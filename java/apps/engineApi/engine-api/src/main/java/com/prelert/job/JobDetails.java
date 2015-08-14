@@ -33,7 +33,6 @@ import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.prelert.job.process.params.ModelDebugConfig;
 import com.prelert.job.transform.TransformConfig;
 
 /**

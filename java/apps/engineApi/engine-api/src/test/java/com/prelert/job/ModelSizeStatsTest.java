@@ -29,15 +29,7 @@ package com.prelert.job;
 
 import static org.junit.Assert.assertEquals;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-
 import org.junit.Test;
-
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.core.JsonParser;
-import com.prelert.utils.json.AutoDetectParseException;
 
 public class ModelSizeStatsTest
 {
@@ -70,35 +62,5 @@ public class ModelSizeStatsTest
         stats.setMemoryStatus("SOFT_LIMIT");
 
         assertEquals("SOFT_LIMIT", stats.getMemoryStatus());
-    }
-
-    @Test
-    public void testParse() throws JsonParseException, IOException, AutoDetectParseException
-    {
-        String input = "{\"modelSizeStats\": 1,"
-                + "\"totalByFieldCount\" : 2,"
-                + "\"totalOverFieldCount\" : 3,"
-                + "\"totalPartitionFieldCount\" : 4,"
-                + "\"bucketAllocationFailuresCount\" : 5,"
-                + "\"memoryStatus\" : \"OK\""
-                + "}";
-        JsonParser parser = createJsonParser(input);
-        parser.nextToken();
-
-        ModelSizeStats stats = ModelSizeStats.parseJson(parser);
-
-        assertEquals(1L, stats.getModelBytes());
-        assertEquals(2L, stats.getTotalByFieldCount());
-        assertEquals(3L, stats.getTotalOverFieldCount());
-        assertEquals(4L, stats.getTotalPartitionFieldCount());
-        assertEquals(5L, stats.getBucketAllocationFailuresCount());
-        assertEquals("OK", stats.getMemoryStatus());
-    }
-
-    private static final JsonParser createJsonParser(String input) throws JsonParseException,
-            IOException
-    {
-        ByteArrayInputStream inputStream = new ByteArrayInputStream(input.getBytes());
-        return new JsonFactory().createParser(inputStream);
     }
 }

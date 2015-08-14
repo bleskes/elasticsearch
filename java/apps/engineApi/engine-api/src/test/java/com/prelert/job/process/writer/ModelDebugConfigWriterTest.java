@@ -39,7 +39,7 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import com.prelert.job.process.params.ModelDebugConfig;
+import com.prelert.job.ModelDebugConfig;
 
 public class ModelDebugConfigWriterTest
 {

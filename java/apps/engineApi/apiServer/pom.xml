@@ -34,7 +34,7 @@
       <groupId>org.eclipse.jetty</groupId>
       <artifactId>jetty-servlets</artifactId>
       <version>9.1.0.v20131115</version>
-    </dependency>    
+    </dependency>
     <dependency>
       <groupId>org.glassfish.jersey.containers</groupId>
       <artifactId>jersey-container-jetty-servlet</artifactId>
@@ -45,19 +45,19 @@
       <artifactId>engine-api</artifactId>
       <scope>provided</scope>
     </dependency>
-    <dependency>     
+    <dependency>
       <groupId>org.elasticsearch</groupId>
       <artifactId>elasticsearch</artifactId>
       <scope>provided</scope>
     </dependency>
-        
+
   </dependencies>
 
 
   <build>
     <plugins>
 
-    <!-- compiler -->  
+    <!-- compiler -->
     <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
@@ -66,11 +66,6 @@
           <source>1.8</source>
           <target>1.8</target>
           <verbose>false</verbose>
-                  
-          <includes>            
-            <include>com/prelert/jetty/*.java</include>         
-          </includes>
-
         </configuration>
       </plugin>
 
@@ -129,7 +124,7 @@
               </artifactItems>
               <stripVersion>true</stripVersion>
             </configuration>
-          </execution>          
+          </execution>
 
         </executions>
       </plugin>

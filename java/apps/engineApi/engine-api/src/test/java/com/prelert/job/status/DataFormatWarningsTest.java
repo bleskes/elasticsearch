@@ -42,6 +42,7 @@ import junit.framework.Assert;
 import org.apache.log4j.Logger;
 import org.junit.Test;
 import org.mockito.Mockito;
+
 import static org.mockito.Mockito.*;
 
 import com.fasterxml.jackson.core.JsonParseException;
@@ -53,7 +54,7 @@ import com.prelert.job.persistence.JobDataCountsPersister;
 import com.prelert.job.persistence.JobDataPersister;
 import com.prelert.job.persistence.UsagePersister;
 import com.prelert.job.persistence.none.NoneJobDataPersister;
-import com.prelert.job.process.ProcessManager;
+import com.prelert.job.process.autodetect.ProcessManager;
 import com.prelert.job.process.exceptions.MalformedJsonException;
 import com.prelert.job.process.exceptions.MissingFieldException;
 import com.prelert.job.transform.TransformConfig;

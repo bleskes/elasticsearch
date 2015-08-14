@@ -42,7 +42,6 @@ import com.prelert.job.alert.AlertObserver;
 import com.prelert.job.results.AnomalyRecord;
 import com.prelert.job.results.Bucket;
 import com.prelert.job.results.Detector;
-import com.prelert.rs.resources.Buckets;
 
 class AlertListener extends AlertObserver
 {
@@ -88,9 +87,9 @@ class AlertListener extends AlertObserver
         UriBuilder uriBuilder = UriBuilder.fromUri(getBaseUri())
                                 .path("results")
                                 .path(getJobId())
-                                .path(Buckets.ENDPOINT)
+                                .path("buckets")
                                 .path(bucket.getId())
-                                .queryParam(Buckets.EXPAND_QUERY_PARAM, true);
+                                .queryParam("expand", true);
 
         List<AnomalyRecord> records = new ArrayList<>();
         for (Detector detector : bucket.getDetectors())

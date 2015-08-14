@@ -63,6 +63,11 @@
       <artifactId>engine-api</artifactId>
       <scope>provided</scope>
     </dependency>
+    <dependency>
+      <groupId>com.prelert</groupId>
+      <artifactId>apiServer</artifactId>
+      <scope>provided</scope>
+    </dependency>
   </dependencies>
 
 

@@ -28,7 +28,6 @@
 package com.prelert.job.results;
 
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -41,11 +40,6 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonToken;
-import com.prelert.utils.json.AutoDetectParseException;
-import com.prelert.utils.json.FieldNameParser;
 
 /**
  * Bucket Result POJO
@@ -213,7 +207,7 @@ public class Bucket
      * Add a detector that produced output in this bucket
      *
      */
-    private void addDetector(Detector detector)
+    public void addDetector(Detector detector)
     {
         m_Detectors.add(detector);
     }
@@ -260,43 +254,6 @@ public class Bucket
         m_IsInterim = isInterim;
     }
 
-
-    /**
-     * Create a new <code>Bucket</code> and populate it from the JSON parser.
-     * The parser must be pointing at the start of the object then all the object's
-     * fields are read and if they match the property names the appropriate
-     * members are set.
-     *
-     * Does not validate that all the properties (or any) have been set but if
-     * parsing fails an exception will be thrown.
-     *
-     * @param parser The JSON Parser should be pointing to the start of the object,
-     * when the function returns it will be pointing to the end.
-     * @return The new bucket
-     * @throws JsonParseException
-     * @throws IOException
-     * @throws AutoDetectParseException
-     */
-    public static Bucket parseJson(JsonParser parser)
-    throws JsonParseException, IOException, AutoDetectParseException
-    {
-        Bucket bucket = new Bucket();
-        BucketJsonParser bucketJsonParser = new BucketJsonParser(parser, LOGGER);
-        bucketJsonParser.parse(bucket);
-        setRecordCountToSumOfDetectorsRecords(bucket);
-        return bucket;
-    }
-
-    /** Set the record count to what was actually read */
-    private static void setRecordCountToSumOfDetectorsRecords(Bucket bucket)
-    {
-        bucket.m_RecordCount = 0;
-        for (Detector d : bucket.getDetectors())
-        {
-            bucket.m_RecordCount += d.getRecords().size();
-        }
-    }
-
     public List<Influencer> getInfluencers()
     {
         return m_Influencers;
@@ -307,140 +264,6 @@ public class Bucket
         this.m_Influencers = influences;
     }
 
-    /**
-     * Create a new <code>Bucket</code> and populate it from the JSON parser.
-     * The parser must be pointing at the first token inside the object.  It
-     * is assumed that prior code has validated that the previous token was
-     * the start of an object.  Then all the object's fields are read and if
-     * they match the property names the appropriate members are set.
-     *
-     * Does not validate that all the properties (or any) have been set but if
-     * parsing fails an exception will be thrown.
-     *
-     * @param parser The JSON Parser should be pointing to the start of the object,
-     * when the function returns it will be pointing to the end.
-     * @return The new bucket
-     * @throws JsonParseException
-     * @throws IOException
-     * @throws AutoDetectParseException
-     */
-    public static Bucket parseJsonAfterStartObject(JsonParser parser)
-    throws JsonParseException, IOException, AutoDetectParseException
-    {
-        Bucket bucket = new Bucket();
-        BucketJsonParser bucketJsonParser = new BucketJsonParser(parser, LOGGER);
-        bucketJsonParser.parseAfterStartObject(bucket);
-        setRecordCountToSumOfDetectorsRecords(bucket);
-        return bucket;
-    }
-
-    private static class BucketJsonParser extends FieldNameParser<Bucket>
-    {
-        public BucketJsonParser(JsonParser jsonParser, Logger logger)
-        {
-            super("Bucket", jsonParser, logger);
-        }
-
-        @Override
-        protected void handleFieldName(String fieldName, Bucket bucket)
-                throws AutoDetectParseException, JsonParseException, IOException
-        {
-            JsonToken token = m_Parser.nextToken();
-            switch (fieldName)
-            {
-            case TIMESTAMP:
-                parseTimestamp(bucket, token);
-                break;
-            case RAW_ANOMALY_SCORE:
-                bucket.setRawAnomalyScore(parseAsDoubleOrZero(token, fieldName));
-                break;
-            case ANOMALY_SCORE:
-                bucket.setAnomalyScore(parseAsDoubleOrZero(token, fieldName));
-                break;
-            case MAX_NORMALIZED_PROBABILITY:
-                bucket.setMaxNormalizedProbability(parseAsDoubleOrZero(token, fieldName));
-                break;
-            case RECORD_COUNT:
-                bucket.setRecordCount(parseAsIntOrZero(token, fieldName));
-                break;
-            case EVENT_COUNT:
-                bucket.setEventCount(parseAsLongOrZero(token, fieldName));
-                break;
-            case IS_INTERIM:
-                bucket.setInterim(parseAsBooleanOrNull(token, fieldName));
-                break;
-            case DETECTORS:
-                parseDetectors(token, bucket);
-                break;
-            case INFLUENCERS:
-                bucket.setInfluencers(parseInfluencers(token));
-                break;
-            default:
-                LOGGER.warn(String.format("Parse error unknown field in Bucket %s:%s",
-                        fieldName, token.asString()));
-                break;
-            }
-        }
-
-        private void parseTimestamp(Bucket bucket, JsonToken token) throws IOException
-        {
-            if (token == JsonToken.VALUE_NUMBER_INT)
-            {
-                // convert seconds to ms
-                long val = m_Parser.getLongValue() * 1000;
-                bucket.setTimestamp(new Date(val));
-            }
-            else
-            {
-                LOGGER.warn("Cannot parse " + TIMESTAMP + " : " + m_Parser.getText()
-                                + " as a long");
-            }
-        }
-
-        private void parseDetectors(JsonToken token, Bucket bucket)
-                throws AutoDetectParseException, IOException, JsonParseException
-        {
-            if (token != JsonToken.START_ARRAY)
-            {
-                String msg = "Invalid value Expecting an array of detectors";
-                LOGGER.warn(msg);
-                throw new AutoDetectParseException(msg);
-            }
-
-            token = m_Parser.nextToken();
-            while (token != JsonToken.END_ARRAY)
-            {
-                Detector detector = Detector.parseJson(m_Parser);
-                bucket.addDetector(detector);
-
-                token = m_Parser.nextToken();
-            }
-        }
-
-        private List<Influencer> parseInfluencers(JsonToken token)
-                throws AutoDetectParseException, IOException, JsonParseException
-        {
-            if (token != JsonToken.START_ARRAY)
-            {
-                String msg = "Invalid value Expecting an array of influencers";
-                LOGGER.warn(msg);
-                throw new AutoDetectParseException(msg);
-            }
-
-            List<Influencer> influencers = new ArrayList<Influencer>();
-
-            token = m_Parser.nextToken();
-            while (token != JsonToken.END_ARRAY)
-            {
-                Influencer inf = Influencers.parseJson(m_Parser);
-                influencers.add(inf);
-
-                token = m_Parser.nextToken();
-            }
-
-            return influencers;
-        }
-    }
 
     @Override
     public int hashCode()

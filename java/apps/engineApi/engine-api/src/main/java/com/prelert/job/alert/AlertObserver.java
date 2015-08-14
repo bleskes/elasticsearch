@@ -35,10 +35,10 @@ import com.prelert.job.results.Bucket;
  */
 public abstract class AlertObserver
 {
-    /** If null, it means it was not specified. */
+    /** If null it means it was not specified. */
     private final Double m_AnomalyThreshold;
 
-    /** If null, it means it was not specified. */
+    /** If null it means it was not specified. */
     private final Double m_NormalisedThreshold;
 
     public AlertObserver(Double normlizedProbThreshold, Double anomalyThreshold)

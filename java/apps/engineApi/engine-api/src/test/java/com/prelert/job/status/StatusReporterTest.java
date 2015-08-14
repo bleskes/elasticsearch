@@ -183,12 +183,24 @@ public class StatusReporterTest
         StatusReporter reporter = new StatusReporter("SR", usage, perister, mock(Logger.class));
         reporter.setAnalysedFieldsPerRecord(3);
 
+        DataCounts dc = new DataCounts();
+        dc.setExcludedRecordCount(1l);
+        dc.setInputFieldCount(12l);
+        dc.setMissingFieldCount(1l);
+        dc.setProcessedFieldCount(5l);
+        dc.setProcessedRecordCount(2l);
+        dc.setLatestRecordTimeStamp(new Date(3000 * 1000));
+
         reporter.reportRecordWritten(5, 2000);
         reporter.reportRecordWritten(5, 3000);
+        reporter.reportMissingField();
+        reporter.reportExcludedRecord(2);
         reporter.finishReporting();
 
         Mockito.verify(usage, Mockito.times(1)).reportUsage();
-        Mockito.verify(perister, Mockito.times(1)).persistDataCounts(eq("SR"), any());
+        Mockito.verify(perister, Mockito.times(1)).persistDataCounts(eq("SR"), eq(dc));
+
+        assertEquals(dc, reporter.incrementalStats());
     }
 
     private void testAllFieldsEqualZero(DataCounts stats)
