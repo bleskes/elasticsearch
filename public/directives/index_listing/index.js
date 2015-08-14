@@ -36,8 +36,8 @@ define(function (require) {
       var chartData = _.get(this.props, dataKey.chart_data);
       var has_chart = !!dataKey.chart_data;
       return make.td({key: idx},
-        make.div({className: (has_chart ? 'pull-right': '')}, value),
-        (has_chart ? React.createElement(SparkLines, {data: chartData}) : null));
+        (has_chart ? React.createElement(SparkLines, {data: chartData}) : null),
+        make.div({className: (has_chart ? 'pull-right': '')}, value));
     }
     var initialTableOptions = {
       title: 'Indices',

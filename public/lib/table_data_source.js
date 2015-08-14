@@ -63,13 +63,13 @@ define(function (require) {
         return {
           field: 'index_stats.index',
           size: cluster.counts.indices
-        }
+        };
       }
       if (this.type === 'node') {
         return {
           field: 'node_stats.name',
           size: cluster.counts.nodes
-        }
+        };
       }
     }
 

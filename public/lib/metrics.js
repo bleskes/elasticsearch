@@ -99,7 +99,7 @@ module.exports = {
     type: 'node',
     derivative: false
   },
-  'heap_used_percent': {
+  'node_jvm_mem_percent': {
     active: true,
     field: 'node_stats.jvm.mem.heap_used_percent',
     label: 'JVM Heap Usage',
