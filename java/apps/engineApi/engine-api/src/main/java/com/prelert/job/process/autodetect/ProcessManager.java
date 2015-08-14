@@ -451,7 +451,7 @@ public class ProcessManager
                 nativeProcess, jobId,
                 job.getDataDescription(), job.getTimeout(), job.getAnalysisConfig(),
                 new TransformConfigs(job.getTransforms()), logger,
-                new StatusReporter(jobId,
+                new StatusReporter(jobId, job.getCounts(),
                         new UsageReporter(jobId,
                                           m_UsagePersisterFactory.getInstance(logger),
                                           logger),
