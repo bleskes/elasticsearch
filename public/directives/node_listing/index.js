@@ -56,7 +56,7 @@ define(function (require) {
       var $charts = [];
       while(--count >= 0) {
         $charts.push(React.createElement(MarvelChart, {
-          className: 'col-md-4',
+          className: 'col-md-4 marvel-chart',
           data: makeSampleData(),
           source: {metric: metrics.load_average_1m}
         }));

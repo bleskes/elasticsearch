@@ -1,52 +1,48 @@
+marvel-chart {display: block;}
+.marvel-chart,
 marvel-chart {
-  >div {
-    background-color: @white;
-    border-top: @thick solid @esGray;
-    padding: 15px;
+  background-color: @white;
+  border-top: @thick solid @esGray;
+  padding: 15px;
 
-    h1 {
-      font-size: 20px;
-      margin-top: 0;
-    }
-
-    .vis-canvas {
-      padding: 0 5px 0 0;
-      min-height: 200px;
-      display: flex;
-    }
-
-    .loading {
-      flex-grow: 1;
-      justify-content: center;
-      align-self: center;
-      text-align: center;
-      font-size: 18px;
-      color: @esDarkGray;
-    }
-
-    .nvd3 {
-      flex-grow: 1;
-    }
-
-    .jubilee {
-      g {
-        > line { stroke: #999; }
-        > path { stroke: #444; }
-      }
-      .axis.y > path { display: none; }
-      .axis.y > line { stroke: #d1d2d6; }
-      .axis.x > line { stroke: #eff0f1; }
-    }
+  h1 {
+    font-size: 20px;
+    margin-top: 0;
   }
+
+  .vis-canvas {
+    padding: 0 5px 0 0;
+    min-height: 200px;
+    display: flex;
+  }
+
+  .loading {
+    flex-grow: 1;
+    justify-content: center;
+    align-self: center;
+    text-align: center;
+    font-size: 18px;
+    color: @esDarkGray;
+  }
+
+  .nvd3 {
+    flex-grow: 1;
+  }
+
 }
 
 /***************************/
 /****** MarvelCharts! ******/
 /***************************/
 
-marvel-chart {
-  .x.axis .domain {
-    display: block;
+.jubilee {
+  g {
+    > line { stroke: #999; }
+    > path { stroke: #444; }
   }
+  .axis.y > path { display: none; }
+  .axis.y > line { stroke: #d1d2d6; }
+  .axis.x > line { stroke: #eff0f1; }
+  .axis.x .domain { display: block; }
 }
 
