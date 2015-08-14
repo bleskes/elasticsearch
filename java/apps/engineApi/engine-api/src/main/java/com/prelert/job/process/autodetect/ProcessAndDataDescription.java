@@ -24,7 +24,7 @@
  *                                                          *
  *                                                          *
  ************************************************************/
-package com.prelert.job.process;
+package com.prelert.job.process.autodetect;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -42,7 +42,7 @@ import com.prelert.job.status.StatusReporter;
 import com.prelert.job.transform.TransformConfigs;
 
 /**
- * The native process, settings objects and output parsers.
+ * The native autodetect process, settings objects and output parsers.
  * Before writing to the process's outputstream the semaphore {@linkplain #guard()}
  * should be acquired and released immediately after.
  * ErrorReader is a buffered reader connected to the Process's error output.

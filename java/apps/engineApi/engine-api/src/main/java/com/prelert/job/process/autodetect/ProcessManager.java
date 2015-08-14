@@ -25,7 +25,7 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.job.process;
+package com.prelert.job.process.autodetect;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -69,7 +69,8 @@ import com.prelert.job.messages.Messages;
 import com.prelert.job.persistence.DataPersisterFactory;
 import com.prelert.job.persistence.JobDataPersister;
 import com.prelert.job.persistence.JobProvider;
-import com.prelert.job.process.ProcessAndDataDescription.Action;
+import com.prelert.job.process.ProcessCtrl;
+import com.prelert.job.process.autodetect.ProcessAndDataDescription.Action;
 import com.prelert.job.process.exceptions.ClosedJobException;
 import com.prelert.job.process.exceptions.DataUploadException;
 import com.prelert.job.process.exceptions.MalformedJsonException;
@@ -92,11 +93,12 @@ import com.prelert.job.transform.TransformConfigs;
 import com.prelert.job.usage.UsageReporterFactory;
 
 /**
- * Manages the native processes channelling data to them and parsing the
- * results.
+ * Manages the native autodetect processes channelling
+ * data to them and parsing the results.
  *
- * This class registers a JVM shutdown hook once the
+ * This class registers a JVM shutdown hook the
  * purpose of which is to stop any running processes
+ * before the JVM exits
  */
 public class ProcessManager
 {

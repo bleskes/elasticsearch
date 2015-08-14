@@ -25,7 +25,7 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.job.normalisation;
+package com.prelert.job.process.normaliser;
 
 import java.io.IOException;
 

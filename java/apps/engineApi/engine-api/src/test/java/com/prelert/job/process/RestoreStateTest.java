@@ -54,6 +54,7 @@ import com.prelert.job.exceptions.UnknownJobException;
 import com.prelert.job.manager.JobManager;
 import com.prelert.job.persistence.QueryPage;
 import com.prelert.job.persistence.elasticsearch.ElasticsearchJobProvider;
+import com.prelert.job.process.autodetect.ProcessManager;
 import com.prelert.job.process.exceptions.MalformedJsonException;
 import com.prelert.job.process.exceptions.MissingFieldException;
 import com.prelert.job.process.exceptions.NativeProcessRunException;

@@ -25,12 +25,13 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.job.normalisation;
+package com.prelert.job.process.normaliser;
 
 import java.io.IOException;
 
 import org.apache.log4j.Logger;
 
+import com.prelert.job.process.output.parsing.NormalisedResultsParser;
 import com.prelert.job.process.writer.LengthEncodedWriter;
 
 public class NormaliserProcess

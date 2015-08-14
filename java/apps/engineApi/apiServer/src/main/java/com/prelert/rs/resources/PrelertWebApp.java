@@ -55,7 +55,7 @@ import com.prelert.job.persistence.elasticsearch.ElasticsearchJobProvider;
 import com.prelert.job.persistence.elasticsearch.ElasticsearchJobProviderFactory;
 import com.prelert.job.persistence.elasticsearch.ElasticsearchJobResultsPeristerFactory;
 import com.prelert.job.process.ProcessCtrl;
-import com.prelert.job.process.ProcessManager;
+import com.prelert.job.process.autodetect.ProcessManager;
 import com.prelert.job.process.output.parsing.ResultsReaderFactory;
 import com.prelert.job.status.elasticsearch.ElasticsearchStatusReporterFactory;
 import com.prelert.job.usage.elasticsearch.ElasticsearchUsageReporterFactory;

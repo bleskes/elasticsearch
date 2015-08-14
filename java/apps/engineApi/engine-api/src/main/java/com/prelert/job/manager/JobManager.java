@@ -64,7 +64,7 @@ import com.prelert.job.messages.Messages;
 import com.prelert.job.persistence.JobProvider;
 import com.prelert.job.persistence.QueryPage;
 import com.prelert.job.persistence.none.NoneJobDataPersister;
-import com.prelert.job.process.ProcessManager;
+import com.prelert.job.process.autodetect.ProcessManager;
 import com.prelert.job.process.exceptions.ClosedJobException;
 import com.prelert.job.process.exceptions.MalformedJsonException;
 import com.prelert.job.process.exceptions.MissingFieldException;

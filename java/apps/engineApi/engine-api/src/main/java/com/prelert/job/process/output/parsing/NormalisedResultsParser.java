@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -24,7 +24,7 @@
  *                                                          *
  *                                                          *
  ************************************************************/
-package com.prelert.job.normalisation;
+package com.prelert.job.process.output.parsing;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -40,6 +40,7 @@ import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
+import com.prelert.job.normalisation.NormalisedResult;
 
 /**
  * Parse the JSON output of the Normaliser.
@@ -111,7 +112,7 @@ public class NormalisedResultsParser implements Runnable
         int resultCount = 0;
         while (token != null)
         {
-            NormalisedResult result = NormalisedResult.parseJson(parser, m_Logger);
+            NormalisedResult result = NormalisedResultParser.parseJson(parser, m_Logger);
             m_Results.add(result);
             resultCount++;
 

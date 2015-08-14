@@ -24,7 +24,7 @@
  *                                                          *
  *                                                          *
  ************************************************************/
-package com.prelert.job.normalisation;
+package com.prelert.job.process.normaliser;
 
 import static org.junit.Assert.*;
 
@@ -34,6 +34,7 @@ import org.junit.Test;
 import static org.mockito.Mockito.mock;
 
 import com.prelert.job.persistence.JobProvider;
+import com.prelert.job.process.normaliser.Renormaliser;
 
 /**
  * This class is hard to unit test because it creates

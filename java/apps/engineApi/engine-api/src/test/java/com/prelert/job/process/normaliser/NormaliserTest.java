@@ -25,7 +25,7 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.job.normalisation;
+package com.prelert.job.process.normaliser;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -51,6 +51,10 @@ import org.mockito.MockitoAnnotations;
 
 import com.prelert.job.exceptions.UnknownJobException;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
+import com.prelert.job.process.normaliser.Normaliser;
+import com.prelert.job.process.normaliser.NormaliserProcess;
+import com.prelert.job.process.normaliser.NormaliserProcessFactory;
+import com.prelert.job.process.output.parsing.NormalisedResultsParser;
 import com.prelert.job.process.writer.LengthEncodedWriter;
 import com.prelert.job.results.AnomalyRecord;
 import com.prelert.job.results.Bucket;

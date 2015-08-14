@@ -34,9 +34,9 @@ import org.apache.log4j.Logger;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.prelert.job.alert.AlertObserver;
-import com.prelert.job.normalisation.Renormaliser;
 import com.prelert.job.persistence.JobProvider;
 import com.prelert.job.persistence.JobResultsPersister;
+import com.prelert.job.process.normaliser.Renormaliser;
 import com.prelert.utils.json.AutoDetectParseException;
 
 /**

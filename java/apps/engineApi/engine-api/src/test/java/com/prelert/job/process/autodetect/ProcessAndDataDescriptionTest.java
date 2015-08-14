@@ -25,7 +25,7 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.job.process;
+package com.prelert.job.process.autodetect;
 
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.mock;
@@ -43,7 +43,8 @@ import org.junit.Test;
 
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataDescription;
-import com.prelert.job.process.ProcessAndDataDescription.Action;
+import com.prelert.job.process.autodetect.ProcessAndDataDescription;
+import com.prelert.job.process.autodetect.ProcessAndDataDescription.Action;
 import com.prelert.job.process.output.parsing.ResultsReader;
 import com.prelert.job.status.StatusReporter;
 import com.prelert.job.transform.TransformConfig;
