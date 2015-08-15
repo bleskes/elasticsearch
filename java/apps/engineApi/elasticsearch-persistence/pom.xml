@@ -37,4 +37,81 @@
     </dependency>
 
   </dependencies>
+
+  <build>
+
+    <plugins>
+      <!-- install dependencies -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <version>2.8</version>
+        <executions>
+          <execution>
+            <id>copy-dependencies</id>
+            <phase>install</phase>
+            <goals>
+              <goal>copy-dependencies</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>${env.PRELERT_HOME}/cots/libjar</outputDirectory>
+              <overWriteReleases>true</overWriteReleases>
+              <overWriteSnapshots>true</overWriteSnapshots>
+              <overWriteIfNewer>true</overWriteIfNewer>
+              <!-- Don't copy test jars (JUnit) or provided -->
+              <includeScope>runtime</includeScope>
+              <excludeScope>provided</excludeScope>
+            </configuration>
+          </execution>
+
+          <!-- install target jar -->
+          <execution>
+            <id>copy</id>
+            <phase>install</phase>
+            <goals>
+              <goal>copy</goal>
+            </goals>
+           <configuration>
+              <artifactItems>
+                <artifactItem>
+                  <groupId>${project.groupId}</groupId>
+                  <artifactId>${project.artifactId}</artifactId>
+                  <version>${project.version}</version>
+                  <type>${project.packaging}</type>
+                  <outputDirectory>${env.PRELERT_HOME}/libjar</outputDirectory>
+                </artifactItem>
+              </artifactItems>
+              <stripVersion>true</stripVersion>
+            </configuration>
+          </execution>
+
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+
+  <reporting>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-project-info-reports-plugin</artifactId>
+        <version>2.4</version>
+        <configuration>
+          <dependencyDetailsEnabled>false</dependencyDetailsEnabled>
+          <dependencyLocationsEnabled>false</dependencyLocationsEnabled>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>findbugs-maven-plugin</artifactId>
+        <version>2.5.4</version>
+        <configuration>
+          <threshold>High</threshold>
+          <effort>Default</effort>
+        </configuration>
+      </plugin>
+    </plugins>
+  </reporting>
+
 </project>
