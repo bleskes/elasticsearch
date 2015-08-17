@@ -221,10 +221,12 @@ public class RestoreStateTest
         DataCounts splitCounts = splitJob.getDocument().getCounts();
 
         // number of input bytes will be different so don't compare those
-        test(oneShotCounts.getBucketCount() == splitCounts.getBucketCount());
+        test(oneShotCounts.getBucketCount() != null);
+        test(oneShotCounts.getBucketCount().equals(splitCounts.getBucketCount()));
         test(oneShotCounts.getInputRecordCount() == splitCounts.getInputRecordCount());
         test(oneShotCounts.getProcessedRecordCount() == splitCounts.getProcessedRecordCount());
         test(oneShotCounts.getProcessedFieldCount() == splitCounts.getProcessedFieldCount());
+        test(oneShotCounts.getLatestRecordTimeStamp() != null);
         test(oneShotCounts.getLatestRecordTimeStamp().equals(splitCounts.getLatestRecordTimeStamp()));
     }
 

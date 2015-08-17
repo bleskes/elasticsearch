@@ -138,7 +138,7 @@ public class ModelSizeStats
 
     public void setMemoryStatus(String m)
     {
-        if (m == null || m == "")
+        if (m == null || m.isEmpty())
         {
             m_MemoryStatus = MemoryStatus.OK;
         }
