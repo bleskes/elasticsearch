@@ -53,7 +53,7 @@ define(function (require) {
               bool: {
                 must: [
                   { range: { 'timestamp': timeRange } },
-                  { term: { 'cluster_name': cluster._id } }
+                  { term: { 'cluster_name': cluster.cluster_name } }
                 ]
               }
             }

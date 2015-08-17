@@ -52,7 +52,7 @@ define(function (require) {
     };
   });
 
-  module.directive('marvelShardAllocation', function (timefilter, globalState, $timeout, Private, marvelClusterState) {
+  module.directive('marvelShardAllocation', function (timefilter, globalState, $timeout, Private) {
     var getTimeline = Private(require('plugins/marvel/directives/shard_allocation/requests/getTimelineData'));
     var getStateSource = Private(require('plugins/marvel/directives/shard_allocation/requests/getStateSource'));
 
@@ -65,7 +65,8 @@ define(function (require) {
         filterBy: '=',
         view: '@',
         hideUi: '=',
-        showHiddenIndices: '='
+        showHiddenIndices: '=',
+        clusterState: '='
       },
       link: function ($scope, el, attr) {
         var handleConnectionError = function () {
@@ -74,7 +75,6 @@ define(function (require) {
           //     'error', 30000);
         };
 
-        $scope.clusterState = marvelClusterState;
         $scope.style = 'light';
         $scope.timelineData = [];
         $scope.showHead = false;
@@ -215,7 +215,7 @@ define(function (require) {
           var offsetX = _.isUndefined($event.offsetX) ? $event.originalEvent.layerX : $event.offsetX;
           var position = offsetX / $event.currentTarget.clientWidth;
           var current = Math.floor(position * $scope.player.total);
-          var timestamp = getValue($scope.timelineData[current].fields['timestamp']);
+          var timestamp = getValue($scope.timelineData[current].fields.timestamp);
           var message = getValue($scope.timelineData[current].fields.message);
           var status = getValue($scope.timelineData[current].fields.status);
 
@@ -286,7 +286,7 @@ define(function (require) {
             _type: state._type,
             _id: state._id,
             fields: {
-              'timestamp': [ state['timestamp'] ],
+              'timestamp': [ state.timestamp ],
               'status': [ state.status ],
               'message': [ state.message ]
             }
@@ -311,13 +311,13 @@ define(function (require) {
         });
         $scope.$on('$destroy', unsubscribe);
 
-        $scope.$watch('clusterState.version', function (version) {
+        $scope.$watch('clusterState.data.version', function (version) {
           var current = ($scope.player.current === $scope.player.total);
           var data = $scope.timelineData;
           var last = _.last(data);
           if (last) {
-            var newTimestamp = moment($scope.clusterState['timestamp']).valueOf();
-            var lastTimestamp = moment(getValue(last.fields['timestamp'])).valueOf();
+            var newTimestamp = moment($scope.clusterState.data.timestamp).valueOf();
+            var lastTimestamp = moment(getValue(last.fields.timestamp)).valueOf();
             var newTimeRange = { gte: lastTimestamp, lte: newTimestamp, format: 'epoch_millis' };
             if (lastTimestamp < newTimestamp) {
               fetch(100, newTimeRange, 'push');

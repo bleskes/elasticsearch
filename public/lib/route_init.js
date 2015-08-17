@@ -1,5 +1,8 @@
 define(function (require) {
-  return function routeInitProvider(Notifier, marvelClusterState, marvelSettings, Private, marvelClusters, globalState, Promise, kbnUrl) {
+  var _ = require('lodash');
+  var chrome = require('ui/chrome');
+  var tabs = require('./tabs');
+  return function routeInitProvider(Notifier, marvelSettings, Private, marvelClusters, globalState, Promise, kbnUrl) {
 
     var initMarvelIndex = Private(require('plugins/marvel/lib/marvel_index_init'));
     return function (options) {
@@ -17,14 +20,14 @@ define(function (require) {
           var cluster;
           marvel.clusters = clusters;
           // Check to see if the current cluster is available
-          if (globalState.cluster && !_.find(clusters, { _id: globalState.cluster })) {
+          if (globalState.cluster && !_.find(clusters, { cluster_name: globalState.cluster })) {
             globalState.cluster = null;
           }
           // if there are no clusers choosen then set the first one
           if (!globalState.cluster) {
             cluster = _.first(clusters);
-            if (cluster && cluster._id) {
-              globalState.cluster = cluster._id;
+            if (cluster && cluster.cluster_name) {
+              globalState.cluster = cluster.cluster_name;
               globalState.save();
             }
           }
@@ -50,12 +53,9 @@ define(function (require) {
             return indexPattern;
           });
         })
-        .then(function (pattern) {
-          marvelClusterState.setIndex(pattern);
-          return pattern;
-        })
         // Finally return the Marvel object.
         .then(function () {
+          chrome.setTabs(tabs);
           return marvel;
         });
     };

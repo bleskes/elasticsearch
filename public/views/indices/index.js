@@ -45,6 +45,12 @@ define(function (require) {
     // Setup the data sources for the charts
     $scope.dataSources = {};
 
+    var ClusterStateDataSource = Private(require('plugins/marvel/lib/cluster_state_data_source'));
+    $scope.dataSources.clusterState = new ClusterStateDataSource({
+      indexPattern: indexPattern,
+      cluster: globalState.cluster
+    });
+    $scope.dataSources.clusterState.register(courier);
 
     // Map the metric keys to ChartDataSources and register them with
     // the courier. Once this is finished call courier fetch.
@@ -77,7 +83,7 @@ define(function (require) {
       .then(function () {
         var dataSource = new TableDataSource({
           index: indexPattern,
-          cluster: _.find(clusters, { _id: globalState.cluster }),
+          cluster: _.find(clusters, { cluster_name: globalState.cluster }),
           clusters: clusters,
           metrics: [
             'index_document_count',

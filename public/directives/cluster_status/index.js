@@ -4,15 +4,15 @@ define(function (require) {
   var moment = require('moment');
   var _ = require('lodash');
 
-  module.directive('marvelClusterStatus', function ($location, globalState, kbnUrl, marvelClusters, marvelClusterState) {
+  module.directive('marvelClusterStatus', function ($location, globalState, kbnUrl, marvelClusters) {
     return {
       restrict: 'E',
       template: template,
       scope: {
-        source: '='
+        source: '=',
+        clusterState: '='
       },
       link: function ($scope) {
-        $scope.clusterState = marvelClusterState;
         $scope.primary_shards = 0;
         $scope.replica_shards = 0;
         $scope.unassigned_shards = 0;
@@ -25,7 +25,7 @@ define(function (require) {
         $scope.$on('$destroy', unsubscribe);
 
         $scope.changeCluster = function (name) {
-          if(globalState.cluster !== name) {
+          if (globalState.cluster !== name) {
             globalState.cluster = name;
             globalState.save();
             kbnUrl.changePath($location.path());
@@ -34,7 +34,7 @@ define(function (require) {
 
         $scope.laggingCluster = false;
 
-        $scope.$watch('clusterState.shardStats', function (shardStats) {
+        $scope.$watch('clusterState.data.shardStats', function (shardStats) {
           if (shardStats) {
             $scope.primary_shards = shardStats.totals.primary;
             $scope.replica_shards = shardStats.totals.replica;
@@ -44,7 +44,7 @@ define(function (require) {
         });
 
         $scope.$watch('source.clusters', function (clusters) {
-          $scope.cluster = _.find(clusters, { _id: $scope.source.cluster });
+          $scope.cluster = _.find(clusters, { cluster_name: $scope.source.cluster });
           if ($scope.cluster) {
             $scope.lastUpdate = moment.utc($scope.cluster.lastUpdate);
             var now = moment.utc();

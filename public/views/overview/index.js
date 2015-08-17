@@ -2,8 +2,6 @@ define(function (require) {
   var _ = require('lodash');
   var angular = require('angular');
 
-  // require('plugins/visualize/saved_visualizations/saved_visualizations');
-  // require('ui/timepicker/timepicker');
   require('plugins/marvel/services/settings');
   require('plugins/marvel/services/metrics');
   require('plugins/marvel/services/clusters');
@@ -28,10 +26,11 @@ define(function (require) {
         return routeInit();
       }
     }
-  })
-  .otherwise({ redirectTo: '/overview' });
+  });
 
-  module.controller('overview', function (kbnUrl, globalState, $scope, timefilter, $route, courier, marvelMetrics, Private, Promise, $timeout) {
+  module.controller('overview', function (kbnUrl, globalState, $scope, timefilter,
+        $route, courier, marvelMetrics, Private, Promise, $timeout) {
+
     var ChartDataSource = Private(require('plugins/marvel/directives/chart/data_source'));
     var ClusterStatusDataSource = Private(require('plugins/marvel/directives/cluster_status/data_source'));
     var ShardRecoveryDataSource = Private(require('plugins/marvel/directives/shard_activity/data_source'));
@@ -58,6 +57,13 @@ define(function (require) {
     // Setup the data sources for the charts
     $scope.dataSources = {};
 
+    var ClusterStateDataSource = Private(require('plugins/marvel/lib/cluster_state_data_source'));
+    $scope.dataSources.clusterState = new ClusterStateDataSource({
+      indexPattern: indexPattern,
+      cluster: globalState.cluster
+    });
+    $scope.dataSources.clusterState.register(courier);
+
     // Map the metric keys to ChartDataSources and register them with
     // the courier. Once this is finished call courier fetch.
     Promise
@@ -67,7 +73,7 @@ define(function (require) {
             indexPattern: indexPattern,
             cluster: globalState.cluster,
             metric: metric
-          }
+          };
           var dataSource = new ChartDataSource(options);
           dataSource.register(courier);
           $scope.dataSources[name] = dataSource;
@@ -80,7 +86,7 @@ define(function (require) {
         $scope.dataSources.cluster_status = dataSource;
         return dataSource;
       })
-      .then(function() {
+      .then(function () {
         var dataSource = new ShardRecoveryDataSource(indexPattern, globalState.cluster);
         dataSource.register(courier);
         $scope.dataSources.shardActivity = dataSource;
@@ -91,10 +97,10 @@ define(function (require) {
     $scope.$on('$destroy', function () {
       _.each($scope.dataSources, function (dataSource) {
         dataSource.destroy();
-      })
+      });
     });
 
-    function fetch (withoutCourier) {
+    function fetch(withoutCourier) {
       var tasks = [];
       _.each($scope.dataSources.issues, function (dataSource) {
         tasks.push(dataSource.fetch());
