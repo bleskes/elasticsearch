@@ -18,8 +18,6 @@
 package org.elasticsearch.marvel.agent;
 
 import com.google.common.collect.ImmutableSet;
-import org.elasticsearch.cluster.settings.ClusterDynamicSettings;
-import org.elasticsearch.cluster.settings.DynamicSettings;
 import org.elasticsearch.common.component.AbstractLifecycleComponent;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.settings.Settings;
@@ -55,7 +53,6 @@ public class AgentService extends AbstractLifecycleComponent<AgentService> imple
 
     @Inject
     public AgentService(Settings settings, NodeSettingsService nodeSettingsService,
-                        @ClusterDynamicSettings DynamicSettings dynamicSettings,
                         LicenseService licenseService,
                         Set<Collector> collectors, Set<Exporter> exporters) {
         super(settings);
@@ -73,9 +70,6 @@ public class AgentService extends AbstractLifecycleComponent<AgentService> imple
         }
 
         nodeSettingsService.addListener(this);
-        dynamicSettings.addDynamicSetting(SETTINGS_INTERVAL);
-        dynamicSettings.addDynamicSetting(SETTINGS_STATS_TIMEOUT);
-
         logger.trace("marvel is running in [{}] mode", licenseService.mode());
     }
 
