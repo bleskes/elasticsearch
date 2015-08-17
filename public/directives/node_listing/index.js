@@ -14,6 +14,7 @@ define(function (require) {
 
 
   module.directive('marvelNodesListing', function () {
+    // makes the tds for every <tr> in the table
     function makeTdWithPropKey(dataKey, idx) {
       var value = _.get(this.props, dataKey.key);
       var $content = null;
@@ -60,7 +61,7 @@ define(function (require) {
     };
     function makeChart(data, metric) {
       return React.createElement(MarvelChart, {
-        className: 'col-md-4 marvel-chart',
+        className: 'col-md-4 marvel-chart no-border',
         data: data,
         source: {metric: metric}
       });

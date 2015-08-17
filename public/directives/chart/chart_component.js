@@ -55,7 +55,7 @@ define(function(require) {
       var lineChart = new jubilee.chart.line()
         .height(300)
         .yScale({nice: true})
-        .margin({left: 30, right: 10})
+        .margin({left: 50, right: 10})
         .lines({
           stroke: '#000',
           strokeWidth: '2px',

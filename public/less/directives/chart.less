@@ -5,6 +5,8 @@ marvel-chart {
   border-top: @thick solid @esGray;
   padding: 15px;
 
+  &.no-border { border-top: 0 none transparent; }
+
   h1 {
     font-size: 20px;
     margin-top: 0;
@@ -43,13 +45,14 @@ marvel-chart {
   .axis {
     text {
       font-size: 13px;
-      color: #444;
+      color: #666977;
     }
-    .y {
+    &.y {
       > path { display: none; }
       > line { stroke: #d1d2d6; }
     }
-    .x {
+    &.x {
+      > path { stroke: #232123; }
       > line { stroke: #eff0f1; }
       .domain { display: block; }
     }
