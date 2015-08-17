@@ -30,20 +30,13 @@ package com.prelert.job;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import junit.framework.Assert;
 
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 
 import com.prelert.job.DataDescription.DataFormat;
-import com.prelert.job.exceptions.JobConfigurationException;
 
 public class DataDescriptionTest
 {
-    @Rule
-    public ExpectedException m_ExpectedException = ExpectedException.none();
-
     @Test
     public void testDataFormatForString()
     {
@@ -59,85 +52,6 @@ public class DataDescriptionTest
         assertEquals(DataFormat.SINGLE_LINE, DataFormat.forString("SINGLE_LINE"));
     }
 
-    @Test
-    public void testVerify_GivenNullTimeFormat() throws JobConfigurationException
-    {
-        DataDescription description = new DataDescription();
-        description.setTimeFormat(null);
-
-        assertTrue(description.verify());
-    }
-
-    @Test
-    public void testVerify_GivenEmptyTimeFormat() throws JobConfigurationException
-    {
-        DataDescription description = new DataDescription();
-        description.setTimeFormat("");
-
-        assertTrue(description.verify());
-    }
-
-    @Test
-    public void testVerify_GivenTimeFormatIsEpoch() throws JobConfigurationException
-    {
-        DataDescription description = new DataDescription();
-        description.setTimeFormat("epoch");
-
-        assertTrue(description.verify());
-    }
-
-    @Test
-    public void testVerify_GivenTimeFormatIsEpochMs() throws JobConfigurationException
-    {
-        DataDescription description = new DataDescription();
-        description.setTimeFormat("epoch_ms");
-
-        assertTrue(description.verify());
-    }
-
-    @Test
-    public void testVerify_GivenTimeFormatIsValidDateFormat() throws JobConfigurationException
-    {
-        DataDescription description = new DataDescription();
-        description.setTimeFormat("yyyy-MM-dd");
-
-        assertTrue(description.verify());
-    }
-
-    @Test
-    public void testVerify_GivenTimeFormatIsInvalidDateFormat() throws JobConfigurationException
-    {
-        m_ExpectedException.expect(JobConfigurationException.class);
-        m_ExpectedException.expectMessage("Invalid Time format string 'invalid'");
-
-        DataDescription description = new DataDescription();
-        description.setTimeFormat("invalid");
-
-        description.verify();
-    }
-
-    @Test
-    public void testVerify_GivenTimeFormatIsInvalidDateParseFormat()
-    throws JobConfigurationException
-    {
-        String badFormat = "YYY-mm-UU hh:mm:ssY";
-        DataDescription dd = new DataDescription();
-
-        dd.setTimeFormat(badFormat);
-        try
-        {
-            dd.verify();
-            // shouldn't get here
-            Assert.assertTrue("Invalid format should throw", false);
-        }
-        catch (JobConfigurationException e)
-        {
-        }
-
-        String goodFormat = "yyyy.MM.dd G 'at' HH:mm:ss z";
-        dd.setTimeFormat(goodFormat);
-        Assert.assertTrue("Good time format", dd.verify());
-    }
 
     @Test
     public void testEquals_GivenEqual()

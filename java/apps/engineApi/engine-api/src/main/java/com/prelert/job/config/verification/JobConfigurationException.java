@@ -1,6 +1,7 @@
+
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -24,37 +25,31 @@
  *                                                          *
  *                                                          *
  ************************************************************/
+package com.prelert.job.config.verification;
 
-package com.prelert.job;
+import com.prelert.job.errorcodes.ErrorCodes;
+import com.prelert.job.exceptions.JobException;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-
-import org.junit.Test;
-
-import com.prelert.job.ModelDebugConfig;
-
-public class ModelDebugConfigTest
+/**
+ * Represents the invalid configuration of a job.
+ */
+public class JobConfigurationException extends JobException
 {
-    @Test
-    public void testEquals()
-    {
-        assertFalse(new ModelDebugConfig().equals(null));
-        assertFalse(new ModelDebugConfig().equals("a string"));
-        assertFalse(new ModelDebugConfig(80.0, "").equals(new ModelDebugConfig(81.0, "")));
-        assertFalse(new ModelDebugConfig(80.0, "foo").equals(new ModelDebugConfig(80.0, "bar")));
+	private static final long serialVersionUID = -563428978300447381L;
 
-        ModelDebugConfig modelDebugConfig = new ModelDebugConfig();
-        assertTrue(modelDebugConfig.equals(modelDebugConfig));
-        assertTrue(new ModelDebugConfig().equals(new ModelDebugConfig()));
-        assertTrue(new ModelDebugConfig(80.0, "foo").equals(new ModelDebugConfig(80.0, "foo")));
-    }
+	/**
+	 * Create a new JobConfigurationException.
+	 *
+	 * @param message Details of error explaining the context
+	 * @param errorCode See {@linkplain com.prelert.job.errorcodes.ErrorCodes}
+	 */
+	public JobConfigurationException(String message, ErrorCodes errorCode)
+	{
+		super(message, errorCode);
+	}
 
-    @Test
-    public void testHashCode()
-    {
-        assertEquals(new ModelDebugConfig(80.0, "foo").hashCode(),
-                new ModelDebugConfig(80.0, "foo").hashCode());
-    }
+	public JobConfigurationException(String message, ErrorCodes errorCode, Throwable cause)
+	{
+		super(message, errorCode, cause);
+	}
 }

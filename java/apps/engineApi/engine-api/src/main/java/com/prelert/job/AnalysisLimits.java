@@ -31,10 +31,6 @@ import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.prelert.job.errorcodes.ErrorCodes;
-import com.prelert.job.exceptions.JobConfigurationException;
-import com.prelert.job.messages.Messages;
-import com.prelert.job.verification.Verifiable;
 
 /**
  * Analysis limits for autodetect
@@ -42,7 +38,7 @@ import com.prelert.job.verification.Verifiable;
  * If an option has not been set it shouldn't be used so the default value is picked up instead.
  */
 @JsonInclude(Include.NON_NULL)
-public class AnalysisLimits implements Verifiable
+public class AnalysisLimits
 {
     /**
      * Serialisation field names
@@ -149,17 +145,4 @@ public class AnalysisLimits implements Verifiable
     {
         return Objects.hash(m_ModelMemoryLimit, m_CategorizationExamplesLimit);
     }
-
-    @Override
-    public boolean verify() throws JobConfigurationException
-    {
-        if (m_CategorizationExamplesLimit != null && m_CategorizationExamplesLimit < 0)
-        {
-            String msg = Messages.getMessage(Messages.JOB_CONFIG_NEGATIVE_FIELD_VALUE,
-                    CATEGORIZATION_EXAMPLES_LIMIT, m_CategorizationExamplesLimit);
-            throw new JobConfigurationException(msg, ErrorCodes.INVALID_VALUE);
-        }
-        return true;
-    }
-
 }

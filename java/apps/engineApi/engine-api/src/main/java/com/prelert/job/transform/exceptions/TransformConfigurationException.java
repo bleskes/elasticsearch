@@ -27,8 +27,8 @@
 
 package com.prelert.job.transform.exceptions;
 
+import com.prelert.job.config.verification.JobConfigurationException;
 import com.prelert.job.errorcodes.ErrorCodes;
-import com.prelert.job.exceptions.JobConfigurationException;
 
 /**
  * Represents the invalid configuration of a transform.

@@ -34,9 +34,6 @@ import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.prelert.job.errorcodes.ErrorCodes;
-import com.prelert.job.exceptions.JobConfigurationException;
-import com.prelert.job.messages.Messages;
 
 
 /**
@@ -188,14 +185,14 @@ public class Detector
     /**
      * The set of functions that cannot have a by fieldname
      */
-    private static final Set<String> NO_BY_FIELD_NAME_FUNCTIONS =
+    public static final Set<String> NO_BY_FIELD_NAME_FUNCTIONS =
             new HashSet<String>(Arrays.<String>asList(new String [] {
             }));
 
     /**
      * The set of functions that cannot have an over fieldname
      */
-    private static final Set<String> NO_OVER_FIELD_NAME_FUNCTIONS =
+    public static final Set<String> NO_OVER_FIELD_NAME_FUNCTIONS =
             new HashSet<String>(Arrays.<String>asList(new String [] {
                 NON_ZERO_COUNT, NZC,
                 LOW_NON_ZERO_COUNT, LOW_NZC,
@@ -206,8 +203,8 @@ public class Detector
      * field names cannot contain any of these characters
      *     [, ], (, ), =, ", \, -
      */
-    private static final String PROHIBITED = "[, ], (, ), =, \", \\, -";
-    private static final Character [] PROHIBITED_FIELDNAME_CHARACTERS =
+    public static final String PROHIBITED = "[, ], (, ), =, \", \\, -";
+    public static final Character [] PROHIBITED_FIELDNAME_CHARACTERS =
         {'[', ']', '(', ')', '=', '"', '\\', '-'};
 
 
@@ -361,184 +358,4 @@ public class Detector
         return Objects.hash(m_Function, m_FieldName, m_ByFieldName,
                 m_OverFieldName, m_PartitionFieldName, m_UseNull, m_ExcludeFrequent);
     }
-
-    /**
-     * Checks the configuration is valid
-     * <ol>
-     * <li>One of fieldName, byFieldName, overFieldName or function must be set</li>
-     * <li>Unless the function is 'count' one of fieldName, byFieldName
-     * or overFieldName must be set</li>
-     * <li>If byFieldName is set function or fieldName must bet set</li>
-     * <li>If overFieldName is set function or fieldName must bet set</li>
-     * <li>function is one of the strings in the set {@link #ANALYSIS_FUNCTIONS}</li>
-     * <li>Function cannot be 'metric' (explicitly or implicitly) in jobs that
-     * take pre-summarised input</li>
-     * <li>If function is not set but the fieldname happens to be the same
-     * as one of the function names (e.g.a field called 'count')
-     * set function to 'metric'</li>
-     * <li>Check the metric/by/over fields are set as required by the different
-     * functions</li>
-     * <li>Check the metric/by/over fields that cannot be set with certain
-     * functions are not set</li>
-     * <li>If the function is NON_ZERO_COUNT or NZC
-     * then overFieldName must not be set</li>
-     * </ol>
-     *
-     * @param isSummarised Is this detector in a pre-summarised job?
-     * @return true
-     * @throws JobConfigurationException
-     */
-    public boolean verify(boolean isSummarised)
-    throws JobConfigurationException
-    {
-        boolean emptyField = m_FieldName == null || m_FieldName.isEmpty();
-        boolean emptyByField = m_ByFieldName == null || m_ByFieldName.isEmpty();
-        boolean emptyOverField = m_OverFieldName == null || m_OverFieldName.isEmpty();
-        boolean emptyFunction = m_Function == null || m_Function.isEmpty();
-
-        if (emptyField && emptyByField && emptyOverField)
-        {
-            if (emptyFunction)
-            {
-                throw new JobConfigurationException(
-                        Messages.getMessage(Messages.JOB_CONFIG_NO_ANALYSIS_FIELD),
-                        ErrorCodes.INVALID_FIELD_SELECTION);
-            }
-
-            if (!COUNT_WITHOUT_FIELD_FUNCTIONS.contains(m_Function))
-            {
-                throw new JobConfigurationException(
-                        Messages.getMessage(Messages.JOB_CONFIG_NO_ANALYSIS_FIELD_NOT_COUNT),
-                        ErrorCodes.INVALID_FIELD_SELECTION);
-            }
-        }
-
-        if (!emptyFunction && ANALYSIS_FUNCTIONS.contains(m_Function) == false)
-        {
-            throw new JobConfigurationException(
-                    Messages.getMessage(Messages.JOB_CONFIG_UNKNOWN_FUNCTION, m_Function),
-                    ErrorCodes.UNKNOWN_FUNCTION);
-        }
-
-        if (isSummarised && (emptyFunction || m_Function.equals(METRIC)))
-        {
-            throw new JobConfigurationException(
-                    Messages.getMessage(Messages.JOB_CONFIG_FUNCTION_INCOMPATIBLE_PRESUMMARIZED,
-                               METRIC),
-                    ErrorCodes.INVALID_FUNCTION);
-        }
-
-        // If function is not set but the fieldname happens
-        // to be the same as one of the function names (e.g.
-        // a field called 'count' set function to 'metric'
-        if (emptyFunction && ANALYSIS_FUNCTIONS.contains(m_FieldName))
-        {
-            m_Function = METRIC;
-            emptyFunction = false;
-        }
-
-
-        if (!emptyByField && emptyField && emptyFunction)
-        {
-            throw new JobConfigurationException(
-                            Messages.getMessage(Messages.JOB_CONFIG_BYFIELD_NEEDS_ANOTHER),
-                            ErrorCodes.INVALID_FIELD_SELECTION);
-        }
-
-        if (!emptyOverField && emptyField && emptyFunction)
-        {
-            throw new JobConfigurationException(
-                            Messages.getMessage(Messages.JOB_CONFIG_OVERFIELD_NEEDS_ANOTHER),
-                            ErrorCodes.INVALID_FIELD_SELECTION);
-        }
-
-        // check functions have required fields
-        if (!emptyFunction)
-        {
-            if (FIELD_NAME_FUNCTIONS.contains(m_Function) && emptyField)
-            {
-                throw new JobConfigurationException(
-                        Messages.getMessage(Messages.JOB_CONFIG_FUNCTION_REQUIRES_FIELDNAME,
-                                m_Function),
-                        ErrorCodes.INVALID_FIELD_SELECTION);
-            }
-
-            if (!emptyField && (FIELD_NAME_FUNCTIONS.contains(m_Function) == false))
-            {
-                throw new JobConfigurationException(
-                        Messages.getMessage(Messages.JOB_CONFIG_FIELDNAME_INCOMPATIBLE_FUNCTION,
-                                m_Function),
-                        ErrorCodes.INVALID_FIELD_SELECTION);
-            }
-
-            if (BY_FIELD_NAME_FUNCTIONS.contains(m_Function) && emptyByField)
-            {
-                throw new JobConfigurationException(
-                        Messages.getMessage(Messages.JOB_CONFIG_FUNCTION_REQUIRES_BYFIELD,
-                                m_Function),
-                        ErrorCodes.INVALID_FIELD_SELECTION);
-            }
-
-            if (!emptyByField && NO_BY_FIELD_NAME_FUNCTIONS.contains(m_Function))
-            {
-                throw new JobConfigurationException(
-                            Messages.getMessage(Messages.JOB_CONFIG_BYFIELD_INCOMPATIBLE_FUNCTION,
-                                m_Function),
-                        ErrorCodes.INVALID_FIELD_SELECTION);
-            }
-
-            if (emptyOverField && OVER_FIELD_NAME_FUNCTIONS.contains(m_Function))
-            {
-                throw new JobConfigurationException(
-                        Messages.getMessage(Messages.JOB_CONFIG_FUNCTION_REQUIRES_OVERFIELD,
-                                m_Function),
-                        ErrorCodes.INVALID_FIELD_SELECTION);
-            }
-
-            if (!emptyOverField && NO_OVER_FIELD_NAME_FUNCTIONS.contains(m_Function))
-            {
-                throw new JobConfigurationException(
-                        Messages.getMessage(Messages.JOB_CONFIG_OVERFIELD_INCOMPATIBLE_FUNCTION,
-                                m_Function),
-                        ErrorCodes.INVALID_FIELD_SELECTION);
-            }
-
-        }
-
-        // field names cannot contain certain characters
-        String [] fields = {m_FieldName, m_ByFieldName, m_OverFieldName, m_PartitionFieldName};
-        for (String field : fields)
-        {
-            verifyFieldName(field);
-        }
-
-        return true;
-    }
-
-
-    /**
-     * Check that the characters used in a field name will not cause problems.
-     * @param field The field name to be validated
-     * @return true
-     * @throws JobConfigurationException
-     */
-    public static boolean verifyFieldName(String field)
-    throws JobConfigurationException
-    {
-        if (field != null)
-        {
-            for (Character ch : PROHIBITED_FIELDNAME_CHARACTERS)
-            {
-                if (field.indexOf(ch) >= 0)
-                {
-                    throw new JobConfigurationException(
-                            Messages.getMessage(Messages.JOB_CONFIG_INVALID_FIELDNAME_CHARS,
-                                    field, PROHIBITED),
-                            ErrorCodes.PROHIBITIED_CHARACTER_IN_FIELD_NAME);
-                }
-            }
-        }
-        return true;
-    }
-
 }

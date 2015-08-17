@@ -24,37 +24,33 @@
  *                                                          *
  *                                                          *
  ************************************************************/
+package com.prelert.job.config.verification;
 
-package com.prelert.job;
+import com.prelert.job.AnalysisLimits;
+import com.prelert.job.errorcodes.ErrorCodes;
+import com.prelert.job.messages.Messages;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-
-import org.junit.Test;
-
-import com.prelert.job.ModelDebugConfig;
-
-public class ModelDebugConfigTest
+public class AnalysisLimitsVerifier
 {
-    @Test
-    public void testEquals()
+    /**
+    /**
+     * Checks the limits configuration is valid
+     * <ol>
+     * <li>CategorizationExamplesLimit cannot be &lt 0</li>
+     * </ol>
+     *
+     * @param al
+     * @return
+     * @throws JobConfigurationException
+     */
+    public static boolean verify(AnalysisLimits al) throws JobConfigurationException
     {
-        assertFalse(new ModelDebugConfig().equals(null));
-        assertFalse(new ModelDebugConfig().equals("a string"));
-        assertFalse(new ModelDebugConfig(80.0, "").equals(new ModelDebugConfig(81.0, "")));
-        assertFalse(new ModelDebugConfig(80.0, "foo").equals(new ModelDebugConfig(80.0, "bar")));
-
-        ModelDebugConfig modelDebugConfig = new ModelDebugConfig();
-        assertTrue(modelDebugConfig.equals(modelDebugConfig));
-        assertTrue(new ModelDebugConfig().equals(new ModelDebugConfig()));
-        assertTrue(new ModelDebugConfig(80.0, "foo").equals(new ModelDebugConfig(80.0, "foo")));
-    }
-
-    @Test
-    public void testHashCode()
-    {
-        assertEquals(new ModelDebugConfig(80.0, "foo").hashCode(),
-                new ModelDebugConfig(80.0, "foo").hashCode());
+        if (al.getCategorizationExamplesLimit() != null && al.getCategorizationExamplesLimit() < 0)
+        {
+            String msg = Messages.getMessage(Messages.JOB_CONFIG_NEGATIVE_FIELD_VALUE,
+                    AnalysisLimits.CATEGORIZATION_EXAMPLES_LIMIT, al.getCategorizationExamplesLimit());
+            throw new JobConfigurationException(msg, ErrorCodes.INVALID_VALUE);
+        }
+        return true;
     }
 }

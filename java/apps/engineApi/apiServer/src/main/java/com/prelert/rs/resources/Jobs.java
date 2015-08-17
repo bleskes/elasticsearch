@@ -50,7 +50,9 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.JobDetails;
 import com.prelert.job.ModelDebugConfig;
-import com.prelert.job.exceptions.JobConfigurationException;
+import com.prelert.job.config.verification.JobConfigurationException;
+import com.prelert.job.config.verification.JobConfigurationVerifier;
+import com.prelert.job.config.verification.ModelDebugConfigVerifier;
 import com.prelert.job.exceptions.JobIdAlreadyExistsException;
 import com.prelert.job.exceptions.JobInUseException;
 import com.prelert.job.exceptions.TooManyJobsException;
@@ -174,7 +176,7 @@ public class Jobs extends ResourceWithJobManager
         // throws if a bad config
         try
         {
-            config.verify();
+            JobConfigurationVerifier.verify(config);
         }
         catch (JobConfigurationException e)
         {
@@ -235,7 +237,7 @@ public class Jobs extends ResourceWithJobManager
         LOGGER.debug("Setting model debug config");
 
         ModelDebugConfig modelDebugConfig = new ModelDebugConfig(boundsPercentile, terms);
-        modelDebugConfig.verify();
+        ModelDebugConfigVerifier.verify(modelDebugConfig);
         jobManager().setModelDebugConfig(jobId, modelDebugConfig);
         return Response.ok(new Acknowledgement()).build();
     }

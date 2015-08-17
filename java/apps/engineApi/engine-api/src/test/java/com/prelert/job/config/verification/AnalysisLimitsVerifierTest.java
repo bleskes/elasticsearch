@@ -24,16 +24,51 @@
  *                                                          *
  *                                                          *
  ************************************************************/
+package com.prelert.job.config.verification;
 
-package com.prelert.job.verification;
+import static org.junit.Assert.*;
 
-import com.prelert.job.exceptions.JobConfigurationException;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
-public interface Verifiable
+import com.prelert.job.AnalysisLimits;
+import com.prelert.job.config.verification.AnalysisLimitsVerifier;
+import com.prelert.job.config.verification.JobConfigurationException;
+import com.prelert.job.errorcodes.ErrorCodeMatcher;
+import com.prelert.job.errorcodes.ErrorCodes;
+
+public class AnalysisLimitsVerifierTest
 {
-    /**
-     * Returns true if there are no problems. Throws otherwise.
-     * @throws JobConfigurationException If there the configuration is invalid.
-     */
-    boolean verify() throws JobConfigurationException;
+
+    @Rule
+    public ExpectedException m_ExpectedException = ExpectedException.none();
+
+    @Test
+    public void testVerify_GivenNegativeCategorizationExamplesLimit()
+            throws JobConfigurationException
+    {
+        m_ExpectedException.expect(JobConfigurationException.class);
+        m_ExpectedException.expectMessage(
+                "categorizationExamplesLimit cannot be < 0. Value = -1");
+        m_ExpectedException.expect(
+                ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_VALUE));
+
+        AnalysisLimits limits = new AnalysisLimits(1L, -1L);
+
+        System.out.print(limits.hashCode());
+
+        AnalysisLimitsVerifier.verify(limits);
+    }
+
+    @Test
+    public void testVerify_GivenValid() throws JobConfigurationException
+    {
+        AnalysisLimits limits = new AnalysisLimits(0L, 0L);
+        assertTrue(AnalysisLimitsVerifier.verify(limits));
+        limits = new AnalysisLimits(1L, null);
+        assertTrue(AnalysisLimitsVerifier.verify(limits));
+        limits = new AnalysisLimits(1L, 1L);
+        assertTrue(AnalysisLimitsVerifier.verify(limits));
+    }
 }

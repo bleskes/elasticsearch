@@ -35,12 +35,11 @@ import java.util.Set;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.messages.Messages;
 import com.prelert.job.transform.exceptions.TransformConfigurationException;
-import com.prelert.job.verification.Verifiable;
 
 /**
  * Utility class for methods involving arrays of transforms
  */
-public class TransformConfigs implements Verifiable
+public class TransformConfigs
 {
     private List<TransformConfig> m_Transforms;
 
@@ -86,7 +85,14 @@ public class TransformConfigs implements Verifiable
         return fields;
     }
 
-    @Override
+    /**
+     * Checks the transform configurations ar valid
+     * <ol>
+     * <li>Call {@linkplain TransformConfig#verify()} on each transform</li>
+     * <li>Check all the transform output field names are unique</li>
+     * <li>Check there are no circular dependencies in the transforms</li>
+     * </ol>
+     */
     public boolean verify() throws TransformConfigurationException
     {
         for (TransformConfig tr : m_Transforms)

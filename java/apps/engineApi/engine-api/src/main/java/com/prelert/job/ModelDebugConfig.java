@@ -32,13 +32,10 @@ import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.prelert.job.errorcodes.ErrorCodes;
-import com.prelert.job.exceptions.JobConfigurationException;
-import com.prelert.job.verification.Verifiable;
 
 @JsonIgnoreProperties({"enabled"})
 @JsonInclude(Include.NON_NULL)
-public class ModelDebugConfig implements Verifiable
+public class ModelDebugConfig
 {
     public static final String TYPE = "modelDebugConfig";
     public static final String BOUNDS_PERCENTILE = "boundsPercentile";
@@ -80,17 +77,6 @@ public class ModelDebugConfig implements Verifiable
     public void setTerms(String terms)
     {
         m_Terms = terms;
-    }
-
-    @Override
-    public boolean verify() throws JobConfigurationException
-    {
-        if (isEnabled() && (m_BoundsPercentile < 0.0 || m_BoundsPercentile > 100.0))
-        {
-            String msg = "Invalid modelDebugConfig: boundPercentile has to be in [0, 100]";
-            throw new JobConfigurationException(msg, ErrorCodes.INVALID_VALUE);
-        }
-        return true;
     }
 
     @Override

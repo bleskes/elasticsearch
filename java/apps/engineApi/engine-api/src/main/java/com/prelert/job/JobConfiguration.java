@@ -31,14 +31,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import com.prelert.job.DataDescription.DataFormat;
-import com.prelert.job.errorcodes.ErrorCodes;
-import com.prelert.job.exceptions.JobConfigurationException;
-import com.prelert.job.messages.Messages;
 import com.prelert.job.transform.TransformConfig;
-import com.prelert.job.transform.TransformConfigs;
-import com.prelert.job.transform.exceptions.TransformConfigurationException;
-import com.prelert.job.verification.Verifiable;
+
 
 /**
  * This class encapsulates all the data required to create a new job it
@@ -49,15 +43,15 @@ import com.prelert.job.verification.Verifiable;
  * are used around integral types &amp; booleans so they can take <code>null</code>
  * values.
  */
-public class JobConfiguration implements Verifiable
+public class JobConfiguration
 {
-    private static final int MAX_JOB_ID_LENGTH = 64;
+    public static final int MAX_JOB_ID_LENGTH = 64;
 
     /**
      * Characters that cannot be in a job id: '\\', '/', '*', '?', '&quot;', '&lt;', '&gt;', '|', ' ', ','
      */
-    private static final Set<Character> PROHIBITED_JOB_ID_CHARACTERS_SET;
-    private static final String PROHIBITED_JOB_ID_CHARACTERS;
+    public static final Set<Character> PROHIBITED_JOB_ID_CHARACTERS_SET;
+    public static final String PROHIBITED_JOB_ID_CHARACTERS;
     static
     {
         // frustrating work around to initialise both the set
@@ -237,189 +231,5 @@ public class JobConfiguration implements Verifiable
     public ModelDebugConfig getModelDebugConfig()
     {
         return m_ModelDebugConfig;
-    }
-
-    /**
-     * Checks the job configuration settings and throws an exception
-     * if any values are invalid
-     *
-     * <ol>
-     * <li>Either an AnalysisConfig or Job reference must be set</li>
-     * <li>Verify {@link AnalysisConfig#verify() AnalysisConfig}</li>
-     * <li>Verify {@link AnalysisLimits#verify() AnalysisLimits}</li>
-     * <li>Verify {@link DataDescription#verify() DataDescription}</li>
-     * <li>Verify {@link TransformConfigs#verify() Transforms}</li>
-     * <li>Check timeout is a +ve number</li>
-     * <li>The job ID cannot contain any upper case characters, control
-     * characters or any characters in {@link #PROHIBITED_JOB_ID_CHARACTERS_SET}</li>
-     * <li>The job is cannot be longer than {@link MAX_JOB_ID_LENGTH }</li>
-     * <li></li>
-     * </ol>
-     */
-    @Override
-    public boolean verify()
-    throws JobConfigurationException
-    {
-        checkEitherAnalysisConfigOrJobReferenceIdPresent();
-        verifyIfNotNull(m_AnalysisConfig);
-        verifyIfNotNull(m_AnalysisLimits);
-        verifyIfNotNull(m_DataDescription);
-
-        if (m_Transforms != null)
-        {
-            new TransformConfigs(m_Transforms).verify();
-            checkTransformOutputIsUsed();
-        }
-
-        checkAtLeastOneTransformIfDataFormatIsSingleLine();
-
-        if (m_Timeout != null && m_Timeout < 0)
-        {
-            throw new JobConfigurationException(
-                    Messages.getMessage(Messages.JOB_CONFIG_NEGATIVE_FIELD_VALUE,
-                            "timeout", m_Timeout),
-                    ErrorCodes.INVALID_VALUE);
-        }
-
-        if (m_ID != null && m_ID.isEmpty() == false)
-        {
-            checkValidId();
-        }
-
-        verifyIfNotNull(m_ModelDebugConfig);
-
-        return true;
-    }
-
-    private void checkEitherAnalysisConfigOrJobReferenceIdPresent()
-            throws JobConfigurationException
-    {
-        if (m_AnalysisConfig == null && m_ReferenceJobId == null)
-        {
-            throw new JobConfigurationException(
-                    Messages.getMessage(Messages.JOB_CONFIG_MISSING_ANALYSISCONFIG),
-                    ErrorCodes.INCOMPLETE_CONFIGURATION);
-        }
-    }
-
-    private static void verifyIfNotNull(Verifiable verifiable) throws JobConfigurationException
-    {
-        if (verifiable != null)
-        {
-            verifiable.verify();
-        }
-    }
-
-    /**
-     * Transform outputs should be used in either the date field,
-     * as an analysis field or input to another transform
-     * @return
-     * @throws TransformConfigurationException
-     */
-    private boolean checkTransformOutputIsUsed() throws TransformConfigurationException
-    {
-        Set<String> usedFields = new TransformConfigs(m_Transforms).inputFieldNames();
-        usedFields.addAll(m_AnalysisConfig.analysisFields());
-        boolean isSummarised = m_AnalysisConfig.getSummaryCountFieldName() != null &&
-                                m_AnalysisConfig.getSummaryCountFieldName().isEmpty() == false;
-        if (isSummarised)
-        {
-            usedFields.remove(m_AnalysisConfig.getSummaryCountFieldName());
-        }
-
-        String timeField = DataDescription.DEFAULT_TIME_FIELD;
-        if (m_DataDescription != null)
-        {
-            timeField = m_DataDescription.getTimeField();
-        }
-        usedFields.add(timeField);
-
-        for (TransformConfig tc : m_Transforms)
-        {
-            // if the type has no default outputs it doesn't need an output
-            boolean usesAnOutput = tc.type().defaultOutputNames().isEmpty();
-            for (String outputName : tc.getOutputs())
-            {
-                if (usedFields.contains(outputName))
-                {
-                    usesAnOutput = true;
-                    break;
-                }
-            }
-
-            if (isSummarised)
-            {
-                if (tc.getOutputs().contains(m_AnalysisConfig.getSummaryCountFieldName()))
-                {
-                    String msg = Messages.getMessage(
-                            Messages.JOB_CONFIG_TRANSFORM_DUPLICATED_OUTPUT_NAME,
-                            tc.type().prettyName());
-                    throw new TransformConfigurationException(msg, ErrorCodes.DUPLICATED_TRANSFORM_OUTPUT_NAME);
-
-                }
-            }
-
-            if (!usesAnOutput)
-            {
-                String msg = Messages.getMessage(Messages.JOB_CONFIG_TRANSFORM_OUTPUTS_UNUSED,
-                        tc.type().prettyName());
-                throw new TransformConfigurationException(msg, ErrorCodes.TRANSFORM_OUTPUTS_UNUSED);
-            }
-        }
-
-        return false;
-    }
-
-    private void checkAtLeastOneTransformIfDataFormatIsSingleLine() throws JobConfigurationException
-    {
-        if (m_DataDescription != null && m_DataDescription.getFormat() == DataFormat.SINGLE_LINE)
-        {
-            if (m_Transforms == null || m_Transforms.isEmpty())
-            {
-                String msg = Messages.getMessage(
-                                Messages.JOB_CONFIG_DATAFORMAT_REQUIRES_TRANSFORM,
-                                DataFormat.SINGLE_LINE);
-
-                throw new JobConfigurationException(msg,
-                        ErrorCodes.DATA_FORMAT_IS_SINGLE_LINE_BUT_NO_TRANSFORMS);
-            }
-        }
-    }
-
-    private void checkValidId() throws JobConfigurationException
-    {
-        if (m_ID.length() > MAX_JOB_ID_LENGTH)
-        {
-            throw new JobConfigurationException(
-                    Messages.getMessage(Messages.JOB_CONFIG_ID_TOO_LONG, MAX_JOB_ID_LENGTH),
-                    ErrorCodes.JOB_ID_TOO_LONG);
-        }
-
-        for (Character ch : PROHIBITED_JOB_ID_CHARACTERS_SET)
-        {
-            if (m_ID.indexOf(ch) >= 0)
-            {
-                throw new JobConfigurationException(
-                        Messages.getMessage(Messages.JOB_CONFIG_INVALID_JOBID_CHARS,
-                                ch, PROHIBITED_JOB_ID_CHARACTERS),
-                        ErrorCodes.PROHIBITIED_CHARACTER_IN_JOB_ID);
-            }
-        }
-
-        for (char c : m_ID.toCharArray())
-        {
-            if (Character.isUpperCase(c))
-            {
-                throw new JobConfigurationException(
-                        Messages.getMessage(Messages.JOB_CONFIG_ID_CONTAINS_UPPERCASE_CHARS),
-                        ErrorCodes.PROHIBITIED_CHARACTER_IN_JOB_ID);
-            }
-            if (Character.isISOControl(c))
-            {
-                throw new JobConfigurationException(
-                        Messages.getMessage(Messages.JOB_CONFIG_ID_CONTAINS_CONTROL_CHARS),
-                        ErrorCodes.PROHIBITIED_CHARACTER_IN_JOB_ID);
-            }
-        }
     }
 }

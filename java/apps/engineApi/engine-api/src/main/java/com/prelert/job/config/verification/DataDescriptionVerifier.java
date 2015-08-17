@@ -1,7 +1,6 @@
-
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -25,30 +24,46 @@
  *                                                          *
  *                                                          *
  ************************************************************/
-package com.prelert.job.exceptions;
+package com.prelert.job.config.verification;
 
+import java.text.SimpleDateFormat;
+
+import com.prelert.job.DataDescription;
 import com.prelert.job.errorcodes.ErrorCodes;
+import com.prelert.job.messages.Messages;
 
-/**
- * Represents the invalid configuration of a job.
- */
-public class JobConfigurationException extends JobException
+public class DataDescriptionVerifier
 {
-	private static final long serialVersionUID = -563428978300447381L;
+    /**
+     * Verify the data description configuration
+     * @param dd DataDescription
+     * <ol>
+     * <li>Check the timeFormat - if set - is either {@value #EPOCH},
+     * {@value #EPOCH_MS} or a valid format string</li>
+     * <li></li>
+     * </ol>
+     */
+    public static boolean verify(DataDescription dd) throws JobConfigurationException
+    {
+        if (dd.getTimeFormat() != null && dd.getTimeFormat().isEmpty() == false)
+        {
+            if (dd.getTimeFormat().equals(DataDescription.EPOCH) || dd.getTimeFormat().equals(DataDescription.EPOCH_MS))
+            {
+                return true;
+            }
 
-	/**
-	 * Create a new JobConfigurationException.
-	 *
-	 * @param message Details of error explaining the context
-	 * @param errorCode See {@linkplain com.prelert.job.errorcodes.ErrorCodes}
-	 */
-	public JobConfigurationException(String message, ErrorCodes errorCode)
-	{
-		super(message, errorCode);
-	}
+            try
+            {
+                new SimpleDateFormat(dd.getTimeFormat());
+            }
+            catch (IllegalArgumentException e)
+            {
+                String message = Messages.getMessage(Messages.JOB_CONFIG_INVALID_TIMEFORMAT,
+                                                    dd.getTimeFormat());
+                throw new JobConfigurationException(message,  ErrorCodes.INVALID_DATE_FORMAT, e);
+            }
+        }
 
-	public JobConfigurationException(String message, ErrorCodes errorCode, Throwable cause)
-	{
-		super(message, errorCode, cause);
-	}
+        return true;
+    }
 }

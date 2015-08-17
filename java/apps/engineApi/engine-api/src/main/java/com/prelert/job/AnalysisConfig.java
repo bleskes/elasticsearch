@@ -38,24 +38,23 @@ import java.util.function.Function;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.prelert.job.errorcodes.ErrorCodes;
-import com.prelert.job.exceptions.JobConfigurationException;
-import com.prelert.job.messages.Messages;
-import com.prelert.job.verification.Verifiable;
+
 
 /**
  * Autodetect analysis configuration options describes which fields are
  * analysed and the functions to use.
  * <p>
  * The configuration can contain multiple detectors, a new anomaly detector will
- * be created for each detector configuration. The other fields
- * <code>bucketSpan, summaryCountFieldName</code> etc apply to all detectors.<p>
+ * be created for each detector configuration. The fields
+ * <code>bucketSpan, batchSpan, summaryCountFieldName and categorizationFieldName</code>
+ * apply to all detectors.
+ * <p>
  * If a value has not been set it will be <code>null</code>
  * Object wrappers are used around integral types &amp; booleans so they can take
  * <code>null</code> values.
  */
 @JsonInclude(Include.NON_NULL)
-public class AnalysisConfig implements Verifiable
+public class AnalysisConfig
 {
     /**
      * Serialisation names
@@ -336,53 +335,5 @@ public class AnalysisConfig implements Verifiable
                 m_SummaryCountFieldName, m_Influencers);
     }
 
-    /**
-     * Checks the configuration is valid
-     * <ol>
-     * <li>Check that if non-null BucketSpan, BatchSpan, Latency and Period are &gt= 0</li>
-     * <li>Check that if non-null Latency is &lt= MAX_LATENCY </li>
-     * <li>Check there is at least one detector configured</li>
-     * <li>Check all the detectors are configured correctly</li>
-     * </ol>
-     */
-    @Override
-    public boolean verify() throws JobConfigurationException
-    {
-        checkFieldIsNotNegativeIfSpecified("BucketSpan", m_BucketSpan);
-        checkFieldIsNotNegativeIfSpecified("BatchSpan", m_BatchSpan);
-        checkFieldIsNotNegativeIfSpecified("Latency", m_Latency);
-        checkFieldIsNotNegativeIfSpecified("Period", m_Period);
-        Detector.verifyFieldName(m_SummaryCountFieldName);
-        Detector.verifyFieldName(m_CategorizationFieldName);
-        verifyDetectors();
 
-        return true;
-    }
-
-    private static void checkFieldIsNotNegativeIfSpecified(String fieldName, Long value)
-            throws JobConfigurationException
-    {
-        if (value != null && value < 0)
-        {
-            String msg = Messages.getMessage(Messages.JOB_CONFIG_NEGATIVE_FIELD_VALUE,
-                                                fieldName, value);
-            throw new JobConfigurationException(msg, ErrorCodes.INVALID_VALUE);
-        }
-    }
-
-    private void verifyDetectors() throws JobConfigurationException
-    {
-        if (m_Detectors.isEmpty())
-        {
-            throw new JobConfigurationException(
-                    Messages.getMessage(Messages.JOB_CONFIG_NO_DETECTORS),
-                    ErrorCodes.INCOMPLETE_CONFIGURATION);
-        }
-
-        boolean isSummarised = m_SummaryCountFieldName != null && !m_SummaryCountFieldName.isEmpty();
-        for (Detector d : m_Detectors)
-        {
-            d.verify(isSummarised);
-        }
-    }
 }

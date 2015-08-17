@@ -27,17 +27,12 @@
 
 package com.prelert.job;
 
-import java.text.SimpleDateFormat;
 import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.prelert.job.errorcodes.ErrorCodes;
-import com.prelert.job.exceptions.JobConfigurationException;
-import com.prelert.job.messages.Messages;
-import com.prelert.job.verification.Verifiable;
 
 /**
  * Describes the format of the data used in the job and how it should
@@ -53,7 +48,7 @@ import com.prelert.job.verification.Verifiable;
  */
 @JsonIgnoreProperties({"transformTime", "epochMs"})
 @JsonInclude(Include.NON_NULL)
-public class DataDescription implements Verifiable
+public class DataDescription
 {
     /**
      * Enum of the acceptable data formats.
@@ -299,36 +294,5 @@ public class DataDescription implements Verifiable
                 m_TimeFormat, m_FieldDelimiter);
     }
 
-    /**
-     * Verify the data description configuration
-     * <ol>
-     * <li>Check the timeFormat - if set - is either {@value #EPOCH},
-     * {@value #EPOCH_MS} or a valid format string</li>
-     * <li></li>
-     * </ol>
-     */
-    @Override
-    public boolean verify() throws JobConfigurationException
-    {
-        if (m_TimeFormat != null && m_TimeFormat.isEmpty() == false)
-        {
-            if (m_TimeFormat.equals(EPOCH) || m_TimeFormat.equals(EPOCH_MS))
-            {
-                return true;
-            }
 
-            try
-            {
-                new SimpleDateFormat(m_TimeFormat);
-            }
-            catch (IllegalArgumentException e)
-            {
-                String message = Messages.getMessage(Messages.JOB_CONFIG_INVALID_TIMEFORMAT,
-                                                    m_TimeFormat);
-                throw new JobConfigurationException(message,  ErrorCodes.INVALID_DATE_FORMAT, e);
-            }
-        }
-
-        return true;
-    }
 }

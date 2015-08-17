@@ -41,8 +41,8 @@ import java.util.Set;
 import org.junit.Test;
 
 import com.google.common.collect.Range;
+import com.prelert.job.config.verification.JobConfigurationException;
 import com.prelert.job.errorcodes.ErrorCodes;
-import com.prelert.job.exceptions.JobConfigurationException;
 import com.prelert.job.transform.condition.Condition;
 import com.prelert.job.transform.condition.Operator;
 import com.prelert.job.transform.exceptions.TransformConfigurationException;

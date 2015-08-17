@@ -37,13 +37,12 @@ import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.messages.Messages;
 import com.prelert.job.transform.condition.Condition;
 import com.prelert.job.transform.exceptions.TransformConfigurationException;
-import com.prelert.job.verification.Verifiable;
 
 /**
  * Represents an API data transform
  */
 @JsonInclude(Include.NON_NULL)
-public class TransformConfig implements Verifiable
+public class TransformConfig
 {
     // Serialisation strings
     public static final String TYPE = "transform";
@@ -152,7 +151,15 @@ public class TransformConfig implements Verifiable
         return m_Type;
     }
 
-    @Override
+    /**
+     * Checks the configuration is valid
+     * <ol>
+     * <li>Checks {@linkplain TransformType#verify(TransformConfig)} is valid}</li>
+     * <li>Throws a TransformConfigurationException if a condition isn't defined
+     * for a transform type that expects one </li>
+     * <li>If a condition is present its arguments are verified</li>
+     * </ol>
+     */
     public boolean verify() throws TransformConfigurationException
     {
         TransformType type = type();

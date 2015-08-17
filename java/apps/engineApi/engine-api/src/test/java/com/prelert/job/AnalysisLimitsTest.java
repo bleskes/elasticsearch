@@ -31,45 +31,10 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
-
-import com.prelert.job.errorcodes.ErrorCodeMatcher;
-import com.prelert.job.errorcodes.ErrorCodes;
-import com.prelert.job.exceptions.JobConfigurationException;
 
 public class AnalysisLimitsTest
 {
-    @Rule
-    public ExpectedException m_ExpectedException = ExpectedException.none();
-
-    @Test
-    public void testVerify_GivenNegativeCategorizationExamplesLimit()
-            throws JobConfigurationException
-    {
-        m_ExpectedException.expect(JobConfigurationException.class);
-        m_ExpectedException.expectMessage(
-                "categorizationExamplesLimit cannot be < 0. Value = -1");
-        m_ExpectedException.expect(
-                ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_VALUE));
-
-        AnalysisLimits limits = new AnalysisLimits(1L, -1L);
-
-        limits.verify();
-    }
-
-    @Test
-    public void testVerify_GivenValid() throws JobConfigurationException
-    {
-        AnalysisLimits limits = new AnalysisLimits(0L, 0L);
-        assertTrue(limits.verify());
-        limits = new AnalysisLimits(1L, null);
-        assertTrue(limits.verify());
-        limits = new AnalysisLimits(1L, 1L);
-        assertTrue(limits.verify());
-    }
-
     @Test
     public void testEquals_GivenEqual()
     {
