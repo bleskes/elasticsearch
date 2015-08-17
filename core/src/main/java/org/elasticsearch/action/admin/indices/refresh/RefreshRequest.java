@@ -21,6 +21,7 @@ package org.elasticsearch.action.admin.indices.refresh;
 
 import org.elasticsearch.action.ActionRequest;
 import org.elasticsearch.action.support.broadcast.BroadcastRequest;
+import org.elasticsearch.action.support.indices.IndicesLevelRequest;
 
 /**
  * A refresh request making all operations performed since the last refresh available for search. The (near) real-time
@@ -31,7 +32,7 @@ import org.elasticsearch.action.support.broadcast.BroadcastRequest;
  * @see org.elasticsearch.client.IndicesAdminClient#refresh(RefreshRequest)
  * @see RefreshResponse
  */
-public class RefreshRequest extends BroadcastRequest<RefreshRequest> {
+public class RefreshRequest extends IndicesLevelRequest<RefreshRequest> {
 
 
     RefreshRequest() {

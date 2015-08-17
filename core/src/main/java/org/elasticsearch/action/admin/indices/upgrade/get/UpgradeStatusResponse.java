@@ -22,8 +22,8 @@ package org.elasticsearch.action.admin.indices.upgrade.get;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import org.elasticsearch.action.ShardOperationFailedException;
-import org.elasticsearch.action.support.broadcast.BroadcastResponse;
+import org.elasticsearch.action.support.DefaultShardOperationFailedException;
+import org.elasticsearch.action.support.indices.IndicesLevelResponse;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.xcontent.ToXContent;
@@ -35,18 +35,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class UpgradeStatusResponse extends BroadcastResponse implements ToXContent {
-
-
+public class UpgradeStatusResponse extends IndicesLevelResponse implements ToXContent {
     private ShardUpgradeStatus[] shards;
 
     private Map<String, IndexUpgradeStatus> indicesUpgradeStatus;
 
     UpgradeStatusResponse() {
-
     }
 
-    UpgradeStatusResponse(ShardUpgradeStatus[] shards, int totalShards, int successfulShards, int failedShards, List<ShardOperationFailedException> shardFailures) {
+    UpgradeStatusResponse(ShardUpgradeStatus[] shards, int totalShards, int successfulShards, int failedShards, List<DefaultShardOperationFailedException> shardFailures) {
         super(totalShards, successfulShards, failedShards, shardFailures);
         this.shards = shards;
     }
@@ -74,7 +71,6 @@ public class UpgradeStatusResponse extends BroadcastResponse implements ToXConte
         this.indicesUpgradeStatus = indicesUpgradeStats;
         return indicesUpgradeStats;
     }
-
 
     @Override
     public void readFrom(StreamInput in) throws IOException {
@@ -120,8 +116,6 @@ public class UpgradeStatusResponse extends BroadcastResponse implements ToXConte
 
     @Override
     public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
-
-
         builder.byteSizeField(Fields.SIZE_IN_BYTES, Fields.SIZE, getTotalBytes());
         builder.byteSizeField(Fields.SIZE_TO_UPGRADE_IN_BYTES, Fields.SIZE_TO_UPGRADE, getToUpgradeBytes());
         builder.byteSizeField(Fields.SIZE_TO_UPGRADE_ANCIENT_IN_BYTES, Fields.SIZE_TO_UPGRADE_ANCIENT, getToUpgradeBytesAncient());
@@ -163,10 +157,8 @@ public class UpgradeStatusResponse extends BroadcastResponse implements ToXConte
                     }
                     builder.endObject();
                 }
-
                 builder.endObject();
             }
-
             builder.endObject();
         }
         return builder;
@@ -186,6 +178,5 @@ public class UpgradeStatusResponse extends BroadcastResponse implements ToXConte
         static final XContentBuilderString SIZE_TO_UPGRADE_ANCIENT = new XContentBuilderString("size_to_upgrade_ancient");
         static final XContentBuilderString SIZE_TO_UPGRADE_IN_BYTES = new XContentBuilderString("size_to_upgrade_in_bytes");
         static final XContentBuilderString SIZE_TO_UPGRADE_ANCIENT_IN_BYTES = new XContentBuilderString("size_to_upgrade_ancient_in_bytes");
-
     }
 }

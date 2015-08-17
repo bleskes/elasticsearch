@@ -19,12 +19,13 @@
 
 package org.elasticsearch.action.admin.indices.recovery;
 
-import org.elasticsearch.action.ShardOperationFailedException;
-import org.elasticsearch.action.support.broadcast.BroadcastResponse;
+import org.elasticsearch.action.support.DefaultShardOperationFailedException;
+import org.elasticsearch.action.support.indices.IndicesLevelResponse;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.indices.recovery.RecoveryState;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -35,10 +36,10 @@ import java.util.Map;
 /**
  * Information regarding the recovery state of indices and their associated shards.
  */
-public class RecoveryResponse extends BroadcastResponse implements ToXContent {
+public class RecoveryResponse extends IndicesLevelResponse implements ToXContent {
 
     private boolean detailed = false;
-    private Map<String, List<ShardRecoveryResponse>> shardResponses = new HashMap<>();
+    private Map<String, List<RecoveryState>> shardResponses = new HashMap<>();
 
     public RecoveryResponse() { }
 
@@ -54,7 +55,7 @@ public class RecoveryResponse extends BroadcastResponse implements ToXContent {
      * @param shardFailures     List of failures processing shards
      */
     public RecoveryResponse(int totalShards, int successfulShards, int failedShards, boolean detailed,
-                            Map<String, List<ShardRecoveryResponse>> shardResponses, List<ShardOperationFailedException> shardFailures) {
+                            Map<String, List<RecoveryState>> shardResponses, List<DefaultShardOperationFailedException> shardFailures) {
         super(totalShards, successfulShards, failedShards, shardFailures);
         this.shardResponses = shardResponses;
         this.detailed = detailed;
@@ -72,7 +73,7 @@ public class RecoveryResponse extends BroadcastResponse implements ToXContent {
         this.detailed = detailed;
     }
 
-    public Map<String, List<ShardRecoveryResponse>> shardResponses() {
+    public Map<String, List<RecoveryState>> shardResponses() {
         return shardResponses;
     }
 
@@ -80,15 +81,15 @@ public class RecoveryResponse extends BroadcastResponse implements ToXContent {
     public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
         if (hasRecoveries()) {
             for (String index : shardResponses.keySet()) {
-                List<ShardRecoveryResponse> responses = shardResponses.get(index);
-                if (responses == null || responses.size() == 0) {
+                List<RecoveryState> recoveryStates = shardResponses.get(index);
+                if (recoveryStates == null || recoveryStates.size() == 0) {
                     continue;
                 }
                 builder.startObject(index);
                 builder.startArray("shards");
-                for (ShardRecoveryResponse recoveryResponse : responses) {
+                for (RecoveryState recoveryState : recoveryStates) {
                     builder.startObject();
-                    recoveryResponse.toXContent(builder, params);
+                    recoveryState.toXContent(builder, params);
                     builder.endObject();
                 }
                 builder.endArray();
@@ -102,11 +103,11 @@ public class RecoveryResponse extends BroadcastResponse implements ToXContent {
     public void writeTo(StreamOutput out) throws IOException {
         super.writeTo(out);
         out.writeVInt(shardResponses.size());
-        for (Map.Entry<String, List<ShardRecoveryResponse>> entry : shardResponses.entrySet()) {
+        for (Map.Entry<String, List<RecoveryState>> entry : shardResponses.entrySet()) {
             out.writeString(entry.getKey());
             out.writeVInt(entry.getValue().size());
-            for (ShardRecoveryResponse recoveryResponse : entry.getValue()) {
-                recoveryResponse.writeTo(out);
+            for (RecoveryState recoveryState : entry.getValue()) {
+                recoveryState.writeTo(out);
             }
         }
     }
@@ -118,9 +119,9 @@ public class RecoveryResponse extends BroadcastResponse implements ToXContent {
         for (int i = 0; i < size; i++) {
             String s = in.readString();
             int listSize = in.readVInt();
-            List<ShardRecoveryResponse> list = new ArrayList<>(listSize);
+            List<RecoveryState> list = new ArrayList<>(listSize);
             for (int j = 0; j < listSize; j++) {
-                list.add(ShardRecoveryResponse.readShardRecoveryResponse(in));
+                list.add(RecoveryState.readRecoveryState(in));
             }
             shardResponses.put(s, list);
         }

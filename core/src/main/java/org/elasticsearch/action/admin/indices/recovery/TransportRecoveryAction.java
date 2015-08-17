@@ -19,12 +19,13 @@
 
 package org.elasticsearch.action.admin.indices.recovery;
 
-import org.elasticsearch.action.ShardOperationFailedException;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import org.elasticsearch.action.support.ActionFilters;
 import org.elasticsearch.action.support.DefaultShardOperationFailedException;
 import org.elasticsearch.action.support.broadcast.BroadcastShardOperationFailedException;
-import org.elasticsearch.action.support.broadcast.BroadcastShardRequest;
-import org.elasticsearch.action.support.broadcast.TransportBroadcastAction;
+import org.elasticsearch.action.support.indices.BaseNodesIndicesRequest;
+import org.elasticsearch.action.support.indices.TransportNodeBroadcastAction;
 import org.elasticsearch.cluster.ClusterService;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.block.ClusterBlockException;
@@ -36,23 +37,19 @@ import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.index.IndexService;
 import org.elasticsearch.index.shard.IndexShard;
-import org.elasticsearch.index.shard.ShardId;
 import org.elasticsearch.indices.IndicesService;
 import org.elasticsearch.indices.recovery.RecoveryState;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportService;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicReferenceArray;
 
 /**
  * Transport action for shard recovery operation. This transport action does not actually
  * perform shard recovery, it only reports on recoveries (both active and complete).
  */
-public class TransportRecoveryAction extends TransportBroadcastAction<RecoveryRequest, RecoveryResponse, TransportRecoveryAction.ShardRecoveryRequest, ShardRecoveryResponse> {
+public class TransportRecoveryAction extends TransportNodeBroadcastAction<RecoveryRequest, RecoveryResponse, TransportRecoveryAction.ShardRecoveryRequest, ShardRecoveryResponse, RecoveryState> {
 
     private final IndicesService indicesService;
 
@@ -66,74 +63,51 @@ public class TransportRecoveryAction extends TransportBroadcastAction<RecoveryRe
     }
 
     @Override
-    protected RecoveryResponse newResponse(RecoveryRequest request, AtomicReferenceArray shardsResponses, ClusterState clusterState) {
-
-        int successfulShards = 0;
-        int failedShards = 0;
-        List<ShardOperationFailedException> shardFailures = null;
-        Map<String, List<ShardRecoveryResponse>> shardResponses = new HashMap<>();
-
-        for (int i = 0; i < shardsResponses.length(); i++) {
-            Object shardResponse = shardsResponses.get(i);
-            if (shardResponse == null) {
-                // simply ignore non active shards
-            } else if (shardResponse instanceof BroadcastShardOperationFailedException) {
-                failedShards++;
-                if (shardFailures == null) {
-                    shardFailures = new ArrayList<>();
-                }
-                shardFailures.add(new DefaultShardOperationFailedException((BroadcastShardOperationFailedException) shardResponse));
-            } else {
-                ShardRecoveryResponse recoveryResponse = (ShardRecoveryResponse) shardResponse;
-                successfulShards++;
-
-                if (recoveryResponse.recoveryState() == null) {
-                    // recovery not yet started
+    protected RecoveryResponse newResponse(RecoveryRequest request, int totalShards, int successfulShards, int failedShards, List<ShardRecoveryResponse> responses, List<DefaultShardOperationFailedException> shardFailures) {
+        Map<String, List<RecoveryState>> shardResponses = Maps.newHashMap();
+        for (ShardRecoveryResponse response : responses) {
+            for (RecoveryState recoveryState : response.recoveryStates) {
+                if (recoveryState == null) {
                     continue;
                 }
-
-                String indexName = recoveryResponse.getIndex();
-                List<ShardRecoveryResponse> responses = shardResponses.get(indexName);
-
-                if (responses == null) {
-                    responses = new ArrayList<>();
-                    shardResponses.put(indexName, responses);
+                String indexName = recoveryState.getShardId().getIndex();
+                if (!shardResponses.containsKey(indexName)) {
+                    shardResponses.put(indexName, Lists.<RecoveryState>newArrayList());
                 }
-
                 if (request.activeOnly()) {
-                    if (recoveryResponse.recoveryState().getStage() != RecoveryState.Stage.DONE) {
-                        responses.add(recoveryResponse);
+                    if (recoveryState.getStage() != RecoveryState.Stage.DONE) {
+                        shardResponses.get(indexName).add(recoveryState);
                     }
                 } else {
-                    responses.add(recoveryResponse);
+                    shardResponses.get(indexName).add(recoveryState);
                 }
             }
         }
-
-        return new RecoveryResponse(shardsResponses.length(), successfulShards,
-                failedShards, request.detailed(), shardResponses, shardFailures);
+        return new RecoveryResponse(totalShards, successfulShards, failedShards, request.detailed(), shardResponses, shardFailures);
     }
 
     @Override
-    protected ShardRecoveryRequest newShardRequest(int numShards, ShardRouting shard, RecoveryRequest request) {
-        return new ShardRecoveryRequest(shard.shardId(), request);
+    protected ShardRecoveryRequest newNodeRequest(String nodeId, RecoveryRequest request, List<ShardRouting> shards) {
+        return new ShardRecoveryRequest(request, shards, nodeId);
     }
 
     @Override
-    protected ShardRecoveryResponse newShardResponse() {
+    protected ShardRecoveryResponse newNodeResponse() {
         return new ShardRecoveryResponse();
     }
 
     @Override
-    protected ShardRecoveryResponse shardOperation(ShardRecoveryRequest request) {
+    protected ShardRecoveryResponse newNodeResponse(String nodeId, int totalShards, int successfulShards, List<RecoveryState> results, List<BroadcastShardOperationFailedException> exceptions) {
+        ShardRecoveryResponse response = new ShardRecoveryResponse(nodeId, totalShards, successfulShards, exceptions);
+        response.setRecoveryStates(results);
+        return response;
+    }
 
-        IndexService indexService = indicesService.indexServiceSafe(request.shardId().getIndex());
-        IndexShard indexShard = indexService.shardSafe(request.shardId().id());
-        ShardRecoveryResponse shardRecoveryResponse = new ShardRecoveryResponse(request.shardId());
-
-        RecoveryState state = indexShard.recoveryState();
-        shardRecoveryResponse.recoveryState(state);
-        return shardRecoveryResponse;
+    @Override
+    protected RecoveryState shardOperation(ShardRecoveryRequest request, ShardRouting shardRouting) {
+        IndexService indexService = indicesService.indexServiceSafe(shardRouting.shardId().getIndex());
+        IndexShard indexShard = indexService.shardSafe(shardRouting.shardId().id());
+        return indexShard.recoveryState();
     }
 
     @Override
@@ -151,13 +125,18 @@ public class TransportRecoveryAction extends TransportBroadcastAction<RecoveryRe
         return state.blocks().indicesBlockedException(ClusterBlockLevel.READ, concreteIndices);
     }
 
-    static class ShardRecoveryRequest extends BroadcastShardRequest {
+    static class ShardRecoveryRequest extends BaseNodesIndicesRequest<RecoveryRequest> {
 
         ShardRecoveryRequest() {
         }
 
-        ShardRecoveryRequest(ShardId shardId, RecoveryRequest request) {
-            super(shardId, request);
+        ShardRecoveryRequest(RecoveryRequest request, List<ShardRouting> shards, String nodeId) {
+            super(nodeId, request, shards);
+        }
+
+        @Override
+        protected RecoveryRequest newRequest() {
+            return new RecoveryRequest();
         }
     }
 }

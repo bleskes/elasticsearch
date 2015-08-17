@@ -19,11 +19,10 @@
 
 package org.elasticsearch.action.admin.indices.cache.clear;
 
-import org.elasticsearch.action.ShardOperationFailedException;
 import org.elasticsearch.action.support.ActionFilters;
 import org.elasticsearch.action.support.DefaultShardOperationFailedException;
 import org.elasticsearch.action.support.broadcast.BroadcastShardOperationFailedException;
-import org.elasticsearch.action.support.broadcast.TransportBroadcastAction;
+import org.elasticsearch.action.support.indices.TransportNodeBroadcastAction;
 import org.elasticsearch.cluster.ClusterService;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.block.ClusterBlockException;
@@ -41,14 +40,11 @@ import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportService;
 
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReferenceArray;
-
-import static com.google.common.collect.Lists.newArrayList;
 
 /**
  * Indices clear cache action.
  */
-public class TransportClearIndicesCacheAction extends TransportBroadcastAction<ClearIndicesCacheRequest, ClearIndicesCacheResponse, ShardClearIndicesCacheRequest, ShardClearIndicesCacheResponse> {
+public class TransportClearIndicesCacheAction extends TransportNodeBroadcastAction<ClearIndicesCacheRequest, ClearIndicesCacheResponse, ShardClearIndicesCacheRequest, ShardClearIndicesCacheResponse, Boolean> {
 
     private final IndicesService indicesService;
     private final IndicesRequestCache indicesRequestCache;
@@ -65,42 +61,30 @@ public class TransportClearIndicesCacheAction extends TransportBroadcastAction<C
     }
 
     @Override
-    protected ClearIndicesCacheResponse newResponse(ClearIndicesCacheRequest request, AtomicReferenceArray shardsResponses, ClusterState clusterState) {
-        int successfulShards = 0;
-        int failedShards = 0;
-        List<ShardOperationFailedException> shardFailures = null;
-        for (int i = 0; i < shardsResponses.length(); i++) {
-            Object shardResponse = shardsResponses.get(i);
-            if (shardResponse == null) {
-                // simply ignore non active shards
-            } else if (shardResponse instanceof BroadcastShardOperationFailedException) {
-                failedShards++;
-                if (shardFailures == null) {
-                    shardFailures = newArrayList();
-                }
-                shardFailures.add(new DefaultShardOperationFailedException((BroadcastShardOperationFailedException) shardResponse));
-            } else {
-                successfulShards++;
-            }
-        }
-        return new ClearIndicesCacheResponse(shardsResponses.length(), successfulShards, failedShards, shardFailures);
+    protected ClearIndicesCacheResponse newResponse(ClearIndicesCacheRequest request, int totalShards, int successfulShards, int failedShards, List<ShardClearIndicesCacheResponse> responses, List<DefaultShardOperationFailedException> shardFailures) {
+        return new ClearIndicesCacheResponse(totalShards, successfulShards, failedShards, shardFailures);
     }
 
     @Override
-    protected ShardClearIndicesCacheRequest newShardRequest(int numShards, ShardRouting shard, ClearIndicesCacheRequest request) {
-        return new ShardClearIndicesCacheRequest(shard.shardId(), request);
+    protected ShardClearIndicesCacheRequest newNodeRequest(String nodeId, ClearIndicesCacheRequest request, List<ShardRouting> shards) {
+        return new ShardClearIndicesCacheRequest(request, shards, nodeId);
     }
 
     @Override
-    protected ShardClearIndicesCacheResponse newShardResponse() {
+    protected ShardClearIndicesCacheResponse newNodeResponse() {
         return new ShardClearIndicesCacheResponse();
     }
 
     @Override
-    protected ShardClearIndicesCacheResponse shardOperation(ShardClearIndicesCacheRequest request) {
-        IndexService service = indicesService.indexService(request.shardId().getIndex());
+    protected ShardClearIndicesCacheResponse newNodeResponse(String nodeId, int totalShards, int successfulShards, List<Boolean> results, List<BroadcastShardOperationFailedException> exceptions) {
+        return new ShardClearIndicesCacheResponse(nodeId, totalShards, successfulShards, exceptions);
+    }
+
+    @Override
+    protected Boolean shardOperation(ShardClearIndicesCacheRequest request, ShardRouting shardRouting) {
+        IndexService service = indicesService.indexService(shardRouting.getIndex());
         if (service != null) {
-            IndexShard shard = service.shard(request.shardId().id());
+            IndexShard shard = service.shard(shardRouting.id());
             boolean clearedAtLeastOne = false;
             if (request.queryCache()) {
                 clearedAtLeastOne = true;
@@ -138,7 +122,7 @@ public class TransportClearIndicesCacheAction extends TransportBroadcastAction<C
                 }
             }
         }
-        return new ShardClearIndicesCacheResponse(request.shardId());
+        return Boolean.TRUE;
     }
 
     /**

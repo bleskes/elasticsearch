@@ -19,42 +19,46 @@
 
 package org.elasticsearch.action.admin.indices.recovery;
 
-import org.elasticsearch.action.support.broadcast.BroadcastShardResponse;
+import com.google.common.collect.Lists;
+import org.elasticsearch.action.support.broadcast.BroadcastShardOperationFailedException;
+import org.elasticsearch.action.support.indices.BaseNodesIndicesResponse;
 import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.index.shard.ShardId;
 import org.elasticsearch.indices.recovery.RecoveryState;
 
 import java.io.IOException;
+import java.util.List;
 
 /**
  * Information regarding the recovery state of a shard.
  */
-public class ShardRecoveryResponse extends BroadcastShardResponse implements ToXContent {
+public class ShardRecoveryResponse extends BaseNodesIndicesResponse implements ToXContent {
 
-    RecoveryState recoveryState;
+    List<RecoveryState> recoveryStates;
 
     public ShardRecoveryResponse() { }
 
     /**
-     * Constructs shard recovery information for the given index and shard id.
-     *
-     * @param shardId   Id of the shard
+     * Constructs shard recovery in formation for the given index and shard id.
+     * @param nodeId Id of the node
+     * @param totalShards The total number of shards for which the operation was performed
+     * @param successfulShards The number of shards for which the operation was successful
+     * @param exceptions The exceptions from the failed shards
      */
-    ShardRecoveryResponse(ShardId shardId) {
-        super(shardId);
+    public ShardRecoveryResponse(String nodeId, int totalShards, int successfulShards, List<BroadcastShardOperationFailedException> exceptions) {
+        super(nodeId, totalShards, successfulShards, exceptions);
     }
 
     /**
      * Sets the recovery state information for the shard.
      *
-     * @param recoveryState Recovery state
+     * @param recoveryStates Recovery states
      */
-    public void recoveryState(RecoveryState recoveryState) {
-        this.recoveryState = recoveryState;
+    public void setRecoveryStates(List<RecoveryState> recoveryStates) {
+        this.recoveryStates = recoveryStates;
     }
 
     /**
@@ -63,26 +67,37 @@ public class ShardRecoveryResponse extends BroadcastShardResponse implements ToX
      * @return  Recovery state
      */
     @Nullable
-    public RecoveryState recoveryState() {
-        return recoveryState;
+    public List<RecoveryState> recoveryStates() {
+        return recoveryStates;
     }
 
     @Override
     public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
-        recoveryState.toXContent(builder, params);
+        builder.startArray("recovery_states");
+        for (RecoveryState recoveryState : recoveryStates) {
+            recoveryState.toXContent(builder, params);
+        }
+        builder.endArray();
         return builder;
     }
 
     @Override
     public void writeTo(StreamOutput out) throws IOException {
         super.writeTo(out);
-        recoveryState.writeTo(out);
+        out.writeVInt(recoveryStates.size());
+        for (int i = 0; i < recoveryStates.size(); i++) {
+            recoveryStates.get(i).writeTo(out);
+        }
     }
 
     @Override
     public void readFrom(StreamInput in) throws IOException {
         super.readFrom(in);
-        recoveryState = RecoveryState.readRecoveryState(in);
+        int size = in.readVInt();
+        recoveryStates = Lists.newArrayListWithCapacity(size);
+        for (int i = 0; i < size; i++) {
+            recoveryStates.add(RecoveryState.readRecoveryState(in));
+        }
     }
 
     /**

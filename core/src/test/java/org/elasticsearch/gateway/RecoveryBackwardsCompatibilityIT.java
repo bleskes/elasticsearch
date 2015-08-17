@@ -99,8 +99,7 @@ public class RecoveryBackwardsCompatibilityIT extends ESBackcompatTestCase {
         HashMap<String, String> map = new HashMap<>();
         map.put("details", "true");
         final ToXContent.Params params = new ToXContent.MapParams(map);
-        for (ShardRecoveryResponse response : recoveryResponse.shardResponses().get("test")) {
-            RecoveryState recoveryState = response.recoveryState();
+        for (RecoveryState recoveryState : recoveryResponse.shardResponses().get("test")) {
             final String recoverStateAsJSON = XContentHelper.toString(recoveryState, params);
             if (!recoveryState.getPrimary()) {
                 RecoveryState.Index index = recoveryState.getIndex();

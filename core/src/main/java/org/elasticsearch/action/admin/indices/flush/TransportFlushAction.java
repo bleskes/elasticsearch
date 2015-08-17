@@ -19,11 +19,10 @@
 
 package org.elasticsearch.action.admin.indices.flush;
 
-import org.elasticsearch.action.ShardOperationFailedException;
 import org.elasticsearch.action.support.ActionFilters;
 import org.elasticsearch.action.support.DefaultShardOperationFailedException;
 import org.elasticsearch.action.support.broadcast.BroadcastShardOperationFailedException;
-import org.elasticsearch.action.support.broadcast.TransportBroadcastAction;
+import org.elasticsearch.action.support.indices.TransportNodeBroadcastAction;
 import org.elasticsearch.cluster.ClusterService;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.block.ClusterBlockException;
@@ -39,14 +38,11 @@ import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportService;
 
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReferenceArray;
-
-import static com.google.common.collect.Lists.newArrayList;
 
 /**
  * Flush Action.
  */
-public class TransportFlushAction extends TransportBroadcastAction<FlushRequest, FlushResponse, ShardFlushRequest, ShardFlushResponse> {
+public class TransportFlushAction extends TransportNodeBroadcastAction<FlushRequest, FlushResponse, ShardFlushRequest, ShardFlushResponse, Boolean> {
 
     private final IndicesService indicesService;
 
@@ -60,42 +56,30 @@ public class TransportFlushAction extends TransportBroadcastAction<FlushRequest,
     }
 
     @Override
-    protected FlushResponse newResponse(FlushRequest request, AtomicReferenceArray shardsResponses, ClusterState clusterState) {
-        int successfulShards = 0;
-        int failedShards = 0;
-        List<ShardOperationFailedException> shardFailures = null;
-        for (int i = 0; i < shardsResponses.length(); i++) {
-            Object shardResponse = shardsResponses.get(i);
-            if (shardResponse == null) {
-                // a non active shard, ignore
-            } else if (shardResponse instanceof BroadcastShardOperationFailedException) {
-                failedShards++;
-                if (shardFailures == null) {
-                    shardFailures = newArrayList();
-                }
-                shardFailures.add(new DefaultShardOperationFailedException((BroadcastShardOperationFailedException) shardResponse));
-            } else {
-                successfulShards++;
-            }
-        }
-        return new FlushResponse(shardsResponses.length(), successfulShards, failedShards, shardFailures);
+    protected FlushResponse newResponse(FlushRequest request, int totalShards, int successfulShards, int failedShards, List<ShardFlushResponse> responses, List<DefaultShardOperationFailedException> shardFailures) {
+        return new FlushResponse(totalShards, successfulShards, failedShards, shardFailures);
     }
 
     @Override
-    protected ShardFlushRequest newShardRequest(int numShards, ShardRouting shard, FlushRequest request) {
-        return new ShardFlushRequest(shard.shardId(), request);
+    protected ShardFlushRequest newNodeRequest(String nodeId, FlushRequest request, List<ShardRouting> shards) {
+        return new ShardFlushRequest(request, shards, nodeId);
     }
 
     @Override
-    protected ShardFlushResponse newShardResponse() {
+    protected ShardFlushResponse newNodeResponse() {
         return new ShardFlushResponse();
     }
 
     @Override
-    protected ShardFlushResponse shardOperation(ShardFlushRequest request) {
-        IndexShard indexShard = indicesService.indexServiceSafe(request.shardId().getIndex()).shardSafe(request.shardId().id());
+    protected ShardFlushResponse newNodeResponse(String nodeId, int totalShards, int successfulShards, List<Boolean> results, List<BroadcastShardOperationFailedException> exceptions) {
+        return new ShardFlushResponse(nodeId, totalShards, successfulShards, exceptions);
+    }
+
+    @Override
+    protected Boolean shardOperation(ShardFlushRequest request, ShardRouting shardRouting) {
+        IndexShard indexShard = indicesService.indexServiceSafe(shardRouting.getIndex()).shardSafe(shardRouting.id());
         indexShard.flush(request.getRequest());
-        return new ShardFlushResponse(request.shardId());
+        return Boolean.TRUE;
     }
 
     /**

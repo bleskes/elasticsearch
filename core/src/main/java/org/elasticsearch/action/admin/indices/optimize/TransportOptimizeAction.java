@@ -19,11 +19,10 @@
 
 package org.elasticsearch.action.admin.indices.optimize;
 
-import org.elasticsearch.action.ShardOperationFailedException;
 import org.elasticsearch.action.support.ActionFilters;
 import org.elasticsearch.action.support.DefaultShardOperationFailedException;
 import org.elasticsearch.action.support.broadcast.BroadcastShardOperationFailedException;
-import org.elasticsearch.action.support.broadcast.TransportBroadcastAction;
+import org.elasticsearch.action.support.indices.TransportNodeBroadcastAction;
 import org.elasticsearch.cluster.ClusterService;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.block.ClusterBlockException;
@@ -39,14 +38,11 @@ import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportService;
 
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReferenceArray;
-
-import static com.google.common.collect.Lists.newArrayList;
 
 /**
  * Optimize index/indices action.
  */
-public class TransportOptimizeAction extends TransportBroadcastAction<OptimizeRequest, OptimizeResponse, ShardOptimizeRequest, ShardOptimizeResponse> {
+public class TransportOptimizeAction extends TransportNodeBroadcastAction<OptimizeRequest, OptimizeResponse, ShardOptimizeRequest, ShardOptimizeResponse, Boolean> {
 
     private final IndicesService indicesService;
 
@@ -60,42 +56,30 @@ public class TransportOptimizeAction extends TransportBroadcastAction<OptimizeRe
     }
 
     @Override
-    protected OptimizeResponse newResponse(OptimizeRequest request, AtomicReferenceArray shardsResponses, ClusterState clusterState) {
-        int successfulShards = 0;
-        int failedShards = 0;
-        List<ShardOperationFailedException> shardFailures = null;
-        for (int i = 0; i < shardsResponses.length(); i++) {
-            Object shardResponse = shardsResponses.get(i);
-            if (shardResponse == null) {
-                // a non active shard, ignore...
-            } else if (shardResponse instanceof BroadcastShardOperationFailedException) {
-                failedShards++;
-                if (shardFailures == null) {
-                    shardFailures = newArrayList();
-                }
-                shardFailures.add(new DefaultShardOperationFailedException((BroadcastShardOperationFailedException) shardResponse));
-            } else {
-                successfulShards++;
-            }
-        }
-        return new OptimizeResponse(shardsResponses.length(), successfulShards, failedShards, shardFailures);
+    protected OptimizeResponse newResponse(OptimizeRequest request, int totalShards, int successfulShards, int failedShards, List<ShardOptimizeResponse> responses, List<DefaultShardOperationFailedException> shardFailures) {
+        return new OptimizeResponse(totalShards, successfulShards, failedShards, shardFailures);
     }
 
     @Override
-    protected ShardOptimizeRequest newShardRequest(int numShards, ShardRouting shard, OptimizeRequest request) {
-        return new ShardOptimizeRequest(shard.shardId(), request);
-    }
-
-    @Override
-    protected ShardOptimizeResponse newShardResponse() {
+    protected ShardOptimizeResponse newNodeResponse() {
         return new ShardOptimizeResponse();
     }
 
     @Override
-    protected ShardOptimizeResponse shardOperation(ShardOptimizeRequest request) {
-        IndexShard indexShard = indicesService.indexServiceSafe(request.shardId().getIndex()).shardSafe(request.shardId().id());
-        indexShard.optimize(request.optimizeRequest());
-        return new ShardOptimizeResponse(request.shardId());
+    protected ShardOptimizeResponse newNodeResponse(String nodeId, int totalShards, int successfulShards, List<Boolean> results, List<BroadcastShardOperationFailedException> exceptions) {
+        return new ShardOptimizeResponse(nodeId, totalShards, successfulShards, exceptions);
+    }
+
+    @Override
+    protected ShardOptimizeRequest newNodeRequest(String nodeId, OptimizeRequest request, List<ShardRouting> shards) {
+        return new ShardOptimizeRequest(nodeId, shards, request);
+    }
+
+    @Override
+    protected Boolean shardOperation(ShardOptimizeRequest request, ShardRouting shardRouting) {
+        IndexShard indexShard = indicesService.indexServiceSafe(shardRouting.shardId().getIndex()).shardSafe(shardRouting.shardId().id());
+        indexShard.optimize(request.getIndicesLevelRequest());
+        return Boolean.TRUE;
     }
 
     /**

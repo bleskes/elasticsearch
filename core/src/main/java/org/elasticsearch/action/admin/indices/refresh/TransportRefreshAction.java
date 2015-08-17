@@ -19,11 +19,10 @@
 
 package org.elasticsearch.action.admin.indices.refresh;
 
-import org.elasticsearch.action.ShardOperationFailedException;
 import org.elasticsearch.action.support.ActionFilters;
 import org.elasticsearch.action.support.DefaultShardOperationFailedException;
 import org.elasticsearch.action.support.broadcast.BroadcastShardOperationFailedException;
-import org.elasticsearch.action.support.broadcast.TransportBroadcastAction;
+import org.elasticsearch.action.support.indices.TransportNodeBroadcastAction;
 import org.elasticsearch.cluster.ClusterService;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.block.ClusterBlockException;
@@ -39,14 +38,11 @@ import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportService;
 
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReferenceArray;
-
-import static com.google.common.collect.Lists.newArrayList;
 
 /**
  * Refresh action.
  */
-public class TransportRefreshAction extends TransportBroadcastAction<RefreshRequest, RefreshResponse, ShardRefreshRequest, ShardRefreshResponse> {
+public class TransportRefreshAction extends TransportNodeBroadcastAction<RefreshRequest, RefreshResponse, ShardRefreshRequest, ShardRefreshResponse, Boolean> {
 
     private final IndicesService indicesService;
 
@@ -60,43 +56,31 @@ public class TransportRefreshAction extends TransportBroadcastAction<RefreshRequ
     }
 
     @Override
-    protected RefreshResponse newResponse(RefreshRequest request, AtomicReferenceArray shardsResponses, ClusterState clusterState) {
-        int successfulShards = 0;
-        int failedShards = 0;
-        List<ShardOperationFailedException> shardFailures = null;
-        for (int i = 0; i < shardsResponses.length(); i++) {
-            Object shardResponse = shardsResponses.get(i);
-            if (shardResponse == null) {
-                // non active shard, ignore
-            } else if (shardResponse instanceof BroadcastShardOperationFailedException) {
-                failedShards++;
-                if (shardFailures == null) {
-                    shardFailures = newArrayList();
-                }
-                shardFailures.add(new DefaultShardOperationFailedException((BroadcastShardOperationFailedException) shardResponse));
-            } else {
-                successfulShards++;
-            }
-        }
-        return new RefreshResponse(shardsResponses.length(), successfulShards, failedShards, shardFailures);
+    protected RefreshResponse newResponse(RefreshRequest request, int totalShards, int successfulShards, int failedShards, List<ShardRefreshResponse> shardRefreshResponses, List<DefaultShardOperationFailedException> shardFailures) {
+        return new RefreshResponse(totalShards, successfulShards, failedShards, shardFailures);
     }
 
     @Override
-    protected ShardRefreshRequest newShardRequest(int numShards, ShardRouting shard, RefreshRequest request) {
-        return new ShardRefreshRequest(shard.shardId(), request);
+    protected ShardRefreshRequest newNodeRequest(String nodeId, RefreshRequest request, List<ShardRouting> shards) {
+        return new ShardRefreshRequest(nodeId, shards, request);
     }
 
     @Override
-    protected ShardRefreshResponse newShardResponse() {
+    protected ShardRefreshResponse newNodeResponse() {
         return new ShardRefreshResponse();
     }
 
     @Override
-    protected ShardRefreshResponse shardOperation(ShardRefreshRequest request) {
-        IndexShard indexShard = indicesService.indexServiceSafe(request.shardId().getIndex()).shardSafe(request.shardId().id());
+    protected ShardRefreshResponse newNodeResponse(String nodeId, int totalShards, int successfulShards, List<Boolean> results, List<BroadcastShardOperationFailedException> exceptions) {
+        return new ShardRefreshResponse(nodeId, totalShards, successfulShards, exceptions);
+    }
+
+    @Override
+    protected Boolean shardOperation(ShardRefreshRequest request, ShardRouting shardRouting) {
+        IndexShard indexShard = indicesService.indexServiceSafe(shardRouting.getIndex()).shardSafe(shardRouting.shardId().id());
         indexShard.refresh("api");
         logger.trace("{} refresh request executed", indexShard.shardId());
-        return new ShardRefreshResponse(request.shardId());
+        return Boolean.TRUE;
     }
 
     /**

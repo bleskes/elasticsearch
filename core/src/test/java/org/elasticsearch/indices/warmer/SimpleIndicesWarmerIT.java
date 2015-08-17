@@ -260,7 +260,7 @@ public class SimpleIndicesWarmerIT extends ESIntegTestCase {
         for (IndexShardSegments indexShardSegments : indicesSegments) {
             for (ShardSegments shardSegments : indexShardSegments) {
                 for (Segment segment : shardSegments) {
-                    logger.debug("+=" + segment.memoryInBytes + " " + indexShardSegments.getShardId() + " " + shardSegments.getIndex());
+                    logger.debug("+=" + segment.memoryInBytes + " " + indexShardSegments.getShardId() + " " + shardSegments.getShardRouting().getIndex());
                     total += segment.memoryInBytes;
                 }
             }

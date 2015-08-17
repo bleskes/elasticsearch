@@ -21,6 +21,7 @@ package org.elasticsearch.action.admin.indices.flush;
 
 import org.elasticsearch.action.ActionRequest;
 import org.elasticsearch.action.support.broadcast.BroadcastRequest;
+import org.elasticsearch.action.support.indices.IndicesLevelRequest;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 
@@ -37,7 +38,7 @@ import java.io.IOException;
  * @see org.elasticsearch.client.IndicesAdminClient#flush(FlushRequest)
  * @see FlushResponse
  */
-public class FlushRequest extends BroadcastRequest<FlushRequest> {
+public class FlushRequest extends IndicesLevelRequest<FlushRequest> {
 
     private boolean force = false;
     private boolean waitIfOngoing = false;

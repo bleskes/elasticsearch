@@ -96,31 +96,16 @@ import org.elasticsearch.test.ESIntegTestCase;
 import org.elasticsearch.test.ESIntegTestCase.ClusterScope;
 import org.elasticsearch.test.ESIntegTestCase.Scope;
 import org.elasticsearch.threadpool.ThreadPool;
-import org.elasticsearch.transport.Transport;
-import org.elasticsearch.transport.TransportChannel;
-import org.elasticsearch.transport.TransportModule;
-import org.elasticsearch.transport.TransportRequest;
-import org.elasticsearch.transport.TransportRequestHandler;
-import org.elasticsearch.transport.TransportService;
+import org.elasticsearch.transport.*;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static org.elasticsearch.test.hamcrest.ElasticsearchAssertions.assertAcked;
 import static org.elasticsearch.test.hamcrest.ElasticsearchAssertions.assertNoFailures;
-import static org.hamcrest.Matchers.emptyIterable;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.greaterThan;
-import static org.hamcrest.Matchers.hasItem;
-import static org.hamcrest.Matchers.instanceOf;
+import static org.hamcrest.Matchers.*;
 
 @ClusterScope(scope = Scope.SUITE, numClientNodes = 1, minNumDataNodes = 2)
 public class IndicesRequestIT extends ESIntegTestCase {
@@ -383,7 +368,7 @@ public class IndicesRequestIT extends ESIntegTestCase {
 
     @Test
     public void testFlush() {
-        String flushShardAction = FlushAction.NAME + "[s]";
+        String flushShardAction = FlushAction.NAME + "[i]";
         interceptTransportActions(flushShardAction);
 
         FlushRequest flushRequest = new FlushRequest(randomIndicesOrAliases());
@@ -395,7 +380,7 @@ public class IndicesRequestIT extends ESIntegTestCase {
 
     @Test
     public void testOptimize() {
-        String optimizeShardAction = OptimizeAction.NAME + "[s]";
+        String optimizeShardAction = OptimizeAction.NAME + "[i]";
         interceptTransportActions(optimizeShardAction);
 
         OptimizeRequest optimizeRequest = new OptimizeRequest(randomIndicesOrAliases());
@@ -407,7 +392,7 @@ public class IndicesRequestIT extends ESIntegTestCase {
 
     @Test
     public void testRefresh() {
-        String refreshShardAction = RefreshAction.NAME + "[s]";
+        String refreshShardAction = RefreshAction.NAME + "[i]";
         interceptTransportActions(refreshShardAction);
 
         RefreshRequest refreshRequest = new RefreshRequest(randomIndicesOrAliases());
@@ -419,7 +404,7 @@ public class IndicesRequestIT extends ESIntegTestCase {
 
     @Test
     public void testClearCache() {
-        String clearCacheAction = ClearIndicesCacheAction.NAME + "[s]";
+        String clearCacheAction = ClearIndicesCacheAction.NAME + "[i]";
         interceptTransportActions(clearCacheAction);
 
         ClearIndicesCacheRequest clearIndicesCacheRequest = new ClearIndicesCacheRequest(randomIndicesOrAliases());
@@ -431,7 +416,7 @@ public class IndicesRequestIT extends ESIntegTestCase {
 
     @Test
     public void testRecovery() {
-        String recoveryAction = RecoveryAction.NAME + "[s]";
+        String recoveryAction = RecoveryAction.NAME + "[i]";
         interceptTransportActions(recoveryAction);
 
         RecoveryRequest recoveryRequest = new RecoveryRequest(randomIndicesOrAliases());
@@ -443,7 +428,7 @@ public class IndicesRequestIT extends ESIntegTestCase {
 
     @Test
     public void testSegments() {
-        String segmentsAction = IndicesSegmentsAction.NAME + "[s]";
+        String segmentsAction = IndicesSegmentsAction.NAME + "[i]";
         interceptTransportActions(segmentsAction);
 
         IndicesSegmentsRequest segmentsRequest = new IndicesSegmentsRequest(randomIndicesOrAliases());
@@ -455,7 +440,7 @@ public class IndicesRequestIT extends ESIntegTestCase {
 
     @Test
     public void testIndicesStats() {
-        String indicesStats = IndicesStatsAction.NAME + "[s]";
+        String indicesStats = IndicesStatsAction.NAME + "[i]";
         interceptTransportActions(indicesStats);
 
         IndicesStatsRequest indicesStatsRequest = new IndicesStatsRequest().indices(randomIndicesOrAliases());

@@ -20,7 +20,7 @@
 package org.elasticsearch.action.admin.indices.stats;
 
 import org.elasticsearch.action.admin.indices.stats.CommonStatsFlags.Flag;
-import org.elasticsearch.action.support.broadcast.BroadcastRequest;
+import org.elasticsearch.action.support.indices.IndicesLevelRequest;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 
@@ -34,7 +34,7 @@ import java.io.IOException;
  * <p>All the stats to be returned can be cleared using {@link #clear()}, at which point, specific
  * stats can be enabled.
  */
-public class IndicesStatsRequest extends BroadcastRequest<IndicesStatsRequest> {
+public class IndicesStatsRequest extends IndicesLevelRequest<IndicesStatsRequest> {
 
     private CommonStatsFlags flags = new CommonStatsFlags();
 

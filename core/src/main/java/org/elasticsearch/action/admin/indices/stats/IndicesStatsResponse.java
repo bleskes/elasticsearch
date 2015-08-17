@@ -23,9 +23,8 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import org.elasticsearch.action.ShardOperationFailedException;
-import org.elasticsearch.action.support.broadcast.BroadcastResponse;
-import org.elasticsearch.cluster.ClusterState;
+import org.elasticsearch.action.support.DefaultShardOperationFailedException;
+import org.elasticsearch.action.support.indices.IndicesLevelResponse;
 import org.elasticsearch.cluster.routing.ShardRouting;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
@@ -41,7 +40,7 @@ import java.util.Set;
 
 /**
  */
-public class IndicesStatsResponse extends BroadcastResponse implements ToXContent {
+public class IndicesStatsResponse extends IndicesLevelResponse implements ToXContent {
 
     private ShardStats[] shards;
 
@@ -51,7 +50,7 @@ public class IndicesStatsResponse extends BroadcastResponse implements ToXConten
 
     }
 
-    IndicesStatsResponse(ShardStats[] shards, ClusterState clusterState, int totalShards, int successfulShards, int failedShards, List<ShardOperationFailedException> shardFailures) {
+    IndicesStatsResponse(ShardStats[] shards, int totalShards, int successfulShards, int failedShards, List<DefaultShardOperationFailedException> shardFailures) {
         super(totalShards, successfulShards, failedShards, shardFailures);
         this.shards = shards;
     }
@@ -90,7 +89,7 @@ public class IndicesStatsResponse extends BroadcastResponse implements ToXConten
 
         Set<String> indices = Sets.newHashSet();
         for (ShardStats shard : shards) {
-            indices.add(shard.getIndex());
+            indices.add(shard.getShardRouting().getIndex());
         }
 
         for (String index : indices) {

@@ -19,17 +19,18 @@
 
 package org.elasticsearch.action.admin.indices.cache.clear;
 
-import org.elasticsearch.action.support.broadcast.BroadcastShardRequest;
+import org.elasticsearch.action.support.indices.BaseNodesIndicesRequest;
+import org.elasticsearch.cluster.routing.ShardRouting;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
-import org.elasticsearch.index.shard.ShardId;
 
 import java.io.IOException;
+import java.util.List;
 
 /**
  *
  */
-class ShardClearIndicesCacheRequest extends BroadcastShardRequest {
+class ShardClearIndicesCacheRequest extends BaseNodesIndicesRequest<ClearIndicesCacheRequest> {
 
     private boolean queryCache = false;
     private boolean fieldDataCache = false;
@@ -41,8 +42,8 @@ class ShardClearIndicesCacheRequest extends BroadcastShardRequest {
     ShardClearIndicesCacheRequest() {
     }
 
-    ShardClearIndicesCacheRequest(ShardId shardId, ClearIndicesCacheRequest request) {
-        super(shardId, request);
+    ShardClearIndicesCacheRequest(ClearIndicesCacheRequest request, List<ShardRouting> shards, String nodeId) {
+        super(nodeId, request, shards);
         queryCache = request.queryCache();
         fieldDataCache = request.fieldDataCache();
         fields = request.fields();
@@ -88,5 +89,10 @@ class ShardClearIndicesCacheRequest extends BroadcastShardRequest {
         out.writeBoolean(recycler);
         out.writeStringArrayNullable(fields);
         out.writeBoolean(requestCache);
+    }
+
+    @Override
+    protected ClearIndicesCacheRequest newRequest() {
+        return new ClearIndicesCacheRequest();
     }
 }

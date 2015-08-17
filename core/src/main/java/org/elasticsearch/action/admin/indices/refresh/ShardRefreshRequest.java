@@ -19,19 +19,25 @@
 
 package org.elasticsearch.action.admin.indices.refresh;
 
-import org.elasticsearch.action.support.broadcast.BroadcastShardRequest;
-import org.elasticsearch.index.shard.ShardId;
+import org.elasticsearch.action.support.indices.BaseNodesIndicesRequest;
+import org.elasticsearch.cluster.routing.ShardRouting;
+
+import java.util.List;
 
 /**
  *
  */
-class ShardRefreshRequest extends BroadcastShardRequest {
+class ShardRefreshRequest extends BaseNodesIndicesRequest<RefreshRequest> {
 
     ShardRefreshRequest() {
     }
 
-    ShardRefreshRequest(ShardId shardId, RefreshRequest request) {
-        super(shardId, request);
+    ShardRefreshRequest(String nodeId, List<ShardRouting> shards, RefreshRequest request) {
+        super(nodeId, request, shards);
     }
 
+    @Override
+    protected RefreshRequest newRequest() {
+        return new RefreshRequest();
+    }
 }

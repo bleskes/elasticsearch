@@ -400,8 +400,7 @@ public class RecoveryFromGatewayIT extends ESIntegTestCase {
             assertSyncIdsNotNull();
         }
         RecoveryResponse recoveryResponse = client().admin().indices().prepareRecoveries("test").get();
-        for (ShardRecoveryResponse response : recoveryResponse.shardResponses().get("test")) {
-            RecoveryState recoveryState = response.recoveryState();
+        for (RecoveryState recoveryState : recoveryResponse.shardResponses().get("test")) {
             long recovered = 0;
             for (RecoveryState.File file : recoveryState.getIndex().fileDetails()) {
                 if (file.name().startsWith("segments")) {
@@ -410,7 +409,7 @@ public class RecoveryFromGatewayIT extends ESIntegTestCase {
             }
             if (!recoveryState.getPrimary() && (useSyncIds == false)) {
                 logger.info("--> replica shard {} recovered from {} to {}, recovered {}, reuse {}",
-                        response.getShardId(), recoveryState.getSourceNode().name(), recoveryState.getTargetNode().name(),
+                        recoveryState.getShardId().getId(), recoveryState.getSourceNode().name(), recoveryState.getTargetNode().name(),
                         recoveryState.getIndex().recoveredBytes(), recoveryState.getIndex().reusedBytes());
                 assertThat("no bytes should be recovered", recoveryState.getIndex().recoveredBytes(), equalTo(recovered));
                 assertThat("data should have been reused", recoveryState.getIndex().reusedBytes(), greaterThan(0l));
@@ -422,7 +421,7 @@ public class RecoveryFromGatewayIT extends ESIntegTestCase {
             } else {
                 if (useSyncIds && !recoveryState.getPrimary()) {
                     logger.info("--> replica shard {} recovered from {} to {} using sync id, recovered {}, reuse {}",
-                            response.getShardId(), recoveryState.getSourceNode().name(), recoveryState.getTargetNode().name(),
+                            recoveryState.getShardId().getId(), recoveryState.getSourceNode().name(), recoveryState.getTargetNode().name(),
                             recoveryState.getIndex().recoveredBytes(), recoveryState.getIndex().reusedBytes());
                 }
                 assertThat(recoveryState.getIndex().recoveredBytes(), equalTo(0l));

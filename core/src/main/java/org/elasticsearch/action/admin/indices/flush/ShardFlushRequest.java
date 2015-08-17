@@ -19,24 +19,25 @@
 
 package org.elasticsearch.action.admin.indices.flush;
 
-import org.elasticsearch.action.support.broadcast.BroadcastShardRequest;
+import org.elasticsearch.action.support.indices.BaseNodesIndicesRequest;
+import org.elasticsearch.cluster.routing.ShardRouting;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
-import org.elasticsearch.index.shard.ShardId;
 
 import java.io.IOException;
+import java.util.List;
 
 /**
  *
  */
-class ShardFlushRequest extends BroadcastShardRequest {
+class ShardFlushRequest extends BaseNodesIndicesRequest<FlushRequest> {
     private FlushRequest request = new FlushRequest();
 
     ShardFlushRequest() {
     }
 
-    ShardFlushRequest(ShardId shardId, FlushRequest request) {
-        super(shardId, request);
+    ShardFlushRequest(FlushRequest request, List<ShardRouting> shards, String nodeId) {
+        super(nodeId, request, shards);
         this.request = request;
     }
 
@@ -55,5 +56,10 @@ class ShardFlushRequest extends BroadcastShardRequest {
 
     FlushRequest getRequest() {
         return request;
+    }
+
+    @Override
+    protected FlushRequest newRequest() {
+        return new FlushRequest();
     }
 }

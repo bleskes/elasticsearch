@@ -19,18 +19,20 @@
 
 package org.elasticsearch.action.admin.indices.cache.clear;
 
-import org.elasticsearch.action.support.broadcast.BroadcastShardResponse;
-import org.elasticsearch.index.shard.ShardId;
+import org.elasticsearch.action.support.broadcast.BroadcastShardOperationFailedException;
+import org.elasticsearch.action.support.indices.BaseNodesIndicesResponse;
+
+import java.util.List;
 
 /**
  *
  */
-class ShardClearIndicesCacheResponse extends BroadcastShardResponse {
+class ShardClearIndicesCacheResponse extends BaseNodesIndicesResponse {
 
     ShardClearIndicesCacheResponse() {
     }
 
-    ShardClearIndicesCacheResponse(ShardId shardId) {
-        super(shardId);
+    public ShardClearIndicesCacheResponse(String nodeId, int totalShards, int successfulShards, List<BroadcastShardOperationFailedException> exceptions) {
+        super(nodeId, totalShards, successfulShards, exceptions);
     }
 }

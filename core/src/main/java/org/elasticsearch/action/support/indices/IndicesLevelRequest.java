@@ -17,22 +17,20 @@
  * under the License.
  */
 
-package org.elasticsearch.action.admin.indices.optimize;
+package org.elasticsearch.action.support.indices;
 
-import org.elasticsearch.action.support.broadcast.BroadcastShardOperationFailedException;
-import org.elasticsearch.action.support.indices.BaseNodesIndicesResponse;
+import org.elasticsearch.action.ActionRequest;
+import org.elasticsearch.action.support.broadcast.BroadcastRequest;
 
-import java.util.List;
-
-/**
- *
- */
-class ShardOptimizeResponse extends BaseNodesIndicesResponse {
-
-    ShardOptimizeResponse() {
+public abstract class IndicesLevelRequest<T extends IndicesLevelRequest> extends BroadcastRequest<T> {
+    protected IndicesLevelRequest() {
     }
 
-    public ShardOptimizeResponse(String nodeId, int totalShards, int successfulShards, List<BroadcastShardOperationFailedException> exceptions) {
-        super(nodeId, totalShards, successfulShards, exceptions);
+    protected IndicesLevelRequest(ActionRequest originalRequest) {
+        super(originalRequest);
+    }
+
+    protected IndicesLevelRequest(String[] indices) {
+        super(indices);
     }
 }
