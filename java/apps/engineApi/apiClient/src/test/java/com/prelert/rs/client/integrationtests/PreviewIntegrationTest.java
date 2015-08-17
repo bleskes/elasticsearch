@@ -31,6 +31,7 @@ import java.io.Closeable;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets
 import java.nio.file.Files;
 import java.util.Arrays;
 
@@ -113,7 +114,8 @@ public class PreviewIntegrationTest implements Closeable
                 data));
         File previewResult = new File(m_TestDataHome
                 + "/engine_api_integration_test/preview/previewResult.txt");
-        String expectedPreview = new String(Files.readAllBytes(previewResult.toPath()));
+        String expectedPreview = new String(Files.readAllBytes(previewResult.toPath()),
+                StandardCharsets.UTF_8);
 
         test(preview.equals(expectedPreview));
 
