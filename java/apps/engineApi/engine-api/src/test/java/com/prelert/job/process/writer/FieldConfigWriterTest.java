@@ -35,6 +35,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.StringReader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -74,7 +75,7 @@ public class FieldConfigWriterTest
         detectors.add(d3);
         Detector d4 = new Detector();
         d4.setFunction("rare");
-        d4.setFieldName("ipaddress");
+        d4.setByFieldName("ipaddress");
         d4.setPartitionFieldName("host");
         detectors.add(d4);
 
@@ -82,7 +83,7 @@ public class FieldConfigWriterTest
         config.setDetectors(detectors);
 
         ByteArrayOutputStream ba = new ByteArrayOutputStream();
-        try (OutputStreamWriter osw = new OutputStreamWriter(ba, "UTF-8"))
+        try (OutputStreamWriter osw = new OutputStreamWriter(ba, StandardCharsets.UTF_8))
         {
             BasicConfigurator.configure();
             Logger logger = Logger.getLogger(FieldConfigWriterTest.class);
@@ -105,20 +106,25 @@ public class FieldConfigWriterTest
 
         Assert.assertEquals(detectors.size(), section.size());
 
-        String value = fieldConfig.get(iniConfig.getGlobalSectionName(), "Integer_Value-ts_hash.by");
-        Assert.assertEquals("ts_hash", value);
-        value = fieldConfig.get(iniConfig.getGlobalSectionName(), "count-ipaddress.by");
-        Assert.assertEquals("ipaddress", value);
-        value = fieldConfig.get(iniConfig.getGlobalSectionName(), "max(Integer_Value)-ts_hash.over");
-        Assert.assertEquals("ts_hash", value);
-        value = fieldConfig.get(iniConfig.getGlobalSectionName(), "rare(ipaddress)-host.partition");
-        Assert.assertEquals("host", value);
+        String value = fieldConfig.get(iniConfig.getGlobalSectionName(), "detector.1.clause");
+        Assert.assertEquals("Integer_Value by ts_hash", value);
+        value = fieldConfig.get(iniConfig.getGlobalSectionName(), "detector.2.clause");
+        Assert.assertEquals("count by ipaddress", value);
+        value = fieldConfig.get(iniConfig.getGlobalSectionName(), "detector.3.clause");
+        Assert.assertEquals("max(Integer_Value) over ts_hash", value);
+        value = fieldConfig.get(iniConfig.getGlobalSectionName(), "detector.4.clause");
+        Assert.assertEquals("rare by ipaddress partitionfield=host", value);
     }
 
     @Test
     public void testWrite_GivenConfigHasCategorizationField() throws IOException
     {
+        Detector d = new Detector();
+        d.setFieldName("Integer_Value");
+        d.setByFieldName("ts_hash");
+
         AnalysisConfig config = new AnalysisConfig();
+        config.setDetectors(Arrays.asList(d));
         config.setCategorizationFieldName("foo");
         OutputStreamWriter writer = mock(OutputStreamWriter.class);
         Logger logger = mock(Logger.class);
@@ -126,14 +132,19 @@ public class FieldConfigWriterTest
 
         fieldConfigWriter.write();
 
-        verify(writer).write("categorizationfield = foo\n");
+        verify(writer).write("detector.1.clause = Integer_Value by ts_hash categorizationfield=foo\n");
         verifyNoMoreInteractions(writer);
     }
 
     @Test
     public void testWrite_GivenConfigHasInfluencers() throws IOException
     {
+        Detector d = new Detector();
+        d.setFieldName("Integer_Value");
+        d.setByFieldName("ts_hash");
+
         AnalysisConfig config = new AnalysisConfig();
+        config.setDetectors(Arrays.asList(d));
         config.setInfluencers(Arrays.asList("sun", "moon", "earth"));
 
         OutputStreamWriter writer = mock(OutputStreamWriter.class);
@@ -142,7 +153,10 @@ public class FieldConfigWriterTest
 
         fieldConfigWriter.write();
 
-        verify(writer).write("influencers = sun-moon-earth\n");
+        verify(writer).write("detector.1.clause = Integer_Value by ts_hash\n" +
+                "influencer.1 = sun\n" +
+                "influencer.2 = moon\n" +
+                "influencer.3 = earth\n");
         verifyNoMoreInteractions(writer);
     }
 }
