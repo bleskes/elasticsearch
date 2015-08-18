@@ -54,7 +54,7 @@ define(function (require) {
 
     TableDataSource.prototype.getCluster = function () {
       if (_.isObject(this.cluster)) return this.cluster;
-      return _.find(this.clusters, { cluster_name: this.cluster });
+      return _.find(this.clusters, { cluster_uuid: this.cluster });
     };
 
     TableDataSource.prototype.createTermAgg = function () {

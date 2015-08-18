@@ -36,7 +36,7 @@ define(function (require) {
       })
       .then(function (issues) {
         return marvelClusters.fetch().then(function (clusters) {
-          var cluster = _.find(clusters, { cluster_name: self.cluster });
+          var cluster = _.find(clusters, { cluster_uuid: self.cluster });
           return Promise.all(_.map(issues, function (issue) {
             if (issue.node && cluster.nodes && cluster.nodes[issue.node]) {
               issue.node = cluster.nodes[issue.node];

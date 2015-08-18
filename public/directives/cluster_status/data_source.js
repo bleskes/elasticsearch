@@ -24,7 +24,7 @@ define(function (require) {
       function get(key) {
         return _.get(source, key);
       }
-      this.data.cluster_name = get('cluster_name');
+      this.data.cluster_uuid = get('cluster_uuid');
       this.data.nodes_count = get('cluster_stats.nodes.count.total');
       this.data.total_shards = get('cluster_stats.indices.shards.total') || 0;
       this.data.document_count = formatNumber(get('cluster_stats.indices.docs.count'), 'int_commas');

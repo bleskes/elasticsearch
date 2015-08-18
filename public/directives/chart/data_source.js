@@ -19,7 +19,7 @@ define(function (require) {
     };
 
     ChartDataSource.prototype.getFilters = function () {
-      var filters = [ { term: { 'cluster_name': this.cluster } } ];
+      var filters = [ { term: { 'cluster_uuid': this.cluster } } ];
       filters = filters.concat(this.metric.filters || []);
       return filters.concat(this.filters);
     };

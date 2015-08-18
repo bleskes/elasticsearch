@@ -20,14 +20,14 @@ define(function (require) {
           var cluster;
           marvel.clusters = clusters;
           // Check to see if the current cluster is available
-          if (globalState.cluster && !_.find(clusters, { cluster_name: globalState.cluster })) {
+          if (globalState.cluster && !_.find(clusters, { cluster_uuid: globalState.cluster })) {
             globalState.cluster = null;
           }
           // if there are no clusers choosen then set the first one
           if (!globalState.cluster) {
             cluster = _.first(clusters);
-            if (cluster && cluster.cluster_name) {
-              globalState.cluster = cluster.cluster_name;
+            if (cluster && cluster.cluster_uuid) {
+              globalState.cluster = cluster.cluster_uuid;
               globalState.save();
             }
           }

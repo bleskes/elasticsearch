@@ -18,9 +18,9 @@ module.exports = function clusterStateDataSourceProvider(courier) {
   };
 
   ClusterStateDataSource.prototype.getFilters = function () {
-    var id = (_.isObject(this.cluster)) ? this.cluster.cluster_name : this.cluster;
+    var id = (_.isObject(this.cluster)) ? this.cluster.cluster_uuid : this.cluster;
     return [
-      { term: { 'cluster_name': id } },
+      { term: { 'cluster_uuid': id } },
       { term: { _type: 'marvel_cluster_state' } }
     ];
   };
