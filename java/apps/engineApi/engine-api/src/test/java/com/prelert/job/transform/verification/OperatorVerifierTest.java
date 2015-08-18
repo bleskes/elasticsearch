@@ -24,27 +24,28 @@
  *                                                          *
  *                                                          *
  ************************************************************/
+package com.prelert.job.transform.verification;
 
-package com.prelert.job.transform.exceptions;
+import static org.junit.Assert.assertTrue;
 
-import com.prelert.job.config.verification.JobConfigurationException;
-import com.prelert.job.errorcodes.ErrorCodes;
+import org.junit.Test;
 
-/**
- * Represents the invalid configuration of a transform.
- */
-public class TransformConfigurationException extends JobConfigurationException
+import com.prelert.job.transform.Operator;
+import com.prelert.job.transform.TransformConfigurationException;
+
+public class OperatorVerifierTest
 {
-    private static final long serialVersionUID = -8930949236695246267L;
-
-    /**
-     * Create a new TransformConfigurationException.
-     *
-     * @param message Details of error explaining the context
-     * @param errorCode See {@linkplain com.prelert.job.errorcodes.ErrorCodes}
-     */
-    public TransformConfigurationException(String message, ErrorCodes errorCode)
+    @Test
+    public void testVerify() throws TransformConfigurationException
     {
-        super(message, errorCode);
+        assertTrue(OperatorVerifier.verify(Operator.EQ.name()));
+        assertTrue(OperatorVerifier.verify("matCh"));
     }
+
+    @Test(expected=TransformConfigurationException.class)
+    public void testVerify_unknownOp() throws TransformConfigurationException
+    {
+        assertTrue(OperatorVerifier.verify("bad_op"));
+    }
+
 }

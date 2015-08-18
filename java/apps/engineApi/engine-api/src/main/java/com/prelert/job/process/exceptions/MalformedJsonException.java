@@ -27,8 +27,8 @@
 
 package com.prelert.job.process.exceptions;
 
+import com.prelert.job.JobException;
 import com.prelert.job.errorcodes.ErrorCodes;
-import com.prelert.job.exceptions.JobException;
 
 public class MalformedJsonException extends JobException
 {

@@ -61,16 +61,17 @@ import com.prelert.job.DataCounts;
 import com.prelert.job.DataDescription;
 import com.prelert.job.JobDetails;
 import com.prelert.job.JobStatus;
+import com.prelert.job.UnknownJobException;
 import com.prelert.job.alert.AlertObserver;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.exceptions.JobInUseException;
-import com.prelert.job.exceptions.UnknownJobException;
 import com.prelert.job.messages.Messages;
 import com.prelert.job.persistence.DataPersisterFactory;
 import com.prelert.job.persistence.JobDataCountsPersisterFactory;
 import com.prelert.job.persistence.JobDataPersister;
 import com.prelert.job.persistence.JobProvider;
 import com.prelert.job.persistence.UsagePersisterFactory;
+import com.prelert.job.persistence.none.NoneJobDataPersister;
 import com.prelert.job.process.ProcessCtrl;
 import com.prelert.job.process.autodetect.ProcessAndDataDescription.Action;
 import com.prelert.job.process.exceptions.ClosedJobException;
@@ -243,7 +244,7 @@ public class ProcessManager
         OutOfOrderRecordsException, MalformedJsonException
     {
         JobDataPersister persister = params.isPersisting() ? m_DataPersisterFactory
-                .newDataPersister(jobId) : m_DataPersisterFactory.newNoneDataPersister();
+                .newDataPersister(jobId) : new NoneJobDataPersister();
         return processDataLoadJob(jobId, input, persister, params);
     }
 

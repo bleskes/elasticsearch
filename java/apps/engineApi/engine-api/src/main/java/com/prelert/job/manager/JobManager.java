@@ -51,16 +51,17 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.prelert.job.DataCounts;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.JobDetails;
+import com.prelert.job.JobIdAlreadyExistsException;
 import com.prelert.job.JobStatus;
 import com.prelert.job.ModelDebugConfig;
+import com.prelert.job.UnknownJobException;
 import com.prelert.job.alert.AlertObserver;
 import com.prelert.job.config.verification.JobConfigurationException;
 import com.prelert.job.errorcodes.ErrorCodes;
-import com.prelert.job.exceptions.JobIdAlreadyExistsException;
 import com.prelert.job.exceptions.JobInUseException;
 import com.prelert.job.exceptions.TooManyJobsException;
-import com.prelert.job.exceptions.UnknownJobException;
 import com.prelert.job.messages.Messages;
+import com.prelert.job.persistence.DataStoreException;
 import com.prelert.job.persistence.JobProvider;
 import com.prelert.job.persistence.QueryPage;
 import com.prelert.job.persistence.none.NoneJobDataPersister;
@@ -587,12 +588,13 @@ public class JobManager
      * @param jobId
      * @return
      * @throws UnknownJobException If the jobId is not recognised
+     * @throws DataStoreException If there is an error deleting the job
      * @throws NativeProcessRunException
      * @throws JobInUseException If the job cannot be deleted because the
      * native process is in use.
      */
     public boolean deleteJob(String jobId)
-    throws UnknownJobException, NativeProcessRunException, JobInUseException
+    throws UnknownJobException, DataStoreException, NativeProcessRunException, JobInUseException
     {
         LOGGER.debug("Deleting job '" + jobId + "'");
 

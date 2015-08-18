@@ -34,7 +34,6 @@ import org.elasticsearch.client.Client;
 import org.junit.Test;
 
 import com.prelert.job.persistence.JobDataPersister;
-import com.prelert.job.persistence.none.NoneJobDataPersister;
 
 public class ElasticsearchDataPersisterFactoryTest
 {
@@ -48,16 +47,5 @@ public class ElasticsearchDataPersisterFactoryTest
         JobDataPersister persister = factory.newDataPersister("foo");
 
         assertTrue(persister instanceof ElasticsearchJobDataPersister);
-    }
-
-    @Test
-    public void testNewNoneDataPersister()
-    {
-        Client client = mock(Client.class);
-        ElasticsearchDataPersisterFactory factory = new ElasticsearchDataPersisterFactory(client);
-
-        JobDataPersister persister = factory.newNoneDataPersister();
-
-        assertTrue(persister instanceof NoneJobDataPersister);
     }
 }

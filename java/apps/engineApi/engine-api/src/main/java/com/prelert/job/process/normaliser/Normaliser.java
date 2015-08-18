@@ -34,8 +34,8 @@ import java.util.List;
 import org.apache.log4j.Logger;
 
 import com.google.common.base.Strings;
+import com.prelert.job.UnknownJobException;
 import com.prelert.job.errorcodes.ErrorCodes;
-import com.prelert.job.exceptions.UnknownJobException;
 import com.prelert.job.normalisation.NormalisedResult;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
 import com.prelert.job.process.output.parsing.NormalisedResultsParser;

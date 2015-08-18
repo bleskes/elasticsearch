@@ -31,7 +31,6 @@ import org.elasticsearch.client.Client;
 
 import com.prelert.job.persistence.DataPersisterFactory;
 import com.prelert.job.persistence.JobDataPersister;
-import com.prelert.job.persistence.none.NoneJobDataPersister;
 
 public class ElasticsearchDataPersisterFactory implements DataPersisterFactory
 {
@@ -47,10 +46,5 @@ public class ElasticsearchDataPersisterFactory implements DataPersisterFactory
     public JobDataPersister newDataPersister(String jobId)
     {
         return new ElasticsearchJobDataPersister(jobId, m_Client);
-    }
-
-    @Override
-    public JobDataPersister newNoneDataPersister() {
-        return new NoneJobDataPersister();
     }
 }

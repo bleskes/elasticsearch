@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -25,12 +25,37 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.job.transform;
+package com.prelert.job;
 
-import com.prelert.job.transform.exceptions.TransformConfigurationException;
+import com.prelert.job.errorcodes.ErrorCodes;
+//import com.prelert.job.messages.Messages;
 
-@FunctionalInterface
-public interface ArgumentVerifier
+
+/**
+ * Job ids (names) must be unique no 2 jobs can have the same id.
+ */
+public class JobIdAlreadyExistsException extends JobException
 {
-    void verify(String argument, TransformConfig tc) throws TransformConfigurationException;
+	private static final long serialVersionUID = 8656604180755905746L;
+
+	private final String m_JobId;
+
+	/**
+	 * Create a new JobIdAlreadyExistsException with the error code
+	 * and Id (job name)
+	 *
+	 * @param jobId The Job Id that could not be found
+	 */
+	public JobIdAlreadyExistsException(String jobId)
+	{
+		super("" /*Messages.getMessage(Messages.JOB_CONFIG_ID_ALREADY_TAKEN, jobId)*/,
+		            ErrorCodes.JOB_ID_TAKEN);
+		m_JobId = jobId;
+	}
+
+	public String getAlias()
+	{
+		return m_JobId;
+	}
+
 }

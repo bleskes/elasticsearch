@@ -78,7 +78,8 @@ public final class Messages
     public static final String JOB_CONFIG_OVERFIELD_NEEDS_ANOTHER = "job.config.overField.needs.another";
     public static final String JOB_CONFIG_TRANSFORM_CIRCULAR_DEPENDENCY = "job.config.transform.circular.dependency";
     public static final String JOB_CONFIG_TRANSFORM_CONDITION_INVALID_OPERATOR = "job.config.transform.condition.invalid.operator";
-    public static final String JOB_CONFIG_TRANSFORM_CONDITION_INVALID_VALUE = "job.config.transform.condition.invalid.value";
+    public static final String JOB_CONFIG_TRANSFORM_CONDITION_INVALID_VALUE_NUMBER = "job.config.transform.condition.invalid.value.numeric";
+    public static final String JOB_CONFIG_TRANSFORM_CONDITION_INVALID_VALUE_REGEX = "job.config.transform.condition.invalid.value.regex";
     public static final String JOB_CONFIG_TRANSFORM_CONDITION_REQUIRED = "job.config.transform.condition.required";
     public static final String JOB_CONFIG_TRANSFORM_CONDITION_UNKNOWN_OPERATOR = "job.config.transform.condition.unknown.operator";
     public static final String JOB_CONFIG_TRANSFORM_DUPLICATED_OUTPUT_NAME = "job.config.transform.duplicated.output.name";

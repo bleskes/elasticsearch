@@ -52,9 +52,9 @@ import com.prelert.job.DataDescription;
 import com.prelert.job.Detector;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.JobDetails;
+import com.prelert.job.transform.Condition;
+import com.prelert.job.transform.Operator;
 import com.prelert.job.transform.TransformConfig;
-import com.prelert.job.transform.condition.Condition;
-import com.prelert.job.transform.condition.Operator;
 
 public class JobConfigurationSerialisationTest {
 

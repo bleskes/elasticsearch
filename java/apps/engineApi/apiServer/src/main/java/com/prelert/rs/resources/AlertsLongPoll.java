@@ -40,9 +40,9 @@ import javax.ws.rs.core.Response;
 
 import org.apache.log4j.Logger;
 
+import com.prelert.job.UnknownJobException;
 import com.prelert.job.alert.manager.AlertManager;
 import com.prelert.job.errorcodes.ErrorCodes;
-import com.prelert.job.exceptions.UnknownJobException;
 import com.prelert.job.messages.Messages;
 import com.prelert.rs.provider.RestApiException;
 

@@ -80,8 +80,8 @@ import com.prelert.job.JobStatus;
 import com.prelert.job.ModelSizeStats;
 import com.prelert.job.ModelState;
 import com.prelert.job.errorcodes.ErrorCodes;
-import com.prelert.job.exceptions.UnknownJobException;
-import com.prelert.job.messages.Messages;
+import com.prelert.job.UnknownJobException;
+import com.prelert.job.persistence.DataStoreException;
 import com.prelert.job.persistence.JobProvider;
 import com.prelert.job.persistence.QueryPage;
 import com.prelert.job.quantiles.Quantiles;
@@ -526,7 +526,7 @@ public class ElasticsearchJobProvider implements JobProvider
 
 
     @Override
-    public boolean deleteJob(String jobId) throws UnknownJobException
+    public boolean deleteJob(String jobId) throws UnknownJobException, DataStoreException
     {
         try
         {
@@ -547,17 +547,19 @@ public class ElasticsearchJobProvider implements JobProvider
         {
             if (e.getCause() instanceof IndexMissingException)
             {
-                String msg = Messages.getMessage(Messages.DATASTORE_ERROR_DELETING_MISSING_INDEX, jobId);
+                String msg = "";
+                // TODO
+                //String msg = Messages.getMessage(Messages.DATASTORE_ERROR_DELETING_MISSING_INDEX, jobId);
                 LOGGER.warn(msg);
-                throw new UnknownJobException(jobId, msg,
-                        ErrorCodes.MISSING_JOB_ERROR);
+                throw new DataStoreException(msg, ErrorCodes.MISSING_JOB_ERROR);
             }
             else
             {
-                String msg = Messages.getMessage(Messages.DATASTORE_ERROR_DELETING, jobId);
+                String msg = "";
+                // TODO
+                //String msg = Messages.getMessage(Messages.DATASTORE_ERROR_DELETING, jobId);
                 LOGGER.error(msg);
-                throw new UnknownJobException(jobId, msg,
-                        ErrorCodes.DATA_STORE_ERROR, e.getCause());
+                throw new DataStoreException(msg, ErrorCodes.DATA_STORE_ERROR, e.getCause());
             }
         }
     }
@@ -988,9 +990,8 @@ public class ElasticsearchJobProvider implements JobProvider
         }
         catch (IndexMissingException e)
         {
-            String message = Messages.getMessage(Messages.JOB_MISSING_QUANTILES, jobId);
-            LOGGER.error(message);
-            throw new UnknownJobException(jobId, message, ErrorCodes.MISSING_JOB_ERROR);
+            LOGGER.error("Missing index when getting quantiles", e);
+            throw new UnknownJobException(jobId);
         }
     }
 

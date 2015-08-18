@@ -26,8 +26,8 @@
  ************************************************************/
 package com.prelert.job.status;
 
+import com.prelert.job.JobException;
 import com.prelert.job.errorcodes.ErrorCodes;
-import com.prelert.job.exceptions.JobException;
 
 /**
  * If the timestamp field of a record cannot be read or the

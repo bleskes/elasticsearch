@@ -33,7 +33,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.core.io.JsonStringEncoder;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.errorcodes.HasErrorCode;
-import com.prelert.job.exceptions.JobException;
+import com.prelert.job.JobException;
 
 
 /**

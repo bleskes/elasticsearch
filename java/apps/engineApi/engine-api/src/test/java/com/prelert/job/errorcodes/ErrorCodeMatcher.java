@@ -25,31 +25,42 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.job.transform;
+package com.prelert.job.errorcodes;
 
-import java.util.regex.Pattern;
-import java.util.regex.PatternSyntaxException;
+import org.hamcrest.Description;
+import org.junit.internal.matchers.TypeSafeMatcher;
 
 import com.prelert.job.errorcodes.ErrorCodes;
-import com.prelert.job.messages.Messages;
-import com.prelert.job.transform.exceptions.TransformConfigurationException;
+import com.prelert.job.errorcodes.HasErrorCode;
 
-public class RegexPatternVerifier implements ArgumentVerifier
-{
+public class ErrorCodeMatcher extends TypeSafeMatcher<HasErrorCode> {
+
+    private ErrorCodes m_ExpectedErrorCode;
+    private ErrorCodes m_ActualErrorCode;
+
+    public static ErrorCodeMatcher hasErrorCode(ErrorCodes expected)
+    {
+        return new ErrorCodeMatcher(expected);
+    }
+
+    private ErrorCodeMatcher(ErrorCodes expectedErrorCode)
+    {
+        m_ExpectedErrorCode = expectedErrorCode;
+    }
 
     @Override
-    public void verify(String arg, TransformConfig tc) throws TransformConfigurationException
+    public void describeTo(Description description)
     {
-        try
-        {
-            Pattern.compile(arg);
-        }
-        catch (PatternSyntaxException e)
-        {
-            String msg = Messages.getMessage(Messages.JOB_CONFIG_TRANSFORM_INVALID_ARGUMENT,
-                    tc.getTransform(), arg);
-            throw new TransformConfigurationException(msg, ErrorCodes.TRANSFORM_INVALID_ARGUMENT);
-        }
+        description.appendValue(m_ActualErrorCode)
+                .appendText(" was found instead of ")
+                .appendValue(m_ExpectedErrorCode);
+    }
+
+    @Override
+    public boolean matchesSafely(HasErrorCode item)
+    {
+        m_ActualErrorCode = item.getErrorCode();
+        return m_ActualErrorCode.equals(m_ExpectedErrorCode);
     }
 
 }

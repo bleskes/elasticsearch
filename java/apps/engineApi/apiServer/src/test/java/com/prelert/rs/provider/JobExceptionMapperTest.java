@@ -39,9 +39,9 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.prelert.job.UnknownJobException;
 import com.prelert.job.config.verification.JobConfigurationException;
 import com.prelert.job.errorcodes.ErrorCodes;
-import com.prelert.job.exceptions.UnknownJobException;
 import com.prelert.rs.data.ApiError;
 
 public class JobExceptionMapperTest

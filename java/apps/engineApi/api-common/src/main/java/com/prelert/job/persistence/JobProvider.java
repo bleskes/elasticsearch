@@ -27,7 +27,7 @@
 
 package com.prelert.job.persistence;
 
-import com.prelert.job.exceptions.UnknownJobException;
+import com.prelert.job.UnknownJobException;
 import com.prelert.job.quantiles.Quantiles;
 
 public interface JobProvider extends JobDetailsProvider, JobResultsProvider, JobRenormaliser

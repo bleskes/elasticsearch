@@ -36,10 +36,14 @@ import java.util.Map;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.prelert.job.results.Bucket;
 import com.prelert.rs.data.Pagination;
-import com.prelert.rs.resources.Buckets;
 
 public class BucketsRequestBuilder extends BaseJobRequestBuilder<Bucket>
 {
+    public static final String INCLUDE_INTERIM_QUERY_PARAM = "includeInterim";
+    public static final String EXPAND_QUERY_PARAM = "expand";
+    public static final String START_QUERY_PARAM = "start";
+    public static final String END_QUERY_PARAM = "end";
+
     private final Map<String, String> m_Params;
 
     /**
@@ -60,7 +64,7 @@ public class BucketsRequestBuilder extends BaseJobRequestBuilder<Bucket>
      */
     public BucketsRequestBuilder expand(boolean shouldExpand)
     {
-        m_Params.put(Buckets.EXPAND_QUERY_PARAM, Boolean.toString(shouldExpand));
+        m_Params.put(EXPAND_QUERY_PARAM, Boolean.toString(shouldExpand));
         return this;
     }
 
@@ -72,7 +76,7 @@ public class BucketsRequestBuilder extends BaseJobRequestBuilder<Bucket>
      */
     public BucketsRequestBuilder includeInterim(boolean includeInterim)
     {
-        m_Params.put(Buckets.INCLUDE_INTERIM_QUERY_PARAM, Boolean.toString(includeInterim));
+        m_Params.put(INCLUDE_INTERIM_QUERY_PARAM, Boolean.toString(includeInterim));
         return this;
     }
 
@@ -133,7 +137,7 @@ public class BucketsRequestBuilder extends BaseJobRequestBuilder<Bucket>
      */
     public BucketsRequestBuilder start(long value)
     {
-        m_Params.put(Buckets.START_QUERY_PARAM, Long.toString(value));
+        m_Params.put(START_QUERY_PARAM, Long.toString(value));
         return this;
     }
 
@@ -147,7 +151,7 @@ public class BucketsRequestBuilder extends BaseJobRequestBuilder<Bucket>
      */
     public BucketsRequestBuilder start(String value) throws UnsupportedEncodingException
     {
-        m_Params.put(Buckets.START_QUERY_PARAM, URLEncoder.encode(value, "UTF-8"));
+        m_Params.put(START_QUERY_PARAM, URLEncoder.encode(value, "UTF-8"));
         return this;
     }
 
@@ -160,7 +164,7 @@ public class BucketsRequestBuilder extends BaseJobRequestBuilder<Bucket>
      */
     public BucketsRequestBuilder end(long value)
     {
-        m_Params.put(Buckets.END_QUERY_PARAM, Long.toString(value));
+        m_Params.put(END_QUERY_PARAM, Long.toString(value));
         return this;
     }
 
@@ -175,7 +179,7 @@ public class BucketsRequestBuilder extends BaseJobRequestBuilder<Bucket>
      */
     public BucketsRequestBuilder end(String value) throws UnsupportedEncodingException
     {
-        m_Params.put(Buckets.END_QUERY_PARAM, URLEncoder.encode(value, "UTF-8"));
+        m_Params.put(END_QUERY_PARAM, URLEncoder.encode(value, "UTF-8"));
         return this;
     }
 

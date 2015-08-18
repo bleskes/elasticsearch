@@ -42,7 +42,6 @@ import org.junit.rules.ExpectedException;
 
 import com.prelert.job.errorcodes.ErrorCodeMatcher;
 import com.prelert.job.errorcodes.ErrorCodes;
-import com.prelert.job.transform.exceptions.TransformConfigurationException;
 
 public class TransformConfigsTest
 {

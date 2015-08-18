@@ -49,7 +49,7 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
-import com.prelert.job.exceptions.UnknownJobException;
+import com.prelert.job.UnknownJobException;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
 import com.prelert.job.process.normaliser.Normaliser;
 import com.prelert.job.process.normaliser.NormaliserProcess;

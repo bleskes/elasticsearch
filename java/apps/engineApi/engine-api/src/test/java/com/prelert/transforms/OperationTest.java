@@ -32,8 +32,8 @@ import java.util.regex.Pattern;
 
 import org.junit.Test;
 
-import com.prelert.job.transform.condition.Operator;
-import com.prelert.job.transform.exceptions.TransformConfigurationException;
+import com.prelert.job.transform.Operator;
+import com.prelert.job.transform.TransformConfigurationException;
 
 public class OperationTest {
 

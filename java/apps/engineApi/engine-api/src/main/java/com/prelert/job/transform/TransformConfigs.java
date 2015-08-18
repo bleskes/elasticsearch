@@ -34,7 +34,7 @@ import java.util.Set;
 
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.messages.Messages;
-import com.prelert.job.transform.exceptions.TransformConfigurationException;
+import com.prelert.job.transform.verification.TransformConfigVerifier;
 
 /**
  * Utility class for methods involving arrays of transforms
@@ -86,9 +86,9 @@ public class TransformConfigs
     }
 
     /**
-     * Checks the transform configurations ar valid
+     * Checks the transform configurations are valid
      * <ol>
-     * <li>Call {@linkplain TransformConfig#verify()} on each transform</li>
+     * <li>Call {@linkplain TransformConfigVerifier#verify()} on each transform</li>
      * <li>Check all the transform output field names are unique</li>
      * <li>Check there are no circular dependencies in the transforms</li>
      * </ol>
@@ -97,7 +97,7 @@ public class TransformConfigs
     {
         for (TransformConfig tr : m_Transforms)
         {
-            tr.verify();
+            TransformConfigVerifier.verify(tr);
         }
 
         String duplicatedName = outputNamesAreUnique();

@@ -26,6 +26,7 @@
  ************************************************************/
 package com.prelert.job.exceptions;
 
+import com.prelert.job.JobException;
 import com.prelert.job.errorcodes.ErrorCodes;
 
 /**

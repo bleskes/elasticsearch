@@ -34,8 +34,8 @@ import java.util.Optional;
 
 import com.prelert.job.JobDetails;
 import com.prelert.job.JobStatus;
-import com.prelert.job.exceptions.JobIdAlreadyExistsException;
-import com.prelert.job.exceptions.UnknownJobException;
+import com.prelert.job.JobIdAlreadyExistsException;
+import com.prelert.job.UnknownJobException;
 
 /**
  * General interface for classes that persist Jobs and job data
@@ -69,8 +69,8 @@ public interface JobDetailsProvider extends Closeable
 
 
 	/**
-	 * Get the details of the specific job or throw a
-	 * <code>UnknownJobException</code>
+	 * Get the details of the specific job or an empty
+	 * Optional if there is no job with the given id.
 	 *
 	 * @param jobId
 	 * @return The JobDetails
@@ -131,8 +131,9 @@ public interface JobDetailsProvider extends Closeable
 	 * @param jobId
 	 * @return
 	 * @throws UnknownJobException If the jobId is not recognised
+	 * @throws DataStoreException If there is a datastore error
 	 */
-	public boolean deleteJob(String jobId) throws UnknownJobException;
+	public boolean deleteJob(String jobId) throws UnknownJobException, DataStoreException;
 
 	/**
 	 * Set the job status

@@ -43,7 +43,7 @@ import static org.junit.Assert.*;
 
 import org.junit.Test;
 
-import com.prelert.job.exceptions.UnknownJobException;
+import com.prelert.job.UnknownJobException;
 
 
 /**

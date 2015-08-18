@@ -36,10 +36,15 @@ import java.util.Map;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.prelert.job.results.AnomalyRecord;
 import com.prelert.rs.data.Pagination;
-import com.prelert.rs.resources.Records;
 
 public class RecordsRequestBuilder extends BaseJobRequestBuilder<AnomalyRecord>
 {
+    public static final String INCLUDE_INTERIM_QUERY_PARAM = "includeInterim";
+    public static final String START_QUERY_PARAM = "start";
+    public static final String END_QUERY_PARAM = "end";
+    public static final String SORT_QUERY_PARAM = "sort";
+    public static final String DESCENDING_ORDER = "desc";
+
     private final Map<String, String> m_Params;
 
     /**
@@ -60,7 +65,7 @@ public class RecordsRequestBuilder extends BaseJobRequestBuilder<AnomalyRecord>
      */
     public RecordsRequestBuilder includeInterim(boolean includeInterim)
     {
-        m_Params.put(Records.INCLUDE_INTERIM_QUERY_PARAM, Boolean.toString(includeInterim));
+        m_Params.put(INCLUDE_INTERIM_QUERY_PARAM, Boolean.toString(includeInterim));
         return this;
     }
 
@@ -121,7 +126,7 @@ public class RecordsRequestBuilder extends BaseJobRequestBuilder<AnomalyRecord>
      */
     public RecordsRequestBuilder start(long value)
     {
-        m_Params.put(Records.START_QUERY_PARAM, Long.toString(value));
+        m_Params.put(START_QUERY_PARAM, Long.toString(value));
         return this;
     }
 
@@ -135,7 +140,7 @@ public class RecordsRequestBuilder extends BaseJobRequestBuilder<AnomalyRecord>
      */
     public RecordsRequestBuilder start(String value) throws UnsupportedEncodingException
     {
-        m_Params.put(Records.START_QUERY_PARAM, URLEncoder.encode(value, "UTF-8"));
+        m_Params.put(START_QUERY_PARAM, URLEncoder.encode(value, "UTF-8"));
         return this;
     }
 
@@ -148,7 +153,7 @@ public class RecordsRequestBuilder extends BaseJobRequestBuilder<AnomalyRecord>
      */
     public RecordsRequestBuilder end(long value)
     {
-        m_Params.put(Records.END_QUERY_PARAM, Long.toString(value));
+        m_Params.put(END_QUERY_PARAM, Long.toString(value));
         return this;
     }
 
@@ -162,7 +167,7 @@ public class RecordsRequestBuilder extends BaseJobRequestBuilder<AnomalyRecord>
      */
     public RecordsRequestBuilder end(String value) throws UnsupportedEncodingException
     {
-        m_Params.put(Records.END_QUERY_PARAM, URLEncoder.encode(value, "UTF-8"));
+        m_Params.put(END_QUERY_PARAM, URLEncoder.encode(value, "UTF-8"));
         return this;
     }
 
@@ -174,7 +179,7 @@ public class RecordsRequestBuilder extends BaseJobRequestBuilder<AnomalyRecord>
      */
     public RecordsRequestBuilder sortField(String field)
     {
-        m_Params.put(Records.SORT_QUERY_PARAM, field);
+        m_Params.put(SORT_QUERY_PARAM, field);
         return this;
     }
 
@@ -186,7 +191,7 @@ public class RecordsRequestBuilder extends BaseJobRequestBuilder<AnomalyRecord>
      */
     public RecordsRequestBuilder descending(boolean descending)
     {
-        m_Params.put(Records.DESCENDING_ORDER, Boolean.toString(descending));
+        m_Params.put(DESCENDING_ORDER, Boolean.toString(descending));
         return this;
     }
 

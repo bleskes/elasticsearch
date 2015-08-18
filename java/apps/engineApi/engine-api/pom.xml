@@ -22,12 +22,12 @@
 
   <dependencies>
     <!-- provided jars -->
-
     <dependency>
       <groupId>com.prelert</groupId>
       <artifactId>api-common</artifactId>
       <scope>provided</scope>
     </dependency>
+    
     <!-- elasticsearch is required for server info -->
     <dependency>
       <groupId>org.elasticsearch</groupId>
@@ -66,9 +66,7 @@
     <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
-      <version>18.0</version>
     </dependency>
-
   </dependencies>
 
 

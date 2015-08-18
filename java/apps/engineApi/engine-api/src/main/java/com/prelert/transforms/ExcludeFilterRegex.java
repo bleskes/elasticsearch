@@ -32,7 +32,7 @@ import java.util.regex.Pattern;
 
 import org.apache.log4j.Logger;
 
-import com.prelert.job.transform.condition.Condition;
+import com.prelert.job.transform.Condition;
 
 /**
  * Matches a field against a regex

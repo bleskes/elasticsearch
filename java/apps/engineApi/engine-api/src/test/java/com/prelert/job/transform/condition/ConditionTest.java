@@ -28,69 +28,14 @@ package com.prelert.job.transform.condition;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 
-import com.prelert.job.errorcodes.ErrorCodeMatcher;
-import com.prelert.job.errorcodes.ErrorCodes;
-import com.prelert.job.transform.exceptions.TransformConfigurationException;
+import com.prelert.job.transform.Condition;
+import com.prelert.job.transform.Operator;
 
 public class ConditionTest
 {
-    @Rule public ExpectedException m_ExpectedException = ExpectedException.none();
-
-    @Test
-    public void testVerifyArgsNumericArgs()
-    throws TransformConfigurationException
-    {
-        Condition c = new Condition(Operator.LTE, "100");
-        assertTrue(c.verify());
-        c = new Condition(Operator.GT, "10.0");
-        assertTrue(c.verify());
-    }
-
-    @Test
-    public void testVerify_GivenUnsetOperator() throws TransformConfigurationException
-    {
-        m_ExpectedException.expect(TransformConfigurationException.class);
-        m_ExpectedException.expectMessage("Invalid operator for condition");
-        m_ExpectedException.expect(
-                ErrorCodeMatcher.hasErrorCode(ErrorCodes.CONDITION_INVALID_ARGUMENT));
-
-        new Condition().verify();
-    }
-
-    @Test
-    public void testVerify_GivenOperatorIsNone() throws TransformConfigurationException
-    {
-        m_ExpectedException.expect(TransformConfigurationException.class);
-        m_ExpectedException.expectMessage("Invalid operator for condition");
-        m_ExpectedException.expect(
-                ErrorCodeMatcher.hasErrorCode(ErrorCodes.CONDITION_INVALID_ARGUMENT));
-
-        Condition condition = new Condition();
-        condition.setOperator(Operator.NONE);
-        condition.verify();
-    }
-
-    @Test
-    public void testVerify_GivenEmptyValue() throws TransformConfigurationException
-    {
-        m_ExpectedException.expect(TransformConfigurationException.class);
-        m_ExpectedException.expectMessage(
-                "Invalid condition value: cannot parse a double from string ''");
-        m_ExpectedException.expect(
-                ErrorCodeMatcher.hasErrorCode(ErrorCodes.CONDITION_INVALID_ARGUMENT));
-
-        Condition condition = new Condition();
-        condition.setOperator(Operator.LT);
-        condition.setValue("");
-        condition.verify();
-    }
-
     @Test
     public void testSetValues()
     {

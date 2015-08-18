@@ -63,11 +63,11 @@ import com.prelert.job.process.writer.AbstractDataToProcessWriter.InputOutputMap
 import com.prelert.job.status.HighProportionOfBadTimestampsException;
 import com.prelert.job.status.OutOfOrderRecordsException;
 import com.prelert.job.status.StatusReporter;
+import com.prelert.job.transform.Condition;
+import com.prelert.job.transform.Operator;
 import com.prelert.job.transform.TransformConfig;
 import com.prelert.job.transform.TransformConfigs;
 import com.prelert.job.transform.TransformType;
-import com.prelert.job.transform.condition.Condition;
-import com.prelert.job.transform.condition.Operator;
 import com.prelert.transforms.Concat;
 import com.prelert.transforms.HighestRegisteredDomain;
 import com.prelert.transforms.RegexSplit;

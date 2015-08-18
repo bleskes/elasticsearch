@@ -50,8 +50,8 @@ import org.mockito.Mockito;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.prelert.job.ModelSizeStats;
+import com.prelert.job.UnknownJobException;
 import com.prelert.job.alert.AlertObserver;
-import com.prelert.job.exceptions.UnknownJobException;
 import com.prelert.job.persistence.JobResultsPersister;
 import com.prelert.job.process.normaliser.Renormaliser;
 import com.prelert.job.process.output.parsing.AutoDetectResultsParser;

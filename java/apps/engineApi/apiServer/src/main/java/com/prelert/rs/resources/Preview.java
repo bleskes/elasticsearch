@@ -41,9 +41,9 @@ import javax.ws.rs.core.Response;
 
 import org.apache.log4j.Logger;
 
+import com.prelert.job.UnknownJobException;
 import com.prelert.job.exceptions.JobInUseException;
 import com.prelert.job.exceptions.TooManyJobsException;
-import com.prelert.job.exceptions.UnknownJobException;
 import com.prelert.job.process.exceptions.MalformedJsonException;
 import com.prelert.job.process.exceptions.MissingFieldException;
 import com.prelert.job.process.exceptions.NativeProcessRunException;

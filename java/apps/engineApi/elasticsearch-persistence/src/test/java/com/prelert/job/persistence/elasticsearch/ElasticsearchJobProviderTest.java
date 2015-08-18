@@ -50,7 +50,7 @@ import org.mockito.MockitoAnnotations;
 
 import com.prelert.job.errorcodes.ErrorCodeMatcher;
 import com.prelert.job.errorcodes.ErrorCodes;
-import com.prelert.job.exceptions.UnknownJobException;
+import com.prelert.job.UnknownJobException;
 import com.prelert.job.quantiles.Quantiles;
 
 public class ElasticsearchJobProviderTest

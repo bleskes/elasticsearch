@@ -35,7 +35,7 @@ import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.messages.Messages;
 import com.prelert.job.transform.TransformConfig;
 import com.prelert.job.transform.TransformConfigs;
-import com.prelert.job.transform.exceptions.TransformConfigurationException;
+import com.prelert.job.transform.TransformConfigurationException;
 
 public class JobConfigurationVerifier
 {

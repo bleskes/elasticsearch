@@ -42,11 +42,11 @@ import org.apache.log4j.Logger;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.prelert.job.DataCounts;
+import com.prelert.job.JobException;
+import com.prelert.job.UnknownJobException;
 import com.prelert.job.errorcodes.ErrorCodes;
-import com.prelert.job.exceptions.JobException;
 import com.prelert.job.exceptions.JobInUseException;
 import com.prelert.job.exceptions.TooManyJobsException;
-import com.prelert.job.exceptions.UnknownJobException;
 import com.prelert.job.manager.JobManager;
 import com.prelert.job.messages.Messages;
 import com.prelert.job.process.exceptions.MalformedJsonException;

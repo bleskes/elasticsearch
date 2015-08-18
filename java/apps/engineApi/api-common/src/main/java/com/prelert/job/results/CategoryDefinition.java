@@ -25,80 +25,78 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.job.quantiles;
+package com.prelert.job.results;
 
-import java.util.Date;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.Objects;
-
-import org.elasticsearch.common.base.Strings;
+import java.util.Set;
+import java.util.TreeSet;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
-/**
- * Quantiles Result POJO
- */
 @JsonInclude(Include.NON_NULL)
-public class Quantiles
+public class CategoryDefinition
 {
-    public static final String QUANTILES_ID = "hierarchical";
-    public static final String CURRENT_VERSION = "1";
+    public static final String TYPE = "categoryDefinition";
+    public static final String CATEGORY_ID = "categoryId";
+    public static final String TERMS = "terms";
+    public static final String REGEX = "regex";
+    public static final String EXAMPLES = "examples";
 
-    /**
-     * Field Names
-     */
-    public static final String ID = "id";
-    public static final String VERSION = "version";
-    public static final String TIMESTAMP = "timestamp";
-    public static final String QUANTILE_STATE = "quantileState";
+    private long m_Id = 0L;
+    private String m_Terms = "";
+    private String m_Regex = "";
+    private final Set<String> m_Examples = new TreeSet<>();
 
-    /**
-     * Elasticsearch type
-     */
-    public static final String TYPE = "quantiles";
-
-    private Date m_Timestamp;
-    private String m_State;
-
-    public String getId()
+    public long getCategoryId()
     {
-        return QUANTILES_ID;
+        return m_Id;
     }
 
-    public String getVersion()
+    public void setCategoryId(long categoryId)
     {
-        return CURRENT_VERSION;
+        m_Id = categoryId;
     }
 
-    public Date getTimestamp()
+    public String getTerms()
     {
-        return m_Timestamp;
+        return m_Terms;
     }
 
-    public void setTimestamp(Date timestamp)
+    public void setTerms(String terms)
     {
-        m_Timestamp = timestamp;
+        m_Terms = terms;
     }
 
-    public String getState()
+    public String getRegex()
     {
-        return Strings.nullToEmpty(m_State);
+        return m_Regex;
     }
 
-    public void setState(String state)
+    public void setRegex(String regex)
     {
-        m_State = state;
+        m_Regex = regex;
     }
 
-    @Override
-    public int hashCode()
+    public List<String> getExamples()
     {
-        return Objects.hashCode(m_State);
+        return new ArrayList<>(m_Examples);
     }
 
-    /**
-     * Compare all the fields.
-     */
+    public void setExamples(Collection<String> examples)
+    {
+        m_Examples.clear();
+        m_Examples.addAll(examples);
+    }
+
+    public void addExample(String example)
+    {
+        m_Examples.add(example);
+    }
+
     @Override
     public boolean equals(Object other)
     {
@@ -106,15 +104,20 @@ public class Quantiles
         {
             return true;
         }
-
-        if (other instanceof Quantiles == false)
+        if (other instanceof CategoryDefinition == false)
         {
             return false;
         }
+        CategoryDefinition that = (CategoryDefinition) other;
+        return Objects.equals(this.m_Id, that.m_Id)
+                && Objects.equals(this.m_Terms, that.m_Terms)
+                && Objects.equals(this.m_Regex, that.m_Regex)
+                && Objects.equals(this.m_Examples, that.m_Examples);
+    }
 
-        Quantiles that = (Quantiles) other;
-
-        return Objects.equals(this.m_State, that.m_State);
+    @Override
+    public int hashCode()
+    {
+        return Objects.hash(m_Id, m_Terms, m_Regex, m_Examples);
     }
 }
-

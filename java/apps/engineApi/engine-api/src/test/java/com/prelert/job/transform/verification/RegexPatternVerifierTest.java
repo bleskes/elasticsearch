@@ -25,86 +25,40 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.job.transform;
+package com.prelert.job.transform.verification;
 
-import java.util.Arrays;
-
-import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
 import com.prelert.job.errorcodes.ErrorCodeMatcher;
 import com.prelert.job.errorcodes.ErrorCodes;
-import com.prelert.job.transform.RegexExtractVerifier;
 import com.prelert.job.transform.TransformConfig;
-import com.prelert.job.transform.exceptions.TransformConfigurationException;
+import com.prelert.job.transform.TransformConfigurationException;
+import com.prelert.job.transform.verification.RegexPatternVerifier;
 
-public class RegexExtractVerifierTest
+public class RegexPatternVerifierTest
 {
     @Rule
     public ExpectedException m_ExpectedException = ExpectedException.none();
 
-    private final TransformConfig m_TransformConfig = new TransformConfig();
-
-    @Before
-    public void setUp()
-    {
-        m_TransformConfig.setTransform("extract");
-        m_TransformConfig.setInputs(Arrays.asList("foo"));
-        m_TransformConfig.setArguments(Arrays.asList("Foo ([0-9]+)"));
-        m_TransformConfig.setOutputs(Arrays.asList("o1"));
-    }
-
     @Test
     public void testVerify_GivenValidRegex() throws TransformConfigurationException
     {
-        new RegexExtractVerifier().verify("Foo ([0-9]+)", m_TransformConfig);
+        new RegexPatternVerifier().verify("[a-z]+", new TransformConfig());
     }
 
     @Test
     public void testVerify_GivenInvalidRegex() throws TransformConfigurationException
     {
         m_ExpectedException.expect(TransformConfigurationException.class);
-        m_ExpectedException.expectMessage("Transform 'extract' has invalid argument '[+'");
+        m_ExpectedException.expectMessage("Transform 'split' has invalid argument '[+'");
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.TRANSFORM_INVALID_ARGUMENT));
 
-        new RegexExtractVerifier().verify("[+", m_TransformConfig);
-    }
+        TransformConfig transformConfig = new TransformConfig();
+        transformConfig.setTransform("split");
 
-    @Test
-    public void testVerify_GivenTwoOutputsButOneGroup() throws TransformConfigurationException
-    {
-        m_ExpectedException.expect(TransformConfigurationException.class);
-        m_ExpectedException.expectMessage("Transform 'extract' expects 2 output(s) but regex 'Foo ([0-9]+)' captures 1 group(s)");
-        m_ExpectedException.expect(
-                ErrorCodeMatcher.hasErrorCode(ErrorCodes.TRANSFORM_INVALID_ARGUMENT));
-
-        m_TransformConfig.setOutputs(Arrays.asList("o1", "o2"));
-
-        new RegexExtractVerifier().verify("Foo ([0-9]+)", m_TransformConfig);
-    }
-
-    @Test
-    public void testVerify_GivenOneOutputButTwoGroups() throws TransformConfigurationException
-    {
-        m_ExpectedException.expect(TransformConfigurationException.class);
-        m_ExpectedException.expectMessage(
-                "Transform 'extract' expects 1 output(s) but regex 'Foo ([0-9]+) ([0-9]+)' captures 2 group(s)");
-        m_ExpectedException.expect(
-                ErrorCodeMatcher.hasErrorCode(ErrorCodes.TRANSFORM_INVALID_ARGUMENT));
-
-        m_TransformConfig.setOutputs(Arrays.asList("o1"));
-
-        new RegexExtractVerifier().verify("Foo ([0-9]+) ([0-9]+)", m_TransformConfig);
-    }
-
-    @Test
-    public void testVerify_GivenTwoOutputsAndTwoGroups() throws TransformConfigurationException
-    {
-        m_TransformConfig.setOutputs(Arrays.asList("o1", "o2"));
-
-        new RegexExtractVerifier().verify("Foo ([0-9]+) ([0-9]+)", m_TransformConfig);
+        new RegexPatternVerifier().verify("[+", transformConfig);
     }
 }

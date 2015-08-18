@@ -34,7 +34,7 @@ import java.util.Optional;
 import org.apache.log4j.Logger;
 
 import com.prelert.job.DataCounts;
-import com.prelert.job.exceptions.JobException;
+import com.prelert.job.JobException;
 import com.prelert.job.process.params.DataLoadParams;
 
 public class DataStreamerThread extends Thread

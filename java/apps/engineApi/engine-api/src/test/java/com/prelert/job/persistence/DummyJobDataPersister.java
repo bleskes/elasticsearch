@@ -25,40 +25,56 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.job.transform;
+package com.prelert.job.persistence;
 
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
-
-import com.prelert.job.errorcodes.ErrorCodeMatcher;
-import com.prelert.job.errorcodes.ErrorCodes;
-import com.prelert.job.transform.RegexPatternVerifier;
-import com.prelert.job.transform.TransformConfig;
-import com.prelert.job.transform.exceptions.TransformConfigurationException;
-
-public class RegexPatternVerifierTest
+public class DummyJobDataPersister extends JobDataPersister
 {
-    @Rule
-    public ExpectedException m_ExpectedException = ExpectedException.none();
+	private int m_RecordCount = 0;
 
-    @Test
-    public void testVerify_GivenValidRegex() throws TransformConfigurationException
-    {
-        new RegexPatternVerifier().verify("[a-z]+", new TransformConfig());
-    }
+	@Override
+	public void persistRecord(long epoch, String[] record)
+	{
+		m_RecordCount++;
+	}
 
-    @Test
-    public void testVerify_GivenInvalidRegex() throws TransformConfigurationException
-    {
-        m_ExpectedException.expect(TransformConfigurationException.class);
-        m_ExpectedException.expectMessage("Transform 'split' has invalid argument '[+'");
-        m_ExpectedException.expect(
-                ErrorCodeMatcher.hasErrorCode(ErrorCodes.TRANSFORM_INVALID_ARGUMENT));
+	@Override
+	public void flushRecords()
+	{
+	}
 
-        TransformConfig transformConfig = new TransformConfig();
-        transformConfig.setTransform("split");
+	@Override
+	public boolean deleteData()
+	{
+		return false;
+	}
 
-        new RegexPatternVerifier().verify("[+", transformConfig);
-    }
+	public int getRecordCount()
+	{
+		return m_RecordCount;
+	}
+
+	public String [] getFieldNames()
+	{
+	    return m_FieldNames;
+	}
+
+	public int [] getFieldMappings()
+	{
+	    return m_FieldMappings;
+	}
+
+	public int [] getByFieldMappings()
+	{
+	    return m_ByFieldMappings;
+	}
+
+	public int [] getOverFieldMappings()
+	{
+	    return m_OverFieldMappings;
+	}
+
+	public int [] getPartitionFieldMappings()
+	{
+	    return m_PartitionFieldMappings;
+	}
 }

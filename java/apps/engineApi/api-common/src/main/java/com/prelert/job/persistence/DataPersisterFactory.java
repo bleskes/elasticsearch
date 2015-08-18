@@ -34,7 +34,6 @@ package com.prelert.job.persistence;
  */
 public interface DataPersisterFactory
 {
-    JobDataPersister newNoneDataPersister();
     JobDataPersister newDataPersister(String jobId);
 }
 

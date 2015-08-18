@@ -27,13 +27,13 @@
 
 package com.prelert.rs.data;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 import org.junit.Test;
 
 import com.prelert.job.errorcodes.ErrorCodes;
-import com.prelert.job.exceptions.JobException;
-import com.prelert.job.process.exceptions.NativeProcessRunException;
+import com.prelert.job.JobException;
+import com.prelert.job.UnknownJobException;
 
 public class ApiErrorTest
 {
@@ -50,7 +50,7 @@ public class ApiErrorTest
     {
         Exception cause = new ArrayIndexOutOfBoundsException();
 
-        JobException e = new NativeProcessRunException("error message",
+        JobException e = new UnknownJobException("job", "error message",
                                                 ErrorCodes.BUCKET_RESET_NOT_SUPPORTED,
                                                 cause);
 

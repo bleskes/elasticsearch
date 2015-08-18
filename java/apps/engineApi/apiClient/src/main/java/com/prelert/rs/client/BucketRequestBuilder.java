@@ -34,10 +34,12 @@ import java.util.Map;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.prelert.job.results.Bucket;
 import com.prelert.rs.data.SingleDocument;
-import com.prelert.rs.resources.Buckets;
 
 public class BucketRequestBuilder extends BaseJobRequestBuilder<Bucket>
 {
+    public static final String INCLUDE_INTERIM_QUERY_PARAM = "includeInterim";
+    public static final String EXPAND_QUERY_PARAM = "expand";
+
     private final String m_BucketId;
 
     private final Map<String, String> m_Params;
@@ -62,7 +64,7 @@ public class BucketRequestBuilder extends BaseJobRequestBuilder<Bucket>
      */
     public BucketRequestBuilder expand(boolean shouldExpand)
     {
-        m_Params.put(Buckets.EXPAND_QUERY_PARAM, Boolean.toString(shouldExpand));
+        m_Params.put(EXPAND_QUERY_PARAM, Boolean.toString(shouldExpand));
         return this;
     }
 
@@ -74,7 +76,7 @@ public class BucketRequestBuilder extends BaseJobRequestBuilder<Bucket>
      */
     public BucketRequestBuilder includeInterim(boolean includeInterim)
     {
-        m_Params.put(Buckets.INCLUDE_INTERIM_QUERY_PARAM, Boolean.toString(includeInterim));
+        m_Params.put(INCLUDE_INTERIM_QUERY_PARAM, Boolean.toString(includeInterim));
         return this;
     }
 

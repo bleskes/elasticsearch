@@ -44,8 +44,8 @@ import java.util.zip.ZipOutputStream;
 
 import org.apache.log4j.Logger;
 
+import com.prelert.job.UnknownJobException;
 import com.prelert.job.errorcodes.ErrorCodes;
-import com.prelert.job.exceptions.UnknownJobException;
 import com.prelert.job.messages.Messages;
 import com.prelert.job.process.ProcessCtrl;
 

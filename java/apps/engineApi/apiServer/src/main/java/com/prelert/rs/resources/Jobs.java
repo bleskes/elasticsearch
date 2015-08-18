@@ -49,16 +49,17 @@ import org.apache.log4j.Logger;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.JobDetails;
+import com.prelert.job.JobIdAlreadyExistsException;
 import com.prelert.job.ModelDebugConfig;
+import com.prelert.job.UnknownJobException;
 import com.prelert.job.config.verification.JobConfigurationException;
 import com.prelert.job.config.verification.JobConfigurationVerifier;
 import com.prelert.job.config.verification.ModelDebugConfigVerifier;
-import com.prelert.job.exceptions.JobIdAlreadyExistsException;
 import com.prelert.job.exceptions.JobInUseException;
 import com.prelert.job.exceptions.TooManyJobsException;
-import com.prelert.job.exceptions.UnknownJobException;
 import com.prelert.job.logs.JobLogs;
 import com.prelert.job.manager.JobManager;
+import com.prelert.job.persistence.DataStoreException;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
 import com.prelert.rs.data.Acknowledgement;
 import com.prelert.rs.data.Pagination;
@@ -262,12 +263,13 @@ public class Jobs extends ResourceWithJobManager
      * @throws UnknownJobException If the job id is not known
      * @throws JobInUseException If the job cannot be deleted because the
      * native process is in use.
+     * @throws DataStoreException
      */
     @DELETE
     @Path("/{jobId}")
     @Produces(MediaType.APPLICATION_JSON)
     public Response deleteJob(@PathParam("jobId") String jobId)
-    throws UnknownJobException, NativeProcessRunException, JobInUseException
+    throws UnknownJobException, NativeProcessRunException, JobInUseException, DataStoreException
     {
         LOGGER.debug("Delete job '" + jobId + "'");
 

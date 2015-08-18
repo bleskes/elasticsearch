@@ -26,8 +26,8 @@
  ************************************************************/
 package com.prelert.job.process.exceptions;
 
+import com.prelert.job.JobException;
 import com.prelert.job.errorcodes.ErrorCodes;
-import com.prelert.job.exceptions.JobException;
 
 /**
  * Represents the case where a job has been configured to use

@@ -33,9 +33,6 @@ import java.util.List;
 import java.util.Set;
 
 import com.google.common.collect.Range;
-import com.prelert.job.errorcodes.ErrorCodes;
-import com.prelert.job.messages.Messages;
-import com.prelert.job.transform.exceptions.TransformConfigurationException;
 
 /**
  * Enum type representing the different transform functions
@@ -44,15 +41,15 @@ import com.prelert.job.transform.exceptions.TransformConfigurationException;
  */
 public enum TransformType
 {
-    // Name, arity, arguments, outputs, default output names, has condition, argument validator
+    // Name, arity, arguments, outputs, default output names, has condition
     DOMAIN_SPLIT(Names.DOMAIN_SPLIT_NAME, Range.singleton(1), Range.singleton(0),
             Range.closed(1, 2), Arrays.asList("subDomain", "hrd")),
     CONCAT(Names.CONCAT_NAME, Range.atLeast(2), Range.closed(0, 1), Range.singleton(1),
             Arrays.asList("concat")),
     REGEX_EXTRACT(Names.EXTRACT_NAME, Range.singleton(1), Range.singleton(1), Range.atLeast(1),
-            Arrays.asList("extract"), false, new RegexExtractVerifier()),
+            Arrays.asList("extract"), false),
     REGEX_SPLIT(Names.SPLIT_NAME, Range.singleton(1), Range.singleton(1), Range.atLeast(1),
-            Arrays.asList("split"), false, new RegexPatternVerifier()),
+            Arrays.asList("split"), false),
     EXCLUDE(Names.EXCLUDE_NAME, Range.atLeast(1), Range.singleton(0), Range.singleton(0),
             Arrays.asList(), true),
     LOWERCASE(Names.LOWERCASE_NAME, Range.singleton(1), Range.singleton(0), Range.singleton(1),
@@ -92,7 +89,6 @@ public enum TransformType
     private final String m_PrettyName;
     private final List<String> m_DefaultOutputNames;
     private final boolean m_HasCondition;
-    private final ArgumentVerifier m_ArgumentVerifier;
 
     private TransformType(String prettyName, Range<Integer> arityRange,
             Range<Integer> argumentsRange, Range<Integer> outputsRange,
@@ -105,22 +101,12 @@ public enum TransformType
             Range<Integer> argumentsRange, Range<Integer> outputsRange,
             List<String> defaultOutputNames, boolean hasCondition)
     {
-        this(prettyName, arityRange, argumentsRange, outputsRange, defaultOutputNames, hasCondition,
-                (arg, transform) -> {});
-    }
-
-    private TransformType(String prettyName, Range<Integer> arityRange,
-            Range<Integer> argumentsRange, Range<Integer> outputsRange,
-            List<String> defaultOutputNames, boolean hasCondition,
-            ArgumentVerifier argumentVerifier)
-    {
         m_ArityRange = arityRange;
         m_ArgumentsRange = argumentsRange;
         m_OutputsRange = outputsRange;
         m_PrettyName = prettyName;
         m_DefaultOutputNames = defaultOutputNames;
         m_HasCondition = hasCondition;
-        m_ArgumentVerifier = argumentVerifier;
     }
 
     /**
@@ -165,111 +151,6 @@ public enum TransformType
         return m_HasCondition;
     }
 
-    public boolean verify(TransformConfig tc) throws TransformConfigurationException
-    {
-        checkInputs(tc);
-        checkArguments(tc);
-        checkOutputs(tc);
-        return true;
-    }
-
-    private void checkInputs(TransformConfig tc) throws TransformConfigurationException
-    {
-        List<String> inputs = tc.getInputs();
-        checkValidInputCount(tc, inputs);
-        checkInputsAreNonEmptyStrings(tc, inputs);
-    }
-
-    private void checkValidInputCount(TransformConfig tc, List<String> inputs)
-            throws TransformConfigurationException
-    {
-        int inputsSize = (inputs == null) ? 0 : inputs.size();
-        if (!m_ArityRange.contains(inputsSize))
-        {
-            String msg = Messages.getMessage(Messages.JOB_CONFIG_TRANSFORM_INVALID_INPUT_COUNT,
-                    tc.getTransform(), rangeAsString(m_ArityRange), inputsSize);
-            throw new TransformConfigurationException(msg, ErrorCodes.TRANSFORM_INVALID_INPUT_COUNT);
-        }
-    }
-
-    private void checkInputsAreNonEmptyStrings(TransformConfig tc, List<String> inputs)
-            throws TransformConfigurationException
-    {
-        if (containsEmptyString(inputs))
-        {
-            String msg = Messages.getMessage(
-                    Messages.JOB_CONFIG_TRANSFORM_INPUTS_CONTAIN_EMPTY_STRING, tc.getTransform());
-            throw new TransformConfigurationException(msg,
-                    ErrorCodes.TRANSFORM_INPUTS_CANNOT_BE_EMPTY_STRINGS);
-        }
-    }
-
-    private static boolean containsEmptyString(List<String> strings)
-    {
-        return strings.stream().anyMatch(s -> s.trim().isEmpty());
-    }
-
-    private void checkArguments(TransformConfig tc) throws TransformConfigurationException
-    {
-        List<String> arguments = tc.getArguments();
-        int argumentsSize = (arguments == null) ? 0 : arguments.size();
-        if (!m_ArgumentsRange.contains(argumentsSize))
-        {
-            String msg = Messages.getMessage(Messages.JOB_CONFIG_TRANSFORM_INVALID_ARGUMENT_COUNT,
-                    tc.getTransform(), rangeAsString(m_ArgumentsRange), argumentsSize);
-            throw new TransformConfigurationException(msg, ErrorCodes.TRANSFORM_INVALID_ARGUMENT_COUNT);
-        }
-
-        if (arguments != null)
-        {
-            for (String argument : arguments)
-            {
-                m_ArgumentVerifier.verify(argument, tc);
-            }
-        }
-    }
-
-    private void checkOutputs(TransformConfig tc) throws TransformConfigurationException
-    {
-        List<String> outputs = tc.getOutputs();
-        checkValidOutputCount(tc, outputs);
-        checkOutputsAreNonEmptyStrings(tc, outputs);
-    }
-
-    private void checkValidOutputCount(TransformConfig tc, List<String> outputs)
-            throws TransformConfigurationException
-    {
-        int outputsSize = (outputs == null) ? 0 : outputs.size();
-        if (!m_OutputsRange.contains(outputsSize))
-        {
-            String msg = Messages.getMessage(Messages.JOB_CONFIG_TRANSFORM_INVALID_OUTPUT_COUNT,
-                    tc.getTransform(), rangeAsString(m_OutputsRange), outputsSize);
-            throw new TransformConfigurationException(msg, ErrorCodes.TRANSFORM_INVALID_OUTPUT_COUNT);
-        }
-    }
-
-    private void checkOutputsAreNonEmptyStrings(TransformConfig tc, List<String> outputs)
-            throws TransformConfigurationException
-    {
-        if (containsEmptyString(outputs))
-        {
-            String msg = Messages.getMessage(
-                    Messages.JOB_CONFIG_TRANSFORM_OUTPUTS_CONTAIN_EMPTY_STRING, tc.getTransform());
-            throw new TransformConfigurationException(msg,
-                    ErrorCodes.TRANSFORM_OUTPUTS_CANNOT_BE_EMPTY_STRINGS);
-        }
-    }
-
-    private static String rangeAsString(Range<Integer> range)
-    {
-        if (range.hasLowerBound() && range.hasUpperBound()
-                && range.lowerEndpoint() == range.upperEndpoint())
-        {
-            return String.valueOf(range.lowerEndpoint());
-        }
-        return range.toString();
-    }
-
     @Override
     public String toString()
     {
@@ -285,7 +166,7 @@ public enum TransformType
      * @param prettyName
      * @return
      */
-    public static TransformType fromString(String prettyName) throws TransformConfigurationException
+    public static TransformType fromString(String prettyName) throws IllegalArgumentException
     {
         Set<TransformType> all = EnumSet.allOf(TransformType.class);
 
@@ -297,9 +178,7 @@ public enum TransformType
             }
         }
 
-        throw new TransformConfigurationException(
-                Messages.getMessage(Messages.JOB_CONFIG_TRANSFORM_UNKNOWN_TYPE, prettyName),
-                ErrorCodes.UNKNOWN_TRANSFORM);
+        throw new IllegalArgumentException(prettyName);
     }
 
 }

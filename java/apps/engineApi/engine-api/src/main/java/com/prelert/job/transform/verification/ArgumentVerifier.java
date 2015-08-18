@@ -25,32 +25,14 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.job.transform;
+package com.prelert.job.transform.verification;
 
-import java.util.List;
-import java.util.regex.Pattern;
+import com.prelert.job.transform.TransformConfig;
+import com.prelert.job.transform.TransformConfigurationException;
 
-import com.prelert.job.errorcodes.ErrorCodes;
-import com.prelert.job.messages.Messages;
-import com.prelert.job.transform.exceptions.TransformConfigurationException;
 
-public class RegexExtractVerifier implements ArgumentVerifier
+@FunctionalInterface
+public interface ArgumentVerifier
 {
-    @Override
-    public void verify(String arg, TransformConfig tc)
-            throws TransformConfigurationException
-    {
-        new RegexPatternVerifier().verify(arg, tc);
-
-        Pattern pattern = Pattern.compile(arg);
-        int groupCount = pattern.matcher("").groupCount();
-        List<String> outputs = tc.getOutputs();
-        int outputCount = outputs == null ? 0 : outputs.size();
-        if (groupCount != outputCount)
-        {
-            String msg = Messages.getMessage(Messages.JOB_CONFIG_TRANSFORM_EXTRACT_GROUPS_SHOULD_MATCH_OUTPUT_COUNT,
-                    tc.getTransform(), outputCount, arg, groupCount);
-            throw new TransformConfigurationException(msg, ErrorCodes.TRANSFORM_INVALID_ARGUMENT);
-        }
-    }
+    void verify(String argument, TransformConfig tc) throws TransformConfigurationException;
 }

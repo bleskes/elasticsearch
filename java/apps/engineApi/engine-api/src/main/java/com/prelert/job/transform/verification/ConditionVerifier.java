@@ -24,65 +24,63 @@
  *                                                          *
  *                                                          *
  ************************************************************/
-package com.prelert.job.transform.condition;
+package com.prelert.job.transform.verification;
 
-import java.util.Objects;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.messages.Messages;
-import com.prelert.job.transform.TransformType;
-import com.prelert.job.transform.exceptions.TransformConfigurationException;
+import com.prelert.job.transform.Condition;
+import com.prelert.job.transform.Operator;
+import com.prelert.job.transform.TransformConfigurationException;
 
-/**
- * A {@linkplain TransformType} condition.
- * Some transforms should only be applied if a condition
- * is met. One example is exclude a record if a value is
- * greater than some numeric constant.
- * The {@linkplain Operator} enum defines the available
- * comparisons a condition can use.
- */
-public class Condition
+public class ConditionVerifier
 {
-    private Operator m_Op;
-    private String m_FilterValue;
-
     /**
-     * Operation defaults to {@linkplain Operator#NONE}
-     * and the filter is an empty string
-     * @param
+     * Check that the condition has an operator and the operator
+     * operand is valid. In the case of numerical operators this means
+     * the operand can be parsed as a number else is is a Regex match
+     * so check the operand is a valid regex.
+     *
+     * @param condition
+     * @return
+     * @throws TransformConfigurationException
      */
-    public Condition()
-    {
-        m_Op = Operator.NONE;
-        m_FilterValue = "";
-    }
-
-    public Condition(Operator op, String filterString)
-    {
-        m_Op = op;
-        m_FilterValue = filterString;
-    }
-
-    public boolean verify()
+    public static boolean verify(Condition condition)
     throws TransformConfigurationException
     {
-        if (m_Op == Operator.NONE)
+        if (condition.getOperator() == Operator.NONE)
         {
             throw new TransformConfigurationException(
                     Messages.getMessage(Messages.JOB_CONFIG_TRANSFORM_CONDITION_INVALID_OPERATOR),
                     ErrorCodes.CONDITION_INVALID_ARGUMENT);
         }
 
-        if (m_Op.expectsANumericArgument())
+        if (condition.getOperator().expectsANumericArgument())
         {
             try
             {
-                Double.parseDouble(m_FilterValue);
+                Double.parseDouble(condition.getValue());
             }
             catch (NumberFormatException nfe)
             {
                 String msg = Messages.getMessage(
-                        Messages.JOB_CONFIG_TRANSFORM_CONDITION_INVALID_VALUE, m_FilterValue);
+                        Messages.JOB_CONFIG_TRANSFORM_CONDITION_INVALID_VALUE_NUMBER, condition.getValue());
+                throw new TransformConfigurationException(msg, ErrorCodes.CONDITION_INVALID_ARGUMENT);
+            }
+        }
+        else
+        {
+            try
+            {
+                Pattern.compile(condition.getValue());
+            }
+            catch (PatternSyntaxException e)
+            {
+                String msg = Messages.getMessage(
+                                Messages.JOB_CONFIG_TRANSFORM_CONDITION_INVALID_VALUE_REGEX,
+                                condition.getValue());
                 throw new TransformConfigurationException(msg, ErrorCodes.CONDITION_INVALID_ARGUMENT);
             }
         }
@@ -90,56 +88,4 @@ public class Condition
         return true;
     }
 
-    public Operator getOperator()
-    {
-        return m_Op;
-    }
-
-    public void setOperator(Operator op)
-    {
-        m_Op = op;
-    }
-
-    public String getValue()
-    {
-        return m_FilterValue;
-    }
-
-    public void setValue(String value)
-    {
-        m_FilterValue = value;
-    }
-
-    @Override
-    public int hashCode()
-    {
-        final int prime = 31;
-        int result = 1;
-        result = prime * result
-                + ((m_FilterValue == null) ? 0 : m_FilterValue.hashCode());
-        result = prime * result + ((m_Op == null) ? 0 : m_Op.hashCode());
-        return result;
-    }
-
-    @Override
-    public boolean equals(Object obj)
-    {
-        if (this == obj)
-        {
-            return true;
-        }
-        if (obj == null)
-        {
-            return false;
-        }
-
-        if (getClass() != obj.getClass())
-        {
-            return false;
-        }
-
-        Condition other = (Condition) obj;
-        return Objects.equals(this.m_Op, other.m_Op) &&
-                    Objects.equals(this.m_FilterValue, other.m_FilterValue);
-    }
 }

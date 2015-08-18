@@ -36,7 +36,7 @@ import javax.ws.rs.core.MediaType;
 
 import org.apache.log4j.Logger;
 
-import com.prelert.job.exceptions.UnknownJobException;
+import com.prelert.job.UnknownJobException;
 import com.prelert.job.manager.JobManager;
 import com.prelert.job.persistence.QueryPage;
 import com.prelert.job.results.Influencer;

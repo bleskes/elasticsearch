@@ -33,10 +33,6 @@ import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.prelert.job.errorcodes.ErrorCodes;
-import com.prelert.job.messages.Messages;
-import com.prelert.job.transform.condition.Condition;
-import com.prelert.job.transform.exceptions.TransformConfigurationException;
 
 /**
  * Represents an API data transform
@@ -107,7 +103,7 @@ public class TransformConfig
             {
                 m_Outputs = type().defaultOutputNames();
             }
-            catch (TransformConfigurationException e)
+            catch (IllegalArgumentException e)
             {
                 m_Outputs = Collections.emptyList();
             }
@@ -141,7 +137,7 @@ public class TransformConfig
      * Type may be null when the class is constructed.
      * @return
      */
-    public TransformType type() throws TransformConfigurationException
+    public TransformType type() throws IllegalArgumentException
     {
         if (m_Type == null)
         {
@@ -149,36 +145,6 @@ public class TransformConfig
         }
 
         return m_Type;
-    }
-
-    /**
-     * Checks the configuration is valid
-     * <ol>
-     * <li>Checks {@linkplain TransformType#verify(TransformConfig)} is valid}</li>
-     * <li>Throws a TransformConfigurationException if a condition isn't defined
-     * for a transform type that expects one </li>
-     * <li>If a condition is present its arguments are verified</li>
-     * </ol>
-     */
-    public boolean verify() throws TransformConfigurationException
-    {
-        TransformType type = type();
-
-        boolean verified = type.verify(this);
-        if (verified && type.hasCondition())
-        {
-            if (m_Condition == null)
-            {
-                throw new TransformConfigurationException(
-                        Messages.getMessage(Messages.JOB_CONFIG_TRANSFORM_CONDITION_REQUIRED,
-                                type.prettyName()),
-                        ErrorCodes.TRANSFORM_REQUIRES_CONDITION);
-            }
-
-            verified = m_Condition.verify();
-        }
-
-        return verified;
     }
 
     @Override

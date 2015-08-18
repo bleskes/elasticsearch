@@ -24,58 +24,36 @@
  *                                                          *
  *                                                          *
  ************************************************************/
-package com.prelert.job.exceptions;
+
+package com.prelert.job;
 
 import com.prelert.job.errorcodes.ErrorCodes;
-import com.prelert.job.messages.Messages;
+import com.prelert.job.errorcodes.HasErrorCode;
 
 /**
- * This type of exception represents an error where
- * an operation uses a <i>JobId</i> that does not exist.
+ * General job exception class with a specific error code and message.
  */
-public class UnknownJobException extends JobException
+public class JobException extends Exception implements HasErrorCode
 {
-	private static final long serialVersionUID = 8603362038035845948L;
+    private static final long serialVersionUID = -5289885963015348819L;
 
-	private final String m_JobId;
+    private final ErrorCodes m_ErrorCode;
 
-	/**
-	 * Create with the default message and error code
-	 * set to ErrorCode.MISSING_JOB_ERROR
-	 * @param jobId
-	 */
-	public UnknownJobException(String jobId)
-	{
-		super(Messages.getMessage(Messages.JOB_UNKNOWN_ID, jobId), ErrorCodes.MISSING_JOB_ERROR);
-		m_JobId = jobId;
-	}
+    public JobException(String message, ErrorCodes errorCode)
+    {
+        super(message);
+        m_ErrorCode = errorCode;
+    }
 
-	/**
-	 * Create a new UnknownJobException with an error code
-	 *
-	 * @param jobId The Job Id that could not be found
-	 * @param message Details of error explaining the context
-	 * @param errorCode
-	 */
-	public UnknownJobException(String jobId, String message, ErrorCodes errorCode)
-	{
-		super(message, errorCode);
-		m_JobId = jobId;
-	}
+    public JobException(String message, ErrorCodes errorCode, Throwable cause)
+    {
+        super(message, cause);
+        m_ErrorCode = errorCode;
+    }
 
-	public UnknownJobException(String jobId, String message, ErrorCodes errorCode,
-			Throwable cause)
-	{
-		super(message, errorCode, cause);
-		m_JobId = jobId;
-	}
-
-	/**
-	 * Get the unknown <i>JobId</i> that was the source of the error.
-	 * @return
-	 */
-	public String getJobId()
-	{
-		return m_JobId;
-	}
+    @Override
+    public ErrorCodes getErrorCode()
+    {
+        return m_ErrorCode;
+    }
 }

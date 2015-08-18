@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -24,36 +24,22 @@
  *                                                          *
  *                                                          *
  ************************************************************/
+package com.prelert.job.persistence;
 
-package com.prelert.job.exceptions;
-
+import com.prelert.job.JobException;
 import com.prelert.job.errorcodes.ErrorCodes;
-import com.prelert.job.errorcodes.HasErrorCode;
 
-/**
- * General job exception class with a specific error code and message.
- */
-public class JobException extends Exception implements HasErrorCode
+public class DataStoreException extends JobException
 {
-    private static final long serialVersionUID = -5289885963015348819L;
+    private static final long serialVersionUID = 3297520527560841022L;
 
-    private final ErrorCodes m_ErrorCode;
-
-    public JobException(String message, ErrorCodes errorCode)
+    public DataStoreException(String message, ErrorCodes errorCode)
     {
-        super(message);
-        m_ErrorCode = errorCode;
+        super(message, errorCode);
     }
 
-    public JobException(String message, ErrorCodes errorCode, Throwable cause)
+    public DataStoreException(String message, ErrorCodes errorCode, Throwable cause)
     {
-        super(message, cause);
-        m_ErrorCode = errorCode;
-    }
-
-    @Override
-    public ErrorCodes getErrorCode()
-    {
-        return m_ErrorCode;
+        super(message, errorCode, cause);
     }
 }

@@ -34,8 +34,8 @@ import java.util.Map;
 import org.apache.log4j.Logger;
 
 import com.prelert.job.transform.TransformConfig;
+import com.prelert.job.transform.TransformConfigurationException;
 import com.prelert.job.transform.TransformType;
-import com.prelert.job.transform.exceptions.TransformConfigurationException;
 import com.prelert.transforms.Transform.TransformIndex;
 
 /**

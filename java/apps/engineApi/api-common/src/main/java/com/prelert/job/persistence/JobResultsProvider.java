@@ -30,7 +30,7 @@ package com.prelert.job.persistence;
 import java.io.Closeable;
 import java.util.Optional;
 
-import com.prelert.job.exceptions.UnknownJobException;
+import com.prelert.job.UnknownJobException;
 import com.prelert.job.results.AnomalyRecord;
 import com.prelert.job.results.Bucket;
 import com.prelert.job.results.CategoryDefinition;

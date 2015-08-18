@@ -24,7 +24,7 @@
  *                                                          *
  *                                                          *
  ************************************************************/
-package com.prelert.job.transform.condition;
+package com.prelert.job.transform;
 
 import java.util.EnumSet;
 import java.util.Set;
@@ -32,9 +32,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.prelert.job.errorcodes.ErrorCodes;
-import com.prelert.job.messages.Messages;
-import com.prelert.job.transform.exceptions.TransformConfigurationException;
 
 /**
  * Enum representing logical comparisons on doubles
@@ -115,7 +112,7 @@ public enum Operator
     }
 
     @JsonCreator
-    public static Operator fromString(String name) throws TransformConfigurationException
+    public static Operator fromString(String name) throws IllegalArgumentException
     {
         Set<Operator> all = EnumSet.allOf(Operator.class);
 
@@ -128,9 +125,7 @@ public enum Operator
             }
         }
 
-        throw new TransformConfigurationException(
-                Messages.getMessage(Messages.JOB_CONFIG_TRANSFORM_CONDITION_UNKNOWN_OPERATOR, name),
-                ErrorCodes.UNKNOWN_OPERATOR);
+        throw new IllegalArgumentException();
     }
 
  };

@@ -41,9 +41,9 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
+import com.prelert.job.UnknownJobException;
 import com.prelert.job.errorcodes.ErrorCodeMatcher;
 import com.prelert.job.errorcodes.ErrorCodes;
-import com.prelert.job.exceptions.UnknownJobException;
 import com.prelert.job.persistence.QueryPage;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
 import com.prelert.job.results.CategoryDefinition;

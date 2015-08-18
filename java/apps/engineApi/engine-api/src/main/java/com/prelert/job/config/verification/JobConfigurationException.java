@@ -27,8 +27,8 @@
  ************************************************************/
 package com.prelert.job.config.verification;
 
+import com.prelert.job.JobException;
 import com.prelert.job.errorcodes.ErrorCodes;
-import com.prelert.job.exceptions.JobException;
 
 /**
  * Represents the invalid configuration of a job.
