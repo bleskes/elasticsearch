@@ -28,6 +28,7 @@ import org.elasticsearch.license.plugin.LicensePlugin;
 import org.elasticsearch.marvel.MarvelPlugin;
 import org.elasticsearch.marvel.agent.AgentService;
 import org.elasticsearch.marvel.agent.collector.indices.IndexStatsMarvelDoc;
+import org.elasticsearch.marvel.agent.settings.MarvelSettings;
 import org.elasticsearch.node.Node;
 import org.elasticsearch.test.ESIntegTestCase;
 import org.elasticsearch.test.ESIntegTestCase.ClusterScope;
@@ -59,7 +60,7 @@ public class HttpESExporterTests extends ESIntegTestCase {
     @Test
     public void testHttpServerOff() {
         Settings.Builder builder = Settings.builder()
-                .put(AgentService.SETTINGS_INTERVAL, "200m")
+                .put(MarvelSettings.STARTUP_DELAY, "200m")
                 .put(Node.HTTP_ENABLED, false);
         internalCluster().startNode(builder);
         HttpESExporter httpEsExporter = getEsExporter();
@@ -97,7 +98,7 @@ public class HttpESExporterTests extends ESIntegTestCase {
     @Test
     public void testTemplateAdditionDespiteOfLateClusterForming() {
         Settings.Builder builder = Settings.builder()
-                .put(AgentService.SETTINGS_INTERVAL, "200m")
+                .put(MarvelSettings.STARTUP_DELAY, "200m")
                 .put(Node.HTTP_ENABLED, true)
                 .put("discovery.type", "zen")
                 .put("discovery.zen.ping_timeout", "1s")
@@ -125,7 +126,7 @@ public class HttpESExporterTests extends ESIntegTestCase {
     public void testDynamicHostChange() {
         // disable exporting to be able to use non valid hosts
         Settings.Builder builder = Settings.builder()
-                .put(AgentService.SETTINGS_INTERVAL, "-1");
+                .put(MarvelSettings.INTERVAL, "-1");
         internalCluster().startNode(builder);
 
         HttpESExporter httpEsExporter = getEsExporter();
@@ -145,7 +146,7 @@ public class HttpESExporterTests extends ESIntegTestCase {
     @Test
     public void testHostChangeReChecksTemplate() {
         Settings.Builder builder = Settings.builder()
-                .put(AgentService.SETTINGS_INTERVAL, "200m")
+                .put(MarvelSettings.STARTUP_DELAY, "200m")
                 .put(Node.HTTP_ENABLED, true);
         internalCluster().startNode(builder);
 
@@ -171,7 +172,7 @@ public class HttpESExporterTests extends ESIntegTestCase {
     @Test
     public void testHostFailureChecksTemplate() throws InterruptedException, IOException {
         Settings.Builder builder = Settings.builder()
-                .put(AgentService.SETTINGS_INTERVAL, "200m")
+                .put(MarvelSettings.STARTUP_DELAY, "200m")
                 .put(Node.HTTP_ENABLED, true);
         final String node0 = internalCluster().startNode(builder);
         String node1 = internalCluster().startNode(builder);
