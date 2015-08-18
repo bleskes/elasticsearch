@@ -58,7 +58,7 @@ define(function (require) {
       options: {
         chart: {
           type: 'lineChart',
-          height: 200,
+          height: 150,
           showLegend: false,
           showXAxis: true,
           showYAxis: true,

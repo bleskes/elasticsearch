@@ -1,6 +1,8 @@
 var _ = require('lodash');
 var React = require('react');
 var make = React.DOM;
+var Loading = require('./loading.jsx');
+var NoData = require('./no_data.jsx');
 
 function renderRow(dataKeys, obj, idx) {
   var $objTds = dataKeys.map(function (key, idx) {
@@ -16,10 +18,10 @@ module.exports = React.createClass({
   displayName: 'TableBody',
   render: function () {
     if (!this.props.tableData) {
-      return makeOneTd('Loading...');
+      return React.createFactory(Loading);
     }
     if (!this.props.tableData.length) {
-      return makeOneTd('No Data!');
+      return React.createFactory(NoData);
     }
     var that = this;
 

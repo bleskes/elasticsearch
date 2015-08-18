@@ -1,9 +1,21 @@
 .marvel-view {
+
   background-color: @esVeryLightGray;
 
   .metrics {
     display: flex;
     flex-flow: row wrap;
+    &.x2 {
+      >div, >marvel-issues {
+        flex: 1 1 45%;
+        &:nth-child(odd) {
+          margin: 0 10px 10px 0;
+        }
+        &:nth-child(even) {
+          margin: 0 0 10px 0;
+        }
+      }
+    }
     >div, >marvel-issues {
       flex: 1 1 30%;
       &:nth-child(3n+1) {
@@ -26,6 +38,10 @@
 
   flex-grow: 1;
   padding: 10px;
+
+  &.no-padding {
+    padding: 0;
+  }
 
   .table > thead > tr > th {
     border-color: @esGray;

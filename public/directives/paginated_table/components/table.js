@@ -69,7 +69,11 @@ define(function (require) {
     render: function () {
       var isLoading = (this.state.tableData === null);
       if (isLoading) {
-        return make.div({className: 'paginated-table loading'}, 'Loading...');
+        let nodes = [
+          make.i({ className: 'fa fa-spinner fa-pulse' }),
+          make.span(null, 'Loading Data...')
+        ];
+        return make.div({className: 'paginated-table loading'}, nodes);
       }
 
       // Make the Title Bar

@@ -50,6 +50,7 @@ define(function (require) {
     // page. Use the metric keys from the metrics hash.
     $scope.charts = [
       'search_request_rate',
+      'query_latency',
       'index_request_rate',
       'index_latency'
     ];

@@ -1,22 +1,35 @@
 define(function (require) {
   var _ = require('lodash');
   var angular = require('angular');
+  var chrome = require('ui/chrome');
   var module = require('ui/modules').get('marvel', [
     'marvel/directives'
   ]);
-  var chrome = require('ui/chrome');
+  // var chrome = require('ui/chrome');
   require('ui/routes')
   .when('/home', {
     template: require('plugins/marvel/views/home/home_template.html'),
-    resove: {
-      tabs: function (arg) {
+    resolve: {
+      tabs: function () {
         chrome.setTabs([]);
       }
     }
   })
   .otherwise({ redirectTo: '/home' });
 
-  module.controller('home', function ($scope, marvelClusters, timefilter, $timeout) {
+  module.controller('home', function ($window, $scope, marvelClusters, timefilter, $timeout) {
+
+    var hideBanner = $window.localStorage.getItem('marvel.hideBanner');
+    $scope.showBanner = (hideBanner) ? false : true;
+
+    $scope.hideBanner = function () {
+      $scope.showBanner = false;
+    };
+
+    $scope.dontShowAgain = function () {
+      $scope.showBanner = false;
+      $window.localStorage.setItem('marvel.hideBanner', 1);
+    };
 
     timefilter.enabled = true;
     if (timefilter.refreshInterval.value === 0) {

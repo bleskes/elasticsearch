@@ -37,9 +37,10 @@ define(function (require) {
     // Define the metrics for the three charts at the top of the
     // page. Use the metric keys from the metrics hash.
     $scope.charts = [
-      'index_latency',
+      'search_request_rate',
+      'query_latency',
       'index_request_rate',
-      'query_latency'
+      'index_latency'
     ];
 
     // Setup the data sources for the charts
