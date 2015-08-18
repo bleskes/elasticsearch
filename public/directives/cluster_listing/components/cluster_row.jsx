@@ -20,16 +20,28 @@ class ClusterRow extends React.Component {
   }
 
   render() {
+    var licenseExpiry = (
+      <div
+        className="expires">
+        Expires { moment(this.props.license.expiry_date_in_millis).format('D MMM YY') }
+        </div>
+    );
+    if (this.props.license.expiry_date_in_millis < moment().valueOf()) {
+      licenseExpiry = (
+        <div
+          className="expires expired">Expired</div>
+      );
+    }
     return (
       <tr className={ this.props.status }>
-        <td><a onClick={(event) => this.changeCluster(event) }>{ this.props.cluster_uuid }</a></td>
+        <td><a onClick={(event) => this.changeCluster(event) }>{ this.props.cluster_name }</a></td>
         <td>{ numeral(this.props.stats.node_count).format('0,0') }</td>
         <td>{ numeral(this.props.stats.indice_count).format('0,0') }</td>
         <td>{ formatTime(this.props.stats.uptime) }</td>
         <td>{ numeral(this.props.stats.data).format('0,0[.]0 b') }</td>
         <td className="license">
           <div className="license">{ _.capitalize(this.props.license.type) }</div>
-          <div className="expires">Expires { moment(this.props.license.expiry_date_in_millis).format('D MMM YY') }</div>
+          { licenseExpiry }
         </td>
       </tr>
     );
