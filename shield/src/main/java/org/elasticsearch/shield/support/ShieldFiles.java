@@ -18,6 +18,7 @@
 package org.elasticsearch.shield.support;
 
 import com.google.common.base.Charsets;
+import org.elasticsearch.env.Environment;
 
 import java.io.IOException;
 import java.io.Writer;
@@ -60,7 +61,7 @@ public class ShieldFiles {
                 writer.close();
                 // get original permissions
                 if (Files.exists(path)) {
-                    boolean supportsPosixAttributes = Files.getFileStore(path).supportsFileAttributeView(PosixFileAttributeView.class);
+                    boolean supportsPosixAttributes = Environment.getFileStore(path).supportsFileAttributeView(PosixFileAttributeView.class);
                     if (supportsPosixAttributes) {
                         setPosixAttributesOnTempFile(path, tempFile);
                     }

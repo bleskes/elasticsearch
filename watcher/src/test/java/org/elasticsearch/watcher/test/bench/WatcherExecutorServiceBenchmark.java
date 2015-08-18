@@ -37,6 +37,7 @@ import org.elasticsearch.watcher.trigger.TriggerModule;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 import static org.elasticsearch.watcher.actions.ActionBuilders.indexAction;
@@ -223,8 +224,8 @@ public class WatcherExecutorServiceBenchmark {
         }
 
         @Override
-        public Collection<Class<? extends Module>> modules() {
-            return ImmutableList.<Class<? extends Module>>of(WatcherModule.class);
+        public Collection<Module> nodeModules() {
+            return Collections.<Module>singletonList(new WatcherModule(settings));
         }
 
         public static class WatcherModule extends org.elasticsearch.watcher.WatcherModule {

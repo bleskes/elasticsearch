@@ -18,7 +18,6 @@
 package org.elasticsearch.watcher.watch;
 
 import com.google.common.collect.ImmutableMap;
-import org.apache.commons.lang3.ArrayUtils;
 import org.elasticsearch.ElasticsearchParseException;
 import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.ParseField;
@@ -174,7 +173,14 @@ public class WatchStatus implements ToXContent, Streamable {
      */
     boolean onAck(DateTime timestamp, String... actionIds) {
         boolean changed = false;
-        if (ArrayUtils.contains(actionIds, Watch.ALL_ACTIONS_ID)) {
+        boolean containsAll = false;
+        for (String actionId : actionIds) {
+            if (actionId.equals(Watch.ALL_ACTIONS_ID)) {
+                containsAll = true;
+                break;
+            }
+        }
+        if (containsAll) {
             for (ActionStatus status : actions.values()) {
                 changed |= status.onAck(timestamp);
             }
