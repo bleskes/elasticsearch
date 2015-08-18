@@ -39,8 +39,6 @@ import org.elasticsearch.common.collect.Tuple;
 import org.elasticsearch.common.component.AbstractComponent;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.inject.Provider;
-import org.elasticsearch.common.io.Streams;
-import org.elasticsearch.common.network.NetworkUtils;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.elasticsearch.common.transport.TransportAddress;
@@ -60,6 +58,7 @@ import org.elasticsearch.shield.authc.AuthenticationToken;
 import org.elasticsearch.shield.authz.Privilege;
 import org.elasticsearch.shield.rest.RemoteHostHeader;
 import org.elasticsearch.shield.transport.filter.ShieldIpFilterRule;
+import org.elasticsearch.transport.Transport;
 import org.elasticsearch.transport.TransportMessage;
 import org.elasticsearch.transport.TransportRequest;
 import org.joda.time.DateTime;
@@ -118,6 +117,7 @@ public class IndexAuditTrail extends AbstractComponent implements AuditTrail {
     private final Environment environment;
     private final LinkedBlockingQueue<Message> eventQueue;
     private final QueueConsumer queueConsumer;
+    private final Transport transport;
     private final boolean indexToRemoteCluster;
 
     private BulkProcessor bulkProcessor;
@@ -135,12 +135,13 @@ public class IndexAuditTrail extends AbstractComponent implements AuditTrail {
     @Inject
     public IndexAuditTrail(Settings settings, IndexAuditUserHolder indexingAuditUser,
                            Environment environment, AuthenticationService authenticationService,
-                           Provider<Client> clientProvider) {
+                           Transport transport, Provider<Client> clientProvider) {
         super(settings);
         this.auditUser = indexingAuditUser;
         this.authenticationService = authenticationService;
         this.clientProvider = clientProvider;
         this.environment = environment;
+        this.transport = transport;
         this.nodeName = settings.get("name");
         this.queueConsumer = new QueueConsumer(EsExecutors.threadName(settings, "audit-queue-consumer"));
 
@@ -251,8 +252,8 @@ public class IndexAuditTrail extends AbstractComponent implements AuditTrail {
      */
     public void start(boolean master) {
         if (state.compareAndSet(State.INITIALIZED, State.STARTING)) {
-            this.nodeHostName = NetworkUtils.getLocalHost().getHostName();
-            this.nodeHostAddress = NetworkUtils.getLocalHost().getHostAddress();
+            this.nodeHostName = transport.boundAddress().publishAddress().getHost();
+            this.nodeHostAddress = transport.boundAddress().publishAddress().getAddress();
 
             if (client == null) {
                 initializeClient();
@@ -473,7 +474,7 @@ public class IndexAuditTrail extends AbstractComponent implements AuditTrail {
 
         Message msg = new Message().start();
         common("transport", type, msg.builder);
-        originAttributes(message, msg.builder);
+        originAttributes(message, msg.builder, transport);
 
         if (action != null) {
             msg.builder.field(Field.ACTION, action);
@@ -547,7 +548,7 @@ public class IndexAuditTrail extends AbstractComponent implements AuditTrail {
         return builder;
     }
 
-    private static XContentBuilder originAttributes(TransportMessage message, XContentBuilder builder) throws IOException {
+    private static XContentBuilder originAttributes(TransportMessage message, XContentBuilder builder, Transport transport) throws IOException {
 
         // first checking if the message originated in a rest call
         InetSocketAddress restAddress = RemoteHostHeader.restRemoteAddress(message);
@@ -571,7 +572,7 @@ public class IndexAuditTrail extends AbstractComponent implements AuditTrail {
 
         // the call was originated locally on this node
         builder.field(Field.ORIGIN_TYPE, "local_node");
-        builder.field(Field.ORIGIN_ADDRESS, NetworkUtils.getLocalHost().getHostAddress());
+        builder.field(Field.ORIGIN_ADDRESS, transport.boundAddress().publishAddress().getAddress());
         return builder;
     }
 

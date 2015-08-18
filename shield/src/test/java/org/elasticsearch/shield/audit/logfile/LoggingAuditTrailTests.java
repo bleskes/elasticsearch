@@ -23,9 +23,7 @@ import org.elasticsearch.common.bytes.BytesArray;
 import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.network.NetworkUtils;
 import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.common.transport.InetSocketTransportAddress;
-import org.elasticsearch.common.transport.LocalTransportAddress;
-import org.elasticsearch.common.transport.TransportAddress;
+import org.elasticsearch.common.transport.*;
 import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.shield.User;
 import org.elasticsearch.shield.authc.AuthenticationToken;
@@ -33,6 +31,7 @@ import org.elasticsearch.shield.rest.RemoteHostHeader;
 import org.elasticsearch.shield.transport.filter.IPFilter;
 import org.elasticsearch.shield.transport.filter.ShieldIpFilterRule;
 import org.elasticsearch.test.ESTestCase;
+import org.elasticsearch.transport.Transport;
 import org.elasticsearch.transport.TransportMessage;
 import org.junit.Before;
 import org.junit.Test;
@@ -111,6 +110,7 @@ public class LoggingAuditTrailTests extends ESTestCase {
 
     private String prefix;
     private Settings settings;
+    private Transport transport;
 
     @Before
     public void init() throws Exception {
@@ -119,16 +119,18 @@ public class LoggingAuditTrailTests extends ESTestCase {
                 .put("shield.audit.logfile.prefix.emit_node_host_name", randomBoolean())
                 .put("shield.audit.logfile.prefix.emit_node_name", randomBoolean())
                 .build();
-        prefix = LoggingAuditTrail.resolvePrefix(settings);
+        transport = mock(Transport.class);
+        when(transport.boundAddress()).thenReturn(new BoundTransportAddress(DummyTransportAddress.INSTANCE, DummyTransportAddress.INSTANCE));
+        prefix = LoggingAuditTrail.resolvePrefix(settings, transport);
     }
 
     @Test
     public void testAnonymousAccessDenied_Transport() throws Exception {
         for (Level level : Level.values()) {
             CapturingLogger logger = new CapturingLogger(level);
-            LoggingAuditTrail auditTrail = new LoggingAuditTrail(settings, logger);
+            LoggingAuditTrail auditTrail = new LoggingAuditTrail(settings, transport, logger);
             TransportMessage message = randomBoolean() ? new MockMessage() : new MockIndicesRequest();
-            String origins = LoggingAuditTrail.originAttributes(message);
+            String origins = LoggingAuditTrail.originAttributes(message, transport);
             auditTrail.anonymousAccessDenied("_action", message);
             switch (level) {
                 case ERROR:
@@ -162,7 +164,7 @@ public class LoggingAuditTrailTests extends ESTestCase {
 
         for (Level level : Level.values()) {
             CapturingLogger logger = new CapturingLogger(level);
-            LoggingAuditTrail auditTrail = new LoggingAuditTrail(settings, logger);
+            LoggingAuditTrail auditTrail = new LoggingAuditTrail(settings, transport, logger);
             auditTrail.anonymousAccessDenied(request);
             switch (level) {
                 case ERROR:
@@ -183,9 +185,9 @@ public class LoggingAuditTrailTests extends ESTestCase {
     public void testAuthenticationFailed() throws Exception {
         for (Level level : Level.values()) {
             CapturingLogger logger = new CapturingLogger(level);
-            LoggingAuditTrail auditTrail = new LoggingAuditTrail(settings, logger);
+            LoggingAuditTrail auditTrail = new LoggingAuditTrail(settings, transport, logger);
             TransportMessage message = randomBoolean() ? new MockMessage() : new MockIndicesRequest();
-            String origins = LoggingAuditTrail.originAttributes(message);
+            String origins = LoggingAuditTrail.originAttributes(message, transport);;
             auditTrail.authenticationFailed(new MockToken(), "_action", message);
             switch (level) {
                 case ERROR:
@@ -212,9 +214,9 @@ public class LoggingAuditTrailTests extends ESTestCase {
     public void testAuthenticationFailed_NoToken() throws Exception {
         for (Level level : Level.values()) {
             CapturingLogger logger = new CapturingLogger(level);
-            LoggingAuditTrail auditTrail = new LoggingAuditTrail(settings, logger);
+            LoggingAuditTrail auditTrail = new LoggingAuditTrail(settings, transport, logger);
             TransportMessage message = randomBoolean() ? new MockMessage() : new MockIndicesRequest();
-            String origins = LoggingAuditTrail.originAttributes(message);
+            String origins = LoggingAuditTrail.originAttributes(message, transport);;
             auditTrail.authenticationFailed("_action", message);
             switch (level) {
                 case ERROR:
@@ -245,7 +247,7 @@ public class LoggingAuditTrailTests extends ESTestCase {
             when(request.uri()).thenReturn("_uri");
             String expectedMessage = prepareRestContent(request);
             CapturingLogger logger = new CapturingLogger(level);
-            LoggingAuditTrail auditTrail = new LoggingAuditTrail(settings, logger);
+            LoggingAuditTrail auditTrail = new LoggingAuditTrail(settings, transport, logger);
             auditTrail.authenticationFailed(new MockToken(), request);
             switch (level) {
                 case ERROR:
@@ -268,7 +270,7 @@ public class LoggingAuditTrailTests extends ESTestCase {
             when(request.uri()).thenReturn("_uri");
             String expectedMessage = prepareRestContent(request);
             CapturingLogger logger = new CapturingLogger(level);
-            LoggingAuditTrail auditTrail = new LoggingAuditTrail(settings, logger);
+            LoggingAuditTrail auditTrail = new LoggingAuditTrail(settings, transport, logger);
             auditTrail.authenticationFailed(request);
             switch (level) {
                 case ERROR:
@@ -287,9 +289,9 @@ public class LoggingAuditTrailTests extends ESTestCase {
     public void testAuthenticationFailed_Realm() throws Exception {
         for (Level level : Level.values()) {
             CapturingLogger logger = new CapturingLogger(level);
-            LoggingAuditTrail auditTrail = new LoggingAuditTrail(settings, logger);
+            LoggingAuditTrail auditTrail = new LoggingAuditTrail(settings, transport, logger);
             TransportMessage message = randomBoolean() ? new MockMessage() : new MockIndicesRequest();
-            String origins = LoggingAuditTrail.originAttributes(message);
+            String origins = LoggingAuditTrail.originAttributes(message, transport);;
             auditTrail.authenticationFailed("_realm", new MockToken(), "_action", message);
             switch (level) {
                 case ERROR:
@@ -316,7 +318,7 @@ public class LoggingAuditTrailTests extends ESTestCase {
             when(request.uri()).thenReturn("_uri");
             String expectedMessage = prepareRestContent(request);
             CapturingLogger logger = new CapturingLogger(level);
-            LoggingAuditTrail auditTrail = new LoggingAuditTrail(settings, logger);
+            LoggingAuditTrail auditTrail = new LoggingAuditTrail(settings, transport, logger);
             auditTrail.authenticationFailed("_realm", new MockToken(), request);
             switch (level) {
                 case ERROR:
@@ -335,9 +337,9 @@ public class LoggingAuditTrailTests extends ESTestCase {
     public void testAccessGranted() throws Exception {
         for (Level level : Level.values()) {
             CapturingLogger logger = new CapturingLogger(level);
-            LoggingAuditTrail auditTrail = new LoggingAuditTrail(settings, logger);
+            LoggingAuditTrail auditTrail = new LoggingAuditTrail(settings, transport, logger);
             TransportMessage message = randomBoolean() ? new MockMessage() : new MockIndicesRequest();
-            String origins = LoggingAuditTrail.originAttributes(message);
+            String origins = LoggingAuditTrail.originAttributes(message, transport);;
             auditTrail.accessGranted(new User.Simple("_username", "r1"), "_action", message);
             switch (level) {
                 case ERROR:
@@ -366,9 +368,9 @@ public class LoggingAuditTrailTests extends ESTestCase {
     public void testAccessGranted_InternalSystemAction() throws Exception {
         for (Level level : Level.values()) {
             CapturingLogger logger = new CapturingLogger(level);
-            LoggingAuditTrail auditTrail = new LoggingAuditTrail(settings, logger);
+            LoggingAuditTrail auditTrail = new LoggingAuditTrail(settings, transport, logger);
             TransportMessage message = randomBoolean() ? new MockMessage() : new MockIndicesRequest();
-            String origins = LoggingAuditTrail.originAttributes(message);
+            String origins = LoggingAuditTrail.originAttributes(message, transport);;
             auditTrail.accessGranted(User.SYSTEM, "internal:_action", message);
             switch (level) {
                 case ERROR:
@@ -391,9 +393,9 @@ public class LoggingAuditTrailTests extends ESTestCase {
     public void testAccessGranted_InternalSystemAction_NonSystemUser() throws Exception {
         for (Level level : Level.values()) {
             CapturingLogger logger = new CapturingLogger(level);
-            LoggingAuditTrail auditTrail = new LoggingAuditTrail(settings, logger);
+            LoggingAuditTrail auditTrail = new LoggingAuditTrail(settings, transport, logger);
             TransportMessage message = randomBoolean() ? new MockMessage() : new MockIndicesRequest();
-            String origins = LoggingAuditTrail.originAttributes(message);
+            String origins = LoggingAuditTrail.originAttributes(message, transport);;
             auditTrail.accessGranted(new User.Simple("_username"), "internal:_action", message);
             switch (level) {
                 case ERROR:
@@ -422,9 +424,9 @@ public class LoggingAuditTrailTests extends ESTestCase {
     public void testAccessDenied() throws Exception {
         for (Level level : Level.values()) {
             CapturingLogger logger = new CapturingLogger(level);
-            LoggingAuditTrail auditTrail = new LoggingAuditTrail(settings, logger);
+            LoggingAuditTrail auditTrail = new LoggingAuditTrail(settings, transport, logger);
             TransportMessage message = randomBoolean() ? new MockMessage() : new MockIndicesRequest();
-            String origins = LoggingAuditTrail.originAttributes(message);
+            String origins = LoggingAuditTrail.originAttributes(message, transport);;
             auditTrail.accessDenied(new User.Simple("_username", "r1"), "_action", message);
             switch (level) {
                 case ERROR:
@@ -451,8 +453,8 @@ public class LoggingAuditTrailTests extends ESTestCase {
     public void testConnectionDenied() throws Exception {
         for (Level level : Level.values()) {
             CapturingLogger logger = new CapturingLogger(level);
-            LoggingAuditTrail auditTrail = new LoggingAuditTrail(settings, logger);
-            InetAddress inetAddress = InetAddress.getLocalHost();
+            LoggingAuditTrail auditTrail = new LoggingAuditTrail(settings, transport, logger);
+            InetAddress inetAddress = InetAddress.getLoopbackAddress();
             ShieldIpFilterRule rule = new ShieldIpFilterRule(false, "_all");
             auditTrail.connectionDenied(inetAddress, "default", rule);
             switch (level) {
@@ -472,8 +474,8 @@ public class LoggingAuditTrailTests extends ESTestCase {
     public void testConnectionGranted() throws Exception {
         for (Level level : Level.values()) {
             CapturingLogger logger = new CapturingLogger(level);
-            LoggingAuditTrail auditTrail = new LoggingAuditTrail(settings, logger);
-            InetAddress inetAddress = InetAddress.getLocalHost();
+            LoggingAuditTrail auditTrail = new LoggingAuditTrail(settings, transport, logger);
+            InetAddress inetAddress = InetAddress.getLoopbackAddress();
             ShieldIpFilterRule rule = IPFilter.DEFAULT_PROFILE_ACCEPT_ALL;
             auditTrail.connectionGranted(inetAddress, "default", rule);
             switch (level) {
@@ -494,7 +496,7 @@ public class LoggingAuditTrailTests extends ESTestCase {
     @Test
     public void testOriginAttributes() throws Exception {
         MockMessage message = new MockMessage();
-        String text = LoggingAuditTrail.originAttributes(message);
+        String text = LoggingAuditTrail.originAttributes(message, transport);;
         InetSocketAddress restAddress = RemoteHostHeader.restRemoteAddress(message);
         if (restAddress != null) {
             assertThat(text, equalTo("origin_type=[rest], origin_address=[" + restAddress + "]"));
@@ -502,7 +504,7 @@ public class LoggingAuditTrailTests extends ESTestCase {
         }
         TransportAddress address = message.remoteAddress();
         if (address == null) {
-            assertThat(text, equalTo("origin_type=[local_node], origin_address=[" + NetworkUtils.getLocalHost().getHostAddress() + "]"));
+            assertThat(text, equalTo("origin_type=[local_node], origin_address=[" + transport.boundAddress().publishAddress().getAddress() + "]"));
             return;
         }
 
