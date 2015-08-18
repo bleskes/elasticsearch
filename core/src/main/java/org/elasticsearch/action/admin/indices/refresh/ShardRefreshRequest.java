@@ -19,7 +19,7 @@
 
 package org.elasticsearch.action.admin.indices.refresh;
 
-import org.elasticsearch.action.support.indices.BaseNodesIndicesRequest;
+import org.elasticsearch.action.support.indices.BaseNodeBroadcastRequest;
 import org.elasticsearch.cluster.routing.ShardRouting;
 
 import java.util.List;
@@ -27,7 +27,7 @@ import java.util.List;
 /**
  *
  */
-class ShardRefreshRequest extends BaseNodesIndicesRequest<RefreshRequest> {
+class ShardRefreshRequest extends BaseNodeBroadcastRequest<RefreshRequest> {
 
     ShardRefreshRequest() {
     }

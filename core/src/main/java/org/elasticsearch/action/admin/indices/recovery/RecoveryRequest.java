@@ -19,7 +19,6 @@
 
 package org.elasticsearch.action.admin.indices.recovery;
 
-import org.elasticsearch.action.support.broadcast.BroadcastRequest;
 import org.elasticsearch.action.support.indices.IndicesLevelRequest;
 import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.io.stream.StreamInput;

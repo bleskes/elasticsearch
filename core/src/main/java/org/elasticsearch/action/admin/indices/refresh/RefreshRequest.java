@@ -20,7 +20,6 @@
 package org.elasticsearch.action.admin.indices.refresh;
 
 import org.elasticsearch.action.ActionRequest;
-import org.elasticsearch.action.support.broadcast.BroadcastRequest;
 import org.elasticsearch.action.support.indices.IndicesLevelRequest;
 
 /**

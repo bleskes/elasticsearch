@@ -20,14 +20,14 @@
 package org.elasticsearch.action.admin.indices.flush;
 
 import org.elasticsearch.action.support.broadcast.BroadcastShardOperationFailedException;
-import org.elasticsearch.action.support.indices.BaseNodesIndicesResponse;
+import org.elasticsearch.action.support.indices.BaseNodeBroadcastResponse;
 
 import java.util.List;
 
 /**
  *
  */
-class ShardFlushResponse extends BaseNodesIndicesResponse {
+class ShardFlushResponse extends BaseNodeBroadcastResponse {
 
     ShardFlushResponse() {
 

@@ -23,8 +23,8 @@ import com.google.common.collect.Lists;
 import org.elasticsearch.action.support.ActionFilters;
 import org.elasticsearch.action.support.DefaultShardOperationFailedException;
 import org.elasticsearch.action.support.broadcast.BroadcastShardOperationFailedException;
-import org.elasticsearch.action.support.indices.BaseNodesIndicesRequest;
-import org.elasticsearch.action.support.indices.BaseNodesIndicesResponse;
+import org.elasticsearch.action.support.indices.BaseNodeBroadcastRequest;
+import org.elasticsearch.action.support.indices.BaseNodeBroadcastResponse;
 import org.elasticsearch.action.support.indices.TransportNodeBroadcastAction;
 import org.elasticsearch.cluster.ClusterService;
 import org.elasticsearch.cluster.ClusterState;
@@ -177,7 +177,7 @@ public class TransportIndicesStatsAction extends TransportNodeBroadcastAction<In
         return new ShardStats(indexShard, indexShard.routingEntry(), flags);
     }
 
-    static class IndexShardStatsRequest extends BaseNodesIndicesRequest<IndicesStatsRequest> {
+    static class IndexShardStatsRequest extends BaseNodeBroadcastRequest<IndicesStatsRequest> {
 
         // TODO if there are many indices, the request might hold a large indices array..., we don't really need to serialize it
         IndicesStatsRequest request;
@@ -209,7 +209,7 @@ public class TransportIndicesStatsAction extends TransportNodeBroadcastAction<In
         }
     }
 
-    public class IndexShardStatsResponse extends BaseNodesIndicesResponse {
+    public class IndexShardStatsResponse extends BaseNodeBroadcastResponse {
         List<ShardStats> shards;
 
         public IndexShardStatsResponse() {

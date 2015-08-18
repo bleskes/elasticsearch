@@ -21,7 +21,7 @@ package org.elasticsearch.action.admin.indices.recovery;
 
 import com.google.common.collect.Lists;
 import org.elasticsearch.action.support.broadcast.BroadcastShardOperationFailedException;
-import org.elasticsearch.action.support.indices.BaseNodesIndicesResponse;
+import org.elasticsearch.action.support.indices.BaseNodeBroadcastResponse;
 import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
@@ -35,7 +35,7 @@ import java.util.List;
 /**
  * Information regarding the recovery state of a shard.
  */
-public class ShardRecoveryResponse extends BaseNodesIndicesResponse implements ToXContent {
+public class ShardRecoveryResponse extends BaseNodeBroadcastResponse implements ToXContent {
 
     List<RecoveryState> recoveryStates;
 

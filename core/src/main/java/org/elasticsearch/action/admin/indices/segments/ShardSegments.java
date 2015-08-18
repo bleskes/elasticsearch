@@ -20,14 +20,11 @@
 package org.elasticsearch.action.admin.indices.segments;
 
 import com.google.common.collect.ImmutableList;
-import org.elasticsearch.action.support.broadcast.BroadcastShardResponse;
-import org.elasticsearch.action.support.indices.BaseNodesIndicesResponse;
 import org.elasticsearch.cluster.routing.ShardRouting;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Streamable;
 import org.elasticsearch.index.engine.Segment;
-import org.elasticsearch.index.shard.ShardId;
 
 import java.io.IOException;
 import java.util.ArrayList;

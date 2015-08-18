@@ -24,7 +24,7 @@ import com.google.common.collect.Maps;
 import org.elasticsearch.action.support.ActionFilters;
 import org.elasticsearch.action.support.DefaultShardOperationFailedException;
 import org.elasticsearch.action.support.broadcast.BroadcastShardOperationFailedException;
-import org.elasticsearch.action.support.indices.BaseNodesIndicesRequest;
+import org.elasticsearch.action.support.indices.BaseNodeBroadcastRequest;
 import org.elasticsearch.action.support.indices.TransportNodeBroadcastAction;
 import org.elasticsearch.cluster.ClusterService;
 import org.elasticsearch.cluster.ClusterState;
@@ -125,7 +125,7 @@ public class TransportRecoveryAction extends TransportNodeBroadcastAction<Recove
         return state.blocks().indicesBlockedException(ClusterBlockLevel.READ, concreteIndices);
     }
 
-    static class ShardRecoveryRequest extends BaseNodesIndicesRequest<RecoveryRequest> {
+    static class ShardRecoveryRequest extends BaseNodeBroadcastRequest<RecoveryRequest> {
 
         ShardRecoveryRequest() {
         }

@@ -23,8 +23,8 @@ import com.google.common.collect.Lists;
 import org.elasticsearch.action.support.ActionFilters;
 import org.elasticsearch.action.support.DefaultShardOperationFailedException;
 import org.elasticsearch.action.support.broadcast.BroadcastShardOperationFailedException;
-import org.elasticsearch.action.support.indices.BaseNodesIndicesRequest;
-import org.elasticsearch.action.support.indices.BaseNodesIndicesResponse;
+import org.elasticsearch.action.support.indices.BaseNodeBroadcastRequest;
+import org.elasticsearch.action.support.indices.BaseNodeBroadcastResponse;
 import org.elasticsearch.action.support.indices.TransportNodeBroadcastAction;
 import org.elasticsearch.cluster.ClusterService;
 import org.elasticsearch.cluster.ClusterState;
@@ -111,7 +111,7 @@ public class TransportIndicesSegmentsAction extends TransportNodeBroadcastAction
         return new ShardSegments(indexShard.routingEntry(), indexShard.engine().segments(request.verbose));
     }
 
-    static class IndexShardSegmentRequest extends BaseNodesIndicesRequest<IndicesSegmentsRequest> {
+    static class IndexShardSegmentRequest extends BaseNodeBroadcastRequest<IndicesSegmentsRequest> {
         boolean verbose;
         
         IndexShardSegmentRequest() {
@@ -141,7 +141,7 @@ public class TransportIndicesSegmentsAction extends TransportNodeBroadcastAction
         }
     }
 
-    static class IndexShardSegmentResponse extends BaseNodesIndicesResponse {
+    static class IndexShardSegmentResponse extends BaseNodeBroadcastResponse {
         private List<ShardSegments> shardSegments;
 
         public IndexShardSegmentResponse() {

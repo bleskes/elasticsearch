@@ -20,7 +20,7 @@
 package org.elasticsearch.action.admin.indices.optimize;
 
 
-import org.elasticsearch.action.support.indices.BaseNodesIndicesRequest;
+import org.elasticsearch.action.support.indices.BaseNodeBroadcastRequest;
 import org.elasticsearch.cluster.routing.ShardRouting;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
@@ -31,7 +31,7 @@ import java.util.List;
 /**
  *
  */
-final class ShardOptimizeRequest extends BaseNodesIndicesRequest<OptimizeRequest> {
+final class ShardOptimizeRequest extends BaseNodeBroadcastRequest<OptimizeRequest> {
     ShardOptimizeRequest() {
     }
 

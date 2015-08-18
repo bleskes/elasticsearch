@@ -19,7 +19,7 @@
 
 package org.elasticsearch.action.admin.indices.flush;
 
-import org.elasticsearch.action.support.indices.BaseNodesIndicesRequest;
+import org.elasticsearch.action.support.indices.BaseNodeBroadcastRequest;
 import org.elasticsearch.cluster.routing.ShardRouting;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
@@ -30,7 +30,7 @@ import java.util.List;
 /**
  *
  */
-class ShardFlushRequest extends BaseNodesIndicesRequest<FlushRequest> {
+class ShardFlushRequest extends BaseNodeBroadcastRequest<FlushRequest> {
     private FlushRequest request = new FlushRequest();
 
     ShardFlushRequest() {

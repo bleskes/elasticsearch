@@ -19,7 +19,6 @@
 
 package org.elasticsearch.action.admin.indices.cache.clear;
 
-import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.action.support.DefaultShardOperationFailedException;
 import org.elasticsearch.action.support.indices.IndicesLevelResponse;
 import org.elasticsearch.common.io.stream.StreamInput;
