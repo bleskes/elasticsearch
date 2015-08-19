@@ -97,7 +97,7 @@ public class TransformConfigVerifier
             throws TransformConfigurationException
     {
         int inputsSize = (inputs == null) ? 0 : inputs.size();
-        if (type.arityRange().contains(inputsSize))
+        if (!type.arityRange().contains(inputsSize))
         {
             String msg = Messages.getMessage(Messages.JOB_CONFIG_TRANSFORM_INVALID_INPUT_COUNT,
                     tc.getTransform(), rangeAsString(type.arityRange()), inputsSize);

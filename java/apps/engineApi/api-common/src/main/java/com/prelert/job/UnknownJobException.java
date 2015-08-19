@@ -47,14 +47,7 @@ public class UnknownJobException extends JobException
 	public UnknownJobException(String jobId)
 	{
 	    super("", ErrorCodes.MISSING_JOB_ERROR);
-
-		//super(Messages.getMessage(Messages.JOB_UNKNOWN_ID, jobId), ErrorCodes.MISSING_JOB_ERROR);
-	    // TODO
-	    throw new IllegalStateException();
-	    /*
-		super("", ErrorCodes.MISSING_JOB_ERROR);
 		m_JobId = jobId;
-		*/
 	}
 
 	/**

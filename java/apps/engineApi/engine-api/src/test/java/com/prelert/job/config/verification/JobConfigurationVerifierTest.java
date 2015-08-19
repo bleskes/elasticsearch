@@ -258,7 +258,7 @@ public class JobConfigurationVerifierTest
         catch (JobConfigurationException e)
         {
             assertTrue(e instanceof TransformConfigurationException);
-            assertEquals(e.getErrorCode(), ErrorCodes.TRANSFORM_OUTPUTS_UNUSED);
+            assertEquals(ErrorCodes.TRANSFORM_OUTPUTS_UNUSED, e.getErrorCode());
         }
 
 
@@ -287,7 +287,7 @@ public class JobConfigurationVerifierTest
         catch (JobConfigurationException e)
         {
             assertTrue(e instanceof TransformConfigurationException);
-            assertEquals(e.getErrorCode(), ErrorCodes.DUPLICATED_TRANSFORM_OUTPUT_NAME);
+            assertEquals(ErrorCodes.DUPLICATED_TRANSFORM_OUTPUT_NAME, e.getErrorCode());
         }
 
         jc.getAnalysisConfig().getDetectors().get(0).setFieldName(TransformType.DOMAIN_SPLIT.defaultOutputNames().get(0));

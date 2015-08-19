@@ -157,5 +157,4 @@ public interface JobDetailsProvider extends Closeable
 	public boolean setJobFinishedTimeandStatus(String jobId, Date time,
 			JobStatus status)
 	throws UnknownJobException;
-
 }

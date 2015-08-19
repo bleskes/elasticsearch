@@ -33,18 +33,35 @@ import javax.ws.rs.ext.ExceptionMapper;
 
 import com.prelert.job.JobException;
 import com.prelert.job.UnknownJobException;
+import com.prelert.job.messages.Messages;
 import com.prelert.rs.data.ApiError;
 
 public class JobExceptionMapper
 implements ExceptionMapper<JobException>
 {
 
+    /**
+     * If the JobException doesn't have a message and it's an instance of
+     * {@link UnknownJobException} set the default message.
+     */
     @Override
     public Response toResponse(JobException e)
     {
         ApiError error = new ApiError(e.getErrorCode());
         error.setCause(e.getCause());
         error.setMessage(e.getMessage());
+
+        if (e.getMessage() == null || e.getMessage().isEmpty())
+        {
+            if (e instanceof UnknownJobException)
+            {
+                // set the default message
+                UnknownJobException uje = (UnknownJobException)e;
+                error.setMessage(Messages.getMessage(Messages.JOB_UNKNOWN_ID, uje.getJobId()));
+            }
+
+        }
+
 
 
         Response.Status statusCode = Response.Status.BAD_REQUEST;

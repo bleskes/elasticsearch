@@ -551,7 +551,7 @@ public class ElasticsearchJobProvider implements JobProvider
                 // TODO
                 //String msg = Messages.getMessage(Messages.DATASTORE_ERROR_DELETING_MISSING_INDEX, jobId);
                 LOGGER.warn(msg);
-                throw new DataStoreException(msg, ErrorCodes.MISSING_JOB_ERROR);
+                throw new UnknownJobException(jobId);
             }
             else
             {
