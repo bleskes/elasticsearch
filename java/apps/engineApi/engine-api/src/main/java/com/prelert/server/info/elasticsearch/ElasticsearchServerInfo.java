@@ -280,7 +280,6 @@ public class ElasticsearchServerInfo implements ServerInfoFactory
         try
         {
             builder.startObject("elasticsearch");
-            builder.field("host", nodeStats.getHostname());
 
             if (nodeInfo != null)
             {
@@ -293,6 +292,7 @@ public class ElasticsearchServerInfo implements ServerInfoFactory
 
             if (nodeStats != null)
             {
+                builder.field("host", nodeStats.getHostname());
                 builder.startObject("stats");
                 nodeStats.getIndices().toXContent(builder, ToXContent.EMPTY_PARAMS);
                 nodeStats.getOs().toXContent(builder, ToXContent.EMPTY_PARAMS);
