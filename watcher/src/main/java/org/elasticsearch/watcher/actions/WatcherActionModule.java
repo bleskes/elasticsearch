@@ -36,7 +36,7 @@ import java.util.Map;
 
 /**
  */
-public class ActionModule extends AbstractModule {
+public class WatcherActionModule extends AbstractModule {
 
     private final Map<String, Class<? extends ActionFactory>> parsers = new HashMap<>();
 

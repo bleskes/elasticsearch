@@ -15,26 +15,16 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.watcher;
-
+package org.elasticsearch.marvel.agent.settings;
 
 import org.elasticsearch.common.inject.AbstractModule;
-import org.elasticsearch.common.inject.Module;
-import org.elasticsearch.common.inject.SpawnModules;
-import org.elasticsearch.watcher.transport.WatcherTransportModule;
+import org.elasticsearch.marvel.agent.AgentService;
 
-import java.util.Collections;
-
-
-public class TransportClientWatcherModule extends AbstractModule implements SpawnModules {
-
-    @Override
-    public Iterable<? extends Module> spawnModules() {
-        return Collections.singleton(new WatcherTransportModule());
-    }
+public class MarvelModule extends AbstractModule {
 
     @Override
     protected void configure() {
+        bind(MarvelSettings.class).asEagerSingleton();
+        bind(AgentService.class).asEagerSingleton();
     }
-
 }
