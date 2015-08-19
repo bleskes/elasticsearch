@@ -56,7 +56,7 @@ public abstract class TransportNodeBroadcastAction<Request extends IndicesLevelR
     private final ClusterService clusterService;
     private final TransportService transportService;
 
-    final String transportNodeIndicesAction;
+    final String transportNodeBroadcastAction;
 
     public TransportNodeBroadcastAction(
             Settings settings,
@@ -67,16 +67,16 @@ public abstract class TransportNodeBroadcastAction<Request extends IndicesLevelR
             ActionFilters actionFilters,
             IndexNameExpressionResolver indexNameExpressionResolver,
             Class<Request> request,
-            Class<NodeBroadcastRequest> nodeIndicesRequest,
+            Class<NodeBroadcastRequest> nodeBroadcastRequest,
             String executor) {
         super(settings, actionName, threadPool, transportService, actionFilters, indexNameExpressionResolver, request);
 
         this.clusterService = clusterService;
         this.transportService = transportService;
 
-        transportNodeIndicesAction = actionName + "[i]";
+        transportNodeBroadcastAction = actionName + "[i]";
 
-        transportService.registerRequestHandler(transportNodeIndicesAction, nodeIndicesRequest, executor, new NodeIndicesTransportHandler());
+        transportService.registerRequestHandler(transportNodeBroadcastAction, nodeBroadcastRequest, executor, new NodeBroadcastTransportHandler());
     }
 
     private final Response newResponse(Request request, AtomicReferenceArray responses, List<NoShardAvailableActionException> unavailableShardExceptions) {
@@ -194,7 +194,7 @@ public abstract class TransportNodeBroadcastAction<Request extends IndicesLevelR
         private void performOperation(final DiscoveryNode node, List<ShardRouting> shards, final int nodeIndex) {
             try {
                 NodeBroadcastRequest nodeRequest = newNodeRequest(node.getId(), request, shards);
-                transportService.sendRequest(node, transportNodeIndicesAction, nodeRequest, new BaseTransportResponseHandler<NodeBroadcastResponse>() {
+                transportService.sendRequest(node, transportNodeBroadcastAction, nodeRequest, new BaseTransportResponseHandler<NodeBroadcastResponse>() {
                     @Override
                     public NodeBroadcastResponse newInstance() {
                         return newNodeResponse();
@@ -252,7 +252,7 @@ public abstract class TransportNodeBroadcastAction<Request extends IndicesLevelR
         }
     }
 
-    class NodeIndicesTransportHandler implements TransportRequestHandler<NodeBroadcastRequest> {
+    class NodeBroadcastTransportHandler implements TransportRequestHandler<NodeBroadcastRequest> {
         @Override
         public void messageReceived(final NodeBroadcastRequest request, TransportChannel channel) throws Exception {
             List<ShardRouting> shards = request.getShards();
