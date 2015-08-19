@@ -37,11 +37,19 @@ define(function (require) {
 
     $scope.dataSources = {};
 
+    var ClusterStateDataSource = Private(require('plugins/marvel/lib/cluster_state_data_source'));
+    $scope.dataSources.clusterState = new ClusterStateDataSource({
+      indexPattern: indexPattern,
+      cluster: globalState.cluster
+    });
+    $scope.dataSources.clusterState.register(courier);
+
     $scope.dataSources.clusterStatus = new ClusterStatusDataSource(indexPattern, globalState.cluster, clusters);
     $scope.dataSources.clusterStatus.register(courier);
-    $scope.cluster = _.find($scope.dataSources.clusterStatus.clusters, { _id: globalState.cluster });
+
+    $scope.cluster = _.find($scope.dataSources.clusterStatus.clusters, { cluster_name: globalState.cluster });
     $scope.$watch('dataSources.clusterStatus.clusters', function (clusters) {
-      $scope.cluster = _.find(clusters, { _id: globalState.cluster });
+      $scope.cluster = _.find(clusters, { cluster_name: globalState.cluster });
     });
 
     $scope.$on('$destroy', function () {

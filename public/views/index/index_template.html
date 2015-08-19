@@ -1,5 +1,5 @@
 <div ng-controller="indexView" class="details marvel-view" ng-class="cluster.shards[indexName].status">
-  <marvel-cluster-status source="dataSources.clusterStatus"></marvel-cluster-status>
+  <marvel-cluster-status cluster-state="dataSources.clusterState" source="dataSources.clusterStatus"></marvel-cluster-status>
   <div class="detail-metrics marvel-element">
     <h1>{{ indexName }}</h1>
     <div class="metrics marvel-element">

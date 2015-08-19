@@ -37,6 +37,13 @@ define(function (require) {
     // Setup the data sources for the charts
     $scope.dataSources = {};
 
+    var ClusterStateDataSource = Private(require('plugins/marvel/lib/cluster_state_data_source'));
+    $scope.dataSources.clusterState = new ClusterStateDataSource({
+      indexPattern: indexPattern,
+      cluster: globalState.cluster
+    });
+    $scope.dataSources.clusterState.register(courier);
+
     // Map the metric keys to ChartDataSources and register them with
     // the courier. Once this is finished call courier fetch.
     Promise

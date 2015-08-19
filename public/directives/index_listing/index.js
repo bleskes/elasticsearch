@@ -14,12 +14,12 @@ define(function (require) {
 
   module.directive('marvelIndexListing', function () {
     function makeSampleData() {
-      var sampleData = (function() {
+      var sampleData = (function () {
         var arr = [];
         var length = 30;
         var now = (new Date()).getTime();
-        for( var i = 0; i < length; i++ ) {
-          arr.push({y: Math.random() * 100, x: (now - ((length-i) * 10))});
+        for (var i = 0; i < length; i++) {
+          arr.push({y: Math.random() * 100, x: (now - ((length - i) * 10))});
         }
         return arr;
       }());
@@ -34,10 +34,10 @@ define(function (require) {
         value = (value.metric.format) ? numeral(value.last).format(value.metric.format) : value.last;
       }
       var chartData = _.get(this.props, dataKey.chart_data);
-      var has_chart = !!dataKey.chart_data;
+      var hasChart = !!dataKey.chart_data;
       return make.td({key: idx},
-        (has_chart ? React.createElement(SparkLines, {data: chartData}) : null),
-        make.div({className: (has_chart ? 'pull-right': '')}, value));
+        make.div({className: (hasChart ? 'pull-right' : '')}, value),
+        (hasChart ? React.createElement(SparkLines, {data: chartData}) : null));
     }
     var initialTableOptions = {
       title: 'Indices',
@@ -73,23 +73,24 @@ define(function (require) {
       restrict: 'E',
       scope: { data: '=' },
       link: function ($scope, $el) {
-        var tableRowTemplate = React.createFactory(React.createClass({
-          render: function() {
+        var tableRowTemplate = React.createClass({
+          render: function () {
             var boundTemplateFn = makeTdWithPropKey.bind(this);
             var dataProps = _.pluck(initialTableOptions.dataKeys, 'key');
             var $tdsArr = initialTableOptions.dataKeys.map(boundTemplateFn);
             return make.tr({key: this.props.name}, $tdsArr);
           }
-        }));
-
-        $scope.options = initialTableOptions;
-
-        var $table = React.createElement(Table, {
-          scope: $scope,
-          template: tableRowTemplate
         });
 
-        React.render($table, $el[0]);
+        var tableFactory = React.createFactory(Table);
+
+        var table = React.render(tableFactory({
+          scope: $scope,
+          options: initialTableOptions,
+          template: tableRowTemplate
+        }), $el[0]);
+
+        $scope.$watch('data', (data) => table.setData(data));
       }
     };
   });

@@ -57,7 +57,7 @@ define(function(require) {
         .yScale({nice: true})
         .margin({left: 50, right: 10})
         .lines({
-          stroke: '#000',
+          stroke: function() { return '#000'; },
           strokeWidth: '2px',
           interpolate: 'basis'
         })

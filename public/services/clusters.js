@@ -5,11 +5,10 @@ define(function (require) {
   var module = require('ui/modules').get('marvel/clusters', [ 'ngResource' ]);
   module.service('marvelClusters', function ($resource, Promise) {
 
-    var Clusters = $resource('/marvel/api/v1/clusters/:id', { id: '@_id' });
+    var Clusters = $resource('/marvel/api/v1/clusters/:id', { id: '@cluster_name' });
     var cache;
 
-    function fetch(force) {
-      if (!force && cache) return Promise.resolve(cache);
+    function fetch() {
       return Clusters.query().$promise.then(function (clusters) {
         cache = clusters;
         return clusters;

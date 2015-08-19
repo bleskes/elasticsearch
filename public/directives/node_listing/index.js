@@ -95,14 +95,17 @@ define(function (require) {
           }
         }));
 
-        $scope.options = initialTableOptions;
-
         var $table = React.createElement(Table, {
-          scope: $scope,
+          options: initialTableOptions,
+          data: $scope.data,
           template: tableRowTemplate
         });
 
-        React.render($table, $el[0]);
+        var TableInstance = React.render($table, $el[0]);
+
+        $scope.$watch('data', function(data, oldVal) {
+          TableInstance.setData(data);
+        });
       }
     };
   });
