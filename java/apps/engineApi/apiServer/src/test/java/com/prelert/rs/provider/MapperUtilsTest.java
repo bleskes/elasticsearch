@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -24,38 +24,32 @@
  *                                                          *
  *                                                          *
  ************************************************************/
-
 package com.prelert.rs.provider;
 
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.ext.ExceptionMapper;
+import static org.junit.Assert.*;
+
+import org.junit.Test;
 
 import com.prelert.job.JobException;
 import com.prelert.job.UnknownJobException;
+import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.rs.data.ApiError;
 
-public class JobExceptionMapper
-implements ExceptionMapper<JobException>
-{
+public class MapperUtilsTest {
 
-    /**
-     * If the JobException doesn't have a message and it's an instance of
-     * {@link UnknownJobException} set the default message.
-     */
-    @Override
-    public Response toResponse(JobException e)
+    @Test
+    public void testApiErrorFromJobException()
     {
+        Exception cause = new ArrayIndexOutOfBoundsException();
+
+        JobException e = new UnknownJobException("job", "error message",
+                                                ErrorCodes.BUCKET_RESET_NOT_SUPPORTED,
+                                                cause);
+
         ApiError error = MapperUtils.apiErrorFromJobException(e);
-
-        Response.Status statusCode = Response.Status.BAD_REQUEST;
-        if (e instanceof UnknownJobException)
-        {
-            statusCode = Response.Status.NOT_FOUND;
-        }
-
-        return Response.status(statusCode)
-                        .type(MediaType.APPLICATION_JSON)
-                        .entity(error.toJson()).build();
+        assertEquals(ErrorCodes.BUCKET_RESET_NOT_SUPPORTED, error.getErrorCode());
+        assertEquals("error message", error.getMessage());
+        assertEquals(cause, error.getCause());
     }
+
 }

@@ -75,6 +75,7 @@ import com.prelert.rs.data.ApiError;
 import com.prelert.rs.data.DataPostResponse;
 import com.prelert.rs.data.MultiDataPostResult;
 import com.prelert.rs.exception.InvalidParametersException;
+import com.prelert.rs.provider.MapperUtils;
 
 
 public abstract class AbstractDataLoad extends ResourceWithJobManager
@@ -149,7 +150,7 @@ public abstract class AbstractDataLoad extends ResourceWithJobManager
         {
             for (String job : jobIds)
             {
-                ApiError error = ApiError.fromJobException(e);
+                ApiError error = MapperUtils.apiErrorFromJobException(e);
                 result.addResult(new DataPostResponse(job, error));
             }
 
@@ -192,7 +193,7 @@ public abstract class AbstractDataLoad extends ResourceWithJobManager
         }
         catch (JobException e)
         {
-            ApiError error = ApiError.fromJobException(e);
+            ApiError error = MapperUtils.apiErrorFromJobException(e);
             result.addResult(new DataPostResponse(jobId, error));
         }
 
@@ -399,7 +400,8 @@ public abstract class AbstractDataLoad extends ResourceWithJobManager
         else if (dataStreamer.getJobException().isPresent())
         {
             JobException e = dataStreamer.getJobException().get();
-            return new DataPostResponse(dataStreamer.getJobId(), ApiError.fromJobException(e));
+            return new DataPostResponse(dataStreamer.getJobId(),
+                                        MapperUtils.apiErrorFromJobException(e));
         }
         else
         {

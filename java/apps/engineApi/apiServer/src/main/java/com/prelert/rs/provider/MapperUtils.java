@@ -24,38 +24,42 @@
  *                                                          *
  *                                                          *
  ************************************************************/
-
 package com.prelert.rs.provider;
-
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.ext.ExceptionMapper;
 
 import com.prelert.job.JobException;
 import com.prelert.job.UnknownJobException;
+import com.prelert.job.messages.Messages;
 import com.prelert.rs.data.ApiError;
 
-public class JobExceptionMapper
-implements ExceptionMapper<JobException>
+public class MapperUtils
 {
+    private MapperUtils()
+    {
+
+    }
 
     /**
-     * If the JobException doesn't have a message and it's an instance of
-     * {@link UnknownJobException} set the default message.
+     * Static method to create an {@link ApiError} from a {@linkplain JobException}
+     * @param e
+     * @return
      */
-    @Override
-    public Response toResponse(JobException e)
+    public static ApiError apiErrorFromJobException(JobException e)
     {
-        ApiError error = MapperUtils.apiErrorFromJobException(e);
+        ApiError error = new ApiError(e.getErrorCode());
+        error.setCause(e.getCause());
+        error.setMessage(e.getMessage());
 
-        Response.Status statusCode = Response.Status.BAD_REQUEST;
-        if (e instanceof UnknownJobException)
+        if (e.getMessage() == null || e.getMessage().isEmpty())
         {
-            statusCode = Response.Status.NOT_FOUND;
+            if (e instanceof UnknownJobException)
+            {
+                // set the default message
+                UnknownJobException uje = (UnknownJobException)e;
+                error.setMessage(Messages.getMessage(Messages.JOB_UNKNOWN_ID, uje.getJobId()));
+            }
+
         }
 
-        return Response.status(statusCode)
-                        .type(MediaType.APPLICATION_JSON)
-                        .entity(error.toJson()).build();
+        return error;
     }
 }

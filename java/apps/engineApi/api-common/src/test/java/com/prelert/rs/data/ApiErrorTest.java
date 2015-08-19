@@ -32,8 +32,6 @@ import static org.junit.Assert.*;
 import org.junit.Test;
 
 import com.prelert.job.errorcodes.ErrorCodes;
-import com.prelert.job.JobException;
-import com.prelert.job.UnknownJobException;
 
 public class ApiErrorTest
 {
@@ -43,21 +41,6 @@ public class ApiErrorTest
         ApiError apiError = new ApiError();
 
         assertEquals("{\n}\n", apiError.toJson());
-    }
-
-    @Test
-    public void testFromJobException()
-    {
-        Exception cause = new ArrayIndexOutOfBoundsException();
-
-        JobException e = new UnknownJobException("job", "error message",
-                                                ErrorCodes.BUCKET_RESET_NOT_SUPPORTED,
-                                                cause);
-
-        ApiError error = ApiError.fromJobException(e);
-        assertEquals(ErrorCodes.BUCKET_RESET_NOT_SUPPORTED, error.getErrorCode());
-        assertEquals("error message", error.getMessage());
-        assertEquals(cause, error.getCause());
     }
 
     @Test

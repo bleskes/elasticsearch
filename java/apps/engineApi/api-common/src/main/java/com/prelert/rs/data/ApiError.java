@@ -33,7 +33,6 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.core.io.JsonStringEncoder;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.errorcodes.HasErrorCode;
-import com.prelert.job.JobException;
 
 
 /**
@@ -126,19 +125,6 @@ public class ApiError implements HasErrorCode
 	public void setCause(Throwable e)
 	{
 		m_Cause = e;
-	}
-
-	/**
-	 * Static method to create an error from a {@linkplain JobException}
-	 * @param e
-	 * @return
-	 */
-	public static ApiError fromJobException(JobException e)
-	{
-	    ApiError error = new ApiError(e.getErrorCode());
-	    error.setMessage(e.getMessage());
-	    error.setCause(e.getCause());
-	    return error;
 	}
 
 	/**
