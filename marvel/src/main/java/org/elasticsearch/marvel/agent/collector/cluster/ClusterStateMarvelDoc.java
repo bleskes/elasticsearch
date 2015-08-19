@@ -25,8 +25,8 @@ public class ClusterStateMarvelDoc extends MarvelDoc<ClusterStateMarvelDoc.Paylo
 
     private final Payload payload;
 
-    public ClusterStateMarvelDoc(String clusterName, String type, long timestamp, Payload payload) {
-        super(clusterName, type, timestamp);
+    public ClusterStateMarvelDoc(String clusterUUID, String type, long timestamp, Payload payload) {
+        super(clusterUUID, type, timestamp);
         this.payload = payload;
     }
 
@@ -35,8 +35,8 @@ public class ClusterStateMarvelDoc extends MarvelDoc<ClusterStateMarvelDoc.Paylo
         return payload;
     }
 
-    public static ClusterStateMarvelDoc createMarvelDoc(String clusterName, String type, long timestamp, ClusterState clusterState, ClusterHealthStatus status) {
-        return new ClusterStateMarvelDoc(clusterName, type, timestamp, new Payload(clusterState, status));
+    public static ClusterStateMarvelDoc createMarvelDoc(String clusterUUID, String type, long timestamp, ClusterState clusterState, ClusterHealthStatus status) {
+        return new ClusterStateMarvelDoc(clusterUUID, type, timestamp, new Payload(clusterState, status));
     }
 
     public static class Payload {

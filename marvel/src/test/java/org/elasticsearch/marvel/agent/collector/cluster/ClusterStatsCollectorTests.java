@@ -17,7 +17,6 @@
 
 package org.elasticsearch.marvel.agent.collector.cluster;
 
-import org.elasticsearch.cluster.ClusterName;
 import org.elasticsearch.cluster.ClusterService;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.marvel.agent.exporter.MarvelDoc;
@@ -41,7 +40,7 @@ public class ClusterStatsCollectorTests extends ESIntegTestCase {
         assertThat(marvelDoc, instanceOf(ClusterStatsMarvelDoc.class));
 
         ClusterStatsMarvelDoc clusterStatsMarvelDoc = (ClusterStatsMarvelDoc) marvelDoc;
-        assertThat(clusterStatsMarvelDoc.clusterName(), equalTo(client().admin().cluster().prepareHealth().get().getClusterName()));
+        assertThat(clusterStatsMarvelDoc.clusterUUID(), equalTo(client().admin().cluster().prepareState().setMetaData(true).get().getState().metaData().clusterUUID()));
         assertThat(clusterStatsMarvelDoc.timestamp(), greaterThan(0L));
         assertThat(clusterStatsMarvelDoc.type(), equalTo(ClusterStatsCollector.TYPE));
 
@@ -54,7 +53,6 @@ public class ClusterStatsCollectorTests extends ESIntegTestCase {
     private ClusterStatsCollector newClusterStatsCollector() {
         return new ClusterStatsCollector(internalCluster().getInstance(Settings.class),
                 internalCluster().getInstance(ClusterService.class),
-                internalCluster().getInstance(ClusterName.class),
                 internalCluster().getInstance(MarvelSettings.class),
                 client());
     }
