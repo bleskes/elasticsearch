@@ -44,7 +44,6 @@ import org.elasticsearch.transport.*;
 
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 
@@ -259,51 +258,40 @@ public abstract class TransportNodeBroadcastAction<Request extends IndicesLevelR
             List<ShardRouting> shards = request.getShards();
             final int totalShards = shards.size();
             logger.trace("executing operation [{}] on [{}] shards on node [{}]", actionName, totalShards, request.getNodeId());
-            final CountDownLatch latch = new CountDownLatch(totalShards);
-            final AtomicReferenceArray shardResults = new AtomicReferenceArray(totalShards);
+            final Object[] shardResults = new Object[totalShards];
 
             int shardIndex = -1;
             for (final ShardRouting shardRouting : shards) {
                 shardIndex++;
-                onShardOperation(request, latch, shardResults, shardIndex, shardRouting);
+                onShardOperation(request, shardResults, shardIndex, shardRouting);
             }
 
-            latch.await();
             List<BroadcastShardOperationFailedException> accumulatedExceptions = Lists.newArrayList();
             List<ShardOperationResult> results = Lists.newArrayList();
             for (int i = 0; i < totalShards; i++) {
-                if (shardResults.get(i) instanceof BroadcastShardOperationFailedException) {
-                    accumulatedExceptions.add((BroadcastShardOperationFailedException) shardResults.get(i));
+                if (shardResults[i] instanceof BroadcastShardOperationFailedException) {
+                    accumulatedExceptions.add((BroadcastShardOperationFailedException) shardResults[i]);
                 } else {
-                    results.add((ShardOperationResult) shardResults.get(i));
+                    results.add((ShardOperationResult) shardResults[i]);
                 }
             }
 
             channel.sendResponse(newNodeResponse(request.getNodeId(), totalShards, totalShards - accumulatedExceptions.size(), results, accumulatedExceptions));
         }
 
-        private void onShardOperation(final NodeBroadcastRequest request, final CountDownLatch latch, final AtomicReferenceArray shardResults, final int shardIndex, final ShardRouting shardRouting) {
-            threadPool.executor(ThreadPool.Names.SAME).execute(
-                    new Runnable() {
-                        @Override
-                        public void run() {
-                            try {
-                                logger.trace("executing operation [{}] for shard [{}] on node [{}]", actionName, shardRouting.shortSummary(), request.getNodeId());
-                                ShardOperationResult result = shardOperation(request, shardRouting);
-                                shardResults.set(shardIndex, result);
-                                logger.trace("completed operation [{}] for shard [{}] on node [{}]", actionName, shardRouting.shortSummary(), request.getNodeId());
-                            } catch (Throwable t) {
-                                BroadcastShardOperationFailedException e = new BroadcastShardOperationFailedException(shardRouting.shardId(), "operation " + actionName + " failed", t);
-                                e.setIndex(shardRouting.getIndex());
-                                e.setShard(shardRouting.shardId());
-                                shardResults.set(shardIndex, e);
-                                logger.trace("failed to execute operation [{}] for shard [{}] on node [{}]: [{}]", actionName, shardRouting.shortSummary(), request.getNodeId(), e);
-                            } finally {
-                                latch.countDown();
-                            }
-                        }
-                    }
-            );
+        private void onShardOperation(final NodeBroadcastRequest request, final Object[] shardResults, final int shardIndex, final ShardRouting shardRouting) {
+            try {
+                logger.trace("executing operation [{}] for shard [{}] on node [{}]", actionName, shardRouting.shortSummary(), request.getNodeId());
+                ShardOperationResult result = shardOperation(request, shardRouting);
+                shardResults[shardIndex] = result;
+                logger.trace("completed operation [{}] for shard [{}] on node [{}]", actionName, shardRouting.shortSummary(), request.getNodeId());
+            } catch (Throwable t) {
+                BroadcastShardOperationFailedException e = new BroadcastShardOperationFailedException(shardRouting.shardId(), "operation " + actionName + " failed", t);
+                e.setIndex(shardRouting.getIndex());
+                e.setShard(shardRouting.shardId());
+                shardResults[shardIndex] = e;
+                logger.trace("failed to execute operation [{}] for shard [{}] on node [{}]: [{}]", actionName, shardRouting.shortSummary(), request.getNodeId(), e);
+            }
         }
     }
 }
