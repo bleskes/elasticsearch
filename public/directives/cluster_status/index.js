@@ -24,6 +24,14 @@ define(function (require) {
         });
         $scope.$on('$destroy', unsubscribe);
 
+        $scope.createClass = function (cluster) {
+          var classes = [cluster.status];
+          if (cluster.license.type === 'lite') {
+            classes.push('lite');
+          }
+          return classes.join(' ');
+        };
+
         $scope.changeCluster = function (name) {
           if (globalState.cluster !== name) {
             globalState.cluster = name;

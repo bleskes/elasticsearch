@@ -16,29 +16,37 @@ function formatTime(millis) {
 class ClusterRow extends React.Component {
 
   changeCluster(event) {
+    if (this.props.license.type === 'lite') return;
     this.props.changeCluster(this.props.cluster_uuid);
   }
 
   render() {
+
     var licenseExpiry = (
       <div
         className="expires">
         Expires { moment(this.props.license.expiry_date_in_millis).format('D MMM YY') }
         </div>
     );
+
     if (this.props.license.expiry_date_in_millis < moment().valueOf()) {
-      licenseExpiry = (
-        <div
-          className="expires expired">Expired</div>
-      );
+      licenseExpiry = (<div className="expires expired">Expired</div>);
     }
+
+    var classes = [ this.props.status ];
+    var notLite = true;
+    if (this.props.license.type === 'lite') {
+      classes = [ 'lite' ];
+      notLite = false;
+    }
+
     return (
-      <tr className={ this.props.status }>
+      <tr className={ classes.join(' ') }>
         <td><a onClick={(event) => this.changeCluster(event) }>{ this.props.cluster_name }</a></td>
-        <td>{ numeral(this.props.stats.node_count).format('0,0') }</td>
-        <td>{ numeral(this.props.stats.indice_count).format('0,0') }</td>
-        <td>{ formatTime(this.props.stats.uptime) }</td>
-        <td>{ numeral(this.props.stats.data).format('0,0[.]0 b') }</td>
+        <td>{ notLite ? numeral(this.props.stats.node_count).format('0,0') : '-' }</td>
+        <td>{ notLite ? numeral(this.props.stats.indice_count).format('0,0') : '-' }</td>
+        <td>{ notLite ? formatTime(this.props.stats.uptime) : '-' }</td>
+        <td>{ notLite ? numeral(this.props.stats.data).format('0,0[.]0 b') : '-' }</td>
         <td className="license">
           <div className="license">{ _.capitalize(this.props.license.type) }</div>
           { licenseExpiry }
