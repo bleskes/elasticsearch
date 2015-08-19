@@ -47,6 +47,19 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 
+/**
+ * Abstraction for transporting aggregated shard-level operations in a single request (NodeBroadcastRequest) per-node
+ * and executing the shard-level operations serially on the receiving node. Each shard-level operation can produce a
+ * result (ShardOperationResult), these per-node shard-level results are aggregated into a single result
+ * (NodeBroadcastResponse) to the coordinating node. These per-node results are aggregated into a single result (Result)
+ * to the client.
+ *
+ * @param <Request>               the underlying client request
+ * @param <Response>              the response to the client request
+ * @param <NodeBroadcastRequest>  per-node container of shard-level requests
+ * @param <NodeBroadcastResponse> per-node container of shard-level responses
+ * @param <ShardOperationResult>  per-shard operation results
+ */
 public abstract class TransportNodeBroadcastAction<Request extends IndicesLevelRequest,
         Response extends IndicesLevelResponse,
         NodeBroadcastRequest extends BaseNodeBroadcastRequest<Request>,
@@ -100,20 +113,85 @@ public abstract class TransportNodeBroadcastAction<Request extends IndicesLevelR
         return newResponse(request, totalShards, successfulShards, failedShards, nodeBroadcastResponses, exceptions);
     }
 
+    /**
+     * Creates a new response to the underlying request.
+     *
+     * @param request          the underlying request
+     * @param totalShards      the total number of shards considered for execution of the operation
+     * @param successfulShards the total number of shards for which execution of the operation was successful
+     * @param failedShards     the total number of shards for which execution of the operation failed
+     * @param responses        the per-node aggregated shard-level responses
+     * @param shardFailures    the exceptions corresponding to shard operationa failures
+     * @return the response
+     */
     protected abstract Response newResponse(Request request, int totalShards, int successfulShards, int failedShards, List<NodeBroadcastResponse> responses, List<DefaultShardOperationFailedException> shardFailures);
 
+    /**
+     * Creates a new node-level request.
+     *
+     * @param nodeId  the node the request will be sent to
+     * @param request the underlying request
+     * @param shards  the shards the operation will be executed against
+     * @return the node-level request
+     */
     protected abstract NodeBroadcastRequest newNodeRequest(String nodeId, Request request, List<ShardRouting> shards);
 
+    /**
+     * Creates an empty node-level response object (used for deserialization).
+     *
+     * @return an empty node-level response object
+     */
     protected abstract NodeBroadcastResponse newNodeResponse();
 
+    /**
+     * Creates a new node-level response.
+     *
+     * @param nodeId           the node the shard-level operations were executed on
+     * @param totalShards      the total number of shards for which execution of the operation was attempted
+     * @param successfulShards the total number of shards for which the execution of the operation was successful
+     * @param results          the per-shard operation results
+     * @param exceptions       the exceptions corresponding to shard operation failures
+     * @return the per-node aggregated shard-level response
+     */
     protected abstract NodeBroadcastResponse newNodeResponse(String nodeId, int totalShards, int successfulShards, List<ShardOperationResult> results, List<BroadcastShardOperationFailedException> exceptions);
 
+    /**
+     * Executes the shard-level operation. This method is called asynchronously once per shard.
+     *
+     * @param request      the node-level request
+     * @param shardRouting the shard on which to execute the operation
+     * @return the result of the shard-level operation for the shard
+     */
     protected abstract ShardOperationResult shardOperation(NodeBroadcastRequest request, ShardRouting shardRouting);
 
+    /**
+     * Determines the shards on which this operation will be executed on. The operation is executed once per shard
+     * iterator and unlike TransportBroadcastAction does not fall back to the next shard in the iterator on failure.
+     *
+     * @param clusterState    the cluster state
+     * @param request         the underlying request
+     * @param concreteIndices the concrete indices on which to execute the operation
+     * @return the shards on which to execute the operation
+     */
     protected abstract GroupShardsIterator shards(ClusterState clusterState, Request request, String[] concreteIndices);
 
+    /**
+     * Executes a global block check before polling the cluster state.
+     *
+     * @param state   the cluster state
+     * @param request the underlying request
+     * @return a non-null exception if the operation is blocked
+     */
     protected abstract ClusterBlockException checkGlobalBlock(ClusterState state, Request request);
 
+    /**
+     * Executes a global request-level check before polling the cluster state.
+     *
+     * @param state           the cluster state
+     * @param request         the underlying request
+     * @param concreteIndices the concrete indices on which to execute the operation
+     * @return a non-null exception if the operation if blocked
+     */
     protected abstract ClusterBlockException checkRequestBlock(ClusterState state, Request request, String[] concreteIndices);
 
     @Override
