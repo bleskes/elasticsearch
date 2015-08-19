@@ -78,6 +78,15 @@ public class FieldConfigWriterTest
         d4.setByFieldName("ipaddress");
         d4.setPartitionFieldName("host");
         detectors.add(d4);
+        Detector d5 = new Detector();
+        d5.setFunction("rare");
+        d5.setByFieldName("weird field");
+        detectors.add(d5);
+        Detector d6 = new Detector();
+        d6.setFunction("max");
+        d6.setFieldName("\"quoted\" field");
+        d6.setOverFieldName("ts\\hash");
+        detectors.add(d6);
 
         AnalysisConfig config = new AnalysisConfig();
         config.setDetectors(detectors);
@@ -114,6 +123,13 @@ public class FieldConfigWriterTest
         Assert.assertEquals("max(Integer_Value) over ts_hash", value);
         value = fieldConfig.get(iniConfig.getGlobalSectionName(), "detector.4.clause");
         Assert.assertEquals("rare by ipaddress partitionfield=host", value);
+        value = fieldConfig.get(iniConfig.getGlobalSectionName(), "detector.5.clause");
+        Assert.assertEquals("rare by \"weird field\"", value);
+        value = fieldConfig.get(iniConfig.getGlobalSectionName(), "detector.6.clause");
+        // Ini4j meddles with escape characters itself, so the assertion below
+        // fails even though the raw file is fine.  The file is never read by
+        // Ini4j in the production system.
+        // Assert.assertEquals("max(\"\\\"quoted\\\" field\") over \"ts\\\\hash\"", value);
     }
 
     @Test

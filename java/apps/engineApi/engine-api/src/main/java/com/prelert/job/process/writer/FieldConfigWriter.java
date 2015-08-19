@@ -31,6 +31,7 @@ import static com.prelert.job.process.writer.WriterConstants.EQUALS;
 
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.util.regex.Pattern;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
@@ -58,6 +59,8 @@ public class FieldConfigWriter
     // config file
 
     private static final char NEW_LINE = '\n';
+
+    private static final Pattern NEEDS_QUOTING = Pattern.compile("\\W");
 
     private final AnalysisConfig m_Config;
     private final OutputStreamWriter m_Writer;
@@ -89,13 +92,13 @@ public class FieldConfigWriter
                 contents.append(detector.getFunction());
                 if (isNotNullOrEmpty(detector.getFieldName()))
                 {
-                    contents.append('(').append(detector.getFieldName())
+                    contents.append('(').append(quoteField(detector.getFieldName()))
                             .append(')');
                 }
             }
             else if (isNotNullOrEmpty(detector.getFieldName()))
             {
-                contents.append(detector.getFieldName());
+                contents.append(quoteField(detector.getFieldName()));
             }
             else
             {
@@ -106,12 +109,12 @@ public class FieldConfigWriter
 
             if (isNotNullOrEmpty(detector.getByFieldName()))
             {
-                contents.append(BY_TOKEN).append(detector.getByFieldName());
+                contents.append(BY_TOKEN).append(quoteField(detector.getByFieldName()));
             }
 
             if (isNotNullOrEmpty(detector.getOverFieldName()))
             {
-                contents.append(OVER_TOKEN).append(detector.getOverFieldName());
+                contents.append(OVER_TOKEN).append(quoteField(detector.getOverFieldName()));
             }
 
             if (detector.isUseNull() != null)
@@ -122,7 +125,7 @@ public class FieldConfigWriter
             if (isNotNullOrEmpty(detector.getPartitionFieldName()))
             {
                 contents.append(PARTITION_FIELD_OPTION)
-                        .append(detector.getPartitionFieldName());
+                        .append(quoteField(detector.getPartitionFieldName()));
             }
 
             if (isNotNullOrEmpty(detector.getExcludeFrequent()))
@@ -134,7 +137,7 @@ public class FieldConfigWriter
             if (isNotNullOrEmpty(m_Config.getCategorizationFieldName()))
             {
                 contents.append(CATEGORIZATION_FIELD_OPTION)
-                        .append(m_Config.getCategorizationFieldName());
+                        .append(quoteField(m_Config.getCategorizationFieldName()));
             }
 
             contents.append(NEW_LINE);
@@ -145,6 +148,8 @@ public class FieldConfigWriter
             counter = 0;
             for (String influencer : m_Config.getInfluencers())
             {
+                // Influencer fields are entire settings rather than part of a
+                // clause, so don't need quoting
                 contents.append(INFLUENCER_PREFIX).append(++counter)
                         .append(EQUALS).append(influencer).append(NEW_LINE);
             }
@@ -153,6 +158,30 @@ public class FieldConfigWriter
         m_Logger.debug("FieldConfig:\n" + contents.toString());
 
         m_Writer.write(contents.toString());
+    }
+
+    private static String quoteField(String field)
+    {
+        if (!NEEDS_QUOTING.matcher(field).find())
+        {
+            return field;
+        }
+
+        StringBuilder quoted = new StringBuilder();
+        quoted.append('\"');
+
+        for (int i = 0; i < field.length(); ++i)
+        {
+            char c = field.charAt(i);
+            if (c == '\"' || c == '\\')
+            {
+                quoted.append('\\');
+            }
+            quoted.append(c);
+        }
+
+        quoted.append('\"');
+        return quoted.toString();
     }
 
     private static boolean isNotNullOrEmpty(String arg)
