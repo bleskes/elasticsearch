@@ -32,7 +32,7 @@ import java.util.Set;
 /**
  *
  */
-public class TriggerModule extends AbstractModule implements SpawnModules {
+public class TriggerModule extends AbstractModule {
 
     private final Settings settings;
     private final Set<Class<? extends TriggerEngine>> engines = new HashSet<>();
@@ -49,11 +49,6 @@ public class TriggerModule extends AbstractModule implements SpawnModules {
     protected void registerStandardEngines() {
         registerEngine(ScheduleModule.triggerEngineType(settings));
         registerEngine(ManualTriggerEngine.class);
-    }
-
-    @Override
-    public Iterable<? extends Module> spawnModules() {
-        return Collections.singleton(new ScheduleModule());
     }
 
     @Override
