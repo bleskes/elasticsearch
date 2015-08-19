@@ -19,20 +19,18 @@
 
 package org.elasticsearch.action.admin.indices.refresh;
 
-import org.elasticsearch.action.support.broadcast.BroadcastShardOperationFailedException;
-import org.elasticsearch.action.support.indices.BaseNodeBroadcastResponse;
-
-import java.util.List;
+import org.elasticsearch.action.support.broadcast.BroadcastShardResponse;
+import org.elasticsearch.index.shard.ShardId;
 
 /**
  *
  */
-class ShardRefreshResponse extends BaseNodeBroadcastResponse {
+class ShardRefreshResponse extends BroadcastShardResponse {
 
     ShardRefreshResponse() {
     }
 
-    public ShardRefreshResponse(String nodeId, int totalShards, int successfulShards, List<BroadcastShardOperationFailedException> exceptions) {
-        super(nodeId, totalShards, successfulShards, exceptions);
+    ShardRefreshResponse(ShardId shardId) {
+        super(shardId);
     }
 }

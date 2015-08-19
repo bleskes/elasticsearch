@@ -368,7 +368,7 @@ public class IndicesRequestIT extends ESIntegTestCase {
 
     @Test
     public void testFlush() {
-        String flushShardAction = FlushAction.NAME + "[i]";
+        String flushShardAction = FlushAction.NAME + "[s]";
         interceptTransportActions(flushShardAction);
 
         FlushRequest flushRequest = new FlushRequest(randomIndicesOrAliases());
@@ -392,7 +392,7 @@ public class IndicesRequestIT extends ESIntegTestCase {
 
     @Test
     public void testRefresh() {
-        String refreshShardAction = RefreshAction.NAME + "[i]";
+        String refreshShardAction = RefreshAction.NAME + "[s]";
         interceptTransportActions(refreshShardAction);
 
         RefreshRequest refreshRequest = new RefreshRequest(randomIndicesOrAliases());

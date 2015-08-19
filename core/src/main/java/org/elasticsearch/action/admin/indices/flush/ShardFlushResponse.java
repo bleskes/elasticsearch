@@ -19,21 +19,19 @@
 
 package org.elasticsearch.action.admin.indices.flush;
 
-import org.elasticsearch.action.support.broadcast.BroadcastShardOperationFailedException;
-import org.elasticsearch.action.support.indices.BaseNodeBroadcastResponse;
-
-import java.util.List;
+import org.elasticsearch.action.support.broadcast.BroadcastShardResponse;
+import org.elasticsearch.index.shard.ShardId;
 
 /**
  *
  */
-class ShardFlushResponse extends BaseNodeBroadcastResponse {
+class ShardFlushResponse extends BroadcastShardResponse {
 
     ShardFlushResponse() {
 
     }
 
-    public ShardFlushResponse(String nodeId, int totalShards, int successfulShards, List<BroadcastShardOperationFailedException> exceptions) {
-        super(nodeId, totalShards, successfulShards, exceptions);
+    ShardFlushResponse(ShardId shardId) {
+        super(shardId);
     }
 }
