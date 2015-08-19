@@ -4,11 +4,16 @@ marvel-cluster-listing {
   .paginated-table > .table > tbody >  tr > td {
     vertical-align: middle;
     font-size: 24px;
-    line-height: 1em;
+    line-height: 0.8em;
+    padding: 5px 0;
+    &:first-child {
+      padding-left: 5px;
+    }
 
     a {
       text-decoration: none
     }
+
 
     div.license {
       font-size: 20px;
@@ -22,6 +27,15 @@ marvel-cluster-listing {
     div.expired {
       color: @esRed;
     }
+  }
+
+  .paginated-table .tbody tr.lite td:first-child {
+    border-color: @esLightGray;
+  }
+  tr.lite > td > a,
+  .paginated-table .table tr.lite > td.license > div.expires,
+  tr.lite > td {
+    color: @esLightGray !important;
   }
 
 }

@@ -55,7 +55,11 @@ define(function (require) {
         })
         // Finally return the Marvel object.
         .then(function () {
-          chrome.setTabs(tabs);
+          chrome.setTabs(tabs.filter(function (tab) {
+            if (tab.id !== 'home') return true;
+            if (marvel.clusters.length > 1) return true;
+            return false;
+          }));
           return marvel;
         });
     };

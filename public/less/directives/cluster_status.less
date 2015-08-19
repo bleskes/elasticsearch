@@ -24,6 +24,7 @@ marvel-cluster-status {
         > li:first-child {
           border-top: 0;
         }
+        > li > div,
         > li > a {
           padding: 5px 10px;
         }
@@ -45,6 +46,10 @@ marvel-cluster-status {
             background-color: @esGreen;
           }
           border-left: 4px solid @esGreen;
+        }
+        > li.lite {
+          color: @esLightGray;
+          border-left: 4px solid @esLightGray;
         }
       }
     }

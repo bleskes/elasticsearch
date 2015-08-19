@@ -10,8 +10,16 @@ define(function (require) {
   .when('/home', {
     template: require('plugins/marvel/views/home/home_template.html'),
     resolve: {
-      tabs: function () {
-        chrome.setTabs([]);
+      clusters: function (marvelClusters, kbnUrl, globalState) {
+        return marvelClusters.fetch().then(function (clusters) {
+          if (clusters.length === 1) {
+            globalState.cluster = clusters[0].cluster_uuid;
+            globalState.save();
+            kbnUrl.changePath('/overview');
+            return Promise.reject();
+          }
+          chrome.setTabs([]);
+        });
       }
     }
   })
@@ -40,8 +48,8 @@ define(function (require) {
     function fetch() {
       marvelClusters.fetch().then((clusters) => {
         $scope.clusters = clusters;
+        $timeout(fetch, timefilter.refreshInterval.value);
       });
-      $timeout(fetch, timefilter.refreshInterval.value);
     }
 
     fetch();
