@@ -13,7 +13,7 @@ module.directive('marvelClusterListing', function (globalState, kbnUrl, $locatio
         title: 'Your Clusters',
         dataKeys: [
           {
-            key: 'cluster_name',
+            key: 'cluster_uuid',
             sort: 1,
             title: 'Name'
           },

@@ -16,10 +16,22 @@ function formatTime(millis) {
 class ClusterRow extends React.Component {
 
   changeCluster(event) {
-    this.props.changeCluster(this.props.cluster_name);
+    this.props.changeCluster(this.props.cluster_uuid);
   }
 
   render() {
+    var licenseExpiry = (
+      <div
+        className="expires">
+        Expires { moment(this.props.license.expiry_date_in_millis).format('D MMM YY') }
+        </div>
+    );
+    if (this.props.license.expiry_date_in_millis < moment().valueOf()) {
+      licenseExpiry = (
+        <div
+          className="expires expired">Expired</div>
+      );
+    }
     return (
       <tr className={ this.props.status }>
         <td><a onClick={(event) => this.changeCluster(event) }>{ this.props.cluster_name }</a></td>
@@ -29,7 +41,7 @@ class ClusterRow extends React.Component {
         <td>{ numeral(this.props.stats.data).format('0,0[.]0 b') }</td>
         <td className="license">
           <div className="license">{ _.capitalize(this.props.license.type) }</div>
-          <div className="expires">Expires { moment(this.props.license.expiry_date_in_millis).format('D MMM YY') }</div>
+          { licenseExpiry }
         </td>
       </tr>
     );

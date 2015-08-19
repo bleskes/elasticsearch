@@ -32,7 +32,7 @@ define(function (require) {
 
 		var state = {
       _id: new Date().getTime()+Math.random(),
-			cluster_name: 'elasticsearch',
+			cluster_uuid: 'elasticsearch',
 			version: 1,
 			nodes: {},
 			routing_nodes: {
@@ -73,7 +73,7 @@ define(function (require) {
 			var index = moment().subtract('days', n).format('[logstash-]YYYY.MM.DD');
 			_.times(options.shards, function (shard) {
 
-				// Generate Primary Shards   
+				// Generate Primary Shards
 				var node = getNode();
 				state.routing_nodes.nodes[node].push({
 					state           : 'STARTED',

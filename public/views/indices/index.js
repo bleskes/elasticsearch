@@ -77,7 +77,7 @@ define(function (require) {
       .then(function () {
         var dataSource = new TableDataSource({
           index: indexPattern,
-          cluster: _.find(clusters, { cluster_name: globalState.cluster }),
+          cluster: _.find(clusters, { cluster_uuid: globalState.cluster }),
           clusters: clusters,
           metrics: [
             'index_document_count',

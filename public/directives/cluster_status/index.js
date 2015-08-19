@@ -44,7 +44,7 @@ define(function (require) {
         });
 
         $scope.$watch('source.clusters', function (clusters) {
-          $scope.cluster = _.find(clusters, { cluster_name: $scope.source.cluster });
+          $scope.cluster = _.find(clusters, { cluster_uuid: $scope.source.cluster });
           if ($scope.cluster) {
             $scope.lastUpdate = moment.utc($scope.cluster.lastUpdate);
             var now = moment.utc();
