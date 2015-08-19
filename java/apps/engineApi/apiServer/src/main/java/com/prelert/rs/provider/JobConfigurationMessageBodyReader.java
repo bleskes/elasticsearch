@@ -48,6 +48,7 @@ import com.prelert.job.JobConfiguration;
 import com.prelert.job.config.verification.JobConfigurationException;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.messages.Messages;
+import com.prelert.job.transform.UnknownOperatorException;
 
 /**
  * JobConfiguration entity provider.
@@ -98,18 +99,30 @@ public class JobConfigurationMessageBodyReader implements MessageBodyReader<JobC
           }
           catch (JsonMappingException e)
           {
-              if (e.getCause() != null && e.getCause() instanceof JobConfigurationException)
+              if (e.getCause() != null)
               {
-                  JobConfigurationException jce = (JobConfigurationException)e.getCause();
-                  throw new JobConfigurationParseException(jce.getMessage(), e,
-                                       jce.getErrorCode());
+                  if (e.getCause() instanceof JobConfigurationException)
+                  {
+                      JobConfigurationException jce = (JobConfigurationException)e.getCause();
+                      throw new JobConfigurationParseException(jce.getMessage(), e,
+                                           jce.getErrorCode());
+                  }
+                  else if (e.getCause() instanceof UnknownOperatorException)
+                  {
+                      UnknownOperatorException uoe = (UnknownOperatorException)e.getCause();
+
+                      throw new JobConfigurationParseException(
+                              Messages.getMessage(Messages.JOB_CONFIG_TRANSFORM_CONDITION_UNKNOWN_OPERATOR,
+                                          uoe.getName()),
+                              uoe,
+                              ErrorCodes.UNKNOWN_OPERATOR);
+                  }
+
               }
-              else
-              {
-                  throw new JobConfigurationParseException(
+
+              throw new JobConfigurationParseException(
                          Messages.getMessage(Messages.JSON_JOB_CONFIG_MAPPING), e,
                          ErrorCodes.JOB_CONFIG_UNKNOWN_FIELD_ERROR);
-              }
           }
      }
 

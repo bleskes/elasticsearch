@@ -39,7 +39,12 @@ public class MapperUtils
     }
 
     /**
-     * Static method to create an {@link ApiError} from a {@linkplain JobException}
+     * Static method to create an {@link ApiError} from a {@linkplain JobException}<br>
+     *
+     * If the exception does not have a message string and it is an instance
+     * of {@link UnknownJobException} then this function sets the default
+     * error message
+     *
      * @param e
      * @return
      */

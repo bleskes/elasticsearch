@@ -67,10 +67,17 @@ public class TransformConfigVerifier
                     ErrorCodes.UNKNOWN_TRANSFORM);
         }
 
+        checkCondition(tc, type);
         checkInputs(tc, type);
         checkArguments(tc, type);
         checkOutputs(tc, type);
 
+        return true;
+    }
+
+    private static void checkCondition(TransformConfig tc, TransformType type)
+    throws TransformConfigurationException
+    {
         if (type.hasCondition())
         {
             if (tc.getCondition() == null)
@@ -83,10 +90,10 @@ public class TransformConfigVerifier
 
             ConditionVerifier.verify(tc.getCondition());
         }
-        return true;
     }
 
-    private static void checkInputs(TransformConfig tc, TransformType type) throws TransformConfigurationException
+    private static void checkInputs(TransformConfig tc, TransformType type)
+    throws TransformConfigurationException
     {
         List<String> inputs = tc.getInputs();
         checkValidInputCount(tc, type, inputs);

@@ -24,36 +24,29 @@
  *                                                          *
  *                                                          *
  ************************************************************/
-package com.prelert.job.transform.verification;
+package com.prelert.job.transform;
 
-import com.prelert.job.errorcodes.ErrorCodes;
-import com.prelert.job.messages.Messages;
-import com.prelert.job.transform.Operator;
-import com.prelert.job.transform.TransformConfigurationException;
-import com.prelert.job.transform.UnknownOperatorException;
-
-public class OperatorVerifier
+public class UnknownOperatorException extends Exception
 {
-    /**
-     * Checks that the <code>name</code> string is a string
-     * value of an Operator enum
-     * @param name
-     * @return
-     * @throws TransformConfigurationException
-     */
-    public static boolean verify(String name) throws TransformConfigurationException
-    {
-        try
-        {
-            Operator.fromString(name);
-        }
-        catch (UnknownOperatorException e)
-        {
-            throw new TransformConfigurationException(
-                Messages.getMessage(Messages.JOB_CONFIG_TRANSFORM_CONDITION_UNKNOWN_OPERATOR, name),
-                ErrorCodes.UNKNOWN_OPERATOR);
-        }
+    private static final long serialVersionUID = 4691115581549035110L;
 
-        return true;
+    private final String m_Name;
+
+    /**
+     *
+     * @param operatorName The unrecognised operator name
+     */
+    public UnknownOperatorException(String operatorName)
+    {
+        m_Name = operatorName;
+    }
+
+    /**
+     * Get the unknown operator name
+     * @return
+     */
+    public String getName()
+    {
+        return m_Name;
     }
 }

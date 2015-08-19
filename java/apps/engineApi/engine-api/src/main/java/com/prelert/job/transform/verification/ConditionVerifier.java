@@ -50,6 +50,7 @@ public class ConditionVerifier
     public static boolean verify(Condition condition)
     throws TransformConfigurationException
     {
+        OperatorVerifier.verify(condition.getOperator().name());
         if (condition.getOperator() == Operator.NONE)
         {
             throw new TransformConfigurationException(

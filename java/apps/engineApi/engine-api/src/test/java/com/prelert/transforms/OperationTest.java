@@ -33,12 +33,12 @@ import java.util.regex.Pattern;
 import org.junit.Test;
 
 import com.prelert.job.transform.Operator;
-import com.prelert.job.transform.TransformConfigurationException;
+import com.prelert.job.transform.UnknownOperatorException;
 
 public class OperationTest {
 
     @Test
-    public void testFromString() throws TransformConfigurationException
+    public void testFromString() throws UnknownOperatorException
     {
         assertEquals(Operator.fromString("gt"), Operator.GT);
         assertEquals(Operator.fromString("Gt"), Operator.GT);

@@ -112,7 +112,7 @@ public enum Operator
     }
 
     @JsonCreator
-    public static Operator fromString(String name) throws IllegalArgumentException
+    public static Operator fromString(String name) throws UnknownOperatorException
     {
         Set<Operator> all = EnumSet.allOf(Operator.class);
 
@@ -125,7 +125,7 @@ public enum Operator
             }
         }
 
-        throw new IllegalArgumentException();
+        throw new UnknownOperatorException(name);
     }
 
  };

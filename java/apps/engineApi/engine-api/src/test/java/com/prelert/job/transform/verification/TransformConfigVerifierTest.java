@@ -234,6 +234,9 @@ public class TransformConfigVerifierTest
             assertEquals(ErrorCodes.TRANSFORM_REQUIRES_CONDITION, e.getErrorCode());
         }
 
+        // this works
+        tr.setCondition(new Condition(Operator.LTE, "20.00001"));
+
         // too many args
         tr.setArguments(Arrays.asList("100.0", "lte", "bad-extra-arg"));
         try
@@ -247,8 +250,7 @@ public class TransformConfigVerifierTest
             assertEquals(ErrorCodes.TRANSFORM_INVALID_ARGUMENT_COUNT, e.getErrorCode());
         }
 
-        // this works
-        tr.setCondition(new Condition(Operator.LTE, "20.00001"));
+
 
         Condition cond = tr.getCondition();
         assertNotNull(cond);

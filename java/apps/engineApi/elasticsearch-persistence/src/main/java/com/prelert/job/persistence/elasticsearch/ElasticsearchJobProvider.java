@@ -547,17 +547,13 @@ public class ElasticsearchJobProvider implements JobProvider
         {
             if (e.getCause() instanceof IndexMissingException)
             {
-                String msg = "";
-                // TODO
-                //String msg = Messages.getMessage(Messages.DATASTORE_ERROR_DELETING_MISSING_INDEX, jobId);
+                String msg = "Cannot delete job - no index with id '" + jobId + " in the database";
                 LOGGER.warn(msg);
-                throw new UnknownJobException(jobId);
+                throw new UnknownJobException(jobId, msg, ErrorCodes.MISSING_JOB_ERROR);
             }
             else
             {
-                String msg = "";
-                // TODO
-                //String msg = Messages.getMessage(Messages.DATASTORE_ERROR_DELETING, jobId);
+                String msg = "Error deleting index '" + jobId + "'";
                 LOGGER.error(msg);
                 throw new DataStoreException(msg, ErrorCodes.DATA_STORE_ERROR, e.getCause());
             }
