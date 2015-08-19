@@ -103,6 +103,9 @@ public final class Messages
     public static final String JOB_UNKNOWN_ID = "job.unknown.id";
     public static final String JOB_UNKNOWN_REFERENCE = "job.unknown.reference";
 
+    public static final String JSON_JOB_CONFIG_MAPPING = "json.job.config.mapping.error";
+    public static final String JSON_JOB_CONFIG_PARSE = "json.job.config.parse.error";
+
     public static final String REST_INVALID_FLUSH_PARAMS_MISSING = "rest.invalid.flush.params.missing.argument";
     public static final String REST_INVALID_FLUSH_PARAMS_UNEXPECTED = "rest.invalid.flush.params.unexpected";
     public static final String REST_INVALID_RESET_PARAMS = "rest.invalid.reset.params";
