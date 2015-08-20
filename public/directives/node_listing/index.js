@@ -70,7 +70,7 @@ define(function (require) {
       restrict: 'E',
       scope: { data: '=' },
       link: function ($scope, $el) {
-        var tableRowTemplate = React.createFactory(React.createClass({
+        var tableRowTemplate = React.createClass({
           render: function() {
             var boundTemplateFn = makeTdWithPropKey.bind(this);
             var $tdsArr = initialTableOptions.dataKeys.map(boundTemplateFn);
@@ -93,7 +93,7 @@ define(function (require) {
                     content: make.tr({key: 'charts'}, make.td({colSpan: numCols}, $chartsArr))
                   }))));
           }
-        }));
+        });
 
         var $table = React.createElement(Table, {
           options: initialTableOptions,

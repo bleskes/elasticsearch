@@ -67,7 +67,7 @@ define(function (require) {
       }
       if (this.type === 'node') {
         return {
-          field: 'node_stats.name',
+          field: 'node_stats.node_id',
           size: maxBucketSize
         };
       }

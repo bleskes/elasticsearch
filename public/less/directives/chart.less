@@ -1,6 +1,10 @@
 marvel-chart {display: block;}
 .marvel-chart,
 marvel-chart {
+  h1 {
+    font-size: 24px;
+    margin: 0;
+  }
   background-color: @white;
   border-top: @thick solid @esGray;
   padding: 15px;
@@ -35,21 +39,21 @@ marvel-chart {
 
 .jubilee {
   g {
-    > line { stroke: #999; }
-    > path { stroke: #444; }
+    > line { stroke: @esLightGray; }
+    > path { stroke: @esBlack; }
   }
   .axis {
     text {
       font-size: 13px;
-      color: #666977;
+      color: @esDarkGray;
     }
     &.y {
       > path { display: none; }
-      > line { stroke: #d1d2d6; }
+      > line { stroke: @esLightGray; }
     }
     &.x {
-      > path { stroke: #232123; }
-      > line { stroke: #eff0f1; }
+      > path { stroke: @esBlack; }
+      > line { stroke: @esLightGray; }
       .domain { display: block; }
     }
   }
