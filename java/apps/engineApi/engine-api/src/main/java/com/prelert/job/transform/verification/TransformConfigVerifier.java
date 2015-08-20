@@ -38,7 +38,7 @@ import com.prelert.job.transform.TransformType;
 public class TransformConfigVerifier
 {
     /**
-     * Checks the transform configurations are valid
+     * Checks the transform configuration is valid
      * <ol>
      * <li>Checks there are the correct number of inputs for a given
      * transform type and that those inputs are not empty strings</li>
