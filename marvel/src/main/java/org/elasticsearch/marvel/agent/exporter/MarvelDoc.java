@@ -17,7 +17,7 @@
 
 package org.elasticsearch.marvel.agent.exporter;
 
-public abstract class MarvelDoc<T> {
+public abstract class MarvelDoc {
 
     private final String index;
     private final String type;
@@ -57,6 +57,4 @@ public abstract class MarvelDoc<T> {
     public long timestamp() {
         return timestamp;
     }
-
-    public abstract T payload();
 }
