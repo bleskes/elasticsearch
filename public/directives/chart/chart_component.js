@@ -18,7 +18,7 @@ define(function (require) {
     render: function () {
       var metric = this.props.source.metric;
       var lastPoint = _.last(this.state.chartData);
-      var titleStr = [metric.label + ':', lastPoint ? lastPoint.y : 0, metric.units].join(' ');
+      var titleStr = [metric.label + ':', lastPoint ? formatNumber(lastPoint.y, metric.format) : 0, metric.units].join(' ');
       var $title = make.h1(null, titleStr);
       var $chartWrapper = make.div({className: 'jubilee'});
       var attrs = {
