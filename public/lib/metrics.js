@@ -99,12 +99,12 @@ module.exports = {
     type: 'node',
     derivative: false
   },
-  'heap_used_percent': {
+  'node_jvm_mem_percent': {
     active: true,
     field: 'node_stats.jvm.mem.heap_used_percent',
     label: 'JVM Heap Usage',
     description: 'The amound of heap used by the JVM',
-    format: '0,0.0',
+    format: '0.0',
     metricAgg: 'avg',
     units: '%',
     defaults: { warning: '>7', critical: '>9', interval: '1m', periods: 1  },

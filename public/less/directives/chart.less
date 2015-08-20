@@ -1,87 +1,61 @@
+marvel-chart {display: block;}
+.marvel-chart,
 marvel-chart {
-  >div {
-    background-color: @white;
-    border-top: @thick solid @esGray;
-    padding: 5px;
-
-    h1 {
-      font-size: 20px;
-      margin-top: 0;
-    }
-
-    .vis-canvas {
-      padding: 0 5px 0 0;
-      min-height: 150px;
-      display: flex;
-    }
-
-    .loading {
-      flex-grow: 1;
-      justify-content: center;
-      align-self: center;
-      text-align: center;
-      font-size: 18px;
-      color: @esDarkGray;
-    }
-
-    .nvd3 {
-      flex-grow: 1;
-    }
-
-    .chart {
-      min-height: 200px;
-      background-color: @white;
-      display: flex;
-      >div {
-        color: @esLightGray;
-        font-size: 17px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        flex: 1 1 auto;
-      }
-    }
+  h1 {
+    font-size: 24px;
+    margin: 0;
   }
+  background-color: @white;
+  border-top: @thick solid @esGray;
+  padding: 15px;
+
+  &.no-border { border-top: 0 none transparent; }
+
+
+  .vis-canvas {
+    padding: 0 5px 0 0;
+    min-height: 150px;
+    display: flex;
+  }
+
+  .loading {
+    flex-grow: 1;
+    justify-content: center;
+    align-self: center;
+    text-align: center;
+    font-size: 18px;
+    color: @esDarkGray;
+  }
+
+  .nvd3 {
+    flex-grow: 1;
+  }
+
 }
 
 /***************************/
 /****** MarvelCharts! ******/
 /***************************/
 
-/* Hide the vertical x-axis lines   */
-.nv-axis.nv-x line {
-  stroke-opacity: 1;
-  stroke: #e5e5e5;
-}
-
-/* Hide the Left most vertical line */
-.nv-axis.nv-y .domain {
-  display: none;
-}
-
-/* increase the line stroke width */
-.nv-linesWrap .nv-line {
-  stroke-width: 2px !important;
-}
-
-/* Make the min max ticks not bold */
-.nvd3 .nv-axis .nv-axisMaxMin text {
-  font-weight: normal !important;
-}
-
-// make all of the ticks the same color
-.nvd3 .nv-axis .nv-axisMaxMin text,
-.nv-axis .tick > text {
-  font-weight: normal !important;
-  color: @esGray;
-  fill: @esGray;
-  // do we normally use px for font size?
-  font-size: 10px;
-}
-
-// Show the main xAxis line
-.nvd3 .nv-axis.nv-x path.domain {
-  stroke-opacity: 1;
-  stroke: #e5e5e5;
+.jubilee {
+  g {
+    > line { stroke: @esLightGray; }
+    > path { stroke: @esBlack; }
+  }
+  .axis {
+    text {
+      font-size: 13px;
+      color: @esDarkGray;
+    }
+    &.y {
+      > path { display: none; }
+      > line { stroke: @esLightGray; }
+    }
+    &.x {
+      > path { stroke: @esBlack; }
+      > line { stroke: @esLightGray; }
+      .domain { display: block; }
+    }
+  }
 }
 

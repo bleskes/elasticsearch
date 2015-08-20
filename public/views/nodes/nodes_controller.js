@@ -1,20 +1,10 @@
 define(function (require) {
   var _ = require('lodash');
   var angular = require('angular');
-
-  // require('plugins/visualize/saved_visualizations/saved_visualizations');
-  // require('ui/timepicker/timepicker');
-  require('plugins/marvel/services/settings');
-  require('plugins/marvel/services/metrics');
-  require('plugins/marvel/services/clusters');
-  require('angular-bindonce');
+  var moment = require('moment');
 
   var module = require('ui/modules').get('marvel', [
-    'marvel/directives',
-    'marvel/settings',
-    'marvel/metrics',
-    'nvd3',
-    'pasvaz.bindonce'
+    'plugins/marvel/directives'
   ]);
 
   require('ui/routes')
@@ -31,7 +21,7 @@ define(function (require) {
   module.controller('nodes', function (kbnUrl, globalState, $scope, timefilter, $route, courier, marvelMetrics, Private, Promise, es) {
     var ChartDataSource = Private(require('plugins/marvel/directives/chart/data_source'));
     var ClusterStatusDataSource = Private(require('plugins/marvel/directives/cluster_status/data_source'));
-    var NodesDataSource = Private(require('plugins/marvel/directives/node_listing/nodes_data_source'));
+    var TableDataSource = Private(require('plugins/marvel/lib/table_data_source'));
     var indexPattern = $route.current.locals.marvel.indexPattern;
     var clusters = $route.current.locals.marvel.clusters;
     var docTitle = Private(require('ui/doc_title'));
@@ -43,14 +33,6 @@ define(function (require) {
       timefilter.refreshInterval.value = 10000;
       timefilter.refreshInterval.display = '10 Seconds';
     }
-
-    // Define the metrics for the three charts at the top of the
-    // page. Use the metric keys from the metrics hash.
-    $scope.charts = [
-      'search_request_rate',
-      'index_request_rate',
-      'index_latency'
-    ];
 
     // Setup the data sources for the charts
     $scope.dataSources = {};
@@ -65,19 +47,7 @@ define(function (require) {
     // Map the metric keys to ChartDataSources and register them with
     // the courier. Once this is finished call courier fetch.
     Promise
-      .all($scope.charts.map(function (name) {
-        return marvelMetrics(globalState.cluster, name).then(function (metric) {
-          var options = {
-            indexPattern: indexPattern,
-            metric: metric,
-            cluster: globalState.cluster
-          }
-          var dataSource = new ChartDataSource(options);
-          dataSource.register(courier);
-          $scope.dataSources[name] = dataSource;
-          return dataSource;
-        });
-      }))
+      .all([])
       .then(function () {
         var dataSource = new ClusterStatusDataSource(indexPattern, globalState.cluster, clusters);
         dataSource.register(courier);
@@ -85,10 +55,20 @@ define(function (require) {
         return dataSource;
       })
       .then(function() {
-        var dataSource = new NodesDataSource(indexPattern, globalState.cluster);
+        var dataSource = new TableDataSource({
+          index: indexPattern,
+          cluster: _.find(clusters, { cluster_uuid: globalState.cluster }),
+          clusters: clusters,
+          metrics: [
+            'node_jvm_mem_percent',
+            'load_average_1m'
+          ],
+          type: 'node',
+          duration: moment.duration(10, 'minutes')
+        });
         dataSource.register(courier);
-        $scope.dataSources.nodes = dataSource;
-        return $scope.dataSources.nodes;
+        $scope.dataSources.nodes_table = dataSource;
+        return dataSource;
       })
       .then(fetch);
 
@@ -102,8 +82,11 @@ define(function (require) {
       }
     });
 
-
+    $scope.$on('$destroy', function () {
+      _.each($scope.dataSources, function (dataSource) {
+        dataSource.destroy();
+      });
     });
-
+  });
 });
 

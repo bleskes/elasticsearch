@@ -4,7 +4,7 @@ define(function (require) {
   var moment = require('moment');
 
   var module = require('ui/modules').get('marvel', [
-    'marvel/directives'
+    'plugins/marvel/directives'
   ]);
 
   require('ui/routes')
@@ -22,7 +22,6 @@ define(function (require) {
     var ChartDataSource = Private(require('plugins/marvel/directives/chart/data_source'));
     var TableDataSource = Private(require('plugins/marvel/lib/table_data_source'));
     var ClusterStatusDataSource = Private(require('plugins/marvel/directives/cluster_status/data_source'));
-    // var IndicesDataSource = Private(require('plugins/marvel/directives/index_listing/indices_data_source'));
     var indexPattern = $route.current.locals.marvel.indexPattern;
     var clusters = $route.current.locals.marvel.clusters;
     var docTitle = Private(require('ui/doc_title'));
@@ -69,12 +68,6 @@ define(function (require) {
           return dataSource;
         });
       }))
-      // .then(function () {
-      //   var dataSource = new IndicesDataSource(indexPattern, globalState.cluster, clusters);
-      //   dataSource.register(courier);
-      //   $scope.dataSources.indices = dataSource;
-      //   return dataSource;
-      // })
       .then(function () {
         var dataSource = new ClusterStatusDataSource(indexPattern, globalState.cluster, clusters);
         dataSource.register(courier);
