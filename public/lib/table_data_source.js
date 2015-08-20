@@ -63,13 +63,13 @@ define(function (require) {
         return {
           field: 'index_stats.index',
           size: maxBucketSize
-        }
+        };
       }
       if (this.type === 'node') {
         return {
-          field: 'node_stats.name',
+          field: 'node_stats.node_id',
           size: maxBucketSize
-        }
+        };
       }
     }
 

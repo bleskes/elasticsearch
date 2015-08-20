@@ -12,7 +12,6 @@ define(function (require) {
     'marvel/directives',
     'marvel/settings',
     'marvel/metrics',
-    'nvd3',
     'pasvaz.bindonce',
     'kibana/notify'
   ]);

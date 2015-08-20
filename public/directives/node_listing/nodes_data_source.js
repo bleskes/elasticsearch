@@ -18,14 +18,14 @@ define(function (require) {
 
     NodesDataSource.prototype.handleResponse = function (resp) {
       if (resp.hits.total === 0) return;
-      this.data = resp.hits.hits.map(function(hit) {
+      this.data = resp.hits.hits.map(function (hit) {
         var source = hit._source;
         return {
-          name: _.get(source, 'node_stats.name'),
-          address: _.get(source, 'node_stats.ip_port'),
+          name: _.get(source, 'node_stats.node_id'),
+          address: _.get(source, 'node_stats.node_id'),
           ram: _.get(source, 'node_stats.os.mem.actual_used_in_bytes'),
           upTime: _.get(source, 'node_stats.os.uptime_in_millis')
-        }
+        };
       });
     };
     return NodesDataSource;
