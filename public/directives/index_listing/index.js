@@ -42,7 +42,7 @@ define(function (require) {
     }
     var initialTableOptions = {
       title: 'Indices',
-      dataKeys: [{
+      columns: [{
         key: 'name',
         sort: 1,
         title: 'Name'
@@ -50,7 +50,8 @@ define(function (require) {
         key: 'metrics.index_document_count',
         sortKey: 'metrics.index_document_count.last',
         sort: 0,
-        title: 'Document Count'
+        title: 'Document Count',
+        className: 'class1 class2'
       }, {
         key: 'metrics.index_request_rate',
         sort: 0,
@@ -77,8 +78,8 @@ define(function (require) {
         var tableRowTemplate = React.createClass({
           render: function () {
             var boundTemplateFn = makeTdWithPropKey.bind(this);
-            var dataProps = _.pluck(initialTableOptions.dataKeys, 'key');
-            var $tdsArr = initialTableOptions.dataKeys.map(boundTemplateFn);
+            var dataProps = _.pluck(initialTableOptions.columns, 'key');
+            var $tdsArr = initialTableOptions.columns.map(boundTemplateFn);
             return make.tr({key: this.props.name}, $tdsArr);
           }
         });

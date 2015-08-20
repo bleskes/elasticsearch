@@ -18,8 +18,8 @@ define(function (require) {
     displayName: 'Table',
     getInitialState: function () {
       var sortColObj = null;
-      if (this.props.options.dataKeys) {
-        sortColObj = this.props.options.dataKeys.reduce((prev, dataKey) => {
+      if (this.props.options.columns) {
+        sortColObj = this.props.options.columns.reduce((prev, dataKey) => {
           return prev || (dataKey.sort !== 0 ? dataKey : null);
         }, null);
       }
@@ -96,12 +96,12 @@ define(function (require) {
       // Make the Table
       var $tableHead = React.createElement(TableHead, {
         setSortCol: this.setSortCol,
-        dataKeys: this.props.options.dataKeys,
+        columns: this.props.options.columns,
         sortColObj: this.state.sortColObj
       });
       var $tableBody = React.createElement(TableBody, {
         tableData: filteredTableData,
-        dataKeys: this.props.options.dataKeys,
+        columns: this.props.options.columns,
         sortColObj: this.state.sortColObj,
         pageIdx: this.state.pageIdx,
         itemsPerPage: this.state.itemsPerPage,

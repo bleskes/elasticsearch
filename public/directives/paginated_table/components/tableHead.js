@@ -48,10 +48,11 @@ define(function(require) {
               config.sort = 1;
             }
             that.props.setSortCol(config);
-          }
+          },
+          className: config.className || ''
         }, config.title, $icon);
       }
-      var $ths =  this.props.dataKeys.map(makeTh);
+      var $ths =  this.props.columns.map(makeTh);
       return make.thead(null, make.tr(null, $ths));
     }
   });

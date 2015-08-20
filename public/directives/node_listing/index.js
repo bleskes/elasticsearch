@@ -43,7 +43,7 @@ define(function (require) {
     }
     var initialTableOptions = {
       title: 'Nodes',
-      dataKeys: [{
+      columns: [{
         key: 'name',
         sort: 1,
         title: 'Name'
@@ -78,7 +78,7 @@ define(function (require) {
         var tableRowTemplate = React.createClass({
           render: function() {
             var boundTemplateFn = makeTdWithPropKey.bind(this);
-            var $tdsArr = initialTableOptions.dataKeys.map(boundTemplateFn);
+            var $tdsArr = initialTableOptions.columns.map(boundTemplateFn);
             var trAttrs = {
               key: 'stats',
               className: 'big'
@@ -88,7 +88,7 @@ define(function (require) {
               var source = that.props.metrics[key];
               return makeChart(source.data, source.metric);
             });
-            var numCols = initialTableOptions.dataKeys.length;
+            var numCols = initialTableOptions.columns.length;
             return make.tr({className: 'big no-border', key: 'row-' + this.props.name},
               make.td({colSpan: numCols, key: 'table-td-wrap'},
                 make.table({className: 'nested-table', key: 'table'},
