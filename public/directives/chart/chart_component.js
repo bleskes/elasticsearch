@@ -63,6 +63,7 @@ define(function (require) {
         })
         .yAxis({
           tick: {
+            number: 4,
             outerTickSize: 0,
             showGridLines: true,
             text: { x: -5 }
