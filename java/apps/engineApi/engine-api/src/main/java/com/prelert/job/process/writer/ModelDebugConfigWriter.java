@@ -34,8 +34,7 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.util.Objects;
 
-import org.elasticsearch.common.base.Strings;
-
+import com.google.common.base.Strings;
 import com.prelert.job.ModelDebugConfig;
 
 public class ModelDebugConfigWriter

@@ -23,7 +23,6 @@
   <url>http://maven.apache.org</url>
 
   <dependencies>
-    <!-- test jars -->
     <dependency>
       <groupId>org.apache.httpcomponents</groupId>
       <artifactId>httpasyncclient</artifactId>

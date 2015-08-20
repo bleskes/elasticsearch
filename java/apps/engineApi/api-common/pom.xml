@@ -4,6 +4,7 @@
 
   <!--
     The common POJO classes used for results and configuration
+    and the persistence layer interfaces
   -->
 
   <parent>
@@ -41,7 +42,7 @@
       <artifactId>guava</artifactId>
     </dependency>
   </dependencies>
-  
+
   <build>
     <plugins>
       <!-- install dependencies -->
@@ -92,5 +93,5 @@
       </plugin>
     </plugins>
   </build>
-    
+
 </project>

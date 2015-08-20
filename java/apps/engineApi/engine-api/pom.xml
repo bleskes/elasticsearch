@@ -4,7 +4,7 @@
   <modelVersion>4.0.0</modelVersion>
 
   <!--
-    The Engine REST API
+    The Engine core classes
   -->
 
   <parent>
@@ -25,13 +25,6 @@
     <dependency>
       <groupId>com.prelert</groupId>
       <artifactId>api-common</artifactId>
-      <scope>provided</scope>
-    </dependency>
-    
-    <!-- elasticsearch is required for server info -->
-    <dependency>
-      <groupId>org.elasticsearch</groupId>
-      <artifactId>elasticsearch</artifactId>
       <scope>provided</scope>
     </dependency>
 
