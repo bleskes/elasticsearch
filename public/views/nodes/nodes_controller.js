@@ -57,7 +57,7 @@ define(function (require) {
       .then(function() {
         var dataSource = new TableDataSource({
           index: indexPattern,
-          cluster: _.find(clusters, { _id: globalState.cluster }),
+          cluster: _.find(clusters, { cluster_uuid: globalState.cluster }),
           clusters: clusters,
           metrics: [
             'node_jvm_mem_percent',

@@ -1,4 +1,4 @@
-define(function(require) {
+define(function (require) {
   var React = require('react');
   var make = React.DOM;
   var _ = require('lodash');
@@ -6,34 +6,34 @@ define(function(require) {
   var jubilee = require('jubilee/build/jubilee');
 
   var MarvelSparkLine = React.createClass({
-    getInitialState: function() {
+    getInitialState: function () {
       var data = this.props.data;
       if (!data && this.props.source) {
         data = this.props.source.data;
       }
       return { chartData: data || [] };
     },
-    componentDidMount: function() { this.drawJubileeChart(); },
-    componentDidUpdate: function() { this.drawJubileeChart(); },
-    render: function() {
+    componentDidMount: function () { this.drawJubileeChart(); },
+    componentDidUpdate: function () { this.drawJubileeChart(); },
+    render: function () {
       var metric = this.props.source.metric;
       var lastPoint = _.last(this.state.chartData);
       var titleStr = [metric.label + ':', lastPoint ? lastPoint.y : 0, metric.units].join(' ');
       var $title = make.h1(null, titleStr);
       var $chartWrapper = make.div({className: 'jubilee'});
       var attrs = {
-        className: this.props.className || ""
+        className: this.props.className || ''
       };
 
       return make.div(attrs, $title, $chartWrapper);
     },
-    drawJubileeChart: function() {
+    drawJubileeChart: function () {
       var children = React.findDOMNode(this).children;
       d3.select(children[children.length - 1])
         .datum(this.state.chartData)
         .call(this.jLineChart);
     },
-    setData: function(data) {
+    setData: function (data) {
       if (data && data.length) {
         var source = this.props.source;
         var metric = source.metric;
@@ -51,13 +51,13 @@ define(function(require) {
         this.setState({chartData: data, total: total});
       }
     },
-    componentWillMount: function() {
+    componentWillMount: function () {
       var lineChart = new jubilee.chart.line()
-        .height(300)
+        .height(150)
         .yScale({nice: true})
         .margin({left: 50, right: 10})
         .lines({
-          stroke: function() { return '#000'; },
+          stroke: function () { return '#000'; },
           strokeWidth: '2px',
           interpolate: 'basis'
         })
@@ -81,7 +81,7 @@ define(function(require) {
         .zeroLine({
           add: false
         })
-        .on('mouseenter', function(evt) {
+        .on('mouseenter', function (evt) {
           console.log('Mouse Enter');
           console.log(evt);
         });
