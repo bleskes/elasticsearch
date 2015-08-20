@@ -61,6 +61,7 @@ define(function (require) {
           clusters: clusters,
           metrics: [
             'node_jvm_mem_percent',
+            'node_space_free',
             'load_average_1m'
           ],
           type: 'node',

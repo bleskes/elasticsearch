@@ -56,6 +56,7 @@ define(function (require) {
         .height(150)
         .yScale({nice: true})
         .margin({left: 50, right: 10})
+        .defined(function (d) { return !_.isNull(d.y); })
         .lines({
           stroke: function () { return '#000'; },
           strokeWidth: '2px',

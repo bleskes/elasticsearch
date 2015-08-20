@@ -57,6 +57,11 @@ define(function (require) {
         sortKey: 'metrics.load_average_1m.last',
         sort: 0,
         title: 'RAM used'
+      }, {
+        key: 'metrics.node_space_free',
+        sortKey: 'metrics.node_space_free.last',
+        sort: 0,
+        title: 'Disk Free Space GB'
       }]
     };
     function makeChart(data, metric) {
