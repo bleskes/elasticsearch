@@ -38,6 +38,7 @@ import org.elasticsearch.common.util.concurrent.AbstractRunnable;
 import org.elasticsearch.common.util.concurrent.ConcurrentCollections;
 import org.elasticsearch.common.util.concurrent.EsExecutors;
 import org.elasticsearch.common.util.concurrent.EsRejectedExecutionException;
+import org.elasticsearch.discovery.DiscoverySettings;
 import org.elasticsearch.discovery.zen.elect.ElectMasterService;
 import org.elasticsearch.discovery.zen.ping.PingContextProvider;
 import org.elasticsearch.discovery.zen.ping.ZenPing;
@@ -113,7 +114,7 @@ public class UnicastZenPing extends AbstractLifecycleComponent<ZenPing> implemen
         }
 
         this.concurrentConnects = this.settings.getAsInt("discovery.zen.ping.unicast.concurrent_connects", 10);
-        String[] hostArr = this.settings.getAsArray("discovery.zen.ping.unicast.hosts");
+        String[] hostArr = this.settings.getAsArray(DiscoverySettings.UNICAST_HOSTS);
         // trim the hosts
         for (int i = 0; i < hostArr.length; i++) {
             hostArr[i] = hostArr[i].trim();

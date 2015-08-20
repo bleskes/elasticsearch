@@ -63,7 +63,6 @@ import org.elasticsearch.common.io.FileSystemUtils;
 import org.elasticsearch.common.lease.Releasables;
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.logging.Loggers;
-import org.elasticsearch.common.network.NetworkUtils;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.settings.Settings.Builder;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
@@ -72,6 +71,7 @@ import org.elasticsearch.common.unit.ByteSizeUnit;
 import org.elasticsearch.common.unit.ByteSizeValue;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.util.concurrent.EsExecutors;
+import org.elasticsearch.discovery.DiscoverySettings;
 import org.elasticsearch.env.NodeEnvironment;
 import org.elasticsearch.http.HttpServerTransport;
 import org.elasticsearch.index.IndexService;
@@ -103,12 +103,12 @@ import org.elasticsearch.test.transport.MockTransportService;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.Transport;
 import org.elasticsearch.transport.TransportService;
+import org.elasticsearch.transport.local.LocalTransport;
 import org.elasticsearch.transport.netty.NettyTransport;
 import org.junit.Assert;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -357,13 +357,23 @@ public final class InternalTestCluster extends TestCluster {
         return nodes.keySet().toArray(Strings.EMPTY_ARRAY);
     }
 
-    private boolean isLocalTransportConfigured() {
+    public boolean isLocalTransportConfigured() {
         return "local".equals(nodeMode);
     }
 
     private Settings getSettings(int nodeOrdinal, long nodeSeed, Settings others) {
         Builder builder = Settings.settingsBuilder().put(defaultSettings)
                 .put(getRandomNodeSettings(nodeSeed));
+        if (isLocalTransportConfigured()) {
+            // force a known address
+            builder.put(LocalTransport.TRANSPORT_LOCAL_ADDRESS, getNodeLocalAddress(nodeOrdinal));
+            // add previous
+            ArrayList<String> unicastHosts = new ArrayList<>();
+            for (int i = 0; i < nodeOrdinal; i++) {
+                unicastHosts.add(getNodeLocalAddress(i));
+            }
+            builder.putArray(DiscoverySettings.UNICAST_HOSTS, unicastHosts.toArray(new String[unicastHosts.size()]));
+        }
         Settings settings = settingsSource.node(nodeOrdinal);
         if (settings != null) {
             if (settings.get(ClusterName.SETTING) != null) {
@@ -376,6 +386,10 @@ public final class InternalTestCluster extends TestCluster {
         }
         builder.put(ClusterName.SETTING, clusterName);
         return builder.build();
+    }
+
+    public String getNodeLocalAddress(int nodeOrdinal) {
+        return clusterName + "_" + nodeOrdinal;
     }
 
     private Settings getRandomNodeSettings(long seed) {

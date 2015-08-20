@@ -57,7 +57,6 @@ import static org.hamcrest.Matchers.lessThan;
 /**
  */
 @ClusterScope(scope = Scope.TEST, numDataNodes = 0)
-@ESIntegTestCase.SuppressLocalMode
 public class NoMasterNodeIT extends ESIntegTestCase {
 
     @Test

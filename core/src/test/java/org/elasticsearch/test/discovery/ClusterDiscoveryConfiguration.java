@@ -23,6 +23,7 @@ import com.google.common.primitives.Ints;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.common.network.NetworkUtils;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.discovery.DiscoverySettings;
 import org.elasticsearch.test.InternalTestCluster;
 import org.elasticsearch.test.SettingsSource;
 import org.elasticsearch.transport.local.LocalTransport;
@@ -65,12 +66,14 @@ public class ClusterDiscoveryConfiguration extends SettingsSource {
 
         private final int[] unicastHostOrdinals;
         private final int[] unicastHostPorts;
+        private final String[] unicastHosts;
+        private final boolean localMode;
 
-        public UnicastZen(int numOfNodes, Settings extraSettings) {
-            this(numOfNodes, numOfNodes, extraSettings);
+        public UnicastZen(int numOfNodes, Settings extraSettings, InternalTestCluster cluster) {
+            this(numOfNodes, numOfNodes, extraSettings, cluster);
         }
 
-        public UnicastZen(int numOfNodes, int numOfUnicastHosts, Settings extraSettings) {
+        public UnicastZen(int numOfNodes, int numOfUnicastHosts, Settings extraSettings, InternalTestCluster cluster) {
             super(numOfNodes, extraSettings);
             if (numOfUnicastHosts == numOfNodes) {
                 unicastHostOrdinals = new int[numOfNodes];
@@ -85,17 +88,29 @@ public class ClusterDiscoveryConfiguration extends SettingsSource {
                 unicastHostOrdinals = Ints.toArray(ordinals);
             }
             this.unicastHostPorts = unicastHostPorts(numOfNodes);
+            this.localMode = cluster.isLocalTransportConfigured();
+            if (localMode) {
+                this.unicastHosts = buildLocalUnicastHosts(unicastHostOrdinals, cluster);
+            } else {
+                this.unicastHosts = buildNetworkUnicastHosts(unicastHostOrdinals, unicastHostPorts);
+            }
             assert unicastHostOrdinals.length <= unicastHostPorts.length;
         }
 
-        public UnicastZen(int numOfNodes, int[] unicastHostOrdinals) {
-            this(numOfNodes, Settings.EMPTY, unicastHostOrdinals);
+        public UnicastZen(int numOfNodes, int[] unicastHostOrdinals, InternalTestCluster cluster) {
+            this(numOfNodes, Settings.EMPTY, unicastHostOrdinals, cluster);
         }
 
-        public UnicastZen(int numOfNodes, Settings extraSettings, int[] unicastHostOrdinals) {
+        public UnicastZen(int numOfNodes, Settings extraSettings, int[] unicastHostOrdinals, InternalTestCluster cluster) {
             super(numOfNodes, extraSettings);
             this.unicastHostOrdinals = unicastHostOrdinals;
             this.unicastHostPorts = unicastHostPorts(numOfNodes);
+            this.localMode = cluster.isLocalTransportConfigured();
+            if (localMode) {
+                this.unicastHosts = buildLocalUnicastHosts(unicastHostOrdinals, cluster);
+            } else {
+                this.unicastHosts = buildNetworkUnicastHosts(unicastHostOrdinals, unicastHostPorts);
+            }
             assert unicastHostOrdinals.length <= unicastHostPorts.length;
         }
 
@@ -106,23 +121,34 @@ public class ClusterDiscoveryConfiguration extends SettingsSource {
         @Override
         public Settings node(int nodeOrdinal) {
             Settings.Builder builder = Settings.builder();
-
-            String[] unicastHosts = new String[unicastHostOrdinals.length];
             if (nodeOrdinal >= unicastHostPorts.length) {
                 throw new ElasticsearchException("nodeOrdinal [" + nodeOrdinal + "] is greater than the number unicast ports [" + unicastHostPorts.length + "]");
-            } else {
+            } else if (localMode == false) {
                 // we need to pin the node port & host so we'd know where to point things
                 builder.put("transport.tcp.port", unicastHostPorts[nodeOrdinal]);
                 builder.put("transport.host", IP_ADDR); // only bind on one IF we use v4 here by default
                 builder.put("transport.bind_host", IP_ADDR);
                 builder.put("transport.publish_host", IP_ADDR);
                 builder.put("http.enabled", false);
-                for (int i = 0; i < unicastHostOrdinals.length; i++) {
-                    unicastHosts[i] = IP_ADDR + ":" + (unicastHostPorts[unicastHostOrdinals[i]]);
-                }
             }
-            builder.putArray("discovery.zen.ping.unicast.hosts", unicastHosts);
+            builder.putArray(DiscoverySettings.UNICAST_HOSTS, unicastHosts);
             return builder.put(super.node(nodeOrdinal)).build();
+        }
+
+        protected static String[] buildLocalUnicastHosts(int[] unicastHostOrdinals, InternalTestCluster cluster) {
+            String[] unicastHosts = new String[unicastHostOrdinals.length];
+            for (int i = 0; i < unicastHostOrdinals.length; i++) {
+                unicastHosts[i] = cluster.getNodeLocalAddress(i);
+            }
+            return unicastHosts;
+        }
+
+        protected static String[] buildNetworkUnicastHosts(int[] unicastHostOrdinals, int[] unicastHostPorts) {
+            String[] unicastHosts = new String[unicastHostOrdinals.length];
+            for (int i = 0; i < unicastHostOrdinals.length; i++) {
+                unicastHosts[i] = IP_ADDR + ":" + (unicastHostPorts[unicastHostOrdinals[i]]);
+            }
+            return unicastHosts;
         }
 
         protected synchronized static int[] unicastHostPorts(int numHosts) {

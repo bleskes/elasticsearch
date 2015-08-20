@@ -65,7 +65,6 @@ import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.sameInstance;
 
 @ESIntegTestCase.ClusterScope(scope = ESIntegTestCase.Scope.TEST, numDataNodes = 0, numClientNodes = 0)
-@ESIntegTestCase.SuppressLocalMode
 public class ZenDiscoveryIT extends ESIntegTestCase {
 
     @Test
@@ -229,11 +228,12 @@ public class ZenDiscoveryIT extends ESIntegTestCase {
     public void testHandleNodeJoin_incompatibleMinVersion() throws UnknownHostException {
         Settings nodeSettings = Settings.settingsBuilder()
                 .put("discovery.type", "zen") // <-- To override the local setting if set externally
+                .put("node.mode", "local")  // <-- force local transport so we can fake a network address
                 .build();
         String nodeName = internalCluster().startNode(nodeSettings, Version.V_2_0_0_beta1);
         ZenDiscovery zenDiscovery = (ZenDiscovery) internalCluster().getInstance(Discovery.class, nodeName);
 
-        DiscoveryNode node = new DiscoveryNode("_node_id", new InetSocketTransportAddress(InetAddress.getByName("0.0.0.0"), 0), Version.V_1_6_0);
+        DiscoveryNode node = new DiscoveryNode("_node_id", new LocalTransportAddress("_id"), Version.V_1_6_0);
         final AtomicReference<IllegalStateException> holder = new AtomicReference<>();
         zenDiscovery.handleJoinRequest(node, new MembershipAction.JoinCallback() {
             @Override

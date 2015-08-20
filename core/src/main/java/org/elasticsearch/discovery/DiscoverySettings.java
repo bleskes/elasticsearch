@@ -38,6 +38,8 @@ public class DiscoverySettings extends AbstractComponent {
     public static final String PUBLISH_TIMEOUT = "discovery.zen.publish_timeout";
     public static final String NO_MASTER_BLOCK = "discovery.zen.no_master_block";
     public static final String PUBLISH_DIFF_ENABLE = "discovery.zen.publish_diff.enable";
+    public static final String UNICAST_HOSTS = "discovery.zen.ping.unicast.hosts";
+
 
     public static final TimeValue DEFAULT_PUBLISH_TIMEOUT = TimeValue.timeValueSeconds(30);
     public static final String DEFAULT_NO_MASTER_BLOCK = "write";

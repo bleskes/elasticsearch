@@ -35,7 +35,6 @@ import java.util.concurrent.ExecutionException;
 import static org.hamcrest.Matchers.equalTo;
 
 @ClusterScope(scope = Scope.TEST, numDataNodes = 0)
-@ESIntegTestCase.SuppressLocalMode
 public class ZenUnicastDiscoveryIT extends ESIntegTestCase {
 
     private ClusterDiscoveryConfiguration discoveryConfig;
@@ -59,7 +58,7 @@ public class ZenUnicastDiscoveryIT extends ESIntegTestCase {
         for (int i = 0; i < unicastHostOrdinals.length; i++) {
             unicastHostOrdinals[i] = i;
         }
-        discoveryConfig = new ClusterDiscoveryConfiguration.UnicastZen(currentNumNodes, unicastHostOrdinals);
+        discoveryConfig = new ClusterDiscoveryConfiguration.UnicastZen(currentNumNodes, unicastHostOrdinals, internalCluster());
 
         // start the unicast hosts
         internalCluster().startNodesAsync(unicastHostOrdinals.length).get();
@@ -82,7 +81,7 @@ public class ZenUnicastDiscoveryIT extends ESIntegTestCase {
         final int min_master_nodes = currentNumNodes / 2 + 1;
         int currentNumOfUnicastHosts = randomIntBetween(min_master_nodes, currentNumNodes);
         final Settings settings = Settings.settingsBuilder().put("discovery.zen.minimum_master_nodes", min_master_nodes).build();
-        discoveryConfig = new ClusterDiscoveryConfiguration.UnicastZen(currentNumNodes, currentNumOfUnicastHosts, settings);
+        discoveryConfig = new ClusterDiscoveryConfiguration.UnicastZen(currentNumNodes, currentNumOfUnicastHosts, settings, internalCluster());
 
         List<String> nodes = internalCluster().startNodesAsync(currentNumNodes).get();
 
