@@ -10,7 +10,7 @@ define(function (require) {
 
   var defaultOptions = {
     data: [],
-    width: 40,
+    width: 30,
     height: 20,
     getX: function(d) { return d.x; },
     getY: function(d) { return d.y; },
@@ -50,7 +50,7 @@ define(function (require) {
 
   return React.createClass({
     render: function() {
-      return make.div({className: 'pull-right sparkline'});
+      return make.div({className: 'pull-right sparkline_cont'});
     },
     componentDidMount: function() {
       this.renderSparkline();
