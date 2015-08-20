@@ -57,7 +57,6 @@ public class TransformTypeTest
 
     @Test(expected=IllegalArgumentException.class)
     public void testFromString_UnknownType()
-    throws TransformConfigurationException
     {
         @SuppressWarnings("unused")
         TransformType created = TransformType.fromString("random_type");
