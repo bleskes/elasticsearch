@@ -90,13 +90,16 @@ define(function (require) {
             });
             var numCols = initialTableOptions.columns.length;
             return make.tr({className: 'big no-border', key: 'row-' + this.props.name},
+              $tdsArr);
+            /*
+            return make.tr({className: 'big no-border', key: 'row-' + this.props.name},
               make.td({colSpan: numCols, key: 'table-td-wrap'},
                 make.table({className: 'nested-table', key: 'table'},
                   React.createElement(ToggleOnClickComponent, {
                     elWrapper: 'tbody',
                     activator: make.tr(trAttrs, $tdsArr),
                     content: make.tr({key: 'charts'}, make.td({colSpan: numCols}, $chartsArr))
-                  }))));
+                  }))));*/
           }
         });
 
