@@ -50,8 +50,7 @@ define(function (require) {
         key: 'metrics.index_document_count',
         sortKey: 'metrics.index_document_count.last',
         sort: 0,
-        title: 'Document Count',
-        className: 'class1 class2'
+        title: 'Document Count'
       }, {
         key: 'metrics.index_request_rate',
         sort: 0,
