@@ -20,7 +20,7 @@ define(function (require) {
       var $content = null;
       if (dataKey.key === 'name') {
         $content = make.div(null,
-          make.div(null, value),
+          make.a({href: '#/node/' + value}, value),
           make.div({className: 'small'}, '192.168.1.1'));
       }
       if (_.isObject(value) && value.metric) {
