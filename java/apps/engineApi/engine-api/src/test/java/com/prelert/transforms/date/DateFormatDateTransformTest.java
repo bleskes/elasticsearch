@@ -41,7 +41,7 @@ import org.junit.rules.ExpectedException;
 import com.prelert.transforms.Transform.TransformIndex;
 import com.prelert.transforms.TransformException;
 
-public class DateFormatDateTransformerTest
+public class DateFormatDateTransformTest
 {
     @Rule
     public ExpectedException m_ExpectedException = ExpectedException.none();

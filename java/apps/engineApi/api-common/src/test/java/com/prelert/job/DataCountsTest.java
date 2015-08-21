@@ -25,7 +25,7 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.job.data;
+package com.prelert.job;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;

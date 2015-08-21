@@ -41,7 +41,7 @@ import org.junit.rules.ExpectedException;
 import com.prelert.transforms.Transform.TransformIndex;
 import com.prelert.transforms.TransformException;
 
-public class DoubleDateTransformerTest
+public class DoubleDateTransformTest
 {
     @Rule
     public ExpectedException m_ExpectedException = ExpectedException.none();

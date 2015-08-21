@@ -56,7 +56,8 @@ import com.prelert.job.transform.Condition;
 import com.prelert.job.transform.Operator;
 import com.prelert.job.transform.TransformConfig;
 
-public class JobConfigurationSerialisationTest {
+public class JobConfigurationMessageBodyReaderTest 
+{
 
 	@Test
 	public void testIsReadable()

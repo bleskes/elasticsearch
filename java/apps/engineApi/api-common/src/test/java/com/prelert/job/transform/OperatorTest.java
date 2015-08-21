@@ -24,7 +24,7 @@
  *                                                          *
  *                                                          *
  ************************************************************/
-package com.prelert.transforms;
+package com.prelert.job.transform;
 
 import static org.junit.Assert.*;
 
@@ -35,7 +35,8 @@ import org.junit.Test;
 import com.prelert.job.transform.Operator;
 import com.prelert.job.transform.UnknownOperatorException;
 
-public class OperationTest {
+public class OperatorTest
+{
 
     @Test
     public void testFromString() throws UnknownOperatorException

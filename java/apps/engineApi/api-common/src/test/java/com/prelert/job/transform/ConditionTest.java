@@ -24,7 +24,7 @@
  *                                                          *
  *                                                          *
  ************************************************************/
-package com.prelert.job.transform.condition;
+package com.prelert.job.transform;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
