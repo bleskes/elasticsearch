@@ -48,22 +48,22 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 
 /**
- * Abstraction for transporting aggregated shard-level operations in a single request (NodeBroadcastRequest) per-node
+ * Abstraction for transporting aggregated shard-level operations in a single request (BroadcastByNodeRequest) per-node
  * and executing the shard-level operations serially on the receiving node. Each shard-level operation can produce a
  * result (ShardOperationResult), these per-node shard-level results are aggregated into a single result
- * (NodeBroadcastResponse) to the coordinating node. These per-node results are aggregated into a single result (Result)
+ * (BroadcastByNodeResponse) to the coordinating node. These per-node results are aggregated into a single result (Result)
  * to the client.
  *
  * @param <Request>               the underlying client request
  * @param <Response>              the response to the client request
- * @param <NodeBroadcastRequest>  per-node container of shard-level requests
- * @param <NodeBroadcastResponse> per-node container of shard-level responses
+ * @param <BroadcastByNodeRequest>  per-node container of shard-level requests
+ * @param <BroadcastByNodeResponse> per-node container of shard-level responses
  * @param <ShardOperationResult>  per-shard operation results
  */
 public abstract class TransportBroadcastByNodeAction<Request extends IndicesLevelRequest,
         Response extends IndicesLevelResponse,
-        NodeBroadcastRequest extends BaseBroadcastByNodeRequest<Request>,
-        NodeBroadcastResponse extends BaseBroadcastByNodeResponse,
+        BroadcastByNodeRequest extends BaseBroadcastByNodeRequest<Request>,
+        BroadcastByNodeResponse extends BaseBroadcastByNodeResponse,
         ShardOperationResult> extends HandledTransportAction<Request, Response> {
 
     private final ClusterService clusterService;
@@ -80,7 +80,7 @@ public abstract class TransportBroadcastByNodeAction<Request extends IndicesLeve
             ActionFilters actionFilters,
             IndexNameExpressionResolver indexNameExpressionResolver,
             Class<Request> request,
-            Class<NodeBroadcastRequest> nodeBroadcastRequest,
+            Class<BroadcastByNodeRequest> nodeBroadcastRequest,
             String executor) {
         super(settings, actionName, threadPool, transportService, actionFilters, indexNameExpressionResolver, request);
 
@@ -95,11 +95,11 @@ public abstract class TransportBroadcastByNodeAction<Request extends IndicesLeve
     private final Response newResponse(Request request, AtomicReferenceArray responses, List<NoShardAvailableActionException> unavailableShardExceptions) {
         int totalShards = 0;
         int successfulShards = 0;
-        List<NodeBroadcastResponse> nodeBroadcastResponses = Lists.newArrayList();
+        List<BroadcastByNodeResponse> broadcastByNodeResponses = Lists.newArrayList();
         List<DefaultShardOperationFailedException> exceptions = Lists.newArrayList();
         for (int i = 0; i < responses.length(); i++) {
-            NodeBroadcastResponse response = (NodeBroadcastResponse) responses.get(i);
-            nodeBroadcastResponses.add(response);
+            BroadcastByNodeResponse response = (BroadcastByNodeResponse) responses.get(i);
+            broadcastByNodeResponses.add(response);
             totalShards += response.getTotalShards();
             successfulShards += response.getSuccessfulShards();
             for (BroadcastShardOperationFailedException t : response.getExceptions()) {
@@ -110,7 +110,7 @@ public abstract class TransportBroadcastByNodeAction<Request extends IndicesLeve
         }
         totalShards += unavailableShardExceptions.size();
         int failedShards = exceptions.size();
-        return newResponse(request, totalShards, successfulShards, failedShards, nodeBroadcastResponses, exceptions);
+        return newResponse(request, totalShards, successfulShards, failedShards, broadcastByNodeResponses, exceptions);
     }
 
     /**
@@ -124,7 +124,7 @@ public abstract class TransportBroadcastByNodeAction<Request extends IndicesLeve
      * @param shardFailures    the exceptions corresponding to shard operationa failures
      * @return the response
      */
-    protected abstract Response newResponse(Request request, int totalShards, int successfulShards, int failedShards, List<NodeBroadcastResponse> responses, List<DefaultShardOperationFailedException> shardFailures);
+    protected abstract Response newResponse(Request request, int totalShards, int successfulShards, int failedShards, List<BroadcastByNodeResponse> responses, List<DefaultShardOperationFailedException> shardFailures);
 
     /**
      * Creates a new node-level request.
@@ -134,14 +134,14 @@ public abstract class TransportBroadcastByNodeAction<Request extends IndicesLeve
      * @param shards  the shards the operation will be executed against
      * @return the node-level request
      */
-    protected abstract NodeBroadcastRequest newNodeRequest(String nodeId, Request request, List<ShardRouting> shards);
+    protected abstract BroadcastByNodeRequest newNodeRequest(String nodeId, Request request, List<ShardRouting> shards);
 
     /**
      * Creates an empty node-level response object (used for deserialization).
      *
      * @return an empty node-level response object
      */
-    protected abstract NodeBroadcastResponse newNodeResponse();
+    protected abstract BroadcastByNodeResponse newNodeResponse();
 
     /**
      * Creates a new node-level response.
@@ -153,7 +153,7 @@ public abstract class TransportBroadcastByNodeAction<Request extends IndicesLeve
      * @param exceptions       the exceptions corresponding to shard operation failures
      * @return the per-node aggregated shard-level response
      */
-    protected abstract NodeBroadcastResponse newNodeResponse(String nodeId, int totalShards, int successfulShards, List<ShardOperationResult> results, List<BroadcastShardOperationFailedException> exceptions);
+    protected abstract BroadcastByNodeResponse newNodeResponse(String nodeId, int totalShards, int successfulShards, List<ShardOperationResult> results, List<BroadcastShardOperationFailedException> exceptions);
 
     /**
      * Executes the shard-level operation. This method is called asynchronously once per shard.
@@ -162,7 +162,7 @@ public abstract class TransportBroadcastByNodeAction<Request extends IndicesLeve
      * @param shardRouting the shard on which to execute the operation
      * @return the result of the shard-level operation for the shard
      */
-    protected abstract ShardOperationResult shardOperation(NodeBroadcastRequest request, ShardRouting shardRouting);
+    protected abstract ShardOperationResult shardOperation(BroadcastByNodeRequest request, ShardRouting shardRouting);
 
     /**
      * Determines the shards on which this operation will be executed on. The operation is executed once per shard
@@ -271,15 +271,15 @@ public abstract class TransportBroadcastByNodeAction<Request extends IndicesLeve
 
         private void sendNodeRequest(final DiscoveryNode node, List<ShardRouting> shards, final int nodeIndex) {
             try {
-                NodeBroadcastRequest nodeRequest = newNodeRequest(node.getId(), request, shards);
-                transportService.sendRequest(node, transportNodeBroadcastAction, nodeRequest, new BaseTransportResponseHandler<NodeBroadcastResponse>() {
+                BroadcastByNodeRequest nodeRequest = newNodeRequest(node.getId(), request, shards);
+                transportService.sendRequest(node, transportNodeBroadcastAction, nodeRequest, new BaseTransportResponseHandler<BroadcastByNodeResponse>() {
                     @Override
-                    public NodeBroadcastResponse newInstance() {
+                    public BroadcastByNodeResponse newInstance() {
                         return newNodeResponse();
                     }
 
                     @Override
-                    public void handleResponse(NodeBroadcastResponse response) {
+                    public void handleResponse(BroadcastByNodeResponse response) {
                         onNodeResponse(node, nodeIndex, response);
                     }
 
@@ -298,7 +298,7 @@ public abstract class TransportBroadcastByNodeAction<Request extends IndicesLeve
             }
         }
 
-        protected void onNodeResponse(DiscoveryNode node, int nodeIndex, NodeBroadcastResponse response) {
+        protected void onNodeResponse(DiscoveryNode node, int nodeIndex, BroadcastByNodeResponse response) {
             logger.trace("received response from node [{}]", node.id());
             responses.set(nodeIndex, response);
             if (counter.incrementAndGet() == responses.length()) {
@@ -337,9 +337,9 @@ public abstract class TransportBroadcastByNodeAction<Request extends IndicesLeve
         }
     }
 
-    class NodeBroadcastTransportHandler implements TransportRequestHandler<NodeBroadcastRequest> {
+    class NodeBroadcastTransportHandler implements TransportRequestHandler<BroadcastByNodeRequest> {
         @Override
-        public void messageReceived(final NodeBroadcastRequest request, TransportChannel channel) throws Exception {
+        public void messageReceived(final BroadcastByNodeRequest request, TransportChannel channel) throws Exception {
             List<ShardRouting> shards = request.getShards();
             final int totalShards = shards.size();
             logger.trace("executing operation [{}] on [{}] shards on node [{}]", actionName, totalShards, request.getNodeId());
@@ -364,7 +364,7 @@ public abstract class TransportBroadcastByNodeAction<Request extends IndicesLeve
             channel.sendResponse(newNodeResponse(request.getNodeId(), totalShards, totalShards - accumulatedExceptions.size(), results, accumulatedExceptions));
         }
 
-        private void onShardOperation(final NodeBroadcastRequest request, final Object[] shardResults, final int shardIndex, final ShardRouting shardRouting) {
+        private void onShardOperation(final BroadcastByNodeRequest request, final Object[] shardResults, final int shardIndex, final ShardRouting shardRouting) {
             try {
                 logger.trace("executing operation [{}] for shard [{}] on node [{}]", actionName, shardRouting.shortSummary(), request.getNodeId());
                 ShardOperationResult result = shardOperation(request, shardRouting);
