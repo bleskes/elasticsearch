@@ -27,7 +27,6 @@ import org.elasticsearch.action.admin.cluster.snapshots.create.CreateSnapshotRes
 import org.elasticsearch.action.admin.cluster.snapshots.restore.RestoreSnapshotResponse;
 import org.elasticsearch.action.admin.cluster.state.ClusterStateResponse;
 import org.elasticsearch.action.admin.indices.recovery.RecoveryResponse;
-import org.elasticsearch.action.admin.indices.recovery.ShardRecoveryResponse;
 import org.elasticsearch.action.admin.indices.stats.CommonStatsFlags;
 import org.elasticsearch.action.admin.indices.stats.IndicesStatsResponse;
 import org.elasticsearch.action.index.IndexRequestBuilder;
@@ -155,10 +154,10 @@ public class IndexRecoveryIT extends ESIntegTestCase {
 
         logger.info("--> request recoveries");
         RecoveryResponse response = client().admin().indices().prepareRecoveries(INDEX_NAME).execute().actionGet();
-        assertThat(response.shardResponses().size(), equalTo(SHARD_COUNT));
-        assertThat(response.shardResponses().get(INDEX_NAME).size(), equalTo(1));
+        assertThat(response.shardRecoveryStates().size(), equalTo(SHARD_COUNT));
+        assertThat(response.shardRecoveryStates().get(INDEX_NAME).size(), equalTo(1));
 
-        List<RecoveryState> recoveryStates = response.shardResponses().get(INDEX_NAME);
+        List<RecoveryState> recoveryStates = response.shardRecoveryStates().get(INDEX_NAME);
         assertThat(recoveryStates.size(), equalTo(1));
 
         RecoveryState recoveryState = recoveryStates.get(0);
@@ -182,7 +181,7 @@ public class IndexRecoveryIT extends ESIntegTestCase {
         logger.info("--> request recoveries");
         RecoveryResponse response = client().admin().indices().prepareRecoveries(INDEX_NAME).setActiveOnly(true).execute().actionGet();
 
-        List<RecoveryState> recoveryStates = response.shardResponses().get(INDEX_NAME);
+        List<RecoveryState> recoveryStates = response.shardRecoveryStates().get(INDEX_NAME);
         assertThat(recoveryStates.size(), equalTo(0));  // Should not expect any responses back
     }
 
@@ -208,7 +207,7 @@ public class IndexRecoveryIT extends ESIntegTestCase {
         RecoveryResponse response = client().admin().indices().prepareRecoveries(INDEX_NAME).execute().actionGet();
 
         // we should now have two total shards, one primary and one replica
-        List<RecoveryState> recoveryStates = response.shardResponses().get(INDEX_NAME);
+        List<RecoveryState> recoveryStates = response.shardRecoveryStates().get(INDEX_NAME);
         assertThat(recoveryStates.size(), equalTo(2));
 
         List<RecoveryState> nodeAResponses = findRecoveriesForTargetNode(nodeA, recoveryStates);
@@ -265,7 +264,7 @@ public class IndexRecoveryIT extends ESIntegTestCase {
         logger.info("--> request recoveries");
         RecoveryResponse response = client().admin().indices().prepareRecoveries(INDEX_NAME).execute().actionGet();
 
-        List<RecoveryState> recoveryStates = response.shardResponses().get(INDEX_NAME);
+        List<RecoveryState> recoveryStates = response.shardRecoveryStates().get(INDEX_NAME);
         List<RecoveryState> nodeARecoveryStates = findRecoveriesForTargetNode(nodeA, recoveryStates);
         assertThat(nodeARecoveryStates.size(), equalTo(1));
         List<RecoveryState> nodeBRecoveryStates = findRecoveriesForTargetNode(nodeB, recoveryStates);
@@ -324,7 +323,7 @@ public class IndexRecoveryIT extends ESIntegTestCase {
 
         response = client().admin().indices().prepareRecoveries(INDEX_NAME).execute().actionGet();
 
-        recoveryStates = response.shardResponses().get(INDEX_NAME);
+        recoveryStates = response.shardRecoveryStates().get(INDEX_NAME);
         assertThat(recoveryStates.size(), equalTo(1));
 
         assertRecoveryState(recoveryStates.get(0), 0, Type.RELOCATION, Stage.DONE, nodeA, nodeB, false);
@@ -376,7 +375,7 @@ public class IndexRecoveryIT extends ESIntegTestCase {
                 .execute().actionGet().getState();
 
         response = client().admin().indices().prepareRecoveries(INDEX_NAME).execute().actionGet();
-        recoveryStates = response.shardResponses().get(INDEX_NAME);
+        recoveryStates = response.shardRecoveryStates().get(INDEX_NAME);
 
         nodeARecoveryStates = findRecoveriesForTargetNode(nodeA, recoveryStates);
         assertThat(nodeARecoveryStates.size(), equalTo(1));
@@ -400,7 +399,7 @@ public class IndexRecoveryIT extends ESIntegTestCase {
         ensureGreen();
 
         response = client().admin().indices().prepareRecoveries(INDEX_NAME).execute().actionGet();
-        recoveryStates = response.shardResponses().get(INDEX_NAME);
+        recoveryStates = response.shardRecoveryStates().get(INDEX_NAME);
 
         nodeARecoveryStates = findRecoveriesForTargetNode(nodeA, recoveryStates);
         assertThat(nodeARecoveryStates.size(), equalTo(0));
@@ -456,7 +455,7 @@ public class IndexRecoveryIT extends ESIntegTestCase {
         logger.info("--> request recoveries");
         RecoveryResponse response = client().admin().indices().prepareRecoveries(INDEX_NAME).execute().actionGet();
 
-        for (Map.Entry<String, List<RecoveryState>> indexRecoveryStates : response.shardResponses().entrySet()) {
+        for (Map.Entry<String, List<RecoveryState>> indexRecoveryStates : response.shardRecoveryStates().entrySet()) {
 
             assertThat(indexRecoveryStates.getKey(), equalTo(INDEX_NAME));
             List<RecoveryState> recoveryStates = indexRecoveryStates.getValue();

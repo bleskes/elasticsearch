@@ -20,7 +20,6 @@
 package org.elasticsearch.gateway;
 
 import org.elasticsearch.action.admin.indices.recovery.RecoveryResponse;
-import org.elasticsearch.action.admin.indices.recovery.ShardRecoveryResponse;
 import org.elasticsearch.action.admin.indices.stats.IndexStats;
 import org.elasticsearch.action.admin.indices.stats.ShardStats;
 import org.elasticsearch.client.Client;
@@ -400,7 +399,7 @@ public class RecoveryFromGatewayIT extends ESIntegTestCase {
             assertSyncIdsNotNull();
         }
         RecoveryResponse recoveryResponse = client().admin().indices().prepareRecoveries("test").get();
-        for (RecoveryState recoveryState : recoveryResponse.shardResponses().get("test")) {
+        for (RecoveryState recoveryState : recoveryResponse.shardRecoveryStates().get("test")) {
             long recovered = 0;
             for (RecoveryState.File file : recoveryState.getIndex().fileDetails()) {
                 if (file.name().startsWith("segments")) {

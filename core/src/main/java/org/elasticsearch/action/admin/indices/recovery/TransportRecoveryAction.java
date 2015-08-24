@@ -49,7 +49,7 @@ import java.util.Map;
  * Transport action for shard recovery operation. This transport action does not actually
  * perform shard recovery, it only reports on recoveries (both active and complete).
  */
-public class TransportRecoveryAction extends TransportNodeBroadcastAction<RecoveryRequest, RecoveryResponse, TransportRecoveryAction.ShardRecoveryRequest, ShardRecoveryResponse, RecoveryState> {
+public class TransportRecoveryAction extends TransportNodeBroadcastAction<RecoveryRequest, RecoveryResponse, TransportRecoveryAction.ShardRecoveryRequest, RecoveryNodeResponse, RecoveryState> {
 
     private final IndicesService indicesService;
 
@@ -63,9 +63,9 @@ public class TransportRecoveryAction extends TransportNodeBroadcastAction<Recove
     }
 
     @Override
-    protected RecoveryResponse newResponse(RecoveryRequest request, int totalShards, int successfulShards, int failedShards, List<ShardRecoveryResponse> responses, List<DefaultShardOperationFailedException> shardFailures) {
+    protected RecoveryResponse newResponse(RecoveryRequest request, int totalShards, int successfulShards, int failedShards, List<RecoveryNodeResponse> responses, List<DefaultShardOperationFailedException> shardFailures) {
         Map<String, List<RecoveryState>> shardResponses = Maps.newHashMap();
-        for (ShardRecoveryResponse response : responses) {
+        for (RecoveryNodeResponse response : responses) {
             for (RecoveryState recoveryState : response.recoveryStates) {
                 if (recoveryState == null) {
                     continue;
@@ -92,13 +92,13 @@ public class TransportRecoveryAction extends TransportNodeBroadcastAction<Recove
     }
 
     @Override
-    protected ShardRecoveryResponse newNodeResponse() {
-        return new ShardRecoveryResponse();
+    protected RecoveryNodeResponse newNodeResponse() {
+        return new RecoveryNodeResponse();
     }
 
     @Override
-    protected ShardRecoveryResponse newNodeResponse(String nodeId, int totalShards, int successfulShards, List<RecoveryState> results, List<BroadcastShardOperationFailedException> exceptions) {
-        ShardRecoveryResponse response = new ShardRecoveryResponse(nodeId, totalShards, successfulShards, exceptions);
+    protected RecoveryNodeResponse newNodeResponse(String nodeId, int totalShards, int successfulShards, List<RecoveryState> results, List<BroadcastShardOperationFailedException> exceptions) {
+        RecoveryNodeResponse response = new RecoveryNodeResponse(nodeId, totalShards, successfulShards, exceptions);
         response.setRecoveryStates(results);
         return response;
     }

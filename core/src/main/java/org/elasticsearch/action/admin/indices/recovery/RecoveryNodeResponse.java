@@ -35,11 +35,11 @@ import java.util.List;
 /**
  * Information regarding the recovery state of a shard.
  */
-public class ShardRecoveryResponse extends BaseNodeBroadcastResponse implements ToXContent {
+public class RecoveryNodeResponse extends BaseNodeBroadcastResponse implements ToXContent {
 
     List<RecoveryState> recoveryStates;
 
-    public ShardRecoveryResponse() { }
+    public RecoveryNodeResponse() { }
 
     /**
      * Constructs shard recovery in formation for the given index and shard id.
@@ -48,7 +48,7 @@ public class ShardRecoveryResponse extends BaseNodeBroadcastResponse implements 
      * @param successfulShards The number of shards for which the operation was successful
      * @param exceptions The exceptions from the failed shards
      */
-    public ShardRecoveryResponse(String nodeId, int totalShards, int successfulShards, List<BroadcastShardOperationFailedException> exceptions) {
+    public RecoveryNodeResponse(String nodeId, int totalShards, int successfulShards, List<BroadcastShardOperationFailedException> exceptions) {
         super(nodeId, totalShards, successfulShards, exceptions);
     }
 
@@ -101,14 +101,14 @@ public class ShardRecoveryResponse extends BaseNodeBroadcastResponse implements 
     }
 
     /**
-     * Builds a new ShardRecoveryResponse from the give input stream.
+     * Builds a new RecoveryNodeResponse from the give input stream.
      *
      * @param in    Input stream
-     * @return      A new ShardRecoveryResponse
+     * @return      A new RecoveryNodeResponse
      * @throws IOException
      */
-    public static ShardRecoveryResponse readShardRecoveryResponse(StreamInput in) throws IOException {
-        ShardRecoveryResponse response = new ShardRecoveryResponse();
+    public static RecoveryNodeResponse readShardRecoveryResponse(StreamInput in) throws IOException {
+        RecoveryNodeResponse response = new RecoveryNodeResponse();
         response.readFrom(in);
         return response;
     }

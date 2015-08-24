@@ -146,7 +146,7 @@ public class ShardInfoIT extends ESIntegTestCase {
                 RecoveryResponse recoveryResponse = client().admin().indices().prepareRecoveries("idx")
                         .setActiveOnly(true)
                         .get();
-                assertThat(recoveryResponse.shardResponses().get("idx").size(), equalTo(0));
+                assertThat(recoveryResponse.shardRecoveryStates().get("idx").size(), equalTo(0));
             }
         });
     }

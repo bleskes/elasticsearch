@@ -19,7 +19,6 @@
 package org.elasticsearch.benchmark.recovery;
 
 import org.elasticsearch.action.admin.indices.recovery.RecoveryResponse;
-import org.elasticsearch.action.admin.indices.recovery.ShardRecoveryResponse;
 import org.elasticsearch.bootstrap.Bootstrap;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.cluster.metadata.IndexMetaData;
@@ -129,12 +128,12 @@ public class ReplicaRecoveryBenchmark {
                     long currentTime = System.currentTimeMillis();
                     long currentDocs = indexer.totalIndexedDocs();
                     RecoveryResponse recoveryResponse = client1.admin().indices().prepareRecoveries(INDEX_NAME).setActiveOnly(true).get();
-                    List<RecoveryState> indexRecoveries = recoveryResponse.shardResponses().get(INDEX_NAME);
+                    List<RecoveryState> indexRecoveries = recoveryResponse.shardRecoveryStates().get(INDEX_NAME);
                     long translogOps;
                     long bytes;
                     if (indexRecoveries.size() > 0) {
                         translogOps = indexRecoveries.get(0).getTranslog().recoveredOperations();
-                        bytes = recoveryResponse.shardResponses().get(INDEX_NAME).get(0).getIndex().recoveredBytes();
+                        bytes = recoveryResponse.shardRecoveryStates().get(INDEX_NAME).get(0).getIndex().recoveredBytes();
                     } else {
                         bytes = lastBytes = 0;
                         translogOps = lastTranslogOps = 0;

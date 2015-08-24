@@ -22,7 +22,6 @@ package org.elasticsearch.rest.action.cat;
 import org.apache.lucene.util.CollectionUtil;
 import org.elasticsearch.action.admin.indices.recovery.RecoveryRequest;
 import org.elasticsearch.action.admin.indices.recovery.RecoveryResponse;
-import org.elasticsearch.action.admin.indices.recovery.ShardRecoveryResponse;
 import org.elasticsearch.action.support.IndicesOptions;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.Strings;
@@ -116,9 +115,9 @@ public class RestRecoveryAction extends AbstractCatAction {
 
         Table t = getTableWithHeader(request);
 
-        for (String index : response.shardResponses().keySet()) {
+        for (String index : response.shardRecoveryStates().keySet()) {
 
-            List<RecoveryState> shardRecoveryStates = response.shardResponses().get(index);
+            List<RecoveryState> shardRecoveryStates = response.shardRecoveryStates().get(index);
             if (shardRecoveryStates.size() == 0) {
                 continue;
             }

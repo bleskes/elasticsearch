@@ -39,7 +39,7 @@ import java.util.Map;
 public class RecoveryResponse extends IndicesLevelResponse implements ToXContent {
 
     private boolean detailed = false;
-    private Map<String, List<RecoveryState>> shardResponses = new HashMap<>();
+    private Map<String, List<RecoveryState>> shardRecoveryStates = new HashMap<>();
 
     public RecoveryResponse() { }
 
@@ -51,18 +51,18 @@ public class RecoveryResponse extends IndicesLevelResponse implements ToXContent
      * @param successfulShards  Count of shards successfully processed
      * @param failedShards      Count of shards which failed to process
      * @param detailed          Display detailed metrics
-     * @param shardResponses    Map of indices to shard recovery information
+     * @param shardRecoveryStates    Map of indices to shard recovery information
      * @param shardFailures     List of failures processing shards
      */
     public RecoveryResponse(int totalShards, int successfulShards, int failedShards, boolean detailed,
-                            Map<String, List<RecoveryState>> shardResponses, List<DefaultShardOperationFailedException> shardFailures) {
+                            Map<String, List<RecoveryState>> shardRecoveryStates, List<DefaultShardOperationFailedException> shardFailures) {
         super(totalShards, successfulShards, failedShards, shardFailures);
-        this.shardResponses = shardResponses;
+        this.shardRecoveryStates = shardRecoveryStates;
         this.detailed = detailed;
     }
 
     public boolean hasRecoveries() {
-        return shardResponses.size() > 0;
+        return shardRecoveryStates.size() > 0;
     }
 
     public boolean detailed() {
@@ -73,15 +73,15 @@ public class RecoveryResponse extends IndicesLevelResponse implements ToXContent
         this.detailed = detailed;
     }
 
-    public Map<String, List<RecoveryState>> shardResponses() {
-        return shardResponses;
+    public Map<String, List<RecoveryState>> shardRecoveryStates() {
+        return shardRecoveryStates;
     }
 
     @Override
     public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
         if (hasRecoveries()) {
-            for (String index : shardResponses.keySet()) {
-                List<RecoveryState> recoveryStates = shardResponses.get(index);
+            for (String index : shardRecoveryStates.keySet()) {
+                List<RecoveryState> recoveryStates = shardRecoveryStates.get(index);
                 if (recoveryStates == null || recoveryStates.size() == 0) {
                     continue;
                 }
@@ -102,8 +102,8 @@ public class RecoveryResponse extends IndicesLevelResponse implements ToXContent
     @Override
     public void writeTo(StreamOutput out) throws IOException {
         super.writeTo(out);
-        out.writeVInt(shardResponses.size());
-        for (Map.Entry<String, List<RecoveryState>> entry : shardResponses.entrySet()) {
+        out.writeVInt(shardRecoveryStates.size());
+        for (Map.Entry<String, List<RecoveryState>> entry : shardRecoveryStates.entrySet()) {
             out.writeString(entry.getKey());
             out.writeVInt(entry.getValue().size());
             for (RecoveryState recoveryState : entry.getValue()) {
@@ -123,7 +123,7 @@ public class RecoveryResponse extends IndicesLevelResponse implements ToXContent
             for (int j = 0; j < listSize; j++) {
                 list.add(RecoveryState.readRecoveryState(in));
             }
-            shardResponses.put(s, list);
+            shardRecoveryStates.put(s, list);
         }
     }
 }
