@@ -264,12 +264,12 @@ public abstract class TransportBroadcastByNodeAction<Request extends IndicesLeve
                 for (Map.Entry<String, List<ShardRouting>> entry : nodeIds.entrySet()) {
                     nodeIndex++;
                     DiscoveryNode node = nodes.get(entry.getKey());
-                    performOperation(node, entry.getValue(), nodeIndex);
+                    sendNodeRequest(node, entry.getValue(), nodeIndex);
                 }
             }
         }
 
-        private void performOperation(final DiscoveryNode node, List<ShardRouting> shards, final int nodeIndex) {
+        private void sendNodeRequest(final DiscoveryNode node, List<ShardRouting> shards, final int nodeIndex) {
             try {
                 NodeBroadcastRequest nodeRequest = newNodeRequest(node.getId(), request, shards);
                 transportService.sendRequest(node, transportNodeBroadcastAction, nodeRequest, new BaseTransportResponseHandler<NodeBroadcastResponse>() {
@@ -280,12 +280,12 @@ public abstract class TransportBroadcastByNodeAction<Request extends IndicesLeve
 
                     @Override
                     public void handleResponse(NodeBroadcastResponse response) {
-                        onOperation(node, nodeIndex, response);
+                        onNodeResponse(node, nodeIndex, response);
                     }
 
                     @Override
                     public void handleException(TransportException exp) {
-                        onFailure(node, nodeIndex, exp);
+                        onNodeFailure(node, nodeIndex, exp);
                     }
 
                     @Override
@@ -294,11 +294,11 @@ public abstract class TransportBroadcastByNodeAction<Request extends IndicesLeve
                     }
                 });
             } catch (Throwable e) {
-                onFailure(node, nodeIndex, e);
+                onNodeFailure(node, nodeIndex, e);
             }
         }
 
-        protected void onOperation(DiscoveryNode node, int nodeIndex, NodeBroadcastResponse response) {
+        protected void onNodeResponse(DiscoveryNode node, int nodeIndex, NodeBroadcastResponse response) {
             logger.trace("received response from node [{}]", node.id());
             responses.set(nodeIndex, response);
             if (counter.incrementAndGet() == responses.length()) {
@@ -306,7 +306,7 @@ public abstract class TransportBroadcastByNodeAction<Request extends IndicesLeve
             }
         }
 
-        protected void onFailure(DiscoveryNode node, int nodeIndex, Throwable t) {
+        protected void onNodeFailure(DiscoveryNode node, int nodeIndex, Throwable t) {
             String nodeId = node.id();
             if (logger.isDebugEnabled() && !(t instanceof NodeShouldNotConnectException)) {
                 logger.debug("failed to execute on node [{}]: [{}]", nodeId, t);
