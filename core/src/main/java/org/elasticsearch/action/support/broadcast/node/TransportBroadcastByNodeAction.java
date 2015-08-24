@@ -17,7 +17,7 @@
  * under the License.
  */
 
-package org.elasticsearch.action.support.indices;
+package org.elasticsearch.action.support.broadcast.node;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -31,6 +31,8 @@ import org.elasticsearch.action.support.TransportActions;
 import org.elasticsearch.action.support.broadcast.BroadcastRequest;
 import org.elasticsearch.action.support.broadcast.BroadcastResponse;
 import org.elasticsearch.action.support.broadcast.BroadcastShardOperationFailedException;
+import org.elasticsearch.action.support.indices.BaseBroadcastByNodeRequest;
+import org.elasticsearch.action.support.indices.BaseBroadcastByNodeResponse;
 import org.elasticsearch.cluster.ClusterService;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.block.ClusterBlockException;
