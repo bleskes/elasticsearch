@@ -19,13 +19,13 @@
 
 package org.elasticsearch.action.support.indices;
 
-import com.google.common.collect.Lists;
 import org.elasticsearch.action.support.broadcast.BroadcastShardOperationFailedException;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.transport.TransportResponse;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 public abstract class BaseBroadcastByNodeResponse extends TransportResponse {
@@ -71,7 +71,7 @@ public abstract class BaseBroadcastByNodeResponse extends TransportResponse {
         successfulShards = in.readVInt();
         if (in.readBoolean()) {
             int failureShards = in.readVInt();
-            exceptions = Lists.newArrayListWithCapacity(failureShards);
+            exceptions = new ArrayList<>(failureShards);
             for (int i = 0; i < failureShards; i++) {
                 exceptions.add(new BroadcastShardOperationFailedException(in));
             }
