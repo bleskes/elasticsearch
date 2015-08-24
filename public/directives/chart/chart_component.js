@@ -30,7 +30,7 @@ define(function (require) {
     drawJubileeChart: function () {
       var children = React.findDOMNode(this).children;
       d3.select(children[children.length - 1])
-        .datum(this.state.chartData)
+        .datum([this.state.chartData])
         .call(this.jLineChart);
     },
     setData: function (data) {
@@ -52,6 +52,7 @@ define(function (require) {
       }
     },
     componentWillMount: function () {
+      var Tooltip = require('plugins/marvel/directives/tooltip');
       var lineChart = new jubilee.chart.line()
         .height(150)
         .yScale({nice: true})
@@ -83,9 +84,17 @@ define(function (require) {
         .zeroLine({
           add: false
         })
-        .on('mouseenter', function (evt) {
-          console.log('Mouse Enter');
-          console.log(evt);
+        .on('mouseenter', function(evt) {
+          console.log('mouseenter');
+          Tooltip.showTooltip(evt.pageX, evt.pageY, 'dummy content');
+        })
+        .on('mousemove', function(evt) {
+          console.log('mousemove');
+          Tooltip.showTooltip(evt.pageX, evt.pageY, 'dummy content')
+        })
+        .on('mouseleave', function(evt) {
+          console.log('mouseleave');
+          Tooltip.emptyTooltip();
         });
 
       this.jLineChart = lineChart;

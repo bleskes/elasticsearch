@@ -33,9 +33,6 @@ define(function (require) {
     $scope.charts = [
       'node_jvm_mem_percent',
       'node_space_free',
-      'load_average_1m',
-      'node_jvm_mem_percent',
-      'node_space_free',
       'load_average_1m'
     ];
 
@@ -71,7 +68,7 @@ define(function (require) {
           };
           var dataSource = new ChartDataSource(options);
           dataSource.register(courier);
-          $scope.dataSources[name + idx] = dataSource;
+          $scope.dataSources[name] = dataSource;
           return dataSource;
         });
       }))
