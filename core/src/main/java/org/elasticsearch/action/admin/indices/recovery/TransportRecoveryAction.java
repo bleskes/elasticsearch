@@ -56,7 +56,7 @@ import java.util.Map;
  * Transport action for shard recovery operation. This transport action does not actually
  * perform shard recovery, it only reports on recoveries (both active and complete).
  */
-public class TransportRecoveryAction extends TransportBroadcastByNodeAction<RecoveryRequest, RecoveryResponse, TransportRecoveryAction.ShardRecoveryRequest, TransportRecoveryAction.NodeRecoveryResponse, RecoveryState> {
+public class TransportRecoveryAction extends TransportBroadcastByNodeAction<RecoveryRequest, RecoveryResponse, TransportRecoveryAction.NodeRecoveryRequest, TransportRecoveryAction.NodeRecoveryResponse, RecoveryState> {
 
     private final IndicesService indicesService;
 
@@ -65,7 +65,7 @@ public class TransportRecoveryAction extends TransportBroadcastByNodeAction<Reco
                                    TransportService transportService, IndicesService indicesService,
                                    ActionFilters actionFilters, IndexNameExpressionResolver indexNameExpressionResolver) {
         super(settings, RecoveryAction.NAME, threadPool, clusterService, transportService, actionFilters, indexNameExpressionResolver,
-                RecoveryRequest.class, ShardRecoveryRequest.class, ThreadPool.Names.MANAGEMENT);
+                RecoveryRequest.class, NodeRecoveryRequest.class, ThreadPool.Names.MANAGEMENT);
         this.indicesService = indicesService;
     }
 
@@ -94,8 +94,8 @@ public class TransportRecoveryAction extends TransportBroadcastByNodeAction<Reco
     }
 
     @Override
-    protected ShardRecoveryRequest newNodeRequest(String nodeId, RecoveryRequest request, List<ShardRouting> shards) {
-        return new ShardRecoveryRequest(request, shards, nodeId);
+    protected NodeRecoveryRequest newNodeRequest(String nodeId, RecoveryRequest request, List<ShardRouting> shards) {
+        return new NodeRecoveryRequest(request, shards, nodeId);
     }
 
     @Override
@@ -111,7 +111,7 @@ public class TransportRecoveryAction extends TransportBroadcastByNodeAction<Reco
     }
 
     @Override
-    protected RecoveryState shardOperation(ShardRecoveryRequest request, ShardRouting shardRouting) {
+    protected RecoveryState shardOperation(NodeRecoveryRequest request, ShardRouting shardRouting) {
         IndexService indexService = indicesService.indexServiceSafe(shardRouting.shardId().getIndex());
         IndexShard indexShard = indexService.shardSafe(shardRouting.shardId().id());
         return indexShard.recoveryState();
@@ -132,12 +132,12 @@ public class TransportRecoveryAction extends TransportBroadcastByNodeAction<Reco
         return state.blocks().indicesBlockedException(ClusterBlockLevel.READ, concreteIndices);
     }
 
-    static class ShardRecoveryRequest extends BaseBroadcastByNodeRequest<RecoveryRequest> {
+    static class NodeRecoveryRequest extends BaseBroadcastByNodeRequest<RecoveryRequest> {
 
-        ShardRecoveryRequest() {
+        NodeRecoveryRequest() {
         }
 
-        ShardRecoveryRequest(RecoveryRequest request, List<ShardRouting> shards, String nodeId) {
+        NodeRecoveryRequest(RecoveryRequest request, List<ShardRouting> shards, String nodeId) {
             super(nodeId, request, shards);
         }
 
