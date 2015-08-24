@@ -45,6 +45,7 @@ import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportService;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -229,7 +230,7 @@ public class TransportIndicesStatsAction extends TransportNodeBroadcastAction<In
             super.readFrom(in);
             if (in.readBoolean()) {
                 int size = in.readVInt();
-                shards = Lists.newArrayListWithCapacity(size);
+                shards = new ArrayList<>(size);
                 for (int i = 0; i < size; i++) {
                     shards.add(ShardStats.readShardStats(in));
                 }
