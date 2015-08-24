@@ -320,12 +320,19 @@ public abstract class TransportBroadcastByNodeAction<Request extends IndicesLeve
         }
 
         protected void onCompletion() {
+            Response response = null;
             try {
-                Response response = newResponse(request, responses, unavailableShardExceptions);
-                listener.onResponse(response);
+                response = newResponse(request, responses, unavailableShardExceptions);
             } catch (Throwable t) {
                 logger.debug("failed to combine responses from nodes", t);
                 listener.onFailure(t);
+            }
+            if (response != null) {
+                try {
+                    listener.onResponse(response);
+                } catch (Throwable t) {
+                    listener.onFailure(t);
+                }
             }
         }
     }
