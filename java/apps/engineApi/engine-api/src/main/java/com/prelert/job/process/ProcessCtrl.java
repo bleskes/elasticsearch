@@ -294,6 +294,11 @@ public class ProcessCtrl
 
     private static final Logger LOGGER = Logger.getLogger(ProcessCtrl.class);
 
+    private ProcessCtrl()
+    {
+
+    }
+
     /**
      * Set up an environment containing the PRELERT_HOME and LD_LIBRARY_PATH
      * (or equivalent) environment variables.
@@ -310,7 +315,7 @@ public class ProcessCtrl
     }
 
 
-    public String getAnalyticsVersion()
+    public static String getAnalyticsVersion()
     {
         return AnalyticsVersionHolder.s_AnalyticsVersion;
     }
@@ -383,7 +388,7 @@ public class ProcessCtrl
      * Get the C++ process to print a JSON document containing some of the usage
      * and license info
      */
-    public synchronized String getInfo()
+    public synchronized static String getInfo()
     {
         List<String> command = new ArrayList<>();
         command.add(AUTODETECT_PATH);

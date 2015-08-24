@@ -133,8 +133,6 @@ public class ProcessManager
 
     private static final Logger LOGGER = Logger.getLogger(ProcessManager.class);
 
-    private ProcessCtrl m_ProcessCtrl;
-
     private ConcurrentMap<String, ProcessAndDataDescription> m_JobIdToProcessMap;
     private ConcurrentMap<String, ScheduledFuture<?>> m_JobIdToTimeoutFuture;
 
@@ -153,8 +151,6 @@ public class ProcessManager
                             UsagePersisterFactory usagePersisterFactory,
                             DataPersisterFactory dataPersisterFactory)
     {
-        m_ProcessCtrl = new ProcessCtrl();
-
         m_JobIdToProcessMap = new ConcurrentHashMap<String, ProcessAndDataDescription>();
 
         m_ProcessTimeouts = Executors.newScheduledThreadPool(1);
@@ -1078,7 +1074,7 @@ public class ProcessManager
      */
     public String getAnalyticsVersion()
     {
-        return m_ProcessCtrl.getAnalyticsVersion();
+        return ProcessCtrl.getAnalyticsVersion();
     }
 
 
@@ -1089,7 +1085,7 @@ public class ProcessManager
      */
     public String getInfo()
     {
-        return m_ProcessCtrl.getInfo();
+        return ProcessCtrl.getInfo();
     }
 
 
