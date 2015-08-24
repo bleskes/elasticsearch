@@ -156,7 +156,7 @@ public abstract class TransportBroadcastByNodeAction<Request extends IndicesLeve
     protected abstract BroadcastByNodeResponse newNodeResponse(String nodeId, int totalShards, int successfulShards, List<ShardOperationResult> results, List<BroadcastShardOperationFailedException> exceptions);
 
     /**
-     * Executes the shard-level operation. This method is called asynchronously once per shard.
+     * Executes the shard-level operation. This method is called once per shard serially on the receiving node.
      *
      * @param request      the node-level request
      * @param shardRouting the shard on which to execute the operation
