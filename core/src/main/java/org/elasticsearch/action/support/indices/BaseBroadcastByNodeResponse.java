@@ -28,19 +28,19 @@ import org.elasticsearch.transport.TransportResponse;
 import java.io.IOException;
 import java.util.List;
 
-public class BaseNodeBroadcastResponse extends TransportResponse {
+public class BaseBroadcastByNodeResponse extends TransportResponse {
     protected String nodeId;
     protected int totalShards;
     protected int successfulShards;
     protected List<BroadcastShardOperationFailedException> exceptions;
 
-    public BaseNodeBroadcastResponse() {
+    public BaseBroadcastByNodeResponse() {
     }
 
-    public BaseNodeBroadcastResponse(String nodeId,
-                                     int totalShards,
-                                     int successfulShards,
-                                     List<BroadcastShardOperationFailedException> exceptions) {
+    public BaseBroadcastByNodeResponse(String nodeId,
+                                       int totalShards,
+                                       int successfulShards,
+                                       List<BroadcastShardOperationFailedException> exceptions) {
         this.nodeId = nodeId;
         this.totalShards = totalShards;
         this.successfulShards = successfulShards;

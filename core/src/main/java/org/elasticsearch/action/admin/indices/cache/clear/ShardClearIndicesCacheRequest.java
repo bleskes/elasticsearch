@@ -19,7 +19,7 @@
 
 package org.elasticsearch.action.admin.indices.cache.clear;
 
-import org.elasticsearch.action.support.indices.BaseNodeBroadcastRequest;
+import org.elasticsearch.action.support.indices.BaseBroadcastByNodeRequest;
 import org.elasticsearch.cluster.routing.ShardRouting;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
@@ -30,7 +30,7 @@ import java.util.List;
 /**
  *
  */
-class ShardClearIndicesCacheRequest extends BaseNodeBroadcastRequest<ClearIndicesCacheRequest> {
+class ShardClearIndicesCacheRequest extends BaseBroadcastByNodeRequest<ClearIndicesCacheRequest> {
 
     private boolean queryCache = false;
     private boolean fieldDataCache = false;

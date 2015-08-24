@@ -20,14 +20,14 @@
 package org.elasticsearch.action.admin.indices.optimize;
 
 import org.elasticsearch.action.support.broadcast.BroadcastShardOperationFailedException;
-import org.elasticsearch.action.support.indices.BaseNodeBroadcastResponse;
+import org.elasticsearch.action.support.indices.BaseBroadcastByNodeResponse;
 
 import java.util.List;
 
 /**
  *
  */
-class ShardOptimizeResponse extends BaseNodeBroadcastResponse {
+class ShardOptimizeResponse extends BaseBroadcastByNodeResponse {
 
     ShardOptimizeResponse() {
     }

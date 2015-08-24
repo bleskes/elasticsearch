@@ -24,8 +24,8 @@ import org.elasticsearch.Version;
 import org.elasticsearch.action.support.ActionFilters;
 import org.elasticsearch.action.support.DefaultShardOperationFailedException;
 import org.elasticsearch.action.support.broadcast.BroadcastShardOperationFailedException;
-import org.elasticsearch.action.support.indices.BaseNodeBroadcastRequest;
-import org.elasticsearch.action.support.indices.BaseNodeBroadcastResponse;
+import org.elasticsearch.action.support.indices.BaseBroadcastByNodeRequest;
+import org.elasticsearch.action.support.indices.BaseBroadcastByNodeResponse;
 import org.elasticsearch.action.support.indices.TransportNodeBroadcastAction;
 import org.elasticsearch.cluster.ClusterService;
 import org.elasticsearch.cluster.ClusterState;
@@ -129,7 +129,7 @@ public class TransportUpgradeStatusAction extends TransportNodeBroadcastAction<U
         return new ShardUpgradeStatus(indexShard.routingEntry(), total_bytes, to_upgrade_bytes, to_upgrade_bytes_ancient);
     }
 
-    static class NodeUpgradeStatusRequest extends BaseNodeBroadcastRequest<UpgradeStatusRequest> {
+    static class NodeUpgradeStatusRequest extends BaseBroadcastByNodeRequest<UpgradeStatusRequest> {
         NodeUpgradeStatusRequest() {
         }
 
@@ -143,7 +143,7 @@ public class TransportUpgradeStatusAction extends TransportNodeBroadcastAction<U
         }
     }
 
-    public class NodeUpgradeStatusResponse extends BaseNodeBroadcastResponse {
+    public class NodeUpgradeStatusResponse extends BaseBroadcastByNodeResponse {
         private List<ShardUpgradeStatus> shards;
 
         public NodeUpgradeStatusResponse() {

@@ -24,8 +24,8 @@ import com.google.common.collect.Maps;
 import org.elasticsearch.action.support.ActionFilters;
 import org.elasticsearch.action.support.DefaultShardOperationFailedException;
 import org.elasticsearch.action.support.broadcast.BroadcastShardOperationFailedException;
-import org.elasticsearch.action.support.indices.BaseNodeBroadcastRequest;
-import org.elasticsearch.action.support.indices.BaseNodeBroadcastResponse;
+import org.elasticsearch.action.support.indices.BaseBroadcastByNodeRequest;
+import org.elasticsearch.action.support.indices.BaseBroadcastByNodeResponse;
 import org.elasticsearch.action.support.indices.TransportNodeBroadcastAction;
 import org.elasticsearch.cluster.ClusterService;
 import org.elasticsearch.cluster.ClusterState;
@@ -132,7 +132,7 @@ public class TransportRecoveryAction extends TransportNodeBroadcastAction<Recove
         return state.blocks().indicesBlockedException(ClusterBlockLevel.READ, concreteIndices);
     }
 
-    static class ShardRecoveryRequest extends BaseNodeBroadcastRequest<RecoveryRequest> {
+    static class ShardRecoveryRequest extends BaseBroadcastByNodeRequest<RecoveryRequest> {
 
         ShardRecoveryRequest() {
         }
@@ -150,7 +150,7 @@ public class TransportRecoveryAction extends TransportNodeBroadcastAction<Recove
     /**
      * Information regarding the recovery state of a shard.
      */
-    public static class NodeRecoveryResponse extends BaseNodeBroadcastResponse implements ToXContent {
+    public static class NodeRecoveryResponse extends BaseBroadcastByNodeResponse implements ToXContent {
 
         List<RecoveryState> recoveryStates;
 

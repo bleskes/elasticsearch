@@ -62,8 +62,8 @@ import java.util.concurrent.atomic.AtomicReferenceArray;
  */
 public abstract class TransportNodeBroadcastAction<Request extends IndicesLevelRequest,
         Response extends IndicesLevelResponse,
-        NodeBroadcastRequest extends BaseNodeBroadcastRequest<Request>,
-        NodeBroadcastResponse extends BaseNodeBroadcastResponse,
+        NodeBroadcastRequest extends BaseBroadcastByNodeRequest<Request>,
+        NodeBroadcastResponse extends BaseBroadcastByNodeResponse,
         ShardOperationResult> extends HandledTransportAction<Request, Response> {
 
     private final ClusterService clusterService;
