@@ -342,7 +342,7 @@ public abstract class TransportBroadcastByNodeAction<Request extends IndicesLeve
         public void messageReceived(final BroadcastByNodeRequest request, TransportChannel channel) throws Exception {
             List<ShardRouting> shards = request.getShards();
             final int totalShards = shards.size();
-            logger.trace("executing operation [{}] on [{}] shards on node [{}]", actionName, totalShards, request.getNodeId());
+            logger.trace("[{}] executing operation on [{}] shards", actionName, totalShards);
             final Object[] shardResults = new Object[totalShards];
 
             int shardIndex = -1;
@@ -366,16 +366,16 @@ public abstract class TransportBroadcastByNodeAction<Request extends IndicesLeve
 
         private void onShardOperation(final BroadcastByNodeRequest request, final Object[] shardResults, final int shardIndex, final ShardRouting shardRouting) {
             try {
-                logger.trace("executing operation [{}] for shard [{}] on node [{}]", actionName, shardRouting.shortSummary(), request.getNodeId());
+                logger.trace("[{}]  executing operation for shard [{}]", actionName, shardRouting.shortSummary());
                 ShardOperationResult result = shardOperation(request, shardRouting);
                 shardResults[shardIndex] = result;
-                logger.trace("completed operation [{}] for shard [{}] on node [{}]", actionName, shardRouting.shortSummary(), request.getNodeId());
+                logger.trace("[{}]  completed operation for shard [{}]", actionName, shardRouting.shortSummary());
             } catch (Throwable t) {
                 BroadcastShardOperationFailedException e = new BroadcastShardOperationFailedException(shardRouting.shardId(), "operation " + actionName + " failed", t);
                 e.setIndex(shardRouting.getIndex());
                 e.setShard(shardRouting.shardId());
                 shardResults[shardIndex] = e;
-                logger.trace("failed to execute operation [{}] for shard [{}] on node [{}]: [{}]", actionName, shardRouting.shortSummary(), request.getNodeId(), e);
+                logger.debug("[{}] failed to execute operation for shard [{}]", e, actionName, shardRouting.shortSummary());
             }
         }
     }
