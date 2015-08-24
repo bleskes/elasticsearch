@@ -40,16 +40,6 @@ final class ShardOptimizeRequest extends BaseNodeBroadcastRequest<OptimizeReques
     }
 
     @Override
-    public void readFrom(StreamInput in) throws IOException {
-        super.readFrom(in);
-    }
-
-    @Override
-    public void writeTo(StreamOutput out) throws IOException {
-        super.writeTo(out);
-    }
-
-    @Override
     protected OptimizeRequest newRequest() {
         return new OptimizeRequest();
     }
