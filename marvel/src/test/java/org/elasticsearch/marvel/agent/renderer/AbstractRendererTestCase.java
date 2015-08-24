@@ -15,23 +15,19 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.marvel.agent.renderer.indices;
+package org.elasticsearch.marvel.agent.renderer;
 
-import org.elasticsearch.action.count.CountResponse;
-import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.action.admin.indices.template.get.GetIndexTemplatesResponse;
+import org.elasticsearch.cluster.metadata.IndexTemplateMetaData;
 import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.license.plugin.LicensePlugin;
 import org.elasticsearch.marvel.MarvelPlugin;
-import org.elasticsearch.marvel.agent.collector.indices.IndexStatsCollector;
 import org.elasticsearch.marvel.agent.settings.MarvelSettings;
 import org.elasticsearch.node.Node;
 import org.elasticsearch.plugins.Plugin;
-import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.test.ESIntegTestCase;
 import org.elasticsearch.test.ESIntegTestCase.ClusterScope;
-import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -39,17 +35,18 @@ import java.util.Map;
 
 import static org.hamcrest.Matchers.*;
 
-@ClusterScope(scope = ESIntegTestCase.Scope.SUITE, numDataNodes = 1)
-public class IndexStatsRendererIT extends ESIntegTestCase {
+
+@ClusterScope(scope = ESIntegTestCase.Scope.SUITE, randomDynamicTemplates = false, transportClientRatio = 0.0)
+public abstract class AbstractRendererTestCase extends ESIntegTestCase {
 
     @Override
     protected Settings nodeSettings(int nodeOrdinal) {
         return Settings.builder()
                 .put(super.nodeSettings(nodeOrdinal))
                 .put(Node.HTTP_ENABLED, true)
-                .put(MarvelSettings.STARTUP_DELAY, "1s")
-                .put(MarvelSettings.INTERVAL, "30s")
-                .put(MarvelSettings.COLLECTORS, IndexStatsCollector.NAME)
+                .put(MarvelSettings.STARTUP_DELAY, "3s")
+                .put(MarvelSettings.INTERVAL, "1s")
+                .put(MarvelSettings.COLLECTORS, Strings.collectionToCommaDelimitedString(collectors()))
                 .build();
     }
 
@@ -63,48 +60,25 @@ public class IndexStatsRendererIT extends ESIntegTestCase {
         return nodePlugins();
     }
 
-    @Test
-    public void testIndexStats() throws Exception {
-        final int nbIndices = randomIntBetween(1, 5);
-        for (int i = 0; i < nbIndices; i++) {
-            createIndex("test" + i);
-        }
+    protected abstract Collection<String> collectors ();
 
-        final long[] nbDocsPerIndex = new long[nbIndices];
-        for (int i = 0; i < nbIndices; i++) {
-            nbDocsPerIndex[i] = randomIntBetween(1, 50);
-            for (int j = 0; j < nbDocsPerIndex[i]; j++) {
-                client().prepareIndex("test" + i, "type1").setSource("num", i).get();
-            }
-        }
-        refresh();
+    protected void waitForMarvelDocs(final String type) throws Exception {
+        waitForMarvelDocs(type, 0L);
+    }
 
-        logger.debug("--> wait for index stats collector to collect stat for each index");
+    protected void waitForMarvelDocs(final String type, final long minCount) throws Exception {
+        logger.debug("--> waiting for at least [{}] marvel docs of type [{}] to be collected", minCount, type);
         assertBusy(new Runnable() {
             @Override
             public void run() {
-                for (int i = 0; i < nbIndices; i++) {
-                    CountResponse count = client().prepareCount()
-                                                    .setTypes(IndexStatsCollector.TYPE)
-                                                    .setQuery(QueryBuilders.termQuery("index_stats.index", "test" + i))
-                                                    .get();
-                    assertThat(count.getCount(), greaterThan(0L));
+                try {
+                    refresh();
+                    assertThat(client().prepareCount().setTypes(type).get().getCount(), greaterThan(minCount));
+                } catch (Throwable t) {
+                    fail("exception when waiting for marvel docs: " + t.getMessage());
                 }
             }
         });
-
-        logger.debug("--> get the list of filters used by the renderer");
-        String[] filters = IndexStatsRenderer.FILTERS;
-
-        logger.debug("--> checking that every document contains the expected fields");
-        SearchResponse response = client().prepareSearch().setTypes(IndexStatsCollector.TYPE).get();
-        for (SearchHit searchHit : response.getHits().getHits()) {
-            Map<String, Object> fields = searchHit.sourceAsMap();
-
-            for (String filter : filters) {
-                assertContains(filter, fields);
-            }
-        }
     }
 
     /**
@@ -112,7 +86,7 @@ public class IndexStatsRendererIT extends ESIntegTestCase {
      * it checks that 'foo' exists in the map of values and that it points to a sub-map. Then
      * it recurses to check if 'bar' exists in the sub-map.
      */
-    private void assertContains(String field, Map<String, Object> values) {
+    protected void assertContains(String field, Map<String, Object> values) {
         assertNotNull(field);
         assertNotNull(values);
 
@@ -123,9 +97,10 @@ public class IndexStatsRendererIT extends ESIntegTestCase {
             String segment = field.substring(0, point);
             assertTrue(Strings.hasText(segment));
 
-            Object value = values.get(segment);
-            assertNotNull(value);
+            boolean fieldExists = values.containsKey(segment);
+            assertTrue("expecting field [" + segment + "] to be present in marvel document", fieldExists);
 
+            Object value = values.get(segment);
             String next = field.substring(point + 1);
             if (next.length() > 0) {
                 assertTrue(value instanceof Map);
@@ -136,5 +111,26 @@ public class IndexStatsRendererIT extends ESIntegTestCase {
         } else {
             assertNotNull(values.get(field));
         }
+    }
+
+    protected void assertMarvelTemplateExists() throws Exception {
+        final String marvelTemplate = "marvel";
+
+        assertBusy(new Runnable() {
+            @Override
+            public void run() {
+                GetIndexTemplatesResponse response = client().admin().indices().prepareGetTemplates(marvelTemplate).get();
+                assertNotNull(response);
+
+                boolean found = false;
+                for (IndexTemplateMetaData template : response.getIndexTemplates()) {
+                    if (marvelTemplate.equals(template.getName())) {
+                        found = true;
+                        break;
+                    }
+                }
+                assertTrue("Template [" + marvelTemplate + "] not found", found);
+            }
+        });
     }
 }
