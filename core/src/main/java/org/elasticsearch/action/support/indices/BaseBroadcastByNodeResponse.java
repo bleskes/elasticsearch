@@ -28,7 +28,7 @@ import org.elasticsearch.transport.TransportResponse;
 import java.io.IOException;
 import java.util.List;
 
-public class BaseBroadcastByNodeResponse extends TransportResponse {
+public abstract class BaseBroadcastByNodeResponse extends TransportResponse {
     protected String nodeId;
     protected int totalShards;
     protected int successfulShards;
