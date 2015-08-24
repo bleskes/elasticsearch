@@ -132,6 +132,10 @@ public class ProcessCtrl
      */
     public static final String PRELERT_LOGS_PROPERTY = "prelert.logs";
     /**
+     * The maximum number of anomaly records that will be written each bucket
+     */
+    public static final String MAX_ANOMALY_RECORDS_PROPERTY = "max.anomaly.records";
+    /**
      * Name of the environment variable PRELERT_LOGS
      */
     public static final String PRELERT_LOGS_ENV = "PRELERT_LOGS";
@@ -174,7 +178,7 @@ public class ProcessCtrl
     public static final String INFO_ARG = "--info";
     public static final String LIMIT_CONFIG_ARG = "--limitconfig=";
     public static final String LATENCY_ARG = "--latency=";
-    public static final String MAX_ANOMALY_RECORDS_ARG = "--maxAnomalyRecords=500";
+    public static final String MAX_ANOMALY_RECORDS_ARG;
     public static final String MODEL_DEBUG_CONFIG_ARG = "--modeldebugconfig=";
     public static final String PERIOD_ARG = "--period=";
     public static final String PERSIST_INTERVAL_ARG = "--persistInterval=10800"; // 3 hours
@@ -243,6 +247,28 @@ public class ProcessCtrl
         {
             logPath = System.getenv().get(PRELERT_LOGS_ENV);
         }
+
+        String maxNumRecords = "500";
+        if (System.getProperty(MAX_ANOMALY_RECORDS_PROPERTY) != null)
+        {
+            try
+            {
+                Integer.parseInt(System.getProperty(MAX_ANOMALY_RECORDS_PROPERTY));
+
+                // this is an integer so use it
+                maxNumRecords = System.getProperty(MAX_ANOMALY_RECORDS_PROPERTY);
+
+            }
+            catch (NumberFormatException e)
+            {
+
+                Logger.getLogger(ProcessCtrl.class).error(
+                            "Cannot parse " + MAX_ANOMALY_RECORDS_PROPERTY + "="
+                            + System.getProperty(MAX_ANOMALY_RECORDS_PROPERTY) +
+                            " as a number");
+            }
+        }
+        MAX_ANOMALY_RECORDS_ARG = "--maxAnomalyRecords=" + maxNumRecords;
 
         PRELERT_HOME = prelertHome;
         File executable = new File(new File(PRELERT_HOME, "bin"), AUTODETECT_API);
