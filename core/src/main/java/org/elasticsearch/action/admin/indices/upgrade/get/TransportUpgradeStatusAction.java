@@ -52,7 +52,7 @@ import java.util.List;
 /**
  *
  */
-public class TransportUpgradeStatusAction extends TransportNodeBroadcastAction<UpgradeStatusRequest, UpgradeStatusResponse, TransportUpgradeStatusAction.IndexShardUpgradeStatusRequest, TransportUpgradeStatusAction.IndexShardUpgradeStatusResponse, ShardUpgradeStatus> {
+public class TransportUpgradeStatusAction extends TransportNodeBroadcastAction<UpgradeStatusRequest, UpgradeStatusResponse, TransportUpgradeStatusAction.NodeUpgradeStatusRequest, TransportUpgradeStatusAction.NodeUpgradeStatusResponse, ShardUpgradeStatus> {
 
     private final IndicesService indicesService;
 
@@ -60,7 +60,7 @@ public class TransportUpgradeStatusAction extends TransportNodeBroadcastAction<U
     public TransportUpgradeStatusAction(Settings settings, ThreadPool threadPool, ClusterService clusterService, TransportService transportService,
                                         IndicesService indicesService, ActionFilters actionFilters, IndexNameExpressionResolver indexNameExpressionResolver) {
         super(settings, UpgradeStatusAction.NAME, threadPool, clusterService, transportService, actionFilters, indexNameExpressionResolver,
-                UpgradeStatusRequest.class, IndexShardUpgradeStatusRequest.class, ThreadPool.Names.MANAGEMENT);
+                UpgradeStatusRequest.class, NodeUpgradeStatusRequest.class, ThreadPool.Names.MANAGEMENT);
         this.indicesService = indicesService;
     }
 
@@ -83,31 +83,31 @@ public class TransportUpgradeStatusAction extends TransportNodeBroadcastAction<U
     }
 
     @Override
-    protected UpgradeStatusResponse newResponse(UpgradeStatusRequest request, int totalShards, int successfulShards, int failedShards, List<IndexShardUpgradeStatusResponse> responses, List<DefaultShardOperationFailedException> shardFailures) {
+    protected UpgradeStatusResponse newResponse(UpgradeStatusRequest request, int totalShards, int successfulShards, int failedShards, List<NodeUpgradeStatusResponse> responses, List<DefaultShardOperationFailedException> shardFailures) {
         List<ShardUpgradeStatus> concatenation = Lists.newArrayList();
-        for (IndexShardUpgradeStatusResponse response : responses) {
+        for (NodeUpgradeStatusResponse response : responses) {
             concatenation.addAll(response.getShards());
         }
         return new UpgradeStatusResponse(concatenation.toArray(new ShardUpgradeStatus[concatenation.size()]), totalShards, successfulShards, failedShards, shardFailures);
     }
 
     @Override
-    protected IndexShardUpgradeStatusRequest newNodeRequest(String nodeId, UpgradeStatusRequest request, List<ShardRouting> shards) {
-        return new IndexShardUpgradeStatusRequest(request, shards, nodeId);
+    protected NodeUpgradeStatusRequest newNodeRequest(String nodeId, UpgradeStatusRequest request, List<ShardRouting> shards) {
+        return new NodeUpgradeStatusRequest(request, shards, nodeId);
     }
 
     @Override
-    protected IndexShardUpgradeStatusResponse newNodeResponse() {
-        return new IndexShardUpgradeStatusResponse();
+    protected NodeUpgradeStatusResponse newNodeResponse() {
+        return new NodeUpgradeStatusResponse();
     }
 
     @Override
-    protected IndexShardUpgradeStatusResponse newNodeResponse(String nodeId, int totalShards, int successfulShards, List<ShardUpgradeStatus> shards, List<BroadcastShardOperationFailedException> exceptions) {
-        return new IndexShardUpgradeStatusResponse(nodeId, totalShards, successfulShards, shards, exceptions);
+    protected NodeUpgradeStatusResponse newNodeResponse(String nodeId, int totalShards, int successfulShards, List<ShardUpgradeStatus> shards, List<BroadcastShardOperationFailedException> exceptions) {
+        return new NodeUpgradeStatusResponse(nodeId, totalShards, successfulShards, shards, exceptions);
     }
 
     @Override
-    protected ShardUpgradeStatus shardOperation(IndexShardUpgradeStatusRequest request, ShardRouting shardRouting) {
+    protected ShardUpgradeStatus shardOperation(NodeUpgradeStatusRequest request, ShardRouting shardRouting) {
         IndexService indexService = indicesService.indexServiceSafe(shardRouting.shardId().getIndex());
         IndexShard indexShard = indexService.shardSafe(shardRouting.shardId().id());
         List<Segment> segments = indexShard.engine().segments(false);
@@ -129,11 +129,11 @@ public class TransportUpgradeStatusAction extends TransportNodeBroadcastAction<U
         return new ShardUpgradeStatus(indexShard.routingEntry(), total_bytes, to_upgrade_bytes, to_upgrade_bytes_ancient);
     }
 
-    static class IndexShardUpgradeStatusRequest extends BaseNodeBroadcastRequest<UpgradeStatusRequest> {
-        IndexShardUpgradeStatusRequest() {
+    static class NodeUpgradeStatusRequest extends BaseNodeBroadcastRequest<UpgradeStatusRequest> {
+        NodeUpgradeStatusRequest() {
         }
 
-        IndexShardUpgradeStatusRequest(UpgradeStatusRequest request, List<ShardRouting> shards, String nodeId) {
+        NodeUpgradeStatusRequest(UpgradeStatusRequest request, List<ShardRouting> shards, String nodeId) {
             super(nodeId, request, shards);
         }
 
@@ -143,13 +143,13 @@ public class TransportUpgradeStatusAction extends TransportNodeBroadcastAction<U
         }
     }
 
-    public class IndexShardUpgradeStatusResponse extends BaseNodeBroadcastResponse {
+    public class NodeUpgradeStatusResponse extends BaseNodeBroadcastResponse {
         private List<ShardUpgradeStatus> shards;
 
-        public IndexShardUpgradeStatusResponse() {
+        public NodeUpgradeStatusResponse() {
         }
 
-        public IndexShardUpgradeStatusResponse(String nodeId, int totalShards, int successfulShards, List<ShardUpgradeStatus> shards, List<BroadcastShardOperationFailedException> exceptions) {
+        public NodeUpgradeStatusResponse(String nodeId, int totalShards, int successfulShards, List<ShardUpgradeStatus> shards, List<BroadcastShardOperationFailedException> exceptions) {
             super(nodeId, totalShards, successfulShards, exceptions);
             this.shards = shards;
         }
