@@ -85,7 +85,6 @@ public class TransportIndicesSegmentsAction extends TransportNodeBroadcastAction
         for (IndexShardSegmentResponse response : indexShardSegmentResponses) {
             concatenation.addAll(response.getShardSegments());
         }
-        List<DefaultShardOperationFailedException> es = Lists.newArrayList();
         return new IndicesSegmentResponse(concatenation.toArray(new ShardSegments[concatenation.size()]), totalShards, successfulShards, failedShards, shardFailures);
     }
 
