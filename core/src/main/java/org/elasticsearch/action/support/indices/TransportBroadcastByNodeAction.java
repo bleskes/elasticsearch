@@ -28,6 +28,8 @@ import org.elasticsearch.action.support.ActionFilters;
 import org.elasticsearch.action.support.DefaultShardOperationFailedException;
 import org.elasticsearch.action.support.HandledTransportAction;
 import org.elasticsearch.action.support.TransportActions;
+import org.elasticsearch.action.support.broadcast.BroadcastRequest;
+import org.elasticsearch.action.support.broadcast.BroadcastResponse;
 import org.elasticsearch.action.support.broadcast.BroadcastShardOperationFailedException;
 import org.elasticsearch.cluster.ClusterService;
 import org.elasticsearch.cluster.ClusterState;
@@ -60,8 +62,8 @@ import java.util.concurrent.atomic.AtomicReferenceArray;
  * @param <BroadcastByNodeResponse> per-node container of shard-level responses
  * @param <ShardOperationResult>  per-shard operation results
  */
-public abstract class TransportBroadcastByNodeAction<Request extends IndicesLevelRequest,
-        Response extends IndicesLevelResponse,
+public abstract class TransportBroadcastByNodeAction<Request extends BroadcastRequest,
+        Response extends BroadcastResponse,
         BroadcastByNodeRequest extends BaseBroadcastByNodeRequest<Request>,
         BroadcastByNodeResponse extends BaseBroadcastByNodeResponse,
         ShardOperationResult> extends HandledTransportAction<Request, Response> {

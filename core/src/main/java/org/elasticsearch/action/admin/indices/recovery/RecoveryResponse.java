@@ -20,7 +20,7 @@
 package org.elasticsearch.action.admin.indices.recovery;
 
 import org.elasticsearch.action.support.DefaultShardOperationFailedException;
-import org.elasticsearch.action.support.indices.IndicesLevelResponse;
+import org.elasticsearch.action.support.broadcast.BroadcastResponse;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.xcontent.ToXContent;
@@ -36,7 +36,7 @@ import java.util.Map;
 /**
  * Information regarding the recovery state of indices and their associated shards.
  */
-public class RecoveryResponse extends IndicesLevelResponse implements ToXContent {
+public class RecoveryResponse extends BroadcastResponse implements ToXContent {
 
     private boolean detailed = false;
     private Map<String, List<RecoveryState>> shardRecoveryStates = new HashMap<>();

@@ -23,7 +23,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import org.elasticsearch.action.support.DefaultShardOperationFailedException;
-import org.elasticsearch.action.support.indices.IndicesLevelResponse;
+import org.elasticsearch.action.support.broadcast.BroadcastResponse;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.xcontent.ToXContent;
@@ -35,7 +35,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class UpgradeStatusResponse extends IndicesLevelResponse implements ToXContent {
+public class UpgradeStatusResponse extends BroadcastResponse implements ToXContent {
     private ShardUpgradeStatus[] shards;
 
     private Map<String, IndexUpgradeStatus> indicesUpgradeStatus;

@@ -31,7 +31,7 @@ import org.elasticsearch.transport.TransportRequest;
 import java.io.IOException;
 import java.util.List;
 
-public abstract class BaseBroadcastByNodeRequest<T extends IndicesLevelRequest> extends TransportRequest implements IndicesRequest {
+public abstract class BaseBroadcastByNodeRequest<T extends org.elasticsearch.action.support.broadcast.BroadcastRequest> extends TransportRequest implements IndicesRequest {
     private String nodeId;
 
     private List<ShardRouting> shards;

@@ -20,7 +20,7 @@
 package org.elasticsearch.action.admin.indices.optimize;
 
 import org.elasticsearch.action.support.DefaultShardOperationFailedException;
-import org.elasticsearch.action.support.indices.IndicesLevelResponse;
+import org.elasticsearch.action.support.broadcast.BroadcastResponse;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 
@@ -32,7 +32,7 @@ import java.util.List;
  *
  *
  */
-public class OptimizeResponse extends IndicesLevelResponse {
+public class OptimizeResponse extends BroadcastResponse {
 
     OptimizeResponse() {
 

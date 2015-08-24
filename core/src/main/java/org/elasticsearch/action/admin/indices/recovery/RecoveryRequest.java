@@ -19,7 +19,6 @@
 
 package org.elasticsearch.action.admin.indices.recovery;
 
-import org.elasticsearch.action.support.indices.IndicesLevelRequest;
 import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
@@ -29,7 +28,7 @@ import java.io.IOException;
 /**
  * Request for recovery information
  */
-public class RecoveryRequest extends IndicesLevelRequest<RecoveryRequest> {
+public class RecoveryRequest extends org.elasticsearch.action.support.broadcast.BroadcastRequest<RecoveryRequest> {
 
     private boolean detailed = false;       // Provides extra details in the response
     private boolean activeOnly = false;     // Only reports on active recoveries

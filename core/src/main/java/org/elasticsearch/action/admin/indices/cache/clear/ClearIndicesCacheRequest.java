@@ -19,7 +19,6 @@
 
 package org.elasticsearch.action.admin.indices.cache.clear;
 
-import org.elasticsearch.action.support.indices.IndicesLevelRequest;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 
@@ -28,7 +27,7 @@ import java.io.IOException;
 /**
  *
  */
-public class ClearIndicesCacheRequest extends IndicesLevelRequest<ClearIndicesCacheRequest> {
+public class ClearIndicesCacheRequest extends org.elasticsearch.action.support.broadcast.BroadcastRequest<ClearIndicesCacheRequest> {
 
     private boolean queryCache = false;
     private boolean fieldDataCache = false;

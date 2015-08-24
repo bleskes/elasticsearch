@@ -24,7 +24,7 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import org.apache.lucene.util.Accountable;
 import org.elasticsearch.action.support.DefaultShardOperationFailedException;
-import org.elasticsearch.action.support.indices.IndicesLevelResponse;
+import org.elasticsearch.action.support.broadcast.BroadcastResponse;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.unit.ByteSizeValue;
@@ -39,7 +39,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class IndicesSegmentResponse extends IndicesLevelResponse implements ToXContent {
+public class IndicesSegmentResponse extends BroadcastResponse implements ToXContent {
 
     private ShardSegments[] shards;
 

@@ -24,7 +24,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import org.elasticsearch.action.support.DefaultShardOperationFailedException;
-import org.elasticsearch.action.support.indices.IndicesLevelResponse;
+import org.elasticsearch.action.support.broadcast.BroadcastResponse;
 import org.elasticsearch.cluster.routing.ShardRouting;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
@@ -40,7 +40,7 @@ import java.util.Set;
 
 /**
  */
-public class IndicesStatsResponse extends IndicesLevelResponse implements ToXContent {
+public class IndicesStatsResponse extends BroadcastResponse implements ToXContent {
 
     private ShardStats[] shards;
 

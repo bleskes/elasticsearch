@@ -19,14 +19,13 @@
 
 package org.elasticsearch.action.admin.indices.segments;
 
-import org.elasticsearch.action.support.indices.IndicesLevelRequest;
 import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 
 import java.io.IOException;
 
-public class IndicesSegmentsRequest extends IndicesLevelRequest<IndicesSegmentsRequest> {
+public class IndicesSegmentsRequest extends org.elasticsearch.action.support.broadcast.BroadcastRequest<IndicesSegmentsRequest> {
 
     protected boolean verbose = false;
     
