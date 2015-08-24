@@ -23,6 +23,7 @@ import com.google.common.collect.Lists;
 import org.elasticsearch.action.IndicesRequest;
 import org.elasticsearch.action.OriginalIndices;
 import org.elasticsearch.action.support.IndicesOptions;
+import org.elasticsearch.action.support.broadcast.BroadcastRequest;
 import org.elasticsearch.cluster.routing.ShardRouting;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
@@ -31,7 +32,7 @@ import org.elasticsearch.transport.TransportRequest;
 import java.io.IOException;
 import java.util.List;
 
-public abstract class BaseBroadcastByNodeRequest<T extends org.elasticsearch.action.support.broadcast.BroadcastRequest> extends TransportRequest implements IndicesRequest {
+public abstract class BaseBroadcastByNodeRequest<T extends BroadcastRequest> extends TransportRequest implements IndicesRequest {
     private String nodeId;
 
     private List<ShardRouting> shards;
