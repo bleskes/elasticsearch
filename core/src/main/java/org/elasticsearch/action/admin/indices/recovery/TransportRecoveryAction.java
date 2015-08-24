@@ -26,7 +26,7 @@ import org.elasticsearch.action.support.DefaultShardOperationFailedException;
 import org.elasticsearch.action.support.broadcast.BroadcastShardOperationFailedException;
 import org.elasticsearch.action.support.indices.BaseBroadcastByNodeRequest;
 import org.elasticsearch.action.support.indices.BaseBroadcastByNodeResponse;
-import org.elasticsearch.action.support.indices.TransportNodeBroadcastAction;
+import org.elasticsearch.action.support.indices.TransportBroadcastByNodeAction;
 import org.elasticsearch.cluster.ClusterService;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.block.ClusterBlockException;
@@ -56,7 +56,7 @@ import java.util.Map;
  * Transport action for shard recovery operation. This transport action does not actually
  * perform shard recovery, it only reports on recoveries (both active and complete).
  */
-public class TransportRecoveryAction extends TransportNodeBroadcastAction<RecoveryRequest, RecoveryResponse, TransportRecoveryAction.ShardRecoveryRequest, TransportRecoveryAction.NodeRecoveryResponse, RecoveryState> {
+public class TransportRecoveryAction extends TransportBroadcastByNodeAction<RecoveryRequest, RecoveryResponse, TransportRecoveryAction.ShardRecoveryRequest, TransportRecoveryAction.NodeRecoveryResponse, RecoveryState> {
 
     private final IndicesService indicesService;
 

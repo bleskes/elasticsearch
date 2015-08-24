@@ -22,7 +22,7 @@ package org.elasticsearch.action.admin.indices.optimize;
 import org.elasticsearch.action.support.ActionFilters;
 import org.elasticsearch.action.support.DefaultShardOperationFailedException;
 import org.elasticsearch.action.support.broadcast.BroadcastShardOperationFailedException;
-import org.elasticsearch.action.support.indices.TransportNodeBroadcastAction;
+import org.elasticsearch.action.support.indices.TransportBroadcastByNodeAction;
 import org.elasticsearch.cluster.ClusterService;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.block.ClusterBlockException;
@@ -42,7 +42,7 @@ import java.util.List;
 /**
  * Optimize index/indices action.
  */
-public class TransportOptimizeAction extends TransportNodeBroadcastAction<OptimizeRequest, OptimizeResponse, ShardOptimizeRequest, ShardOptimizeResponse, Boolean> {
+public class TransportOptimizeAction extends TransportBroadcastByNodeAction<OptimizeRequest, OptimizeResponse, ShardOptimizeRequest, ShardOptimizeResponse, Boolean> {
 
     private final IndicesService indicesService;
 

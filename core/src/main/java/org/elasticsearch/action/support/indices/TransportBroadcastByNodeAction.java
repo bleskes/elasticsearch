@@ -60,7 +60,7 @@ import java.util.concurrent.atomic.AtomicReferenceArray;
  * @param <NodeBroadcastResponse> per-node container of shard-level responses
  * @param <ShardOperationResult>  per-shard operation results
  */
-public abstract class TransportNodeBroadcastAction<Request extends IndicesLevelRequest,
+public abstract class TransportBroadcastByNodeAction<Request extends IndicesLevelRequest,
         Response extends IndicesLevelResponse,
         NodeBroadcastRequest extends BaseBroadcastByNodeRequest<Request>,
         NodeBroadcastResponse extends BaseBroadcastByNodeResponse,
@@ -71,7 +71,7 @@ public abstract class TransportNodeBroadcastAction<Request extends IndicesLevelR
 
     final String transportNodeBroadcastAction;
 
-    public TransportNodeBroadcastAction(
+    public TransportBroadcastByNodeAction(
             Settings settings,
             String actionName,
             ThreadPool threadPool,

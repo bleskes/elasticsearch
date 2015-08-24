@@ -22,7 +22,7 @@ package org.elasticsearch.action.admin.indices.cache.clear;
 import org.elasticsearch.action.support.ActionFilters;
 import org.elasticsearch.action.support.DefaultShardOperationFailedException;
 import org.elasticsearch.action.support.broadcast.BroadcastShardOperationFailedException;
-import org.elasticsearch.action.support.indices.TransportNodeBroadcastAction;
+import org.elasticsearch.action.support.indices.TransportBroadcastByNodeAction;
 import org.elasticsearch.cluster.ClusterService;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.block.ClusterBlockException;
@@ -44,7 +44,7 @@ import java.util.List;
 /**
  * Indices clear cache action.
  */
-public class TransportClearIndicesCacheAction extends TransportNodeBroadcastAction<ClearIndicesCacheRequest, ClearIndicesCacheResponse, ShardClearIndicesCacheRequest, ShardClearIndicesCacheResponse, Boolean> {
+public class TransportClearIndicesCacheAction extends TransportBroadcastByNodeAction<ClearIndicesCacheRequest, ClearIndicesCacheResponse, ShardClearIndicesCacheRequest, ShardClearIndicesCacheResponse, Boolean> {
 
     private final IndicesService indicesService;
     private final IndicesRequestCache indicesRequestCache;
