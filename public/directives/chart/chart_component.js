@@ -52,7 +52,7 @@ define(function (require) {
       }
     },
     componentWillMount: function () {
-      var Tooltip = require('plugins/marvel/directives/tooltip');
+      //var Tooltip = require('plugins/marvel/directives/tooltip');
       var lineChart = new jubilee.chart.line()
         .height(150)
         .yScale({nice: true})
@@ -86,15 +86,15 @@ define(function (require) {
         })
         .on('mouseenter', function(evt) {
           console.log('mouseenter');
-          Tooltip.showTooltip(evt.pageX, evt.pageY, 'dummy content');
+          //Tooltip.showTooltip(evt.pageX, evt.pageY, 'dummy content');
         })
         .on('mousemove', function(evt) {
           console.log('mousemove');
-          Tooltip.showTooltip(evt.pageX, evt.pageY, 'dummy content')
+          //Tooltip.showTooltip(evt.pageX, evt.pageY, 'dummy content')
         })
         .on('mouseleave', function(evt) {
           console.log('mouseleave');
-          Tooltip.emptyTooltip();
+          //Tooltip.emptyTooltip();
         });
 
       this.jLineChart = lineChart;
