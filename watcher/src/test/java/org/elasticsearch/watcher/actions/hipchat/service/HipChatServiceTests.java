@@ -23,7 +23,6 @@ import org.elasticsearch.test.junit.annotations.Network;
 import org.elasticsearch.watcher.actions.hipchat.HipChatAction;
 import org.elasticsearch.watcher.test.AbstractWatcherIntegrationTests;
 import org.elasticsearch.watcher.transport.actions.put.PutWatchResponse;
-import org.junit.Before;
 import org.junit.Test;
 
 import static org.elasticsearch.index.query.QueryBuilders.boolQuery;
@@ -41,9 +40,7 @@ import static org.hamcrest.Matchers.*;
  *
  */
 @Network
-public class HipChatServiceIT extends AbstractWatcherIntegrationTests {
-
-    private HipChatService service;
+public class HipChatServiceTests extends AbstractWatcherIntegrationTests {
 
     @Override
     protected boolean timeWarped() {
@@ -75,13 +72,9 @@ public class HipChatServiceIT extends AbstractWatcherIntegrationTests {
                 .build();
     }
 
-    @Before
-    public void init() throws Exception {
-        service = getInstanceFromMaster(HipChatService.class);
-    }
-
     @Test
     public void testSendMessage_V1Account() throws Exception {
+        HipChatService service = getInstanceFromMaster(HipChatService.class);
         HipChatMessage hipChatMessage = new HipChatMessage(
                 "/code HipChatServiceIT#testSendMessage_V1Account",
                 new String[] { "test-watcher", "test-watcher-2" },
@@ -105,6 +98,7 @@ public class HipChatServiceIT extends AbstractWatcherIntegrationTests {
 
     @Test
     public void testSendMessage_IntegrationAccount() throws Exception {
+        HipChatService service = getInstanceFromMaster(HipChatService.class);
         HipChatMessage hipChatMessage = new HipChatMessage(
                 "/code HipChatServiceIT#testSendMessage_IntegrationAccount",
                 null, // custom rooms are unsupported by integration profiles
@@ -128,6 +122,7 @@ public class HipChatServiceIT extends AbstractWatcherIntegrationTests {
 
     @Test
     public void testSendMessage_UserAccount() throws Exception {
+        HipChatService service = getInstanceFromMaster(HipChatService.class);
         HipChatMessage hipChatMessage = new HipChatMessage(
                 "/code HipChatServiceIT#testSendMessage_UserAccount",
                 new String[] { "test-watcher", "test-watcher-2" },
@@ -151,7 +146,6 @@ public class HipChatServiceIT extends AbstractWatcherIntegrationTests {
 
     @Test
     public void testWatchWithHipChatAction() throws Exception {
-
 
         HipChatAccount.Profile profile = randomFrom(HipChatAccount.Profile.values());
         String account;
