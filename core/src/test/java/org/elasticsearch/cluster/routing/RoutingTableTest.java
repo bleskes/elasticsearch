@@ -243,4 +243,50 @@ public class RoutingTableTest extends ESAllocationTestCase {
             fail("Calling with non-existing index should be ignored at the moment");
         }
     }
+
+    public void testAllActiveShards() {
+        assertThat(this.emptyRoutingTable.allActiveShards(new String[0], true).size(), is(0));
+        assertThat(this.emptyRoutingTable.allActiveShards(new String[0], false).size(), is(0));
+
+        assertThat(this.testRoutingTable.allActiveShards(new String[]{TEST_INDEX_1}, false).size(), is(0));
+        assertThat(this.testRoutingTable.allActiveShards(new String[]{TEST_INDEX_1}, true).size(), is(this.shardsPerIndex));
+
+        initPrimaries();
+        assertThat(this.testRoutingTable.allActiveShards(new String[]{TEST_INDEX_1}, false).size(), is(0));
+        assertThat(this.testRoutingTable.allActiveShards(new String[]{TEST_INDEX_1}, true).size(), is(this.shardsPerIndex));
+
+        startInitializingShards(TEST_INDEX_1);
+        assertThat(this.testRoutingTable.allActiveShards(new String[]{TEST_INDEX_1}, false).size(), is(this.numberOfShards));
+        assertThat(this.testRoutingTable.allActiveShards(new String[]{TEST_INDEX_1, TEST_INDEX_2}, false).size(), is(this.numberOfShards));
+        assertThat(this.testRoutingTable.allActiveShards(new String[]{TEST_INDEX_1}, true).size(), is(this.shardsPerIndex));
+
+        startInitializingShards(TEST_INDEX_2);
+        assertThat(this.testRoutingTable.allActiveShards(new String[]{TEST_INDEX_2}, false).size(), is(this.numberOfShards));
+        assertThat(this.testRoutingTable.allActiveShards(new String[]{TEST_INDEX_1, TEST_INDEX_2}, false).size(), is(2 * this.numberOfShards));
+        assertThat(this.testRoutingTable.allActiveShards(new String[]{TEST_INDEX_1, TEST_INDEX_2}, true).size(), is(this.totalNumberOfShards));
+
+        try {
+            this.testRoutingTable.allActiveShardsGrouped(new String[]{TEST_INDEX_1, "not_exists"}, true);
+        } catch (IndexNotFoundException e) {
+            fail("Calling with non-existing index should be ignored at the moment");
+        }
+    }
+
+    public void testAllAssignedShards() {
+        assertThat(this.testRoutingTable.allAssignedShards(new String[]{TEST_INDEX_1}, false).size(), is(0));
+        assertThat(this.testRoutingTable.allAssignedShards(new String[]{TEST_INDEX_1}, true).size(), is(this.shardsPerIndex));
+
+        initPrimaries();
+        assertThat(this.testRoutingTable.allAssignedShards(new String[]{TEST_INDEX_1}, false).size(), is(this.numberOfShards));
+        assertThat(this.testRoutingTable.allAssignedShards(new String[]{TEST_INDEX_1}, true).size(), is(this.shardsPerIndex));
+
+        assertThat(this.testRoutingTable.allAssignedShards(new String[]{TEST_INDEX_1, TEST_INDEX_2}, false).size(), is(2 * this.numberOfShards));
+        assertThat(this.testRoutingTable.allAssignedShards(new String[]{TEST_INDEX_1, TEST_INDEX_2}, true).size(), is(this.totalNumberOfShards));
+
+        try {
+            this.testRoutingTable.allAssignedShardsGrouped(new String[]{TEST_INDEX_1, "not_exists"}, false);
+        } catch (IndexNotFoundException e) {
+            fail("Calling with non-existing index should be ignored at the moment");
+        }
+    }
 }

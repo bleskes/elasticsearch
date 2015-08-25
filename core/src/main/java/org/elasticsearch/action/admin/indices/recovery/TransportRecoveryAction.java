@@ -32,8 +32,8 @@ import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.block.ClusterBlockException;
 import org.elasticsearch.cluster.block.ClusterBlockLevel;
 import org.elasticsearch.cluster.metadata.IndexNameExpressionResolver;
-import org.elasticsearch.cluster.routing.GroupShardsIterator;
 import org.elasticsearch.cluster.routing.ShardRouting;
+import org.elasticsearch.cluster.routing.ShardsIterator;
 import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.io.stream.StreamInput;
@@ -116,8 +116,8 @@ public class TransportRecoveryAction extends TransportBroadcastByNodeAction<Reco
     }
 
     @Override
-    protected GroupShardsIterator shards(ClusterState state, RecoveryRequest request, String[] concreteIndices) {
-        return state.routingTable().allAssignedShardsGrouped(concreteIndices, true, true);
+    protected ShardsIterator shards(ClusterState state, RecoveryRequest request, String[] concreteIndices) {
+        return state.routingTable().allAssignedShards(concreteIndices, true, true);
     }
 
     @Override

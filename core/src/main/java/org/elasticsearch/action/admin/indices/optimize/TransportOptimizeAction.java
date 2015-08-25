@@ -28,8 +28,8 @@ import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.block.ClusterBlockException;
 import org.elasticsearch.cluster.block.ClusterBlockLevel;
 import org.elasticsearch.cluster.metadata.IndexNameExpressionResolver;
-import org.elasticsearch.cluster.routing.GroupShardsIterator;
 import org.elasticsearch.cluster.routing.ShardRouting;
+import org.elasticsearch.cluster.routing.ShardsIterator;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.index.shard.IndexShard;
@@ -86,8 +86,8 @@ public class TransportOptimizeAction extends TransportBroadcastByNodeAction<Opti
      * The refresh request works against *all* shards.
      */
     @Override
-    protected GroupShardsIterator shards(ClusterState clusterState, OptimizeRequest request, String[] concreteIndices) {
-        return clusterState.routingTable().allActiveShardsGrouped(concreteIndices, true);
+    protected ShardsIterator shards(ClusterState clusterState, OptimizeRequest request, String[] concreteIndices) {
+        return clusterState.routingTable().allActiveShards(concreteIndices, true);
     }
 
     @Override

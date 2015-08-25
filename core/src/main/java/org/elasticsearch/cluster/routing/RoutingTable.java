@@ -20,6 +20,7 @@
 package org.elasticsearch.cluster.routing;
 
 import com.carrotsearch.hppc.IntSet;
+import com.google.common.base.Predicate;
 import com.google.common.collect.*;
 import org.elasticsearch.cluster.*;
 import org.elasticsearch.cluster.metadata.IndexMetaData;
@@ -220,6 +221,59 @@ public class RoutingTable implements Iterable<IndexRoutingTable>, Diffable<Routi
             }
         }
         return new GroupShardsIterator(set);
+    }
+
+    private final static Predicate<ShardRouting> ACTIVE_PREDICATE = new Predicate<ShardRouting>() {
+        @Override
+        public boolean apply(ShardRouting shardRouting) {
+            return shardRouting.active();
+        }
+    };
+
+    private final static Predicate<ShardRouting> ASSIGNED_PREDICATE = new Predicate<ShardRouting>() {
+        @Override
+        public boolean apply(ShardRouting shardRouting) {
+            return shardRouting.assignedToNode();
+        }
+    };
+
+    public ShardsIterator allAssignedShards(String[] indices, boolean includeEmpty) {
+        return allAssignedShards(indices, includeEmpty, false);
+    }
+
+    public ShardsIterator allAssignedShards(String[] indices, boolean includeEmpty, boolean includeRelocationTargets) {
+        return allShardsSatisfyingPredicate(indices, includeEmpty, includeRelocationTargets, ASSIGNED_PREDICATE);
+    }
+
+    public ShardsIterator allActiveShards(String[] indices, boolean includeEmpty) {
+        return allActiveShards(indices, includeEmpty, false);
+    }
+
+    public ShardsIterator allActiveShards(String[] indices, boolean includeEmpty, boolean includeRelocationTargets) {
+        return allShardsSatisfyingPredicate(indices, includeEmpty, includeRelocationTargets, ACTIVE_PREDICATE);
+    }
+
+    private ShardsIterator allShardsSatisfyingPredicate(String[] indices, boolean includeEmpty, boolean includeReloactionTargets, Predicate<ShardRouting> predicate) {
+        // use list here since we need to maintain identity across shards
+        List<ShardRouting> shards = new ArrayList<>();
+        for (String index : indices) {
+            IndexRoutingTable indexRoutingTable = index(index);
+            if (indexRoutingTable == null) {
+                continue;
+                // we simply ignore indices that don't exists (make sense for operations that use it currently)
+            }
+            for (IndexShardRoutingTable indexShardRoutingTable : indexRoutingTable) {
+                for (ShardRouting shardRouting : indexShardRoutingTable) {
+                    if (predicate.apply(shardRouting) || includeEmpty) {
+                        shards.add(shardRouting);
+                    }
+                    if (includeReloactionTargets && shardRouting.relocating()) {
+                      shards.add(shardRouting.buildTargetRelocatingShard());
+                    }
+                }
+            }
+        }
+        return new PlainShardsIterator(shards);
     }
 
     /**

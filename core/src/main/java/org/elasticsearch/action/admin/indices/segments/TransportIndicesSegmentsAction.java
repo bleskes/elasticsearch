@@ -33,6 +33,7 @@ import org.elasticsearch.cluster.block.ClusterBlockLevel;
 import org.elasticsearch.cluster.metadata.IndexNameExpressionResolver;
 import org.elasticsearch.cluster.routing.GroupShardsIterator;
 import org.elasticsearch.cluster.routing.ShardRouting;
+import org.elasticsearch.cluster.routing.ShardsIterator;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
@@ -65,8 +66,8 @@ public class TransportIndicesSegmentsAction extends TransportBroadcastByNodeActi
      * Segments goes across *all* active shards.
      */
     @Override
-    protected GroupShardsIterator shards(ClusterState clusterState, IndicesSegmentsRequest request, String[] concreteIndices) {
-        return clusterState.routingTable().allActiveShardsGrouped(concreteIndices, true);
+    protected ShardsIterator shards(ClusterState clusterState, IndicesSegmentsRequest request, String[] concreteIndices) {
+        return clusterState.routingTable().allActiveShards(concreteIndices, true);
     }
 
     @Override

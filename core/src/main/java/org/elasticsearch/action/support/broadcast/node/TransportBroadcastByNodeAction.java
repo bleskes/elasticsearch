@@ -42,10 +42,12 @@ import org.elasticsearch.cluster.node.DiscoveryNodes;
 import org.elasticsearch.cluster.routing.GroupShardsIterator;
 import org.elasticsearch.cluster.routing.ShardIterator;
 import org.elasticsearch.cluster.routing.ShardRouting;
+import org.elasticsearch.cluster.routing.ShardsIterator;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.*;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -177,7 +179,7 @@ public abstract class TransportBroadcastByNodeAction<Request extends BroadcastRe
      * @param concreteIndices the concrete indices on which to execute the operation
      * @return the shards on which to execute the operation
      */
-    protected abstract GroupShardsIterator shards(ClusterState clusterState, Request request, String[] concreteIndices);
+    protected abstract ShardsIterator shards(ClusterState clusterState, Request request, String[] concreteIndices);
 
     /**
      * Executes a global block check before polling the cluster state.
@@ -232,12 +234,11 @@ public abstract class TransportBroadcastByNodeAction<Request extends BroadcastRe
             }
 
             logger.trace("resolving shards based on cluster state version [{}]", clusterState.version());
-            GroupShardsIterator shardIts = shards(clusterState, request, concreteIndices);
+            ShardsIterator shardIts = shards(clusterState, request, concreteIndices);
             nodeIds = Maps.newHashMap();
 
-            for (ShardIterator shardIt : shardIts) {
-                ShardRouting shard = shardIt.nextOrNull();
-                if (shard != null) {
+            for (ShardRouting shard : shardIts.asUnordered()) {
+                if (shard.assignedToNode()) {
                     String nodeId = shard.currentNodeId();
                     if (!nodeIds.containsKey(nodeId)) {
                         nodeIds.put(nodeId, Lists.<ShardRouting>newArrayList());
@@ -246,8 +247,8 @@ public abstract class TransportBroadcastByNodeAction<Request extends BroadcastRe
                 } else {
                     unavailableShardExceptions.add(
                             new NoShardAvailableActionException(
-                                    shardIt.shardId(),
-                                    "[" + shardIt.shardId().getIndex() + "][" + shardIt.shardId().getId() + "] no shards available while executing " + actionName
+                                    shard.shardId(),
+                                    "[" + shard.shardId().getIndex() + "][" + shard.shardId().getId() + "] no shards available while executing " + actionName
                             )
                     );
                 }
