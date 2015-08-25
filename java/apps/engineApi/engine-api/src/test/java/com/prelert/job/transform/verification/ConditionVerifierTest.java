@@ -106,4 +106,18 @@ public class ConditionVerifierTest
 
         ConditionVerifier.verify(condition);
     }
+
+    @Test
+    public void testVerify_GivenNullRegex() throws TransformConfigurationException
+    {
+        m_ExpectedException.expect(TransformConfigurationException.class);
+        m_ExpectedException.expect(
+                ErrorCodeMatcher.hasErrorCode(ErrorCodes.CONDITION_INVALID_ARGUMENT));
+
+        Condition condition = new Condition();
+        condition.setOperator(Operator.MATCH);
+        condition.setValue(null);
+
+        ConditionVerifier.verify(condition);
+    }
 }

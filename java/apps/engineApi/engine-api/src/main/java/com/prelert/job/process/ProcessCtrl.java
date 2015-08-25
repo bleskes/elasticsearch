@@ -414,7 +414,7 @@ public class ProcessCtrl
      * Get the C++ process to print a JSON document containing some of the usage
      * and license info
      */
-    public synchronized static String getInfo()
+    public static synchronized String getInfo()
     {
         List<String> command = new ArrayList<>();
         command.add(AUTODETECT_PATH);
