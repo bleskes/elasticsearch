@@ -15,15 +15,19 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.watcher.support.template;
+package org.elasticsearch.watcher.support.text;
 
-import java.util.Map;
+import org.elasticsearch.common.inject.AbstractModule;
+import org.elasticsearch.watcher.support.text.xmustache.XMustacheTextTemplateEngine;
 
 /**
  *
  */
-public interface TemplateEngine {
+public class TextTemplateModule extends AbstractModule {
 
-    String render(Template template, Map<String, Object> model);
+    @Override
+    protected void configure() {
+        bind(XMustacheTextTemplateEngine.class).asEagerSingleton();
+        bind(TextTemplateEngine.class).to(XMustacheTextTemplateEngine.class);
+    }
 }
-

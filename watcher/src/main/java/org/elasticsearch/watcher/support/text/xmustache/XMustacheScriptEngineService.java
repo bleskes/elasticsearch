@@ -15,7 +15,7 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.watcher.support.template.xmustache;
+package org.elasticsearch.watcher.support.text.xmustache;
 
 import com.github.mustachejava.Mustache;
 import org.elasticsearch.common.Nullable;

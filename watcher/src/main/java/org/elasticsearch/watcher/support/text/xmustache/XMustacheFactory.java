@@ -15,7 +15,7 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.watcher.support.template.xmustache;
+package org.elasticsearch.watcher.support.text.xmustache;
 
 import com.fasterxml.jackson.core.io.JsonStringEncoder;
 import com.github.mustachejava.DefaultMustacheFactory;

@@ -15,7 +15,7 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.watcher.support.template.xmustache;
+package org.elasticsearch.watcher.support.text.xmustache;
 
 import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.component.AbstractComponent;
@@ -23,8 +23,8 @@ import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.script.ExecutableScript;
 import org.elasticsearch.watcher.support.init.proxy.ScriptServiceProxy;
-import org.elasticsearch.watcher.support.template.Template;
-import org.elasticsearch.watcher.support.template.TemplateEngine;
+import org.elasticsearch.watcher.support.text.TextTemplate;
+import org.elasticsearch.watcher.support.text.TextTemplateEngine;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -32,18 +32,18 @@ import java.util.Map;
 /**
  *
  */
-public class XMustacheTemplateEngine extends AbstractComponent implements TemplateEngine {
+public class XMustacheTextTemplateEngine extends AbstractComponent implements TextTemplateEngine {
 
     private final ScriptServiceProxy service;
 
     @Inject
-    public XMustacheTemplateEngine(Settings settings, ScriptServiceProxy service) {
+    public XMustacheTextTemplateEngine(Settings settings, ScriptServiceProxy service) {
         super(settings);
         this.service = service;
     }
 
     @Override
-    public String render(Template template, Map<String, Object> model) {
+    public String render(TextTemplate template, Map<String, Object> model) {
         Map<String, Object> mergedModel = new HashMap<>();
         mergedModel.putAll(template.getParams());
         mergedModel.putAll(model);
