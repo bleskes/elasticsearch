@@ -91,6 +91,14 @@ public interface AuditTrail {
         @Override
         public void connectionDenied(InetAddress inetAddress, String profile, ShieldIpFilterRule rule) {
         }
+
+        @Override
+        public void runAsGranted(User user, String action, TransportMessage<?> message) {
+        }
+
+        @Override
+        public void runAsDenied(User user, String action, TransportMessage<?> message) {
+        }
     };
 
     String name();
@@ -120,4 +128,8 @@ public interface AuditTrail {
     void connectionGranted(InetAddress inetAddress, String profile, ShieldIpFilterRule rule);
 
     void connectionDenied(InetAddress inetAddress, String profile, ShieldIpFilterRule rule);
+
+    void runAsGranted(User user, String action, TransportMessage<?> message);
+
+    void runAsDenied(User user, String action, TransportMessage<?> message);
 }

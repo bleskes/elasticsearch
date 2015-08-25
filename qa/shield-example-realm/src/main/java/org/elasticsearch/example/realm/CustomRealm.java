@@ -78,4 +78,14 @@ public class CustomRealm extends Realm<UsernamePasswordToken> {
         }
         return null;
     }
+
+    @Override
+    public User lookupUser(String username) {
+        return null;
+    }
+
+    @Override
+    public boolean userLookupSupported() {
+        return false;
+    }
 }
