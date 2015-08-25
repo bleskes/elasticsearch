@@ -58,6 +58,13 @@ public class ConditionVerifier
                     ErrorCodes.CONDITION_INVALID_ARGUMENT);
         }
 
+        if (condition.getValue() == null)
+        {
+            throw new TransformConfigurationException(
+                    Messages.getMessage(Messages.JOB_CONFIG_TRANSFORM_CONDITION_INVALID_VALUE_NULL),
+                    ErrorCodes.CONDITION_INVALID_ARGUMENT);
+        }
+
         if (condition.getOperator().expectsANumericArgument())
         {
             try
