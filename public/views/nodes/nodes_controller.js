@@ -34,13 +34,16 @@ define(function (require) {
       timefilter.refreshInterval.display = '10 Seconds';
     }
 
+    var cluster = _.find(clusters, { cluster_uuid: globalState.cluster });
+    $scope.nodes = cluster.nodes;
+
     // Setup the data sources for the charts
     $scope.dataSources = {};
 
     var ClusterStateDataSource = Private(require('plugins/marvel/lib/cluster_state_data_source'));
     $scope.dataSources.clusterState = new ClusterStateDataSource({
       indexPattern: indexPattern,
-      cluster: globalState.cluster
+      cluster: cluster
     });
     $scope.dataSources.clusterState.register(courier);
 
@@ -49,7 +52,7 @@ define(function (require) {
     Promise
       .all([])
       .then(function () {
-        var dataSource = new ClusterStatusDataSource(indexPattern, globalState.cluster, clusters);
+        var dataSource = new ClusterStatusDataSource(indexPattern, cluster, clusters);
         dataSource.register(courier);
         $scope.dataSources.cluster_status = dataSource;
         return dataSource;
@@ -57,7 +60,7 @@ define(function (require) {
       .then(function() {
         var dataSource = new TableDataSource({
           index: indexPattern,
-          cluster: _.find(clusters, { cluster_uuid: globalState.cluster }),
+          cluster: cluster,
           clusters: clusters,
           metrics: [
             'node_jvm_mem_percent',
