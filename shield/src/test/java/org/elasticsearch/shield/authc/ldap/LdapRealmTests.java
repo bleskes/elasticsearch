@@ -18,7 +18,6 @@
 package org.elasticsearch.shield.authc.ldap;
 
 import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.rest.RestController;
 import org.elasticsearch.shield.User;
 import org.elasticsearch.shield.authc.RealmConfig;
 import org.elasticsearch.shield.authc.ldap.support.LdapSearchScope;
@@ -48,14 +47,12 @@ public class LdapRealmTests extends LdapTestCase {
     public static final String VALID_USERNAME = "Thomas Masterman Hardy";
     public static final String PASSWORD = "pass";
 
-    private RestController restController;
     private ThreadPool threadPool;
     private ResourceWatcherService resourceWatcherService;
     private Settings globalSettings;
 
     @Before
     public void init() throws Exception {
-        restController = mock(RestController.class);
         threadPool = new ThreadPool("ldap realm tests");
         resourceWatcherService = new ResourceWatcherService(Settings.EMPTY, threadPool);
         globalSettings = Settings.builder().put("path.home", createTempDir()).build();
@@ -65,12 +62,6 @@ public class LdapRealmTests extends LdapTestCase {
     public void shutdown() throws InterruptedException {
         resourceWatcherService.stop();
         terminate(threadPool);
-    }
-
-    @Test
-    public void testRestHeaderRegistration() {
-        new LdapRealm.Factory(resourceWatcherService, restController, null);
-        verify(restController).registerRelevantHeaders(UsernamePasswordToken.BASIC_AUTH_HEADER);
     }
 
     @Test
