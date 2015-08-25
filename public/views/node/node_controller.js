@@ -53,6 +53,7 @@ define(function (require) {
     $scope.dataSources.clusterStatus = new ClusterStatusDataSource(indexPattern, globalState.cluster, clusters);
     $scope.dataSources.clusterStatus.register(courier);
     $scope.cluster = _.find(clusters, { cluster_uuid: globalState.cluster });
+    $scope.node = $scope.cluster.nodes[$scope.nodeName];
     $scope.$watch('dataSources.clusterStatus.clusters', function (clusters) {
       $scope.cluster = _.find(clusters, { cluster_uuid: globalState.cluster });
     });

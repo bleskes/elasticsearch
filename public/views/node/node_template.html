@@ -1,7 +1,7 @@
-<div ng-controller="nodeView" class="details marvel-view" ng-class="cluster.shards[nodeName].status">
+<div ng-controller="nodeView" class="details marvel-view" ng-class="cluster.shards[node.name].status">
   <marvel-cluster-status cluster-state="dataSources.clusterState" source="dataSources.clusterStatus"></marvel-cluster-status>
   <div class="detail-metrics marvel-element">
-    <h1>{{ nodeName }}</h1>
+    <h1>{{ node.name }}</h1>
     <div class="metrics marvel-element">
       <div ng-repeat="name in charts" class="marvel-element">
         <marvel-chart source="dataSources[name]" />
@@ -9,7 +9,7 @@
     </div>
   </div>
   <div class="marvel-element">
-    <marvel-shard-allocation filter-by="nodeName" hide-ui="true" view="nodes" cluster="cluster" index-pattern="indexPattern"></marvel-shard-allocation>
+    <marvel-shard-allocation filter-by="node.name" hide-ui="true" view="nodes" cluster="cluster" index-pattern="indexPattern"></marvel-shard-allocation>
   </div>
 </div>
 

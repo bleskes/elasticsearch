@@ -13,6 +13,7 @@ define(function (require) {
   var ToggleOnClickComponent = require('plugins/marvel/directives/node_listing/toggle_on_click_component');
 
 
+  // change the node to actually display the name
   module.directive('marvelNodesListing', function () {
     // makes the tds for every <tr> in the table
     function makeTdWithPropKey(dataKey, idx) {
