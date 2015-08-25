@@ -380,7 +380,7 @@ public class IndicesRequestIT extends ESIntegTestCase {
 
     @Test
     public void testOptimize() {
-        String optimizeShardAction = OptimizeAction.NAME + "[i]";
+        String optimizeShardAction = OptimizeAction.NAME + "[n]";
         interceptTransportActions(optimizeShardAction);
 
         OptimizeRequest optimizeRequest = new OptimizeRequest(randomIndicesOrAliases());
@@ -404,7 +404,7 @@ public class IndicesRequestIT extends ESIntegTestCase {
 
     @Test
     public void testClearCache() {
-        String clearCacheAction = ClearIndicesCacheAction.NAME + "[i]";
+        String clearCacheAction = ClearIndicesCacheAction.NAME + "[n]";
         interceptTransportActions(clearCacheAction);
 
         ClearIndicesCacheRequest clearIndicesCacheRequest = new ClearIndicesCacheRequest(randomIndicesOrAliases());
@@ -416,7 +416,7 @@ public class IndicesRequestIT extends ESIntegTestCase {
 
     @Test
     public void testRecovery() {
-        String recoveryAction = RecoveryAction.NAME + "[i]";
+        String recoveryAction = RecoveryAction.NAME + "[n]";
         interceptTransportActions(recoveryAction);
 
         RecoveryRequest recoveryRequest = new RecoveryRequest(randomIndicesOrAliases());
@@ -428,7 +428,7 @@ public class IndicesRequestIT extends ESIntegTestCase {
 
     @Test
     public void testSegments() {
-        String segmentsAction = IndicesSegmentsAction.NAME + "[i]";
+        String segmentsAction = IndicesSegmentsAction.NAME + "[n]";
         interceptTransportActions(segmentsAction);
 
         IndicesSegmentsRequest segmentsRequest = new IndicesSegmentsRequest(randomIndicesOrAliases());
@@ -440,7 +440,7 @@ public class IndicesRequestIT extends ESIntegTestCase {
 
     @Test
     public void testIndicesStats() {
-        String indicesStats = IndicesStatsAction.NAME + "[i]";
+        String indicesStats = IndicesStatsAction.NAME + "[n]";
         interceptTransportActions(indicesStats);
 
         IndicesStatsRequest indicesStatsRequest = new IndicesStatsRequest().indices(randomIndicesOrAliases());

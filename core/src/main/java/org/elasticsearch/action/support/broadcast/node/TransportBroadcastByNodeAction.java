@@ -91,7 +91,7 @@ public abstract class TransportBroadcastByNodeAction<Request extends BroadcastRe
         this.clusterService = clusterService;
         this.transportService = transportService;
 
-        transportNodeBroadcastAction = actionName + "[i]";
+        transportNodeBroadcastAction = actionName + "[n]";
 
         transportService.registerRequestHandler(transportNodeBroadcastAction, nodeBroadcastRequest, executor, new NodeBroadcastTransportHandler());
     }
