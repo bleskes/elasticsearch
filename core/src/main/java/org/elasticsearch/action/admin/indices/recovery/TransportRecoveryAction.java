@@ -24,9 +24,9 @@ import com.google.common.collect.Maps;
 import org.elasticsearch.action.support.ActionFilters;
 import org.elasticsearch.action.support.DefaultShardOperationFailedException;
 import org.elasticsearch.action.support.broadcast.BroadcastShardOperationFailedException;
+import org.elasticsearch.action.support.broadcast.node.TransportBroadcastByNodeAction;
 import org.elasticsearch.action.support.indices.BaseBroadcastByNodeRequest;
 import org.elasticsearch.action.support.indices.BaseBroadcastByNodeResponse;
-import org.elasticsearch.action.support.broadcast.node.TransportBroadcastByNodeAction;
 import org.elasticsearch.cluster.ClusterService;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.block.ClusterBlockException;
@@ -39,8 +39,6 @@ import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.common.xcontent.ToXContent;
-import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.index.IndexService;
 import org.elasticsearch.index.shard.IndexShard;
 import org.elasticsearch.indices.IndicesService;
@@ -150,7 +148,7 @@ public class TransportRecoveryAction extends TransportBroadcastByNodeAction<Reco
     /**
      * Information regarding the recovery state of a shard.
      */
-    public static class NodeRecoveryResponse extends BaseBroadcastByNodeResponse implements ToXContent {
+    public static class NodeRecoveryResponse extends BaseBroadcastByNodeResponse {
 
         List<RecoveryState> recoveryStates;
 
@@ -184,16 +182,6 @@ public class TransportRecoveryAction extends TransportBroadcastByNodeAction<Reco
         @Nullable
         public List<RecoveryState> recoveryStates() {
             return recoveryStates;
-        }
-
-        @Override
-        public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
-            builder.startArray("recovery_states");
-            for (RecoveryState recoveryState : recoveryStates) {
-                recoveryState.toXContent(builder, params);
-            }
-            builder.endArray();
-            return builder;
         }
 
         @Override
