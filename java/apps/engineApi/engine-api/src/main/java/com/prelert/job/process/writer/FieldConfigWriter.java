@@ -31,6 +31,7 @@ import static com.prelert.job.process.writer.WriterConstants.EQUALS;
 
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.util.regex.Pattern;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
@@ -42,17 +43,24 @@ import com.prelert.job.Detector;
 
 public class FieldConfigWriter
 {
+    private static final String DETECTOR_PREFIX = "detector.";
+    private static final String DETECTOR_CLAUSE_SUFFIX = ".clause";
+    private static final String INFLUENCER_PREFIX = "influencer.";
 
-    private static final String CATEGORIZATION_FIELD_KEY = "categorizationfield";
-    private static final String DOT_IS_ENABLED = ".isEnabled";
-    private static final String DOT_USE_NULL = ".useNull";
-    private static final String DOT_BY = ".by";
-    private static final String DOT_OVER = ".over";
-    private static final String DOT_PARTITION = ".partition";
-    private static final String DOT_EXCLUDE_FREQUENT = ".excludefrequent";
-    private static final String HYPHEN = "-";
-    private static final String INFLUENCERS = "influencers";
+    private static final String BY_TOKEN = " by ";
+    private static final String OVER_TOKEN = " over ";
+
+    private static final String USE_NULL_OPTION = " usenull=";
+    private static final String PARTITION_FIELD_OPTION = " partitionfield=";
+    private static final String EXCLUDE_FREQUENT_OPTION = " excludefrequent=";
+    private static final String CATEGORIZATION_FIELD_OPTION = " categorizationfield=";
+    // Note: for the Engine API summarycountfield is currently passed as a
+    // command line option to prelert_autodetect_input rather than in the field
+    // config file
+
     private static final char NEW_LINE = '\n';
+
+    private static final Pattern NEEDS_QUOTING = Pattern.compile("\\W");
 
     private final AnalysisConfig m_Config;
     private final OutputStreamWriter m_Writer;
@@ -73,109 +81,107 @@ public class FieldConfigWriter
     public void write() throws IOException
     {
         StringBuilder contents = new StringBuilder();
-        if (isNotNullOrEmpty(m_Config.getCategorizationFieldName()))
-        {
-            contents.append(CATEGORIZATION_FIELD_KEY).append(EQUALS)
-                    .append(m_Config.getCategorizationFieldName()).append(NEW_LINE);
-        }
 
-        if (!m_Config.getInfluencers().isEmpty())
-        {
-            contents.append(INFLUENCERS).append(EQUALS);
-            StringBuilder fieldsBuilder = new StringBuilder();
-
-            for (String influencer : m_Config.getInfluencers())
-            {
-                fieldsBuilder.append(influencer).append(HYPHEN);
-            }
-            int lastHyphen = fieldsBuilder.lastIndexOf(HYPHEN);
-            fieldsBuilder.setLength(lastHyphen);
-            contents.append(fieldsBuilder.toString()).append(NEW_LINE);
-        }
-
-        Set<String> detectorKeys = new HashSet<>();
+        int counter = 0;
         for (Detector detector : m_Config.getDetectors())
         {
-            StringBuilder keyBuilder = new StringBuilder();
+            contents.append(DETECTOR_PREFIX).append(++counter)
+                    .append(DETECTOR_CLAUSE_SUFFIX).append(EQUALS);
             if (isNotNullOrEmpty(detector.getFunction()))
             {
-                keyBuilder.append(detector.getFunction());
-                if (detector.getFieldName() != null)
+                contents.append(detector.getFunction());
+                if (isNotNullOrEmpty(detector.getFieldName()))
                 {
-                    keyBuilder.append("(")
-                            .append(detector.getFieldName())
-                            .append(")");
+                    contents.append('(').append(quoteField(detector.getFieldName()))
+                            .append(')');
                 }
             }
             else if (isNotNullOrEmpty(detector.getFieldName()))
             {
-                keyBuilder.append(detector.getFieldName());
+                contents.append(quoteField(detector.getFieldName()));
+            }
+            else
+            {
+                m_Logger.error("Detector config contains neither function nor fieldname " +
+                        "- this should have been caught during prior validation" +
+                        "- C++ field config file will be invalid");
             }
 
             if (isNotNullOrEmpty(detector.getByFieldName()))
             {
-                keyBuilder.append(HYPHEN).append(detector.getByFieldName());
+                contents.append(BY_TOKEN).append(quoteField(detector.getByFieldName()));
             }
+
             if (isNotNullOrEmpty(detector.getOverFieldName()))
             {
-                keyBuilder.append(HYPHEN).append(detector.getOverFieldName());
-            }
-            if (isNotNullOrEmpty(detector.getPartitionFieldName()))
-            {
-                keyBuilder.append(HYPHEN).append(detector.getPartitionFieldName());
-            }
-
-            String key = keyBuilder.toString();
-            if (detectorKeys.contains(key))
-            {
-                m_Logger.warn(String.format(
-                        "Duplicate detector key '%s' ignorning this detector", key));
-                continue;
-            }
-            detectorKeys.add(key);
-
-            // .isEnabled is only necessary if nothing else is going to be added
-            // for this key
-            if (detector.isUseNull() == null &&
-                    isNullOrEmpty(detector.getByFieldName()) &&
-                    isNullOrEmpty(detector.getOverFieldName()) &&
-                    isNullOrEmpty(detector.getPartitionFieldName()))
-            {
-                contents.append(key).append(DOT_IS_ENABLED).append(" = true").append(NEW_LINE);
+                contents.append(OVER_TOKEN).append(quoteField(detector.getOverFieldName()));
             }
 
             if (detector.isUseNull() != null)
             {
-                contents.append(key).append(DOT_USE_NULL)
-                    .append(detector.isUseNull() ? " = true" : " = false")
-                    .append(NEW_LINE);
+                contents.append(USE_NULL_OPTION).append(detector.isUseNull());
+            }
+
+            if (isNotNullOrEmpty(detector.getPartitionFieldName()))
+            {
+                contents.append(PARTITION_FIELD_OPTION)
+                        .append(quoteField(detector.getPartitionFieldName()));
             }
 
             if (isNotNullOrEmpty(detector.getExcludeFrequent()))
             {
-                contents.append(key).append(DOT_EXCLUDE_FREQUENT).append(EQUALS).
-                    append(detector.getExcludeFrequent()).append(NEW_LINE);
+                contents.append(EXCLUDE_FREQUENT_OPTION)
+                        .append(detector.getExcludeFrequent());
             }
-            if (isNotNullOrEmpty(detector.getByFieldName()))
+
+            if (isNotNullOrEmpty(m_Config.getCategorizationFieldName()))
             {
-                contents.append(key).append(DOT_BY).append(EQUALS)
-                        .append(detector.getByFieldName()).append(NEW_LINE);
+                contents.append(CATEGORIZATION_FIELD_OPTION)
+                        .append(quoteField(m_Config.getCategorizationFieldName()));
             }
-            if (isNotNullOrEmpty(detector.getOverFieldName()))
+
+            contents.append(NEW_LINE);
+        }
+
+        if (!m_Config.getInfluencers().isEmpty())
+        {
+            counter = 0;
+            for (String influencer : m_Config.getInfluencers())
             {
-                contents.append(key).append(DOT_OVER).append(EQUALS)
-                        .append(detector.getOverFieldName()).append(NEW_LINE);
-            }
-            if (isNotNullOrEmpty(detector.getPartitionFieldName()))
-            {
-                contents.append(key).append(DOT_PARTITION).append(EQUALS)
-                        .append(detector.getPartitionFieldName()).append(NEW_LINE);
+                // Influencer fields are entire settings rather than part of a
+                // clause, so don't need quoting
+                contents.append(INFLUENCER_PREFIX).append(++counter)
+                        .append(EQUALS).append(influencer).append(NEW_LINE);
             }
         }
 
-        m_Logger.debug("FieldConfig: \n" + contents.toString());
+        m_Logger.debug("FieldConfig:\n" + contents.toString());
 
         m_Writer.write(contents.toString());
+    }
+
+    private static String quoteField(String field)
+    {
+        if (!NEEDS_QUOTING.matcher(field).find())
+        {
+            return field;
+        }
+
+        StringBuilder quoted = new StringBuilder();
+        quoted.append('\"');
+
+        for (int i = 0; i < field.length(); ++i)
+        {
+            char c = field.charAt(i);
+            if (c == '\"' || c == '\\')
+            {
+                quoted.append('\\');
+            }
+            quoted.append(c);
+        }
+
+        quoted.append('\"');
+        return quoted.toString();
     }
 
     private static boolean isNotNullOrEmpty(String arg)
