@@ -39,15 +39,12 @@ import org.elasticsearch.cluster.block.ClusterBlockException;
 import org.elasticsearch.cluster.metadata.IndexNameExpressionResolver;
 import org.elasticsearch.cluster.node.DiscoveryNode;
 import org.elasticsearch.cluster.node.DiscoveryNodes;
-import org.elasticsearch.cluster.routing.GroupShardsIterator;
-import org.elasticsearch.cluster.routing.ShardIterator;
 import org.elasticsearch.cluster.routing.ShardRouting;
 import org.elasticsearch.cluster.routing.ShardsIterator;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.*;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -95,22 +92,30 @@ public abstract class TransportBroadcastByNodeAction<Request extends BroadcastRe
 
         transportNodeBroadcastAction = actionName + "[n]";
 
-        transportService.registerRequestHandler(transportNodeBroadcastAction, nodeBroadcastRequest, executor, new NodeBroadcastTransportHandler());
+        transportService.registerRequestHandler(transportNodeBroadcastAction, nodeBroadcastRequest, executor, new BroadcastByNodeTransportRequestHandler());
     }
 
-    private final Response newResponse(Request request, AtomicReferenceArray responses, List<NoShardAvailableActionException> unavailableShardExceptions) {
+    private final Response newResponse(Request request, AtomicReferenceArray responses, List<NoShardAvailableActionException> unavailableShardExceptions, Map<String, List<ShardRouting>> nodes) {
         int totalShards = 0;
         int successfulShards = 0;
         List<BroadcastByNodeResponse> broadcastByNodeResponses = Lists.newArrayList();
         List<DefaultShardOperationFailedException> exceptions = Lists.newArrayList();
         for (int i = 0; i < responses.length(); i++) {
-            BroadcastByNodeResponse response = (BroadcastByNodeResponse) responses.get(i);
-            broadcastByNodeResponses.add(response);
-            totalShards += response.getTotalShards();
-            successfulShards += response.getSuccessfulShards();
-            for (BroadcastShardOperationFailedException t : response.getExceptions()) {
-                if (!TransportActions.isShardNotAvailableException(t)) {
-                    exceptions.add(new DefaultShardOperationFailedException(t.getIndex(), t.getShardId().getId(), t));
+            if (responses.get(i) instanceof FailedNodeException) {
+                FailedNodeException exception = (FailedNodeException)responses.get(i);
+                totalShards += nodes.get(exception.nodeId()).size();
+                for (ShardRouting shard : nodes.get(exception.nodeId())) {
+                    exceptions.add(new DefaultShardOperationFailedException(shard.getIndex(), shard.getId(), exception));
+                }
+            } else {
+                BroadcastByNodeResponse response = (BroadcastByNodeResponse) responses.get(i);
+                broadcastByNodeResponses.add(response);
+                totalShards += response.getTotalShards();
+                successfulShards += response.getSuccessfulShards();
+                for (BroadcastShardOperationFailedException throwable : response.getExceptions()) {
+                    if (!TransportActions.isShardNotAvailableException(throwable)) {
+                        exceptions.add(new DefaultShardOperationFailedException(throwable.getIndex(), throwable.getShardId().getId(), throwable));
+                    }
                 }
             }
         }
@@ -234,10 +239,10 @@ public abstract class TransportBroadcastByNodeAction<Request extends BroadcastRe
             }
 
             logger.trace("resolving shards based on cluster state version [{}]", clusterState.version());
-            ShardsIterator shardIts = shards(clusterState, request, concreteIndices);
+            ShardsIterator shardIt = shards(clusterState, request, concreteIndices);
             nodeIds = Maps.newHashMap();
 
-            for (ShardRouting shard : shardIts.asUnordered()) {
+            for (ShardRouting shard : shardIt.asUnordered()) {
                 if (shard.assignedToNode()) {
                     String nodeId = shard.currentNodeId();
                     if (!nodeIds.containsKey(nodeId)) {
@@ -260,7 +265,7 @@ public abstract class TransportBroadcastByNodeAction<Request extends BroadcastRe
         public void start() {
             if (nodeIds.size() == 0) {
                 try {
-                    listener.onResponse(newResponse(request, new AtomicReferenceArray(0), unavailableShardExceptions));
+                    listener.onResponse(newResponse(request, new AtomicReferenceArray(0), unavailableShardExceptions, nodeIds));
                 } catch (Throwable e) {
                     listener.onFailure(e);
                 }
@@ -327,7 +332,7 @@ public abstract class TransportBroadcastByNodeAction<Request extends BroadcastRe
         protected void onCompletion() {
             Response response = null;
             try {
-                response = newResponse(request, responses, unavailableShardExceptions);
+                response = newResponse(request, responses, unavailableShardExceptions, nodeIds);
             } catch (Throwable t) {
                 logger.debug("failed to combine responses from nodes", t);
                 listener.onFailure(t);
@@ -342,7 +347,7 @@ public abstract class TransportBroadcastByNodeAction<Request extends BroadcastRe
         }
     }
 
-    class NodeBroadcastTransportHandler implements TransportRequestHandler<BroadcastByNodeRequest> {
+    class BroadcastByNodeTransportRequestHandler implements TransportRequestHandler<BroadcastByNodeRequest> {
         @Override
         public void messageReceived(final BroadcastByNodeRequest request, TransportChannel channel) throws Exception {
             List<ShardRouting> shards = request.getShards();
