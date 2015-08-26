@@ -22,33 +22,38 @@ class ClusterRow extends React.Component {
 
   render() {
 
+    var self = this;
+    function get(path) {
+      return _.get(self.props, path);
+    }
+
     var licenseExpiry = (
       <div
         className="expires">
-        Expires { moment(this.props.license.expiry_date_in_millis).format('D MMM YY') }
+        Expires { moment(get('license.expiry_date_in_millis')).format('D MMM YY') }
         </div>
     );
 
-    if (this.props.license.expiry_date_in_millis < moment().valueOf()) {
+    if (get('license.expiry_date_in_millis') < moment().valueOf()) {
       licenseExpiry = (<div className="expires expired">Expired</div>);
     }
 
-    var classes = [ this.props.status ];
+    var classes = [ get('status') ];
     var notLite = true;
-    if (this.props.license.type === 'lite') {
+    if (get('license.type') === 'lite') {
       classes = [ 'lite' ];
       notLite = false;
     }
 
     return (
       <tr className={ classes.join(' ') }>
-        <td><a onClick={(event) => this.changeCluster(event) }>{ this.props.cluster_name }</a></td>
-        <td>{ notLite ? numeral(this.props.stats.node_count).format('0,0') : '-' }</td>
-        <td>{ notLite ? numeral(this.props.stats.indice_count).format('0,0') : '-' }</td>
-        <td>{ notLite ? formatTime(this.props.stats.uptime) : '-' }</td>
-        <td>{ notLite ? numeral(this.props.stats.data).format('0,0[.]0 b') : '-' }</td>
+        <td><a onClick={(event) => this.changeCluster(event) }>{ get('cluster_name') }</a></td>
+        <td>{ notLite ? numeral(get('stats.nodes.count.total')).format('0,0') : '-' }</td>
+        <td>{ notLite ? numeral(get('stats.indices.count')).format('0,0') : '-' }</td>
+        <td>{ notLite ? formatTime(get('stats.nodes.jvm.max_uptime_in_millis')) : '-' }</td>
+        <td>{ notLite ? numeral(get('stats.indices.store.size_in_bytes')).format('0,0[.]0 b') : '-' }</td>
         <td className="license">
-          <div className="license">{ _.capitalize(this.props.license.type) }</div>
+          <div className="license">{ _.capitalize(get('license.type')) }</div>
           { licenseExpiry }
         </td>
       </tr>

@@ -1,4 +1,5 @@
 define(function (require) {
+  var _ = require('lodash');
   var angular = require('angular');
   require('angular-resource');
 
@@ -10,8 +11,10 @@ define(function (require) {
 
     function fetch() {
       return Clusters.query().$promise.then(function (clusters) {
-        cache = clusters;
-        return clusters;
+        return clusters.map(function (cluster) {
+          cluster.license = _.find(cluster.licenses, { feature: 'marvel' });
+          return cluster;
+        });
       });
     }
 
