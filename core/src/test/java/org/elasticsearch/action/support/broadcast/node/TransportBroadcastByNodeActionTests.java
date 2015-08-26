@@ -91,7 +91,7 @@ public class TransportBroadcastByNodeActionTests extends ESTestCase {
         public Response() {
         }
 
-        public Response(int totalShards, int successfulShards, int failedShards, List<? extends ShardOperationFailedException> shardFailures) {
+        public Response(int totalShards, int successfulShards, int failedShards, List<ShardOperationFailedException> shardFailures) {
             super(totalShards, successfulShards, failedShards, shardFailures);
         }
     }
@@ -127,7 +127,7 @@ public class TransportBroadcastByNodeActionTests extends ESTestCase {
         }
 
         @Override
-        protected Response newResponse(Request request, int totalShards, int successfulShards, int failedShards, List<BroadcastByNodeResponse> broadcastByNodeResponses, List<DefaultShardOperationFailedException> shardFailures) {
+        protected Response newResponse(Request request, int totalShards, int successfulShards, int failedShards, List<BroadcastByNodeResponse> broadcastByNodeResponses, List<ShardOperationFailedException> shardFailures) {
             return new Response(totalShards, successfulShards, failedShards, shardFailures);
         }
 

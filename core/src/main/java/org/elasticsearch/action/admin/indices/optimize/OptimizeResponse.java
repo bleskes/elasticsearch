@@ -19,6 +19,7 @@
 
 package org.elasticsearch.action.admin.indices.optimize;
 
+import org.elasticsearch.action.ShardOperationFailedException;
 import org.elasticsearch.action.support.DefaultShardOperationFailedException;
 import org.elasticsearch.action.support.broadcast.BroadcastResponse;
 import org.elasticsearch.common.io.stream.StreamInput;
@@ -38,7 +39,7 @@ public class OptimizeResponse extends BroadcastResponse {
 
     }
 
-    OptimizeResponse(int totalShards, int successfulShards, int failedShards, List<DefaultShardOperationFailedException> shardFailures) {
+    OptimizeResponse(int totalShards, int successfulShards, int failedShards, List<ShardOperationFailedException> shardFailures) {
         super(totalShards, successfulShards, failedShards, shardFailures);
     }
 

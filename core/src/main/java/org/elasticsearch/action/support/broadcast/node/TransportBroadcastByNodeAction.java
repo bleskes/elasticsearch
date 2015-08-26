@@ -24,6 +24,7 @@ import com.google.common.collect.Maps;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.FailedNodeException;
 import org.elasticsearch.action.NoShardAvailableActionException;
+import org.elasticsearch.action.ShardOperationFailedException;
 import org.elasticsearch.action.support.ActionFilters;
 import org.elasticsearch.action.support.DefaultShardOperationFailedException;
 import org.elasticsearch.action.support.HandledTransportAction;
@@ -99,7 +100,7 @@ public abstract class TransportBroadcastByNodeAction<Request extends BroadcastRe
         int totalShards = 0;
         int successfulShards = 0;
         List<BroadcastByNodeResponse> broadcastByNodeResponses = Lists.newArrayList();
-        List<DefaultShardOperationFailedException> exceptions = Lists.newArrayList();
+        List<ShardOperationFailedException> exceptions = Lists.newArrayList();
         for (int i = 0; i < responses.length(); i++) {
             if (responses.get(i) instanceof FailedNodeException) {
                 FailedNodeException exception = (FailedNodeException)responses.get(i);
@@ -135,7 +136,7 @@ public abstract class TransportBroadcastByNodeAction<Request extends BroadcastRe
      * @param shardFailures    the exceptions corresponding to shard operationa failures
      * @return the response
      */
-    protected abstract Response newResponse(Request request, int totalShards, int successfulShards, int failedShards, List<BroadcastByNodeResponse> responses, List<DefaultShardOperationFailedException> shardFailures);
+    protected abstract Response newResponse(Request request, int totalShards, int successfulShards, int failedShards, List<BroadcastByNodeResponse> responses, List<ShardOperationFailedException> shardFailures);
 
     /**
      * Creates a new node-level request.

@@ -19,6 +19,7 @@
 
 package org.elasticsearch.action.admin.indices.recovery;
 
+import org.elasticsearch.action.ShardOperationFailedException;
 import org.elasticsearch.action.support.DefaultShardOperationFailedException;
 import org.elasticsearch.action.support.broadcast.BroadcastResponse;
 import org.elasticsearch.common.io.stream.StreamInput;
@@ -55,7 +56,7 @@ public class RecoveryResponse extends BroadcastResponse implements ToXContent {
      * @param shardFailures     List of failures processing shards
      */
     public RecoveryResponse(int totalShards, int successfulShards, int failedShards, boolean detailed,
-                            Map<String, List<RecoveryState>> shardRecoveryStates, List<DefaultShardOperationFailedException> shardFailures) {
+                            Map<String, List<RecoveryState>> shardRecoveryStates, List<ShardOperationFailedException> shardFailures) {
         super(totalShards, successfulShards, failedShards, shardFailures);
         this.shardRecoveryStates = shardRecoveryStates;
         this.detailed = detailed;

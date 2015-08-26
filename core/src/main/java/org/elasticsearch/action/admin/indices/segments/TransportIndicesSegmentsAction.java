@@ -20,6 +20,7 @@
 package org.elasticsearch.action.admin.indices.segments;
 
 import com.google.common.collect.Lists;
+import org.elasticsearch.action.ShardOperationFailedException;
 import org.elasticsearch.action.support.ActionFilters;
 import org.elasticsearch.action.support.DefaultShardOperationFailedException;
 import org.elasticsearch.action.support.broadcast.BroadcastShardOperationFailedException;
@@ -81,7 +82,7 @@ public class TransportIndicesSegmentsAction extends TransportBroadcastByNodeActi
     }
 
     @Override
-    protected IndicesSegmentResponse newResponse(IndicesSegmentsRequest request, int totalShards, int successfulShards, int failedShards, List<IndexShardSegmentResponse> indexShardSegmentResponses, List<DefaultShardOperationFailedException> shardFailures) {
+    protected IndicesSegmentResponse newResponse(IndicesSegmentsRequest request, int totalShards, int successfulShards, int failedShards, List<IndexShardSegmentResponse> indexShardSegmentResponses, List<ShardOperationFailedException> shardFailures) {
         List<ShardSegments> concatenation = Lists.newArrayList();
         for (IndexShardSegmentResponse response : indexShardSegmentResponses) {
             concatenation.addAll(response.getShardSegments());

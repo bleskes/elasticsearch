@@ -19,6 +19,7 @@
 
 package org.elasticsearch.action.admin.indices.cache.clear;
 
+import org.elasticsearch.action.ShardOperationFailedException;
 import org.elasticsearch.action.support.ActionFilters;
 import org.elasticsearch.action.support.DefaultShardOperationFailedException;
 import org.elasticsearch.action.support.broadcast.BroadcastShardOperationFailedException;
@@ -61,7 +62,7 @@ public class TransportClearIndicesCacheAction extends TransportBroadcastByNodeAc
     }
 
     @Override
-    protected ClearIndicesCacheResponse newResponse(ClearIndicesCacheRequest request, int totalShards, int successfulShards, int failedShards, List<ShardClearIndicesCacheResponse> responses, List<DefaultShardOperationFailedException> shardFailures) {
+    protected ClearIndicesCacheResponse newResponse(ClearIndicesCacheRequest request, int totalShards, int successfulShards, int failedShards, List<ShardClearIndicesCacheResponse> responses, List<ShardOperationFailedException> shardFailures) {
         return new ClearIndicesCacheResponse(totalShards, successfulShards, failedShards, shardFailures);
     }
 

@@ -21,6 +21,7 @@ package org.elasticsearch.action.admin.indices.upgrade.get;
 
 import com.google.common.collect.Lists;
 import org.elasticsearch.Version;
+import org.elasticsearch.action.ShardOperationFailedException;
 import org.elasticsearch.action.support.ActionFilters;
 import org.elasticsearch.action.support.DefaultShardOperationFailedException;
 import org.elasticsearch.action.support.broadcast.BroadcastShardOperationFailedException;
@@ -83,7 +84,7 @@ public class TransportUpgradeStatusAction extends TransportBroadcastByNodeAction
     }
 
     @Override
-    protected UpgradeStatusResponse newResponse(UpgradeStatusRequest request, int totalShards, int successfulShards, int failedShards, List<NodeUpgradeStatusResponse> responses, List<DefaultShardOperationFailedException> shardFailures) {
+    protected UpgradeStatusResponse newResponse(UpgradeStatusRequest request, int totalShards, int successfulShards, int failedShards, List<NodeUpgradeStatusResponse> responses, List<ShardOperationFailedException> shardFailures) {
         List<ShardUpgradeStatus> concatenation = Lists.newArrayList();
         for (NodeUpgradeStatusResponse response : responses) {
             concatenation.addAll(response.getShards());

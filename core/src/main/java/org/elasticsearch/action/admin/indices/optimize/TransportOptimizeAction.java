@@ -19,6 +19,7 @@
 
 package org.elasticsearch.action.admin.indices.optimize;
 
+import org.elasticsearch.action.ShardOperationFailedException;
 import org.elasticsearch.action.support.ActionFilters;
 import org.elasticsearch.action.support.DefaultShardOperationFailedException;
 import org.elasticsearch.action.support.broadcast.BroadcastShardOperationFailedException;
@@ -56,7 +57,7 @@ public class TransportOptimizeAction extends TransportBroadcastByNodeAction<Opti
     }
 
     @Override
-    protected OptimizeResponse newResponse(OptimizeRequest request, int totalShards, int successfulShards, int failedShards, List<ShardOptimizeResponse> responses, List<DefaultShardOperationFailedException> shardFailures) {
+    protected OptimizeResponse newResponse(OptimizeRequest request, int totalShards, int successfulShards, int failedShards, List<ShardOptimizeResponse> responses, List<ShardOperationFailedException> shardFailures) {
         return new OptimizeResponse(totalShards, successfulShards, failedShards, shardFailures);
     }
 

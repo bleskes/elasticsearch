@@ -20,6 +20,7 @@
 package org.elasticsearch.action.admin.indices.stats;
 
 import com.google.common.collect.Lists;
+import org.elasticsearch.action.ShardOperationFailedException;
 import org.elasticsearch.action.support.ActionFilters;
 import org.elasticsearch.action.support.DefaultShardOperationFailedException;
 import org.elasticsearch.action.support.broadcast.BroadcastShardOperationFailedException;
@@ -82,7 +83,7 @@ public class TransportIndicesStatsAction extends TransportBroadcastByNodeAction<
     }
 
     @Override
-    protected IndicesStatsResponse newResponse(IndicesStatsRequest request, int totalShards, int successfulShards, int failedShards, List<IndexShardStatsResponse> responses, List<DefaultShardOperationFailedException> shardFailures) {
+    protected IndicesStatsResponse newResponse(IndicesStatsRequest request, int totalShards, int successfulShards, int failedShards, List<IndexShardStatsResponse> responses, List<ShardOperationFailedException> shardFailures) {
         List<ShardStats> concatenation = Lists.newArrayList();
         for (IndexShardStatsResponse response : responses) {
             concatenation.addAll(response.getShards());
