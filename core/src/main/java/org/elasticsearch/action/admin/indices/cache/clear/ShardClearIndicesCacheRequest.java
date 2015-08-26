@@ -31,64 +31,31 @@ import java.util.List;
  *
  */
 class ShardClearIndicesCacheRequest extends BaseBroadcastByNodeRequest<ClearIndicesCacheRequest> {
-
-    private boolean queryCache = false;
-    private boolean fieldDataCache = false;
-    private boolean recycler;
-    private boolean requestCache = false;
-
-    private String[] fields = null;
-
     ShardClearIndicesCacheRequest() {
     }
 
     ShardClearIndicesCacheRequest(ClearIndicesCacheRequest request, List<ShardRouting> shards, String nodeId) {
         super(nodeId, request, shards);
-        queryCache = request.queryCache();
-        fieldDataCache = request.fieldDataCache();
-        fields = request.fields();
-        recycler = request.recycler();
-        requestCache = request.requestCache();
     }
 
     public boolean queryCache() {
-        return queryCache;
+        return getIndicesLevelRequest().queryCache();
     }
 
     public boolean requestCache() {
-        return requestCache;
+        return getIndicesLevelRequest().requestCache();
     }
 
     public boolean fieldDataCache() {
-        return this.fieldDataCache;
+        return getIndicesLevelRequest().fieldDataCache();
     }
 
     public boolean recycler() {
-        return this.recycler;
+        return getIndicesLevelRequest().recycler();
     }
 
     public String[] fields() {
-        return this.fields;
-    }
-
-    @Override
-    public void readFrom(StreamInput in) throws IOException {
-        super.readFrom(in);
-        queryCache = in.readBoolean();
-        fieldDataCache = in.readBoolean();
-        recycler = in.readBoolean();
-        fields = in.readStringArray();
-        requestCache = in.readBoolean();
-    }
-
-    @Override
-    public void writeTo(StreamOutput out) throws IOException {
-        super.writeTo(out);
-        out.writeBoolean(queryCache);
-        out.writeBoolean(fieldDataCache);
-        out.writeBoolean(recycler);
-        out.writeStringArrayNullable(fields);
-        out.writeBoolean(requestCache);
+        return getIndicesLevelRequest().fields();
     }
 
     @Override
