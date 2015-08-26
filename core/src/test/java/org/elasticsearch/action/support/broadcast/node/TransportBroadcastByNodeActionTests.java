@@ -271,10 +271,11 @@ public class TransportBroadcastByNodeActionTests extends ESTestCase {
         PlainActionFuture<Response> listener = new PlainActionFuture<>();
 
         ClusterBlocks.Builder block = ClusterBlocks.builder()
-                .addIndexBlock(TEST_INDEX, new ClusterBlock(1, "", false, true, RestStatus.SERVICE_UNAVAILABLE, ClusterBlockLevel.ALL));
+                .addIndexBlock(TEST_INDEX, new ClusterBlock(1, "test-block", false, true, RestStatus.SERVICE_UNAVAILABLE, ClusterBlockLevel.ALL));
         clusterService.setState(ClusterState.builder(clusterService.state()).blocks(block));
         try {
             action.new AsyncAction(request, listener).start();
+            fail("expected ClusterBlockException");
         } catch (ClusterBlockException expected) {
 
         }
@@ -292,9 +293,15 @@ public class TransportBroadcastByNodeActionTests extends ESTestCase {
         for (ShardRouting shard : shardIt.asUnordered()) {
             set.add(shard.currentNodeId());
         }
+
+        // check a request was sent to the right number of nodes
         assertEquals(set.size(), capturedRequests.size());
+
+        // check requests were sent to the right nodes
+
         assertEquals(set, capturedRequests.keySet());
         for (Map.Entry<String, List<CapturingTransport.CapturedRequest>> entry : capturedRequests.entrySet()) {
+            // check one request was sent to each node
             assertEquals(1, entry.getValue().size());
         }
     }
@@ -333,6 +340,8 @@ public class TransportBroadcastByNodeActionTests extends ESTestCase {
                 failedShards++;
             }
         }
+
+        // check the operation results
         assertEquals("successful shards", successfulShards, broadcastByNodeResponse.getSuccessfulShards());
         assertEquals("total shards", action.getResults().size(), broadcastByNodeResponse.getTotalShards());
         assertEquals("failed shards", failedShards, broadcastByNodeResponse.getExceptions().size());
@@ -366,6 +375,7 @@ public class TransportBroadcastByNodeActionTests extends ESTestCase {
             List<BroadcastShardOperationFailedException> exceptions = new ArrayList<>();
             long requestId = entry.getValue().get(0).requestId;
             if (rarely()) {
+                // simulate node failure
                 totalShards += map.get(entry.getKey()).size();
                 totalFailedShards += map.get(entry.getKey()).size();
                 transport.handleResponse(requestId, new Exception());
@@ -375,6 +385,7 @@ public class TransportBroadcastByNodeActionTests extends ESTestCase {
                 for (ShardRouting shard : shards) {
                     totalShards++;
                     if (rarely()) {
+                        // simulate operation failure
                         totalFailedShards++;
                         exceptions.add(new BroadcastShardOperationFailedException(shard.shardId(), "operation indices:admin/test failed"));
                     } else {
