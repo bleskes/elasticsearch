@@ -298,7 +298,6 @@ public class TransportBroadcastByNodeActionTests extends ESTestCase {
         assertEquals(set.size(), capturedRequests.size());
 
         // check requests were sent to the right nodes
-
         assertEquals(set, capturedRequests.keySet());
         for (Map.Entry<String, List<CapturingTransport.CapturedRequest>> entry : capturedRequests.entrySet()) {
             // check one request was sent to each node
