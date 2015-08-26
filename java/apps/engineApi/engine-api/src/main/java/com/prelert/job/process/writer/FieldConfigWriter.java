@@ -32,9 +32,7 @@ import static com.prelert.job.process.writer.WriterConstants.EQUALS;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.util.regex.Pattern;
-import java.util.HashSet;
 import java.util.Objects;
-import java.util.Set;
 
 import org.apache.log4j.Logger;
 
@@ -187,10 +185,5 @@ public class FieldConfigWriter
     private static boolean isNotNullOrEmpty(String arg)
     {
         return arg != null && arg.isEmpty() == false;
-    }
-
-    private static boolean isNullOrEmpty(String arg)
-    {
-        return arg == null || arg.isEmpty();
     }
 }
