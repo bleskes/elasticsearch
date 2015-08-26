@@ -55,6 +55,8 @@ public class IndexStatsCollectorTests extends AbstractCollectorTestCase {
         client().admin().indices().prepareRefresh().get();
         assertHitCount(client().prepareCount().get(), nbDocs);
 
+        waitForRelocation();
+
         Collection<MarvelDoc> results = newIndexStatsCollector().doCollect();
         assertThat(results, hasSize(1));
 
@@ -99,6 +101,8 @@ public class IndexStatsCollectorTests extends AbstractCollectorTestCase {
         for (int i = 0; i < nbIndices; i++) {
             assertHitCount(client().prepareCount(indexPrefix + i).get(), docsPerIndex[i]);
         }
+
+        waitForRelocation();
 
         Collection<MarvelDoc> results = newIndexStatsCollector().doCollect();
         assertThat(results, hasSize(nbIndices));
