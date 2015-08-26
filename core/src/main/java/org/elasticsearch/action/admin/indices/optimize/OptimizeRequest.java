@@ -19,6 +19,7 @@
 
 package org.elasticsearch.action.admin.indices.optimize;
 
+import org.elasticsearch.action.support.broadcast.BroadcastRequest;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 
@@ -35,7 +36,7 @@ import java.io.IOException;
  * @see org.elasticsearch.client.IndicesAdminClient#optimize(OptimizeRequest)
  * @see OptimizeResponse
  */
-public class OptimizeRequest extends org.elasticsearch.action.support.broadcast.BroadcastRequest<OptimizeRequest> {
+public class OptimizeRequest extends BroadcastRequest<OptimizeRequest> {
 
     public static final class Defaults {
         public static final int MAX_NUM_SEGMENTS = -1;

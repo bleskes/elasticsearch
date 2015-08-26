@@ -19,9 +19,10 @@
 
 package org.elasticsearch.action.admin.indices.upgrade.get;
 
+import org.elasticsearch.action.support.broadcast.BroadcastRequest;
 import org.elasticsearch.common.Strings;
 
-public class UpgradeStatusRequest extends org.elasticsearch.action.support.broadcast.BroadcastRequest<UpgradeStatusRequest> {
+public class UpgradeStatusRequest extends BroadcastRequest<UpgradeStatusRequest> {
 
     public UpgradeStatusRequest() {
         this(Strings.EMPTY_ARRAY);
