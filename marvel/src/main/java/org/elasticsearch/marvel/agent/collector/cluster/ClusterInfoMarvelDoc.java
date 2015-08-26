@@ -15,25 +15,28 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.marvel.agent.collector.licenses;
+package org.elasticsearch.marvel.agent.collector.cluster;
 
+import org.elasticsearch.action.admin.cluster.stats.ClusterStatsResponse;
 import org.elasticsearch.license.core.License;
 import org.elasticsearch.marvel.agent.exporter.MarvelDoc;
 
 import java.util.List;
 
-public class LicensesMarvelDoc extends MarvelDoc {
+public class ClusterInfoMarvelDoc extends MarvelDoc {
 
     private final String clusterName;
     private final String version;
     private final List<License> licenses;
+    private final ClusterStatsResponse clusterStats;
 
-    LicensesMarvelDoc(String index, String type, String id, String clusterUUID, long timestamp,
-                      String clusterName, String version, List<License> licenses) {
+    ClusterInfoMarvelDoc(String index, String type, String id, String clusterUUID, long timestamp,
+                         String clusterName, String version, List<License> licenses, ClusterStatsResponse clusterStats) {
         super(index, type, id, clusterUUID, timestamp);
         this.clusterName = clusterName;
         this.version = version;
         this.licenses = licenses;
+        this.clusterStats = clusterStats;
     }
 
     public String getClusterName() {
@@ -48,4 +51,7 @@ public class LicensesMarvelDoc extends MarvelDoc {
         return licenses;
     }
 
+    public ClusterStatsResponse getClusterStats() {
+        return clusterStats;
+    }
 }
