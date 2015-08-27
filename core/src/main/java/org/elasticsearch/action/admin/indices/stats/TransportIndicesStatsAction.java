@@ -22,7 +22,6 @@ package org.elasticsearch.action.admin.indices.stats;
 import com.google.common.collect.Lists;
 import org.elasticsearch.action.ShardOperationFailedException;
 import org.elasticsearch.action.support.ActionFilters;
-import org.elasticsearch.action.support.DefaultShardOperationFailedException;
 import org.elasticsearch.action.support.broadcast.BroadcastShardOperationFailedException;
 import org.elasticsearch.action.support.broadcast.node.TransportBroadcastByNodeAction;
 import org.elasticsearch.action.support.indices.BaseBroadcastByNodeRequest;
@@ -117,62 +116,62 @@ public class TransportIndicesStatsAction extends TransportBroadcastByNodeAction<
 
         CommonStatsFlags flags = new CommonStatsFlags().clear();
 
-        if (request.request.docs()) {
+        if (request.getIndicesLevelRequest().docs()) {
             flags.set(CommonStatsFlags.Flag.Docs);
         }
-        if (request.request.store()) {
+        if (request.getIndicesLevelRequest().store()) {
             flags.set(CommonStatsFlags.Flag.Store);
         }
-        if (request.request.indexing()) {
+        if (request.getIndicesLevelRequest().indexing()) {
             flags.set(CommonStatsFlags.Flag.Indexing);
-            flags.types(request.request.types());
+            flags.types(request.getIndicesLevelRequest().types());
         }
-        if (request.request.get()) {
+        if (request.getIndicesLevelRequest().get()) {
             flags.set(CommonStatsFlags.Flag.Get);
         }
-        if (request.request.search()) {
+        if (request.getIndicesLevelRequest().search()) {
             flags.set(CommonStatsFlags.Flag.Search);
-            flags.groups(request.request.groups());
+            flags.groups(request.getIndicesLevelRequest().groups());
         }
-        if (request.request.merge()) {
+        if (request.getIndicesLevelRequest().merge()) {
             flags.set(CommonStatsFlags.Flag.Merge);
         }
-        if (request.request.refresh()) {
+        if (request.getIndicesLevelRequest().refresh()) {
             flags.set(CommonStatsFlags.Flag.Refresh);
         }
-        if (request.request.flush()) {
+        if (request.getIndicesLevelRequest().flush()) {
             flags.set(CommonStatsFlags.Flag.Flush);
         }
-        if (request.request.warmer()) {
+        if (request.getIndicesLevelRequest().warmer()) {
             flags.set(CommonStatsFlags.Flag.Warmer);
         }
-        if (request.request.queryCache()) {
+        if (request.getIndicesLevelRequest().queryCache()) {
             flags.set(CommonStatsFlags.Flag.QueryCache);
         }
-        if (request.request.fieldData()) {
+        if (request.getIndicesLevelRequest().fieldData()) {
             flags.set(CommonStatsFlags.Flag.FieldData);
-            flags.fieldDataFields(request.request.fieldDataFields());
+            flags.fieldDataFields(request.getIndicesLevelRequest().fieldDataFields());
         }
-        if (request.request.percolate()) {
+        if (request.getIndicesLevelRequest().percolate()) {
             flags.set(CommonStatsFlags.Flag.Percolate);
         }
-        if (request.request.segments()) {
+        if (request.getIndicesLevelRequest().segments()) {
             flags.set(CommonStatsFlags.Flag.Segments);
         }
-        if (request.request.completion()) {
+        if (request.getIndicesLevelRequest().completion()) {
             flags.set(CommonStatsFlags.Flag.Completion);
-            flags.completionDataFields(request.request.completionFields());
+            flags.completionDataFields(request.getIndicesLevelRequest().completionFields());
         }
-        if (request.request.translog()) {
+        if (request.getIndicesLevelRequest().translog()) {
             flags.set(CommonStatsFlags.Flag.Translog);
         }
-        if (request.request.suggest()) {
+        if (request.getIndicesLevelRequest().suggest()) {
             flags.set(CommonStatsFlags.Flag.Suggest);
         }
-        if (request.request.requestCache()) {
+        if (request.getIndicesLevelRequest().requestCache()) {
             flags.set(CommonStatsFlags.Flag.RequestCache);
         }
-        if (request.request.recovery()) {
+        if (request.getIndicesLevelRequest().recovery()) {
             flags.set(CommonStatsFlags.Flag.Recovery);
         }
 
@@ -180,31 +179,13 @@ public class TransportIndicesStatsAction extends TransportBroadcastByNodeAction<
     }
 
     static class IndexShardStatsRequest extends BaseBroadcastByNodeRequest<IndicesStatsRequest> {
-
-        // TODO if there are many indices, the request might hold a large indices array..., we don't really need to serialize it
-        IndicesStatsRequest request;
-
         IndexShardStatsRequest() {
         }
 
         IndexShardStatsRequest(IndicesStatsRequest request, List<ShardRouting> shards, String nodeId) {
             super(nodeId, request, shards);
-            this.request = request;
         }
-
-        @Override
-        public void readFrom(StreamInput in) throws IOException {
-            super.readFrom(in);
-            request = new IndicesStatsRequest();
-            request.readFrom(in);
-        }
-
-        @Override
-        public void writeTo(StreamOutput out) throws IOException {
-            super.writeTo(out);
-            request.writeTo(out);
-        }
-
+        
         @Override
         protected IndicesStatsRequest newRequest() {
             return new IndicesStatsRequest();

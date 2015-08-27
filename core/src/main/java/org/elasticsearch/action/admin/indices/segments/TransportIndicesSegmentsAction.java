@@ -22,17 +22,15 @@ package org.elasticsearch.action.admin.indices.segments;
 import com.google.common.collect.Lists;
 import org.elasticsearch.action.ShardOperationFailedException;
 import org.elasticsearch.action.support.ActionFilters;
-import org.elasticsearch.action.support.DefaultShardOperationFailedException;
 import org.elasticsearch.action.support.broadcast.BroadcastShardOperationFailedException;
+import org.elasticsearch.action.support.broadcast.node.TransportBroadcastByNodeAction;
 import org.elasticsearch.action.support.indices.BaseBroadcastByNodeRequest;
 import org.elasticsearch.action.support.indices.BaseBroadcastByNodeResponse;
-import org.elasticsearch.action.support.broadcast.node.TransportBroadcastByNodeAction;
 import org.elasticsearch.cluster.ClusterService;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.block.ClusterBlockException;
 import org.elasticsearch.cluster.block.ClusterBlockLevel;
 import org.elasticsearch.cluster.metadata.IndexNameExpressionResolver;
-import org.elasticsearch.cluster.routing.GroupShardsIterator;
 import org.elasticsearch.cluster.routing.ShardRouting;
 import org.elasticsearch.cluster.routing.ShardsIterator;
 import org.elasticsearch.common.inject.Inject;
@@ -109,31 +107,25 @@ public class TransportIndicesSegmentsAction extends TransportBroadcastByNodeActi
     protected ShardSegments shardOperation(IndexShardSegmentRequest request, ShardRouting shardRouting) {
         IndexService indexService = indicesService.indexServiceSafe(shardRouting.getIndex());
         IndexShard indexShard = indexService.shardSafe(shardRouting.id());
-        return new ShardSegments(indexShard.routingEntry(), indexShard.engine().segments(request.verbose));
+        return new ShardSegments(indexShard.routingEntry(), indexShard.engine().segments(request.getIndicesLevelRequest().verbose()));
     }
 
     static class IndexShardSegmentRequest extends BaseBroadcastByNodeRequest<IndicesSegmentsRequest> {
-        boolean verbose;
-        
         IndexShardSegmentRequest() {
-            verbose = false;
         }
 
         IndexShardSegmentRequest(String nodeId, List<ShardRouting> shards, IndicesSegmentsRequest request) {
             super(nodeId, request, shards);
-            verbose = request.verbose();
         }
 
         @Override
         public void writeTo(StreamOutput out) throws IOException {
             super.writeTo(out);
-            out.writeBoolean(verbose);
         }
 
         @Override
         public void readFrom(StreamInput in) throws IOException {
             super.readFrom(in);
-            verbose = in.readBoolean();
         }
 
         @Override

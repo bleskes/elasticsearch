@@ -21,10 +21,7 @@ package org.elasticsearch.action.admin.indices.cache.clear;
 
 import org.elasticsearch.action.support.indices.BaseBroadcastByNodeRequest;
 import org.elasticsearch.cluster.routing.ShardRouting;
-import org.elasticsearch.common.io.stream.StreamInput;
-import org.elasticsearch.common.io.stream.StreamOutput;
 
-import java.io.IOException;
 import java.util.List;
 
 /**
@@ -36,26 +33,6 @@ class ShardClearIndicesCacheRequest extends BaseBroadcastByNodeRequest<ClearIndi
 
     ShardClearIndicesCacheRequest(ClearIndicesCacheRequest request, List<ShardRouting> shards, String nodeId) {
         super(nodeId, request, shards);
-    }
-
-    public boolean queryCache() {
-        return getIndicesLevelRequest().queryCache();
-    }
-
-    public boolean requestCache() {
-        return getIndicesLevelRequest().requestCache();
-    }
-
-    public boolean fieldDataCache() {
-        return getIndicesLevelRequest().fieldDataCache();
-    }
-
-    public boolean recycler() {
-        return getIndicesLevelRequest().recycler();
-    }
-
-    public String[] fields() {
-        return getIndicesLevelRequest().fields();
     }
 
     @Override

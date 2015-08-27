@@ -21,7 +21,6 @@ package org.elasticsearch.action.admin.indices.cache.clear;
 
 import org.elasticsearch.action.ShardOperationFailedException;
 import org.elasticsearch.action.support.ActionFilters;
-import org.elasticsearch.action.support.DefaultShardOperationFailedException;
 import org.elasticsearch.action.support.broadcast.BroadcastShardOperationFailedException;
 import org.elasticsearch.action.support.broadcast.node.TransportBroadcastByNodeAction;
 import org.elasticsearch.cluster.ClusterService;
@@ -87,33 +86,33 @@ public class TransportClearIndicesCacheAction extends TransportBroadcastByNodeAc
         if (service != null) {
             IndexShard shard = service.shard(shardRouting.id());
             boolean clearedAtLeastOne = false;
-            if (request.queryCache()) {
+            if (request.getIndicesLevelRequest().queryCache()) {
                 clearedAtLeastOne = true;
                 service.cache().query().clear("api");
             }
-            if (request.fieldDataCache()) {
+            if (request.getIndicesLevelRequest().fieldDataCache()) {
                 clearedAtLeastOne = true;
-                if (request.fields() == null || request.fields().length == 0) {
+                if (request.getIndicesLevelRequest().fields() == null || request.getIndicesLevelRequest().fields().length == 0) {
                     service.fieldData().clear();
                 } else {
-                    for (String field : request.fields()) {
+                    for (String field : request.getIndicesLevelRequest().fields()) {
                         service.fieldData().clearField(field);
                     }
                 }
             }
-            if (request.requestCache()) {
+            if (request.getIndicesLevelRequest().requestCache()) {
                 clearedAtLeastOne = true;
                 indicesRequestCache.clear(shard);
             }
-            if (request.recycler()) {
+            if (request.getIndicesLevelRequest().recycler()) {
                 logger.debug("Clear CacheRecycler on index [{}]", service.index());
                 clearedAtLeastOne = true;
                 // cacheRecycler.clear();
             }
             if (!clearedAtLeastOne) {
-                if (request.fields() != null && request.fields().length > 0) {
+                if (request.getIndicesLevelRequest().fields() != null && request.getIndicesLevelRequest().fields().length > 0) {
                     // only clear caches relating to the specified fields
-                    for (String field : request.fields()) {
+                    for (String field : request.getIndicesLevelRequest().fields()) {
                         service.fieldData().clearField(field);
                     }
                 } else {
