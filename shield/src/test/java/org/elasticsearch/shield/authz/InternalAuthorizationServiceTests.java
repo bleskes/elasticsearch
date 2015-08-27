@@ -45,7 +45,6 @@ import org.junit.Test;
 
 import static org.elasticsearch.test.ShieldTestsUtils.assertAuthenticationException;
 import static org.elasticsearch.test.ShieldTestsUtils.assertAuthorizationException;
-import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.*;
 import static org.mockito.Mockito.*;
 
@@ -219,7 +218,7 @@ public class InternalAuthorizationServiceTests extends ESTestCase {
             assertAuthorizationException(e, containsString("action [indices:a] is unauthorized for user [test user]"));
             verify(auditTrail).accessDenied(user, "indices:a", request);
             verify(clusterService, times(2)).state();
-            verify(state, times(2)).metaData();
+            verify(state, times(3)).metaData();
         }
     }
 
@@ -240,7 +239,7 @@ public class InternalAuthorizationServiceTests extends ESTestCase {
             assertAuthorizationException(e, containsString("action [" + IndicesAliasesAction.NAME + "] is unauthorized for user [test user]"));
             verify(auditTrail).accessDenied(user, IndicesAliasesAction.NAME, request);
             verify(clusterService).state();
-            verify(state).metaData();
+            verify(state, times(2)).metaData();
         }
     }
 
@@ -259,7 +258,7 @@ public class InternalAuthorizationServiceTests extends ESTestCase {
         verify(auditTrail).accessGranted(user, CreateIndexAction.NAME, request);
         verifyNoMoreInteractions(auditTrail);
         verify(clusterService).state();
-        verify(state).metaData();
+        verify(state, times(2)).metaData();
     }
 
     @Test
@@ -316,7 +315,7 @@ public class InternalAuthorizationServiceTests extends ESTestCase {
             assertAuthorizationException(e, containsString("action [indices:a] is unauthorized for user [" + anonymousService.anonymousUser().principal() + "]"));
             verify(auditTrail).accessDenied(anonymousService.anonymousUser(), "indices:a", request);
             verify(clusterService, times(2)).state();
-            verify(state, times(2)).metaData();
+            verify(state, times(3)).metaData();
         }
     }
 
@@ -341,7 +340,8 @@ public class InternalAuthorizationServiceTests extends ESTestCase {
             assertAuthenticationException(e, containsString("action [indices:a] requires authentication"));
             verify(auditTrail).accessDenied(anonymousService.anonymousUser(), "indices:a", request);
             verify(clusterService, times(2)).state();
-            verify(state, times(2)).metaData();
+            verify(state, times(3)).metaData();
         }
     }
+
 }
