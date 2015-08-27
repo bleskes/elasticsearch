@@ -30,7 +30,7 @@ define(function (require) {
       this.data.document_count = formatNumber(get('cluster_stats.indices.docs.count'), 'int_commas');
       this.data.data = formatNumber(get('cluster_stats.nodes.fs.total_in_bytes'), 'byte');
       this.data.upTime = formatNumber(get('cluster_stats.nodes.jvm.max_uptime_in_millis'), 'time_since');
-      this.data.version = get('cluster_stats.nodes.versions')[0];
+      this.data.version = get('cluster_stats.nodes.versions');
     };
     return ClusterStatusDataSource;
 

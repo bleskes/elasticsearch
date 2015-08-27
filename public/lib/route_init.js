@@ -5,6 +5,7 @@ define(function (require) {
   return function routeInitProvider(Notifier, marvelSettings, Private, marvelClusters, globalState, Promise, kbnUrl) {
 
     var initMarvelIndex = Private(require('plugins/marvel/lib/marvel_index_init'));
+    var phoneHome = Private(require('plugins/marvel/lib/phone_home'));
     return function (options) {
       options = _.defaults(options || {}, {
         force: {
@@ -15,6 +16,11 @@ define(function (require) {
       var marvel = {};
       var notify = new Notifier({ location: 'Marvel' });
       return marvelClusters.fetch(true)
+        .then(function (clusters) {
+          return phoneHome.sendIfDue(clusters).then(() => {
+            return clusters;
+          });
+        })
         // Get the clusters
         .then(function (clusters) {
           var cluster;
