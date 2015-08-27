@@ -42,7 +42,7 @@ define(function (require) {
     }
     var initialTableOptions = {
       title: 'Indices',
-      dataKeys: [{
+      columns: [{
         key: 'name',
         sort: 1,
         title: 'Name'
@@ -77,8 +77,8 @@ define(function (require) {
         var tableRowTemplate = React.createClass({
           render: function () {
             var boundTemplateFn = makeTdWithPropKey.bind(this);
-            var dataProps = _.pluck(initialTableOptions.dataKeys, 'key');
-            var $tdsArr = initialTableOptions.dataKeys.map(boundTemplateFn);
+            var dataProps = _.pluck(initialTableOptions.columns, 'key');
+            var $tdsArr = initialTableOptions.columns.map(boundTemplateFn);
             return make.tr({key: this.props.name}, $tdsArr);
           }
         });

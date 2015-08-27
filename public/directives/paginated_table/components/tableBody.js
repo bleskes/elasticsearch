@@ -4,8 +4,8 @@ var make = React.DOM;
 var Loading = require('./loading.jsx');
 var NoData = require('./no_data.jsx');
 
-function renderRow(dataKeys, obj, idx) {
-  var $objTds = dataKeys.map(function (key, idx) {
+function renderRow(columns, obj, idx) {
+  var $objTds = columns.map(function (key, idx) {
     return make.td({key: idx}, _.get(obj, key.key));
   });
   return make.tr({key: idx}, $objTds);
@@ -39,7 +39,7 @@ module.exports = React.createClass({
     var end = start + (this.props.itemsPerPage || sortedData.length);
     var paginatedData = sortedData.slice(start, end);
 
-    var template = renderRow.bind(this.props.dataKeys);
+    var template = renderRow.bind(this.props.columns);
     if (this.props.template) {
       template = React.createFactory(this.props.template);
     }

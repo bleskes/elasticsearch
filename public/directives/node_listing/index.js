@@ -13,15 +13,17 @@ define(function (require) {
   var ToggleOnClickComponent = require('plugins/marvel/directives/node_listing/toggle_on_click_component');
 
 
+  // change the node to actually display the name
   module.directive('marvelNodesListing', function () {
     // makes the tds for every <tr> in the table
     function makeTdWithPropKey(dataKey, idx) {
       var value = _.get(this.props, dataKey.key);
       var $content = null;
       if (dataKey.key === 'name') {
+        var state = this.state || {};
         $content = make.div(null,
-          make.div(null, value),
-          make.div({className: 'small'}, '192.168.1.1'));
+          make.a({href: '#/node/' + value}, state.name),  // <a href="#/node/:node_id>
+          make.div({className: 'small'}, state.transport_address)); //   <div.small>
       }
       if (_.isObject(value) && value.metric) {
         var formatNumber = (function(metric) {
@@ -43,7 +45,7 @@ define(function (require) {
     }
     var initialTableOptions = {
       title: 'Nodes',
-      dataKeys: [{
+      columns: [{
         key: 'name',
         sort: 1,
         title: 'Name'
@@ -57,6 +59,11 @@ define(function (require) {
         sortKey: 'metrics.load_average_1m.last',
         sort: 0,
         title: 'RAM used'
+      }, {
+        key: 'metrics.node_space_free',
+        sortKey: 'metrics.node_space_free.last',
+        sort: 0,
+        title: 'Disk Free Space GB'
       }]
     };
     function makeChart(data, metric) {
@@ -68,22 +75,26 @@ define(function (require) {
     }
     return {
       restrict: 'E',
-      scope: { data: '=' },
+      scope: { data: '=', nodes: '='},
       link: function ($scope, $el) {
         var tableRowTemplate = React.createClass({
+          getInitialState: function() { return $scope.nodes[this.props.name]; },
+          componentWillReceiveProps: function(newProps) { this.setState($scope.nodes[newProps.name]); },
           render: function() {
             var boundTemplateFn = makeTdWithPropKey.bind(this);
-            var $tdsArr = initialTableOptions.dataKeys.map(boundTemplateFn);
+            var $tdsArr = initialTableOptions.columns.map(boundTemplateFn);
+            return make.tr({className: 'big no-border', key: 'row-' + this.props.name},
+              $tdsArr);
+            /*
             var trAttrs = {
               key: 'stats',
               className: 'big'
             };
-            var that = this;
+            var numCols = initialTableOptions.columns.length;
             var $chartsArr = _.keys(this.props.metrics).map(function(key) {
               var source = that.props.metrics[key];
               return makeChart(source.data, source.metric);
             });
-            var numCols = initialTableOptions.dataKeys.length;
             return make.tr({className: 'big no-border', key: 'row-' + this.props.name},
               make.td({colSpan: numCols, key: 'table-td-wrap'},
                 make.table({className: 'nested-table', key: 'table'},
@@ -91,7 +102,7 @@ define(function (require) {
                     elWrapper: 'tbody',
                     activator: make.tr(trAttrs, $tdsArr),
                     content: make.tr({key: 'charts'}, make.td({colSpan: numCols}, $chartsArr))
-                  }))));
+                  }))));*/
           }
         });
 

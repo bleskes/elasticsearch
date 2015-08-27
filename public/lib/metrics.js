@@ -123,6 +123,18 @@ module.exports = {
     type: 'node',
     derivative: false
   },
+  'node_space_free': {
+    active: true,
+    field: 'node_stats.fs.total.available_in_bytes',
+    label: 'Disk Free Space GB',
+    description: 'The free disk space available on the node',
+    format: '0.0b',
+    metricAgg: 'max',
+    units: '',
+    defaults: { warning: '>2', critical: '>4', interval: '1m', periods: 1 },
+    type: 'node',
+    derivative: false
+  },
   'index_throttle_time': {
     active: true,
     field: 'index_stats.primaries.indexing.throttle_time_in_millis',
