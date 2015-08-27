@@ -20,8 +20,7 @@ package org.elasticsearch.marvel.agent.collector.node;
 
 import com.google.common.collect.ImmutableList;
 import org.elasticsearch.action.admin.cluster.node.stats.NodeStats;
-import org.elasticsearch.bootstrap.Bootstrap;
-import org.elasticsearch.cluster.ClusterName;
+import org.elasticsearch.bootstrap.BootstrapInfo;
 import org.elasticsearch.cluster.ClusterService;
 import org.elasticsearch.cluster.routing.allocation.decider.DiskThresholdDecider;
 import org.elasticsearch.common.inject.ConfigurationException;
@@ -32,7 +31,8 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.discovery.DiscoveryService;
 import org.elasticsearch.marvel.agent.collector.AbstractCollector;
 import org.elasticsearch.marvel.agent.exporter.MarvelDoc;
-import org.elasticsearch.marvel.agent.settings.MarvelSettingsService;
+import org.elasticsearch.marvel.agent.settings.MarvelSettings;
+import org.elasticsearch.marvel.license.LicenseService;
 import org.elasticsearch.node.service.NodeService;
 
 import java.util.Collection;
@@ -56,11 +56,10 @@ public class NodeStatsCollector extends AbstractCollector<NodeStatsCollector> {
     private final Provider<DiskThresholdDecider> diskThresholdDeciderProvider;
 
     @Inject
-    public NodeStatsCollector(Settings settings, ClusterService clusterService, ClusterName clusterName,
-                              MarvelSettingsService marvelSettings,
+    public NodeStatsCollector(Settings settings, ClusterService clusterService, MarvelSettings marvelSettings, LicenseService licenseService,
                               NodeService nodeService, DiscoveryService discoveryService,
                               Provider<DiskThresholdDecider> diskThresholdDeciderProvider) {
-        super(settings, NAME, clusterService, clusterName, marvelSettings);
+        super(settings, NAME, clusterService, marvelSettings, licenseService);
         this.nodeService = nodeService;
         this.discoveryService = discoveryService;
         this.diskThresholdDeciderProvider = diskThresholdDeciderProvider;
@@ -84,16 +83,10 @@ public class NodeStatsCollector extends AbstractCollector<NodeStatsCollector> {
         Double diskThresholdWatermarkHigh = (diskThresholdDecider != null) ? 100.0 - diskThresholdDecider.getFreeDiskThresholdHigh() : -1;
         boolean diskThresholdDeciderEnabled = (diskThresholdDecider != null) && diskThresholdDecider.isEnabled();
 
-        results.add(buildMarvelDoc(clusterName.value(), TYPE, System.currentTimeMillis(),
-                discoveryService.localNode().id(), clusterService.state().nodes().localNodeMaster(), nodeStats,
-                Bootstrap.isMemoryLocked(), diskThresholdWatermarkHigh, diskThresholdDeciderEnabled));
+        results.add(new NodeStatsMarvelDoc(clusterUUID(), TYPE, System.currentTimeMillis(),
+                discoveryService.localNode().id(), isLocalNodeMaster(), nodeStats,
+                BootstrapInfo.isMemoryLocked(), diskThresholdWatermarkHigh, diskThresholdDeciderEnabled));
 
         return results.build();
-    }
-
-    protected MarvelDoc buildMarvelDoc(String clusterName, String type, long timestamp,
-                                       String nodeId, boolean nodeMaster, NodeStats nodeStats,
-                                       boolean mlockall, Double diskThresholdWaterMarkHigh, boolean diskThresholdDeciderEnabled) {
-        return NodeStatsMarvelDoc.createMarvelDoc(clusterName, type, timestamp, nodeId, nodeMaster, nodeStats, mlockall, diskThresholdWaterMarkHigh, diskThresholdDeciderEnabled);
     }
 }

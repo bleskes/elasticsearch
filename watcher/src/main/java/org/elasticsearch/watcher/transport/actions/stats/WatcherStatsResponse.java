@@ -19,14 +19,13 @@ package org.elasticsearch.watcher.transport.actions.stats;
 
 import org.elasticsearch.action.ActionResponse;
 import org.elasticsearch.common.Nullable;
+import org.elasticsearch.common.io.stream.StreamInput;
+import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.watcher.WatcherBuild;
 import org.elasticsearch.watcher.WatcherMetaData;
 import org.elasticsearch.watcher.WatcherState;
-import org.elasticsearch.watcher.WatcherVersion;
-import org.elasticsearch.common.io.stream.StreamInput;
-import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.watcher.execution.QueuedWatch;
 import org.elasticsearch.watcher.execution.WatchExecutionSnapshot;
 
@@ -37,7 +36,6 @@ import java.util.Locale;
 
 public class WatcherStatsResponse extends ActionResponse implements ToXContent {
 
-    private WatcherVersion version;
     private WatcherBuild build;
     private long watchesCount;
     private WatcherState watcherState;
@@ -96,17 +94,6 @@ public class WatcherStatsResponse extends ActionResponse implements ToXContent {
     }
 
     /**
-     * @return The watcher plugin version.
-     */
-    public WatcherVersion getVersion() {
-        return version;
-    }
-
-    void setVersion(WatcherVersion version) {
-        this.version = version;
-    }
-
-    /**
      * @return The watcher plugin build information.
      */
     public WatcherBuild getBuild() {
@@ -150,7 +137,6 @@ public class WatcherStatsResponse extends ActionResponse implements ToXContent {
         threadPoolQueueSize = in.readLong();
         threadPoolMaxSize = in.readLong();
         watcherState = WatcherState.fromId(in.readByte());
-        version = WatcherVersion.readVersion(in);
         build = WatcherBuild.readBuild(in);
 
         if (in.readBoolean()) {
@@ -177,7 +163,6 @@ public class WatcherStatsResponse extends ActionResponse implements ToXContent {
         out.writeLong(threadPoolQueueSize);
         out.writeLong(threadPoolMaxSize);
         out.writeByte(watcherState.getId());
-        WatcherVersion.writeVersion(version, out);
         WatcherBuild.writeBuild(build, out);
 
         if (snapshots != null) {

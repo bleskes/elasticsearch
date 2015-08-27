@@ -37,6 +37,7 @@ public interface Action extends ToXContent {
         public enum Status implements ToXContent {
             SUCCESS,
             FAILURE,
+            PARTIAL_FAILURE,
             THROTTLED,
             SIMULATED;
 
@@ -107,7 +108,6 @@ public interface Action extends ToXContent {
     }
 
     interface Field {
-        ParseField STATUS = new ParseField("status");
         ParseField REASON = new ParseField("reason");
     }
 }

@@ -31,6 +31,7 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 
@@ -82,7 +83,7 @@ public class IpFilteringIntegrationTests extends ShieldIntegTestCase {
     @Test
     public void testThatIpFilteringIsAppliedForProfile() throws Exception {
         try (Socket socket = new Socket()){
-            trySocketConnection(socket, new InetSocketAddress("localhost", getProfilePort("client")));
+            trySocketConnection(socket, new InetSocketAddress(InetAddress.getLoopbackAddress(), getProfilePort("client")));
             assertThat(socket.isClosed(), is(true));
         }
     }

@@ -42,6 +42,7 @@ import javax.net.ssl.SSLException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.BindException;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.security.SecureRandom;
 import java.util.ArrayList;
@@ -199,7 +200,7 @@ public class HandshakeWaitingHandlerTests extends ESTestCase {
         int maxTries = 10;
         while (tries <= maxTries) {
             try {
-                serverBootstrap.bind(new InetSocketAddress("localhost", randomPort));
+                serverBootstrap.bind(new InetSocketAddress(InetAddress.getLoopbackAddress(), randomPort));
                 break;
             } catch (Throwable t) {
                 if (t.getCause() instanceof BindException) {
@@ -257,7 +258,7 @@ public class HandshakeWaitingHandlerTests extends ESTestCase {
             buffer.writeLong(SecureRandom.getInstance("SHA1PRNG").nextLong());
 
             // Connect and wait, then immediately start writing
-            ChannelFuture future = bootstrap.connect(new InetSocketAddress("localhost", port));
+            ChannelFuture future = bootstrap.connect(new InetSocketAddress(InetAddress.getLoopbackAddress(), port));
             future.awaitUninterruptibly();
             Channel channel = future.getChannel();
 

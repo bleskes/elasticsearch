@@ -90,7 +90,7 @@ public class SslHostnameVerificationTests extends ShieldIntegTestCase {
                 .build();
 
         try (TransportClient client = TransportClient.builder().settings(settings).loadConfigSettings(false).build()) {
-            client.addTransportAddress(new InetSocketTransportAddress(inetSocketAddress.getHostName(), inetSocketAddress.getPort()));
+            client.addTransportAddress(new InetSocketTransportAddress(inetSocketAddress.getAddress(), inetSocketAddress.getPort()));
             client.admin().cluster().prepareHealth().get();
             fail("Expected a NoNodeAvailableException due to hostname verification failures");
         }

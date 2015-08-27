@@ -28,7 +28,7 @@ import java.io.IOException;
 
 public class NodeStatsRenderer extends AbstractRenderer<NodeStatsMarvelDoc> {
 
-    private static final String[] FILTERS = {
+    public static final String[] FILTERS = {
             // Extra information
             "node_stats.node_id",
             "node_stats.node_master",
@@ -44,6 +44,7 @@ public class NodeStatsRenderer extends AbstractRenderer<NodeStatsMarvelDoc> {
             "node_stats.fs.total.total_in_bytes",
             "node_stats.fs.total.free_in_bytes",
             "node_stats.fs.total.available_in_bytes",
+            "node_stats.os.load_average",
             "node_stats.process.max_file_descriptors",
             "node_stats.process.open_file_descriptors",
             "node_stats.jvm.mem.heap_used_in_bytes",
@@ -67,20 +68,17 @@ public class NodeStatsRenderer extends AbstractRenderer<NodeStatsMarvelDoc> {
     protected void doRender(NodeStatsMarvelDoc marvelDoc, XContentBuilder builder, ToXContent.Params params) throws IOException {
         builder.startObject(Fields.NODE_STATS);
 
-        NodeStatsMarvelDoc.Payload payload = marvelDoc.payload();
-        if (payload != null) {
+        builder.field(Fields.NODE_ID, marvelDoc.getNodeId());
+        builder.field(Fields.NODE_MASTER, marvelDoc.isNodeMaster());
+        builder.field(Fields.MLOCKALL, marvelDoc.isMlockall());
+        builder.field(Fields.DISK_THRESHOLD_ENABLED, marvelDoc.isDiskThresholdDeciderEnabled());
+        builder.field(Fields.DISK_THRESHOLD_WATERMARK_HIGH, marvelDoc.getDiskThresholdWaterMarkHigh());
 
-            builder.field(Fields.NODE_ID, payload.getNodeId());
-            builder.field(Fields.NODE_MASTER, payload.isNodeMaster());
-            builder.field(Fields.MLOCKALL, payload.isMlockall());
-            builder.field(Fields.DISK_THRESHOLD_ENABLED, payload.isDiskThresholdDeciderEnabled());
-            builder.field(Fields.DISK_THRESHOLD_WATERMARK_HIGH, payload.getDiskThresholdWaterMarkHigh());
-
-            NodeStats nodeStats = payload.getNodeStats();
-            if (nodeStats != null) {
-                nodeStats.toXContent(builder, params);
-            }
+        NodeStats nodeStats = marvelDoc.getNodeStats();
+        if (nodeStats != null) {
+            nodeStats.toXContent(builder, params);
         }
+
         builder.endObject();
     }
 

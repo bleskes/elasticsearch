@@ -26,8 +26,10 @@ import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.support.IndicesOptions;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.inject.util.Providers;
-import org.elasticsearch.common.network.NetworkUtils;
+import org.elasticsearch.common.network.NetworkAddress;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.transport.BoundTransportAddress;
+import org.elasticsearch.common.transport.DummyTransportAddress;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.elasticsearch.common.transport.LocalTransportAddress;
 import org.elasticsearch.env.Environment;
@@ -44,6 +46,7 @@ import org.elasticsearch.test.ESIntegTestCase;
 import org.elasticsearch.test.InternalTestCluster;
 import org.elasticsearch.test.ShieldIntegTestCase;
 import org.elasticsearch.test.ShieldSettingsSource;
+import org.elasticsearch.transport.Transport;
 import org.elasticsearch.transport.TransportInfo;
 import org.elasticsearch.transport.TransportMessage;
 import org.elasticsearch.transport.TransportRequest;
@@ -78,7 +81,7 @@ public class IndexAuditTrailTests extends ShieldIntegTestCase {
 
     public static final String SECOND_CLUSTER_NODE_PREFIX = "remote_" + SUITE_CLUSTER_NODE_PREFIX;
 
-    private static final IndexAuditUserHolder user = new IndexAuditUserHolder(IndexAuditTrail.INDEX_NAME_PREFIX);
+    private static final IndexAuditUserHolder user = new IndexAuditUserHolder();
 
     private IndexNameResolver.Rollover rollover;
     private IndexAuditTrail auditor;
@@ -159,7 +162,7 @@ public class IndexAuditTrailTests extends ShieldIntegTestCase {
                                 .build();
                     }
             };
-            cluster2 = new InternalTestCluster(randomLong(), createTempDir(), numNodes, numNodes, cluster2Name, cluster2SettingsSource, 0, false, SECOND_CLUSTER_NODE_PREFIX);
+            cluster2 = new InternalTestCluster("network", randomLong(), createTempDir(), numNodes, numNodes, cluster2Name, cluster2SettingsSource, 0, false, SECOND_CLUSTER_NODE_PREFIX);
             cluster2.beforeTest(getRandom(), 0.5);
             remoteClient = cluster2.client();
 
@@ -170,7 +173,7 @@ public class IndexAuditTrailTests extends ShieldIntegTestCase {
             Settings.Builder builder = Settings.builder()
                     .put(settings)
                     .put(ShieldPlugin.ENABLED_SETTING_NAME, useShield)
-                    .put(remoteSettings(inet.address().getAddress().getHostAddress(), inet.address().getPort(), cluster2Name))
+                    .put(remoteSettings(NetworkAddress.formatAddress(inet.address().getAddress()), inet.address().getPort(), cluster2Name))
                     .put("shield.audit.index.client.shield.user", ShieldSettingsSource.DEFAULT_USER_NAME + ":" + ShieldSettingsSource.DEFAULT_PASSWORD);
 
             if (useSSL) {
@@ -187,9 +190,11 @@ public class IndexAuditTrailTests extends ShieldIntegTestCase {
         logger.info("--> settings: [{}]", settings.getAsMap().toString());
         when(authService.authenticate(mock(RestRequest.class))).thenThrow(new UnsupportedOperationException(""));
         when(authService.authenticate("_action", new LocalHostMockMessage(), user.user())).thenThrow(new UnsupportedOperationException(""));
+        Transport transport = mock(Transport.class);
+        when(transport.boundAddress()).thenReturn(new BoundTransportAddress(DummyTransportAddress.INSTANCE, DummyTransportAddress.INSTANCE));
 
         Environment env = new Environment(settings);
-        auditor = new IndexAuditTrail(settings, user, env, authService, Providers.of(client()));
+        auditor = new IndexAuditTrail(settings, user, env, authService, transport, Providers.of(client()));
         auditor.start(true);
     }
 
@@ -251,7 +256,7 @@ public class IndexAuditTrailTests extends ShieldIntegTestCase {
         SearchHit hit = getIndexedAuditMessage();
 
         assertAuditMessage(hit, "rest", "anonymous_access_denied");
-        assertThat("127.0.0.1", equalTo(hit.field("origin_address").getValue()));
+        assertThat(NetworkAddress.formatAddress(InetAddress.getLoopbackAddress()), equalTo(hit.field("origin_address").getValue()));
         assertThat("_uri", equalTo(hit.field("uri").getValue()));
         assertThat((String) hit.field("origin_type").getValue(), is("rest"));
         assertThat(hit.field("request_body").getValue(), notNullValue());
@@ -548,7 +553,7 @@ public class IndexAuditTrailTests extends ShieldIntegTestCase {
     public void testConnectionGranted() throws Exception {
 
         initialize();
-        InetAddress inetAddress = InetAddress.getLocalHost();
+        InetAddress inetAddress = InetAddress.getLoopbackAddress();
         ShieldIpFilterRule rule = IPFilter.DEFAULT_PROFILE_ACCEPT_ALL;
         auditor.connectionGranted(inetAddress, "default", rule);
         awaitIndexCreation(resolveIndexName());
@@ -563,7 +568,7 @@ public class IndexAuditTrailTests extends ShieldIntegTestCase {
     @Test(expected = IndexNotFoundException.class)
     public void testConnectionGranted_Muted() throws Exception {
         initialize("connection_granted");
-        InetAddress inetAddress = InetAddress.getLocalHost();
+        InetAddress inetAddress = InetAddress.getLoopbackAddress();
         ShieldIpFilterRule rule = IPFilter.DEFAULT_PROFILE_ACCEPT_ALL;
         auditor.connectionGranted(inetAddress, "default", rule);
         getClient().prepareExists(resolveIndexName()).execute().actionGet();
@@ -573,7 +578,7 @@ public class IndexAuditTrailTests extends ShieldIntegTestCase {
     public void testConnectionDenied() throws Exception {
 
         initialize();
-        InetAddress inetAddress = InetAddress.getLocalHost();
+        InetAddress inetAddress = InetAddress.getLoopbackAddress();
         ShieldIpFilterRule rule = new ShieldIpFilterRule(false, "_all");
         auditor.connectionDenied(inetAddress, "default", rule);
         awaitIndexCreation(resolveIndexName());
@@ -588,7 +593,7 @@ public class IndexAuditTrailTests extends ShieldIntegTestCase {
     @Test(expected = IndexNotFoundException.class)
     public void testConnectionDenied_Muted() throws Exception {
         initialize("connection_denied");
-        InetAddress inetAddress = InetAddress.getLocalHost();
+        InetAddress inetAddress = InetAddress.getLoopbackAddress();
         ShieldIpFilterRule rule = new ShieldIpFilterRule(false, "_all");
         auditor.connectionDenied(inetAddress, "default", rule);
         getClient().prepareExists(resolveIndexName()).execute().actionGet();
@@ -599,8 +604,8 @@ public class IndexAuditTrailTests extends ShieldIntegTestCase {
         DateTime dateTime = ISODateTimeFormat.dateTimeParser().withZoneUTC().parseDateTime((String) hit.field("@timestamp").getValue());
         assertThat(dateTime.isBefore(DateTime.now(DateTimeZone.UTC)), is(true));
 
-        assertThat(NetworkUtils.getLocalHostName("n/a"), equalTo(hit.field("node_host_name").getValue()));
-        assertThat(NetworkUtils.getLocalHostAddress("n/a"), equalTo(hit.field("node_host_address").getValue()));
+        assertThat(DummyTransportAddress.INSTANCE.getHost(), equalTo(hit.field("node_host_name").getValue()));
+        assertThat(DummyTransportAddress.INSTANCE.getAddress(), equalTo(hit.field("node_host_address").getValue()));
 
         assertEquals(layer, hit.field("layer").getValue());
         assertEquals(type, hit.field("event_type").getValue());
@@ -614,13 +619,13 @@ public class IndexAuditTrailTests extends ShieldIntegTestCase {
 
     private static class RemoteHostMockMessage extends TransportMessage<RemoteHostMockMessage> {
         RemoteHostMockMessage() throws Exception {
-            remoteAddress(new InetSocketTransportAddress(InetAddress.getLocalHost(), 1234));
+            remoteAddress(DummyTransportAddress.INSTANCE);
         }
     }
 
     private static class RemoteHostMockTransportRequest extends TransportRequest {
         RemoteHostMockTransportRequest() throws Exception {
-            remoteAddress(new InetSocketTransportAddress(InetAddress.getLocalHost(), 1234));
+            remoteAddress(DummyTransportAddress.INSTANCE);
         }
     }
 
@@ -659,7 +664,7 @@ public class IndexAuditTrailTests extends ShieldIntegTestCase {
 
     private RestRequest mockRestRequest() {
         RestRequest request = mock(RestRequest.class);
-        when(request.getRemoteAddress()).thenReturn(new InetSocketAddress("127.0.0.1", 9200));
+        when(request.getRemoteAddress()).thenReturn(new InetSocketAddress(InetAddress.getLoopbackAddress(), 9200));
         when(request.uri()).thenReturn("_uri");
         return request;
     }
@@ -722,7 +727,7 @@ public class IndexAuditTrailTests extends ShieldIntegTestCase {
     }
 
     static String remoteHostAddress() throws Exception {
-        return InetAddress.getLocalHost().getHostAddress();
+        return DummyTransportAddress.INSTANCE.toString();
     }
 }
 

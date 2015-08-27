@@ -29,10 +29,8 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.license.core.License;
 import org.elasticsearch.license.plugin.core.LicensesClientService;
 import org.elasticsearch.license.plugin.core.LicensesService;
-import org.elasticsearch.plugins.AbstractPlugin;
 import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.rest.RestStatus;
-import org.elasticsearch.watcher.WatcherVersion;
 import org.elasticsearch.watcher.actions.ActionStatus;
 import org.elasticsearch.watcher.history.HistoryStore;
 import org.elasticsearch.watcher.test.AbstractWatcherIntegrationTests;
@@ -43,6 +41,7 @@ import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 import static org.elasticsearch.index.query.QueryBuilders.*;
@@ -116,7 +115,7 @@ public class LicenseIntegrationTests extends AbstractWatcherIntegrationTests {
         assertThat(watcherClient().prepareDeleteWatch(watchName).get().isFound(), is(true));
 
         // watcher stats API should work
-        assertThat(watcherClient().prepareWatcherStats().get().getVersion(), is(WatcherVersion.CURRENT));
+        assertThat(watcherClient().prepareWatcherStats().get().getWatchesCount(), is(0L));
 
         // watcher service API should work
         WatcherServiceResponse serviceResponse = watcherClient().prepareWatchService().restart().get();
@@ -273,7 +272,7 @@ public class LicenseIntegrationTests extends AbstractWatcherIntegrationTests {
         assertThat(watcherClient().prepareDeleteWatch(watchName).get().isFound(), is(true));
 
         // watcher stats API should work
-        assertThat(watcherClient().prepareWatcherStats().get().getVersion(), is(WatcherVersion.CURRENT));
+        assertThat(watcherClient().prepareWatcherStats().get().getWatchesCount(), is(0L));
 
         // watcher service API should work
         assertThat(watcherClient().prepareWatchService().stop().get().isAcknowledged(), is(true));
@@ -291,7 +290,7 @@ public class LicenseIntegrationTests extends AbstractWatcherIntegrationTests {
         }
     }
 
-    public static class MockLicensePlugin extends AbstractPlugin {
+    public static class MockLicensePlugin extends Plugin {
 
         public static final String NAME = "internal-test-licensing";
 
@@ -306,8 +305,8 @@ public class LicenseIntegrationTests extends AbstractWatcherIntegrationTests {
         }
 
         @Override
-        public Collection<Class<? extends Module>> modules() {
-            return ImmutableSet.<Class<? extends Module>>of(InternalLicenseModule.class);
+        public Collection<Module> nodeModules() {
+            return Collections.<Module>singletonList(new InternalLicenseModule());
         }
     }
 
@@ -330,7 +329,7 @@ public class LicenseIntegrationTests extends AbstractWatcherIntegrationTests {
         }
 
         @Override
-        public void register(String s, LicensesService.TrialLicenseOptions trialLicenseOptions, Collection<LicensesService.ExpirationCallback> collection, Listener listener) {
+        public void register(String s, LicensesService.TrialLicenseOptions trialLicenseOptions, Collection<LicensesService.ExpirationCallback> collection, AcknowledgementCallback acknowledgementCallback, Listener listener) {
             listeners.add(listener);
             enable();
         }
