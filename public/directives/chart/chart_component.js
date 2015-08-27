@@ -28,6 +28,10 @@ define(function (require) {
       return make.div(attrs, $title, $chartWrapper);
     },
     drawJubileeChart: function () {
+      var data = this.state.chartData;
+      if( !data || !data.length ) {
+        return;
+      }
       var children = React.findDOMNode(this).children;
       d3.select(children[children.length - 1])
         .datum([this.state.chartData])
@@ -52,7 +56,16 @@ define(function (require) {
       }
     },
     componentWillMount: function () {
-      // var Tooltip = require('plugins/marvel/directives/tooltip');
+      var Tooltip = require('plugins/marvel/directives/tooltip');
+      var that = this;
+      function showTooltip(evt, yValue, chartIndex) {
+        var val = yValue[0];
+        if( val !== null ) {
+          Tooltip.showTooltip(evt.pageX, evt.pageY, 'Value: ' + val.y);
+        } else {
+          Tooltip.removeTooltip();
+        }
+      }
       var lineChart = new jubilee.chart.line()
         .height(150)
         .yScale({nice: true})
@@ -78,23 +91,11 @@ define(function (require) {
             showGridLines: true
           }
         })
-        .circles({
-          show: false
-        })
-        .zeroLine({
-          add: false
-        })
-        .on('mouseenter', function(evt) {
-          console.log('mouseenter');
-          // Tooltip.showTooltip(evt.pageX, evt.pageY, 'dummy content');
-        })
-        .on('mousemove', function(evt) {
-          console.log('mousemove');
-          // Tooltip.showTooltip(evt.pageX, evt.pageY, 'dummy content')
-        })
-        .on('mouseleave', function(evt) {
-          console.log('mouseleave');
-          // Tooltip.emptyTooltip();
+        .zeroLine({ add: false })
+        .on('mouseenter', showTooltip)
+        .on('mousemove', showTooltip)
+        .on('mouseleave', function(evt, yValue, chartIndex) {
+          Tooltip.removeTooltip();
         });
 
       this.jLineChart = lineChart;
