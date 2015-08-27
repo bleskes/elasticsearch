@@ -5,13 +5,26 @@ define(function (require) {
   var formatNumber = require('plugins/marvel/lib/format_number');
   var jubilee = require('jubilee/build/jubilee');
 
+
+  var LoadingComponent = React.createClass({
+    render: function() {
+      var $icon = make.i({className: 'fa fa-spinner fa-pulse'})
+      return make.span({
+        className: 'loading'
+      }, $icon, ' Loading');
+    }
+  });
+
   var MarvelSparkLine = React.createClass({
     getInitialState: function () {
       var data = this.props.data;
       if (!data && this.props.source) {
         data = this.props.source.data;
       }
-      return { chartData: data || [] };
+      return {
+        chartData: data || [],
+        loading: true
+      };
     },
     componentDidMount: function () { this.drawJubileeChart(); },
     componentDidUpdate: function () { this.drawJubileeChart(); },
@@ -27,13 +40,22 @@ define(function (require) {
 
       return make.div(attrs, $title, $chartWrapper);
     },
+    shouldComponentUpdate: function(nextProps, nextState) {
+      return this.state.loading === nextState.loading;
+    },
     drawJubileeChart: function () {
       var data = this.state.chartData;
+      var children = React.findDOMNode(this).children;
+      var lastChild = children[children.length - 1];
       if( !data || !data.length ) {
+        React.render(React.createElement(LoadingComponent), lastChild);
         return;
       }
-      var children = React.findDOMNode(this).children;
-      d3.select(children[children.length - 1])
+      if( this.state.loading ) {
+        lastChild.removeChild(lastChild.childNodes[0]);
+        this.setState({loading: false});
+      }
+      d3.select(lastChild)
         .datum([this.state.chartData])
         .call(this.jLineChart);
     },
