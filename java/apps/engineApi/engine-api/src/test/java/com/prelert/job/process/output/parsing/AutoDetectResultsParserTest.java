@@ -53,7 +53,7 @@ import com.prelert.job.ModelSizeStats;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.alert.AlertObserver;
 import com.prelert.job.persistence.JobResultsPersister;
-import com.prelert.job.process.normaliser.Renormaliser;
+import com.prelert.job.process.normaliser.BlockingQueueRenormaliser;
 import com.prelert.job.process.output.parsing.AutoDetectResultsParser;
 import com.prelert.job.quantiles.Quantiles;
 import com.prelert.job.results.Bucket;
@@ -222,7 +222,7 @@ public class AutoDetectResultsParserTest
 
         InputStream inputStream = new ByteArrayInputStream(METRIC_OUTPUT_SAMPLE.getBytes(StandardCharsets.UTF_8));
         ResultsPersister persister = new ResultsPersister();
-        Renormaliser renormaliser = Mockito.mock(Renormaliser.class);
+        BlockingQueueRenormaliser renormaliser = Mockito.mock(BlockingQueueRenormaliser.class);
 
         AutoDetectResultsParser parser = new AutoDetectResultsParser();
 
@@ -328,7 +328,7 @@ public class AutoDetectResultsParserTest
 
         InputStream inputStream = new ByteArrayInputStream(POPULATION_OUTPUT_SAMPLE.getBytes(StandardCharsets.UTF_8));
         ResultsPersister persister = new ResultsPersister();
-        Renormaliser renormaliser = Mockito.mock(Renormaliser.class);
+        BlockingQueueRenormaliser renormaliser = Mockito.mock(BlockingQueueRenormaliser.class);
 
         AutoDetectResultsParser parser = new AutoDetectResultsParser();
 
@@ -407,7 +407,7 @@ public class AutoDetectResultsParserTest
         // 1. normalised prob threshold
         InputStream inputStream = new ByteArrayInputStream(METRIC_OUTPUT_SAMPLE.getBytes(StandardCharsets.UTF_8));
         ResultsPersister persister = new ResultsPersister();
-        Renormaliser renormaliser = Mockito.mock(Renormaliser.class);
+        BlockingQueueRenormaliser renormaliser = Mockito.mock(BlockingQueueRenormaliser.class);
 
         double probThreshold = 9.0;
         double scoreThreshold = 100.0;

@@ -30,34 +30,30 @@ import java.io.InputStream;
 
 import org.apache.log4j.Logger;
 
-import com.prelert.job.persistence.JobProviderFactory;
 import com.prelert.job.persistence.JobResultsPeristerFactory;
 
 /**
  * Factory method for creating new {@linkplain ResultsReader} objects
  * to parse the autodetect output.
- * Requires 2 other factories for creating the
+ * Requires 2 other factories for creating the {@linkplain ResultsReader}
  *
  */
 public class ResultsReaderFactory
 {
-    private JobResultsPeristerFactory m_PersisterFactory;
-    private JobProviderFactory m_ProviderFactory;
+    private final JobResultsPeristerFactory m_PersisterFactory;
+    private final RenormaliserFactory m_RenormaliserFactory;
 
-    public ResultsReaderFactory(JobProviderFactory providerFactory,
-                                JobResultsPeristerFactory persisterFactory)
+    public ResultsReaderFactory(JobResultsPeristerFactory persisterFactory,
+                                RenormaliserFactory renormaliserFactory)
     {
-        m_ProviderFactory = providerFactory;
         m_PersisterFactory = persisterFactory;
+        m_RenormaliserFactory = renormaliserFactory;
     }
 
-	public ResultsReader newResultsParser(String jobId, InputStream autoDetectOutputStream,
-			Logger logger)
-	{
-	    return new ResultsReader(jobId,
-	                             m_PersisterFactory.jobResultsPersister(jobId),
-	                             m_ProviderFactory.jobProvider(),
-	                             autoDetectOutputStream,
-	                             logger);
+    public ResultsReader newResultsParser(String jobId, InputStream autoDetectOutputStream,
+            Logger logger)
+    {
+        return new ResultsReader(m_RenormaliserFactory.create(jobId),
+                m_PersisterFactory.jobResultsPersister(jobId), autoDetectOutputStream, logger);
     }
 }

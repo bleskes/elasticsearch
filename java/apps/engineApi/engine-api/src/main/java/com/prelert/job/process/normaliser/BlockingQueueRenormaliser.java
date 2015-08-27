@@ -42,6 +42,7 @@ import com.prelert.job.UnknownJobException;
 import com.prelert.job.persistence.JobProvider;
 import com.prelert.job.persistence.QueryPage;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
+import com.prelert.job.process.output.parsing.Renormaliser;
 import com.prelert.job.quantiles.Quantiles;
 import com.prelert.job.results.AnomalyRecord;
 import com.prelert.job.results.Bucket;
@@ -58,7 +59,7 @@ import com.prelert.job.results.Bucket;
  * Access to the job results and updates to the results (buckets,
  * records) is via the {@linkplain JobProvider} interface.
  */
-public class Renormaliser
+public class BlockingQueueRenormaliser implements Renormaliser
 {
     private String m_JobId;
     private JobProvider m_JobProvider;
@@ -96,7 +97,7 @@ public class Renormaliser
      * @param jobId The job Id/datastore index
      * @param jobProvider The job provider for accessing and updating job results
      */
-    public Renormaliser(String jobId, JobProvider jobProvider)
+    public BlockingQueueRenormaliser(String jobId, JobProvider jobProvider)
     {
         m_JobId = jobId;
         m_JobProvider = jobProvider;
@@ -114,6 +115,7 @@ public class Renormaliser
     /**
      * Shut down the worker thread
      */
+    @Override
     public synchronized boolean shutdown(Logger logger)
     {
         try
@@ -140,19 +142,18 @@ public class Renormaliser
      * Is the worker thread running
      * @return
      */
-    public boolean isWorkerThreadRunning()
+    boolean isWorkerThreadRunning()
     {
         return m_QuantileUpdateThread.isAlive();
     }
 
-
     /**
      * Update the anomaly score field on all previously persisted buckets
      * and all contained records
-     * @param sysChangeState
-     * @param endTime
+     * @param quantiles
      * @param logger
      */
+    @Override
     public synchronized void renormalise(Quantiles quantiles, Logger logger)
     {
         if (m_QuantileUpdateThread.isAlive())
@@ -327,6 +328,7 @@ public class Renormaliser
     /**
      * Blocks until the queue is empty and no normalisation is in progress.
      */
+    @Override
     public void waitUntilIdle()
     {
         synchronized (m_WaitForIdleLock)
@@ -411,7 +413,7 @@ public class Renormaliser
                     QuantileInfo latestInfo = null;
 
                     // take() will block if the queue is empty
-                    QuantileInfo info = Renormaliser.this.m_UpdatedQuantileQueue.take();
+                    QuantileInfo info = BlockingQueueRenormaliser.this.m_UpdatedQuantileQueue.take();
                     setIsNormalisationInProgress();
                     while (keepGoing && info != null)
                     {
@@ -433,12 +435,12 @@ public class Renormaliser
                                 throw new IllegalStateException();
                         }
                         // poll() will return null if the queue is empty
-                        info = Renormaliser.this.m_UpdatedQuantileQueue.poll();
+                        info = BlockingQueueRenormaliser.this.m_UpdatedQuantileQueue.poll();
                     }
 
                     if (latestInfo != null)
                     {
-                        Renormaliser.this.updateScores(latestInfo.m_State,
+                        BlockingQueueRenormaliser.this.updateScores(latestInfo.m_State,
                                 latestInfo.m_EndBucketEpochMs, latestInfo.m_Logger);
                     }
 
@@ -447,8 +449,8 @@ public class Renormaliser
                     // a) The next normalisation starting
                     // b) A request to close the job returning
                     lastLogger.info("Renormaliser thread about to refresh indexes");
-                    lastLogger.trace("ES API CALL: refresh index " + Renormaliser.this.m_JobId);
-                    m_JobProvider.refreshIndex(Renormaliser.this.m_JobId);
+                    lastLogger.trace("ES API CALL: refresh index " + BlockingQueueRenormaliser.this.m_JobId);
+                    m_JobProvider.refreshIndex(BlockingQueueRenormaliser.this.m_JobId);
 
                     if (m_UpdatedQuantileQueue.isEmpty())
                     {

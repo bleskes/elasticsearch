@@ -34,9 +34,7 @@ import org.apache.log4j.Logger;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.prelert.job.alert.AlertObserver;
-import com.prelert.job.persistence.JobProvider;
 import com.prelert.job.persistence.JobResultsPersister;
-import com.prelert.job.process.normaliser.Renormaliser;
 import com.prelert.utils.json.AutoDetectParseException;
 
 /**
@@ -49,21 +47,19 @@ import com.prelert.utils.json.AutoDetectParseException;
  */
 public class ResultsReader implements Runnable
 {
-    private final String m_JobId;
     private final InputStream m_Stream;
     private final Logger m_Logger;
     private final AutoDetectResultsParser m_Parser;
     private final Renormaliser m_Renormaliser;
     private final JobResultsPersister m_ResultsPersister;
 
-    public ResultsReader(String jobId, JobResultsPersister persister, JobProvider jobProvider,
+    public ResultsReader(Renormaliser renormaliser, JobResultsPersister persister,
             InputStream stream, Logger logger)
     {
-        m_JobId = jobId;
         m_Stream = stream;
         m_Logger = logger;
         m_Parser = new AutoDetectResultsParser();
-        m_Renormaliser = new Renormaliser(m_JobId, jobProvider);
+        m_Renormaliser = renormaliser;
         m_ResultsPersister = persister;
     }
 
