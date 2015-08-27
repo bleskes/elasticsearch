@@ -21,6 +21,7 @@ package org.elasticsearch.action.admin.indices.stats;
 
 import com.google.common.collect.Lists;
 import org.elasticsearch.action.ShardOperationFailedException;
+import org.elasticsearch.action.admin.indices.shards.IndicesShardStoresRequest;
 import org.elasticsearch.action.support.ActionFilters;
 import org.elasticsearch.action.support.broadcast.BroadcastShardOperationFailedException;
 import org.elasticsearch.action.support.broadcast.node.TransportBroadcastByNodeAction;
@@ -50,7 +51,7 @@ import java.util.List;
 
 /**
  */
-public class TransportIndicesStatsAction extends TransportBroadcastByNodeAction<IndicesStatsRequest, IndicesStatsResponse, TransportIndicesStatsAction.IndexShardStatsRequest, TransportIndicesStatsAction.IndexShardStatsResponse, ShardStats> {
+public class TransportIndicesStatsAction extends TransportBroadcastByNodeAction<IndicesStatsRequest, IndicesStatsResponse, ShardStats> {
 
     private final IndicesService indicesService;
 
@@ -59,7 +60,7 @@ public class TransportIndicesStatsAction extends TransportBroadcastByNodeAction<
                                        TransportService transportService, IndicesService indicesService,
                                        ActionFilters actionFilters, IndexNameExpressionResolver indexNameExpressionResolver) {
         super(settings, IndicesStatsAction.NAME, threadPool, clusterService, transportService, actionFilters, indexNameExpressionResolver,
-                IndicesStatsRequest.class, IndexShardStatsRequest.class, ThreadPool.Names.MANAGEMENT);
+                IndicesStatsRequest.class, ThreadPool.Names.MANAGEMENT);
         this.indicesService = indicesService;
     }
 
@@ -82,31 +83,24 @@ public class TransportIndicesStatsAction extends TransportBroadcastByNodeAction<
     }
 
     @Override
-    protected IndicesStatsResponse newResponse(IndicesStatsRequest request, int totalShards, int successfulShards, int failedShards, List<IndexShardStatsResponse> responses, List<ShardOperationFailedException> shardFailures) {
-        List<ShardStats> concatenation = Lists.newArrayList();
-        for (IndexShardStatsResponse response : responses) {
-            concatenation.addAll(response.getShards());
-        }
-        return new IndicesStatsResponse(concatenation.toArray(new ShardStats[concatenation.size()]), totalShards, successfulShards, failedShards, shardFailures);
+    protected ShardStats readShardResult(StreamInput in) throws IOException {
+        return ShardStats.readShardStats(in);
     }
 
     @Override
-    protected IndexShardStatsRequest newNodeRequest(String nodeId, IndicesStatsRequest request, List<ShardRouting> shards) {
-        return new IndexShardStatsRequest(request, shards, nodeId);
+    protected IndicesStatsResponse newResponse(IndicesStatsRequest request, int totalShards, int successfulShards, int failedShards, List<ShardStats> responses, List<ShardOperationFailedException> shardFailures) {
+        return new IndicesStatsResponse(responses.toArray(new ShardStats[responses.size()]), totalShards, successfulShards, failedShards, shardFailures);
     }
 
     @Override
-    protected IndexShardStatsResponse newNodeResponse() {
-        return new IndexShardStatsResponse();
+    protected IndicesStatsRequest readRequestFrom(StreamInput in) throws IOException {
+        IndicesStatsRequest request = new IndicesStatsRequest();
+        request.readFrom(in);
+        return request;
     }
 
     @Override
-    protected IndexShardStatsResponse newNodeResponse(String nodeId, int totalShards, int successfulShards, List<ShardStats> shards, List<BroadcastShardOperationFailedException> exceptions) {
-        return new IndexShardStatsResponse(nodeId, totalShards, successfulShards, shards, exceptions);
-    }
-
-    @Override
-    protected ShardStats shardOperation(IndexShardStatsRequest request, ShardRouting shardRouting) {
+    protected ShardStats shardOperation(IndicesStatsRequest request, ShardRouting shardRouting) {
         IndexService indexService = indicesService.indexServiceSafe(shardRouting.shardId().getIndex());
         IndexShard indexShard = indexService.shardSafe(shardRouting.shardId().id());
         // if we don't have the routing entry yet, we need it stats wise, we treat it as if the shard is not ready yet
@@ -116,62 +110,62 @@ public class TransportIndicesStatsAction extends TransportBroadcastByNodeAction<
 
         CommonStatsFlags flags = new CommonStatsFlags().clear();
 
-        if (request.getIndicesLevelRequest().docs()) {
+        if (request.docs()) {
             flags.set(CommonStatsFlags.Flag.Docs);
         }
-        if (request.getIndicesLevelRequest().store()) {
+        if (request.store()) {
             flags.set(CommonStatsFlags.Flag.Store);
         }
-        if (request.getIndicesLevelRequest().indexing()) {
+        if (request.indexing()) {
             flags.set(CommonStatsFlags.Flag.Indexing);
-            flags.types(request.getIndicesLevelRequest().types());
+            flags.types(request.types());
         }
-        if (request.getIndicesLevelRequest().get()) {
+        if (request.get()) {
             flags.set(CommonStatsFlags.Flag.Get);
         }
-        if (request.getIndicesLevelRequest().search()) {
+        if (request.search()) {
             flags.set(CommonStatsFlags.Flag.Search);
-            flags.groups(request.getIndicesLevelRequest().groups());
+            flags.groups(request.groups());
         }
-        if (request.getIndicesLevelRequest().merge()) {
+        if (request.merge()) {
             flags.set(CommonStatsFlags.Flag.Merge);
         }
-        if (request.getIndicesLevelRequest().refresh()) {
+        if (request.refresh()) {
             flags.set(CommonStatsFlags.Flag.Refresh);
         }
-        if (request.getIndicesLevelRequest().flush()) {
+        if (request.flush()) {
             flags.set(CommonStatsFlags.Flag.Flush);
         }
-        if (request.getIndicesLevelRequest().warmer()) {
+        if (request.warmer()) {
             flags.set(CommonStatsFlags.Flag.Warmer);
         }
-        if (request.getIndicesLevelRequest().queryCache()) {
+        if (request.queryCache()) {
             flags.set(CommonStatsFlags.Flag.QueryCache);
         }
-        if (request.getIndicesLevelRequest().fieldData()) {
+        if (request.fieldData()) {
             flags.set(CommonStatsFlags.Flag.FieldData);
-            flags.fieldDataFields(request.getIndicesLevelRequest().fieldDataFields());
+            flags.fieldDataFields(request.fieldDataFields());
         }
-        if (request.getIndicesLevelRequest().percolate()) {
+        if (request.percolate()) {
             flags.set(CommonStatsFlags.Flag.Percolate);
         }
-        if (request.getIndicesLevelRequest().segments()) {
+        if (request.segments()) {
             flags.set(CommonStatsFlags.Flag.Segments);
         }
-        if (request.getIndicesLevelRequest().completion()) {
+        if (request.completion()) {
             flags.set(CommonStatsFlags.Flag.Completion);
-            flags.completionDataFields(request.getIndicesLevelRequest().completionFields());
+            flags.completionDataFields(request.completionFields());
         }
-        if (request.getIndicesLevelRequest().translog()) {
+        if (request.translog()) {
             flags.set(CommonStatsFlags.Flag.Translog);
         }
-        if (request.getIndicesLevelRequest().suggest()) {
+        if (request.suggest()) {
             flags.set(CommonStatsFlags.Flag.Suggest);
         }
-        if (request.getIndicesLevelRequest().requestCache()) {
+        if (request.requestCache()) {
             flags.set(CommonStatsFlags.Flag.RequestCache);
         }
-        if (request.getIndicesLevelRequest().recovery()) {
+        if (request.recovery()) {
             flags.set(CommonStatsFlags.Flag.Recovery);
         }
 

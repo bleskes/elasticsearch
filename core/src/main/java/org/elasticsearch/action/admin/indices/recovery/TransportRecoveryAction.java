@@ -23,10 +23,8 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.elasticsearch.action.ShardOperationFailedException;
 import org.elasticsearch.action.support.ActionFilters;
-import org.elasticsearch.action.support.DefaultShardOperationFailedException;
 import org.elasticsearch.action.support.broadcast.BroadcastShardOperationFailedException;
 import org.elasticsearch.action.support.broadcast.node.TransportBroadcastByNodeAction;
-import org.elasticsearch.action.support.indices.BaseBroadcastByNodeRequest;
 import org.elasticsearch.action.support.indices.BaseBroadcastByNodeResponse;
 import org.elasticsearch.cluster.ClusterService;
 import org.elasticsearch.cluster.ClusterState;
@@ -55,7 +53,7 @@ import java.util.Map;
  * Transport action for shard recovery operation. This transport action does not actually
  * perform shard recovery, it only reports on recoveries (both active and complete).
  */
-public class TransportRecoveryAction extends TransportBroadcastByNodeAction<RecoveryRequest, RecoveryResponse, TransportRecoveryAction.NodeRecoveryRequest, TransportRecoveryAction.NodeRecoveryResponse, RecoveryState> {
+public class TransportRecoveryAction extends TransportBroadcastByNodeAction<RecoveryRequest, RecoveryResponse, RecoveryState> {
 
     private final IndicesService indicesService;
 
@@ -64,53 +62,47 @@ public class TransportRecoveryAction extends TransportBroadcastByNodeAction<Reco
                                    TransportService transportService, IndicesService indicesService,
                                    ActionFilters actionFilters, IndexNameExpressionResolver indexNameExpressionResolver) {
         super(settings, RecoveryAction.NAME, threadPool, clusterService, transportService, actionFilters, indexNameExpressionResolver,
-                RecoveryRequest.class, NodeRecoveryRequest.class, ThreadPool.Names.MANAGEMENT);
+                RecoveryRequest.class, ThreadPool.Names.MANAGEMENT);
         this.indicesService = indicesService;
     }
 
     @Override
-    protected RecoveryResponse newResponse(RecoveryRequest request, int totalShards, int successfulShards, int failedShards, List<NodeRecoveryResponse> responses, List<ShardOperationFailedException> shardFailures) {
+    protected RecoveryState readShardResult(StreamInput in) throws IOException {
+        return RecoveryState.readRecoveryState(in);
+    }
+
+
+    @Override
+    protected RecoveryResponse newResponse(RecoveryRequest request, int totalShards, int successfulShards, int failedShards, List<RecoveryState> responses, List<ShardOperationFailedException> shardFailures) {
         Map<String, List<RecoveryState>> shardResponses = Maps.newHashMap();
-        for (NodeRecoveryResponse response : responses) {
-            for (RecoveryState recoveryState : response.recoveryStates) {
-                if (recoveryState == null) {
-                    continue;
-                }
-                String indexName = recoveryState.getShardId().getIndex();
-                if (!shardResponses.containsKey(indexName)) {
-                    shardResponses.put(indexName, Lists.<RecoveryState>newArrayList());
-                }
-                if (request.activeOnly()) {
-                    if (recoveryState.getStage() != RecoveryState.Stage.DONE) {
-                        shardResponses.get(indexName).add(recoveryState);
-                    }
-                } else {
+        for (RecoveryState recoveryState : responses) {
+            if (recoveryState == null) {
+                continue;
+            }
+            String indexName = recoveryState.getShardId().getIndex();
+            if (!shardResponses.containsKey(indexName)) {
+                shardResponses.put(indexName, Lists.<RecoveryState>newArrayList());
+            }
+            if (request.activeOnly()) {
+                if (recoveryState.getStage() != RecoveryState.Stage.DONE) {
                     shardResponses.get(indexName).add(recoveryState);
                 }
+            } else {
+                shardResponses.get(indexName).add(recoveryState);
             }
         }
         return new RecoveryResponse(totalShards, successfulShards, failedShards, request.detailed(), shardResponses, shardFailures);
     }
 
     @Override
-    protected NodeRecoveryRequest newNodeRequest(String nodeId, RecoveryRequest request, List<ShardRouting> shards) {
-        return new NodeRecoveryRequest(request, shards, nodeId);
+    protected RecoveryRequest readRequestFrom(StreamInput in) throws IOException {
+        final RecoveryRequest recoveryRequest = new RecoveryRequest();
+        recoveryRequest.readFrom(in);
+        return recoveryRequest;
     }
 
     @Override
-    protected NodeRecoveryResponse newNodeResponse() {
-        return new NodeRecoveryResponse();
-    }
-
-    @Override
-    protected NodeRecoveryResponse newNodeResponse(String nodeId, int totalShards, int successfulShards, List<RecoveryState> results, List<BroadcastShardOperationFailedException> exceptions) {
-        NodeRecoveryResponse response = new NodeRecoveryResponse(nodeId, totalShards, successfulShards, exceptions);
-        response.setRecoveryStates(results);
-        return response;
-    }
-
-    @Override
-    protected RecoveryState shardOperation(NodeRecoveryRequest request, ShardRouting shardRouting) {
+    protected RecoveryState shardOperation(RecoveryRequest request, ShardRouting shardRouting) {
         IndexService indexService = indicesService.indexServiceSafe(shardRouting.shardId().getIndex());
         IndexShard indexShard = indexService.shardSafe(shardRouting.shardId().id());
         return indexShard.recoveryState();
@@ -131,21 +123,6 @@ public class TransportRecoveryAction extends TransportBroadcastByNodeAction<Reco
         return state.blocks().indicesBlockedException(ClusterBlockLevel.READ, concreteIndices);
     }
 
-    static class NodeRecoveryRequest extends BaseBroadcastByNodeRequest<RecoveryRequest> {
-
-        NodeRecoveryRequest() {
-        }
-
-        NodeRecoveryRequest(RecoveryRequest request, List<ShardRouting> shards, String nodeId) {
-            super(nodeId, request, shards);
-        }
-
-        @Override
-        protected RecoveryRequest newRequest() {
-            return new RecoveryRequest();
-        }
-    }
-
     /**
      * Information regarding the recovery state of a shard.
      */
@@ -153,14 +130,16 @@ public class TransportRecoveryAction extends TransportBroadcastByNodeAction<Reco
 
         List<RecoveryState> recoveryStates;
 
-        public NodeRecoveryResponse() { }
+        public NodeRecoveryResponse() {
+        }
 
         /**
          * Constructs shard recovery in formation for the given index and shard id.
-         * @param nodeId Id of the node
-         * @param totalShards The total number of shards for which the operation was performed
+         *
+         * @param nodeId           Id of the node
+         * @param totalShards      The total number of shards for which the operation was performed
          * @param successfulShards The number of shards for which the operation was successful
-         * @param exceptions The exceptions from the failed shards
+         * @param exceptions       The exceptions from the failed shards
          */
         public NodeRecoveryResponse(String nodeId, int totalShards, int successfulShards, List<BroadcastShardOperationFailedException> exceptions) {
             super(nodeId, totalShards, successfulShards, exceptions);
@@ -178,7 +157,7 @@ public class TransportRecoveryAction extends TransportBroadcastByNodeAction<Reco
         /**
          * Gets the recovery state information for the shard. Null if shard wasn't recovered / recovery didn't start yet.
          *
-         * @return  Recovery state
+         * @return Recovery state
          */
         @Nullable
         public List<RecoveryState> recoveryStates() {
@@ -207,8 +186,8 @@ public class TransportRecoveryAction extends TransportBroadcastByNodeAction<Reco
         /**
          * Builds a new NodeRecoveryResponse from the give input stream.
          *
-         * @param in    Input stream
-         * @return      A new NodeRecoveryResponse
+         * @param in Input stream
+         * @return A new NodeRecoveryResponse
          * @throws IOException
          */
         public static NodeRecoveryResponse readShardRecoveryResponse(StreamInput in) throws IOException {

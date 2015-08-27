@@ -19,15 +19,10 @@
 
 package org.elasticsearch.action.admin.indices.upgrade.get;
 
-import com.google.common.collect.Lists;
 import org.elasticsearch.Version;
 import org.elasticsearch.action.ShardOperationFailedException;
 import org.elasticsearch.action.support.ActionFilters;
-import org.elasticsearch.action.support.DefaultShardOperationFailedException;
-import org.elasticsearch.action.support.broadcast.BroadcastShardOperationFailedException;
 import org.elasticsearch.action.support.broadcast.node.TransportBroadcastByNodeAction;
-import org.elasticsearch.action.support.indices.BaseBroadcastByNodeRequest;
-import org.elasticsearch.action.support.indices.BaseBroadcastByNodeResponse;
 import org.elasticsearch.cluster.ClusterService;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.block.ClusterBlockException;
@@ -37,7 +32,6 @@ import org.elasticsearch.cluster.routing.ShardRouting;
 import org.elasticsearch.cluster.routing.ShardsIterator;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.io.stream.StreamInput;
-import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.index.IndexService;
 import org.elasticsearch.index.engine.Segment;
@@ -47,13 +41,12 @@ import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportService;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
  *
  */
-public class TransportUpgradeStatusAction extends TransportBroadcastByNodeAction<UpgradeStatusRequest, UpgradeStatusResponse, TransportUpgradeStatusAction.NodeUpgradeStatusRequest, TransportUpgradeStatusAction.NodeUpgradeStatusResponse, ShardUpgradeStatus> {
+public class TransportUpgradeStatusAction extends TransportBroadcastByNodeAction<UpgradeStatusRequest, UpgradeStatusResponse, ShardUpgradeStatus> {
 
     private final IndicesService indicesService;
 
@@ -61,7 +54,7 @@ public class TransportUpgradeStatusAction extends TransportBroadcastByNodeAction
     public TransportUpgradeStatusAction(Settings settings, ThreadPool threadPool, ClusterService clusterService, TransportService transportService,
                                         IndicesService indicesService, ActionFilters actionFilters, IndexNameExpressionResolver indexNameExpressionResolver) {
         super(settings, UpgradeStatusAction.NAME, threadPool, clusterService, transportService, actionFilters, indexNameExpressionResolver,
-                UpgradeStatusRequest.class, NodeUpgradeStatusRequest.class, ThreadPool.Names.MANAGEMENT);
+                UpgradeStatusRequest.class, ThreadPool.Names.MANAGEMENT);
         this.indicesService = indicesService;
     }
 
@@ -84,31 +77,24 @@ public class TransportUpgradeStatusAction extends TransportBroadcastByNodeAction
     }
 
     @Override
-    protected UpgradeStatusResponse newResponse(UpgradeStatusRequest request, int totalShards, int successfulShards, int failedShards, List<NodeUpgradeStatusResponse> responses, List<ShardOperationFailedException> shardFailures) {
-        List<ShardUpgradeStatus> concatenation = Lists.newArrayList();
-        for (NodeUpgradeStatusResponse response : responses) {
-            concatenation.addAll(response.getShards());
-        }
-        return new UpgradeStatusResponse(concatenation.toArray(new ShardUpgradeStatus[concatenation.size()]), totalShards, successfulShards, failedShards, shardFailures);
+    protected ShardUpgradeStatus readShardResult(StreamInput in) throws IOException {
+        return ShardUpgradeStatus.readShardUpgradeStatus(in);
     }
 
     @Override
-    protected NodeUpgradeStatusRequest newNodeRequest(String nodeId, UpgradeStatusRequest request, List<ShardRouting> shards) {
-        return new NodeUpgradeStatusRequest(request, shards, nodeId);
+    protected UpgradeStatusResponse newResponse(UpgradeStatusRequest request, int totalShards, int successfulShards, int failedShards, List<ShardUpgradeStatus> responses, List<ShardOperationFailedException> shardFailures) {
+        return new UpgradeStatusResponse(responses.toArray(new ShardUpgradeStatus[responses.size()]), totalShards, successfulShards, failedShards, shardFailures);
     }
 
     @Override
-    protected NodeUpgradeStatusResponse newNodeResponse() {
-        return new NodeUpgradeStatusResponse();
+    protected UpgradeStatusRequest readRequestFrom(StreamInput in) throws IOException {
+        UpgradeStatusRequest request = new UpgradeStatusRequest();
+        request.readFrom(in);
+        return request;
     }
 
     @Override
-    protected NodeUpgradeStatusResponse newNodeResponse(String nodeId, int totalShards, int successfulShards, List<ShardUpgradeStatus> shards, List<BroadcastShardOperationFailedException> exceptions) {
-        return new NodeUpgradeStatusResponse(nodeId, totalShards, successfulShards, shards, exceptions);
-    }
-
-    @Override
-    protected ShardUpgradeStatus shardOperation(NodeUpgradeStatusRequest request, ShardRouting shardRouting) {
+    protected ShardUpgradeStatus shardOperation(UpgradeStatusRequest request, ShardRouting shardRouting) {
         IndexService indexService = indicesService.indexServiceSafe(shardRouting.shardId().getIndex());
         IndexShard indexShard = indexService.shardSafe(shardRouting.shardId().id());
         List<Segment> segments = indexShard.engine().segments(false);
@@ -128,62 +114,5 @@ public class TransportUpgradeStatusAction extends TransportBroadcastByNodeAction
         }
 
         return new ShardUpgradeStatus(indexShard.routingEntry(), total_bytes, to_upgrade_bytes, to_upgrade_bytes_ancient);
-    }
-
-    static class NodeUpgradeStatusRequest extends BaseBroadcastByNodeRequest<UpgradeStatusRequest> {
-        NodeUpgradeStatusRequest() {
-        }
-
-        NodeUpgradeStatusRequest(UpgradeStatusRequest request, List<ShardRouting> shards, String nodeId) {
-            super(nodeId, request, shards);
-        }
-
-        @Override
-        protected UpgradeStatusRequest newRequest() {
-            return new UpgradeStatusRequest();
-        }
-    }
-
-    public class NodeUpgradeStatusResponse extends BaseBroadcastByNodeResponse {
-        private List<ShardUpgradeStatus> shards;
-
-        public NodeUpgradeStatusResponse() {
-        }
-
-        public NodeUpgradeStatusResponse(String nodeId, int totalShards, int successfulShards, List<ShardUpgradeStatus> shards, List<BroadcastShardOperationFailedException> exceptions) {
-            super(nodeId, totalShards, successfulShards, exceptions);
-            this.shards = shards;
-        }
-
-        public List<ShardUpgradeStatus> getShards() {
-            return shards;
-        }
-
-        @Override
-        public void readFrom(StreamInput in) throws IOException {
-            super.readFrom(in);
-            if (in.readBoolean()) {
-                int size = in.readVInt();
-                shards = new ArrayList<>(size);
-                for (int i = 0; i < size; i++) {
-                    shards.add(ShardUpgradeStatus.readShardUpgradeStatus(in));
-                }
-            } else {
-                shards = null;
-            }
-        }
-
-        @Override
-        public void writeTo(StreamOutput out) throws IOException {
-            super.writeTo(out);
-            out.writeBoolean(shards != null);
-            if (shards != null) {
-                int size = shards.size();
-                out.writeVInt(size);
-                for (int i = 0; i < size; i++) {
-                    shards.get(i).writeTo(out);
-                }
-            }
-        }
     }
 }

@@ -49,7 +49,7 @@ import java.util.List;
 /**
  *
  */
-public class TransportIndicesSegmentsAction extends TransportBroadcastByNodeAction<IndicesSegmentsRequest, IndicesSegmentResponse, TransportIndicesSegmentsAction.IndexShardSegmentRequest, TransportIndicesSegmentsAction.IndexShardSegmentResponse, ShardSegments> {
+public class TransportIndicesSegmentsAction extends TransportBroadcastByNodeAction<IndicesSegmentsRequest, IndicesSegmentResponse, ShardSegments> {
 
     private final IndicesService indicesService;
 
@@ -57,7 +57,7 @@ public class TransportIndicesSegmentsAction extends TransportBroadcastByNodeActi
     public TransportIndicesSegmentsAction(Settings settings, ThreadPool threadPool, ClusterService clusterService, TransportService transportService,
                                           IndicesService indicesService, ActionFilters actionFilters, IndexNameExpressionResolver indexNameExpressionResolver) {
         super(settings, IndicesSegmentsAction.NAME, threadPool, clusterService, transportService, actionFilters, indexNameExpressionResolver,
-                IndicesSegmentsRequest.class, TransportIndicesSegmentsAction.IndexShardSegmentRequest.class, ThreadPool.Names.MANAGEMENT);
+                IndicesSegmentsRequest.class, ThreadPool.Names.MANAGEMENT);
         this.indicesService = indicesService;
     }
 
@@ -80,92 +80,26 @@ public class TransportIndicesSegmentsAction extends TransportBroadcastByNodeActi
     }
 
     @Override
-    protected IndicesSegmentResponse newResponse(IndicesSegmentsRequest request, int totalShards, int successfulShards, int failedShards, List<IndexShardSegmentResponse> indexShardSegmentResponses, List<ShardOperationFailedException> shardFailures) {
-        List<ShardSegments> concatenation = Lists.newArrayList();
-        for (IndexShardSegmentResponse response : indexShardSegmentResponses) {
-            concatenation.addAll(response.getShardSegments());
-        }
-        return new IndicesSegmentResponse(concatenation.toArray(new ShardSegments[concatenation.size()]), totalShards, successfulShards, failedShards, shardFailures);
+    protected ShardSegments readShardResult(StreamInput in) throws IOException {
+        return ShardSegments.readShardSegments(in);
     }
 
     @Override
-    protected IndexShardSegmentRequest newNodeRequest(String nodeId, IndicesSegmentsRequest request, List<ShardRouting> shards) {
-        return new IndexShardSegmentRequest(nodeId, shards, request);
+    protected IndicesSegmentResponse newResponse(IndicesSegmentsRequest request, int totalShards, int successfulShards, int failedShards, List<ShardSegments> results, List<ShardOperationFailedException> shardFailures) {
+        return new IndicesSegmentResponse(results.toArray(new ShardSegments[results.size()]), totalShards, successfulShards, failedShards, shardFailures);
     }
 
     @Override
-    protected IndexShardSegmentResponse newNodeResponse() {
-        return new IndexShardSegmentResponse();
+    protected IndicesSegmentsRequest readRequestFrom(StreamInput in) throws IOException {
+        final IndicesSegmentsRequest request = new IndicesSegmentsRequest();
+        request.readFrom(in);
+        return request;
     }
 
     @Override
-    protected IndexShardSegmentResponse newNodeResponse(String nodeId, int totalShards, int successfulShards, List<ShardSegments> results, List<BroadcastShardOperationFailedException> exceptions) {
-        return new IndexShardSegmentResponse(nodeId, totalShards, successfulShards, results, exceptions);
-    }
-
-    @Override
-    protected ShardSegments shardOperation(IndexShardSegmentRequest request, ShardRouting shardRouting) {
+    protected ShardSegments shardOperation(IndicesSegmentsRequest request, ShardRouting shardRouting) {
         IndexService indexService = indicesService.indexServiceSafe(shardRouting.getIndex());
         IndexShard indexShard = indexService.shardSafe(shardRouting.id());
-        return new ShardSegments(indexShard.routingEntry(), indexShard.engine().segments(request.getIndicesLevelRequest().verbose()));
-    }
-
-    static class IndexShardSegmentRequest extends BaseBroadcastByNodeRequest<IndicesSegmentsRequest> {
-        IndexShardSegmentRequest() {
-        }
-
-        IndexShardSegmentRequest(String nodeId, List<ShardRouting> shards, IndicesSegmentsRequest request) {
-            super(nodeId, request, shards);
-        }
-
-        @Override
-        public void writeTo(StreamOutput out) throws IOException {
-            super.writeTo(out);
-        }
-
-        @Override
-        public void readFrom(StreamInput in) throws IOException {
-            super.readFrom(in);
-        }
-
-        @Override
-        protected IndicesSegmentsRequest newRequest() {
-            return new IndicesSegmentsRequest();
-        }
-    }
-
-    static class IndexShardSegmentResponse extends BaseBroadcastByNodeResponse {
-        private List<ShardSegments> shardSegments;
-
-        public IndexShardSegmentResponse() {
-        }
-
-        public IndexShardSegmentResponse(String nodeId, int totalShards, int successfulShards, List<ShardSegments> shardSegments, List<BroadcastShardOperationFailedException> exceptions) {
-            super(nodeId, totalShards, successfulShards, exceptions);
-            this.shardSegments = shardSegments;
-        }
-
-        public List<ShardSegments> getShardSegments() {
-            return shardSegments;
-        }
-
-        @Override
-        public void writeTo(StreamOutput out) throws IOException {
-            super.writeTo(out);
-            out.writeVInt(shardSegments.size());
-            for (int i = 0; i < shardSegments.size(); i++) {
-                shardSegments.get(i).writeTo(out);
-            }
-        }
-
-        @Override
-        public void readFrom(StreamInput in) throws IOException {
-            super.readFrom(in);
-            int size = in.readVInt();
-            shardSegments = Lists.newArrayListWithCapacity(size);
-            for (int i = 0; i < size; i++) {
-                shardSegments.add(ShardSegments.readShardSegments(in));
-            }
-        }
+        return new ShardSegments(indexShard.routingEntry(), indexShard.engine().segments(request.verbose()));
     }
 }

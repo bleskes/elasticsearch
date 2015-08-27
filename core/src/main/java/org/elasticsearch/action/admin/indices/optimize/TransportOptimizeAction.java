@@ -32,18 +32,20 @@ import org.elasticsearch.cluster.metadata.IndexNameExpressionResolver;
 import org.elasticsearch.cluster.routing.ShardRouting;
 import org.elasticsearch.cluster.routing.ShardsIterator;
 import org.elasticsearch.common.inject.Inject;
+import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.index.shard.IndexShard;
 import org.elasticsearch.indices.IndicesService;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportService;
 
+import java.io.IOException;
 import java.util.List;
 
 /**
  * Optimize index/indices action.
  */
-public class TransportOptimizeAction extends TransportBroadcastByNodeAction<OptimizeRequest, OptimizeResponse, ShardOptimizeRequest, ShardOptimizeResponse, Boolean> {
+public class TransportOptimizeAction extends TransportBroadcastByNodeAction<OptimizeRequest, OptimizeResponse, TransportBroadcastByNodeAction.EmptyResult> {
 
     private final IndicesService indicesService;
 
@@ -52,35 +54,32 @@ public class TransportOptimizeAction extends TransportBroadcastByNodeAction<Opti
                                    TransportService transportService, IndicesService indicesService,
                                    ActionFilters actionFilters, IndexNameExpressionResolver indexNameExpressionResolver) {
         super(settings, OptimizeAction.NAME, threadPool, clusterService, transportService, actionFilters, indexNameExpressionResolver,
-                OptimizeRequest.class, ShardOptimizeRequest.class, ThreadPool.Names.OPTIMIZE);
+                OptimizeRequest.class, ThreadPool.Names.OPTIMIZE);
         this.indicesService = indicesService;
     }
 
     @Override
-    protected OptimizeResponse newResponse(OptimizeRequest request, int totalShards, int successfulShards, int failedShards, List<ShardOptimizeResponse> responses, List<ShardOperationFailedException> shardFailures) {
+    protected EmptyResult readShardResult(StreamInput in) throws IOException {
+        return EmptyResult.readEmptyResultFrom(in);
+    }
+
+    @Override
+    protected OptimizeResponse newResponse(OptimizeRequest request, int totalShards, int successfulShards, int failedShards, List<EmptyResult> responses, List<ShardOperationFailedException> shardFailures) {
         return new OptimizeResponse(totalShards, successfulShards, failedShards, shardFailures);
     }
 
     @Override
-    protected ShardOptimizeResponse newNodeResponse() {
-        return new ShardOptimizeResponse();
+    protected OptimizeRequest readRequestFrom(StreamInput in) throws IOException {
+        final OptimizeRequest request = new OptimizeRequest();
+        request.readFrom(in);
+        return request;
     }
 
     @Override
-    protected ShardOptimizeResponse newNodeResponse(String nodeId, int totalShards, int successfulShards, List<Boolean> results, List<BroadcastShardOperationFailedException> exceptions) {
-        return new ShardOptimizeResponse(nodeId, totalShards, successfulShards, exceptions);
-    }
-
-    @Override
-    protected ShardOptimizeRequest newNodeRequest(String nodeId, OptimizeRequest request, List<ShardRouting> shards) {
-        return new ShardOptimizeRequest(nodeId, shards, request);
-    }
-
-    @Override
-    protected Boolean shardOperation(ShardOptimizeRequest request, ShardRouting shardRouting) {
+    protected EmptyResult shardOperation(OptimizeRequest request, ShardRouting shardRouting) {
         IndexShard indexShard = indicesService.indexServiceSafe(shardRouting.shardId().getIndex()).shardSafe(shardRouting.shardId().id());
-        indexShard.optimize(request.getIndicesLevelRequest());
-        return Boolean.TRUE;
+        indexShard.optimize(request);
+        return null;
     }
 
     /**
