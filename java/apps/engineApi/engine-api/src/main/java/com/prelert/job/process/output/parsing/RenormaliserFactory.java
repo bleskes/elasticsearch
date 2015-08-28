@@ -24,28 +24,10 @@
  *                                                          *
  *                                                          *
  ************************************************************/
-package com.prelert.job.persistence.elasticsearch;
 
-import com.prelert.job.persistence.JobProvider;
-import com.prelert.job.persistence.JobProviderFactory;
+package com.prelert.job.process.output.parsing;
 
-
-/**
- * Reuses the same {@linkplain ElasticsearchJobProvider}
- */
-public class ElasticsearchJobProviderFactory implements JobProviderFactory
+public interface RenormaliserFactory
 {
-    private ElasticsearchJobProvider m_JobProvider;
-
-    public ElasticsearchJobProviderFactory(ElasticsearchJobProvider jobProvider)
-    {
-        m_JobProvider = jobProvider;
-    }
-
-    @Override
-    public JobProvider jobProvider()
-    {
-        return m_JobProvider;
-    }
-
+    Renormaliser create(String jobId);
 }

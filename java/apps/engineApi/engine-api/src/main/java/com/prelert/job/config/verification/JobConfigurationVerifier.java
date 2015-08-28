@@ -29,13 +29,13 @@ package com.prelert.job.config.verification;
 import java.util.Set;
 
 import com.prelert.job.DataDescription;
-import com.prelert.job.JobConfiguration;
 import com.prelert.job.DataDescription.DataFormat;
+import com.prelert.job.JobConfiguration;
+import com.prelert.job.ModelDebugConfig;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.messages.Messages;
 import com.prelert.job.transform.TransformConfig;
 import com.prelert.job.transform.TransformConfigs;
-import com.prelert.job.transform.TransformConfigurationException;
 import com.prelert.job.transform.verification.TransformConfigsVerifier;
 
 public class JobConfigurationVerifier
@@ -124,10 +124,10 @@ public class JobConfigurationVerifier
      * Transform outputs should be used in either the date field,
      * as an analysis field or input to another transform
      * @return
-     * @throws TransformConfigurationException
+     * @throws JobConfigurationException
      */
     private static boolean checkTransformOutputIsUsed(JobConfiguration config)
-    throws TransformConfigurationException
+            throws JobConfigurationException
     {
         Set<String> usedFields = new TransformConfigs(config.getTransforms()).inputFieldNames();
         usedFields.addAll(config.getAnalysisConfig().analysisFields());
@@ -165,7 +165,7 @@ public class JobConfigurationVerifier
                     String msg = Messages.getMessage(
                             Messages.JOB_CONFIG_TRANSFORM_DUPLICATED_OUTPUT_NAME,
                             tc.type().prettyName());
-                    throw new TransformConfigurationException(msg, ErrorCodes.DUPLICATED_TRANSFORM_OUTPUT_NAME);
+                    throw new JobConfigurationException(msg, ErrorCodes.DUPLICATED_TRANSFORM_OUTPUT_NAME);
 
                 }
             }
@@ -174,7 +174,7 @@ public class JobConfigurationVerifier
             {
                 String msg = Messages.getMessage(Messages.JOB_CONFIG_TRANSFORM_OUTPUTS_UNUSED,
                         tc.type().prettyName());
-                throw new TransformConfigurationException(msg, ErrorCodes.TRANSFORM_OUTPUTS_UNUSED);
+                throw new JobConfigurationException(msg, ErrorCodes.TRANSFORM_OUTPUTS_UNUSED);
             }
         }
 

@@ -50,14 +50,14 @@ import org.apache.log4j.Logger;
 
 import com.prelert.job.alert.manager.AlertManager;
 import com.prelert.job.manager.JobManager;
-import com.prelert.job.persistence.elasticsearch.ElasticsearchDataPersisterFactory;
-import com.prelert.job.persistence.elasticsearch.ElasticsearchJobDataCountsPersisterFactory;
+import com.prelert.job.persistence.elasticsearch.ElasticsearchJobDataCountsPersister;
+import com.prelert.job.persistence.elasticsearch.ElasticsearchJobDataPersister;
 import com.prelert.job.persistence.elasticsearch.ElasticsearchJobProvider;
-import com.prelert.job.persistence.elasticsearch.ElasticsearchJobProviderFactory;
-import com.prelert.job.persistence.elasticsearch.ElasticsearchJobResultsPeristerFactory;
-import com.prelert.job.persistence.elasticsearch.ElasticsearchUsagePersisterFactory;
+import com.prelert.job.persistence.elasticsearch.ElasticsearchPersister;
+import com.prelert.job.persistence.elasticsearch.ElasticsearchUsagePersister;
 import com.prelert.job.process.ProcessCtrl;
 import com.prelert.job.process.autodetect.ProcessManager;
+import com.prelert.job.process.normaliser.BlockingQueueRenormaliser;
 import com.prelert.job.process.output.parsing.ResultsReaderFactory;
 import com.prelert.rs.provider.AcknowledgementWriter;
 import com.prelert.rs.provider.AlertMessageBodyWriter;
@@ -187,11 +187,11 @@ public class PrelertWebApp extends Application
 	{
 	    return new ProcessManager(jobProvider,
                 new ResultsReaderFactory(
-                        new ElasticsearchJobProviderFactory(jobProvider),
-                        new ElasticsearchJobResultsPeristerFactory(jobProvider.getClient())),
-                new ElasticsearchJobDataCountsPersisterFactory(jobProvider.getClient()),
-                new ElasticsearchUsagePersisterFactory(jobProvider.getClient()),
-                new ElasticsearchDataPersisterFactory(jobProvider.getClient())
+                        jobId -> new ElasticsearchPersister(jobId, jobProvider.getClient()),
+                        jobId -> new BlockingQueueRenormaliser(jobId, jobProvider)),
+                logger -> new ElasticsearchJobDataCountsPersister(jobProvider.getClient(), logger),
+                logger -> new ElasticsearchUsagePersister(jobProvider.getClient(), logger),
+                jobId -> new ElasticsearchJobDataPersister(jobId, jobProvider.getClient())
         );
 	}
 

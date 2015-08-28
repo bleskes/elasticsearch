@@ -24,33 +24,37 @@
  *                                                          *
  *                                                          *
  ************************************************************/
-package com.prelert.job.persistence.elasticsearch;
+package com.prelert.job.process.normaliser;
+
+import static org.junit.Assert.*;
 
 import org.apache.log4j.Logger;
-import org.elasticsearch.client.Client;
+import org.junit.Test;
 
-import com.prelert.job.persistence.JobDataCountsPersister;
-import com.prelert.job.persistence.JobDataCountsPersisterFactory;
+import static org.mockito.Mockito.mock;
 
-public class ElasticsearchJobDataCountsPersisterFactory implements JobDataCountsPersisterFactory
+import com.prelert.job.persistence.JobProvider;
+import com.prelert.job.process.normaliser.BlockingQueueRenormaliser;
+
+/**
+ * This class is hard to unit test because it creates
+ * a normalisation process and depends on that.
+ * Some refactoring is required ideally so that the
+ * normaliser process isn't created inside the updateScores
+ * method.
+ */
+public class BlockingQueueRenormaliserTest
 {
-    private Client m_Client;
-
-    /**
-     * Construct the factory
-     *
-     * @param client The Elasticsearch client
-     */
-    public ElasticsearchJobDataCountsPersisterFactory(Client client)
+    @Test
+    public void testShutdown()
     {
-        m_Client = client;
+        JobProvider jobProvider = mock(JobProvider.class);
+        BlockingQueueRenormaliser normaliser = new BlockingQueueRenormaliser("foo", jobProvider);
+
+        normaliser.shutdown(mock(Logger.class));
+
+        assertEquals(false, normaliser.isWorkerThreadRunning());
     }
 
-
-    @Override
-    public JobDataCountsPersister getInstance(Logger logger)
-    {
-        return new ElasticsearchJobDataCountsPersister(m_Client, logger);
-    }
 
 }

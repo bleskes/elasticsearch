@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -25,26 +25,29 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.job.persistence.elasticsearch;
+package com.prelert.job.process.output.parsing;
 
-import org.elasticsearch.client.Client;
+import org.apache.log4j.Logger;
 
-import com.prelert.job.persistence.DataPersisterFactory;
-import com.prelert.job.persistence.JobDataPersister;
+import com.prelert.job.quantiles.Quantiles;
 
-public class ElasticsearchDataPersisterFactory implements DataPersisterFactory
+public interface Renormaliser
 {
+    /**
+     * Update the anomaly score field on all previously persisted buckets
+     * and all contained records
+     * @param quantiles
+     * @param logger
+     */
+    void renormalise(Quantiles quantiles, Logger logger);
 
-    private Client m_Client;
+    /**
+     * Blocks until the renormaliser is idle and no further normalisation tasks are pending.
+     */
+    void waitUntilIdle();
 
-    public ElasticsearchDataPersisterFactory(Client client)
-    {
-        m_Client = client;
-    }
-
-    @Override
-    public JobDataPersister newDataPersister(String jobId)
-    {
-        return new ElasticsearchJobDataPersister(jobId, m_Client);
-    }
+    /**
+     * Shut down the renormaliser
+     */
+    boolean shutdown(Logger logger);
 }
