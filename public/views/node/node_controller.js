@@ -22,7 +22,11 @@ define(function (require) {
     var ChartDataSource = Private(require('plugins/marvel/directives/chart/data_source'));
     var ClusterStatusDataSource = Private(require('plugins/marvel/directives/cluster_status/data_source'));
     var docTitle = Private(require('ui/doc_title'));
-    docTitle.change('Marvel - ' + $scope.nodeName, true);
+
+    $scope.cluster = _.find(clusters, { cluster_uuid: globalState.cluster });
+    $scope.node = $scope.cluster.nodes[$scope.nodeName];
+
+    docTitle.change('Marvel - ' + $scope.node.name, true);
 
     timefilter.enabled = true;
     if (timefilter.refreshInterval.value === 0) {
@@ -52,8 +56,6 @@ define(function (require) {
 
     $scope.dataSources.clusterStatus = new ClusterStatusDataSource(indexPattern, globalState.cluster, clusters);
     $scope.dataSources.clusterStatus.register(courier);
-    $scope.cluster = _.find(clusters, { cluster_uuid: globalState.cluster });
-    $scope.node = $scope.cluster.nodes[$scope.nodeName];
     $scope.$watch('dataSources.clusterStatus.clusters', function (clusters) {
       $scope.cluster = _.find(clusters, { cluster_uuid: globalState.cluster });
     });

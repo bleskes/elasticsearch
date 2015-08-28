@@ -43,7 +43,7 @@ define(function (require) {
     var ClusterStateDataSource = Private(require('plugins/marvel/lib/cluster_state_data_source'));
     $scope.dataSources.clusterState = new ClusterStateDataSource({
       indexPattern: indexPattern,
-      cluster: cluster
+      cluster: globalState.cluster
     });
     $scope.dataSources.clusterState.register(courier);
 
@@ -52,17 +52,18 @@ define(function (require) {
     Promise
       .all([])
       .then(function () {
-        var dataSource = new ClusterStatusDataSource(indexPattern, cluster, clusters);
+        var dataSource = new ClusterStatusDataSource(indexPattern, globalState.cluster, clusters);
         dataSource.register(courier);
         $scope.dataSources.cluster_status = dataSource;
         return dataSource;
       })
-      .then(function() {
+      .then(function () {
         var dataSource = new TableDataSource({
           index: indexPattern,
           cluster: cluster,
           clusters: clusters,
           metrics: [
+            'cpu_utilization',
             'node_jvm_mem_percent',
             'node_space_free',
             'load_average_1m'
@@ -76,7 +77,7 @@ define(function (require) {
       })
       .then(fetch);
 
-    function fetch () {
+    function fetch() {
       return Promise.all([courier.fetch()]);
     }
 
