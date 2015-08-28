@@ -2,6 +2,7 @@ define(function (require) {
   var React = require('react');
   var make = React.DOM;
   var _ = require('lodash');
+  var moment = require('moment');
   var formatNumber = require('plugins/marvel/lib/format_number');
   var jubilee = require('jubilee/build/jubilee');
 
@@ -34,9 +35,7 @@ define(function (require) {
       var titleStr = [metric.label + ':', lastPoint ? formatNumber(lastPoint.y, metric.format) : 0, metric.units].join(' ');
       var $title = make.h1(null, titleStr);
       var $chartWrapper = make.div({className: 'jubilee'});
-      var attrs = {
-        className: this.props.className || ''
-      };
+      var attrs = { className: this.props.className || '' };
 
       return make.div(attrs, $title, $chartWrapper);
     },
@@ -80,10 +79,17 @@ define(function (require) {
     componentWillMount: function () {
       var Tooltip = require('plugins/marvel/directives/tooltip');
       var that = this;
+      var TooltipInnerComponent = React.createClass({
+        render: function() {
+          var time = moment(this.props.x);
+          var contentArr = [make.div(null, time.format("YYYY-MM-DD HH:mm:ss")), [that.props.source.metric.label, this.props.y].join(' ')];
+          return make.div(null, contentArr);
+        }
+      });
       function showTooltip(evt, yValue, chartIndex) {
         var val = yValue[0];
         if( val !== null ) {
-          Tooltip.showTooltip(evt.pageX, evt.pageY, 'Value: ' + val.y);
+          Tooltip.showTooltip(evt.pageX, evt.pageY, React.createElement(TooltipInnerComponent, val));
         } else {
           Tooltip.removeTooltip();
         }
@@ -116,14 +122,11 @@ define(function (require) {
         .zeroLine({ add: false })
         .on('mouseenter', showTooltip)
         .on('mousemove', showTooltip)
-        .on('mouseleave', function(evt, yValue, chartIndex) {
-          Tooltip.removeTooltip();
-        });
+        .on('mouseleave', function(evt, yValue, chartIndex) { Tooltip.removeTooltip(); });
 
       this.jLineChart = lineChart;
     }
   });
-
 
   return MarvelSparkLine;
 });
