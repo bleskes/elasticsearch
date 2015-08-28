@@ -43,7 +43,7 @@ public class ConditionTest
         // default is the < operator and 0.
         Condition cond = new Condition();
         assertEquals(Operator.NONE, cond.getOperator());
-        assertEquals("", cond.getValue());
+        assertEquals(null, cond.getValue());
 
         cond = new Condition(Operator.EQ, "astring");
         assertEquals(Operator.EQ, cond.getOperator());
