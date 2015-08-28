@@ -26,7 +26,9 @@
  ************************************************************/
 package com.prelert.job.config.verification;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -40,15 +42,14 @@ import org.junit.rules.ExpectedException;
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.AnalysisLimits;
 import com.prelert.job.DataDescription;
+import com.prelert.job.DataDescription.DataFormat;
 import com.prelert.job.Detector;
 import com.prelert.job.JobConfiguration;
-import com.prelert.job.DataDescription.DataFormat;
 import com.prelert.job.errorcodes.ErrorCodeMatcher;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.transform.Condition;
 import com.prelert.job.transform.Operator;
 import com.prelert.job.transform.TransformConfig;
-import com.prelert.job.transform.TransformConfigurationException;
 import com.prelert.job.transform.TransformType;
 
 
@@ -257,7 +258,7 @@ public class JobConfigurationVerifierTest
         }
         catch (JobConfigurationException e)
         {
-            assertTrue(e instanceof TransformConfigurationException);
+            assertTrue(e instanceof JobConfigurationException);
             assertEquals(ErrorCodes.TRANSFORM_OUTPUTS_UNUSED, e.getErrorCode());
         }
 
@@ -286,7 +287,7 @@ public class JobConfigurationVerifierTest
         }
         catch (JobConfigurationException e)
         {
-            assertTrue(e instanceof TransformConfigurationException);
+            assertTrue(e instanceof JobConfigurationException);
             assertEquals(ErrorCodes.DUPLICATED_TRANSFORM_OUTPUT_NAME, e.getErrorCode());
         }
 
