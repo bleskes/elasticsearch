@@ -49,7 +49,6 @@ public class Condition
     public Condition()
     {
         m_Op = Operator.NONE;
-        m_FilterValue = "";
     }
 
     public Condition(Operator op, String filterString)

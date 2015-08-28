@@ -116,7 +116,6 @@ public class ConditionVerifierTest
 
         Condition condition = new Condition();
         condition.setOperator(Operator.MATCH);
-        condition.setValue(null);
 
         ConditionVerifier.verify(condition);
     }
