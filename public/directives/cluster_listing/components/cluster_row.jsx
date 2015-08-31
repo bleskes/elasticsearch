@@ -47,12 +47,12 @@ class ClusterRow extends React.Component {
 
     return (
       <tr className={ classes.join(' ') }>
-        <td><a onClick={(event) => this.changeCluster(event) }>{ get('cluster_name') }</a></td>
-        <td>{ notLite ? numeral(get('stats.nodes.count.total')).format('0,0') : '-' }</td>
-        <td>{ notLite ? numeral(get('stats.indices.count')).format('0,0') : '-' }</td>
-        <td>{ notLite ? formatTime(get('stats.nodes.jvm.max_uptime_in_millis')) : '-' }</td>
-        <td>{ notLite ? numeral(get('stats.indices.store.size_in_bytes')).format('0,0[.]0 b') : '-' }</td>
-        <td className="license">
+        <td key="Name"><a onClick={(event) => this.changeCluster(event) }>{ get('cluster_name') }</a></td>
+        <td key="Nodes">{ notLite ? numeral(get('stats.nodes.count.total')).format('0,0') : '-' }</td>
+        <td key="Indices">{ notLite ? numeral(get('stats.indices.count')).format('0,0') : '-' }</td>
+        <td key="Uptime">{ notLite ? formatTime(get('stats.nodes.jvm.max_uptime_in_millis')) : '-' }</td>
+        <td key="Data">{ notLite ? numeral(get('stats.indices.store.size_in_bytes')).format('0,0[.]0 b') : '-' }</td>
+        <td key="License" className="license">
           <div className="license">{ _.capitalize(get('license.type')) }</div>
           { licenseExpiry }
         </td>

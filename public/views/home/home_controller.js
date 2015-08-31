@@ -47,7 +47,10 @@ define(function (require) {
 
     function fetch() {
       marvelClusters.fetch().then((clusters) => {
-        $scope.clusters = clusters;
+        $scope.clusters = clusters.map((cluster) => {
+          cluster.key = cluster.cluster_uuid;
+          return cluster;
+        });
         $timeout(fetch, timefilter.refreshInterval.value);
       });
     }

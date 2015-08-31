@@ -1,18 +1,17 @@
-'use strict';
-define(function(require) {
+define(function (require) {
   var React = require('react');
   var make = React.DOM;
 
 
   function sortManager(cols) {
-    var lastSortedColIdx = cols.reduce(function(prev, curr, idx) {
+    var lastSortedColIdx = cols.reduce(function (prev, curr, idx) {
       if (prev !== false) {
         return prev;
       }
       return (curr.sort !== 0 ? idx : null);
     }, false) || 0;
 
-    return function(sortObjIdx) {
+    return function (sortObjIdx) {
       var oldCol = cols[lastSortedColIdx];
       var newCol = cols[sortObjIdx];
       if (sortObjIdx === lastSortedColIdx) {
@@ -23,12 +22,12 @@ define(function(require) {
         lastSortedColIdx = sortObjIdx;
       }
       return cols;
-    }
+    };
   }
 
   var TableHead = React.createClass({
     displayName: 'TableHead',
-    render: function() {
+    render: function () {
       var that = this;
       function makeTh(config, idx) {
         var isSortCol = config.sort !== 0;
@@ -40,8 +39,8 @@ define(function(require) {
         }
 
         return make.th({
-          key: idx,
-          onClick: function() {
+          key: config.title,
+          onClick: function () {
             if (config.sort !== 0) {
               config.sort = config.sort === 1 ? -1 : 1;
             } else {

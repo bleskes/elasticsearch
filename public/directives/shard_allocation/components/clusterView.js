@@ -19,12 +19,11 @@
 
 /* jshint newcap: false */
 define(function (require) {
-  'use strict';
   var React = require('react');
   var D = React.DOM;
 
   var TableHead = React.createFactory(require('./tableHead'));
-  var TableBody = React.createFactory(require('./tableBody'));
+  var TableBody = React.createFactory(require('./tableBody.jsx'));
 
   return React.createClass({
     displayName: 'ClusterView',

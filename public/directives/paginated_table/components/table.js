@@ -94,22 +94,24 @@ define(function (require) {
 
 
       // Make the Table
-      var $tableHead = React.createElement(TableHead, {
-        setSortCol: this.setSortCol,
-        columns: this.props.options.columns,
-        sortColObj: this.state.sortColObj
-      });
-      var $tableBody = React.createElement(TableBody, {
-        tableData: filteredTableData,
-        columns: this.props.options.columns,
-        sortColObj: this.state.sortColObj,
-        pageIdx: this.state.pageIdx,
-        itemsPerPage: this.state.itemsPerPage,
-        template: this.props.template
-      });
-      var $table = React.createElement('table', {className: 'table'},
-        $tableHead,
-        $tableBody);
+      var $tableHead = React.createFactory(TableHead);
+      var $tableBody = React.createFactory(TableBody);
+      var $table = make.table({ key: 'table', className: 'table' },
+        $tableHead({
+          key: 'table.head',
+          setSortCol: this.setSortCol,
+          columns: this.props.options.columns,
+          sortColObj: this.state.sortColObj
+        }),
+        $tableBody({
+          key: 'table.body',
+          tableData: filteredTableData,
+          columns: this.props.options.columns,
+          sortColObj: this.state.sortColObj,
+          pageIdx: this.state.pageIdx,
+          itemsPerPage: this.state.itemsPerPage,
+          template: this.props.template
+        }));
 
       // Footer
       var $pagination = React.createElement(Pagination, {

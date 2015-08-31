@@ -6,10 +6,10 @@ define(function (require) {
 
   function calcSlope(data) {
     var length = data.length;
-    var xSum = data.reduce(function(prev, curr) { return prev + curr.x; }, 0);
-    var ySum = data.reduce(function(prev, curr) { return prev + curr.y; }, 0);
-    var xySum = data.reduce(function(prev, curr) { return prev + (curr.y * curr.x); }, 0);
-    var xSqSum = data.reduce(function(prev, curr) { return prev + (curr.x * curr.x); }, 0);
+    var xSum = data.reduce(function (prev, curr) { return prev + curr.x; }, 0);
+    var ySum = data.reduce(function (prev, curr) { return prev + curr.y; }, 0);
+    var xySum = data.reduce(function (prev, curr) { return prev + (curr.y * curr.x); }, 0);
+    var xSqSum = data.reduce(function (prev, curr) { return prev + (curr.x * curr.x); }, 0);
     var numerator = (length * xySum) - (xSum * ySum);
     var denominator = (length * xSqSum) - (xSum * ySum);
     return numerator / denominator;
@@ -44,10 +44,10 @@ define(function (require) {
             'timestamp': {
               gte: moment().subtract(this.duration.asMilliseconds(), 'ms').valueOf(),
               lte: moment().valueOf(),
-              format: "epoch_millis"
+              format: 'epoch_millis'
             }
           }
-        })
+        });
       }
       return filters;
     };
@@ -71,7 +71,7 @@ define(function (require) {
           size: maxBucketSize
         };
       }
-    }
+    };
 
     TableDataSource.prototype.toAggsObject = function () {
       var self = this;
@@ -90,6 +90,7 @@ define(function (require) {
 
       _.each(this.metrics, function (id) {
         var metric = metrics[id];
+        var metricAgg;
         if (!metric) return;
         if (!metric.aggs) {
           metricAgg = {
@@ -131,7 +132,7 @@ define(function (require) {
       if (resp.hits.total) {
         items = resp.aggregations.items.buckets;
         this.data = _.map(items, function (item) {
-          var row = { name: item.key, metrics: {} };
+          var row = { key: item.key, name: item.key, metrics: {} };
           _.each(self.metrics, function (id) {
             var metric = metrics[id];
             var data = _.map(item[id].buckets, mapChartData(metric));
