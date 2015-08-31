@@ -17,7 +17,6 @@
 
 package org.elasticsearch.watcher;
 
-import com.google.common.collect.ImmutableList;
 import org.elasticsearch.action.ActionModule;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.cluster.ClusterModule;
@@ -74,6 +73,7 @@ import org.elasticsearch.watcher.trigger.TriggerModule;
 import org.elasticsearch.watcher.trigger.schedule.ScheduleModule;
 import org.elasticsearch.watcher.watch.WatchModule;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -138,9 +138,9 @@ public class WatcherPlugin extends Plugin {
     @Override
     public Collection<Class<? extends LifecycleComponent>> nodeServices() {
         if (!enabled || transportClient) {
-            return ImmutableList.of();
+            return Collections.EMPTY_SET;
         }
-        return ImmutableList.<Class<? extends LifecycleComponent>>of(
+        return Arrays.<Class<? extends LifecycleComponent>>asList(
             // the initialization service must be first in the list
             // as other services may depend on one of the initialized
             // constructs

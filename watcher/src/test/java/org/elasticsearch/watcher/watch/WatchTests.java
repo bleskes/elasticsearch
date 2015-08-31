@@ -17,7 +17,6 @@
 
 package org.elasticsearch.watcher.watch;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import org.elasticsearch.ElasticsearchParseException;
@@ -110,8 +109,7 @@ import org.joda.time.DateTimeZone;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.Collection;
-import java.util.Map;
+import java.util.*;
 
 import static org.elasticsearch.watcher.input.InputBuilders.searchInput;
 import static org.elasticsearch.watcher.test.WatcherTestUtils.matchAllRequest;
@@ -248,7 +246,7 @@ public class WatchTests extends ESTestCase {
         ConditionRegistry conditionRegistry = registry(new ExecutableAlwaysCondition(logger));
         InputRegistry inputRegistry = registry(new ExecutableNoneInput(logger));
         TransformRegistry transformRegistry = transformRegistry();
-        ExecutableActions actions =  new ExecutableActions(ImmutableList.<ActionWrapper>of());
+        ExecutableActions actions =  new ExecutableActions(Collections.EMPTY_LIST);
         ActionRegistry actionRegistry = registry(actions, transformRegistry);
 
         XContentBuilder builder = XContentFactory.jsonBuilder();
@@ -378,10 +376,9 @@ public class WatchTests extends ESTestCase {
             case SearchTransform.TYPE:
                 return new ExecutableSearchTransform(new SearchTransform(matchAllRequest(WatcherUtils.DEFAULT_INDICES_OPTIONS), timeout, timeZone), logger, client, null, indexNameParser);
             default: // chain
-                ChainTransform chainTransform = new ChainTransform(ImmutableList.of(
-                        new SearchTransform(matchAllRequest(WatcherUtils.DEFAULT_INDICES_OPTIONS), timeout, timeZone),
-                        new ScriptTransform(Script.inline("_script").build())));
-                return new ExecutableChainTransform(chainTransform, logger, ImmutableList.<ExecutableTransform>of(
+                ChainTransform chainTransform = new ChainTransform(Arrays.asList(
+                        new SearchTransform(matchAllRequest(WatcherUtils.DEFAULT_INDICES_OPTIONS), timeout, timeZone), new ScriptTransform(Script.inline("_script").build())));
+                return new ExecutableChainTransform(chainTransform, logger, Arrays.<ExecutableTransform>asList(
                         new ExecutableSearchTransform(new SearchTransform(matchAllRequest(WatcherUtils.DEFAULT_INDICES_OPTIONS), timeout, timeZone), logger, client, null, indexNameParser),
                         new ExecutableScriptTransform(new ScriptTransform(Script.inline("_script").build()), logger, scriptService)));
         }
@@ -399,7 +396,7 @@ public class WatchTests extends ESTestCase {
     }
 
     private ExecutableActions randomActions() {
-        ImmutableList.Builder<ActionWrapper> list = ImmutableList.builder();
+        List<ActionWrapper> list = new ArrayList<>();
         if (randomBoolean()) {
             ExecutableTransform transform = randomTransform();
             EmailAction action = new EmailAction(EmailTemplate.builder().build(), null, null, Profile.STANDARD, randomFrom(DataAttachment.JSON, DataAttachment.YAML, null));
@@ -419,7 +416,7 @@ public class WatchTests extends ESTestCase {
             WebhookAction action = new WebhookAction(httpRequest);
             list.add(new ActionWrapper("_webhook_" + randomAsciiOfLength(8), randomThrottler(), randomTransform(), new ExecutableWebhookAction(action, logger, httpClient, templateEngine)));
         }
-        return new ExecutableActions(list.build());
+        return new ExecutableActions(list);
     }
 
     private ActionRegistry registry(ExecutableActions actions, TransformRegistry transformRegistry) {
