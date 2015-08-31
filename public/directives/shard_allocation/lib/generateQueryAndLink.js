@@ -18,16 +18,15 @@
 
 
 define(function (require) {
-  'use strict';
   var _ = require('lodash');
   var stringify = _.compose(encodeURIComponent, JSON.stringify);
 
-  return function generateQueryAndLink (data) {
+  return function generateQueryAndLink(data) {
     var type = 'index';
     var ident = data.name;
     if (data.type === 'node') {
       type = 'node';
-      ident = data.ip_port;
+      ident = data.id;
     }
     return '#/' + data.type + '/' + ident;
   };

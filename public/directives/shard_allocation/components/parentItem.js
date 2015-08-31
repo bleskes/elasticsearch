@@ -53,7 +53,7 @@ define(function (require) {
       if (data.unassignedPrimaries) {
         className.push('text-error');
       }
-      var name = D.a({ href:generateQueryAndLink(data) },
+      var name = D.a({ href: generateQueryAndLink(data) },
        D.span(null, data.name)
       );
       return D.td({ nowrap: true, className: cellClassName.join(' ')  },

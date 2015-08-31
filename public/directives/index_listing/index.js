@@ -55,13 +55,13 @@ define(function (require) {
         key: 'metrics.index_request_rate',
         sort: 0,
         sortKey: 'metrics.index_request_rate.last',
-        chart_data: 'metrics.index_request_rate.data',
+        // chart_data: 'metrics.index_request_rate.data',
         title: 'Index Rate'
       }, {
         key: 'metrics.index_search_request_rate',
         sort: 0,
         sortKey: 'metrics.index_search_request_rate.last',
-        chart_data: 'metrics.index_search_request_rate.data',
+        // chart_data: 'metrics.index_search_request_rate.data',
         title: 'Search Rate'
       }, {
         key: 'metrics.index_merge_rate',
