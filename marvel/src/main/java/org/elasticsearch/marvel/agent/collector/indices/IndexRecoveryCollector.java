@@ -17,7 +17,6 @@
 
 package org.elasticsearch.marvel.agent.collector.indices;
 
-import com.google.common.collect.ImmutableList;
 import org.elasticsearch.action.admin.indices.recovery.RecoveryResponse;
 import org.elasticsearch.action.support.IndicesOptions;
 import org.elasticsearch.client.Client;
@@ -29,7 +28,10 @@ import org.elasticsearch.marvel.agent.exporter.MarvelDoc;
 import org.elasticsearch.marvel.agent.settings.MarvelSettings;
 import org.elasticsearch.marvel.license.LicenseService;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Collector for the Recovery API.
@@ -58,7 +60,7 @@ public class IndexRecoveryCollector extends AbstractCollector<IndexRecoveryColle
 
     @Override
     protected Collection<MarvelDoc> doCollect() throws Exception {
-        ImmutableList.Builder<MarvelDoc> results = ImmutableList.builder();
+        List<MarvelDoc> results = new ArrayList<>(1);
 
         RecoveryResponse recoveryResponse = client.admin().indices().prepareRecoveries()
                 .setIndices(marvelSettings.indices())
@@ -69,6 +71,6 @@ public class IndexRecoveryCollector extends AbstractCollector<IndexRecoveryColle
         if (recoveryResponse.hasRecoveries()) {
             results.add(new IndexRecoveryMarvelDoc(clusterUUID(), TYPE, System.currentTimeMillis(), recoveryResponse));
         }
-        return results.build();
+        return Collections.unmodifiableCollection(results);
     }
 }
