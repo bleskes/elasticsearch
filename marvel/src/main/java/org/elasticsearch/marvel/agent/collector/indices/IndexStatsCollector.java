@@ -17,7 +17,6 @@
 
 package org.elasticsearch.marvel.agent.collector.indices;
 
-import com.google.common.collect.ImmutableList;
 import org.elasticsearch.action.admin.indices.stats.IndexStats;
 import org.elasticsearch.action.admin.indices.stats.IndicesStatsResponse;
 import org.elasticsearch.action.support.IndicesOptions;
@@ -30,7 +29,10 @@ import org.elasticsearch.marvel.agent.exporter.MarvelDoc;
 import org.elasticsearch.marvel.agent.settings.MarvelSettings;
 import org.elasticsearch.marvel.license.LicenseService;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Collector for indices statistics.
@@ -59,7 +61,7 @@ public class IndexStatsCollector extends AbstractCollector<IndexStatsCollector> 
 
     @Override
     protected Collection<MarvelDoc> doCollect() throws Exception {
-        ImmutableList.Builder<MarvelDoc> results = ImmutableList.builder();
+        List<MarvelDoc> results = new ArrayList<>(1);
 
         IndicesStatsResponse indicesStats = client.admin().indices().prepareStats()
                 .setRefresh(true)
@@ -72,6 +74,6 @@ public class IndexStatsCollector extends AbstractCollector<IndexStatsCollector> 
         for (IndexStats indexStats : indicesStats.getIndices().values()) {
             results.add(new IndexStatsMarvelDoc(clusterUUID, TYPE, timestamp, indexStats));
         }
-        return results.build();
+        return Collections.unmodifiableCollection(results);
     }
 }
