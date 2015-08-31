@@ -69,7 +69,7 @@ define(function (require) {
             'load_average_1m'
           ],
           type: 'node',
-          duration: moment.duration(10, 'minutes')
+          duration: moment.duration(5, 'minutes')
         });
         dataSource.register(courier);
         $scope.dataSources.nodes_table = dataSource;
