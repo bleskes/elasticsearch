@@ -17,7 +17,6 @@
 
 package org.elasticsearch.shield.authc;
 
-import com.google.common.collect.ImmutableList;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.ElasticsearchSecurityException;
 import org.elasticsearch.common.io.stream.BytesStreamOutput;
@@ -39,6 +38,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -80,7 +80,7 @@ public class InternalAuthenticationServiceTests extends ESTestCase {
         realms = new Realms(Settings.EMPTY, new Environment(settings), Collections.<String, Realm.Factory>emptyMap(), mock(ShieldSettingsFilter.class)) {
             @Override
             protected List<Realm> initRealms() {
-                return ImmutableList.of(firstRealm, secondRealm);
+                return Arrays.asList(firstRealm, secondRealm);
             }
         };
         realms.start();

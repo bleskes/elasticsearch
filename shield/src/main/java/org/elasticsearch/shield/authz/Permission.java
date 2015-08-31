@@ -21,7 +21,10 @@ import com.google.common.base.Predicate;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import com.google.common.collect.*;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterators;
+import com.google.common.collect.UnmodifiableIterator;
 import org.elasticsearch.cluster.metadata.AliasOrIndex;
 import org.elasticsearch.cluster.metadata.IndexMetaData;
 import org.elasticsearch.cluster.metadata.MetaData;
@@ -130,7 +133,7 @@ public interface Permission {
 
                 private final String name;
                 private Cluster.Core cluster = Cluster.Core.NONE;
-                private ImmutableList.Builder<Indices.Group> groups = ImmutableList.builder();
+                private List<Indices.Group> groups = new ArrayList<>();
 
                 private Builder(String name) {
                     this.name = name;
@@ -152,8 +155,7 @@ public interface Permission {
                 }
 
                 public Role build() {
-                    ImmutableList<Indices.Group> list = groups.build();
-                    Indices.Core indices = list.isEmpty() ? Indices.Core.NONE : new Indices.Core(list.toArray(new Indices.Group[list.size()]));
+                    Indices.Core indices = groups.isEmpty() ? Indices.Core.NONE : new Indices.Core(groups.toArray(new Indices.Group[groups.size()]));
                     return new Role(name, cluster, indices);
                 }
             }
@@ -161,7 +163,7 @@ public interface Permission {
 
         static class Compound extends Global {
 
-            public Compound(ImmutableList<Global> globals) {
+            public Compound(List<Global> globals) {
                 super(new Cluster.Globals(globals), new Indices.Globals(globals));
             }
 
@@ -171,7 +173,7 @@ public interface Permission {
 
             public static class Builder {
 
-                private ImmutableList.Builder<Global> globals = ImmutableList.builder();
+                private List<Global> globals = new ArrayList<>();
 
                 private Builder() {
                 }
@@ -182,7 +184,7 @@ public interface Permission {
                 }
 
                 public Compound build() {
-                    return new Compound(globals.build());
+                    return new Compound(Collections.unmodifiableList(globals));
                 }
             }
         }
@@ -230,9 +232,9 @@ public interface Permission {
 
         static class Globals implements Cluster {
 
-            private final ImmutableList<Global> globals;
+            private final List<Global> globals;
 
-            public Globals(ImmutableList<Global> globals) {
+            public Globals(List<Global> globals) {
                 this.globals = globals;
             }
 
@@ -287,13 +289,13 @@ public interface Permission {
                     .build(new CacheLoader<String, Predicate<String>>() {
                         @Override
                         public Predicate<String> load(String action) throws Exception {
-                            ImmutableList.Builder<String> indices = ImmutableList.builder();
+                            List<String> indices = new ArrayList<>();
                             for (Group group : groups) {
                                 if (group.actionMatcher.apply(action)) {
-                                    indices.add(group.indices);
+                                    indices.addAll(Arrays.asList(group.indices));
                                 }
                             }
-                            return new AutomatonPredicate(Automatons.patterns(indices.build()));
+                            return new AutomatonPredicate(Automatons.patterns(Collections.unmodifiableList(indices)));
                         }
                     });
 
@@ -404,9 +406,9 @@ public interface Permission {
 
         public static class Globals implements Indices {
 
-            private final ImmutableList<Global> globals;
+            private final List<Global> globals;
 
-            public Globals(ImmutableList<Global> globals) {
+            public Globals(List<Global> globals) {
                 this.globals = globals;
             }
 
@@ -465,7 +467,7 @@ public interface Permission {
                 private final Iterator<Global> globals;
                 private Iterator<Group> current;
 
-                Iter(ImmutableList<Global> globals) {
+                Iter(List<Global> globals) {
                     this.globals = globals.iterator();
                     advance();
                 }

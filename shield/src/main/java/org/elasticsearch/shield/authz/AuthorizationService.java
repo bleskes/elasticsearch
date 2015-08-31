@@ -17,10 +17,11 @@
 
 package org.elasticsearch.shield.authz;
 
-import com.google.common.collect.ImmutableList;
 import org.elasticsearch.ElasticsearchSecurityException;
 import org.elasticsearch.shield.User;
 import org.elasticsearch.transport.TransportRequest;
+
+import java.util.List;
 
 /**
  *
@@ -33,7 +34,7 @@ public interface AuthorizationService {
      * @param user      The user
      * @param action    The action
      */
-    ImmutableList<String> authorizedIndicesAndAliases(User user, String action);
+    List<String> authorizedIndicesAndAliases(User user, String action);
 
     /**
      * Verifies that the given user can execute the given request (and action). If the user doesn't

@@ -17,7 +17,6 @@
 
 package org.elasticsearch.shield.authz;
 
-import com.google.common.collect.ImmutableList;
 import org.elasticsearch.ElasticsearchSecurityException;
 import org.elasticsearch.Version;
 import org.elasticsearch.action.admin.indices.alias.Alias;
@@ -42,6 +41,8 @@ import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.transport.TransportRequest;
 import org.junit.Before;
 import org.junit.Test;
+
+import java.util.List;
 
 import static org.elasticsearch.test.ShieldTestsUtils.assertAuthenticationException;
 import static org.elasticsearch.test.ShieldTestsUtils.assertAuthorizationException;
@@ -265,7 +266,7 @@ public class InternalAuthorizationServiceTests extends ESTestCase {
     public void testIndicesAliasesWithNoRolesUser() {
         User user = new User.Simple("test user");
 
-        ImmutableList<String> list = internalAuthorizationService.authorizedIndicesAndAliases(user, "");
+        List<String> list = internalAuthorizationService.authorizedIndicesAndAliases(user, "");
         assertThat(list.isEmpty(), is(true));
     }
 
@@ -291,7 +292,7 @@ public class InternalAuthorizationServiceTests extends ESTestCase {
                         .build(), true)
                 .build());
 
-        ImmutableList<String> list = internalAuthorizationService.authorizedIndicesAndAliases(user, SearchAction.NAME);
+        List<String> list = internalAuthorizationService.authorizedIndicesAndAliases(user, SearchAction.NAME);
         assertThat(list, containsInAnyOrder("a1", "a2", "aaaaaa", "b", "ab"));
         assertThat(list.contains("bbbbb"), is(false));
         assertThat(list.contains("ba"), is(false));
