@@ -191,7 +191,6 @@ public abstract class ShieldIntegTestCase extends ESIntegTestCase {
     @Override
     protected Settings externalClusterClientSettings() {
         return Settings.builder()
-                .put("plugin.types", ShieldPlugin.class.getName())
                 .put("shield.user", ShieldSettingsSource.DEFAULT_USER_NAME + ":" + ShieldSettingsSource.DEFAULT_PASSWORD)
                 .build();
     }
@@ -306,7 +305,6 @@ public abstract class ShieldIntegTestCase extends ESIntegTestCase {
             return ShieldIntegTestCase.this.nodeClientPassword();
         }
 
-
         @Override
         protected String transportClientUsername() {
             return ShieldIntegTestCase.this.transportClientUsername();
@@ -320,6 +318,16 @@ public abstract class ShieldIntegTestCase extends ESIntegTestCase {
         @Override
         protected Class<? extends Plugin> licensePluginClass() {
             return ShieldIntegTestCase.this.licensePluginClass();
+        }
+
+        @Override
+        public Collection<Class<? extends Plugin>> nodePlugins() {
+            return ShieldIntegTestCase.this.nodePlugins();
+        }
+
+        @Override
+        public Collection<Class<? extends Plugin>> transportClientPlugins() {
+            return ShieldIntegTestCase.this.transportClientPlugins();
         }
 
         @Override
