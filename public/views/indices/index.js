@@ -36,10 +36,10 @@ define(function (require) {
     // Define the metrics for the three charts at the top of the
     // page. Use the metric keys from the metrics hash.
     $scope.charts = [
-      'search_request_rate',
-      'query_latency',
-      'index_request_rate',
-      'index_latency'
+      'cluster_search_request_rate',
+      'cluster_query_latency',
+      'cluster_index_request_rate',
+      'cluster_index_latency'
     ];
 
     // Setup the data sources for the charts
@@ -86,7 +86,7 @@ define(function (require) {
             'index_merge_rate'
           ],
           type: 'index',
-          duration: moment.duration(10, 'minutes')
+          duration: moment.duration(5, 'minutes')
         });
         dataSource.register(courier);
         $scope.dataSources.indices_table = dataSource;

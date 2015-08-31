@@ -1,4 +1,116 @@
 module.exports = {
+  'cluster_index_request_rate': {
+    active: true,
+    field: 'indices_stats._all.total.indexing.index_total',
+    label: 'Indexing Rate',
+    description: 'The per index rate at which documents are being indexed.',
+    format: '0,0.0',
+    metricAgg: 'max',
+    units: '/s',
+    defaults: { warning: '>1000', critical: '>5000', interval: '1m', periods: 1 },
+    type: 'index',
+    derivative: true
+  },
+  'cluster_search_request_rate': {
+    active: true,
+    field: 'indices_stats._all.total.search.query_total',
+    label: 'Search Rate',
+    description: 'The cluster wide rate at which search reqeusts are being executed.',
+    format: '0,0.0',
+    metricAgg: 'max',
+    units: '/s',
+    defaults: { warning: '>100', critical: '>5000', interval: '1m', periods: 1 },
+    type: 'cluster',
+    derivative: true
+  },
+  'cluster_index_latency': {
+    active: true,
+    field: 'indices_stats._all.total.indexing.index_total',
+    label: 'Indexing Latency',
+    description: 'The average indexing latency across the entire cluster.',
+    format: '0,0.0',
+    metricAgg: 'sum',
+    aggs: {
+      index_time_in_millis: {
+        max: { field: 'indices_stats._all.total.indexing.index_time_in_millis' }
+      },
+      index_total: {
+        max: { field: 'indices_stats._all.total.indexing.index_total' }
+      },
+      index_time_in_millis_deriv: {
+        derivative: { buckets_path: 'index_time_in_millis', gap_policy: 'insert_zeros' }
+      },
+      index_total_deriv: {
+        derivative: { buckets_path: 'index_total', gap_policy: 'insert_zeros' }
+      }
+    },
+    units: 'ms',
+    defaults: { warning: '>100', critical: '>200', interval: '1m', periods: 1 },
+    type: 'cluster',
+    derivitave: false,
+    calculation: function (last) {
+      var required = last &&
+          last.index_time_in_millis_deriv &&
+          last.index_total_deriv &&
+          last.index_total_deriv.value &&
+          last.index_time_in_millis_deriv.value;
+      if (required) {
+        return last.index_time_in_millis_deriv.value / last.index_total_deriv.value;
+      }
+
+      return 0;
+    }
+  },
+  'cluster_query_latency': {
+    active: true,
+    field: 'indices_stats._all.total.search.query_total',
+    label: 'Query Latency',
+    description: 'The average query latency across the entire cluster.',
+    format: '0,0.0',
+    metricAgg: 'sum',
+    aggs: {
+      query_time_in_millis: {
+        max: { field: 'indices_stats._all.total.search.query_time_in_millis' }
+      },
+      query_total: {
+        max: { field: 'indices_stats._all.total.search.query_total' }
+      },
+      query_time_in_millis_deriv: {
+        derivative: { buckets_path: 'query_time_in_millis', gap_policy: 'insert_zeros' }
+      },
+      query_total_deriv: {
+        derivative: { buckets_path: 'query_total', gap_policy: 'insert_zeros' }
+      }
+    },
+    units: 'ms',
+    defaults: { warning: '>100', critical: '>200', interval: '1m', periods: 1 },
+    type: 'cluster',
+    derivitave: false,
+    calculation: function (last) {
+      var required = last &&
+          last.query_time_in_millis_deriv &&
+          last.query_total_deriv &&
+          last.query_total_deriv.value &&
+          last.query_time_in_millis_deriv.value;
+      if (required) {
+        return last.query_time_in_millis_deriv.value / last.query_total_deriv.value;
+      }
+
+      return 0;
+    }
+  },
+  'index_request_rate': {
+    active: true,
+    field: 'index_stats.total.indexing.index_total',
+    label: 'Indexing Rate',
+    description: 'The per index rate at which documents are being indexed.',
+    format: '0,0.0',
+    metricAgg: 'max',
+    units: '/s',
+    defaults: { warning: '>1000', critical: '>5000', interval: '1m', periods: 1 },
+    type: 'index',
+    derivative: true
+  },
   'search_request_rate': {
     active: true,
     field: 'index_stats.total.search.query_total',
@@ -89,10 +201,10 @@ module.exports = {
   },
   'cpu_utilization': {
     active: true,
-    field: 'os.cpu.user',
+    field: 'node_stats.process.cpu.percent',
     label: 'CPU Utilization',
     description: 'The percentage of CPU usage.',
-    format: '0,0.0',
+    format: '0,0',
     metricAgg: 'avg',
     units: '%',
     defaults: { warning: '>70', critical: '>90', interval: '1m', periods: 1 },
@@ -104,7 +216,7 @@ module.exports = {
     field: 'node_stats.jvm.mem.heap_used_percent',
     label: 'JVM Heap Usage',
     description: 'The amound of heap used by the JVM',
-    format: '0.0',
+    format: '0,0',
     metricAgg: 'avg',
     units: '%',
     defaults: { warning: '>7', critical: '>9', interval: '1m', periods: 1  },
@@ -113,8 +225,8 @@ module.exports = {
   },
   'load_average_1m': {
     active: true,
-    field: 'node_stats.os.load_average.1m',
-    label: 'CPU Load (1m)',
+    field: 'node_stats.os.load_average',
+    label: 'CPU Load Average',
     description: 'The amount of load used for the last 1 minute.',
     format: '0,0.0',
     metricAgg: 'avg',
@@ -180,18 +292,6 @@ module.exports = {
     metricAgg: 'max',
     units: '/s',
     defaults: { warning: '>100', critical: '>5000', interval: '1m', periods: 1 },
-    type: 'index',
-    derivative: true
-  },
-  'index_request_rate': {
-    active: true,
-    field: 'index_stats.total.indexing.index_total',
-    label: 'Indexing Rate',
-    description: 'The per index rate at which documents are being indexed.',
-    format: '0,0.0',
-    metricAgg: 'max',
-    units: '/s',
-    defaults: { warning: '>1000', critical: '>5000', interval: '1m', periods: 1 },
     type: 'index',
     derivative: true
   },

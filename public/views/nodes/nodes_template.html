@@ -1,4 +1,4 @@
 <div class="marvel-nodes marvel-view" ng-controller="nodes">
-  <marvel-cluster-status source="dataSources['cluster_status']"></marvel-cluster-status>
+  <marvel-cluster-status cluster-state="dataSources.clusterState" source="dataSources['cluster_status']"></marvel-cluster-status>
   <marvel-nodes-listing data="dataSources.nodes_table.data" nodes="nodes"></marvel-nodes-listing>
 </div>

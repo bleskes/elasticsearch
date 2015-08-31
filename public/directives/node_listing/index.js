@@ -6,6 +6,7 @@ define(function (require) {
   var React = require('react');
   var make = React.DOM;
   var metrics = require('plugins/marvel/lib/metrics');
+  var extractIp = require('plugins/marvel/lib/extract_ip');
 
 
   var Table = require('plugins/marvel/directives/paginated_table/components/table');
@@ -23,14 +24,14 @@ define(function (require) {
         var state = this.state || {};
         $content = make.div(null,
           make.a({href: '#/node/' + value}, state.name),  // <a href="#/node/:node_id>
-          make.div({className: 'small'}, state.transport_address)); //   <div.small>
+          make.div({className: 'small'}, extractIp(state.transport_address))); //   <div.small>
       }
       if (_.isObject(value) && value.metric) {
-        var formatNumber = (function(metric) {
-          return function(val) {
+        var formatNumber = (function (metric) {
+          return function (val) {
             if (!metric.format) { return val; }
             return numeral(val).format(metric.format) + metric.units;
-          }
+          };
         }(value.metric));
         var metric = value.metric;
         var rawValue = formatNumber(value.last);
@@ -45,26 +46,37 @@ define(function (require) {
     }
     var initialTableOptions = {
       title: 'Nodes',
-      columns: [{
-        key: 'name',
-        sort: 1,
-        title: 'Name'
-      }, {
-        key: 'metrics.node_jvm_mem_percent',
-        sortKey: 'metrics.node_jvm_mem_percen.lastt',
-        sort: 0,
-        title: 'Load 1m'
-      }, {
-        key: 'metrics.load_average_1m',
-        sortKey: 'metrics.load_average_1m.last',
-        sort: 0,
-        title: 'RAM used'
-      }, {
-        key: 'metrics.node_space_free',
-        sortKey: 'metrics.node_space_free.last',
-        sort: 0,
-        title: 'Disk Free Space GB'
-      }]
+      columns: [
+        {
+          key: 'name',
+          sort: 1,
+          title: 'Name'
+        },
+        {
+          key: 'metrics.cpu_utilization',
+          sortKey: 'metrics.cpu_utilization.last',
+          sort: 0,
+          title: 'CPU Usage'
+        },
+        {
+          key: 'metrics.node_jvm_mem_percent',
+          sortKey: 'metrics.node_jvm_mem_percen.last',
+          sort: 0,
+          title: 'JVM Memory'
+        },
+        {
+          key: 'metrics.load_average_1m',
+          sortKey: 'metrics.load_average_1m.last',
+          sort: 0,
+          title: 'Load Average'
+        },
+        {
+          key: 'metrics.node_space_free',
+          sortKey: 'metrics.node_space_free.last',
+          sort: 0,
+          title: 'Disk Free Space GB'
+        }
+      ]
     };
     function makeChart(data, metric) {
       return React.createElement(MarvelChart, {
@@ -78,13 +90,19 @@ define(function (require) {
       scope: { data: '=', nodes: '='},
       link: function ($scope, $el) {
         var tableRowTemplate = React.createClass({
-          getInitialState: function() { return $scope.nodes[this.props.name]; },
-          componentWillReceiveProps: function(newProps) { this.setState($scope.nodes[newProps.name]); },
-          render: function() {
+          getInitialState: function () {
+            return $scope.nodes[this.props.name];
+          },
+          componentWillReceiveProps: function (newProps) {
+            this.setState($scope.nodes[newProps.name]);
+          },
+          render: function () {
             var boundTemplateFn = makeTdWithPropKey.bind(this);
             var $tdsArr = initialTableOptions.columns.map(boundTemplateFn);
-            return make.tr({className: 'big no-border', key: 'row-' + this.props.name},
-              $tdsArr);
+            return make.tr({
+              className: 'big no-border',
+              key: 'row-' + this.props.name
+            }, $tdsArr);
             /*
             var trAttrs = {
               key: 'stats',
@@ -114,7 +132,7 @@ define(function (require) {
 
         var TableInstance = React.render($table, $el[0]);
 
-        $scope.$watch('data', function(data, oldVal) {
+        $scope.$watch('data', function (data, oldVal) {
           TableInstance.setData(data);
         });
       }
