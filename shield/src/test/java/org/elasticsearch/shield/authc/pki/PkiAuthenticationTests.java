@@ -30,6 +30,7 @@ import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.elasticsearch.common.transport.TransportAddress;
 import org.elasticsearch.http.HttpServerTransport;
 import org.elasticsearch.node.Node;
+import org.elasticsearch.shield.ShieldPlugin;
 import org.elasticsearch.shield.transport.SSLClientAuth;
 import org.elasticsearch.shield.transport.netty.ShieldNettyHttpServerTransport;
 import org.elasticsearch.test.ESIntegTestCase.ClusterScope;
@@ -152,7 +153,7 @@ public class PkiAuthenticationTests extends ShieldIntegTestCase {
                 .put("cluster.name", internalTestCluster().getClusterName());
         builder.remove("shield.user");
         builder.remove("request.headers.Authorization");
-        return TransportClient.builder().settings(builder).build();
+        return TransportClient.builder().settings(builder).addPlugin(ShieldPlugin.class).build();
     }
 
     private String getNodeUrl() {
