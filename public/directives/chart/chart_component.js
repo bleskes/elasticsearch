@@ -2,8 +2,31 @@ define(function (require) {
   var React = require('react');
   var make = React.DOM;
   var _ = require('lodash');
+  var moment = require('moment');
   var formatNumber = require('plugins/marvel/lib/format_number');
   var jubilee = require('jubilee/build/jubilee');
+
+
+  var LoadingComponent = React.createClass({
+    render: function() {
+      var $icon = make.i({className: 'fa fa-spinner fa-pulse'})
+      return make.div({
+        className: 'loading'
+      }, $icon, ' Loading');
+    }
+  });
+  var Tooltip = require('plugins/marvel/directives/tooltip');
+  var TooltipInnerComponent = React.createClass({
+    render: function() {
+      var time = moment(this.props.x);
+      var $dateDiv = make.div(null,
+          make.i({className: 'fa fa-calendar-o'}),
+          ' ',
+          time.format("YYYY-MM-DD HH:mm:ss"));
+      var value = [this.props.label, this.props.y].join(' ');
+      return make.div(null, $dateDiv, value);
+    }
+  });
 
   var MarvelSparkLine = React.createClass({
     getInitialState: function () {
@@ -11,9 +34,18 @@ define(function (require) {
       if (!data && this.props.source) {
         data = this.props.source.data;
       }
-      return { chartData: data || [] };
+      return {
+        chartData: data || [],
+        loading: true
+      };
     },
-    componentDidMount: function () { this.drawJubileeChart(); },
+    componentDidUnmount: function() {
+      window.removeEventListener('resize', this.drawJubileeChart);
+    },
+    componentDidMount: function () {
+      window.addEventListener('resize', _.throttle(this.drawJubileeChart, 10));
+      this.drawJubileeChart();
+    },
     componentDidUpdate: function () { this.drawJubileeChart(); },
     render: function () {
       var metric = this.props.source.metric;
@@ -21,19 +53,28 @@ define(function (require) {
       var titleStr = [metric.label + ':', lastPoint ? formatNumber(lastPoint.y, metric.format) : 0, metric.units].join(' ');
       var $title = make.h1(null, titleStr);
       var $chartWrapper = make.div({className: 'jubilee'});
-      var attrs = {
-        className: this.props.className || ''
-      };
+      var attrs = { className: this.props.className || '' };
 
       return make.div(attrs, $title, $chartWrapper);
     },
+    shouldComponentUpdate: function(nextProps, nextState) {
+      return this.state.loading === nextState.loading;
+    },
     drawJubileeChart: function () {
+      Tooltip.removeTooltip();
       var data = this.state.chartData;
+      var children = React.findDOMNode(this).children;
+      var lastChild = children[children.length - 1];
       if( !data || !data.length ) {
+        React.render(React.createElement(LoadingComponent), lastChild);
         return;
       }
-      var children = React.findDOMNode(this).children;
-      d3.select(children[children.length - 1])
+      if( this.state.loading ) {
+        lastChild.removeChild(lastChild.childNodes[0]);
+        this.setState({loading: false});
+      }
+      // Hide the tooltip so you don't get old data with it.
+      d3.select(lastChild)
         .datum([this.state.chartData])
         .call(this.jLineChart);
     },
@@ -56,12 +97,14 @@ define(function (require) {
       }
     },
     componentWillMount: function () {
-      var Tooltip = require('plugins/marvel/directives/tooltip');
       var that = this;
       function showTooltip(evt, yValue, chartIndex) {
         var val = yValue[0];
         if( val !== null ) {
-          Tooltip.showTooltip(evt.pageX, evt.pageY, 'Value: ' + val.y);
+          var niceVal = formatNumber(val.y, that.props.source.metric.format);
+          var tooltipInnerProps = _.assign({label: that.props.source.metric.label}, val, {y: niceVal});
+          var tooltipInnerComponentInstance = React.createElement(TooltipInnerComponent, tooltipInnerProps);
+          Tooltip.showTooltip(evt.pageX, evt.pageY, tooltipInnerComponentInstance);
         } else {
           Tooltip.removeTooltip();
         }
@@ -93,15 +136,12 @@ define(function (require) {
         })
         .zeroLine({ add: false })
         .on('mouseenter', showTooltip)
-        .on('mousemove', showTooltip)
-        .on('mouseleave', function(evt, yValue, chartIndex) {
-          Tooltip.removeTooltip();
-        });
+        .on('mousemove', _.throttle(showTooltip, 50))
+        .on('mouseleave', function(evt, yValue, chartIndex) { Tooltip.removeTooltip(); });
 
       this.jLineChart = lineChart;
     }
   });
-
 
   return MarvelSparkLine;
 });

@@ -90,7 +90,7 @@ define(function(require) {
   };
   Tooltip.prototype._positionTooltip = function() {
       var dimensions = this.$tooltipPortal.getBoundingClientRect();
-      var dimensionVector = new Vector(dimensions.width / 2, dimensions.height);
+      var dimensionVector = new Vector(dimensions.width / 2, dimensions.height+5);
       var position = this.lastPosition.clone();
       position.subtract(dimensionVector);
       this.$tooltipPortal.style.left = position._xPx();
