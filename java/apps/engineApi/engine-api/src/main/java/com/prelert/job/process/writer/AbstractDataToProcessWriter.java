@@ -52,7 +52,6 @@ import com.prelert.job.status.OutOfOrderRecordsException;
 import com.prelert.job.status.StatusReporter;
 import com.prelert.job.transform.TransformConfig;
 import com.prelert.job.transform.TransformConfigs;
-import com.prelert.job.transform.TransformConfigurationException;
 import com.prelert.transforms.DependencySorter;
 import com.prelert.transforms.Transform;
 import com.prelert.transforms.Transform.TransformIndex;
@@ -167,16 +166,9 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
         TransformFactory transformFactory = new TransformFactory();
         for (TransformConfig config : dateInputTransforms)
         {
-            try
-            {
-                Transform tr = transformFactory.create(config, m_InFieldIndexes, scratchAreaIndicies,
-                        outFieldIndexes, m_Logger);
-                m_DateInputTransforms.add(tr);
-            }
-            catch (TransformConfigurationException e)
-            {
-                m_Logger.error("Error creating transform " + config, e);
-            }
+            Transform tr = transformFactory.create(config, m_InFieldIndexes, scratchAreaIndicies,
+                    outFieldIndexes, m_Logger);
+            m_DateInputTransforms.add(tr);
         }
 
         // get the transforms that don't input into the date
@@ -192,16 +184,9 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
         postDateTransforms = DependencySorter.sortByDependency(postDateTransforms);
         for (TransformConfig config : postDateTransforms)
         {
-            try
-            {
-                Transform tr = transformFactory.create(config, m_InFieldIndexes, scratchAreaIndicies,
-                        outFieldIndexes, m_Logger);
-                m_PostDateTransforms.add(tr);
-            }
-            catch (TransformConfigurationException e)
-            {
-                m_Logger.error("Error creating transform " + config, e);
-            }
+            Transform tr = transformFactory.create(config, m_InFieldIndexes, scratchAreaIndicies,
+                    outFieldIndexes, m_Logger);
+            m_PostDateTransforms.add(tr);
         }
 
         writeHeader(outFieldIndexes);

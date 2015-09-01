@@ -44,14 +44,13 @@ import org.junit.Test;
 import com.prelert.job.transform.Condition;
 import com.prelert.job.transform.Operator;
 import com.prelert.job.transform.TransformConfig;
-import com.prelert.job.transform.TransformConfigurationException;
 import com.prelert.job.transform.TransformType;
 import com.prelert.transforms.Transform.TransformIndex;
 
 public class TransformFactoryTest {
 
     @Test
-    public void testIndiciesMapping() throws TransformConfigurationException
+    public void testIndiciesMapping()
     {
         TransformConfig conf = new TransformConfig();
         conf.setInputs(Arrays.asList("field1", "field2"));
@@ -80,7 +79,7 @@ public class TransformFactoryTest {
     }
 
     @Test
-    public void testConcatWithOptionalArgs() throws TransformConfigurationException
+    public void testConcatWithOptionalArgs()
     {
         TransformConfig conf = new TransformConfig();
         conf.setTransform(TransformType.CONCAT.prettyName());
@@ -109,7 +108,7 @@ public class TransformFactoryTest {
     }
 
     @Test
-    public void testAllTypesCreated() throws TransformConfigurationException
+    public void testAllTypesCreated()
     {
         EnumSet<TransformType> all = EnumSet.allOf(TransformType.class);
 
@@ -130,7 +129,7 @@ public class TransformFactoryTest {
     }
 
     @Test
-    public void testExcludeTransformsCreated() throws TransformConfigurationException
+    public void testExcludeTransformsCreated()
     {
         Map<String, Integer> inputIndicies = new HashMap<>();
         Map<String, Integer> scratchMap = new HashMap<>();

@@ -34,7 +34,6 @@ import java.util.Map;
 import org.apache.log4j.Logger;
 
 import com.prelert.job.transform.TransformConfig;
-import com.prelert.job.transform.TransformConfigurationException;
 import com.prelert.job.transform.TransformType;
 import com.prelert.transforms.Transform.TransformIndex;
 
@@ -58,14 +57,12 @@ public class TransformFactory
      * @param outputIndiciesMap
      * @param logger
      * @return
-     * @throws TransformConfigurationException
      */
     public Transform create(TransformConfig transformConfig,
             Map<String, Integer> inputIndiciesMap,
             Map<String, Integer> scratchAreaIndiciesMap,
             Map<String, Integer> outputIndiciesMap,
             Logger logger)
-    throws TransformConfigurationException
     {
         int[] input = new int[transformConfig.getInputs().size()];
         fillIndexArray(transformConfig.getInputs(), inputIndiciesMap, input);
