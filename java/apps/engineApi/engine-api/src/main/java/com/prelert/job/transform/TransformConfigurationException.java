@@ -27,15 +27,17 @@
 
 package com.prelert.job.transform;
 
-import com.prelert.job.config.verification.JobConfigurationException;
 import com.prelert.job.errorcodes.ErrorCodes;
+import com.prelert.job.errorcodes.HasErrorCode;
 
 /**
  * Represents the invalid configuration of a transform.
  */
-public class TransformConfigurationException extends JobConfigurationException
+public class TransformConfigurationException extends Exception implements HasErrorCode
 {
     private static final long serialVersionUID = -8930949236695246267L;
+
+    private final ErrorCodes m_ErrorCode;
 
     /**
      * Create a new TransformConfigurationException.
@@ -45,6 +47,15 @@ public class TransformConfigurationException extends JobConfigurationException
      */
     public TransformConfigurationException(String message, ErrorCodes errorCode)
     {
-        super(message, errorCode);
+        super(message);
+        m_ErrorCode = errorCode;
     }
+
+    @Override
+    public ErrorCodes getErrorCode()
+    {
+        return m_ErrorCode;
+    }
+
+
 }

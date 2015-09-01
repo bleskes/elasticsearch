@@ -26,7 +26,10 @@
  ************************************************************/
 package com.prelert.job.transform.verification;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -40,7 +43,6 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
 import com.google.common.collect.Range;
-import com.prelert.job.config.verification.JobConfigurationException;
 import com.prelert.job.errorcodes.ErrorCodeMatcher;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.transform.Condition;
@@ -56,7 +58,7 @@ public class TransformConfigVerifierTest
     public ExpectedException m_ExpectedException = ExpectedException.none();
 
     @Test
-    public void testVerify_GivenValidTransform() throws JobConfigurationException
+    public void testVerify_GivenValidTransform() throws TransformConfigurationException
     {
         Set<TransformType> types = EnumSet.allOf(TransformType.class);
 
@@ -69,7 +71,7 @@ public class TransformConfigVerifierTest
     }
 
     @Test
-    public void testVerify_GivenConcat() throws JobConfigurationException
+    public void testVerify_GivenConcat() throws TransformConfigurationException
     {
         List<String> inputs = new ArrayList<>();
 

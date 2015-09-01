@@ -36,6 +36,7 @@ import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.messages.Messages;
 import com.prelert.job.transform.TransformConfig;
 import com.prelert.job.transform.TransformConfigs;
+import com.prelert.job.transform.TransformConfigurationException;
 import com.prelert.job.transform.verification.TransformConfigsVerifier;
 
 public class JobConfigurationVerifier
@@ -82,7 +83,14 @@ public class JobConfigurationVerifier
 
         if (config.getTransforms() != null)
         {
-            TransformConfigsVerifier.verify(config.getTransforms());
+            try
+            {
+                TransformConfigsVerifier.verify(config.getTransforms());
+            }
+            catch (TransformConfigurationException e)
+            {
+                throw new JobConfigurationException(e.getMessage(), e.getErrorCode());
+            }
             checkTransformOutputIsUsed(config);
         }
 
