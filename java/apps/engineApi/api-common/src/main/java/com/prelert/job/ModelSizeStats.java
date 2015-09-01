@@ -57,7 +57,7 @@ public class ModelSizeStats
      * some aggressive pruning to keep the memory below the limit,
      * and HARD_LIMIT means that samples have been dropped
      */
-    public enum MemoryStatus { OK, SOFT_LIMIT, HARD_LIMIT };
+    public enum MemoryStatus { OK, SOFT_LIMIT, HARD_LIMIT }
 
     private long m_ModelBytes;
     private long m_TotalByFieldCount;
