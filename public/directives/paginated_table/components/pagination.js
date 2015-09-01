@@ -14,18 +14,19 @@ define(function(require) {
       if (!_.isFinite(numPages)) { numPages = 1; } // Because Dividing by 0 results in Infinity
 
       var pageList = [];
-      // Make the middle pagination
       if(this.props.pageIdx > 0) {
         pageList.push(make.li({
           'onClick': this.props.setCurrPage.bind(null, this.props.pageIdx-1)
         }, makeChev()));
       }
       var that = this;
+      // Make the middle pagination
       if (numPages > 1) {
         for (var i = 1; i <= numPages; i++) {
           pageList.push(make.li({
             'key': i,
-            'onClick': this.props.setCurrPage.bind(null, i-1)
+            'onClick': this.props.setCurrPage.bind(null, i-1),
+            'className': (this.props.pageIdx === i-1 ? 'current' : '')
           }, i));
         }
       }
@@ -38,7 +39,7 @@ define(function(require) {
 
       // Select: 20 | 60 | 80 | ALL
       var showOptions = [];
-      [1, 20, 60, 80, 'Show All'].forEach(function(choice, idx) {
+      [20, 60, 80, 'Show All'].forEach(function(choice, idx) {
         if (idx) {
           showOptions.push('|');
         }

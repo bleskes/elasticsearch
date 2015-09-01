@@ -15,6 +15,23 @@ define(function (require) {
       }, $icon, ' Loading');
     }
   });
+  var Tooltip = require('plugins/marvel/directives/tooltip');
+  var TooltipInnerComponent = React.createClass({
+    render: function() {
+      var time = moment(this.props.x);
+      var makeSpacedDivWithContent  = function() {
+        return make
+      };
+      var contentArr = [
+        make.div(null,
+          make.i({className: 'fa fa-calendar-o'}),
+          ' ',
+          time.format("YYYY-MM-DD HH:mm:ss")),
+        [this.props.label, this.props.y].join(' ')
+      ];
+      return make.div(null, contentArr);
+    }
+  });
 
   var MarvelSparkLine = React.createClass({
     getInitialState: function () {
@@ -27,7 +44,13 @@ define(function (require) {
         loading: true
       };
     },
-    componentDidMount: function () { this.drawJubileeChart(); },
+    componentDidUnmount: function() {
+      window.removeEventListener('resize', this.drawJubileeChart);
+    },
+    componentDidMount: function () {
+      window.addEventListener('resize', _.throttle(this.drawJubileeChart, 10));
+      this.drawJubileeChart();
+    },
     componentDidUpdate: function () { this.drawJubileeChart(); },
     render: function () {
       var metric = this.props.source.metric;
@@ -54,6 +77,8 @@ define(function (require) {
         lastChild.removeChild(lastChild.childNodes[0]);
         this.setState({loading: false});
       }
+      // Hide the tooltip so you don't get old data with it.
+      Tooltip.removeTooltip();
       d3.select(lastChild)
         .datum([this.state.chartData])
         .call(this.jLineChart);
@@ -77,19 +102,13 @@ define(function (require) {
       }
     },
     componentWillMount: function () {
-      var Tooltip = require('plugins/marvel/directives/tooltip');
       var that = this;
-      var TooltipInnerComponent = React.createClass({
-        render: function() {
-          var time = moment(this.props.x);
-          var contentArr = [make.div(null, time.format("YYYY-MM-DD HH:mm:ss")), [that.props.source.metric.label, this.props.y].join(' ')];
-          return make.div(null, contentArr);
-        }
-      });
       function showTooltip(evt, yValue, chartIndex) {
         var val = yValue[0];
         if( val !== null ) {
-          Tooltip.showTooltip(evt.pageX, evt.pageY, React.createElement(TooltipInnerComponent, val));
+          var tooltipInnerProps = _.assign({label: that.props.source.metric.label}, val);
+          var tooltipInnerComponentInstance = React.createElement(TooltipInnerComponent, tooltipInnerProps);
+          Tooltip.showTooltip(evt.pageX, evt.pageY, tooltipInnerComponentInstance);
         } else {
           Tooltip.removeTooltip();
         }
