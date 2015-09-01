@@ -23,12 +23,14 @@ import org.elasticsearch.marvel.agent.collector.cluster.ClusterStateCollector;
 import org.elasticsearch.marvel.agent.collector.cluster.ClusterStatsCollector;
 import org.elasticsearch.marvel.agent.collector.indices.IndexRecoveryCollector;
 import org.elasticsearch.marvel.agent.collector.indices.IndexStatsCollector;
+import org.elasticsearch.marvel.agent.collector.indices.IndicesStatsCollector;
 import org.elasticsearch.marvel.agent.collector.licenses.LicensesCollector;
 import org.elasticsearch.marvel.agent.collector.node.NodeStatsCollector;
 import org.elasticsearch.marvel.agent.renderer.cluster.ClusterStateRenderer;
 import org.elasticsearch.marvel.agent.renderer.cluster.ClusterStatsRenderer;
 import org.elasticsearch.marvel.agent.renderer.indices.IndexRecoveryRenderer;
 import org.elasticsearch.marvel.agent.renderer.indices.IndexStatsRenderer;
+import org.elasticsearch.marvel.agent.renderer.indices.IndicesStatsRenderer;
 import org.elasticsearch.marvel.agent.renderer.licenses.LicensesRenderer;
 import org.elasticsearch.marvel.agent.renderer.node.NodeStatsRenderer;
 
@@ -50,6 +52,9 @@ public class RendererModule extends AbstractModule {
         // Bind default renderers
         bind(LicensesRenderer.class).asEagerSingleton();
         mbinder.addBinding(LicensesCollector.TYPE).to(LicensesRenderer.class);
+
+        bind(IndicesStatsRenderer.class).asEagerSingleton();
+        mbinder.addBinding(IndicesStatsCollector.TYPE).to(IndicesStatsRenderer.class);
 
         bind(IndexStatsRenderer.class).asEagerSingleton();
         mbinder.addBinding(IndexStatsCollector.TYPE).to(IndexStatsRenderer.class);
