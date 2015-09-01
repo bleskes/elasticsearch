@@ -11,6 +11,32 @@ require('plugins/marvel/views/issues/issues_controller.js');
 require('plugins/marvel/views/setup/setup_controller.js');
 require('plugins/marvel/views/shard_allocation/shard_allocation_controller.js');
 require('plugins/marvel/views/index/index_controller.js');
+require('ui/modules').get('kibana').config(function (PrivateProvider) {
+  PrivateProvider.swap(require('ui/config/defaults'), function ($injector) {
+    var defaults = $injector.invoke(require('ui/config/defaults'));
+    defaults['timepicker:timeDefaults'] = {
+      type: 'json',
+      value: [
+        '{',
+        '  "from": "now-1h",',
+        '  "to": "now",',
+        '  "mode": "quick"',
+        '}'
+      ].join('\n')
+    };
+    defaults['timepicker:refreshIntervalDefaults'] = {
+      type: 'json',
+      value: [
+        '{',
+        '  "display": "10 seconds",',
+        '  "pause": false,',
+        '  "value": 10000',
+        '}'
+      ].join('\n')
+    };
+    return defaults;
+  });
+});
 
 
 require('ui/chrome')
