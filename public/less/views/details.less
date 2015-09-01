@@ -14,14 +14,19 @@
     border-top: 2px solid @esGreen;
     padding: 10px;
 
-    marvel-chart >div {
-      border-left: 1px solid @esGray;
-      border-right: 1px solid @esGray;
-      border-bottom: 1px solid @esGray;
-      >h1 {
-        font-size: 20px;
-        margin: 0;
-        padding: 5px;
+    marvel-chart {
+      border-top: 0 none transparent;
+      padding: 0;
+      > div {
+        border-top: 2px solid @esGray;
+        border-left: 1px solid @esGray;
+        border-right: 1px solid @esGray;
+        border-bottom: 1px solid @esGray;
+        >h1 {
+          font-size: 20px;
+          margin: 0;
+          padding: 5px;
+        }
       }
     }
   }
