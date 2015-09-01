@@ -61,6 +61,7 @@ define(function (require) {
       return this.state.loading === nextState.loading;
     },
     drawJubileeChart: function () {
+      Tooltip.removeTooltip();
       var data = this.state.chartData;
       var children = React.findDOMNode(this).children;
       var lastChild = children[children.length - 1];
@@ -73,7 +74,6 @@ define(function (require) {
         this.setState({loading: false});
       }
       // Hide the tooltip so you don't get old data with it.
-      Tooltip.removeTooltip();
       d3.select(lastChild)
         .datum([this.state.chartData])
         .call(this.jLineChart);
@@ -101,7 +101,8 @@ define(function (require) {
       function showTooltip(evt, yValue, chartIndex) {
         var val = yValue[0];
         if( val !== null ) {
-          var tooltipInnerProps = _.assign({label: that.props.source.metric.label}, val);
+          var niceVal = formatNumber(val.y, that.props.source.metric.format);
+          var tooltipInnerProps = _.assign({label: that.props.source.metric.label}, val, {y: niceVal});
           var tooltipInnerComponentInstance = React.createElement(TooltipInnerComponent, tooltipInnerProps);
           Tooltip.showTooltip(evt.pageX, evt.pageY, tooltipInnerComponentInstance);
         } else {
