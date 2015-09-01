@@ -19,7 +19,6 @@ define(function(require) {
           'onClick': this.props.setCurrPage.bind(null, this.props.pageIdx-1)
         }, makeChev()));
       }
-      var that = this;
       // Make the middle pagination
       if (numPages > 1) {
         for (var i = 1; i <= numPages; i++) {
@@ -39,6 +38,7 @@ define(function(require) {
 
       // Select: 20 | 60 | 80 | ALL
       var showOptions = [];
+      var that = this;
       [20, 60, 80, 'Show All'].forEach(function(choice, idx) {
         if (idx) {
           showOptions.push('|');

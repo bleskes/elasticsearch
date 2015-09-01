@@ -10,7 +10,7 @@ define(function (require) {
   var LoadingComponent = React.createClass({
     render: function() {
       var $icon = make.i({className: 'fa fa-spinner fa-pulse'})
-      return make.span({
+      return make.div({
         className: 'loading'
       }, $icon, ' Loading');
     }
@@ -19,17 +19,12 @@ define(function (require) {
   var TooltipInnerComponent = React.createClass({
     render: function() {
       var time = moment(this.props.x);
-      var makeSpacedDivWithContent  = function() {
-        return make
-      };
-      var contentArr = [
-        make.div(null,
+      var $dateDiv = make.div(null,
           make.i({className: 'fa fa-calendar-o'}),
           ' ',
-          time.format("YYYY-MM-DD HH:mm:ss")),
-        [this.props.label, this.props.y].join(' ')
-      ];
-      return make.div(null, contentArr);
+          time.format("YYYY-MM-DD HH:mm:ss"));
+      var value = [this.props.label, this.props.y].join(' ');
+      return make.div(null, $dateDiv, value);
     }
   });
 
@@ -140,7 +135,7 @@ define(function (require) {
         })
         .zeroLine({ add: false })
         .on('mouseenter', showTooltip)
-        .on('mousemove', showTooltip)
+        .on('mousemove', _.throttle(showTooltip, 50))
         .on('mouseleave', function(evt, yValue, chartIndex) { Tooltip.removeTooltip(); });
 
       this.jLineChart = lineChart;
