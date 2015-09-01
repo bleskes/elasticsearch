@@ -17,7 +17,6 @@
 
 package org.elasticsearch.marvel.agent.exporter;
 
-import com.google.common.base.Predicate;
 import org.elasticsearch.action.admin.indices.stats.IndexStats;
 import org.elasticsearch.cluster.metadata.IndexTemplateMetaData;
 import org.elasticsearch.common.Strings;
@@ -34,7 +33,6 @@ import org.elasticsearch.test.ESIntegTestCase.ClusterScope;
 import org.hamcrest.Matchers;
 import org.junit.Test;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -42,6 +40,7 @@ import java.util.Collections;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static org.elasticsearch.test.hamcrest.ElasticsearchAssertions.assertAcked;
+import static org.hamcrest.Matchers.equalTo;
 
 
 // Transport Client instantiation also calls the marvel plugin, which then fails to find modules
@@ -174,14 +173,15 @@ public class HttpESExporterTests extends ESIntegTestCase {
     }
 
     @Test
-    public void testHostFailureChecksTemplate() throws InterruptedException, IOException {
+    public void testHostFailureChecksTemplate() throws Exception {
         Settings.Builder builder = Settings.builder()
                 .put(MarvelSettings.STARTUP_DELAY, "200m")
                 .put(Node.HTTP_ENABLED, true);
         final String node0 = internalCluster().startNode(builder);
-        String node1 = internalCluster().startNode(builder);
+        final HttpESExporter httpEsExporter0 = getEsExporter(node0);
+        assertThat(node0, equalTo(internalCluster().getMasterName()));
 
-        HttpESExporter httpEsExporter0 = getEsExporter(node0);
+        final String node1 = internalCluster().startNode(builder);
         final HttpESExporter httpEsExporter1 = getEsExporter(node1);
 
         logger.info("--> exporting events to force host resolution");
@@ -206,23 +206,18 @@ public class HttpESExporterTests extends ESIntegTestCase {
         assertAcked(client().admin().indices().prepareDeleteTemplate("marvel").get());
 
         logger.info("--> shutting down node0");
-        internalCluster().stopRandomNode(new Predicate<Settings>() {
-            @Override
-            public boolean apply(Settings settings) {
-                return settings.get("name").equals(node0);
-            }
-        });
+        internalCluster().stopCurrentMasterNode();
 
         logger.info("--> exporting events from node1");
         // we use assert busy node because url caching may cause the node failure to be only detected while sending the event
-        assertTrue("failed to find a template named 'marvel'", awaitBusy(new Predicate<Object>() {
+        assertBusy(new Runnable() {
             @Override
-            public boolean apply(Object o) {
+            public void run() {
                 httpEsExporter1.export(Collections.singletonList(newRandomMarvelDoc()));
                 logger.debug("--> checking for template");
-                return findMarvelTemplate();
+                assertTrue("failed to find a template named 'marvel'", findMarvelTemplate());
             }
-        }));
+        });
     }
 
     private HttpESExporter getEsExporter() {
