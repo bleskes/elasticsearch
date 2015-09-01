@@ -6,7 +6,7 @@ var ClusterRow = require('./components/cluster_row.jsx');
 module.directive('marvelClusterListing', function (globalState, kbnUrl, $location) {
   return {
     restrict: 'E',
-    scope: { data: '=' },
+    scope: { clusters: '=' },
     link: function ($scope, $el) {
 
       var options = {
@@ -58,7 +58,7 @@ module.directive('marvelClusterListing', function (globalState, kbnUrl, $locatio
         });
       }
 
-      $scope.$watch('data', (data) => {
+      $scope.$watch('clusters', (data) => {
         if (data) {
           data.forEach((cluster) => {
             cluster.changeCluster = changeCluster;

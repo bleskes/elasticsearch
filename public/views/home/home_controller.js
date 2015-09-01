@@ -19,13 +19,21 @@ define(function (require) {
             return Promise.reject();
           }
           chrome.setTabs([]);
+          return clusters;
         });
       }
     }
   })
   .otherwise({ redirectTo: '/home' });
 
-  module.controller('home', function ($window, $scope, marvelClusters, timefilter, $timeout) {
+  module.controller('home', function ($route, $window, $scope, marvelClusters, timefilter, $timeout) {
+
+    function setKeyForClusters(cluster) {
+      cluster.key = cluster.cluster_uuid;
+      return cluster;
+    }
+
+    $scope.clusters = $route.current.locals.clusters.map(setKeyForClusters);
 
     var hideBanner = $window.localStorage.getItem('marvel.hideBanner');
     $scope.showBanner = (hideBanner) ? false : true;
@@ -45,17 +53,18 @@ define(function (require) {
       timefilter.refreshInterval.display = '10 Seconds';
     }
 
+    var fetchTimer;
     function fetch() {
+      console.log('home#fetch()');
       marvelClusters.fetch().then((clusters) => {
-        $scope.clusters = clusters.map((cluster) => {
-          cluster.key = cluster.cluster_uuid;
-          return cluster;
-        });
-        $timeout(fetch, timefilter.refreshInterval.value);
+        $scope.clusters = clusters.map(setKeyForClusters);
+        fetchTimer = $timeout(fetch, timefilter.refreshInterval.value);
       });
     }
-
-    fetch();
+    fetchTimer = $timeout(fetch, timefilter.refreshInterval.value);
+    $scope.$on('$destroy', () => {
+      $timeout.cancel(fetchTimer);
+    });
 
   });
 

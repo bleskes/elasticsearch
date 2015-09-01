@@ -100,7 +100,7 @@ define(function (require) {
       });
     });
 
-    function fetch(withoutCourier) {
+    function fetch() {
       var tasks = [];
       _.each($scope.dataSources.issues, function (dataSource) {
         tasks.push(dataSource.fetch());
