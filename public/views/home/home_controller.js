@@ -54,16 +54,30 @@ define(function (require) {
     }
 
     var fetchTimer;
+    function startFetchInterval() {
+      if (!timefilter.refreshInterval.pause) {
+        fetchTimer = $timeout(fetch, timefilter.refreshInterval.value);
+      }
+    }
+    function cancelFetchInterval() {
+      $timeout.cancel(fetchTimer);
+    }
+
+    timefilter.on('update', (time) => {
+      cancelFetchInterval();
+      startFetchInterval();
+    });
+
     function fetch() {
-      console.log('home#fetch()');
       marvelClusters.fetch().then((clusters) => {
         $scope.clusters = clusters.map(setKeyForClusters);
-        fetchTimer = $timeout(fetch, timefilter.refreshInterval.value);
+        startFetchInterval();
       });
     }
-    fetchTimer = $timeout(fetch, timefilter.refreshInterval.value);
+
+    startFetchInterval();
     $scope.$on('$destroy', () => {
-      $timeout.cancel(fetchTimer);
+      cancelFetchInterval();
     });
 
   });
