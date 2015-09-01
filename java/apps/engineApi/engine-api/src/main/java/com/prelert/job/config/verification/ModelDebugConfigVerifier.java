@@ -29,8 +29,12 @@ package com.prelert.job.config.verification;
 import com.prelert.job.ModelDebugConfig;
 import com.prelert.job.errorcodes.ErrorCodes;
 
-public class ModelDebugConfigVerifier
+public final class ModelDebugConfigVerifier
 {
+    private ModelDebugConfigVerifier()
+    {
+    }
+
     /**
     /**
      * Checks the ModelDebugConfig is valid

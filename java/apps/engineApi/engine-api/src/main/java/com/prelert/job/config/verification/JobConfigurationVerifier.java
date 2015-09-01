@@ -39,8 +39,12 @@ import com.prelert.job.transform.TransformConfigs;
 import com.prelert.job.transform.TransformConfigurationException;
 import com.prelert.job.transform.verification.TransformConfigsVerifier;
 
-public class JobConfigurationVerifier
+public final class JobConfigurationVerifier
 {
+    private JobConfigurationVerifier()
+    {
+    }
+
     /**
      * Checks the job configuration settings and throws an exception
      * if any values are invalid

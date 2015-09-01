@@ -31,8 +31,12 @@ import com.prelert.job.Detector;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.messages.Messages;
 
-public class AnalysisConfigVerifier
+public final class AnalysisConfigVerifier
 {
+    private AnalysisConfigVerifier()
+    {
+    }
+
     /**
      * Checks the configuration is valid
      * <ol>

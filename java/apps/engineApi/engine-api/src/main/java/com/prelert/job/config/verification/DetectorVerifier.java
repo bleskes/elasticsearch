@@ -30,8 +30,12 @@ import com.prelert.job.Detector;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.messages.Messages;
 
-public class DetectorVerifier
+public final class DetectorVerifier
 {
+    private DetectorVerifier()
+    {
+    }
+
     /**
      * Checks the configuration is valid
      * <ol>

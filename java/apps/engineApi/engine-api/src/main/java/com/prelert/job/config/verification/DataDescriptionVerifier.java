@@ -32,8 +32,12 @@ import com.prelert.job.DataDescription;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.messages.Messages;
 
-public class DataDescriptionVerifier
+public final class DataDescriptionVerifier
 {
+    private DataDescriptionVerifier()
+    {
+    }
+
     /**
      * Verify the data description configuration
      * @param dd DataDescription

@@ -30,8 +30,12 @@ import com.prelert.job.AnalysisLimits;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.messages.Messages;
 
-public class AnalysisLimitsVerifier
+public final class AnalysisLimitsVerifier
 {
+    private AnalysisLimitsVerifier()
+    {
+    }
+
     /**
     /**
      * Checks the limits configuration is valid
