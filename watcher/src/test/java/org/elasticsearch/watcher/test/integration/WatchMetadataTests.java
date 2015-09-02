@@ -26,7 +26,7 @@ import org.elasticsearch.watcher.execution.ActionExecutionMode;
 import org.elasticsearch.watcher.history.HistoryStore;
 import org.elasticsearch.watcher.support.text.TextTemplate;
 import org.elasticsearch.watcher.support.xcontent.ObjectPath;
-import org.elasticsearch.watcher.test.AbstractWatcherIntegrationTests;
+import org.elasticsearch.watcher.test.AbstractWatcherIntegrationTestCase;
 import org.elasticsearch.watcher.test.WatcherTestUtils;
 import org.elasticsearch.watcher.transport.actions.execute.ExecuteWatchResponse;
 import org.elasticsearch.watcher.trigger.TriggerEvent;
@@ -54,7 +54,7 @@ import static org.hamcrest.Matchers.greaterThan;
 /**
  *
  */
-public class WatchMetadataTests extends AbstractWatcherIntegrationTests {
+public class WatchMetadataTests extends AbstractWatcherIntegrationTestCase {
 
     @Test
     public void testWatchMetadata() throws Exception {

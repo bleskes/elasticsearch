@@ -22,7 +22,7 @@ import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.common.util.Callback;
 import org.elasticsearch.watcher.client.WatcherClient;
-import org.elasticsearch.watcher.test.AbstractWatcherIntegrationTests;
+import org.elasticsearch.watcher.test.AbstractWatcherIntegrationTestCase;
 import org.elasticsearch.watcher.transport.actions.put.PutWatchResponse;
 import org.elasticsearch.watcher.trigger.schedule.IntervalSchedule;
 import org.joda.time.format.DateTimeFormat;
@@ -44,7 +44,7 @@ import static org.hamcrest.Matchers.is;
 
 /**
  */
-public class DynamicIndexNameIntegrationTests extends AbstractWatcherIntegrationTests {
+public class DynamicIndexNameIntegrationTests extends AbstractWatcherIntegrationTestCase {
 
     @Override
     protected boolean timeWarped() {

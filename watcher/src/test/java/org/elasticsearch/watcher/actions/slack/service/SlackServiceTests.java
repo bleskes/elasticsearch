@@ -23,7 +23,7 @@ import org.elasticsearch.test.junit.annotations.Network;
 import org.elasticsearch.watcher.actions.slack.SlackAction;
 import org.elasticsearch.watcher.actions.slack.service.message.Attachment;
 import org.elasticsearch.watcher.actions.slack.service.message.SlackMessage;
-import org.elasticsearch.watcher.test.AbstractWatcherIntegrationTests;
+import org.elasticsearch.watcher.test.AbstractWatcherIntegrationTestCase;
 import org.elasticsearch.watcher.transport.actions.put.PutWatchResponse;
 import org.junit.Test;
 
@@ -42,7 +42,7 @@ import static org.hamcrest.Matchers.*;
  *
  */
 @Network
-public class SlackServiceTests extends AbstractWatcherIntegrationTests {
+public class SlackServiceTests extends AbstractWatcherIntegrationTestCase {
 
     @Override
     protected boolean timeWarped() {

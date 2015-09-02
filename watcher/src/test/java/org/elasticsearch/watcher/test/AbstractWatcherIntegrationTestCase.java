@@ -93,7 +93,7 @@ import static org.hamcrest.core.IsNot.not;
 /**
  */
 @ClusterScope(scope = SUITE, numClientNodes = 0, transportClientRatio = 0, randomDynamicTemplates = false, maxNumDataNodes = 3)
-public abstract class AbstractWatcherIntegrationTests extends ESIntegTestCase {
+public abstract class AbstractWatcherIntegrationTestCase extends ESIntegTestCase {
 
     private static final boolean timeWarpEnabled = SystemPropertyUtil.getBoolean("tests.timewarp", true);
 
@@ -299,7 +299,7 @@ public abstract class AbstractWatcherIntegrationTests extends ESIntegTestCase {
         return getInstanceFromMaster(TriggerService.class);
     }
 
-    public AbstractWatcherIntegrationTests() {
+    public AbstractWatcherIntegrationTestCase() {
         super();
     }
 
