@@ -86,7 +86,7 @@ define(function (require) {
             'index_merge_rate'
           ],
           type: 'index',
-          duration: moment.duration(5, 'minutes')
+          duration: moment.duration(10, 'minutes')
         });
         dataSource.register(courier);
         $scope.dataSources.indices_table = dataSource;
