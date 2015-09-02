@@ -32,6 +32,7 @@ import org.elasticsearch.test.ESIntegTestCase.ClusterScope;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import static org.hamcrest.Matchers.*;
 
@@ -78,7 +79,7 @@ public abstract class AbstractRendererTestCase extends ESIntegTestCase {
                     fail("exception when waiting for marvel docs: " + t.getMessage());
                 }
             }
-        });
+        }, 30L, TimeUnit.SECONDS);
     }
 
     /**
