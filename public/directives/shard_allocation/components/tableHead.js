@@ -18,17 +18,20 @@
 
 
 define(function (require) {
-  'use strict';
   var React = require('react');
   var D = React.DOM;
 
   return React.createClass({
     displayName: 'TableHead',
     createColumn: function (label) {
-      return D.th({ key: label }, label);
+      var options = { key: label };
+      if (label === 'Indices' && this.props.hasUnassigned) {
+        options.colSpan = '2';
+      }
+      return D.th(options, label);
     },
     render: function () {
-      var columns = this.props.columns.map(this.createColumn);
+      var columns = this.props.columns.map((row) => this.createColumn(row));
       return D.thead({}, D.tr({}, columns));
     }
   });

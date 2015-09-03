@@ -15,25 +15,28 @@
  * from Elasticsearch Incorporated.
  */
 
-
-
 define(function () {
-  'use strict';
-  return function getStateSourceProvider(es) {
-    return function (obj) {
-      return es.get({
-        index: obj._index,
-        type: 'marvel_cluster_state',
-        id: obj._id
-      }).then(function (resp) {
-        var state;
-        if (resp && resp._source) {
-          state = resp._source;
-          state._id = obj._id;
-          return state;
-        }
-        return false;
-      });
+  var _ = require('lodash');
+  var getValueFromArrayOrString = require('../lib/getValueFromArrayOrString');
+  return function getStateSourceProvider($http, es) {
+    return function (obj, id, type) {
+      var stateUuid = getValueFromArrayOrString(obj.fields['cluster_state.state_uuid']);
+      var clusterUuid = getValueFromArrayOrString(obj.fields.cluster_uuid);
+      return es.get({ index: obj._index, type: 'marvel_cluster_state', id: obj._id })
+        .then((stateResp) => {
+          var url = `/marvel/api/v1/clusters/${clusterUuid}/state/${stateUuid}/shards`;
+          if (id && type) url += `?${type}=${id}`;
+          console.log(type, id, url);
+          return $http.get(url).then((shardResp) => {
+            if (stateResp && stateResp._source) {
+              var state = stateResp._source;
+              if (shardResp && shardResp.data) {
+                _.set(state, 'cluster_state.shards', shardResp.data || []);
+              }
+              return state;
+            }
+          });
+        });
     };
   };
 });
