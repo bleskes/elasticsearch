@@ -15,7 +15,7 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.watcher.transport.actions.ack;
+package org.elasticsearch.watcher.transport.actions.activate;
 
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.action.ActionListener;
@@ -36,17 +36,17 @@ import org.elasticsearch.watcher.watch.WatchStatus;
 import org.elasticsearch.watcher.watch.WatchStore;
 
 /**
- * Performs the ack operation.
+ * Performs the watch de/activation operation.
  */
-public class TransportAckWatchAction extends WatcherTransportAction<AckWatchRequest, AckWatchResponse> {
+public class TransportActivateWatchAction extends WatcherTransportAction<ActivateWatchRequest, ActivateWatchResponse> {
 
     private final WatcherService watcherService;
 
     @Inject
-    public TransportAckWatchAction(Settings settings, TransportService transportService, ClusterService clusterService,
-                                   ThreadPool threadPool, ActionFilters actionFilters, IndexNameExpressionResolver indexNameExpressionResolver,
-                                   WatcherService watcherService, LicenseService licenseService) {
-        super(settings, AckWatchAction.NAME, transportService, clusterService, threadPool, actionFilters, indexNameExpressionResolver, licenseService, AckWatchRequest.class);
+    public TransportActivateWatchAction(Settings settings, TransportService transportService, ClusterService clusterService,
+                                        ThreadPool threadPool, ActionFilters actionFilters, IndexNameExpressionResolver indexNameExpressionResolver,
+                                        WatcherService watcherService, LicenseService licenseService) {
+        super(settings, ActivateWatchAction.NAME, transportService, clusterService, threadPool, actionFilters, indexNameExpressionResolver, licenseService, ActivateWatchRequest.class);
         this.watcherService = watcherService;
     }
 
@@ -56,15 +56,17 @@ public class TransportAckWatchAction extends WatcherTransportAction<AckWatchRequ
     }
 
     @Override
-    protected AckWatchResponse newResponse() {
-        return new AckWatchResponse();
+    protected ActivateWatchResponse newResponse() {
+        return new ActivateWatchResponse();
     }
 
     @Override
-    protected void masterOperation(AckWatchRequest request, ClusterState state, ActionListener<AckWatchResponse> listener) throws ElasticsearchException {
+    protected void masterOperation(ActivateWatchRequest request, ClusterState state, ActionListener<ActivateWatchResponse> listener) throws ElasticsearchException {
         try {
-            WatchStatus watchStatus = watcherService.ackWatch(request.getWatchId(), request.getActionIds(), request.masterNodeTimeout());
-            AckWatchResponse response = new AckWatchResponse(watchStatus);
+            WatchStatus watchStatus = request.isActivate() ?
+                    watcherService.activateWatch(request.getWatchId(), request.masterNodeTimeout()) :
+                    watcherService.deactivateWatch(request.getWatchId(), request.masterNodeTimeout());
+            ActivateWatchResponse response = new ActivateWatchResponse(watchStatus);
             listener.onResponse(response);
         } catch (Exception e) {
             listener.onFailure(e);
@@ -72,7 +74,7 @@ public class TransportAckWatchAction extends WatcherTransportAction<AckWatchRequ
     }
 
     @Override
-    protected ClusterBlockException checkBlock(AckWatchRequest request, ClusterState state) {
+    protected ClusterBlockException checkBlock(ActivateWatchRequest request, ClusterState state) {
         return state.blocks().indexBlockedException(ClusterBlockLevel.WRITE, WatchStore.INDEX);
     }
 

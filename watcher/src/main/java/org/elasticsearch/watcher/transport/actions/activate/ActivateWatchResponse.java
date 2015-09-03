@@ -15,7 +15,7 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.watcher.transport.actions.ack;
+package org.elasticsearch.watcher.transport.actions.activate;
 
 import org.elasticsearch.action.ActionResponse;
 import org.elasticsearch.common.Nullable;
@@ -26,17 +26,17 @@ import org.elasticsearch.watcher.watch.WatchStatus;
 import java.io.IOException;
 
 /**
- * This class contains the status of the watch. If the watch was successfully acked
- * this will be reflected in the watch status.
+ * This class contains the status of the watch. If the watch was successfully de/activates
+ * this will reflected the new state of the watch.
  */
-public class AckWatchResponse extends ActionResponse {
+public class ActivateWatchResponse extends ActionResponse {
 
     private WatchStatus status;
 
-    public AckWatchResponse() {
+    public ActivateWatchResponse() {
     }
 
-    public AckWatchResponse(@Nullable WatchStatus status) {
+    public ActivateWatchResponse(@Nullable WatchStatus status) {
         this.status = status;
     }
 
