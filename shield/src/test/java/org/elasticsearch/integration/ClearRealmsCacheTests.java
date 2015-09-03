@@ -152,7 +152,7 @@ public class ClearRealmsCacheTests extends ShieldIntegTestCase {
             client.authc().clearRealmCache(request, new ActionListener<ClearRealmCacheResponse>() {
                 @Override
                 public void onResponse(ClearRealmCacheResponse response) {
-                    assertThat(response.getNodes().length, equalTo(internalTestCluster().getNodeNames().length));
+                    assertThat(response.getNodes().length, equalTo(internalCluster().getNodeNames().length));
                     latch.countDown();
                 }
 
@@ -175,7 +175,7 @@ public class ClearRealmsCacheTests extends ShieldIntegTestCase {
         static void executeHttpRequest(String path, Map<String, String> params) throws Exception {
             try (CloseableHttpClient client = HttpClients.createDefault()) {
                 HttpRequestBuilder requestBuilder = new HttpRequestBuilder(client)
-                        .httpTransport(internalTestCluster().getDataNodeInstance(HttpServerTransport.class))
+                        .httpTransport(internalCluster().getDataNodeInstance(HttpServerTransport.class))
                         .method("POST")
                         .path(path);
                 for (Map.Entry<String, String> entry : params.entrySet()) {
@@ -252,7 +252,7 @@ public class ClearRealmsCacheTests extends ShieldIntegTestCase {
         }
 
         List<Realm> realms = new ArrayList<>();
-        for (Realms nodeRealms : internalTestCluster().getInstances(Realms.class)) {
+        for (Realms nodeRealms : internalCluster().getInstances(Realms.class)) {
             realms.add(nodeRealms.realm("esusers"));
         }
 
