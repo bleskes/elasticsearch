@@ -39,7 +39,7 @@ public class CpuInfo
     private String m_Vendor;
     private String m_Model;
     private Integer m_FrequencyMHz;
-    private Integer cores;
+    private Integer m_Cores;
 
     public String getVendor()
     {
@@ -63,7 +63,7 @@ public class CpuInfo
 
     public Integer getCores()
     {
-        return cores;
+        return m_Cores;
     }
 
     public Integer getFrequencyMHz()
@@ -78,7 +78,7 @@ public class CpuInfo
 
     public void setCores(Integer cores)
     {
-        this.cores = cores;
+        this.m_Cores = cores;
     }
 
     @Override
