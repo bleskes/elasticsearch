@@ -62,5 +62,5 @@ public interface JobRenormaliser
      * @param records The new record values
      */
     public void updateRecords(String jobId, String bucketId, List<AnomalyRecord> records);
-};
+}
 
