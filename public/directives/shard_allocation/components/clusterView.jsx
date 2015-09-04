@@ -19,7 +19,7 @@
 
 define(function (require) {
   var React = require('react');
-  var TableHead = require('./tableHead');
+  var TableHead = require('./tableHead.jsx');
   var TableBody = require('./tableBody.jsx');
 
   return React.createClass({
