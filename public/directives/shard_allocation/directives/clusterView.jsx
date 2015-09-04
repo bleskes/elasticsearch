@@ -17,10 +17,9 @@
 
 
 
-/* jshint newcap: false */
 define(function (require) {
   var React = require('react');
-  var ClusterView = React.createFactory(require('plugins/marvel/directives/shard_allocation/components/clusterView'));
+  var ClusterView = require('plugins/marvel/directives/shard_allocation/components/clusterView');
   var module = require('ui/modules').get('marvel/directives', []);
   module.directive('clusterView', function ($parse) {
     return {
@@ -33,8 +32,7 @@ define(function (require) {
         shardStats: '='
       },
       link: function (scope, element, attr) {
-        var clusterView = ClusterView({ scope: scope });
-        React.render(clusterView, element[0]);
+        React.render(<ClusterView scope={scope}></ClusterView>, element[0]);
       }
     };
   });

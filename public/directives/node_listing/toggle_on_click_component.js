@@ -1,15 +1,15 @@
-define(function(require) {
+define(function (require) {
   var React = require('react');
   var make = React.DOM;
 
   var ToggleOnClickComponent = React.createClass({
-    getInitialState: function() {
+    getInitialState: function () {
       return { visible: this.props.initiallyVisible || false };
     },
-    toggleVisibility: function() {
+    toggleVisibility: function () {
       this.setState({visible: !this.state.visible});
     },
-    render: function() {
+    render: function () {
       var activator = this.props.activator;
       var visible = this.state.visible;
       var content = visible ? this.props.content : null;

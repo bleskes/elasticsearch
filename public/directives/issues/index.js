@@ -1,4 +1,5 @@
 define(function (require) {
+  var _ = require('lodash');
   var template = require('plugins/marvel/directives/issues/index.html');
   var module = require('ui/modules').get('marvel/directives', []);
   module.directive('marvelIssues', function (marvelMetrics) {

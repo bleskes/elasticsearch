@@ -19,7 +19,6 @@
 
 
 define(function (require) {
-  'use strict';
   var transform = require('./transform');
   var calculateShardStats = require('plugins/marvel/lib/calculate_shard_stats');
   var filterByName = require('./filterByName');
@@ -34,7 +33,7 @@ define(function (require) {
     if ($scope.currentState && $scope.panel) {
       var data = _.cloneDeep($scope.currentState);
       $scope.shardStats = calculateShardStats(data);
-      $scope.current = data['timestamp'];
+      $scope.current = data.timestamp;
       // Create the transformer. The transformer returned is based on the
       // $scope.panel.view
       var transformer = transform($scope.panel.view, $scope);

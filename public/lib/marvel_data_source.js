@@ -1,4 +1,5 @@
 define(function (require) {
+  var _ = require('lodash');
 
   function MarvelDataSource(index, cluster) {
     this.index = index;
@@ -19,7 +20,7 @@ define(function (require) {
   MarvelDataSource.prototype.initSearchSource = function () {};
 
   MarvelDataSource.prototype.getFilters = function () {
-    var id = (_.isObject(this.cluster)) ? this.cluster.cluster_uuid: this.cluster;
+    var id = (_.isObject(this.cluster)) ? this.cluster.cluster_uuid : this.cluster;
     return [{ term: { 'cluster_uuid': id } }];
   };
 

@@ -1,5 +1,5 @@
 // Mind the gap... UMD Below
-(function(define) {
+(function (define) {
   define(function (require, exports, module) {
     return function (a, b) {
       if (a.status === b.status) return 0;
@@ -9,7 +9,8 @@
       if (b.status === 'yellow') return 1;
     };
   });
-}( // Help Node out by setting up define.
-   typeof module === 'object' && typeof define !== 'function' ? function (factory) { module.exports = factory(require, exports, module); } : define
+}(// Help Node out by setting up define.
+   typeof module === 'object' &&
+   typeof define !== 'function' ? function (factory) { module.exports = factory(require, exports, module); } : define
 ));
 

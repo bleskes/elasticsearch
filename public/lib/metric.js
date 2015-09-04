@@ -1,7 +1,7 @@
 var numeral = require('numeral');
 
 // Mind the gap... UMD Below
-(function(define) {
+(function (define) {
   define(function (require, exports, module) {
     var Model = require('./model');
     var _ = require('lodash');
@@ -109,7 +109,8 @@ var numeral = require('numeral');
     return Metric;
 
   });
-}( // Help Node out by setting up define.
-   typeof module === 'object' && typeof define !== 'function' ? function (factory) { module.exports = factory(require, exports, module); } : define
+}(// Help Node out by setting up define.
+   typeof module === 'object' &&
+   typeof define !== 'function' ? function (factory) { module.exports = factory(require, exports, module); } : define
 ));
 

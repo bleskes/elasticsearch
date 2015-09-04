@@ -1,4 +1,5 @@
 define(function (require) {
+  var _ = require('lodash');
   return function SettingModelProvider($resource) {
 
     var Resource = $resource('/marvel/api/v1/settings/:id', { id: '@_id' });

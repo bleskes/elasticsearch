@@ -19,9 +19,9 @@
 
 /* jshint newcap: false */
 define(function (require) {
-  'use strict';
   var React = require('react');
   var Shard = require('./shard.jsx');
+  var _ = require('lodash');
 
   return React.createClass({
     displayName: 'Unassigned',

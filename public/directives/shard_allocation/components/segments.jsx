@@ -16,12 +16,8 @@
  */
 
 
-
-/* jshint newcap: false */
 define(function (require) {
-  'use strict';
   var React = require('react');
-  var D = React.DOM;
   var _ = require('lodash');
 
   return React.createClass({
@@ -39,13 +35,16 @@ define(function (require) {
       });
     },
     createSegment: function (data) {
-      var className = 'segment '+data.status;
-      var width = ((data.count/this.state.total)*100)+'%';
-      return D.div({ className: className, style: { width: width } });
+      var className = 'segment ' + data.status;
+      var width = ((data.count / this.state.total) * 100) + '%';
+      return (
+        <div
+          className={ className }
+          style={{ width: width }}></div>
+      );
     },
     render: function () {
-      var segments = _.map(this.state.colors, this.createSegment);
-      return D.div(null, segments);
+      return (<div>{ _.map(this.state.colors, (row) => this.createSegment(row)) }</div>);
     }
   });
 

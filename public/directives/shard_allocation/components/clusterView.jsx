@@ -17,13 +17,10 @@
 
 
 
-/* jshint newcap: false */
 define(function (require) {
   var React = require('react');
-  var D = React.DOM;
-
-  var TableHead = React.createFactory(require('./tableHead'));
-  var TableBody = React.createFactory(require('./tableBody.jsx'));
+  var TableHead = require('./tableHead');
+  var TableBody = require('./tableBody.jsx');
 
   return React.createClass({
     displayName: 'ClusterView',
@@ -54,18 +51,18 @@ define(function (require) {
         this.state.showing[0].unassigned.length;
     },
     render: function () {
-      var tableHead = TableHead({ hasUnassigned: this.hasUnassigned(), columns: this.state.labels });
-      var tableBody = TableBody({
-        fitler: this.props.scope.filter,
-        totalCount: this.props.scope.totalCount,
-        rows: this.state.showing,
-        cols: this.state.labels.length,
-        shardStats: this.state.shardStats
-      });
-      return D.table(
-        { cellPadding: 0, cellSpacing: 0, className: 'table' },
-        tableHead,
-        tableBody
+      return (
+        <table cellPadding="0" cellSpacing="0" className="table">
+          <TableHead
+            hasUnassigned={ this.hasUnassigned() }
+            columns={ this.state.labels }></TableHead>
+          <TableBody
+            filter={ this.props.scope.filter }
+            totalCount={ this.props.scope.totalCount }
+            rows={ this.state.showing }
+            cols={ this.state.labels.length }
+            shardStats={ this.state.shardStats }></TableBody>
+        </table>
       );
     }
   });
