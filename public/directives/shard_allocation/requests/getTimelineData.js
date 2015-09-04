@@ -43,7 +43,12 @@ define(function (require) {
       var body = {
         size: size,
         from: 0,
-        fields: ['timestamp', 'cluster_state.status'],
+        fields: [
+          'timestamp',
+          'cluster_state.status',
+          'cluster_state.state_uuid',
+          'cluster_uuid'
+        ],
         sort: {
           'timestamp': { order: 'desc' }
         },

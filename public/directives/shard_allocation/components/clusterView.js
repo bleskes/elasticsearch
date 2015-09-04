@@ -32,7 +32,7 @@ define(function (require) {
     },
     setLabels: function (data) {
       if (data) {
-        this.setState({ labels: data });
+        this.setState({ labels: data.slice(1) });
       }
     },
     setShowing: function (data) {
@@ -48,8 +48,13 @@ define(function (require) {
       this.props.scope.$watch('showing', this.setShowing);
       this.props.scope.$watch('shardStats', this.setShardStats);
     },
+    hasUnassigned: function () {
+      return this.state.showing.length &&
+        this.state.showing[0].unassigned &&
+        this.state.showing[0].unassigned.length;
+    },
     render: function () {
-      var tableHead = TableHead({ columns: this.state.labels });
+      var tableHead = TableHead({ hasUnassigned: this.hasUnassigned(), columns: this.state.labels });
       var tableBody = TableBody({
         fitler: this.props.scope.filter,
         totalCount: this.props.scope.totalCount,

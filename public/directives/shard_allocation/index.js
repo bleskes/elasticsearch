@@ -62,7 +62,7 @@ define(function (require) {
       scope: {
         indexPattern: '=',
         cluster: '=',
-        filterBy: '=',
+        id: '=',
         view: '@',
         hideUi: '=',
         showHiddenIndices: '=',
@@ -101,7 +101,7 @@ define(function (require) {
         // Defaults for the panel.
         var defaults = {
           show_hidden: ($scope.showHiddenIndices != null) ? $scope.showHiddenIndices : true,
-          view: $scope.view || 'nodes',
+          view: $scope.view || 'node',
           labels: labels.nodes,
           rate: 500,
           showPlayer: true,
@@ -182,7 +182,7 @@ define(function (require) {
           var doc = $scope.timelineData[docIndex];
           var differentState = !$scope.currentState || (doc && doc._id !== $scope.currentState._id);
           if (doc && differentState) {
-            getStateSource(doc).then(function (state) {
+            getStateSource(doc, $scope.id, $scope.view).then(function (state) {
               $scope.currentState = state;
               changeData($scope);
             }, handleConnectionError);

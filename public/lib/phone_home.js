@@ -16,7 +16,7 @@
  */
 
 var _ = require('lodash');
-module.exports = function phoneHomeProvider(es, $http, statsReportUrl, reportStats) {
+module.exports = function phoneHomeProvider(Promise, es, $http, statsReportUrl, reportStats) {
 
   const defaults = {
     report: true,
@@ -97,7 +97,7 @@ module.exports = function phoneHomeProvider(es, $http, statsReportUrl, reportSta
       var self = this;
       if (!this.checkReportStatus()) return Promise.resolve();
       return Promise.all(clusters.map((cluster) => {
-        this.getClusterInfo(cluster.cluster_uuid).then((info) => {
+        return this.getClusterInfo(cluster.cluster_uuid).then((info) => {
           return $http.post(statsReportUrl, info);
         });
       })).then(() => {

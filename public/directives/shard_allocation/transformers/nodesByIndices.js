@@ -18,7 +18,6 @@
 
 
 define(function (require) {
-  'use strict';
   var extractShards = require('../lib/extractShards');
   var _ = require('lodash');
 
@@ -59,6 +58,9 @@ define(function (require) {
       function createIndexAddShard(obj, shard) {
         var node = shard.node || 'unassigned';
         var index = shard.index;
+        if (!obj[node]) {
+          createNode(obj, state.cluster_state.nodes[node], node);
+        }
         var indexObj = _.find(obj[node].children, { id: index });
         if (!indexObj) {
           indexObj = {
@@ -82,7 +84,8 @@ define(function (require) {
         return shard.state === 'UNASSIGNED';
       }
 
-      var data = _.reduce(state.cluster_state.nodes, createNode, {});
+      // var data = _.reduce(state.cluster_state.nodes, createNode, {});
+      var data = {};
       if (_.some(shards, isUnassigned)) {
         data.unassigned = {
           name: 'Unassigned',
