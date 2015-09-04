@@ -18,8 +18,7 @@
 
 
 define(function () {
-  'use strict';
-  return function countChildren (memo, child) {
+  return function countChildren(memo, child) {
     if (child.name !== 'Unassigned') {
       memo++;
     }

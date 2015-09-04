@@ -18,9 +18,8 @@
 
 
 define(function (require) {
-  'use strict';
+  var _ = require('lodash');
   var React = require('react');
-  var D = React.DOM;
   var generateQueryAndLink = require('../lib/generateQueryAndLink');
 
   function calculateChildStatus(shardStats, items) {
@@ -53,15 +52,25 @@ define(function (require) {
       if (data.unassignedPrimaries) {
         className.push('text-error');
       }
-      var name = D.a({ href: generateQueryAndLink(data) },
-       D.span(null, data.name)
+      var masterIcon;
+      if (data.master) {
+        masterIcon = (<span className="fa fa-star"></span>);
+      }
+      var details;
+      if (data.details) {
+        details = (<div className="details">{ data.details }</div>);
+      }
+      var name = (
+        <a href={ generateQueryAndLink(data) }><span>{ data.name }</span></a>
       );
-      return D.td({ nowrap: true, className: cellClassName.join(' ')  },
-        D.div({ className: className.join(' ') },
-          name,
-          data.master ? D.span({ className: 'fa fa-star' }, null) : null
-        ),
-        data.details ? D.div({ className: 'details' }, data.details) : null
+      return (
+        <td nowrap="true" className={ cellClassName.join(' ') }>
+          <div className={ className.join(' ') }>
+            { name }
+            { masterIcon }
+          </div>
+          { details }
+        </td>
       );
     }
   });

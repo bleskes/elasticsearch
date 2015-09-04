@@ -18,19 +18,19 @@
 
 
 define(function (require) {
-	var module = require('ui/modules').get('marvel/directives', []);
+  var module = require('ui/modules').get('marvel/directives', []);
   var calculateClass = require('../lib/calculateClass');
-	module.directive('shardGroups', function () {
-		return {
-			restrict: 'E',
-			scope: {
-				groups: '=groups',
-				unassigned: '=unassigned'
-			},
-			templateUrl: '/kibana/app/panels/marvel/shard_allocation/directives/shardGroups.html',
-			link: function (scope) {
-				scope.calculateClass = calculateClass;
-			}
-		};
-	});
+  module.directive('shardGroups', function () {
+    return {
+      restrict: 'E',
+      scope: {
+        groups: '=groups',
+        unassigned: '=unassigned'
+      },
+      templateUrl: '/kibana/app/panels/marvel/shard_allocation/directives/shardGroups.html',
+      link: function (scope) {
+        scope.calculateClass = calculateClass;
+      }
+    };
+  });
 });

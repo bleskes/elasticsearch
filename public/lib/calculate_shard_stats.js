@@ -23,10 +23,10 @@ define(function (require) {
     };
     if (state) {
       var clusterName = _.get(state, 'cluster_uuid');
-      var shards = _.get(state, 'cluster_state.shards')
+      var shards = _.get(state, 'cluster_state.shards');
       _.each(shards, processShards);
     }
     return data;
-  }
+  };
 
 });

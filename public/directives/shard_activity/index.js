@@ -19,7 +19,7 @@ define(function (require) {
         $scope.toggleActive = function () {
           $scope.onlyActive = !$scope.onlyActive;
           filterData($scope.data);
-        }
+        };
 
         $scope.lookup = {
           GATEWAY: 'Primary',
@@ -40,7 +40,7 @@ define(function (require) {
             });
           }
         }
-        filterData()
+        filterData();
 
         $scope.$watch('source.data', filterData);
 

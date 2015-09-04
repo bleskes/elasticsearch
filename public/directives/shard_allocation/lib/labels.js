@@ -18,7 +18,6 @@
 
 
 define(function () {
-  'use strict';
   // The ui had different columns in different order depending on the
   // $scope.pane.view variable. This provides a lookup for the column headers
   return {

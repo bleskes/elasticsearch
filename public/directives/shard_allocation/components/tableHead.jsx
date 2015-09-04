@@ -16,25 +16,27 @@
  */
 
 
-
-/* jshint newcap: false */
 define(function (require) {
-	var module = require('ui/modules').get('marvel/directives', []);
   var React = require('react');
-  var Segements = require('plugins/marvel/directives/shard_allocation/components/segments');
-	module.directive('segments', function () {
-		return {
-			restrict: 'E',
-			scope: {
-				colors: '=colors',
-				total: '=total'
-			},
-			link: function (scope, element) {
-				var segments = Segements({ scope: scope });
-				React.renderComponent(segments, element[0]);
-			}
-		};
-	});
+
+  return React.createClass({
+    displayName: 'TableHead',
+    createColumn: function (label) {
+      var colSpan = 1;
+      if (label === 'Indices' && this.props.hasUnassigned) {
+        colSpan = 2;
+      }
+      return (
+        <th key={ label } colSpan={ colSpan }>{ label }</th>
+      );
+    },
+    render: function () {
+      var columns = this.props.columns.map((row) => this.createColumn(row));
+      return (
+        <thead>
+          <tr>{ columns }</tr>
+        </thead>
+      );
+    }
+  });
 });
-
-

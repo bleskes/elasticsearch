@@ -1,4 +1,5 @@
 define(function (require) {
+  var _ = require('lodash');
   var moment = require('moment');
   var MarvelDataSource = require('plugins/marvel/lib/marvel_data_source');
 
@@ -55,13 +56,13 @@ define(function (require) {
       if (!resp.aggregations) return;
       var self = this;
       var defaultCalculation = function (bucket) {
-        var key = (self.metric.derivative)? 'metric_deriv' : 'metric';
+        var key = (self.metric.derivative) ? 'metric_deriv' : 'metric';
         return bucket[key] && bucket[key].value || 0;
       };
 
       var calculation = this.metric && this.metric.calculation || defaultCalculation;
       var buckets = resp.aggregations.check.buckets;
-      this.data = _.map(buckets, function(bucket) {
+      this.data = _.map(buckets, function (bucket) {
         return {
           x: bucket.key,
           y: calculation(bucket) // Why are one of these null?

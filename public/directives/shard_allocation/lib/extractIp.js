@@ -18,7 +18,6 @@
 
 
 define(function () {
-  'use strict';
   return function (node) {
     if (!node) {
       return null;

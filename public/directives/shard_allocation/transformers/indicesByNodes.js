@@ -18,7 +18,6 @@
 
 
 define(function (require) {
-  'use strict';
   var extractShards = require('../lib/extractShards');
   var _ = require('lodash');
 

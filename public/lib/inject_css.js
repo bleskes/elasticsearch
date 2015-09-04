@@ -1,5 +1,5 @@
 define(function (require) {
-  return function injectCss (raw) {
+  return function injectCss(raw) {
     var styleTag = document.createElement('style');
     styleTag.type = 'text/css';
     var head = document.head || document.getElementsByTagName('head')[0];

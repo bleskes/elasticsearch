@@ -18,7 +18,7 @@ define(function (require) {
 
     IndicesDataSource.prototype.handleResponse = function (resp) {
       if (resp.hits.total === 0) return;
-      this.data = resp.hits.hits.map(function(hit) {
+      this.data = resp.hits.hits.map(function (hit) {
         var source = hit._source;
 
         var primaries = source.primaries;

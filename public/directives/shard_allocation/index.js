@@ -31,7 +31,6 @@ define(function (require) {
   var template = require('plugins/marvel/directives/shard_allocation/index.html');
 
   require('plugins/marvel/directives/shard_allocation/directives/shardGroups');
-  require('plugins/marvel/directives/shard_allocation/directives/segments');
   require('plugins/marvel/directives/shard_allocation/directives/clusterView');
 
   module.filter('localTime', function () {

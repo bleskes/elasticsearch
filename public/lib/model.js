@@ -32,7 +32,7 @@ Model.prototype.toJSON = function () {
 };
 
 Model.stripEmpties = function (obj) {
-  for(var i in obj) {
+  for (var i in obj) {
     if (_.isEmpty(obj[i])) {
       delete obj[i];
     } else if (typeof obj[i] === 'object') {
@@ -55,7 +55,7 @@ Model.flatten = function flatten(obj, path, newObj) {
   return newObj;
 };
 
-Model.explode = function explode (obj) {
+Model.explode = function explode(obj) {
   var newObj = {};
   _.each(obj, function (val, key) {
     _.set(newObj, key, val);

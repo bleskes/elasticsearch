@@ -18,7 +18,6 @@
 
 
 define(function (require) {
-  'use strict';
   var _ = require('lodash');
   var vents = {};
   return {
@@ -28,7 +27,7 @@ define(function (require) {
         vents[id] = [];
       }
       vents[id].push(cb);
-    }, 
+    },
     clear: function (id) {
       delete vents[id];
     },
