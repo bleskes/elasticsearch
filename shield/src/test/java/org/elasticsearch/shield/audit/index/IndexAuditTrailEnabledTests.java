@@ -17,7 +17,6 @@
 
 package org.elasticsearch.shield.audit.index;
 
-import com.google.common.base.Predicate;
 import org.elasticsearch.action.admin.indices.template.delete.DeleteIndexTemplateResponse;
 import org.elasticsearch.action.admin.indices.template.get.GetIndexTemplatesResponse;
 import org.elasticsearch.action.exists.ExistsResponse;
@@ -31,7 +30,7 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.Test;
 
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.is;
 
 @ClusterScope(scope = Scope.TEST, randomDynamicTemplates = false)
 public class IndexAuditTrailEnabledTests extends ShieldIntegTestCase {
@@ -81,16 +80,13 @@ public class IndexAuditTrailEnabledTests extends ShieldIntegTestCase {
 
     void awaitIndexCreation() throws Exception {
         final String indexName = IndexNameResolver.resolve(IndexAuditTrail.INDEX_NAME_PREFIX, DateTime.now(DateTimeZone.UTC), rollover);
-        boolean success = awaitBusy(new Predicate<Void>() {
-            @Override
-            public boolean apply(Void o) {
-                try {
-                    ExistsResponse response =
-                            client().prepareExists(indexName).execute().actionGet();
-                    return response.exists();
-                } catch (Exception e) {
-                    return false;
-                }
+        boolean success = awaitBusy(() -> {
+            try {
+                ExistsResponse response =
+                        client().prepareExists(indexName).execute().actionGet();
+                return response.exists();
+            } catch (Exception e) {
+                return false;
             }
         });
 
@@ -100,19 +96,16 @@ public class IndexAuditTrailEnabledTests extends ShieldIntegTestCase {
     }
 
     void awaitIndexTemplateCreation() throws InterruptedException {
-        boolean found = awaitBusy(new Predicate<Void>() {
-            @Override
-            public boolean apply(Void aVoid) {
-                GetIndexTemplatesResponse response = client().admin().indices().prepareGetTemplates(IndexAuditTrail.INDEX_TEMPLATE_NAME).execute().actionGet();
-                if (response.getIndexTemplates().size() > 0) {
-                    for (IndexTemplateMetaData indexTemplateMetaData : response.getIndexTemplates()) {
-                        if (IndexAuditTrail.INDEX_TEMPLATE_NAME.equals(indexTemplateMetaData.name())) {
-                            return true;
-                        }
+        boolean found = awaitBusy(() -> {
+            GetIndexTemplatesResponse response = client().admin().indices().prepareGetTemplates(IndexAuditTrail.INDEX_TEMPLATE_NAME).execute().actionGet();
+            if (response.getIndexTemplates().size() > 0) {
+                for (IndexTemplateMetaData indexTemplateMetaData : response.getIndexTemplates()) {
+                    if (IndexAuditTrail.INDEX_TEMPLATE_NAME.equals(indexTemplateMetaData.name())) {
+                        return true;
                     }
                 }
-                return false;
             }
+            return false;
         });
 
         if (!found) {
