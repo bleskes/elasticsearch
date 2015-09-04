@@ -19,7 +19,6 @@
 
 /* jshint newcap:false  */
 define(function (require) {
-  'use strict';
   var _ = require('lodash');
   var React = require('react');
   var calculateClass = require('../lib/calculateClass');

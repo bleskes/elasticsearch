@@ -18,7 +18,6 @@
 
 
 define(function (require) {
-  'use strict';
   var _ = require('lodash');
   var getValue = require('./getValueFromArrayOrString');
   return function ($scope) {
@@ -42,7 +41,7 @@ define(function (require) {
     colors = _.map(colors, function (val) {
       runningTotal += previous.width || 0;
       val.left = runningTotal;
-      val.width = (val.count/grandTotal)*100;
+      val.width = (val.count / grandTotal) * 100;
       previous = val;
       return val;
     });

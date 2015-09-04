@@ -17,24 +17,24 @@
 
 
 
-/* jshint newcap: false */
 define(function (require) {
-	var module = require('ui/modules').get('marvel/directives', []);
   var React = require('react');
-  var Segements = require('plugins/marvel/directives/shard_allocation/components/segments');
-	module.directive('segments', function () {
-		return {
-			restrict: 'E',
-			scope: {
-				colors: '=colors',
-				total: '=total'
-			},
-			link: function (scope, element) {
-				var segments = Segements({ scope: scope });
-				React.renderComponent(segments, element[0]);
-			}
-		};
-	});
+  var ClusterView = require('plugins/marvel/directives/shard_allocation/components/clusterView');
+  var module = require('ui/modules').get('marvel/directives', []);
+  module.directive('clusterView', function ($parse) {
+    return {
+      restrict: 'E',
+      scope: {
+        totalCount: '=',
+        filter: '=',
+        showing: '=',
+        labels: '=',
+        shardStats: '='
+      },
+      link: function (scope, element, attr) {
+        React.render(<ClusterView scope={scope}></ClusterView>, element[0]);
+      }
+    };
+  });
 });
-
 

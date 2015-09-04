@@ -39,7 +39,6 @@ define(function (require) {
       }
       return (
         <tr>
-          <ParentItem data={ this.props.data } shardStats={ this.props.shardStats }></ParentItem>
           { unassigned }
           <Assigned shardStats={ this.props.shardStats } data={ this.props.data.children }></Assigned>
         </tr>

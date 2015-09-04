@@ -1,5 +1,4 @@
 define(function (require) {
-  'use strict';
   var React = require('react');
   var module = require('ui/modules').get('plugins/marvel/directives', []);
   var MarvelChart = require('plugins/marvel/directives/chart/chart_component');
@@ -10,7 +9,7 @@ define(function (require) {
       scope: {
         source: '='
       },
-      link: function($scope, $elem, attrs) {
+      link: function ($scope, $elem, attrs) {
         var $chart = React.createElement(MarvelChart, {
           source: $scope.source
         });

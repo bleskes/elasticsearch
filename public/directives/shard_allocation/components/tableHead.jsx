@@ -16,20 +16,27 @@
  */
 
 
-
 define(function (require) {
-  'use strict';
   var React = require('react');
-  var D = React.DOM;
 
   return React.createClass({
     displayName: 'TableHead',
     createColumn: function (label) {
-      return D.th({ key: label }, label);
+      var colSpan = 1;
+      if (label === 'Indices' && this.props.hasUnassigned) {
+        colSpan = 2;
+      }
+      return (
+        <th key={ label } colSpan={ colSpan }>{ label }</th>
+      );
     },
     render: function () {
-      var columns = this.props.columns.map(this.createColumn);
-      return D.thead({}, D.tr({}, columns));
+      var columns = this.props.columns.map((row) => this.createColumn(row));
+      return (
+        <thead>
+          <tr>{ columns }</tr>
+        </thead>
+      );
     }
   });
 });

@@ -19,7 +19,6 @@
 
 /* jshint newcap:false  */
 define(function (require) {
-  'use strict';
   var _ = require('lodash');
   var React = require('react');
   var calculateClass = require('../lib/calculateClass');
@@ -40,7 +39,8 @@ define(function (require) {
     },
 
     componentDidMount: function () {
-      var key, element;
+      var key;
+      var element;
       var shard = this.props.shard;
       var self = this;
       var placement = shard.state === 'INITIALIZING' ? 'bottom' : 'top';
@@ -58,11 +58,12 @@ define(function (require) {
       var shardType = shard.primary ? 'primary' : 'replica';
       var additionId = shard.state === 'UNASSIGNED' ? Math.random() : '';
       var node = relocating ? shard.relocating_node : shard.node;
-      return shard.index+'.'+node+'.'+shardType+'.'+shard.shard+additionId;
+      return shard.index + '.' + node + '.' + shardType + '.' + shard.shard + additionId;
     },
 
     componentWillUnmount: function () {
-      var key, element;
+      var key;
+      var element;
       var shard = this.props.shard;
       if (shard.relocating_message) {
         element = this.getDOMNode();
@@ -87,7 +88,7 @@ define(function (require) {
       };
       var tooltip = this.state.tooltip;
       if (tooltip) {
-       tooltip = (<div className="shard-tooltip">{ this.props.shard.relocating_message }</div>);
+        tooltip = (<div className="shard-tooltip">{ this.props.shard.relocating_message }</div>);
       }
       return (<div
           onMouseEnter={ this.toggle }

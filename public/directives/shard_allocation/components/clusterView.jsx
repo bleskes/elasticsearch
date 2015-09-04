@@ -17,13 +17,10 @@
 
 
 
-/* jshint newcap: false */
 define(function (require) {
   var React = require('react');
-  var D = React.DOM;
-
-  var TableHead = React.createFactory(require('./tableHead'));
-  var TableBody = React.createFactory(require('./tableBody.jsx'));
+  var TableHead = require('./tableHead.jsx');
+  var TableBody = require('./tableBody.jsx');
 
   return React.createClass({
     displayName: 'ClusterView',
@@ -32,7 +29,7 @@ define(function (require) {
     },
     setLabels: function (data) {
       if (data) {
-        this.setState({ labels: data });
+        this.setState({ labels: data.slice(1) });
       }
     },
     setShowing: function (data) {
@@ -48,19 +45,24 @@ define(function (require) {
       this.props.scope.$watch('showing', this.setShowing);
       this.props.scope.$watch('shardStats', this.setShardStats);
     },
+    hasUnassigned: function () {
+      return this.state.showing.length &&
+        this.state.showing[0].unassigned &&
+        this.state.showing[0].unassigned.length;
+    },
     render: function () {
-      var tableHead = TableHead({ columns: this.state.labels });
-      var tableBody = TableBody({
-        fitler: this.props.scope.filter,
-        totalCount: this.props.scope.totalCount,
-        rows: this.state.showing,
-        cols: this.state.labels.length,
-        shardStats: this.state.shardStats
-      });
-      return D.table(
-        { cellPadding: 0, cellSpacing: 0, className: 'table' },
-        tableHead,
-        tableBody
+      return (
+        <table cellPadding="0" cellSpacing="0" className="table">
+          <TableHead
+            hasUnassigned={ this.hasUnassigned() }
+            columns={ this.state.labels }></TableHead>
+          <TableBody
+            filter={ this.props.scope.filter }
+            totalCount={ this.props.scope.totalCount }
+            rows={ this.state.showing }
+            cols={ this.state.labels.length }
+            shardStats={ this.state.shardStats }></TableBody>
+        </table>
       );
     }
   });

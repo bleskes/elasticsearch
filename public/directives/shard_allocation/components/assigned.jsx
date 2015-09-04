@@ -19,7 +19,6 @@
 
 /* jshint newcap: false */
 define(function (require) {
-  'use strict';
   var React = require('react');
   var D = React.DOM;
   var Shard = require('./shard.jsx');

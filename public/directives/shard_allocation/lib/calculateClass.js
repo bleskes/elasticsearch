@@ -18,7 +18,6 @@
 
 
 define(function () {
-  'use strict';
   return function (item, initial) {
     var classes = [item.type];
     if (initial) {

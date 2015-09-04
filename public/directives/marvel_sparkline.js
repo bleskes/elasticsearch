@@ -2,18 +2,14 @@ define(function (require) {
   var d3 = require('d3');
   var React = require('react');
   var make = React.DOM;
-  function makeEl(str) {
-    var arr = atr.split('.');
-    var elName = srr.shift();
-    return make[elName]({className: arr.join(' ')});
-  }
+  var _ = require('lodash');
 
   var defaultOptions = {
     data: [],
     width: 30,
     height: 20,
-    getX: function(d) { return d.x; },
-    getY: function(d) { return d.y; },
+    getX: function (d) { return d.x; },
+    getY: function (d) { return d.y; },
   };
 
   function drawSparkline($el, params) {
@@ -22,8 +18,8 @@ define(function (require) {
     var x = d3.scale.linear().range([0, settings.width]);
     var y = d3.scale.linear().range([settings.height, 0]);
     var line = d3.svg.line()
-      .x(function(d) { return x(settings.getX(d)); })
-      .y(function(d) { return y(settings.getY(d)); });
+      .x(function (d) { return x(settings.getX(d)); })
+      .y(function (d) { return y(settings.getY(d)); });
 
     x.domain(d3.extent(settings.data, settings.getX));
     y.domain(d3.extent(settings.data, settings.getY));
@@ -40,7 +36,7 @@ define(function (require) {
       .attr('d', line);
 
     // Draw the point
-    var lastDataPoint = settings.data[settings.data.length-1];
+    var lastDataPoint = settings.data[settings.data.length - 1];
     $svgCont.append('circle')
       .attr('class', 'point')
       .attr('cx', x(settings.getX(lastDataPoint)))
@@ -49,19 +45,19 @@ define(function (require) {
   }
 
   return React.createClass({
-    render: function() {
+    render: function () {
       return make.div({className: 'pull-right sparkline_cont'});
     },
-    componentDidMount: function() {
+    componentDidMount: function () {
       this.renderSparkline();
     },
-    componentDidUpdate: function() {
+    componentDidUpdate: function () {
       this.renderSparkline();
     },
-    shouldComponentUpdate: function() {
+    shouldComponentUpdate: function () {
       return false;
     },
-    renderSparkline: function() {
+    renderSparkline: function () {
       var $cont = this.getDOMNode();
       var $child = $cont.childNodes[0];
       if ($child) {

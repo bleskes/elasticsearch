@@ -1,4 +1,4 @@
-define(['moment', 'numeral'], function(moment, numeral) {
+define(['moment', 'numeral'], function (moment, numeral) {
   return function formatNumber(num, which) {
     var format = '0,0.0';
     var postfix = '';
