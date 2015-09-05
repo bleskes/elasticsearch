@@ -17,6 +17,7 @@ define(function (require) {
       this.searchSource.set('query', '_type:marvel_cluster_stats');
     };
 
+
     ClusterStatusDataSource.prototype.handleResponse = function (resp) {
       this.data = {};
       if (resp.hits.total === 0) return;
@@ -26,11 +27,14 @@ define(function (require) {
       }
       this.data.cluster_uuid = get('cluster_uuid');
       this.data.nodes_count = get('cluster_stats.nodes.count.total');
+      this.data.indices_count = get('cluster_stats.indices.count');
       this.data.total_shards = get('cluster_stats.indices.shards.total') || 0;
       this.data.document_count = formatNumber(get('cluster_stats.indices.docs.count'), 'int_commas');
       this.data.data = formatNumber(get('cluster_stats.indices.store.size_in_bytes'), 'byte');
       this.data.upTime = formatNumber(get('cluster_stats.nodes.jvm.max_uptime_in_millis'), 'time_since');
       this.data.version = get('cluster_stats.nodes.versions');
+      this.data.memUsed = get('cluster_stats.nodes.jvm.mem.heap_used_in_bytes');
+      this.data.memMax = get('cluster_stats.nodes.jvm.mem.heap_max_in_bytes');
     };
     return ClusterStatusDataSource;
 
