@@ -17,9 +17,10 @@
 
 package org.elasticsearch.shield.support;
 
-import com.google.common.base.Predicate;
 import dk.brics.automaton.Automaton;
 import dk.brics.automaton.RunAutomaton;
+
+import java.util.function.Predicate;
 
 /**
 *
@@ -37,7 +38,7 @@ public class AutomatonPredicate implements Predicate<String> {
     }
 
     @Override
-    public boolean apply(String input) {
+    public boolean test(String input) {
         return automaton.run(input);
     }
 }

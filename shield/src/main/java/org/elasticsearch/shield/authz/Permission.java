@@ -17,7 +17,6 @@
 
 package org.elasticsearch.shield.authz;
 
-import com.google.common.base.Predicate;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -34,7 +33,17 @@ import org.elasticsearch.shield.authz.accesscontrol.IndicesAccessControl;
 import org.elasticsearch.shield.support.AutomatonPredicate;
 import org.elasticsearch.shield.support.Automatons;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.SortedMap;
+import java.util.function.Predicate;
 
 /**
  * Represents a permission in the system. There are 3 types of permissions:
@@ -221,7 +230,7 @@ public interface Permission {
             }
 
             public boolean check(String action) {
-                return predicate.apply(action);
+                return predicate.test(action);
             }
 
             @Override
@@ -291,7 +300,7 @@ public interface Permission {
                         public Predicate<String> load(String action) throws Exception {
                             List<String> indices = new ArrayList<>();
                             for (Group group : groups) {
-                                if (group.actionMatcher.apply(action)) {
+                                if (group.actionMatcher.test(action)) {
                                     indices.addAll(Arrays.asList(group.indices));
                                 }
                             }
@@ -544,12 +553,12 @@ public interface Permission {
             }
 
             public boolean indexNameMatch(String index) {
-                return indexNameMatcher.apply(index);
+                return indexNameMatcher.test(index);
             }
 
             public boolean check(String action, String index) {
                 assert index != null;
-                return actionMatcher.apply(action) && indexNameMatcher.apply(index);
+                return actionMatcher.test(action) && indexNameMatcher.test(index);
             }
         }
     }
