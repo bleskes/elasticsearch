@@ -267,7 +267,7 @@ public abstract class AbstractWatcherIntegrationTestCase extends ESIntegTestCase
     }
 
     protected long docCount(String index, String type, SearchSourceBuilder source) {
-        SearchRequestBuilder builder = client().prepareSearch(index).setSearchType(SearchType.COUNT);
+        SearchRequestBuilder builder = client().prepareSearch(index).setSize(0);
         if (type != null) {
             builder.setTypes(type);
         }
@@ -390,7 +390,7 @@ public abstract class AbstractWatcherIntegrationTestCase extends ESIntegTestCase
         refresh();
         SearchResponse searchResponse = client().prepareSearch(HistoryStore.INDEX_PREFIX + "*")
                 .setIndicesOptions(IndicesOptions.lenientExpandOpen())
-                .setSearchType(SearchType.COUNT)
+                .setSize(0)
                 .setQuery(matchQuery("watch_id", watchName))
                 .get();
         return searchResponse.getHits().getTotalHits();
