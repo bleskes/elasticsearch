@@ -35,8 +35,7 @@ import com.prelert.job.JobException;
 import com.prelert.job.UnknownJobException;
 import com.prelert.rs.data.ApiError;
 
-public class JobExceptionMapper
-implements ExceptionMapper<JobException>
+public class JobExceptionMapper implements ExceptionMapper<JobException>
 {
 
     /**

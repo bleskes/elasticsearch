@@ -85,10 +85,7 @@ public class AlertManager implements TimeoutHandler
             long timeoutSecs, Double anomalyScoreThreshold, Double normalizedProbabiltyThreshold)
     throws UnknownJobException
     {
-        if (!m_JobProvider.jobExists(jobId))
-        {
-            throw new UnknownJobException(jobId);
-        }
+        m_JobProvider.checkJobExists(jobId);
 
         response.setTimeout(timeoutSecs, TimeUnit.SECONDS);
         response.setTimeoutHandler(this);

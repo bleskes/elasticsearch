@@ -27,7 +27,13 @@
 
 package com.prelert.job.alert.manager;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 import java.net.URI;
 import java.util.concurrent.TimeUnit;
@@ -36,9 +42,7 @@ import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.core.UriBuilder;
 
 import org.junit.Test;
-import org.mockito.*;
-
-import static org.mockito.Mockito.*;
+import org.mockito.ArgumentCaptor;
 
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.alert.Alert;
@@ -49,12 +53,10 @@ import com.prelert.job.process.exceptions.ClosedJobException;
 public class AlertManagerTest {
 
     @Test
-    public void testRegisterRequest()
-    throws UnknownJobException, ClosedJobException
+    public void testRegisterRequest() throws UnknownJobException, ClosedJobException
     {
         JobManager jobManager = mock(JobManager.class);
         JobProvider jobProvider = mock(JobProvider.class);
-        when(jobProvider.jobExists("foo")).thenReturn(true);
 
         AlertManager am = new AlertManager(jobProvider, jobManager);
 
@@ -69,12 +71,11 @@ public class AlertManagerTest {
     }
 
     @Test
-    public void testRegisterRequest_ClosedJobExceptionThrown()
-    throws UnknownJobException, ClosedJobException
+    public void testRegisterRequest_ClosedJobExceptionThrown() throws UnknownJobException,
+            ClosedJobException
     {
         JobManager jobManager = mock(JobManager.class);
         JobProvider jobProvider = mock(JobProvider.class);
-        when(jobProvider.jobExists("foo")).thenReturn(true);
 
         AlertManager am = new AlertManager(jobProvider, jobManager);
 

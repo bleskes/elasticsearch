@@ -46,8 +46,8 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.apache.log4j.Appender;
 import org.apache.log4j.EnhancedPatternLayout;
@@ -783,8 +783,7 @@ public class ProcessManager
     {
         try
         {
-            m_JobProvider.setJobFinishedTimeandStatus(jobId,
-                    new Date(), status);
+            m_JobProvider.setJobFinishedTimeAndStatus(jobId, new Date(), status);
         }
         catch (UnknownJobException e)
         {

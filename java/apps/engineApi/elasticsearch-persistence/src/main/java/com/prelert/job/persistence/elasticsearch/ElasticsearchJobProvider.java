@@ -79,8 +79,8 @@ import com.prelert.job.JobDetails;
 import com.prelert.job.JobStatus;
 import com.prelert.job.ModelSizeStats;
 import com.prelert.job.ModelState;
-import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.UnknownJobException;
+import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.persistence.DataStoreException;
 import com.prelert.job.persistence.JobProvider;
 import com.prelert.job.persistence.QueryPage;
@@ -221,7 +221,7 @@ public class ElasticsearchJobProvider implements JobProvider
     }
 
     @Override
-    public boolean jobExists(String jobId)
+    public void checkJobExists(String jobId) throws UnknownJobException
     {
         try
         {
@@ -236,7 +236,7 @@ public class ElasticsearchJobProvider implements JobProvider
             {
                 String msg = "No job document with id " + jobId;
                 LOGGER.warn(msg);
-                return false;
+                throw new UnknownJobException(jobId);
             }
         }
         catch (IndexMissingException e)
@@ -244,10 +244,8 @@ public class ElasticsearchJobProvider implements JobProvider
             // the job does not exist
             String msg = "Missing Index: no job with id " + jobId;
             LOGGER.warn(msg);
-            return false;
+            throw new UnknownJobException(jobId);
         }
-
-        return true;
     }
 
 
@@ -470,44 +468,40 @@ public class ElasticsearchJobProvider implements JobProvider
 
 
     @Override
-    public boolean updateJob(String jobId, Map<String, Object> updates)
+    public boolean updateJob(String jobId, Map<String, Object> updates) throws UnknownJobException
     {
-        if (jobExists(jobId))
+        checkJobExists(jobId);
+
+        int retryCount = 3;
+        while (--retryCount >= 0)
         {
-            int retryCount = 3;
-            while (--retryCount >= 0)
+            try
             {
-                try
-                {
-                    LOGGER.trace("ES API CALL: update ID " + jobId + " type " + JobDetails.TYPE +
-                            " in index " + jobId + " using map of new values");
-                    m_Client.prepareUpdate(jobId, JobDetails.TYPE, jobId)
-                                        .setDoc(updates)
-                                        .get();
+                LOGGER.trace("ES API CALL: update ID " + jobId + " type " + JobDetails.TYPE +
+                        " in index " + jobId + " using map of new values");
+                m_Client.prepareUpdate(jobId, JobDetails.TYPE, jobId)
+                                    .setDoc(updates)
+                                    .get();
 
-                    break;
-                }
-                catch (VersionConflictEngineException e)
-                {
-                    LOGGER.warn("Conflict updating job document " + jobId);
-                }
+                break;
             }
-
-            if (retryCount <= 0)
+            catch (VersionConflictEngineException e)
             {
-                LOGGER.warn("Unable to update conflicted job document " + jobId +
-                        ". Updates = " + updates);
-                return false;
+                LOGGER.warn("Conflict updating job document " + jobId);
             }
-
-            return true;
         }
 
-        return false;
+        if (retryCount <= 0)
+        {
+            LOGGER.warn("Unable to update conflicted job document " + jobId +
+                    ". Updates = " + updates);
+            return false;
+        }
+        return true;
     }
 
     @Override
-    public boolean setJobStatus(String jobId, JobStatus status)
+    public boolean setJobStatus(String jobId, JobStatus status) throws UnknownJobException
     {
         Map<String, Object> update = new HashMap<>();
         update.put(JobDetails.STATUS, status);
@@ -516,7 +510,7 @@ public class ElasticsearchJobProvider implements JobProvider
     }
 
     @Override
-    public boolean setJobFinishedTimeandStatus(String jobId, Date time, JobStatus status)
+    public boolean setJobFinishedTimeAndStatus(String jobId, Date time, JobStatus status) throws UnknownJobException
     {
         Map<String, Object> update = new HashMap<>();
         update.put(JobDetails.FINISHED_TIME, time);

@@ -533,10 +533,9 @@ public class JobManager
 
         // First check the job is in the database.
         // this method throws if it isn't
-        if (m_JobProvider.jobExists(jobId))
-        {
-            m_ProcessManager.flushJob(jobId, interimResultsParams);
-        }
+        m_JobProvider.checkJobExists(jobId);
+
+        m_ProcessManager.flushJob(jobId, interimResultsParams);
     }
 
     /**
@@ -555,10 +554,9 @@ public class JobManager
 
         // First check the job is in the database.
         // this method throws if it isn't
-        if (m_JobProvider.jobExists(jobId))
-        {
-            m_ProcessManager.closeJob(jobId);
-        }
+        m_JobProvider.checkJobExists(jobId);
+
+        m_ProcessManager.closeJob(jobId);
     }
 
     /**

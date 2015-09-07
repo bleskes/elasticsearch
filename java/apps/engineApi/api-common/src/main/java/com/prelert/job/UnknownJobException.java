@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -27,6 +27,7 @@
 package com.prelert.job;
 
 import com.prelert.job.errorcodes.ErrorCodes;
+import com.prelert.job.messages.Messages;
 //import com.prelert.job.messages.Messages;
 
 /**
@@ -35,47 +36,47 @@ import com.prelert.job.errorcodes.ErrorCodes;
  */
 public class UnknownJobException extends JobException
 {
-	private static final long serialVersionUID = 8603362038035845948L;
+    private static final long serialVersionUID = 8603362038035845948L;
 
-	private final String m_JobId;
+    private final String m_JobId;
 
-	/**
-	 * Create with the default message and error code
-	 * set to ErrorCode.MISSING_JOB_ERROR
-	 * @param jobId
-	 */
-	public UnknownJobException(String jobId)
-	{
-	    super("", ErrorCodes.MISSING_JOB_ERROR);
-		m_JobId = jobId;
-	}
+    /**
+     * Create with the default message and error code
+     * set to ErrorCode.MISSING_JOB_ERROR
+     * @param jobId
+     */
+    public UnknownJobException(String jobId)
+    {
+        super(Messages.getMessage(Messages.JOB_UNKNOWN_ID, jobId), ErrorCodes.MISSING_JOB_ERROR);
+        m_JobId = jobId;
+    }
 
-	/**
-	 * Create a new UnknownJobException with an error code
-	 *
-	 * @param jobId The Job Id that could not be found
-	 * @param message Details of error explaining the context
-	 * @param errorCode
-	 */
-	public UnknownJobException(String jobId, String message, ErrorCodes errorCode)
-	{
-		super(message, errorCode);
-		m_JobId = jobId;
-	}
+    /**
+     * Create a new UnknownJobException with an error code
+     *
+     * @param jobId The Job Id that could not be found
+     * @param message Details of error explaining the context
+     * @param errorCode
+     */
+    public UnknownJobException(String jobId, String message, ErrorCodes errorCode)
+    {
+        super(message, errorCode);
+        m_JobId = jobId;
+    }
 
-	public UnknownJobException(String jobId, String message, ErrorCodes errorCode,
-			Throwable cause)
-	{
-		super(message, errorCode, cause);
-		m_JobId = jobId;
-	}
+    public UnknownJobException(String jobId, String message, ErrorCodes errorCode,
+            Throwable cause)
+    {
+        super(message, errorCode, cause);
+        m_JobId = jobId;
+    }
 
-	/**
-	 * Get the unknown <i>JobId</i> that was the source of the error.
-	 * @return
-	 */
-	public String getJobId()
-	{
-		return m_JobId;
-	}
+    /**
+     * Get the unknown <i>JobId</i> that was the source of the error.
+     * @return
+     */
+    public String getJobId()
+    {
+        return m_JobId;
+    }
 }
