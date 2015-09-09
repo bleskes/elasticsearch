@@ -102,7 +102,7 @@ public class SslMultiPortTests extends ShieldIntegTestCase {
                 .put("path.home", createTempDir())
                 .put(additionalSettings)
                 .build();
-        return TransportClient.builder().settings(settings).loadConfigSettings(false)
+        return TransportClient.builder().settings(settings)
                 .addPlugin(licensePluginClass())
                 .addPlugin(ShieldPlugin.class)
                 .build();
@@ -229,7 +229,7 @@ public class SslMultiPortTests extends ShieldIntegTestCase {
                 .put("cluster.name", internalCluster().getClusterName())
                 .put("path.home", createTempDir())
                 .build();
-        try (TransportClient transportClient = TransportClient.builder().settings(settings).loadConfigSettings(false).addPlugin(ShieldPlugin.class).addPlugin(licensePluginClass()).build()) {
+        try (TransportClient transportClient = TransportClient.builder().settings(settings).addPlugin(ShieldPlugin.class).addPlugin(licensePluginClass()).build()) {
             transportClient.addTransportAddress(new InetSocketTransportAddress(InetAddress.getLoopbackAddress(), getProfilePort("no_ssl")));
             assertGreenClusterState(transportClient);
         }
@@ -246,7 +246,7 @@ public class SslMultiPortTests extends ShieldIntegTestCase {
                 .put("cluster.name", internalCluster().getClusterName())
                 .put("path.home", createTempDir())
                 .build();
-        try (TransportClient transportClient = TransportClient.builder().settings(settings).loadConfigSettings(false).build()) {
+        try (TransportClient transportClient = TransportClient.builder().settings(settings).build()) {
             transportClient.addTransportAddress(internalCluster().getInstance(Transport.class).boundAddress().boundAddress());
             assertGreenClusterState(transportClient);
         }
@@ -263,7 +263,7 @@ public class SslMultiPortTests extends ShieldIntegTestCase {
                 .put("cluster.name", internalCluster().getClusterName())
                 .put("path.home", createTempDir())
                 .build();
-        try (TransportClient transportClient = TransportClient.builder().settings(settings).loadConfigSettings(false).build()) {
+        try (TransportClient transportClient = TransportClient.builder().settings(settings).build()) {
             transportClient.addTransportAddress(new InetSocketTransportAddress(InetAddress.getLoopbackAddress(), getProfilePort("client")));
             assertGreenClusterState(transportClient);
         }
@@ -280,7 +280,7 @@ public class SslMultiPortTests extends ShieldIntegTestCase {
                 .put("cluster.name", internalCluster().getClusterName())
                 .put("path.home", createTempDir())
                 .build();
-        try (TransportClient transportClient = TransportClient.builder().settings(settings).loadConfigSettings(false).build()) {
+        try (TransportClient transportClient = TransportClient.builder().settings(settings).build()) {
             transportClient.addTransportAddress(new InetSocketTransportAddress(InetAddress.getLoopbackAddress(), getProfilePort("no_client_auth")));
             assertGreenClusterState(transportClient);
         }
@@ -301,7 +301,7 @@ public class SslMultiPortTests extends ShieldIntegTestCase {
                 .put("shield.ssl.truststore.password", "truststore-testnode-only")
                 .put("path.home", createTempDir())
                 .build();
-        try (TransportClient transportClient = TransportClient.builder().settings(settings).loadConfigSettings(false).addPlugin(ShieldPlugin.class).addPlugin(licensePluginClass()).build()) {
+        try (TransportClient transportClient = TransportClient.builder().settings(settings).addPlugin(ShieldPlugin.class).addPlugin(licensePluginClass()).build()) {
             transportClient.addTransportAddress(new InetSocketTransportAddress(InetAddress.getLoopbackAddress(), getProfilePort("no_client_auth")));
             assertGreenClusterState(transportClient);
         }
@@ -323,7 +323,7 @@ public class SslMultiPortTests extends ShieldIntegTestCase {
                 .put("shield.ssl.truststore.password", "truststore-testnode-only")
                 .put("path.home", createTempDir())
                 .build();
-        try (TransportClient transportClient = TransportClient.builder().settings(settings).loadConfigSettings(false).build()) {
+        try (TransportClient transportClient = TransportClient.builder().settings(settings).build()) {
             transportClient.addTransportAddress(new InetSocketTransportAddress(InetAddress.getLoopbackAddress(), getProfilePort("client")));
             assertGreenClusterState(transportClient);
         }
@@ -345,7 +345,7 @@ public class SslMultiPortTests extends ShieldIntegTestCase {
                 .put("shield.ssl.truststore.password", "truststore-testnode-only")
                 .put("path.home", createTempDir())
                 .build();
-        try (TransportClient transportClient = TransportClient.builder().settings(settings).loadConfigSettings(false).build()) {
+        try (TransportClient transportClient = TransportClient.builder().settings(settings).build()) {
             transportClient.addTransportAddress(internalCluster().getInstance(Transport.class).boundAddress().boundAddress());
                     assertGreenClusterState(transportClient);
         }
@@ -366,7 +366,7 @@ public class SslMultiPortTests extends ShieldIntegTestCase {
                 .put("shield.ssl.truststore.password", "truststore-testnode-only")
                 .put("path.home", createTempDir())
                 .build();
-        try (TransportClient transportClient = TransportClient.builder().settings(settings).loadConfigSettings(false).build()) {
+        try (TransportClient transportClient = TransportClient.builder().settings(settings).build()) {
             transportClient.addTransportAddress(new InetSocketTransportAddress(InetAddress.getLoopbackAddress(), getProfilePort("no_ssl")));
             assertGreenClusterState(transportClient);
         }
@@ -385,7 +385,7 @@ public class SslMultiPortTests extends ShieldIntegTestCase {
                 .put("shield.transport.ssl", true)
                 .put("path.home", createTempDir())
                 .build();
-        try (TransportClient transportClient = TransportClient.builder().settings(settings).loadConfigSettings(false).build()) {
+        try (TransportClient transportClient = TransportClient.builder().settings(settings).build()) {
             transportClient.addTransportAddress(internalCluster().getInstance(Transport.class).boundAddress().boundAddress());
             assertGreenClusterState(transportClient);
         }
@@ -404,7 +404,7 @@ public class SslMultiPortTests extends ShieldIntegTestCase {
                 .put("shield.transport.ssl", true)
                 .put("path.home", createTempDir())
                 .build();
-        try (TransportClient transportClient = TransportClient.builder().settings(settings).loadConfigSettings(false).build()) {
+        try (TransportClient transportClient = TransportClient.builder().settings(settings).build()) {
             transportClient.addTransportAddress(new InetSocketTransportAddress(InetAddress.getLoopbackAddress(), getProfilePort("client")));
             assertGreenClusterState(transportClient);
         }
@@ -423,7 +423,7 @@ public class SslMultiPortTests extends ShieldIntegTestCase {
                 .put("shield.transport.ssl", true)
                 .put("path.home", createTempDir())
                 .build();
-        try (TransportClient transportClient = TransportClient.builder().settings(settings).loadConfigSettings(false).build()) {
+        try (TransportClient transportClient = TransportClient.builder().settings(settings).build()) {
             transportClient.addTransportAddress(new InetSocketTransportAddress(InetAddress.getLoopbackAddress(), getProfilePort("no_client_auth")));
             assertGreenClusterState(transportClient);
         }
@@ -442,7 +442,7 @@ public class SslMultiPortTests extends ShieldIntegTestCase {
                 .put("shield.transport.ssl", true)
                 .put("path.home", createTempDir())
                 .build();
-        try (TransportClient transportClient = TransportClient.builder().settings(settings).loadConfigSettings(false).build()) {
+        try (TransportClient transportClient = TransportClient.builder().settings(settings).build()) {
             transportClient.addTransportAddress(new InetSocketTransportAddress(InetAddress.getLoopbackAddress(), getProfilePort("no_ssl")));
             assertGreenClusterState(transportClient);
         }
