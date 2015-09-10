@@ -43,8 +43,8 @@ public class ServerInfo
 {
     private String m_OsName;
     private String m_OsVersion;
-    private String hostname;
-    private CpuInfo cpuInfo;
+    private String m_Hostname;
+    private CpuInfo m_CpuInfo;
     private Long m_TotalMemoryMb;
     private Long m_TotalDiskMb;
     private Long m_AvailableDiskMb;
@@ -62,7 +62,7 @@ public class ServerInfo
 
     public void setOsName(String osName)
     {
-        this.m_OsName = osName;
+        m_OsName = osName;
     }
 
     public String getOsVersion()
@@ -72,27 +72,27 @@ public class ServerInfo
 
     public void setOsVersion(String osVersion)
     {
-        this.m_OsVersion = osVersion;
+        m_OsVersion = osVersion;
     }
 
     public String getHostname()
     {
-        return hostname;
+        return m_Hostname;
     }
 
     public void setHostname(String hostname)
     {
-        this.hostname = hostname;
+        m_Hostname = hostname;
     }
 
     public CpuInfo getCpuInfo()
     {
-        return cpuInfo;
+        return m_CpuInfo;
     }
 
     public void setCpuInfo(CpuInfo cpuInfo)
     {
-        this.cpuInfo = cpuInfo;
+        m_CpuInfo = cpuInfo;
     }
 
     public Long getTotalMemoryMb()
@@ -102,7 +102,7 @@ public class ServerInfo
 
     public void setTotalMemoryMb(Long memoryMb)
     {
-        this.m_TotalMemoryMb = memoryMb;
+        m_TotalMemoryMb = memoryMb;
     }
 
     public Long getTotalDiskMb()
@@ -112,7 +112,7 @@ public class ServerInfo
 
     public void setTotalDiskMb(Long totalDiskMb)
     {
-        this.m_TotalDiskMb = totalDiskMb;
+        m_TotalDiskMb = totalDiskMb;
     }
 
     public Long getAvailableDiskMb()
@@ -122,6 +122,6 @@ public class ServerInfo
 
     public void setAvailableDiskMb(Long availableDiskMb)
     {
-        this.m_AvailableDiskMb = availableDiskMb;
+        m_AvailableDiskMb = availableDiskMb;
     }
 }
