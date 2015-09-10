@@ -322,6 +322,7 @@ public class AnalysisConfig
 
         return Objects.equals(this.m_BucketSpan, that.m_BucketSpan) &&
                 Objects.equals(this.m_BatchSpan, that.m_BatchSpan) &&
+                Objects.equals(this.m_CategorizationFieldName, that.m_CategorizationFieldName) &&
                 Objects.equals(this.m_Latency, that.m_Latency) &&
                 Objects.equals(this.m_Period, that.m_Period) &&
                 Objects.equals(this.m_SummaryCountFieldName, that.m_SummaryCountFieldName) &&
