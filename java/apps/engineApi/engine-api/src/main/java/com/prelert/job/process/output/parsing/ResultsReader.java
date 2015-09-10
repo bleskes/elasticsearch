@@ -32,7 +32,6 @@ import java.io.InputStream;
 
 import org.apache.log4j.Logger;
 
-import com.fasterxml.jackson.core.JsonParseException;
 import com.prelert.job.alert.AlertObserver;
 import com.prelert.job.persistence.JobResultsPersister;
 import com.prelert.utils.json.AutoDetectParseException;
@@ -70,15 +69,7 @@ public class ResultsReader implements Runnable
         {
             m_Parser.parseResults(m_Stream, m_ResultsPersister, m_Renormaliser, m_Logger);
         }
-        catch (JsonParseException e)
-        {
-            m_Logger.info("Error parsing autodetect_api output", e);
-        }
-        catch (IOException e)
-        {
-            m_Logger.info("Error parsing autodetect_api output", e);
-        }
-        catch (AutoDetectParseException e)
+        catch (IOException | AutoDetectParseException e)
         {
             m_Logger.info("Error parsing autodetect_api output", e);
         }
