@@ -156,7 +156,7 @@ public class TransformConfig
     @Override
     public int hashCode()
     {
-        return Objects.hash(m_Inputs, m_Name, m_Outputs, m_Type, m_Arguments);
+        return Objects.hash(m_Inputs, m_Name, m_Outputs, m_Type, m_Arguments, m_Condition);
     }
 
     @Override

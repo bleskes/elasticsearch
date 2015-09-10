@@ -36,6 +36,36 @@ import org.junit.Test;
 public class AnalysisLimitsTest
 {
     @Test
+    public void testSetModelMemoryLimit_GivenNegative()
+    {
+        AnalysisLimits limits = new AnalysisLimits();
+
+        limits.setModelMemoryLimit(-42);
+
+        assertEquals(-1, limits.getModelMemoryLimit());
+    }
+
+    @Test
+    public void testSetModelMemoryLimit_GivenZero()
+    {
+        AnalysisLimits limits = new AnalysisLimits();
+
+        limits.setModelMemoryLimit(0);
+
+        assertEquals(0, limits.getModelMemoryLimit());
+    }
+
+    @Test
+    public void testSetModelMemoryLimit_GivenPositive()
+    {
+        AnalysisLimits limits = new AnalysisLimits();
+
+        limits.setModelMemoryLimit(52);
+
+        assertEquals(52, limits.getModelMemoryLimit());
+    }
+
+    @Test
     public void testEquals_GivenEqual()
     {
         AnalysisLimits analysisLimits1 = new AnalysisLimits(10, 20L);

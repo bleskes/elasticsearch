@@ -28,8 +28,8 @@
 package com.prelert.rs.data;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 /**
  * Generic wrapper class for returning a single document requested through
@@ -42,73 +42,72 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 @JsonInclude(Include.NON_NULL)
 public class SingleDocument<T>
 {
-	private boolean m_Exists;
-	private String m_Type;
-	private String m_Id;
+    private boolean m_Exists;
+    private String m_Type;
+    private String m_Id;
 
-	private T m_Document;
+    private T m_Document;
 
-	/**
-	 * Return true if the requested document exists
-	 * @return true is document exists
-	 */
-	public boolean isExists()
-	{
-		return m_Exists;
-	}
+    /**
+     * Return true if the requested document exists
+     * @return true is document exists
+     */
+    public boolean isExists()
+    {
+        return m_Exists;
+    }
 
-	public void setExists(boolean exists)
-	{
-		this.m_Exists = exists;
-	}
+    public void setExists(boolean exists)
+    {
+        this.m_Exists = exists;
+    }
 
-	/**
-	 * The type of the requested document
-	 * @return The document type
-	 */
-	public String getType()
-	{
-		return m_Type;
-	}
+    /**
+     * The type of the requested document
+     * @return The document type
+     */
+    public String getType()
+    {
+        return m_Type;
+    }
 
-	public void setType(String type)
-	{
-		this.m_Type = type;
-	}
+    public void setType(String type)
+    {
+        this.m_Type = type;
+    }
 
-	/**
-	 * The id of the requested document
-	 * @return The document Id
-	 */
-	public String getDocumentId()
-	{
-		return m_Id;
-	}
+    /**
+     * The id of the requested document
+     * @return The document Id
+     */
+    public String getDocumentId()
+    {
+        return m_Id;
+    }
 
-	public void setDocumentId(String id)
-	{
-		this.m_Id = id;
-	}
+    public void setDocumentId(String id)
+    {
+        this.m_Id = id;
+    }
 
-	/**
-	 * Get the requested document or null
-	 * @return The document or <code>null</code>
-	 */
-	public T getDocument()
-	{
-		return m_Document;
-	}
+    /**
+     * Get the requested document or null
+     * @return The document or <code>null</code>
+     */
+    public T getDocument()
+    {
+        return m_Document;
+    }
 
-	/**
-	 * Set the requested document.
-	 * If the doc is non-null {@link #isExists() Exists} is set to true
-	 * else it is false
-	 * @param doc the requested document
-	 */
-	public void setDocument(T doc)
-	{
-		m_Document = doc;
-		m_Exists = (doc != null) ? true : false;
-	}
-
+    /**
+     * Set the requested document.
+     * If the doc is non-null {@link #isExists() Exists} is set to true
+     * else it is false
+     * @param doc the requested document
+     */
+    public void setDocument(T doc)
+    {
+        m_Document = doc;
+        m_Exists = (doc != null) ? true : false;
+    }
 }
