@@ -30,6 +30,8 @@ import org.junit.Test;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
+import java.util.concurrent.Executor;
+
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.*;
 
@@ -44,7 +46,7 @@ public class WatcherLifeCycleServiceTests extends ESTestCase {
     @Before
     public void prepareServices() {
         ThreadPool threadPool = mock(ThreadPool.class);
-        when(threadPool.executor(anyString())).thenReturn(MoreExecutors.newDirectExecutorService());
+        when(threadPool.executor(anyString())).thenReturn(Runnable::run);
         clusterService = mock(ClusterService.class);
         Answer<Object> answer = new Answer<Object>() {
             @Override

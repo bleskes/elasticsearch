@@ -164,7 +164,7 @@ public class WatcherIndexTemplateRegistry extends AbstractComponent implements C
     private void putTemplate(final TemplateConfig config, boolean wait) {
         final Executor executor;
         if (wait) {
-            executor = MoreExecutors.directExecutor();
+            executor = Runnable::run;
         } else {
             executor = threadPool.generic();
         }
