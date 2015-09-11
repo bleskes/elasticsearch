@@ -52,6 +52,63 @@ public class DataDescriptionTest
         assertEquals(DataFormat.SINGLE_LINE, DataFormat.forString("SINGLE_LINE"));
     }
 
+    @Test
+    public void testTransform_GivenJson()
+    {
+        DataDescription dd = new DataDescription();
+        dd.setFormat(DataFormat.JSON);
+        assertTrue(dd.transform());
+    }
+
+    @Test
+    public void testTransform_GivenDelimitedAndEpoch()
+    {
+        DataDescription dd = new DataDescription();
+        dd.setFormat(DataFormat.DELIMITED);
+        dd.setTimeFormat("epoch");
+        assertFalse(dd.transform());
+    }
+
+    @Test
+    public void testTransform_GivenDelimitedAndEpochMs()
+    {
+        DataDescription dd = new DataDescription();
+        dd.setFormat(DataFormat.DELIMITED);
+        dd.setTimeFormat("epoch_ms");
+        assertTrue(dd.transform());
+    }
+
+    @Test
+    public void testIsTransformTime_GivenTimeFormatIsNull()
+    {
+        DataDescription dd = new DataDescription();
+        dd.setTimeFormat(null);
+        assertFalse(dd.isTransformTime());
+    }
+
+    @Test
+    public void testIsTransformTime_GivenTimeFormatIsEpoch()
+    {
+        DataDescription dd = new DataDescription();
+        dd.setTimeFormat("epoch");
+        assertFalse(dd.isTransformTime());
+    }
+
+    @Test
+    public void testIsTransformTime_GivenTimeFormatIsEpochMs()
+    {
+        DataDescription dd = new DataDescription();
+        dd.setTimeFormat("epoch_ms");
+        assertTrue(dd.isTransformTime());
+    }
+
+    @Test
+    public void testIsTransformTime_GivenTimeFormatPattern()
+    {
+        DataDescription dd = new DataDescription();
+        dd.setTimeFormat("yyyy-MM-dd HH:mm:ss.SSSZ");
+        assertTrue(dd.isTransformTime());
+    }
 
     @Test
     public void testEquals_GivenEqual()
