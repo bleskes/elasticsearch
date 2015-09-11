@@ -31,7 +31,7 @@ ENGINEAPI_BUILD_DIR=$(PRELERT_SRC_HOME)/java/apps/engineApi
 # Don't let Maven download dependencies during official builds
 # To update the dependencies run "make MAVEN_ARGS="
 #MAVEN_ARGS=--offline
-MAVEN_ARGS=--offline
+MAVEN_ARGS=
 
 ifdef PRELERT_TOOLS_HOME
 # Override the default tools location if $PRELERT_TOOLS_HOME is set
