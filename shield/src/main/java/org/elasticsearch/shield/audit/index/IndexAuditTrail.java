@@ -535,11 +535,7 @@ public class IndexAuditTrail extends AbstractComponent implements AuditTrail, Cl
         if (indices != null) {
             msg.builder.array(Field.INDICES, indices);
         }
-
-        // FIXME WTF!!! Why does this have anything to do with the logger!!!!!
-        if (logger.isDebugEnabled()) {
-            msg.builder.field(Field.REQUEST, message.getClass().getSimpleName());
-        }
+        msg.builder.field(Field.REQUEST, message.getClass().getSimpleName());
 
         return msg.end();
     }
@@ -564,11 +560,7 @@ public class IndexAuditTrail extends AbstractComponent implements AuditTrail, Cl
         if (indices != null) {
             msg.builder.array(Field.INDICES, indices);
         }
-
-        // FIXME WTF!!! Why does this have anything to do with the logger!!!!!
-        if (logger.isDebugEnabled()) {
-            msg.builder.field(Field.REQUEST, message.getClass().getSimpleName());
-        }
+        msg.builder.field(Field.REQUEST, message.getClass().getSimpleName());
 
         return msg.end();
     }

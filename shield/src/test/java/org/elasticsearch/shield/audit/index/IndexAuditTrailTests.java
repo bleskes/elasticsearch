@@ -254,6 +254,7 @@ public class IndexAuditTrailTests extends ShieldIntegTestCase {
             List<Object> indices = hit.field("indices").getValues();
             assertThat(indices, contains((Object[]) ((IndicesRequest) message).indices()));
         }
+        assertEquals(hit.field("request").getValue(), message.getClass().getSimpleName());
     }
 
     @Test(expected = IndexNotFoundException.class)
@@ -310,6 +311,7 @@ public class IndexAuditTrailTests extends ShieldIntegTestCase {
         assertEquals("_principal", hit.field("principal").getValue());
         assertEquals("_action", hit.field("action").getValue());
         assertEquals("transport", hit.field("origin_type").getValue());
+        assertEquals(hit.field("request").getValue(), message.getClass().getSimpleName());
     }
 
     @Test
@@ -336,6 +338,7 @@ public class IndexAuditTrailTests extends ShieldIntegTestCase {
             List<Object> indices = hit.field("indices").getValues();
             assertThat(indices, contains((Object[]) ((IndicesRequest) message).indices()));
         }
+        assertEquals(hit.field("request").getValue(), message.getClass().getSimpleName());
     }
 
     @Test(expected = IndexNotFoundException.class)
@@ -431,6 +434,7 @@ public class IndexAuditTrailTests extends ShieldIntegTestCase {
             List<Object> indices = hit.field("indices").getValues();
             assertThat(indices, contains((Object[]) ((IndicesRequest)message).indices()));
         }
+        assertEquals(hit.field("request").getValue(), message.getClass().getSimpleName());
     }
 
     @Test(expected = IndexNotFoundException.class)
@@ -496,6 +500,7 @@ public class IndexAuditTrailTests extends ShieldIntegTestCase {
             List<Object> indices = hit.field("indices").getValues();
             assertThat(indices, contains((Object[]) ((IndicesRequest)message).indices()));
         }
+        assertEquals(hit.field("request").getValue(), message.getClass().getSimpleName());
     }
 
     @Test(expected = IndexNotFoundException.class)
@@ -518,6 +523,7 @@ public class IndexAuditTrailTests extends ShieldIntegTestCase {
         assertEquals("transport", hit.field("origin_type").getValue());
         assertEquals(User.SYSTEM.principal(), hit.field("principal").getValue());
         assertEquals("internal:_action", hit.field("action").getValue());
+        assertEquals(hit.field("request").getValue(), message.getClass().getSimpleName());
     }
 
     @Test(expected = IndexNotFoundException.class)
@@ -558,6 +564,7 @@ public class IndexAuditTrailTests extends ShieldIntegTestCase {
             List<Object> indices = hit.field("indices").getValues();
             assertThat(indices, contains((Object[]) ((IndicesRequest)message).indices()));
         }
+        assertEquals(hit.field("request").getValue(), message.getClass().getSimpleName());
     }
 
     @Test(expected = IndexNotFoundException.class)
@@ -594,6 +601,7 @@ public class IndexAuditTrailTests extends ShieldIntegTestCase {
             assertEquals("_username", hit.field("principal").getValue());
         }
         assertEquals("_action", hit.field("action").getValue());
+        assertEquals(hit.field("request").getValue(), message.getClass().getSimpleName());
     }
 
     @Test(expected = IndexNotFoundException.class)
@@ -668,6 +676,7 @@ public class IndexAuditTrailTests extends ShieldIntegTestCase {
         assertThat((String) hit.field("principal").getValue(), is("_username"));
         assertThat((String) hit.field("run_as_principal").getValue(), is("running as"));
         assertEquals("_action", hit.field("action").getValue());
+        assertEquals(hit.field("request").getValue(), message.getClass().getSimpleName());
     }
 
     @Test(expected = IndexNotFoundException.class)
@@ -692,6 +701,7 @@ public class IndexAuditTrailTests extends ShieldIntegTestCase {
         assertThat((String) hit.field("principal").getValue(), is("_username"));
         assertThat((String) hit.field("run_as_principal").getValue(), is("running as"));
         assertEquals("_action", hit.field("action").getValue());
+        assertEquals(hit.field("request").getValue(), message.getClass().getSimpleName());
     }
 
     @Test(expected = IndexNotFoundException.class)
