@@ -17,7 +17,6 @@
 
 package org.elasticsearch.shield.crypto;
 
-import com.google.common.base.Charsets;
 import org.elasticsearch.common.io.Streams;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.env.Environment;
@@ -31,6 +30,7 @@ import org.junit.Test;
 import javax.crypto.SecretKey;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
@@ -269,8 +269,8 @@ public class InternalCryptoServiceTests extends ESTestCase {
         assertThat(service.encrypted(new byte[0]), is(false));
         assertThat(service.encrypted(new byte[InternalCryptoService.ENCRYPTED_BYTE_PREFIX.length]), is(false));
         assertThat(service.encrypted(InternalCryptoService.ENCRYPTED_BYTE_PREFIX), is(true));
-        assertThat(service.encrypted(randomAsciiOfLengthBetween(0, 100).getBytes(Charsets.UTF_8)), is(false));
-        assertThat(service.encrypted(service.encrypt(randomAsciiOfLength(10).getBytes(Charsets.UTF_8))), is(true));
+        assertThat(service.encrypted(randomAsciiOfLengthBetween(0, 100).getBytes(StandardCharsets.UTF_8)), is(false));
+        assertThat(service.encrypted(service.encrypt(randomAsciiOfLength(10).getBytes(StandardCharsets.UTF_8))), is(true));
     }
 
     @Test

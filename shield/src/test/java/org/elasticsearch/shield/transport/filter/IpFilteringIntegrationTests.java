@@ -17,7 +17,6 @@
 
 package org.elasticsearch.shield.transport.filter;
 
-import com.google.common.base.Charsets;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
@@ -34,6 +33,7 @@ import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 
 import static org.elasticsearch.test.ESIntegTestCase.ClusterScope;
 import static org.elasticsearch.test.ESIntegTestCase.Scope;
@@ -94,7 +94,7 @@ public class IpFilteringIntegrationTests extends ShieldIntegTestCase {
 
         assertThat(socket.isConnected(), is(true));
         try (OutputStream os = socket.getOutputStream()) {
-            os.write("fooooo".getBytes(Charsets.UTF_8));
+            os.write("fooooo".getBytes(StandardCharsets.UTF_8));
             os.flush();
         }
     }
