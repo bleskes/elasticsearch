@@ -31,7 +31,7 @@ module.exports = function phoneHomeProvider(Promise, es, $http, statsReportUrl, 
         var marvelData = localStorage.getItem('marvel_data');
         let attributes = marvelData && JSON.parse(marvelData) || {};
         _.defaults(this.attributes, attributes, defaults);
-      } catch(e) {
+      } catch (e) {
         _.defaults(this.attributes, defaults);
       }
     }
