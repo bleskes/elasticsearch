@@ -3,7 +3,7 @@ define(function (require) {
   var _ = require('lodash');
   var TableHead = require('./tableHead');
   var TableBody = require('./tableBody');
-  var Pagination = require('./pagination');
+  var Pagination = require('./pagination.jsx');
   var make = React.DOM;
 
 
