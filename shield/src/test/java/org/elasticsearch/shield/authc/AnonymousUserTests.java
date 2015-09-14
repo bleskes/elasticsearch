@@ -17,7 +17,6 @@
 
 package org.elasticsearch.shield.authc;
 
-import com.google.common.base.Charsets;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -32,6 +31,7 @@ import org.elasticsearch.test.ShieldIntegTestCase;
 import org.junit.Test;
 
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 
 import static org.hamcrest.Matchers.*;
@@ -68,7 +68,7 @@ public class AnonymousUserTests extends ShieldIntegTestCase {
         try (CloseableHttpClient client = HttpClients.createDefault();
              CloseableHttpResponse response = client.execute(new HttpGet(getNodeUrl() + "_nodes"))) {
             int statusCode = response.getStatusLine().getStatusCode();
-            String data = Streams.copyToString(new InputStreamReader(response.getEntity().getContent(), Charsets.UTF_8));
+            String data = Streams.copyToString(new InputStreamReader(response.getEntity().getContent(), StandardCharsets.UTF_8));
             if (authorizationExceptionsEnabled) {
                 assertThat(statusCode, is(403));
                 assertThat(response.getFirstHeader("WWW-Authenticate"), nullValue());

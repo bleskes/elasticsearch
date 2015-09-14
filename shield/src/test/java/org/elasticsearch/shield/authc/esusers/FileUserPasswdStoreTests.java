@@ -17,7 +17,6 @@
 
 package org.elasticsearch.shield.authc.esusers;
 
-import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.logging.ESLoggerFactory;
@@ -36,6 +35,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.BufferedWriter;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -81,7 +81,7 @@ public class FileUserPasswdStoreTests extends ESTestCase {
         Path file = createTempFile();
 
         // writing in utf_16 should cause a parsing error as we try to read the file in utf_8
-        Files.write(file, Collections.singletonList("aldlfkjldjdflkjd"), Charsets.UTF_16);
+        Files.write(file, Collections.singletonList("aldlfkjldjdflkjd"), StandardCharsets.UTF_16);
 
         Settings esusersSettings = Settings.builder()
                 .put("files.users", file.toAbsolutePath())
@@ -120,7 +120,7 @@ public class FileUserPasswdStoreTests extends ESTestCase {
 
         watcherService.start();
 
-        try (BufferedWriter writer = Files.newBufferedWriter(tmp, Charsets.UTF_8, StandardOpenOption.APPEND)) {
+        try (BufferedWriter writer = Files.newBufferedWriter(tmp, StandardCharsets.UTF_8, StandardOpenOption.APPEND)) {
             writer.newLine();
             writer.append("foobar:").append(new String(Hasher.BCRYPT.hash(SecuredStringTests.build("barfoo"))));
         }
@@ -160,7 +160,7 @@ public class FileUserPasswdStoreTests extends ESTestCase {
         watcherService.start();
 
         // now replacing the content of the users file with something that cannot be read
-        Files.write(tmp, Collections.singletonList("aldlfkjldjdflkjd"), Charsets.UTF_16);
+        Files.write(tmp, Collections.singletonList("aldlfkjldjdflkjd"), StandardCharsets.UTF_16);
 
         if (!latch.await(5, TimeUnit.SECONDS)) {
             fail("Waited too long for the updated file to be picked up");
@@ -212,7 +212,7 @@ public class FileUserPasswdStoreTests extends ESTestCase {
     public void testParseFile_WhenCannotReadFile() throws Exception {
         Path file = createTempFile();
         // writing in utf_16 should cause a parsing error as we try to read the file in utf_8
-        Files.write(file, Collections.singletonList("aldlfkjldjdflkjd"), Charsets.UTF_16);
+        Files.write(file, Collections.singletonList("aldlfkjldjdflkjd"), StandardCharsets.UTF_16);
         CapturingLogger logger = new CapturingLogger(CapturingLogger.Level.INFO);
         try {
             FileUserPasswdStore.parseFile(file, logger);
@@ -225,7 +225,7 @@ public class FileUserPasswdStoreTests extends ESTestCase {
     @Test
     public void testParseFile_InvalidLineDoesNotResultInLoggerNPE() throws Exception {
         Path file = createTempFile();
-        Files.write(file, Arrays.asList("NotValidUsername=Password", "user:pass"), Charsets.UTF_8);
+        Files.write(file, Arrays.asList("NotValidUsername=Password", "user:pass"), StandardCharsets.UTF_8);
         Map<String, char[]> users = FileUserPasswdStore.parseFile(file, null);
         assertThat(users, notNullValue());
         assertThat(users.keySet(), hasSize(1));
@@ -235,7 +235,7 @@ public class FileUserPasswdStoreTests extends ESTestCase {
     public void testParseFileLenient_WhenCannotReadFile() throws Exception {
         Path file = createTempFile();
         // writing in utf_16 should cause a parsing error as we try to read the file in utf_8
-        Files.write(file, Collections.singletonList("aldlfkjldjdflkjd"), Charsets.UTF_16);
+        Files.write(file, Collections.singletonList("aldlfkjldjdflkjd"), StandardCharsets.UTF_16);
         CapturingLogger logger = new CapturingLogger(CapturingLogger.Level.INFO);
         Map<String, char[]> users = FileUserPasswdStore.parseFileLenient(file, logger);
         assertThat(users, notNullValue());
@@ -248,7 +248,7 @@ public class FileUserPasswdStoreTests extends ESTestCase {
     @Test
     public void testParseFileWithLineWithEmptyPasswordAndWhitespace() throws Exception {
         Path file = createTempFile();
-        Files.write(file, Collections.singletonList("user: "), Charsets.UTF_8);
+        Files.write(file, Collections.singletonList("user: "), StandardCharsets.UTF_8);
         Map<String, char[]> users = FileUserPasswdStore.parseFile(file, null);
         assertThat(users, notNullValue());
         assertThat(users.keySet(), is(empty()));
