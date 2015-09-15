@@ -1,4 +1,4 @@
-/*global d2 */
+/*global d3 */
 /*eslint new-cap: 0*/
 define(function (require) {
   var React = require('react');
@@ -76,7 +76,7 @@ define(function (require) {
         this.setState({loading: false});
       }
       // Hide the tooltip so you don't get old data with it.
-      window.d3.select(lastChild)
+      d3.select(lastChild)
         .datum([this.state.chartData])
         .call(this.jLineChart);
     },
