@@ -26,7 +26,6 @@ define(function () {
         .then((stateResp) => {
           var url = `/marvel/api/v1/clusters/${clusterUuid}/state/${stateUuid}/shards`;
           if (id && type) url += `?${type}=${id}`;
-          console.log(type, id, url);
           return $http.get(url).then((shardResp) => {
             if (stateResp && stateResp._source) {
               var state = stateResp._source;
