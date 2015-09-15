@@ -107,14 +107,16 @@ define(function (require) {
       }
       var chartMargin = {
         left: 50,
-        right: 10
+        right: 10,
+        top: 20,
+        bottom: 20
       };
       var $tooltipLine = document.createElement('div');
       $tooltipLine.style.zIndex = 1;
-      $tooltipLine.style.borderLeft = '1px solid #000';
+      $tooltipLine.style.borderLeft = '2px solid #a4a4ae';
       $tooltipLine.style.position = 'absolute';
       $tooltipLine.style.width = '1px';
-      $tooltipLine.style.top = '0';
+      $tooltipLine.style.top = chartMargin.top + 'px';
       var that = this;
       function showTooltip(evt, yValue, valueCoords) {
         var val = yValue[0];
@@ -137,7 +139,7 @@ define(function (require) {
           };
           Tooltip.showTooltip(tooltipOptions);
 
-          $tooltipLine.style.height = svgClientRect.height + 'px';
+          $tooltipLine.style.height = svgClientRect.height - (chartMargin.bottom + chartMargin.top) + 'px';
           $tooltipLine.style.left = valueCoords[0] + chartMargin.left + 'px';
           // $tooltipLine.style.top = svgClientRect.top + 'px';
           // Show the tooltip line
