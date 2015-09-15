@@ -16,23 +16,19 @@ require('ui/modules').get('kibana').config(function (PrivateProvider) {
     var defaults = $injector.invoke(require('ui/config/defaults'));
     defaults['timepicker:timeDefaults'] = {
       type: 'json',
-      value: [
-        '{',
-        '  "from": "now-1h",',
-        '  "to": "now",',
-        '  "mode": "quick"',
-        '}'
-      ].join('\n')
+      value: JSON.stringify({
+        from: 'now-1h',
+        to: 'now',
+        mode: 'quick'
+      })
     };
     defaults['timepicker:refreshIntervalDefaults'] = {
       type: 'json',
-      value: [
-        '{',
-        '  "display": "10 seconds",',
-        '  "pause": false,',
-        '  "value": 10000',
-        '}'
-      ].join('\n')
+      value: JSON.stringify({
+        display: '10 seconds',
+        pause: false,
+        value: 10000
+      })
     };
     return defaults;
   });
