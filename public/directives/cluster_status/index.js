@@ -13,6 +13,7 @@ define(function (require) {
         clusterState: '='
       },
       link: function ($scope) {
+        $scope.total_shards = 0;
         $scope.primary_shards = 0;
         $scope.replica_shards = 0;
         $scope.unassigned_shards = 0;
@@ -36,23 +37,26 @@ define(function (require) {
           if (globalState.cluster !== name) {
             globalState.cluster = name;
             globalState.save();
-            kbnUrl.changePath($location.path());
+            kbnUrl.changePath('/overview');
           }
         };
 
         $scope.laggingCluster = false;
 
-        $scope.$watch('clusterState.data.shardStats', function (shardStats) {
+
+        function setShardStats(shardStats) {
           if (shardStats) {
+            $scope.total_shards = shardStats.totals.primary + shardStats.totals.replica;
             $scope.primary_shards = shardStats.totals.primary;
             $scope.replica_shards = shardStats.totals.replica;
             $scope.unassigned_shards = shardStats.totals.unassigned.primary +
               shardStats.totals.unassigned.replica;
           }
-        });
+        }
 
         $scope.$watch('source.clusters', function (clusters) {
           $scope.cluster = _.find(clusters, { cluster_uuid: $scope.source.cluster });
+          setShardStats($scope.cluster.shardStats);
           if ($scope.cluster) {
             $scope.lastUpdate = moment.utc($scope.cluster.lastUpdate);
             var now = moment.utc();

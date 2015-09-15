@@ -31,7 +31,6 @@ module.exports = function clusterStateDataSourceProvider(courier) {
       if (this.data.timestamp !== newState.timestamp) {
         this.data.timestamp = newState.timestamp;
         _.assign(this.data, newState.cluster_state);
-        this.data.shardStats = calculateShardStats(newState);
       }
     }
   };
