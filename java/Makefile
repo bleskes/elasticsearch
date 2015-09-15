@@ -28,16 +28,19 @@ include $(PRELERT_SRC_HOME)/mk/defines.mk
 
 ENGINEAPI_BUILD_DIR=$(PRELERT_SRC_HOME)/java/apps/engineApi
 
-# Don't let Maven download dependencies during official builds
-# To update the dependencies run "make MAVEN_ARGS="
+# Previously we didn't let Maven download dependencies during official builds,
+# but changed this as shared local repositories are unsafe.
+# To update the dependencies if this policy is reinstated run:
+# make MAVEN_ARGS=
 #MAVEN_ARGS=--offline
 MAVEN_ARGS=
 
 ifdef PRELERT_TOOLS_HOME
-# Override the default tools location if $PRELERT_TOOLS_HOME is set
+# We used to override the default repository base directory if
+# $PRELERT_TOOLS_HOME was set, but don't any more as shared local repositories
+# are unsafe.
 # NB: If you uncomment the next line you must also change settings.xml
-# MAVEN_PROPS+= -Drepository.basedir=$(PRELERT_TOOLS_HOME)/maven
-MAVEN_PROPS=
+#MAVEN_PROPS+= -Drepository.basedir=$(PRELERT_TOOLS_HOME)/maven
 endif
 
 ifdef BUILD_ENGINE_API
