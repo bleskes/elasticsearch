@@ -42,6 +42,9 @@ define(function (require) {
             make.div({className: 'small'}, formatNumber(value.max) + ' max'),
             make.div({className: 'small'}, formatNumber(value.min) + ' min')));
       }
+      if (!$content && !_.isUndefined(value)) {
+        $content = make.div(null, make.div({className: 'big inline'}, value));
+      }
       return make.td({key: idx}, $content);
     }
     var initialTableOptions = {
@@ -75,6 +78,12 @@ define(function (require) {
           sortKey: 'metrics.node_space_free.last',
           sort: 0,
           title: 'Disk Free Space GB'
+        },
+        {
+          key: 'metrics.shard_count',
+          sortKey: 'metrics.shard_count',
+          sort: 0,
+          title: 'Number of Shards'
         }
       ]
     };
@@ -133,7 +142,10 @@ define(function (require) {
         var TableInstance = React.render($table, $el[0]);
 
         $scope.$watch('data', function (data, oldVal) {
-          TableInstance.setData(data);
+          TableInstance.setData(data.map(function (row) {
+            row.metrics.shard_count  = $scope.nodes[row.name].shard_count;
+            return row;
+          }));
         });
       }
     };

@@ -18,7 +18,8 @@ define(function (require) {
     }
   });
 
-  module.controller('nodes', function (kbnUrl, globalState, $scope, timefilter, $route, courier, marvelMetrics, Private, Promise, es) {
+  module.controller('nodes', function (kbnUrl, globalState, $scope, timefilter, $route,
+        courier, marvelMetrics, Private, Promise, es) {
     var ChartDataSource = Private(require('plugins/marvel/directives/chart/data_source'));
     var ClusterStatusDataSource = Private(require('plugins/marvel/directives/cluster_status/data_source'));
     var TableDataSource = Private(require('plugins/marvel/lib/table_data_source'));
@@ -78,7 +79,9 @@ define(function (require) {
       .then(fetch);
 
     function fetch() {
-      return Promise.all([courier.fetch()]);
+      return Promise.all([
+        courier.fetch()
+      ]);
     }
 
     $scope.$listen(globalState, 'save_with_changes', function (changes) {
@@ -86,6 +89,7 @@ define(function (require) {
         fetch();
       }
     });
+
 
     $scope.$on('$destroy', function () {
       _.each($scope.dataSources, function (dataSource) {
