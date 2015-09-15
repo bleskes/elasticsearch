@@ -1,4 +1,4 @@
-/*global d3 */
+/*global d2 */
 /*eslint new-cap: 0*/
 define(function (require) {
   var React = require('react');
@@ -76,7 +76,7 @@ define(function (require) {
         this.setState({loading: false});
       }
       // Hide the tooltip so you don't get old data with it.
-      d3.select(lastChild)
+      window.d3.select(lastChild)
         .datum([this.state.chartData])
         .call(this.jLineChart);
     },
@@ -99,22 +99,57 @@ define(function (require) {
       }
     },
     componentWillMount: function () {
+      function getSvgElement(el) {
+        if (el.tagName === 'svg') {
+          return el;
+        }
+        return getSvgElement(el.parentNode);
+      }
+      var chartMargin = {
+        left: 50,
+        right: 10
+      };
+      var $tooltipLine = document.createElement('div');
+      $tooltipLine.style.zIndex = 1;
+      $tooltipLine.style.borderLeft = '1px solid #000';
+      $tooltipLine.style.position = 'absolute';
+      $tooltipLine.style.width = '1px';
+      $tooltipLine.style.top = '0';
       var that = this;
-      function showTooltip(evt, yValue, chartIndex) {
+      function showTooltip(evt, yValue, valueCoords) {
         var val = yValue[0];
         if (val !== null) {
           var niceVal = formatNumber(val.y, that.props.source.metric.format);
           var tooltipInnerProps = _.assign({label: that.props.source.metric.label}, val, {y: niceVal});
           var tooltipInnerComponentInstance = React.createElement(TooltipInnerComponent, tooltipInnerProps);
-          Tooltip.showTooltip(evt.pageX, evt.pageY, tooltipInnerComponentInstance);
-        } else {
-          Tooltip.removeTooltip();
+          var svgElement = getSvgElement(evt.target);
+          var svgClientRect = svgElement.getBoundingClientRect();
+          var tooltipOptions = {
+            x: svgClientRect.left + valueCoords[0] + chartMargin.left,
+            y: svgClientRect.top + svgClientRect.height / 2,
+            content: tooltipInnerComponentInstance,
+            bounds: {
+              x: svgClientRect.left,
+              y: svgClientRect.top,
+              w: svgElement.clientWidth,
+              h: svgElement.clientHeight
+            }
+          };
+          Tooltip.showTooltip(tooltipOptions);
+
+          $tooltipLine.style.height = svgClientRect.height + 'px';
+          $tooltipLine.style.left = valueCoords[0] + chartMargin.left + 'px';
+          // $tooltipLine.style.top = svgClientRect.top + 'px';
+          // Show the tooltip line
+          if (!$tooltipLine.parentElement) {
+            svgElement.parentElement.appendChild($tooltipLine);
+          }
         }
       }
       var lineChart = new jubilee.chart.line()
         .height(150)
         .yScale({nice: true})
-        .margin({left: 50, right: 10})
+        .margin(chartMargin)
         .defined(function (d) { return !_.isNull(d.y); })
         .lines({
           stroke: function () { return '#000'; },
@@ -138,8 +173,14 @@ define(function (require) {
         })
         .zeroLine({ add: false })
         .on('mouseenter', showTooltip)
-        .on('mousemove', _.throttle(showTooltip, 50))
-        .on('mouseleave', function (evt, yValue, chartIndex) { Tooltip.removeTooltip(); });
+        .on('mousemove', _.throttle(showTooltip, 10))
+        .on('mouseleave', function (evt, yValue, chartIndex) {
+          var svgElement = getSvgElement(evt.target);
+          if ($tooltipLine.parentElement) {
+            svgElement.parentElement.removeChild($tooltipLine);
+          }
+          Tooltip.removeTooltip();
+        });
 
       this.jLineChart = lineChart;
     }
