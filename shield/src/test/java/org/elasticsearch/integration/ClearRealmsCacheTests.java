@@ -17,7 +17,6 @@
 
 package org.elasticsearch.integration;
 
-import com.google.common.base.Joiner;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.elasticsearch.action.ActionListener;
@@ -135,7 +134,7 @@ public class ClearRealmsCacheTests extends ShieldIntegTestCase {
             @Override
             public void executeRequest() throws Exception {
                 String path = "/_shield/realm/" + (randomBoolean() ? "*" : "_all") + "/_cache/clear";
-                Map<String, String> params = Collections.singletonMap("usernames", Joiner.on(',').join(evicted_usernames));
+                Map<String, String> params = Collections.singletonMap("usernames", String.join(",", evicted_usernames));
                 executeHttpRequest(path, params);
             }
         };
