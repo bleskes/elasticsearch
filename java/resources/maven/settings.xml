@@ -52,8 +52,8 @@ under the License.
    | To use the property ${repository.basedir} it must be set on the command 
    | line when maven is invoked e.g.
    | mvn compile -Drepository.basedir=/path/to/repo
-  -->
   <localRepository>${repository.basedir}</localRepository>
+  -->
   
   <!-- interactiveMode
    | This will determine whether maven prompts you when it needs input. If set to false,
