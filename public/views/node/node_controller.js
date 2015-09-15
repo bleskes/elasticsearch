@@ -15,7 +15,7 @@ define(function (require) {
       }
     });
 
-  module.controller('nodeView', function ($scope, marvelMetrics, globalState, courier, timefilter, Private, $routeParams, $route) {
+  module.controller('nodeView', function ($scope, marvelMetrics, globalState, courier, timefilter, Private, $routeParams, $route, Promise) {
     var clusters = $route.current.locals.marvel.clusters;
     $scope.nodeName = $routeParams.node;
     var indexPattern = $scope.indexPattern = $route.current.locals.marvel.indexPattern;
