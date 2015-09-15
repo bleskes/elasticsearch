@@ -35,6 +35,7 @@ MAVEN_ARGS=
 
 ifdef PRELERT_TOOLS_HOME
 # Override the default tools location if $PRELERT_TOOLS_HOME is set
+# NB: If you uncomment the next line you must also change settings.xml
 # MAVEN_PROPS+= -Drepository.basedir=$(PRELERT_TOOLS_HOME)/maven
 MAVEN_PROPS=
 endif
