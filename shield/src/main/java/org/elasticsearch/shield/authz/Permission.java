@@ -19,8 +19,6 @@ package org.elasticsearch.shield.authz;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Iterators;
-import com.google.common.collect.UnmodifiableIterator;
 import org.elasticsearch.cluster.metadata.AliasOrIndex;
 import org.elasticsearch.cluster.metadata.IndexMetaData;
 import org.elasticsearch.cluster.metadata.MetaData;
@@ -67,7 +65,7 @@ public interface Permission {
 
     boolean isEmpty();
 
-    static class Global implements Permission {
+    class Global implements Permission {
 
         public static final Global NONE = new Global(Cluster.Core.NONE, Indices.Core.NONE, RunAs.Core.NONE);
 
@@ -335,7 +333,7 @@ public interface Permission {
 
             @Override
             public Iterator<Group> iterator() {
-                return Iterators.forArray(groups);
+                return Arrays.asList(groups).iterator();
             }
 
             public Group[] groups() {
@@ -490,7 +488,7 @@ public interface Permission {
                 }
             }
 
-            static class Iter extends UnmodifiableIterator<Group> {
+            static class Iter implements Iterator<Group> {
 
                 private final Iterator<Global> globals;
                 private Iterator<Group> current;
@@ -510,6 +508,11 @@ public interface Permission {
                     Group group = current.next();
                     advance();
                     return group;
+                }
+
+                @Override
+                public void remove() {
+                    throw new UnsupportedOperationException();
                 }
 
                 private void advance() {

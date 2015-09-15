@@ -83,7 +83,7 @@ public class IndicesAccessControl {
          *         this means that there are no field level restrictions
          */
         @Nullable
-        public ImmutableSet<String> getFields() {
+        public Set<String> getFields() {
             return fields;
         }
 
@@ -92,7 +92,7 @@ public class IndicesAccessControl {
          *         then this means that there are no document level restrictions
          */
         @Nullable
-        public ImmutableSet<BytesReference> getQueries() {
+        public Set<BytesReference> getQueries() {
             return queries;
         }
 
