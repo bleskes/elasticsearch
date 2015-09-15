@@ -18,7 +18,6 @@
 package org.elasticsearch.watcher.trigger.schedule;
 
 
-import com.google.common.primitives.Ints;
 import org.elasticsearch.ElasticsearchParseException;
 import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.bytes.BytesReference;
@@ -31,6 +30,7 @@ import org.elasticsearch.watcher.trigger.schedule.support.WeekTimes;
 import org.junit.Test;
 
 import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
+import static org.elasticsearch.watcher.support.Strings.join;
 import static org.hamcrest.Matchers.*;
 
 /**
@@ -53,7 +53,7 @@ public class WeeklyScheduleTests extends ScheduleTestCase {
         String[] crons = expressions(schedule);
         assertThat(crons, arrayWithSize(time.times().length));
         for (DayTimes dayTimes : time.times()) {
-            assertThat(crons, hasItemInArray("0 " + Ints.join(",", dayTimes.minute()) + " " + Ints.join(",", dayTimes.hour()) + " ? * " + Strings.collectionToCommaDelimitedString(time.days())));
+            assertThat(crons, hasItemInArray("0 " + join(",", dayTimes.minute()) + " " + join(",", dayTimes.hour()) + " ? * " + Strings.collectionToCommaDelimitedString(time.days())));
         }
     }
 
@@ -69,7 +69,7 @@ public class WeeklyScheduleTests extends ScheduleTestCase {
         assertThat(crons, arrayWithSize(count));
         for (WeekTimes weekTimes : times) {
             for (DayTimes dayTimes : weekTimes.times()) {
-                assertThat(crons, hasItemInArray("0 " + Ints.join(",", dayTimes.minute()) + " " + Ints.join(",", dayTimes.hour()) + " ? * " + Strings.collectionToCommaDelimitedString(weekTimes.days())));
+                assertThat(crons, hasItemInArray("0 " + join(",", dayTimes.minute()) + " " + join(",", dayTimes.hour()) + " ? * " + Strings.collectionToCommaDelimitedString(weekTimes.days())));
             }
         }
     }

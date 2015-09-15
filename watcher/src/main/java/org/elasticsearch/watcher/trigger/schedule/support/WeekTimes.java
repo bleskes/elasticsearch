@@ -18,7 +18,6 @@
 package org.elasticsearch.watcher.trigger.schedule.support;
 
 import com.google.common.collect.ImmutableSet;
-import com.google.common.primitives.Ints;
 import org.elasticsearch.ElasticsearchParseException;
 import org.elasticsearch.common.ParseFieldMatcher;
 import org.elasticsearch.common.xcontent.XContentBuilder;
@@ -26,6 +25,8 @@ import org.elasticsearch.common.xcontent.XContentParser;
 
 import java.io.IOException;
 import java.util.*;
+
+import static org.elasticsearch.watcher.support.Strings.join;
 
 /**
  *
@@ -66,8 +67,8 @@ public class WeekTimes implements Times {
     public Set<String> crons() {
         Set<String> crons = new HashSet<>();
         for (DayTimes times : this.times) {
-            String hrsStr = Ints.join(",", times.hour);
-            String minsStr = Ints.join(",", times.minute);
+            String hrsStr = join(",", times.hour);
+            String minsStr = join(",", times.minute);
             String daysStr = DayOfWeek.cronPart(this.days);
             crons.add("0 " + minsStr + " " + hrsStr + " ? * " + daysStr);
         }
