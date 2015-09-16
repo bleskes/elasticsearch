@@ -24,7 +24,11 @@ define(function (require) {
       var $dateDiv = make.div(null,
           make.i({className: 'fa fa-calendar-o'}),
           ' ',
-          time.format('YYYY-MM-DD HH:mm:ss'));
+          time.format('YYYY-MM-DD'),
+          '   ',
+          make.i({className: 'fa fa-clock-o'}),
+          ' ',
+          time.format('HH:mm:ss'));
       var value = [this.props.label, this.props.y].join(' ');
       return make.div(null, $dateDiv, value);
     }
