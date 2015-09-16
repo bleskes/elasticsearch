@@ -400,22 +400,22 @@ public class ZenDiscovery extends AbstractLifecycleComponent<Discovery> implemen
             clusterService.submitStateUpdateTask("finalize_join (" + masterNode + ")", new ClusterStateNonMasterUpdateTask() {
                 @Override
                 public ClusterState execute(ClusterState currentState) throws Exception {
-                    if (!success) {
-                        // failed to join. Try again...
-                        joinThreadControl.markThreadAsDoneAndStartNew(currentThread);
-                        return currentState;
-                    }
 
-                    if (currentState.getNodes().masterNode() == null) {
+                    final DiscoveryNode currentMaster = currentState.getNodes().masterNode();
+                    if (currentMaster == null) {
                         // Post 1.3.0, the master should publish a new cluster state before acking our join request. we now should have
                         // a valid master.
-                        logger.debug("no master node is set, despite of join request completing. retrying pings.");
+                        logger.debug("no master node is set [{}]. retrying pings.", success ? "despite of join request completing" : "join request failed");
                         joinThreadControl.markThreadAsDoneAndStartNew(currentThread);
                         return currentState;
                     }
 
-                    if (!currentState.getNodes().masterNode().equals(finalMasterNode)) {
-                        return joinThreadControl.stopRunningThreadAndRejoin(currentState, "master_switched_while_finalizing_join");
+                    if (currentMaster.equals(finalMasterNode) == false) {
+                        if (success) {
+                            logger.warn("master node was set to [{}] during a successful join to [{}]. accepting current master", currentMaster, finalMasterNode);
+                        } else {
+                            logger.debug("master node was set to [{}] during a successful join to [{}]. accepting current master", currentMaster, finalMasterNode);
+                        }
                     }
 
                     // Note: we do not have to start master fault detection here because it's set at {@link #processNextPendingClusterState }
