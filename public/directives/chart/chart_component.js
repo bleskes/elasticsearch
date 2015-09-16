@@ -105,12 +105,14 @@ define(function (require) {
         }
         return getSvgElement(el.parentNode);
       }
+      // Reference for use with posistioning things, and also the options
       var chartMargin = {
         left: 50,
         right: 10,
         top: 20,
         bottom: 20
       };
+      // Setup the line that shows up on the charts
       var $tooltipLine = document.createElement('div');
       $tooltipLine.style.zIndex = 1;
       $tooltipLine.style.borderLeft = '2px solid #a4a4ae';
@@ -128,13 +130,13 @@ define(function (require) {
           var svgClientRect = svgElement.getBoundingClientRect();
           var tooltipOptions = {
             x: svgClientRect.left + valueCoords[0] + chartMargin.left,
-            y: svgClientRect.top + svgClientRect.height / 2,
+            y: svgClientRect.top + svgClientRect.height / 3,
             content: tooltipInnerComponentInstance,
             bounds: {
               x: svgClientRect.left,
               y: svgClientRect.top,
-              w: svgElement.clientWidth,
-              h: svgElement.clientHeight
+              w: svgClientRect.width,
+              h: svgClientRect.height
             }
           };
           Tooltip.showTooltip(tooltipOptions);
@@ -148,6 +150,7 @@ define(function (require) {
           }
         }
       }
+      // Finally make the line chart
       var lineChart = new jubilee.chart.line()
         .height(150)
         .yScale({nice: true})

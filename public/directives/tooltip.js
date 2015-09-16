@@ -213,24 +213,24 @@ define(function (require) {
       };
     }(position, dimensions));
     const west = direction({
-      extents: [new Vector(-1.09, -.5), new Vector(-1.09, .5)],
+      extents: [new Vector(-1.00, -.5), new Vector(-1.00, .5)],
       key: 'left',
-      position: new Vector(-1.09, -.5)
+      position: new Vector(-1.00, -.5)
     });
     const east = direction({
-      extents: [new Vector(1.09, -.5), new Vector(1.09, .5)],
+      extents: [new Vector(1.00, -.5), new Vector(1.00, .5)],
       key: 'right',
-      position: new Vector(.09, -.5)
+      position: new Vector(.00, -.5)
     });
     const north = direction({
-      extents: [new Vector(-.5, -1.09), new Vector(.5, -1.09)],
+      extents: [new Vector(-.5, -1.00), new Vector(.5, -1.00)],
       key: 'top',
-      position: new Vector(-.5, -1.09)
+      position: new Vector(-.5, -1.00)
     });
     const south = direction({
-      extents: [new Vector(-.5, 1.09), new Vector(.5, 1.09)],
+      extents: [new Vector(-.5, 1.00), new Vector(.5, 1.00)],
       key: 'bottom',
-      position: new Vector(-.5, 0.09)
+      position: new Vector(-.5, 0.00)
     });
 
     var directions = [west, east, north, south];
