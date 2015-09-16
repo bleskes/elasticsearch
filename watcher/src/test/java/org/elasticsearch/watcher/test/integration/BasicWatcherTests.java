@@ -35,7 +35,7 @@ import org.elasticsearch.watcher.support.WatcherUtils;
 import org.elasticsearch.watcher.support.clock.SystemClock;
 import org.elasticsearch.watcher.support.text.TextTemplate;
 import org.elasticsearch.watcher.support.xcontent.XContentSource;
-import org.elasticsearch.watcher.test.AbstractWatcherIntegrationTests;
+import org.elasticsearch.watcher.test.AbstractWatcherIntegrationTestCase;
 import org.elasticsearch.watcher.transport.actions.delete.DeleteWatchResponse;
 import org.elasticsearch.watcher.transport.actions.get.GetWatchResponse;
 import org.elasticsearch.watcher.transport.actions.put.PutWatchResponse;
@@ -67,7 +67,7 @@ import static org.hamcrest.Matchers.*;
 /**
  */
 @TestLogging("watcher.trigger.schedule:TRACE")
-public class BasicWatcherTests extends AbstractWatcherIntegrationTests {
+public class BasicWatcherTests extends AbstractWatcherIntegrationTestCase {
 
     @Test
     public void testIndexWatch() throws Exception {
@@ -297,9 +297,9 @@ public class BasicWatcherTests extends AbstractWatcherIntegrationTests {
     @Test
     public void testConditionSearchWithSource() throws Exception {
         String variable = randomFrom("ctx.execution_time", "ctx.trigger.scheduled_time", "ctx.trigger.triggered_time");
-        SearchSourceBuilder searchSourceBuilder = searchSource().query(filteredQuery(
-                matchQuery("level", "a"),
-                rangeQuery("_timestamp")
+        SearchSourceBuilder searchSourceBuilder = searchSource().query(boolQuery()
+                .must(matchQuery("level", "a"))
+                .must(rangeQuery("_timestamp")
                         .from("{{" + variable + "}}||-30s")
                         .to("{{" + variable + "}}")));
 
@@ -309,9 +309,9 @@ public class BasicWatcherTests extends AbstractWatcherIntegrationTests {
     @Test
     public void testConditionSearchWithIndexedTemplate() throws Exception {
         String variable = randomFrom("ctx.execution_time", "ctx.trigger.scheduled_time", "ctx.trigger.triggered_time");
-        SearchSourceBuilder searchSourceBuilder = searchSource().query(filteredQuery(
-                matchQuery("level", "a"),
-                rangeQuery("_timestamp")
+        SearchSourceBuilder searchSourceBuilder = searchSource().query(boolQuery()
+                .must(matchQuery("level", "a"))
+                .must(rangeQuery("_timestamp")
                         .from("{{" + variable + "}}||-30s")
                         .to("{{" + variable + "}}")));
 

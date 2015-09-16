@@ -17,7 +17,6 @@
 
 package org.elasticsearch.shield.authc.esusers.tool;
 
-import com.google.common.base.Charsets;
 import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.cli.CliTool;
 import org.elasticsearch.common.cli.CliToolTestCase;
@@ -30,6 +29,7 @@ import org.elasticsearch.shield.authc.support.SecuredStringTests;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -134,7 +134,7 @@ public class ESUsersToolTests extends CliToolTestCase {
         assertThat(status, is(CliTool.ExitStatus.OK));
 
         assertFileExists(userFile);
-        List<String> lines = Files.readAllLines(userFile, Charsets.UTF_8);
+        List<String> lines = Files.readAllLines(userFile, StandardCharsets.UTF_8);
         assertThat(lines.size(), is(1));
         // we can't just hash again and compare the lines, as every time we hash a new salt is generated
         // instead we'll just verify the generated hash against the correct password.
@@ -144,7 +144,7 @@ public class ESUsersToolTests extends CliToolTestCase {
         assertThat(Hasher.BCRYPT.verify(SecuredStringTests.build("changeme"), hash.toCharArray()), is(true));
 
         assertFileExists(userRolesFile);
-        lines = Files.readAllLines(userRolesFile, Charsets.UTF_8);
+        lines = Files.readAllLines(userRolesFile, StandardCharsets.UTF_8);
         assertThat(lines, hasSize(2));
         assertThat(lines, containsInAnyOrder("r1:user1", "r2:user1"));
     }
@@ -166,7 +166,7 @@ public class ESUsersToolTests extends CliToolTestCase {
         assertThat(status, is(CliTool.ExitStatus.OK));
 
         assertFileExists(userFile);
-        List<String> lines = Files.readAllLines(userFile, Charsets.UTF_8);
+        List<String> lines = Files.readAllLines(userFile, StandardCharsets.UTF_8);
         assertThat(lines, hasSize(2));
         assertThat(lines, hasItem("user2:hash2"));
         assertThat(lines, hasItem(startsWith("user1:")));
@@ -181,7 +181,7 @@ public class ESUsersToolTests extends CliToolTestCase {
         }
 
         assertFileExists(userRolesFile);
-        lines = Files.readAllLines(userRolesFile, Charsets.UTF_8);
+        lines = Files.readAllLines(userRolesFile, StandardCharsets.UTF_8);
         assertThat(lines, hasSize(4));
         assertThat(lines, containsInAnyOrder("r1:user1", "r2:user1", "r3:user2", "r4:user2"));
     }
@@ -203,7 +203,7 @@ public class ESUsersToolTests extends CliToolTestCase {
         assertThat(status, is(CliTool.ExitStatus.OK));
 
         assertFileExists(userRolesFile);
-        List<String> lines = Files.readAllLines(userRolesFile, Charsets.UTF_8);
+        List<String> lines = Files.readAllLines(userRolesFile, StandardCharsets.UTF_8);
         assertThat(lines, hasSize(2));
         assertThat(lines, not(hasItem(containsString("user1"))));
     }
@@ -315,11 +315,11 @@ public class ESUsersToolTests extends CliToolTestCase {
         assertThat(status, is(CliTool.ExitStatus.OK));
 
         assertFileExists(userFile);
-        List<String> lines = Files.readAllLines(userFile, Charsets.UTF_8);
+        List<String> lines = Files.readAllLines(userFile, StandardCharsets.UTF_8);
         assertThat(lines.size(), is(0));
 
         assertFileExists(userRolesFile);
-        lines = Files.readAllLines(userRolesFile, Charsets.UTF_8);
+        lines = Files.readAllLines(userRolesFile, StandardCharsets.UTF_8);
         assertThat(lines.size(), is(0));
     }
 
@@ -345,11 +345,11 @@ public class ESUsersToolTests extends CliToolTestCase {
         assertThat(output, hasItem(startsWith("User [user2] doesn't exist")));
 
         assertFileExists(userFile);
-        List<String> lines = Files.readAllLines(userFile, Charsets.UTF_8);
+        List<String> lines = Files.readAllLines(userFile, StandardCharsets.UTF_8);
         assertThat(lines.size(), is(1));
 
         assertFileExists(userRolesFile);
-        lines = Files.readAllLines(userRolesFile, Charsets.UTF_8);
+        lines = Files.readAllLines(userRolesFile, StandardCharsets.UTF_8);
         assertThat(lines, hasSize(2));
     }
 
@@ -434,7 +434,7 @@ public class ESUsersToolTests extends CliToolTestCase {
         CliTool.ExitStatus status = execute(cmd, settings);
         assertThat(status, is(CliTool.ExitStatus.OK));
 
-        List<String> lines = Files.readAllLines(userFile, Charsets.UTF_8);
+        List<String> lines = Files.readAllLines(userFile, StandardCharsets.UTF_8);
         assertThat(lines.size(), is(1));
         // we can't just hash again and compare the lines, as every time we hash a new salt is generated
         // instead we'll just verify the generated hash against the correct password.
@@ -604,7 +604,7 @@ public class ESUsersToolTests extends CliToolTestCase {
 
         assertThat(status, is(CliTool.ExitStatus.OK));
 
-        List<String> usersRoleFileLines = Files.readAllLines(usersRoleFile, Charsets.UTF_8);
+        List<String> usersRoleFileLines = Files.readAllLines(usersRoleFile, StandardCharsets.UTF_8);
         assertThat(usersRoleFileLines, not(hasItem(containsString("user"))));
     }
 
@@ -878,7 +878,7 @@ public class ESUsersToolTests extends CliToolTestCase {
         assertThat(status, is(CliTool.ExitStatus.OK));
 
         assertFileExists(userFile);
-        List<String> lines = Files.readAllLines(userFile, Charsets.UTF_8);
+        List<String> lines = Files.readAllLines(userFile, StandardCharsets.UTF_8);
         assertThat(lines.size(), is(1));
         // we can't just hash again and compare the lines, as every time we hash a new salt is generated
         // instead we'll just verify the generated hash against the correct password.
@@ -888,7 +888,7 @@ public class ESUsersToolTests extends CliToolTestCase {
         assertThat(Hasher.BCRYPT.verify(SecuredStringTests.build("changeme"), hash.toCharArray()), is(true));
 
         assertFileExists(userRolesFile);
-        lines = Files.readAllLines(userRolesFile, Charsets.UTF_8);
+        lines = Files.readAllLines(userRolesFile, StandardCharsets.UTF_8);
         assertThat(lines, hasSize(3));
         assertThat(lines, containsInAnyOrder("r1:john.doe", "r2:john.doe", "r3:john.doe"));
     }
@@ -900,7 +900,7 @@ public class ESUsersToolTests extends CliToolTestCase {
 
     private Path writeFile(String content) throws IOException {
         Path file = createTempFile();
-        Files.write(file, content.getBytes(Charsets.UTF_8));
+        Files.write(file, content.getBytes(StandardCharsets.UTF_8));
         return file;
     }
 

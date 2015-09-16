@@ -26,7 +26,8 @@ import org.elasticsearch.watcher.watch.WatchStatus;
 import java.io.IOException;
 
 /**
- * This class contains the ackState of the watch, if the watch was successfully acked this will be ACK
+ * This class contains the status of the watch. If the watch was successfully acked
+ * this will be reflected in the watch status.
  */
 public class AckWatchResponse extends ActionResponse {
 
@@ -40,7 +41,7 @@ public class AckWatchResponse extends ActionResponse {
     }
 
     /**
-     * @return The ack state for the watch
+     * @return The watch status
      */
     public WatchStatus getStatus() {
         return status;

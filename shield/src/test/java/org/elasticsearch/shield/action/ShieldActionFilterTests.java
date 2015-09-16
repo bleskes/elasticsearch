@@ -24,6 +24,7 @@ import org.elasticsearch.action.search.SearchScrollRequest;
 import org.elasticsearch.action.support.ActionFilterChain;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.shield.User;
+import org.elasticsearch.shield.action.interceptor.RequestInterceptor;
 import org.elasticsearch.shield.audit.AuditTrail;
 import org.elasticsearch.shield.authc.AuthenticationService;
 import org.elasticsearch.shield.authz.AuthorizationService;
@@ -32,6 +33,8 @@ import org.elasticsearch.shield.license.LicenseEventsNotifier;
 import org.elasticsearch.test.ESTestCase;
 import org.junit.Before;
 import org.junit.Test;
+
+import java.util.HashSet;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.mockito.Matchers.eq;
@@ -57,7 +60,7 @@ public class ShieldActionFilterTests extends ESTestCase {
         cryptoService = mock(CryptoService.class);
         auditTrail = mock(AuditTrail.class);
         licenseEventsNotifier = new MockLicenseEventsNotifier();
-        filter = new ShieldActionFilter(Settings.EMPTY, authcService, authzService, cryptoService, auditTrail, licenseEventsNotifier, new ShieldActionMapper());
+        filter = new ShieldActionFilter(Settings.EMPTY, authcService, authzService, cryptoService, auditTrail, licenseEventsNotifier, new ShieldActionMapper(), new HashSet<RequestInterceptor>());
     }
 
     @Test
@@ -65,7 +68,7 @@ public class ShieldActionFilterTests extends ESTestCase {
         ActionRequest request = mock(ActionRequest.class);
         ActionListener listener = mock(ActionListener.class);
         ActionFilterChain chain = mock(ActionFilterChain.class);
-        User user = new User.Simple("username", "r1", "r2");
+        User user = new User.Simple("username", new String[] { "r1", "r2" });
         when(authcService.authenticate("_action", request, User.SYSTEM)).thenReturn(user);
         doReturn(request).when(spy(filter)).unsign(user, "_action", request);
         filter.apply("_action", request, listener, chain);
@@ -79,7 +82,7 @@ public class ShieldActionFilterTests extends ESTestCase {
         ActionListener listener = mock(ActionListener.class);
         ActionFilterChain chain = mock(ActionFilterChain.class);
         RuntimeException exception = new RuntimeException("process-error");
-        User user = new User.Simple("username", "r1", "r2");
+        User user = new User.Simple("username", new String[] { "r1", "r2" });
         when(authcService.authenticate("_action", request, User.SYSTEM)).thenReturn(user);
         doThrow(exception).when(authzService).authorize(user, "_action", request);
         filter.apply("_action", request, listener, chain);

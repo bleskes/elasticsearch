@@ -79,7 +79,6 @@ public abstract class WatcherRestTestCase extends ESRestTestCase {
     protected Settings nodeSettings(int nodeOrdinal) {
         return Settings.builder()
                 .put(super.nodeSettings(nodeOrdinal))
-                .put("plugin.types", WatcherPlugin.class.getName() + "," + LicensePlugin.class.getName())
                 .put(Node.HTTP_ENABLED, true)
         .build();
     }
@@ -88,7 +87,6 @@ public abstract class WatcherRestTestCase extends ESRestTestCase {
     protected Settings transportClientSettings() {
         return Settings.builder()
                 .put(Node.HTTP_ENABLED, true)
-                .put("plugin.types", WatcherPlugin.class.getName() + "," + LicensePlugin.class.getName())
                 .build();
     }
 

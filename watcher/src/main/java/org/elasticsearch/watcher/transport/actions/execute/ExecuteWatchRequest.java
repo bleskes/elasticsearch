@@ -51,7 +51,7 @@ public class ExecuteWatchRequest extends MasterNodeReadRequest<ExecuteWatchReque
 
     private boolean debug = false;
 
-    ExecuteWatchRequest() {
+    public ExecuteWatchRequest() {
     }
 
     /**

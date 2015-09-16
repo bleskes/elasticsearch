@@ -18,6 +18,7 @@
 package org.elasticsearch.watcher.test.integration;
 
 import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.test.junit.annotations.TestLogging;
 import org.joda.time.DateTime;
 import org.elasticsearch.watcher.actions.logging.LoggingAction;
 import org.elasticsearch.watcher.actions.logging.LoggingLevel;
@@ -26,7 +27,7 @@ import org.elasticsearch.watcher.execution.ActionExecutionMode;
 import org.elasticsearch.watcher.history.HistoryStore;
 import org.elasticsearch.watcher.support.text.TextTemplate;
 import org.elasticsearch.watcher.support.xcontent.ObjectPath;
-import org.elasticsearch.watcher.test.AbstractWatcherIntegrationTests;
+import org.elasticsearch.watcher.test.AbstractWatcherIntegrationTestCase;
 import org.elasticsearch.watcher.test.WatcherTestUtils;
 import org.elasticsearch.watcher.transport.actions.execute.ExecuteWatchResponse;
 import org.elasticsearch.watcher.trigger.TriggerEvent;
@@ -54,7 +55,7 @@ import static org.hamcrest.Matchers.greaterThan;
 /**
  *
  */
-public class WatchMetadataTests extends AbstractWatcherIntegrationTests {
+public class WatchMetadataTests extends AbstractWatcherIntegrationTestCase {
 
     @Test
     public void testWatchMetadata() throws Exception {
@@ -90,6 +91,7 @@ public class WatchMetadataTests extends AbstractWatcherIntegrationTests {
     }
 
     @Test
+    @TestLogging("watcher:TRACE")
     public void testWatchMetadataAvailableAtExecution() throws Exception {
         Map<String, Object> metadata = new HashMap<>();
         metadata.put("foo", "bar");
@@ -110,7 +112,8 @@ public class WatchMetadataTests extends AbstractWatcherIntegrationTests {
 
         TriggerEvent triggerEvent = new ScheduleTriggerEvent(new DateTime(UTC), new DateTime(UTC));
         ExecuteWatchResponse executeWatchResponse = watcherClient().prepareExecuteWatch("_name").setTriggerEvent(triggerEvent).setActionMode("_all", ActionExecutionMode.SIMULATE).get();
-        Map<String, Object> result = executeWatchResponse.getRecordSource().getAsMap();;
+        Map<String, Object> result = executeWatchResponse.getRecordSource().getAsMap();
+        logger.info("result=\n{}", result);
 
         assertThat(ObjectPath.<String>eval("metadata.foo", result), equalTo("bar"));
         assertThat(ObjectPath.<String>eval("result.actions.0.id", result), equalTo("testLogger"));

@@ -17,7 +17,6 @@
 
 package org.elasticsearch.integration;
 
-import com.google.common.collect.ImmutableSet;
 import org.elasticsearch.ElasticsearchSecurityException;
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
 import org.elasticsearch.action.admin.cluster.node.stats.NodesStatsResponse;
@@ -123,7 +122,7 @@ public class LicensingTests extends ShieldIntegTestCase {
 
         refresh();
 
-        Client client = internalTestCluster().transportClient();
+        Client client = internalCluster().transportClient();
 
         disableLicensing();
 
@@ -182,13 +181,13 @@ public class LicensingTests extends ShieldIntegTestCase {
     }
 
     public static void disableLicensing() {
-        for (InternalLicensesClientService service : internalTestCluster().getInstances(InternalLicensesClientService.class)) {
+        for (InternalLicensesClientService service : internalCluster().getInstances(InternalLicensesClientService.class)) {
             service.disable();
         }
     }
 
     public static void enableLicensing() {
-        for (InternalLicensesClientService service : internalTestCluster().getInstances(InternalLicensesClientService.class)) {
+        for (InternalLicensesClientService service : internalCluster().getInstances(InternalLicensesClientService.class)) {
             service.enable();
         }
     }

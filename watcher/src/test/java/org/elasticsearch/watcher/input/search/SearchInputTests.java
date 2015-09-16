@@ -18,6 +18,7 @@
 package org.elasticsearch.watcher.input.search;
 
 import com.google.common.collect.ImmutableMap;
+
 import org.elasticsearch.ElasticsearchParseException;
 import org.elasticsearch.action.indexedscripts.put.PutIndexedScriptRequest;
 import org.elasticsearch.action.search.SearchRequest;
@@ -31,6 +32,7 @@ import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.common.xcontent.json.JsonXContent;
 import org.elasticsearch.common.xcontent.support.XContentMapValues;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
+import org.elasticsearch.search.sort.SortBuilders;
 import org.elasticsearch.test.ESIntegTestCase;
 import org.elasticsearch.test.ESIntegTestCase.ClusterScope;
 import org.elasticsearch.watcher.actions.ActionStatus;
@@ -119,7 +121,7 @@ public class SearchInputTests extends ESIntegTestCase {
     @Test
     public void testExecute() throws Exception {
         SearchSourceBuilder searchSourceBuilder = searchSource().query(
-                filteredQuery(matchQuery("event_type", "a"), rangeQuery("_timestamp").from("{{ctx.trigger.scheduled_time}}||-30s").to("{{ctx.trigger.triggered_time}}")));
+                boolQuery().must(matchQuery("event_type", "a")).must(rangeQuery("_timestamp").from("{{ctx.trigger.scheduled_time}}||-30s").to("{{ctx.trigger.triggered_time}}")));
         SearchRequest request = client()
                 .prepareSearch()
                 .setSearchType(ExecutableSearchInput.DEFAULT_SEARCH_TYPE)
@@ -136,7 +138,7 @@ public class SearchInputTests extends ESIntegTestCase {
                         null,
                         new ExecutableActions(new ArrayList<ActionWrapper>()),
                         null,
-                        new WatchStatus(ImmutableMap.<String, ActionStatus>of())),
+                        new WatchStatus(new DateTime(0, UTC), ImmutableMap.<String, ActionStatus>of())),
                 new DateTime(0, UTC),
                 new ScheduleTriggerEvent("test-watch", new DateTime(0, UTC), new DateTime(0, UTC)),
                 timeValueSeconds(5));
@@ -223,7 +225,7 @@ public class SearchInputTests extends ESIntegTestCase {
     @Test
     public void testDifferentSearchType() throws Exception {
         SearchSourceBuilder searchSourceBuilder = searchSource().query(
-                filteredQuery(matchQuery("event_type", "a"), rangeQuery("_timestamp").from("{{ctx.trigger.scheduled_time}}||-30s").to("{{ctx.trigger.triggered_time}}"))
+                boolQuery().must(matchQuery("event_type", "a")).must(rangeQuery("_timestamp").from("{{ctx.trigger.scheduled_time}}||-30s").to("{{ctx.trigger.triggered_time}}"))
         );
         SearchType searchType = getRandomSupportedSearchType();
 
@@ -243,7 +245,7 @@ public class SearchInputTests extends ESIntegTestCase {
                         null,
                         new ExecutableActions(new ArrayList<ActionWrapper>()),
                         null,
-                        new WatchStatus(ImmutableMap.<String, ActionStatus>of())),
+                        new WatchStatus(new DateTime(0, UTC), ImmutableMap.<String, ActionStatus>of())),
                 new DateTime(0, UTC),
                 new ScheduleTriggerEvent("test-watch", new DateTime(0, UTC), new DateTime(0, UTC)),
                 timeValueSeconds(5));
@@ -262,7 +264,7 @@ public class SearchInputTests extends ESIntegTestCase {
                 .setSearchType(ExecutableSearchInput.DEFAULT_SEARCH_TYPE)
                 .request()
                 .source(searchSource()
-                        .query(filteredQuery(matchQuery("event_type", "a"), rangeQuery("_timestamp").from("{{ctx.trigger.scheduled_time}}||-30s").to("{{ctx.trigger.triggered_time}}"))));
+                        .query(boolQuery().must(matchQuery("event_type", "a")).must(rangeQuery("_timestamp").from("{{ctx.trigger.scheduled_time}}||-30s").to("{{ctx.trigger.triggered_time}}"))));
 
         TimeValue timeout = randomBoolean() ? TimeValue.timeValueSeconds(randomInt(10)) : null;
         XContentBuilder builder = jsonBuilder().value(new SearchInput(request, null, timeout, null));
@@ -327,24 +329,6 @@ public class SearchInputTests extends ESIntegTestCase {
         assertThat(names, arrayContaining("test", "test-" + DateTimeFormat.forPattern(dateFormat).print(now.minusDays(1))));
     }
 
-    @Test(expected = ElasticsearchParseException.class)
-    public void testParser_ScanNotSupported() throws Exception {
-        SearchRequest request = client().prepareSearch()
-                .setSearchType(SearchType.SCAN)
-                .request()
-                .source(searchSource()
-                        .query(filteredQuery(matchQuery("event_type", "a"), rangeQuery("_timestamp").from("{{ctx.trigger.scheduled_time}}||-30s").to("{{ctx.trigger.triggered_time}}"))));
-
-        XContentBuilder builder = jsonBuilder().value(new SearchInput(request, null, null, null));
-        XContentParser parser = JsonXContent.jsonXContent.createParser(builder.bytes());
-        parser.nextToken();
-
-        SearchInputFactory factory = new SearchInputFactory(Settings.EMPTY, ClientProxy.of(client()));
-
-        factory.parseInput("_id", parser);
-        fail("expected a SearchInputException as search type SCAN should not be supported");
-    }
-
     private WatchExecutionContext createContext() {
         return new TriggeredExecutionContext(
                 new Watch("test-watch",
@@ -355,7 +339,7 @@ public class SearchInputTests extends ESIntegTestCase {
                         null,
                         new ExecutableActions(new ArrayList<ActionWrapper>()),
                         null,
-                        new WatchStatus(ImmutableMap.<String, ActionStatus>of())),
+                        new WatchStatus(new DateTime(50000, UTC), ImmutableMap.<String, ActionStatus>of())),
                 new DateTime(60000, UTC),
                 new ScheduleTriggerEvent("test-watch", new DateTime(60000, UTC), new DateTime(60000, UTC)),
                 timeValueSeconds(5));

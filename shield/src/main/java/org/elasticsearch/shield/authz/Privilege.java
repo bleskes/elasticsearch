@@ -17,12 +17,7 @@
 
 package org.elasticsearch.shield.authz;
 
-import com.google.common.base.Predicate;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.UncheckedExecutionException;
 import dk.brics.automaton.Automaton;
 import dk.brics.automaton.BasicAutomata;
@@ -34,12 +29,15 @@ import org.elasticsearch.action.search.MultiSearchAction;
 import org.elasticsearch.action.search.SearchAction;
 import org.elasticsearch.action.suggest.SuggestAction;
 import org.elasticsearch.common.Strings;
+import org.elasticsearch.common.util.set.Sets;
 import org.elasticsearch.shield.support.AutomatonPredicate;
 import org.elasticsearch.shield.support.Automatons;
 
 import java.util.Locale;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.function.Predicate;
 
 import static org.elasticsearch.shield.support.Automatons.patterns;
 
@@ -122,7 +120,7 @@ public abstract class Privilege<P extends Privilege<P>> {
 
     public static class General extends AutomatonPrivilege<General> {
 
-        private static final General NONE = new General(Name.NONE, BasicAutomata.makeEmpty());
+        public static final General NONE = new General(Name.NONE, BasicAutomata.makeEmpty());
 
         public General(String name, String... patterns) {
             super(name, patterns);
@@ -192,17 +190,7 @@ public abstract class Privilege<P extends Privilege<P>> {
             return values;
         }
 
-        private static final LoadingCache<Name, Index> cache = CacheBuilder.newBuilder().build(
-                new CacheLoader<Name, Index>() {
-                    @Override
-                    public Index load(Name name) throws Exception {
-                        Index index = NONE;
-                        for (String part : name.parts) {
-                            index = index == NONE ? resolve(part) : index.plus(resolve(part));
-                        }
-                        return index;
-                    }
-                });
+        private static final ConcurrentHashMap<Name, Index> cache = new ConcurrentHashMap<>();
 
         private Index(String name, String... patterns) {
             super(name, patterns);
@@ -218,7 +206,7 @@ public abstract class Privilege<P extends Privilege<P>> {
 
         public static void addCustom(String name, String... actionPatterns) {
             for (String pattern : actionPatterns) {
-                if (!Index.ACTION_MATCHER.apply(pattern)) {
+                if (!Index.ACTION_MATCHER.test(pattern)) {
                     throw new IllegalArgumentException("cannot register custom index privilege [" + name + "]. index action must follow the 'indices:*' format");
                 }
             }
@@ -247,11 +235,13 @@ public abstract class Privilege<P extends Privilege<P>> {
         }
 
         public static Index get(Name name) {
-            try {
-                return cache.getUnchecked(name);
-            } catch (UncheckedExecutionException e) {
-                throw (RuntimeException) e.getCause();
-            }
+            return cache.computeIfAbsent(name, (theName) -> {
+                Index index = NONE;
+                for (String part : theName.parts) {
+                    index = index == NONE ? resolve(part) : index.plus(resolve(part));
+                }
+                return index;
+            });
         }
 
         public static Index union(Index... indices) {
@@ -264,7 +254,7 @@ public abstract class Privilege<P extends Privilege<P>> {
 
         private static Index resolve(String name) {
             name = name.toLowerCase(Locale.ROOT);
-            if (ACTION_MATCHER.apply(name)) {
+            if (ACTION_MATCHER.test(name)) {
                 return action(name);
             }
             for (Index index : values) {
@@ -300,17 +290,8 @@ public abstract class Privilege<P extends Privilege<P>> {
             return values;
         }
 
-        private static final LoadingCache<Name, Cluster> cache = CacheBuilder.newBuilder().build(
-                new CacheLoader<Name, Cluster>() {
-                    @Override
-                    public Cluster load(Name name) throws Exception {
-                        Cluster cluster = NONE;
-                        for (String part : name.parts) {
-                            cluster = cluster == NONE ? resolve(part) : cluster.plus(resolve(part));
-                        }
-                        return cluster;
-                    }
-                });
+        private static final ConcurrentHashMap<Name, Cluster> cache = new ConcurrentHashMap<>();
+
 
         private Cluster(String name, String... patterns) {
             super(name, patterns);
@@ -326,7 +307,7 @@ public abstract class Privilege<P extends Privilege<P>> {
 
         public static void addCustom(String name, String... actionPatterns) {
             for (String pattern : actionPatterns) {
-                if (!Cluster.ACTION_MATCHER.apply(pattern)) {
+                if (!Cluster.ACTION_MATCHER.test(pattern)) {
                     throw new IllegalArgumentException("cannot register custom cluster privilege [" + name + "]. cluster aciton must follow the 'cluster:*' format");
                 }
             }
@@ -353,16 +334,18 @@ public abstract class Privilege<P extends Privilege<P>> {
         }
 
         public static Cluster get(Name name) {
-            try {
-                return cache.getUnchecked(name);
-            } catch (UncheckedExecutionException e) {
-                throw (RuntimeException) e.getCause();
-            }
+            return cache.computeIfAbsent(name, (theName) -> {
+                Cluster cluster = NONE;
+                for (String part : theName.parts) {
+                    cluster = cluster == NONE ? resolve(part) : cluster.plus(resolve(part));
+                }
+                return cluster;
+            });
         }
 
         private static Cluster resolve(String name) {
             name = name.toLowerCase(Locale.ROOT);
-            if (ACTION_MATCHER.apply(name)) {
+            if (ACTION_MATCHER.test(name)) {
                 return action(name);
             }
             for (Cluster cluster : values) {

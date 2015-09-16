@@ -26,7 +26,7 @@ import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.sort.SortOrder;
 import org.elasticsearch.watcher.history.HistoryStore;
 import org.elasticsearch.watcher.support.WatcherDateTimeUtils;
-import org.elasticsearch.watcher.test.AbstractWatcherIntegrationTests;
+import org.elasticsearch.watcher.test.AbstractWatcherIntegrationTestCase;
 import org.elasticsearch.watcher.transport.actions.execute.ExecuteWatchResponse;
 import org.elasticsearch.watcher.transport.actions.put.PutWatchResponse;
 import org.elasticsearch.watcher.trigger.schedule.ScheduleTriggerEvent;
@@ -49,7 +49,7 @@ import static org.hamcrest.Matchers.*;
 /**
  *
  */
-public class IndexActionIntegrationTests extends AbstractWatcherIntegrationTests {
+public class IndexActionIntegrationTests extends AbstractWatcherIntegrationTestCase {
 
     @Test
     public void testSimple() throws Exception {

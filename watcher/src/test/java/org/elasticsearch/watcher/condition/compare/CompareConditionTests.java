@@ -17,7 +17,6 @@
 
 package org.elasticsearch.watcher.condition.compare;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.elasticsearch.ElasticsearchParseException;
 import org.elasticsearch.common.settings.Settings;
@@ -33,6 +32,7 @@ import org.elasticsearch.watcher.watch.Payload;
 import org.joda.time.DateTime;
 import org.junit.Test;
 
+import java.util.Arrays;
 import java.util.Locale;
 
 import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
@@ -60,8 +60,8 @@ public class CompareConditionTests extends ESTestCase {
         assertThat(Op.EQ.eval("aa", "ab"), is(false));
         assertThat(Op.EQ.eval(ImmutableMap.of("k", "v"), ImmutableMap.of("k", "v")), is(true));
         assertThat(Op.EQ.eval(ImmutableMap.of("k", "v"), ImmutableMap.of("k1", "v1")), is(false));
-        assertThat(Op.EQ.eval(ImmutableList.of("k", "v"), ImmutableList.of("k", "v")), is(true));
-        assertThat(Op.EQ.eval(ImmutableList.of("k", "v"), ImmutableList.of("k1", "v1")), is(false));
+        assertThat(Op.EQ.eval(Arrays.asList("k", "v"), Arrays.asList("k", "v")), is(true));
+        assertThat(Op.EQ.eval(Arrays.asList("k", "v"), Arrays.asList("k1", "v1")), is(false));
     }
 
     @Test
@@ -80,8 +80,8 @@ public class CompareConditionTests extends ESTestCase {
         assertThat(Op.NOT_EQ.eval("aa", "ab"), is(true));
         assertThat(Op.NOT_EQ.eval(ImmutableMap.of("k", "v"), ImmutableMap.of("k", "v")), is(false));
         assertThat(Op.NOT_EQ.eval(ImmutableMap.of("k", "v"), ImmutableMap.of("k1", "v1")), is(true));
-        assertThat(Op.NOT_EQ.eval(ImmutableList.of("k", "v"), ImmutableList.of("k", "v")), is(false));
-        assertThat(Op.NOT_EQ.eval(ImmutableList.of("k", "v"), ImmutableList.of("k1", "v1")), is(true));
+        assertThat(Op.NOT_EQ.eval(Arrays.asList("k", "v"), Arrays.asList("k", "v")), is(false));
+        assertThat(Op.NOT_EQ.eval(Arrays.asList("k", "v"), Arrays.asList("k1", "v1")), is(true));
     }
 
     @Test
@@ -238,7 +238,7 @@ public class CompareConditionTests extends ESTestCase {
 
     @Test(expected = ElasticsearchParseException.class)
     public void testParse_InValid_WrongValueForOp() throws Exception {
-        Object value = randomFrom(ImmutableList.of("1", "2"), ImmutableMap.of("key", "value"));
+        Object value = randomFrom(Arrays.asList("1", "2"), ImmutableMap.of("key", "value"));
         String op = randomFrom("lt", "lte", "gt", "gte");
         CompareConditionFactory factory = new CompareConditionFactory(Settings.EMPTY, SystemClock.INSTANCE);
         XContentBuilder builder = jsonBuilder();

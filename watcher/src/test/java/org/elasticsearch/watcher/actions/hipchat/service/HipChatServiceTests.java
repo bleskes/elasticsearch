@@ -20,8 +20,9 @@ package org.elasticsearch.watcher.actions.hipchat.service;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.test.junit.annotations.Network;
+import org.elasticsearch.test.junit.annotations.TestLogging;
 import org.elasticsearch.watcher.actions.hipchat.HipChatAction;
-import org.elasticsearch.watcher.test.AbstractWatcherIntegrationTests;
+import org.elasticsearch.watcher.test.AbstractWatcherIntegrationTestCase;
 import org.elasticsearch.watcher.transport.actions.put.PutWatchResponse;
 import org.junit.Test;
 
@@ -40,7 +41,8 @@ import static org.hamcrest.Matchers.*;
  *
  */
 @Network
-public class HipChatServiceTests extends AbstractWatcherIntegrationTests {
+@TestLogging("watcher.support.http:TRACE")
+public class HipChatServiceTests extends AbstractWatcherIntegrationTestCase {
 
     @Override
     protected boolean timeWarped() {
@@ -89,7 +91,7 @@ public class HipChatServiceTests extends AbstractWatcherIntegrationTests {
         SentMessages messages = account.send(hipChatMessage);
         assertThat(messages.count(), is(2));
         for (SentMessages.SentMessage message : messages) {
-            assertThat(message.successful(), is(true));
+            assertThat("Expected no failures, but got [" + message.failureReason + "]", message.successful(), is(true));
             assertThat(message.request, notNullValue());
             assertThat(message.response, notNullValue());
             assertThat(message.response.status(), lessThan(300));
@@ -113,7 +115,7 @@ public class HipChatServiceTests extends AbstractWatcherIntegrationTests {
         SentMessages messages = account.send(hipChatMessage);
         assertThat(messages.count(), is(1));
         for (SentMessages.SentMessage message : messages) {
-            assertThat(message.successful(), is(true));
+            assertThat("Expected no failures, but got [" + message.failureReason + "]", message.successful(), is(true));
             assertThat(message.request, notNullValue());
             assertThat(message.response, notNullValue());
             assertThat(message.response.status(), lessThan(300));
@@ -137,7 +139,7 @@ public class HipChatServiceTests extends AbstractWatcherIntegrationTests {
         SentMessages messages = account.send(hipChatMessage);
         assertThat(messages.count(), is(3));
         for (SentMessages.SentMessage message : messages) {
-            assertThat(message.successful(), is(true));
+            assertThat("Expected no failures, but got [" + message.failureReason + "]", message.successful(), is(true));
             assertThat(message.request, notNullValue());
             assertThat(message.response, notNullValue());
             assertThat(message.response.status(), lessThan(300));

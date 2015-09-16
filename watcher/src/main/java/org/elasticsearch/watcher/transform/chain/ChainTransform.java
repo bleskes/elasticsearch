@@ -17,7 +17,6 @@
 
 package org.elasticsearch.watcher.transform.chain;
 
-import com.google.common.collect.ImmutableList;
 import org.elasticsearch.ElasticsearchParseException;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.xcontent.XContentBuilder;
@@ -27,6 +26,9 @@ import org.elasticsearch.watcher.transform.TransformRegistry;
 import org.elasticsearch.watcher.watch.Payload;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -36,10 +38,14 @@ public class ChainTransform implements Transform {
 
     public static final String TYPE = "chain";
 
-    private final ImmutableList<Transform> transforms;
+    private final List<Transform> transforms;
 
-    public ChainTransform(ImmutableList<Transform> transforms) {
-        this.transforms = transforms;
+    public ChainTransform(Transform... transforms) {
+        this(Arrays.asList(transforms));
+    }
+
+    public ChainTransform(List<Transform> transforms) {
+        this.transforms = Collections.unmodifiableList(transforms);
     }
 
     @Override
@@ -83,7 +89,7 @@ public class ChainTransform implements Transform {
             throw new ElasticsearchParseException("could not parse [{}] transform for watch [{}]. expected an array of transform objects, but found [{}] instead", TYPE, watchId, token);
         }
 
-        ImmutableList.Builder<Transform> builder = ImmutableList.builder();
+        List<Transform> transforms = new ArrayList<>();
 
         String currentFieldName = null;
         while ((token = parser.nextToken()) != XContentParser.Token.END_ARRAY) {
@@ -94,11 +100,11 @@ public class ChainTransform implements Transform {
                 if (token == XContentParser.Token.FIELD_NAME) {
                     currentFieldName = parser.currentName();
                 } else {
-                    builder.add(transformRegistry.parseTransform(watchId, currentFieldName, parser));
+                    transforms.add(transformRegistry.parseTransform(watchId, currentFieldName, parser));
                 }
             }
         }
-        return new ChainTransform(builder.build());
+        return new ChainTransform(transforms);
     }
 
     public static Builder builder(Transform... transforms) {
@@ -107,24 +113,24 @@ public class ChainTransform implements Transform {
 
     public static class Result extends Transform.Result {
 
-        private final ImmutableList<Transform.Result> results;
+        private final List<Transform.Result> results;
 
-        public Result(Payload payload, ImmutableList<Transform.Result> results) {
+        public Result(Payload payload, List<Transform.Result> results) {
             super(TYPE, payload);
-            this.results = results;
+            this.results = Collections.unmodifiableList(results);
         }
 
-        public Result(Exception e, ImmutableList<Transform.Result> results) {
+        public Result(Exception e, List<Transform.Result> results) {
             super(TYPE, e);
-            this.results = results;
+            this.results = Collections.unmodifiableList(results);
         }
 
-        public Result(String errorMessage, ImmutableList<Transform.Result> results) {
+        public Result(String errorMessage, List<Transform.Result> results) {
             super(TYPE, errorMessage);
-            this.results = results;
+            this.results = Collections.unmodifiableList(results);
         }
 
-        public ImmutableList<Transform.Result> results() {
+        public List<Transform.Result> results() {
             return results;
         }
 
@@ -145,14 +151,14 @@ public class ChainTransform implements Transform {
 
     public static class Builder implements Transform.Builder<ChainTransform> {
 
-        private final ImmutableList.Builder<Transform> transforms = ImmutableList.builder();
+        private final List<Transform> transforms = new ArrayList<>();
 
         public Builder(Transform... transforms) {
-            this.transforms.add(transforms);
+            add(transforms);
         }
 
         public Builder add(Transform... transforms) {
-            this.transforms.add(transforms);
+            Collections.addAll(this.transforms, transforms);
             return this;
         }
 
@@ -165,7 +171,7 @@ public class ChainTransform implements Transform {
 
         @Override
         public ChainTransform build() {
-            return new ChainTransform(transforms.build());
+            return new ChainTransform(transforms);
         }
     }
 
