@@ -143,7 +143,7 @@ define(function (require) {
 
         $scope.$watch('data', function (data, oldVal) {
           TableInstance.setData(data.map(function (row) {
-            row.metrics.shard_count  = $scope.nodes[row.name].shard_count;
+            row.metrics.shard_count = $scope.nodes[row.name].shard_count;
             return row;
           }));
         });
