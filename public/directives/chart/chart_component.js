@@ -111,7 +111,7 @@ define(function (require) {
       }
       // Reference for use with posistioning things, and also the options
       var chartMargin = {
-        left: 50,
+        left: 60,
         right: 10,
         top: 20,
         bottom: 20
@@ -170,7 +170,8 @@ define(function (require) {
             number: 4,
             outerTickSize: 0,
             showGridLines: true,
-            text: { x: -5 }
+            text: { x: -5 },
+            format: function (val) { return formatNumber(val, that.props.source.metric.format); }
           }
         })
         .xAxis({
