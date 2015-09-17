@@ -61,6 +61,7 @@ import org.junit.Test;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -223,9 +224,9 @@ public class IndexAuditTrailTests extends ShieldIntegTestCase {
             auditor.close();
         }
 
-        cluster().wipe();
+        cluster().wipe(Collections.<String>emptySet());
         if (remoteIndexing && cluster2 != null) {
-            cluster2.wipe();
+            cluster2.wipe(Collections.emptySet());
             remoteClient.close();
             cluster2.close();
         }
