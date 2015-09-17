@@ -66,9 +66,6 @@
   }
   .tbody {
     tr {
-      td:first-child {
-        border-left: 2px solid @esGreen;
-      }
       &.big {
         height: 65px;
         td {
@@ -98,16 +95,30 @@
           }
         }
       }
-    }
-    tr.red { td:first-child {
-        border-left: 2px solid @esRed;
+      &.red {
+        td:first-child {
+          border-left: 2px solid @esRed;
+        }
+        td:last-child {
+          border-right: 2px solid @esRed;
+        }
       }
-    }
-    tr.yellow {
-      td:first-child {
-        border-left: 2px solid @esYellow;
+      &.yellow {
+        td:first-child {
+          border-left: 2px solid @esYellow;
+        }
+        td:last-child {
+          border-right: 2px solid @esYellow;
+        }
       }
-
+      &.green {
+        td:first-child {
+          border-left: 2px solid @esGreen;
+        }
+        td:last-child {
+          border-right: 2px solid @esGreen;
+        }
+      }
     }
   }
 
