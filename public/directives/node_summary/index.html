@@ -1,7 +1,7 @@
 <div>
   <div>{{ source.node.transport_address|extractIp }}</div>
-  <div>Documents: {{ source.data.documents|formatNumber:'0.0a' }}</div>
-  <div>Data: {{ source.data.data_size|formatNumber:'bytes' }}</div>
+  <div>Documents: {{ source.data.documents|formatNumber:'0.[0]a' }}</div>
+  <div>Data: {{ source.data.data_size|formatNumber:'0.0b' }}</div>
   <div>Indices: {{ source.node.index_count|formatNumber:'0,0' }}</div>
   <div>Total Shards: {{ source.node.shard_count|formatNumber:'0,0' }}</div>
 </div>
