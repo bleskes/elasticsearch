@@ -15,16 +15,22 @@ define(function (require) {
       }
     });
 
-  module.controller('nodeView', function ($scope, marvelMetrics, globalState, courier, timefilter, Private, $routeParams, $route, Promise) {
+  module.controller('nodeView', function ($scope, marvelMetrics, globalState,
+      kbnUrl, Notifier, courier, timefilter, Private, $routeParams, $route, Promise) {
     var clusters = $route.current.locals.marvel.clusters;
     $scope.nodeName = $routeParams.node;
     var indexPattern = $scope.indexPattern = $route.current.locals.marvel.indexPattern;
     var ChartDataSource = Private(require('plugins/marvel/directives/chart/data_source'));
     var ClusterStatusDataSource = Private(require('plugins/marvel/directives/cluster_status/data_source'));
     var docTitle = Private(require('ui/doc_title'));
+    var notify = new Notifier({ location: 'Marvel' });
 
     $scope.cluster = _.find(clusters, { cluster_uuid: globalState.cluster });
     $scope.node = $scope.cluster.nodes[$scope.nodeName];
+    if (!$scope.node) {
+      notify.error('We can\'t seem to find this node in your Marvel data.');
+      return kbnUrl.redirect('/nodes?reason=missing_node');
+    }
     $scope.node.id = $scope.nodeName;
 
     docTitle.change('Marvel - ' + $scope.node.name, true);
