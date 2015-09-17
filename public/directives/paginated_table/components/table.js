@@ -82,7 +82,7 @@ define(function (require) {
       var $filter = make.input({
         type: 'text',
         className: 'pull-left filter-input',
-        placeholder: 'Filter Indices',
+        placeholder: this.props.options.searchPlaceholder,
         onKeyUp: function (evt) {
           that.setFilter(evt.target.value);
         }

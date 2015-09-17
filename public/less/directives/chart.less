@@ -40,6 +40,11 @@ marvel-chart {
 /***************************/
 
 .jubilee {
+  position: relative;
+  > svg {
+    z-index: 2;
+    position: relative;
+  }
   g {
     > line { stroke: @esLightGray; }
     > path { stroke: @esBlack; }

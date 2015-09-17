@@ -49,6 +49,7 @@ define(function (require) {
     }
     var initialTableOptions = {
       title: 'Nodes',
+      searchPlaceholder: 'Filter Nodes',
       columns: [
         {
           key: 'name',
