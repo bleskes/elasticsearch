@@ -42,6 +42,7 @@ define(function (require) {
     }
     var initialTableOptions = {
       title: 'Indices',
+      searchPlaceholder: 'Filter Indices',
       columns: [{
         key: 'name',
         sort: 1,

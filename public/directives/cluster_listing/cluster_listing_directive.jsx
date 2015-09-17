@@ -11,6 +11,7 @@ module.directive('marvelClusterListing', function (globalState, kbnUrl, $locatio
 
       var options = {
         title: 'Your Clusters',
+        searchPlaceholder: 'Filter Clusters',
         columns: [
           {
             key: 'cluster_uuid',
