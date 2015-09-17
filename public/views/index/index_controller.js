@@ -31,12 +31,12 @@ define(function (require) {
     }
 
     $scope.charts = [
-      'index_document_count',
       'index_search_request_rate',
       'index_request_rate',
       'index_size',
       'index_lucene_memory',
-      'index_refresh_time'
+      'index_document_count',
+      'index_fielddata'
     ];
 
     $scope.dataSources = {};
