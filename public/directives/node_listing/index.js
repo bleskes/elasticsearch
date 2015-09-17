@@ -56,8 +56,8 @@ define(function (require) {
           title: 'Name'
         },
         {
-          key: 'metrics.cpu_utilization',
-          sortKey: 'metrics.cpu_utilization.last',
+          key: 'metrics.node_cpu_utilization',
+          sortKey: 'metrics.node_cpu_utilization.last',
           sort: 0,
           title: 'CPU Usage'
         },
@@ -68,22 +68,22 @@ define(function (require) {
           title: 'JVM Memory'
         },
         {
-          key: 'metrics.load_average_1m',
-          sortKey: 'metrics.load_average_1m.last',
+          key: 'metrics.node_load_average',
+          sortKey: 'metrics.node_load_average.last',
           sort: 0,
           title: 'Load Average'
         },
         {
-          key: 'metrics.node_space_free',
-          sortKey: 'metrics.node_space_free.last',
+          key: 'metrics.node_free_space',
+          sortKey: 'metrics.node_free_space.last',
           sort: 0,
-          title: 'Disk Free Space GB'
+          title: 'Disk Free Space'
         },
         {
           key: 'metrics.shard_count',
           sortKey: 'metrics.shard_count',
           sort: 0,
-          title: 'Number of Shards'
+          title: 'Shards'
         }
       ]
     };

@@ -25,5 +25,6 @@ module.exports = function (transport) {
   if (matches) {
     return matches[1];
   }
+  return transport;
 };
 

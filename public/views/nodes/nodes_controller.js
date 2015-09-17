@@ -64,10 +64,10 @@ define(function (require) {
           cluster: cluster,
           clusters: clusters,
           metrics: [
-            'cpu_utilization',
+            'node_cpu_utilization',
             'node_jvm_mem_percent',
-            'node_space_free',
-            'load_average_1m'
+            'node_free_space',
+            'node_load_average'
           ],
           type: 'node',
           duration: moment.duration(5, 'minutes')

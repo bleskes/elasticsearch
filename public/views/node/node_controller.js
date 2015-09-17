@@ -25,6 +25,7 @@ define(function (require) {
 
     $scope.cluster = _.find(clusters, { cluster_uuid: globalState.cluster });
     $scope.node = $scope.cluster.nodes[$scope.nodeName];
+    $scope.node.id = $scope.nodeName;
 
     docTitle.change('Marvel - ' + $scope.node.name, true);
 
@@ -35,9 +36,12 @@ define(function (require) {
     }
 
     $scope.charts = [
+      'node_query_latency',
+      'node_index_latency',
       'node_jvm_mem_percent',
-      'node_space_free',
-      'load_average_1m'
+      'node_free_space',
+      'node_load_average',
+      'node_segment_count'
     ];
 
     $scope.dataSources = {};
@@ -53,6 +57,14 @@ define(function (require) {
       cluster: globalState.cluster
     });
     $scope.dataSources.clusterState.register(courier);
+
+    var NodeSummaryDataSource = Private(require('plugins/marvel/directives/node_summary/data_source'));
+    $scope.dataSources.nodeSummary = new NodeSummaryDataSource({
+      indexPattern: indexPattern,
+      cluster: globalState.cluster,
+      node: $scope.node
+    });
+    $scope.dataSources.nodeSummary.register(courier);
 
     $scope.dataSources.clusterStatus = new ClusterStatusDataSource(indexPattern, globalState.cluster, clusters);
     $scope.dataSources.clusterStatus.register(courier);

@@ -9,4 +9,5 @@ define(function (require) {
   require('plugins/marvel/directives/issue_summary/index');
   require('plugins/marvel/directives/paginated_table/index');
   require('plugins/marvel/directives/cluster_listing/cluster_listing_directive.jsx');
+  require('plugins/marvel/directives/node_summary/index');
 });
