@@ -40,7 +40,7 @@ require('ui/chrome')
   .setTabDefaults({
     resetWhenActive: true,
     trackLastPath: true,
-    activeIndicatorColor: '#666'
+    activeIndicatorColor: '#EFF0F1'
   })
   .setRootController('marvel', function ($scope, courier) {
     $scope.$on('application.load', function () {

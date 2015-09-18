@@ -6,17 +6,18 @@
     display: flex;
     flex-flow: row wrap;
     &.x2 {
-      >div, >marvel-issues {
+      > .marvel-element {
         flex: 1 1 45%;
+        margin: 0;
         &:nth-child(odd) {
-          margin: 0 10px 10px 0;
+          margin-right: 10px;
         }
-        &:nth-child(even) {
-          margin: 0 0 10px 0;
+        &:nth-child(n+3) {
+          margin-top: 10px;
         }
       }
     }
-    >div, >marvel-issues {
+    >div {
       flex: 1 1 30%;
       &:nth-child(3n+1) {
         margin: 0 10px 10px 0;

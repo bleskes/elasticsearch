@@ -178,7 +178,8 @@ define(function (require) {
           tick: {
             number: 6,
             outerTickSize: 0,
-            showGridLines: true
+            showGridLines: true,
+            format: function (val) { return moment(val).format('HH:mm'); }
           }
         })
         .zeroLine({ add: false })
