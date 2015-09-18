@@ -1,3 +1,4 @@
+@md_size_screen: 980px;
 .marvel-view {
 
   background-color: @esVeryLightGray;
@@ -6,23 +7,39 @@
     display: flex;
     flex-flow: row wrap;
     &.x2 {
-      >div, >marvel-issues {
-        flex: 1 1 45%;
-        &:nth-child(odd) {
-          margin: 0 10px 10px 0;
+      @media (min-width: @md_size_screen) {
+        > .marvel-element {
+          flex: 1 1 45%;
+          margin: 0;
+          &:nth-child(odd) {
+            margin-right: 10px;
+          }
+          &:nth-child(n+3) {
+            margin-top: 10px;
+          }
         }
-        &:nth-child(even) {
+      }
+      @media (max-width: @md_size_screen) {
+        > .marvel-element {
+          width: 100%;
           margin: 0 0 10px 0;
         }
       }
     }
-    >div, >marvel-issues {
-      flex: 1 1 30%;
-      &:nth-child(3n+1) {
-        margin: 0 10px 10px 0;
+    @media (min-width: @md_size_screen) {
+      > div {
+        flex: 1 1 30%;
+        &:nth-child(3n+1) {
+          margin: 0 10px 10px 0;
+        }
+        &:nth-child(3n+3) {
+          margin: 0 0 10px 10px;
+        }
       }
-      &:nth-child(3n+3) {
-        margin: 0 0 10px 10px;
+    }
+    @media (max-width: @md_size_screen) {
+      > div {
+        width: 100%;
       }
     }
   }
