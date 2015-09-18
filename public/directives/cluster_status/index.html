@@ -20,7 +20,7 @@
     <div>Memory: <strong>{{source.data.memUsed|formatNumber:'bytes'}} / {{source.data.memMax|formatNumber:'bytes'}}</strong></div>
     <div>Total Shards: <strong>{{total_shards}}</strong></div>
     <div>Unassigned Shards: <strong>{{unassigned_shards}}</strong></div>
-    <div>Documents: <strong>{{source.data.document_count}}</strong></div>
+    <div>Documents: <strong>{{source.data.document_count|formatNumber:'0.0a'}}</strong></div>
     <div>Data: <strong>{{source.data.data}}</strong></div>
     <div>Uptime: <strong>{{source.data.upTime}}</strong></div>
     <div>Version: <strong>{{cluster.version}}</strong></div>

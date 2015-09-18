@@ -99,6 +99,82 @@ module.exports = {
       return 0;
     }
   },
+  'node_index_latency': {
+    active: true,
+    field: 'node_stats.indices.indexing.index_total',
+    label: 'Indexing Latency',
+    description: 'The average indexing latency',
+    format: '0,0.0',
+    metricAgg: 'sum',
+    aggs: {
+      index_time_in_millis: {
+        max: { field: 'node_stats.indices.indexing.index_time_in_millis' }
+      },
+      index_total: {
+        max: { field: 'node_stats.indices.indexing.index_total' }
+      },
+      index_time_in_millis_deriv: {
+        derivative: { buckets_path: 'index_time_in_millis', gap_policy: 'insert_zeros' }
+      },
+      index_total_deriv: {
+        derivative: { buckets_path: 'index_total', gap_policy: 'insert_zeros' }
+      }
+    },
+    units: 'ms',
+    defaults: { warning: '>100', critical: '>200', interval: '1m', periods: 1 },
+    type: 'node',
+    derivitave: false,
+    calculation: function (last) {
+      var required = last &&
+          last.index_time_in_millis_deriv &&
+          last.index_total_deriv &&
+          last.index_total_deriv.value &&
+          last.index_time_in_millis_deriv.value;
+      if (required) {
+        return last.index_time_in_millis_deriv.value / last.index_total_deriv.value;
+      }
+
+      return 0;
+    }
+  },
+  'node_query_latency': {
+    active: true,
+    field: 'node_stats.indices.search.query_total',
+    label: 'Query Latency',
+    description: 'The average query latency',
+    format: '0,0.0',
+    metricAgg: 'sum',
+    aggs: {
+      query_time_in_millis: {
+        max: { field: 'node_stats.indices.search.query_time_in_millis' }
+      },
+      query_total: {
+        max: { field: 'node_stats.indices.search.query_total' }
+      },
+      query_time_in_millis_deriv: {
+        derivative: { buckets_path: 'query_time_in_millis', gap_policy: 'insert_zeros' }
+      },
+      query_total_deriv: {
+        derivative: { buckets_path: 'query_total', gap_policy: 'insert_zeros' }
+      }
+    },
+    units: 'ms',
+    defaults: { warning: '>100', critical: '>200', interval: '1m', periods: 1 },
+    type: 'node',
+    derivitave: false,
+    calculation: function (last) {
+      var required = last &&
+          last.query_time_in_millis_deriv &&
+          last.query_total_deriv &&
+          last.query_total_deriv.value &&
+          last.query_time_in_millis_deriv.value;
+      if (required) {
+        return last.query_time_in_millis_deriv.value / last.query_total_deriv.value;
+      }
+
+      return 0;
+    }
+  },
   'index_request_rate': {
     active: true,
     field: 'index_stats.total.indexing.index_total',
@@ -199,7 +275,7 @@ module.exports = {
       return 0;
     }
   },
-  'cpu_utilization': {
+  'node_cpu_utilization': {
     active: true,
     field: 'node_stats.process.cpu.percent',
     label: 'CPU Utilization',
@@ -207,6 +283,18 @@ module.exports = {
     format: '0,0',
     metricAgg: 'avg',
     units: '%',
+    defaults: { warning: '>70', critical: '>90', interval: '1m', periods: 1 },
+    type: 'node',
+    derivative: false
+  },
+  'node_segment_count': {
+    active: true,
+    field: 'node_stats.indices.segments.count',
+    label: 'Segment Count',
+    description: 'The average segment count.',
+    format: '0,0',
+    metricAgg: 'avg',
+    units: '',
     defaults: { warning: '>70', critical: '>90', interval: '1m', periods: 1 },
     type: 'node',
     derivative: false
@@ -223,7 +311,7 @@ module.exports = {
     type: 'node',
     derivative: false
   },
-  'load_average_1m': {
+  'node_load_average': {
     active: true,
     field: 'node_stats.os.load_average',
     label: 'CPU Load Average',
@@ -235,10 +323,10 @@ module.exports = {
     type: 'node',
     derivative: false
   },
-  'node_space_free': {
+  'node_free_space': {
     active: true,
     field: 'node_stats.fs.total.available_in_bytes',
-    label: 'Disk Free Space GB',
+    label: 'Disk Free Space',
     description: 'The free disk space available on the node',
     format: '0.0b',
     metricAgg: 'max',
