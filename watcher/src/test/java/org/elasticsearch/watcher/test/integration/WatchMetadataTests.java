@@ -92,7 +92,6 @@ public class WatchMetadataTests extends AbstractWatcherIntegrationTestCase {
     }
 
     @Test
-    @TestLogging("watcher:TRACE")
     public void testWatchMetadataAvailableAtExecution() throws Exception {
         Map<String, Object> metadata = new HashMap<>();
         metadata.put("foo", "bar");
