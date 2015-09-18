@@ -17,7 +17,6 @@
 
 package org.elasticsearch.watcher.trigger.schedule;
 
-import com.google.common.primitives.Ints;
 import org.elasticsearch.ElasticsearchParseException;
 import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.xcontent.XContentBuilder;
@@ -28,6 +27,7 @@ import org.elasticsearch.watcher.trigger.schedule.support.MonthTimes;
 import org.junit.Test;
 
 import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
+import static org.elasticsearch.watcher.support.Strings.join;
 import static org.hamcrest.Matchers.*;
 
 /**
@@ -50,9 +50,9 @@ public class MonthlyScheduleTests extends ScheduleTestCase {
         String[] crons = expressions(schedule);
         assertThat(crons, arrayWithSize(time.times().length));
         for (DayTimes dayTimes : time.times()) {
-            String minStr = Ints.join(",", dayTimes.minute());
-            String hrStr = Ints.join(",", dayTimes.hour());
-            String dayStr = Ints.join(",", time.days());
+            String minStr = join(",", dayTimes.minute());
+            String hrStr = join(",", dayTimes.hour());
+            String dayStr = join(",", time.days());
             dayStr = dayStr.replace("32", "L");
             assertThat(crons, hasItemInArray("0 " + minStr + " " + hrStr + " " + dayStr + " * ?"));
         }
@@ -70,9 +70,9 @@ public class MonthlyScheduleTests extends ScheduleTestCase {
         assertThat(crons, arrayWithSize(count));
         for (MonthTimes monthTimes : times) {
             for (DayTimes dayTimes : monthTimes.times()) {
-                String minStr = Ints.join(",", dayTimes.minute());
-                String hrStr = Ints.join(",", dayTimes.hour());
-                String dayStr = Ints.join(",", monthTimes.days());
+                String minStr = join(",", dayTimes.minute());
+                String hrStr = join(",", dayTimes.hour());
+                String dayStr = join(",", monthTimes.days());
                 dayStr = dayStr.replace("32", "L");
                 assertThat(crons, hasItemInArray("0 " + minStr + " " + hrStr + " " + dayStr + " * ?"));
             }

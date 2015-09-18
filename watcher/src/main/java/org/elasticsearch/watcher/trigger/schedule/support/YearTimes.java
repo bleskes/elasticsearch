@@ -18,10 +18,10 @@
 package org.elasticsearch.watcher.trigger.schedule.support;
 
 import com.google.common.collect.ImmutableSet;
-import com.google.common.primitives.Ints;
 import org.elasticsearch.ElasticsearchParseException;
 import org.elasticsearch.common.ParseFieldMatcher;
 import org.elasticsearch.common.Strings;
+import org.elasticsearch.common.util.CollectionUtils;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentParser;
 
@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.util.*;
 
 import static org.elasticsearch.watcher.support.Exceptions.illegalArgument;
+import static org.elasticsearch.watcher.support.Strings.join;
 
 /**
  *
@@ -81,9 +82,9 @@ public class YearTimes implements Times {
     public Set<String> crons() {
         Set<String> crons = new HashSet<>();
         for (DayTimes times : this.times) {
-            String hrsStr = Ints.join(",", times.hour);
-            String minsStr = Ints.join(",", times.minute);
-            String daysStr = Ints.join(",", this.days);
+            String hrsStr = join(",", times.hour);
+            String minsStr = join(",", times.minute);
+            String daysStr = join(",", this.days);
             daysStr = daysStr.replace("32", "L");
             String monthsStr = Strings.collectionToCommaDelimitedString(months);
             String expression = "0 " + minsStr + " " + hrsStr + " " + daysStr + " " + monthsStr + " ?";
@@ -121,7 +122,7 @@ public class YearTimes implements Times {
                 Locale.ROOT,
                 "months [%s], days [%s], times [%s]",
                 Strings.collectionToCommaDelimitedString(months),
-                Ints.join(",", days),
+                join(",", days),
                 Strings.arrayToCommaDelimitedString(times)
         );
     }
@@ -193,7 +194,7 @@ public class YearTimes implements Times {
             }
         }
         EnumSet<Month> months = monthsSet.isEmpty() ? DEFAULT_MONTHS : EnumSet.copyOf(monthsSet);
-        int[] days = daysSet.isEmpty() ? DEFAULT_DAYS : Ints.toArray(daysSet);
+        int[] days = daysSet.isEmpty() ? DEFAULT_DAYS : CollectionUtils.toArray(daysSet);
         DayTimes[] times = timesSet.isEmpty() ? new DayTimes[] { new DayTimes(0, 0) } : timesSet.toArray(new DayTimes[timesSet.size()]);
         return new YearTimes(months, days, times);
     }
@@ -223,7 +224,7 @@ public class YearTimes implements Times {
         }
 
         public Builder on(int... days) {
-            this.days.addAll(Ints.asList(days));
+            Arrays.stream(days).forEach(this.days::add);
             return this;
         }
 
@@ -248,7 +249,7 @@ public class YearTimes implements Times {
         }
 
         public YearTimes build() {
-            return new YearTimes(EnumSet.copyOf(months), Ints.toArray(days), times.toArray(new DayTimes[times.size()]));
+            return new YearTimes(EnumSet.copyOf(months), CollectionUtils.toArray(days), times.toArray(new DayTimes[times.size()]));
         }
     }
 }
