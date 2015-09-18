@@ -18,6 +18,7 @@
 package org.elasticsearch.watcher.test.integration;
 
 import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.test.junit.annotations.TestLogging;
 import org.joda.time.DateTime;
 import org.elasticsearch.watcher.actions.logging.LoggingAction;
@@ -103,10 +104,11 @@ public class WatchMetadataTests extends AbstractWatcherIntegrationTestCase {
 
         watcherClient().preparePutWatch("_name")
                 .setSource(watchBuilder()
-                        .trigger(schedule(cron("0/5 * * * * ? *")))
+                        .trigger(schedule(cron("0 0 0 1 1 ? 2050")))
                         .input(searchInput(WatcherTestUtils.newInputSearchRequest("my-index").source(searchSource().query(matchAllQuery()))))
                         .condition(new AlwaysCondition())
                         .addAction("testLogger", loggingAction)
+                        .defaultThrottlePeriod(TimeValue.timeValueSeconds(0))
                         .metadata(metadata))
                 .get();
 
