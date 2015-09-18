@@ -133,12 +133,12 @@ define(function (require) {
           var svgElement = getSvgElement(evt.target);
           var svgClientRect = svgElement.getBoundingClientRect();
           var tooltipOptions = {
-            x: svgClientRect.left + valueCoords[0] + chartMargin.left,
-            y: svgClientRect.top + svgClientRect.height / 3,
+            x: document.body.scrollLeft + svgClientRect.left + valueCoords[0] + chartMargin.left,
+            y: document.body.scrollTop + svgClientRect.top + svgClientRect.height / 3,
             content: tooltipInnerComponentInstance,
             bounds: {
-              x: svgClientRect.left,
-              y: svgClientRect.top,
+              x: document.body.scrollLeft + svgClientRect.left,
+              y: document.body.scrollTop + svgClientRect.top,
               w: svgClientRect.width,
               h: svgClientRect.height
             }
