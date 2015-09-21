@@ -24,4 +24,14 @@
       </ul>
     </div>
   </div>
+  <div>
+    <p>
+      <input type="checkbox" id="allowReportCheck"
+        ng-model="allowReport" ng-change="toggleAllowReport(this)">
+      <label for="allowReportCheck">
+        Allow usage usage statistic reports to sent to Elastic (you can also
+        set this globally in the marvel.yml config).
+      </label>
+    </p>
+  </div>
 </div>
