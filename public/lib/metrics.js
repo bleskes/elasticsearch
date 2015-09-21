@@ -4,7 +4,7 @@ module.exports = {
     field: 'indices_stats._all.total.indexing.index_total',
     label: 'Indexing Rate',
     description: 'The per index rate at which documents are being indexed.',
-    format: '0,0.0',
+    format: '0,0.[000]',
     metricAgg: 'max',
     units: '/s',
     defaults: { warning: '>1000', critical: '>5000', interval: '1m', periods: 1 },
@@ -16,7 +16,7 @@ module.exports = {
     field: 'indices_stats._all.total.search.query_total',
     label: 'Search Rate',
     description: 'The cluster wide rate at which search reqeusts are being executed.',
-    format: '0,0.0',
+    format: '0,0.[000]',
     metricAgg: 'max',
     units: '/s',
     defaults: { warning: '>100', critical: '>5000', interval: '1m', periods: 1 },
@@ -28,7 +28,7 @@ module.exports = {
     field: 'indices_stats._all.total.indexing.index_total',
     label: 'Indexing Latency',
     description: 'The average indexing latency across the entire cluster.',
-    format: '0,0.0',
+    format: '0,0.[000]',
     metricAgg: 'sum',
     aggs: {
       index_time_in_millis: {
@@ -64,9 +64,9 @@ module.exports = {
   'cluster_query_latency': {
     active: true,
     field: 'indices_stats._all.total.search.query_total',
-    label: 'Query Latency',
+    label: 'Search Latency',
     description: 'The average query latency across the entire cluster.',
-    format: '0,0.0',
+    format: '0,0.[000]',
     metricAgg: 'sum',
     aggs: {
       query_time_in_millis: {
@@ -104,7 +104,7 @@ module.exports = {
     field: 'node_stats.indices.indexing.index_total',
     label: 'Indexing Latency',
     description: 'The average indexing latency',
-    format: '0,0.0',
+    format: '0,0.[000]',
     metricAgg: 'sum',
     aggs: {
       index_time_in_millis: {
@@ -140,9 +140,9 @@ module.exports = {
   'node_query_latency': {
     active: true,
     field: 'node_stats.indices.search.query_total',
-    label: 'Query Latency',
+    label: 'Search Latency',
     description: 'The average query latency',
-    format: '0,0.0',
+    format: '0,0.[000]',
     metricAgg: 'sum',
     aggs: {
       query_time_in_millis: {
@@ -180,7 +180,7 @@ module.exports = {
     field: 'index_stats.total.indexing.index_total',
     label: 'Indexing Rate',
     description: 'The per index rate at which documents are being indexed.',
-    format: '0,0.0',
+    format: '0,0.[000]',
     metricAgg: 'max',
     units: '/s',
     defaults: { warning: '>1000', critical: '>5000', interval: '1m', periods: 1 },
@@ -192,7 +192,7 @@ module.exports = {
     field: 'index_stats.total.search.query_total',
     label: 'Search Rate',
     description: 'The cluster wide rate at which search reqeusts are being executed.',
-    format: '0,0.0',
+    format: '0,0.[000]',
     metricAgg: 'max',
     units: '/s',
     defaults: { warning: '>100', critical: '>5000', interval: '1m', periods: 1 },
@@ -204,7 +204,7 @@ module.exports = {
     field: 'index_stats.total.indexing.index_total',
     label: 'Indexing Latency',
     description: 'The average indexing latency across the entire cluster.',
-    format: '0,0.0',
+    format: '0,0.[000]',
     metricAgg: 'sum',
     aggs: {
       index_time_in_millis: {
@@ -240,9 +240,9 @@ module.exports = {
   'query_latency': {
     active: true,
     field: 'index_stats.total.search.query_total',
-    label: 'Query Latency',
+    label: 'Search Latency',
     description: 'The average query latency across the entire cluster.',
-    format: '0,0.0',
+    format: '0,0.[000]',
     metricAgg: 'sum',
     aggs: {
       query_time_in_millis: {
@@ -316,7 +316,7 @@ module.exports = {
     field: 'node_stats.os.load_average',
     label: 'CPU Load Average',
     description: 'The amount of load used for the last 1 minute.',
-    format: '0,0.0',
+    format: '0,0.[000]',
     metricAgg: 'avg',
     units: '',
     defaults: { warning: '>2', critical: '>4', interval: '1m', periods: 1 },
@@ -340,7 +340,7 @@ module.exports = {
     field: 'index_stats.primaries.indexing.throttle_time_in_millis',
     label: 'Indexing Throttle Time',
     description: 'The amount of load used for the last 1 minute.',
-    format: '0,0.0',
+    format: '0,0.[000]',
     metricAgg: 'max',
     units: 'ms',
     defaults: { warning: '>0', critical: '>0', interval: '1m', periods: 1 },
@@ -350,9 +350,9 @@ module.exports = {
   'index_shard_query_rate': {
     active: false,
     field: 'index_stats.total.search.query_total',
-    label: 'Index Search Query Shard Rate',
+    label: 'Index Shard Search Rate',
     description: 'Total number of requests (GET /_search)across an index (and across all relevant shards for that index) / <time range>',
-    format: '0.0',
+    format: '0.[000]',
     metricAgg: 'max',
     units: '',
     defaults: { warning: '>0', critical: '>0', interval: '1m', periods: 1 },
@@ -376,7 +376,7 @@ module.exports = {
     field: 'index_stats.total.search.query_total',
     label: 'Search Rate',
     description: 'The per index rate at which search reqeusts are being executed.',
-    format: '0,0.0',
+    format: '0,0.[000]',
     metricAgg: 'max',
     units: '/s',
     defaults: { warning: '>100', critical: '>5000', interval: '1m', periods: 1 },
@@ -388,7 +388,7 @@ module.exports = {
     field: 'index_stats.total.merges.total_size_in_bytes',
     label: 'Indexing Rate',
     description: 'The per index rate at which segements are being merged.',
-    format: '0,0.0',
+    format: '0,0.[000]',
     metricAgg: 'max',
     units: '/s',
     defaults: { warning: '>1000', critical: '>5000', interval: '1m', periods: 1 },
@@ -424,7 +424,7 @@ module.exports = {
     field: 'total.refresh.total_time_in_millis',
     label: 'Total Refresh Time',
     description: 'The the amount of time a refresh takes',
-    format: '0,0.0',
+    format: '0,0.[000]',
     metricAgg: 'max',
     units: '',
     defaults: { warning: '>1000', critical: '>5000', interval: '1m', periods: 1 },
