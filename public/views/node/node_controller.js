@@ -29,7 +29,7 @@ define(function (require) {
     $scope.node = $scope.cluster.nodes[$scope.nodeName];
     if (!$scope.node) {
       notify.error('We can\'t seem to find this node in your Marvel data.');
-      return kbnUrl.redirect('/nodes?reason=missing_node');
+      return kbnUrl.redirect('/nodes');
     }
     $scope.node.id = $scope.nodeName;
 

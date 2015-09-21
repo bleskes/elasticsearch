@@ -62,7 +62,7 @@ define(function (require) {
     // is the selected index valid?
     if (!_.has($scope.cluster.shardStats, $scope.indexName)) {
       notify.error('We can\'t seem to find this index in your Marvel data.');
-      return kbnUrl.redirect('/indices?reason=missing_index');
+      return kbnUrl.redirect('/indices');
     }
 
     $scope.$watch('dataSources.clusterStatus.clusters', function (clusters) {
