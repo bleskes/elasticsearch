@@ -364,7 +364,7 @@ module.exports = {
     field: 'index_stats.primaries.docs.count',
     label: 'Indexing Document Count',
     description: 'Total number of documents (in primary shards) for an index',
-    format: '0,0',
+    format: '0,0.[0]a',
     metricAgg: 'max',
     units: '',
     defaults: { warning: '>0', critical: '>0', interval: '1m', periods: 1 },

@@ -81,9 +81,9 @@ define(function (require) {
           clusters: clusters,
           metrics: [
             'index_document_count',
+            'index_size',
             'index_search_request_rate',
             'index_request_rate',
-            'index_merge_rate'
           ],
           type: 'index',
           duration: moment.duration(10, 'minutes')

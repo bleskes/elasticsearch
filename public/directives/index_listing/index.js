@@ -27,11 +27,14 @@ define(function (require) {
     }
     function makeTdWithPropKey(dataKey, idx) {
       var value = _.get(this.props, dataKey.key);
+      var units;
       if (dataKey.key === 'name') {
         value = make.a({ href: `#/index/${value}` }, value);
       }
       if (_.isObject(value) && value.metric) {
+        if (value.metric.units) units = ` ${value.metric.units}`;
         value = (value.metric.format) ? numeral(value.last).format(value.metric.format) : value.last;
+        if (units) value += units;
       }
       var chartData = _.get(this.props, dataKey.chart_data);
       var hasChart = !!dataKey.chart_data;
@@ -53,6 +56,12 @@ define(function (require) {
         sort: 0,
         title: 'Document Count'
       }, {
+        key: 'metrics.index_size',
+        sort: 0,
+        sortKey: 'metrics.index_size.last',
+        // chart_data: 'metrics.index_request_rate.data',
+        title: 'Data'
+      }, {
         key: 'metrics.index_request_rate',
         sort: 0,
         sortKey: 'metrics.index_request_rate.last',
@@ -64,11 +73,6 @@ define(function (require) {
         sortKey: 'metrics.index_search_request_rate.last',
         // chart_data: 'metrics.index_search_request_rate.data',
         title: 'Search Rate'
-      }, {
-        key: 'metrics.index_merge_rate',
-        sort: 0,
-        sortKey: 'metrics.index_merge_rate.last',
-        title: 'Merge Rate',
       }]
     };
     return {
