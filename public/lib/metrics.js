@@ -65,7 +65,7 @@ module.exports = {
     active: true,
     field: 'indices_stats._all.total.search.query_total',
     label: 'Search Latency',
-    description: 'The average query latency across the entire cluster.',
+    description: 'The average search latency across the entire cluster.',
     format: '0,0.[000]',
     metricAgg: 'sum',
     aggs: {
@@ -141,7 +141,7 @@ module.exports = {
     active: true,
     field: 'node_stats.indices.search.query_total',
     label: 'Search Latency',
-    description: 'The average query latency',
+    description: 'The average search latency',
     format: '0,0.[000]',
     metricAgg: 'sum',
     aggs: {
@@ -241,7 +241,7 @@ module.exports = {
     active: true,
     field: 'index_stats.total.search.query_total',
     label: 'Search Latency',
-    description: 'The average query latency across the entire cluster.',
+    description: 'The average search latency across the entire cluster.',
     format: '0,0.[000]',
     metricAgg: 'sum',
     aggs: {
