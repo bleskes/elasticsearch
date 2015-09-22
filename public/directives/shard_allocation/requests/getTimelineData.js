@@ -50,7 +50,7 @@ define(function (require) {
           'cluster_uuid'
         ],
         sort: {
-          'timestamp': { order: 'desc' }
+          'timestamp': { order: direction === 'push' ? 'asc' : 'desc' }
         },
         query: {
           filtered: {
