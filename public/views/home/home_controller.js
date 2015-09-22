@@ -10,7 +10,8 @@ define(function (require) {
   .when('/home', {
     template: require('plugins/marvel/views/home/home_template.html'),
     resolve: {
-      clusters: function (marvelClusters, kbnUrl, globalState) {
+      clusters: function (Private, marvelClusters, kbnUrl, globalState) {
+        var phoneHome = Private(require('plugins/marvel/lib/phone_home'));
         return marvelClusters.fetch().then(function (clusters) {
           var license;
           var cluster;
@@ -26,6 +27,10 @@ define(function (require) {
           }
           chrome.setTabs([]);
           return clusters;
+        }).then(function (clusters) {
+          return phoneHome.sendIfDue(clusters).then(function () {
+            return clusters;
+          });
         });
       }
     }
