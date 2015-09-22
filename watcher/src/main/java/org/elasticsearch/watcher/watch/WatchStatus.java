@@ -55,7 +55,7 @@ public class WatchStatus implements ToXContent, Streamable {
 
     private @Nullable DateTime lastChecked;
     private @Nullable DateTime lastMetCondition;
-    private ImmutableMap<String, ActionStatus> actions;
+    private Map<String, ActionStatus> actions;
 
     private volatile boolean dirty = false;
 
@@ -63,7 +63,7 @@ public class WatchStatus implements ToXContent, Streamable {
     private WatchStatus() {
     }
 
-    public WatchStatus(DateTime now, ImmutableMap<String, ActionStatus> actions) {
+    public WatchStatus(DateTime now, Map<String, ActionStatus> actions) {
         this(-1, new State(true, now), null, null, actions);
     }
 
@@ -71,7 +71,7 @@ public class WatchStatus implements ToXContent, Streamable {
         this(other.version, other.state, other.lastChecked, other.lastMetCondition, other.actions);
     }
 
-    private WatchStatus(long version, State state, DateTime lastChecked, DateTime lastMetCondition, ImmutableMap<String, ActionStatus> actions) {
+    private WatchStatus(long version, State state, DateTime lastChecked, DateTime lastMetCondition, Map<String, ActionStatus> actions) {
         this.version = version;
         this.lastChecked = lastChecked;
         this.lastMetCondition = lastMetCondition;
