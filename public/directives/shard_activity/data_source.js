@@ -15,7 +15,7 @@ define(function (require) {
     ShardRecoveryDataSource.prototype.initSearchSource = function () {
       this.searchSource.set('size', 1);
       this.searchSource.set('sort', {'timestamp': { order: 'desc' }});
-      this.searchSource.set('query', '_type:marvel_index_recovery');
+      this.searchSource.set('query', '_type:index_recovery');
     };
 
     ShardRecoveryDataSource.prototype.handleResponse = function (resp) {
