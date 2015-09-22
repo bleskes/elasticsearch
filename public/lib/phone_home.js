@@ -16,7 +16,7 @@
  */
 
 var _ = require('lodash');
-module.exports = function phoneHomeProvider(Promise, es, $http, statsReportUrl, reportStats) {
+module.exports = function phoneHomeProvider(Promise, es, $http, statsReportUrl, reportStats, features) {
 
   const defaults = {
     report: true,
@@ -64,7 +64,7 @@ module.exports = function phoneHomeProvider(Promise, es, $http, statsReportUrl, 
       var reportInterval = 86400000;
       var sendReport     = false;
 
-      if (reportStats) {
+      if (reportStats && features.isEnabled('report', true)) {
         // If the last report is empty it means we've never sent an report and
         // now is the time to send it.
         if (!this.get('lastReport')) {
