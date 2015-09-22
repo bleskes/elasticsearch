@@ -1,6 +1,7 @@
 require('plugins/marvel/less/main.less');
 require('plugins/marvel/filters/index.js');
 require('plugins/marvel/directives/index.js');
+require('plugins/marvel/services/features.js');
 require('plugins/marvel/views/home/home_controller.js');
 require('plugins/marvel/views/indices/index.js');
 require('plugins/marvel/views/nodes/nodes_controller.js');

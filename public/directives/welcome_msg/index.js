@@ -1,7 +1,7 @@
 const _ = require('lodash');
 const mod = require('ui/modules').get('marvel/directives', []);
 const template = require('plugins/marvel/directives/welcome_msg/index.html');
-mod.directive('marvelWelcomeMessage', function ($window) {
+mod.directive('marvelWelcomeMessage', function ($window, features) {
   return {
     restrict: 'E',
     scope: {
@@ -27,6 +27,12 @@ mod.directive('marvelWelcomeMessage', function ($window) {
       scope.dontShowAgain = function () {
         scope.showBanner = false;
         $window.localStorage.setItem('marvel.hideBanner', 1);
+      };
+
+      scope.allowReport = features.isEnabled('report', true);
+      scope.toggleAllowReport = function (data) {
+        features.update('report', data.allowReport);
+        scope.allowReport = data.allowReport;
       };
 
     }

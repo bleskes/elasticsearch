@@ -2,7 +2,8 @@ define(function (require) {
   var _ = require('lodash');
   var chrome = require('ui/chrome');
   var tabs = require('./tabs');
-  return function routeInitProvider(Notifier, marvelSettings, Private, marvelClusters, globalState, Promise, kbnUrl) {
+  return function routeInitProvider(Notifier, marvelSettings, Private,
+    marvelClusters, globalState, Promise, kbnUrl, $rootScope, features) {
 
     var initMarvelIndex = Private(require('plugins/marvel/lib/marvel_index_init'));
     var phoneHome = Private(require('plugins/marvel/lib/phone_home'));
@@ -15,6 +16,9 @@ define(function (require) {
 
       var marvel = {};
       var notify = new Notifier({ location: 'Marvel' });
+
+      $rootScope.allowReport = features.isEnabled('report', true);
+
       return marvelClusters.fetch(true)
         .then(function (clusters) {
           return phoneHome.sendIfDue(clusters).then(() => {
