@@ -246,7 +246,7 @@ public abstract class BaseTriggerEngineTestCase extends ESTestCase {
         }
 
         /**
-         * increments the hour and returns whether the day jumped. (note, only supports increment steps < 24)
+         * increments the hour and returns whether the day jumped. (note, only supports increment steps &lt; 24)
          */
         boolean inc(int inc) {
             value += inc;
@@ -267,7 +267,7 @@ public abstract class BaseTriggerEngineTestCase extends ESTestCase {
         }
 
         /**
-         * increments the minute and returns whether the hour jumped. (note, only supports increment steps < 60)
+         * increments the minute and returns whether the hour jumped. (note, only supports increment steps &lt; 60)
          */
         boolean inc(int inc) {
             value += inc;
@@ -288,7 +288,7 @@ public abstract class BaseTriggerEngineTestCase extends ESTestCase {
         }
 
         /**
-         * increments the minute and returns whether the week jumped. (note, only supports increment steps < 8)
+         * increments the minute and returns whether the week jumped. (note, only supports increment steps &lt; 8)
          */
         boolean inc(int inc) {
             value += inc;

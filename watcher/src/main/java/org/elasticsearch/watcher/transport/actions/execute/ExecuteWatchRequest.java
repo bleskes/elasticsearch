@@ -119,7 +119,6 @@ public class ExecuteWatchRequest extends MasterNodeReadRequest<ExecuteWatchReque
 
     /**
      * @param data The data that should be associated with the trigger event.
-     * @throws IOException
      */
     public void setTriggerData(Map<String, Object> data) throws IOException {
         this.triggerData = data;
@@ -127,7 +126,6 @@ public class ExecuteWatchRequest extends MasterNodeReadRequest<ExecuteWatchReque
 
     /**
      * @param event the trigger event to use
-     * @throws IOException
      */
     public void setTriggerEvent(TriggerEvent event) throws IOException {
         setTriggerData(event.data());
