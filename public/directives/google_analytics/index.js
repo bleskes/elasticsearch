@@ -17,7 +17,7 @@ mod.directive('googleAnalytics', (googleTagManagerId, reportStats, features, $wi
     scope: {},
     link(scope) {
       let loaded = false;
-      scope.$watch(($scope) => features.isEnabled('report', true), (newValue) => {
+      scope.$watch(() => features.isEnabled('report', true), (newValue) => {
         if (!loaded && reportStats && newValue) {
           setupGoogleTagManager($window, googleTagManagerId);
           loaded = true;
