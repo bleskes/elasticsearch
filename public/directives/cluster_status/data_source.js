@@ -14,7 +14,7 @@ define(function (require) {
     ClusterStatusDataSource.prototype.initSearchSource = function () {
       this.searchSource.set('size', 1);
       this.searchSource.set('sort', {'timestamp': { order: 'desc' }});
-      this.searchSource.set('query', '_type:marvel_cluster_stats');
+      this.searchSource.set('query', '_type:cluster_stats');
     };
 
 

@@ -22,7 +22,7 @@ define(function () {
     return function (obj, id, type) {
       var stateUuid = getValueFromArrayOrString(obj.fields['cluster_state.state_uuid']);
       var clusterUuid = getValueFromArrayOrString(obj.fields.cluster_uuid);
-      return es.get({ index: obj._index, type: 'marvel_cluster_state', id: obj._id })
+      return es.get({ index: obj._index, type: 'cluster_state', id: obj._id })
         .then((stateResp) => {
           var url = `/marvel/api/v1/clusters/${clusterUuid}/state/${stateUuid}/shards`;
           if (id && type) url += `?${type}=${id}`;

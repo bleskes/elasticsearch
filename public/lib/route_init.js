@@ -40,7 +40,7 @@ define(function (require) {
           // if we don't have any clusters then redirect to setup
           if (!globalState.cluster) {
             notify.error('We can\'t seem to find any clusters in your Marvel data. Please check your Marvel agents');
-            return kbnUrl.redirect('/home?reason=missing_cluster');
+            return kbnUrl.redirect('/home');
           }
           return globalState.cluster;
         })

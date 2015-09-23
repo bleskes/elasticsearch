@@ -39,7 +39,7 @@ define(function (require) {
         };
       }
 
-      var header = { index: indices[position], type: 'marvel_cluster_state' };
+      var header = { index: indices[position], type: 'cluster_state' };
       var body = {
         size: size,
         from: 0,
@@ -50,7 +50,7 @@ define(function (require) {
           'cluster_uuid'
         ],
         sort: {
-          'timestamp': { order: 'desc' }
+          'timestamp': { order: direction === 'push' ? 'asc' : 'desc' }
         },
         query: {
           filtered: {

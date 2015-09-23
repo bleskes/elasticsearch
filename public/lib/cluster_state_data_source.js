@@ -21,7 +21,7 @@ module.exports = function clusterStateDataSourceProvider(courier) {
     var id = (_.isObject(this.cluster)) ? this.cluster.cluster_uuid : this.cluster;
     return [
       { term: { 'cluster_uuid': id } },
-      { term: { _type: 'marvel_cluster_state' } }
+      { term: { _type: 'cluster_state' } }
     ];
   };
 

@@ -15,7 +15,8 @@ define(function (require) {
       }
     });
 
-  module.controller('indexView', function ($scope, marvelMetrics, globalState, courier, timefilter, Private, $routeParams, $route) {
+  module.controller('indexView', function ($scope, marvelMetrics, globalState,
+      kbnUrl, Notifier, courier, timefilter, Private, $routeParams, $route) {
     var clusters = $route.current.locals.marvel.clusters;
     $scope.indexName = $routeParams.index;
     var indexPattern = $scope.indexPattern = $route.current.locals.marvel.indexPattern;
@@ -23,6 +24,7 @@ define(function (require) {
     var ClusterStatusDataSource = Private(require('plugins/marvel/directives/cluster_status/data_source'));
     var docTitle = Private(require('ui/doc_title'));
     docTitle.change('Marvel - ' + $scope.indexName, true);
+    var notify = new Notifier({ location: 'Marvel' });
 
     timefilter.enabled = true;
     if (timefilter.refreshInterval.value === 0) {
@@ -56,6 +58,13 @@ define(function (require) {
     $scope.dataSources.clusterStatus = new ClusterStatusDataSource(indexPattern, globalState.cluster, clusters);
     $scope.dataSources.clusterStatus.register(courier);
     $scope.cluster = _.find(clusters, { cluster_uuid: globalState.cluster });
+
+    // is the selected index valid?
+    if (!_.has($scope.cluster.shardStats, $scope.indexName)) {
+      notify.error('We can\'t seem to find this index in your Marvel data.');
+      return kbnUrl.redirect('/indices');
+    }
+
     $scope.$watch('dataSources.clusterStatus.clusters', function (clusters) {
       $scope.cluster = _.find(clusters, { cluster_uuid: globalState.cluster });
     });
