@@ -17,12 +17,14 @@
 
 package org.elasticsearch.shield.authz.accesscontrol;
 
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+
 import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.bytes.BytesReference;
 
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -30,12 +32,12 @@ import java.util.Set;
  */
 public class IndicesAccessControl {
 
-    public static final IndicesAccessControl ALLOW_ALL = new IndicesAccessControl(true, ImmutableMap.<String, IndexAccessControl>of());
+    public static final IndicesAccessControl ALLOW_ALL = new IndicesAccessControl(true, Collections.emptyMap());
 
     private final boolean granted;
-    private final ImmutableMap<String, IndexAccessControl> indexPermissions;
+    private final Map<String, IndexAccessControl> indexPermissions;
 
-    public IndicesAccessControl(boolean granted, ImmutableMap<String, IndexAccessControl> indexPermissions) {
+    public IndicesAccessControl(boolean granted, Map<String, IndexAccessControl> indexPermissions) {
         this.granted = granted;
         this.indexPermissions = indexPermissions;
     }
