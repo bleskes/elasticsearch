@@ -12,11 +12,17 @@ define(function (require) {
     resolve: {
       clusters: function (marvelClusters, kbnUrl, globalState) {
         return marvelClusters.fetch().then(function (clusters) {
+          var license;
+          var cluster;
           if (clusters.length === 1) {
-            globalState.cluster = clusters[0].cluster_uuid;
-            globalState.save();
-            kbnUrl.changePath('/overview');
-            return Promise.reject();
+            cluster = clusters[0];
+            globalState.cluster = cluster.cluster_uuid;
+            license = _.find(cluster.licenses, { feature: 'marvel' });
+            if (license.type === 'lite') {
+              globalState.save();
+              kbnUrl.changePath('/overview');
+              return Promise.reject();
+            }
           }
           chrome.setTabs([]);
           return clusters;
@@ -34,18 +40,6 @@ define(function (require) {
     }
 
     $scope.clusters = $route.current.locals.clusters.map(setKeyForClusters);
-
-    var hideBanner = $window.localStorage.getItem('marvel.hideBanner');
-    $scope.showBanner = (hideBanner) ? false : true;
-
-    $scope.hideBanner = function () {
-      $scope.showBanner = false;
-    };
-
-    $scope.dontShowAgain = function () {
-      $scope.showBanner = false;
-      $window.localStorage.setItem('marvel.hideBanner', 1);
-    };
 
     timefilter.enabled = true;
     if (timefilter.refreshInterval.value === 0) {

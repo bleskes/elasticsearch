@@ -61,9 +61,11 @@ define(function (require) {
         })
         // Finally return the Marvel object.
         .then(function () {
+          var cluster = _.find(marvel.clusters, { cluster_uuid: globalState.cluster });
+          var license = _.find(cluster.licenses, { feature: 'marvel' });
           chrome.setTabs(tabs.filter(function (tab) {
             if (tab.id !== 'home') return true;
-            if (marvel.clusters.length > 1) return true;
+            if (license.type !== 'lite') return true;
             return false;
           }));
           return marvel;

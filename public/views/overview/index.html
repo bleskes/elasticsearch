@@ -1,7 +1,10 @@
-<div class="marvel-overview marvel-view" ng-controller="overview">
-  <marvel-cluster-status cluster-state="dataSources.clusterState" source="dataSources['cluster_status']"></marvel-cluster-status>
-  <div class="metrics x2 marvel-element">
-    <div ng-repeat="name in charts" class="marvel-element"><marvel-chart source="dataSources[name]"/></div>
+<div ng-controller="overview">
+  <marvel-welcome-message clusters="clusters" cluster="cluster"></marvel-welcome-message>
+  <div class="marvel-overview marvel-view">
+    <marvel-cluster-status cluster-state="dataSources.clusterState" source="dataSources['cluster_status']"></marvel-cluster-status>
+    <div class="metrics x2 marvel-element">
+      <div ng-repeat="name in charts" class="marvel-element"><marvel-chart source="dataSources[name]"/></div>
+    </div>
+    <marvel-shard-activity onlyActive="true" source="dataSources.shardActivity"/>
   </div>
-  <marvel-shard-activity onlyActive="true" source="dataSources.shardActivity"/>
 </div>
