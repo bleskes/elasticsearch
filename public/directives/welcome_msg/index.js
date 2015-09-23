@@ -1,7 +1,7 @@
 const _ = require('lodash');
 const mod = require('ui/modules').get('marvel/directives', []);
 const template = require('plugins/marvel/directives/welcome_msg/index.html');
-mod.directive('marvelWelcomeMessage', function ($window, reportStats, features) {
+mod.directive('marvelWelcomeMessage', function ($window, $rootScope, reportStats, features) {
   return {
     restrict: 'E',
     scope: {
@@ -34,7 +34,7 @@ mod.directive('marvelWelcomeMessage', function ($window, reportStats, features) 
         scope.allowReport = features.isEnabled('report', true);
         scope.toggleAllowReport = function (data) {
           features.update('report', data.allowReport);
-          scope.allowReport = data.allowReport;
+          scope.$rootScope = scope.allowReport = data.allowReport;
         };
       }
 
