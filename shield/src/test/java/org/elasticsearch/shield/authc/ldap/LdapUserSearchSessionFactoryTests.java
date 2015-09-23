@@ -29,7 +29,6 @@ import org.elasticsearch.env.Environment;
 import org.elasticsearch.license.plugin.LicensePlugin;
 import org.elasticsearch.node.MockNode;
 import org.elasticsearch.node.Node;
-import org.elasticsearch.node.NodeBuilder;
 import org.elasticsearch.shield.ShieldPlugin;
 import org.elasticsearch.shield.authc.RealmConfig;
 import org.elasticsearch.shield.authc.activedirectory.ActiveDirectorySessionFactoryTests;
@@ -48,7 +47,6 @@ import java.nio.file.Path;
 import java.text.MessageFormat;
 import java.util.*;
 
-import static org.elasticsearch.common.settings.Settings.builder;
 import static org.elasticsearch.common.settings.Settings.settingsBuilder;
 import static org.elasticsearch.test.ShieldTestsUtils.assertAuthenticationException;
 import static org.hamcrest.Matchers.*;
