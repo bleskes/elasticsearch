@@ -13,7 +13,7 @@ define(function (require) {
     IndicesDataSource.prototype.initSearchSource = function () {
       this.searchSource.set('size', 1000);
       this.searchSource.set('sort', {'timestamp': { order: 'desc' }});
-      this.searchSource.set('query', '_type:marvel_index_stats');
+      this.searchSource.set('query', '_type:index_stats');
     };
 
     IndicesDataSource.prototype.handleResponse = function (resp) {

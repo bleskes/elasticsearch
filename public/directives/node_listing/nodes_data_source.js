@@ -13,7 +13,7 @@ define(function (require) {
     NodesDataSource.prototype.initSearchSource = function () {
       this.searchSource.set('size', 10000);
       this.searchSource.set('sort', {'timestamp': { order: 'desc' }});
-      this.searchSource.set('query', '_type:marvel_node_stats');
+      this.searchSource.set('query', '_type:node_stats');
     };
 
     NodesDataSource.prototype.handleResponse = function (resp) {
