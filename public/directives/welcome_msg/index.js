@@ -1,6 +1,6 @@
 const _ = require('lodash');
 const mod = require('ui/modules').get('marvel/directives', []);
-const template = require('plugins/marvel/directives/welcome_msg/welcome_msg_template.html');
+const template = require('plugins/marvel/directives/welcome_msg/index.html');
 mod.directive('marvelWelcomeMessage', function ($window) {
   return {
     restrict: 'E',
