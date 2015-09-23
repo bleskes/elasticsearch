@@ -15,12 +15,12 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.marvel.agent.exporter;
+package org.elasticsearch.marvel.agent.exporter.local;
 
 import org.elasticsearch.client.Client;
-import org.elasticsearch.common.component.Lifecycle;
-import org.elasticsearch.common.component.LifecycleListener;
 import org.elasticsearch.common.inject.Inject;
+import org.elasticsearch.marvel.agent.exporter.Exporter;
+import org.elasticsearch.marvel.agent.exporter.MarvelDoc;
 import org.elasticsearch.marvel.shield.SecuredClient;
 
 import java.util.Collection;
@@ -28,54 +28,38 @@ import java.util.Collection;
 /**
  *
  */
-public class LocalExporter implements Exporter<LocalExporter> {
+public class LocalExporter extends Exporter {
 
-    public static final String NAME = "local";
+    public static final String TYPE = "local";
 
     private final Client client;
 
-    @Inject
-    public LocalExporter(SecuredClient client) {
+    public LocalExporter(Exporter.Config config, SecuredClient client) {
+        super(TYPE, config);
         this.client = client;
     }
 
     @Override
-    public String name() {
-        return NAME;
-    }
-
-    @Override
     public void export(Collection<MarvelDoc> marvelDocs) {
-
-    }
-
-    @Override
-    public Lifecycle.State lifecycleState() {
-        return null;
-    }
-
-    @Override
-    public void addLifecycleListener(LifecycleListener lifecycleListener) {
-
-    }
-
-    @Override
-    public void removeLifecycleListener(LifecycleListener lifecycleListener) {
-
-    }
-
-    @Override
-    public LocalExporter start() {
-        return null;
-    }
-
-    @Override
-    public LocalExporter stop() {
-        return null;
     }
 
     @Override
     public void close() {
+    }
 
+    public static class Factory extends Exporter.Factory<LocalExporter> {
+
+        private final SecuredClient client;
+
+        @Inject
+        public Factory(SecuredClient client) {
+            super(TYPE, true);
+            this.client = client;
+        }
+
+        @Override
+        public LocalExporter create(Config config) {
+            return new LocalExporter(config, client);
+        }
     }
 }
