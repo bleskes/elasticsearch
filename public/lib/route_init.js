@@ -59,7 +59,7 @@ define(function (require) {
             return indexPattern;
           });
         })
-        // Finally return the Marvel object.
+        // Finally filter the cluster from the nav if it's light then return the Marvel object.
         .then(function () {
           var cluster = _.find(marvel.clusters, { cluster_uuid: globalState.cluster });
           var license = _.find(cluster.licenses, { feature: 'marvel' });
