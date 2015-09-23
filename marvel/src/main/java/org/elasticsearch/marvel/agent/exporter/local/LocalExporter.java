@@ -57,6 +57,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static org.elasticsearch.marvel.agent.exporter.http.HttpExporter.MIN_SUPPORTED_CLUSTER_VERSION;
 import static org.elasticsearch.marvel.agent.exporter.http.HttpExporter.MIN_SUPPORTED_TEMPLATE_VERSION;
+import static org.elasticsearch.marvel.agent.exporter.http.HttpExporterUtils.MARVEL_VERSION_FIELD;
 
 /**
  *
@@ -118,18 +119,11 @@ public class LocalExporter extends Exporter {
         if (builtInTemplateVersion == null) {
             throw new IllegalStateException("unable to find built-in template version");
         }
-    }
-
-    @Override
-    public void start() {
-        if (state.compareAndSet(State.INITIALIZED, State.STARTING)) {
-            queueConsumer.start();
-            state.set(State.STARTED);
-        }
+        state.set(State.STARTING);
     }
 
     public void stop() {
-        if (state.compareAndSet(State.STARTED, State.STOPPING) || state.compareAndSet(State.EXPORTING, State.STOPPING)) {
+        if (state.compareAndSet(State.STARTED, State.STOPPING) || state.compareAndSet(State.STARTING, State.STOPPING)) {
             try {
                 queueConsumer.interrupt();
             } finally {
@@ -146,11 +140,11 @@ public class LocalExporter extends Exporter {
     }
 
     private boolean canExport() {
-        if (state.get() == State.EXPORTING) {
+        if (state.get() == State.STARTED) {
             return true;
         }
 
-        if (state.get() != State.STARTED) {
+        if (state.get() != State.STARTING) {
             return false;
         }
 
@@ -184,7 +178,8 @@ public class LocalExporter extends Exporter {
         }
 
         logger.debug("exporter [{}] can now export marvel data", name());
-        state.set(State.EXPORTING);
+        queueConsumer.start();
+        state.set(State.STARTED);
         return true;
     }
 
@@ -199,7 +194,7 @@ public class LocalExporter extends Exporter {
     Version templateVersion() {
         for (IndexTemplateMetaData template : client.admin().indices().prepareGetTemplates(INDEX_TEMPLATE_NAME).get().getIndexTemplates()) {
             if (template.getName().equals(INDEX_TEMPLATE_NAME)) {
-                String version = template.settings().get("index." + HttpExporterUtils.MARVEL_VERSION_FIELD);
+                String version = template.settings().get("index." + MARVEL_VERSION_FIELD);
                 if (Strings.hasLength(version)) {
                     return Version.fromString(version);
                 }
@@ -409,7 +404,6 @@ public class LocalExporter extends Exporter {
         INITIALIZED,
         STARTING,
         STARTED,
-        EXPORTING,
         STOPPING,
         STOPPED,
         FAILED
