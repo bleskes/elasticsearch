@@ -1,9 +1,14 @@
 const mod = require('ui/modules').get('marvel/directives', []);
 const template = require('plugins/marvel/directives/google_analytics/index.html');
-mod.directive('googleAnalytics', () => {
+mod.directive('googleAnalytics', (reportStats, features) => {
   return {
-    restrict: 'A',
+    restrict: 'E',
     scope: {},
-    template: template
+    template: template,
+    link(scope) {
+      if (reportStats && features.isEnabled('report', true)) {
+        scope.allowReport = true;
+      }
+    }
   };
 });
