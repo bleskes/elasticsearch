@@ -1,7 +1,7 @@
 const _ = require('lodash');
 const mod = require('ui/modules').get('marvel/directives', []);
 const template = require('plugins/marvel/directives/welcome_msg/index.html');
-mod.directive('marvelWelcomeMessage', function ($window, reportStats, features) {
+mod.directive('marvelWelcomeMessage', function ($window, $http, reportStats, features) {
   return {
     restrict: 'E',
     scope: {
@@ -38,6 +38,16 @@ mod.directive('marvelWelcomeMessage', function ($window, reportStats, features) 
         };
       }
 
+      scope.hideReport = true;
+      scope.viewReport = function () {
+        const clusterUuid = _.get(scope, 'clusters[0].cluster_uuid');
+        scope.hideReport = !scope.hideReport;
+        if (!scope.statReportData) {
+          $http.get(`/marvel/api/v1/clusters/${clusterUuid}/info`).then(function (response) {
+            scope.statReportData = JSON.stringify(response.data, null, ' ');
+          });
+        }
+      };
     }
   };
 });
