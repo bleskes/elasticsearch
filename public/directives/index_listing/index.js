@@ -26,21 +26,22 @@ define(function (require) {
       return sampleData;
     }
     function makeTdWithPropKey(dataKey, idx) {
-      var value = _.get(this.props, dataKey.key);
+      var rawValue = _.get(this.props, dataKey.key);
       var units;
+      var innerMarkup = null;
       if (dataKey.key === 'name') {
-        value = make.a({ href: `#/index/${value}` }, value);
+        innerMarkup = this.state.exists ? make.a({ href: `#/index/${rawValue}` }, rawValue) : make.div(null, rawValue);
       }
-      if (_.isObject(value) && value.metric) {
-        if (value.metric.units) units = ` ${value.metric.units}`;
-        value = (value.metric.format) ? numeral(value.last).format(value.metric.format) : value.last;
-        if (units) value += units;
+      if (_.isObject(rawValue) && rawValue.metric) {
+        if (rawValue.metric.units) units = ` ${rawValue.metric.units}`;
+        innerMarkup = (rawValue.metric.format) ? numeral(rawValue.last).format(rawValue.metric.format) : rawValue.last;
+        if (units) innerMarkup += units;
       }
       var chartData = _.get(this.props, dataKey.chart_data);
       var hasChart = !!dataKey.chart_data;
       return make.td({key: idx},
         (hasChart ? React.createElement(SparkLines, {data: chartData}) : null),
-        make.div({className: (hasChart ? 'pull-right chart-val' : '')}, value)
+        make.div({className: (hasChart ? 'pull-right chart-val' : '')}, innerMarkup)
       );
     }
     var initialTableOptions = {
@@ -77,14 +78,25 @@ define(function (require) {
     };
     return {
       restrict: 'E',
-      scope: { data: '=' },
+      scope: {
+        data: '=',
+        currCluster: '=',
+        clusters: '='
+      },
       link: function ($scope, $el) {
         var tableRowTemplate = React.createClass({
+          getInitialState: function () { return {exists: !!$scope.indices[this.props.name]}; },
+          componentWillReceiveProps: function (nextProps) {
+            this.setState({exists: !!$scope.indices[nextProps.name]});
+          },
           render: function () {
             var boundTemplateFn = makeTdWithPropKey.bind(this);
             var dataProps = _.pluck(initialTableOptions.columns, 'key');
             var $tdsArr = initialTableOptions.columns.map(boundTemplateFn);
-            return make.tr({key: this.props.name}, $tdsArr);
+            return make.tr({
+              key: this.props.name,
+              className: this.state.exists ? '' : 'disabled'
+            }, $tdsArr);
           }
         });
 
@@ -97,6 +109,10 @@ define(function (require) {
         }), $el[0]);
 
         $scope.$watch('data', (data) => table.setData(data));
+        $scope.$watch('clusters', (newClusters) => {
+          $scope.indices = _.find(newClusters, {cluster_uuid: $scope.currCluster}).shardStats;
+          table.render();
+        });
       }
     };
   });
