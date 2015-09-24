@@ -17,7 +17,6 @@
 
 package org.elasticsearch.watcher.input.search;
 
-import com.google.common.collect.ImmutableSet;
 import org.elasticsearch.ElasticsearchParseException;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.common.Nullable;
@@ -35,8 +34,11 @@ import org.joda.time.DateTimeZone;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+
+import static java.util.Collections.unmodifiableSet;
 
 /**
  *
@@ -205,7 +207,7 @@ public class SearchInput implements Input {
     public static class Builder implements Input.Builder<SearchInput> {
 
         private final SearchRequest request;
-        private final ImmutableSet.Builder<String> extractKeys = ImmutableSet.builder();
+        private final Set<String> extractKeys = new HashSet<>();
         private TimeValue timeout;
         private DateTimeZone dynamicNameTimeZone;
 
@@ -219,7 +221,7 @@ public class SearchInput implements Input {
         }
 
         public Builder extractKeys(String... keys) {
-            extractKeys.add(keys);
+            Collections.addAll(extractKeys, keys);
             return this;
         }
 
@@ -235,8 +237,7 @@ public class SearchInput implements Input {
 
         @Override
         public SearchInput build() {
-            Set<String> keys = extractKeys.build();
-            return new SearchInput(request, keys.isEmpty() ? null : keys, timeout, dynamicNameTimeZone);
+            return new SearchInput(request, extractKeys.isEmpty() ? null : unmodifiableSet(extractKeys), timeout, dynamicNameTimeZone);
         }
     }
 
