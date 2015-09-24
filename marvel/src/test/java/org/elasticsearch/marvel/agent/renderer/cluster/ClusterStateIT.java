@@ -48,6 +48,7 @@ public class ClusterStateIT extends AbstractRendererTestCase {
 
         logger.debug("--> searching for marvel documents of type [{}]", ClusterStateCollector.TYPE);
         SearchResponse response = client().prepareSearch().setTypes(ClusterStateCollector.TYPE).get();
+
         assertThat(response.getHits().getTotalHits(), greaterThan(0L));
 
         logger.debug("--> checking that every document contains the expected fields");
@@ -75,7 +76,7 @@ public class ClusterStateIT extends AbstractRendererTestCase {
         assertAcked(client().admin().indices().preparePutTemplate("marvel").setSource(HttpExporterUtils.loadDefaultTemplate()).execute().actionGet());
 
         logger.debug("--> deleting all marvel indices");
-        cluster().wipeIndices(MarvelSettings.MARVEL_INDICES_PREFIX + "*");
+        deleteMarvelIndices();
 
         logger.debug("--> checking for template existence");
         assertMarvelTemplateExists();

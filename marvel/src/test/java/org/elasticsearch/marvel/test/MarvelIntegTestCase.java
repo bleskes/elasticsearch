@@ -25,6 +25,7 @@ import org.elasticsearch.index.IndexNotFoundException;
 import org.elasticsearch.index.cache.IndexCacheModule;
 import org.elasticsearch.license.plugin.LicensePlugin;
 import org.elasticsearch.marvel.MarvelPlugin;
+import org.elasticsearch.marvel.agent.AgentService;
 import org.elasticsearch.marvel.agent.exporter.local.LocalExporter;
 import org.elasticsearch.marvel.agent.settings.MarvelSettings;
 import org.elasticsearch.plugins.Plugin;
@@ -46,7 +47,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.concurrent.TimeUnit;
 
 import static org.elasticsearch.test.hamcrest.ElasticsearchAssertions.assertAcked;
 
@@ -60,7 +60,8 @@ public abstract class MarvelIntegTestCase extends ESIntegTestCase {
     @Override
     protected TestCluster buildTestCluster(Scope scope, long seed) throws IOException {
         if (shieldEnabled == null) {
-            shieldEnabled = true; // enableShield();
+            shieldEnabled = enableShield();
+            logger.info("--> shield {}", shieldEnabled ? "enabled" : "disabled");
         }
         return super.buildTestCluster(scope, seed);
     }
@@ -75,7 +76,6 @@ public abstract class MarvelIntegTestCase extends ESIntegTestCase {
         if (shieldEnabled) {
             ShieldSettings.apply(builder);
         }
-
         return builder.build();
     }
 
@@ -108,7 +108,19 @@ public abstract class MarvelIntegTestCase extends ESIntegTestCase {
      * Override and returns {@code false} to force running without shield
      */
     protected boolean enableShield() {
-        return randomBoolean();
+        return true; //randomBoolean();
+    }
+
+    protected void stopCollection() {
+        for (AgentService agent : internalCluster().getInstances(AgentService.class)) {
+            agent.stopCollection();
+        }
+    }
+
+    protected void startCollection() {
+        for (AgentService agent : internalCluster().getInstances(AgentService.class)) {
+            agent.startCollection();
+        }
     }
 
     protected void deleteMarvelIndices() {
@@ -127,13 +139,14 @@ public abstract class MarvelIntegTestCase extends ESIntegTestCase {
     }
 
     protected void awaitMarvelDocsCount(Matcher<Long> matcher, String... types) throws Exception {
+        securedFlush();
         securedRefresh();
         assertBusy(new Runnable() {
             @Override
             public void run() {
                 assertMarvelDocsCount(matcher, types);
             }
-        }, 5, TimeUnit.SECONDS);
+        });
     }
 
     protected void assertMarvelDocsCount(Matcher<Long> matcher, String... types) {
@@ -178,6 +191,20 @@ public abstract class MarvelIntegTestCase extends ESIntegTestCase {
             }
         } else {
             refresh();
+        }
+    }
+
+    protected void securedFlush(String... indices) {
+        if (shieldEnabled) {
+            try {
+                flush(indices);
+            } catch (Exception e) {
+                if (!(e instanceof IndexNotFoundException)) {
+                    throw e;
+                }
+            }
+        } else {
+            flush(indices);
         }
     }
 
