@@ -7,43 +7,21 @@ define(function (require) {
   ]);
   // var chrome = require('ui/chrome');
   require('ui/routes')
-  .when('/home', {
-    template: require('plugins/marvel/views/home/home_template.html'),
+  .when('/no-data', {
+    template: require('plugins/marvel/views/no_data/no_data_template.html'),
     resolve: {
-      clusters: function (Promise, marvelClusters, kbnUrl, globalState) {
+      clusters: function (marvelClusters, kbnUrl, Promise, globalState) {
         return marvelClusters.fetch().then(function (clusters) {
-          var license;
-          var cluster;
-          if (!clusters.length) {
-            kbnUrl.changePath('/no-data');
-            return Promise.reject();
-          }
-          if (clusters.length === 1) {
-            cluster = clusters[0];
-            globalState.cluster = cluster.cluster_uuid;
-            license = _.find(cluster.licenses, { feature: 'marvel' });
-            if (license.type === 'lite') {
-              globalState.save();
-              kbnUrl.changePath('/overview');
-              return Promise.reject();
-            }
-          }
+          if (clusters.length) return Promise.reject();
           chrome.setTabs([]);
-          return clusters;
+          return Promise.resolve();
         });
       }
     }
   })
-  .otherwise({ redirectTo: '/no-data' });
+  .otherwise({ redirectTo: '/home' });
 
-  module.controller('home', function ($route, $window, $scope, marvelClusters, timefilter, $timeout) {
-
-    function setKeyForClusters(cluster) {
-      cluster.key = cluster.cluster_uuid;
-      return cluster;
-    }
-
-    $scope.clusters = $route.current.locals.clusters.map(setKeyForClusters);
+  module.controller('noData', function (kbnUrl, $scope, marvelClusters, timefilter, $timeout) {
 
     timefilter.enabled = true;
     if (timefilter.refreshInterval.value === 0) {
@@ -68,7 +46,9 @@ define(function (require) {
 
     function fetch() {
       marvelClusters.fetch().then((clusters) => {
-        $scope.clusters = clusters.map(setKeyForClusters);
+        if (clusters.length) {
+          kbnUrl.changePath('/home');
+        }
         startFetchInterval();
       });
     }
@@ -81,4 +61,5 @@ define(function (require) {
   });
 
 });
+
 
