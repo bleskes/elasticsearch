@@ -5,8 +5,8 @@
       <li
         ng-repeat="cluster in source.clusters"
         ng-class="createClass(cluster)">
-          <a ng-if="cluster.license.type !== 'lite'" ng-click="changeCluster(cluster.cluster_uuid)">{{ cluster.cluster_name}}</a>
-          <div ng-if="cluster.license.type === 'lite'">{{ cluster.cluster_name}}</div>
+          <a ng-if="cluster.license.type !== 'basic'" ng-click="changeCluster(cluster.cluster_uuid)">{{ cluster.cluster_name}}</a>
+          <div ng-if="cluster.license.type === 'basic'">{{ cluster.cluster_name}}</div>
       </li>
     </ul>
   </div>

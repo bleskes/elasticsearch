@@ -29,12 +29,15 @@ marvel-cluster-listing {
     }
   }
 
-  .paginated-table .tbody tr.lite td:first-child {
-    border-color: @esLightGray;
+  .paginated-table .tbody tr td:first-child {
+    border-left: 2px solid @esLightGray;
   }
-  tr.lite > td > a,
-  .paginated-table .table tr.lite > td.license > div.expires,
-  tr.lite > td {
+  .paginated-table .tbody tr td:last-child{
+    border-right: 2px solid @esLightGray;
+  }
+  tr.basic > td > a,
+  .paginated-table .table tr.basic > td.license > div.expires,
+  tr.basic > td {
     color: @esLightGray !important;
   }
 

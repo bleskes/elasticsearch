@@ -65,7 +65,7 @@ define(function (require) {
           var license = _.find(cluster.licenses, { feature: 'marvel' });
           chrome.setTabs(tabs.filter(function (tab) {
             if (tab.id !== 'home') return true;
-            if (license.type !== 'lite') return true;
+            if (license.type !== 'basic') return true;
             return false;
           }));
           return marvel;
