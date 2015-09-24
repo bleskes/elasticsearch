@@ -44,7 +44,7 @@ public class ClusterStateIT extends AbstractRendererTestCase {
 
     @Test
     public void testClusterState() throws Exception {
-        waitForMarvelDocs(ClusterStateCollector.TYPE);
+        awaitMarvelDocsCount(greaterThan(0L), ClusterStateCollector.TYPE);
 
         logger.debug("--> searching for marvel documents of type [{}]", ClusterStateCollector.TYPE);
         SearchResponse response = client().prepareSearch().setTypes(ClusterStateCollector.TYPE).get();
@@ -79,7 +79,7 @@ public class ClusterStateIT extends AbstractRendererTestCase {
 
         logger.debug("--> checking for template existence");
         assertMarvelTemplateExists();
-        waitForMarvelDocs(ClusterStateCollector.TYPE);
+        awaitMarvelDocsCount(greaterThan(0L), ClusterStateCollector.TYPE);
 
         logger.debug("--> searching for marvel documents of type [{}]", ClusterStateCollector.TYPE);
         SearchResponse response = client().prepareSearch().setTypes(ClusterStateCollector.TYPE).get();
