@@ -8,13 +8,13 @@
       class="button-dark">Hide</button>
   </div>
   <h3>Welcome to Marvel Beta 1</h3>
-  <div>
-    <div>
+  <div class="welcomeCols">
+    <div class="welcomeCol">
       <p>Thanks for downloading Marvel Beta 1.<br>
       We are hard at work building a smart Elasticsearch monitor with actionable insights for you.</p>
       <p>If You have any questions, ideas or concerns please let us know. <a href="mailto:feedback@elastic.co">Contact Us</a></p>
     </div>
-    <div>
+    <div class="welcomeCol">
       Coming Soon:
       <ul>
         <li>Switch easily between Clusters</li>
@@ -25,13 +25,17 @@
     </div>
   </div>
   <div ng-if="reportStats">
-    <p>
-      <input type="checkbox" id="allowReportCheck"
-        ng-model="allowReport" ng-change="toggleAllowReport(this)">
-      <label for="allowReportCheck">
-        Allow usage usage statistic reports to sent to Elastic (you can also
-        set this globally in the marvel.yml config).
-      </label>
+    <p class="shareYourStats">
+      Sharing your cluster statistics with us helps us improve. Your data is never shared with anyone.
+      Curious what we see? <a ng-href ng-click="viewReport()">View report here</a>.
+      <span ng-switch="allowReport">
+        <span ng-switch-when="true">
+          Not interested? <a ng-click="toggleAllowReport()">Opt out here</a>.
+        </span>
+        <span ng-switch-default>
+          <a ng-click="toggleAllowReport()">Opt in here</a>.
+        </span>
+      </span>
     </p>
   </div>
 </div>

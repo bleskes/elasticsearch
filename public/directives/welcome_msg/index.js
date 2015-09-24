@@ -32,9 +32,9 @@ mod.directive('marvelWelcomeMessage', function ($window, reportStats, features) 
       scope.reportStats = reportStats;
       if (reportStats) {
         scope.allowReport = features.isEnabled('report', true);
-        scope.toggleAllowReport = function (data) {
-          features.update('report', data.allowReport);
-          scope.allowReport = data.allowReport;
+        scope.toggleAllowReport = function () {
+          features.update('report', !scope.allowReport);
+          scope.allowReport = !scope.allowReport;
         };
       }
 
