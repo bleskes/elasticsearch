@@ -32,7 +32,6 @@ import org.elasticsearch.watcher.actions.Action;
 import org.elasticsearch.watcher.actions.ExecutableAction;
 import org.elasticsearch.watcher.execution.WatchExecutionContext;
 import org.elasticsearch.watcher.support.ArrayObjectIterator;
-import org.elasticsearch.watcher.support.DynamicIndexName;
 import org.elasticsearch.watcher.support.WatcherDateTimeUtils;
 import org.elasticsearch.watcher.support.init.proxy.ClientProxy;
 import org.elasticsearch.watcher.support.xcontent.XContentSource;
@@ -49,17 +48,11 @@ public class ExecutableIndexAction extends ExecutableAction<IndexAction> {
 
     private final ClientProxy client;
     private final TimeValue timeout;
-    private final DynamicIndexName indexName;
 
-    public ExecutableIndexAction(IndexAction action, ESLogger logger, ClientProxy client, @Nullable TimeValue defaultTimeout, DynamicIndexName.Parser indexNameParser) {
+    public ExecutableIndexAction(IndexAction action, ESLogger logger, ClientProxy client, @Nullable TimeValue defaultTimeout) {
         super(action, logger);
         this.client = client;
         this.timeout = action.timeout != null ? action.timeout : defaultTimeout;
-        this.indexName = indexNameParser.parse(action.index, action.dynamicNameTimeZone);
-    }
-
-    DynamicIndexName indexName() {
-        return indexName;
     }
 
     @Override
@@ -83,7 +76,7 @@ public class ExecutableIndexAction extends ExecutableAction<IndexAction> {
 
         IndexRequest indexRequest = new IndexRequest();
 
-        indexRequest.index(indexName.name(ctx.executionTime()));
+        indexRequest.index(action.index);
         indexRequest.type(action.docType);
 
         if (action.executionTimeField != null && !TimestampFieldMapper.NAME.equals(action.executionTimeField)) {
@@ -116,7 +109,7 @@ public class ExecutableIndexAction extends ExecutableAction<IndexAction> {
             }
             Map<String, Object> doc = (Map<String, Object>) item;
             IndexRequest indexRequest = new IndexRequest();
-            indexRequest.index(indexName.name(ctx.executionTime()));
+            indexRequest.index(action.index);
             indexRequest.type(action.docType);
             if (action.executionTimeField != null && !TimestampFieldMapper.NAME.equals(action.executionTimeField)) {
                 if (!(doc instanceof HashMap)) {
