@@ -27,7 +27,7 @@ import java.util.Collection;
  */
 public abstract class ExportBulk {
 
-    private final String name;
+    protected final String name;
 
     public ExportBulk(String name) {
         this.name = name;
@@ -35,6 +35,11 @@ public abstract class ExportBulk {
 
     public ExportBulk add(MarvelDoc... docs) throws Exception {
         return add(Arrays.asList(docs));
+    }
+
+    @Override
+    public String toString() {
+        return name;
     }
 
     public abstract ExportBulk add(Collection<MarvelDoc> docs) throws Exception;
