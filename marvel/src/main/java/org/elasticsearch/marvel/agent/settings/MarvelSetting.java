@@ -18,7 +18,6 @@
 package org.elasticsearch.marvel.agent.settings;
 
 import org.elasticsearch.ElasticsearchParseException;
-import org.elasticsearch.cluster.settings.Validator;
 import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.TimeValue;
@@ -29,15 +28,15 @@ public abstract class MarvelSetting<V> {
 
     private final String name;
     private final String description;
-    private final boolean dynamic;
 
+    private final V defaultValue;
     private volatile V value;
 
-    MarvelSetting(String name, String description, V defaultValue, boolean dynamic) {
+    MarvelSetting(String name, String description, V defaultValue) {
         this.name = name;
         this.description = description;
+        this.defaultValue = defaultValue;
         this.value = defaultValue;
-        this.dynamic = dynamic;
     }
 
     abstract boolean onRefresh(Settings settings);
@@ -54,6 +53,10 @@ public abstract class MarvelSetting<V> {
         return value;
     }
 
+    public V getDefaultValue() {
+        return defaultValue;
+    }
+
     public synchronized void setValue(V value) {
         this.value = value;
     }
@@ -62,47 +65,35 @@ public abstract class MarvelSetting<V> {
         return getValue() != null ? getValue().toString() : "null";
     }
 
-    public boolean isDynamic() {
-        return dynamic;
-    }
-
-    public String dynamicSettingName() {
-        return getName();
-    }
-
-    public Validator dynamicValidator() {
-        return Validator.EMPTY;
-    }
-
     @Override
     public String toString() {
         return "marvel setting [" + getName() + " : " + getValueAsString() + "]";
     }
 
-    public static BooleanSetting booleanSetting(String name, Boolean defaultValue, String description, boolean dynamic) {
-        return new BooleanSetting(name, description, defaultValue, dynamic);
+    public static BooleanSetting booleanSetting(String name, Boolean defaultValue, String description) {
+        return new BooleanSetting(name, description, defaultValue);
     }
 
-    public static StringSetting stringSetting(String name, String defaultValue, String description, boolean dynamic) {
-        return new StringSetting(name, description, defaultValue, dynamic);
+    public static StringSetting stringSetting(String name, String defaultValue, String description) {
+        return new StringSetting(name, description, defaultValue);
     }
 
-    public static StringArraySetting arraySetting(String name, String[] defaultValue, String description, boolean dynamic) {
-        return new StringArraySetting(name, description, defaultValue, dynamic);
+    public static StringArraySetting arraySetting(String name, String[] defaultValue, String description) {
+        return new StringArraySetting(name, description, defaultValue);
     }
 
-    public static TimeValueSetting timeSetting(String name, TimeValue defaultValue, String description, boolean dynamic) {
-        return new TimeValueSetting(name, description, defaultValue, dynamic);
+    public static TimeValueSetting timeSetting(String name, TimeValue defaultValue, String description) {
+        return new TimeValueSetting(name, description, defaultValue);
     }
 
-    public static TimeoutValueSetting timeoutSetting(String name, TimeValue defaultTimeoutValue, String description, boolean dynamic) {
-        return new TimeoutValueSetting(name, description, defaultTimeoutValue, dynamic);
+    public static TimeoutValueSetting timeoutSetting(String name, TimeValue defaultTimeoutValue, String description) {
+        return new TimeoutValueSetting(name, description, defaultTimeoutValue);
     }
 
     static class BooleanSetting extends MarvelSetting<Boolean> {
 
-        BooleanSetting(String name, String description, Boolean defaultValue, boolean dynamic) {
-            super(name, description, defaultValue, dynamic);
+        BooleanSetting(String name, String description, Boolean defaultValue) {
+            super(name, description, defaultValue);
         }
 
         @Override
@@ -114,17 +105,12 @@ public abstract class MarvelSetting<V> {
             }
             return false;
         }
-
-        @Override
-        public Validator dynamicValidator() {
-            return Validator.BOOLEAN;
-        }
     }
 
     static class StringSetting extends MarvelSetting<String> {
 
-        StringSetting(String name, String description, String defaultValue, boolean dynamic) {
-            super(name, description, defaultValue, dynamic);
+        StringSetting(String name, String description, String defaultValue) {
+            super(name, description, defaultValue);
         }
 
         @Override
@@ -140,8 +126,8 @@ public abstract class MarvelSetting<V> {
 
     static class StringArraySetting extends MarvelSetting<String[]> {
 
-        StringArraySetting(String name, String description, String[] defaultValue, boolean dynamic) {
-            super(name, description, defaultValue, dynamic);
+        StringArraySetting(String name, String description, String[] defaultValue) {
+            super(name, description, defaultValue);
         }
 
         @Override
@@ -155,12 +141,6 @@ public abstract class MarvelSetting<V> {
         }
 
         @Override
-        public String dynamicSettingName() {
-            // array settings
-            return super.dynamicSettingName() + ".*";
-        }
-
-        @Override
         public String getValueAsString() {
             return Strings.arrayToCommaDelimitedString(getValue());
         }
@@ -168,8 +148,8 @@ public abstract class MarvelSetting<V> {
 
     static class TimeValueSetting extends MarvelSetting<TimeValue> {
 
-        TimeValueSetting(String name, String description, TimeValue defaultValue, boolean dynamic) {
-            super(name, description, defaultValue, dynamic);
+        TimeValueSetting(String name, String description, TimeValue defaultValue) {
+            super(name, description, defaultValue);
         }
 
         @Override
@@ -196,22 +176,12 @@ public abstract class MarvelSetting<V> {
             }
             return null;
         }
-
-        @Override
-        public Validator dynamicValidator() {
-            return Validator.TIME;
-        }
     }
 
     static class TimeoutValueSetting extends TimeValueSetting {
 
-        TimeoutValueSetting(String name, String description, TimeValue defaultValue, boolean dynamic) {
-            super(name, description, defaultValue, dynamic);
-        }
-
-        @Override
-        public Validator dynamicValidator() {
-            return Validator.TIMEOUT;
+        TimeoutValueSetting(String name, String description, TimeValue defaultValue) {
+            super(name, description, defaultValue);
         }
     }
 }
