@@ -17,7 +17,6 @@
 
 package org.elasticsearch.shield.audit;
 
-import com.google.common.collect.ImmutableSet;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.shield.User;
@@ -30,8 +29,10 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.net.InetAddress;
+import java.util.HashSet;
 import java.util.Set;
 
+import static java.util.Collections.unmodifiableSet;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
@@ -49,11 +50,11 @@ public class AuditTrailServiceTests extends ESTestCase {
 
     @Before
     public void init() throws Exception {
-        ImmutableSet.Builder<AuditTrail> builder = ImmutableSet.builder();
+        Set<AuditTrail> auditTrailsBuilder = new HashSet<>();
         for (int i = 0; i < randomIntBetween(1, 4); i++) {
-            builder.add(mock(AuditTrail.class));
+            auditTrailsBuilder.add(mock(AuditTrail.class));
         }
-        auditTrails = builder.build();
+        auditTrails = unmodifiableSet(auditTrailsBuilder);
         service = new AuditTrailService(Settings.EMPTY, auditTrails);
         token = mock(AuthenticationToken.class);
         message = mock(TransportMessage.class);

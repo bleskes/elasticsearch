@@ -17,7 +17,6 @@
 
 package org.elasticsearch.watcher.trigger.schedule.support;
 
-import com.google.common.collect.ImmutableSet;
 import org.elasticsearch.ElasticsearchParseException;
 import org.elasticsearch.common.ParseFieldMatcher;
 import org.elasticsearch.common.Strings;
@@ -31,6 +30,7 @@ import java.util.HashSet;
 import java.util.Locale;
 import java.util.Set;
 
+import static org.elasticsearch.common.util.set.Sets.newHashSet;
 import static org.elasticsearch.watcher.support.Exceptions.illegalArgument;
 import static org.elasticsearch.watcher.support.Strings.join;
 
@@ -99,7 +99,7 @@ public class MonthTimes implements Times {
 
         if (!Arrays.equals(days, that.days)) return false;
         // order doesn't matter
-        if (!ImmutableSet.copyOf(times).equals(ImmutableSet.copyOf(that.times))) return false;
+        if (!newHashSet(times).equals(newHashSet(that.times))) return false;
 
         return true;
     }
