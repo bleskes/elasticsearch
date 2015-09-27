@@ -52,6 +52,11 @@ public abstract class AbstractCollector<T> extends AbstractLifecycleComponent<T>
     }
 
     @Override
+    public String toString() {
+        return name;
+    }
+
+    @Override
     public T start() {
         logger.debug("starting collector [{}]", name());
         return super.start();
@@ -64,8 +69,12 @@ public abstract class AbstractCollector<T> extends AbstractLifecycleComponent<T>
     /**
      * Indicates if the current collector is allowed to collect data
      */
-    protected boolean canCollect() {
-        return licenseService.enabled() || licenseService.inExpirationGracePeriod();
+    protected boolean shouldCollect() {
+        boolean validLicense = licenseService.enabled() || licenseService.inExpirationGracePeriod();
+        if (!validLicense) {
+            logger.trace("collector [{}] can not collect data due to invalid license", name());
+        }
+        return validLicense;
     }
 
     protected boolean isLocalNodeMaster() {
@@ -75,11 +84,10 @@ public abstract class AbstractCollector<T> extends AbstractLifecycleComponent<T>
     @Override
     public Collection<MarvelDoc> collect() {
         try {
-            if (canCollect()) {
+            if (shouldCollect()) {
                 logger.trace("collector [{}] - collecting data...", name());
                 return doCollect();
             }
-            logger.trace("collector [{}] can not collect data", name());
         } catch (ElasticsearchTimeoutException e) {
             logger.error("collector [{}] timed out when collecting data");
         } catch (Exception e) {

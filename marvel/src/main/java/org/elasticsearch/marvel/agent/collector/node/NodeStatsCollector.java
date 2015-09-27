@@ -71,8 +71,8 @@ public class NodeStatsCollector extends AbstractCollector<NodeStatsCollector> {
     }
 
     @Override
-    protected boolean canCollect() {
-        return super.canCollect() && nodeEnvironment.hasNodeFile();
+    protected boolean shouldCollect() {
+        return super.shouldCollect() && nodeEnvironment.hasNodeFile();
     }
 
     @Override
