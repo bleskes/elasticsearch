@@ -129,6 +129,20 @@ public class JobDetailsTest
     }
 
     @Test
+    public void testEquals_GivenSameReference()
+    {
+        JobDetails jobDetails = new JobDetails();
+        assertTrue(jobDetails.equals(jobDetails));
+    }
+
+    @Test
+    public void testEquals_GivenDifferentClass()
+    {
+        JobDetails jobDetails = new JobDetails();
+        assertFalse(jobDetails.equals("a string"));
+    }
+
+    @Test
     public void testEquals_GivenEqualJobDetails()
     {
         JobConfiguration jobConfiguration = new JobConfiguration();
@@ -165,5 +179,24 @@ public class JobDetailsTest
         jobDetails2.setCreateTime(createTime);
 
         assertEquals(jobDetails1.hashCode(), jobDetails2.hashCode());
+    }
+
+    @Test
+    public void testToString()
+    {
+        Date createTime = new Date(1443410000);
+        Date lastDataTime = new Date(1443420000);
+
+        JobDetails jobDetails = new JobDetails();
+        jobDetails.setId("foo");
+        jobDetails.setDescription("blah blah");
+        jobDetails.setStatus(JobStatus.RUNNING);
+        jobDetails.setCreateTime(createTime);
+        jobDetails.setLastDataTime(lastDataTime);
+
+        String expected = "{id:foo description:blah blah status:RUNNING createTime:" + createTime
+                + " lastDataTime:" + lastDataTime + "}";
+
+        assertEquals(expected, jobDetails.toString());
     }
 }
