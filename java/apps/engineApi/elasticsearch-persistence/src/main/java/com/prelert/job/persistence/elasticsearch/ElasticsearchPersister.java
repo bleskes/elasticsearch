@@ -147,7 +147,7 @@ public class ElasticsearchPersister implements JobResultsPersister
                 deleteRecords(bucket);
             }
 
-            if (bucket.getInfluencers() != null && bucket.getInfluencers().size() > 0)
+            if (bucket.getInfluencers() != null && bucket.getInfluencers().isEmpty() == false)
             {
                 BulkRequestBuilder addInfluencersRequest = m_Client.prepareBulk();
 
