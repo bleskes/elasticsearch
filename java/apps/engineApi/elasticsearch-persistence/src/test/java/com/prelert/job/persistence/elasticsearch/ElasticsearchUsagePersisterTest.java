@@ -86,7 +86,7 @@ public class ElasticsearchUsagePersisterTest
         verify(updateRequestBuilder, times(2)).addScriptParam("fieldCount", 30L);
         verify(updateRequestBuilder, times(2)).addScriptParam("recordCount", 1L);
         verify(updateRequestBuilder, times(2)).setUpsert(upsertsCaptor.capture());
-        verify(updateRequestBuilder, times(2)).setRetryOnConflict(3);
+        verify(updateRequestBuilder, times(2)).setRetryOnConflict(5);
         verify(updateRequestBuilder, times(2)).get();
 
         assertEquals(Arrays.asList("prelert-usage", "job1"), indexCaptor.getAllValues());
