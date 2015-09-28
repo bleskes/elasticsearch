@@ -34,6 +34,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
+import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.script.ScriptService;
 
@@ -104,12 +105,21 @@ public class ElasticsearchUsagePersister implements UsagePersister
                 " type " + Usage.TYPE + " in index " + index +
                 " by running Groovy script update-usage with arguments bytes=" + additionalBytes +
                 " fieldCount=" + additionalFields + " recordCount=" + additionalRecords);
-        m_Client.prepareUpdate(index, Usage.TYPE, id)
-                .setScript("update-usage", ScriptService.ScriptType.FILE)
-                .addScriptParam("bytes", additionalBytes)
-                .addScriptParam("fieldCount", additionalFields)
-                .addScriptParam("recordCount", additionalRecords)
-                .setUpsert(m_UpsertMap)
-                .setRetryOnConflict(3).get();
+
+        try
+        {
+            m_Client.prepareUpdate(index, Usage.TYPE, id)
+                    .setScript("update-usage", ScriptService.ScriptType.FILE)
+                    .addScriptParam("bytes", additionalBytes)
+                    .addScriptParam("fieldCount", additionalFields)
+                    .addScriptParam("recordCount", additionalRecords)
+                    .setUpsert(m_UpsertMap)
+                    .setRetryOnConflict(5).get();
+        }
+        catch (ElasticsearchException e)
+        {
+            m_Logger.error("Failed to update the Usage document " + id +
+                            " in index " + index);
+        }
     }
 }
