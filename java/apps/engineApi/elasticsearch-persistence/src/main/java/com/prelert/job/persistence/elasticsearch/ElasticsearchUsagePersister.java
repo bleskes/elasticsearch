@@ -34,8 +34,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
-import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.client.Client;
+import org.elasticsearch.index.engine.VersionConflictEngineException;
 import org.elasticsearch.script.ScriptService;
 
 import com.prelert.job.persistence.UsagePersister;
@@ -116,7 +116,7 @@ public class ElasticsearchUsagePersister implements UsagePersister
                     .setUpsert(m_UpsertMap)
                     .setRetryOnConflict(5).get();
         }
-        catch (ElasticsearchException e)
+        catch (VersionConflictEngineException e)
         {
             m_Logger.error("Failed to update the Usage document " + id +
                             " in index " + index);
