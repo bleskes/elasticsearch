@@ -223,6 +223,12 @@ public final class JobConfigurationVerifier
 
     private static void checkValidId(String jobId) throws JobConfigurationException
     {
+        checkValidIdLength(jobId);
+        checkIdContainsValidCharacters(jobId);
+    }
+
+    private static void checkValidIdLength(String jobId) throws JobConfigurationException
+    {
         if (jobId.length() > JobConfiguration.MAX_JOB_ID_LENGTH)
         {
             throw new JobConfigurationException(
@@ -230,7 +236,11 @@ public final class JobConfigurationVerifier
                             JobConfiguration.MAX_JOB_ID_LENGTH),
                             ErrorCodes.JOB_ID_TOO_LONG);
         }
+    }
 
+    private static void checkIdContainsValidCharacters(String jobId)
+            throws JobConfigurationException
+    {
         for (Character ch : JobConfiguration.PROHIBITED_JOB_ID_CHARACTERS_SET)
         {
             if (jobId.indexOf(ch) >= 0)
