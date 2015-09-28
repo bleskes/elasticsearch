@@ -199,18 +199,26 @@ public final class JobConfigurationVerifier
     private static void checkAtLeastOneTransformIfDataFormatIsSingleLine(JobConfiguration config)
     throws JobConfigurationException
     {
-        if (config.getDataDescription() != null && config.getDataDescription().getFormat() == DataFormat.SINGLE_LINE)
+        if (isSingleLineFormat(config) && hasNoTransforms(config))
         {
-            if (config.getTransforms() == null || config.getTransforms().isEmpty())
-            {
-                String msg = Messages.getMessage(
-                                Messages.JOB_CONFIG_DATAFORMAT_REQUIRES_TRANSFORM,
-                                DataFormat.SINGLE_LINE);
+            String msg = Messages.getMessage(
+                            Messages.JOB_CONFIG_DATAFORMAT_REQUIRES_TRANSFORM,
+                            DataFormat.SINGLE_LINE);
 
-                throw new JobConfigurationException(msg,
-                        ErrorCodes.DATA_FORMAT_IS_SINGLE_LINE_BUT_NO_TRANSFORMS);
-            }
+            throw new JobConfigurationException(msg,
+                    ErrorCodes.DATA_FORMAT_IS_SINGLE_LINE_BUT_NO_TRANSFORMS);
         }
+    }
+
+    private static boolean isSingleLineFormat(JobConfiguration config)
+    {
+        return config.getDataDescription() != null
+                && config.getDataDescription().getFormat() == DataFormat.SINGLE_LINE;
+    }
+
+    private static boolean hasNoTransforms(JobConfiguration config)
+    {
+        return config.getTransforms() == null || config.getTransforms().isEmpty();
     }
 
     private static void checkValidId(String jobId) throws JobConfigurationException
