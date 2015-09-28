@@ -176,16 +176,13 @@ public final class JobConfigurationVerifier
                 }
             }
 
-            if (isSummarised)
+            if (isSummarised && tc.getOutputs().contains(
+                    config.getAnalysisConfig().getSummaryCountFieldName()))
             {
-                if (tc.getOutputs().contains(config.getAnalysisConfig().getSummaryCountFieldName()))
-                {
-                    String msg = Messages.getMessage(
-                            Messages.JOB_CONFIG_TRANSFORM_DUPLICATED_OUTPUT_NAME,
-                            tc.type().prettyName());
-                    throw new JobConfigurationException(msg, ErrorCodes.DUPLICATED_TRANSFORM_OUTPUT_NAME);
-
-                }
+                String msg = Messages.getMessage(
+                        Messages.JOB_CONFIG_TRANSFORM_DUPLICATED_OUTPUT_NAME,
+                        tc.type().prettyName());
+                throw new JobConfigurationException(msg, ErrorCodes.DUPLICATED_TRANSFORM_OUTPUT_NAME);
             }
 
             if (!usesAnOutput)
@@ -216,8 +213,7 @@ public final class JobConfigurationVerifier
         }
     }
 
-    private static void checkValidId(String jobId)
-    throws JobConfigurationException
+    private static void checkValidId(String jobId) throws JobConfigurationException
     {
         if (jobId.length() > JobConfiguration.MAX_JOB_ID_LENGTH)
         {
