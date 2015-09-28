@@ -36,30 +36,32 @@ import com.prelert.job.persistence.JobDataPersister;
  */
 public class NoneJobDataPersister extends JobDataPersister
 {
-	/**
-	 * No point setting up the field mappings here
-	 */
-	@Override
-	public void setFieldMappings(List<String> fields,
-			List<String> byFields, List<String> overFields,
-			List<String> partitionFields, Map<String, Integer> fieldMap)
+    /**
+     * No point setting up the field mappings here
+     */
+    @Override
+    public void setFieldMappings(List<String> fields,
+            List<String> byFields, List<String> overFields,
+            List<String> partitionFields, Map<String, Integer> fieldMap)
     {
-
+        // Do nothing
     }
 
-	@Override
-	public void persistRecord(long epoch, String[] record)
-	{
-	}
+    @Override
+    public void persistRecord(long epoch, String[] record)
+    {
+     // Do nothing
+    }
 
-	@Override
-	public void flushRecords()
-	{
-	}
+    @Override
+    public void flushRecords()
+    {
+     // Do nothing
+    }
 
-	@Override
-	public boolean deleteData()
-	{
-		return false;
-	}
+    @Override
+    public boolean deleteData()
+    {
+        return false;
+    }
 }
