@@ -241,19 +241,15 @@ public final class JobConfigurationVerifier
     private static void checkIdContainsValidCharacters(String jobId)
             throws JobConfigurationException
     {
-        for (Character ch : JobConfiguration.PROHIBITED_JOB_ID_CHARACTERS_SET)
+        for (char c : jobId.toCharArray())
         {
-            if (jobId.indexOf(ch) >= 0)
+            if (JobConfiguration.PROHIBITED_JOB_ID_CHARACTERS_SET.contains(c))
             {
                 throw new JobConfigurationException(
                         Messages.getMessage(Messages.JOB_CONFIG_INVALID_JOBID_CHARS,
-                                ch, JobConfiguration.PROHIBITED_JOB_ID_CHARACTERS),
+                                c, JobConfiguration.PROHIBITED_JOB_ID_CHARACTERS),
                         ErrorCodes.PROHIBITIED_CHARACTER_IN_JOB_ID);
             }
-        }
-
-        for (char c : jobId.toCharArray())
-        {
             if (Character.isUpperCase(c))
             {
                 throw new JobConfigurationException(
