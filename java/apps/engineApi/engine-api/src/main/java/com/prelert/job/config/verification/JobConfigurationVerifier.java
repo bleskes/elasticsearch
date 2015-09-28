@@ -85,20 +85,7 @@ public final class JobConfigurationVerifier
             DataDescriptionVerifier.verify(config.getDataDescription());
         }
 
-        if (config.getTransforms() != null)
-        {
-            try
-            {
-                TransformConfigsVerifier.verify(config.getTransforms());
-            }
-            catch (TransformConfigurationException e)
-            {
-                throw new JobConfigurationException(e.getMessage(), e.getErrorCode());
-            }
-            checkTransformOutputIsUsed(config);
-        }
-
-        checkAtLeastOneTransformIfDataFormatIsSingleLine(config);
+        checkValidTransforms(config);
 
         if (config.getTimeout() != null && config.getTimeout() < 0)
         {
@@ -130,6 +117,25 @@ public final class JobConfigurationVerifier
                     Messages.getMessage(Messages.JOB_CONFIG_MISSING_ANALYSISCONFIG),
                     ErrorCodes.INCOMPLETE_CONFIGURATION);
         }
+    }
+
+    private static void checkValidTransforms(JobConfiguration config)
+            throws JobConfigurationException
+    {
+        if (config.getTransforms() != null)
+        {
+            try
+            {
+                TransformConfigsVerifier.verify(config.getTransforms());
+            }
+            catch (TransformConfigurationException e)
+            {
+                throw new JobConfigurationException(e.getMessage(), e.getErrorCode());
+            }
+            checkTransformOutputIsUsed(config);
+        }
+
+        checkAtLeastOneTransformIfDataFormatIsSingleLine(config);
     }
 
     /**
