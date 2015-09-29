@@ -119,7 +119,7 @@ public class ElasticsearchUsagePersister implements UsagePersister
         catch (VersionConflictEngineException e)
         {
             m_Logger.error("Failed to update the Usage document " + id +
-                            " in index " + index);
+                            " in index " + index, e);
         }
     }
 }
