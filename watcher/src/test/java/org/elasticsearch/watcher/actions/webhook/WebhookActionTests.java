@@ -18,6 +18,8 @@
 package org.elasticsearch.watcher.actions.webhook;
 
 import com.google.common.collect.ImmutableMap;
+
+import org.apache.lucene.util.LuceneTestCase.AwaitsFix;
 import org.elasticsearch.ElasticsearchParseException;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.ToXContent;
@@ -52,6 +54,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import javax.mail.internet.AddressException;
+
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -69,6 +72,7 @@ import static org.mockito.Mockito.*;
 
 /**
  */
+@AwaitsFix(bugUrl = "https://github.com/elastic/x-plugins/issues/724")
 public class WebhookActionTests extends ESTestCase {
 
     static final String TEST_HOST = "test.com";

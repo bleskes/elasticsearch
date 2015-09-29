@@ -17,6 +17,7 @@
 
 package org.elasticsearch.watcher.condition.script;
 
+import org.apache.lucene.util.LuceneTestCase.AwaitsFix;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.ShardSearchFailure;
 import org.elasticsearch.common.text.StringText;
@@ -44,6 +45,7 @@ import static org.mockito.Mockito.when;
 
 /**
  */
+@AwaitsFix(bugUrl = "https://github.com/elastic/x-plugins/issues/724")
 public class ScriptConditionSearchTests extends AbstractWatcherIntegrationTestCase {
 
     private ThreadPool tp = null;

@@ -18,6 +18,7 @@
 
 package org.elasticsearch.watcher.test.integration;
 
+import org.apache.lucene.util.LuceneTestCase.AwaitsFix;
 import org.elasticsearch.action.WriteConsistencyLevel;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
@@ -62,6 +63,7 @@ import static org.hamcrest.core.IsEqual.equalTo;
 /**
  */
 @TestLogging("watcher:TRACE")
+@AwaitsFix(bugUrl = "https://github.com/elastic/x-plugins/issues/724")
 public class BootStrapTests extends AbstractWatcherIntegrationTestCase {
 
     @Override

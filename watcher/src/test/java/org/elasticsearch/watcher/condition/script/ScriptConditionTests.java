@@ -19,6 +19,8 @@ package org.elasticsearch.watcher.condition.script;
 
 
 import com.google.common.collect.ImmutableMap;
+
+import org.apache.lucene.util.LuceneTestCase.AwaitsFix;
 import org.elasticsearch.ElasticsearchParseException;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.ShardSearchFailure;
@@ -53,6 +55,7 @@ import static org.hamcrest.Matchers.*;
 
 /**
  */
+@AwaitsFix(bugUrl = "https://github.com/elastic/x-plugins/issues/724")
 public class ScriptConditionTests extends ESTestCase {
 
     ThreadPool tp = null;

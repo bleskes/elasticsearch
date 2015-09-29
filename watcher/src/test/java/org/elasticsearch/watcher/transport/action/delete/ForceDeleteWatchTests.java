@@ -17,6 +17,7 @@
 
 package org.elasticsearch.watcher.transport.action.delete;
 
+import org.apache.lucene.util.LuceneTestCase.AwaitsFix;
 import org.elasticsearch.test.junit.annotations.TestLogging;
 import org.elasticsearch.watcher.support.Script;
 import org.elasticsearch.watcher.test.AbstractWatcherIntegrationTestCase;
@@ -35,6 +36,7 @@ import static org.hamcrest.Matchers.is;
 
 /**
  */
+@AwaitsFix(bugUrl = "https://github.com/elastic/x-plugins/issues/724")
 public class ForceDeleteWatchTests extends AbstractWatcherIntegrationTestCase {
 
     //Disable time warping for the force delete long running watch test
