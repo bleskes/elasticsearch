@@ -28,20 +28,13 @@
 package com.prelert.job.process.normaliser;
 
 
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
 import org.apache.log4j.Logger;
 
-import com.prelert.job.AnalysisConfig;
-import com.prelert.job.JobDetails;
-import com.prelert.job.UnknownJobException;
 import com.prelert.job.persistence.JobProvider;
-import com.prelert.job.persistence.QueryPage;
-import com.prelert.job.process.exceptions.NativeProcessRunException;
 import com.prelert.job.process.output.parsing.Renormaliser;
 import com.prelert.job.quantiles.Quantiles;
 import com.prelert.job.results.AnomalyRecord;
@@ -61,13 +54,9 @@ import com.prelert.job.results.Bucket;
  */
 public class BlockingQueueRenormaliser implements Renormaliser
 {
-    private String m_JobId;
-    private JobProvider m_JobProvider;
-
-    /**
-     * This read from the data store on first access
-     */
-    private int m_BucketSpan;
+    private final String m_JobId;
+    private final JobProvider m_JobProvider;
+    private final ScoresUpdater m_ScoresUpdater;
 
     /**
      * Queue of updated quantiles to be used for renormalisation
@@ -86,11 +75,6 @@ public class BlockingQueueRenormaliser implements Renormaliser
     private volatile boolean m_IsNormalisationInProgress;
 
     /**
-     * Maximum number of buckets to renormalise at a time
-     */
-    private static final int MAX_BUCKETS_PER_PAGE = 100;
-
-    /**
      * Create with the job provider client. Data will be written to
      * the index <code>jobId</code>
      *
@@ -101,7 +85,8 @@ public class BlockingQueueRenormaliser implements Renormaliser
     {
         m_JobId = jobId;
         m_JobProvider = jobProvider;
-        m_BucketSpan = 0;
+        m_ScoresUpdater = new ScoresUpdater(jobId, jobProvider,
+                (someJobId, logger) -> new Normaliser(jobId, new NormaliserProcessFactory(), logger));
 
         // Queue limit of 50 means that renormalisation will eventually block
         // the main data processing of the job if it gets too far ahead
@@ -110,7 +95,6 @@ public class BlockingQueueRenormaliser implements Renormaliser
             m_JobId + "-Renormalizer");
         m_QuantileUpdateThread.start();
     }
-
 
     /**
      * Shut down the worker thread
@@ -176,153 +160,6 @@ public class BlockingQueueRenormaliser implements Renormaliser
             logger.error("Cannot renormalise for system changes " +
                         "- update thread no longer running");
         }
-    }
-
-    /**
-     * Update the anomaly score field on all previously persisted buckets
-     * and all contained records
-     * @param quantilesState
-     * @param endBucketEpochMs
-     * @param logger
-     */
-    private void updateScores(String quantilesState, long endBucketEpochMs, Logger logger)
-    {
-        try
-        {
-            Normaliser normaliser = new Normaliser(m_JobId, new NormaliserProcessFactory(), logger);
-            int[] counts = { 0, 0 };
-            int skip = 0;
-            QueryPage<Bucket> page = m_JobProvider.buckets(m_JobId, true, false,
-                        skip, MAX_BUCKETS_PER_PAGE, 0, endBucketEpochMs, 0.0, 0.0);
-
-            while (page.hitCount() > skip)
-            {
-                List<Bucket> buckets = page.queryResults();
-                if (buckets == null)
-                {
-                    logger.warn("No buckets to renormalise for job " +
-                                m_JobId + " with skip " + skip + " and hit count " +
-                                page.hitCount());
-                    break;
-                }
-
-                List<Bucket> normalisedBuckets =
-                        normaliser.normalise(getJobBucketSpan(logger), buckets, quantilesState);
-
-                for (Bucket bucket : normalisedBuckets)
-                {
-                    updateSingleBucket(bucket, logger, counts);
-                }
-
-                skip += MAX_BUCKETS_PER_PAGE;
-                if (page.hitCount() > skip)
-                {
-                    page = m_JobProvider.buckets(m_JobId, true, false,
-                            skip, MAX_BUCKETS_PER_PAGE, 0, endBucketEpochMs, 0.0, 0.0);
-                }
-            }
-
-            logger.info("System changes normalisation resulted in: " +
-                        counts[0] + " updates, " +
-                        counts[1] + " no-ops");
-        }
-        catch (UnknownJobException uje)
-        {
-            logger.error("Inconsistency - job " + m_JobId +
-                            " unknown during system change renormalisation", uje);
-        }
-        catch (NativeProcessRunException npe)
-        {
-            logger.error("Failed to renormalise for system changes", npe);
-        }
-    }
-
-    /**
-     * Update the anomaly score and unsual score fields on the bucket provided
-     * and all contained records
-     * @param bucket
-     * @param logger
-     * @param counts Element 0 will be incremented if we update a document and
-     * element 1 if we don't
-     */
-    private void updateSingleBucket(Bucket bucket, Logger logger, int[] counts)
-    {
-        // First update the bucket if worthwhile
-        String bucketId = bucket.getId();
-        if (bucketId != null)
-        {
-            if (bucket.hadBigNormalisedUpdate())
-            {
-                logger.trace("ES API CALL: update ID " + bucketId + " type " + Bucket.TYPE +
-                        " in index " + m_JobId + " using map of new values");
-
-                m_JobProvider.updateBucket(m_JobId, bucketId, bucket.getAnomalyScore(),
-                        bucket.getMaxNormalizedProbability());
-
-                ++counts[0];
-            }
-            else
-            {
-                ++counts[1];
-            }
-        }
-        else
-        {
-            logger.warn("Failed to renormalise bucket - no ID");
-            ++counts[1];
-        }
-
-        // Now bulk update the records within the bucket
-        List<AnomalyRecord> toUpdate = new ArrayList<AnomalyRecord>();
-
-        for (AnomalyRecord record : bucket.getRecords())
-        {
-            String recordId = record.getId();
-            if (recordId != null)
-            {
-                if (record.hadBigNormalisedUpdate())
-                {
-                    toUpdate.add(record);
-
-                    logger.trace("ES BULK ACTION: update ID " + recordId + " type " + AnomalyRecord.TYPE +
-                            " in index " + m_JobId + " using map of new values");
-                    ++counts[0];
-                }
-                else
-                {
-                    ++counts[1];
-                }
-            }
-            else
-            {
-                logger.warn("Failed to renormalise record - no ID");
-                ++counts[1];
-            }
-        }
-
-        if (!toUpdate.isEmpty())
-        {
-            m_JobProvider.updateRecords(m_JobId, bucketId, toUpdate);
-        }
-    }
-
-
-    private int getJobBucketSpan(Logger logger)
-    {
-        if (m_BucketSpan == 0)
-        {
-            // use dot notation to get fields from nested docs.
-            Number num = m_JobProvider.<Number>getField(m_JobId,
-                    JobDetails.ANALYSIS_CONFIG + "." + AnalysisConfig.BUCKET_SPAN);
-            if (num != null)
-            {
-                m_BucketSpan = num.intValue();
-                logger.info("Caching bucket span " + m_BucketSpan +
-                            " for job " + m_JobId);
-            }
-        }
-
-        return m_BucketSpan;
     }
 
     /**
@@ -440,8 +277,8 @@ public class BlockingQueueRenormaliser implements Renormaliser
 
                     if (latestInfo != null)
                     {
-                        BlockingQueueRenormaliser.this.updateScores(latestInfo.m_State,
-                                latestInfo.m_EndBucketEpochMs, latestInfo.m_Logger);
+                        m_ScoresUpdater.update(latestInfo.m_State, latestInfo.m_EndBucketEpochMs,
+                                latestInfo.m_Logger);
                     }
 
                     // Refresh the indexes so that normalised results are
