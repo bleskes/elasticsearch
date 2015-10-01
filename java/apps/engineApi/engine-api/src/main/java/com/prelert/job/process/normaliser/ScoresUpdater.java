@@ -139,30 +139,7 @@ class ScoresUpdater
      */
     private void updateSingleBucket(Bucket bucket, int[] counts, Logger logger)
     {
-        // First update the bucket if worthwhile
-        String bucketId = bucket.getId();
-        if (bucketId != null)
-        {
-            if (bucket.hadBigNormalisedUpdate())
-            {
-                logger.trace("ES API CALL: update ID " + bucketId + " type " + Bucket.TYPE +
-                        " in index " + m_JobId + " using map of new values");
-
-                m_JobProvider.updateBucket(m_JobId, bucketId, bucket.getAnomalyScore(),
-                        bucket.getMaxNormalizedProbability());
-
-                ++counts[0];
-            }
-            else
-            {
-                ++counts[1];
-            }
-        }
-        else
-        {
-            logger.warn("Failed to renormalise bucket - no ID");
-            ++counts[1];
-        }
+        String bucketId = updateBucketIfItHasBigChange(bucket, counts, logger);
 
         // Now bulk update the records within the bucket
         List<AnomalyRecord> toUpdate = new ArrayList<AnomalyRecord>();
@@ -196,6 +173,34 @@ class ScoresUpdater
         {
             m_JobProvider.updateRecords(m_JobId, bucketId, toUpdate);
         }
+    }
+
+    private String updateBucketIfItHasBigChange(Bucket bucket, int[] counts, Logger logger)
+    {
+        String bucketId = bucket.getId();
+        if (bucketId != null)
+        {
+            if (bucket.hadBigNormalisedUpdate())
+            {
+                logger.trace("ES API CALL: update ID " + bucketId + " type " + Bucket.TYPE +
+                        " in index " + m_JobId + " using map of new values");
+
+                m_JobProvider.updateBucket(m_JobId, bucketId, bucket.getAnomalyScore(),
+                        bucket.getMaxNormalizedProbability());
+
+                ++counts[0];
+            }
+            else
+            {
+                ++counts[1];
+            }
+        }
+        else
+        {
+            logger.warn("Failed to renormalise bucket - no ID");
+            ++counts[1];
+        }
+        return bucketId;
     }
 
     private int getJobBucketSpan(Logger logger)
