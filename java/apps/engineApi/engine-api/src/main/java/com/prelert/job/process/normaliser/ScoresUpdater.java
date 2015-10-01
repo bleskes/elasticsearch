@@ -129,6 +129,33 @@ class ScoresUpdater
         }
     }
 
+    private int getJobBucketSpan(Logger logger)
+    {
+        // lazy initialization idiom of instance field (as in Effective Java)
+
+        int bucketSpan = m_BucketSpan;
+        if (bucketSpan == 0)
+        {
+            synchronized (this)
+            {
+                bucketSpan = m_BucketSpan;
+                if (bucketSpan == 0)
+                {
+                    // use dot notation to get fields from nested docs.
+                    Number num = m_JobProvider.<Number>getField(m_JobId,
+                            JobDetails.ANALYSIS_CONFIG + "." + AnalysisConfig.BUCKET_SPAN);
+                    if (num != null)
+                    {
+                        m_BucketSpan = bucketSpan = num.intValue();
+                        logger.info("Caching bucket span " + m_BucketSpan +
+                                " for job " + m_JobId);
+                    }
+                }
+            }
+        }
+        return bucketSpan;
+    }
+
     /**
      * Update the anomaly score and unsual score fields on the bucket provided
      * and all contained records
@@ -139,9 +166,39 @@ class ScoresUpdater
      */
     private void updateSingleBucket(Bucket bucket, int[] counts, Logger logger)
     {
-        String bucketId = updateBucketIfItHasBigChange(bucket, counts, logger);
+        updateBucketIfItHasBigChange(bucket, counts, logger);
+        updateRecordsThatHaveBigChange(bucket, counts, logger);
+    }
 
-        // Now bulk update the records within the bucket
+    private void updateBucketIfItHasBigChange(Bucket bucket, int[] counts, Logger logger)
+    {
+        String bucketId = bucket.getId();
+        if (bucketId != null)
+        {
+            if (bucket.hadBigNormalisedUpdate())
+            {
+                logger.trace("ES API CALL: update ID " + bucketId + " type " + Bucket.TYPE +
+                        " in index " + m_JobId + " using map of new values");
+
+                m_JobProvider.updateBucket(m_JobId, bucketId, bucket.getAnomalyScore(),
+                        bucket.getMaxNormalizedProbability());
+
+                ++counts[0];
+            }
+            else
+            {
+                ++counts[1];
+            }
+        }
+        else
+        {
+            logger.warn("Failed to renormalise bucket - no ID");
+            ++counts[1];
+        }
+    }
+
+    private void updateRecordsThatHaveBigChange(Bucket bucket, int[] counts, Logger logger)
+    {
         List<AnomalyRecord> toUpdate = new ArrayList<AnomalyRecord>();
 
         for (AnomalyRecord record : bucket.getRecords())
@@ -171,62 +228,7 @@ class ScoresUpdater
 
         if (!toUpdate.isEmpty())
         {
-            m_JobProvider.updateRecords(m_JobId, bucketId, toUpdate);
+            m_JobProvider.updateRecords(m_JobId, bucket.getId(), toUpdate);
         }
-    }
-
-    private String updateBucketIfItHasBigChange(Bucket bucket, int[] counts, Logger logger)
-    {
-        String bucketId = bucket.getId();
-        if (bucketId != null)
-        {
-            if (bucket.hadBigNormalisedUpdate())
-            {
-                logger.trace("ES API CALL: update ID " + bucketId + " type " + Bucket.TYPE +
-                        " in index " + m_JobId + " using map of new values");
-
-                m_JobProvider.updateBucket(m_JobId, bucketId, bucket.getAnomalyScore(),
-                        bucket.getMaxNormalizedProbability());
-
-                ++counts[0];
-            }
-            else
-            {
-                ++counts[1];
-            }
-        }
-        else
-        {
-            logger.warn("Failed to renormalise bucket - no ID");
-            ++counts[1];
-        }
-        return bucketId;
-    }
-
-    private int getJobBucketSpan(Logger logger)
-    {
-        // lazy initialization idiom of instance field (as in Effective Java)
-
-        int bucketSpan = m_BucketSpan;
-        if (bucketSpan == 0)
-        {
-            synchronized (this)
-            {
-                bucketSpan = m_BucketSpan;
-                if (bucketSpan == 0)
-                {
-                    // use dot notation to get fields from nested docs.
-                    Number num = m_JobProvider.<Number>getField(m_JobId,
-                            JobDetails.ANALYSIS_CONFIG + "." + AnalysisConfig.BUCKET_SPAN);
-                    if (num != null)
-                    {
-                        m_BucketSpan = bucketSpan = num.intValue();
-                        logger.info("Caching bucket span " + m_BucketSpan +
-                                " for job " + m_JobId);
-                    }
-                }
-            }
-        }
-        return bucketSpan;
     }
 }
