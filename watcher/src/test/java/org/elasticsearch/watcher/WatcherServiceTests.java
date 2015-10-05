@@ -17,7 +17,6 @@
 
 package org.elasticsearch.watcher;
 
-import com.google.common.collect.ImmutableMap;
 import org.elasticsearch.ElasticsearchTimeoutException;
 import org.elasticsearch.action.delete.DeleteResponse;
 import org.elasticsearch.action.index.IndexResponse;
@@ -27,7 +26,6 @@ import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.test.ESTestCase;
-import org.elasticsearch.watcher.actions.ActionStatus;
 import org.elasticsearch.watcher.execution.ExecutionService;
 import org.elasticsearch.watcher.support.WatcherIndexTemplateRegistry;
 import org.elasticsearch.watcher.support.clock.ClockMock;
@@ -44,13 +42,21 @@ import org.joda.time.DateTimeZone;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.lang.reflect.Field;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static java.util.Collections.emptyMap;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.sameInstance;
 import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.when;
 
 /**
  *
@@ -231,7 +237,7 @@ public class WatcherServiceTests extends ESTestCase {
         when(watchLockService.tryAcquire("_id", timeout)).thenReturn(lock);
         Watch watch = mock(Watch.class);
         when(watch.ack(now, "_all")).thenReturn(true);
-        WatchStatus status = new WatchStatus(now, ImmutableMap.<String, ActionStatus>of());
+        WatchStatus status = new WatchStatus(now, emptyMap());
         when(watch.status()).thenReturn(status);
         when(watchStore.get("_id")).thenReturn(watch);
 
@@ -278,7 +284,7 @@ public class WatcherServiceTests extends ESTestCase {
         when(watchLockService.tryAcquire("_id", timeout)).thenReturn(lock);
 
         Watch watch = mock(Watch.class);
-        WatchStatus status = new WatchStatus(now, ImmutableMap.<String, ActionStatus>of());
+        WatchStatus status = new WatchStatus(now, emptyMap());
         when(watch.status()).thenReturn(status);
         when(watch.setState(true, now)).thenReturn(false);
 
@@ -308,7 +314,7 @@ public class WatcherServiceTests extends ESTestCase {
         when(watchLockService.tryAcquire("_id", timeout)).thenReturn(lock);
 
         Watch watch = mock(Watch.class);
-        WatchStatus status = new WatchStatus(now, ImmutableMap.<String, ActionStatus>of());
+        WatchStatus status = new WatchStatus(now, emptyMap());
         when(watch.status()).thenReturn(status);
         when(watch.setState(true, now)).thenReturn(true);
 
@@ -337,7 +343,7 @@ public class WatcherServiceTests extends ESTestCase {
 
         Watch watch = mock(Watch.class);
         when(watch.id()).thenReturn("_id");
-        WatchStatus status = new WatchStatus(now, ImmutableMap.<String, ActionStatus>of());
+        WatchStatus status = new WatchStatus(now, emptyMap());
         when(watch.status()).thenReturn(status);
         when(watch.setState(false, now)).thenReturn(true);
 
@@ -368,7 +374,7 @@ public class WatcherServiceTests extends ESTestCase {
 
         Watch watch = mock(Watch.class);
         when(watch.id()).thenReturn("_id");
-        WatchStatus status = new WatchStatus(now, ImmutableMap.<String, ActionStatus>of());
+        WatchStatus status = new WatchStatus(now, emptyMap());
         when(watch.status()).thenReturn(status);
         when(watch.setState(false, now)).thenReturn(false);
 
@@ -396,7 +402,7 @@ public class WatcherServiceTests extends ESTestCase {
         when(watchLockService.tryAcquire("_id", timeout)).thenReturn(lock);
         Watch watch = mock(Watch.class);
         when(watch.ack(now)).thenReturn(false);
-        WatchStatus status = new WatchStatus(now, ImmutableMap.<String, ActionStatus>of());
+        WatchStatus status = new WatchStatus(now, emptyMap());
         when(watch.status()).thenReturn(status);
         when(watchStore.get("_id")).thenReturn(watch);
 

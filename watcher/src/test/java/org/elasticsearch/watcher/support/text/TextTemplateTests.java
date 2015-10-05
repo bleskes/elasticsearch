@@ -18,7 +18,6 @@
 package org.elasticsearch.watcher.support.text;
 
 
-import com.google.common.collect.ImmutableMap;
 import org.elasticsearch.ElasticsearchParseException;
 import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.settings.Settings;
@@ -33,11 +32,16 @@ import org.elasticsearch.watcher.support.text.xmustache.XMustacheTextTemplateEng
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.HashMap;
 import java.util.Map;
 
+import static java.util.Collections.singletonMap;
+import static java.util.Collections.unmodifiableMap;
 import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 import static org.elasticsearch.watcher.support.Exceptions.illegalArgument;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -61,9 +65,11 @@ public class TextTemplateTests extends ESTestCase {
     @Test
     public void testRender() throws Exception {
         String templateText = "_template";
-        Map<String, Object> params = ImmutableMap.<String, Object>of("param_key", "param_val");
-        Map<String, Object> model = ImmutableMap.<String, Object>of("model_key", "model_val");
-        Map<String, Object> merged = ImmutableMap.<String, Object>builder().putAll(params).putAll(model).build();
+        Map<String, Object> params = singletonMap("param_key", "param_val");
+        Map<String, Object> model = singletonMap("model_key", "model_val");
+        Map<String, Object> merged = new HashMap<>(params);
+        merged.putAll(model);
+        merged = unmodifiableMap(merged);
         ScriptType type = randomFrom(ScriptType.values());
 
         when(proxy.executable(new org.elasticsearch.script.Template(templateText, type, lang, null, merged))).thenReturn(script);
@@ -76,8 +82,8 @@ public class TextTemplateTests extends ESTestCase {
     @Test
     public void testRender_OverridingModel() throws Exception {
         String templateText = "_template";
-        Map<String, Object> params = ImmutableMap.<String, Object>of("key", "param_val");
-        Map<String, Object> model = ImmutableMap.<String, Object>of("key", "model_val");
+        Map<String, Object> params = singletonMap("key", "param_val");
+        Map<String, Object> model = singletonMap("key", "model_val");
         ScriptType scriptType = randomFrom(ScriptType.values());
 
         when(proxy.executable(new org.elasticsearch.script.Template(templateText, scriptType, lang, null, model))).thenReturn(script);
@@ -90,7 +96,7 @@ public class TextTemplateTests extends ESTestCase {
     @Test
     public void testRender_Defaults() throws Exception {
         String templateText = "_template";
-        Map<String, Object> model = ImmutableMap.<String, Object>of("key", "model_val");
+        Map<String, Object> model = singletonMap("key", "model_val");
 
         when(proxy.executable(new org.elasticsearch.script.Template(templateText, ScriptType.INLINE, lang, null, model))).thenReturn(script);
         when(script.run()).thenReturn("rendered_text");
@@ -102,7 +108,7 @@ public class TextTemplateTests extends ESTestCase {
     @Test
     public void testParser() throws Exception {
         ScriptType type = randomScriptType();
-        TextTemplate template = templateBuilder(type, "_template").params(ImmutableMap.<String, Object>of("param_key", "param_val")).build();
+        TextTemplate template = templateBuilder(type, "_template").params(singletonMap("param_key", "param_val")).build();
         XContentBuilder builder = jsonBuilder().startObject();
         switch (type) {
             case INLINE:
@@ -126,7 +132,7 @@ public class TextTemplateTests extends ESTestCase {
 
     @Test
     public void testParser_ParserSelfGenerated() throws Exception {
-        TextTemplate template = templateBuilder(randomScriptType(), "_template").params(ImmutableMap.<String, Object>of("param_key", "param_val")).build();
+        TextTemplate template = templateBuilder(randomScriptType(), "_template").params(singletonMap("param_key", "param_val")).build();
 
         XContentBuilder builder = jsonBuilder().value(template);
         BytesReference bytes = builder.bytes();

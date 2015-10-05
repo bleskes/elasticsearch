@@ -17,13 +17,13 @@
 
 package org.elasticsearch.watcher.input;
 
-import com.google.common.collect.ImmutableMap;
 import org.elasticsearch.ElasticsearchParseException;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.common.xcontent.json.JsonXContent;
 import org.elasticsearch.test.ESTestCase;
 import org.junit.Test;
 
+import static java.util.Collections.emptyMap;
 import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 
 /**
@@ -33,7 +33,7 @@ public class InputRegistryTests extends ESTestCase {
 
     @Test(expected = ElasticsearchParseException.class)
     public void testParse_EmptyInput() throws Exception {
-        InputRegistry registry = new InputRegistry(ImmutableMap.<String, InputFactory>of());
+        InputRegistry registry = new InputRegistry(emptyMap());
         XContentParser parser = JsonXContent.jsonXContent.createParser(
                 jsonBuilder().startObject().endObject().bytes());
         parser.nextToken();
@@ -43,7 +43,7 @@ public class InputRegistryTests extends ESTestCase {
 
     @Test(expected = ElasticsearchParseException.class)
     public void testParse_ArrayInput() throws Exception {
-        InputRegistry registry = new InputRegistry(ImmutableMap.<String, InputFactory>of());
+        InputRegistry registry = new InputRegistry(emptyMap());
         XContentParser parser = JsonXContent.jsonXContent.createParser(
                 jsonBuilder().startArray().endArray().bytes());
         parser.nextToken();
