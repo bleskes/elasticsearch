@@ -17,7 +17,6 @@
 
 package org.elasticsearch.watcher.trigger;
 
-import com.google.common.collect.ImmutableMap;
 import org.elasticsearch.ElasticsearchParseException;
 import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.component.AbstractComponent;
@@ -28,11 +27,13 @@ import org.elasticsearch.common.xcontent.XContentParser;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import static java.util.Collections.unmodifiableMap;
 import static org.elasticsearch.watcher.support.Exceptions.illegalArgument;
 
 /**
@@ -41,18 +42,18 @@ import static org.elasticsearch.watcher.support.Exceptions.illegalArgument;
 public class TriggerService extends AbstractComponent {
 
     private final Listeners listeners;
-    private final ImmutableMap<String, TriggerEngine> engines;
+    private final Map<String, TriggerEngine> engines;
 
     @Inject
     public TriggerService(Settings settings, Set<TriggerEngine> engines) {
         super(settings);
         listeners = new Listeners();
-        ImmutableMap.Builder<String, TriggerEngine> builder = ImmutableMap.builder();
+        Map<String, TriggerEngine> builder = new HashMap<>();
         for (TriggerEngine engine : engines) {
             builder.put(engine.type(), engine);
             engine.register(listeners);
         }
-        this.engines = builder.build();
+        this.engines = unmodifiableMap(builder);
     }
 
     public synchronized void start(Collection<? extends TriggerEngine.Job> jobs) throws Exception {
