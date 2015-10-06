@@ -127,11 +127,6 @@ public class XMustacheScriptEngineService extends AbstractComponent implements S
     }
 
     @Override
-    public Object unwrap(Object value) {
-        return value;
-    }
-
-    @Override
     public void close() {
         // Nothing to do here
     }
