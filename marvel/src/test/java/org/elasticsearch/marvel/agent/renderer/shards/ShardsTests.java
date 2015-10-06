@@ -17,7 +17,6 @@
 
 package org.elasticsearch.marvel.agent.renderer.shards;
 
-import org.apache.lucene.util.LuceneTestCase.AwaitsFix;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.cluster.metadata.IndexMetaData;
@@ -30,15 +29,19 @@ import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.aggregations.Aggregation;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.aggregations.bucket.terms.StringTerms;
+import org.elasticsearch.test.ESIntegTestCase.ClusterScope;
+import org.elasticsearch.test.ESIntegTestCase.Scope;
+import org.junit.After;
 import org.junit.Test;
 
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import static org.elasticsearch.test.hamcrest.ElasticsearchAssertions.assertAcked;
 import static org.hamcrest.Matchers.*;
 
-@AwaitsFix(bugUrl="https://github.com/elastic/x-plugins/issues/729")
-public class ShardsIT extends MarvelIntegTestCase {
+@ClusterScope(scope = Scope.TEST)
+public class ShardsTests extends MarvelIntegTestCase {
 
     private static final String INDEX_PREFIX = "test-shards-";
 
@@ -46,10 +49,18 @@ public class ShardsIT extends MarvelIntegTestCase {
     protected Settings nodeSettings(int nodeOrdinal) {
         return Settings.builder()
                 .put(super.nodeSettings(nodeOrdinal))
-                .put(MarvelSettings.INTERVAL, "3s")
+                .put(MarvelSettings.INTERVAL, "-1")
                 .put(MarvelSettings.COLLECTORS, ShardsCollector.NAME)
                 .put(MarvelSettings.INDICES, INDEX_PREFIX + "*")
+                .put("marvel.agent.exporters.default_local.type", "local")
+                .put("marvel.agent.exporters.default_local.template.settings.index.number_of_replicas", 0)
                 .build();
+    }
+
+    @After
+    public void cleanup() throws Exception {
+        updateMarvelInterval(-1, TimeUnit.SECONDS);
+        wipeMarvelIndices();
     }
 
     @Test
@@ -58,6 +69,12 @@ public class ShardsIT extends MarvelIntegTestCase {
         for (int i = 0; i < randomIntBetween(1, 5); i++) {
             client().prepareIndex(INDEX_PREFIX + i, "foo").setRefresh(true).setSource("field1", "value1").get();
         }
+
+        securedFlush();
+        securedRefresh();
+
+        updateMarvelInterval(3L, TimeUnit.SECONDS);
+        waitForMarvelIndices();
 
         awaitMarvelDocsCount(greaterThan(0L), ShardsCollector.TYPE);
 
@@ -86,6 +103,9 @@ public class ShardsIT extends MarvelIntegTestCase {
     public void testNotAnalyzedFields() throws Exception {
         final String indexName = INDEX_PREFIX + randomInt();
         assertAcked(prepareCreate(indexName).setSettings(IndexMetaData.SETTING_NUMBER_OF_SHARDS, 1, IndexMetaData.SETTING_NUMBER_OF_REPLICAS, 0));
+
+        updateMarvelInterval(3L, TimeUnit.SECONDS);
+        waitForMarvelIndices();
 
         awaitMarvelDocsCount(greaterThan(0L), ShardsCollector.TYPE);
 

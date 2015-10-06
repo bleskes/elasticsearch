@@ -17,38 +17,52 @@
 
 package org.elasticsearch.marvel.agent.renderer.indices;
 
-import org.apache.lucene.util.LuceneTestCase.AwaitsFix;
 import org.elasticsearch.action.count.CountResponse;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.marvel.agent.collector.indices.IndicesStatsCollector;
+import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.marvel.agent.collector.indices.IndexStatsCollector;
 import org.elasticsearch.marvel.agent.settings.MarvelSettings;
 import org.elasticsearch.marvel.test.MarvelIntegTestCase;
 import org.elasticsearch.search.SearchHit;
+import org.elasticsearch.test.ESIntegTestCase.ClusterScope;
+import org.elasticsearch.test.ESIntegTestCase.Scope;
+import org.junit.After;
 import org.junit.Test;
 
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import static org.hamcrest.Matchers.greaterThan;
 
-@AwaitsFix(bugUrl="https://github.com/elastic/x-plugins/issues/729")
-public class IndicesStatsIT extends MarvelIntegTestCase {
+@ClusterScope(scope = Scope.TEST, numClientNodes = 0)
+public class IndexStatsTests extends MarvelIntegTestCase {
 
     @Override
     protected Settings nodeSettings(int nodeOrdinal) {
         return Settings.builder()
                 .put(super.nodeSettings(nodeOrdinal))
-                .put(MarvelSettings.INTERVAL, "3s")
-                .put(MarvelSettings.COLLECTORS, IndicesStatsCollector.NAME)
+                .put(MarvelSettings.INTERVAL, "-1")
+                .put(MarvelSettings.COLLECTORS, IndexStatsCollector.NAME)
+                .put("marvel.agent.exporters.default_local.type", "local")
+                .put("marvel.agent.exporters.default_local.template.settings.index.number_of_replicas", 0)
                 .build();
     }
 
+    @After
+    public void cleanup() throws Exception {
+        updateMarvelInterval(-1, TimeUnit.SECONDS);
+        wipeMarvelIndices();
+    }
+
     @Test
-    public void testIndicesStats() throws Exception {
-        logger.debug("--> creating some indices for future indices stats");
+    public void testIndexStats() throws Exception {
+        logger.debug("--> creating some indices for future index stats");
         final int nbIndices = randomIntBetween(1, 5);
+        String[] indices = new String[nbIndices];
         for (int i = 0; i < nbIndices; i++) {
-            createIndex("stat" + i);
+            indices[i] = "stat" + i;
+            createIndex(indices[i]);
         }
 
         final long[] nbDocsPerIndex = new long[nbIndices];
@@ -59,27 +73,36 @@ public class IndicesStatsIT extends MarvelIntegTestCase {
             }
         }
 
-        awaitMarvelDocsCount(greaterThan(0L), IndicesStatsCollector.TYPE);
+        securedFlush();
+        securedRefresh();
 
-        logger.debug("--> wait for indicesx stats collector to collect global stat");
+        updateMarvelInterval(3L, TimeUnit.SECONDS);
+        waitForMarvelIndices();
+
+        awaitMarvelDocsCount(greaterThan(0L), IndexStatsCollector.TYPE);
+
+        logger.debug("--> wait for index stats collector to collect stat for each index");
         assertBusy(new Runnable() {
             @Override
             public void run() {
+                securedFlush(indices);
+                securedRefresh();
                 for (int i = 0; i < nbIndices; i++) {
                     CountResponse count = client().prepareCount()
-                            .setTypes(IndicesStatsCollector.TYPE)
+                            .setTypes(IndexStatsCollector.TYPE)
+                            .setQuery(QueryBuilders.termQuery("index_stats.index", indices[i]))
                             .get();
                     assertThat(count.getCount(), greaterThan(0L));
                 }
             }
         });
 
-        logger.debug("--> searching for marvel documents of type [{}]", IndicesStatsCollector.TYPE);
-        SearchResponse response = client().prepareSearch().setTypes(IndicesStatsCollector.TYPE).get();
+        logger.debug("--> searching for marvel documents of type [{}]", IndexStatsCollector.TYPE);
+        SearchResponse response = client().prepareSearch().setTypes(IndexStatsCollector.TYPE).get();
         assertThat(response.getHits().getTotalHits(), greaterThan(0L));
 
         logger.debug("--> checking that every document contains the expected fields");
-        String[] filters = IndicesStatsRenderer.FILTERS;
+        String[] filters = IndexStatsRenderer.FILTERS;
         for (SearchHit searchHit : response.getHits().getHits()) {
             Map<String, Object> fields = searchHit.sourceAsMap();
 
@@ -88,6 +111,6 @@ public class IndicesStatsIT extends MarvelIntegTestCase {
             }
         }
 
-        logger.debug("--> indices stats successfully collected");
+        logger.debug("--> index stats successfully collected");
     }
 }
