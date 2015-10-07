@@ -18,7 +18,7 @@ define(function (require) {
             cluster = clusters[0];
             globalState.cluster = cluster.cluster_uuid;
             license = _.find(cluster.licenses, { feature: 'marvel' });
-            if (license.type === 'lite') {
+            if (license.type === 'basic') {
               globalState.save();
               kbnUrl.changePath('/overview');
               return Promise.reject();

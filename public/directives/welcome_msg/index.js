@@ -15,7 +15,7 @@ mod.directive('marvelWelcomeMessage', function ($window) {
 
       if (scope.showBanner && scope.cluster && scope.clusters) {
         const license = _.find(scope.cluster.licenses, { feature: 'marvel' });
-        if (license.type !== 'lite') {
+        if (license.type !== 'basic') {
           scope.showBanner = false;
         }
       }
