@@ -22,12 +22,8 @@ define(function (require) {
   return React.createClass({
     displayName: 'TableHead',
     createColumn: function (label) {
-      var colSpan = 1;
-      if (label === 'Indices' && this.props.hasUnassigned) {
-        colSpan = 2;
-      }
       return (
-        <th key={ label } colSpan={ colSpan }>{ label }</th>
+        <th key={ label } colSpan={ 1 }>{ label }</th>
       );
     },
     render: function () {
