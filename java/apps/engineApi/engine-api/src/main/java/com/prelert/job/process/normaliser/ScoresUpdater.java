@@ -83,36 +83,7 @@ class ScoresUpdater
         int[] counts = { 0, 0 };
         try
         {
-            int skip = 0;
-            QueryPage<Bucket> page = m_JobProvider.buckets(m_JobId, true, false,
-                        skip, MAX_BUCKETS_PER_PAGE, 0, endBucketEpochMs, 0.0, 0.0);
-
-            while (page.hitCount() > skip)
-            {
-                List<Bucket> buckets = page.queryResults();
-                if (buckets == null)
-                {
-                    logger.warn("No buckets to renormalise for job " +
-                                m_JobId + " with skip " + skip + " and hit count " +
-                                page.hitCount());
-                    break;
-                }
-
-                List<Bucket> normalisedBuckets =
-                        normaliser.normalise(getJobBucketSpan(logger), buckets, quantilesState);
-
-                for (Bucket bucket : normalisedBuckets)
-                {
-                    updateSingleBucket(bucket, counts, logger);
-                }
-
-                skip += MAX_BUCKETS_PER_PAGE;
-                if (page.hitCount() > skip)
-                {
-                    page = m_JobProvider.buckets(m_JobId, true, false,
-                            skip, MAX_BUCKETS_PER_PAGE, 0, endBucketEpochMs, 0.0, 0.0);
-                }
-            }
+            updateBuckets(normaliser, quantilesState, endBucketEpochMs, counts, logger);
         }
         catch (UnknownJobException uje)
         {
@@ -126,6 +97,42 @@ class ScoresUpdater
         logger.info("Normalisation resulted in: " +
                 counts[0] + " updates, " +
                 counts[1] + " no-ops");
+    }
+
+    private void updateBuckets(Normaliser normaliser, String quantilesState, long endBucketEpochMs,
+            int[] counts, Logger logger) throws UnknownJobException,
+            NativeProcessRunException
+    {
+        int skip = 0;
+        QueryPage<Bucket> page = m_JobProvider.buckets(m_JobId, true, false, skip,
+                MAX_BUCKETS_PER_PAGE, 0, endBucketEpochMs, 0.0, 0.0);
+
+        while (page.hitCount() > skip)
+        {
+            List<Bucket> buckets = page.queryResults();
+            if (buckets == null)
+            {
+                logger.warn("No buckets to renormalise for job " +
+                            m_JobId + " with skip " + skip + " and hit count " +
+                            page.hitCount());
+                break;
+            }
+
+            List<Bucket> normalisedBuckets =
+                    normaliser.normalise(getJobBucketSpan(logger), buckets, quantilesState);
+
+            for (Bucket bucket : normalisedBuckets)
+            {
+                updateSingleBucket(bucket, counts, logger);
+            }
+
+            skip += MAX_BUCKETS_PER_PAGE;
+            if (page.hitCount() > skip)
+            {
+                page = m_JobProvider.buckets(m_JobId, true, false,
+                        skip, MAX_BUCKETS_PER_PAGE, 0, endBucketEpochMs, 0.0, 0.0);
+            }
+        }
     }
 
     private int getJobBucketSpan(Logger logger)
