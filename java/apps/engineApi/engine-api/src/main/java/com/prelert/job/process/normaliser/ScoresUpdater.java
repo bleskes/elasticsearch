@@ -114,18 +114,17 @@ class ScoresUpdater
                 }
             }
 
-            logger.info("System changes normalisation resulted in: " +
+            logger.info("Normalisation resulted in: " +
                         counts[0] + " updates, " +
                         counts[1] + " no-ops");
         }
         catch (UnknownJobException uje)
         {
-            logger.error("Inconsistency - job " + m_JobId +
-                            " unknown during system change renormalisation", uje);
+            logger.error("Inconsistency - job " + m_JobId + " unknown during renormalisation", uje);
         }
         catch (NativeProcessRunException npe)
         {
-            logger.error("Failed to renormalise for system changes", npe);
+            logger.error("Failed to renormalise", npe);
         }
     }
 
