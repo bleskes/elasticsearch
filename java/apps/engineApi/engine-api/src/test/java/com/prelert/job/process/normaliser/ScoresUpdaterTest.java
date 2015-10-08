@@ -27,9 +27,11 @@
 
 package com.prelert.job.process.normaliser;
 
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.anyDouble;
 import static org.mockito.Matchers.anyListOf;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -45,6 +47,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.persistence.JobProvider;
@@ -86,7 +90,7 @@ public class ScoresUpdaterTest
         List<Bucket> normalisedBatch = Arrays.asList(bucket);
         givenProviderReturnsBuckets(0, endTime, totalBuckets, originalBatch);
 
-        givenNormalisedBuckets(bucketSpan, originalBatch, QUANTILES_STATE, normalisedBatch);
+        givenNormalisedBuckets(bucketSpan, originalBatch, normalisedBatch);
 
         m_ScoresUpdater.update(QUANTILES_STATE, 3600, m_Logger);
 
@@ -116,7 +120,7 @@ public class ScoresUpdaterTest
         List<Bucket> normalisedBatch = Arrays.asList(bucket);
         givenProviderReturnsBuckets(0, endTime, totalBuckets, originalBatch);
 
-        givenNormalisedBuckets(bucketSpan, originalBatch, QUANTILES_STATE, normalisedBatch);
+        givenNormalisedBuckets(bucketSpan, originalBatch, normalisedBatch);
 
         m_ScoresUpdater.update(QUANTILES_STATE, 3600, m_Logger);
 
@@ -147,7 +151,7 @@ public class ScoresUpdaterTest
         List<Bucket> normalisedBatch = Arrays.asList(normalisedBucket);
         givenProviderReturnsBuckets(0, endTime, totalBuckets, originalBatch);
 
-        givenNormalisedBuckets(bucketSpan, originalBatch, QUANTILES_STATE, normalisedBatch);
+        givenNormalisedBuckets(bucketSpan, originalBatch, normalisedBatch);
 
         m_ScoresUpdater.update(QUANTILES_STATE, 3600, m_Logger);
 
@@ -185,7 +189,7 @@ public class ScoresUpdaterTest
         List<Bucket> normalisedBatch = Arrays.asList(normalisedBucket);
         givenProviderReturnsBuckets(0, endTime, totalBuckets, originalBatch);
 
-        givenNormalisedBuckets(bucketSpan, originalBatch, QUANTILES_STATE, normalisedBatch);
+        givenNormalisedBuckets(bucketSpan, originalBatch, normalisedBatch);
 
         m_ScoresUpdater.update(QUANTILES_STATE, 3600, m_Logger);
 
@@ -224,7 +228,7 @@ public class ScoresUpdaterTest
         List<Bucket> normalisedBatch = Arrays.asList(normalisedBucket);
         givenProviderReturnsBuckets(0, endTime, totalBuckets, originalBatch);
 
-        givenNormalisedBuckets(bucketSpan, originalBatch, QUANTILES_STATE, normalisedBatch);
+        givenNormalisedBuckets(bucketSpan, originalBatch, normalisedBatch);
 
         m_ScoresUpdater.update(QUANTILES_STATE, 3600, m_Logger);
 
@@ -268,8 +272,8 @@ public class ScoresUpdaterTest
         givenProviderReturnsBuckets(0, endTime, totalBuckets, originalBatch1);
         givenProviderReturnsBuckets(100, endTime, totalBuckets, originalBatch2);
 
-        givenNormalisedBuckets(bucketSpan, originalBatch1, QUANTILES_STATE, normalisedBatch1);
-        givenNormalisedBuckets(bucketSpan, originalBatch2, QUANTILES_STATE, normalisedBatch2);
+        givenNormalisedBuckets(bucketSpan, originalBatch1, originalBatch2, normalisedBatch1,
+                normalisedBatch2);
 
         m_ScoresUpdater.update(QUANTILES_STATE, 3600, m_Logger);
 
@@ -297,11 +301,55 @@ public class ScoresUpdaterTest
     }
 
     private void givenNormalisedBuckets(int bucketSpan, List<Bucket> originalBuckets,
-            String quantilesState, List<Bucket> normalisedBuckets)
+            List<Bucket> normalisedBuckets) throws NativeProcessRunException, UnknownJobException
+    {
+        givenNormalisedBuckets(bucketSpan, originalBuckets, new ArrayList<>(), normalisedBuckets,
+                new ArrayList<>());
+    }
+    private void givenNormalisedBuckets(int bucketSpan, List<Bucket> originalBuckets1,
+            List<Bucket> originalBuckets2, List<Bucket> normalisedBuckets1, List<Bucket> normalisedBuckets2)
             throws NativeProcessRunException, UnknownJobException
     {
-        when(m_Normaliser.normalise(bucketSpan, originalBuckets, quantilesState)).thenReturn(
-                normalisedBuckets);
+        doAnswer(new Answer<Void>()
+        {
+            private int count = 0;
+
+            @Override
+            public Void answer(InvocationOnMock invocation) throws Throwable
+            {
+                count++;
+                if (count == 1)
+                {
+                    applyBuckets(originalBuckets1, normalisedBuckets1);
+                }
+                if (count == 2)
+                {
+                    applyBuckets(originalBuckets2, normalisedBuckets2);
+                }
+                return null;
+            }
+        }).when(m_Normaliser).normalise(eq(bucketSpan), anyListOf(Normalisable.class), eq(QUANTILES_STATE));
+    }
+
+    private void applyBuckets(List<Bucket> oldBuckets, List<Bucket> newBuckets)
+    {
+        assertEquals(oldBuckets.size(), newBuckets.size());
+        for (int i = 0; i < oldBuckets.size(); ++i)
+        {
+            Bucket newBucket = newBuckets.get(i);
+            Bucket oldBucket = oldBuckets.get(i);
+            oldBucket.setAnomalyScore(newBucket.getAnomalyScore());
+            oldBucket.setMaxNormalizedProbability(newBucket.getMaxNormalizedProbability());
+            if (newBucket.hadBigNormalisedUpdate())
+            {
+                oldBucket.raiseBigNormalisedUpdateFlag();
+            }
+            else
+            {
+                oldBucket.resetBigNormalisedUpdateFlag();
+            }
+            oldBucket.setRecords(newBucket.getRecords());
+        }
     }
 
     private void verifyBucketSpanWasRequestedOnlyOnce()

@@ -38,6 +38,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.apache.log4j.Logger;
 import org.junit.Before;
@@ -51,9 +52,6 @@ import org.mockito.MockitoAnnotations;
 
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
-import com.prelert.job.process.normaliser.Normaliser;
-import com.prelert.job.process.normaliser.NormaliserProcess;
-import com.prelert.job.process.normaliser.NormaliserProcessFactory;
 import com.prelert.job.process.output.parsing.NormalisedResultsParser;
 import com.prelert.job.process.writer.LengthEncodedWriter;
 import com.prelert.job.results.AnomalyRecord;
@@ -121,9 +119,7 @@ public class NormaliserTest
 
         List<Bucket> buckets = createBuckets(rawScoresPerBucket, probabilityPerRecord);
 
-        List<Bucket> normalisedBuckets = m_Normaliser.normalise(10, buckets, "quantilesState");
-
-        assertEquals(buckets, normalisedBuckets);
+        m_Normaliser.normalise(10, transformToNormalisable(buckets), "quantilesState");
 
         InOrder inOrder = Mockito.inOrder(m_Process, writer);
         inOrder.verify(writer).writeRecord(
@@ -181,7 +177,7 @@ public class NormaliserTest
 
         Normaliser normaliser = new Normaliser(JOB_ID, m_ProcessFactory, m_Logger);
 
-        normaliser.normalise(10, buckets, "quantilesState");
+        normaliser.normalise(10, transformToNormalisable(buckets), "quantilesState");
 
         for (int i = 0; i < buckets.size(); i++)
         {
@@ -216,7 +212,7 @@ public class NormaliserTest
 
         Normaliser normaliser = new Normaliser(JOB_ID, m_ProcessFactory, m_Logger);
 
-        normaliser.normalise(10, buckets, "quantilesState");
+        normaliser.normalise(10, transformToNormalisable(buckets), "quantilesState");
 
         Bucket bucket = buckets.get(0);
         assertEquals(0.4, bucket.getMaxNormalizedProbability(), ERROR);
@@ -252,5 +248,11 @@ public class NormaliserTest
             buckets.add(bucket);
         }
         return buckets;
+    }
+
+    private static List<Normalisable> transformToNormalisable(List<Bucket> buckets)
+    {
+        return buckets.stream().map(bucket -> new BucketNormalisable(bucket))
+                .collect(Collectors.toList());
     }
 }

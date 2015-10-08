@@ -30,6 +30,7 @@ package com.prelert.job.process.normaliser;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import org.apache.log4j.Logger;
 
@@ -118,10 +119,11 @@ class ScoresUpdater
                 break;
             }
 
-            List<Bucket> normalisedBuckets =
-                    normaliser.normalise(getJobBucketSpan(logger), buckets, quantilesState);
+            List<Normalisable> asNormalisables = buckets.stream()
+                    .map(bucket -> new BucketNormalisable(bucket)).collect(Collectors.toList());
+            normaliser.normalise(getJobBucketSpan(logger), asNormalisables, quantilesState);
 
-            for (Bucket bucket : normalisedBuckets)
+            for (Bucket bucket : buckets)
             {
                 updateSingleBucket(bucket, counts, logger);
             }

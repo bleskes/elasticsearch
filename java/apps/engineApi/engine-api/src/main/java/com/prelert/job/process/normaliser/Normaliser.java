@@ -40,8 +40,6 @@ import com.prelert.job.normalisation.NormalisedResult;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
 import com.prelert.job.process.output.parsing.NormalisedResultsParser;
 import com.prelert.job.process.writer.LengthEncodedWriter;
-import com.prelert.job.results.AnomalyRecord;
-import com.prelert.job.results.Bucket;
 
 /**
  * Normalises bucket scores and anomaly records for either
@@ -64,10 +62,6 @@ public class Normaliser
     private static final String VALUE_FIELD_NAME = "valueFieldName";
     private static final String RAW_SCORE = "rawScore";
 
-    /** Normalisation levels */
-    private static final String ROOT = "root";
-    private static final String LEAF = "leaf";
-
     private final String m_JobId;
     private final NormaliserProcessFactory m_ProcessFactory;
     private final Logger m_Logger;
@@ -80,24 +74,22 @@ public class Normaliser
     }
 
     /**
-     * Normalise buckets anomaly scores and records normalized probability.
-     * Seed the normaliser with the state provided.
+     * Launches a normalisation process seeded with the quantiles state provided
+     * and normalises the given results.
      *
      * @param bucketSpan If <code>null</code> the default is used
-     * @param buckets Will be modified to have the normalised result
+     * @param results Will be updated with the normalised results
      * @param quantilesState The state to be used to seed the system change
      * normaliser
      * @return
      * @throws NativeProcessRunException
      * @throws UnknownJobException
      */
-    public List<Bucket> normalise(Integer bucketSpan, List<Bucket> buckets, String quantilesState)
-    throws NativeProcessRunException, UnknownJobException
+    public void normalise(Integer bucketSpan, List<Normalisable> results, String quantilesState)
+            throws NativeProcessRunException, UnknownJobException
     {
         NormaliserProcess process = createNormaliserProcess(quantilesState, bucketSpan);
-
         NormalisedResultsParser resultsParser = process.createNormalisedResultsParser(m_Logger);
-
         Thread parserThread = new Thread(resultsParser, m_JobId + "-Normalizer-Parser");
         parserThread.start();
 
@@ -108,21 +100,9 @@ public class Normaliser
             writer.writeRecord(new String[] { NORMALIZATION_LEVEL, PARTITION_FIELD_NAME,
                     PER_PERSON_FIELD_NAME, FUNCTION_NAME, VALUE_FIELD_NAME, RAW_SCORE });
 
-            for (Bucket bucket : buckets)
+            for (Normalisable result: results)
             {
-                writer.writeRecord(new String[] {
-                        ROOT, "", "", "", "", Double.toString(bucket.getRawAnomalyScore())});
-                for (AnomalyRecord record : bucket.getRecords())
-                {
-                    writer.writeRecord(new String[] {
-                            LEAF,
-                            Strings.nullToEmpty(record.getPartitionFieldName()),
-                            Strings.nullToEmpty(getPersonFieldName(record)),
-                            Strings.nullToEmpty(record.getFunction()),
-                            Strings.nullToEmpty(record.getFieldName()),
-                            Double.toString(record.getProbability())
-                            });
-                }
+                writeNormalisableAndChildrenRecursively(result, writer);
             }
         }
         catch (IOException e)
@@ -151,68 +131,100 @@ public class Normaliser
             Thread.currentThread().interrupt();
         }
 
-        return mergeNormalisedScoresIntoBuckets(resultsParser.getNormalisedResults(), buckets);
+        mergeNormalisedScoresIntoResults(resultsParser.getNormalisedResults(), results);
+    }
+
+    private static void writeNormalisableAndChildrenRecursively(Normalisable normalisable,
+            LengthEncodedWriter writer) throws IOException
+    {
+        writer.writeRecord(new String[] {
+                normalisable.getLevel().asString(),
+                Strings.nullToEmpty(normalisable.getPartitonFieldName()),
+                Strings.nullToEmpty(normalisable.getPersonFieldName()),
+                Strings.nullToEmpty(normalisable.getFunctionName()),
+                Strings.nullToEmpty(normalisable.getValueFieldName()),
+                Double.toString(normalisable.getInitialScore())
+        });
+        for (Normalisable child : normalisable.getChildren())
+        {
+            writeNormalisableAndChildrenRecursively(child, writer);
+        }
     }
 
     /**
      * Updates the normalised scores on the results.
      *
      * @param normalisedScores
-     * @param buckets
-     * @return
+     * @param results
      * @throws NativeProcessRunException
      */
-    private List<Bucket> mergeNormalisedScoresIntoBuckets(List<NormalisedResult> normalisedScores,
-            List<Bucket> buckets) throws NativeProcessRunException
+    private void mergeNormalisedScoresIntoResults(List<NormalisedResult> normalisedScores,
+            List<Normalisable> results) throws NativeProcessRunException
     {
         Iterator<NormalisedResult> scoresIter = normalisedScores.iterator();
-
-        for (Bucket bucket : buckets)
+        for (Normalisable result: results)
         {
-            bucket.resetBigNormalisedUpdateFlag();
+            mergeRecursively(scoresIter, null, false, result);
+        }
+        if (scoresIter.hasNext())
+        {
+            m_Logger.error("Unused normalized scores remain after updating all results: "
+                    + normalisedScores.size() + " for " + results.size() + " results");
+        }
+    }
 
-            double anomalyScore = scoresIter.next().getNormalizedScore();
-            boolean anomalyScoreHadBigUpdate = isBigUpdate(bucket.getAnomalyScore(), anomalyScore);
-            if (anomalyScoreHadBigUpdate)
-            {
-                bucket.setAnomalyScore(anomalyScore);
-                bucket.raiseBigNormalisedUpdateFlag();
-            }
-
-            double maxNormalizedProbability = 0.0;
-            for (AnomalyRecord record : bucket.getRecords())
-            {
-                if (!scoresIter.hasNext())
-                {
-                    String msg = "Error iterating normalised results";
-                    m_Logger.error(msg);
-                    throw new NativeProcessRunException(msg, ErrorCodes.NATIVE_PROCESS_ERROR);
-                }
-                record.resetBigNormalisedUpdateFlag();
-                if (anomalyScoreHadBigUpdate)
-                {
-                    record.setAnomalyScore(anomalyScore);
-                    record.raiseBigNormalisedUpdateFlag();
-                }
-
-                NormalisedResult recordNormalisedResult = scoresIter.next();
-                double normalizedProbability = recordNormalisedResult.getNormalizedScore();
-                boolean normalizedProbabilityHadBigUpdate =
-                        isBigUpdate(record.getNormalizedProbability(), normalizedProbability);
-                if (normalizedProbabilityHadBigUpdate)
-                {
-                    record.setNormalizedProbability(normalizedProbability);
-                    record.raiseBigNormalisedUpdateFlag();
-                    bucket.raiseBigNormalisedUpdateFlag();
-                }
-                maxNormalizedProbability =
-                        Math.max(maxNormalizedProbability, record.getNormalizedProbability());
-            }
-
-            bucket.setMaxNormalizedProbability(maxNormalizedProbability);
+    /**
+     * Recursively merges the scores returned by the normalisation process into the results
+     *
+     * @param scoresIter an Iterator of the scores returned by the normalisation process
+     * @param parent the parent result
+     * @param parentHadBigChange whether the parent had a big change
+     * @param result the result to be updated
+     * @return the effective normalised score of the given result
+     * @throws NativeProcessRunException
+     */
+    private double mergeRecursively(Iterator<NormalisedResult> scoresIter, Normalisable parent,
+            boolean parentHadBigChange, Normalisable result) throws NativeProcessRunException
+    {
+        if (!scoresIter.hasNext())
+        {
+            String msg = "Error iterating normalised results";
+            m_Logger.error(msg);
+            throw new NativeProcessRunException(msg, ErrorCodes.NATIVE_PROCESS_ERROR);
         }
 
-        return buckets;
+        result.resetBigChangeFlag();
+        if (parent != null && parentHadBigChange)
+        {
+            result.setParentScore(parent.getNormalisedScore());
+            result.raiseBigChangeFlag();
+        }
+
+        double normalisedScore = scoresIter.next().getNormalizedScore();
+        boolean hasBigChange = isBigUpdate(result.getNormalisedScore(), normalisedScore);
+        if (hasBigChange)
+        {
+            result.setNormalisedScore(normalisedScore);
+            result.raiseBigChangeFlag();
+            if (parent != null)
+            {
+                parent.raiseBigChangeFlag();
+            }
+        }
+
+        double maxChildrenScore = 0.0;
+        List<Normalisable> children = result.getChildren();
+        if (!children.isEmpty())
+        {
+            for (Normalisable child : children)
+            {
+                maxChildrenScore = Math.max(
+                        mergeRecursively(scoresIter, result, hasBigChange, child),
+                        maxChildrenScore);
+            }
+            result.setMaxChildrenScore(maxChildrenScore);
+        }
+        return result.getNormalisedScore();
     }
 
     /**
@@ -237,12 +249,6 @@ public class Normaliser
             throw new NativeProcessRunException(msg,
                     ErrorCodes.NATIVE_PROCESS_START_ERROR, e);
         }
-    }
-
-    private static String getPersonFieldName(AnomalyRecord record)
-    {
-        String over = record.getOverFieldName();
-        return over != null ? over : record.getByFieldName();
     }
 
     /**
