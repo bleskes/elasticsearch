@@ -7,34 +7,12 @@ define(function (require) {
   var moment = require('moment');
   var formatNumber = require('plugins/marvel/lib/format_number');
   var jubilee = require('jubilee/build/jubilee');
+  var LoadingComponent = require('plugins/marvel/directives/chart/loadingComponent');
+  var ChartTooltipController = require('plugins/marvel/directives/chart/tooltipController');
 
 
-  var LoadingComponent = React.createClass({
-    render: function () {
-      var $icon = make.i({className: 'fa fa-spinner fa-pulse'});
-      return make.div({
-        className: 'loading'
-      }, $icon, ' Loading');
-    }
-  });
-  var Tooltip = require('plugins/marvel/directives/tooltip');
-  var TooltipInnerComponent = React.createClass({
-    render: function () {
-      var time = moment(this.props.x);
-      var $dateDiv = make.div(null,
-          make.i({className: 'fa fa-calendar-o'}),
-          ' ',
-          time.format('YYYY-MM-DD'),
-          '   ',
-          make.i({className: 'fa fa-clock-o'}),
-          ' ',
-          time.format('HH:mm:ss'));
-      var value = [this.props.label, this.props.y].join(' ');
-      return make.div(null, $dateDiv, value);
-    }
-  });
 
-  var MarvelSparkLine = React.createClass({
+  var MarvelMainChart = React.createClass({
     getInitialState: function () {
       var data = this.props.data;
       if (!data && this.props.source) {
@@ -54,6 +32,8 @@ define(function (require) {
     },
     componentDidUpdate: function () { this.drawJubileeChart(); },
     render: function () {
+      // Draw everything around the chart, and
+      // create a blank div to be filled with the chart later
       var metric = this.props.source.metric;
       var lastPoint = _.last(this.state.chartData);
       var titleStr = [metric.label + ':', lastPoint ? formatNumber(lastPoint.y, metric.format) : 0, metric.units].join(' ');
@@ -66,8 +46,11 @@ define(function (require) {
     shouldComponentUpdate: function (nextProps, nextState) {
       return this.state.loading === nextState.loading;
     },
+    removeTooltip: function () {
+      this.tooltipController.hideTooltip();
+    },
     drawJubileeChart: function () {
-      Tooltip.removeTooltip();
+      this.removeTooltip();
       var data = this.state.chartData;
       var children = React.findDOMNode(this).children;
       var lastChild = children[children.length - 1];
@@ -103,12 +86,6 @@ define(function (require) {
       }
     },
     componentWillMount: function () {
-      function getSvgElement(el) {
-        if (el.tagName === 'svg') {
-          return el;
-        }
-        return getSvgElement(el.parentNode);
-      }
       // Reference for use with posistioning things, and also the options
       var chartMargin = {
         left: 60,
@@ -116,44 +93,7 @@ define(function (require) {
         top: 20,
         bottom: 20
       };
-      // Setup the line that shows up on the charts
-      var $tooltipLine = document.createElement('div');
-      $tooltipLine.style.zIndex = 1;
-      $tooltipLine.style.borderLeft = '2px solid #a4a4ae';
-      $tooltipLine.style.position = 'absolute';
-      $tooltipLine.style.width = '1px';
-      $tooltipLine.style.top = chartMargin.top + 'px';
-      var that = this;
-      function showTooltip(evt, yValue, valueCoords) {
-        var val = yValue[0];
-        if (val !== null) {
-          var niceVal = formatNumber(val.y, that.props.source.metric.format);
-          var tooltipInnerProps = _.assign({label: that.props.source.metric.label}, val, {y: niceVal});
-          var tooltipInnerComponentInstance = React.createElement(TooltipInnerComponent, tooltipInnerProps);
-          var svgElement = getSvgElement(evt.target);
-          var svgClientRect = svgElement.getBoundingClientRect();
-          var tooltipOptions = {
-            x: document.body.scrollLeft + svgClientRect.left + valueCoords[0] + chartMargin.left,
-            y: document.body.scrollTop + svgClientRect.top + svgClientRect.height / 3,
-            content: tooltipInnerComponentInstance,
-            bounds: {
-              x: document.body.scrollLeft + svgClientRect.left,
-              y: document.body.scrollTop + svgClientRect.top,
-              w: svgClientRect.width,
-              h: svgClientRect.height
-            }
-          };
-          Tooltip.showTooltip(tooltipOptions);
-
-          $tooltipLine.style.height = svgClientRect.height - (chartMargin.bottom + chartMargin.top) + 'px';
-          $tooltipLine.style.left = valueCoords[0] + chartMargin.left + 'px';
-          // $tooltipLine.style.top = svgClientRect.top + 'px';
-          // Show the tooltip line
-          if (!$tooltipLine.parentElement) {
-            svgElement.parentElement.appendChild($tooltipLine);
-          }
-        }
-      }
+      this.tooltipController = ChartTooltipController(this, chartMargin);
       // Finally make the line chart
       var lineChart = new jubilee.chart.line()
         .height(150)
@@ -171,7 +111,7 @@ define(function (require) {
             outerTickSize: 0,
             showGridLines: true,
             text: { x: -5 },
-            format: function (val) { return formatNumber(val, that.props.source.metric.format); }
+            format: function (val) { return formatNumber(val, this.props.source.metric.format); }.bind(this)
           }
         })
         .xAxis({
@@ -183,19 +123,13 @@ define(function (require) {
           }
         })
         .zeroLine({ add: false })
-        .on('mouseenter', showTooltip)
-        .on('mousemove', _.throttle(showTooltip, 10))
-        .on('mouseleave', function (evt, yValue, chartIndex) {
-          var svgElement = getSvgElement(evt.target);
-          if ($tooltipLine.parentElement) {
-            svgElement.parentElement.removeChild($tooltipLine);
-          }
-          Tooltip.removeTooltip();
-        });
+        .on('mouseenter', this.tooltipController.showTooltip)
+        .on('mousemove', _.throttle(this.tooltipController.showTooltip, 10))
+        .on('mouseleave', this.tooltipController.hideTooltip);
 
       this.jLineChart = lineChart;
     }
   });
 
-  return MarvelSparkLine;
+  return MarvelMainChart;
 });
