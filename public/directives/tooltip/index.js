@@ -2,44 +2,8 @@ define(function (require) {
   const React = require('react');
   const make = React.DOM;
   const _ = require('lodash');
-  class Vector {
-    constructor(x, y) {
-      this.x = x || 0;
-      this.y = y || 0;
-    }
-    clone() { return new Vector(this.x, this.y); }
-    toArray() { return [this.x, this.y]; }
-    toString() { return this.x + ', ' + this.y; }
-    _xPx() { return this.x + 'px'; }
-    _yPx() { return this.y + 'px'; }
-    add(vector) {
-      this.x += vector.x;
-      this.y += vector.y;
-      return this;
-    }
-    subtract(vector) {
-      this.x = this.x - vector.x;
-      this.y = this.y - vector.y;
-      return this;
-    }
-    multiply(vector) {
-      this.x *= vector.x;
-      this.y *= vector.y;
-      return this;
-    }
-  }
-  class Bounds {
-    constructor(v1, v2) {
-      this.nw = v1 || new Vector();
-      this.se = v2 || new Vector();
-    }
-    contains(vector) {
-      return this.nw.x < vector.x &&
-        vector.x < this.se.x &&
-        this.nw.y < vector.y &&
-        vector.y < this.se.y;
-    }
-  }
+  const Vector = require('./vector');
+  const Bounds = require('./bounds');
 
   const TooltipComponent = React.createClass({
     render: function () {

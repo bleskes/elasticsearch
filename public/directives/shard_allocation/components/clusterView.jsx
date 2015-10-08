@@ -29,7 +29,7 @@ define(function (require) {
     },
     setLabels: function (data) {
       if (data) {
-        this.setState({ labels: data.slice(1) });
+        this.setState({ labels: data });
       }
     },
     setShowing: function (data) {

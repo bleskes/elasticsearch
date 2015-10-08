@@ -15,11 +15,15 @@ define(function (require) {
         return marvelClusters.fetch().then(function (clusters) {
           var license;
           var cluster;
+          if (!clusters.length) {
+            kbnUrl.changePath('/no-data');
+            return Promise.reject();
+          }
           if (clusters.length === 1) {
             cluster = clusters[0];
             globalState.cluster = cluster.cluster_uuid;
             license = _.find(cluster.licenses, { feature: 'marvel' });
-            if (license.type === 'lite') {
+            if (license.type === 'basic') {
               globalState.save();
               kbnUrl.changePath('/overview');
               return Promise.reject();
@@ -35,7 +39,7 @@ define(function (require) {
       }
     }
   })
-  .otherwise({ redirectTo: '/home' });
+  .otherwise({ redirectTo: '/no-data' });
 
   module.controller('home', function ($route, $window, $scope, marvelClusters, timefilter, $timeout) {
 
