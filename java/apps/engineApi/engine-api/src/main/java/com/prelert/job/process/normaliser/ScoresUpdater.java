@@ -79,10 +79,10 @@ class ScoresUpdater
      */
     public void update(String quantilesState, long endBucketEpochMs, Logger logger)
     {
+        Normaliser normaliser = m_NormaliserFactory.create(m_JobId, logger);
+        int[] counts = { 0, 0 };
         try
         {
-            Normaliser normaliser = m_NormaliserFactory.create(m_JobId, logger);
-            int[] counts = { 0, 0 };
             int skip = 0;
             QueryPage<Bucket> page = m_JobProvider.buckets(m_JobId, true, false,
                         skip, MAX_BUCKETS_PER_PAGE, 0, endBucketEpochMs, 0.0, 0.0);
@@ -113,10 +113,6 @@ class ScoresUpdater
                             skip, MAX_BUCKETS_PER_PAGE, 0, endBucketEpochMs, 0.0, 0.0);
                 }
             }
-
-            logger.info("Normalisation resulted in: " +
-                        counts[0] + " updates, " +
-                        counts[1] + " no-ops");
         }
         catch (UnknownJobException uje)
         {
@@ -126,6 +122,10 @@ class ScoresUpdater
         {
             logger.error("Failed to renormalise", npe);
         }
+
+        logger.info("Normalisation resulted in: " +
+                counts[0] + " updates, " +
+                counts[1] + " no-ops");
     }
 
     private int getJobBucketSpan(Logger logger)
