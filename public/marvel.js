@@ -9,7 +9,7 @@ require('plugins/marvel/views/overview/index.js');
 require('plugins/marvel/views/settings/index.js');
 require('plugins/marvel/views/issues/issues_controller.js');
 require('plugins/marvel/views/setup/setup_controller.js');
-require('plugins/marvel/views/shard_allocation/shard_allocation_controller.js');
+require('plugins/marvel/views/expired_license/index.js');
 require('plugins/marvel/views/index/index_controller.js');
 require('ui/modules').get('kibana').config(function (PrivateProvider) {
   PrivateProvider.swap(require('ui/config/defaults'), function ($injector) {

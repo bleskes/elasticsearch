@@ -63,6 +63,9 @@ define(function (require) {
         .then(function () {
           var cluster = _.find(marvel.clusters, { cluster_uuid: globalState.cluster });
           var license = _.find(cluster.licenses, { feature: 'marvel' });
+          if ((new Date()).getTime() > license.expiry_date_in_millis) {
+            kbnUrl.redirect('expired-license');
+          }
           chrome.setTabs(tabs.filter(function (tab) {
             if (tab.id !== 'home') return true;
             if (license.type !== 'lite') return true;
