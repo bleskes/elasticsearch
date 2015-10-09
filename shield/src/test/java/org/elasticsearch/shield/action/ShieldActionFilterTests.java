@@ -23,6 +23,7 @@ import org.elasticsearch.action.ActionRequest;
 import org.elasticsearch.action.search.SearchScrollRequest;
 import org.elasticsearch.action.support.ActionFilterChain;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.license.plugin.core.LicenseState;
 import org.elasticsearch.shield.User;
 import org.elasticsearch.shield.action.interceptor.RequestInterceptor;
 import org.elasticsearch.shield.audit.AuditTrail;
@@ -124,7 +125,7 @@ public class ShieldActionFilterTests extends ESTestCase {
     private class MockLicenseEventsNotifier extends LicenseEventsNotifier {
         @Override
         public void register(MockLicenseEventsNotifier.Listener listener) {
-            listener.enabled();
+            listener.notify(LicenseState.ENABLED);
         }
     }
 }
