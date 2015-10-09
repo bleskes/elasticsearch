@@ -26,7 +26,7 @@
  ************************************************************/
 package com.prelert.job.process.output.parsing;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -47,7 +47,7 @@ public class InfluencerParserTest
     {
         String json = "{"
                 + "\"probability\": 0.2,"
-                + "\"initialScore\": 10.0,"
+                + "\"initialAnomalyScore\": 10.0,"
                 + "\"influencerFieldName\": \"inf-name\","
                 + "\"influencerFieldValue\": \"inf-value\""
          + "}";
@@ -59,31 +59,34 @@ public class InfluencerParserTest
         assertEquals("inf-name", influencer.getInfluencerFieldName());
         assertEquals("inf-value", influencer.getInfluencerFieldValue());
         assertEquals(0.2, influencer.getProbability(), 0.0001);
-        assertEquals(10.0, influencer.getInitialScore(), 0.0001);
+        assertEquals(10.0, influencer.getInitialAnomalyScore(), 0.0001);
+        assertEquals(10.0, influencer.getAnomalyScore(), 0.0001);
     }
 
     @Test
     public void testParseJson() throws JsonParseException, IOException, AutoDetectParseException
     {
-        String json = "{\"probability\":0.9,\"initialScore\":97.1948,\"influencerFieldName\":\"src_ip\",\"influencerFieldValue\":\"23.28.243.150\"},";
+        String json = "{\"probability\":0.9,\"initialAnomalyScore\":97.1948,\"influencerFieldName\":\"src_ip\",\"influencerFieldValue\":\"23.28.243.150\"},";
 
         JsonParser parser = createJsonParser(json);
         parser.nextToken();
         Influencer inf = InfluencerParser.parseJson(parser);
 
         assertEquals(0.9, inf.getProbability(), 0.0001);
-        assertEquals(97.1948, inf.getInitialScore(), 0.0001);
+        assertEquals(97.1948, inf.getInitialAnomalyScore(), 0.0001);
+        assertEquals(97.1948, inf.getAnomalyScore(), 0.0001);
         assertEquals("src_ip", inf.getInfluencerFieldName());
         assertEquals("23.28.243.150", inf.getInfluencerFieldValue());
 
 
-        json = "{\"probability\":0.4,\"initialScore\":12.1948,\"influencerFieldName\":\"dst_ip\",\"influencerFieldValue\":\"23.28.243.1\"}";
+        json = "{\"probability\":0.4,\"initialAnomalyScore\":12.1948,\"influencerFieldName\":\"dst_ip\",\"influencerFieldValue\":\"23.28.243.1\"}";
 
         parser = createJsonParser(json);
         parser.nextToken();
         inf = InfluencerParser.parseJson(parser);
         assertEquals(0.4, inf.getProbability(), 0.0001);
-        assertEquals(12.1948, inf.getInitialScore(), 0.0001);
+        assertEquals(12.1948, inf.getInitialAnomalyScore(), 0.0001);
+        assertEquals(12.1948, inf.getAnomalyScore(), 0.0001);
         assertEquals("dst_ip", inf.getInfluencerFieldName());
         assertEquals("23.28.243.1", inf.getInfluencerFieldValue());
     }

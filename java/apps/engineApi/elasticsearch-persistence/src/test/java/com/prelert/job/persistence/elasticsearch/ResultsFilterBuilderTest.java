@@ -33,12 +33,14 @@ import org.elasticsearch.index.query.FilterBuilder;
 import org.elasticsearch.index.query.FilterBuilders;
 import org.junit.Test;
 
-public class BucketsAndRecordsFilterBuilderTest
+public class ResultsFilterBuilderTest
 {
+    private static final String TIMESTAMP = "timestamp";
+
     @Test
     public void testBuild_GivenNoFilters()
     {
-        FilterBuilder fb = new BucketsAndRecordsFilterBuilder().build();
+        FilterBuilder fb = new ResultsFilterBuilder().build();
 
         assertEquals(FilterBuilders.matchAllFilter().toString(), fb.toString());
     }
@@ -47,7 +49,7 @@ public class BucketsAndRecordsFilterBuilderTest
     public void testBuild_GivenFilterInCtorButNoAdditionalFilters()
     {
         FilterBuilder originalFilter = FilterBuilders.existsFilter("someField") ;
-        FilterBuilder fb = new BucketsAndRecordsFilterBuilder(originalFilter).build();
+        FilterBuilder fb = new ResultsFilterBuilder(originalFilter).build();
 
         assertEquals(originalFilter.toString(), fb.toString());
     }
@@ -55,8 +57,8 @@ public class BucketsAndRecordsFilterBuilderTest
     @Test
     public void testBuild_GivenZeroStartAndEndTime()
     {
-        FilterBuilder fb = new BucketsAndRecordsFilterBuilder()
-                .timeRange(0, 0)
+        FilterBuilder fb = new ResultsFilterBuilder()
+                .timeRange(TIMESTAMP, 0, 0)
                 .build();
 
         assertEquals(FilterBuilders.matchAllFilter().toString(), fb.toString());
@@ -69,8 +71,8 @@ public class BucketsAndRecordsFilterBuilderTest
                 .rangeFilter(ElasticsearchMappings.ES_TIMESTAMP)
                 .gte(1000);
 
-        FilterBuilder fb = new BucketsAndRecordsFilterBuilder()
-                .timeRange(1000, 0)
+        FilterBuilder fb = new ResultsFilterBuilder()
+                .timeRange(ElasticsearchMappings.ES_TIMESTAMP, 1000, 0)
                 .build();
 
         assertEquals(expected.toString(), fb.toString());
@@ -80,11 +82,11 @@ public class BucketsAndRecordsFilterBuilderTest
     public void testBuild_GivenOnlyEndTime()
     {
         FilterBuilder expected = FilterBuilders
-                .rangeFilter(ElasticsearchMappings.ES_TIMESTAMP)
+                .rangeFilter(TIMESTAMP)
                 .lt(2000);
 
-        FilterBuilder fb = new BucketsAndRecordsFilterBuilder()
-                .timeRange(0, 2000)
+        FilterBuilder fb = new ResultsFilterBuilder()
+                .timeRange(TIMESTAMP, 0, 2000)
                 .build();
 
         assertEquals(expected.toString(), fb.toString());
@@ -94,12 +96,12 @@ public class BucketsAndRecordsFilterBuilderTest
     public void testBuild_GivenStartAndEndTime()
     {
         FilterBuilder expected = FilterBuilders
-                .rangeFilter(ElasticsearchMappings.ES_TIMESTAMP)
+                .rangeFilter(TIMESTAMP)
                 .gte(40)
                 .lt(50);
 
-        FilterBuilder fb = new BucketsAndRecordsFilterBuilder()
-                .timeRange(40, 50)
+        FilterBuilder fb = new ResultsFilterBuilder()
+                .timeRange(TIMESTAMP, 40, 50)
                 .build();
 
         assertEquals(expected.toString(), fb.toString());
@@ -108,8 +110,8 @@ public class BucketsAndRecordsFilterBuilderTest
     @Test
     public void testBuild_GivenNegativeStartAndEndTime()
     {
-        FilterBuilder fb = new BucketsAndRecordsFilterBuilder()
-                .timeRange(-10, -5)
+        FilterBuilder fb = new ResultsFilterBuilder()
+                .timeRange(TIMESTAMP, -10, -5)
                 .build();
 
         assertEquals(FilterBuilders.matchAllFilter().toString(), fb.toString());
@@ -118,7 +120,7 @@ public class BucketsAndRecordsFilterBuilderTest
     @Test
     public void testBuild_GivenZeroScore()
     {
-        FilterBuilder fb = new BucketsAndRecordsFilterBuilder()
+        FilterBuilder fb = new ResultsFilterBuilder()
                 .score("someField", 0.0)
                 .build();
 
@@ -128,7 +130,7 @@ public class BucketsAndRecordsFilterBuilderTest
     @Test
     public void testBuild_GivenNegativeScore()
     {
-        FilterBuilder fb = new BucketsAndRecordsFilterBuilder()
+        FilterBuilder fb = new ResultsFilterBuilder()
                 .score("someField", -10.0)
                 .build();
 
@@ -142,7 +144,7 @@ public class BucketsAndRecordsFilterBuilderTest
                 .rangeFilter("someField")
                 .gte(40.3);
 
-        FilterBuilder fb = new BucketsAndRecordsFilterBuilder()
+        FilterBuilder fb = new ResultsFilterBuilder()
                 .score("someField", 40.3)
                 .build();
 
@@ -152,7 +154,7 @@ public class BucketsAndRecordsFilterBuilderTest
     @Test
     public void testBuild_GivenInterimTrue()
     {
-        FilterBuilder fb = new BucketsAndRecordsFilterBuilder()
+        FilterBuilder fb = new ResultsFilterBuilder()
                 .interim("isInterim", true)
                 .build();
 
@@ -165,7 +167,7 @@ public class BucketsAndRecordsFilterBuilderTest
         FilterBuilder expected = FilterBuilders.notFilter(FilterBuilders.termFilter("isInterim",
                 Boolean.TRUE.toString()));
 
-        FilterBuilder fb = new BucketsAndRecordsFilterBuilder()
+        FilterBuilder fb = new ResultsFilterBuilder()
                 .interim("isInterim", false)
                 .build();
 
@@ -180,10 +182,10 @@ public class BucketsAndRecordsFilterBuilderTest
                 .rangeFilter(ElasticsearchMappings.ES_TIMESTAMP)
                 .gte(1000)
                 .lt(2000);
-        FilterBuilder score1Filter = new BucketsAndRecordsFilterBuilder()
+        FilterBuilder score1Filter = new ResultsFilterBuilder()
                 .score("score1", 50.0)
                 .build();
-        FilterBuilder score2Filter = new BucketsAndRecordsFilterBuilder()
+        FilterBuilder score2Filter = new ResultsFilterBuilder()
                 .score("score2", 80.0)
                 .build();
         FilterBuilder interimFilter = FilterBuilders.notFilter(FilterBuilders.termFilter(
@@ -191,8 +193,8 @@ public class BucketsAndRecordsFilterBuilderTest
         FilterBuilder expected = FilterBuilders.andFilter(originalFilter, timeFilter, score1Filter,
                 score2Filter, interimFilter);
 
-        FilterBuilder fb = new BucketsAndRecordsFilterBuilder(originalFilter)
-                .timeRange(1000, 2000)
+        FilterBuilder fb = new ResultsFilterBuilder(originalFilter)
+                .timeRange(ElasticsearchMappings.ES_TIMESTAMP, 1000, 2000)
                 .score("score1", 50.0)
                 .score("score2", 80.0)
                 .interim("isInterim", false)

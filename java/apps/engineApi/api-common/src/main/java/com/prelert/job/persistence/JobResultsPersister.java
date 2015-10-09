@@ -31,6 +31,7 @@ import com.prelert.job.ModelSizeStats;
 import com.prelert.job.quantiles.Quantiles;
 import com.prelert.job.results.Bucket;
 import com.prelert.job.results.CategoryDefinition;
+import com.prelert.job.results.Influencer;
 
 /**
  * Interface for classes that persist {@linkplain Bucket Buckets} and
@@ -38,43 +39,48 @@ import com.prelert.job.results.CategoryDefinition;
  */
 public interface JobResultsPersister
 {
-	/**
-	 * Persist the result bucket
-	 * @param bucket
-	 */
-	public void persistBucket(Bucket bucket);
+    /**
+     * Persist the result bucket
+     * @param bucket
+     */
+    void persistBucket(Bucket bucket);
 
-	/**
+    /**
      * Persist the category definition
      * @param category The category to be persisted
      */
-    public void persistCategoryDefinition(CategoryDefinition category);
+    void persistCategoryDefinition(CategoryDefinition category);
 
     /**
-	 * Persist the quantiles
-	 * @param quantiles
-	 */
-	public void persistQuantiles(Quantiles quantiles);
+     * Persist the quantiles
+     * @param quantiles
+     */
+    void persistQuantiles(Quantiles quantiles);
 
-	/**
-	 * Persist the memory usage data
-	 * @param modelSizeStats
-	 */
-	public void persistModelSizeStats(ModelSizeStats modelSizeStats);
+    /**
+     * Persist the memory usage data
+     * @param modelSizeStats
+     */
+    void persistModelSizeStats(ModelSizeStats modelSizeStats);
 
-	/**
-	 * Increment the jobs bucket result count by <code>count</code>
-	 * @param count
-	 */
-	public void incrementBucketCount(long count);
+    /**
+     * Persist the influencer
+     * @param influencer
+     */
+    void persistInfluencer(Influencer influencer);
 
+    /**
+     * Increment the jobs bucket result count by <code>count</code>
+     * @param count
+     */
+    void incrementBucketCount(long count);
 
-	/**
-	 * Once all the job data has been written this function will be
-	 * called to commit the data if the implementing persister requries
-	 * it.
-	 *
-	 * @return True if successful
-	 */
-	public boolean commitWrites();
+    /**
+     * Once all the job data has been written this function will be
+     * called to commit the data if the implementing persister requries
+     * it.
+     *
+     * @return True if successful
+     */
+    boolean commitWrites();
 }

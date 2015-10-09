@@ -26,7 +26,8 @@
  ************************************************************/
 package com.prelert.job.process.output.parsing;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -56,8 +57,8 @@ public class BucketParserTest
                 + "\"eventCount\" : 1693,"
                 + "\"isInterim\" : false,"
                 + "\"influencers\" : ["
-                    + "{\"probability\":0.9,\"initialScore\":97.1948,\"influencerFieldName\":\"src_ip\",\"influencerFieldValue\":\"23.28.243.150\"},"
-                    + "{\"probability\":0.4,\"initialScore\":12.1948,\"influencerFieldName\":\"dst_ip\",\"influencerFieldValue\":\"23.28.243.1\"}"
+                    + "{\"probability\":0.9,\"initialAnomalyScore\":97.1948,\"influencerFieldName\":\"src_ip\",\"influencerFieldValue\":\"23.28.243.150\"},"
+                    + "{\"probability\":0.4,\"initialAnomalyScore\":12.1948,\"influencerFieldName\":\"dst_ip\",\"influencerFieldValue\":\"23.28.243.1\"}"
                   + "],"
                 + "\"detectors\" : []"
                 + "}";
@@ -84,11 +85,11 @@ public class BucketParserTest
         assertEquals("src_ip", inf.getInfluencerFieldName());
         assertEquals("23.28.243.150", inf.getInfluencerFieldValue());
         assertEquals(0.9, inf.getProbability(), 0.0001);
-        assertEquals(97.1948, inf.getInitialScore(), 0.0001);
+        assertEquals(97.1948, inf.getInitialAnomalyScore(), 0.0001);
 
         inf = influencers.get(1);
         assertEquals(0.4, inf.getProbability(), 0.0001);
-        assertEquals(12.1948, inf.getInitialScore(), 0.0001);
+        assertEquals(12.1948, inf.getInitialAnomalyScore(), 0.0001);
         assertEquals("dst_ip", inf.getInfluencerFieldName());
         assertEquals("23.28.243.1", inf.getInfluencerFieldValue());
     }

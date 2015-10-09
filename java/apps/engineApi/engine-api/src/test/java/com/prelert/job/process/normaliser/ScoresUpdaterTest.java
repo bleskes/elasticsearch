@@ -29,7 +29,9 @@ package com.prelert.job.process.normaliser;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.anyDouble;
+import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyListOf;
+import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
@@ -40,6 +42,7 @@ import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import org.apache.log4j.Logger;
@@ -56,6 +59,7 @@ import com.prelert.job.persistence.QueryPage;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
 import com.prelert.job.results.AnomalyRecord;
 import com.prelert.job.results.Bucket;
+import com.prelert.job.results.Influencer;
 
 public class ScoresUpdaterTest
 {
@@ -74,6 +78,7 @@ public class ScoresUpdaterTest
     {
         MockitoAnnotations.initMocks(this);
         m_ScoresUpdater = new ScoresUpdater(JOB_ID, m_JobProvider, (jobId, logger) -> m_Normaliser);
+        givenProviderReturnsNoInfluencers();
     }
 
     @Test
@@ -297,6 +302,13 @@ public class ScoresUpdaterTest
     {
         QueryPage<Bucket> page = new QueryPage<>(buckets, hitCount);
         when(m_JobProvider.buckets(JOB_ID, true, false, skip, MAX_BUCKETS_PER_PAGE, 0, endTime, 0.0, 0.0))
+                .thenReturn(page);
+    }
+
+    private void givenProviderReturnsNoInfluencers()
+    {
+        QueryPage<Influencer> page = new QueryPage<>(Collections.emptyList(), 0);
+        when(m_JobProvider.influencers(eq(JOB_ID), anyInt(), anyInt(), anyLong(), anyLong()))
                 .thenReturn(page);
     }
 

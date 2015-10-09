@@ -30,6 +30,8 @@ package com.prelert.job.persistence;
 import java.util.List;
 
 import com.prelert.job.results.AnomalyRecord;
+import com.prelert.job.results.Bucket;
+import com.prelert.job.results.Influencer;
 
 
 /**
@@ -48,8 +50,8 @@ public interface JobRenormaliser
      * @param anomalyScore New anomaly score
      * @param maxNormalizedProbability New max normalized probability
      */
-    public void updateBucket(String jobId, String bucketId, double anomalyScore,
-                            double maxNormalizedProbability);
+    void updateBucket(String jobId, String bucketId, double anomalyScore,
+            double maxNormalizedProbability);
 
 
     /**
@@ -61,6 +63,14 @@ public interface JobRenormaliser
      * @param bucketId Id of the bucket to update
      * @param records The new record values
      */
-    public void updateRecords(String jobId, String bucketId, List<AnomalyRecord> records);
+    void updateRecords(String jobId, String bucketId, List<AnomalyRecord> records);
+
+    /**
+     * Update the influencer for a particular job
+     *
+     * @param jobId
+     * @param influencer
+     */
+    void updateInfluencer(String jobId, Influencer influencer);
 }
 
