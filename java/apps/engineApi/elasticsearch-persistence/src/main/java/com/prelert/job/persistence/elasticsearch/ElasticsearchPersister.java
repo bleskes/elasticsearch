@@ -153,6 +153,12 @@ public class ElasticsearchPersister implements JobResultsPersister
 
                 for (Influencer influencer : bucket.getInfluencers())
                 {
+                    if (influencer.getInfluencerFieldValue() == null)
+                    {
+                        // TODO Influencers with a null field value are actually a different
+                        // result type called 'influencerbucket' and should be dealt accordingly.
+                        continue;
+                    }
                     influencer.setTimestamp(bucket.getTimestamp());
                     content = serialiseInfluencer(influencer);
                     LOGGER.trace("ES BULK ACTION: index type " + Influencer.TYPE +
