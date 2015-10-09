@@ -103,6 +103,10 @@ module.exports = function phoneHomeProvider(Promise, es, $http, statsReportUrl, 
       })).then(() => {
         this.set('lastReport', Date.now());
         this.saveToBrowser();
+      })
+      .catch((err) => {
+        // swallow!
+        return Promise.resolve();
       });
     }
 
