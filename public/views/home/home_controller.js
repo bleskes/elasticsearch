@@ -10,15 +10,20 @@ define(function (require) {
   .when('/home', {
     template: require('plugins/marvel/views/home/home_template.html'),
     resolve: {
-      clusters: function (marvelClusters, kbnUrl, globalState) {
+      clusters: function (Private, marvelClusters, kbnUrl, globalState) {
+        var phoneHome = Private(require('plugins/marvel/lib/phone_home'));
         return marvelClusters.fetch().then(function (clusters) {
           var license;
           var cluster;
+          if (!clusters.length) {
+            kbnUrl.changePath('/no-data');
+            return Promise.reject();
+          }
           if (clusters.length === 1) {
             cluster = clusters[0];
             globalState.cluster = cluster.cluster_uuid;
             license = _.find(cluster.licenses, { feature: 'marvel' });
-            if (license.type === 'lite') {
+            if (license.type === 'basic') {
               globalState.save();
               kbnUrl.changePath('/overview');
               return Promise.reject();
@@ -26,11 +31,15 @@ define(function (require) {
           }
           chrome.setTabs([]);
           return clusters;
+        }).then(function (clusters) {
+          return phoneHome.sendIfDue(clusters).then(function () {
+            return clusters;
+          });
         });
       }
     }
   })
-  .otherwise({ redirectTo: '/home' });
+  .otherwise({ redirectTo: '/no-data' });
 
   module.controller('home', function ($route, $window, $scope, marvelClusters, timefilter, $timeout) {
 
