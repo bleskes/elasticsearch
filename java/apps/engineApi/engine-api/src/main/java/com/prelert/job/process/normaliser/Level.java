@@ -25,52 +25,23 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.job.persistence;
+package com.prelert.job.process.normaliser;
 
-import java.util.List;
-
-import com.prelert.job.results.AnomalyRecord;
-import com.prelert.job.results.Bucket;
-import com.prelert.job.results.Influencer;
-
-
-/**
- * Interface for classes that update {@linkplain Bucket Buckets}
- * for a particular job with new normalised anomaly scores and
- * unusual scores
- */
-public interface JobRenormaliser
+enum Level
 {
-    /**
-     * Update the bucket with the new anomaly score and normalised
-     * probability.
-     *
-     * @param jobId Job to update
-     * @param bucketId Id of the bucket to update
-     * @param anomalyScore New anomaly score
-     * @param maxNormalizedProbability New max normalized probability
-     */
-    void updateBucket(String jobId, String bucketId, double anomalyScore,
-            double maxNormalizedProbability);
+    ROOT("root"),
+    LEAF("leaf"),
+    INFLUENCER("infl");
 
+    private final String m_Key;
 
-    /**
-     * Update the anomaly records for a particular bucket and job.
-     * The anomaly records are updated with the values in the
-     * <code>records</code> list.
-     *
-     * @param jobId Job to update
-     * @param bucketId Id of the bucket to update
-     * @param records The new record values
-     */
-    void updateRecords(String jobId, String bucketId, List<AnomalyRecord> records);
+    Level(String key)
+    {
+        m_Key = key;
+    }
 
-    /**
-     * Update the influencer for a particular job
-     *
-     * @param jobId
-     * @param influencer
-     */
-    void updateInfluencer(String jobId, Influencer influencer);
+    public String asString()
+    {
+        return m_Key;
+    }
 }
-

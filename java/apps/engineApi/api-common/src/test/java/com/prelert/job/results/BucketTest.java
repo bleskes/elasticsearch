@@ -35,10 +35,6 @@ import java.util.Date;
 
 import org.junit.Test;
 
-import com.prelert.job.results.AnomalyRecord;
-import com.prelert.job.results.Bucket;
-import com.prelert.job.results.Detector;
-
 public class BucketTest
 {
     @Test
@@ -209,7 +205,7 @@ public class BucketTest
         AnomalyRecord record = new AnomalyRecord();
         Influencer influencer = new Influencer("testField", "testValue");
         influencer.setProbability(0.1);
-        influencer.setInitialScore(10.0);
+        influencer.setInitialAnomalyScore(10.0);
         Date date = new Date();
 
         Bucket bucket1 = new Bucket();

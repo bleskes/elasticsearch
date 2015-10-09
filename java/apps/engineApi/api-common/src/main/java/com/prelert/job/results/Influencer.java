@@ -29,6 +29,9 @@ package com.prelert.job.results;
 import java.util.Date;
 import java.util.Objects;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+@JsonIgnoreProperties(value={"id", "initialAnomalyScore"}, allowSetters=true)
 public class Influencer
 {
     /**
@@ -39,20 +42,21 @@ public class Influencer
     /*
      * Field names
      */
+    public static final String ID = "id";
     public static final String PROBABILITY = "probability";
     public static final String TIMESTAMP = "timestamp";
     public static final String INFLUENCER_FIELD_NAME = "influencerFieldName";
     public static final String INFLUENCER_VALUE_NAME = "influencerFieldValue";
-    public static final String INITIAL_SCORE = "initialScore";
+    public static final String INITIAL_ANOMALY_SCORE = "initialAnomalyScore";
+    public static final String ANOMALY_SCORE = "anomalyScore";
 
-    private double m_Probability;
     private Date m_Timestamp;
-
     private String m_InfluenceField;
     private String m_InfluenceValue;
-
-    private double m_InitialScore;
-
+    private double m_Probability;
+    private double m_InitialAnomalyScore;
+    private double m_AnomalyScore;
+    private boolean m_HadBigNormalisedUpdate;
 
     public Influencer()
     {
@@ -62,6 +66,16 @@ public class Influencer
     {
         m_InfluenceField = fieldName;
         m_InfluenceValue = fieldValue;
+    }
+
+    public String getId()
+    {
+        return new StringBuilder(m_InfluenceField)
+                .append('_')
+                .append(m_InfluenceValue)
+                .append('_')
+                .append(m_Timestamp.getTime() / 1000)
+                .toString();
     }
 
     public double getProbability()
@@ -107,38 +121,46 @@ public class Influencer
         this.m_InfluenceValue = fieldValue;
     }
 
-
-    public double getInitialScore()
+    public double getInitialAnomalyScore()
     {
-        return m_InitialScore;
+        return m_InitialAnomalyScore;
     }
 
-    public void setInitialScore(double influenceScore)
+    public void setInitialAnomalyScore(double influenceScore)
     {
-        this.m_InitialScore = influenceScore;
+        this.m_InitialAnomalyScore = influenceScore;
+    }
+
+    public double getAnomalyScore()
+    {
+        return m_AnomalyScore;
+    }
+
+    public void setAnomalyScore(double score)
+    {
+        m_AnomalyScore = score;
+    }
+
+    public boolean hadBigNormalisedUpdate()
+    {
+        return m_HadBigNormalisedUpdate;
+    }
+
+    public void resetBigNormalisedUpdateFlag()
+    {
+        m_HadBigNormalisedUpdate = false;
+    }
+
+    public void raiseBigNormalisedUpdateFlag()
+    {
+        m_HadBigNormalisedUpdate = true;
     }
 
     @Override
     public int hashCode()
     {
-        final int prime = 31;
-        int result = 1;
-        result = prime * result
-                + ((m_Timestamp == null) ? 0 : m_Timestamp.hashCode());
-        result = prime
-                * result
-                + ((m_InfluenceField == null) ? 0 : m_InfluenceField.hashCode());
-        result = prime
-                * result
-                + ((m_InfluenceValue == null) ? 0 : m_InfluenceValue
-                        .hashCode());
-
-        long temp;
-        temp = Double.doubleToLongBits(m_InitialScore);
-        result = prime * result + (int) (temp ^ (temp >>> 32));
-        temp = Double.doubleToLongBits(m_Probability);
-        result = prime * result + (int) (temp ^ (temp >>> 32));
-        return result;
+        return Objects.hash(m_Timestamp, m_InfluenceField, m_InfluenceValue, m_InitialAnomalyScore,
+                m_AnomalyScore, m_Probability);
     }
 
     @Override
@@ -164,7 +186,8 @@ public class Influencer
         return Objects.equals(m_Timestamp, other.m_Timestamp) &&
                 Objects.equals(m_InfluenceField, other.m_InfluenceField) &&
                 Objects.equals(m_InfluenceValue, other.m_InfluenceValue) &&
-                Double.compare(m_InitialScore, other.m_InitialScore) == 0 &&
+                Double.compare(m_InitialAnomalyScore, other.m_InitialAnomalyScore) == 0 &&
+                Double.compare(m_AnomalyScore, other.m_AnomalyScore) == 0 &&
                 Double.compare(m_Probability, other.m_Probability) == 0;
     }
 

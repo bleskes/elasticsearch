@@ -30,6 +30,7 @@ package com.prelert.job.process.normaliser;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import org.apache.log4j.Logger;
 
@@ -41,6 +42,7 @@ import com.prelert.job.persistence.QueryPage;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
 import com.prelert.job.results.AnomalyRecord;
 import com.prelert.job.results.Bucket;
+import com.prelert.job.results.Influencer;
 
 /**
  * Thread safe class that updated the scores of all existing results
@@ -50,8 +52,19 @@ class ScoresUpdater
 {
     /**
      * Maximum number of buckets to renormalise at a time
+     *
+     * In jobs with dense results, 100 buckets with their
+     * records expanded can get close to 1GB.
      */
     private static final int MAX_BUCKETS_PER_PAGE = 100;
+
+    /**
+     * Maximum number of influncers to renormalise at a time
+     *
+     * An influencer object is about 100 bytes, thus we can get
+     * a million of them and still only use 100MB.
+     */
+    private static final int MAX_INFLUENCERS_PER_PAGE = 1000000;
 
     private final String m_JobId;
     private final JobProvider m_JobProvider;
@@ -79,53 +92,61 @@ class ScoresUpdater
      */
     public void update(String quantilesState, long endBucketEpochMs, Logger logger)
     {
+        Normaliser normaliser = m_NormaliserFactory.create(m_JobId, logger);
+        int[] counts = { 0, 0 };
         try
         {
-            Normaliser normaliser = m_NormaliserFactory.create(m_JobId, logger);
-            int[] counts = { 0, 0 };
-            int skip = 0;
-            QueryPage<Bucket> page = m_JobProvider.buckets(m_JobId, true, false,
-                        skip, MAX_BUCKETS_PER_PAGE, 0, endBucketEpochMs, 0.0, 0.0);
-
-            while (page.hitCount() > skip)
-            {
-                List<Bucket> buckets = page.queryResults();
-                if (buckets == null)
-                {
-                    logger.warn("No buckets to renormalise for job " +
-                                m_JobId + " with skip " + skip + " and hit count " +
-                                page.hitCount());
-                    break;
-                }
-
-                List<Bucket> normalisedBuckets =
-                        normaliser.normalise(getJobBucketSpan(logger), buckets, quantilesState);
-
-                for (Bucket bucket : normalisedBuckets)
-                {
-                    updateSingleBucket(bucket, counts, logger);
-                }
-
-                skip += MAX_BUCKETS_PER_PAGE;
-                if (page.hitCount() > skip)
-                {
-                    page = m_JobProvider.buckets(m_JobId, true, false,
-                            skip, MAX_BUCKETS_PER_PAGE, 0, endBucketEpochMs, 0.0, 0.0);
-                }
-            }
-
-            logger.info("System changes normalisation resulted in: " +
-                        counts[0] + " updates, " +
-                        counts[1] + " no-ops");
+            updateBuckets(normaliser, quantilesState, endBucketEpochMs, counts, logger);
+            updateInfluencers(normaliser, quantilesState, endBucketEpochMs, counts, logger);
         }
         catch (UnknownJobException uje)
         {
-            logger.error("Inconsistency - job " + m_JobId +
-                            " unknown during system change renormalisation", uje);
+            logger.error("Inconsistency - job " + m_JobId + " unknown during renormalisation", uje);
         }
         catch (NativeProcessRunException npe)
         {
-            logger.error("Failed to renormalise for system changes", npe);
+            logger.error("Failed to renormalise", npe);
+        }
+
+        logger.info("Normalisation resulted in: " +
+                counts[0] + " updates, " +
+                counts[1] + " no-ops");
+    }
+
+    private void updateBuckets(Normaliser normaliser, String quantilesState, long endBucketEpochMs,
+            int[] counts, Logger logger) throws UnknownJobException,
+            NativeProcessRunException
+    {
+        int skip = 0;
+        QueryPage<Bucket> page = m_JobProvider.buckets(m_JobId, true, false, skip,
+                MAX_BUCKETS_PER_PAGE, 0, endBucketEpochMs, 0.0, 0.0);
+
+        while (page.hitCount() > skip)
+        {
+            List<Bucket> buckets = page.queryResults();
+            if (buckets == null)
+            {
+                logger.warn("No buckets to renormalise for job " +
+                            m_JobId + " with skip " + skip + " and hit count " +
+                            page.hitCount());
+                break;
+            }
+
+            List<Normalisable> asNormalisables = buckets.stream()
+                    .map(bucket -> new BucketNormalisable(bucket)).collect(Collectors.toList());
+            normaliser.normalise(getJobBucketSpan(logger), asNormalisables, quantilesState);
+
+            for (Bucket bucket : buckets)
+            {
+                updateSingleBucket(bucket, counts, logger);
+            }
+
+            skip += MAX_BUCKETS_PER_PAGE;
+            if (page.hitCount() > skip)
+            {
+                page = m_JobProvider.buckets(m_JobId, true, false,
+                        skip, MAX_BUCKETS_PER_PAGE, 0, endBucketEpochMs, 0.0, 0.0);
+            }
         }
     }
 
@@ -229,6 +250,43 @@ class ScoresUpdater
         if (!toUpdate.isEmpty())
         {
             m_JobProvider.updateRecords(m_JobId, bucket.getId(), toUpdate);
+        }
+    }
+
+    private void updateInfluencers(Normaliser normaliser, String quantilesState, long endBucketEpochMs,
+            int[] counts, Logger logger) throws UnknownJobException, NativeProcessRunException
+    {
+        int skip = 0;
+        QueryPage<Influencer> page = m_JobProvider.influencers(m_JobId, skip,
+                MAX_INFLUENCERS_PER_PAGE, 0, endBucketEpochMs);
+
+        while (page.hitCount() > skip)
+        {
+            List<Influencer> influencers = page.queryResults();
+
+            List<Normalisable> asNormalisables = influencers.stream()
+                    .map(bucket -> new InfluencerNormalisable(bucket)).collect(Collectors.toList());
+            normaliser.normalise(getJobBucketSpan(logger), asNormalisables, quantilesState);
+
+            for (Influencer influencer : influencers)
+            {
+                if (influencer.hadBigNormalisedUpdate())
+                {
+                    m_JobProvider.updateInfluencer(m_JobId, influencer);
+                    ++counts[0];
+                }
+                else
+                {
+                    ++counts[1];
+                }
+            }
+
+            skip += MAX_INFLUENCERS_PER_PAGE;
+            if (page.hitCount() > skip)
+            {
+                page = m_JobProvider.influencers(m_JobId, skip, MAX_INFLUENCERS_PER_PAGE, 0,
+                        endBucketEpochMs);
+            }
         }
     }
 }

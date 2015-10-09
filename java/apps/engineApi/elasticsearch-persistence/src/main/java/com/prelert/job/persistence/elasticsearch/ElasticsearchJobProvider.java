@@ -571,8 +571,8 @@ public class ElasticsearchJobProvider implements JobProvider
             double anomalyScoreThreshold, double normalizedProbabilityThreshold)
     throws UnknownJobException
     {
-        FilterBuilder fb = new BucketsAndRecordsFilterBuilder()
-                .timeRange(startEpochMs, endEpochMs)
+        FilterBuilder fb = new ResultsFilterBuilder()
+                .timeRange(ElasticsearchMappings.ES_TIMESTAMP, startEpochMs, endEpochMs)
                 .score(Bucket.ANOMALY_SCORE, anomalyScoreThreshold)
                 .score(Bucket.MAX_NORMALIZED_PROBABILITY, normalizedProbabilityThreshold)
                 .interim(Bucket.IS_INTERIM, includeInterim)
@@ -715,7 +715,7 @@ public class ElasticsearchJobProvider implements JobProvider
         FilterBuilder recordFilter = FilterBuilders.hasParentFilter(Bucket.TYPE,
                                 FilterBuilders.termFilter(Bucket.ID, bucketId));
 
-        recordFilter = new BucketsAndRecordsFilterBuilder(recordFilter).interim(
+        recordFilter = new ResultsFilterBuilder(recordFilter).interim(
                 AnomalyRecord.IS_INTERIM, includeInterim).build();
 
         SortBuilder sb = null;
@@ -814,8 +814,8 @@ public class ElasticsearchJobProvider implements JobProvider
             double anomalyScoreThreshold, double normalizedProbabilityThreshold)
     throws UnknownJobException
     {
-        FilterBuilder fb = new BucketsAndRecordsFilterBuilder()
-                .timeRange(startEpochMs, endEpochMs)
+        FilterBuilder fb = new ResultsFilterBuilder()
+                .timeRange(ElasticsearchMappings.ES_TIMESTAMP, startEpochMs, endEpochMs)
                 .score(AnomalyRecord.ANOMALY_SCORE, anomalyScoreThreshold)
                 .score(AnomalyRecord.NORMALIZED_PROBABILITY, normalizedProbabilityThreshold)
                 .interim(AnomalyRecord.IS_INTERIM, includeInterim)
@@ -906,8 +906,20 @@ public class ElasticsearchJobProvider implements JobProvider
     @Override
     public QueryPage<Influencer> influencers(String jobId, int skip, int take)
     {
-        FilterBuilder fb = FilterBuilders.matchAllFilter();
+        return influencers(jobId, skip, take, FilterBuilders.matchAllFilter());
+    }
 
+    @Override
+    public QueryPage<Influencer> influencers(String jobId, int skip, int take, long startEpochMs,
+            long endEpochMs)
+    {
+        FilterBuilder fb = new ResultsFilterBuilder()
+                .timeRange(Influencer.TIMESTAMP, startEpochMs, endEpochMs).build();
+        return influencers(jobId, skip, take, fb);
+    }
+
+    private QueryPage<Influencer> influencers(String jobId, int skip, int take, FilterBuilder fb)
+    {
         LOGGER.trace("ES API CALL: search all of type " + Influencer.TYPE +
                 " from index " + jobId +
                 " with filter after sort skip " + skip + " take " + take);
@@ -1086,6 +1098,12 @@ public class ElasticsearchJobProvider implements JobProvider
         {
             LOGGER.error("Error updating anomaly records", e);
         }
+    }
+
+    @Override
+    public void updateInfluencer(String jobId, Influencer influencer)
+    {
+        new ElasticsearchPersister(jobId, m_Client).persistInfluencer(influencer);
     }
 }
 

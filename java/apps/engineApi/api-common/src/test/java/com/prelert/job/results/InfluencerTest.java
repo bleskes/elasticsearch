@@ -26,7 +26,8 @@
  ************************************************************/
 package com.prelert.job.results;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 
 import java.util.Date;
 
@@ -42,12 +43,14 @@ public class InfluencerTest
         inf.setInfluencerFieldName("a");
         inf.setInfluencerFieldValue("f");
         inf.setProbability(0.1);
-        inf.setInitialScore(2.0);
+        inf.setInitialAnomalyScore(2.0);
+        inf.setAnomalyScore(55.0);
 
         Influencer inf2 = new Influencer("a", "f");
         inf2.setTimestamp(new Date(123));
         inf2.setProbability(0.1);
-        inf2.setInitialScore(2.0);
+        inf2.setInitialAnomalyScore(2.0);
+        inf2.setAnomalyScore(55.0);
 
         assertEquals(inf, inf2);
 
@@ -63,12 +66,14 @@ public class InfluencerTest
         inf.setInfluencerFieldName("a");
         inf.setInfluencerFieldValue("f");
         inf.setProbability(0.1);
-        inf.setInitialScore(2.0);
+        inf.setInitialAnomalyScore(2.0);
+        inf.setAnomalyScore(55.0);
 
         Influencer inf2 = new Influencer("a", "f");
         inf2.setTimestamp(new Date(123));
         inf2.setProbability(0.1);
-        inf2.setInitialScore(2.0);
+        inf2.setInitialAnomalyScore(2.0);
+        inf2.setAnomalyScore(55.0);
 
         assertEquals(inf.hashCode(), inf2.hashCode());
 

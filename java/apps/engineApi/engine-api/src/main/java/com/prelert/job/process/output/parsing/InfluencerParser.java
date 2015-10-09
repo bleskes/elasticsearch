@@ -94,8 +94,9 @@ public class InfluencerParser
             case Influencer.PROBABILITY:
                 influencer.setProbability(parseAsDoubleOrZero(token, fieldName));
                 break;
-            case Influencer.INITIAL_SCORE:
-                influencer.setInitialScore(parseAsDoubleOrZero(token, fieldName));
+            case Influencer.INITIAL_ANOMALY_SCORE:
+                influencer.setInitialAnomalyScore(parseAsDoubleOrZero(token, fieldName));
+                influencer.setAnomalyScore(influencer.getInitialAnomalyScore());
                 break;
             case Influencer.INFLUENCER_FIELD_NAME:
                 influencer.setInfluencerFieldName(parseAsStringOrNull(token, fieldName));

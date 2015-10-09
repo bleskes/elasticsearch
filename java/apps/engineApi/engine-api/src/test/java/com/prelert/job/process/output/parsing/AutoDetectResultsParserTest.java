@@ -54,11 +54,11 @@ import com.prelert.job.UnknownJobException;
 import com.prelert.job.alert.AlertObserver;
 import com.prelert.job.persistence.JobResultsPersister;
 import com.prelert.job.process.normaliser.BlockingQueueRenormaliser;
-import com.prelert.job.process.output.parsing.AutoDetectResultsParser;
 import com.prelert.job.quantiles.Quantiles;
 import com.prelert.job.results.Bucket;
 import com.prelert.job.results.CategoryDefinition;
 import com.prelert.job.results.Detector;
+import com.prelert.job.results.Influencer;
 import com.prelert.utils.json.AutoDetectParseException;
 
 /**
@@ -137,6 +137,7 @@ public class AutoDetectResultsParserTest
     {
         List<Bucket> m_Buckets = new ArrayList<>();
         SortedMap<String, Quantiles> m_Quantiles = new TreeMap<>();
+        List<Influencer> m_Influencers = new ArrayList<>();
         int m_BucketCount;
 
         @Override
@@ -184,6 +185,12 @@ public class AutoDetectResultsParserTest
         public void incrementBucketCount(long count)
         {
             m_BucketCount += count;
+        }
+
+        @Override
+        public void persistInfluencer(Influencer influencer)
+        {
+            m_Influencers.add(influencer);
         }
     }
 

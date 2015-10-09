@@ -153,12 +153,18 @@ public class ElasticsearchPersister implements JobResultsPersister
 
                 for (Influencer influencer : bucket.getInfluencers())
                 {
+                    if (influencer.getInfluencerFieldValue() == null)
+                    {
+                        // TODO Influencers with a null field value are actually a different
+                        // result type called 'influencerbucket' and should be dealt accordingly.
+                        continue;
+                    }
                     influencer.setTimestamp(bucket.getTimestamp());
                     content = serialiseInfluencer(influencer);
                     LOGGER.trace("ES BULK ACTION: index type " + Influencer.TYPE +
                             " to index " + m_JobId + " with auto-assigned ID");
                     addInfluencersRequest.add(
-                            m_Client.prepareIndex(m_JobId, Influencer.TYPE)
+                            m_Client.prepareIndex(m_JobId, Influencer.TYPE, influencer.getId())
                             .setSource(content));
                 }
 
@@ -329,6 +335,26 @@ public class ElasticsearchPersister implements JobResultsPersister
         // for information at the API level
     }
 
+    @Override
+    public void persistInfluencer(Influencer influencer)
+    {
+        XContentBuilder content = null;
+        try
+        {
+            content = serialiseInfluencer(influencer);
+        }
+        catch (IOException e)
+        {
+            LOGGER.error("Error writing influencer", e);
+            return;
+        }
+        String id = influencer.getId();
+        LOGGER.trace("ES API CALL: index type " + Influencer.TYPE +
+                " to index " + m_JobId + " with ID " + id);
+        m_Client.prepareIndex(m_JobId, Influencer.TYPE, id)
+                .setSource(content)
+                .execute().actionGet();
+    }
 
     @Override
     public void incrementBucketCount(long count)
@@ -645,7 +671,8 @@ public class ElasticsearchPersister implements JobResultsPersister
                 .field(Influencer.PROBABILITY, influencer.getProbability())
                 .field(Influencer.INFLUENCER_FIELD_NAME, influencer.getInfluencerFieldName())
                 .field(Influencer.INFLUENCER_VALUE_NAME, influencer.getInfluencerFieldValue())
-                .field(Influencer.INITIAL_SCORE, influencer.getInitialScore())
+                .field(Influencer.INITIAL_ANOMALY_SCORE, influencer.getInitialAnomalyScore())
+                .field(Influencer.ANOMALY_SCORE, influencer.getAnomalyScore())
                 .endObject();
     }
 

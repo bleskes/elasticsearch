@@ -39,26 +39,24 @@ import org.elasticsearch.index.query.TermFilterBuilder;
  * This builder facilitates the creation of a {@link FilterBuilder} with common
  * characteristics to both buckets and records.
  */
-class BucketsAndRecordsFilterBuilder
+class ResultsFilterBuilder
 {
     private final List<FilterBuilder> m_FilterBuilders = new ArrayList<>();
 
-    public BucketsAndRecordsFilterBuilder()
+    public ResultsFilterBuilder()
     {
     }
 
-    public BucketsAndRecordsFilterBuilder(FilterBuilder filterBuilder)
+    public ResultsFilterBuilder(FilterBuilder filterBuilder)
     {
         m_FilterBuilders.add(filterBuilder);
     }
 
-    public BucketsAndRecordsFilterBuilder timeRange(long startEpochMs, long endEpochMs)
+    public ResultsFilterBuilder timeRange(String field, long startEpochMs, long endEpochMs)
     {
         if (startEpochMs > 0 || endEpochMs > 0)
         {
-            // HACK for the timestamps being @timestamp in the database
-            RangeFilterBuilder timeRange = FilterBuilders
-                    .rangeFilter(ElasticsearchMappings.ES_TIMESTAMP);
+            RangeFilterBuilder timeRange = FilterBuilders.rangeFilter(field);
 
             if (startEpochMs > 0)
             {
@@ -73,7 +71,7 @@ class BucketsAndRecordsFilterBuilder
         return this;
     }
 
-    public BucketsAndRecordsFilterBuilder score(String fieldName, double threshold)
+    public ResultsFilterBuilder score(String fieldName, double threshold)
     {
         if (threshold > 0.0)
         {
@@ -84,7 +82,7 @@ class BucketsAndRecordsFilterBuilder
         return this;
     }
 
-    public BucketsAndRecordsFilterBuilder interim(String fieldName, boolean includeInterim)
+    public ResultsFilterBuilder interim(String fieldName, boolean includeInterim)
     {
         if (includeInterim)
         {

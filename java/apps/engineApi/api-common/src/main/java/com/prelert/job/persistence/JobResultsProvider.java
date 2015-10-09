@@ -225,6 +225,24 @@ public interface JobResultsProvider extends Closeable
      */
     public QueryPage<Influencer> influencers(String jobId, int skip, int take);
 
+    /**
+     * Return a page of influencers for the given job and within the given date range
+     *
+     * @param jobId The job ID for which influencers are requested
+     * @param skip Skip the first N Buckets. This parameter is for paging
+     * if not required set to 0.
+     * @param take Maximum number of influencers to insert in the page
+     * @param startEpochMs The start influencer timestamp. An influencer with this timestamp will be
+     * included in the results. If 0 all buckets up to <code>endEpochMs</code>
+     * are returned
+     * @param endEpochMs The end bucket timestamp buckets up to but NOT including this
+     * timestamp are returned. If 0 all buckets from <code>startEpochMs</code>
+     * are returned
+     * @return QueryPage of Influencer
+     */
+    public QueryPage<Influencer> influencers(String jobId, int skip, int take, long startEpochMs,
+            long endEpochMs);
+
 
     /**
      * Get the influencer for the given job for id
