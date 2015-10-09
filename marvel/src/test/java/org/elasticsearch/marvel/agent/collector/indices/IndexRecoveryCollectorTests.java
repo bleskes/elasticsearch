@@ -25,7 +25,7 @@ import org.elasticsearch.indices.recovery.RecoveryState;
 import org.elasticsearch.marvel.agent.collector.AbstractCollectorTestCase;
 import org.elasticsearch.marvel.agent.exporter.MarvelDoc;
 import org.elasticsearch.marvel.agent.settings.MarvelSettings;
-import org.elasticsearch.marvel.license.LicenseService;
+import org.elasticsearch.marvel.license.MarvelLicensee;
 import org.elasticsearch.test.ESIntegTestCase.ClusterScope;
 import org.junit.Test;
 
@@ -169,7 +169,7 @@ public class IndexRecoveryCollectorTests extends AbstractCollectorTestCase {
         return new IndexRecoveryCollector(internalCluster().getInstance(Settings.class, nodeId),
                 internalCluster().getInstance(ClusterService.class, nodeId),
                 internalCluster().getInstance(MarvelSettings.class, nodeId),
-                internalCluster().getInstance(LicenseService.class, nodeId),
+                internalCluster().getInstance(MarvelLicensee.class, nodeId),
                 securedClient(nodeId));
     }
 }
