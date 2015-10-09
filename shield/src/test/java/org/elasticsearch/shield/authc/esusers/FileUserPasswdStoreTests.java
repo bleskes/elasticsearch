@@ -17,7 +17,6 @@
 
 package org.elasticsearch.shield.authc.esusers;
 
-import com.google.common.collect.ImmutableMap;
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.logging.ESLoggerFactory;
 import org.elasticsearch.common.settings.Settings;
@@ -32,7 +31,6 @@ import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.watcher.ResourceWatcherService;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Test;
 
 import java.io.BufferedWriter;
 import java.nio.charset.StandardCharsets;
@@ -47,9 +45,17 @@ import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import static org.hamcrest.Matchers.*;
-import static org.mockito.Mockito.contains;
-import static org.mockito.Mockito.*;
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.empty;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
+import static org.mockito.Matchers.contains;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 /**
  *
@@ -75,7 +81,6 @@ public class FileUserPasswdStoreTests extends ESTestCase {
         terminate(threadPool);
     }
 
-    @Test
     public void testStore_ConfiguredWithUnreadableFile() throws Exception {
 
         Path file = createTempFile();
@@ -93,7 +98,6 @@ public class FileUserPasswdStoreTests extends ESTestCase {
         assertThat(store.usersCount(), is(0));
     }
 
-    @Test
     public void testStore_AutoReload() throws Exception {
         Path users = getDataPath("users");
         Path tmp = createTempFile();
@@ -133,7 +137,6 @@ public class FileUserPasswdStoreTests extends ESTestCase {
         assertThat(store.verifyPassword("foobar", SecuredStringTests.build("barfoo")), is(true));
     }
 
-    @Test
     public void testStore_AutoReload_WithParseFailures() throws Exception {
         Path users = getDataPath("users");
         Path tmp = createTempFile();
@@ -169,7 +172,6 @@ public class FileUserPasswdStoreTests extends ESTestCase {
         assertThat(store.usersCount(), is(0));
     }
 
-    @Test
     public void testParseFile() throws Exception {
         Path path = getDataPath("users");
         Map<String, char[]> users = FileUserPasswdStore.parseFile(path, null);
@@ -189,17 +191,15 @@ public class FileUserPasswdStoreTests extends ESTestCase {
         assertThat(new String(users.get("sha")), equalTo("{SHA}cojt0Pw//L6ToM8G41aOKFIWh7w="));
     }
 
-    @Test
     public void testParseFile_Empty() throws Exception {
         Path empty = createTempFile();
         ESLogger log = ESLoggerFactory.getLogger("test");
         log = spy(log);
-        ImmutableMap<String, char[]> users = FileUserPasswdStore.parseFile(empty, log);
+        Map<String, char[]> users = FileUserPasswdStore.parseFile(empty, log);
         assertThat(users.isEmpty(), is(true));
         verify(log, times(1)).warn(contains("no users found"), eq(empty));
     }
 
-    @Test
     public void testParseFile_WhenFileDoesNotExist() throws Exception {
         Path file = createTempDir().resolve(randomAsciiOfLength(10));
         CapturingLogger logger = new CapturingLogger(CapturingLogger.Level.INFO);
@@ -208,7 +208,6 @@ public class FileUserPasswdStoreTests extends ESTestCase {
         assertThat(users.isEmpty(), is(true));
     }
 
-    @Test
     public void testParseFile_WhenCannotReadFile() throws Exception {
         Path file = createTempFile();
         // writing in utf_16 should cause a parsing error as we try to read the file in utf_8
@@ -222,7 +221,6 @@ public class FileUserPasswdStoreTests extends ESTestCase {
         }
     }
 
-    @Test
     public void testParseFile_InvalidLineDoesNotResultInLoggerNPE() throws Exception {
         Path file = createTempFile();
         Files.write(file, Arrays.asList("NotValidUsername=Password", "user:pass"), StandardCharsets.UTF_8);
@@ -231,7 +229,6 @@ public class FileUserPasswdStoreTests extends ESTestCase {
         assertThat(users.keySet(), hasSize(1));
     }
 
-    @Test
     public void testParseFileLenient_WhenCannotReadFile() throws Exception {
         Path file = createTempFile();
         // writing in utf_16 should cause a parsing error as we try to read the file in utf_8
@@ -245,7 +242,6 @@ public class FileUserPasswdStoreTests extends ESTestCase {
         assertThat(msgs.get(0).text, containsString("failed to parse users file"));
     }
 
-    @Test
     public void testParseFileWithLineWithEmptyPasswordAndWhitespace() throws Exception {
         Path file = createTempFile();
         Files.write(file, Collections.singletonList("user: "), StandardCharsets.UTF_8);

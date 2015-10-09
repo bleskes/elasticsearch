@@ -18,7 +18,7 @@
 package org.elasticsearch.shield.transport.filter;
 
 import com.carrotsearch.hppc.ObjectObjectHashMap;
-import com.google.common.collect.ImmutableMap;
+
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.common.collect.HppcMaps;
 import org.elasticsearch.common.component.AbstractLifecycleComponent;
@@ -35,7 +35,14 @@ import org.elasticsearch.shield.audit.AuditTrail;
 import org.elasticsearch.transport.Transport;
 
 import java.net.InetAddress;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import static java.util.Collections.unmodifiableMap;
 
 public class IPFilter extends AbstractLifecycleComponent<IPFilter> {
 
@@ -186,7 +193,7 @@ public class IPFilter extends AbstractLifecycleComponent<IPFilter> {
         }
 
         logger.debug("loaded ip filtering profiles: {}", profileRules.keySet());
-        return ImmutableMap.copyOf(profileRules);
+        return unmodifiableMap(profileRules);
     }
 
     private ShieldIpFilterRule[] createRules(String[] allow, String[] deny, TransportAddress[] boundAddresses) {

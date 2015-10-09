@@ -27,7 +27,12 @@ import org.elasticsearch.cluster.ClusterName;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.metadata.IndexMetaData;
 import org.elasticsearch.cluster.metadata.MetaData;
-import org.elasticsearch.cluster.routing.*;
+import org.elasticsearch.cluster.routing.IndexRoutingTable;
+import org.elasticsearch.cluster.routing.IndexShardRoutingTable;
+import org.elasticsearch.cluster.routing.RoutingTable;
+import org.elasticsearch.cluster.routing.ShardRoutingState;
+import org.elasticsearch.cluster.routing.TestShardRouting;
+import org.elasticsearch.cluster.routing.UnassignedInfo;
 import org.elasticsearch.common.bytes.BytesArray;
 import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.settings.Settings;
@@ -46,12 +51,18 @@ import org.junit.Test;
 
 import java.util.Collection;
 
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.core.IsEqual.equalTo;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.when;
 
 public class TriggeredWatchStoreTests extends ESTestCase {
 
@@ -112,7 +123,7 @@ public class TriggeredWatchStoreTests extends ESTestCase {
         routingTableBuilder.add(indexRoutingTableBuilder.build());
 
         csBuilder.metaData(metaDateBuilder);
-        csBuilder.routingTable(routingTableBuilder);
+        csBuilder.routingTable(routingTableBuilder.build());
         ClusterState cs = csBuilder.build();
 
         assertThat(triggeredWatchStore.validate(cs), is(false));
@@ -145,7 +156,7 @@ public class TriggeredWatchStoreTests extends ESTestCase {
         indexRoutingTableBuilder.addReplica();
         routingTableBuilder.add(indexRoutingTableBuilder.build());
         csBuilder.metaData(metaDateBuilder);
-        csBuilder.routingTable(routingTableBuilder);
+        csBuilder.routingTable(routingTableBuilder.build());
         ClusterState cs = csBuilder.build();
 
         assertThat(triggeredWatchStore.validate(cs), is(true));
@@ -180,7 +191,7 @@ public class TriggeredWatchStoreTests extends ESTestCase {
         indexRoutingTableBuilder.addReplica();
         routingTableBuilder.add(indexRoutingTableBuilder.build());
         csBuilder.metaData(metaDateBuilder);
-        csBuilder.routingTable(routingTableBuilder);
+        csBuilder.routingTable(routingTableBuilder.build());
         ClusterState cs = csBuilder.build();
 
         RefreshResponse refreshResponse = mockRefreshResponse(1, 1);
@@ -224,7 +235,7 @@ public class TriggeredWatchStoreTests extends ESTestCase {
         indexRoutingTableBuilder.addReplica();
         routingTableBuilder.add(indexRoutingTableBuilder.build());
         csBuilder.metaData(metaDateBuilder);
-        csBuilder.routingTable(routingTableBuilder);
+        csBuilder.routingTable(routingTableBuilder.build());
         ClusterState cs = csBuilder.build();
 
         RefreshResponse refreshResponse = mockRefreshResponse(1, 1);
@@ -267,7 +278,7 @@ public class TriggeredWatchStoreTests extends ESTestCase {
         indexRoutingTableBuilder.addReplica();
         routingTableBuilder.add(indexRoutingTableBuilder.build());
         csBuilder.metaData(metaDateBuilder);
-        csBuilder.routingTable(routingTableBuilder);
+        csBuilder.routingTable(routingTableBuilder.build());
         ClusterState cs = csBuilder.build();
 
         RefreshResponse refreshResponse = mockRefreshResponse(1, 1);

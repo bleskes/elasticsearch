@@ -19,7 +19,6 @@ package org.elasticsearch.watcher.support.http;
 
 import org.elasticsearch.common.bytes.BytesArray;
 import org.elasticsearch.common.bytes.BytesReference;
-import com.google.common.collect.ImmutableMap;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.test.ESTestCase;
@@ -28,6 +27,8 @@ import org.junit.Test;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
+import static java.util.Collections.emptyMap;
+import static java.util.Collections.singletonMap;
 import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 import static org.elasticsearch.watcher.test.WatcherTestUtils.xContentParser;
 import static org.hamcrest.CoreMatchers.nullValue;
@@ -43,9 +44,9 @@ public class HttpResponseTests extends ESTestCase {
     @Test
     public void testParse_SelfGenerated() throws Exception {
         int status = randomIntBetween(200, 600);
-        ImmutableMap<String, String[]> headers = ImmutableMap.of();
+        Map<String, String[]> headers = emptyMap();
         if (randomBoolean()) {
-            headers = ImmutableMap.of("key", new String[] { "value" });
+            headers = singletonMap("key", new String[] { "value" });
         }
         String body = randomBoolean() ? "body" : null;
         final HttpResponse response;
