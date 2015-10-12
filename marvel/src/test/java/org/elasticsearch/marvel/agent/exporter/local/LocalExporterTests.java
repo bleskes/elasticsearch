@@ -47,8 +47,8 @@ import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.test.ESIntegTestCase.ClusterScope;
 import org.elasticsearch.test.ESIntegTestCase.Scope;
 import org.elasticsearch.test.InternalTestCluster;
-import org.elasticsearch.test.junit.annotations.TestLogging;
 import org.joda.time.format.DateTimeFormat;
+import org.junit.After;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -72,7 +72,14 @@ public class LocalExporterTests extends MarvelIntegTestCase {
     protected Settings nodeSettings(int nodeOrdinal) {
         return Settings.builder()
                 .put(super.nodeSettings(nodeOrdinal))
+                .put(MarvelSettings.INTERVAL, "-1")
                 .build();
+    }
+
+    @After
+    public void cleanup() throws Exception {
+        updateMarvelInterval(-1, TimeUnit.SECONDS);
+        wipeMarvelIndices();
     }
 
     @Test
@@ -81,7 +88,7 @@ public class LocalExporterTests extends MarvelIntegTestCase {
                 .put("marvel.agent.exporters._local.type", LocalExporter.TYPE)
                 .put("marvel.agent.exporters._local.enabled", true)
                 .build());
-        ensureGreen();
+        securedEnsureGreen();
 
         Exporter exporter = getLocalExporter("_local");
 
@@ -112,11 +119,16 @@ public class LocalExporterTests extends MarvelIntegTestCase {
     public void testTemplateCreation() throws Exception {
         internalCluster().startNode(Settings.builder()
                 .put("marvel.agent.exporters._local.type", LocalExporter.TYPE)
+                .put("marvel.agent.exporters._local.template.settings.index.number_of_replicas", 0)
                 .build());
-        ensureGreen();
+        securedEnsureGreen();
 
         LocalExporter exporter = getLocalExporter("_local");
         assertTrue(exporter.installedTemplateVersionMandatesAnUpdate(Version.CURRENT, null));
+
+        // start collecting
+        updateMarvelInterval(3L, TimeUnit.SECONDS);
+        waitForMarvelIndices();
 
         // lets wait until the marvel template will be installed
         awaitMarvelTemplateInstalled();
@@ -130,15 +142,24 @@ public class LocalExporterTests extends MarvelIntegTestCase {
     public void testTemplateUpdate() throws Exception {
         internalCluster().startNode(Settings.builder()
                 .put("marvel.agent.exporters._local.type", LocalExporter.TYPE)
+                .put("marvel.agent.exporters._local.template.settings.index.number_of_replicas", 0)
                 .build());
-        ensureGreen();
+        securedEnsureGreen();
 
         LocalExporter exporter = getLocalExporter("_local");
         Version fakeVersion = MIN_SUPPORTED_TEMPLATE_VERSION;
         assertThat(exporter.installedTemplateVersionMandatesAnUpdate(Version.CURRENT, fakeVersion), is(true));
 
+        // start collecting
+        updateMarvelInterval(3L, TimeUnit.SECONDS);
+        waitForMarvelIndices();
+
         // first, lets wait for the marvel template to be installed
         awaitMarvelTemplateInstalled();
+
+        // stop collecting before cluster restart
+        updateMarvelInterval(-1, TimeUnit.SECONDS);
+        wipeMarvelIndices();
 
         // now lets update the template with an old one and then restart the cluster
         exporter.putTemplate(Settings.builder().put(MarvelTemplateUtils.MARVEL_VERSION_FIELD, fakeVersion.toString()).build());
@@ -153,6 +174,10 @@ public class LocalExporterTests extends MarvelIntegTestCase {
         if (!latch.await(30, TimeUnit.SECONDS)) {
             fail("waited too long (at least 30 seconds) for the cluster to restart");
         }
+
+        // start collecting again
+        updateMarvelInterval(3L, TimeUnit.SECONDS);
+        waitForMarvelIndices();
 
         // now that the cluster is restarting, lets wait for the new template version to be installed
         awaitMarvelTemplateInstalled(Version.CURRENT);
@@ -196,7 +221,7 @@ public class LocalExporterTests extends MarvelIntegTestCase {
         verify(exporter, times(1)).installedTemplateVersionIsSufficient(Version.CURRENT, unsupportedVersion);
     }
 
-    @Test @TestLogging("marvel.agent:trace")
+    @Test
     public void testIndexTimestampFormat() throws Exception {
         long time = System.currentTimeMillis();
         String timeFormat = randomFrom("YY", "YYYY", "YYYY.MM", "YYYY-MM", "MM.YYYY", "MM");
@@ -205,7 +230,7 @@ public class LocalExporterTests extends MarvelIntegTestCase {
                 .put("marvel.agent.exporters._local.type", LocalExporter.TYPE)
                 .put("marvel.agent.exporters._local." + LocalExporter.INDEX_NAME_TIME_FORMAT_SETTING, timeFormat)
                 .build());
-        ensureGreen();
+        securedEnsureGreen();
 
         LocalExporter exporter = getLocalExporter("_local");
 
@@ -250,8 +275,6 @@ public class LocalExporterTests extends MarvelIntegTestCase {
                     ClusterStateCollector.TYPE, timeStampGenerator.incrementAndGet(), ClusterState.PROTO, ClusterHealthStatus.GREEN);
         }
     }
-
-
 
     private Version getCurrentlyInstalledTemplateVersion() {
         GetIndexTemplatesResponse response = client().admin().indices().prepareGetTemplates(MarvelTemplateUtils.INDEX_TEMPLATE_NAME).get();
