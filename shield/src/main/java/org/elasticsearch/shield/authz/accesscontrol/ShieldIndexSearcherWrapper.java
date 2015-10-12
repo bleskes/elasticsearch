@@ -42,6 +42,7 @@ import org.elasticsearch.index.shard.ShardId;
 import org.elasticsearch.index.shard.ShardUtils;
 import org.elasticsearch.shield.authz.InternalAuthorizationService;
 import org.elasticsearch.shield.authz.accesscontrol.DocumentSubsetReader.DocumentSubsetDirectoryReader;
+import org.elasticsearch.shield.license.ShieldLicenseState;
 import org.elasticsearch.shield.support.Exceptions;
 
 import java.io.IOException;
@@ -66,13 +67,16 @@ public final class ShieldIndexSearcherWrapper extends AbstractComponent implemen
     private final Set<String> allowedMetaFields;
     private final IndexQueryParserService parserService;
     private final BitsetFilterCache bitsetFilterCache;
+    private final ShieldLicenseState shieldLicenseState;
 
     @Inject
-    public ShieldIndexSearcherWrapper(@IndexSettings Settings indexSettings, IndexQueryParserService parserService, MapperService mapperService, BitsetFilterCache bitsetFilterCache) {
+    public ShieldIndexSearcherWrapper(@IndexSettings Settings indexSettings, IndexQueryParserService parserService,
+                                      MapperService mapperService, BitsetFilterCache bitsetFilterCache, ShieldLicenseState shieldLicenseState) {
         super(indexSettings);
         this.mapperService = mapperService;
         this.parserService = parserService;
         this.bitsetFilterCache = bitsetFilterCache;
+        this.shieldLicenseState = shieldLicenseState;
 
         Set<String> allowedMetaFields = new HashSet<>();
         allowedMetaFields.addAll(Arrays.asList(MapperService.getAllMetaFields()));
@@ -85,6 +89,10 @@ public final class ShieldIndexSearcherWrapper extends AbstractComponent implemen
 
     @Override
     public DirectoryReader wrap(DirectoryReader reader) {
+        if (shieldLicenseState.documentAndFieldLevelSecurityEnabled() == false) {
+            return reader;
+        }
+
         final Set<String> allowedMetaFields = this.allowedMetaFields;
         try {
             RequestContext context = RequestContext.current();
@@ -136,6 +144,10 @@ public final class ShieldIndexSearcherWrapper extends AbstractComponent implemen
 
     @Override
     public IndexSearcher wrap(EngineConfig engineConfig, IndexSearcher searcher) throws EngineException {
+        if (shieldLicenseState.documentAndFieldLevelSecurityEnabled() == false) {
+            return searcher;
+        }
+
         final DirectoryReader directoryReader = (DirectoryReader) searcher.getIndexReader();
         if (directoryReader instanceof DocumentSubsetDirectoryReader) {
             // The reasons why we return a custom searcher:

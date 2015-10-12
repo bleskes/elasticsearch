@@ -25,6 +25,7 @@ import org.elasticsearch.http.netty.NettyHttpRequest;
 import org.elasticsearch.rest.*;
 import org.elasticsearch.shield.authc.AuthenticationService;
 import org.elasticsearch.shield.authc.pki.PkiRealm;
+import org.elasticsearch.shield.license.ShieldLicenseState;
 import org.elasticsearch.shield.transport.SSLClientAuth;
 import org.elasticsearch.shield.transport.netty.ShieldNettyHttpServerTransport;
 import org.jboss.netty.handler.ssl.SslHandler;
@@ -40,11 +41,13 @@ public class ShieldRestFilter extends RestFilter {
 
     private final AuthenticationService service;
     private final ESLogger logger;
+    private final ShieldLicenseState licenseState;
     private final boolean extractClientCertificate;
 
     @Inject
-    public ShieldRestFilter(AuthenticationService service, RestController controller, Settings settings) {
+    public ShieldRestFilter(AuthenticationService service, RestController controller, Settings settings, ShieldLicenseState licenseState) {
         this.service = service;
+        this.licenseState = licenseState;
         controller.registerFilter(this);
         boolean ssl = settings.getAsBoolean(ShieldNettyHttpServerTransport.HTTP_SSL_SETTING, ShieldNettyHttpServerTransport.HTTP_SSL_DEFAULT);
         extractClientCertificate = ssl && SSLClientAuth.parse(settings.get(ShieldNettyHttpServerTransport.HTTP_CLIENT_AUTH_SETTING), ShieldNettyHttpServerTransport.HTTP_CLIENT_AUTH_DEFAULT).enabled();
@@ -59,15 +62,17 @@ public class ShieldRestFilter extends RestFilter {
     @Override
     public void process(RestRequest request, RestChannel channel, RestFilterChain filterChain) throws Exception {
 
-        // CORS - allow for preflight unauthenticated OPTIONS request
-        if (request.method() != RestRequest.Method.OPTIONS) {
-            if (extractClientCertificate) {
-                putClientCertificateInContext(request, logger);
+        if (licenseState.securityEnabled()) {
+            // CORS - allow for preflight unauthenticated OPTIONS request
+            if (request.method() != RestRequest.Method.OPTIONS) {
+                if (extractClientCertificate) {
+                    putClientCertificateInContext(request, logger);
+                }
+                service.authenticate(request);
             }
-            service.authenticate(request);
-        }
 
-        RemoteHostHeader.process(request);
+            RemoteHostHeader.process(request);
+        }
 
         filterChain.continueProcessing(request, channel);
     }

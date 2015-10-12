@@ -32,8 +32,8 @@ public class LicenseModule extends AbstractShieldModule.Node {
 
     @Override
     protected void configureNode() {
-        bind(LicenseService.class).asEagerSingleton();
-        bind(LicenseEventsNotifier.class).asEagerSingleton();
+        bind(ShieldLicensee.class).asEagerSingleton();
+        bind(ShieldLicenseState.class).asEagerSingleton();
     }
 
     private void verifyLicensePlugin() {

@@ -25,6 +25,7 @@ import org.elasticsearch.rest.RestFilterChain;
 import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.shield.User;
 import org.elasticsearch.shield.authc.AuthenticationService;
+import org.elasticsearch.shield.license.ShieldLicenseState;
 import org.elasticsearch.test.ESTestCase;
 import org.junit.Before;
 import org.junit.Test;
@@ -42,6 +43,7 @@ public class ShieldRestFilterTests extends ESTestCase {
     private RestChannel channel;
     private RestFilterChain chain;
     private ShieldRestFilter filter;
+    private ShieldLicenseState licenseState;
 
     @Before
     public void init() throws Exception {
@@ -49,7 +51,9 @@ public class ShieldRestFilterTests extends ESTestCase {
         RestController restController = mock(RestController.class);
         channel = mock(RestChannel.class);
         chain = mock(RestFilterChain.class);
-        filter = new ShieldRestFilter(authcService, restController, Settings.EMPTY);
+        licenseState = mock(ShieldLicenseState.class);
+        when(licenseState.securityEnabled()).thenReturn(true);
+        filter = new ShieldRestFilter(authcService, restController, Settings.EMPTY, licenseState);
         verify(restController).registerFilter(filter);
     }
 
@@ -61,6 +65,15 @@ public class ShieldRestFilterTests extends ESTestCase {
         filter.process(request, channel, chain);
         verify(chain).continueProcessing(request, channel);
         verifyZeroInteractions(channel);
+    }
+
+    @Test
+    public void testProcessBasicLicense() throws Exception {
+        RestRequest request = mock(RestRequest.class);
+        when(licenseState.securityEnabled()).thenReturn(false);
+        filter.process(request, channel, chain);
+        verify(chain).continueProcessing(request, channel);
+        verifyZeroInteractions(channel, authcService);
     }
 
     @Test
