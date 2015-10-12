@@ -61,7 +61,7 @@ public class JobConfigurationMessageBodyReader implements MessageBodyReader<JobC
      /**
       * The Object to JSON mapper.
       */
-     private static final ObjectReader OBJECT_READER = new ObjectMapper().reader(JobConfiguration.class)
+     private static final ObjectReader OBJECT_READER = new ObjectMapper().readerFor(JobConfiguration.class)
                                    .with(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY);
 
 

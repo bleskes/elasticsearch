@@ -45,7 +45,7 @@ public class TransformSerialisationTest
 	public void testDeserialise_singleFieldAsArray() throws JsonProcessingException, IOException
 	{
 		ObjectMapper mapper = new ObjectMapper();
-		ObjectReader reader = mapper.reader(TransformConfig.class)
+		ObjectReader reader = mapper.readerFor(TransformConfig.class)
 							.with(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY);
 
 		String json = "{\"inputs\":\"dns\", \"transform\":\"highest_registered_domain\"}";
@@ -71,7 +71,7 @@ public class TransformSerialisationTest
 	public void testDeserialise_fieldsArray() throws JsonProcessingException, IOException
 	{
 		ObjectMapper mapper = new ObjectMapper();
-		ObjectReader reader = mapper.reader(TransformConfig.class)
+		ObjectReader reader = mapper.readerFor(TransformConfig.class)
 							.with(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY);
 
 		String json = "{\"inputs\":[\"dns\"], \"transform\":\"highest_registered_domain\"}";
