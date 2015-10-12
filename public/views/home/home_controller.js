@@ -13,7 +13,6 @@ define(function (require) {
       clusters: function (Private, marvelClusters, kbnUrl, globalState) {
         var phoneHome = Private(require('plugins/marvel/lib/phone_home'));
         return marvelClusters.fetch().then(function (clusters) {
-          var license;
           var cluster;
           if (!clusters.length) {
             kbnUrl.changePath('/no-data');
@@ -22,8 +21,7 @@ define(function (require) {
           if (clusters.length === 1) {
             cluster = clusters[0];
             globalState.cluster = cluster.cluster_uuid;
-            license = _.find(cluster.licenses, { feature: 'marvel' });
-            if (license.type === 'basic') {
+            if (cluster.license.type === 'basic') {
               globalState.save();
               kbnUrl.changePath('/overview');
               return Promise.reject();
