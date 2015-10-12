@@ -1,6 +1,6 @@
-<div ng-controller="overview">
+<div ng-controller="overview" class="marvel-view">
   <marvel-welcome-message clusters="clusters" cluster="cluster"></marvel-welcome-message>
-  <div class="marvel-overview marvel-view">
+  <div class="marvel-overview">
     <marvel-cluster-status cluster-state="dataSources.clusterState" source="dataSources['cluster_status']"></marvel-cluster-status>
     <div class="metrics x2 marvel-element">
       <div ng-repeat="name in charts" class="marvel-element"><marvel-chart source="dataSources[name]"/></div>
