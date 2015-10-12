@@ -11,10 +11,7 @@ define(function (require) {
 
     function fetch() {
       return Clusters.query().$promise.then(function (clusters) {
-        return clusters.map(function (cluster) {
-          cluster.license = _.find(cluster.licenses, { feature: 'marvel' });
-          return cluster;
-        });
+        return clusters;
       });
     }
 
