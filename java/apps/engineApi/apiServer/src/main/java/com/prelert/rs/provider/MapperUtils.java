@@ -47,11 +47,14 @@ public final class MapperUtils
      * @param e
      * @return
      */
-    public static ApiError apiErrorFromJobException(JobException e)
+    public static ApiError apiErrorFromJobException(JobException jobException)
     {
-        ApiError error = new ApiError(e.getErrorCode());
-        error.setCause(e.getCause());
-        error.setMessage(e.getMessage());
+        ApiError error = new ApiError(jobException.getErrorCode());
+        if (jobException.getCause() != null)
+        {
+            error.setCause(jobException.getCause().toString());
+        }
+        error.setMessage(jobException.getMessage());
         return error;
     }
 }

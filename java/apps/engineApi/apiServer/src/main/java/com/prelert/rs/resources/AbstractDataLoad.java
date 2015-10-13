@@ -413,11 +413,11 @@ public abstract class AbstractDataLoad extends ResourceWithJobManager
                 error.setMessage(e.getMessage());
                 if (e.getCause() != null)
                 {
-                    error.setCause(e.getCause());
+                    error.setCause(e.getCause().toString());
                 }
                 else
                 {
-                    error.setCause(e);
+                    error.setCause(e.toString());
                 }
             }
 

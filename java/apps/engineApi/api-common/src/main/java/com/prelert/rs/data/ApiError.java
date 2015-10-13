@@ -40,7 +40,11 @@ import com.prelert.job.errorcodes.HasErrorCode;
  * The errorCode identifies the error type and the message
  * provides further details. If the error was caused by
  * a Java Exception {@linkplain #getCause()} will return that
- * Exception else it returns <code>null</code>.
+ * exception's error message else <code>null</code>.
+ *
+ * Note that the cause exception's message is used not the
+ * actual exception this is due to problems serialising the
+ * exceptions.
  *
  * @see ErrorCodes
  */
@@ -49,7 +53,7 @@ public class ApiError implements HasErrorCode
 {
     private ErrorCodes m_ErrorCode;
 	private String m_Message;
-	private Throwable m_Cause;
+	private String m_Cause;
 
 	/**
 	 * Default cons for serialisation (Jackson)
@@ -110,19 +114,19 @@ public class ApiError implements HasErrorCode
 	}
 
 	/**
-	 * The exception that caused the error
-	 * @return The exception that caused the error or <code>null</code>
+	 * The message from the exception that caused the error
+	 * @return The cause exception message or <code>null</code>
 	 */
-	public Throwable getCause()
+	public String getCause()
 	{
 		return m_Cause;
 	}
 
 	/**
-	 * Set the cause to the error
+	 * Set the error message of the cause exception
 	 * @param e
 	 */
-	public void setCause(Throwable e)
+	public void setCause(String e)
 	{
 		m_Cause = e;
 	}

@@ -44,7 +44,7 @@ public class DataUploadExceptionMapper implements ExceptionMapper<DataUploadExce
     public Response toResponse(DataUploadException e)
     {
         ApiError error = new ApiError(ErrorCodes.DATA_ERROR);
-        error.setCause(e.getCause());
+        error.setCause(e.getCause().toString());
         error.setMessage(e.getMessage());
         return Response.serverError()
                         .type(MediaType.APPLICATION_JSON)

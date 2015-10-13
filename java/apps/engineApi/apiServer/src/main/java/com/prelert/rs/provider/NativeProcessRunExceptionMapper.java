@@ -44,7 +44,7 @@ public class NativeProcessRunExceptionMapper implements ExceptionMapper<NativePr
     public Response toResponse(NativeProcessRunException e)
     {
         ApiError error = new ApiError(e.getErrorCode());
-        error.setCause(e.getCause());
+        error.setCause(e.getCause().toString());
         error.setMessage(e.getMessage());
 
         return Response.serverError()

@@ -37,7 +37,7 @@ import com.prelert.rs.data.ApiError;
 
 
 /**
- * Elasticsearch exception mapper. 
+ * Elasticsearch exception mapper.
  * Constructs an error message from the rest status code
  * and exception message and returns in a a server error
  * (500) response.
@@ -49,8 +49,8 @@ public class ElasticsearchExceptionMapper implements ExceptionMapper<Elasticsear
 	{
 		ApiError error = new ApiError(ErrorCodes.DATA_STORE_ERROR);
 		error.setMessage("Error in Elasticsearch: = " + e.getDetailedMessage());
-		error.setCause(e);
-			
+		error.setCause(e.toString());
+
 		return Response.serverError().entity(error.toJson()).build();
 	}
 }

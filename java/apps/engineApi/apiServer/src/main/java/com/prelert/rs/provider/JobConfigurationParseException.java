@@ -62,7 +62,7 @@ public class JobConfigurationParseException extends WebApplicationException impl
     {
         ApiError err = new ApiError(m_ErrorCode);
         err.setMessage(this.getMessage());
-        err.setCause(this.getCause());
+        err.setCause(this.getCause().toString());
 
         return Response.status(Response.Status.BAD_REQUEST)
                 .entity(err.toJson()).build();

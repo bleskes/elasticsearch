@@ -49,7 +49,7 @@ public class ApiErrorTest
         ApiError apiError = new ApiError();
         apiError.setErrorCode(ErrorCodes.DATA_ERROR);
         apiError.setMessage("Some message");
-        apiError.setCause(new RuntimeException("Cause message"));
+        apiError.setCause(new RuntimeException("Cause message").toString());
 
         StringBuilder expected = new StringBuilder();
         expected.append("{\n")
