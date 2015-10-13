@@ -43,7 +43,7 @@ import com.prelert.job.process.exceptions.MalformedJsonException;
 
 class JsonRecordReader
 {
-    private static final int PARSE_ERRORS_LIMIT = 1000;
+    static final int PARSE_ERRORS_LIMIT = 100;
 
     private final JsonParser m_Parser;
     private final Map<String, Integer> m_FieldMap;
@@ -52,6 +52,7 @@ class JsonRecordReader
     private long m_FieldCount;
     private Deque<String> m_NestedFields;
     private String m_NestedSuffix;
+    private int m_ErrorCounter;
 
     /**
      * Create a reader that parses the mapped fields from JSON.
@@ -83,6 +84,7 @@ class JsonRecordReader
      * was read
      *
      * @return The number of fields in the JSON doc or -1 if nothing was read
+     * because the end of the stream was reached
      * @throws IOException
      * @throws MalformedJsonException
      */
@@ -91,7 +93,6 @@ class JsonRecordReader
         Arrays.fill(gotFields, false);
         Arrays.fill(record, "");
         m_FieldCount = 0;
-        boolean readSomething = false;
         clearNestedLevel();
 
         JsonToken token = tryNextTokenOrReadToEndOnError();
@@ -101,8 +102,6 @@ class JsonRecordReader
             {
                 break;
             }
-
-            readSomething = true;
 
             if (token == JsonToken.END_OBJECT)
             {
@@ -120,7 +119,8 @@ class JsonRecordReader
             token = tryNextTokenOrReadToEndOnError();
         }
 
-        if (readSomething)
+        // null token means EOF
+        if (token != null)
         {
             return m_FieldCount;
         }
@@ -137,6 +137,12 @@ class JsonRecordReader
         m_NestedSuffix = "";
     }
 
+    /**
+     * Returns null at the EOF or the next token
+     * @return
+     * @throws IOException
+     * @throws MalformedJsonException
+     */
     private JsonToken tryNextTokenOrReadToEndOnError() throws IOException, MalformedJsonException
     {
         try
@@ -152,13 +158,21 @@ class JsonRecordReader
             }
             clearNestedLevel();
         }
-        return null;
+
+        return m_Parser.getCurrentToken();
     }
 
+    /**
+     * In some cases the parser doesn't recognise the '}' of a badly formed
+     * JSON document and so my skip to the end of the second document. In this
+     * case we lose an extra record.
+     *
+     * @throws IOException
+     * @throws MalformedJsonException
+     */
     private void readToEndOfObject() throws IOException, MalformedJsonException
     {
         JsonToken token = null;
-        int errorCounter = 0;
         do
         {
             try
@@ -167,8 +181,8 @@ class JsonRecordReader
             }
             catch (JsonParseException e)
             {
-                errorCounter++;
-                if (errorCounter >= PARSE_ERRORS_LIMIT)
+                m_ErrorCounter++;
+                if (m_ErrorCounter >= PARSE_ERRORS_LIMIT)
                 {
                     m_Logger.error("Failed to recover from malformed JSON data.", e);
                     throw new MalformedJsonException(e);
