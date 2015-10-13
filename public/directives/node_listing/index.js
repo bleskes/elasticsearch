@@ -101,7 +101,7 @@ define(function (require) {
       link: function ($scope, $el) {
         var tableRowTemplate = React.createClass({
           getInitialState: function () {
-            return $scope.nodes[this.props.name];
+            return $scope.nodes[this.props.name] || null;
           },
           componentWillReceiveProps: function (newProps) {
             this.setState($scope.nodes[newProps.name]);
