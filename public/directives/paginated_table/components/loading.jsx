@@ -5,7 +5,7 @@ class Loading extends React.Component {
     return (
       <tbody>
         <tr>
-          <td colSpan={ colSpan } calssName="loading">
+          <td colSpan={ colSpan } className="loading">
             <i className="fa fa-spinner fa-pulse"></i>
             <span>Loading data...</span>
           </td>
