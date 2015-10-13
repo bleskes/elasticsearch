@@ -123,6 +123,8 @@ define(function (require) {
         var data = {x: row.key};
         if (metric.derivative && row.metric_deriv) {
           data.y = row.metric_deriv.normalized_value || row.metric_deriv.value || 0;
+        } else {
+          data.y = row.metric.value;
         }
         return data;
       };
