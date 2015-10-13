@@ -96,7 +96,7 @@ define(function (require) {
           metricAgg = {
             metric: {},
             metric_deriv: {
-              derivative: { buckets_path: 'metric' }
+              derivative: { buckets_path: 'metric', unit: 'second' }
             }
           };
           metricAgg.metric[metric.metricAgg] = {
@@ -121,8 +121,9 @@ define(function (require) {
       var self = this;
       return function (row) {
         var data = {x: row.key};
-        data.y = (metric.derivative ? row.metric_deriv && row.metric_deriv.value || 0 : row.metric.value);
-        if (metric.units === '/s') data.y = data.y / self.bucketSize;
+        if (metric.derivative && row.metric_deriv) {
+          data.y = row.metric_deriv.normalized_value || row.metric_deriv.value || 0;
+        }
         return data;
       };
     }
