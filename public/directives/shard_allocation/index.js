@@ -310,6 +310,10 @@ define(function (require) {
         });
         $scope.$on('$destroy', unsubscribe);
 
+        $scope.$watch('cluster', function (cluster) {
+          $scope.shardStats = cluster.shardStats;
+        });
+
         $scope.$watch('clusterState.data.version', function (version) {
           var current = ($scope.player.current === $scope.player.total);
           var data = $scope.timelineData;

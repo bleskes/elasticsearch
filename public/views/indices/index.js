@@ -97,6 +97,14 @@ define(function (require) {
     function fetch() {
       return Promise.all([courier.fetch()]);
     }
+
+    $scope.$watch('dataSources.cluster_status.clusters', function (clusters) {
+      var cluster = _.find(clusters, { cluster_uuid: globalState.cluster });
+      $scope.nodes = cluster.nodes;
+      $scope.dataSources.indices_table.cluster = cluster;
+      $scope.dataSources.indices_table.clusters = clusters;
+    });
+
     $scope.$listen(globalState, 'save_with_changes', function (changes) {
       if (_.contains(changes, 'time')) {
         fetch();
