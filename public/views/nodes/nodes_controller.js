@@ -90,6 +90,13 @@ define(function (require) {
       }
     });
 
+    $scope.$watch('dataSources.cluster_status.clusters', function (clusters) {
+      var cluster = _.find(clusters, { cluster_uuid: globalState.cluster });
+      $scope.nodes = cluster.nodes;
+      $scope.dataSources.nodes_table.cluster = cluster;
+      $scope.dataSources.nodes_table.clusters = clusters;
+    });
+
 
     $scope.$on('$destroy', function () {
       _.each($scope.dataSources, function (dataSource) {
