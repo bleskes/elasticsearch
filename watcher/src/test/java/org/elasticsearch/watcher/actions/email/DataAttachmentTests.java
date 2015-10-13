@@ -17,7 +17,6 @@
 
 package org.elasticsearch.watcher.actions.email;
 
-import org.apache.lucene.util.LuceneTestCase.AwaitsFix;
 import org.elasticsearch.common.io.Streams;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.watcher.actions.email.service.Attachment;
@@ -34,7 +33,6 @@ import static org.hamcrest.Matchers.is;
 /**
  *
  */
-@AwaitsFix(bugUrl = "https://github.com/elastic/x-plugins/issues/728")
 public class DataAttachmentTests extends ESTestCase {
 
     @Test
@@ -43,7 +41,7 @@ public class DataAttachmentTests extends ESTestCase {
         Attachment attachment = DataAttachment.JSON.create(data);
         InputStream input = attachment.bodyPart().getDataHandler().getInputStream();
         String content = Streams.copyToString(new InputStreamReader(input, StandardCharsets.UTF_8));
-        assertThat(content, is("{" + System.lineSeparator() + "  \"key\" : \"value\"" + System.lineSeparator() + "}"));
+        assertThat(content, is("{\n  \"key\" : \"value\"\n}"));
     }
 
     @Test
