@@ -41,6 +41,7 @@ public class MapperUtilsTest {
     public void testApiErrorFromJobException()
     {
         Exception cause = new ArrayIndexOutOfBoundsException();
+        String causeString = cause.toString();
 
         JobException e = new UnknownJobException("job", "error message",
                                                 ErrorCodes.BUCKET_RESET_NOT_SUPPORTED,
@@ -49,7 +50,7 @@ public class MapperUtilsTest {
         ApiError error = MapperUtils.apiErrorFromJobException(e);
         assertEquals(ErrorCodes.BUCKET_RESET_NOT_SUPPORTED, error.getErrorCode());
         assertEquals("error message", error.getMessage());
-        assertEquals(cause, error.getCause());
+        assertEquals(causeString, error.getCause());
     }
 
 }
