@@ -12,4 +12,5 @@ define(function (require) {
   require('plugins/marvel/directives/node_summary/index');
   require('plugins/marvel/directives/welcome_msg/index');
   require('plugins/marvel/directives/google_analytics/index');
+  require('plugins/marvel/directives/shard_allocation/index');
 });
