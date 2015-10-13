@@ -18,10 +18,10 @@ module.exports = React.createClass({
   displayName: 'TableBody',
   render: function () {
     if (!this.props.tableData) {
-      return React.createFactory(Loading);
+      return React.createFactory(Loading)({ columns: this.props.columns });
     }
     if (!this.props.tableData.length) {
-      return React.createFactory(NoData);
+      return React.createFactory(NoData)({ columns: this.props.columns });
     }
     var that = this;
 
