@@ -31,7 +31,6 @@ import org.elasticsearch.test.ShieldIntegTestCase;
 import org.elasticsearch.test.ShieldSettingsSource;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.Test;
 
 import java.util.Collections;
 
@@ -40,7 +39,6 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 
 public class ShieldCachePermissionTests extends ShieldIntegTestCase {
-
     static final String READ_ONE_IDX_USER = "read_user";
 
     @Override
@@ -87,7 +85,6 @@ public class ShieldCachePermissionTests extends ShieldIntegTestCase {
         refresh();
     }
 
-    @Test
     public void testThatTermsFilterQueryDoesntLeakData() {
         SearchResponse response = client().prepareSearch("data").setTypes("a").setQuery(QueryBuilders.constantScoreQuery(
                 QueryBuilders.termsLookupQuery("token", new TermsLookup("tokens", "tokens", "1", "tokens"))))
@@ -108,7 +105,6 @@ public class ShieldCachePermissionTests extends ShieldIntegTestCase {
         }
     }
 
-    @Test
     public void testThatScriptServiceDoesntLeakData() {
         SearchResponse response = client().prepareSearch("data").setTypes("a")
                 .setTemplate(new Template("testTemplate", ScriptService.ScriptType.INDEXED, MustacheScriptEngineService.NAME, null, Collections.<String, Object>singletonMap("name", "token")))

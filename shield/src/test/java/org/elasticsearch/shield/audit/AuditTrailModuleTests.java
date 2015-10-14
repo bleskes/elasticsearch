@@ -28,16 +28,15 @@ import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.threadpool.ThreadPoolModule;
 import org.elasticsearch.transport.TransportModule;
-import org.junit.Test;
 
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.instanceOf;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
 
 /**
  *
  */
 public class AuditTrailModuleTests extends ESTestCase {
-
-    @Test
     public void testEnabled() throws Exception {
         Settings settings = Settings.builder()
                 .put("client.type", "node")
@@ -48,7 +47,6 @@ public class AuditTrailModuleTests extends ESTestCase {
         assertThat(auditTrail, is(AuditTrail.NOOP));
     }
 
-    @Test
     public void testDisabledByDefault() throws Exception {
         Settings settings = Settings.builder()
                 .put("client.type", "node").build();
@@ -57,7 +55,6 @@ public class AuditTrailModuleTests extends ESTestCase {
         assertThat(auditTrail, is(AuditTrail.NOOP));
     }
 
-    @Test
     public void testLogfile() throws Exception {
         Settings settings = Settings.builder()
                 .put("shield.audit.enabled", true)
@@ -77,7 +74,6 @@ public class AuditTrailModuleTests extends ESTestCase {
         }
     }
 
-    @Test
     public void testUnknownOutput() throws Exception {
         Settings settings = Settings.builder()
                 .put("shield.audit.enabled", true)
@@ -91,5 +87,4 @@ public class AuditTrailModuleTests extends ESTestCase {
             // expected
         }
     }
-
 }

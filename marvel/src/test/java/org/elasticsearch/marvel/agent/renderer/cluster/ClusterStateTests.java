@@ -29,7 +29,6 @@ import org.elasticsearch.test.ESIntegTestCase.ClusterScope;
 import org.elasticsearch.test.ESIntegTestCase.Scope;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Test;
 
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -39,7 +38,6 @@ import static org.hamcrest.Matchers.greaterThan;
 
 @ClusterScope(scope = Scope.TEST)
 public class ClusterStateTests extends MarvelIntegTestCase {
-
     @Override
     protected Settings nodeSettings(int nodeOrdinal) {
         return Settings.builder()
@@ -63,7 +61,6 @@ public class ClusterStateTests extends MarvelIntegTestCase {
         wipeMarvelIndices();
     }
 
-    @Test
     public void testClusterState() throws Exception {
         logger.debug("--> waiting for documents to be collected");
         awaitMarvelDocsCount(greaterThan(0L), ClusterStateCollector.TYPE);
@@ -89,7 +86,6 @@ public class ClusterStateTests extends MarvelIntegTestCase {
      * This test should fail if the mapping for the 'nodes' attribute
      * in the 'cluster_state' document is NOT set to 'enable: false'
      */
-    @Test
     public void testNoNodesIndexing() throws Exception {
         logger.debug("--> waiting for documents to be collected");
         awaitMarvelDocsCount(greaterThan(0L), ClusterStateCollector.TYPE);

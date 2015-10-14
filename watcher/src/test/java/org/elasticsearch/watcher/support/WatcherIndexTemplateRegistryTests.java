@@ -22,7 +22,6 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.test.ESIntegTestCase;
 import org.elasticsearch.watcher.WatcherModule;
 import org.elasticsearch.watcher.test.AbstractWatcherIntegrationTestCase;
-import org.junit.Test;
 
 import static org.elasticsearch.test.ESIntegTestCase.Scope.TEST;
 import static org.elasticsearch.test.hamcrest.ElasticsearchAssertions.assertAcked;
@@ -33,8 +32,6 @@ import static org.hamcrest.core.Is.is;
  */
 @ESIntegTestCase.ClusterScope(scope = TEST, numClientNodes = 0, transportClientRatio = 0, randomDynamicTemplates = false, numDataNodes = 1)
 public class WatcherIndexTemplateRegistryTests extends AbstractWatcherIntegrationTestCase {
-
-    @Test
     public void testTemplates() throws Exception {
         assertAcked(
                 client().admin().cluster().prepareUpdateSettings()
@@ -70,5 +67,4 @@ public class WatcherIndexTemplateRegistryTests extends AbstractWatcherIntegratio
             }
         });
     }
-
 }

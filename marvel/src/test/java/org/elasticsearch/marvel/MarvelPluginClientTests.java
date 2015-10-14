@@ -22,15 +22,12 @@ import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.inject.Module;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.test.ESTestCase;
-import org.junit.Test;
 
 import java.util.Collection;
 
 import static org.hamcrest.Matchers.is;
 
 public class MarvelPluginClientTests extends ESTestCase {
-
-    @Test
     public void testModulesWithClientSettings() {
         Settings settings = Settings.builder()
                 .put(Client.CLIENT_TYPE_SETTING, TransportClient.CLIENT_TYPE)
@@ -42,7 +39,6 @@ public class MarvelPluginClientTests extends ESTestCase {
         assertThat(modules.size(), is(0));
     }
 
-    @Test
     public void testModulesWithNodeSettings() {
         // these settings mimic what ES does when running as a node...
         Settings settings = Settings.builder()
@@ -53,5 +49,4 @@ public class MarvelPluginClientTests extends ESTestCase {
         Collection<Module> modules = plugin.nodeModules();
         assertThat(modules.size(), is(6));
     }
-
 }

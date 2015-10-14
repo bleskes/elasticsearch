@@ -33,7 +33,6 @@ import org.elasticsearch.test.ShieldIntegTestCase;
 import org.elasticsearch.test.ShieldSettingsSource;
 import org.elasticsearch.transport.Transport;
 import org.junit.BeforeClass;
-import org.junit.Test;
 
 import java.net.InetSocketAddress;
 import java.nio.file.Files;
@@ -48,7 +47,6 @@ import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
 
 public class ServerTransportFilterIntegrationTests extends ShieldIntegTestCase {
-
     private static int randomClientPort;
 
     @BeforeClass
@@ -90,7 +88,6 @@ public class ServerTransportFilterIntegrationTests extends ShieldIntegTestCase {
                 .build();
     }
 
-    @Test
     public void testThatConnectionToServerTypeConnectionWorks() {
         Settings dataNodeSettings = internalCluster().getDataNodeInstance(Settings.class);
         String systemKeyFile = dataNodeSettings.get(InternalCryptoService.FILE_SETTING);
@@ -123,7 +120,6 @@ public class ServerTransportFilterIntegrationTests extends ShieldIntegTestCase {
         }
     }
 
-    @Test
     public void testThatConnectionToClientTypeConnectionIsRejected() {
         Settings dataNodeSettings = internalCluster().getDataNodeInstance(Settings.class);
         String systemKeyFile = dataNodeSettings.get(InternalCryptoService.FILE_SETTING);

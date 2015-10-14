@@ -18,16 +18,15 @@
 package org.elasticsearch.shield.authz;
 
 import org.elasticsearch.action.get.GetAction;
+import org.elasticsearch.shield.authz.Privilege.Cluster;
 import org.elasticsearch.test.ESTestCase;
 import org.junit.Before;
-import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.function.Predicate;
 
-import static org.elasticsearch.shield.authz.Privilege.Index.Cluster;
 import static org.elasticsearch.shield.authz.Privilege.Index.MONITOR;
 import static org.elasticsearch.shield.authz.Privilege.Index.READ;
 import static org.elasticsearch.shield.authz.Privilege.Index.SEARCH;
@@ -40,7 +39,6 @@ import static org.hamcrest.Matchers.notNullValue;
  *
  */
 public class PermissionTests extends ESTestCase {
-
     private Permission.Global.Role permission;
 
     @Before
@@ -52,19 +50,16 @@ public class PermissionTests extends ESTestCase {
         permission = builder.build();
     }
 
-    @Test
-    public void testAllowedIndicesMatcher_Action() throws Exception {
+    public void testAllowedIndicesMatcherAction() throws Exception {
         testAllowedIndicesMatcher(permission.indices().allowedIndicesMatcher(GetAction.NAME));
     }
 
-    @Test
-    public void testAllowedIndicesMatcher_Action_Caching() throws Exception {
+    public void testAllowedIndicesMatcherActionCaching() throws Exception {
         Predicate<String> matcher1 = permission.indices().allowedIndicesMatcher(GetAction.NAME);
         Predicate<String> matcher2 = permission.indices().allowedIndicesMatcher(GetAction.NAME);
         assertThat(matcher1, is(matcher2));
     }
 
-    @Test
     public void testIndicesGlobalsIterator() {
         Permission.Global.Role.Builder builder = Permission.Global.Role.builder("tc_role");
         builder.cluster(Cluster.action("cluster:monitor/nodes/info"));
@@ -81,8 +76,7 @@ public class PermissionTests extends ESTestCase {
         assertThat(count, is(equalTo(permission.indices().groups().length)));
     }
 
-    @Test
-    public void buildEmptyRole() {
+    public void testBuildEmptyRole() {
         Permission.Global.Role.Builder permission = Permission.Global.Role.builder("some_role");
         Permission.Global.Role role = permission.build();
         assertThat(role, notNullValue());
@@ -91,7 +85,6 @@ public class PermissionTests extends ESTestCase {
         assertThat(role.runAs(), notNullValue());
     }
 
-    @Test
     public void testRunAs() {
         Permission.Global.Role permission = Permission.Global.Role.builder("some_role")
                 .runAs(new Privilege.General("name", "user1", "run*"))

@@ -32,21 +32,27 @@ import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.test.junit.annotations.Network;
 import org.elasticsearch.transport.Transport;
 import org.junit.Before;
-import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 
 import java.net.InetAddress;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 import static org.elasticsearch.common.settings.Settings.settingsBuilder;
 import static org.hamcrest.Matchers.is;
-import static org.mockito.Mockito.*;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.when;
 
 /**
  *
  */
 public class IPFilterTests extends ESTestCase {
-
     private IPFilter ipFilter;
     private ShieldLicenseState licenseState;
     private AuditTrail auditTrail;
@@ -76,7 +82,6 @@ public class IPFilterTests extends ESTestCase {
         when(transport.profileBoundAddresses()).thenReturn(profileBoundAddresses);
     }
 
-    @Test
     public void testThatIpV4AddressesCanBeProcessed() throws Exception {
         Settings settings = settingsBuilder()
                 .put("shield.transport.filter.allow", "127.0.0.1")
@@ -88,7 +93,6 @@ public class IPFilterTests extends ESTestCase {
         assertAddressIsDenied("10.2.3.4");
     }
 
-    @Test
     public void testThatIpV6AddressesCanBeProcessed() throws Exception {
         // you have to use the shortest possible notation in order to match, so
         // 1234:0db8:85a3:0000:0000:8a2e:0370:7334 becomes 1234:db8:85a3:0:0:8a2e:370:7334
@@ -103,7 +107,6 @@ public class IPFilterTests extends ESTestCase {
         assertAddressIsDenied("4321:0db8:1234:0000:0000:8a2e:0370:7334");
     }
 
-    @Test
     @Network // requires network for name resolution
     public void testThatHostnamesCanBeProcessed() throws Exception {
         Settings settings = settingsBuilder()
@@ -116,7 +119,6 @@ public class IPFilterTests extends ESTestCase {
         assertAddressIsDenied("8.8.8.8");
     }
 
-    @Test
     public void testThatAnAllowAllAuthenticatorWorks() throws Exception {
         Settings settings = settingsBuilder()
                 .put("shield.transport.filter.allow", "_all")
@@ -127,7 +129,6 @@ public class IPFilterTests extends ESTestCase {
         assertAddressIsAllowed("173.194.70.100");
     }
 
-    @Test
     public void testThatProfilesAreSupported() throws Exception {
         Settings settings = settingsBuilder()
                 .put("shield.transport.filter.allow", "localhost")
@@ -143,7 +144,6 @@ public class IPFilterTests extends ESTestCase {
         assertAddressIsDeniedForProfile("client", "192.168.0.2");
     }
 
-    @Test
     public void testThatAllowWinsOverDeny() throws Exception {
         Settings settings = settingsBuilder()
                 .put("shield.transport.filter.allow", "10.0.0.1")
@@ -155,7 +155,6 @@ public class IPFilterTests extends ESTestCase {
         assertAddressIsDenied("10.0.0.2");
     }
 
-    @Test
     public void testDefaultAllow() throws Exception {
         Settings settings = settingsBuilder().build();
         ipFilter = new IPFilter(settings, auditTrail, nodeSettingsService, transport, licenseState).start();
@@ -164,7 +163,6 @@ public class IPFilterTests extends ESTestCase {
         assertAddressIsAllowed("10.0.0.2");
     }
 
-    @Test
     public void testThatHttpWorks() throws Exception {
         Settings settings = settingsBuilder()
                 .put("shield.transport.filter.allow", "127.0.0.1")
@@ -179,7 +177,6 @@ public class IPFilterTests extends ESTestCase {
         assertAddressIsDeniedForProfile(IPFilter.HTTP_PROFILE_NAME, "192.168.0.1");
     }
 
-    @Test
     public void testThatHttpFallsbackToDefault() throws Exception {
         Settings settings = settingsBuilder()
                 .put("shield.transport.filter.allow", "127.0.0.1")
@@ -192,7 +189,6 @@ public class IPFilterTests extends ESTestCase {
         assertAddressIsDeniedForProfile(IPFilter.HTTP_PROFILE_NAME, "10.2.3.4");
     }
 
-    @Test
     public void testThatBoundAddressIsNeverRejected() throws Exception {
         List<String> addressStrings = new ArrayList<>();
         for (TransportAddress address : transport.boundAddress().boundAddresses()) {
@@ -214,7 +210,6 @@ public class IPFilterTests extends ESTestCase {
         }
     }
 
-    @Test
     public void testThatAllAddressesAreAllowedWhenLicenseDisablesSecurity() {
         Settings settings = settingsBuilder()
                 .put("shield.transport.filter.deny", "_all")

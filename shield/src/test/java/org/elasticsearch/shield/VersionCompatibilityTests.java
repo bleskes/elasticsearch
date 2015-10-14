@@ -18,9 +18,7 @@
 package org.elasticsearch.shield;
 
 import org.elasticsearch.Version;
-import org.elasticsearch.shield.license.ShieldLicensee;
 import org.elasticsearch.test.ESTestCase;
-import org.junit.Test;
 
 import static org.hamcrest.CoreMatchers.is;
 
@@ -37,8 +35,6 @@ import static org.hamcrest.CoreMatchers.is;
  * helps keeping track of this and eventually making changes when needed.
  */
 public class VersionCompatibilityTests extends ESTestCase {
-
-    @Test
     public void testCompatibility() {
         /**
          * see https://github.com/elasticsearch/elasticsearch/issues/9372 {@link ShieldLicensee}

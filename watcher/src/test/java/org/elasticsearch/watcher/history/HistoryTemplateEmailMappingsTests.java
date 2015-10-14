@@ -27,7 +27,6 @@ import org.elasticsearch.watcher.execution.ExecutionState;
 import org.elasticsearch.watcher.test.AbstractWatcherIntegrationTestCase;
 import org.elasticsearch.watcher.transport.actions.put.PutWatchResponse;
 import org.junit.After;
-import org.junit.Test;
 
 import static org.elasticsearch.search.aggregations.AggregationBuilders.terms;
 import static org.elasticsearch.search.builder.SearchSourceBuilder.searchSource;
@@ -45,12 +44,10 @@ import static org.hamcrest.Matchers.notNullValue;
  * not analyzed so they can be used in aggregations
  */
 public class HistoryTemplateEmailMappingsTests extends AbstractWatcherIntegrationTestCase {
-
     static final String USERNAME = "_user";
     static final String PASSWORD = "_passwd";
 
     private EmailServer server;
-
 
     @After
     public void cleanup() throws Exception {
@@ -86,7 +83,6 @@ public class HistoryTemplateEmailMappingsTests extends AbstractWatcherIntegratio
                 .build();
     }
 
-    @Test
     public void testEmailFields() throws Exception {
         PutWatchResponse putWatchResponse = watcherClient().preparePutWatch("_id").setSource(watchBuilder()
                 .trigger(schedule(interval("5s")))

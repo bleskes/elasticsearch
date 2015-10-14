@@ -21,6 +21,7 @@ import com.squareup.okhttp.mockwebserver.MockResponse;
 import com.squareup.okhttp.mockwebserver.MockWebServer;
 import com.squareup.okhttp.mockwebserver.QueueDispatcher;
 import com.squareup.okhttp.mockwebserver.RecordedRequest;
+
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
@@ -38,7 +39,6 @@ import org.elasticsearch.watcher.support.xcontent.XContentSource;
 import org.elasticsearch.watcher.test.AbstractWatcherIntegrationTestCase;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Test;
 
 import java.net.BindException;
 import java.nio.file.Path;
@@ -55,7 +55,6 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 
 public class WebhookHttpsIntegrationTests extends AbstractWatcherIntegrationTestCase {
-
     private int webPort;
     private MockWebServer webServer;
 
@@ -93,7 +92,6 @@ public class WebhookHttpsIntegrationTests extends AbstractWatcherIntegrationTest
         webServer.shutdown();
     }
 
-    @Test
     public void testHttps() throws Exception {
         webServer.enqueue(new MockResponse().setResponseCode(200).setBody("body"));
         HttpRequestTemplate.Builder builder = HttpRequestTemplate.builder("localhost", webPort)
@@ -136,7 +134,6 @@ public class WebhookHttpsIntegrationTests extends AbstractWatcherIntegrationTest
         assertThat(status.intValue(), is(200));
     }
 
-    @Test
     public void testHttpsAndBasicAuth() throws Exception {
         webServer.enqueue(new MockResponse().setResponseCode(200).setBody("body"));
         HttpRequestTemplate.Builder builder = HttpRequestTemplate.builder("localhost", webPort)
@@ -164,5 +161,4 @@ public class WebhookHttpsIntegrationTests extends AbstractWatcherIntegrationTest
         assertThat(recordedRequest.getBody().readUtf8Line(), equalTo("{key=value}"));
         assertThat(recordedRequest.getHeader("Authorization"), equalTo("Basic X3VzZXJuYW1lOl9wYXNzd29yZA=="));
     }
-
 }

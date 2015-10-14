@@ -23,7 +23,6 @@ import org.elasticsearch.node.Node;
 import org.elasticsearch.test.ESIntegTestCase.ClusterScope;
 import org.elasticsearch.test.ShieldIntegTestCase;
 import org.junit.BeforeClass;
-import org.junit.Test;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -36,7 +35,6 @@ import static org.hamcrest.Matchers.is;
 
 @ClusterScope(scope = TEST, numDataNodes = 1)
 public class IpFilteringUpdateTests extends ShieldIntegTestCase {
-
     private static int randomClientPort;
 
     private final boolean httpEnabled = randomBoolean();
@@ -57,7 +55,6 @@ public class IpFilteringUpdateTests extends ShieldIntegTestCase {
                 .build();
     }
 
-    @Test
     public void testThatIpFilterConfigurationCanBeChangedDynamically() throws Exception {
         // ensure this did not get overwritten by the listener during startup
         assertConnectionRejected("default", "127.0.0.200");
@@ -131,7 +128,7 @@ public class IpFilteringUpdateTests extends ShieldIntegTestCase {
         }
     }
 
-    @Test // issue #762, occured because in the above test we use HTTP and transport
+    // issue #762, occured because in the above test we use HTTP and transport
     public void testThatDisablingIpFilterWorksAsExpected() throws Exception {
         Settings settings = settingsBuilder()
                 .put("shield.transport.filter.deny", "127.0.0.8")
@@ -146,7 +143,6 @@ public class IpFilteringUpdateTests extends ShieldIntegTestCase {
         assertConnectionAccepted("default", "127.0.0.8");
     }
 
-    @Test
     public void testThatDisablingIpFilterForProfilesWorksAsExpected() throws Exception {
         Settings settings = settingsBuilder()
                 .put("transport.profiles.client.shield.filter.deny", "127.0.0.8")

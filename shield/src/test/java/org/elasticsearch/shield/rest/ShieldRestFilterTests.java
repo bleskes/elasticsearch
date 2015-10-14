@@ -28,17 +28,18 @@ import org.elasticsearch.shield.authc.AuthenticationService;
 import org.elasticsearch.shield.license.ShieldLicenseState;
 import org.elasticsearch.test.ESTestCase;
 import org.junit.Before;
-import org.junit.Test;
 
 import static org.elasticsearch.shield.support.Exceptions.authenticationError;
 import static org.hamcrest.Matchers.equalTo;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.when;
 
 /**
  *
  */
 public class ShieldRestFilterTests extends ESTestCase {
-
     private AuthenticationService authcService;
     private RestChannel channel;
     private RestFilterChain chain;
@@ -57,7 +58,6 @@ public class ShieldRestFilterTests extends ESTestCase {
         verify(restController).registerFilter(filter);
     }
 
-    @Test
     public void testProcess() throws Exception {
         RestRequest request = mock(RestRequest.class);
         User user = new User.Simple("_user", new String[] { "r1" });
@@ -67,7 +67,6 @@ public class ShieldRestFilterTests extends ESTestCase {
         verifyZeroInteractions(channel);
     }
 
-    @Test
     public void testProcessBasicLicense() throws Exception {
         RestRequest request = mock(RestRequest.class);
         when(licenseState.securityEnabled()).thenReturn(false);
@@ -76,8 +75,7 @@ public class ShieldRestFilterTests extends ESTestCase {
         verifyZeroInteractions(channel, authcService);
     }
 
-    @Test
-    public void testProcess_AuthenticationError() throws Exception {
+    public void testProcessAuthenticationError() throws Exception {
         RestRequest request = mock(RestRequest.class);
         when(authcService.authenticate(request)).thenThrow(authenticationError("failed authc"));
         try {
@@ -90,8 +88,7 @@ public class ShieldRestFilterTests extends ESTestCase {
         verifyZeroInteractions(chain);
     }
 
-    @Test
-    public void testProcess_OptionsMethod() throws Exception {
+    public void testProcessOptionsMethod() throws Exception {
         RestRequest request = mock(RestRequest.class);
         when(request.method()).thenReturn(RestRequest.Method.OPTIONS);
         filter.process(request, channel, chain);

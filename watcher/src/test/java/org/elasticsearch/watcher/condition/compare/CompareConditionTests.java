@@ -29,7 +29,6 @@ import org.elasticsearch.watcher.support.clock.ClockMock;
 import org.elasticsearch.watcher.support.clock.SystemClock;
 import org.elasticsearch.watcher.watch.Payload;
 import org.joda.time.DateTime;
-import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.Locale;
@@ -37,15 +36,14 @@ import java.util.Locale;
 import static java.util.Collections.singletonMap;
 import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 import static org.elasticsearch.watcher.test.WatcherTestUtils.mockExecutionContext;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 
 /**
  */
 public class CompareConditionTests extends ESTestCase {
-
-    @Test
-    public void testOpEval_EQ() throws Exception {
+    public void testOpEvalEQ() throws Exception {
         assertThat(Op.EQ.eval(null, null), is(true));
         assertThat(Op.EQ.eval(4, 3.0), is(false));
         assertThat(Op.EQ.eval(3, 3.0), is(true));
@@ -64,8 +62,7 @@ public class CompareConditionTests extends ESTestCase {
         assertThat(Op.EQ.eval(Arrays.asList("k", "v"), Arrays.asList("k1", "v1")), is(false));
     }
 
-    @Test
-    public void testOpEval_NOT_EQ() throws Exception {
+    public void testOpEvalNotEQ() throws Exception {
         assertThat(Op.NOT_EQ.eval(null, null), is(false));
         assertThat(Op.NOT_EQ.eval(4, 3.0), is(true));
         assertThat(Op.NOT_EQ.eval(3, 3.0), is(false));
@@ -84,8 +81,7 @@ public class CompareConditionTests extends ESTestCase {
         assertThat(Op.NOT_EQ.eval(Arrays.asList("k", "v"), Arrays.asList("k1", "v1")), is(true));
     }
 
-    @Test
-    public void testOpEval_GTE() throws Exception {
+    public void testOpEvalGTE() throws Exception {
         assertThat(Op.GTE.eval(4, 3.0), is(true));
         assertThat(Op.GTE.eval(3, 3.0), is(true));
         assertThat(Op.GTE.eval(2, new Float(3.0)), is(false));
@@ -99,8 +95,7 @@ public class CompareConditionTests extends ESTestCase {
         assertThat(Op.GTE.eval("aa", "ab"), is(false));
     }
 
-    @Test
-    public void testOpEval_GT() throws Exception {
+    public void testOpEvalGT() throws Exception {
         assertThat(Op.GT.eval(4, 3.0), is(true));
         assertThat(Op.GT.eval(3, 3.0), is(false));
         assertThat(Op.GT.eval(2, new Float(3.0)), is(false));
@@ -114,8 +109,7 @@ public class CompareConditionTests extends ESTestCase {
         assertThat(Op.GT.eval("aa", "ab"), is(false));
     }
 
-    @Test
-    public void testOpEval_LTE() throws Exception {
+    public void testOpEvalLTE() throws Exception {
         assertThat(Op.LTE.eval(4, 3.0), is(false));
         assertThat(Op.LTE.eval(3, 3.0), is(true));
         assertThat(Op.LTE.eval(2, new Float(3.0)), is(true));
@@ -129,8 +123,7 @@ public class CompareConditionTests extends ESTestCase {
         assertThat(Op.LTE.eval("aa", "ab"), is(true));
     }
 
-    @Test
-    public void testOpEval_LT() throws Exception {
+    public void testOpEvalLT() throws Exception {
         assertThat(Op.LT.eval(4, 3.0), is(false));
         assertThat(Op.LT.eval(3, 3.0), is(false));
         assertThat(Op.LT.eval(2, new Float(3.0)), is(true));
@@ -144,7 +137,6 @@ public class CompareConditionTests extends ESTestCase {
         assertThat(Op.LT.eval("aa", "ab"), is(true));
     }
 
-    @Test
     public void testExecute() throws Exception {
         Op op = randomFrom(Op.values());
         int value = randomInt(10);
@@ -156,8 +148,7 @@ public class CompareConditionTests extends ESTestCase {
         assertThat(condition.execute(ctx).met(), is(met));
     }
 
-    @Test
-    public void testExecute_DateMath() throws Exception {
+    public void testExecuteDateMath() throws Exception {
         ClockMock clock = new ClockMock();
         boolean met = randomBoolean();
         Op op = met ? randomFrom(Op.GT, Op.GTE, Op.NOT_EQ) : randomFrom(Op.LT, Op.LTE, Op.EQ);
@@ -169,8 +160,7 @@ public class CompareConditionTests extends ESTestCase {
         assertThat(condition.execute(ctx).met(), is(met));
     }
 
-    @Test
-    public void testExecute_Path() throws Exception {
+    public void testExecutePath() throws Exception {
         ClockMock clock = new ClockMock();
         boolean met = randomBoolean();
         Op op = met ? Op.EQ : Op.NOT_EQ;
@@ -182,9 +172,7 @@ public class CompareConditionTests extends ESTestCase {
         assertThat(condition.execute(ctx).met(), is(met));
     }
 
-
-    @Test
-    public void testParse_Valid() throws Exception {
+    public void testParseValid() throws Exception {
         Op op = randomFrom(Op.values());
         Object value = randomFrom("value", 1, null);
         CompareConditionFactory factory = new CompareConditionFactory(Settings.EMPTY, SystemClock.INSTANCE);
@@ -206,8 +194,7 @@ public class CompareConditionTests extends ESTestCase {
         assertThat(condition.getValue(), is(value));
     }
 
-    @Test(expected = ElasticsearchParseException.class)
-    public void testParse_InValid_NoOperationBody() throws Exception {
+    public void testParseInvalidNoOperationBody() throws Exception {
         CompareConditionFactory factory = new CompareConditionFactory(Settings.EMPTY, SystemClock.INSTANCE);
         XContentBuilder builder = jsonBuilder();
         builder.startObject();
@@ -216,11 +203,15 @@ public class CompareConditionTests extends ESTestCase {
         builder.endObject();
 
         XContentParser parser = JsonXContent.jsonXContent.createParser(builder.bytes());
-        factory.parseCondition("_id", parser);
+        try {
+            factory.parseCondition("_id", parser);
+            fail("Expected ElasticsearchParseException");
+        } catch (ElasticsearchParseException e) {
+            assertThat(e.getMessage(), containsString("expected an object but found [null] instead"));
+        }
     }
 
-    @Test(expected = ElasticsearchParseException.class)
-    public void testParse_InValid_UnknownOp() throws Exception {
+    public void testParseInvalidUnknownOp() throws Exception {
         Object value = randomFrom("value", 1, null);
         CompareConditionFactory factory = new CompareConditionFactory(Settings.EMPTY, SystemClock.INSTANCE);
         XContentBuilder builder = jsonBuilder();
@@ -232,12 +223,15 @@ public class CompareConditionTests extends ESTestCase {
 
         XContentParser parser = JsonXContent.jsonXContent.createParser(builder.bytes());
         parser.nextToken();
-
-        factory.parseCondition("_id", parser);
+        try {
+            factory.parseCondition("_id", parser);
+            fail("Expected ElasticsearchParseException");
+        } catch (ElasticsearchParseException e) {
+            assertThat(e.getMessage(), containsString("unknown comparison operator [foobar]"));
+        }
     }
 
-    @Test(expected = ElasticsearchParseException.class)
-    public void testParse_InValid_WrongValueForOp() throws Exception {
+    public void testParseInvalidWrongValueForOp() throws Exception {
         Object value = randomFrom(Arrays.asList("1", "2"), singletonMap("key", "value"));
         String op = randomFrom("lt", "lte", "gt", "gte");
         CompareConditionFactory factory = new CompareConditionFactory(Settings.EMPTY, SystemClock.INSTANCE);
@@ -250,8 +244,11 @@ public class CompareConditionTests extends ESTestCase {
 
         XContentParser parser = JsonXContent.jsonXContent.createParser(builder.bytes());
         parser.nextToken();
-
-        factory.parseCondition("_id", parser);
+        try {
+            factory.parseCondition("_id", parser);
+            fail("Expected ElasticsearchParseException");
+        } catch (ElasticsearchParseException e) {
+            assertThat(e.getMessage(), containsString("must either be a numeric, string, boolean or null value, but found ["));
+        }
     }
-
 }

@@ -23,7 +23,6 @@ import org.elasticsearch.watcher.test.AbstractWatcherIntegrationTestCase;
 import org.elasticsearch.watcher.transport.actions.get.GetWatchRequest;
 import org.elasticsearch.watcher.transport.actions.get.GetWatchResponse;
 import org.elasticsearch.watcher.transport.actions.put.PutWatchResponse;
-import org.junit.Test;
 
 import java.util.Map;
 
@@ -33,15 +32,17 @@ import static org.elasticsearch.watcher.condition.ConditionBuilders.alwaysCondit
 import static org.elasticsearch.watcher.input.InputBuilders.simpleInput;
 import static org.elasticsearch.watcher.trigger.TriggerBuilders.schedule;
 import static org.elasticsearch.watcher.trigger.schedule.Schedules.interval;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.hasKey;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 
 /**
  *
  */
 public class GetWatchTests extends AbstractWatcherIntegrationTestCase {
-
-    @Test
     public void testGet() throws Exception {
         PutWatchResponse putResponse = watcherClient().preparePutWatch("_name").setSource(watchBuilder()
                 .trigger(schedule(interval("5m")))
@@ -67,13 +68,16 @@ public class GetWatchTests extends AbstractWatcherIntegrationTestCase {
         assertThat(source, not(hasKey("status")));
     }
 
-    @Test(expected = ActionRequestValidationException.class)
-    public void testGet_InvalidWatchId() throws Exception {
-        watcherClient().prepareGetWatch("id with whitespaces").get();
+    public void testGetInvalidWatchId() throws Exception {
+        try {
+            watcherClient().prepareGetWatch("id with whitespaces").get();
+            fail("Expected ActionRequestValidationException");
+        } catch (ActionRequestValidationException e) {
+            assertThat(e.getMessage(), containsString("Watch id cannot have white spaces"));
+        }
     }
 
-    @Test
-    public void testGet_NotFound() throws Exception {
+    public void testGetNotFound() throws Exception {
         GetWatchResponse getResponse = watcherClient().getWatch(new GetWatchRequest("_name")).get();
         assertThat(getResponse, notNullValue());
         assertThat(getResponse.getId(), is("_name"));
@@ -83,5 +87,4 @@ public class GetWatchTests extends AbstractWatcherIntegrationTestCase {
         XContentSource source = getResponse.getSource();
         assertThat(source, nullValue());
     }
-
 }

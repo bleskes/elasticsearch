@@ -23,7 +23,6 @@ import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.common.xcontent.json.JsonXContent;
 import org.elasticsearch.watcher.support.Strings;
-import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.stream.Collectors;
@@ -31,23 +30,24 @@ import java.util.stream.Collectors;
 import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 import static org.elasticsearch.watcher.support.Integers.asIterable;
 import static org.elasticsearch.watcher.support.Integers.contains;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.arrayContaining;
+import static org.hamcrest.Matchers.arrayWithSize;
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
 
 /**
  *
  */
 public class HourlyScheduleTests extends ScheduleTestCase {
-
-    @Test
-    public void test_Default() throws Exception {
+    public void testDefault() throws Exception {
         HourlySchedule schedule = new HourlySchedule();
         String[] crons = expressions(schedule);
         assertThat(crons, arrayWithSize(1));
         assertThat(crons, arrayContaining("0 0 * * * ?"));
     }
 
-    @Test
-    public void test_SingleMinute() throws Exception {
+    public void testSingleMinute() throws Exception {
         int minute = validMinute();
         HourlySchedule schedule = new HourlySchedule(minute);
         String[] crons = expressions(schedule);
@@ -55,13 +55,17 @@ public class HourlyScheduleTests extends ScheduleTestCase {
         assertThat(crons, arrayContaining("0 " + minute + " * * * ?"));
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void test_SingleMinute_Invalid() throws Exception {
-        new HourlySchedule(invalidMinute());
+    public void testSingleMinuteInvalid() throws Exception {
+        try {
+            new HourlySchedule(invalidMinute());
+            fail("Expected IllegalArgumentException");
+        } catch (IllegalArgumentException e) {
+            assertThat(e.getMessage(), containsString("invalid hourly minute"));
+            assertThat(e.getMessage(), containsString("minute must be between 0 and 59 incl."));
+        }
     }
 
-    @Test
-    public void test_MultipleMinutes() throws Exception {
+    public void testMultipleMinutes() throws Exception {
         int[] minutes = validMinutes();
         String minutesStr = Strings.join(",", minutes);
         HourlySchedule schedule = new HourlySchedule(minutes);
@@ -70,14 +74,18 @@ public class HourlyScheduleTests extends ScheduleTestCase {
         assertThat(crons, arrayContaining("0 " + minutesStr + " * * * ?"));
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void test_MultipleMinutes_Invalid() throws Exception {
+    public void testMultipleMinutesInvalid() throws Exception {
         int[] minutes = invalidMinutes();
-        new HourlySchedule(minutes);
+        try {
+            new HourlySchedule(minutes);
+            fail("Expected IllegalArgumentException");
+        } catch (IllegalArgumentException e) {
+            assertThat(e.getMessage(), containsString("invalid hourly minute"));
+            assertThat(e.getMessage(), containsString("minute must be between 0 and 59 incl."));
+        }
     }
 
-    @Test
-    public void testParser_Empty() throws Exception {
+    public void testParserEmpty() throws Exception {
         XContentBuilder builder = jsonBuilder().startObject().endObject();
         BytesReference bytes = builder.bytes();
         XContentParser parser = JsonXContent.jsonXContent.createParser(bytes);
@@ -88,8 +96,7 @@ public class HourlyScheduleTests extends ScheduleTestCase {
         assertThat(schedule.minutes()[0], is(0));
     }
 
-    @Test
-    public void testParser_SingleMinute_Number() throws Exception {
+    public void testParserSingleMinuteNumber() throws Exception {
         int minute = validMinute();
         XContentBuilder builder = jsonBuilder()
                 .startObject()
@@ -104,8 +111,7 @@ public class HourlyScheduleTests extends ScheduleTestCase {
         assertThat(schedule.minutes()[0], is(minute));
     }
 
-    @Test(expected = ElasticsearchParseException.class)
-    public void testParser_SingleMinute_Number_Invalid() throws Exception {
+    public void testParserSingleMinuteNumberInvalid() throws Exception {
         XContentBuilder builder = jsonBuilder()
                 .startObject()
                 .field("minute", invalidMinute())
@@ -113,11 +119,15 @@ public class HourlyScheduleTests extends ScheduleTestCase {
         BytesReference bytes = builder.bytes();
         XContentParser parser = JsonXContent.jsonXContent.createParser(bytes);
         parser.nextToken(); // advancing to the start object
-        new HourlySchedule.Parser().parse(parser);
+        try {
+            new HourlySchedule.Parser().parse(parser);
+            fail("Expected ElasticsearchParseException");
+        } catch (ElasticsearchParseException e) {
+            assertThat(e.getMessage(), is("could not parse [hourly] schedule. invalid value for [minute]"));
+        }
     }
 
-    @Test
-    public void testParser_SingleMinute_String() throws Exception {
+    public void testParserSingleMinuteString() throws Exception {
         int minute = validMinute();
         XContentBuilder builder = jsonBuilder()
                 .startObject()
@@ -132,8 +142,7 @@ public class HourlyScheduleTests extends ScheduleTestCase {
         assertThat(schedule.minutes()[0], is(minute));
     }
 
-    @Test(expected = ElasticsearchParseException.class)
-    public void testParser_SingleMinute_String_Invalid() throws Exception {
+    public void testParserSingleMinuteStringInvalid() throws Exception {
         XContentBuilder builder = jsonBuilder()
                 .startObject()
                 .field("minute", String.valueOf(invalidMinute()))
@@ -141,11 +150,15 @@ public class HourlyScheduleTests extends ScheduleTestCase {
         BytesReference bytes = builder.bytes();
         XContentParser parser = JsonXContent.jsonXContent.createParser(bytes);
         parser.nextToken(); // advancing to the start object
-        new HourlySchedule.Parser().parse(parser);
+        try {
+            new HourlySchedule.Parser().parse(parser);
+            fail("Expected ElasticsearchParseException");
+        } catch (ElasticsearchParseException e) {
+            assertThat(e.getMessage(), is("could not parse [hourly] schedule. invalid value for [minute]"));
+        }
     }
 
-    @Test
-    public void testParser_MultipleMinutes_Numbers() throws Exception {
+    public void testParserMultipleMinutesNumbers() throws Exception {
         int[] minutes = validMinutes();
         XContentBuilder builder = jsonBuilder()
                 .startObject()
@@ -158,13 +171,11 @@ public class HourlyScheduleTests extends ScheduleTestCase {
         assertThat(schedule, notNullValue());
         assertThat(schedule.minutes().length, is(minutes.length));
         for (int i = 0; i < minutes.length; i++) {
-            final int minute = minutes[i];
             assertThat(contains(schedule.minutes(), minutes[i]), is(true));
         }
     }
 
-    @Test(expected = ElasticsearchParseException.class)
-    public void testParser_MultipleMinutes_Numbers_Invalid() throws Exception {
+    public void testParserMultipleMinutesNumbersInvalid() throws Exception {
         int[] minutes = invalidMinutes();
         XContentBuilder builder = jsonBuilder()
                 .startObject()
@@ -173,11 +184,15 @@ public class HourlyScheduleTests extends ScheduleTestCase {
         BytesReference bytes = builder.bytes();
         XContentParser parser = JsonXContent.jsonXContent.createParser(bytes);
         parser.nextToken(); // advancing to the start object
-        new HourlySchedule.Parser().parse(parser);
+        try {
+            new HourlySchedule.Parser().parse(parser);
+            fail("Expected ElasticsearchParseException");
+        } catch (ElasticsearchParseException e) {
+            assertThat(e.getMessage(), is("could not parse [hourly] schedule. invalid value for [minute]"));
+        }
     }
 
-    @Test
-    public void testParser_MultipleMinutes_Strings() throws Exception {
+    public void testParserMultipleMinutesStrings() throws Exception {
         int[] minutes = validMinutes();
         XContentBuilder builder = jsonBuilder()
                 .startObject()
@@ -194,8 +209,7 @@ public class HourlyScheduleTests extends ScheduleTestCase {
         }
     }
 
-    @Test(expected = ElasticsearchParseException.class)
-    public void testParser_MultipleMinutes_Strings_Invalid() throws Exception {
+    public void testParserMultipleMinutesStringsInvalid() throws Exception {
         int[] minutes = invalidMinutes();
         XContentBuilder builder = jsonBuilder()
                 .startObject()
@@ -204,7 +218,11 @@ public class HourlyScheduleTests extends ScheduleTestCase {
         BytesReference bytes = builder.bytes();
         XContentParser parser = JsonXContent.jsonXContent.createParser(bytes);
         parser.nextToken(); // advancing to the start object
-        new HourlySchedule.Parser().parse(parser);
+        try {
+            new HourlySchedule.Parser().parse(parser);
+            fail("Expected ElasticsearchParseException");
+        } catch (ElasticsearchParseException e) {
+            assertThat(e.getMessage(), is("could not parse [hourly] schedule. invalid value for [minute]"));
+        }
     }
-
 }

@@ -22,7 +22,6 @@ import org.elasticsearch.marvel.agent.exporter.MarvelTemplateUtils;
 import org.elasticsearch.marvel.support.VersionUtils;
 import org.elasticsearch.test.ESTestCase;
 import org.hamcrest.Matchers;
-import org.junit.Test;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -36,15 +35,12 @@ import static org.hamcrest.CoreMatchers.equalTo;
 
 
 public class HttpExporterUtilsTests extends ESTestCase {
-
-    @Test
     public void testLoadTemplate() {
         byte[] template = MarvelTemplateUtils.loadDefaultTemplate();
         assertNotNull(template);
         assertThat(template.length, Matchers.greaterThan(0));
     }
 
-    @Test
     public void testParseTemplateVersionFromByteArrayTemplate() throws IOException {
         byte[] template = MarvelTemplateUtils.loadDefaultTemplate();
         assertNotNull(template);
@@ -53,7 +49,6 @@ public class HttpExporterUtilsTests extends ESTestCase {
         assertNotNull(version);
     }
 
-    @Test
     public void testParseTemplateVersionFromStringTemplate() throws IOException {
         List<String> templates = new ArrayList<>();
         templates.add("{\"marvel_version\": \"1.4.0.Beta1\"}");
@@ -72,7 +67,6 @@ public class HttpExporterUtilsTests extends ESTestCase {
         assertNull(version);
     }
 
-    @Test
     public void testParseVersion() throws IOException {
         assertNotNull(VersionUtils.parseVersion(MARVEL_VERSION_FIELD, "{\"marvel_version\": \"2.0.0-beta1\"}"));
         assertNotNull(VersionUtils.parseVersion(MARVEL_VERSION_FIELD, "{\"marvel_version\": \"2.0.0\"}"));
@@ -82,8 +76,6 @@ public class HttpExporterUtilsTests extends ESTestCase {
         assertNull(VersionUtils.parseVersion(MARVEL_VERSION_FIELD + "unkown", "{\"marvel_version\": \"1.5.2\"}"));
     }
 
-
-    @Test
     public void testHostParsing() throws MalformedURLException, URISyntaxException {
         URL url = HttpExporterUtils.parseHostWithPath("localhost:9200", "");
         verifyUrl(url, "http", "localhost", 9200, "/");

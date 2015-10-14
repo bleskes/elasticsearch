@@ -25,7 +25,6 @@ import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.elasticsearch.common.transport.TransportAddress;
 import org.elasticsearch.test.ShieldIntegTestCase;
 import org.elasticsearch.transport.Transport;
-import org.junit.Test;
 
 import java.net.InetSocketAddress;
 import java.nio.file.Files;
@@ -34,9 +33,9 @@ import java.nio.file.Path;
 import static org.elasticsearch.common.settings.Settings.settingsBuilder;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.Matchers.containsString;
 
 public class SslHostnameVerificationTests extends ShieldIntegTestCase {
-
     @Override
     protected boolean sslTransportEnabled() {
         return true;
@@ -77,7 +76,6 @@ public class SslHostnameVerificationTests extends ShieldIntegTestCase {
                 .build();
     }
 
-    @Test(expected = NoNodeAvailableException.class)
     public void testThatHostnameMismatchDeniesTransportClientConnection() throws Exception {
         Transport transport = internalCluster().getDataNodeInstance(Transport.class);
         TransportAddress transportAddress = transport.boundAddress().publishAddress();
@@ -92,10 +90,11 @@ public class SslHostnameVerificationTests extends ShieldIntegTestCase {
             client.addTransportAddress(new InetSocketTransportAddress(inetSocketAddress.getAddress(), inetSocketAddress.getPort()));
             client.admin().cluster().prepareHealth().get();
             fail("Expected a NoNodeAvailableException due to hostname verification failures");
+        } catch (NoNodeAvailableException e) {
+            assertThat(e.getMessage(), containsString("None of the configured nodes are available: [{#transport#"));
         }
     }
 
-    @Test
     public void testTransportClientConnectionIgnoringHostnameVerification() throws Exception {
         Client client = internalCluster().transportClient();
         assertGreenClusterState(client);

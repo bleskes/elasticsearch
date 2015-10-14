@@ -19,8 +19,14 @@ package org.elasticsearch.shield.authc.ldap;
 
 import com.carrotsearch.randomizedtesting.ThreadFilter;
 import com.carrotsearch.randomizedtesting.annotations.ThreadLeakFilters;
-import com.unboundid.ldap.sdk.*;
-import org.elasticsearch.*;
+import com.unboundid.ldap.sdk.BindRequest;
+import com.unboundid.ldap.sdk.GetEntryLDAPConnectionPoolHealthCheck;
+import com.unboundid.ldap.sdk.LDAPConnectionPool;
+import com.unboundid.ldap.sdk.LDAPConnectionPoolHealthCheck;
+import com.unboundid.ldap.sdk.SimpleBindRequest;
+import com.unboundid.ldap.sdk.SingleServerSet;
+
+import org.elasticsearch.ElasticsearchSecurityException;
 import org.elasticsearch.Version;
 import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.settings.Settings;
@@ -41,15 +47,22 @@ import org.elasticsearch.shield.ssl.ClientSSLService;
 import org.elasticsearch.shield.support.NoOpLogger;
 import org.elasticsearch.test.junit.annotations.Network;
 import org.junit.Before;
-import org.junit.Test;
 
 import java.nio.file.Path;
 import java.text.MessageFormat;
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 import static org.elasticsearch.common.settings.Settings.settingsBuilder;
 import static org.elasticsearch.test.ShieldTestsUtils.assertAuthenticationException;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.nullValue;
 
 // thread leak filter for UnboundID's background connect threads. The background connect threads do not always respect the
 // timeout and linger. Will be fixed in a new version of the library, see http://sourceforge.net/p/ldap-sdk/discussion/1001257/thread/154e3b71/
@@ -57,7 +70,6 @@ import static org.hamcrest.Matchers.*;
         LdapUserSearchSessionFactoryTests.BackgroundConnectThreadLeakFilter.class
 })
 public class LdapUserSearchSessionFactoryTests extends LdapTestCase {
-
     private ClientSSLService clientSSLService;
     private Settings globalSettings;
 
@@ -79,8 +91,7 @@ public class LdapUserSearchSessionFactoryTests extends LdapTestCase {
         globalSettings = settingsBuilder().put("path.home", createTempDir()).build();
     }
 
-    @Test
-    public void supportsUnauthenticatedSessions() throws Exception {
+    public void testSupportsUnauthenticatedSessions() throws Exception {
         RealmConfig config = new RealmConfig("ldap_realm", settingsBuilder()
                 .put(buildLdapSettings(ldapUrl(), Strings.EMPTY_ARRAY, "", LdapSearchScope.SUB_TREE))
                 .put("user_search.base_dn", "")
@@ -97,7 +108,6 @@ public class LdapUserSearchSessionFactoryTests extends LdapTestCase {
         }
     }
 
-    @Test
     public void testUserSearchSubTree() throws Exception {
         String groupSearchBase = "o=sevenSeas";
         String userSearchBase = "o=sevenSeas";
@@ -132,7 +142,6 @@ public class LdapUserSearchSessionFactoryTests extends LdapTestCase {
         }
     }
 
-    @Test
     public void testUserSearchBaseScopeFailsWithWrongBaseDN() throws Exception {
         String groupSearchBase = "o=sevenSeas";
         String userSearchBase = "o=sevenSeas";
@@ -170,7 +179,6 @@ public class LdapUserSearchSessionFactoryTests extends LdapTestCase {
         }
     }
 
-    @Test
     public void testUserSearchBaseScopePassesWithCorrectBaseDN() throws Exception {
         String groupSearchBase = "o=sevenSeas";
         String userSearchBase = "cn=William Bush,ou=people,o=sevenSeas";
@@ -206,7 +214,6 @@ public class LdapUserSearchSessionFactoryTests extends LdapTestCase {
         }
     }
 
-    @Test
     public void testUserSearchOneLevelScopeFailsWithWrongBaseDN() throws Exception {
         String groupSearchBase = "o=sevenSeas";
         String userSearchBase = "o=sevenSeas";
@@ -244,7 +251,6 @@ public class LdapUserSearchSessionFactoryTests extends LdapTestCase {
         }
     }
 
-    @Test
     public void testUserSearchOneLevelScopePassesWithCorrectBaseDN() throws Exception {
         String groupSearchBase = "o=sevenSeas";
         String userSearchBase = "ou=people,o=sevenSeas";
@@ -280,7 +286,6 @@ public class LdapUserSearchSessionFactoryTests extends LdapTestCase {
         }
     }
 
-    @Test
     public void testUserSearchWithBadAttributeFails() throws Exception {
         String groupSearchBase = "o=sevenSeas";
         String userSearchBase = "o=sevenSeas";
@@ -317,7 +322,6 @@ public class LdapUserSearchSessionFactoryTests extends LdapTestCase {
         }
     }
 
-    @Test
     public void testUserSearchWithoutAttributePasses() throws Exception {
         String groupSearchBase = "o=sevenSeas";
         String userSearchBase = "o=sevenSeas";
@@ -351,7 +355,7 @@ public class LdapUserSearchSessionFactoryTests extends LdapTestCase {
         }
     }
 
-    @Test @Network
+    @Network
     public void testUserSearchWithActiveDirectory() throws Exception {
         String groupSearchBase = "DC=ad,DC=test,DC=elasticsearch,DC=com";
         String userSearchBase = "CN=Users,DC=ad,DC=test,DC=elasticsearch,DC=com";
@@ -393,7 +397,7 @@ public class LdapUserSearchSessionFactoryTests extends LdapTestCase {
         }
     }
 
-    @Test @Network
+    @Network
     public void testUserSearchwithBindUserOpenLDAP() throws Exception {
         String groupSearchBase = "ou=people,dc=oldap,dc=test,dc=elasticsearch,dc=com";
         String userSearchBase = "ou=people,dc=oldap,dc=test,dc=elasticsearch,dc=com";
@@ -425,7 +429,6 @@ public class LdapUserSearchSessionFactoryTests extends LdapTestCase {
         }
     }
 
-    @Test
     public void testConnectionPoolDefaultSettings() throws Exception {
         String groupSearchBase = "o=sevenSeas";
         String userSearchBase = "o=sevenSeas";
@@ -449,7 +452,6 @@ public class LdapUserSearchSessionFactoryTests extends LdapTestCase {
         }
     }
 
-    @Test
     public void testConnectionPoolSettings() throws Exception {
         String groupSearchBase = "o=sevenSeas";
         String userSearchBase = "o=sevenSeas";
@@ -474,7 +476,6 @@ public class LdapUserSearchSessionFactoryTests extends LdapTestCase {
         }
     }
 
-    @Test
     public void testThatEmptyBindDNThrowsExceptionWithHealthCheckEnabled() throws Exception {
         String groupSearchBase = "o=sevenSeas";
         String userSearchBase = "o=sevenSeas";
@@ -491,13 +492,11 @@ public class LdapUserSearchSessionFactoryTests extends LdapTestCase {
         }
     }
 
-    @Test
     public void testEmptyBindDNReturnsNullBindRequest() {
         BindRequest request = LdapUserSearchSessionFactory.bindRequest(settingsBuilder().put("bind_password", "password").build());
         assertThat(request, is(nullValue()));
     }
 
-    @Test
     public void testThatBindRequestReturnsSimpleBindRequest() {
         BindRequest request = LdapUserSearchSessionFactory.bindRequest(settingsBuilder()
                 .put("bind_password", "password")
@@ -508,7 +507,6 @@ public class LdapUserSearchSessionFactoryTests extends LdapTestCase {
         assertThat(simpleBindRequest.getBindDN(), is("cn=ironman"));
     }
 
-    @Test
     @Network
     public void testThatLDAPServerConnectErrorDoesNotPreventNodeFromStarting() {
         String groupSearchBase = "DC=ad,DC=test,DC=elasticsearch,DC=com";
@@ -535,7 +533,6 @@ public class LdapUserSearchSessionFactoryTests extends LdapTestCase {
     }
 
     public static class BackgroundConnectThreadLeakFilter implements ThreadFilter {
-
         @Override
         public boolean reject(Thread thread) {
             if (thread.getName().startsWith("Background connect thread for elastic.co")) {

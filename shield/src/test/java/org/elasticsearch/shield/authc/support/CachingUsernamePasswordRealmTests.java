@@ -24,14 +24,16 @@ import org.elasticsearch.shield.authc.Realm;
 import org.elasticsearch.shield.authc.RealmConfig;
 import org.elasticsearch.test.ESTestCase;
 import org.junit.Before;
-import org.junit.Test;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.arrayContaining;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.nullValue;
+import static org.hamcrest.Matchers.sameInstance;
 
 public class CachingUsernamePasswordRealmTests extends ESTestCase {
-
     private Settings globalSettings;
 
     @Before
@@ -39,9 +41,7 @@ public class CachingUsernamePasswordRealmTests extends ESTestCase {
         globalSettings = Settings.builder().put("path.home", createTempDir()).build();
     }
 
-    @Test
     public void testSettings() throws Exception {
-
         String hashAlgo = randomFrom("bcrypt", "bcrypt4", "bcrypt5", "bcrypt6", "bcrypt7", "bcrypt8", "bcrypt9", "sha1", "ssha256", "md5", "clear_text", "noop");
         int maxUsers = randomIntBetween(10, 100);
         TimeValue ttl = TimeValue.timeValueMinutes(randomIntBetween(10, 20));
@@ -72,7 +72,6 @@ public class CachingUsernamePasswordRealmTests extends ESTestCase {
         assertThat(realm.hasher, sameInstance(Hasher.resolve(hashAlgo)));
     }
 
-    @Test
     public void testAuthCache() {
         AlwaysAuthenticateCachingRealm realm = new AlwaysAuthenticateCachingRealm(globalSettings);
         SecuredString pass = SecuredStringTests.build("pass");
@@ -89,7 +88,6 @@ public class CachingUsernamePasswordRealmTests extends ESTestCase {
         assertThat(realm.lookupInvocationCounter.intValue(), is(0));
     }
 
-    @Test
     public void testLookupCache() {
         AlwaysAuthenticateCachingRealm realm = new AlwaysAuthenticateCachingRealm(globalSettings);
         realm.lookupUser("a");
@@ -105,7 +103,6 @@ public class CachingUsernamePasswordRealmTests extends ESTestCase {
         assertThat(realm.lookupInvocationCounter.intValue(), is(3));
     }
 
-    @Test
     public void testLookupAndAuthCache() {
         AlwaysAuthenticateCachingRealm realm = new AlwaysAuthenticateCachingRealm(globalSettings);
         // lookup first
@@ -133,8 +130,7 @@ public class CachingUsernamePasswordRealmTests extends ESTestCase {
         assertThat(user, sameInstance(lookedUp));
     }
 
-    @Test
-    public void testCache_changePassword(){
+    public void testCacheChangePassword(){
         AlwaysAuthenticateCachingRealm realm = new AlwaysAuthenticateCachingRealm(globalSettings);
 
         String user = "testUser";
@@ -152,7 +148,6 @@ public class CachingUsernamePasswordRealmTests extends ESTestCase {
         assertThat(realm.authInvocationCounter.intValue(), is(2));
     }
 
-    @Test
     public void testAuthenticateContract() throws Exception {
         Realm<UsernamePasswordToken> realm = new FailingAuthenticationRealm(Settings.EMPTY, globalSettings);
         User user = realm.authenticate(new UsernamePasswordToken("user", SecuredStringTests.build("pass")));
@@ -163,7 +158,6 @@ public class CachingUsernamePasswordRealmTests extends ESTestCase {
         assertThat(user , nullValue());
     }
 
-    @Test
     public void testLookupContract() throws Exception {
         Realm<UsernamePasswordToken> realm = new FailingAuthenticationRealm(Settings.EMPTY, globalSettings);
         User user = realm.lookupUser("user");
@@ -174,7 +168,6 @@ public class CachingUsernamePasswordRealmTests extends ESTestCase {
         assertThat(user , nullValue());
     }
 
-    @Test
     public void testThatLookupIsNotCalledIfNotSupported() throws Exception {
         LookupNotSupportedRealm realm = new LookupNotSupportedRealm(globalSettings);
         assertThat(realm.userLookupSupported(), is(false));

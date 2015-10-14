@@ -34,17 +34,17 @@ import org.elasticsearch.transport.netty.NettyMockUtil;
 import org.jboss.netty.channel.ChannelPipelineFactory;
 import org.jboss.netty.handler.ssl.SslHandler;
 import org.junit.Before;
-import org.junit.Test;
 
 import java.nio.file.Path;
 import java.util.Locale;
 
 import static org.elasticsearch.common.settings.Settings.settingsBuilder;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.Mockito.mock;
 
 public class ShieldNettyTransportTests extends ESTestCase {
-
     private ServerSSLService serverSSLService;
     private ClientSSLService clientSSLService;
     private ShieldSettingsFilter settingsFilter;
@@ -63,7 +63,6 @@ public class ShieldNettyTransportTests extends ESTestCase {
         clientSSLService.setEnvironment(env);
     }
 
-    @Test
     public void testThatSSLCanBeDisabledByProfile() throws Exception {
         Settings settings = settingsBuilder().put("shield.transport.ssl", true).build();
         ShieldNettyTransport transport = new ShieldNettyTransport(settings, mock(ThreadPool.class), mock(NetworkService.class), mock(BigArrays.class), Version.CURRENT, null, serverSSLService, clientSSLService, settingsFilter, mock(NamedWriteableRegistry.class));
@@ -72,7 +71,6 @@ public class ShieldNettyTransportTests extends ESTestCase {
         assertThat(factory.getPipeline().get(SslHandler.class), nullValue());
     }
 
-    @Test
     public void testThatSSLCanBeEnabledByProfile() throws Exception {
         Settings settings = settingsBuilder().put("shield.transport.ssl", false).build();
         ShieldNettyTransport transport = new ShieldNettyTransport(settings, mock(ThreadPool.class), mock(NetworkService.class), mock(BigArrays.class), Version.CURRENT, null, serverSSLService, clientSSLService, settingsFilter, mock(NamedWriteableRegistry.class));
@@ -81,7 +79,6 @@ public class ShieldNettyTransportTests extends ESTestCase {
         assertThat(factory.getPipeline().get(SslHandler.class), notNullValue());
     }
 
-    @Test
     public void testThatProfileTakesDefaultSSLSetting() throws Exception {
         Settings settings = settingsBuilder().put("shield.transport.ssl", true).build();
         ShieldNettyTransport transport = new ShieldNettyTransport(settings, mock(ThreadPool.class), mock(NetworkService.class), mock(BigArrays.class), Version.CURRENT, null, serverSSLService, clientSSLService, settingsFilter, mock(NamedWriteableRegistry.class));
@@ -90,7 +87,6 @@ public class ShieldNettyTransportTests extends ESTestCase {
         assertThat(factory.getPipeline().get(SslHandler.class).getEngine(), notNullValue());
     }
 
-    @Test
     public void testDefaultClientAuth() throws Exception {
         Settings settings = settingsBuilder().put("shield.transport.ssl", true).build();
         ShieldNettyTransport transport = new ShieldNettyTransport(settings, mock(ThreadPool.class), mock(NetworkService.class), mock(BigArrays.class), Version.CURRENT, null, serverSSLService, clientSSLService, settingsFilter, mock(NamedWriteableRegistry.class));
@@ -100,7 +96,6 @@ public class ShieldNettyTransportTests extends ESTestCase {
         assertThat(factory.getPipeline().get(SslHandler.class).getEngine().getWantClientAuth(), is(false));
     }
 
-    @Test
     public void testRequiredClientAuth() throws Exception {
         String value = randomFrom(SSLClientAuth.REQUIRED.name(), SSLClientAuth.REQUIRED.name().toLowerCase(Locale.ROOT), "true");
         Settings settings = settingsBuilder()
@@ -113,7 +108,6 @@ public class ShieldNettyTransportTests extends ESTestCase {
         assertThat(factory.getPipeline().get(SslHandler.class).getEngine().getWantClientAuth(), is(false));
     }
 
-    @Test
     public void testNoClientAuth() throws Exception {
         String value = randomFrom(SSLClientAuth.NO.name(), "false", "FALSE", SSLClientAuth.NO.name().toLowerCase(Locale.ROOT));
         Settings settings = settingsBuilder()
@@ -126,7 +120,6 @@ public class ShieldNettyTransportTests extends ESTestCase {
         assertThat(factory.getPipeline().get(SslHandler.class).getEngine().getWantClientAuth(), is(false));
     }
 
-    @Test
     public void testOptionalClientAuth() throws Exception {
         String value = randomFrom(SSLClientAuth.OPTIONAL.name(), SSLClientAuth.OPTIONAL.name().toLowerCase(Locale.ROOT));
         Settings settings = settingsBuilder()
@@ -139,7 +132,6 @@ public class ShieldNettyTransportTests extends ESTestCase {
         assertThat(factory.getPipeline().get(SslHandler.class).getEngine().getWantClientAuth(), is(true));
     }
 
-    @Test
     public void testProfileRequiredClientAuth() throws Exception {
         String value = randomFrom(SSLClientAuth.REQUIRED.name(), SSLClientAuth.REQUIRED.name().toLowerCase(Locale.ROOT), "true", "TRUE");
         Settings settings = settingsBuilder().put("shield.transport.ssl", true).build();
@@ -150,7 +142,6 @@ public class ShieldNettyTransportTests extends ESTestCase {
         assertThat(factory.getPipeline().get(SslHandler.class).getEngine().getWantClientAuth(), is(false));
     }
 
-    @Test
     public void testProfileNoClientAuth() throws Exception {
         String value = randomFrom(SSLClientAuth.NO.name(), "false", "FALSE", SSLClientAuth.NO.name().toLowerCase(Locale.ROOT));
         Settings settings = settingsBuilder().put("shield.transport.ssl", true).build();
@@ -161,7 +152,6 @@ public class ShieldNettyTransportTests extends ESTestCase {
         assertThat(factory.getPipeline().get(SslHandler.class).getEngine().getWantClientAuth(), is(false));
     }
 
-    @Test
     public void testProfileOptionalClientAuth() throws Exception {
         String value = randomFrom(SSLClientAuth.OPTIONAL.name(), SSLClientAuth.OPTIONAL.name().toLowerCase(Locale.ROOT));
         Settings settings = settingsBuilder().put("shield.transport.ssl", true).build();

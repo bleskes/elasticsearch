@@ -23,7 +23,6 @@ import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.marvel.test.MarvelIntegTestCase;
 import org.elasticsearch.node.Node;
 import org.elasticsearch.test.ESIntegTestCase;
-import org.junit.Test;
 
 import static org.elasticsearch.test.hamcrest.ElasticsearchAssertions.assertAcked;
 import static org.hamcrest.Matchers.equalTo;
@@ -31,7 +30,6 @@ import static org.hamcrest.Matchers.instanceOf;
 
 @ESIntegTestCase.ClusterScope(scope = ESIntegTestCase.Scope.TEST, numDataNodes = 1, numClientNodes = 0)
 public class MarvelSettingsTests extends MarvelIntegTestCase {
-
     private final TimeValue interval = newRandomTimeValue();
     private final TimeValue indexStatsTimeout = newRandomTimeValue();
     private final TimeValue indicesStatsTimeout = newRandomTimeValue();
@@ -41,7 +39,6 @@ public class MarvelSettingsTests extends MarvelIntegTestCase {
     private final TimeValue recoveryTimeout = newRandomTimeValue();
     private final Boolean recoveryActiveOnly = randomBoolean();
     private final String[] collectors = randomStringArray();
-    private final TimeValue licenseGracePeriod = randomExpirationDelay();
 
     @Override
     protected Settings nodeSettings(int nodeOrdinal) {
@@ -66,7 +63,6 @@ public class MarvelSettingsTests extends MarvelIntegTestCase {
                 .build();
     }
 
-    @Test
     public void testMarvelSettings() throws Exception {
         logger.info("--> testing marvel settings service initialization");
         for (final MarvelSettings marvelSettings : internalCluster().getInstances(MarvelSettings.class)) {
@@ -184,9 +180,5 @@ public class MarvelSettingsTests extends MarvelIntegTestCase {
             items[i] = randomAsciiOfLength(5);
         }
         return items;
-    }
-
-    private TimeValue randomExpirationDelay() {
-        return randomBoolean() ? newRandomTimeValue() : TimeValue.timeValueHours(randomIntBetween(-10, 10) * 24);
     }
 }

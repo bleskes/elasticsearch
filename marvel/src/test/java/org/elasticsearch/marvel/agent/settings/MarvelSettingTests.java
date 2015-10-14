@@ -20,14 +20,11 @@ package org.elasticsearch.marvel.agent.settings;
 import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.test.ESTestCase;
-import org.junit.Test;
 
 import static org.elasticsearch.common.settings.Settings.settingsBuilder;
 import static org.hamcrest.Matchers.equalTo;
 
 public class MarvelSettingTests extends ESTestCase {
-
-    @Test
     public void testBooleanMarvelSetting() {
         String name = randomAsciiOfLength(10);
         String description = randomAsciiOfLength(20);
@@ -48,7 +45,6 @@ public class MarvelSettingTests extends ESTestCase {
         assertTrue(setting.getValue());
     }
 
-    @Test
     public void testTimeValueMarvelSetting() {
         String name = randomAsciiOfLength(10);
         String description = randomAsciiOfLength(20);
@@ -78,7 +74,6 @@ public class MarvelSettingTests extends ESTestCase {
         assertThat(setting.getValue().millis(), equalTo(updated.millis()));
     }
 
-    @Test
     public void testStringMarvelSetting() {
         String name = randomAsciiOfLength(10);
         String description = randomAsciiOfLength(20);
@@ -108,7 +103,6 @@ public class MarvelSettingTests extends ESTestCase {
         assertThat(setting.getValue(), equalTo(updated));
     }
 
-    @Test
     public void testStringArrayMarvelSetting() {
         String name = randomAsciiOfLength(10);
         String description = randomAsciiOfLength(20);

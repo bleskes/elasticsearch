@@ -29,7 +29,6 @@ import org.elasticsearch.watcher.trigger.schedule.support.WeekTimes;
 import org.joda.time.DateTime;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.BitSet;
@@ -38,12 +37,14 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import static org.elasticsearch.watcher.trigger.schedule.Schedules.*;
+import static org.elasticsearch.watcher.trigger.schedule.Schedules.daily;
+import static org.elasticsearch.watcher.trigger.schedule.Schedules.hourly;
+import static org.elasticsearch.watcher.trigger.schedule.Schedules.interval;
+import static org.elasticsearch.watcher.trigger.schedule.Schedules.weekly;
 import static org.hamcrest.Matchers.is;
 import static org.joda.time.DateTimeZone.UTC;
 
 public abstract class BaseTriggerEngineTestCase extends ESTestCase {
-
     private TriggerEngine engine;
 
     @Before
@@ -58,7 +59,6 @@ public abstract class BaseTriggerEngineTestCase extends ESTestCase {
         engine.stop();
     }
 
-    @Test
     public void testStart() throws Exception {
         int count = randomIntBetween(2, 5);
         final CountDownLatch latch = new CountDownLatch(count);
@@ -91,8 +91,7 @@ public abstract class BaseTriggerEngineTestCase extends ESTestCase {
         assertThat(bits.cardinality(), is(count));
     }
 
-    @Test
-    public void testAdd_Hourly() throws Exception {
+    public void testAddHourly() throws Exception {
         final String name = "job_name";
         final CountDownLatch latch = new CountDownLatch(1);
         engine.start(Collections.<TriggerEngine.Job>emptySet());
@@ -125,8 +124,7 @@ public abstract class BaseTriggerEngineTestCase extends ESTestCase {
         }
     }
 
-    @Test
-    public void testAdd_Daily() throws Exception {
+    public void testAddDaily() throws Exception {
         final String name = "job_name";
         final CountDownLatch latch = new CountDownLatch(1);
         engine.start(Collections.<TriggerEngine.Job>emptySet());
@@ -161,8 +159,7 @@ public abstract class BaseTriggerEngineTestCase extends ESTestCase {
         }
     }
 
-    @Test
-    public void testAdd_Weekly() throws Exception {
+    public void testAddWeekly() throws Exception {
         final String name = "job_name";
         final CountDownLatch latch = new CountDownLatch(1);
         engine.start(Collections.<TriggerEngine.Job>emptySet());
@@ -199,7 +196,6 @@ public abstract class BaseTriggerEngineTestCase extends ESTestCase {
         }
     }
 
-    @Test
     public void testAddSameJobSeveralTimes() {
         engine.start(Collections.<TriggerEngine.Job>emptySet());
         engine.register(new TriggerEngine.Listener() {

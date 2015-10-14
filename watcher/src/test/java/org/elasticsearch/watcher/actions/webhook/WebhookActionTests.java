@@ -56,7 +56,6 @@ import org.hamcrest.Matchers;
 import org.joda.time.DateTime;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Test;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -69,6 +68,7 @@ import static org.elasticsearch.common.unit.TimeValue.timeValueSeconds;
 import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.lessThanOrEqualTo;
@@ -85,7 +85,6 @@ import static org.mockito.Mockito.when;
  */
 @AwaitsFix(bugUrl = "https://github.com/elastic/x-plugins/issues/724")
 public class WebhookActionTests extends ESTestCase {
-
     static final String TEST_HOST = "test.com";
     static final int TEST_PORT = 8089;
 
@@ -117,7 +116,6 @@ public class WebhookActionTests extends ESTestCase {
         tp.shutdownNow();
     }
 
-    @Test
     public void testExecute() throws Exception {
         ExecuteScenario scenario = randomFrom(ExecuteScenario.Success, ExecuteScenario.ErrorCode);
 
@@ -152,7 +150,6 @@ public class WebhookActionTests extends ESTestCase {
         return builder.build();
     }
 
-    @Test
     public void testParser() throws Exception {
         TextTemplate body = randomBoolean() ? TextTemplate.inline("_subject").build() : null;
         TextTemplate path = TextTemplate.inline("_url").build();
@@ -173,8 +170,7 @@ public class WebhookActionTests extends ESTestCase {
         assertThat(executable.action().getRequest(), equalTo(request));
     }
 
-    @Test
-    public void testParser_SelfGenerated() throws Exception {
+    public void testParserSelfGenerated() throws Exception {
         TextTemplate body = randomBoolean() ? TextTemplate.inline("_body").build() : null;
         TextTemplate path = TextTemplate.inline("_url").build();
         String host = "test.host";
@@ -200,8 +196,7 @@ public class WebhookActionTests extends ESTestCase {
         assertThat(parsedExecutable.action(), is(action));
     }
 
-    @Test
-    public void testParser_Builder() throws Exception {
+    public void testParserBuilder() throws Exception {
         TextTemplate body = randomBoolean() ? TextTemplate.inline("_body").build() : null;
         TextTemplate path = TextTemplate.inline("_url").build();
         String host = "test.host";
@@ -225,8 +220,7 @@ public class WebhookActionTests extends ESTestCase {
         assertThat(parsedAction.action(), is(action));
     }
 
-    @Test(expected = ElasticsearchParseException.class)
-    public void testParser_Failure() throws Exception {
+    public void testParserFailure() throws Exception {
         XContentBuilder builder = jsonBuilder().startObject();
         if (randomBoolean()) {
             builder.field(HttpRequest.Field.HOST.getPreferredName(), TEST_HOST);
@@ -240,17 +234,19 @@ public class WebhookActionTests extends ESTestCase {
 
         WebhookActionFactory actionParser = webhookFactory(ExecuteScenario.Success.client());
         //This should fail since we are not supplying a url
-        actionParser.parseExecutable("_watch", randomAsciiOfLength(5), parser);
-        fail("expected a WebhookActionException since we only provided either a host or a port but not both");
+        try {
+            actionParser.parseExecutable("_watch", randomAsciiOfLength(5), parser);
+            fail("expected a WebhookActionException since we only provided either a host or a port but not both");
+        } catch (ElasticsearchParseException e) {
+            assertThat(e.getMessage(), containsString("could not parse http request template. missing required ["));
+        }
     }
 
     private WebhookActionFactory webhookFactory(HttpClient client) {
         return new WebhookActionFactory(Settings.EMPTY, client, new HttpRequestTemplate.Parser(authRegistry), templateEngine);
     }
 
-    @Test
-    public void testTemplatedHttpRequest() throws Exception
-    {
+    public void testTemplatedHttpRequest() throws Exception {
         HttpClient httpClient = ExecuteScenario.Success.client();
 
         String body = "{{ctx.watch_id}}";
@@ -283,9 +279,7 @@ public class WebhookActionTests extends ESTestCase {
 
     }
 
-    @Test
     public void testValidUrls() throws Exception {
-
         HttpClient httpClient = ExecuteScenario.Success.client();
         HttpMethod method = HttpMethod.POST;
         TextTemplate path = TextTemplate.defaultType("/test_{{ctx.watch_id}}").build();
@@ -320,7 +314,6 @@ public class WebhookActionTests extends ESTestCase {
                 },
                 logger);
     }
-
 
     private enum ExecuteScenario {
         ErrorCode() {
@@ -397,5 +390,4 @@ public class WebhookActionTests extends ESTestCase {
 
         public abstract void assertResult(HttpClient client, Action.Result result) throws Exception ;
     }
-
 }
