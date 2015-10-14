@@ -2,7 +2,7 @@ const angular = require('angular');
 const _ = require('lodash');
 
 const mod = require('ui/modules').get('marvel/executor', []);
-mod.service('$executor', ($timeout, $rootScope, timefilter) => {
+mod.service('$executor', (Promise, $timeout, timefilter) => {
 
   const queue = [];
   let executionTimer;
@@ -21,7 +21,7 @@ mod.service('$executor', ($timeout, $rootScope, timefilter) => {
    * @returns {void}
    */
   function cancel() {
-    $timeout.cancel(executionTimer);
+    if (executionTimer) $timeout.cancel(executionTimer);
   }
 
   /**
@@ -52,7 +52,7 @@ mod.service('$executor', ($timeout, $rootScope, timefilter) => {
         .then(service.handleResponse || _.noop)
         .catch(service.handleError || _.noop);
     }))
-    .then(reset);
+    .finally(reset);
   }
 
   /**
@@ -76,7 +76,12 @@ mod.service('$executor', ($timeout, $rootScope, timefilter) => {
    */
   return {
     register,
-    start,
+    start(now = false) {
+      if (now) {
+        return run();
+      }
+      start();
+    },
     destroy,
     reset,
     cancel

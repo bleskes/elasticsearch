@@ -64,6 +64,13 @@ define(function (require) {
       }
     });
 
+    $executor.register({
+      execute: function () {
+        console.log('rejecting');
+        return Promise.reject();
+      }
+    });
+
     // Start the executor
     $executor.start();
 
