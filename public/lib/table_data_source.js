@@ -96,7 +96,7 @@ define(function (require) {
           metricAgg = {
             metric: {},
             metric_deriv: {
-              derivative: { buckets_path: 'metric' }
+              derivative: { buckets_path: 'metric', unit: 'second' }
             }
           };
           metricAgg.metric[metric.metricAgg] = {
@@ -118,9 +118,14 @@ define(function (require) {
     };
 
     function mapChartData(metric) {
+      var self = this;
       return function (row) {
         var data = {x: row.key};
-        data.y = (metric.derivative ? row.metric_deriv && row.metric_deriv.value || 0 : row.metric.value);
+        if (metric.derivative && row.metric_deriv) {
+          data.y = row.metric_deriv.normalized_value || row.metric_deriv.value || 0;
+        } else {
+          data.y = row.metric.value;
+        }
         return data;
       };
     }
@@ -135,7 +140,7 @@ define(function (require) {
           var row = { key: item.key, name: item.key, metrics: {} };
           _.each(self.metrics, function (id) {
             var metric = metrics[id];
-            var data = _.map(item[id].buckets, mapChartData(metric));
+            var data = _.map(item[id].buckets, mapChartData.call(self, metric));
             var min = _.min(_.pluck(data, 'y'));
             var max = _.max(_.pluck(data, 'y'));
             var last = _.last(_.pluck(data, 'y'));

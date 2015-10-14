@@ -101,7 +101,7 @@ define(function (require) {
       link: function ($scope, $el) {
         var tableRowTemplate = React.createClass({
           getInitialState: function () {
-            return $scope.nodes[this.props.name];
+            return $scope.nodes[this.props.name] || null;
           },
           componentWillReceiveProps: function (newProps) {
             this.setState($scope.nodes[newProps.name]);
@@ -143,7 +143,10 @@ define(function (require) {
         var TableInstance = React.render($table, $el[0]);
 
         $scope.$watch('data', function (data, oldVal) {
-          TableInstance.setData(data.map(function (row) {
+          var tableData = data.filter(function (row) {
+            return $scope.nodes[row.name];
+          });
+          TableInstance.setData(tableData.map(function (row) {
             row.metrics.shard_count = $scope.nodes[row.name] && $scope.nodes[row.name].shard_count;
             return row;
           }));
