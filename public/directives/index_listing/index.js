@@ -85,17 +85,30 @@ define(function (require) {
       },
       link: function ($scope, $el) {
         var tableRowTemplate = React.createClass({
-          getInitialState: function () { return {exists: !!$scope.indices[this.props.name]}; },
+          getInitialState: function () {
+            var index = $scope.indices[this.props.name];
+            return {
+              exists: !!index,
+              status: !!index ? index.status : 'disabled'
+            };
+          },
           componentWillReceiveProps: function (nextProps) {
-            this.setState({exists: !!$scope.indices[nextProps.name]});
+            if ($scope.indices) {
+              var index = $scope.indices[this.props.name];
+              this.setState({
+                exists: !!index,
+                status: !!index ? index.status : 'disabled'
+              });
+            }
           },
           render: function () {
             var boundTemplateFn = makeTdWithPropKey.bind(this);
             var dataProps = _.pluck(initialTableOptions.columns, 'key');
             var $tdsArr = initialTableOptions.columns.map(boundTemplateFn);
+            var classes = [ this.state.status ];
             return make.tr({
               key: this.props.name,
-              className: this.state.exists ? '' : 'disabled'
+              className: classes
             }, $tdsArr);
           }
         });

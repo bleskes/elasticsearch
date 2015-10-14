@@ -32,7 +32,6 @@ define(function (require) {
   return function ($scope) {
     if ($scope.currentState && $scope.panel) {
       var data = _.cloneDeep($scope.currentState);
-      $scope.shardStats = calculateShardStats(data);
       $scope.current = data.timestamp;
       // Create the transformer. The transformer returned is based on the
       // $scope.panel.view
