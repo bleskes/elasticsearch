@@ -34,6 +34,7 @@ public class ShieldLicenseStateTests extends ESTestCase {
         assertThat(licenseState.securityEnabled(), is(true));
         assertThat(licenseState.statsAndHealthEnabled(), is(true));
         assertThat(licenseState.documentAndFieldLevelSecurityEnabled(), is(true));
+        assertThat(licenseState.customRealmsEnabled(), is(true));
     }
 
     public void testBasic() {
@@ -43,6 +44,7 @@ public class ShieldLicenseStateTests extends ESTestCase {
         assertThat(licenseState.securityEnabled(), is(false));
         assertThat(licenseState.statsAndHealthEnabled(), is(true));
         assertThat(licenseState.documentAndFieldLevelSecurityEnabled(), is(false));
+        assertThat(licenseState.customRealmsEnabled(), is(false));
     }
 
     public void testBasicExpired() {
@@ -52,6 +54,7 @@ public class ShieldLicenseStateTests extends ESTestCase {
         assertThat(licenseState.securityEnabled(), is(false));
         assertThat(licenseState.statsAndHealthEnabled(), is(false));
         assertThat(licenseState.documentAndFieldLevelSecurityEnabled(), is(false));
+        assertThat(licenseState.customRealmsEnabled(), is(false));
     }
 
     public void testGold() {
@@ -61,6 +64,7 @@ public class ShieldLicenseStateTests extends ESTestCase {
         assertThat(licenseState.securityEnabled(), is(true));
         assertThat(licenseState.statsAndHealthEnabled(), is(true));
         assertThat(licenseState.documentAndFieldLevelSecurityEnabled(), is(false));
+        assertThat(licenseState.customRealmsEnabled(), is(false));
     }
 
     public void testGoldExpired() {
@@ -70,6 +74,7 @@ public class ShieldLicenseStateTests extends ESTestCase {
         assertThat(licenseState.securityEnabled(), is(true));
         assertThat(licenseState.statsAndHealthEnabled(), is(false));
         assertThat(licenseState.documentAndFieldLevelSecurityEnabled(), is(false));
+        assertThat(licenseState.customRealmsEnabled(), is(false));
     }
 
     public void testPlatinum() {
@@ -79,6 +84,7 @@ public class ShieldLicenseStateTests extends ESTestCase {
         assertThat(licenseState.securityEnabled(), is(true));
         assertThat(licenseState.statsAndHealthEnabled(), is(true));
         assertThat(licenseState.documentAndFieldLevelSecurityEnabled(), is(true));
+        assertThat(licenseState.customRealmsEnabled(), is(true));
     }
 
     public void testPlatinumExpired() {
@@ -88,5 +94,6 @@ public class ShieldLicenseStateTests extends ESTestCase {
         assertThat(licenseState.securityEnabled(), is(true));
         assertThat(licenseState.statsAndHealthEnabled(), is(false));
         assertThat(licenseState.documentAndFieldLevelSecurityEnabled(), is(true));
+        assertThat(licenseState.customRealmsEnabled(), is(true));
     }
 }
