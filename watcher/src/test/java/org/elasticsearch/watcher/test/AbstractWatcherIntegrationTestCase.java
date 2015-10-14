@@ -21,12 +21,10 @@ import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.action.admin.indices.template.get.GetIndexTemplatesResponse;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.action.search.SearchType;
 import org.elasticsearch.action.support.IndicesOptions;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.metadata.IndexNameExpressionResolver;
 import org.elasticsearch.cluster.routing.IndexRoutingTable;
-import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.io.Streams;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.util.Callback;
@@ -47,16 +45,12 @@ import org.elasticsearch.test.ESIntegTestCase;
 import org.elasticsearch.test.ESIntegTestCase.ClusterScope;
 import org.elasticsearch.test.TestCluster;
 import org.elasticsearch.watcher.*;
-import org.elasticsearch.watcher.actions.email.service.Authentication;
-import org.elasticsearch.watcher.actions.email.service.Email;
-import org.elasticsearch.watcher.actions.email.service.EmailService;
-import org.elasticsearch.watcher.actions.email.service.Profile;
+import org.elasticsearch.watcher.actions.email.service.*;
 import org.elasticsearch.watcher.client.WatcherClient;
 import org.elasticsearch.watcher.execution.ExecutionService;
 import org.elasticsearch.watcher.execution.ExecutionState;
-import org.elasticsearch.watcher.execution.TriggeredWatchStore;
 import org.elasticsearch.watcher.history.HistoryStore;
-import org.elasticsearch.watcher.license.LicenseService;
+import org.elasticsearch.watcher.license.WatcherLicensee;
 import org.elasticsearch.watcher.support.WatcherIndexTemplateRegistry;
 import org.elasticsearch.watcher.support.clock.ClockMock;
 import org.elasticsearch.watcher.support.http.HttpClient;
@@ -66,7 +60,6 @@ import org.elasticsearch.watcher.trigger.ScheduleTriggerEngineMock;
 import org.elasticsearch.watcher.trigger.TriggerService;
 import org.elasticsearch.watcher.trigger.schedule.ScheduleModule;
 import org.elasticsearch.watcher.watch.Watch;
-import org.elasticsearch.watcher.watch.WatchStore;
 import org.hamcrest.Matcher;
 import org.jboss.netty.util.internal.SystemPropertyUtil;
 import org.junit.After;
@@ -330,8 +323,8 @@ public abstract class AbstractWatcherIntegrationTestCase extends ESIntegTestCase
         return new NoopEmailService();
     }
 
-    protected LicenseService licenseService() {
-        return getInstanceFromMaster(LicenseService.class);
+    protected WatcherLicensee licenseService() {
+        return getInstanceFromMaster(WatcherLicensee.class);
     }
 
     protected IndexNameExpressionResolver indexNameExpressionResolver() {
@@ -490,8 +483,8 @@ public abstract class AbstractWatcherIntegrationTestCase extends ESIntegTestCase
         assertBusy(new Runnable() {
             @Override
             public void run() {
-                for (LicenseService service : internalCluster().getInstances(LicenseService.class)) {
-                    assertThat(service.enabled(), is(true));
+                for (WatcherLicensee service : internalCluster().getInstances(WatcherLicensee.class)) {
+                    assertThat(service.isWatcherTransportActionAllowed(), is(true));
                 }
             }
         });

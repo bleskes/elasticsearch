@@ -17,42 +17,33 @@
 
 package org.elasticsearch.watcher.license;
 
-import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.common.Strings;
-import org.elasticsearch.common.component.AbstractLifecycleComponent;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.license.core.License;
+import org.elasticsearch.license.plugin.core.AbstractLicenseeComponent;
 import org.elasticsearch.license.plugin.core.LicenseState;
-import org.elasticsearch.license.plugin.core.Licensee;
 import org.elasticsearch.license.plugin.core.LicenseeRegistry;
 import org.elasticsearch.watcher.WatcherPlugin;
 
-/**
- *
- */
-public class LicenseService extends AbstractLifecycleComponent<LicenseService> implements Licensee {
+import static org.elasticsearch.license.core.License.OperationMode.*;
 
-    public static final String FEATURE_NAME = WatcherPlugin.NAME;
+public class WatcherLicensee extends AbstractLicenseeComponent<WatcherLicensee> {
 
-    private final LicenseeRegistry clientService;
-    private volatile LicenseState state;
+    public static final String ID = WatcherPlugin.NAME;
 
     @Inject
-    public LicenseService(Settings settings, LicenseeRegistry clientService) {
-        super(settings);
-        this.clientService = clientService;
-    }
-
-    @Override
-    public String id() {
-        return FEATURE_NAME;
+    public WatcherLicensee(Settings settings, LicenseeRegistry clientService) {
+        super(settings, ID, clientService);
     }
 
     @Override
     public String[] expirationMessages() {
-        // TODO add messages to be logged around license expiry
-        return new String[0];
+        return new String[] {
+                "PUT / GET watch APIs are disabled, DELETE watch API continues to work",
+                "Watches execute and write to the history",
+                "The actions of the watches don't execute"
+        };
     }
 
     @Override
@@ -72,27 +63,23 @@ public class LicenseService extends AbstractLifecycleComponent<LicenseService> i
         return Strings.EMPTY_ARRAY;
     }
 
-    @Override
-    public void onChange(License license, LicenseState state) {
-        synchronized (this) {
-            this.state = state;
-        }
+    public boolean isExecutingActionsAllowed() {
+        return isPutWatchAllowed();
     }
 
-    @Override
-    protected void doStart() throws ElasticsearchException {
-        clientService.register(this);
+    public boolean isGetWatchAllowed() {
+        return isPutWatchAllowed();
     }
 
-    @Override
-    protected void doStop() throws ElasticsearchException {
+    public boolean isPutWatchAllowed() {
+        boolean isLicenseActive = getLicense().status() == License.Status.ACTIVE;
+        return isLicenseActive && isWatcherTransportActionAllowed();
     }
 
-    @Override
-    protected void doClose() throws ElasticsearchException {
-    }
-
-    public boolean enabled() {
-        return state != LicenseState.DISABLED;
+    public boolean isWatcherTransportActionAllowed() {
+        Status localStatus = status;
+        boolean isLicenseStateActive = localStatus.getLicenseState() != LicenseState.DISABLED;
+        License.OperationMode operationMode = localStatus.getMode();
+        return isLicenseStateActive && (operationMode == TRIAL || operationMode == GOLD || operationMode == PLATINUM);
     }
 }

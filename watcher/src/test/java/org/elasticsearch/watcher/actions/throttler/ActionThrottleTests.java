@@ -361,7 +361,6 @@ public class ActionThrottleTests extends AbstractWatcherIntegrationTestCase {
         assertThat(watchRecord.state(), equalTo(ExecutionState.THROTTLED));
     }
 
-
     private String getExecutionStatus(Map<String, Object> watchRecordMap) {
         return ObjectPath.eval("result.actions.0.status", watchRecordMap);
     }

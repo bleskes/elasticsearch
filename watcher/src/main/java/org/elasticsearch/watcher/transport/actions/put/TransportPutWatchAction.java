@@ -28,10 +28,11 @@ import org.elasticsearch.cluster.block.ClusterBlockLevel;
 import org.elasticsearch.cluster.metadata.IndexNameExpressionResolver;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.license.plugin.core.LicenseUtils;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportService;
 import org.elasticsearch.watcher.WatcherService;
-import org.elasticsearch.watcher.license.LicenseService;
+import org.elasticsearch.watcher.license.WatcherLicensee;
 import org.elasticsearch.watcher.transport.actions.WatcherTransportAction;
 import org.elasticsearch.watcher.watch.WatchStore;
 
@@ -44,8 +45,8 @@ public class TransportPutWatchAction extends WatcherTransportAction<PutWatchRequ
     @Inject
     public TransportPutWatchAction(Settings settings, TransportService transportService, ClusterService clusterService,
                                    ThreadPool threadPool, ActionFilters actionFilters, IndexNameExpressionResolver indexNameExpressionResolver,
-                                   WatcherService watcherService, LicenseService licenseService) {
-        super(settings, PutWatchAction.NAME, transportService, clusterService, threadPool, actionFilters, indexNameExpressionResolver, licenseService, PutWatchRequest::new);
+                                   WatcherService watcherService, WatcherLicensee watcherLicensee) {
+        super(settings, PutWatchAction.NAME, transportService, clusterService, threadPool, actionFilters, indexNameExpressionResolver, watcherLicensee, PutWatchRequest::new);
         this.watcherService = watcherService;
     }
 
@@ -61,6 +62,11 @@ public class TransportPutWatchAction extends WatcherTransportAction<PutWatchRequ
 
     @Override
     protected void masterOperation(PutWatchRequest request, ClusterState state, ActionListener<PutWatchResponse> listener) throws ElasticsearchException {
+        if (!watcherLicensee.isPutWatchAllowed()) {
+            listener.onFailure(LicenseUtils.newComplianceException(WatcherLicensee.ID));
+            return;
+        }
+
         try {
             IndexResponse indexResponse = watcherService.putWatch(request.getId(), request.getSource(), request.masterNodeTimeout(), request.isActive());
             listener.onResponse(new PutWatchResponse(indexResponse.getId(), indexResponse.getVersion(), indexResponse.isCreated()));
