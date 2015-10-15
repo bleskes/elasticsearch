@@ -45,7 +45,7 @@ define(function (require) {
       'node_query_latency',
       'node_index_latency',
       'node_jvm_mem_percent',
-      'node_free_space',
+      'node_cpu_utilization',
       'node_load_average',
       'node_segment_count'
     ];

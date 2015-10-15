@@ -314,7 +314,7 @@ module.exports = {
   'node_load_average': {
     active: true,
     field: 'node_stats.os.load_average',
-    label: 'CPU Load Average',
+    label: 'System Load Average',
     description: 'The amount of load used for the last 1 minute.',
     format: '0,0.[000]',
     metricAgg: 'avg',
