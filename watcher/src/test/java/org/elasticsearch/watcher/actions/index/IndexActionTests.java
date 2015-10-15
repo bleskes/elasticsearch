@@ -110,8 +110,7 @@ public class IndexActionTests extends ESIntegTestCase {
                 .setTypes("test-type")
                 .setSource(searchSource()
                         .query(matchAllQuery())
-                        .aggregation(terms("timestamps").field(customTimestampField ? timestampField : "_timestamp"))
-                        .buildAsBytes())
+                        .aggregation(terms("timestamps").field(customTimestampField ? timestampField : "_timestamp")))
                 .get();
 
         assertThat(searchResponse.getHits().totalHits(), equalTo(1L));
@@ -177,8 +176,7 @@ public class IndexActionTests extends ESIntegTestCase {
                 .addSort("foo", SortOrder.ASC)
                 .setSource(searchSource()
                         .query(matchAllQuery())
-                        .aggregation(terms("timestamps").field(customTimestampField ? timestampField : "_timestamp"))
-                        .buildAsBytes())
+                        .aggregation(terms("timestamps").field(customTimestampField ? timestampField : "_timestamp")))
                 .get();
 
         assertThat(searchResponse.getHits().totalHits(), equalTo(2L));
