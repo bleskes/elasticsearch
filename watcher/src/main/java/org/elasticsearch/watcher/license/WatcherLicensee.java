@@ -72,8 +72,7 @@ public class WatcherLicensee extends AbstractLicenseeComponent<WatcherLicensee> 
     }
 
     public boolean isPutWatchAllowed() {
-        boolean isLicenseActive = getLicense().status() == License.Status.ACTIVE;
-        return isLicenseActive && isWatcherTransportActionAllowed();
+        return isWatcherTransportActionAllowed();
     }
 
     public boolean isWatcherTransportActionAllowed() {
