@@ -30,6 +30,7 @@ module.exports = function nodeSummaryDataSourceProvider() {
         const source = resp.hits.hits[0]._source;
         this.data.documents = _.get(source, 'node_stats.indices.docs.count');
         this.data.data_size = _.get(source, 'node_stats.indices.store.size_in_bytes');
+        this.data.free_space = _.get(source, 'node_stats.fs.total.available_in_bytes');
       }
     }
 
