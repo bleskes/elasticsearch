@@ -48,7 +48,7 @@ define(function (require) {
       };
       if (this.metric.derivative) {
         aggs.check.aggs.metric_deriv = {
-          derivative: { buckets_path: 'metric' }
+          derivative: { buckets_path: 'metric', gap_policy: 'insert_zeros' }
         };
       }
       if (this.metric.aggs) {
