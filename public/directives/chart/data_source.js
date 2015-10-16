@@ -33,7 +33,12 @@ define(function (require) {
         check: {
           date_histogram: {
             field: this.index.timeFieldName,
-            interval: this.bucketSize + 's'
+            min_doc_count: 0,
+            interval: this.bucketSize + 's',
+            extended_bounds: {
+              min: bounds.min,
+              max: bounds.max
+            }
           },
           aggs: { metric: { } }
         }
