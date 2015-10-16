@@ -63,8 +63,8 @@
         <p><span bo-text="activity.translog.total"></span>/<span bo-text="activity.translog.total_on_start"><span></p>
       </td>
     </tr>
-    <tr>
-      <td ng-if="!visibleData.length" colspan="8" class="no-results">There are no shard activity records for this cluster.</td>
+    <tr ng-if="!visibleData.length">
+      <td colspan="8" class="no-results">There are no shard activity records for this cluster.</td>
     </tr>
   </tbody>
 </table>
