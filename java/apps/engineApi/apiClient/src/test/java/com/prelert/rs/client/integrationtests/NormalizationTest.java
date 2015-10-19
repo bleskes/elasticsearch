@@ -378,7 +378,7 @@ public class NormalizationTest implements Closeable
 
         /*
          * There should be at least two anomalies with unusual score of 80+
-         * and at two with anomaly score 65+
+         * and at least two with anomaly score 65+
          */
         int highAnomalyScoreCount = 0;
         int highUnusualScoreCount = 0;
@@ -395,7 +395,7 @@ public class NormalizationTest implements Closeable
         }
 
         test(highUnusualScoreCount >= 2);
-        test(highAnomalyScoreCount == 2);
+        test(highAnomalyScoreCount >= 2);
 
         return true;
     }
