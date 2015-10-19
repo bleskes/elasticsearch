@@ -6,7 +6,7 @@ define(function (require) {
 
   module.filter('capitalize', function () {
     return function (input) {
-      return _.capitalize(input);
+      return _.capitalize(input.toLowerCase());
     };
   });
 

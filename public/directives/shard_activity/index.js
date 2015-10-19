@@ -22,13 +22,12 @@ define(function (require) {
         };
 
         $scope.lookup = {
+          STORE: 'Primary',
           GATEWAY: 'Primary',
           REPLICA: 'Replica',
           SNAPSHOT: 'Snapshot',
           RELOCATION: 'Relocation'
         };
-
-        if ($scope.onlyActive != null) $scope.onlyActive = true;
 
         function filterData() {
           if ($scope.source && $scope.source.data) {
