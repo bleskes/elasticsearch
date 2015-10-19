@@ -169,7 +169,7 @@ public class NormalizationTest implements Closeable
         }
         test(pagedBuckets.size() == FAREQUOTE_NUM_BUCKETS);
 
-        for (int i=0; i<FAREQUOTE_NUM_BUCKETS; i++)
+        for (int i=0; i<FAREQUOTE_NUM_BUCKETS; ++i)
         {
             test(Double.compare(pagedBuckets.get(i).getAnomalyScore(),
                                 allBuckets.getDocuments().get(i).getAnomalyScore()) == 0);
@@ -200,7 +200,7 @@ public class NormalizationTest implements Closeable
         }
         test(pagedBuckets.size() == allBuckets.getDocumentCount());
 
-        for (int i=0; i<pagedBuckets.size(); i++)
+        for (int i=0; i<pagedBuckets.size(); ++i)
         {
             test(Double.compare(pagedBuckets.get(i).getAnomalyScore(),
                                 allBuckets.getDocuments().get(i).getAnomalyScore()) == 0);
@@ -217,7 +217,7 @@ public class NormalizationTest implements Closeable
         String [] startDateFormats = new String[] {"2013-01-30T15:10:00Z", "1359558600"};
         String [] endDateFormats = new String[] {"2013-01-31T22:10:00.000+0000", "1359670200"};
 
-        for (int i=0; i<startDateFormats.length; i++)
+        for (int i=0; i<startDateFormats.length; ++i)
         {
             Pagination<Bucket> byDate = m_WebServiceClient.prepareGetBuckets(jobId)
                     .take(1000)
@@ -238,7 +238,7 @@ public class NormalizationTest implements Closeable
             });
 
             test(startIndex >= 0);
-            for (int j=0; j<byDate.getDocumentCount(); j++)
+            for (int j=0; j<byDate.getDocumentCount(); ++j)
             {
                 test(Double.compare(byDate.getDocuments().get(j).getAnomalyScore(),
                         allBuckets.getDocuments().get(j + startIndex).getAnomalyScore()) == 0);
@@ -257,20 +257,19 @@ public class NormalizationTest implements Closeable
         int highAnomalyScoreCount = 0;
         for (Bucket b : pagedBuckets)
         {
-            if (b.getAnomalyScore() >= 80.0)
+            if (b.getAnomalyScore() >= 65.0)
             {
-                highAnomalyScoreCount++;
+                ++highAnomalyScoreCount;
             }
         }
         test(highAnomalyScoreCount == 2);
 
         // The big anomaly spans buckets 771 and 772.  Which one of these has
-        // the higher score may vary as the analytics are updated, but each
-        // should have a score of at least 80.
+        // the higher score may vary as the analytics are updated, but the
+        // sum should be at least 155.
         double bucket771Score = pagedBuckets.get(770).getAnomalyScore();
         double bucket772Score = pagedBuckets.get(771).getAnomalyScore();
-        test(bucket771Score >= 80.0);
-        test(bucket772Score >= 80.0);
+        test(bucket771Score + bucket772Score >= 155.0);
 
         Pagination<Bucket> allBucketsExpanded = m_WebServiceClient.prepareGetBuckets(jobId)
                 .expand(true).take(1500).get();
@@ -333,7 +332,7 @@ public class NormalizationTest implements Closeable
         for (AnomalyRecord record : allRecords.getDocuments())
         {
             test(record.equals(pagedRecords.get(recordIndex)));
-            recordIndex++;
+            ++recordIndex;
         }
         test(recordIndex == pagedRecords.size());
 
@@ -372,14 +371,14 @@ public class NormalizationTest implements Closeable
         for (AnomalyRecord record : allRecords.getDocuments())
         {
             test(record.equals(pagedRecords.get(recordIndex)));
-            recordIndex++;
+            ++recordIndex;
         }
         test(recordIndex == pagedRecords.size());
 
 
         /*
          * There should be at least two anomalies with unusual score of 80+
-         * and at least two with anomaly score 80+
+         * and at two with anomaly score 65+
          */
         int highAnomalyScoreCount = 0;
         int highUnusualScoreCount = 0;
@@ -387,16 +386,16 @@ public class NormalizationTest implements Closeable
         {
             if (record.getNormalizedProbability() >= 80.0)
             {
-                highUnusualScoreCount++;
+                ++highUnusualScoreCount;
             }
-            if (record.getAnomalyScore() >= 80.0)
+            if (record.getAnomalyScore() >= 65.0)
             {
-                highAnomalyScoreCount++;
+                ++highAnomalyScoreCount;
             }
         }
 
-        test(highAnomalyScoreCount >= 2);
         test(highUnusualScoreCount >= 2);
+        test(highAnomalyScoreCount == 2);
 
         return true;
     }
