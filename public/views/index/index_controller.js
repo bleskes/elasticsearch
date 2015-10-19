@@ -92,6 +92,11 @@ define(function (require) {
         return courier.fetch();
       });
 
+    $scope.$listen(globalState, 'save_with_changes', function (changes) {
+      if (_.contains(changes, 'time')) {
+        courier.fetch();
+      }
+    });
 
   });
 });
