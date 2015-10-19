@@ -60,7 +60,7 @@ public class IndexStatsCollectorTests extends AbstractCollectorTestCase {
         securedRefresh();
         securedEnsureGreen(indexName);
 
-        assertHitCount(client().prepareCount().get(), nbDocs);
+        assertHitCount(client().prepareSearch().setSize(0).get(), nbDocs);
 
         Collection<MarvelDoc> results = newIndexStatsCollector().doCollect();
         assertThat(results, hasSize(1));
@@ -104,7 +104,7 @@ public class IndexStatsCollectorTests extends AbstractCollectorTestCase {
         securedEnsureGreen(indexPrefix + "*");
 
         for (int i = 0; i < nbIndices; i++) {
-            assertHitCount(client().prepareCount(indexPrefix + i).get(), docsPerIndex[i]);
+            assertHitCount(client().prepareSearch(indexPrefix + i).setSize(0).get(), docsPerIndex[i]);
         }
 
         String clusterUUID = client().admin().cluster().prepareState().setMetaData(true).get().getState().metaData().clusterUUID();
