@@ -326,8 +326,8 @@ public class CategorizationTest implements Closeable
         // Count tests with different examples limits
         Map<String, Object> expectedResultsForCount = new HashMap<>();
         expectedResultsForCount.put(HIGHEST_ANOMALY_BUCKET_ID, "1428678000");
-        expectedResultsForCount.put(HIGHEST_ANOMALY_SCORE_THRESHOLD, 97.0);
-        expectedResultsForCount.put(HIGHEST_RECORD_PROBABILITY_THRESHOLD, 99.9);
+        expectedResultsForCount.put(HIGHEST_ANOMALY_SCORE_THRESHOLD, 91.0);
+        expectedResultsForCount.put(HIGHEST_RECORD_PROBABILITY_THRESHOLD, 99.0);
         expectedResultsForCount.put(HIGHEST_ANOMALY_CATEGORY_ID, "43");
 
         CategorizationTest test = new CategorizationTest(prelertTestDataHome, baseUrl,

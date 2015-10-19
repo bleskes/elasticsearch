@@ -206,7 +206,7 @@ public class HierarchicalNormalizationTest implements Closeable
 
         AnomalyRecord record1 = records.get(0);
         test(record1.getNormalizedProbability() > 97.0);
-        test(record1.getAnomalyScore() > 82.0);
+        test(record1.getAnomalyScore() > 80.0);
         test(record1.getPartitionFieldName().equals("instance"));
         test(record1.getPartitionFieldValue().equals("US-1"));
 
