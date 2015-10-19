@@ -221,7 +221,7 @@ public class CategorizationTest implements Closeable
                 maxExamplesSize = Math.max(maxExamplesSize, examplesSize);
                 test(examplesSize > 0);
             }
-            categoryId++;
+            ++categoryId;
         }
         test(maxExamplesSize == getExamplesByCategoryLimit());
     }
@@ -350,7 +350,7 @@ public class CategorizationTest implements Closeable
         // Rare tests with default examples limits
         Map<String, Object> expectedResultsForRare = new HashMap<>();
         expectedResultsForRare.put(HIGHEST_ANOMALY_BUCKET_ID, "1428678000");
-        expectedResultsForRare.put(HIGHEST_ANOMALY_SCORE_THRESHOLD, 82.0);
+        expectedResultsForRare.put(HIGHEST_ANOMALY_SCORE_THRESHOLD, 71.0);
         expectedResultsForRare.put(HIGHEST_RECORD_PROBABILITY_THRESHOLD, 16.0);
 
         test = new CategorizationTest(prelertTestDataHome, baseUrl,
