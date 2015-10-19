@@ -21,7 +21,7 @@ define(function (require) {
     ShardRecoveryDataSource.prototype.handleResponse = function (resp) {
       if (resp.hits.total < 1) return;
       var self = this;
-      self.data = resp.hits.hits[0]._source.shards || [];
+      self.data = resp.hits.hits[0]._source.index_recovery.shards || [];
       self.data.sort(function (a, b) {
         return b.start_time_in_millis - a.start_time_in_millis;
       });
