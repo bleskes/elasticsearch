@@ -409,7 +409,7 @@ module.exports = {
   },
   'index_lucene_memory': {
     active: true,
-    field: 'total.segments.memory_in_bytes',
+    field: 'index_stats.total.segments.memory_in_bytes',
     label: 'Lucene Memory',
     description: 'The amount of memory used by Lucene.',
     format: '0,0.0b',
@@ -421,7 +421,7 @@ module.exports = {
   },
   'index_fielddata': {
     active: true,
-    field: 'total.fielddata.memory_size_in_bytes',
+    field: 'index_stats.total.fielddata.memory_size_in_bytes',
     label: 'Field Data Size',
     description: 'The amount of memory used by field data.',
     format: '0,0.0b',
