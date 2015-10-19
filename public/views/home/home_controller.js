@@ -2,6 +2,7 @@ define(function (require) {
   var _ = require('lodash');
   var angular = require('angular');
   var chrome = require('ui/chrome');
+  var moment = require('moment');
   var module = require('ui/modules').get('marvel', [
     'marvel/directives'
   ]);
@@ -46,7 +47,14 @@ define(function (require) {
       return cluster;
     }
 
-    $scope.clusters = $route.current.locals.clusters.map(setKeyForClusters);
+    function isClusterCurrent(cluster) {
+      var lastUpdate = moment(cluster.state_timestamp);
+      return lastUpdate.isAfter(moment().subtract(10, 'minutes'));
+    }
+
+    $scope.clusters = $route.current.locals.clusters
+      .filter(isClusterCurrent)
+      .map(setKeyForClusters);
 
     timefilter.enabled = true;
     if (timefilter.refreshInterval.value === 0) {
@@ -71,7 +79,9 @@ define(function (require) {
 
     function fetch() {
       marvelClusters.fetch().then((clusters) => {
-        $scope.clusters = clusters.map(setKeyForClusters);
+        $scope.clusters = clusters
+          .filter(isClusterCurrent)
+          .map(setKeyForClusters);
         startFetchInterval();
       });
     }
