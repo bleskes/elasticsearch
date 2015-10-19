@@ -60,13 +60,17 @@ define(function (require) {
     $scope.cluster = _.find(clusters, { cluster_uuid: globalState.cluster });
 
     // is the selected index valid?
-    if (!_.has($scope.cluster.shardStats, $scope.indexName)) {
-      notify.error('We can\'t seem to find this index in your Marvel data.');
-      return kbnUrl.redirect('/indices');
+    function checkIndexExists(indexName) {
+      if (!_.has($scope.cluster.shardStats, indexName)) {
+        notify.error('We can\'t seem to find this index in your Marvel data.');
+        return kbnUrl.redirect('/indices');
+      }
     }
+    checkIndexExists($scope.indexName);
 
     $scope.$watch('dataSources.clusterStatus.clusters', function (clusters) {
       $scope.cluster = _.find(clusters, { cluster_uuid: globalState.cluster });
+      checkIndexExists($scope.indexName);
     });
 
     Promise
