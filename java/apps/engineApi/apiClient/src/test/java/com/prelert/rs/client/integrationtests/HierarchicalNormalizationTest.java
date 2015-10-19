@@ -263,25 +263,25 @@ public class HierarchicalNormalizationTest implements Closeable
 
         AnomalyRecord record1 = records.get(0);
         test(record1.getNormalizedProbability() > 97.0);
-        test(record1.getAnomalyScore() > 82.0);
+        test(record1.getAnomalyScore() > 80.0);
         test(record1.getByFieldName().equals("instance"));
         test(record1.getByFieldValue().equals("US-1"));
         test(record1.getFunction().equals("mean"));
 
-        AnomalyRecord record2 = records.get(1);
+        AnomalyRecord record2 = records.get(2);
         test(record2.getNormalizedProbability() > 82.0);
-        test(record2.getAnomalyScore() == record1.getAnomalyScore());
+        LOGGER.info("record2.getAnomalyScore() = " + record2.getAnomalyScore());
+        test(record2.getAnomalyScore() > 5.0 && record2.getAnomalyScore() < 5.5);
         test(record2.getByFieldName().equals("region"));
-        test(record2.getByFieldValue().equals("Europe"));
-        test(record2.getFunction().equals("mean"));
+        test(record2.getByFieldValue().equals("US"));
+        test(record2.getFunction().equals("min"));
 
-        AnomalyRecord record3 = records.get(2);
+        AnomalyRecord record3 = records.get(1);
         test(record3.getNormalizedProbability() > 82.0);
-        LOGGER.info("record3.getAnomalyScore() = " + record3.getAnomalyScore());
-        test(record3.getAnomalyScore() > 5.0 && record3.getAnomalyScore() < 5.5);
+        test(record3.getAnomalyScore() == record1.getAnomalyScore());
         test(record3.getByFieldName().equals("region"));
-        test(record3.getByFieldValue().equals("US"));
-        test(record3.getFunction().equals("min"));
+        test(record3.getByFieldValue().equals("Europe"));
+        test(record3.getFunction().equals("mean"));
 
         return true;
     }
