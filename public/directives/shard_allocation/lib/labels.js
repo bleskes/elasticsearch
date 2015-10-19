@@ -24,6 +24,6 @@ define(function () {
   return {
     index: ['Nodes'], // "index detail" page shows nodes on which index shards are allocated
     node: ['Indices'], // "node detail" page shows the indexes that have shards on this node
-    indexWithUnassigned: ['Unassigned', 'Indices'] // NOTE: is this unused or is there even an indexWithUnassigned view?
+    indexWithUnassigned: ['Unassigned', 'Nodes'] // NOTE: is this unused or is there even an indexWithUnassigned view?
   };
 });
