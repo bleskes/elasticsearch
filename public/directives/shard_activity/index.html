@@ -16,8 +16,8 @@
   <tbody bindonce>
     <tr ng-repeat="activity in visibleData" ng-class="{ done: activity.stage === 'DONE', red: activity.primary, yellow: !activity.primary }">
       <td class="index">
-        <h5><a href="#/index/{{ activity.index.name }}">{{ activity.index.name }}</a></h5>
-        <p>Shard <span bo-text="activity.id"></span> | <span bo-text="lookup[activity.type]"></span><span ng-if="activity.type === 'RELOCATION'"> of {{ activity.primary ? 'Primary' : 'Replica' }}</span></p>
+        <h5><a href="#/index/{{ activity.index_name }}">{{ activity.index_name }}</a></h5>
+        <p><span bo-text="activity.id"></span> | <span>{{activity.type|capitalize}}</span><span ng-if="activity.type === 'RELOCATION'"> of {{ activity.primary ? 'Primary' : 'Replica' }}</span></p>
       </td>
       <td class="stage">
         <h6 bo-text="activity.stage"></h6>
