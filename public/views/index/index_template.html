@@ -1,16 +1,25 @@
 <div ng-controller="indexView" class="details marvel-view" ng-class="cluster.shardStats[indexName].status">
+<div class="col-md-12">
   <marvel-cluster-status cluster-state="dataSources.clusterState" source="dataSources.clusterStatus"></marvel-cluster-status>
   <div class="detail-metrics marvel-element">
-    <h1>{{ indexName }}</h1>
-    <marvel-index-summary source="dataSources.indexSummary" cluster="cluster"></marvel-index-summary>
-    <div class="metrics marvel-element">
-      <div ng-repeat="name in charts" class="marvel-element">
-        <marvel-chart source="dataSources[name]" />
+    <div class="row">
+      <div class="col-md-12">
+        <h1>{{ indexName }}</h1>
+        <marvel-index-summary source="dataSources.indexSummary" cluster="cluster"></marvel-index-summary>
       </div>
     </div>
+    <div class="row marvel-element" ng-if="charts">
+      <div class="col-md-4"><marvel-chart source="dataSources.index_search_request_rate"/></div>
+      <div class="col-md-4"><marvel-chart source="dataSources.index_request_rate"/></div>
+      <div class="col-md-4"><marvel-chart source="dataSources.index_size"/></div>
+    </div>
+    <div class="row marvel-element" ng-if="charts">
+      <div class="col-md-4"><marvel-chart source="dataSources.index_lucene_memory"/></div>
+      <div class="col-md-4"><marvel-chart source="dataSources.index_document_count"/></div>
+      <div class="col-md-4"><marvel-chart source="dataSources.index_fielddata"/></div>
+    </div>
   </div>
-  <div class="marvel-element">
-    <marvel-shard-allocation id="indexName" hide-ui="true" view="index" cluster="cluster" index-pattern="indexPattern" cluster-state="dataSources.clusterState"></marvel-shard-allocation>
-  </div>
+  <marvel-shard-allocation id="indexName" hide-ui="true" view="index" cluster="cluster" index-pattern="indexPattern" cluster-state="dataSources.clusterState"></marvel-shard-allocation>
+</div>
 </div>
 <google-analytics></google-analytics>
