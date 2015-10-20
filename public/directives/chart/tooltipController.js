@@ -54,14 +54,14 @@ define(function (require) {
       $tooltipLine.style.height = svgClientRect.height - (chartMargin.bottom + chartMargin.top) + 'px';
 
       // Show the tooltip line
-      if (!$tooltipLine.parentElement) {
-        svgElement.parentElement.appendChild($tooltipLine);
+      if (!$tooltipLine.parentNode) {
+        svgElement.parentNode.appendChild($tooltipLine);
       }
     }
     function hide() {
       Tooltip.removeTooltip();
-      if ($tooltipLine.parentElement) {
-        $tooltipLine.parentElement.removeChild($tooltipLine);
+      if ($tooltipLine.parentNode) {
+        $tooltipLine.parentNode.removeChild($tooltipLine);
       }
     }
     return {
