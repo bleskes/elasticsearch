@@ -2,6 +2,7 @@
   <marvel-cluster-status cluster-state="dataSources.clusterState" source="dataSources.clusterStatus"></marvel-cluster-status>
   <div class="detail-metrics marvel-element">
     <h1>{{ indexName }}</h1>
+    <marvel-index-summary source="dataSources.indexSummary" cluster="cluster"></marvel-index-summary>
     <div class="metrics marvel-element">
       <div ng-repeat="name in charts" class="marvel-element">
         <marvel-chart source="dataSources[name]" />

@@ -1,0 +1,9 @@
+<div>
+  <div>Status: {{ status }}</div>
+  <div>Documents: {{ source.data.documents|formatNumber:'0.[0]a' }}</div>
+  <div>Data: {{ source.data.data_size|formatNumber:'0.0b' }}</div>
+  <div>Total Shards: {{ totalShards|formatNumber:'0,0' }}</div>
+  <div>Unassigned Shards: {{ unassignedShards|formatNumber:'0,0' }}</div>
+</div>
+
+

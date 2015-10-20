@@ -20,6 +20,7 @@ define(function (require) {
     var clusters = $route.current.locals.marvel.clusters;
     $scope.indexName = $routeParams.index;
     var indexPattern = $scope.indexPattern = $route.current.locals.marvel.indexPattern;
+    var IndexSummaryDataSource = Private(require('plugins/marvel/directives/index_summary/data_source'));
     var ChartDataSource = Private(require('plugins/marvel/directives/chart/data_source'));
     var ClusterStatusDataSource = Private(require('plugins/marvel/directives/cluster_status/data_source'));
     var docTitle = Private(require('ui/doc_title'));
@@ -47,6 +48,13 @@ define(function (require) {
         dataSource.destroy();
       });
     });
+
+    $scope.dataSources.indexSummary = new IndexSummaryDataSource({
+      indexPattern: indexPattern,
+      cluster: globalState.cluster,
+      indexName: $scope.indexName
+    });
+    $scope.dataSources.indexSummary.register(courier);
 
     var ClusterStateDataSource = Private(require('plugins/marvel/lib/cluster_state_data_source'));
     $scope.dataSources.clusterState = new ClusterStateDataSource({
