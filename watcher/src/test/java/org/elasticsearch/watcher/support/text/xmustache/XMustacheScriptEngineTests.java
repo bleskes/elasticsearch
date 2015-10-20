@@ -24,7 +24,6 @@ import org.elasticsearch.script.CompiledScript;
 import org.elasticsearch.script.ScriptService;
 import org.elasticsearch.test.ESTestCase;
 import org.junit.Before;
-import org.junit.Test;
 
 import java.io.StringWriter;
 import java.io.Writer;
@@ -36,7 +35,6 @@ import java.util.Map;
  *
  */
 public class XMustacheScriptEngineTests extends ESTestCase {
-
     private XMustacheScriptEngineService engine;
 
     @Before
@@ -44,7 +42,6 @@ public class XMustacheScriptEngineTests extends ESTestCase {
         engine = new XMustacheScriptEngineService(Settings.Builder.EMPTY_SETTINGS);
     }
 
-    @Test
     public void testSimpleParameterReplace() {
         {
             String template = "__json__::GET _search {\"query\": " + "{\"boosting\": {" + "\"positive\": {\"match\": {\"body\": \"gift\"}},"
@@ -71,7 +68,6 @@ public class XMustacheScriptEngineTests extends ESTestCase {
         }
     }
 
-    @Test
     public void testInvalidPrefixes() throws Exception {
         String[] specialStrings = new String[]{"\f", "\n", "\r", "\"", "\\", "\t", "\b", "__::", "__" };
         String prefix = randomFrom("", "__", "____::", "___::", "____", "::", "++json__::", "__json__", "+_json__::", "__json__:");

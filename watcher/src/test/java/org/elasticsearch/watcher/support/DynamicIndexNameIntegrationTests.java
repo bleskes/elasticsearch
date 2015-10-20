@@ -26,7 +26,6 @@ import org.elasticsearch.watcher.test.AbstractWatcherIntegrationTestCase;
 import org.elasticsearch.watcher.transport.actions.put.PutWatchResponse;
 import org.elasticsearch.watcher.trigger.schedule.IntervalSchedule;
 import org.joda.time.format.DateTimeFormat;
-import org.junit.Test;
 
 import static org.elasticsearch.index.query.QueryBuilders.matchAllQuery;
 import static org.elasticsearch.index.query.QueryBuilders.matchQuery;
@@ -45,7 +44,6 @@ import static org.hamcrest.Matchers.is;
 /**
  */
 public class DynamicIndexNameIntegrationTests extends AbstractWatcherIntegrationTestCase {
-
     @Override
     protected boolean timeWarped() {
         return true;
@@ -56,7 +54,6 @@ public class DynamicIndexNameIntegrationTests extends AbstractWatcherIntegration
         return false; // reduce noise
     }
 
-    @Test
     public void testDynamicIndexAction() throws Exception {
         WatcherClient watcherClient = watcherClient();
         PutWatchResponse putWatchResponse = watcherClient.preparePutWatch("_id")
@@ -87,7 +84,6 @@ public class DynamicIndexNameIntegrationTests extends AbstractWatcherIntegration
         });
     }
 
-    @Test
     public void testDynamicIndexSearchInput() throws Exception {
         final String indexName = "idx-" + DateTimeFormat.forPattern("YYYY.MM.dd").print(timeWarp().clock().nowUTC());
         createIndex(indexName);
@@ -113,7 +109,6 @@ public class DynamicIndexNameIntegrationTests extends AbstractWatcherIntegration
         assertThat(response.getHits().getTotalHits(), is(1L));
     }
 
-    @Test
     public void testDynamicIndexSearchTransform() throws Exception {
         String indexName = "idx-" + DateTimeFormat.forPattern("YYYY.MM.dd").print(timeWarp().clock().nowUTC());
         createIndex(indexName);
@@ -144,5 +139,4 @@ public class DynamicIndexNameIntegrationTests extends AbstractWatcherIntegration
         });
         assertThat(response.getHits().getTotalHits(), is(1L));
     }
-
 }

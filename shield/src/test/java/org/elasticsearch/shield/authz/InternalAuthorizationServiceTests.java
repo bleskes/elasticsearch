@@ -24,7 +24,11 @@ import org.elasticsearch.action.admin.indices.alias.IndicesAliasesAction;
 import org.elasticsearch.action.admin.indices.create.CreateIndexAction;
 import org.elasticsearch.action.admin.indices.create.CreateIndexRequest;
 import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsRequest;
-import org.elasticsearch.action.search.*;
+import org.elasticsearch.action.search.ClearScrollAction;
+import org.elasticsearch.action.search.ClearScrollRequest;
+import org.elasticsearch.action.search.SearchAction;
+import org.elasticsearch.action.search.SearchScrollAction;
+import org.elasticsearch.action.search.SearchScrollRequest;
 import org.elasticsearch.cluster.ClusterService;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.metadata.AliasMetaData;
@@ -40,17 +44,22 @@ import org.elasticsearch.shield.authz.store.RolesStore;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.transport.TransportRequest;
 import org.junit.Before;
-import org.junit.Test;
 
 import java.util.List;
 
 import static org.elasticsearch.test.ShieldTestsUtils.assertAuthenticationException;
 import static org.elasticsearch.test.ShieldTestsUtils.assertAuthorizationException;
-import static org.hamcrest.Matchers.*;
-import static org.mockito.Mockito.*;
+import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
 
 public class InternalAuthorizationServiceTests extends ESTestCase {
-
     private AuditTrail auditTrail;
     private RolesStore rolesStore;
     private ClusterService clusterService;
@@ -65,7 +74,6 @@ public class InternalAuthorizationServiceTests extends ESTestCase {
         internalAuthorizationService = new InternalAuthorizationService(Settings.EMPTY, rolesStore, clusterService, auditTrail, anonymousService, new DefaultAuthenticationFailureHandler());
     }
 
-    @Test
     public void testActionsSystemUserIsAuthorized() {
         TransportRequest request = mock(TransportRequest.class);
 
@@ -78,7 +86,6 @@ public class InternalAuthorizationServiceTests extends ESTestCase {
         verifyNoMoreInteractions(auditTrail);
     }
 
-    @Test
     public void testIndicesActionsAreNotAuthorized() {
         TransportRequest request = mock(TransportRequest.class);
         try {
@@ -91,7 +98,6 @@ public class InternalAuthorizationServiceTests extends ESTestCase {
         }
     }
 
-    @Test
     public void testClusterAdminActionsAreNotAuthorized() {
         TransportRequest request = mock(TransportRequest.class);
         try {
@@ -104,7 +110,6 @@ public class InternalAuthorizationServiceTests extends ESTestCase {
         }
     }
 
-    @Test
     public void testClusterAdminSnapshotStatusActionIsNotAuthorized() {
         TransportRequest request = mock(TransportRequest.class);
         try {
@@ -117,7 +122,6 @@ public class InternalAuthorizationServiceTests extends ESTestCase {
         }
     }
 
-    @Test
     public void testNoRolesCausesDenial() {
         TransportRequest request = mock(TransportRequest.class);
         User user = new User.Simple("test user", null);
@@ -131,7 +135,6 @@ public class InternalAuthorizationServiceTests extends ESTestCase {
         }
     }
 
-    @Test
     public void testUnknownRoleCausesDenial() {
         TransportRequest request = mock(TransportRequest.class);
         User user = new User.Simple("test user", new String[] { "non-existent-role" });
@@ -145,7 +148,6 @@ public class InternalAuthorizationServiceTests extends ESTestCase {
         }
     }
 
-    @Test
     public void testThatNonIndicesAndNonClusterActionIsDenied() {
         TransportRequest request = mock(TransportRequest.class);
         User user = new User.Simple("test user", new String[] { "a_all" });
@@ -161,7 +163,6 @@ public class InternalAuthorizationServiceTests extends ESTestCase {
         }
     }
 
-    @Test
     public void testThatRoleWithNoIndicesIsDenied() {
         TransportRequest request = new IndicesExistsRequest("a");
         User user = new User.Simple("test user", new String[] { "no_indices" });
@@ -177,7 +178,6 @@ public class InternalAuthorizationServiceTests extends ESTestCase {
         }
     }
 
-    @Test
     public void testScrollRelatedRequestsAllowed() {
         User user = new User.Simple("test user", new String[] { "a_all" });
         when(rolesStore.role("a_all")).thenReturn(Permission.Global.Role.builder("a_role").add(Privilege.Index.ALL, "a").build());
@@ -209,7 +209,6 @@ public class InternalAuthorizationServiceTests extends ESTestCase {
         verifyNoMoreInteractions(auditTrail);
     }
 
-    @Test
     public void testAuthorizeIndicesFailures() {
         TransportRequest request = new IndicesExistsRequest("b");
         ClusterState state = mock(ClusterState.class);
@@ -230,7 +229,6 @@ public class InternalAuthorizationServiceTests extends ESTestCase {
         }
     }
 
-    @Test
     public void testCreateIndexWithAliasWithoutPermissions() {
         CreateIndexRequest request = new CreateIndexRequest("a");
         request.alias(new Alias("a2"));
@@ -252,7 +250,6 @@ public class InternalAuthorizationServiceTests extends ESTestCase {
         }
     }
 
-    @Test
     public void testCreateIndexWithAlias() {
         CreateIndexRequest request = new CreateIndexRequest("a");
         request.alias(new Alias("a2"));
@@ -270,7 +267,6 @@ public class InternalAuthorizationServiceTests extends ESTestCase {
         verify(state, times(2)).metaData();
     }
 
-    @Test
     public void testIndicesAliasesWithNoRolesUser() {
         User user = new User.Simple("test user", null);
 
@@ -278,7 +274,6 @@ public class InternalAuthorizationServiceTests extends ESTestCase {
         assertThat(list.isEmpty(), is(true));
     }
 
-    @Test
     public void testIndicesAliasesWithUserHavingRoles() {
         User user = new User.Simple("test user", new String[] { "a_star", "b" });
         ClusterState state = mock(ClusterState.class);
@@ -306,7 +301,6 @@ public class InternalAuthorizationServiceTests extends ESTestCase {
         assertThat(list.contains("ba"), is(false));
     }
 
-    @Test
     public void testDenialForAnonymousUser() {
         TransportRequest request = new IndicesExistsRequest("b");
         ClusterState state = mock(ClusterState.class);
@@ -329,7 +323,6 @@ public class InternalAuthorizationServiceTests extends ESTestCase {
         }
     }
 
-    @Test
     public void testDenialForAnonymousUserAuthorizationExceptionDisabled() {
         TransportRequest request = new IndicesExistsRequest("b");
         ClusterState state = mock(ClusterState.class);
@@ -355,7 +348,6 @@ public class InternalAuthorizationServiceTests extends ESTestCase {
         }
     }
 
-    @Test
     public void testRunAsRequestWithNoRolesUser() {
         TransportRequest request = mock(TransportRequest.class);
         User user = new User.Simple("test user", null, new User.Simple("run as me", new String[] { "admin" }));
@@ -370,7 +362,6 @@ public class InternalAuthorizationServiceTests extends ESTestCase {
         }
     }
 
-    @Test
     public void testRunAsRequestRunningAsUnAllowedUser() {
         TransportRequest request = mock(TransportRequest.class);
         User user = new User.Simple("test user", new String[] { "can run as" }, new User.Simple("run as me", new String[] { "doesn't exist" }));
@@ -391,7 +382,6 @@ public class InternalAuthorizationServiceTests extends ESTestCase {
         }
     }
 
-    @Test
     public void testRunAsRequestWithRunAsUserWithoutPermission() {
         TransportRequest request = new IndicesExistsRequest("a");
         User user = new User.Simple("test user", new String[] { "can run as" }, new User.Simple("run as me", new String[] { "b" }));
@@ -427,7 +417,6 @@ public class InternalAuthorizationServiceTests extends ESTestCase {
         }
     }
 
-    @Test
     public void testRunAsRequestWithValidPermissions() {
         TransportRequest request = new IndicesExistsRequest("b");
         User user = new User.Simple("test user", new String[] { "can run as" }, new User.Simple("run as me", new String[] { "b" }));

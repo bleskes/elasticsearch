@@ -29,7 +29,6 @@ import org.elasticsearch.shield.authc.support.SecuredString;
 import org.elasticsearch.test.ShieldIntegTestCase;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,7 +39,6 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 
 public class ShieldClearScrollTests extends ShieldIntegTestCase {
-
     protected static final String USERS_PASSWD_HASHED = new String(Hasher.BCRYPT.hash(new SecuredString("change_me".toCharArray())));
 
     private List<String> scrollIds;
@@ -96,7 +94,6 @@ public class ShieldClearScrollTests extends ShieldIntegTestCase {
         client().prepareClearScroll().addScrollId("_all").get();
     }
 
-    @Test
     public void testThatClearingAllScrollIdsWorks() throws Exception {
         String shieldUser = "allowed_user:change_me";
         String basicAuth = basicAuthHeaderValue("allowed_user", new SecuredString("change_me".toCharArray()));
@@ -109,7 +106,6 @@ public class ShieldClearScrollTests extends ShieldIntegTestCase {
         assertThatScrollIdsDoNotExist(scrollIds);
     }
 
-    @Test
     public void testThatClearingAllScrollIdsRequirePermissions() throws Exception {
         String shieldUser = "denied_user:change_me";
         String basicAuth = basicAuthHeaderValue("denied_user", new SecuredString("change_me".toCharArray()));

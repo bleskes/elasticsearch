@@ -39,19 +39,20 @@ import org.elasticsearch.transport.TransportService;
 import org.hamcrest.Matcher;
 import org.junit.After;
 import org.junit.BeforeClass;
-import org.junit.Test;
 
 import java.io.IOException;
 
 import static org.elasticsearch.rest.RestStatus.OK;
 import static org.elasticsearch.shield.authc.support.UsernamePasswordToken.basicAuthHeaderValue;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.instanceOf;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
 
 /**
  *
  */
 public class ShieldPluginEnabledDisabledTests extends ShieldIntegTestCase {
-
     private static boolean enabled;
 
     @BeforeClass
@@ -96,7 +97,6 @@ public class ShieldPluginEnabledDisabledTests extends ShieldIntegTestCase {
         return LicensingTests.InternalLicensePlugin.NAME;
     }
 
-    @Test
     public void testTransportEnabledDisabled() throws Exception {
         for (TransportService service : internalCluster().getInstances(TransportService.class)) {
             Matcher<TransportService> matcher = instanceOf(ShieldServerTransportService.class);
@@ -114,7 +114,6 @@ public class ShieldPluginEnabledDisabledTests extends ShieldIntegTestCase {
         }
     }
 
-    @Test
     public void testShieldInfoStatus() throws IOException {
         HttpServerTransport httpServerTransport = internalCluster().getDataNodeInstance(HttpServerTransport.class);
         OperationMode mode;

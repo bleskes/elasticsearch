@@ -19,6 +19,7 @@ package org.elasticsearch.watcher.support.http;
 
 import com.squareup.okhttp.mockwebserver.MockResponse;
 import com.squareup.okhttp.mockwebserver.MockWebServer;
+
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.ElasticsearchTimeoutException;
 import org.elasticsearch.common.settings.Settings;
@@ -29,7 +30,6 @@ import org.elasticsearch.watcher.support.http.auth.HttpAuthRegistry;
 import org.elasticsearch.watcher.support.secret.SecretService;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Test;
 
 import java.net.BindException;
 
@@ -40,7 +40,6 @@ import static org.mockito.Mockito.mock;
 /**
  */
 public class HttpReadTimeoutTests extends ESTestCase {
-
     private MockWebServer webServer;
     private SecretService secretService;
     private int webPort;
@@ -65,7 +64,6 @@ public class HttpReadTimeoutTests extends ESTestCase {
         webServer.shutdown();
     }
 
-    @Test
     public void testDefaultTimeout() throws Exception {
         Environment environment = new Environment(Settings.builder().put("path.home", createTempDir()).build());
         HttpClient httpClient = new HttpClient(Settings.EMPTY, mock(HttpAuthRegistry.class), environment).start();
@@ -96,8 +94,7 @@ public class HttpReadTimeoutTests extends ESTestCase {
         }
     }
 
-    @Test
-    public void testDefaultTimeout_Custom() throws Exception {
+    public void testDefaultTimeoutCustom() throws Exception {
         Environment environment = new Environment(Settings.builder().put("path.home", createTempDir()).build());
 
         HttpClient httpClient = new HttpClient(Settings.builder()
@@ -131,8 +128,7 @@ public class HttpReadTimeoutTests extends ESTestCase {
         }
     }
 
-    @Test
-    public void testTimeout_CustomPerRequest() throws Exception {
+    public void testTimeoutCustomPerRequest() throws Exception {
         Environment environment = new Environment(Settings.builder().put("path.home", createTempDir()).build());
 
         HttpClient httpClient = new HttpClient(Settings.builder()

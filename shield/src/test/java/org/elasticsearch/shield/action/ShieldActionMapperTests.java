@@ -23,7 +23,6 @@ import org.elasticsearch.action.search.ClearScrollAction;
 import org.elasticsearch.action.search.ClearScrollRequest;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.transport.KnownActionsTests;
-import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -32,8 +31,6 @@ import java.util.List;
 import static org.hamcrest.CoreMatchers.equalTo;
 
 public class ShieldActionMapperTests extends ESTestCase {
-
-    @Test
     public void testThatAllOrdinaryActionsRemainTheSame() {
         List<String> actions = new ArrayList<>();
         actions.addAll(KnownActionsTests.loadKnownActions());
@@ -57,7 +54,6 @@ public class ShieldActionMapperTests extends ESTestCase {
         }
     }
 
-    @Test
     public void testClearScroll() {
         ShieldActionMapper shieldActionMapper = new ShieldActionMapper();
         ClearScrollRequest clearScrollRequest = new ClearScrollRequest();
@@ -68,7 +64,6 @@ public class ShieldActionMapperTests extends ESTestCase {
         assertThat(shieldActionMapper.action(ClearScrollAction.NAME, clearScrollRequest), equalTo(ClearScrollAction.NAME));
     }
 
-    @Test
     public void testClearScrollAll() {
         ShieldActionMapper shieldActionMapper = new ShieldActionMapper();
         ClearScrollRequest clearScrollRequest = new ClearScrollRequest();
@@ -83,7 +78,6 @@ public class ShieldActionMapperTests extends ESTestCase {
         assertThat(shieldActionMapper.action(ClearScrollAction.NAME, clearScrollRequest), equalTo(ShieldActionMapper.CLUSTER_PERMISSION_SCROLL_CLEAR_ALL_NAME));
     }
 
-    @Test
     public void testIndicesAnalyze() {
         ShieldActionMapper shieldActionMapper = new ShieldActionMapper();
         AnalyzeRequest analyzeRequest;
@@ -96,7 +90,6 @@ public class ShieldActionMapperTests extends ESTestCase {
         assertThat(shieldActionMapper.action(AnalyzeAction.NAME, analyzeRequest), equalTo(AnalyzeAction.NAME));
     }
 
-    @Test
     public void testClusterAnalyze() {
         ShieldActionMapper shieldActionMapper = new ShieldActionMapper();
         AnalyzeRequest analyzeRequest = new AnalyzeRequest(null).text("text");

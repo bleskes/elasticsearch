@@ -27,7 +27,6 @@ import org.elasticsearch.watcher.trigger.schedule.ScheduleTriggerEvent;
 import org.elasticsearch.watcher.watch.Watch;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-import org.junit.Test;
 
 import static org.hamcrest.Matchers.equalTo;
 
@@ -35,8 +34,6 @@ import static org.hamcrest.Matchers.equalTo;
  */
 @AwaitsFix(bugUrl = "https://github.com/elastic/x-plugins/issues/724")
 public class TriggeredWatchTests extends AbstractWatcherIntegrationTestCase {
-
-    @Test
     public void testParser() throws Exception {
         Watch watch = WatcherTestUtils.createTestWatch("fired_test", scriptService(), watcherHttpClient(), noopEmailService(), logger);
         ScheduleTriggerEvent event = new ScheduleTriggerEvent(watch.id(), DateTime.now(DateTimeZone.UTC), DateTime.now(DateTimeZone.UTC));
@@ -55,6 +52,4 @@ public class TriggeredWatchTests extends AbstractWatcherIntegrationTestCase {
     private TriggeredWatch.Parser triggeredWatchParser() {
         return internalCluster().getInstance(TriggeredWatch.Parser.class);
     }
-
-
 }

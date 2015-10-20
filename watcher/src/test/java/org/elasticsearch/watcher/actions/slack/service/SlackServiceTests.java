@@ -25,7 +25,6 @@ import org.elasticsearch.watcher.actions.slack.service.message.Attachment;
 import org.elasticsearch.watcher.actions.slack.service.message.SlackMessage;
 import org.elasticsearch.watcher.test.AbstractWatcherIntegrationTestCase;
 import org.elasticsearch.watcher.transport.actions.put.PutWatchResponse;
-import org.junit.Test;
 
 import static org.elasticsearch.index.query.QueryBuilders.boolQuery;
 import static org.elasticsearch.index.query.QueryBuilders.termQuery;
@@ -36,14 +35,15 @@ import static org.elasticsearch.watcher.condition.ConditionBuilders.alwaysCondit
 import static org.elasticsearch.watcher.input.InputBuilders.simpleInput;
 import static org.elasticsearch.watcher.trigger.TriggerBuilders.schedule;
 import static org.elasticsearch.watcher.trigger.schedule.Schedules.interval;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.lessThan;
+import static org.hamcrest.Matchers.notNullValue;
 
 /**
  *
  */
 @Network
 public class SlackServiceTests extends AbstractWatcherIntegrationTestCase {
-
     @Override
     protected boolean timeWarped() {
         return true;
@@ -64,7 +64,6 @@ public class SlackServiceTests extends AbstractWatcherIntegrationTestCase {
                 .build();
     }
 
-    @Test
     public void testSendMessage() throws Exception {
         SlackService service = getInstanceFromMaster(SlackService.class);
         Attachment[] attachments = new Attachment[] {
@@ -88,9 +87,7 @@ public class SlackServiceTests extends AbstractWatcherIntegrationTestCase {
         }
     }
 
-    @Test
     public void testWatchWithSlackAction() throws Exception {
-
         String account = "test_account";
         SlackAction.Builder actionBuilder = slackAction(account, SlackMessage.Template.builder()
                 .setText("slack integration test `{{ctx.payload.ref}}`")

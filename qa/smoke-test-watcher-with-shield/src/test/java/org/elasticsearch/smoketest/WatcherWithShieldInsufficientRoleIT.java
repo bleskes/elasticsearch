@@ -19,7 +19,6 @@ package org.elasticsearch.smoketest;
 
 import com.carrotsearch.randomizedtesting.annotations.Name;
 import org.elasticsearch.test.rest.RestTestCandidate;
-import org.junit.Test;
 
 import java.io.IOException;
 
@@ -27,12 +26,10 @@ import static org.hamcrest.Matchers.anyOf;
 import static org.hamcrest.Matchers.containsString;
 
 public class WatcherWithShieldInsufficientRoleIT extends WatcherWithShieldIT {
-
     public WatcherWithShieldInsufficientRoleIT(@Name("yaml") RestTestCandidate testCandidate) {
         super(testCandidate);
     }
 
-    @Test
     public void test() throws IOException {
         try {
             super.test();
@@ -49,4 +46,3 @@ public class WatcherWithShieldInsufficientRoleIT extends WatcherWithShieldIT {
         return new String[]{"powerless_user", "changeme"};
     }
 }
-

@@ -35,16 +35,16 @@ import org.elasticsearch.test.rest.client.http.HttpRequestBuilder;
 import org.elasticsearch.test.rest.client.http.HttpResponse;
 import org.elasticsearch.transport.Transport;
 import org.junit.BeforeClass;
-import org.junit.Test;
 
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManagerFactory;
 import java.io.InputStream;
 import java.net.InetAddress;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.KeyStore;
 import java.security.SecureRandom;
+
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManagerFactory;
 
 import static org.elasticsearch.test.ShieldSettingsSource.DEFAULT_PASSWORD;
 import static org.elasticsearch.test.ShieldSettingsSource.DEFAULT_USER_NAME;
@@ -86,7 +86,6 @@ public class PkiOptionalClientAuthTests extends ShieldIntegTestCase {
         return true;
     }
 
-    @Test
     public void testRestClientWithoutClientCertificate() throws Exception {
         HttpServerTransport httpServerTransport = internalCluster().getDataNodeInstance(HttpServerTransport.class);
 
@@ -106,7 +105,6 @@ public class PkiOptionalClientAuthTests extends ShieldIntegTestCase {
         }
     }
 
-    @Test
     public void testTransportClientWithoutClientCertificate() {
         Transport transport = internalCluster().getDataNodeInstance(Transport.class);
         int port = ((InetSocketTransportAddress) randomFrom(transport.profileBoundAddresses().get("want_client_auth").boundAddresses())).address().getPort();

@@ -20,6 +20,7 @@ package org.elasticsearch.watcher.history;
 import com.squareup.okhttp.mockwebserver.MockResponse;
 import com.squareup.okhttp.mockwebserver.MockWebServer;
 import com.squareup.okhttp.mockwebserver.QueueDispatcher;
+
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.search.aggregations.Aggregations;
@@ -30,7 +31,6 @@ import org.elasticsearch.watcher.test.AbstractWatcherIntegrationTestCase;
 import org.elasticsearch.watcher.transport.actions.put.PutWatchResponse;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Test;
 
 import java.net.BindException;
 
@@ -50,7 +50,6 @@ import static org.hamcrest.Matchers.notNullValue;
  * not analyzed so they can be used in aggregations
  */
 public class HistoryTemplateHttpMappingsTests extends AbstractWatcherIntegrationTestCase {
-
     private int webPort;
     private MockWebServer webServer;
 
@@ -86,7 +85,6 @@ public class HistoryTemplateHttpMappingsTests extends AbstractWatcherIntegration
         return false; // remove shield noise from this test
     }
 
-    @Test
     public void testHttpFields() throws Exception {
         PutWatchResponse putWatchResponse = watcherClient().preparePutWatch("_id").setSource(watchBuilder()
                 .trigger(schedule(interval("5s")))

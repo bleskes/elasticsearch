@@ -20,7 +20,6 @@ package org.elasticsearch.watcher.watch;
 import org.elasticsearch.ElasticsearchTimeoutException;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.test.ESTestCase;
-import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,14 +27,14 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.is;
 
 /**
  */
 public class WatchLockServiceTests extends ESTestCase {
-
-    @Test
-    public void testLocking_notStarted() {
+    public void testLockingNotStarted() {
         WatchLockService lockService = new WatchLockService(new TimeValue(1, TimeUnit.SECONDS));
         try {
             lockService.acquire("_name");
@@ -45,7 +44,6 @@ public class WatchLockServiceTests extends ESTestCase {
         }
     }
 
-    @Test
     public void testLocking() {
         WatchLockService lockService = new WatchLockService(new TimeValue(1, TimeUnit.SECONDS));
         lockService.start();
@@ -56,8 +54,7 @@ public class WatchLockServiceTests extends ESTestCase {
         lockService.stop();
     }
 
-    @Test
-    public void testLocking_alreadyHeld() {
+    public void testLockingAlreadyHeld() {
         WatchLockService lockService = new WatchLockService(new TimeValue(1, TimeUnit.SECONDS));
         lockService.start();
         WatchLockService.Lock lock1 = lockService.acquire("_name");
@@ -71,17 +68,19 @@ public class WatchLockServiceTests extends ESTestCase {
         lockService.stop();
     }
 
-    @Test(expected = ElasticsearchTimeoutException.class)
-    public void testLocking_stopTimeout(){
+    public void testLockingStopTimeout(){
         final WatchLockService lockService = new WatchLockService(new TimeValue(1, TimeUnit.SECONDS));
         lockService.start();
         lockService.acquire("_name");
-        lockService.stop();
-        fail();
+        try {
+            lockService.stop();
+            fail("Expected ElasticsearchTimeoutException");
+        } catch (ElasticsearchTimeoutException e) {
+            assertThat(e.getMessage(), is("timed out waiting for watches to complete, after waiting for [2s]"));
+        }
     }
 
-    @Test
-    public void testLocking_fair() throws Exception {
+    public void testLockingFair() throws Exception {
         final WatchLockService lockService = new WatchLockService(new TimeValue(1, TimeUnit.SECONDS));
         lockService.start();
         final AtomicInteger value = new AtomicInteger(0);

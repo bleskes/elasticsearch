@@ -27,7 +27,6 @@ import org.elasticsearch.shield.authc.support.SecuredString;
 import org.elasticsearch.shield.authc.support.SecuredStringTests;
 import org.elasticsearch.shield.authc.support.UsernamePasswordToken;
 import org.elasticsearch.test.ShieldIntegTestCase;
-import org.junit.Test;
 
 import java.util.List;
 
@@ -44,7 +43,6 @@ import static org.hamcrest.Matchers.hasSize;
  * index template actions.
  */
 public class PermissionPrecedenceTests extends ShieldIntegTestCase {
-
     protected static final String USERS_PASSWD_HASHED = new String(Hasher.BCRYPT.hash(new SecuredString("test123".toCharArray())));
 
     @Override
@@ -98,9 +96,7 @@ public class PermissionPrecedenceTests extends ShieldIntegTestCase {
         return new SecuredString("test123".toCharArray());
     }
 
-    @Test
     public void testDifferentCombinationsOfIndices() throws Exception {
-
         Client client = internalCluster().transportClient();
 
         // first lets try with "admin"... all should work

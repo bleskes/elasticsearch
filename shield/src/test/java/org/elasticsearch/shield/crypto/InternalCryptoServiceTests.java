@@ -26,10 +26,7 @@ import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.watcher.ResourceWatcherService;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Test;
 
-import javax.crypto.SecretKey;
-import javax.crypto.spec.SecretKeySpec;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
@@ -40,13 +37,19 @@ import java.util.Collections;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import static org.hamcrest.Matchers.*;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
+
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
 
 /**
  *
  */
 public class InternalCryptoServiceTests extends ESTestCase {
-
     private ResourceWatcherService watcherService;
     private Settings settings;
     private Environment env;
@@ -74,7 +77,6 @@ public class InternalCryptoServiceTests extends ESTestCase {
         terminate(threadPool);
     }
 
-    @Test
     public void testSigned() throws Exception {
         // randomize whether to use a system key or not
         Settings settings = randomBoolean() ? this.settings : Settings.EMPTY;
@@ -84,7 +86,6 @@ public class InternalCryptoServiceTests extends ESTestCase {
         assertThat(service.signed(signed), is(true));
     }
 
-    @Test
     public void testSignAndUnsign() throws Exception {
         InternalCryptoService service = new InternalCryptoService(settings, env, watcherService).start();
         String text = randomAsciiOfLength(10);
@@ -94,8 +95,7 @@ public class InternalCryptoServiceTests extends ESTestCase {
         assertThat(text, equalTo(text2));
     }
 
-    @Test
-    public void testSignAndUnsign_NoKeyFile() throws Exception {
+    public void testSignAndUnsignNoKeyFile() throws Exception {
         InternalCryptoService service = new InternalCryptoService(Settings.EMPTY, env, watcherService).start();
         final String text = randomAsciiOfLength(10);
         String signed = service.sign(text);
@@ -105,7 +105,6 @@ public class InternalCryptoServiceTests extends ESTestCase {
         assertThat(unsigned, equalTo(text));
     }
 
-    @Test
     public void testTamperedSignature() throws Exception {
         InternalCryptoService service = new InternalCryptoService(settings, env, watcherService).start();
         String text = randomAsciiOfLength(10);
@@ -123,7 +122,6 @@ public class InternalCryptoServiceTests extends ESTestCase {
         }
     }
 
-    @Test
     public void testTamperedSignatureOneChar() throws Exception {
         InternalCryptoService service = new InternalCryptoService(settings, env, watcherService).start();
         String text = randomAsciiOfLength(10);
@@ -143,7 +141,6 @@ public class InternalCryptoServiceTests extends ESTestCase {
         }
     }
 
-    @Test
     public void testTamperedSignatureLength() throws Exception {
         InternalCryptoService service = new InternalCryptoService(settings, env, watcherService).start();
         String text = randomAsciiOfLength(10);
@@ -171,7 +168,6 @@ public class InternalCryptoServiceTests extends ESTestCase {
         }
     }
 
-    @Test
     public void testEncryptionAndDecryptionChars() {
         InternalCryptoService service = new InternalCryptoService(settings, env, watcherService).start();
         assertThat(service.encryptionEnabled(), is(true));
@@ -184,7 +180,6 @@ public class InternalCryptoServiceTests extends ESTestCase {
         assertThat(Arrays.equals(chars, decrypted), is(true));
     }
 
-    @Test
     public void testEncryptionAndDecryptionBytes() {
         InternalCryptoService service = new InternalCryptoService(settings, env, watcherService).start();
         assertThat(service.encryptionEnabled(), is(true));
@@ -197,7 +192,6 @@ public class InternalCryptoServiceTests extends ESTestCase {
         assertThat(Arrays.equals(bytes, decrypted), is(true));
     }
 
-    @Test
     public void testEncryptionAndDecryptionCharsWithoutKey() {
         InternalCryptoService service = new InternalCryptoService(Settings.EMPTY, env, watcherService).start();
         assertThat(service.encryptionEnabled(), is(false));
@@ -208,7 +202,6 @@ public class InternalCryptoServiceTests extends ESTestCase {
         assertThat(chars, equalTo(decryptedChars));
     }
 
-    @Test
     public void testEncryptionAndDecryptionBytesWithoutKey() {
         InternalCryptoService service = new InternalCryptoService(Settings.EMPTY, env, watcherService).start();
         assertThat(service.encryptionEnabled(), is(false));
@@ -219,19 +212,16 @@ public class InternalCryptoServiceTests extends ESTestCase {
         assertThat(decryptedBytes, equalTo(encryptedBytes));
     }
 
-    @Test
     public void testEncryptionEnabledWithKey() {
         InternalCryptoService service = new InternalCryptoService(settings, env, watcherService).start();
         assertThat(service.encryptionEnabled(), is(true));
     }
 
-    @Test
     public void testEncryptionEnabledWithoutKey() {
         InternalCryptoService service = new InternalCryptoService(Settings.EMPTY, env, watcherService).start();
         assertThat(service.encryptionEnabled(), is(false));
     }
 
-    @Test
     public void testChangingAByte() {
         InternalCryptoService service = new InternalCryptoService(settings, env, watcherService).start();
         assertThat(service.encryptionEnabled(), is(true));
@@ -252,7 +242,6 @@ public class InternalCryptoServiceTests extends ESTestCase {
         assertThat(Arrays.equals(bytes, decrypted), is(false));
     }
 
-    @Test
     public void testEncryptedChar() {
         InternalCryptoService service = new InternalCryptoService(settings, env, watcherService).start();
         assertThat(service.encryptionEnabled(), is(true));
@@ -265,7 +254,6 @@ public class InternalCryptoServiceTests extends ESTestCase {
         assertThat(service.encrypted(service.encrypt(randomAsciiOfLength(10).toCharArray())), is(true));
     }
 
-    @Test
     public void testEncryptedByte() {
         InternalCryptoService service = new InternalCryptoService(settings, env, watcherService).start();
         assertThat(service.encryptionEnabled(), is(true));
@@ -278,7 +266,6 @@ public class InternalCryptoServiceTests extends ESTestCase {
         assertThat(service.encrypted(service.encrypt(randomAsciiOfLength(10).getBytes(StandardCharsets.UTF_8))), is(true));
     }
 
-    @Test
     public void testReloadKey() throws Exception {
         final CountDownLatch latch = new CountDownLatch(1);
         final CryptoService.Listener listener = new CryptoService.Listener() {
@@ -323,7 +310,6 @@ public class InternalCryptoServiceTests extends ESTestCase {
         assertThat(Arrays.equals(textChars, decrypted2), is(true));
     }
 
-    @Test
     public void testReencryptValuesOnKeyChange() throws Exception {
         final InternalCryptoService service = new InternalCryptoService(settings, env, watcherService).start();
         assertThat(service.encryptionEnabled(), is(true));
@@ -354,7 +340,6 @@ public class InternalCryptoServiceTests extends ESTestCase {
         }
     }
 
-    @Test
     public void testResignValuesOnKeyChange() throws Exception {
         final InternalCryptoService service = new InternalCryptoService(settings, env, watcherService).start();
         final String text = randomAsciiOfLength(10);
@@ -389,7 +374,6 @@ public class InternalCryptoServiceTests extends ESTestCase {
         }
     }
 
-    @Test
     public void testReencryptValuesOnKeyDeleted() throws Exception {
         final InternalCryptoService service = new InternalCryptoService(settings, env, watcherService).start();
         assertThat(service.encryptionEnabled(), is(true));
@@ -420,7 +404,6 @@ public class InternalCryptoServiceTests extends ESTestCase {
         }
     }
 
-    @Test
     public void testAllListenersCalledWhenExceptionThrown() throws Exception {
         final InternalCryptoService service = new InternalCryptoService(settings, env, watcherService).start();
         assertThat(service.encryptionEnabled(), is(true));
@@ -456,7 +439,6 @@ public class InternalCryptoServiceTests extends ESTestCase {
         }
     }
 
-    @Test
     public void testSigningOnKeyDeleted() throws Exception {
         final InternalCryptoService service = new InternalCryptoService(settings, env, watcherService).start();
         final String text = randomAsciiOfLength(10);
@@ -491,7 +473,6 @@ public class InternalCryptoServiceTests extends ESTestCase {
         }
     }
 
-    @Test
     public void testSigningKeyCanBeRecomputedConsistently() {
         final SecretKey systemKey = new SecretKeySpec(InternalCryptoService.generateKey(), InternalCryptoService.KEY_ALGO);
         final SecretKey randomKey = InternalCryptoService.generateSecretKey(InternalCryptoService.RANDOM_KEY_SIZE);

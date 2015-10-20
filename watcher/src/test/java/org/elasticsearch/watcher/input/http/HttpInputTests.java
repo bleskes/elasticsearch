@@ -57,7 +57,6 @@ import org.elasticsearch.watcher.watch.WatchStatus;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.joda.time.DateTime;
 import org.junit.Before;
-import org.junit.Test;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -79,7 +78,6 @@ import static org.mockito.Mockito.when;
 /**
  */
 public class HttpInputTests extends ESTestCase {
-
     private HttpClient httpClient;
     private HttpInputFactory httpParser;
     private SecretService secretService;
@@ -94,7 +92,6 @@ public class HttpInputTests extends ESTestCase {
         httpParser = new HttpInputFactory(Settings.EMPTY, httpClient, templateEngine, new HttpRequest.Parser(registry), new HttpRequestTemplate.Parser(registry));
     }
 
-    @Test
     public void testExecute() throws Exception {
         String host = "_host";
         int port = 123;
@@ -155,8 +152,7 @@ public class HttpInputTests extends ESTestCase {
         assertThat(result.payload().data(), equalTo(MapBuilder.<String, Object>newMapBuilder().put("key", "value").map()));
     }
 
-    @Test
-    public void testExecute_nonJson() throws Exception {
+    public void testExecuteNonJson() throws Exception {
         String host = "_host";
         int port = 123;
         HttpRequestTemplate.Builder request = HttpRequestTemplate.builder(host, port)
@@ -186,8 +182,6 @@ public class HttpInputTests extends ESTestCase {
         assertThat(result.payload().data().get("_value").toString(), equalTo(notJson));
     }
 
-
-    @Test
     public void testParser() throws Exception {
         final HttpMethod httpMethod = rarely() ? null : randomFrom(HttpMethod.values());
         Scheme scheme = randomFrom(Scheme.HTTP, Scheme.HTTPS, null);
@@ -254,7 +248,6 @@ public class HttpInputTests extends ESTestCase {
         }
     }
 
-    @Test(expected = IllegalArgumentException.class)
     public void testParser_invalidHttpMethod() throws Exception {
         XContentBuilder builder = jsonBuilder().startObject()
                 .startObject("request")
@@ -264,7 +257,11 @@ public class HttpInputTests extends ESTestCase {
                 .endObject();
         XContentParser parser = XContentHelper.createParser(builder.bytes());
         parser.nextToken();
-        httpParser.parseInput("_id", parser);
+        try {
+            httpParser.parseInput("_id", parser);
+            fail("Expected IllegalArgumentException");
+        } catch (IllegalArgumentException e) {
+            assertThat(e.getMessage(), is("unsupported http method [_METHOD]"));
+        }
     }
-
 }

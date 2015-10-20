@@ -17,6 +17,7 @@
 
 package org.elasticsearch.watcher.input.http;
 
+import org.apache.lucene.util.LuceneTestCase.AwaitsFix;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.support.IndicesOptions;
 import org.elasticsearch.common.settings.Settings;
@@ -32,7 +33,6 @@ import org.elasticsearch.watcher.support.xcontent.XContentSource;
 import org.elasticsearch.watcher.test.AbstractWatcherIntegrationTestCase;
 import org.elasticsearch.watcher.transport.actions.put.PutWatchResponse;
 import org.elasticsearch.watcher.trigger.schedule.IntervalSchedule;
-import org.junit.Test;
 
 import java.net.InetSocketAddress;
 
@@ -49,11 +49,8 @@ import static org.elasticsearch.watcher.trigger.TriggerBuilders.schedule;
 import static org.elasticsearch.watcher.trigger.schedule.Schedules.interval;
 import static org.hamcrest.Matchers.equalTo;
 
-import org.apache.lucene.util.LuceneTestCase.AwaitsFix;
-
 @AwaitsFix(bugUrl = "https://github.com/elastic/x-plugins/issues/724")
 public class HttpInputIntegrationTests extends AbstractWatcherIntegrationTestCase {
-
     @Override
     protected Settings nodeSettings(int nodeOrdinal) {
         return Settings.builder()
@@ -62,7 +59,6 @@ public class HttpInputIntegrationTests extends AbstractWatcherIntegrationTestCas
                 .build();
     }
 
-    @Test
     @TestLogging("watcher.support.http:TRACE")
     public void testHttpInput() throws Exception {
         createIndex("index");
@@ -87,8 +83,7 @@ public class HttpInputIntegrationTests extends AbstractWatcherIntegrationTestCas
         assertWatchWithMinimumPerformedActionsCount("_name", 1, false);
     }
 
-    @Test
-    public void testHttpInput_clusterStats() throws Exception {
+    public void testHttpInputClusterStats() throws Exception {
         InetSocketAddress address = internalCluster().httpAddresses()[0];
         PutWatchResponse putWatchResponse = watcherClient().preparePutWatch("_name")
                 .setSource(watchBuilder()
@@ -108,7 +103,6 @@ public class HttpInputIntegrationTests extends AbstractWatcherIntegrationTestCas
         assertWatchWithMinimumPerformedActionsCount("_name", 1, false);
     }
 
-    @Test
     @TestLogging("watcher.support.http:TRACE")
     public void testInputFiltering() throws Exception {
         WatcherClient watcherClient = watcherClient();
@@ -165,5 +159,4 @@ public class HttpInputIntegrationTests extends AbstractWatcherIntegrationTestCas
         XContentSource source = xContentSource(searchResponse.getHits().getAt(0).getSourceRef());
         assertThat(source.getValue("result.input.payload.hits.total"), equalTo((Object) 1));
     }
-
 }

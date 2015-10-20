@@ -21,7 +21,6 @@ import org.elasticsearch.ElasticsearchSecurityException;
 import org.elasticsearch.shield.authc.support.Hasher;
 import org.elasticsearch.shield.authc.support.SecuredString;
 import org.elasticsearch.test.ShieldIntegTestCase;
-import org.junit.Test;
 
 import static org.elasticsearch.shield.authc.support.UsernamePasswordToken.BASIC_AUTH_HEADER;
 import static org.elasticsearch.shield.authc.support.UsernamePasswordToken.basicAuthHeaderValue;
@@ -29,7 +28,6 @@ import static org.elasticsearch.test.ShieldTestsUtils.assertAuthorizationExcepti
 import static org.hamcrest.CoreMatchers.containsString;
 
 public class AnalyzeTests extends ShieldIntegTestCase {
-
     protected static final String USERS_PASSWD_HASHED = new String(Hasher.BCRYPT.hash(new SecuredString("test123".toCharArray())));
 
     @Override
@@ -58,7 +56,6 @@ public class AnalyzeTests extends ShieldIntegTestCase {
                 "    - cluster:admin/analyze\n";
     }
 
-    @Test
     public void testAnalyzeWithIndices() {
         //this test tries to execute different analyze api variants from a user that has analyze privileges only on a specific index namespace
 
@@ -86,7 +83,6 @@ public class AnalyzeTests extends ShieldIntegTestCase {
         }
     }
 
-    @Test
     public void testAnalyzeWithoutIndices() {
         //this test tries to execute different analyze api variants from a user that has analyze privileges only at cluster level
 

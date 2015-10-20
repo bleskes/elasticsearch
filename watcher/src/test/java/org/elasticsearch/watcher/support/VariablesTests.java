@@ -25,7 +25,6 @@ import org.elasticsearch.watcher.trigger.TriggerEvent;
 import org.elasticsearch.watcher.trigger.schedule.ScheduleTriggerEvent;
 import org.elasticsearch.watcher.watch.Payload;
 import org.joda.time.DateTime;
-import org.junit.Test;
 
 import java.util.Map;
 
@@ -40,8 +39,6 @@ import static org.joda.time.DateTimeZone.UTC;
  *
  */
 public class VariablesTests extends ESTestCase {
-
-    @Test
     public void testCreateCtxModel() throws Exception {
         DateTime scheduledTime = DateTime.now(UTC);
         DateTime triggeredTime = scheduledTime.plusMillis(50);

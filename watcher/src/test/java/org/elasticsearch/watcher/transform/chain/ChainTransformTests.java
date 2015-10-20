@@ -29,7 +29,6 @@ import org.elasticsearch.watcher.transform.Transform;
 import org.elasticsearch.watcher.transform.TransformFactory;
 import org.elasticsearch.watcher.transform.TransformRegistry;
 import org.elasticsearch.watcher.watch.Payload;
-import org.junit.Test;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -52,8 +51,6 @@ import static org.mockito.Mockito.mock;
  *
  */
 public class ChainTransformTests extends ESTestCase {
-
-    @Test
     public void testExecute() throws Exception {
         ChainTransform transform = new ChainTransform(
                 new NamedExecutableTransform.Transform("name1"),
@@ -93,8 +90,7 @@ public class ChainTransformTests extends ESTestCase {
         assertThat(names, contains("name1", "name2", "name3"));
     }
 
-    @Test
-    public void testExecute_Failure() throws Exception {
+    public void testExecuteFailure() throws Exception {
         ChainTransform transform = new ChainTransform(
                 new NamedExecutableTransform.Transform("name1"),
                 new NamedExecutableTransform.Transform("name2"),
@@ -126,7 +122,6 @@ public class ChainTransformTests extends ESTestCase {
 
     }
 
-    @Test
     public void testParser() throws Exception {
         TransformRegistry registry = new TransformRegistry(singletonMap("named", new NamedExecutableTransform.Factory(logger)));
 
@@ -152,7 +147,6 @@ public class ChainTransformTests extends ESTestCase {
     }
 
     private static class NamedExecutableTransform extends ExecutableTransform<NamedExecutableTransform.Transform, NamedExecutableTransform.Result> {
-
         private static final String TYPE = "named";
 
         public NamedExecutableTransform(String name) {
@@ -209,7 +203,6 @@ public class ChainTransformTests extends ESTestCase {
         }
 
         public static class Factory extends TransformFactory<Transform, Result, NamedExecutableTransform> {
-
             public Factory(ESLogger transformLogger) {
                 super(transformLogger);
             }
@@ -243,7 +236,6 @@ public class ChainTransformTests extends ESTestCase {
     }
 
     private static class FailingExecutableTransform extends ExecutableTransform<FailingExecutableTransform.Transform, FailingExecutableTransform.Result> {
-
         private static final String TYPE = "throwing";
 
         public FailingExecutableTransform(ESLogger logger) {
@@ -256,7 +248,6 @@ public class ChainTransformTests extends ESTestCase {
         }
 
         public static class Transform implements org.elasticsearch.watcher.transform.Transform {
-
             @Override
             public String type() {
                 return TYPE;
@@ -269,7 +260,6 @@ public class ChainTransformTests extends ESTestCase {
         }
 
         public static class Result extends Transform.Result {
-
             public Result(String type) {
                 super(type, new Exception("_error"));
             }
@@ -281,7 +271,6 @@ public class ChainTransformTests extends ESTestCase {
         }
 
         public static class Factory extends TransformFactory<Transform, Result, FailingExecutableTransform> {
-
             public Factory(ESLogger transformLogger) {
                 super(transformLogger);
             }

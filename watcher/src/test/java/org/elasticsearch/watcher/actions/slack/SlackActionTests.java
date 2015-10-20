@@ -41,7 +41,6 @@ import org.elasticsearch.watcher.watch.Payload;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.Before;
-import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -67,7 +66,6 @@ import static org.mockito.Mockito.when;
  *
  */
 public class SlackActionTests extends ESTestCase {
-
     private SlackService service;
 
     @Before
@@ -75,7 +73,6 @@ public class SlackActionTests extends ESTestCase {
         service = mock(SlackService.class);
     }
 
-    @Test
     public void testExecute() throws Exception {
         final String accountName = "account1";
 
@@ -159,9 +156,7 @@ public class SlackActionTests extends ESTestCase {
         assertThat(((SlackAction.Result.Executed) result).sentMessages(), sameInstance(sentMessages));
     }
 
-    @Test
     public void testParser() throws Exception {
-
         XContentBuilder builder = jsonBuilder().startObject();
 
         String accountName = randomAsciiOfLength(10);
@@ -184,10 +179,7 @@ public class SlackActionTests extends ESTestCase {
         assertThat(action.message, is(message));
     }
 
-
-    @Test
-    public void testParser_SelfGenerated() throws Exception {
-
+    public void testParserSelfGenerated() throws Exception {
         String accountName = randomBoolean() ? randomAsciiOfLength(10) : null;
         SlackMessage.Template message = SlackMessageTests.createRandomTemplate();
 
@@ -206,11 +198,15 @@ public class SlackActionTests extends ESTestCase {
         assertThat(parsedAction, is(action));
     }
 
-    @Test(expected = ElasticsearchParseException.class)
-    public void testParser_Invalid() throws Exception {
+    public void testParserInvalid() throws Exception {
         XContentBuilder builder = jsonBuilder().startObject().field("unknown_field", "value");
         XContentParser parser = JsonXContent.jsonXContent.createParser(builder.bytes());
         parser.nextToken();
-        SlackAction.parse("_watch", "_action", parser);
+        try {
+            SlackAction.parse("_watch", "_action", parser);
+            fail("Expected ElasticsearchParseException");
+        } catch (ElasticsearchParseException e) {
+            assertThat(e.getMessage(), is("failed to parse [slack] action [_watch/_action]. unexpected token [VALUE_STRING]"));
+        }
     }
 }

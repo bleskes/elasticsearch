@@ -36,7 +36,6 @@ import org.elasticsearch.test.rest.FakeRestRequest;
 import org.elasticsearch.transport.TransportMessage;
 import org.junit.Before;
 import org.junit.Rule;
-import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
 import java.util.Arrays;
@@ -44,8 +43,23 @@ import java.util.Collections;
 
 import static org.elasticsearch.shield.support.Exceptions.authenticationError;
 import static org.elasticsearch.test.ShieldTestsUtils.assertAuthenticationException;
-import static org.hamcrest.Matchers.*;
-import static org.mockito.Mockito.*;
+import static org.hamcrest.Matchers.arrayContaining;
+import static org.hamcrest.Matchers.arrayContainingInAnyOrder;
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
+import static org.hamcrest.Matchers.sameInstance;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.when;
 
 
 /**
@@ -96,8 +110,8 @@ public class InternalAuthenticationServiceTests extends ESTestCase {
         service = new InternalAuthenticationService(Settings.EMPTY, realms, auditTrail, cryptoService, anonymousService, new DefaultAuthenticationFailureHandler());
     }
 
-    @Test @SuppressWarnings("unchecked")
-    public void testToken_FirstMissing_SecondFound() throws Exception {
+    @SuppressWarnings("unchecked")
+    public void testTokenFirstMissingSecondFound() throws Exception {
         when(firstRealm.token(message)).thenReturn(null);
         when(secondRealm.token(message)).thenReturn(token);
 
@@ -107,16 +121,14 @@ public class InternalAuthenticationServiceTests extends ESTestCase {
         verifyZeroInteractions(auditTrail);
     }
 
-    @Test
-    public void testToken_Missing() throws Exception {
+    public void testTokenMissing() throws Exception {
         AuthenticationToken token = service.token("_action", message);
         assertThat(token, nullValue());
         verifyNoMoreInteractions(auditTrail);
         assertThat(message.getContext().get(InternalAuthenticationService.TOKEN_KEY), nullValue());
     }
 
-    @Test @SuppressWarnings("unchecked")
-    public void testToken_Cached() throws Exception {
+    public void testTokenCached() throws Exception {
         message.putInContext(InternalAuthenticationService.TOKEN_KEY, token);
         AuthenticationToken result = service.token("_action", message);
         assertThat(result, notNullValue());
@@ -128,8 +140,8 @@ public class InternalAuthenticationServiceTests extends ESTestCase {
         assertThat(message.getContext().get(InternalAuthenticationService.TOKEN_KEY), is((Object) token));
     }
 
-    @Test @SuppressWarnings("unchecked")
-    public void testAuthenticate_BothSupport_SecondSucceeds() throws Exception {
+    @SuppressWarnings("unchecked")
+    public void testAuthenticateBothSupportSecondSucceeds() throws Exception {
         User user = new User.Simple("_username", new String[] { "r1" });
         when(firstRealm.supports(token)).thenReturn(true);
         when(firstRealm.authenticate(token)).thenReturn(null); // first fails
@@ -150,8 +162,8 @@ public class InternalAuthenticationServiceTests extends ESTestCase {
         assertThat(message.getHeader(InternalAuthenticationService.USER_KEY), equalTo((Object) "_encoded_user"));
     }
 
-    @Test @SuppressWarnings("unchecked")
-    public void testAuthenticate_FirstNotSupporting_SecondSucceeds() throws Exception {
+    @SuppressWarnings("unchecked")
+    public void testAuthenticateFirstNotSupportingSecondSucceeds() throws Exception {
         User user = new User.Simple("_username", new String[] { "r1" });
         when(firstRealm.supports(token)).thenReturn(false);
         when(secondRealm.supports(token)).thenReturn(true);
@@ -172,8 +184,7 @@ public class InternalAuthenticationServiceTests extends ESTestCase {
         assertThat(message.getHeader(InternalAuthenticationService.USER_KEY), equalTo((Object) "_encoded_user"));
     }
 
-    @Test @SuppressWarnings("unchecked")
-    public void testAuthenticate_Cached() throws Exception {
+    public void testAuthenticateCached() throws Exception {
         User user = new User.Simple("_username", new String[] { "r1" });
         message.putInContext(InternalAuthenticationService.USER_KEY, user);
         User result = service.authenticate("_action", message, null);
@@ -187,8 +198,7 @@ public class InternalAuthenticationServiceTests extends ESTestCase {
         assertThat(message.getContext().get(InternalAuthenticationService.USER_KEY), is((Object) user));
     }
 
-    @Test
-    public void testAuthenticate_nonExistentRestRequestUserThrowsAuthenticationException() throws Exception {
+    public void testAuthenticateNonExistentRestRequestUserThrowsAuthenticationException() throws Exception {
         when(firstRealm.token(restRequest)).thenReturn(new UsernamePasswordToken("idonotexist", new SecuredString("passwd".toCharArray())));
         try {
             service.authenticate(restRequest);
@@ -198,8 +208,7 @@ public class InternalAuthenticationServiceTests extends ESTestCase {
         }
     }
 
-    @Test
-    public void testToken_Rest_Exists() throws Exception {
+    public void testTokenRestExists() throws Exception {
         AuthenticationToken token = mock(AuthenticationToken.class);
         when(firstRealm.token(restRequest)).thenReturn(null);
         when(secondRealm.token(restRequest)).thenReturn(token);
@@ -208,15 +217,13 @@ public class InternalAuthenticationServiceTests extends ESTestCase {
         assertThat(restRequest.getFromContext(InternalAuthenticationService.TOKEN_KEY), equalTo((Object) token));
     }
 
-    @Test
-    public void testToken_Rest_Missing() throws Exception {
+    public void testTokenRestMissing() throws Exception {
         when(firstRealm.token(restRequest)).thenReturn(null);
         when(secondRealm.token(restRequest)).thenReturn(null);
         AuthenticationToken token = service.token(restRequest);
         assertThat(token, nullValue());
     }
 
-    @Test
     public void testEncodeDecodeUser() throws Exception {
         User user = new User.Simple("username", new String[] { "r1", "r2", "r3" });
         String text = InternalAuthenticationService.encodeUser(user, null);
@@ -228,7 +235,6 @@ public class InternalAuthenticationServiceTests extends ESTestCase {
         assertThat(User.SYSTEM, sameInstance(user2));
     }
 
-    @Test
     public void testUserHeader() throws Exception {
         User user = new User.Simple("_username", new String[] { "r1" });
         when(firstRealm.token(message)).thenReturn(token);
@@ -245,8 +251,7 @@ public class InternalAuthenticationServiceTests extends ESTestCase {
         assertThat(userStr, equalTo("_signed_user"));
     }
 
-    @Test
-    public void testAuthenticate_Transport_Anonymous() throws Exception {
+    public void testAuthenticateTransportAnonymous() throws Exception {
         when(firstRealm.token(message)).thenReturn(null);
         when(secondRealm.token(message)).thenReturn(null);
         try {
@@ -259,8 +264,7 @@ public class InternalAuthenticationServiceTests extends ESTestCase {
         verify(auditTrail).anonymousAccessDenied("_action", message);
     }
 
-    @Test
-    public void testAuthenticate_Rest_Anonymous()  throws Exception {
+    public void testAuthenticateRestAnonymous()  throws Exception {
         when(firstRealm.token(restRequest)).thenReturn(null);
         when(secondRealm.token(restRequest)).thenReturn(null);
         try {
@@ -273,8 +277,7 @@ public class InternalAuthenticationServiceTests extends ESTestCase {
         verify(auditTrail).anonymousAccessDenied(restRequest);
     }
 
-    @Test
-    public void testAuthenticate_Transport_Fallback() throws Exception {
+    public void testAuthenticateTransportFallback() throws Exception {
         when(firstRealm.token(message)).thenReturn(null);
         when(secondRealm.token(message)).thenReturn(null);
         User.Simple user1 = new User.Simple("username", new String[] { "r1", "r2" });
@@ -285,8 +288,7 @@ public class InternalAuthenticationServiceTests extends ESTestCase {
         assertThat(message.getHeader(InternalAuthenticationService.USER_KEY), equalTo((Object) "_signed_user"));
     }
 
-    @Test
-    public void testAuthenticate_Transport_Success_NoFallback() throws Exception {
+    public void testAuthenticateTransportSuccessNoFallback() throws Exception {
         User.Simple user1 = new User.Simple("username", new String[] { "r1", "r2" });
         when(firstRealm.token(message)).thenReturn(token);
         when(firstRealm.supports(token)).thenReturn(true);
@@ -298,8 +300,7 @@ public class InternalAuthenticationServiceTests extends ESTestCase {
         assertThat(message.getHeader(InternalAuthenticationService.USER_KEY), equalTo((Object) "_signed_user"));
     }
 
-    @Test
-    public void testAuthenticate_Transport_Success_WithFallback() throws Exception {
+    public void testAuthenticateTransportSuccessWithFallback() throws Exception {
         User.Simple user1 = new User.Simple("username", new String[] { "r1", "r2" });
         when(firstRealm.token(message)).thenReturn(token);
         when(firstRealm.supports(token)).thenReturn(true);
@@ -311,8 +312,7 @@ public class InternalAuthenticationServiceTests extends ESTestCase {
         assertThat(message.getHeader(InternalAuthenticationService.USER_KEY), equalTo((Object) "_signed_user"));
     }
 
-    @Test
-    public void testAuthenticate_Rest_Success() throws Exception {
+    public void testAuthenticateRestSuccess() throws Exception {
         User.Simple user1 = new User.Simple("username", new String[] { "r1", "r2" });
         when(firstRealm.token(restRequest)).thenReturn(token);
         when(firstRealm.supports(token)).thenReturn(true);
@@ -322,8 +322,7 @@ public class InternalAuthenticationServiceTests extends ESTestCase {
         assertThat(restRequest.getFromContext(InternalAuthenticationService.USER_KEY), sameInstance((Object) user2));
     }
 
-    @Test
-    public void testAutheticate_Transport_ContextAndHeader() throws Exception {
+    public void testAutheticateTransportContextAndHeader() throws Exception {
         User user1 = new User.Simple("username", new String[] { "r1", "r2" });
         when(firstRealm.token(message)).thenReturn(token);
         when(firstRealm.supports(token)).thenReturn(true);
@@ -357,8 +356,7 @@ public class InternalAuthenticationServiceTests extends ESTestCase {
         verifyZeroInteractions(firstRealm);
     }
 
-    @Test
-    public void testAutheticate_Transport_ContextAndHeader_NoSigning() throws Exception {
+    public void testAutheticateTransportContextAndHeaderNoSigning() throws Exception {
         Settings settings = Settings.builder().put(InternalAuthenticationService.SETTING_SIGN_USER_HEADER, false).build();
         service = new InternalAuthenticationService(settings, realms, auditTrail, cryptoService, anonymousService, new DefaultAuthenticationFailureHandler());
 
@@ -395,7 +393,6 @@ public class InternalAuthenticationServiceTests extends ESTestCase {
         verifyZeroInteractions(cryptoService);
     }
 
-    @Test
     public void testAuthenticateTamperedUser() throws Exception {
         InternalMessage message = new InternalMessage();
         message.putHeader(InternalAuthenticationService.USER_KEY, "_signed_user");
@@ -410,8 +407,7 @@ public class InternalAuthenticationServiceTests extends ESTestCase {
         }
     }
 
-    @Test
-    public void testAttachIfMissing_Missing() throws Exception {
+    public void testAttachIfMissingMissing() throws Exception {
         User user = new User.Simple("username", new String[] { "r1", "r2" });
         assertThat(message.getFromContext(InternalAuthenticationService.USER_KEY), nullValue());
         assertThat(message.getHeader(InternalAuthenticationService.USER_KEY), nullValue());
@@ -430,8 +426,7 @@ public class InternalAuthenticationServiceTests extends ESTestCase {
         assertThat(message.getHeader(InternalAuthenticationService.USER_KEY), equalTo((Object) "_signed_user"));
     }
 
-    @Test
-    public void testAttachIfMissing_Exists() throws Exception {
+    public void testAttachIfMissingExists() throws Exception {
         User user = new User.Simple("username", new String[] { "r1", "r2" });
         message.putInContext(InternalAuthenticationService.USER_KEY, user);
         message.putHeader(InternalAuthenticationService.USER_KEY, "_signed_user");
@@ -440,8 +435,7 @@ public class InternalAuthenticationServiceTests extends ESTestCase {
         assertThat(message.getHeader(InternalAuthenticationService.USER_KEY), equalTo((Object) "_signed_user"));
     }
 
-    @Test
-    public void testAnonymousUser_Rest() throws Exception {
+    public void testAnonymousUserRest() throws Exception {
         String username = randomBoolean() ? AnonymousService.ANONYMOUS_USERNAME : "user1";
         Settings.Builder builder = Settings.builder()
                 .putArray("shield.authc.anonymous.roles", "r1", "r2", "r3");
@@ -462,8 +456,7 @@ public class InternalAuthenticationServiceTests extends ESTestCase {
         assertThat(user.roles(), arrayContainingInAnyOrder("r1", "r2", "r3"));
     }
 
-    @Test
-    public void testAnonymousUser_Transport_NoDefaultUser() throws Exception {
+    public void testAnonymousUserTransportNoDefaultUser() throws Exception {
         Settings settings = Settings.builder()
                 .putArray("shield.authc.anonymous.roles", "r1", "r2", "r3")
                 .build();
@@ -477,8 +470,7 @@ public class InternalAuthenticationServiceTests extends ESTestCase {
         assertThat(user.roles(), arrayContainingInAnyOrder("r1", "r2", "r3"));
     }
 
-    @Test
-    public void testAnonymousUser_Transport_WithDefaultUser() throws Exception {
+    public void testAnonymousUserTransportWithDefaultUser() throws Exception {
         Settings settings = Settings.builder()
                 .putArray("shield.authc.anonymous.roles", "r1", "r2", "r3")
                 .build();
@@ -491,7 +483,6 @@ public class InternalAuthenticationServiceTests extends ESTestCase {
         assertThat(user, sameInstance(User.SYSTEM));
     }
 
-    @Test
     public void testRealmTokenThrowingException() throws Exception {
         when(firstRealm.token(message)).thenThrow(authenticationError("realm doesn't like tokens"));
         try {
@@ -503,8 +494,7 @@ public class InternalAuthenticationServiceTests extends ESTestCase {
         }
     }
 
-    @Test
-    public void testRealmTokenThrowingException_Rest() throws Exception {
+    public void testRealmTokenThrowingExceptionRest() throws Exception {
         when(firstRealm.token(restRequest)).thenThrow(authenticationError("realm doesn't like tokens"));
         try {
             service.authenticate(restRequest);
@@ -515,7 +505,6 @@ public class InternalAuthenticationServiceTests extends ESTestCase {
         }
     }
 
-    @Test
     public void testRealmSupportsMethodThrowingException() throws Exception {
         AuthenticationToken token = mock(AuthenticationToken.class);
         when(secondRealm.token(message)).thenReturn(token);
@@ -529,8 +518,7 @@ public class InternalAuthenticationServiceTests extends ESTestCase {
         }
     }
 
-    @Test
-    public void testRealmSupportsMethodThrowingException_Rest() throws Exception {
+    public void testRealmSupportsMethodThrowingExceptionRest() throws Exception {
         AuthenticationToken token = mock(AuthenticationToken.class);
         when(secondRealm.token(restRequest)).thenReturn(token);
         when(secondRealm.supports(token)).thenThrow(authenticationError("realm doesn't like supports"));
@@ -543,7 +531,6 @@ public class InternalAuthenticationServiceTests extends ESTestCase {
         }
     }
 
-    @Test
     public void testRealmAuthenticateThrowingException() throws Exception {
         AuthenticationToken token = mock(AuthenticationToken.class);
         when(secondRealm.token(message)).thenReturn(token);
@@ -558,8 +545,7 @@ public class InternalAuthenticationServiceTests extends ESTestCase {
         }
     }
 
-    @Test
-    public void testRealmAuthenticateThrowingException_Rest() throws Exception {
+    public void testRealmAuthenticateThrowingExceptionRest() throws Exception {
         AuthenticationToken token = mock(AuthenticationToken.class);
         when(secondRealm.token(restRequest)).thenReturn(token);
         when(secondRealm.supports(token)).thenReturn(true);
@@ -573,7 +559,6 @@ public class InternalAuthenticationServiceTests extends ESTestCase {
         }
     }
 
-    @Test
     public void testRealmLookupThrowingException() throws Exception {
         AuthenticationToken token = mock(AuthenticationToken.class);
         message.putHeader(InternalAuthenticationService.RUN_AS_USER_HEADER, "run_as");
@@ -592,8 +577,7 @@ public class InternalAuthenticationServiceTests extends ESTestCase {
         }
     }
 
-    @Test
-    public void testRealmLookupThrowingException_Rest() throws Exception {
+    public void testRealmLookupThrowingExceptionRest() throws Exception {
         AuthenticationToken token = mock(AuthenticationToken.class);
         restRequest = new FakeRestRequest(Collections.singletonMap(InternalAuthenticationService.RUN_AS_USER_HEADER, "run_as"), Collections.<String, String>emptyMap());
         when(secondRealm.token(restRequest)).thenReturn(token);
@@ -611,7 +595,6 @@ public class InternalAuthenticationServiceTests extends ESTestCase {
         }
     }
 
-    @Test
     public void testRunAsLookupSameRealm() throws Exception {
         AuthenticationToken token = mock(AuthenticationToken.class);
         message.putHeader(InternalAuthenticationService.RUN_AS_USER_HEADER, "run_as");
@@ -632,8 +615,7 @@ public class InternalAuthenticationServiceTests extends ESTestCase {
         assertThat(message.getContext().get(InternalAuthenticationService.USER_KEY), sameInstance((Object) authenticated));
     }
 
-    @Test
-    public void testRunAsLookupSameRealm_Rest() throws Exception {
+    public void testRunAsLookupSameRealmRest() throws Exception {
         AuthenticationToken token = mock(AuthenticationToken.class);
         restRequest = new FakeRestRequest(Collections.singletonMap(InternalAuthenticationService.RUN_AS_USER_HEADER, "run_as"), Collections.<String, String>emptyMap());
         when(secondRealm.token(restRequest)).thenReturn(token);
@@ -653,7 +635,6 @@ public class InternalAuthenticationServiceTests extends ESTestCase {
         assertThat(restRequest.getContext().get(InternalAuthenticationService.USER_KEY), sameInstance((Object) authenticated));
     }
 
-    @Test
     public void testRunAsLookupDifferentRealm() throws Exception {
         AuthenticationToken token = mock(AuthenticationToken.class);
         message.putHeader(InternalAuthenticationService.RUN_AS_USER_HEADER, "run_as");
@@ -675,8 +656,7 @@ public class InternalAuthenticationServiceTests extends ESTestCase {
         assertThat(message.getContext().get(InternalAuthenticationService.USER_KEY), sameInstance((Object) authenticated));
     }
 
-    @Test
-    public void testRunAsLookupDifferentRealm_Rest() throws Exception {
+    public void testRunAsLookupDifferentRealmRest() throws Exception {
         AuthenticationToken token = mock(AuthenticationToken.class);
         restRequest = new FakeRestRequest(Collections.singletonMap(InternalAuthenticationService.RUN_AS_USER_HEADER, "run_as"), Collections.<String, String>emptyMap());
         when(secondRealm.token(restRequest)).thenReturn(token);
@@ -696,8 +676,7 @@ public class InternalAuthenticationServiceTests extends ESTestCase {
         assertThat(restRequest.getContext().get(InternalAuthenticationService.USER_KEY), sameInstance((Object) authenticated));
     }
 
-    @Test
-    public void testRunAsWithEmptyRunAsUsername_Rest() throws Exception {
+    public void testRunAsWithEmptyRunAsUsernameRest() throws Exception {
         AuthenticationToken token = mock(AuthenticationToken.class);
         restRequest = new FakeRestRequest(Collections.singletonMap(InternalAuthenticationService.RUN_AS_USER_HEADER, ""), Collections.<String, String>emptyMap());
         when(secondRealm.token(restRequest)).thenReturn(token);
@@ -714,7 +693,6 @@ public class InternalAuthenticationServiceTests extends ESTestCase {
         }
     }
 
-    @Test
     public void testRunAsWithEmptyRunAsUsername() throws Exception {
         AuthenticationToken token = mock(AuthenticationToken.class);
         message.putHeader(InternalAuthenticationService.RUN_AS_USER_HEADER, "");
@@ -734,5 +712,4 @@ public class InternalAuthenticationServiceTests extends ESTestCase {
 
     private static class InternalMessage extends TransportMessage<InternalMessage> {
     }
-
 }

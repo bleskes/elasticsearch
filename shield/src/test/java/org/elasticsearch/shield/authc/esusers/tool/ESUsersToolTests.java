@@ -26,7 +26,6 @@ import org.elasticsearch.env.Environment;
 import org.elasticsearch.shield.authc.esusers.FileUserRolesStore;
 import org.elasticsearch.shield.authc.support.Hasher;
 import org.elasticsearch.shield.authc.support.SecuredStringTests;
-import org.junit.Test;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -37,15 +36,27 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.allOf;
+import static org.hamcrest.Matchers.arrayContaining;
+import static org.hamcrest.Matchers.arrayContainingInAnyOrder;
+import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.greaterThanOrEqualTo;
+import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.hasItems;
+import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.instanceOf;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.startsWith;
 
 /**
  *
  */
 public class ESUsersToolTests extends CliToolTestCase {
-
-    @Test
-    public void testUseradd_Parse_AllOptions() throws Exception {
+    public void testUseraddParseAllOptions() throws Exception {
         ESUsersTool tool = new ESUsersTool();
         CliTool.Command command = tool.parse("useradd", args("username -p changeme -r r1,r2,r3"));
         assertThat(command, instanceOf(ESUsersTool.Useradd.class));
@@ -56,7 +67,6 @@ public class ESUsersToolTests extends CliToolTestCase {
         assertThat(cmd.roles, arrayContaining("r1", "r2", "r3"));
     }
 
-    @Test
     public void testUseraddExtraArgs() throws Exception {
         ESUsersTool tool = new ESUsersTool();
         CliTool.Command command = tool.parse("useradd", args("username -p changeme -r r1,r2,r3 r4 r6"));
@@ -65,8 +75,7 @@ public class ESUsersToolTests extends CliToolTestCase {
         assertThat(exit.status(), is(CliTool.ExitStatus.USAGE));
     }
 
-    @Test
-    public void testUseradd_Parse_InvalidUsername() throws Exception {
+    public void testUseraddParseInvalidUsername() throws Exception {
         ESUsersTool tool = new ESUsersTool();
         CliTool.Command command = tool.parse("useradd", args("$34dkl -p changeme -r r1,r2,r3"));
         assertThat(command, instanceOf(CliTool.Command.Exit.class));
@@ -74,7 +83,6 @@ public class ESUsersToolTests extends CliToolTestCase {
         assertThat(exit.status(), is(CliTool.ExitStatus.DATA_ERROR));
     }
 
-    @Test
     public void testUseradd_Parse_InvalidRoleName() throws Exception {
         ESUsersTool tool = new ESUsersTool();
         CliTool.Command command = tool.parse("useradd", args("username -p changeme -r $343,r2,r3"));
@@ -83,8 +91,7 @@ public class ESUsersToolTests extends CliToolTestCase {
         assertThat(exit.status(), is(CliTool.ExitStatus.DATA_ERROR));
     }
 
-    @Test
-    public void testUseradd_Parse_InvalidPassword() throws Exception {
+    public void testUseraddParseInvalidPassword() throws Exception {
         ESUsersTool tool = new ESUsersTool();
         CliTool.Command command = tool.parse("useradd", args("username -p 123 -r r1,r2,r3"));
         assertThat(command, instanceOf(CliTool.Command.Exit.class));
@@ -92,16 +99,14 @@ public class ESUsersToolTests extends CliToolTestCase {
         assertThat(exit.status(), is(CliTool.ExitStatus.DATA_ERROR));
     }
 
-    @Test
-    public void testUseradd_Parse_NoUsername() throws Exception {
+    public void testUseraddParseNoUsername() throws Exception {
         ESUsersTool tool = new ESUsersTool();
         CliTool.Command command = tool.parse("useradd", args("-p test123"));
         assertThat(command, instanceOf(CliTool.Command.Exit.class));
         assertThat(((CliTool.Command.Exit) command).status(), is(CliTool.ExitStatus.USAGE));
     }
 
-    @Test
-    public void testUseradd_Parse_NoPassword() throws Exception {
+    public void testUseraddParseNoPassword() throws Exception {
         ESUsersTool tool = new ESUsersTool(new MockTerminal() {
             @Override
             public char[] readSecret(String text, Object... args) {
@@ -117,8 +122,7 @@ public class ESUsersToolTests extends CliToolTestCase {
         assertThat(cmd.roles.length, is(0));
     }
 
-    @Test
-    public void testUseradd_Cmd_Create() throws Exception {
+    public void testUseraddCmdCreate() throws Exception {
         Path userFile = createTempFile();
         Path userRolesFile = createTempFile();
         Settings settings = Settings.builder()
@@ -149,8 +153,7 @@ public class ESUsersToolTests extends CliToolTestCase {
         assertThat(lines, containsInAnyOrder("r1:user1", "r2:user1"));
     }
 
-    @Test
-    public void testUseradd_Cmd_Append() throws Exception {
+    public void testUseraddCmdAppend() throws Exception {
         Path userFile = writeFile("user2:hash2");
         Path userRolesFile = writeFile("r3:user2\nr4:user2");
         Settings settings = Settings.builder()
@@ -186,8 +189,7 @@ public class ESUsersToolTests extends CliToolTestCase {
         assertThat(lines, containsInAnyOrder("r1:user1", "r2:user1", "r3:user2", "r4:user2"));
     }
 
-    @Test
-    public void testUseradd_Cmd_AddingUserWithoutRolesDoesNotAddEmptyRole() throws Exception {
+    public void testUseraddCmdAddingUserWithoutRolesDoesNotAddEmptyRole() throws Exception {
         Path userFile = writeFile("user2:hash2");
         Path userRolesFile = writeFile("r3:user2\nr4:user2");
         Settings settings = Settings.builder()
@@ -208,8 +210,7 @@ public class ESUsersToolTests extends CliToolTestCase {
         assertThat(lines, not(hasItem(containsString("user1"))));
     }
 
-    @Test
-    public void testUseradd_Cmd_Append_UserAlreadyExists() throws Exception {
+    public void testUseraddCmdAppendUserAlreadyExists() throws Exception {
         Path userFile = writeFile("user1:hash1");
         Path userRolesFile = createTempFile();
         Settings settings = Settings.builder()
@@ -225,9 +226,7 @@ public class ESUsersToolTests extends CliToolTestCase {
         assertThat(status, is(CliTool.ExitStatus.CODE_ERROR));
     }
 
-
-    @Test
-    public void testUseradd_CustomRole() throws Exception {
+    public void testUseraddCustomRole() throws Exception {
         Path usersFile = createTempFile();
         Path userRolesFile = createTempFile();
         Path rolesFile = writeFile("plugin_admin:\n" +
@@ -248,8 +247,7 @@ public class ESUsersToolTests extends CliToolTestCase {
         assertThat(terminal.getTerminalOutput(), hasSize(0));
     }
 
-    @Test
-    public void testUseradd_NonExistantRole() throws Exception {
+    public void testUseraddNonExistantRole() throws Exception {
         Path usersFile = createTempFile();
         Path userRolesFile = createTempFile();
         Path rolesFile = writeFile("plugin_admin:\n" +
@@ -271,8 +269,7 @@ public class ESUsersToolTests extends CliToolTestCase {
         assertThat(terminal.getTerminalOutput().get(0), containsString("[plugin_admin_2]"));
     }
 
-    @Test
-    public void testUserdel_Parse() throws Exception {
+    public void testUserdelParse() throws Exception {
         ESUsersTool tool = new ESUsersTool();
         CliTool.Command command = tool.parse("userdel", args("username"));
         assertThat(command, instanceOf(ESUsersTool.Userdel.class));
@@ -280,8 +277,7 @@ public class ESUsersToolTests extends CliToolTestCase {
         assertThat(userdel.username, equalTo("username"));
     }
 
-    @Test
-    public void testUserdel_Parse_MissingUsername() throws Exception {
+    public void testUserdelParseMissingUsername() throws Exception {
         ESUsersTool tool = new ESUsersTool();
         CliTool.Command command = tool.parse("userdel", args(null));
         assertThat(command, instanceOf(ESUsersTool.Command.Exit.class));
@@ -289,8 +285,7 @@ public class ESUsersToolTests extends CliToolTestCase {
         assertThat(exit.status(), equalTo(CliTool.ExitStatus.USAGE));
     }
 
-    @Test
-    public void testUserdel_Parse_ExtraArgs() throws Exception {
+    public void testUserdelParseExtraArgs() throws Exception {
         ESUsersTool tool = new ESUsersTool();
         CliTool.Command command = tool.parse("userdel", args("user1 user2"));
         assertThat(command, instanceOf(ESUsersTool.Command.Exit.class));
@@ -298,8 +293,7 @@ public class ESUsersToolTests extends CliToolTestCase {
         assertThat(exit.status(), equalTo(CliTool.ExitStatus.USAGE));
     }
 
-    @Test
-    public void testUserdel_Cmd() throws Exception {
+    public void testUserdelCmd() throws Exception {
         Path userFile = writeFile("user1:hash2");
         Path userRolesFile = writeFile("r3:user1\nr4:user1");
         Settings settings = Settings.builder()
@@ -323,8 +317,7 @@ public class ESUsersToolTests extends CliToolTestCase {
         assertThat(lines.size(), is(0));
     }
 
-    @Test
-    public void testUserdel_Cmd_MissingUser() throws Exception {
+    public void testUserdelCmdMissingUser() throws Exception {
         Path userFile = writeFile("user1:hash2");
         Path userRolesFile = writeFile("r3:user1\nr4:user1");
         Settings settings = Settings.builder()
@@ -353,8 +346,7 @@ public class ESUsersToolTests extends CliToolTestCase {
         assertThat(lines, hasSize(2));
     }
 
-    @Test
-    public void testUserdel_Cmd_MissingFiles() throws Exception {
+    public void testUserdelCmdMissingFiles() throws Exception {
         Path dir = createTempDir();
         Path userFile = dir.resolve("users");
         Path userRolesFile = dir.resolve("users_roles");
@@ -374,8 +366,7 @@ public class ESUsersToolTests extends CliToolTestCase {
         assertThat(Files.exists(userRolesFile), is(false));
     }
 
-    @Test
-    public void testPasswd_Parse_AllOptions() throws Exception {
+    public void testPasswdParseAllOptions() throws Exception {
         ESUsersTool tool = new ESUsersTool();
         CliTool.Command command = tool.parse("passwd", args("user1 -p changeme"));
         assertThat(command, instanceOf(ESUsersTool.Passwd.class));
@@ -384,8 +375,7 @@ public class ESUsersToolTests extends CliToolTestCase {
         assertThat(new String(cmd.passwd.internalChars()), equalTo("changeme"));
     }
 
-    @Test
-    public void testPasswd_Parse_MissingUsername() throws Exception {
+    public void testPasswdParseMissingUsername() throws Exception {
         ESUsersTool tool = new ESUsersTool();
         CliTool.Command command = tool.parse("passwd", args("-p changeme"));
         assertThat(command, instanceOf(ESUsersTool.Command.Exit.class));
@@ -393,8 +383,7 @@ public class ESUsersToolTests extends CliToolTestCase {
         assertThat(cmd.status(), is(CliTool.ExitStatus.USAGE));
     }
 
-    @Test
-    public void testPasswd_Parse_ExtraArgs() throws Exception {
+    public void testPasswdParseExtraArgs() throws Exception {
         ESUsersTool tool = new ESUsersTool();
         CliTool.Command command = tool.parse("passwd", args("user1 user2 -p changeme"));
         assertThat(command, instanceOf(ESUsersTool.Command.Exit.class));
@@ -402,8 +391,7 @@ public class ESUsersToolTests extends CliToolTestCase {
         assertThat(cmd.status(), is(CliTool.ExitStatus.USAGE));
     }
 
-    @Test
-    public void testPasswd_Parse_MissingPassword() throws Exception {
+    public void testPasswdParseMissingPassword() throws Exception {
         final AtomicReference<Boolean> secretRequested = new AtomicReference<>(false);
         Terminal terminal = new MockTerminal() {
             @Override
@@ -421,8 +409,7 @@ public class ESUsersToolTests extends CliToolTestCase {
         assertThat(secretRequested.get(), is(true));
     }
 
-    @Test
-    public void testPasswd_Cmd() throws Exception {
+    public void testPasswdCmd() throws Exception {
         Path userFile = writeFile("user1:hash2");
         Settings settings = Settings.builder()
                 .put("shield.authc.realms.esusers.type", "esusers")
@@ -444,8 +431,7 @@ public class ESUsersToolTests extends CliToolTestCase {
         assertThat(Hasher.BCRYPT.verify(SecuredStringTests.build("changeme"), hash.toCharArray()), is(true));
     }
 
-    @Test
-    public void testPasswd_Cmd_UnknownUser() throws Exception {
+    public void testPasswdCmdUnknownUser() throws Exception {
         Path userFile = writeFile("user1:hash2");
         Settings settings = Settings.builder()
                 .put("shield.authc.realms.esusers.type", "esusers")
@@ -458,8 +444,7 @@ public class ESUsersToolTests extends CliToolTestCase {
         assertThat(status, is(CliTool.ExitStatus.NO_USER));
     }
 
-    @Test
-    public void testPasswd_Cmd_MissingFiles() throws Exception {
+    public void testPasswdCmdMissingFiles() throws Exception {
         Path userFile = createTempFile();
         Settings settings = Settings.builder()
                 .put("shield.authc.realms.esusers.type", "esusers")
@@ -472,8 +457,7 @@ public class ESUsersToolTests extends CliToolTestCase {
         assertThat(status, is(CliTool.ExitStatus.NO_USER));
     }
 
-    @Test
-    public void testRoles_Parse_AllOptions() throws Exception {
+    public void testRolesParseAllOptions() throws Exception {
         ESUsersTool tool = new ESUsersTool();
         CliTool.Command command = tool.parse("roles", args("someuser -a test1,test2,test3 -r test4,test5,test6"));
         assertThat(command, instanceOf(ESUsersTool.Roles.class));
@@ -483,8 +467,7 @@ public class ESUsersToolTests extends CliToolTestCase {
         assertThat(rolesCommand.removeRoles, arrayContaining("test4", "test5", "test6"));
     }
 
-    @Test
-    public void testRoles_Parse_ExtraArgs() throws Exception {
+    public void testRolesParseExtraArgs() throws Exception {
         ESUsersTool tool = new ESUsersTool();
         CliTool.Command command = tool.parse("roles", args("someuser -a test1,test2,test3 foo -r test4,test5,test6 bar"));
         assertThat(command, instanceOf(ESUsersTool.Command.Exit.class));
@@ -492,8 +475,7 @@ public class ESUsersToolTests extends CliToolTestCase {
         assertThat(cmd.status(), is(CliTool.ExitStatus.USAGE));
     }
 
-    @Test
-    public void testRoles_Cmd_validatingRoleNames() throws Exception {
+    public void testRolesCmdValidatingRoleNames() throws Exception {
         ESUsersTool tool = new ESUsersTool();
         Path usersFile = writeFile("admin:hash");
         Path usersRoleFile = writeFile("admin: admin\n");
@@ -519,8 +501,7 @@ public class ESUsersToolTests extends CliToolTestCase {
         assertThat(execute(tool.parse("roles", args("admin -a role0")), settings), is(CliTool.ExitStatus.OK));
     }
 
-    @Test
-    public void testRoles_Cmd_addingRoleWorks() throws Exception {
+    public void testRolesCmdAddingRoleWorks() throws Exception {
         Path usersFile = writeFile("admin:hash\nuser:hash");
         Path usersRoleFile = writeFile("admin: admin\nuser: user\n");
         Settings settings = Settings.builder()
@@ -542,8 +523,7 @@ public class ESUsersToolTests extends CliToolTestCase {
         assertThat(userRoles.get("user"), arrayContainingInAnyOrder("user", "foo"));
     }
 
-    @Test
-    public void testRoles_Cmd_removingRoleWorks() throws Exception {
+    public void testRolesCmdRemovingRoleWorks() throws Exception {
         Path usersFile = writeFile("admin:hash\nuser:hash");
         Path usersRoleFile = writeFile("admin: admin\nuser: user\nfoo: user\nbar: user\n");
         Settings settings = Settings.builder()
@@ -565,8 +545,7 @@ public class ESUsersToolTests extends CliToolTestCase {
         assertThat(userRoles.get("user"), arrayContainingInAnyOrder("user", "bar"));
     }
 
-    @Test
-    public void testRoles_Cmd_addingAndRemovingRoleWorks() throws Exception {
+    public void testRolesCmdAddingAndRemovingRoleWorks() throws Exception {
         Path usersFile = writeFile("admin:hash\nuser:hash");
         Path usersRoleFile = writeFile("admin: admin\nuser:user\nfoo:user\nbar:user\n");
         Settings settings = Settings.builder()
@@ -588,8 +567,7 @@ public class ESUsersToolTests extends CliToolTestCase {
         assertThat(userRoles.get("user"), arrayContainingInAnyOrder("user", "bar", "newrole"));
     }
 
-    @Test
-    public void testRoles_Cmd_removingLastRoleRemovesEntryFromRolesFile() throws Exception {
+    public void testRolesCmdRemovingLastRoleRemovesEntryFromRolesFile() throws Exception {
         Path usersFile = writeFile("admin:hash\nuser:hash");
         Path usersRoleFile = writeFile("admin: admin\nuser:user\nfoo:user\nbar:user\n");
         Settings settings = Settings.builder()
@@ -608,8 +586,7 @@ public class ESUsersToolTests extends CliToolTestCase {
         assertThat(usersRoleFileLines, not(hasItem(containsString("user"))));
     }
 
-    @Test
-    public void testRoles_Cmd_userNotFound() throws Exception {
+    public void testRolesCmdUserNotFound() throws Exception {
         Path usersFile = writeFile("admin:hash\nuser:hash");
         Path usersRoleFile = writeFile("admin: admin\nuser: user\nfoo:user\nbar:user\n");
         Settings settings = Settings.builder()
@@ -625,8 +602,7 @@ public class ESUsersToolTests extends CliToolTestCase {
         assertThat(status, is(CliTool.ExitStatus.NO_USER));
     }
 
-    @Test
-    public void testRoles_Cmd_testNotAddingOrRemovingRolesShowsListingOfRoles() throws Exception {
+    public void testRolesCmdTestNotAddingOrRemovingRolesShowsListingOfRoles() throws Exception {
         Path usersFile = writeFile("admin:hash\nuser:hash");
         Path usersRoleFile = writeFile("admin: admin\nuser:user\nfoo:user\nbar:user\n");
         Path rolesFile = writeFile("admin:\n  cluster: all\n\nuser:\n  cluster: all\n\nfoo:\n  cluster: all\n\nbar:\n  cluster: all");
@@ -646,8 +622,7 @@ public class ESUsersToolTests extends CliToolTestCase {
         assertThat(catchTerminalOutput.getTerminalOutput(), hasItem(allOf(containsString("user"), containsString("user,foo,bar"))));
     }
 
-    @Test
-    public void testRoles_cmd_testRoleCanBeAddedWhenUserIsNotInRolesFile() throws Exception {
+    public void testRolesCmdRoleCanBeAddedWhenUserIsNotInRolesFile() throws Exception {
         Path usersFile = writeFile("admin:hash\nuser:hash");
         Path usersRoleFile = writeFile("admin: admin\n");
         Path rolesFile = writeFile("admin:\n  cluster: all\n\nmyrole:\n  cluster: all");
@@ -670,8 +645,7 @@ public class ESUsersToolTests extends CliToolTestCase {
         assertThat(userRoles.get("user"), arrayContaining("myrole"));
     }
 
-    @Test
-    public void testListUsersAndRoles_Cmd_parsingWorks() throws Exception {
+    public void testListUsersAndRolesCmdParsingWorks() throws Exception {
         ESUsersTool tool = new ESUsersTool();
         CliTool.Command command = tool.parse("list", args("someuser"));
         assertThat(command, instanceOf(ESUsersTool.ListUsersAndRoles.class));
@@ -679,8 +653,7 @@ public class ESUsersToolTests extends CliToolTestCase {
         assertThat(listUsersAndRolesCommand.username, is("someuser"));
     }
 
-    @Test
-    public void testListUsersAndRoles_Cmd_parsingExtraArgs() throws Exception {
+    public void testListUsersAndRolesCmdParsingExtraArgs() throws Exception {
         ESUsersTool tool = new ESUsersTool();
         CliTool.Command command = tool.parse("list", args("someuser two"));
         assertThat(command, instanceOf(ESUsersTool.Command.Exit.class));
@@ -688,8 +661,7 @@ public class ESUsersToolTests extends CliToolTestCase {
         assertThat(cmd.status(), is(CliTool.ExitStatus.USAGE));
     }
 
-    @Test
-    public void testListUsersAndRoles_Cmd_listAllUsers() throws Exception {
+    public void testListUsersAndRolesCmdListAllUsers() throws Exception {
         Path usersRoleFile = writeFile("admin: admin\nuser: user\nfoo:user\nbar:user\n");
         Path rolesFile = writeFile("admin:\n  cluster: all\n\nuser:\n  cluster: all\n\nfoo:\n  cluster: all\n\nbar:\n  cluster: all");
         Settings settings = Settings.builder()
@@ -709,8 +681,7 @@ public class ESUsersToolTests extends CliToolTestCase {
         assertThat(catchTerminalOutput.getTerminalOutput(), hasItem(allOf(containsString("user"), containsString("user,foo,bar"))));
     }
 
-    @Test
-    public void testListUsersAndRoles_Cmd_listAllUsers_WithUnknownRoles() throws Exception {
+    public void testListUsersAndRolesCmdListAllUsersWithUnknownRoles() throws Exception {
         Path usersRoleFile = writeFile("admin: admin\nuser: user\nfoo:user\nbar:user\n");
         Path rolesFile = writeFile("admin:\n  cluster: all\n\nuser:\n  cluster: all");
         Settings settings = Settings.builder()
@@ -730,8 +701,7 @@ public class ESUsersToolTests extends CliToolTestCase {
         assertThat(catchTerminalOutput.getTerminalOutput(), hasItem(allOf(containsString("user"), containsString("user,foo*,bar*"))));
     }
 
-    @Test
-    public void testListUsersAndRoles_Cmd_listSingleUser() throws Exception {
+    public void testListUsersAndRolesCmdListSingleUser() throws Exception {
         Path usersRoleFile = writeFile("admin: admin\nuser: user\nfoo:user\nbar:user\n");
         Path usersFile = writeFile("admin:{plain}changeme\nuser:{plain}changeme\nno-roles-user:{plain}changeme\n");
         Path rolesFile = writeFile("admin:\n  cluster: all\n\nuser:\n  cluster: all\n\nfoo:\n  cluster: all");
@@ -753,8 +723,7 @@ public class ESUsersToolTests extends CliToolTestCase {
         assertThat(catchTerminalOutput.getTerminalOutput(), hasItem(not(containsString("user"))));
     }
 
-    @Test
-    public void testListUsersAndRoles_Cmd_NoUsers() throws Exception {
+    public void testListUsersAndRolesCmdNoUsers() throws Exception {
         Path usersFile = writeFile("");
         Path usersRoleFile = writeFile("");
         Settings settings = Settings.builder()
@@ -774,8 +743,7 @@ public class ESUsersToolTests extends CliToolTestCase {
         assertThat(output.get(0), equalTo("No users found" + System.lineSeparator()));
     }
 
-    @Test
-    public void testListUsersAndRoles_Cmd_listSingleUserNotFound() throws Exception {
+    public void testListUsersAndRolesCmdListSingleUserNotFound() throws Exception {
         Path usersRoleFile = writeFile("admin: admin\nuser: user\nfoo:user\nbar:user\n");
         Settings settings = Settings.builder()
                 .put("shield.authc.realms.esusers.type", "esusers")
@@ -790,8 +758,7 @@ public class ESUsersToolTests extends CliToolTestCase {
         assertThat(status, is(CliTool.ExitStatus.NO_USER));
     }
 
-    @Test
-    public void testListUsersAndRoles_Cmd_testThatUsersWithAndWithoutRolesAreListed() throws Exception {
+    public void testListUsersAndRolesCmdUsersWithAndWithoutRolesAreListed() throws Exception {
         Path usersFile = writeFile("admin:{plain}changeme\nuser:{plain}changeme\nno-roles-user:{plain}changeme\n");
         Path usersRoleFile = writeFile("admin: admin\nuser: user\nfoo:user\nbar:user\n");
         Path rolesFile = writeFile("admin:\n  cluster: all\n\nuser:\n  cluster: all\n\nfoo:\n  cluster: all\n\nbar:\n  cluster: all");
@@ -814,8 +781,7 @@ public class ESUsersToolTests extends CliToolTestCase {
         assertThat(catchTerminalOutput.getTerminalOutput(), hasItem(allOf(containsString("no-roles-user"), containsString("-"))));
     }
 
-    @Test
-    public void testListUsersAndRoles_Cmd_testThatUsersWithoutRolesAreListed() throws Exception {
+    public void testListUsersAndRolesCmdUsersWithoutRolesAreListed() throws Exception {
         Path usersFile = writeFile("admin:{plain}changeme\nuser:{plain}changeme\nno-roles-user:{plain}changeme\n");
         Path usersRoleFile = writeFile("");
         Path rolesFile = writeFile("admin:\n  cluster: all\n\nuser:\n  cluster: all\n\nfoo:\n  cluster: all\n\nbar:\n  cluster: all");
@@ -838,8 +804,7 @@ public class ESUsersToolTests extends CliToolTestCase {
         assertThat(catchTerminalOutput.getTerminalOutput(), hasItem(allOf(containsString("no-roles-user"), containsString("-"))));
     }
 
-    @Test
-    public void testListUsersAndRoles_Cmd_testThatUsersWithoutRolesAreListedForSingleUser() throws Exception {
+    public void testListUsersAndRolesCmdUsersWithoutRolesAreListedForSingleUser() throws Exception {
         Path usersFile = writeFile("admin:{plain}changeme");
         Path usersRoleFile = writeFile("");
         Settings settings = Settings.builder()
@@ -858,8 +823,7 @@ public class ESUsersToolTests extends CliToolTestCase {
         assertThat(loggingTerminal.getTerminalOutput(), hasItem(allOf(containsString("admin"), containsString("-"))));
     }
 
-    @Test
-    public void testUseradd_UsernameWithPeriod() throws Exception {
+    public void testUseraddUsernameWithPeriod() throws Exception {
         Path userFile = createTempFile();
         Path userRolesFile = createTempFile();
         Settings settings = Settings.builder()

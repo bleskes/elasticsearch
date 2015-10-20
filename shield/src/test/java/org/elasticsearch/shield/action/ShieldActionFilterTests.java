@@ -32,20 +32,25 @@ import org.elasticsearch.shield.crypto.CryptoService;
 import org.elasticsearch.shield.license.ShieldLicenseState;
 import org.elasticsearch.test.ESTestCase;
 import org.junit.Before;
-import org.junit.Test;
 
 import java.util.HashSet;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.isA;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.when;
 
 /**
  *
  */
 public class ShieldActionFilterTests extends ESTestCase {
-
     private AuthenticationService authcService;
     private AuthorizationService authzService;
     private CryptoService cryptoService;
@@ -65,7 +70,6 @@ public class ShieldActionFilterTests extends ESTestCase {
         filter = new ShieldActionFilter(Settings.EMPTY, authcService, authzService, cryptoService, auditTrail, shieldLicenseState, new ShieldActionMapper(), new HashSet<RequestInterceptor>());
     }
 
-    @Test
     public void testApply() throws Exception {
         ActionRequest request = mock(ActionRequest.class);
         ActionListener listener = mock(ActionListener.class);
@@ -78,8 +82,7 @@ public class ShieldActionFilterTests extends ESTestCase {
         verify(chain).proceed(eq("_action"), eq(request), isA(ShieldActionFilter.SigningListener.class));
     }
 
-    @Test
-    public void testAction_Process_Exception() throws Exception {
+    public void testActionProcessException() throws Exception {
         ActionRequest request = mock(ActionRequest.class);
         ActionListener listener = mock(ActionListener.class);
         ActionFilterChain chain = mock(ActionFilterChain.class);
@@ -92,8 +95,7 @@ public class ShieldActionFilterTests extends ESTestCase {
         verifyNoMoreInteractions(chain);
     }
 
-    @Test
-    public void testAction_Signature() throws Exception {
+    public void testActionSignature() throws Exception {
         SearchScrollRequest request = new SearchScrollRequest("signed_scroll_id");
         ActionListener listener = mock(ActionListener.class);
         ActionFilterChain chain = mock(ActionFilterChain.class);
@@ -107,8 +109,7 @@ public class ShieldActionFilterTests extends ESTestCase {
         verify(chain).proceed(eq("_action"), eq(request), isA(ShieldActionFilter.SigningListener.class));
     }
 
-    @Test
-    public void testAction_SignatureError() throws Exception {
+    public void testActionSignatureError() throws Exception {
         SearchScrollRequest request = new SearchScrollRequest("scroll_id");
         ActionListener listener = mock(ActionListener.class);
         ActionFilterChain chain = mock(ActionFilterChain.class);
@@ -123,7 +124,6 @@ public class ShieldActionFilterTests extends ESTestCase {
         verifyNoMoreInteractions(chain);
     }
 
-    @Test
     public void testApplyUnlicensed() throws Exception {
         ActionRequest request = mock(ActionRequest.class);
         ActionListener listener = mock(ActionListener.class);

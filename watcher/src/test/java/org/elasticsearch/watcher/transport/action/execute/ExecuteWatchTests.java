@@ -36,7 +36,6 @@ import org.elasticsearch.watcher.trigger.schedule.ScheduleTriggerEvent;
 import org.elasticsearch.watcher.watch.WatchStatus;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-import org.junit.Test;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -50,6 +49,7 @@ import static org.elasticsearch.watcher.input.InputBuilders.simpleInput;
 import static org.elasticsearch.watcher.trigger.TriggerBuilders.schedule;
 import static org.elasticsearch.watcher.trigger.schedule.Schedules.cron;
 import static org.elasticsearch.watcher.trigger.schedule.Schedules.interval;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
@@ -58,27 +58,32 @@ import static org.hamcrest.Matchers.notNullValue;
  *
  */
 public class ExecuteWatchTests extends AbstractWatcherIntegrationTestCase {
-
-
-    @Test(expected = ActionRequestValidationException.class)
-    public void testExecute_InvalidWatchId() throws Exception {
+    public void testExecuteInvalidWatchId() throws Exception {
         DateTime now = DateTime.now(DateTimeZone.UTC);
-        watcherClient().prepareExecuteWatch("id with whitespaces")
-                .setTriggerEvent(new ScheduleTriggerEvent(now, now))
-                .get();
+        try {
+            watcherClient().prepareExecuteWatch("id with whitespaces")
+                    .setTriggerEvent(new ScheduleTriggerEvent(now, now))
+                    .get();
+            fail("Expected ActionRequestValidationException");
+        } catch (ActionRequestValidationException e) {
+            assertThat(e.getMessage(), containsString("Watch id cannot have white spaces"));
+        }
     }
 
-    @Test(expected = ActionRequestValidationException.class)
-    public void testExecute_InvalidActionId() throws Exception {
+    public void testExecuteInvalidActionId() throws Exception {
         DateTime now = DateTime.now(DateTimeZone.UTC);
-        watcherClient().prepareExecuteWatch("_id")
-                .setTriggerEvent(new ScheduleTriggerEvent(now, now))
-                .setActionMode("id with whitespaces", randomFrom(ActionExecutionMode.values()))
-                .get();
+        try {
+            watcherClient().prepareExecuteWatch("_id")
+                    .setTriggerEvent(new ScheduleTriggerEvent(now, now))
+                    .setActionMode("id with whitespaces", randomFrom(ActionExecutionMode.values()))
+                    .get();
+            fail("Expected ActionRequestValidationException");
+        } catch (ActionRequestValidationException e) {
+            assertThat(e.getMessage(), containsString("Action id cannot have white spaces"));
+        }
     }
 
-    @Test
-    public void testExecute_AllDefaults() throws Exception {
+    public void testExecuteAllDefaults() throws Exception {
         WatcherClient watcherClient = watcherClient();
 
         PutWatchResponse putWatchResponse = watcherClient.preparePutWatch()
@@ -119,8 +124,7 @@ public class ExecuteWatchTests extends AbstractWatcherIntegrationTestCase {
         assertValue(record, "result.actions.0.logging.logged_text", is("_text"));
     }
 
-    @Test
-    public void testExecute_CustomTriggerData() throws Exception {
+    public void testExecuteCustomTriggerData() throws Exception {
         WatcherClient watcherClient = watcherClient();
 
         PutWatchResponse putWatchResponse = watcherClient.preparePutWatch()
@@ -176,8 +180,7 @@ public class ExecuteWatchTests extends AbstractWatcherIntegrationTestCase {
         assertValue(record, "result.actions.0.logging.logged_text", is("_text"));
     }
 
-    @Test
-    public void testExecute_AlternativeInput() throws Exception {
+    public void testExecuteAlternativeInput() throws Exception {
         WatcherClient watcherClient = watcherClient();
 
         PutWatchResponse putWatchResponse = watcherClient.preparePutWatch()
@@ -220,8 +223,7 @@ public class ExecuteWatchTests extends AbstractWatcherIntegrationTestCase {
         assertValue(record, "result.actions.0.logging.logged_text", is("_text"));
     }
 
-    @Test
-    public void testExecute_IgnoreCondition() throws Exception {
+    public void testExecuteIgnoreCondition() throws Exception {
         WatcherClient watcherClient = watcherClient();
 
         PutWatchResponse putWatchResponse = watcherClient.preparePutWatch()
@@ -265,8 +267,7 @@ public class ExecuteWatchTests extends AbstractWatcherIntegrationTestCase {
         assertValue(record, "result.actions.0.logging.logged_text", is("_text"));
     }
 
-    @Test
-    public void testExecute_ActionMode() throws Exception {
+    public void testExecuteActionMode() throws Exception {
         final WatcherClient watcherClient = watcherClient();
 
         PutWatchResponse putWatchResponse = watcherClient.preparePutWatch()

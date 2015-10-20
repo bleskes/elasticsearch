@@ -40,7 +40,6 @@ import org.elasticsearch.watcher.watch.Payload;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.Before;
-import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -62,7 +61,6 @@ import static org.mockito.Mockito.when;
  *
  */
 public class HipChatActionTests extends ESTestCase {
-
     private HipChatService service;
 
     @Before
@@ -70,7 +68,6 @@ public class HipChatActionTests extends ESTestCase {
         service = mock(HipChatService.class);
     }
 
-    @Test
     public void testExecute() throws Exception {
         final String accountName = "account1";
 
@@ -137,9 +134,7 @@ public class HipChatActionTests extends ESTestCase {
         assertThat(((HipChatAction.Result.Executed) result).sentMessages(), sameInstance(sentMessages));
     }
 
-    @Test
     public void testParser() throws Exception {
-
         XContentBuilder builder = jsonBuilder().startObject();
 
         String accountName = randomAsciiOfLength(10);
@@ -200,10 +195,7 @@ public class HipChatActionTests extends ESTestCase {
         assertThat(action.message, is(new HipChatMessage.Template(body, rooms, users, from, format, color, notify)));
     }
 
-
-    @Test
-    public void testParser_SelfGenerated() throws Exception {
-
+    public void testParserSelfGenerated() throws Exception {
         String accountName = randomAsciiOfLength(10);
         TextTemplate body = TextTemplate.inline("_body").build();
         HipChatMessage.Template.Builder templateBuilder = new HipChatMessage.Template.Builder(body);
@@ -266,11 +258,15 @@ public class HipChatActionTests extends ESTestCase {
         assertThat(parsedAction, is(action));
     }
 
-    @Test(expected = ElasticsearchParseException.class)
-    public void testParser_Invalid() throws Exception {
+    public void testParserInvalid() throws Exception {
         XContentBuilder builder = jsonBuilder().startObject().field("unknown_field", "value");
         XContentParser parser = JsonXContent.jsonXContent.createParser(builder.bytes());
         parser.nextToken();
-        HipChatAction.parse("_watch", "_action", parser);
+        try {
+            HipChatAction.parse("_watch", "_action", parser);
+            fail("Expected ElasticsearchParseException");
+        } catch (ElasticsearchParseException e) {
+            assertThat(e.getMessage(), is("failed to parse [hipchat] action [_watch/_action]. unexpected token [VALUE_STRING]"));
+        }
     }
 }

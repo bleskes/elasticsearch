@@ -23,10 +23,11 @@ import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.elasticsearch.common.transport.TransportAddress;
 import org.elasticsearch.http.HttpServerTransport;
 import org.elasticsearch.node.Node;
+import org.elasticsearch.test.ESIntegTestCase.ClusterScope;
+import org.elasticsearch.test.ESIntegTestCase.Scope;
 import org.elasticsearch.test.ShieldIntegTestCase;
 import org.elasticsearch.transport.Transport;
 import org.junit.BeforeClass;
-import org.junit.Test;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -35,15 +36,12 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 
-import static org.elasticsearch.test.ESIntegTestCase.ClusterScope;
-import static org.elasticsearch.test.ESIntegTestCase.Scope;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 
 // no client nodes, no transport clients, as they all get rejected on network connections
 @ClusterScope(scope = Scope.SUITE, numDataNodes = 0, numClientNodes = 0, transportClientRatio = 0.0)
 public class IpFilteringIntegrationTests extends ShieldIntegTestCase {
-
     private static int randomClientPort;
 
     @BeforeClass
@@ -62,7 +60,6 @@ public class IpFilteringIntegrationTests extends ShieldIntegTestCase {
                 .put("shield.http.filter.deny", "_all").build();
     }
 
-    @Test
     public void testThatIpFilteringIsIntegratedIntoNettyPipelineViaHttp() throws Exception {
         TransportAddress transportAddress = randomFrom(internalCluster().getDataNodeInstance(HttpServerTransport.class).boundAddress().boundAddresses());
         assertThat(transportAddress, is(instanceOf(InetSocketTransportAddress.class)));
@@ -74,13 +71,11 @@ public class IpFilteringIntegrationTests extends ShieldIntegTestCase {
         }
     }
 
-    @Test
     public void testThatIpFilteringIsNotAppliedForDefaultTransport() throws Exception {
         Client client = internalCluster().transportClient();
         assertGreenClusterState(client);
     }
 
-    @Test
     public void testThatIpFilteringIsAppliedForProfile() throws Exception {
         try (Socket socket = new Socket()){
             trySocketConnection(socket, new InetSocketAddress(InetAddress.getLoopbackAddress(), getProfilePort("client")));

@@ -21,6 +21,7 @@ import com.squareup.okhttp.mockwebserver.MockResponse;
 import com.squareup.okhttp.mockwebserver.MockWebServer;
 import com.squareup.okhttp.mockwebserver.QueueDispatcher;
 import com.squareup.okhttp.mockwebserver.RecordedRequest;
+
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.Version;
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthStatus;
@@ -44,7 +45,6 @@ import org.hamcrest.Matchers;
 import org.joda.time.format.DateTimeFormat;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Test;
 
 import java.io.IOException;
 import java.net.BindException;
@@ -58,7 +58,6 @@ import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 
 @ESIntegTestCase.ClusterScope(scope = Scope.TEST, numDataNodes = 0, numClientNodes = 0, transportClientRatio = 0.0)
 public class HttpExporterTests extends MarvelIntegTestCase {
-
     private int webPort;
     private MockWebServer webServer;
 
@@ -85,7 +84,6 @@ public class HttpExporterTests extends MarvelIntegTestCase {
         webServer.shutdown();
     }
 
-    @Test
     public void testExport() throws Exception {
         enqueueGetClusterVersionResponse(Version.CURRENT);
         enqueueResponse(404, "marvel template does not exist");
@@ -123,7 +121,6 @@ public class HttpExporterTests extends MarvelIntegTestCase {
         assertThat(recordedRequest.getPath(), equalTo("/_bulk"));
     }
 
-    @Test
     public void testDynamicHostChange() {
         // disable exporting to be able to use non valid hosts
         Settings.Builder builder = Settings.builder()
@@ -148,7 +145,6 @@ public class HttpExporterTests extends MarvelIntegTestCase {
         assertThat(getExporter(nodeName).hosts, Matchers.arrayContaining("test3"));
     }
 
-    @Test
     public void testHostChangeReChecksTemplate() throws Exception {
 
         Settings.Builder builder = Settings.builder()
@@ -249,9 +245,7 @@ public class HttpExporterTests extends MarvelIntegTestCase {
         }
     }
 
-    @Test
     public void testDynamicIndexFormatChange() throws Exception {
-
         Settings.Builder builder = Settings.builder()
                 .put(MarvelSettings.INTERVAL, "-1")
                 .put("marvel.agent.exporters._http.type", "http")
@@ -346,7 +340,6 @@ public class HttpExporterTests extends MarvelIntegTestCase {
         assertThat(index.get("_index"), equalTo(expectedMarvelIndex));
     }
 
-    @Test
     public void testLoadRemoteClusterVersion() throws IOException {
         final String host = webServer.getHostName() + ":" + webServer.getPort();
 

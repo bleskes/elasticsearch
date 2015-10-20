@@ -20,6 +20,7 @@ package org.elasticsearch.watcher.test.integration;
 import com.squareup.okhttp.mockwebserver.MockResponse;
 import com.squareup.okhttp.mockwebserver.MockWebServer;
 import com.squareup.okhttp.mockwebserver.RecordedRequest;
+
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.common.settings.Settings;
@@ -41,7 +42,6 @@ import org.elasticsearch.watcher.watch.WatchStore;
 import org.joda.time.DateTime;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Test;
 
 import java.net.BindException;
 import java.util.Map;
@@ -55,14 +55,18 @@ import static org.elasticsearch.watcher.input.InputBuilders.httpInput;
 import static org.elasticsearch.watcher.input.InputBuilders.simpleInput;
 import static org.elasticsearch.watcher.trigger.TriggerBuilders.schedule;
 import static org.elasticsearch.watcher.trigger.schedule.Schedules.cron;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.instanceOf;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
 import static org.joda.time.DateTimeZone.UTC;
 
 /**
  *
  */
 public class HttpSecretsIntegrationTests extends AbstractWatcherIntegrationTestCase {
-
     static final String USERNAME = "_user";
     static final String PASSWORD = "_passwd";
 
@@ -101,7 +105,6 @@ public class HttpSecretsIntegrationTests extends AbstractWatcherIntegrationTestC
                 .build();
     }
 
-    @Test
     public void testHttpInput() throws Exception {
         WatcherClient watcherClient = watcherClient();
         watcherClient.preparePutWatch("_id")
@@ -172,7 +175,6 @@ public class HttpSecretsIntegrationTests extends AbstractWatcherIntegrationTestC
         assertThat(request.getHeader("Authorization"), equalTo(ApplicableBasicAuth.headerValue(USERNAME, PASSWORD.toCharArray())));
     }
 
-    @Test
     public void testWebhookAction() throws Exception {
         WatcherClient watcherClient = watcherClient();
         watcherClient.preparePutWatch("_id")

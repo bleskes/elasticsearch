@@ -34,7 +34,6 @@ import java.io.IOException;
  *
  */
 public class SlackActionFactory extends ActionFactory<SlackAction, ExecutableSlackAction> {
-
     private final TextTemplateEngine templateEngine;
     private final SlackService slackService;
 
@@ -55,7 +54,7 @@ public class SlackActionFactory extends ActionFactory<SlackAction, ExecutableSla
         SlackAction action = SlackAction.parse(watchId, actionId, parser);
         SlackAccount account = slackService.getAccount(action.account);
         if (account == null) {
-            throw new ElasticsearchParseException("could not parse [slack] action [{}/{}]. unknown slack account [{}]", watchId, account, action.account);
+            throw new ElasticsearchParseException("could not parse [slack] action [{}]. unknown slack account [{}]", watchId, action.account);
         }
         return action;
     }
@@ -64,5 +63,4 @@ public class SlackActionFactory extends ActionFactory<SlackAction, ExecutableSla
     public ExecutableSlackAction createExecutable(SlackAction action) {
         return new ExecutableSlackAction(action, actionLogger, slackService, templateEngine);
     }
-
 }

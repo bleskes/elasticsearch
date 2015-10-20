@@ -27,27 +27,29 @@ import org.elasticsearch.common.xcontent.json.JsonXContent;
 import org.elasticsearch.watcher.trigger.schedule.support.DayOfWeek;
 import org.elasticsearch.watcher.trigger.schedule.support.DayTimes;
 import org.elasticsearch.watcher.trigger.schedule.support.WeekTimes;
-import org.junit.Test;
 
 import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 import static org.elasticsearch.watcher.support.Strings.join;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.arrayContaining;
+import static org.hamcrest.Matchers.arrayWithSize;
+import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.hasItemInArray;
+import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
 
 /**
  *
  */
 public class WeeklyScheduleTests extends ScheduleTestCase {
-
-    @Test
-    public void test_Default() throws Exception {
+    public void testDefault() throws Exception {
         WeeklySchedule schedule = new WeeklySchedule();
         String[] crons = expressions(schedule);
         assertThat(crons, arrayWithSize(1));
         assertThat(crons, arrayContaining("0 0 0 ? * MON"));
     }
 
-    @Test
-    public void test_SingleTime() throws Exception {
+    public void testSingleTime() throws Exception {
         WeekTimes time = validWeekTime();
         WeeklySchedule schedule = new WeeklySchedule(time);
         String[] crons = expressions(schedule);
@@ -57,8 +59,7 @@ public class WeeklyScheduleTests extends ScheduleTestCase {
         }
     }
 
-    @Test
-    public void test_MultipleTimes() throws Exception {
+    public void testMultipleTimes() throws Exception {
         WeekTimes[] times = validWeekTimes();
         WeeklySchedule schedule = new WeeklySchedule(times);
         String[] crons = expressions(schedule);
@@ -74,8 +75,7 @@ public class WeeklyScheduleTests extends ScheduleTestCase {
         }
     }
 
-    @Test
-    public void testParser_Empty() throws Exception {
+    public void testParserEmpty() throws Exception {
         XContentBuilder builder = jsonBuilder().startObject().endObject();
         BytesReference bytes = builder.bytes();
         XContentParser parser = JsonXContent.jsonXContent.createParser(bytes);
@@ -86,8 +86,7 @@ public class WeeklyScheduleTests extends ScheduleTestCase {
         assertThat(schedule.times()[0], is(new WeekTimes(DayOfWeek.MONDAY, new DayTimes())));
     }
 
-    @Test
-    public void testParser_SingleTime() throws Exception {
+    public void testParserSingleTime() throws Exception {
         DayTimes time = validDayTime();
         XContentBuilder builder = jsonBuilder()
                 .startObject()
@@ -109,8 +108,7 @@ public class WeeklyScheduleTests extends ScheduleTestCase {
         assertThat(schedule.times()[0].times(), hasItemInArray(time));
     }
 
-    @Test(expected = ElasticsearchParseException.class)
-    public void testParser_SingleTime_Invalid() throws Exception {
+    public void testParserSingleTimeInvalid() throws Exception {
         HourAndMinute time = invalidDayTime();
         XContentBuilder builder = jsonBuilder()
                 .startObject()
@@ -123,11 +121,15 @@ public class WeeklyScheduleTests extends ScheduleTestCase {
         BytesReference bytes = builder.bytes();
         XContentParser parser = JsonXContent.jsonXContent.createParser(bytes);
         parser.nextToken(); // advancing to the start object
-        new WeeklySchedule.Parser().parse(parser);
+        try {
+            new WeeklySchedule.Parser().parse(parser);
+            fail("Expected ElasticsearchParseException");
+        } catch (ElasticsearchParseException e) {
+            assertThat(e.getMessage(), is("could not parse [weekly] schedule. invalid weekly times"));
+        }
     }
 
-    @Test
-    public void testParser_MultipleTimes() throws Exception {
+    public void testParserMultipleTimes() throws Exception {
         WeekTimes[] times = validWeekTimes();
         XContentBuilder builder = jsonBuilder().value(times);
         BytesReference bytes = builder.bytes();
@@ -141,8 +143,7 @@ public class WeeklyScheduleTests extends ScheduleTestCase {
         }
     }
 
-    @Test(expected = ElasticsearchParseException.class)
-    public void testParser_MultipleTimes_Objects_Invalid() throws Exception {
+    public void testParserMultipleTimesObjectsInvalid() throws Exception {
         HourAndMinute[] times = invalidDayTimes();
         XContentBuilder builder = jsonBuilder()
                 .startObject()
@@ -152,6 +153,11 @@ public class WeeklyScheduleTests extends ScheduleTestCase {
         BytesReference bytes = builder.bytes();
         XContentParser parser = JsonXContent.jsonXContent.createParser(bytes);
         parser.nextToken(); // advancing to the start object
-        new WeeklySchedule.Parser().parse(parser);
+        try {
+            new WeeklySchedule.Parser().parse(parser);
+            fail("Expected ElasticsearchParseException");
+        } catch (ElasticsearchParseException e) {
+            assertThat(e.getMessage(), is("could not parse [weekly] schedule. invalid weekly times"));
+        }
     }
 }

@@ -23,13 +23,15 @@ import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.transport.TransportRequest;
 import org.junit.Rule;
-import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
 import java.nio.charset.StandardCharsets;
 
 import static org.elasticsearch.test.ShieldTestsUtils.assertAuthenticationException;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -37,11 +39,9 @@ import static org.mockito.Mockito.when;
  *
  */
 public class UsernamePasswordTokenTests extends ESTestCase {
-
     @Rule
     public ExpectedException thrown = ExpectedException.none();
 
-    @Test
     public void testPutToken() throws Exception {
         TransportRequest request = new TransportRequest() {};
         UsernamePasswordToken.putTokenHeader(request, new UsernamePasswordToken("user1", SecuredStringTests.build("test123")));
@@ -58,7 +58,6 @@ public class UsernamePasswordTokenTests extends ESTestCase {
         assertThat(password, equalTo("test123"));
     }
 
-    @Test
     public void testExtractToken() throws Exception {
         TransportRequest request = new TransportRequest() {};
         String header = "Basic " + Base64.encodeBytes("user1:test123".getBytes(StandardCharsets.UTF_8));
@@ -69,8 +68,7 @@ public class UsernamePasswordTokenTests extends ESTestCase {
         assertThat(new String(token.credentials().internalChars()), equalTo("test123"));
     }
 
-    @Test
-    public void testExtractToken_Invalid() throws Exception {
+    public void testExtractTokenInvalid() throws Exception {
         String[] invalidValues = { "Basic", "Basic ", "Basic f" };
         for (String value : invalidValues) {
             TransportRequest request = new TransportRequest() {};
@@ -85,7 +83,6 @@ public class UsernamePasswordTokenTests extends ESTestCase {
         }
     }
 
-    @Test
     public void testThatAuthenticationExceptionContainsResponseHeaders() {
         TransportRequest request = new TransportRequest() {};
         String header = "BasicBroken";
@@ -98,7 +95,6 @@ public class UsernamePasswordTokenTests extends ESTestCase {
         }
     }
 
-    @Test
     public void testExtractTokenRest() throws Exception {
         RestRequest request = mock(RestRequest.class);
         UsernamePasswordToken token = new UsernamePasswordToken("username", SecuredStringTests.build("changeme"));
@@ -106,44 +102,38 @@ public class UsernamePasswordTokenTests extends ESTestCase {
         assertThat(UsernamePasswordToken.extractToken(request, null), equalTo(token));
     }
 
-    @Test
-    public void testExtractTokenRest_Missing() throws Exception {
+    public void testExtractTokenRestMissing() throws Exception {
         RestRequest request = mock(RestRequest.class);
         when(request.header(UsernamePasswordToken.BASIC_AUTH_HEADER)).thenReturn(null);
         assertThat(UsernamePasswordToken.extractToken(request, null), nullValue());
     }
 
-    @Test
-    public void testExtractTokenRest_WithInvalidToken1() throws Exception {
+    public void testExtractTokenRestWithInvalidToken1() throws Exception {
         thrown.expect(ElasticsearchSecurityException.class);
         RestRequest request = mock(RestRequest.class);
         when(request.header(UsernamePasswordToken.BASIC_AUTH_HEADER)).thenReturn("invalid");
         UsernamePasswordToken.extractToken(request, null);
     }
 
-    @Test
-    public void testExtractTokenRest_WithInvalidToken2() throws Exception {
+    public void testExtractTokenRestWithInvalidToken2() throws Exception {
         thrown.expect(ElasticsearchSecurityException.class);
         RestRequest request = mock(RestRequest.class);
         when(request.header(UsernamePasswordToken.BASIC_AUTH_HEADER)).thenReturn("Basic");
         UsernamePasswordToken.extractToken(request, null);
     }
 
-    @Test
     public void testEqualsWithDifferentPasswords() {
         UsernamePasswordToken token1 = new UsernamePasswordToken("username", new SecuredString("password".toCharArray()));
         UsernamePasswordToken token2 = new UsernamePasswordToken("username", new SecuredString("new password".toCharArray()));
         assertThat(token1, not(equalTo(token2)));
     }
 
-    @Test
     public void testEqualsWithDifferentUsernames() {
         UsernamePasswordToken token1 = new UsernamePasswordToken("username", new SecuredString("password".toCharArray()));
         UsernamePasswordToken token2 = new UsernamePasswordToken("username1", new SecuredString("password".toCharArray()));
         assertThat(token1, not(equalTo(token2)));
     }
 
-    @Test
     public void testEquals() {
         UsernamePasswordToken token1 = new UsernamePasswordToken("username", new SecuredString("password".toCharArray()));
         UsernamePasswordToken token2 = new UsernamePasswordToken("username", new SecuredString("password".toCharArray()));

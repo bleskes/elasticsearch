@@ -25,17 +25,17 @@ import org.elasticsearch.marvel.agent.collector.AbstractCollectorTestCase;
 import org.elasticsearch.marvel.agent.exporter.MarvelDoc;
 import org.elasticsearch.marvel.agent.settings.MarvelSettings;
 import org.elasticsearch.marvel.license.MarvelLicensee;
-import org.junit.Test;
 
 import java.util.Collection;
 
 import static org.elasticsearch.test.hamcrest.ElasticsearchAssertions.assertAcked;
 import static org.elasticsearch.test.hamcrest.ElasticsearchAssertions.assertHitCount;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.instanceOf;
 
 public class ClusterStateCollectorTests extends AbstractCollectorTestCase {
-
-    @Test
     public void testClusterStateCollectorNoIndices() throws Exception {
         Collection<MarvelDoc> results = newClusterStateCollector().doCollect();
         assertThat(results, hasSize(1));
@@ -54,7 +54,6 @@ public class ClusterStateCollectorTests extends AbstractCollectorTestCase {
         assertThat(clusterState.getRoutingTable().allShards(), hasSize(0));
     }
 
-    @Test
     public void testClusterStateCollectorOneIndex() throws Exception {
         int nbShards = randomIntBetween(1, 5);
         assertAcked(prepareCreate("test").setSettings(Settings.settingsBuilder()
@@ -89,7 +88,6 @@ public class ClusterStateCollectorTests extends AbstractCollectorTestCase {
         assertThat(clusterState.getRoutingTable().allShards("test"), hasSize(nbShards));
     }
 
-    @Test
     public void testClusterStateCollectorMultipleIndices() throws Exception {
         int nbIndices = randomIntBetween(1, 5);
         int[] docsPerIndex = new int[nbIndices];
@@ -131,7 +129,6 @@ public class ClusterStateCollectorTests extends AbstractCollectorTestCase {
         }
     }
 
-    @Test
     public void testClusterStateCollectorWithLicensing() {
         try {
             String[] nodes = internalCluster().getNodeNames();

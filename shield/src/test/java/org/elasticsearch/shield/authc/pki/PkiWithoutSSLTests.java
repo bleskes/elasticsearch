@@ -30,13 +30,11 @@ import org.elasticsearch.test.ShieldIntegTestCase;
 import org.elasticsearch.test.ShieldSettingsSource;
 import org.elasticsearch.test.rest.client.http.HttpRequestBuilder;
 import org.elasticsearch.test.rest.client.http.HttpResponse;
-import org.junit.Test;
 
 import static org.hamcrest.Matchers.is;
 
 @ClusterScope(numClientNodes = 0, numDataNodes = 1)
 public class PkiWithoutSSLTests extends ShieldIntegTestCase {
-
     @Override
     public boolean sslTransportEnabled() {
         return false;
@@ -52,13 +50,11 @@ public class PkiWithoutSSLTests extends ShieldIntegTestCase {
                 .build();
     }
 
-    @Test
     public void testThatTransportClientWorks() {
         Client client = internalCluster().transportClient();
         assertGreenClusterState(client);
     }
 
-    @Test
     public void testThatHttpWorks() throws Exception {
         HttpServerTransport httpServerTransport = internalCluster().getDataNodeInstance(HttpServerTransport.class);
         try (CloseableHttpClient httpClient = HttpClients.createDefault()) {

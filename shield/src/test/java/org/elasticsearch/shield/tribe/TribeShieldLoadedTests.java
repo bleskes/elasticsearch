@@ -24,10 +24,8 @@ import org.elasticsearch.license.plugin.LicensePlugin;
 import org.elasticsearch.node.MockNode;
 import org.elasticsearch.node.Node;
 import org.elasticsearch.node.NodeBuilder;
-import org.elasticsearch.plugins.PluginsService;
 import org.elasticsearch.shield.ShieldPlugin;
 import org.elasticsearch.test.ESTestCase;
-import org.junit.Test;
 
 import java.util.Arrays;
 
@@ -39,8 +37,6 @@ import static org.hamcrest.CoreMatchers.containsString;
  * shield too if the tribe node does.
  */
 public class TribeShieldLoadedTests extends ESTestCase {
-
-    @Test
     @AwaitsFix(bugUrl = "https://github.com/elastic/elasticsearch/issues/13212")
     // we really need to support loading plugins at the node level this way which should flow the plugins down to the tribe service, right now it doesnt!
     public void testShieldLoadedOnBothTribeNodeAndClients() {
@@ -54,7 +50,6 @@ public class TribeShieldLoadedTests extends ESTestCase {
 
     //this test causes leaking threads to be left behind
     @LuceneTestCase.AwaitsFix(bugUrl = "https://github.com/elasticsearch/elasticsearch/issues/9107")
-    @Test
     public void testShieldLoadedOnTribeNodeOnly() {
         //startup failure if any of the tribe clients doesn't have shield installed
         Settings.Builder builder = defaultSettings();
@@ -68,7 +63,6 @@ public class TribeShieldLoadedTests extends ESTestCase {
     }
 
     @LuceneTestCase.AwaitsFix(bugUrl = "https://github.com/elasticsearch/elasticsearch/issues/9107")
-    @Test
     public void testShieldMustBeLoadedOnAllTribes() {
         //startup failure if any of the tribe clients doesn't have shield installed
         Settings.Builder builder = addTribeSettings(defaultSettings(), "t2");
