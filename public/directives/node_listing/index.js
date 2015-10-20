@@ -64,7 +64,7 @@ define(function (require) {
         },
         {
           key: 'metrics.node_jvm_mem_percent',
-          sortKey: 'metrics.node_jvm_mem_percen.last',
+          sortKey: 'metrics.node_jvm_mem_percent.last',
           sort: 0,
           title: 'JVM Memory'
         },
