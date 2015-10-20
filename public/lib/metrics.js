@@ -38,10 +38,10 @@ module.exports = {
         max: { field: 'indices_stats._all.total.indexing.index_total' }
       },
       index_time_in_millis_deriv: {
-        derivative: { buckets_path: 'index_time_in_millis', gap_policy: 'insert_zeros' }
+        derivative: { buckets_path: 'index_time_in_millis', gap_policy: 'skip' }
       },
       index_total_deriv: {
-        derivative: { buckets_path: 'index_total', gap_policy: 'insert_zeros' }
+        derivative: { buckets_path: 'index_total', gap_policy: 'skip' }
       }
     },
     units: 'ms',
@@ -76,10 +76,10 @@ module.exports = {
         max: { field: 'indices_stats._all.total.search.query_total' }
       },
       query_time_in_millis_deriv: {
-        derivative: { buckets_path: 'query_time_in_millis', gap_policy: 'insert_zeros' }
+        derivative: { buckets_path: 'query_time_in_millis', gap_policy: 'skip' }
       },
       query_total_deriv: {
-        derivative: { buckets_path: 'query_total', gap_policy: 'insert_zeros' }
+        derivative: { buckets_path: 'query_total', gap_policy: 'skip' }
       }
     },
     units: 'ms',
@@ -114,10 +114,10 @@ module.exports = {
         max: { field: 'node_stats.indices.indexing.index_total' }
       },
       index_time_in_millis_deriv: {
-        derivative: { buckets_path: 'index_time_in_millis', gap_policy: 'insert_zeros' }
+        derivative: { buckets_path: 'index_time_in_millis', gap_policy: 'skip' }
       },
       index_total_deriv: {
-        derivative: { buckets_path: 'index_total', gap_policy: 'insert_zeros' }
+        derivative: { buckets_path: 'index_total', gap_policy: 'skip' }
       }
     },
     units: 'ms',
@@ -152,10 +152,10 @@ module.exports = {
         max: { field: 'node_stats.indices.search.query_total' }
       },
       query_time_in_millis_deriv: {
-        derivative: { buckets_path: 'query_time_in_millis', gap_policy: 'insert_zeros' }
+        derivative: { buckets_path: 'query_time_in_millis', gap_policy: 'skip' }
       },
       query_total_deriv: {
-        derivative: { buckets_path: 'query_total', gap_policy: 'insert_zeros' }
+        derivative: { buckets_path: 'query_total', gap_policy: 'skip' }
       }
     },
     units: 'ms',
@@ -214,10 +214,10 @@ module.exports = {
         max: { field: 'index_stats.total.indexing.index_total' }
       },
       index_time_in_millis_deriv: {
-        derivative: { buckets_path: 'index_time_in_millis', gap_policy: 'insert_zeros' }
+        derivative: { buckets_path: 'index_time_in_millis', gap_policy: 'skip' }
       },
       index_total_deriv: {
-        derivative: { buckets_path: 'index_total', gap_policy: 'insert_zeros' }
+        derivative: { buckets_path: 'index_total', gap_policy: 'skip' }
       }
     },
     units: 'ms',
@@ -252,10 +252,10 @@ module.exports = {
         max: { field: 'index_stats.total.search.query_total' }
       },
       query_time_in_millis_deriv: {
-        derivative: { buckets_path: 'query_time_in_millis', gap_policy: 'insert_zeros' }
+        derivative: { buckets_path: 'query_time_in_millis', gap_policy: 'skip' }
       },
       query_total_deriv: {
-        derivative: { buckets_path: 'query_total', gap_policy: 'insert_zeros' }
+        derivative: { buckets_path: 'query_total', gap_policy: 'skip' }
       }
     },
     units: 'ms',
