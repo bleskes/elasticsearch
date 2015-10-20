@@ -103,7 +103,7 @@ define(function (require) {
           view: $scope.view || 'node',
           labels: labels.nodes,
           rate: 500,
-          showPlayer: true,
+          showPlayer: false,
           filter: $scope.filterBy
         };
 
