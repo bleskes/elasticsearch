@@ -148,6 +148,7 @@ define(function (require) {
           });
           TableInstance.setData(tableData.map(function (row) {
             row.metrics.shard_count = $scope.nodes[row.name] && $scope.nodes[row.name].shard_count;
+            row.nodeName = $scope.nodes[row.name] && $scope.nodes[row.name].name;
             return row;
           }));
         });
