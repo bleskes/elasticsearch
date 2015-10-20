@@ -49,13 +49,7 @@ define(function (require) {
       return cluster;
     }
 
-    function isClusterCurrent(cluster) {
-      var lastUpdate = moment(cluster.state_timestamp);
-      return lastUpdate.isAfter(moment().subtract(10, 'minutes'));
-    }
-
     $scope.clusters = $route.current.locals.clusters
-      .filter(isClusterCurrent)
       .map(setKeyForClusters);
 
     // Enable the timefilter
@@ -67,7 +61,7 @@ define(function (require) {
         return marvelClusters.fetch();
       },
       handleResponse: function (clusters) {
-        $scope.clusters = clusters.filter(isClusterCurrent).map(setKeyForClusters);
+        $scope.clusters = clusters.map(setKeyForClusters);
       }
     });
 
