@@ -20,6 +20,7 @@ package org.elasticsearch.watcher.support.http;
 import org.elasticsearch.ElasticsearchParseException;
 import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.ParseFieldMatcher;
+import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.collect.MapBuilder;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.unit.TimeValue;
@@ -57,10 +58,12 @@ public class HttpRequestTemplate implements ToXContent {
     private final TextTemplate body;
     private final @Nullable TimeValue connectionTimeout;
     private final @Nullable TimeValue readTimeout;
+    private final @Nullable HttpProxy proxy;
 
     public HttpRequestTemplate(String host, int port, @Nullable Scheme scheme, @Nullable HttpMethod method, @Nullable TextTemplate path,
                                Map<String, TextTemplate> params, Map<String, TextTemplate> headers, HttpAuth auth,
-                               TextTemplate body, @Nullable TimeValue connectionTimeout, @Nullable TimeValue readTimeout) {
+                               TextTemplate body, @Nullable TimeValue connectionTimeout, @Nullable TimeValue readTimeout,
+                               @Nullable HttpProxy proxy) {
         this.host = host;
         this.port = port;
         this.scheme = scheme != null ? scheme :Scheme.HTTP;
@@ -72,6 +75,7 @@ public class HttpRequestTemplate implements ToXContent {
         this.body = body;
         this.connectionTimeout = connectionTimeout;
         this.readTimeout = readTimeout;
+        this.proxy = proxy;
     }
 
     public Scheme scheme() {
@@ -118,6 +122,10 @@ public class HttpRequestTemplate implements ToXContent {
         return readTimeout;
     }
 
+    public HttpProxy proxy() {
+        return proxy;
+    }
+
     public HttpRequest render(TextTemplateEngine engine, Map<String, Object> model) {
         HttpRequest.Builder request = HttpRequest.builder(host, port);
         request.method(method);
@@ -156,6 +164,9 @@ public class HttpRequestTemplate implements ToXContent {
         }
         if (readTimeout != null) {
             request.readTimeout(readTimeout);
+        }
+        if (proxy != null) {
+            request.proxy(proxy);
         }
         return request.build();
     }
@@ -198,6 +209,9 @@ public class HttpRequestTemplate implements ToXContent {
         if (readTimeout != null) {
             builder.field(Field.READ_TIMEOUT.getPreferredName(), readTimeout);
         }
+        if (proxy != null) {
+            proxy.toXContent(builder, params);
+        }
         return builder.endObject();
     }
 
@@ -218,6 +232,7 @@ public class HttpRequestTemplate implements ToXContent {
         if (auth != null ? !auth.equals(that.auth) : that.auth != null) return false;
         if (connectionTimeout != null ? !connectionTimeout.equals(that.connectionTimeout) : that.connectionTimeout != null) return false;
         if (readTimeout != null ? !readTimeout.equals(that.readTimeout) : that.readTimeout != null) return false;
+        if (proxy != null ? !proxy.equals(that.proxy) : that.proxy != null) return false;
         return body != null ? body.equals(that.body) : that.body == null;
     }
 
@@ -234,6 +249,7 @@ public class HttpRequestTemplate implements ToXContent {
         result = 31 * result + (body != null ? body.hashCode() : 0);
         result = 31 * result + (connectionTimeout != null ? connectionTimeout.hashCode() : 0);
         result = 31 * result + (readTimeout != null ? readTimeout.hashCode() : 0);
+        result = 31 * result + (proxy != null ? proxy.hashCode() : 0);
         return result;
     }
 
@@ -259,6 +275,8 @@ public class HttpRequestTemplate implements ToXContent {
             while ((token = parser.nextToken()) != XContentParser.Token.END_OBJECT) {
                 if (token == XContentParser.Token.FIELD_NAME) {
                     currentFieldName = parser.currentName();
+                } else if (ParseFieldMatcher.STRICT.match(currentFieldName, Field.PROXY)) {
+                    builder.proxy(HttpProxy.parse(parser));
                 } else if (ParseFieldMatcher.STRICT.match(currentFieldName, Field.PATH)) {
                     builder.path(parseFieldTemplate(currentFieldName, parser));
                 } else if (ParseFieldMatcher.STRICT.match(currentFieldName, Field.HEADERS)) {
@@ -310,7 +328,7 @@ public class HttpRequestTemplate implements ToXContent {
                 throw new ElasticsearchParseException("could not parse http request template. missing required [{}] string field", Field.HOST.getPreferredName());
             }
             if (builder.port <= 0) {
-                throw new ElasticsearchParseException("could not parse http request template. missing required [{}] numeric field", Field.PORT.getPreferredName());
+                throw new ElasticsearchParseException("could not parse http request template. wrong port for [{}]", Field.PORT.getPreferredName());
             }
 
             return builder.build();
@@ -353,6 +371,7 @@ public class HttpRequestTemplate implements ToXContent {
         private TextTemplate body;
         private TimeValue connectionTimeout;
         private TimeValue readTimeout;
+        private HttpProxy proxy;
 
         private Builder() {
         }
@@ -445,9 +464,14 @@ public class HttpRequestTemplate implements ToXContent {
             return this;
         }
 
+        public Builder proxy(HttpProxy proxy) {
+            this.proxy = proxy;
+            return this;
+        }
+
         public HttpRequestTemplate build() {
             return new HttpRequestTemplate(host, port, scheme, method, path, unmodifiableMap(new HashMap<>(params)),
-                    unmodifiableMap(new HashMap<>(headers)), auth, body, connectionTimeout, readTimeout);
+                    unmodifiableMap(new HashMap<>(headers)), auth, body, connectionTimeout, readTimeout, proxy);
         }
     }
 

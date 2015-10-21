@@ -20,6 +20,7 @@ package org.elasticsearch.watcher.support.http;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.ElasticsearchTimeoutException;
 import org.elasticsearch.ExceptionsHelper;
+import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.component.AbstractLifecycleComponent;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.io.Streams;
@@ -62,6 +63,7 @@ import static java.util.Collections.unmodifiableMap;
 public class HttpClient extends AbstractLifecycleComponent<HttpClient> {
 
     static final String SETTINGS_SSL_PREFIX = "watcher.http.ssl.";
+    static final String SETTINGS_PROXY_PREFIX = "watcher.http.proxy.";
     static final String SETTINGS_SSL_SHIELD_PREFIX = "shield.ssl.";
 
     public static final String SETTINGS_SSL_PROTOCOL = SETTINGS_SSL_PREFIX + "protocol";
@@ -80,6 +82,8 @@ public class HttpClient extends AbstractLifecycleComponent<HttpClient> {
     static final String SETTINGS_SSL_SHIELD_TRUSTSTORE_PASSWORD = SETTINGS_SSL_SHIELD_PREFIX + "truststore.password";
     public static final String SETTINGS_SSL_TRUSTSTORE_ALGORITHM = SETTINGS_SSL_PREFIX + "truststore.algorithm";
     static final String SETTINGS_SSL_SHIELD_TRUSTSTORE_ALGORITHM = SETTINGS_SSL_SHIELD_PREFIX + "truststore.algorithm";
+    public static final String SETTINGS_PROXY_HOST = SETTINGS_PROXY_PREFIX + "host";
+    public static final String SETTINGS_PROXY_PORT = SETTINGS_PROXY_PREFIX + "post";
 
     private final HttpAuthRegistry httpAuthRegistry;
     private final Environment env;
@@ -87,6 +91,7 @@ public class HttpClient extends AbstractLifecycleComponent<HttpClient> {
     private final TimeValue defaultReadTimeout;
 
     private SSLSocketFactory sslSocketFactory;
+    private HttpProxy proxy = HttpProxy.NO_PROXY;
 
     @Inject
     public HttpClient(Settings settings, HttpAuthRegistry httpAuthRegistry, Environment env) {
@@ -99,6 +104,16 @@ public class HttpClient extends AbstractLifecycleComponent<HttpClient> {
 
     @Override
     protected void doStart() throws ElasticsearchException {
+        Integer proxyPort = settings.getAsInt(SETTINGS_PROXY_PORT, null);
+        String proxyHost = settings.get(SETTINGS_PROXY_HOST, null);
+        if (proxyPort != null && Strings.hasText(proxyHost)) {
+            proxy = new HttpProxy(proxyHost, proxyPort);
+        } else {
+            if (proxyPort == null && Strings.hasText(proxyHost) || proxyPort != null && !Strings.hasText(proxyHost)) {
+                logger.error("disabling proxy. Watcher HTTP HttpProxy requires both settings: [{}] and [{}]", SETTINGS_PROXY_HOST, SETTINGS_PROXY_PORT);
+            }
+        }
+
         if (!settings.getByPrefix(SETTINGS_SSL_PREFIX).getAsMap().isEmpty() ||
                 !settings.getByPrefix(SETTINGS_SSL_SHIELD_PREFIX).getAsMap().isEmpty()) {
             sslSocketFactory = createSSLSocketFactory(settings);
@@ -149,7 +164,11 @@ public class HttpClient extends AbstractLifecycleComponent<HttpClient> {
 
         logger.debug("making [{}] request to [{}]", request.method().method(), url);
         logger.trace("sending [{}] as body of request", request.body());
-        HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
+
+        // proxy configured in the request always wins!
+        HttpProxy proxyToUse = request.proxy != null ? request.proxy : proxy;
+
+        HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection(proxyToUse.proxy());
         if (urlConnection instanceof HttpsURLConnection && sslSocketFactory != null) {
             HttpsURLConnection httpsConn = (HttpsURLConnection) urlConnection;
             httpsConn.setSSLSocketFactory(sslSocketFactory);
