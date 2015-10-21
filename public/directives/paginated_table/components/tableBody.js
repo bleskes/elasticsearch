@@ -4,16 +4,6 @@ var make = React.DOM;
 var Loading = require('./loading.jsx');
 var NoData = require('./no_data.jsx');
 
-function renderRow(columns, obj, idx) {
-  var $objTds = columns.map(function (key, idx) {
-    return make.td({key: idx}, _.get(obj, key.key));
-  });
-  return make.tr({key: idx}, $objTds);
-}
-function makeOneTd(text) {
-  var $tr = make.tr(null, make.td(null, text));
-  return make.tbody(null, $tr);
-}
 module.exports = React.createClass({
   displayName: 'TableBody',
   render: function () {
@@ -38,11 +28,7 @@ module.exports = React.createClass({
     var start = this.props.pageIdx * this.props.itemsPerPage;
     var end = start + (this.props.itemsPerPage || sortedData.length);
     var paginatedData = sortedData.slice(start, end);
-
-    var template = renderRow.bind(this.props.columns);
-    if (this.props.template) {
-      template = React.createFactory(this.props.template);
-    }
+    var template = React.createFactory(this.props.template);
 
     var createRow = function (row, idx) {
       return template(row, idx);
