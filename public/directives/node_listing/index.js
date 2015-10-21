@@ -50,10 +50,15 @@ define(function (require) {
     var initialTableOptions = {
       title: 'Nodes',
       searchPlaceholder: 'Filter Nodes',
+      /* "key" should be an object
+       *   - unless it's the "name" key
+       *   - the key object should have:
+       *      - "metric" object
+       *      - "last" scalar
+       * "sortKey" should be a scalar */
       columns: [
         {
           key: 'name',
-          sortKey: 'nodeName',
           sort: 1,
           title: 'Name'
         },
