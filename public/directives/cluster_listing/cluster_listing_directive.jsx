@@ -16,25 +16,26 @@ module.directive('marvelClusterListing', function (globalState, kbnUrl, $locatio
           {
             key: 'cluster_uuid',
             sort: 1,
+            sortKey: 'cluster_name',
             title: 'Name'
           },
           {
-            key: 'stats.node_count',
+            key: 'stats.nodes.count.total',
             sort: 0,
             title: 'Nodes'
           },
           {
-            key: 'stats.indice_count',
+            key: 'stats.indices.count',
             sort: 0,
             title: 'Indices'
           },
           {
-            key: 'stats.uptime',
+            key: 'stats.nodes.jvm.max_uptime_in_millis',
             sort: 0,
             title: 'Uptime'
           },
           {
-            key: 'stats.data',
+            key: 'stats.indices.store.size_in_bytes',
             sort: 0,
             title: 'Data'
           },
