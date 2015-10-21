@@ -22,6 +22,7 @@ mod.service('$executor', (Promise, $timeout, timefilter) => {
    */
   function cancel() {
     if (executionTimer) $timeout.cancel(executionTimer);
+    timefilter.off('update', reset);
   }
 
   /**
@@ -60,16 +61,11 @@ mod.service('$executor', (Promise, $timeout, timefilter) => {
    * @returns {void}
    */
   function start() {
+    timefilter.on('update', reset);
     if (!timefilter.refreshInterval.pause) {
       executionTimer = $timeout(run, timefilter.refreshInterval.value);
     }
   }
-
-  /**
-   * Reset the executor when the timefilter updates
-   */
-  timefilter.on('update', reset);
-
 
   /**
    * Expose the methods
