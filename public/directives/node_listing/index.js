@@ -59,6 +59,7 @@ define(function (require) {
       columns: [
         {
           key: 'name',
+          sortKey: 'nodeName',
           sort: 1,
           title: 'Name'
         },
