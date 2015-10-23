@@ -142,15 +142,13 @@ public class JobCreateTest
 		console.activateOptions();
 		Logger.getRootLogger().addAppender(console);
 
-		if (args.length == 0)
+		s_ApiBaseUrl = "http://localhost:8080/engine/v1";
+		if (args.length > 0)
 		{
-			LOGGER.error("This program has one argument the base Url of the"
-					+ " REST API");
-			return;
+	        s_ApiBaseUrl = args[0];
 		}
 
-		s_ApiBaseUrl = args[0];
-
+		LOGGER.info("Using " + s_ApiBaseUrl + " for tests");
 
 		final int NUM_CLIENTS = 1;
 		final int NUM_JOBS = 50;

@@ -291,8 +291,7 @@ public class MultiJobUploadTest
         final String prelertTestDataHome = System.getProperty("prelert.test.data.home");
         if (prelertTestDataHome == null)
         {
-            LOGGER.error("Error property prelert.test.data.home is not set");
-            return;
+            throw new IllegalStateException("Error property prelert.test.data.home is not set");
         }
 
         MultiJobUploadTest test = new MultiJobUploadTest(baseUrl);

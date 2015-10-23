@@ -321,9 +321,9 @@ public class TransformJobTest implements Closeable {
 
         final String prelertTestDataHome = System
                 .getProperty("prelert.test.data.home");
-        if (prelertTestDataHome == null) {
-            LOGGER.error("Error property prelert.test.data.home is not set");
-            return;
+        if (prelertTestDataHome == null)
+        {
+            throw new IllegalStateException("Error property prelert.test.data.home is not set");
         }
 
         File splitMetricDataFileCsv = new File(
