@@ -151,6 +151,9 @@ public class ElasticsearchPersister implements JobResultsPersister
             {
                 BulkRequestBuilder addInfluencersRequest = m_Client.prepareBulk();
 
+                // TODO take this out once the influencer bucket TODO below is done.
+                boolean influencerAdded = false;
+
                 for (Influencer influencer : bucket.getInfluencers())
                 {
                     if (influencer.getInfluencerFieldValue() == null)
@@ -166,18 +169,25 @@ public class ElasticsearchPersister implements JobResultsPersister
                     addInfluencersRequest.add(
                             m_Client.prepareIndex(m_JobId, Influencer.TYPE, influencer.getId())
                             .setSource(content));
+
+                    influencerAdded = true;
                 }
 
-                LOGGER.trace("ES API CALL: bulk request with " + addInfluencersRequest.numberOfActions() + " actions");
-                BulkResponse addInfluencersResponse = addInfluencersRequest.execute().actionGet();
-                if (addInfluencersResponse.hasFailures())
+                // It causes an exception if the bulk update does not contain any request
+                if (influencerAdded)
                 {
-                    LOGGER.error("Bulk index of Influencers has errors");
-                    for (BulkItemResponse item : addInfluencersResponse.getItems())
+                    LOGGER.trace("ES API CALL: bulk request with " + addInfluencersRequest.numberOfActions() + " actions");
+                    BulkResponse addInfluencersResponse = addInfluencersRequest.execute().actionGet();
+                    if (addInfluencersResponse.hasFailures())
                     {
-                        LOGGER.error(item.getFailureMessage());
+                        LOGGER.error("Bulk index of Influencers has errors");
+                        for (BulkItemResponse item : addInfluencersResponse.getItems())
+                        {
+                            LOGGER.error(item.getFailureMessage());
+                        }
                     }
                 }
+
             }
 
             for (Detector detector : bucket.getDetectors())
