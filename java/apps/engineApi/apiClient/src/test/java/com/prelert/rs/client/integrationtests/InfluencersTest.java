@@ -38,9 +38,9 @@ import org.apache.log4j.PatternLayout;
 
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataDescription;
+import com.prelert.job.DataDescription.DataFormat;
 import com.prelert.job.Detector;
 import com.prelert.job.JobConfiguration;
-import com.prelert.job.DataDescription.DataFormat;
 import com.prelert.job.results.AnomalyRecord;
 import com.prelert.job.results.Influence;
 import com.prelert.rs.client.EngineApiClient;
@@ -57,7 +57,7 @@ import com.prelert.rs.data.Pagination;
  */
 public class InfluencersTest
 {
-    private static final Logger LOGGER = Logger.getLogger(InterimResultsTest.class);
+    private static final Logger LOGGER = Logger.getLogger(InfluencersTest.class);
 
     /**
      * The default base Url used in the test

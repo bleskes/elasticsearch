@@ -78,9 +78,7 @@ public class Influencers extends ResourceWithJobManager
         QueryPage<Influencer> page = manager.influencers(jobId, skip, take);
         Pagination<Influencer> results = paginationFromQueryPage(page, skip, take);
 
-
         setPagingUrls(ENDPOINT + "/" + jobId, results);
-
 
         LOGGER.debug(String.format("Returning %d of %d influencers",
                 results.getDocuments().size(), results.getHitCount()));
