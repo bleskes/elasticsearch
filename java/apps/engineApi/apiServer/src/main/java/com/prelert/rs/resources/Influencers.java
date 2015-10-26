@@ -43,7 +43,7 @@ import com.prelert.job.results.Influencer;
 import com.prelert.rs.data.Pagination;
 import com.prelert.rs.validation.PaginationParamsValidator;
 
-@Path("/influencers")
+@Path("/results")
 public class Influencers extends ResourceWithJobManager
 {
     private static final Logger LOGGER = Logger.getLogger(Influencers.class);
@@ -61,7 +61,7 @@ public class Influencers extends ResourceWithJobManager
      * @throws UnknownJobException
      */
     @GET
-    @Path("/{jobId}")
+    @Path("/{jobId}/influencers")
     @Produces(MediaType.APPLICATION_JSON)
     public Pagination<Influencer> influencers(
             @PathParam("jobId") String jobId,
