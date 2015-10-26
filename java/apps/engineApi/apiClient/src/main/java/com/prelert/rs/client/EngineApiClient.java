@@ -740,6 +740,19 @@ public class EngineApiClient implements Closeable
     }
 
     /**
+     * Returns a {@link InfluencersRequestBuilder} for the given job through which
+     * the request can be configured and executed
+     *
+     * @param jobId The jobId for which influencers are requested
+     *
+     * @return A {@link InfluencersRequestBuilder}
+     */
+    public InfluencersRequestBuilder prepareGetInfluencers(String jobId)
+    {
+        return new InfluencersRequestBuilder(this, jobId);
+    }
+
+    /**
      * Returns a {@link RecordsRequestBuilder} for the given job through which
      * the request can be configured and executed
      *
