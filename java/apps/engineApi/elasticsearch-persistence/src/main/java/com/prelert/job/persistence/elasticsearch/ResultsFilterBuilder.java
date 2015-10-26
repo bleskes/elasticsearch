@@ -41,14 +41,16 @@ import org.elasticsearch.index.query.TermFilterBuilder;
  */
 class ResultsFilterBuilder
 {
-    private final List<FilterBuilder> m_FilterBuilders = new ArrayList<>();
+    private final List<FilterBuilder> m_FilterBuilders;
 
     public ResultsFilterBuilder()
     {
+        m_FilterBuilders = new ArrayList<>();
     }
 
     public ResultsFilterBuilder(FilterBuilder filterBuilder)
     {
+        this();
         m_FilterBuilders.add(filterBuilder);
     }
 

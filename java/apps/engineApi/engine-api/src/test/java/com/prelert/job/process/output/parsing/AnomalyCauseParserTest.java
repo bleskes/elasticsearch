@@ -57,7 +57,7 @@ public class AnomalyCauseParserTest
                 + "\"function\" : \"mean\","
                 + "\"typical\" : 442.616,"
                 + "\"actual\" : 10.0,"
-                + "\"influences\" : {"
+                + "\"influencers\" : {"
                    + "\"host\": [\"web-server\", \"localhost\"],"
                    + "\"user\": [\"cat\"]"
                 + "},"

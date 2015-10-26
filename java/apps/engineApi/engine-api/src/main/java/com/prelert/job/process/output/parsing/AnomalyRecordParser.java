@@ -132,7 +132,7 @@ public class AnomalyRecordParser
             case AnomalyRecord.IS_INTERIM:
                 record.setInterim(parseAsBooleanOrNull(token, fieldName));
                 break;
-            case AnomalyRecord.INFLUENCES:
+            case AnomalyRecord.INFLUENCERS:
                 record.setInfluences(InfluenceParser.parseJson(m_Parser));
                 break;
             case AnomalyRecord.CAUSES:

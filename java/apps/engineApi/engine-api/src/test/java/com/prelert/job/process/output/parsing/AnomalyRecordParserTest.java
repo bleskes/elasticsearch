@@ -88,7 +88,7 @@ public class AnomalyRecordParserTest
                 + "\"overFieldName\" : \"someOverFieldName\","
                 + "\"overFieldValue\" : \"someOverFieldValue\","
                 + "\"causes\" : [{\"probability\" : 0.01}, {\"probability\" : 0.02}],"
-                + "\"influences\" : {"
+                + "\"influencers\" : {"
                     + "\"host\": [{\"web-server\": 0.8}, {\"localhost\": 0.7}],"
                     + "\"user\": [{\"cat\": 1}, {\"dave\": 0.4},{\"jo\": 0.1}]"
                     + "},"

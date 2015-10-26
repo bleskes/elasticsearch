@@ -35,8 +35,11 @@ import java.util.Objects;
  */
 public class Influence
 {
-    public static final String INFLUENCE_FIELD_NAME = "influenceFieldName";
-    public static final String INFLUENCE_FIELD_VALUES = "influenceFieldValues";
+    /**
+     * Note all publicly exposed field names are "influencer" not "influence"
+     */
+    public static final String INFLUENCER_FIELD_NAME = "influencerFieldName";
+    public static final String INFLUENCER_FIELD_VALUES = "influencerFieldValues";
 
 
     private String m_Field;

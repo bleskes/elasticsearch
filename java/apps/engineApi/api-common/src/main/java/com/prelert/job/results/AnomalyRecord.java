@@ -71,7 +71,7 @@ public class AnomalyRecord
     public static final String TYPICAL = "typical";
     public static final String ACTUAL = "actual";
     public static final String IS_INTERIM = "isInterim";
-    public static final String INFLUENCES = "influences";
+    public static final String INFLUENCERS = "influencers";
 
 
     /**

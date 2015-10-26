@@ -121,7 +121,7 @@ public class AnomalyCauseParser
             case AnomalyCause.OVER_FIELD_VALUE:
                 cause.setOverFieldValue(parseAsStringOrNull(token, fieldName));
                 break;
-            case AnomalyCause.INFLUENCES:
+            case AnomalyCause.INFLUENCERS:
                 cause.setInfluences(InfluenceParser.parseJson(m_Parser));
                 break;
             default:

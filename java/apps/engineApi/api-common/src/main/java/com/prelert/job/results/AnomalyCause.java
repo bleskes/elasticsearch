@@ -54,7 +54,7 @@ public class AnomalyCause
     public static final String FUNCTION_DESCRIPTION = "functionDescription";
     public static final String TYPICAL = "typical";
     public static final String ACTUAL = "actual";
-    public static final String INFLUENCES = "influences";
+    public static final String INFLUENCERS = "influencers";
 
     /**
      * Metric Results
