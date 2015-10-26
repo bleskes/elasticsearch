@@ -440,7 +440,7 @@ public class InfluencersTest
         String statusCodePath = prelertTestDataHome + "/engine_api_integration_test/influence";
         test.doBucketOnlyInfluencers(statusCodePath);
 
-        LOGGER.info("Influencers test completed successfully");
+        LOGGER.info("All tests passed Ok");
     }
 
 }
