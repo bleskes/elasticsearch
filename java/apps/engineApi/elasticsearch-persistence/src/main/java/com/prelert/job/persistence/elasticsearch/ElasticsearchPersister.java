@@ -576,7 +576,7 @@ public class ElasticsearchPersister implements JobResultsPersister
         }
         if (record.getInfluences() != null && record.getInfluences().isEmpty() == false)
         {
-            builder.startArray(AnomalyRecord.INFLUENCES);
+            builder.startArray(AnomalyRecord.INFLUENCERS);
             for (Influence influence: record.getInfluences())
             {
                 serialiseInfluence(influence, builder);
@@ -655,9 +655,9 @@ public class ElasticsearchPersister implements JobResultsPersister
     private void serialiseInfluence(Influence influence, XContentBuilder builder)
     throws IOException
     {
-        builder.startObject().field(Influence.INFLUENCE_FIELD_NAME, influence.getInfluenceFieldName());
+        builder.startObject().field(Influence.INFLUENCER_FIELD_NAME, influence.getInfluenceFieldName());
 
-        builder.startArray(Influence.INFLUENCE_FIELD_VALUES);
+        builder.startArray(Influence.INFLUENCER_FIELD_VALUES);
         for (String value : influence.getInfluenceFieldValues())
         {
             builder.value(value);
