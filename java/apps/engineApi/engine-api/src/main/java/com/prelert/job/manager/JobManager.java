@@ -406,11 +406,11 @@ public class JobManager
         return m_JobProvider.categoryDefinition(jobId, categoryId);
     }
 
-
-    public QueryPage<Influencer> influencers(String jobId, int skip, int take)
-            throws UnknownJobException
+    public QueryPage<Influencer> influencers(String jobId, int skip, int take, long epochStartMs,
+            long epochEndMs, String sortField, boolean sortDescending) throws UnknownJobException
     {
-        return m_JobProvider.influencers(jobId, skip, take);
+        return m_JobProvider.influencers(jobId, skip, take, epochStartMs, epochEndMs, sortField,
+                sortDescending);
     }
 
     public Optional<Influencer> influencer(String jobId, String influencerId)

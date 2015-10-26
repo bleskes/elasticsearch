@@ -308,8 +308,8 @@ public class ScoresUpdaterTest
     private void givenProviderReturnsNoInfluencers()
     {
         QueryPage<Influencer> page = new QueryPage<>(Collections.emptyList(), 0);
-        when(m_JobProvider.influencers(eq(JOB_ID), anyInt(), anyInt(), anyLong(), anyLong()))
-                .thenReturn(page);
+        when(m_JobProvider.influencers(eq(JOB_ID), anyInt(), anyInt(), anyLong(), anyLong(),
+                eq(null), eq(false))).thenReturn(page);
     }
 
     private void givenNormalisedBuckets(int bucketSpan, List<Bucket> originalBuckets,
