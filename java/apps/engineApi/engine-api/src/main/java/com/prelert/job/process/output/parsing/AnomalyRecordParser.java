@@ -133,7 +133,7 @@ public class AnomalyRecordParser
                 record.setInterim(parseAsBooleanOrNull(token, fieldName));
                 break;
             case AnomalyRecord.INFLUENCERS:
-                record.setInfluences(InfluenceParser.parseJson(m_Parser));
+                record.setInfluencers(InfluenceParser.parseJson(m_Parser));
                 break;
             case AnomalyRecord.CAUSES:
                 if (token != JsonToken.START_ARRAY)

@@ -84,17 +84,17 @@ public class AnomalyCauseParserTest
         assertEquals(cause.getOverFieldName(), "callsign");
         assertEquals(cause.getOverFieldValue(), "HVN600");
 
-        List<Influence> influences = cause.getInfluences();
+        List<Influence> influences = cause.getInfluencers();
 
         Influence host = influences.get(0);
-        assertEquals("host", host.getInfluenceFieldName());
-        assertEquals(2, host.getInfluenceFieldValues().size());
-        assertEquals("web-server", host.getInfluenceFieldValues().get(0));
-        assertEquals("localhost", host.getInfluenceFieldValues().get(1));
+        assertEquals("host", host.getInfluencerFieldName());
+        assertEquals(2, host.getInfluencerFieldValues().size());
+        assertEquals("web-server", host.getInfluencerFieldValues().get(0));
+        assertEquals("localhost", host.getInfluencerFieldValues().get(1));
 
         Influence user = influences.get(1);
-        assertEquals("user", user.getInfluenceFieldName());
-        assertEquals(1, user.getInfluenceFieldValues().size());
-        assertEquals("cat", user.getInfluenceFieldValues().get(0));
+        assertEquals("user", user.getInfluencerFieldName());
+        assertEquals(1, user.getInfluencerFieldValues().size());
+        assertEquals("cat", user.getInfluencerFieldValues().get(0));
     }
 }

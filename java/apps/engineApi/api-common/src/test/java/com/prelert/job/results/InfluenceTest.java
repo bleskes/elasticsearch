@@ -42,8 +42,8 @@ public class InfluenceTest
 
         assertEquals(inf1, inf2);
 
-        inf1.setInfluenceFieldValues(Arrays.asList("a", "b"));
-        inf2.setInfluenceFieldValues(Arrays.asList("a", "b"));
+        inf1.setInfluencerFieldValues(Arrays.asList("a", "b"));
+        inf2.setInfluencerFieldValues(Arrays.asList("a", "b"));
 
         assertEquals(inf1, inf2);
     }
@@ -56,8 +56,8 @@ public class InfluenceTest
 
         assertEquals(inf1.hashCode(), inf2.hashCode());
 
-        inf1.setInfluenceFieldValues(Arrays.asList("a", "b"));
-        inf2.setInfluenceFieldValues(Arrays.asList("a", "b"));
+        inf1.setInfluencerFieldValues(Arrays.asList("a", "b"));
+        inf2.setInfluencerFieldValues(Arrays.asList("a", "b"));
 
         assertEquals(inf1.hashCode(), inf2.hashCode());
     }

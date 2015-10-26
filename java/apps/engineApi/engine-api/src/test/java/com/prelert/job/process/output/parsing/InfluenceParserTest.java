@@ -51,7 +51,7 @@ public class InfluenceParserTest
         @Override
         public int compare(Influence o1, Influence o2)
         {
-            return o1.getInfluenceFieldName().compareTo(o2.getInfluenceFieldName());
+            return o1.getInfluencerFieldName().compareTo(o2.getInfluencerFieldName());
         }
     }
 
@@ -69,10 +69,10 @@ public class InfluenceParserTest
         assertEquals(1, infs.size());
         Influence inf = infs.get(0);
 
-        assertEquals("host", inf.getInfluenceFieldName());
-        assertEquals(2, inf.getInfluenceFieldValues().size());
-        assertEquals("web-server", inf.getInfluenceFieldValues().get(0));
-        assertEquals("localhost", inf.getInfluenceFieldValues().get(1));
+        assertEquals("host", inf.getInfluencerFieldName());
+        assertEquals(2, inf.getInfluencerFieldValues().size());
+        assertEquals("web-server", inf.getInfluencerFieldValues().get(0));
+        assertEquals("localhost", inf.getInfluencerFieldValues().get(1));
     }
 
     @Test
@@ -89,8 +89,8 @@ public class InfluenceParserTest
         assertEquals(1, infs.size());
         Influence inf = infs.get(0);
 
-        assertEquals("user", inf.getInfluenceFieldName());
-        assertEquals(0, inf.getInfluenceFieldValues().size());
+        assertEquals("user", inf.getInfluencerFieldName());
+        assertEquals(0, inf.getInfluencerFieldValues().size());
     }
 
     @Test(expected = AutoDetectParseException.class)
@@ -122,17 +122,17 @@ public class InfluenceParserTest
         Collections.sort(infs, new InfluenceFieldComparator());
 
         Influence host = infs.get(0);
-        assertEquals("host", host.getInfluenceFieldName());
-        assertEquals(2, host.getInfluenceFieldValues().size());
-        assertEquals("web-server", host.getInfluenceFieldValues().get(0));
-        assertEquals("localhost", host.getInfluenceFieldValues().get(1));
+        assertEquals("host", host.getInfluencerFieldName());
+        assertEquals(2, host.getInfluencerFieldValues().size());
+        assertEquals("web-server", host.getInfluencerFieldValues().get(0));
+        assertEquals("localhost", host.getInfluencerFieldValues().get(1));
 
         Influence user = infs.get(1);
-        assertEquals("user", user.getInfluenceFieldName());
-        assertEquals(3, user.getInfluenceFieldValues().size());
-        assertEquals("cat", user.getInfluenceFieldValues().get(0));
-        assertEquals("dave", user.getInfluenceFieldValues().get(1));
-        assertEquals("jo", user.getInfluenceFieldValues().get(2));
+        assertEquals("user", user.getInfluencerFieldName());
+        assertEquals(3, user.getInfluencerFieldValues().size());
+        assertEquals("cat", user.getInfluencerFieldValues().get(0));
+        assertEquals("dave", user.getInfluencerFieldValues().get(1));
+        assertEquals("jo", user.getInfluencerFieldValues().get(2));
     }
 
 

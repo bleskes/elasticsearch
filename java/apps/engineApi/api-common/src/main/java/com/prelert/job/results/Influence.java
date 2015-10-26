@@ -56,22 +56,22 @@ public class Influence
         m_Field = field;
     }
 
-    public String getInfluenceFieldName()
+    public String getInfluencerFieldName()
     {
         return m_Field;
     }
 
-    public void setInfluenceFieldName(String field)
+    public void setInfluencerFieldName(String field)
     {
         this.m_Field = field;
     }
 
-    public List<String> getInfluenceFieldValues()
+    public List<String> getInfluencerFieldValues()
     {
         return m_FieldValues;
     }
 
-    public void setInfluenceFieldValues(List<String> values)
+    public void setInfluencerFieldValues(List<String> values)
     {
         this.m_FieldValues = values;
     }

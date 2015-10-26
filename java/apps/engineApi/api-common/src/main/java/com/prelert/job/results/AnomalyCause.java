@@ -76,7 +76,7 @@ public class AnomalyCause
     private String m_OverFieldName;
     private String m_OverFieldValue;
 
-    private List<Influence> m_Influences;
+    private List<Influence> m_Influencers;
 
 
     public double getProbability()
@@ -200,14 +200,14 @@ public class AnomalyCause
         m_OverFieldValue = value.intern();
     }
 
-    public List<Influence> getInfluences()
+    public List<Influence> getInfluencers()
     {
-        return m_Influences;
+        return m_Influencers;
     }
 
-    public void setInfluences(List<Influence> influences)
+    public void setInfluencers(List<Influence> influencers)
     {
-        this.m_Influences = influences;
+        m_Influencers = influencers;
     }
 
     @Override
@@ -225,7 +225,7 @@ public class AnomalyCause
                 m_OverFieldValue,
                 m_PartitionFieldName,
                 m_PartitionFieldValue,
-                m_Influences);
+                m_Influencers);
     }
 
     @Override
@@ -255,7 +255,7 @@ public class AnomalyCause
                 Objects.equals(this.m_PartitionFieldValue, that.m_PartitionFieldValue) &&
                 Objects.equals(this.m_OverFieldName, that.m_OverFieldName) &&
                 Objects.equals(this.m_OverFieldValue, that.m_OverFieldValue) &&
-                Objects.equals(this.m_Influences, that.m_Influences);
+                Objects.equals(this.m_Influencers, that.m_Influencers);
     }
 
 }

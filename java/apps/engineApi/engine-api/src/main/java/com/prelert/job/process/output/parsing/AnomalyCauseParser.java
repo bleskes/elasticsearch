@@ -122,7 +122,7 @@ public class AnomalyCauseParser
                 cause.setOverFieldValue(parseAsStringOrNull(token, fieldName));
                 break;
             case AnomalyCause.INFLUENCERS:
-                cause.setInfluences(InfluenceParser.parseJson(m_Parser));
+                cause.setInfluencers(InfluenceParser.parseJson(m_Parser));
                 break;
             default:
                 LOGGER.warn(String.format("Parse error unknown field in Anomaly Cause %s:%s",

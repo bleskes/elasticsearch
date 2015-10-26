@@ -123,7 +123,7 @@ public class AnomalyRecord
     private double m_NormalizedProbability;
     private Date   m_Timestamp;
 
-    private List<Influence> m_Influences;
+    private List<Influence> m_Influencers;
 
     private boolean m_HadBigNormalisedUpdate;
 
@@ -391,14 +391,14 @@ public class AnomalyRecord
         m_Parent = parent.intern();
     }
 
-    public List<Influence> getInfluences()
+    public List<Influence> getInfluencers()
     {
-        return m_Influences;
+        return m_Influencers;
     }
 
-    public void setInfluences(List<Influence> influences)
+    public void setInfluencers(List<Influence> influencers)
     {
-        this.m_Influences = influences;
+        m_Influencers = influencers;
     }
 
 
@@ -414,7 +414,7 @@ public class AnomalyRecord
         return Objects.hash(m_Probability, m_AnomalyScore, m_NormalizedProbability,
                 m_Typical, m_Actual, m_Function, m_FunctionDescription, m_FieldName, m_ByFieldName,
                 m_ByFieldValue, m_PartitionFieldName, m_PartitionFieldValue, m_OverFieldName,
-                m_OverFieldValue, m_Timestamp, m_Parent, m_IsInterim, m_Causes, m_Influences);
+                m_OverFieldValue, m_Timestamp, m_Parent, m_IsInterim, m_Causes, m_Influencers);
     }
 
 
@@ -456,7 +456,7 @@ public class AnomalyRecord
                 && Objects.equals(this.m_Parent, that.m_Parent)
                 && Objects.equals(this.m_IsInterim, that.m_IsInterim)
                 && Objects.equals(this.m_Causes, that.m_Causes)
-                && Objects.equals(this.m_Influences, that.m_Influences);
+                && Objects.equals(this.m_Influencers, that.m_Influencers);
     }
 
     public boolean hadBigNormalisedUpdate()

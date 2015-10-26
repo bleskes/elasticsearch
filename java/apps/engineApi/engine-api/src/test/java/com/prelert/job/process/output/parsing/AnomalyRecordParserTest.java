@@ -116,9 +116,9 @@ public class AnomalyRecordParserTest
         assertTrue(anomalyRecord.isInterim());
         assertEquals(2, anomalyRecord.getCauses().size());
 
-        assertEquals(2, anomalyRecord.getInfluences().size());
-        assertEquals("host", anomalyRecord.getInfluences().get(0).getInfluenceFieldName());
-        assertEquals("user", anomalyRecord.getInfluences().get(1).getInfluenceFieldName());
+        assertEquals(2, anomalyRecord.getInfluencers().size());
+        assertEquals("host", anomalyRecord.getInfluencers().get(0).getInfluencerFieldName());
+        assertEquals("user", anomalyRecord.getInfluencers().get(1).getInfluencerFieldName());
 
 
         assertEquals(JsonToken.END_OBJECT, parser.getCurrentToken());

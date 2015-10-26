@@ -127,10 +127,10 @@ public class InfluencersTest
 
         AnomalyRecord record = records.getDocuments().get(0);
 
-        test(record.getInfluences().size() == 1);
-        test(record.getInfluences().get(0).getInfluenceFieldName().equals("src_ip"));
-        test(record.getInfluences().get(0).getInfluenceFieldValues().size() == 1);
-        test(record.getInfluences().get(0).getInfluenceFieldValues().get(0).equals("23.28.243.150"));
+        test(record.getInfluencers().size() == 1);
+        test(record.getInfluencers().get(0).getInfluencerFieldName().equals("src_ip"));
+        test(record.getInfluencers().get(0).getInfluencerFieldValues().size() == 1);
+        test(record.getInfluencers().get(0).getInfluencerFieldValues().get(0).equals("23.28.243.150"));
     }
 
 
@@ -189,10 +189,10 @@ public class InfluencersTest
         AnomalyRecord record = records.getDocuments().get(0);
 
         test(record.getOverFieldValue().equals("nigella"));
-        test(record.getInfluences().size() == 1);
-        test(record.getInfluences().get(0).getInfluenceFieldName().equals("src_ip"));
-        test(record.getInfluences().get(0).getInfluenceFieldValues().size() == 1);
-        test(record.getInfluences().get(0).getInfluenceFieldValues().get(0).equals("23.28.243.150"));
+        test(record.getInfluencers().size() == 1);
+        test(record.getInfluencers().get(0).getInfluencerFieldName().equals("src_ip"));
+        test(record.getInfluencers().get(0).getInfluencerFieldValues().size() == 1);
+        test(record.getInfluencers().get(0).getInfluencerFieldValues().get(0).equals("23.28.243.150"));
     }
 
 
@@ -251,15 +251,15 @@ public class InfluencersTest
         AnomalyRecord record = records.getDocuments().get(0);
 
 
-        test(record.getInfluences().size() == 2);
+        test(record.getInfluencers().size() == 2);
 
         Influence user = new Influence("user");
         user.addInfluenceFieldValue("nigella");
-        test(record.getInfluences().indexOf(user) >= 0);
+        test(record.getInfluencers().indexOf(user) >= 0);
 
         Influence src = new Influence("src_machine");
         src.addInfluenceFieldValue("10.2.20.200");
-        test(record.getInfluences().indexOf(user) >= 0);
+        test(record.getInfluencers().indexOf(user) >= 0);
     }
 
     /**
@@ -320,15 +320,15 @@ public class InfluencersTest
         AnomalyRecord record = records.getDocuments().get(0);
 
 
-        test(record.getInfluences().size() == 2);
+        test(record.getInfluencers().size() == 2);
 
         Influence user = new Influence("user");
         user.addInfluenceFieldValue("nigella");
-        test(record.getInfluences().indexOf(user) >= 0);
+        test(record.getInfluencers().indexOf(user) >= 0);
 
         Influence src = new Influence("src_ip");
         src.addInfluenceFieldValue("10.2.20.200");
-        test(record.getInfluences().indexOf(user) >= 0);
+        test(record.getInfluencers().indexOf(user) >= 0);
     }
 
 

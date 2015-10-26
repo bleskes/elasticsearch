@@ -86,7 +86,7 @@ public class InfluenceParser
                 throws AutoDetectParseException, JsonParseException, IOException
         {
             Influence influence = new Influence();
-            influence.setInfluenceFieldName(fieldName);
+            influence.setInfluencerFieldName(fieldName);
             JsonToken token = m_Parser.nextToken();
             parseValues(token, influence);
 
