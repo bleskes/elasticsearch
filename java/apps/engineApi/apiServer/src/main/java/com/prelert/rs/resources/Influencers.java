@@ -43,7 +43,7 @@ import com.prelert.job.results.Influencer;
 import com.prelert.rs.data.Pagination;
 import com.prelert.rs.validation.PaginationParamsValidator;
 
-@Path("/influencers")
+@Path("/results")
 public class Influencers extends ResourceWithJobManager
 {
     private static final Logger LOGGER = Logger.getLogger(Influencers.class);
@@ -53,6 +53,8 @@ public class Influencers extends ResourceWithJobManager
      */
     public static final String ENDPOINT = "influencers";
 
+    private static final String SORT_QUERY_PARAM = "sort";
+    private static final String DESCENDING_ORDER = "desc";
 
     /**
      * Get influencers for the job
@@ -61,26 +63,32 @@ public class Influencers extends ResourceWithJobManager
      * @throws UnknownJobException
      */
     @GET
-    @Path("/{jobId}")
+    @Path("/{jobId}/influencers")
     @Produces(MediaType.APPLICATION_JSON)
     public Pagination<Influencer> influencers(
             @PathParam("jobId") String jobId,
             @DefaultValue("0") @QueryParam("skip") int skip,
-            @DefaultValue(JobManager.DEFAULT_PAGE_SIZE_STR) @QueryParam("take") int take)
+            @DefaultValue(JobManager.DEFAULT_PAGE_SIZE_STR) @QueryParam("take") int take,
+            @DefaultValue("") @QueryParam(START_QUERY_PARAM) String start,
+            @DefaultValue("") @QueryParam(END_QUERY_PARAM) String end,
+            @DefaultValue(Influencer.ANOMALY_SCORE) @QueryParam(SORT_QUERY_PARAM) String sort,
+            @DefaultValue("true") @QueryParam(DESCENDING_ORDER) boolean descending)
     throws UnknownJobException
     {
         LOGGER.debug("Get influencers for job '" + jobId + "'");
 
         new PaginationParamsValidator(skip, take).validate();
 
+        long epochStartMs = paramToEpochIfValidOrThrow(START_QUERY_PARAM, start, LOGGER);
+        long epochEndMs = paramToEpochIfValidOrThrow(END_QUERY_PARAM, end, LOGGER);
+
         JobManager manager = jobManager();
 
-        QueryPage<Influencer> page = manager.influencers(jobId, skip, take);
+        QueryPage<Influencer> page = manager.influencers(jobId, skip, take, epochStartMs,
+                epochEndMs, sort, descending);
         Pagination<Influencer> results = paginationFromQueryPage(page, skip, take);
 
-
         setPagingUrls(ENDPOINT + "/" + jobId, results);
-
 
         LOGGER.debug(String.format("Returning %d of %d influencers",
                 results.getDocuments().size(), results.getHitCount()));

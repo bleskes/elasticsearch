@@ -906,26 +906,34 @@ public class ElasticsearchJobProvider implements JobProvider
     @Override
     public QueryPage<Influencer> influencers(String jobId, int skip, int take)
     {
-        return influencers(jobId, skip, take, FilterBuilders.matchAllFilter());
+        return influencers(jobId, skip, take, FilterBuilders.matchAllFilter(),
+                Influencer.ANOMALY_SCORE, true);
     }
 
     @Override
     public QueryPage<Influencer> influencers(String jobId, int skip, int take, long startEpochMs,
-            long endEpochMs)
+            long endEpochMs, String sortField, boolean sortDescending)
     {
         FilterBuilder fb = new ResultsFilterBuilder()
                 .timeRange(Influencer.TIMESTAMP, startEpochMs, endEpochMs).build();
-        return influencers(jobId, skip, take, fb);
+        return influencers(jobId, skip, take, fb, sortField, sortDescending);
     }
 
-    private QueryPage<Influencer> influencers(String jobId, int skip, int take, FilterBuilder fb)
+    private QueryPage<Influencer> influencers(String jobId, int skip, int take,
+            FilterBuilder filterBuilder, String sortField, boolean sortDescending)
     {
-        LOGGER.trace("ES API CALL: search all of type " + Influencer.TYPE +
-                " from index " + jobId +
-                " with filter after sort skip " + skip + " take " + take);
+        LOGGER.trace("ES API CALL: search all of type " + Influencer.TYPE + " from index " + jobId
+                + ((sortField != null) ? " with sort "
+                + (sortDescending ? "descending" : "ascending") + " on field " + sortField : "")
+                + " with filter after sort skip " + skip + " take " + take);
+
+        SortBuilder sb = sortField == null ? null : new FieldSortBuilder(sortField)
+                .order(sortDescending ? SortOrder.DESC : SortOrder.ASC);
+
         SearchResponse response = m_Client.prepareSearch(jobId)
                 .setTypes(Influencer.TYPE)
-                .setPostFilter(fb)
+                .setPostFilter(filterBuilder)
+                .addSort(sb)
                 .setFrom(skip).setSize(take)
                 .get();
 

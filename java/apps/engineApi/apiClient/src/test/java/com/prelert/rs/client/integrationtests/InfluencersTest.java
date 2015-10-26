@@ -29,6 +29,8 @@ package com.prelert.rs.client.integrationtests;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
 
 import org.apache.http.client.ClientProtocolException;
 import org.apache.log4j.ConsoleAppender;
@@ -38,11 +40,12 @@ import org.apache.log4j.PatternLayout;
 
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataDescription;
+import com.prelert.job.DataDescription.DataFormat;
 import com.prelert.job.Detector;
 import com.prelert.job.JobConfiguration;
-import com.prelert.job.DataDescription.DataFormat;
 import com.prelert.job.results.AnomalyRecord;
 import com.prelert.job.results.Influence;
+import com.prelert.job.results.Influencer;
 import com.prelert.rs.client.EngineApiClient;
 import com.prelert.rs.data.Pagination;
 
@@ -57,7 +60,7 @@ import com.prelert.rs.data.Pagination;
  */
 public class InfluencersTest
 {
-    private static final Logger LOGGER = Logger.getLogger(InterimResultsTest.class);
+    private static final Logger LOGGER = Logger.getLogger(InfluencersTest.class);
 
     /**
      * The default base Url used in the test
@@ -131,6 +134,14 @@ public class InfluencersTest
         test(record.getInfluencers().get(0).getInfluencerFieldName().equals("src_ip"));
         test(record.getInfluencers().get(0).getInfluencerFieldValues().size() == 1);
         test(record.getInfluencers().get(0).getInfluencerFieldValues().get(0).equals("23.28.243.150"));
+
+        List<Influencer> influencers = m_WebServiceClient.prepareGetInfluencers(FIREWALL).get()
+                .getDocuments();
+        test(influencers.size() == 1);
+        test(influencers.get(0).getInfluencerFieldName().equals("src_ip"));
+        test(influencers.get(0).getInfluencerFieldValue().equals("23.28.243.150"));
+        test(influencers.get(0).getTimestamp().equals(new Date(1421992800000L)));
+        test(influencers.get(0).getAnomalyScore() > 94.0);
     }
 
 
@@ -193,6 +204,14 @@ public class InfluencersTest
         test(record.getInfluencers().get(0).getInfluencerFieldName().equals("src_ip"));
         test(record.getInfluencers().get(0).getInfluencerFieldValues().size() == 1);
         test(record.getInfluencers().get(0).getInfluencerFieldValues().get(0).equals("23.28.243.150"));
+
+        List<Influencer> influencers = m_WebServiceClient.prepareGetInfluencers(SSH_AUTH).get()
+                .getDocuments();
+        test(influencers.size() == 1);
+        test(influencers.get(0).getInfluencerFieldName().equals("src_ip"));
+        test(influencers.get(0).getInfluencerFieldValue().equals("23.28.243.150"));
+        test(influencers.get(0).getTimestamp().equals(new Date(1422172800000L)));
+        test(influencers.get(0).getAnomalyScore() > 98.0);
     }
 
 
@@ -260,6 +279,27 @@ public class InfluencersTest
         Influence src = new Influence("src_machine");
         src.addInfluenceFieldValue("10.2.20.200");
         test(record.getInfluencers().indexOf(user) >= 0);
+
+        Pagination<Influencer> pagination = m_WebServiceClient.prepareGetInfluencers(WEB_LOGS).get();
+        test(pagination.getHitCount() > 100);
+        List<Influencer> influencers = pagination.getDocuments();
+        test(influencers.size() == 100);
+        test(influencers.get(0).getInfluencerFieldName().equals("user"));
+        test(influencers.get(0).getInfluencerFieldValue().equals("nigella"));
+        test(influencers.get(0).getTimestamp().equals(new Date(1422355200000L)));
+        test(influencers.get(0).getAnomalyScore() > 99.0);
+
+        test(influencers.get(1).getInfluencerFieldName().equals("src_machine"));
+        test(influencers.get(1).getInfluencerFieldValue().equals("10.2.20.200"));
+        test(influencers.get(1).getTimestamp().equals(new Date(1422355800000L)));
+        test(influencers.get(1).getAnomalyScore() > 99.0);
+
+        test(influencers.get(2).getInfluencerFieldName().equals("src_machine"));
+        test(influencers.get(2).getInfluencerFieldValue().equals("10.2.20.200"));
+        test(influencers.get(2).getTimestamp().equals(new Date(1422355200000L)));
+        test(influencers.get(2).getAnomalyScore() > 99.0);
+
+        test(influencers.get(3).getAnomalyScore() < influencers.get(2).getAnomalyScore());
     }
 
     /**
@@ -329,6 +369,24 @@ public class InfluencersTest
         Influence src = new Influence("src_ip");
         src.addInfluenceFieldValue("10.2.20.200");
         test(record.getInfluencers().indexOf(user) >= 0);
+
+        Pagination<Influencer> pagination = m_WebServiceClient.prepareGetInfluencers(BLUECOAT_LOGS).get();
+        test(pagination.getHitCount() > 1500);
+        List<Influencer> influencers = pagination.getDocuments();
+        test(influencers.size() == 100);
+
+        // We expect two top influencers with score > 90.0
+        for (int i = 0; i < 2; i++)
+        {
+            test(influencers.get(i).getInfluencerFieldName().equals("user")
+                    || influencers.get(i).getInfluencerFieldName().equals("src_ip"));
+            test(influencers.get(i).getInfluencerFieldValue().equals("nigella")
+                    || influencers.get(i).getInfluencerFieldValue().equals("10.2.20.200"));
+            test(influencers.get(i).getTimestamp().equals(new Date(1422712800000L)));
+            test(influencers.get(i).getAnomalyScore() > 90.0);
+        }
+
+        test(influencers.get(2).getAnomalyScore() < influencers.get(1).getAnomalyScore());
     }
 
 
@@ -356,7 +414,6 @@ public class InfluencersTest
 
         Detector d = new Detector();
         d.setFunction("high_count");
-
 
         AnalysisConfig ac = new AnalysisConfig();
         ac.setBucketSpan(3600L);
@@ -440,7 +497,7 @@ public class InfluencersTest
         String statusCodePath = prelertTestDataHome + "/engine_api_integration_test/influence";
         test.doBucketOnlyInfluencers(statusCodePath);
 
-        LOGGER.info("Influencers test completed successfully");
+        LOGGER.info("All tests passed Ok");
     }
 
 }

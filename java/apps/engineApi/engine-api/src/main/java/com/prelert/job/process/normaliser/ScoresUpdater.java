@@ -258,7 +258,7 @@ class ScoresUpdater
     {
         int skip = 0;
         QueryPage<Influencer> page = m_JobProvider.influencers(m_JobId, skip,
-                MAX_INFLUENCERS_PER_PAGE, 0, endBucketEpochMs);
+                MAX_INFLUENCERS_PER_PAGE, 0, endBucketEpochMs, null, false);
 
         while (page.hitCount() > skip)
         {
@@ -285,7 +285,7 @@ class ScoresUpdater
             if (page.hitCount() > skip)
             {
                 page = m_JobProvider.influencers(m_JobId, skip, MAX_INFLUENCERS_PER_PAGE, 0,
-                        endBucketEpochMs);
+                        endBucketEpochMs, null, false);
             }
         }
     }

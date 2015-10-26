@@ -27,6 +27,12 @@
 
 package com.prelert.rs.resources;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.mockito.Mockito.when;
+
+import java.util.Arrays;
+
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -35,6 +41,9 @@ import org.junit.rules.ExpectedException;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.errorcodes.ErrorCodeMatcher;
 import com.prelert.job.errorcodes.ErrorCodes;
+import com.prelert.job.persistence.QueryPage;
+import com.prelert.job.results.Influencer;
+import com.prelert.rs.data.Pagination;
 import com.prelert.rs.exception.InvalidParametersException;
 
 public class InfluencersTest extends ServiceTest
@@ -60,7 +69,7 @@ public class InfluencersTest extends ServiceTest
         m_ExpectedException.expectMessage("Parameter 'skip' cannot be < 0");
         m_ExpectedException.expect(ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_SKIP_PARAM));
 
-        m_Influencers.influencers(JOB_ID, -1, 100);
+        m_Influencers.influencers(JOB_ID, -1, 100, "", "", null, false);
     }
 
     @Test
@@ -70,6 +79,27 @@ public class InfluencersTest extends ServiceTest
         m_ExpectedException.expectMessage("Parameter 'take' cannot be < 0");
         m_ExpectedException.expect(ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_TAKE_PARAM));
 
-        m_Influencers.influencers(JOB_ID, 0, -1);
+        m_Influencers.influencers(JOB_ID, 0, -1, "", "", null, false);
+    }
+
+    @Test
+    public void testInfluencers_GivenAllResultsInOnePage() throws UnknownJobException
+    {
+        Influencer inf1 = new Influencer();
+        Influencer inf2 = new Influencer();
+        Influencer inf3 = new Influencer();
+        QueryPage<Influencer> page = new QueryPage<>(Arrays.asList(inf1, inf2, inf3), 3);
+
+        when(jobManager().influencers(JOB_ID, 0, 100, 0, 0, null, false)).thenReturn(page);
+
+        Pagination<Influencer> results =  m_Influencers.influencers(JOB_ID, 0, 100, "", "", null, false);
+
+        assertEquals(3, results.getHitCount());
+        assertEquals(inf1, results.getDocuments().get(0));
+        assertEquals(inf2, results.getDocuments().get(1));
+        assertEquals(inf3, results.getDocuments().get(2));
+
+        assertNull(results.getNextPage());
+        assertNull(results.getPreviousPage());
     }
 }

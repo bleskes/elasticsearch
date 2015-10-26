@@ -238,10 +238,12 @@ public interface JobResultsProvider extends Closeable
      * @param endEpochMs The end bucket timestamp buckets up to but NOT including this
      * timestamp are returned. If 0 all buckets from <code>startEpochMs</code>
      * are returned
+     * @param sortField The field to sort influencers by. If <code>null</code> no sort is applied
+     * @param sortDescending Sort in descending order
      * @return QueryPage of Influencer
      */
     public QueryPage<Influencer> influencers(String jobId, int skip, int take, long startEpochMs,
-            long endEpochMs);
+            long endEpochMs, String sortField, boolean sortDescending);
 
 
     /**

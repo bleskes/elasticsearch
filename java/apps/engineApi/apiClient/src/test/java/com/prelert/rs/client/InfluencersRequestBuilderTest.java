@@ -39,7 +39,7 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-public class CategoryDefinitionRequestBuilderTest
+public class InfluencersRequestBuilderTest
 {
     private static final String BASE_URL = "http://localhost:8080";
 
@@ -53,11 +53,32 @@ public class CategoryDefinitionRequestBuilderTest
     }
 
     @Test
-    public void testGet() throws IOException
+    public void testGet_GivenDefaultParameters() throws IOException
     {
-        new CategoryDefinitionRequestBuilder(m_Client, "foo", "3").get();
-        verify(m_Client).get(eq(BASE_URL + "/results/foo/categorydefinitions/3"), any());
-        new CategoryDefinitionRequestBuilder(m_Client, "foo", "4").get();
-        verify(m_Client).get(eq(BASE_URL + "/results/foo/categorydefinitions/4"), any());
+        new InfluencersRequestBuilder(m_Client, "foo").get();
+        verify(m_Client).get(eq(BASE_URL + "/results/foo/influencers"), any());
+    }
+
+    @Test
+    public void testGet_GivenSkip() throws IOException
+    {
+        new InfluencersRequestBuilder(m_Client, "foo").skip(200).get();
+        verify(m_Client).get(eq(BASE_URL + "/results/foo/influencers?skip=200"), any());
+    }
+
+    @Test
+    public void testGet_GivenTake() throws IOException
+    {
+        new InfluencersRequestBuilder(m_Client, "foo").take(1000).get();
+        verify(m_Client).get(eq(BASE_URL + "/results/foo/influencers?take=1000"), any());
+    }
+
+    @Test
+    public void testGet_GivenMultipleParameters() throws IOException
+    {
+        new InfluencersRequestBuilder(m_Client, "foo").skip(0).take(1000).get();
+        verify(m_Client).get(
+                eq(BASE_URL + "/results/foo/influencers?skip=0&take=1000"),
+                any());
     }
 }
