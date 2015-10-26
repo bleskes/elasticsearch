@@ -331,6 +331,65 @@ public class InfluencersTest
         test(record.getInfluences().indexOf(user) >= 0);
     }
 
+
+    /**
+     * Analyse the 5xx status code data using the high count function
+     * so there are record and bucket level influencers.
+     *
+     * *** Bucket level influencers aren't implemented yet ***
+     *
+     * The anomaly results aren't tested, the code only asserts that the
+     * Engine successfully processes the data.
+     *
+     *
+     *
+     * @param filePath
+     * @throws ClientProtocolException
+     * @throws IOException
+     */
+    private void doBucketOnlyInfluencers(String filePath) throws ClientProtocolException, IOException
+    {
+        // TODO update test when bucket influencers are added
+        final String STATUS_CODES_RATES = "5xx_status_code_rates";
+
+        m_WebServiceClient.deleteJob(STATUS_CODES_RATES);
+
+        Detector d = new Detector();
+        d.setFunction("high_count");
+
+
+        AnalysisConfig ac = new AnalysisConfig();
+        ac.setBucketSpan(3600L);
+        ac.setInfluencers(Arrays.asList("clientip"));
+        ac.setDetectors(Arrays.asList(d));
+
+        DataDescription dd = new DataDescription();
+        dd.setFormat(DataFormat.DELIMITED);
+        dd.setFieldDelimiter(',');
+        dd.setTimeField("time");
+        dd.setTimeFormat("epoch");
+
+        JobConfiguration config = new JobConfiguration(ac);
+        config.setId(STATUS_CODES_RATES);
+        config.setDataDescription(dd);
+
+        String jobId = m_WebServiceClient.createJob(config);
+        if (jobId == null || jobId.isEmpty())
+        {
+            LOGGER.error("No Job Id returned by create job");
+            test(jobId != null && jobId.isEmpty() == false);
+        }
+
+        File data = new File(filePath, "5xx_status_codes.csv");
+        m_WebServiceClient.fileUpload(STATUS_CODES_RATES, data, false);
+        m_WebServiceClient.closeJob(STATUS_CODES_RATES);
+
+        Pagination<AnomalyRecord> records = m_WebServiceClient.prepareGetRecords(STATUS_CODES_RATES).get();
+
+        test(records.getHitCount() > 0);
+    }
+
+
     /**
      * Throws an IllegalStateException if <code>condition</code> is false.
      *
@@ -373,11 +432,15 @@ public class InfluencersTest
         InfluencersTest test = new InfluencersTest(baseUrl);
 
         String basePath = prelertTestDataHome + "/influence/security_story1";
-
         test.doFirewallJob(basePath);
         test.doAuthDJob(basePath);
         test.doServerLogsJob(basePath);
         test.doBluecoatLogsJob(basePath);
+
+        String statusCodePath = prelertTestDataHome + "/engine_api_integration_test/influence";
+        test.doBucketOnlyInfluencers(statusCodePath);
+
+        LOGGER.info("Influencers test completed successfully");
     }
 
 }
