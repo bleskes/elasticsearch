@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -36,9 +36,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.text.DateFormat;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -52,14 +50,10 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
-import com.prelert.job.persistence.elasticsearch.ElasticsearchUsagePersister;
 import com.prelert.job.usage.Usage;
 
 public class ElasticsearchUsagePersisterTest
 {
-
-    private static final DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXX");
-
     @SuppressWarnings("rawtypes")
     @Test
     public void testPersistUsageCounts() throws ParseException
@@ -101,7 +95,8 @@ public class ElasticsearchUsagePersisterTest
 
         List<Map> capturedUpserts = upsertsCaptor.getAllValues();
         assertEquals(2, capturedUpserts.size());
-        assertEquals(DATE_FORMAT.parse(timestamp), capturedUpserts.get(0).get(Usage.TIMESTAMP));
+        System.out.println(capturedUpserts.get(0).get(Usage.TIMESTAMP));
+        assertEquals(timestamp, capturedUpserts.get(0).get(Usage.TIMESTAMP).toString());
         assertEquals(10L, capturedUpserts.get(0).get(Usage.INPUT_BYTES));
         assertEquals(30L, capturedUpserts.get(0).get(Usage.INPUT_FIELD_COUNT));
         assertEquals(1L, capturedUpserts.get(0).get(Usage.INPUT_RECORD_COUNT));

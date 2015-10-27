@@ -98,7 +98,7 @@ public enum ErrorCodes
 	/**
 	 * The date format pattern cannot be interpreted as a valid
 	 * Java date format pattern.
-	 * @see java.text.SimpleDateFormat
+	 * @see java.time.format.DateTimeFormatter
 	 */
 	INVALID_DATE_FORMAT(10108),
 

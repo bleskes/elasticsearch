@@ -55,13 +55,13 @@ import com.prelert.job.AnalysisConfig;
 import com.prelert.job.AnalysisLimits;
 import com.prelert.job.DataDescription;
 import com.prelert.job.DataDescription.DataFormat;
-import com.prelert.job.errorcodes.ErrorCodes;
-import com.prelert.job.results.AnomalyRecord;
-import com.prelert.job.results.Bucket;
 import com.prelert.job.Detector;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.JobDetails;
 import com.prelert.job.JobStatus;
+import com.prelert.job.errorcodes.ErrorCodes;
+import com.prelert.job.results.AnomalyRecord;
+import com.prelert.job.results.Bucket;
 import com.prelert.rs.client.EngineApiClient;
 import com.prelert.rs.data.ApiError;
 import com.prelert.rs.data.MultiDataPostResult;
@@ -87,8 +87,8 @@ import com.prelert.rs.data.SingleDocument;
  */
 public class JobsTest implements Closeable
 {
-    static final String ISO_8601_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ssX";
-    static final String ISO_8601_DATE_FORMAT_WITH_MS = "yyyy-MM-dd'T'HH:mm:ss.SSSX";
+    static final String ISO_8601_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ssXXX";
+    static final String ISO_8601_DATE_FORMAT_WITH_MS = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX";
 
 
     /**
@@ -1009,9 +1009,6 @@ public class JobsTest implements Closeable
     public void testBucketDateFilters(String jobId, Date start, Date end)
     throws IOException
     {
-        final String ISO_8601_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ssX";
-        final String ISO_8601_DATE_FORMAT_WITH_MS = "yyyy-MM-dd'T'HH:mm:ss.SSSX";
-
         // test 3 date formats
         Long epochStart = start.getTime() / 1000;
         Long epochEnd = end.getTime() / 1000;

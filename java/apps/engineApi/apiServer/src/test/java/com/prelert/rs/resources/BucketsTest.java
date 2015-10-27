@@ -52,6 +52,7 @@ import com.prelert.job.results.Bucket;
 import com.prelert.rs.data.Pagination;
 import com.prelert.rs.data.SingleDocument;
 import com.prelert.rs.exception.InvalidParametersException;
+import com.prelert.rs.provider.RestApiException;
 
 public class BucketsTest extends ServiceTest
 {
@@ -118,7 +119,8 @@ public class BucketsTest extends ServiceTest
     }
 
     @Test
-    public void testBuckets_GivenStartAndEndParams() throws UnknownJobException, NativeProcessRunException
+    public void testBuckets_GivenEpochStartAndEpochEndParams() throws UnknownJobException,
+            NativeProcessRunException
     {
         QueryPage<Bucket> queryResult = new QueryPage<>(Arrays.asList(new Bucket()), 300);
 
@@ -135,6 +137,63 @@ public class BucketsTest extends ServiceTest
         assertEquals("http://localhost/test/results/foo/buckets?skip=100&take=100&start=1&end=2&"
                 + "expand=false&includeInterim=false&anomalyScore=0.0&maxNormalizedProbability=0.0",
                 nextPageUri);
+    }
+
+    @Test
+    public void testBuckets_GivenIsoWithoutMillisStartAndEpochEndParams() throws UnknownJobException,
+            NativeProcessRunException
+    {
+        QueryPage<Bucket> queryResult = new QueryPage<>(Arrays.asList(new Bucket()), 300);
+
+        when(jobManager().buckets("foo", false, false, 0, 100, 1420113600000L, 1420117200000L, 0.0, 0.0))
+                .thenReturn(queryResult);
+
+        Pagination<Bucket> buckets = m_Buckets.buckets("foo", false, false, 0, 100,
+                "2015-01-01T12:00:00Z", "2015-01-01T13:00:00Z", 0.0, 0.0);
+
+        assertEquals(300l, buckets.getHitCount());
+        assertEquals(100l, buckets.getTake());
+        assertEquals(0l, buckets.getSkip());
+
+        assertNull(buckets.getPreviousPage());
+        String nextPageUri = buckets.getNextPage().toString();
+        assertEquals("http://localhost/test/results/foo/buckets?skip=100&take=100&start=2015-01-01T12:00:00Z&end=2015-01-01T13:00:00Z&"
+                + "expand=false&includeInterim=false&anomalyScore=0.0&maxNormalizedProbability=0.0",
+                nextPageUri);
+    }
+
+    @Test
+    public void testBuckets_GivenIsoWithMillisStartAndEpochEndParams() throws UnknownJobException,
+            NativeProcessRunException
+    {
+        QueryPage<Bucket> queryResult = new QueryPage<>(Arrays.asList(new Bucket()), 300);
+
+        when(jobManager().buckets("foo", false, false, 0, 100, 1420113600042L, 1420117200142L, 0.0, 0.0))
+                .thenReturn(queryResult);
+
+        Pagination<Bucket> buckets = m_Buckets.buckets("foo", false, false, 0, 100,
+                "2015-01-01T12:00:00.042Z", "2015-01-01T13:00:00.142+00:00", 0.0, 0.0);
+
+        assertEquals(300l, buckets.getHitCount());
+        assertEquals(100l, buckets.getTake());
+        assertEquals(0l, buckets.getSkip());
+
+        assertNull(buckets.getPreviousPage());
+        String nextPageUri = buckets.getNextPage().toString();
+        assertEquals("http://localhost/test/results/foo/buckets?skip=100&take=100&start=2015-01-01T12:00:00.042Z&end=2015-01-01T13:00:00.142%2B00:00&"
+                + "expand=false&includeInterim=false&anomalyScore=0.0&maxNormalizedProbability=0.0",
+                nextPageUri);
+    }
+
+    @Test
+    public void testBuckets_GivenInvalidStartAndEpochEndParams() throws UnknownJobException,
+            NativeProcessRunException
+    {
+        m_ExpectedException.expect(RestApiException.class);
+        m_ExpectedException.expectMessage("Query param 'start' with value 'invalid' cannot be parsed as a date or converted to a number (epoch)");
+        m_ExpectedException.expect(ErrorCodeMatcher.hasErrorCode(ErrorCodes.UNPARSEABLE_DATE_ARGUMENT));
+
+        m_Buckets.buckets("foo", false, false, 0, 100, "invalid", "also invalid", 0.0, 0.0);
     }
 
     @Test

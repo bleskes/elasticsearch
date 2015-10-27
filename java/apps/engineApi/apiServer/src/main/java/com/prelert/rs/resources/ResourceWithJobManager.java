@@ -28,11 +28,11 @@
 package com.prelert.rs.resources;
 
 import java.net.URI;
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
+import java.time.Instant;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.time.temporal.TemporalAccessor;
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -65,15 +65,6 @@ public abstract class ResourceWithJobManager
     private static final Logger LOGGER = Logger.getLogger(ResourceWithJobManager.class);
 
     /**
-     * Date query param format
-     */
-    private static final String ISO_8601_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ssX";
-    /**
-     * Date query param format with ms
-     */
-    private static final String ISO_8601_DATE_FORMAT_WITH_MS = "yyyy-MM-dd'T'HH:mm:ss.SSSX";
-
-    /**
      * The filter 'start' query parameter
      */
     public static final String START_QUERY_PARAM = "start";
@@ -88,16 +79,6 @@ public abstract class ResourceWithJobManager
      */
     public static final String BAD_DATE_FORMAT_MSG = "Error: Query param '%s' with value"
             + " '%s' cannot be parsed as a date or converted to a number (epoch)";
-
-    /**
-     * The date formats to be used while trying to parse timestamps.
-     * The array should be ordered the most likely to work first.
-     * Also note that DateFormat objects are not thread-safe, thus
-     * we create new instances for each endpoint.
-     */
-    private final DateFormat[] m_DateFormats = new DateFormat [] {
-            new SimpleDateFormat(ISO_8601_DATE_FORMAT),
-            new SimpleDateFormat(ISO_8601_DATE_FORMAT_WITH_MS)};
 
     /**
      * Application context injected by the framework
@@ -379,18 +360,15 @@ public abstract class ResourceWithJobManager
             // not a number
         }
 
-        for (DateFormat dateFormat : m_DateFormats)
+        // try parsing as a date string
+        try
         {
-            // try parsing as a date string
-            try
-            {
-                Date d = dateFormat.parse(date);
-                return d.getTime();
-            }
-            catch (ParseException pe)
-            {
-                // not a date
-            }
+            TemporalAccessor parsed = DateTimeFormatter.ISO_OFFSET_DATE_TIME.parse(date);
+            return Instant.from(parsed).toEpochMilli();
+        }
+        catch (DateTimeParseException pe)
+        {
+            // not a date
         }
 
         // Could not do the conversion

@@ -32,8 +32,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -119,7 +119,7 @@ public class JobManager
 
 
     private AtomicLong m_IdSequence;
-    private DateFormat m_JobIdDateFormat;
+    private DateTimeFormatter m_JobIdDateFormat;
 
     private ObjectMapper m_ObjectMapper;
 
@@ -162,7 +162,7 @@ public class JobManager
         m_MaxAllowedJobs = calculateMaxJobsAllowed();
 
         m_IdSequence = new AtomicLong();
-        m_JobIdDateFormat = new SimpleDateFormat("yyyyMMddHHmmss");
+        m_JobIdDateFormat = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
 
         m_ObjectMapper = new ObjectMapper();
         m_ObjectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
@@ -746,7 +746,7 @@ public class JobManager
      */
     private String generateJobId()
     {
-        return String.format("%s-%05d", m_JobIdDateFormat.format(new Date()),
+        return String.format("%s-%05d", m_JobIdDateFormat.format(LocalDateTime.now()),
                         m_IdSequence.incrementAndGet());
     }
 

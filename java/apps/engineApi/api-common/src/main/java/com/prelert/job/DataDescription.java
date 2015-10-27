@@ -42,7 +42,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
  * the {@linkplain DataFormat} enum indicates which. {@link #getTimeField()}
  * is the name of the field containing the timestamp and {@link #getTimeFormat()}
  * is the format code for the date string in as described by
- * {@link java.text.SimpleDateFormat}. The default quote character for
+ * {@link java.time.format.DateTimeFormatter}. The default quote character for
  * delineated formats is {@value #DEFAULT_QUOTE_CHAR} but any other character can be
  * used.
  */

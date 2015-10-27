@@ -26,11 +26,10 @@
  ************************************************************/
 package com.prelert.job.config.verification;
 
-import java.text.SimpleDateFormat;
-
 import com.prelert.job.DataDescription;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.messages.Messages;
+import com.prelert.utils.time.DateTimeFormatterTimestampConverter;
 
 public final class DataDescriptionVerifier
 {
@@ -58,7 +57,7 @@ public final class DataDescriptionVerifier
 
             try
             {
-                new SimpleDateFormat(dd.getTimeFormat());
+                DateTimeFormatterTimestampConverter.ofPattern(dd.getTimeFormat());
             }
             catch (IllegalArgumentException e)
             {
