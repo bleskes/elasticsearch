@@ -81,7 +81,8 @@ public class ShieldPlugin extends Plugin {
     private final Settings settings;
     private final boolean enabled;
     private final boolean clientMode;
-    private final ShieldLicenseState shieldLicenseState = new ShieldLicenseState();
+    private ShieldLicenseState shieldLicenseState;
+
 
     public ShieldPlugin(Settings settings) {
         this.settings = settings;
@@ -111,6 +112,10 @@ public class ShieldPlugin extends Plugin {
                     new ShieldTransportModule(settings),
                     new SSLModule(settings));
         } else {
+            // we can't load that at construction time since the license plugin might not have been loaded at that point
+            // which might not be the case during Plugin class instantiation. Once nodeModules are pulled
+            // everything should have been loaded
+            shieldLicenseState = new ShieldLicenseState();
             return Arrays.<Module>asList(
                     new ShieldModule(settings),
                     new LicenseModule(settings, shieldLicenseState),
@@ -167,7 +172,10 @@ public class ShieldPlugin extends Plugin {
         if (enabled == false) {
             return;
         }
-        module.setSearcherWrapper((indexService) -> new ShieldIndexSearcherWrapper(indexService.getIndexSettings(), indexService.queryParserService(), indexService.mapperService(), indexService.bitsetFilterCache(), shieldLicenseState));
+        assert shieldLicenseState != null;
+        module.setSearcherWrapper((indexService) -> new ShieldIndexSearcherWrapper(indexService.getIndexSettings(),
+                indexService.queryParserService(), indexService.mapperService(),
+                indexService.bitsetFilterCache(), shieldLicenseState));
         if (clientMode == false) {
             module.registerQueryCache(ShieldPlugin.OPT_OUT_QUERY_CACHE, OptOutQueryCache::new);
         }
