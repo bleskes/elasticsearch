@@ -12,29 +12,30 @@ module.directive('marvelClusterListing', function (globalState, kbnUrl, $locatio
       var options = {
         title: 'Your Clusters',
         searchPlaceholder: 'Filter Clusters',
+        // "key" properties are scalars used for sorting
         columns: [
           {
-            key: 'cluster_uuid',
+            key: 'cluster_name',
             sort: 1,
             title: 'Name'
           },
           {
-            key: 'stats.node_count',
+            key: 'stats.nodes.count.total',
             sort: 0,
             title: 'Nodes'
           },
           {
-            key: 'stats.indice_count',
+            key: 'stats.indices.count',
             sort: 0,
             title: 'Indices'
           },
           {
-            key: 'stats.uptime',
+            key: 'stats.nodes.jvm.max_uptime_in_millis',
             sort: 0,
             title: 'Uptime'
           },
           {
-            key: 'stats.data',
+            key: 'stats.indices.store.size_in_bytes',
             sort: 0,
             title: 'Data'
           },
