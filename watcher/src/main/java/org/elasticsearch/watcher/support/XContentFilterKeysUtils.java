@@ -45,6 +45,10 @@ public final class XContentFilterKeysUtils {
     }
 
     private static Map<String, Object> parse(XContentParser parser, State state) throws IOException {
+        return parse(parser, state, true);
+    }
+
+    private static Map<String, Object> parse(XContentParser parser, State state, boolean isOutsideOfArray) throws IOException {
         if (state.includeLeaf) {
             return parser.map();
         }
@@ -58,12 +62,14 @@ public final class XContentFilterKeysUtils {
                 case START_OBJECT:
                     if (state.includeKey) {
                         String fieldName = state.currentFieldName();
-                        Map<String, Object> nestedData = parse(parser, state);
+                        Map<String, Object> nestedData = parse(parser, state, isOutsideOfArray);
                         data.put(fieldName, nestedData);
                     } else {
                         parser.skipChildren();
                     }
-                    state.previousField();
+                    if (isOutsideOfArray) {
+                        state.previousField();
+                    }
                     break;
                 case START_ARRAY:
                     if (state.includeKey) {
@@ -103,7 +109,7 @@ public final class XContentFilterKeysUtils {
         for (XContentParser.Token token = parser.nextToken(); token != END_ARRAY; token = parser.nextToken()) {
             switch (token) {
                 case START_OBJECT:
-                    values.add(parse(parser, state));
+                    values.add(parse(parser, state, false));
                     break;
                 case VALUE_STRING:
                     values.add(parser.text());
