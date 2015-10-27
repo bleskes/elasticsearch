@@ -69,7 +69,7 @@ public class InfluencersTest extends ServiceTest
         m_ExpectedException.expectMessage("Parameter 'skip' cannot be < 0");
         m_ExpectedException.expect(ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_SKIP_PARAM));
 
-        m_Influencers.influencers(JOB_ID, -1, 100, "", "", null, false);
+        m_Influencers.influencers(JOB_ID, -1, 100, "", "", null, false, 0.0);
     }
 
     @Test
@@ -79,7 +79,7 @@ public class InfluencersTest extends ServiceTest
         m_ExpectedException.expectMessage("Parameter 'take' cannot be < 0");
         m_ExpectedException.expect(ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_TAKE_PARAM));
 
-        m_Influencers.influencers(JOB_ID, 0, -1, "", "", null, false);
+        m_Influencers.influencers(JOB_ID, 0, -1, "", "", null, false, 0.0);
     }
 
     @Test
@@ -90,9 +90,10 @@ public class InfluencersTest extends ServiceTest
         Influencer inf3 = new Influencer();
         QueryPage<Influencer> page = new QueryPage<>(Arrays.asList(inf1, inf2, inf3), 3);
 
-        when(jobManager().influencers(JOB_ID, 0, 100, 0, 0, null, false)).thenReturn(page);
+        when(jobManager().influencers(JOB_ID, 0, 100, 0, 0, null, false, 0.0)).thenReturn(page);
 
-        Pagination<Influencer> results =  m_Influencers.influencers(JOB_ID, 0, 100, "", "", null, false);
+        Pagination<Influencer> results = m_Influencers.influencers(JOB_ID, 0, 100, "", "", null,
+                false, 0.0);
 
         assertEquals(3, results.getHitCount());
         assertEquals(inf1, results.getDocuments().get(0));

@@ -240,10 +240,11 @@ public interface JobResultsProvider extends Closeable
      * are returned
      * @param sortField The field to sort influencers by. If <code>null</code> no sort is applied
      * @param sortDescending Sort in descending order
+     * @param anomalyScoreThreshold Return only influencers with an anomalyScore >= this value
      * @return QueryPage of Influencer
      */
     public QueryPage<Influencer> influencers(String jobId, int skip, int take, long startEpochMs,
-            long endEpochMs, String sortField, boolean sortDescending);
+            long endEpochMs, String sortField, boolean sortDescending, double anomalyScoreFilter);
 
 
     /**

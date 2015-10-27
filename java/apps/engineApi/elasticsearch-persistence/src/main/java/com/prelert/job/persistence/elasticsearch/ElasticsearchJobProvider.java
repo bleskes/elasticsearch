@@ -912,10 +912,12 @@ public class ElasticsearchJobProvider implements JobProvider
 
     @Override
     public QueryPage<Influencer> influencers(String jobId, int skip, int take, long startEpochMs,
-            long endEpochMs, String sortField, boolean sortDescending)
+            long endEpochMs, String sortField, boolean sortDescending, double anomalyScoreFilter)
     {
         FilterBuilder fb = new ResultsFilterBuilder()
-                .timeRange(Influencer.TIMESTAMP, startEpochMs, endEpochMs).build();
+                .timeRange(Influencer.TIMESTAMP, startEpochMs, endEpochMs)
+                .score(Influencer.ANOMALY_SCORE, anomalyScoreFilter)
+                .build();
         return influencers(jobId, skip, take, fb, sortField, sortDescending);
     }
 

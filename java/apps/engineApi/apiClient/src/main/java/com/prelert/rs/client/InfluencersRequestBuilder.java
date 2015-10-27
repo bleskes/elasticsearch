@@ -28,6 +28,8 @@
 package com.prelert.rs.client;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -70,6 +72,96 @@ public class InfluencersRequestBuilder extends BaseJobRequestBuilder<Influencer>
     public InfluencersRequestBuilder take(long value)
     {
         m_Params.put("take", Long.toString(value));
+        return this;
+    }
+
+    /**
+     * Filters out influencers that start before the given value.
+     * Value is expected in seconds from the Epoch.
+     *
+     * @param value The start date as seconds from the Epoch
+     * @return this {@code InfluencersRequestBuilder} object
+     */
+    public InfluencersRequestBuilder start(long value)
+    {
+        m_Params.put(START_QUERY_PARAM, Long.toString(value));
+        return this;
+    }
+
+    /**
+     * Filters out influencers that start before the given value.
+     * Value is expected as an ISO 8601 date String.
+     *
+     * @param value The start date as an ISO 8601 String
+     * @return this {@code InfluencersRequestBuilder} object
+     * @throws UnsupportedEncodingException
+     */
+    public InfluencersRequestBuilder start(String value) throws UnsupportedEncodingException
+    {
+        m_Params.put(START_QUERY_PARAM, URLEncoder.encode(value, "UTF-8"));
+        return this;
+    }
+
+    /**
+     * Filters out influencers that start at or after the given value.
+     * Value is expected in seconds from the Epoch.
+     *
+     * @param value The end date as seconds from the Epoch
+     * @return this {@code InfluencersRequestBuilder} object
+     */
+    public InfluencersRequestBuilder end(long value)
+    {
+        m_Params.put(END_QUERY_PARAM, Long.toString(value));
+        return this;
+    }
+
+    /**
+     * Filters out influencers that start at or after the given value.
+     * Value is expected as an ISO 8601 date String.
+     *
+     * @param value The end date as an ISO 8601 String
+     * @return this {@code InfluencersRequestBuilder} object
+     * @throws UnsupportedEncodingException
+     */
+    public InfluencersRequestBuilder end(String value) throws UnsupportedEncodingException
+    {
+        m_Params.put(END_QUERY_PARAM, URLEncoder.encode(value, "UTF-8"));
+        return this;
+    }
+
+    /**
+     * Sets the field to sort by
+     *
+     * @param field The field to sort by
+     * @return this {@code InfluencersRequestBuilder} object
+     */
+    public InfluencersRequestBuilder sortField(String field)
+    {
+        m_Params.put(SORT_QUERY_PARAM, field);
+        return this;
+    }
+
+    /**
+     * Sets whether the sorting order is descending
+     *
+     * @param descending Should the sorting order be descending or not
+     * @return this {@code InfluencersRequestBuilder} object
+     */
+    public InfluencersRequestBuilder descending(boolean descending)
+    {
+        m_Params.put(DESCENDING_ORDER, Boolean.toString(descending));
+        return this;
+    }
+
+    /**
+     * Return only influencers with an anomalyScore &gt;= this value.
+     *
+     * @param value The anomaly score threshold
+     * @return this {@code InfluencersRequestBuilder} object
+     */
+    public InfluencersRequestBuilder anomalyScoreThreshold(double value)
+    {
+        m_Params.put(Influencer.ANOMALY_SCORE, Double.toString(value));
         return this;
     }
 

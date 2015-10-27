@@ -34,6 +34,11 @@ import java.util.StringJoiner;
 
 class BaseJobRequestBuilder<T>
 {
+    public static final String START_QUERY_PARAM = "start";
+    public static final String END_QUERY_PARAM = "end";
+    public static final String SORT_QUERY_PARAM = "sort";
+    public static final String DESCENDING_ORDER = "desc";
+
     private final EngineApiClient m_Client;
     private final String m_JobId;
 

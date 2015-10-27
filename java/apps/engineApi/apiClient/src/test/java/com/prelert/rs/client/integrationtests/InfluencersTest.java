@@ -300,6 +300,12 @@ public class InfluencersTest
         test(influencers.get(2).getAnomalyScore() > 99.0);
 
         test(influencers.get(3).getAnomalyScore() < influencers.get(2).getAnomalyScore());
+
+        // Test filtering based on anomalyScore
+        test(m_WebServiceClient.prepareGetInfluencers(WEB_LOGS)
+                .anomalyScoreThreshold(99.0)
+                .get()
+                .getHitCount() == 3);
     }
 
     /**

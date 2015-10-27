@@ -407,10 +407,11 @@ public class JobManager
     }
 
     public QueryPage<Influencer> influencers(String jobId, int skip, int take, long epochStartMs,
-            long epochEndMs, String sortField, boolean sortDescending) throws UnknownJobException
+            long epochEndMs, String sortField, boolean sortDescending, double anomalyScoreFilter)
+            throws UnknownJobException
     {
         return m_JobProvider.influencers(jobId, skip, take, epochStartMs, epochEndMs, sortField,
-                sortDescending);
+                sortDescending, anomalyScoreFilter);
     }
 
     public Optional<Influencer> influencer(String jobId, String influencerId)
