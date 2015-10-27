@@ -211,7 +211,7 @@ public class InfluencersTest
         test(influencers.get(0).getInfluencerFieldName().equals("src_ip"));
         test(influencers.get(0).getInfluencerFieldValue().equals("23.28.243.150"));
         test(influencers.get(0).getTimestamp().equals(new Date(1422172800000L)));
-        test(influencers.get(0).getAnomalyScore() > 98.0);
+        test(influencers.get(0).getAnomalyScore() > 97.0);
     }
 
 
@@ -387,7 +387,7 @@ public class InfluencersTest
         List<Influencer> influencers = pagination.getDocuments();
         test(influencers.size() == 100);
 
-        // We expect two top influencers with score > 90.0
+        // We expect two top influencers with score > 85.0
         for (int i = 0; i < 2; i++)
         {
             test(influencers.get(i).getInfluencerFieldName().equals("user")
@@ -395,7 +395,7 @@ public class InfluencersTest
             test(influencers.get(i).getInfluencerFieldValue().equals("nigella")
                     || influencers.get(i).getInfluencerFieldValue().equals("10.2.20.200"));
             test(influencers.get(i).getTimestamp().equals(new Date(1422712800000L)));
-            test(influencers.get(i).getAnomalyScore() > 90.0);
+            test(influencers.get(i).getAnomalyScore() > 85.0);
         }
 
         test(influencers.get(2).getAnomalyScore() < influencers.get(1).getAnomalyScore());
