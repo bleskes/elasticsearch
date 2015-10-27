@@ -54,7 +54,8 @@ define(function (require) {
           aggs: { metric: { } },
           meta: {
             timefilterMin: bounds.min.valueOf(),
-            timefilterMax: bounds.max.valueOf()
+            timefilterMax: bounds.max.valueOf(),
+            bucketSize: this.bucketSize
           }
         }
       };
@@ -85,12 +86,13 @@ define(function (require) {
       var buckets = aggCheck.buckets;
       var boundsMin = moment(aggCheck.meta.timefilterMin);
       var boundsMax = moment(aggCheck.meta.timefilterMax);
+      var bucketSize = aggCheck.meta.bucketSize;
       this.data = _.chain(buckets)
         .filter(function (bucket) {
-          if (getDelta(getTime(bucket).subtract(self.bucketSize, 'seconds'), boundsMin) < 0) {
+          if (getDelta(getTime(bucket).subtract(bucketSize, 'seconds'), boundsMin) < 0) {
             return false;
           }
-          if (getDelta(boundsMax, getTime(bucket).add(self.bucketSize, 'seconds')) < 0) {
+          if (getDelta(boundsMax, getTime(bucket).add(bucketSize, 'seconds')) < 0) {
             return false;
           }
           return true;
