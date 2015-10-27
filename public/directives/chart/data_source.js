@@ -51,7 +51,11 @@ define(function (require) {
               max: bounds.max
             }
           },
-          aggs: { metric: { } }
+          aggs: { metric: { } },
+          meta: {
+            timefilterMin: bounds.min.valueOf(),
+            timefilterMax: bounds.max.valueOf()
+          }
         }
       };
       aggs.check.aggs.metric[this.metric.metricAgg] = {
@@ -77,14 +81,16 @@ define(function (require) {
       };
 
       var calculation = this.metric && this.metric.calculation || defaultCalculation;
-      var buckets = resp.aggregations.check.buckets;
-      var bounds = timefilter.getBounds();
+      var aggCheck = resp.aggregations.check;
+      var buckets = aggCheck.buckets;
+      var boundsMin = moment(aggCheck.meta.timefilterMin);
+      var boundsMax = moment(aggCheck.meta.timefilterMax);
       this.data = _.chain(buckets)
         .filter(function (bucket) {
-          if (getDelta(getTime(bucket).subtract(self.bucketSize, 'seconds'), bounds.min) < 0) {
+          if (getDelta(getTime(bucket).subtract(self.bucketSize, 'seconds'), boundsMin) < 0) {
             return false;
           }
-          if (getDelta(bounds.max, getTime(bucket).add(self.bucketSize, 'seconds')) < 0) {
+          if (getDelta(boundsMax, getTime(bucket).add(self.bucketSize, 'seconds')) < 0) {
             return false;
           }
           return true;
