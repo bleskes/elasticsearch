@@ -141,7 +141,7 @@ public class InfluencersTest
         test(influencers.get(0).getInfluencerFieldName().equals("src_ip"));
         test(influencers.get(0).getInfluencerFieldValue().equals("23.28.243.150"));
         test(influencers.get(0).getTimestamp().equals(new Date(1421992800000L)));
-        test(influencers.get(0).getAnomalyScore() > 94.0);
+        test(influencers.get(0).getAnomalyScore() > 85.0);
     }
 
 
@@ -284,28 +284,34 @@ public class InfluencersTest
         test(pagination.getHitCount() > 100);
         List<Influencer> influencers = pagination.getDocuments();
         test(influencers.size() == 100);
-        test(influencers.get(0).getInfluencerFieldName().equals("user"));
-        test(influencers.get(0).getInfluencerFieldValue().equals("nigella"));
-        test(influencers.get(0).getTimestamp().equals(new Date(1422355200000L)));
-        test(influencers.get(0).getAnomalyScore() > 99.0);
 
-        test(influencers.get(1).getInfluencerFieldName().equals("src_machine"));
-        test(influencers.get(1).getInfluencerFieldValue().equals("10.2.20.200"));
-        test(influencers.get(1).getTimestamp().equals(new Date(1422355800000L)));
-        test(influencers.get(1).getAnomalyScore() > 99.0);
+        for (int i = 0; i < influencers.size(); i++)
+        {
+            Influencer influencer = influencers.get(i);
+            if (influencer.getInfluencerFieldName().equals("user"))
+            {
+                test(influencer.getInfluencerFieldValue().equals("nigella"));
+            }
+            else if (influencer.getInfluencerFieldName().equals("src_machine"))
+            {
+                test(influencer.getInfluencerFieldValue().equals("10.2.20.200"));
+            }
+            else
+            {
+                test(false);
+            }
 
-        test(influencers.get(2).getInfluencerFieldName().equals("src_machine"));
-        test(influencers.get(2).getInfluencerFieldValue().equals("10.2.20.200"));
-        test(influencers.get(2).getTimestamp().equals(new Date(1422355200000L)));
-        test(influencers.get(2).getAnomalyScore() > 99.0);
-
-        test(influencers.get(3).getAnomalyScore() < influencers.get(2).getAnomalyScore());
+            if (i + 1 < influencers.size())
+            {
+                test(influencer.getAnomalyScore() >= influencers.get(i + 1).getAnomalyScore());
+            }
+        }
 
         // Test filtering based on anomalyScore
         test(m_WebServiceClient.prepareGetInfluencers(WEB_LOGS)
-                .anomalyScoreThreshold(99.0)
+                .anomalyScoreThreshold(90.0)
                 .get()
-                .getHitCount() == 3);
+                .getHitCount() == 19);
     }
 
     /**

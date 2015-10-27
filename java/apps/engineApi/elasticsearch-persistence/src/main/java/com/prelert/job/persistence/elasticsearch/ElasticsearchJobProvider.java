@@ -929,15 +929,18 @@ public class ElasticsearchJobProvider implements JobProvider
                 + (sortDescending ? "descending" : "ascending") + " on field " + sortField : "")
                 + " with filter after sort skip " + skip + " take " + take);
 
-        SortBuilder sb = sortField == null ? null : new FieldSortBuilder(sortField)
-                .order(sortDescending ? SortOrder.DESC : SortOrder.ASC);
-
-        SearchResponse response = m_Client.prepareSearch(jobId)
+        SearchRequestBuilder searchRequestBuilder = m_Client.prepareSearch(jobId)
                 .setTypes(Influencer.TYPE)
                 .setPostFilter(filterBuilder)
-                .addSort(sb)
-                .setFrom(skip).setSize(take)
-                .get();
+                .setFrom(skip).setSize(take);
+
+        if (sortField != null)
+        {
+            SortBuilder sb = new FieldSortBuilder(sortField).order(
+                    sortDescending ? SortOrder.DESC : SortOrder.ASC);
+            searchRequestBuilder.addSort(sb);
+        }
+        SearchResponse response = searchRequestBuilder.get();
 
         List<Influencer> influencers = new ArrayList<>();
         for (SearchHit hit : response.getHits().getHits())
