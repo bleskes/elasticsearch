@@ -17,12 +17,20 @@
 
 package org.elasticsearch.index;
 
+import org.elasticsearch.shield.ShieldPlugin;
+import org.elasticsearch.shield.authz.accesscontrol.OptOutQueryCache;
 import org.elasticsearch.shield.authz.accesscontrol.ShieldIndexSearcherWrapper;
 
-public class SearcherWrapperInstaller {
+/**
+ * This class installs package protected extension points on the {@link IndexModule}
+ */
+public class ProtectedServiceInstaller {
 
-    public static void install(IndexModule module) {
+    public static void install(IndexModule module, boolean clientMode) {
         module.indexSearcherWrapper = ShieldIndexSearcherWrapper.class;
+        if (clientMode == false) {
+            module.registerQueryCache(ShieldPlugin.OPT_OUT_QUERY_CACHE, OptOutQueryCache::new);
+        }
     }
 
 }
