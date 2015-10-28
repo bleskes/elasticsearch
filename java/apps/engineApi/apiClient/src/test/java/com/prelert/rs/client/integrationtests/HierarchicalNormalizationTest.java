@@ -262,13 +262,25 @@ public class HierarchicalNormalizationTest implements Closeable
         test(records.size() == 3);
 
         AnomalyRecord record1 = records.get(0);
+        AnomalyRecord record2 = records.get(1);
+        AnomalyRecord record3 = records.get(2);
+
         test(record1.getNormalizedProbability() > 97.0);
         test(record1.getAnomalyScore() > 80.0);
         test(record1.getByFieldName().equals("instance"));
         test(record1.getByFieldValue().equals("US-1"));
         test(record1.getFunction().equals("mean"));
 
-        AnomalyRecord record2 = records.get(1);
+        // The next two records have such close probabilities that tiny changes
+        // in the core code can make their ordering flip, so tolerate them
+        // either way around
+        if (record2.getByFieldValue().equals("Europe"))
+        {
+            LOGGER.info("Flipping records 2 and 3");
+            record2 = records.get(2);
+            record3 = records.get(1);
+        }
+
         test(record2.getNormalizedProbability() > 82.0);
         LOGGER.info("record2.getAnomalyScore() = " + record2.getAnomalyScore());
         test(record2.getAnomalyScore() > 5.0 && record2.getAnomalyScore() < 5.5);
@@ -276,7 +288,6 @@ public class HierarchicalNormalizationTest implements Closeable
         test(record2.getByFieldValue().equals("US"));
         test(record2.getFunction().equals("min"));
 
-        AnomalyRecord record3 = records.get(2);
         test(record3.getNormalizedProbability() > 82.0);
         test(record3.getAnomalyScore() == record1.getAnomalyScore());
         test(record3.getByFieldName().equals("region"));
