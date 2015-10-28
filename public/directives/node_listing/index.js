@@ -7,12 +7,15 @@ define(function (require) {
   var make = React.DOM;
   var metrics = require('plugins/marvel/lib/metrics');
   var extractIp = require('plugins/marvel/lib/extract_ip');
+  var lookups = require('plugins/marvel/lib/lookups');
 
 
   var Table = require('plugins/marvel/directives/paginated_table/components/table');
   var MarvelChart = require('plugins/marvel/directives/chart/chart_component');
   var ToggleOnClickComponent = require('plugins/marvel/directives/node_listing/toggle_on_click_component');
 
+  var nodeTypeClass = lookups.nodeTypeClass;
+  var nodeTypeLabel = lookups.nodeTypeLabel;
 
   // change the node to actually display the name
   module.directive('marvelNodesListing', function () {
@@ -21,8 +24,17 @@ define(function (require) {
       var value = _.get(this.props, dataKey.key);
       var $content = null;
       if (dataKey.key === 'name') {
+        var title = this.props.nodeTypeLabel;
+        var classes = 'fa ' + this.props.nodeTypeClass;
         var state = this.state || {};
         $content = make.div(null,
+          make.span({
+            style: { paddingRight: 5 }
+          }, make.i({
+            title: title,
+            className: classes },
+            null)
+          ),
           make.a({href: '#/node/' + value}, state.name),  // <a href="#/node/:node_id>
           make.div({className: 'small'}, extractIp(state.transport_address))); //   <div.small>
       }
@@ -154,8 +166,16 @@ define(function (require) {
             return $scope.nodes[row.name];
           });
           TableInstance.setData(tableData.map(function (row) {
-            row.metrics.shard_count = $scope.nodes[row.name] && $scope.nodes[row.name].shard_count;
-            row.nodeName = $scope.nodes[row.name] && $scope.nodes[row.name].name;
+            if ($scope.nodes[row.name]) {
+              var node = $scope.nodes[row.name];
+              row.metrics.shard_count = node.shard_count;
+              row.nodeName = node.name;
+              row.nodeType = node.type;
+              row.isMaster = node.master;
+              var type = row.isMaster && 'master' || row.nodeType;
+              row.nodeTypeClass = nodeTypeClass[type];
+              row.nodeTypeLabel = nodeTypeLabel[type];
+            }
             return row;
           }));
         });

@@ -1,6 +1,7 @@
 define(function (require) {
   var _ = require('lodash');
   var angular = require('angular');
+  var lookups = require('plugins/marvel/lib/lookups');
 
   var module = require('ui/modules').get('marvel', []);
 
@@ -36,6 +37,9 @@ define(function (require) {
     $scope.node = $scope.cluster.nodes[$scope.nodeName];
     checkNodeExists($scope.node);
     $scope.node.id = $scope.nodeName;
+    var nodeType = $scope.node.master && 'master' || $scope.node.type;
+    $scope.node.nodeTypeClass = 'fa ' + lookups.nodeTypeClass[nodeType];
+    $scope.node.nodeTypeLabel = lookups.nodeTypeLabel[nodeType];
 
     docTitle.change('Marvel - ' + $scope.node.name, true);
 

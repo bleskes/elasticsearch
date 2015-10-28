@@ -4,8 +4,8 @@
   <div class="detail-metrics marvel-element">
     <div class="row">
       <div class="col-md-12">
-        <h1>{{ node.name }}</h1>
-        <marvel-node-summary source="dataSources.nodeSummary"></marvel-node-summary>
+        <h1><i class="{{ node.nodeTypeClass }}" title="{{ node.nodeTypeLabel }}"></i> {{ node.name }}</h1>
+        <marvel-node-summary node="node" source="dataSources.nodeSummary"></marvel-node-summary>
       </div>
     </div>
     <div class="row marvel-element" ng-if="charts">
