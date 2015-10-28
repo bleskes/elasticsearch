@@ -14,6 +14,22 @@ define(function (require) {
   var ToggleOnClickComponent = require('plugins/marvel/directives/node_listing/toggle_on_click_component');
 
 
+  var nodeTypeClassLookup = {
+    node: 'fa-server',
+    master: 'fa-star',
+    master_only: 'fa-star-o',
+    data: 'fa-database',
+    client: 'fa-binoculars'
+  };
+
+  var nodeTypeTitle = {
+    node: 'Node',
+    master: 'Master Node',
+    master_only: 'Master Only Node',
+    data: 'Data Only Node',
+    client: 'Client Node'
+  };
+
   // change the node to actually display the name
   module.directive('marvelNodesListing', function () {
     // makes the tds for every <tr> in the table
@@ -21,8 +37,19 @@ define(function (require) {
       var value = _.get(this.props, dataKey.key);
       var $content = null;
       if (dataKey.key === 'name') {
+        var nodeTypeClasses = ['fa'];
+        var type = this.props.isMaster && 'master' || this.props.nodeType;
+        nodeTypeClasses.push(nodeTypeClassLookup[type]);
+        var title = nodeTypeTitle[type];
         var state = this.state || {};
         $content = make.div(null,
+          make.span({
+            style: { paddingRight: 5 }
+          }, make.i({
+            title: title,
+            className: nodeTypeClasses.join(' ') },
+            null)
+          ),
           make.a({href: '#/node/' + value}, state.name),  // <a href="#/node/:node_id>
           make.div({className: 'small'}, extractIp(state.transport_address))); //   <div.small>
       }
@@ -156,6 +183,8 @@ define(function (require) {
           TableInstance.setData(tableData.map(function (row) {
             row.metrics.shard_count = $scope.nodes[row.name] && $scope.nodes[row.name].shard_count;
             row.nodeName = $scope.nodes[row.name] && $scope.nodes[row.name].name;
+            row.nodeType = $scope.nodes[row.name] && $scope.nodes[row.name].type;
+            row.isMaster = $scope.nodes[row.name] && $scope.nodes[row.name].master;
             return row;
           }));
         });
