@@ -166,13 +166,16 @@ define(function (require) {
             return $scope.nodes[row.name];
           });
           TableInstance.setData(tableData.map(function (row) {
-            row.metrics.shard_count = $scope.nodes[row.name] && $scope.nodes[row.name].shard_count;
-            row.nodeName = $scope.nodes[row.name] && $scope.nodes[row.name].name;
-            row.nodeType = $scope.nodes[row.name] && $scope.nodes[row.name].type;
-            row.isMaster = $scope.nodes[row.name] && $scope.nodes[row.name].master;
-            var type = row.isMaster && 'master' || row.nodeType;
-            row.nodeTypeClass = nodeTypeClass[type];
-            row.nodeTypeLabel = nodeTypeLabel[type];
+            if ($scope.nodes[row.name]) {
+              var node = $scope.nodes[row.name];
+              row.metrics.shard_count = node.shard_count;
+              row.nodeName = node.name;
+              row.nodeType = node.type;
+              row.isMaster = node.master;
+              var type = row.isMaster && 'master' || row.nodeType;
+              row.nodeTypeClass = nodeTypeClass[type];
+              row.nodeTypeLabel = nodeTypeLabel[type];
+            }
             return row;
           }));
         });
