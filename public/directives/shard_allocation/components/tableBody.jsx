@@ -58,13 +58,9 @@ define(function (require) {
             <tr>
               <td colSpan={ this.props.cols }>
                 <div>
-                  <p style={{ margin: '10px 0 0 0' }} className="text-center lead">
-                    Where's the data? It looks like you don't have any indexes in your
-                    cluster (or they are not visible).
+                  <p style={{ margin: '10px 0' }} className="text-center lead">
+                    There are no shards allocated.
                   </p>
-                  <div className="text-center" style={{ margin: '0 0 10px 0'  }}>
-                    Marvel indexes are hidden by default, click the "cog" icon on this panel and ensure "show hidden indices" is checked.
-                  </div>
                 </div>
               </td>
             </tr>
