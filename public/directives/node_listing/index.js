@@ -7,28 +7,15 @@ define(function (require) {
   var make = React.DOM;
   var metrics = require('plugins/marvel/lib/metrics');
   var extractIp = require('plugins/marvel/lib/extract_ip');
+  var lookups = require('plugins/marvel/lib/lookups');
 
 
   var Table = require('plugins/marvel/directives/paginated_table/components/table');
   var MarvelChart = require('plugins/marvel/directives/chart/chart_component');
   var ToggleOnClickComponent = require('plugins/marvel/directives/node_listing/toggle_on_click_component');
 
-
-  var nodeTypeClassLookup = {
-    node: 'fa-server',
-    master: 'fa-star',
-    master_only: 'fa-star-o',
-    data: 'fa-database',
-    client: 'fa-binoculars'
-  };
-
-  var nodeTypeTitle = {
-    node: 'Node',
-    master: 'Master Node',
-    master_only: 'Master Only Node',
-    data: 'Data Only Node',
-    client: 'Client Node'
-  };
+  var nodeTypeClass = lookups.nodeTypeClass;
+  var nodeTypeLabel = lookups.nodeTypeLabel;
 
   // change the node to actually display the name
   module.directive('marvelNodesListing', function () {
@@ -37,17 +24,15 @@ define(function (require) {
       var value = _.get(this.props, dataKey.key);
       var $content = null;
       if (dataKey.key === 'name') {
-        var nodeTypeClasses = ['fa'];
-        var type = this.props.isMaster && 'master' || this.props.nodeType;
-        nodeTypeClasses.push(nodeTypeClassLookup[type]);
-        var title = nodeTypeTitle[type];
+        var title = this.props.nodeTypeLabel;
+        var classes = 'fa ' + this.props.nodeTypeClass;
         var state = this.state || {};
         $content = make.div(null,
           make.span({
             style: { paddingRight: 5 }
           }, make.i({
             title: title,
-            className: nodeTypeClasses.join(' ') },
+            className: classes },
             null)
           ),
           make.a({href: '#/node/' + value}, state.name),  // <a href="#/node/:node_id>
@@ -185,6 +170,9 @@ define(function (require) {
             row.nodeName = $scope.nodes[row.name] && $scope.nodes[row.name].name;
             row.nodeType = $scope.nodes[row.name] && $scope.nodes[row.name].type;
             row.isMaster = $scope.nodes[row.name] && $scope.nodes[row.name].master;
+            var type = row.isMaster && 'master' || row.nodeType;
+            row.nodeTypeClass = nodeTypeClass[type];
+            row.nodeTypeLabel = nodeTypeLabel[type];
             return row;
           }));
         });
