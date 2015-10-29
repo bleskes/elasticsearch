@@ -15,14 +15,12 @@
  * from Elasticsearch Incorporated.
  */
 
-
-
 define(function (require) {
   var _ = require('lodash');
   var getValueFromArrayOrString = require('../lib/getValueFromArrayOrString');
   var moment = require('moment');
-  return function ($rootScope, timefilter, es) {
 
+  return function ($rootScope, timefilter, es) {
     var getTimelineData = function (direction, indexPattern, cluster, size, timeRange, data, position, indices) {
       var newPosition = false;
       size = _.isUndefined(size) ? 300 : size;
@@ -91,9 +89,9 @@ define(function (require) {
               };
               return getTimelineData(direction, indexPattern, cluster, size, nextTimeRange, data, position, indices); // call again
             }
+
             // flip data back to normal order
             return data.reverse();
-
           }
         };
 
