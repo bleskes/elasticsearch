@@ -1,0 +1,71 @@
+
+/*
+ * ELASTICSEARCH CONFIDENTIAL
+ * __________________
+ *
+ *  [2014] Elasticsearch Incorporated. All Rights Reserved.
+ *
+ * NOTICE:  All information contained herein is, and remains
+ * the property of Elasticsearch Incorporated and its suppliers,
+ * if any.  The intellectual and technical concepts contained
+ * herein are proprietary to Elasticsearch Incorporated
+ * and its suppliers and may be covered by U.S. and Foreign Patents,
+ * patents in process, and are protected by trade secret or copyright law.
+ * Dissemination of this information or reproduction of this material
+ * is strictly forbidden unless prior written permission is obtained
+ * from Elasticsearch Incorporated.
+ */
+
+import org.elasticsearch.gradle.MavenFilteringHack
+
+apply plugin: 'elasticsearch.esplugin'
+esplugin {
+  name 'marvel-agent'
+  description 'Elasticsearch Marvel'
+  classname 'org.elasticsearch.marvel.MarvelPlugin'
+  isolated false
+}
+
+configurations {
+  licensePluginZip
+}
+
+dependencies {
+  licensePluginZip project(path: ':license:plugin') // zip
+  provided project(path: ':license:plugin', configuration: 'runtime')
+  provided project(path: ':shield', configuration: 'runtime')
+  testCompile 'org.elasticsearch:securemock:1.1'
+  testCompile 'com.squareup.okhttp:mockwebserver:2.3.0'
+}
+
+compileJava.options.compilerArgs << '-Xlint:-rawtypes,-unchecked'
+compileTestJava.options.compilerArgs << '-Xlint:-rawtypes,-unchecked'
+
+ext.expansions = [
+  'project.version': version,
+  'integ.http.port': integTest.cluster.httpPort
+]
+
+processResources {
+  inputs.properties(expansions)
+  MavenFilteringHack.filter(it, expansions)
+}
+
+processTestResources {
+  inputs.properties(expansions)
+  MavenFilteringHack.filter(it, expansions)
+}
+
+integTest {
+  dependsOn configurations.licensePluginZip
+  cluster {
+    plugin 'installLicensePlugin', configurations.licensePluginZip
+  }
+}
+
+bundlePlugin {
+  from(projectDir) {
+    include 'LICENSE.txt'
+    include 'NOTICE.txt'
+  }
+}

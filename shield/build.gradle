@@ -1,0 +1,63 @@
+
+/*
+ * ELASTICSEARCH CONFIDENTIAL
+ * __________________
+ *
+ *  [2014] Elasticsearch Incorporated. All Rights Reserved.
+ *
+ * NOTICE:  All information contained herein is, and remains
+ * the property of Elasticsearch Incorporated and its suppliers,
+ * if any.  The intellectual and technical concepts contained
+ * herein are proprietary to Elasticsearch Incorporated
+ * and its suppliers and may be covered by U.S. and Foreign Patents,
+ * patents in process, and are protected by trade secret or copyright law.
+ * Dissemination of this information or reproduction of this material
+ * is strictly forbidden unless prior written permission is obtained
+ * from Elasticsearch Incorporated.
+ */
+
+apply plugin: 'elasticsearch.esplugin'
+esplugin {
+  description 'Elasticsearch Shield (security)'
+  classname 'org.elasticsearch.shield.ShieldPlugin'
+  isolated false
+}
+
+configurations.create('jar')
+artifacts {
+  jar project.jar
+}
+
+dependencies {
+  compile project(':license:plugin-api')
+  compile project(path: ':license:plugin', configuration: 'runtime')
+  compile 'dk.brics.automaton:automaton:1.11-8'
+  compile 'com.unboundid:unboundid-ldapsdk:2.3.8'
+  testCompile "org.elasticsearch:test-framework:${version}"
+  testCompile 'org.slf4j:slf4j-log4j12:1.6.2'
+  testCompile 'org.elasticsearch:securemock:1.1'
+}
+
+forbiddenPatterns {
+  exclude '**/*.p12'
+}
+
+compileJava.options.compilerArgs << "-Xlint:-deprecation,-rawtypes,-serial,-try,-unchecked"
+compileTestJava.options.compilerArgs << "-Xlint:-deprecation,-rawtypes,-serial,-try,-unchecked"
+
+// no integ tests...
+integTest.enabled = false
+
+// TODO: standardize packaging config for plugins
+bundlePlugin {
+  from(projectDir) {
+    include 'LICENSE.txt'
+    include 'NOTICE.txt'
+  }
+  from('bin/shield') {
+    into 'bin'
+  }
+  from('config/shield') {
+    into 'config'
+  }
+}

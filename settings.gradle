@@ -1,0 +1,27 @@
+rootProject.name = 'x-plugins'
+
+buildscript {
+  repositories {
+    maven {
+      name 'sonatype-snapshots'
+      url 'http://oss.sonatype.org/content/repositories/snapshots/'
+    }
+  }
+  dependencies {
+    classpath 'org.elasticsearch.gradle:project-attachment-plugin:1.0.0-SNAPSHOT'
+  }
+}
+apply plugin: 'elasticsearch.project-settings-attachment'
+
+include 'license:core2'
+// HACK: the dependency substitution for elasticsearch:core gets confused
+// when elasticsearch is attached since it has a core project...
+project(':license:core2').projectDir = new File(project(':license').projectDir, 'core')
+
+include 'license:licensor'
+include 'license:plugin-api'
+include 'license:plugin'
+include 'license:found-plugin'
+include 'shield'
+include 'watcher'
+include 'marvel'
