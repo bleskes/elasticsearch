@@ -21,6 +21,7 @@ package org.elasticsearch.watcher.input.simple;
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.watcher.execution.WatchExecutionContext;
 import org.elasticsearch.watcher.input.ExecutableInput;
+import org.elasticsearch.watcher.watch.Payload;
 
 /**
  * This class just defines a simple xcontent map as an input
@@ -32,7 +33,7 @@ public class ExecutableSimpleInput extends ExecutableInput<SimpleInput, SimpleIn
     }
 
     @Override
-    public SimpleInput.Result execute(WatchExecutionContext ctx) {
+    public SimpleInput.Result execute(WatchExecutionContext ctx, Payload payload) {
         return new SimpleInput.Result(input.getPayload());
     }
 }

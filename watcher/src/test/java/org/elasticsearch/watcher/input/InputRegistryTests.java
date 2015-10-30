@@ -30,6 +30,7 @@ import static org.hamcrest.Matchers.containsString;
  *
  */
 public class InputRegistryTests extends ESTestCase {
+
     public void testParseEmptyInput() throws Exception {
         InputRegistry registry = new InputRegistry(emptyMap());
         XContentParser parser = JsonXContent.jsonXContent.createParser(
