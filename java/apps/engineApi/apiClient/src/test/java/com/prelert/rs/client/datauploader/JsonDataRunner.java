@@ -31,8 +31,8 @@ import java.io.IOException;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.nio.charset.StandardCharsets;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.concurrent.ThreadLocalRandom;
 
 import org.apache.http.client.ClientProtocolException;
@@ -251,7 +251,7 @@ public class JsonDataRunner implements Runnable
 			}
 
 
-			SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX");
+			DateTimeFormatter format = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssX");
 			try
 			{
 				int iterationCount = 0;
@@ -264,7 +264,7 @@ public class JsonDataRunner implements Runnable
 
 					long iterStartMs = System.currentTimeMillis();
 
-					Date now = new Date();
+					ZonedDateTime now = ZonedDateTime.now();
 					String dateStr = format.format(now);
 
 

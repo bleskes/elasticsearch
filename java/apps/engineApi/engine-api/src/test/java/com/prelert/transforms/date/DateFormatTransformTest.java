@@ -31,6 +31,7 @@ import static com.prelert.transforms.TransformTestUtils.createIndexArray;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
 
+import java.util.Collections;
 import java.util.List;
 
 import org.apache.log4j.Logger;
@@ -41,7 +42,7 @@ import org.junit.rules.ExpectedException;
 import com.prelert.transforms.Transform.TransformIndex;
 import com.prelert.transforms.TransformException;
 
-public class DateFormatDateTransformTest
+public class DateFormatTransformTest
 {
     @Rule
     public ExpectedException m_ExpectedException = ExpectedException.none();
@@ -52,35 +53,47 @@ public class DateFormatDateTransformTest
         List<TransformIndex> readIndicies = createIndexArray(new TransformIndex(0, 0));
         List<TransformIndex> writeIndicies = createIndexArray(new TransformIndex(2, 0));
 
-        DateFormatTransform transformer = new DateFormatTransform("y-M-d",
+        DateFormatTransform transformer = new DateFormatTransform("yyyy-MM-dd HH:mm:ssXXX",
                                         readIndicies, writeIndicies, mock(Logger.class));
 
-    	String [] input = {"2014-01-01"};
-    	String [] scratch = {};
-    	String [] output = new String[1];
+        String [] input = {"2014-01-01 13:42:56Z"};
+        String [] scratch = {};
+        String [] output = new String[1];
         String [][] readWriteArea = {input, scratch, output};
 
         transformer.transform(readWriteArea);
 
-        assertEquals(1388534400, transformer.epoch());
-        assertEquals("1388534400", output[0]);
+        assertEquals(1388583776, transformer.epoch());
+        assertEquals("1388583776", output[0]);
+    }
+
+    @Test
+    public void testTransform_GivenInvalidFormat() throws TransformException
+    {
+        m_ExpectedException.expect(IllegalArgumentException.class);
+        m_ExpectedException.expectMessage(
+                "Timestamp cannot be derived from pattern: yyyy-MM HH:mm:ss");
+
+        new DateFormatTransform("yyyy-MM HH:mm:ss", Collections.emptyList(),
+                Collections.emptyList(), mock(Logger.class));
     }
 
     @Test
     public void testTransform_GivenInvalidTimestamp() throws TransformException
     {
         m_ExpectedException.expect(ParseTimestampException.class);
-        m_ExpectedException.expectMessage("Cannot parse date 'invalid' with format string 'y-M-d'");
+        m_ExpectedException.expectMessage(
+                "Cannot parse date 'invalid' with format string 'yyyy-MM-dd HH:mm:ss'");
 
         List<TransformIndex> readIndicies = createIndexArray(new TransformIndex(0, 0));
         List<TransformIndex> writeIndicies = createIndexArray(new TransformIndex(2, 0));
 
-        DateFormatTransform transformer = new DateFormatTransform("y-M-d",
+        DateFormatTransform transformer = new DateFormatTransform("yyyy-MM-dd HH:mm:ss",
                                         readIndicies, writeIndicies, mock(Logger.class));
 
-    	String [] input = {"invalid"};
-    	String [] scratch = {};
-    	String [] output = new String[1];
+        String [] input = {"invalid"};
+        String [] scratch = {};
+        String [] output = new String[1];
         String [][] readWriteArea = {input, scratch, output};
 
         transformer.transform(readWriteArea);
@@ -94,12 +107,12 @@ public class DateFormatDateTransformTest
         List<TransformIndex> readIndicies = createIndexArray(new TransformIndex(1, 0));
         List<TransformIndex> writeIndicies = createIndexArray(new TransformIndex(2, 0));
 
-        DateFormatTransform transformer = new DateFormatTransform("y-M-d",
+        DateFormatTransform transformer = new DateFormatTransform("yyyy-MM-dd HH:mm:ss",
                                         readIndicies, writeIndicies, mock(Logger.class));
 
-    	String [] input = {};
-    	String [] scratch = {null};
-    	String [] output = new String[1];
+        String [] input = {};
+        String [] scratch = {null};
+        String [] output = new String[1];
         String [][] readWriteArea = {input, scratch, output};
 
         transformer.transform(readWriteArea);
@@ -130,11 +143,11 @@ public class DateFormatDateTransformTest
         List<TransformIndex> readIndicies = createIndexArray(new TransformIndex(1, 0));
         List<TransformIndex> writeIndicies = createIndexArray(new TransformIndex(2, 0));
 
-        DateFormatTransform transformer = new DateFormatTransform("y-M-d",
+        DateFormatTransform transformer = new DateFormatTransform("yyyy-MM-dd HH:mm:ssXXX",
                                         readIndicies, writeIndicies, mock(Logger.class));
 
         String [] input = {};
-        String [] scratch = {"2014-01-01"};
+        String [] scratch = {"2014-01-01 00:00:00Z"};
         String [] output = new String[1];
         String [][] readWriteArea = {input, scratch, output};
 
@@ -151,7 +164,7 @@ public class DateFormatDateTransformTest
         List<TransformIndex> readIndicies = createIndexArray(new TransformIndex(0, 0));
         List<TransformIndex> writeIndicies = createIndexArray(new TransformIndex(2, 0));
 
-        DateFormatTransform transformer = new DateFormatTransform("[yyyy-MM-dd HH:mm:ssX]",
+        DateFormatTransform transformer = new DateFormatTransform("'['yyyy-MM-dd HH:mm:ssX']'",
                                         readIndicies, writeIndicies, mock(Logger.class));
 
         String [] input = {"[2014-06-23 00:00:00Z]"};
@@ -168,7 +181,7 @@ public class DateFormatDateTransformTest
         List<TransformIndex> readIndicies = createIndexArray(new TransformIndex(0, 0));
         List<TransformIndex> writeIndicies = createIndexArray(new TransformIndex(2, 0));
 
-        DateFormatTransform transformer = new DateFormatTransform("[dd/MMM/yyyy:HH:mm:ssX",
+        DateFormatTransform transformer = new DateFormatTransform("'['dd/MMM/yyyy:HH:mm:ssX",
                                         readIndicies, writeIndicies, mock(Logger.class));
 
         String [] input = {"[02/Jul/2013:13:36:07+0000"};

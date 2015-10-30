@@ -26,7 +26,7 @@
  ************************************************************/
 package com.prelert.job.config.verification;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertTrue;
 import junit.framework.Assert;
 
 import org.junit.Rule;
@@ -34,8 +34,6 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
 import com.prelert.job.DataDescription;
-import com.prelert.job.config.verification.DataDescriptionVerifier;
-import com.prelert.job.config.verification.JobConfigurationException;
 
 public class DataDescriptionVerifierTest
 {
@@ -82,7 +80,7 @@ public class DataDescriptionVerifierTest
     public void testVerify_GivenTimeFormatIsValidDateFormat() throws JobConfigurationException
     {
         DataDescription description = new DataDescription();
-        description.setTimeFormat("yyyy-MM-dd");
+        description.setTimeFormat("yyyy-MM-dd HH");
 
         assertTrue(DataDescriptionVerifier.verify(description));
     }
@@ -95,6 +93,18 @@ public class DataDescriptionVerifierTest
 
         DataDescription description = new DataDescription();
         description.setTimeFormat("invalid");
+
+        DataDescriptionVerifier.verify(description);
+    }
+
+    @Test
+    public void testVerify_GivenTimeFormatIsValidButDoesNotContainTime() throws JobConfigurationException
+    {
+        m_ExpectedException.expect(JobConfigurationException.class);
+        m_ExpectedException.expectMessage("Invalid Time format string 'y-M-dd'");
+
+        DataDescription description = new DataDescription();
+        description.setTimeFormat("y-M-dd");
 
         DataDescriptionVerifier.verify(description);
     }

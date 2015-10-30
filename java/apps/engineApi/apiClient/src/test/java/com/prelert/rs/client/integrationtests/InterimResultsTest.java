@@ -33,7 +33,10 @@ import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.text.SimpleDateFormat;
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -49,10 +52,10 @@ import org.apache.log4j.PatternLayout;
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataDescription;
 import com.prelert.job.DataDescription.DataFormat;
-import com.prelert.job.results.AnomalyRecord;
-import com.prelert.job.results.Bucket;
 import com.prelert.job.Detector;
 import com.prelert.job.JobConfiguration;
+import com.prelert.job.results.AnomalyRecord;
+import com.prelert.job.results.Bucket;
 import com.prelert.rs.client.EngineApiClient;
 import com.prelert.rs.data.Pagination;
 import com.prelert.rs.data.SingleDocument;
@@ -248,7 +251,7 @@ public class InterimResultsTest implements Closeable
          * Test get buckets by date range with a time string
          */
         String [] startDateFormats = new String[] {"2013-01-29T05:10:00Z", "1359436200"};
-        String [] endDateFormats = new String[] {"2013-01-30T16:15:00.000+0000", "1359562500"};
+        String [] endDateFormats = new String[] {"2013-01-30T16:15:00.000+00:00", "1359562500"};
 
         for (int i = 0; i < startDateFormats.length; i++)
         {
@@ -482,9 +485,11 @@ public class InterimResultsTest implements Closeable
 
         interimResults = getInterimResultsOnly(start, end);
         test(interimResults.size() == 1);
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX");
+        DateTimeFormatter dateFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssX");
         AnomalyRecord record = interimResults.get(0);
-        test(dateFormat.format(record.getTimestamp()).equals("2013-01-30T16:05:00Z"));
+        ZonedDateTime timestamp = ZonedDateTime.ofInstant(
+                Instant.ofEpochMilli(record.getTimestamp().getTime()), ZoneOffset.UTC);
+        test(dateFormat.format(timestamp).equals("2013-01-30T16:05:00Z"));
     }
 
     private List<AnomalyRecord> getInterimResultsOnly(String start, String end) throws IOException

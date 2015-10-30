@@ -28,22 +28,25 @@
 
 package com.prelert.job.status;
 
+import static org.mockito.Matchers.anyLong;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.times;
+
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
-import java.util.Date;
 
 import junit.framework.Assert;
 
 import org.apache.log4j.Logger;
 import org.junit.Test;
 import org.mockito.Mockito;
-
-import static org.mockito.Mockito.*;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.prelert.job.AnalysisConfig;
@@ -63,130 +66,127 @@ import com.prelert.job.usage.DummyUsageReporter;
 
 public class DataFormatWarningsTest
 {
-	Logger LOGGER = Logger.getLogger(DataFormatWarningsTest.class);
+    Logger LOGGER = Logger.getLogger(DataFormatWarningsTest.class);
 
-	/**
-	 * Writes to nowhere
-	 */
-	public class NullOutputStream extends OutputStream
-	{
-	  @Override
-	  public void write(int b) throws IOException
-	  {
-	  }
-	}
+    /**
+     * Writes to nowhere
+     */
+    public class NullOutputStream extends OutputStream
+    {
+      @Override
+      public void write(int b) throws IOException
+      {
+      }
+    }
 
 
-	/**
-	 * Test writing csv data with unparseble dates throws a
-	 * HighProportionOfBadTimestampsException
-	 */
-	@Test
+    /**
+     * Test writing csv data with unparseble dates throws a
+     * HighProportionOfBadTimestampsException
+     */
+    @Test
     public void highProportionOfBadTimestampsCsvTest() throws JsonParseException,
             MissingFieldException, IOException, OutOfOrderRecordsException, MalformedJsonException
-	{
-		final String HEADER = "time,responsetime,sourcetype,airline\n";
-		final String RECORD_TEMPLATE = "\"%s\",0.35,Farequote,AAL\n";
+    {
+        final String HEADER = "time,responsetime,sourcetype,airline\n";
+        final String RECORD_TEMPLATE = "\"%s\",0.35,Farequote,AAL\n";
 
-		final String DATE_FORMAT = "EEE, d MMM yyyy HH:mm:ss Z";
+        final String DATE_FORMAT = "EEE, d MMM yyyy HH:mm:ss Z";
 
-		final int MAX_PERCENT_DATE_PARSE_ERRORS = 40;
-		final int MAX_PERCENT_OUT_OF_ORDER_ERRORS = 30;
+        final int MAX_PERCENT_DATE_PARSE_ERRORS = 40;
+        final int MAX_PERCENT_OUT_OF_ORDER_ERRORS = 30;
 
-		// do for epoch, epochms, date format
+        // do for epoch, epochms, date format
 
-		AnalysisConfig ac = new AnalysisConfig();
-		Detector det = new Detector();
-		det.setFieldName("responsetime");
-		det.setByFieldName("airline");
-		det.setPartitionFieldName("sourcetype");
-		ac.setDetectors(Arrays.asList(det));
+        AnalysisConfig ac = new AnalysisConfig();
+        Detector det = new Detector();
+        det.setFieldName("responsetime");
+        det.setByFieldName("airline");
+        det.setPartitionFieldName("sourcetype");
+        ac.setDetectors(Arrays.asList(det));
 
-		DateFormat dateFormat = new SimpleDateFormat(DATE_FORMAT);
+        DateTimeFormatter dateFormat = DateTimeFormatter.ofPattern(DATE_FORMAT);
 
-		String [] apiDateFormats = new String [] {DATE_FORMAT, "epoch", "epoch_ms"};
-		for (String apiDateFormat : apiDateFormats)
-		{
-			// create data
-			boolean goodRecord = true;
-			long startEpoch = new Date().getTime();
+        String [] apiDateFormats = new String [] {DATE_FORMAT, "epoch", "epoch_ms"};
+        for (String apiDateFormat : apiDateFormats)
+        {
+            // create data
+            boolean goodRecord = true;
+            long startEpoch = Instant.now().toEpochMilli();
 
-			StringBuilder sb = new StringBuilder(HEADER);
-			for (long i=0; i<1000; i++)
-			{
-				if (goodRecord == false)
-				{
-					sb.append(String.format(RECORD_TEMPLATE, ""));
-				}
-				else
-				{
-					Date d = new Date(startEpoch + i * 1000);
+            StringBuilder sb = new StringBuilder(HEADER);
+            for (long i=0; i<1000; i++)
+            {
+                if (goodRecord == false)
+                {
+                    sb.append(String.format(RECORD_TEMPLATE, ""));
+                }
+                else
+                {
+                    ZonedDateTime d = fromEpochMilli(startEpoch + i * 1000);
 
-					String record;
-					if (apiDateFormat.equals("epoch"))
-					{
-						record = String.format(RECORD_TEMPLATE,
-								Long.toString(d.getTime() / 1000));
-					}
-					else if (apiDateFormat.equals("epoch_ms"))
-					{
-						record = String.format(RECORD_TEMPLATE,
-								Long.toString(d.getTime()));
-					}
-					else
-					{
-						record = String.format(RECORD_TEMPLATE,
-								dateFormat.format(d));
-					}
+                    String record;
+                    if (apiDateFormat.equals("epoch"))
+                    {
+                        record = String.format(RECORD_TEMPLATE, Long.toString(d.toEpochSecond()));
+                    }
+                    else if (apiDateFormat.equals("epoch_ms"))
+                    {
+                        record = String.format(RECORD_TEMPLATE, Long.toString(d.toEpochSecond() * 1000));
+                    }
+                    else
+                    {
+                        record = String.format(RECORD_TEMPLATE, dateFormat.format(d));
+                    }
 
-					sb.append(record);
-				}
+                    sb.append(record);
+                }
 
-				goodRecord = !goodRecord;
-			}
+                goodRecord = !goodRecord;
+            }
 
 
-			// can create with null
-			ProcessManager pm = new ProcessManager(null, null, null, null, null);
+            // can create with null
+            ProcessManager pm = new ProcessManager(null, null, null, null, null);
 
-			ByteArrayInputStream bis =
-					new ByteArrayInputStream(sb.toString().getBytes(StandardCharsets.UTF_8));
+            ByteArrayInputStream bis =
+                    new ByteArrayInputStream(sb.toString().getBytes(StandardCharsets.UTF_8));
 
-			DataDescription dd = new DataDescription();
-			dd.setFieldDelimiter(',');
-			dd.setTimeField("time");
-			dd.setTimeFormat(apiDateFormat);
+            DataDescription dd = new DataDescription();
+            dd.setFieldDelimiter(',');
+            dd.setTimeField("time");
+            dd.setTimeFormat(apiDateFormat);
 
 
 
-			System.setProperty(StatusReporter.ACCEPTABLE_PERCENTAGE_DATE_PARSE_ERRORS_PROP,
-					Integer.toString(MAX_PERCENT_DATE_PARSE_ERRORS));
-			System.setProperty(StatusReporter.ACCEPTABLE_PERCENTAGE_OUT_OF_ORDER_ERRORS_PROP,
-					Integer.toString(MAX_PERCENT_OUT_OF_ORDER_ERRORS));
+            System.setProperty(StatusReporter.ACCEPTABLE_PERCENTAGE_DATE_PARSE_ERRORS_PROP,
+                    Integer.toString(MAX_PERCENT_DATE_PARSE_ERRORS));
+            System.setProperty(StatusReporter.ACCEPTABLE_PERCENTAGE_OUT_OF_ORDER_ERRORS_PROP,
+                    Integer.toString(MAX_PERCENT_OUT_OF_ORDER_ERRORS));
 
-			JobDataCountsPersister countsPersister = Mockito.mock(JobDataCountsPersister.class);
-			UsagePersister usagePersister = Mockito.mock(UsagePersister.class);
+            JobDataCountsPersister countsPersister = Mockito.mock(JobDataCountsPersister.class);
+            UsagePersister usagePersister = Mockito.mock(UsagePersister.class);
 
-			DummyUsageReporter usageReporter = new DummyUsageReporter("test-job", usagePersister, LOGGER);
-			StatusReporter statusReporter = new StatusReporter("test-job", usageReporter,
-			        countsPersister, LOGGER);
-			JobDataPersister dp = new NoneJobDataPersister();
+            DummyUsageReporter usageReporter = new DummyUsageReporter("test-job", usagePersister, LOGGER);
+            StatusReporter statusReporter = new StatusReporter("test-job", usageReporter,
+                    countsPersister, LOGGER);
+            JobDataPersister dp = new NoneJobDataPersister();
 
-			Assert.assertEquals(MAX_PERCENT_DATE_PARSE_ERRORS,
-					statusReporter.getAcceptablePercentDateParseErrors());
-			Assert.assertEquals(MAX_PERCENT_OUT_OF_ORDER_ERRORS,
-					statusReporter.getAcceptablePercentOutOfOrderErrors());
+            Assert.assertEquals(MAX_PERCENT_DATE_PARSE_ERRORS,
+                    statusReporter.getAcceptablePercentDateParseErrors());
+            Assert.assertEquals(MAX_PERCENT_OUT_OF_ORDER_ERRORS,
+                    statusReporter.getAcceptablePercentOutOfOrderErrors());
 
-			try
-			{
-				pm.writeToJob(dd, ac, new TransformConfigs(Arrays.<TransformConfig>asList()), bis,
-				        new NullOutputStream(),
-						statusReporter, dp, LOGGER);
-				Assert.assertTrue(false); // should throw
-			}
-			catch (HighProportionOfBadTimestampsException e)
-			{
-				long percentBad = (e.getNumberBad() * 100 )/ e.getTotalNumber();
+            try
+            {
+                pm.writeToJob(dd, ac, new TransformConfigs(Arrays.<TransformConfig>asList()), bis,
+                        new NullOutputStream(),
+                        statusReporter, dp, LOGGER);
+                Assert.assertTrue(false); // should throw
+            }
+            catch (HighProportionOfBadTimestampsException e)
+            {
+                long percentBad = (e.getNumberBad() * 100 )/ e.getTotalNumber();
 
                 Mockito.verify(countsPersister).persistDataCounts(Mockito.anyString(), Mockito.any());
                 Mockito.verify(usagePersister, times(1)).persistUsage(anyString(), anyLong(), anyLong(), anyLong());
@@ -202,99 +202,100 @@ public class DataFormatWarningsTest
                 Assert.assertEquals(0, usageReporter.getFieldsReadSinceLastReport());
                 Assert.assertEquals(0, usageReporter.getRecordsReadSinceLastReport());
 
-				Assert.assertTrue(percentBad >= MAX_PERCENT_DATE_PARSE_ERRORS);
-			}
-		}
-	}
+                Assert.assertTrue(percentBad >= MAX_PERCENT_DATE_PARSE_ERRORS);
+            }
+        }
+    }
 
+    private static ZonedDateTime fromEpochMilli(long epochMilli)
+    {
+        return ZonedDateTime.ofInstant(Instant.ofEpochMilli(epochMilli), ZoneOffset.systemDefault());
+    }
 
-	/**
-	 * Test writing JSON data with unparseble dates throws a
-	 * HighProportionOfBadTimestampsException
-	 */
-	@Test
+    /**
+     * Test writing JSON data with unparseble dates throws a
+     * HighProportionOfBadTimestampsException
+     */
+    @Test
     public void highProportionOfBadTimestampsJsonTest() throws JsonParseException,
             MissingFieldException, IOException, OutOfOrderRecordsException, MalformedJsonException
-	{
-		final String RECORD_TEMPLATE = "{\"time\":\"%s\","
-				+ "\"responsetime\":0.35,"
-				+ "\"sourcetype\":\"Farequote\","
-				+ "\"airline\":\"AAL\"}";
+    {
+        final String RECORD_TEMPLATE = "{\"time\":\"%s\","
+                + "\"responsetime\":0.35,"
+                + "\"sourcetype\":\"Farequote\","
+                + "\"airline\":\"AAL\"}";
 
-		final String DATE_FORMAT = "EEE, d MMM yyyy HH:mm:ss Z";
+        final String DATE_FORMAT = "EEE, d MMM yyyy HH:mm:ss Z";
 
-		final int MAX_PERCENT_DATE_PARSE_ERRORS = 40;
-		final int MAX_PERCENT_OUT_OF_ORDER_ERRORS = 30;
+        final int MAX_PERCENT_DATE_PARSE_ERRORS = 40;
+        final int MAX_PERCENT_OUT_OF_ORDER_ERRORS = 30;
 
-		// do for epoch, epochms, date format
-
-
-		AnalysisConfig ac = new AnalysisConfig();
-		Detector det = new Detector();
-		det.setFieldName("responsetime");
-		det.setByFieldName("airline");
-		det.setPartitionFieldName("sourcetype");
-		ac.setDetectors(Arrays.asList(det));
-
-		DateFormat dateFormat = new SimpleDateFormat(DATE_FORMAT);
-
-		String [] apiDateFormats = new String [] {DATE_FORMAT, "epoch", "epoch_ms"};
-		for (String apiDateFormat : apiDateFormats)
-		{
-			// create data
-			boolean goodRecord = true;
-			long startEpoch = new Date().getTime();
-
-			StringBuilder sb = new StringBuilder();
-			for (long i=0; i<1000; i++)
-			{
-				if (goodRecord == false)
-				{
-					sb.append(String.format(RECORD_TEMPLATE, ""));
-				}
-				else
-				{
-					Date d = new Date(startEpoch + i * 1000);
-
-					String record;
-					if (apiDateFormat.equals("epoch"))
-					{
-						record = String.format(RECORD_TEMPLATE,
-								Long.toString(d.getTime() / 1000));
-					}
-					else if (apiDateFormat.equals("epoch_ms"))
-					{
-						record = String.format(RECORD_TEMPLATE,
-								Long.toString(d.getTime()));
-					}
-					else
-					{
-						record = String.format(RECORD_TEMPLATE,
-								dateFormat.format(d));
-					}
-
-					sb.append(record);
-				}
-
-				goodRecord = !goodRecord;
-			}
+        // do for epoch, epochms, date format
 
 
-			// can create with null
-			ProcessManager pm = new ProcessManager(null, null, null, null, null);
+        AnalysisConfig ac = new AnalysisConfig();
+        Detector det = new Detector();
+        det.setFieldName("responsetime");
+        det.setByFieldName("airline");
+        det.setPartitionFieldName("sourcetype");
+        ac.setDetectors(Arrays.asList(det));
 
-			ByteArrayInputStream bis =
-					new ByteArrayInputStream(sb.toString().getBytes(StandardCharsets.UTF_8));
+        DateTimeFormatter dateFormat = DateTimeFormatter.ofPattern(DATE_FORMAT);
 
-			DataDescription dd = new DataDescription();
-			dd.setFormat(DataFormat.JSON);
-			dd.setTimeField("time");
-			dd.setTimeFormat(apiDateFormat);
+        String [] apiDateFormats = new String [] {DATE_FORMAT, "epoch", "epoch_ms"};
+        for (String apiDateFormat : apiDateFormats)
+        {
+            // create data
+            boolean goodRecord = true;
+            long startEpoch = Instant.now().toEpochMilli();
 
-			System.setProperty(StatusReporter.ACCEPTABLE_PERCENTAGE_DATE_PARSE_ERRORS_PROP,
-					Integer.toString(MAX_PERCENT_DATE_PARSE_ERRORS));
-			System.setProperty(StatusReporter.ACCEPTABLE_PERCENTAGE_OUT_OF_ORDER_ERRORS_PROP,
-					Integer.toString(MAX_PERCENT_OUT_OF_ORDER_ERRORS));
+            StringBuilder sb = new StringBuilder();
+            for (long i=0; i<1000; i++)
+            {
+                if (goodRecord == false)
+                {
+                    sb.append(String.format(RECORD_TEMPLATE, ""));
+                }
+                else
+                {
+                    ZonedDateTime d = fromEpochMilli(startEpoch + i * 1000);
+
+                    String record;
+                    if (apiDateFormat.equals("epoch"))
+                    {
+                        record = String.format(RECORD_TEMPLATE, Long.toString(d.toEpochSecond()));
+                    }
+                    else if (apiDateFormat.equals("epoch_ms"))
+                    {
+                        record = String.format(RECORD_TEMPLATE, Long.toString(d.toEpochSecond() * 1000));
+                    }
+                    else
+                    {
+                        record = String.format(RECORD_TEMPLATE, dateFormat.format(d));
+                    }
+
+                    sb.append(record);
+                }
+
+                goodRecord = !goodRecord;
+            }
+
+
+            // can create with null
+            ProcessManager pm = new ProcessManager(null, null, null, null, null);
+
+            ByteArrayInputStream bis =
+                    new ByteArrayInputStream(sb.toString().getBytes(StandardCharsets.UTF_8));
+
+            DataDescription dd = new DataDescription();
+            dd.setFormat(DataFormat.JSON);
+            dd.setTimeField("time");
+            dd.setTimeFormat(apiDateFormat);
+
+            System.setProperty(StatusReporter.ACCEPTABLE_PERCENTAGE_DATE_PARSE_ERRORS_PROP,
+                    Integer.toString(MAX_PERCENT_DATE_PARSE_ERRORS));
+            System.setProperty(StatusReporter.ACCEPTABLE_PERCENTAGE_OUT_OF_ORDER_ERRORS_PROP,
+                    Integer.toString(MAX_PERCENT_OUT_OF_ORDER_ERRORS));
 
             JobDataCountsPersister countsPersister = Mockito.mock(JobDataCountsPersister.class);
             UsagePersister usagePersister = Mockito.mock(UsagePersister.class);
@@ -302,22 +303,22 @@ public class DataFormatWarningsTest
             DummyUsageReporter usageReporter = new DummyUsageReporter("test-job", usagePersister, LOGGER);
             StatusReporter statusReporter = new StatusReporter("test-job", usageReporter,
                     countsPersister, LOGGER);
-			JobDataPersister dp = new NoneJobDataPersister();
+            JobDataPersister dp = new NoneJobDataPersister();
 
-			Assert.assertEquals(MAX_PERCENT_DATE_PARSE_ERRORS,
-					statusReporter.getAcceptablePercentDateParseErrors());
-			Assert.assertEquals(MAX_PERCENT_OUT_OF_ORDER_ERRORS,
-					statusReporter.getAcceptablePercentOutOfOrderErrors());
+            Assert.assertEquals(MAX_PERCENT_DATE_PARSE_ERRORS,
+                    statusReporter.getAcceptablePercentDateParseErrors());
+            Assert.assertEquals(MAX_PERCENT_OUT_OF_ORDER_ERRORS,
+                    statusReporter.getAcceptablePercentOutOfOrderErrors());
 
-			try
-			{
-				pm.writeToJob(dd, ac, new TransformConfigs(Arrays.<TransformConfig>asList()), bis, new NullOutputStream(),
-						statusReporter, dp, LOGGER);
-				Assert.assertTrue(false); // should throw
-			}
-			catch (HighProportionOfBadTimestampsException e)
-			{
-				long percentBad = (e.getNumberBad() * 100 )/ e.getTotalNumber();
+            try
+            {
+                pm.writeToJob(dd, ac, new TransformConfigs(Arrays.<TransformConfig>asList()), bis, new NullOutputStream(),
+                        statusReporter, dp, LOGGER);
+                Assert.assertTrue(false); // should throw
+            }
+            catch (HighProportionOfBadTimestampsException e)
+            {
+                long percentBad = (e.getNumberBad() * 100 )/ e.getTotalNumber();
 
                 Mockito.verify(countsPersister).persistDataCounts(Mockito.any(), Mockito.any());
                 Mockito.verify(usagePersister, times(1)).persistUsage(anyString(), anyLong(), anyLong(), anyLong());
@@ -333,100 +334,87 @@ public class DataFormatWarningsTest
                 Assert.assertEquals(0, usageReporter.getFieldsReadSinceLastReport());
                 Assert.assertEquals(0, usageReporter.getRecordsReadSinceLastReport());
 
-				Assert.assertTrue(percentBad >= MAX_PERCENT_DATE_PARSE_ERRORS);
-			}
-		}
-	}
+                Assert.assertTrue(percentBad >= MAX_PERCENT_DATE_PARSE_ERRORS);
+            }
+        }
+    }
 
 
-	/**
-	 * Test writing CSV with out of order records should throw an exception
-	 */
-	@Test
+    /**
+     * Test writing CSV with out of order records should throw an exception
+     */
+    @Test
     public void OutOfOrderRecondsCsvTest() throws JsonParseException, MissingFieldException,
             IOException, HighProportionOfBadTimestampsException, MalformedJsonException
-	{
-		final String HEADER = "time,responsetime,sourcetype,airline\n";
-		final String RECORD_TEMPLATE = "\"%s\",0.35,Farequote,AAL\n";
+    {
+        final String HEADER = "time,responsetime,sourcetype,airline\n";
+        final String RECORD_TEMPLATE = "\"%s\",0.35,Farequote,AAL\n";
 
-		final String DATE_FORMAT = "EEE, d MMM yyyy HH:mm:ss Z";
+        final String DATE_FORMAT = "EEE, d MMM yyyy HH:mm:ss Z";
 
-		final int MAX_PERCENT_DATE_PARSE_ERRORS = 40;
-		final int MAX_PERCENT_OUT_OF_ORDER_ERRORS = 8;
+        final int MAX_PERCENT_DATE_PARSE_ERRORS = 40;
+        final int MAX_PERCENT_OUT_OF_ORDER_ERRORS = 8;
 
-		// do for epoch, epochms, date format
-
-
-		AnalysisConfig ac = new AnalysisConfig();
-		Detector det = new Detector();
-		det.setFieldName("responsetime");
-		det.setByFieldName("airline");
-		det.setPartitionFieldName("sourcetype");
-		ac.setDetectors(Arrays.asList(det));
+        // do for epoch, epochms, date format
 
 
-		DateFormat dateFormat = new SimpleDateFormat(DATE_FORMAT);
+        AnalysisConfig ac = new AnalysisConfig();
+        Detector det = new Detector();
+        det.setFieldName("responsetime");
+        det.setByFieldName("airline");
+        det.setPartitionFieldName("sourcetype");
+        ac.setDetectors(Arrays.asList(det));
 
-		String [] apiDateFormats = new String [] {DATE_FORMAT, "epoch", "epoch_ms"};
-		for (String apiDateFormat : apiDateFormats)
-		{
-			// create data
-			long startEpoch = new Date().getTime();
+        DateTimeFormatter dateFormat = DateTimeFormatter.ofPattern(DATE_FORMAT);
 
-			StringBuilder sb = new StringBuilder(HEADER);
-			for (long i=0; i<1000; i++)
-			{
-				// make 1 in 10 records a bad un
-				boolean badRecord = i % 10 == 0;
+        String [] apiDateFormats = new String [] {DATE_FORMAT, "epoch", "epoch_ms"};
+        for (String apiDateFormat : apiDateFormats)
+        {
+            // create data
+            long startEpoch = Instant.now().toEpochMilli();
 
-				Date d;
-				if (badRecord)
-				{
-					d = new Date(startEpoch);
-				}
-				else
-				{
-					d = new Date(startEpoch + i * 1000);
-				}
+            StringBuilder sb = new StringBuilder(HEADER);
+            for (long i=0; i<1000; i++)
+            {
+                // make 1 in 10 records a bad un
+                boolean badRecord = i % 10 == 0;
 
+                ZonedDateTime d = badRecord ? fromEpochMilli(startEpoch) : fromEpochMilli(startEpoch + i * 1000);
 
-				String record;
-				if (apiDateFormat.equals("epoch"))
-				{
-					record = String.format(RECORD_TEMPLATE,
-							Long.toString(d.getTime() / 1000));
-				}
-				else if (apiDateFormat.equals("epoch_ms"))
-				{
-					record = String.format(RECORD_TEMPLATE,
-							Long.toString(d.getTime()));
-				}
-				else
-				{
-					record = String.format(RECORD_TEMPLATE,
-							dateFormat.format(d));
-				}
+                String record;
+                if (apiDateFormat.equals("epoch"))
+                {
+                    record = String.format(RECORD_TEMPLATE, Long.toString(d.toEpochSecond()));
+                }
+                else if (apiDateFormat.equals("epoch_ms"))
+                {
+                    record = String.format(RECORD_TEMPLATE, Long.toString(d.toEpochSecond() * 1000));
+                }
+                else
+                {
+                    record = String.format(RECORD_TEMPLATE, dateFormat.format(d));
+                }
 
-				sb.append(record);
+                sb.append(record);
 
-			}
+            }
 
-			// can create with null
-			ProcessManager pm = new ProcessManager(null, null, null, null, null);
+            // can create with null
+            ProcessManager pm = new ProcessManager(null, null, null, null, null);
 
-			ByteArrayInputStream bis =
-					new ByteArrayInputStream(sb.toString().getBytes(StandardCharsets.UTF_8));
+            ByteArrayInputStream bis =
+                    new ByteArrayInputStream(sb.toString().getBytes(StandardCharsets.UTF_8));
 
-			DataDescription dd = new DataDescription();
-			dd.setFormat(DataFormat.DELIMITED);
-			dd.setTimeField("time");
-			dd.setFieldDelimiter(',');
-			dd.setTimeFormat(apiDateFormat);
+            DataDescription dd = new DataDescription();
+            dd.setFormat(DataFormat.DELIMITED);
+            dd.setTimeField("time");
+            dd.setFieldDelimiter(',');
+            dd.setTimeFormat(apiDateFormat);
 
-			System.setProperty(StatusReporter.ACCEPTABLE_PERCENTAGE_DATE_PARSE_ERRORS_PROP,
-					Integer.toString(MAX_PERCENT_DATE_PARSE_ERRORS));
-			System.setProperty(StatusReporter.ACCEPTABLE_PERCENTAGE_OUT_OF_ORDER_ERRORS_PROP,
-					Integer.toString(MAX_PERCENT_OUT_OF_ORDER_ERRORS));
+            System.setProperty(StatusReporter.ACCEPTABLE_PERCENTAGE_DATE_PARSE_ERRORS_PROP,
+                    Integer.toString(MAX_PERCENT_DATE_PARSE_ERRORS));
+            System.setProperty(StatusReporter.ACCEPTABLE_PERCENTAGE_OUT_OF_ORDER_ERRORS_PROP,
+                    Integer.toString(MAX_PERCENT_OUT_OF_ORDER_ERRORS));
 
             JobDataCountsPersister countsPersister = Mockito.mock(JobDataCountsPersister.class);
             UsagePersister usagePersister = Mockito.mock(UsagePersister.class);
@@ -434,22 +422,22 @@ public class DataFormatWarningsTest
             DummyUsageReporter usageReporter = new DummyUsageReporter("test-job", usagePersister, LOGGER);
             StatusReporter statusReporter = new StatusReporter("test-job", usageReporter,
                     countsPersister, LOGGER);
-			JobDataPersister dp = new NoneJobDataPersister();
+            JobDataPersister dp = new NoneJobDataPersister();
 
-			Assert.assertEquals(MAX_PERCENT_DATE_PARSE_ERRORS,
-					statusReporter.getAcceptablePercentDateParseErrors());
-			Assert.assertEquals(MAX_PERCENT_OUT_OF_ORDER_ERRORS,
-					statusReporter.getAcceptablePercentOutOfOrderErrors());
+            Assert.assertEquals(MAX_PERCENT_DATE_PARSE_ERRORS,
+                    statusReporter.getAcceptablePercentDateParseErrors());
+            Assert.assertEquals(MAX_PERCENT_OUT_OF_ORDER_ERRORS,
+                    statusReporter.getAcceptablePercentOutOfOrderErrors());
 
-			try
-			{
-				pm.writeToJob(dd, ac, new TransformConfigs(Arrays.<TransformConfig>asList()), bis, new NullOutputStream(),
-						statusReporter, dp, LOGGER);
-				Assert.assertTrue(false); // should throw
-			}
-			catch (OutOfOrderRecordsException e)
-			{
-				long percentBad = (e.getNumberOutOfOrder() * 100 )/ e.getTotalNumber();
+            try
+            {
+                pm.writeToJob(dd, ac, new TransformConfigs(Arrays.<TransformConfig>asList()), bis, new NullOutputStream(),
+                        statusReporter, dp, LOGGER);
+                Assert.assertTrue(false); // should throw
+            }
+            catch (OutOfOrderRecordsException e)
+            {
+                long percentBad = (e.getNumberOutOfOrder() * 100 )/ e.getTotalNumber();
 
                 Mockito.verify(countsPersister).persistDataCounts(Mockito.anyString(), Mockito.any());
                 Mockito.verify(usagePersister, times(1)).persistUsage(anyString(), anyLong(), anyLong(), anyLong());
@@ -465,99 +453,87 @@ public class DataFormatWarningsTest
                 Assert.assertEquals(0, usageReporter.getFieldsReadSinceLastReport());
                 Assert.assertEquals(0, usageReporter.getRecordsReadSinceLastReport());
 
-				Assert.assertTrue(percentBad >= MAX_PERCENT_OUT_OF_ORDER_ERRORS);
-			}
-		}
-	}
+                Assert.assertTrue(percentBad >= MAX_PERCENT_OUT_OF_ORDER_ERRORS);
+            }
+        }
+    }
 
 
-	/**
-	 * Test writing JSON with out of order records should throw an exception
-	 */
-	@Test
+    /**
+     * Test writing JSON with out of order records should throw an exception
+     */
+    @Test
     public void outOfOrderRecordsJsonTest() throws JsonParseException, MissingFieldException,
             IOException, HighProportionOfBadTimestampsException, MalformedJsonException
-	{
-		final String RECORD_TEMPLATE = "{\"time\":\"%s\","
-				+ "\"responsetime\":0.35,"
-				+ "\"sourcetype\":\"Farequote\","
-				+ "\"airline\":\"AAL\"}";
+    {
+        final String RECORD_TEMPLATE = "{\"time\":\"%s\","
+                + "\"responsetime\":0.35,"
+                + "\"sourcetype\":\"Farequote\","
+                + "\"airline\":\"AAL\"}";
 
-		final String DATE_FORMAT = "EEE, d MMM yyyy HH:mm:ss Z";
+        final String DATE_FORMAT = "EEE, d MMM yyyy HH:mm:ss Z";
 
-		final int MAX_PERCENT_DATE_PARSE_ERRORS = 40;
-		final int MAX_PERCENT_OUT_OF_ORDER_ERRORS = 8;
+        final int MAX_PERCENT_DATE_PARSE_ERRORS = 40;
+        final int MAX_PERCENT_OUT_OF_ORDER_ERRORS = 8;
 
-		// do for epoch, epochms, date format
+        // do for epoch, epochms, date format
 
-		AnalysisConfig ac = new AnalysisConfig();
-		Detector det = new Detector();
-		det.setFieldName("responsetime");
-		det.setByFieldName("airline");
-		det.setPartitionFieldName("sourcetype");
-		ac.setDetectors(Arrays.asList(det));
+        AnalysisConfig ac = new AnalysisConfig();
+        Detector det = new Detector();
+        det.setFieldName("responsetime");
+        det.setByFieldName("airline");
+        det.setPartitionFieldName("sourcetype");
+        ac.setDetectors(Arrays.asList(det));
 
-		DateFormat dateFormat = new SimpleDateFormat(DATE_FORMAT);
+        DateTimeFormatter dateFormat = DateTimeFormatter.ofPattern(DATE_FORMAT);
 
-		String [] apiDateFormats = new String [] {DATE_FORMAT, "epoch", "epoch_ms"};
-		for (String apiDateFormat : apiDateFormats)
-		{
-			// create data
-			long startEpoch = new Date().getTime();
+        String [] apiDateFormats = new String [] {DATE_FORMAT, "epoch", "epoch_ms"};
+        for (String apiDateFormat : apiDateFormats)
+        {
+            // create data
+            long startEpoch = Instant.now().toEpochMilli();
 
-			StringBuilder sb = new StringBuilder();
-			for (long i=0; i<1000; i++)
-			{
-				// make 1 in 10 records a bad un
-				boolean badRecord = i % 10 == 0;
+            StringBuilder sb = new StringBuilder();
+            for (long i=0; i<1000; i++)
+            {
+                // make 1 in 10 records a bad un
+                boolean badRecord = i % 10 == 0;
 
-				Date d;
-				if (badRecord)
-				{
-					d = new Date(startEpoch);
-				}
-				else
-				{
-					d = new Date(startEpoch + i * 1000);
-				}
+                ZonedDateTime d = badRecord ? fromEpochMilli(startEpoch) : fromEpochMilli(startEpoch + i * 1000);
 
+                String record;
+                if (apiDateFormat.equals("epoch"))
+                {
+                    record = String.format(RECORD_TEMPLATE, Long.toString(d.toEpochSecond()));
+                }
+                else if (apiDateFormat.equals("epoch_ms"))
+                {
+                    record = String.format(RECORD_TEMPLATE, Long.toString(d.toEpochSecond() * 1000));
+                }
+                else
+                {
+                    record = String.format(RECORD_TEMPLATE, dateFormat.format(d));
+                }
 
-				String record;
-				if (apiDateFormat.equals("epoch"))
-				{
-					record = String.format(RECORD_TEMPLATE,
-							Long.toString(d.getTime() / 1000));
-				}
-				else if (apiDateFormat.equals("epoch_ms"))
-				{
-					record = String.format(RECORD_TEMPLATE,
-							Long.toString(d.getTime()));
-				}
-				else
-				{
-					record = String.format(RECORD_TEMPLATE,
-							dateFormat.format(d));
-				}
+                sb.append(record);
 
-				sb.append(record);
+            }
 
-			}
+            // can create with null
+            ProcessManager pm = new ProcessManager(null, null, null, null, null);
 
-			// can create with null
-			ProcessManager pm = new ProcessManager(null, null, null, null, null);
+            ByteArrayInputStream bis =
+                    new ByteArrayInputStream(sb.toString().getBytes(StandardCharsets.UTF_8));
 
-			ByteArrayInputStream bis =
-					new ByteArrayInputStream(sb.toString().getBytes(StandardCharsets.UTF_8));
+            DataDescription dd = new DataDescription();
+            dd.setFormat(DataFormat.JSON);
+            dd.setTimeField("time");
+            dd.setTimeFormat(apiDateFormat);
 
-			DataDescription dd = new DataDescription();
-			dd.setFormat(DataFormat.JSON);
-			dd.setTimeField("time");
-			dd.setTimeFormat(apiDateFormat);
-
-			System.setProperty(StatusReporter.ACCEPTABLE_PERCENTAGE_DATE_PARSE_ERRORS_PROP,
-					Integer.toString(MAX_PERCENT_DATE_PARSE_ERRORS));
-			System.setProperty(StatusReporter.ACCEPTABLE_PERCENTAGE_OUT_OF_ORDER_ERRORS_PROP,
-					Integer.toString(MAX_PERCENT_OUT_OF_ORDER_ERRORS));
+            System.setProperty(StatusReporter.ACCEPTABLE_PERCENTAGE_DATE_PARSE_ERRORS_PROP,
+                    Integer.toString(MAX_PERCENT_DATE_PARSE_ERRORS));
+            System.setProperty(StatusReporter.ACCEPTABLE_PERCENTAGE_OUT_OF_ORDER_ERRORS_PROP,
+                    Integer.toString(MAX_PERCENT_OUT_OF_ORDER_ERRORS));
 
             JobDataCountsPersister countsPersister = Mockito.mock(JobDataCountsPersister.class);
             UsagePersister usagePersister = Mockito.mock(UsagePersister.class);
@@ -565,30 +541,30 @@ public class DataFormatWarningsTest
             DummyUsageReporter usageReporter = new DummyUsageReporter("test-job", usagePersister, LOGGER);
             StatusReporter statusReporter = new StatusReporter("test-job", usageReporter,
                     countsPersister, LOGGER);
-			JobDataPersister dp = new NoneJobDataPersister();
+            JobDataPersister dp = new NoneJobDataPersister();
 
-			Assert.assertEquals(MAX_PERCENT_DATE_PARSE_ERRORS,
-					statusReporter.getAcceptablePercentDateParseErrors());
-			Assert.assertEquals(MAX_PERCENT_OUT_OF_ORDER_ERRORS,
-					statusReporter.getAcceptablePercentOutOfOrderErrors());
+            Assert.assertEquals(MAX_PERCENT_DATE_PARSE_ERRORS,
+                    statusReporter.getAcceptablePercentDateParseErrors());
+            Assert.assertEquals(MAX_PERCENT_OUT_OF_ORDER_ERRORS,
+                    statusReporter.getAcceptablePercentOutOfOrderErrors());
 
-			try
-			{
-				pm.writeToJob(dd, ac, new TransformConfigs(Arrays.<TransformConfig>asList()), bis, new NullOutputStream(),
-						statusReporter, dp, LOGGER);
-				Assert.assertTrue(false); // should throw
-			}
-			catch (OutOfOrderRecordsException e)
-			{
-				long percentBad = (e.getNumberOutOfOrder() * 100 )/ e.getTotalNumber();
+            try
+            {
+                pm.writeToJob(dd, ac, new TransformConfigs(Arrays.<TransformConfig>asList()), bis, new NullOutputStream(),
+                        statusReporter, dp, LOGGER);
+                Assert.assertTrue(false); // should throw
+            }
+            catch (OutOfOrderRecordsException e)
+            {
+                long percentBad = (e.getNumberOutOfOrder() * 100 )/ e.getTotalNumber();
 
                 Mockito.verify(countsPersister).persistDataCounts(Mockito.anyString(), Mockito.any());
                 Mockito.verify(usagePersister, times(1)).persistUsage(anyString(), anyLong(), anyLong(), anyLong());
 
-				Assert.assertEquals(statusReporter.getBytesRead(),
-						usageReporter.getTotalBytesRead());
-				Assert.assertEquals(statusReporter.getInputFieldCount(),
-				        usageReporter.getTotalFieldsRead());
+                Assert.assertEquals(statusReporter.getBytesRead(),
+                        usageReporter.getTotalBytesRead());
+                Assert.assertEquals(statusReporter.getInputFieldCount(),
+                        usageReporter.getTotalFieldsRead());
                 Assert.assertEquals(statusReporter.getInputRecordCount(),
                         usageReporter.getTotalRecordsRead());
 
@@ -596,8 +572,8 @@ public class DataFormatWarningsTest
                 Assert.assertEquals(0, usageReporter.getFieldsReadSinceLastReport());
                 Assert.assertEquals(0, usageReporter.getRecordsReadSinceLastReport());
 
-				Assert.assertTrue(percentBad >= MAX_PERCENT_OUT_OF_ORDER_ERRORS);
-			}
-		}
-	}
+                Assert.assertTrue(percentBad >= MAX_PERCENT_OUT_OF_ORDER_ERRORS);
+            }
+        }
+    }
 }

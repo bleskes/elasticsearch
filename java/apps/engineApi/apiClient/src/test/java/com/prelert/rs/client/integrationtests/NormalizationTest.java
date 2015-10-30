@@ -45,10 +45,10 @@ import org.apache.log4j.PatternLayout;
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataDescription;
 import com.prelert.job.DataDescription.DataFormat;
-import com.prelert.job.results.AnomalyRecord;
-import com.prelert.job.results.Bucket;
 import com.prelert.job.Detector;
 import com.prelert.job.JobConfiguration;
+import com.prelert.job.results.AnomalyRecord;
+import com.prelert.job.results.Bucket;
 import com.prelert.rs.client.EngineApiClient;
 import com.prelert.rs.data.Pagination;
 
@@ -215,7 +215,7 @@ public class NormalizationTest implements Closeable
          * Test get buckets by date range with a time string
          */
         String [] startDateFormats = new String[] {"2013-01-30T15:10:00Z", "1359558600"};
-        String [] endDateFormats = new String[] {"2013-01-31T22:10:00.000+0000", "1359670200"};
+        String [] endDateFormats = new String[] {"2013-01-31T22:10:00.000+00:00", "1359670200"};
 
         for (int i=0; i<startDateFormats.length; ++i)
         {

@@ -28,8 +28,9 @@ package com.prelert.job.persistence.elasticsearch;
 
 import static com.prelert.job.persistence.elasticsearch.ElasticsearchJobProvider.PRELERT_USAGE_INDEX;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -43,22 +44,19 @@ import com.prelert.job.usage.Usage;
 
 public class ElasticsearchUsagePersister implements UsagePersister
 {
-    private static final int MS_IN_HOUR = 60 * 60 * 1000;
+    private static final String USAGE_DOC_ID_PREFIX = "usage-";
 
-    private Client m_Client;
-    private SimpleDateFormat m_SimpleDateFormat;
+    private final Client m_Client;
+    private final Logger m_Logger;
+    private final DateTimeFormatter m_DateTimeFormatter;
+    private final Map<String, Object> m_UpsertMap;
     private String m_DocId;
-    private long m_CurrentHour;
-    private Logger m_Logger;
-
-    private Map<String, Object> m_UpsertMap;
 
     public ElasticsearchUsagePersister(Client client, Logger logger)
     {
         m_Client = client;
-        m_CurrentHour = 0;
         m_Logger = logger;
-        m_SimpleDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXX");
+        m_DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXX");
         m_UpsertMap = new HashMap<>();
 
         m_UpsertMap.put(Usage.TIMESTAMP, "");
@@ -68,14 +66,10 @@ public class ElasticsearchUsagePersister implements UsagePersister
     @Override
     public void persistUsage(String jobId, long bytesRead, long fieldsRead, long recordsRead)
     {
-        long hour =  System.currentTimeMillis() / MS_IN_HOUR;
-
-        if (m_CurrentHour != hour)
-        {
-            Date date = new Date(hour * MS_IN_HOUR);
-            m_DocId = "usage-" + m_SimpleDateFormat.format(date);
-            m_UpsertMap.put(Usage.TIMESTAMP, date);
-        }
+        ZonedDateTime nowTruncatedToHour = ZonedDateTime.now().truncatedTo(ChronoUnit.HOURS);
+        String formattedNowTruncatedToHour = nowTruncatedToHour.format(m_DateTimeFormatter);
+        m_DocId = USAGE_DOC_ID_PREFIX + formattedNowTruncatedToHour;
+        m_UpsertMap.put(Usage.TIMESTAMP, formattedNowTruncatedToHour);
 
         // update global count
         updateDocument(PRELERT_USAGE_INDEX,  m_DocId, bytesRead, fieldsRead, recordsRead);

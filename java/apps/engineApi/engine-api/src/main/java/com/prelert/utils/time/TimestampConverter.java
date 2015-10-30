@@ -25,53 +25,35 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.transforms.date;
+package com.prelert.utils.time;
 
 import java.time.format.DateTimeParseException;
-import java.util.List;
-
-import org.apache.log4j.Logger;
-
-import com.prelert.transforms.TransformException;
-import com.prelert.utils.time.DateTimeFormatterTimestampConverter;
-import com.prelert.utils.time.TimestampConverter;
 
 /**
- * A transform that attempts to parse a String timestamp
- * according to a timeFormat. It converts that
- * to a long that represents the equivalent epoch.
+ * A converter that enables conversions of textual timestamps to epoch seconds
+ * or milliseconds according to a given pattern.
  */
-public class DateFormatTransform extends DateTransform
+public interface TimestampConverter
 {
-    private final String m_TimeFormat;
-    private final TimestampConverter m_DateToEpochConverter;
+    /**
+     * Converts the a textual timestamp into an epoch in seconds
+     *
+     * @param timestamp the timestamp to convert, not null. The timestamp is expected to
+     * be formatted according to the pattern of the formatter. In addition, the pattern is
+     * assumed to contain both date and time information.
+     * @return the epoch in seconds for the given timestamp
+     * @throws DateTimeParseException if unable to parse the given timestamp
+     */
+    long toEpochSeconds(String timestamp);
 
-    public DateFormatTransform(String timeFormat, List<TransformIndex> readIndicies,
-            List<TransformIndex> writeIndicies, Logger logger)
-    {
-        super(readIndicies, writeIndicies, logger);
-
-        m_TimeFormat = timeFormat;
-        m_DateToEpochConverter = DateTimeFormatterTimestampConverter.ofPattern(timeFormat);
-    }
-
-    @Override
-    protected TransformResult parseAndWriteDate(String field, String[][] readWriteArea) throws TransformException
-    {
-        try
-        {
-            m_Epoch = m_DateToEpochConverter.toEpochSeconds(field);
-
-            TransformIndex writeIndex = m_WriteIndicies.get(0);
-            readWriteArea[writeIndex.array][writeIndex.index] = Long.toString(m_Epoch);
-            return TransformResult.OK;
-        }
-        catch (DateTimeParseException pe)
-        {
-            String message = String.format("Cannot parse date '%s' with format string '%s'",
-                    field, m_TimeFormat);
-
-            throw new ParseTimestampException(message);
-        }
-    }
+    /**
+     * Converts the a textual timestamp into an epoch in milliseconds
+     *
+     * @param timestamp the timestamp to convert, not null. The timestamp is expected to
+     * be formatted according to the pattern of the formatter. In addition, the pattern is
+     * assumed to contain both date and time information.
+     * @return the epoch in milliseconds for the given timestamp
+     * @throws DateTimeParseException if unable to parse the given timestamp
+     */
+    long toEpochMillis(String timestamp);
 }

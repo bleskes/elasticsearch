@@ -32,8 +32,8 @@ import java.io.InputStream;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Objects;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipException;
@@ -64,8 +64,8 @@ public class DataStreamer
      * Persisted data files are named with this date format
      * e.g. Tue_22_Apr_2014_091033
      */
-    private static final SimpleDateFormat PERSISTED_FILE_NAME_DATE_FORMAT =
-            new SimpleDateFormat("EEE_d_MMM_yyyy_HHmmss");
+    private static final DateTimeFormatter PERSISTED_FILE_NAME_DATE_FORMAT =
+            DateTimeFormatter.ofPattern("EEE_d_MMM_yyyy_HHmmss");
 
     private final boolean m_ShouldPersistDataToDisk;
     private final String m_BaseDirectory;
@@ -146,8 +146,7 @@ public class DataStreamer
     {
         try
         {
-            Files.createDirectory(FileSystems.getDefault().getPath(
-                    m_BaseDirectory, jobId));
+            Files.createDirectory(FileSystems.getDefault().getPath(m_BaseDirectory, jobId));
         }
         catch (FileAlreadyExistsException e)
         {
@@ -155,7 +154,7 @@ public class DataStreamer
         }
 
         java.nio.file.Path filePath = FileSystems.getDefault().getPath(
-                m_BaseDirectory, jobId, PERSISTED_FILE_NAME_DATE_FORMAT.format(new Date()) + ".gz");
+                m_BaseDirectory, jobId, PERSISTED_FILE_NAME_DATE_FORMAT.format(LocalDateTime.now()) + ".gz");
 
         LOGGER.info("Data will be persisted to: " + filePath);
 
