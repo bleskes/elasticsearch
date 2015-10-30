@@ -102,6 +102,12 @@ public class DateTimeFormatterTimestampConverterTest
     }
 
     @Test
+    public void testToEpochSeconds_GivenTimestampRequiresLenientParsing()
+    {
+        assertEquals(1395703820, toEpochSeconds("2014-03-25 1:30:20 +02:00", "yyyy-MM-dd HH:mm:ss XXX"));
+    }
+
+    @Test
     public void testToEpochSeconds_GivenPatternHasDateWithoutYearAndTimeWithoutTimeZone() throws ParseException
     {
         // Summertime

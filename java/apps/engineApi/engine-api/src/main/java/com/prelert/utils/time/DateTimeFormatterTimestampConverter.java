@@ -67,7 +67,9 @@ public class DateTimeFormatterTimestampConverter implements TimestampConverter
      */
     public static TimestampConverter ofPattern(String pattern)
     {
-        DateTimeFormatter formatter = new DateTimeFormatterBuilder().appendPattern(pattern)
+        DateTimeFormatter formatter = new DateTimeFormatterBuilder()
+                .parseLenient()
+                .appendPattern(pattern)
                 .parseDefaulting(ChronoField.YEAR_OF_ERA, LocalDate.now().getYear())
                 .toFormatter();
 
