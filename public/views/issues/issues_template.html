@@ -32,19 +32,19 @@
             <th>Type</th>
           </tr>
         </thead>
-        <tbody bindonce>
+        <tbody>
           <tr ng-repeat="issue in issues">
             <td>
               <span class="icon"><i class="fa" ng-class="{ 'fa-warning': issue.status === 'yellow', 'fa-bolt': issue.status === 'red' }"></i></span>
               <span>{{ issue.status === 'red' ? 'Critical' : 'Warning' }}</span>
             </td>
             <td>
-              <span class="node" ng-if="issue.type === 'node'" bo-text="issue.node.name"></span>
-              <span class="index" ng-if="issue.type === 'index'" bo-text="issue.index"></span>
-              <span class="field" ng-if="issue.field" bo-text="issue.field"></span>
-              <span bo-text="issue.message"></span>
+              <span class="node" ng-if="issue.type === 'node'" ng-text="::issue.node.name"></span>
+              <span class="index" ng-if="issue.type === 'index'" ng-text="::issue.index"></span>
+              <span class="field" ng-if="issue.field" ng-text="::issue.field"></span>
+              <span ng-text="::issue.message"></span>
             </td>
-            <td class="type" bo-text="issue.type"></td>
+            <td class="type" ng-text="::issue.type"></td>
           </tr>
         </tbody>
         <div
