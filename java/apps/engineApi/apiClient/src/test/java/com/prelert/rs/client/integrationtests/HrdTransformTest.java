@@ -94,7 +94,7 @@ public class HrdTransformTest implements Closeable
                     + "\"detectors\":[{\"fieldName\":\"sum_cs_bytes_\",\"function\":\"max\", \"overFieldName\":\"highest_registered_domain\"}]},"
                     + "\"transforms\":[{\"transform\":\"domain_split\", \"inputs\":\"cs_host\", \"outputs\":[\"sub_domain\", \"highest_registered_domain\"]}],"
                     + "\"dataDescription\":{\"fieldDelimiter\":\",\", \"timeField\":\"_time\", "
-                        + "\"timeFormat\":\"yyyy-MM-ddHH:mm:ss.SSS z\"} }";
+                        + "\"timeFormat\":\"yyyy-MM-dd HH:mm:ss.SSS z\"} }";
 
 
         m_WebServiceClient.deleteJob(MAX_BYTES_OVER_HRD_JOB);
@@ -134,7 +134,7 @@ public class HrdTransformTest implements Closeable
                 + "\"detectors\":[{\"fieldName\":\"sub_domain\",\"function\":\"info_content\", \"overFieldName\":\"highest_registered_domain\"}]},"
                 + "\"transforms\":[{\"transform\":\"domain_split\", \"inputs\":\"cs_host\", \"outputs\":[\"sub_domain\", \"highest_registered_domain\"]}],"
                 + "\"dataDescription\":{\"fieldDelimiter\":\",\", \"timeField\":\"_time\", "
-                    + "\"timeFormat\":\"yyyy-MM-ddHH:mm:ss.SSS z\"} }";
+                    + "\"timeFormat\":\"yyyy-MM-dd HH:mm:ss.SSS z\"} }";
 
 
         m_WebServiceClient.deleteJob(INFO_CONTENT_OVER_HRD_JOB);

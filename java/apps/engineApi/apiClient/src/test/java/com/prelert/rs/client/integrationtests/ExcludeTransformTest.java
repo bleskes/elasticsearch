@@ -99,7 +99,7 @@ public class ExcludeTransformTest implements Closeable
         dd.setFormat(DataFormat.DELIMITED);
         dd.setFieldDelimiter(',');
         dd.setTimeField("datetime");
-        dd.setTimeFormat("dd-MMM-yyyy HH:mm:ss.SSS");
+        dd.setTimeFormat("dd-MMM-yyyy HH:mm:ss.SSS ");
 
         List<TransformConfig> transforms = new ArrayList<>();
 

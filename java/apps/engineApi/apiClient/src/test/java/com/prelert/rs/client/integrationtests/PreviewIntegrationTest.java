@@ -136,11 +136,11 @@ public class PreviewIntegrationTest implements Closeable
         DataDescription dd = new DataDescription();
         dd.setFormat(DataFormat.SINGLE_LINE);
         dd.setTimeField("time");
-        dd.setTimeFormat("yyyy-MM-dd HH:mm:ss,SSS z");
+        dd.setTimeFormat("yyyy-MM-dd HH:mm:ss,SSS XXX");
 
         TransformConfig transform = new TransformConfig();
         transform.setTransform("extract");
-        transform.setArguments(Arrays.asList("(.{27}) (.*)"));
+        transform.setArguments(Arrays.asList("(.{30}) (.*)"));
         transform.setInputs(Arrays.asList("raw"));
         transform.setOutputs(Arrays.asList("time", "message"));
 
