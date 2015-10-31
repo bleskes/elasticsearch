@@ -9,8 +9,7 @@ define(function (require) {
   var module = require('ui/modules').get('marvel', [
     'marvel/directives',
     'marvel/settings',
-    'marvel/metrics',
-    'pasvaz.bindonce'
+    'marvel/metrics'
   ]);
 
   require('ui/routes').when('/issues', {
