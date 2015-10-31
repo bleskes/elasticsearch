@@ -6,13 +6,11 @@ define(function (require) {
   require('plugins/marvel/services/metrics');
   require('plugins/marvel/services/clusters');
   require('ui/notify/notify');
-  require('angular-bindonce');
 
   var module = require('ui/modules').get('marvel', [
     'marvel/directives',
     'marvel/settings',
     'marvel/metrics',
-    'pasvaz.bindonce',
     'kibana/notify'
   ]);
 
