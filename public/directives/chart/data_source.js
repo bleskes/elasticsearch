@@ -39,7 +39,8 @@ define(function (require) {
     ChartDataSource.prototype.toAggsObject = function () {
       var bounds = timefilter.getBounds();
       var duration = moment.duration(bounds.max - bounds.min, 'ms');
-      this.bucketSize = calcAuto.near(100, duration).asSeconds();
+      var minBucketSize = 10;
+      this.bucketSize = Math.max(minBucketSize, calcAuto.near(100, duration).asSeconds());
       var aggs = {
         check: {
           date_histogram: {
