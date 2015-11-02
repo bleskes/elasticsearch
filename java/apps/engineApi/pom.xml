@@ -11,7 +11,7 @@
     -->
 
   <groupId>com.prelert</groupId>
-  <version>1.5.1</version>
+  <version>1.6.0</version>
   <artifactId>engineAPI</artifactId>
   <packaging>pom</packaging>
 
@@ -143,22 +143,22 @@
       <dependency>
         <groupId>com.prelert</groupId>
         <artifactId>api-common</artifactId>
-        <version>1.5.1</version>
+        <version>1.6.0</version>
       </dependency>
       <dependency>
         <groupId>com.prelert</groupId>
         <artifactId>engine-api</artifactId>
-        <version>1.5.1</version>
+        <version>1.6.0</version>
       </dependency>
       <dependency>
         <groupId>com.prelert</groupId>
         <artifactId>apiServer</artifactId>
-        <version>1.5.1</version>
+        <version>1.6.0</version>
       </dependency>
       <dependency>
         <groupId>com.prelert</groupId>
         <artifactId>elasticsearch-persistence</artifactId>
-        <version>1.5.1</version>
+        <version>1.6.0</version>
       </dependency>
 
     </dependencies>
