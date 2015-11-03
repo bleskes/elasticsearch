@@ -26,7 +26,7 @@
  ************************************************************/
 package com.prelert.job.process.output.parsing;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.verify;
 
 import java.io.ByteArrayInputStream;
@@ -68,8 +68,9 @@ public class NormalisedResultParserTest
     {
         String input = "";
         JsonParser parser = createJsonParser(input);
+        NormalisedResultParser resultParser = new NormalisedResultParser(parser, m_Logger);
 
-        NormalisedResult normalisedResult = NormalisedResultParser.parseJson(parser, m_Logger);
+        NormalisedResult normalisedResult = resultParser.parseJson();
 
         assertEquals(0.0, normalisedResult.getRawScore(), ERROR);
         assertEquals(0.0, normalisedResult.getNormalizedScore(), ERROR);
@@ -80,8 +81,9 @@ public class NormalisedResultParserTest
     {
         String input = "{}";
         JsonParser parser = createJsonParser(input);
+        NormalisedResultParser resultParser = new NormalisedResultParser(parser, m_Logger);
 
-        NormalisedResult normalisedResult = NormalisedResultParser.parseJson(parser, m_Logger);
+        NormalisedResult normalisedResult = resultParser.parseJson();
 
         assertEquals(0.0, normalisedResult.getRawScore(), ERROR);
         assertEquals(0.0, normalisedResult.getNormalizedScore(), ERROR);
@@ -92,8 +94,9 @@ public class NormalisedResultParserTest
     {
         String input = "{\"foo\":\"0.0\"}";
         JsonParser parser = createJsonParser(input);
+        NormalisedResultParser resultParser = new NormalisedResultParser(parser, m_Logger);
 
-        NormalisedResult normalisedResult = NormalisedResultParser.parseJson(parser, m_Logger);
+        NormalisedResult normalisedResult = resultParser.parseJson();
 
         assertEquals(0.0, normalisedResult.getRawScore(), ERROR);
         assertEquals(0.0, normalisedResult.getNormalizedScore(), ERROR);
@@ -105,8 +108,9 @@ public class NormalisedResultParserTest
     {
         String input = "[]";
         JsonParser parser = createJsonParser(input);
+        NormalisedResultParser resultParser = new NormalisedResultParser(parser, m_Logger);
 
-        NormalisedResult normalisedResult = NormalisedResultParser.parseJson(parser, m_Logger);
+        NormalisedResult normalisedResult = resultParser.parseJson();
 
         assertEquals(0.0, normalisedResult.getRawScore(), ERROR);
         assertEquals(0.0, normalisedResult.getNormalizedScore(), ERROR);
@@ -117,15 +121,23 @@ public class NormalisedResultParserTest
     }
 
     @Test
-    public void testParseJson_GivenValidNormalisationResult() throws JsonParseException, IOException
+    public void testParseJson_GivenValidNormalisationResults() throws JsonParseException, IOException
     {
-        String input = "{\"rawScore\":\"42.0\", \"normalizedScore\":\"0.01\"}";
+        String input = "{\"rawScore\":\"42.0\", \"normalizedScore\":\"0.01\"}\n" +
+                "{\"rawScore\":\"43.0\", \"normalizedScore\":\"0.02\"}";
         JsonParser parser = createJsonParser(input);
+        NormalisedResultParser resultParser = new NormalisedResultParser(parser, m_Logger);
 
-        NormalisedResult normalisedResult = NormalisedResultParser.parseJson(parser, m_Logger);
+        NormalisedResult normalisedResult = resultParser.parseJson();
 
         assertEquals(42.0, normalisedResult.getRawScore(), ERROR);
         assertEquals(0.01, normalisedResult.getNormalizedScore(), ERROR);
+
+        normalisedResult = resultParser.parseJson();
+
+        assertEquals(43.0, normalisedResult.getRawScore(), ERROR);
+        assertEquals(0.02, normalisedResult.getNormalizedScore(), ERROR);
+
     }
 
     @Test
@@ -134,8 +146,9 @@ public class NormalisedResultParserTest
     {
         String input = "{\"rawScore\":\"invalid\"}";
         JsonParser parser = createJsonParser(input);
+        NormalisedResultParser resultParser = new NormalisedResultParser(parser, m_Logger);
 
-        NormalisedResult normalisedResult = NormalisedResultParser.parseJson(parser, m_Logger);
+        NormalisedResult normalisedResult = resultParser.parseJson();
 
         assertEquals(0.0, normalisedResult.getRawScore(), ERROR);
         assertEquals(0.0, normalisedResult.getNormalizedScore(), ERROR);
@@ -148,8 +161,9 @@ public class NormalisedResultParserTest
     {
         String input = "{\"rawScore\":[]}";
         JsonParser parser = createJsonParser(input);
+        NormalisedResultParser resultParser = new NormalisedResultParser(parser, m_Logger);
 
-        NormalisedResult normalisedResult = NormalisedResultParser.parseJson(parser, m_Logger);
+        NormalisedResult normalisedResult = resultParser.parseJson();
 
         assertEquals(0.0, normalisedResult.getRawScore(), ERROR);
         assertEquals(0.0, normalisedResult.getNormalizedScore(), ERROR);
@@ -164,8 +178,9 @@ public class NormalisedResultParserTest
     {
         String input = "{\"rawScore\":\"\"}";
         JsonParser parser = createJsonParser(input);
+        NormalisedResultParser resultParser = new NormalisedResultParser(parser, m_Logger);
 
-        NormalisedResult normalisedResult = NormalisedResultParser.parseJson(parser, m_Logger);
+        NormalisedResult normalisedResult = resultParser.parseJson();
 
         assertEquals(0.0, normalisedResult.getRawScore(), ERROR);
         assertEquals(0.0, normalisedResult.getNormalizedScore(), ERROR);
@@ -177,8 +192,9 @@ public class NormalisedResultParserTest
     {
         String input = "{\"normalizedScore\":\"invalid\"}";
         JsonParser parser = createJsonParser(input);
+        NormalisedResultParser resultParser = new NormalisedResultParser(parser, m_Logger);
 
-        NormalisedResult normalisedResult = NormalisedResultParser.parseJson(parser, m_Logger);
+        NormalisedResult normalisedResult = resultParser.parseJson();
 
         assertEquals(0.0, normalisedResult.getRawScore(), ERROR);
         assertEquals(0.0, normalisedResult.getNormalizedScore(), ERROR);
@@ -191,8 +207,9 @@ public class NormalisedResultParserTest
     {
         String input = "{\"normalizedScore\":[]}";
         JsonParser parser = createJsonParser(input);
+        NormalisedResultParser resultParser = new NormalisedResultParser(parser, m_Logger);
 
-        NormalisedResult normalisedResult = NormalisedResultParser.parseJson(parser, m_Logger);
+        NormalisedResult normalisedResult = resultParser.parseJson();
 
         assertEquals(0.0, normalisedResult.getRawScore(), ERROR);
         assertEquals(0.0, normalisedResult.getNormalizedScore(), ERROR);
@@ -207,8 +224,9 @@ public class NormalisedResultParserTest
     {
         String input = "{\"normalizedScore\":\"\"}";
         JsonParser parser = createJsonParser(input);
+        NormalisedResultParser resultParser = new NormalisedResultParser(parser, m_Logger);
 
-        NormalisedResult normalisedResult = NormalisedResultParser.parseJson(parser, m_Logger);
+        NormalisedResult normalisedResult = resultParser.parseJson();
 
         assertEquals(0.0, normalisedResult.getRawScore(), ERROR);
         assertEquals(0.0, normalisedResult.getNormalizedScore(), ERROR);

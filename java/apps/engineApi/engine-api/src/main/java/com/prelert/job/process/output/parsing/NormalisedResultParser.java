@@ -27,6 +27,7 @@
 package com.prelert.job.process.output.parsing;
 
 import java.io.IOException;
+import java.util.Objects;
 
 import org.apache.log4j.Logger;
 
@@ -37,20 +38,26 @@ import com.prelert.job.normalisation.NormalisedResult;
 
 public class NormalisedResultParser
 {
+    private final JsonParser m_JsonParser;
+    private final Logger m_Logger;
+
+    public NormalisedResultParser(JsonParser jsonParser, Logger logger)
+    {
+        m_JsonParser = Objects.requireNonNull(jsonParser);
+        m_Logger = Objects.requireNonNull(logger);
+    }
+
     /**
      * Read a NormalisedResult from the JSON parser
-     * @param parser
-     * @param logger
-     * @return
+     * @return the {@link NormalisedResult} that was read
      * @throws JsonParseException
      * @throws IOException
      */
-    public static NormalisedResult parseJson(JsonParser parser, Logger logger)
-    throws JsonParseException, IOException
+    public NormalisedResult parseJson() throws JsonParseException, IOException
     {
         NormalisedResult result = new NormalisedResult();
 
-        JsonToken token = parser.nextToken();
+        JsonToken token = m_JsonParser.nextToken();
         while (token != null && token != JsonToken.END_OBJECT)
         {
             switch (token)
@@ -58,56 +65,50 @@ public class NormalisedResultParser
                 case START_OBJECT:
                     break;
                 case FIELD_NAME:
-                    String fieldName = parser.getCurrentName();
-                    token = parser.nextToken();
-                    handleFieldName(result, token, parser, fieldName, logger);
+                    handleFieldName(result);
                     break;
+                    //$CASES-OMITTED$
                 default:
-                    logger.warn("Parsing error: Only simple fields expected in NormalisedResult not "
+                    m_Logger.warn(
+                            "Parsing error: Only simple fields expected in NormalisedResult not "
                             + token);
                     break;
             }
 
-            token = parser.nextToken();
+            token = m_JsonParser.nextToken();
         }
 
         return result;
     }
 
-    private static void handleFieldName(NormalisedResult result, JsonToken token, JsonParser parser,
-            String fieldName, Logger logger) throws JsonParseException, IOException
+    private void handleFieldName(NormalisedResult result) throws JsonParseException, IOException
     {
+        String fieldName = m_JsonParser.getCurrentName();
+        JsonToken token = m_JsonParser.nextToken();
         switch (fieldName)
         {
             case NormalisedResult.RAW_SCORE:
-                result.setRawScore(parseStringValueAsDoubleOrZero(token, parser,
-                        NormalisedResult.RAW_SCORE, logger));
+                result.setRawScore(
+                        parseStringValueAsDoubleOrZero(token, NormalisedResult.RAW_SCORE));
                 break;
             case NormalisedResult.NORMALIZED_SCORE:
-                result.setNormalizedScore(parseStringValueAsDoubleOrZero(token, parser,
-                        NormalisedResult.NORMALIZED_SCORE, logger));
+                result.setNormalizedScore(
+                        parseStringValueAsDoubleOrZero(token, NormalisedResult.NORMALIZED_SCORE));
                 break;
             default:
-                logger.trace(String.format(
+                m_Logger.trace(String.format(
                         "Parsed unknown field in NormalisedResult %s:%s", fieldName,
-                        parser.getValueAsString()));
+                        m_JsonParser.getValueAsString()));
                 break;
         }
     }
 
-    private static double parseStringValueAsDoubleOrZero(JsonToken token, JsonParser parser,
-            String key, Logger logger) throws JsonParseException, IOException
+    private double parseStringValueAsDoubleOrZero(JsonToken token, String key)
+            throws JsonParseException, IOException
     {
-        // TODO this is string should be output as a double
-        // if (token == JsonToken.VALUE_NUMBER_FLOAT ||
-        //     token == JsonToken.VALUE_NUMBER_INT)
-        // {
-        //     return parser.getDoubleValue();
-        // }
-
         if (token == JsonToken.VALUE_STRING)
         {
-            String val = parser.getValueAsString();
+            String val = m_JsonParser.getValueAsString();
             if (val.isEmpty() == false)
             {
                 try
@@ -116,13 +117,14 @@ public class NormalisedResultParser
                 }
                 catch (NumberFormatException nfe)
                 {
-                    logger.warn("Cannot parse " + key + " : " + parser.getText() + " as a double");
+                    m_Logger.warn("Cannot parse " + key + " : " + m_JsonParser.getText()
+                            + " as a double");
                 }
             }
         }
         else
         {
-            logger.warn("Cannot parse " + key + " : " + parser.getText() + " as a double");
+            m_Logger.warn("Cannot parse " + key + " : " + m_JsonParser.getText() + " as a double");
         }
         return 0.0;
     }

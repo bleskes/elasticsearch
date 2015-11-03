@@ -47,15 +47,15 @@ import com.prelert.job.normalisation.NormalisedResult;
  */
 public class NormalisedResultsParser implements Runnable
 {
-    private List<NormalisedResult> m_Results;
-    private InputStream m_InputStream;
-    private Logger m_Logger;
+    private final List<NormalisedResult> m_Results;
+    private final InputStream m_InputStream;
+    private final Logger m_Logger;
 
     public NormalisedResultsParser(InputStream inputStream, Logger logger)
     {
         m_InputStream = inputStream;
         m_Logger = logger;
-        m_Results = new ArrayList<NormalisedResult>();
+        m_Results = new ArrayList<>();
     }
 
     @Override
@@ -77,29 +77,10 @@ public class NormalisedResultsParser implements Runnable
         return m_Results;
     }
 
-    /**
-     * Debugging print normalise output
-     * @throws IOException
-     */
-    @SuppressWarnings("unused")
-    private void printResults() throws IOException
-    {
-        BufferedReader in = new BufferedReader(
-                new InputStreamReader(m_InputStream,
-                StandardCharsets.UTF_8));
-
-        String line = null;
-        while((line = in.readLine()) != null)
-        {
-            System.out.println(line);
-        }
-    }
-
     private void parseResults() throws JsonParseException, IOException
     {
         JsonParser parser = new JsonFactory().createParser(m_InputStream);
         parser.configure(JsonParser.Feature.ALLOW_BACKSLASH_ESCAPING_ANY_CHARACTER, true);
-
 
         JsonToken token = parser.nextToken();
         if (token == null)
@@ -110,9 +91,10 @@ public class NormalisedResultsParser implements Runnable
 
         // Parse the results from the stream
         int resultCount = 0;
+        NormalisedResultParser resultParser = new NormalisedResultParser(parser, m_Logger);
         while (token != null)
         {
-            NormalisedResult result = NormalisedResultParser.parseJson(parser, m_Logger);
+            NormalisedResult result = resultParser.parseJson();
             m_Results.add(result);
             resultCount++;
 
@@ -122,4 +104,16 @@ public class NormalisedResultsParser implements Runnable
         m_Logger.info(resultCount + " records parsed from output");
     }
 
+    /**
+     * Debugging print normalise output
+     * @throws IOException
+     */
+    @SuppressWarnings("unused")
+    private void printResults() throws IOException
+    {
+        try (BufferedReader in = new BufferedReader(new InputStreamReader(m_InputStream, StandardCharsets.UTF_8)))
+        {
+            in.lines().forEach(line -> System.out.println(line));
+        }
+    }
 }
