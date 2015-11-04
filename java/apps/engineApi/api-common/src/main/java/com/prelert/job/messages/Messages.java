@@ -121,6 +121,11 @@ public final class Messages
     public static final String REST_ALERT_INVALID_TIMEOUT = "rest.alert.invalid.timeout";
     public static final String REST_ALERT_INVALID_THRESHOLD = "rest.alert.invalid.threshold";
 
+    public static final String PROCESS_ACTION_CLOSING_JOB = "process.action.closing.job";
+    public static final String PROCESS_ACTION_FLUSHING_JOB = "process.action.flushing.job";
+    public static final String PROCESS_ACTION_WRITING_JOB = "process.action.writing.job";
+    public static final String PROCESS_ACTION_USING_JOB = "process.action.using.job";
+
     private Messages()
     {
     }

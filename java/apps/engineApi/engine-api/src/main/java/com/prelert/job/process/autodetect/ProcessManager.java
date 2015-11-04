@@ -73,7 +73,6 @@ import com.prelert.job.persistence.JobProvider;
 import com.prelert.job.persistence.UsagePersisterFactory;
 import com.prelert.job.persistence.none.NoneJobDataPersister;
 import com.prelert.job.process.ProcessCtrl;
-import com.prelert.job.process.autodetect.ProcessAndDataDescription.Action;
 import com.prelert.job.process.exceptions.ClosedJobException;
 import com.prelert.job.process.exceptions.DataUploadException;
 import com.prelert.job.process.exceptions.MalformedJsonException;
@@ -174,29 +173,6 @@ public class ProcessManager
         Runtime.getRuntime().addShutdownHook(shutdownHook);
     }
 
-    private String actionToErrorString(Action action)
-    {
-        String s;
-        switch (action)
-        {
-        case CLOSING:
-            s = "closing";
-            break;
-        case FLUSHING:
-            s = "flushing";
-            break;
-        case WRITING:
-            s = "writing to";
-            break;
-        case NONE:
-        default:
-            s = "using";
-            break;
-        }
-
-        return s;
-    }
-
      /**
      * Passes data to the native process. There are 3 alternate cases handled
      * by this function
@@ -278,8 +254,8 @@ public class ProcessManager
         // We can't write data if someone is already writing to the process.
         if (process.tryAcquireGuard(Action.WRITING) == false)
         {
-            String otherAction = actionToErrorString(process.getAction());
-            String msg = Messages.getMessage(Messages.JOB_DATA_CONCURRENT_USE_UPLOAD, jobId, otherAction);
+            String msg = Messages.getMessage(Messages.JOB_DATA_CONCURRENT_USE_UPLOAD, jobId,
+                    process.getAction().getErrorString());
             LOGGER.warn(msg);
             throw new JobInUseException(jobId, msg, ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR);
         }
@@ -500,8 +476,8 @@ public class ProcessManager
 
         if (process.tryAcquireGuard(Action.FLUSHING) == false)
         {
-            String otherAction = actionToErrorString(process.getAction());
-            String msg = Messages.getMessage(Messages.JOB_DATA_CONCURRENT_USE_FLUSH, jobId, otherAction);
+            String msg = Messages.getMessage(Messages.JOB_DATA_CONCURRENT_USE_FLUSH, jobId,
+                    process.getAction().getErrorString());
             LOGGER.info(msg);
             process.getLogger().info(msg);
             throw new JobInUseException(jobId, msg, ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR);
@@ -599,8 +575,8 @@ public class ProcessManager
 
         if (process.tryAcquireGuard(Action.CLOSING) == false)
         {
-            String otherAction = actionToErrorString(process.getAction());
-            String msg = Messages.getMessage(Messages.JOB_DATA_CONCURRENT_USE_CLOSE, jobId, otherAction);
+            String msg = Messages.getMessage(Messages.JOB_DATA_CONCURRENT_USE_CLOSE, jobId,
+                    process.getAction().getErrorString());
             LOGGER.info(msg);
             process.getLogger().info(msg);
             throw new JobInUseException(jobId, msg, ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR);

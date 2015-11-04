@@ -27,7 +27,9 @@
 
 package com.prelert.job.process.autodetect;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -43,8 +45,6 @@ import org.junit.Test;
 
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataDescription;
-import com.prelert.job.process.autodetect.ProcessAndDataDescription;
-import com.prelert.job.process.autodetect.ProcessAndDataDescription.Action;
 import com.prelert.job.process.output.parsing.ResultsReader;
 import com.prelert.job.status.StatusReporter;
 import com.prelert.job.transform.TransformConfig;
