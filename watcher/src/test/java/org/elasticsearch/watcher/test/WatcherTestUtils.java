@@ -43,6 +43,7 @@ import org.elasticsearch.watcher.actions.email.ExecutableEmailAction;
 import org.elasticsearch.watcher.actions.email.service.*;
 import org.elasticsearch.watcher.actions.webhook.ExecutableWebhookAction;
 import org.elasticsearch.watcher.actions.webhook.WebhookAction;
+import org.elasticsearch.watcher.condition.always.ExecutableAlwaysCondition;
 import org.elasticsearch.watcher.condition.script.ExecutableScriptCondition;
 import org.elasticsearch.watcher.condition.script.ScriptCondition;
 import org.elasticsearch.watcher.execution.WatchExecutionContext;
@@ -117,7 +118,8 @@ public final class WatcherTestUtils {
     }
 
     public static SearchRequest newInputSearchRequest(String... indices) {
-        SearchRequest request = new SearchRequest(indices);
+        SearchRequest request = new SearchRequest();
+        request.indices(indices);
         request.indicesOptions(WatcherUtils.DEFAULT_INDICES_OPTIONS);
         request.searchType(ExecutableSearchInput.DEFAULT_SEARCH_TYPE);
         return request;
@@ -227,7 +229,7 @@ public final class WatcherTestUtils {
                 watchName,
                 new ScheduleTrigger(new CronSchedule("0/5 * * * * ? *")),
                 new ExecutableSimpleInput(new SimpleInput(new Payload.Simple(inputData)), logger),
-                new ExecutableScriptCondition(new ScriptCondition(Script.inline("return true").build()), logger, scriptService),
+                new ExecutableAlwaysCondition(logger),
                 new ExecutableSearchTransform(new SearchTransform(transformRequest, null, null), logger, client, null),
                 new TimeValue(0),
                 new ExecutableActions(actions),
