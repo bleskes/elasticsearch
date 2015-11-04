@@ -14,7 +14,7 @@ define(function (require) {
     return moment.duration(t1 - t2).asMilliseconds();
   }
 
-  return function chartDataSourceProvider(timefilter, Private) {
+  return function chartDataSourceProvider(timefilter, Private, minIntervalSeconds) {
     var calcAuto = Private(require('ui/time_buckets/calc_auto_interval'));
 
     function ChartDataSource(options) {
@@ -39,7 +39,7 @@ define(function (require) {
     ChartDataSource.prototype.toAggsObject = function () {
       var bounds = timefilter.getBounds();
       var duration = moment.duration(bounds.max - bounds.min, 'ms');
-      this.bucketSize = calcAuto.near(100, duration).asSeconds();
+      this.bucketSize = Math.max(minIntervalSeconds, calcAuto.near(100, duration).asSeconds());
       var aggs = {
         check: {
           date_histogram: {
