@@ -75,6 +75,7 @@ public class SystemKeyToolTests extends CliToolTestCase {
     }
 
     public void testGenerate() throws Exception {
+        assumeTrue("test cannot run with security manager enabled", System.getSecurityManager() == null);
         Path path = createTempFile();
         Generate generate = new Generate(terminal, path);
         CliTool.ExitStatus status = generate.execute(Settings.EMPTY, env);
@@ -84,6 +85,7 @@ public class SystemKeyToolTests extends CliToolTestCase {
     }
 
     public void testGeneratePathInSettings() throws Exception {
+        assumeTrue("test cannot run with security manager enabled", System.getSecurityManager() == null);
         Path path = createTempFile();
         Settings settings = Settings.builder()
                 .put("shield.system_key.file", path.toAbsolutePath().toString())
@@ -96,6 +98,7 @@ public class SystemKeyToolTests extends CliToolTestCase {
     }
 
     public void testGenerateDefaultPath() throws Exception {
+        assumeTrue("test cannot run with security manager enabled", System.getSecurityManager() == null);
         Path config = createTempDir();
         Path shieldConfig = config.resolve(ShieldPlugin.NAME);
         Files.createDirectories(shieldConfig);
@@ -109,6 +112,7 @@ public class SystemKeyToolTests extends CliToolTestCase {
     }
 
     public void testThatSystemKeyMayOnlyBeReadByOwner() throws Exception {
+        assumeTrue("test cannot run with security manager enabled", System.getSecurityManager() == null);
         Path config = createTempDir();
         Path shieldConfig = config.resolve(ShieldPlugin.NAME);
         Files.createDirectories(shieldConfig);
