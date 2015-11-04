@@ -123,13 +123,6 @@ public class ProcessManager
         }
     }
 
-    /**
-     * The status of a native process managed by this manager.
-     * IN_USE means the process is running its analysis, COMPLETED means
-     * it stopped normally.
-     */
-    public enum ProcessStatus { IN_USE, COMPLETED }
-
     private static final Logger LOGGER = Logger.getLogger(ProcessManager.class);
 
     private ConcurrentMap<String, ProcessAndDataDescription> m_JobIdToProcessMap;
@@ -547,13 +540,11 @@ public class ProcessManager
      * returned.
      *
      * @param jobId
-     * @return The process finished status
      * @throws NativeProcessRunException If the process has already terminated
      * @throws JobInUseException if the job cannot be closed because data is
      * being streamed to it
      */
-    public ProcessStatus closeJob(String jobId)
-    throws NativeProcessRunException, JobInUseException
+    public void closeJob(String jobId) throws NativeProcessRunException, JobInUseException
     {
         /*
          * Be careful modifying this function because is can throw exceptions in
@@ -569,7 +560,7 @@ public class ProcessManager
             // tidy up
             m_JobIdToTimeoutFuture.remove(jobId);
 
-            return ProcessStatus.COMPLETED;
+            return;
         }
 
 
@@ -641,8 +632,6 @@ public class ProcessManager
         {
             process.releaseGuard();
         }
-
-        return ProcessStatus.COMPLETED;
     }
 
     private void terminateProcess(String jobId, ProcessAndDataDescription process)
