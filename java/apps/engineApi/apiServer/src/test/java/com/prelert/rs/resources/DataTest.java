@@ -37,13 +37,16 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.Response;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -68,6 +71,9 @@ import com.prelert.job.process.params.DataLoadParams;
 import com.prelert.job.process.params.InterimResultsParams;
 import com.prelert.job.status.HighProportionOfBadTimestampsException;
 import com.prelert.job.status.OutOfOrderRecordsException;
+import com.prelert.rs.data.Acknowledgement;
+import com.prelert.rs.data.DataPostResponse;
+import com.prelert.rs.data.MultiDataPostResult;
 import com.prelert.rs.exception.InvalidParametersException;
 import com.prelert.rs.provider.RestApiException;
 
@@ -101,7 +107,7 @@ public class DataTest extends ServiceTest
     }
 
     @Test
-    public void testStreamData() throws UnknownJobException, NativeProcessRunException,
+    public void testStreamData_GivenSingleJob() throws UnknownJobException, NativeProcessRunException,
             MissingFieldException, JobInUseException, HighProportionOfBadTimestampsException,
             OutOfOrderRecordsException, TooManyJobsException, MalformedJsonException, IOException
     {
@@ -110,7 +116,7 @@ public class DataTest extends ServiceTest
         when(jobManager().submitDataLoadJob(eq(JOB_ID), eq(inputStream), any(DataLoadParams.class)))
                 .thenReturn(new DataCounts());
 
-        m_Data.streamData(httpHeaders, JOB_ID, inputStream, "", "");
+        Response response = m_Data.streamData(httpHeaders, JOB_ID, inputStream, "", "");
 
         ArgumentCaptor<DataLoadParams> paramsCaptor = ArgumentCaptor.forClass(DataLoadParams.class);
         verify(jobManager()).submitDataLoadJob(eq(JOB_ID), eq(inputStream), paramsCaptor.capture());
@@ -119,6 +125,55 @@ public class DataTest extends ServiceTest
         assertFalse(params.isResettingBuckets());
         assertEquals("", params.getStart());
         assertEquals("", params.getEnd());
+
+        assertEquals(202, response.getStatus());
+        MultiDataPostResult result = (MultiDataPostResult) response.getEntity();
+        List<DataPostResponse> responses = result.getResponses();
+        assertEquals(1, responses.size());
+        assertEquals(JOB_ID, responses.get(0).getJobId());
+    }
+
+    @Test
+    public void testStreamData_GivenMultipleJobs() throws UnknownJobException, NativeProcessRunException,
+            MissingFieldException, JobInUseException, HighProportionOfBadTimestampsException,
+            OutOfOrderRecordsException, TooManyJobsException, MalformedJsonException, IOException
+    {
+        String job1 = "job_1";
+        String job2 = "job_2";
+        when(jobManager().submitDataLoadJob(eq(job1), any(InputStream.class), any(DataLoadParams.class)))
+                .thenReturn(new DataCounts());
+        when(jobManager().submitDataLoadJob(eq(job2), any(InputStream.class), any(DataLoadParams.class)))
+                .thenReturn(new DataCounts());
+        HttpHeaders httpHeaders = mock(HttpHeaders.class);
+        String input = "";
+        InputStream inputStream = new ByteArrayInputStream(input.getBytes(StandardCharsets.UTF_8));
+
+        Response response = m_Data.streamData(httpHeaders, "job_1,job_2", inputStream, "", "");
+
+        // Job 1
+        ArgumentCaptor<DataLoadParams> paramsCaptor = ArgumentCaptor.forClass(DataLoadParams.class);
+        verify(jobManager()).submitDataLoadJob(eq(job1), any(InputStream.class), paramsCaptor.capture());
+        DataLoadParams params = paramsCaptor.getValue();
+        assertFalse(params.isPersisting());
+        assertFalse(params.isResettingBuckets());
+        assertEquals("", params.getStart());
+        assertEquals("", params.getEnd());
+
+        // Job 2
+        verify(jobManager()).submitDataLoadJob(eq(job2), any(InputStream.class), paramsCaptor.capture());
+        params = paramsCaptor.getValue();
+        assertFalse(params.isPersisting());
+        assertFalse(params.isResettingBuckets());
+        assertEquals("", params.getStart());
+        assertEquals("", params.getEnd());
+
+        // Response
+        assertEquals(202, response.getStatus());
+        MultiDataPostResult result = (MultiDataPostResult) response.getEntity();
+        List<DataPostResponse> responses = result.getResponses();
+        assertEquals(2, responses.size());
+        assertEquals(job1, responses.get(0).getJobId());
+        assertEquals(job2, responses.get(1).getJobId());
     }
 
     @Test
@@ -400,6 +455,18 @@ public class DataTest extends ServiceTest
         assertTrue(params.shouldCalculate());
         assertEquals("1428494400", params.getStart());
         assertEquals("1428494401", params.getEnd());
+    }
+
+    @Test
+    public void testCommitUpload() throws UnknownJobException, NativeProcessRunException,
+            JobInUseException
+    {
+        Response response = m_Data.commitUpload(JOB_ID);
+
+        verify(jobManager()).closeJob(JOB_ID);
+        assertEquals(200, response.getStatus());
+        Acknowledgement acknowledgement = (Acknowledgement) response.getEntity();
+        assertTrue(acknowledgement.getAcknowledgement());
     }
 
     private void givenLatency(Long latency)
