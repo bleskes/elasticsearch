@@ -20,9 +20,9 @@
     <div>Memory: <strong>{{pageData.clusterStatus.memUsed|formatNumber:'bytes'}} / {{pageData.clusterStatus.memMax|formatNumber:'bytes'}}</strong></div>
     <div>Total Shards: <strong>{{pageData.clusterStatus.totalShards}}</strong></div>
     <div>Unassigned Shards: <strong>{{pageData.clusterStatus.unassignedShards}}</strong></div>
-    <div>Documents: <strong>{{pageData.clusterStatus.documentCount|formatNumber:'0.0a'}}</strong></div>
+    <div>Documents: <strong>{{pageData.clusterStatus.documentCount|formatNumber:'int_commas'}}</strong></div>
     <div>Data: <strong>{{pageData.clusterStatus.dataSize|formatNumber:'bytes'}}</strong></div>
-    <div>Uptime: <strong>{{pageData.clusterStatus.upTime|formatNumber:''}}</strong></div>
+    <div>Uptime: <strong>{{pageData.clusterStatus.upTime|formatNumber:'time_since'}}</strong></div>
     <div>Version: <strong>{{cluster.version}}</strong></div>
   </div>
   <div ng-if="!cluster" class="stats">
