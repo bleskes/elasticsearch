@@ -104,6 +104,8 @@ import com.prelert.job.usage.UsageReporter;
 public class ProcessManager
 {
     public static final String LOG_FILE_APPENDER_NAME = "engine_api_file_appender";
+
+    private static final int WAIT_SECONDS_BEFORE_RETRY_CLOSING = 10;
     /**
      * JVM shutdown hook stops all the running processes
      */
@@ -905,8 +907,6 @@ public class ProcessManager
 
     private class FinishJobRunnable implements Runnable
     {
-        private static final int WAIT_SECONDS_BEFORE_RETRY = 10;
-
         private final String m_JobId;
 
         public FinishJobRunnable(String jobId)
@@ -931,7 +931,7 @@ public class ProcessManager
                     }
                     catch (JobInUseException e)
                     {
-                        if (wait(WAIT_SECONDS_BEFORE_RETRY, e) == false)
+                        if (ProcessManager.wait(m_JobId, WAIT_SECONDS_BEFORE_RETRY_CLOSING, e) == false)
                         {
                             return;
                         }
@@ -943,27 +943,27 @@ public class ProcessManager
                 LOGGER.error(String.format("Error in job %s finish timeout", m_JobId), e);
             }
         }
+    }
 
-        private boolean wait(int waitSeconds, JobInUseException e)
+    private static boolean wait(String jobId, int waitSeconds, JobInUseException e)
+    {
+        String msg = String.format(
+                "Job '%s' is reading data and cannot be shutdown " +
+                        "Rescheduling shutdown for %d seconds", jobId, waitSeconds);
+        LOGGER.warn(msg);
+
+        // wait then try again
+        try
         {
-            String msg = String.format(
-                    "Job '%s' is reading data and cannot be shutdown " +
-                            "Rescheduling shutdown for %d seconds", m_JobId, waitSeconds);
-            LOGGER.warn(msg);
-
-            // wait then try again
-            try
-            {
-                Thread.sleep(waitSeconds * 1000);
-            }
-            catch (InterruptedException e1)
-            {
-                Thread.currentThread().interrupt();
-                LOGGER.warn("Interrupted waiting for job to stop", e);
-                return false;
-            }
-            return true;
+            Thread.sleep(waitSeconds * 1000);
         }
+        catch (InterruptedException e1)
+        {
+            Thread.currentThread().interrupt();
+            LOGGER.warn("Interrupted waiting for job to stop", e);
+            return false;
+        }
+        return true;
     }
 
     /**
@@ -997,30 +997,15 @@ public class ProcessManager
             {
                 try
                 {
-                    try
+                    closeJob(jobId);
+                    notFinished = false;
+                }
+                catch (JobInUseException e)
+                {
+                    // wait then try again
+                    if (ProcessManager.wait(jobId, WAIT_SECONDS_BEFORE_RETRY_CLOSING, e) == false)
                     {
-                        closeJob(jobId);
-                        notFinished = false;
-                    }
-                    catch (JobInUseException e)
-                    {
-                        int waitSeconds = 10;
-                        String msg = String.format(
-                                "Job '%s' is reading data and cannot be shutdown " +
-                                        "Rescheduling shutdown for %d seconds", jobId, waitSeconds);
-                        LOGGER.info(msg);
-
-                        // wait then try again
-                        try
-                        {
-                            Thread.sleep(waitSeconds * 1000);
-                        }
-                        catch (InterruptedException e1)
-                        {
-                            Thread.currentThread().interrupt();
-                            LOGGER.warn("Interrupted waiting for job to stop", e);
-                            return;
-                        }
+                        return;
                     }
                 }
                 catch (NativeProcessRunException e)
