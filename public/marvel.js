@@ -5,7 +5,7 @@ require('plugins/marvel/services/features.js');
 require('plugins/marvel/services/executor.js');
 require('plugins/marvel/views/no_data/no_data_controller.js');
 require('plugins/marvel/views/home/home_controller.js');
-require('plugins/marvel/views/indices/index.js');
+require('plugins/marvel/views/indices/indices_controller');
 require('plugins/marvel/views/nodes/nodes_controller.js');
 require('plugins/marvel/views/node/node_controller.js');
 require('plugins/marvel/views/overview/index.js');
