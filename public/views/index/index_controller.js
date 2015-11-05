@@ -37,7 +37,7 @@ function getPageData(timefilter, globalState, $route, $http) {
   });
 }
 
-mod.controller('indexView', (timefilter, $route, $routeParams, Private, globalState, $executor, $http, marvelClusters, $scope) => {
+mod.controller('indexView', (timefilter, $route, Private, globalState, $executor, $http, marvelClusters, $scope) => {
   timefilter.enabled = true;
 
   function setClusters(clusters) {
@@ -47,7 +47,7 @@ mod.controller('indexView', (timefilter, $route, $routeParams, Private, globalSt
   setClusters($route.current.locals.marvel.clusters);
 
   $scope.pageData = $route.current.locals.pageData;
-  $scope.indexName = $routeParams.index;
+  $scope.indexName = $route.current.params.index;
 
   var docTitle = Private(require('ui/doc_title'));
   docTitle.change('Marvel - ' + $scope.indexName, true);
