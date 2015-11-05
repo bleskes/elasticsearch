@@ -13,18 +13,6 @@ define(function (require) {
 
 
   module.directive('marvelIndexListing', function () {
-    function makeSampleData() {
-      var sampleData = (function () {
-        var arr = [];
-        var length = 30;
-        var now = (new Date()).getTime();
-        for (var i = 0; i < length; i++) {
-          arr.push({y: Math.random() * 100, x: (now - ((length - i) * 10))});
-        }
-        return arr;
-      }());
-      return sampleData;
-    }
     function makeTdWithPropKey(dataKey, idx) {
       var rawValue = _.get(this.props, dataKey.key);
       var units;
