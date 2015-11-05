@@ -46,4 +46,4 @@ enum Action {
     {
         return m_ErrorString;
     }
-};
+}
