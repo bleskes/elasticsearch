@@ -8,15 +8,15 @@
           <marvel-index-summary summary="pageData.indexSummary"></marvel-index-summary>
       </div>
     </div>
-    <div class="row marvel-element" ng-if="charts">
-      <div class="col-md-4"><marvel-chart source="dataSources.index_search_request_rate"/></div>
-      <div class="col-md-4"><marvel-chart source="dataSources.index_request_rate"/></div>
-      <div class="col-md-4"><marvel-chart source="dataSources.index_size"/></div>
+    <div class="row marvel-element" ng-if="pageData.metrics">
+      <div class="col-md-4"><marvel-chart metric="pageData.metrics.index_search_request_rate"/></div>
+      <div class="col-md-4"><marvel-chart metric="pageData.metrics.index_request_rate"/></div>
+      <div class="col-md-4"><marvel-chart metric="pageData.metrics.index_size"/></div>
     </div>
-    <div class="row marvel-element" ng-if="charts">
-      <div class="col-md-4"><marvel-chart source="dataSources.index_lucene_memory"/></div>
-      <div class="col-md-4"><marvel-chart source="dataSources.index_document_count"/></div>
-      <div class="col-md-4"><marvel-chart source="dataSources.index_fielddata"/></div>
+    <div class="row marvel-element" ng-if="pageData.metrics">
+      <div class="col-md-4"><marvel-chart metric="pageData.metrics.index_lucene_memory"/></div>
+      <div class="col-md-4"><marvel-chart metric="pageData.metrics.index_document_count"/></div>
+      <div class="col-md-4"><marvel-chart metric="pageData.metrics.index_fielddata"/></div>
     </div>
   </div>
   <marvel-shard-allocation id="indexName" hide-ui="true" view="index" cluster="cluster" index-pattern="indexPattern" cluster-state="dataSources.clusterState"></marvel-shard-allocation>
