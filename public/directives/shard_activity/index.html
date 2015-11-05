@@ -1,4 +1,4 @@
-<!-- <div class="filter pull-right" ng-click="toggleActive()" ng-class="{ active: onlyActive }"><span ng-if="onlyActive">Show</span><span ng-if="!onlyActive">Hide</span> History</div> -->
+<div class="filter pull-right" ng-click="toggleActive()" ng-class="{ active: onlyActive }"><span ng-if="onlyActive">Show</span><span ng-if="!onlyActive">Hide</span> History</div>
 <h1>Shard Activity</h1>
 <table class="table table-condensed">
   <thead>
@@ -16,29 +16,29 @@
   <tbody>
     <tr ng-repeat="activity in visibleData" ng-class="{ done: activity.stage === 'DONE', red: activity.primary, yellow: !activity.primary }">
       <td class="index">
-        <h5><a href="#/index/{{ activity.index_name }}">{{ activity.index_name }}</a></h5>
-        <p><span ng-text="::activity.id"></span> | <span>{{activity.type|capitalize}}</span><span ng-if="activity.type === 'RELOCATION'"> of {{ activity.primary ? 'Primary' : 'Replica' }}</span></p>
+        <h5><a href="#/index/{{ activity.index.name }}">{{ activity.index.name }}</a></h5>
+        <p><span>{{ activity.id }}</span> | <span>{{activity.type|capitalize}}</span><span ng-if="activity.type === 'RELOCATION'"> of {{ activity.primary ? 'Primary' : 'Replica' }}</span></p>
       </td>
       <td class="stage">
-        <h6 ng-text="::activity.stage"></h6>
+        <h6>{{ activity.stage }}</h6>
       </td>
       <td class="time">
-        <h6 ng-text="::formatNumber(activity.total_time_in_millis/1000, '00:00:00')"></h6>
+        <h6>{{ (activity.total_time_in_millis/1000)|formatNumber: '00:00:00' }}</h6>
       </td>
       <td class="source-dest">
         <div>
           <div>
             <h6 ng-if="!activity.source.name">n/a</h6>
             <div ng-if="activity.source.name">
-              <h6 ng-text="::activity.source.name"></h6>
-              <p ng-text="::getIpAndPort(activity.source.transport_address)"></p>
+              <h6>{{ activity.source.name }}</h6>
+              <p>{{ getIpAndPort(activity.source.transport_address )}}</p>
             </div>
           </div>
           <div><h6><i class="fa fa-arrow-right"></i></h6></div>
           <div>
             <div>
-              <h6 ng-text="::activity.target.name"></h6>
-              <p ng-text="::getIpAndPort(activity.target.transport_address)"></p>
+              <h6>{{ activity.target.name }}</h6>
+              <p>{{ getIpAndPort(activity.target.transport_address) }}</p>
             </div>
           </div>
         </div>
@@ -48,19 +48,19 @@
         <div ng-if="activity.type === 'SNAPSHOT'"><p>logstash-data</p><p>logstash-s3-backup</p></div>
       </td>
       <td class="files">
-        <h5 ng-text="::activity.index.files.percent"></h5>
-        <p><span ng-text="::formatNumber(activity.index.files.reused ? activity.index.files.reused : activity.index.files.recovered, '0,0')"></span>/<span ng-text="::formatNumber(activity.index.files.total, '0,0')"></span></p>
+        <h5>{{ activity.index.files.percent }}</h5>
+        <p><span>{{ formatNumber(activity.index.files.reused ? activity.index.files.reused : activity.index.files.recovered, '0,0') }}</span>/<span>{{ formatNumber(activity.index.files.total, '0,0') }}</span></p>
       </td>
       <td class="bytes">
-        <h5 ng-text="::activity.index.size.percent"></h5>
-        <p><span ng-text="::formatNumber((activity.index.size.reused_in_bytes === activity.index.size.total_in_bytes)? activity.index.size.recovered_in_bytes : activity.index.size.reused_in_bytes, 'byte')"></span>/<span ng-text="::formatNumber(activity.index.size.total_in_bytes, 'byte')"></span></p>
+        <h5></h5{{ activity.index.size.percent }}>
+        <p><span>{{ formatNumber((activity.index.size.reused_in_bytes === activity.index.size.total_in_bytes)? activity.index.size.recovered_in_bytes : activity.index.size.reused_in_bytes, 'byte') }}</span>/<span>{{ formatNumber(activity.index.size.total_in_bytes, 'byte') }}</span></p>
       </td>
       <td class="translog" ng-if="activity.translog.total <= 0">
         <h5>n/a</h5>
       </td>
       <td class="translog" ng-if="activity.translog.total > 0">
-        <h5 ng-text="::activity.translog.percent"></h5>
-        <p><span ng-text="::activity.translog.total"></span>/<span ng-text="::activity.translog.total_on_start"></span></p>
+        <h5>{{ activity.translog.percent }}</h5>
+        <p><span>{{ activity.translog.total }}</span>/<span>{{ activity.translog.total_on_start }}</span></p>
       </td>
     </tr>
     <tr ng-if="!visibleData.length">

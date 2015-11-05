@@ -8,7 +8,7 @@ require('plugins/marvel/views/home/home_controller.js');
 require('plugins/marvel/views/indices/indices_controller');
 require('plugins/marvel/views/nodes/nodes_controller.js');
 require('plugins/marvel/views/node/node_controller.js');
-require('plugins/marvel/views/overview/index.js');
+require('plugins/marvel/views/overview/overview_controller.js');
 require('plugins/marvel/views/settings/index.js');
 require('plugins/marvel/views/issues/issues_controller.js');
 require('plugins/marvel/views/setup/setup_controller.js');
