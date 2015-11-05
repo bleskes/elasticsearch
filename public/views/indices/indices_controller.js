@@ -34,7 +34,7 @@ require('ui/routes')
   template: require('plugins/marvel/views/indices/index.html'),
   resolve: {
     marvel: function (Private) {
-      var routeInit = Private(require('plugins/marvel/lib/route_init'));
+      const routeInit = Private(require('plugins/marvel/lib/route_init'));
       return routeInit();
     },
     pageData: getPageData
@@ -54,18 +54,12 @@ mod.controller('indices', ($route, globalState, timefilter, $http, $executor, ma
   $scope.pageData = $route.current.locals.pageData;
 
   $executor.register({
-    execute: function () {
-      return getPageData(timefilter, globalState, $http);
-    },
-    handleResponse: function (response) {
-      $scope.pageData = response;
-    }
+    execute: () => getPageData(timefilter, globalState, $http),
+    handleResponse: (response) => $scope.pageData = response
   });
 
   $executor.register({
-    execute: function () {
-      return marvelClusters.fetch();
-    },
+    execute: () => marvelClusters.fetch(),
     handleResponse: setClusters
   });
 
