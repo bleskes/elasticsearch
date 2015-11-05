@@ -88,7 +88,7 @@ public class ProcessManager
     /**
      * JVM shutdown hook stops all the running processes
      */
-    private class StopProcessShutdownHook extends Thread
+    private static class StopProcessShutdownHook extends Thread
     {
         ProcessManager m_ProcessManager;
 
@@ -115,7 +115,22 @@ public class ProcessManager
     private final ProcessFactory m_ProcessFactory;
     private final DataPersisterFactory m_DataPersisterFactory;
 
-    public ProcessManager(JobProvider jobProvider, ProcessFactory processFactory,
+    public static ProcessManager create(JobProvider jobProvider, ProcessFactory processFactory,
+            DataPersisterFactory dataPersisterFactory)
+    {
+        ProcessManager processManager = new ProcessManager(jobProvider, processFactory,
+                dataPersisterFactory);
+        addShutdownHook(processManager);
+        return processManager;
+    }
+
+    private static void addShutdownHook(ProcessManager processManager)
+    {
+        StopProcessShutdownHook shutdownHook = new StopProcessShutdownHook(processManager);
+        Runtime.getRuntime().addShutdownHook(shutdownHook);
+    }
+
+    ProcessManager(JobProvider jobProvider, ProcessFactory processFactory,
             DataPersisterFactory dataPersisterFactory)
     {
         m_JobIdToProcessMap = new ConcurrentHashMap<String, ProcessAndDataDescription>();
@@ -126,14 +141,6 @@ public class ProcessManager
         m_JobProvider = jobProvider;
         m_ProcessFactory = processFactory;
         m_DataPersisterFactory = dataPersisterFactory;
-
-        addShutdownHook();
-    }
-
-    private void addShutdownHook()
-    {
-        StopProcessShutdownHook shutdownHook = new StopProcessShutdownHook(this);
-        Runtime.getRuntime().addShutdownHook(shutdownHook);
     }
 
      /**

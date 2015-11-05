@@ -147,7 +147,7 @@ public class DataFormatWarningsTest
 
 
             // can create with null
-            ProcessManager pm = new ProcessManager(null, null, null);
+            ProcessManager pm = ProcessManager.create(null, null, null);;
 
             ByteArrayInputStream bis =
                     new ByteArrayInputStream(sb.toString().getBytes(StandardCharsets.UTF_8));
@@ -281,7 +281,7 @@ public class DataFormatWarningsTest
 
 
             // can create with null
-            ProcessManager pm = new ProcessManager(null, null, null);
+            ProcessManager pm = ProcessManager.create(null, null, null);;
 
             ByteArrayInputStream bis =
                     new ByteArrayInputStream(sb.toString().getBytes(StandardCharsets.UTF_8));
@@ -399,7 +399,7 @@ public class DataFormatWarningsTest
             }
 
             // can create with null
-            ProcessManager pm = new ProcessManager(null, null, null);
+            ProcessManager pm = ProcessManager.create(null, null, null);;
 
             ByteArrayInputStream bis =
                     new ByteArrayInputStream(sb.toString().getBytes(StandardCharsets.UTF_8));
@@ -519,7 +519,7 @@ public class DataFormatWarningsTest
             }
 
             // can create with null
-            ProcessManager pm = new ProcessManager(null, null, null);
+            ProcessManager pm = ProcessManager.create(null, null, null);;
 
             ByteArrayInputStream bis =
                     new ByteArrayInputStream(sb.toString().getBytes(StandardCharsets.UTF_8));

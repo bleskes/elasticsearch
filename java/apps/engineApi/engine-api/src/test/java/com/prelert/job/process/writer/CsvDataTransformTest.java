@@ -102,7 +102,7 @@ public class CsvDataTransformTest
 
 
         // can create with null
-        ProcessManager pm = new ProcessManager(null, null, null);
+        ProcessManager pm = ProcessManager.create(null, null, null);
 
         ByteArrayInputStream bis =
                 new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
@@ -226,7 +226,7 @@ public class CsvDataTransformTest
         dd.setQuoteCharacter('?');
 
         // can create with null
-        ProcessManager pm = new ProcessManager(null, null, null);
+        ProcessManager pm = ProcessManager.create(null, null, null);;
 
         ByteArrayInputStream bis =
                 new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
@@ -343,7 +343,7 @@ public class CsvDataTransformTest
 
 
         // can create with null
-        ProcessManager pm = new ProcessManager(null, null, null);
+        ProcessManager pm = ProcessManager.create(null, null, null);;
 
         ByteArrayInputStream bis =
                 new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
@@ -469,7 +469,7 @@ public class CsvDataTransformTest
         }
 
         // can create with null
-        ProcessManager pm = new ProcessManager(null, null, null);
+        ProcessManager pm = ProcessManager.create(null, null, null);;
 
         ByteArrayInputStream bis =
                 new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
@@ -568,7 +568,7 @@ public class CsvDataTransformTest
         dd.setFieldDelimiter(',');
 
         // can create with null
-        ProcessManager pm = new ProcessManager(null, null, null);
+        ProcessManager pm = ProcessManager.create(null, null, null);;
 
         ByteArrayInputStream bis =
                 new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
@@ -660,7 +660,7 @@ public class CsvDataTransformTest
         ac.setDetectors(Arrays.asList(d));
 
         // can create with null
-        ProcessManager pm = new ProcessManager(null, null, null);
+        ProcessManager pm = ProcessManager.create(null, null, null);;
 
         ByteArrayInputStream bis =
                 new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
@@ -801,7 +801,7 @@ public class CsvDataTransformTest
             }
 
             // can create with null
-            ProcessManager pm = new ProcessManager(null, null, null);
+            ProcessManager pm = ProcessManager.create(null, null, null);;
 
             ByteArrayInputStream bis =
                     new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
@@ -931,7 +931,7 @@ public class CsvDataTransformTest
             loop++;
 
             // can create with null
-            ProcessManager pm = new ProcessManager(null, null, null);
+            ProcessManager pm = ProcessManager.create(null, null, null);;
 
             ByteArrayInputStream bis =
                     new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
