@@ -69,7 +69,6 @@ mod.controller('indices', ($route, globalState, timefilter, $http, $executor, ma
     handleResponse: setClusters
   });
 
-
   // Start the executor
   $executor.start();
 

@@ -2,7 +2,7 @@ const angular = require('angular');
 const _ = require('lodash');
 
 const mod = require('ui/modules').get('marvel/executor', []);
-mod.service('$executor', (Promise, $timeout, timefilter) => {
+mod.service('$executor', (globalState, Promise, $timeout, timefilter) => {
 
   const queue = [];
   let executionTimer;
@@ -23,6 +23,7 @@ mod.service('$executor', (Promise, $timeout, timefilter) => {
   function cancel() {
     if (executionTimer) $timeout.cancel(executionTimer);
     timefilter.off('update', reset);
+    globalState.off('save_with_changes', runIfTime);
   }
 
   /**
@@ -56,12 +57,19 @@ mod.service('$executor', (Promise, $timeout, timefilter) => {
     .finally(reset);
   }
 
+  function runIfTime(changes) {
+    if (_.contains(changes, 'time')) {
+      cancel();
+      run();
+    }
+  }
+
   /**
    * Starts the executor service if the timefilter is not paused
    * @returns {void}
    */
   function start() {
-    timefilter.on('update', reset);
+    globalState.on('save_with_changes', runIfTime);
     if (!timefilter.refreshInterval.pause) {
       executionTimer = $timeout(run, timefilter.refreshInterval.value);
     }
@@ -78,6 +86,7 @@ mod.service('$executor', (Promise, $timeout, timefilter) => {
       }
       start();
     },
+    run,
     destroy,
     reset,
     cancel
