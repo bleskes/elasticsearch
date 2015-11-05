@@ -31,7 +31,7 @@ function getPageData(timefilter, globalState, $http) {
 
 require('ui/routes')
 .when('/indices', {
-  template: require('plugins/marvel/views/indices/index.html'),
+  template: require('plugins/marvel/views/indices/indices_template.html'),
   resolve: {
     marvel: function (Private) {
       const routeInit = Private(require('plugins/marvel/lib/route_init'));
