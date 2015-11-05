@@ -19,7 +19,13 @@
       <div class="col-md-4"><marvel-chart metric="pageData.metrics.index_fielddata"/></div>
     </div>
   </div>
-  <marvel-shard-allocation id="indexName" hide-ui="true" view="index" cluster="cluster" index-pattern="indexPattern" cluster-state="dataSources.clusterState"></marvel-shard-allocation>
+  <marvel-shard-allocation
+    id="indexName"
+    view="index"
+    nodes="pageData.nodes"
+    cluster="cluster"
+    shards="pageData.shards"
+    shard-stats="pageData.shardStats"></marvel-shard-allocation>
 </div>
 </div>
 <google-analytics></google-analytics>

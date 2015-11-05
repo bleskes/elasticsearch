@@ -18,14 +18,12 @@
 
 
 define(function (require) {
-  var extractShards = require('../lib/extractShards');
   var _ = require('lodash');
-
-  var filterHiddenIndices = require('../lib/filterHiddenIndices');
   var extractIp = require('../lib/extractIp');
+  var decorateShards = require('../lib/decorateShards');
 
   return function ($scope) {
-    return function nodesByIndices(state) {
+    return function indicesByNode(shards, nodes) {
 
       function createIndex(obj, shard) {
         var id = shard.index;
@@ -62,10 +60,10 @@ define(function (require) {
         if (!nodeObj) {
           nodeObj = {
             id: node,
-            name: state.cluster_state.nodes[node].name,
+            name: nodes[node].name,
             type: 'node',
-            ip_port: extractIp(state.cluster_state.nodes[node]),
-            master: state.cluster_state.master_node === node,
+            ip_port: extractIp(nodes[node]),
+            master: nodes[node].master,
             children: []
           };
           obj[index].children.push(nodeObj);
@@ -74,13 +72,7 @@ define(function (require) {
         return obj;
       }
 
-      var shards = extractShards(state);
-
-      if (!$scope.panel.show_hidden) {
-        shards = shards.filter(filterHiddenIndices);
-      }
-
-      var data = _.reduce(shards, function (obj, shard) {
+      var data = _.reduce(decorateShards(shards, nodes), function (obj, shard) {
         obj = createIndex(obj, shard);
         obj = createNodeAddShard(obj, shard);
         return obj;

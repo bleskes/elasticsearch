@@ -20,25 +20,21 @@
 define(function (require) {
   var _ = require('lodash');
 
-  return function (state) {
-    if (!state) {
-      return [];
-    }
-
+  return function (shards, nodes) {
     function setNodeName(shard) {
-      var node = state.cluster_state.nodes[shard.node];
+      var node = nodes[shard.node];
       shard.nodeName = (node && node.name) || null;
       shard.type = 'shard';
       if (shard.state === 'INITIALIZING' && shard.relocating_node) {
-        shard.relocating_message = 'Relocating from ' + state.cluster_stae.nodes[shard.relocating_node].name;
+        shard.relocating_message = 'Relocating from ' + nodes[shard.relocating_node].name;
       }
       if (shard.state === 'RELOCATING') {
-        shard.relocating_message = 'Relocating to ' + state.cluster_state.nodes[shard.relocating_node].name;
+        shard.relocating_message = 'Relocating to ' + nodes[shard.relocating_node].name;
       }
       return shard;
     }
 
-    return state.cluster_state.shards.map(setNodeName);
+    return shards.map(setNodeName);
   };
 
 });
