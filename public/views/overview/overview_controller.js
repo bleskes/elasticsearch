@@ -1,5 +1,5 @@
 /**
- * Controller for Index Listing
+ * Controller for Overview Page
  */
 const mod = require('ui/modules').get('marvel', [ 'marvel/directives' ]);
 const _ = require('lodash');
