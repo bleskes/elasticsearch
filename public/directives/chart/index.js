@@ -7,19 +7,16 @@ define(function (require) {
     return {
       restrict: 'E',
       scope: {
-        source: '='
+        metric: '='
       },
       link: function ($scope, $elem, attrs) {
         var $chart = React.createElement(MarvelChart, {
-          source: $scope.source
+          source: $scope.metric
         });
 
         var Sparkline = React.render($chart, $elem[0]);
 
-        $scope.$watch('source.error', function (err) {
-          $scope.err = err;
-        });
-        $scope.$watch('source.data', function (data) {
+        $scope.$watch('metric.data', function (data) {
           Sparkline.setData(data);
         });
       }

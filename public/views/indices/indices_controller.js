@@ -11,7 +11,19 @@ function getPageData(timefilter, globalState, $http) {
     timeRange: {
       min: timeBounds.min.toISOString(),
       max: timeBounds.max.toISOString()
-    }
+    },
+    metrics: [
+      'cluster_search_request_rate',
+      'cluster_query_latency',
+      'cluster_index_request_rate',
+      'cluster_index_latency'
+    ],
+    listingMetrics: [
+      'index_document_count',
+      'index_size',
+      'index_search_request_rate',
+      'index_request_rate'
+    ]
   }).then((response) => {
     return response.data;
   });
@@ -40,7 +52,6 @@ mod.controller('indices', ($route, globalState, timefilter, $http, $executor, ma
   setClusters($route.current.locals.marvel.clusters);
 
   $scope.pageData = $route.current.locals.pageData;
-  $scope.pageData.clusterStatus.status = 'yellow';
 
   $executor.register({
     execute: function () {
@@ -48,7 +59,6 @@ mod.controller('indices', ($route, globalState, timefilter, $http, $executor, ma
     },
     handleResponse: function (response) {
       $scope.pageData = response;
-      $scope.pageData.clusterStatus.status = 'yellow';
     }
   });
 
