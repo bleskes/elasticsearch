@@ -7,10 +7,7 @@ define(function (require) {
   var make = React.DOM;
 
   var SparkLines = require('plugins/marvel/directives/marvel_sparkline');
-
-
   var Table = require('plugins/marvel/directives/paginated_table/components/table');
-
 
   module.directive('marvelIndexListing', function () {
     function makeTdWithPropKey(dataKey, idx) {
@@ -70,25 +67,24 @@ define(function (require) {
         title: 'Search Rate'
       }]
     };
+
     return {
       restrict: 'E',
       scope: {
-        data: '=',
-        currCluster: '=',
-        clusters: '='
+        data: '='
       },
       link: function ($scope, $el) {
         var tableRowTemplate = React.createClass({
           getInitialState: function () {
-            var index = $scope.indices[this.props.name];
+            var index = _.findWhere($scope.data, {name: this.props.name});
             return {
               exists: !!index,
               status: !!index ? index.status : 'disabled'
             };
           },
           componentWillReceiveProps: function (nextProps) {
-            if ($scope.indices) {
-              var index = $scope.indices[this.props.name];
+            if ($scope.data) {
+              var index = _.findWhere($scope.data, {name: this.props.name});
               this.setState({
                 exists: !!index,
                 status: !!index ? index.status : 'disabled'
@@ -115,9 +111,8 @@ define(function (require) {
           template: tableRowTemplate
         }), $el[0]);
 
-        $scope.$watch('data', (data) => table.setData(data));
-        $scope.$watch('clusters', (newClusters) => {
-          $scope.indices = _.find(newClusters, {cluster_uuid: $scope.currCluster}).shardStats;
+        $scope.$watch('data', (data) => {
+          table.setData(data);
           table.render();
         });
       }
