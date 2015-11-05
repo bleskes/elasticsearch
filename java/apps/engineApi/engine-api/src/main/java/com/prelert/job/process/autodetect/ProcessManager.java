@@ -28,19 +28,10 @@
 package com.prelert.job.process.autodetect;
 
 import java.io.BufferedOutputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.file.FileAlreadyExistsException;
-import java.nio.file.FileSystems;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.Enumeration;
-import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executors;
@@ -49,17 +40,12 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import org.apache.log4j.Appender;
-import org.apache.log4j.EnhancedPatternLayout;
-import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
-import org.apache.log4j.RollingFileAppender;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataCounts;
 import com.prelert.job.DataDescription;
-import com.prelert.job.JobDetails;
 import com.prelert.job.JobStatus;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.alert.AlertObserver;
@@ -67,10 +53,8 @@ import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.exceptions.JobInUseException;
 import com.prelert.job.messages.Messages;
 import com.prelert.job.persistence.DataPersisterFactory;
-import com.prelert.job.persistence.JobDataCountsPersisterFactory;
 import com.prelert.job.persistence.JobDataPersister;
 import com.prelert.job.persistence.JobProvider;
-import com.prelert.job.persistence.UsagePersisterFactory;
 import com.prelert.job.persistence.none.NoneJobDataPersister;
 import com.prelert.job.process.ProcessCtrl;
 import com.prelert.job.process.exceptions.ClosedJobException;
@@ -78,7 +62,6 @@ import com.prelert.job.process.exceptions.DataUploadException;
 import com.prelert.job.process.exceptions.MalformedJsonException;
 import com.prelert.job.process.exceptions.MissingFieldException;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
-import com.prelert.job.process.output.parsing.ResultsReaderFactory;
 import com.prelert.job.process.params.DataLoadParams;
 import com.prelert.job.process.params.InterimResultsParams;
 import com.prelert.job.process.writer.ControlMsgToProcessWriter;
@@ -86,12 +69,10 @@ import com.prelert.job.process.writer.DataToProcessWriter;
 import com.prelert.job.process.writer.DataToProcessWriterFactory;
 import com.prelert.job.process.writer.LengthEncodedWriter;
 import com.prelert.job.process.writer.RecordWriter;
-import com.prelert.job.quantiles.Quantiles;
 import com.prelert.job.status.HighProportionOfBadTimestampsException;
 import com.prelert.job.status.OutOfOrderRecordsException;
 import com.prelert.job.status.StatusReporter;
 import com.prelert.job.transform.TransformConfigs;
-import com.prelert.job.usage.UsageReporter;
 
 /**
  * Manages the native autodetect processes channelling
@@ -103,8 +84,6 @@ import com.prelert.job.usage.UsageReporter;
  */
 public class ProcessManager
 {
-    public static final String LOG_FILE_APPENDER_NAME = "engine_api_file_appender";
-
     private static final int WAIT_SECONDS_BEFORE_RETRY_CLOSING = 10;
     /**
      * JVM shutdown hook stops all the running processes
@@ -132,18 +111,12 @@ public class ProcessManager
 
     private ScheduledExecutorService m_ProcessTimeouts;
 
-    private JobProvider m_JobProvider;
+    private final JobProvider m_JobProvider;
+    private final ProcessFactory m_ProcessFactory;
+    private final DataPersisterFactory m_DataPersisterFactory;
 
-    private ResultsReaderFactory m_ResultsReaderFactory;
-    private JobDataCountsPersisterFactory m_dataCountsPersisterFactory;
-    private UsagePersisterFactory m_UsagePersisterFactory;
-    private DataPersisterFactory m_DataPersisterFactory;
-
-    public ProcessManager(JobProvider jobProvider,
-                            ResultsReaderFactory readerFactory,
-                            JobDataCountsPersisterFactory dataCountsPersisterFactory,
-                            UsagePersisterFactory usagePersisterFactory,
-                            DataPersisterFactory dataPersisterFactory)
+    public ProcessManager(JobProvider jobProvider, ProcessFactory processFactory,
+            DataPersisterFactory dataPersisterFactory)
     {
         m_JobIdToProcessMap = new ConcurrentHashMap<String, ProcessAndDataDescription>();
 
@@ -151,16 +124,11 @@ public class ProcessManager
         m_JobIdToTimeoutFuture = new ConcurrentHashMap<String, ScheduledFuture<?>>();
 
         m_JobProvider = jobProvider;
-        m_ResultsReaderFactory = readerFactory;
-        m_UsagePersisterFactory = usagePersisterFactory;
-
-        m_dataCountsPersisterFactory = dataCountsPersisterFactory;
-
+        m_ProcessFactory = processFactory;
         m_DataPersisterFactory = dataPersisterFactory;
 
         addShutdownHook();
     }
-
 
     private void addShutdownHook()
     {
@@ -242,7 +210,7 @@ public class ProcessManager
         {
             // create the new process and restore its state
             // if it has been saved
-            process = createProcess(jobId);
+            process = m_ProcessFactory.createProcess(jobId);
             m_JobIdToProcessMap.put(jobId, process);
         }
 
@@ -348,96 +316,6 @@ public class ProcessManager
     {
         return m_JobIdToProcessMap.get(jobId) != null;
     }
-
-
-    /**
-     * Create a new autodetect process restoring its state if persisted
-     *
-     * @param jobId
-     * @return
-     * @throws UnknownJobException If there is no job with <code>jobId</code>
-     * @throws NativeProcessRunException
-     */
-    public ProcessAndDataDescription createProcess(String jobId)
-    throws UnknownJobException, NativeProcessRunException
-    {
-        Optional<JobDetails> job = m_JobProvider.getJobDetails(jobId);
-
-        if (!job.isPresent())
-        {
-            throw new UnknownJobException(jobId);
-        }
-
-        return createProcess(job.get(), true);
-    }
-
-    /**
-     * Create a new autodetect process from the JobDetails restoring
-     * its state if <code>restoreState</code> is true.
-     *
-     * @param job
-     * @param restoreState Will attempt to restore the state but it isn't an
-     * error if there is no state to restore
-     * @return
-     * @throws UnknownJobException If there is no job with <code>jobId</code>
-     * @throws NativeProcessRunException If an error is encountered creating
-     * the native process
-     */
-    private ProcessAndDataDescription createProcess(JobDetails job,
-                                        boolean restoreState)
-    throws UnknownJobException, NativeProcessRunException
-    {
-        String jobId = job.getId();
-
-        Logger logger = createLogger(job.getId());
-
-        Quantiles quantiles = null;
-        if (restoreState)
-        {
-            quantiles = m_JobProvider.getQuantiles(jobId);
-        }
-
-        Process nativeProcess = null;
-        List<File> filesToDelete = new ArrayList<>();
-        try
-        {
-            // if state is null or empty it will be ignored
-            // else it is used to restore the quantiles
-            nativeProcess = ProcessCtrl.buildAutoDetect(job, quantiles, logger, filesToDelete);
-        }
-        catch (IOException e)
-        {
-            String msg = "Failed to launch process for job " + job.getId();
-            LOGGER.error(msg);
-            logger.error(msg, e);
-            throw new NativeProcessRunException(msg,
-                    ErrorCodes.NATIVE_PROCESS_START_ERROR, e);
-        }
-
-
-        ProcessAndDataDescription procAndDD = new ProcessAndDataDescription(
-                nativeProcess, jobId,
-                job.getDataDescription(), job.getTimeout(), job.getAnalysisConfig(),
-                new TransformConfigs(job.getTransforms()), logger,
-                new StatusReporter(jobId, job.getCounts(),
-                        new UsageReporter(jobId,
-                                          m_UsagePersisterFactory.getInstance(logger),
-                                          logger),
-                         m_dataCountsPersisterFactory.getInstance(logger),
-                         logger),
-                m_ResultsReaderFactory.newResultsParser(jobId,
-                        nativeProcess.getInputStream(),
-                        logger),
-                filesToDelete
-                );
-
-        m_JobProvider.setJobStatus(jobId, JobStatus.RUNNING);
-
-        logger.debug("Created process for job " + jobId);
-
-        return procAndDD;
-    }
-
 
     /**
      * Flush the running job, ensuring that the native process has had the
@@ -625,7 +503,7 @@ public class ProcessManager
 
                 setJobFinishedTimeAndStatus(jobId, process.getLogger(), JobStatus.FAILED);
                 // free the logger resources
-                closeLogger(process.getLogger());
+                JobLogger.close(process.getLogger());
 
                 throw npre;
             }
@@ -665,7 +543,7 @@ public class ProcessManager
                 process.getLogger().error(sb);
 
                 // free the logger resources
-                closeLogger(process.getLogger());
+                JobLogger.close(process.getLogger());
 
                 throw new NativeProcessRunException(sb.toString(),
                         ErrorCodes.NATIVE_PROCESS_ERROR);
@@ -676,7 +554,7 @@ public class ProcessManager
             }
 
             // free the logger resources
-            closeLogger(process.getLogger());
+            JobLogger.close(process.getLogger());
         }
         catch (IOException | InterruptedException e)
         {
@@ -687,7 +565,7 @@ public class ProcessManager
             setJobFinishedTimeAndStatus(jobId, process.getLogger(), JobStatus.FAILED);
 
             // free the logger resources
-            closeLogger(process.getLogger());
+            JobLogger.close(process.getLogger());
         }
     }
 
@@ -1069,105 +947,6 @@ public class ProcessManager
 
         return sb;
     }
-
-
-    /**
-     * Close the log appender to release the file descriptor and
-     * remove it from the logger.
-     *
-     * @param logger
-     */
-    private void closeLogger(Logger logger)
-    {
-        Appender appender = logger.getAppender(LOG_FILE_APPENDER_NAME);
-
-        if (appender != null)
-        {
-            appender.close();
-            logger.removeAppender(LOG_FILE_APPENDER_NAME);
-        }
-    }
-
-
-    /**
-     * Create the job's logger.
-     *
-     * @param jobId
-     * @return
-     */
-    private Logger createLogger(String jobId)
-    {
-        try
-        {
-            Logger logger = Logger.getLogger(jobId);
-            logger.setAdditivity(false);
-            logger.setLevel(Level.DEBUG);
-
-            try
-            {
-                Path logDir = FileSystems.getDefault().getPath(ProcessCtrl.LOG_DIR, jobId);
-                Files.createDirectory(logDir);
-
-                // If we get here then we had to create the directory.  In this
-                // case we always want to create the appender because any
-                // pre-existing appender will be pointing to a directory of the
-                // same name that must have been previously removed.  (See bug
-                // 697 in Bugzilla.)
-                closeLogger(logger);
-            }
-            catch (FileAlreadyExistsException e)
-            {
-            }
-
-            if (logger.getAppender(LOG_FILE_APPENDER_NAME) == null)
-            {
-                Path logFile = FileSystems.getDefault().getPath(ProcessCtrl.LOG_DIR,
-                        jobId, "engine_api.log");
-                RollingFileAppender fileAppender = new RollingFileAppender(
-                        new EnhancedPatternLayout(
-                                "%d{yyyy-MM-dd HH:mm:ss,SSS zz} [%t] %-5p %c{3} - %m%n"),
-                                logFile.toString());
-
-                fileAppender.setName(LOG_FILE_APPENDER_NAME);
-                fileAppender.setMaxFileSize("1MB");
-                fileAppender.setMaxBackupIndex(9);
-
-                // Try to copy the maximum file size and maximum index from the
-                // first rolling file appender of the root logger (there will
-                // be one unless the user has meddled with the default config).
-                // If we fail the defaults set above will remain in force.
-                @SuppressWarnings("rawtypes")
-                Enumeration rootAppenders = Logger.getRootLogger().getAllAppenders();
-                while (rootAppenders.hasMoreElements())
-                {
-                    try
-                    {
-                        RollingFileAppender defaultFileAppender = (RollingFileAppender)rootAppenders.nextElement();
-                        fileAppender.setMaximumFileSize(defaultFileAppender.getMaximumFileSize());
-                        fileAppender.setMaxBackupIndex(defaultFileAppender.getMaxBackupIndex());
-                        break;
-                    }
-                    catch (ClassCastException e)
-                    {
-                        // Ignore it
-                    }
-                }
-
-                logger.addAppender(fileAppender);
-            }
-
-            return logger;
-        }
-        catch (IOException e)
-        {
-            Logger logger = Logger.getLogger(ProcessAndDataDescription.class);
-            logger.error(String.format("Cannot create logger for job '%s' using default",
-                    jobId), e);
-
-            return logger;
-        }
-    }
-
 
     public void addAlertObserver(String jobId, AlertObserver ao)
     throws ClosedJobException

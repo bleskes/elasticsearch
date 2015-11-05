@@ -147,7 +147,7 @@ public class DataFormatWarningsTest
 
 
             // can create with null
-            ProcessManager pm = new ProcessManager(null, null, null, null, null);
+            ProcessManager pm = new ProcessManager(null, null, null);
 
             ByteArrayInputStream bis =
                     new ByteArrayInputStream(sb.toString().getBytes(StandardCharsets.UTF_8));
@@ -156,7 +156,6 @@ public class DataFormatWarningsTest
             dd.setFieldDelimiter(',');
             dd.setTimeField("time");
             dd.setTimeFormat(apiDateFormat);
-
 
 
             System.setProperty(StatusReporter.ACCEPTABLE_PERCENTAGE_DATE_PARSE_ERRORS_PROP,
@@ -282,7 +281,7 @@ public class DataFormatWarningsTest
 
 
             // can create with null
-            ProcessManager pm = new ProcessManager(null, null, null, null, null);
+            ProcessManager pm = new ProcessManager(null, null, null);
 
             ByteArrayInputStream bis =
                     new ByteArrayInputStream(sb.toString().getBytes(StandardCharsets.UTF_8));
@@ -400,7 +399,7 @@ public class DataFormatWarningsTest
             }
 
             // can create with null
-            ProcessManager pm = new ProcessManager(null, null, null, null, null);
+            ProcessManager pm = new ProcessManager(null, null, null);
 
             ByteArrayInputStream bis =
                     new ByteArrayInputStream(sb.toString().getBytes(StandardCharsets.UTF_8));
@@ -520,7 +519,7 @@ public class DataFormatWarningsTest
             }
 
             // can create with null
-            ProcessManager pm = new ProcessManager(null, null, null, null, null);
+            ProcessManager pm = new ProcessManager(null, null, null);
 
             ByteArrayInputStream bis =
                     new ByteArrayInputStream(sb.toString().getBytes(StandardCharsets.UTF_8));

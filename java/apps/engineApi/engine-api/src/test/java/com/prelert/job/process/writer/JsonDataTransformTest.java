@@ -108,7 +108,7 @@ public class JsonDataTransformTest
         ac.setDetectors(Arrays.asList(det));
 
         // can create with null
-        ProcessManager pm = new ProcessManager(null, null, null, null, null);
+        ProcessManager pm = new ProcessManager(null, null, null);
 
         ByteArrayInputStream bis =
                 new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
@@ -239,7 +239,7 @@ public class JsonDataTransformTest
         }
 
         // can create with null
-        ProcessManager pm = new ProcessManager(null, null, null, null, null);
+        ProcessManager pm = new ProcessManager(null, null, null);
 
         ByteArrayInputStream bis =
                 new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
@@ -370,7 +370,7 @@ public class JsonDataTransformTest
         }
 
         // can create with null
-        ProcessManager pm = new ProcessManager(null, null, null, null, null);
+        ProcessManager pm = new ProcessManager(null, null, null);
 
         ByteArrayInputStream bis =
                 new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
@@ -503,7 +503,7 @@ public class JsonDataTransformTest
 
 
         // can create with null
-        ProcessManager pm = new ProcessManager(null, null, null, null, null);
+        ProcessManager pm = new ProcessManager(null, null, null);
 
         ByteArrayInputStream bis =
                 new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
@@ -666,7 +666,7 @@ public class JsonDataTransformTest
                 epochMsFormatDD};
 
         // can create with null
-        ProcessManager pm = new ProcessManager(null, null, null, null, null);
+        ProcessManager pm = new ProcessManager(null, null, null);
 
         int count = 0;
         for (String data : new String [] {dateFormatData, epochFormatData, epochMsFormatData})
@@ -816,7 +816,7 @@ public class JsonDataTransformTest
             loop++;
 
             // can create with null
-            ProcessManager pm = new ProcessManager(null, null, null, null, null);
+            ProcessManager pm = new ProcessManager(null, null, null);
 
             ByteArrayInputStream bis =
                     new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
@@ -943,7 +943,7 @@ public class JsonDataTransformTest
         }
 
         // can create with null
-        ProcessManager pm = new ProcessManager(null, null, null, null, null);
+        ProcessManager pm = new ProcessManager(null, null, null);
 
         ByteArrayInputStream bis =
                 new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
@@ -1089,7 +1089,7 @@ public class JsonDataTransformTest
             loop++;
 
             // can create with null
-            ProcessManager pm = new ProcessManager(null, null, null, null, null);
+            ProcessManager pm = new ProcessManager(null, null, null);
 
             ByteArrayInputStream bis =
                     new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));

@@ -56,6 +56,7 @@ import com.prelert.job.persistence.elasticsearch.ElasticsearchJobProvider;
 import com.prelert.job.persistence.elasticsearch.ElasticsearchPersister;
 import com.prelert.job.persistence.elasticsearch.ElasticsearchUsagePersister;
 import com.prelert.job.process.ProcessCtrl;
+import com.prelert.job.process.autodetect.ProcessFactory;
 import com.prelert.job.process.autodetect.ProcessManager;
 import com.prelert.job.process.normaliser.BlockingQueueRenormaliser;
 import com.prelert.job.process.output.parsing.ResultsReaderFactory;
@@ -185,12 +186,14 @@ public class PrelertWebApp extends Application
 
 	private static ProcessManager createProcessManager(ElasticsearchJobProvider jobProvider)
 	{
-	    return new ProcessManager(jobProvider,
-                new ResultsReaderFactory(
+	    ProcessFactory processFactory = new ProcessFactory(
+	            jobProvider,
+	            new ResultsReaderFactory(
                         jobId -> new ElasticsearchPersister(jobId, jobProvider.getClient()),
                         jobId -> new BlockingQueueRenormaliser(jobId, jobProvider)),
                 logger -> new ElasticsearchJobDataCountsPersister(jobProvider.getClient(), logger),
-                logger -> new ElasticsearchUsagePersister(jobProvider.getClient(), logger),
+                logger -> new ElasticsearchUsagePersister(jobProvider.getClient(), logger));
+	    return new ProcessManager(jobProvider, processFactory,
                 jobId -> new ElasticsearchJobDataPersister(jobId, jobProvider.getClient())
         );
 	}
