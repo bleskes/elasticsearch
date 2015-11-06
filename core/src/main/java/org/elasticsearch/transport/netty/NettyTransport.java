@@ -53,31 +53,13 @@ import org.elasticsearch.common.util.concurrent.EsExecutors;
 import org.elasticsearch.common.util.concurrent.KeyedLock;
 import org.elasticsearch.monitor.jvm.JvmInfo;
 import org.elasticsearch.threadpool.ThreadPool;
-import org.elasticsearch.transport.BindTransportException;
-import org.elasticsearch.transport.BytesTransportRequest;
-import org.elasticsearch.transport.ConnectTransportException;
-import org.elasticsearch.transport.NodeNotConnectedException;
-import org.elasticsearch.transport.Transport;
-import org.elasticsearch.transport.TransportException;
-import org.elasticsearch.transport.TransportRequest;
-import org.elasticsearch.transport.TransportRequestOptions;
-import org.elasticsearch.transport.TransportServiceAdapter;
+import org.elasticsearch.transport.*;
 import org.elasticsearch.transport.support.TransportStatus;
 import org.jboss.netty.bootstrap.ClientBootstrap;
 import org.jboss.netty.bootstrap.ServerBootstrap;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
-import org.jboss.netty.channel.AdaptiveReceiveBufferSizePredictorFactory;
-import org.jboss.netty.channel.Channel;
-import org.jboss.netty.channel.ChannelFuture;
-import org.jboss.netty.channel.ChannelFutureListener;
-import org.jboss.netty.channel.ChannelHandlerContext;
-import org.jboss.netty.channel.ChannelPipeline;
-import org.jboss.netty.channel.ChannelPipelineFactory;
-import org.jboss.netty.channel.Channels;
-import org.jboss.netty.channel.ExceptionEvent;
-import org.jboss.netty.channel.FixedReceiveBufferSizePredictorFactory;
-import org.jboss.netty.channel.ReceiveBufferSizePredictorFactory;
+import org.jboss.netty.channel.*;
 import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
 import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
 import org.jboss.netty.channel.socket.nio.NioWorkerPool;
@@ -92,21 +74,8 @@ import java.net.SocketAddress;
 import java.net.UnknownHostException;
 import java.nio.channels.CancelledKeyException;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
+import java.util.*;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -115,18 +84,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static java.util.Collections.unmodifiableMap;
-import static org.elasticsearch.common.network.NetworkService.TcpSettings.TCP_BLOCKING;
-import static org.elasticsearch.common.network.NetworkService.TcpSettings.TCP_BLOCKING_CLIENT;
-import static org.elasticsearch.common.network.NetworkService.TcpSettings.TCP_BLOCKING_SERVER;
-import static org.elasticsearch.common.network.NetworkService.TcpSettings.TCP_CONNECT_TIMEOUT;
-import static org.elasticsearch.common.network.NetworkService.TcpSettings.TCP_DEFAULT_CONNECT_TIMEOUT;
-import static org.elasticsearch.common.network.NetworkService.TcpSettings.TCP_DEFAULT_RECEIVE_BUFFER_SIZE;
-import static org.elasticsearch.common.network.NetworkService.TcpSettings.TCP_DEFAULT_SEND_BUFFER_SIZE;
-import static org.elasticsearch.common.network.NetworkService.TcpSettings.TCP_KEEP_ALIVE;
-import static org.elasticsearch.common.network.NetworkService.TcpSettings.TCP_NO_DELAY;
-import static org.elasticsearch.common.network.NetworkService.TcpSettings.TCP_RECEIVE_BUFFER_SIZE;
-import static org.elasticsearch.common.network.NetworkService.TcpSettings.TCP_REUSE_ADDRESS;
-import static org.elasticsearch.common.network.NetworkService.TcpSettings.TCP_SEND_BUFFER_SIZE;
+import static org.elasticsearch.common.network.NetworkService.TcpSettings.*;
 import static org.elasticsearch.common.settings.Settings.settingsBuilder;
 import static org.elasticsearch.common.transport.NetworkExceptionHelper.isCloseConnectionException;
 import static org.elasticsearch.common.transport.NetworkExceptionHelper.isConnectException;
@@ -290,44 +248,22 @@ public class NettyTransport extends AbstractLifecycleComponent<Transport> implem
                 final OpenChannelsHandler openChannels = new OpenChannelsHandler(logger);
                 this.serverOpenChannels = openChannels;
 
-                // extract default profile first and create standard bootstrap
-                Map<String, Settings> profiles = settings.getGroups("transport.profiles", true);
-                if (!profiles.containsKey(DEFAULT_PROFILE)) {
-                    profiles = new HashMap<>(profiles);
-                    profiles.put(DEFAULT_PROFILE, Settings.EMPTY);
-                }
-
-                Settings fallbackSettings = createFallbackSettings();
-                Settings defaultSettings = profiles.get(DEFAULT_PROFILE);
-
-                // loop through all profiles and start them up, special handling for default one
-                for (Map.Entry<String, Settings> entry : profiles.entrySet()) {
+                Map<String, Settings> normalizedProfileSettings = normalizeProfileSetting(settings);
+                for (Map.Entry<String, Settings> entry : normalizedProfileSettings.entrySet()) {
                     Settings profileSettings = entry.getValue();
                     String name = entry.getKey();
 
                     if (!Strings.hasLength(name)) {
                         logger.info("transport profile configured without a name. skipping profile with settings [{}]", profileSettings.toDelimitedString(','));
                         continue;
-                    } else if (DEFAULT_PROFILE.equals(name)) {
-                        profileSettings = settingsBuilder()
-                                .put(profileSettings)
-                                .put("port", profileSettings.get("port", this.settings.get("transport.tcp.port", DEFAULT_PORT_RANGE)))
-                                .build();
                     } else if (profileSettings.get("port") == null) {
                         // if profile does not have a port, skip it
                         logger.info("No port configured for profile [{}], not binding", name);
                         continue;
                     }
 
-                    // merge fallback settings with default settings with profile settings so we have complete settings with default values
-                    Settings mergedSettings = settingsBuilder()
-                            .put(fallbackSettings)
-                            .put(defaultSettings)
-                            .put(profileSettings)
-                            .build();
-
-                    createServerBootstrap(name, mergedSettings);
-                    bindServerBootstrap(name, mergedSettings);
+                    createServerBootstrap(name, profileSettings);
+                    bindServerBootstrap(name, profileSettings);
                 }
             }
             success = true;
@@ -336,6 +272,61 @@ public class NettyTransport extends AbstractLifecycleComponent<Transport> implem
                 doStop();
             }
         }
+    }
+
+    public static List<String> extractPortsFromSettings(Settings settings) {
+        ArrayList<String> ports = new ArrayList<>();
+        if (settings.getAsBoolean("network.server", true)) {
+            Map<String, Settings> normalizedProfileSettings = normalizeProfileSetting(settings);
+            for (Settings profileSettings : normalizedProfileSettings.values()) {
+                String port = profileSettings.get("port");
+                if (port != null) {
+                    ports.add(port);
+                }
+            }
+        }
+        return ports;
+    }
+
+
+    private static Map<String, Settings> normalizeProfileSetting(Settings settings) {
+        // extract default profile first and create standard bootstrap
+        Map<String, Settings> profiles = settings.getGroups("transport.profiles", true);
+        if (!profiles.containsKey(DEFAULT_PROFILE)) {
+            profiles = new HashMap<>(profiles);
+            profiles.put(DEFAULT_PROFILE, Settings.EMPTY);
+        }
+
+        Settings fallbackSettings = createFallbackSettings(settings);
+        Settings defaultSettings = profiles.get(DEFAULT_PROFILE);
+
+        Map<String, Settings> result = new HashMap<>();
+        // loop through all profiles and start them up, special handling for default one
+        for (Map.Entry<String, Settings> entry : profiles.entrySet()) {
+            Settings profileSettings = entry.getValue();
+            String name = entry.getKey();
+
+            if (DEFAULT_PROFILE.equals(name)) {
+                profileSettings = settingsBuilder()
+                        .put(profileSettings)
+                        .put("port", profileSettings.get("port", settings.get("transport.tcp.port", DEFAULT_PORT_RANGE)))
+                        .build();
+            } else if (profileSettings.get("port") == null) {
+                // if profile does not have a port, skip normalization (it will be ignored by the rest too)
+                result.put(name, profileSettings);
+                continue;
+            }
+
+            // merge fallback settings with default settings with profile settings so we have complete settings with default values
+            Settings mergedSettings = settingsBuilder()
+                    .put(fallbackSettings)
+                    .put(defaultSettings)
+                    .put(profileSettings)
+                    .build();
+
+            result.put(name, mergedSettings);
+        }
+        return result;
     }
 
     @Override
@@ -394,7 +385,7 @@ public class NettyTransport extends AbstractLifecycleComponent<Transport> implem
         return clientBootstrap;
     }
 
-    private Settings createFallbackSettings() {
+    private static Settings createFallbackSettings(Settings settings) {
         Settings.Builder fallbackSettingsBuilder = settingsBuilder();
 
         String fallbackBindHost = settings.get("transport.netty.bind_host", settings.get("transport.bind_host", settings.get("transport.host")));
@@ -447,7 +438,7 @@ public class NettyTransport extends AbstractLifecycleComponent<Transport> implem
             for (int i = 0; i < hostAddresses.length; i++) {
                 addresses[i] = NetworkAddress.format(hostAddresses[i]);
             }
-            logger.debug("binding server bootstrap to: {}", (Object)addresses);
+            logger.debug("binding server bootstrap to: {}", (Object) addresses);
         }
         for (InetAddress hostAddress : hostAddresses) {
             bindServerBootstrap(name, hostAddress, settings);
@@ -493,7 +484,7 @@ public class NettyTransport extends AbstractLifecycleComponent<Transport> implem
             if (boundTransportAddress == null) {
                 // no address is bound, so lets create one with the publish address information from the settings or the bound address as a fallback
                 int publishPort = profileSettings.getAsInt("publish_port", boundAddress.getPort());
-                String publishHosts[] = profileSettings.getAsArray("publish_host", new String[] { boundAddress.getHostString() });
+                String publishHosts[] = profileSettings.getAsArray("publish_host", new String[]{boundAddress.getHostString()});
                 InetSocketAddress publishAddress = createPublishAddress(publishHosts, publishPort);
                 profileBoundAddresses.put(name, new BoundTransportAddress(new TransportAddress[]{new InetSocketTransportAddress(boundAddress)}, new InetSocketTransportAddress(publishAddress)));
             } else {
@@ -658,9 +649,9 @@ public class NettyTransport extends AbstractLifecycleComponent<Transport> implem
     @Override
     public TransportAddress[] addressesFromString(String address, int perAddressLimit) throws Exception {
         return parse(address, settings.get("transport.profiles.default.port",
-                              settings.get("transport.netty.port",
-                              settings.get("transport.tcp.port",
-                              DEFAULT_PORT_RANGE))), perAddressLimit);
+                settings.get("transport.netty.port",
+                        settings.get("transport.tcp.port",
+                                DEFAULT_PORT_RANGE))), perAddressLimit);
     }
 
     // this code is a take on guava's HostAndPort, like a HostAndPortRange
@@ -676,27 +667,27 @@ public class NettyTransport extends AbstractLifecycleComponent<Transport> implem
         String portString = null;
 
         if (hostPortString.startsWith("[")) {
-          // Parse a bracketed host, typically an IPv6 literal.
-          Matcher matcher = BRACKET_PATTERN.matcher(hostPortString);
-          if (!matcher.matches()) {
-              throw new IllegalArgumentException("Invalid bracketed host/port range: " + hostPortString);
-          }
-          host = matcher.group(1);
-          portString = matcher.group(2);  // could be null
-        } else {
-          int colonPos = hostPortString.indexOf(':');
-          if (colonPos >= 0 && hostPortString.indexOf(':', colonPos + 1) == -1) {
-            // Exactly 1 colon.  Split into host:port.
-            host = hostPortString.substring(0, colonPos);
-            portString = hostPortString.substring(colonPos + 1);
-          } else {
-            // 0 or 2+ colons.  Bare hostname or IPv6 literal.
-            host = hostPortString;
-            // 2+ colons and not bracketed: exception
-            if (colonPos >= 0) {
-                throw new IllegalArgumentException("IPv6 addresses must be bracketed: " + hostPortString);
+            // Parse a bracketed host, typically an IPv6 literal.
+            Matcher matcher = BRACKET_PATTERN.matcher(hostPortString);
+            if (!matcher.matches()) {
+                throw new IllegalArgumentException("Invalid bracketed host/port range: " + hostPortString);
             }
-          }
+            host = matcher.group(1);
+            portString = matcher.group(2);  // could be null
+        } else {
+            int colonPos = hostPortString.indexOf(':');
+            if (colonPos >= 0 && hostPortString.indexOf(':', colonPos + 1) == -1) {
+                // Exactly 1 colon.  Split into host:port.
+                host = hostPortString.substring(0, colonPos);
+                portString = hostPortString.substring(colonPos + 1);
+            } else {
+                // 0 or 2+ colons.  Bare hostname or IPv6 literal.
+                host = hostPortString;
+                // 2+ colons and not bracketed: exception
+                if (colonPos >= 0) {
+                    throw new IllegalArgumentException("IPv6 addresses must be bracketed: " + hostPortString);
+                }
+            }
         }
 
         // if port isn't specified, fill with the default

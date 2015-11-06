@@ -26,13 +26,7 @@ import org.elasticsearch.common.io.Streams;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.env.Environment;
 import org.elasticsearch.node.service.NodeService;
-import org.elasticsearch.rest.BytesRestResponse;
-import org.elasticsearch.rest.RestChannel;
-import org.elasticsearch.rest.RestController;
-import org.elasticsearch.rest.RestFilter;
-import org.elasticsearch.rest.RestFilterChain;
-import org.elasticsearch.rest.RestRequest;
-import org.elasticsearch.rest.RestStatus;
+import org.elasticsearch.rest.*;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -45,10 +39,7 @@ import java.util.Locale;
 import java.util.Map;
 
 import static java.util.Collections.unmodifiableMap;
-import static org.elasticsearch.rest.RestStatus.FORBIDDEN;
-import static org.elasticsearch.rest.RestStatus.INTERNAL_SERVER_ERROR;
-import static org.elasticsearch.rest.RestStatus.NOT_FOUND;
-import static org.elasticsearch.rest.RestStatus.OK;
+import static org.elasticsearch.rest.RestStatus.*;
 
 /**
  *
@@ -56,6 +47,7 @@ import static org.elasticsearch.rest.RestStatus.OK;
 public class HttpServer extends AbstractLifecycleComponent<HttpServer> {
 
     private final Environment environment;
+    public static final String HTTP_ENABLED = "http.enabled";
 
     private final HttpServerTransport transport;
 

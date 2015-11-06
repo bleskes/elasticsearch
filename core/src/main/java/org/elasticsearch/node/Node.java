@@ -110,7 +110,6 @@ import static org.elasticsearch.common.settings.Settings.settingsBuilder;
 public class Node implements Releasable {
 
     private static final String CLIENT_TYPE = "node";
-    public static final String HTTP_ENABLED = "http.enabled";
     private final Lifecycle lifecycle = new Lifecycle();
     private final Injector injector;
     private final Settings settings;
@@ -179,7 +178,7 @@ public class Node implements Releasable {
             modules.add(new ClusterModule(this.settings));
             modules.add(new RestModule(this.settings));
             modules.add(new TransportModule(settings));
-            if (settings.getAsBoolean(HTTP_ENABLED, true)) {
+            if (settings.getAsBoolean(HttpServer.HTTP_ENABLED, true)) {
                 modules.add(new HttpServerModule(settings));
             }
             modules.add(new IndicesModule());

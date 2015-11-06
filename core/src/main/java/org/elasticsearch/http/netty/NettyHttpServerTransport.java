@@ -158,7 +158,7 @@ public class NettyHttpServerTransport extends AbstractLifecycleComponent<HttpSer
         this.maxCompositeBufferComponents = settings.getAsInt("http.netty.max_composite_buffer_components", -1);
         this.workerCount = settings.getAsInt("http.netty.worker_count", EsExecutors.boundedNumberOfProcessors(settings) * 2);
         this.blockingServer = settings.getAsBoolean("http.netty.http.blocking_server", settings.getAsBoolean(TCP_BLOCKING_SERVER, settings.getAsBoolean(TCP_BLOCKING, false)));
-        this.port = settings.get("http.netty.port", settings.get("http.port", DEFAULT_PORT_RANGE));
+        this.port = portFromSettings(settings);
         this.bindHosts = settings.getAsArray("http.netty.bind_host", settings.getAsArray("http.bind_host", settings.getAsArray("http.host", null)));
         this.publishHosts = settings.getAsArray("http.netty.publish_host", settings.getAsArray("http.publish_host", settings.getAsArray("http.host", null)));
         this.publishPort = settings.getAsInt("http.netty.publish_port", settings.getAsInt("http.publish_port", 0));
@@ -203,6 +203,13 @@ public class NettyHttpServerTransport extends AbstractLifecycleComponent<HttpSer
 
     public Settings settings() {
         return this.settings;
+    }
+
+    public static String portFromSettings(Settings settings) {
+        if (settings.getAsBoolean(HttpServer.HTTP_ENABLED, true) == false) {
+            return null;
+        }
+        return settings.get("http.netty.port", settings.get("http.port", DEFAULT_PORT_RANGE));
     }
 
     @Override
