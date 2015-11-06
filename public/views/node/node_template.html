@@ -22,9 +22,12 @@
         <div class="col-md-4"><marvel-chart metric="pageData.metrics.node_segment_count"/></div>
       </div>
     </div>
-    <!-- marvel-shard-allocation id="nodeName" hide-ui="true" view="node"
-      cluster="cluster" index-pattern="indexPattern"
-      cluster-state=dataSources.clusterState></marvel-shard-allocation -->
+    <marvel-shard-allocation
+      id="nodeName"
+      view="node"
+      nodes="pageData.nodes"
+      shards="pageData.shards"
+      shard-stats="pageData.shardStats"></marvel-shard-allocation>
   </div>
 </div>
 <google-analytics></google-analytics>
