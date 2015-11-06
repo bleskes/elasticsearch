@@ -2,7 +2,7 @@ Prelert Engine API
 ==================
 
 The Prelert Engine API is a RESTful anomaly detector built to automatically
-identify anomalies large data volumes.
+identify anomalies in large data volumes.
 
 The RESTful interface can create analytic jobs, upload data to those jobs, and
 persist the results in a queryable data store. The API is modeled around the
