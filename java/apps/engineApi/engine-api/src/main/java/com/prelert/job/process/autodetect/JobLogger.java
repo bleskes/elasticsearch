@@ -85,6 +85,13 @@ public final class JobLogger
             {
             }
 
+            // Get the base logger and use its configured log level.
+            // If the logger is not configured it will be created and
+            // inherit the root logger's config this will only happen
+            // if the default log4j.properties has changed
+            Logger basePrelertLogger = Logger.getLogger("com.prelert");
+            logger.setLevel(basePrelertLogger.getEffectiveLevel());
+
             if (logger.getAppender(LOG_FILE_APPENDER_NAME) == null)
             {
                 Path logFile = FileSystems.getDefault().getPath(ProcessCtrl.LOG_DIR,
