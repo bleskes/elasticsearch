@@ -415,7 +415,6 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
             if (index >= 0)
             {
                 fieldIndexes.put(field, index);
-                m_Logger.info("Index of field " + field + " is " + index);
             }
         }
 
