@@ -104,7 +104,7 @@ define(function (require) {
     };
     return {
       restrict: 'E',
-      scope: { data: '=', nodes: '='},
+      scope: { cluster: '=', data: '=', nodes: '='},
       link: function ($scope, $el) {
         var tableRowTemplate = React.createClass({
           getInitialState: function () {
@@ -142,6 +142,10 @@ define(function (require) {
             var type = row.isMaster && 'master' || row.nodeType;
             row.nodeTypeClass = nodeTypeClass[type];
             row.nodeTypeLabel = nodeTypeLabel[type];
+            if (!$scope.cluster.nodes[row.id]) {
+              row.nodeTypeLabel = nodeTypeLabel.invalid;
+              row.nodeTypeClass = nodeTypeClass.invalid;
+            }
             return row;
           });
           tableInstance.setData(tableData);

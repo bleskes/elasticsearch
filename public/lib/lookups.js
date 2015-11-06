@@ -1,5 +1,6 @@
 module.exports = {
   nodeTypeClass: {
+    invalid: 'fa-exclamation-triangle',
     node: 'fa-server',
     master: 'fa-star',
     master_only: 'fa-star-o',
@@ -8,6 +9,7 @@ module.exports = {
   },
 
   nodeTypeLabel: {
+    invalid: 'Invalid Node',
     node: 'Node',
     master: 'Master Node',
     master_only: 'Master Only Node',
