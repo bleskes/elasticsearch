@@ -1,8 +1,8 @@
 /**
  * Controller for Index Listing
  */
-const mod = require('ui/modules').get('marvel', [ 'marvel/directives' ]);
 const _ = require('lodash');
+const mod = require('ui/modules').get('marvel', [ 'marvel/directives' ]);
 
 function getPageData(timefilter, globalState, $http) {
   const timeBounds = timefilter.getBounds();

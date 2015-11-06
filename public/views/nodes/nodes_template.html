@@ -1,7 +1,7 @@
 <div class="marvel-nodes marvel-view" ng-controller="nodes">
-<div class="col-md-12">
-  <marvel-cluster-status cluster-state="dataSources.clusterState" source="dataSources['cluster_status']"></marvel-cluster-status>
-  <marvel-nodes-listing data="dataSources.nodes_table.data" nodes="nodes"></marvel-nodes-listing>
-</div>
+  <div class="col-md-12">
+    <marvel-cluster-status></marvel-cluster-status>
+    <marvel-nodes-listing data="pageData.rows" nodes="pageData.nodes"></marvel-nodes-listing>
+  </div>
 </div>
 <google-analytics></google-analytics>
