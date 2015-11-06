@@ -4,6 +4,6 @@ mod.directive('marvelNodeSummary', () => {
   return {
     restrict: 'E',
     template: template,
-    scope: { source: '=', node: '=' }
+    scope: { node: '=' }
   };
 });
