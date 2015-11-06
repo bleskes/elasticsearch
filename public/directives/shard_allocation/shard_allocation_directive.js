@@ -11,13 +11,12 @@ app.directive('marvelShardAllocation', () => {
     scope: {
       view: '@',
       shards: '=',
-      cluster: '=', // TODO: remove this
       nodes: '=',
       shardStats: '='
     },
     link: (scope, el, attrs) => {
       const transformer = (scope.view === 'index') ? indicesByNodes(scope) : nodesByIndices(scope);
-      scope.showing = transformer(scope.shards, scope.cluster.nodes); // TODO: change cluster.nodes to nodes (when we fix this in the API
+      scope.showing = transformer(scope.shards, scope.nodes);
       if (scope.shards.some((shard) => shard.state === 'UNASSIGNED')) {
         scope.view += 'WithUnassigned';
       }
