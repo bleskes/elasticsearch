@@ -1,117 +1,67 @@
-define(function (require) {
-  var _ = require('lodash');
-  var angular = require('angular');
-  var lookups = require('plugins/marvel/lib/lookups');
+/**
+ * Controller for Node Detail
+ */
+const _ = require('lodash');
+const mod = require('ui/modules').get('marvel', [ 'plugins/marvel/directives' ]);
 
-  var module = require('ui/modules').get('marvel', []);
-
-  require('ui/routes')
-    .when('/node/:node', {
-      template: require('plugins/marvel/views/node/node_template.html'),
-      resolve: {
-        marvel: function (Private) {
-          var routeInit = Private(require('plugins/marvel/lib/route_init'));
-          return routeInit();
-        }
-      }
-    });
-
-  module.controller('nodeView', function ($scope, marvelMetrics, globalState,
-      kbnUrl, Notifier, courier, timefilter, Private, $routeParams, $route, Promise) {
-    var clusters = $route.current.locals.marvel.clusters;
-    $scope.nodeName = $routeParams.node;
-    var indexPattern = $scope.indexPattern = $route.current.locals.marvel.indexPattern;
-    var ChartDataSource = Private(require('plugins/marvel/directives/chart/data_source'));
-    var ClusterStatusDataSource = Private(require('plugins/marvel/directives/cluster_status/data_source'));
-    var docTitle = Private(require('ui/doc_title'));
-    var notify = new Notifier({ location: 'Marvel' });
-
-    function checkNodeExists(node) {
-      if (!node) {
-        notify.error('We can\'t seem to find this node in your Marvel data.');
-        return kbnUrl.redirect('/nodes');
-      }
-    }
-
-    $scope.cluster = _.find(clusters, { cluster_uuid: globalState.cluster });
-    $scope.node = $scope.cluster.nodes[$scope.nodeName];
-    checkNodeExists($scope.node);
-    $scope.node.id = $scope.nodeName;
-    var nodeType = $scope.node.master && 'master' || $scope.node.type;
-    $scope.node.nodeTypeClass = 'fa ' + lookups.nodeTypeClass[nodeType];
-    $scope.node.nodeTypeLabel = lookups.nodeTypeLabel[nodeType];
-
-    docTitle.change('Marvel - ' + $scope.node.name, true);
-
-    timefilter.enabled = true;
-    if (timefilter.refreshInterval.value === 0) {
-      timefilter.refreshInterval.value = 10000;
-      timefilter.refreshInterval.display = '10 Seconds';
-    }
-
-    $scope.charts = [
+function getPageData(timefilter, globalState, $route, $http) {
+  const timeBounds = timefilter.getBounds();
+  const url = `/marvel/api/v1/clusters/${globalState.cluster}/nodes/${$route.current.params.node}`;
+  return $http.post(url, {
+    timeRange: {
+      min: timeBounds.min.toISOString(),
+      max: timeBounds.max.toISOString()
+    },
+    metrics: [
       'node_query_latency',
       'node_index_latency',
       'node_jvm_mem_percent',
       'node_cpu_utilization',
       'node_load_average',
       'node_segment_count'
-    ];
-
-    $scope.dataSources = {};
-    $scope.$on('$destroy', function () {
-      _.each($scope.dataSources, function (dataSource) {
-        dataSource.destroy();
-      });
-    });
-
-    var ClusterStateDataSource = Private(require('plugins/marvel/lib/cluster_state_data_source'));
-    $scope.dataSources.clusterState = new ClusterStateDataSource({
-      indexPattern: indexPattern,
-      cluster: globalState.cluster
-    });
-    $scope.dataSources.clusterState.register(courier);
-
-    var NodeSummaryDataSource = Private(require('plugins/marvel/directives/node_summary/data_source'));
-    $scope.dataSources.nodeSummary = new NodeSummaryDataSource({
-      indexPattern: indexPattern,
-      cluster: globalState.cluster,
-      node: $scope.node
-    });
-    $scope.dataSources.nodeSummary.register(courier);
-
-    $scope.dataSources.clusterStatus = new ClusterStatusDataSource(indexPattern, globalState.cluster, clusters);
-    $scope.dataSources.clusterStatus.register(courier);
-    $scope.$watch('dataSources.clusterStatus.clusters', function (clusters) {
-      $scope.cluster = _.find(clusters, { cluster_uuid: globalState.cluster });
-      checkNodeExists($scope.cluster.nodes[$scope.nodeName]);
-    });
-
-    Promise
-      .all($scope.charts.map(function (name, idx) {
-        return marvelMetrics(globalState.cluster, name).then(function (metric) {
-          var options = {
-            indexPattern: indexPattern,
-            cluster: globalState.cluster,
-            metric: metric,
-            filters: [{ term: { 'node_stats.node_id': $scope.nodeName } }]
-          };
-          var dataSource = new ChartDataSource(options);
-          dataSource.register(courier);
-          $scope.dataSources[name] = dataSource;
-          return dataSource;
-        });
-      }))
-      .then(function () {
-        return courier.fetch();
-      });
-
-    $scope.$listen(globalState, 'save_with_changes', function (changes) {
-      if (_.contains(changes, 'time')) {
-        courier.fetch();
-      }
-    });
-
-
+    ]
+  }).then((response) => {
+    return response.data;
   });
+}
+
+require('ui/routes')
+.when('/node/:node', {
+  template: require('plugins/marvel/views/node/node_template.html'),
+  resolve: {
+    marvel: function (Private) {
+      var routeInit = Private(require('plugins/marvel/lib/route_init'));
+      return routeInit();
+    },
+    pageData: getPageData
+  }
+});
+
+mod.controller('nodeView', (timefilter, $route, Private, globalState, $executor, $http, marvelClusters, $scope) => {
+
+  timefilter.enabled = true;
+
+  function setClusters(clusters) {
+    $scope.clusters = clusters;
+    $scope.cluster = _.find($scope.clusters, { cluster_uuid: globalState.cluster });
+  }
+  setClusters($route.current.locals.marvel.clusters);
+
+  $scope.pageData = $route.current.locals.pageData;
+
+  $executor.register({
+    execute: () => getPageData(timefilter, globalState, $route, $http),
+    handleResponse: (response) => $scope.pageData = response
+  });
+
+  $executor.register({
+    execute: () => marvelClusters.fetch(),
+    handleResponse: setClusters
+  });
+
+  // Start the executor
+  $executor.start();
+
+  // Destory the executor
+  $scope.$on('$destroy', $executor.destroy);
 });
