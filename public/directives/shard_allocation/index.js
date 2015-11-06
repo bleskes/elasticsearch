@@ -17,11 +17,13 @@ app.directive('marvelShardAllocation', () => {
     link: (scope, el, attrs) => {
       const transformer = (scope.view === 'index') ? indicesByNodes(scope) : nodesByIndices(scope);
       scope.$watch('shards', (shards) => {
+        let view = scope.view;
+        scope.totalCount = shards.length;
         scope.showing = transformer(scope.shards, scope.nodes);
-        if (shards.some((shard) => shard.state === 'UNASSIGNED')) {
-          scope.view += 'WithUnassigned';
+        if (view === 'index' && shards.some((shard) => shard.state === 'UNASSIGNED')) {
+          view += 'WithUnassigned';
         }
-        scope.labels = labels[scope.view];
+        scope.labels = labels[view];
       });
     }
   };
