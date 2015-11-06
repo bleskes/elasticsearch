@@ -30,7 +30,7 @@ define(function (require) {
             className: classes },
             null)
           ),
-          make.a({href: '#/node/' + value}, state.id),  // <a href="#/node/:node_id>
+          make.a({href: '#/node/' + state.id}, state.name),  // <a href="#/node/:node_id>
           make.div({className: 'small'}, extractIp(state.transport_address))); //   <div.small>
       }
       if (_.isObject(value) && value.metric) {
