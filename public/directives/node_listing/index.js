@@ -125,29 +125,26 @@ define(function (require) {
 
         var $table = React.createElement(Table, {
           options: initialTableOptions,
-          data: $scope.data,
           template: tableRowTemplate
         });
 
         var tableInstance = React.render($table, $el[0]);
 
-        $scope.$watch('data', function (data, oldVal) {
+        $scope.$watch('data', function (data) {
           var tableData = data.filter(function (row) {
             return $scope.nodes[row.id];
-          });
-          tableInstance.setData(tableData.map(function (row) {
-            if ($scope.nodes[row.id]) {
-              var node = $scope.nodes[row.id];
-              row.metrics.shard_count = node.shardCount;
-              row.nodeName = node.name;
-              row.nodeType = node.type;
-              row.isMaster = node.master;
-              var type = row.isMaster && 'master' || row.nodeType;
-              row.nodeTypeClass = nodeTypeClass[type];
-              row.nodeTypeLabel = nodeTypeLabel[type];
-            }
+          }).map(function (row) {
+            var node = $scope.nodes[row.id];
+            row.metrics.shard_count = node.shardCount;
+            row.nodeName = node.name;
+            row.nodeType = node.type;
+            row.isMaster = node.master;
+            var type = row.isMaster && 'master' || row.nodeType;
+            row.nodeTypeClass = nodeTypeClass[type];
+            row.nodeTypeLabel = nodeTypeLabel[type];
             return row;
-          }));
+          });
+          tableInstance.setData(tableData);
         });
       }
     };
