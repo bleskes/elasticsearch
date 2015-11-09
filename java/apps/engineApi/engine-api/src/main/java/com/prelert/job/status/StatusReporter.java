@@ -77,14 +77,14 @@ public class StatusReporter
     private long m_LogEvery = 1;
     private long m_LogCount = 0;
 
-    private int m_AcceptablePercentDateParseErrors;
-    private int m_AcceptablePercentOutOfOrderErrors;
+    private final int m_AcceptablePercentDateParseErrors;
+    private final int m_AcceptablePercentOutOfOrderErrors;
 
-    private UsageReporter m_UsageReporter;
+    private final UsageReporter m_UsageReporter;
 
-    private String m_JobId;
-    private Logger m_Logger;
-    private JobDataCountsPersister m_DataCountsPersister;
+    private final String m_JobId;
+    private final Logger m_Logger;
+    private final JobDataCountsPersister m_DataCountsPersister;
 
     public StatusReporter(String jobId, UsageReporter usageReporter,
                         JobDataCountsPersister dataCountsPersister, Logger logger)
@@ -97,26 +97,24 @@ public class StatusReporter
         m_TotalRecordStats = new DataCounts();
         m_IncrementalRecordStats = new DataCounts();
 
-        m_AcceptablePercentDateParseErrors = ACCEPTABLE_PERCENTAGE_DATE_PARSE_ERRORS;
+        m_AcceptablePercentDateParseErrors = readPropertyOrDefault(
+                ACCEPTABLE_PERCENTAGE_DATE_PARSE_ERRORS_PROP,
+                ACCEPTABLE_PERCENTAGE_DATE_PARSE_ERRORS);
+        m_AcceptablePercentOutOfOrderErrors = readPropertyOrDefault(
+                ACCEPTABLE_PERCENTAGE_OUT_OF_ORDER_ERRORS_PROP,
+                ACCEPTABLE_PERCENTAGE_OUT_OF_ORDER_ERRORS);
+    }
 
-        String prop = System.getProperty(ACCEPTABLE_PERCENTAGE_DATE_PARSE_ERRORS_PROP);
+    private static int readPropertyOrDefault(String key, int defaultValue)
+    {
+        String prop = System.getProperty(key);
         try
         {
-            m_AcceptablePercentDateParseErrors = Integer.parseInt(prop);
+            return Integer.parseInt(prop);
         }
         catch (NumberFormatException e)
         {
-        }
-
-        m_AcceptablePercentOutOfOrderErrors = ACCEPTABLE_PERCENTAGE_OUT_OF_ORDER_ERRORS;
-
-        prop = System.getProperty(ACCEPTABLE_PERCENTAGE_OUT_OF_ORDER_ERRORS_PROP);
-        try
-        {
-            m_AcceptablePercentOutOfOrderErrors = Integer.parseInt(prop);
-        }
-        catch (NumberFormatException e)
-        {
+            return defaultValue;
         }
     }
 
@@ -330,22 +328,10 @@ public class StatusReporter
         return m_AcceptablePercentDateParseErrors;
     }
 
-    public void setAcceptablePercentDateParseErrors(int value)
-    {
-        m_AcceptablePercentDateParseErrors = value;
-    }
-
-
     public int getAcceptablePercentOutOfOrderErrors()
     {
         return m_AcceptablePercentOutOfOrderErrors;
     }
-
-    public void setAcceptablePercentOutOfOrderErrors(int value)
-    {
-        m_AcceptablePercentOutOfOrderErrors = value;
-    }
-
 
     public void setAnalysedFieldsPerRecord(long value)
     {
