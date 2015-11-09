@@ -28,6 +28,7 @@
 package com.prelert.job.process.autodetect;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
@@ -57,9 +58,11 @@ import com.prelert.job.DataCounts;
 import com.prelert.job.DataDescription;
 import com.prelert.job.DataDescription.DataFormat;
 import com.prelert.job.UnknownJobException;
+import com.prelert.job.alert.AlertObserver;
 import com.prelert.job.exceptions.JobInUseException;
 import com.prelert.job.persistence.DataPersisterFactory;
 import com.prelert.job.persistence.JobProvider;
+import com.prelert.job.process.exceptions.ClosedJobException;
 import com.prelert.job.process.exceptions.MalformedJsonException;
 import com.prelert.job.process.exceptions.MissingFieldException;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
@@ -104,6 +107,7 @@ public class ProcessManagerTest
         InputStream inputStream = createInputStream("time");
         m_ProcessManager.processDataLoadJob("foo", inputStream, createNoPersistNoResetDataLoadParams());
 
+        assertTrue(m_ProcessManager.jobIsRunning("foo"));
         String output = mockProcessBuilder.getOutput().trim();
         assertTrue(output.startsWith("time"));
         verify(process).releaseGuard();
@@ -189,10 +193,12 @@ public class ProcessManagerTest
 
         InputStream inputStream = createInputStream("");
         m_ProcessManager.processDataLoadJob("foo", inputStream, createNoPersistNoResetDataLoadParams());
+        assertTrue(m_ProcessManager.jobIsRunning("foo"));
         assertEquals(1, m_ProcessManager.numberOfRunningJobs());
 
         m_ProcessManager.closeJob("foo");
 
+        assertFalse(m_ProcessManager.jobIsRunning("foo"));
         assertEquals(0, m_ProcessManager.numberOfRunningJobs());
         verify(process, times(2)).releaseGuard();
     }
@@ -237,6 +243,97 @@ public class ProcessManagerTest
         m_ProcessManager.closeJob("foo");
 
         assertEquals(0, m_ProcessManager.numberOfRunningJobs());
+    }
+
+    @Test
+    public void testStop_ClosesAllRunningJobs() throws NativeProcessRunException,
+            JobInUseException, JsonParseException, UnknownJobException, MissingFieldException,
+            HighProportionOfBadTimestampsException, OutOfOrderRecordsException,
+            MalformedJsonException
+    {
+        MockProcessBuilder mockProcessBuilder = new MockProcessBuilder();
+        ProcessAndDataDescription process1 = mockProcessBuilder
+                .withAvailableWriting()
+                .withAvailableClosing()
+                .stillRunning(true)
+                .build();
+        ProcessAndDataDescription process2 = mockProcessBuilder
+                .withAvailableWriting()
+                .withAvailableClosing()
+                .stillRunning(true)
+                .build();
+        when(m_ProcessFactory.createProcess("job_1")).thenReturn(process1);
+        when(m_ProcessFactory.createProcess("job_2")).thenReturn(process2);
+
+        InputStream inputStream = createInputStream("");
+        m_ProcessManager.processDataLoadJob("job_1", inputStream, createNoPersistNoResetDataLoadParams());
+        m_ProcessManager.processDataLoadJob("job_2", inputStream, createNoPersistNoResetDataLoadParams());
+        assertTrue(m_ProcessManager.jobIsRunning("job_1"));
+        assertTrue(m_ProcessManager.jobIsRunning("job_1"));
+        assertEquals(2, m_ProcessManager.numberOfRunningJobs());
+
+        m_ProcessManager.stop();
+
+        assertFalse(m_ProcessManager.jobIsRunning("job_1"));
+        assertFalse(m_ProcessManager.jobIsRunning("job_2"));
+        assertEquals(0, m_ProcessManager.numberOfRunningJobs());
+    }
+
+    @Test
+    public void testAddAlertObserver_GivenRunningJob() throws UnknownJobException,
+            NativeProcessRunException, JsonParseException, MissingFieldException,
+            JobInUseException, HighProportionOfBadTimestampsException, OutOfOrderRecordsException,
+            MalformedJsonException, ClosedJobException
+    {
+        MockProcessBuilder mockProcessBuilder = new MockProcessBuilder();
+        ProcessAndDataDescription process = mockProcessBuilder
+                .withAvailableWriting()
+                .withAvailableClosing()
+                .stillRunning(true)
+                .build();
+        when(m_ProcessFactory.createProcess("foo")).thenReturn(process);
+        InputStream inputStream = createInputStream("");
+        m_ProcessManager.processDataLoadJob("foo", inputStream, createNoPersistNoResetDataLoadParams());
+
+        AlertObserver alertObserver = mock(AlertObserver.class);
+        m_ProcessManager.addAlertObserver("foo", alertObserver);
+
+        verify(process.getResultsReader()).addAlertObserver(alertObserver);
+    }
+
+    @Test
+    public void testAddAlertObserver_GivenNonRunningJob() throws ClosedJobException
+    {
+        m_ExpectedException.expect(ClosedJobException.class);
+        m_ProcessManager.addAlertObserver("nonRunning", null);
+    }
+
+    @Test
+    public void testRemoveAlertObserver_GivenRunningJob() throws UnknownJobException,
+            NativeProcessRunException, JsonParseException, MissingFieldException,
+            JobInUseException, HighProportionOfBadTimestampsException, OutOfOrderRecordsException,
+            MalformedJsonException, ClosedJobException
+    {
+        MockProcessBuilder mockProcessBuilder = new MockProcessBuilder();
+        ProcessAndDataDescription process = mockProcessBuilder.withAvailableWriting()
+                .withAvailableClosing().stillRunning(true).build();
+        when(m_ProcessFactory.createProcess("foo")).thenReturn(process);
+        InputStream inputStream = createInputStream("");
+        m_ProcessManager.processDataLoadJob("foo", inputStream,
+                createNoPersistNoResetDataLoadParams());
+
+        AlertObserver alertObserver = mock(AlertObserver.class);
+        when(process.getResultsReader().removeAlertObserver(alertObserver)).thenReturn(true);
+
+        assertTrue(m_ProcessManager.removeAlertObserver("foo", alertObserver));
+
+        verify(process.getResultsReader()).removeAlertObserver(alertObserver);
+    }
+
+    @Test
+    public void testRemoveAlertObserver_GivenNonRunningJob()
+    {
+        assertFalse(m_ProcessManager.removeAlertObserver("nonRunning", null));
     }
 
     private static InputStream createInputStream(String input)

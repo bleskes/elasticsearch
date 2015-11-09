@@ -955,8 +955,7 @@ public class ProcessManager
         return sb;
     }
 
-    public void addAlertObserver(String jobId, AlertObserver ao)
-    throws ClosedJobException
+    public void addAlertObserver(String jobId, AlertObserver ao) throws ClosedJobException
     {
         ProcessAndDataDescription process = m_JobIdToProcessMap.get(jobId);
         if (process!= null)
@@ -975,7 +974,7 @@ public class ProcessManager
     public boolean removeAlertObserver(String jobId, AlertObserver ao)
     {
         ProcessAndDataDescription process = m_JobIdToProcessMap.get(jobId);
-        if (process!= null)
+        if (process != null)
         {
             return process.getResultsReader().removeAlertObserver(ao);
         }
