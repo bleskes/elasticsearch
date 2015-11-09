@@ -82,7 +82,7 @@ public class AlertManagerTest {
         AsyncResponse response = mock(AsyncResponse.class);
         URI uri = UriBuilder.fromUri("http://testing").build();
 
-        ClosedJobException e = new ClosedJobException("foo", "bar");
+        ClosedJobException e = new ClosedJobException("blah");
         doThrow(e).when(jobManager).addAlertObserver(eq("foo"), any());
 
         am.registerRequest(response, "foo", uri, 20l, 60.0, 70.0);

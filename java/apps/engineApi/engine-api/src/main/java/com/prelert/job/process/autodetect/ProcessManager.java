@@ -967,7 +967,7 @@ public class ProcessManager
             String message = String.format("Cannot alert on job '%s' because "
                     + "the job is not running", jobId);
             LOGGER.info(message);
-            throw new ClosedJobException(message, jobId);
+            throw new ClosedJobException(message);
         }
     }
 
