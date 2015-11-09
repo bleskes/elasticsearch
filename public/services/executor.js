@@ -6,6 +6,7 @@ mod.service('$executor', (globalState, Promise, $timeout, timefilter) => {
 
   const queue = [];
   let executionTimer;
+  let ignorePaused = false;
 
   /**
    * Resets the timer to start again
@@ -41,6 +42,7 @@ mod.service('$executor', (globalState, Promise, $timeout, timefilter) => {
    */
   function destroy() {
     cancel();
+    ignorePaused = false;
     queue.splice(0, queue.length);
   }
 
@@ -70,7 +72,7 @@ mod.service('$executor', (globalState, Promise, $timeout, timefilter) => {
    */
   function start() {
     globalState.on('save_with_changes', runIfTime);
-    if (!timefilter.refreshInterval.pause) {
+    if (ignorePaused || !timefilter.refreshInterval.pause) {
       executionTimer = $timeout(run, timefilter.refreshInterval.value);
     }
   }
@@ -80,9 +82,16 @@ mod.service('$executor', (globalState, Promise, $timeout, timefilter) => {
    */
   return {
     register,
-    start(now = false) {
-      if (now) {
+    start(options = {}) {
+      options = _.defaults(options, {
+        ignorePaused: false,
+        now: false
+      });
+      if (options.now) {
         return run();
+      }
+      if (options.ignorePaused) {
+        ignorePaused = options.ignorePaused;
       }
       start();
     },
