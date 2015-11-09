@@ -47,6 +47,12 @@ define(function (require) {
     var initialTableOptions = {
       title: 'Indices',
       searchPlaceholder: 'Filter Indices',
+      /* "key" should be an object
+       *   - unless it's the "name" key
+       *   - the key object should have:
+       *      - "metric" object
+       *      - "last" scalar
+       * "sortKey" should be a scalar */
       columns: [{
         key: 'name',
         sort: 1,

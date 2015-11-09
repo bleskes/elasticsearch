@@ -20,6 +20,7 @@ define(function (require) {
     var clusters = $route.current.locals.marvel.clusters;
     $scope.indexName = $routeParams.index;
     var indexPattern = $scope.indexPattern = $route.current.locals.marvel.indexPattern;
+    var IndexSummaryDataSource = Private(require('plugins/marvel/directives/index_summary/data_source'));
     var ChartDataSource = Private(require('plugins/marvel/directives/chart/data_source'));
     var ClusterStatusDataSource = Private(require('plugins/marvel/directives/cluster_status/data_source'));
     var docTitle = Private(require('ui/doc_title'));
@@ -48,6 +49,13 @@ define(function (require) {
       });
     });
 
+    $scope.dataSources.indexSummary = new IndexSummaryDataSource({
+      indexPattern: indexPattern,
+      cluster: globalState.cluster,
+      indexName: $scope.indexName
+    });
+    $scope.dataSources.indexSummary.register(courier);
+
     var ClusterStateDataSource = Private(require('plugins/marvel/lib/cluster_state_data_source'));
     $scope.dataSources.clusterState = new ClusterStateDataSource({
       indexPattern: indexPattern,
@@ -60,13 +68,17 @@ define(function (require) {
     $scope.cluster = _.find(clusters, { cluster_uuid: globalState.cluster });
 
     // is the selected index valid?
-    if (!_.has($scope.cluster.shardStats, $scope.indexName)) {
-      notify.error('We can\'t seem to find this index in your Marvel data.');
-      return kbnUrl.redirect('/indices');
+    function checkIndexExists(indexName) {
+      if (!_.has($scope.cluster.shardStats, indexName)) {
+        notify.error('We can\'t seem to find this index in your Marvel data.');
+        return kbnUrl.redirect('/indices');
+      }
     }
+    checkIndexExists($scope.indexName);
 
     $scope.$watch('dataSources.clusterStatus.clusters', function (clusters) {
       $scope.cluster = _.find(clusters, { cluster_uuid: globalState.cluster });
+      checkIndexExists($scope.indexName);
     });
 
     Promise
@@ -88,6 +100,11 @@ define(function (require) {
         return courier.fetch();
       });
 
+    $scope.$listen(globalState, 'save_with_changes', function (changes) {
+      if (_.contains(changes, 'time')) {
+        courier.fetch();
+      }
+    });
 
   });
 });

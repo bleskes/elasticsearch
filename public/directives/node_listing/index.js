@@ -50,9 +50,16 @@ define(function (require) {
     var initialTableOptions = {
       title: 'Nodes',
       searchPlaceholder: 'Filter Nodes',
+      /* "key" should be an object
+       *   - unless it's the "name" key
+       *   - the key object should have:
+       *      - "metric" object
+       *      - "last" scalar
+       * "sortKey" should be a scalar */
       columns: [
         {
           key: 'name',
+          sortKey: 'nodeName',
           sort: 1,
           title: 'Name'
         },
@@ -64,7 +71,7 @@ define(function (require) {
         },
         {
           key: 'metrics.node_jvm_mem_percent',
-          sortKey: 'metrics.node_jvm_mem_percen.last',
+          sortKey: 'metrics.node_jvm_mem_percent.last',
           sort: 0,
           title: 'JVM Memory'
         },
@@ -148,6 +155,7 @@ define(function (require) {
           });
           TableInstance.setData(tableData.map(function (row) {
             row.metrics.shard_count = $scope.nodes[row.name] && $scope.nodes[row.name].shard_count;
+            row.nodeName = $scope.nodes[row.name] && $scope.nodes[row.name].name;
             return row;
           }));
         });

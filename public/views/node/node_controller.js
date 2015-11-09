@@ -25,12 +25,16 @@ define(function (require) {
     var docTitle = Private(require('ui/doc_title'));
     var notify = new Notifier({ location: 'Marvel' });
 
+    function checkNodeExists(node) {
+      if (!node) {
+        notify.error('We can\'t seem to find this node in your Marvel data.');
+        return kbnUrl.redirect('/nodes');
+      }
+    }
+
     $scope.cluster = _.find(clusters, { cluster_uuid: globalState.cluster });
     $scope.node = $scope.cluster.nodes[$scope.nodeName];
-    if (!$scope.node) {
-      notify.error('We can\'t seem to find this node in your Marvel data.');
-      return kbnUrl.redirect('/nodes');
-    }
+    checkNodeExists($scope.node);
     $scope.node.id = $scope.nodeName;
 
     docTitle.change('Marvel - ' + $scope.node.name, true);
@@ -76,6 +80,7 @@ define(function (require) {
     $scope.dataSources.clusterStatus.register(courier);
     $scope.$watch('dataSources.clusterStatus.clusters', function (clusters) {
       $scope.cluster = _.find(clusters, { cluster_uuid: globalState.cluster });
+      checkNodeExists($scope.cluster.nodes[$scope.nodeName]);
     });
 
     Promise
@@ -96,6 +101,12 @@ define(function (require) {
       .then(function () {
         return courier.fetch();
       });
+
+    $scope.$listen(globalState, 'save_with_changes', function (changes) {
+      if (_.contains(changes, 'time')) {
+        courier.fetch();
+      }
+    });
 
 
   });

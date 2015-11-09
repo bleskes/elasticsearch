@@ -9,8 +9,11 @@ define(function (require) {
 
   function getFilteredData(data, filter) {
     return data.filter(function (obj) {
-      var concatValues = _.values(obj).join('|');
-      return (concatValues.indexOf(filter) !== -1);
+      var concatValues = _.values(obj)
+        .filter(function (val) { return typeof val === 'string'; })
+        .join('|')
+        .toLowerCase();
+      return (concatValues.indexOf(filter.toLowerCase()) !== -1);
     });
   }
 

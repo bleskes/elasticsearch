@@ -1,60 +1,15 @@
 @md_size_screen: 980px;
+.application {
+  background-color: @esVeryLightGray;
+}
+
 .marvel-view {
 
-  background-color: @esVeryLightGray;
-
-  .metrics {
-    display: flex;
-    flex-flow: row wrap;
-    &.x2 {
-      @media (min-width: @md_size_screen) {
-        > .marvel-element {
-          flex: 1 1 45%;
-          margin: 0;
-          &:nth-child(odd) {
-            margin-right: 10px;
-          }
-          &:nth-child(n+3) {
-            margin-top: 10px;
-          }
-        }
-      }
-      @media (max-width: @md_size_screen) {
-        > .marvel-element {
-          width: 100%;
-          margin: 0 0 10px 0;
-        }
-      }
-    }
-    @media (min-width: @md_size_screen) {
-      > div {
-        flex: 1 1 30%;
-        &:nth-child(3n+1) {
-          margin: 0 10px 10px 0;
-        }
-        &:nth-child(3n+3) {
-          margin: 0 0 10px 10px;
-        }
-      }
-    }
-    @media (max-width: @md_size_screen) {
-      > div {
-        width: 100%;
-      }
-    }
-  }
-
-  .marvel-content {
-    display: block;
-    flex-grow: 1;
-  }
-
   .marvel-element {
-    margin-bottom: 10px;
+    &.row {
+      margin-bottom: 15px;
+    }
   }
-
-  flex-grow: 1;
-  padding: 10px;
 
   &.no-padding {
     padding: 0;
