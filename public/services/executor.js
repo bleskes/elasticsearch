@@ -17,12 +17,16 @@ mod.service('$executor', (globalState, Promise, $timeout, timefilter) => {
     start();
   }
 
+  function killTimer() {
+    if (executionTimer) $timeout.cancel(executionTimer);
+  }
+
   /**
    * Cancels the execution timer
    * @returns {void}
    */
   function cancel() {
-    if (executionTimer) $timeout.cancel(executionTimer);
+    killTimer();
     timefilter.off('update', reset);
     globalState.off('save_with_changes', runIfTime);
   }
@@ -60,9 +64,13 @@ mod.service('$executor', (globalState, Promise, $timeout, timefilter) => {
   }
 
   function runIfTime(changes) {
-    if (_.contains(changes, 'time')) {
+    const timeChanged = _.contains(changes, 'time');
+    const refreshIntervalChanged = _.contains(changes, 'refreshInterval');
+    if (timeChanged || (refreshIntervalChanged && !timefilter.refreshInterval.pause)) {
       cancel();
       run();
+    } else if (refreshIntervalChanged && timefilter.refreshInterval.pause) {
+      killTimer();
     }
   }
 
