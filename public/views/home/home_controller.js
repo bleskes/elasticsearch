@@ -40,8 +40,10 @@ define(function (require) {
   })
   .otherwise({ redirectTo: '/no-data' });
 
-  module.controller('home', function ($route, $window, $scope, marvelClusters, timefilter, $timeout) {
+  module.controller('home', function ($route, $window, $scope, marvelClusters, timefilter, $timeout, $executor) {
 
+    // Set the key for as the cluster_uuid. This is mainly for
+    // react.js so we can use the key easily.
     function setKeyForClusters(cluster) {
       cluster.key = cluster.cluster_uuid;
       return cluster;
@@ -50,39 +52,24 @@ define(function (require) {
     $scope.clusters = $route.current.locals.clusters
       .map(setKeyForClusters);
 
+    // Enable the timefilter
     timefilter.enabled = true;
-    if (timefilter.refreshInterval.value === 0) {
-      timefilter.refreshInterval.value = 10000;
-      timefilter.refreshInterval.display = '10 Seconds';
-    }
 
-    var fetchTimer;
-    function startFetchInterval() {
-      if (!timefilter.refreshInterval.pause) {
-        fetchTimer = $timeout(fetch, timefilter.refreshInterval.value);
+    // Register the marvelClusters service.
+    $executor.register({
+      execute: function () {
+        return marvelClusters.fetch();
+      },
+      handleResponse: function (clusters) {
+        $scope.clusters = clusters.map(setKeyForClusters);
       }
-    }
-    function cancelFetchInterval() {
-      $timeout.cancel(fetchTimer);
-    }
-
-    timefilter.on('update', (time) => {
-      cancelFetchInterval();
-      startFetchInterval();
     });
 
-    function fetch() {
-      marvelClusters.fetch().then((clusters) => {
-        $scope.clusters = clusters
-          .map(setKeyForClusters);
-        startFetchInterval();
-      });
-    }
+    // Start the executor
+    $executor.start();
 
-    startFetchInterval();
-    $scope.$on('$destroy', () => {
-      cancelFetchInterval();
-    });
+    // Destory the executor
+    $scope.$on('$destroy', $executor.destroy);
 
   });
 

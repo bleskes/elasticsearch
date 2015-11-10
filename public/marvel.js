@@ -2,17 +2,18 @@ require('plugins/marvel/less/main.less');
 require('plugins/marvel/filters/index.js');
 require('plugins/marvel/directives/index.js');
 require('plugins/marvel/services/features.js');
+require('plugins/marvel/services/executor.js');
 require('plugins/marvel/views/no_data/no_data_controller.js');
 require('plugins/marvel/views/home/home_controller.js');
-require('plugins/marvel/views/indices/index.js');
+require('plugins/marvel/views/indices/indices_controller.js');
+require('plugins/marvel/views/index/index_controller.js');
 require('plugins/marvel/views/nodes/nodes_controller.js');
 require('plugins/marvel/views/node/node_controller.js');
-require('plugins/marvel/views/overview/index.js');
+require('plugins/marvel/views/overview/overview_controller.js');
 require('plugins/marvel/views/settings/index.js');
 require('plugins/marvel/views/issues/issues_controller.js');
 require('plugins/marvel/views/setup/setup_controller.js');
 require('plugins/marvel/views/expired_license/index.js');
-require('plugins/marvel/views/index/index_controller.js');
 require('ui/modules').get('kibana').config(function (PrivateProvider) {
   PrivateProvider.swap(require('ui/config/defaults'), function ($injector) {
     var defaults = $injector.invoke(require('ui/config/defaults'));

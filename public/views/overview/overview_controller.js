@@ -1,24 +1,22 @@
 /**
- * Controller for Node Detail
+ * Controller for Overview Page
  */
+const mod = require('ui/modules').get('marvel', [ 'marvel/directives' ]);
 const _ = require('lodash');
-const mod = require('ui/modules').get('marvel', [ 'plugins/marvel/directives' ]);
 
-function getPageData(timefilter, globalState, $route, $http) {
+function getPageData(timefilter, globalState, $http) {
   const timeBounds = timefilter.getBounds();
-  const url = `/marvel/api/v1/clusters/${globalState.cluster}/nodes/${$route.current.params.node}`;
+  const url = `/marvel/api/v1/clusters/${globalState.cluster}`;
   return $http.post(url, {
     timeRange: {
       min: timeBounds.min.toISOString(),
       max: timeBounds.max.toISOString()
     },
     metrics: [
-      'node_query_latency',
-      'node_index_latency',
-      'node_jvm_mem_percent',
-      'node_cpu_utilization',
-      'node_load_average',
-      'node_segment_count'
+      'cluster_search_request_rate',
+      'cluster_query_latency',
+      'cluster_index_request_rate',
+      'cluster_index_latency'
     ]
   }).then((response) => {
     return response.data;
@@ -26,18 +24,18 @@ function getPageData(timefilter, globalState, $route, $http) {
 }
 
 require('ui/routes')
-.when('/node/:node', {
-  template: require('plugins/marvel/views/node/node_template.html'),
+.when('/overview', {
+  template: require('plugins/marvel/views/overview/overview_template.html'),
   resolve: {
     marvel: function (Private) {
-      var routeInit = Private(require('plugins/marvel/lib/route_init'));
+      const routeInit = Private(require('plugins/marvel/lib/route_init'));
       return routeInit();
     },
     pageData: getPageData
   }
 });
 
-mod.controller('nodeView', (timefilter, $route, Private, globalState, $executor, $http, marvelClusters, $scope) => {
+mod.controller('overview', ($route, globalState, timefilter, $http, $executor, marvelClusters, $scope) => {
 
   timefilter.enabled = true;
 
@@ -50,7 +48,7 @@ mod.controller('nodeView', (timefilter, $route, Private, globalState, $executor,
   $scope.pageData = $route.current.locals.pageData;
 
   $executor.register({
-    execute: () => getPageData(timefilter, globalState, $route, $http),
+    execute: () => getPageData(timefilter, globalState, $http),
     handleResponse: (response) => $scope.pageData = response
   });
 
@@ -64,4 +62,6 @@ mod.controller('nodeView', (timefilter, $route, Private, globalState, $executor,
 
   // Destory the executor
   $scope.$on('$destroy', $executor.destroy);
+
 });
+

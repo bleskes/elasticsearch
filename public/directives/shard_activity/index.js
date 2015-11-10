@@ -7,14 +7,13 @@ define(function (require) {
     return {
       restrict: 'E',
       scope: {
-        source: '=',
+        data: '=',
         onlyActive: '=?'
       },
       template: template,
       link: function ($scope) {
         $scope.formatNumber = formatNumber;
         $scope.visibleData = [];
-        $scope.data = [];
 
         $scope.toggleActive = function () {
           $scope.onlyActive = !$scope.onlyActive;
@@ -30,8 +29,8 @@ define(function (require) {
         };
 
         function filterData() {
-          if ($scope.source && $scope.source.data) {
-            $scope.visibleData = _.filter($scope.source.data, function (item) {
+          if ($scope.data) {
+            $scope.visibleData = _.filter($scope.data, function (item) {
               if ($scope.onlyActive) {
                 return item.stage !== 'DONE';
               }
@@ -41,7 +40,7 @@ define(function (require) {
         }
         filterData();
 
-        $scope.$watch('source.data', filterData);
+        $scope.$watch('data', filterData);
 
         $scope.getIpAndPort = function (transport) {
           var matches = transport.match(/([\d\.:]+)\]$/);

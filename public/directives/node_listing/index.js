@@ -1,18 +1,13 @@
 define(function (require) {
   var _ = require('lodash');
   var numeral = require('numeral');
-  var moment = require('moment');
   var module = require('ui/modules').get('marvel/directives', []);
   var React = require('react');
   var make = React.DOM;
-  var metrics = require('plugins/marvel/lib/metrics');
   var extractIp = require('plugins/marvel/lib/extract_ip');
   var lookups = require('plugins/marvel/lib/lookups');
 
-
   var Table = require('plugins/marvel/directives/paginated_table/components/table');
-  var MarvelChart = require('plugins/marvel/directives/chart/chart_component');
-  var ToggleOnClickComponent = require('plugins/marvel/directives/node_listing/toggle_on_click_component');
 
   var nodeTypeClass = lookups.nodeTypeClass;
   var nodeTypeLabel = lookups.nodeTypeLabel;
@@ -35,7 +30,7 @@ define(function (require) {
             className: classes },
             null)
           ),
-          make.a({href: '#/node/' + value}, state.name),  // <a href="#/node/:node_id>
+          make.a({href: '#/node/' + state.id}, state.name),  // <a href="#/node/:node_id>
           make.div({className: 'small'}, extractIp(state.transport_address))); //   <div.small>
       }
       if (_.isObject(value) && value.metric) {
@@ -107,80 +102,55 @@ define(function (require) {
         }
       ]
     };
-    function makeChart(data, metric) {
-      return React.createElement(MarvelChart, {
-        className: 'col-md-4 marvel-chart no-border',
-        data: data,
-        source: {metric: metric}
-      });
-    }
     return {
       restrict: 'E',
-      scope: { data: '=', nodes: '='},
+      scope: { cluster: '=', data: '=', nodes: '='},
       link: function ($scope, $el) {
         var tableRowTemplate = React.createClass({
           getInitialState: function () {
-            return $scope.nodes[this.props.name] || null;
+            return $scope.nodes[this.props.id] || null;
           },
           componentWillReceiveProps: function (newProps) {
-            this.setState($scope.nodes[newProps.name]);
+            this.setState($scope.nodes[newProps.id]);
           },
           render: function () {
             var boundTemplateFn = makeTdWithPropKey.bind(this);
             var $tdsArr = initialTableOptions.columns.map(boundTemplateFn);
             return make.tr({
               className: 'big no-border',
-              key: 'row-' + this.props.name
+              key: 'row-' + this.props.id
             }, $tdsArr);
-            /*
-            var trAttrs = {
-              key: 'stats',
-              className: 'big'
-            };
-            var numCols = initialTableOptions.columns.length;
-            var $chartsArr = _.keys(this.props.metrics).map(function(key) {
-              var source = that.props.metrics[key];
-              return makeChart(source.data, source.metric);
-            });
-            return make.tr({className: 'big no-border', key: 'row-' + this.props.name},
-              make.td({colSpan: numCols, key: 'table-td-wrap'},
-                make.table({className: 'nested-table', key: 'table'},
-                  React.createElement(ToggleOnClickComponent, {
-                    elWrapper: 'tbody',
-                    activator: make.tr(trAttrs, $tdsArr),
-                    content: make.tr({key: 'charts'}, make.td({colSpan: numCols}, $chartsArr))
-                  }))));*/
           }
         });
 
         var $table = React.createElement(Table, {
           options: initialTableOptions,
-          data: $scope.data,
           template: tableRowTemplate
         });
 
-        var TableInstance = React.render($table, $el[0]);
+        var tableInstance = React.render($table, $el[0]);
 
-        $scope.$watch('data', function (data, oldVal) {
+        $scope.$watch('data', function (data) {
           var tableData = data.filter(function (row) {
-            return $scope.nodes[row.name];
-          });
-          TableInstance.setData(tableData.map(function (row) {
-            if ($scope.nodes[row.name]) {
-              var node = $scope.nodes[row.name];
-              row.metrics.shard_count = node.shard_count;
-              row.nodeName = node.name;
-              row.nodeType = node.type;
-              row.isMaster = node.master;
-              var type = row.isMaster && 'master' || row.nodeType;
-              row.nodeTypeClass = nodeTypeClass[type];
-              row.nodeTypeLabel = nodeTypeLabel[type];
+            return $scope.nodes[row.id];
+          }).map(function (row) {
+            var node = $scope.nodes[row.id];
+            row.metrics.shard_count = node.shardCount;
+            row.nodeName = node.name;
+            row.nodeType = node.type;
+            row.isMaster = node.master;
+            var type = row.isMaster && 'master' || row.nodeType;
+            row.nodeTypeClass = nodeTypeClass[type];
+            row.nodeTypeLabel = nodeTypeLabel[type];
+            if (!$scope.cluster.nodes[row.id]) {
+              row.nodeTypeLabel = nodeTypeLabel.invalid;
+              row.nodeTypeClass = nodeTypeClass.invalid;
             }
             return row;
-          }));
+          });
+          tableInstance.setData(tableData);
         });
       }
     };
   });
 });
-

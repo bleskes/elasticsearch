@@ -18,15 +18,14 @@
 
 
 define(function (require) {
-  var extractShards = require('../lib/extractShards');
   var _ = require('lodash');
 
-  var filterHiddenIndices = require('../lib/filterHiddenIndices');
   var hasPrimaryChildren = require('../lib/hasPrimaryChildren');
+  var decorateShards = require('../lib/decorateShards');
   var extractIp = require('../lib/extractIp');
 
   return function ($scope) {
-    return function nodesByIndices(state) {
+    return function nodesByIndices(shards, nodes) {
 
       var getNodeType = function (node) {
         if (node.attributes.client === 'true') {
@@ -43,7 +42,6 @@ define(function (require) {
       };
 
       function createNode(obj, node, id) {
-        node.master = state.cluster_state.master_node === id;
         node.details = extractIp(node);
         node.ip_port = extractIp(node);
         node.type = 'node';
@@ -59,7 +57,7 @@ define(function (require) {
         var node = shard.node || 'unassigned';
         var index = shard.index;
         if (!obj[node]) {
-          createNode(obj, state.cluster_state.nodes[node], node);
+          createNode(obj, nodes[node], node);
         }
         var indexObj = _.find(obj[node].children, { id: index });
         if (!indexObj) {
@@ -75,16 +73,10 @@ define(function (require) {
         return obj;
       }
 
-      var shards = extractShards(state);
-      if (!$scope.panel.show_hidden) {
-        shards = shards.filter(filterHiddenIndices);
-      }
-
       function isUnassigned(shard) {
         return shard.state === 'UNASSIGNED';
       }
 
-      // var data = _.reduce(state.cluster_state.nodes, createNode, {});
       var data = {};
       if (_.some(shards, isUnassigned)) {
         data.unassigned = {
@@ -95,7 +87,7 @@ define(function (require) {
         };
       }
 
-      data = _.reduce(shards, createIndexAddShard, data);
+      data = _.reduce(decorateShards(shards, nodes), createIndexAddShard, data);
 
       return _(data).values()
         .sortBy(function (node) {
