@@ -12,21 +12,21 @@ define(function (require) {
     'marvel/metrics'
   ]);
 
-  require('ui/routes').when('/issues', {
-    template: require('plugins/marvel/views/issues/issues_template.html'),
-    resolve: {
-      marvel: function (Private) {
-        var routeInit = Private(require('plugins/marvel/lib/route_init'));
-        return routeInit();
-      }
-    }
-  });
+  // require('ui/routes').when('/issues', {
+  //   template: require('plugins/marvel/views/issues/issues_template.html'),
+  //   resolve: {
+  //     marvel: function (Private) {
+  //       var routeInit = Private(require('plugins/marvel/lib/route_init'));
+  //       return routeInit();
+  //     }
+  //   }
+  // });
 
   module.controller('issues', function (courier, $http, $route, $scope, Promise, Private, timefilter, globalState) {
     var clusters = $route.current.locals.marvel.clusters;
     var indexPattern = $route.current.locals.marvel.indexPattern;
-    var IssueDataSource = Private(require('plugins/marvel/directives/issues/data_source'));
-    var ClusterStatusDataSource = Private(require('plugins/marvel/directives/cluster_status/data_source'));
+    // var IssueDataSource = Private(require('plugins/marvel/directives/issues/data_source'));
+    // var ClusterStatusDataSource = Private(require('plugins/marvel/directives/cluster_status/data_source'));
 
     timefilter.enabled = true;
     if (timefilter.refreshInterval.value === 0) {
@@ -35,15 +35,15 @@ define(function (require) {
     }
 
 
-    // Fetch the cluster status
-    var dataSource = new ClusterStatusDataSource(indexPattern, globalState.cluster, clusters);
-    $scope.cluster_status = dataSource;
-    dataSource.register(courier);
-    courier.fetch();
+    // // Fetch the cluster status
+    // var dataSource = new ClusterStatusDataSource(indexPattern, globalState.cluster, clusters);
+    // $scope.cluster_status = dataSource;
+    // dataSource.register(courier);
+    // courier.fetch();
 
-    $scope.$on('$destroy', function () {
-      dataSource.destroy();
-    });
+    // $scope.$on('$destroy', function () {
+    //   dataSource.destroy();
+    // });
 
     // Fetch the issues
     $scope.issues = [];
