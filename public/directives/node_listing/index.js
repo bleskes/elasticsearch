@@ -18,6 +18,7 @@ define(function (require) {
     function makeTdWithPropKey(dataKey, idx) {
       var value = _.get(this.props, dataKey.key);
       var $content = null;
+      // Content for the name column.
       if (dataKey.key === 'name') {
         var title = this.props.nodeTypeLabel;
         var classes = 'fa ' + this.props.nodeTypeClass;
@@ -33,6 +34,7 @@ define(function (require) {
           make.a({href: '#/node/' + state.id}, state.name),  // <a href="#/node/:node_id>
           make.div({className: 'small'}, extractIp(state.transport_address))); //   <div.small>
       }
+      // make the content for all of the metric columns
       if (_.isObject(value) && value.metric) {
         var formatNumber = (function (metric) {
           return function (val) {
@@ -40,15 +42,22 @@ define(function (require) {
             return numeral(val).format(metric.format) + metric.units;
           };
         }(value.metric));
-        var metric = value.metric;
-        var rawValue = formatNumber(value.last);
-        $content = make.div(null,
-          make.div({className: 'big inline'}, rawValue),
-          make.i({className: 'inline big fa fa-long-arrow-' + (value.slope > 0 ? 'up' : 'down')}),
-          make.div({className: 'inline'},
-            make.div({className: 'small'}, formatNumber(value.max) + ' max'),
-            make.div({className: 'small'}, formatNumber(value.min) + ' min')));
+        // if the node is no longer online only show N/A
+        if (this.props.invalid) {
+          $content = make.div(null, make.div({className: 'big inline'}, 'N/A'));
+        } else {
+          var displayVal = formatNumber(value.last);
+          // make the big metric value you appear with min,
+          // max, and an arrow.
+          $content = make.div(null,
+            make.div({className: 'big inline'}, displayVal),
+            make.i({className: 'inline big fa fa-long-arrow-' + (value.slope > 0 ? 'up' : 'down')}),
+            make.div({className: 'inline'},
+              make.div({className: 'small'}, formatNumber(value.max) + ' max'),
+              make.div({className: 'small'}, formatNumber(value.min) + ' min')));
+        }
       }
+      // Content for non metric columns
       if (!$content && !_.isUndefined(value)) {
         $content = make.div(null, make.div({className: 'big inline'}, value));
       }
@@ -73,32 +82,31 @@ define(function (require) {
         {
           key: 'metrics.node_cpu_utilization',
           sortKey: 'metrics.node_cpu_utilization.last',
-          sort: 0,
           title: 'CPU Usage'
         },
         {
           key: 'metrics.node_jvm_mem_percent',
           sortKey: 'metrics.node_jvm_mem_percent.last',
-          sort: 0,
           title: 'JVM Memory'
         },
         {
           key: 'metrics.node_load_average',
           sortKey: 'metrics.node_load_average.last',
-          sort: 0,
           title: 'Load Average'
         },
         {
           key: 'metrics.node_free_space',
           sortKey: 'metrics.node_free_space.last',
-          sort: 0,
           title: 'Disk Free Space'
         },
         {
           key: 'metrics.shard_count',
-          sortKey: 'metrics.shard_count',
-          sort: 0,
           title: 'Shards'
+        },
+        {
+          key: 'status',
+          sortKey: 'invalid',
+          title: 'Status'
         }
       ]
     };
@@ -142,10 +150,8 @@ define(function (require) {
             var type = row.isMaster && 'master' || row.nodeType;
             row.nodeTypeClass = nodeTypeClass[type];
             row.nodeTypeLabel = nodeTypeLabel[type];
-            if (!$scope.cluster.nodes[row.id]) {
-              row.nodeTypeLabel = nodeTypeLabel.invalid;
-              row.nodeTypeClass = nodeTypeClass.invalid;
-            }
+            row.invalid = (!$scope.cluster.nodes[row.id]);
+            row.status = row.invalid ? 'Offline' : 'Online';
             return row;
           });
           tableInstance.setData(tableData);
