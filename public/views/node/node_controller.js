@@ -37,7 +37,7 @@ require('ui/routes')
   }
 });
 
-mod.controller('nodeView', (timefilter, $route, Private, globalState, $executor, $http, marvelClusters, $scope) => {
+mod.controller('nodeView', (timefilter, $route, globalState, Private, $executor, $http, marvelClusters, $scope) => {
 
   timefilter.enabled = true;
 
@@ -48,6 +48,9 @@ mod.controller('nodeView', (timefilter, $route, Private, globalState, $executor,
   setClusters($route.current.locals.marvel.clusters);
 
   $scope.pageData = $route.current.locals.pageData;
+
+  var docTitle = Private(require('ui/doc_title'));
+  docTitle.change(`Marvel - ${$scope.pageData.nodeSummary.name}`, true);
 
   $executor.register({
     execute: () => getPageData(timefilter, globalState, $route, $http),

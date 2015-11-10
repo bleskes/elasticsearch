@@ -35,7 +35,7 @@ require('ui/routes')
   }
 });
 
-mod.controller('nodes', ($route, timefilter, globalState, $executor, $http, marvelClusters, $scope) => {
+mod.controller('nodes', ($route, timefilter, globalState, Private, $executor, $http, marvelClusters, $scope) => {
 
   timefilter.enabled = true;
 
@@ -46,6 +46,9 @@ mod.controller('nodes', ($route, timefilter, globalState, $executor, $http, marv
   setClusters($route.current.locals.marvel.clusters);
 
   $scope.pageData = $route.current.locals.pageData;
+
+  const docTitle = Private(require('ui/doc_title'));
+  docTitle.change('Marvel', true);
 
   $executor.register({
     execute: () => getPageData(timefilter, globalState, $http),

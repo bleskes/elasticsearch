@@ -50,7 +50,7 @@ mod.controller('indexView', (timefilter, $route, Private, globalState, $executor
   $scope.indexName = $route.current.params.index;
 
   var docTitle = Private(require('ui/doc_title'));
-  docTitle.change('Marvel - ' + $scope.indexName, true);
+  docTitle.change(`Marvel - ${$scope.indexName}`, true);
 
   $executor.register({
     execute: () => getPageData(timefilter, globalState, $route, $http),
