@@ -1,5 +1,7 @@
 define(['moment', 'numeral'], function (moment, numeral) {
   return function formatNumber(num, which) {
+    if (typeof num === 'undefined') { return 0; }
+    if (typeof num !== 'number') { return num; }
     var format = '0,0.0';
     var postfix = '';
     switch (which) {

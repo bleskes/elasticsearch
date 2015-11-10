@@ -43,7 +43,7 @@ define(function (require) {
           };
         }(value.metric));
         // if the node is no longer online only show N/A
-        if (this.props.invalid) {
+        if (this.props.offline) {
           $content = make.div(null, make.div({className: 'big inline'}, 'N/A'));
         } else {
           var displayVal = formatNumber(value.last);
@@ -105,7 +105,7 @@ define(function (require) {
         },
         {
           key: 'status',
-          sortKey: 'invalid',
+          sortKey: 'offline',
           title: 'Status'
         }
       ]
@@ -150,8 +150,7 @@ define(function (require) {
             var type = row.isMaster && 'master' || row.nodeType;
             row.nodeTypeClass = nodeTypeClass[type];
             row.nodeTypeLabel = nodeTypeLabel[type];
-            row.invalid = (!$scope.cluster.nodes[row.id]);
-            row.status = row.invalid ? 'Offline' : 'Online';
+            row.status = row.offline ? 'Offline' : 'Online';
             return row;
           });
           tableInstance.setData(tableData);
