@@ -33,6 +33,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 
 import org.junit.Test;
@@ -125,49 +126,234 @@ public class AnomalyRecordTest
     @Test
     public void testEquals_GivenEqualRecords()
     {
-        Influence influence = new Influence();
-
-        AnomalyRecord record1 = new AnomalyRecord();
-        record1.setActual(42.0);
-        record1.setAnomalyScore(99.0);
-        record1.setByFieldName("airline");
-        record1.setByFieldValue("AAL");
-        record1.setFieldName("responsetime");
-        record1.setFunction("metric");
-        record1.setFunctionDescription("Function blah blah");
-        record1.setId("1403701200individual metric/42");
-        record1.setInfluencers(Arrays.asList(influence));
-        record1.setInterim(false);
-        record1.setNormalizedProbability(86.4);
-        record1.setOverFieldName("airport");
-        record1.setOverFieldValue("SKG");
-        record1.setPartitionFieldName("planet");
-        record1.setPartitionFieldValue("earth");
-        record1.setProbability(0.00042);
-        record1.setTimestamp(new Date(0));
-        record1.setTypical(0.5);
-
-        AnomalyRecord record2 = new AnomalyRecord();
-        record2.setActual(42.0);
-        record2.setAnomalyScore(99.0);
-        record2.setByFieldName("airline");
-        record2.setByFieldValue("AAL");
-        record2.setFieldName("responsetime");
-        record2.setFunction("metric");
-        record2.setFunctionDescription("Function blah blah");
-        record2.setId("1403701200individual metric/42");
-        record2.setInfluencers(Arrays.asList(influence));
-        record2.setInterim(false);
-        record2.setNormalizedProbability(86.4);
-        record2.setOverFieldName("airport");
-        record2.setOverFieldValue("SKG");
-        record2.setPartitionFieldName("planet");
-        record2.setPartitionFieldValue("earth");
-        record2.setProbability(0.00042);
-        record2.setTimestamp(new Date(0));
-        record2.setTypical(0.5);
+        AnomalyRecord record1 = createFullyPopulatedRecord();
+        AnomalyRecord record2 = createFullyPopulatedRecord();
 
         assertTrue(record1.equals(record2));
         assertTrue(record2.equals(record1));
+    }
+
+    @Test
+    public void testEquals_GivenDifferentActual()
+    {
+        AnomalyRecord record1 = createFullyPopulatedRecord();
+        AnomalyRecord record2 = createFullyPopulatedRecord();
+        record1.setActual(record1.getActual() + 1.0);
+
+        assertFalse(record1.equals(record2));
+        assertFalse(record2.equals(record1));
+    }
+
+    @Test
+    public void testEquals_GivenDifferentAnomalyScore()
+    {
+        AnomalyRecord record1 = createFullyPopulatedRecord();
+        AnomalyRecord record2 = createFullyPopulatedRecord();
+        record1.setAnomalyScore(record1.getAnomalyScore() + 1.0);
+
+        assertFalse(record1.equals(record2));
+        assertFalse(record2.equals(record1));
+    }
+
+    @Test
+    public void testEquals_GivenDifferentByFieldName()
+    {
+        AnomalyRecord record1 = createFullyPopulatedRecord();
+        AnomalyRecord record2 = createFullyPopulatedRecord();
+        record1.setByFieldName(record1.getByFieldName() + ".diff");
+
+        assertFalse(record1.equals(record2));
+        assertFalse(record2.equals(record1));
+    }
+
+    @Test
+    public void testEquals_GivenDifferentByFieldValue()
+    {
+        AnomalyRecord record1 = createFullyPopulatedRecord();
+        AnomalyRecord record2 = createFullyPopulatedRecord();
+        record1.setByFieldValue(record1.getByFieldValue() + ".diff");
+
+        assertFalse(record1.equals(record2));
+        assertFalse(record2.equals(record1));
+    }
+
+    @Test
+    public void testEquals_GivenDifferentFieldName()
+    {
+        AnomalyRecord record1 = createFullyPopulatedRecord();
+        AnomalyRecord record2 = createFullyPopulatedRecord();
+        record1.setFieldName(record1.getFieldName() + ".diff");
+
+        assertFalse(record1.equals(record2));
+        assertFalse(record2.equals(record1));
+    }
+
+    @Test
+    public void testEquals_GivenDifferentFunction()
+    {
+        AnomalyRecord record1 = createFullyPopulatedRecord();
+        AnomalyRecord record2 = createFullyPopulatedRecord();
+        record1.setFunction(record1.getFunction() + ".diff");
+
+        assertFalse(record1.equals(record2));
+        assertFalse(record2.equals(record1));
+    }
+
+    @Test
+    public void testEquals_GivenDifferentFunctionDescription()
+    {
+        AnomalyRecord record1 = createFullyPopulatedRecord();
+        AnomalyRecord record2 = createFullyPopulatedRecord();
+        record1.setFunctionDescription(record1.getFunctionDescription() + ".diff");
+
+        assertFalse(record1.equals(record2));
+        assertFalse(record2.equals(record1));
+    }
+
+    @Test
+    public void testEquals_GivenDifferentId()
+    {
+        AnomalyRecord record1 = createFullyPopulatedRecord();
+        AnomalyRecord record2 = createFullyPopulatedRecord();
+        record1.setId(record1.getId() + "0");
+
+        assertTrue(record1.equals(record2));
+        assertTrue(record2.equals(record1));
+    }
+
+    @Test
+    public void testEquals_GivenDifferentInfluencers()
+    {
+        AnomalyRecord record1 = createFullyPopulatedRecord();
+        AnomalyRecord record2 = createFullyPopulatedRecord();
+        record1.setInfluencers(Collections.emptyList());
+
+        assertFalse(record1.equals(record2));
+        assertFalse(record2.equals(record1));
+    }
+
+    @Test
+    public void testEquals_GivenDifferentInterim()
+    {
+        AnomalyRecord record1 = createFullyPopulatedRecord();
+        AnomalyRecord record2 = createFullyPopulatedRecord();
+        record1.setInterim(!record1.isInterim());
+
+        assertFalse(record1.equals(record2));
+        assertFalse(record2.equals(record1));
+    }
+
+    @Test
+    public void testEquals_GivenDifferentNormalizedProbability()
+    {
+        AnomalyRecord record1 = createFullyPopulatedRecord();
+        AnomalyRecord record2 = createFullyPopulatedRecord();
+        record1.setNormalizedProbability(record1.getNormalizedProbability() + 0.1);
+
+        assertFalse(record1.equals(record2));
+        assertFalse(record2.equals(record1));
+    }
+
+    @Test
+    public void testEquals_GivenDifferentOverFieldName()
+    {
+        AnomalyRecord record1 = createFullyPopulatedRecord();
+        AnomalyRecord record2 = createFullyPopulatedRecord();
+        record1.setOverFieldName(record1.getOverFieldName() + ".diff");
+
+        assertFalse(record1.equals(record2));
+        assertFalse(record2.equals(record1));
+    }
+
+    @Test
+    public void testEquals_GivenDifferentOverFieldValue()
+    {
+        AnomalyRecord record1 = createFullyPopulatedRecord();
+        AnomalyRecord record2 = createFullyPopulatedRecord();
+        record1.setOverFieldValue(record1.getOverFieldValue() + ".diff");
+
+        assertFalse(record1.equals(record2));
+        assertFalse(record2.equals(record1));
+    }
+
+    @Test
+    public void testEquals_GivenDifferentPartitionFieldName()
+    {
+        AnomalyRecord record1 = createFullyPopulatedRecord();
+        AnomalyRecord record2 = createFullyPopulatedRecord();
+        record1.setPartitionFieldName(record1.getPartitionFieldName() + ".diff");
+
+        assertFalse(record1.equals(record2));
+        assertFalse(record2.equals(record1));
+    }
+
+    @Test
+    public void testEquals_GivenDifferentPartitionFieldValue()
+    {
+        AnomalyRecord record1 = createFullyPopulatedRecord();
+        AnomalyRecord record2 = createFullyPopulatedRecord();
+        record1.setPartitionFieldValue(record1.getPartitionFieldValue() + ".diff");
+
+        assertFalse(record1.equals(record2));
+        assertFalse(record2.equals(record1));
+    }
+
+    @Test
+    public void testEquals_GivenDifferentProbability()
+    {
+        AnomalyRecord record1 = createFullyPopulatedRecord();
+        AnomalyRecord record2 = createFullyPopulatedRecord();
+        record1.setProbability(record1.getProbability() + 0.001);
+
+        assertFalse(record1.equals(record2));
+        assertFalse(record2.equals(record1));
+    }
+
+    @Test
+    public void testEquals_GivenDifferentTimestamp()
+    {
+        AnomalyRecord record1 = createFullyPopulatedRecord();
+        AnomalyRecord record2 = createFullyPopulatedRecord();
+        Date timestamp = record1.getTimestamp();
+        Date newTimestamp = new Date(timestamp.getTime() + 1000);
+        record1.setTimestamp(newTimestamp);
+
+        assertFalse(record1.equals(record2));
+        assertFalse(record2.equals(record1));
+    }
+
+    @Test
+    public void testEquals_GivenDifferentTypical()
+    {
+        AnomalyRecord record1 = createFullyPopulatedRecord();
+        AnomalyRecord record2 = createFullyPopulatedRecord();
+        record1.setTypical(record1.getTypical() + 42.0);
+
+        assertFalse(record1.equals(record2));
+        assertFalse(record2.equals(record1));
+    }
+
+    private static AnomalyRecord createFullyPopulatedRecord()
+    {
+        AnomalyRecord record = new AnomalyRecord();
+        record.setActual(42.0);
+        record.setAnomalyScore(99.0);
+        record.setByFieldName("airline");
+        record.setByFieldValue("AAL");
+        record.setFieldName("responsetime");
+        record.setFunction("metric");
+        record.setFunctionDescription("Function blah blah");
+        record.setInfluencers(Arrays.asList(new Influence()));
+        record.setInterim(false);
+        record.setNormalizedProbability(86.4);
+        record.setOverFieldName("airport");
+        record.setOverFieldValue("SKG");
+        record.setPartitionFieldName("planet");
+        record.setPartitionFieldValue("earth");
+        record.setProbability(0.00042);
+        record.setTimestamp(new Date(0));
+        record.setTypical(0.5);
+        record.setId("1403701200individual metric/planet/earth42");
+        return record;
     }
 }
