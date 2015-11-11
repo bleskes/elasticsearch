@@ -18,6 +18,7 @@
 package org.elasticsearch.watcher.actions.hipchat.service;
 
 import org.elasticsearch.ElasticsearchParseException;
+import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.ParseFieldMatcher;
 import org.elasticsearch.common.settings.Settings;
@@ -27,7 +28,6 @@ import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.watcher.support.text.TextTemplateEngine;
 import org.elasticsearch.watcher.support.text.TextTemplate;
 
-import javax.annotation.Nullable;
 import java.io.IOException;
 import java.util.*;
 
