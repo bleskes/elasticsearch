@@ -115,6 +115,7 @@ public class ElasticsearchJobProvider implements JobProvider
     private static final List<String> SECONDARY_SORT = new ArrayList<>();
 
     private static final int UPDATE_JOB_RETRY_COUNT = 3;
+    private static final int RECORDS_TAKE_PARAM = 500;
 
 
     private final Node m_Node;
@@ -615,9 +616,8 @@ public class ElasticsearchJobProvider implements JobProvider
             if (expand)
             {
                 int rskip = 0;
-                int rtake = 500;
                 QueryPage<AnomalyRecord> page = this.bucketRecords(
-                        jobId, hit.getId(), rskip, rtake, includeInterim,
+                        jobId, hit.getId(), rskip, RECORDS_TAKE_PARAM, includeInterim,
                         AnomalyRecord.PROBABILITY, false);
 
                 if (page.hitCount() > 0)
@@ -625,11 +625,11 @@ public class ElasticsearchJobProvider implements JobProvider
                     bucket.setRecords(page.queryResults());
                 }
 
-                while (page.hitCount() > rskip + rtake)
+                while (page.hitCount() > rskip + RECORDS_TAKE_PARAM)
                 {
-                    rskip += rtake;
+                    rskip += RECORDS_TAKE_PARAM;
                     page = this.bucketRecords(
-                            jobId, hit.getId(), rskip, rtake, includeInterim,
+                            jobId, hit.getId(), rskip, RECORDS_TAKE_PARAM, includeInterim,
                             AnomalyRecord.PROBABILITY, false);
                     bucket.getRecords().addAll(page.queryResults());
                 }
@@ -676,17 +676,16 @@ public class ElasticsearchJobProvider implements JobProvider
                 if (expand)
                 {
                     int rskip = 0;
-                    int rtake = 500;
                     QueryPage<AnomalyRecord> page = this.bucketRecords(
-                            jobId, bucketId, rskip, rtake, includeInterim,
+                            jobId, bucketId, rskip, RECORDS_TAKE_PARAM, includeInterim,
                             AnomalyRecord.PROBABILITY, false);
                     bucket.setRecords(page.queryResults());
 
-                    while (page.hitCount() > rskip + rtake)
+                    while (page.hitCount() > rskip + RECORDS_TAKE_PARAM)
                     {
-                        rskip += rtake;
+                        rskip += RECORDS_TAKE_PARAM;
                         page = this.bucketRecords(
-                                jobId, bucketId, rskip, rtake, includeInterim,
+                                jobId, bucketId, rskip, RECORDS_TAKE_PARAM, includeInterim,
                                 AnomalyRecord.PROBABILITY, false);
                         bucket.getRecords().addAll(page.queryResults());
                     }
