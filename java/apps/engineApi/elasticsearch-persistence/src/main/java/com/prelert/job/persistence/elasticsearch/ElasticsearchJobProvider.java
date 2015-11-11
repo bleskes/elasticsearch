@@ -615,31 +615,32 @@ public class ElasticsearchJobProvider implements JobProvider
 
             if (expand)
             {
-                int rskip = 0;
-                QueryPage<AnomalyRecord> page = this.bucketRecords(
-                        jobId, hit.getId(), rskip, RECORDS_TAKE_PARAM, includeInterim,
-                        AnomalyRecord.PROBABILITY, false);
-
-                if (page.hitCount() > 0)
-                {
-                    bucket.setRecords(page.queryResults());
-                }
-
-                while (page.hitCount() > rskip + RECORDS_TAKE_PARAM)
-                {
-                    rskip += RECORDS_TAKE_PARAM;
-                    page = this.bucketRecords(
-                            jobId, hit.getId(), rskip, RECORDS_TAKE_PARAM, includeInterim,
-                            AnomalyRecord.PROBABILITY, false);
-                    bucket.getRecords().addAll(page.queryResults());
-                }
+                fillBucketWithItsRecords(bucket, jobId, includeInterim);
             }
 
             results.add(bucket);
         }
 
-
         return new QueryPage<>(results, searchResponse.getHits().getTotalHits());
+    }
+
+    private void fillBucketWithItsRecords(Bucket bucket, String jobId, boolean includeInterim)
+            throws UnknownJobException
+    {
+        int skip = 0;
+        String bucketId = bucket.getId();
+
+        QueryPage<AnomalyRecord> page = this.bucketRecords(jobId, bucketId, skip,
+                RECORDS_TAKE_PARAM, includeInterim, AnomalyRecord.PROBABILITY, false);
+        bucket.setRecords(page.queryResults());
+
+        while (page.hitCount() > skip + RECORDS_TAKE_PARAM)
+        {
+            skip += RECORDS_TAKE_PARAM;
+            page = this.bucketRecords(jobId, bucketId, skip, RECORDS_TAKE_PARAM, includeInterim,
+                    AnomalyRecord.PROBABILITY, false);
+            bucket.getRecords().addAll(page.queryResults());
+        }
     }
 
     @Override
@@ -675,20 +676,7 @@ public class ElasticsearchJobProvider implements JobProvider
             {
                 if (expand)
                 {
-                    int rskip = 0;
-                    QueryPage<AnomalyRecord> page = this.bucketRecords(
-                            jobId, bucketId, rskip, RECORDS_TAKE_PARAM, includeInterim,
-                            AnomalyRecord.PROBABILITY, false);
-                    bucket.setRecords(page.queryResults());
-
-                    while (page.hitCount() > rskip + RECORDS_TAKE_PARAM)
-                    {
-                        rskip += RECORDS_TAKE_PARAM;
-                        page = this.bucketRecords(
-                                jobId, bucketId, rskip, RECORDS_TAKE_PARAM, includeInterim,
-                                AnomalyRecord.PROBABILITY, false);
-                        bucket.getRecords().addAll(page.queryResults());
-                    }
+                    fillBucketWithItsRecords(bucket, jobId, includeInterim);
                 }
 
                 doc = Optional.of(bucket);
@@ -697,7 +685,6 @@ public class ElasticsearchJobProvider implements JobProvider
 
         return doc;
     }
-
 
     @Override
     public QueryPage<AnomalyRecord> bucketRecords(String jobId,
