@@ -114,6 +114,8 @@ public class ElasticsearchJobProvider implements JobProvider
 
     private static final List<String> SECONDARY_SORT = new ArrayList<>();
 
+    private static final int UPDATE_JOB_RETRY_COUNT = 3;
+
 
     private final Node m_Node;
     private final Client m_Client;
@@ -472,7 +474,7 @@ public class ElasticsearchJobProvider implements JobProvider
     {
         checkJobExists(jobId);
 
-        int retryCount = 3;
+        int retryCount = UPDATE_JOB_RETRY_COUNT;
         while (--retryCount >= 0)
         {
             try
