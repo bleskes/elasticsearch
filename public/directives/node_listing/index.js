@@ -5,12 +5,8 @@ define(function (require) {
   var React = require('react');
   var make = React.DOM;
   var extractIp = require('plugins/marvel/lib/extract_ip');
-  var lookups = require('plugins/marvel/lib/lookups');
 
   var Table = require('plugins/marvel/directives/paginated_table/components/table');
-
-  var nodeTypeClass = lookups.nodeTypeClass;
-  var nodeTypeLabel = lookups.nodeTypeLabel;
 
   // change the node to actually display the name
   module.directive('marvelNodesListing', function () {
@@ -19,9 +15,9 @@ define(function (require) {
       var value = _.get(this.props, dataKey.key);
       var $content = null;
       // Content for the name column.
-      if (dataKey.key === 'name') {
-        var title = this.props.nodeTypeLabel;
-        var classes = 'fa ' + this.props.nodeTypeClass;
+      if (dataKey.key === 'node.name') {
+        var title = this.props.node.nodeTypeLabel;
+        var classes = 'fa ' + this.props.node.nodeTypeClass;
         var state = this.state || {};
         $content = make.div(null,
           make.span({
@@ -31,7 +27,7 @@ define(function (require) {
             className: classes },
             null)
           ),
-          make.a({href: '#/node/' + state.id}, state.name),  // <a href="#/node/:node_id>
+          make.a({href: '#/node/' + state.id}, state.node.name),  // <a href="#/node/:node_id>
           make.div({className: 'small'}, extractIp(state.transport_address))); //   <div.small>
       }
       // make the content for all of the metric columns
@@ -63,6 +59,7 @@ define(function (require) {
       }
       return make.td({key: idx}, $content);
     }
+
     var initialTableOptions = {
       title: 'Nodes',
       searchPlaceholder: 'Filter Nodes',
@@ -74,8 +71,8 @@ define(function (require) {
        * "sortKey" should be a scalar */
       columns: [
         {
-          key: 'name',
-          sortKey: 'nodeName',
+          key: 'node.name',
+          sortKey: 'node.name',
           sort: 1,
           title: 'Name'
         },
@@ -110,16 +107,17 @@ define(function (require) {
         }
       ]
     };
+
     return {
       restrict: 'E',
-      scope: { cluster: '=', data: '=', nodes: '='},
+      scope: { cluster: '=', rows: '=' },
       link: function ($scope, $el) {
         var tableRowTemplate = React.createClass({
           getInitialState: function () {
-            return $scope.nodes[this.props.id] || null;
+            return _.find($scope.rows, {id: this.props.id }) || null;
           },
           componentWillReceiveProps: function (newProps) {
-            this.setState($scope.nodes[newProps.id]);
+            this.setState(_.find($scope.rows, { id: newProps.id }));
           },
           render: function () {
             var boundTemplateFn = makeTdWithPropKey.bind(this);
@@ -135,25 +133,12 @@ define(function (require) {
           options: initialTableOptions,
           template: tableRowTemplate
         });
-
         var tableInstance = React.render($table, $el[0]);
-
-        $scope.$watch('data', function (data) {
-          var tableData = data.filter(function (row) {
-            return $scope.nodes[row.id];
-          }).map(function (row) {
-            var node = $scope.nodes[row.id];
-            row.metrics.shard_count = node.shardCount;
-            row.nodeName = node.name;
-            row.nodeType = node.type;
-            row.isMaster = node.master;
-            var type = row.isMaster && 'master' || row.nodeType;
-            row.nodeTypeClass = nodeTypeClass[type];
-            row.nodeTypeLabel = nodeTypeLabel[type];
+        $scope.$watch('rows', function (rows) {
+          rows.forEach(function (row) {
             row.status = row.offline ? 'Offline' : 'Online';
-            return row;
           });
-          tableInstance.setData(tableData);
+          tableInstance.setData(rows);
         });
       }
     };
