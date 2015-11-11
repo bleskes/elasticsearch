@@ -522,39 +522,32 @@ public class ElasticsearchJobProvider implements JobProvider
     @Override
     public boolean deleteJob(String jobId) throws UnknownJobException, DataStoreException
     {
+        if (indexExists(jobId) == false)
+        {
+            throw new UnknownJobException(jobId);
+        }
+        LOGGER.trace("ES API CALL: delete index " + jobId);
+
         try
         {
-            if (indexExists(jobId))
-            {
-                LOGGER.trace("ES API CALL: delete index " + jobId);
-                DeleteIndexResponse response = m_Client.admin()
-                        .indices().delete(new DeleteIndexRequest(jobId)).get();
-
-                return response.isAcknowledged();
-            }
-            else
-            {
-                throw new UnknownJobException(jobId);
-            }
+            DeleteIndexResponse response = m_Client.admin()
+                    .indices().delete(new DeleteIndexRequest(jobId)).get();
+            return response.isAcknowledged();
         }
         catch (InterruptedException|ExecutionException e)
         {
+            String msg = "Error deleting index '" + jobId + "'";
+            ErrorCodes errorCode = ErrorCodes.DATA_STORE_ERROR;
             if (e.getCause() instanceof IndexMissingException)
             {
-                String msg = "Cannot delete job - no index with id '" + jobId + " in the database";
-                LOGGER.warn(msg);
-                throw new UnknownJobException(jobId, msg, ErrorCodes.MISSING_JOB_ERROR);
+                msg = "Cannot delete job - no index with id '" + jobId + " in the database";
+                errorCode = ErrorCodes.MISSING_JOB_ERROR;
             }
-            else
-            {
-                String msg = "Error deleting index '" + jobId + "'";
-                LOGGER.error(msg);
-                throw new DataStoreException(msg, ErrorCodes.DATA_STORE_ERROR, e.getCause());
-            }
+            LOGGER.warn(msg);
+            throw new UnknownJobException(jobId, msg, errorCode);
         }
     }
 
-    /* Results */
     @Override
     public QueryPage<Bucket> buckets(String jobId,
             boolean expand, boolean includeInterim, int skip, int take,
@@ -580,10 +573,8 @@ public class ElasticsearchJobProvider implements JobProvider
         return buckets(jobId, expand, includeInterim, skip, take, fb);
     }
 
-    private QueryPage<Bucket> buckets(String jobId,
-            boolean expand, boolean includeInterim, int skip, int take,
-            FilterBuilder fb)
-    throws UnknownJobException
+    private QueryPage<Bucket> buckets(String jobId, boolean expand, boolean includeInterim,
+            int skip, int take, FilterBuilder fb) throws UnknownJobException
     {
         SortBuilder sb = new FieldSortBuilder(Bucket.ID)
                     .unmappedType("string")
@@ -787,14 +778,8 @@ public class ElasticsearchJobProvider implements JobProvider
             throw new UnknownJobException(jobId);
         }
 
-        if (response.isExists())
-        {
-            return Optional.of(m_ObjectMapper.convertValue(response.getSource(), CategoryDefinition.class));
-        }
-        else
-        {
-            return Optional.<CategoryDefinition>empty();
-        }
+        return response.isExists() ? Optional.of(m_ObjectMapper.convertValue(response.getSource(),
+                CategoryDefinition.class)) : Optional.<CategoryDefinition> empty();
     }
 
     @Override
