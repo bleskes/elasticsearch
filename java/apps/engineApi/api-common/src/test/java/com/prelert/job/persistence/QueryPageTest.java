@@ -27,36 +27,19 @@
 
 package com.prelert.job.persistence;
 
-import java.util.List;
+import static org.junit.Assert.assertEquals;
 
-/**
- * Generic wrapper class for a page of query results and the
- * total number of query hits.<br>
- * {@linkplain #hitCount()} is the total number of results
- * but that value may not be equal to the actual length of
- * the {@linkplain #queryResults()} list if skip & take or
- * some cursor was used in the database query.
- *
- * @param <T>
- */
-public final class QueryPage<T>
+import java.util.Arrays;
+
+import org.junit.Test;
+
+public class QueryPageTest
 {
-    private final List<T> m_QueryResults;
-    private final long m_HitCount;
-
-    public QueryPage(List<T> queryResults, long hitCount)
+    @Test
+    public void testConstructor()
     {
-        m_QueryResults = queryResults;
-        m_HitCount = hitCount;
-    }
-
-    public List<T> queryResults()
-    {
-        return m_QueryResults;
-    }
-
-    public long hitCount()
-    {
-        return m_HitCount;
+        QueryPage<String> queryPage = new QueryPage<String>(Arrays.asList("a", "b"), 2);
+        assertEquals(2, queryPage.hitCount());
+        assertEquals(Arrays.asList("a", "b"), queryPage.queryResults());
     }
 }
