@@ -69,18 +69,18 @@ define(function (require) {
       scope: {
         data: '='
       },
-      link: function ($scope, $el) {
+      link: function (scope, $el) {
         var tableRowTemplate = React.createClass({
           getInitialState: function () {
-            var index = _.findWhere($scope.data, {name: this.props.name});
+            var index = _.findWhere(scope.data, {name: this.props.name});
             return {
               exists: !!index,
               status: !!index ? index.status : 'disabled'
             };
           },
           componentWillReceiveProps: function (nextProps) {
-            if ($scope.data) {
-              var index = _.findWhere($scope.data, {name: this.props.name});
+            if (scope.data) {
+              var index = _.findWhere(scope.data, {name: this.props.name});
               this.setState({
                 exists: !!index,
                 status: !!index ? index.status : 'disabled'
@@ -102,12 +102,12 @@ define(function (require) {
         var tableFactory = React.createFactory(Table);
 
         var table = React.render(tableFactory({
-          scope: $scope,
+          scope: scope,
           options: initialTableOptions,
           template: tableRowTemplate
         }), $el[0]);
 
-        $scope.$watch('data', (data) => {
+        scope.$watch('data', (data) => {
           table.setData(data);
           table.render();
         });
