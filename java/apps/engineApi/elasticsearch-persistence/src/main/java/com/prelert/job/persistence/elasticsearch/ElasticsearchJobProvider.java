@@ -114,6 +114,9 @@ public class ElasticsearchJobProvider implements JobProvider
 
     private static final List<String> SECONDARY_SORT = new ArrayList<>();
 
+    private static final int UPDATE_JOB_RETRY_COUNT = 3;
+    private static final int RECORDS_TAKE_PARAM = 500;
+
 
     private final Node m_Node;
     private final Client m_Client;
@@ -472,7 +475,7 @@ public class ElasticsearchJobProvider implements JobProvider
     {
         checkJobExists(jobId);
 
-        int retryCount = 3;
+        int retryCount = UPDATE_JOB_RETRY_COUNT;
         while (--retryCount >= 0)
         {
             try
@@ -522,39 +525,32 @@ public class ElasticsearchJobProvider implements JobProvider
     @Override
     public boolean deleteJob(String jobId) throws UnknownJobException, DataStoreException
     {
+        if (indexExists(jobId) == false)
+        {
+            throw new UnknownJobException(jobId);
+        }
+        LOGGER.trace("ES API CALL: delete index " + jobId);
+
         try
         {
-            if (indexExists(jobId))
-            {
-                LOGGER.trace("ES API CALL: delete index " + jobId);
-                DeleteIndexResponse response = m_Client.admin()
-                        .indices().delete(new DeleteIndexRequest(jobId)).get();
-
-                return response.isAcknowledged();
-            }
-            else
-            {
-                throw new UnknownJobException(jobId);
-            }
+            DeleteIndexResponse response = m_Client.admin()
+                    .indices().delete(new DeleteIndexRequest(jobId)).get();
+            return response.isAcknowledged();
         }
         catch (InterruptedException|ExecutionException e)
         {
+            String msg = "Error deleting index '" + jobId + "'";
+            ErrorCodes errorCode = ErrorCodes.DATA_STORE_ERROR;
             if (e.getCause() instanceof IndexMissingException)
             {
-                String msg = "Cannot delete job - no index with id '" + jobId + " in the database";
-                LOGGER.warn(msg);
-                throw new UnknownJobException(jobId, msg, ErrorCodes.MISSING_JOB_ERROR);
+                msg = "Cannot delete job - no index with id '" + jobId + " in the database";
+                errorCode = ErrorCodes.MISSING_JOB_ERROR;
             }
-            else
-            {
-                String msg = "Error deleting index '" + jobId + "'";
-                LOGGER.error(msg);
-                throw new DataStoreException(msg, ErrorCodes.DATA_STORE_ERROR, e.getCause());
-            }
+            LOGGER.warn(msg);
+            throw new UnknownJobException(jobId, msg, errorCode);
         }
     }
 
-    /* Results */
     @Override
     public QueryPage<Bucket> buckets(String jobId,
             boolean expand, boolean includeInterim, int skip, int take,
@@ -580,10 +576,8 @@ public class ElasticsearchJobProvider implements JobProvider
         return buckets(jobId, expand, includeInterim, skip, take, fb);
     }
 
-    private QueryPage<Bucket> buckets(String jobId,
-            boolean expand, boolean includeInterim, int skip, int take,
-            FilterBuilder fb)
-    throws UnknownJobException
+    private QueryPage<Bucket> buckets(String jobId, boolean expand, boolean includeInterim,
+            int skip, int take, FilterBuilder fb) throws UnknownJobException
     {
         SortBuilder sb = new FieldSortBuilder(Bucket.ID)
                     .unmappedType("string")
@@ -621,32 +615,32 @@ public class ElasticsearchJobProvider implements JobProvider
 
             if (expand)
             {
-                int rskip = 0;
-                int rtake = 500;
-                QueryPage<AnomalyRecord> page = this.bucketRecords(
-                        jobId, hit.getId(), rskip, rtake, includeInterim,
-                        AnomalyRecord.PROBABILITY, false);
-
-                if (page.hitCount() > 0)
-                {
-                    bucket.setRecords(page.queryResults());
-                }
-
-                while (page.hitCount() > rskip + rtake)
-                {
-                    rskip += rtake;
-                    page = this.bucketRecords(
-                            jobId, hit.getId(), rskip, rtake, includeInterim,
-                            AnomalyRecord.PROBABILITY, false);
-                    bucket.getRecords().addAll(page.queryResults());
-                }
+                fillBucketWithItsRecords(bucket, jobId, includeInterim);
             }
 
             results.add(bucket);
         }
 
-
         return new QueryPage<>(results, searchResponse.getHits().getTotalHits());
+    }
+
+    private void fillBucketWithItsRecords(Bucket bucket, String jobId, boolean includeInterim)
+            throws UnknownJobException
+    {
+        int skip = 0;
+        String bucketId = bucket.getId();
+
+        QueryPage<AnomalyRecord> page = this.bucketRecords(jobId, bucketId, skip,
+                RECORDS_TAKE_PARAM, includeInterim, AnomalyRecord.PROBABILITY, false);
+        bucket.setRecords(page.queryResults());
+
+        while (page.hitCount() > skip + RECORDS_TAKE_PARAM)
+        {
+            skip += RECORDS_TAKE_PARAM;
+            page = this.bucketRecords(jobId, bucketId, skip, RECORDS_TAKE_PARAM, includeInterim,
+                    AnomalyRecord.PROBABILITY, false);
+            bucket.getRecords().addAll(page.queryResults());
+        }
     }
 
     @Override
@@ -682,21 +676,7 @@ public class ElasticsearchJobProvider implements JobProvider
             {
                 if (expand)
                 {
-                    int rskip = 0;
-                    int rtake = 500;
-                    QueryPage<AnomalyRecord> page = this.bucketRecords(
-                            jobId, bucketId, rskip, rtake, includeInterim,
-                            AnomalyRecord.PROBABILITY, false);
-                    bucket.setRecords(page.queryResults());
-
-                    while (page.hitCount() > rskip + rtake)
-                    {
-                        rskip += rtake;
-                        page = this.bucketRecords(
-                                jobId, bucketId, rskip, rtake, includeInterim,
-                                AnomalyRecord.PROBABILITY, false);
-                        bucket.getRecords().addAll(page.queryResults());
-                    }
+                    fillBucketWithItsRecords(bucket, jobId, includeInterim);
                 }
 
                 doc = Optional.of(bucket);
@@ -705,7 +685,6 @@ public class ElasticsearchJobProvider implements JobProvider
 
         return doc;
     }
-
 
     @Override
     public QueryPage<AnomalyRecord> bucketRecords(String jobId,
@@ -787,14 +766,8 @@ public class ElasticsearchJobProvider implements JobProvider
             throw new UnknownJobException(jobId);
         }
 
-        if (response.isExists())
-        {
-            return Optional.of(m_ObjectMapper.convertValue(response.getSource(), CategoryDefinition.class));
-        }
-        else
-        {
-            return Optional.<CategoryDefinition>empty();
-        }
+        return response.isExists() ? Optional.of(m_ObjectMapper.convertValue(response.getSource(),
+                CategoryDefinition.class)) : Optional.<CategoryDefinition> empty();
     }
 
     @Override
