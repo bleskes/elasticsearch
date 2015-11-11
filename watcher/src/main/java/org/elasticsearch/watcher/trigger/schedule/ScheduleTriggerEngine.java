@@ -17,6 +17,7 @@
 
 package org.elasticsearch.watcher.trigger.schedule;
 
+import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.watcher.support.WatcherDateTimeUtils;
@@ -25,7 +26,6 @@ import org.elasticsearch.watcher.trigger.AbstractTriggerEngine;
 import org.elasticsearch.watcher.trigger.TriggerService;
 import org.joda.time.DateTime;
 
-import javax.annotation.Nullable;
 import java.io.IOException;
 import java.util.Map;
 
