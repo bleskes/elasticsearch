@@ -30,7 +30,7 @@ define(function (require) {
     render: function () {
       var that = this;
       function makeTh(config, idx) {
-        var isSortCol = config.sort !== 0;
+        var isSortCol = config.sort !== 0 && config.sort;
         var isSortAsc = config.sort === 1;
         var $icon = false;
         if (isSortCol) {
