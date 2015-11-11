@@ -1,4 +1,6 @@
 
+apply plugin: 'elasticsearch.project-attachment'
+
 allprojects {
   apply plugin: 'idea'
   apply plugin: 'eclipse'
