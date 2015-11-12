@@ -98,11 +98,15 @@ public abstract class ResourceWithJobManager
      */
     protected JobManager jobManager()
     {
-        if (m_JobManager != null)
+        if (m_JobManager == null)
         {
-            return m_JobManager;
+            m_JobManager = getSingleton(JobManager.class);
         }
+        return m_JobManager;
+    }
 
+    private <T> T getSingleton(Class<T> clazz)
+    {
         if (m_RestApplication == null)
         {
             LOGGER.error("Application context has not been set in "
@@ -115,23 +119,17 @@ public abstract class ResourceWithJobManager
         Set<Object> singletons = m_RestApplication.getSingletons();
         for (Object obj : singletons)
         {
-            if (obj instanceof JobManager)
+            if (clazz.isInstance(obj))
             {
-                m_JobManager = (JobManager)obj;
-                break;
+                return clazz.cast(obj);
             }
         }
 
-        if (m_JobManager == null)
-        {
-            LOGGER.error("Application singleton set doesn't contain an " +
-                    "instance of JobManager");
+        LOGGER.error("Application singleton set doesn't contain an " +
+                "instance of " + clazz.getSimpleName());
 
-            throw new IllegalStateException("Application singleton set doesn't "
-                    + "contain an instance of JobManager");
-        }
-
-        return m_JobManager;
+        throw new IllegalStateException("Application singleton set doesn't "
+                + "contain an instance of " + clazz.getSimpleName());
     }
 
     /**
@@ -141,39 +139,10 @@ public abstract class ResourceWithJobManager
      */
     protected AlertManager alertManager()
     {
-        if (m_AlertManager != null)
-        {
-            return m_AlertManager;
-        }
-
-        if (m_RestApplication == null)
-        {
-            LOGGER.error("Application context has not been set in "
-                    + "the jobs resource");
-
-            throw new IllegalStateException("Application context has not been"
-                    + " set in the jobs resource");
-        }
-
-        Set<Object> singletons = m_RestApplication.getSingletons();
-        for (Object obj : singletons)
-        {
-            if (obj instanceof AlertManager)
-            {
-                m_AlertManager = (AlertManager)obj;
-                break;
-            }
-        }
-
         if (m_AlertManager == null)
         {
-            String msg = "Application singleton set doesn't contain an " +
-                    "instance of AlertManager";
-
-            LOGGER.error(msg);
-            throw new IllegalStateException(msg);
+            m_AlertManager = getSingleton(AlertManager.class);
         }
-
         return m_AlertManager;
     }
 
@@ -183,42 +152,12 @@ public abstract class ResourceWithJobManager
      */
     protected ServerInfoFactory serverInfo()
     {
-        if (m_ServerInfo != null)
-        {
-            return m_ServerInfo;
-        }
-
-        if (m_RestApplication == null)
-        {
-            LOGGER.error("Application context has not been set in "
-                    + "the jobs resource");
-
-            throw new IllegalStateException("Application context has not been"
-                    + " set in the jobs resource");
-        }
-
-        Set<Object> singletons = m_RestApplication.getSingletons();
-        for (Object obj : singletons)
-        {
-            if (obj instanceof ServerInfoFactory)
-            {
-                m_ServerInfo = (ServerInfoFactory)obj;
-                break;
-            }
-        }
-
         if (m_ServerInfo == null)
         {
-            String msg = "Application singleton set doesn't contain an " +
-                    "instance of ServerInfoFactory";
-
-            LOGGER.error(msg);
-            throw new IllegalStateException(msg);
+            m_ServerInfo = getSingleton(ServerInfoFactory.class);
         }
-
         return m_ServerInfo;
     }
-
 
     /**
      * Set the previous and next page URLs if appropriate.
