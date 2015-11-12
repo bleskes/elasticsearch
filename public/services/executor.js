@@ -6,6 +6,7 @@ mod.service('$executor', (globalState, Promise, $timeout, timefilter) => {
 
   const queue = [];
   let executionTimer;
+  let ignorePaused = false;
 
   /**
    * Resets the timer to start again
@@ -16,12 +17,16 @@ mod.service('$executor', (globalState, Promise, $timeout, timefilter) => {
     start();
   }
 
+  function killTimer() {
+    if (executionTimer) $timeout.cancel(executionTimer);
+  }
+
   /**
    * Cancels the execution timer
    * @returns {void}
    */
   function cancel() {
-    if (executionTimer) $timeout.cancel(executionTimer);
+    killTimer();
     timefilter.off('update', reset);
     globalState.off('save_with_changes', runIfTime);
   }
@@ -41,6 +46,7 @@ mod.service('$executor', (globalState, Promise, $timeout, timefilter) => {
    */
   function destroy() {
     cancel();
+    ignorePaused = false;
     queue.splice(0, queue.length);
   }
 
@@ -58,9 +64,13 @@ mod.service('$executor', (globalState, Promise, $timeout, timefilter) => {
   }
 
   function runIfTime(changes) {
-    if (_.contains(changes, 'time')) {
+    const timeChanged = _.contains(changes, 'time');
+    const refreshIntervalChanged = _.contains(changes, 'refreshInterval');
+    if (timeChanged || (refreshIntervalChanged && !timefilter.refreshInterval.pause)) {
       cancel();
       run();
+    } else if (refreshIntervalChanged && timefilter.refreshInterval.pause) {
+      killTimer();
     }
   }
 
@@ -70,7 +80,7 @@ mod.service('$executor', (globalState, Promise, $timeout, timefilter) => {
    */
   function start() {
     globalState.on('save_with_changes', runIfTime);
-    if (!timefilter.refreshInterval.pause) {
+    if (ignorePaused || !timefilter.refreshInterval.pause) {
       executionTimer = $timeout(run, timefilter.refreshInterval.value);
     }
   }
@@ -80,9 +90,16 @@ mod.service('$executor', (globalState, Promise, $timeout, timefilter) => {
    */
   return {
     register,
-    start(now = false) {
-      if (now) {
+    start(options = {}) {
+      options = _.defaults(options, {
+        ignorePaused: false,
+        now: false
+      });
+      if (options.now) {
         return run();
+      }
+      if (options.ignorePaused) {
+        ignorePaused = options.ignorePaused;
       }
       start();
     },

@@ -52,8 +52,8 @@ define(function (require) {
     $scope.clusters = $route.current.locals.clusters
       .map(setKeyForClusters);
 
-    // Enable the timefilter
-    timefilter.enabled = true;
+    // This will display the timefilter
+    // timefilter.enabled = true;
 
     // Register the marvelClusters service.
     $executor.register({
@@ -66,7 +66,7 @@ define(function (require) {
     });
 
     // Start the executor
-    $executor.start();
+    $executor.start({ ignorePaused: true });
 
     // Destory the executor
     $scope.$on('$destroy', $executor.destroy);
