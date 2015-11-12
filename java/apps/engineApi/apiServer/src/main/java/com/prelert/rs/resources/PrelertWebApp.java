@@ -84,164 +84,164 @@ public class PrelertWebApp extends Application
 {
     private static Logger LOGGER = Logger.getLogger(PrelertWebApp.class);
 
-	/**
-	 * The default Elasticsearch Cluster name
-	 */
-	public static final String DEFAULT_CLUSTER_NAME = "prelert";
+    /**
+     * The default Elasticsearch Cluster name
+     */
+    public static final String DEFAULT_CLUSTER_NAME = "prelert";
 
-	public static final String ES_CLUSTER_NAME_PROP = "es.cluster.name";
+    public static final String ES_CLUSTER_NAME_PROP = "es.cluster.name";
 
-	public static final String ES_TRANSPORT_PORT_RANGE = "es.transport.port";
+    public static final String ES_TRANSPORT_PORT_RANGE = "es.transport.port";
 
-	public static final String PERSIST_RECORDS = "persist.records";
+    public static final String PERSIST_RECORDS = "persist.records";
 
-	private static final String SERVER_INFO_FILE =  "server.json";
+    private static final String SERVER_INFO_FILE =  "server.json";
 
-	private Set<Class<?>> m_ResourceClasses;
-	private Set<Object> m_Singletons;
+    private Set<Class<?>> m_ResourceClasses;
+    private Set<Object> m_Singletons;
 
-	private JobManager m_JobManager;
-	private AlertManager m_AlertManager;
-	private ServerInfoFactory m_ServerInfo;
+    private JobManager m_JobManager;
+    private AlertManager m_AlertManager;
+    private ServerInfoFactory m_ServerInfo;
 
     private ScheduledExecutorService m_ServerStatsSchedule;
 
-	public PrelertWebApp()
-	{
-		m_ResourceClasses = new HashSet<>();
-		m_ResourceClasses.add(ApiBase.class);
-		m_ResourceClasses.add(AlertsLongPoll.class);
-		m_ResourceClasses.add(Jobs.class);
-		m_ResourceClasses.add(Data.class);
-		m_ResourceClasses.add(DataLoad.class);
-		m_ResourceClasses.add(Preview.class);
-		m_ResourceClasses.add(Buckets.class);
-		m_ResourceClasses.add(CategoryDefinitions.class);
-		m_ResourceClasses.add(Records.class);
-		m_ResourceClasses.add(Influencers.class);
-		m_ResourceClasses.add(Logs.class);
+    public PrelertWebApp()
+    {
+        m_ResourceClasses = new HashSet<>();
+        m_ResourceClasses.add(ApiBase.class);
+        m_ResourceClasses.add(AlertsLongPoll.class);
+        m_ResourceClasses.add(Jobs.class);
+        m_ResourceClasses.add(Data.class);
+        m_ResourceClasses.add(DataLoad.class);
+        m_ResourceClasses.add(Preview.class);
+        m_ResourceClasses.add(Buckets.class);
+        m_ResourceClasses.add(CategoryDefinitions.class);
+        m_ResourceClasses.add(Records.class);
+        m_ResourceClasses.add(Influencers.class);
+        m_ResourceClasses.add(Logs.class);
 
-		// Message body writers
-		m_ResourceClasses.add(AcknowledgementWriter.class);
-		m_ResourceClasses.add(AlertMessageBodyWriter.class);
-		m_ResourceClasses.add(DataCountsWriter.class);
-		m_ResourceClasses.add(JobConfigurationMessageBodyReader.class);
-		m_ResourceClasses.add(MultiDataPostResultWriter.class);
-		m_ResourceClasses.add(PaginationWriter.class);
-		m_ResourceClasses.add(SingleDocumentWriter.class);
-
-
-		// Exception mappers
-		m_ResourceClasses.add(ElasticsearchExceptionMapper.class);
-		m_ResourceClasses.add(NativeProcessRunExceptionMapper.class);
-		m_ResourceClasses.add(JobExceptionMapper.class);
-		m_ResourceClasses.add(DataUploadExceptionMapper.class);
+        // Message body writers
+        m_ResourceClasses.add(AcknowledgementWriter.class);
+        m_ResourceClasses.add(AlertMessageBodyWriter.class);
+        m_ResourceClasses.add(DataCountsWriter.class);
+        m_ResourceClasses.add(JobConfigurationMessageBodyReader.class);
+        m_ResourceClasses.add(MultiDataPostResultWriter.class);
+        m_ResourceClasses.add(PaginationWriter.class);
+        m_ResourceClasses.add(SingleDocumentWriter.class);
 
 
-		String elasticSearchClusterName = System.getProperty(ES_CLUSTER_NAME_PROP);
-		if (elasticSearchClusterName == null)
-		{
-			elasticSearchClusterName = DEFAULT_CLUSTER_NAME;
-		}
-		String portRange = System.getProperty(ES_TRANSPORT_PORT_RANGE);
+        // Exception mappers
+        m_ResourceClasses.add(ElasticsearchExceptionMapper.class);
+        m_ResourceClasses.add(NativeProcessRunExceptionMapper.class);
+        m_ResourceClasses.add(JobExceptionMapper.class);
+        m_ResourceClasses.add(DataUploadExceptionMapper.class);
 
 
-		ElasticsearchJobProvider esJob = ElasticsearchJobProvider.create(
-				elasticSearchClusterName, portRange);
+        String elasticSearchClusterName = System.getProperty(ES_CLUSTER_NAME_PROP);
+        if (elasticSearchClusterName == null)
+        {
+            elasticSearchClusterName = DEFAULT_CLUSTER_NAME;
+        }
+        String portRange = System.getProperty(ES_TRANSPORT_PORT_RANGE);
 
-		m_JobManager = new JobManager(esJob, createProcessManager(esJob));
-		m_AlertManager = new AlertManager(esJob, m_JobManager);
-		m_ServerInfo = new ElasticsearchServerInfo(esJob.getClient());
+
+        ElasticsearchJobProvider esJob = ElasticsearchJobProvider.create(
+                elasticSearchClusterName, portRange);
+
+        m_JobManager = new JobManager(esJob, createProcessManager(esJob));
+        m_AlertManager = new AlertManager(esJob, m_JobManager);
+        m_ServerInfo = new ElasticsearchServerInfo(esJob.getClient());
 
 
-		final String ENGINE_API_DIR = "engine_api";
-		// Write some server information
-		File serverInfoFile = new File(new File(ProcessCtrl.LOG_DIR, ENGINE_API_DIR), SERVER_INFO_FILE);
-		try
-		{
-		    // create path if missing
-		    Path path = Paths.get(ProcessCtrl.LOG_DIR, ENGINE_API_DIR);
-		    if (!Files.isDirectory(path))
-		    {
-		        Files.createDirectory(path);
-		    }
+        final String ENGINE_API_DIR = "engine_api";
+        // Write some server information
+        File serverInfoFile = new File(new File(ProcessCtrl.LOG_DIR, ENGINE_API_DIR), SERVER_INFO_FILE);
+        try
+        {
+            // create path if missing
+            Path path = Paths.get(ProcessCtrl.LOG_DIR, ENGINE_API_DIR);
+            if (!Files.isDirectory(path))
+            {
+                Files.createDirectory(path);
+            }
         }
         catch (IOException e)
         {
             LOGGER.error("Error creating log file directory", e);
         }
 
-		ServerInfoWriter writer = new ServerInfoWriter(m_ServerInfo, serverInfoFile);
-		writer.writeInfo();
-		writer.writeStats();
+        ServerInfoWriter writer = new ServerInfoWriter(m_ServerInfo, serverInfoFile);
+        writer.writeInfo();
+        writer.writeStats();
 
-		scheduleServerStatsDump(serverInfoFile);
+        scheduleServerStatsDump(serverInfoFile);
 
 
-		m_Singletons = new HashSet<>();
-		m_Singletons.add(m_JobManager);
-		m_Singletons.add(m_AlertManager);
-		m_Singletons.add(m_ServerInfo);
-	}
+        m_Singletons = new HashSet<>();
+        m_Singletons.add(m_JobManager);
+        m_Singletons.add(m_AlertManager);
+        m_Singletons.add(m_ServerInfo);
+    }
 
-	private static ProcessManager createProcessManager(ElasticsearchJobProvider jobProvider)
-	{
-	    ProcessFactory processFactory = new ProcessFactory(
-	            jobProvider,
-	            new ResultsReaderFactory(
+    private static ProcessManager createProcessManager(ElasticsearchJobProvider jobProvider)
+    {
+        ProcessFactory processFactory = new ProcessFactory(
+                jobProvider,
+                new ResultsReaderFactory(
                         jobId -> new ElasticsearchPersister(jobId, jobProvider.getClient()),
                         jobId -> new BlockingQueueRenormaliser(jobId, jobProvider)),
                 logger -> new ElasticsearchJobDataCountsPersister(jobProvider.getClient(), logger),
                 logger -> new ElasticsearchUsagePersister(jobProvider.getClient(), logger));
-	    return ProcessManager.create(jobProvider, processFactory,
+        return ProcessManager.create(jobProvider, processFactory,
                 jobId -> new ElasticsearchJobDataPersister(jobId, jobProvider.getClient())
         );
-	}
+    }
 
 
-	/**
-	 * Starts a ScheduledExecutorService to write the server stats
-	 * every 24 hours.
-	 * To stop the scheduled executor keeping the JVM alive it has to
-	 * run in a daemon thread.
-	 *
-	 * @param file
-	 */
-	private void scheduleServerStatsDump(File file)
-	{
-	    // Create with a daemon thread factory
-	    m_ServerStatsSchedule = Executors.newSingleThreadScheduledExecutor(
-	                        new ThreadFactory() {
-	                            @Override public Thread newThread(Runnable runnable) {
-	                                Thread thread = Executors.defaultThreadFactory().newThread(runnable);
-	                                thread.setDaemon(true);
-	                                thread.setName("Server-Stats-Writer-Thread");
-	                                return thread;
-	                            }
-	                        } );
+    /**
+     * Starts a ScheduledExecutorService to write the server stats
+     * every 24 hours.
+     * To stop the scheduled executor keeping the JVM alive it has to
+     * run in a daemon thread.
+     *
+     * @param file
+     */
+    private void scheduleServerStatsDump(File file)
+    {
+        // Create with a daemon thread factory
+        m_ServerStatsSchedule = Executors.newSingleThreadScheduledExecutor(
+                            new ThreadFactory() {
+                                @Override public Thread newThread(Runnable runnable) {
+                                    Thread thread = Executors.defaultThreadFactory().newThread(runnable);
+                                    thread.setDaemon(true);
+                                    thread.setName("Server-Stats-Writer-Thread");
+                                    return thread;
+                                }
+                            } );
 
-	    ServerInfoWriter writer = new ServerInfoWriter(m_ServerInfo, file);
+        ServerInfoWriter writer = new ServerInfoWriter(m_ServerInfo, file);
 
-	    LocalDate tomorrow = LocalDate.now(ZoneId.systemDefault()).plusDays(1l);
-	    ZonedDateTime tomorrorwMidnight = ZonedDateTime.of(tomorrow, LocalTime.MIDNIGHT,
-	                                                ZoneId.systemDefault());
+        LocalDate tomorrow = LocalDate.now(ZoneId.systemDefault()).plusDays(1l);
+        ZonedDateTime tomorrorwMidnight = ZonedDateTime.of(tomorrow, LocalTime.MIDNIGHT,
+                                                    ZoneId.systemDefault());
 
-	    ZonedDateTime now = ZonedDateTime.now();
-	    long delaySeconds = now.until(tomorrorwMidnight, ChronoUnit.SECONDS);
+        ZonedDateTime now = ZonedDateTime.now();
+        long delaySeconds = now.until(tomorrorwMidnight, ChronoUnit.SECONDS);
 
-	    m_ServerStatsSchedule.scheduleAtFixedRate(() -> writer.writeStats(),
-	                                               delaySeconds, 3600l * 24l, TimeUnit.SECONDS);
-	}
+        m_ServerStatsSchedule.scheduleAtFixedRate(() -> writer.writeStats(),
+                                                   delaySeconds, 3600l * 24l, TimeUnit.SECONDS);
+    }
 
-	@Override
-	public Set<Class<?>> getClasses()
-	{
-	    return m_ResourceClasses;
-	}
+    @Override
+    public Set<Class<?>> getClasses()
+    {
+        return m_ResourceClasses;
+    }
 
-	@Override
-	public Set<Object> getSingletons()
-	{
-		return m_Singletons;
-	}
+    @Override
+    public Set<Object> getSingletons()
+    {
+        return m_Singletons;
+    }
 }
