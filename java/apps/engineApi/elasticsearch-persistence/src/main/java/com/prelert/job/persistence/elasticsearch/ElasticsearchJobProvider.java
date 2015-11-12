@@ -123,10 +123,11 @@ public class ElasticsearchJobProvider implements JobProvider
 
     private final ObjectMapper m_ObjectMapper;
 
-    public static ElasticsearchJobProvider create(String elasticSearchClusterName, String portRange)
+    public static ElasticsearchJobProvider create(String elasticSearchHost,
+            String elasticSearchClusterName, String portRange)
     {
         Node node = nodeBuilder()
-                .settings(buildSettings(portRange))
+                .settings(buildSettings(elasticSearchHost, portRange))
                 .client(true)
                 .clusterName(elasticSearchClusterName).node();
         return new ElasticsearchJobProvider(node, node.client());
@@ -150,9 +151,9 @@ public class ElasticsearchJobProvider implements JobProvider
     /**
      * Elasticsearch settings that instruct the node not to accept HTTP, not to
      * attempt multicast discovery and to only look for another node to connect
-     * to on the local machine.
+     * to on the given host.
      */
-    private static Settings buildSettings(String portRange)
+    private static Settings buildSettings(String host, String portRange)
     {
         // Multicast discovery is expected to be disabled on the Elasticsearch
         // data node, so disable it for this embedded node too and tell it to
@@ -160,7 +161,7 @@ public class ElasticsearchJobProvider implements JobProvider
         Builder builder = ImmutableSettings.settingsBuilder()
                 .put("http.enabled", "false")
                 .put("discovery.zen.ping.multicast.enabled", "false")
-                .put("discovery.zen.ping.unicast.hosts", "localhost");
+                .put("discovery.zen.ping.unicast.hosts", host);
 
         if (portRange != null && portRange.isEmpty() == false)
         {

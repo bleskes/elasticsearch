@@ -89,6 +89,10 @@ public class PrelertWebApp extends Application
      */
     public static final String DEFAULT_CLUSTER_NAME = "prelert";
 
+    private static final String DEFAULT_ES_HOST = "localhost";
+
+    private static final String ES_HOST_PROP = "es.host";
+
     public static final String ES_CLUSTER_NAME_PROP = "es.cluster.name";
 
     public static final String ES_TRANSPORT_PORT_RANGE = "es.transport.port";
@@ -137,16 +141,12 @@ public class PrelertWebApp extends Application
         m_ResourceClasses.add(JobExceptionMapper.class);
         m_ResourceClasses.add(DataUploadExceptionMapper.class);
 
-
-        String elasticSearchClusterName = System.getProperty(ES_CLUSTER_NAME_PROP);
-        if (elasticSearchClusterName == null)
-        {
-            elasticSearchClusterName = DEFAULT_CLUSTER_NAME;
-        }
+        String elasticSearchHost = getPropertyOrDefault(ES_HOST_PROP, DEFAULT_ES_HOST);
+        String elasticSearchClusterName = getPropertyOrDefault(ES_CLUSTER_NAME_PROP,
+                DEFAULT_CLUSTER_NAME);
         String portRange = System.getProperty(ES_TRANSPORT_PORT_RANGE);
 
-
-        ElasticsearchJobProvider esJob = ElasticsearchJobProvider.create(
+        ElasticsearchJobProvider esJob = ElasticsearchJobProvider.create(elasticSearchHost,
                 elasticSearchClusterName, portRange);
 
         m_JobManager = new JobManager(esJob, createProcessManager(esJob));
@@ -182,6 +182,12 @@ public class PrelertWebApp extends Application
         m_Singletons.add(m_JobManager);
         m_Singletons.add(m_AlertManager);
         m_Singletons.add(m_ServerInfo);
+    }
+
+    private static String getPropertyOrDefault(String key, String defaultValue)
+    {
+        String propertyValue = System.getProperty(key);
+        return propertyValue == null ? defaultValue : propertyValue;
     }
 
     private static ProcessManager createProcessManager(ElasticsearchJobProvider jobProvider)
