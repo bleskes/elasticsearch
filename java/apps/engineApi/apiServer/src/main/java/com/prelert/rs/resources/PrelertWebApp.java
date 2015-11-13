@@ -115,33 +115,9 @@ public class PrelertWebApp extends Application
     public PrelertWebApp()
     {
         m_ResourceClasses = new HashSet<>();
-        m_ResourceClasses.add(ApiBase.class);
-        m_ResourceClasses.add(AlertsLongPoll.class);
-        m_ResourceClasses.add(Jobs.class);
-        m_ResourceClasses.add(Data.class);
-        m_ResourceClasses.add(DataLoad.class);
-        m_ResourceClasses.add(Preview.class);
-        m_ResourceClasses.add(Buckets.class);
-        m_ResourceClasses.add(CategoryDefinitions.class);
-        m_ResourceClasses.add(Records.class);
-        m_ResourceClasses.add(Influencers.class);
-        m_ResourceClasses.add(Logs.class);
-
-        // Message body writers
-        m_ResourceClasses.add(AcknowledgementWriter.class);
-        m_ResourceClasses.add(AlertMessageBodyWriter.class);
-        m_ResourceClasses.add(DataCountsWriter.class);
-        m_ResourceClasses.add(JobConfigurationMessageBodyReader.class);
-        m_ResourceClasses.add(MultiDataPostResultWriter.class);
-        m_ResourceClasses.add(PaginationWriter.class);
-        m_ResourceClasses.add(SingleDocumentWriter.class);
-
-
-        // Exception mappers
-        m_ResourceClasses.add(ElasticsearchExceptionMapper.class);
-        m_ResourceClasses.add(NativeProcessRunExceptionMapper.class);
-        m_ResourceClasses.add(JobExceptionMapper.class);
-        m_ResourceClasses.add(DataUploadExceptionMapper.class);
+        addEndPoints();
+        addMessageWriters();
+        addExceptionMappers();
 
         String elasticSearchHost = getPropertyOrDefault(ES_HOST_PROP, DEFAULT_ES_HOST);
         String elasticSearchClusterName = getPropertyOrDefault(ES_CLUSTER_NAME_PROP,
@@ -183,6 +159,40 @@ public class PrelertWebApp extends Application
         m_Singletons.add(m_JobManager);
         m_Singletons.add(m_AlertManager);
         m_Singletons.add(m_ServerInfo);
+    }
+
+    private void addEndPoints()
+    {
+        m_ResourceClasses.add(ApiBase.class);
+        m_ResourceClasses.add(AlertsLongPoll.class);
+        m_ResourceClasses.add(Jobs.class);
+        m_ResourceClasses.add(Data.class);
+        m_ResourceClasses.add(DataLoad.class);
+        m_ResourceClasses.add(Preview.class);
+        m_ResourceClasses.add(Buckets.class);
+        m_ResourceClasses.add(CategoryDefinitions.class);
+        m_ResourceClasses.add(Records.class);
+        m_ResourceClasses.add(Influencers.class);
+        m_ResourceClasses.add(Logs.class);
+    }
+
+    private void addMessageWriters()
+    {
+        m_ResourceClasses.add(AcknowledgementWriter.class);
+        m_ResourceClasses.add(AlertMessageBodyWriter.class);
+        m_ResourceClasses.add(DataCountsWriter.class);
+        m_ResourceClasses.add(JobConfigurationMessageBodyReader.class);
+        m_ResourceClasses.add(MultiDataPostResultWriter.class);
+        m_ResourceClasses.add(PaginationWriter.class);
+        m_ResourceClasses.add(SingleDocumentWriter.class);
+    }
+
+    private void addExceptionMappers()
+    {
+        m_ResourceClasses.add(ElasticsearchExceptionMapper.class);
+        m_ResourceClasses.add(NativeProcessRunExceptionMapper.class);
+        m_ResourceClasses.add(JobExceptionMapper.class);
+        m_ResourceClasses.add(DataUploadExceptionMapper.class);
     }
 
     private static String getPropertyOrDefault(String key, String defaultValue)
