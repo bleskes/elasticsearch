@@ -63,6 +63,18 @@ import com.prelert.job.transform.TransformConfigs;
  */
 class CsvDataToProcessWriter extends AbstractDataToProcessWriter
 {
+    /**
+     * Maximum number of lines allowed within a single CSV record.
+     *
+     * In the scenario where there is a misplaced quote, there is
+     * the possibility that it results to a single record expanding
+     * over many lines. Supercsv will eventually deplete all memory
+     * from the JVM. We set a limit to an arbitrary large number
+     * to prevent that from happening. Unfortunately, supercsv
+     * throws an exception which means we cannot recover and continue
+     * reading new records from the next line.
+     */
+    private static final int MAX_LINES_PER_RECORD = 10000;
 
     public CsvDataToProcessWriter(RecordWriter recordWriter,
             DataDescription dataDescription, AnalysisConfig analysisConfig,
@@ -93,7 +105,8 @@ class CsvDataToProcessWriter extends AbstractDataToProcessWriter
         CsvPreference csvPref = new CsvPreference.Builder(
                 m_DataDescription.getQuoteCharacter(),
                 m_DataDescription.getFieldDelimiter(),
-                new String(new char[] {DataDescription.LINE_ENDING})).build();
+                new String(new char[] {DataDescription.LINE_ENDING}))
+                .maxLinesPerRow(MAX_LINES_PER_RECORD).build();
 
         int recordsWritten = 0;
         int lineCount = 0;

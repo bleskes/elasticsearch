@@ -48,12 +48,15 @@ import java.util.List;
 
 import org.apache.log4j.Logger;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.mockito.stubbing.Answer;
+import org.supercsv.exception.SuperCsvException;
 
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataDescription;
@@ -71,6 +74,7 @@ import com.prelert.job.transform.TransformType;
 @RunWith(MockitoJUnitRunner.class)
 public class CsvDataToProcessWriterTest
 {
+    @Rule public ExpectedException m_ExpectedException = ExpectedException.none();
 
     @Mock private LengthEncodedWriter m_LengthEncodedWriter;
     private List<TransformConfig> m_Transforms;
@@ -382,6 +386,29 @@ public class CsvDataToProcessWriterTest
 
         verify(m_StatusReporter).finishReporting();
         verify(m_DataPersister).flushRecords();
+    }
+
+    @Test
+    public void testWrite_GivenMisplacedQuoteMakesRecordExtendOverTooManyLines() throws MissingFieldException,
+            HighProportionOfBadTimestampsException, OutOfOrderRecordsException, IOException
+    {
+        m_ExpectedException.expect(SuperCsvException.class);
+        m_ExpectedException.expectMessage(
+                "max number of lines to read exceeded while reading quoted column beginning"
+                + " on line 2 and ending on line 10001");
+
+        StringBuilder input = new StringBuilder();
+        input.append("time,metric,value\n");
+        input.append("1,\"foo,1.0\n");
+        for (int i = 0; i < 10000 - 1; i++)
+        {
+            input.append("\n");
+        }
+        input.append("2,bar\",2.0\n");
+        InputStream inputStream = createInputStream(input.toString());
+        CsvDataToProcessWriter writer = createWriter();
+
+        writer.write(inputStream);
     }
 
     private static InputStream createInputStream(String input)
