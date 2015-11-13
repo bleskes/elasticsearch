@@ -82,7 +82,7 @@ import com.prelert.server.info.elasticsearch.ElasticsearchServerInfo;
 
 public class PrelertWebApp extends Application
 {
-    private static Logger LOGGER = Logger.getLogger(PrelertWebApp.class);
+    private static final Logger LOGGER = Logger.getLogger(PrelertWebApp.class);
 
     /**
      * The default Elasticsearch Cluster name
