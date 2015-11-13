@@ -131,29 +131,7 @@ public class PrelertWebApp extends Application
         m_AlertManager = new AlertManager(esJob, m_JobManager);
         m_ServerInfo = new ElasticsearchServerInfo(esJob.getClient());
 
-
-        // Write some server information
-        File serverInfoFile = new File(new File(ProcessCtrl.LOG_DIR, ENGINE_API_DIR), SERVER_INFO_FILE);
-        try
-        {
-            // create path if missing
-            Path path = Paths.get(ProcessCtrl.LOG_DIR, ENGINE_API_DIR);
-            if (!Files.isDirectory(path))
-            {
-                Files.createDirectory(path);
-            }
-        }
-        catch (IOException e)
-        {
-            LOGGER.error("Error creating log file directory", e);
-        }
-
-        ServerInfoWriter writer = new ServerInfoWriter(m_ServerInfo, serverInfoFile);
-        writer.writeInfo();
-        writer.writeStats();
-
-        scheduleServerStatsDump(serverInfoFile);
-
+        writeServerInfoDailyStartingNow();
 
         m_Singletons = new HashSet<>();
         m_Singletons.add(m_JobManager);
@@ -215,6 +193,30 @@ public class PrelertWebApp extends Application
         );
     }
 
+
+    private void writeServerInfoDailyStartingNow()
+    {
+        File serverInfoFile = new File(new File(ProcessCtrl.LOG_DIR, ENGINE_API_DIR), SERVER_INFO_FILE);
+        try
+        {
+            // create path if missing
+            Path path = Paths.get(ProcessCtrl.LOG_DIR, ENGINE_API_DIR);
+            if (!Files.isDirectory(path))
+            {
+                Files.createDirectory(path);
+            }
+        }
+        catch (IOException e)
+        {
+            LOGGER.error("Error creating log file directory", e);
+        }
+
+        ServerInfoWriter writer = new ServerInfoWriter(m_ServerInfo, serverInfoFile);
+        writer.writeInfo();
+        writer.writeStats();
+
+        scheduleServerStatsDump(serverInfoFile);
+    }
 
     /**
      * Starts a ScheduledExecutorService to write the server stats
