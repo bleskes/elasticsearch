@@ -197,22 +197,28 @@ public final class DetectorVerifier
      * @return true
      * @throws JobConfigurationException
      */
-    public static boolean verifyFieldName(String field)
-    throws JobConfigurationException
+    public static boolean verifyFieldName(String field) throws JobConfigurationException
     {
-        if (field != null)
+        if (field != null && containsInvalidChar(field))
         {
-            for (Character ch : Detector.PROHIBITED_FIELDNAME_CHARACTERS)
-            {
-                if (field.indexOf(ch) >= 0)
-                {
-                    throw new JobConfigurationException(
-                            Messages.getMessage(Messages.JOB_CONFIG_INVALID_FIELDNAME_CHARS,
-                                    field, Detector.PROHIBITED),
+            throw new JobConfigurationException(
+                    Messages.getMessage(Messages.JOB_CONFIG_INVALID_FIELDNAME_CHARS,
+                            field, Detector.PROHIBITED),
                             ErrorCodes.PROHIBITIED_CHARACTER_IN_FIELD_NAME);
-                }
-            }
+
         }
         return true;
+    }
+
+    private static boolean containsInvalidChar(String field)
+    {
+        for (Character ch : Detector.PROHIBITED_FIELDNAME_CHARACTERS)
+        {
+            if (field.indexOf(ch) >= 0)
+            {
+                return true;
+            }
+        }
+        return field.chars().anyMatch(ch -> Character.isISOControl(ch));
     }
 }

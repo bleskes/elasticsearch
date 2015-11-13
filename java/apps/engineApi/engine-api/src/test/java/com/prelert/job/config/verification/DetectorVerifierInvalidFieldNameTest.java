@@ -45,6 +45,8 @@ import com.prelert.job.errorcodes.ErrorCodes;
 @RunWith(Parameterized.class)
 public class DetectorVerifierInvalidFieldNameTest
 {
+    private static final String SUFFIX = "suffix";
+
     @Rule public ExpectedException m_ExpectedException = ExpectedException.none();
 
     private Detector m_Detector;
@@ -63,8 +65,11 @@ public class DetectorVerifierInvalidFieldNameTest
                 { ")", true },
                 { "=", true },
                 { "-", true },
+                { " ", true },
                 { "\"", false },
-                { "\\", false }
+                { "\\", false },
+                { "\t", false },
+                { "\n", false },
         });
     }
 
@@ -86,7 +91,7 @@ public class DetectorVerifierInvalidFieldNameTest
         expectJobConfigurationExceptionWhenCharIsInvalid(
                 ErrorCodes.PROHIBITIED_CHARACTER_IN_FIELD_NAME);
 
-        m_Detector.setFieldName(m_Detector.getFieldName() + m_Character);
+        m_Detector.setFieldName(m_Detector.getFieldName() + getCharacterPlusSuffix());
         DetectorVerifier.verify(m_Detector, false);
     }
 
@@ -96,7 +101,7 @@ public class DetectorVerifierInvalidFieldNameTest
         expectJobConfigurationExceptionWhenCharIsInvalid(
                 ErrorCodes.PROHIBITIED_CHARACTER_IN_FIELD_NAME);
 
-        m_Detector.setByFieldName(m_Detector.getByFieldName() + m_Character);
+        m_Detector.setByFieldName(m_Detector.getByFieldName() + getCharacterPlusSuffix());
         DetectorVerifier.verify(m_Detector, false);
     }
 
@@ -106,7 +111,7 @@ public class DetectorVerifierInvalidFieldNameTest
         expectJobConfigurationExceptionWhenCharIsInvalid(
                 ErrorCodes.PROHIBITIED_CHARACTER_IN_FIELD_NAME);
 
-        m_Detector.setOverFieldName(m_Detector.getOverFieldName() + m_Character);
+        m_Detector.setOverFieldName(m_Detector.getOverFieldName() + getCharacterPlusSuffix());
         DetectorVerifier.verify(m_Detector, false);
     }
 
@@ -116,7 +121,7 @@ public class DetectorVerifierInvalidFieldNameTest
         expectJobConfigurationExceptionWhenCharIsInvalid(
                 ErrorCodes.PROHIBITIED_CHARACTER_IN_FIELD_NAME);
 
-        m_Detector.setPartitionFieldName(m_Detector.getPartitionFieldName() + m_Character);
+        m_Detector.setPartitionFieldName(m_Detector.getPartitionFieldName() + getCharacterPlusSuffix());
         DetectorVerifier.verify(m_Detector, false);
     }
 
@@ -125,7 +130,7 @@ public class DetectorVerifierInvalidFieldNameTest
     {
         expectJobConfigurationException(ErrorCodes.INVALID_FUNCTION);
 
-        m_Detector.setFieldName(m_Detector.getFieldName() + m_Character);
+        m_Detector.setFieldName(m_Detector.getFieldName() + getCharacterPlusSuffix());
         DetectorVerifier.verify(m_Detector, true);
     }
 
@@ -134,7 +139,7 @@ public class DetectorVerifierInvalidFieldNameTest
     {
         expectJobConfigurationException(ErrorCodes.INVALID_FUNCTION);
 
-        m_Detector.setByFieldName(m_Detector.getByFieldName() + m_Character);
+        m_Detector.setByFieldName(m_Detector.getByFieldName() + getCharacterPlusSuffix());
         DetectorVerifier.verify(m_Detector, true);
     }
 
@@ -143,7 +148,7 @@ public class DetectorVerifierInvalidFieldNameTest
     {
         expectJobConfigurationException(ErrorCodes.INVALID_FUNCTION);
 
-        m_Detector.setOverFieldName(m_Detector.getOverFieldName() + m_Character);
+        m_Detector.setOverFieldName(m_Detector.getOverFieldName() + getCharacterPlusSuffix());
         DetectorVerifier.verify(m_Detector, true);
     }
 
@@ -152,8 +157,13 @@ public class DetectorVerifierInvalidFieldNameTest
     {
         expectJobConfigurationException(ErrorCodes.INVALID_FUNCTION);
 
-        m_Detector.setPartitionFieldName(m_Detector.getPartitionFieldName() + m_Character);
+        m_Detector.setPartitionFieldName(m_Detector.getPartitionFieldName() + getCharacterPlusSuffix());
         DetectorVerifier.verify(m_Detector, true);
+    }
+
+    private String getCharacterPlusSuffix()
+    {
+        return m_Character + SUFFIX;
     }
 
     private void expectJobConfigurationExceptionWhenCharIsInvalid(ErrorCodes errorCode)
