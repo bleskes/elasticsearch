@@ -139,10 +139,10 @@ public class ElasticsearchJobProvider implements JobProvider
     }
 
     public static ElasticsearchJobProvider create(String elasticSearchHost,
-            String elasticSearchClusterName, String portRange)
+            String elasticSearchClusterName, String portRange, String numProcessors)
     {
         Node node = nodeBuilder()
-                .settings(buildSettings(elasticSearchHost, portRange))
+                .settings(buildSettings(elasticSearchHost, portRange, numProcessors))
                 .client(true)
                 .clusterName(elasticSearchClusterName).node();
         return new ElasticsearchJobProvider(node, node.client());
@@ -153,7 +153,8 @@ public class ElasticsearchJobProvider implements JobProvider
      * attempt multicast discovery and to only look for another node to connect
      * to on the given host.
      */
-    private static Settings buildSettings(String host, String portRange)
+    private static Settings buildSettings(String host, String portRange,
+            String numProcessors)
     {
         // Multicast discovery is expected to be disabled on the Elasticsearch
         // data node, so disable it for this embedded node too and tell it to
@@ -167,6 +168,12 @@ public class ElasticsearchJobProvider implements JobProvider
         {
             LOGGER.info("Using TCP port range " + portRange + " to connect to Elasticsearch");
             builder.put("transport.tcp.port", portRange);
+        }
+        if (numProcessors != null && numProcessors.isEmpty() == false)
+        {
+            LOGGER.info("Telling Elasticsearch there are " + numProcessors
+                    + " processors on this machine");
+            builder.put("processors", numProcessors);
         }
 
         return builder.build();

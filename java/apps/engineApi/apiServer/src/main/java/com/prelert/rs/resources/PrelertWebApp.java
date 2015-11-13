@@ -97,6 +97,8 @@ public class PrelertWebApp extends Application
 
     public static final String ES_TRANSPORT_PORT_RANGE = "es.transport.port";
 
+    private static final String ES_PROCESSORS_PROP = "es.processors";
+
     public static final String PERSIST_RECORDS = "persist.records";
 
     private static final String SERVER_INFO_FILE =  "server.json";
@@ -123,9 +125,12 @@ public class PrelertWebApp extends Application
         String elasticSearchClusterName = getPropertyOrDefault(ES_CLUSTER_NAME_PROP,
                 DEFAULT_CLUSTER_NAME);
         String portRange = System.getProperty(ES_TRANSPORT_PORT_RANGE);
+        // The number of processors affects the size of ES thread pools, so it
+        // can sometimes be desirable to frig it
+        String numProcessors = System.getProperty(ES_PROCESSORS_PROP);
 
         ElasticsearchJobProvider esJob = ElasticsearchJobProvider.create(elasticSearchHost,
-                elasticSearchClusterName, portRange);
+                elasticSearchClusterName, portRange, numProcessors);
 
         m_JobManager = new JobManager(esJob, createProcessManager(esJob));
         m_AlertManager = new AlertManager(esJob, m_JobManager);
