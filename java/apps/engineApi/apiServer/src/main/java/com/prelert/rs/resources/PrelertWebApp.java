@@ -101,6 +101,8 @@ public class PrelertWebApp extends Application
 
     private static final String SERVER_INFO_FILE =  "server.json";
 
+    private static final String ENGINE_API_DIR = "engine_api";
+
     private Set<Class<?>> m_ResourceClasses;
     private Set<Object> m_Singletons;
 
@@ -154,7 +156,6 @@ public class PrelertWebApp extends Application
         m_ServerInfo = new ElasticsearchServerInfo(esJob.getClient());
 
 
-        final String ENGINE_API_DIR = "engine_api";
         // Write some server information
         File serverInfoFile = new File(new File(ProcessCtrl.LOG_DIR, ENGINE_API_DIR), SERVER_INFO_FILE);
         try
