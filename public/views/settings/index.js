@@ -12,20 +12,19 @@ define(function (require) {
     'marvel/settings'
   ]);
 
-  require('ui/routes')
-  .when('/settings', {
-    template: require('plugins/marvel/views/settings/index.html'),
-    resolve: {
-      marvel: function (Private) {
-        var routeInit = Private(require('plugins/marvel/lib/route_init'));
-        return routeInit({ force: { settings: true } });
-      }
-    }
-  });
-
+  // require('ui/routes')
+  // .when('/settings', {
+  //   template: require('plugins/marvel/views/settings/index.html'),
+  //   resolve: {
+  //     marvel: function (Private) {
+  //       var routeInit = Private(require('plugins/marvel/lib/route_init'));
+  //       return routeInit({ force: { settings: true } });
+  //     }
+  //   }
+  // });
 
   module.controller('settings', function (timefilter, courier, $scope, $route, Notifier, Private, globalState) {
-    var ClusterStatusDataSource = Private(require('plugins/marvel/directives/cluster_status/data_source'));
+    // var ClusterStatusDataSource = Private(require('plugins/marvel/directives/cluster_status/data_source'));
 
     var notify = new Notifier({ location: 'Marvel Settings' });
     var settings = $route.current.locals.marvel.settings[globalState.cluster + ':metric-thresholds'];
@@ -35,16 +34,16 @@ define(function (require) {
     $scope.metrics = metrics;
     $scope.dataSources = {};
 
-    var dataSource = new ClusterStatusDataSource(indexPattern, globalState.cluster, clusters);
-    $scope.dataSources.cluster_status = dataSource;
-    dataSource.register(courier);
-    courier.fetch();
+    // var dataSource = new ClusterStatusDataSource(indexPattern, globalState.cluster, clusters);
+    // $scope.dataSources.cluster_status = dataSource;
+    // dataSource.register(courier);
+    // courier.fetch();
 
-    $scope.$on('$destroy', function () {
-      _.each($scope.dataSources, function (dataSource) {
-        dataSource.destroy();
-      });
-    });
+    // $scope.$on('$destroy', function () {
+    //   _.each($scope.dataSources, function (dataSource) {
+    //     dataSource.destroy();
+    //   });
+    // });
 
     // Create a model for the view to easily work with
     $scope.model = {};

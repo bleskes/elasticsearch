@@ -41,7 +41,7 @@ require('ui/routes')
   }
 });
 
-mod.controller('indices', ($route, globalState, timefilter, $http, $executor, marvelClusters, $scope) => {
+mod.controller('indices', ($route, globalState, timefilter, $http, Private, $executor, marvelClusters, $scope) => {
 
   timefilter.enabled = true;
 
@@ -52,6 +52,9 @@ mod.controller('indices', ($route, globalState, timefilter, $http, $executor, ma
   setClusters($route.current.locals.marvel.clusters);
 
   $scope.pageData = $route.current.locals.pageData;
+
+  const docTitle = Private(require('ui/doc_title'));
+  docTitle.change('Marvel', true);
 
   $executor.register({
     execute: () => getPageData(timefilter, globalState, $http),
