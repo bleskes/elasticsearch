@@ -123,17 +123,7 @@ public class ElasticsearchJobProvider implements JobProvider
 
     private final ObjectMapper m_ObjectMapper;
 
-    public static ElasticsearchJobProvider create(String elasticSearchHost,
-            String elasticSearchClusterName, String portRange)
-    {
-        Node node = nodeBuilder()
-                .settings(buildSettings(elasticSearchHost, portRange))
-                .client(true)
-                .clusterName(elasticSearchClusterName).node();
-        return new ElasticsearchJobProvider(node, node.client());
-    }
-
-    public ElasticsearchJobProvider(Node node, Client client)
+    ElasticsearchJobProvider(Node node, Client client)
     {
         m_Node = Objects.requireNonNull(node);
         m_Client = Objects.requireNonNull(client);
@@ -146,6 +136,16 @@ public class ElasticsearchJobProvider implements JobProvider
 
         LOGGER.info("Connecting to Elasticsearch cluster '" + m_Node.settings().get("cluster.name")
                 + "'");
+    }
+
+    public static ElasticsearchJobProvider create(String elasticSearchHost,
+            String elasticSearchClusterName, String portRange)
+    {
+        Node node = nodeBuilder()
+                .settings(buildSettings(elasticSearchHost, portRange))
+                .client(true)
+                .clusterName(elasticSearchClusterName).node();
+        return new ElasticsearchJobProvider(node, node.client());
     }
 
     /**

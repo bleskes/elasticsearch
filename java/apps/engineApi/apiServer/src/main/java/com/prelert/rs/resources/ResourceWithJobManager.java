@@ -62,7 +62,6 @@ import com.prelert.server.info.ServerInfoFactory;
  */
 public abstract class ResourceWithJobManager
 {
-    // TODO This field is hidden in subclasses
     private static final Logger LOGGER = Logger.getLogger(ResourceWithJobManager.class);
 
     /**
