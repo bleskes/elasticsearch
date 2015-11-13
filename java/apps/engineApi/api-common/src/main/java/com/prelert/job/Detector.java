@@ -31,6 +31,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -203,9 +204,10 @@ public class Detector
      * field names cannot contain any of these characters
      *     [, ], (, ), =, ", \, -
      */
-    public static final String PROHIBITED = "[, ], (, ), =, \", \\, -";
-    public static final Character [] PROHIBITED_FIELDNAME_CHARACTERS =
-        {'[', ']', '(', ')', '=', '"', '\\', '-'};
+    public static final Character [] PROHIBITED_FIELDNAME_CHARACTERS = {'"', '\\'};
+    public static final String PROHIBITED = String.join(",",
+            Arrays.stream(PROHIBITED_FIELDNAME_CHARACTERS).map(
+                    c -> Character.toString(c)).collect(Collectors.toList()));
 
 
     private String m_Function;
