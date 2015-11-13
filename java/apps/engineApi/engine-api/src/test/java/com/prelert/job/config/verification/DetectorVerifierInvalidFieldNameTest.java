@@ -55,15 +55,16 @@ public class DetectorVerifierInvalidFieldNameTest
     public static Collection<Object[]> getCharactersAndValidity()
     {
         return Arrays.asList(new Object[][] {
+                // char, isValid?
                 { "a", true},
-                { "[", false },
-                { "]", false },
-                { "(", false },
-                { ")", false },
-                { "=", false },
+                { "[", true },
+                { "]", true },
+                { "(", true },
+                { ")", true },
+                { "=", true },
+                { "-", true },
                 { "\"", false },
-                { "\\", false },
-                { "-", false }
+                { "\\", false }
         });
     }
 
