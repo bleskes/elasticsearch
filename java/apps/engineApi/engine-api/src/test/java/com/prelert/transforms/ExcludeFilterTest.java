@@ -118,4 +118,27 @@ public class ExcludeFilterTest
 
         assertEquals(TransformResult.EXCLUDE, transform.transform(readWriteArea));
     }
+
+
+    @Test
+    public void testTransform() throws TransformException
+    {
+        List<TransformIndex> readIndicies = createIndexArray(new TransformIndex(0, 0));
+        List<TransformIndex> writeIndicies = createIndexArray();
+
+        Condition cond = new Condition(Operator.MATCH, "^(?!latency\\.total).*$");
+
+        ExcludeFilterRegex transform = new ExcludeFilterRegex(cond, readIndicies, writeIndicies, mock(Logger.class));
+        String [] input = {"utilization.total"};
+        String [] scratch = {};
+        String [] output = new String [3];
+        String [][] readWriteArea = {input, scratch, output};
+
+        TransformResult tr = transform.transform(readWriteArea);
+        assertEquals(TransformResult.EXCLUDE, tr);
+
+        readWriteArea[0] = new String [] {"latency.total"};
+        tr = transform.transform(readWriteArea);
+        assertEquals(TransformResult.OK, tr);
+    }
 }
