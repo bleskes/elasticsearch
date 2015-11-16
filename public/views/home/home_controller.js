@@ -47,6 +47,8 @@ define(function (require) {
       return cluster;
     }
 
+    timefilter.enabled = false;
+
     $scope.clusters = $route.current.locals.clusters
       .map(setKeyForClusters);
 
