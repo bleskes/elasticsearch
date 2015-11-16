@@ -16,7 +16,7 @@
   <tbody>
     <tr ng-repeat="activity in visibleData" ng-class="{ done: activity.stage === 'DONE', red: activity.primary, yellow: !activity.primary }">
       <td class="index">
-        <h5><a href="#/index/{{ activity.index.name }}">{{ activity.index.name }}</a></h5>
+        <h5><a href="#/index/{{ activity.index_name || activity.index.name }}">{{ activity.index_name || activity.index.name }}</a></h5>
         <p><span>{{ activity.id }}</span> | <span>{{activity.type|capitalize}}</span><span ng-if="activity.type === 'RELOCATION'"> of {{ activity.primary ? 'Primary' : 'Replica' }}</span></p>
       </td>
       <td class="stage">
