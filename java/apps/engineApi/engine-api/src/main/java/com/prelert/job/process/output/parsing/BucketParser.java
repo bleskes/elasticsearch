@@ -37,6 +37,7 @@ import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import com.prelert.job.results.Bucket;
+import com.prelert.job.results.BucketInfluencer;
 import com.prelert.job.results.Detector;
 import com.prelert.job.results.Influencer;
 import com.prelert.utils.json.AutoDetectParseException;
@@ -132,9 +133,6 @@ public class BucketParser
             case Bucket.TIMESTAMP:
                 parseTimestamp(bucket, token);
                 break;
-            case Bucket.RAW_ANOMALY_SCORE:
-                bucket.setRawAnomalyScore(parseAsDoubleOrZero(token, fieldName));
-                break;
             case Bucket.ANOMALY_SCORE:
                 bucket.setAnomalyScore(parseAsDoubleOrZero(token, fieldName));
                 break;
@@ -152,6 +150,9 @@ public class BucketParser
                 break;
             case Bucket.DETECTORS:
                 parseDetectors(token, bucket);
+                break;
+            case Bucket.BUCKET_INFLUENCERS:
+                bucket.setBucketInfluencers(parseBucketInfluencers(token));
                 break;
             case Bucket.INFLUENCERS:
                 bucket.setInfluencers(parseInfluencers(token));
@@ -196,6 +197,28 @@ public class BucketParser
 
                 token = m_Parser.nextToken();
             }
+        }
+
+        private List<BucketInfluencer> parseBucketInfluencers(JsonToken token)
+                throws AutoDetectParseException, IOException, JsonParseException
+        {
+            if (token != JsonToken.START_ARRAY)
+            {
+                String msg = "Invalid value Expecting an array of bucketInfluencers";
+                LOGGER.warn(msg);
+                throw new AutoDetectParseException(msg);
+            }
+
+            List<BucketInfluencer> influencers = new ArrayList<BucketInfluencer>();
+
+            token = m_Parser.nextToken();
+            while (token != JsonToken.END_ARRAY)
+            {
+                influencers.add(BucketInfluencerParser.parseJson(m_Parser));
+                token = m_Parser.nextToken();
+            }
+
+            return influencers;
         }
 
         private List<Influencer> parseInfluencers(JsonToken token)

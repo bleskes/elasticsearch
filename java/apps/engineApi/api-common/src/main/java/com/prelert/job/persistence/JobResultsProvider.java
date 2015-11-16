@@ -235,8 +235,10 @@ public interface JobResultsProvider extends Closeable
      * if not required set to 0.
      * @param take Take only this number of records
      * @return QueryPage of Influencer
+     * @throws UnknownJobException
      */
-    public QueryPage<Influencer> influencers(String jobId, int skip, int take);
+    public QueryPage<Influencer> influencers(String jobId, int skip, int take)
+            throws UnknownJobException;
 
     /**
      * Return a page of influencers for the given job and within the given date range
@@ -255,9 +257,11 @@ public interface JobResultsProvider extends Closeable
      * @param sortDescending Sort in descending order
      * @param anomalyScoreThreshold Return only influencers with an anomalyScore >= this value
      * @return QueryPage of Influencer
+     * @throws UnknownJobException
      */
     public QueryPage<Influencer> influencers(String jobId, int skip, int take, long startEpochMs,
-            long endEpochMs, String sortField, boolean sortDescending, double anomalyScoreFilter);
+            long endEpochMs, String sortField, boolean sortDescending, double anomalyScoreFilter)
+            throws UnknownJobException;
 
 
     /**

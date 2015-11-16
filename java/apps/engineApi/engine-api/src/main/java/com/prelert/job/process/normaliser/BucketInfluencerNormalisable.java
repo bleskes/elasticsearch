@@ -27,36 +27,32 @@
 
 package com.prelert.job.process.normaliser;
 
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-import com.prelert.job.results.Bucket;
+import com.prelert.job.results.BucketInfluencer;
 
-class BucketNormalisable implements Normalisable
+class BucketInfluencerNormalisable implements Normalisable
 {
-    private static final int BUCKET_INFLUENCER = 0;
-    private static final int RECORD = 1;
-    private static final List<Integer> CHILDREN_TYPES = Arrays.asList(BUCKET_INFLUENCER, RECORD);
+    private final BucketInfluencer m_Influencer;
 
-    private final Bucket m_Bucket;
-
-    public BucketNormalisable(Bucket bucket)
+    public BucketInfluencerNormalisable(BucketInfluencer influencer)
     {
-        m_Bucket = Objects.requireNonNull(bucket);
+        m_Influencer = Objects.requireNonNull(influencer);
     }
 
     @Override
     public boolean isContainerOnly()
     {
-        return true;
+        return false;
     }
 
     @Override
     public Level getLevel()
     {
-        return Level.ROOT;
+        return BucketInfluencer.BUCKET_TIME.equals(m_Influencer.getInfluencerFieldName()) ?
+                Level.ROOT : Level.BUCKET_INFLUENCER;
     }
 
     @Override
@@ -68,7 +64,7 @@ class BucketNormalisable implements Normalisable
     @Override
     public String getPersonFieldName()
     {
-        return null;
+        return m_Influencer.getInfluencerFieldName();
     }
 
     @Override
@@ -86,93 +82,60 @@ class BucketNormalisable implements Normalisable
     @Override
     public double getInitialScore()
     {
-        throw new IllegalStateException("Bucket is container only");
+        return m_Influencer.getProbability();
     }
 
     @Override
     public double getNormalisedScore()
     {
-        return m_Bucket.getAnomalyScore();
+        return m_Influencer.getAnomalyScore();
     }
 
     @Override
     public void setNormalisedScore(double normalisedScore)
     {
-        m_Bucket.setAnomalyScore(normalisedScore);
+        m_Influencer.setAnomalyScore(normalisedScore);
     }
 
     @Override
     public List<Integer> getChildrenTypes()
     {
-        return CHILDREN_TYPES;
+        return Collections.emptyList();
     }
 
     @Override
     public List<Normalisable> getChildren()
     {
-        List<Normalisable> children = new ArrayList<>();
-        for (Integer type : getChildrenTypes())
-        {
-            children.addAll(getChildren(type));
-        }
-        return children;
+        return Collections.emptyList();
     }
 
     @Override
     public List<Normalisable> getChildren(int type)
     {
-        List<Normalisable> children = new ArrayList<>();
-        switch (type)
-        {
-            case BUCKET_INFLUENCER:
-                m_Bucket.getBucketInfluencers().stream().forEach(
-                        influencer -> children.add(new BucketInfluencerNormalisable(influencer)));
-                break;
-            case RECORD:
-                m_Bucket.getRecords().stream().forEach(
-                        record -> children.add(new RecordNormalisable(record)));
-                break;
-            default:
-                throw new IllegalArgumentException("Invalid type: " + type);
-        }
-        return children;
+        throw new IllegalStateException("BucketInfluencer has no children");
     }
 
     @Override
     public boolean setMaxChildrenScore(int childrenType, double maxScore)
     {
-        double oldScore = 0.0;
-        switch (childrenType)
-        {
-            case BUCKET_INFLUENCER:
-                oldScore = m_Bucket.getAnomalyScore();
-                m_Bucket.setAnomalyScore(maxScore);
-                break;
-            case RECORD:
-                oldScore = m_Bucket.getMaxNormalizedProbability();
-                m_Bucket.setMaxNormalizedProbability(maxScore);
-                break;
-            default:
-                throw new IllegalArgumentException("Invalid type: " + childrenType);
-        }
-        return maxScore != oldScore;
+        throw new IllegalStateException("BucketInfluencer has no children");
     }
 
     @Override
     public void setParentScore(double parentScore)
     {
-        throw new IllegalStateException("Bucket has no parent");
+        // Do nothing as it is not holding the parent score.
     }
 
     @Override
     public void resetBigChangeFlag()
     {
-        m_Bucket.resetBigNormalisedUpdateFlag();
+        // Do nothing
     }
 
     @Override
     public void raiseBigChangeFlag()
     {
-        m_Bucket.raiseBigNormalisedUpdateFlag();
+        // Do nothing
     }
 }

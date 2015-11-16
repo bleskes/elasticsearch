@@ -59,6 +59,7 @@ import com.prelert.job.quantiles.Quantiles;
 import com.prelert.job.results.AnomalyCause;
 import com.prelert.job.results.AnomalyRecord;
 import com.prelert.job.results.Bucket;
+import com.prelert.job.results.BucketInfluencer;
 import com.prelert.job.results.CategoryDefinition;
 import com.prelert.job.results.Detector;
 import com.prelert.job.results.Influence;
@@ -152,17 +153,8 @@ public class ElasticsearchPersister implements JobResultsPersister
             {
                 BulkRequestBuilder addInfluencersRequest = m_Client.prepareBulk();
 
-                // TODO take this out once the influencer bucket TODO below is done.
-                boolean influencerAdded = false;
-
                 for (Influencer influencer : bucket.getInfluencers())
                 {
-                    if (influencer.getInfluencerFieldValue() == null)
-                    {
-                        // TODO Influencers with a null field value are actually a different
-                        // result type called 'influencerbucket' and should be dealt accordingly.
-                        continue;
-                    }
                     influencer.setTimestamp(bucket.getTimestamp());
                     content = serialiseInfluencer(influencer);
                     LOGGER.trace("ES BULK ACTION: index type " + Influencer.TYPE +
@@ -170,25 +162,18 @@ public class ElasticsearchPersister implements JobResultsPersister
                     addInfluencersRequest.add(
                             m_Client.prepareIndex(m_JobId, Influencer.TYPE, influencer.getId())
                             .setSource(content));
-
-                    influencerAdded = true;
                 }
 
-                // It causes an exception if the bulk update does not contain any request
-                if (influencerAdded)
+                LOGGER.trace("ES API CALL: bulk request with " + addInfluencersRequest.numberOfActions() + " actions");
+                BulkResponse addInfluencersResponse = addInfluencersRequest.execute().actionGet();
+                if (addInfluencersResponse.hasFailures())
                 {
-                    LOGGER.trace("ES API CALL: bulk request with " + addInfluencersRequest.numberOfActions() + " actions");
-                    BulkResponse addInfluencersResponse = addInfluencersRequest.execute().actionGet();
-                    if (addInfluencersResponse.hasFailures())
+                    LOGGER.error("Bulk index of Influencers has errors");
+                    for (BulkItemResponse item : addInfluencersResponse.getItems())
                     {
-                        LOGGER.error("Bulk index of Influencers has errors");
-                        for (BulkItemResponse item : addInfluencersResponse.getItems())
-                        {
-                            LOGGER.error(item.getFailureMessage());
-                        }
+                        LOGGER.error(item.getFailureMessage());
                     }
                 }
-
             }
 
             for (Detector detector : bucket.getDetectors())
@@ -405,7 +390,6 @@ public class ElasticsearchPersister implements JobResultsPersister
         XContentBuilder builder = jsonBuilder().startObject()
                 .field(Bucket.ID, bucket.getId())
                 .field(ElasticsearchMappings.ES_TIMESTAMP, bucket.getTimestamp())
-                .field(Bucket.RAW_ANOMALY_SCORE, bucket.getRawAnomalyScore())
                 .field(Bucket.ANOMALY_SCORE, bucket.getAnomalyScore())
                 .field(Bucket.INITIAL_ANOMALY_SCORE, bucket.getAnomalyScore())
                 .field(Bucket.MAX_NORMALIZED_PROBABILITY, bucket.getMaxNormalizedProbability())
@@ -415,6 +399,16 @@ public class ElasticsearchPersister implements JobResultsPersister
         if (bucket.isInterim() != null)
         {
             builder.field(Bucket.IS_INTERIM, bucket.isInterim());
+        }
+
+        if (bucket.getBucketInfluencers() != null)
+        {
+            builder.startArray(Bucket.BUCKET_INFLUENCERS);
+            for (BucketInfluencer bucketInfluencer : bucket.getBucketInfluencers())
+            {
+                serialiseBucketInfluencer(bucketInfluencer, builder);
+            }
+            builder.endArray();
         }
 
         builder.endObject();
@@ -668,6 +662,18 @@ public class ElasticsearchPersister implements JobResultsPersister
         builder.endObject();
     }
 
+    private void serialiseBucketInfluencer(BucketInfluencer bucketInfluencer,
+            XContentBuilder bucketBuilder) throws IOException
+    {
+        bucketBuilder.startObject()
+                .field(BucketInfluencer.PROBABILITY, bucketInfluencer.getProbability())
+                .field(BucketInfluencer.INFLUENCER_FIELD_NAME, bucketInfluencer.getInfluencerFieldName())
+                .field(BucketInfluencer.INITIAL_ANOMALY_SCORE, bucketInfluencer.getInitialAnomalyScore())
+                .field(BucketInfluencer.ANOMALY_SCORE, bucketInfluencer.getAnomalyScore())
+                .field(BucketInfluencer.RAW_ANOMALY_SCORE, bucketInfluencer.getRawAnomalyScore())
+                .endObject();
+    }
+
     /**
      * Return the bucket as serialisable content
      * @param bucket
@@ -751,5 +757,4 @@ public class ElasticsearchPersister implements JobResultsPersister
     {
         persistInfluencer(influencer);
     }
-
 }

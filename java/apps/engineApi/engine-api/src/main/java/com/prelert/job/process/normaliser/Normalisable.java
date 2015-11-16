@@ -31,6 +31,17 @@ import java.util.List;
 
 interface Normalisable
 {
+    /**
+     * A {@code Normalisable} may be the owner of scores or just a
+     * container of other {@code Normalisable} objects. A container only
+     * {@code Normalisable} does not have any scores to be normalised.
+     * It contains scores that are aggregates of its children.
+     *
+     * @return true if this {@code Normalisable} is only a container
+     *
+     */
+    boolean isContainerOnly();
+
     Level getLevel();
     String getPartitonFieldName();
     String getPersonFieldName();
@@ -39,8 +50,25 @@ interface Normalisable
     double getInitialScore();
     double getNormalisedScore();
     void setNormalisedScore(double normalisedScore);
+    List<Integer> getChildrenTypes();
     List<Normalisable> getChildren();
-    void setMaxChildrenScore(double maxScore);
+    List<Normalisable> getChildren(int type);
+
+    /**
+     * Set the aggregate normalised score for a type of children
+     *
+     * @param childrenType the integer that corresponds to a children type
+     * @param maxScore the aggregate normalised score of the children
+     * @return true if the score has changed or false otherwise
+     */
+    boolean setMaxChildrenScore(int childrenType, double maxScore);
+
+    /**
+     * If this {@code Normalisable} holds the score of its parent,
+     * set the parent score
+     *
+     * @param parentScore the score of the parent {@code Normalisable}
+     */
     void setParentScore(double parentScore);
 
     void resetBigChangeFlag();

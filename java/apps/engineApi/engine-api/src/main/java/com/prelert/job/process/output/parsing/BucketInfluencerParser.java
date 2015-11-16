@@ -33,24 +33,24 @@ import org.apache.log4j.Logger;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
-import com.prelert.job.results.Influencer;
+import com.prelert.job.results.BucketInfluencer;
 import com.prelert.utils.json.AutoDetectParseException;
 import com.prelert.utils.json.FieldNameParser;
 
 /**
- * Static methods for {@linkplain InfluencerParser}
+ * Static methods for {@linkplain BucketInfluencerParser}
  *
  */
-public class InfluencerParser
+public final class BucketInfluencerParser
 {
-    private static final Logger LOGGER = Logger.getLogger(InfluencerParser.class);
+    private static final Logger LOGGER = Logger.getLogger(BucketInfluencerParser.class);
 
-    private InfluencerParser()
+    private BucketInfluencerParser()
     {
     }
 
     /**
-     * Create a new <code>Influencer</code> and populate it from the JSON parser.
+     * Create a new <code>BucketInfluencer</code> and populate it from the JSON parser.
      * The parser must be pointing at the start of the object then all the object's
      * fields are read and if they match the property names then the appropriate
      * members are set.
@@ -60,51 +60,50 @@ public class InfluencerParser
      *
      * @param parser The JSON Parser should be pointing to the start of the object,
      * when the function returns it will be pointing to the end.
-     * @return The parsed {@code Influencer}
+     * @return The parsed {@code BucketInfluencer}
      * @throws JsonParseException
      * @throws IOException
      * @throws AutoDetectParseException
      */
-    public static Influencer parseJson(JsonParser parser)
+    public static BucketInfluencer parseJson(JsonParser parser)
     throws JsonParseException, IOException, AutoDetectParseException
     {
-        Influencer influencer = new Influencer();
-        InfluencerJsonParser influencerJsonParser = new InfluencerJsonParser(parser, LOGGER);
+        BucketInfluencer influencer = new BucketInfluencer();
+        BucketInfluencerJsonParser influencerJsonParser = new BucketInfluencerJsonParser(parser, LOGGER);
         influencerJsonParser.parse(influencer);
-
         return influencer;
     }
 
-    private static class InfluencerJsonParser extends FieldNameParser<Influencer>
+    private static class BucketInfluencerJsonParser extends FieldNameParser<BucketInfluencer>
     {
 
-        public InfluencerJsonParser(JsonParser jsonParser, Logger logger)
+        public BucketInfluencerJsonParser(JsonParser jsonParser, Logger logger)
         {
-            super("Influencer", jsonParser, logger);
+            super("BucketInfluencer", jsonParser, logger);
         }
 
         @Override
-        protected void handleFieldName(String fieldName, Influencer influencer)
+        protected void handleFieldName(String fieldName, BucketInfluencer influencer)
                 throws AutoDetectParseException, JsonParseException, IOException
         {
             JsonToken token = m_Parser.nextToken();
             switch (fieldName)
             {
-            case Influencer.PROBABILITY:
+            case BucketInfluencer.PROBABILITY:
                 influencer.setProbability(parseAsDoubleOrZero(token, fieldName));
                 break;
-            case Influencer.INITIAL_ANOMALY_SCORE:
+            case BucketInfluencer.INITIAL_ANOMALY_SCORE:
                 influencer.setInitialAnomalyScore(parseAsDoubleOrZero(token, fieldName));
                 influencer.setAnomalyScore(influencer.getInitialAnomalyScore());
                 break;
-            case Influencer.INFLUENCER_FIELD_NAME:
+            case BucketInfluencer.RAW_ANOMALY_SCORE:
+                influencer.setRawAnomalyScore(parseAsDoubleOrZero(token, fieldName));
+                break;
+            case BucketInfluencer.INFLUENCER_FIELD_NAME:
                 influencer.setInfluencerFieldName(parseAsStringOrNull(token, fieldName));
                 break;
-            case Influencer.INFLUENCER_VALUE_NAME:
-                influencer.setInfluencerFieldValue(parseAsStringOrNull(token, fieldName));
-                break;
             default:
-                LOGGER.warn(String.format("Parse error unknown field in Influencer %s:%s",
+                LOGGER.warn(String.format("Parse error unknown field in BucketInfluencer %s:%s",
                         fieldName, token.asString()));
                 break;
             }

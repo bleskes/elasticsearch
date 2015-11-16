@@ -892,6 +892,7 @@ public class ElasticsearchJobProvider implements JobProvider
 
     @Override
     public QueryPage<Influencer> influencers(String jobId, int skip, int take)
+            throws UnknownJobException
     {
         return influencers(jobId, skip, take, FilterBuilders.matchAllFilter(),
                 Influencer.ANOMALY_SCORE, true);
@@ -900,6 +901,7 @@ public class ElasticsearchJobProvider implements JobProvider
     @Override
     public QueryPage<Influencer> influencers(String jobId, int skip, int take, long startEpochMs,
             long endEpochMs, String sortField, boolean sortDescending, double anomalyScoreFilter)
+            throws UnknownJobException
     {
         FilterBuilder fb = new ResultsFilterBuilder()
                 .timeRange(Influencer.TIMESTAMP, startEpochMs, endEpochMs)
@@ -910,6 +912,7 @@ public class ElasticsearchJobProvider implements JobProvider
 
     private QueryPage<Influencer> influencers(String jobId, int skip, int take,
             FilterBuilder filterBuilder, String sortField, boolean sortDescending)
+            throws UnknownJobException
     {
         LOGGER.trace("ES API CALL: search all of type " + Influencer.TYPE + " from index " + jobId
                 + ((sortField != null) ? " with sort "
@@ -927,7 +930,15 @@ public class ElasticsearchJobProvider implements JobProvider
                     sortDescending ? SortOrder.DESC : SortOrder.ASC);
             searchRequestBuilder.addSort(sb);
         }
-        SearchResponse response = searchRequestBuilder.get();
+        SearchResponse response = null;
+        try
+        {
+            response = searchRequestBuilder.get();
+        }
+        catch (IndexMissingException e)
+        {
+            throw new UnknownJobException(jobId);
+        }
 
         List<Influencer> influencers = new ArrayList<>();
         for (SearchHit hit : response.getHits().getHits())

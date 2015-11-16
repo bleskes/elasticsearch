@@ -31,6 +31,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 
 import org.junit.Test;
@@ -80,18 +81,6 @@ public class BucketTest
         bucket1.setMaxNormalizedProbability(55.0);
         Bucket bucket2 = new Bucket();
         bucket2.setMaxNormalizedProbability(55.1);
-
-        assertFalse(bucket1.equals(bucket2));
-        assertFalse(bucket2.equals(bucket1));
-    }
-
-    @Test
-    public void testEquals_GivenDifferentRawAnomalyScore()
-    {
-        Bucket bucket1 = new Bucket();
-        bucket1.setRawAnomalyScore(0.03);
-        Bucket bucket2 = new Bucket();
-        bucket2.setRawAnomalyScore(0.3);
 
         assertFalse(bucket1.equals(bucket2));
         assertFalse(bucket2.equals(bucket1));
@@ -199,11 +188,29 @@ public class BucketTest
     }
 
     @Test
+    public void testEquals_GivenDifferentBucketInfluencers()
+    {
+        Bucket bucket1 = new Bucket();
+        BucketInfluencer influencer1 = new BucketInfluencer();
+        influencer1.setInfluencerFieldName("foo");
+        bucket1.addBucketInfluencer(influencer1);;
+
+        Bucket bucket2 = new Bucket();
+        BucketInfluencer influencer2 = new BucketInfluencer();
+        influencer2.setInfluencerFieldName("bar");
+        bucket2.addBucketInfluencer(influencer2);
+
+        assertFalse(bucket1.equals(bucket2));
+        assertFalse(bucket2.equals(bucket1));
+    }
+
+    @Test
     public void testEquals_GivenEqualBuckets()
     {
         Detector detector = new Detector();
         AnomalyRecord record = new AnomalyRecord();
         Influencer influencer = new Influencer("testField", "testValue");
+        BucketInfluencer bucketInfluencer = new BucketInfluencer();
         influencer.setProbability(0.1);
         influencer.setInitialAnomalyScore(10.0);
         Date date = new Date();
@@ -215,9 +222,9 @@ public class BucketTest
         bucket1.setId("13546461");
         bucket1.setInterim(true);
         bucket1.setMaxNormalizedProbability(33.3);
-        bucket1.setRawAnomalyScore(0.005);
         bucket1.setRecordCount(4);
         bucket1.setRecords(Arrays.asList(record));
+        bucket1.addBucketInfluencer(bucketInfluencer);
         bucket1.setInfluencers(Arrays.asList(influencer));
         bucket1.setTimestamp(date);
 
@@ -228,9 +235,9 @@ public class BucketTest
         bucket2.setId("13546461");
         bucket2.setInterim(true);
         bucket2.setMaxNormalizedProbability(33.3);
-        bucket2.setRawAnomalyScore(0.005);
         bucket2.setRecordCount(4);
         bucket2.setRecords(Arrays.asList(record));
+        bucket2.addBucketInfluencer(bucketInfluencer);
         bucket2.setInfluencers(Arrays.asList(influencer));
         bucket2.setTimestamp(date);
 
@@ -238,4 +245,67 @@ public class BucketTest
         assertTrue(bucket2.equals(bucket1));
     }
 
+    @Test
+    public void testIsNormalisable_GivenNullBucketInfluencers()
+    {
+        Bucket bucket = new Bucket();
+        bucket.setBucketInfluencers(null);
+        bucket.setAnomalyScore(90.0);
+
+        assertFalse(bucket.isNormalisable());
+    }
+
+    @Test
+    public void testIsNormalisable_GivenEmptyBucketInfluencers()
+    {
+        Bucket bucket = new Bucket();
+        bucket.setBucketInfluencers(Collections.emptyList());
+        bucket.setAnomalyScore(90.0);
+
+        assertFalse(bucket.isNormalisable());
+    }
+
+    @Test
+    public void testIsNormalisable_GivenAnomalyScoreIsZeroAndRecordCountIsZero()
+    {
+        Bucket bucket = new Bucket();
+        bucket.addBucketInfluencer(new BucketInfluencer());
+        bucket.setAnomalyScore(0.0);
+        bucket.setRecordCount(0);
+
+        assertFalse(bucket.isNormalisable());
+    }
+
+    @Test
+    public void testIsNormalisable_GivenAnomalyScoreIsZeroAndRecordCountIsNonZero()
+    {
+        Bucket bucket = new Bucket();
+        bucket.addBucketInfluencer(new BucketInfluencer());
+        bucket.setAnomalyScore(0.0);
+        bucket.setRecordCount(1);
+
+        assertTrue(bucket.isNormalisable());
+    }
+
+    @Test
+    public void testIsNormalisable_GivenAnomalyScoreIsNonZeroAndRecordCountIsZero()
+    {
+        Bucket bucket = new Bucket();
+        bucket.addBucketInfluencer(new BucketInfluencer());
+        bucket.setAnomalyScore(1.0);
+        bucket.setRecordCount(0);
+
+        assertTrue(bucket.isNormalisable());
+    }
+
+    @Test
+    public void testIsNormalisable_GivenAnomalyScoreIsNonZeroAndRecordCountIsNonZero()
+    {
+        Bucket bucket = new Bucket();
+        bucket.addBucketInfluencer(new BucketInfluencer());
+        bucket.setAnomalyScore(1.0);
+        bucket.setRecordCount(1);
+
+        assertTrue(bucket.isNormalisable());
+    }
 }

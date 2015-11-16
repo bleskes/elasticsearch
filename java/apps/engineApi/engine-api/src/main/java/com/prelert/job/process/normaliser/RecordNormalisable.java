@@ -43,6 +43,12 @@ class RecordNormalisable implements Normalisable
     }
 
     @Override
+    public boolean isContainerOnly()
+    {
+        return false;
+    }
+
+    @Override
     public Level getLevel()
     {
         return Level.LEAF;
@@ -92,13 +98,25 @@ class RecordNormalisable implements Normalisable
     }
 
     @Override
+    public List<Integer> getChildrenTypes()
+    {
+        return Collections.emptyList();
+    }
+
+    @Override
     public List<Normalisable> getChildren()
     {
         return Collections.emptyList();
     }
 
     @Override
-    public void setMaxChildrenScore(double maxScore)
+    public List<Normalisable> getChildren(int type)
+    {
+        throw new IllegalStateException("Record has no children");
+    }
+
+    @Override
+    public boolean setMaxChildrenScore(int childrenType, double maxScore)
     {
         throw new IllegalStateException("Record has no children");
     }

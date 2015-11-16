@@ -944,6 +944,10 @@ public class JobsTest implements Closeable
         for (Bucket b : buckets)
         {
             test(b.getAnomalyScore() >= 0.0);
+            test(b.getBucketInfluencers().size() == 1);
+            test(b.getBucketInfluencers().get(0).getAnomalyScore() == b.getAnomalyScore());
+            test(b.getBucketInfluencers().get(0).getProbability() >= 0.0);
+            test(b.getBucketInfluencers().get(0).getProbability() <= 1.0);
             test(b.getRecordCount() >= 0);
             test(b.getDetectors().size() == 0);
             test(b.getId() != null && b.getId().isEmpty() == false);

@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -37,6 +37,7 @@ import static org.mockito.Mockito.when;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -56,6 +57,7 @@ import com.prelert.job.process.output.parsing.NormalisedResultsParser;
 import com.prelert.job.process.writer.LengthEncodedWriter;
 import com.prelert.job.results.AnomalyRecord;
 import com.prelert.job.results.Bucket;
+import com.prelert.job.results.BucketInfluencer;
 
 public class NormaliserTest
 {
@@ -91,23 +93,46 @@ public class NormaliserTest
     }
 
     @Test
-    public void testNormalise() throws NativeProcessRunException,
+    public void testNormalise_GivenSingleBucketInfluencerAndRecords() throws NativeProcessRunException,
             UnknownJobException, IOException
     {
         LengthEncodedWriter writer = mock(LengthEncodedWriter.class);
         when(m_Process.createProcessWriter()).thenReturn(writer);
 
-        double[] rawScoresPerBucket = {1.0, 2.0, 3.0};
-        double[] probabilityPerRecord = {0.05, 0.03, 0.03, 0.05, 0.01, 0.02};
+        Bucket bucket1 = new Bucket();
+        bucket1.setAnomalyScore(1.0);
+        bucket1.addBucketInfluencer(createBucketInfluencer(BucketInfluencer.BUCKET_TIME, 0.001, 1.0));
+        bucket1.setRecords(Arrays.asList(
+                createSumButesRecord(0.05, 20.0, 1.0),
+                createSumButesRecord(0.03, 30.0, 1.0)
+                ));
+        bucket1.setMaxNormalizedProbability(30.0);
 
-        // The normalised results are (10 + raw score) for buckets and (100 * prob) for records
-        String normalisedResults = "{\"normalizedScore\":\"11.0\"}"  // Bucket 1
+        Bucket bucket2 = new Bucket();
+        bucket2.setAnomalyScore(2.0);
+        bucket2.addBucketInfluencer(createBucketInfluencer(BucketInfluencer.BUCKET_TIME, 0.002, 2.0));
+        bucket2.setRecords(Arrays.asList(
+                createSumButesRecord(0.03, 30.0, 2.0),
+                createSumButesRecord(0.05, 0.2, 2.0)
+                ));
+        bucket2.setMaxNormalizedProbability(30.0);
+
+        Bucket bucket3 = new Bucket();
+        bucket3.setAnomalyScore(3.0);
+        bucket3.addBucketInfluencer(createBucketInfluencer(BucketInfluencer.BUCKET_TIME, 0.003, 3.0));
+        bucket3.setRecords(Arrays.asList(
+                createSumButesRecord(0.01, 90.0, 3.0),
+                createSumButesRecord(0.02, 80.0, 3.0)
+                ));
+        bucket3.setMaxNormalizedProbability(90.0);
+
+        String normalisedResults = "{\"normalizedScore\":\"10.0\"}"  // Bucket 1
                 + "{\"normalizedScore\":\"5.0\"}"                   // Bucket 1, Record 1
                 + "{\"normalizedScore\":\"3.0\"}"                   // Bucket 1, Record 2
-                + "{\"normalizedScore\":\"12.0\"}"                   // Bucket 2
+                + "{\"normalizedScore\":\"20.0\"}"                   // Bucket 2
                 + "{\"normalizedScore\":\"3.0\"}"                   // Bucket 2, Record 1
-                + "{\"normalizedScore\":\"5.0\"}"                   // Bucket 2, Record 2
-                + "{\"normalizedScore\":\"13.0\"}"                   // Bucket 3
+                + "{\"normalizedScore\":\"0.41\"}"                   // Bucket 2, Record 2
+                + "{\"normalizedScore\":\"30.0\"}"                   // Bucket 3
                 + "{\"normalizedScore\":\"1.0\"}"                   // Bucket 3, Record 1
                 + "{\"normalizedScore\":\"2.0\"}";                  // Bucket 3, Record 2
 
@@ -117,40 +142,107 @@ public class NormaliserTest
 
         when(m_ProcessFactory.create(JOB_ID, "quantilesState", 10, m_Logger)).thenReturn(m_Process);
 
-        List<Bucket> buckets = createBuckets(rawScoresPerBucket, probabilityPerRecord);
+        List<Bucket> buckets = Arrays.asList(bucket1, bucket2, bucket3);
 
         m_Normaliser.normalise(10, transformToNormalisable(buckets), "quantilesState");
 
         InOrder inOrder = Mockito.inOrder(m_Process, writer);
         inOrder.verify(writer).writeRecord(
                 new String[] {"level", "partitionFieldName", "personFieldName", "functionName", "valueFieldName", "rawScore"});
-        inOrder.verify(writer).writeRecord(new String[] {"root", "", "", "", "", "1.0"});
+        inOrder.verify(writer).writeRecord(new String[] {"root", "", "bucketTime", "", "", "0.001"});
         inOrder.verify(writer).writeRecord(new String[] {"leaf", "", "", "sum", "bytes", "0.05"});
         inOrder.verify(writer).writeRecord(new String[] {"leaf", "", "", "sum", "bytes", "0.03"});
-        inOrder.verify(writer).writeRecord(new String[] {"root", "", "", "", "", "2.0"});
+        inOrder.verify(writer).writeRecord(new String[] {"root", "", "bucketTime", "", "", "0.002"});
         inOrder.verify(writer).writeRecord(new String[] {"leaf", "", "", "sum", "bytes", "0.03"});
         inOrder.verify(writer).writeRecord(new String[] {"leaf", "", "", "sum", "bytes", "0.05"});
-        inOrder.verify(writer).writeRecord(new String[] {"root", "", "", "", "", "3.0"});
+        inOrder.verify(writer).writeRecord(new String[] {"root", "", "bucketTime", "", "", "0.003"});
         inOrder.verify(writer).writeRecord(new String[] {"leaf", "", "", "sum", "bytes", "0.01"});
         inOrder.verify(writer).writeRecord(new String[] {"leaf", "", "", "sum", "bytes", "0.02"});
         inOrder.verify(m_Process).closeOutputStream();
 
-        for (int bucketIndex = 0; bucketIndex < buckets.size(); bucketIndex++)
-        {
-            Bucket bucket = buckets.get(bucketIndex);
-            assertEquals(10 + rawScoresPerBucket[bucketIndex], bucket.getAnomalyScore(), ERROR);
-            assertTrue(bucket.hadBigNormalisedUpdate());
+        assertTrue(bucket1.hadBigNormalisedUpdate());
+        assertEquals(10.0, bucket1.getAnomalyScore(), ERROR);
+        assertEquals(10.0, bucket1.getBucketInfluencers().get(0).getAnomalyScore(), ERROR);
+        assertTrue(bucket1.getRecords().get(0).hadBigNormalisedUpdate());
+        assertEquals(10.0, bucket1.getRecords().get(0).getAnomalyScore(), ERROR);
+        assertEquals(5.0, bucket1.getRecords().get(0).getNormalizedProbability(), ERROR);
+        assertTrue(bucket1.getRecords().get(1).hadBigNormalisedUpdate());
+        assertEquals(10.0, bucket1.getRecords().get(1).getAnomalyScore(), ERROR);
+        assertEquals(3.0, bucket1.getRecords().get(1).getNormalizedProbability(), ERROR);
+        assertEquals(5.0, bucket1.getMaxNormalizedProbability(), ERROR);
 
-            for (int i = 0; i < bucket.getRecords().size(); i++)
-            {
-                AnomalyRecord record = bucket.getRecords().get(i);
-                int recordIndex = (bucketIndex * 2) + i;
+        assertTrue(bucket2.hadBigNormalisedUpdate());
+        assertEquals(20.0, bucket2.getAnomalyScore(), ERROR);
+        assertEquals(20.0, bucket2.getBucketInfluencers().get(0).getAnomalyScore(), ERROR);
+        assertTrue(bucket2.getRecords().get(0).hadBigNormalisedUpdate());
+        assertEquals(20.0, bucket2.getRecords().get(0).getAnomalyScore(), ERROR);
+        assertEquals(3.0, bucket2.getRecords().get(0).getNormalizedProbability(), ERROR);
+        assertTrue(bucket2.getRecords().get(1).hadBigNormalisedUpdate());
+        assertEquals(20.0, bucket2.getRecords().get(1).getAnomalyScore(), ERROR);
+        assertEquals(0.41, bucket2.getRecords().get(1).getNormalizedProbability(), ERROR);
+        assertEquals(3.0, bucket2.getMaxNormalizedProbability(), ERROR);
 
-                assertEquals(10 + rawScoresPerBucket[bucketIndex], record.getAnomalyScore(), ERROR);
-                assertEquals(100 * probabilityPerRecord[recordIndex], record.getNormalizedProbability(), ERROR);
-                assertTrue(record.hadBigNormalisedUpdate());
-            }
-        }
+        assertTrue(bucket3.hadBigNormalisedUpdate());
+        assertEquals(30.0, bucket3.getAnomalyScore(), ERROR);
+        assertEquals(30.0, bucket3.getBucketInfluencers().get(0).getAnomalyScore(), ERROR);
+        assertTrue(bucket3.getRecords().get(0).hadBigNormalisedUpdate());
+        assertEquals(30.0, bucket3.getRecords().get(0).getAnomalyScore(), ERROR);
+        assertEquals(1.0, bucket3.getRecords().get(0).getNormalizedProbability(), ERROR);
+        assertTrue(bucket3.getRecords().get(1).hadBigNormalisedUpdate());
+        assertEquals(30.0, bucket3.getRecords().get(1).getAnomalyScore(), ERROR);
+        assertEquals(2.0, bucket3.getRecords().get(1).getNormalizedProbability(), ERROR);
+        assertEquals(2.0, bucket3.getMaxNormalizedProbability(), ERROR);
+    }
+
+    @Test
+    public void testNormalise_GivenMultipleBucketInfluencersWithBigUpdateAndRecordsNoBigUpdate() throws NativeProcessRunException,
+            UnknownJobException, IOException
+    {
+        LengthEncodedWriter writer = mock(LengthEncodedWriter.class);
+        when(m_Process.createProcessWriter()).thenReturn(writer);
+
+        Bucket bucket1 = new Bucket();
+        bucket1.setAnomalyScore(20.0);
+        bucket1.addBucketInfluencer(createBucketInfluencer(BucketInfluencer.BUCKET_TIME, 0.001, 10.0));
+        bucket1.addBucketInfluencer(createBucketInfluencer(BucketInfluencer.BUCKET_TIME, 0.002, 20.0));
+        bucket1.setRecords(Arrays.asList(
+                createSumButesRecord(0.05, 5.0, 20.0),
+                createSumButesRecord(0.03, 7.0, 20.0)
+                ));
+
+        String normalisedResults = "{\"normalizedScore\":\"80.0\"}"  // Bucket 1, BucketInfluencer 1
+                + "{\"normalizedScore\":\"90.0\"}"                   // Bucket 1, BucketInfluencer 2
+                + "{\"normalizedScore\":\"5.0\"}"                    // Bucket 1, record 1
+                + "{\"normalizedScore\":\"7.0\"}";                   // Bucket 1, record 2
+
+        ByteArrayInputStream inputStream = new ByteArrayInputStream(normalisedResults.getBytes());
+        when(m_Process.createNormalisedResultsParser(m_Logger)).thenReturn(
+                new NormalisedResultsParser(inputStream, m_Logger));
+
+        when(m_ProcessFactory.create(JOB_ID, "quantilesState", 10, m_Logger)).thenReturn(m_Process);
+
+        List<Bucket> buckets = Arrays.asList(bucket1);
+
+        m_Normaliser.normalise(10, transformToNormalisable(buckets), "quantilesState");
+
+        InOrder inOrder = Mockito.inOrder(m_Process, writer);
+        inOrder.verify(writer).writeRecord(
+                new String[] {"level", "partitionFieldName", "personFieldName", "functionName", "valueFieldName", "rawScore"});
+        inOrder.verify(writer).writeRecord(new String[] {"root", "", "bucketTime", "", "", "0.001"});
+        inOrder.verify(writer).writeRecord(new String[] {"root", "", "bucketTime", "", "", "0.002"});
+        inOrder.verify(m_Process).closeOutputStream();
+
+        assertTrue(bucket1.hadBigNormalisedUpdate());
+        assertEquals(90.0, bucket1.getAnomalyScore(), ERROR);
+        assertEquals(80.0, bucket1.getBucketInfluencers().get(0).getAnomalyScore(), ERROR);
+        assertEquals(90.0, bucket1.getBucketInfluencers().get(1).getAnomalyScore(), ERROR);
+        assertTrue(bucket1.getRecords().get(0).hadBigNormalisedUpdate());
+        assertEquals(90.0, bucket1.getRecords().get(0).getAnomalyScore(), ERROR);
+        assertEquals(5.0, bucket1.getRecords().get(0).getNormalizedProbability(), ERROR);
+        assertTrue(bucket1.getRecords().get(1).hadBigNormalisedUpdate());
+        assertEquals(90.0, bucket1.getRecords().get(1).getAnomalyScore(), ERROR);
+        assertEquals(7.0, bucket1.getRecords().get(1).getNormalizedProbability(), ERROR);
+        assertEquals(7.0, bucket1.getMaxNormalizedProbability(), ERROR);
     }
 
     @Test
@@ -161,34 +253,60 @@ public class NormaliserTest
         when(m_Process.createProcessWriter()).thenReturn(writer);
         when(m_ProcessFactory.create(JOB_ID, "quantilesState", 10, m_Logger)).thenReturn(m_Process);
 
+        Bucket bucket1 = new Bucket();
+        bucket1.setAnomalyScore(30.0);
+        bucket1.addBucketInfluencer(createBucketInfluencer(BucketInfluencer.BUCKET_TIME, 0.001, 30.0));
+        bucket1.setRecords(Arrays.asList(
+                createSumButesRecord(0.01, 0.1, 30.0),
+                createSumButesRecord(0.02, 0.2, 30.0)
+                ));
+        bucket1.setMaxNormalizedProbability(0.2);
+
+        Bucket bucket2 = new Bucket();
+        bucket2.setAnomalyScore(0.1);
+        bucket2.addBucketInfluencer(createBucketInfluencer(BucketInfluencer.BUCKET_TIME, 0.049, 0.1));
+        bucket2.setRecords(Arrays.asList(
+                createSumButesRecord(0.03, 0.3, 0.1),
+                createSumButesRecord(0.04, 0.4, 0.1)
+                ));
+        bucket1.setMaxNormalizedProbability(0.4);
+
         String normalisedResults = "{\"normalizedScore\":\"30.9\"}"  // Bucket 1
                 + "{\"normalizedScore\":\"0.11\"}"                   // Bucket 1, Record 1
                 + "{\"normalizedScore\":\"0.19\"}"                   // Bucket 1, Record 2
                 + "{\"normalizedScore\":\"0.05\"}"                   // Bucket 2
-                + "{\"normalizedScore\":\"0.33\"}"                   // Bucket 2, Record 1
+                + "{\"normalizedScore\":\"0.28\"}"                   // Bucket 2, Record 1
                 + "{\"normalizedScore\":\"0.44\"}";                  // Bucket 2, Record 2
         ByteArrayInputStream inputStream = new ByteArrayInputStream(normalisedResults.getBytes());
         when(m_Process.createNormalisedResultsParser(m_Logger)).thenReturn(
                 new NormalisedResultsParser(inputStream, m_Logger));
 
-        double[] rawScoresPerBucket = {30.0, 0.1};
-        double[] probabilityPerRecord = {0.1, 0.2, 0.3, 0.4};
-        List<Bucket> buckets = createBuckets(rawScoresPerBucket, probabilityPerRecord);
-
         Normaliser normaliser = new Normaliser(JOB_ID, m_ProcessFactory, m_Logger);
+        List<Bucket> buckets = Arrays.asList(bucket1, bucket2);
 
         normaliser.normalise(10, transformToNormalisable(buckets), "quantilesState");
 
-        for (int i = 0; i < buckets.size(); i++)
-        {
-            Bucket bucket = buckets.get(i);
-            assertEquals(rawScoresPerBucket[i], bucket.getAnomalyScore(), ERROR);
-            assertFalse(bucket.hadBigNormalisedUpdate());
-            for (AnomalyRecord record : bucket.getRecords())
-            {
-                assertFalse(record.hadBigNormalisedUpdate());
-            }
-        }
+        assertFalse(bucket1.hadBigNormalisedUpdate());
+        assertEquals(30.0, bucket1.getAnomalyScore(), ERROR);
+        assertEquals(30.0, bucket1.getBucketInfluencers().get(0).getAnomalyScore(), ERROR);
+        assertFalse(bucket1.getRecords().get(0).hadBigNormalisedUpdate());
+        assertEquals(30.0, bucket1.getRecords().get(0).getAnomalyScore(), ERROR);
+        assertEquals(0.1, bucket1.getRecords().get(0).getNormalizedProbability(), ERROR);
+        assertFalse(bucket1.getRecords().get(1).hadBigNormalisedUpdate());
+        assertEquals(30.0, bucket1.getRecords().get(1).getAnomalyScore(), ERROR);
+        assertEquals(0.2, bucket1.getRecords().get(1).getNormalizedProbability(), ERROR);
+        assertEquals(0.2, bucket1.getMaxNormalizedProbability(), ERROR);
+
+        assertFalse(bucket2.hadBigNormalisedUpdate());
+        assertEquals(0.1, bucket2.getAnomalyScore(), ERROR);
+        assertEquals(0.1, bucket2.getBucketInfluencers().get(0).getAnomalyScore(), ERROR);
+        assertFalse(bucket2.getRecords().get(0).hadBigNormalisedUpdate());
+        assertEquals(0.1, bucket2.getRecords().get(0).getAnomalyScore(), ERROR);
+        assertEquals(0.3, bucket2.getRecords().get(0).getNormalizedProbability(), ERROR);
+        assertFalse(bucket2.getRecords().get(1).hadBigNormalisedUpdate());
+        assertEquals(0.1, bucket2.getRecords().get(1).getAnomalyScore(), ERROR);
+        assertEquals(0.4, bucket2.getRecords().get(1).getNormalizedProbability(), ERROR);
+        assertEquals(0.4, bucket2.getMaxNormalizedProbability(), ERROR);
     }
 
     @Test
@@ -199,55 +317,55 @@ public class NormaliserTest
         when(m_Process.createProcessWriter()).thenReturn(writer);
         when(m_ProcessFactory.create(JOB_ID, "quantilesState", 10, m_Logger)).thenReturn(m_Process);
 
+        Bucket bucket1 = new Bucket();
+        bucket1.setAnomalyScore(30.0);
+        bucket1.addBucketInfluencer(createBucketInfluencer(BucketInfluencer.BUCKET_TIME, 0.001, 30.0));
+        bucket1.setRecords(Arrays.asList(
+                createSumButesRecord(0.01, 0.4, 30.0),
+                createSumButesRecord(0.02, 0.2, 30.0)
+                ));
+        bucket1.setMaxNormalizedProbability(0.2);
+
         String normalisedResults = "{\"normalizedScore\":\"30.0\"}" // Bucket 1
-                + "{\"normalizedScore\":\"0.4\"}"                   // Bucket 1, Record 1
+                + "{\"normalizedScore\":\"0.1\"}"                   // Bucket 1, Record 1
                 + "{\"normalizedScore\":\"0.2\"}";                  // Bucket 1, Record 2
         ByteArrayInputStream inputStream = new ByteArrayInputStream(normalisedResults.getBytes());
         when(m_Process.createNormalisedResultsParser(m_Logger)).thenReturn(
                 new NormalisedResultsParser(inputStream, m_Logger));
 
-        double[] rawScoresPerBucket = {30.0};
-        double[] probabilityPerRecord = {0.1, 0.2};
-        List<Bucket> buckets = createBuckets(rawScoresPerBucket, probabilityPerRecord);
+        List<Bucket> buckets = Arrays.asList(bucket1);
 
         Normaliser normaliser = new Normaliser(JOB_ID, m_ProcessFactory, m_Logger);
 
         normaliser.normalise(10, transformToNormalisable(buckets), "quantilesState");
 
-        Bucket bucket = buckets.get(0);
-        assertEquals(0.4, bucket.getMaxNormalizedProbability(), ERROR);
-        assertTrue(bucket.hadBigNormalisedUpdate());
-        assertEquals(0.4, bucket.getRecords().get(0).getNormalizedProbability(), ERROR);
-        assertTrue(bucket.getRecords().get(0).hadBigNormalisedUpdate());
-        assertFalse(bucket.getRecords().get(1).hadBigNormalisedUpdate());
+        assertEquals(0.2, bucket1.getMaxNormalizedProbability(), ERROR);
+        assertTrue(bucket1.hadBigNormalisedUpdate());
+        assertEquals(0.1, bucket1.getRecords().get(0).getNormalizedProbability(), ERROR);
+        assertTrue(bucket1.getRecords().get(0).hadBigNormalisedUpdate());
+        assertFalse(bucket1.getRecords().get(1).hadBigNormalisedUpdate());
     }
 
-    private static List<Bucket> createBuckets(double[] anomalyScorePerBucket,
-            double[] normalizedProbabilityPerRecord)
+    private static BucketInfluencer createBucketInfluencer(String field, double probability,
+            double score)
     {
-        assertTrue(normalizedProbabilityPerRecord.length == 2 * anomalyScorePerBucket.length);
-        List<Bucket> buckets = new ArrayList<>();
-        for (int bucketIndex = 0; bucketIndex < anomalyScorePerBucket.length; bucketIndex++)
-        {
-            Bucket bucket = new Bucket();
-            bucket.setRawAnomalyScore(anomalyScorePerBucket[bucketIndex]);
-            bucket.setAnomalyScore(anomalyScorePerBucket[bucketIndex]);
-            List<AnomalyRecord> records = new ArrayList<>();
-            for (int recordIndex = 0; recordIndex < 2; recordIndex++)
-            {
-                int recordCount = bucketIndex * 2 + recordIndex;
-                AnomalyRecord anomalyRecord = new AnomalyRecord();
-                anomalyRecord.setAnomalyScore(anomalyScorePerBucket[bucketIndex]);
-                anomalyRecord.setProbability(normalizedProbabilityPerRecord[recordCount]);
-                anomalyRecord.setNormalizedProbability(normalizedProbabilityPerRecord[recordCount]);
-                anomalyRecord.setFunction(SUM);
-                anomalyRecord.setFieldName(BYTES);
-                records.add(anomalyRecord);
-            }
-            bucket.setRecords(records);
-            buckets.add(bucket);
-        }
-        return buckets;
+        BucketInfluencer bucketInfluencer = new BucketInfluencer();
+        bucketInfluencer.setInfluencerFieldName(field);
+        bucketInfluencer.setProbability(probability);
+        bucketInfluencer.setAnomalyScore(score);
+        return bucketInfluencer;
+    }
+
+    private static AnomalyRecord createSumButesRecord(double probability, double normProbability,
+            double anomalyScore)
+    {
+        AnomalyRecord anomalyRecord = new AnomalyRecord();
+        anomalyRecord.setAnomalyScore(anomalyScore);
+        anomalyRecord.setProbability(probability);
+        anomalyRecord.setNormalizedProbability(normProbability);
+        anomalyRecord.setFunction(SUM);
+        anomalyRecord.setFieldName(BYTES);
+        return anomalyRecord;
     }
 
     private static List<Normalisable> transformToNormalisable(List<Bucket> buckets)

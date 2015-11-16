@@ -40,6 +40,7 @@ import org.junit.Test;
 
 import com.prelert.job.results.AnomalyRecord;
 import com.prelert.job.results.Bucket;
+import com.prelert.job.results.BucketInfluencer;
 
 public class BucketNormalisableTest
 {
@@ -50,9 +51,20 @@ public class BucketNormalisableTest
     @Before
     public void setUp()
     {
+        BucketInfluencer bucketInfluencer1 = new BucketInfluencer();
+        bucketInfluencer1.setInfluencerFieldName(BucketInfluencer.BUCKET_TIME);
+        bucketInfluencer1.setAnomalyScore(42.0);
+        bucketInfluencer1.setProbability(0.01);
+
+        BucketInfluencer bucketInfluencer2 = new BucketInfluencer();
+        bucketInfluencer2.setInfluencerFieldName("foo");
+        bucketInfluencer2.setAnomalyScore(88.0);
+        bucketInfluencer2.setProbability(0.001);
+
         m_Bucket = new Bucket();
-        m_Bucket.setAnomalyScore(42.0);
-        m_Bucket.setRawAnomalyScore(4.2);
+        m_Bucket.setBucketInfluencers(Arrays.asList(bucketInfluencer1, bucketInfluencer2));
+
+        m_Bucket.setAnomalyScore(88.0);
         m_Bucket.setMaxNormalizedProbability(2.0);
         AnomalyRecord record1 = new AnomalyRecord();
         record1.setNormalizedProbability(1.0);
@@ -60,6 +72,12 @@ public class BucketNormalisableTest
         record2.setNormalizedProbability(2.0);
         m_Records = Arrays.asList(record1, record2);
         m_Bucket.setRecords(m_Records);
+    }
+
+    @Test
+    public void testIsContainerOnly()
+    {
+        assertTrue(new BucketNormalisable(m_Bucket).isContainerOnly());
     }
 
     @Test
@@ -92,16 +110,16 @@ public class BucketNormalisableTest
         assertNull(new BucketNormalisable(m_Bucket).getValueFieldName());
     }
 
-    @Test
+    @Test (expected = IllegalStateException.class)
     public void testGetInitialScore()
     {
-        assertEquals(4.2, new BucketNormalisable(m_Bucket).getInitialScore(), ERROR);
+        new BucketNormalisable(m_Bucket).getInitialScore();
     }
 
     @Test
     public void testGetNormalisedScore()
     {
-        assertEquals(42.0, new BucketNormalisable(m_Bucket).getNormalisedScore(), ERROR);
+        assertEquals(88.0, new BucketNormalisable(m_Bucket).getNormalisedScore(), ERROR);
     }
 
     @Test
@@ -120,17 +138,75 @@ public class BucketNormalisableTest
     {
         List<Normalisable> children = new BucketNormalisable(m_Bucket).getChildren();
 
-        assertEquals(2, children.size());
-        assertEquals(1.0, children.get(0).getNormalisedScore(), ERROR);
-        assertEquals(2.0, children.get(1).getNormalisedScore(), ERROR);
+        assertEquals(4, children.size());
+        assertTrue(children.get(0) instanceof BucketInfluencerNormalisable);
+        assertEquals(42.0, children.get(0).getNormalisedScore(), ERROR);
+        assertTrue(children.get(1) instanceof BucketInfluencerNormalisable);
+        assertEquals(88.0, children.get(1).getNormalisedScore(), ERROR);
+        assertTrue(children.get(2) instanceof RecordNormalisable);
+        assertEquals(1.0, children.get(2).getNormalisedScore(), ERROR);
+        assertTrue(children.get(3) instanceof RecordNormalisable);
+        assertEquals(2.0, children.get(3).getNormalisedScore(), ERROR);
     }
 
     @Test
-    public void testSetMaxChildrenScore()
+    public void testGetChildren_GivenTypeBucketInfluencer()
     {
-        new BucketNormalisable(m_Bucket).setMaxChildrenScore(42.0);
+        List<Normalisable> children = new BucketNormalisable(m_Bucket).getChildren(0);
 
+        assertEquals(2, children.size());
+        assertTrue(children.get(0) instanceof BucketInfluencerNormalisable);
+        assertEquals(42.0, children.get(0).getNormalisedScore(), ERROR);
+        assertTrue(children.get(1) instanceof BucketInfluencerNormalisable);
+        assertEquals(88.0, children.get(1).getNormalisedScore(), ERROR);
+    }
+
+    @Test
+    public void testGetChildren_GivenTypeRecord()
+    {
+        List<Normalisable> children = new BucketNormalisable(m_Bucket).getChildren(1);
+
+        assertEquals(2, children.size());
+        assertTrue(children.get(0) instanceof RecordNormalisable);
+        assertEquals(1.0, children.get(0).getNormalisedScore(), ERROR);
+        assertTrue(children.get(1) instanceof RecordNormalisable);
+        assertEquals(2.0, children.get(1).getNormalisedScore(), ERROR);
+    }
+
+    @Test (expected = IllegalArgumentException.class)
+    public void testGetChildren_GivenInvalidType()
+    {
+        new BucketNormalisable(m_Bucket).getChildren(2);
+    }
+
+    @Test
+    public void testSetMaxChildrenScore_GivenDifferentScores()
+    {
+        BucketNormalisable bucketNormalisable = new BucketNormalisable(m_Bucket);
+
+        assertTrue(bucketNormalisable.setMaxChildrenScore(0, 95.0));
+        assertTrue(bucketNormalisable.setMaxChildrenScore(1, 42.0));
+
+        assertEquals(95.0, m_Bucket.getAnomalyScore(), ERROR);
         assertEquals(42.0, m_Bucket.getMaxNormalizedProbability(), ERROR);
+    }
+
+    @Test
+    public void testSetMaxChildrenScore_GivenSameScores()
+    {
+        BucketNormalisable bucketNormalisable = new BucketNormalisable(m_Bucket);
+
+        assertFalse(bucketNormalisable.setMaxChildrenScore(0, 88.0));
+        assertFalse(bucketNormalisable.setMaxChildrenScore(1, 2.0));
+
+        assertEquals(88.0, m_Bucket.getAnomalyScore(), ERROR);
+        assertEquals(2.0, m_Bucket.getMaxNormalizedProbability(), ERROR);
+    }
+
+    @Test (expected = IllegalArgumentException.class)
+    public void testSetMaxChildrenScore_GivenInvalidType()
+    {
+        new BucketNormalisable(m_Bucket).setMaxChildrenScore(2, 95.0);
     }
 
     @Test(expected = IllegalStateException.class)
