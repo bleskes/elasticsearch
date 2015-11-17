@@ -52,11 +52,13 @@ class ScoresUpdater
 {
     /**
      * Maximum number of buckets to renormalise at a time
-     *
-     * In jobs with dense results, 100 buckets with their
-     * records expanded can get close to 1GB.
      */
-    private static final int MAX_BUCKETS_PER_PAGE = 100;
+    private static final int MAX_BUCKETS_PER_PAGE = 10000;
+
+    /**
+     * Target number of records to renormalise at a time
+     */
+    private static final int TARGET_RECORDS_TO_RENORMALISE = 100000;
 
     /**
      * Maximum number of influncers to renormalise at a time
@@ -118,7 +120,9 @@ class ScoresUpdater
             NativeProcessRunException
     {
         int skip = 0;
-        QueryPage<Bucket> page = m_JobProvider.buckets(m_JobId, true, false, skip,
+        // Get some buckets without their records to calculate how many
+        // buckets can be sensibly retrieved with their records
+        QueryPage<Bucket> page = m_JobProvider.buckets(m_JobId, false, false, skip,
                 MAX_BUCKETS_PER_PAGE, 0, endBucketEpochMs, 0.0, 0.0);
 
         while (page.hitCount() > skip)
@@ -132,19 +136,52 @@ class ScoresUpdater
                 break;
             }
 
-            List<Normalisable> asNormalisables = buckets.stream()
-                    .map(bucket -> new BucketNormalisable(bucket)).collect(Collectors.toList());
-            normaliser.normalise(getJobBucketSpan(logger), asNormalisables, quantilesState);
-
+            // Make a list of buckets with their records to be renormalised.
+            // This may be shorter than the original list of buckets for two
+            // reasons:
+            // 1) We don't bother with buckets that have raw score 0 and no
+            //    records
+            // 2) We limit the total number of records to be not much more
+            //    than 100000
+            List<Bucket> bucketsToRenormalise = new ArrayList<>();
+            int taken = 0;
+            int totalRecordCount = 0;
             for (Bucket bucket : buckets)
             {
-                updateSingleBucket(bucket, counts, logger);
+                ++taken;
+                if (bucket.getRawAnomalyScore() > 0.0 || bucket.getRecordCount() > 0)
+                {
+                    bucketsToRenormalise.add(bucket);
+                    m_JobProvider.expandBucket(m_JobId, false, bucket);
+                    totalRecordCount += m_JobProvider.expandBucket(m_JobId, false, bucket);
+                    if (totalRecordCount >= TARGET_RECORDS_TO_RENORMALISE)
+                    {
+                        break;
+                    }
+                }
             }
 
-            skip += MAX_BUCKETS_PER_PAGE;
+            if (!bucketsToRenormalise.isEmpty())
+            {
+                logger.debug("Will renormalize a batch of " + bucketsToRenormalise.size()
+                        + " buckets with " + totalRecordCount + " records ("
+                        + (taken - bucketsToRenormalise.size()) + " empty buckets skipped)");
+
+                List<Normalisable> asNormalisables = bucketsToRenormalise.stream()
+                        .map(bucket -> new BucketNormalisable(bucket)).collect(Collectors.toList());
+                normaliser.normalise(getJobBucketSpan(logger), asNormalisables, quantilesState);
+
+                for (Bucket bucket : bucketsToRenormalise)
+                {
+                    updateSingleBucket(bucket, counts, logger);
+                }
+            }
+
+            skip += taken;
             if (page.hitCount() > skip)
             {
-                page = m_JobProvider.buckets(m_JobId, true, false,
+                // Get more buckets without their records
+                page = m_JobProvider.buckets(m_JobId, false, false,
                         skip, MAX_BUCKETS_PER_PAGE, 0, endBucketEpochMs, 0.0, 0.0);
             }
         }
