@@ -6,7 +6,7 @@ const mod = require('ui/modules').get('marvel', [ 'plugins/marvel/directives' ])
 
 function getPageData(timefilter, globalState, $route, $http) {
   const timeBounds = timefilter.getBounds();
-  const url = `/marvel/api/v1/clusters/${globalState.cluster}/nodes/${$route.current.params.node}`;
+  const url = `/api/marvel/v1/clusters/${globalState.cluster}/nodes/${$route.current.params.node}`;
   return $http.post(url, {
     timeRange: {
       min: timeBounds.min.toISOString(),

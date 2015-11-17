@@ -18,9 +18,13 @@ define(function (require) {
         innerMarkup = this.state.exists ? make.a({ href: `#/index/${rawValue}` }, rawValue) : make.div(null, rawValue);
       }
       if (_.isObject(rawValue) && rawValue.metric) {
-        if (rawValue.metric.units) units = ` ${rawValue.metric.units}`;
-        innerMarkup = (rawValue.metric.format) ? numeral(rawValue.last).format(rawValue.metric.format) : rawValue.last;
-        if (units) innerMarkup += units;
+        if (rawValue.inapplicable) {
+          innerMarkup = 'N/A';
+        } else {
+          if (rawValue.metric.units) units = ` ${rawValue.metric.units}`;
+          innerMarkup = (rawValue.metric.format) ? numeral(rawValue.last).format(rawValue.metric.format) : rawValue.last;
+          if (units) innerMarkup += units;
+        }
       }
       var chartData = _.get(this.props, dataKey.chart_data);
       var hasChart = !!dataKey.chart_data;
