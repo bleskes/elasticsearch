@@ -47,6 +47,7 @@ import com.prelert.job.manager.JobManager;
 import com.prelert.job.persistence.QueryPage;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
 import com.prelert.job.results.Bucket;
+import com.prelert.rs.data.KeyValue;
 import com.prelert.rs.data.Pagination;
 import com.prelert.rs.data.SingleDocument;
 import com.prelert.rs.validation.PaginationParamsValidator;
@@ -140,19 +141,19 @@ public class Buckets extends ResourceWithJobManager
                                 .append("/buckets")
                                 .toString();
 
-            List<ResourceWithJobManager.KeyValue> queryParams = new ArrayList<>();
+            List<KeyValue> queryParams = new ArrayList<>();
             if (epochStart > 0)
             {
-                queryParams.add(this.new KeyValue(START_QUERY_PARAM, start));
+                queryParams.add(new KeyValue(START_QUERY_PARAM, start));
             }
             if (epochEnd > 0)
             {
-                queryParams.add(this.new KeyValue(END_QUERY_PARAM, end));
+                queryParams.add(new KeyValue(END_QUERY_PARAM, end));
             }
-            queryParams.add(this.new KeyValue(EXPAND_QUERY_PARAM, Boolean.toString(expand)));
-            queryParams.add(this.new KeyValue(INCLUDE_INTERIM_QUERY_PARAM, Boolean.toString(includeInterim)));
-            queryParams.add(this.new KeyValue(Bucket.ANOMALY_SCORE, String.format("%2.1f", anomalySoreFilter)));
-            queryParams.add(this.new KeyValue(Bucket.MAX_NORMALIZED_PROBABILITY, String.format("%2.1f", normalizedProbabilityFilter)));
+            queryParams.add(new KeyValue(EXPAND_QUERY_PARAM, Boolean.toString(expand)));
+            queryParams.add(new KeyValue(INCLUDE_INTERIM_QUERY_PARAM, Boolean.toString(includeInterim)));
+            queryParams.add(new KeyValue(Bucket.ANOMALY_SCORE, String.format("%2.1f", anomalySoreFilter)));
+            queryParams.add(new KeyValue(Bucket.MAX_NORMALIZED_PROBABILITY, String.format("%2.1f", normalizedProbabilityFilter)));
 
             setPagingUrls(path, buckets, queryParams);
         }
