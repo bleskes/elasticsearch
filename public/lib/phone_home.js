@@ -87,7 +87,7 @@ module.exports = function phoneHomeProvider(Promise, es, $http, statsReportUrl, 
     }
 
     getClusterInfo(clusterUUID) {
-      let url = `/marvel/api/v1/clusters/${clusterUUID}/info`;
+      let url = `/api/marvel/v1/clusters/${clusterUUID}/info`;
       return $http.get(url).then((resp) => {
         return resp.data;
       });

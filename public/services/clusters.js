@@ -6,7 +6,7 @@ define(function (require) {
   var module = require('ui/modules').get('marvel/clusters', [ 'ngResource' ]);
   module.service('marvelClusters', function ($resource, Promise) {
 
-    var Clusters = $resource('/marvel/api/v1/clusters/:id', { id: '@cluster_uuid' });
+    var Clusters = $resource('/api/marvel/v1/clusters/:id', { id: '@cluster_uuid' });
     var cache;
 
     function fetch() {

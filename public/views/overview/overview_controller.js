@@ -6,7 +6,7 @@ const _ = require('lodash');
 
 function getPageData(timefilter, globalState, $http) {
   const timeBounds = timefilter.getBounds();
-  const url = `/marvel/api/v1/clusters/${globalState.cluster}`;
+  const url = `/api/marvel/v1/clusters/${globalState.cluster}`;
   return $http.post(url, {
     timeRange: {
       min: timeBounds.min.toISOString(),
