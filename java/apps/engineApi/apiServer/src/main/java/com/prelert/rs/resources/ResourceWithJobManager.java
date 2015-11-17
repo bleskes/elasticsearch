@@ -51,7 +51,6 @@ import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.manager.JobManager;
 import com.prelert.job.messages.Messages;
 import com.prelert.job.persistence.QueryPage;
-import com.prelert.rs.data.KeyValue;
 import com.prelert.rs.data.Pagination;
 import com.prelert.rs.data.SingleDocument;
 import com.prelert.rs.provider.RestApiException;
@@ -320,6 +319,31 @@ public abstract class ResourceWithJobManager
     protected void setUriInfo(UriInfo uriInfo)
     {
         m_UriInfo = uriInfo;
+    }
+
+    /**
+     * Simple class to pair key, value strings
+     */
+    protected class KeyValue
+    {
+        private String m_Key;
+        private String m_Value;
+
+        public KeyValue(String key, String value)
+        {
+            m_Key = key;
+            m_Value = value;
+        }
+
+        public String getKey()
+        {
+            return m_Key;
+        }
+
+        public String getValue()
+        {
+            return m_Value;
+        }
     }
 
     /**
