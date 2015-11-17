@@ -24,35 +24,39 @@
  *                                                          *
  *                                                          *
  ************************************************************/
-package com.prelert.job.config.verification;
 
-import com.prelert.job.ModelDebugConfig;
-import com.prelert.job.errorcodes.ErrorCodes;
+package com.prelert.rs.job.update;
 
-public final class ModelDebugConfigVerifier
+import java.util.Objects;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.prelert.job.UnknownJobException;
+import com.prelert.job.config.verification.JobConfigurationException;
+import com.prelert.job.manager.JobManager;
+
+abstract class AbstractUpdater
 {
-    private ModelDebugConfigVerifier()
+    protected static final ObjectMapper JSON_MAPPER = new ObjectMapper();
+
+    private final JobManager m_JobManager;
+    private final String m_JobId;
+
+    AbstractUpdater(JobManager jobManager, String jobId)
     {
+        m_JobManager = Objects.requireNonNull(jobManager);
+        m_JobId = Objects.requireNonNull(jobId);
     }
 
-    /**
-    /**
-     * Checks the ModelDebugConfig is valid
-     * <ol>
-     * <li>If BoundsPercentile is set it must be $gt= 0.0 and &lt 100.0</li>
-     * </ol>
-     * @param config
-     * @return
-     * @throws JobConfigurationException
-     */
-    public static boolean verify(ModelDebugConfig config) throws JobConfigurationException
+    protected JobManager jobManager()
     {
-        if (config.isEnabled() &&
-                (config.getBoundsPercentile() < 0.0 || config.getBoundsPercentile() > 100.0))
-        {
-            String msg = "Invalid modelDebugConfig: boundsPercentile has to be in [0, 100]";
-            throw new JobConfigurationException(msg, ErrorCodes.INVALID_VALUE);
-        }
-        return true;
+        return m_JobManager;
     }
+
+    protected String jobId()
+    {
+        return m_JobId;
+    }
+
+    abstract void update(JsonNode node) throws UnknownJobException, JobConfigurationException;
 }

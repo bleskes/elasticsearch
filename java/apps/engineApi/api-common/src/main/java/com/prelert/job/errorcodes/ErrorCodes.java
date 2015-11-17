@@ -140,6 +140,11 @@ public enum ErrorCodes
 	INVALID_FUNCTION(10114),
 
 	/**
+	 * The key for which an update was requested is invalid.
+	 */
+	INVALID_UPDATE_KEY(10115),
+
+	/**
 	 * The transform name isn't recognised
 	 */
 	UNKNOWN_TRANSFORM(10201),

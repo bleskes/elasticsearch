@@ -299,8 +299,7 @@ public class ElasticsearchJobProvider implements JobProvider
                 jobId, ModelSizeStats.TYPE, ModelSizeStats.TYPE).get();
             if (!modelSizeStatsResponse.isExists())
             {
-                String msg = "No model size stats for job with id "
-                    + jobId + " " + ModelSizeStats.TYPE;
+                String msg = "No model size stats for job with id " + jobId;
                 LOGGER.warn(msg);
             }
             else

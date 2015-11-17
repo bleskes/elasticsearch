@@ -32,7 +32,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -48,7 +47,6 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
-import org.mockito.ArgumentCaptor;
 
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataDescription;
@@ -199,36 +197,15 @@ public class JobsTest extends ServiceTest
     }
 
     @Test
-    public void testSetModelDebugConfig_GivenValidConfig() throws JobConfigurationException,
+    public void testUpdate_GivenValidModelDebugConfig() throws JobConfigurationException,
             UnknownJobException
     {
-        Response response = m_Jobs.setModelDebugConfig("foo", 90.0, "someTerm");
+        Response response = m_Jobs.updateJob("foo",
+                "{\"modelDebugConfig\":{\"boundsPercentile\":90.0, \"terms\":\"someTerm\"}}");
         assertEquals(200, response.getStatus());
         assertTrue(((Acknowledgement) response.getEntity()).getAcknowledgement());
 
-        ArgumentCaptor<ModelDebugConfig> captor = ArgumentCaptor.forClass(ModelDebugConfig.class);
-        verify(jobManager()).setModelDebugConfig(eq("foo"), captor.capture());
-        ModelDebugConfig config = captor.getValue();
-        assertEquals(new Double(90.0), config.getBoundsPercentile());
-        assertEquals("someTerm", config.getTerms());
-    }
-
-    @Test
-    public void testSetModelDebugConfig_GivenInvalidConfig() throws JobConfigurationException,
-            UnknownJobException
-    {
-        m_ExpectedException.expect(JobConfigurationException.class);
-        m_Jobs.setModelDebugConfig("foo", 190.0, "someTerm");
-    }
-
-    @Test
-    public void testDeleteModelDebugConfig() throws JobConfigurationException, UnknownJobException
-    {
-        Response response = m_Jobs.deleteModelDebugConfig("foo");
-        assertEquals(200, response.getStatus());
-        assertTrue(((Acknowledgement) response.getEntity()).getAcknowledgement());
-
-        verify(jobManager()).setModelDebugConfig("foo", null);
+        verify(jobManager()).setModelDebugConfig("foo", new ModelDebugConfig(90.0, "someTerm"));
     }
 
     private static void verifyJobHasIdAndEndpoints(String jobId, JobDetails job)

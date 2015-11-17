@@ -118,6 +118,7 @@ public class PrelertWebApp extends Application
     {
         m_ResourceClasses = new HashSet<>();
         addEndPoints();
+        addMessageReaders();
         addMessageWriters();
         addExceptionMappers();
 
@@ -159,12 +160,16 @@ public class PrelertWebApp extends Application
         m_ResourceClasses.add(Logs.class);
     }
 
+    private void addMessageReaders()
+    {
+        m_ResourceClasses.add(JobConfigurationMessageBodyReader.class);
+    }
+
     private void addMessageWriters()
     {
         m_ResourceClasses.add(AcknowledgementWriter.class);
         m_ResourceClasses.add(AlertMessageBodyWriter.class);
         m_ResourceClasses.add(DataCountsWriter.class);
-        m_ResourceClasses.add(JobConfigurationMessageBodyReader.class);
         m_ResourceClasses.add(MultiDataPostResultWriter.class);
         m_ResourceClasses.add(PaginationWriter.class);
         m_ResourceClasses.add(SingleDocumentWriter.class);

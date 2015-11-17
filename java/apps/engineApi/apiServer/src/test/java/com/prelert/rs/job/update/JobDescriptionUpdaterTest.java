@@ -24,51 +24,64 @@
  *                                                          *
  *                                                          *
  ************************************************************/
-package com.prelert.job.config.verification;
 
-import static org.junit.Assert.assertTrue;
+package com.prelert.rs.job.update;
 
+import static org.mockito.Mockito.verify;
+
+import java.io.IOException;
+
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 
-import com.prelert.job.ModelDebugConfig;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.DoubleNode;
+import com.fasterxml.jackson.databind.node.TextNode;
+import com.prelert.job.UnknownJobException;
+import com.prelert.job.config.verification.JobConfigurationException;
 import com.prelert.job.errorcodes.ErrorCodeMatcher;
 import com.prelert.job.errorcodes.ErrorCodes;
+import com.prelert.job.manager.JobManager;
 
-public class ModelDebugConfigVerifierTest
+public class JobDescriptionUpdaterTest
 {
     @Rule public ExpectedException m_ExpectedException = ExpectedException.none();
 
-    @Test
-    public void testVerify_GivenBoundPercentileLessThanZero() throws JobConfigurationException
-    {
-        m_ExpectedException.expect(JobConfigurationException.class);
-        m_ExpectedException.expectMessage(
-                "Invalid modelDebugConfig: boundsPercentile has to be in [0, 100]");
-        m_ExpectedException.expect(
-                ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_VALUE));
+    @Mock private JobManager m_JobManager;
 
-        ModelDebugConfigVerifier.verify(new ModelDebugConfig(-1.0, ""));
+    @Before
+    public void setUp()
+    {
+        MockitoAnnotations.initMocks(this);
     }
 
     @Test
-    public void testVerify_GivenBoundPercentileGreaterThan100() throws JobConfigurationException
+    public void testUpdate_GivenNonText() throws UnknownJobException,
+            JobConfigurationException, JsonProcessingException, IOException
     {
+        JsonNode node = DoubleNode.valueOf(42.0);
+
         m_ExpectedException.expect(JobConfigurationException.class);
-        m_ExpectedException.expectMessage(
-                "Invalid modelDebugConfig: boundsPercentile has to be in [0, 100]");
+        m_ExpectedException.expectMessage("Invalid update value for job description: value has to be a string");
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_VALUE));
 
-        ModelDebugConfigVerifier.verify(new ModelDebugConfig(100.1, ""));
+        new JobDescriptionUpdater(m_JobManager, "foo").update(node);
     }
 
     @Test
-    public void testVerify_GivenValid() throws JobConfigurationException
+    public void testUpdate_GivenText() throws UnknownJobException,
+            JobConfigurationException, JsonProcessingException, IOException
     {
-        assertTrue(ModelDebugConfigVerifier.verify(new ModelDebugConfig()));
-        assertTrue(ModelDebugConfigVerifier.verify(new ModelDebugConfig(93.0, "")));
-        assertTrue(ModelDebugConfigVerifier.verify(new ModelDebugConfig(93.0, "foo,bar")));
+        JsonNode node = TextNode.valueOf("blah blah...");
+
+        new JobDescriptionUpdater(m_JobManager, "foo").update(node);
+
+        verify(m_JobManager).setDescription("foo", "blah blah...");
     }
 }
