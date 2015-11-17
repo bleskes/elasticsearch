@@ -5,7 +5,22 @@ define(function (require) {
   module.directive('marvelClusterStatus', function () {
     return {
       restrict: 'E',
-      template: template
+      template: template,
+
+      /* The app has the styles of the Bootstrap dropdown component, but not
+       * the dropdown JS. So we style the menu as "open" in the markup, and
+       * control the actual showing and hiding with this directive. */
+      link: function (scope) {
+        var isMenuShown = false;
+
+        scope.toggleMenu = function () {
+          isMenuShown = !isMenuShown;
+        };
+
+        scope.showOrHideMenu = function () {
+          return isMenuShown;
+        };
+      }
     };
   });
 });
