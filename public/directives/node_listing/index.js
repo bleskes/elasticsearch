@@ -55,7 +55,11 @@ define(function (require) {
       }
       // Content for non metric columns
       if (!$content && !_.isUndefined(value)) {
-        $content = make.div(null, make.div({className: 'big inline'}, value));
+        if (this.props.offline && dataKey.key !== 'status') {
+          $content = make.div(null, make.div({className: 'big inline'}, 'N/A'));
+        } else {
+          $content = make.div(null, make.div({className: 'big inline'}, value));
+        }
       }
       return make.td({key: idx}, $content);
     }

@@ -18,7 +18,7 @@ require('ui/routes')
 
 function getPageData(timefilter, globalState, $route, $http) {
   const timeBounds = timefilter.getBounds();
-  const url = `/marvel/api/v1/clusters/${globalState.cluster}/indices/${$route.current.params.index}`;
+  const url = `/api/marvel/v1/clusters/${globalState.cluster}/indices/${$route.current.params.index}`;
   return $http.post(url, {
     timeRange: {
       min: timeBounds.min.toISOString(),

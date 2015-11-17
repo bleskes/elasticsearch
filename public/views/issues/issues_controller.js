@@ -49,7 +49,7 @@ define(function (require) {
     $scope.issues = [];
     $scope.allIssues = [];
     function fetch() {
-      return $http.get('/marvel/api/v1/issues/' + globalState.cluster).then(function (resp) {
+      return $http.get('/api/marvel/v1/issues/' + globalState.cluster).then(function (resp) {
         var data = [];
         var body = resp.data;
         _.each(body, function (rows, type) {
