@@ -1467,11 +1467,11 @@ public class JobsTest implements Closeable
         test(job != null);
         test(job.getDescription().equals(emptyDesc));
 
-        String longerDesc = "a little big longer\nwWith newline characters";
+        String longerDesc = "a little big longer\\nWith newline characters";
         m_WebServiceClient.setJobDescription(jobId, longerDesc);
         job = m_WebServiceClient.getJob(jobId).getDocument();
         test(job != null);
-        test(job.getDescription().equals(longerDesc));
+        test(job.getDescription().equals("a little big longer\nWith newline characters"));
 
         // Set the description back to what it was
         m_WebServiceClient.setJobDescription(jobId, orignalDescription);
