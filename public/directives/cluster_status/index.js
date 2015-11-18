@@ -32,6 +32,14 @@ define(function (require) {
           }
         };
 
+        scope.createClass = function (cluster) {
+          var classes = [cluster.status];
+          if (cluster.license.type === 'basic') {
+            classes.push('basic');
+          }
+          return classes.join(' ');
+        };
+
       }
     };
   });
