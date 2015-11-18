@@ -181,11 +181,25 @@ public class ProcessCtrl
     public static final String MAX_ANOMALY_RECORDS_ARG;
     public static final String MODEL_DEBUG_CONFIG_ARG = "--modeldebugconfig=";
     public static final String PERIOD_ARG = "--period=";
-    public static final String PERSIST_INTERVAL_ARG = "--persistInterval=10800"; // 3 hours
+    public static final String PERSIST_INTERVAL_ARG = "--persistInterval=";
+    public static final String MAX_QUANTILE_INTERVAL_ARG = "--maxQuantileInterval=";
     public static final String PERSIST_URL_BASE_ARG = "--persistUrlBase=";
     public static final String SUMMARY_COUNT_FIELD_ARG = "--summarycountfield=";
     public static final String TIME_FIELD_ARG = "--timefield=";
     public static final String VERSION_ARG = "--version";
+
+    /**
+     * Roughly how often should the C++ process persist state?  A staggering
+     * factor that varies by job is added to this.
+     */
+    public static final int BASE_PERSIST_INTERVAL = 10800;
+
+    /**
+     * Roughly how often should the C++ process output quantiles when no
+     * anomalies are being detected?  A staggering factor that varies by job is
+     * added to this.
+     */
+    public static final int BASE_MAX_QUANTILE_INTERVAL = 7200;
 
     private static final String CONF_EXTENSION = ".conf";
 
@@ -606,6 +620,14 @@ public class ProcessCtrl
         String timeFieldArg = TIME_FIELD_ARG + timeField;
         command.add(timeFieldArg);
 
+        // This random time of up to 1 hour is added to intervals at which we
+        // tell the C++ process to perform periodic operations.  This means that
+        // when there are many jobs there is a certain amount of staggering of
+        // their periodic operations.
+        int intervalStagger = job.getId().hashCode() % 3600;
+        logger.debug("Periodic operations staggered by " + intervalStagger +
+                " seconds for job '" + job.getId() + "'");
+
         // Supply a URL for persisting/restoring model state unless model
         // persistence has been explicitly disabled.
         if (System.getProperty(DONT_PERSIST_MODEL_STATE) != null)
@@ -620,8 +642,12 @@ public class ProcessCtrl
             command.add(persistUrlBase);
 
             // Persist model state every few hours even if the job isn't closed
-            command.add(PERSIST_INTERVAL_ARG);
+            int persistInterval = BASE_PERSIST_INTERVAL + intervalStagger;
+            command.add(PERSIST_INTERVAL_ARG + persistInterval);
         }
+
+        int maxQuantileInterval = BASE_MAX_QUANTILE_INTERVAL + intervalStagger;
+        command.add(MAX_QUANTILE_INTERVAL_ARG + maxQuantileInterval);
 
         return command;
     }

@@ -88,7 +88,7 @@ public class ProcessCtrlTest
 
         List<String> command = ProcessCtrl.buildAutoDetectCommand(job, m_Logger);
 
-        assertEquals(12, command.size());
+        assertEquals(13, command.size());
         assertTrue(command.contains(ProcessCtrl.AUTODETECT_PATH));
         assertTrue(command.contains(ProcessCtrl.BATCH_SPAN_ARG + "100"));
         assertTrue(command.contains(ProcessCtrl.BUCKET_SPAN_ARG + "120"));
@@ -102,7 +102,10 @@ public class ProcessCtrlTest
         assertTrue(command.contains(ProcessCtrl.TIME_FIELD_ARG + "tf"));
         assertTrue(command.contains(ProcessCtrl.LOG_ID_ARG + "unit-test-job"));
 
-        assertTrue(command.contains(ProcessCtrl.PERSIST_INTERVAL_ARG));
+        int expectedPersistInterval = 10800 + (job.getId().hashCode() % 3600);
+        assertTrue(command.contains(ProcessCtrl.PERSIST_INTERVAL_ARG + expectedPersistInterval));
+        int expectedMaxQuantileInterval = 7200 + (job.getId().hashCode() % 3600);
+        assertTrue(command.contains(ProcessCtrl.MAX_QUANTILE_INTERVAL_ARG + expectedMaxQuantileInterval));
         assertTrue(command.contains(ProcessCtrl.PERSIST_URL_BASE_ARG +
                         "http://localhost:" + ProcessCtrl.ES_HTTP_PORT + "/unit-test-job"));
     }
@@ -126,13 +129,15 @@ public class ProcessCtrlTest
 
         System.setProperty(ProcessCtrl.DONT_PERSIST_MODEL_STATE, "true");
 
+        int expectedPersistInterval = 10800 + (job.getId().hashCode() % 3600);
+
         List<String> command = ProcessCtrl.buildAutoDetectCommand(job, m_Logger);
-        assertFalse(command.contains(ProcessCtrl.PERSIST_INTERVAL_ARG));
+        assertFalse(command.contains(ProcessCtrl.PERSIST_INTERVAL_ARG + expectedPersistInterval));
 
         System.getProperties().remove(ProcessCtrl.DONT_PERSIST_MODEL_STATE);
 
         command = ProcessCtrl.buildAutoDetectCommand(job, m_Logger);
-        assertTrue(command.contains(ProcessCtrl.PERSIST_INTERVAL_ARG));
+        assertTrue(command.contains(ProcessCtrl.PERSIST_INTERVAL_ARG + expectedPersistInterval));
     }
 
     @Test
