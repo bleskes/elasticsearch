@@ -64,7 +64,7 @@ import com.prelert.job.results.Influencer;
 public class ScoresUpdaterTest
 {
     private static final String JOB_ID = "foo";
-    private static final int MAX_BUCKETS_PER_PAGE = 100;
+    private static final int MAX_BUCKETS_PER_PAGE = 10000;
     private static final String QUANTILES_STATE = "someState";
 
     @Mock private JobProvider m_JobProvider;
@@ -101,7 +101,7 @@ public class ScoresUpdaterTest
 
         verifyBucketWasNotUpdated("0");
         verifyBucketRecordsWereNotUpdated("0");
-        verifyBucketSpanWasRequestedOnlyOnce();
+        verifyBucketSpanWasNotRequested();
     }
 
     @Test
@@ -131,7 +131,7 @@ public class ScoresUpdaterTest
 
         verifyBucketWasNotUpdated("0");
         verifyBucketRecordsWereNotUpdated("0");
-        verifyBucketSpanWasRequestedOnlyOnce();
+        verifyBucketSpanWasNotRequested();
     }
 
     @Test
@@ -140,6 +140,7 @@ public class ScoresUpdaterTest
     {
         Bucket bucket = new Bucket();
         bucket.setId("0");
+        bucket.setRawAnomalyScore(42.0);
         bucket.setAnomalyScore(42.0);
         bucket.setMaxNormalizedProbability(50.0);
         Bucket normalisedBucket = new Bucket();
@@ -171,6 +172,7 @@ public class ScoresUpdaterTest
     {
         Bucket bucket = new Bucket();
         bucket.setId("0");
+        bucket.setRawAnomalyScore(42.0);
         bucket.setAnomalyScore(42.0);
         bucket.setMaxNormalizedProbability(50.0);
         Bucket normalisedBucket = new Bucket();
@@ -209,10 +211,12 @@ public class ScoresUpdaterTest
     {
         Bucket bucket = new Bucket();
         bucket.setId("0");
+        bucket.setRawAnomalyScore(42.0);
         bucket.setAnomalyScore(42.0);
         bucket.setMaxNormalizedProbability(50.0);
         Bucket normalisedBucket = new Bucket();
         normalisedBucket.setId("0");
+        normalisedBucket.setRawAnomalyScore(42.0);
         normalisedBucket.setAnomalyScore(60.0);
         normalisedBucket.setMaxNormalizedProbability(99.0);
         normalisedBucket.raiseBigNormalisedUpdateFlag();
@@ -248,34 +252,43 @@ public class ScoresUpdaterTest
     {
         List<Bucket> originalBatch1 = new ArrayList<>();
         List<Bucket> normalisedBatch1 = new ArrayList<>();
-        for (int i = 0; i < 100; i++)
+        for (int i = 0; i < 10000; ++i)
         {
             Bucket bucket = new Bucket();
             bucket.setId(String.valueOf(i));
+            bucket.setRawAnomalyScore(42.0);
+            bucket.setAnomalyScore(42.0);
+            bucket.setMaxNormalizedProbability(50.0);
             originalBatch1.add(bucket);
             Bucket normalisedBucket = new Bucket();
             normalisedBucket.setId(String.valueOf(i));
+            normalisedBucket.setRawAnomalyScore(42.0);
+            normalisedBucket.setAnomalyScore(60.0);
+            normalisedBucket.setMaxNormalizedProbability(99.0);
+            normalisedBucket.raiseBigNormalisedUpdateFlag();
             normalisedBatch1.add(normalisedBucket);
         }
 
         Bucket bucket = new Bucket();
-        bucket.setId("100");
+        bucket.setId("10000");
+        bucket.setRawAnomalyScore(42.0);
         bucket.setAnomalyScore(42.0);
         bucket.setMaxNormalizedProbability(50.0);
         Bucket normalisedBucket = new Bucket();
-        normalisedBucket.setId("100");
+        normalisedBucket.setId("10000");
+        normalisedBucket.setRawAnomalyScore(42.0);
         normalisedBucket.setAnomalyScore(60.0);
         normalisedBucket.setMaxNormalizedProbability(99.0);
         normalisedBucket.raiseBigNormalisedUpdateFlag();
         List<Bucket> originalBatch2 = Arrays.asList(bucket);
         List<Bucket> normalisedBatch2 = Arrays.asList(normalisedBucket);
 
-        int totalBuckets = 101;
+        int totalBuckets = 10001;
         long endTime = 3600;
         int bucketSpan = 3600;
         givenBucketSpan(bucketSpan);
         givenProviderReturnsBuckets(0, endTime, totalBuckets, originalBatch1);
-        givenProviderReturnsBuckets(100, endTime, totalBuckets, originalBatch2);
+        givenProviderReturnsBuckets(10000, endTime, totalBuckets, originalBatch2);
 
         givenNormalisedBuckets(bucketSpan, originalBatch1, originalBatch2, normalisedBatch1,
                 normalisedBatch2);
@@ -284,8 +297,11 @@ public class ScoresUpdaterTest
 
         for (Bucket b : normalisedBatch1)
         {
-            verifyBucketWasNotUpdated(b.getId());
+            verifyBucketWasUpdated(b);
             verifyBucketRecordsWereNotUpdated(b.getId());
+            // Just verify the first bucket for the time being as the Mockito is
+            // horrifically slow to verify all 10000
+            break;
         }
         verifyBucketWasUpdated(normalisedBucket);
         verifyBucketRecordsWereNotUpdated(normalisedBucket.getId());
@@ -301,7 +317,7 @@ public class ScoresUpdaterTest
     private void givenProviderReturnsBuckets(int skip, long endTime, int hitCount, List<Bucket> buckets) throws UnknownJobException
     {
         QueryPage<Bucket> page = new QueryPage<>(buckets, hitCount);
-        when(m_JobProvider.buckets(JOB_ID, true, false, skip, MAX_BUCKETS_PER_PAGE, 0, endTime, 0.0, 0.0))
+        when(m_JobProvider.buckets(JOB_ID, false, false, skip, MAX_BUCKETS_PER_PAGE, 0, endTime, 0.0, 0.0))
                 .thenReturn(page);
     }
 
@@ -324,17 +340,18 @@ public class ScoresUpdaterTest
     {
         doAnswer(new Answer<Void>()
         {
-            private int count = 0;
+            private int m_Count = 0;
 
             @Override
             public Void answer(InvocationOnMock invocation) throws Throwable
             {
-                count++;
-                if (count == 1)
+                ++m_Count;
+
+                if (m_Count == 1)
                 {
                     applyBuckets(originalBuckets1, normalisedBuckets1);
                 }
-                if (count == 2)
+                if (m_Count == 2)
                 {
                     applyBuckets(originalBuckets2, normalisedBuckets2);
                 }
@@ -350,6 +367,7 @@ public class ScoresUpdaterTest
         {
             Bucket newBucket = newBuckets.get(i);
             Bucket oldBucket = oldBuckets.get(i);
+            oldBucket.setRawAnomalyScore(newBucket.getRawAnomalyScore());
             oldBucket.setAnomalyScore(newBucket.getAnomalyScore());
             oldBucket.setMaxNormalizedProbability(newBucket.getMaxNormalizedProbability());
             if (newBucket.hadBigNormalisedUpdate())
@@ -362,6 +380,11 @@ public class ScoresUpdaterTest
             }
             oldBucket.setRecords(newBucket.getRecords());
         }
+    }
+
+    private void verifyBucketSpanWasNotRequested()
+    {
+        verify(m_JobProvider, times(0)).getField(JOB_ID, "analysisConfig.bucketSpan");
     }
 
     private void verifyBucketSpanWasRequestedOnlyOnce()

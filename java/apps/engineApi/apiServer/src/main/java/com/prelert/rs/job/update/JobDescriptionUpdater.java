@@ -25,36 +25,31 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.rs.data;
+package com.prelert.rs.job.update;
 
-public class KeyValue
+import com.fasterxml.jackson.databind.JsonNode;
+import com.prelert.job.UnknownJobException;
+import com.prelert.job.config.verification.JobConfigurationException;
+import com.prelert.job.errorcodes.ErrorCodes;
+import com.prelert.job.manager.JobManager;
+import com.prelert.job.messages.Messages;
+
+class JobDescriptionUpdater extends AbstractUpdater
 {
-    private String m_Key;
-    private String m_Value;
-
-    public KeyValue(String key, String value)
+    public JobDescriptionUpdater(JobManager jobManager, String jobId)
     {
-        m_Key = key;
-        m_Value = value;
+        super(jobManager, jobId);
     }
 
-    public String getKey()
+    @Override
+    void update(JsonNode node) throws UnknownJobException, JobConfigurationException
     {
-        return m_Key;
-    }
-
-    public void setKey(String key)
-    {
-        m_Key = key;
-    }
-
-    public String getValue()
-    {
-        return m_Value;
-    }
-
-    public void setValue(String value)
-    {
-        m_Value = value;
+        if (node.isTextual() == false)
+        {
+            throw new JobConfigurationException(
+                    Messages.getMessage(Messages.JOB_CONFIG_UPDATE_DESCRIPTION_INVALID),
+                    ErrorCodes.INVALID_VALUE);
+        }
+        jobManager().setDescription(jobId(), node.asText());
     }
 }

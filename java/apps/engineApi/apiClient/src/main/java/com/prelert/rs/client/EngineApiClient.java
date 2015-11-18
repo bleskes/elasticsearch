@@ -260,12 +260,12 @@ public class EngineApiClient implements Closeable
     public boolean setJobDescription(String jobId, String description)
     throws IOException
     {
-        String url = m_BaseUrl + "/jobs/" + jobId + "/description";
+        String url = m_BaseUrl + "/jobs/" + jobId + "/update";
         LOGGER.debug("PUT job description: " + url);
 
         HttpPut put = new HttpPut(url);
-        StringEntity entity = new StringEntity(description);
-        put.setEntity(entity);
+        String json = "{\"description\":\"" + description + "\"}";
+        put.setEntity(new StringEntity(json, ContentType.create("application/json", "UTF-8")));
 
         return executeRequest(put, "putting job description");
     }

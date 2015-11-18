@@ -76,6 +76,11 @@ public final class Messages
     public static final String JOB_CONFIG_NO_DETECTORS = "job.config.no.detectors";
     public static final String JOB_CONFIG_OVERFIELD_INCOMPATIBLE_FUNCTION = "job.config.overField.incompatible.function";
     public static final String JOB_CONFIG_OVERFIELD_NEEDS_ANOTHER = "job.config.overField.needs.another";
+    public static final String JOB_CONFIG_UPDATE_DESCRIPTION_INVALID = "job.config.update.description.invalid";
+    public static final String JOB_CONFIG_UPDATE_INVALID_KEY = "job.config.update.invalid.key";
+    public static final String JOB_CONFIG_UPDATE_MODEL_DEBUG_CONFIG_PARSE_ERROR = "job.config.update.model.debug.config.parse.error";
+    public static final String JOB_CONFIG_UPDATE_NO_OBJECT = "job.config.update.no.object";
+    public static final String JOB_CONFIG_UPDATE_PARSE_ERROR = "job.config.update.parse.error";
     public static final String JOB_CONFIG_TRANSFORM_CIRCULAR_DEPENDENCY = "job.config.transform.circular.dependency";
     public static final String JOB_CONFIG_TRANSFORM_CONDITION_INVALID_OPERATOR = "job.config.transform.condition.invalid.operator";
     public static final String JOB_CONFIG_TRANSFORM_CONDITION_INVALID_VALUE_NULL = "job.config.transform.condition.invalid.value.null";

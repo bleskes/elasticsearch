@@ -24,35 +24,43 @@
  *                                                          *
  *                                                          *
  ************************************************************/
-package com.prelert.job.config.verification;
 
+package com.prelert.rs.job.update;
+
+import com.fasterxml.jackson.databind.JsonNode;
 import com.prelert.job.ModelDebugConfig;
+import com.prelert.job.UnknownJobException;
+import com.prelert.job.config.verification.JobConfigurationException;
+import com.prelert.job.config.verification.ModelDebugConfigVerifier;
 import com.prelert.job.errorcodes.ErrorCodes;
+import com.prelert.job.manager.JobManager;
+import com.prelert.job.messages.Messages;
+import com.prelert.rs.provider.JobConfigurationParseException;
 
-public final class ModelDebugConfigVerifier
+class ModelDebugConfigUpdater extends AbstractUpdater
 {
-    private ModelDebugConfigVerifier()
+    public ModelDebugConfigUpdater(JobManager jobManager, String jobId)
     {
+        super(jobManager, jobId);
     }
 
-    /**
-    /**
-     * Checks the ModelDebugConfig is valid
-     * <ol>
-     * <li>If BoundsPercentile is set it must be $gt= 0.0 and &lt 100.0</li>
-     * </ol>
-     * @param config
-     * @return
-     * @throws JobConfigurationException
-     */
-    public static boolean verify(ModelDebugConfig config) throws JobConfigurationException
+    @Override
+    void update(JsonNode node) throws UnknownJobException, JobConfigurationException
     {
-        if (config.isEnabled() &&
-                (config.getBoundsPercentile() < 0.0 || config.getBoundsPercentile() > 100.0))
+        try
         {
-            String msg = "Invalid modelDebugConfig: boundsPercentile has to be in [0, 100]";
-            throw new JobConfigurationException(msg, ErrorCodes.INVALID_VALUE);
+            ModelDebugConfig modelDebugConfig = JSON_MAPPER.convertValue(node, ModelDebugConfig.class);
+            if (modelDebugConfig != null)
+            {
+                ModelDebugConfigVerifier.verify(modelDebugConfig);
+            }
+            jobManager().setModelDebugConfig(jobId(), modelDebugConfig);
         }
-        return true;
+        catch (IllegalArgumentException e)
+        {
+            throw new JobConfigurationParseException(
+                    Messages.getMessage(Messages.JOB_CONFIG_UPDATE_MODEL_DEBUG_CONFIG_PARSE_ERROR),
+                    e.getCause(), ErrorCodes.INVALID_VALUE);
+        }
     }
 }

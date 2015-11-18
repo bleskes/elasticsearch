@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -46,15 +46,12 @@ import javax.ws.rs.core.Response;
 
 import org.apache.log4j.Logger;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.JobDetails;
 import com.prelert.job.JobIdAlreadyExistsException;
-import com.prelert.job.ModelDebugConfig;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.config.verification.JobConfigurationException;
 import com.prelert.job.config.verification.JobConfigurationVerifier;
-import com.prelert.job.config.verification.ModelDebugConfigVerifier;
 import com.prelert.job.exceptions.JobInUseException;
 import com.prelert.job.exceptions.TooManyJobsException;
 import com.prelert.job.logs.JobLogs;
@@ -64,6 +61,7 @@ import com.prelert.job.process.exceptions.NativeProcessRunException;
 import com.prelert.rs.data.Acknowledgement;
 import com.prelert.rs.data.Pagination;
 import com.prelert.rs.data.SingleDocument;
+import com.prelert.rs.job.update.JobUpdater;
 import com.prelert.rs.validation.PaginationParamsValidator;
 
 
@@ -202,56 +200,14 @@ public class Jobs extends ResourceWithJobManager
         return Response.created(job.getLocation()).entity(ent).build();
     }
 
-    /**
-     * Set the job's description
-     *
-     * @param jobId
-     * @param description
-     * @return
-     * @throws UnknownJobException
-     * @throws JsonProcessingException
-     */
     @PUT
-    @Path("/{jobId}/description")
-    @Consumes({MediaType.TEXT_PLAIN, MediaType.APPLICATION_FORM_URLENCODED})
+    @Path("{jobId}/update")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response setDescription(@PathParam("jobId") String jobId,
-            String description)
-    throws UnknownJobException, JsonProcessingException
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response updateJob(@PathParam("jobId") String jobId, String updateJson)
+            throws UnknownJobException, JobConfigurationException
     {
-        LOGGER.debug("Setting the job description");
-
-        JobManager manager = jobManager();
-        manager.setDescription(jobId, description);
-
-        return Response.ok(new Acknowledgement()).build();
-    }
-
-    @PUT
-    @Path("/{jobId}/modelDebug")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response setModelDebugConfig(@PathParam("jobId") String jobId,
-            @QueryParam(ModelDebugConfig.BOUNDS_PERCENTILE) Double boundsPercentile,
-            @QueryParam(ModelDebugConfig.TERMS) String terms)
-            throws JobConfigurationException, UnknownJobException
-    {
-        LOGGER.debug("Setting model debug config");
-
-        ModelDebugConfig modelDebugConfig = new ModelDebugConfig(boundsPercentile, terms);
-        ModelDebugConfigVerifier.verify(modelDebugConfig);
-        jobManager().setModelDebugConfig(jobId, modelDebugConfig);
-        return Response.ok(new Acknowledgement()).build();
-    }
-
-    @DELETE
-    @Path("/{jobId}/modelDebug")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response deleteModelDebugConfig(@PathParam("jobId") String jobId)
-            throws UnknownJobException
-    {
-        LOGGER.debug("Deleting model debug config");
-        jobManager().setModelDebugConfig(jobId, null);
-        return Response.ok(new Acknowledgement()).build();
+        return new JobUpdater(jobManager(), jobId).update(updateJson);
     }
 
     /**

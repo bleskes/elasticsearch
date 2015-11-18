@@ -299,8 +299,7 @@ public class ElasticsearchJobProvider implements JobProvider
                 jobId, ModelSizeStats.TYPE, ModelSizeStats.TYPE).get();
             if (!modelSizeStatsResponse.isExists())
             {
-                String msg = "No model size stats for job with id "
-                    + jobId + " " + ModelSizeStats.TYPE;
+                String msg = "No model size stats for job with id " + jobId;
                 LOGGER.warn(msg);
             }
             else
@@ -621,9 +620,9 @@ public class ElasticsearchJobProvider implements JobProvider
 
             Bucket bucket = m_ObjectMapper.convertValue(hit.getSource(), Bucket.class);
 
-            if (expand)
+            if (expand && bucket.getRecordCount() > 0)
             {
-                fillBucketWithItsRecords(bucket, jobId, includeInterim);
+                expandBucket(jobId, includeInterim, bucket);
             }
 
             results.add(bucket);
@@ -632,24 +631,6 @@ public class ElasticsearchJobProvider implements JobProvider
         return new QueryPage<>(results, searchResponse.getHits().getTotalHits());
     }
 
-    private void fillBucketWithItsRecords(Bucket bucket, String jobId, boolean includeInterim)
-            throws UnknownJobException
-    {
-        int skip = 0;
-        String bucketId = bucket.getId();
-
-        QueryPage<AnomalyRecord> page = this.bucketRecords(jobId, bucketId, skip,
-                RECORDS_TAKE_PARAM, includeInterim, AnomalyRecord.PROBABILITY, false);
-        bucket.setRecords(page.queryResults());
-
-        while (page.hitCount() > skip + RECORDS_TAKE_PARAM)
-        {
-            skip += RECORDS_TAKE_PARAM;
-            page = this.bucketRecords(jobId, bucketId, skip, RECORDS_TAKE_PARAM, includeInterim,
-                    AnomalyRecord.PROBABILITY, false);
-            bucket.getRecords().addAll(page.queryResults());
-        }
-    }
 
     @Override
     public Optional<Bucket> bucket(String jobId,
@@ -682,9 +663,9 @@ public class ElasticsearchJobProvider implements JobProvider
                 bucket.isInterim() == null ||
                 bucket.isInterim() == false)
             {
-                if (expand)
+                if (expand && bucket.getRecordCount() > 0)
                 {
-                    fillBucketWithItsRecords(bucket, jobId, includeInterim);
+                    expandBucket(jobId, includeInterim, bucket);
                 }
 
                 doc = Optional.of(bucket);
@@ -693,6 +674,30 @@ public class ElasticsearchJobProvider implements JobProvider
 
         return doc;
     }
+
+    @Override
+    public int expandBucket(String jobId, boolean includeInterim, Bucket bucket)
+    throws UnknownJobException
+    {
+        int skip = 0;
+
+        QueryPage<AnomalyRecord> page = this.bucketRecords(
+                jobId, bucket.getId(), skip, RECORDS_TAKE_PARAM, includeInterim,
+                AnomalyRecord.PROBABILITY, false);
+        bucket.setRecords(page.queryResults());
+
+        while (page.hitCount() > skip + RECORDS_TAKE_PARAM)
+        {
+            skip += RECORDS_TAKE_PARAM;
+            page = this.bucketRecords(
+                    jobId, bucket.getId(), skip, RECORDS_TAKE_PARAM, includeInterim,
+                    AnomalyRecord.PROBABILITY, false);
+            bucket.getRecords().addAll(page.queryResults());
+        }
+
+        return bucket.getRecords().size();
+    }
+
 
     @Override
     public QueryPage<AnomalyRecord> bucketRecords(String jobId,

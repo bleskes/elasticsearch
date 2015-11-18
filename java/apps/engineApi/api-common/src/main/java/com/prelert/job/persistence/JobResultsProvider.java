@@ -110,6 +110,19 @@ public interface JobResultsProvider extends Closeable
 
 
     /**
+     * Expand a bucket to include the associated records.
+     *
+     * @param jobId
+     * @param includeInterim Include interim results
+     * @param bucket The bucket to be expanded
+     * @return The number of records added to the bucket
+     * @throws UnknownJobException If the job id is no recognised
+     */
+    public int expandBucket(String jobId, boolean includeInterim, Bucket bucket)
+    throws UnknownJobException;
+
+
+    /**
      * Get the anomaly records for the bucket.
      * The returned records will have the <code>parent</code> member
      * set to the parent bucket's id.
