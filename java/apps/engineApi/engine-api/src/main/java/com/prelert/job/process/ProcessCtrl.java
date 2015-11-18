@@ -624,7 +624,7 @@ public class ProcessCtrl
         // tell the C++ process to perform periodic operations.  This means that
         // when there are many jobs there is a certain amount of staggering of
         // their periodic operations.
-        int intervalStagger = job.getId().hashCode() % 3600;
+        int intervalStagger = Math.abs(job.getId().hashCode() % 3600);
         logger.debug("Periodic operations staggered by " + intervalStagger +
                 " seconds for job '" + job.getId() + "'");
 
