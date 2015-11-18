@@ -88,7 +88,7 @@ public class JobUpdaterTest
         String update = "{\"dimitris\":\"foobar\"}";
 
         m_ExpectedException.expect(JobConfigurationException.class);
-        m_ExpectedException.expectMessage("Invalid key 'dimitris'. Valid keys for update are: description, modelDebugConfig");
+        m_ExpectedException.expectMessage("Invalid key 'dimitris'. Valid keys for update are: description");
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_UPDATE_KEY));
 

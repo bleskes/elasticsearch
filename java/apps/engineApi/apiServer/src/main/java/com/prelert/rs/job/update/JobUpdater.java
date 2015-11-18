@@ -28,11 +28,16 @@
 package com.prelert.rs.job.update;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import javax.ws.rs.core.Response;
 
@@ -53,8 +58,10 @@ import com.prelert.rs.provider.JobConfigurationParseException;
 public class JobUpdater
 {
     private static final Logger LOGGER = Logger.getLogger(JobUpdater.class);
-    static final String JOB_DESCRIPTION_KEY = "description";
-    static final String MODEL_DEBUG_CONFIG_KEY = "modelDebugConfig";
+    private static final String JOB_DESCRIPTION_KEY = "description";
+    private static final String MODEL_DEBUG_CONFIG_KEY = "modelDebugConfig";
+    private static final Set<String> HIDDEN_PROPERTIES = new HashSet<>(
+            Arrays.asList(MODEL_DEBUG_CONFIG_KEY));
 
     private final JobManager m_JobManager;
     private final String m_JobId;
@@ -124,7 +131,9 @@ public class JobUpdater
 
     private String createInvalidKeyMsg(String key)
     {
-        String validKeys = Joiner.on(", ").join(m_UpdaterPerKey.keySet().iterator()).toString();
+        List<String> keys = m_UpdaterPerKey.keySet().stream()
+                .filter(k -> !HIDDEN_PROPERTIES.contains(k)).collect(Collectors.toList());
+        String validKeys = Joiner.on(", ").join(keys).toString();
         return Messages.getMessage(Messages.JOB_CONFIG_UPDATE_INVALID_KEY, key, validKeys);
     }
 }
