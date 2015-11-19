@@ -23,7 +23,6 @@ define(function (require) {
   var D = React.DOM;
   var Unassigned = require('./unassigned.jsx');
   var Assigned = require('./assigned.jsx');
-  var ParentItem = require('./parentItem');
 
   class ShardRow extends React.Component {
     render() {
