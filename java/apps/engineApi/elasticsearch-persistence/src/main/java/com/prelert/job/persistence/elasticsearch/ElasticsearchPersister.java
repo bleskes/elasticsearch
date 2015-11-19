@@ -141,7 +141,7 @@ public class ElasticsearchPersister implements JobResultsPersister
 
             if (response.isCreated() == false)
             {
-                LOGGER.warn(String.format("Bucket %s document has been overwritten",
+                LOGGER.debug(String.format("Bucket %s document has been overwritten",
                         bucket.getId()));
 
                 deleteRecords(bucket);

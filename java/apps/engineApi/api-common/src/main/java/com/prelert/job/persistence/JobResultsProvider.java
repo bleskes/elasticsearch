@@ -128,7 +128,7 @@ public interface JobResultsProvider extends Closeable
      * set to the parent bucket's id.
      *
      * @param jobId
-     * @param bucketId
+     * @param bucket
      * @param skip Skip the first N Jobs. This parameter is for paging
      * results if not required set to 0.
      * @param take Take only this number of Jobs
@@ -140,7 +140,7 @@ public interface JobResultsProvider extends Closeable
      * @throws UnknownJobException If the job id is no recognised
      */
     public QueryPage<AnomalyRecord> bucketRecords(String jobId,
-            String bucketId, int skip, int take, boolean includeInterim, String sortField,
+            Bucket bucket, int skip, int take, boolean includeInterim, String sortField,
             boolean sortDescending)
     throws UnknownJobException;
 

@@ -38,6 +38,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 import org.apache.commons.lang.SystemUtils;
 import org.apache.log4j.Logger;
@@ -188,18 +189,20 @@ public class ProcessCtrl
     public static final String TIME_FIELD_ARG = "--timefield=";
     public static final String VERSION_ARG = "--version";
 
+    public static final int SECONDS_IN_HOUR = 3600;
+
     /**
      * Roughly how often should the C++ process persist state?  A staggering
      * factor that varies by job is added to this.
      */
-    public static final int BASE_PERSIST_INTERVAL = 10800;
+    public static final int BASE_PERSIST_INTERVAL = 10800; // 3 hours
 
     /**
      * Roughly how often should the C++ process output quantiles when no
      * anomalies are being detected?  A staggering factor that varies by job is
      * added to this.
      */
-    public static final int BASE_MAX_QUANTILE_INTERVAL = 7200;
+    public static final int BASE_MAX_QUANTILE_INTERVAL = 21600; // 6 hours
 
     private static final String CONF_EXTENSION = ".conf";
 
@@ -474,6 +477,22 @@ public class ProcessCtrl
     }
 
     /**
+     * This random time of up to 1 hour is added to intervals at which we
+     * tell the C++ process to perform periodic operations.  This means that
+     * when there are many jobs there is a certain amount of staggering of
+     * their periodic operations.  A given job will always be given the same
+     * staggering interval (for a given JVM implementation).
+     *
+     * @param jobId The ID of the job to calculate the staggering interval for
+     * @return The staggering interval
+     */
+    public static int calculateStaggeringInterval(String jobId)
+    {
+        Random rng = new Random(jobId.hashCode());
+        return rng.nextInt(SECONDS_IN_HOUR);
+    }
+
+    /**
      * Sets the environment variables PRELERT_HOME and LIB_PATH (or platform
      * variants) and starts the process in that environment. Any inherited value
      * of LIB_PATH or PRELERT_HOME is overwritten.
@@ -620,11 +639,7 @@ public class ProcessCtrl
         String timeFieldArg = TIME_FIELD_ARG + timeField;
         command.add(timeFieldArg);
 
-        // This random time of up to 1 hour is added to intervals at which we
-        // tell the C++ process to perform periodic operations.  This means that
-        // when there are many jobs there is a certain amount of staggering of
-        // their periodic operations.
-        int intervalStagger = job.getId().hashCode() % 3600;
+        int intervalStagger = calculateStaggeringInterval(job.getId());
         logger.debug("Periodic operations staggered by " + intervalStagger +
                 " seconds for job '" + job.getId() + "'");
 
