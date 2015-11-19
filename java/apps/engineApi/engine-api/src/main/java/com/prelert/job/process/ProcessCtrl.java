@@ -195,14 +195,14 @@ public class ProcessCtrl
      * Roughly how often should the C++ process persist state?  A staggering
      * factor that varies by job is added to this.
      */
-    public static final int BASE_PERSIST_INTERVAL = 10800;
+    public static final int BASE_PERSIST_INTERVAL = 10800; // 3 hours
 
     /**
      * Roughly how often should the C++ process output quantiles when no
      * anomalies are being detected?  A staggering factor that varies by job is
      * added to this.
      */
-    public static final int BASE_MAX_QUANTILE_INTERVAL = 7200;
+    public static final int BASE_MAX_QUANTILE_INTERVAL = 21600; // 6 hours
 
     private static final String CONF_EXTENSION = ".conf";
 
