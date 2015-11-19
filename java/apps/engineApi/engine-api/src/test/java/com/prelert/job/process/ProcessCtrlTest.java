@@ -104,7 +104,7 @@ public class ProcessCtrlTest
 
         int expectedPersistInterval = 10800 + ProcessCtrl.calculateStaggeringInterval(job.getId());
         assertTrue(command.contains(ProcessCtrl.PERSIST_INTERVAL_ARG + expectedPersistInterval));
-        int expectedMaxQuantileInterval = 7200 + ProcessCtrl.calculateStaggeringInterval(job.getId());
+        int expectedMaxQuantileInterval = 21600 + ProcessCtrl.calculateStaggeringInterval(job.getId());
         assertTrue(command.contains(ProcessCtrl.MAX_QUANTILE_INTERVAL_ARG + expectedMaxQuantileInterval));
         assertTrue(command.contains(ProcessCtrl.PERSIST_URL_BASE_ARG +
                         "http://localhost:" + ProcessCtrl.ES_HTTP_PORT + "/unit-test-job"));
