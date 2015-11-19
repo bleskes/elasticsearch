@@ -681,16 +681,16 @@ public class ElasticsearchJobProvider implements JobProvider
     {
         int skip = 0;
 
-        QueryPage<AnomalyRecord> page = this.bucketRecords(
-                jobId, bucket.getId(), skip, RECORDS_TAKE_PARAM, includeInterim,
+        QueryPage<AnomalyRecord> page = bucketRecords(
+                jobId, bucket, skip, RECORDS_TAKE_PARAM, includeInterim,
                 AnomalyRecord.PROBABILITY, false);
         bucket.setRecords(page.queryResults());
 
         while (page.hitCount() > skip + RECORDS_TAKE_PARAM)
         {
             skip += RECORDS_TAKE_PARAM;
-            page = this.bucketRecords(
-                    jobId, bucket.getId(), skip, RECORDS_TAKE_PARAM, includeInterim,
+            page = bucketRecords(
+                    jobId, bucket, skip, RECORDS_TAKE_PARAM, includeInterim,
                     AnomalyRecord.PROBABILITY, false);
             bucket.getRecords().addAll(page.queryResults());
         }
@@ -701,11 +701,16 @@ public class ElasticsearchJobProvider implements JobProvider
 
     @Override
     public QueryPage<AnomalyRecord> bucketRecords(String jobId,
-            String bucketId, int skip, int take, boolean includeInterim, String sortField, boolean descending)
+            Bucket bucket, int skip, int take, boolean includeInterim, String sortField, boolean descending)
     throws UnknownJobException
     {
-        FilterBuilder recordFilter = FilterBuilders.hasParentFilter(Bucket.TYPE,
-                                FilterBuilders.termFilter(Bucket.ID, bucketId));
+        // Find the records using the time stamp rather than a parent-child
+        // relationship.  The parent-child filter involves two queries behind
+        // the scenes, and Elasticsearch documentation claims it's significantly
+        // slower.  Here we rely on the record timestamps being identical to the
+        // bucket timestamp.
+        FilterBuilder recordFilter = FilterBuilders.termFilter(ElasticsearchMappings.ES_TIMESTAMP,
+                bucket.getTimestamp().getTime());
 
         recordFilter = new ResultsFilterBuilder(recordFilter).interim(
                 AnomalyRecord.IS_INTERIM, includeInterim).build();
