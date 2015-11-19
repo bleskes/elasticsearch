@@ -134,7 +134,7 @@ public class ProcessAndDataDescription
     }
 
     /**
-     * Non-blocking tryAcqurie call returns immediately.
+     * Non-blocking tryAcquire call returns immediately.
      * If the result is false someone else has acquired the semaphore
      * If successful the {@linkplain #getAction()} member is set to <code>action</code>
      * @param action

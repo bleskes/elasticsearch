@@ -59,8 +59,10 @@ import com.prelert.job.UnknownJobException;
 import com.prelert.job.config.verification.JobConfigurationException;
 import com.prelert.job.errorcodes.ErrorCodeMatcher;
 import com.prelert.job.errorcodes.ErrorCodes;
+import com.prelert.job.exceptions.JobInUseException;
 import com.prelert.job.exceptions.TooManyJobsException;
 import com.prelert.job.persistence.QueryPage;
+import com.prelert.job.process.exceptions.NativeProcessRunException;
 import com.prelert.rs.data.Acknowledgement;
 import com.prelert.rs.data.Pagination;
 import com.prelert.rs.data.SingleDocument;
@@ -197,8 +199,8 @@ public class JobsTest extends ServiceTest
     }
 
     @Test
-    public void testUpdate_GivenValidModelDebugConfig() throws JobConfigurationException,
-            UnknownJobException
+    public void testUpdate_GivenValidModelDebugConfig() throws UnknownJobException,
+            JobConfigurationException, JobInUseException, NativeProcessRunException
     {
         Response response = m_Jobs.updateJob("foo",
                 "{\"modelDebugConfig\":{\"boundsPercentile\":90.0, \"terms\":\"someTerm\"}}");
@@ -206,6 +208,8 @@ public class JobsTest extends ServiceTest
         assertTrue(((Acknowledgement) response.getEntity()).getAcknowledgement());
 
         verify(jobManager()).setModelDebugConfig("foo", new ModelDebugConfig(90.0, "someTerm"));
+        String expectedConfig = "[modelDebugConfig]\nboundspercentile = 90.0\nterms = someTerm\n";
+        verify(jobManager()).writeUpdateConfigMessage("foo", expectedConfig);
     }
 
     private static void verifyJobHasIdAndEndpoints(String jobId, JobDetails job)

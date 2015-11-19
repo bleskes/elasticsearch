@@ -27,12 +27,16 @@
 
 package com.prelert.job.manager;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.any;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -374,6 +378,17 @@ public class JobManagerTest
             String message = Messages.getMessage(Messages.LICENSE_LIMIT_PARTITIONS);
             assertEquals(message, e.getMessage());
         }
+    }
+
+    @Test
+    public void testWriteUpdateConfigMessage() throws JobInUseException, NativeProcessRunException
+    {
+        givenProcessInfo(5);
+        JobManager jobManager = new JobManager(m_JobProvider, m_ProcessManager);
+
+        jobManager.writeUpdateConfigMessage("foo", "bar");
+
+        verify(m_ProcessManager).writeUpdateConfigMessage("foo", "bar");
     }
 
     @Test

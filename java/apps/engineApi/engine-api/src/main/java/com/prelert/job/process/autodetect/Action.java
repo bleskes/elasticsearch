@@ -32,6 +32,7 @@ import com.prelert.job.messages.Messages;
 enum Action {
     CLOSING(Messages.PROCESS_ACTION_CLOSING_JOB),
     FLUSHING(Messages.PROCESS_ACTION_FLUSHING_JOB),
+    UPDATING(Messages.PROCESS_ACTION_UPDATING_JOB),
     WRITING(Messages.PROCESS_ACTION_WRITING_JOB),
     NONE(Messages.PROCESS_ACTION_USING_JOB);
 

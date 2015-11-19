@@ -28,6 +28,7 @@
 package com.prelert.rs.job.update;
 
 import java.io.IOException;
+import java.io.StringWriter;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -50,8 +51,10 @@ import com.google.common.collect.ImmutableMap;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.config.verification.JobConfigurationException;
 import com.prelert.job.errorcodes.ErrorCodes;
+import com.prelert.job.exceptions.JobInUseException;
 import com.prelert.job.manager.JobManager;
 import com.prelert.job.messages.Messages;
+import com.prelert.job.process.exceptions.NativeProcessRunException;
 import com.prelert.rs.data.Acknowledgement;
 import com.prelert.rs.provider.JobConfigurationParseException;
 
@@ -66,23 +69,26 @@ public class JobUpdater
     private final JobManager m_JobManager;
     private final String m_JobId;
     private final Map<String, Supplier<AbstractUpdater>> m_UpdaterPerKey;
+    private final StringWriter m_ConfigWriter;
 
     public JobUpdater(JobManager jobManager, String jobId)
     {
         m_JobManager = Objects.requireNonNull(jobManager);
         m_JobId = Objects.requireNonNull(jobId);
         m_UpdaterPerKey = createUpdaterPerKeyMap();
+        m_ConfigWriter = new StringWriter();
     }
 
     private Map<String, Supplier<AbstractUpdater>> createUpdaterPerKeyMap()
     {
         return ImmutableMap.<String, Supplier<AbstractUpdater>>builder()
                 .put(JOB_DESCRIPTION_KEY, () -> new JobDescriptionUpdater(m_JobManager, m_JobId))
-                .put(MODEL_DEBUG_CONFIG_KEY, () -> new ModelDebugConfigUpdater(m_JobManager, m_JobId))
+                .put(MODEL_DEBUG_CONFIG_KEY, () -> new ModelDebugConfigUpdater(m_JobManager, m_JobId, m_ConfigWriter))
                 .build();
     }
 
-    public Response update(String updateJson) throws UnknownJobException, JobConfigurationException
+    public Response update(String updateJson) throws JobConfigurationException, UnknownJobException,
+            JobInUseException, NativeProcessRunException
     {
         JsonNode node = parse(updateJson);
         if (node.isObject() == false)
@@ -98,9 +104,9 @@ public class JobUpdater
             Entry<String, JsonNode> keyValue = fieldsIterator.next();
             LOGGER.debug("Updating job config for key: " + keyValue.getKey());
             createKeyValueUpdater(keyValue.getKey()).update(keyValue.getValue());
-            LOGGER.debug("Updated successfully job config for key: " + keyValue.getKey());
         }
 
+        writeUpdateConfigMessage();
         return Response.ok(new Acknowledgement()).build();
     }
 
@@ -135,5 +141,14 @@ public class JobUpdater
                 .filter(k -> !HIDDEN_PROPERTIES.contains(k)).collect(Collectors.toList());
         String validKeys = Joiner.on(", ").join(keys).toString();
         return Messages.getMessage(Messages.JOB_CONFIG_UPDATE_INVALID_KEY, key, validKeys);
+    }
+
+    private void writeUpdateConfigMessage() throws JobInUseException, NativeProcessRunException
+    {
+        String config = m_ConfigWriter.toString();
+        if (!config.isEmpty())
+        {
+            m_JobManager.writeUpdateConfigMessage(m_JobId, config);
+        }
     }
 }

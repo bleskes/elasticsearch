@@ -31,7 +31,7 @@ import static com.prelert.job.process.writer.WriterConstants.EQUALS;
 import static com.prelert.job.process.writer.WriterConstants.NEW_LINE;
 
 import java.io.IOException;
-import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.util.Objects;
 
 import com.google.common.base.Strings;
@@ -43,9 +43,9 @@ public class ModelDebugConfigWriter
     private static final String TERMS_STR = "terms";
 
     private final ModelDebugConfig m_ModelDebugConfig;
-    private final OutputStreamWriter m_Writer;
+    private final Writer m_Writer;
 
-    public ModelDebugConfigWriter(ModelDebugConfig modelDebugConfig, OutputStreamWriter writer)
+    public ModelDebugConfigWriter(ModelDebugConfig modelDebugConfig, Writer writer)
     {
         m_ModelDebugConfig = Objects.requireNonNull(modelDebugConfig);
         m_Writer = Objects.requireNonNull(writer);

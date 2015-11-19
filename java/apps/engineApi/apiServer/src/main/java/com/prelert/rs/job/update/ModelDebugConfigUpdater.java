@@ -27,6 +27,9 @@
 
 package com.prelert.rs.job.update;
 
+import java.io.IOException;
+import java.io.StringWriter;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.prelert.job.ModelDebugConfig;
 import com.prelert.job.UnknownJobException;
@@ -35,21 +38,26 @@ import com.prelert.job.config.verification.ModelDebugConfigVerifier;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.manager.JobManager;
 import com.prelert.job.messages.Messages;
+import com.prelert.job.process.writer.ModelDebugConfigWriter;
 import com.prelert.rs.provider.JobConfigurationParseException;
 
 class ModelDebugConfigUpdater extends AbstractUpdater
 {
-    public ModelDebugConfigUpdater(JobManager jobManager, String jobId)
+    private final StringWriter m_ConfigWriter;
+
+    public ModelDebugConfigUpdater(JobManager jobManager, String jobId, StringWriter configWriter)
     {
         super(jobManager, jobId);
+        m_ConfigWriter = configWriter;
     }
 
     @Override
     void update(JsonNode node) throws UnknownJobException, JobConfigurationException
     {
+        ModelDebugConfig modelDebugConfig = null;
         try
         {
-            ModelDebugConfig modelDebugConfig = JSON_MAPPER.convertValue(node, ModelDebugConfig.class);
+            modelDebugConfig = JSON_MAPPER.convertValue(node, ModelDebugConfig.class);
             if (modelDebugConfig != null)
             {
                 ModelDebugConfigVerifier.verify(modelDebugConfig);
@@ -61,6 +69,25 @@ class ModelDebugConfigUpdater extends AbstractUpdater
             throw new JobConfigurationParseException(
                     Messages.getMessage(Messages.JOB_CONFIG_UPDATE_MODEL_DEBUG_CONFIG_PARSE_ERROR),
                     e.getCause(), ErrorCodes.INVALID_VALUE);
+        }
+
+        write(modelDebugConfig);
+    }
+
+    private void write(ModelDebugConfig modelDebugConfig) throws JobConfigurationException
+    {
+        m_ConfigWriter.write("[modelDebugConfig]\n");
+        if (modelDebugConfig == null)
+        {
+            modelDebugConfig = new ModelDebugConfig(-1.0, null);
+        }
+        try
+        {
+            new ModelDebugConfigWriter(modelDebugConfig, m_ConfigWriter).write();
+        }
+        catch (IOException e)
+        {
+            throw new JobConfigurationException("Failed to write", null, e);
         }
     }
 }

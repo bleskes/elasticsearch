@@ -27,9 +27,11 @@
 
 package com.prelert.rs.job.update;
 
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.verify;
 
 import java.io.IOException;
+import java.io.StringWriter;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -55,11 +57,13 @@ public class ModelDebugConfigUpdaterTest
     @Rule public ExpectedException m_ExpectedException = ExpectedException.none();
 
     @Mock private JobManager m_JobManager;
+    private StringWriter m_ConfigWriter;
 
     @Before
     public void setUp()
     {
         MockitoAnnotations.initMocks(this);
+        m_ConfigWriter = new StringWriter();
     }
 
     @Test
@@ -74,7 +78,7 @@ public class ModelDebugConfigUpdaterTest
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_VALUE));
 
-        new ModelDebugConfigUpdater(m_JobManager, "foo").update(node);
+        new ModelDebugConfigUpdater(m_JobManager, "foo", m_ConfigWriter).update(node);
     }
 
     @Test
@@ -89,7 +93,7 @@ public class ModelDebugConfigUpdaterTest
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_VALUE));
 
-        new ModelDebugConfigUpdater(m_JobManager, "foo").update(node);
+        new ModelDebugConfigUpdater(m_JobManager, "foo", m_ConfigWriter).update(node);
     }
 
     @Test
@@ -99,9 +103,11 @@ public class ModelDebugConfigUpdaterTest
         String update = "{\"boundsPercentile\":67.3, \"terms\":\"a,b\"}";
         JsonNode node = new ObjectMapper().readTree(update);
 
-        new ModelDebugConfigUpdater(m_JobManager, "foo").update(node);
+        new ModelDebugConfigUpdater(m_JobManager, "foo", m_ConfigWriter).update(node);
 
         verify(m_JobManager).setModelDebugConfig("foo", new ModelDebugConfig(67.3, "a,b"));
+        String expectedConfig = "[modelDebugConfig]\nboundspercentile = 67.3\nterms = a,b\n";
+        assertEquals(expectedConfig, m_ConfigWriter.toString());
     }
 
     @Test
@@ -110,8 +116,10 @@ public class ModelDebugConfigUpdaterTest
     {
         JsonNode node = NullNode.getInstance();
 
-        new ModelDebugConfigUpdater(m_JobManager, "foo").update(node);
+        new ModelDebugConfigUpdater(m_JobManager, "foo", m_ConfigWriter).update(node);
 
         verify(m_JobManager).setModelDebugConfig("foo", null);
+        String expectedConfig = "[modelDebugConfig]\nboundspercentile = -1.0\nterms = \n";
+        assertEquals(expectedConfig, m_ConfigWriter.toString());
     }
 }

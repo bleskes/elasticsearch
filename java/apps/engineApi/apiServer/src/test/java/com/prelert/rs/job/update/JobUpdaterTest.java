@@ -27,6 +27,8 @@
 
 package com.prelert.rs.job.update;
 
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 import org.junit.Before;
@@ -41,7 +43,9 @@ import com.prelert.job.UnknownJobException;
 import com.prelert.job.config.verification.JobConfigurationException;
 import com.prelert.job.errorcodes.ErrorCodeMatcher;
 import com.prelert.job.errorcodes.ErrorCodes;
+import com.prelert.job.exceptions.JobInUseException;
 import com.prelert.job.manager.JobManager;
+import com.prelert.job.process.exceptions.NativeProcessRunException;
 import com.prelert.rs.provider.JobConfigurationParseException;
 
 public class JobUpdaterTest
@@ -57,7 +61,8 @@ public class JobUpdaterTest
     }
 
     @Test
-    public void testUpdate_GivenEmptyString() throws UnknownJobException, JobConfigurationException
+    public void testUpdate_GivenEmptyString() throws UnknownJobException,
+            JobConfigurationException, JobInUseException, NativeProcessRunException
     {
         String update = "";
 
@@ -70,7 +75,8 @@ public class JobUpdaterTest
     }
 
     @Test
-    public void testUpdate_GivenNoObject() throws UnknownJobException, JobConfigurationException
+    public void testUpdate_GivenNoObject() throws UnknownJobException,
+            JobConfigurationException, JobInUseException, NativeProcessRunException
     {
         String update = "\"description\":\"foobar\"";
 
@@ -83,7 +89,8 @@ public class JobUpdaterTest
     }
 
     @Test
-    public void testUpdate_GivenInvalidKey() throws UnknownJobException, JobConfigurationException
+    public void testUpdate_GivenInvalidKey() throws UnknownJobException,
+            JobConfigurationException, JobInUseException, NativeProcessRunException
     {
         String update = "{\"dimitris\":\"foobar\"}";
 
@@ -96,17 +103,20 @@ public class JobUpdaterTest
     }
 
     @Test
-    public void testUpdate_GivenValidDescriptionUpdate() throws UnknownJobException, JobConfigurationException
+    public void testUpdate_GivenValidDescriptionUpdate() throws UnknownJobException,
+            JobConfigurationException, JobInUseException, NativeProcessRunException
     {
         String update = "{\"description\":\"foobar\"}";
 
         new JobUpdater(m_JobManager, "foo").update(update);
 
         verify(m_JobManager).setDescription("foo", "foobar");
+        verify(m_JobManager, never()).writeUpdateConfigMessage(anyString(), anyString());
     }
 
     @Test
-    public void testUpdate_GivenTwoUpdates() throws UnknownJobException, JobConfigurationException
+    public void testUpdate_GivenTwoUpdates() throws UnknownJobException,
+            JobConfigurationException, JobInUseException, NativeProcessRunException
     {
         String update = "{\"description\":\"foobar\", \"modelDebugConfig\":{\"boundsPercentile\":33.9}}";
 
@@ -114,5 +124,8 @@ public class JobUpdaterTest
 
         verify(m_JobManager).setDescription("foo", "foobar");
         verify(m_JobManager).setModelDebugConfig("foo", new ModelDebugConfig(33.9, null));
+
+        String expectedConfig = "[modelDebugConfig]\nboundspercentile = 33.9\nterms = \n";
+        verify(m_JobManager).writeUpdateConfigMessage("foo", expectedConfig);
     }
 }

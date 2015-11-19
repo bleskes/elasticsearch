@@ -560,6 +560,12 @@ public class JobManager
         m_ProcessManager.closeJob(jobId);
     }
 
+    public void writeUpdateConfigMessage(String jobId, String config) throws JobInUseException,
+            NativeProcessRunException
+    {
+        m_ProcessManager.writeUpdateConfigMessage(jobId, config);
+    }
+
     /**
      * Set time the job last received data.
      * Updates the database document
