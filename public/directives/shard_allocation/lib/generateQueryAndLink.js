@@ -22,13 +22,13 @@ define(function (require) {
   var stringify = _.compose(encodeURIComponent, JSON.stringify);
 
   return function generateQueryAndLink(data) {
-    var type = 'index';
+    var type = 'indices';
     var ident = data.name;
     if (data.type === 'node') {
-      type = 'node';
+      type = 'nodes';
       ident = data.id;
     }
-    return '#/' + data.type + '/' + ident;
+    return '#/' + type + '/' + ident;
   };
 
 });

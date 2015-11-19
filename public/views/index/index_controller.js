@@ -5,7 +5,7 @@ const _ = require('lodash');
 const mod = require('ui/modules').get('marvel', []);
 
 require('ui/routes')
-.when('/index/:index', {
+.when('/indices/:index', {
   template: require('plugins/marvel/views/index/index_template.html'),
   resolve: {
     marvel: function (Private) {
