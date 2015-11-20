@@ -195,8 +195,7 @@ public class AutoDetectResultsParserTest
         }
 
         @Override
-        public void updateBucket(String jobId, String bucketId, double anomalyScore,
-                double maxNormalizedProbability)
+        public void updateBucket(String jobId, Bucket bucket)
         {
             // Do nothing
         }

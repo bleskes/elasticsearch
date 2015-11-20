@@ -242,8 +242,7 @@ class ScoresUpdater
                 logger.trace("ES API CALL: update ID " + bucketId + " type " + Bucket.TYPE +
                         " in index " + m_JobId + " using map of new values");
 
-                m_JobRenormaliser.updateBucket(m_JobId, bucketId, bucket.getAnomalyScore(),
-                        bucket.getMaxNormalizedProbability());
+                m_JobRenormaliser.updateBucket(m_JobId, bucket);
 
                 ++counts[0];
             }

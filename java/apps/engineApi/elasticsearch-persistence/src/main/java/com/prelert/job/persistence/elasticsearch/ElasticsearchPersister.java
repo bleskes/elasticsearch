@@ -33,9 +33,7 @@ import java.io.IOException;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
-import java.util.TreeMap;
 
 import org.apache.log4j.Logger;
 import org.elasticsearch.ElasticsearchException;
@@ -690,24 +688,17 @@ public class ElasticsearchPersister implements JobResultsPersister
     }
 
     @Override
-    public void updateBucket(String jobId, String bucketId, double anomalyScore,
-                                double maxNormalizedProbability)
+    public void updateBucket(String jobId, Bucket bucket)
     {
         try
         {
-            Map<String, Object> map = new TreeMap<>();
-            map.put(Bucket.ANOMALY_SCORE, anomalyScore);
-            map.put(Bucket.MAX_NORMALIZED_PROBABILITY, maxNormalizedProbability);
-
-            m_Client.prepareUpdate(jobId, Bucket.TYPE, bucketId)
-                            .setDoc(map)
-                            .execute().actionGet();
+            m_Client.prepareIndex(jobId, Bucket.TYPE, bucket.getId())
+                    .setSource(serialiseBucket(bucket)).execute().actionGet();
         }
-        catch (ElasticsearchException e)
+        catch (IOException e)
         {
             LOGGER.error("Error updating bucket state", e);
         }
-
     }
 
     @Override
@@ -721,17 +712,15 @@ public class ElasticsearchPersister implements JobResultsPersister
             for (AnomalyRecord record : records)
             {
                 String recordId = record.getId();
-                Map<String, Object> map = new TreeMap<>();
-                map.put(AnomalyRecord.ANOMALY_SCORE, record.getAnomalyScore());
-                map.put(AnomalyRecord.NORMALIZED_PROBABILITY, record.getNormalizedProbability());
 
                 LOGGER.trace("ES BULK ACTION: update ID " + recordId + " type " + AnomalyRecord.TYPE +
                         " in index " + jobId + " using map of new values");
+
                 bulkRequest.add(
-                        m_Client.prepareUpdate(jobId, AnomalyRecord.TYPE, recordId)
-                        .setDoc(map)
-                        // Need to specify the parent ID when updating a child
-                        .setParent(bucketId));
+                        m_Client.prepareIndex(jobId, AnomalyRecord.TYPE, recordId)
+                                .setSource(serialiseRecord(record, record.getTimestamp()))
+                                 // Need to specify the parent ID when updating a child
+                                .setParent(bucketId));
 
                 addedAny = true;
             }
@@ -751,7 +740,7 @@ public class ElasticsearchPersister implements JobResultsPersister
                 }
             }
         }
-        catch (ElasticsearchException e)
+        catch (IOException | ElasticsearchException e)
         {
             LOGGER.error("Error updating anomaly records", e);
         }

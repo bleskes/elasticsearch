@@ -28,7 +28,6 @@
 package com.prelert.job.process.normaliser;
 
 import static org.junit.Assert.assertEquals;
-import static org.mockito.Matchers.anyDouble;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyListOf;
 import static org.mockito.Matchers.anyLong;
@@ -102,7 +101,7 @@ public class ScoresUpdaterTest
 
         m_ScoresUpdater.update(QUANTILES_STATE, 3600, m_Logger);
 
-        verifyBucketWasNotUpdated("0");
+        verifyBucketWasNotUpdated(bucket);
         verifyBucketRecordsWereNotUpdated("0");
         verifyBucketSpanWasNotRequested();
     }
@@ -132,7 +131,7 @@ public class ScoresUpdaterTest
 
         m_ScoresUpdater.update(QUANTILES_STATE, 3600, m_Logger);
 
-        verifyBucketWasNotUpdated("0");
+        verifyBucketWasNotUpdated(bucket);
         verifyBucketRecordsWereNotUpdated("0");
         verifyBucketSpanWasNotRequested();
     }
@@ -203,7 +202,7 @@ public class ScoresUpdaterTest
 
         m_ScoresUpdater.update(QUANTILES_STATE, 3600, m_Logger);
 
-        verifyBucketWasNotUpdated("0");
+        verifyBucketWasNotUpdated(bucket);
         verifyRecordsWereUpdated("0", Arrays.asList(record1, record3));
         verifyBucketSpanWasRequestedOnlyOnce();
     }
@@ -397,8 +396,7 @@ public class ScoresUpdaterTest
 
     private void verifyBucketWasUpdated(Bucket bucket)
     {
-        verify(m_JobRenormaliser).updateBucket(JOB_ID, bucket.getId(), bucket.getAnomalyScore(),
-                bucket.getMaxNormalizedProbability());
+        verify(m_JobRenormaliser).updateBucket(JOB_ID, bucket);
     }
 
     private void verifyRecordsWereUpdated(String bucketId, List<AnomalyRecord> records)
@@ -406,10 +404,9 @@ public class ScoresUpdaterTest
         verify(m_JobRenormaliser).updateRecords(JOB_ID, bucketId, records);
     }
 
-    private void verifyBucketWasNotUpdated(String bucketId)
+    private void verifyBucketWasNotUpdated(Bucket bucket)
     {
-        verify(m_JobRenormaliser, never()).updateBucket(eq(JOB_ID), eq(bucketId), anyDouble(),
-                anyDouble());
+        verify(m_JobRenormaliser, never()).updateBucket(JOB_ID, bucket);
     }
 
     private void verifyBucketRecordsWereNotUpdated(String bucketId)

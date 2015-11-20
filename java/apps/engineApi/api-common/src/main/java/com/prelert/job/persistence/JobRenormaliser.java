@@ -42,16 +42,13 @@ import com.prelert.job.results.Influencer;
 public interface JobRenormaliser
 {
     /**
-     * Update the bucket with the new anomaly score and normalised
-     * probability.
+     * Update the bucket with the changes that may result
+     * due to renormalisation.
      *
      * @param jobId Job to update
-     * @param bucketId Id of the bucket to update
-     * @param anomalyScore New anomaly score
-     * @param maxNormalizedProbability New max normalized probability
+     * @param bucke the bucket to update
      */
-    void updateBucket(String jobId, String bucketId, double anomalyScore,
-            double maxNormalizedProbability);
+    void updateBucket(String jobId, Bucket bucket);
 
 
     /**
