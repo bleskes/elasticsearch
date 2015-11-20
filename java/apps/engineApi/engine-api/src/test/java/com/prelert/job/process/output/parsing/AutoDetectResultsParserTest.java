@@ -55,6 +55,7 @@ import com.prelert.job.alert.AlertObserver;
 import com.prelert.job.persistence.JobResultsPersister;
 import com.prelert.job.process.normaliser.BlockingQueueRenormaliser;
 import com.prelert.job.quantiles.Quantiles;
+import com.prelert.job.results.AnomalyRecord;
 import com.prelert.job.results.Bucket;
 import com.prelert.job.results.CategoryDefinition;
 import com.prelert.job.results.Detector;
@@ -191,6 +192,25 @@ public class AutoDetectResultsParserTest
         public void persistInfluencer(Influencer influencer)
         {
             m_Influencers.add(influencer);
+        }
+
+        @Override
+        public void updateBucket(String jobId, String bucketId, double anomalyScore,
+                double maxNormalizedProbability)
+        {
+            // Do nothing
+        }
+
+        @Override
+        public void updateRecords(String jobId, String bucketId, List<AnomalyRecord> records)
+        {
+            // Do nothing
+        }
+
+        @Override
+        public void updateInfluencer(String jobId, Influencer influencer)
+        {
+            // Do nothing
         }
     }
 

@@ -37,7 +37,7 @@ import com.prelert.job.results.Influencer;
  * Interface for classes that persist {@linkplain Bucket Buckets} and
  * {@linkplain Quantiles Quantiles}
  */
-public interface JobResultsPersister
+public interface JobResultsPersister extends JobRenormaliser
 {
     /**
      * Persist the result bucket

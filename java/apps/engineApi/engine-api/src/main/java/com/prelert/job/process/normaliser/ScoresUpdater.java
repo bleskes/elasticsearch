@@ -38,6 +38,7 @@ import com.prelert.job.AnalysisConfig;
 import com.prelert.job.JobDetails;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.persistence.JobProvider;
+import com.prelert.job.persistence.JobRenormaliser;
 import com.prelert.job.persistence.QueryPage;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
 import com.prelert.job.results.AnomalyRecord;
@@ -70,6 +71,7 @@ class ScoresUpdater
 
     private final String m_JobId;
     private final JobProvider m_JobProvider;
+    private final JobRenormaliser m_JobRenormaliser;
     private final NormaliserFactory m_NormaliserFactory;
 
     /**
@@ -77,10 +79,12 @@ class ScoresUpdater
      */
     private volatile int m_BucketSpan;
 
-    public ScoresUpdater(String jobId, JobProvider jobProvider, NormaliserFactory normaliserFactory)
+    public ScoresUpdater(String jobId, JobProvider jobProvider, JobRenormaliser jobRenormaliser,
+            NormaliserFactory normaliserFactory)
     {
         m_JobId = jobId;
         m_JobProvider = Objects.requireNonNull(jobProvider);
+        m_JobRenormaliser = Objects.requireNonNull(jobRenormaliser);
         m_NormaliserFactory = Objects.requireNonNull(normaliserFactory);
         m_BucketSpan = 0;
     }
@@ -238,7 +242,7 @@ class ScoresUpdater
                 logger.trace("ES API CALL: update ID " + bucketId + " type " + Bucket.TYPE +
                         " in index " + m_JobId + " using map of new values");
 
-                m_JobProvider.updateBucket(m_JobId, bucketId, bucket.getAnomalyScore(),
+                m_JobRenormaliser.updateBucket(m_JobId, bucketId, bucket.getAnomalyScore(),
                         bucket.getMaxNormalizedProbability());
 
                 ++counts[0];
@@ -286,7 +290,7 @@ class ScoresUpdater
 
         if (!toUpdate.isEmpty())
         {
-            m_JobProvider.updateRecords(m_JobId, bucket.getId(), toUpdate);
+            m_JobRenormaliser.updateRecords(m_JobId, bucket.getId(), toUpdate);
         }
     }
 
@@ -309,7 +313,7 @@ class ScoresUpdater
             {
                 if (influencer.hadBigNormalisedUpdate())
                 {
-                    m_JobProvider.updateInfluencer(m_JobId, influencer);
+                    m_JobRenormaliser.updateInfluencer(m_JobId, influencer);
                     ++counts[0];
                 }
                 else

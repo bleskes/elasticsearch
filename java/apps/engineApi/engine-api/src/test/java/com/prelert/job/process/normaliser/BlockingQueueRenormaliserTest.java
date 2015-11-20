@@ -26,15 +26,14 @@
  ************************************************************/
 package com.prelert.job.process.normaliser;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.mock;
 
 import org.apache.log4j.Logger;
 import org.junit.Test;
 
-import static org.mockito.Mockito.mock;
-
 import com.prelert.job.persistence.JobProvider;
-import com.prelert.job.process.normaliser.BlockingQueueRenormaliser;
+import com.prelert.job.persistence.JobRenormaliser;
 
 /**
  * This class is hard to unit test because it creates
@@ -49,7 +48,9 @@ public class BlockingQueueRenormaliserTest
     public void testShutdown()
     {
         JobProvider jobProvider = mock(JobProvider.class);
-        BlockingQueueRenormaliser normaliser = new BlockingQueueRenormaliser("foo", jobProvider);
+        JobRenormaliser jobRenormaliser = mock(JobRenormaliser.class);
+        BlockingQueueRenormaliser normaliser = new BlockingQueueRenormaliser("foo", jobProvider,
+                jobRenormaliser);
 
         normaliser.shutdown(mock(Logger.class));
 

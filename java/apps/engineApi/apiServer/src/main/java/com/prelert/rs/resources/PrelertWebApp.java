@@ -195,7 +195,8 @@ public class PrelertWebApp extends Application
                 jobProvider,
                 new ResultsReaderFactory(
                         jobId -> new ElasticsearchPersister(jobId, jobProvider.getClient()),
-                        jobId -> new BlockingQueueRenormaliser(jobId, jobProvider)),
+                        jobId -> new BlockingQueueRenormaliser(jobId, jobProvider,
+                                new ElasticsearchPersister(jobId, jobProvider.getClient()))),
                 logger -> new ElasticsearchJobDataCountsPersister(jobProvider.getClient(), logger),
                 logger -> new ElasticsearchUsagePersister(jobProvider.getClient(), logger));
         return ProcessManager.create(jobProvider, processFactory,
