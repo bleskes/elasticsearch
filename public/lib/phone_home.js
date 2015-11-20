@@ -98,7 +98,13 @@ module.exports = function phoneHomeProvider(Promise, es, $http, statsReportUrl, 
       if (!this.checkReportStatus()) return Promise.resolve();
       return Promise.all(clusters.map((cluster) => {
         return this.getClusterInfo(cluster.cluster_uuid).then((info) => {
-          return $http.post(statsReportUrl, info);
+          const req = {
+            method: 'POST',
+            url: statsReportUrl,
+            data: info,
+            kbnXsrfToken: false
+          };
+          return $http(req);
         });
       })).then(() => {
         this.set('lastReport', Date.now());
