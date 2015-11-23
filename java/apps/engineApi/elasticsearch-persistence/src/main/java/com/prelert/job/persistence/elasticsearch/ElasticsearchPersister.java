@@ -36,6 +36,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
+import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.action.admin.indices.refresh.RefreshRequest;
 import org.elasticsearch.action.bulk.BulkItemResponse;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
@@ -684,6 +685,71 @@ public class ElasticsearchPersister implements JobResultsPersister
                 .field(Influencer.INITIAL_ANOMALY_SCORE, influencer.getInitialAnomalyScore())
                 .field(Influencer.ANOMALY_SCORE, influencer.getAnomalyScore())
                 .endObject();
+    }
+
+    @Override
+    public void updateBucket(String jobId, Bucket bucket)
+    {
+        try
+        {
+            m_Client.prepareIndex(jobId, Bucket.TYPE, bucket.getId())
+                    .setSource(serialiseBucket(bucket)).execute().actionGet();
+        }
+        catch (IOException e)
+        {
+            LOGGER.error("Error updating bucket state", e);
+        }
+    }
+
+    @Override
+    public void updateRecords(String jobId, String bucketId, List<AnomalyRecord> records)
+    {
+        try
+        {
+            // Now bulk update the records within the bucket
+            BulkRequestBuilder bulkRequest = m_Client.prepareBulk();
+            boolean addedAny = false;
+            for (AnomalyRecord record : records)
+            {
+                String recordId = record.getId();
+
+                LOGGER.trace("ES BULK ACTION: update ID " + recordId + " type " + AnomalyRecord.TYPE +
+                        " in index " + jobId + " using map of new values");
+
+                bulkRequest.add(
+                        m_Client.prepareIndex(jobId, AnomalyRecord.TYPE, recordId)
+                                .setSource(serialiseRecord(record, record.getTimestamp()))
+                                 // Need to specify the parent ID when updating a child
+                                .setParent(bucketId));
+
+                addedAny = true;
+            }
+
+            if (addedAny)
+            {
+                LOGGER.trace("ES API CALL: bulk request with " +
+                        bulkRequest.numberOfActions() + " actions");
+                BulkResponse bulkResponse = bulkRequest.execute().actionGet();
+                if (bulkResponse.hasFailures())
+                {
+                    LOGGER.error("BulkResponse has errors");
+                    for (BulkItemResponse item : bulkResponse.getItems())
+                    {
+                        LOGGER.error(item.getFailureMessage());
+                    }
+                }
+            }
+        }
+        catch (IOException | ElasticsearchException e)
+        {
+            LOGGER.error("Error updating anomaly records", e);
+        }
+    }
+
+    @Override
+    public void updateInfluencer(String jobId, Influencer influencer)
+    {
+        persistInfluencer(influencer);
     }
 
 }

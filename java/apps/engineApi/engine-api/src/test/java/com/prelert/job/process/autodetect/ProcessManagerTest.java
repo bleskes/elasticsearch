@@ -280,6 +280,61 @@ public class ProcessManagerTest
     }
 
     @Test
+    public void testWriteUpdateConfigMessage_GivenJobWithoutProcess()
+            throws NativeProcessRunException, JobInUseException
+    {
+        m_ProcessManager.writeUpdateConfigMessage("foo", "bar");
+    }
+
+    @Test
+    public void testWriteUpdateConfigMessage_GivenJobRunningProcess()
+            throws UnknownJobException, NativeProcessRunException, JobInUseException,
+            JsonParseException, MissingFieldException, HighProportionOfBadTimestampsException,
+            OutOfOrderRecordsException, MalformedJsonException
+    {
+        MockProcessBuilder mockProcessBuilder = new MockProcessBuilder();
+        ProcessAndDataDescription process = mockProcessBuilder
+                .withAvailableWriting()
+                .withAvailableUpdating()
+                .stillRunning(true)
+                .build();
+        when(m_ProcessFactory.createProcess("foo")).thenReturn(process);
+
+        InputStream inputStream = createInputStream("");
+        m_ProcessManager.processDataLoadJob("foo", inputStream, createNoPersistNoResetDataLoadParams());
+
+        m_ProcessManager.writeUpdateConfigMessage("foo", "bar");
+
+        String output = mockProcessBuilder.getOutput().trim();
+        assertTrue(output.startsWith("ubar"));
+        verify(process, times(2)).releaseGuard();
+    }
+
+    @Test
+    public void testWriteUpdateConfigMessage_GivenJobRunningProcessThatIsStillInUse()
+            throws UnknownJobException, NativeProcessRunException, JobInUseException,
+            JsonParseException, MissingFieldException, HighProportionOfBadTimestampsException,
+            OutOfOrderRecordsException, MalformedJsonException
+    {
+        m_ExpectedException.expect(JobInUseException.class);
+        m_ExpectedException.expectMessage(
+                "Cannot update job foo while another connection is writing to the job");
+
+        MockProcessBuilder mockProcessBuilder = new MockProcessBuilder();
+        ProcessAndDataDescription process = mockProcessBuilder
+                .withAvailableWriting()
+                .withAction(Action.WRITING)
+                .stillRunning(true)
+                .build();
+        when(m_ProcessFactory.createProcess("foo")).thenReturn(process);
+
+        InputStream inputStream = createInputStream("");
+        m_ProcessManager.processDataLoadJob("foo", inputStream, createNoPersistNoResetDataLoadParams());
+
+        m_ProcessManager.writeUpdateConfigMessage("foo", "bar");
+    }
+
+    @Test
     public void testAddAlertObserver_GivenRunningJob() throws UnknownJobException,
             NativeProcessRunException, JsonParseException, MissingFieldException,
             JobInUseException, HighProportionOfBadTimestampsException, OutOfOrderRecordsException,
@@ -409,6 +464,12 @@ public class ProcessManagerTest
         MockProcessBuilder withAvailableFlushing()
         {
             when(m_Process.tryAcquireGuard(Action.FLUSHING)).thenReturn(true);
+            return this;
+        }
+
+        MockProcessBuilder withAvailableUpdating()
+        {
+            when(m_Process.tryAcquireGuard(Action.UPDATING)).thenReturn(true);
             return this;
         }
 

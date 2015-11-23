@@ -302,6 +302,52 @@ public class ProcessManager
         }
     }
 
+    public void writeUpdateConfigMessage(String jobId, String config) throws JobInUseException,
+            NativeProcessRunException
+    {
+        ProcessAndDataDescription process = m_JobIdToProcessMap.get(jobId);
+        if (process == null)
+        {
+            return;
+        }
+        try
+        {
+            processStillRunning(process);
+        }
+        catch (NativeProcessRunException e)
+        {
+            return;
+        }
+
+        if (process.tryAcquireGuard(Action.UPDATING) == false)
+        {
+            String msg = Messages.getMessage(Messages.JOB_DATA_CONCURRENT_USE_UPDATE, jobId,
+                    process.getAction().getErrorString());
+            LOGGER.info(msg);
+            process.getLogger().info(msg);
+            throw new JobInUseException(jobId, msg, ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR);
+        }
+
+        ControlMsgToProcessWriter writer = ControlMsgToProcessWriter.create(
+                process.getProcess().getOutputStream(),
+                process.getAnalysisConfig());
+
+        try
+        {
+            writer.writeUpdateConfigMessage(config);
+            processStillRunning(process);
+        }
+        catch (IOException e)
+        {
+            String msg = String.format("Exception updating process for job %s", jobId);
+            throwNativeProcessRunExceptionFromIoException(process, e, msg);
+        }
+        finally
+        {
+            process.releaseGuard();
+        }
+    }
+
     /**
      * Get the number of running active job.
      * A job is considered to be running if it has an active
@@ -400,14 +446,7 @@ public class ProcessManager
         catch (IOException ioe)
         {
             String msg = String.format("Exception flushing process for job %s", jobId);
-
-            StringBuilder sb = new StringBuilder(msg)
-                    .append('\n').append(ioe.toString()).append('\n');
-            readProcessErrorOutput(process, sb);
-            process.getLogger().error(sb);
-
-            throw new NativeProcessRunException(sb.toString(),
-                    ErrorCodes.NATIVE_PROCESS_WRITE_ERROR);
+            throwNativeProcessRunExceptionFromIoException(process, ioe, msg);
         }
         finally
         {
@@ -415,6 +454,15 @@ public class ProcessManager
         }
     }
 
+    private void throwNativeProcessRunExceptionFromIoException(ProcessAndDataDescription process,
+            IOException ioe, String msg) throws NativeProcessRunException
+    {
+        StringBuilder sb = new StringBuilder(msg)
+                .append('\n').append(ioe.toString()).append('\n');
+        readProcessErrorOutput(process, sb);
+        process.getLogger().error(sb);
+        throw new NativeProcessRunException(sb.toString(), ErrorCodes.NATIVE_PROCESS_WRITE_ERROR);
+    }
 
     /**
      * Stop the running process.

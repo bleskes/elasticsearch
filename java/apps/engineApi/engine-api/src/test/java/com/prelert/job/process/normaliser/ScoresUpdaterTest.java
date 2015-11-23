@@ -28,7 +28,6 @@
 package com.prelert.job.process.normaliser;
 
 import static org.junit.Assert.assertEquals;
-import static org.mockito.Matchers.anyDouble;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyListOf;
 import static org.mockito.Matchers.anyLong;
@@ -55,6 +54,7 @@ import org.mockito.stubbing.Answer;
 
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.persistence.JobProvider;
+import com.prelert.job.persistence.JobRenormaliser;
 import com.prelert.job.persistence.QueryPage;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
 import com.prelert.job.results.AnomalyRecord;
@@ -68,6 +68,7 @@ public class ScoresUpdaterTest
     private static final String QUANTILES_STATE = "someState";
 
     @Mock private JobProvider m_JobProvider;
+    @Mock private JobRenormaliser m_JobRenormaliser;
     @Mock private Normaliser m_Normaliser;
     @Mock private Logger m_Logger;
 
@@ -77,7 +78,8 @@ public class ScoresUpdaterTest
     public void setUp()
     {
         MockitoAnnotations.initMocks(this);
-        m_ScoresUpdater = new ScoresUpdater(JOB_ID, m_JobProvider, (jobId, logger) -> m_Normaliser);
+        m_ScoresUpdater = new ScoresUpdater(JOB_ID, m_JobProvider, m_JobRenormaliser,
+                (jobId, logger) -> m_Normaliser);
         givenProviderReturnsNoInfluencers();
     }
 
@@ -99,7 +101,7 @@ public class ScoresUpdaterTest
 
         m_ScoresUpdater.update(QUANTILES_STATE, 3600, m_Logger);
 
-        verifyBucketWasNotUpdated("0");
+        verifyBucketWasNotUpdated(bucket);
         verifyBucketRecordsWereNotUpdated("0");
         verifyBucketSpanWasNotRequested();
     }
@@ -129,7 +131,7 @@ public class ScoresUpdaterTest
 
         m_ScoresUpdater.update(QUANTILES_STATE, 3600, m_Logger);
 
-        verifyBucketWasNotUpdated("0");
+        verifyBucketWasNotUpdated(bucket);
         verifyBucketRecordsWereNotUpdated("0");
         verifyBucketSpanWasNotRequested();
     }
@@ -200,7 +202,7 @@ public class ScoresUpdaterTest
 
         m_ScoresUpdater.update(QUANTILES_STATE, 3600, m_Logger);
 
-        verifyBucketWasNotUpdated("0");
+        verifyBucketWasNotUpdated(bucket);
         verifyRecordsWereUpdated("0", Arrays.asList(record1, record3));
         verifyBucketSpanWasRequestedOnlyOnce();
     }
@@ -394,24 +396,22 @@ public class ScoresUpdaterTest
 
     private void verifyBucketWasUpdated(Bucket bucket)
     {
-        verify(m_JobProvider).updateBucket(JOB_ID, bucket.getId(), bucket.getAnomalyScore(),
-                bucket.getMaxNormalizedProbability());
+        verify(m_JobRenormaliser).updateBucket(JOB_ID, bucket);
     }
 
     private void verifyRecordsWereUpdated(String bucketId, List<AnomalyRecord> records)
     {
-        verify(m_JobProvider).updateRecords(JOB_ID, bucketId, records);
+        verify(m_JobRenormaliser).updateRecords(JOB_ID, bucketId, records);
     }
 
-    private void verifyBucketWasNotUpdated(String bucketId)
+    private void verifyBucketWasNotUpdated(Bucket bucket)
     {
-        verify(m_JobProvider, never()).updateBucket(eq(JOB_ID), eq(bucketId), anyDouble(),
-                anyDouble());
+        verify(m_JobRenormaliser, never()).updateBucket(JOB_ID, bucket);
     }
 
     private void verifyBucketRecordsWereNotUpdated(String bucketId)
     {
-        verify(m_JobProvider, never()).updateRecords(eq(JOB_ID), eq(bucketId),
+        verify(m_JobRenormaliser, never()).updateRecords(eq(JOB_ID), eq(bucketId),
                 anyListOf(AnomalyRecord.class));
     }
 

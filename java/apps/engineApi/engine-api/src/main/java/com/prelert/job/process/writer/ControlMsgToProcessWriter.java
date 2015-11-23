@@ -65,6 +65,11 @@ public class ControlMsgToProcessWriter
     private static final String RESET_BUCKETS_MESSAGE_CODE = "r";
 
     /**
+     * This must match the code defined in the api::CAnomalyDetector C++ class.
+     */
+    private static final String UPDATE_MESSAGE_CODE = "u";
+
+    /**
      * An number to uniquely identify each flush so that subsequent code can
      * wait for acknowledgement of the correct flush.
      */
@@ -122,6 +127,10 @@ public class ControlMsgToProcessWriter
         return flushId;
     }
 
+    public void writeUpdateConfigMessage(String config) throws IOException
+    {
+        writeMessage(new StringBuilder(UPDATE_MESSAGE_CODE).append(config).toString());
+    }
 
     public void writeResetBucketsMessage(DataLoadParams params) throws IOException
     {

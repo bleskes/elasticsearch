@@ -205,7 +205,8 @@ public class Jobs extends ResourceWithJobManager
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     public Response updateJob(@PathParam("jobId") String jobId, String updateJson)
-            throws UnknownJobException, JobConfigurationException
+            throws JobConfigurationException, UnknownJobException, JobInUseException,
+            NativeProcessRunException
     {
         return new JobUpdater(jobManager(), jobId).update(updateJson);
     }
