@@ -101,9 +101,10 @@ module.exports = function phoneHomeProvider(Promise, es, $http, statsReportUrl, 
           const req = {
             method: 'POST',
             url: statsReportUrl,
-            data: info,
-            kbnXsrfToken: false
+            data: info
           };
+          // if passing data externally to Infra, suppress kbnXsrfToken
+          if (statsReportUrl.match(/^https/)) req.kbnXsrfToken = false;
           return $http(req);
         });
       })).then(() => {
