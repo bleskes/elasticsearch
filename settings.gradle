@@ -1,0 +1,4 @@
+
+// NOTE: we ensure the elasticsearch dir is present in buildSrc
+project(':').projectDir = new File('../elasticsearch')
+apply from: '../elasticsearch/settings.gradle'
