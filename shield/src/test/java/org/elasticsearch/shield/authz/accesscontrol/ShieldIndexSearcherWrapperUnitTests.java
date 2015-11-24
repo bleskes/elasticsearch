@@ -44,6 +44,7 @@ import org.elasticsearch.index.mapper.internal.ParentFieldMapper;
 import org.elasticsearch.index.shard.IndexShard;
 import org.elasticsearch.index.shard.ShardId;
 import org.elasticsearch.index.similarity.SimilarityService;
+import org.elasticsearch.indices.IndicesModule;
 import org.elasticsearch.indices.IndicesWarmer;
 import org.elasticsearch.search.aggregations.LeafBucketCollector;
 import org.elasticsearch.shield.authz.InternalAuthorizationService;
@@ -79,7 +80,7 @@ public class ShieldIndexSearcherWrapperUnitTests extends ESTestCase {
         AnalysisService analysisService = new AnalysisService(indexSettings, Collections.emptyMap(), Collections.emptyMap(),
                 Collections.emptyMap(), Collections.emptyMap());
         SimilarityService similarityService = new SimilarityService(indexSettings, Collections.emptyMap());
-        mapperService = new MapperService(indexSettings, analysisService, similarityService);
+        mapperService = new MapperService(indexSettings, analysisService, similarityService, new IndicesModule().getMapperRegistry());
 
         ShardId shardId = new ShardId(index, 0);
         licenseState = mock(ShieldLicenseState.class);
