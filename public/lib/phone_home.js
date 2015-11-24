@@ -87,7 +87,7 @@ module.exports = function phoneHomeProvider(Promise, es, $http, statsReportUrl, 
     }
 
     getClusterInfo(clusterUUID) {
-      let url = `/marvel/api/v1/clusters/${clusterUUID}/info`;
+      let url = `/api/marvel/v1/clusters/${clusterUUID}/info`;
       return $http.get(url).then((resp) => {
         return resp.data;
       });
@@ -98,7 +98,13 @@ module.exports = function phoneHomeProvider(Promise, es, $http, statsReportUrl, 
       if (!this.checkReportStatus()) return Promise.resolve();
       return Promise.all(clusters.map((cluster) => {
         return this.getClusterInfo(cluster.cluster_uuid).then((info) => {
-          return $http.post(statsReportUrl, info);
+          const req = {
+            method: 'POST',
+            url: statsReportUrl,
+            data: info,
+            kbnXsrfToken: false
+          };
+          return $http(req);
         });
       })).then(() => {
         this.set('lastReport', Date.now());

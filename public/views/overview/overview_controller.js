@@ -1,22 +1,22 @@
 /**
- * Controller for Node Listing
+ * Controller for Overview Page
  */
+const mod = require('ui/modules').get('marvel', [ 'marvel/directives' ]);
 const _ = require('lodash');
-const mod = require('ui/modules').get('marvel', [ 'plugins/marvel/directives' ]);
 
 function getPageData(timefilter, globalState, $http) {
   const timeBounds = timefilter.getBounds();
-  const url = `/api/marvel/v1/clusters/${globalState.cluster}/nodes`;
+  const url = `/api/marvel/v1/clusters/${globalState.cluster}`;
   return $http.post(url, {
     timeRange: {
       min: timeBounds.min.toISOString(),
       max: timeBounds.max.toISOString()
     },
-    listingMetrics: [
-      'node_cpu_utilization',
-      'node_jvm_mem_percent',
-      'node_load_average',
-      'node_free_space'
+    metrics: [
+      'cluster_search_request_rate',
+      'cluster_query_latency',
+      'cluster_index_request_rate',
+      'cluster_index_latency'
     ]
   }).then((response) => {
     return response.data;
@@ -24,18 +24,18 @@ function getPageData(timefilter, globalState, $http) {
 }
 
 require('ui/routes')
-.when('/nodes', {
-  template: require('plugins/marvel/views/nodes/nodes_template.html'),
+.when('/overview', {
+  template: require('plugins/marvel/views/overview/overview_template.html'),
   resolve: {
     marvel: function (Private) {
-      var routeInit = Private(require('plugins/marvel/lib/route_init'));
+      const routeInit = Private(require('plugins/marvel/lib/route_init'));
       return routeInit();
     },
     pageData: getPageData
   }
 });
 
-mod.controller('nodes', ($route, timefilter, globalState, Private, $executor, $http, marvelClusters, $scope) => {
+mod.controller('overview', ($route, globalState, timefilter, $http, Private, $executor, marvelClusters, $scope) => {
 
   timefilter.enabled = true;
 
@@ -47,8 +47,8 @@ mod.controller('nodes', ($route, timefilter, globalState, Private, $executor, $h
 
   $scope.pageData = $route.current.locals.pageData;
 
-  const docTitle = Private(require('ui/doc_title'));
-  docTitle.change('Marvel', true);
+  var docTitle = Private(require('ui/doc_title'));
+  docTitle.change(`Marvel - ${$scope.cluster.cluster_name}`, true);
 
   $executor.register({
     execute: () => getPageData(timefilter, globalState, $http),
@@ -67,3 +67,4 @@ mod.controller('nodes', ($route, timefilter, globalState, Private, $executor, $h
   $scope.$on('$destroy', $executor.destroy);
 
 });
+

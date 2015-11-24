@@ -20,7 +20,7 @@ define(function (require) {
       }
       return {
         chartData: data || [],
-        loading: true
+        loading: false
       };
     },
     componentDidUnmount: function () {
@@ -71,14 +71,6 @@ define(function (require) {
       if (data && data.length) {
         var source = this.props.source;
         var metric = source.metric;
-        if (metric.units === '/s') {
-          _.each(data, function (row) {
-            row.y = row.y / source.bucketSize;
-          });
-          data = _.filter(data, function (row) {
-            return row.y >= 0;
-          });
-        }
         var last = data[data.length - 1];
         var total = last ? formatNumber(last.y, metric.format) : 0;
 

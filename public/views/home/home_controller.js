@@ -1,12 +1,11 @@
 define(function (require) {
   var _ = require('lodash');
   var angular = require('angular');
-  var chrome = require('ui/chrome');
   var moment = require('moment');
   var module = require('ui/modules').get('marvel', [
     'marvel/directives'
   ]);
-  // var chrome = require('ui/chrome');
+
   require('ui/routes')
   .when('/home', {
     template: require('plugins/marvel/views/home/home_template.html'),
@@ -28,7 +27,6 @@ define(function (require) {
               return Promise.reject();
             }
           }
-          chrome.setTabs([]);
           return clusters;
         }).then(function (clusters) {
           return phoneHome.sendIfDue(clusters).then(function () {
@@ -40,49 +38,41 @@ define(function (require) {
   })
   .otherwise({ redirectTo: '/no-data' });
 
-  module.controller('home', function ($route, $window, $scope, marvelClusters, timefilter, $timeout) {
+  module.controller('home', function ($route, $window, $scope, marvelClusters, timefilter, $timeout, Private, $executor) {
 
+    // Set the key for as the cluster_uuid. This is mainly for
+    // react.js so we can use the key easily.
     function setKeyForClusters(cluster) {
       cluster.key = cluster.cluster_uuid;
       return cluster;
     }
 
+    timefilter.enabled = false;
+
     $scope.clusters = $route.current.locals.clusters
       .map(setKeyForClusters);
 
-    timefilter.enabled = true;
-    if (timefilter.refreshInterval.value === 0) {
-      timefilter.refreshInterval.value = 10000;
-      timefilter.refreshInterval.display = '10 Seconds';
-    }
+    // This will display the timefilter
+    // timefilter.enabled = true;
 
-    var fetchTimer;
-    function startFetchInterval() {
-      if (!timefilter.refreshInterval.pause) {
-        fetchTimer = $timeout(fetch, timefilter.refreshInterval.value);
+    var docTitle = Private(require('ui/doc_title'));
+    docTitle.change('Marvel', true);
+
+    // Register the marvelClusters service.
+    $executor.register({
+      execute: function () {
+        return marvelClusters.fetch();
+      },
+      handleResponse: function (clusters) {
+        $scope.clusters = clusters.map(setKeyForClusters);
       }
-    }
-    function cancelFetchInterval() {
-      $timeout.cancel(fetchTimer);
-    }
-
-    timefilter.on('update', (time) => {
-      cancelFetchInterval();
-      startFetchInterval();
     });
 
-    function fetch() {
-      marvelClusters.fetch().then((clusters) => {
-        $scope.clusters = clusters
-          .map(setKeyForClusters);
-        startFetchInterval();
-      });
-    }
+    // Start the executor
+    $executor.start({ ignorePaused: true });
 
-    startFetchInterval();
-    $scope.$on('$destroy', () => {
-      cancelFetchInterval();
-    });
+    // Destory the executor
+    $scope.$on('$destroy', $executor.destroy);
 
   });
 

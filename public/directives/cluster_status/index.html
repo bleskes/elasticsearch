@@ -1,36 +1,32 @@
 <div class="marvel-element">
-  <div ng-if="source.cluster && source.clusters.length !== 1" class="clusters dropdown">
-    <a class="dropdown-toggle">Cluster: <strong>{{cluster.cluster_name}}</strong> <i class="fa fa-chevron-down"></i></a>
-    <ul class="dropdown-menu" role="menu">
-      <li
-        ng-repeat="cluster in source.clusters"
-        ng-class="createClass(cluster)">
+  <div ng-if="cluster && clusters.length !== 1" class="clusters dropdown open">
+    <a class="dropdown-toggle" ng-click="toggleMenu()">
+      Cluster: <strong>{{cluster.cluster_name}}</strong>
+      <i class="fa fa-chevron-down"></i>
+    </a>
+    <ul class="dropdown-menu" role="menu" ng-show="showOrHideMenu()">
+      <li ng-repeat="cluster in clusters" ng-class="createClass(cluster)">
           <a ng-if="cluster.license.type !== 'basic'" ng-click="changeCluster(cluster.cluster_uuid)">{{ cluster.cluster_name}}</a>
           <div ng-if="cluster.license.type === 'basic'">{{ cluster.cluster_name}}</div>
       </li>
     </ul>
   </div>
-  <div ng-if="source.cluster && source.clusters.length === 1" class="clusters">
+  <div ng-if="cluster && clusters.length === 1" class="clusters">
     Cluster: <strong>{{cluster.cluster_name}}</strong>
   </div>
-  <div ng-if="source.data.cluster_uuid && !laggingCluster" class="stats">
-    <div class="status {{ clusterState.data.status|lowercase }}">Status: <strong>{{ clusterState.data.status|capitalize }}</strong></div>
-    <div>Nodes: <strong>{{source.data.nodes_count}}</strong></div>
-    <div>Indices: <strong>{{source.data.indices_count}}</strong></div>
-    <div>Memory: <strong>{{source.data.memUsed|formatNumber:'bytes'}} / {{source.data.memMax|formatNumber:'bytes'}}</strong></div>
-    <div>Total Shards: <strong>{{total_shards}}</strong></div>
-    <div>Unassigned Shards: <strong>{{unassigned_shards}}</strong></div>
-    <div>Documents: <strong>{{source.data.document_count|formatNumber:'0.0a'}}</strong></div>
-    <div>Data: <strong>{{source.data.data}}</strong></div>
-    <div>Uptime: <strong>{{source.data.upTime}}</strong></div>
+  <div ng-if="cluster" class="stats">
+    <div class="status {{ pageData.clusterStatus.status|lowercase }}">Status: <strong>{{ pageData.clusterStatus.status|capitalize }}</strong></div>
+    <div>Nodes: <strong>{{pageData.clusterStatus.nodesCount}}</strong></div>
+    <div>Indices: <strong>{{pageData.clusterStatus.indicesCount}}</strong></div>
+    <div>Memory: <strong>{{pageData.clusterStatus.memUsed|formatNumber:'bytes'}} / {{pageData.clusterStatus.memMax|formatNumber:'bytes'}}</strong></div>
+    <div>Total Shards: <strong>{{pageData.clusterStatus.totalShards}}</strong></div>
+    <div>Unassigned Shards: <strong>{{pageData.clusterStatus.unassignedShards}}</strong></div>
+    <div>Documents: <strong>{{pageData.clusterStatus.documentCount|formatNumber:'int_commas'}}</strong></div>
+    <div>Data: <strong>{{pageData.clusterStatus.dataSize|formatNumber:'bytes'}}</strong></div>
+    <div>Uptime: <strong>{{pageData.clusterStatus.upTime|formatNumber:'time_since'}}</strong></div>
     <div>Version: <strong>{{cluster.version}}</strong></div>
   </div>
-  <div ng-if="laggingCluster" class="stats red">
-      <div>
-        <i class="fa fa-warning"></i> The data for this cluster was last sent {{ lastSeen }} ago.
-      </div>
-  </div>
-  <div ng-if="!source.data.cluster_uuid && !laggingCluster" class="stats">
+  <div ng-if="!cluster" class="stats">
     <div class="loading">
       <i class="fa fa-spinner fa-pulse"></i> Loading Data...
     </div>

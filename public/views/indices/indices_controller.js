@@ -1,22 +1,28 @@
 /**
- * Controller for Node Listing
+ * Controller for Index Listing
  */
 const _ = require('lodash');
-const mod = require('ui/modules').get('marvel', [ 'plugins/marvel/directives' ]);
+const mod = require('ui/modules').get('marvel', [ 'marvel/directives' ]);
 
 function getPageData(timefilter, globalState, $http) {
   const timeBounds = timefilter.getBounds();
-  const url = `/api/marvel/v1/clusters/${globalState.cluster}/nodes`;
+  const url = `/api/marvel/v1/clusters/${globalState.cluster}/indices`;
   return $http.post(url, {
     timeRange: {
       min: timeBounds.min.toISOString(),
       max: timeBounds.max.toISOString()
     },
+    metrics: [
+      'cluster_search_request_rate',
+      'cluster_query_latency',
+      'cluster_index_request_rate',
+      'cluster_index_latency'
+    ],
     listingMetrics: [
-      'node_cpu_utilization',
-      'node_jvm_mem_percent',
-      'node_load_average',
-      'node_free_space'
+      'index_document_count',
+      'index_size',
+      'index_search_request_rate',
+      'index_request_rate'
     ]
   }).then((response) => {
     return response.data;
@@ -24,18 +30,18 @@ function getPageData(timefilter, globalState, $http) {
 }
 
 require('ui/routes')
-.when('/nodes', {
-  template: require('plugins/marvel/views/nodes/nodes_template.html'),
+.when('/indices', {
+  template: require('plugins/marvel/views/indices/indices_template.html'),
   resolve: {
     marvel: function (Private) {
-      var routeInit = Private(require('plugins/marvel/lib/route_init'));
+      const routeInit = Private(require('plugins/marvel/lib/route_init'));
       return routeInit();
     },
     pageData: getPageData
   }
 });
 
-mod.controller('nodes', ($route, timefilter, globalState, Private, $executor, $http, marvelClusters, $scope) => {
+mod.controller('indices', ($route, globalState, timefilter, $http, Private, $executor, marvelClusters, $scope) => {
 
   timefilter.enabled = true;
 
