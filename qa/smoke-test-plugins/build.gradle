@@ -1,0 +1,67 @@
+/*
+ * ELASTICSEARCH CONFIDENTIAL
+ * __________________
+ *
+ *  [2014] Elasticsearch Incorporated. All Rights Reserved.
+ *
+ * NOTICE:  All information contained herein is, and remains
+ * the property of Elasticsearch Incorporated and its suppliers,
+ * if any.  The intellectual and technical concepts contained
+ * herein are proprietary to Elasticsearch Incorporated
+ * and its suppliers and may be covered by U.S. and Foreign Patents,
+ * patents in process, and are protected by trade secret or copyright law.
+ * Dissemination of this information or reproduction of this material
+ * is strictly forbidden unless prior written permission is obtained
+ * from Elasticsearch Incorporated.
+ */
+
+import org.elasticsearch.gradle.MavenFilteringHack
+
+apply plugin: 'elasticsearch.rest-test'
+
+dependencies {
+  testCompile project(path: ':x-plugins:shield', configuration: 'runtime')
+}
+
+ext.pluginCount = 0
+// this loop must be outside of a configuration closure, otherwise it may get executed multiple times
+for (Project subproj : project.rootProject.subprojects) {
+  if (subproj.path.startsWith(':plugins:')) {
+    // need to get a non-decorated project object, so must re-lookup the project by path
+    integTest.clusterConfig.plugin(subproj.name, project(subproj.path))
+    project.pluginCount += 1
+  }
+}
+
+project.pluginCount += 4
+integTest {
+  cluster {
+    plugin 'licence', project(':x-plugins:license:plugin')
+    plugin 'shield', project(':x-plugins:shield')
+    plugin 'watcher', project(':x-plugins:watcher')
+    plugin 'marvel-agent', project(':x-plugins:marvel')
+
+    setupCommand 'setupDummyUser',
+                 'bin/shield/esusers', 'useradd', 'test_user', '-p', 'changeme', '-r', 'admin'
+    waitCondition = { node, ant ->
+      File tmpFile = new File(node.cwd, 'wait.success')
+      ant.get(src: "http://localhost:${node.httpPort()}",
+              dest: tmpFile.toString(),
+              username: 'test_user',
+              password: 'changeme',
+              ignoreerrors: true,
+              retries: 10)
+      return tmpFile.exists()
+    }
+  }
+} 
+
+ext.expansions = [
+  'expected.plugin.count': pluginCount
+]
+
+processTestResources {
+  inputs.properties(expansions)
+  MavenFilteringHack.filter(it, expansions)
+}
+
