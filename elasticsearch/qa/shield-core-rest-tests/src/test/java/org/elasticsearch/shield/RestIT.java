@@ -65,7 +65,7 @@ public class RestIT extends ESRestTestCase {
 
     @Override
     protected Collection<Class<? extends Plugin>> transportClientPlugins() {
-        return Collections.<Class<? extends Plugin>>singleton(ShieldPlugin.class);
+        return Collections.<Class<? extends Plugin>>singleton(XPackPlugin.class);
     }
 
 }

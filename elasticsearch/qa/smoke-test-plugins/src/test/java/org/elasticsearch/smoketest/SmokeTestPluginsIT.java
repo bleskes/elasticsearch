@@ -23,7 +23,7 @@ import com.carrotsearch.randomizedtesting.annotations.ParametersFactory;
 import org.elasticsearch.client.support.Headers;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.plugins.Plugin;
-import org.elasticsearch.shield.ShieldPlugin;
+import org.elasticsearch.xpack.XPackPlugin;
 import org.elasticsearch.shield.authc.support.SecuredString;
 import org.elasticsearch.test.rest.ESRestTestCase;
 import org.elasticsearch.test.rest.RestTestCandidate;
@@ -66,7 +66,7 @@ public class SmokeTestPluginsIT extends ESRestTestCase {
 
     @Override
     protected Collection<Class<? extends Plugin>> transportClientPlugins() {
-        return Collections.<Class<? extends Plugin>>singleton(ShieldPlugin.class);
+        return Collections.<Class<? extends Plugin>>singleton(XPackPlugin.class);
     }
 }
 
