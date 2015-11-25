@@ -27,7 +27,7 @@ define(function (require) {
             className: classes },
             null)
           ),
-          make.a({href: '#/node/' + state.id}, state.node.name),  // <a href="#/node/:node_id>
+          make.a({href: '#/nodes/' + state.id}, state.node.name),
           make.div({className: 'small'}, extractIp(state.transport_address))); //   <div.small>
       }
       // make the content for all of the metric columns

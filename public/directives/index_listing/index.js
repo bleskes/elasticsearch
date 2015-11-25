@@ -15,7 +15,7 @@ define(function (require) {
       var units;
       var innerMarkup = null;
       if (dataKey.key === 'name') {
-        innerMarkup = this.state.exists ? make.a({ href: `#/index/${rawValue}` }, rawValue) : make.div(null, rawValue);
+        innerMarkup = this.state.exists ? make.a({ href: `#/indices/${rawValue}` }, rawValue) : make.div(null, rawValue);
       }
       if (_.isObject(rawValue) && rawValue.metric) {
         if (rawValue.inapplicable) {

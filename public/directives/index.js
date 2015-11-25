@@ -1,5 +1,4 @@
 define(function (require) {
-  require('plugins/marvel/directives/nav/index');
   require('plugins/marvel/directives/cluster_status/index');
   require('plugins/marvel/directives/chart/index');
   require('plugins/marvel/directives/issues/index');

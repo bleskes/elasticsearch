@@ -26,7 +26,7 @@ function getPageData(timefilter, globalState, $route, $http) {
 }
 
 require('ui/routes')
-.when('/node/:node', {
+.when('/nodes/:node', {
   template: require('plugins/marvel/views/node/node_template.html'),
   resolve: {
     marvel: function (Private) {
