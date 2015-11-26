@@ -58,6 +58,7 @@ import static org.hamcrest.Matchers.is;
  */
 @ClusterScope(numClientNodes = 0, numDataNodes = 1)
 public class PkiAuthenticationTests extends ShieldIntegTestCase {
+
     @Override
     protected Settings nodeSettings(int nodeOrdinal) {
         return Settings.builder()
