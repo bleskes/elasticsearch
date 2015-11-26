@@ -84,7 +84,7 @@ class BucketNormalisable implements Normalisable
     }
 
     @Override
-    public double getInitialScore()
+    public double getProbability()
     {
         throw new IllegalStateException("Bucket is container only");
     }

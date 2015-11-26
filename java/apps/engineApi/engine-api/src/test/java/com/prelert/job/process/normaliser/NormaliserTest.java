@@ -148,7 +148,7 @@ public class NormaliserTest
 
         InOrder inOrder = Mockito.inOrder(m_Process, writer);
         inOrder.verify(writer).writeRecord(
-                new String[] {"level", "partitionFieldName", "personFieldName", "functionName", "valueFieldName", "rawScore"});
+                new String[] {"level", "partitionFieldName", "personFieldName", "functionName", "valueFieldName", "probability"});
         inOrder.verify(writer).writeRecord(new String[] {"root", "", "bucketTime", "", "", "0.001"});
         inOrder.verify(writer).writeRecord(new String[] {"leaf", "", "", "sum", "bytes", "0.05"});
         inOrder.verify(writer).writeRecord(new String[] {"leaf", "", "", "sum", "bytes", "0.03"});
@@ -227,7 +227,7 @@ public class NormaliserTest
 
         InOrder inOrder = Mockito.inOrder(m_Process, writer);
         inOrder.verify(writer).writeRecord(
-                new String[] {"level", "partitionFieldName", "personFieldName", "functionName", "valueFieldName", "rawScore"});
+                new String[] {"level", "partitionFieldName", "personFieldName", "functionName", "valueFieldName", "probability"});
         inOrder.verify(writer).writeRecord(new String[] {"root", "", "bucketTime", "", "", "0.001"});
         inOrder.verify(writer).writeRecord(new String[] {"root", "", "bucketTime", "", "", "0.002"});
         inOrder.verify(m_Process).closeOutputStream();

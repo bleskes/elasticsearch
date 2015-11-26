@@ -90,9 +90,9 @@ public class InfluencerNormalisableTest
     }
 
     @Test
-    public void testGetInitialScore()
+    public void testGetProbability()
     {
-        assertEquals(0.05, new InfluencerNormalisable(m_Influencer).getInitialScore(), ERROR);
+        assertEquals(0.05, new InfluencerNormalisable(m_Influencer).getProbability(), ERROR);
     }
 
     @Test

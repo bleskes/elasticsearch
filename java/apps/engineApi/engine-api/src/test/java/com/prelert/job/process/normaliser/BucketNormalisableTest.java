@@ -111,9 +111,9 @@ public class BucketNormalisableTest
     }
 
     @Test (expected = IllegalStateException.class)
-    public void testGetInitialScore()
+    public void testGetProbability()
     {
-        new BucketNormalisable(m_Bucket).getInitialScore();
+        new BucketNormalisable(m_Bucket).getProbability();
     }
 
     @Test

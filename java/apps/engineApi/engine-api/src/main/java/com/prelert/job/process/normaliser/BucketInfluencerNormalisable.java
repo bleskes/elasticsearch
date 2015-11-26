@@ -80,7 +80,7 @@ class BucketInfluencerNormalisable implements Normalisable
     }
 
     @Override
-    public double getInitialScore()
+    public double getProbability()
     {
         return m_Influencer.getProbability();
     }

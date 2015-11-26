@@ -80,7 +80,7 @@ class RecordNormalisable implements Normalisable
     }
 
     @Override
-    public double getInitialScore()
+    public double getProbability()
     {
         return m_Record.getProbability();
     }

@@ -60,7 +60,7 @@ public class Normaliser
     private static final String PER_PERSON_FIELD_NAME = "personFieldName";
     private static final String FUNCTION_NAME = "functionName";
     private static final String VALUE_FIELD_NAME = "valueFieldName";
-    private static final String RAW_SCORE = "rawScore";
+    private static final String PROBABILITY = "probability";
 
     private final String m_JobId;
     private final NormaliserProcessFactory m_ProcessFactory;
@@ -98,7 +98,7 @@ public class Normaliser
         try
         {
             writer.writeRecord(new String[] { NORMALIZATION_LEVEL, PARTITION_FIELD_NAME,
-                    PER_PERSON_FIELD_NAME, FUNCTION_NAME, VALUE_FIELD_NAME, RAW_SCORE });
+                    PER_PERSON_FIELD_NAME, FUNCTION_NAME, VALUE_FIELD_NAME, PROBABILITY });
 
             for (Normalisable result: results)
             {
@@ -145,7 +145,7 @@ public class Normaliser
                     Strings.nullToEmpty(normalisable.getPersonFieldName()),
                     Strings.nullToEmpty(normalisable.getFunctionName()),
                     Strings.nullToEmpty(normalisable.getValueFieldName()),
-                    Double.toString(normalisable.getInitialScore())
+                    Double.toString(normalisable.getProbability())
             });
         }
         for (Normalisable child : normalisable.getChildren())

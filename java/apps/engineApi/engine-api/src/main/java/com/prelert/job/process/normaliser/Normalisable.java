@@ -47,7 +47,7 @@ interface Normalisable
     String getPersonFieldName();
     String getFunctionName();
     String getValueFieldName();
-    double getInitialScore();
+    double getProbability();
     double getNormalisedScore();
     void setNormalisedScore(double normalisedScore);
     List<Integer> getChildrenTypes();

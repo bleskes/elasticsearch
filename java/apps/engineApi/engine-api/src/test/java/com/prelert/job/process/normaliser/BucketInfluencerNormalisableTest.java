@@ -94,9 +94,9 @@ public class BucketInfluencerNormalisableTest
     }
 
     @Test
-    public void testGetInitialScore()
+    public void testGetProbability()
     {
-        assertEquals(0.05, new BucketInfluencerNormalisable(m_Influencer).getInitialScore(), ERROR);
+        assertEquals(0.05, new BucketInfluencerNormalisable(m_Influencer).getProbability(), ERROR);
     }
 
     @Test
