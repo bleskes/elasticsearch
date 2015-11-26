@@ -27,12 +27,11 @@
 
 package com.prelert.job.process.normaliser;
 
-import static org.junit.Assert.assertEquals;
+import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyListOf;
 import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -49,8 +48,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.persistence.JobProvider;
@@ -59,12 +56,14 @@ import com.prelert.job.persistence.QueryPage;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
 import com.prelert.job.results.AnomalyRecord;
 import com.prelert.job.results.Bucket;
+import com.prelert.job.results.BucketInfluencer;
 import com.prelert.job.results.Influencer;
 
 public class ScoresUpdaterTest
 {
     private static final String JOB_ID = "foo";
     private static final int MAX_BUCKETS_PER_PAGE = 10000;
+    private static final int MAX_INFLUENCERS_PER_PAGE = 1000000;
     private static final String QUANTILES_STATE = "someState";
 
     @Mock private JobProvider m_JobProvider;
@@ -75,12 +74,59 @@ public class ScoresUpdaterTest
     private ScoresUpdater m_ScoresUpdater;
 
     @Before
-    public void setUp()
+    public void setUp() throws UnknownJobException
     {
         MockitoAnnotations.initMocks(this);
         m_ScoresUpdater = new ScoresUpdater(JOB_ID, m_JobProvider, m_JobRenormaliser,
                 (jobId, logger) -> m_Normaliser);
+        givenProviderReturnsNoBuckets();
         givenProviderReturnsNoInfluencers();
+    }
+
+    @Test
+    public void testUpdate_GivenBucketWithZeroScoreAndNoRecords()
+            throws UnknownJobException, NativeProcessRunException
+    {
+        Bucket bucket = new Bucket();
+        bucket.setId("0");
+        bucket.setAnomalyScore(0.0);
+        bucket.addBucketInfluencer(createTimeBucketInfluencer(0.7, 0.0));
+        int totalBuckets = 1;
+        long endTime = 3600;
+        int bucketSpan = 3600;
+        givenBucketSpan(bucketSpan);
+        List<Bucket> buckets = Arrays.asList(bucket);
+        givenProviderReturnsBuckets(0, endTime, totalBuckets, buckets);
+
+        m_ScoresUpdater.update(QUANTILES_STATE, 3600, m_Logger);
+
+        verifyNormaliserWasInvoked(bucketSpan, 0);
+        verifyBucketWasNotUpdated(bucket);
+        verifyBucketRecordsWereNotUpdated("0");
+        verifyBucketSpanWasNotRequested();
+    }
+
+    @Test
+    public void testUpdate_GivenBucketWithNonZeroScoreButNoBucketInfluencers()
+            throws UnknownJobException, NativeProcessRunException
+    {
+        Bucket bucket = new Bucket();
+        bucket.setId("0");
+        bucket.setAnomalyScore(0.0);
+        bucket.setBucketInfluencers(null);
+        int totalBuckets = 1;
+        long endTime = 3600;
+        int bucketSpan = 3600;
+        givenBucketSpan(bucketSpan);
+        List<Bucket> buckets = Arrays.asList(bucket);
+        givenProviderReturnsBuckets(0, endTime, totalBuckets, buckets);
+
+        m_ScoresUpdater.update(QUANTILES_STATE, 3600, m_Logger);
+
+        verifyNormaliserWasInvoked(bucketSpan, 0);
+        verifyBucketWasNotUpdated(bucket);
+        verifyBucketRecordsWereNotUpdated("0");
+        verifyBucketSpanWasNotRequested();
     }
 
     @Test
@@ -89,21 +135,21 @@ public class ScoresUpdaterTest
     {
         Bucket bucket = new Bucket();
         bucket.setId("0");
+        bucket.setAnomalyScore(30.0);
+        bucket.addBucketInfluencer(createTimeBucketInfluencer(0.04, 30.0));
         int totalBuckets = 1;
         long endTime = 3600;
         int bucketSpan = 3600;
         givenBucketSpan(bucketSpan);
-        List<Bucket> originalBatch = Arrays.asList(bucket);
-        List<Bucket> normalisedBatch = Arrays.asList(bucket);
-        givenProviderReturnsBuckets(0, endTime, totalBuckets, originalBatch);
-
-        givenNormalisedBuckets(bucketSpan, originalBatch, normalisedBatch);
+        List<Bucket> buckets = Arrays.asList(bucket);
+        givenProviderReturnsBuckets(0, endTime, totalBuckets, buckets);
 
         m_ScoresUpdater.update(QUANTILES_STATE, 3600, m_Logger);
 
+        verifyNormaliserWasInvoked(bucketSpan, 1);
         verifyBucketWasNotUpdated(bucket);
         verifyBucketRecordsWereNotUpdated("0");
-        verifyBucketSpanWasNotRequested();
+        verifyBucketSpanWasRequestedOnlyOnce();
     }
 
     @Test
@@ -111,29 +157,30 @@ public class ScoresUpdaterTest
             throws UnknownJobException, NativeProcessRunException
     {
         Bucket bucket = new Bucket();
+        bucket.setAnomalyScore(30.0);
+        bucket.addBucketInfluencer(createTimeBucketInfluencer(0.04, 30.0));
         List<AnomalyRecord> records = new ArrayList<>();
         AnomalyRecord record1 = createRecordWithoutBigChange();
         AnomalyRecord record2 = createRecordWithoutBigChange();
         records.add(record1);
         records.add(record2);
         bucket.setRecords(records);
+        bucket.setRecordCount(2);
 
         bucket.setId("0");
         int totalBuckets = 1;
         long endTime = 3600;
         int bucketSpan = 3600;
         givenBucketSpan(bucketSpan);
-        List<Bucket> originalBatch = Arrays.asList(bucket);
-        List<Bucket> normalisedBatch = Arrays.asList(bucket);
-        givenProviderReturnsBuckets(0, endTime, totalBuckets, originalBatch);
-
-        givenNormalisedBuckets(bucketSpan, originalBatch, normalisedBatch);
+        List<Bucket> buckets = Arrays.asList(bucket);
+        givenProviderReturnsBuckets(0, endTime, totalBuckets, buckets);
 
         m_ScoresUpdater.update(QUANTILES_STATE, 3600, m_Logger);
 
+        verifyNormaliserWasInvoked(bucketSpan, 1);
         verifyBucketWasNotUpdated(bucket);
         verifyBucketRecordsWereNotUpdated("0");
-        verifyBucketSpanWasNotRequested();
+        verifyBucketSpanWasRequestedOnlyOnce();
     }
 
     @Test
@@ -142,28 +189,22 @@ public class ScoresUpdaterTest
     {
         Bucket bucket = new Bucket();
         bucket.setId("0");
-        bucket.setRawAnomalyScore(42.0);
         bucket.setAnomalyScore(42.0);
+        bucket.addBucketInfluencer(createTimeBucketInfluencer(0.04, 42.0));
         bucket.setMaxNormalizedProbability(50.0);
-        Bucket normalisedBucket = new Bucket();
-        normalisedBucket.setId("0");
-        normalisedBucket.setAnomalyScore(60.0);
-        normalisedBucket.setMaxNormalizedProbability(99.0);
-        normalisedBucket.raiseBigNormalisedUpdateFlag();
+        bucket.raiseBigNormalisedUpdateFlag();
 
         int totalBuckets = 1;
         long endTime = 3600;
         int bucketSpan = 3600;
         givenBucketSpan(bucketSpan);
-        List<Bucket> originalBatch = Arrays.asList(bucket);
-        List<Bucket> normalisedBatch = Arrays.asList(normalisedBucket);
-        givenProviderReturnsBuckets(0, endTime, totalBuckets, originalBatch);
-
-        givenNormalisedBuckets(bucketSpan, originalBatch, normalisedBatch);
+        List<Bucket> buckets = Arrays.asList(bucket);
+        givenProviderReturnsBuckets(0, endTime, totalBuckets, buckets);
 
         m_ScoresUpdater.update(QUANTILES_STATE, 3600, m_Logger);
 
-        verifyBucketWasUpdated(normalisedBucket);
+        verifyNormaliserWasInvoked(bucketSpan, 1);
+        verifyBucketWasUpdated(bucket);
         verifyBucketRecordsWereNotUpdated("0");
         verifyBucketSpanWasRequestedOnlyOnce();
     }
@@ -174,13 +215,10 @@ public class ScoresUpdaterTest
     {
         Bucket bucket = new Bucket();
         bucket.setId("0");
-        bucket.setRawAnomalyScore(42.0);
         bucket.setAnomalyScore(42.0);
+        bucket.addBucketInfluencer(createTimeBucketInfluencer(0.04, 42.0));
         bucket.setMaxNormalizedProbability(50.0);
-        Bucket normalisedBucket = new Bucket();
-        normalisedBucket.setId("0");
-        normalisedBucket.setAnomalyScore(60.0);
-        normalisedBucket.setMaxNormalizedProbability(99.0);
+
         List<AnomalyRecord> records = new ArrayList<>();
         AnomalyRecord record1 = createRecordWithBigChange();
         AnomalyRecord record2 = createRecordWithoutBigChange();
@@ -188,20 +226,18 @@ public class ScoresUpdaterTest
         records.add(record1);
         records.add(record2);
         records.add(record3);
-        normalisedBucket.setRecords(records);
+        bucket.setRecords(records);
 
         int totalBuckets = 1;
         long endTime = 3600;
         int bucketSpan = 3600;
         givenBucketSpan(bucketSpan);
-        List<Bucket> originalBatch = Arrays.asList(bucket);
-        List<Bucket> normalisedBatch = Arrays.asList(normalisedBucket);
-        givenProviderReturnsBuckets(0, endTime, totalBuckets, originalBatch);
-
-        givenNormalisedBuckets(bucketSpan, originalBatch, normalisedBatch);
+        List<Bucket> buckets = Arrays.asList(bucket);
+        givenProviderReturnsBuckets(0, endTime, totalBuckets, buckets);
 
         m_ScoresUpdater.update(QUANTILES_STATE, 3600, m_Logger);
 
+        verifyNormaliserWasInvoked(bucketSpan, 1);
         verifyBucketWasNotUpdated(bucket);
         verifyRecordsWereUpdated("0", Arrays.asList(record1, record3));
         verifyBucketSpanWasRequestedOnlyOnce();
@@ -213,15 +249,10 @@ public class ScoresUpdaterTest
     {
         Bucket bucket = new Bucket();
         bucket.setId("0");
-        bucket.setRawAnomalyScore(42.0);
         bucket.setAnomalyScore(42.0);
+        bucket.addBucketInfluencer(createTimeBucketInfluencer(0.04, 42.0));
         bucket.setMaxNormalizedProbability(50.0);
-        Bucket normalisedBucket = new Bucket();
-        normalisedBucket.setId("0");
-        normalisedBucket.setRawAnomalyScore(42.0);
-        normalisedBucket.setAnomalyScore(60.0);
-        normalisedBucket.setMaxNormalizedProbability(99.0);
-        normalisedBucket.raiseBigNormalisedUpdateFlag();
+        bucket.raiseBigNormalisedUpdateFlag();
         List<AnomalyRecord> records = new ArrayList<>();
         AnomalyRecord record1 = createRecordWithBigChange();
         AnomalyRecord record2 = createRecordWithoutBigChange();
@@ -229,21 +260,19 @@ public class ScoresUpdaterTest
         records.add(record1);
         records.add(record2);
         records.add(record3);
-        normalisedBucket.setRecords(records);
+        bucket.setRecords(records);
 
         int totalBuckets = 1;
         long endTime = 3600;
         int bucketSpan = 3600;
         givenBucketSpan(bucketSpan);
-        List<Bucket> originalBatch = Arrays.asList(bucket);
-        List<Bucket> normalisedBatch = Arrays.asList(normalisedBucket);
-        givenProviderReturnsBuckets(0, endTime, totalBuckets, originalBatch);
-
-        givenNormalisedBuckets(bucketSpan, originalBatch, normalisedBatch);
+        List<Bucket> buckets = Arrays.asList(bucket);
+        givenProviderReturnsBuckets(0, endTime, totalBuckets, buckets);
 
         m_ScoresUpdater.update(QUANTILES_STATE, 3600, m_Logger);
 
-        verifyBucketWasUpdated(normalisedBucket);
+        verifyNormaliserWasInvoked(bucketSpan, 1);
+        verifyBucketWasUpdated(bucket);
         verifyRecordsWereUpdated("0", Arrays.asList(record1, record3));
         verifyBucketSpanWasRequestedOnlyOnce();
     }
@@ -252,68 +281,97 @@ public class ScoresUpdaterTest
     public void testUpdate_GivenEnoughBucketsToRequirePaging() throws UnknownJobException,
             NativeProcessRunException
     {
-        List<Bucket> originalBatch1 = new ArrayList<>();
-        List<Bucket> normalisedBatch1 = new ArrayList<>();
+        List<Bucket> batch1 = new ArrayList<>();
         for (int i = 0; i < 10000; ++i)
         {
             Bucket bucket = new Bucket();
             bucket.setId(String.valueOf(i));
-            bucket.setRawAnomalyScore(42.0);
             bucket.setAnomalyScore(42.0);
+            bucket.addBucketInfluencer(createTimeBucketInfluencer(0.04, 42.0));
             bucket.setMaxNormalizedProbability(50.0);
-            originalBatch1.add(bucket);
-            Bucket normalisedBucket = new Bucket();
-            normalisedBucket.setId(String.valueOf(i));
-            normalisedBucket.setRawAnomalyScore(42.0);
-            normalisedBucket.setAnomalyScore(60.0);
-            normalisedBucket.setMaxNormalizedProbability(99.0);
-            normalisedBucket.raiseBigNormalisedUpdateFlag();
-            normalisedBatch1.add(normalisedBucket);
+            bucket.raiseBigNormalisedUpdateFlag();
+            batch1.add(bucket);
         }
 
-        Bucket bucket = new Bucket();
-        bucket.setId("10000");
-        bucket.setRawAnomalyScore(42.0);
-        bucket.setAnomalyScore(42.0);
-        bucket.setMaxNormalizedProbability(50.0);
-        Bucket normalisedBucket = new Bucket();
-        normalisedBucket.setId("10000");
-        normalisedBucket.setRawAnomalyScore(42.0);
-        normalisedBucket.setAnomalyScore(60.0);
-        normalisedBucket.setMaxNormalizedProbability(99.0);
-        normalisedBucket.raiseBigNormalisedUpdateFlag();
-        List<Bucket> originalBatch2 = Arrays.asList(bucket);
-        List<Bucket> normalisedBatch2 = Arrays.asList(normalisedBucket);
+        Bucket secondBatchBucket = new Bucket();
+        secondBatchBucket.setId("10000");
+        secondBatchBucket.addBucketInfluencer(createTimeBucketInfluencer(0.04, 42.0));
+        secondBatchBucket.setAnomalyScore(42.0);
+        secondBatchBucket.setMaxNormalizedProbability(50.0);
+        secondBatchBucket.raiseBigNormalisedUpdateFlag();
+        List<Bucket> batch2 = Arrays.asList(secondBatchBucket);
 
         int totalBuckets = 10001;
         long endTime = 3600;
         int bucketSpan = 3600;
         givenBucketSpan(bucketSpan);
-        givenProviderReturnsBuckets(0, endTime, totalBuckets, originalBatch1);
-        givenProviderReturnsBuckets(10000, endTime, totalBuckets, originalBatch2);
-
-        givenNormalisedBuckets(bucketSpan, originalBatch1, originalBatch2, normalisedBatch1,
-                normalisedBatch2);
+        givenProviderReturnsBuckets(0, endTime, totalBuckets, batch1);
+        givenProviderReturnsBuckets(10000, endTime, totalBuckets, batch2);
 
         m_ScoresUpdater.update(QUANTILES_STATE, 3600, m_Logger);
 
-        for (Bucket b : normalisedBatch1)
-        {
-            verifyBucketWasUpdated(b);
-            verifyBucketRecordsWereNotUpdated(b.getId());
-            // Just verify the first bucket for the time being as the Mockito is
-            // horrifically slow to verify all 10000
-            break;
-        }
-        verifyBucketWasUpdated(normalisedBucket);
-        verifyBucketRecordsWereNotUpdated(normalisedBucket.getId());
+        verifyNormaliserWasInvoked(bucketSpan, 2);
+
+        // Batch 1 - Just verify first and last were updated as Mockito
+        // is forbiddingly slow when tring to verify all 10000
+        verifyBucketWasUpdated(batch1.get(0));
+        verifyBucketRecordsWereNotUpdated(batch1.get(0).getId());
+        verifyBucketWasUpdated(batch1.get(9999));
+        verifyBucketRecordsWereNotUpdated(batch1.get(9999).getId());
+
+        verifyBucketWasUpdated(secondBatchBucket);
+        verifyBucketRecordsWereNotUpdated(secondBatchBucket.getId());
         verifyBucketSpanWasRequestedOnlyOnce();
+    }
+
+    @Test
+    public void testUpdate_GivenInfluencerWithBigChange()
+            throws UnknownJobException, NativeProcessRunException
+    {
+        Influencer influencer = new Influencer();
+        influencer.raiseBigNormalisedUpdateFlag();
+
+        int totalInfluencers = 1;
+        long endTime = 3600;
+        int bucketSpan = 3600;
+        givenBucketSpan(bucketSpan);
+        List<Influencer> influencers = Arrays.asList(influencer);
+        givenProviderReturnsInfluencers(0, endTime, totalInfluencers, influencers);
+
+        m_ScoresUpdater.update(QUANTILES_STATE, 3600, m_Logger);
+
+        verifyNormaliserWasInvoked(bucketSpan, 1);
+        verifyInfluencerWasUpdated(influencer);
+        verifyBucketSpanWasRequestedOnlyOnce();
+    }
+
+    private void verifyNormaliserWasInvoked(int bucketSpan, int times) throws NativeProcessRunException,
+            UnknownJobException
+    {
+        verify(m_Normaliser, times(times)).normalise(eq(bucketSpan), anyListOf(Normalisable.class),
+                eq(QUANTILES_STATE));
     }
 
     private void givenBucketSpan(int bucketSpan)
     {
         when(m_JobProvider.getField(JOB_ID, "analysisConfig.bucketSpan")).thenReturn(
                 new Integer(bucketSpan));
+    }
+
+    private BucketInfluencer createTimeBucketInfluencer(double probability, double anomalyScore)
+    {
+        BucketInfluencer influencer = new BucketInfluencer();
+        influencer.setProbability(probability);
+        influencer.setAnomalyScore(anomalyScore);
+        influencer.setInfluencerFieldName(BucketInfluencer.BUCKET_TIME);
+        return influencer;
+    }
+
+    private void givenProviderReturnsNoBuckets() throws UnknownJobException
+    {
+        QueryPage<Bucket> page = new QueryPage<>(Collections.emptyList(), 0);
+        when(m_JobProvider.buckets(eq(JOB_ID), anyBoolean(), anyBoolean(), anyInt(), anyInt(),
+                anyLong(), anyLong(), eq(0.0), eq(0.0))).thenReturn(page);
     }
 
     private void givenProviderReturnsBuckets(int skip, long endTime, int hitCount, List<Bucket> buckets) throws UnknownJobException
@@ -323,65 +381,19 @@ public class ScoresUpdaterTest
                 .thenReturn(page);
     }
 
-    private void givenProviderReturnsNoInfluencers()
+    private void givenProviderReturnsNoInfluencers() throws UnknownJobException
     {
         QueryPage<Influencer> page = new QueryPage<>(Collections.emptyList(), 0);
         when(m_JobProvider.influencers(eq(JOB_ID), anyInt(), anyInt(), anyLong(), anyLong(),
                 eq(null), eq(false), eq(0.0))).thenReturn(page);
     }
 
-    private void givenNormalisedBuckets(int bucketSpan, List<Bucket> originalBuckets,
-            List<Bucket> normalisedBuckets) throws NativeProcessRunException, UnknownJobException
+    private void givenProviderReturnsInfluencers(int skip, long endTime, int hitCount,
+            List<Influencer> influencers) throws UnknownJobException
     {
-        givenNormalisedBuckets(bucketSpan, originalBuckets, new ArrayList<>(), normalisedBuckets,
-                new ArrayList<>());
-    }
-    private void givenNormalisedBuckets(int bucketSpan, List<Bucket> originalBuckets1,
-            List<Bucket> originalBuckets2, List<Bucket> normalisedBuckets1, List<Bucket> normalisedBuckets2)
-            throws NativeProcessRunException, UnknownJobException
-    {
-        doAnswer(new Answer<Void>()
-        {
-            private int m_Count = 0;
-
-            @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable
-            {
-                ++m_Count;
-
-                if (m_Count == 1)
-                {
-                    applyBuckets(originalBuckets1, normalisedBuckets1);
-                }
-                if (m_Count == 2)
-                {
-                    applyBuckets(originalBuckets2, normalisedBuckets2);
-                }
-                return null;
-            }
-        }).when(m_Normaliser).normalise(eq(bucketSpan), anyListOf(Normalisable.class), eq(QUANTILES_STATE));
-    }
-
-    private void applyBuckets(List<Bucket> oldBuckets, List<Bucket> newBuckets)
-    {
-        assertEquals(oldBuckets.size(), newBuckets.size());
-        for (int i = 0; i < oldBuckets.size(); ++i)
-        {
-            Bucket newBucket = newBuckets.get(i);
-            Bucket oldBucket = oldBuckets.get(i);
-            oldBucket.setRawAnomalyScore(newBucket.getRawAnomalyScore());
-            oldBucket.setAnomalyScore(newBucket.getAnomalyScore());
-            oldBucket.setMaxNormalizedProbability(newBucket.getMaxNormalizedProbability());
-            if (newBucket.hadBigNormalisedUpdate())
-            {
-                oldBucket.raiseBigNormalisedUpdateFlag();
-            }
-            else
-            {
-                oldBucket.resetBigNormalisedUpdateFlag();
-            }
-            oldBucket.setRecords(newBucket.getRecords());
-        }
+        QueryPage<Influencer> page = new QueryPage<>(influencers, hitCount);
+        when(m_JobProvider.influencers(JOB_ID, skip, MAX_INFLUENCERS_PER_PAGE, 0, endTime, null, false, 0.0))
+                .thenReturn(page);
     }
 
     private void verifyBucketSpanWasNotRequested()
@@ -431,5 +443,10 @@ public class ScoresUpdaterTest
         when(anomalyRecord.hadBigNormalisedUpdate()).thenReturn(hadBigChange);
         when(anomalyRecord.getId()).thenReturn("someId");
         return anomalyRecord;
+    }
+
+    private void verifyInfluencerWasUpdated(Influencer influencer)
+    {
+        verify(m_JobRenormaliser).updateInfluencer(JOB_ID, influencer);
     }
 }

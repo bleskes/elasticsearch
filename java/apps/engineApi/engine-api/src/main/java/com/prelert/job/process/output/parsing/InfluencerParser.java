@@ -33,7 +33,6 @@ import org.apache.log4j.Logger;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
-import com.prelert.job.results.Influence;
 import com.prelert.job.results.Influencer;
 import com.prelert.utils.json.AutoDetectParseException;
 import com.prelert.utils.json.FieldNameParser;
@@ -51,7 +50,7 @@ public class InfluencerParser
     }
 
     /**
-     * Create a new <code>List&ltInfluencer&gt</code> and populate it from the JSON parser.
+     * Create a new <code>Influencer</code> and populate it from the JSON parser.
      * The parser must be pointing at the start of the object then all the object's
      * fields are read and if they match the property names then the appropriate
      * members are set.
@@ -61,7 +60,7 @@ public class InfluencerParser
      *
      * @param parser The JSON Parser should be pointing to the start of the object,
      * when the function returns it will be pointing to the end.
-     * @return List of {@linkplain Influence}
+     * @return The parsed {@code Influencer}
      * @throws JsonParseException
      * @throws IOException
      * @throws AutoDetectParseException
@@ -92,17 +91,17 @@ public class InfluencerParser
             switch (fieldName)
             {
             case Influencer.PROBABILITY:
-                influencer.setProbability(parseAsDoubleOrZero(token, fieldName));
+                influencer.setProbability(parseAsDoubleOrZero( fieldName));
                 break;
             case Influencer.INITIAL_ANOMALY_SCORE:
-                influencer.setInitialAnomalyScore(parseAsDoubleOrZero(token, fieldName));
+                influencer.setInitialAnomalyScore(parseAsDoubleOrZero(fieldName));
                 influencer.setAnomalyScore(influencer.getInitialAnomalyScore());
                 break;
             case Influencer.INFLUENCER_FIELD_NAME:
-                influencer.setInfluencerFieldName(parseAsStringOrNull(token, fieldName));
+                influencer.setInfluencerFieldName(parseAsStringOrNull(fieldName));
                 break;
             case Influencer.INFLUENCER_VALUE_NAME:
-                influencer.setInfluencerFieldValue(parseAsStringOrNull(token, fieldName));
+                influencer.setInfluencerFieldValue(parseAsStringOrNull(fieldName));
                 break;
             default:
                 LOGGER.warn(String.format("Parse error unknown field in Influencer %s:%s",

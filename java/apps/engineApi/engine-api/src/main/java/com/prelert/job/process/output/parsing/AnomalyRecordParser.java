@@ -27,6 +27,8 @@
 package com.prelert.job.process.output.parsing;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.log4j.Logger;
 
@@ -88,75 +90,69 @@ public class AnomalyRecordParser
             switch (fieldName)
             {
             case AnomalyRecord.PROBABILITY:
-                record.setProbability(parseAsDoubleOrZero(token, fieldName));
+                record.setProbability(parseAsDoubleOrZero(fieldName));
                 break;
             case AnomalyRecord.ANOMALY_SCORE:
-                record.setAnomalyScore(parseAsDoubleOrZero(token, fieldName));
+                record.setAnomalyScore(parseAsDoubleOrZero(fieldName));
                 break;
             case AnomalyRecord.NORMALIZED_PROBABILITY:
-                record.setNormalizedProbability(parseAsDoubleOrZero(token, fieldName));
+                record.setNormalizedProbability(parseAsDoubleOrZero(fieldName));
                 break;
             case AnomalyRecord.BY_FIELD_NAME:
-                record.setByFieldName(parseAsStringOrNull(token, fieldName));
+                record.setByFieldName(parseAsStringOrNull(fieldName));
                 break;
             case AnomalyRecord.BY_FIELD_VALUE:
-                record.setByFieldValue(parseAsStringOrNull(token, fieldName));
+                record.setByFieldValue(parseAsStringOrNull(fieldName));
                 break;
             case AnomalyRecord.PARTITION_FIELD_NAME:
-                record.setPartitionFieldName(parseAsStringOrNull(token, fieldName));
+                record.setPartitionFieldName(parseAsStringOrNull(fieldName));
                 break;
             case AnomalyRecord.PARTITION_FIELD_VALUE:
-                record.setPartitionFieldValue(parseAsStringOrNull(token, fieldName));
+                record.setPartitionFieldValue(parseAsStringOrNull(fieldName));
                 break;
             case AnomalyRecord.FUNCTION:
-                record.setFunction(parseAsStringOrNull(token, fieldName));
+                record.setFunction(parseAsStringOrNull(fieldName));
                 break;
             case AnomalyRecord.FUNCTION_DESCRIPTION:
-                record.setFunctionDescription(parseAsStringOrNull(token, fieldName));
+                record.setFunctionDescription(parseAsStringOrNull(fieldName));
                 break;
             case AnomalyRecord.TYPICAL:
-                record.setTypical(parseAsDoubleOrZero(token, fieldName));
+                record.setTypical(parseAsDoubleOrZero(fieldName));
                 break;
             case AnomalyRecord.ACTUAL:
-                record.setActual(parseAsDoubleOrZero(token, fieldName));
+                record.setActual(parseAsDoubleOrZero(fieldName));
                 break;
             case AnomalyRecord.FIELD_NAME:
-                record.setFieldName(parseAsStringOrNull(token, fieldName));
+                record.setFieldName(parseAsStringOrNull(fieldName));
                 break;
             case AnomalyRecord.OVER_FIELD_NAME:
-                record.setOverFieldName(parseAsStringOrNull(token, fieldName));
+                record.setOverFieldName(parseAsStringOrNull(fieldName));
                 break;
             case AnomalyRecord.OVER_FIELD_VALUE:
-                record.setOverFieldValue(parseAsStringOrNull(token, fieldName));
+                record.setOverFieldValue(parseAsStringOrNull(fieldName));
                 break;
             case AnomalyRecord.IS_INTERIM:
-                record.setInterim(parseAsBooleanOrNull(token, fieldName));
+                record.setInterim(parseAsBooleanOrNull(fieldName));
                 break;
             case AnomalyRecord.INFLUENCERS:
                 record.setInfluencers(InfluenceParser.parseJson(m_Parser));
                 break;
             case AnomalyRecord.CAUSES:
-                if (token != JsonToken.START_ARRAY)
-                {
-                    String msg = "Invalid value Expecting an array of causes";
-                    LOGGER.warn(msg);
-                    throw new AutoDetectParseException(msg);
-                }
-
-                token = m_Parser.nextToken();
-                while (token != JsonToken.END_ARRAY)
-                {
-                    AnomalyCause cause = AnomalyCauseParser.parseJson(m_Parser);
-                    record.addCause(cause);
-
-                    token = m_Parser.nextToken();
-                }
+                record.setCauses(parseCauses(fieldName));
                 break;
             default:
                 LOGGER.warn(String.format("Parse error unknown field in Anomaly Record %s:%s",
                         fieldName, token.asString()));
                 break;
             }
+        }
+
+        private List<AnomalyCause> parseCauses(String fieldName) throws AutoDetectParseException,
+                IOException, JsonParseException
+        {
+            List<AnomalyCause> causes = new ArrayList<>();
+            parseArray(fieldName, () -> AnomalyCauseParser.parseJson(m_Parser), causes);
+            return causes;
         }
     }
 

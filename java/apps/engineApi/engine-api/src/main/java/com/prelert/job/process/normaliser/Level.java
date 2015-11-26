@@ -27,10 +27,16 @@
 
 package com.prelert.job.process.normaliser;
 
+/**
+ * An enumeration of the different normalisation levels.
+ * The string value of each level has to match the equivalent
+ * level names in the normaliser C++ process.
+ */
 enum Level
 {
     ROOT("root"),
     LEAF("leaf"),
+    BUCKET_INFLUENCER("inflb"),
     INFLUENCER("infl");
 
     private final String m_Key;

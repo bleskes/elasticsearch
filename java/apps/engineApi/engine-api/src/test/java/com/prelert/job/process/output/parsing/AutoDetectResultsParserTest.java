@@ -57,6 +57,7 @@ import com.prelert.job.process.normaliser.BlockingQueueRenormaliser;
 import com.prelert.job.quantiles.Quantiles;
 import com.prelert.job.results.AnomalyRecord;
 import com.prelert.job.results.Bucket;
+import com.prelert.job.results.BucketInfluencer;
 import com.prelert.job.results.CategoryDefinition;
 import com.prelert.job.results.Detector;
 import com.prelert.job.results.Influencer;
@@ -67,9 +68,11 @@ import com.prelert.utils.json.AutoDetectParseException;
  */
 public class AutoDetectResultsParserTest
 {
-    public static final String METRIC_OUTPUT_SAMPLE = "[{\"timestamp\":1359450000,\"detectors\":[],\"rawAnomalyScore\":0, \"maxNormalizedProbability\":0,\"anomalyScore\":0,\"recordCount\":0,\"eventCount\":806}" +
+    private static final double ERROR = 0.000001;
+
+    public static final String METRIC_OUTPUT_SAMPLE = "[{\"timestamp\":1359450000,\"detectors\":[],\"maxNormalizedProbability\":0,\"anomalyScore\":0,\"recordCount\":0,\"eventCount\":806,\"bucketInfluencers\":[{\"rawAnomalyScore\":0, \"probability\":0.0,\"influencerFieldName\":\"bucketTime\",\"initialAnomalyScore\":0.0}]}" +
             ",{\"quantileState\":[\"normaliser 1.1\", \"normaliser 2.1\"]}" +
-            ",{\"timestamp\":1359453600,\"detectors\":[{\"name\":\"individual metric/responsetime/airline\",\"records\":[{\"probability\":0.0637541,\"byFieldName\":\"airline\",\"byFieldValue\":\"JZA\",\"typical\":1020.08,\"actual\":1042.14,\"fieldName\":\"responsetime\",\"function\":\"max\",\"partitionFieldName\":\"\",\"partitionFieldValue\":\"\"},{\"probability\":0.00748292,\"byFieldName\":\"airline\",\"byFieldValue\":\"AMX\",\"typical\":20.2137,\"actual\":22.8855,\"fieldName\":\"responsetime\",\"function\":\"max\",\"partitionFieldName\":\"\",\"partitionFieldValue\":\"\"},{\"probability\":0.023494,\"byFieldName\":\"airline\",\"byFieldValue\":\"DAL\",\"typical\":382.177,\"actual\":358.934,\"fieldName\":\"responsetime\",\"function\":\"min\",\"partitionFieldName\":\"\",\"partitionFieldValue\":\"\"},{\"probability\":0.0473552,\"byFieldName\":\"airline\",\"byFieldValue\":\"SWA\",\"typical\":152.148,\"actual\":96.6425,\"fieldName\":\"responsetime\",\"function\":\"min\",\"partitionFieldName\":\"\",\"partitionFieldValue\":\"\"}]}],\"rawAnomalyScore\":0.0140005, \"anomalyScore\":20.22688,\"maxNormalizedProbability\":10.5688, \"recordCount\":4,\"eventCount\":820}" +
+            ",{\"timestamp\":1359453600,\"detectors\":[{\"name\":\"individual metric/responsetime/airline\",\"records\":[{\"probability\":0.0637541,\"byFieldName\":\"airline\",\"byFieldValue\":\"JZA\",\"typical\":1020.08,\"actual\":1042.14,\"fieldName\":\"responsetime\",\"function\":\"max\",\"partitionFieldName\":\"\",\"partitionFieldValue\":\"\"},{\"probability\":0.00748292,\"byFieldName\":\"airline\",\"byFieldValue\":\"AMX\",\"typical\":20.2137,\"actual\":22.8855,\"fieldName\":\"responsetime\",\"function\":\"max\",\"partitionFieldName\":\"\",\"partitionFieldValue\":\"\"},{\"probability\":0.023494,\"byFieldName\":\"airline\",\"byFieldValue\":\"DAL\",\"typical\":382.177,\"actual\":358.934,\"fieldName\":\"responsetime\",\"function\":\"min\",\"partitionFieldName\":\"\",\"partitionFieldValue\":\"\"},{\"probability\":0.0473552,\"byFieldName\":\"airline\",\"byFieldValue\":\"SWA\",\"typical\":152.148,\"actual\":96.6425,\"fieldName\":\"responsetime\",\"function\":\"min\",\"partitionFieldName\":\"\",\"partitionFieldValue\":\"\"}]}],\"rawAnomalyScore\":0.0140005, \"anomalyScore\":20.22688,\"maxNormalizedProbability\":10.5688, \"recordCount\":4,\"eventCount\":820,\"bucketInfluencers\":[{\"rawAnomalyScore\":0.0140005, \"probability\":0.01,\"influencerFieldName\":\"bucketTime\",\"initialAnomalyScore\":20.22688},{\"rawAnomalyScore\":0.005, \"probability\":0.03,\"influencerFieldName\":\"foo\",\"initialAnomalyScore\":10.5}]}" +
             ",{\"quantileState\":[\"normaliser 1.2\", \"normaliser 2.2\"]}" +
             ",{\"flush\":\"testing1\"}" +
             ",{\"quantileState\":[\"normaliser 1.3\", \"normaliser 2.3\"]}" +
@@ -279,7 +282,13 @@ public class AutoDetectResultsParserTest
         assertEquals(recordCount, buckets.get(0).getRecordCount());
 
         assertEquals(buckets.get(0).getEventCount(), 806);
-        assertEquals(0.0, buckets.get(0).getRawAnomalyScore(), 0.000001);
+
+        List<BucketInfluencer> bucketInfluencers = buckets.get(0).getBucketInfluencers();
+        assertEquals(1, bucketInfluencers.size());
+        assertEquals(0.0, bucketInfluencers.get(0).getRawAnomalyScore(), ERROR);
+        assertEquals(0.0, bucketInfluencers.get(0).getAnomalyScore(), ERROR);
+        assertEquals(0.0, bucketInfluencers.get(0).getProbability(), ERROR);
+        assertEquals("bucketTime", bucketInfluencers.get(0).getInfluencerFieldName());
 
         assertEquals(new Date(1359453600000L), buckets.get(1).getTimestamp());
         assertEquals(4, buckets.get(1).getRecordCount());
@@ -292,14 +301,23 @@ public class AutoDetectResultsParserTest
         assertEquals(recordCount, buckets.get(1).getRecordCount());
 
         assertEquals(buckets.get(1).getEventCount(), 820);
-        assertEquals(0.0140005, buckets.get(1).getRawAnomalyScore(), 0.000001);
+        bucketInfluencers = buckets.get(1).getBucketInfluencers();
+        assertEquals(2, bucketInfluencers.size());
+        assertEquals(0.0140005, bucketInfluencers.get(0).getRawAnomalyScore(), ERROR);
+        assertEquals(20.22688, bucketInfluencers.get(0).getAnomalyScore(), ERROR);
+        assertEquals(0.01, bucketInfluencers.get(0).getProbability(), ERROR);
+        assertEquals("bucketTime", bucketInfluencers.get(0).getInfluencerFieldName());
+        assertEquals(0.005, bucketInfluencers.get(1).getRawAnomalyScore(), ERROR);
+        assertEquals(10.5, bucketInfluencers.get(1).getAnomalyScore(), ERROR);
+        assertEquals(0.03, bucketInfluencers.get(1).getProbability(), ERROR);
+        assertEquals("foo", bucketInfluencers.get(1).getInfluencerFieldName());
 
         com.prelert.job.results.Detector detector = buckets.get(1).getDetectors().get(0);
 
         assertEquals("individual metric/responsetime/airline", detector.getName());
         assertEquals(4, detector.getRecords().size());
 
-        assertEquals(0.0637541, detector.getRecords().get(0).getProbability(), 0.000001);
+        assertEquals(0.0637541, detector.getRecords().get(0).getProbability(), ERROR);
         assertEquals("airline", detector.getRecords().get(0).getByFieldName());
         assertEquals("JZA", detector.getRecords().get(0).getByFieldValue());
         assertEquals(1020.08, 0.001, detector.getRecords().get(0).getTypical());
@@ -309,7 +327,7 @@ public class AutoDetectResultsParserTest
         assertEquals("", detector.getRecords().get(0).getPartitionFieldName());
         assertEquals("", detector.getRecords().get(0).getPartitionFieldValue());
 
-        assertEquals(0.00748292, detector.getRecords().get(1).getProbability(), 0.000001);
+        assertEquals(0.00748292, detector.getRecords().get(1).getProbability(), ERROR);
         assertEquals("airline", detector.getRecords().get(1).getByFieldName());
         assertEquals("AMX", detector.getRecords().get(1).getByFieldValue());
         assertEquals(20.2137, 0.001, detector.getRecords().get(1).getTypical());
@@ -319,7 +337,7 @@ public class AutoDetectResultsParserTest
         assertEquals("", detector.getRecords().get(1).getPartitionFieldName());
         assertEquals("", detector.getRecords().get(1).getPartitionFieldValue());
 
-        assertEquals(0.023494, detector.getRecords().get(2).getProbability(), 0.000001);
+        assertEquals(0.023494, detector.getRecords().get(2).getProbability(), ERROR);
         assertEquals("airline", detector.getRecords().get(2).getByFieldName());
         assertEquals("DAL", detector.getRecords().get(2).getByFieldValue());
         assertEquals(382.177, 0.001, detector.getRecords().get(2).getTypical());
@@ -329,7 +347,7 @@ public class AutoDetectResultsParserTest
         assertEquals("", detector.getRecords().get(2).getPartitionFieldName());
         assertEquals("", detector.getRecords().get(2).getPartitionFieldValue());
 
-        assertEquals(0.0473552, detector.getRecords().get(3).getProbability(), 0.000001);
+        assertEquals(0.0473552, detector.getRecords().get(3).getProbability(), ERROR);
         assertEquals("airline", detector.getRecords().get(3).getByFieldName());
         assertEquals("SWA", detector.getRecords().get(3).getByFieldValue());
         assertEquals(152.148, 0.001, detector.getRecords().get(3).getTypical());
@@ -384,14 +402,13 @@ public class AutoDetectResultsParserTest
         assertEquals(recordCount, buckets.get(0).getRecordCount());
 
         assertEquals(buckets.get(0).getEventCount(), 1235);
-        assertEquals(1.30397, buckets.get(0).getRawAnomalyScore(), 0.000001);
 
         com.prelert.job.results.Detector detector = buckets.get(0).getDetectors().get(0);
 
         assertEquals("population metric maximum/0/sum_cs_bytes_//cs_host/", detector.getName());
         assertEquals(4, detector.getRecords().size());
 
-        assertEquals(1.38951e-08, detector.getRecords().get(0).getProbability(), 0.000001);
+        assertEquals(1.38951e-08, detector.getRecords().get(0).getProbability(), ERROR);
         assertEquals("sum_cs_bytes_", detector.getRecords().get(0).getFieldName());
         assertEquals("max", detector.getRecords().get(0).getFunction());
         assertEquals("cs_host", detector.getRecords().get(0).getOverFieldName());
@@ -409,7 +426,6 @@ public class AutoDetectResultsParserTest
         assertEquals(recordCount, buckets.get(1).getRecordCount());
 
         assertEquals(buckets.get(1).getEventCount(), 1159);
-        assertEquals(1.26918, buckets.get(1).getRawAnomalyScore(), 0.000001);
 
         detector = buckets.get(1).getDetectors().get(0);
 

@@ -34,7 +34,6 @@ import org.apache.log4j.Logger;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonToken;
 import com.prelert.job.results.Influence;
 import com.prelert.utils.json.AutoDetectParseException;
 import com.prelert.utils.json.FieldNameParser;
@@ -87,40 +86,18 @@ public class InfluenceParser
         {
             Influence influence = new Influence();
             influence.setInfluencerFieldName(fieldName);
-            JsonToken token = m_Parser.nextToken();
-            parseValues(token, influence);
+            m_Parser.nextToken();
+            influence.setInfluencerFieldValues(parseValues(fieldName));
 
             influences.add(influence);
         }
 
-        private void parseValues(JsonToken token, Influence influence)
-                throws AutoDetectParseException, IOException, JsonParseException
+        private List<String> parseValues(String fieldName) throws AutoDetectParseException,
+                IOException, JsonParseException
         {
-            if (token != JsonToken.START_ARRAY)
-            {
-                String msg = "Invalid value Expecting an array of influence scores";
-                LOGGER.warn(msg);
-                throw new AutoDetectParseException(msg);
-            }
-
-            token = m_Parser.nextToken();
-            while (token != JsonToken.END_ARRAY)
-            {
-                if (token == JsonToken.VALUE_STRING)
-                {
-                    String value = m_Parser.getText();
-                    if (value != null)
-                    {
-                        influence.addInfluenceFieldValue(value);
-                    }
-                }
-                else
-                {
-                    LOGGER.error("Expected a string value parsing influence field value not " + token);
-                }
-
-                token = m_Parser.nextToken();
-            }
+            List<String> influenceValues = new ArrayList<>();
+            parseArray(fieldName, () -> parseAsStringOrNull(fieldName), influenceValues);
+            return influenceValues;
         }
     }
 }

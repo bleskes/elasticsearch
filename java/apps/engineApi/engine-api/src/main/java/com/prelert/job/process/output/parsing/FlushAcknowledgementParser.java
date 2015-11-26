@@ -116,7 +116,7 @@ public class FlushAcknowledgementParser
             JsonToken token = m_Parser.nextToken();
             if (FlushAcknowledgement.FLUSH.equals(fieldName))
             {
-                ack.setId(parseAsStringOrNull(token, fieldName));
+                ack.setId(parseAsStringOrNull(fieldName));
             }
             else
             {

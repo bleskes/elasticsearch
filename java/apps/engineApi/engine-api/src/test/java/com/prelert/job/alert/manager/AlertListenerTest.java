@@ -299,7 +299,6 @@ public class AlertListenerTest
         b.setId("testbucket");
         b.setInterim(false);
         b.setMaxNormalizedProbability(60);
-        b.setRawAnomalyScore(10.0);
         b.setRecordCount(0);
         b.setTimestamp(new Date());
         return b;
