@@ -115,12 +115,12 @@ public class QuantilesParser
             switch (fieldName)
             {
             case Quantiles.TIMESTAMP:
-                long seconds = parseAsLongOrZero(token, fieldName);
+                long seconds = parseAsLongOrZero(fieldName);
                 // convert seconds to ms
                 quantiles.setTimestamp(new Date(seconds * 1000));
                 break;
             case Quantiles.QUANTILE_STATE:
-                quantiles.setState(parseAsStringOrNull(token, fieldName));
+                quantiles.setState(parseAsStringOrNull(fieldName));
                 break;
             default:
                 LOGGER.warn(String.format("Parse error unknown field in Quantiles %s:%s",

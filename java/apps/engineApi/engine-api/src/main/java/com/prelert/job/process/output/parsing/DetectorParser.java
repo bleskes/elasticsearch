@@ -88,7 +88,7 @@ public class DetectorParser
             switch (fieldName)
             {
             case Detector.NAME:
-                detector.setName(parseAsStringOrNull(token, fieldName));
+                detector.setName(parseAsStringOrNull(fieldName));
                 break;
             case Detector.RECORDS:
                 if (token == JsonToken.START_ARRAY)

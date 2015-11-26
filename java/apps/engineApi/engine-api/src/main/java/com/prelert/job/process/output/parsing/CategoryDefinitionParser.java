@@ -27,6 +27,8 @@
 package com.prelert.job.process.output.parsing;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.log4j.Logger;
 
@@ -115,16 +117,16 @@ public class CategoryDefinitionParser
             switch (fieldName)
             {
             case CategoryDefinition.TYPE:
-                category.setCategoryId(parseAsLongOrZero(token, fieldName));
+                category.setCategoryId(parseAsLongOrZero(fieldName));
                 break;
             case CategoryDefinition.TERMS:
-                category.setTerms(parseAsStringOrNull(token, fieldName));
+                category.setTerms(parseAsStringOrNull(fieldName));
                 break;
             case CategoryDefinition.REGEX:
-                category.setRegex(parseAsStringOrNull(token, fieldName));
+                category.setRegex(parseAsStringOrNull(fieldName));
                 break;
             case CategoryDefinition.EXAMPLES:
-                parseExamples(token, fieldName, category);
+                category.setExamples(parseExamples(fieldName));
                 break;
             default:
                 LOGGER.warn(String.format("Parse error unknown field in CategoryDefinition %s:%s",
@@ -133,22 +135,12 @@ public class CategoryDefinitionParser
             }
         }
 
-        private void parseExamples(JsonToken token, String fieldName, CategoryDefinition category)
-                throws IOException, JsonParseException, AutoDetectParseException
+        private List<String> parseExamples(String fieldName) throws AutoDetectParseException,
+                IOException, JsonParseException
         {
-            if (token != JsonToken.START_ARRAY)
-            {
-                String msg = "Invalid value Expecting an array of examples";
-                LOGGER.warn(msg);
-                throw new AutoDetectParseException(msg);
-            }
-
-            token = m_Parser.nextToken();
-            while (token != JsonToken.END_ARRAY)
-            {
-                category.addExample(parseAsStringOrNull(token, fieldName));
-                token = m_Parser.nextToken();
-            }
+            List<String> examples = new ArrayList<>();
+            parseArray(fieldName, () -> parseAsStringOrNull(fieldName), examples);
+            return examples;
         }
     }
 }

@@ -26,7 +26,8 @@
  ************************************************************/
 package com.prelert.job.process.output.parsing;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -66,8 +67,6 @@ public class AnomalyRecordParserTest
         assertEquals(new AnomalyRecord(), AnomalyRecordParser.parseJson(parser));
         assertEquals(JsonToken.END_OBJECT, parser.getCurrentToken());
     }
-
-
 
     @Test
     public void testParseJson_GivenAnomalyRecordWithAllFieldsPopulatedAndValid()
@@ -115,6 +114,8 @@ public class AnomalyRecordParserTest
         assertEquals("someOverFieldValue", anomalyRecord.getOverFieldValue());
         assertTrue(anomalyRecord.isInterim());
         assertEquals(2, anomalyRecord.getCauses().size());
+        assertEquals(0.01, anomalyRecord.getCauses().get(0).getProbability(), ERROR);
+        assertEquals(0.02, anomalyRecord.getCauses().get(1).getProbability(), ERROR);
 
         assertEquals(2, anomalyRecord.getInfluencers().size());
         assertEquals("host", anomalyRecord.getInfluencers().get(0).getInfluencerFieldName());

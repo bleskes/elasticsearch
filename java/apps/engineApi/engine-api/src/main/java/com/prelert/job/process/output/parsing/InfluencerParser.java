@@ -91,17 +91,17 @@ public class InfluencerParser
             switch (fieldName)
             {
             case Influencer.PROBABILITY:
-                influencer.setProbability(parseAsDoubleOrZero(token, fieldName));
+                influencer.setProbability(parseAsDoubleOrZero( fieldName));
                 break;
             case Influencer.INITIAL_ANOMALY_SCORE:
-                influencer.setInitialAnomalyScore(parseAsDoubleOrZero(token, fieldName));
+                influencer.setInitialAnomalyScore(parseAsDoubleOrZero(fieldName));
                 influencer.setAnomalyScore(influencer.getInitialAnomalyScore());
                 break;
             case Influencer.INFLUENCER_FIELD_NAME:
-                influencer.setInfluencerFieldName(parseAsStringOrNull(token, fieldName));
+                influencer.setInfluencerFieldName(parseAsStringOrNull(fieldName));
                 break;
             case Influencer.INFLUENCER_VALUE_NAME:
-                influencer.setInfluencerFieldValue(parseAsStringOrNull(token, fieldName));
+                influencer.setInfluencerFieldValue(parseAsStringOrNull(fieldName));
                 break;
             default:
                 LOGGER.warn(String.format("Parse error unknown field in Influencer %s:%s",

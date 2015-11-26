@@ -341,23 +341,23 @@ public class FieldNameParserTest
         protected void handleFieldName(String fieldName, TestData data)
                 throws AutoDetectParseException, JsonParseException, IOException
         {
-            JsonToken token = m_Parser.nextToken();
+            m_Parser.nextToken();
             switch(fieldName)
             {
                 case "testInt":
-                    data.setInt(parseAsIntOrZero(token, fieldName));
+                    data.setInt(parseAsIntOrZero(fieldName));
                     break;
                 case "testLong":
-                    data.setLong(parseAsLongOrZero(token, fieldName));
+                    data.setLong(parseAsLongOrZero(fieldName));
                     break;
                 case "testDouble":
-                    data.setDouble(parseAsDoubleOrZero(token, fieldName));
+                    data.setDouble(parseAsDoubleOrZero(fieldName));
                     break;
                 case "testBoolean":
-                    data.setBoolean(parseAsBooleanOrNull(token, fieldName));
+                    data.setBoolean(parseAsBooleanOrNull(fieldName));
                     break;
                 case "testString":
-                    data.setString(parseAsStringOrNull(token, fieldName));
+                    data.setString(parseAsStringOrNull(fieldName));
                     break;
                 default:
                     m_Logger.error("Invalid fieldName: " + fieldName);
