@@ -383,7 +383,7 @@ public class InfluencersTest
         test(record.getInfluencers().indexOf(user) >= 0);
 
         Pagination<Influencer> pagination = m_WebServiceClient.prepareGetInfluencers(BLUECOAT_LOGS).get();
-        test(pagination.getHitCount() > 1500);
+        test(pagination.getHitCount() > 1000);
         List<Influencer> influencers = pagination.getDocuments();
         test(influencers.size() == 100);
 
