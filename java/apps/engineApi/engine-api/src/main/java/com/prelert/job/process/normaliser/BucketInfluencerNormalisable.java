@@ -35,11 +35,11 @@ import com.prelert.job.results.BucketInfluencer;
 
 class BucketInfluencerNormalisable implements Normalisable
 {
-    private final BucketInfluencer m_Influencer;
+    private final BucketInfluencer m_BucketInfluencer;
 
     public BucketInfluencerNormalisable(BucketInfluencer influencer)
     {
-        m_Influencer = Objects.requireNonNull(influencer);
+        m_BucketInfluencer = Objects.requireNonNull(influencer);
     }
 
     @Override
@@ -51,7 +51,7 @@ class BucketInfluencerNormalisable implements Normalisable
     @Override
     public Level getLevel()
     {
-        return BucketInfluencer.BUCKET_TIME.equals(m_Influencer.getInfluencerFieldName()) ?
+        return BucketInfluencer.BUCKET_TIME.equals(m_BucketInfluencer.getInfluencerFieldName()) ?
                 Level.ROOT : Level.BUCKET_INFLUENCER;
     }
 
@@ -64,7 +64,7 @@ class BucketInfluencerNormalisable implements Normalisable
     @Override
     public String getPersonFieldName()
     {
-        return m_Influencer.getInfluencerFieldName();
+        return m_BucketInfluencer.getInfluencerFieldName();
     }
 
     @Override
@@ -82,19 +82,19 @@ class BucketInfluencerNormalisable implements Normalisable
     @Override
     public double getProbability()
     {
-        return m_Influencer.getProbability();
+        return m_BucketInfluencer.getProbability();
     }
 
     @Override
     public double getNormalisedScore()
     {
-        return m_Influencer.getAnomalyScore();
+        return m_BucketInfluencer.getAnomalyScore();
     }
 
     @Override
     public void setNormalisedScore(double normalisedScore)
     {
-        m_Influencer.setAnomalyScore(normalisedScore);
+        m_BucketInfluencer.setAnomalyScore(normalisedScore);
     }
 
     @Override
