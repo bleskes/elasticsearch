@@ -21,6 +21,7 @@ import org.elasticsearch.Version;
 import org.elasticsearch.common.inject.Guice;
 import org.elasticsearch.common.inject.Injector;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.settings.SettingsFilter;
 import org.elasticsearch.common.settings.SettingsModule;
 import org.elasticsearch.indices.breaker.CircuitBreakerModule;
 import org.elasticsearch.shield.audit.logfile.LoggingAuditTrail;
@@ -42,7 +43,7 @@ public class AuditTrailModuleTests extends ESTestCase {
                 .put("client.type", "node")
                 .put("shield.audit.enabled", false)
                 .build();
-        Injector injector = Guice.createInjector(new SettingsModule(settings), new AuditTrailModule(settings));
+        Injector injector = Guice.createInjector(new SettingsModule(settings, new SettingsFilter(settings)), new AuditTrailModule(settings));
         AuditTrail auditTrail = injector.getInstance(AuditTrail.class);
         assertThat(auditTrail, is(AuditTrail.NOOP));
     }
@@ -50,7 +51,7 @@ public class AuditTrailModuleTests extends ESTestCase {
     public void testDisabledByDefault() throws Exception {
         Settings settings = Settings.builder()
                 .put("client.type", "node").build();
-        Injector injector = Guice.createInjector(new SettingsModule(settings), new AuditTrailModule(settings));
+        Injector injector = Guice.createInjector(new SettingsModule(settings, new SettingsFilter(settings)), new AuditTrailModule(settings));
         AuditTrail auditTrail = injector.getInstance(AuditTrail.class);
         assertThat(auditTrail, is(AuditTrail.NOOP));
     }
@@ -62,7 +63,7 @@ public class AuditTrailModuleTests extends ESTestCase {
                 .build();
         ThreadPool pool = new ThreadPool("testLogFile");
         try {
-            Injector injector = Guice.createInjector(new SettingsModule(settings), new AuditTrailModule(settings), new TransportModule(settings), new CircuitBreakerModule(settings), new ThreadPoolModule(pool), new Version.Module(Version.CURRENT));
+            Injector injector = Guice.createInjector(new SettingsModule(settings, new SettingsFilter(settings)), new AuditTrailModule(settings), new TransportModule(settings), new CircuitBreakerModule(settings), new ThreadPoolModule(pool), new Version.Module(Version.CURRENT));
             AuditTrail auditTrail = injector.getInstance(AuditTrail.class);
             assertThat(auditTrail, instanceOf(AuditTrailService.class));
             AuditTrailService service = (AuditTrailService) auditTrail;
@@ -81,7 +82,7 @@ public class AuditTrailModuleTests extends ESTestCase {
                 .put("client.type", "node")
                 .build();
         try {
-            Guice.createInjector(new SettingsModule(settings), new AuditTrailModule(settings));
+            Guice.createInjector(new SettingsModule(settings, new SettingsFilter(settings)), new AuditTrailModule(settings));
             fail("Expect initialization to fail when an unknown audit trail output is configured");
         } catch (Throwable t) {
             // expected
