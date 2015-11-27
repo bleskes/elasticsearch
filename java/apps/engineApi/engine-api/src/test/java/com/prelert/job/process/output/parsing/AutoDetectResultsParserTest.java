@@ -32,6 +32,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.mockito.Mockito.mock;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -45,7 +46,9 @@ import java.util.TreeMap;
 
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Logger;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.mockito.Mockito;
 
 import com.fasterxml.jackson.core.JsonParseException;
@@ -82,6 +85,8 @@ public class AutoDetectResultsParserTest
             ",{\"flush\":\"testing2\"}" +
             ",{\"timestamp\":1379590800,\"detectors\":[{\"name\":\"population metric maximum/0/sum_cs_bytes_//cs_host/\",\"records\":[{\"probability\":1.9008e-08,\"fieldName\":\"sum_cs_bytes_\",\"overFieldName\":\"cs_host\",\"overFieldValue\":\"mail.google.com\",\"function\":\"max\",\"causes\":[{\"probability\":1.9008e-08,\"fieldName\":\"sum_cs_bytes_\",\"overFieldName\":\"cs_host\",\"overFieldValue\":\"mail.google.com\",\"function\":\"max\",\"typical\":31356,\"actual\":1.1498e+08}],\"normalizedProbability\":93.6213,\"anomalyScore\":1.19192},{\"probability\":1.01013e-06,\"fieldName\":\"sum_cs_bytes_\",\"overFieldName\":\"cs_host\",\"overFieldValue\":\"armmf.adobe.com\",\"function\":\"max\",\"causes\":[{\"probability\":1.01013e-06,\"fieldName\":\"sum_cs_bytes_\",\"overFieldName\":\"cs_host\",\"overFieldValue\":\"armmf.adobe.com\",\"function\":\"max\",\"typical\":31356,\"actual\":3.25808e+07}],\"normalizedProbability\":86.5825,\"anomalyScore\":1.19192},{\"probability\":0.000386185,\"fieldName\":\"sum_cs_bytes_\",\"overFieldName\":\"cs_host\",\"overFieldValue\":\"0.docs.google.com\",\"function\":\"max\",\"causes\":[{\"probability\":0.000386185,\"fieldName\":\"sum_cs_bytes_\",\"overFieldName\":\"cs_host\",\"overFieldValue\":\"0.docs.google.com\",\"function\":\"max\",\"typical\":31356,\"actual\":3.22855e+06}],\"normalizedProbability\":17.1179,\"anomalyScore\":1.19192},{\"probability\":0.00208033,\"fieldName\":\"sum_cs_bytes_\",\"overFieldName\":\"cs_host\",\"overFieldValue\":\"docs.google.com\",\"function\":\"max\",\"causes\":[{\"probability\":0.00208033,\"fieldName\":\"sum_cs_bytes_\",\"overFieldName\":\"cs_host\",\"overFieldValue\":\"docs.google.com\",\"function\":\"max\",\"typical\":31356,\"actual\":1.43328e+06}],\"normalizedProbability\":3.0692,\"anomalyScore\":1.19192},{\"probability\":0.00312988,\"fieldName\":\"sum_cs_bytes_\",\"overFieldName\":\"cs_host\",\"overFieldValue\":\"booking2.airasia.com\",\"function\":\"max\",\"causes\":[{\"probability\":0.00312988,\"fieldName\":\"sum_cs_bytes_\",\"overFieldName\":\"cs_host\",\"overFieldValue\":\"booking2.airasia.com\",\"function\":\"max\",\"typical\":31356,\"actual\":1.15764e+06}],\"normalizedProbability\":1.99532,\"anomalyScore\":1.19192},{\"probability\":0.00379229,\"fieldName\":\"sum_cs_bytes_\",\"overFieldName\":\"cs_host\",\"overFieldValue\":\"www.facebook.com\",\"function\":\"max\",\"causes\":[{\"probability\":0.00379229,\"fieldName\":\"sum_cs_bytes_\",\"overFieldName\":\"cs_host\",\"overFieldValue\":\"www.facebook.com\",\"function\":\"max\",\"typical\":31356,\"actual\":1.0443e+06}],\"normalizedProbability\":1.62352,\"anomalyScore\":1.19192},{\"probability\":0.00623576,\"fieldName\":\"sum_cs_bytes_\",\"overFieldName\":\"cs_host\",\"overFieldValue\":\"www.airasia.com\",\"function\":\"max\",\"causes\":[{\"probability\":0.00623576,\"fieldName\":\"sum_cs_bytes_\",\"overFieldName\":\"cs_host\",\"overFieldValue\":\"www.airasia.com\",\"function\":\"max\",\"typical\":31356,\"actual\":792699}],\"normalizedProbability\":0.935134,\"anomalyScore\":1.19192},{\"probability\":0.00665308,\"fieldName\":\"sum_cs_bytes_\",\"overFieldName\":\"cs_host\",\"overFieldValue\":\"www.google.com\",\"function\":\"max\",\"causes\":[{\"probability\":0.00665308,\"fieldName\":\"sum_cs_bytes_\",\"overFieldName\":\"cs_host\",\"overFieldValue\":\"www.google.com\",\"function\":\"max\",\"typical\":31356,\"actual\":763985}],\"normalizedProbability\":0.868119,\"anomalyScore\":1.19192},{\"probability\":0.00709315,\"fieldName\":\"sum_cs_bytes_\",\"overFieldName\":\"cs_host\",\"overFieldValue\":\"0.drive.google.com\",\"function\":\"max\",\"causes\":[{\"probability\":0.00709315,\"fieldName\":\"sum_cs_bytes_\",\"overFieldName\":\"cs_host\",\"overFieldValue\":\"0.drive.google.com\",\"function\":\"max\",\"typical\":31356,\"actual\":736442}],\"normalizedProbability\":0.805994,\"anomalyScore\":1.19192},{\"probability\":0.00755789,\"fieldName\":\"sum_cs_bytes_\",\"overFieldName\":\"cs_host\",\"overFieldValue\":\"resources2.news.com.au\",\"function\":\"max\",\"causes\":[{\"probability\":0.00755789,\"fieldName\":\"sum_cs_bytes_\",\"overFieldName\":\"cs_host\",\"overFieldValue\":\"resources2.news.com.au\",\"function\":\"max\",\"typical\":31356,\"actual\":709962}],\"normalizedProbability\":0.748239,\"anomalyScore\":1.19192},{\"probability\":0.00834974,\"fieldName\":\"sum_cs_bytes_\",\"overFieldName\":\"cs_host\",\"overFieldValue\":\"www.calypso.net.au\",\"function\":\"max\",\"causes\":[{\"probability\":0.00834974,\"fieldName\":\"sum_cs_bytes_\",\"overFieldName\":\"cs_host\",\"overFieldValue\":\"www.calypso.net.au\",\"function\":\"max\",\"typical\":31356,\"actual\":669968}],\"normalizedProbability\":0.664644,\"anomalyScore\":1.19192},{\"probability\":0.0107711,\"fieldName\":\"sum_cs_bytes_\",\"overFieldName\":\"cs_host\",\"overFieldValue\":\"ad.yieldmanager.com\",\"function\":\"max\",\"causes\":[{\"probability\":0.0107711,\"fieldName\":\"sum_cs_bytes_\",\"overFieldName\":\"cs_host\",\"overFieldValue\":\"ad.yieldmanager.com\",\"function\":\"max\",\"typical\":31356,\"actual\":576067}],\"normalizedProbability\":0.485277,\"anomalyScore\":1.19192},{\"probability\":0.0123367,\"fieldName\":\"sum_cs_bytes_\",\"overFieldName\":\"cs_host\",\"overFieldValue\":\"www.google-analytics.com\",\"function\":\"max\",\"causes\":[{\"probability\":0.0123367,\"fieldName\":\"sum_cs_bytes_\",\"overFieldName\":\"cs_host\",\"overFieldValue\":\"www.google-analytics.com\",\"function\":\"max\",\"typical\":31356,\"actual\":530594}],\"normalizedProbability\":0.406783,\"anomalyScore\":1.19192},{\"probability\":0.0125647,\"fieldName\":\"sum_cs_bytes_\",\"overFieldName\":\"cs_host\",\"overFieldValue\":\"bs.serving-sys.com\",\"function\":\"max\",\"causes\":[{\"probability\":0.0125647,\"fieldName\":\"sum_cs_bytes_\",\"overFieldName\":\"cs_host\",\"overFieldValue\":\"bs.serving-sys.com\",\"function\":\"max\",\"typical\":31356,\"actual\":524690}],\"normalizedProbability\":0.396986,\"anomalyScore\":1.19192},{\"probability\":0.0141652,\"fieldName\":\"sum_cs_bytes_\",\"overFieldName\":\"cs_host\",\"overFieldValue\":\"www.google.com.au\",\"function\":\"max\",\"causes\":[{\"probability\":0.0141652,\"fieldName\":\"sum_cs_bytes_\",\"overFieldName\":\"cs_host\",\"overFieldValue\":\"www.google.com.au\",\"function\":\"max\",\"typical\":31356,\"actual\":487328}],\"normalizedProbability\":0.337075,\"anomalyScore\":1.19192},{\"probability\":0.0141742,\"fieldName\":\"sum_cs_bytes_\",\"overFieldName\":\"cs_host\",\"overFieldValue\":\"resources1.news.com.au\",\"function\":\"max\",\"causes\":[{\"probability\":0.0141742,\"fieldName\":\"sum_cs_bytes_\",\"overFieldName\":\"cs_host\",\"overFieldValue\":\"resources1.news.com.au\",\"function\":\"max\",\"typical\":31356,\"actual\":487136}],\"normalizedProbability\":0.336776,\"anomalyScore\":1.19192},{\"probability\":0.0145263,\"fieldName\":\"sum_cs_bytes_\",\"overFieldName\":\"cs_host\",\"overFieldValue\":\"b.mail.google.com\",\"function\":\"max\",\"causes\":[{\"probability\":0.0145263,\"fieldName\":\"sum_cs_bytes_\",\"overFieldName\":\"cs_host\",\"overFieldValue\":\"b.mail.google.com\",\"function\":\"max\",\"typical\":31356,\"actual\":479766}],\"normalizedProbability\":0.325385,\"anomalyScore\":1.19192},{\"probability\":0.0151447,\"fieldName\":\"sum_cs_bytes_\",\"overFieldName\":\"cs_host\",\"overFieldValue\":\"www.rei.com\",\"function\":\"max\",\"causes\":[{\"probability\":0.0151447,\"fieldName\":\"sum_cs_bytes_\",\"overFieldName\":\"cs_host\",\"overFieldValue\":\"www.rei.com\",\"function\":\"max\",\"typical\":31356,\"actual\":467450}],\"normalizedProbability\":0.306657,\"anomalyScore\":1.19192},{\"probability\":0.0164073,\"fieldName\":\"sum_cs_bytes_\",\"overFieldName\":\"cs_host\",\"overFieldValue\":\"s3.amazonaws.com\",\"function\":\"max\",\"causes\":[{\"probability\":0.0164073,\"fieldName\":\"sum_cs_bytes_\",\"overFieldName\":\"cs_host\",\"overFieldValue\":\"s3.amazonaws.com\",\"function\":\"max\",\"typical\":31356,\"actual\":444511}],\"normalizedProbability\":0.272805,\"anomalyScore\":1.19192},{\"probability\":0.0201927,\"fieldName\":\"sum_cs_bytes_\",\"overFieldName\":\"cs_host\",\"overFieldValue\":\"0-p-06-ash2.channel.facebook.com\",\"function\":\"max\",\"causes\":[{\"probability\":0.0201927,\"fieldName\":\"sum_cs_bytes_\",\"overFieldName\":\"cs_host\",\"overFieldValue\":\"0-p-06-ash2.channel.facebook.com\",\"function\":\"max\",\"typical\":31356,\"actual\":389243}],\"normalizedProbability\":0.196685,\"anomalyScore\":1.19192},{\"probability\":0.0218721,\"fieldName\":\"sum_cs_bytes_\",\"overFieldName\":\"cs_host\",\"overFieldValue\":\"booking.airasia.com\",\"function\":\"max\",\"causes\":[{\"probability\":0.0218721,\"fieldName\":\"sum_cs_bytes_\",\"overFieldName\":\"cs_host\",\"overFieldValue\":\"booking.airasia.com\",\"function\":\"max\",\"typical\":31356,\"actual\":369509}],\"normalizedProbability\":0.171353,\"anomalyScore\":1.19192},{\"probability\":0.0242411,\"fieldName\":\"sum_cs_bytes_\",\"overFieldName\":\"cs_host\",\"overFieldValue\":\"www.yammer.com\",\"function\":\"max\",\"causes\":[{\"probability\":0.0242411,\"fieldName\":\"sum_cs_bytes_\",\"overFieldName\":\"cs_host\",\"overFieldValue\":\"www.yammer.com\",\"function\":\"max\",\"typical\":31356,\"actual\":345295}],\"normalizedProbability\":0.141585,\"anomalyScore\":1.19192},{\"probability\":0.0258232,\"fieldName\":\"sum_cs_bytes_\",\"overFieldName\":\"cs_host\",\"overFieldValue\":\"safebrowsing-cache.google.com\",\"function\":\"max\",\"causes\":[{\"probability\":0.0258232,\"fieldName\":\"sum_cs_bytes_\",\"overFieldName\":\"cs_host\",\"overFieldValue\":\"safebrowsing-cache.google.com\",\"function\":\"max\",\"typical\":31356,\"actual\":331051}],\"normalizedProbability\":0.124748,\"anomalyScore\":1.19192},{\"probability\":0.0259695,\"fieldName\":\"sum_cs_bytes_\",\"overFieldName\":\"cs_host\",\"overFieldValue\":\"fbcdn-profile-a.akamaihd.net\",\"function\":\"max\",\"causes\":[{\"probability\":0.0259695,\"fieldName\":\"sum_cs_bytes_\",\"overFieldName\":\"cs_host\",\"overFieldValue\":\"fbcdn-profile-a.akamaihd.net\",\"function\":\"max\",\"typical\":31356,\"actual\":329801}],\"normalizedProbability\":0.123294,\"anomalyScore\":1.19192},{\"probability\":0.0268874,\"fieldName\":\"sum_cs_bytes_\",\"overFieldName\":\"cs_host\",\"overFieldValue\":\"www.oag.com\",\"function\":\"max\",\"causes\":[{\"probability\":0.0268874,\"fieldName\":\"sum_cs_bytes_\",\"overFieldName\":\"cs_host\",\"overFieldValue\":\"www.oag.com\",\"function\":\"max\",\"typical\":31356,\"actual\":322200}],\"normalizedProbability\":0.114537,\"anomalyScore\":1.19192},{\"probability\":0.0279146,\"fieldName\":\"sum_cs_bytes_\",\"overFieldName\":\"cs_host\",\"overFieldValue\":\"booking.qatarairways.com\",\"function\":\"max\",\"causes\":[{\"probability\":0.0279146,\"fieldName\":\"sum_cs_bytes_\",\"overFieldName\":\"cs_host\",\"overFieldValue\":\"booking.qatarairways.com\",\"function\":\"max\",\"typical\":31356,\"actual\":314153}],\"normalizedProbability\":0.105419,\"anomalyScore\":1.19192},{\"probability\":0.0309351,\"fieldName\":\"sum_cs_bytes_\",\"overFieldName\":\"cs_host\",\"overFieldValue\":\"resources3.news.com.au\",\"function\":\"max\",\"causes\":[{\"probability\":0.0309351,\"fieldName\":\"sum_cs_bytes_\",\"overFieldName\":\"cs_host\",\"overFieldValue\":\"resources3.news.com.au\",\"function\":\"max\",\"typical\":31356,\"actual\":292918}],\"normalizedProbability\":0.0821156,\"anomalyScore\":1.19192},{\"probability\":0.0335204,\"fieldName\":\"sum_cs_bytes_\",\"overFieldName\":\"cs_host\",\"overFieldValue\":\"resources0.news.com.au\",\"function\":\"max\",\"causes\":[{\"probability\":0.0335204,\"fieldName\":\"sum_cs_bytes_\",\"overFieldName\":\"cs_host\",\"overFieldValue\":\"resources0.news.com.au\",\"function\":\"max\",\"typical\":31356,\"actual\":277136}],\"normalizedProbability\":0.0655063,\"anomalyScore\":1.19192},{\"probability\":0.0354927,\"fieldName\":\"sum_cs_bytes_\",\"overFieldName\":\"cs_host\",\"overFieldValue\":\"www.southwest.com\",\"function\":\"max\",\"causes\":[{\"probability\":0.0354927,\"fieldName\":\"sum_cs_bytes_\",\"overFieldName\":\"cs_host\",\"overFieldValue\":\"www.southwest.com\",\"function\":\"max\",\"typical\":31356,\"actual\":266310}],\"normalizedProbability\":0.0544615,\"anomalyScore\":1.19192},{\"probability\":0.0392043,\"fieldName\":\"sum_cs_bytes_\",\"overFieldName\":\"cs_host\",\"overFieldValue\":\"syndication.twimg.com\",\"function\":\"max\",\"causes\":[{\"probability\":0.0392043,\"fieldName\":\"sum_cs_bytes_\",\"overFieldName\":\"cs_host\",\"overFieldValue\":\"syndication.twimg.com\",\"function\":\"max\",\"typical\":31356,\"actual\":248276}],\"normalizedProbability\":0.0366913,\"anomalyScore\":1.19192},{\"probability\":0.0400853,\"fieldName\":\"sum_cs_bytes_\",\"overFieldName\":\"cs_host\",\"overFieldValue\":\"mts0.google.com\",\"function\":\"max\",\"causes\":[{\"probability\":0.0400853,\"fieldName\":\"sum_cs_bytes_\",\"overFieldName\":\"cs_host\",\"overFieldValue\":\"mts0.google.com\",\"function\":\"max\",\"typical\":31356,\"actual\":244381}],\"normalizedProbability\":0.0329562,\"anomalyScore\":1.19192},{\"probability\":0.0407335,\"fieldName\":\"sum_cs_bytes_\",\"overFieldName\":\"cs_host\",\"overFieldValue\":\"www.onthegotours.com\",\"function\":\"max\",\"causes\":[{\"probability\":0.0407335,\"fieldName\":\"sum_cs_bytes_\",\"overFieldName\":\"cs_host\",\"overFieldValue\":\"www.onthegotours.com\",\"function\":\"max\",\"typical\":31356,\"actual\":241600}],\"normalizedProbability\":0.0303116,\"anomalyScore\":1.19192},{\"probability\":0.0470889,\"fieldName\":\"sum_cs_bytes_\",\"overFieldName\":\"cs_host\",\"overFieldValue\":\"chatenabled.mail.google.com\",\"function\":\"max\",\"causes\":[{\"probability\":0.0470889,\"fieldName\":\"sum_cs_bytes_\",\"overFieldName\":\"cs_host\",\"overFieldValue\":\"chatenabled.mail.google.com\",\"function\":\"max\",\"typical\":31356,\"actual\":217573}],\"normalizedProbability\":0.00823738,\"anomalyScore\":1.19192},{\"probability\":0.0491243,\"fieldName\":\"sum_cs_bytes_\",\"overFieldName\":\"cs_host\",\"overFieldValue\":\"googleads.g.doubleclick.net\",\"function\":\"max\",\"causes\":[{\"probability\":0.0491243,\"fieldName\":\"sum_cs_bytes_\",\"overFieldName\":\"cs_host\",\"overFieldValue\":\"googleads.g.doubleclick.net\",\"function\":\"max\",\"typical\":31356,\"actual\":210926}],\"normalizedProbability\":0.00237509,\"anomalyScore\":1.19192}]}],\"rawAnomalyScore\":1.26918,\"anomalyScore\":1.19192,\"maxNormalizedProbability\":93.6213,\"recordCount\":34,\"eventCount\":1159}" +
             "]";
+
+    @Rule public ExpectedException m_ExpectedException = ExpectedException.none();
 
     /**
      * Simple results persister stores buckets and state in a local array.
@@ -139,9 +144,11 @@ public class AutoDetectResultsParserTest
      */
     public class ResultsPersister implements JobResultsPersister
     {
-        List<Bucket> m_Buckets = new ArrayList<>();
-        SortedMap<String, Quantiles> m_Quantiles = new TreeMap<>();
-        List<Influencer> m_Influencers = new ArrayList<>();
+        final List<Bucket> m_Buckets = new ArrayList<>();
+        final SortedMap<String, Quantiles> m_Quantiles = new TreeMap<>();
+        final List<Influencer> m_Influencers = new ArrayList<>();
+        final List<CategoryDefinition> m_CategoryDefinitions = new ArrayList<>();
+        final List<ModelSizeStats> m_ModelSizeStats = new ArrayList<>();
         int m_BucketCount;
 
         @Override
@@ -153,7 +160,7 @@ public class AutoDetectResultsParserTest
         @Override
         public void persistCategoryDefinition(CategoryDefinition category)
         {
-            // Do nothing
+            m_CategoryDefinitions.add(category);
         }
 
         @Override
@@ -165,7 +172,7 @@ public class AutoDetectResultsParserTest
         @Override
         public void persistModelSizeStats(ModelSizeStats memUsagae)
         {
-
+            m_ModelSizeStats.add(memUsagae);
         }
 
         @Override
@@ -523,4 +530,148 @@ public class AutoDetectResultsParserTest
                 firedListener.m_NormalisedProb >= probThreshold);
     }
 
+    @Test
+    public void testParse_GivenEmptyArray() throws JsonParseException, IOException, AutoDetectParseException
+    {
+        String json = "[]";
+        InputStream inputStream = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
+        Logger logger = mock(Logger.class);
+        JobResultsPersister persister = mock(JobResultsPersister.class);
+        Renormaliser renormaliser = mock(Renormaliser.class);
+
+        AutoDetectResultsParser parser = new AutoDetectResultsParser();
+
+        parser.parseResults(inputStream, persister, renormaliser, logger);
+
+        Mockito.verifyZeroInteractions(persister);
+    }
+
+    @Test
+    public void testParse_GivenModelSizeStats() throws JsonParseException, IOException, AutoDetectParseException
+    {
+        String json = "{\"modelSizeStats\":300}";
+        InputStream inputStream = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
+        Logger logger = mock(Logger.class);
+        ResultsPersister persister = new ResultsPersister();
+        Renormaliser renormaliser = mock(Renormaliser.class);
+
+        AutoDetectResultsParser parser = new AutoDetectResultsParser();
+
+        parser.parseResults(inputStream, persister, renormaliser, logger);
+
+        assertEquals(1, persister.m_ModelSizeStats.size());
+        assertEquals(300, persister.m_ModelSizeStats.get(0).getModelBytes());
+    }
+
+    @Test
+    public void testParse_GivenCategoryDefinition() throws JsonParseException, IOException, AutoDetectParseException
+    {
+        String json = "[{\"categoryDefinition\":18}]";
+        InputStream inputStream = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
+        Logger logger = mock(Logger.class);
+        ResultsPersister persister = new ResultsPersister();
+        Renormaliser renormaliser = mock(Renormaliser.class);
+
+        AutoDetectResultsParser parser = new AutoDetectResultsParser();
+
+        parser.parseResults(inputStream, persister, renormaliser, logger);
+
+        assertEquals(1, persister.m_CategoryDefinitions.size());
+        assertEquals(18, persister.m_CategoryDefinitions.get(0).getCategoryId());
+    }
+
+    @Test
+    public void testParse_GivenUnknownObject() throws JsonParseException, IOException, AutoDetectParseException
+    {
+        m_ExpectedException.expect(AutoDetectParseException.class);
+        m_ExpectedException.expectMessage(
+                "Invalid JSON  - unexpected object parsed from output - first field unknown");
+
+        String json = "{\"unknown\":18}";
+        InputStream inputStream = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
+        Logger logger = mock(Logger.class);
+        ResultsPersister persister = new ResultsPersister();
+        Renormaliser renormaliser = mock(Renormaliser.class);
+
+        AutoDetectResultsParser parser = new AutoDetectResultsParser();
+
+        parser.parseResults(inputStream, persister, renormaliser, logger);
+    }
+
+    @Test
+    public void testParse_GivenArrayContainsAnotherArray() throws JsonParseException, IOException,
+            AutoDetectParseException
+    {
+        m_ExpectedException.expect(AutoDetectParseException.class);
+        m_ExpectedException.expectMessage(
+                "Invalid JSON should start with an array of objects or an object = START_ARRAY");
+
+        String json = "[[]]";
+        InputStream inputStream = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
+        Logger logger = mock(Logger.class);
+        ResultsPersister persister = new ResultsPersister();
+        Renormaliser renormaliser = mock(Renormaliser.class);
+
+        AutoDetectResultsParser parser = new AutoDetectResultsParser();
+
+        parser.parseResults(inputStream, persister, renormaliser, logger);
+    }
+
+    @Test
+    public void testRemoveObserver() throws JsonParseException, IOException, AutoDetectParseException
+    {
+        AutoDetectResultsParser parser = new AutoDetectResultsParser();
+        AlertObserver alertObserver = mock(AlertObserver.class);
+        parser.addObserver(alertObserver);
+
+        assertEquals(1, parser.observerCount());
+
+        parser.removeObserver(alertObserver);
+
+        assertEquals(0, parser.observerCount());
+    }
+
+    @Test
+    public void testParse_GivenInterimBucket_ShouldNotNotifyObserver() throws JsonParseException,
+            IOException, AutoDetectParseException
+    {
+        String json = "{\"timestamp\":1359450000,\"anomalyScore\":99.0, \"isInterim\":true}";
+
+
+        InputStream inputStream = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
+        Logger logger = mock(Logger.class);
+        ResultsPersister persister = new ResultsPersister();
+        Renormaliser renormaliser = mock(Renormaliser.class);
+        AutoDetectResultsParser parser = new AutoDetectResultsParser();
+        AlertListener alertListener = new AlertListener(90.0, 90.0);
+        parser.addObserver(alertListener);
+
+        parser.parseResults(inputStream, persister, renormaliser, logger);
+
+        assertEquals(1, persister.m_BucketCount);
+
+        assertFalse(alertListener.isFired());
+    }
+
+    @Test
+    public void testParse_GivenBucketWithInterimFalse_ShouldNotifyObserver() throws JsonParseException,
+            IOException, AutoDetectParseException
+    {
+        String json = "{\"timestamp\":1359450000,\"anomalyScore\":99.0, \"isInterim\":false}";
+
+
+        InputStream inputStream = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
+        Logger logger = mock(Logger.class);
+        ResultsPersister persister = new ResultsPersister();
+        Renormaliser renormaliser = mock(Renormaliser.class);
+        AutoDetectResultsParser parser = new AutoDetectResultsParser();
+        AlertListener alertListener = new AlertListener(90.0, 90.0);
+        parser.addObserver(alertListener);
+
+        parser.parseResults(inputStream, persister, renormaliser, logger);
+
+        assertEquals(1, persister.m_BucketCount);
+
+        assertTrue(alertListener.isFired());
+    }
 }

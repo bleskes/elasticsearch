@@ -288,8 +288,7 @@ public class AutoDetectResultsParser
     private void notifyObservers(Bucket bucket)
     {
         // Never alert on interim results
-        if (bucket.isInterim() != null &&
-            bucket.isInterim() == true)
+        if (bucket.isInterim() != null && bucket.isInterim() == true)
         {
             return;
         }
