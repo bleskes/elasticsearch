@@ -27,25 +27,17 @@
 
 package com.prelert.job.process.normaliser;
 
-import java.util.Collections;
-import java.util.List;
 import java.util.Objects;
 
 import com.prelert.job.results.BucketInfluencer;
 
-class BucketInfluencerNormalisable implements Normalisable
+class BucketInfluencerNormalisable extends AbstractLeafNormalisable
 {
     private final BucketInfluencer m_BucketInfluencer;
 
     public BucketInfluencerNormalisable(BucketInfluencer influencer)
     {
         m_BucketInfluencer = Objects.requireNonNull(influencer);
-    }
-
-    @Override
-    public boolean isContainerOnly()
-    {
-        return false;
     }
 
     @Override
@@ -95,30 +87,6 @@ class BucketInfluencerNormalisable implements Normalisable
     public void setNormalisedScore(double normalisedScore)
     {
         m_BucketInfluencer.setAnomalyScore(normalisedScore);
-    }
-
-    @Override
-    public List<Integer> getChildrenTypes()
-    {
-        return Collections.emptyList();
-    }
-
-    @Override
-    public List<Normalisable> getChildren()
-    {
-        return Collections.emptyList();
-    }
-
-    @Override
-    public List<Normalisable> getChildren(int type)
-    {
-        throw new IllegalStateException("BucketInfluencer has no children");
-    }
-
-    @Override
-    public boolean setMaxChildrenScore(int childrenType, double maxScore)
-    {
-        throw new IllegalStateException("BucketInfluencer has no children");
     }
 
     @Override

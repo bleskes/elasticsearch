@@ -27,82 +27,38 @@
 
 package com.prelert.job.process.normaliser;
 
-import java.util.Objects;
+import java.util.Collections;
+import java.util.List;
 
-import com.prelert.job.results.Influencer;
-
-class InfluencerNormalisable extends AbstractLeafNormalisable
+abstract class AbstractLeafNormalisable implements Normalisable
 {
-    private final Influencer m_Influencer;
-
-    public InfluencerNormalisable(Influencer influencer)
+    @Override
+    public final boolean isContainerOnly()
     {
-        m_Influencer = Objects.requireNonNull(influencer);
+        return false;
     }
 
     @Override
-    public Level getLevel()
+    public final List<Integer> getChildrenTypes()
     {
-        return Level.INFLUENCER;
+        return Collections.emptyList();
     }
 
     @Override
-    public String getPartitonFieldName()
+    public final List<Normalisable> getChildren()
     {
-        return null;
+        return Collections.emptyList();
     }
 
     @Override
-    public String getPersonFieldName()
+    public final List<Normalisable> getChildren(int type)
     {
-        return m_Influencer.getInfluencerFieldName();
+        throw new IllegalStateException(getClass().getSimpleName() + " has no children");
     }
 
     @Override
-    public String getFunctionName()
+    public final boolean setMaxChildrenScore(int childrenType, double maxScore)
     {
-        return null;
-    }
-
-    @Override
-    public String getValueFieldName()
-    {
-        return null;
-    }
-
-    @Override
-    public double getProbability()
-    {
-        return m_Influencer.getProbability();
-    }
-
-    @Override
-    public double getNormalisedScore()
-    {
-        return m_Influencer.getAnomalyScore();
-    }
-
-    @Override
-    public void setNormalisedScore(double normalisedScore)
-    {
-        m_Influencer.setAnomalyScore(normalisedScore);
-    }
-
-    @Override
-    public void setParentScore(double parentScore)
-    {
-        throw new IllegalStateException("Influencer has no parent");
-    }
-
-    @Override
-    public void resetBigChangeFlag()
-    {
-        m_Influencer.resetBigNormalisedUpdateFlag();
-    }
-
-    @Override
-    public void raiseBigChangeFlag()
-    {
-        m_Influencer.raiseBigNormalisedUpdateFlag();
+        throw new IllegalStateException(getClass().getSimpleName() + " has no children");
     }
 }
