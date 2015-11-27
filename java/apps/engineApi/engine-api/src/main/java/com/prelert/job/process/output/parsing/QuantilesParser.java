@@ -38,14 +38,13 @@ import com.prelert.job.quantiles.Quantiles;
 import com.prelert.utils.json.AutoDetectParseException;
 import com.prelert.utils.json.FieldNameParser;
 
-public class QuantilesParser
+public final class QuantilesParser
 {
     private static final Logger LOGGER = Logger.getLogger(QuantilesParser.class);
 
     private QuantilesParser()
     {
     }
-
 
     /**
      * Create a new <code>Quantiles</code> and populate it from the JSON parser.

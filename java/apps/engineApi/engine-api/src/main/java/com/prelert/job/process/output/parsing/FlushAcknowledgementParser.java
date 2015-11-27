@@ -37,15 +37,13 @@ import com.prelert.job.process.output.FlushAcknowledgement;
 import com.prelert.utils.json.AutoDetectParseException;
 import com.prelert.utils.json.FieldNameParser;
 
-public class FlushAcknowledgementParser
+public final class FlushAcknowledgementParser
 {
     private static final Logger LOGGER = Logger.getLogger(FlushAcknowledgementParser.class);
 
     private FlushAcknowledgementParser()
     {
-
     }
-
 
     /**
      * Create a new <code>FlushAcknowledgement</code> and populate it from the

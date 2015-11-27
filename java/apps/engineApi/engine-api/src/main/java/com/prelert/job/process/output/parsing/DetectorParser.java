@@ -38,15 +38,13 @@ import com.prelert.job.results.Detector;
 import com.prelert.utils.json.AutoDetectParseException;
 import com.prelert.utils.json.FieldNameParser;
 
-public class DetectorParser
+public final class DetectorParser
 {
     private static final Logger LOGGER = Logger.getLogger(DetectorParser.class);
 
     private DetectorParser ()
     {
-
     }
-
 
     /**
      * Create a new <code>Detector</code> and populate it from the JSON parser.

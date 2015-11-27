@@ -37,7 +37,7 @@ import com.prelert.job.results.AnomalyCause;
 import com.prelert.utils.json.AutoDetectParseException;
 import com.prelert.utils.json.FieldNameParser;
 
-public class AnomalyCauseParser
+public final class AnomalyCauseParser
 {
     private static final Logger LOGGER = Logger.getLogger(AnomalyCauseParser.class);
 

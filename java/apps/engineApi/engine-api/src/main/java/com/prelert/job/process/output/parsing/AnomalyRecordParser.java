@@ -40,13 +40,12 @@ import com.prelert.job.results.AnomalyRecord;
 import com.prelert.utils.json.AutoDetectParseException;
 import com.prelert.utils.json.FieldNameParser;
 
-public class AnomalyRecordParser
+public final class AnomalyRecordParser
 {
     private static final Logger LOGGER = Logger.getLogger(AnomalyRecordParser.class);
 
     private AnomalyRecordParser()
     {
-
     }
 
     /**

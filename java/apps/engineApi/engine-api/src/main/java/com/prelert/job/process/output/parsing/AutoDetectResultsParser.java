@@ -58,8 +58,8 @@ import com.prelert.utils.json.AutoDetectParseException;
  */
 public class AutoDetectResultsParser
 {
-    private List<AlertObserver> m_Observers = new ArrayList<>();
-    private Set<String> m_AcknowledgedFlushes = new HashSet<>();
+    private final List<AlertObserver> m_Observers = new ArrayList<>();
+    private final Set<String> m_AcknowledgedFlushes = new HashSet<>();
     private volatile boolean m_ParsingStarted;
     private volatile boolean m_ParsingInProgress;
 
@@ -76,17 +76,7 @@ public class AutoDetectResultsParser
         synchronized (m_Observers)
         {
             // relies on obj reference id for equality
-            int index = m_Observers.indexOf(obs);
-
-            if (index >= 0)
-            {
-                m_Observers.remove(index);
-                return true;
-            }
-            else
-            {
-                return false;
-            }
+            return m_Observers.remove(obs);
         }
     }
 
@@ -298,8 +288,7 @@ public class AutoDetectResultsParser
     private void notifyObservers(Bucket bucket)
     {
         // Never alert on interim results
-        if (bucket.isInterim() != null &&
-            bucket.isInterim() == true)
+        if (bucket.isInterim() != null && bucket.isInterim() == true)
         {
             return;
         }

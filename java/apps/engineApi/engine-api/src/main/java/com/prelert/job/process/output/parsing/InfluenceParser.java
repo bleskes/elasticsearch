@@ -39,7 +39,7 @@ import com.prelert.utils.json.AutoDetectParseException;
 import com.prelert.utils.json.FieldNameParser;
 
 
-public class InfluenceParser
+public final class InfluenceParser
 {
     private static final Logger LOGGER = Logger.getLogger(InfluenceParser.class);
 
