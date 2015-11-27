@@ -39,13 +39,12 @@ import com.prelert.job.results.CategoryDefinition;
 import com.prelert.utils.json.AutoDetectParseException;
 import com.prelert.utils.json.FieldNameParser;
 
-public class CategoryDefinitionParser
+public final class CategoryDefinitionParser
 {
     private static final Logger LOGGER = Logger.getLogger(CategoryDefinitionParser.class);
 
     private CategoryDefinitionParser()
     {
-
     }
 
     /**

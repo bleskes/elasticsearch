@@ -27,25 +27,17 @@
 
 package com.prelert.job.process.normaliser;
 
-import java.util.Collections;
-import java.util.List;
 import java.util.Objects;
 
 import com.prelert.job.results.AnomalyRecord;
 
-class RecordNormalisable implements Normalisable
+class RecordNormalisable extends AbstractLeafNormalisable
 {
     private final AnomalyRecord m_Record;
 
     public RecordNormalisable(AnomalyRecord record)
     {
         m_Record = Objects.requireNonNull(record);
-    }
-
-    @Override
-    public boolean isContainerOnly()
-    {
-        return false;
     }
 
     @Override
@@ -95,30 +87,6 @@ class RecordNormalisable implements Normalisable
     public void setNormalisedScore(double normalisedScore)
     {
         m_Record.setNormalizedProbability(normalisedScore);
-    }
-
-    @Override
-    public List<Integer> getChildrenTypes()
-    {
-        return Collections.emptyList();
-    }
-
-    @Override
-    public List<Normalisable> getChildren()
-    {
-        return Collections.emptyList();
-    }
-
-    @Override
-    public List<Normalisable> getChildren(int type)
-    {
-        throw new IllegalStateException("Record has no children");
-    }
-
-    @Override
-    public boolean setMaxChildrenScore(int childrenType, double maxScore)
-    {
-        throw new IllegalStateException("Record has no children");
     }
 
     @Override

@@ -27,31 +27,23 @@
 
 package com.prelert.job.process.normaliser;
 
-import java.util.Collections;
-import java.util.List;
 import java.util.Objects;
 
 import com.prelert.job.results.BucketInfluencer;
 
-class BucketInfluencerNormalisable implements Normalisable
+class BucketInfluencerNormalisable extends AbstractLeafNormalisable
 {
-    private final BucketInfluencer m_Influencer;
+    private final BucketInfluencer m_BucketInfluencer;
 
     public BucketInfluencerNormalisable(BucketInfluencer influencer)
     {
-        m_Influencer = Objects.requireNonNull(influencer);
-    }
-
-    @Override
-    public boolean isContainerOnly()
-    {
-        return false;
+        m_BucketInfluencer = Objects.requireNonNull(influencer);
     }
 
     @Override
     public Level getLevel()
     {
-        return BucketInfluencer.BUCKET_TIME.equals(m_Influencer.getInfluencerFieldName()) ?
+        return BucketInfluencer.BUCKET_TIME.equals(m_BucketInfluencer.getInfluencerFieldName()) ?
                 Level.ROOT : Level.BUCKET_INFLUENCER;
     }
 
@@ -64,7 +56,7 @@ class BucketInfluencerNormalisable implements Normalisable
     @Override
     public String getPersonFieldName()
     {
-        return m_Influencer.getInfluencerFieldName();
+        return m_BucketInfluencer.getInfluencerFieldName();
     }
 
     @Override
@@ -82,43 +74,19 @@ class BucketInfluencerNormalisable implements Normalisable
     @Override
     public double getProbability()
     {
-        return m_Influencer.getProbability();
+        return m_BucketInfluencer.getProbability();
     }
 
     @Override
     public double getNormalisedScore()
     {
-        return m_Influencer.getAnomalyScore();
+        return m_BucketInfluencer.getAnomalyScore();
     }
 
     @Override
     public void setNormalisedScore(double normalisedScore)
     {
-        m_Influencer.setAnomalyScore(normalisedScore);
-    }
-
-    @Override
-    public List<Integer> getChildrenTypes()
-    {
-        return Collections.emptyList();
-    }
-
-    @Override
-    public List<Normalisable> getChildren()
-    {
-        return Collections.emptyList();
-    }
-
-    @Override
-    public List<Normalisable> getChildren(int type)
-    {
-        throw new IllegalStateException("BucketInfluencer has no children");
-    }
-
-    @Override
-    public boolean setMaxChildrenScore(int childrenType, double maxScore)
-    {
-        throw new IllegalStateException("BucketInfluencer has no children");
+        m_BucketInfluencer.setAnomalyScore(normalisedScore);
     }
 
     @Override

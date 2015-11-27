@@ -38,13 +38,12 @@ import com.prelert.job.ModelSizeStats.MemoryStatus;
 import com.prelert.utils.json.AutoDetectParseException;
 import com.prelert.utils.json.FieldNameParser;
 
-public class ModelSizeStatsParser
+public final class ModelSizeStatsParser
 {
     private static final Logger LOGGER = Logger.getLogger(ModelSizeStats.class);
 
     private ModelSizeStatsParser()
     {
-
     }
 
     /**

@@ -41,7 +41,7 @@ import com.prelert.utils.json.FieldNameParser;
  * Static methods for {@linkplain InfluencerParser}
  *
  */
-public class InfluencerParser
+public final class InfluencerParser
 {
     private static final Logger LOGGER = Logger.getLogger(InfluencerParser.class);
 
