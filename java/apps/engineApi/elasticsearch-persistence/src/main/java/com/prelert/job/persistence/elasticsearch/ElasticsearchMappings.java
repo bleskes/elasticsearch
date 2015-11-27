@@ -47,6 +47,7 @@ import com.prelert.job.quantiles.Quantiles;
 import com.prelert.job.results.AnomalyCause;
 import com.prelert.job.results.AnomalyRecord;
 import com.prelert.job.results.Bucket;
+import com.prelert.job.results.BucketInfluencer;
 import com.prelert.job.results.CategoryDefinition;
 import com.prelert.job.results.Influence;
 import com.prelert.job.results.Influencer;
@@ -328,9 +329,6 @@ public class ElasticsearchMappings
                         .startObject(ES_TIMESTAMP)
                             .field(TYPE, DATE)
                         .endObject()
-                        .startObject(Bucket.RAW_ANOMALY_SCORE)
-                            .field(TYPE, DOUBLE)
-                        .endObject()
                         .startObject(Bucket.ANOMALY_SCORE)
                             .field(TYPE, DOUBLE)
                         .endObject()
@@ -348,6 +346,25 @@ public class ElasticsearchMappings
                         .endObject()
                         .startObject(Bucket.EVENT_COUNT)
                             .field(TYPE, LONG)
+                        .endObject()
+                        .startObject(Bucket.BUCKET_INFLUENCERS)
+                            .startObject(PROPERTIES)
+                                .startObject(BucketInfluencer.INFLUENCER_FIELD_NAME)
+                                    .field(TYPE, STRING).field(INDEX, NOT_ANALYZED)
+                                .endObject()
+                                .startObject(BucketInfluencer.INITIAL_ANOMALY_SCORE)
+                                    .field(TYPE, DOUBLE)
+                                .endObject()
+                                .startObject(BucketInfluencer.ANOMALY_SCORE)
+                                    .field(TYPE, DOUBLE)
+                                .endObject()
+                                .startObject(BucketInfluencer.RAW_ANOMALY_SCORE)
+                                    .field(TYPE, DOUBLE)
+                                .endObject()
+                                .startObject(BucketInfluencer.PROBABILITY)
+                                    .field(TYPE, DOUBLE)
+                                .endObject()
+                            .endObject()
                         .endObject()
                     .endObject()
                 .endObject()

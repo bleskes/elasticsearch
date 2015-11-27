@@ -35,76 +35,80 @@ import static org.junit.Assert.assertTrue;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.prelert.job.results.Influencer;
+import com.prelert.job.results.BucketInfluencer;
 
-public class InfluencerNormalisableTest
+public class BucketInfluencerNormalisableTest
 {
     private static final double ERROR = 0.0001;
-    private Influencer m_Influencer;
+    private BucketInfluencer m_Influencer;
 
     @Before
     public void setUp()
     {
-        m_Influencer = new Influencer();
-        m_Influencer.setAnomalyScore(1.0);
+        m_Influencer = new BucketInfluencer();
         m_Influencer.setInfluencerFieldName("airline");
-        m_Influencer.setInfluencerFieldValue("AAL");
-        m_Influencer.setInitialAnomalyScore(2.0);
         m_Influencer.setProbability(0.05);
+        m_Influencer.setRawAnomalyScore(3.14);
+        m_Influencer.setInitialAnomalyScore(2.0);
+        m_Influencer.setAnomalyScore(1.0);
     }
 
     @Test
     public void testIsContainerOnly()
     {
-        assertFalse(new InfluencerNormalisable(m_Influencer).isContainerOnly());
+        assertFalse(new BucketInfluencerNormalisable(m_Influencer).isContainerOnly());
     }
 
     @Test
     public void testGetLevel()
     {
-        assertEquals(Level.INFLUENCER, new InfluencerNormalisable(m_Influencer).getLevel());
+        assertEquals(Level.BUCKET_INFLUENCER, new BucketInfluencerNormalisable(m_Influencer).getLevel());
+
+        BucketInfluencer timeInfluencer = new BucketInfluencer();
+        timeInfluencer.setInfluencerFieldName(BucketInfluencer.BUCKET_TIME);
+        assertEquals(Level.ROOT, new BucketInfluencerNormalisable(timeInfluencer).getLevel());
     }
 
     @Test
     public void testGetPartitionFieldName()
     {
-        assertNull(new InfluencerNormalisable(m_Influencer).getPartitonFieldName());
+        assertNull(new BucketInfluencerNormalisable(m_Influencer).getPartitonFieldName());
     }
 
     @Test
     public void testGetPersonFieldName()
     {
-        assertEquals("airline", new InfluencerNormalisable(m_Influencer).getPersonFieldName());
+        assertEquals("airline", new BucketInfluencerNormalisable(m_Influencer).getPersonFieldName());
     }
 
     @Test
     public void testGetFunctionName()
     {
-        assertNull(new InfluencerNormalisable(m_Influencer).getFunctionName());
+        assertNull(new BucketInfluencerNormalisable(m_Influencer).getFunctionName());
     }
 
     @Test
     public void testGetValueFieldName()
     {
-        assertNull(new InfluencerNormalisable(m_Influencer).getValueFieldName());
+        assertNull(new BucketInfluencerNormalisable(m_Influencer).getValueFieldName());
     }
 
     @Test
     public void testGetProbability()
     {
-        assertEquals(0.05, new InfluencerNormalisable(m_Influencer).getProbability(), ERROR);
+        assertEquals(0.05, new BucketInfluencerNormalisable(m_Influencer).getProbability(), ERROR);
     }
 
     @Test
     public void testGetNormalisedScore()
     {
-        assertEquals(1.0, new InfluencerNormalisable(m_Influencer).getNormalisedScore(), ERROR);
+        assertEquals(1.0, new BucketInfluencerNormalisable(m_Influencer).getNormalisedScore(), ERROR);
     }
 
     @Test
     public void testSetNormalisedScore()
     {
-        InfluencerNormalisable normalisable = new InfluencerNormalisable(m_Influencer);
+        BucketInfluencerNormalisable normalisable = new BucketInfluencerNormalisable(m_Influencer);
 
         normalisable.setNormalisedScore(99.0);
 
@@ -115,52 +119,48 @@ public class InfluencerNormalisableTest
     @Test
     public void testGetChildrenTypes()
     {
-        assertTrue(new InfluencerNormalisable(m_Influencer).getChildrenTypes().isEmpty());
+        assertTrue(new BucketInfluencerNormalisable(m_Influencer).getChildrenTypes().isEmpty());
     }
 
     @Test (expected = IllegalStateException.class)
     public void testGetChildren_ByType()
     {
-        new InfluencerNormalisable(m_Influencer).getChildren(0);
+        new BucketInfluencerNormalisable(m_Influencer).getChildren(0);
     }
 
     @Test
     public void testGetChildren()
     {
-        assertTrue(new InfluencerNormalisable(m_Influencer).getChildren().isEmpty());
+        assertTrue(new BucketInfluencerNormalisable(m_Influencer).getChildren().isEmpty());
     }
 
     @Test(expected = IllegalStateException.class)
     public void testSetMaxChildrenScore()
     {
-        new InfluencerNormalisable(m_Influencer).setMaxChildrenScore(0, 42.0);
+        new BucketInfluencerNormalisable(m_Influencer).setMaxChildrenScore(0, 42.0);
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test
     public void testSetParentScore()
     {
-        new InfluencerNormalisable(m_Influencer).setParentScore(42.0);
+        new BucketInfluencerNormalisable(m_Influencer).setParentScore(42.0);
+
+        assertEquals("airline", m_Influencer.getInfluencerFieldName());
+        assertEquals(1.0, m_Influencer.getAnomalyScore(), ERROR);
+        assertEquals(3.14, m_Influencer.getRawAnomalyScore(), ERROR);
+        assertEquals(2.0, m_Influencer.getInitialAnomalyScore(), ERROR);
+        assertEquals(0.05, m_Influencer.getProbability(), ERROR);
     }
 
     @Test
     public void testResetBigChangeFlag()
     {
-        InfluencerNormalisable normalisable = new InfluencerNormalisable(m_Influencer);
-        normalisable.raiseBigChangeFlag();
-
-        normalisable.resetBigChangeFlag();
-
-        assertFalse(m_Influencer.hadBigNormalisedUpdate());
+        new BucketInfluencerNormalisable(m_Influencer).resetBigChangeFlag();
     }
 
     @Test
     public void testRaiseBigChangeFlag()
     {
-        InfluencerNormalisable normalisable = new InfluencerNormalisable(m_Influencer);
-        normalisable.resetBigChangeFlag();
-
-        normalisable.raiseBigChangeFlag();
-
-        assertTrue(m_Influencer.hadBigNormalisedUpdate());
+        new BucketInfluencerNormalisable(m_Influencer).raiseBigChangeFlag();
     }
 }

@@ -28,9 +28,12 @@ package com.prelert.rs.client.integrationtests;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.http.client.ClientProtocolException;
 import org.apache.log4j.ConsoleAppender;
@@ -44,6 +47,8 @@ import com.prelert.job.DataDescription.DataFormat;
 import com.prelert.job.Detector;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.results.AnomalyRecord;
+import com.prelert.job.results.Bucket;
+import com.prelert.job.results.BucketInfluencer;
 import com.prelert.job.results.Influence;
 import com.prelert.job.results.Influencer;
 import com.prelert.rs.client.EngineApiClient;
@@ -67,7 +72,14 @@ public class InfluencersTest
      */
     public static final String API_BASE_URL = "http://localhost:8080/engine/v1";
 
+    private static final String FIREWALL_JOB = "firewall";
+    private static final String SSH_AUTH_JOB = "ssh-auth";
+    private static final String WEB_LOGS_JOB = "web-logs";
+    private static final String BLUECOAT_LOGS_JOB = "bluecoat-logs";
+    private static final String STATUS_CODES_RATES_JOB = "5xx_status_code_rates";
+
     private final EngineApiClient m_WebServiceClient;
+    private final List<String> m_JobIds;
 
     /**
      * Creates a new http client
@@ -75,6 +87,7 @@ public class InfluencersTest
     public InfluencersTest(String baseUrl)
     {
         m_WebServiceClient = new EngineApiClient(baseUrl);
+        m_JobIds = new ArrayList<>();
     }
 
     /**
@@ -90,9 +103,7 @@ public class InfluencersTest
      */
     private void doFirewallJob(String filePath) throws ClientProtocolException, IOException
     {
-        final String FIREWALL = "firewall";
-
-        m_WebServiceClient.deleteJob(FIREWALL);
+        m_WebServiceClient.deleteJob(FIREWALL_JOB);
 
         Detector d = new Detector();
         d.setFunction("dc");
@@ -111,22 +122,16 @@ public class InfluencersTest
         dd.setTimeFormat("epoch");
 
         JobConfiguration config = new JobConfiguration(ac);
-        config.setId(FIREWALL);
+        config.setId(FIREWALL_JOB);
         config.setDataDescription(dd);
 
-        String jobId = m_WebServiceClient.createJob(config);
-        if (jobId == null || jobId.isEmpty())
-        {
-            LOGGER.error("No Job Id returned by create job");
-            test(jobId != null && jobId.isEmpty() == false);
-        }
-
+        createJob(config);
 
         File data = new File(filePath, "firewall.log");
-        m_WebServiceClient.fileUpload(FIREWALL, data, false);
-        m_WebServiceClient.closeJob(FIREWALL);
+        m_WebServiceClient.fileUpload(FIREWALL_JOB, data, false);
+        m_WebServiceClient.closeJob(FIREWALL_JOB);
 
-        Pagination<AnomalyRecord> records = m_WebServiceClient.prepareGetRecords(FIREWALL).get();
+        Pagination<AnomalyRecord> records = m_WebServiceClient.prepareGetRecords(FIREWALL_JOB).get();
 
         AnomalyRecord record = records.getDocuments().get(0);
 
@@ -135,7 +140,7 @@ public class InfluencersTest
         test(record.getInfluencers().get(0).getInfluencerFieldValues().size() == 1);
         test(record.getInfluencers().get(0).getInfluencerFieldValues().get(0).equals("23.28.243.150"));
 
-        List<Influencer> influencers = m_WebServiceClient.prepareGetInfluencers(FIREWALL).get()
+        List<Influencer> influencers = m_WebServiceClient.prepareGetInfluencers(FIREWALL_JOB).get()
                 .getDocuments();
         test(influencers.size() == 1);
         test(influencers.get(0).getInfluencerFieldName().equals("src_ip"));
@@ -143,7 +148,6 @@ public class InfluencersTest
         test(influencers.get(0).getTimestamp().equals(new Date(1421992800000L)));
         test(influencers.get(0).getAnomalyScore() > 85.0);
     }
-
 
     /**
      * pam_authd.log  contains SSH authentication messages for all users,
@@ -159,9 +163,7 @@ public class InfluencersTest
      */
     private void doAuthDJob(String filePath) throws ClientProtocolException, IOException
     {
-        final String SSH_AUTH = "ssh-auth";
-
-        m_WebServiceClient.deleteJob(SSH_AUTH);
+        m_WebServiceClient.deleteJob(SSH_AUTH_JOB);
 
         Detector d = new Detector();
         d.setFunction("high_count");
@@ -180,22 +182,16 @@ public class InfluencersTest
         dd.setTimeFormat("epoch");
 
         JobConfiguration config = new JobConfiguration(ac);
-        config.setId(SSH_AUTH);
+        config.setId(SSH_AUTH_JOB);
         config.setDataDescription(dd);
 
-        String jobId = m_WebServiceClient.createJob(config);
-        if (jobId == null || jobId.isEmpty())
-        {
-            LOGGER.error("No Job Id returned by create job");
-            test(jobId != null && jobId.isEmpty() == false);
-        }
-
+        createJob(config);
 
         File data = new File(filePath, "pam_authd.log");
-        m_WebServiceClient.fileUpload(SSH_AUTH, data, false);
-        m_WebServiceClient.closeJob(SSH_AUTH);
+        m_WebServiceClient.fileUpload(SSH_AUTH_JOB, data, false);
+        m_WebServiceClient.closeJob(SSH_AUTH_JOB);
 
-        Pagination<AnomalyRecord> records = m_WebServiceClient.prepareGetRecords(SSH_AUTH).get();
+        Pagination<AnomalyRecord> records = m_WebServiceClient.prepareGetRecords(SSH_AUTH_JOB).get();
 
         AnomalyRecord record = records.getDocuments().get(0);
 
@@ -205,7 +201,7 @@ public class InfluencersTest
         test(record.getInfluencers().get(0).getInfluencerFieldValues().size() == 1);
         test(record.getInfluencers().get(0).getInfluencerFieldValues().get(0).equals("23.28.243.150"));
 
-        List<Influencer> influencers = m_WebServiceClient.prepareGetInfluencers(SSH_AUTH).get()
+        List<Influencer> influencers = m_WebServiceClient.prepareGetInfluencers(SSH_AUTH_JOB).get()
                 .getDocuments();
         test(influencers.size() == 1);
         test(influencers.get(0).getInfluencerFieldName().equals("src_ip"));
@@ -230,9 +226,7 @@ public class InfluencersTest
      */
     private void doServerLogsJob(String filePath) throws ClientProtocolException, IOException
     {
-        final String WEB_LOGS = "web-logs";
-
-        m_WebServiceClient.deleteJob(WEB_LOGS);
+        m_WebServiceClient.deleteJob(WEB_LOGS_JOB);
 
         Detector d = new Detector();
         d.setFunction("rare");
@@ -250,22 +244,16 @@ public class InfluencersTest
         dd.setTimeFormat("epoch");
 
         JobConfiguration config = new JobConfiguration(ac);
-        config.setId(WEB_LOGS);
+        config.setId(WEB_LOGS_JOB);
         config.setDataDescription(dd);
 
-        String jobId = m_WebServiceClient.createJob(config);
-        if (jobId == null || jobId.isEmpty())
-        {
-            LOGGER.error("No Job Id returned by create job");
-            test(jobId != null && jobId.isEmpty() == false);
-        }
-
+        createJob(config);
 
         File data = new File(filePath, "intranet_server.log");
-        m_WebServiceClient.fileUpload(WEB_LOGS, data, false);
-        m_WebServiceClient.closeJob(WEB_LOGS);
+        m_WebServiceClient.fileUpload(WEB_LOGS_JOB, data, false);
+        m_WebServiceClient.closeJob(WEB_LOGS_JOB);
 
-        Pagination<AnomalyRecord> records = m_WebServiceClient.prepareGetRecords(WEB_LOGS).get();
+        Pagination<AnomalyRecord> records = m_WebServiceClient.prepareGetRecords(WEB_LOGS_JOB).get();
 
         AnomalyRecord record = records.getDocuments().get(0);
 
@@ -280,7 +268,7 @@ public class InfluencersTest
         src.addInfluenceFieldValue("10.2.20.200");
         test(record.getInfluencers().indexOf(user) >= 0);
 
-        Pagination<Influencer> pagination = m_WebServiceClient.prepareGetInfluencers(WEB_LOGS).get();
+        Pagination<Influencer> pagination = m_WebServiceClient.prepareGetInfluencers(WEB_LOGS_JOB).get();
         test(pagination.getHitCount() > 100);
         List<Influencer> influencers = pagination.getDocuments();
         test(influencers.size() == 100);
@@ -308,7 +296,7 @@ public class InfluencersTest
         }
 
         // Test filtering based on anomalyScore
-        test(m_WebServiceClient.prepareGetInfluencers(WEB_LOGS)
+        test(m_WebServiceClient.prepareGetInfluencers(WEB_LOGS_JOB)
                 .anomalyScoreThreshold(90.0)
                 .get()
                 .getHitCount() == 19);
@@ -330,9 +318,7 @@ public class InfluencersTest
      */
     private void doBluecoatLogsJob(String filePath) throws ClientProtocolException, IOException
     {
-        final String BLUECOAT_LOGS = "bluecoat-logs";
-
-        m_WebServiceClient.deleteJob(BLUECOAT_LOGS);
+        m_WebServiceClient.deleteJob(BLUECOAT_LOGS_JOB);
 
         Detector d = new Detector();
         d.setFunction("high_sum");
@@ -352,22 +338,16 @@ public class InfluencersTest
         dd.setTimeFormat("epoch");
 
         JobConfiguration config = new JobConfiguration(ac);
-        config.setId(BLUECOAT_LOGS);
+        config.setId(BLUECOAT_LOGS_JOB);
         config.setDataDescription(dd);
 
-        String jobId = m_WebServiceClient.createJob(config);
-        if (jobId == null || jobId.isEmpty())
-        {
-            LOGGER.error("No Job Id returned by create job");
-            test(jobId != null && jobId.isEmpty() == false);
-        }
-
+        createJob(config);
 
         File data = new File(filePath, "proxy_bluecoat.log");
-        m_WebServiceClient.fileUpload(BLUECOAT_LOGS, data, false);
-        m_WebServiceClient.closeJob(BLUECOAT_LOGS);
+        m_WebServiceClient.fileUpload(BLUECOAT_LOGS_JOB, data, false);
+        m_WebServiceClient.closeJob(BLUECOAT_LOGS_JOB);
 
-        Pagination<AnomalyRecord> records = m_WebServiceClient.prepareGetRecords(BLUECOAT_LOGS).get();
+        Pagination<AnomalyRecord> records = m_WebServiceClient.prepareGetRecords(BLUECOAT_LOGS_JOB).get();
 
         AnomalyRecord record = records.getDocuments().get(0);
 
@@ -382,8 +362,8 @@ public class InfluencersTest
         src.addInfluenceFieldValue("10.2.20.200");
         test(record.getInfluencers().indexOf(user) >= 0);
 
-        Pagination<Influencer> pagination = m_WebServiceClient.prepareGetInfluencers(BLUECOAT_LOGS).get();
-        test(pagination.getHitCount() > 1500);
+        Pagination<Influencer> pagination = m_WebServiceClient.prepareGetInfluencers(BLUECOAT_LOGS_JOB).get();
+        test(pagination.getHitCount() > 1000);
         List<Influencer> influencers = pagination.getDocuments();
         test(influencers.size() == 100);
 
@@ -406,23 +386,13 @@ public class InfluencersTest
      * Analyse the 5xx status code data using the high count function
      * so there are record and bucket level influencers.
      *
-     * *** Bucket level influencers aren't implemented yet ***
-     *
-     * The anomaly results aren't tested, the code only asserts that the
-     * Engine successfully processes the data.
-     *
-     *
-     *
      * @param filePath
      * @throws ClientProtocolException
      * @throws IOException
      */
     private void doBucketOnlyInfluencers(String filePath) throws ClientProtocolException, IOException
     {
-        // TODO update test when bucket influencers are added
-        final String STATUS_CODES_RATES = "5xx_status_code_rates";
-
-        m_WebServiceClient.deleteJob(STATUS_CODES_RATES);
+        m_WebServiceClient.deleteJob(STATUS_CODES_RATES_JOB);
 
         Detector d = new Detector();
         d.setFunction("high_count");
@@ -439,25 +409,56 @@ public class InfluencersTest
         dd.setTimeFormat("epoch");
 
         JobConfiguration config = new JobConfiguration(ac);
-        config.setId(STATUS_CODES_RATES);
+        config.setId(STATUS_CODES_RATES_JOB);
         config.setDataDescription(dd);
 
-        String jobId = m_WebServiceClient.createJob(config);
+        createJob(config);
+
+        File data = new File(filePath, "5xx_status_codes.csv");
+        m_WebServiceClient.fileUpload(STATUS_CODES_RATES_JOB, data, false);
+        m_WebServiceClient.closeJob(STATUS_CODES_RATES_JOB);
+
+        Pagination<Bucket> topBuckets = m_WebServiceClient.prepareGetBuckets(STATUS_CODES_RATES_JOB)
+                .anomalyScoreThreshold(10.0)
+                .expand(true)
+                .get();
+
+        for (Bucket bucket : topBuckets.getDocuments())
+        {
+            double anomalyScore = bucket.getAnomalyScore();
+            double maxBucketInfluencerAnomalyScore = 0.0;
+            test(bucket.getBucketInfluencers().size() == 2);
+            Set<String> bucketInfluencers = new HashSet<>();
+            for (BucketInfluencer bucketInfluencer : bucket.getBucketInfluencers())
+            {
+                maxBucketInfluencerAnomalyScore = Math.max(maxBucketInfluencerAnomalyScore,
+                        bucketInfluencer.getAnomalyScore());
+                bucketInfluencers.add(bucketInfluencer.getInfluencerFieldName());
+            }
+            test(bucketInfluencers.contains("bucketTime"));
+            test(bucketInfluencers.contains("clientip"));
+            test(anomalyScore == maxBucketInfluencerAnomalyScore);
+            test(bucket.getRecords().size() > 0);
+            for (AnomalyRecord record : bucket.getRecords())
+            {
+                List<Influence> influencers = record.getInfluencers();
+                test(influencers.size() == 1);
+                test(influencers.get(0).getInfluencerFieldName().equals("clientip"));
+            }
+        }
+    }
+
+    private void createJob(JobConfiguration jobConfig) throws ClientProtocolException, IOException
+    {
+        String jobId = m_WebServiceClient.createJob(jobConfig);
         if (jobId == null || jobId.isEmpty())
         {
             LOGGER.error("No Job Id returned by create job");
             test(jobId != null && jobId.isEmpty() == false);
         }
-
-        File data = new File(filePath, "5xx_status_codes.csv");
-        m_WebServiceClient.fileUpload(STATUS_CODES_RATES, data, false);
-        m_WebServiceClient.closeJob(STATUS_CODES_RATES);
-
-        Pagination<AnomalyRecord> records = m_WebServiceClient.prepareGetRecords(STATUS_CODES_RATES).get();
-
-        test(records.getHitCount() > 0);
+        LOGGER.info("Created job: " + jobId);
+        m_JobIds.add(jobId);
     }
-
 
     /**
      * Throws an IllegalStateException if <code>condition</code> is false.
@@ -465,8 +466,7 @@ public class InfluencersTest
      * @param condition
      * @throws IllegalStateException
      */
-    public static void test(boolean condition)
-    throws IllegalStateException
+    public static void test(boolean condition) throws IllegalStateException
     {
         if (condition == false)
         {
@@ -474,7 +474,28 @@ public class InfluencersTest
         }
     }
 
-    public static void main(String[] args) throws ClientProtocolException, IOException
+    /**
+     * Delete all the jobs that have been created so far
+     *
+     * @throws IOException
+     * @throws InterruptedException
+     */
+    public void deleteJobs() throws IOException, InterruptedException
+    {
+        for (String jobId : m_JobIds)
+        {
+            LOGGER.debug("Deleting job " + jobId);
+
+            boolean success = m_WebServiceClient.deleteJob(jobId);
+            if (success == false)
+            {
+                LOGGER.error("Error deleting job: " + jobId);
+            }
+        }
+    }
+
+    public static void main(String[] args) throws ClientProtocolException, IOException,
+            InterruptedException
     {
         // configure log4j
         ConsoleAppender console = new ConsoleAppender();
@@ -508,6 +529,8 @@ public class InfluencersTest
 
         String statusCodePath = prelertTestDataHome + "/engine_api_integration_test/influence";
         test.doBucketOnlyInfluencers(statusCodePath);
+
+        test.deleteJobs();
 
         LOGGER.info("All tests passed Ok");
     }

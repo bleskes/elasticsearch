@@ -28,6 +28,7 @@
 package com.prelert.utils.json;
 
 import java.io.IOException;
+import java.util.Collection;
 
 import org.apache.log4j.Logger;
 
@@ -44,6 +45,11 @@ import com.fasterxml.jackson.core.JsonToken;
  */
 public abstract class FieldNameParser<T>
 {
+    protected interface ElementParser<T>
+    {
+        T parse() throws JsonParseException, IOException, AutoDetectParseException;
+    }
+
     private final String m_ObjectName;
     protected final JsonParser m_Parser;
     protected final Logger m_Logger;
@@ -133,10 +139,9 @@ public abstract class FieldNameParser<T>
     protected abstract void handleFieldName(String fieldName, T data)
             throws AutoDetectParseException, JsonParseException, IOException;
 
-    protected int parseAsIntOrZero(JsonToken token, String fieldName) throws JsonParseException,
-            IOException
+    protected int parseAsIntOrZero(String fieldName) throws JsonParseException, IOException
     {
-        if (token == JsonToken.VALUE_NUMBER_INT)
+        if (m_Parser.getCurrentToken() == JsonToken.VALUE_NUMBER_INT)
         {
             return m_Parser.getIntValue();
         }
@@ -144,10 +149,9 @@ public abstract class FieldNameParser<T>
         return 0;
     }
 
-    protected long parseAsLongOrZero(JsonToken token, String fieldName)
-            throws JsonParseException, IOException
+    protected long parseAsLongOrZero(String fieldName) throws JsonParseException, IOException
     {
-        if (token == JsonToken.VALUE_NUMBER_INT)
+        if (m_Parser.getCurrentToken() == JsonToken.VALUE_NUMBER_INT)
         {
             return m_Parser.getLongValue();
         }
@@ -155,9 +159,9 @@ public abstract class FieldNameParser<T>
         return 0;
     }
 
-    protected double parseAsDoubleOrZero(JsonToken token, String fieldName)
-            throws JsonParseException, IOException
+    protected double parseAsDoubleOrZero(String fieldName) throws JsonParseException, IOException
     {
+        JsonToken token = m_Parser.getCurrentToken();
         if (token == JsonToken.VALUE_NUMBER_FLOAT || token == JsonToken.VALUE_NUMBER_INT)
         {
             return m_Parser.getDoubleValue();
@@ -166,10 +170,9 @@ public abstract class FieldNameParser<T>
         return 0.0;
     }
 
-    protected String parseAsStringOrNull(JsonToken token, String fieldName)
-            throws JsonParseException, IOException
+    protected String parseAsStringOrNull(String fieldName) throws JsonParseException, IOException
     {
-        if (token == JsonToken.VALUE_STRING)
+        if (m_Parser.getCurrentToken() == JsonToken.VALUE_STRING)
         {
             return m_Parser.getText();
         }
@@ -177,9 +180,9 @@ public abstract class FieldNameParser<T>
         return null;
     }
 
-    protected Boolean parseAsBooleanOrNull(JsonToken token, String fieldName)
-            throws JsonParseException, IOException
+    protected Boolean parseAsBooleanOrNull(String fieldName) throws JsonParseException, IOException
     {
+        JsonToken token = m_Parser.getCurrentToken();
         if (token == JsonToken.VALUE_TRUE)
         {
             return true;
@@ -190,5 +193,24 @@ public abstract class FieldNameParser<T>
         }
         m_Logger.warn("Cannot parse " + fieldName + " : " + m_Parser.getText() + " as a boolean");
         return null;
+    }
+
+    protected <E> void parseArray(String fieldName, ElementParser<E> elementParser,
+            Collection<E> result) throws AutoDetectParseException, IOException, JsonParseException
+    {
+        JsonToken token = m_Parser.getCurrentToken();
+        if (token != JsonToken.START_ARRAY)
+        {
+            String msg = "Invalid value Expecting an array of " + fieldName;
+            m_Logger.warn(msg);
+            throw new AutoDetectParseException(msg);
+        }
+
+        token = m_Parser.nextToken();
+        while (token != JsonToken.END_ARRAY)
+        {
+            result.add(elementParser.parse());
+            token = m_Parser.nextToken();
+        }
     }
 }

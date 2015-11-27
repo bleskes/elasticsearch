@@ -31,15 +31,15 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-import com.prelert.job.results.AnomalyRecord;
+import com.prelert.job.results.BucketInfluencer;
 
-class RecordNormalisable implements Normalisable
+class BucketInfluencerNormalisable implements Normalisable
 {
-    private final AnomalyRecord m_Record;
+    private final BucketInfluencer m_Influencer;
 
-    public RecordNormalisable(AnomalyRecord record)
+    public BucketInfluencerNormalisable(BucketInfluencer influencer)
     {
-        m_Record = Objects.requireNonNull(record);
+        m_Influencer = Objects.requireNonNull(influencer);
     }
 
     @Override
@@ -51,50 +51,50 @@ class RecordNormalisable implements Normalisable
     @Override
     public Level getLevel()
     {
-        return Level.LEAF;
+        return BucketInfluencer.BUCKET_TIME.equals(m_Influencer.getInfluencerFieldName()) ?
+                Level.ROOT : Level.BUCKET_INFLUENCER;
     }
 
     @Override
     public String getPartitonFieldName()
     {
-        return m_Record.getPartitionFieldName();
+        return null;
     }
 
     @Override
     public String getPersonFieldName()
     {
-        String over = m_Record.getOverFieldName();
-        return over != null ? over : m_Record.getByFieldName();
+        return m_Influencer.getInfluencerFieldName();
     }
 
     @Override
     public String getFunctionName()
     {
-        return m_Record.getFunction();
+        return null;
     }
 
     @Override
     public String getValueFieldName()
     {
-        return m_Record.getFieldName();
+        return null;
     }
 
     @Override
     public double getProbability()
     {
-        return m_Record.getProbability();
+        return m_Influencer.getProbability();
     }
 
     @Override
     public double getNormalisedScore()
     {
-        return m_Record.getNormalizedProbability();
+        return m_Influencer.getAnomalyScore();
     }
 
     @Override
     public void setNormalisedScore(double normalisedScore)
     {
-        m_Record.setNormalizedProbability(normalisedScore);
+        m_Influencer.setAnomalyScore(normalisedScore);
     }
 
     @Override
@@ -112,30 +112,30 @@ class RecordNormalisable implements Normalisable
     @Override
     public List<Normalisable> getChildren(int type)
     {
-        throw new IllegalStateException("Record has no children");
+        throw new IllegalStateException("BucketInfluencer has no children");
     }
 
     @Override
     public boolean setMaxChildrenScore(int childrenType, double maxScore)
     {
-        throw new IllegalStateException("Record has no children");
+        throw new IllegalStateException("BucketInfluencer has no children");
     }
 
     @Override
     public void setParentScore(double parentScore)
     {
-        m_Record.setAnomalyScore(parentScore);
+        // Do nothing as it is not holding the parent score.
     }
 
     @Override
     public void resetBigChangeFlag()
     {
-        m_Record.resetBigNormalisedUpdateFlag();
+        // Do nothing
     }
 
     @Override
     public void raiseBigChangeFlag()
     {
-        m_Record.raiseBigNormalisedUpdateFlag();
+        // Do nothing
     }
 }

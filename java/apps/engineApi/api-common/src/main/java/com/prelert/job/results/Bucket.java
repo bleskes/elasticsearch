@@ -44,7 +44,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 /**
  * Bucket Result POJO
  */
-@JsonIgnoreProperties({"epoch", "detectors"})
+@JsonIgnoreProperties({"epoch", "detectors", "normalisable"})
 @JsonInclude(Include.NON_NULL)
 public class Bucket
 {
@@ -53,7 +53,6 @@ public class Bucket
      */
     public static final String ID = "id";
     public static final String TIMESTAMP = "timestamp";
-    public static final String RAW_ANOMALY_SCORE = "rawAnomalyScore";
     public static final String ANOMALY_SCORE = "anomalyScore";
     public static final String MAX_NORMALIZED_PROBABILITY = "maxNormalizedProbability";
     public static final String IS_INTERIM = "isInterim";
@@ -61,6 +60,7 @@ public class Bucket
     public static final String EVENT_COUNT = "eventCount";
     public static final String DETECTORS = "detectors";
     public static final String RECORDS = "records";
+    public static final String BUCKET_INFLUENCERS = "bucketInfluencers";
     public static final String INFLUENCERS = "influencers";
 
     public static final String ES_TIMESTAMP = "@timestamp";
@@ -80,7 +80,6 @@ public class Bucket
     private static final Logger LOGGER = Logger.getLogger(Bucket.class);
 
     private Date m_Timestamp;
-    private double m_RawAnomalyScore;
     private double m_AnomalyScore;
     private double m_MaxNormalizedProbability;
     private int m_RecordCount;
@@ -89,12 +88,14 @@ public class Bucket
     private long m_EventCount;
     private Boolean m_IsInterim;
     private boolean m_HadBigNormalisedUpdate;
+    private List<BucketInfluencer> m_BucketInfluencers;
     private List<Influencer> m_Influencers;
 
     public Bucket()
     {
         m_Detectors = new ArrayList<>();
         m_Records = Collections.emptyList();
+        m_BucketInfluencers = new ArrayList<>();
     }
 
     /**
@@ -145,17 +146,6 @@ public class Bucket
     public void setTimestamp(Date timestamp)
     {
         m_Timestamp = timestamp;
-    }
-
-
-    public double getRawAnomalyScore()
-    {
-        return m_RawAnomalyScore;
-    }
-
-    public void setRawAnomalyScore(double rawAnomalyScore)
-    {
-        m_RawAnomalyScore = rawAnomalyScore;
     }
 
     public double getAnomalyScore()
@@ -266,13 +256,31 @@ public class Bucket
         this.m_Influencers = influences;
     }
 
+    public List<BucketInfluencer> getBucketInfluencers()
+    {
+        return m_BucketInfluencers;
+    }
+
+    public void setBucketInfluencers(List<BucketInfluencer> bucketInfluencers)
+    {
+        m_BucketInfluencers = bucketInfluencers;
+    }
+
+    public void addBucketInfluencer(BucketInfluencer bucketInfluencer)
+    {
+        if (m_BucketInfluencers == null)
+        {
+            m_BucketInfluencers = new ArrayList<>();
+        }
+        m_BucketInfluencers.add(bucketInfluencer);
+    }
 
     @Override
     public int hashCode()
     {
         // m_HadBigNormalisedUpdate is deliberately excluded from the hash
-        return Objects.hash(m_Timestamp, m_EventCount, m_RawAnomalyScore, m_AnomalyScore,
-                m_MaxNormalizedProbability, m_RecordCount, m_Records, m_IsInterim, m_Influencers);
+        return Objects.hash(m_Timestamp, m_EventCount, m_AnomalyScore, m_MaxNormalizedProbability,
+                m_RecordCount, m_Records, m_IsInterim, m_BucketInfluencers, m_Influencers);
     }
 
     /**
@@ -299,21 +307,19 @@ public class Bucket
         // don't bother testing detectors
         return Objects.equals(this.m_Timestamp, that.m_Timestamp)
                 && (this.m_EventCount == that.m_EventCount)
-                && (this.m_RawAnomalyScore == that.m_RawAnomalyScore)
                 && (this.m_AnomalyScore == that.m_AnomalyScore)
                 && (this.m_MaxNormalizedProbability == that.m_MaxNormalizedProbability)
                 && (this.m_RecordCount == that.m_RecordCount)
                 && Objects.equals(this.m_Records, that.m_Records)
                 && Objects.equals(this.m_IsInterim, that.m_IsInterim)
+                && Objects.equals(this.m_BucketInfluencers, that.m_BucketInfluencers)
                 && Objects.equals(this.m_Influencers, that.m_Influencers);
     }
-
 
     public boolean hadBigNormalisedUpdate()
     {
         return m_HadBigNormalisedUpdate;
     }
-
 
     public void resetBigNormalisedUpdateFlag()
     {
@@ -323,5 +329,31 @@ public class Bucket
     public void raiseBigNormalisedUpdateFlag()
     {
         m_HadBigNormalisedUpdate = true;
+    }
+
+    /**
+     * This method encapsulated the logic for whether a bucket should
+     * be normalised. The decision depends on two factors.
+     *
+     * The first is whether the bucket has bucket influencers.
+     * Since bucket influencers were introduced, every bucket must have
+     * at least one bucket influencer. If it does not, it means it is
+     * a bucket persisted with an older version and should not be
+     * normalised.
+     *
+     * The second factor has to do with minimising the number of buckets
+     * that are sent for normalisation. Buckets that have no records
+     * and a score of zero should not be normalised as their score
+     * will not change and they will just add overhead.
+     *
+     * @return true if the bucket should be normalised or false otherwise
+     */
+    public boolean isNormalisable()
+    {
+        if (m_BucketInfluencers == null || m_BucketInfluencers.isEmpty())
+        {
+            return false;
+        }
+        return m_AnomalyScore > 0.0 || m_RecordCount > 0;
     }
 }

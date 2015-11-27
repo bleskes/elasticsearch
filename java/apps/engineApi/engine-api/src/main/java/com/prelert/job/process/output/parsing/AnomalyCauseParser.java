@@ -86,40 +86,40 @@ public class AnomalyCauseParser
             switch (fieldName)
             {
             case AnomalyCause.PROBABILITY:
-                cause.setProbability(parseAsDoubleOrZero(token, fieldName));
+                cause.setProbability(parseAsDoubleOrZero(fieldName));
                 break;
             case AnomalyCause.BY_FIELD_NAME:
-                cause.setByFieldName(parseAsStringOrNull(token, fieldName));
+                cause.setByFieldName(parseAsStringOrNull(fieldName));
                 break;
             case AnomalyCause.BY_FIELD_VALUE:
-                cause.setByFieldValue(parseAsStringOrNull(token, fieldName));
+                cause.setByFieldValue(parseAsStringOrNull(fieldName));
                 break;
             case AnomalyCause.PARTITION_FIELD_NAME:
-                cause.setPartitionFieldName(parseAsStringOrNull(token, fieldName));
+                cause.setPartitionFieldName(parseAsStringOrNull(fieldName));
                 break;
             case AnomalyCause.PARTITION_FIELD_VALUE:
-                cause.setPartitionFieldValue(parseAsStringOrNull(token, fieldName));
+                cause.setPartitionFieldValue(parseAsStringOrNull(fieldName));
                 break;
             case AnomalyCause.FUNCTION:
-                cause.setFunction(parseAsStringOrNull(token, fieldName));
+                cause.setFunction(parseAsStringOrNull(fieldName));
                 break;
             case AnomalyCause.FUNCTION_DESCRIPTION:
-                cause.setFunctionDescription(parseAsStringOrNull(token, fieldName));
+                cause.setFunctionDescription(parseAsStringOrNull(fieldName));
                 break;
             case AnomalyCause.TYPICAL:
-                cause.setTypical(parseAsDoubleOrZero(token, fieldName));
+                cause.setTypical(parseAsDoubleOrZero(fieldName));
                 break;
             case AnomalyCause.ACTUAL:
-                cause.setActual(parseAsDoubleOrZero(token, fieldName));
+                cause.setActual(parseAsDoubleOrZero(fieldName));
                 break;
             case AnomalyCause.FIELD_NAME:
-                cause.setFieldName(parseAsStringOrNull(token, fieldName));
+                cause.setFieldName(parseAsStringOrNull(fieldName));
                 break;
             case AnomalyCause.OVER_FIELD_NAME:
-                cause.setOverFieldName(parseAsStringOrNull(token, fieldName));
+                cause.setOverFieldName(parseAsStringOrNull(fieldName));
                 break;
             case AnomalyCause.OVER_FIELD_VALUE:
-                cause.setOverFieldValue(parseAsStringOrNull(token, fieldName));
+                cause.setOverFieldValue(parseAsStringOrNull(fieldName));
                 break;
             case AnomalyCause.INFLUENCERS:
                 cause.setInfluencers(InfluenceParser.parseJson(m_Parser));

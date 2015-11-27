@@ -60,7 +60,7 @@ public class Normaliser
     private static final String PER_PERSON_FIELD_NAME = "personFieldName";
     private static final String FUNCTION_NAME = "functionName";
     private static final String VALUE_FIELD_NAME = "valueFieldName";
-    private static final String RAW_SCORE = "rawScore";
+    private static final String PROBABILITY = "probability";
 
     private final String m_JobId;
     private final NormaliserProcessFactory m_ProcessFactory;
@@ -98,7 +98,7 @@ public class Normaliser
         try
         {
             writer.writeRecord(new String[] { NORMALIZATION_LEVEL, PARTITION_FIELD_NAME,
-                    PER_PERSON_FIELD_NAME, FUNCTION_NAME, VALUE_FIELD_NAME, RAW_SCORE });
+                    PER_PERSON_FIELD_NAME, FUNCTION_NAME, VALUE_FIELD_NAME, PROBABILITY });
 
             for (Normalisable result: results)
             {
@@ -137,14 +137,17 @@ public class Normaliser
     private static void writeNormalisableAndChildrenRecursively(Normalisable normalisable,
             LengthEncodedWriter writer) throws IOException
     {
-        writer.writeRecord(new String[] {
-                normalisable.getLevel().asString(),
-                Strings.nullToEmpty(normalisable.getPartitonFieldName()),
-                Strings.nullToEmpty(normalisable.getPersonFieldName()),
-                Strings.nullToEmpty(normalisable.getFunctionName()),
-                Strings.nullToEmpty(normalisable.getValueFieldName()),
-                Double.toString(normalisable.getInitialScore())
-        });
+        if (normalisable.isContainerOnly() == false)
+        {
+            writer.writeRecord(new String[] {
+                    normalisable.getLevel().asString(),
+                    Strings.nullToEmpty(normalisable.getPartitonFieldName()),
+                    Strings.nullToEmpty(normalisable.getPersonFieldName()),
+                    Strings.nullToEmpty(normalisable.getFunctionName()),
+                    Strings.nullToEmpty(normalisable.getValueFieldName()),
+                    Double.toString(normalisable.getProbability())
+            });
+        }
         for (Normalisable child : normalisable.getChildren())
         {
             writeNormalisableAndChildrenRecursively(child, writer);
@@ -186,43 +189,50 @@ public class Normaliser
     private double mergeRecursively(Iterator<NormalisedResult> scoresIter, Normalisable parent,
             boolean parentHadBigChange, Normalisable result) throws NativeProcessRunException
     {
-        if (!scoresIter.hasNext())
+        boolean hasBigChange = false;
+        if (result.isContainerOnly() == false)
         {
-            String msg = "Error iterating normalised results";
-            m_Logger.error(msg);
-            throw new NativeProcessRunException(msg, ErrorCodes.NATIVE_PROCESS_ERROR);
-        }
-
-        result.resetBigChangeFlag();
-        if (parent != null && parentHadBigChange)
-        {
-            result.setParentScore(parent.getNormalisedScore());
-            result.raiseBigChangeFlag();
-        }
-
-        double normalisedScore = scoresIter.next().getNormalizedScore();
-        boolean hasBigChange = isBigUpdate(result.getNormalisedScore(), normalisedScore);
-        if (hasBigChange)
-        {
-            result.setNormalisedScore(normalisedScore);
-            result.raiseBigChangeFlag();
-            if (parent != null)
+            if (!scoresIter.hasNext())
             {
-                parent.raiseBigChangeFlag();
+                String msg = "Error iterating normalised results";
+                m_Logger.error(msg);
+                throw new NativeProcessRunException(msg, ErrorCodes.NATIVE_PROCESS_ERROR);
+            }
+
+            result.resetBigChangeFlag();
+            if (parent != null && parentHadBigChange)
+            {
+                result.setParentScore(parent.getNormalisedScore());
+                result.raiseBigChangeFlag();
+            }
+
+            double normalisedScore = scoresIter.next().getNormalizedScore();
+            hasBigChange = isBigUpdate(result.getNormalisedScore(), normalisedScore);
+            if (hasBigChange)
+            {
+                result.setNormalisedScore(normalisedScore);
+                result.raiseBigChangeFlag();
+                if (parent != null)
+                {
+                    parent.raiseBigChangeFlag();
+                }
             }
         }
 
-        double maxChildrenScore = 0.0;
-        List<Normalisable> children = result.getChildren();
-        if (!children.isEmpty())
+        for (Integer childrenType : result.getChildrenTypes())
         {
-            for (Normalisable child : children)
+            List<Normalisable> children = result.getChildren(childrenType);
+            if (!children.isEmpty())
             {
-                maxChildrenScore = Math.max(
-                        mergeRecursively(scoresIter, result, hasBigChange, child),
-                        maxChildrenScore);
+                double maxChildrenScore = 0.0;
+                for (Normalisable child : children)
+                {
+                    maxChildrenScore = Math.max(
+                            mergeRecursively(scoresIter, result, hasBigChange, child),
+                            maxChildrenScore);
+                }
+                hasBigChange |= result.setMaxChildrenScore(childrenType, maxChildrenScore);
             }
-            result.setMaxChildrenScore(maxChildrenScore);
         }
         return result.getNormalisedScore();
     }

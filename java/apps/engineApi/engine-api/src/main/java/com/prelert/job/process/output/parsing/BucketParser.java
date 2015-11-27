@@ -37,6 +37,7 @@ import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import com.prelert.job.results.Bucket;
+import com.prelert.job.results.BucketInfluencer;
 import com.prelert.job.results.Detector;
 import com.prelert.job.results.Influencer;
 import com.prelert.utils.json.AutoDetectParseException;
@@ -132,29 +133,29 @@ public class BucketParser
             case Bucket.TIMESTAMP:
                 parseTimestamp(bucket, token);
                 break;
-            case Bucket.RAW_ANOMALY_SCORE:
-                bucket.setRawAnomalyScore(parseAsDoubleOrZero(token, fieldName));
-                break;
             case Bucket.ANOMALY_SCORE:
-                bucket.setAnomalyScore(parseAsDoubleOrZero(token, fieldName));
+                bucket.setAnomalyScore(parseAsDoubleOrZero(fieldName));
                 break;
             case Bucket.MAX_NORMALIZED_PROBABILITY:
-                bucket.setMaxNormalizedProbability(parseAsDoubleOrZero(token, fieldName));
+                bucket.setMaxNormalizedProbability(parseAsDoubleOrZero(fieldName));
                 break;
             case Bucket.RECORD_COUNT:
-                bucket.setRecordCount(parseAsIntOrZero(token, fieldName));
+                bucket.setRecordCount(parseAsIntOrZero(fieldName));
                 break;
             case Bucket.EVENT_COUNT:
-                bucket.setEventCount(parseAsLongOrZero(token, fieldName));
+                bucket.setEventCount(parseAsLongOrZero(fieldName));
                 break;
             case Bucket.IS_INTERIM:
-                bucket.setInterim(parseAsBooleanOrNull(token, fieldName));
+                bucket.setInterim(parseAsBooleanOrNull( fieldName));
                 break;
             case Bucket.DETECTORS:
-                parseDetectors(token, bucket);
+                bucket.setDetectors(parseDetectors(fieldName));
+                break;
+            case Bucket.BUCKET_INFLUENCERS:
+                bucket.setBucketInfluencers(parseBucketInfluencers(fieldName));
                 break;
             case Bucket.INFLUENCERS:
-                bucket.setInfluencers(parseInfluencers(token));
+                bucket.setInfluencers(parseInfluencers(fieldName));
                 break;
             default:
                 LOGGER.warn(String.format("Parse error unknown field in Bucket %s:%s",
@@ -178,47 +179,27 @@ public class BucketParser
             }
         }
 
-        private void parseDetectors(JsonToken token, Bucket bucket)
-                throws AutoDetectParseException, IOException, JsonParseException
+        private List<Detector> parseDetectors(String fieldName) throws AutoDetectParseException,
+                IOException, JsonParseException
         {
-            if (token != JsonToken.START_ARRAY)
-            {
-                String msg = "Invalid value Expecting an array of detectors";
-                LOGGER.warn(msg);
-                throw new AutoDetectParseException(msg);
-            }
-
-            token = m_Parser.nextToken();
-            while (token != JsonToken.END_ARRAY)
-            {
-                Detector detector = DetectorParser.parseJson(m_Parser);
-                bucket.addDetector(detector);
-
-                token = m_Parser.nextToken();
-            }
+            List<Detector> detectors = new ArrayList<>();
+            parseArray(fieldName, () -> DetectorParser.parseJson(m_Parser), detectors);
+            return detectors;
         }
 
-        private List<Influencer> parseInfluencers(JsonToken token)
+        private List<BucketInfluencer> parseBucketInfluencers(String fieldName)
                 throws AutoDetectParseException, IOException, JsonParseException
         {
-            if (token != JsonToken.START_ARRAY)
-            {
-                String msg = "Invalid value Expecting an array of influencers";
-                LOGGER.warn(msg);
-                throw new AutoDetectParseException(msg);
-            }
+            List<BucketInfluencer> influencers = new ArrayList<>();
+            parseArray(fieldName, () -> BucketInfluencerParser.parseJson(m_Parser), influencers);
+            return influencers;
+        }
 
-            List<Influencer> influencers = new ArrayList<Influencer>();
-
-            token = m_Parser.nextToken();
-            while (token != JsonToken.END_ARRAY)
-            {
-                Influencer inf = InfluencerParser.parseJson(m_Parser);
-                influencers.add(inf);
-
-                token = m_Parser.nextToken();
-            }
-
+        private List<Influencer> parseInfluencers(String fieldName)
+                throws AutoDetectParseException, IOException, JsonParseException
+        {
+            List<Influencer> influencers = new ArrayList<>();
+            parseArray(fieldName, () -> InfluencerParser.parseJson(m_Parser), influencers);
             return influencers;
         }
     }

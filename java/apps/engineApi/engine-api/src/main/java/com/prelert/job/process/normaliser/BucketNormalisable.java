@@ -27,19 +27,30 @@
 
 package com.prelert.job.process.normaliser;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 import com.prelert.job.results.Bucket;
 
 class BucketNormalisable implements Normalisable
 {
+    private static final int BUCKET_INFLUENCER = 0;
+    private static final int RECORD = 1;
+    private static final List<Integer> CHILDREN_TYPES = Arrays.asList(BUCKET_INFLUENCER, RECORD);
+
     private final Bucket m_Bucket;
 
     public BucketNormalisable(Bucket bucket)
     {
         m_Bucket = Objects.requireNonNull(bucket);
+    }
+
+    @Override
+    public boolean isContainerOnly()
+    {
+        return true;
     }
 
     @Override
@@ -73,9 +84,9 @@ class BucketNormalisable implements Normalisable
     }
 
     @Override
-    public double getInitialScore()
+    public double getProbability()
     {
-        return m_Bucket.getRawAnomalyScore();
+        throw new IllegalStateException("Bucket is container only");
     }
 
     @Override
@@ -91,16 +102,60 @@ class BucketNormalisable implements Normalisable
     }
 
     @Override
-    public List<Normalisable> getChildren()
+    public List<Integer> getChildrenTypes()
     {
-        return m_Bucket.getRecords().stream().map(record -> new RecordNormalisable(record))
-                .collect(Collectors.toList());
+        return CHILDREN_TYPES;
     }
 
     @Override
-    public void setMaxChildrenScore(double maxScore)
+    public List<Normalisable> getChildren()
     {
-        m_Bucket.setMaxNormalizedProbability(maxScore);
+        List<Normalisable> children = new ArrayList<>();
+        for (Integer type : getChildrenTypes())
+        {
+            children.addAll(getChildren(type));
+        }
+        return children;
+    }
+
+    @Override
+    public List<Normalisable> getChildren(int type)
+    {
+        List<Normalisable> children = new ArrayList<>();
+        switch (type)
+        {
+            case BUCKET_INFLUENCER:
+                m_Bucket.getBucketInfluencers().stream().forEach(
+                        influencer -> children.add(new BucketInfluencerNormalisable(influencer)));
+                break;
+            case RECORD:
+                m_Bucket.getRecords().stream().forEach(
+                        record -> children.add(new RecordNormalisable(record)));
+                break;
+            default:
+                throw new IllegalArgumentException("Invalid type: " + type);
+        }
+        return children;
+    }
+
+    @Override
+    public boolean setMaxChildrenScore(int childrenType, double maxScore)
+    {
+        double oldScore = 0.0;
+        switch (childrenType)
+        {
+            case BUCKET_INFLUENCER:
+                oldScore = m_Bucket.getAnomalyScore();
+                m_Bucket.setAnomalyScore(maxScore);
+                break;
+            case RECORD:
+                oldScore = m_Bucket.getMaxNormalizedProbability();
+                m_Bucket.setMaxNormalizedProbability(maxScore);
+                break;
+            default:
+                throw new IllegalArgumentException("Invalid type: " + childrenType);
+        }
+        return maxScore != oldScore;
     }
 
     @Override

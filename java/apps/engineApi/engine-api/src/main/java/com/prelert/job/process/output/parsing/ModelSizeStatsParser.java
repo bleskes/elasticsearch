@@ -117,22 +117,22 @@ public class ModelSizeStatsParser
             switch (fieldName)
             {
             case ModelSizeStats.TYPE:
-                modelSizeStats.setModelBytes(parseAsLongOrZero(token, fieldName));
+                modelSizeStats.setModelBytes(parseAsLongOrZero(fieldName));
                 break;
             case ModelSizeStats.TOTAL_BY_FIELD_COUNT:
-                modelSizeStats.setTotalByFieldCount(parseAsLongOrZero(token, fieldName));
+                modelSizeStats.setTotalByFieldCount(parseAsLongOrZero(fieldName));
                 break;
             case ModelSizeStats.TOTAL_OVER_FIELD_COUNT:
-                modelSizeStats.setTotalOverFieldCount(parseAsLongOrZero(token, fieldName));
+                modelSizeStats.setTotalOverFieldCount(parseAsLongOrZero(fieldName));
                 break;
             case ModelSizeStats.TOTAL_PARTITION_FIELD_COUNT:
-                modelSizeStats.setTotalPartitionFieldCount(parseAsLongOrZero(token, fieldName));
+                modelSizeStats.setTotalPartitionFieldCount(parseAsLongOrZero(fieldName));
                 break;
             case ModelSizeStats.BUCKET_ALLOCATION_FAILURES_COUNT:
-                modelSizeStats.setBucketAllocationFailuresCount(parseAsLongOrZero(token, fieldName));
+                modelSizeStats.setBucketAllocationFailuresCount(parseAsLongOrZero(fieldName));
                 break;
             case ModelSizeStats.MEMORY_STATUS:
-                int status = parseAsIntOrZero(token, fieldName);
+                int status = parseAsIntOrZero(fieldName);
                 modelSizeStats.setMemoryStatus(MemoryStatus.values()[status].name());
                 break;
             default:

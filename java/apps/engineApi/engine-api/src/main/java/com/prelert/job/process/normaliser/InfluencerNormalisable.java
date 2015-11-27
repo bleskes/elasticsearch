@@ -43,6 +43,12 @@ class InfluencerNormalisable implements Normalisable
     }
 
     @Override
+    public boolean isContainerOnly()
+    {
+        return false;
+    }
+
+    @Override
     public Level getLevel()
     {
         return Level.INFLUENCER;
@@ -73,7 +79,7 @@ class InfluencerNormalisable implements Normalisable
     }
 
     @Override
-    public double getInitialScore()
+    public double getProbability()
     {
         return m_Influencer.getProbability();
     }
@@ -91,13 +97,25 @@ class InfluencerNormalisable implements Normalisable
     }
 
     @Override
+    public List<Integer> getChildrenTypes()
+    {
+        return Collections.emptyList();
+    }
+
+    @Override
     public List<Normalisable> getChildren()
     {
         return Collections.emptyList();
     }
 
     @Override
-    public void setMaxChildrenScore(double maxScore)
+    public List<Normalisable> getChildren(int type)
+    {
+        throw new IllegalStateException("Influencer has no children");
+    }
+
+    @Override
+    public boolean setMaxChildrenScore(int childrenType, double maxScore)
     {
         throw new IllegalStateException("Influencer has no children");
     }

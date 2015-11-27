@@ -46,7 +46,7 @@ public interface JobRenormaliser
      * due to renormalisation.
      *
      * @param jobId Job to update
-     * @param bucke the bucket to update
+     * @param bucket the bucket to update
      */
     void updateBucket(String jobId, Bucket bucket);
 

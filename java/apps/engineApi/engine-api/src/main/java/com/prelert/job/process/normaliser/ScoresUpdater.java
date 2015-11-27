@@ -153,7 +153,7 @@ class ScoresUpdater
             for (Bucket bucket : buckets)
             {
                 ++taken;
-                if (bucket.getRawAnomalyScore() > 0.0 || bucket.getRecordCount() > 0)
+                if (bucket.isNormalisable())
                 {
                     bucketsToRenormalise.add(bucket);
                     m_JobProvider.expandBucket(m_JobId, false, bucket);
