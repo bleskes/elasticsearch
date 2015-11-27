@@ -76,17 +76,7 @@ public class AutoDetectResultsParser
         synchronized (m_Observers)
         {
             // relies on obj reference id for equality
-            int index = m_Observers.indexOf(obs);
-
-            if (index >= 0)
-            {
-                m_Observers.remove(index);
-                return true;
-            }
-            else
-            {
-                return false;
-            }
+            return m_Observers.remove(obs);
         }
     }
 
