@@ -20,6 +20,8 @@ package org.elasticsearch.shield.audit;
 import org.elasticsearch.Version;
 import org.elasticsearch.common.inject.Guice;
 import org.elasticsearch.common.inject.Injector;
+import org.elasticsearch.common.network.NetworkModule;
+import org.elasticsearch.common.network.NetworkService;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.settings.SettingsFilter;
 import org.elasticsearch.common.settings.SettingsModule;
@@ -63,7 +65,15 @@ public class AuditTrailModuleTests extends ESTestCase {
                 .build();
         ThreadPool pool = new ThreadPool("testLogFile");
         try {
-            Injector injector = Guice.createInjector(new SettingsModule(settings, new SettingsFilter(settings)), new AuditTrailModule(settings), new TransportModule(settings), new CircuitBreakerModule(settings), new ThreadPoolModule(pool), new Version.Module(Version.CURRENT));
+            Injector injector = Guice.createInjector(
+                    new SettingsModule(settings, new SettingsFilter(settings)),
+                    new AuditTrailModule(settings),
+                    new TransportModule(settings),
+                    new CircuitBreakerModule(settings),
+                    new ThreadPoolModule(pool),
+                    new Version.Module(Version.CURRENT),
+                    new NetworkModule(new NetworkService(settings))
+            );
             AuditTrail auditTrail = injector.getInstance(AuditTrail.class);
             assertThat(auditTrail, instanceOf(AuditTrailService.class));
             AuditTrailService service = (AuditTrailService) auditTrail;
