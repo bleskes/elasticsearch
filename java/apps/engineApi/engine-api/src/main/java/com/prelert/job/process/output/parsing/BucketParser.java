@@ -43,13 +43,12 @@ import com.prelert.job.results.Influencer;
 import com.prelert.utils.json.AutoDetectParseException;
 import com.prelert.utils.json.FieldNameParser;
 
-public class BucketParser
+public final class BucketParser
 {
     private static final Logger LOGGER = Logger.getLogger(BucketParser.class);
 
     private BucketParser()
     {
-
     }
 
     /**
