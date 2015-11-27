@@ -28,7 +28,7 @@ define(function (require) {
             null)
           ),
           make.a({href: '#/nodes/' + state.id}, state.node.name),
-          make.div({className: 'small'}, extractIp(state.transport_address))); //   <div.small>
+          make.div({className: 'small'}, extractIp(state.node.transport_address))); //   <div.small>
       }
       // make the content for all of the metric columns
       if (_.isObject(value) && value.metric) {
