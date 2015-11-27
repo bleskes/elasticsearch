@@ -58,8 +58,8 @@ import com.prelert.utils.json.AutoDetectParseException;
  */
 public class AutoDetectResultsParser
 {
-    private List<AlertObserver> m_Observers = new ArrayList<>();
-    private Set<String> m_AcknowledgedFlushes = new HashSet<>();
+    private final List<AlertObserver> m_Observers = new ArrayList<>();
+    private final Set<String> m_AcknowledgedFlushes = new HashSet<>();
     private volatile boolean m_ParsingStarted;
     private volatile boolean m_ParsingInProgress;
 
