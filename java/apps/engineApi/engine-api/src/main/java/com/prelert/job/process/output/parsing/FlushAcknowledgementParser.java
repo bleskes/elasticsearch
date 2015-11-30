@@ -37,90 +37,34 @@ import com.prelert.job.process.output.FlushAcknowledgement;
 import com.prelert.utils.json.AutoDetectParseException;
 import com.prelert.utils.json.FieldNameParser;
 
-public final class FlushAcknowledgementParser
+final class FlushAcknowledgementParser extends FieldNameParser<FlushAcknowledgement>
 {
     private static final Logger LOGGER = Logger.getLogger(FlushAcknowledgementParser.class);
 
-    private FlushAcknowledgementParser()
+    public FlushAcknowledgementParser(JsonParser jsonParser)
     {
+        super("FlushAcknowledgement", jsonParser, LOGGER);
     }
 
-    /**
-     * Create a new <code>FlushAcknowledgement</code> and populate it from the
-     * JSON parser.  The parser must be pointing at the start of the object then
-     * all the object's fields are read and if they match the property names the
-     * appropriate members are set.
-     *
-     * Does not validate that all the properties (or any) have been set but if
-     * parsing fails an exception will be thrown.
-     *
-     * @param parser The JSON Parser should be pointing to the start of the object,
-     * when the function returns it will be pointing to the end.
-     * @return The new FlushAcknowledgement
-     * @throws JsonParseException
-     * @throws IOException
-     * @throws AutoDetectParseException
-     */
-    public static FlushAcknowledgement parseJson(JsonParser parser)
-    throws JsonParseException, IOException, AutoDetectParseException
+    @Override
+    protected FlushAcknowledgement supply()
     {
-        FlushAcknowledgement acknowledgement = new FlushAcknowledgement();
-        FlushAcknowledgementJsonParser flushAcknowledgementJsonParser =
-                new FlushAcknowledgementJsonParser(parser, LOGGER);
-        flushAcknowledgementJsonParser.parse(acknowledgement);
-        return acknowledgement;
+        return new FlushAcknowledgement();
     }
 
-
-    /**
-     * Create a new <code>FlushAcknowledgement</code> and populate it from the
-     * JSON parser.  The parser must be pointing at the first token inside the
-     * object.  It is assumed that prior code has validated that the previous
-     * token was the start of an object.  Then all the object's fields are read
-     * and if they match the property names the appropriate members are set.
-     *
-     * Does not validate that all the properties (or any) have been set but if
-     * parsing fails an exception will be thrown.
-     *
-     * @param parser The JSON Parser should be pointing to the start of the object,
-     * when the function returns it will be pointing to the end.
-     * @return The new FlushAcknowledgement
-     * @throws JsonParseException
-     * @throws IOException
-     * @throws AutoDetectParseException
-     */
-    public static FlushAcknowledgement parseJsonAfterStartObject(JsonParser parser)
-    throws JsonParseException, IOException, AutoDetectParseException
+    @Override
+    protected void handleFieldName(String fieldName, FlushAcknowledgement ack)
+            throws AutoDetectParseException, JsonParseException, IOException
     {
-        FlushAcknowledgement acknowledgement = new FlushAcknowledgement();
-        FlushAcknowledgementJsonParser flushAcknowledgementJsonParser =
-                new FlushAcknowledgementJsonParser(parser, LOGGER);
-        flushAcknowledgementJsonParser.parseAfterStartObject(acknowledgement);
-        return acknowledgement;
-    }
-
-    private static class FlushAcknowledgementJsonParser extends FieldNameParser<FlushAcknowledgement>
-    {
-
-        public FlushAcknowledgementJsonParser(JsonParser jsonParser, Logger logger)
+        JsonToken token = m_Parser.nextToken();
+        if (FlushAcknowledgement.FLUSH.equals(fieldName))
         {
-            super("FlushAcknowledgement", jsonParser, logger);
+            ack.setId(parseAsStringOrNull(fieldName));
         }
-
-        @Override
-        protected void handleFieldName(String fieldName, FlushAcknowledgement ack)
-                throws AutoDetectParseException, JsonParseException, IOException
+        else
         {
-            JsonToken token = m_Parser.nextToken();
-            if (FlushAcknowledgement.FLUSH.equals(fieldName))
-            {
-                ack.setId(parseAsStringOrNull(fieldName));
-            }
-            else
-            {
-                LOGGER.warn(String.format("Parse error unknown field in FlushAcknowledgement %s:%s",
-                        fieldName, token.asString()));
-            }
+            LOGGER.warn(String.format("Parse error unknown field in FlushAcknowledgement %s:%s",
+                    fieldName, token.asString()));
         }
     }
 }

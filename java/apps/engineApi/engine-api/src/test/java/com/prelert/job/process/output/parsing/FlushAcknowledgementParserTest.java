@@ -26,7 +26,7 @@
  ************************************************************/
 package com.prelert.job.process.output.parsing;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -50,7 +50,7 @@ public class FlushAcknowledgementParserTest
         JsonParser parser = createJsonParser(input);
         parser.nextToken();
 
-        FlushAcknowledgement ack = FlushAcknowledgementParser.parseJson(parser);
+        FlushAcknowledgement ack = new FlushAcknowledgementParser(parser).parseJson();
 
         assertEquals("job-id", ack.getId());
 

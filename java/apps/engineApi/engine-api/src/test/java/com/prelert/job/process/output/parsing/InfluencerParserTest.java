@@ -54,7 +54,7 @@ public class InfluencerParserTest
 
         JsonParser parser = createJsonParser(json);
         parser.nextToken();
-        Influencer influencer = InfluencerParser.parseJson(parser);
+        Influencer influencer = new InfluencerParser(parser).parseJson();
 
         assertEquals("inf-name", influencer.getInfluencerFieldName());
         assertEquals("inf-value", influencer.getInfluencerFieldValue());
@@ -70,7 +70,7 @@ public class InfluencerParserTest
 
         JsonParser parser = createJsonParser(json);
         parser.nextToken();
-        Influencer inf = InfluencerParser.parseJson(parser);
+        Influencer inf = new InfluencerParser(parser).parseJson();
 
         assertEquals(0.9, inf.getProbability(), 0.0001);
         assertEquals(97.1948, inf.getInitialAnomalyScore(), 0.0001);
@@ -83,7 +83,7 @@ public class InfluencerParserTest
 
         parser = createJsonParser(json);
         parser.nextToken();
-        inf = InfluencerParser.parseJson(parser);
+        inf = new InfluencerParser(parser).parseJson();
         assertEquals(0.4, inf.getProbability(), 0.0001);
         assertEquals(12.1948, inf.getInitialAnomalyScore(), 0.0001);
         assertEquals(12.1948, inf.getAnomalyScore(), 0.0001);

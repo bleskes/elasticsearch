@@ -56,7 +56,7 @@ public class BucketInfluencerParserTest
 
         JsonParser parser = createJsonParser(json);
         parser.nextToken();
-        BucketInfluencer influencer = BucketInfluencerParser.parseJson(parser);
+        BucketInfluencer influencer = new BucketInfluencerParser(parser).parseJson();
 
         assertEquals("inf-name", influencer.getInfluencerFieldName());
         assertEquals(0.2, influencer.getProbability(), ERROR);
@@ -75,7 +75,7 @@ public class BucketInfluencerParserTest
 
         JsonParser parser = createJsonParser(json);
         parser.nextToken();
-        BucketInfluencer influencer = BucketInfluencerParser.parseJson(parser);
+        BucketInfluencer influencer = new BucketInfluencerParser(parser).parseJson();
         assertEquals(new BucketInfluencer(), influencer);
     }
 

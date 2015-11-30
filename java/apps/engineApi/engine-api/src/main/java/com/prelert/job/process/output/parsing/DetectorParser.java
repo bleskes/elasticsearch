@@ -38,79 +38,53 @@ import com.prelert.job.results.Detector;
 import com.prelert.utils.json.AutoDetectParseException;
 import com.prelert.utils.json.FieldNameParser;
 
-public final class DetectorParser
+final class DetectorParser extends FieldNameParser<Detector>
 {
     private static final Logger LOGGER = Logger.getLogger(DetectorParser.class);
 
-    private DetectorParser ()
+    public DetectorParser(JsonParser jsonParser)
     {
+        super("Detector", jsonParser, LOGGER);
     }
 
-    /**
-     * Create a new <code>Detector</code> and populate it from the JSON parser.
-     * The parser must be pointing at the start of the object then all the object's
-     * fields are read and if they match the property names the appropriate
-     * members are set.
-     *
-     * Does not validate that all the properties (or any) have been set but if
-     * parsing fails an exception will be thrown.
-     *
-     * @param parser The JSON Parser should be pointing to the start of the object,
-     * when the function returns it will be pointing to the end.
-     * @return The new Detector
-     * @throws JsonParseException
-     * @throws IOException
-     * @throws AutoDetectParseException
-     */
-    public static Detector parseJson(JsonParser parser)
-    throws JsonParseException, IOException, AutoDetectParseException
+    @Override
+    protected Detector supply()
     {
-        Detector detector = new Detector();
-        DetectorJsonParser detectorJsonParser = new DetectorJsonParser(parser, LOGGER);
-        detectorJsonParser.parse(detector);
-        return detector;
+        return new Detector();
     }
 
-    private static class DetectorJsonParser extends FieldNameParser<Detector>
+    @Override
+    protected void handleFieldName(String fieldName, Detector detector)
+            throws AutoDetectParseException, JsonParseException, IOException
     {
-        public DetectorJsonParser(JsonParser jsonParser, Logger logger)
+        JsonToken token = m_Parser.nextToken();
+        switch (fieldName)
         {
-            super("Detector", jsonParser, logger);
-        }
-
-        @Override
-        protected void handleFieldName(String fieldName, Detector detector)
-                throws AutoDetectParseException, JsonParseException, IOException
-        {
-            JsonToken token = m_Parser.nextToken();
-            switch (fieldName)
+        case Detector.NAME:
+            detector.setName(parseAsStringOrNull(fieldName));
+            break;
+        case Detector.RECORDS:
+            if (token == JsonToken.START_ARRAY)
             {
-            case Detector.NAME:
-                detector.setName(parseAsStringOrNull(fieldName));
-                break;
-            case Detector.RECORDS:
-                if (token == JsonToken.START_ARRAY)
+                token = m_Parser.nextToken();
+                while (token != JsonToken.END_ARRAY)
                 {
-                    token = m_Parser.nextToken();
-                    while (token != JsonToken.END_ARRAY)
-                    {
-                        AnomalyRecord record = AnomalyRecordParser.parseJson(m_Parser);
-                        detector.addRecord(record);
+                    AnomalyRecord record = new AnomalyRecordParser(m_Parser).parseJson();
+                    detector.addRecord(record);
 
-                        token = m_Parser.nextToken();
-                    }
+                    token = m_Parser.nextToken();
                 }
-                else
-                {
-                    LOGGER.warn("Expected the start of an array for field '"
-                                + fieldName + "' not " + m_Parser.getText());
-                }
-                break;
-            default:
-                LOGGER.warn(String.format("Parse error unknown field in detector %s:%s",
-                        fieldName, token.asString()));
-                break;
             }
+            else
+            {
+                LOGGER.warn("Expected the start of an array for field '"
+                            + fieldName + "' not " + m_Parser.getText());
+            }
+            break;
+        default:
+            LOGGER.warn(String.format("Parse error unknown field in detector %s:%s",
+                    fieldName, token.asString()));
+            break;
         }
     }
 }

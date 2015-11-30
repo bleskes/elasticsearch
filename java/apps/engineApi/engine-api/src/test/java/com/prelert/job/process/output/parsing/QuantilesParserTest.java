@@ -26,7 +26,7 @@
  ************************************************************/
 package com.prelert.job.process.output.parsing;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -52,7 +52,7 @@ public class QuantilesParserTest
         JsonParser parser = createJsonParser(input);
         parser.nextToken();
 
-        Quantiles quantile = QuantilesParser.parseJson(parser);
+        Quantiles quantile = new QuantilesParser(parser).parseJson();
         assertEquals("quantile-state", quantile.getState());
         assertEquals(new Date(1000l), quantile.getTimestamp());
         assertEquals(Quantiles.QUANTILES_ID, quantile.getId());

@@ -217,7 +217,7 @@ public class AutoDetectResultsParser
                     switch (fieldName)
                     {
                     case Bucket.TIMESTAMP:
-                        Bucket bucket = BucketParser.parseJsonAfterStartObject(parser);
+                        Bucket bucket = new BucketParser(parser).parseJsonAfterStartObject();
                         persister.persistBucket(bucket);
                         persister.incrementBucketCount(1);
                         notifyObservers(bucket);
@@ -225,7 +225,7 @@ public class AutoDetectResultsParser
                         logger.debug("Bucket number " + ++bucketCount + " parsed from output");
                         break;
                     case Quantiles.QUANTILE_STATE:
-                        Quantiles quantiles = QuantilesParser.parseJsonAfterStartObject(parser);
+                        Quantiles quantiles = new QuantilesParser(parser).parseJsonAfterStartObject();
                         persister.persistQuantiles(quantiles);
 
                         logger.debug("Quantiles parsed from output - will " +
@@ -233,7 +233,7 @@ public class AutoDetectResultsParser
                         renormaliser.renormalise(quantiles, logger);
                         break;
                     case ModelSizeStats.TYPE:
-                        ModelSizeStats modelSizeStats = ModelSizeStatsParser.parseJsonAfterStartObject(parser);
+                        ModelSizeStats modelSizeStats = new ModelSizeStatsParser(parser).parseJsonAfterStartObject();
                         logger.trace(String.format("Parsed ModelSizeStats: %d / %d / %d / %d / %d / %s",
                             modelSizeStats.getModelBytes(),
                             modelSizeStats.getTotalByFieldCount(),
@@ -245,7 +245,7 @@ public class AutoDetectResultsParser
                         persister.persistModelSizeStats(modelSizeStats);
                         break;
                     case FlushAcknowledgement.FLUSH:
-                        FlushAcknowledgement ack = FlushAcknowledgementParser.parseJsonAfterStartObject(parser);
+                        FlushAcknowledgement ack = new FlushAcknowledgementParser(parser).parseJsonAfterStartObject();
                         logger.debug("Flush acknowledgement parsed from output for ID " +
                                     ack.getId());
                         // Commit previous writes here, effectively continuing
@@ -259,7 +259,7 @@ public class AutoDetectResultsParser
                         }
                         break;
                     case CategoryDefinition.TYPE:
-                        CategoryDefinition category = CategoryDefinitionParser.parseJsonAfterStartObject(parser);
+                        CategoryDefinition category = new CategoryDefinitionParser(parser).parseJsonAfterStartObject();
                         persister.persistCategoryDefinition(category);
                         break;
                     default:

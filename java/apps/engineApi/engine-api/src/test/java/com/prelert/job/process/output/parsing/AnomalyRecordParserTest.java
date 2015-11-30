@@ -53,7 +53,7 @@ public class AnomalyRecordParserTest
         String input = "{}";
         JsonParser parser = createJsonParser(input);
 
-        AnomalyRecordParser.parseJson(parser);
+        new AnomalyRecordParser(parser).parseJson();
     }
 
     @Test
@@ -64,7 +64,7 @@ public class AnomalyRecordParserTest
         JsonParser parser = createJsonParser(input);
         parser.nextToken();
 
-        assertEquals(new AnomalyRecord(), AnomalyRecordParser.parseJson(parser));
+        assertEquals(new AnomalyRecord(), new AnomalyRecordParser(parser).parseJson());
         assertEquals(JsonToken.END_OBJECT, parser.getCurrentToken());
     }
 
@@ -96,7 +96,7 @@ public class AnomalyRecordParserTest
         JsonParser parser = createJsonParser(input);
         parser.nextToken();
 
-        AnomalyRecord anomalyRecord = AnomalyRecordParser.parseJson(parser);
+        AnomalyRecord anomalyRecord = new AnomalyRecordParser(parser).parseJson();
 
         assertEquals(0.01, anomalyRecord.getProbability(), ERROR);
         assertEquals(42.0, anomalyRecord.getAnomalyScore(), ERROR);
