@@ -38,94 +38,40 @@ import com.prelert.job.quantiles.Quantiles;
 import com.prelert.utils.json.AutoDetectParseException;
 import com.prelert.utils.json.FieldNameParser;
 
-public final class QuantilesParser
+final class QuantilesParser extends FieldNameParser<Quantiles>
 {
     private static final Logger LOGGER = Logger.getLogger(QuantilesParser.class);
 
-    private QuantilesParser()
+    public QuantilesParser(JsonParser jsonParser)
     {
+        super("Quantiles", jsonParser, LOGGER);
     }
 
-    /**
-     * Create a new <code>Quantiles</code> and populate it from the JSON parser.
-     * The parser must be pointing at the start of the object then all the object's
-     * fields are read and if they match the property names the appropriate
-     * members are set.
-     *
-     * Does not validate that all the properties (or any) have been set but if
-     * parsing fails an exception will be thrown.
-     *
-     * @param parser The JSON Parser should be pointing to the start of the object,
-     * when the function returns it will be pointing to the end.
-     * @return The new quantiles
-     * @throws JsonParseException
-     * @throws IOException
-     * @throws AutoDetectParseException
-     */
-    public static Quantiles parseJson(JsonParser parser)
-    throws JsonParseException, IOException, AutoDetectParseException
+    @Override
+    protected Quantiles supply()
     {
-        Quantiles quantiles = new Quantiles();
-        QuantilesJsonParser quantilesJsonParser = new QuantilesJsonParser(parser, LOGGER);
-        quantilesJsonParser.parse(quantiles);
-        return quantiles;
+        return new Quantiles();
     }
 
-
-    /**
-     * Create a new <code>Quantiles</code> and populate it from the JSON parser.
-     * The parser must be pointing at the first token inside the object.  It
-     * is assumed that prior code has validated that the previous token was
-     * the start of an object.  Then all the object's fields are read and if
-     * they match the property names the appropriate members are set.
-     *
-     * Does not validate that all the properties (or any) have been set but if
-     * parsing fails an exception will be thrown.
-     *
-     * @param parser The JSON Parser should be pointing to the start of the object,
-     * when the function returns it will be pointing to the end.
-     * @return The new quantiles
-     * @throws JsonParseException
-     * @throws IOException
-     * @throws AutoDetectParseException
-     */
-    public static Quantiles parseJsonAfterStartObject(JsonParser parser)
-    throws JsonParseException, IOException, AutoDetectParseException
+    @Override
+    protected void handleFieldName(String fieldName, Quantiles quantiles)
+            throws AutoDetectParseException, JsonParseException, IOException
     {
-        Quantiles quantiles = new Quantiles();
-        QuantilesJsonParser quantilesJsonParser = new QuantilesJsonParser(parser, LOGGER);
-        quantilesJsonParser.parseAfterStartObject(quantiles);
-        return quantiles;
-    }
-
-    private static class QuantilesJsonParser extends FieldNameParser<Quantiles>
-    {
-
-        public QuantilesJsonParser(JsonParser jsonParser, Logger logger)
+        JsonToken token = m_Parser.nextToken();
+        switch (fieldName)
         {
-            super("Quantiles", jsonParser, logger);
-        }
-
-        @Override
-        protected void handleFieldName(String fieldName, Quantiles quantiles)
-                throws AutoDetectParseException, JsonParseException, IOException
-        {
-            JsonToken token = m_Parser.nextToken();
-            switch (fieldName)
-            {
-            case Quantiles.TIMESTAMP:
-                long seconds = parseAsLongOrZero(fieldName);
-                // convert seconds to ms
-                quantiles.setTimestamp(new Date(seconds * 1000));
-                break;
-            case Quantiles.QUANTILE_STATE:
-                quantiles.setState(parseAsStringOrNull(fieldName));
-                break;
-            default:
-                LOGGER.warn(String.format("Parse error unknown field in Quantiles %s:%s",
-                        fieldName, token.asString()));
-                break;
-            }
+        case Quantiles.TIMESTAMP:
+            long seconds = parseAsLongOrZero(fieldName);
+            // convert seconds to ms
+            quantiles.setTimestamp(new Date(seconds * 1000));
+            break;
+        case Quantiles.QUANTILE_STATE:
+            quantiles.setState(parseAsStringOrNull(fieldName));
+            break;
+        default:
+            LOGGER.warn(String.format("Parse error unknown field in Quantiles %s:%s",
+                    fieldName, token.asString()));
+            break;
         }
     }
 }

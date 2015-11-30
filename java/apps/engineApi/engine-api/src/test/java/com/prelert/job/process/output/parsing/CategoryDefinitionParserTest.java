@@ -26,7 +26,7 @@
  ************************************************************/
 package com.prelert.job.process.output.parsing;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -51,7 +51,7 @@ public class CategoryDefinitionParserTest
         JsonParser parser = createJsonParser(input);
         parser.nextToken();
 
-        CategoryDefinitionParser.parseJson(parser);
+        new CategoryDefinitionParser(parser).parseJson();
     }
 
     @Test
@@ -65,7 +65,7 @@ public class CategoryDefinitionParserTest
         JsonParser parser = createJsonParser(input);
         parser.nextToken();
 
-        CategoryDefinition category = CategoryDefinitionParser.parseJson(parser);
+        CategoryDefinition category = new CategoryDefinitionParser(parser).parseJson();
 
         assertEquals(1, category.getCategoryId());
         assertEquals("foo bar", category.getTerms());

@@ -26,7 +26,7 @@
  ************************************************************/
 package com.prelert.job.process.output.parsing;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -69,7 +69,7 @@ public class AnomalyCauseParserTest
         JsonParser parser = new JsonFactory().createParser(inputStream);
 
         parser.nextToken();
-        AnomalyCause cause = AnomalyCauseParser.parseJson(parser);
+        AnomalyCause cause = new AnomalyCauseParser(parser).parseJson();
 
         assertEquals(cause.getFieldName(), "groundspeed");
         assertEquals(cause.getProbability(), 6.04434E-49, 0.0001);

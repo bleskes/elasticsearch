@@ -39,66 +39,39 @@ import com.prelert.utils.json.AutoDetectParseException;
 import com.prelert.utils.json.FieldNameParser;
 
 
-public final class InfluenceParser
+final class InfluenceParser extends FieldNameParser<List<Influence>>
 {
     private static final Logger LOGGER = Logger.getLogger(InfluenceParser.class);
 
-    private InfluenceParser()
+    public InfluenceParser(JsonParser jsonParser)
     {
+        super("Influences", jsonParser, LOGGER);
     }
 
-    /**
-     * Create a new <code>List&ltInfluence&gt</code> and populate it from the JSON parser.
-     * The parser must be pointing at the start of the object then all the object's
-     * fields are read and if they match the property names then the appropriate
-     * members are set.
-     *
-     * Does not validate that all the properties (or any) have been set but if
-     * parsing fails an exception will be thrown.
-     *
-     * @param parser The JSON Parser should be pointing to the start of the object,
-     * when the function returns it will be pointing to the end.
-     * @return List of {@linkplain Influence}
-     * @throws JsonParseException
-     * @throws IOException
-     * @throws AutoDetectParseException
-     */
-    public static List<Influence> parseJson(JsonParser parser)
-    throws JsonParseException, IOException, AutoDetectParseException
+    @Override
+    protected List<Influence> supply()
     {
-        List<Influence> records = new ArrayList<>();
-        InfluencesJsonParser influencesJsonParser = new InfluencesJsonParser(parser, LOGGER);
-        influencesJsonParser.parse(records);
-        return records;
+        return new ArrayList<>();
     }
 
-    private static class InfluencesJsonParser extends FieldNameParser<List<Influence>>
+    @Override
+    protected void handleFieldName(String fieldName, List<Influence> influences)
+            throws AutoDetectParseException, JsonParseException, IOException
     {
+        Influence influence = new Influence();
+        influence.setInfluencerFieldName(fieldName);
+        m_Parser.nextToken();
+        influence.setInfluencerFieldValues(parseValues(fieldName));
 
-        public InfluencesJsonParser(JsonParser jsonParser, Logger logger)
-        {
-            super("Influences", jsonParser, logger);
-        }
+        influences.add(influence);
+    }
 
-        @Override
-        protected void handleFieldName(String fieldName, List<Influence> influences)
-                throws AutoDetectParseException, JsonParseException, IOException
-        {
-            Influence influence = new Influence();
-            influence.setInfluencerFieldName(fieldName);
-            m_Parser.nextToken();
-            influence.setInfluencerFieldValues(parseValues(fieldName));
-
-            influences.add(influence);
-        }
-
-        private List<String> parseValues(String fieldName) throws AutoDetectParseException,
-                IOException, JsonParseException
-        {
-            List<String> influenceValues = new ArrayList<>();
-            parseArray(fieldName, () -> parseAsStringOrNull(fieldName), influenceValues);
-            return influenceValues;
-        }
+    private List<String> parseValues(String fieldName) throws AutoDetectParseException,
+            IOException, JsonParseException
+    {
+        List<String> influenceValues = new ArrayList<>();
+        parseArray(fieldName, () -> parseAsStringOrNull(fieldName), influenceValues);
+        return influenceValues;
     }
 }
 

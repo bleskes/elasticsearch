@@ -73,7 +73,7 @@ public class BucketParserTest
         JsonParser parser = new JsonFactory().createParser(inputStream);
 
         parser.nextToken();
-        Bucket b = BucketParser.parseJson(parser);
+        Bucket b = new BucketParser(parser).parseJson();
         assertEquals(1369437000000l, b.getTimestamp().getTime());
         assertEquals(2.0, b.getMaxNormalizedProbability(), ERROR);
         assertEquals(50.0, b.getAnomalyScore(), ERROR);

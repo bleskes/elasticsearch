@@ -54,7 +54,7 @@ public class ModelSizeStatsParserTest
         JsonParser parser = createJsonParser(input);
         parser.nextToken();
 
-        ModelSizeStats stats = ModelSizeStatsParser.parseJson(parser);
+        ModelSizeStats stats = new ModelSizeStatsParser(parser).parseJson();
 
         assertEquals(1L, stats.getModelBytes());
         assertEquals(2L, stats.getTotalByFieldCount());

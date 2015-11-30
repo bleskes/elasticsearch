@@ -62,7 +62,7 @@ public abstract class FieldNameParser<T>
     }
 
     /**
-     * Populates the passed in data from the JSON parser.
+     * Creates a new object T and populates it from the JSON parser.
      * The parser must be pointing at the start of the object then all the object's
      * fields are read and if they match the property names the appropriate
      * members are set.
@@ -70,13 +70,43 @@ public abstract class FieldNameParser<T>
      * Does not validate that all the properties (or any) have been set but if
      * parsing fails an exception will be thrown.
      *
-     * @param data The data object to be populated
      * @return The populated data
      * @throws JsonParseException
      * @throws IOException
      * @throws AutoDetectParseException
      */
-    public void parse(T data) throws AutoDetectParseException, JsonParseException, IOException
+    public T parseJson() throws JsonParseException, IOException, AutoDetectParseException
+    {
+        T result = supply();
+        parse(result);
+        postProcess(result);
+        return result;
+    }
+
+    /**
+     * Creates a new object T and populates it from the JSON parser.
+     * The parser must be pointing at the first token inside the object.  It
+     * is assumed that prior code has validated that the previous token was
+     * the start of an object.  Then all the object's fields are read and if
+     * they match the property names the appropriate members are set.
+     *
+     * Does not validate that all the properties (or any) have been set but if
+     * parsing fails an exception will be thrown.
+     *
+     * @return The populated data
+     * @throws JsonParseException
+     * @throws IOException
+     * @throws AutoDetectParseException
+     */
+    public T parseJsonAfterStartObject() throws JsonParseException, IOException, AutoDetectParseException
+    {
+        T result = supply();
+        parseAfterStartObject(result);
+        postProcess(result);
+        return result;
+    }
+
+    private void parse(T data) throws AutoDetectParseException, JsonParseException, IOException
     {
         JsonToken token = m_Parser.getCurrentToken();
         if (JsonToken.START_OBJECT != token)
@@ -91,23 +121,7 @@ public abstract class FieldNameParser<T>
         parseAfterStartObject(data);
     }
 
-    /**
-     * Populates the passed in data from the JSON parser.
-     * The parser must be pointing at the first token inside the object.  It
-     * is assumed that prior code has validated that the previous token was
-     * the start of an object.  Then all the object's fields are read and if
-     * they match the property names the appropriate members are set.
-     *
-     * Does not validate that all the properties (or any) have been set but if
-     * parsing fails an exception will be thrown.
-     *
-     * @param data The data object to be populated
-     * @return The populated data
-     * @throws JsonParseException
-     * @throws IOException
-     * @throws AutoDetectParseException
-     */
-    public void parseAfterStartObject(T data) throws AutoDetectParseException, JsonParseException,
+    private void parseAfterStartObject(T data) throws AutoDetectParseException, JsonParseException,
             IOException
     {
         JsonToken token = m_Parser.getCurrentToken();
@@ -136,8 +150,22 @@ public abstract class FieldNameParser<T>
         }
     }
 
+    /**
+     * Supply a new object to be populated from the parser
+     */
+    protected abstract T supply();
+
     protected abstract void handleFieldName(String fieldName, T data)
             throws AutoDetectParseException, JsonParseException, IOException;
+
+    /**
+     * Override to perform some post processing on the parsed object
+     * @param obj the object of type T to be processed
+     */
+    protected void postProcess(T obj)
+    {
+        // Do nothing
+    }
 
     protected int parseAsIntOrZero(String fieldName) throws JsonParseException, IOException
     {

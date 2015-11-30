@@ -26,7 +26,7 @@
  ************************************************************/
 package com.prelert.job.process.output.parsing;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -40,7 +40,6 @@ import org.junit.Test;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
-import com.prelert.job.process.output.parsing.InfluenceParser;
 import com.prelert.job.results.Influence;
 import com.prelert.utils.json.AutoDetectParseException;
 
@@ -64,7 +63,7 @@ public class InfluenceParserTest
 
         JsonParser parser = createJsonParser(json);
         parser.nextToken();
-        List<Influence> infs = InfluenceParser.parseJson(parser);
+        List<Influence> infs = new InfluenceParser(parser).parseJson();
 
         assertEquals(1, infs.size());
         Influence inf = infs.get(0);
@@ -84,7 +83,7 @@ public class InfluenceParserTest
 
         JsonParser parser = createJsonParser(json);
         parser.nextToken();
-        List<Influence> infs = InfluenceParser.parseJson(parser);
+        List<Influence> infs = new InfluenceParser(parser).parseJson();
 
         assertEquals(1, infs.size());
         Influence inf = infs.get(0);
@@ -103,7 +102,7 @@ public class InfluenceParserTest
 
         JsonParser parser = createJsonParser(json);
         parser.nextToken();
-        InfluenceParser.parseJson(parser);
+        new InfluenceParser(parser).parseJson();
     }
 
     @Test
@@ -116,7 +115,7 @@ public class InfluenceParserTest
 
         JsonParser parser = createJsonParser(json);
         parser.nextToken();
-        List<Influence> infs = InfluenceParser.parseJson(parser);
+        List<Influence> infs = new InfluenceParser(parser).parseJson();
 
         assertEquals(2, infs.size());
         Collections.sort(infs, new InfluenceFieldComparator());

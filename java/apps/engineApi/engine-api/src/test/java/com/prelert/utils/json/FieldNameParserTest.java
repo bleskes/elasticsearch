@@ -70,15 +70,14 @@ public class FieldNameParserTest
     }
 
     @Test
-    public void testParse_GivenParserDoesNotPointToStartObject() throws JsonParseException,
+    public void testParseJson_GivenParserDoesNotPointToStartObject() throws JsonParseException,
             IOException, AutoDetectParseException
     {
         String input = "{}";
         JsonParser parser = createJsonParser(input);
-        TestData data = new TestData();
 
         try {
-            new TestFieldNameParser(parser, m_Logger).parse(data);
+            new TestFieldNameParser(parser, m_Logger).parseJson();
             Assert.fail();
         }
         catch (AutoDetectParseException e)
@@ -89,7 +88,7 @@ public class FieldNameParserTest
     }
 
     @Test
-    public void testParse_GivenInvalidInt() throws JsonParseException,
+    public void testParseJson_GivenInvalidInt() throws JsonParseException,
             IOException, AutoDetectParseException
     {
         String input = "{\"testInt\" : 0.0,"
@@ -100,9 +99,8 @@ public class FieldNameParserTest
                 + "}";
         JsonParser parser = createJsonParser(input);
         parser.nextToken();
-        TestData data = new TestData();
 
-        new TestFieldNameParser(parser, m_Logger).parse(data);
+        TestData data = new TestFieldNameParser(parser, m_Logger).parseJson();
 
         assertEquals(0, data.getInt());
         assertEquals(2, data.getLong());
@@ -115,7 +113,7 @@ public class FieldNameParserTest
     }
 
     @Test
-    public void testParse_GivenInvalidLong() throws JsonParseException,
+    public void testParseJson_GivenInvalidLong() throws JsonParseException,
             IOException, AutoDetectParseException
     {
         String input = "{\"testInt\" : 1,"
@@ -126,9 +124,8 @@ public class FieldNameParserTest
                 + "}";
         JsonParser parser = createJsonParser(input);
         parser.nextToken();
-        TestData data = new TestData();
 
-        new TestFieldNameParser(parser, m_Logger).parse(data);
+        TestData data = new TestFieldNameParser(parser, m_Logger).parseJson();
 
         assertEquals(1, data.getInt());
         assertEquals(0, data.getLong());
@@ -141,7 +138,7 @@ public class FieldNameParserTest
     }
 
     @Test
-    public void testParse_GivenInvalidDouble() throws JsonParseException,
+    public void testParseJson_GivenInvalidDouble() throws JsonParseException,
             IOException, AutoDetectParseException
     {
         String input = "{\"testInt\" : 1,"
@@ -152,9 +149,8 @@ public class FieldNameParserTest
                 + "}";
         JsonParser parser = createJsonParser(input);
         parser.nextToken();
-        TestData data = new TestData();
 
-        new TestFieldNameParser(parser, m_Logger).parse(data);
+        TestData data = new TestFieldNameParser(parser, m_Logger).parseJson();
 
         assertEquals(1, data.getInt());
         assertEquals(2, data.getLong());
@@ -167,7 +163,7 @@ public class FieldNameParserTest
     }
 
     @Test
-    public void testParse_GivenInvalidBoolean() throws JsonParseException,
+    public void testParseJson_GivenInvalidBoolean() throws JsonParseException,
             IOException, AutoDetectParseException
     {
         String input = "{\"testInt\" : 1,"
@@ -178,9 +174,8 @@ public class FieldNameParserTest
                 + "}";
         JsonParser parser = createJsonParser(input);
         parser.nextToken();
-        TestData data = new TestData();
 
-        new TestFieldNameParser(parser, m_Logger).parse(data);
+        TestData data = new TestFieldNameParser(parser, m_Logger).parseJson();
 
         assertEquals(1, data.getInt());
         assertEquals(2, data.getLong());
@@ -193,7 +188,7 @@ public class FieldNameParserTest
     }
 
     @Test
-    public void testParse_GivenInvalidString() throws JsonParseException,
+    public void testParseJson_GivenInvalidString() throws JsonParseException,
             IOException, AutoDetectParseException
     {
         String input = "{\"testInt\" : 1,"
@@ -204,9 +199,8 @@ public class FieldNameParserTest
                 + "}";
         JsonParser parser = createJsonParser(input);
         parser.nextToken();
-        TestData data = new TestData();
 
-        new TestFieldNameParser(parser, m_Logger).parse(data);
+        TestData data = new TestFieldNameParser(parser, m_Logger).parseJson();
 
         assertEquals(1, data.getInt());
         assertEquals(2, data.getLong());
@@ -219,7 +213,7 @@ public class FieldNameParserTest
     }
 
     @Test
-    public void testParse_GivenFullyPopulatedAndValidTestData() throws JsonParseException,
+    public void testParseJson_GivenFullyPopulatedAndValidTestData() throws JsonParseException,
             IOException, AutoDetectParseException
     {
         String input = "{\"testInt\" : 1,"
@@ -230,9 +224,8 @@ public class FieldNameParserTest
                 + "}";
         JsonParser parser = createJsonParser(input);
         parser.nextToken();
-        TestData data = new TestData();
 
-        new TestFieldNameParser(parser, m_Logger).parse(data);
+        TestData data = new TestFieldNameParser(parser, m_Logger).parseJson();
 
         assertEquals(1, data.getInt());
         assertEquals(2, data.getLong());
@@ -243,15 +236,14 @@ public class FieldNameParserTest
     }
 
     @Test
-    public void testParseAfterStartObject_GivenParserPointsToStartObject() throws JsonParseException,
+    public void testParseJsonAfterStartObject_GivenParserPointsToStartObject() throws JsonParseException,
             IOException, AutoDetectParseException
     {
         String input = "{}";
         JsonParser parser = createJsonParser(input);
         parser.nextToken();
-        TestData data = new TestData();
 
-        new TestFieldNameParser(parser, m_Logger).parseAfterStartObject(data);
+        TestData data = new TestFieldNameParser(parser, m_Logger).parseJsonAfterStartObject();
 
         assertEquals(0, data.getInt());
         assertEquals(0, data.getLong());
@@ -335,6 +327,12 @@ public class FieldNameParserTest
         public TestFieldNameParser(JsonParser jsonParser, Logger logger)
         {
             super("TestData", jsonParser, logger);
+        }
+
+        @Override
+        protected TestData supply()
+        {
+            return new TestData();
         }
 
         @Override
