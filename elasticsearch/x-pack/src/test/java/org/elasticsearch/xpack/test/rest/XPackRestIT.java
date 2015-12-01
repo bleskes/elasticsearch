@@ -15,14 +15,14 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.watcher.test.rest;
+package org.elasticsearch.xpack.test.rest;
 
 import org.elasticsearch.test.rest.RestTestCandidate;
 
 /** Runs rest tests against external cluster */
-public class WatcherRestIT extends WatcherRestTestCase {
+public class XPackRestIT extends XPackRestTestCase {
 
-    public WatcherRestIT(RestTestCandidate testCandidate) {
+    public XPackRestIT(RestTestCandidate testCandidate) {
         super(testCandidate);
     }
 
