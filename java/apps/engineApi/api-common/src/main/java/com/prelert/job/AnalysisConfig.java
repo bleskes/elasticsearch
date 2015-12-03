@@ -210,9 +210,9 @@ public class AnalysisConfig
 
     /**
      * Return the list of fields required by the analysis.
-     * These are the metric field, partition field, by field and over
-     * field of each detector, plus the summary count field and the
-     * categorization field name of the job.
+     * These are the influencer fields, metric field, partition field,
+     * by field and over field of each detector, plus the summary count
+     * field and the categorization field name of the job.
      * <code>null</code> and empty strings are filtered from the
      * config
      *

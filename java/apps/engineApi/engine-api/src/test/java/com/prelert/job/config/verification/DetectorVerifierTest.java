@@ -33,7 +33,6 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import com.prelert.job.Detector;
-import com.prelert.job.errorcodes.ErrorCodes;
 
 
 /**

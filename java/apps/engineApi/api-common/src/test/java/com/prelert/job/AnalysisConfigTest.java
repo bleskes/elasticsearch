@@ -97,6 +97,7 @@ public class AnalysisConfigTest
         List<Detector> detectors = new ArrayList<>();
 
         ac = new AnalysisConfig();
+        ac.setInfluencers(Arrays.asList("Influencer_Field"));
         det = new Detector();
         det.setFieldName("metric1");
         det.setByFieldName("by_one");
@@ -119,8 +120,9 @@ public class AnalysisConfigTest
 
         analysisFields = new TreeSet<String>(Arrays.asList(new String [] {
                 "metric1", "metric2", "by_one", "by_two", "over_field",
-                "partition_one", "partition_two"}));
+                "partition_one", "partition_two", "Influencer_Field"}));
 
+        Assert.assertTrue(analysisFields.size() == ac.analysisFields().size());
         for (String s : ac.analysisFields())
         {
             Assert.assertTrue(analysisFields.contains(s));
