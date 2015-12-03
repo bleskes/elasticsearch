@@ -26,7 +26,6 @@ import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.http.HttpServerModule;
 import org.elasticsearch.index.IndexModule;
-import org.elasticsearch.index.IndexService;
 import org.elasticsearch.license.plugin.LicensePlugin;
 import org.elasticsearch.marvel.MarvelPlugin;
 import org.elasticsearch.plugins.Plugin;
@@ -133,12 +132,6 @@ public class XPackPlugin extends Plugin {
         // FIXME clean these up
         watcherPlugin.onModule(module);
         marvelPlugin.onModule(module);
-    }
-
-    public void onIndexService(IndexService indexService) {
-        shieldPlugin.onIndexService(indexService);
-        watcherPlugin.onIndexService(indexService);
-        marvelPlugin.onIndexService(indexService);
     }
 
     public void onIndexModule(IndexModule module) {
