@@ -25,46 +25,47 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.rs.validation;
+package com.prelert.job.persistence;
 
-import com.prelert.job.errorcodes.ErrorCodes;
-import com.prelert.job.messages.Messages;
-import com.prelert.rs.exception.InvalidParametersException;
+import java.util.Deque;
+import java.util.NoSuchElementException;
 
-public class PaginationParamsValidator
+import com.prelert.job.UnknownJobException;
+
+/**
+ * An iterator useful to fetch a big number of results of type T
+ * and iterate through them in batches.
+ */
+public interface BatchedResultsIterator<T>
 {
     /**
-     * This is a limit imposed by elasticsearch since version 2.1.0.
-     * The reason is to avoid loading too many documents in memory.
+     * Query results whose timestamp is within the given time range
+     *
+     * @param startEpochMs the start time as epoch milliseconds (inclusive)
+     * @param endEpochMs the end time as epoch milliseconds (exclusive)
+     * @return the iterator itself
      */
-    private static final int MAX_SKIP_TAKE_SUM = 10000;
+    BatchedResultsIterator<T> timeRange(long startEpochMs, long endEpochMs);
 
-    private final int m_Skip;
-    private final int m_Take;
+    /**
+     * The first time next() is called, the search will be performed and the first
+     * batch will be returned. Any subsequent call will return the following batches.
+     * <p>
+     * Note that in some implementations it is possible that when there are no
+     * results at all, the first time this method is called an empty {@code Deque} is returned.
+     *
+     * @return a {@code Deque} with the next batch of results
+     * @throws UnknownJobException if the job whose results are queried is unknown
+     * @throws NoSuchElementException if the iteration has no more elements
+     */
+    Deque<T> next() throws UnknownJobException;
 
-    public PaginationParamsValidator(int skip, int take)
-    {
-        m_Skip = skip;
-        m_Take = take;
-    }
-
-    public void validate()
-    {
-        if (m_Skip < 0)
-        {
-            throw new InvalidParametersException(Messages.getMessage(Messages.REST_INVALID_SKIP),
-                    ErrorCodes.INVALID_SKIP_PARAM);
-        }
-        if (m_Take < 0)
-        {
-            throw new InvalidParametersException(Messages.getMessage(Messages.REST_INVALID_TAKE),
-                    ErrorCodes.INVALID_TAKE_PARAM);
-        }
-        if (m_Skip + m_Take > MAX_SKIP_TAKE_SUM)
-        {
-            throw new InvalidParametersException(Messages.getMessage(
-                    Messages.REST_INVALID_SKIP_TAKE_SUM, MAX_SKIP_TAKE_SUM),
-                    ErrorCodes.INVALID_TAKE_PARAM);
-        }
-    }
+    /**
+     * Returns {@code true} if the iteration has more elements.
+     * (In other words, returns {@code true} if {@link #next} would
+     * return an element rather than throwing an exception.)
+     *
+     * @return {@code true} if the iteration has more elements
+     */
+    boolean hasNext();
 }

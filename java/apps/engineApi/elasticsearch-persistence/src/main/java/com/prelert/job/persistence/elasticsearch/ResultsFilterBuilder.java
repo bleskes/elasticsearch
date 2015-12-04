@@ -30,25 +30,27 @@ package com.prelert.job.persistence.elasticsearch;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.elasticsearch.index.query.FilterBuilder;
-import org.elasticsearch.index.query.FilterBuilders;
-import org.elasticsearch.index.query.RangeFilterBuilder;
-import org.elasticsearch.index.query.TermFilterBuilder;
+import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.QueryBuilder;
+import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.index.query.RangeQueryBuilder;
+import org.elasticsearch.index.query.TermQueryBuilder;
+
 
 /**
- * This builder facilitates the creation of a {@link FilterBuilder} with common
+ * This builder facilitates the creation of a {@link QueryBuilder} with common
  * characteristics to both buckets and records.
  */
 class ResultsFilterBuilder
 {
-    private final List<FilterBuilder> m_FilterBuilders;
+    private final List<QueryBuilder> m_FilterBuilders;
 
     public ResultsFilterBuilder()
     {
         m_FilterBuilders = new ArrayList<>();
     }
 
-    public ResultsFilterBuilder(FilterBuilder filterBuilder)
+    public ResultsFilterBuilder(QueryBuilder filterBuilder)
     {
         this();
         m_FilterBuilders.add(filterBuilder);
@@ -58,7 +60,7 @@ class ResultsFilterBuilder
     {
         if (startEpochMs > 0 || endEpochMs > 0)
         {
-            RangeFilterBuilder timeRange = FilterBuilders.rangeFilter(field);
+            RangeQueryBuilder timeRange = QueryBuilders.rangeQuery(field);
 
             if (startEpochMs > 0)
             {
@@ -77,7 +79,7 @@ class ResultsFilterBuilder
     {
         if (threshold > 0.0)
         {
-            RangeFilterBuilder scoreFilter = FilterBuilders.rangeFilter(fieldName);
+            RangeQueryBuilder scoreFilter = QueryBuilders.rangeQuery(fieldName);
             scoreFilter.gte(threshold);
             addFilter(scoreFilter);
         }
@@ -98,25 +100,33 @@ class ResultsFilterBuilder
         // are equivalent to false.  This improves backwards compatibility.
         // Also, note how for a boolean field, unlike numeric term filters, the
         // term value is supplied as a string.
-        TermFilterBuilder interimFilter = FilterBuilders.termFilter(fieldName,
+        TermQueryBuilder interimFilter = QueryBuilders.termQuery(fieldName,
                 Boolean.TRUE.toString());
-        FilterBuilder notInterimFilter = FilterBuilders.notFilter(interimFilter);
+        QueryBuilder notInterimFilter = QueryBuilders.boolQuery().mustNot(interimFilter);
         addFilter(notInterimFilter);
         return this;
     }
 
-    private void addFilter(FilterBuilder fb)
+    private void addFilter(QueryBuilder fb)
     {
         m_FilterBuilders.add(fb);
     }
 
-    public FilterBuilder build()
+    public QueryBuilder build()
     {
         if (m_FilterBuilders.isEmpty())
         {
-            return FilterBuilders.matchAllFilter();
+            return QueryBuilders.matchAllQuery();
         }
-        return m_FilterBuilders.size() == 1 ? m_FilterBuilders.get(0) : FilterBuilders
-                .andFilter(m_FilterBuilders.toArray(new FilterBuilder[m_FilterBuilders.size()]));
+        if (m_FilterBuilders.size() == 1)
+        {
+            return m_FilterBuilders.get(0);
+        }
+        BoolQueryBuilder boolQueryBuilder = new BoolQueryBuilder();
+        for (QueryBuilder query : m_FilterBuilders)
+        {
+            boolQueryBuilder.must(query);
+        }
+        return boolQueryBuilder;
     }
 }

@@ -31,8 +31,10 @@ import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 
 import java.io.IOException;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
@@ -41,14 +43,16 @@ import org.elasticsearch.action.admin.indices.refresh.RefreshRequest;
 import org.elasticsearch.action.bulk.BulkItemResponse;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;
+import org.elasticsearch.action.delete.DeleteAction;
 import org.elasticsearch.action.delete.DeleteRequestBuilder;
 import org.elasticsearch.action.index.IndexResponse;
-import org.elasticsearch.action.search.SearchRequestBuilder;
+import org.elasticsearch.action.search.SearchAction;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.index.query.HasParentQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.script.Script;
 import org.elasticsearch.script.ScriptService;
 import org.elasticsearch.search.SearchHit;
 
@@ -358,9 +362,14 @@ public class ElasticsearchPersister implements JobResultsPersister
         LOGGER.trace("ES API CALL: update ID " + m_JobId + " type " + JobDetails.TYPE +
                 " in index " + m_JobId +
                 " by running Groovy script update-bucket-count with params count=" + count);
+
+        Map<String, Object> scriptParams = new HashMap<>();
+        scriptParams.put("count", count);
+        Script script = new Script("update-bucket-count", ScriptService.ScriptType.FILE,
+                ScriptService.DEFAULT_LANG, scriptParams);
+
         m_Client.prepareUpdate(m_JobId, JobDetails.TYPE, m_JobId)
-                        .setScript("update-bucket-count", ScriptService.ScriptType.FILE)
-                        .addScriptParam("count", count)
+                        .setScript(script)
                         .setRetryOnConflict(3).get();
     }
 
@@ -421,12 +430,13 @@ public class ElasticsearchPersister implements JobResultsPersister
         HasParentQueryBuilder recordsQuery = QueryBuilders.hasParentQuery(Bucket.TYPE,
                 QueryBuilders.matchQuery(Bucket.ID, bucket.getId()));
 
-        SearchResponse searchResponse = new SearchRequestBuilder(m_Client)
+        SearchResponse searchResponse = SearchAction.INSTANCE.newRequestBuilder(m_Client)
                 .setIndices(m_JobId)
                 .setQuery(recordsQuery)
                 .execute().actionGet();
 
-        DeleteRequestBuilder deleteRequest = new DeleteRequestBuilder(m_Client, m_JobId);
+        DeleteRequestBuilder deleteRequest = DeleteAction.INSTANCE.newRequestBuilder(m_Client)
+                .setIndex(m_JobId);
         for (SearchHit hit : searchResponse.getHits())
         {
             deleteRequest.setType(AnomalyRecord.TYPE).setId(hit.getId()).execute().actionGet();

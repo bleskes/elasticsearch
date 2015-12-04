@@ -44,6 +44,7 @@ import java.util.Map;
 import org.apache.log4j.Logger;
 import org.elasticsearch.action.update.UpdateRequestBuilder;
 import org.elasticsearch.client.Client;
+import org.elasticsearch.script.Script;
 import org.elasticsearch.script.ScriptService;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -72,13 +73,11 @@ public class ElasticsearchUsagePersisterTest
         ArgumentCaptor<String> indexCaptor = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<String> idCaptor = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<Map> upsertsCaptor = ArgumentCaptor.forClass(Map.class);
+        ArgumentCaptor<Script> updateScriptCaptor = ArgumentCaptor.forClass(Script.class);
 
         verify(client, times(2)).prepareUpdate(indexCaptor.capture(), eq(Usage.TYPE),
                 idCaptor.capture());
-        verify(updateRequestBuilder, times(2)).setScript("update-usage", ScriptService.ScriptType.FILE);
-        verify(updateRequestBuilder, times(2)).addScriptParam("bytes", 10L);
-        verify(updateRequestBuilder, times(2)).addScriptParam("fieldCount", 30L);
-        verify(updateRequestBuilder, times(2)).addScriptParam("recordCount", 1L);
+        verify(updateRequestBuilder, times(2)).setScript(updateScriptCaptor.capture());
         verify(updateRequestBuilder, times(2)).setUpsert(upsertsCaptor.capture());
         verify(updateRequestBuilder, times(2)).setRetryOnConflict(5);
         verify(updateRequestBuilder, times(2)).get();
@@ -92,6 +91,16 @@ public class ElasticsearchUsagePersisterTest
 
         assertEquals("prelert-usage", indexCaptor.getAllValues().get(0));
         assertEquals("job1", indexCaptor.getAllValues().get(1));
+
+        Script script = updateScriptCaptor.getValue();
+        assertEquals("update-usage", script.getScript());
+        assertEquals(ScriptService.ScriptType.FILE, script.getType());
+        assertEquals("groovy", script.getLang());
+        Map<String, Object> scriptParams = script.getParams();
+        assertEquals(3, scriptParams.size());
+        assertEquals(10L, scriptParams.get("bytes"));
+        assertEquals(30L, scriptParams.get("fieldCount"));
+        assertEquals(1L, scriptParams.get("recordCount"));
 
         List<Map> capturedUpserts = upsertsCaptor.getAllValues();
         assertEquals(2, capturedUpserts.size());

@@ -119,6 +119,7 @@ public final class Messages
     public static final String REST_INVALID_RESET_PARAMS = "rest.invalid.reset.params";
     public static final String REST_INVALID_SKIP = "rest.invalid.skip";
     public static final String REST_INVALID_TAKE = "rest.invalid.take";
+    public static final String REST_INVALID_SKIP_TAKE_SUM = "rest.invalid.skip.take.sum";
     public static final String REST_GZIP_ERROR = "rest.gzip.error";
     public static final String REST_START_AFTER_END = "rest.start.after.end";
     public static final String REST_RESET_BUCKET_NO_LATENCY = "rest.reset.bucket.no.latency";

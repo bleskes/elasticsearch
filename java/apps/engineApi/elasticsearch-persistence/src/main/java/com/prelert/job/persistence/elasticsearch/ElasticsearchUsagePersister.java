@@ -37,6 +37,7 @@ import java.util.Map;
 import org.apache.log4j.Logger;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.index.engine.VersionConflictEngineException;
+import org.elasticsearch.script.Script;
 import org.elasticsearch.script.ScriptService;
 
 import com.prelert.job.persistence.UsagePersister;
@@ -100,13 +101,17 @@ public class ElasticsearchUsagePersister implements UsagePersister
                 " by running Groovy script update-usage with arguments bytes=" + additionalBytes +
                 " fieldCount=" + additionalFields + " recordCount=" + additionalRecords);
 
+
+        Map<String, Object> scriptParams = new HashMap<>();
+        scriptParams.put("bytes", additionalBytes);
+        scriptParams.put("fieldCount", additionalFields);
+        scriptParams.put("recordCount", additionalRecords);
+        Script script = new Script("update-usage", ScriptService.ScriptType.FILE,
+                ScriptService.DEFAULT_LANG, scriptParams);
         try
         {
             m_Client.prepareUpdate(index, Usage.TYPE, id)
-                    .setScript("update-usage", ScriptService.ScriptType.FILE)
-                    .addScriptParam("bytes", additionalBytes)
-                    .addScriptParam("fieldCount", additionalFields)
-                    .addScriptParam("recordCount", additionalRecords)
+                    .setScript(script)
                     .setUpsert(m_UpsertMap)
                     .setRetryOnConflict(5).get();
         }

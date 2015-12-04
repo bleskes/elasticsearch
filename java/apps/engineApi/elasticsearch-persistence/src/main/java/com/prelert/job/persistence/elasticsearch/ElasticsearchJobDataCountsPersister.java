@@ -33,7 +33,7 @@ import java.util.concurrent.ExecutionException;
 import org.apache.log4j.Logger;
 import org.elasticsearch.action.update.UpdateRequestBuilder;
 import org.elasticsearch.client.Client;
-import org.elasticsearch.indices.IndexMissingException;
+import org.elasticsearch.index.IndexNotFoundException;
 
 import com.prelert.job.DataCounts;
 import com.prelert.job.JobDetails;
@@ -83,7 +83,7 @@ public class ElasticsearchJobDataCountsPersister implements JobDataCountsPersist
                     " in index " + jobId + " using map of new values");
             m_Client.update(updateBuilder.request()).get();
         }
-        catch (IndexMissingException | InterruptedException | ExecutionException e)
+        catch (IndexNotFoundException | InterruptedException | ExecutionException e)
         {
             String msg = String.format("Error writing the job '%s' status stats.",
                     jobId);

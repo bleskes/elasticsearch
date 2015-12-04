@@ -1,0 +1,138 @@
+/************************************************************
+ *                                                          *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ *                                                          *
+ *----------------------------------------------------------*
+ *----------------------------------------------------------*
+ * WARNING:                                                 *
+ * THIS FILE CONTAINS UNPUBLISHED PROPRIETARY               *
+ * SOURCE CODE WHICH IS THE PROPERTY OF PRELERT LTD AND     *
+ * PARENT OR SUBSIDIARY COMPANIES.                          *
+ * PLEASE READ THE FOLLOWING AND TAKE CAREFUL NOTE:         *
+ *                                                          *
+ * This source code is confidential and any person who      *
+ * receives a copy of it, or believes that they are viewing *
+ * it without permission is asked to notify Prelert Ltd     *
+ * on +44 (0)20 3567 1249 or email to legal@prelert.com.    *
+ * All intellectual property rights in this source code     *
+ * are owned by Prelert Ltd.  No part of this source code   *
+ * may be reproduced, adapted or transmitted in any form or *
+ * by any means, electronic, mechanical, photocopying,      *
+ * recording or otherwise.                                  *
+ *                                                          *
+ *----------------------------------------------------------*
+ *                                                          *
+ *                                                          *
+ ************************************************************/
+
+package com.prelert.job.persistence.elasticsearch;
+
+import java.util.ArrayDeque;
+import java.util.Arrays;
+import java.util.Deque;
+import java.util.NoSuchElementException;
+import java.util.Objects;
+
+import org.apache.log4j.Logger;
+import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.client.Client;
+import org.elasticsearch.index.IndexNotFoundException;
+import org.elasticsearch.search.SearchHit;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.prelert.job.UnknownJobException;
+import com.prelert.job.persistence.BatchedResultsIterator;
+
+abstract class ElasticsearchBatchedResultsIterator<T> implements BatchedResultsIterator<T>
+{
+    private static final Logger LOGGER = Logger.getLogger(ElasticsearchBatchedResultsIterator.class);
+
+    private static final String CONTEXT_ALIVE_DURATION = "5m";
+    private static final int BATCH_SIZE = 10000;
+
+    private final Client m_Client;
+    private final String m_JobId;
+    private final ObjectMapper m_ObjectMapper;
+    private String m_ScrollId;
+    private long m_TotalHits;
+    private long m_Count;
+    private final ResultsFilterBuilder m_FilterBuilder;
+
+    public ElasticsearchBatchedResultsIterator(Client client, String jobId, ObjectMapper objectMapper)
+    {
+        m_Client = Objects.requireNonNull(client);
+        m_JobId = Objects.requireNonNull(jobId);
+        m_ObjectMapper = Objects.requireNonNull(objectMapper);
+        m_TotalHits = 0;
+        m_Count = 0;
+        m_FilterBuilder = new ResultsFilterBuilder();
+    }
+
+    @Override
+    public BatchedResultsIterator<T> timeRange(long startEpochMs, long endEpochMs)
+    {
+        m_FilterBuilder.timeRange(getTimestampField(), startEpochMs, endEpochMs);
+        return this;
+    }
+
+    @Override
+    public boolean hasNext()
+    {
+        return m_ScrollId == null || m_Count != m_TotalHits;
+    }
+
+    @Override
+    public Deque<T> next() throws UnknownJobException
+    {
+        if (!hasNext())
+        {
+            throw new NoSuchElementException();
+        }
+        SearchResponse searchResponse = (m_ScrollId == null) ? initScroll() :
+                m_Client.prepareSearchScroll(m_ScrollId).setScroll(CONTEXT_ALIVE_DURATION).get();
+        return mapHits(searchResponse);
+    }
+
+    private SearchResponse initScroll() throws UnknownJobException
+    {
+        LOGGER.trace("ES API CALL: search all of type " + getType() + " from index " + m_JobId);
+        SearchResponse searchResponse = null;
+        try
+        {
+            searchResponse = m_Client.prepareSearch(m_JobId)
+                    .setScroll(CONTEXT_ALIVE_DURATION)
+                    .setSize(BATCH_SIZE)
+                    .setTypes(getType())
+                    .setQuery(m_FilterBuilder.build())
+                    .get();
+            m_TotalHits = searchResponse.getHits().getTotalHits();
+            m_ScrollId = searchResponse.getScrollId();
+        }
+        catch (IndexNotFoundException e)
+        {
+            throw new UnknownJobException(m_JobId);
+        }
+        return searchResponse;
+    }
+
+    private Deque<T> mapHits(SearchResponse searchResponse)
+    {
+        Deque<T> results = new ArrayDeque<>();
+
+        for (SearchHit hit : searchResponse.getHits().getHits())
+        {
+            results.add(map(m_ObjectMapper, hit));
+        }
+        m_Count += results.size();
+
+        if (!hasNext())
+        {
+            m_Client.prepareClearScroll().setScrollIds(Arrays.asList(m_ScrollId)).get();
+        }
+        return results;
+    }
+
+    protected abstract String getType();
+    protected abstract String getTimestampField();
+    protected abstract T map(ObjectMapper objectMapper, SearchHit hit);
+}
