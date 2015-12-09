@@ -111,6 +111,7 @@ public class Account {
         }
 
         transport.connect(config.smtp.host, config.smtp.port, user, password);
+        ClassLoader contextClassLoader = null;
         try {
             MimeMessage message = profile.toMimeMessage(email, session);
             String mid = message.getMessageID();
@@ -120,6 +121,17 @@ public class Account {
                 // we need to add it back
                 message.setHeader(Profile.MESSAGE_ID_HEADER, mid);
             }
+
+            SecurityManager sm = System.getSecurityManager();
+            if (sm != null) {
+                // unprivileged code such as scripts do not have SpecialPermission
+                sm.checkPermission(new SpecialPermission());
+            }
+            contextClassLoader = AccessController.doPrivileged((PrivilegedAction<ClassLoader>) () -> Thread.currentThread().getContextClassLoader());
+            // if we cannot get the context class loader, changing does not make sense, as we run into the danger of not being able to change it back
+            if (contextClassLoader != null) {
+                setContextClassLoader(this.getClass().getClassLoader());
+            }
             transport.sendMessage(message, message.getAllRecipients());
         } finally {
             try {
@@ -127,8 +139,23 @@ public class Account {
             } catch (MessagingException me) {
                 logger.error("failed to close email transport for account [" + config.name + "]");
             }
+            if (contextClassLoader != null) {
+                setContextClassLoader(contextClassLoader);
+            }
         }
         return email;
+    }
+
+    private void setContextClassLoader(final ClassLoader classLoader) {
+        SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+            // unprivileged code such as scripts do not have SpecialPermission
+            sm.checkPermission(new SpecialPermission());
+        }
+        AccessController.doPrivileged((PrivilegedAction<Void>) () -> {
+            Thread.currentThread().setContextClassLoader(classLoader);
+            return null;
+        });
     }
 
     static class Config {
