@@ -156,7 +156,6 @@ class ScoresUpdater
                 if (bucket.isNormalisable())
                 {
                     bucketsToRenormalise.add(bucket);
-                    m_JobProvider.expandBucket(m_JobId, false, bucket);
                     totalRecordCount += m_JobProvider.expandBucket(m_JobId, false, bucket);
                     if (totalRecordCount >= TARGET_RECORDS_TO_RENORMALISE)
                     {
