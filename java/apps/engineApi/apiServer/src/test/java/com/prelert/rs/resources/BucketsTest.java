@@ -157,8 +157,8 @@ public class BucketsTest extends ServiceTest
 
         assertNull(buckets.getPreviousPage());
         String nextPageUri = buckets.getNextPage().toString();
-        assertEquals("http://localhost/test/results/foo/buckets?skip=100&take=100&start=2015-01-01T12:00:00Z&end=2015-01-01T13:00:00Z&"
-                + "expand=false&includeInterim=false&anomalyScore=0.0&maxNormalizedProbability=0.0",
+        assertEquals(
+                "http://localhost/test/results/foo/buckets?skip=100&take=100&start=2015-01-01T12%3A00%3A00Z&end=2015-01-01T13%3A00%3A00Z&expand=false&includeInterim=false&anomalyScore=0.0&maxNormalizedProbability=0.0",
                 nextPageUri);
     }
 
@@ -180,8 +180,8 @@ public class BucketsTest extends ServiceTest
 
         assertNull(buckets.getPreviousPage());
         String nextPageUri = buckets.getNextPage().toString();
-        assertEquals("http://localhost/test/results/foo/buckets?skip=100&take=100&start=2015-01-01T12:00:00.042Z&end=2015-01-01T13:00:00.142%2B00:00&"
-                + "expand=false&includeInterim=false&anomalyScore=0.0&maxNormalizedProbability=0.0",
+        assertEquals(
+                "http://localhost/test/results/foo/buckets?skip=100&take=100&start=2015-01-01T12%3A00%3A00.042Z&end=2015-01-01T13%3A00%3A00.142%2B00%3A00&expand=false&includeInterim=false&anomalyScore=0.0&maxNormalizedProbability=0.0",
                 nextPageUri);
     }
 
