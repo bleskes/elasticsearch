@@ -17,17 +17,13 @@
  * under the License.
  */
 
-grant {
-  // needed because of problems in unbound LDAP library
-  permission java.util.PropertyPermission "*", "read,write";
+/*
+ * Messy tests that depend on mustache directly. Fix these!
+ */
 
-  // needed to set expert SSL options, etc
-  permission java.lang.RuntimePermission "setFactory";
+apply plugin: 'elasticsearch.messy-test'
 
-  // needed when sending emails for javax.activation
-  // otherwise a classnotfound exception is thrown due to trying
-  // to load the class with the application class loader
-  permission java.lang.RuntimePermission "setContextClassLoader";
-  permission java.lang.RuntimePermission "getClassLoader";
-
-};
+dependencies {
+  testCompile project(path: ':x-plugins:elasticsearch:x-pack', configuration: 'testArtifacts')
+  testCompile project(path: ':modules:lang-mustache', configuration: 'runtime')
+}

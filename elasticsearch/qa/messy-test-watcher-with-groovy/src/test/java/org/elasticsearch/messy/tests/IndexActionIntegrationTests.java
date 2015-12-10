@@ -22,6 +22,7 @@ import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.SearchType;
 import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.script.groovy.GroovyPlugin;
+import org.elasticsearch.script.mustache.MustachePlugin;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.aggregations.bucket.histogram.DateHistogramInterval;
 import org.elasticsearch.search.sort.SortOrder;
@@ -60,6 +61,7 @@ public class IndexActionIntegrationTests extends AbstractWatcherIntegrationTestC
     protected List<Class<? extends Plugin>> pluginTypes() {
         List<Class<? extends Plugin>> types = super.pluginTypes();
         types.add(GroovyPlugin.class);
+        types.add(MustachePlugin.class);
         return types;
     }
     
