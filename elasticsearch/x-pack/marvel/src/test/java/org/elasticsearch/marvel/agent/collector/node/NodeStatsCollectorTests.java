@@ -27,6 +27,7 @@ import org.elasticsearch.marvel.agent.collector.AbstractCollectorTestCase;
 import org.elasticsearch.marvel.agent.exporter.MarvelDoc;
 import org.elasticsearch.marvel.agent.settings.MarvelSettings;
 import org.elasticsearch.marvel.license.MarvelLicensee;
+import org.elasticsearch.marvel.shield.SecuredClient;
 import org.elasticsearch.node.service.NodeService;
 import org.elasticsearch.test.ESIntegTestCase.ClusterScope;
 
@@ -103,7 +104,7 @@ public class NodeStatsCollectorTests extends AbstractCollectorTestCase {
                 internalCluster().getInstance(ClusterService.class, nodeId),
                 internalCluster().getInstance(MarvelSettings.class, nodeId),
                 internalCluster().getInstance(MarvelLicensee.class, nodeId),
-                internalCluster().getInstance(NodeService.class, nodeId),
+                internalCluster().getInstance(SecuredClient.class, nodeId),
                 internalCluster().getInstance(DiscoveryService.class, nodeId),
                 internalCluster().getInstance(NodeEnvironment.class, nodeId),
                 internalCluster().getInstance(DiskThresholdDecider.class, nodeId));
