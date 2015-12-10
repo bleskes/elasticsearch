@@ -27,6 +27,32 @@
 
 package com.prelert.server.info.elasticsearch;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
+
+import org.apache.commons.lang.SystemUtils;
+import org.elasticsearch.Build;
+import org.elasticsearch.Version;
+import org.elasticsearch.action.admin.cluster.node.info.NodeInfo;
+import org.elasticsearch.action.admin.cluster.node.stats.NodeStats;
+import org.elasticsearch.client.Client;
+import org.elasticsearch.cluster.node.DiscoveryNode;
+import org.elasticsearch.common.transport.TransportAddress;
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSortedMap;
+import com.prelert.server.info.ServerInfo;
+
 
 
 /**
@@ -37,112 +63,67 @@ package com.prelert.server.info.elasticsearch;
  */
 public class ElasticsearchServerInfoTest
 {
-//    @Test
-//    public void testClientNodeReturnsNoCpuInfo()
-//    throws InterruptedException, ExecutionException
-//    {
-//        ImmutableMap<String, String> attributes = ImmutableSortedMap.<String, String>naturalOrder()
-//                                                                    .put("client", "true")
-//                                                                    .put("data", "false")
-//                                                                    .build();
-//
-//        DiscoveryNode clientNode = new DiscoveryNode("nname", "nodeId", mock(TransportAddress.class),
-//                                        attributes, mock(Version.class));
-//
-//
-//
-//
-//        NodeInfo nodeInfo = new NodeInfo(mock(Version.class),
-//                                        mock(Build.class),
-//                                        clientNode,
-//                                        null, null, null, null, null, null, null, null,
-//                                        null, null);
-//
-//        NodesInfoResponse response = new NodesInfoResponse(mock(ClusterName.class),
-//                                                            new NodeInfo[] {nodeInfo});
-//
-//
-//
-//        Client client = mock(Client.class);
-//        AdminClient ac = mock(AdminClient.class);
-//        ClusterAdminClient cac = mock(ClusterAdminClient.class);
-//        @SuppressWarnings("unchecked")
-//        ActionFuture<NodesInfoResponse> af = mock(ActionFuture.class);
-//
-//        when(client.admin()).thenReturn(ac);
-//        when(ac.cluster()).thenReturn(cac);
-//        when(cac.nodesInfo(Mockito.any())).thenReturn(af);
-//        when(af.get()).thenReturn(response);
-//
-//        ElasticsearchServerInfo esi = new ElasticsearchServerInfo(client);
-//        CpuInfo cpuInfo = esi.cpuInfo();
-//
-//        assertNull(cpuInfo.getCores());
-//        assertNull(cpuInfo.getFrequencyMHz());
-//        assertNull(cpuInfo.getModel());
-//        assertNull(cpuInfo.getVendor());
-//    }
-//
-//
-//    @Test
-//    public void testClientNodeReturnsNoServerInfo()
-//    throws InterruptedException, ExecutionException
-//    {
-//        ImmutableMap<String, String> attributes = ImmutableSortedMap.<String, String>naturalOrder()
-//                                                                    .put("client", "true")
-//                                                                    .put("data", "false")
-//                                                                    .build();
-//
-//        DiscoveryNode clientNode = new DiscoveryNode("nname", "nodeId", mock(TransportAddress.class),
-//                                        attributes, mock(Version.class));
-//
-//
-//
-//
-//        NodeStats nodeStat = new NodeStats(clientNode, 0,
-//                                        null, null, null, null, null, null, null, null,
-//                                        null, null);
-//
-//        NodesStatsResponse response = new NodesStatsResponse(mock(ClusterName.class),
-//                                                            new NodeStats[] {nodeStat});
-//
-//
-//        NodeInfo nodeInfo = new NodeInfo(mock(Version.class),
-//                mock(Build.class),
-//                clientNode,
-//                null, null, null, null, null, null, null, null,
-//                null, null);
-//
-//        NodesInfoResponse infoResponse = new NodesInfoResponse(mock(ClusterName.class),
-//                                    new NodeInfo[] {nodeInfo});
-//
-//
-//        Client client = mock(Client.class);
-//        AdminClient ac = mock(AdminClient.class);
-//        ClusterAdminClient cac = mock(ClusterAdminClient.class);
-//        @SuppressWarnings("unchecked")
-//        ActionFuture<NodesStatsResponse> af = mock(ActionFuture.class);
-//        @SuppressWarnings("unchecked")
-//        ActionFuture<NodesInfoResponse> afInfo = mock(ActionFuture.class);
-//
-//        when(client.admin()).thenReturn(ac);
-//        when(ac.cluster()).thenReturn(cac);
-//        when(cac.nodesStats(Mockito.any())).thenReturn(af);
-//        when(af.get()).thenReturn(response);
-//
-//        when(cac.nodesInfo(Mockito.any())).thenReturn(afInfo);
-//        when(afInfo.get()).thenReturn(infoResponse);
-//
-//        ElasticsearchServerInfo esi = new ElasticsearchServerInfo(client);
-//        ServerInfo info = esi.serverInfo();
-//
-//        assertEquals(SystemUtils.OS_NAME, info.getOsName());
-//        assertEquals(SystemUtils.OS_VERSION, info.getOsVersion());
-//        assertNull(info.getCpuInfo());
-//        assertNull(info.getHostname());
-//        assertNull(info.getTotalDiskMb());
-//        assertNull(info.getTotalMemoryMb());
-//        assertNull(info.getAvailableDiskMb());
-//
-//    }
+    private List<NodeInfo> m_NodeInfo;
+    private List<NodeStats> m_NodeStats;
+    @Mock private Client m_Client;
+
+    @Before
+    public void setUp()
+    {
+        m_NodeInfo = new ArrayList<>();
+        m_NodeStats = new ArrayList<>();
+        MockitoAnnotations.initMocks(this);
+    }
+
+    @Test
+    public void testClientNodeReturnsNoServerInfo() throws InterruptedException, ExecutionException
+    {
+        ImmutableMap<String, String> attributes = ImmutableSortedMap.<String, String>naturalOrder()
+                                                                    .put("client", "true")
+                                                                    .put("data", "false")
+                                                                    .build();
+        TransportAddress transportAddress = mock(TransportAddress.class);
+        when(transportAddress.getHost()).thenReturn("localhost");
+        when(transportAddress.getAddress()).thenReturn("127.0.0.1");
+
+        DiscoveryNode clientNode = new DiscoveryNode("nname", "nodeId", transportAddress,
+                                        attributes, mock(Version.class));
+
+        m_NodeStats.add(new NodeStats(clientNode, 0, null, null, null, null, null, null, null,
+                null, null, null));
+
+        m_NodeInfo.add(new NodeInfo(mock(Version.class), mock(Build.class), clientNode, null, null,
+                null, null, null, null, null, null, null));
+
+        ElasticsearchServerInfo esi = new TestServerInfo(m_Client);
+        ServerInfo info = esi.serverInfo();
+
+        assertEquals(SystemUtils.OS_NAME, info.getOsName());
+        assertEquals(SystemUtils.OS_VERSION, info.getOsVersion());
+        assertNull(info.getHostname());
+        assertNull(info.getTotalDiskMb());
+        assertNull(info.getTotalMemoryMb());
+        assertNull(info.getAvailableDiskMb());
+
+    }
+
+    private class TestServerInfo extends ElasticsearchServerInfo
+    {
+        public TestServerInfo(Client client)
+        {
+            super(client);
+        }
+
+        @Override
+        protected NodeInfo[] nodesInfo()
+        {
+            return m_NodeInfo.toArray(new NodeInfo[m_NodeInfo.size()]);
+        }
+
+        @Override
+        protected NodeStats[] nodesStats()
+        {
+            return m_NodeStats.toArray(new NodeStats[m_NodeStats.size()]);
+        }
+    }
 }

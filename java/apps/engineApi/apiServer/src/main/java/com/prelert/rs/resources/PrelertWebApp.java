@@ -137,7 +137,7 @@ public class PrelertWebApp extends Application
         m_AlertManager = new AlertManager(esJob, m_JobManager);
         m_ServerInfo = new ElasticsearchServerInfo(esJob.getClient());
 
-//        writeServerInfoDailyStartingNow();
+        writeServerInfoDailyStartingNow();
 
         m_Singletons = new HashSet<>();
         m_Singletons.add(m_JobManager);
