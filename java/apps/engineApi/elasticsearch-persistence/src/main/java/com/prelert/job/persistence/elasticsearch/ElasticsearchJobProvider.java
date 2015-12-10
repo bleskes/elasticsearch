@@ -947,16 +947,12 @@ public class ElasticsearchJobProvider implements JobProvider
         List<Influencer> influencers = new ArrayList<>();
         for (SearchHit hit : response.getHits().getHits())
         {
-            Influencer influencer;
-            try
-            {
-                influencer = m_ObjectMapper.convertValue(hit.getSource(), Influencer.class);
-            }
-            catch (IllegalArgumentException e)
-            {
-                LOGGER.error("Cannot parse influencer from JSON", e);
-                continue;
-            }
+            Map<String, Object> m = hit.getSource();
+
+            // replace logstash timestamp name with timestamp
+            m.put(Bucket.TIMESTAMP, m.remove(ElasticsearchMappings.ES_TIMESTAMP));
+
+            Influencer influencer = m_ObjectMapper.convertValue(m, Influencer.class);
 
             influencers.add(influencer);
         }

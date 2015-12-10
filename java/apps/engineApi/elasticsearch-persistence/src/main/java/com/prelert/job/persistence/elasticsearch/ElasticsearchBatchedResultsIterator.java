@@ -71,7 +71,7 @@ abstract class ElasticsearchBatchedResultsIterator<T> implements BatchedResultsI
     @Override
     public BatchedResultsIterator<T> timeRange(long startEpochMs, long endEpochMs)
     {
-        m_FilterBuilder.timeRange(getTimestampField(), startEpochMs, endEpochMs);
+        m_FilterBuilder.timeRange(ElasticsearchMappings.ES_TIMESTAMP, startEpochMs, endEpochMs);
         return this;
     }
 
@@ -133,6 +133,5 @@ abstract class ElasticsearchBatchedResultsIterator<T> implements BatchedResultsI
     }
 
     protected abstract String getType();
-    protected abstract String getTimestampField();
     protected abstract T map(ObjectMapper objectMapper, SearchHit hit);
 }

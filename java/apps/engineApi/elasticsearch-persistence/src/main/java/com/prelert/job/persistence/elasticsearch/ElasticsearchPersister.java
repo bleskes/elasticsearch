@@ -694,7 +694,7 @@ public class ElasticsearchPersister implements JobResultsPersister
     throws IOException
     {
         return jsonBuilder().startObject()
-                .field(Influencer.TIMESTAMP, influencer.getTimestamp())
+                .field(ElasticsearchMappings.ES_TIMESTAMP, influencer.getTimestamp())
                 .field(Influencer.PROBABILITY, influencer.getProbability())
                 .field(Influencer.INFLUENCER_FIELD_NAME, influencer.getInfluencerFieldName())
                 .field(Influencer.INFLUENCER_VALUE_NAME, influencer.getInfluencerFieldValue())

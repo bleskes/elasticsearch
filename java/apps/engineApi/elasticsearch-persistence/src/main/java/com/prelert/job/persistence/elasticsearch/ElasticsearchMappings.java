@@ -757,7 +757,7 @@ public class ElasticsearchMappings
                         .field("enabled", false)
                     .endObject()
                     .startObject(PROPERTIES)
-                        .startObject(Influencer.TIMESTAMP)
+                        .startObject(ElasticsearchMappings.ES_TIMESTAMP)
                             .field(TYPE, DATE)
                         .endObject()
                         .startObject(Influencer.PROBABILITY)

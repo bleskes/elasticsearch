@@ -48,12 +48,6 @@ class ElasticsearchBatchedBucketsIterator extends ElasticsearchBatchedResultsIte
     }
 
     @Override
-    protected String getTimestampField()
-    {
-        return ElasticsearchMappings.ES_TIMESTAMP;
-    }
-
-    @Override
     protected Bucket map(ObjectMapper objectMapper, SearchHit hit)
     {
         // Remove the Kibana/Logstash '@timestamp' entry as stored in Elasticsearch,

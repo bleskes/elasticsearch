@@ -31,6 +31,7 @@ import org.elasticsearch.client.Client;
 import org.elasticsearch.search.SearchHit;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.prelert.job.results.Bucket;
 import com.prelert.job.results.Influencer;
 
 class ElasticsearchBatchedInfluencersIterator extends ElasticsearchBatchedResultsIterator<Influencer>
@@ -48,14 +49,13 @@ class ElasticsearchBatchedInfluencersIterator extends ElasticsearchBatchedResult
     }
 
     @Override
-    protected String getTimestampField()
-    {
-        return Influencer.TIMESTAMP;
-    }
-
-    @Override
     protected Influencer map(ObjectMapper objectMapper, SearchHit hit)
     {
+        // Remove the Kibana/Logstash '@timestamp' entry as stored in Elasticsearch,
+        // and replace using the API 'timestamp' key.
+        Object timestamp = hit.getSource().remove(ElasticsearchMappings.ES_TIMESTAMP);
+        hit.getSource().put(Bucket.TIMESTAMP, timestamp);
+
         return objectMapper.convertValue(hit.getSource(), Influencer.class);
     }
 }
