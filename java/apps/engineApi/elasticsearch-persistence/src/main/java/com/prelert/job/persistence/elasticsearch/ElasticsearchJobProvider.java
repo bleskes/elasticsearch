@@ -155,7 +155,6 @@ public class ElasticsearchJobProvider implements JobProvider
         // expect the data node to be on the same machine
         Builder builder = Settings.builder()
                 .put("http.enabled", "false")
-                .put("discovery.zen.ping.multicast.enabled", "false")
                 .put("discovery.zen.ping.unicast.hosts", host);
 
         if (portRange != null && portRange.isEmpty() == false)
