@@ -39,13 +39,12 @@
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-databind</artifactId>
     </dependency>
-
-    <!-- provided jars -->
     <dependency>
       <groupId>org.elasticsearch</groupId>
       <artifactId>elasticsearch</artifactId>
-      <scope>provided</scope>
     </dependency>
+
+    <!-- provided jars -->
     <dependency>
       <groupId>com.prelert</groupId>
       <artifactId>api-common</artifactId>

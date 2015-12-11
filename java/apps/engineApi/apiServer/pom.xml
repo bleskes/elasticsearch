@@ -44,6 +44,10 @@
       <groupId>net.java.dev.jna</groupId>
       <artifactId>jna</artifactId>
     </dependency>
+    <dependency>
+      <groupId>org.elasticsearch</groupId>
+      <artifactId>elasticsearch</artifactId>
+    </dependency>
 
     <!-- prelert jars -->
     <dependency>
@@ -59,12 +63,6 @@
     <dependency>
       <groupId>com.prelert</groupId>
       <artifactId>elasticsearch-persistence</artifactId>
-      <scope>provided</scope>
-    </dependency>
-    
-    <dependency>
-      <groupId>org.elasticsearch</groupId>
-      <artifactId>elasticsearch</artifactId>
       <scope>provided</scope>
     </dependency>
   </dependencies>
