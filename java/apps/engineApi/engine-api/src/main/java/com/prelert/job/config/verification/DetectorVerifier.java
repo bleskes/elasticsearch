@@ -130,7 +130,7 @@ public final class DetectorVerifier
         // check functions have required fields
         if (!emptyFunction)
         {
-            if (Detector.FIELD_NAME_FUNCTIONS.contains(detector.getFunction()) && emptyField)
+            if (emptyField && Detector.FIELD_NAME_FUNCTIONS.contains(detector.getFunction()))
             {
                 throw new JobConfigurationException(
                         Messages.getMessage(Messages.JOB_CONFIG_FUNCTION_REQUIRES_FIELDNAME,
@@ -146,7 +146,7 @@ public final class DetectorVerifier
                         ErrorCodes.INVALID_FIELD_SELECTION);
             }
 
-            if (Detector.BY_FIELD_NAME_FUNCTIONS.contains(detector.getFunction()) && emptyByField)
+            if (emptyByField && Detector.BY_FIELD_NAME_FUNCTIONS.contains(detector.getFunction()))
             {
                 throw new JobConfigurationException(
                         Messages.getMessage(Messages.JOB_CONFIG_FUNCTION_REQUIRES_BYFIELD,
