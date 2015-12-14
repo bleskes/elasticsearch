@@ -80,11 +80,22 @@ public class PaginationParamsValidatorTest
     }
 
     @Test
+    public void testValidate_GivenSkipAndTakeSumIsMoreThan10000()
+    {
+        m_ExpectedException.expect(InvalidParametersException.class);
+        m_ExpectedException.expectMessage(
+                "The sum of parameters 'skip' and 'take' cannot be higher than 10,000. Please use filters to reduce the number of results.");
+        m_ExpectedException.expect(ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_TAKE_PARAM));
+
+        new PaginationParamsValidator(0, 10001).validate();
+    }
+
+    @Test
     public void testValidate_GivenSkipAndTakeAreValid()
     {
         new PaginationParamsValidator(0, 0).validate();
         new PaginationParamsValidator(100, 0).validate();
-        new PaginationParamsValidator(0, 100).validate();
+        new PaginationParamsValidator(0, 10000).validate();
         new PaginationParamsValidator(50, 500).validate();
     }
 }

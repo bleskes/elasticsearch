@@ -55,10 +55,9 @@ public interface JobResultsProvider extends Closeable
      * @return QueryPage of buckets
      * @throws UnknownJobException If the job id is no recognised
      */
-    public QueryPage<Bucket> buckets(String jobId,
-            boolean expand, boolean includeInterim, int skip, int take,
-            double anomalyScoreThreshold, double normalizedProbabilityThreshold)
-    throws UnknownJobException;
+    QueryPage<Bucket> buckets(String jobId, boolean expand, boolean includeInterim, int skip,
+            int take, double anomalyScoreThreshold, double normalizedProbabilityThreshold)
+            throws UnknownJobException;
 
 
     /**
@@ -87,11 +86,9 @@ public interface JobResultsProvider extends Closeable
      * @return QueryPage of Buckets
      * @throws UnknownJobException If the job id is no recognised
      */
-    public QueryPage<Bucket> buckets(String jobId,
-            boolean expand, boolean includeInterim, int skip, int take,
-            long startEpochMs, long endEpochMs,
-            double anomalyScoreThreshold, double normalizedProbabilityThreshold)
-    throws UnknownJobException;
+    QueryPage<Bucket> buckets(String jobId, boolean expand, boolean includeInterim, int skip,
+            int take, long startEpochMs, long endEpochMs, double anomalyScoreThreshold,
+            double normalizedProbabilityThreshold) throws UnknownJobException;
 
 
     /**
@@ -104,10 +101,17 @@ public interface JobResultsProvider extends Closeable
      * @return Optional Bucket
      * @throws UnknownJobException If the job id is no recognised
      */
-    public Optional<Bucket> bucket(String jobId,
-            String bucketId, boolean expand, boolean includeInterim)
-    throws UnknownJobException;
+    Optional<Bucket> bucket(String jobId, String bucketId, boolean expand, boolean includeInterim)
+            throws UnknownJobException;
 
+    /**
+     * Returns a {@link BatchedResultsIterator} that allows querying
+     * and iterating over a large number of buckets of the given job
+     *
+     * @param jobId the id of the job for which buckets are requested
+     * @return a bucket {@link BatchedResultsIterator}
+     */
+    BatchedResultsIterator<Bucket> newBatchedBucketsIterator(String jobId);
 
     /**
      * Expand a bucket to include the associated records.
@@ -118,9 +122,7 @@ public interface JobResultsProvider extends Closeable
      * @return The number of records added to the bucket
      * @throws UnknownJobException If the job id is no recognised
      */
-    public int expandBucket(String jobId, boolean includeInterim, Bucket bucket)
-    throws UnknownJobException;
-
+    int expandBucket(String jobId, boolean includeInterim, Bucket bucket) throws UnknownJobException;
 
     /**
      * Get the anomaly records for the bucket.
@@ -139,10 +141,9 @@ public interface JobResultsProvider extends Closeable
      * @return QueryPage of AnomalyRecords
      * @throws UnknownJobException If the job id is no recognised
      */
-    public QueryPage<AnomalyRecord> bucketRecords(String jobId,
-            Bucket bucket, int skip, int take, boolean includeInterim, String sortField,
-            boolean sortDescending)
-    throws UnknownJobException;
+    QueryPage<AnomalyRecord> bucketRecords(String jobId, Bucket bucket, int skip, int take,
+            boolean includeInterim, String sortField, boolean sortDescending)
+            throws UnknownJobException;
 
     /**
      * Get a page of {@linkplain CategoryDefinition}s for the given <code>jobId</code>.
@@ -153,8 +154,8 @@ public interface JobResultsProvider extends Closeable
      * @return QueryPage of CategoryDefinition
      * @throws UnknownJobException If the job id is no recognised
      */
-    public QueryPage<CategoryDefinition> categoryDefinitions(String jobId, int skip, int take)
-    throws UnknownJobException;
+    QueryPage<CategoryDefinition> categoryDefinitions(String jobId, int skip, int take)
+            throws UnknownJobException;
 
     /**
      * Get the specific CategoryDefinition for the given job and category id.
@@ -164,8 +165,8 @@ public interface JobResultsProvider extends Closeable
      * @return Optional CategoryDefinition
      * @throws UnknownJobException
      */
-    public Optional<CategoryDefinition> categoryDefinition(String jobId, String categoryId)
-    throws UnknownJobException;
+    Optional<CategoryDefinition> categoryDefinition(String jobId, String categoryId)
+            throws UnknownJobException;
 
     /**
      * Get the anomaly records for all buckets.
@@ -188,10 +189,9 @@ public interface JobResultsProvider extends Closeable
      * @return QueryPage of AnomalyRecords
      * @throws UnknownJobException If the job id is no recognised
      */
-    public QueryPage<AnomalyRecord> records(String jobId,
-             int skip, int take, boolean includeInterim, String sortField, boolean sortDescending,
-             double anomalyScoreThreshold, double normalizedProbabilityThreshold)
-    throws UnknownJobException;
+    QueryPage<AnomalyRecord> records(String jobId, int skip, int take, boolean includeInterim,
+            String sortField, boolean sortDescending, double anomalyScoreThreshold,
+            double normalizedProbabilityThreshold) throws UnknownJobException;
 
     /**
      * Get the anomaly records for all buckets in the given
@@ -220,11 +220,10 @@ public interface JobResultsProvider extends Closeable
      * @return QueryPage of AnomalyRecords
      * throws UnknownJobException If the job id is no recognised
      */
-    public QueryPage<AnomalyRecord> records(String jobId,
-            int skip, int take, long startEpochMs, long endEpochMs,
-            boolean includeInterim, String sortField, boolean sortDescending,
+    QueryPage<AnomalyRecord> records(String jobId, int skip, int take, long startEpochMs,
+            long endEpochMs, boolean includeInterim, String sortField, boolean sortDescending,
             double anomalyScoreThreshold, double normalizedProbabilityThreshold)
-    throws UnknownJobException;
+            throws UnknownJobException;
 
 
     /**
@@ -237,8 +236,7 @@ public interface JobResultsProvider extends Closeable
      * @return QueryPage of Influencer
      * @throws UnknownJobException
      */
-    public QueryPage<Influencer> influencers(String jobId, int skip, int take)
-            throws UnknownJobException;
+    QueryPage<Influencer> influencers(String jobId, int skip, int take) throws UnknownJobException;
 
     /**
      * Return a page of influencers for the given job and within the given date range
@@ -259,10 +257,9 @@ public interface JobResultsProvider extends Closeable
      * @return QueryPage of Influencer
      * @throws UnknownJobException
      */
-    public QueryPage<Influencer> influencers(String jobId, int skip, int take, long startEpochMs,
+    QueryPage<Influencer> influencers(String jobId, int skip, int take, long startEpochMs,
             long endEpochMs, String sortField, boolean sortDescending, double anomalyScoreFilter)
             throws UnknownJobException;
-
 
     /**
      * Get the influencer for the given job for id
@@ -271,5 +268,14 @@ public interface JobResultsProvider extends Closeable
      * @param influencerId The unique influencer Id
      * @return Optional Influencer
      */
-    public Optional<Influencer> influencer(String jobId, String influencerId);
+    Optional<Influencer> influencer(String jobId, String influencerId);
+
+    /**
+     * Returns a {@link BatchedResultsIterator} that allows querying
+     * and iterating over a large number of influencers of the given job
+     *
+     * @param jobId the id of the job for which influencers are requested
+     * @return an influencer {@link BatchedResultsIterator}
+     */
+    BatchedResultsIterator<Influencer> newBatchedInfluencersIterator(String jobId);
 }

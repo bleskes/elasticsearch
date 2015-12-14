@@ -35,17 +35,10 @@ package com.prelert.server.info;
 public interface ServerInfoFactory
 {
     /**
-     * General server information CPU, Mem, etc.
-     * Contains {@linkplain #cpuInfo()}
+     * General server information Mem, Disk usage, etc.
      * @return
      */
     public ServerInfo serverInfo();
-
-    /**
-     * CPU model, clock rate, ete
-     * @return
-     */
-    public CpuInfo cpuInfo();
 
     /**
      * Specific server status information.

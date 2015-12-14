@@ -43,7 +43,7 @@ import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.client.AdminClient;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.client.IndicesAdminClient;
-import org.elasticsearch.indices.IndexMissingException;
+import org.elasticsearch.index.IndexNotFoundException;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 
@@ -91,7 +91,7 @@ public class MockClientBuilder
 
     public MockClientBuilder throwMissingIndexOnPrepareGet(String index, String type, String id)
     {
-        doThrow(new IndexMissingException(null)).when(m_Client).prepareGet(index, type, id);
+        doThrow(new IndexNotFoundException(index)).when(m_Client).prepareGet(index, type, id);
         return this;
     }
 

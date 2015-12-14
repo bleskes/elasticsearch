@@ -28,6 +28,7 @@
 package com.prelert.job.process.normaliser;
 
 import java.util.ArrayList;
+import java.util.Deque;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -37,9 +38,9 @@ import org.apache.log4j.Logger;
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.JobDetails;
 import com.prelert.job.UnknownJobException;
+import com.prelert.job.persistence.BatchedResultsIterator;
 import com.prelert.job.persistence.JobProvider;
 import com.prelert.job.persistence.JobRenormaliser;
-import com.prelert.job.persistence.QueryPage;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
 import com.prelert.job.results.AnomalyRecord;
 import com.prelert.job.results.Bucket;
@@ -52,22 +53,9 @@ import com.prelert.job.results.Influencer;
 class ScoresUpdater
 {
     /**
-     * Maximum number of buckets to renormalise at a time
-     */
-    private static final int MAX_BUCKETS_PER_PAGE = 10000;
-
-    /**
      * Target number of records to renormalise at a time
      */
     private static final int TARGET_RECORDS_TO_RENORMALISE = 100000;
-
-    /**
-     * Maximum number of influncers to renormalise at a time
-     *
-     * An influencer object is about 100 bytes, thus we can get
-     * a million of them and still only use 100MB.
-     */
-    private static final int MAX_INFLUENCERS_PER_PAGE = 1000000;
 
     private final String m_JobId;
     private final JobProvider m_JobProvider;
@@ -120,73 +108,79 @@ class ScoresUpdater
     }
 
     private void updateBuckets(Normaliser normaliser, String quantilesState, long endBucketEpochMs,
-            int[] counts, Logger logger) throws UnknownJobException,
-            NativeProcessRunException
+            int[] counts, Logger logger) throws UnknownJobException, NativeProcessRunException
     {
-        int skip = 0;
-        // Get some buckets without their records to calculate how many
-        // buckets can be sensibly retrieved with their records
-        QueryPage<Bucket> page = m_JobProvider.buckets(m_JobId, false, false, skip,
-                MAX_BUCKETS_PER_PAGE, 0, endBucketEpochMs, 0.0, 0.0);
+        BatchedResultsIterator<Bucket> bucketsIterator =
+                m_JobProvider.newBatchedBucketsIterator(m_JobId).timeRange(0, endBucketEpochMs);
 
-        while (page.hitCount() > skip)
+        // Make a list of buckets with their records to be renormalised.
+        // This may be shorter than the original list of buckets for two
+        // reasons:
+        // 1) We don't bother with buckets that have raw score 0 and no
+        //    records
+        // 2) We limit the total number of records to be not much more
+        //    than 100000
+        List<Bucket> bucketsToRenormalise = new ArrayList<>();
+        int batchRecordCount = 0;
+        int skipped = 0;
+
+        while (bucketsIterator.hasNext())
         {
-            List<Bucket> buckets = page.queryResults();
-            if (buckets == null)
+            // Get a batch of buckets without their records to calculate
+            // how many buckets can be sensibly retrieved
+            Deque<Bucket> buckets = bucketsIterator.next();
+            if (buckets.isEmpty())
             {
-                logger.warn("No buckets to renormalise for job " +
-                            m_JobId + " with skip " + skip + " and hit count " +
-                            page.hitCount());
+                logger.warn("No buckets to renormalise for job " + m_JobId);
                 break;
             }
 
-            // Make a list of buckets with their records to be renormalised.
-            // This may be shorter than the original list of buckets for two
-            // reasons:
-            // 1) We don't bother with buckets that have raw score 0 and no
-            //    records
-            // 2) We limit the total number of records to be not much more
-            //    than 100000
-            List<Bucket> bucketsToRenormalise = new ArrayList<>();
-            int taken = 0;
-            int totalRecordCount = 0;
-            for (Bucket bucket : buckets)
+            while (!buckets.isEmpty())
             {
-                ++taken;
-                if (bucket.isNormalisable())
+                Bucket currentBucket = buckets.removeFirst();
+                if (currentBucket.isNormalisable())
                 {
-                    bucketsToRenormalise.add(bucket);
-                    totalRecordCount += m_JobProvider.expandBucket(m_JobId, false, bucket);
-                    if (totalRecordCount >= TARGET_RECORDS_TO_RENORMALISE)
-                    {
-                        break;
-                    }
+                    bucketsToRenormalise.add(currentBucket);
+                    batchRecordCount += m_JobProvider.expandBucket(m_JobId, false, currentBucket);
+                }
+                else
+                {
+                    ++skipped;
+                }
+
+                if (batchRecordCount >= TARGET_RECORDS_TO_RENORMALISE)
+                {
+                    normaliseBuckets(normaliser, bucketsToRenormalise, quantilesState,
+                            batchRecordCount, skipped, counts, logger);
+
+                    bucketsToRenormalise = new ArrayList<>();
+                    batchRecordCount = 0;
+                    skipped = 0;
                 }
             }
+        }
+        if (!bucketsToRenormalise.isEmpty())
+        {
+            normaliseBuckets(normaliser, bucketsToRenormalise, quantilesState,
+                    batchRecordCount, skipped, counts, logger);
+        }
+    }
 
-            if (!bucketsToRenormalise.isEmpty())
-            {
-                logger.debug("Will renormalize a batch of " + bucketsToRenormalise.size()
-                        + " buckets with " + totalRecordCount + " records ("
-                        + (taken - bucketsToRenormalise.size()) + " empty buckets skipped)");
+    private void normaliseBuckets(Normaliser normaliser, List<Bucket> buckets,
+            String quantilesState, int recordCount, int skipped, int[] counts, Logger logger)
+            throws NativeProcessRunException, UnknownJobException
+    {
+        logger.debug("Will renormalize a batch of " + buckets.size()
+                + " buckets with " + recordCount + " records ("
+                + skipped + " empty buckets skipped)");
 
-                List<Normalisable> asNormalisables = bucketsToRenormalise.stream()
-                        .map(bucket -> new BucketNormalisable(bucket)).collect(Collectors.toList());
-                normaliser.normalise(getJobBucketSpan(logger), asNormalisables, quantilesState);
+        List<Normalisable> asNormalisables = buckets.stream()
+                .map(bucket -> new BucketNormalisable(bucket)).collect(Collectors.toList());
+        normaliser.normalise(getJobBucketSpan(logger), asNormalisables, quantilesState);
 
-                for (Bucket bucket : bucketsToRenormalise)
-                {
-                    updateSingleBucket(bucket, counts, logger);
-                }
-            }
-
-            skip += taken;
-            if (page.hitCount() > skip)
-            {
-                // Get more buckets without their records
-                page = m_JobProvider.buckets(m_JobId, false, false,
-                        skip, MAX_BUCKETS_PER_PAGE, 0, endBucketEpochMs, 0.0, 0.0);
-            }
+        for (Bucket bucket : buckets)
+        {
+            updateSingleBucket(bucket, counts, logger);
         }
     }
 
@@ -295,13 +289,15 @@ class ScoresUpdater
     private void updateInfluencers(Normaliser normaliser, String quantilesState, long endBucketEpochMs,
             int[] counts, Logger logger) throws UnknownJobException, NativeProcessRunException
     {
-        int skip = 0;
-        QueryPage<Influencer> page = m_JobProvider.influencers(m_JobId, skip,
-                MAX_INFLUENCERS_PER_PAGE, 0, endBucketEpochMs, null, false, 0.0);
-
-        while (page.hitCount() > skip)
+        BatchedResultsIterator<Influencer> influencersIterator = m_JobProvider
+                .newBatchedInfluencersIterator(m_JobId).timeRange(0, endBucketEpochMs);
+        while (influencersIterator.hasNext())
         {
-            List<Influencer> influencers = page.queryResults();
+            Deque<Influencer> influencers = influencersIterator.next();
+            if (influencers.isEmpty())
+            {
+                break;
+            }
 
             List<Normalisable> asNormalisables = influencers.stream()
                     .map(bucket -> new InfluencerNormalisable(bucket)).collect(Collectors.toList());
@@ -318,13 +314,6 @@ class ScoresUpdater
                 {
                     ++counts[1];
                 }
-            }
-
-            skip += MAX_INFLUENCERS_PER_PAGE;
-            if (page.hitCount() > skip)
-            {
-                page = m_JobProvider.influencers(m_JobId, skip, MAX_INFLUENCERS_PER_PAGE, 0,
-                        endBucketEpochMs, null, false, 0.0);
             }
         }
     }

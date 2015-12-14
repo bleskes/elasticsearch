@@ -27,10 +27,8 @@
 
 package com.prelert.job.process.normaliser;
 
-import static org.mockito.Matchers.anyBoolean;
-import static org.mockito.Matchers.anyInt;
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.anyListOf;
-import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -38,10 +36,13 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Deque;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 import org.apache.log4j.Logger;
 import org.junit.Before;
@@ -50,9 +51,9 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import com.prelert.job.UnknownJobException;
+import com.prelert.job.persistence.BatchedResultsIterator;
 import com.prelert.job.persistence.JobProvider;
 import com.prelert.job.persistence.JobRenormaliser;
-import com.prelert.job.persistence.QueryPage;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
 import com.prelert.job.results.AnomalyRecord;
 import com.prelert.job.results.Bucket;
@@ -62,9 +63,8 @@ import com.prelert.job.results.Influencer;
 public class ScoresUpdaterTest
 {
     private static final String JOB_ID = "foo";
-    private static final int MAX_BUCKETS_PER_PAGE = 10000;
-    private static final int MAX_INFLUENCERS_PER_PAGE = 1000000;
     private static final String QUANTILES_STATE = "someState";
+    private static final long END_TIME = 3600;
 
     @Mock private JobProvider m_JobProvider;
     @Mock private JobRenormaliser m_JobRenormaliser;
@@ -79,8 +79,8 @@ public class ScoresUpdaterTest
         MockitoAnnotations.initMocks(this);
         m_ScoresUpdater = new ScoresUpdater(JOB_ID, m_JobProvider, m_JobRenormaliser,
                 (jobId, logger) -> m_Normaliser);
-        givenProviderReturnsNoBuckets();
-        givenProviderReturnsNoInfluencers();
+        givenProviderReturnsNoBuckets(END_TIME);
+        givenProviderReturnsNoInfluencers(END_TIME);
     }
 
     @Test
@@ -91,12 +91,11 @@ public class ScoresUpdaterTest
         bucket.setId("0");
         bucket.setAnomalyScore(0.0);
         bucket.addBucketInfluencer(createTimeBucketInfluencer(0.7, 0.0));
-        int totalBuckets = 1;
-        long endTime = 3600;
         int bucketSpan = 3600;
         givenBucketSpan(bucketSpan);
-        List<Bucket> buckets = Arrays.asList(bucket);
-        givenProviderReturnsBuckets(0, endTime, totalBuckets, buckets);
+        Deque<Bucket> buckets = new ArrayDeque<>();
+        buckets.add(bucket);
+        givenProviderReturnsBuckets(END_TIME, buckets);
 
         m_ScoresUpdater.update(QUANTILES_STATE, 3600, m_Logger);
 
@@ -114,12 +113,11 @@ public class ScoresUpdaterTest
         bucket.setId("0");
         bucket.setAnomalyScore(0.0);
         bucket.setBucketInfluencers(null);
-        int totalBuckets = 1;
-        long endTime = 3600;
         int bucketSpan = 3600;
         givenBucketSpan(bucketSpan);
-        List<Bucket> buckets = Arrays.asList(bucket);
-        givenProviderReturnsBuckets(0, endTime, totalBuckets, buckets);
+        Deque<Bucket> buckets = new ArrayDeque<>();
+        buckets.add(bucket);
+        givenProviderReturnsBuckets(END_TIME, buckets);
 
         m_ScoresUpdater.update(QUANTILES_STATE, 3600, m_Logger);
 
@@ -137,12 +135,11 @@ public class ScoresUpdaterTest
         bucket.setId("0");
         bucket.setAnomalyScore(30.0);
         bucket.addBucketInfluencer(createTimeBucketInfluencer(0.04, 30.0));
-        int totalBuckets = 1;
-        long endTime = 3600;
         int bucketSpan = 3600;
         givenBucketSpan(bucketSpan);
-        List<Bucket> buckets = Arrays.asList(bucket);
-        givenProviderReturnsBuckets(0, endTime, totalBuckets, buckets);
+        Deque<Bucket> buckets = new ArrayDeque<>();
+        buckets.add(bucket);
+        givenProviderReturnsBuckets(END_TIME, buckets);
 
         m_ScoresUpdater.update(QUANTILES_STATE, 3600, m_Logger);
 
@@ -168,12 +165,11 @@ public class ScoresUpdaterTest
         bucket.setRecordCount(2);
 
         bucket.setId("0");
-        int totalBuckets = 1;
-        long endTime = 3600;
         int bucketSpan = 3600;
         givenBucketSpan(bucketSpan);
-        List<Bucket> buckets = Arrays.asList(bucket);
-        givenProviderReturnsBuckets(0, endTime, totalBuckets, buckets);
+        Deque<Bucket> buckets = new ArrayDeque<>();
+        buckets.add(bucket);
+        givenProviderReturnsBuckets(END_TIME, buckets);
 
         m_ScoresUpdater.update(QUANTILES_STATE, 3600, m_Logger);
 
@@ -194,12 +190,11 @@ public class ScoresUpdaterTest
         bucket.setMaxNormalizedProbability(50.0);
         bucket.raiseBigNormalisedUpdateFlag();
 
-        int totalBuckets = 1;
-        long endTime = 3600;
         int bucketSpan = 3600;
         givenBucketSpan(bucketSpan);
-        List<Bucket> buckets = Arrays.asList(bucket);
-        givenProviderReturnsBuckets(0, endTime, totalBuckets, buckets);
+        Deque<Bucket> buckets = new ArrayDeque<>();
+        buckets.add(bucket);
+        givenProviderReturnsBuckets(END_TIME, buckets);
 
         m_ScoresUpdater.update(QUANTILES_STATE, 3600, m_Logger);
 
@@ -228,12 +223,11 @@ public class ScoresUpdaterTest
         records.add(record3);
         bucket.setRecords(records);
 
-        int totalBuckets = 1;
-        long endTime = 3600;
         int bucketSpan = 3600;
         givenBucketSpan(bucketSpan);
-        List<Bucket> buckets = Arrays.asList(bucket);
-        givenProviderReturnsBuckets(0, endTime, totalBuckets, buckets);
+        Deque<Bucket> buckets = new ArrayDeque<>();
+        buckets.add(bucket);
+        givenProviderReturnsBuckets(END_TIME, buckets);
 
         m_ScoresUpdater.update(QUANTILES_STATE, 3600, m_Logger);
 
@@ -262,12 +256,11 @@ public class ScoresUpdaterTest
         records.add(record3);
         bucket.setRecords(records);
 
-        int totalBuckets = 1;
-        long endTime = 3600;
         int bucketSpan = 3600;
         givenBucketSpan(bucketSpan);
-        List<Bucket> buckets = Arrays.asList(bucket);
-        givenProviderReturnsBuckets(0, endTime, totalBuckets, buckets);
+        Deque<Bucket> buckets = new ArrayDeque<>();
+        buckets.add(bucket);
+        givenProviderReturnsBuckets(END_TIME, buckets);
 
         m_ScoresUpdater.update(QUANTILES_STATE, 3600, m_Logger);
 
@@ -278,10 +271,10 @@ public class ScoresUpdaterTest
     }
 
     @Test
-    public void testUpdate_GivenEnoughBucketsToRequirePaging() throws UnknownJobException,
-            NativeProcessRunException
+    public void testUpdate_GivenEnoughBucketsForTwoBatchesButOneNormalisation()
+            throws UnknownJobException, NativeProcessRunException
     {
-        List<Bucket> batch1 = new ArrayList<>();
+        Deque<Bucket> batch1 = new ArrayDeque<>();
         for (int i = 0; i < 10000; ++i)
         {
             Bucket bucket = new Bucket();
@@ -299,28 +292,63 @@ public class ScoresUpdaterTest
         secondBatchBucket.setAnomalyScore(42.0);
         secondBatchBucket.setMaxNormalizedProbability(50.0);
         secondBatchBucket.raiseBigNormalisedUpdateFlag();
-        List<Bucket> batch2 = Arrays.asList(secondBatchBucket);
+        Deque<Bucket> batch2 = new ArrayDeque<>();
+        batch2.add(secondBatchBucket);
 
-        int totalBuckets = 10001;
-        long endTime = 3600;
         int bucketSpan = 3600;
         givenBucketSpan(bucketSpan);
-        givenProviderReturnsBuckets(0, endTime, totalBuckets, batch1);
-        givenProviderReturnsBuckets(10000, endTime, totalBuckets, batch2);
+        givenProviderReturnsBuckets(END_TIME, batch1, batch2);
+
+        m_ScoresUpdater.update(QUANTILES_STATE, 3600, m_Logger);
+
+        verifyNormaliserWasInvoked(bucketSpan, 1);
+
+        // Batch 1 - Just verify first and last were updated as Mockito
+        // is forbiddingly slow when tring to verify all 10000
+        verifyBucketWasUpdated(batch1.getFirst());
+        verifyBucketRecordsWereNotUpdated(batch1.getFirst().getId());
+        verifyBucketWasUpdated(batch1.getLast());
+        verifyBucketRecordsWereNotUpdated(batch1.getLast().getId());
+
+        verifyBucketWasUpdated(secondBatchBucket);
+        verifyBucketRecordsWereNotUpdated(secondBatchBucket.getId());
+        verifyBucketSpanWasRequestedOnlyOnce();
+    }
+
+    @Test
+    public void testUpdate_GivenTwoBucketsWithFirstHavingEnoughRecordsToForceSecondNormalisation()
+            throws UnknownJobException, NativeProcessRunException
+    {
+        Bucket bucket1 = new Bucket();
+        bucket1.setId("0");
+        bucket1.setAnomalyScore(42.0);
+        bucket1.addBucketInfluencer(createTimeBucketInfluencer(0.04, 42.0));
+        bucket1.setMaxNormalizedProbability(50.0);
+        bucket1.raiseBigNormalisedUpdateFlag();
+        when(m_JobProvider.expandBucket(JOB_ID, false, bucket1)).thenReturn(100000);
+
+        Bucket bucket2 = new Bucket();
+        bucket2.setId("10000");
+        bucket2.addBucketInfluencer(createTimeBucketInfluencer(0.04, 42.0));
+        bucket2.setAnomalyScore(42.0);
+        bucket2.setMaxNormalizedProbability(50.0);
+        bucket2.raiseBigNormalisedUpdateFlag();
+
+        Deque<Bucket> batch = new ArrayDeque<>();
+        batch.add(bucket1);
+        batch.add(bucket2);
+        int bucketSpan = 3600;
+        givenBucketSpan(bucketSpan);
+        givenProviderReturnsBuckets(END_TIME, batch);
 
         m_ScoresUpdater.update(QUANTILES_STATE, 3600, m_Logger);
 
         verifyNormaliserWasInvoked(bucketSpan, 2);
 
-        // Batch 1 - Just verify first and last were updated as Mockito
-        // is forbiddingly slow when tring to verify all 10000
-        verifyBucketWasUpdated(batch1.get(0));
-        verifyBucketRecordsWereNotUpdated(batch1.get(0).getId());
-        verifyBucketWasUpdated(batch1.get(9999));
-        verifyBucketRecordsWereNotUpdated(batch1.get(9999).getId());
-
-        verifyBucketWasUpdated(secondBatchBucket);
-        verifyBucketRecordsWereNotUpdated(secondBatchBucket.getId());
+        verifyBucketWasUpdated(bucket1);
+        verifyBucketRecordsWereNotUpdated(bucket1.getId());
+        verifyBucketWasUpdated(bucket2);
+        verifyBucketRecordsWereNotUpdated(bucket2.getId());
         verifyBucketSpanWasRequestedOnlyOnce();
     }
 
@@ -331,12 +359,11 @@ public class ScoresUpdaterTest
         Influencer influencer = new Influencer();
         influencer.raiseBigNormalisedUpdateFlag();
 
-        int totalInfluencers = 1;
-        long endTime = 3600;
         int bucketSpan = 3600;
         givenBucketSpan(bucketSpan);
-        List<Influencer> influencers = Arrays.asList(influencer);
-        givenProviderReturnsInfluencers(0, endTime, totalInfluencers, influencers);
+        Deque<Influencer> influencers = new ArrayDeque<>();
+        influencers.add(influencer);
+        givenProviderReturnsInfluencers(END_TIME, influencers);
 
         m_ScoresUpdater.update(QUANTILES_STATE, 3600, m_Logger);
 
@@ -367,33 +394,46 @@ public class ScoresUpdaterTest
         return influencer;
     }
 
-    private void givenProviderReturnsNoBuckets() throws UnknownJobException
+    private void givenProviderReturnsNoBuckets(long endTime) throws UnknownJobException
     {
-        QueryPage<Bucket> page = new QueryPage<>(Collections.emptyList(), 0);
-        when(m_JobProvider.buckets(eq(JOB_ID), anyBoolean(), anyBoolean(), anyInt(), anyInt(),
-                anyLong(), anyLong(), eq(0.0), eq(0.0))).thenReturn(page);
+        givenBuckets(endTime, Collections.emptyList());
     }
 
-    private void givenProviderReturnsBuckets(int skip, long endTime, int hitCount, List<Bucket> buckets) throws UnknownJobException
+    private void givenProviderReturnsBuckets(long endTime, Deque<Bucket> batch1, Deque<Bucket> batch2)
+            throws UnknownJobException
     {
-        QueryPage<Bucket> page = new QueryPage<>(buckets, hitCount);
-        when(m_JobProvider.buckets(JOB_ID, false, false, skip, MAX_BUCKETS_PER_PAGE, 0, endTime, 0.0, 0.0))
-                .thenReturn(page);
+        List<Deque<Bucket>> batches = new ArrayList<>();
+        batches.add(new ArrayDeque<>(batch1));
+        batches.add(new ArrayDeque<>(batch2));
+        givenBuckets(endTime, batches);
     }
 
-    private void givenProviderReturnsNoInfluencers() throws UnknownJobException
+    private void givenProviderReturnsBuckets(long endTime, Deque<Bucket> buckets)
     {
-        QueryPage<Influencer> page = new QueryPage<>(Collections.emptyList(), 0);
-        when(m_JobProvider.influencers(eq(JOB_ID), anyInt(), anyInt(), anyLong(), anyLong(),
-                eq(null), eq(false), eq(0.0))).thenReturn(page);
+        List<Deque<Bucket>> batches = new ArrayList<>();
+        batches.add(new ArrayDeque<>(buckets));
+        givenBuckets(endTime, batches);
     }
 
-    private void givenProviderReturnsInfluencers(int skip, long endTime, int hitCount,
-            List<Influencer> influencers) throws UnknownJobException
+    private void givenBuckets(long endTime, List<Deque<Bucket>> batches)
     {
-        QueryPage<Influencer> page = new QueryPage<>(influencers, hitCount);
-        when(m_JobProvider.influencers(JOB_ID, skip, MAX_INFLUENCERS_PER_PAGE, 0, endTime, null, false, 0.0))
-                .thenReturn(page);
+        BatchedResultsIterator<Bucket> iterator = new MockBatchedResultsIterator<Bucket>(0,
+                endTime, batches);
+        when(m_JobProvider.newBatchedBucketsIterator(JOB_ID)).thenReturn(iterator);
+    }
+
+    private void givenProviderReturnsNoInfluencers(long endTime) throws UnknownJobException
+    {
+        givenProviderReturnsInfluencers(endTime, new ArrayDeque<>());
+    }
+
+    private void givenProviderReturnsInfluencers(long endTime, Deque<Influencer> influencers)
+    {
+        List<Deque<Influencer>> batches = new ArrayList<>();
+        batches.add(new ArrayDeque<>(influencers));
+        BatchedResultsIterator<Influencer> iterator = new MockBatchedResultsIterator<Influencer>(0,
+                endTime, batches);
+        when(m_JobProvider.newBatchedInfluencersIterator(JOB_ID)).thenReturn(iterator);
     }
 
     private void verifyBucketSpanWasNotRequested()
@@ -448,5 +488,48 @@ public class ScoresUpdaterTest
     private void verifyInfluencerWasUpdated(Influencer influencer)
     {
         verify(m_JobRenormaliser).updateInfluencer(JOB_ID, influencer);
+    }
+
+    private static class MockBatchedResultsIterator<T> implements BatchedResultsIterator<T>
+    {
+        private final long m_StartEpochMs;
+        private final long m_EndEpochMs;
+        private final List<Deque<T>> m_Batches;
+        private int m_Index;
+        private boolean m_WasTimeRangeCalled;
+
+        public MockBatchedResultsIterator(long startEpochMs, long endEpochMs, List<Deque<T>> batches)
+        {
+            m_StartEpochMs = startEpochMs;
+            m_EndEpochMs = endEpochMs;
+            m_Batches = batches;
+            m_Index = 0;
+            m_WasTimeRangeCalled = false;
+        }
+
+        @Override
+        public BatchedResultsIterator<T> timeRange(long startEpochMs, long endEpochMs)
+        {
+            assertEquals(m_StartEpochMs, startEpochMs);
+            assertEquals(m_EndEpochMs, endEpochMs);
+            m_WasTimeRangeCalled = true;
+            return this;
+        }
+
+        @Override
+        public Deque<T> next() throws UnknownJobException
+        {
+            if (!m_WasTimeRangeCalled || !hasNext())
+            {
+                throw new NoSuchElementException();
+            }
+            return m_Batches.get(m_Index++);
+        }
+
+        @Override
+        public boolean hasNext()
+        {
+            return m_Index != m_Batches.size();
+        }
     }
 }

@@ -44,7 +44,6 @@ public class ServerInfo
     private String m_OsName;
     private String m_OsVersion;
     private String m_Hostname;
-    private CpuInfo m_CpuInfo;
     private Long m_TotalMemoryMb;
     private Long m_TotalDiskMb;
     private Long m_AvailableDiskMb;
@@ -83,16 +82,6 @@ public class ServerInfo
     public void setHostname(String hostname)
     {
         m_Hostname = hostname;
-    }
-
-    public CpuInfo getCpuInfo()
-    {
-        return m_CpuInfo;
-    }
-
-    public void setCpuInfo(CpuInfo cpuInfo)
-    {
-        m_CpuInfo = cpuInfo;
     }
 
     public Long getTotalMemoryMb()

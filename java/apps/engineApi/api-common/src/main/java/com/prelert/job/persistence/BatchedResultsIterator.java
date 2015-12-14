@@ -24,29 +24,48 @@
  *                                                          *
  *                                                          *
  ************************************************************/
-package com.prelert.server.info;
 
-import static org.junit.Assert.*;
+package com.prelert.job.persistence;
 
-import org.junit.Test;
+import java.util.Deque;
+import java.util.NoSuchElementException;
 
-public class CpuInfoTest
+import com.prelert.job.UnknownJobException;
+
+/**
+ * An iterator useful to fetch a big number of results of type T
+ * and iterate through them in batches.
+ */
+public interface BatchedResultsIterator<T>
 {
-    @Test
-    public void testToString()
-    {
-        CpuInfo info = new CpuInfo();
-        assertEquals("", info.toString());
+    /**
+     * Query results whose timestamp is within the given time range
+     *
+     * @param startEpochMs the start time as epoch milliseconds (inclusive)
+     * @param endEpochMs the end time as epoch milliseconds (exclusive)
+     * @return the iterator itself
+     */
+    BatchedResultsIterator<T> timeRange(long startEpochMs, long endEpochMs);
 
-        info.setVendor("intel");
-        info.setModel("pentium 2");
-        assertEquals("intel pentium 2", info.toString().trim());
+    /**
+     * The first time next() is called, the search will be performed and the first
+     * batch will be returned. Any subsequent call will return the following batches.
+     * <p>
+     * Note that in some implementations it is possible that when there are no
+     * results at all, the first time this method is called an empty {@code Deque} is returned.
+     *
+     * @return a {@code Deque} with the next batch of results
+     * @throws UnknownJobException if the job whose results are queried is unknown
+     * @throws NoSuchElementException if the iteration has no more elements
+     */
+    Deque<T> next() throws UnknownJobException;
 
-        info.setFrequencyMHz(800);
-        assertEquals("800MHz intel pentium 2", info.toString().trim());
-
-        info.setCores(1);
-        assertEquals("800MHz intel pentium 2 (1 cores)", info.toString().trim());
-    }
-
+    /**
+     * Returns {@code true} if the iteration has more elements.
+     * (In other words, returns {@code true} if {@link #next} would
+     * return an element rather than throwing an exception.)
+     *
+     * @return {@code true} if the iteration has more elements
+     */
+    boolean hasNext();
 }

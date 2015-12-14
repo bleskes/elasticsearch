@@ -25,46 +25,37 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.rs.validation;
+package com.prelert.job.persistence.elasticsearch;
 
-import com.prelert.job.errorcodes.ErrorCodes;
-import com.prelert.job.messages.Messages;
-import com.prelert.rs.exception.InvalidParametersException;
+import org.elasticsearch.client.Client;
+import org.elasticsearch.search.SearchHit;
 
-public class PaginationParamsValidator
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.prelert.job.results.Bucket;
+import com.prelert.job.results.Influencer;
+
+class ElasticsearchBatchedInfluencersIterator extends ElasticsearchBatchedResultsIterator<Influencer>
 {
-    /**
-     * This is a limit imposed by elasticsearch since version 2.1.0.
-     * The reason is to avoid loading too many documents in memory.
-     */
-    private static final int MAX_SKIP_TAKE_SUM = 10000;
-
-    private final int m_Skip;
-    private final int m_Take;
-
-    public PaginationParamsValidator(int skip, int take)
+    public ElasticsearchBatchedInfluencersIterator(Client client, String jobId,
+            ObjectMapper objectMapper)
     {
-        m_Skip = skip;
-        m_Take = take;
+        super(client, jobId, objectMapper);
     }
 
-    public void validate()
+    @Override
+    protected String getType()
     {
-        if (m_Skip < 0)
-        {
-            throw new InvalidParametersException(Messages.getMessage(Messages.REST_INVALID_SKIP),
-                    ErrorCodes.INVALID_SKIP_PARAM);
-        }
-        if (m_Take < 0)
-        {
-            throw new InvalidParametersException(Messages.getMessage(Messages.REST_INVALID_TAKE),
-                    ErrorCodes.INVALID_TAKE_PARAM);
-        }
-        if (m_Skip + m_Take > MAX_SKIP_TAKE_SUM)
-        {
-            throw new InvalidParametersException(Messages.getMessage(
-                    Messages.REST_INVALID_SKIP_TAKE_SUM, MAX_SKIP_TAKE_SUM),
-                    ErrorCodes.INVALID_TAKE_PARAM);
-        }
+        return Influencer.TYPE;
+    }
+
+    @Override
+    protected Influencer map(ObjectMapper objectMapper, SearchHit hit)
+    {
+        // Remove the Kibana/Logstash '@timestamp' entry as stored in Elasticsearch,
+        // and replace using the API 'timestamp' key.
+        Object timestamp = hit.getSource().remove(ElasticsearchMappings.ES_TIMESTAMP);
+        hit.getSource().put(Bucket.TIMESTAMP, timestamp);
+
+        return objectMapper.convertValue(hit.getSource(), Influencer.class);
     }
 }

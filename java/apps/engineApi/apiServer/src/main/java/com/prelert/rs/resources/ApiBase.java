@@ -64,7 +64,6 @@ public class ApiBase extends ResourceWithJobManager
                 + "<tr><td>Hostname</td><td>%s</td></tr>"
 	            + "<tr><td>OS Name</td><td>%s</td></tr>"
 	            + "<tr><td>OS Version</td><td>%s</td></tr>"
-	            + "<tr><td>Processor</td><td>%s</td></tr>"
 	            + "<tr><td>Total Memory MB</td><td>%d</td></tr>"
 	            + "<tr><td>Total Disk MB</td><td>%d</td></tr>"
 	            + "<tr><td>Available Disk MB</td><td>%d</td></tr>"
@@ -90,7 +89,6 @@ public class ApiBase extends ResourceWithJobManager
     	                                    serverInfo.getHostname(),
     	                                    serverInfo.getOsName(),
     	                                    serverInfo.getOsVersion(),
-    	                                    serverInfo.getCpuInfo().toString(),
     	                                    serverInfo.getTotalMemoryMb(),
     	                                    serverInfo.getTotalDiskMb(),
     	                                    serverInfo.getAvailableDiskMb());
