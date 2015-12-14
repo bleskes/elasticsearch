@@ -436,7 +436,7 @@ public class ElasticsearchPersister implements JobResultsPersister
                 .execute().actionGet();
 
         DeleteRequestBuilder deleteRequest = DeleteAction.INSTANCE.newRequestBuilder(m_Client)
-                .setIndex(m_JobId);
+                .setIndex(m_JobId).setParent(bucket.getId());
         for (SearchHit hit : searchResponse.getHits())
         {
             deleteRequest.setType(AnomalyRecord.TYPE).setId(hit.getId()).execute().actionGet();
