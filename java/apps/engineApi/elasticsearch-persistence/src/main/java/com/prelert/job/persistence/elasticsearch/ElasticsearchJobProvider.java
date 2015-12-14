@@ -27,8 +27,6 @@
 
 package com.prelert.job.persistence.elasticsearch;
 
-import static org.elasticsearch.node.NodeBuilder.nodeBuilder;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -52,16 +50,16 @@ import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
-import org.elasticsearch.common.settings.ImmutableSettings;
-import org.elasticsearch.common.settings.ImmutableSettings.Builder;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.settings.Settings.Builder;
 import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.index.IndexNotFoundException;
 import org.elasticsearch.index.engine.VersionConflictEngineException;
 import org.elasticsearch.index.get.GetField;
-import org.elasticsearch.index.query.FilterBuilder;
-import org.elasticsearch.index.query.FilterBuilders;
-import org.elasticsearch.indices.IndexMissingException;
+import org.elasticsearch.index.query.QueryBuilder;
+import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.node.Node;
+import org.elasticsearch.node.NodeBuilder;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.sort.FieldSortBuilder;
 import org.elasticsearch.search.sort.SortBuilder;
@@ -77,6 +75,7 @@ import com.prelert.job.ModelSizeStats;
 import com.prelert.job.ModelState;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.errorcodes.ErrorCodes;
+import com.prelert.job.persistence.BatchedResultsIterator;
 import com.prelert.job.persistence.DataStoreException;
 import com.prelert.job.persistence.JobProvider;
 import com.prelert.job.persistence.QueryPage;
@@ -137,7 +136,7 @@ public class ElasticsearchJobProvider implements JobProvider
     public static ElasticsearchJobProvider create(String elasticSearchHost,
             String elasticSearchClusterName, String portRange, String numProcessors)
     {
-        Node node = nodeBuilder()
+        Node node = NodeBuilder.nodeBuilder()
                 .settings(buildSettings(elasticSearchHost, portRange, numProcessors))
                 .client(true)
                 .clusterName(elasticSearchClusterName).node();
@@ -149,15 +148,13 @@ public class ElasticsearchJobProvider implements JobProvider
      * attempt multicast discovery and to only look for another node to connect
      * to on the given host.
      */
-    private static Settings buildSettings(String host, String portRange,
-            String numProcessors)
+    private static Settings buildSettings(String host, String portRange, String numProcessors)
     {
         // Multicast discovery is expected to be disabled on the Elasticsearch
         // data node, so disable it for this embedded node too and tell it to
         // expect the data node to be on the same machine
-        Builder builder = ImmutableSettings.settingsBuilder()
+        Builder builder = Settings.builder()
                 .put("http.enabled", "false")
-                .put("discovery.zen.ping.multicast.enabled", "false")
                 .put("discovery.zen.ping.unicast.hosts", host);
 
         if (portRange != null && portRange.isEmpty() == false)
@@ -246,7 +243,7 @@ public class ElasticsearchJobProvider implements JobProvider
                 throw new UnknownJobException(jobId);
             }
         }
-        catch (IndexMissingException e)
+        catch (IndexNotFoundException e)
         {
             // the job does not exist
             String msg = "Missing Index: no job with id " + jobId;
@@ -307,7 +304,7 @@ public class ElasticsearchJobProvider implements JobProvider
 
             return Optional.of(details);
         }
-        catch (IndexMissingException e)
+        catch (IndexNotFoundException e)
         {
             // the job does not exist
             String msg = "Missing Index no job with id " + jobId;
@@ -319,7 +316,7 @@ public class ElasticsearchJobProvider implements JobProvider
     @Override
     public QueryPage<JobDetails> getJobs(int skip, int take)
     {
-        FilterBuilder fb = FilterBuilders.matchAllFilter();
+        QueryBuilder fb = QueryBuilders.matchAllQuery();
         SortBuilder sb = new FieldSortBuilder(JobDetails.ID)
                                 .unmappedType("string")
                                 .order(SortOrder.ASC);
@@ -462,7 +459,7 @@ public class ElasticsearchJobProvider implements JobProvider
                 return null;
             }
         }
-        catch (IndexMissingException e)
+        catch (IndexNotFoundException e)
         {
             // the job does not exist
             String msg = "Missing Index no job with id " + jobId;
@@ -544,7 +541,7 @@ public class ElasticsearchJobProvider implements JobProvider
         {
             String msg = "Error deleting index '" + jobId + "'";
             ErrorCodes errorCode = ErrorCodes.DATA_STORE_ERROR;
-            if (e.getCause() instanceof IndexMissingException)
+            if (e.getCause() instanceof IndexNotFoundException)
             {
                 msg = "Cannot delete job - no index with id '" + jobId + " in the database";
                 errorCode = ErrorCodes.MISSING_JOB_ERROR;
@@ -570,7 +567,7 @@ public class ElasticsearchJobProvider implements JobProvider
             double anomalyScoreThreshold, double normalizedProbabilityThreshold)
     throws UnknownJobException
     {
-        FilterBuilder fb = new ResultsFilterBuilder()
+        QueryBuilder fb = new ResultsFilterBuilder()
                 .timeRange(ElasticsearchMappings.ES_TIMESTAMP, startEpochMs, endEpochMs)
                 .score(Bucket.ANOMALY_SCORE, anomalyScoreThreshold)
                 .score(Bucket.MAX_NORMALIZED_PROBABILITY, normalizedProbabilityThreshold)
@@ -580,7 +577,7 @@ public class ElasticsearchJobProvider implements JobProvider
     }
 
     private QueryPage<Bucket> buckets(String jobId, boolean expand, boolean includeInterim,
-            int skip, int take, FilterBuilder fb) throws UnknownJobException
+            int skip, int take, QueryBuilder fb) throws UnknownJobException
     {
         SortBuilder sb = new FieldSortBuilder(Bucket.ID)
                     .unmappedType("string")
@@ -599,7 +596,7 @@ public class ElasticsearchJobProvider implements JobProvider
                                         .setFrom(skip).setSize(take)
                                         .get();
         }
-        catch (IndexMissingException e)
+        catch (IndexNotFoundException e)
         {
             throw new UnknownJobException(jobId);
         }
@@ -641,7 +638,7 @@ public class ElasticsearchJobProvider implements JobProvider
                     " from index " + jobId);
             response = m_Client.prepareGet(jobId, Bucket.TYPE, bucketId).get();
         }
-        catch (IndexMissingException e)
+        catch (IndexNotFoundException e)
         {
             throw new UnknownJobException(jobId);
         }
@@ -669,6 +666,12 @@ public class ElasticsearchJobProvider implements JobProvider
         }
 
         return doc;
+    }
+
+    @Override
+    public BatchedResultsIterator<Bucket> newBatchedBucketsIterator(String jobId)
+    {
+        return new ElasticsearchBatchedBucketsIterator(m_Client, jobId, m_ObjectMapper);
     }
 
     @Override
@@ -705,7 +708,7 @@ public class ElasticsearchJobProvider implements JobProvider
         // the scenes, and Elasticsearch documentation claims it's significantly
         // slower.  Here we rely on the record timestamps being identical to the
         // bucket timestamp.
-        FilterBuilder recordFilter = FilterBuilders.termFilter(ElasticsearchMappings.ES_TIMESTAMP,
+        QueryBuilder recordFilter = QueryBuilders.termQuery(ElasticsearchMappings.ES_TIMESTAMP,
                 bucket.getTimestamp().getTime());
 
         recordFilter = new ResultsFilterBuilder(recordFilter).interim(
@@ -750,7 +753,7 @@ public class ElasticsearchJobProvider implements JobProvider
         {
             searchResponse = searchBuilder.get();
         }
-        catch (IndexMissingException e)
+        catch (IndexNotFoundException e)
         {
             throw new UnknownJobException(jobId);
         }
@@ -775,7 +778,7 @@ public class ElasticsearchJobProvider implements JobProvider
                     " from index " + jobId);
             response = m_Client.prepareGet(jobId, CategoryDefinition.TYPE, categoryId).get();
         }
-        catch (IndexMissingException e)
+        catch (IndexNotFoundException e)
         {
             throw new UnknownJobException(jobId);
         }
@@ -801,7 +804,7 @@ public class ElasticsearchJobProvider implements JobProvider
             double anomalyScoreThreshold, double normalizedProbabilityThreshold)
     throws UnknownJobException
     {
-        FilterBuilder fb = new ResultsFilterBuilder()
+        QueryBuilder fb = new ResultsFilterBuilder()
                 .timeRange(ElasticsearchMappings.ES_TIMESTAMP, startEpochMs, endEpochMs)
                 .score(AnomalyRecord.ANOMALY_SCORE, anomalyScoreThreshold)
                 .score(AnomalyRecord.NORMALIZED_PROBABILITY, normalizedProbabilityThreshold)
@@ -811,7 +814,7 @@ public class ElasticsearchJobProvider implements JobProvider
     }
 
     private QueryPage<AnomalyRecord> records(String jobId,
-            int skip, int take, FilterBuilder recordFilter,
+            int skip, int take, QueryBuilder recordFilter,
             String sortField, boolean descending)
     throws UnknownJobException
     {
@@ -831,7 +834,7 @@ public class ElasticsearchJobProvider implements JobProvider
      * The returned records have the parent bucket id set.
      */
     private QueryPage<AnomalyRecord> records(String jobId, int skip, int take,
-            FilterBuilder recordFilter, SortBuilder sb, List<String> secondarySort,
+            QueryBuilder recordFilter, SortBuilder sb, List<String> secondarySort,
             boolean descending)
     throws UnknownJobException
     {
@@ -863,7 +866,7 @@ public class ElasticsearchJobProvider implements JobProvider
                     " with filter after sort skip " + skip + " take " + take);
             searchResponse = searchBuilder.get();
         }
-        catch (IndexMissingException e)
+        catch (IndexNotFoundException e)
         {
             throw new UnknownJobException(jobId);
         }
@@ -894,7 +897,7 @@ public class ElasticsearchJobProvider implements JobProvider
     public QueryPage<Influencer> influencers(String jobId, int skip, int take)
             throws UnknownJobException
     {
-        return influencers(jobId, skip, take, FilterBuilders.matchAllFilter(),
+        return influencers(jobId, skip, take, QueryBuilders.matchAllQuery(),
                 Influencer.ANOMALY_SCORE, true);
     }
 
@@ -903,7 +906,7 @@ public class ElasticsearchJobProvider implements JobProvider
             long endEpochMs, String sortField, boolean sortDescending, double anomalyScoreFilter)
             throws UnknownJobException
     {
-        FilterBuilder fb = new ResultsFilterBuilder()
+        QueryBuilder fb = new ResultsFilterBuilder()
                 .timeRange(Influencer.TIMESTAMP, startEpochMs, endEpochMs)
                 .score(Influencer.ANOMALY_SCORE, anomalyScoreFilter)
                 .build();
@@ -911,7 +914,7 @@ public class ElasticsearchJobProvider implements JobProvider
     }
 
     private QueryPage<Influencer> influencers(String jobId, int skip, int take,
-            FilterBuilder filterBuilder, String sortField, boolean sortDescending)
+            QueryBuilder filterBuilder, String sortField, boolean sortDescending)
             throws UnknownJobException
     {
         LOGGER.trace("ES API CALL: search all of type " + Influencer.TYPE + " from index " + jobId
@@ -935,7 +938,7 @@ public class ElasticsearchJobProvider implements JobProvider
         {
             response = searchRequestBuilder.get();
         }
-        catch (IndexMissingException e)
+        catch (IndexNotFoundException e)
         {
             throw new UnknownJobException(jobId);
         }
@@ -943,16 +946,12 @@ public class ElasticsearchJobProvider implements JobProvider
         List<Influencer> influencers = new ArrayList<>();
         for (SearchHit hit : response.getHits().getHits())
         {
-            Influencer influencer;
-            try
-            {
-                influencer = m_ObjectMapper.convertValue(hit.getSource(), Influencer.class);
-            }
-            catch (IllegalArgumentException e)
-            {
-                LOGGER.error("Cannot parse influencer from JSON", e);
-                continue;
-            }
+            Map<String, Object> m = hit.getSource();
+
+            // replace logstash timestamp name with timestamp
+            m.put(Bucket.TIMESTAMP, m.remove(ElasticsearchMappings.ES_TIMESTAMP));
+
+            Influencer influencer = m_ObjectMapper.convertValue(m, Influencer.class);
 
             influencers.add(influencer);
         }
@@ -966,6 +965,11 @@ public class ElasticsearchJobProvider implements JobProvider
         throw new IllegalStateException();
     }
 
+    @Override
+    public BatchedResultsIterator<Influencer> newBatchedInfluencersIterator(String jobId)
+    {
+        return new ElasticsearchBatchedInfluencersIterator(m_Client, jobId, m_ObjectMapper);
+    }
 
     /**
      * Always returns true
@@ -975,6 +979,7 @@ public class ElasticsearchJobProvider implements JobProvider
     {
         LOGGER.trace("ES API CALL: index type " + PRELERT_INFO_TYPE +
                 " in index " + PRELERT_INFO_INDEX + " with ID " + PRELERT_INFO_ID);
+
         m_Client.prepareIndex(PRELERT_INFO_INDEX, PRELERT_INFO_TYPE, PRELERT_INFO_ID)
                         .setSource(infoDoc)
                         .execute().actionGet();
@@ -1001,7 +1006,7 @@ public class ElasticsearchJobProvider implements JobProvider
             return checkQuantilesVersion(jobId, response) ? createQuantiles(jobId, response)
                     : new Quantiles();
         }
-        catch (IndexMissingException e)
+        catch (IndexNotFoundException e)
         {
             LOGGER.error("Missing index when getting quantiles", e);
             throw new UnknownJobException(jobId);

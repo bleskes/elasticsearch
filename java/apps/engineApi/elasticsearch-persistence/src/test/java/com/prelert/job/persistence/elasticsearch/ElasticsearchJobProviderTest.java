@@ -63,10 +63,8 @@ public class ElasticsearchJobProviderTest
     public void setUp() throws InterruptedException, ExecutionException
     {
         MockitoAnnotations.initMocks(this);
-        Settings settings = mock(Settings.class);
-        when(settings.get("cluster.name")).thenReturn("nodeName");
+        Settings settings = Settings.builder().put("cluster.name", "nodeName").build();
         when(m_Node.settings()).thenReturn(settings);
-
     }
 
     @Test
@@ -86,7 +84,7 @@ public class ElasticsearchJobProviderTest
             ExecutionException, UnknownJobException
     {
         m_ExpectedException.expect(UnknownJobException.class);
-//        m_ExpectedException.expectMessage("Cannot read persisted quantiles");
+        m_ExpectedException.expectMessage("No known job with id 'foo'");
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.MISSING_JOB_ERROR));
 

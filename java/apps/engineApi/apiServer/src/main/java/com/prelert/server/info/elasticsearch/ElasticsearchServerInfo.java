@@ -28,22 +28,20 @@ package com.prelert.server.info.elasticsearch;
 
 import java.io.IOException;
 import java.util.Date;
-import java.util.concurrent.ExecutionException;
 
 import org.apache.log4j.Logger;
 import org.elasticsearch.action.admin.cluster.node.info.NodeInfo;
-import org.elasticsearch.action.admin.cluster.node.info.NodesInfoRequestBuilder;
+import org.elasticsearch.action.admin.cluster.node.info.NodesInfoAction;
 import org.elasticsearch.action.admin.cluster.node.info.NodesInfoResponse;
 import org.elasticsearch.action.admin.cluster.node.stats.NodeStats;
-import org.elasticsearch.action.admin.cluster.node.stats.NodesStatsRequestBuilder;
+import org.elasticsearch.action.admin.cluster.node.stats.NodesStatsAction;
 import org.elasticsearch.action.admin.cluster.node.stats.NodesStatsResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
-import org.elasticsearch.monitor.os.OsInfo;
 
-import com.prelert.server.info.CpuInfo;
+import com.google.common.annotations.VisibleForTesting;
 import com.prelert.server.info.ServerInfo;
 import com.prelert.server.info.ServerInfoFactory;
 
@@ -81,12 +79,8 @@ public class ElasticsearchServerInfo implements ServerInfoFactory
                 continue;
             }
 
-            CpuInfo cpuInfo = new CpuInfo();
-            populateCpuInfo(cpuInfo, nodeInfo.getOs().getCpu());
-            serverInfo.setCpuInfo(cpuInfo);
-
             serverInfo.setHostname(nodeInfo.getHostname());
-            serverInfo.setTotalMemoryMb(nodeInfo.getOs().getMem().getTotal().getMb());
+            serverInfo.setTotalMemoryMb(nodeInfo.getJvm().getMem().getHeapMax().getMb());
             break;
         }
 
@@ -113,46 +107,9 @@ public class ElasticsearchServerInfo implements ServerInfoFactory
         return serverInfo;
     }
 
-    @Override
-    public CpuInfo cpuInfo()
-    {
-        CpuInfo cpuInfo = new CpuInfo();
-
-        NodeInfo[] nodeInfos = this.nodesInfo();
-
-        if (nodeInfos.length == 0)
-        {
-            LOGGER.error("No NodeInfo returned");
-        }
-
-        // Use the first data node
-        for (NodeInfo nodeInfo : nodesInfo())
-        {
-            if (nodeInfo.getNode().isClientNode() && nodeInfo.getNode().isDataNode() == false)
-            {
-                continue;
-            }
-
-            populateCpuInfo(cpuInfo, nodeInfo.getOs().getCpu());
-            break;
-        }
-
-
-        return cpuInfo;
-    }
-
-    private void populateCpuInfo(CpuInfo cpuInfo, OsInfo.Cpu cpu)
-    {
-        cpuInfo.setModel(cpu.getModel());
-        cpuInfo.setVendor(cpu.getVendor());
-        cpuInfo.setCores(cpu.getTotalCores());
-        cpuInfo.setFrequencyMHz(cpu.getMhz());
-    }
-
-
     /**
      * JSON formatted server stats.
-     * Includes CPU load, memory usage, disk usage and the size of the
+     * Includes memory usage, disk usage and the size of the
      * Elasticsearch indexes.
      */
     @Override
@@ -218,43 +175,23 @@ public class ElasticsearchServerInfo implements ServerInfoFactory
         }
     }
 
-
-
-    private NodeInfo[] nodesInfo()
+    @VisibleForTesting
+    protected NodeInfo[] nodesInfo()
     {
-        try
-        {
-            LOGGER.trace("ES API CALL: node info all nodes");
-            NodesInfoResponse response = m_Client.admin().cluster().nodesInfo(
-                new NodesInfoRequestBuilder(m_Client.admin().cluster()).all().request()).get();
-
-            return response.getNodes();
-        }
-        catch (InterruptedException | ExecutionException e)
-        {
-            LOGGER.error("Error getting NodesInfo", e);
-            return new NodeInfo[] {};
-        }
+        LOGGER.trace("ES API CALL: node info all nodes");
+        NodesInfoResponse response = NodesInfoAction.INSTANCE
+                .newRequestBuilder(m_Client.admin().cluster()).all().get();
+        return response.getNodes();
     }
 
-    private NodeStats[] nodesStats()
+    @VisibleForTesting
+    protected NodeStats[] nodesStats()
     {
-        try
-        {
-            LOGGER.trace("ES API CALL: node stats all nodes");
-            NodesStatsResponse response = m_Client.admin().cluster().nodesStats(
-                new NodesStatsRequestBuilder(m_Client.admin().cluster()).all().request()).get();
-
-            return response.getNodes();
-        }
-        catch (InterruptedException | ExecutionException e)
-        {
-            LOGGER.error("Error getting NodesStats", e);
-            return new NodeStats[] {};
-        }
+        LOGGER.trace("ES API CALL: node stats all nodes");
+        NodesStatsResponse response = NodesStatsAction.INSTANCE
+                .newRequestBuilder(m_Client.admin().cluster()).all().get();
+        return response.getNodes();
     }
-
-
 
     private void writeApiServerNode(XContentBuilder builder, NodeInfo nodeInfo)
     {
