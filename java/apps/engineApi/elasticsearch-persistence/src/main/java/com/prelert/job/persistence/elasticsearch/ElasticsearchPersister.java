@@ -100,6 +100,11 @@ public class ElasticsearchPersister implements JobResultsPersister
 {
     private static final Logger LOGGER = Logger.getLogger(ElasticsearchPersister.class);
 
+    /**
+     * We add the jobId in top level results to facilitate display in kibana
+     */
+    static final String JOB_ID_NAME = "jobId";
+
     private final Client m_Client;
     private final String m_JobId;
     private final Set<String> m_DetectorNames;
@@ -396,6 +401,7 @@ public class ElasticsearchPersister implements JobResultsPersister
     throws IOException
     {
         XContentBuilder builder = jsonBuilder().startObject()
+                .field(JOB_ID_NAME, m_JobId)
                 .field(Bucket.ID, bucket.getId())
                 .field(ElasticsearchMappings.ES_TIMESTAMP, bucket.getTimestamp())
                 .field(Bucket.ANOMALY_SCORE, bucket.getAnomalyScore())
@@ -447,6 +453,7 @@ public class ElasticsearchPersister implements JobResultsPersister
     {
         List<String> examples = category.getExamples();
         return jsonBuilder().startObject()
+                .field(JOB_ID_NAME, m_JobId)
                 .field(CategoryDefinition.CATEGORY_ID, category.getCategoryId())
                 .field(CategoryDefinition.TERMS, category.getTerms())
                 .field(CategoryDefinition.REGEX, category.getRegex())
@@ -515,6 +522,7 @@ public class ElasticsearchPersister implements JobResultsPersister
     throws IOException
     {
         XContentBuilder builder = jsonBuilder().startObject()
+                .field(JOB_ID_NAME, m_JobId)
                 .field(AnomalyRecord.PROBABILITY, record.getProbability())
                 .field(AnomalyRecord.ANOMALY_SCORE, record.getAnomalyScore())
                 .field(AnomalyRecord.NORMALIZED_PROBABILITY, record.getNormalizedProbability())
@@ -693,6 +701,7 @@ public class ElasticsearchPersister implements JobResultsPersister
     throws IOException
     {
         return jsonBuilder().startObject()
+                .field(JOB_ID_NAME, m_JobId)
                 .field(ElasticsearchMappings.ES_TIMESTAMP, influencer.getTimestamp())
                 .field(Influencer.PROBABILITY, influencer.getProbability())
                 .field(Influencer.INFLUENCER_FIELD_NAME, influencer.getInfluencerFieldName())
