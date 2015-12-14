@@ -100,10 +100,9 @@ public class ElasticsearchPersister implements JobResultsPersister
 {
     private static final Logger LOGGER = Logger.getLogger(ElasticsearchPersister.class);
 
-    private Client m_Client;
-    private String m_JobId;
-
-    private Set<String> m_DetectorNames;
+    private final Client m_Client;
+    private final String m_JobId;
+    private final Set<String> m_DetectorNames;
 
     /**
      * Create with the Elasticsearch client. Data will be written to
