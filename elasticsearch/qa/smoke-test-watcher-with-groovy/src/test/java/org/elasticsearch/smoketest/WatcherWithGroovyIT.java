@@ -15,7 +15,7 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.watcher.test.rest;
+package org.elasticsearch.smoketest;
 
 import org.elasticsearch.test.rest.RestTestCandidate;
 
