@@ -93,7 +93,8 @@ curl -X POST -H 'Content-Type: application/json' 'http://localhost:8080/engine/v
     "id":"farequote",
     "analysisConfig" : {
         "bucketSpan":3600,
-        "detectors" :[{"function":"metric","fieldName":"responsetime","byFieldName":"airline"}]
+        "detectors" :[{"function":"metric","fieldName":"responsetime","byFieldName":"airline"}],
+        "influencers" :["airline"]
     },
     "dataDescription" : {
         "fieldDelimiter":",",
@@ -141,12 +142,14 @@ latest job. For example:
     "location" : "http://localhost:8080/engine/v1/jobs/farequote",
     "id" : "farequote",
     "analysisConfig" : {
+      "latency" : 0,
+      "bucketSpan" : 3600,
       "detectors" : [ {
         "fieldName" : "responsetime",
         "function" : "metric",
         "byFieldName" : "airline"
       } ],
-      "bucketSpan" : 3600
+      "influencers" : [ "airline" ]
     },
     "dataDescription" : {
       "format" : "DELIMITED",
@@ -320,7 +323,8 @@ curl -X POST -H 'Content-Type: application/json' 'http://localhost:8080/engine/v
     "id" : "farequote-json",
     "analysisConfig" : {
         "bucketSpan":3600,
-        "detectors" :[{"fieldName":"responsetime","byFieldName":"airline"}]
+        "detectors" :[{"fieldName":"responsetime","byFieldName":"airline"}],
+        "influencers" :["airline"]
     },
     "dataDescription" : {
         "format":"json",
