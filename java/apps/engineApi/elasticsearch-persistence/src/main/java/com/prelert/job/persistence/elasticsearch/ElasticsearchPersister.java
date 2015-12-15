@@ -30,6 +30,7 @@ package com.prelert.job.persistence.elasticsearch;
 import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -68,6 +69,7 @@ import com.prelert.job.results.CategoryDefinition;
 import com.prelert.job.results.Detector;
 import com.prelert.job.results.Influence;
 import com.prelert.job.results.Influencer;
+import com.prelert.job.results.ReservedFieldNames;
 
 /**
  * Saves result Buckets and Quantiles to Elasticsearch<br>
@@ -529,9 +531,17 @@ public class ElasticsearchPersister implements JobResultsPersister
                 .field(AnomalyRecord.INITIAL_NORMALIZED_PROBABILITY, record.getNormalizedProbability())
                 .field(ElasticsearchMappings.ES_TIMESTAMP, bucketTime);
 
+        List<String> topLevelExcludes = new ArrayList<>();
+
         if (record.getByFieldName() != null)
         {
             builder.field(AnomalyRecord.BY_FIELD_NAME, record.getByFieldName());
+            if (record.getByFieldValue() != null &&
+                !ReservedFieldNames.RESERVED_FIELD_NAMES.contains(record.getByFieldName()))
+            {
+                builder.field(record.getByFieldName(), record.getByFieldValue());
+                topLevelExcludes.add(record.getByFieldName());
+            }
         }
         if (record.getByFieldValue() != null)
         {
@@ -564,6 +574,12 @@ public class ElasticsearchPersister implements JobResultsPersister
         if (record.getPartitionFieldName() != null)
         {
             builder.field(AnomalyRecord.PARTITION_FIELD_NAME, record.getPartitionFieldName());
+            if (record.getPartitionFieldValue() != null &&
+                !ReservedFieldNames.RESERVED_FIELD_NAMES.contains(record.getPartitionFieldName()))
+            {
+                builder.field(record.getPartitionFieldName(), record.getPartitionFieldValue());
+                topLevelExcludes.add(record.getByFieldName());
+            }
         }
         if (record.getPartitionFieldValue() != null)
         {
@@ -572,6 +588,12 @@ public class ElasticsearchPersister implements JobResultsPersister
         if (record.getOverFieldName() != null)
         {
             builder.field(AnomalyRecord.OVER_FIELD_NAME, record.getOverFieldName());
+            if (record.getOverFieldValue() != null &&
+                !ReservedFieldNames.RESERVED_FIELD_NAMES.contains(record.getOverFieldName()))
+            {
+                builder.field(record.getOverFieldName(), record.getOverFieldValue());
+                topLevelExcludes.add(record.getByFieldName());
+            }
         }
         if (record.getOverFieldValue() != null)
         {
@@ -591,7 +613,7 @@ public class ElasticsearchPersister implements JobResultsPersister
             builder.startArray(AnomalyRecord.INFLUENCERS);
             for (Influence influence: record.getInfluencers())
             {
-                serialiseInfluence(influence, builder);
+                serialiseInfluence(topLevelExcludes, influence, builder);
             }
             builder.endArray();
         }
@@ -619,6 +641,11 @@ public class ElasticsearchPersister implements JobResultsPersister
         if (cause.getByFieldName() != null)
         {
             builder.field(AnomalyCause.BY_FIELD_NAME, cause.getByFieldName());
+            if (cause.getByFieldValue() != null &&
+                !ReservedFieldNames.RESERVED_FIELD_NAMES.contains(cause.getByFieldName()))
+            {
+                builder.field(cause.getByFieldName(), cause.getByFieldValue());
+            }
         }
         if (cause.getByFieldValue() != null)
         {
@@ -639,6 +666,11 @@ public class ElasticsearchPersister implements JobResultsPersister
         if (cause.getPartitionFieldName() != null)
         {
             builder.field(AnomalyCause.PARTITION_FIELD_NAME, cause.getPartitionFieldName());
+            if (cause.getPartitionFieldValue() != null &&
+                !ReservedFieldNames.RESERVED_FIELD_NAMES.contains(cause.getPartitionFieldName()))
+            {
+                builder.field(cause.getPartitionFieldName(), cause.getPartitionFieldValue());
+            }
         }
         if (cause.getPartitionFieldValue() != null)
         {
@@ -647,6 +679,11 @@ public class ElasticsearchPersister implements JobResultsPersister
         if (cause.getOverFieldName() != null)
         {
             builder.field(AnomalyCause.OVER_FIELD_NAME, cause.getOverFieldName());
+            if (cause.getOverFieldValue() != null &&
+                !ReservedFieldNames.RESERVED_FIELD_NAMES.contains(cause.getOverFieldName()))
+            {
+                builder.field(cause.getOverFieldName(), cause.getOverFieldValue());
+            }
         }
         if (cause.getOverFieldValue() != null)
         {
@@ -660,23 +697,38 @@ public class ElasticsearchPersister implements JobResultsPersister
     /**
      * Add the influence object to the content builder.
      *
+     * @param topLevelExcludes Field names that should not be added as top level
+     * field names within the document
      * @param influence Influence to serialise
      * @param builder JSON builder to be augmented
      * @throws IOException
      */
-    private void serialiseInfluence(Influence influence, XContentBuilder builder)
+    private void serialiseInfluence(List<String> topLevelExcludes, Influence influence, XContentBuilder builder)
     throws IOException
     {
+        String firstValue = null;
+
         builder.startObject().field(Influence.INFLUENCER_FIELD_NAME, influence.getInfluencerFieldName());
 
         builder.startArray(Influence.INFLUENCER_FIELD_VALUES);
         for (String value : influence.getInfluencerFieldValues())
         {
             builder.value(value);
+            if (firstValue == null)
+            {
+                firstValue = value;
+            }
         }
         builder.endArray();
 
         builder.endObject();
+
+        if (firstValue != null &&
+            !topLevelExcludes.contains(influence.getInfluencerFieldName()) &&
+            !ReservedFieldNames.RESERVED_FIELD_NAMES.contains(influence.getInfluencerFieldName()))
+        {
+            builder.field(influence.getInfluencerFieldName(), firstValue);
+        }
     }
 
     private void serialiseBucketInfluencer(BucketInfluencer bucketInfluencer,
@@ -700,15 +752,23 @@ public class ElasticsearchPersister implements JobResultsPersister
     private XContentBuilder serialiseInfluencer(Influencer influencer)
     throws IOException
     {
-        return jsonBuilder().startObject()
+        XContentBuilder builder = jsonBuilder().startObject()
                 .field(JOB_ID_NAME, m_JobId)
                 .field(ElasticsearchMappings.ES_TIMESTAMP, influencer.getTimestamp())
                 .field(Influencer.PROBABILITY, influencer.getProbability())
                 .field(Influencer.INFLUENCER_FIELD_NAME, influencer.getInfluencerFieldName())
                 .field(Influencer.INFLUENCER_FIELD_VALUE, influencer.getInfluencerFieldValue())
                 .field(Influencer.INITIAL_ANOMALY_SCORE, influencer.getInitialAnomalyScore())
-                .field(Influencer.ANOMALY_SCORE, influencer.getAnomalyScore())
-                .endObject();
+                .field(Influencer.ANOMALY_SCORE, influencer.getAnomalyScore());
+
+        if (!ReservedFieldNames.RESERVED_FIELD_NAMES.contains(influencer.getInfluencerFieldName()))
+        {
+            builder.field(influencer.getInfluencerFieldName(), influencer.getInfluencerFieldValue());
+        }
+
+        builder.endObject();
+
+        return builder;
     }
 
     @Override

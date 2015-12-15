@@ -506,6 +506,7 @@ public class ElasticsearchMappings
                             .field(TYPE, STRING).field(INDEX, NOT_ANALYZED)
                         .endObject()
                         .startObject(AnomalyRecord.CAUSES)
+                            .field(TYPE, "nested")
                             .startObject(PROPERTIES)
                                 .startObject(AnomalyCause.ACTUAL)
                                     .field(TYPE, DOUBLE)
