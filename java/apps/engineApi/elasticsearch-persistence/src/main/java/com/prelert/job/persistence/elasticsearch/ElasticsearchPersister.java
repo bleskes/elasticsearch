@@ -705,7 +705,7 @@ public class ElasticsearchPersister implements JobResultsPersister
                 .field(ElasticsearchMappings.ES_TIMESTAMP, influencer.getTimestamp())
                 .field(Influencer.PROBABILITY, influencer.getProbability())
                 .field(Influencer.INFLUENCER_FIELD_NAME, influencer.getInfluencerFieldName())
-                .field(Influencer.INFLUENCER_VALUE_NAME, influencer.getInfluencerFieldValue())
+                .field(Influencer.INFLUENCER_FIELD_VALUE, influencer.getInfluencerFieldValue())
                 .field(Influencer.INITIAL_ANOMALY_SCORE, influencer.getInitialAnomalyScore())
                 .field(Influencer.ANOMALY_SCORE, influencer.getAnomalyScore())
                 .endObject();

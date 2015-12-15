@@ -46,7 +46,7 @@ public class Influencer
     public static final String PROBABILITY = "probability";
     public static final String TIMESTAMP = "timestamp";
     public static final String INFLUENCER_FIELD_NAME = "influencerFieldName";
-    public static final String INFLUENCER_VALUE_NAME = "influencerFieldValue";
+    public static final String INFLUENCER_FIELD_VALUE = "influencerFieldValue";
     public static final String INITIAL_ANOMALY_SCORE = "initialAnomalyScore";
     public static final String ANOMALY_SCORE = "anomalyScore";
 

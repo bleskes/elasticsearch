@@ -784,7 +784,7 @@ public class ElasticsearchMappings
                         .startObject(Influencer.INFLUENCER_FIELD_NAME)
                             .field(TYPE, STRING).field(INDEX, NOT_ANALYZED)
                         .endObject()
-                        .startObject(Influencer.INFLUENCER_FIELD_NAME)
+                        .startObject(Influencer.INFLUENCER_FIELD_VALUE)
                             .field(TYPE, STRING).field(INDEX, NOT_ANALYZED)
                         .endObject()
                     .endObject()
