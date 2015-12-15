@@ -610,12 +610,27 @@ public class ElasticsearchPersister implements JobResultsPersister
         }
         if (record.getInfluencers() != null && record.getInfluencers().isEmpty() == false)
         {
+            // First add the influencers array
+
             builder.startArray(AnomalyRecord.INFLUENCERS);
             for (Influence influence: record.getInfluencers())
             {
-                serialiseInfluence(topLevelExcludes, influence, builder);
+                serialiseInfluence(influence, builder);
             }
             builder.endArray();
+
+            // Then, where possible without creating duplicates, add top level
+            // raw data fields
+            for (Influence influence: record.getInfluencers())
+            {
+                if (influence.getInfluencerFieldName() != null &&
+                    !influence.getInfluencerFieldValues().isEmpty() &&
+                    !topLevelExcludes.contains(influence.getInfluencerFieldName()) &&
+                    !ReservedFieldNames.RESERVED_FIELD_NAMES.contains(influence.getInfluencerFieldName()))
+                {
+                    builder.field(influence.getInfluencerFieldName(), influence.getInfluencerFieldValues().get(0));
+                }
+            }
         }
 
         builder.endObject();
@@ -697,38 +712,23 @@ public class ElasticsearchPersister implements JobResultsPersister
     /**
      * Add the influence object to the content builder.
      *
-     * @param topLevelExcludes Field names that should not be added as top level
-     * field names within the document
      * @param influence Influence to serialise
      * @param builder JSON builder to be augmented
      * @throws IOException
      */
-    private void serialiseInfluence(List<String> topLevelExcludes, Influence influence, XContentBuilder builder)
+    private void serialiseInfluence(Influence influence, XContentBuilder builder)
     throws IOException
     {
-        String firstValue = null;
-
         builder.startObject().field(Influence.INFLUENCER_FIELD_NAME, influence.getInfluencerFieldName());
 
         builder.startArray(Influence.INFLUENCER_FIELD_VALUES);
         for (String value : influence.getInfluencerFieldValues())
         {
             builder.value(value);
-            if (firstValue == null)
-            {
-                firstValue = value;
-            }
         }
         builder.endArray();
 
         builder.endObject();
-
-        if (firstValue != null &&
-            !topLevelExcludes.contains(influence.getInfluencerFieldName()) &&
-            !ReservedFieldNames.RESERVED_FIELD_NAMES.contains(influence.getInfluencerFieldName()))
-        {
-            builder.field(influence.getInfluencerFieldName(), firstValue);
-        }
     }
 
     private void serialiseBucketInfluencer(BucketInfluencer bucketInfluencer,
