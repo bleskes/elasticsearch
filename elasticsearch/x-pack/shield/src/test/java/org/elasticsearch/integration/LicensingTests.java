@@ -34,6 +34,7 @@ import org.elasticsearch.common.component.LifecycleComponent;
 import org.elasticsearch.common.inject.AbstractModule;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.inject.Module;
+import org.elasticsearch.common.network.NetworkModule;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.license.core.License.OperationMode;
 import org.elasticsearch.license.plugin.LicensePlugin;
@@ -41,7 +42,6 @@ import org.elasticsearch.license.plugin.core.LicenseState;
 import org.elasticsearch.license.plugin.core.Licensee;
 import org.elasticsearch.license.plugin.core.LicenseeRegistry;
 import org.elasticsearch.node.Node;
-import org.elasticsearch.rest.RestModule;
 import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.shield.ShieldPlugin;
 import org.elasticsearch.shield.authc.support.UsernamePasswordToken;
@@ -58,7 +58,9 @@ import java.util.List;
 
 import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 import static org.elasticsearch.test.hamcrest.ElasticsearchAssertions.assertNoFailures;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
 
 /**
  *
@@ -265,7 +267,7 @@ public class LicensingTests extends ShieldIntegTestCase {
         }
 
         @Override
-        public void onModule(RestModule module) {
+        public void onModule(NetworkModule module) {
         }
 
         @Override
