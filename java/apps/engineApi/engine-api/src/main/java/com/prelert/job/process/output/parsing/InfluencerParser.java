@@ -69,7 +69,7 @@ final class InfluencerParser extends FieldNameParser<Influencer>
         case Influencer.INFLUENCER_FIELD_NAME:
             influencer.setInfluencerFieldName(parseAsStringOrNull(fieldName));
             break;
-        case Influencer.INFLUENCER_VALUE_NAME:
+        case Influencer.INFLUENCER_FIELD_VALUE:
             influencer.setInfluencerFieldValue(parseAsStringOrNull(fieldName));
             break;
         default:
