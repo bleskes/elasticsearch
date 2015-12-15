@@ -82,7 +82,7 @@ public class ElasticsearchUsagePersisterTest
         verify(updateRequestBuilder, times(2)).setRetryOnConflict(5);
         verify(updateRequestBuilder, times(2)).get();
 
-        assertEquals(Arrays.asList("prelert-usage", "job1"), indexCaptor.getAllValues());
+        assertEquals(Arrays.asList("prelert-usage", "prelertresults-job1"), indexCaptor.getAllValues());
         assertEquals(2, idCaptor.getAllValues().size());
         String id = idCaptor.getValue();
         assertEquals(id, idCaptor.getAllValues().get(0));
@@ -90,7 +90,7 @@ public class ElasticsearchUsagePersisterTest
         String timestamp = id.substring("usage-".length());
 
         assertEquals("prelert-usage", indexCaptor.getAllValues().get(0));
-        assertEquals("job1", indexCaptor.getAllValues().get(1));
+        assertEquals("prelertresults-job1", indexCaptor.getAllValues().get(1));
 
         Script script = updateScriptCaptor.getValue();
         assertEquals("update-usage", script.getScript());

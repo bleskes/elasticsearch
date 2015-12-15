@@ -51,7 +51,7 @@ abstract class ElasticsearchBatchedResultsIterator<T> implements BatchedResultsI
     private static final int BATCH_SIZE = 10000;
 
     private final Client m_Client;
-    private final String m_JobId;
+    private final ElasticsearchJobId m_JobId;
     private final ObjectMapper m_ObjectMapper;
     private String m_ScrollId;
     private long m_TotalHits;
@@ -61,7 +61,7 @@ abstract class ElasticsearchBatchedResultsIterator<T> implements BatchedResultsI
     public ElasticsearchBatchedResultsIterator(Client client, String jobId, ObjectMapper objectMapper)
     {
         m_Client = Objects.requireNonNull(client);
-        m_JobId = Objects.requireNonNull(jobId);
+        m_JobId = new ElasticsearchJobId(jobId);
         m_ObjectMapper = Objects.requireNonNull(objectMapper);
         m_TotalHits = 0;
         m_Count = 0;
@@ -95,11 +95,11 @@ abstract class ElasticsearchBatchedResultsIterator<T> implements BatchedResultsI
 
     private SearchResponse initScroll() throws UnknownJobException
     {
-        LOGGER.trace("ES API CALL: search all of type " + getType() + " from index " + m_JobId);
+        LOGGER.trace("ES API CALL: search all of type " + getType() + " from index " + m_JobId.getIndex());
         SearchResponse searchResponse = null;
         try
         {
-            searchResponse = m_Client.prepareSearch(m_JobId)
+            searchResponse = m_Client.prepareSearch(m_JobId.getIndex())
                     .setScroll(CONTEXT_ALIVE_DURATION)
                     .setSize(BATCH_SIZE)
                     .setTypes(getType())
@@ -110,7 +110,7 @@ abstract class ElasticsearchBatchedResultsIterator<T> implements BatchedResultsI
         }
         catch (IndexNotFoundException e)
         {
-            throw new UnknownJobException(m_JobId);
+            throw new UnknownJobException(m_JobId.getId());
         }
         return searchResponse;
     }
