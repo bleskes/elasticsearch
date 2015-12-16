@@ -21,6 +21,8 @@ import org.elasticsearch.action.admin.cluster.node.info.NodeInfo;
 import org.elasticsearch.action.admin.cluster.node.info.NodesInfoResponse;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.marvel.agent.AgentService;
+import org.elasticsearch.marvel.agent.settings.MarvelSettings;
+import org.elasticsearch.marvel.shield.MarvelShieldIntegration;
 import org.elasticsearch.marvel.test.MarvelIntegTestCase;
 import org.elasticsearch.plugins.PluginInfo;
 import org.elasticsearch.test.ESIntegTestCase.ClusterScope;
@@ -36,6 +38,7 @@ public class MarvelPluginTests extends MarvelIntegTestCase {
     protected Settings nodeSettings(int nodeOrdinal) {
         return Settings.builder()
                 .put(super.nodeSettings(nodeOrdinal))
+                .put(MarvelSettings.INTERVAL_SETTING.getKey(), "-1")
                 .build();
     }
 
@@ -51,10 +54,18 @@ public class MarvelPluginTests extends MarvelIntegTestCase {
         assertServiceIsNotBound(AgentService.class);
     }
 
+    public void testMarvelEnabledOnTribeNode() {
+        internalCluster().startNode(Settings.builder().put(MarvelPlugin.ENABLED, true).put(TribeService.TRIBE_NAME, "t1").build());
+        assertPluginIsLoaded();
+        assertServiceIsBound(AgentService.class);
+        assertServiceIsBound(MarvelShieldIntegration.class);
+    }
+
     public void testMarvelDisabledOnTribeNode() {
         internalCluster().startNode(Settings.builder().put(TribeService.TRIBE_NAME, "t1").build());
         assertPluginIsLoaded();
         assertServiceIsNotBound(AgentService.class);
+        assertServiceIsBound(MarvelShieldIntegration.class);
     }
 
     private void assertPluginIsLoaded() {
