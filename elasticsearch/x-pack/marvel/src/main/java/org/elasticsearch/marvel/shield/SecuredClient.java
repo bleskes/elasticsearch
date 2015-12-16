@@ -141,6 +141,10 @@ import org.elasticsearch.action.admin.indices.flush.FlushAction;
 import org.elasticsearch.action.admin.indices.flush.FlushRequest;
 import org.elasticsearch.action.admin.indices.flush.FlushRequestBuilder;
 import org.elasticsearch.action.admin.indices.flush.FlushResponse;
+import org.elasticsearch.action.admin.indices.flush.SyncedFlushAction;
+import org.elasticsearch.action.admin.indices.flush.SyncedFlushRequest;
+import org.elasticsearch.action.admin.indices.flush.SyncedFlushRequestBuilder;
+import org.elasticsearch.action.admin.indices.flush.SyncedFlushResponse;
 import org.elasticsearch.action.admin.indices.forcemerge.ForceMergeAction;
 import org.elasticsearch.action.admin.indices.forcemerge.ForceMergeRequest;
 import org.elasticsearch.action.admin.indices.forcemerge.ForceMergeRequestBuilder;
@@ -272,6 +276,7 @@ import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.indices.flush.SyncedFlushService;
 import org.elasticsearch.threadpool.ThreadPool;
 
 /**
@@ -801,6 +806,21 @@ public class SecuredClient implements Client {
 
         public FlushRequestBuilder prepareFlush(String... indices) {
             return (new FlushRequestBuilder(this, FlushAction.INSTANCE)).setIndices(indices);
+        }
+
+        @Override
+        public ActionFuture<SyncedFlushResponse> syncedFlush(SyncedFlushRequest syncedFlushRequest) {
+            return this.execute(SyncedFlushAction.INSTANCE, syncedFlushRequest);
+        }
+
+        @Override
+        public void syncedFlush(SyncedFlushRequest syncedFlushRequest, ActionListener<SyncedFlushResponse> actionListener) {
+            this.execute(SyncedFlushAction.INSTANCE, syncedFlushRequest, actionListener);
+        }
+
+        @Override
+        public SyncedFlushRequestBuilder prepareSyncedFlush(String... indices) {
+            return (new SyncedFlushRequestBuilder(this, SyncedFlushAction.INSTANCE)).setIndices(indices);
         }
 
         public void getMappings(GetMappingsRequest request, ActionListener<GetMappingsResponse> listener) {
