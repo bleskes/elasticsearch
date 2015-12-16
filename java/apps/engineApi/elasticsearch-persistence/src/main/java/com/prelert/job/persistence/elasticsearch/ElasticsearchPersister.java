@@ -578,7 +578,7 @@ public class ElasticsearchPersister implements JobResultsPersister
                 !ReservedFieldNames.RESERVED_FIELD_NAMES.contains(record.getPartitionFieldName()))
             {
                 builder.field(record.getPartitionFieldName(), record.getPartitionFieldValue());
-                topLevelExcludes.add(record.getByFieldName());
+                topLevelExcludes.add(record.getPartitionFieldName());
             }
         }
         if (record.getPartitionFieldValue() != null)
@@ -592,7 +592,7 @@ public class ElasticsearchPersister implements JobResultsPersister
                 !ReservedFieldNames.RESERVED_FIELD_NAMES.contains(record.getOverFieldName()))
             {
                 builder.field(record.getOverFieldName(), record.getOverFieldValue());
-                topLevelExcludes.add(record.getByFieldName());
+                topLevelExcludes.add(record.getOverFieldName());
             }
         }
         if (record.getOverFieldValue() != null)
