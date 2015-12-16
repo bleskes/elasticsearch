@@ -227,28 +227,29 @@ public class ElasticsearchJobProvider implements JobProvider
     @Override
     public void checkJobExists(String jobId) throws UnknownJobException
     {
+        ElasticsearchJobId elasticJobId = new ElasticsearchJobId(jobId);
         try
         {
-            LOGGER.trace("ES API CALL: get ID " + jobId +
-                    " type " + JobDetails.TYPE + " from index " + jobId);
-            GetResponse response = m_Client.prepareGet(jobId, JobDetails.TYPE, jobId)
+            LOGGER.trace("ES API CALL: get ID " + elasticJobId.getId() +
+                    " type " + JobDetails.TYPE + " from index " + elasticJobId.getIndex());
+            GetResponse response = m_Client.prepareGet(elasticJobId.getIndex(), JobDetails.TYPE, elasticJobId.getId())
                             .setFetchSource(false)
                             .setFields()
                             .get();
 
             if (response.isExists() == false)
             {
-                String msg = "No job document with id " + jobId;
+                String msg = "No job document with id " + elasticJobId.getId();
                 LOGGER.warn(msg);
-                throw new UnknownJobException(jobId);
+                throw new UnknownJobException(elasticJobId.getId());
             }
         }
         catch (IndexNotFoundException e)
         {
             // the job does not exist
-            String msg = "Missing Index: no job with id " + jobId;
+            String msg = "Missing Index: no job with id " + elasticJobId.getId();
             LOGGER.warn(msg);
-            throw new UnknownJobException(jobId);
+            throw new UnknownJobException(elasticJobId.getId());
         }
     }
 
@@ -256,14 +257,14 @@ public class ElasticsearchJobProvider implements JobProvider
     @Override
     public boolean jobIdIsUnique(String jobId)
     {
-        return indexExists(jobId) == false;
+        return indexExists(new ElasticsearchJobId(jobId)) == false;
     }
 
-    private boolean indexExists(String jobId)
+    private boolean indexExists(ElasticsearchJobId jobId)
     {
-        LOGGER.trace("ES API CALL: index exists? " + jobId);
+        LOGGER.trace("ES API CALL: index exists? " + jobId.getIndex());
         IndicesExistsResponse res =
-                m_Client.admin().indices().exists(new IndicesExistsRequest(jobId)).actionGet();
+                m_Client.admin().indices().exists(new IndicesExistsRequest(jobId.getIndex())).actionGet();
 
         return res.isExists();
     }
@@ -272,14 +273,15 @@ public class ElasticsearchJobProvider implements JobProvider
     @Override
     public Optional<JobDetails> getJobDetails(String jobId)
     {
+        ElasticsearchJobId elasticJobId = new ElasticsearchJobId(jobId);
         try
         {
-            LOGGER.trace("ES API CALL: get ID " + jobId +
-                    " type " + JobDetails.TYPE + " from index " + jobId);
-            GetResponse response = m_Client.prepareGet(jobId, JobDetails.TYPE, jobId).get();
+            LOGGER.trace("ES API CALL: get ID " + elasticJobId.getId() +
+                    " type " + JobDetails.TYPE + " from index " + elasticJobId.getIndex());
+            GetResponse response = m_Client.prepareGet(elasticJobId.getIndex(), JobDetails.TYPE, elasticJobId.getId()).get();
             if (!response.isExists())
             {
-                String msg = "No details for job with id " + jobId;
+                String msg = "No details for job with id " + elasticJobId.getId();
                 LOGGER.warn(msg);
                 return Optional.empty();
             }
@@ -287,12 +289,12 @@ public class ElasticsearchJobProvider implements JobProvider
 
             // Pull out the modelSizeStats document, and add this to the JobDetails
             LOGGER.trace("ES API CALL: get ID " + ModelSizeStats.TYPE +
-                    " type " + ModelSizeStats.TYPE + " from index " + jobId);
+                    " type " + ModelSizeStats.TYPE + " from index " + elasticJobId.getIndex());
             GetResponse modelSizeStatsResponse = m_Client.prepareGet(
-                jobId, ModelSizeStats.TYPE, ModelSizeStats.TYPE).get();
+                    elasticJobId.getIndex(), ModelSizeStats.TYPE, ModelSizeStats.TYPE).get();
             if (!modelSizeStatsResponse.isExists())
             {
-                String msg = "No model size stats for job with id " + jobId;
+                String msg = "No model size stats for job with id " + elasticJobId.getId();
                 LOGGER.warn(msg);
             }
             else
@@ -307,7 +309,7 @@ public class ElasticsearchJobProvider implements JobProvider
         catch (IndexNotFoundException e)
         {
             // the job does not exist
-            String msg = "Missing Index no job with id " + jobId;
+            String msg = "Missing Index no job with id " + elasticJobId.getId();
             LOGGER.warn(msg);
             return Optional.empty();
         }
@@ -344,12 +346,13 @@ public class ElasticsearchJobProvider implements JobProvider
                 LOGGER.error("Cannot parse job from JSON", e);
                 continue;
             }
+            ElasticsearchJobId elasticJobId = new ElasticsearchJobId(job.getId());
 
             // Pull out the modelSizeStats document, and add this to the JobDetails
             LOGGER.trace("ES API CALL: get ID " + ModelSizeStats.TYPE +
-                    " type " + ModelSizeStats.TYPE + " from index " + job.getId());
+                    " type " + ModelSizeStats.TYPE + " from index " + elasticJobId.getIndex());
             GetResponse modelSizeStatsResponse = m_Client.prepareGet(
-                job.getId(), ModelSizeStats.TYPE, ModelSizeStats.TYPE).get();
+                    elasticJobId.getIndex(), ModelSizeStats.TYPE, ModelSizeStats.TYPE).get();
 
             if (!modelSizeStatsResponse.isExists())
             {
@@ -390,9 +393,11 @@ public class ElasticsearchJobProvider implements JobProvider
             XContentBuilder modelSizeStatsMapping = ElasticsearchMappings.modelSizeStatsMapping();
             XContentBuilder influencerMapping = ElasticsearchMappings.influencerMapping();
 
+            ElasticsearchJobId elasticJobId = new ElasticsearchJobId(job.getId());
+
             LOGGER.trace("ES API CALL: create index " + job.getId());
             m_Client.admin().indices()
-                    .prepareCreate(job.getId())
+                    .prepareCreate(elasticJobId.getIndex())
                     .addMapping(JobDetails.TYPE, jobMapping)
                     .addMapping(Bucket.TYPE, bucketMapping)
                     .addMapping(CategorizerState.TYPE, categorizerStateMapping)
@@ -405,15 +410,16 @@ public class ElasticsearchJobProvider implements JobProvider
                     .addMapping(ModelSizeStats.TYPE, modelSizeStatsMapping)
                     .addMapping(Influencer.TYPE, influencerMapping)
                     .get();
-            LOGGER.trace("ES API CALL: wait for yellow status " + job.getId());
-            m_Client.admin().cluster().prepareHealth(job.getId()).setWaitForYellowStatus().execute().actionGet();
+            LOGGER.trace("ES API CALL: wait for yellow status " + elasticJobId.getId());
+            m_Client.admin().cluster().prepareHealth(elasticJobId.getIndex())
+                    .setWaitForYellowStatus().execute().actionGet();
 
 
             String json = m_ObjectMapper.writeValueAsString(job);
 
             LOGGER.trace("ES API CALL: index " + JobDetails.TYPE +
-                    " to index " + job.getId() + " with ID " + job.getId());
-            m_Client.prepareIndex(job.getId(), JobDetails.TYPE, job.getId())
+                    " to index " + elasticJobId.getIndex() + " with ID " + elasticJobId.getId());
+            m_Client.prepareIndex(elasticJobId.getIndex(), JobDetails.TYPE, elasticJobId.getId())
                     .setSource(json)
                     .setRefresh(true)
                     .get();
@@ -441,12 +447,13 @@ public class ElasticsearchJobProvider implements JobProvider
     @Override
     public <V> V getField(String jobId, String fieldName)
     {
+        ElasticsearchJobId elasticJobId = new ElasticsearchJobId(jobId);
         try
         {
-            LOGGER.trace("ES API CALL: get ID " + jobId +
-                    " type " + JobDetails.TYPE + " from index " + jobId);
+            LOGGER.trace("ES API CALL: get ID " + elasticJobId.getId() +
+                    " type " + JobDetails.TYPE + " from index " + elasticJobId.getIndex());
             GetResponse response = m_Client
-                    .prepareGet(jobId, JobDetails.TYPE, jobId)
+                    .prepareGet(elasticJobId.getIndex(), JobDetails.TYPE, elasticJobId.getId())
                     .setFields(fieldName)
                     .get();
             try
@@ -462,7 +469,7 @@ public class ElasticsearchJobProvider implements JobProvider
         catch (IndexNotFoundException e)
         {
             // the job does not exist
-            String msg = "Missing Index no job with id " + jobId;
+            String msg = "Missing Index no job with id " + elasticJobId.getId();
             LOGGER.error(msg);
         }
 
@@ -474,15 +481,16 @@ public class ElasticsearchJobProvider implements JobProvider
     public boolean updateJob(String jobId, Map<String, Object> updates) throws UnknownJobException
     {
         checkJobExists(jobId);
+        ElasticsearchJobId elasticJobId = new ElasticsearchJobId(jobId);
 
         int retryCount = UPDATE_JOB_RETRY_COUNT;
         while (--retryCount >= 0)
         {
             try
             {
-                LOGGER.trace("ES API CALL: update ID " + jobId + " type " + JobDetails.TYPE +
-                        " in index " + jobId + " using map of new values");
-                m_Client.prepareUpdate(jobId, JobDetails.TYPE, jobId)
+                LOGGER.trace("ES API CALL: update ID " + elasticJobId.getId() + " type " + JobDetails.TYPE +
+                        " in index " + elasticJobId.getIndex() + " using map of new values");
+                m_Client.prepareUpdate(elasticJobId.getIndex(), JobDetails.TYPE, elasticJobId.getId())
                                     .setDoc(updates)
                                     .get();
 
@@ -490,13 +498,13 @@ public class ElasticsearchJobProvider implements JobProvider
             }
             catch (VersionConflictEngineException e)
             {
-                LOGGER.warn("Conflict updating job document " + jobId);
+                LOGGER.warn("Conflict updating job document " + elasticJobId.getId());
             }
         }
 
         if (retryCount <= 0)
         {
-            LOGGER.warn("Unable to update conflicted job document " + jobId +
+            LOGGER.warn("Unable to update conflicted job document " + elasticJobId.getId() +
                     ". Updates = " + updates);
             return false;
         }
@@ -508,42 +516,44 @@ public class ElasticsearchJobProvider implements JobProvider
     {
         Map<String, Object> update = new HashMap<>();
         update.put(JobDetails.STATUS, status);
-        return this.updateJob(jobId, update);
+        return updateJob(jobId, update);
 
     }
 
     @Override
-    public boolean setJobFinishedTimeAndStatus(String jobId, Date time, JobStatus status) throws UnknownJobException
+    public boolean setJobFinishedTimeAndStatus(String jobId, Date time, JobStatus status)
+            throws UnknownJobException
     {
         Map<String, Object> update = new HashMap<>();
         update.put(JobDetails.FINISHED_TIME, time);
         update.put(JobDetails.STATUS, status);
-        return this.updateJob(jobId, update);
+        return updateJob(jobId, update);
     }
 
 
     @Override
     public boolean deleteJob(String jobId) throws UnknownJobException, DataStoreException
     {
-        if (indexExists(jobId) == false)
+        ElasticsearchJobId elasticJobId = new ElasticsearchJobId(jobId);
+        if (indexExists(elasticJobId) == false)
         {
-            throw new UnknownJobException(jobId);
+            throw new UnknownJobException(elasticJobId.getId());
         }
-        LOGGER.trace("ES API CALL: delete index " + jobId);
+        LOGGER.trace("ES API CALL: delete index " + elasticJobId.getIndex());
 
         try
         {
             DeleteIndexResponse response = m_Client.admin()
-                    .indices().delete(new DeleteIndexRequest(jobId)).get();
+                    .indices().delete(new DeleteIndexRequest(elasticJobId.getIndex())).get();
             return response.isAcknowledged();
         }
         catch (InterruptedException|ExecutionException e)
         {
-            String msg = "Error deleting index '" + jobId + "'";
+            String msg = "Error deleting index '" + elasticJobId.getIndex() + "'";
             ErrorCodes errorCode = ErrorCodes.DATA_STORE_ERROR;
             if (e.getCause() instanceof IndexNotFoundException)
             {
-                msg = "Cannot delete job - no index with id '" + jobId + " in the database";
+                msg = "Cannot delete job - no index with id '" + elasticJobId.getIndex() + " in the database";
                 errorCode = ErrorCodes.MISSING_JOB_ERROR;
             }
             LOGGER.warn(msg);
@@ -573,10 +583,10 @@ public class ElasticsearchJobProvider implements JobProvider
                 .score(Bucket.MAX_NORMALIZED_PROBABILITY, normalizedProbabilityThreshold)
                 .interim(Bucket.IS_INTERIM, includeInterim)
                 .build();
-        return buckets(jobId, expand, includeInterim, skip, take, fb);
+        return buckets(new ElasticsearchJobId(jobId), expand, includeInterim, skip, take, fb);
     }
 
-    private QueryPage<Bucket> buckets(String jobId, boolean expand, boolean includeInterim,
+    private QueryPage<Bucket> buckets(ElasticsearchJobId jobId, boolean expand, boolean includeInterim,
             int skip, int take, QueryBuilder fb) throws UnknownJobException
     {
         SortBuilder sb = new FieldSortBuilder(Bucket.ID)
@@ -587,9 +597,9 @@ public class ElasticsearchJobProvider implements JobProvider
         try
         {
             LOGGER.trace("ES API CALL: search all of type " + Bucket.TYPE +
-                    " from index " + jobId + " sort ascending " + Bucket.ID +
+                    " from index " + jobId.getIndex() + " sort ascending " + Bucket.ID +
                     " with filter after sort skip " + skip + " take " + take);
-            searchResponse = m_Client.prepareSearch(jobId)
+            searchResponse = m_Client.prepareSearch(jobId.getIndex())
                                         .setTypes(Bucket.TYPE)
                                         .addSort(sb)
                                         .setPostFilter(fb)
@@ -598,7 +608,7 @@ public class ElasticsearchJobProvider implements JobProvider
         }
         catch (IndexNotFoundException e)
         {
-            throw new UnknownJobException(jobId);
+            throw new UnknownJobException(jobId.getId());
         }
 
         List<Bucket> results = new ArrayList<>();
@@ -615,7 +625,7 @@ public class ElasticsearchJobProvider implements JobProvider
 
             if (expand && bucket.getRecordCount() > 0)
             {
-                expandBucket(jobId, includeInterim, bucket);
+                expandBucket(jobId.getId(), includeInterim, bucket);
             }
 
             results.add(bucket);
@@ -630,17 +640,18 @@ public class ElasticsearchJobProvider implements JobProvider
             String bucketId, boolean expand, boolean includeInterim)
     throws UnknownJobException
     {
+        ElasticsearchJobId elasticJobId = new ElasticsearchJobId(jobId);
         GetResponse response;
 
         try
         {
             LOGGER.trace("ES API CALL: get ID " + bucketId + " type " + Bucket.TYPE +
-                    " from index " + jobId);
-            response = m_Client.prepareGet(jobId, Bucket.TYPE, bucketId).get();
+                    " from index " + elasticJobId.getIndex());
+            response = m_Client.prepareGet(elasticJobId.getIndex(), Bucket.TYPE, bucketId).get();
         }
         catch (IndexNotFoundException e)
         {
-            throw new UnknownJobException(jobId);
+            throw new UnknownJobException(elasticJobId.getId());
         }
 
         Optional<Bucket> doc = Optional.<Bucket>empty();
@@ -731,7 +742,7 @@ public class ElasticsearchJobProvider implements JobProvider
             AnomalyRecord.FUNCTION}
         );
 
-        return records(jobId, skip, take, recordFilter, sb, secondarySort,
+        return records(new ElasticsearchJobId(jobId), skip, take, recordFilter, sb, secondarySort,
                 descending);
     }
 
@@ -740,10 +751,11 @@ public class ElasticsearchJobProvider implements JobProvider
     public QueryPage<CategoryDefinition> categoryDefinitions(String jobId, int skip, int take)
             throws UnknownJobException
     {
+        ElasticsearchJobId elasticJobId = new ElasticsearchJobId(jobId);
         LOGGER.trace("ES API CALL: search all of type " + CategoryDefinition.TYPE +
-                " from index " + jobId + " sort ascending " + CategoryDefinition.CATEGORY_ID +
+                " from index " + elasticJobId.getIndex() + " sort ascending " + CategoryDefinition.CATEGORY_ID +
                 " skip " + skip + " take " + take);
-        SearchRequestBuilder searchBuilder = m_Client.prepareSearch(jobId)
+        SearchRequestBuilder searchBuilder = m_Client.prepareSearch(elasticJobId.getIndex())
                 .setTypes(CategoryDefinition.TYPE)
                 .setFrom(skip).setSize(take)
                 .addSort(new FieldSortBuilder(CategoryDefinition.CATEGORY_ID).order(SortOrder.ASC));
@@ -770,13 +782,14 @@ public class ElasticsearchJobProvider implements JobProvider
     public Optional<CategoryDefinition> categoryDefinition(String jobId, String categoryId)
             throws UnknownJobException
     {
+        ElasticsearchJobId elasticJobId = new ElasticsearchJobId(jobId);
         GetResponse response;
 
         try
         {
             LOGGER.trace("ES API CALL: get ID " + categoryId + " type " + CategoryDefinition.TYPE +
-                    " from index " + jobId);
-            response = m_Client.prepareGet(jobId, CategoryDefinition.TYPE, categoryId).get();
+                    " from index " + elasticJobId.getIndex());
+            response = m_Client.prepareGet(elasticJobId.getIndex(), CategoryDefinition.TYPE, categoryId).get();
         }
         catch (IndexNotFoundException e)
         {
@@ -810,10 +823,10 @@ public class ElasticsearchJobProvider implements JobProvider
                 .score(AnomalyRecord.NORMALIZED_PROBABILITY, normalizedProbabilityThreshold)
                 .interim(AnomalyRecord.IS_INTERIM, includeInterim)
                 .build();
-        return records(jobId, skip, take, fb, sortField, descending);
+        return records(new ElasticsearchJobId(jobId), skip, take, fb, sortField, descending);
     }
 
-    private QueryPage<AnomalyRecord> records(String jobId,
+    private QueryPage<AnomalyRecord> records(ElasticsearchJobId jobId,
             int skip, int take, QueryBuilder recordFilter,
             String sortField, boolean descending)
     throws UnknownJobException
@@ -833,12 +846,12 @@ public class ElasticsearchJobProvider implements JobProvider
     /**
      * The returned records have the parent bucket id set.
      */
-    private QueryPage<AnomalyRecord> records(String jobId, int skip, int take,
+    private QueryPage<AnomalyRecord> records(ElasticsearchJobId jobId, int skip, int take,
             QueryBuilder recordFilter, SortBuilder sb, List<String> secondarySort,
             boolean descending)
     throws UnknownJobException
     {
-        SearchRequestBuilder searchBuilder = m_Client.prepareSearch(jobId)
+        SearchRequestBuilder searchBuilder = m_Client.prepareSearch(jobId.getIndex())
                 .setTypes(AnomalyRecord.TYPE)
                 .setPostFilter(recordFilter)
                 .setFrom(skip).setSize(take)
@@ -861,14 +874,14 @@ public class ElasticsearchJobProvider implements JobProvider
         try
         {
             LOGGER.trace("ES API CALL: search all of type " + AnomalyRecord.TYPE +
-                    " from index " + jobId + ((sb != null) ? " with sort" : "") +
+                    " from index " + jobId.getIndex() + ((sb != null) ? " with sort" : "") +
                     (secondarySort.isEmpty() ? "" : " with secondary sort") +
                     " with filter after sort skip " + skip + " take " + take);
             searchResponse = searchBuilder.get();
         }
         catch (IndexNotFoundException e)
         {
-            throw new UnknownJobException(jobId);
+            throw new UnknownJobException(jobId.getId());
         }
 
         List<AnomalyRecord> results = new ArrayList<>();
@@ -897,7 +910,7 @@ public class ElasticsearchJobProvider implements JobProvider
     public QueryPage<Influencer> influencers(String jobId, int skip, int take)
             throws UnknownJobException
     {
-        return influencers(jobId, skip, take, QueryBuilders.matchAllQuery(),
+        return influencers(new ElasticsearchJobId(jobId), skip, take, QueryBuilders.matchAllQuery(),
                 Influencer.ANOMALY_SCORE, true);
     }
 
@@ -910,19 +923,19 @@ public class ElasticsearchJobProvider implements JobProvider
                 .timeRange(Influencer.TIMESTAMP, startEpochMs, endEpochMs)
                 .score(Influencer.ANOMALY_SCORE, anomalyScoreFilter)
                 .build();
-        return influencers(jobId, skip, take, fb, sortField, sortDescending);
+        return influencers(new ElasticsearchJobId(jobId), skip, take, fb, sortField, sortDescending);
     }
 
-    private QueryPage<Influencer> influencers(String jobId, int skip, int take,
+    private QueryPage<Influencer> influencers(ElasticsearchJobId jobId, int skip, int take,
             QueryBuilder filterBuilder, String sortField, boolean sortDescending)
             throws UnknownJobException
     {
-        LOGGER.trace("ES API CALL: search all of type " + Influencer.TYPE + " from index " + jobId
+        LOGGER.trace("ES API CALL: search all of type " + Influencer.TYPE + " from index " + jobId.getIndex()
                 + ((sortField != null) ? " with sort "
                 + (sortDescending ? "descending" : "ascending") + " on field " + sortField : "")
                 + " with filter after sort skip " + skip + " take " + take);
 
-        SearchRequestBuilder searchRequestBuilder = m_Client.prepareSearch(jobId)
+        SearchRequestBuilder searchRequestBuilder = m_Client.prepareSearch(jobId.getIndex())
                 .setTypes(Influencer.TYPE)
                 .setPostFilter(filterBuilder)
                 .setFrom(skip).setSize(take);
@@ -940,7 +953,7 @@ public class ElasticsearchJobProvider implements JobProvider
         }
         catch (IndexNotFoundException e)
         {
-            throw new UnknownJobException(jobId);
+            throw new UnknownJobException(jobId.getId());
         }
 
         List<Influencer> influencers = new ArrayList<>();
@@ -992,12 +1005,13 @@ public class ElasticsearchJobProvider implements JobProvider
     public Quantiles getQuantiles(String jobId)
     throws UnknownJobException
     {
+        ElasticsearchJobId elasticJobId = new ElasticsearchJobId(jobId);
         try
         {
             LOGGER.trace("ES API CALL: get ID " + Quantiles.QUANTILES_ID +
-                    " type " + Quantiles.TYPE + " from index " + jobId);
+                    " type " + Quantiles.TYPE + " from index " + elasticJobId.getIndex());
             GetResponse response = m_Client.prepareGet(
-                    jobId, Quantiles.TYPE, Quantiles.QUANTILES_ID).get();
+                    elasticJobId.getIndex(), Quantiles.TYPE, Quantiles.QUANTILES_ID).get();
             if (!response.isExists())
             {
                 LOGGER.info("There are currently no quantiles for job " + jobId);
@@ -1045,7 +1059,8 @@ public class ElasticsearchJobProvider implements JobProvider
     @Override
     public void refreshIndex(String jobId)
     {
-        m_Client.admin().indices().refresh(new RefreshRequest(jobId)).actionGet();
+        String indexName = new ElasticsearchJobId(jobId).getIndex();
+        m_Client.admin().indices().refresh(new RefreshRequest(indexName)).actionGet();
     }
 }
 

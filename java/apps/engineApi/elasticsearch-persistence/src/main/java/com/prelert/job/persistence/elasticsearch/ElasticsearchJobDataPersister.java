@@ -55,6 +55,8 @@ public class ElasticsearchJobDataPersister extends JobDataPersister
 
     private static final int DOC_BUFFER_SIZE = 1000;
 
+    private static final String RAW_INDEX_PREFIX = "prelertinput-";
+
     private final Client m_Client;
     private final String m_IndexName;
 
@@ -64,7 +66,7 @@ public class ElasticsearchJobDataPersister extends JobDataPersister
 
     public ElasticsearchJobDataPersister(String jobId, Client client)
     {
-        m_IndexName = jobId + "_raw";
+        m_IndexName = RAW_INDEX_PREFIX + jobId;
         m_Client = client;
 
         m_BufferedRecords = new String [DOC_BUFFER_SIZE][];

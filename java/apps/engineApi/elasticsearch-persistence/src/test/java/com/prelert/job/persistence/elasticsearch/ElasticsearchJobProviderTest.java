@@ -55,6 +55,9 @@ import com.prelert.job.quantiles.Quantiles;
 
 public class ElasticsearchJobProviderTest
 {
+    private static final String JOB_ID = "foo";
+    private static final String INDEX_NAME = "prelertresults-foo";
+
     @Rule public ExpectedException m_ExpectedException = ExpectedException.none();
 
     @Mock private Node m_Node;
@@ -84,17 +87,17 @@ public class ElasticsearchJobProviderTest
             ExecutionException, UnknownJobException
     {
         m_ExpectedException.expect(UnknownJobException.class);
-        m_ExpectedException.expectMessage("No known job with id 'foo'");
+        m_ExpectedException.expectMessage("No known job with id '"+ JOB_ID + "'");
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.MISSING_JOB_ERROR));
 
         MockClientBuilder clientBuilder = new MockClientBuilder()
                 .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true)
-                .throwMissingIndexOnPrepareGet("foo", Quantiles.TYPE, Quantiles.QUANTILES_ID);
+                .throwMissingIndexOnPrepareGet(INDEX_NAME, Quantiles.TYPE, Quantiles.QUANTILES_ID);
 
         ElasticsearchJobProvider provider = createProvider(clientBuilder.build());
 
-        provider.getQuantiles("foo");
+        provider.getQuantiles(JOB_ID);
     }
 
     @Test
@@ -105,11 +108,11 @@ public class ElasticsearchJobProviderTest
 
         MockClientBuilder clientBuilder = new MockClientBuilder()
                 .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true)
-                .prepareGet("foo", Quantiles.TYPE, Quantiles.QUANTILES_ID, getResponse);
+                .prepareGet(INDEX_NAME, Quantiles.TYPE, Quantiles.QUANTILES_ID, getResponse);
 
         ElasticsearchJobProvider provider = createProvider(clientBuilder.build());
 
-        Quantiles quantiles = provider.getQuantiles("foo");
+        Quantiles quantiles = provider.getQuantiles(JOB_ID);
 
         assertEquals("", quantiles.getState());
     }
@@ -125,11 +128,11 @@ public class ElasticsearchJobProviderTest
 
         MockClientBuilder clientBuilder = new MockClientBuilder()
                 .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true)
-                .prepareGet("foo", Quantiles.TYPE, Quantiles.QUANTILES_ID, getResponse);
+                .prepareGet(INDEX_NAME, Quantiles.TYPE, Quantiles.QUANTILES_ID, getResponse);
 
         ElasticsearchJobProvider provider = createProvider(clientBuilder.build());
 
-        Quantiles quantiles = provider.getQuantiles("foo");
+        Quantiles quantiles = provider.getQuantiles(JOB_ID);
 
         assertEquals("", quantiles.getState());
     }
@@ -145,11 +148,11 @@ public class ElasticsearchJobProviderTest
 
         MockClientBuilder clientBuilder = new MockClientBuilder()
                 .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true)
-                .prepareGet("foo", Quantiles.TYPE, Quantiles.QUANTILES_ID, getResponse);
+                .prepareGet(INDEX_NAME, Quantiles.TYPE, Quantiles.QUANTILES_ID, getResponse);
 
         ElasticsearchJobProvider provider = createProvider(clientBuilder.build());
 
-        Quantiles quantiles = provider.getQuantiles("foo");
+        Quantiles quantiles = provider.getQuantiles(JOB_ID);
 
         assertEquals("state", quantiles.getState());
     }
@@ -164,11 +167,11 @@ public class ElasticsearchJobProviderTest
 
         MockClientBuilder clientBuilder = new MockClientBuilder()
                 .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true)
-                .prepareGet("foo", Quantiles.TYPE, Quantiles.QUANTILES_ID, getResponse);
+                .prepareGet(INDEX_NAME, Quantiles.TYPE, Quantiles.QUANTILES_ID, getResponse);
 
         ElasticsearchJobProvider provider = createProvider(clientBuilder.build());
 
-        Quantiles quantiles = provider.getQuantiles("foo");
+        Quantiles quantiles = provider.getQuantiles(JOB_ID);
 
         assertEquals("", quantiles.getState());
     }

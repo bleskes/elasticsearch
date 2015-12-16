@@ -60,6 +60,7 @@ import com.prelert.job.UnknownJobException;
 public class ElasticsearchBatchedResultsIteratorTest
 {
     private static final String JOB_ID = "foo";
+    private static final String INDEX_NAME = "prelertresults-foo";
     private static final String SCROLL_ID = "someScrollId";
 
     @Mock private Client m_Client;
@@ -91,7 +92,7 @@ public class ElasticsearchBatchedResultsIteratorTest
     @Test (expected = UnknownJobException.class)
     public void testQueryAgainstUnknownJob() throws UnknownJobException
     {
-        when(m_Client.prepareSearch(JOB_ID)).thenThrow(new IndexNotFoundException(JOB_ID));
+        when(m_Client.prepareSearch(INDEX_NAME)).thenThrow(new IndexNotFoundException(INDEX_NAME));
         m_TestIterator.next();
     }
 
@@ -201,7 +202,7 @@ public class ElasticsearchBatchedResultsIteratorTest
         {
             SearchResponse searchResponse = createSearchResponseWithHits(hits);
             SearchRequestBuilder requestBuilder = mock(SearchRequestBuilder.class);
-            when(m_Client.prepareSearch(JOB_ID)).thenReturn(requestBuilder);
+            when(m_Client.prepareSearch(INDEX_NAME)).thenReturn(requestBuilder);
             when(requestBuilder.setScroll("5m")).thenReturn(requestBuilder);
             when(requestBuilder.setSize(10000)).thenReturn(requestBuilder);
             when(requestBuilder.setTypes("String")).thenReturn(requestBuilder);
