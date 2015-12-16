@@ -76,7 +76,7 @@ public class PreviewIntegrationTest implements Closeable
     /**
      * The default base Url used in the test
      */
-    public static final String API_BASE_URL = "http://localhost:8080/engine/v1";
+    public static final String API_BASE_URL = "http://localhost:8080/engine/v2";
 
     private final EngineApiClient m_WebServiceClient;
     private final String m_TestDataHome;

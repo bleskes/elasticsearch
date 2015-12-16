@@ -65,7 +65,7 @@ public class ServerMain
 	/**
 	 * Base URI, all web service endpoints should match this path
 	 */
-	public static final String BASE_PATH = "/engine/v1/*";
+	public static final String BASE_PATH = "/engine/v2/*";
 
 	/**
 	 * The default port the server will run on.

@@ -87,7 +87,7 @@ public class AlertSubscriptionTest
 	/**
 	 * The default base Url used in the test
 	 */
-	public static final String API_BASE_URL = "http://localhost:8080/engine/v1";
+	public static final String API_BASE_URL = "http://localhost:8080/engine/v2";
 
 	public static final String ALERTING_JOB_1 = "alerting-job-1";
 	public static final String ALERTING_JOB_2 = "alerting-job-2";

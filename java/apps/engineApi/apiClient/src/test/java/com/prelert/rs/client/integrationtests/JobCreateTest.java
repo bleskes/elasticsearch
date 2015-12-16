@@ -142,7 +142,7 @@ public class JobCreateTest
 		console.activateOptions();
 		Logger.getRootLogger().addAppender(console);
 
-		s_ApiBaseUrl = "http://localhost:8080/engine/v1";
+		s_ApiBaseUrl = "http://localhost:8080/engine/v2";
 		if (args.length > 0)
 		{
 	        s_ApiBaseUrl = args[0];
