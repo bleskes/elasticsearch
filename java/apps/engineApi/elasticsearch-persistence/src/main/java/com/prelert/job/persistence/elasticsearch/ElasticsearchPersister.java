@@ -772,11 +772,11 @@ public class ElasticsearchPersister implements JobResultsPersister
     }
 
     @Override
-    public void updateBucket(String jobId, Bucket bucket)
+    public void updateBucket(Bucket bucket)
     {
         try
         {
-            m_Client.prepareIndex(jobId, Bucket.TYPE, bucket.getId())
+            m_Client.prepareIndex(m_JobId.getIndex(), Bucket.TYPE, bucket.getId())
                     .setSource(serialiseBucket(bucket)).execute().actionGet();
         }
         catch (IOException e)
@@ -786,9 +786,8 @@ public class ElasticsearchPersister implements JobResultsPersister
     }
 
     @Override
-    public void updateRecords(String jobId, String bucketId, List<AnomalyRecord> records)
+    public void updateRecords(String bucketId, List<AnomalyRecord> records)
     {
-        ElasticsearchJobId elasticJobId = new ElasticsearchJobId(jobId);
         try
         {
             // Now bulk update the records within the bucket
@@ -799,10 +798,10 @@ public class ElasticsearchPersister implements JobResultsPersister
                 String recordId = record.getId();
 
                 LOGGER.trace("ES BULK ACTION: update ID " + recordId + " type " + AnomalyRecord.TYPE +
-                        " in index " + elasticJobId.getIndex() + " using map of new values");
+                        " in index " + m_JobId.getIndex() + " using map of new values");
 
                 bulkRequest.add(
-                        m_Client.prepareIndex(elasticJobId.getIndex(), AnomalyRecord.TYPE, recordId)
+                        m_Client.prepareIndex(m_JobId.getIndex(), AnomalyRecord.TYPE, recordId)
                                 .setSource(serialiseRecord(record, record.getTimestamp()))
                                  // Need to specify the parent ID when updating a child
                                 .setParent(bucketId));
@@ -832,7 +831,7 @@ public class ElasticsearchPersister implements JobResultsPersister
     }
 
     @Override
-    public void updateInfluencer(String jobId, Influencer influencer)
+    public void updateInfluencer(Influencer influencer)
     {
         persistInfluencer(influencer);
     }

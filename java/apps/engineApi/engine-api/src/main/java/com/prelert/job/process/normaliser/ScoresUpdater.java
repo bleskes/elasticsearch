@@ -233,9 +233,9 @@ class ScoresUpdater
             if (bucket.hadBigNormalisedUpdate())
             {
                 logger.trace("ES API CALL: update ID " + bucketId + " type " + Bucket.TYPE +
-                        " in index " + m_JobId + " using map of new values");
+                        " for job " + m_JobId + " using map of new values");
 
-                m_JobRenormaliser.updateBucket(m_JobId, bucket);
+                m_JobRenormaliser.updateBucket(bucket);
 
                 ++counts[0];
             }
@@ -282,7 +282,7 @@ class ScoresUpdater
 
         if (!toUpdate.isEmpty())
         {
-            m_JobRenormaliser.updateRecords(m_JobId, bucket.getId(), toUpdate);
+            m_JobRenormaliser.updateRecords(bucket.getId(), toUpdate);
         }
     }
 
@@ -307,7 +307,7 @@ class ScoresUpdater
             {
                 if (influencer.hadBigNormalisedUpdate())
                 {
-                    m_JobRenormaliser.updateInfluencer(m_JobId, influencer);
+                    m_JobRenormaliser.updateInfluencer(influencer);
                     ++counts[0];
                 }
                 else

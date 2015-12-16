@@ -448,22 +448,22 @@ public class ScoresUpdaterTest
 
     private void verifyBucketWasUpdated(Bucket bucket)
     {
-        verify(m_JobRenormaliser).updateBucket(JOB_ID, bucket);
+        verify(m_JobRenormaliser).updateBucket(bucket);
     }
 
     private void verifyRecordsWereUpdated(String bucketId, List<AnomalyRecord> records)
     {
-        verify(m_JobRenormaliser).updateRecords(JOB_ID, bucketId, records);
+        verify(m_JobRenormaliser).updateRecords(bucketId, records);
     }
 
     private void verifyBucketWasNotUpdated(Bucket bucket)
     {
-        verify(m_JobRenormaliser, never()).updateBucket(JOB_ID, bucket);
+        verify(m_JobRenormaliser, never()).updateBucket(bucket);
     }
 
     private void verifyBucketRecordsWereNotUpdated(String bucketId)
     {
-        verify(m_JobRenormaliser, never()).updateRecords(eq(JOB_ID), eq(bucketId),
+        verify(m_JobRenormaliser, never()).updateRecords(eq(bucketId),
                 anyListOf(AnomalyRecord.class));
     }
 
@@ -487,7 +487,7 @@ public class ScoresUpdaterTest
 
     private void verifyInfluencerWasUpdated(Influencer influencer)
     {
-        verify(m_JobRenormaliser).updateInfluencer(JOB_ID, influencer);
+        verify(m_JobRenormaliser).updateInfluencer(influencer);
     }
 
     private static class MockBatchedResultsIterator<T> implements BatchedResultsIterator<T>

@@ -205,19 +205,19 @@ public class AutoDetectResultsParserTest
         }
 
         @Override
-        public void updateBucket(String jobId, Bucket bucket)
+        public void updateBucket(Bucket bucket)
         {
             // Do nothing
         }
 
         @Override
-        public void updateRecords(String jobId, String bucketId, List<AnomalyRecord> records)
+        public void updateRecords(String bucketId, List<AnomalyRecord> records)
         {
             // Do nothing
         }
 
         @Override
-        public void updateInfluencer(String jobId, Influencer influencer)
+        public void updateInfluencer(Influencer influencer)
         {
             // Do nothing
         }
