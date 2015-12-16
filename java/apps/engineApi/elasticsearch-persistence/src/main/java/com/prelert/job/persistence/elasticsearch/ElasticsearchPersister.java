@@ -753,7 +753,7 @@ public class ElasticsearchPersister implements JobResultsPersister
     throws IOException
     {
         XContentBuilder builder = jsonBuilder().startObject()
-                .field(JOB_ID_NAME, m_JobId)
+                .field(JOB_ID_NAME, m_JobId.getId())
                 .field(ElasticsearchMappings.ES_TIMESTAMP, influencer.getTimestamp())
                 .field(Influencer.PROBABILITY, influencer.getProbability())
                 .field(Influencer.INFLUENCER_FIELD_NAME, influencer.getInfluencerFieldName())
