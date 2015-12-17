@@ -55,7 +55,6 @@ import org.elasticsearch.common.settings.Settings.Builder;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.index.IndexNotFoundException;
 import org.elasticsearch.index.engine.VersionConflictEngineException;
-import org.elasticsearch.index.get.GetField;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.node.Node;
@@ -438,44 +437,6 @@ public class ElasticsearchJobProvider implements JobProvider
 
         return false;
     }
-
-    /**
-     * Returns null if the field cannot be found or converted to
-     * type V
-     */
-    @SuppressWarnings("unchecked")
-    @Override
-    public <V> V getField(String jobId, String fieldName)
-    {
-        ElasticsearchJobId elasticJobId = new ElasticsearchJobId(jobId);
-        try
-        {
-            LOGGER.trace("ES API CALL: get ID " + elasticJobId.getId() +
-                    " type " + JobDetails.TYPE + " from index " + elasticJobId.getIndex());
-            GetResponse response = m_Client
-                    .prepareGet(elasticJobId.getIndex(), JobDetails.TYPE, elasticJobId.getId())
-                    .setFields(fieldName)
-                    .get();
-            try
-            {
-                GetField f = response.getField(fieldName);
-                return (f != null) ? (V)f.getValue() : null;
-            }
-            catch (ClassCastException e)
-            {
-                return null;
-            }
-        }
-        catch (IndexNotFoundException e)
-        {
-            // the job does not exist
-            String msg = "Missing Index no job with id " + elasticJobId.getId();
-            LOGGER.error(msg);
-        }
-
-        return null;
-    }
-
 
     @Override
     public boolean updateJob(String jobId, Map<String, Object> updates) throws UnknownJobException

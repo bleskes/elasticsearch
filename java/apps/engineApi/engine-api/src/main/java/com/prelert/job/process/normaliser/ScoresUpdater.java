@@ -61,20 +61,27 @@ class ScoresUpdater
     private final JobProvider m_JobProvider;
     private final JobRenormaliser m_JobRenormaliser;
     private final NormaliserFactory m_NormaliserFactory;
+    private final int m_BucketSpan;
 
-    /**
-     * This read from the data store on first access (lazy initialization)
-     */
-    private volatile int m_BucketSpan;
-
-    public ScoresUpdater(String jobId, JobProvider jobProvider, JobRenormaliser jobRenormaliser,
+    public ScoresUpdater(JobDetails job, JobProvider jobProvider, JobRenormaliser jobRenormaliser,
             NormaliserFactory normaliserFactory)
     {
-        m_JobId = jobId;
+        m_JobId = job.getId();
         m_JobProvider = Objects.requireNonNull(jobProvider);
         m_JobRenormaliser = Objects.requireNonNull(jobRenormaliser);
         m_NormaliserFactory = Objects.requireNonNull(normaliserFactory);
-        m_BucketSpan = 0;
+        m_BucketSpan = getBucketSpanOrDefault(job.getAnalysisConfig());
+    }
+
+    private static int getBucketSpanOrDefault(AnalysisConfig analysisConfig)
+    {
+        if (analysisConfig != null && analysisConfig.getBucketSpan() != null)
+        {
+            return analysisConfig.getBucketSpan().intValue();
+        }
+        // A bucketSpan value of 0 will result to the default
+        // bucketSpan value being used in the back-end.
+        return 0;
     }
 
     /**
@@ -176,39 +183,12 @@ class ScoresUpdater
 
         List<Normalisable> asNormalisables = buckets.stream()
                 .map(bucket -> new BucketNormalisable(bucket)).collect(Collectors.toList());
-        normaliser.normalise(getJobBucketSpan(logger), asNormalisables, quantilesState);
+        normaliser.normalise(m_BucketSpan, asNormalisables, quantilesState);
 
         for (Bucket bucket : buckets)
         {
             updateSingleBucket(bucket, counts, logger);
         }
-    }
-
-    private int getJobBucketSpan(Logger logger)
-    {
-        // lazy initialization idiom of instance field (as in Effective Java)
-
-        int bucketSpan = m_BucketSpan;
-        if (bucketSpan == 0)
-        {
-            synchronized (this)
-            {
-                bucketSpan = m_BucketSpan;
-                if (bucketSpan == 0)
-                {
-                    // use dot notation to get fields from nested docs.
-                    Number num = m_JobProvider.<Number>getField(m_JobId,
-                            JobDetails.ANALYSIS_CONFIG + "." + AnalysisConfig.BUCKET_SPAN);
-                    if (num != null)
-                    {
-                        m_BucketSpan = bucketSpan = num.intValue();
-                        logger.info("Caching bucket span " + m_BucketSpan +
-                                " for job " + m_JobId);
-                    }
-                }
-            }
-        }
-        return bucketSpan;
     }
 
     /**
@@ -296,12 +276,14 @@ class ScoresUpdater
             Deque<Influencer> influencers = influencersIterator.next();
             if (influencers.isEmpty())
             {
+                logger.debug("No influencers to renormalise for job " + m_JobId);
                 break;
             }
 
+            logger.debug("Will renormalize a batch of " + influencers.size() + " influencers");
             List<Normalisable> asNormalisables = influencers.stream()
                     .map(bucket -> new InfluencerNormalisable(bucket)).collect(Collectors.toList());
-            normaliser.normalise(getJobBucketSpan(logger), asNormalisables, quantilesState);
+            normaliser.normalise(m_BucketSpan, asNormalisables, quantilesState);
 
             for (Influencer influencer : influencers)
             {
