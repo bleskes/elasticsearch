@@ -167,7 +167,7 @@ public abstract class Exporter  {
 
         @Override
         public String resolve(long timestamp) {
-            return MarvelSettings.MARVEL_INDICES_PREFIX + indexTimeFormatter.print(timestamp);
+            return MarvelSettings.MARVEL_INDICES_PREFIX + String.valueOf(MarvelTemplateUtils.TEMPLATE_VERSION) + "-" + indexTimeFormatter.print(timestamp);
         }
 
         @Override
