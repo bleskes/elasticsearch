@@ -43,6 +43,8 @@ import org.elasticsearch.shield.crypto.InternalCryptoService;
 import org.elasticsearch.test.ESIntegTestCase;
 import org.elasticsearch.test.ESIntegTestCase.ClusterScope;
 import org.elasticsearch.test.TestCluster;
+import org.elasticsearch.test.transport.AssertingLocalTransport;
+import org.elasticsearch.test.transport.MockTransportService;
 import org.elasticsearch.watcher.WatcherLifeCycleService;
 import org.elasticsearch.watcher.WatcherModule;
 import org.elasticsearch.watcher.WatcherService;
@@ -137,6 +139,14 @@ public abstract class AbstractWatcherIntegrationTestCase extends ESIntegTestCase
             excludes.add(templateConfig.getTemplateName());
         }
         return excludes;
+    }
+
+    @Override
+    protected Collection<Class<? extends Plugin>> getMockPlugins() {
+        Set<Class<? extends Plugin>> plugins = new HashSet<>(super.getMockPlugins());
+        plugins.remove(MockTransportService.TestPlugin.class); // shield has its own transport service
+        plugins.remove(AssertingLocalTransport.TestPlugin.class); // shield has its own transport
+        return plugins;
     }
 
     @Override
