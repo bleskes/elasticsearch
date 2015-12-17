@@ -75,8 +75,8 @@ public class TransportFilterTests extends ESIntegTestCase {
     }
 
     @Override
-    protected boolean enableMockModules() {
-        return false;
+    protected Collection<Class<? extends Plugin>> getMockPlugins() {
+        return Collections.emptyList();
     }
 
     @Override
