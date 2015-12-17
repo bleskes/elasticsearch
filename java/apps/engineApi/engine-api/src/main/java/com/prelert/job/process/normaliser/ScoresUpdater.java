@@ -47,7 +47,7 @@ import com.prelert.job.results.Bucket;
 import com.prelert.job.results.Influencer;
 
 /**
- * Thread safe class that updated the scores of all existing results
+ * Thread safe class that updates the scores of all existing results
  * with the normalised scores
  */
 class ScoresUpdater
@@ -57,11 +57,20 @@ class ScoresUpdater
      */
     private static final int TARGET_RECORDS_TO_RENORMALISE = 100000;
 
+    // 30 days
+    private static final long DEFAULT_RENORMALISATION_WINDOW_MS = 2592000000L;
+
+    private static final int DEFAULT_BUCKETS_IN_RENORMALISATION_WINDOW = 100;
+
+    private static final long SECONDS_IN_DAY = 86400;
+    private static final long MILLISECONDS_IN_SECOND = 1000;
+
     private final String m_JobId;
     private final JobProvider m_JobProvider;
     private final JobRenormaliser m_JobRenormaliser;
     private final NormaliserFactory m_NormaliserFactory;
     private final int m_BucketSpan;
+    private final long m_NormalisationWindow;
 
     public ScoresUpdater(JobDetails job, JobProvider jobProvider, JobRenormaliser jobRenormaliser,
             NormaliserFactory normaliserFactory)
@@ -71,6 +80,7 @@ class ScoresUpdater
         m_JobRenormaliser = Objects.requireNonNull(jobRenormaliser);
         m_NormaliserFactory = Objects.requireNonNull(normaliserFactory);
         m_BucketSpan = getBucketSpanOrDefault(job.getAnalysisConfig());
+        m_NormalisationWindow = getNormalisationWindowOrDefault(job.getAnalysisConfig());
     }
 
     private static int getBucketSpanOrDefault(AnalysisConfig analysisConfig)
@@ -82,6 +92,18 @@ class ScoresUpdater
         // A bucketSpan value of 0 will result to the default
         // bucketSpan value being used in the back-end.
         return 0;
+    }
+
+    private long getNormalisationWindowOrDefault(AnalysisConfig analysisConfig)
+    {
+        if (analysisConfig != null && analysisConfig.getRenormalizationWindow() != null)
+        {
+            return analysisConfig.getRenormalizationWindow() * SECONDS_IN_DAY * MILLISECONDS_IN_SECOND;
+        }
+
+        long defaultWindow = Math.max(DEFAULT_RENORMALISATION_WINDOW_MS,
+                DEFAULT_BUCKETS_IN_RENORMALISATION_WINDOW * m_BucketSpan * MILLISECONDS_IN_SECOND);
+        return defaultWindow;
     }
 
     /**
@@ -118,7 +140,8 @@ class ScoresUpdater
             int[] counts, Logger logger) throws UnknownJobException, NativeProcessRunException
     {
         BatchedResultsIterator<Bucket> bucketsIterator =
-                m_JobProvider.newBatchedBucketsIterator(m_JobId).timeRange(0, endBucketEpochMs);
+                m_JobProvider.newBatchedBucketsIterator(m_JobId)
+                .timeRange(calcNormalisationWindowStart(endBucketEpochMs), endBucketEpochMs);
 
         // Make a list of buckets with their records to be renormalised.
         // This may be shorter than the original list of buckets for two
@@ -138,7 +161,7 @@ class ScoresUpdater
             Deque<Bucket> buckets = bucketsIterator.next();
             if (buckets.isEmpty())
             {
-                logger.warn("No buckets to renormalise for job " + m_JobId);
+                logger.debug("No buckets to renormalise for job " + m_JobId);
                 break;
             }
 
@@ -171,6 +194,11 @@ class ScoresUpdater
             normaliseBuckets(normaliser, bucketsToRenormalise, quantilesState,
                     batchRecordCount, skipped, counts, logger);
         }
+    }
+
+    private long calcNormalisationWindowStart(long endEpochMs)
+    {
+        return Math.max(0, endEpochMs - m_NormalisationWindow);
     }
 
     private void normaliseBuckets(Normaliser normaliser, List<Bucket> buckets,
@@ -270,7 +298,8 @@ class ScoresUpdater
             int[] counts, Logger logger) throws UnknownJobException, NativeProcessRunException
     {
         BatchedResultsIterator<Influencer> influencersIterator = m_JobProvider
-                .newBatchedInfluencersIterator(m_JobId).timeRange(0, endBucketEpochMs);
+                .newBatchedInfluencersIterator(m_JobId)
+                .timeRange(calcNormalisationWindowStart(endBucketEpochMs), endBucketEpochMs);
         while (influencersIterator.hasNext())
         {
             Deque<Influencer> influencers = influencersIterator.next();
