@@ -19,6 +19,7 @@ package org.elasticsearch.shield.authc;
 
 import org.elasticsearch.ElasticsearchSecurityException;
 import org.elasticsearch.common.Base64;
+import org.elasticsearch.common.ContextAndHeaderHolder;
 import org.elasticsearch.common.component.AbstractComponent;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.io.stream.BytesStreamOutput;
@@ -72,6 +73,11 @@ public class InternalAuthenticationService extends AbstractComponent implements 
 
     @Override
     public User authenticate(RestRequest request) throws ElasticsearchSecurityException {
+        User user = getUserFromContext(request);
+        if (user != null) {
+            return user;
+        }
+
         AuthenticationToken token;
         try {
             token = token(request);
@@ -96,7 +102,6 @@ public class InternalAuthenticationService extends AbstractComponent implements 
             throw failureHandler.missingToken(request);
         }
 
-        User user;
         try {
             user = authenticate(request, token);
         } catch (Exception e) {
@@ -156,7 +161,7 @@ public class InternalAuthenticationService extends AbstractComponent implements 
 
     @Override
     public User authenticate(String action, TransportMessage message, User fallbackUser) throws IOException {
-        User user = message.getFromContext(USER_KEY);
+        User user = getUserFromContext(message);
         if (user != null) {
             return user;
         }
@@ -182,7 +187,7 @@ public class InternalAuthenticationService extends AbstractComponent implements 
     }
 
     @Override
-    public void attachUserHeaderIfMissing(TransportMessage message, User user) throws IOException {
+    public void attachUserHeaderIfMissing(ContextAndHeaderHolder message, User user) throws IOException {
         if (message.hasHeader(USER_KEY)) {
             return;
         }
@@ -196,6 +201,14 @@ public class InternalAuthenticationService extends AbstractComponent implements 
         message.putInContext(USER_KEY, user);
         String userHeader = signUserHeader ? cryptoService.sign(encodeUser(user, logger)) : encodeUser(user, logger);
         message.putHeader(USER_KEY, userHeader);
+    }
+
+    User getUserFromContext(ContextAndHeaderHolder message) {
+        User user = message.getFromContext(USER_KEY);
+        if (user != null) {
+            return user;
+        }
+        return null;
     }
 
     static User decodeUser(String text) {
