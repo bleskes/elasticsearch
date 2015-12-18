@@ -1,39 +1,5 @@
 package org.elasticsearch.messy.tests;
 
-import static org.elasticsearch.watcher.actions.ActionBuilders.loggingAction;
-import static org.elasticsearch.watcher.client.WatchSourceBuilders.watchBuilder;
-import static org.elasticsearch.watcher.input.InputBuilders.simpleInput;
-import static org.elasticsearch.watcher.trigger.TriggerBuilders.schedule;
-import static org.elasticsearch.watcher.trigger.schedule.Schedules.cron;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.greaterThan;
-import static org.hamcrest.Matchers.greaterThanOrEqualTo;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.lessThan;
-
-import java.util.ArrayList;
-
-/*
- * ELASTICSEARCH CONFIDENTIAL
- * __________________
- *
- *  [2014] Elasticsearch Incorporated. All Rights Reserved.
- *
- * NOTICE:  All information contained herein is, and remains
- * the property of Elasticsearch Incorporated and its suppliers,
- * if any.  The intellectual and technical concepts contained
- * herein are proprietary to Elasticsearch Incorporated
- * and its suppliers and may be covered by U.S. and Foreign Patents,
- * patents in process, and are protected by trade secret or copyright law.
- * Dissemination of this information or reproduction of this material
- * is strictly forbidden unless prior written permission is obtained
- * from Elasticsearch Incorporated.
- */
-
-import java.util.List;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.plugins.Plugin;
@@ -54,6 +20,39 @@ import org.elasticsearch.watcher.trigger.schedule.ScheduleTriggerEvent;
 import org.elasticsearch.watcher.watch.Watch;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+
+import static org.elasticsearch.watcher.actions.ActionBuilders.loggingAction;
+import static org.elasticsearch.watcher.client.WatchSourceBuilders.watchBuilder;
+import static org.elasticsearch.watcher.input.InputBuilders.simpleInput;
+import static org.elasticsearch.watcher.trigger.TriggerBuilders.schedule;
+import static org.elasticsearch.watcher.trigger.schedule.Schedules.cron;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.greaterThanOrEqualTo;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.lessThan;
+
+/*
+ * ELASTICSEARCH CONFIDENTIAL
+ * __________________
+ *
+ *  [2014] Elasticsearch Incorporated. All Rights Reserved.
+ *
+ * NOTICE:  All information contained herein is, and remains
+ * the property of Elasticsearch Incorporated and its suppliers,
+ * if any.  The intellectual and technical concepts contained
+ * herein are proprietary to Elasticsearch Incorporated
+ * and its suppliers and may be covered by U.S. and Foreign Patents,
+ * patents in process, and are protected by trade secret or copyright law.
+ * Dissemination of this information or reproduction of this material
+ * is strictly forbidden unless prior written permission is obtained
+ * from Elasticsearch Incorporated.
+ */
 
 /** 
  * Two groovy-using methods from ManualExecutionTests.

@@ -1,3 +1,4 @@
+import org.elasticsearch.gradle.LoggedExec
 import org.elasticsearch.gradle.MavenFilteringHack
 
 /*
@@ -16,10 +17,6 @@ import org.elasticsearch.gradle.MavenFilteringHack
  * is strictly forbidden unless prior written permission is obtained
  * from Elasticsearch Incorporated.
  */
-
-import org.elasticsearch.gradle.LoggedExec
-import org.elasticsearch.gradle.MavenFilteringHack
-
 apply plugin: 'elasticsearch.rest-test'
 
 dependencies {

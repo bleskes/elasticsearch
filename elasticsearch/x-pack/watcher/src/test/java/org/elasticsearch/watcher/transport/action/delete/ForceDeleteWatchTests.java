@@ -17,13 +17,9 @@
 
 package org.elasticsearch.watcher.transport.action.delete;
 
-import org.apache.lucene.util.LuceneTestCase.AwaitsFix;
 import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.script.SleepScriptEngine;
 import org.elasticsearch.test.junit.annotations.TestLogging;
-import org.elasticsearch.watcher.condition.Condition;
-import org.elasticsearch.watcher.condition.ConditionBuilders;
-import org.elasticsearch.watcher.support.Script;
 import org.elasticsearch.watcher.test.AbstractWatcherIntegrationTestCase;
 import org.elasticsearch.watcher.transport.actions.delete.DeleteWatchResponse;
 import org.elasticsearch.watcher.transport.actions.put.PutWatchResponse;
@@ -31,7 +27,6 @@ import org.elasticsearch.watcher.transport.actions.service.WatcherServiceRespons
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 import static org.elasticsearch.watcher.actions.ActionBuilders.loggingAction;

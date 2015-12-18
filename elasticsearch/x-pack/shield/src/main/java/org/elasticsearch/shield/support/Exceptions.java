@@ -20,7 +20,6 @@ package org.elasticsearch.shield.support;
 import org.elasticsearch.ElasticsearchSecurityException;
 import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.shield.ShieldPlugin;
-import org.elasticsearch.xpack.XPackPlugin;
 
 /**
  *

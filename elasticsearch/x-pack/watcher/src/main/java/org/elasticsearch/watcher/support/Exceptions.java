@@ -21,7 +21,6 @@ import org.elasticsearch.common.settings.SettingsException;
 import org.elasticsearch.script.ScriptException;
 
 import java.io.IOException;
-import java.util.IllegalFormatException;
 
 import static org.elasticsearch.common.logging.support.LoggerMessageFormat.format;
 

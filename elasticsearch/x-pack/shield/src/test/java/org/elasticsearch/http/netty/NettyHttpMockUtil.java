@@ -17,9 +17,9 @@
 
 package org.elasticsearch.http.netty;
 
-import static org.mockito.Mockito.mock;
-
 import org.elasticsearch.common.netty.OpenChannelsHandler;
+
+import static org.mockito.Mockito.mock;
 
 /** Allows setting a mock into NettyHttpServerTransport */
 public class NettyHttpMockUtil {

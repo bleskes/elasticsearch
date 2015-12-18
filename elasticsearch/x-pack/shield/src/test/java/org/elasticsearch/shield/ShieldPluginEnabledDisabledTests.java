@@ -24,7 +24,6 @@ import org.elasticsearch.http.HttpServerTransport;
 import org.elasticsearch.integration.LicensingTests;
 import org.elasticsearch.license.core.License.OperationMode;
 import org.elasticsearch.node.Node;
-import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.shield.authc.support.SecuredString;
 import org.elasticsearch.shield.authc.support.UsernamePasswordToken;
 import org.elasticsearch.shield.transport.ShieldServerTransportService;
