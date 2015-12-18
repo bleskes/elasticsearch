@@ -27,6 +27,7 @@
 
 package com.prelert.job.results;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -217,6 +218,7 @@ public class BucketTest
 
         Bucket bucket1 = new Bucket();
         bucket1.setAnomalyScore(42.0);
+        bucket1.setInitialAnomalyScore(92.0);
         bucket1.setDetectors(Arrays.asList(detector));
         bucket1.setEventCount(134);
         bucket1.setId("13546461");
@@ -230,6 +232,7 @@ public class BucketTest
 
         Bucket bucket2 = new Bucket();
         bucket2.setAnomalyScore(42.0);
+        bucket2.setInitialAnomalyScore(92.0);
         bucket2.setDetectors(Arrays.asList(detector));
         bucket2.setEventCount(134);
         bucket2.setId("13546461");
@@ -243,6 +246,7 @@ public class BucketTest
 
         assertTrue(bucket1.equals(bucket2));
         assertTrue(bucket2.equals(bucket1));
+        assertEquals(bucket1.hashCode(), bucket2.hashCode());
     }
 
     @Test

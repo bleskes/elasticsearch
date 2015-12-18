@@ -77,6 +77,7 @@ public class BucketParserTest
         assertEquals(1369437000000l, b.getTimestamp().getTime());
         assertEquals(2.0, b.getMaxNormalizedProbability(), ERROR);
         assertEquals(50.0, b.getAnomalyScore(), ERROR);
+        assertEquals(50.0, b.getInitialAnomalyScore(), ERROR);
         assertEquals("1369437000", b.getId());
         assertEquals(0, b.getRecordCount());
         assertEquals(0, b.getDetectors().size());

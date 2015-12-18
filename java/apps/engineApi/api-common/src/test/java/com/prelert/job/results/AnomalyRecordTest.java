@@ -244,6 +244,17 @@ public class AnomalyRecordTest
     }
 
     @Test
+    public void testEquals_GivenDifferentInitialNormalizedProbability()
+    {
+        AnomalyRecord record1 = createFullyPopulatedRecord();
+        AnomalyRecord record2 = createFullyPopulatedRecord();
+        record1.setInitialNormalizedProbability(record1.getNormalizedProbability() + 0.1);
+
+        assertFalse(record1.equals(record2));
+        assertFalse(record2.equals(record1));
+    }
+
+    @Test
     public void testEquals_GivenDifferentNormalizedProbability()
     {
         AnomalyRecord record1 = createFullyPopulatedRecord();
@@ -346,6 +357,7 @@ public class AnomalyRecordTest
         record.setInfluencers(Arrays.asList(new Influence()));
         record.setInterim(false);
         record.setNormalizedProbability(86.4);
+        record.setInitialNormalizedProbability(90.2);
         record.setOverFieldName("airport");
         record.setOverFieldValue("SKG");
         record.setPartitionFieldName("planet");

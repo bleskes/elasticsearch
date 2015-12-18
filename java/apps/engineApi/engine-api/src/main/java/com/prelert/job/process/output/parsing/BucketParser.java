@@ -76,6 +76,7 @@ final class BucketParser extends FieldNameParser<Bucket>
             break;
         case Bucket.ANOMALY_SCORE:
             bucket.setAnomalyScore(parseAsDoubleOrZero(fieldName));
+            bucket.setInitialAnomalyScore(bucket.getAnomalyScore());
             break;
         case Bucket.MAX_NORMALIZED_PROBABILITY:
             bucket.setMaxNormalizedProbability(parseAsDoubleOrZero(fieldName));

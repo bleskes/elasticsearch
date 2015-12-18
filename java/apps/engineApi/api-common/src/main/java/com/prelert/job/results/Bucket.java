@@ -54,6 +54,7 @@ public class Bucket
     public static final String ID = "id";
     public static final String TIMESTAMP = "timestamp";
     public static final String ANOMALY_SCORE = "anomalyScore";
+    public static final String INITIAL_ANOMALY_SCORE = "initialAnomalyScore";
     public static final String MAX_NORMALIZED_PROBABILITY = "maxNormalizedProbability";
     public static final String IS_INTERIM = "isInterim";
     public static final String RECORD_COUNT = "recordCount";
@@ -66,13 +67,6 @@ public class Bucket
     public static final String ES_TIMESTAMP = "@timestamp";
 
     /**
-     * This is a debug only field. It is only written in ES; the Java objects
-     * never get these values.
-     */
-    public static final String INITIAL_ANOMALY_SCORE = "initialAnomalyScore";
-
-
-    /**
      * Elasticsearch type
      */
     public static final String TYPE = "bucket";
@@ -81,6 +75,10 @@ public class Bucket
 
     private Date m_Timestamp;
     private double m_AnomalyScore;
+
+    @JsonIgnoreProperties(value={INITIAL_ANOMALY_SCORE}, allowSetters=true)
+    private double m_InitialAnomalyScore;
+
     private double m_MaxNormalizedProbability;
     private int m_RecordCount;
     private List<Detector> m_Detectors;
@@ -156,6 +154,16 @@ public class Bucket
     public void setAnomalyScore(double anomalyScore)
     {
         m_AnomalyScore = anomalyScore;
+    }
+
+    public double getInitialAnomalyScore()
+    {
+        return m_InitialAnomalyScore;
+    }
+
+    public void setInitialAnomalyScore(double influenceScore)
+    {
+        this.m_InitialAnomalyScore = influenceScore;
     }
 
     public double getMaxNormalizedProbability()
@@ -279,8 +287,9 @@ public class Bucket
     public int hashCode()
     {
         // m_HadBigNormalisedUpdate is deliberately excluded from the hash
-        return Objects.hash(m_Timestamp, m_EventCount, m_AnomalyScore, m_MaxNormalizedProbability,
-                m_RecordCount, m_Records, m_IsInterim, m_BucketInfluencers, m_Influencers);
+        return Objects.hash(m_Timestamp, m_EventCount, m_InitialAnomalyScore, m_AnomalyScore,
+                m_MaxNormalizedProbability, m_RecordCount, m_Records, m_IsInterim,
+                m_BucketInfluencers, m_Influencers);
     }
 
     /**
@@ -308,6 +317,7 @@ public class Bucket
         return Objects.equals(this.m_Timestamp, that.m_Timestamp)
                 && (this.m_EventCount == that.m_EventCount)
                 && (this.m_AnomalyScore == that.m_AnomalyScore)
+                && (this.m_InitialAnomalyScore == that.m_InitialAnomalyScore)
                 && (this.m_MaxNormalizedProbability == that.m_MaxNormalizedProbability)
                 && (this.m_RecordCount == that.m_RecordCount)
                 && Objects.equals(this.m_Records, that.m_Records)
