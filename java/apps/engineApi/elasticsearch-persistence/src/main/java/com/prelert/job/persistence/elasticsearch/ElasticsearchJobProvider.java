@@ -508,7 +508,7 @@ public class ElasticsearchJobProvider implements JobProvider
             throws UnknownJobException
     {
         return updateJobField(jobId, job -> {
-            job.setLastDataTime(time);
+            job.setFinishedTime(time);
             job.setStatus(status);
         });
     }
