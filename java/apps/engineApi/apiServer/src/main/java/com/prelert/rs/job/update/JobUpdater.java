@@ -63,6 +63,7 @@ public class JobUpdater
     private static final Logger LOGGER = Logger.getLogger(JobUpdater.class);
     private static final String JOB_DESCRIPTION_KEY = "description";
     private static final String MODEL_DEBUG_CONFIG_KEY = "modelDebugConfig";
+    private static final String RENORMALIZATION_WINDOW_KEY = "renormalizationWindow";
     private static final Set<String> HIDDEN_PROPERTIES = new HashSet<>(
             Arrays.asList(MODEL_DEBUG_CONFIG_KEY));
 
@@ -84,6 +85,7 @@ public class JobUpdater
         return ImmutableMap.<String, Supplier<AbstractUpdater>>builder()
                 .put(JOB_DESCRIPTION_KEY, () -> new JobDescriptionUpdater(m_JobManager, m_JobId))
                 .put(MODEL_DEBUG_CONFIG_KEY, () -> new ModelDebugConfigUpdater(m_JobManager, m_JobId, m_ConfigWriter))
+                .put(RENORMALIZATION_WINDOW_KEY, () -> new RenormalizationWindowUpdater(m_JobManager, m_JobId))
                 .build();
     }
 

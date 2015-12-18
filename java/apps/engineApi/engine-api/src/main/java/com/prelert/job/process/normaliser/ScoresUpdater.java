@@ -69,18 +69,23 @@ class ScoresUpdater
     private final JobProvider m_JobProvider;
     private final JobRenormaliser m_JobRenormaliser;
     private final NormaliserFactory m_NormaliserFactory;
-    private final int m_BucketSpan;
-    private final long m_NormalisationWindow;
+    private int m_BucketSpan;
+    private long m_NormalisationWindow;
 
-    public ScoresUpdater(JobDetails job, JobProvider jobProvider, JobRenormaliser jobRenormaliser,
+    public ScoresUpdater(String jobId, JobProvider jobProvider, JobRenormaliser jobRenormaliser,
             NormaliserFactory normaliserFactory)
     {
-        m_JobId = job.getId();
+        m_JobId = jobId;
         m_JobProvider = Objects.requireNonNull(jobProvider);
         m_JobRenormaliser = Objects.requireNonNull(jobRenormaliser);
         m_NormaliserFactory = Objects.requireNonNull(normaliserFactory);
-        m_BucketSpan = getBucketSpanOrDefault(job.getAnalysisConfig());
-        m_NormalisationWindow = getNormalisationWindowOrDefault(job.getAnalysisConfig());
+    }
+
+    private void updateJobDetails()
+    {
+        JobDetails jobDetails = m_JobProvider.getJobDetails(m_JobId).get();
+        m_BucketSpan = getBucketSpanOrDefault(jobDetails.getAnalysisConfig());
+        m_NormalisationWindow = getNormalisationWindowOrDefault(jobDetails.getAnalysisConfig());
     }
 
     private static int getBucketSpanOrDefault(AnalysisConfig analysisConfig)
@@ -115,6 +120,7 @@ class ScoresUpdater
      */
     public void update(String quantilesState, long endBucketEpochMs, Logger logger)
     {
+        updateJobDetails();
         Normaliser normaliser = m_NormaliserFactory.create(m_JobId, logger);
         int[] counts = { 0, 0 };
         try

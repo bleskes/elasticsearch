@@ -34,7 +34,6 @@ import java.util.concurrent.BlockingQueue;
 
 import org.apache.log4j.Logger;
 
-import com.prelert.job.JobDetails;
 import com.prelert.job.persistence.JobProvider;
 import com.prelert.job.persistence.JobRenormaliser;
 import com.prelert.job.process.output.parsing.Renormaliser;
@@ -83,13 +82,13 @@ public class BlockingQueueRenormaliser implements Renormaliser
      * @param jobId The job Id/datastore index
      * @param jobProvider The job provider for accessing and updating job results
      */
-    public BlockingQueueRenormaliser(JobDetails job, JobProvider jobProvider,
+    public BlockingQueueRenormaliser(String jobId, JobProvider jobProvider,
             JobRenormaliser jobRenormaliser)
     {
-        m_JobId = job.getId();
+        m_JobId = jobId;
         m_JobProvider = jobProvider;
-        m_ScoresUpdater = new ScoresUpdater(job, jobProvider, jobRenormaliser,
-                (someJobId, logger) -> new Normaliser(job.getId(), new NormaliserProcessFactory(), logger));
+        m_ScoresUpdater = new ScoresUpdater(jobId, jobProvider, jobRenormaliser,
+                (someJobId, logger) -> new Normaliser(jobId, new NormaliserProcessFactory(), logger));
 
         // Queue limit of 50 means that renormalisation will eventually block
         // the main data processing of the job if it gets too far ahead

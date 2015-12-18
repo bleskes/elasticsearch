@@ -419,7 +419,7 @@ public class InfluencersTest
         m_WebServiceClient.closeJob(STATUS_CODES_RATES_JOB);
 
         Pagination<Bucket> topBuckets = m_WebServiceClient.prepareGetBuckets(STATUS_CODES_RATES_JOB)
-                .anomalyScoreThreshold(10.0)
+                .anomalyScoreThreshold(50.0)
                 .expand(true)
                 .get();
 

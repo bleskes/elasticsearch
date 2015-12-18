@@ -47,6 +47,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataCounts;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.JobDetails;
@@ -510,6 +511,19 @@ public class JobManager
             throws UnknownJobException
     {
         updateJobField(jobId, job -> job.setModelDebugConfig(modelDebugConfig));
+    }
+
+    public void setRenormalizationWindow(String jobId, Long renormalizationWindow) throws UnknownJobException
+    {
+        updateJobField(jobId, job -> {
+                AnalysisConfig analysisConfig = job.getAnalysisConfig();
+                if (analysisConfig == null)
+                {
+                    analysisConfig = new AnalysisConfig();
+                }
+                analysisConfig.setRenormalizationWindow(renormalizationWindow);
+                job.setAnalysisConfig(analysisConfig);
+            });
     }
 
     /**
