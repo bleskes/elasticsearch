@@ -91,11 +91,6 @@ public class AnomalyRecord
      */
     public static final String ANOMALY_SCORE = "anomalyScore";
     public static final String NORMALIZED_PROBABILITY = "normalizedProbability";
-
-    /**
-     * This is a debug only field. It is only written in ES; the Java objects
-     * never get these values.
-     */
     public static final String INITIAL_NORMALIZED_PROBABILITY = "initialNormalizedProbability";
 
     private static final Logger LOGGER = Logger.getLogger(AnomalyRecord.class);
@@ -121,6 +116,10 @@ public class AnomalyRecord
 
     private double m_AnomalyScore;
     private double m_NormalizedProbability;
+
+    @JsonIgnoreProperties(value={INITIAL_NORMALIZED_PROBABILITY}, allowSetters=true)
+    private double m_InitialNormalizedProbability;
+
     private Date   m_Timestamp;
 
     private List<Influence> m_Influencers;
@@ -217,6 +216,16 @@ public class AnomalyRecord
     public void setNormalizedProbability(double normalizedProbability)
     {
         m_NormalizedProbability = normalizedProbability;
+    }
+
+    public double getInitialNormalizedProbability()
+    {
+        return m_InitialNormalizedProbability;
+    }
+
+    public void setInitialNormalizedProbability(double initialNormalizedProbability)
+    {
+        m_InitialNormalizedProbability = initialNormalizedProbability;
     }
 
     public Date getTimestamp()
@@ -411,10 +420,11 @@ public class AnomalyRecord
 
         // m_HadBigNormalisedUpdate is also deliberately excluded from the hash
 
-        return Objects.hash(m_Probability, m_AnomalyScore, m_NormalizedProbability,
-                m_Typical, m_Actual, m_Function, m_FunctionDescription, m_FieldName, m_ByFieldName,
-                m_ByFieldValue, m_PartitionFieldName, m_PartitionFieldValue, m_OverFieldName,
-                m_OverFieldValue, m_Timestamp, m_Parent, m_IsInterim, m_Causes, m_Influencers);
+        return Objects.hash(m_Probability, m_AnomalyScore, m_InitialNormalizedProbability,
+                m_NormalizedProbability, m_Typical, m_Actual, m_Function, m_FunctionDescription,
+                m_FieldName, m_ByFieldName, m_ByFieldValue, m_PartitionFieldName,
+                m_PartitionFieldValue, m_OverFieldName, m_OverFieldValue, m_Timestamp, m_Parent,
+                m_IsInterim, m_Causes, m_Influencers);
     }
 
 
@@ -441,6 +451,7 @@ public class AnomalyRecord
         return this.m_Probability == that.m_Probability
                 && this.m_AnomalyScore == that.m_AnomalyScore
                 && this.m_NormalizedProbability == that.m_NormalizedProbability
+                && this.m_InitialNormalizedProbability == that.m_InitialNormalizedProbability
                 && Objects.equals(this.m_Typical, that.m_Typical)
                 && Objects.equals(this.m_Actual, that.m_Actual)
                 && Objects.equals(this.m_Function, that.m_Function)

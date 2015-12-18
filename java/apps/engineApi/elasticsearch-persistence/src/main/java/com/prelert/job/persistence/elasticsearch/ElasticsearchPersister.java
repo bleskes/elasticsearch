@@ -407,7 +407,7 @@ public class ElasticsearchPersister implements JobResultsPersister
                 .field(Bucket.ID, bucket.getId())
                 .field(ElasticsearchMappings.ES_TIMESTAMP, bucket.getTimestamp())
                 .field(Bucket.ANOMALY_SCORE, bucket.getAnomalyScore())
-                .field(Bucket.INITIAL_ANOMALY_SCORE, bucket.getAnomalyScore())
+                .field(Bucket.INITIAL_ANOMALY_SCORE, bucket.getInitialAnomalyScore())
                 .field(Bucket.MAX_NORMALIZED_PROBABILITY, bucket.getMaxNormalizedProbability())
                 .field(Bucket.RECORD_COUNT, bucket.getRecordCount())
                 .field(Bucket.EVENT_COUNT, bucket.getEventCount());
@@ -528,7 +528,7 @@ public class ElasticsearchPersister implements JobResultsPersister
                 .field(AnomalyRecord.PROBABILITY, record.getProbability())
                 .field(AnomalyRecord.ANOMALY_SCORE, record.getAnomalyScore())
                 .field(AnomalyRecord.NORMALIZED_PROBABILITY, record.getNormalizedProbability())
-                .field(AnomalyRecord.INITIAL_NORMALIZED_PROBABILITY, record.getNormalizedProbability())
+                .field(AnomalyRecord.INITIAL_NORMALIZED_PROBABILITY, record.getInitialNormalizedProbability())
                 .field(ElasticsearchMappings.ES_TIMESTAMP, bucketTime);
 
         List<String> topLevelExcludes = new ArrayList<>();
