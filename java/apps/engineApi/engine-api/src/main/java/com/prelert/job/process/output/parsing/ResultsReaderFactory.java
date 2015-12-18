@@ -30,7 +30,6 @@ import java.io.InputStream;
 
 import org.apache.log4j.Logger;
 
-import com.prelert.job.JobDetails;
 import com.prelert.job.persistence.JobResultsPeristerFactory;
 
 /**
@@ -51,10 +50,10 @@ public class ResultsReaderFactory
         m_RenormaliserFactory = renormaliserFactory;
     }
 
-    public ResultsReader newResultsParser(JobDetails job, InputStream autoDetectOutputStream,
+    public ResultsReader newResultsParser(String jobId, InputStream autoDetectOutputStream,
             Logger logger)
     {
-        return new ResultsReader(m_RenormaliserFactory.create(job),
-                m_PersisterFactory.jobResultsPersister(job.getId()), autoDetectOutputStream, logger);
+        return new ResultsReader(m_RenormaliserFactory.create(jobId),
+                m_PersisterFactory.jobResultsPersister(jobId), autoDetectOutputStream, logger);
     }
 }

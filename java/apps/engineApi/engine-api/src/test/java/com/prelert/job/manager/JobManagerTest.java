@@ -257,6 +257,39 @@ public class JobManagerTest
     }
 
     @Test
+    public void testSetRenormalizationWindow_GivenNonNullAnalysisConfig() throws UnknownJobException
+    {
+        givenProcessInfo(5);
+        AnalysisConfig config = new AnalysisConfig();
+        config.setRenormalizationWindow(10L);
+        JobDetails jobDetails = new JobDetails("foo", new JobConfiguration());
+        jobDetails.setAnalysisConfig(config);
+        when(m_JobProvider.getJobDetails("foo")).thenReturn(Optional.of(jobDetails));
+        JobManager jobManager = new JobManager(m_JobProvider, m_ProcessManager);
+
+        jobManager.setRenormalizationWindow("foo", 5L);
+
+        assertEquals(new Long(5), jobDetails.getAnalysisConfig().getRenormalizationWindow());
+        verify(m_JobProvider).updateJob(jobDetails);
+    }
+
+    @Test
+    public void testSetRenormalizationWindow_GivenNullAnalysisConfig() throws UnknownJobException
+    {
+        givenProcessInfo(5);
+        JobDetails jobDetails = new JobDetails("foo", new JobConfiguration());
+        jobDetails.setAnalysisConfig(null);
+        when(m_JobProvider.getJobDetails("foo")).thenReturn(Optional.of(jobDetails));
+        JobManager jobManager = new JobManager(m_JobProvider, m_ProcessManager);
+
+        jobManager.setRenormalizationWindow("foo", 5L);
+
+        assertEquals(new Long(5), jobDetails.getAnalysisConfig().getRenormalizationWindow());
+        verify(m_JobProvider).updateJob(jobDetails);
+    }
+
+
+    @Test
     public void testSetDesciption() throws UnknownJobException
     {
         givenProcessInfo(5);
