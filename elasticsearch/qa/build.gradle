@@ -1,2 +1,9 @@
 // this file must exist so that qa projects are found
 // by the elasticsearch x-plugins include mechanism
+
+subprojects {
+  project.afterEvaluate {
+    // someone figure out what the x-plugins logic should be
+    project.licenseHeaders.enabled = false
+  }
+}
