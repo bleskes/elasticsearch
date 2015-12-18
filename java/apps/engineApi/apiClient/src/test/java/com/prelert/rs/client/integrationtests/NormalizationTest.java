@@ -71,7 +71,8 @@ public class NormalizationTest implements Closeable
 
     static final long FAREQUOTE_NUM_BUCKETS = 1439;
 
-    static final String TEST_JOB_ID = "farequote-norm-test";
+    static final String TEST_FAREQUOTE = "farequote-norm-test";
+    static final String TEST_FAREQUOTE_NO_RENORMALIZATION = "farequote-no-renormalization-test";
 
     /**
      * The default base Url used in the test
@@ -99,6 +100,17 @@ public class NormalizationTest implements Closeable
 
     public String createFarequoteJob() throws ClientProtocolException, IOException
     {
+        return createFarequoteJob(TEST_FAREQUOTE, null);
+    }
+
+    public String createFarequoteNoRenormalizationJob() throws ClientProtocolException, IOException
+    {
+        return createFarequoteJob(TEST_FAREQUOTE_NO_RENORMALIZATION, 0L);
+    }
+
+    private String createFarequoteJob(String jobId, Long renormalizationWindow)
+            throws ClientProtocolException, IOException
+    {
         Detector d = new Detector();
         d.setFieldName("responsetime");
         d.setByFieldName("airline");
@@ -106,6 +118,7 @@ public class NormalizationTest implements Closeable
         AnalysisConfig ac = new AnalysisConfig();
         ac.setBucketSpan(300L);
         ac.setDetectors(Arrays.asList(d));
+        ac.setRenormalizationWindow(renormalizationWindow);
 
         DataDescription dd = new DataDescription();
         dd.setFormat(DataFormat.DELIMITED);
@@ -115,17 +128,10 @@ public class NormalizationTest implements Closeable
 
         JobConfiguration config = new JobConfiguration(ac);
         config.setDescription("Farequote normalisation test");
-        config.setId(TEST_JOB_ID);
+        config.setId(jobId);
         config.setDataDescription(dd);
 
-        String jobId = m_WebServiceClient.createJob(config);
-        if (jobId == null || jobId.isEmpty())
-        {
-            LOGGER.error("No Job Id returned by create job");
-            test(jobId != null && jobId.isEmpty() == false);
-        }
-        test(jobId.equals(TEST_JOB_ID));
-
+        test(jobId.equals(m_WebServiceClient.createJob(config)));
         return jobId;
     }
 
@@ -400,6 +406,20 @@ public class NormalizationTest implements Closeable
         return true;
     }
 
+    public boolean verifyNormalizedScoresAreEqualToInitialScores(String jobId) throws IOException
+    {
+        ElasticsearchDirectClient directClient = new ElasticsearchDirectClient(
+                "http://localhost:9200/" + "prelertresults-" + jobId + "/");
+        Pagination<Bucket> allBuckets = m_WebServiceClient.prepareGetBuckets(jobId)
+                .take(1500L).expand(true).get();
+        for (Bucket bucket : allBuckets.getDocuments())
+        {
+            double normalizedScore = bucket.getAnomalyScore();
+            double initialScore = directClient.getBucketInitialScore(bucket.getId());
+            test(normalizedScore == initialScore);
+        }
+        return true;
+    }
 
     /**
      * Delete all the jobs in the list of job ids
@@ -472,28 +492,32 @@ public class NormalizationTest implements Closeable
             throw new IllegalStateException("Error property prelert.test.data.home is not set");
         }
 
-
-        String farequoteJob = TEST_JOB_ID;
-
         NormalizationTest test = new NormalizationTest(baseUrl);
         List<String> jobUrls = new ArrayList<>();
 
+        File fareQuoteData = new File(prelertTestDataHome + "/engine_api_integration_test/farequote.csv");
+
         // Always delete the test job first in case it is hanging around
         // from a previous run
-        test.m_WebServiceClient.deleteJob(farequoteJob);
-        jobUrls.add(farequoteJob);
 
-        File fareQuoteData = new File(prelertTestDataHome +
-                "/engine_api_integration_test/farequote.csv");
         // Farequote test
+        test.m_WebServiceClient.deleteJob(TEST_FAREQUOTE);
+        jobUrls.add(TEST_FAREQUOTE);
         test.createFarequoteJob();
-        test.m_WebServiceClient.fileUpload(farequoteJob,
-                fareQuoteData, false);
-        test.m_WebServiceClient.closeJob(farequoteJob);
+        test.m_WebServiceClient.fileUpload(TEST_FAREQUOTE, fareQuoteData, false);
+        test.m_WebServiceClient.closeJob(TEST_FAREQUOTE);
 
-        test.verifyFarequoteNormalisedBuckets(farequoteJob);
-        test.verifyFarequoteNormalisedRecords(farequoteJob);
+        test.verifyFarequoteNormalisedBuckets(TEST_FAREQUOTE);
+        test.verifyFarequoteNormalisedRecords(TEST_FAREQUOTE);
 
+        // Farequote no renormalization test
+        jobUrls.add(TEST_FAREQUOTE_NO_RENORMALIZATION);
+        test.m_WebServiceClient.deleteJob(TEST_FAREQUOTE_NO_RENORMALIZATION);
+        test.createFarequoteNoRenormalizationJob();
+        test.m_WebServiceClient.fileUpload(TEST_FAREQUOTE_NO_RENORMALIZATION, fareQuoteData, false);
+        test.m_WebServiceClient.closeJob(TEST_FAREQUOTE_NO_RENORMALIZATION);
+
+        test.verifyNormalizedScoresAreEqualToInitialScores(TEST_FAREQUOTE_NO_RENORMALIZATION);
 
         //==========================
         // Clean up test jobs
