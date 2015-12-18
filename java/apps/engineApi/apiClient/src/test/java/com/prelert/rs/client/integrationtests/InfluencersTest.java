@@ -70,7 +70,7 @@ public class InfluencersTest
     /**
      * The default base Url used in the test
      */
-    public static final String API_BASE_URL = "http://localhost:8080/engine/v1";
+    public static final String API_BASE_URL = "http://localhost:8080/engine/v2";
 
     private static final String FIREWALL_JOB = "firewall";
     private static final String SSH_AUTH_JOB = "ssh-auth";

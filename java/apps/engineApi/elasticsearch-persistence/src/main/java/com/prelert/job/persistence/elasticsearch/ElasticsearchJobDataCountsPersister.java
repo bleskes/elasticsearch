@@ -55,10 +55,11 @@ public class ElasticsearchJobDataCountsPersister implements JobDataCountsPersist
     @Override
     public void persistDataCounts(String jobId, DataCounts counts)
     {
+        ElasticsearchJobId elasticJobId = new ElasticsearchJobId(jobId);
         try
         {
-            UpdateRequestBuilder updateBuilder = m_Client.prepareUpdate(jobId,
-                    JobDetails.TYPE, jobId);
+            UpdateRequestBuilder updateBuilder = m_Client.prepareUpdate(elasticJobId.getIndex(),
+                    JobDetails.TYPE, elasticJobId.getId());
             updateBuilder.setRetryOnConflict(RETRY_ON_CONFLICT);
 
             Map<String, Object> updates = new HashMap<>();
@@ -80,13 +81,13 @@ public class ElasticsearchJobDataCountsPersister implements JobDataCountsPersist
             updateBuilder.setDoc(countUpdates).setRefresh(true);
 
             m_Logger.trace("ES API CALL: update ID " + jobId + " type " + JobDetails.TYPE +
-                    " in index " + jobId + " using map of new values");
+                    " in index " + elasticJobId.getIndex() + " using map of new values");
             m_Client.update(updateBuilder.request()).get();
         }
         catch (IndexNotFoundException | InterruptedException | ExecutionException e)
         {
             String msg = String.format("Error writing the job '%s' status stats.",
-                    jobId);
+                    elasticJobId.getId());
 
             m_Logger.warn(msg, e);
         }

@@ -150,6 +150,10 @@ public class ElasticsearchMappingsTest
                         "            \"type\": \"long\"," +
                         "            \"index\": \"no\"" +
                         "          }," +
+                        "          \"renormalizationWindow\": {" +
+                        "            \"type\": \"long\"," +
+                        "            \"index\": \"no\"" +
+                        "          }," +
                         "          \"summaryCountFieldName\": {" +
                         "            \"type\": \"string\"," +
                         "            \"index\": \"not_analyzed\"" +

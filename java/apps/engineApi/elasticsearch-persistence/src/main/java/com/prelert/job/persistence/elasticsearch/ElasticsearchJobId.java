@@ -23,38 +23,39 @@
  *----------------------------------------------------------*
  *                                                          *
  *                                                          *
- ************************************************************/
-package com.prelert.job.process.output.parsing;
+ ***********************************************************/
 
-import java.io.InputStream;
+package com.prelert.job.persistence.elasticsearch;
 
-import org.apache.log4j.Logger;
-
-import com.prelert.job.JobDetails;
-import com.prelert.job.persistence.JobResultsPeristerFactory;
+import java.util.Objects;
 
 /**
- * Factory method for creating new {@linkplain ResultsReader} objects
- * to parse the autodetect output.
- * Requires 2 other factories for creating the {@linkplain ResultsReader}
- *
+ * The job identification needed from the Elasticsearch classes.
+ * It contains the jobId and the index name.
  */
-public class ResultsReaderFactory
+class ElasticsearchJobId
 {
-    private final JobResultsPeristerFactory m_PersisterFactory;
-    private final RenormaliserFactory m_RenormaliserFactory;
+    /**
+     * If this is changed, ProcessCtrl.ES_INDEX_PREFIX should also be changed
+     */
+    private static final String INDEX_PREFIX = "prelertresults-";
 
-    public ResultsReaderFactory(JobResultsPeristerFactory persisterFactory,
-                                RenormaliserFactory renormaliserFactory)
+    private final String m_JobId;
+    private final String m_IndexName;
+
+    public ElasticsearchJobId(String jobId)
     {
-        m_PersisterFactory = persisterFactory;
-        m_RenormaliserFactory = renormaliserFactory;
+        m_JobId = Objects.requireNonNull(jobId);
+        m_IndexName = INDEX_PREFIX + jobId;
     }
 
-    public ResultsReader newResultsParser(JobDetails job, InputStream autoDetectOutputStream,
-            Logger logger)
+    String getId()
     {
-        return new ResultsReader(m_RenormaliserFactory.create(job),
-                m_PersisterFactory.jobResultsPersister(job.getId()), autoDetectOutputStream, logger);
+        return m_JobId;
+    }
+
+    String getIndex()
+    {
+        return m_IndexName;
     }
 }

@@ -32,6 +32,7 @@ import static org.mockito.Mockito.mock;
 import org.apache.log4j.Logger;
 import org.junit.Test;
 
+import com.prelert.job.JobDetails;
 import com.prelert.job.persistence.JobProvider;
 import com.prelert.job.persistence.JobRenormaliser;
 
@@ -49,7 +50,9 @@ public class BlockingQueueRenormaliserTest
     {
         JobProvider jobProvider = mock(JobProvider.class);
         JobRenormaliser jobRenormaliser = mock(JobRenormaliser.class);
-        BlockingQueueRenormaliser normaliser = new BlockingQueueRenormaliser("foo", jobProvider,
+        JobDetails job = new JobDetails();
+        job.setId("foo");
+        BlockingQueueRenormaliser normaliser = new BlockingQueueRenormaliser(job, jobProvider,
                 jobRenormaliser);
 
         normaliser.shutdown(mock(Logger.class));

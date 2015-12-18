@@ -65,7 +65,7 @@ public class ParallelUploadTest
     /**
      * The default base Url used in the test
      */
-    public static final String API_BASE_URL = "http://localhost:8080/engine/v1";
+    public static final String API_BASE_URL = "http://localhost:8080/engine/v2";
 
 	public static void main(String[] args)
 	throws FileNotFoundException, IOException

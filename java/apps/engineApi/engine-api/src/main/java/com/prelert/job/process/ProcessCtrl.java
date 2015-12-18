@@ -228,6 +228,10 @@ public class ProcessCtrl
      */
     public static final String DONT_PERSIST_MODEL_STATE = "no.model.state.persist";
 
+    /**
+     * If this is changed, ElasticsearchJobId should also be changed
+     */
+    private static final String ES_INDEX_PREFIX = "prelertresults-";
 
     /**
      * Static initialisation finds Elasticsearch HTTP port, Prelert home and the
@@ -653,7 +657,7 @@ public class ProcessCtrl
         else
         {
             String persistUrlBase = PERSIST_URL_BASE_ARG +
-                    "http://localhost:" + ES_HTTP_PORT + '/' + job.getId();
+                    "http://localhost:" + ES_HTTP_PORT + '/' + ES_INDEX_PREFIX + job.getId();
             command.add(persistUrlBase);
 
             // Persist model state every few hours even if the job isn't closed

@@ -47,7 +47,7 @@ import com.prelert.job.results.Bucket;
 import com.prelert.job.results.Influencer;
 
 /**
- * Thread safe class that updated the scores of all existing results
+ * Thread safe class that updates the scores of all existing results
  * with the normalised scores
  */
 class ScoresUpdater
@@ -57,24 +57,53 @@ class ScoresUpdater
      */
     private static final int TARGET_RECORDS_TO_RENORMALISE = 100000;
 
+    // 30 days
+    private static final long DEFAULT_RENORMALISATION_WINDOW_MS = 2592000000L;
+
+    private static final int DEFAULT_BUCKETS_IN_RENORMALISATION_WINDOW = 100;
+
+    private static final long SECONDS_IN_DAY = 86400;
+    private static final long MILLISECONDS_IN_SECOND = 1000;
+
     private final String m_JobId;
     private final JobProvider m_JobProvider;
     private final JobRenormaliser m_JobRenormaliser;
     private final NormaliserFactory m_NormaliserFactory;
+    private final int m_BucketSpan;
+    private final long m_NormalisationWindow;
 
-    /**
-     * This read from the data store on first access (lazy initialization)
-     */
-    private volatile int m_BucketSpan;
-
-    public ScoresUpdater(String jobId, JobProvider jobProvider, JobRenormaliser jobRenormaliser,
+    public ScoresUpdater(JobDetails job, JobProvider jobProvider, JobRenormaliser jobRenormaliser,
             NormaliserFactory normaliserFactory)
     {
-        m_JobId = jobId;
+        m_JobId = job.getId();
         m_JobProvider = Objects.requireNonNull(jobProvider);
         m_JobRenormaliser = Objects.requireNonNull(jobRenormaliser);
         m_NormaliserFactory = Objects.requireNonNull(normaliserFactory);
-        m_BucketSpan = 0;
+        m_BucketSpan = getBucketSpanOrDefault(job.getAnalysisConfig());
+        m_NormalisationWindow = getNormalisationWindowOrDefault(job.getAnalysisConfig());
+    }
+
+    private static int getBucketSpanOrDefault(AnalysisConfig analysisConfig)
+    {
+        if (analysisConfig != null && analysisConfig.getBucketSpan() != null)
+        {
+            return analysisConfig.getBucketSpan().intValue();
+        }
+        // A bucketSpan value of 0 will result to the default
+        // bucketSpan value being used in the back-end.
+        return 0;
+    }
+
+    private long getNormalisationWindowOrDefault(AnalysisConfig analysisConfig)
+    {
+        if (analysisConfig != null && analysisConfig.getRenormalizationWindow() != null)
+        {
+            return analysisConfig.getRenormalizationWindow() * SECONDS_IN_DAY * MILLISECONDS_IN_SECOND;
+        }
+
+        long defaultWindow = Math.max(DEFAULT_RENORMALISATION_WINDOW_MS,
+                DEFAULT_BUCKETS_IN_RENORMALISATION_WINDOW * m_BucketSpan * MILLISECONDS_IN_SECOND);
+        return defaultWindow;
     }
 
     /**
@@ -111,7 +140,8 @@ class ScoresUpdater
             int[] counts, Logger logger) throws UnknownJobException, NativeProcessRunException
     {
         BatchedResultsIterator<Bucket> bucketsIterator =
-                m_JobProvider.newBatchedBucketsIterator(m_JobId).timeRange(0, endBucketEpochMs);
+                m_JobProvider.newBatchedBucketsIterator(m_JobId)
+                .timeRange(calcNormalisationWindowStart(endBucketEpochMs), endBucketEpochMs);
 
         // Make a list of buckets with their records to be renormalised.
         // This may be shorter than the original list of buckets for two
@@ -131,7 +161,7 @@ class ScoresUpdater
             Deque<Bucket> buckets = bucketsIterator.next();
             if (buckets.isEmpty())
             {
-                logger.warn("No buckets to renormalise for job " + m_JobId);
+                logger.debug("No buckets to renormalise for job " + m_JobId);
                 break;
             }
 
@@ -166,6 +196,11 @@ class ScoresUpdater
         }
     }
 
+    private long calcNormalisationWindowStart(long endEpochMs)
+    {
+        return Math.max(0, endEpochMs - m_NormalisationWindow);
+    }
+
     private void normaliseBuckets(Normaliser normaliser, List<Bucket> buckets,
             String quantilesState, int recordCount, int skipped, int[] counts, Logger logger)
             throws NativeProcessRunException, UnknownJobException
@@ -176,39 +211,12 @@ class ScoresUpdater
 
         List<Normalisable> asNormalisables = buckets.stream()
                 .map(bucket -> new BucketNormalisable(bucket)).collect(Collectors.toList());
-        normaliser.normalise(getJobBucketSpan(logger), asNormalisables, quantilesState);
+        normaliser.normalise(m_BucketSpan, asNormalisables, quantilesState);
 
         for (Bucket bucket : buckets)
         {
             updateSingleBucket(bucket, counts, logger);
         }
-    }
-
-    private int getJobBucketSpan(Logger logger)
-    {
-        // lazy initialization idiom of instance field (as in Effective Java)
-
-        int bucketSpan = m_BucketSpan;
-        if (bucketSpan == 0)
-        {
-            synchronized (this)
-            {
-                bucketSpan = m_BucketSpan;
-                if (bucketSpan == 0)
-                {
-                    // use dot notation to get fields from nested docs.
-                    Number num = m_JobProvider.<Number>getField(m_JobId,
-                            JobDetails.ANALYSIS_CONFIG + "." + AnalysisConfig.BUCKET_SPAN);
-                    if (num != null)
-                    {
-                        m_BucketSpan = bucketSpan = num.intValue();
-                        logger.info("Caching bucket span " + m_BucketSpan +
-                                " for job " + m_JobId);
-                    }
-                }
-            }
-        }
-        return bucketSpan;
     }
 
     /**
@@ -233,9 +241,9 @@ class ScoresUpdater
             if (bucket.hadBigNormalisedUpdate())
             {
                 logger.trace("ES API CALL: update ID " + bucketId + " type " + Bucket.TYPE +
-                        " in index " + m_JobId + " using map of new values");
+                        " for job " + m_JobId + " using map of new values");
 
-                m_JobRenormaliser.updateBucket(m_JobId, bucket);
+                m_JobRenormaliser.updateBucket(bucket);
 
                 ++counts[0];
             }
@@ -282,7 +290,7 @@ class ScoresUpdater
 
         if (!toUpdate.isEmpty())
         {
-            m_JobRenormaliser.updateRecords(m_JobId, bucket.getId(), toUpdate);
+            m_JobRenormaliser.updateRecords(bucket.getId(), toUpdate);
         }
     }
 
@@ -290,24 +298,27 @@ class ScoresUpdater
             int[] counts, Logger logger) throws UnknownJobException, NativeProcessRunException
     {
         BatchedResultsIterator<Influencer> influencersIterator = m_JobProvider
-                .newBatchedInfluencersIterator(m_JobId).timeRange(0, endBucketEpochMs);
+                .newBatchedInfluencersIterator(m_JobId)
+                .timeRange(calcNormalisationWindowStart(endBucketEpochMs), endBucketEpochMs);
         while (influencersIterator.hasNext())
         {
             Deque<Influencer> influencers = influencersIterator.next();
             if (influencers.isEmpty())
             {
+                logger.debug("No influencers to renormalise for job " + m_JobId);
                 break;
             }
 
+            logger.debug("Will renormalize a batch of " + influencers.size() + " influencers");
             List<Normalisable> asNormalisables = influencers.stream()
                     .map(bucket -> new InfluencerNormalisable(bucket)).collect(Collectors.toList());
-            normaliser.normalise(getJobBucketSpan(logger), asNormalisables, quantilesState);
+            normaliser.normalise(m_BucketSpan, asNormalisables, quantilesState);
 
             for (Influencer influencer : influencers)
             {
                 if (influencer.hadBigNormalisedUpdate())
                 {
-                    m_JobRenormaliser.updateInfluencer(m_JobId, influencer);
+                    m_JobRenormaliser.updateInfluencer(influencer);
                     ++counts[0];
                 }
                 else

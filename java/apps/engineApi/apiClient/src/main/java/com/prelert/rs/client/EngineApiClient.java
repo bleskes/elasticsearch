@@ -95,7 +95,7 @@ public class EngineApiClient implements Closeable
      * Call {@linkplain #close()} once finished
      *
      * @param baseUrl The base URL for the REST API including version number
-     * e.g <code>http://localhost:8080/engine/v1/</code>
+     * e.g <code>http://localhost:8080/engine/v2/</code>
      */
     public EngineApiClient(String baseUrl)
     {

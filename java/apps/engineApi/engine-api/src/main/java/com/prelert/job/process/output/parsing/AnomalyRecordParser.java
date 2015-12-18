@@ -70,6 +70,7 @@ final class AnomalyRecordParser extends FieldNameParser<AnomalyRecord>
             break;
         case AnomalyRecord.NORMALIZED_PROBABILITY:
             record.setNormalizedProbability(parseAsDoubleOrZero(fieldName));
+            record.setInitialNormalizedProbability(record.getNormalizedProbability());
             break;
         case AnomalyRecord.BY_FIELD_NAME:
             record.setByFieldName(parseAsStringOrNull(fieldName));

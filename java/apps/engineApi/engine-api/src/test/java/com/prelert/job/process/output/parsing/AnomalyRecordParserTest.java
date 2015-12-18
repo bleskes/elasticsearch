@@ -101,6 +101,7 @@ public class AnomalyRecordParserTest
         assertEquals(0.01, anomalyRecord.getProbability(), ERROR);
         assertEquals(42.0, anomalyRecord.getAnomalyScore(), ERROR);
         assertEquals(0.05, anomalyRecord.getNormalizedProbability(), ERROR);
+        assertEquals(0.05, anomalyRecord.getInitialNormalizedProbability(), ERROR);
         assertEquals("someByFieldName", anomalyRecord.getByFieldName());
         assertEquals("someByFieldValue", anomalyRecord.getByFieldValue());
         assertEquals("somePartitionFieldName", anomalyRecord.getPartitionFieldName());

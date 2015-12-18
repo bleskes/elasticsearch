@@ -26,7 +26,9 @@
  ***********************************************************/
 package com.prelert.job.process;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.util.List;
@@ -107,7 +109,7 @@ public class ProcessCtrlTest
         int expectedMaxQuantileInterval = 21600 + ProcessCtrl.calculateStaggeringInterval(job.getId());
         assertTrue(command.contains(ProcessCtrl.MAX_QUANTILE_INTERVAL_ARG + expectedMaxQuantileInterval));
         assertTrue(command.contains(ProcessCtrl.PERSIST_URL_BASE_ARG +
-                        "http://localhost:" + ProcessCtrl.ES_HTTP_PORT + "/unit-test-job"));
+                        "http://localhost:" + ProcessCtrl.ES_HTTP_PORT + "/prelertresults-unit-test-job"));
     }
 
     @Test

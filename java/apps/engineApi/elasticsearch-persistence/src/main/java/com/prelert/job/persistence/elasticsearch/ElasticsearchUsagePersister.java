@@ -74,7 +74,8 @@ public class ElasticsearchUsagePersister implements UsagePersister
 
         // update global count
         updateDocument(PRELERT_USAGE_INDEX,  m_DocId, bytesRead, fieldsRead, recordsRead);
-        updateDocument(jobId, m_DocId, bytesRead, fieldsRead, recordsRead);
+        updateDocument(new ElasticsearchJobId(jobId).getIndex(), m_DocId, bytesRead,
+                fieldsRead, recordsRead);
     }
 
 

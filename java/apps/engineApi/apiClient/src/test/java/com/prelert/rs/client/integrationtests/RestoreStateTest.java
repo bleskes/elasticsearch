@@ -77,7 +77,7 @@ public class RestoreStateTest
     /**
      * The default base Url used in the test
      */
-    public static final String API_BASE_URL = "http://localhost:8080/engine/v1";
+    public static final String API_BASE_URL = "http://localhost:8080/engine/v2";
 
     private static final String SPLIT_JOB = "split-flightcenter";
     private static final String ONE_SHOT_JOB = "oneshot-flightcenter";

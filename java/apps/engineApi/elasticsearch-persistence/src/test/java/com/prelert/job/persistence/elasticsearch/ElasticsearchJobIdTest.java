@@ -24,37 +24,24 @@
  *                                                          *
  *                                                          *
  ************************************************************/
-package com.prelert.job.process.output.parsing;
 
-import java.io.InputStream;
+package com.prelert.job.persistence.elasticsearch;
 
-import org.apache.log4j.Logger;
+import static org.junit.Assert.assertEquals;
 
-import com.prelert.job.JobDetails;
-import com.prelert.job.persistence.JobResultsPeristerFactory;
+import org.junit.Test;
 
-/**
- * Factory method for creating new {@linkplain ResultsReader} objects
- * to parse the autodetect output.
- * Requires 2 other factories for creating the {@linkplain ResultsReader}
- *
- */
-public class ResultsReaderFactory
+public class ElasticsearchJobIdTest
 {
-    private final JobResultsPeristerFactory m_PersisterFactory;
-    private final RenormaliserFactory m_RenormaliserFactory;
-
-    public ResultsReaderFactory(JobResultsPeristerFactory persisterFactory,
-                                RenormaliserFactory renormaliserFactory)
+    @Test
+    public void testIdAndIndex()
     {
-        m_PersisterFactory = persisterFactory;
-        m_RenormaliserFactory = renormaliserFactory;
-    }
+        ElasticsearchJobId foo = new ElasticsearchJobId("foo");
+        assertEquals("foo", foo.getId());
+        assertEquals("prelertresults-foo", foo.getIndex());
 
-    public ResultsReader newResultsParser(JobDetails job, InputStream autoDetectOutputStream,
-            Logger logger)
-    {
-        return new ResultsReader(m_RenormaliserFactory.create(job),
-                m_PersisterFactory.jobResultsPersister(job.getId()), autoDetectOutputStream, logger);
+        ElasticsearchJobId bar = new ElasticsearchJobId("bar");
+        assertEquals("bar", bar.getId());
+        assertEquals("prelertresults-bar", bar.getIndex());
     }
 }

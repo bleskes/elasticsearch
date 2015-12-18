@@ -64,7 +64,7 @@ public class DataCountsTest implements Closeable
 	/**
 	 * The default base Url used in the test
 	 */
-	public static final String API_BASE_URL = "http://localhost:8080/engine/v1";
+	public static final String API_BASE_URL = "http://localhost:8080/engine/v2";
 
 	static final long FLIGHTCENTRE_NUM_BUCKETS = 296;
 	static final long FLIGHTCENTRE_NUM_RECORDS = 175910;

@@ -64,6 +64,7 @@ public class AnalysisConfig
     public static final String CATEGORIZATION_FIELD_NAME = "categorizationFieldName";
     public static final String LATENCY = "latency";
     public static final String PERIOD = "period";
+    public static final String RENORMALIZATION_WINDOW = "renormalizationWindow";
     public static final String SUMMARY_COUNT_FIELD_NAME = "summaryCountFieldName";
     public static final String DETECTORS = "detectors";
     public static final String INFLUENCERS = "influencers";
@@ -80,6 +81,7 @@ public class AnalysisConfig
     private String m_CategorizationFieldName;
     private Long m_Latency = 0L;
     private Long m_Period;
+    private Long m_RenormalizationWindow;
     private String m_SummaryCountFieldName;
     private List<Detector> m_Detectors;
     private List<String> m_Influencers;
@@ -163,6 +165,24 @@ public class AnalysisConfig
     public void setPeriod(Long period)
     {
         m_Period = period;
+    }
+
+    /**
+     * The duration of the renormalization window in days
+     * @return renormalization window in days
+     */
+    public Long getRenormalizationWindow()
+    {
+        return m_RenormalizationWindow;
+    }
+
+    /**
+     * Set the renormalization window duration
+     * @param renormalizationWindow the renormalization window in days
+     */
+    public void setRenormalizationWindow(Long renormalizationWindow)
+    {
+        m_RenormalizationWindow = renormalizationWindow;
     }
 
     /**
@@ -325,6 +345,7 @@ public class AnalysisConfig
                 Objects.equals(this.m_CategorizationFieldName, that.m_CategorizationFieldName) &&
                 Objects.equals(this.m_Latency, that.m_Latency) &&
                 Objects.equals(this.m_Period, that.m_Period) &&
+                Objects.equals(this.m_RenormalizationWindow, that.m_RenormalizationWindow) &&
                 Objects.equals(this.m_SummaryCountFieldName, that.m_SummaryCountFieldName) &&
                 Objects.equals(this.m_Influencers, that.m_Influencers);
     }
@@ -333,7 +354,7 @@ public class AnalysisConfig
     public int hashCode()
     {
         return Objects.hash(m_Detectors, m_BucketSpan, m_BatchSpan, m_Latency, m_Period,
-                m_SummaryCountFieldName, m_Influencers);
+                m_RenormalizationWindow, m_SummaryCountFieldName, m_Influencers);
     }
 
 

@@ -45,10 +45,9 @@ public interface JobRenormaliser
      * Update the bucket with the changes that may result
      * due to renormalisation.
      *
-     * @param jobId Job to update
      * @param bucket the bucket to update
      */
-    void updateBucket(String jobId, Bucket bucket);
+    void updateBucket(Bucket bucket);
 
 
     /**
@@ -56,18 +55,16 @@ public interface JobRenormaliser
      * The anomaly records are updated with the values in the
      * <code>records</code> list.
      *
-     * @param jobId Job to update
      * @param bucketId Id of the bucket to update
      * @param records The new record values
      */
-    void updateRecords(String jobId, String bucketId, List<AnomalyRecord> records);
+    void updateRecords(String bucketId, List<AnomalyRecord> records);
 
     /**
      * Update the influencer for a particular job
      *
-     * @param jobId
      * @param influencer
      */
-    void updateInfluencer(String jobId, Influencer influencer);
+    void updateInfluencer(Influencer influencer);
 }
 
