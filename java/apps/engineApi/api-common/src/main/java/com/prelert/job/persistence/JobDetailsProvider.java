@@ -29,7 +29,6 @@ package com.prelert.job.persistence;
 
 import java.io.Closeable;
 import java.util.Date;
-import java.util.Map;
 import java.util.Optional;
 
 import com.prelert.job.JobDetails;
@@ -98,15 +97,12 @@ public interface JobDetailsProvider extends Closeable
     public boolean createJob(JobDetails job) throws JobIdAlreadyExistsException;
 
     /**
-     * Update the job document with the values in the <code>updates</code> map.
-     * e.g. Map<String, Object> update = new HashMap<>();<br>
-     *      update.put(JobDetails.STATUS, JobStatus.CLOSED);
+     * Update the job document with given job details.
      *
-     * @param jobId
-     * @return Whether the operation was a success
-     * @throws UnknownJobException if there is no job with the id.
+     * @param job the new job details
+     * @throws UnknownJobException if there is no job matching the id of the given job details
      */
-    public boolean updateJob(String jobId, Map<String, Object> updates) throws UnknownJobException;
+    public boolean updateJob(JobDetails job) throws UnknownJobException;
 
     /**
      * Delete all the job related documents from the database.
