@@ -70,7 +70,7 @@ import com.prelert.rs.data.SingleDocument;
  * Tests the long poll alert subscription end point.
  * <br>Jobs are created and an alert is subscribed for each then data
  * is uploaded to the job. Some alerts are expected to fire others
- * will timout.
+ * will timeout.
  * Synchronising registering for an alert and data upload is little difficult
  * especially on machines with few cores so the the tests are run
  * sequentially (apart from one where two jobs are run simultaneously).

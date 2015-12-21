@@ -27,8 +27,11 @@
 
 package com.prelert.rs.resources;
 
+import static org.junit.Assert.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+
+import java.util.Arrays;
 
 import javax.ws.rs.container.AsyncResponse;
 
@@ -36,8 +39,11 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.mockito.Mockito;
 
 import com.prelert.job.UnknownJobException;
+import com.prelert.job.alert.AlertTrigger;
+import com.prelert.job.alert.AlertType;
 import com.prelert.job.errorcodes.ErrorCodeMatcher;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.rs.provider.RestApiException;
@@ -62,9 +68,10 @@ public class AlertsLongPollTest extends ServiceTest
     public void testPollJob_GivenValidParams() throws UnknownJobException, InterruptedException
     {
         AsyncResponse asyncResponse = mock(AsyncResponse.class);
-        m_Alerts.pollJob(JOB_ID, 90, 80.0, 60.0, asyncResponse);
+        m_Alerts.pollJob(JOB_ID, 90, 80.0, 60.0, AlertType.BUCKET.toString(), asyncResponse);
 
-        verify(alertManager()).registerRequest(asyncResponse, JOB_ID, BASE_URI, 90, 80.0, 60.0);
+        verify(alertManager()).registerRequest(Mockito.same(asyncResponse), Mockito.eq(JOB_ID),
+                Mockito.eq(BASE_URI), Mockito.eq(90l), Mockito.any());
     }
 
     @Test
@@ -77,7 +84,8 @@ public class AlertsLongPollTest extends ServiceTest
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_THRESHOLD_ARGUMENT));
 
-        m_Alerts.pollJob(JOB_ID, 90, -0.01, null, mock(AsyncResponse.class));
+        m_Alerts.pollJob(JOB_ID, 90, -0.01, null, AlertType.BUCKET.toString(),
+                            mock(AsyncResponse.class));
     }
 
     @Test
@@ -90,7 +98,8 @@ public class AlertsLongPollTest extends ServiceTest
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_THRESHOLD_ARGUMENT));
 
-        m_Alerts.pollJob(JOB_ID, 90, -0.01, 60.0, mock(AsyncResponse.class));
+        m_Alerts.pollJob(JOB_ID, 90, -0.01, 60.0, AlertType.BUCKET.toString(),
+                mock(AsyncResponse.class));
     }
 
     @Test
@@ -103,7 +112,8 @@ public class AlertsLongPollTest extends ServiceTest
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_THRESHOLD_ARGUMENT));
 
-        m_Alerts.pollJob(JOB_ID, 90, 101.0, 60.0, mock(AsyncResponse.class));
+        m_Alerts.pollJob(JOB_ID, 90, 101.0, 60.0, AlertType.BUCKET.toString(),
+                        mock(AsyncResponse.class));
     }
 
     @Test
@@ -116,7 +126,8 @@ public class AlertsLongPollTest extends ServiceTest
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_THRESHOLD_ARGUMENT));
 
-        m_Alerts.pollJob(JOB_ID, 90, null, -0.01, mock(AsyncResponse.class));
+        m_Alerts.pollJob(JOB_ID, 90, null, -0.01, AlertType.BUCKET.toString(),
+                mock(AsyncResponse.class));
     }
 
     @Test
@@ -129,7 +140,8 @@ public class AlertsLongPollTest extends ServiceTest
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_THRESHOLD_ARGUMENT));
 
-        m_Alerts.pollJob(JOB_ID, 90, 90.0, -0.01, mock(AsyncResponse.class));
+        m_Alerts.pollJob(JOB_ID, 90, 90.0, -0.01,AlertType.BUCKET.toString(),
+                mock(AsyncResponse.class));
     }
 
     @Test
@@ -142,7 +154,8 @@ public class AlertsLongPollTest extends ServiceTest
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_THRESHOLD_ARGUMENT));
 
-        m_Alerts.pollJob(JOB_ID, 90, 95.0, 101.0, mock(AsyncResponse.class));
+        m_Alerts.pollJob(JOB_ID, 90, 95.0, 101.0, AlertType.BUCKET.toString(),
+                mock(AsyncResponse.class));
     }
 
     @Test
@@ -155,7 +168,8 @@ public class AlertsLongPollTest extends ServiceTest
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_THRESHOLD_ARGUMENT));
 
-        m_Alerts.pollJob(JOB_ID, 90, null, null, mock(AsyncResponse.class));
+        m_Alerts.pollJob(JOB_ID, 90, null, null,
+                AlertType.BUCKET.toString(), mock(AsyncResponse.class));
     }
 
     @Test
@@ -167,6 +181,65 @@ public class AlertsLongPollTest extends ServiceTest
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_TIMEOUT_ARGUMENT));
 
-        m_Alerts.pollJob(JOB_ID, -1, 10.0, 10.0, mock(AsyncResponse.class));
+        m_Alerts.pollJob(JOB_ID, -1, 10.0, 10.0, AlertType.BUCKET.toString(),
+                mock(AsyncResponse.class));
+    }
+
+    @Test
+    public void testPollJob_GivenBadAlertType() throws UnknownJobException,
+            InterruptedException
+    {
+        m_ExpectedException.expect(RestApiException.class);
+        m_ExpectedException.expectMessage("The alert type argument 'broken' isn't a recognised type");
+        m_ExpectedException.expect(
+                ErrorCodeMatcher.hasErrorCode(ErrorCodes.UNKNOWN_ALERT_TYPE));
+
+        m_Alerts.pollJob(JOB_ID, 90, 10.0, 10.0, "broken", mock(AsyncResponse.class));
+    }
+
+    @Test
+    public void testCreateAlertTriggers()
+    {
+        AlertTrigger [] triggers = m_Alerts.createAlertTriggers(AlertType.BUCKET.toString(), 0.1, 0.2);
+        assertEquals(1, triggers.length);
+        assertEquals(AlertType.BUCKET, triggers[0].getAlertType());
+        assertEquals(0.1, triggers[0].getAnomalyThreshold(), 0.0001);
+        assertEquals(0.2, triggers[0].getNormalisedThreshold(), 0.0001);
+
+        triggers = m_Alerts.createAlertTriggers(AlertType.BUCKETINFLUENCER.toString(), 0.1, 0.2);
+        assertEquals(1, triggers.length);
+        assertEquals(AlertType.BUCKETINFLUENCER, triggers[0].getAlertType());
+        assertEquals(0.1, triggers[0].getAnomalyThreshold(), 0.0001);
+        assertEquals(0.2, triggers[0].getNormalisedThreshold(), 0.0001);
+
+        triggers = m_Alerts.createAlertTriggers(AlertType.INFLUENCER.toString(), 0.1, null);
+        assertEquals(1, triggers.length);
+        assertEquals(AlertType.INFLUENCER, triggers[0].getAlertType());
+        assertEquals(0.1, triggers[0].getAnomalyThreshold(), 0.0001);
+        assertEquals(null, triggers[0].getNormalisedThreshold());
+    }
+
+    @Test
+    public void testCreateAlertTriggers_givenMultipleTypes()
+    {
+        AlertTrigger [] triggers = m_Alerts.createAlertTriggers("bucket,influencer",
+                                            0.1, 0.2);
+        Arrays.sort(triggers,
+                (a,b) -> a.getAlertType().toString().compareTo(b.getAlertType().toString()));
+
+        assertEquals(2, triggers.length);
+        assertEquals(AlertType.BUCKET, triggers[0].getAlertType());
+        assertEquals(0.1, triggers[0].getAnomalyThreshold(), 0.0001);
+        assertEquals(0.2, triggers[0].getNormalisedThreshold(), 0.0001);
+
+        assertEquals(AlertType.INFLUENCER, triggers[1].getAlertType());
+        assertEquals(0.1, triggers[1].getAnomalyThreshold(), 0.0001);
+        assertEquals(0.2, triggers[1].getNormalisedThreshold(), 0.0001);
+    }
+
+    @Test(expected=RestApiException.class)
+    public void testCreateAlertTriggers_throws()
+    {
+         m_Alerts.createAlertTriggers("blah,blah", 0.1, 0.2);
     }
 }

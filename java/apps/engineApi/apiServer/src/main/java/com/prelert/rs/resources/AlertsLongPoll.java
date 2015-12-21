@@ -27,6 +27,10 @@
 
 package com.prelert.rs.resources;
 
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -41,6 +45,8 @@ import javax.ws.rs.core.Response;
 import org.apache.log4j.Logger;
 
 import com.prelert.job.UnknownJobException;
+import com.prelert.job.alert.AlertTrigger;
+import com.prelert.job.alert.AlertType;
 import com.prelert.job.alert.manager.AlertManager;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.messages.Messages;
@@ -69,6 +75,7 @@ public class AlertsLongPoll extends ResourceWithJobManager
      */
     public static final String SCORE = "score";
     public static final String PROBABILITY = "probability";
+    public static final String ALERT_ON = "alertOn";
 
 
     @GET
@@ -79,6 +86,7 @@ public class AlertsLongPoll extends ResourceWithJobManager
             @DefaultValue("90") @QueryParam(TIMEOUT) int timeout,
             @QueryParam(SCORE) Double anomalyScoreThreshold,
             @QueryParam(PROBABILITY) Double normalizedProbabiltyThreshold,
+            @QueryParam(ALERT_ON) String alertTypes,
             @Suspended final AsyncResponse asyncResponse)
     throws InterruptedException, UnknownJobException
     {
@@ -109,9 +117,41 @@ public class AlertsLongPoll extends ResourceWithJobManager
             throw new RestApiException(msg, ErrorCodes.INVALID_TIMEOUT_ARGUMENT, Response.Status.BAD_REQUEST);
         }
 
+        AlertTrigger [] alertTriggers = createAlertTriggers(alertTypes, anomalyScoreThreshold,
+                                         normalizedProbabiltyThreshold);
+
         AlertManager alertManager = alertManager();
         alertManager.registerRequest(asyncResponse, jobId, m_UriInfo.getBaseUri(),
-                timeout, anomalyScoreThreshold, normalizedProbabiltyThreshold);
+                timeout, alertTriggers);
+    }
+
+
+    AlertTrigger [] createAlertTriggers(String requested, Double anomalyScoreThreshold,
+                                        Double normalizedProbabiltyThreshold )
+    throws RestApiException
+    {
+        String [] split = requested.split(",");
+        AlertTrigger [] triggers = new AlertTrigger[split.length];
+
+        Set<String> uniqueSplit = new HashSet<String>(Arrays.<String>asList(split));
+
+        int i = 0;
+        for (String s : uniqueSplit)
+        {
+            try
+            {
+                triggers[i++] = new AlertTrigger(normalizedProbabiltyThreshold, anomalyScoreThreshold,
+                                            AlertType.fromString(s));
+            }
+            catch (IllegalArgumentException e)
+            {
+                String msg = Messages.getMessage(Messages.REST_ALERT_INVALID_TYPE, s);
+                LOGGER.info(msg);
+                throw new RestApiException(msg, ErrorCodes.UNKNOWN_ALERT_TYPE, Response.Status.BAD_REQUEST);
+            }
+        }
+
+        return triggers;
     }
 
     private void logEndpointCall(String jobId, Double anomalyScore, Double normalizedProbability)

@@ -376,7 +376,12 @@ public enum ErrorCodes
     /**
      * Pagination take parameter cannot be < 0.
      */
-    INVALID_TAKE_PARAM(60111);
+    INVALID_TAKE_PARAM(60111),
+
+    /**
+     * Alert request on an invalid alert type
+     */
+    UNKNOWN_ALERT_TYPE(60112);
 
 
 
