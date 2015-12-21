@@ -39,6 +39,7 @@ import org.apache.log4j.Logger;
 
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.alert.Alert;
+import com.prelert.job.alert.AlertTrigger;
 import com.prelert.job.manager.JobManager;
 import com.prelert.job.persistence.JobProvider;
 import com.prelert.job.process.exceptions.ClosedJobException;
@@ -82,7 +83,7 @@ public class AlertManager implements TimeoutHandler
      * @throws UnknownJobException
      */
     public void registerRequest(AsyncResponse response, String jobId, URI baseUri,
-            long timeoutSecs, Double anomalyScoreThreshold, Double normalizedProbabiltyThreshold)
+            long timeoutSecs, AlertTrigger [] alertTriggers)
     throws UnknownJobException
     {
         m_JobProvider.checkJobExists(jobId);
@@ -90,8 +91,7 @@ public class AlertManager implements TimeoutHandler
         response.setTimeout(timeoutSecs, TimeUnit.SECONDS);
         response.setTimeoutHandler(this);
 
-        AlertListener listener = new AlertListener(response, this, jobId,
-                anomalyScoreThreshold, normalizedProbabiltyThreshold, baseUri);
+        AlertListener listener = new AlertListener(response, this, jobId, alertTriggers, baseUri);
         registerListener(listener);
 
         try

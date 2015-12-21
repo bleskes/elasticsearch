@@ -46,6 +46,8 @@ import org.mockito.ArgumentCaptor;
 
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.alert.Alert;
+import com.prelert.job.alert.AlertTrigger;
+import com.prelert.job.alert.AlertType;
 import com.prelert.job.manager.JobManager;
 import com.prelert.job.persistence.JobProvider;
 import com.prelert.job.process.exceptions.ClosedJobException;
@@ -63,7 +65,8 @@ public class AlertManagerTest {
         AsyncResponse response = mock(AsyncResponse.class);
         URI uri = UriBuilder.fromUri("http://testing").build();
 
-        am.registerRequest(response, "foo", uri, 20l, 60.0, 70.0);
+        am.registerRequest(response, "foo", uri, 20l,
+                createAlertTypes(AlertType.BUCKETINFLUENCER, 60.0, 70.0));
 
         verify(response, times(1)).setTimeout(20l, TimeUnit.SECONDS);
         verify(response, times(1)).setTimeoutHandler(am);
@@ -85,7 +88,8 @@ public class AlertManagerTest {
         ClosedJobException e = new ClosedJobException("blah");
         doThrow(e).when(jobManager).addAlertObserver(eq("foo"), any());
 
-        am.registerRequest(response, "foo", uri, 20l, 60.0, 70.0);
+        am.registerRequest(response, "foo", uri, 20l,
+                createAlertTypes(AlertType.BUCKETINFLUENCER, 60.0, 70.0));
         verify(response, times(1)).resume(e);
     }
 
@@ -105,4 +109,8 @@ public class AlertManagerTest {
         assertTrue(argument.getValue().isTimeout());
     }
 
+    private AlertTrigger [] createAlertTypes(AlertType type, double a, double b)
+    {
+        return new AlertTrigger [] {new AlertTrigger(a, b, type)};
+    }
 }

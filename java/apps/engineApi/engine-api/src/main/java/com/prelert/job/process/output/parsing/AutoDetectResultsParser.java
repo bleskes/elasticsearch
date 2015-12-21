@@ -303,7 +303,7 @@ public class AutoDetectResultsParser
             {
                 AlertObserver ao = iter.next();
 
-                if (ao.evaluate(bucket.getAnomalyScore(), bucket.getMaxNormalizedProbability()))
+                if (ao.evaluate(bucket))
                 {
                     observersToFire.add(ao);
                     iter.remove();

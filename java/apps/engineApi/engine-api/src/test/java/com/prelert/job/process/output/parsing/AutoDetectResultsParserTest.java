@@ -54,7 +54,9 @@ import org.mockito.Mockito;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.prelert.job.ModelSizeStats;
 import com.prelert.job.UnknownJobException;
+import com.prelert.job.alert.AlertType;
 import com.prelert.job.alert.AlertObserver;
+import com.prelert.job.alert.AlertTrigger;
 import com.prelert.job.persistence.JobResultsPersister;
 import com.prelert.job.process.normaliser.BlockingQueueRenormaliser;
 import com.prelert.job.quantiles.Quantiles;
@@ -228,7 +230,8 @@ public class AutoDetectResultsParserTest
     {
         public AlertListener(double normlizedProbThreshold, double anomalyThreshold)
         {
-            super(normlizedProbThreshold, anomalyThreshold);
+            super(new AlertTrigger [] {new AlertTrigger(normlizedProbThreshold, anomalyThreshold,
+                                    AlertType.BUCKET)});
         }
 
         private boolean m_AlertFired = false;

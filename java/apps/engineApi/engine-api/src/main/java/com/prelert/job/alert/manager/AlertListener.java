@@ -39,6 +39,7 @@ import org.apache.log4j.Logger;
 
 import com.prelert.job.alert.Alert;
 import com.prelert.job.alert.AlertObserver;
+import com.prelert.job.alert.AlertTrigger;
 import com.prelert.job.results.AnomalyRecord;
 import com.prelert.job.results.Bucket;
 import com.prelert.job.results.Detector;
@@ -53,10 +54,9 @@ class AlertListener extends AlertObserver
     private final URI m_BaseUri;
 
     public AlertListener(AsyncResponse response, AlertManager manager, String jobId,
-            Double anomalyScoreThreshold, Double normalizedProbabiltyThreshold,
-            URI baseUri)
+            AlertTrigger [] triggers, URI baseUri)
     {
-        super(normalizedProbabiltyThreshold, anomalyScoreThreshold);
+        super(triggers);
 
         m_Response = response;
         m_Manager = manager;
@@ -90,31 +90,49 @@ class AlertListener extends AlertObserver
                                 .path("buckets")
                                 .path(bucket.getId())
                                 .queryParam("expand", true);
+        alert.setUri(uriBuilder.build());
 
-        List<AnomalyRecord> records = new ArrayList<>();
-        for (Detector detector : bucket.getDetectors())
+        for (AlertTrigger at : this.triggeredAlerts(bucket))
         {
-            for (AnomalyRecord r : detector.getRecords())
+            switch (at.getAlertType())
             {
-                if (r.getNormalizedProbability() >= getNormalisedProbThreshold())
+            case INFLUENCER:
+            case BUCKETINFLUENCER:
+                alert.setBucket(bucket);
+                break;
+            case BUCKET:
+            {
+                List<AnomalyRecord> records = new ArrayList<>();
+                if (at.getNormalisedThreshold() != null)
                 {
-                    records.add(r);
+                    for (Detector detector : bucket.getDetectors())
+                    {
+                        for (AnomalyRecord r : detector.getRecords())
+                        {
+                            if (r.getNormalizedProbability() >= at.getNormalisedThreshold())
+                            {
+                                records.add(r);
+                            }
+                        }
+                    }
+                }
+
+                boolean isAnomalyScoreAlert = AlertObserver.isGreaterOrEqual(
+                                                        bucket.getAnomalyScore(),
+                                                        at.getAnomalyThreshold());
+                if (isAnomalyScoreAlert)
+                {
+                    bucket.setRecords(records);
+                    bucket.setRecordCount(records.size());
+                    alert.setBucket(bucket);
+                }
+                else
+                {
+                    alert.setRecords(records);
                 }
             }
+            }
         }
-
-        if (isAnomalyScoreAlert(bucket.getAnomalyScore()))
-        {
-            bucket.setRecords(records);
-            bucket.setRecordCount(records.size());
-            alert.setBucket(bucket);
-        }
-        else
-        {
-            alert.setRecords(records);
-        }
-
-        alert.setUri(uriBuilder.build());
 
         return alert;
     }

@@ -26,7 +26,12 @@
  ************************************************************/
 package com.prelert.job.alert;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.prelert.job.results.Bucket;
+import com.prelert.job.results.BucketInfluencer;
+import com.prelert.job.results.Influencer;
 
 /**
  * The observer class for alerting
@@ -35,40 +40,92 @@ import com.prelert.job.results.Bucket;
  */
 public abstract class AlertObserver
 {
-    /** If null it means it was not specified. */
-    private final Double m_AnomalyThreshold;
+    private AlertTrigger [] m_Triggers;
 
-    /** If null it means it was not specified. */
-    private final Double m_NormalisedThreshold;
-
-    public AlertObserver(Double normlizedProbThreshold, Double anomalyThreshold)
+    public AlertObserver(AlertTrigger [] triggers)
     {
-        m_AnomalyThreshold = anomalyThreshold;
-        m_NormalisedThreshold = normlizedProbThreshold;
+        m_Triggers = triggers;
     }
 
     /**
      * Return true if the alert should be fired for these values.
      *
-     * @param anomalyScore
-     * @param normalisedProb
+     * @param bucket
      * @return
      */
-    public boolean evaluate(double anomalyScore, double normalisedProb)
+    public boolean evaluate(Bucket bucket)
     {
-        return isGreaterOrEqual(normalisedProb, m_NormalisedThreshold)
-                || isGreaterOrEqual(anomalyScore, m_AnomalyThreshold);
+        return triggeredAlerts(bucket).isEmpty() == false;
     }
 
-    private static boolean isGreaterOrEqual(double value, Double threshold)
+
+    /**
+     * The list of AlertTriggers that have been triggered by the
+     * bucket
+     *
+     * @param bucket
+     * @return
+     */
+    public List<AlertTrigger> triggeredAlerts(Bucket bucket)
+    {
+        List<AlertTrigger> alerts = new ArrayList<>();
+
+        for (AlertTrigger trigger : m_Triggers)
+        {
+            switch (trigger.getAlertType())
+            {
+            case BUCKET:
+            {
+                if (wouldAlertTrigger(bucket.getMaxNormalizedProbability(),
+                                      bucket.getAnomalyScore(),
+                                      trigger))
+                {
+                    alerts.add(trigger);
+                }
+                break;
+            }
+            case BUCKETINFLUENCER:
+            {
+                for (BucketInfluencer bi : bucket.getBucketInfluencers())
+                {
+                    if (isGreaterOrEqual(bi.getAnomalyScore(), trigger.getAnomalyThreshold()))
+                    {
+                        alerts.add(trigger);
+                        break;
+                    }
+                }
+                break;
+            }
+            case INFLUENCER:
+            {
+                for (Influencer inf : bucket.getInfluencers())
+                {
+                    if (isGreaterOrEqual(inf.getAnomalyScore(), trigger.getAnomalyThreshold()))
+                    {
+                        alerts.add(trigger);
+                        break;
+                    }
+                }
+                break;
+            }
+            }
+        }
+
+        return alerts;
+    }
+
+    protected static boolean isGreaterOrEqual(double value, Double threshold)
     {
         return threshold == null ? false : value >= threshold;
     }
 
-    public boolean isAnomalyScoreAlert(double anomalyScore)
+    private static boolean wouldAlertTrigger(double normalisedValue, double  anomalyScore,
+                                            AlertTrigger trigger)
     {
-        return isGreaterOrEqual(anomalyScore, m_AnomalyThreshold);
+        return isGreaterOrEqual(normalisedValue, trigger.getNormalisedThreshold())
+                    || isGreaterOrEqual(anomalyScore, trigger.getAnomalyThreshold());
     }
+
 
     /**
      * Fire the alert with the bucket the alert came from
@@ -76,9 +133,4 @@ public abstract class AlertObserver
      * @param bucket
      */
     public abstract void fire(Bucket bucket);
-
-    public double getNormalisedProbThreshold()
-    {
-        return m_NormalisedThreshold == null ? 101.0 : m_NormalisedThreshold;
-    }
 }
