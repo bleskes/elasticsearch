@@ -128,16 +128,4 @@ public class JobUpdaterTest
         String expectedConfig = "[modelDebugConfig]\nboundspercentile = 33.9\nterms = \n";
         verify(m_JobManager).writeUpdateConfigMessage("foo", expectedConfig);
     }
-
-    @Test
-    public void testUpdate_GivenValidRenormalizationWindowUpdate() throws UnknownJobException,
-            JobConfigurationException, JobInUseException, NativeProcessRunException
-    {
-        String update = "{\"renormalizationWindow\": 3}";
-
-        new JobUpdater(m_JobManager, "foo").update(update);
-
-        verify(m_JobManager).setRenormalizationWindow("foo", 3L);
-        verify(m_JobManager, never()).writeUpdateConfigMessage(anyString(), anyString());
-    }
 }

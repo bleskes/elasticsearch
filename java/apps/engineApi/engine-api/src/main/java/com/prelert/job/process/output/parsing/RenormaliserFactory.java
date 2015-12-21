@@ -27,8 +27,9 @@
 
 package com.prelert.job.process.output.parsing;
 
+import com.prelert.job.JobDetails;
 
 public interface RenormaliserFactory
 {
-    Renormaliser create(String jobId);
+    Renormaliser create(JobDetails job);
 }

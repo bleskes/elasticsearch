@@ -144,7 +144,7 @@ public class ProcessFactory
                                           logger),
                          m_DataCountsPersisterFactory.getInstance(logger),
                          logger),
-                m_ResultsReaderFactory.newResultsParser(jobId, nativeProcess.getInputStream(), logger),
+                m_ResultsReaderFactory.newResultsParser(job, nativeProcess.getInputStream(), logger),
                 filesToDelete
                 );
 
