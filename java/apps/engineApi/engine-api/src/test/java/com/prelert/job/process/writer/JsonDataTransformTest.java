@@ -192,14 +192,14 @@ public class JsonDataTransformTest
             MalformedJsonException
     {
         // The json docs are have different field orders
-        String data = "{\"airline\": \"DJA\", \"timestamp\": \"2012-10-21T14:00:00\", \"responsetime\": \"622\", \"sourcetype\": \"flightcentre\"}" +
-                    "{\"timestamp\": \"2012-10-21T14:00:01\", \"airline\": \"JQA\", \"responsetime\": \"1742\", \"sourcetype\": \"flightcentre\"}" +
-                    "{\"timestamp\": \"2012-10-21T14:00:02\", \"airline\": \"GAL\", \"responsetime\": \"5339\", \"sourcetype\": \"flightcentre\"}" +
-                    "{\"timestamp\": \"2012-10-21T14:00:03\", \"responsetime\": \"3893\", \"airline\": \"GAL\", \"sourcetype\": \"flightcentre\"}" +
-                    "{\"timestamp\": \"2012-10-21T14:00:03\", \"airline\": \"JQA\", \"responsetime\": \"9\", \"sourcetype\": \"flightcentre\"}" +
-                    "{\"sourcetype\": \"flightcentre\", \"timestamp\": \"2012-10-21T14:00:04\", \"airline\": \"DJA\", \"responsetime\": \"189\" }" +
-                    "{\"timestamp\": \"2012-10-21T14:00:04\", \"airline\": \"JQA\", \"responsetime\": \"8\", \"sourcetype\": \"flightcentre\"}" +
-                    "{\"airline\": \"DJA\", \"timestamp\": \"2012-10-21T14:00:04\", \"responsetime\": \"1200\", \"sourcetype\": \"flightcentre\"}";
+        String data = "{\"airline\": \"DJA\", \"timestamp\": \"2012-10-21T14:00:00+01:00\", \"responsetime\": \"622\", \"sourcetype\": \"flightcentre\"}" +
+                    "{\"timestamp\": \"2012-10-21T14:00:01+01:00\", \"airline\": \"JQA\", \"responsetime\": \"1742\", \"sourcetype\": \"flightcentre\"}" +
+                    "{\"timestamp\": \"2012-10-21T14:00:02+01:00\", \"airline\": \"GAL\", \"responsetime\": \"5339\", \"sourcetype\": \"flightcentre\"}" +
+                    "{\"timestamp\": \"2012-10-21T14:00:03+01:00\", \"responsetime\": \"3893\", \"airline\": \"GAL\", \"sourcetype\": \"flightcentre\"}" +
+                    "{\"timestamp\": \"2012-10-21T14:00:03+01:00\", \"airline\": \"JQA\", \"responsetime\": \"9\", \"sourcetype\": \"flightcentre\"}" +
+                    "{\"sourcetype\": \"flightcentre\", \"timestamp\": \"2012-10-21T14:00:04+01:00\", \"airline\": \"DJA\", \"responsetime\": \"189\" }" +
+                    "{\"timestamp\": \"2012-10-21T14:00:04+01:00\", \"airline\": \"JQA\", \"responsetime\": \"8\", \"sourcetype\": \"flightcentre\"}" +
+                    "{\"airline\": \"DJA\", \"timestamp\": \"2012-10-21T14:00:04+01:00\", \"responsetime\": \"1200\", \"sourcetype\": \"flightcentre\"}";
 
         // The . is the control field name
         String[] header = new String[] {"timestamp", "airline", "responsetime", "sourcetype", "."};
@@ -221,7 +221,7 @@ public class JsonDataTransformTest
         DataDescription dd = new DataDescription();
         dd.setFormat(DataFormat.JSON);
         dd.setTimeField("timestamp");
-        dd.setTimeFormat("yyyy-MM-dd'T'HH:mm:ss");
+        dd.setTimeFormat("yyyy-MM-dd'T'HH:mm:ssXXX");
 
         AnalysisConfig ac = new AnalysisConfig();
         Detector det = new Detector();
@@ -322,14 +322,14 @@ public class JsonDataTransformTest
             OutOfOrderRecordsException, MalformedJsonException
     {
         // Document fields are not in the same order
-        String data = "{\"extra_field\": \"extra\", \"timestamp\": \"2012-10-21T14:00:00\", \"airline\": \"DJA\", \"responsetime\": \"622\", \"sourcetype\": \"flightcentre\", \"junk_field\": \"nonsense\"}" +
-                    "{\"extra_field\": \"extra\", \"airline\": \"JQA\", \"responsetime\": \"1742\", \"timestamp\": \"2012-10-21T14:00:01\", \"sourcetype\": \"flightcentre\", \"junk_field\": \"nonsense\"}" +
-                    "{\"timestamp\": \"2012-10-21T14:00:02\", \"extra_field\": \"extra\", \"airline\": \"GAL\", \"junk_field\": \"nonsense\", \"responsetime\": \"5339\", \"sourcetype\": \"flightcentre\"}" +
-                    "{\"timestamp\": \"2012-10-21T14:00:03\", \"extra_field\": \"extra\", \"airline\": \"GAL\", \"responsetime\": \"3893\", \"sourcetype\": \"flightcentre\", \"junk_field\": \"nonsense\"}" +
-                    "{\"timestamp\": \"2012-10-21T14:00:03\", \"extra_field\": \"extra\", \"airline\": \"JQA\", \"responsetime\": \"9\", \"sourcetype\": \"flightcentre\", \"junk_field\": \"nonsense\"}" +
-                    "{\"timestamp\": \"2012-10-21T14:00:04\", \"airline\": \"DJA\", \"extra_field\": \"extra\", \"responsetime\": \"189\", \"junk_field\": \"nonsense\", \"sourcetype\": \"flightcentre\"}" +
-                    "{\"airline\": \"JQA\", \"timestamp\": \"2012-10-21T14:00:04\", \"extra_field\": \"extra\", \"responsetime\": \"8\", \"sourcetype\": \"flightcentre\", \"junk_field\": \"nonsense\"}" +
-                    "{\"junk_field\": \"nonsense\", \"sourcetype\": \"flightcentre\", \"timestamp\": \"2012-10-21T14:00:04\", \"extra_field\": \"extra\", \"airline\": \"DJA\", \"responsetime\": \"1200\"}";
+        String data = "{\"extra_field\": \"extra\", \"timestamp\": \"2012-10-21T14:00:00+01:00\", \"airline\": \"DJA\", \"responsetime\": \"622\", \"sourcetype\": \"flightcentre\", \"junk_field\": \"nonsense\"}" +
+                    "{\"extra_field\": \"extra\", \"airline\": \"JQA\", \"responsetime\": \"1742\", \"timestamp\": \"2012-10-21T14:00:01+01:00\", \"sourcetype\": \"flightcentre\", \"junk_field\": \"nonsense\"}" +
+                    "{\"timestamp\": \"2012-10-21T14:00:02+01:00\", \"extra_field\": \"extra\", \"airline\": \"GAL\", \"junk_field\": \"nonsense\", \"responsetime\": \"5339\", \"sourcetype\": \"flightcentre\"}" +
+                    "{\"timestamp\": \"2012-10-21T14:00:03+01:00\", \"extra_field\": \"extra\", \"airline\": \"GAL\", \"responsetime\": \"3893\", \"sourcetype\": \"flightcentre\", \"junk_field\": \"nonsense\"}" +
+                    "{\"timestamp\": \"2012-10-21T14:00:03+01:00\", \"extra_field\": \"extra\", \"airline\": \"JQA\", \"responsetime\": \"9\", \"sourcetype\": \"flightcentre\", \"junk_field\": \"nonsense\"}" +
+                    "{\"timestamp\": \"2012-10-21T14:00:04+01:00\", \"airline\": \"DJA\", \"extra_field\": \"extra\", \"responsetime\": \"189\", \"junk_field\": \"nonsense\", \"sourcetype\": \"flightcentre\"}" +
+                    "{\"airline\": \"JQA\", \"timestamp\": \"2012-10-21T14:00:04+01:00\", \"extra_field\": \"extra\", \"responsetime\": \"8\", \"sourcetype\": \"flightcentre\", \"junk_field\": \"nonsense\"}" +
+                    "{\"junk_field\": \"nonsense\", \"sourcetype\": \"flightcentre\", \"timestamp\": \"2012-10-21T14:00:04+01:00\", \"extra_field\": \"extra\", \"airline\": \"DJA\", \"responsetime\": \"1200\"}";
 
         // The . is the control field name
         String[] header = new String[] {"timestamp", "airline", "responsetime", "sourcetype", "."};
@@ -352,7 +352,7 @@ public class JsonDataTransformTest
         DataDescription dd = new DataDescription();
         dd.setFormat(DataFormat.JSON);
         dd.setTimeField("timestamp");
-        dd.setTimeFormat("yyyy-MM-dd'T'HH:mm:ss");
+        dd.setTimeFormat("yyyy-MM-dd'T'HH:mm:ssXXX");
 
         AnalysisConfig ac = new AnalysisConfig();
         Detector det = new Detector();
@@ -587,14 +587,14 @@ public class JsonDataTransformTest
             MalformedJsonException
             {
         // Document fields are not in the same order
-        String dateFormatData = "{\"timestamp\": \"2012-10-21T14:00:00\", \"airline\": \"DJA\", \"responsetime\": \"622\"}" +
-                "{\"timestamp\": \"2012-10-21T14:00:01\", \"airline\": \"JQA\", \"responsetime\": \"1742\", \"sourcetype\": \"flightcentre\"}" +
-                "{\"timestamp\": \"2012-10-21T14:00:02\", \"airline\": \"GAL\",                             \"sourcetype\": \"flightcentre\"}" +
-                "{\"timestamp\": \"2012-10-21T14:00:03\", \"airline\": \"GAL\", \"responsetime\": \"3893\", \"sourcetype\": \"flightcentre\"}" +
-                "{\"timestamp\": \"2012-10-21T14:00:03\",                          \"responsetime\": \"9\", \"sourcetype\": \"flightcentre\"}" +
-                "{\"timestamp\": \"2012-10-21T14:00:04\", \"airline\": \"DJA\", \"responsetime\": \"189\", \"sourcetype\": \"flightcentre\"}" +
-                "{\"timestamp\": \"2012-10-21T14:00:04\", \"airline\": \"JQA\", \"responsetime\": \"8\", \"sourcetype\": \"flightcentre\"}" +
-                "{\"timestamp\": \"2012-10-21T14:00:04\", \"airline\": \"DJA\", \"responsetime\": \"1200\", \"sourcetype\": \"flightcentre\"}";
+        String dateFormatData = "{\"timestamp\": \"2012-10-21T14:00:00+01:00\", \"airline\": \"DJA\", \"responsetime\": \"622\"}" +
+                "{\"timestamp\": \"2012-10-21T14:00:01+01:00\", \"airline\": \"JQA\", \"responsetime\": \"1742\", \"sourcetype\": \"flightcentre\"}" +
+                "{\"timestamp\": \"2012-10-21T14:00:02+01:00\", \"airline\": \"GAL\",                             \"sourcetype\": \"flightcentre\"}" +
+                "{\"timestamp\": \"2012-10-21T14:00:03+01:00\", \"airline\": \"GAL\", \"responsetime\": \"3893\", \"sourcetype\": \"flightcentre\"}" +
+                "{\"timestamp\": \"2012-10-21T14:00:03+01:00\",                          \"responsetime\": \"9\", \"sourcetype\": \"flightcentre\"}" +
+                "{\"timestamp\": \"2012-10-21T14:00:04+01:00\", \"airline\": \"DJA\", \"responsetime\": \"189\", \"sourcetype\": \"flightcentre\"}" +
+                "{\"timestamp\": \"2012-10-21T14:00:04+01:00\", \"airline\": \"JQA\", \"responsetime\": \"8\", \"sourcetype\": \"flightcentre\"}" +
+                "{\"timestamp\": \"2012-10-21T14:00:04+01:00\", \"airline\": \"DJA\", \"responsetime\": \"1200\", \"sourcetype\": \"flightcentre\"}";
 
         String epochFormatData = "{\"timestamp\": 1350824400, \"airline\": \"DJA\", \"responsetime\": \"622\"}" +
                 "{\"timestamp\": 1350824401, \"airline\": \"JQA\", \"responsetime\": \"1742\", \"sourcetype\": \"flightcentre\"}" +
@@ -635,7 +635,7 @@ public class JsonDataTransformTest
         DataDescription dateFormatDD = new DataDescription();
         dateFormatDD.setFormat(DataFormat.JSON);
         dateFormatDD.setTimeField("timestamp");
-        dateFormatDD.setTimeFormat("yyyy-MM-dd'T'HH:mm:ss");
+        dateFormatDD.setTimeFormat("yyyy-MM-dd'T'HH:mm:ssXXX");
 
         DataDescription epochFormatDD = new DataDescription();
         epochFormatDD.setFormat(DataFormat.JSON);
@@ -759,10 +759,10 @@ public class JsonDataTransformTest
                 + "{\"name\":\"my.test.metric3\",\"tags\":{\"tag1\":\"blaaah\",\"tag2\":\"boooo\"},\"time\":1350824402,\"value\":12345.678}"
                 + "{\"name\":\"my.test.metric4\",\"time\":1350824402,\"value\":12345.678}";
 
-        String timeFormatData = "{\"name\":\"my.test.metric1\",\"tags\":{\"tag1\":\"blah\",\"tag2\":\"boo\"},\"time\":\"2012-10-21T14:00:00\",\"value\":12345.678}"
-                + "{\"name\":\"my.test.metric2\",\"tags\":{\"tag1\":\"blaah\",\"tag2\":\"booo\"},\"time\":\"2012-10-21T14:00:01\",\"value\":12345.678}"
-                + "{\"name\":\"my.test.metric3\",\"tags\":{\"tag1\":\"blaaah\",\"tag2\":\"boooo\"},\"time\":\"2012-10-21T14:00:02\",\"value\":12345.678}"
-                + "{\"name\":\"my.test.metric4\",\"time\":\"2012-10-21T14:00:02\",\"value\":12345.678}";
+        String timeFormatData = "{\"name\":\"my.test.metric1\",\"tags\":{\"tag1\":\"blah\",\"tag2\":\"boo\"},\"time\":\"2012-10-21T14:00:00+01:00\",\"value\":12345.678}"
+                + "{\"name\":\"my.test.metric2\",\"tags\":{\"tag1\":\"blaah\",\"tag2\":\"booo\"},\"time\":\"2012-10-21T14:00:01+01:00\",\"value\":12345.678}"
+                + "{\"name\":\"my.test.metric3\",\"tags\":{\"tag1\":\"blaaah\",\"tag2\":\"boooo\"},\"time\":\"2012-10-21T14:00:02+01:00\",\"value\":12345.678}"
+                + "{\"name\":\"my.test.metric4\",\"time\":\"2012-10-21T14:00:02+01:00\",\"value\":12345.678}";
 
         String epochMsData = "{\"name\":\"my.test.metric1\",\"tags\":{\"tag1\":\"blah\",\"tag2\":\"boo\"},\"time\":1350824400000,\"value\":12345.678}"
                 + "{\"name\":\"my.test.metric2\",\"tags\":{\"tag1\":\"blaah\",\"tag2\":\"booo\"},\"time\":1350824401000,\"value\":12345.678}"
@@ -807,7 +807,7 @@ public class JsonDataTransformTest
         {
             if (loop == 1)
             {
-                dd.setTimeFormat("yyyy-MM-dd'T'HH:mm:ss");
+                dd.setTimeFormat("yyyy-MM-dd'T'HH:mm:ssXXX");
             }
             else if (loop == 2)
             {
