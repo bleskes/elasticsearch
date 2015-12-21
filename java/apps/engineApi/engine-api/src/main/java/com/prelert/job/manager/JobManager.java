@@ -35,10 +35,11 @@ import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.Consumer;
 
 import org.apache.log4j.Logger;
 
@@ -47,7 +48,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataCounts;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.JobDetails;
@@ -489,41 +489,37 @@ public class JobManager
      * @param description
      * @throws UnknownJobException
      */
-    public void setDescription(String jobId, String description) throws UnknownJobException
+    public void setDescription(String jobId, String description)
+    throws UnknownJobException
     {
-        updateJobField(jobId, job -> job.setDescription(description));
-    }
-
-    private boolean updateJobField(String jobId, Consumer<JobDetails> setter)
-            throws UnknownJobException
-    {
-        Optional<JobDetails> optionalJob = m_JobProvider.getJobDetails(jobId);
-        if (optionalJob.isPresent())
-        {
-            JobDetails job = optionalJob.get();
-            setter.accept(job);
-            return m_JobProvider.updateJob(job);
-        }
-        throw new UnknownJobException(jobId);
+        Map<String, Object> update = new HashMap<>();
+        update.put(JobDetails.DESCRIPTION, description);
+        m_JobProvider.updateJob(jobId, update);
     }
 
     public void setModelDebugConfig(String jobId, ModelDebugConfig modelDebugConfig)
             throws UnknownJobException
     {
-        updateJobField(jobId, job -> job.setModelDebugConfig(modelDebugConfig));
+        Map<String, Object> update = new HashMap<>();
+        if (modelDebugConfig != null)
+        {
+            Map<String, Object> objectMap = new HashMap<>();
+            objectMap.put(ModelDebugConfig.BOUNDS_PERCENTILE, modelDebugConfig.getBoundsPercentile());
+            objectMap.put(ModelDebugConfig.TERMS, modelDebugConfig.getTerms());
+            update.put(JobDetails.MODEL_DEBUG_CONFIG, objectMap);
+        }
+        else
+        {
+            update.put(JobDetails.MODEL_DEBUG_CONFIG, null);
+        }
+        m_JobProvider.updateJob(jobId, update);
     }
 
     public void setRenormalizationWindow(String jobId, Long renormalizationWindow) throws UnknownJobException
     {
-        updateJobField(jobId, job -> {
-                AnalysisConfig analysisConfig = job.getAnalysisConfig();
-                if (analysisConfig == null)
-                {
-                    analysisConfig = new AnalysisConfig();
-                }
-                analysisConfig.setRenormalizationWindow(renormalizationWindow);
-                job.setAnalysisConfig(analysisConfig);
-            });
+        Map<String, Object> update = new HashMap<>();
+        update.put(JobDetails.RENORMALIZATION_WINDOW, renormalizationWindow);
+        m_JobProvider.updateJob(jobId, update);
     }
 
     /**
@@ -586,12 +582,14 @@ public class JobManager
      * @return
      * @throws UnknownJobException
      */
-    private boolean updateLastDataTime(String jobId, Date time) throws UnknownJobException
+    private boolean updateLastDataTime(String jobId, Date time)
+    throws UnknownJobException
     {
-        return updateJobField(jobId, job -> {
-                job.setLastDataTime(time);
-                job.setStatus(JobStatus.RUNNING);
-            });
+
+        Map<String, Object> update = new HashMap<>();
+        update.put(JobDetails.LAST_DATA_TIME, time);
+        update.put(JobDetails.STATUS, JobStatus.RUNNING);
+        return m_JobProvider.updateJob(jobId, update);
     }
 
     /**

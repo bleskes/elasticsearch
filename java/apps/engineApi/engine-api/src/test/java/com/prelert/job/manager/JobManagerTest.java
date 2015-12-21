@@ -33,6 +33,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -203,6 +204,7 @@ public class JobManagerTest
     }
 
     @Test
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     public void testSubmitDataLoadJob_GivenProcessIsRunSuccessfully()
             throws JsonParseException, UnknownJobException, NativeProcessRunException,
             MissingFieldException, JobInUseException, HighProportionOfBadTimestampsException,
@@ -210,8 +212,8 @@ public class JobManagerTest
     {
         InputStream inputStream = mock(InputStream.class);
         DataLoadParams params = mock(DataLoadParams.class);
-        JobDetails jobDetails = new JobDetails("foo", new JobConfiguration());
-        when(m_JobProvider.getJobDetails("foo")).thenReturn(Optional.of(jobDetails));
+        when(m_JobProvider.getJobDetails("foo")).thenReturn(
+                Optional.of(new JobDetails("foo", new JobConfiguration())));
         givenProcessInfo(5);
         when(m_ProcessManager.jobIsRunning("foo")).thenReturn(false);
         when(m_ProcessManager.numberOfRunningJobs()).thenReturn(0);
@@ -220,88 +222,68 @@ public class JobManagerTest
 
         DataCounts stats = jobManager.submitDataLoadJob("foo", inputStream, params);
         assertNotNull(stats);
-        assertEquals(JobStatus.RUNNING, jobDetails.getStatus());
-        assertNotNull(jobDetails.getLastDataTime());
-        verify(m_JobProvider).updateJob(jobDetails);
+
+        ArgumentCaptor<Map> updateCaptor = ArgumentCaptor.forClass(Map.class);
+        verify(m_JobProvider).updateJob(eq("foo"), updateCaptor.capture());
+        Map updates = updateCaptor.getValue();
+        assertEquals(JobStatus.RUNNING, updates.get(JobDetails.STATUS));
+        assertNotNull(updates.get(JobDetails.LAST_DATA_TIME));
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     public void testSetModelDebugConfig_GivenConfig() throws UnknownJobException
     {
         givenProcessInfo(5);
-        JobDetails jobDetails = new JobDetails("foo", new JobConfiguration());
-        when(m_JobProvider.getJobDetails("foo")).thenReturn(Optional.of(jobDetails));
         ModelDebugConfig config = new ModelDebugConfig(85.0, "bar");
         JobManager jobManager = new JobManager(m_JobProvider, m_ProcessManager);
 
         jobManager.setModelDebugConfig("foo", config);
 
-        assertEquals(85.0, jobDetails.getModelDebugConfig().getBoundsPercentile(), 0.00001);
-        assertEquals("bar", jobDetails.getModelDebugConfig().getTerms());
-        verify(m_JobProvider).updateJob(jobDetails);
+        verify(m_JobProvider).updateJob(eq("foo"), m_JobUpdateCaptor.capture());
+        Map<String, Object> jobUpdate = m_JobUpdateCaptor.getValue();
+        Map<String, Object> configUpdate = (Map<String, Object>) jobUpdate.get("modelDebugConfig");
+        assertEquals(85.0, configUpdate.get("boundsPercentile"));
+        assertEquals("bar", configUpdate.get("terms"));
     }
 
     @Test
     public void testSetModelDebugConfig_GivenNull() throws UnknownJobException
     {
         givenProcessInfo(5);
-        JobDetails jobDetails = new JobDetails("foo", new JobConfiguration());
-        jobDetails.setModelDebugConfig(new ModelDebugConfig());
-        when(m_JobProvider.getJobDetails("foo")).thenReturn(Optional.of(jobDetails));
         JobManager jobManager = new JobManager(m_JobProvider, m_ProcessManager);
 
         jobManager.setModelDebugConfig("foo", null);
 
-        assertNull(jobDetails.getModelDebugConfig());
-        verify(m_JobProvider).updateJob(jobDetails);
+        verify(m_JobProvider).updateJob(eq("foo"), m_JobUpdateCaptor.capture());
+        Map<String, Object> jobUpdate = m_JobUpdateCaptor.getValue();
+        assertNull(jobUpdate.get("modelDebugConfig"));
     }
-
-    @Test
-    public void testSetRenormalizationWindow_GivenNonNullAnalysisConfig() throws UnknownJobException
-    {
-        givenProcessInfo(5);
-        AnalysisConfig config = new AnalysisConfig();
-        config.setRenormalizationWindow(10L);
-        JobDetails jobDetails = new JobDetails("foo", new JobConfiguration());
-        jobDetails.setAnalysisConfig(config);
-        when(m_JobProvider.getJobDetails("foo")).thenReturn(Optional.of(jobDetails));
-        JobManager jobManager = new JobManager(m_JobProvider, m_ProcessManager);
-
-        jobManager.setRenormalizationWindow("foo", 5L);
-
-        assertEquals(new Long(5), jobDetails.getAnalysisConfig().getRenormalizationWindow());
-        verify(m_JobProvider).updateJob(jobDetails);
-    }
-
-    @Test
-    public void testSetRenormalizationWindow_GivenNullAnalysisConfig() throws UnknownJobException
-    {
-        givenProcessInfo(5);
-        JobDetails jobDetails = new JobDetails("foo", new JobConfiguration());
-        jobDetails.setAnalysisConfig(null);
-        when(m_JobProvider.getJobDetails("foo")).thenReturn(Optional.of(jobDetails));
-        JobManager jobManager = new JobManager(m_JobProvider, m_ProcessManager);
-
-        jobManager.setRenormalizationWindow("foo", 5L);
-
-        assertEquals(new Long(5), jobDetails.getAnalysisConfig().getRenormalizationWindow());
-        verify(m_JobProvider).updateJob(jobDetails);
-    }
-
 
     @Test
     public void testSetDesciption() throws UnknownJobException
     {
         givenProcessInfo(5);
-        JobDetails jobDetails = new JobDetails("foo", new JobConfiguration());
-        jobDetails.setDescription("Pre description");
-        when(m_JobProvider.getJobDetails("foo")).thenReturn(Optional.of(jobDetails));
         JobManager jobManager = new JobManager(m_JobProvider, m_ProcessManager);
 
-        jobManager.setDescription("foo", "Post description");
+        jobManager.setDescription("foo", "foo job");
 
-        assertEquals("Post description", jobDetails.getDescription());
-        verify(m_JobProvider).updateJob(jobDetails);
+        verify(m_JobProvider).updateJob(eq("foo"), m_JobUpdateCaptor.capture());
+        Map<String, Object> jobUpdate = m_JobUpdateCaptor.getValue();
+        assertEquals("foo job", jobUpdate.get(JobDetails.DESCRIPTION));
+    }
+
+    @Test
+    public void testSetRenormalizationWindow() throws UnknownJobException
+    {
+        givenProcessInfo(5);
+        JobManager jobManager = new JobManager(m_JobProvider, m_ProcessManager);
+
+        jobManager.setRenormalizationWindow("foo", 7L);
+
+        verify(m_JobProvider).updateJob(eq("foo"), m_JobUpdateCaptor.capture());
+        Map<String, Object> jobUpdate = m_JobUpdateCaptor.getValue();
+        assertEquals(new Long(7), jobUpdate.get(JobDetails.RENORMALIZATION_WINDOW));
     }
 
     private void givenProcessInfo(int maxLicenseJobs)

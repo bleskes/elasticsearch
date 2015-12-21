@@ -31,12 +31,12 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import org.apache.log4j.Logger;
@@ -64,7 +64,6 @@ import org.elasticsearch.search.sort.FieldSortBuilder;
 import org.elasticsearch.search.sort.SortBuilder;
 import org.elasticsearch.search.sort.SortOrder;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -440,45 +439,34 @@ public class ElasticsearchJobProvider implements JobProvider
     }
 
     @Override
-    public boolean updateJob(JobDetails job) throws UnknownJobException
+    public boolean updateJob(String jobId, Map<String, Object> updates) throws UnknownJobException
     {
-        checkJobExists(job.getId());
-        String jobAsJson = "";
+        checkJobExists(jobId);
+        ElasticsearchJobId elasticJobId = new ElasticsearchJobId(jobId);
 
-        try
-        {
-            jobAsJson = m_ObjectMapper.writeValueAsString(job);
-        }
-        catch (JsonProcessingException e)
-        {
-            LOGGER.error("Error converting job with ID " + job.getId() + " to JSON", e);
-            return false;
-        }
-
-        ElasticsearchJobId elasticJobId = new ElasticsearchJobId(job.getId());
         int retryCount = UPDATE_JOB_RETRY_COUNT;
         while (--retryCount >= 0)
         {
             try
             {
-                LOGGER.trace("ES API CALL: overwrite " + JobDetails.TYPE + " to index "
-                        + elasticJobId.getIndex() + " with ID " + elasticJobId.getId());
-                m_Client.prepareIndex(elasticJobId.getIndex(), JobDetails.TYPE, elasticJobId.getId())
-                        .setSource(jobAsJson)
-                        .setRefresh(true)
-                        .get();
+                LOGGER.trace("ES API CALL: update ID " + elasticJobId.getId() + " type " + JobDetails.TYPE +
+                        " in index " + elasticJobId.getIndex() + " using map of new values");
+                m_Client.prepareUpdate(elasticJobId.getIndex(), JobDetails.TYPE, elasticJobId.getId())
+                                    .setDoc(updates)
+                                    .get();
 
                 break;
             }
             catch (VersionConflictEngineException e)
             {
-                LOGGER.warn("Conflict updating job document " + elasticJobId.getId(), e);
+                LOGGER.warn("Conflict updating job document " + elasticJobId.getId());
             }
         }
 
         if (retryCount <= 0)
         {
-            LOGGER.warn("Unable to overwrite conflicted job document " + elasticJobId.getId() + ".");
+            LOGGER.warn("Unable to update conflicted job document " + elasticJobId.getId() +
+                    ". Updates = " + updates);
             return false;
         }
         return true;
@@ -487,31 +475,22 @@ public class ElasticsearchJobProvider implements JobProvider
     @Override
     public boolean setJobStatus(String jobId, JobStatus status) throws UnknownJobException
     {
-        return updateJobField(jobId, job -> job.setStatus(status));
-    }
+        Map<String, Object> update = new HashMap<>();
+        update.put(JobDetails.STATUS, status);
+        return updateJob(jobId, update);
 
-    private boolean updateJobField(String jobId, Consumer<JobDetails> setter)
-            throws UnknownJobException
-    {
-        Optional<JobDetails> optionalJob = getJobDetails(jobId);
-        if (optionalJob.isPresent())
-        {
-            JobDetails job = optionalJob.get();
-            setter.accept(job);
-            return updateJob(job);
-        }
-        throw new UnknownJobException(jobId);
     }
 
     @Override
     public boolean setJobFinishedTimeAndStatus(String jobId, Date time, JobStatus status)
             throws UnknownJobException
     {
-        return updateJobField(jobId, job -> {
-            job.setFinishedTime(time);
-            job.setStatus(status);
-        });
+        Map<String, Object> update = new HashMap<>();
+        update.put(JobDetails.FINISHED_TIME, time);
+        update.put(JobDetails.STATUS, status);
+        return updateJob(jobId, update);
     }
+
 
     @Override
     public boolean deleteJob(String jobId) throws UnknownJobException, DataStoreException

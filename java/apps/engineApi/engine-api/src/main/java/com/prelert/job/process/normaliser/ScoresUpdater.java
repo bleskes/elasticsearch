@@ -85,7 +85,7 @@ class ScoresUpdater
     {
         JobDetails jobDetails = m_JobProvider.getJobDetails(m_JobId).get();
         m_BucketSpan = getBucketSpanOrDefault(jobDetails.getAnalysisConfig());
-        m_NormalisationWindow = getNormalisationWindowOrDefault(jobDetails.getAnalysisConfig());
+        m_NormalisationWindow = getNormalisationWindowOrDefault(jobDetails);
     }
 
     private static int getBucketSpanOrDefault(AnalysisConfig analysisConfig)
@@ -99,11 +99,11 @@ class ScoresUpdater
         return 0;
     }
 
-    private long getNormalisationWindowOrDefault(AnalysisConfig analysisConfig)
+    private long getNormalisationWindowOrDefault(JobDetails job)
     {
-        if (analysisConfig != null && analysisConfig.getRenormalizationWindow() != null)
+        if (job.getRenormalizationWindow() != null)
         {
-            return analysisConfig.getRenormalizationWindow() * SECONDS_IN_DAY * MILLISECONDS_IN_SECOND;
+            return job.getRenormalizationWindow() * SECONDS_IN_DAY * MILLISECONDS_IN_SECOND;
         }
 
         long defaultWindow = Math.max(DEFAULT_RENORMALISATION_WINDOW_MS,

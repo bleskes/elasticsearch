@@ -60,6 +60,7 @@ public class JobDetailsTest
         anotherJobDetails.setAnalysisLimits(anotherAnalysisLimits);
         anotherJobDetails.setDataDescription(anotherDataDescription);
         anotherJobDetails.setDescription("Another");
+        anotherJobDetails.setRenormalizationWindow(4L);
         anotherJobDetails.setTransforms(anotherTransforms);
 
         JobConfiguration jobConfiguration = new JobConfiguration();
@@ -68,6 +69,7 @@ public class JobDetailsTest
         jobConfiguration.setAnalysisLimits(null);
         jobConfiguration.setDataDescription(null);
         jobConfiguration.setDescription(null);
+        jobConfiguration.setRenormalizationWindow(null);
         jobConfiguration.setTransforms(null);
 
         JobDetails jobDetails = new JobDetails("thisId", anotherJobDetails, jobConfiguration);
@@ -79,6 +81,7 @@ public class JobDetailsTest
         assertEquals(anotherAnalysisLimits, jobDetails.getAnalysisLimits());
         assertEquals(anotherDataDescription, jobDetails.getDataDescription());
         assertEquals("Another", jobDetails.getDescription());
+        assertEquals(4L, jobDetails.getRenormalizationWindow().longValue());
         assertEquals(anotherTransforms, jobDetails.getTransforms());
     }
 
@@ -99,6 +102,7 @@ public class JobDetailsTest
         anotherJobDetails.setAnalysisLimits(anotherAnalysisLimits);
         anotherJobDetails.setDataDescription(anotherDataDescription);
         anotherJobDetails.setDescription("Another");
+        anotherJobDetails.setRenormalizationWindow(4L);
         anotherJobDetails.setTransforms(anotherTransforms);
 
         AnalysisConfig overridingAnalysisConfig = mock(AnalysisConfig.class);
@@ -114,6 +118,7 @@ public class JobDetailsTest
         jobConfiguration.setAnalysisLimits(overridingAnalysisLimits);
         jobConfiguration.setDataDescription(overridingDataDescription);
         jobConfiguration.setDescription("Overriding");
+        jobConfiguration.setRenormalizationWindow(5L);
         jobConfiguration.setTransforms(overridingTransforms);
 
         JobDetails jobDetails = new JobDetails("thisId", anotherJobDetails, jobConfiguration);
@@ -125,6 +130,7 @@ public class JobDetailsTest
         assertEquals(overridingAnalysisLimits, jobDetails.getAnalysisLimits());
         assertEquals(overridingDataDescription, jobDetails.getDataDescription());
         assertEquals("Overriding", jobDetails.getDescription());
+        assertEquals(5L, jobDetails.getRenormalizationWindow().longValue());
         assertEquals(overridingTransforms, jobDetails.getTransforms());
     }
 
@@ -164,6 +170,17 @@ public class JobDetailsTest
         Date createTime = new Date();
         jobDetails1.setCreateTime(createTime);
         jobDetails2.setCreateTime(createTime);
+
+        assertFalse(jobDetails1.equals(jobDetails2));
+    }
+
+    @Test
+    public void testEquals_GivenDifferentRenormalizationWindow()
+    {
+        JobConfiguration jobDetails1 = new JobConfiguration();
+        jobDetails1.setRenormalizationWindow(3L);
+        JobConfiguration jobDetails2 = new JobConfiguration();
+        jobDetails2.setRenormalizationWindow(4L);
 
         assertFalse(jobDetails1.equals(jobDetails2));
     }
