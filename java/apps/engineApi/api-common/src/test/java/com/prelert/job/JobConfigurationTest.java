@@ -28,6 +28,9 @@
 package com.prelert.job;
 
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+
 import java.util.Arrays;
 import java.util.List;
 
@@ -93,5 +96,19 @@ public class JobConfigurationTest
         Assert.assertFalse(analysisFields.contains("max"));
         Assert.assertFalse(analysisFields.contains(""));
         Assert.assertFalse(analysisFields.contains(null));
+    }
+
+    @Test
+    public void testDefaultRenormalizationWindow()
+    {
+        assertNull(new JobConfiguration().getRenormalizationWindow());
+    }
+
+    @Test
+    public void testSetRenormalizationWindow()
+    {
+        JobConfiguration config = new JobConfiguration();
+        config.setRenormalizationWindow(3L);
+        assertEquals(3L, config.getRenormalizationWindow().longValue());
     }
 }

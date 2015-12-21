@@ -131,6 +131,10 @@ public class ElasticsearchMappingsTest
                         "        \"type\": \"long\"," +
                         "        \"index\": \"no\"" +
                         "      }," +
+                        "      \"renormalizationWindow\": {" +
+                        "        \"type\": \"long\"," +
+                        "        \"index\": \"no\"" +
+                        "      }," +
                         "      \"analysisConfig\": {" +
                         "        \"type\": \"object\"," +
                         "        \"properties\": {" +
@@ -147,10 +151,6 @@ public class ElasticsearchMappingsTest
                         "            \"index\": \"no\"" +
                         "          }," +
                         "          \"period\": {" +
-                        "            \"type\": \"long\"," +
-                        "            \"index\": \"no\"" +
-                        "          }," +
-                        "          \"renormalizationWindow\": {" +
                         "            \"type\": \"long\"," +
                         "            \"index\": \"no\"" +
                         "          }," +
