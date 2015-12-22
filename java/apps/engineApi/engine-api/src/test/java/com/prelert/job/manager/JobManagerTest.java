@@ -273,6 +273,19 @@ public class JobManagerTest
         assertEquals("foo job", jobUpdate.get(JobDetails.DESCRIPTION));
     }
 
+    @Test
+    public void testSetRenormalizationWindow() throws UnknownJobException
+    {
+        givenProcessInfo(5);
+        JobManager jobManager = new JobManager(m_JobProvider, m_ProcessManager);
+
+        jobManager.setRenormalizationWindow("foo", 7L);
+
+        verify(m_JobProvider).updateJob(eq("foo"), m_JobUpdateCaptor.capture());
+        Map<String, Object> jobUpdate = m_JobUpdateCaptor.getValue();
+        assertEquals(new Long(7), jobUpdate.get(JobDetails.RENORMALIZATION_WINDOW));
+    }
+
     private void givenProcessInfo(int maxLicenseJobs)
     {
         String info = String.format("{\"jobs\":\"%d\"}", maxLicenseJobs);

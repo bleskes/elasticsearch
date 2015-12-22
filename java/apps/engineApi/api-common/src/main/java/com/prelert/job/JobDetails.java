@@ -30,6 +30,7 @@ import java.net.URI;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Consumer;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -67,6 +68,7 @@ public class JobDetails
     public static final String TRANSFORMS = "transforms";
     public static final String DESCRIPTION = "description";
     public static final String MODEL_DEBUG_CONFIG = "modelDebugConfig";
+    public static final String RENORMALIZATION_WINDOW = "renormalizationWindow";
 
     public static final String TYPE = "job";
 
@@ -87,6 +89,7 @@ public class JobDetails
     private List<TransformConfig> m_Transforms;
     private ModelDebugConfig m_ModelDebugConfig;
     private DataCounts m_Counts;
+    private Long m_RenormalizationWindow;
 
     /* These URIs are transient they don't need to be persisted */
     private URI m_Location;
@@ -129,11 +132,8 @@ public class JobDetails
         m_Transforms = jobConfig.getTransforms();
         m_ModelDebugConfig = jobConfig.getModelDebugConfig();
 
-        m_DataDescription = jobConfig.getDataDescription();
-        if (m_DataDescription == null)
-        {
-            m_DataDescription = new DataDescription();
-        }
+        invokeIfNotNull(jobConfig.getDataDescription(), dd -> m_DataDescription = dd);
+        m_RenormalizationWindow = jobConfig.getRenormalizationWindow();
     }
 
     /**
@@ -160,40 +160,26 @@ public class JobDetails
         m_AnalysisConfig = details.getAnalysisConfig();
         m_AnalysisLimits = details.getAnalysisLimits();
         m_DataDescription = details.getDataDescription();
+        m_RenormalizationWindow = details.getRenormalizationWindow();
         m_Transforms = details.getTransforms();
 
         // only override these if explicitly set
-        if (jobConfig.getTimeout() != null)
-        {
-            m_Timeout = jobConfig.getTimeout();
-        }
-
-        if (jobConfig.getAnalysisConfig() != null)
-        {
-            m_AnalysisConfig = jobConfig.getAnalysisConfig();
-        }
-
-        if (jobConfig.getAnalysisLimits() != null)
-        {
-            m_AnalysisLimits = jobConfig.getAnalysisLimits();
-        }
-
-        if (jobConfig.getDataDescription() != null)
-        {
-            m_DataDescription = jobConfig.getDataDescription();
-        }
-
-        if (jobConfig.getDescription() != null)
-        {
-            m_Description = jobConfig.getDescription();
-        }
-
-        if (jobConfig.getTransforms() != null)
-        {
-            m_Transforms = jobConfig.getTransforms();
-        }
+        invokeIfNotNull(jobConfig.getTimeout(), t -> m_Timeout = t);
+        invokeIfNotNull(jobConfig.getAnalysisConfig(), ac -> m_AnalysisConfig = ac);
+        invokeIfNotNull(jobConfig.getAnalysisLimits(), al -> m_AnalysisLimits = al);
+        invokeIfNotNull(jobConfig.getDataDescription(), dd -> m_DataDescription = dd);
+        invokeIfNotNull(jobConfig.getDescription(), d -> m_Description = d);
+        invokeIfNotNull(jobConfig.getRenormalizationWindow(), rw -> m_RenormalizationWindow = rw);
+        invokeIfNotNull(jobConfig.getTransforms(), t -> m_Transforms = t);
     }
 
+    private <T> void invokeIfNotNull(T obj, Consumer<T> consumer)
+    {
+        if (obj != null)
+        {
+            consumer.accept(obj);
+        }
+    }
 
     /**
      * Return the Job Id
@@ -525,6 +511,24 @@ public class JobDetails
     }
 
     /**
+     * The duration of the renormalization window in days
+     * @return renormalization window in days
+     */
+    public Long getRenormalizationWindow()
+    {
+        return m_RenormalizationWindow;
+    }
+
+    /**
+     * Set the renormalization window duration
+     * @param renormalizationWindow the renormalization window in days
+     */
+    public void setRenormalizationWindow(Long renormalizationWindow)
+    {
+        m_RenormalizationWindow = renormalizationWindow;
+    }
+
+    /**
      * Prints the more salient fields in a JSON-like format suitable for logging.
      * If every field was written it would spam the log file.
      */
@@ -574,6 +578,7 @@ public class JobDetails
                 Objects.equals(this.m_ModelSizeStats, that.m_ModelSizeStats) &&
                 Objects.equals(this.m_Transforms, that.m_Transforms) &&
                 Objects.equals(this.m_Counts, that.m_Counts) &&
+                Objects.equals(this.m_RenormalizationWindow, that.m_RenormalizationWindow) &&
                 Objects.equals(this.m_Location, that.m_Location) &&
                 Objects.equals(this.m_DataEndpoint, that.m_DataEndpoint) &&
                 Objects.equals(this.m_CategoryDefinitionsEndpoint, that.m_CategoryDefinitionsEndpoint) &&
@@ -587,8 +592,8 @@ public class JobDetails
     {
         return Objects.hash(m_JobId, m_Description, m_Status, m_CreateTime, m_FinishedTime,
                 m_LastDataTime, m_Timeout, m_AnalysisConfig, m_AnalysisLimits, m_DataDescription,
-                m_ModelDebugConfig, m_ModelSizeStats, m_Transforms, m_Counts, m_Location,
-                m_DataEndpoint, m_CategoryDefinitionsEndpoint, m_BucketsEndpoint, m_RecordsEndpoint,
-                m_AlertsLongPollEndpoint);
+                m_ModelDebugConfig, m_ModelSizeStats, m_Transforms, m_Counts,
+                m_RenormalizationWindow, m_Location, m_DataEndpoint, m_CategoryDefinitionsEndpoint,
+                m_BucketsEndpoint, m_RecordsEndpoint, m_AlertsLongPollEndpoint);
     }
 }

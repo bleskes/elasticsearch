@@ -302,14 +302,14 @@ public class CsvDataTransformTest
     {
         // ? is the quote char
         String data = "date,airline,responsetime,sourcetype\n" +
-                    "2014-01-28 00:00:00,AAL,132.2046,farequote\n" +
-                    "2014-01-28 00:00:00,JZA,990.4628,farequote\n" +
-                    "2014-01-28 00:00:00,JBU,877.5927,farequote\n" +
-                    "2014-01-28 00:00:00,KLM,1355.4812,farequote\n" +
-                    "2014-01-28 01:00:00,NKS,9991.3981,farequote\n" +
-                    "2014-01-28 01:00:00,TRS,412.1948,farequote\n" +
-                    "2014-01-28 01:00:00,DAL,401.4948,farequote\n" +
-                    "2014-01-28 01:00:00,FFT,181.5529,farequote";
+                    "2014-01-28 00:00:00+00:00,AAL,132.2046,farequote\n" +
+                    "2014-01-28 00:00:00+00:00,JZA,990.4628,farequote\n" +
+                    "2014-01-28 00:00:00+00:00,JBU,877.5927,farequote\n" +
+                    "2014-01-28 00:00:00+00:00,KLM,1355.4812,farequote\n" +
+                    "2014-01-28 01:00:00+00:00,NKS,9991.3981,farequote\n" +
+                    "2014-01-28 01:00:00+00:00,TRS,412.1948,farequote\n" +
+                    "2014-01-28 01:00:00+00:00,DAL,401.4948,farequote\n" +
+                    "2014-01-28 01:00:00+00:00,FFT,181.5529,farequote";
 
         String [] epochTimes = new String [] {"", "1390867200", "1390867200",
                 "1390867200", "1390867200", "1390870800", "1390870800",
@@ -339,7 +339,7 @@ public class CsvDataTransformTest
         dd.setFormat(DataFormat.DELIMITED);
         dd.setFieldDelimiter(',');
         dd.setTimeField("date");
-        dd.setTimeFormat("yyyy-MM-dd HH:mm:ss");
+        dd.setTimeFormat("yyyy-MM-dd HH:mm:ssXXX");
 
 
         // can create with null

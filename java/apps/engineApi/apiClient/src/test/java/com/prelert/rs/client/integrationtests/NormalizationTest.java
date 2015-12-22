@@ -118,7 +118,6 @@ public class NormalizationTest implements Closeable
         AnalysisConfig ac = new AnalysisConfig();
         ac.setBucketSpan(300L);
         ac.setDetectors(Arrays.asList(d));
-        ac.setRenormalizationWindow(renormalizationWindow);
 
         DataDescription dd = new DataDescription();
         dd.setFormat(DataFormat.DELIMITED);
@@ -130,6 +129,7 @@ public class NormalizationTest implements Closeable
         config.setDescription("Farequote normalisation test");
         config.setId(jobId);
         config.setDataDescription(dd);
+        config.setRenormalizationWindow(renormalizationWindow);
 
         test(jobId.equals(m_WebServiceClient.createJob(config)));
         return jobId;

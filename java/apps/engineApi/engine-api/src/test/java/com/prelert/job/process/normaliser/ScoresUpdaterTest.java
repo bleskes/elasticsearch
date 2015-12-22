@@ -43,6 +43,7 @@ import java.util.Collections;
 import java.util.Deque;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 
 import org.apache.log4j.Logger;
 import org.junit.Before;
@@ -89,9 +90,12 @@ public class ScoresUpdaterTest
         config.setBucketSpan(DEFAULT_BUCKET_SPAN);
         m_Job.setAnalysisConfig(config);
 
-        createScoresUpdater();
+        m_ScoresUpdater = new ScoresUpdater(JOB_ID, m_JobProvider, m_JobRenormaliser,
+                (jobId, logger) -> m_Normaliser);
+
         givenProviderReturnsNoBuckets(DEFAULT_START_TIME, DEFAULT_END_TIME);
         givenProviderReturnsNoInfluencers(DEFAULT_START_TIME, DEFAULT_END_TIME);
+        when(m_JobProvider.getJobDetails(JOB_ID)).thenReturn(Optional.of(m_Job));
     }
 
     @Test
@@ -381,7 +385,6 @@ public class ScoresUpdaterTest
             throws UnknownJobException, NativeProcessRunException
     {
         m_Job.getAnalysisConfig().setBucketSpan(86400L);
-        createScoresUpdater();
         // Bucket span is a day, so default window should be 8640000000 ms
 
         Bucket bucket = new Bucket();
@@ -408,8 +411,7 @@ public class ScoresUpdaterTest
             throws UnknownJobException, NativeProcessRunException
     {
         // 1 day
-        m_Job.getAnalysisConfig().setRenormalizationWindow(1L);
-        createScoresUpdater();
+        m_Job.setRenormalizationWindow(1L);
 
         Bucket bucket = new Bucket();
         bucket.setId("0");
@@ -428,38 +430,6 @@ public class ScoresUpdaterTest
         verifyNormaliserWasInvoked(1);
         verifyBucketWasUpdated(bucket);
         verifyBucketRecordsWereNotUpdated("0");
-    }
-
-    @Test
-    public void testRenormalizationWindow_GivenNullAnalysisConfig()
-            throws UnknownJobException, NativeProcessRunException
-    {
-        m_Job.setAnalysisConfig(null);
-        createScoresUpdater();
-
-        Bucket bucket = new Bucket();
-        bucket.setId("0");
-        bucket.setAnomalyScore(42.0);
-        bucket.addBucketInfluencer(createTimeBucketInfluencer(0.04, 42.0));
-        bucket.setMaxNormalizedProbability(50.0);
-        bucket.raiseBigNormalisedUpdateFlag();
-
-        Deque<Bucket> buckets = new ArrayDeque<>();
-        buckets.add(bucket);
-        givenProviderReturnsBuckets(0, 3600L, buckets);
-        givenProviderReturnsNoInfluencers(0, 3600L);
-
-        m_ScoresUpdater.update(QUANTILES_STATE, 3600L, m_Logger);
-
-        verifyNormaliserWasInvoked(1);
-        verifyBucketWasUpdated(bucket);
-        verifyBucketRecordsWereNotUpdated("0");
-    }
-
-    private void createScoresUpdater()
-    {
-        m_ScoresUpdater = new ScoresUpdater(m_Job, m_JobProvider, m_JobRenormaliser,
-                (jobId, logger) -> m_Normaliser);
     }
 
     private void verifyNormaliserWasInvoked(int times) throws NativeProcessRunException,

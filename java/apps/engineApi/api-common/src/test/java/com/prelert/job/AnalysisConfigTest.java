@@ -199,7 +199,6 @@ public class AnalysisConfigTest
         config1.setInfluencers(Arrays.asList("myInfluencer"));
         config1.setLatency(3600L);
         config1.setPeriod(100L);
-        config1.setRenormalizationWindow(86400L);
         config1.setSummaryCountFieldName("sumCount");
 
         AnalysisConfig config2 = new AnalysisConfig();
@@ -212,7 +211,6 @@ public class AnalysisConfigTest
         config2.setInfluencers(Arrays.asList("myInfluencer"));
         config2.setLatency(3600L);
         config2.setPeriod(100L);
-        config2.setRenormalizationWindow(86400L);
         config2.setSummaryCountFieldName("sumCount");
 
         assertTrue(config1.equals(config2));
@@ -310,19 +308,6 @@ public class AnalysisConfigTest
 
         AnalysisConfig config2 = new AnalysisConfig();
         config2.setPeriod(3600L);
-
-        assertFalse(config1.equals(config2));
-        assertFalse(config2.equals(config1));
-    }
-
-    @Test
-    public void testEquals_GivenDifferentRenormalizationWindow()
-    {
-        AnalysisConfig config1 = new AnalysisConfig();
-        config1.setRenormalizationWindow(1800L);
-
-        AnalysisConfig config2 = new AnalysisConfig();
-        config2.setRenormalizationWindow(3600L);
 
         assertFalse(config1.equals(config2));
         assertFalse(config2.equals(config1));

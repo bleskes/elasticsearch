@@ -515,6 +515,13 @@ public class JobManager
         m_JobProvider.updateJob(jobId, update);
     }
 
+    public void setRenormalizationWindow(String jobId, Long renormalizationWindow) throws UnknownJobException
+    {
+        Map<String, Object> update = new HashMap<>();
+        update.put(JobDetails.RENORMALIZATION_WINDOW, renormalizationWindow);
+        m_JobProvider.updateJob(jobId, update);
+    }
+
     /**
      * Flush the running job, ensuring that the native process has had the
      * opportunity to process all data previously sent to it with none left
