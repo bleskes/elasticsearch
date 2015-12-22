@@ -65,7 +65,7 @@ public class DataStreamer
      * e.g. Tue_22_Apr_2014_091033
      */
     private static final DateTimeFormatter PERSISTED_FILE_NAME_DATE_FORMAT =
-            DateTimeFormatter.ofPattern("EEE_d_MMM_yyyy_HHmmss");
+            DateTimeFormatter.ofPattern("EEE_d_MMM_yyyy_HHmmss.SSS");
 
     private final boolean m_ShouldPersistDataToDisk;
     private final String m_BaseDirectory;
