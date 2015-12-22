@@ -61,6 +61,7 @@ import com.prelert.job.alert.Alert;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.results.AnomalyRecord;
 import com.prelert.job.results.Bucket;
+import com.prelert.rs.client.AlertRequestBuilder;
 import com.prelert.rs.client.EngineApiClient;
 import com.prelert.rs.data.ApiError;
 import com.prelert.rs.data.SingleDocument;
@@ -75,7 +76,7 @@ import com.prelert.rs.data.SingleDocument;
  * especially on machines with few cores so the the tests are run
  * sequentially (apart from one where two jobs are run simultaneously).
  * Without rewriting the API Client the fine grain sychnronisation control
- * needed to make this test deterministic is non available - be aware the
+ * needed to make this test deterministic is not available - be aware the
  * test will probably fail on single core machines.
  *
  * <br>Returns a non-zero value if the tests fail.
@@ -251,13 +252,29 @@ public class AlertSubscriptionTest
 			return m_TestPassed;
 		}
 
+		private Alert getAlert(long timeout) throws IOException
+		{
+		    AlertRequestBuilder builder = new AlertRequestBuilder(m_Client, m_JobId).timeout(timeout);
+
+		    if (m_ScoreThreshold != null)
+		    {
+		        builder.score(m_ScoreThreshold);
+		    }
+		    if (m_ProbabiltyThreshold != null)
+		    {
+		        builder.probability(m_ProbabiltyThreshold);
+		    }
+
+		    return builder.get();
+		}
+
 		@Override
 		public void run()
 		{
 			try
 			{
-                Alert alert = m_Client.pollJobAlert(m_JobId, 3, m_ScoreThreshold,
-                        m_ProbabiltyThreshold);
+                Alert alert = getAlert(3);
+
 
 				// This alert will timeout as the upload thread is still waiting
 				// on the latch
@@ -278,8 +295,8 @@ public class AlertSubscriptionTest
 				}
 
 				final int TIMEOUT = 30;
-                alert = m_Client.pollJobAlert(m_JobId, TIMEOUT, m_ScoreThreshold,
-                        m_ProbabiltyThreshold);
+                alert = getAlert(TIMEOUT);
+
 
 				// may get errors about the job not running if the data
 				// upload hasn't started
@@ -288,8 +305,7 @@ public class AlertSubscriptionTest
 					ApiError err = m_Client.getLastError();
 					test(err.getErrorCode() == ErrorCodes.JOB_NOT_RUNNING);
 
-                    alert = m_Client.pollJobAlert(m_JobId, TIMEOUT, m_ScoreThreshold,
-                            m_ProbabiltyThreshold);
+	                alert = getAlert(TIMEOUT);
 
 					if (m_Quit)
 					{
@@ -493,19 +509,19 @@ public class AlertSubscriptionTest
 		EngineApiClient client = new EngineApiClient(baseUrl);
 		setupJobs(client);
 
-		Alert alert = client.pollJobAlert("non-existing-job", 5, null, null);
+        Alert alert = new AlertRequestBuilder(client, "non-existing-job").timeout(5).get();
 		test(alert == null);
 		ApiError error = client.getLastError();
 		test(error != null);
 		test(error.getErrorCode() == ErrorCodes.INVALID_THRESHOLD_ARGUMENT);
 
-		alert = client.pollJobAlert("non-existing-job", 5, 10.0, null);
+		alert = new AlertRequestBuilder(client, "non-existing-job").timeout(5).score(10.0).get();
 		test(alert == null);
 		error = client.getLastError();
 		test(error != null);
 		test(error.getErrorCode() == ErrorCodes.MISSING_JOB_ERROR);
 
-		alert = client.pollJobAlert(ALERTING_JOB_1, 5, 10.0, null);
+	    alert = new AlertRequestBuilder(client, ALERTING_JOB_1).timeout(5).score(10.0).get();
 		test(alert == null);
 		error = client.getLastError();
 		test(error != null);

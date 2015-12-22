@@ -65,7 +65,6 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.JobDetails;
-import com.prelert.job.alert.Alert;
 import com.prelert.job.results.CategoryDefinition;
 import com.prelert.rs.data.ApiError;
 import com.prelert.rs.data.DataPostResponse;
@@ -766,78 +765,6 @@ public class EngineApiClient implements Closeable
     }
 
     /**
-     * Long poll an alert from the job. Blocks until the alert occurs or the
-     * timeout period expires.
-     * If <code>timeout</code> is not null then wait <code>timeout</code> seconds
-     *
-     * @param jobId The job id
-     * @param timeout Timeout the request after this many seconds.
-     * If <code>null</code> then use the default.
-     * @param anomalyScoreThreshold Alert if a record has an anomalyScore threshold
-     * &gt;= this value. This should be in the range 0-100, ignored if <code>null</code>.
-     * @param maxNormalizedProbability Alert if a bucket's maxNormalizedProbability
-     * is &gt;= this value. This should be in the range 0-100, ignored if <code>null</code>.
-     *
-     * @return
-     * @throws JsonParseException
-     * @throws JsonMappingException
-     * @throws IOException
-     */
-    public Alert pollJobAlert(String jobId, Integer timeout, Double anomalyScoreThreshold,
-            Double maxNormalizedProbability)
-    throws JsonParseException, JsonMappingException, IOException
-    {
-        String url = m_BaseUrl + "/alerts_longpoll/" + jobId;
-        char queryChar = '?';
-        if (timeout != null)
-        {
-            url += "?timeout=" + timeout;
-            queryChar = '&';
-        }
-
-        if (anomalyScoreThreshold != null)
-        {
-            url += queryChar + "score=" + anomalyScoreThreshold;
-            queryChar = '&';
-        }
-
-        if (maxNormalizedProbability != null)
-        {
-            url += queryChar + "probability=" + maxNormalizedProbability;
-        }
-
-
-        HttpGet get = new HttpGet(url);
-
-        try (CloseableHttpResponse response = m_HttpClient.execute(get))
-        {
-            HttpEntity entity = response.getEntity();
-            String content = EntityUtils.toString(entity);
-
-            if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK)
-            {
-                Alert alert = m_JsonMapper.readValue(content, Alert.class);
-                m_LastError = null;
-                return alert;
-            }
-            else
-            {
-                String msg = String.format(
-                        "long poll alert returned status code %d for job %s. "
-                        + "Returned content = %s",
-                        response.getStatusLine().getStatusCode(), jobId, content);
-
-                LOGGER.error(msg);
-
-                m_LastError = m_JsonMapper.readValue(content,
-                        new TypeReference<ApiError>() {} );
-            }
-        }
-
-        return null;
-    }
-
-    /**
      * Stream data from <code>inputStream</code> to the preview service.
      *
      * @param jobId The Job's unique Id
@@ -1064,7 +991,28 @@ public class EngineApiClient implements Closeable
     throws JsonParseException, JsonMappingException, IOException
     {
         HttpGet get = new HttpGet(fullUrl);
-        return get(get,typeRef);
+        return get(get, typeRef, false);
+    }
+
+    /**
+     * A generic HTTP GET to any Url.
+     * See the documentation for {@linkplain #get(URI, TypeReference)}
+     *
+     * @param fullUrl
+     * @param typeRef
+     * @param errorOn404 If true then upon HTTP 404 status code the response is
+     * attempted to be parsed as an {@linkplain ApiError}
+     * @return
+     * @throws JsonParseException
+     * @throws JsonMappingException
+     * @throws IOException
+     * @see get(URI, TypeReference)
+     */
+    public <T> T get(String fullUrl, TypeReference<T> typeRef, boolean errorOn404)
+    throws JsonParseException, JsonMappingException, IOException
+    {
+        HttpGet get = new HttpGet(fullUrl);
+        return get(get, typeRef, errorOn404);
     }
 
     /**
@@ -1083,6 +1031,7 @@ public class EngineApiClient implements Closeable
      *
      * @param uri
      * @param typeRef
+     * @param errorOn404 If true 404s are treated as errors
      * @return A new T or <code>null</code>
      * @throws JsonParseException
      * @throws JsonMappingException
@@ -1093,10 +1042,10 @@ public class EngineApiClient implements Closeable
     throws JsonParseException, JsonMappingException, IOException
     {
         HttpGet get = new HttpGet(uri);
-        return get(get,typeRef);
+        return get(get, typeRef, false);
     }
 
-    private <T> T get(HttpGet get, TypeReference<T> typeRef)
+    private <T> T get(HttpGet get, TypeReference<T> typeRef, boolean errorOn404)
     throws JsonParseException, JsonMappingException, IOException
     {
         try (CloseableHttpResponse response = m_HttpClient.execute(get))
@@ -1106,8 +1055,7 @@ public class EngineApiClient implements Closeable
 
             // 404 errors return empty paging docs so still read them
             if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK ||
-                response.getStatusLine().getStatusCode() == HttpStatus.SC_NOT_FOUND)
-
+                (response.getStatusLine().getStatusCode() == HttpStatus.SC_NOT_FOUND && !errorOn404))
             {
                 T docs = m_JsonMapper.readValue(content, typeRef);
                 m_LastError = null;

@@ -86,7 +86,7 @@ public class AlertsLongPoll extends ResourceWithJobManager
             @DefaultValue("90") @QueryParam(TIMEOUT) int timeout,
             @QueryParam(SCORE) Double anomalyScoreThreshold,
             @QueryParam(PROBABILITY) Double normalizedProbabiltyThreshold,
-            @QueryParam(ALERT_ON) String alertTypes,
+            @DefaultValue("bucket") @QueryParam(ALERT_ON) String alertTypes,
             @Suspended final AsyncResponse asyncResponse)
     throws InterruptedException, UnknownJobException
     {

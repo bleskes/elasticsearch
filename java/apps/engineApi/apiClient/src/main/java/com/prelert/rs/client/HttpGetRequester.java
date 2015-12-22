@@ -78,4 +78,14 @@ class HttpGetRequester<T>
         }
         return doc;
     }
+
+    protected T get(String fullUrl, TypeReference<T> typeRef)
+    throws IOException
+    {
+        LOGGER.debug("GET " + fullUrl);
+
+        T doc = m_Client.get(fullUrl, typeRef, true);
+
+        return doc;
+    }
 }

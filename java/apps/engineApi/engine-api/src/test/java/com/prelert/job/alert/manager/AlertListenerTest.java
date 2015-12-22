@@ -196,8 +196,8 @@ public class AlertListenerTest
         return b;
     }
 
-    private AlertTrigger [] createAlertTypes(AlertType type, double a, double b)
+    private AlertTrigger [] createAlertTypes(AlertType type, double score, double normalisedProb)
     {
-        return new AlertTrigger [] {new AlertTrigger(a, b, type)};
+        return new AlertTrigger [] {new AlertTrigger(normalisedProb, score, type)};
     }
 }
