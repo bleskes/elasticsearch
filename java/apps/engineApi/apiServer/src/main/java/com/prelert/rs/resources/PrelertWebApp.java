@@ -50,6 +50,8 @@ import org.apache.log4j.Logger;
 
 import com.prelert.job.alert.manager.AlertManager;
 import com.prelert.job.manager.JobManager;
+import com.prelert.job.persistence.OldResultsRemover;
+import com.prelert.job.persistence.elasticsearch.ElasticsearchBulkDeleter;
 import com.prelert.job.persistence.elasticsearch.ElasticsearchJobDataCountsPersister;
 import com.prelert.job.persistence.elasticsearch.ElasticsearchJobDataPersister;
 import com.prelert.job.persistence.elasticsearch.ElasticsearchJobProvider;
@@ -74,6 +76,7 @@ import com.prelert.rs.provider.SingleDocumentWriter;
 import com.prelert.server.info.ServerInfoFactory;
 import com.prelert.server.info.ServerInfoWriter;
 import com.prelert.server.info.elasticsearch.ElasticsearchServerInfo;
+import com.prelert.utils.scheduler.TaskScheduler;
 
 /**
  * Web application class contains the singleton objects accessed by the
@@ -113,6 +116,7 @@ public class PrelertWebApp extends Application
     private ServerInfoFactory m_ServerInfo;
 
     private ScheduledExecutorService m_ServerStatsSchedule;
+    private TaskScheduler m_OldResultsRemoverSchedule;
 
     public PrelertWebApp()
     {
@@ -138,6 +142,7 @@ public class PrelertWebApp extends Application
         m_ServerInfo = new ElasticsearchServerInfo(esJob.getClient());
 
         writeServerInfoDailyStartingNow();
+        scheduleOldResultsRemovalAtMidnight(esJob);
 
         m_Singletons = new HashSet<>();
         m_Singletons.add(m_JobManager);
@@ -261,6 +266,15 @@ public class PrelertWebApp extends Application
 
         m_ServerStatsSchedule.scheduleAtFixedRate(() -> writer.writeStats(),
                                                    delaySeconds, 3600l * 24l, TimeUnit.SECONDS);
+    }
+
+    private void scheduleOldResultsRemovalAtMidnight(ElasticsearchJobProvider esJob)
+    {
+        OldResultsRemover oldResultsRemover = new OldResultsRemover(esJob,
+                jobId -> new ElasticsearchBulkDeleter(esJob.getClient(), jobId));
+        m_OldResultsRemoverSchedule = TaskScheduler
+                .newMidnightTaskScheduler(() -> oldResultsRemover.removeOldResults());
+        m_OldResultsRemoverSchedule.start();
     }
 
     @Override

@@ -49,7 +49,7 @@ import com.prelert.job.errorcodes.ErrorCodeMatcher;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.manager.JobManager;
 
-public class RenormalizationWindowUpdaterTest
+public class ResultsRetentionDaysUpdaterTest
 {
     @Rule public ExpectedException m_ExpectedException = ExpectedException.none();
 
@@ -69,13 +69,12 @@ public class RenormalizationWindowUpdaterTest
 
         m_ExpectedException.expect(JobConfigurationException.class);
         m_ExpectedException.expectMessage(
-                "Invalid update value for renormalizationWindow: value has to be an exact number of days");
+                "Invalid update value for resultsRetentionDays: value has to be an exact number of days");
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_VALUE));
 
-        new RenormalizationWindowUpdater(m_JobManager, "foo").update(node);
+        new ResultsRetentionDaysUpdater(m_JobManager, "foo").update(node);
     }
-
 
     @Test
     public void testUpdate_GivenNegativeInteger() throws UnknownJobException,
@@ -85,11 +84,11 @@ public class RenormalizationWindowUpdaterTest
 
         m_ExpectedException.expect(JobConfigurationException.class);
         m_ExpectedException.expectMessage(
-                "Invalid update value for renormalizationWindow: value has to be an exact number of days");
+                "Invalid update value for resultsRetentionDays: value has to be an exact number of days");
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_VALUE));
 
-        new RenormalizationWindowUpdater(m_JobManager, "foo").update(node);
+        new ResultsRetentionDaysUpdater(m_JobManager, "foo").update(node);
     }
 
     @Test
@@ -98,9 +97,9 @@ public class RenormalizationWindowUpdaterTest
     {
         JsonNode node = LongNode.valueOf(5);
 
-        new RenormalizationWindowUpdater(m_JobManager, "foo").update(node);
+        new ResultsRetentionDaysUpdater(m_JobManager, "foo").update(node);
 
-        verify(m_JobManager).setRenormalizationWindow("foo", 5L);
+        verify(m_JobManager).setResultsRetentionDays("foo", 5L);
     }
 
     @Test
@@ -109,8 +108,8 @@ public class RenormalizationWindowUpdaterTest
     {
         JsonNode node = NullNode.getInstance();
 
-        new RenormalizationWindowUpdater(m_JobManager, "foo").update(node);
+        new ResultsRetentionDaysUpdater(m_JobManager, "foo").update(node);
 
-        verify(m_JobManager).setRenormalizationWindow("foo", null);
+        verify(m_JobManager).setResultsRetentionDays("foo", null);
     }
 }

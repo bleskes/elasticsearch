@@ -69,6 +69,7 @@ public class JobDetails
     public static final String DESCRIPTION = "description";
     public static final String MODEL_DEBUG_CONFIG = "modelDebugConfig";
     public static final String RENORMALIZATION_WINDOW = "renormalizationWindow";
+    public static final String RESULTS_RETENTION_DAYS = "resultsRetentionDays";
 
     public static final String TYPE = "job";
 
@@ -90,6 +91,7 @@ public class JobDetails
     private ModelDebugConfig m_ModelDebugConfig;
     private DataCounts m_Counts;
     private Long m_RenormalizationWindow;
+    private Long m_ResultsRetentionDays;
 
     /* These URIs are transient they don't need to be persisted */
     private URI m_Location;
@@ -134,6 +136,7 @@ public class JobDetails
 
         invokeIfNotNull(jobConfig.getDataDescription(), dd -> m_DataDescription = dd);
         m_RenormalizationWindow = jobConfig.getRenormalizationWindow();
+        m_ResultsRetentionDays = jobConfig.getResultsRetentionDays();
     }
 
     /**
@@ -161,6 +164,7 @@ public class JobDetails
         m_AnalysisLimits = details.getAnalysisLimits();
         m_DataDescription = details.getDataDescription();
         m_RenormalizationWindow = details.getRenormalizationWindow();
+        m_ResultsRetentionDays = details.getResultsRetentionDays();
         m_Transforms = details.getTransforms();
 
         // only override these if explicitly set
@@ -170,6 +174,7 @@ public class JobDetails
         invokeIfNotNull(jobConfig.getDataDescription(), dd -> m_DataDescription = dd);
         invokeIfNotNull(jobConfig.getDescription(), d -> m_Description = d);
         invokeIfNotNull(jobConfig.getRenormalizationWindow(), rw -> m_RenormalizationWindow = rw);
+        invokeIfNotNull(jobConfig.getResultsRetentionDays(), rrd -> m_ResultsRetentionDays = rrd);
         invokeIfNotNull(jobConfig.getTransforms(), t -> m_Transforms = t);
     }
 
@@ -528,6 +533,16 @@ public class JobDetails
         m_RenormalizationWindow = renormalizationWindow;
     }
 
+    public Long getResultsRetentionDays()
+    {
+        return m_ResultsRetentionDays;
+    }
+
+    public void setResultsRetentionDays(Long resultsRetentionDays)
+    {
+        m_ResultsRetentionDays = resultsRetentionDays;
+    }
+
     /**
      * Prints the more salient fields in a JSON-like format suitable for logging.
      * If every field was written it would spam the log file.
@@ -579,6 +594,7 @@ public class JobDetails
                 Objects.equals(this.m_Transforms, that.m_Transforms) &&
                 Objects.equals(this.m_Counts, that.m_Counts) &&
                 Objects.equals(this.m_RenormalizationWindow, that.m_RenormalizationWindow) &&
+                Objects.equals(this.m_ResultsRetentionDays, that.m_ResultsRetentionDays) &&
                 Objects.equals(this.m_Location, that.m_Location) &&
                 Objects.equals(this.m_DataEndpoint, that.m_DataEndpoint) &&
                 Objects.equals(this.m_CategoryDefinitionsEndpoint, that.m_CategoryDefinitionsEndpoint) &&
@@ -593,7 +609,8 @@ public class JobDetails
         return Objects.hash(m_JobId, m_Description, m_Status, m_CreateTime, m_FinishedTime,
                 m_LastDataTime, m_Timeout, m_AnalysisConfig, m_AnalysisLimits, m_DataDescription,
                 m_ModelDebugConfig, m_ModelSizeStats, m_Transforms, m_Counts,
-                m_RenormalizationWindow, m_Location, m_DataEndpoint, m_CategoryDefinitionsEndpoint,
-                m_BucketsEndpoint, m_RecordsEndpoint, m_AlertsLongPollEndpoint);
+                m_RenormalizationWindow, m_ResultsRetentionDays, m_Location, m_DataEndpoint,
+                m_CategoryDefinitionsEndpoint, m_BucketsEndpoint, m_RecordsEndpoint,
+                m_AlertsLongPollEndpoint);
     }
 }
