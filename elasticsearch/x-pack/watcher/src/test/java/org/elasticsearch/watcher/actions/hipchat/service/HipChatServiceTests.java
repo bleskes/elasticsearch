@@ -88,63 +88,48 @@ public class HipChatServiceTests extends AbstractWatcherIntegrationTestCase {
         HipChatAccount account = service.getAccount("v1_account");
         assertThat(account, notNullValue());
         SentMessages messages = account.send(hipChatMessage);
-        assertThat(messages.count(), is(2));
-        for (SentMessages.SentMessage message : messages) {
-            assertThat("Expected no failures, but got [" + message.failureReason + "]", message.successful(), is(true));
-            assertThat(message.request, notNullValue());
-            assertThat(message.response, notNullValue());
-            assertThat(message.response.status(), lessThan(300));
-        }
+        assertSentMessagesAreValid(2, messages);
     }
 
     public void testSendMessageIntegrationAccount() throws Exception {
         HipChatService service = getInstanceFromMaster(HipChatService.class);
+        HipChatMessage.Color color = randomFrom(HipChatMessage.Color.values());
         HipChatMessage hipChatMessage = new HipChatMessage(
-                "/code HipChatServiceIT#testSendMessage_IntegrationAccount",
+                "/code HipChatServiceIT#testSendMessage_IntegrationAccount colored " + color.value(),
                 null, // custom rooms are unsupported by integration profiles
                 null, // users are unsupported by integration profiles
                 null, // custom "from" is not supported by integration profiles
                 HipChatMessage.Format.TEXT,
-                randomFrom(HipChatMessage.Color.values()),
+                color,
                 true);
 
         HipChatAccount account = service.getAccount("integration_account");
         assertThat(account, notNullValue());
         SentMessages messages = account.send(hipChatMessage);
-        assertThat(messages.count(), is(1));
-        for (SentMessages.SentMessage message : messages) {
-            assertThat("Expected no failures, but got [" + message.failureReason + "]", message.successful(), is(true));
-            assertThat(message.request, notNullValue());
-            assertThat(message.response, notNullValue());
-            assertThat(message.response.status(), lessThan(300));
-        }
+        assertSentMessagesAreValid(1, messages);
     }
 
     public void testSendMessageUserAccount() throws Exception {
         HipChatService service = getInstanceFromMaster(HipChatService.class);
+        HipChatMessage.Color color = randomFrom(HipChatMessage.Color.values());
         HipChatMessage hipChatMessage = new HipChatMessage(
-                "/code HipChatServiceIT#testSendMessage_UserAccount",
+                "/code HipChatServiceIT#testSendMessage_UserAccount colored " + color.value(),
                 new String[] { "test-watcher", "test-watcher-2" },
                 new String[] { "watcher@elastic.co" },
                 null, // custom "from" is not supported by integration profiles
                 HipChatMessage.Format.TEXT,
-                randomFrom(HipChatMessage.Color.values()),
+                color,
                 false);
 
         HipChatAccount account = service.getAccount("user_account");
         assertThat(account, notNullValue());
         SentMessages messages = account.send(hipChatMessage);
-        assertThat(messages.count(), is(3));
-        for (SentMessages.SentMessage message : messages) {
-            assertThat("Expected no failures, but got [" + message.failureReason + "]", message.successful(), is(true));
-            assertThat(message.request, notNullValue());
-            assertThat(message.response, notNullValue());
-            assertThat(message.response.status(), lessThan(300));
-        }
+        assertSentMessagesAreValid(3, messages);
     }
 
     public void testWatchWithHipChatAction() throws Exception {
         HipChatAccount.Profile profile = randomFrom(HipChatAccount.Profile.values());
+        HipChatMessage.Color color = randomFrom(HipChatMessage.Color.values());
         String account;
         HipChatAction.Builder actionBuilder;
         switch (profile) {
@@ -154,7 +139,7 @@ public class HipChatServiceTests extends AbstractWatcherIntegrationTestCase {
                         .addRooms("test-watcher", "test-watcher-2")
                         .addUsers("watcher@elastic.co")
                         .setFormat(HipChatMessage.Format.TEXT)
-                        .setColor(randomFrom(HipChatMessage.Color.values()))
+                        .setColor(color)
                         .setNotify(false);
                 break;
 
@@ -162,7 +147,7 @@ public class HipChatServiceTests extends AbstractWatcherIntegrationTestCase {
                 account = "integration_account";
                 actionBuilder = hipchatAction(account, "/code {{ctx.payload.ref}}")
                         .setFormat(HipChatMessage.Format.TEXT)
-                        .setColor(randomFrom(HipChatMessage.Color.values()))
+                        .setColor(color)
                         .setNotify(false);
                 break;
 
@@ -173,7 +158,7 @@ public class HipChatServiceTests extends AbstractWatcherIntegrationTestCase {
                         .addRooms("test-watcher", "test-watcher-2")
                         .setFrom("watcher-test")
                         .setFormat(HipChatMessage.Format.TEXT)
-                        .setColor(randomFrom(HipChatMessage.Color.values()))
+                        .setColor(color)
                         .setNotify(false);
         }
 
@@ -201,5 +186,15 @@ public class HipChatServiceTests extends AbstractWatcherIntegrationTestCase {
 
         assertThat(response, notNullValue());
         assertThat(response.getHits().getTotalHits(), is(1L));
+    }
+
+    private void assertSentMessagesAreValid(int expectedMessageSize, SentMessages messages) {
+        assertThat(messages.count(), is(expectedMessageSize));
+        for (SentMessages.SentMessage message : messages) {
+            assertThat("Expected no failures, but got [" + message.failureReason + "]", message.successful(), is(true));
+            assertThat(message.request, notNullValue());
+            assertThat(message.response, notNullValue());
+            assertThat(message.response.status(), lessThan(300));
+        }
     }
 }
