@@ -72,6 +72,12 @@ public abstract class AlertObserver
 
         for (AlertTrigger trigger : m_Triggers)
         {
+            boolean skipInterimResults = bucket.isInterim() && !trigger.isIncludeInterim();
+            if (skipInterimResults)
+            {
+                continue;
+            }
+
             switch (trigger.getAlertType())
             {
             case BUCKET:

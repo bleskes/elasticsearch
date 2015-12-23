@@ -40,11 +40,23 @@ public class AlertTrigger
 
     private final AlertType m_AlertType;
 
+    private final boolean m_IncludeInterim;
+
     public AlertTrigger(Double normlizedProbThreshold, Double anomalyThreshold, AlertType type)
     {
         m_NormalisedThreshold = normlizedProbThreshold;
         m_AnomalyThreshold = anomalyThreshold;
         m_AlertType = type;
+        m_IncludeInterim = false;
+    }
+
+    public AlertTrigger(Double normlizedProbThreshold, Double anomalyThreshold,
+                        AlertType type, boolean includeInterim)
+    {
+        m_NormalisedThreshold = normlizedProbThreshold;
+        m_AnomalyThreshold = anomalyThreshold;
+        m_AlertType = type;
+        m_IncludeInterim = includeInterim;
     }
 
     public Double getAnomalyThreshold()
@@ -60,5 +72,10 @@ public class AlertTrigger
     public AlertType getAlertType()
     {
         return m_AlertType;
+    }
+
+    public boolean isIncludeInterim()
+    {
+        return m_IncludeInterim;
     }
 }

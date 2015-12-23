@@ -76,6 +76,7 @@ public class AlertsLongPoll extends ResourceWithJobManager
     public static final String SCORE = "score";
     public static final String PROBABILITY = "probability";
     public static final String ALERT_ON = "alertOn";
+    public static final String INCLUDE_INTERIM = "includeInterim";
 
 
     @GET
@@ -87,6 +88,7 @@ public class AlertsLongPoll extends ResourceWithJobManager
             @QueryParam(SCORE) Double anomalyScoreThreshold,
             @QueryParam(PROBABILITY) Double normalizedProbabiltyThreshold,
             @DefaultValue("bucket") @QueryParam(ALERT_ON) String alertTypes,
+            @DefaultValue("false") @QueryParam(INCLUDE_INTERIM) boolean includeInterim,
             @Suspended final AsyncResponse asyncResponse)
     throws InterruptedException, UnknownJobException
     {
@@ -118,7 +120,7 @@ public class AlertsLongPoll extends ResourceWithJobManager
         }
 
         AlertTrigger [] alertTriggers = createAlertTriggers(alertTypes, anomalyScoreThreshold,
-                                         normalizedProbabiltyThreshold);
+                                         normalizedProbabiltyThreshold, includeInterim);
 
         AlertManager alertManager = alertManager();
         alertManager.registerRequest(asyncResponse, jobId, m_UriInfo.getBaseUri(),
@@ -127,13 +129,13 @@ public class AlertsLongPoll extends ResourceWithJobManager
 
 
     AlertTrigger [] createAlertTriggers(String requested, Double anomalyScoreThreshold,
-                                        Double normalizedProbabiltyThreshold )
+                                        Double normalizedProbabiltyThreshold, boolean includeInterim)
     throws RestApiException
     {
         String [] split = requested.split(",");
-        AlertTrigger [] triggers = new AlertTrigger[split.length];
 
         Set<String> uniqueSplit = new HashSet<String>(Arrays.<String>asList(split));
+        AlertTrigger [] triggers = new AlertTrigger[uniqueSplit.size()];
 
         int i = 0;
         for (String s : uniqueSplit)
@@ -141,7 +143,7 @@ public class AlertsLongPoll extends ResourceWithJobManager
             try
             {
                 triggers[i++] = new AlertTrigger(normalizedProbabiltyThreshold, anomalyScoreThreshold,
-                                            AlertType.fromString(s));
+                                            AlertType.fromString(s), includeInterim);
             }
             catch (IllegalArgumentException e)
             {

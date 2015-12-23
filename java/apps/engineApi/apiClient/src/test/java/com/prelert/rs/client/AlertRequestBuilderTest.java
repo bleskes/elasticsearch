@@ -83,6 +83,14 @@ public class AlertRequestBuilderTest
     }
 
     @Test
+    public void testGet_GivenIncludeInterim() throws IOException
+    {
+        new AlertRequestBuilder(m_Client, "foo").includeInterim().get();
+        verify(m_Client).get(eq(BASE_URL + AlertRequestBuilder.ENDPOINT + "foo?includeInterim=true"),
+                any(), eq(true));
+    }
+
+    @Test
     public void testGet_GivenAlertOnInfluencers() throws IOException
     {
         new AlertRequestBuilder(m_Client, "foo").alertOnInfluencers().get();

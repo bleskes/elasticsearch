@@ -30,6 +30,7 @@ package com.prelert.job.alert;
 import static org.junit.Assert.*;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.junit.Test;
@@ -191,10 +192,37 @@ public class AlertObserverTest
         assertSame(at, triggered.get(0));
     }
 
+    @Test
+    public void testTriggeredAlerts_OnlyInterimTriggersGivenInterimBucket()
+    {
+        AlertTrigger at = new AlertTrigger(null, 90.0, AlertType.BUCKETINFLUENCER);
+        AlertTrigger atInterim = new AlertTrigger(null, 90.0, AlertType.BUCKETINFLUENCER, true);
+        AlertTrigger at2 = new AlertTrigger(null, 90.0, AlertType.INFLUENCER);
+        AlertObserver ao = new ConcreteObserver(new AlertTrigger [] {at, atInterim, at2});
+
+        Bucket bucket = makeInterimBucket(91.0, 91.0);
+        BucketInfluencer bf = new BucketInfluencer();
+        bf.setAnomalyScore(95.0);
+        bucket.setBucketInfluencers(Arrays.asList(bf));
+
+        List<AlertTrigger> triggered = null;
+        triggered = ao.triggeredAlerts(bucket);
+        assertEquals(1, triggered.size());
+        assertSame(atInterim, triggered.get(0));
+    }
 
     private Bucket makeBucket(double normalisedProb, double anomalyScore)
     {
         Bucket b = new Bucket();
+        b.setAnomalyScore(anomalyScore);
+        b.setMaxNormalizedProbability(normalisedProb);
+        return b;
+    }
+
+    private Bucket makeInterimBucket(double normalisedProb, double anomalyScore)
+    {
+        Bucket b = new Bucket();
+        b.setInterim(true);
         b.setAnomalyScore(anomalyScore);
         b.setMaxNormalizedProbability(normalisedProb);
         return b;

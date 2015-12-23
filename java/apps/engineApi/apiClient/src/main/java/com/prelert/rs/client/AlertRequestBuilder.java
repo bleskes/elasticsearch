@@ -49,6 +49,8 @@ public class AlertRequestBuilder extends BaseJobRequestBuilder<Alert>
     public static final String BUCKET_INFLUENCER = "bucketinfluencer";
     public static final String INFLUENCER = "influencer";
 
+    public static final String INCLUDE_INTERIM = "includeInterim";
+
     public static final String ALERT_ON = "alert";
 
     private Map<String, String> m_Params;
@@ -98,19 +100,40 @@ public class AlertRequestBuilder extends BaseJobRequestBuilder<Alert>
         return this;
     }
 
+    /**
+     * Alert on interim and full results
+     * @return
+     */
+    public AlertRequestBuilder includeInterim()
+    {
+        m_Params.put(INCLUDE_INTERIM, Boolean.toString(true));
+        return this;
+    }
 
+    /**
+     * Alert on bucket results
+     * @return
+     */
     public AlertRequestBuilder alertOnBuckets()
     {
         addAlertType(BUCKET);
         return this;
     }
 
+    /**
+     * Alert on influencer
+     * @return
+     */
     public AlertRequestBuilder alertOnInfluencers()
     {
         addAlertType(INFLUENCER);
         return this;
     }
 
+    /**
+     * Alert on bucket influencer
+     * @return
+     */
     public AlertRequestBuilder alertOnBucketInfluencers()
     {
         addAlertType(BUCKET_INFLUENCER);
