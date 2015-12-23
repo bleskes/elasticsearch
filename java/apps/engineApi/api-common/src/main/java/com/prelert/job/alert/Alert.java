@@ -44,6 +44,7 @@ import com.prelert.job.results.Bucket;
  *  anomaly score</li>
  *  <li>Records - The records that caused the alert if the alert was based on a
  *  normalized probability threshold</li>
+ *  <li>Alert Type see {@linkplain AlertType} the default is {@linkplain AlertType#BUCKET}
  * </ol>
  */
 @JsonInclude(Include.NON_NULL)
@@ -62,9 +63,14 @@ public class Alert
 	private double m_AnomalyScore;
 	private double m_MaxNormalizedProb;
 	private boolean m_IsTimeout;
+	private AlertType m_AlertType;
 	private Bucket m_Bucket;
 	private List<AnomalyRecord> m_Records;
 
+	public Alert()
+	{
+	    m_AlertType = AlertType.BUCKET;
+	}
 
 	public String getJobId()
 	{
@@ -144,6 +150,16 @@ public class Alert
 	public void setRecords(List<AnomalyRecord> records)
 	{
 		m_Records = records;
+	}
+
+	public AlertType getAlertType()
+	{
+	    return m_AlertType;
+	}
+
+	public void setAlertType(AlertType value)
+	{
+	    m_AlertType = value;
 	}
 
 }
