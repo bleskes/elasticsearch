@@ -106,7 +106,7 @@ public class AnomalyRecord
     private String m_FunctionDescription;
     private Double m_Typical;
     private Double m_Actual;
-    private Boolean m_IsInterim;
+    private boolean m_IsInterim;
 
     private String m_FieldName;
 
@@ -330,13 +330,13 @@ public class AnomalyRecord
     }
 
     @JsonProperty("isInterim")
-    public Boolean isInterim()
+    public boolean isInterim()
     {
         return m_IsInterim;
     }
 
     @JsonProperty("isInterim")
-    public void setInterim(Boolean isInterim)
+    public void setInterim(boolean isInterim)
     {
         m_IsInterim = isInterim;
     }

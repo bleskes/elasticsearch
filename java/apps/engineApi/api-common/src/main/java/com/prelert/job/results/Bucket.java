@@ -84,7 +84,7 @@ public class Bucket
     private List<Detector> m_Detectors;
     private List<AnomalyRecord> m_Records;
     private long m_EventCount;
-    private Boolean m_IsInterim;
+    private boolean m_IsInterim;
     private boolean m_HadBigNormalisedUpdate;
     private List<BucketInfluencer> m_BucketInfluencers;
     private List<Influencer> m_Influencers;
@@ -243,13 +243,13 @@ public class Bucket
     }
 
     @JsonProperty("isInterim")
-    public Boolean isInterim()
+    public boolean isInterim()
     {
         return m_IsInterim;
     }
 
     @JsonProperty("isInterim")
-    public void setInterim(Boolean isInterim)
+    public void setInterim(boolean isInterim)
     {
         m_IsInterim = isInterim;
     }

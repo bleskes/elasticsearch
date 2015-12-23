@@ -624,9 +624,7 @@ public class ElasticsearchJobProvider implements JobProvider
             response.getSource().put(Bucket.TIMESTAMP, timestamp);
 
             Bucket bucket = m_ObjectMapper.convertValue(response.getSource(), Bucket.class);
-            if (includeInterim ||
-                bucket.isInterim() == null ||
-                bucket.isInterim() == false)
+            if (includeInterim || bucket.isInterim() == false)
             {
                 if (expand && bucket.getRecordCount() > 0)
                 {

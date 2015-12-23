@@ -198,11 +198,11 @@ public class InterimResultsTest implements Closeable
 
             if (i < FAREQUOTE_NUM_BEFORE_INTERIM_RESULTS_BUCKETS)
             {
-                test(pagedBuckets.get(i).isInterim() == null || pagedBuckets.get(i).isInterim() == false);
+                test(pagedBuckets.get(i).isInterim() == false);
             }
             else
             {
-                test(pagedBuckets.get(i).isInterim() != null && pagedBuckets.get(i).isInterim() == true);
+                test(pagedBuckets.get(i).isInterim() == true);
             }
         }
 
@@ -239,11 +239,11 @@ public class InterimResultsTest implements Closeable
 
             if (i < FAREQUOTE_NUM_BEFORE_INTERIM_RESULTS_BUCKETS)
             {
-                test(pagedBuckets.get(i).isInterim() == null || pagedBuckets.get(i).isInterim() == false);
+                test(pagedBuckets.get(i).isInterim() == false);
             }
             else
             {
-                test(pagedBuckets.get(i).isInterim() != null && pagedBuckets.get(i).isInterim() == true);
+                test(pagedBuckets.get(i).isInterim() == true);
             }
         }
 

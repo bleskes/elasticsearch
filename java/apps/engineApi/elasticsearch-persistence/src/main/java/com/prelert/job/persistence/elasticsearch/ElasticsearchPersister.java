@@ -412,7 +412,8 @@ public class ElasticsearchPersister implements JobResultsPersister
                 .field(Bucket.RECORD_COUNT, bucket.getRecordCount())
                 .field(Bucket.EVENT_COUNT, bucket.getEventCount());
 
-        if (bucket.isInterim() != null)
+
+        if (bucket.isInterim())
         {
             builder.field(Bucket.IS_INTERIM, bucket.isInterim());
         }
@@ -555,7 +556,7 @@ public class ElasticsearchPersister implements JobResultsPersister
         {
             builder.field(AnomalyRecord.ACTUAL, record.getActual());
         }
-        if (record.isInterim() != null)
+        if (record.isInterim())
         {
             builder.field(AnomalyRecord.IS_INTERIM, record.isInterim());
         }
