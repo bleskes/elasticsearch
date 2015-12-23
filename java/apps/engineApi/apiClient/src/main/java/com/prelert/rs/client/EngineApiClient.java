@@ -1031,7 +1031,6 @@ public class EngineApiClient implements Closeable
      *
      * @param uri
      * @param typeRef
-     * @param errorOn404 If true 404s are treated as errors
      * @return A new T or <code>null</code>
      * @throws JsonParseException
      * @throws JsonMappingException
