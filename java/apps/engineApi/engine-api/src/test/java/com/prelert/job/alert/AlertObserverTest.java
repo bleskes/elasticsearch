@@ -49,7 +49,7 @@ public class AlertObserverTest
         }
 
         @Override
-        public void fire(Bucket bucket)
+        public void fire(Bucket bucket, AlertTrigger trigger)
         {
         }
 

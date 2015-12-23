@@ -90,11 +90,12 @@ public class AlertListenerTest
 
         ArgumentCaptor<Alert> argument = ArgumentCaptor.forClass(Alert.class);
 
+        AlertTrigger [] triggers = createAlertTypes(AlertType.BUCKET, 20.0, 30.0);
         AlertListener listener = new AlertListener(response, manager, "foo",
-                createAlertTypes(AlertType.BUCKET, 20.0, 30.0), baseUri);
+                                triggers, baseUri);
 
         Bucket bucket = createBucket();
-        listener.fire(bucket);
+        listener.fire(bucket, triggers[0]);
 
         Mockito.verify(manager, Mockito.times(1)).deregisterResponse(response);
         Mockito.verify(response).resume(argument.capture());
@@ -122,11 +123,12 @@ public class AlertListenerTest
 
         ArgumentCaptor<Alert> argument = ArgumentCaptor.forClass(Alert.class);
 
+        AlertTrigger [] triggers = createAlertTypes(AlertType.BUCKET, 20.0, 30.0);
         AlertListener listener = new AlertListener(response, manager, "foo",
-                createAlertTypes(AlertType.BUCKET, 20.0, 30.0), baseUri);
+                                triggers, baseUri);
 
         Bucket bucket = createBucket();
-        listener.fire(bucket);
+        listener.fire(bucket, triggers[0]);
 
         Mockito.verify(response).resume(argument.capture());
 
@@ -151,11 +153,12 @@ public class AlertListenerTest
 
         ArgumentCaptor<Alert> argument = ArgumentCaptor.forClass(Alert.class);
 
+        AlertTrigger [] triggers = createAlertTypes(AlertType.BUCKET, 80.0, 50.0);
         AlertListener listener = new AlertListener(response, manager, "foo",
-                createAlertTypes(AlertType.BUCKET, 80.0, 50.0), baseUri);
+                triggers, baseUri);
 
         Bucket bucket = createBucket();
-        listener.fire(bucket);
+        listener.fire(bucket, triggers[0]);
 
         Mockito.verify(response).resume(argument.capture());
 

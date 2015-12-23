@@ -239,7 +239,7 @@ public class AutoDetectResultsParserTest
         public double m_NormalisedProb;
 
         @Override
-        public void fire(Bucket bucket)
+        public void fire(Bucket bucket, AlertTrigger trigger)
         {
             m_AlertFired = true;
             m_AnomalyScore = bucket.getAnomalyScore();

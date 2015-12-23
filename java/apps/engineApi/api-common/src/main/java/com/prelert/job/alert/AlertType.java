@@ -27,12 +27,16 @@
 
 package com.prelert.job.alert;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonValue;
+
 
 public enum AlertType
 {
     BUCKET
     {
         @Override
+        @JsonValue
         public String toString()
         {
             return new String("bucket");
@@ -42,6 +46,7 @@ public enum AlertType
     INFLUENCER
     {
         @Override
+        @JsonValue
         public String toString()
         {
             return new String("influencer");
@@ -51,12 +56,14 @@ public enum AlertType
     BUCKETINFLUENCER
     {
         @Override
+        @JsonValue
         public String toString()
         {
             return new String("bucketinfluencer");
         }
     };
 
+    @JsonCreator
     public static AlertType fromString(String str)
     {
         for (AlertType at : AlertType.values())

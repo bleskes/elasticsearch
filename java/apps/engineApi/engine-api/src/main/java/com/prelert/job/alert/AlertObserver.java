@@ -137,6 +137,7 @@ public abstract class AlertObserver
      * Fire the alert with the bucket the alert came from
      *
      * @param bucket
+     * @param tigger The alert trigger that fired the alert
      */
-    public abstract void fire(Bucket bucket);
+    public abstract void fire(Bucket bucket, AlertTrigger trigger);
 }

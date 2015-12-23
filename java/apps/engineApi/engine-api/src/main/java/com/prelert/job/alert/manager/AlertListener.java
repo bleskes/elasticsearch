@@ -65,7 +65,7 @@ class AlertListener extends AlertObserver
     }
 
     @Override
-    public void fire(Bucket bucket)
+    public void fire(Bucket bucket, AlertTrigger trigger)
     {
         LOGGER.info(String.format("Alert fired in bucket %s, probablilty = %f, anomaly score = %f",
                                     bucket.getTimestamp(),
@@ -73,12 +73,13 @@ class AlertListener extends AlertObserver
                                     bucket.getAnomalyScore()));
 
         m_Manager.deregisterResponse(m_Response);
-        m_Response.resume(createAlert(bucket));
+        m_Response.resume(createAlert(bucket, trigger));
     }
 
-    private Alert createAlert(Bucket bucket)
+    private Alert createAlert(Bucket bucket, AlertTrigger trigger)
     {
         Alert alert = new Alert();
+        alert.setAlertType(trigger.getAlertType());
         alert.setTimestamp(new Date());
         alert.setJobId(getJobId());
         alert.setAnomalyScore(bucket.getAnomalyScore());

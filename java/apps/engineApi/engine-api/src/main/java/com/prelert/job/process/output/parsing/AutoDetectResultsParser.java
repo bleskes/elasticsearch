@@ -43,6 +43,7 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import com.prelert.job.ModelSizeStats;
 import com.prelert.job.alert.AlertObserver;
+import com.prelert.job.alert.AlertTrigger;
 import com.prelert.job.persistence.JobResultsPersister;
 import com.prelert.job.process.output.FlushAcknowledgement;
 import com.prelert.job.quantiles.Quantiles;
@@ -285,9 +286,24 @@ public class AutoDetectResultsParser
         persister.commitWrites();
     }
 
+
+    private final class ObserverTriggerPair
+    {
+        AlertObserver m_Observer;
+        AlertTrigger m_Trigger;
+
+        private ObserverTriggerPair(AlertObserver observer, AlertTrigger trigger)
+        {
+            m_Observer = observer;
+            m_Trigger = trigger;
+        }
+    }
+
     private void notifyObservers(Bucket bucket)
     {
-        List<AlertObserver> observersToFire = new ArrayList<>();
+
+
+        List<ObserverTriggerPair> observersToFire = new ArrayList<>();
 
         // one-time alerts so remove them from the list before firing
         synchronized (m_Observers)
@@ -297,17 +313,19 @@ public class AutoDetectResultsParser
             {
                 AlertObserver ao = iter.next();
 
-                if (ao.evaluate(bucket))
+                List<AlertTrigger> triggeredAlerts = ao.triggeredAlerts(bucket);
+                if (triggeredAlerts.isEmpty() == false)
                 {
-                    observersToFire.add(ao);
+                    // only fire on the first alert trigger
+                    observersToFire.add(new ObserverTriggerPair(ao, triggeredAlerts.get(0)));
                     iter.remove();
                 }
             }
         }
 
-        for (AlertObserver ao : observersToFire)
+        for (ObserverTriggerPair pair : observersToFire)
         {
-            ao.fire(bucket);
+            pair.m_Observer.fire(bucket, pair.m_Trigger);
         }
     }
 
