@@ -93,6 +93,7 @@ public class Bucket
     {
         m_Detectors = new ArrayList<>();
         m_Records = Collections.emptyList();
+        m_Influencers = Collections.emptyList();
         m_BucketInfluencers = new ArrayList<>();
     }
 

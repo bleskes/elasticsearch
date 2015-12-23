@@ -51,7 +51,7 @@ public class AlertRequestBuilder extends BaseJobRequestBuilder<Alert>
 
     public static final String INCLUDE_INTERIM = "includeInterim";
 
-    public static final String ALERT_ON = "alert";
+    public static final String ALERT_ON = "alertOn";
 
     private Map<String, String> m_Params;
 

@@ -26,14 +26,20 @@
  ************************************************************/
 package com.prelert.rs.client.integrationtests;
 
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 import org.apache.http.client.ClientProtocolException;
 import org.apache.log4j.ConsoleAppender;
@@ -46,12 +52,16 @@ import com.prelert.job.DataDescription;
 import com.prelert.job.DataDescription.DataFormat;
 import com.prelert.job.Detector;
 import com.prelert.job.JobConfiguration;
+import com.prelert.job.alert.Alert;
+import com.prelert.job.alert.AlertType;
 import com.prelert.job.results.AnomalyRecord;
 import com.prelert.job.results.Bucket;
 import com.prelert.job.results.BucketInfluencer;
 import com.prelert.job.results.Influence;
 import com.prelert.job.results.Influencer;
+import com.prelert.rs.client.AlertRequestBuilder;
 import com.prelert.rs.client.EngineApiClient;
+import com.prelert.rs.client.integrationtests.alertpoll.PollAlertService;
 import com.prelert.rs.data.Pagination;
 
 
@@ -79,6 +89,7 @@ public class InfluencersTest
     private static final String STATUS_CODES_RATES_JOB = "5xx_status_code_rates";
 
     private final EngineApiClient m_WebServiceClient;
+    private final PollAlertService m_PollAlertService;
     private final List<String> m_JobIds;
 
     /**
@@ -87,6 +98,7 @@ public class InfluencersTest
     public InfluencersTest(String baseUrl)
     {
         m_WebServiceClient = new EngineApiClient(baseUrl);
+        m_PollAlertService = new PollAlertService();
         m_JobIds = new ArrayList<>();
     }
 
@@ -100,8 +112,10 @@ public class InfluencersTest
      * @param filePath directory containing firewall.log
      * @throws ClientProtocolException
      * @throws IOException
+     * @throws ExecutionException
+     * @throws InterruptedException
      */
-    private void doFirewallJob(String filePath) throws ClientProtocolException, IOException
+    private void doFirewallJob(String filePath) throws ClientProtocolException, IOException, InterruptedException, ExecutionException
     {
         m_WebServiceClient.deleteJob(FIREWALL_JOB);
 
@@ -128,8 +142,41 @@ public class InfluencersTest
         createJob(config);
 
         File data = new File(filePath, "firewall.log");
+
+
+        // write the header to start the job
+        BufferedReader reader = new BufferedReader(new FileReader(data));
+        String header = reader.readLine();
+
+        ByteArrayInputStream is = new ByteArrayInputStream(header.getBytes(StandardCharsets.UTF_8));
+        m_WebServiceClient.streamingUpload(FIREWALL_JOB, is, false);
+        reader.close();
+
+        final double score = 10.0;
+
+        // Alert on any influencer result
+        AlertRequestBuilder requestBuilder = new
+                AlertRequestBuilder(m_WebServiceClient, FIREWALL_JOB)
+                                    .alertOnBucketInfluencers()
+                                    .timeout(10l)
+                                    .score(score);
+
+
+
+        Future<Alert> alertFuture = m_PollAlertService.longPoll(requestBuilder);
+
         m_WebServiceClient.fileUpload(FIREWALL_JOB, data, false);
         m_WebServiceClient.closeJob(FIREWALL_JOB);
+
+        Alert alert = alertFuture.get();
+        test(alert.isTimeout() == false);
+        test(alert.getAlertType() == AlertType.BUCKETINFLUENCER);
+        test(alert.getBucket().getBucketInfluencers().size() > 0);
+        for (BucketInfluencer bi : alert.getBucket().getBucketInfluencers())
+        {
+            test(bi.getAnomalyScore() >= score);
+        }
+
 
         Pagination<AnomalyRecord> records = m_WebServiceClient.prepareGetRecords(FIREWALL_JOB).get();
 
@@ -160,8 +207,11 @@ public class InfluencersTest
      * @param filePath
      * @throws ClientProtocolException
      * @throws IOException
+     * @throws ExecutionException
+     * @throws InterruptedException
      */
-    private void doAuthDJob(String filePath) throws ClientProtocolException, IOException
+    private void doAuthDJob(String filePath)
+    throws ClientProtocolException, IOException, InterruptedException, ExecutionException
     {
         m_WebServiceClient.deleteJob(SSH_AUTH_JOB);
 
@@ -187,9 +237,42 @@ public class InfluencersTest
 
         createJob(config);
 
+
         File data = new File(filePath, "pam_authd.log");
+
+        // write the header to start the job
+        BufferedReader reader = new BufferedReader(new FileReader(data));
+        String header = reader.readLine();
+
+        ByteArrayInputStream is = new ByteArrayInputStream(header.getBytes(StandardCharsets.UTF_8));
+        m_WebServiceClient.streamingUpload(SSH_AUTH_JOB, is, false);
+        reader.close();
+
+        final double score = 10.0;
+
+        // Alert on any influencer result
+        AlertRequestBuilder requestBuilder = new
+                AlertRequestBuilder(m_WebServiceClient, SSH_AUTH_JOB)
+                                    .alertOnInfluencers()
+                                    .timeout(10l)
+                                    .score(score);
+
+
+
+        Future<Alert> alertFuture = m_PollAlertService.longPoll(requestBuilder);
+
         m_WebServiceClient.fileUpload(SSH_AUTH_JOB, data, false);
         m_WebServiceClient.closeJob(SSH_AUTH_JOB);
+
+        Alert alert = alertFuture.get();
+        test(alert.isTimeout() == false);
+        test(alert.getAlertType() == AlertType.INFLUENCER);
+        test(alert.getBucket().getInfluencers().size() > 0);
+        for (Influencer inf : alert.getBucket().getInfluencers())
+        {
+            test(inf.getAnomalyScore() >= score);
+        }
+
 
         Pagination<AnomalyRecord> records = m_WebServiceClient.prepareGetRecords(SSH_AUTH_JOB).get();
 
@@ -495,7 +578,7 @@ public class InfluencersTest
     }
 
     public static void main(String[] args) throws ClientProtocolException, IOException,
-            InterruptedException
+            InterruptedException, ExecutionException
     {
         // configure log4j
         ConsoleAppender console = new ConsoleAppender();
@@ -531,6 +614,8 @@ public class InfluencersTest
         test.doBucketOnlyInfluencers(statusCodePath);
 
         test.deleteJobs();
+
+        test.m_PollAlertService.shutdown();
 
         LOGGER.info("All tests passed Ok");
     }

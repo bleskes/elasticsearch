@@ -94,7 +94,7 @@ public class AlertRequestBuilderTest
     public void testGet_GivenAlertOnInfluencers() throws IOException
     {
         new AlertRequestBuilder(m_Client, "foo").alertOnInfluencers().get();
-        verify(m_Client).get(eq(BASE_URL + AlertRequestBuilder.ENDPOINT + "foo?alert=influencer"),
+        verify(m_Client).get(eq(BASE_URL + AlertRequestBuilder.ENDPOINT + "foo?alertOn=influencer"),
                 any(), eq(true));
     }
 
@@ -108,7 +108,7 @@ public class AlertRequestBuilderTest
                         .get();
 
         verify(m_Client).get(eq(BASE_URL + AlertRequestBuilder.ENDPOINT +
-                "foo?alert=influencer,bucket,bucketinfluencer"), any(), eq(true));
+                "foo?alertOn=influencer,bucket,bucketinfluencer"), any(), eq(true));
     }
 
     @Test
@@ -121,6 +121,6 @@ public class AlertRequestBuilderTest
                         .get();
 
         verify(m_Client).get(eq(BASE_URL + AlertRequestBuilder.ENDPOINT +
-                "foo?score=20.0&alert=influencer&timeout=50"), any(), eq(true));
+                "foo?score=20.0&alertOn=influencer&timeout=50"), any(), eq(true));
     }
 }

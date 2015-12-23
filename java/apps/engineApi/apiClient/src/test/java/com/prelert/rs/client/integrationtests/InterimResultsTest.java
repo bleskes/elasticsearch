@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -42,6 +42,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 import org.apache.http.client.ClientProtocolException;
 import org.apache.log4j.ConsoleAppender;
@@ -54,15 +56,19 @@ import com.prelert.job.DataDescription;
 import com.prelert.job.DataDescription.DataFormat;
 import com.prelert.job.Detector;
 import com.prelert.job.JobConfiguration;
+import com.prelert.job.alert.Alert;
 import com.prelert.job.results.AnomalyRecord;
 import com.prelert.job.results.Bucket;
+import com.prelert.rs.client.AlertRequestBuilder;
 import com.prelert.rs.client.EngineApiClient;
+import com.prelert.rs.client.integrationtests.alertpoll.PollAlertService;
 import com.prelert.rs.data.Pagination;
 import com.prelert.rs.data.SingleDocument;
 
 
 /**
  * Tests the interim results for both buckets and records endpoints.
+ * Also poll for an alert from an interim bucket result
  * <br>
  * The system property 'prelert.test.data.home' must be set and point
  * to a directory containing the file:
@@ -94,6 +100,7 @@ public class InterimResultsTest implements Closeable
     public static final String API_BASE_URL = "http://localhost:8080/engine/v2";
 
     private final EngineApiClient m_WebServiceClient;
+    private final PollAlertService m_PollAlertService;
     private final String m_BaseUrl;
 
 
@@ -104,6 +111,7 @@ public class InterimResultsTest implements Closeable
     {
         m_WebServiceClient = new EngineApiClient(baseUrl);
         m_BaseUrl = baseUrl;
+        m_PollAlertService = new PollAlertService();
     }
 
     @Override
@@ -549,9 +557,10 @@ public class InterimResultsTest implements Closeable
      * @param args
      * @throws IOException
      * @throws InterruptedException
+     * @throws ExecutionException
      */
     public static void main(String[] args)
-    throws IOException, InterruptedException
+    throws IOException, InterruptedException, ExecutionException
     {
         // configure log4j
         ConsoleAppender console = new ConsoleAppender();
@@ -574,33 +583,62 @@ public class InterimResultsTest implements Closeable
             throw new IllegalStateException("Error property prelert.test.data.home is not set");
         }
 
-        String farequoteJob = TEST_JOB_ID;
 
         InterimResultsTest test = new InterimResultsTest(baseUrl);
         List<String> jobUrls = new ArrayList<>();
 
         // Always delete the test job first in case it is hanging around
         // from a previous run
-        test.m_WebServiceClient.deleteJob(farequoteJob);
-        jobUrls.add(farequoteJob);
+        test.m_WebServiceClient.deleteJob(TEST_JOB_ID);
+        jobUrls.add(TEST_JOB_ID);
 
         File fareQuotePartData = new File(prelertTestDataHome +
                 "/engine_api_integration_test/farequote_part.csv");
         // Farequote test
         test.createFarequoteJob();
-        test.m_WebServiceClient.fileUpload(farequoteJob,
-                fareQuotePartData, false);
-        InterimResultsTest.test(test.m_WebServiceClient.flushJob(farequoteJob, true) == true);
 
-        test.verifyFarequoteInterimBuckets(farequoteJob, false);
-        test.verifyFarequoteInterimBuckets(farequoteJob, true);
-        test.verifyFarequoteInterimRecords(farequoteJob, false);
-        test.verifyFarequoteInterimRecords(farequoteJob, true);
+
+
+        test.m_WebServiceClient.fileUpload(TEST_JOB_ID, fareQuotePartData, false);
+
+        // Wait a few seconds for the Engine to finish processing the uploaded data
+        // We want to register for an alert in response to the flush
+        try
+        {
+            Thread.sleep(5000);
+        }
+        catch (InterruptedException e)
+        {
+
+        }
+
+        // Register for alerts
+        AlertRequestBuilder requestBuilder = new AlertRequestBuilder(
+                                                    test.m_WebServiceClient, TEST_JOB_ID)
+                                                .includeInterim()
+                                                .score(10.0);
+
+        Future<Alert> alertFuture = test.m_PollAlertService.longPoll(requestBuilder);
+
+        // Flushing should fire an alert
+        InterimResultsTest.test(test.m_WebServiceClient.flushJob(TEST_JOB_ID, true) == true);
+
+
+        Alert alert = alertFuture.get();
+        InterimResultsTest.test(alert.getBucket().isInterim());
+
+        test.m_PollAlertService.shutdown();
+
+
+        test.verifyFarequoteInterimBuckets(TEST_JOB_ID, false);
+        test.verifyFarequoteInterimBuckets(TEST_JOB_ID, true);
+        test.verifyFarequoteInterimRecords(TEST_JOB_ID, false);
+        test.verifyFarequoteInterimRecords(TEST_JOB_ID, true);
 
         test.verifyInterimResultsAreRecalculated();
         //==========================
         // Clean up test jobs
-        InterimResultsTest.test(test.m_WebServiceClient.closeJob(farequoteJob) == true);
+        InterimResultsTest.test(test.m_WebServiceClient.closeJob(TEST_JOB_ID) == true);
         test.deleteJobs(jobUrls);
 
         test.close();

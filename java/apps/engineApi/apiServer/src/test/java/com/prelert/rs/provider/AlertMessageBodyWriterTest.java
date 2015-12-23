@@ -43,6 +43,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.prelert.job.alert.Alert;
+import com.prelert.job.alert.AlertType;
 import com.prelert.job.results.Bucket;
 
 public class AlertMessageBodyWriterTest
@@ -69,6 +70,7 @@ public class AlertMessageBodyWriterTest
         alert.setAnomalyScore(90.0);
         alert.setJobId("foo");
         alert.setTimeout(true);
+        alert.setAlertType(AlertType.BUCKETINFLUENCER);
 
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 
@@ -84,5 +86,6 @@ public class AlertMessageBodyWriterTest
         assertEquals(90.0, readValue.getAnomalyScore(), 0.0000001);
         assertEquals("foo", readValue.getJobId());
         assertTrue(readValue.isTimeout());
+        assertEquals(AlertType.BUCKETINFLUENCER, readValue.getAlertType());
     }
 }
