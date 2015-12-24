@@ -128,6 +128,7 @@ public final class Messages
     public static final String REST_ALERT_MISSING_ARGUMENT = "rest.alert.missing.argument";
     public static final String REST_ALERT_INVALID_TIMEOUT = "rest.alert.invalid.timeout";
     public static final String REST_ALERT_INVALID_THRESHOLD = "rest.alert.invalid.threshold";
+    public static final String REST_ALERT_CANT_USE_PROB = "rest.alert.cant.use.prob";
     public static final String REST_ALERT_INVALID_TYPE = "rest.alert.invalid.type";
 
     public static final String PROCESS_ACTION_CLOSING_JOB = "process.action.closing.job";

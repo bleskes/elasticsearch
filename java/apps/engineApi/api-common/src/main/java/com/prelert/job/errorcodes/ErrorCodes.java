@@ -381,8 +381,12 @@ public enum ErrorCodes
     /**
      * Alert request on an invalid alert type
      */
-    UNKNOWN_ALERT_TYPE(60112);
+    UNKNOWN_ALERT_TYPE(60112),
 
+    /**
+     * Influencers cannot alert on the probability
+     */
+    CANNOT_ALERT_ON_PROB(60113);
 
 
 	private long m_ErrorCode;

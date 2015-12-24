@@ -122,6 +122,10 @@ public class AlertsLongPoll extends ResourceWithJobManager
         AlertTrigger [] alertTriggers = createAlertTriggers(alertTypes, anomalyScoreThreshold,
                                          normalizedProbabiltyThreshold, includeInterim);
 
+
+        checkArgumentsValidForAlertType(anomalyScoreThreshold, normalizedProbabiltyThreshold,
+                                        alertTriggers);
+
         AlertManager alertManager = alertManager();
         alertManager.registerRequest(asyncResponse, jobId, m_UriInfo.getBaseUri(),
                 timeout, alertTriggers);
@@ -149,11 +153,36 @@ public class AlertsLongPoll extends ResourceWithJobManager
             {
                 String msg = Messages.getMessage(Messages.REST_ALERT_INVALID_TYPE, s);
                 LOGGER.info(msg);
-                throw new RestApiException(msg, ErrorCodes.UNKNOWN_ALERT_TYPE, Response.Status.BAD_REQUEST);
+                throw new RestApiException(msg, ErrorCodes.UNKNOWN_ALERT_TYPE,
+                                        Response.Status.BAD_REQUEST);
             }
         }
 
         return triggers;
+    }
+
+    /**
+     * normalizedProbabiltyThreshold can't be used with influencers
+     */
+    private void checkArgumentsValidForAlertType(Double anomalyScoreThreshold,
+                                                Double normalizedProbabiltyThreshold,
+                                                AlertTrigger [] alertTriggers)
+    throws RestApiException
+    {
+        if (anomalyScoreThreshold == null)
+        {
+            //
+            for (AlertTrigger at : alertTriggers)
+            {
+                if (at.getAlertType() != AlertType.BUCKET)
+                {
+                    String msg = Messages.getMessage(Messages.REST_ALERT_CANT_USE_PROB);
+                    LOGGER.info(msg);
+                    throw new RestApiException(msg, ErrorCodes.CANNOT_ALERT_ON_PROB,
+                                            Response.Status.BAD_REQUEST);
+                }
+            }
+        }
     }
 
     private void logEndpointCall(String jobId, Double anomalyScore, Double normalizedProbability)

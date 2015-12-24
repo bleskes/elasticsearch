@@ -46,6 +46,7 @@ import com.prelert.job.alert.AlertTrigger;
 import com.prelert.job.alert.AlertType;
 import com.prelert.job.errorcodes.ErrorCodeMatcher;
 import com.prelert.job.errorcodes.ErrorCodes;
+import com.prelert.job.messages.Messages;
 import com.prelert.rs.provider.RestApiException;
 
 public class AlertsLongPollTest extends ServiceTest
@@ -195,6 +196,30 @@ public class AlertsLongPollTest extends ServiceTest
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.UNKNOWN_ALERT_TYPE));
 
         m_Alerts.pollJob(JOB_ID, 90, 10.0, 10.0, "broken", false, mock(AsyncResponse.class));
+    }
+
+    @Test
+    public void testPollJob_GivenAProbAndInfluencer() throws UnknownJobException,
+            InterruptedException
+    {
+        m_ExpectedException.expect(RestApiException.class);
+        m_ExpectedException.expectMessage(Messages.getMessage(Messages.REST_ALERT_CANT_USE_PROB));
+        m_ExpectedException.expect(
+                ErrorCodeMatcher.hasErrorCode(ErrorCodes.CANNOT_ALERT_ON_PROB));
+
+        m_Alerts.pollJob(JOB_ID, 90, null, 10.0, "influencer", false, mock(AsyncResponse.class));
+    }
+
+    @Test
+    public void testPollJob_GivenAProbAndBucketInfluencer() throws UnknownJobException,
+            InterruptedException
+    {
+        m_ExpectedException.expect(RestApiException.class);
+        m_ExpectedException.expectMessage(Messages.getMessage(Messages.REST_ALERT_CANT_USE_PROB));
+        m_ExpectedException.expect(
+                ErrorCodeMatcher.hasErrorCode(ErrorCodes.CANNOT_ALERT_ON_PROB));
+
+        m_Alerts.pollJob(JOB_ID, 90, null, 10.0, "bucketinfluencer", false, mock(AsyncResponse.class));
     }
 
     @Test
