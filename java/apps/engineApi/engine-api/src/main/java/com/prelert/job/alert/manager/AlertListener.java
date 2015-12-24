@@ -80,6 +80,7 @@ class AlertListener extends AlertObserver
     {
         Alert alert = new Alert();
         alert.setAlertType(trigger.getAlertType());
+        alert.setInterim(bucket.isInterim());
         alert.setTimestamp(new Date());
         alert.setJobId(getJobId());
         alert.setAnomalyScore(bucket.getAnomalyScore());

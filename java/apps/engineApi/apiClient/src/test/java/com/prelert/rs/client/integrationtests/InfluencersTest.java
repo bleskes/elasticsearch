@@ -170,6 +170,7 @@ public class InfluencersTest
 
         Alert alert = alertFuture.get();
         test(alert.isTimeout() == false);
+        test(alert.isInterim() == false);
         test(alert.getAlertType() == AlertType.BUCKETINFLUENCER);
         test(alert.getBucket().getBucketInfluencers().size() > 0);
         for (BucketInfluencer bi : alert.getBucket().getBucketInfluencers())

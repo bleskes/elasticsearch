@@ -58,6 +58,7 @@ import com.prelert.job.DataDescription;
 import com.prelert.job.Detector;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.alert.Alert;
+import com.prelert.job.alert.AlertType;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.results.AnomalyRecord;
 import com.prelert.job.results.Bucket;
@@ -328,6 +329,9 @@ public class AlertSubscriptionTest
 				test(alert != null);
 				test(alert.getJobId().equals(m_JobId));
 				test(alert.isTimeout() == m_ShouldTimeout);
+				test(alert.isInterim() == false);
+				test(alert.getAlertType() == AlertType.BUCKET);
+
 				if (alert.isTimeout() == false)
 				{
 					if (m_ScoreThreshold != null && m_ProbabiltyThreshold != null)

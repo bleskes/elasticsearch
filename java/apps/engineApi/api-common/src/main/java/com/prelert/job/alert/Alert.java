@@ -31,6 +31,7 @@ import java.util.Date;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.prelert.job.results.AnomalyRecord;
 import com.prelert.job.results.Bucket;
@@ -66,6 +67,7 @@ public class Alert
 	private AlertType m_AlertType;
 	private Bucket m_Bucket;
 	private List<AnomalyRecord> m_Records;
+	private boolean m_IsInterim;
 
 	public Alert()
 	{
@@ -161,5 +163,18 @@ public class Alert
 	{
 	    m_AlertType = value;
 	}
+
+	@JsonProperty("isInterim")
+	public boolean isInterim()
+	{
+	    return m_IsInterim;
+	}
+
+	@JsonProperty("isInterim")
+	public void setInterim(boolean value)
+	{
+	    m_IsInterim = value;
+	}
+
 
 }

@@ -625,6 +625,7 @@ public class InterimResultsTest implements Closeable
 
 
         Alert alert = alertFuture.get();
+        InterimResultsTest.test(alert.isInterim());
         InterimResultsTest.test(alert.getBucket().isInterim());
 
         test.m_PollAlertService.shutdown();

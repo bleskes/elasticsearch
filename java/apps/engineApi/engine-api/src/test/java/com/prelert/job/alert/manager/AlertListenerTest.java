@@ -27,8 +27,7 @@
 
 package com.prelert.job.alert.manager;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 import static org.mockito.Mockito.mock;
 
 import java.net.URI;
@@ -95,6 +94,7 @@ public class AlertListenerTest
                                 triggers, baseUri);
 
         Bucket bucket = createBucket();
+        bucket.setInterim(true);
         listener.fire(bucket, triggers[0]);
 
         Mockito.verify(manager, Mockito.times(1)).deregisterResponse(response);
@@ -103,6 +103,7 @@ public class AlertListenerTest
         assertEquals("foo", argument.getValue().getJobId());
         assertEquals(bucket.getAnomalyScore(), argument.getValue().getAnomalyScore(), 0000.1);
         assertEquals(bucket.getMaxNormalizedProbability(), argument.getValue().getMaxNormalizedProbability(), 0000.1);
+        assertTrue(argument.getValue().isInterim());
 
         URI uri = UriBuilder.fromUri(baseUri)
                                 .path("results")
@@ -136,6 +137,7 @@ public class AlertListenerTest
         assertTrue(argument.getValue().getBucket() != null);
         assertEquals(8, argument.getValue().getBucket().getRecordCount());
         assertEquals(8, argument.getValue().getBucket().getRecords().size());
+        assertFalse(argument.getValue().isInterim());
 
         for (AnomalyRecord r : argument.getValue().getBucket().getRecords())
         {
