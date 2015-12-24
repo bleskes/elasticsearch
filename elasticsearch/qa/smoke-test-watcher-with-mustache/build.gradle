@@ -17,14 +17,18 @@
  * under the License.
  */
 
-/*
- * Messy tests that depend on groovy directly. Fix these!
- * https://github.com/elastic/x-plugins/issues/724
- */
-
-apply plugin: 'elasticsearch.messy-test'
+apply plugin: 'elasticsearch.rest-test'
 
 dependencies {
-  testCompile project(path: ':x-plugins:elasticsearch:x-pack', configuration: 'testArtifacts')
-  testCompile project(path: ':modules:lang-groovy', configuration: 'runtime')
+  testCompile project(path: ':x-plugins:elasticsearch:x-pack', configuration: 'runtime')
+  testCompile project(path: ':modules:lang-mustache', configuration: 'runtime')
+}
+
+integTest {
+  cluster {
+    plugin 'x-pack', project(':x-plugins:elasticsearch:x-pack')
+    systemProperty 'es.shield.enabled', 'false'
+    systemProperty 'es.marvel.enabled', 'false'
+    systemProperty 'es.http.port', '9400'
+  }
 }

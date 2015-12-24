@@ -71,7 +71,6 @@ import org.elasticsearch.watcher.support.init.InitializingService;
 import org.elasticsearch.watcher.support.init.proxy.ScriptServiceProxy;
 import org.elasticsearch.watcher.support.secret.SecretModule;
 import org.elasticsearch.watcher.support.text.TextTemplateModule;
-import org.elasticsearch.watcher.support.text.xmustache.XMustacheScriptEngineService;
 import org.elasticsearch.watcher.support.validation.WatcherSettingsValidation;
 import org.elasticsearch.watcher.transform.TransformModule;
 import org.elasticsearch.watcher.transport.actions.ack.AckWatchAction;
@@ -194,9 +193,6 @@ public class WatcherPlugin extends Plugin {
 
     public void onModule(ScriptModule module) {
         module.registerScriptContext(ScriptServiceProxy.INSTANCE);
-        if (enabled && !transportClient) {
-            module.addScriptEngine(new ScriptEngineRegistry.ScriptEngineRegistration(XMustacheScriptEngineService.class, XMustacheScriptEngineService.TYPES));
-        }
     }
 
     public void onModule(SettingsModule module) {

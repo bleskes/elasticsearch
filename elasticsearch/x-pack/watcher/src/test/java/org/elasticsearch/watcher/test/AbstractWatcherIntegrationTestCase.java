@@ -36,6 +36,7 @@ import org.elasticsearch.common.xcontent.support.XContentMapValues;
 import org.elasticsearch.index.IndexModule;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.plugins.Plugin;
+import org.elasticsearch.script.MockMustacheScriptEngine;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.shield.ShieldPlugin;
@@ -164,6 +165,7 @@ public abstract class AbstractWatcherIntegrationTestCase extends ESIntegTestCase
         plugins.remove(MockTransportService.TestPlugin.class); // shield has its own transport service
         plugins.remove(AssertingLocalTransport.TestPlugin.class); // shield has its own transport
         plugins.add(MockFSIndexStore.TestPlugin.class); // we have to explicitly add it otherwise we will fail to set the check_index_on_close setting
+        plugins.add(MockMustacheScriptEngine.TestPlugin.class);
         return plugins;
     }
 

@@ -15,13 +15,10 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.messy.tests;
-
+package org.elasticsearch.watcher.actions;
 
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.common.unit.TimeValue;
-import org.elasticsearch.plugins.Plugin;
-import org.elasticsearch.script.mustache.MustachePlugin;
 import org.elasticsearch.watcher.client.WatcherClient;
 import org.elasticsearch.watcher.condition.compare.CompareCondition;
 import org.elasticsearch.watcher.execution.ExecutionState;
@@ -32,8 +29,6 @@ import org.elasticsearch.watcher.transport.actions.put.PutWatchResponse;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static org.elasticsearch.index.query.QueryBuilders.matchAllQuery;
@@ -52,14 +47,6 @@ import static org.hamcrest.Matchers.is;
 /**
  */
 public class TimeThrottleIntegrationTests extends AbstractWatcherIntegrationTestCase {
-    
-    @Override
-    protected List<Class<? extends Plugin>> pluginTypes() {
-        List<Class<? extends Plugin>> types = new ArrayList<>();
-        types.addAll(super.pluginTypes());
-        types.add(MustachePlugin.class);
-        return types;
-    }
     
     private IndexResponse indexTestDoc() {
         createIndex("actions", "events");

@@ -15,18 +15,16 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.watcher.support.text;
+package org.elasticsearch.watcher.test;
 
-import org.elasticsearch.common.inject.AbstractModule;
+import org.elasticsearch.watcher.support.text.TextTemplate;
+import org.elasticsearch.watcher.support.text.TextTemplateEngine;
 
-/**
- *
- */
-public class TextTemplateModule extends AbstractModule {
+import java.util.Map;
 
+public class MockTextTemplateEngine implements TextTemplateEngine {
     @Override
-    protected void configure() {
-        bind(DefaultTextTemplateEngine.class).asEagerSingleton();
-        bind(TextTemplateEngine.class).to(DefaultTextTemplateEngine.class);
+    public String render(TextTemplate template, Map<String, Object> model) {
+        return template.getTemplate();
     }
 }

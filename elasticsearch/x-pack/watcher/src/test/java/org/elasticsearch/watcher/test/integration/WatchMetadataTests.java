@@ -93,7 +93,7 @@ public class WatchMetadataTests extends AbstractWatcherIntegrationTestCase {
         metadata.put("foo", "bar");
         metadata.put("logtext", "This is a test");
 
-        LoggingAction.Builder loggingAction = loggingAction(TextTemplate.inline("{{ctx.metadata.logtext}}"))
+        LoggingAction.Builder loggingAction = loggingAction(TextTemplate.inline("_logging"))
                 .setLevel(LoggingLevel.DEBUG)
                 .setCategory("test");
 
@@ -114,6 +114,6 @@ public class WatchMetadataTests extends AbstractWatcherIntegrationTestCase {
 
         assertThat(ObjectPath.<String>eval("metadata.foo", result), equalTo("bar"));
         assertThat(ObjectPath.<String>eval("result.actions.0.id", result), equalTo("testLogger"));
-        assertThat(ObjectPath.<String>eval("result.actions.0.logging.logged_text", result), equalTo("This is a test"));
+        assertThat(ObjectPath.<String>eval("result.actions.0.logging.logged_text", result), equalTo("_logging"));
     }
 }
