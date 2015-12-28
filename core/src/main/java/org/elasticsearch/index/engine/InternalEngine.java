@@ -19,8 +19,21 @@
 
 package org.elasticsearch.index.engine;
 
-import org.apache.lucene.index.*;
+import org.apache.lucene.index.DirectoryReader;
+import org.apache.lucene.index.IndexCommit;
+import org.apache.lucene.index.IndexFormatTooOldException;
+import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriter.IndexReaderWarmer;
+import org.apache.lucene.index.IndexWriterConfig;
+import org.apache.lucene.index.LeafReader;
+import org.apache.lucene.index.LeafReaderContext;
+import org.apache.lucene.index.LiveIndexWriterConfig;
+import org.apache.lucene.index.MergePolicy;
+import org.apache.lucene.index.MultiReader;
+import org.apache.lucene.index.SegmentCommitInfo;
+import org.apache.lucene.index.SegmentInfos;
+import org.apache.lucene.index.Term;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.SearcherFactory;
 import org.apache.lucene.search.SearcherManager;
@@ -63,7 +76,13 @@ import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.threadpool.ThreadPool;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
@@ -82,6 +101,7 @@ public class InternalEngine extends Engine {
     private final ShardIndexingService indexingService;
     private final Engine.Warmer warmer;
     private final Translog translog;
+    private final Translog.View uncommitedView;
     private final ElasticsearchConcurrentMergeScheduler mergeScheduler;
 
     private final IndexWriter indexWriter;
@@ -127,15 +147,17 @@ public class InternalEngine extends Engine {
             }
             throttle = new IndexThrottle();
             this.searcherFactory = new SearchFactory(logger, isClosed, engineConfig);
-            final Translog.TranslogGeneration translogGeneration;
+            final Translog.TranslogGeneration translogGenerationToRecoverFrom;
+            final boolean ignoringTranslog;
             try {
                 final boolean create = engineConfig.isCreate();
                 writer = createWriter(create);
                 indexWriter = writer;
-                translog = openTranslog(engineConfig, writer, create || skipInitialTranslogRecovery || engineConfig.forceNewTranslog());
-                translogGeneration = translog.getGeneration();
-                assert translogGeneration != null;
-            } catch (IOException | TranslogCorruptedException e) {
+                translogGenerationToRecoverFrom = loadTranslogIdFromCommit(writer);
+                ignoringTranslog = create || skipInitialTranslogRecovery || engineConfig.forceNewTranslog();
+                translog = openTranslog(engineConfig, translogGenerationToRecoverFrom, writer, ignoringTranslog);
+                assert create || translogGenerationToRecoverFrom != null;
+            } catch (IOException | TranslogCorruptedException | IllegalStateException e) {
                 throw new EngineCreationFailureException(shardId, "failed to create engine", e);
             } catch (AssertionError e) {
                 // IndexWriter throws AssertionError on init, if asserts are enabled, if any files don't exist, but tests that
@@ -147,15 +169,17 @@ public class InternalEngine extends Engine {
                 }
             }
             this.translog = translog;
+            this.uncommitedView = translog.newView();
             manager = createSearcherManager();
             this.searcherManager = manager;
             this.versionMap.setManager(searcherManager);
             try {
-                if (skipInitialTranslogRecovery) {
+                if (ignoringTranslog) {
                     // make sure we point at the latest translog from now on..
                     commitIndexWriter(writer, translog, lastCommittedSegmentInfos.getUserData().get(SYNC_COMMIT_ID));
+                    uncommitedView.incMinGeneration(translog.currentFileGeneration());
                 } else {
-                    recoverFromTranslog(engineConfig, translogGeneration);
+                    recoverFromTranslog(engineConfig, translogGenerationToRecoverFrom);
                 }
             } catch (IOException | EngineException ex) {
                 throw new EngineCreationFailureException(shardId, "failed to recover from translog", ex);
@@ -174,8 +198,7 @@ public class InternalEngine extends Engine {
         logger.trace("created new InternalEngine");
     }
 
-    private Translog openTranslog(EngineConfig engineConfig, IndexWriter writer, boolean createNew) throws IOException {
-        final Translog.TranslogGeneration generation = loadTranslogIdFromCommit(writer);
+    private Translog openTranslog(EngineConfig engineConfig, Translog.TranslogGeneration generation, IndexWriter writer, boolean createNew) throws IOException {
         final TranslogConfig translogConfig = engineConfig.getTranslogConfig();
 
         if (createNew == false) {
@@ -214,10 +237,18 @@ public class InternalEngine extends Engine {
         return translog;
     }
 
+    @Override
+    public Translog.View getUncommittedView() {
+        ensureOpen();
+        return uncommitedView;
+    }
+
     protected void recoverFromTranslog(EngineConfig engineConfig, Translog.TranslogGeneration translogGeneration) throws IOException {
         int opsRecovered = 0;
         final TranslogRecoveryPerformer handler = engineConfig.getTranslogRecoveryPerformer();
-        try (Translog.Snapshot snapshot = translog.newSnapshot()) {
+        uncommitedView.incMinGeneration(translogGeneration.translogFileGeneration);
+        try {
+            Translog.Snapshot snapshot = uncommitedView.snapshot();
             Translog.Operation operation;
             while ((operation = snapshot.next()) != null) {
                 try {
@@ -244,6 +275,7 @@ public class InternalEngine extends Engine {
             flush(true, true);
         } else if (translog.isCurrent(translogGeneration) == false) {
             commitIndexWriter(indexWriter, translog, lastCommittedSegmentInfos.getUserData().get(Engine.SYNC_COMMIT_ID));
+            uncommitedView.incMinGeneration(translogGeneration.translogFileGeneration);
         }
     }
 
@@ -333,12 +365,14 @@ public class InternalEngine extends Engine {
         }
     }
 
+    final static EnumSet<Operation.Origin> UNTHROTTLED_SOURCES = EnumSet.of(Operation.Origin.RECOVERY, Operation.Origin.TRANSLOG_REPLAY);
+
     @Override
     public boolean index(Index index) {
         final boolean created;
         try (ReleasableLock lock = readLock.acquire()) {
             ensureOpen();
-            if (index.origin() == Operation.Origin.RECOVERY) {
+            if (UNTHROTTLED_SOURCES.contains(index.origin())) {
                 // Don't throttle recovery operations
                 created = innerIndex(index);
             } else {
@@ -356,39 +390,39 @@ public class InternalEngine extends Engine {
 
     private boolean innerIndex(Index index) throws IOException {
         synchronized (dirtyLock(index.uid())) {
-            try {
-                lastWriteNanos = index.startTime();
-                final long currentVersion;
-                final boolean deleted;
-                VersionValue versionValue = versionMap.getUnderLock(index.uid().bytes());
-                if (versionValue == null) {
-                    currentVersion = loadCurrentVersionFromIndex(index.uid());
-                    deleted = currentVersion == Versions.NOT_FOUND;
+            lastWriteNanos = index.startTime();
+            final long currentVersion;
+            final boolean deleted;
+            VersionValue versionValue = versionMap.getUnderLock(index.uid().bytes());
+            if (versionValue == null) {
+                currentVersion = loadCurrentVersionFromIndex(index.uid());
+                deleted = currentVersion == Versions.NOT_FOUND;
+            } else {
+                deleted = versionValue.delete();
+                if (engineConfig.isEnableGcDeletes() && versionValue.delete() && (engineConfig.getThreadPool().estimatedTimeInMillis() - versionValue.time()) > engineConfig.getGcDeletesInMillis()) {
+                    currentVersion = Versions.NOT_FOUND; // deleted, and GC
                 } else {
-                    deleted = versionValue.delete();
-                    if (engineConfig.isEnableGcDeletes() && versionValue.delete() && (engineConfig.getThreadPool().estimatedTimeInMillis() - versionValue.time()) > engineConfig.getGcDeletesInMillis()) {
-                        currentVersion = Versions.NOT_FOUND; // deleted, and GC
-                    } else {
-                        currentVersion = versionValue.version();
-                    }
+                    currentVersion = versionValue.version();
                 }
+            }
 
-                long expectedVersion = index.version();
-                if (index.versionType().isVersionConflictForWrites(currentVersion, expectedVersion, deleted)) {
-                    if (index.origin() == Operation.Origin.RECOVERY) {
-                        return false;
-                    } else {
-                        throw new VersionConflictEngineException(shardId, index.type(), index.id(),
-                                index.versionType().explainConflictForWrites(currentVersion, expectedVersion, deleted));
-                    }
+            long expectedVersion = index.version();
+            if (index.versionType().isVersionConflictForWrites(currentVersion, expectedVersion, deleted)) {
+                if (index.origin() == Operation.Origin.RECOVERY) {
+                    return false;
+                } else {
+                    throw new VersionConflictEngineException(shardId, index.type(), index.id(),
+                            index.versionType().explainConflictForWrites(currentVersion, expectedVersion, deleted));
                 }
-                long updatedVersion = index.versionType().updateVersion(currentVersion, expectedVersion);
+            }
+            long updatedVersion = index.versionType().updateVersion(currentVersion, expectedVersion);
 
-                final boolean created;
-                index.updateVersion(updatedVersion);
-                if (index.origin() == Operation.Origin.PRIMARY) {
-                    index.updateSeqNo(seqNoService.generateSeqNo());
-                }
+            final boolean created;
+            index.updateVersion(updatedVersion);
+            if (index.origin() == Operation.Origin.PRIMARY) {
+                index.updateSeqNo(seqNoService.generateSeqNo());
+            }
+            try {
                 if (currentVersion == Versions.NOT_FOUND) {
                     // document does not exists, we can optimize for create
                     created = true;
@@ -409,18 +443,27 @@ public class InternalEngine extends Engine {
                         indexWriter.updateDocument(index.uid(), index.docs().get(0));
                     }
                 }
-                Translog.Location translogLocation = translog.add(new Translog.Index(index));
-
-                versionMap.putUnderLock(index.uid().bytes(), new VersionValue(updatedVersion, translogLocation));
-                index.setTranslogLocation(translogLocation);
-
-                indexingService.postIndexUnderLock(index);
-                return created;
-            } finally {
-                if (index.seqNo() != SequenceNumbersService.UNASSIGNED_SEQ_NO) {
-                    seqNoService.markSeqNoAsCompleted(index.seqNo());
+            } catch (Throwable indexError) {
+                try {
+                    if (index.origin() != Operation.Origin.TRANSLOG_REPLAY) {
+                        translog.add(new Translog.Failure(index.seqNo(), ExceptionsHelper.detailedMessage(indexError)));
+                    }
+                } catch (Throwable t) {
+                    indexError.addSuppressed(t);
                 }
+                throw indexError;
             }
+
+            if (index.origin() != Operation.Origin.TRANSLOG_REPLAY) {
+                Translog.Location translogLocation = translog.add(new Translog.Index(index));
+                index.setTranslogLocation(translogLocation);
+            } else {
+                assert index.getTranslogLocation() != null;
+            }
+            versionMap.putUnderLock(index.uid().bytes(), new VersionValue(updatedVersion, index.getTranslogLocation()));
+
+            indexingService.postIndexUnderLock(index);
+            return created;
         }
     }
 
@@ -476,35 +519,35 @@ public class InternalEngine extends Engine {
 
     private void innerDelete(Delete delete) throws IOException {
         synchronized (dirtyLock(delete.uid())) {
-            try {
-                lastWriteNanos = delete.startTime();
-                final long currentVersion;
-                final boolean deleted;
-                VersionValue versionValue = versionMap.getUnderLock(delete.uid().bytes());
-                if (versionValue == null) {
-                    currentVersion = loadCurrentVersionFromIndex(delete.uid());
-                    deleted = currentVersion == Versions.NOT_FOUND;
+            lastWriteNanos = delete.startTime();
+            final long currentVersion;
+            final boolean deleted;
+            VersionValue versionValue = versionMap.getUnderLock(delete.uid().bytes());
+            if (versionValue == null) {
+                currentVersion = loadCurrentVersionFromIndex(delete.uid());
+                deleted = currentVersion == Versions.NOT_FOUND;
+            } else {
+                deleted = versionValue.delete();
+                if (engineConfig.isEnableGcDeletes() && versionValue.delete() && (engineConfig.getThreadPool().estimatedTimeInMillis() - versionValue.time()) > engineConfig.getGcDeletesInMillis()) {
+                    currentVersion = Versions.NOT_FOUND; // deleted, and GC
                 } else {
-                    deleted = versionValue.delete();
-                    if (engineConfig.isEnableGcDeletes() && versionValue.delete() && (engineConfig.getThreadPool().estimatedTimeInMillis() - versionValue.time()) > engineConfig.getGcDeletesInMillis()) {
-                        currentVersion = Versions.NOT_FOUND; // deleted, and GC
-                    } else {
-                        currentVersion = versionValue.version();
-                    }
+                    currentVersion = versionValue.version();
                 }
+            }
 
-                long updatedVersion;
-                long expectedVersion = delete.version();
-                if (delete.versionType().isVersionConflictForWrites(currentVersion, expectedVersion, deleted)) {
-                    if (delete.origin() == Operation.Origin.RECOVERY) {
-                        return;
-                    } else {
-                        throw new VersionConflictEngineException(shardId, delete.type(), delete.id(),
-                                delete.versionType().explainConflictForWrites(currentVersion, expectedVersion, deleted));
-                    }
+            long updatedVersion;
+            long expectedVersion = delete.version();
+            if (delete.versionType().isVersionConflictForWrites(currentVersion, expectedVersion, deleted)) {
+                if (delete.origin() == Operation.Origin.RECOVERY) {
+                    return;
+                } else {
+                    throw new VersionConflictEngineException(shardId, delete.type(), delete.id(),
+                            delete.versionType().explainConflictForWrites(currentVersion, expectedVersion, deleted));
                 }
-                updatedVersion = delete.versionType().updateVersion(currentVersion, expectedVersion);
+            }
+            updatedVersion = delete.versionType().updateVersion(currentVersion, expectedVersion);
 
+            try {
                 if (delete.origin() == Operation.Origin.PRIMARY) {
                     delete.updateSeqNo(seqNoService.generateSeqNo());
                 }
@@ -521,17 +564,26 @@ public class InternalEngine extends Engine {
                     indexWriter.deleteDocuments(delete.uid());
                     found = true;
                 }
-
                 delete.updateVersion(updatedVersion, found);
-                Translog.Location translogLocation = translog.add(new Translog.Delete(delete));
-                versionMap.putUnderLock(delete.uid().bytes(), new DeleteVersionValue(updatedVersion, engineConfig.getThreadPool().estimatedTimeInMillis(), translogLocation));
-                delete.setTranslogLocation(translogLocation);
-                indexingService.postDeleteUnderLock(delete);
-            } finally {
-                if (delete.seqNo() != SequenceNumbersService.UNASSIGNED_SEQ_NO) {
-                    seqNoService.markSeqNoAsCompleted(delete.seqNo());
+            } catch (Throwable deleteError) {
+                try {
+                    if (delete.origin() != Operation.Origin.TRANSLOG_REPLAY) {
+                        translog.add(new Translog.Failure(delete.seqNo(), ExceptionsHelper.detailedMessage(deleteError)));
+                    }
+                } catch (Throwable t) {
+                    deleteError.addSuppressed(t);
                 }
+                throw deleteError;
             }
+
+            if (delete.origin() != Operation.Origin.TRANSLOG_REPLAY) {
+                Translog.Location translogLocation = translog.add(new Translog.Delete(delete));
+                delete.setTranslogLocation(translogLocation);
+            } else {
+                assert delete.getTranslogLocation() != null;
+            }
+            versionMap.putUnderLock(delete.uid().bytes(), new DeleteVersionValue(updatedVersion, engineConfig.getThreadPool().estimatedTimeInMillis(), delete.getTranslogLocation()));
+            indexingService.postDeleteUnderLock(delete);
         }
     }
 
@@ -598,7 +650,7 @@ public class InternalEngine extends Engine {
         try (ReleasableLock lock = writeLock.acquire()) {
             ensureOpen();
             String syncId = lastCommittedSegmentInfos.getUserData().get(SYNC_COMMIT_ID);
-            if (syncId != null && translog.totalOperations() == 0 && indexWriter.hasUncommittedChanges()) {
+            if (syncId != null && uncommitedView.totalOperations() == 0 && indexWriter.hasUncommittedChanges()) {
                 logger.trace("start renewing sync commit [{}]", syncId);
                 commitIndexWriter(indexWriter, translog, syncId);
                 logger.debug("successfully sync committed. sync id [{}].", syncId);
@@ -648,14 +700,14 @@ public class InternalEngine extends Engine {
             try {
                 if (indexWriter.hasUncommittedChanges() || force) {
                     try {
-                        translog.prepareCommit();
+                        final long newGeneration = translog.startNewGeneration();
                         logger.trace("starting commit for flush; commitTranslog=true");
                         commitIndexWriter(indexWriter, translog);
                         logger.trace("finished commit for flush");
                         // we need to refresh in order to clear older version values
                         refresh("version_table_flush");
                         // after refresh documents can be retrieved from the index so we can now commit the translog
-                        translog.commit();
+                        uncommitedView.incMinGeneration(newGeneration);
                     } catch (Throwable e) {
                         throw new FlushFailedEngineException(shardId, e);
                     }
@@ -811,8 +863,8 @@ public class InternalEngine extends Engine {
             }
             return true;
         } else if (t != null &&
-            ((indexWriter.isOpen() == false && indexWriter.getTragicException() == t)
-                || (translog.isOpen() == false && translog.getTragicException() == t))) {
+                ((indexWriter.isOpen() == false && indexWriter.getTragicException() == t)
+                        || (translog.isOpen() == false && translog.getTragicException() == t))) {
             // this spot on - we are handling the tragic event exception here so we have to fail the engine
             // right away
             failEngine(source, t);
@@ -876,6 +928,7 @@ public class InternalEngine extends Engine {
                     logger.warn("Failed to close SearcherManager", t);
                 }
                 try {
+                    // we explicitly don't close the uncommittedView so those files will be kept.
                     IOUtils.close(translog);
                 } catch (Throwable t) {
                     logger.warn("Failed to close translog", t);
@@ -1162,7 +1215,7 @@ public class InternalEngine extends Engine {
             if (syncId != null) {
                 commitData.put(Engine.SYNC_COMMIT_ID, syncId);
             }
-            indexWriter.setCommitData(commitData);
+            writer.setCommitData(commitData);
             writer.commit();
         } catch (Throwable ex) {
             failEngine("lucene commit failed", ex);

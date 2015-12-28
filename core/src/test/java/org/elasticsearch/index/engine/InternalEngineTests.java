@@ -28,7 +28,17 @@ import org.apache.lucene.codecs.Codec;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.NumericDocValuesField;
 import org.apache.lucene.document.TextField;
-import org.apache.lucene.index.*;
+import org.apache.lucene.index.DirectoryReader;
+import org.apache.lucene.index.IndexWriterConfig;
+import org.apache.lucene.index.KeepOnlyLastCommitDeletionPolicy;
+import org.apache.lucene.index.LiveIndexWriterConfig;
+import org.apache.lucene.index.LogByteSizeMergePolicy;
+import org.apache.lucene.index.LogDocMergePolicy;
+import org.apache.lucene.index.MergePolicy;
+import org.apache.lucene.index.NoMergePolicy;
+import org.apache.lucene.index.SnapshotDeletionPolicy;
+import org.apache.lucene.index.Term;
+import org.apache.lucene.index.TieredMergePolicy;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.TermQuery;
@@ -62,14 +72,26 @@ import org.elasticsearch.index.analysis.AnalysisService;
 import org.elasticsearch.index.codec.CodecService;
 import org.elasticsearch.index.engine.Engine.Searcher;
 import org.elasticsearch.index.indexing.ShardIndexingService;
-import org.elasticsearch.index.mapper.*;
+import org.elasticsearch.index.mapper.ContentPath;
+import org.elasticsearch.index.mapper.DocumentMapper;
+import org.elasticsearch.index.mapper.DocumentMapperForType;
+import org.elasticsearch.index.mapper.DocumentMapperParser;
 import org.elasticsearch.index.mapper.Mapper.BuilderContext;
+import org.elasticsearch.index.mapper.MapperBuilders;
+import org.elasticsearch.index.mapper.MapperService;
+import org.elasticsearch.index.mapper.Mapping;
+import org.elasticsearch.index.mapper.MetadataFieldMapper;
 import org.elasticsearch.index.mapper.ParseContext.Document;
+import org.elasticsearch.index.mapper.ParsedDocument;
 import org.elasticsearch.index.mapper.internal.SourceFieldMapper;
 import org.elasticsearch.index.mapper.internal.UidFieldMapper;
 import org.elasticsearch.index.mapper.object.RootObjectMapper;
 import org.elasticsearch.index.seqno.SequenceNumbersService;
-import org.elasticsearch.index.shard.*;
+import org.elasticsearch.index.shard.IndexSearcherWrapper;
+import org.elasticsearch.index.shard.MergeSchedulerConfig;
+import org.elasticsearch.index.shard.ShardId;
+import org.elasticsearch.index.shard.ShardUtils;
+import org.elasticsearch.index.shard.TranslogRecoveryPerformer;
 import org.elasticsearch.index.similarity.SimilarityService;
 import org.elasticsearch.index.store.DirectoryService;
 import org.elasticsearch.index.store.DirectoryUtils;
@@ -92,7 +114,12 @@ import java.nio.charset.Charset;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;
@@ -103,7 +130,12 @@ import java.util.concurrent.atomic.AtomicReference;
 import static java.util.Collections.emptyMap;
 import static org.elasticsearch.index.engine.Engine.Operation.Origin.PRIMARY;
 import static org.elasticsearch.index.engine.Engine.Operation.Origin.REPLICA;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.hasKey;
+import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
 
 public class InternalEngineTests extends ESTestCase {
 
@@ -1214,13 +1246,13 @@ public class InternalEngineTests extends ESTestCase {
 
     public void testVersioningCreateExistsExceptionWithFlush() {
         ParsedDocument doc = testParsedDocument("1", "1", "test", null, -1, -1, testDocument(), B_1, null);
-        Engine.Index create = new Engine.Index(newUid("1"), doc, -1, Versions.MATCH_DELETED, VersionType.INTERNAL, PRIMARY, 0);
+        Engine.Index create = new Engine.Index(newUid("1"), doc, SequenceNumbersService.UNASSIGNED_SEQ_NO, Versions.MATCH_DELETED, VersionType.INTERNAL, PRIMARY, 0);
         engine.index(create);
         assertThat(create.version(), equalTo(1l));
 
         engine.flush();
 
-        create = new Engine.Index(newUid("1"), doc, -1, Versions.MATCH_DELETED, VersionType.INTERNAL, PRIMARY, 0);
+        create = new Engine.Index(newUid("1"), doc, SequenceNumbersService.UNASSIGNED_SEQ_NO, Versions.MATCH_DELETED, VersionType.INTERNAL, PRIMARY, 0);
         try {
             engine.index(create);
             fail();
@@ -1439,10 +1471,10 @@ public class InternalEngineTests extends ESTestCase {
                 }
             }
         }
-        assertThat(engine.seqNoStats().getMaxSeqNo(), equalTo(seqNoCount));
-        assertThat(engine.seqNoStats().getLocalCheckpoint(), equalTo(seqNoCount));
-        assertThat(replicaEngine.seqNoStats().getMaxSeqNo(), equalTo(seqNoCount));
-        assertThat(replicaEngine.seqNoStats().getLocalCheckpoint(), equalTo(seqNoCount));
+        assertThat(engine.getTranslog().stats().getMaxSeqNo(), equalTo(seqNoCount));
+        assertThat(engine.getTranslog().stats().getLocalCheckpoint(), equalTo(seqNoCount));
+        assertThat(replicaEngine.getTranslog().stats().getMaxSeqNo(), equalTo(seqNoCount));
+        assertThat(replicaEngine.getTranslog().stats().getLocalCheckpoint(), equalTo(seqNoCount));
     }
 
     // #8603: make sure we can separately log IFD's messages
@@ -1987,7 +2019,7 @@ public class InternalEngineTests extends ESTestCase {
         engine.close();
 
         Translog translog = new Translog(new TranslogConfig(shardId, createTempDir(), INDEX_SETTINGS, Translog.Durabilty.REQUEST, BigArrays.NON_RECYCLING_INSTANCE, threadPool));
-        translog.add(new Translog.Index("test", "SomeBogusId", "{}".getBytes(Charset.forName("UTF-8"))));
+        translog.add(new Translog.Index("test", "SomeBogusId", numDocs + 1, "{}".getBytes(Charset.forName("UTF-8"))));
         assertEquals(generation.translogFileGeneration, translog.currentFileGeneration());
         translog.close();
 

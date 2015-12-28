@@ -18,12 +18,13 @@
  */
 package org.elasticsearch.index.translog;
 
-import org.apache.lucene.store.ByteArrayDataOutput;
-import org.apache.lucene.store.DataInput;
-import org.apache.lucene.store.DataOutput;
-import org.apache.lucene.store.InputStreamDataInput;
 import org.apache.lucene.util.RamUsageEstimator;
-import org.elasticsearch.common.io.Channels;
+import org.elasticsearch.Version;
+import org.elasticsearch.common.io.stream.BytesStreamOutput;
+import org.elasticsearch.common.io.stream.InputStreamStreamInput;
+import org.elasticsearch.common.io.stream.StreamInput;
+import org.elasticsearch.common.io.stream.StreamOutput;
+import org.elasticsearch.index.seqno.SequenceNumbersService;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -36,36 +37,61 @@ import java.nio.file.Path;
  */
 class Checkpoint {
 
-   static final int BUFFER_SIZE = RamUsageEstimator.NUM_BYTES_INT  // ops
-            + RamUsageEstimator.NUM_BYTES_LONG // offset
-            + RamUsageEstimator.NUM_BYTES_LONG;// generation
+    // nocommit - double check implications of size change
+    static final int EXPECTED_BUFFER_SIZE =
+            +RamUsageEstimator.NUM_BYTES_INT  // version
+                    + RamUsageEstimator.NUM_BYTES_INT  // ops
+                    + RamUsageEstimator.NUM_BYTES_LONG // offset
+                    + RamUsageEstimator.NUM_BYTES_LONG // generation
+                    + RamUsageEstimator.NUM_BYTES_LONG // minSeqNo
+                    + RamUsageEstimator.NUM_BYTES_LONG // maxSeqNo
+                    + RamUsageEstimator.NUM_BYTES_LONG;// localCheckpoint
     final long offset;
     final int numOps;
     final long generation;
+    final long minSeqNo;
+    final long maxSeqNo;
+    final long localCheckpoint;
 
-    Checkpoint(long offset, int numOps, long generation) {
+    Checkpoint(long offset, int numOps, long generation, long minSeqNo, long maxSeqNp, long localCheckpoint) {
         this.offset = offset;
         this.numOps = numOps;
         this.generation = generation;
+        this.minSeqNo = minSeqNo;
+        this.maxSeqNo = maxSeqNp;
+        this.localCheckpoint = localCheckpoint;
     }
 
-    Checkpoint(DataInput in) throws IOException {
+    Checkpoint(StreamInput in) throws IOException {
         offset = in.readLong();
         numOps = in.readInt();
         generation = in.readLong();
+        if (in.getVersion().onOrAfter(Version.V_3_0_0)) {
+            minSeqNo = in.readLong();
+            maxSeqNo = in.readLong();
+            localCheckpoint = in.readLong();
+        } else {
+            minSeqNo = SequenceNumbersService.UNASSIGNED_SEQ_NO;
+            maxSeqNo = SequenceNumbersService.UNASSIGNED_SEQ_NO;
+            localCheckpoint = SequenceNumbersService.UNASSIGNED_SEQ_NO;
+        }
     }
 
     private void write(FileChannel channel) throws IOException {
-        byte[] buffer = new byte[BUFFER_SIZE];
-        final ByteArrayDataOutput out = new ByteArrayDataOutput(buffer);
+        final BytesStreamOutput out = new BytesStreamOutput(EXPECTED_BUFFER_SIZE);
+        out.setVersion(Version.CURRENT);
+        Version.writeVersion(Version.CURRENT, out);
         write(out);
-        Channels.writeToChannel(buffer, channel);
+        out.bytes().writeTo(channel);
     }
 
-    private void write(DataOutput out) throws IOException {
+    private void write(StreamOutput out) throws IOException {
         out.writeLong(offset);
         out.writeInt(numOps);
         out.writeLong(generation);
+        out.writeLong(minSeqNo);
+        out.writeLong(maxSeqNo);
+        out.writeLong(localCheckpoint);
     }
 
     @Override
@@ -73,13 +99,24 @@ class Checkpoint {
         return "Checkpoint{" +
                 "offset=" + offset +
                 ", numOps=" + numOps +
-                ", translogFileGeneration= " + generation +
+                ", generation=" + generation +
+                ", minSeqNo=" + minSeqNo +
+                ", maxSeqNo=" + maxSeqNo +
+                ", localCheckpoint=" + localCheckpoint +
                 '}';
     }
 
     public static Checkpoint read(Path path) throws IOException {
-        try (InputStream in = Files.newInputStream(path)) {
-            return new Checkpoint(new InputStreamDataInput(in));
+        try (InputStream inputStream = Files.newInputStream(path)) {
+            StreamInput in = new InputStreamStreamInput(inputStream);
+            final Version version;
+            if (Files.size(path) == 20) {
+                version = Version.V_2_0_0;
+            } else {
+                version = Version.readVersion(in);
+            }
+            in.setVersion(version);
+            return new Checkpoint(in);
         }
     }
 
@@ -92,22 +129,48 @@ class Checkpoint {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
 
         Checkpoint that = (Checkpoint) o;
 
-        if (offset != that.offset) return false;
-        if (numOps != that.numOps) return false;
-        return generation == that.generation;
+        if (offset != that.offset) {
+            return false;
+        }
+        if (numOps != that.numOps) {
+            return false;
+        }
+        if (generation != that.generation) {
+            return false;
+        }
+        if (minSeqNo != that.minSeqNo) {
+            return false;
+        }
+        if (maxSeqNo != that.maxSeqNo) {
+            return false;
+        }
+        return localCheckpoint == that.localCheckpoint;
 
     }
 
     @Override
     public int hashCode() {
-        int result = Long.hashCode(offset);
+        int result = (int) (offset ^ (offset >>> 32));
         result = 31 * result + numOps;
         result = 31 * result + Long.hashCode(generation);
+        result = 31 * result + Long.hashCode(minSeqNo);
+        result = 31 * result + Long.hashCode(maxSeqNo);
+        result = 31 * result + Long.hashCode(localCheckpoint);
         return result;
+    }
+
+    public boolean pendingWrites() {
+        return maxSeqNo != SequenceNumbersService.UNASSIGNED_SEQ_NO &&
+                maxSeqNo != SequenceNumbersService.NO_OPS_PERFORMED &&
+                maxSeqNo != localCheckpoint;
     }
 }

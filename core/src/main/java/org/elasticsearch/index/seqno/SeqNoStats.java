@@ -29,44 +29,26 @@ import java.io.IOException;
 
 public class SeqNoStats implements ToXContent, Writeable<SeqNoStats> {
 
-    final long maxSeqNo;
-    final long localCheckpoint;
-
-    public SeqNoStats(long maxSeqNo, long localCheckpoint) {
-        this.maxSeqNo = maxSeqNo;
-        this.localCheckpoint = localCheckpoint;
+    public SeqNoStats() {
     }
 
     public SeqNoStats(StreamInput in) throws IOException {
-        this(in.readZLong(), in.readZLong());
+        this();
     }
 
-    /** the maximum sequence number seen so far */
-    public long getMaxSeqNo() {
-        return maxSeqNo;
-    }
-
-    /** the maximum sequence number for which all previous operations (including) have been completed */
-    public long getLocalCheckpoint() {
-        return localCheckpoint;
-    }
 
     @Override
     public SeqNoStats readFrom(StreamInput in) throws IOException {
-        return new SeqNoStats(in.readLong(), in.readLong());
+        return new SeqNoStats();
     }
 
     @Override
     public void writeTo(StreamOutput out) throws IOException {
-        out.writeZLong(maxSeqNo);
-        out.writeZLong(localCheckpoint);
     }
 
     @Override
     public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
         builder.startObject(Fields.SEQ_NO);
-        builder.field(Fields.MAX_SEQ_NO, maxSeqNo);
-        builder.field(Fields.LOCAL_CHECKPOINT, localCheckpoint);
         builder.endObject();
         return builder;
     }
@@ -74,7 +56,5 @@ public class SeqNoStats implements ToXContent, Writeable<SeqNoStats> {
 
     static final class Fields {
         static final XContentBuilderString SEQ_NO = new XContentBuilderString("seq_no");
-        static final XContentBuilderString MAX_SEQ_NO = new XContentBuilderString("max");
-        static final XContentBuilderString LOCAL_CHECKPOINT = new XContentBuilderString("local_checkpoint");
     }
 }

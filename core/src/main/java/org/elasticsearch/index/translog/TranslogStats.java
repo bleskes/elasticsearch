@@ -24,6 +24,7 @@ import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Streamable;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentBuilderString;
+import org.elasticsearch.index.seqno.SequenceNumbersService;
 
 import java.io.IOException;
 
@@ -34,20 +35,31 @@ public class TranslogStats extends ToXContentToBytes implements Streamable {
 
     private long translogSizeInBytes;
     private int numberOfOperations;
+    private long maxSeqNo = SequenceNumbersService.UNASSIGNED_SEQ_NO;
+    private long localCheckpoint = SequenceNumbersService.UNASSIGNED_SEQ_NO;
+
 
     public TranslogStats() {
     }
 
-    public TranslogStats(int numberOfOperations, long translogSizeInBytes) {
+    public TranslogStats(int numberOfOperations, long translogSizeInBytes, long maxSeqNo, long localCheckpoint) {
         if (numberOfOperations < 0) {
             throw new IllegalArgumentException("numberOfOperations must be >= 0");
         }
         if (translogSizeInBytes < 0) {
             throw new IllegalArgumentException("translogSizeInBytes must be >= 0");
         }
+        if (maxSeqNo < SequenceNumbersService.NO_OPS_PERFORMED) {
+            throw new IllegalArgumentException("numberOfOperations must be >= " + SequenceNumbersService.NO_OPS_PERFORMED);
+        }
+        if (localCheckpoint < SequenceNumbersService.NO_OPS_PERFORMED) {
+            throw new IllegalArgumentException("translogSizeInBytes must be >= " + SequenceNumbersService.NO_OPS_PERFORMED);
+        }
         assert translogSizeInBytes >= 0 : "translogSizeInBytes must be >= 0, got [" + translogSizeInBytes + "]";
         this.numberOfOperations = numberOfOperations;
         this.translogSizeInBytes = translogSizeInBytes;
+        this.maxSeqNo = maxSeqNo;
+        this.localCheckpoint = localCheckpoint;
     }
 
     public void add(TranslogStats translogStats) {
@@ -63,8 +75,18 @@ public class TranslogStats extends ToXContentToBytes implements Streamable {
         return translogSizeInBytes;
     }
 
-    public long estimatedNumberOfOperations() {
+    public long numberOfOperations() {
         return numberOfOperations;
+    }
+
+    /** the maximum sequence number seen so far */
+    public long getMaxSeqNo() {
+        return maxSeqNo;
+    }
+
+    /** the maximum sequence number for which all previous operations (including) have been completed */
+    public long getLocalCheckpoint() {
+        return localCheckpoint;
     }
 
     @Override
@@ -72,6 +94,12 @@ public class TranslogStats extends ToXContentToBytes implements Streamable {
         builder.startObject(Fields.TRANSLOG);
         builder.field(Fields.OPERATIONS, numberOfOperations);
         builder.byteSizeField(Fields.SIZE_IN_BYTES, Fields.SIZE, translogSizeInBytes);
+        if (maxSeqNo != SequenceNumbersService.UNASSIGNED_SEQ_NO) {
+            builder.field(Fields.MAX_SEQ_NO, maxSeqNo);
+        }
+        if (localCheckpoint != SequenceNumbersService.UNASSIGNED_SEQ_NO) {
+            builder.field(Fields.LOCAL_CHECKPOINT, localCheckpoint);
+        }
         builder.endObject();
         return builder;
     }
@@ -81,17 +109,23 @@ public class TranslogStats extends ToXContentToBytes implements Streamable {
         static final XContentBuilderString OPERATIONS = new XContentBuilderString("operations");
         static final XContentBuilderString SIZE = new XContentBuilderString("size");
         static final XContentBuilderString SIZE_IN_BYTES = new XContentBuilderString("size_in_bytes");
+        static final XContentBuilderString MAX_SEQ_NO = new XContentBuilderString("max_seq_no");
+        static final XContentBuilderString LOCAL_CHECKPOINT = new XContentBuilderString("local_checkpoint");
     }
 
     @Override
     public void readFrom(StreamInput in) throws IOException {
         numberOfOperations = in.readVInt();
         translogSizeInBytes = in.readVLong();
+        maxSeqNo = in.readZLong();
+        localCheckpoint = in.readZLong();
     }
 
     @Override
     public void writeTo(StreamOutput out) throws IOException {
         out.writeVInt(numberOfOperations);
         out.writeVLong(translogSizeInBytes);
+        out.writeZLong(maxSeqNo);
+        out.writeZLong(localCheckpoint);
     }
 }

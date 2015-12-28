@@ -24,7 +24,11 @@ import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.index.engine.Engine;
 import org.elasticsearch.index.engine.IgnoreOnRecoveryEngineException;
-import org.elasticsearch.index.mapper.*;
+import org.elasticsearch.index.mapper.DocumentMapperForType;
+import org.elasticsearch.index.mapper.MapperException;
+import org.elasticsearch.index.mapper.MapperService;
+import org.elasticsearch.index.mapper.Mapping;
+import org.elasticsearch.index.mapper.Uid;
 import org.elasticsearch.index.translog.Translog;
 
 import java.io.IOException;
@@ -128,8 +132,9 @@ public class TranslogRecoveryPerformer {
                     Translog.Index index = (Translog.Index) operation;
                     Engine.Index engineIndex = IndexShard.prepareIndex(docMapper(index.type()), source(index.source()).type(index.type()).id(index.id())
                                     .routing(index.routing()).parent(index.parent()).timestamp(index.timestamp()).ttl(index.ttl()),
-                            index.seqNo(), index.version(), index.versionType().versionTypeForReplicationAndRecovery(), Engine.Operation.Origin.RECOVERY);
+                            index.seqNo(), index.version(), index.versionType().versionTypeForReplicationAndRecovery(), Engine.Operation.Origin.TRANSLOG_REPLAY);
                     maybeAddMappingUpdate(engineIndex.type(), engineIndex.parsedDoc().dynamicMappingsUpdate(), engineIndex.id(), allowMappingUpdates);
+                    engineIndex.setTranslogLocation(index.location());
                     if (logger.isTraceEnabled()) {
                         logger.trace("[translog] recover [index] op of [{}][{}]", index.type(), index.id());
                     }
@@ -142,8 +147,14 @@ public class TranslogRecoveryPerformer {
                         logger.trace("[translog] recover [delete] op of [{}][{}]", uid.type(), uid.id());
                     }
                     Engine.Delete engineDelete = IndexShard.prepareDelete(uid.type(), uid.id(), delete.uid(), delete.seqNo(),
-                            delete.version(), delete.versionType().versionTypeForReplicationAndRecovery(), Engine.Operation.Origin.RECOVERY);
+                            delete.version(), delete.versionType().versionTypeForReplicationAndRecovery(), Engine.Operation.Origin.TRANSLOG_REPLAY);
+                    engineDelete.setTranslogLocation(delete.location());
                     engine.delete(engineDelete);
+                    break;
+                case FAILURE:
+                    if (logger.isTraceEnabled()) {
+                        logger.trace("[translog] skipping [failure] op of [{}]", operation);
+                    }
                     break;
                 default:
                     throw new IllegalStateException("No operation defined for [" + operation + "]");

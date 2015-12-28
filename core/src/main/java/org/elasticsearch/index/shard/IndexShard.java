@@ -1174,8 +1174,8 @@ public class IndexShard extends AbstractIndexShardComponent {
             Engine engine = getEngineOrNull();
             if (engine != null) {
                 try {
-                    Translog translog = engine.getTranslog();
-                    return translog.totalOperations() > flushThresholdOperations || translog.sizeInBytes() > flushThresholdSize.bytes();
+                    Translog.View uncommittedView = engine.getUncommittedView();
+                    return uncommittedView.totalOperations() > flushThresholdOperations || uncommittedView.sizeInBytes() > flushThresholdSize.bytes();
                 } catch (AlreadyClosedException | EngineClosedException ex) {
                     // that's fine we are already close - no need to flush
                 }

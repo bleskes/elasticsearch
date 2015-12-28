@@ -28,18 +28,24 @@ import org.apache.lucene.util.RamUsageEstimator;
 import org.elasticsearch.common.bytes.BytesArray;
 import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.io.Channels;
-import org.elasticsearch.common.util.Callback;
 import org.elasticsearch.common.util.concurrent.ReleasableLock;
+import org.elasticsearch.index.seqno.LocalCheckpointService;
+import org.elasticsearch.index.seqno.SequenceNumbersService;
 import org.elasticsearch.index.shard.ShardId;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
-import java.nio.file.*;
+import java.nio.file.Files;
+import java.nio.file.OpenOption;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-public class TranslogWriter extends TranslogReader {
+public class TranslogWriter extends TranslogReader implements Closeable {
 
     public static final String TRANSLOG_CODEC = "translog";
     public static final int VERSION_CHECKSUMS = 1;
@@ -58,21 +64,49 @@ public class TranslogWriter extends TranslogReader {
     /* if we hit an exception that we can't recover from we assign it to this var and ship it with every AlreadyClosedException we throw */
     private volatile Throwable tragedy;
 
+    protected final AtomicBoolean closed = new AtomicBoolean(false);
 
-    public TranslogWriter(ShardId shardId, long generation, ChannelReference channelReference) throws IOException {
-        super(generation, channelReference, channelReference.getChannel().position());
+    protected final long minSeqNo;
+    protected volatile long maxSeqNo;
+    final LocalCheckpointService checkpointSeqNoServiceService;
+
+
+    public TranslogWriter(ShardId shardId, Checkpoint checkpoint, ChannelReference channelReference, int checkpointArraySize) throws IOException {
+        super(checkpoint.generation, channelReference, channelReference.getChannel().position());
         this.shardId = shardId;
         ReadWriteLock rwl = new ReentrantReadWriteLock();
         readLock = new ReleasableLock(rwl.readLock());
         writeLock = new ReleasableLock(rwl.writeLock());
         this.writtenOffset = channelReference.getChannel().position();
-        this.lastSyncedOffset = channelReference.getChannel().position();;
+        this.lastSyncedOffset = channelReference.getChannel().position();
+        this.operationCounter = checkpoint.numOps;
+        this.minSeqNo = checkpoint.minSeqNo;
+        this.maxSeqNo = checkpoint.maxSeqNo;
+        this.checkpointSeqNoServiceService = new LocalCheckpointService(shardId, minSeqNo, checkpoint.localCheckpoint, checkpointArraySize);
     }
 
-    public static TranslogWriter create(Type type, ShardId shardId, String translogUUID, long fileGeneration, Path file, Callback<ChannelReference> onClose, int bufferSize, ChannelFactory channelFactory) throws IOException {
+    public TranslogWriter(ShardId shardId, ImmutableTranslogReader reader, int checkpointArraySize) throws IOException {
+        super(reader.getGeneration(), reader.channelReference, reader.getFirstOperationOffset());
+        this.shardId = shardId;
+        ReadWriteLock rwl = new ReentrantReadWriteLock();
+        readLock = new ReleasableLock(rwl.readLock());
+        writeLock = new ReleasableLock(rwl.writeLock());
+        Checkpoint checkpoint = reader.getInfo();
+        channel.position(checkpoint.offset);
+        this.writtenOffset = checkpoint.offset;
+        this.lastSyncedOffset = checkpoint.offset;
+        this.operationCounter = checkpoint.numOps;
+        this.minSeqNo = checkpoint.minSeqNo;
+        this.maxSeqNo = checkpoint.maxSeqNo;
+        this.checkpointSeqNoServiceService = new LocalCheckpointService(shardId, minSeqNo, checkpoint.localCheckpoint, checkpointArraySize);
+    }
+
+    public static TranslogWriter create(Type type, ShardId shardId, String translogUUID, long fileGeneration, long minSeqNo,
+                                        Path file, int bufferSize, int checkpointArraySize,
+                                        ChannelFactory channelFactory) throws IOException {
         final BytesRef ref = new BytesRef(translogUUID);
         final int headerLength = CodecUtil.headerLength(TRANSLOG_CODEC) + ref.length + RamUsageEstimator.NUM_BYTES_INT;
-        final FileChannel channel = channelFactory.open(file);
+        final FileChannel channel = channelFactory.create(file);
         try {
             // This OutputStreamDataOutput is intentionally not closed because
             // closing it will close the FileChannel
@@ -81,10 +115,11 @@ public class TranslogWriter extends TranslogReader {
             out.writeInt(ref.length);
             out.writeBytes(ref.bytes, ref.offset, ref.length);
             channel.force(false);
-            writeCheckpoint(headerLength, 0, file.getParent(), fileGeneration, StandardOpenOption.WRITE);
-            final TranslogWriter writer = type.create(shardId, fileGeneration, new ChannelReference(file, fileGeneration, channel, onClose), bufferSize);
+            Checkpoint checkpoint = new Checkpoint(headerLength, 0, fileGeneration, minSeqNo, SequenceNumbersService.NO_OPS_PERFORMED, minSeqNo - 1);
+            writeCheckpoint(checkpoint, file.getParent(), StandardOpenOption.CREATE, StandardOpenOption.WRITE);
+            final TranslogWriter writer = type.create(shardId, checkpoint, new ChannelReference(file, fileGeneration, channel), bufferSize, checkpointArraySize);
             return writer;
-        } catch (Throwable throwable){
+        } catch (Throwable throwable) {
             IOUtils.closeWhileHandlingException(channel);
             try {
                 Files.delete(file); // remove the file as well
@@ -94,29 +129,62 @@ public class TranslogWriter extends TranslogReader {
             throw throwable;
         }
     }
-    /** If this {@code TranslogWriter} was closed as a side-effect of a tragic exception,
-     *  e.g. disk full while flushing a new segment, this returns the root cause exception.
-     *  Otherwise (no tragic exception has occurred) it returns null. */
+
+    public static TranslogWriter open(Type type, ShardId shardId, Checkpoint checkpoint, Path file, String translogUUID,
+                                      int bufferSize, int checkpointArraySize, ChannelFactory channelFactory) throws IOException {
+        final FileChannel channel = channelFactory.open(file);
+        try {
+            // check that the file is in the right format (TODO: find a cleaner option)
+            ImmutableTranslogReader reader = ImmutableTranslogReader.open(new ChannelReference(file, checkpoint.generation, channel), checkpoint, translogUUID);
+            final TranslogWriter writer = type.open(shardId, reader, bufferSize, checkpointArraySize);
+            return writer;
+        } catch (Throwable throwable) {
+            IOUtils.closeWhileHandlingException(channel);
+            throw throwable;
+        }
+    }
+
+
+    /**
+     * If this {@code TranslogWriter} was closed as a side-effect of a tragic exception,
+     * e.g. disk full while flushing a new segment, this returns the root cause exception.
+     * Otherwise (no tragic exception has occurred) it returns null.
+     */
     public Throwable getTragicException() {
         return tragedy;
+    }
+
+
+    public boolean pendingWrites() {
+        return maxSeqNo != getLocalCheckpoint();
     }
 
     public enum Type {
 
         SIMPLE() {
             @Override
-            public TranslogWriter create(ShardId shardId, long generation, ChannelReference channelReference, int bufferSize) throws IOException {
-                return new TranslogWriter(shardId, generation, channelReference);
+            public TranslogWriter create(ShardId shardId, Checkpoint checkpoint, ChannelReference channelReference, int bufferSize, int checkpointArraySize) throws IOException {
+                return new TranslogWriter(shardId, checkpoint, channelReference, checkpointArraySize);
+            }
+
+            @Override
+            public TranslogWriter open(ShardId shardId, ImmutableTranslogReader reader, int bufferSize, int checkpointArraySize) throws IOException {
+                return new TranslogWriter(shardId, reader, checkpointArraySize);
             }
         },
         BUFFERED() {
             @Override
-            public TranslogWriter create(ShardId shardId, long generation, ChannelReference channelReference, int bufferSize) throws IOException {
-                return new BufferingTranslogWriter(shardId, generation, channelReference, bufferSize);
+            public TranslogWriter create(ShardId shardId, Checkpoint checkpoint, ChannelReference channelReference, int bufferSize, int checkpointArraySize) throws IOException {
+                return new BufferingTranslogWriter(shardId, checkpoint, channelReference, bufferSize, checkpointArraySize);
+            }
+
+            @Override
+            public TranslogWriter open(ShardId shardId, ImmutableTranslogReader reader, int bufferSize, int checkpointArraySize) throws IOException {
+                return new BufferingTranslogWriter(shardId, reader, bufferSize, checkpointArraySize);
             }
         };
 
-        public abstract TranslogWriter create(ShardId shardId, long generation, ChannelReference raf, int bufferSize) throws IOException;
+        public abstract TranslogWriter create(ShardId shardId, Checkpoint checkpoint, ChannelReference raf, int bufferSize, int checkpointArraySize) throws IOException;
 
         public static Type fromString(String type) {
             if (SIMPLE.name().equalsIgnoreCase(type)) {
@@ -126,6 +194,8 @@ public class TranslogWriter extends TranslogReader {
             }
             throw new IllegalArgumentException("No translog fs type [" + type + "]");
         }
+
+        public abstract TranslogWriter open(ShardId shardId, ImmutableTranslogReader reader, int bufferSize, int checkpointArraySize) throws IOException;
     }
 
     protected final void closeWithTragicEvent(Throwable throwable) throws IOException {
@@ -142,7 +212,7 @@ public class TranslogWriter extends TranslogReader {
     /**
      * add the given bytes to the translog and return the location they were written at
      */
-    public Translog.Location add(BytesReference data) throws IOException {
+    public Translog.Location add(long seqNo, BytesReference data) throws IOException {
         final long position;
         try (ReleasableLock lock = writeLock.acquire()) {
             ensureOpen();
@@ -153,10 +223,12 @@ public class TranslogWriter extends TranslogReader {
                 closeWithTragicEvent(e);
                 throw e;
             }
+            checkpointSeqNoServiceService.markSeqNoAsCompleted(seqNo);
+            maxSeqNo = Math.max(maxSeqNo, seqNo);
             writtenOffset = writtenOffset + data.length();
-            operationCounter++;;
+            operationCounter++;
         }
-        return new Translog.Location(generation, position, data.length());
+        return new Translog.Location(getGeneration(), position, data.length());
     }
 
     /**
@@ -165,6 +237,21 @@ public class TranslogWriter extends TranslogReader {
     public void updateBufferSize(int bufferSize) throws TranslogException {
     }
 
+    @Override
+    public Translog.Snapshot newSnapshot() {
+        try (ReleasableLock lock = writeLock.acquire()) {
+            // must make sure things stay consistent & are available via the channel
+            flush();
+            return super.newSnapshot();
+        } catch (IOException e) {
+            try {
+                closeWithTragicEvent(e);
+            } catch (IOException closeException) {
+                e.addSuppressed(closeException);
+            }
+            throw new TranslogException(shardId, "exception while creating an immutable reader", e);
+        }
+    }
     /**
      * write all buffered ops to disk and fsync file
      */
@@ -173,7 +260,7 @@ public class TranslogWriter extends TranslogReader {
         if (syncNeeded()) {
             try (ReleasableLock lock = writeLock.acquire()) {
                 ensureOpen();
-                checkpoint(writtenOffset, operationCounter, channelReference);
+                checkpoint(writtenOffset, operationCounter, minSeqNo, maxSeqNo, checkpointSeqNoServiceService.getCheckpoint(), channelReference);
                 lastSyncedOffset = writtenOffset;
             }
         }
@@ -192,6 +279,21 @@ public class TranslogWriter extends TranslogReader {
     }
 
     @Override
+    public long getMinSeqNo() {
+        return minSeqNo;
+    }
+
+    @Override
+    public long getMaxSeqNo() {
+        return maxSeqNo;
+    }
+
+    @Override
+    public long getLocalCheckpoint() {
+        return checkpointSeqNoServiceService.getCheckpoint();
+    }
+
+    @Override
     public long sizeInBytes() {
         return writtenOffset;
     }
@@ -203,43 +305,16 @@ public class TranslogWriter extends TranslogReader {
     protected void flush() throws IOException {
     }
 
-    /**
-     * returns a new reader that follows the current writes (most importantly allows making
-     * repeated snapshots that includes new content)
-     */
-    public TranslogReader newReaderFromWriter() {
-        ensureOpen();
-        channelReference.incRef();
-        boolean success = false;
-        try {
-            TranslogReader reader = new InnerReader(this.generation, firstOperationOffset, channelReference);
-            success = true;
+    public ImmutableTranslogReader closeIntoReader() throws TranslogException {
+        try (ReleasableLock ignore = writeLock.acquire()) {
+            ensureOpen();
+            sync();
+            closed.set(true);
+            Checkpoint checkpoint = new Checkpoint(writtenOffset, operationCounter, getGeneration(), minSeqNo, maxSeqNo, getLocalCheckpoint());
+            ImmutableTranslogReader reader = new ImmutableTranslogReader(checkpoint, channelReference, getFirstOperationOffset());
             return reader;
-        } finally {
-            if (!success) {
-                channelReference.decRef();
-            }
-        }
-    }
-
-    /**
-     * returns a new immutable reader which only exposes the current written operation *
-     */
-    public ImmutableTranslogReader immutableReader() throws TranslogException {
-        if (channelReference.tryIncRef()) {
-            try (ReleasableLock lock = writeLock.acquire()) {
-                ensureOpen();
-                flush();
-                ImmutableTranslogReader reader = new ImmutableTranslogReader(this.generation, channelReference, firstOperationOffset, writtenOffset, operationCounter);
-                channelReference.incRef(); // for new reader
-                return reader;
-            } catch (Exception e) {
-                throw new TranslogException(shardId, "exception while creating an immutable reader", e);
-            } finally {
-                channelReference.decRef();
-            }
-        } else {
-            throw new TranslogException(shardId, "can't increment channel [" + channelReference + "] ref count");
+        } catch (Exception e) {
+            throw new TranslogException(shardId, "exception while creating an immutable reader", e);
         }
     }
 
@@ -247,32 +322,6 @@ public class TranslogWriter extends TranslogReader {
         ByteBuffer buffer = ByteBuffer.allocate(location.size);
         readBytes(buffer, location.translogLocation);
         return new BytesArray(buffer.array()).equals(expectedBytes);
-    }
-
-    /**
-     * this class is used when one wants a reference to this file which exposes all recently written operation.
-     * as such it needs access to the internals of the current reader
-     */
-    final class InnerReader extends TranslogReader {
-
-        public InnerReader(long generation, long fistOperationOffset, ChannelReference channelReference) {
-            super(generation, channelReference, fistOperationOffset);
-        }
-
-        @Override
-        public long sizeInBytes() {
-            return TranslogWriter.this.sizeInBytes();
-        }
-
-        @Override
-        public int totalOperations() {
-            return TranslogWriter.this.totalOperations();
-        }
-
-        @Override
-        protected void readBytes(ByteBuffer buffer, long position) throws IOException {
-            TranslogWriter.this.readBytes(buffer, position);
-        }
     }
 
     /**
@@ -295,14 +344,18 @@ public class TranslogWriter extends TranslogReader {
         }
     }
 
-    protected synchronized void checkpoint(long lastSyncPosition, int operationCounter, ChannelReference channelReference) throws IOException {
+    protected synchronized void checkpoint(long lastSyncPosition, int operationCounter, long minSeqNo, long maxSeqNo, long localCheckpoint, ChannelReference channelReference) throws IOException {
         channelReference.getChannel().force(false);
-        writeCheckpoint(lastSyncPosition, operationCounter, channelReference.getPath().getParent(), channelReference.getGeneration(), StandardOpenOption.WRITE);
+        writeCheckpoint(lastSyncPosition, operationCounter, channelReference.getPath().getParent(), channelReference.getGeneration(), minSeqNo, maxSeqNo, localCheckpoint, StandardOpenOption.WRITE);
     }
 
-    private static void writeCheckpoint(long syncPosition, int numOperations, Path translogFile, long generation, OpenOption... options) throws IOException {
-        final Path checkpointFile = translogFile.resolve(Translog.CHECKPOINT_FILE_NAME);
-        Checkpoint checkpoint = new Checkpoint(syncPosition, numOperations, generation);
+    private static void writeCheckpoint(long syncPosition, int numOperations, Path translogFile, long generation, long minSeqNo, long maxSeqNo, long localCheckpoint, OpenOption... options) throws IOException {
+        Checkpoint checkpoint = new Checkpoint(syncPosition, numOperations, generation, minSeqNo, maxSeqNo, localCheckpoint);
+        writeCheckpoint(checkpoint, translogFile, options);
+    }
+
+    private static void writeCheckpoint(Checkpoint checkpoint, Path translogFile, OpenOption... options) throws IOException {
+        final Path checkpointFile = translogFile.resolve(Translog.getCommitCheckpointFileName(checkpoint.generation));
         Checkpoint.write(checkpointFile, checkpoint, options);
     }
 
@@ -311,9 +364,23 @@ public class TranslogWriter extends TranslogReader {
         static final ChannelFactory DEFAULT = new ChannelFactory();
 
         // only for testing until we have a disk-full FileSystemt
-        public FileChannel open(Path file) throws IOException {
+        public FileChannel create(Path file) throws IOException {
             return FileChannel.open(file, StandardOpenOption.WRITE, StandardOpenOption.READ, StandardOpenOption.CREATE_NEW);
         }
+
+        public FileChannel open(Path file) throws IOException {
+            return FileChannel.open(file, StandardOpenOption.WRITE, StandardOpenOption.READ);
+        }
+    }
+
+    public void close() throws IOException {
+        if (closed.compareAndSet(false, true)) {
+            channelReference.decRef();
+        }
+    }
+
+    protected final boolean isClosed() {
+        return closed.get();
     }
 
     protected final void ensureOpen() {

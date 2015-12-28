@@ -192,4 +192,13 @@ public final class TranslogConfig {
     public void setTranslogGeneration(TranslogGeneration translogGeneration) {
         this.translogGeneration = translogGeneration;
     }
+
+    public int getCheckpointArraySize() {
+        // nocommit: make configurable
+        return 1024;
+    }
+
+    public long getBytesPerGeneration() {
+        return 20 * 1024 * 1024;
+    }
 }

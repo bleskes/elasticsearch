@@ -34,7 +34,6 @@ import org.elasticsearch.cluster.node.DiscoveryNode;
 import org.elasticsearch.cluster.routing.RoutingNode;
 import org.elasticsearch.cluster.routing.RoutingNodes;
 import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.discovery.Discovery;
 import org.elasticsearch.index.shard.IndexShard;
 import org.elasticsearch.index.shard.ShadowIndexShard;
 import org.elasticsearch.index.translog.TranslogStats;
@@ -195,8 +194,8 @@ public class IndexWithShadowReplicasIT extends ESIntegTestCase {
         client().prepareIndex(IDX, "doc", "2").setSource("foo", "bar").get();
 
         IndicesStatsResponse indicesStatsResponse = client().admin().indices().prepareStats(IDX).clear().setTranslog(true).get();
-        assertEquals(2, indicesStatsResponse.getIndex(IDX).getPrimaries().getTranslog().estimatedNumberOfOperations());
-        assertEquals(2, indicesStatsResponse.getIndex(IDX).getTotal().getTranslog().estimatedNumberOfOperations());
+        assertEquals(2, indicesStatsResponse.getIndex(IDX).getPrimaries().getTranslog().numberOfOperations());
+        assertEquals(2, indicesStatsResponse.getIndex(IDX).getTotal().getTranslog().numberOfOperations());
         for (IndicesService service : internalCluster().getInstances(IndicesService.class)) {
             IndexService indexService = service.indexService(IDX);
             if (indexService != null) {
@@ -204,7 +203,7 @@ public class IndexWithShadowReplicasIT extends ESIntegTestCase {
                 TranslogStats translogStats = shard.translogStats();
                 assertTrue(translogStats != null || shard instanceof ShadowIndexShard);
                 if (translogStats != null) {
-                    assertEquals(2, translogStats.estimatedNumberOfOperations());
+                    assertEquals(2, translogStats.numberOfOperations());
                 }
             }
         }

@@ -38,14 +38,22 @@ public final class BufferingTranslogWriter extends TranslogWriter {
     /* the total offset of this file including the bytes written to the file as well as into the buffer */
     private volatile long totalOffset;
 
-    public BufferingTranslogWriter(ShardId shardId, long generation, ChannelReference channelReference, int bufferSize) throws IOException {
-        super(shardId, generation, channelReference);
+    public BufferingTranslogWriter(ShardId shardId, Checkpoint checkpoint, ChannelReference channelReference,
+                                   int bufferSize, int checkpointArraySize) throws IOException {
+        super(shardId, checkpoint, channelReference, checkpointArraySize);
         this.buffer = new byte[bufferSize];
         this.totalOffset = writtenOffset;
     }
 
+    public BufferingTranslogWriter(ShardId shardId, ImmutableTranslogReader reader, int bufferSize, int checkpointArraySize) throws IOException {
+        super(shardId, reader, checkpointArraySize);
+        this.buffer = new byte[bufferSize];
+        this.totalOffset = writtenOffset;
+    }
+
+
     @Override
-    public Translog.Location add(BytesReference data) throws IOException {
+    public Translog.Location add(long seqNo, BytesReference data) throws IOException {
         try (ReleasableLock lock = writeLock.acquire()) {
             ensureOpen();
             final long offset = totalOffset;
@@ -68,8 +76,10 @@ public final class BufferingTranslogWriter extends TranslogWriter {
                 data.writeTo(bufferOs);
                 totalOffset += data.length();
             }
+            checkpointSeqNoServiceService.markSeqNoAsCompleted(seqNo);
+            maxSeqNo = Math.max(maxSeqNo, seqNo);
             operationCounter++;
-            return new Translog.Location(generation, offset, data.length());
+            return new Translog.Location(getGeneration(), offset, data.length());
         }
     }
 
@@ -130,7 +140,7 @@ public final class BufferingTranslogWriter extends TranslogWriter {
                 // concurrent syncs
                 ensureOpen(); // just for kicks - the checkpoint happens or not either way
                 try {
-                    checkpoint(offsetToSync, opsCounter, channelReference);
+                    checkpoint(offsetToSync, opsCounter, minSeqNo, maxSeqNo, checkpointSeqNoServiceService.getCheckpoint(), channelReference);
                 } catch (Throwable ex) {
                     closeWithTragicEvent(ex);
                     throw ex;

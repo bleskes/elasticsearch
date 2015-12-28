@@ -22,38 +22,27 @@ import org.elasticsearch.index.IndexSettings;
 import org.elasticsearch.index.shard.AbstractIndexShardComponent;
 import org.elasticsearch.index.shard.ShardId;
 
+import java.util.concurrent.atomic.AtomicLong;
+
 /** a very light weight implementation. will be replaced with proper machinery later */
 public class SequenceNumbersService extends AbstractIndexShardComponent {
 
-    public final static long UNASSIGNED_SEQ_NO = -1L;
-    final LocalCheckpointService localCheckpointService;
+    public final static long UNASSIGNED_SEQ_NO = -2L;
+    public final static long NO_OPS_PERFORMED = -1L;
+
+    final AtomicLong seqNoGenerator = new AtomicLong(NO_OPS_PERFORMED);
 
     public SequenceNumbersService(ShardId shardId, IndexSettings indexSettings) {
         super(shardId, indexSettings);
-        localCheckpointService = new LocalCheckpointService(shardId, indexSettings);
     }
 
     /**
      * generates a new sequence number.
-     * Note: you must call {@link #markSeqNoAsCompleted(long)} after the operation for which this seq# was generated
-     * was completed (whether successfully or with a failure)
      */
     public long generateSeqNo() {
-        return localCheckpointService.generateSeqNo();
+        return seqNoGenerator.incrementAndGet();
     }
-
-    /**
-     * marks the given seqNo as completed. See {@link LocalCheckpointService#markSeqNoAsCompleted(long)}
-     * more details
-     */
-    public void markSeqNoAsCompleted(long seqNo) {
-        localCheckpointService.markSeqNoAsCompleted(seqNo);
-    }
-
-    /**
-     * Gets sequence number related stats
-     */
     public SeqNoStats stats() {
-        return new SeqNoStats(localCheckpointService.getMaxSeqNo(), localCheckpointService.getCheckpoint());
+        return new SeqNoStats();
     }
 }

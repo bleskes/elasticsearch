@@ -20,25 +20,22 @@
 package org.elasticsearch.index.translog;
 
 import org.apache.lucene.util.IOUtils;
-import org.elasticsearch.common.util.Callback;
 import org.elasticsearch.common.util.concurrent.AbstractRefCounted;
 
 import java.io.IOException;
 import java.nio.channels.FileChannel;
-import java.nio.file.*;
+import java.nio.file.Path;
 
 final class ChannelReference extends AbstractRefCounted {
     private final Path file;
     private final FileChannel channel;
     protected final long generation;
-    private final Callback<ChannelReference> onClose;
 
-    ChannelReference(Path file, long generation, FileChannel channel, Callback<ChannelReference> onClose) throws IOException {
+    ChannelReference(Path file, long generation, FileChannel channel) throws IOException {
         super(file.toString());
         this.generation = generation;
         this.file = file;
         this.channel = channel;
-        this.onClose = onClose;
     }
 
     public long getGeneration() {
@@ -60,12 +57,6 @@ final class ChannelReference extends AbstractRefCounted {
 
     @Override
     protected void closeInternal() {
-        try {
-            IOUtils.closeWhileHandlingException(channel);
-        } finally {
-            if (onClose != null) {
-                onClose.handle(this);
-            }
-        }
+        IOUtils.closeWhileHandlingException(channel);
     }
 }

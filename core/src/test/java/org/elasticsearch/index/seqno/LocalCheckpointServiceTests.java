@@ -19,11 +19,9 @@
 package org.elasticsearch.index.seqno;
 
 import org.elasticsearch.ElasticsearchException;
-import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.util.concurrent.AbstractRunnable;
 import org.elasticsearch.index.shard.ShardId;
 import org.elasticsearch.test.ESTestCase;
-import org.elasticsearch.test.IndexSettingsModule;
 import org.junit.Before;
 
 import java.util.ArrayList;
@@ -54,16 +52,12 @@ public class LocalCheckpointServiceTests extends ESTestCase {
     protected LocalCheckpointService getCheckpointService() {
         return new LocalCheckpointService(
             new ShardId("test", 0),
-            IndexSettingsModule.newIndexSettings("test",
-                Settings.builder()
-                    .put(LocalCheckpointService.SETTINGS_BIT_ARRAYS_SIZE, SMALL_CHUNK_SIZE)
-                    .build()
-            ));
+                0, SequenceNumbersService.NO_OPS_PERFORMED, SMALL_CHUNK_SIZE);
     }
 
     public void testSimplePrimary() {
         long seqNo1, seqNo2;
-        assertThat(checkpointService.getCheckpoint(), equalTo(SequenceNumbersService.UNASSIGNED_SEQ_NO));
+        assertThat(checkpointService.getCheckpoint(), equalTo(SequenceNumbersService.NO_OPS_PERFORMED));
         seqNo1 = checkpointService.generateSeqNo();
         assertThat(seqNo1, equalTo(0L));
         checkpointService.markSeqNoAsCompleted(seqNo1);
@@ -79,7 +73,7 @@ public class LocalCheckpointServiceTests extends ESTestCase {
     }
 
     public void testSimpleReplica() {
-        assertThat(checkpointService.getCheckpoint(), equalTo(SequenceNumbersService.UNASSIGNED_SEQ_NO));
+        assertThat(checkpointService.getCheckpoint(), equalTo(SequenceNumbersService.NO_OPS_PERFORMED));
         checkpointService.markSeqNoAsCompleted(0L);
         assertThat(checkpointService.getCheckpoint(), equalTo(0L));
         checkpointService.markSeqNoAsCompleted(2L);

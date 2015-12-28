@@ -49,7 +49,13 @@ import org.elasticsearch.cluster.metadata.IndexMetaData;
 import org.elasticsearch.cluster.metadata.MetaData;
 import org.elasticsearch.cluster.metadata.SnapshotId;
 import org.elasticsearch.cluster.node.DiscoveryNode;
-import org.elasticsearch.cluster.routing.*;
+import org.elasticsearch.cluster.routing.AllocationId;
+import org.elasticsearch.cluster.routing.RestoreSource;
+import org.elasticsearch.cluster.routing.ShardRouting;
+import org.elasticsearch.cluster.routing.ShardRoutingHelper;
+import org.elasticsearch.cluster.routing.ShardRoutingState;
+import org.elasticsearch.cluster.routing.TestShardRouting;
+import org.elasticsearch.cluster.routing.UnassignedInfo;
 import org.elasticsearch.common.bytes.BytesArray;
 import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.io.stream.BytesStreamOutput;
@@ -74,7 +80,11 @@ import org.elasticsearch.index.fielddata.IndexFieldData;
 import org.elasticsearch.index.flush.FlushStats;
 import org.elasticsearch.index.indexing.IndexingOperationListener;
 import org.elasticsearch.index.indexing.ShardIndexingService;
-import org.elasticsearch.index.mapper.*;
+import org.elasticsearch.index.mapper.MappedFieldType;
+import org.elasticsearch.index.mapper.Mapping;
+import org.elasticsearch.index.mapper.ParseContext;
+import org.elasticsearch.index.mapper.ParsedDocument;
+import org.elasticsearch.index.mapper.Uid;
 import org.elasticsearch.index.mapper.internal.UidFieldMapper;
 import org.elasticsearch.index.snapshots.IndexShardRepository;
 import org.elasticsearch.index.snapshots.IndexShardSnapshotStatus;
@@ -83,7 +93,11 @@ import org.elasticsearch.index.translog.Translog;
 import org.elasticsearch.index.translog.TranslogConfig;
 import org.elasticsearch.indices.IndicesService;
 import org.elasticsearch.indices.recovery.RecoveryState;
-import org.elasticsearch.test.*;
+import org.elasticsearch.test.DummyShardLock;
+import org.elasticsearch.test.ESSingleNodeTestCase;
+import org.elasticsearch.test.FieldMaskingReader;
+import org.elasticsearch.test.IndexSettingsModule;
+import org.elasticsearch.test.VersionUtils;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -97,11 +111,16 @@ import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static org.elasticsearch.cluster.metadata.IndexMetaData.*;
+import static org.elasticsearch.cluster.metadata.IndexMetaData.SETTING_NUMBER_OF_REPLICAS;
+import static org.elasticsearch.cluster.metadata.IndexMetaData.SETTING_NUMBER_OF_SHARDS;
+import static org.elasticsearch.cluster.metadata.IndexMetaData.SETTING_VERSION_CREATED;
 import static org.elasticsearch.common.settings.Settings.settingsBuilder;
 import static org.elasticsearch.common.xcontent.ToXContent.EMPTY_PARAMS;
 import static org.elasticsearch.index.query.QueryBuilders.matchAllQuery;
-import static org.elasticsearch.test.hamcrest.ElasticsearchAssertions.*;
+import static org.elasticsearch.test.hamcrest.ElasticsearchAssertions.assertAcked;
+import static org.elasticsearch.test.hamcrest.ElasticsearchAssertions.assertHitCount;
+import static org.elasticsearch.test.hamcrest.ElasticsearchAssertions.assertNoFailures;
+import static org.elasticsearch.test.hamcrest.ElasticsearchAssertions.assertSearchHits;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 
@@ -723,25 +742,26 @@ public class IndexShardTests extends ESSingleNodeTestCase {
         Engine.Index index = new Engine.Index(new Term("_uid", "1"), doc);
         shard.index(index);
         assertTrue(shard.shouldFlush());
-        assertEquals(2, shard.getEngine().getTranslog().totalOperations());
+        final Translog translog = shard.getEngine().getTranslog();
+        assertEquals(2, translog.stats().numberOfOperations());
         client().prepareIndex("test", "test", "2").setSource("{}").setRefresh(randomBoolean()).get();
         assertBusy(() -> { // this is async
             assertFalse(shard.shouldFlush());
         });
-        assertEquals(0, shard.getEngine().getTranslog().totalOperations());
-        shard.getEngine().getTranslog().sync();
-        long size = shard.getEngine().getTranslog().sizeInBytes();
-        logger.info("--> current translog size: [{}] num_ops [{}] generation [{}]", shard.getEngine().getTranslog().sizeInBytes(), shard.getEngine().getTranslog().totalOperations(), shard.getEngine().getTranslog().getGeneration());
+        assertEquals(0, translog.stats().numberOfOperations());
+        translog.sync();
+        long size = translog.stats().getTranslogSizeInBytes();
+        logger.info("--> current translog size: [{}] num_ops [{}] generation [{}]", translog.stats().getTranslogSizeInBytes(), translog.stats().numberOfOperations(), translog.getGeneration());
         client().admin().indices().prepareUpdateSettings("test").setSettings(settingsBuilder().put(IndexShard.INDEX_TRANSLOG_FLUSH_THRESHOLD_OPS, 1000)
                 .put(IndexShard.INDEX_TRANSLOG_FLUSH_THRESHOLD_SIZE, new ByteSizeValue(size, ByteSizeUnit.BYTES))
                 .build()).get();
         client().prepareDelete("test", "test", "2").get();
-        logger.info("--> translog size after delete: [{}] num_ops [{}] generation [{}]", shard.getEngine().getTranslog().sizeInBytes(), shard.getEngine().getTranslog().totalOperations(), shard.getEngine().getTranslog().getGeneration());
+        logger.info("--> translog size after delete: [{}] num_ops [{}] generation [{}]", translog.stats().getTranslogSizeInBytes(), translog.stats().numberOfOperations(), translog.getGeneration());
         assertBusy(() -> { // this is async
-            logger.info("--> translog size on iter  : [{}] num_ops [{}] generation [{}]", shard.getEngine().getTranslog().sizeInBytes(), shard.getEngine().getTranslog().totalOperations(), shard.getEngine().getTranslog().getGeneration());
+            logger.info("--> translog size on iter  : [{}] num_ops [{}] generation [{}]", translog.stats().getTranslogSizeInBytes(), translog.stats().numberOfOperations(), translog.getGeneration());
             assertFalse(shard.shouldFlush());
         });
-        assertEquals(0, shard.getEngine().getTranslog().totalOperations());
+        assertEquals(0, translog.stats().numberOfOperations());
     }
 
     public void testStressMaybeFlush() throws Exception {

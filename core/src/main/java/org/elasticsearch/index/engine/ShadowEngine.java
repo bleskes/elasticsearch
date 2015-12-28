@@ -169,6 +169,11 @@ public class ShadowEngine extends Engine {
     }
 
     @Override
+    public Translog.View getUncommittedView() {
+        throw new UnsupportedOperationException("shadow engines don't have translogs");
+    }
+
+    @Override
     public List<Segment> segments(boolean verbose) {
         try (ReleasableLock lock = readLock.acquire()) {
             Segment[] segmentsArr = getSegmentInfo(lastCommittedSegmentInfos, verbose);

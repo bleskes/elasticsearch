@@ -126,6 +126,4 @@ public final class SnapshotMatchers {
             description.appendText(failureMsg);
         }
     }
-
-
 }

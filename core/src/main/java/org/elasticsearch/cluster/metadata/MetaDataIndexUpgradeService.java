@@ -29,7 +29,6 @@ import org.elasticsearch.index.IndexSettings;
 import org.elasticsearch.index.analysis.AnalysisService;
 import org.elasticsearch.index.analysis.NamedAnalyzer;
 import org.elasticsearch.index.mapper.MapperService;
-import org.elasticsearch.index.seqno.LocalCheckpointService;
 import org.elasticsearch.index.similarity.SimilarityService;
 import org.elasticsearch.indices.mapper.MapperRegistry;
 
@@ -151,7 +150,6 @@ public class MetaDataIndexUpgradeService extends AbstractComponent {
         "index.translog.interval",
         "index.translog.sync_interval",
         "index.shard.inactive_time",
-        LocalCheckpointService.SETTINGS_BIT_ARRAYS_SIZE,
         UnassignedInfo.INDEX_DELAYED_NODE_LEFT_TIMEOUT_SETTING));
 
     /**

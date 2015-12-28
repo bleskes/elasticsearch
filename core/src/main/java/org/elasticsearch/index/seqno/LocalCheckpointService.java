@@ -19,8 +19,9 @@
 package org.elasticsearch.index.seqno;
 
 import org.apache.lucene.util.FixedBitSet;
-import org.elasticsearch.index.IndexSettings;
-import org.elasticsearch.index.shard.AbstractIndexShardComponent;
+import org.elasticsearch.common.logging.ESLogger;
+import org.elasticsearch.common.logging.Loggers;
+import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.index.shard.ShardId;
 
 import java.util.LinkedList;
@@ -29,16 +30,10 @@ import java.util.LinkedList;
  * This class generates sequences numbers and keeps track of the so called local checkpoint - the highest number for which
  * all previous seqNo have been processed (including)
  */
-public class LocalCheckpointService extends AbstractIndexShardComponent {
+public class LocalCheckpointService {
 
-    /**
-     * we keep a bit for each seq No that is still pending. to optimize allocation, we do so in multiple arrays
-     * allocating them on demand and cleaning up while completed. This setting controls the size of the arrays
-     */
-    public static String SETTINGS_BIT_ARRAYS_SIZE = "index.seq_no.checkpoint.bit_arrays_size";
-
-    /** default value for {@link #SETTINGS_BIT_ARRAYS_SIZE} */
-    final static int DEFAULT_BIT_ARRAYS_SIZE = 1024;
+    protected final ESLogger logger;
+    protected final ShardId shardId;
 
 
     /**
@@ -50,19 +45,24 @@ public class LocalCheckpointService extends AbstractIndexShardComponent {
     long firstProcessedSeqNo = 0;
 
     /** the current local checkpoint, i.e., all seqNo lower (&lt;=) than this number have been completed */
-    volatile long checkpoint = SequenceNumbersService.UNASSIGNED_SEQ_NO;
+    volatile long checkpoint = SequenceNumbersService.NO_OPS_PERFORMED;
 
     /** the next available seqNo - used for seqNo generation */
     volatile long nextSeqNo = 0;
 
 
-    public LocalCheckpointService(ShardId shardId, IndexSettings indexSettings) {
-        super(shardId, indexSettings);
-        bitArraysSize = indexSettings.getSettings().getAsInt(SETTINGS_BIT_ARRAYS_SIZE, DEFAULT_BIT_ARRAYS_SIZE);
+    public LocalCheckpointService(ShardId shardId, long minSeqNo, long initialCheckpoint, int bitArraysSize) {
+        this.shardId = shardId;
+        // nocommit: pass a proper logger
+        this.logger = Loggers.getLogger(getClass(), Settings.EMPTY, shardId);
         if (bitArraysSize <= 0) {
-            throw new IllegalArgumentException("[" + SETTINGS_BIT_ARRAYS_SIZE + "] must be positive. got [" + bitArraysSize + "]");
+            throw new IllegalArgumentException("bit array size must be positive. got [" + bitArraysSize + "]");
         }
+        this.bitArraysSize = bitArraysSize;
         processedSeqNo = new LinkedList<>();
+        this.nextSeqNo = minSeqNo;
+        this.firstProcessedSeqNo = minSeqNo;
+        this.checkpoint = initialCheckpoint;
     }
 
     /**
@@ -109,7 +109,8 @@ public class LocalCheckpointService extends AbstractIndexShardComponent {
     private void updateCheckpoint() {
         assert Thread.holdsLock(this);
         assert checkpoint < firstProcessedSeqNo + bitArraysSize - 1 :
-            "checkpoint should be below the end of the first bit set (o.w. current bit set is completed and shouldn't be there)";
+                "checkpoint should be below the end of the first bit set (o.w. current bit set is completed and shouldn't be there)\n" +
+                        "checkpoint:" + checkpoint + " firstProcessedSeqNo: " + firstProcessedSeqNo + " bitArraySize: " + bitArraysSize;
         assert getBitSetForSeqNo(checkpoint + 1) == processedSeqNo.getFirst() :
             "checkpoint + 1 doesn't point to the first bit set (o.w. current bit set is completed and shouldn't be there)";
         assert getBitSetForSeqNo(checkpoint + 1).get(seqNoToBitSetOffset(checkpoint + 1)) :
