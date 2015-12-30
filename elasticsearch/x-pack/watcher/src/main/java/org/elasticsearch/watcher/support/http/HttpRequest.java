@@ -21,6 +21,7 @@ import org.elasticsearch.ElasticsearchParseException;
 import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.ParseFieldMatcher;
+import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.ToXContent;
@@ -28,6 +29,7 @@ import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentHelper;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.common.xcontent.XContentType;
+import org.elasticsearch.rest.support.RestUtils;
 import org.elasticsearch.watcher.support.WatcherDateTimeUtils;
 import org.elasticsearch.watcher.support.WatcherUtils;
 import org.elasticsearch.watcher.support.http.auth.HttpAuth;
@@ -35,6 +37,8 @@ import org.elasticsearch.watcher.support.http.auth.HttpAuthRegistry;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.util.HashMap;
@@ -307,6 +311,8 @@ public class HttpRequest implements ToXContent {
                         builder.path(parser.text());
                     } else if (ParseFieldMatcher.STRICT.match(currentFieldName, Field.BODY)) {
                         builder.body(parser.text());
+                    } else if (ParseFieldMatcher.STRICT.match(currentFieldName, Field.URL)) {
+                        builder.fromUrl(parser.text());
                     } else {
                         throw new ElasticsearchParseException("could not parse http request. unexpected string field [{}]", currentFieldName);
                     }
@@ -439,6 +445,25 @@ public class HttpRequest implements ToXContent {
             headers = null;
             return request;
         }
+
+        public Builder fromUrl(String supposedUrl) {
+            try {
+                URI uri = new URI(supposedUrl);
+                port = uri.getPort() > 0 ? uri.getPort() : 80;
+                host = uri.getHost();
+                scheme = Scheme.parse(uri.getScheme());
+                if (Strings.hasLength(uri.getPath())) {
+                    path = uri.getPath();
+                }
+                String rawQuery = uri.getRawQuery();
+                if (Strings.hasLength(rawQuery)) {
+                    RestUtils.decodeQueryString(rawQuery, 0, params);
+                }
+            } catch (URISyntaxException e) {
+                throw new ElasticsearchParseException("Malformed URL [{}]", supposedUrl);
+            }
+            return this;
+        }
     }
 
     public interface Field {
@@ -454,5 +479,6 @@ public class HttpRequest implements ToXContent {
         ParseField CONNECTION_TIMEOUT = new ParseField("connection_timeout");
         ParseField READ_TIMEOUT = new ParseField("read_timeout");
         ParseField PROXY = new ParseField("proxy");
+        ParseField URL = new ParseField("url");
     }
 }
