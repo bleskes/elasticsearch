@@ -68,8 +68,8 @@ over HTTP.
 Before we start, please download the example CSV file from
 http://s3.amazonaws.com/prelert_demo/farequote.csv. Time series data are
 preferred to be ordered by date. (In case data cannot be sent in time order, see
-http://www.prelert.com/docs/engine_api/2.0/outofsequence.html.) The raw CSV
-data looks like this:
+http://www.prelert.com/docs/engine_api/2.0/concepts/outofsequence.html.) The raw
+CSV data looks like this:
 
 time,airline,responsetime,sourcetype
 2014-06-23 00:00:00Z,AAL,132.2046,farequote
