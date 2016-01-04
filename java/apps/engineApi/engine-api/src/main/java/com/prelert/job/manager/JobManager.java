@@ -522,6 +522,13 @@ public class JobManager
         m_JobProvider.updateJob(jobId, update);
     }
 
+    public void setResultsRetentionDays(String jobId, Long retentionDays) throws UnknownJobException
+    {
+        Map<String, Object> update = new HashMap<>();
+        update.put(JobDetails.RESULTS_RETENTION_DAYS, retentionDays);
+        m_JobProvider.updateJob(jobId, update);
+    }
+
     /**
      * Flush the running job, ensuring that the native process has had the
      * opportunity to process all data previously sent to it with none left

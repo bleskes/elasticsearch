@@ -34,9 +34,9 @@ import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.manager.JobManager;
 import com.prelert.job.messages.Messages;
 
-class RenormalizationWindowUpdater extends AbstractUpdater
+class ResultsRetentionDaysUpdater extends AbstractUpdater
 {
-    public RenormalizationWindowUpdater(JobManager jobManager, String jobId)
+    public ResultsRetentionDaysUpdater(JobManager jobManager, String jobId)
     {
         super(jobManager, jobId);
     }
@@ -46,12 +46,12 @@ class RenormalizationWindowUpdater extends AbstractUpdater
     {
         if (node.isIntegralNumber() || node.isNull())
         {
-            Long renormalizationWindow = node.isIntegralNumber() ? node.asLong() : null;
-            if (renormalizationWindow != null && renormalizationWindow < 0)
+            Long resultsRetentionDays = node.isIntegralNumber() ? node.asLong() : null;
+            if (resultsRetentionDays != null && resultsRetentionDays < 0)
             {
                 throwInvalidValue();
             }
-            jobManager().setRenormalizationWindow(jobId(), renormalizationWindow);
+            jobManager().setResultsRetentionDays(jobId(), resultsRetentionDays);
             return;
         }
         throwInvalidValue();
@@ -60,7 +60,7 @@ class RenormalizationWindowUpdater extends AbstractUpdater
     private void throwInvalidValue() throws JobConfigurationException
     {
         throw new JobConfigurationException(
-                Messages.getMessage(Messages.JOB_CONFIG_UPDATE_RENORMALIZATION_WINDOW_INVALID),
+                Messages.getMessage(Messages.JOB_CONFIG_UPDATE_RESULTS_RETENTION_DAYS_INVALID),
                 ErrorCodes.INVALID_VALUE);
     }
 }

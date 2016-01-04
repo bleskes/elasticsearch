@@ -61,6 +61,7 @@ public class JobDetailsTest
         anotherJobDetails.setDataDescription(anotherDataDescription);
         anotherJobDetails.setDescription("Another");
         anotherJobDetails.setRenormalizationWindow(4L);
+        anotherJobDetails.setResultsRetentionDays(60L);
         anotherJobDetails.setTransforms(anotherTransforms);
 
         JobConfiguration jobConfiguration = new JobConfiguration();
@@ -70,6 +71,7 @@ public class JobDetailsTest
         jobConfiguration.setDataDescription(null);
         jobConfiguration.setDescription(null);
         jobConfiguration.setRenormalizationWindow(null);
+        jobConfiguration.setResultsRetentionDays(null);
         jobConfiguration.setTransforms(null);
 
         JobDetails jobDetails = new JobDetails("thisId", anotherJobDetails, jobConfiguration);
@@ -82,6 +84,7 @@ public class JobDetailsTest
         assertEquals(anotherDataDescription, jobDetails.getDataDescription());
         assertEquals("Another", jobDetails.getDescription());
         assertEquals(4L, jobDetails.getRenormalizationWindow().longValue());
+        assertEquals(60L, jobDetails.getResultsRetentionDays().longValue());
         assertEquals(anotherTransforms, jobDetails.getTransforms());
     }
 
@@ -103,6 +106,7 @@ public class JobDetailsTest
         anotherJobDetails.setDataDescription(anotherDataDescription);
         anotherJobDetails.setDescription("Another");
         anotherJobDetails.setRenormalizationWindow(4L);
+        anotherJobDetails.setResultsRetentionDays(60L);
         anotherJobDetails.setTransforms(anotherTransforms);
 
         AnalysisConfig overridingAnalysisConfig = mock(AnalysisConfig.class);
@@ -119,6 +123,7 @@ public class JobDetailsTest
         jobConfiguration.setDataDescription(overridingDataDescription);
         jobConfiguration.setDescription("Overriding");
         jobConfiguration.setRenormalizationWindow(5L);
+        jobConfiguration.setResultsRetentionDays(90L);
         jobConfiguration.setTransforms(overridingTransforms);
 
         JobDetails jobDetails = new JobDetails("thisId", anotherJobDetails, jobConfiguration);
@@ -131,6 +136,7 @@ public class JobDetailsTest
         assertEquals(overridingDataDescription, jobDetails.getDataDescription());
         assertEquals("Overriding", jobDetails.getDescription());
         assertEquals(5L, jobDetails.getRenormalizationWindow().longValue());
+        assertEquals(90L, jobDetails.getResultsRetentionDays().longValue());
         assertEquals(overridingTransforms, jobDetails.getTransforms());
     }
 
@@ -181,6 +187,17 @@ public class JobDetailsTest
         jobDetails1.setRenormalizationWindow(3L);
         JobConfiguration jobDetails2 = new JobConfiguration();
         jobDetails2.setRenormalizationWindow(4L);
+
+        assertFalse(jobDetails1.equals(jobDetails2));
+    }
+
+    @Test
+    public void testEquals_GivenDifferentResultsRetentionDays()
+    {
+        JobConfiguration jobDetails1 = new JobConfiguration();
+        jobDetails1.setResultsRetentionDays(30L);
+        JobConfiguration jobDetails2 = new JobConfiguration();
+        jobDetails2.setResultsRetentionDays(4L);
 
         assertFalse(jobDetails1.equals(jobDetails2));
     }

@@ -140,4 +140,16 @@ public class JobUpdaterTest
         verify(m_JobManager).setRenormalizationWindow("foo", 3L);
         verify(m_JobManager, never()).writeUpdateConfigMessage(anyString(), anyString());
     }
+
+    @Test
+    public void testUpdate_GivenValidResultsRetentionDaysUpdate() throws UnknownJobException,
+            JobConfigurationException, JobInUseException, NativeProcessRunException
+    {
+        String update = "{\"resultsRetentionDays\": 3}";
+
+        new JobUpdater(m_JobManager, "foo").update(update);
+
+        verify(m_JobManager).setResultsRetentionDays("foo", 3L);
+        verify(m_JobManager, never()).writeUpdateConfigMessage(anyString(), anyString());
+    }
 }

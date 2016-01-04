@@ -25,42 +25,42 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.rs.job.update;
+package com.prelert.utils.scheduler;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.prelert.job.UnknownJobException;
-import com.prelert.job.config.verification.JobConfigurationException;
-import com.prelert.job.errorcodes.ErrorCodes;
-import com.prelert.job.manager.JobManager;
-import com.prelert.job.messages.Messages;
+import static org.junit.Assert.assertEquals;
 
-class RenormalizationWindowUpdater extends AbstractUpdater
+import java.time.LocalDateTime;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import org.junit.Before;
+import org.junit.Test;
+
+public class TaskSchedulerTest
 {
-    public RenormalizationWindowUpdater(JobManager jobManager, String jobId)
+    private AtomicInteger m_TaskCount;
+
+    @Before
+    public void setUp()
     {
-        super(jobManager, jobId);
+        m_TaskCount = new AtomicInteger(0);
     }
 
-    @Override
-    void update(JsonNode node) throws UnknownJobException, JobConfigurationException
+    @Test
+    public void testTaskRunsTwiceGivenOneSecondPeriodAndWaitingForBitMoreThanTwoSeconds()
     {
-        if (node.isIntegralNumber() || node.isNull())
+        TaskScheduler scheduler = new TaskScheduler(() -> m_TaskCount.incrementAndGet(),
+                () -> LocalDateTime.now().plusSeconds(1L));
+        scheduler.start();
+
+        try
         {
-            Long renormalizationWindow = node.isIntegralNumber() ? node.asLong() : null;
-            if (renormalizationWindow != null && renormalizationWindow < 0)
-            {
-                throwInvalidValue();
-            }
-            jobManager().setRenormalizationWindow(jobId(), renormalizationWindow);
-            return;
+            Thread.sleep(2100);
         }
-        throwInvalidValue();
-    }
+        catch (InterruptedException e)
+        {
+            e.printStackTrace();
+        }
 
-    private void throwInvalidValue() throws JobConfigurationException
-    {
-        throw new JobConfigurationException(
-                Messages.getMessage(Messages.JOB_CONFIG_UPDATE_RENORMALIZATION_WINDOW_INVALID),
-                ErrorCodes.INVALID_VALUE);
+        assertEquals(2, m_TaskCount.get());
     }
 }

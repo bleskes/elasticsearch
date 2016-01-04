@@ -135,6 +135,10 @@ public class ElasticsearchMappingsTest
                         "        \"type\": \"long\"," +
                         "        \"index\": \"no\"" +
                         "      }," +
+                        "      \"resultsRetentionDays\": {" +
+                        "        \"type\": \"long\"," +
+                        "        \"index\": \"no\"" +
+                        "      }," +
                         "      \"analysisConfig\": {" +
                         "        \"type\": \"object\"," +
                         "        \"properties\": {" +
