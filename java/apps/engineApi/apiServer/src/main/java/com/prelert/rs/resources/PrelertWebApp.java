@@ -108,6 +108,9 @@ public class PrelertWebApp extends Application
 
     private static final String ENGINE_API_DIR = "engine_api";
 
+    /** Remove old results at 30 minutes past midnight */
+    private static final long OLD_RESULTS_REMOVAL_PAST_MIDNIGHT_OFFSET_MINUTES = 30L;
+
     private Set<Class<?>> m_ResourceClasses;
     private Set<Object> m_Singletons;
 
@@ -273,7 +276,8 @@ public class PrelertWebApp extends Application
         OldResultsRemover oldResultsRemover = new OldResultsRemover(esJob,
                 jobId -> new ElasticsearchBulkDeleter(esJob.getClient(), jobId));
         m_OldResultsRemoverSchedule = TaskScheduler
-                .newMidnightTaskScheduler(() -> oldResultsRemover.removeOldResults());
+                .newMidnightTaskScheduler(() -> oldResultsRemover.removeOldResults(),
+                        OLD_RESULTS_REMOVAL_PAST_MIDNIGHT_OFFSET_MINUTES);
         m_OldResultsRemoverSchedule.start();
     }
 

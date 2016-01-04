@@ -78,12 +78,15 @@ public class TaskScheduler
     }
 
     /**
-     * Create a scheduler to run a task every day at midnight (local timezone)
+     * Create a scheduler to run a task every day at midnight (local timezone) plus the
+     * given offset in minutes
      * @param task the task to be scheduled
+     * @param offsetMinutes the offset in minutes
      * @return the scheduler
      */
-    public static TaskScheduler newMidnightTaskScheduler(Runnable task)
+    public static TaskScheduler newMidnightTaskScheduler(Runnable task, long offsetMinutes)
     {
-        return new TaskScheduler(task, () -> LocalDate.now().plusDays(1).atStartOfDay());
+        return new TaskScheduler(task, () -> LocalDate.now().plusDays(1).atStartOfDay()
+                .plusMinutes(offsetMinutes));
     }
 }
