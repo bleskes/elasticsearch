@@ -60,7 +60,6 @@ import com.prelert.job.alert.AlertTrigger;
 import com.prelert.job.persistence.JobResultsPersister;
 import com.prelert.job.process.normaliser.BlockingQueueRenormaliser;
 import com.prelert.job.quantiles.Quantiles;
-import com.prelert.job.results.AnomalyRecord;
 import com.prelert.job.results.Bucket;
 import com.prelert.job.results.BucketInfluencer;
 import com.prelert.job.results.CategoryDefinition;
@@ -204,24 +203,6 @@ public class AutoDetectResultsParserTest
         public void persistInfluencer(Influencer influencer)
         {
             m_Influencers.add(influencer);
-        }
-
-        @Override
-        public void updateBucket(Bucket bucket)
-        {
-            // Do nothing
-        }
-
-        @Override
-        public void updateRecords(String bucketId, List<AnomalyRecord> records)
-        {
-            // Do nothing
-        }
-
-        @Override
-        public void updateInfluencer(Influencer influencer)
-        {
-            // Do nothing
         }
     }
 

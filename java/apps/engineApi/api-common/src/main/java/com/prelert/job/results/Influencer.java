@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -68,6 +68,10 @@ public class Influencer
         m_InfluenceValue = fieldValue;
     }
 
+    /**
+     *ID is the concatenation of influencer field & value & timestamp
+     * @return
+     */
     public String getId()
     {
         return new StringBuilder(m_InfluenceField)

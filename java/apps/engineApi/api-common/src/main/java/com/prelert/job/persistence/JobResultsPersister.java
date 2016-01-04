@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -37,7 +37,7 @@ import com.prelert.job.results.Influencer;
  * Interface for classes that persist {@linkplain Bucket Buckets} and
  * {@linkplain Quantiles Quantiles}
  */
-public interface JobResultsPersister extends JobRenormaliser
+public interface JobResultsPersister
 {
     /**
      * Persist the result bucket

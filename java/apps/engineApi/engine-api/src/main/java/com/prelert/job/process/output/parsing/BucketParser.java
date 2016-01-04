@@ -88,7 +88,7 @@ final class BucketParser extends FieldNameParser<Bucket>
             bucket.setEventCount(parseAsLongOrZero(fieldName));
             break;
         case Bucket.IS_INTERIM:
-            bucket.setInterim(parseAsBooleanOrNull( fieldName));
+            bucket.setInterim(parseAsBooleanOrNull(fieldName));
             break;
         case Bucket.DETECTORS:
             bucket.setDetectors(parseDetectors(fieldName));
