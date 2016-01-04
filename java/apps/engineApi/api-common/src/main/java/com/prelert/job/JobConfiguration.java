@@ -83,6 +83,7 @@ public class JobConfiguration
     private Long m_Timeout;
     private ModelDebugConfig m_ModelDebugConfig;
     private Long m_RenormalizationWindow;
+    private Long m_ResultsRetentionDays;
 
     public JobConfiguration()
     {
@@ -250,5 +251,15 @@ public class JobConfiguration
     public void setRenormalizationWindow(Long renormalizationWindow)
     {
         m_RenormalizationWindow = renormalizationWindow;
+    }
+
+    public Long getResultsRetentionDays()
+    {
+        return m_ResultsRetentionDays;
+    }
+
+    public void setResultsRetentionDays(Long resultsRetentionDays)
+    {
+        m_ResultsRetentionDays = resultsRetentionDays;
     }
 }

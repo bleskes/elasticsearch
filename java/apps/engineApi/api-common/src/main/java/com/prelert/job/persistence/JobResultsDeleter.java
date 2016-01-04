@@ -25,42 +25,34 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.rs.job.update;
+package com.prelert.job.persistence;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.prelert.job.UnknownJobException;
-import com.prelert.job.config.verification.JobConfigurationException;
-import com.prelert.job.errorcodes.ErrorCodes;
-import com.prelert.job.manager.JobManager;
-import com.prelert.job.messages.Messages;
+import com.prelert.job.results.Bucket;
+import com.prelert.job.results.Influencer;
 
-class RenormalizationWindowUpdater extends AbstractUpdater
+public interface JobResultsDeleter
 {
-    public RenormalizationWindowUpdater(JobManager jobManager, String jobId)
-    {
-        super(jobManager, jobId);
-    }
+    /**
+     * Delete a {@code Bucket} and its records
+     * @param bucket the bucket to delete
+     */
+    void deleteBucket(Bucket bucket);
 
-    @Override
-    void update(JsonNode node) throws UnknownJobException, JobConfigurationException
-    {
-        if (node.isIntegralNumber() || node.isNull())
-        {
-            Long renormalizationWindow = node.isIntegralNumber() ? node.asLong() : null;
-            if (renormalizationWindow != null && renormalizationWindow < 0)
-            {
-                throwInvalidValue();
-            }
-            jobManager().setRenormalizationWindow(jobId(), renormalizationWindow);
-            return;
-        }
-        throwInvalidValue();
-    }
+    /**
+     * Delete the records of a {@code Bucket}
+     * @param bucket the bucket whose records to delete
+     */
+    void deleteRecords(Bucket bucket);
 
-    private void throwInvalidValue() throws JobConfigurationException
-    {
-        throw new JobConfigurationException(
-                Messages.getMessage(Messages.JOB_CONFIG_UPDATE_RENORMALIZATION_WINDOW_INVALID),
-                ErrorCodes.INVALID_VALUE);
-    }
+    /**
+     * Delete an {@code Influencer}
+     * @param influencer the influencer to delete
+     */
+    void deleteInfluencer(Influencer influencer);
+
+    /**
+     * Commit the deletions and give the chance to implementors
+     * to perform clean-up
+     */
+    void commit();
 }

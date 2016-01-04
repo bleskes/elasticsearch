@@ -27,7 +27,6 @@
 
 package com.prelert.job.process.normaliser;
 
-import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.anyListOf;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
@@ -42,7 +41,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.Optional;
 
 import org.apache.log4j.Logger;
@@ -57,6 +55,7 @@ import com.prelert.job.UnknownJobException;
 import com.prelert.job.persistence.BatchedResultsIterator;
 import com.prelert.job.persistence.JobProvider;
 import com.prelert.job.persistence.JobRenormaliser;
+import com.prelert.job.persistence.MockBatchedResultsIterator;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
 import com.prelert.job.results.AnomalyRecord;
 import com.prelert.job.results.Bucket;
@@ -536,48 +535,5 @@ public class ScoresUpdaterTest
     private void verifyInfluencerWasUpdated(Influencer influencer)
     {
         verify(m_JobRenormaliser).updateInfluencer(influencer);
-    }
-
-    private static class MockBatchedResultsIterator<T> implements BatchedResultsIterator<T>
-    {
-        private final long m_StartEpochMs;
-        private final long m_EndEpochMs;
-        private final List<Deque<T>> m_Batches;
-        private int m_Index;
-        private boolean m_WasTimeRangeCalled;
-
-        public MockBatchedResultsIterator(long startEpochMs, long endEpochMs, List<Deque<T>> batches)
-        {
-            m_StartEpochMs = startEpochMs;
-            m_EndEpochMs = endEpochMs;
-            m_Batches = batches;
-            m_Index = 0;
-            m_WasTimeRangeCalled = false;
-        }
-
-        @Override
-        public BatchedResultsIterator<T> timeRange(long startEpochMs, long endEpochMs)
-        {
-            assertEquals(m_StartEpochMs, startEpochMs);
-            assertEquals(m_EndEpochMs, endEpochMs);
-            m_WasTimeRangeCalled = true;
-            return this;
-        }
-
-        @Override
-        public Deque<T> next() throws UnknownJobException
-        {
-            if (!m_WasTimeRangeCalled || !hasNext())
-            {
-                throw new NoSuchElementException();
-            }
-            return m_Batches.get(m_Index++);
-        }
-
-        @Override
-        public boolean hasNext()
-        {
-            return m_Index != m_Batches.size();
-        }
     }
 }

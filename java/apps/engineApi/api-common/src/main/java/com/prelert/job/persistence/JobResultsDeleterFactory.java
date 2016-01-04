@@ -25,42 +25,9 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.rs.job.update;
+package com.prelert.job.persistence;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.prelert.job.UnknownJobException;
-import com.prelert.job.config.verification.JobConfigurationException;
-import com.prelert.job.errorcodes.ErrorCodes;
-import com.prelert.job.manager.JobManager;
-import com.prelert.job.messages.Messages;
-
-class RenormalizationWindowUpdater extends AbstractUpdater
+public interface JobResultsDeleterFactory
 {
-    public RenormalizationWindowUpdater(JobManager jobManager, String jobId)
-    {
-        super(jobManager, jobId);
-    }
-
-    @Override
-    void update(JsonNode node) throws UnknownJobException, JobConfigurationException
-    {
-        if (node.isIntegralNumber() || node.isNull())
-        {
-            Long renormalizationWindow = node.isIntegralNumber() ? node.asLong() : null;
-            if (renormalizationWindow != null && renormalizationWindow < 0)
-            {
-                throwInvalidValue();
-            }
-            jobManager().setRenormalizationWindow(jobId(), renormalizationWindow);
-            return;
-        }
-        throwInvalidValue();
-    }
-
-    private void throwInvalidValue() throws JobConfigurationException
-    {
-        throw new JobConfigurationException(
-                Messages.getMessage(Messages.JOB_CONFIG_UPDATE_RENORMALIZATION_WINDOW_INVALID),
-                ErrorCodes.INVALID_VALUE);
-    }
+    JobResultsDeleter newDeleter(String jobId);
 }
