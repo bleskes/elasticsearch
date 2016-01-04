@@ -146,7 +146,7 @@ public class ElasticsearchBulkDeleter implements JobResultsDeleter
                 .get();
         for (ShardOperationFailedException shardFailure: forceMergeResponse.getShardFailures())
         {
-            LOGGER.error("Shard failed during force-merge:" + shardFailure.reason());
+            LOGGER.error("Shard failed during force-merge: " + shardFailure.reason());
         }
     }
 }
