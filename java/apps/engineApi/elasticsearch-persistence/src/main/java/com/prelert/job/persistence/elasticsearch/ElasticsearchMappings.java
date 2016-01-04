@@ -72,7 +72,6 @@ public class ElasticsearchMappings
     public static final String NOT_ANALYZED = "not_analyzed";
     public static final String INDEX = "index";
     public static final String NO = "no";
-    public static final String NULL_VALUE = "null_value";
 
     /**
      * Name of the field used to store the timestamp in Elasticsearch.
@@ -796,7 +795,7 @@ public class ElasticsearchMappings
                             .field(TYPE, STRING).field(INDEX, NOT_ANALYZED)
                         .endObject()
                         .startObject(Bucket.IS_INTERIM)
-                            .field(TYPE, BOOLEAN).field(NULL_VALUE, false)
+                            .field(TYPE, BOOLEAN)
                         .endObject()
                     .endObject()
                 .endObject()
