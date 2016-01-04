@@ -231,7 +231,7 @@ public class AutoDetectResultsParserTest
         public AlertListener(double normlizedProbThreshold, double anomalyThreshold)
         {
             super(new AlertTrigger [] {new AlertTrigger(normlizedProbThreshold, anomalyThreshold,
-                                    AlertType.BUCKET)});
+                                    AlertType.BUCKET)}, "foo-job");
         }
 
         private boolean m_AlertFired = false;

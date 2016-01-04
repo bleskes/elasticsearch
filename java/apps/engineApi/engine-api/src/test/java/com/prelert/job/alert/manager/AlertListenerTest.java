@@ -72,12 +72,10 @@ public class AlertListenerTest
         AsyncResponse response = mock(AsyncResponse.class);
         URI baseUri = UriBuilder.fromPath("testing").build();
 
-        AlertListener listener = new AlertListener(response, manager, "foo",
+        AsyncResponseAlertObserver listener = new AsyncResponseAlertObserver(response, manager, "foo",
                 createAlertTypes(AlertType.BUCKET, 20.0, 30.0), baseUri);
 
-        assertEquals(baseUri, listener.getBaseUri());
         assertEquals("foo", listener.getJobId());
-        assertEquals(response, listener.getResponse());
     }
 
     @Test
@@ -90,7 +88,7 @@ public class AlertListenerTest
         ArgumentCaptor<Alert> argument = ArgumentCaptor.forClass(Alert.class);
 
         AlertTrigger [] triggers = createAlertTypes(AlertType.BUCKET, 20.0, 30.0);
-        AlertListener listener = new AlertListener(response, manager, "foo",
+        AsyncResponseAlertObserver listener = new AsyncResponseAlertObserver(response, manager, "foo",
                                 triggers, baseUri);
 
         Bucket bucket = createBucket();
@@ -125,7 +123,7 @@ public class AlertListenerTest
         ArgumentCaptor<Alert> argument = ArgumentCaptor.forClass(Alert.class);
 
         AlertTrigger [] triggers = createAlertTypes(AlertType.BUCKET, 20.0, 30.0);
-        AlertListener listener = new AlertListener(response, manager, "foo",
+        AsyncResponseAlertObserver listener = new AsyncResponseAlertObserver(response, manager, "foo",
                                 triggers, baseUri);
 
         Bucket bucket = createBucket();
@@ -156,7 +154,7 @@ public class AlertListenerTest
         ArgumentCaptor<Alert> argument = ArgumentCaptor.forClass(Alert.class);
 
         AlertTrigger [] triggers = createAlertTypes(AlertType.BUCKET, 80.0, 50.0);
-        AlertListener listener = new AlertListener(response, manager, "foo",
+        AsyncResponseAlertObserver listener = new AsyncResponseAlertObserver(response, manager, "foo",
                 triggers, baseUri);
 
         Bucket bucket = createBucket();

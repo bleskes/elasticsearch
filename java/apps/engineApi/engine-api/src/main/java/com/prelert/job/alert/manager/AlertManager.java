@@ -39,6 +39,7 @@ import org.apache.log4j.Logger;
 
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.alert.Alert;
+import com.prelert.job.alert.AlertObserver;
 import com.prelert.job.alert.AlertTrigger;
 import com.prelert.job.manager.JobManager;
 import com.prelert.job.persistence.JobProvider;
@@ -60,7 +61,7 @@ public class AlertManager implements TimeoutHandler
 {
     private static final Logger LOGGER = Logger.getLogger(AlertManager.class);
 
-    private Map<AsyncResponse, AlertListener> m_AsyncRepsonses;
+    private Map<AsyncResponse, AlertObserver> m_AsyncRepsonses;
 
     private JobProvider m_JobProvider;
     private JobManager m_JobManager;
@@ -91,8 +92,8 @@ public class AlertManager implements TimeoutHandler
         response.setTimeout(timeoutSecs, TimeUnit.SECONDS);
         response.setTimeoutHandler(this);
 
-        AlertListener listener = new AlertListener(response, this, jobId, alertTriggers, baseUri);
-        registerListener(listener);
+        AsyncResponseAlertObserver listener = new AsyncResponseAlertObserver(response, this, jobId, alertTriggers, baseUri);
+        registerObserver(response, listener);
 
         try
         {
@@ -115,17 +116,17 @@ public class AlertManager implements TimeoutHandler
         Alert alert = new Alert();
         alert.setTimeout(true);
 
-        AlertListener listener = getListener(response);
-        if (listener != null)
+        AlertObserver observer = getObserver(response);
+        if (observer != null)
         {
-            alert.setJobId(listener.getJobId());
+            alert.setJobId(observer.getJobId());
             deregisterResponse(response);
         }
 
         response.resume(alert);
     }
 
-    private AlertListener getListener(AsyncResponse response)
+    private AlertObserver getObserver(AsyncResponse response)
     {
         synchronized(m_AsyncRepsonses)
         {
@@ -133,11 +134,11 @@ public class AlertManager implements TimeoutHandler
         }
     }
 
-    private void registerListener(final AlertListener listener)
+    private void registerObserver(AsyncResponse response, AlertObserver observer)
     {
         synchronized(m_AsyncRepsonses)
         {
-            m_AsyncRepsonses.put(listener.getResponse(), listener);
+            m_AsyncRepsonses.put(response, observer);
         }
     }
 

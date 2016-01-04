@@ -45,7 +45,7 @@ public class AlertObserverTest
     {
         public ConcreteObserver(AlertTrigger[] triggers)
         {
-            super(triggers);
+            super(triggers, "foo");
         }
 
         @Override

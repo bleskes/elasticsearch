@@ -27,10 +27,13 @@
 package com.prelert.job.alert;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
+import com.prelert.job.results.AnomalyRecord;
 import com.prelert.job.results.Bucket;
 import com.prelert.job.results.BucketInfluencer;
+import com.prelert.job.results.Detector;
 import com.prelert.job.results.Influencer;
 
 /**
@@ -40,11 +43,13 @@ import com.prelert.job.results.Influencer;
  */
 public abstract class AlertObserver
 {
-    private AlertTrigger [] m_Triggers;
+    private final AlertTrigger [] m_Triggers;
+    private final String m_JobId;
 
-    public AlertObserver(AlertTrigger [] triggers)
+    public AlertObserver(AlertTrigger [] triggers, String jobId)
     {
         m_Triggers = triggers;
+        m_JobId = jobId;
     }
 
     /**
@@ -120,6 +125,69 @@ public abstract class AlertObserver
         return alerts;
     }
 
+    /**
+     * Create the alert defined in the <code>trigger</code> based on
+     * the bucket result
+     *
+     * @param bucket
+     * @param trigger
+     * @return
+     */
+    protected Alert createAlert(Bucket bucket, AlertTrigger trigger)
+    {
+        Alert alert = new Alert();
+        alert.setAlertType(trigger.getAlertType());
+        alert.setInterim(bucket.isInterim());
+        alert.setTimestamp(new Date());
+        alert.setJobId(getJobId());
+        alert.setAnomalyScore(bucket.getAnomalyScore());
+        alert.setMaxNormalizedProbability(bucket.getMaxNormalizedProbability());
+
+        for (AlertTrigger at : this.triggeredAlerts(bucket))
+        {
+            switch (at.getAlertType())
+            {
+            case INFLUENCER:
+            case BUCKETINFLUENCER:
+                alert.setBucket(bucket);
+                break;
+            case BUCKET:
+            {
+                List<AnomalyRecord> records = new ArrayList<>();
+                if (at.getNormalisedThreshold() != null)
+                {
+                    for (Detector detector : bucket.getDetectors())
+                    {
+                        for (AnomalyRecord r : detector.getRecords())
+                        {
+                            if (r.getNormalizedProbability() >= at.getNormalisedThreshold())
+                            {
+                                records.add(r);
+                            }
+                        }
+                    }
+                }
+
+                boolean isAnomalyScoreAlert = AlertObserver.isGreaterOrEqual(
+                                                        bucket.getAnomalyScore(),
+                                                        at.getAnomalyThreshold());
+                if (isAnomalyScoreAlert)
+                {
+                    bucket.setRecords(records);
+                    bucket.setRecordCount(records.size());
+                    alert.setBucket(bucket);
+                }
+                else
+                {
+                    alert.setRecords(records);
+                }
+            }
+            }
+        }
+
+        return alert;
+    }
+
     protected static boolean isGreaterOrEqual(double value, Double threshold)
     {
         return threshold == null ? false : value >= threshold;
@@ -130,6 +198,15 @@ public abstract class AlertObserver
     {
         return isGreaterOrEqual(normalisedValue, trigger.getNormalisedThreshold())
                     || isGreaterOrEqual(anomalyScore, trigger.getAnomalyThreshold());
+    }
+
+    /**
+     * The Job the observer is registered for
+     * @return
+     */
+    public String getJobId()
+    {
+        return m_JobId;
     }
 
 

@@ -123,8 +123,7 @@ public class AlertsLongPoll extends ResourceWithJobManager
                                          normalizedProbabiltyThreshold, includeInterim);
 
 
-        checkArgumentsValidForAlertType(anomalyScoreThreshold, normalizedProbabiltyThreshold,
-                                        alertTriggers);
+        checkArgumentsValidForAlertType(anomalyScoreThreshold, alertTriggers);
 
         AlertManager alertManager = alertManager();
         alertManager.registerRequest(asyncResponse, jobId, m_UriInfo.getBaseUri(),
@@ -165,7 +164,6 @@ public class AlertsLongPoll extends ResourceWithJobManager
      * normalizedProbabiltyThreshold can't be used with influencers
      */
     private void checkArgumentsValidForAlertType(Double anomalyScoreThreshold,
-                                                Double normalizedProbabiltyThreshold,
                                                 AlertTrigger [] alertTriggers)
     throws RestApiException
     {
