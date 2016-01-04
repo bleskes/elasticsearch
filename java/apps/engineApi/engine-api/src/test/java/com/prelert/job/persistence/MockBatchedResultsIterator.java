@@ -25,42 +25,55 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.rs.job.update;
+package com.prelert.job.persistence;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import static org.junit.Assert.assertEquals;
+
+import java.util.Deque;
+import java.util.List;
+import java.util.NoSuchElementException;
+
 import com.prelert.job.UnknownJobException;
-import com.prelert.job.config.verification.JobConfigurationException;
-import com.prelert.job.errorcodes.ErrorCodes;
-import com.prelert.job.manager.JobManager;
-import com.prelert.job.messages.Messages;
 
-class RenormalizationWindowUpdater extends AbstractUpdater
+public class MockBatchedResultsIterator<T> implements BatchedResultsIterator<T>
 {
-    public RenormalizationWindowUpdater(JobManager jobManager, String jobId)
+    private final long m_StartEpochMs;
+    private final long m_EndEpochMs;
+    private final List<Deque<T>> m_Batches;
+    private int m_Index;
+    private boolean m_WasTimeRangeCalled;
+
+    public MockBatchedResultsIterator(long startEpochMs, long endEpochMs, List<Deque<T>> batches)
     {
-        super(jobManager, jobId);
+        m_StartEpochMs = startEpochMs;
+        m_EndEpochMs = endEpochMs;
+        m_Batches = batches;
+        m_Index = 0;
+        m_WasTimeRangeCalled = false;
     }
 
     @Override
-    void update(JsonNode node) throws UnknownJobException, JobConfigurationException
+    public BatchedResultsIterator<T> timeRange(long startEpochMs, long endEpochMs)
     {
-        if (node.isIntegralNumber() || node.isNull())
-        {
-            Long renormalizationWindow = node.isIntegralNumber() ? node.asLong() : null;
-            if (renormalizationWindow != null && renormalizationWindow < 0)
-            {
-                throwInvalidValue();
-            }
-            jobManager().setRenormalizationWindow(jobId(), renormalizationWindow);
-            return;
-        }
-        throwInvalidValue();
+        assertEquals(m_StartEpochMs, startEpochMs);
+        assertEquals(m_EndEpochMs, endEpochMs);
+        m_WasTimeRangeCalled = true;
+        return this;
     }
 
-    private void throwInvalidValue() throws JobConfigurationException
+    @Override
+    public Deque<T> next() throws UnknownJobException
     {
-        throw new JobConfigurationException(
-                Messages.getMessage(Messages.JOB_CONFIG_UPDATE_RENORMALIZATION_WINDOW_INVALID),
-                ErrorCodes.INVALID_VALUE);
+        if (!m_WasTimeRangeCalled || !hasNext())
+        {
+            throw new NoSuchElementException();
+        }
+        return m_Batches.get(m_Index++);
+    }
+
+    @Override
+    public boolean hasNext()
+    {
+        return m_Index != m_Batches.size();
     }
 }
