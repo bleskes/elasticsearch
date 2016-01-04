@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -59,6 +59,7 @@ import org.elasticsearch.search.SearchHit;
 
 import com.prelert.job.JobDetails;
 import com.prelert.job.ModelSizeStats;
+import com.prelert.job.persistence.JobRenormaliser;
 import com.prelert.job.persistence.JobResultsPersister;
 import com.prelert.job.quantiles.Quantiles;
 import com.prelert.job.results.AnomalyCause;
@@ -98,7 +99,7 @@ import com.prelert.job.results.ReservedFieldNames;
  * <br>
  * @see com.prelert.job.persistence.elasticsearch.ElasticsearchMappings
  */
-public class ElasticsearchPersister implements JobResultsPersister
+public class ElasticsearchPersister implements JobResultsPersister, JobRenormaliser
 {
     private static final Logger LOGGER = Logger.getLogger(ElasticsearchPersister.class);
 
@@ -166,9 +167,9 @@ public class ElasticsearchPersister implements JobResultsPersister
                 for (Influencer influencer : bucket.getInfluencers())
                 {
                     influencer.setTimestamp(bucket.getTimestamp());
-                    content = serialiseInfluencer(influencer);
+                    content = serialiseInfluencer(influencer, bucket.isInterim());
                     LOGGER.trace("ES BULK ACTION: index type " + Influencer.TYPE +
-                            " to index " + m_JobId.getIndex() + " with auto-assigned ID");
+                            " to index " + m_JobId.getIndex() + " ID = " + influencer.getId());
                     addInfluencersRequest.add(
                             m_Client.prepareIndex(m_JobId.getIndex(), Influencer.TYPE, influencer.getId())
                             .setSource(content));
@@ -347,7 +348,7 @@ public class ElasticsearchPersister implements JobResultsPersister
         XContentBuilder content = null;
         try
         {
-            content = serialiseInfluencer(influencer);
+            content = serialiseInfluencer(influencer, false);
         }
         catch (IOException e)
         {
@@ -750,7 +751,7 @@ public class ElasticsearchPersister implements JobResultsPersister
      * @return
      * @throws IOException
      */
-    private XContentBuilder serialiseInfluencer(Influencer influencer)
+    private XContentBuilder serialiseInfluencer(Influencer influencer, boolean isInterim)
     throws IOException
     {
         XContentBuilder builder = jsonBuilder().startObject()
@@ -761,6 +762,12 @@ public class ElasticsearchPersister implements JobResultsPersister
                 .field(Influencer.INFLUENCER_FIELD_VALUE, influencer.getInfluencerFieldValue())
                 .field(Influencer.INITIAL_ANOMALY_SCORE, influencer.getInitialAnomalyScore())
                 .field(Influencer.ANOMALY_SCORE, influencer.getAnomalyScore());
+
+
+        if (isInterim)
+        {
+            builder.field(Bucket.IS_INTERIM, true);
+        }
 
         if (!ReservedFieldNames.RESERVED_FIELD_NAMES.contains(influencer.getInfluencerFieldName()))
         {

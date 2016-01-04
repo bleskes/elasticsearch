@@ -42,6 +42,7 @@ public class MockBatchedResultsIterator<T> implements BatchedResultsIterator<T>
     private final List<Deque<T>> m_Batches;
     private int m_Index;
     private boolean m_WasTimeRangeCalled;
+    private String m_InterimFieldName;
 
     public MockBatchedResultsIterator(long startEpochMs, long endEpochMs, List<Deque<T>> batches)
     {
@@ -50,6 +51,7 @@ public class MockBatchedResultsIterator<T> implements BatchedResultsIterator<T>
         m_Batches = batches;
         m_Index = 0;
         m_WasTimeRangeCalled = false;
+        m_InterimFieldName = "";
     }
 
     @Override
@@ -58,6 +60,13 @@ public class MockBatchedResultsIterator<T> implements BatchedResultsIterator<T>
         assertEquals(m_StartEpochMs, startEpochMs);
         assertEquals(m_EndEpochMs, endEpochMs);
         m_WasTimeRangeCalled = true;
+        return this;
+    }
+
+    @Override
+    public BatchedResultsIterator<T> includeInterim(String interimFieldName)
+    {
+        m_InterimFieldName = interimFieldName;
         return this;
     }
 
@@ -75,5 +84,15 @@ public class MockBatchedResultsIterator<T> implements BatchedResultsIterator<T>
     public boolean hasNext()
     {
         return m_Index != m_Batches.size();
+    }
+
+    /**
+     * If includeInterim has not been called this is an empty string
+     *
+     * @return
+     */
+    public String getInterimFieldName()
+    {
+        return m_InterimFieldName;
     }
 }

@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -73,7 +73,9 @@ public class Influencers extends ResourceWithJobManager
             @DefaultValue("") @QueryParam(END_QUERY_PARAM) String end,
             @DefaultValue(Influencer.ANOMALY_SCORE) @QueryParam(SORT_QUERY_PARAM) String sort,
             @DefaultValue("true") @QueryParam(DESCENDING_ORDER) boolean descending,
-            @DefaultValue("0.0") @QueryParam(Influencer.ANOMALY_SCORE) double anomalyScoreFilter)
+            @DefaultValue("0.0") @QueryParam(Influencer.ANOMALY_SCORE) double anomalyScoreFilter,
+            @DefaultValue("false") @QueryParam(Buckets.INCLUDE_INTERIM_QUERY_PARAM)
+                boolean includeInterim)
     throws UnknownJobException
     {
         LOGGER.debug("Get influencers for job '" + jobId + "'");
@@ -86,7 +88,7 @@ public class Influencers extends ResourceWithJobManager
         JobManager manager = jobManager();
 
         QueryPage<Influencer> page = manager.influencers(jobId, skip, take, epochStartMs,
-                epochEndMs, sort, descending, anomalyScoreFilter);
+                epochEndMs, sort, descending, anomalyScoreFilter, includeInterim);
         Pagination<Influencer> results = paginationFromQueryPage(page, skip, take);
 
         setPagingUrls(ENDPOINT + "/" + jobId, results);

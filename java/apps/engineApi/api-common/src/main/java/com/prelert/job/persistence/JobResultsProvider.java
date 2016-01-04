@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -233,10 +233,12 @@ public interface JobResultsProvider extends Closeable
      * @param skip Skip the first N records. This parameter is for paging
      * if not required set to 0.
      * @param take Take only this number of records
+     * @param includeInterim Include interim results
      * @return QueryPage of Influencer
      * @throws UnknownJobException
      */
-    QueryPage<Influencer> influencers(String jobId, int skip, int take) throws UnknownJobException;
+    QueryPage<Influencer> influencers(String jobId, int skip, int take, boolean includeInterim)
+    throws UnknownJobException;
 
     /**
      * Return a page of influencers for the given job and within the given date range
@@ -254,11 +256,13 @@ public interface JobResultsProvider extends Closeable
      * @param sortField The field to sort influencers by. If <code>null</code> no sort is applied
      * @param sortDescending Sort in descending order
      * @param anomalyScoreThreshold Return only influencers with an anomalyScore >= this value
+     * @param includeInterim Include interim results
      * @return QueryPage of Influencer
      * @throws UnknownJobException
      */
     QueryPage<Influencer> influencers(String jobId, int skip, int take, long startEpochMs,
-            long endEpochMs, String sortField, boolean sortDescending, double anomalyScoreFilter)
+            long endEpochMs, String sortField, boolean sortDescending, double anomalyScoreFilter,
+            boolean includeInterim)
             throws UnknownJobException;
 
     /**

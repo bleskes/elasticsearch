@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -46,6 +46,14 @@ public interface BatchedResultsIterator<T>
      * @return the iterator itself
      */
     BatchedResultsIterator<T> timeRange(long startEpochMs, long endEpochMs);
+
+    /**
+     * Include interim results
+     *
+     * @param interimFieldName Name of the include interim field
+     * @return
+     */
+    BatchedResultsIterator<T> includeInterim(String interimFieldName);
 
     /**
      * The first time next() is called, the search will be performed and the first

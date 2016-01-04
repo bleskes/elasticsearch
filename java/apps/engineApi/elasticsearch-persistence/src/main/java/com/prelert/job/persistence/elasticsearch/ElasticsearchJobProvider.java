@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -866,23 +866,32 @@ public class ElasticsearchJobProvider implements JobProvider
 
 
     @Override
-    public QueryPage<Influencer> influencers(String jobId, int skip, int take)
-            throws UnknownJobException
+    public QueryPage<Influencer> influencers(String jobId, int skip, int take,
+                                            boolean includeInterim)
+    throws UnknownJobException
     {
-        return influencers(new ElasticsearchJobId(jobId), skip, take, QueryBuilders.matchAllQuery(),
+        QueryBuilder builder = new ResultsFilterBuilder()
+                                .interim(Bucket.IS_INTERIM, includeInterim)
+                                .build();
+
+        return influencers(new ElasticsearchJobId(jobId), skip, take, builder,
                 Influencer.ANOMALY_SCORE, true);
     }
 
     @Override
     public QueryPage<Influencer> influencers(String jobId, int skip, int take, long startEpochMs,
-            long endEpochMs, String sortField, boolean sortDescending, double anomalyScoreFilter)
-            throws UnknownJobException
+            long endEpochMs, String sortField, boolean sortDescending, double anomalyScoreFilter,
+            boolean includeInterim)
+    throws UnknownJobException
     {
         QueryBuilder fb = new ResultsFilterBuilder()
                 .timeRange(Influencer.TIMESTAMP, startEpochMs, endEpochMs)
                 .score(Influencer.ANOMALY_SCORE, anomalyScoreFilter)
+                .interim(Bucket.IS_INTERIM, includeInterim)
                 .build();
-        return influencers(new ElasticsearchJobId(jobId), skip, take, fb, sortField, sortDescending);
+
+        return influencers(new ElasticsearchJobId(jobId), skip, take, fb, sortField,
+                            sortDescending);
     }
 
     private QueryPage<Influencer> influencers(ElasticsearchJobId jobId, int skip, int take,

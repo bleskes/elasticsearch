@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -72,6 +72,7 @@ public class ElasticsearchMappings
     public static final String NOT_ANALYZED = "not_analyzed";
     public static final String INDEX = "index";
     public static final String NO = "no";
+    public static final String NULL_VALUE = "null_value";
 
     /**
      * Name of the field used to store the timestamp in Elasticsearch.
@@ -793,6 +794,9 @@ public class ElasticsearchMappings
                         .endObject()
                         .startObject(Influencer.INFLUENCER_FIELD_VALUE)
                             .field(TYPE, STRING).field(INDEX, NOT_ANALYZED)
+                        .endObject()
+                        .startObject(Bucket.IS_INTERIM)
+                            .field(TYPE, BOOLEAN).field(NULL_VALUE, false)
                         .endObject()
                     .endObject()
                 .endObject()

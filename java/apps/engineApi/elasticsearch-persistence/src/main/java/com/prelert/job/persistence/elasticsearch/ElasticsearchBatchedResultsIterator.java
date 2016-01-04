@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -72,6 +72,13 @@ abstract class ElasticsearchBatchedResultsIterator<T> implements BatchedResultsI
     public BatchedResultsIterator<T> timeRange(long startEpochMs, long endEpochMs)
     {
         m_FilterBuilder.timeRange(ElasticsearchMappings.ES_TIMESTAMP, startEpochMs, endEpochMs);
+        return this;
+    }
+
+    @Override
+    public BatchedResultsIterator<T> includeInterim(String interimFieldName)
+    {
+        m_FilterBuilder.interim(interimFieldName, true);
         return this;
     }
 
