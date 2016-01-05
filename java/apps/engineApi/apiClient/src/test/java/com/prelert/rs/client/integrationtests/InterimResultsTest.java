@@ -59,6 +59,7 @@ import com.prelert.job.JobConfiguration;
 import com.prelert.job.alert.Alert;
 import com.prelert.job.results.AnomalyRecord;
 import com.prelert.job.results.Bucket;
+import com.prelert.job.results.Influencer;
 import com.prelert.rs.client.AlertRequestBuilder;
 import com.prelert.rs.client.EngineApiClient;
 import com.prelert.rs.client.integrationtests.alertpoll.PollAlertService;
@@ -132,6 +133,7 @@ public class InterimResultsTest implements Closeable
         ac.setBucketSpan(BUCKET_SPAN);
         ac.setLatency(LATENCY_BUCKETS * BUCKET_SPAN);
         ac.setDetectors(Arrays.asList(d));
+        ac.setInfluencers(Arrays.asList("responsetime", "airline"));
 
         DataDescription dd = new DataDescription();
         dd.setFormat(DataFormat.DELIMITED);
@@ -512,6 +514,44 @@ public class InterimResultsTest implements Closeable
         return records;
     }
 
+
+    /**
+     * Check we get interim influencer results.
+     *
+     * @param jobId
+     * @param includeInterim
+     * @throws IOException
+     */
+    public void verifyFarequoteInterimInfluencers(String jobId, boolean includeInterim)
+    throws IOException
+    {
+        Pagination<Influencer> allInfluencers = m_WebServiceClient.prepareGetInfluencers(jobId)
+                .take(10000).includeInterim(includeInterim)
+                .sortField("@timestamp")
+                .get();
+
+
+        int numInterim = 0;
+        for (Influencer inf : allInfluencers.getDocuments())
+        {
+            if (inf.isInterim())
+            {
+                ++numInterim;
+            }
+        }
+
+        if (includeInterim)
+        {
+            test(numInterim > 0);
+        }
+        else
+        {
+            test(numInterim == 0);
+        }
+    }
+
+
+
     /**
      * Delete all the jobs in the list of job ids
      *
@@ -635,6 +675,8 @@ public class InterimResultsTest implements Closeable
         test.verifyFarequoteInterimBuckets(TEST_JOB_ID, true);
         test.verifyFarequoteInterimRecords(TEST_JOB_ID, false);
         test.verifyFarequoteInterimRecords(TEST_JOB_ID, true);
+        test.verifyFarequoteInterimInfluencers(TEST_JOB_ID, true);
+        test.verifyFarequoteInterimInfluencers(TEST_JOB_ID, false);
 
         test.verifyInterimResultsAreRecalculated();
         //==========================
