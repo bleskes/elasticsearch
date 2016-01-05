@@ -30,6 +30,7 @@ import org.elasticsearch.shield.authc.AuthenticationService;
 import org.elasticsearch.shield.authz.AuthorizationService;
 import org.elasticsearch.shield.crypto.CryptoService;
 import org.elasticsearch.shield.license.ShieldLicenseState;
+import org.elasticsearch.tasks.Task;
 import org.elasticsearch.test.ESTestCase;
 import org.junit.Before;
 
@@ -74,12 +75,13 @@ public class ShieldActionFilterTests extends ESTestCase {
         ActionRequest request = mock(ActionRequest.class);
         ActionListener listener = mock(ActionListener.class);
         ActionFilterChain chain = mock(ActionFilterChain.class);
+        Task task = mock(Task.class);
         User user = new User.Simple("username", new String[] { "r1", "r2" });
         when(authcService.authenticate("_action", request, User.SYSTEM)).thenReturn(user);
         doReturn(request).when(spy(filter)).unsign(user, "_action", request);
-        filter.apply("_action", request, listener, chain);
+        filter.apply(task, "_action", request, listener, chain);
         verify(authzService).authorize(user, "_action", request);
-        verify(chain).proceed(eq("_action"), eq(request), isA(ShieldActionFilter.SigningListener.class));
+        verify(chain).proceed(eq(task), eq("_action"), eq(request), isA(ShieldActionFilter.SigningListener.class));
     }
 
     public void testActionProcessException() throws Exception {
@@ -87,10 +89,11 @@ public class ShieldActionFilterTests extends ESTestCase {
         ActionListener listener = mock(ActionListener.class);
         ActionFilterChain chain = mock(ActionFilterChain.class);
         RuntimeException exception = new RuntimeException("process-error");
+        Task task = mock(Task.class);
         User user = new User.Simple("username", new String[] { "r1", "r2" });
         when(authcService.authenticate("_action", request, User.SYSTEM)).thenReturn(user);
         doThrow(exception).when(authzService).authorize(user, "_action", request);
-        filter.apply("_action", request, listener, chain);
+        filter.apply(task, "_action", request, listener, chain);
         verify(listener).onFailure(exception);
         verifyNoMoreInteractions(chain);
     }
@@ -100,13 +103,14 @@ public class ShieldActionFilterTests extends ESTestCase {
         ActionListener listener = mock(ActionListener.class);
         ActionFilterChain chain = mock(ActionFilterChain.class);
         User user = mock(User.class);
+        Task task = mock(Task.class);
         when(authcService.authenticate("_action", request, User.SYSTEM)).thenReturn(user);
         when(cryptoService.signed("signed_scroll_id")).thenReturn(true);
         when(cryptoService.unsignAndVerify("signed_scroll_id")).thenReturn("scroll_id");
-        filter.apply("_action", request, listener, chain);
+        filter.apply(task, "_action", request, listener, chain);
         assertThat(request.scrollId(), equalTo("scroll_id"));
         verify(authzService).authorize(user, "_action", request);
-        verify(chain).proceed(eq("_action"), eq(request), isA(ShieldActionFilter.SigningListener.class));
+        verify(chain).proceed(eq(task), eq("_action"), eq(request), isA(ShieldActionFilter.SigningListener.class));
     }
 
     public void testActionSignatureError() throws Exception {
@@ -115,10 +119,11 @@ public class ShieldActionFilterTests extends ESTestCase {
         ActionFilterChain chain = mock(ActionFilterChain.class);
         IllegalArgumentException sigException = new IllegalArgumentException("bad bad boy");
         User user = mock(User.class);
+        Task task = mock(Task.class);
         when(authcService.authenticate("_action", request, User.SYSTEM)).thenReturn(user);
         when(cryptoService.signed("scroll_id")).thenReturn(true);
         doThrow(sigException).when(cryptoService).unsignAndVerify("scroll_id");
-        filter.apply("_action", request, listener, chain);
+        filter.apply(task, "_action", request, listener, chain);
         verify(listener).onFailure(isA(ElasticsearchSecurityException.class));
         verify(auditTrail).tamperedRequest(user, "_action", request);
         verifyNoMoreInteractions(chain);
@@ -128,11 +133,12 @@ public class ShieldActionFilterTests extends ESTestCase {
         ActionRequest request = mock(ActionRequest.class);
         ActionListener listener = mock(ActionListener.class);
         ActionFilterChain chain = mock(ActionFilterChain.class);
+        Task task = mock(Task.class);
         when(shieldLicenseState.securityEnabled()).thenReturn(false);
-        filter.apply("_action", request, listener, chain);
+        filter.apply(task, "_action", request, listener, chain);
         verifyZeroInteractions(authcService);
         verifyZeroInteractions(authzService);
-        verify(chain).proceed(eq("_action"), eq(request), eq(listener));
+        verify(chain).proceed(eq(task), eq("_action"), eq(request), eq(listener));
     }
 
 }
