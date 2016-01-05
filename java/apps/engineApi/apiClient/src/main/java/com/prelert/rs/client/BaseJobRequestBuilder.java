@@ -38,6 +38,11 @@ class BaseJobRequestBuilder<T>
     public static final String END_QUERY_PARAM = "end";
     public static final String SORT_QUERY_PARAM = "sort";
     public static final String DESCENDING_ORDER = "desc";
+    public static final String SKIP_QUERY_PARAM = "skip";
+    public static final String TAKE_QUERY_PARAM = "take";
+    public static final String INCLUDE_INTERIM_QUERY_PARAM = "includeInterim";
+    public static final String EXPAND_QUERY_PARAM = "expand";
+
 
     private final EngineApiClient m_Client;
     private final String m_JobId;

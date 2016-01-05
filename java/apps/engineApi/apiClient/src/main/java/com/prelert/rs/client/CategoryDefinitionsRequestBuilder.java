@@ -57,7 +57,7 @@ public class CategoryDefinitionsRequestBuilder extends BaseJobRequestBuilder<Cat
      */
     public CategoryDefinitionsRequestBuilder skip(long value)
     {
-        m_Params.put("skip", Long.toString(value));
+        m_Params.put(SKIP_QUERY_PARAM, Long.toString(value));
         return this;
     }
 
@@ -69,7 +69,7 @@ public class CategoryDefinitionsRequestBuilder extends BaseJobRequestBuilder<Cat
      */
     public CategoryDefinitionsRequestBuilder take(long value)
     {
-        m_Params.put("take", Long.toString(value));
+        m_Params.put(TAKE_QUERY_PARAM, Long.toString(value));
         return this;
     }
 

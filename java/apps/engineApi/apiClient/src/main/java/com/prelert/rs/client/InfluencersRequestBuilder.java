@@ -59,7 +59,7 @@ public class InfluencersRequestBuilder extends BaseJobRequestBuilder<Influencer>
      */
     public InfluencersRequestBuilder skip(long value)
     {
-        m_Params.put("skip", Long.toString(value));
+        m_Params.put(SKIP_QUERY_PARAM, Long.toString(value));
         return this;
     }
 
@@ -71,7 +71,7 @@ public class InfluencersRequestBuilder extends BaseJobRequestBuilder<Influencer>
      */
     public InfluencersRequestBuilder take(long value)
     {
-        m_Params.put("take", Long.toString(value));
+        m_Params.put(TAKE_QUERY_PARAM, Long.toString(value));
         return this;
     }
 
@@ -162,6 +162,18 @@ public class InfluencersRequestBuilder extends BaseJobRequestBuilder<Influencer>
     public InfluencersRequestBuilder anomalyScoreThreshold(double value)
     {
         m_Params.put(Influencer.ANOMALY_SCORE, Double.toString(value));
+        return this;
+    }
+
+    /**
+     * Include interim influencer results
+     *
+     * @param value
+     * @return this {@code InfluencersRequestBuilder} object
+     */
+    public InfluencersRequestBuilder includeInterim(boolean value)
+    {
+        m_Params.put(INCLUDE_INTERIM_QUERY_PARAM, Boolean.toString(value));
         return this;
     }
 

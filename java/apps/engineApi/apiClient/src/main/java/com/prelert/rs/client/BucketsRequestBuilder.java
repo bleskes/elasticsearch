@@ -39,11 +39,6 @@ import com.prelert.rs.data.Pagination;
 
 public class BucketsRequestBuilder extends BaseJobRequestBuilder<Bucket>
 {
-    public static final String INCLUDE_INTERIM_QUERY_PARAM = "includeInterim";
-    public static final String EXPAND_QUERY_PARAM = "expand";
-    public static final String START_QUERY_PARAM = "start";
-    public static final String END_QUERY_PARAM = "end";
-
     private final Map<String, String> m_Params;
 
     /**
@@ -112,7 +107,7 @@ public class BucketsRequestBuilder extends BaseJobRequestBuilder<Bucket>
      */
     public BucketsRequestBuilder skip(long value)
     {
-        m_Params.put("skip", Long.toString(value));
+        m_Params.put(SKIP_QUERY_PARAM, Long.toString(value));
         return this;
     }
 
@@ -124,7 +119,7 @@ public class BucketsRequestBuilder extends BaseJobRequestBuilder<Bucket>
      */
     public BucketsRequestBuilder take(long value)
     {
-        m_Params.put("take", Long.toString(value));
+        m_Params.put(TAKE_QUERY_PARAM, Long.toString(value));
         return this;
     }
 
