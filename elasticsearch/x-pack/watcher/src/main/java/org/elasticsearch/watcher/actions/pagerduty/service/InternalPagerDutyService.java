@@ -15,7 +15,7 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.watcher.actions.slack.service;
+package org.elasticsearch.watcher.actions.pagerduty.service;
 
 import org.elasticsearch.common.component.AbstractLifecycleComponent;
 import org.elasticsearch.common.inject.Inject;
@@ -28,23 +28,28 @@ import org.elasticsearch.watcher.support.http.HttpClient;
 /**
  *
  */
-public class InternalSlackService extends AbstractLifecycleComponent<SlackService> implements SlackService {
+public class InternalPagerDutyService extends AbstractLifecycleComponent<PagerDutyService> implements PagerDutyService {
+
+    public static final Setting<Settings> PAGERDUTY_ACCOUNT_SETTING = Setting.groupSetting("watcher.actions.pagerduty.service.", true, Setting.Scope.CLUSTER);
 
     private final HttpClient httpClient;
-    public static final Setting<Settings> SLACK_ACCOUNT_SETTING = Setting.groupSetting("watcher.actions.slack.service.", true, Setting.Scope.CLUSTER);
-    private volatile SlackAccounts accounts;
+    private volatile PagerDutyAccounts accounts;
 
     @Inject
-    public InternalSlackService(Settings settings, HttpClient httpClient, ClusterSettings clusterSettings, WatcherSettingsFilter settingsFilter) {
+    public InternalPagerDutyService(Settings settings, HttpClient httpClient, ClusterSettings clusterSettings,
+                                    WatcherSettingsFilter settingsFilter) {
         super(settings);
         this.httpClient = httpClient;
-        settingsFilter.filterOut("watcher.actions.slack.service.account.*.url");
-        clusterSettings.addSettingsUpdateConsumer(SLACK_ACCOUNT_SETTING, this::setSlackAccountSetting);
+        settingsFilter.filterOut(
+                "watcher.actions.pagerduty.service." + PagerDutyAccount.SERVICE_KEY_SETTING,
+                "watcher.actions.pagerduty.service.account.*." + PagerDutyAccount.SERVICE_KEY_SETTING
+        );
+        clusterSettings.addSettingsUpdateConsumer(PAGERDUTY_ACCOUNT_SETTING, this::setPagerDutyAccountSetting);
     }
 
     @Override
     protected void doStart() {
-        setSlackAccountSetting(SLACK_ACCOUNT_SETTING.get(settings));
+        setPagerDutyAccountSetting(PAGERDUTY_ACCOUNT_SETTING.get(settings));
     }
 
     @Override
@@ -55,17 +60,17 @@ public class InternalSlackService extends AbstractLifecycleComponent<SlackServic
     protected void doClose() {
     }
 
+    private void setPagerDutyAccountSetting(Settings settings) {
+        accounts = new PagerDutyAccounts(settings, httpClient, logger);
+    }
+
     @Override
-    public SlackAccount getDefaultAccount() {
+    public PagerDutyAccount getDefaultAccount() {
         return accounts.account(null);
     }
 
-    private void setSlackAccountSetting(Settings setting) {
-        accounts = new SlackAccounts(setting, httpClient, logger);
-    }
-
     @Override
-    public SlackAccount getAccount(String name) {
+    public PagerDutyAccount getAccount(String name) {
         return accounts.account(name);
     }
 }
