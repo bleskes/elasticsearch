@@ -153,20 +153,8 @@ public abstract class AlertObserver
                 break;
             case BUCKET:
             {
-                List<AnomalyRecord> records = new ArrayList<>();
-                if (at.getNormalisedThreshold() != null)
-                {
-                    for (Detector detector : bucket.getDetectors())
-                    {
-                        for (AnomalyRecord r : detector.getRecords())
-                        {
-                            if (r.getNormalizedProbability() >= at.getNormalisedThreshold())
-                            {
-                                records.add(r);
-                            }
-                        }
-                    }
-                }
+                List<AnomalyRecord> records = extractRecordsAboveThreshold(
+                                            at.getNormalisedThreshold(), bucket);
 
                 boolean isAnomalyScoreAlert = AlertObserver.isGreaterOrEqual(
                                                         bucket.getAnomalyScore(),
@@ -186,6 +174,30 @@ public abstract class AlertObserver
         }
 
         return alert;
+    }
+
+    private List<AnomalyRecord> extractRecordsAboveThreshold(Double normalisedThreshold,
+                                                            Bucket bucket)
+    {
+        List<AnomalyRecord> records = new ArrayList<>();
+
+        if (normalisedThreshold == null)
+        {
+            return records;
+        }
+
+        for (Detector detector : bucket.getDetectors())
+        {
+            for (AnomalyRecord r : detector.getRecords())
+            {
+                if (r.getNormalizedProbability() >= normalisedThreshold)
+                {
+                    records.add(r);
+                }
+            }
+        }
+
+        return records;
     }
 
     protected static boolean isGreaterOrEqual(double value, Double threshold)

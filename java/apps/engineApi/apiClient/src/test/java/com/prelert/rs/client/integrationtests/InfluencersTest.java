@@ -191,6 +191,7 @@ public class InfluencersTest
         List<Influencer> influencers = m_WebServiceClient.prepareGetInfluencers(FIREWALL_JOB).get()
                 .getDocuments();
         test(influencers.size() == 1);
+        test(influencers.get(0).isInterim() == false);
         test(influencers.get(0).getInfluencerFieldName().equals("src_ip"));
         test(influencers.get(0).getInfluencerFieldValue().equals("23.28.243.150"));
         test(influencers.get(0).getTimestamp().equals(new Date(1421992800000L)));
@@ -288,6 +289,7 @@ public class InfluencersTest
         List<Influencer> influencers = m_WebServiceClient.prepareGetInfluencers(SSH_AUTH_JOB).get()
                 .getDocuments();
         test(influencers.size() == 1);
+        test(influencers.get(0).isInterim() == false);
         test(influencers.get(0).getInfluencerFieldName().equals("src_ip"));
         test(influencers.get(0).getInfluencerFieldValue().equals("23.28.243.150"));
         test(influencers.get(0).getTimestamp().equals(new Date(1422172800000L)));
@@ -360,6 +362,8 @@ public class InfluencersTest
         for (int i = 0; i < influencers.size(); i++)
         {
             Influencer influencer = influencers.get(i);
+            test(influencer.isInterim() == false);
+
             if (influencer.getInfluencerFieldName().equals("user"))
             {
                 test(influencer.getInfluencerFieldValue().equals("nigella"));

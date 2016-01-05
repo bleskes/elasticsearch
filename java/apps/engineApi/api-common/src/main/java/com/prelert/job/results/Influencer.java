@@ -30,6 +30,7 @@ import java.util.Date;
 import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonIgnoreProperties(value={"id", "initialAnomalyScore"}, allowSetters=true)
 public class Influencer
@@ -57,6 +58,7 @@ public class Influencer
     private double m_InitialAnomalyScore;
     private double m_AnomalyScore;
     private boolean m_HadBigNormalisedUpdate;
+    private boolean m_IsInterim;
 
     public Influencer()
     {
@@ -145,6 +147,17 @@ public class Influencer
         m_AnomalyScore = score;
     }
 
+    public boolean isInterim()
+    {
+        return m_IsInterim;
+    }
+
+    @JsonProperty("isInterim")
+    public void setInterim(boolean value)
+    {
+        m_IsInterim = value;
+    }
+
     public boolean hadBigNormalisedUpdate()
     {
         return m_HadBigNormalisedUpdate;
@@ -164,7 +177,7 @@ public class Influencer
     public int hashCode()
     {
         return Objects.hash(m_Timestamp, m_InfluenceField, m_InfluenceValue, m_InitialAnomalyScore,
-                m_AnomalyScore, m_Probability);
+                m_AnomalyScore, m_Probability, m_IsInterim);
     }
 
     @Override
@@ -192,7 +205,8 @@ public class Influencer
                 Objects.equals(m_InfluenceValue, other.m_InfluenceValue) &&
                 Double.compare(m_InitialAnomalyScore, other.m_InitialAnomalyScore) == 0 &&
                 Double.compare(m_AnomalyScore, other.m_AnomalyScore) == 0 &&
-                Double.compare(m_Probability, other.m_Probability) == 0;
+                Double.compare(m_Probability, other.m_Probability) == 0 &&
+                (m_IsInterim == other.m_IsInterim);
     }
 
 
