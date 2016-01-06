@@ -128,7 +128,7 @@ public class ElasticsearchJobProvider implements JobProvider
 
         createUsageMeteringIndex();
 
-        LOGGER.info("Connecting to Elasticsearch cluster '" + m_Node.settings().get("cluster.name")
+        LOGGER.info("Connecting to Elasticsearch cluster '" + m_Client.settings().get("cluster.name")
                 + "'");
     }
 
