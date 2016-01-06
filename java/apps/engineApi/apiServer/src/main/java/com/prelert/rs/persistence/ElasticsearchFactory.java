@@ -27,12 +27,9 @@
 
 package com.prelert.rs.persistence;
 
-import org.apache.log4j.Logger;
+import java.util.Objects;
+
 import org.elasticsearch.client.Client;
-import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.common.settings.Settings.Builder;
-import org.elasticsearch.node.Node;
-import org.elasticsearch.node.NodeBuilder;
 
 import com.prelert.job.persistence.DataPersisterFactory;
 import com.prelert.job.persistence.JobDataCountsPersisterFactory;
@@ -42,7 +39,6 @@ import com.prelert.job.persistence.UsagePersisterFactory;
 import com.prelert.job.persistence.elasticsearch.ElasticsearchBulkDeleter;
 import com.prelert.job.persistence.elasticsearch.ElasticsearchJobDataCountsPersister;
 import com.prelert.job.persistence.elasticsearch.ElasticsearchJobDataPersister;
-import com.prelert.job.persistence.elasticsearch.ElasticsearchJobProvider;
 import com.prelert.job.persistence.elasticsearch.ElasticsearchPersister;
 import com.prelert.job.persistence.elasticsearch.ElasticsearchUsagePersister;
 import com.prelert.job.process.normaliser.BlockingQueueRenormaliser;
@@ -53,55 +49,15 @@ import com.prelert.server.info.elasticsearch.ElasticsearchServerInfo;
 /**
  * A factory for the entire family of Elasticsearch-based classes
  */
-public class ElasticsearchFactory
+public abstract class ElasticsearchFactory
 {
-    private static final Logger LOGGER = Logger.getLogger(ElasticsearchFactory.class);
+    protected static final String CLUSTER_NAME_KEY = "cluster.name";
 
-    private final Node m_Node;
     private final Client m_Client;
 
-    public ElasticsearchFactory(String elasticSearchHost, String elasticSearchClusterName,
-            String portRange, String numProcessors)
+    protected ElasticsearchFactory(Client client)
     {
-        m_Node = NodeBuilder.nodeBuilder()
-                .settings(buildSettings(elasticSearchHost, portRange, numProcessors))
-                .client(true)
-                .clusterName(elasticSearchClusterName).node();
-        m_Client = m_Node.client();
-    }
-
-    /**
-     * Elasticsearch settings that instruct the node not to accept HTTP, not to
-     * attempt multicast discovery and to only look for another node to connect
-     * to on the given host.
-     */
-    private static Settings buildSettings(String host, String portRange, String numProcessors)
-    {
-        // Multicast discovery is expected to be disabled on the Elasticsearch
-        // data node, so disable it for this embedded node too and tell it to
-        // expect the data node to be on the same machine
-        Builder builder = Settings.builder()
-                .put("http.enabled", "false")
-                .put("discovery.zen.ping.unicast.hosts", host);
-
-        if (portRange != null && portRange.isEmpty() == false)
-        {
-            LOGGER.info("Using TCP port range " + portRange + " to connect to Elasticsearch");
-            builder.put("transport.tcp.port", portRange);
-        }
-        if (numProcessors != null && numProcessors.isEmpty() == false)
-        {
-            LOGGER.info("Telling Elasticsearch there are " + numProcessors
-                    + " processors on this machine");
-            builder.put("processors", numProcessors);
-        }
-
-        return builder.build();
-    }
-
-    public JobProvider newJobProvider()
-    {
-        return new ElasticsearchJobProvider(m_Node, m_Client);
+        m_Client = Objects.requireNonNull(client);
     }
 
     public ResultsReaderFactory newResultsReaderFactory(JobProvider jobProvider)
@@ -135,5 +91,12 @@ public class ElasticsearchFactory
     public JobResultsDeleterFactory newJobResultsDeleterFactory()
     {
         return jobId -> new ElasticsearchBulkDeleter(m_Client, jobId);
+    }
+
+    public abstract JobProvider newJobProvider();
+
+    protected Client getClient()
+    {
+        return m_Client;
     }
 }

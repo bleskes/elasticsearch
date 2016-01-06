@@ -56,6 +56,8 @@ import com.prelert.job.process.ProcessCtrl;
 import com.prelert.job.process.autodetect.ProcessFactory;
 import com.prelert.job.process.autodetect.ProcessManager;
 import com.prelert.rs.persistence.ElasticsearchFactory;
+import com.prelert.rs.persistence.ElasticsearchNodeClientFactory;
+import com.prelert.rs.persistence.ElasticsearchTransportClientFactory;
 import com.prelert.rs.provider.AcknowledgementWriter;
 import com.prelert.rs.provider.AlertMessageBodyWriter;
 import com.prelert.rs.provider.DataCountsWriter;
@@ -85,7 +87,9 @@ public class PrelertWebApp extends Application
      */
     public static final String DEFAULT_CLUSTER_NAME = "prelert";
 
-    private static final String DEFAULT_ES_HOST = "localhost";
+    private static final String DEFAULT_ES_NODE_HOST = "localhost";
+
+    private static final String DEFAULT_ES_TRANSPORT_HOST = "localhost:9300";
 
     private static final String ES_HOST_PROP = "es.host";
 
@@ -94,6 +98,20 @@ public class PrelertWebApp extends Application
     public static final String ES_TRANSPORT_PORT_RANGE = "es.transport.port";
 
     private static final String ES_PROCESSORS_PROP = "es.processors";
+
+    /**
+     * This property specifies the client that should be used to connect
+     * to the storage of the results.
+     *
+     * Available options:
+     * <ul>
+     * <li> <b>es-node</b> will connect to the es.host via a node client
+     * <li> <b>es-transport</b> will create a transport client that is aware of the nodes specified in es.host
+     * </ul>
+     */
+    private static final String RESULTS_STORAGE_CLIENT_PROP = "results.storage.client";
+    private static final String ES_NODE = "es-node";
+    private static final String ES_TRANSPORT = "es-transport";
 
     public static final String PERSIST_RECORDS = "persist.records";
 
@@ -122,16 +140,7 @@ public class PrelertWebApp extends Application
         addMessageWriters();
         addExceptionMappers();
 
-        String elasticSearchHost = getPropertyOrDefault(ES_HOST_PROP, DEFAULT_ES_HOST);
-        String elasticSearchClusterName = getPropertyOrDefault(ES_CLUSTER_NAME_PROP,
-                DEFAULT_CLUSTER_NAME);
-        String portRange = System.getProperty(ES_TRANSPORT_PORT_RANGE);
-        // The number of processors affects the size of ES thread pools, so it
-        // can sometimes be desirable to frig it
-        String numProcessors = System.getProperty(ES_PROCESSORS_PROP);
-
-        ElasticsearchFactory esFactory = new ElasticsearchFactory(
-                elasticSearchHost, elasticSearchClusterName, portRange, numProcessors);
+        ElasticsearchFactory esFactory = createPersistenceFactory();
         JobProvider jobProvider = esFactory.newJobProvider();
 
         m_JobManager = new JobManager(jobProvider, createProcessManager(jobProvider, esFactory));
@@ -145,6 +154,27 @@ public class PrelertWebApp extends Application
         m_Singletons.add(m_JobManager);
         m_Singletons.add(m_AlertManager);
         m_Singletons.add(m_ServerInfo);
+    }
+
+    private ElasticsearchFactory createPersistenceFactory()
+    {
+        String host = getPropertyOrDefault(ES_HOST_PROP, DEFAULT_ES_NODE_HOST);
+        String clusterName = getPropertyOrDefault(ES_CLUSTER_NAME_PROP, DEFAULT_CLUSTER_NAME);
+
+        String resultsStorageClient = System.getProperty(RESULTS_STORAGE_CLIENT_PROP, ES_NODE);
+        if (resultsStorageClient.equals(ES_TRANSPORT))
+        {
+            LOGGER.info("Connecting to elasticsearch via transport client");
+            host = getPropertyOrDefault(ES_HOST_PROP, DEFAULT_ES_TRANSPORT_HOST);
+            return ElasticsearchTransportClientFactory.create(host, clusterName);
+        }
+
+        LOGGER.info("Connecting to elasticsearch via node client");
+        String portRange = System.getProperty(ES_TRANSPORT_PORT_RANGE);
+        // The number of processors affects the size of ES thread pools, so it
+        // can sometimes be desirable to frig it
+        String numProcessors = System.getProperty(ES_PROCESSORS_PROP);
+        return ElasticsearchNodeClientFactory.create(host, clusterName,portRange, numProcessors);
     }
 
     private void addEndPoints()
