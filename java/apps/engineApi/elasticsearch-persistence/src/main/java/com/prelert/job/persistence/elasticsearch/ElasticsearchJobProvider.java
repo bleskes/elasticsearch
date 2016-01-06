@@ -50,15 +50,12 @@ import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
-import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.common.settings.Settings.Builder;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.index.IndexNotFoundException;
 import org.elasticsearch.index.engine.VersionConflictEngineException;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.node.Node;
-import org.elasticsearch.node.NodeBuilder;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.sort.FieldSortBuilder;
 import org.elasticsearch.search.sort.SortBuilder;
@@ -90,7 +87,6 @@ public class ElasticsearchJobProvider implements JobProvider
 {
     private static final Logger LOGGER = Logger.getLogger(ElasticsearchJobProvider.class);
 
-
     /**
      * The index to store total usage/metering information
      */
@@ -117,9 +113,9 @@ public class ElasticsearchJobProvider implements JobProvider
 
     private final ObjectMapper m_ObjectMapper;
 
-    ElasticsearchJobProvider(Node node, Client client)
+    public ElasticsearchJobProvider(Node node, Client client)
     {
-        m_Node = Objects.requireNonNull(node);
+        m_Node = node;
         m_Client = Objects.requireNonNull(client);
 
         m_ObjectMapper = new ObjectMapper();
@@ -132,57 +128,20 @@ public class ElasticsearchJobProvider implements JobProvider
                 + "'");
     }
 
-    public static ElasticsearchJobProvider create(String elasticSearchHost,
-            String elasticSearchClusterName, String portRange, String numProcessors)
-    {
-        Node node = NodeBuilder.nodeBuilder()
-                .settings(buildSettings(elasticSearchHost, portRange, numProcessors))
-                .client(true)
-                .clusterName(elasticSearchClusterName).node();
-        return new ElasticsearchJobProvider(node, node.client());
-    }
-
-    /**
-     * Elasticsearch settings that instruct the node not to accept HTTP, not to
-     * attempt multicast discovery and to only look for another node to connect
-     * to on the given host.
-     */
-    private static Settings buildSettings(String host, String portRange, String numProcessors)
-    {
-        // Multicast discovery is expected to be disabled on the Elasticsearch
-        // data node, so disable it for this embedded node too and tell it to
-        // expect the data node to be on the same machine
-        Builder builder = Settings.builder()
-                .put("http.enabled", "false")
-                .put("discovery.zen.ping.unicast.hosts", host);
-
-        if (portRange != null && portRange.isEmpty() == false)
-        {
-            LOGGER.info("Using TCP port range " + portRange + " to connect to Elasticsearch");
-            builder.put("transport.tcp.port", portRange);
-        }
-        if (numProcessors != null && numProcessors.isEmpty() == false)
-        {
-            LOGGER.info("Telling Elasticsearch there are " + numProcessors
-                    + " processors on this machine");
-            builder.put("processors", numProcessors);
-        }
-
-        return builder.build();
-    }
-
     /**
      * Close the Elasticsearch node
      */
     @Override
     public void close() throws IOException
     {
-        m_Node.close();
-    }
-
-    public Client getClient()
-    {
-        return m_Client;
+        if (m_Node != null)
+        {
+            m_Node.close();
+        }
+        else
+        {
+            m_Client.close();
+        }
     }
 
     /**
