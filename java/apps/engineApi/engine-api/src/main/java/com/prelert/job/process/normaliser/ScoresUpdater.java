@@ -105,10 +105,8 @@ class ScoresUpdater
         {
             return job.getRenormalizationWindow() * SECONDS_IN_DAY * MILLISECONDS_IN_SECOND;
         }
-
-        long defaultWindow = Math.max(DEFAULT_RENORMALISATION_WINDOW_MS,
+        return Math.max(DEFAULT_RENORMALISATION_WINDOW_MS,
                 DEFAULT_BUCKETS_IN_RENORMALISATION_WINDOW * m_BucketSpan * MILLISECONDS_IN_SECOND);
-        return defaultWindow;
     }
 
     /**
