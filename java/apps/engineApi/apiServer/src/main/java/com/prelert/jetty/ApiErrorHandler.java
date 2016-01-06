@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -81,6 +81,13 @@ public class ApiErrorHandler extends ErrorHandler
 
                 char [] message = encoder.quoteAsString(reason);
                 builder.append("\n  \"message\" : \"").append(message).append("\",");
+            }
+            else if (serverResponse.getStatus() == Response.SC_NOT_FOUND)
+            {
+                LOGGER.info("Resource not found: " + baseRequest.getRequestURI());
+
+                builder.append("\n  \"message\" : \"404 Resource not found: ")
+                        .append(baseRequest.getRequestURI()).append("\",");
             }
         }
 
