@@ -43,7 +43,6 @@ import com.prelert.job.DataDescription;
 import com.prelert.job.persistence.JobDataPersister;
 import com.prelert.job.process.exceptions.MalformedJsonException;
 import com.prelert.job.process.exceptions.MissingFieldException;
-import com.prelert.job.status.CountingInputStream;
 import com.prelert.job.status.HighProportionOfBadTimestampsException;
 import com.prelert.job.status.OutOfOrderRecordsException;
 import com.prelert.job.status.StatusReporter;
@@ -89,11 +88,9 @@ class JsonDataToProcessWriter extends AbstractDataToProcessWriter
     public DataCounts write(InputStream inputStream) throws IOException, MissingFieldException,
             HighProportionOfBadTimestampsException, OutOfOrderRecordsException, MalformedJsonException
     {
-        CountingInputStream countingStream = new CountingInputStream(inputStream, m_StatusReporter);
-
         m_StatusReporter.startNewIncrementalCount();
 
-        try (JsonParser parser = new JsonFactory().createParser(countingStream))
+        try (JsonParser parser = new JsonFactory().createParser(inputStream))
         {
             writeJson(parser);
 

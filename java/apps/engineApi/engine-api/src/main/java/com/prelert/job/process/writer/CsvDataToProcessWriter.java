@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -45,7 +45,6 @@ import com.prelert.job.DataCounts;
 import com.prelert.job.DataDescription;
 import com.prelert.job.persistence.JobDataPersister;
 import com.prelert.job.process.exceptions.MissingFieldException;
-import com.prelert.job.status.CountingInputStream;
 import com.prelert.job.status.HighProportionOfBadTimestampsException;
 import com.prelert.job.status.OutOfOrderRecordsException;
 import com.prelert.job.status.StatusReporter;
@@ -111,12 +110,10 @@ class CsvDataToProcessWriter extends AbstractDataToProcessWriter
         int recordsWritten = 0;
         int lineCount = 0;
 
-        CountingInputStream countingStream = new CountingInputStream(inputStream, m_StatusReporter);
-
         m_StatusReporter.startNewIncrementalCount();
 
         try (CsvListReader csvReader = new CsvListReader(
-                new InputStreamReader(countingStream, StandardCharsets.UTF_8),
+                new InputStreamReader(inputStream, StandardCharsets.UTF_8),
                 csvPref))
         {
             String[] header = csvReader.getHeader(true);

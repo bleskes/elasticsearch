@@ -36,17 +36,17 @@ import java.io.InputStream;
  *
  * Overrides the read methods counting the number of bytes read.
  */
-public class CountingInputStream extends FilterInputStream 
+public class CountingInputStream extends FilterInputStream
 {
 	private StatusReporter m_StatusReporter;
-	
+
 	/**
-	 * 
+	 *
 	 * @param in
 	 * @param usageReporter Writes the number of raw bytes processed over time
 	 * @param statusReporter Write number of records, bytes etc.
 	 */
-	public CountingInputStream(InputStream in, StatusReporter statusReporter) 
+	public CountingInputStream(InputStream in, StatusReporter statusReporter)
 	{
 		super(in);
 		m_StatusReporter = statusReporter;
@@ -54,20 +54,20 @@ public class CountingInputStream extends FilterInputStream
 
 	/**
 	 * We don't care if the count is one byte out
-	 * because we don't check for the case where read 
+	 * because we don't check for the case where read
 	 * returns -1.
-	 * 
-	 * One of the buffered read(..) methods is more likely to 
+	 *
+	 * One of the buffered read(..) methods is more likely to
 	 * be called anyway.
 	 */
 	@Override
-	public int read() throws IOException 
+	public int read() throws IOException
 	{
 		m_StatusReporter.reportBytesRead(1);
-		
+
 		return in.read();
 	}
-	
+
 	/**
 	 * Don't bother checking for the special case where
 	 * the stream is closed/finished and read returns -1.
@@ -75,14 +75,14 @@ public class CountingInputStream extends FilterInputStream
 	 */
 	@Override
 	public int read(byte[] b) throws IOException
-	{		
+	{
 		int read = in.read(b);
-		
+
 		m_StatusReporter.reportBytesRead(read);
-		
+
 		return read;
 	}
-	
+
 	/**
 	 * Don't bother checking for the special case where
 	 * the stream is closed/finished and read returns -1.
@@ -92,9 +92,9 @@ public class CountingInputStream extends FilterInputStream
 	public int read(byte[] b, int off, int len) throws IOException
 	{
 		int read = in.read(b, off, len);
-		
+
 		m_StatusReporter.reportBytesRead(read);
 		return read;
 	}
-	
+
 }

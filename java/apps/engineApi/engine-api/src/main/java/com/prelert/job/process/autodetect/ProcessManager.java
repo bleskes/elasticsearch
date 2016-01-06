@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -69,6 +69,7 @@ import com.prelert.job.process.writer.DataToProcessWriter;
 import com.prelert.job.process.writer.DataToProcessWriterFactory;
 import com.prelert.job.process.writer.LengthEncodedWriter;
 import com.prelert.job.process.writer.RecordWriter;
+import com.prelert.job.status.CountingInputStream;
 import com.prelert.job.status.HighProportionOfBadTimestampsException;
 import com.prelert.job.status.OutOfOrderRecordsException;
 import com.prelert.job.status.StatusReporter;
@@ -771,13 +772,14 @@ public class ProcessManager
         // Oracle's documentation recommends buffering process streams
         BufferedOutputStream bufferedStream = new BufferedOutputStream(output);
         LengthEncodedWriter lengthEncodedWriter = new LengthEncodedWriter(bufferedStream);
+        CountingInputStream countingStream = new CountingInputStream(input, statusReporter);
 
         try
         {
             DataToProcessWriter writer = new DataToProcessWriterFactory().create(lengthEncodedWriter,
                     dataDescription, analysisConfig, transforms, statusReporter, dataPersister, jobLogger);
 
-            return writer.write(input);
+            return writer.write(countingStream);
         }
         catch (RuntimeException e)
         {

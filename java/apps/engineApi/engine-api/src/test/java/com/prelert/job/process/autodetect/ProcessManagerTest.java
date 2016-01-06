@@ -38,9 +38,11 @@ import static org.mockito.Mockito.when;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.Collections;
 
 import org.apache.log4j.Logger;
@@ -57,10 +59,13 @@ import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataCounts;
 import com.prelert.job.DataDescription;
 import com.prelert.job.DataDescription.DataFormat;
+import com.prelert.job.Detector;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.alert.AlertObserver;
 import com.prelert.job.exceptions.JobInUseException;
 import com.prelert.job.persistence.DataPersisterFactory;
+import com.prelert.job.persistence.JobDataCountsPersister;
+import com.prelert.job.persistence.JobDataPersister;
 import com.prelert.job.persistence.JobProvider;
 import com.prelert.job.process.exceptions.ClosedJobException;
 import com.prelert.job.process.exceptions.MalformedJsonException;
@@ -74,6 +79,7 @@ import com.prelert.job.status.HighProportionOfBadTimestampsException;
 import com.prelert.job.status.OutOfOrderRecordsException;
 import com.prelert.job.status.StatusReporter;
 import com.prelert.job.transform.TransformConfigs;
+import com.prelert.job.usage.UsageReporter;
 
 public class ProcessManagerTest
 {
@@ -390,6 +396,46 @@ public class ProcessManagerTest
     {
         assertFalse(m_ProcessManager.removeAlertObserver("nonRunning", null));
     }
+
+
+    @Test
+    public void testWriteToJob()
+    throws JsonParseException, MissingFieldException, HighProportionOfBadTimestampsException,
+            OutOfOrderRecordsException, MalformedJsonException, IOException
+    {
+        DataDescription dd = new DataDescription();
+        dd.setFormat(DataFormat.DELIMITED);
+        dd.setFieldDelimiter(',');
+
+        Detector d = new Detector();
+        d.setFieldName("value");
+        d.setFunction("metric");
+
+        AnalysisConfig ac = new AnalysisConfig();
+        ac.setDetectors(Arrays.asList(d));
+
+        TransformConfigs tc = new TransformConfigs(Collections.emptyList());
+
+        StatusReporter statusReporter = new StatusReporter("foo", mock(UsageReporter.class),
+                                            mock(JobDataCountsPersister.class), mock(Logger.class));
+
+        String data = "time,value\n1452095662,1\n1452098662,2\n1452098662,3";
+        ByteArrayInputStream input = new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
+        ByteArrayOutputStream output = new ByteArrayOutputStream();
+
+
+        DataCounts count = m_ProcessManager.writeToJob(dd, ac, tc, input, output, statusReporter,
+                                    mock(JobDataPersister.class), mock(Logger.class));
+
+        // the actual input is longer than 47 bytes but the counting input steam
+        // knocks a couple off
+        assertEquals(47, count.getInputBytes());
+        assertEquals(3, count.getInputRecordCount());
+        assertEquals(3, count.getInputFieldCount());
+        assertEquals(3, count.getProcessedRecordCount());
+        assertEquals(3, count.getProcessedFieldCount());
+    }
+
 
     private static InputStream createInputStream(String input)
     {

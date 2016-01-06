@@ -76,6 +76,7 @@ public class SingleLineDataToProcessWriter extends AbstractDataToProcessWriter
     {
         int recordsWritten = 0;
         int lineCount = 0;
+
         m_StatusReporter.startNewIncrementalCount();
 
         try (BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream)))
