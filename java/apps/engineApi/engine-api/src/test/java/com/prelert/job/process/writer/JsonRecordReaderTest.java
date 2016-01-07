@@ -26,7 +26,8 @@
  ************************************************************/
 package com.prelert.job.process.writer;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.mock;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -41,8 +42,6 @@ import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.prelert.job.process.exceptions.MalformedJsonException;
-
-import static org.mockito.Mockito.mock;
 
 public class JsonRecordReaderTest
 {
@@ -67,6 +66,29 @@ public class JsonRecordReaderTest
         assertEquals("11", record[0]);
         assertEquals("21", record[1]);
         assertEquals("31", record[2]);
+
+        assertEquals(-1, reader.read(record, gotFields));
+    }
+
+    @Test
+    public void testRead_GivenNestedField() throws JsonParseException, IOException, MalformedJsonException
+    {
+        String data = "{\"a\":10, \"b\":20, \"c\":{\"d\":30, \"e\":40}}";
+        JsonParser parser = createParser(data);
+        Map<String, Integer> fieldMap = new HashMap<>();
+        fieldMap.put("a", 0);
+        fieldMap.put("b", 1);
+        fieldMap.put("c.e", 2);
+
+        JsonRecordReader reader = new JsonRecordReader(parser, fieldMap, mock(Logger.class));
+
+        String record [] = new String[3];
+        boolean gotFields [] = new boolean[3];
+
+        assertEquals(4, reader.read(record, gotFields));
+        assertEquals("10", record[0]);
+        assertEquals("20", record[1]);
+        assertEquals("40", record[2]);
 
         assertEquals(-1, reader.read(record, gotFields));
     }
