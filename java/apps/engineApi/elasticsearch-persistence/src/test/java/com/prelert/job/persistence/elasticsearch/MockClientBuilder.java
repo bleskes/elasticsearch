@@ -43,6 +43,7 @@ import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.client.AdminClient;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.client.IndicesAdminClient;
+import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.index.IndexNotFoundException;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
@@ -55,7 +56,7 @@ public class MockClientBuilder
     @Mock private IndicesAdminClient m_IndicesAdminClient;
     @Mock private ActionFuture<IndicesExistsResponse> m_IndexNotExistsResponseFuture;
 
-    public MockClientBuilder()
+    public MockClientBuilder(String clusterName)
     {
         m_Client = mock(Client.class);
         m_AdminClient = mock(AdminClient.class);
@@ -63,6 +64,8 @@ public class MockClientBuilder
 
         when(m_Client.admin()).thenReturn(m_AdminClient);
         when(m_AdminClient.indices()).thenReturn(m_IndicesAdminClient);
+        Settings settings = Settings.builder().put("cluster.name", clusterName).build();
+        when(m_Client.settings()).thenReturn(settings);
     }
 
     @SuppressWarnings({ "rawtypes", "unchecked" })

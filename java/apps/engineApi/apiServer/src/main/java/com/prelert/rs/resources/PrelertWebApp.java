@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -50,18 +50,14 @@ import org.apache.log4j.Logger;
 
 import com.prelert.job.alert.manager.AlertManager;
 import com.prelert.job.manager.JobManager;
+import com.prelert.job.persistence.JobProvider;
 import com.prelert.job.persistence.OldResultsRemover;
-import com.prelert.job.persistence.elasticsearch.ElasticsearchBulkDeleter;
-import com.prelert.job.persistence.elasticsearch.ElasticsearchJobDataCountsPersister;
-import com.prelert.job.persistence.elasticsearch.ElasticsearchJobDataPersister;
-import com.prelert.job.persistence.elasticsearch.ElasticsearchJobProvider;
-import com.prelert.job.persistence.elasticsearch.ElasticsearchPersister;
-import com.prelert.job.persistence.elasticsearch.ElasticsearchUsagePersister;
 import com.prelert.job.process.ProcessCtrl;
 import com.prelert.job.process.autodetect.ProcessFactory;
 import com.prelert.job.process.autodetect.ProcessManager;
-import com.prelert.job.process.normaliser.BlockingQueueRenormaliser;
-import com.prelert.job.process.output.parsing.ResultsReaderFactory;
+import com.prelert.rs.persistence.ElasticsearchFactory;
+import com.prelert.rs.persistence.ElasticsearchNodeClientFactory;
+import com.prelert.rs.persistence.ElasticsearchTransportClientFactory;
 import com.prelert.rs.provider.AcknowledgementWriter;
 import com.prelert.rs.provider.AlertMessageBodyWriter;
 import com.prelert.rs.provider.DataCountsWriter;
@@ -75,7 +71,6 @@ import com.prelert.rs.provider.PaginationWriter;
 import com.prelert.rs.provider.SingleDocumentWriter;
 import com.prelert.server.info.ServerInfoFactory;
 import com.prelert.server.info.ServerInfoWriter;
-import com.prelert.server.info.elasticsearch.ElasticsearchServerInfo;
 import com.prelert.utils.scheduler.TaskScheduler;
 
 /**
@@ -92,7 +87,9 @@ public class PrelertWebApp extends Application
      */
     public static final String DEFAULT_CLUSTER_NAME = "prelert";
 
-    private static final String DEFAULT_ES_HOST = "localhost";
+    private static final String DEFAULT_ES_NODE_HOST = "localhost";
+
+    private static final String DEFAULT_ES_TRANSPORT_HOST = "localhost:9300";
 
     private static final String ES_HOST_PROP = "es.host";
 
@@ -101,6 +98,20 @@ public class PrelertWebApp extends Application
     public static final String ES_TRANSPORT_PORT_RANGE = "es.transport.port";
 
     private static final String ES_PROCESSORS_PROP = "es.processors";
+
+    /**
+     * This property specifies the client that should be used to connect
+     * to the storage of the results.
+     *
+     * Available options:
+     * <ul>
+     * <li> <b>es-node</b> will connect to the es.host via a node client
+     * <li> <b>es-transport</b> will create a transport client that is aware of the nodes specified in es.host
+     * </ul>
+     */
+    private static final String RESULTS_STORAGE_CLIENT_PROP = "results.storage.client";
+    private static final String ES_NODE = "es-node";
+    private static final String ES_TRANSPORT = "es-transport";
 
     public static final String PERSIST_RECORDS = "persist.records";
 
@@ -129,28 +140,41 @@ public class PrelertWebApp extends Application
         addMessageWriters();
         addExceptionMappers();
 
-        String elasticSearchHost = getPropertyOrDefault(ES_HOST_PROP, DEFAULT_ES_HOST);
-        String elasticSearchClusterName = getPropertyOrDefault(ES_CLUSTER_NAME_PROP,
-                DEFAULT_CLUSTER_NAME);
-        String portRange = System.getProperty(ES_TRANSPORT_PORT_RANGE);
-        // The number of processors affects the size of ES thread pools, so it
-        // can sometimes be desirable to frig it
-        String numProcessors = System.getProperty(ES_PROCESSORS_PROP);
+        ElasticsearchFactory esFactory = createPersistenceFactory();
+        JobProvider jobProvider = esFactory.newJobProvider();
 
-        ElasticsearchJobProvider esJob = ElasticsearchJobProvider.create(elasticSearchHost,
-                elasticSearchClusterName, portRange, numProcessors);
-
-        m_JobManager = new JobManager(esJob, createProcessManager(esJob));
-        m_AlertManager = new AlertManager(esJob, m_JobManager);
-        m_ServerInfo = new ElasticsearchServerInfo(esJob.getClient());
+        m_JobManager = new JobManager(jobProvider, createProcessManager(jobProvider, esFactory));
+        m_AlertManager = new AlertManager(jobProvider, m_JobManager);
+        m_ServerInfo = esFactory.newServerInfoFactory();
 
         writeServerInfoDailyStartingNow();
-        scheduleOldResultsRemovalAtMidnight(esJob);
+        scheduleOldResultsRemovalAtMidnight(jobProvider, esFactory);
 
         m_Singletons = new HashSet<>();
         m_Singletons.add(m_JobManager);
         m_Singletons.add(m_AlertManager);
         m_Singletons.add(m_ServerInfo);
+    }
+
+    private ElasticsearchFactory createPersistenceFactory()
+    {
+        String host = getPropertyOrDefault(ES_HOST_PROP, DEFAULT_ES_NODE_HOST);
+        String clusterName = getPropertyOrDefault(ES_CLUSTER_NAME_PROP, DEFAULT_CLUSTER_NAME);
+
+        String resultsStorageClient = System.getProperty(RESULTS_STORAGE_CLIENT_PROP, ES_NODE);
+        if (resultsStorageClient.equals(ES_TRANSPORT))
+        {
+            LOGGER.info("Connecting to elasticsearch via transport client");
+            host = getPropertyOrDefault(ES_HOST_PROP, DEFAULT_ES_TRANSPORT_HOST);
+            return ElasticsearchTransportClientFactory.create(host, clusterName);
+        }
+
+        LOGGER.info("Connecting to elasticsearch via node client");
+        String portRange = System.getProperty(ES_TRANSPORT_PORT_RANGE);
+        // The number of processors affects the size of ES thread pools, so it
+        // can sometimes be desirable to frig it
+        String numProcessors = System.getProperty(ES_PROCESSORS_PROP);
+        return ElasticsearchNodeClientFactory.create(host, clusterName,portRange, numProcessors);
     }
 
     private void addEndPoints()
@@ -197,21 +221,17 @@ public class PrelertWebApp extends Application
         return propertyValue == null ? defaultValue : propertyValue;
     }
 
-    private static ProcessManager createProcessManager(ElasticsearchJobProvider jobProvider)
+    private static ProcessManager createProcessManager(JobProvider jobProvider,
+            ElasticsearchFactory esFactory)
     {
         ProcessFactory processFactory = new ProcessFactory(
                 jobProvider,
-                new ResultsReaderFactory(
-                        jobId -> new ElasticsearchPersister(jobId, jobProvider.getClient()),
-                        jobId -> new BlockingQueueRenormaliser(jobId, jobProvider,
-                                new ElasticsearchPersister(jobId, jobProvider.getClient()))),
-                logger -> new ElasticsearchJobDataCountsPersister(jobProvider.getClient(), logger),
-                logger -> new ElasticsearchUsagePersister(jobProvider.getClient(), logger));
+                esFactory.newResultsReaderFactory(jobProvider),
+                esFactory.newJobDataCountsPersisterFactory(),
+                esFactory.newUsagePersisterFactory());
         return ProcessManager.create(jobProvider, processFactory,
-                jobId -> new ElasticsearchJobDataPersister(jobId, jobProvider.getClient())
-        );
+                esFactory.newDataPersisterFactory());
     }
-
 
     private void writeServerInfoDailyStartingNow()
     {
@@ -271,10 +291,11 @@ public class PrelertWebApp extends Application
                                                    delaySeconds, 3600l * 24l, TimeUnit.SECONDS);
     }
 
-    private void scheduleOldResultsRemovalAtMidnight(ElasticsearchJobProvider esJob)
+    private void scheduleOldResultsRemovalAtMidnight(JobProvider jobProvider,
+            ElasticsearchFactory esFactory)
     {
-        OldResultsRemover oldResultsRemover = new OldResultsRemover(esJob,
-                jobId -> new ElasticsearchBulkDeleter(esJob.getClient(), jobId));
+        OldResultsRemover oldResultsRemover = new OldResultsRemover(jobProvider,
+                esFactory.newJobResultsDeleterFactory());
         m_OldResultsRemoverSchedule = TaskScheduler
                 .newMidnightTaskScheduler(() -> oldResultsRemover.removeOldResults(),
                         OLD_RESULTS_REMOVAL_PAST_MIDNIGHT_OFFSET_MINUTES);
