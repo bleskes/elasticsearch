@@ -86,6 +86,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -222,8 +223,8 @@ public final class WatcherTestUtils {
 
         Authentication auth = new Authentication("testname", new Secret("testpassword".toCharArray()));
 
-        EmailAction action = new EmailAction(email, "testaccount", auth, Profile.STANDARD, null);
-        ExecutableEmailAction executale = new ExecutableEmailAction(action, logger, emailService, templateEngine, new HtmlSanitizer(Settings.EMPTY));
+        EmailAction action = new EmailAction(email, "testaccount", auth, Profile.STANDARD, null, null);
+        ExecutableEmailAction executale = new ExecutableEmailAction(action, logger, emailService, templateEngine, new HtmlSanitizer(Settings.EMPTY), Collections.emptyMap());
 
         actions.add(new ActionWrapper("_email", executale));
 

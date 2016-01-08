@@ -42,6 +42,8 @@ import org.elasticsearch.watcher.actions.email.service.EmailService;
 import org.elasticsearch.watcher.actions.email.service.EmailTemplate;
 import org.elasticsearch.watcher.actions.email.service.HtmlSanitizer;
 import org.elasticsearch.watcher.actions.email.service.Profile;
+import org.elasticsearch.watcher.actions.email.service.attachment.EmailAttachments;
+import org.elasticsearch.watcher.actions.email.service.attachment.EmailAttachmentsParser;
 import org.elasticsearch.watcher.actions.index.ExecutableIndexAction;
 import org.elasticsearch.watcher.actions.index.IndexAction;
 import org.elasticsearch.watcher.actions.index.IndexActionFactory;
@@ -432,8 +434,8 @@ public class WatchTests extends ESTestCase {
         List<ActionWrapper> list = new ArrayList<>();
         if (randomBoolean()) {
             ExecutableTransform transform = randomTransform();
-            EmailAction action = new EmailAction(EmailTemplate.builder().build(), null, null, Profile.STANDARD, randomFrom(DataAttachment.JSON, DataAttachment.YAML, null));
-            list.add(new ActionWrapper("_email_" + randomAsciiOfLength(8), randomThrottler(), transform, new ExecutableEmailAction(action, logger, emailService, templateEngine, htmlSanitizer)));
+            EmailAction action = new EmailAction(EmailTemplate.builder().build(), null, null, Profile.STANDARD, randomFrom(DataAttachment.JSON, DataAttachment.YAML), EmailAttachments.EMPTY_ATTACHMENTS);
+            list.add(new ActionWrapper("_email_" + randomAsciiOfLength(8), randomThrottler(), transform, new ExecutableEmailAction(action, logger, emailService, templateEngine, htmlSanitizer, Collections.emptyMap())));
         }
         if (randomBoolean()) {
             DateTimeZone timeZone = randomBoolean() ? DateTimeZone.UTC : null;
@@ -457,7 +459,7 @@ public class WatchTests extends ESTestCase {
         for (ActionWrapper action : actions) {
             switch (action.action().type()) {
                 case EmailAction.TYPE:
-                    parsers.put(EmailAction.TYPE, new EmailActionFactory(settings, emailService, templateEngine, htmlSanitizer));
+                    parsers.put(EmailAction.TYPE, new EmailActionFactory(settings, emailService, templateEngine, htmlSanitizer, new EmailAttachmentsParser(Collections.emptyMap()), Collections.emptyMap()));
                     break;
                 case IndexAction.TYPE:
                     parsers.put(IndexAction.TYPE, new IndexActionFactory(settings, client));

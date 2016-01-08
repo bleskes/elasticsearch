@@ -68,6 +68,4 @@ public class InternalSlackService extends AbstractLifecycleComponent<SlackServic
     public SlackAccount getAccount(String name) {
         return accounts.account(name);
     }
-
-
 }
