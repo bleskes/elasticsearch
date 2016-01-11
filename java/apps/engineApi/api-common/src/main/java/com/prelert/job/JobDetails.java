@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -154,8 +154,6 @@ public class JobDetails
         this();
 
         m_JobId = jobId;
-        m_Status = JobStatus.CLOSED;
-        m_CreateTime = new Date();
 
         m_Timeout = details.getTimeout();
 

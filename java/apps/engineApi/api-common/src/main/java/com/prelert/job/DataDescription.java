@@ -55,7 +55,7 @@ public class DataDescription
      */
     public enum DataFormat
     {
-        JSON, DELIMITED, SINGLE_LINE;
+        JSON, DELIMITED, SINGLE_LINE, ELASTICSEARCH;
 
         /**
          * Delimited used to be called delineated. We keep supporting that for backwards
