@@ -31,7 +31,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PushbackInputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Objects;
@@ -42,7 +41,9 @@ import java.util.stream.Collectors;
 
 import org.apache.log4j.Logger;
 
-public class ElasticsearchDataExtractor implements Iterator<Optional<InputStream>>
+import com.prelert.job.data.extraction.DataExtractor;
+
+public class ElasticsearchDataExtractor implements DataExtractor
 {
     private static final Logger LOGGER = Logger.getLogger(ElasticsearchDataExtractor.class);
 
@@ -128,6 +129,9 @@ public class ElasticsearchDataExtractor implements Iterator<Optional<InputStream
 
     public void newSearch(String startEpochMs, String endEpochMs)
     {
+        LOGGER.info("Requesting data from '" + m_BaseUrl + "' within [" + startEpochMs + ", "
+                + endEpochMs + ")");
+
         m_ScrollId = null;
         m_IsScrollComplete = false;
         m_StartEpochMs = startEpochMs;

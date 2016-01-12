@@ -391,7 +391,7 @@ public abstract class AbstractDataLoad extends ResourceWithJobManager
     }
 
 
-    public DataPostResponse toDataPostResult(DataStreamerThread dataStreamer)
+    private DataPostResponse toDataPostResult(DataStreamerThread dataStreamer)
     {
         if (dataStreamer.getDataCounts() != null)
         {

@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -25,43 +25,13 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.utils.scheduler;
+package com.prelert.job.data.extraction;
 
-import static org.junit.Assert.assertEquals;
+import java.io.InputStream;
+import java.util.Iterator;
+import java.util.Optional;
 
-import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import org.junit.Before;
-import org.junit.Test;
-
-public class TaskSchedulerTest
+public interface DataExtractor extends Iterator<Optional<InputStream>>
 {
-    private AtomicInteger m_TaskCount;
-
-    @Before
-    public void setUp()
-    {
-        m_TaskCount = new AtomicInteger(0);
-    }
-
-    @Test
-    public void testTaskRunsThriceGiven50MsPeriodAndWaitingFor180Ms()
-    {
-        TaskScheduler scheduler = new TaskScheduler(() -> m_TaskCount.incrementAndGet(),
-                () -> LocalDateTime.now().plus(50, ChronoUnit.MILLIS));
-        scheduler.start();
-
-        try
-        {
-            Thread.sleep(180);
-        }
-        catch (InterruptedException e)
-        {
-            e.printStackTrace();
-        }
-
-        assertEquals(3, m_TaskCount.get());
-    }
+    void newSearch(String start, String end);
 }

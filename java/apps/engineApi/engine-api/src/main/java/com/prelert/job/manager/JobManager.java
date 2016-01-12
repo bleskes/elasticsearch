@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -37,6 +37,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicLong;
@@ -48,15 +49,16 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.base.Preconditions;
 import com.prelert.job.DataCounts;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.JobDetails;
 import com.prelert.job.JobIdAlreadyExistsException;
-import com.prelert.job.JobStatus;
 import com.prelert.job.ModelDebugConfig;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.alert.AlertObserver;
 import com.prelert.job.config.verification.JobConfigurationException;
+import com.prelert.job.data.extraction.DataExtractorFactory;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.exceptions.JobInUseException;
 import com.prelert.job.exceptions.TooManyJobsException;
@@ -87,7 +89,7 @@ import com.prelert.job.transform.TransformConfigs;
  * Creates jobs and handles retrieving job configuration details from
  * the data store. New jobs have a unique job id see {@linkplain #generateJobId()}
  */
-public class JobManager
+public class JobManager implements DataProcessor
 {
     private static final Logger LOGGER = Logger.getLogger(JobManager.class);
 
@@ -115,16 +117,13 @@ public class JobManager
     private static final String MAX_JOBS_FACTOR_NAME = "prelert.max.jobs.factor";
     private static final double DEFAULT_MAX_JOBS_FACTOR = 3.0;
 
+    private final JobProvider m_JobProvider;
     private final ProcessManager m_ProcessManager;
-
+    private final DataExtractorFactory m_DataExtractorFactory;
 
     private AtomicLong m_IdSequence;
     private DateTimeFormatter m_JobIdDateFormat;
-
     private ObjectMapper m_ObjectMapper;
-
-    private JobProvider m_JobProvider;
-
     private final int m_MaxAllowedJobs;
 
     /**
@@ -141,6 +140,8 @@ public class JobManager
      */
     private boolean m_ArePartitionsAllowed = true;
 
+    private final Map<String, JobScheduler> m_ScheduledJobs;
+
     /**
      * constraints in the license key.
      */
@@ -153,11 +154,12 @@ public class JobManager
      *
      * @param jobDetailsProvider
      */
-    public JobManager(JobProvider jobProvider, ProcessManager processManager)
+    public JobManager(JobProvider jobProvider, ProcessManager processManager,
+            DataExtractorFactory dataExtractorFactory)
     {
-        m_JobProvider = jobProvider;
-
-        m_ProcessManager = processManager;
+        m_JobProvider = Objects.requireNonNull(jobProvider);
+        m_ProcessManager = Objects.requireNonNull(processManager);
+        m_DataExtractorFactory = Objects.requireNonNull(dataExtractorFactory);
 
         m_MaxAllowedJobs = calculateMaxJobsAllowed();
 
@@ -166,6 +168,8 @@ public class JobManager
 
         m_ObjectMapper = new ObjectMapper();
         m_ObjectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
+
+        m_ScheduledJobs = new HashMap<>();
 
         // This requires the process manager and Elasticsearch connection in
         // order to work, but failure is considered non-fatal
@@ -277,7 +281,21 @@ public class JobManager
 
         m_JobProvider.createJob(jobDetails);
 
+        if (jobDetails.getSchedulerConfig() != null)
+        {
+            scheduleJob(jobDetails);
+        }
+
         return jobDetails;
+    }
+
+    private void scheduleJob(JobDetails job)
+    {
+        LOGGER.info("Scheduling job: " + job.getId());
+        JobScheduler jobScheduler = new JobScheduler(job.getId(), job.getAnalysisConfig()
+                .getBucketSpan(), m_DataExtractorFactory.newExtractor(job), this);
+        m_ScheduledJobs.put(job.getId(), jobScheduler);
+        jobScheduler.start(job);
     }
 
     private void checkCreateJobForTooManyJobsAgainstLicenseLimit() throws TooManyJobsException
@@ -596,7 +614,6 @@ public class JobManager
 
         Map<String, Object> update = new HashMap<>();
         update.put(JobDetails.LAST_DATA_TIME, time);
-        update.put(JobDetails.STATUS, JobStatus.RUNNING);
         return m_JobProvider.updateJob(jobId, update);
     }
 
@@ -623,36 +640,18 @@ public class JobManager
             m_ProcessManager.closeJob(jobId);
         }
 
+        if (m_ScheduledJobs.containsKey(jobId))
+        {
+            m_ScheduledJobs.get(jobId).stop();
+            m_ScheduledJobs.remove(jobId);
+        }
+
         m_ProcessManager.deletePersistedData(jobId);
 
         return m_JobProvider.deleteJob(jobId);
     }
 
-    /**
-     * Passes data to the native process. If the process is not running a new
-     * one is started.
-     * This is a blocking call that won't return until all the data has been
-     * written to the process. A new thread is launched to parse the process's
-     * output
-     *
-     * @param jobId
-     * @param input
-     * @param params
-     * @return
-     * @throws NativeProcessRunException If there is an error starting the native
-     * process
-     * @throws UnknownJobException If the jobId is not recognised
-     * @throws MissingFieldException If a configured field is missing from
-     * the CSV header
-     * @throws JsonParseException
-     * @throws JobInUseException if the job cannot be written to because
-     * it is already handling data
-     * @throws HighProportionOfBadTimestampsException
-     * @throws OutOfOrderRecordsException
-     * @throws TooManyJobsException If the license is violated
-     * @throws MalformedJsonException If JSON data is malformed and we cannot recover
-     * @return Count of records, fields, bytes, etc written
-     */
+    @Override
     public DataCounts submitDataLoadJob(String jobId, InputStream input, DataLoadParams params)
     throws UnknownJobException, NativeProcessRunException, MissingFieldException,
         JsonParseException, JobInUseException, HighProportionOfBadTimestampsException,
@@ -769,22 +768,6 @@ public class JobManager
     {
         return String.format("%s-%05d", m_JobIdDateFormat.format(LocalDateTime.now()),
                         m_IdSequence.incrementAndGet());
-    }
-
-    /**
-     * Stops the Elasticsearch client and the Process Manager
-     */
-    public void stop()
-    {
-        m_ProcessManager.stop();
-        try
-        {
-            m_JobProvider.close();
-        }
-        catch (IOException e)
-        {
-            LOGGER.error("Exception closing job details provider", e);
-        }
     }
 
     /**
@@ -943,6 +926,15 @@ public class JobManager
     public boolean removeAlertObserver(String jobId, AlertObserver ao)
     {
         return m_ProcessManager.removeAlertObserver(jobId, ao);
+    }
+
+    public void restartScheduledJobs()
+    {
+        Preconditions.checkState(m_ScheduledJobs.isEmpty());
+
+        getJobs(0, 10000).queryResults().stream()
+                .filter(job -> job.getSchedulerConfig() != null)
+                .forEach(job -> scheduleJob(job));
     }
 
     private static int calculateMaxJobsAllowed()

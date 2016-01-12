@@ -85,6 +85,7 @@ public class JobDetails
 
     private AnalysisConfig m_AnalysisConfig;
     private AnalysisLimits m_AnalysisLimits;
+    private SchedulerConfig m_SchedulerConfig;
     private DataDescription m_DataDescription;
     private ModelSizeStats m_ModelSizeStats;
     private List<TransformConfig> m_Transforms;
@@ -131,6 +132,7 @@ public class JobDetails
 
         m_AnalysisConfig = jobConfig.getAnalysisConfig();
         m_AnalysisLimits = jobConfig.getAnalysisLimits();
+        m_SchedulerConfig = jobConfig.getSchedulerConfig();
         m_Transforms = jobConfig.getTransforms();
         m_ModelDebugConfig = jobConfig.getModelDebugConfig();
 
@@ -160,6 +162,7 @@ public class JobDetails
         m_Description = details.getDescription();
         m_AnalysisConfig = details.getAnalysisConfig();
         m_AnalysisLimits = details.getAnalysisLimits();
+        m_SchedulerConfig = details.getSchedulerConfig();
         m_DataDescription = details.getDataDescription();
         m_RenormalizationWindow = details.getRenormalizationWindow();
         m_ResultsRetentionDays = details.getResultsRetentionDays();
@@ -169,6 +172,7 @@ public class JobDetails
         invokeIfNotNull(jobConfig.getTimeout(), t -> m_Timeout = t);
         invokeIfNotNull(jobConfig.getAnalysisConfig(), ac -> m_AnalysisConfig = ac);
         invokeIfNotNull(jobConfig.getAnalysisLimits(), al -> m_AnalysisLimits = al);
+        invokeIfNotNull(jobConfig.getSchedulerConfig(), sc -> m_SchedulerConfig = sc);
         invokeIfNotNull(jobConfig.getDataDescription(), dd -> m_DataDescription = dd);
         invokeIfNotNull(jobConfig.getDescription(), d -> m_Description = d);
         invokeIfNotNull(jobConfig.getRenormalizationWindow(), rw -> m_RenormalizationWindow = rw);
@@ -325,6 +329,16 @@ public class JobDetails
     public void setAnalysisLimits(AnalysisLimits options)
     {
         m_AnalysisLimits = options;
+    }
+
+    public SchedulerConfig getSchedulerConfig()
+    {
+        return m_SchedulerConfig;
+    }
+
+    public void setSchedulerConfig(SchedulerConfig schedulerConfig)
+    {
+        m_SchedulerConfig = schedulerConfig;
     }
 
     public ModelDebugConfig getModelDebugConfig()

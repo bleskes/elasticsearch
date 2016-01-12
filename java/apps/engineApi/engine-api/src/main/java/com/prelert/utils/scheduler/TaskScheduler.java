@@ -58,10 +58,15 @@ public class TaskScheduler
         scheduleNext();
     }
 
+    public void stop()
+    {
+        m_Executor.shutdownNow();
+    }
+
     private void scheduleNext()
     {
         long delay = computeNextDelay();
-        m_Executor.schedule(runTaskAndReschedule(), delay, TimeUnit.SECONDS);
+        m_Executor.schedule(runTaskAndReschedule(), delay, TimeUnit.MILLISECONDS);
     }
 
     private Runnable runTaskAndReschedule()
@@ -74,7 +79,7 @@ public class TaskScheduler
 
     private long computeNextDelay()
     {
-        return LocalDateTime.now().until(m_NextTimeSupplier.get(), ChronoUnit.SECONDS);
+        return LocalDateTime.now().until(m_NextTimeSupplier.get(), ChronoUnit.MILLIS);
     }
 
     /**
