@@ -87,13 +87,9 @@ public final class JobConfigurationVerifier
 
         checkValidTransforms(config);
 
-        if (config.getTimeout() != null && config.getTimeout() < 0)
-        {
-            throw new JobConfigurationException(
-                    Messages.getMessage(Messages.JOB_CONFIG_NEGATIVE_FIELD_VALUE,
-                            "timeout", config.getTimeout()),
-                    ErrorCodes.INVALID_VALUE);
-        }
+        checkValueNotNegative("timeout", config.getTimeout());
+        checkValueNotNegative("renormalizationWindow", config.getRenormalizationWindow());
+        checkValueNotNegative("resultsRetentionDays", config.getResultsRetentionDays());
 
         if (config.getId() != null && config.getId().isEmpty() == false)
         {
@@ -262,6 +258,17 @@ public final class JobConfigurationVerifier
                         Messages.getMessage(Messages.JOB_CONFIG_ID_CONTAINS_CONTROL_CHARS),
                         ErrorCodes.PROHIBITIED_CHARACTER_IN_JOB_ID);
             }
+        }
+    }
+
+    private static void checkValueNotNegative(String name, Long value)
+            throws JobConfigurationException
+    {
+        if (value != null && value < 0)
+        {
+            throw new JobConfigurationException(
+                    Messages.getMessage(Messages.JOB_CONFIG_NEGATIVE_FIELD_VALUE, name, value),
+                    ErrorCodes.INVALID_VALUE);
         }
     }
 }

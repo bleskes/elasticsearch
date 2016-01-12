@@ -363,6 +363,36 @@ public class JobConfigurationVerifierTest
         JobConfigurationVerifier.verify(config);
     }
 
+    @Test
+    public void testVerify_GivenNegativeRenormalizationWindow() throws JobConfigurationException
+    {
+        m_ExpectedException.expect(JobConfigurationException.class);
+        m_ExpectedException.expectMessage(
+                "renormalizationWindow cannot be < 0. Value = -1");
+        m_ExpectedException.expect(ErrorCodeMatcher.hasErrorCode(
+                ErrorCodes.INVALID_VALUE));
+
+        JobConfiguration jobConfig = buildJobConfigurationNoTransforms();
+        jobConfig.setRenormalizationWindow(-1L);
+
+        JobConfigurationVerifier.verify(jobConfig);
+    }
+
+    @Test
+    public void testVerify_GivenNegativeResultsRetentionDays() throws JobConfigurationException
+    {
+        m_ExpectedException.expect(JobConfigurationException.class);
+        m_ExpectedException.expectMessage(
+                "resultsRetentionDays cannot be < 0. Value = -1");
+        m_ExpectedException.expect(ErrorCodeMatcher.hasErrorCode(
+                ErrorCodes.INVALID_VALUE));
+
+        JobConfiguration jobConfig = buildJobConfigurationNoTransforms();
+        jobConfig.setResultsRetentionDays(-1L);
+
+        JobConfigurationVerifier.verify(jobConfig);
+    }
+
     private JobConfiguration buildJobConfigurationNoTransforms()
     {
         JobConfiguration jc = new JobConfiguration();
