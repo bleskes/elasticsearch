@@ -38,13 +38,13 @@ import java.util.function.Supplier;
 import org.apache.log4j.Logger;
 
 import com.fasterxml.jackson.core.JsonParseException;
-import com.prelert.job.DataCounts;
 import com.prelert.job.JobDetails;
 import com.prelert.job.SchedulerConfig;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.data.extraction.DataExtractor;
 import com.prelert.job.exceptions.JobInUseException;
 import com.prelert.job.exceptions.TooManyJobsException;
+import com.prelert.job.process.autodetect.JobLogger;
 import com.prelert.job.process.exceptions.MalformedJsonException;
 import com.prelert.job.process.exceptions.MissingFieldException;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
@@ -56,7 +56,6 @@ import com.prelert.utils.scheduler.TaskScheduler;
 
 public class JobScheduler
 {
-    private static final Logger LOGGER = Logger.getLogger(JobScheduler.class);
     private static final int MILLIS_IN_SECOND = 1000;
     private static final DataLoadParams DATA_LOAD_PARAMS =
             new DataLoadParams(false, new TimeRange(null, null));
@@ -66,6 +65,7 @@ public class JobScheduler
     private final DataProcessor m_DataProcessor;
     private long m_BucketSpanMs;
     private long m_LastBucketEndMs;
+    private Logger m_Logger;
     private TaskScheduler m_Scheduler;
 
     public JobScheduler(String jobId, long bucketSpan, DataExtractor dataExtractor,
@@ -79,6 +79,7 @@ public class JobScheduler
 
     public void start(JobDetails job)
     {
+        m_Logger = JobLogger.create(m_JobId);
         updateLastBucketEndFromLatestRecordTimestamp(job);
         runLookback(job.getSchedulerConfig());
         if (job.getSchedulerConfig().getEndTime() == null)
@@ -103,10 +104,17 @@ public class JobScheduler
         {
             m_Scheduler.stop();
         }
+        if (m_Logger != null)
+        {
+            m_Logger.info("Scheduler has stopped");
+            JobLogger.close(m_Logger);
+            m_Logger = null;
+        }
     }
 
     private void runLookback(SchedulerConfig schedulerConfig)
     {
+        m_Logger.info("Starting lookback");
         long startEpochMs = 0;
         if (m_LastBucketEndMs > 0)
         {
@@ -122,6 +130,7 @@ public class JobScheduler
 
         extractAndProcessData(String.valueOf(startEpochMs),
                 String.valueOf(toBucketStartEpochMs(endTime)));
+        m_Logger.info("Lookback has finished");
     }
 
     private long toBucketStartEpochMs(Date date)
@@ -141,7 +150,7 @@ public class JobScheduler
             return;
         }
 
-        m_DataExtractor.newSearch(start, end);
+        m_DataExtractor.newSearch(start, end, m_Logger);
         while(m_DataExtractor.hasNext())
         {
             Optional<InputStream> nextDataStream = m_DataExtractor.next();
@@ -161,22 +170,21 @@ public class JobScheduler
     {
         try
         {
-            DataCounts dataCounts = m_DataProcessor.submitDataLoadJob(m_JobId, stream,
-                    DATA_LOAD_PARAMS);
-            LOGGER.info("Submitted " + dataCounts.getInputBytes() + " bytes");
+            m_DataProcessor.submitDataLoadJob(m_JobId, stream, DATA_LOAD_PARAMS);
             return true;
         } catch (JsonParseException | UnknownJobException | NativeProcessRunException
                 | MissingFieldException | JobInUseException
                 | HighProportionOfBadTimestampsException | OutOfOrderRecordsException
                 | TooManyJobsException | MalformedJsonException e)
         {
-            LOGGER.error("An error has occurred while submitting data to job '" + m_JobId + "'", e);
+            m_Logger.error("An error has occurred while submitting data to job '" + m_JobId + "'", e);
             return false;
         }
     }
 
     private void scheduleRealTime()
     {
+        m_Logger.info("Entering real-time mode");
         m_Scheduler = new TaskScheduler(createNextTask(), calculateNextTime());
         m_Scheduler.start();
     }

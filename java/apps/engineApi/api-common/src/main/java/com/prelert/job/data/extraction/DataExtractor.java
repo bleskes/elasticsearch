@@ -31,7 +31,9 @@ import java.io.InputStream;
 import java.util.Iterator;
 import java.util.Optional;
 
+import org.apache.log4j.Logger;
+
 public interface DataExtractor extends Iterator<Optional<InputStream>>
 {
-    void newSearch(String start, String end);
+    void newSearch(String start, String end, Logger logger);
 }

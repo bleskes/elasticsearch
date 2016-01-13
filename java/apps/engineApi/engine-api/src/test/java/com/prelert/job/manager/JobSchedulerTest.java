@@ -45,6 +45,7 @@ import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.apache.log4j.Logger;
 import org.junit.Test;
 
 import com.fasterxml.jackson.core.JsonParseException;
@@ -259,7 +260,7 @@ public class JobSchedulerTest
         }
 
         @Override
-        public void newSearch(String start, String end)
+        public void newSearch(String start, String end, Logger logger)
         {
             if (m_SearchCount == m_BatchesPerSearch.size() - 1)
             {

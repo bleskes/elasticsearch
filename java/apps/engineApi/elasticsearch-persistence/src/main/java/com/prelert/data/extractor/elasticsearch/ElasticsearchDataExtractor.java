@@ -45,8 +45,6 @@ import com.prelert.job.data.extraction.DataExtractor;
 
 public class ElasticsearchDataExtractor implements DataExtractor
 {
-    private static final Logger LOGGER = Logger.getLogger(ElasticsearchDataExtractor.class);
-
     /**
      * The search body contains sorting based on the time field
      * and a query. The query is composed by a bool query with
@@ -108,6 +106,7 @@ public class ElasticsearchDataExtractor implements DataExtractor
     private boolean m_IsScrollComplete;
     private String m_StartEpochMs;
     private String m_EndEpochMs;
+    private Logger m_Logger;
 
     ElasticsearchDataExtractor(HttpGetRequester httpGetRequester, String baseUrl,
             List<String> indices, List<String> types, String search, String timeField)
@@ -127,15 +126,16 @@ public class ElasticsearchDataExtractor implements DataExtractor
                 search, timeField);
     }
 
-    public void newSearch(String startEpochMs, String endEpochMs)
+    public void newSearch(String startEpochMs, String endEpochMs, Logger logger)
     {
-        LOGGER.info("Requesting data from '" + m_BaseUrl + "' within [" + startEpochMs + ", "
-                + endEpochMs + ")");
-
         m_ScrollId = null;
         m_IsScrollComplete = false;
         m_StartEpochMs = startEpochMs;
         m_EndEpochMs = endEpochMs;
+        m_Logger = logger;
+
+        m_Logger.info("Requesting data from '" + m_BaseUrl + "' within [" + startEpochMs + ", "
+                + endEpochMs + ")");
     }
 
     @Override
@@ -157,7 +157,7 @@ public class ElasticsearchDataExtractor implements DataExtractor
         }
         catch (IOException e)
         {
-            LOGGER.error("An error occurred during requesting data from: " + m_BaseUrl, e);
+            m_Logger.error("An error occurred during requesting data from: " + m_BaseUrl, e);
             m_IsScrollComplete = true;
         }
         return Optional.empty();
@@ -175,7 +175,7 @@ public class ElasticsearchDataExtractor implements DataExtractor
         HttpGetResponse response = m_HttpGetRequester.get(url, createSearchBody());
         if (response.getResponseCode() != OK_STATUS)
         {
-            LOGGER.error("Request '" + url + "' failed with status code: "
+            m_Logger.error("Request '" + url + "' failed with status code: "
                     + response.getResponseCode() + ". Response was:\n" + response.getResponseAsString());
             return null;
         }
@@ -184,7 +184,7 @@ public class ElasticsearchDataExtractor implements DataExtractor
         Matcher matcher = peekAndMatchInStream(pushbackStream, SCROLL_ID_PATTERN);
         if (!matcher.find())
         {
-            LOGGER.error("Field '_scroll_id' was expected but not found in response:\n"
+            m_Logger.error("Field '_scroll_id' was expected but not found in response:\n"
                     + response.getResponseAsString());
             return null;
         }
@@ -239,7 +239,7 @@ public class ElasticsearchDataExtractor implements DataExtractor
         {
             return new PushbackInputStream(response.getStream(), PUSHBACK_BUFFER_BYTES);
         }
-        LOGGER.error("Request '"  + urlBuilder.toString() + "' with scroll id '" + m_ScrollId
+        m_Logger.error("Request '"  + urlBuilder.toString() + "' with scroll id '" + m_ScrollId
                 + "' failed with status code: " + response.getResponseCode() + ". Response was:\n"
                 + response.getResponseAsString());
         return null;

@@ -43,7 +43,11 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
+import org.apache.log4j.Logger;
+import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 
 public class ElasticsearchDataExtractorTest
 {
@@ -53,7 +57,15 @@ public class ElasticsearchDataExtractorTest
     private static final String SEARCH = "\"match_all\": {}";
     private static final String TIME_FIELD = "time";
 
+    @Mock private Logger m_Logger;
+
     private ElasticsearchDataExtractor m_Extractor;
+
+    @Before
+    public void setUp()
+    {
+        MockitoAnnotations.initMocks(this);
+    }
 
     @Test
     public void testDataExtraction() throws IOException
@@ -128,7 +140,7 @@ public class ElasticsearchDataExtractorTest
         MockHttpGetRequester requester = new MockHttpGetRequester(responses);
         createExtractor(requester);
 
-        m_Extractor.newSearch("1400000000", "1500000000");
+        m_Extractor.newSearch("1400000000", "1500000000", m_Logger);
 
         assertTrue(m_Extractor.hasNext());
         assertEquals(initialResponse, streamToString(m_Extractor.next().get()));
@@ -186,7 +198,7 @@ public class ElasticsearchDataExtractorTest
         MockHttpGetRequester requester = new MockHttpGetRequester(responses);
         createExtractor(requester);
 
-        m_Extractor.newSearch("1400000000", "1500000000");
+        m_Extractor.newSearch("1400000000", "1500000000", m_Logger);
 
         assertTrue(m_Extractor.hasNext());
         assertFalse(m_Extractor.next().isPresent());
@@ -203,7 +215,7 @@ public class ElasticsearchDataExtractorTest
         MockHttpGetRequester requester = new MockHttpGetRequester(responses);
         createExtractor(requester);
 
-        m_Extractor.newSearch("1400000000", "1500000000");
+        m_Extractor.newSearch("1400000000", "1500000000", m_Logger);
 
         assertTrue(m_Extractor.hasNext());
         assertFalse(m_Extractor.next().isPresent());
@@ -223,7 +235,7 @@ public class ElasticsearchDataExtractorTest
         MockHttpGetRequester requester = new MockHttpGetRequester(responses);
         createExtractor(requester);
 
-        m_Extractor.newSearch("1400000000", "1500000000");
+        m_Extractor.newSearch("1400000000", "1500000000", m_Logger);
 
         assertTrue(m_Extractor.hasNext());
         assertEquals(initialResponse, streamToString(m_Extractor.next().get()));
@@ -241,7 +253,7 @@ public class ElasticsearchDataExtractorTest
                 toStream(initialResponse), 200));
         MockHttpGetRequester requester = new MockHttpGetRequester(responses);
         createExtractor(requester);
-        m_Extractor.newSearch("1400000000", "1500000000");
+        m_Extractor.newSearch("1400000000", "1500000000", m_Logger);
         assertTrue(m_Extractor.hasNext());
         m_Extractor.next();
         assertFalse(m_Extractor.hasNext());
