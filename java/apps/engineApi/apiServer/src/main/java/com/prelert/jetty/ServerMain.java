@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -55,138 +55,142 @@ import com.prelert.job.messages.Messages;
  */
 public class ServerMain
 {
-	private static final Logger LOGGER = Logger.getLogger(ServerMain.class);
-	/**
-	 * The web service resources
-	 */
-	public static final String RESOURCE_PACKAGE = "com.prelert.rs.resources";
-	public static final String APPLICATION_CLASS = "com.prelert.rs.resources.PrelertWebApp";
+    private static final Logger LOGGER = Logger.getLogger(ServerMain.class);
+    /**
+     * The web service resources
+     */
+    public static final String RESOURCE_PACKAGE = "com.prelert.rs.resources";
+    public static final String APPLICATION_CLASS = "com.prelert.rs.resources.PrelertWebApp";
 
-	/**
-	 * Base URI, all web service endpoints should match this path
-	 */
-	public static final String BASE_PATH = "/engine/v2/*";
+    /**
+     * Base URI, all web service endpoints should match this path
+     */
+    public static final String BASE_PATH = "/engine/v2/*";
 
-	/**
-	 * The default port the server will run on.
-	 * Override the default value by setting the {@value #JETTY_PORT_PROPERTY}
-	 * system property.
-	 */
-	public static final int JETTY_PORT = 8080;
+    /**
+     * The default port the server will run on.
+     * Override the default value by setting the {@value #JETTY_PORT_PROPERTY}
+     * system property.
+     */
+    public static final int JETTY_PORT = 8080;
 
-	private static final String JETTY_PORT_PROPERTY = "jetty.port";
-	private static final String JETTY_HOME_PROPERTY = "jetty.home";
+    private static final String JETTY_PORT_PROPERTY = "jetty.port";
+    private static final String JETTY_HOME_PROPERTY = "jetty.home";
 
-	/**
-	 * The server - held as a static member variable to allow close() to
-	 * access it
-	 */
-	private static Server ms_Server;
-
-
-	private ServerMain()
-	{
-	}
-
-	public static void main(String[] args)
-	throws Exception
-	{
-		int jettyPort = JETTY_PORT;
-		try
-		{
-			String portProp = System.getProperty(JETTY_PORT_PROPERTY);
-			if (portProp == null)
-			{
-				LOGGER.info("Using default port " + JETTY_PORT);
-			}
-			else
-			{
-				jettyPort = Integer.parseInt(portProp);
-				LOGGER.info("Using port " + jettyPort);
-			}
-		}
-		catch (NumberFormatException e)
-		{
-			LOGGER.warn(String.format("Error parsing %s property value '%s' "
-					+ "cannot not be parsed as an integer",
-					JETTY_PORT_PROPERTY, System.getProperty(JETTY_PORT_PROPERTY)));
-
-			LOGGER.info("Using default port " + JETTY_PORT);
-		}
-
-		String jettyHome = System.getProperty(JETTY_HOME_PROPERTY);
-		if (jettyHome == null)
-		{
-			LOGGER.info("Using default " + JETTY_HOME_PROPERTY +
-							" of current directory");
-			jettyHome = ".";
-		}
-
-		// load the resources here so they are cached
-		Messages.load();
-
-		ms_Server = new Server(jettyPort);
-
-		// This serves the Kibana-based dashboard.
-		ResourceHandler dashboardHandler = new ResourceHandler();
-		dashboardHandler.setResourceBase(jettyHome + File.separator + "webapps");
-
-		// The true argument here lets us add more handlers to the running
-		// server
-		HandlerCollection handlerCollection = new HandlerCollection(true);
-		handlerCollection.setHandlers(new Handler[] { dashboardHandler });
-
-		ms_Server.setHandler(handlerCollection);
-
-		// We start the server before adding the API handler so that the static
-		// content is available immediately
-		ms_Server.start();
-
-		// This serves the Engine API
-		ServletContextHandler contextHandler = new ServletContextHandler();
-		contextHandler.setContextPath("/");
-		contextHandler.setErrorHandler(new ApiErrorHandler());
-
-		// Add cross origin accept filter, using wildcard '*' for origins
-		// and explicitly allowing GET,POST,DELETE,PUT and HEAD http methods.
-		CrossOriginFilter crossOrigin = new CrossOriginFilter();
-		FilterHolder filterHolder = new FilterHolder(crossOrigin);
-		filterHolder.setInitParameter("allowedMethods", "GET,POST,DELETE,PUT,HEAD");
-		filterHolder.setInitParameter("allowedOrigins", "*");
-		contextHandler.addFilter(filterHolder, "/*",
-				EnumSet.of(DispatcherType.REQUEST));
-
-		ServletHolder jerseyServlet = contextHandler.addServlet(
-				org.glassfish.jersey.servlet.ServletContainer.class,
-				BASE_PATH);
-		jerseyServlet.setInitOrder(1);
-		jerseyServlet.setAsyncSupported(true);
-
-		// Set the application class
-		jerseyServlet.setInitParameter(ServletProperties.JAXRS_APPLICATION_CLASS,
-				APPLICATION_CLASS);
-
-		// Add the context handler to the collection already being served by the
-		// running server
-		handlerCollection.addHandler(contextHandler);
-
-		// Block until the server stops (otherwise the whole JVM would shut down
-		// prematurely when main() exited)
-		ms_Server.join();
-	}
+    /**
+     * The server - held as a static member variable to allow close() to
+     * access it
+     */
+    private static Server ms_Server;
 
 
-	/**
-	 * Used to stop the Windows service.  (On Unix we just kill the
-	 * process.)
-	 */
-	public static void close(String[] args)
-	throws Exception
-	{
-		if (ms_Server != null)
-		{
-			ms_Server.stop();
-			ms_Server = null;
-		}
-	}
+    private ServerMain()
+    {
+    }
+
+    public static void main(String[] args)
+    throws Exception
+    {
+        int jettyPort = JETTY_PORT;
+        try
+        {
+            String portProp = System.getProperty(JETTY_PORT_PROPERTY);
+            if (portProp == null)
+            {
+                LOGGER.info("Using default port " + JETTY_PORT);
+            }
+            else
+            {
+                jettyPort = Integer.parseInt(portProp);
+                LOGGER.info("Using port " + jettyPort);
+            }
+        }
+        catch (NumberFormatException e)
+        {
+            LOGGER.warn(String.format("Error parsing %s property value '%s' "
+                    + "cannot not be parsed as an integer",
+                    JETTY_PORT_PROPERTY, System.getProperty(JETTY_PORT_PROPERTY)));
+
+            LOGGER.info("Using default port " + JETTY_PORT);
+        }
+
+        String jettyHome = System.getProperty(JETTY_HOME_PROPERTY);
+        if (jettyHome == null)
+        {
+            LOGGER.info("Using default " + JETTY_HOME_PROPERTY +
+                            " of current directory");
+            jettyHome = ".";
+        }
+
+        // load the resources here so they are cached
+        Messages.load();
+
+        ms_Server = new Server(jettyPort);
+
+        // This serves the Kibana-based dashboard.
+        ResourceHandler dashboardHandler = new ResourceHandler();
+        dashboardHandler.setResourceBase(jettyHome + File.separator + "webapps");
+
+        // The true argument here lets us add more handlers to the running
+        // server
+        HandlerCollection handlerCollection = new HandlerCollection(true);
+        handlerCollection.setHandlers(new Handler[] { dashboardHandler });
+
+        ms_Server.setHandler(handlerCollection);
+
+        // We start the server before adding the API handler so that the static
+        // content is available immediately
+        ms_Server.start();
+
+        // This serves the Engine API
+        ServletContextHandler contextHandler = new ServletContextHandler();
+        contextHandler.setContextPath("/");
+        contextHandler.setErrorHandler(new ApiErrorHandler());
+
+        // Add cross origin accept filter, using wildcard '*' for origins
+        // and explicitly allowing GET,POST,DELETE,PUT and HEAD http methods.
+        CrossOriginFilter crossOrigin = new CrossOriginFilter();
+        FilterHolder filterHolder = new FilterHolder(crossOrigin);
+        filterHolder.setInitParameter("allowedMethods", "GET,POST,DELETE,PUT,HEAD");
+        filterHolder.setInitParameter("allowedOrigins", "*");
+        contextHandler.addFilter(filterHolder, "/*",
+                EnumSet.of(DispatcherType.REQUEST));
+
+        ServletHolder jerseyServlet = contextHandler.addServlet(
+                org.glassfish.jersey.servlet.ServletContainer.class,
+                BASE_PATH);
+        jerseyServlet.setInitOrder(1);
+        jerseyServlet.setAsyncSupported(true);
+
+        // Set the application class
+        jerseyServlet.setInitParameter(ServletProperties.JAXRS_APPLICATION_CLASS,
+                APPLICATION_CLASS);
+
+        // Add the context handler to the collection already being served by the
+        // running server
+        handlerCollection.addHandler(contextHandler);
+        // Handlers added after server start have to be explicitly started.  For
+        // some reason we used to get away without doing this in Jetty 9.1, but
+        // it's essential in Jetty 9.3.
+        contextHandler.start();
+
+        // Block until the server stops (otherwise the whole JVM would shut down
+        // prematurely when main() exited)
+        ms_Server.join();
+    }
+
+
+    /**
+     * Used to stop the Windows service.  (On Unix we just kill the
+     * process.)
+     */
+    public static void close(String[] args)
+    throws Exception
+    {
+        if (ms_Server != null)
+        {
+            ms_Server.stop();
+            ms_Server = null;
+        }
+    }
 }
