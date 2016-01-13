@@ -43,6 +43,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 import org.apache.log4j.Logger;
@@ -71,14 +72,15 @@ public class JobSchedulerTest
     private JobScheduler m_JobScheduler;
 
     @Test
-    public void testStart_GivenLookbackOnlyAndSingleStream()
+    public void testStart_GivenLookbackOnlyAndSingleStream() throws InterruptedException,
+            ExecutionException
     {
         JobDetails job = newJobWithElasticScheduler(1400000000000L, 1400000001000L);
         MockDataExtractor dataExtractor = new MockDataExtractor(Arrays.asList(1));
         MockDataProcessor dataProcessor = new MockDataProcessor();
         m_JobScheduler = new JobScheduler(JOB_ID, BUCKET_SPAN, dataExtractor, dataProcessor);
 
-        m_JobScheduler.start(job);
+        m_JobScheduler.start(job).get();
         m_JobScheduler.stop();
 
         assertEquals(1, dataProcessor.getNumberOfStreams());
@@ -88,14 +90,15 @@ public class JobSchedulerTest
     }
 
     @Test
-    public void testStart_GivenLookbackOnlyAndMultipleStreams()
+    public void testStart_GivenLookbackOnlyAndMultipleStreams() throws InterruptedException,
+            ExecutionException
     {
         JobDetails job = newJobWithElasticScheduler(1400000000000L, 1400000001000L);
         MockDataExtractor dataExtractor = new MockDataExtractor(Arrays.asList(3));
         MockDataProcessor dataProcessor = new MockDataProcessor();
         m_JobScheduler = new JobScheduler(JOB_ID, BUCKET_SPAN, dataExtractor, dataProcessor);
 
-        m_JobScheduler.start(job);
+        m_JobScheduler.start(job).get();
         m_JobScheduler.stop();
 
         assertEquals(3, dataProcessor.getNumberOfStreams());
@@ -107,7 +110,8 @@ public class JobSchedulerTest
     }
 
     @Test
-    public void testStart_GivenLookbackAndRealtimeWithSingleStreams()
+    public void testStart_GivenLookbackAndRealtimeWithSingleStreams() throws InterruptedException,
+            ExecutionException
     {
         JobDetails job = newJobWithElasticScheduler(1400000000000L, null);
         MockDataExtractor dataExtractor = new MockDataExtractor(Arrays.asList(1, 1, 1));
@@ -118,7 +122,7 @@ public class JobSchedulerTest
         long bucketSpanMs = BUCKET_SPAN * 1000;
         long bucketEnd = (nowMs / bucketSpanMs) * bucketSpanMs;
 
-        m_JobScheduler.start(job);
+        m_JobScheduler.start(job).get();
 
         // Give time to scheduler to perform at least one real-time search
         try
@@ -132,24 +136,41 @@ public class JobSchedulerTest
         m_JobScheduler.stop();
 
         assertTrue(dataProcessor.getNumberOfStreams() > 1);
-        for (int i = 0; i < dataProcessor.getNumberOfStreams(); i++)
+
+        // To check the lookback end time we should be lenient as
+        // it is possible that between the moment we recorded now
+        // and the moment the lookback actually got executed,
+        // the current bucket end could have changed.
+        assertEquals("0-0", dataProcessor.getStream(0));
+        assertEquals("1400000000000", dataExtractor.getStart(0));
+        long lookbackEnd = Long.parseLong(dataExtractor.getEnd(0));
+        assertTrue(lookbackEnd >= bucketEnd);
+        assertTrue(lookbackEnd <= bucketEnd + bucketSpanMs);
+        bucketEnd = lookbackEnd + bucketSpanMs;
+
+        // The same is true for the first real-time search.
+        // It is possible that by the time the first real-time
+        // gets executed, we have skipped buckets and therefore
+        // we are processing two buckets together.
+        assertEquals("1-0", dataProcessor.getStream(1));
+        assertEquals(String.valueOf(lookbackEnd), dataExtractor.getStart(1));
+        long firstRtEnd = Long.parseLong(dataExtractor.getEnd(1));
+        assertTrue(firstRtEnd >= bucketEnd);
+        assertTrue(firstRtEnd <= bucketEnd + bucketSpanMs);
+        bucketEnd = firstRtEnd + bucketSpanMs;
+
+        // The rest of real-time searches (if any) should span over exactly one bucket
+        for (int i = 2; i < dataProcessor.getNumberOfStreams(); i++)
         {
             assertEquals("" + i + "-0", dataProcessor.getStream(i));
-            if (i == 0)
-            {
-                assertEquals("1400000000000", dataExtractor.getStart(i));
-            }
-            else
-            {
-                assertEquals(String.valueOf(bucketEnd - bucketSpanMs), dataExtractor.getStart(i));
-            }
+            assertEquals(String.valueOf(bucketEnd - bucketSpanMs), dataExtractor.getStart(i));
             assertEquals(String.valueOf(bucketEnd), dataExtractor.getEnd(i));
             bucketEnd += bucketSpanMs;
         }
     }
 
     @Test
-    public void testStart_GivenDataProcessorThrows()
+    public void testStart_GivenDataProcessorThrows() throws InterruptedException, ExecutionException
     {
         JobDetails job = newJobWithElasticScheduler(1400000000000L, 1400000001000L);
         MockDataExtractor dataExtractor = new MockDataExtractor(Arrays.asList(1, 1));
@@ -157,7 +178,7 @@ public class JobSchedulerTest
         dataProcessor.setShouldThrow(true);
         m_JobScheduler = new JobScheduler(JOB_ID, BUCKET_SPAN, dataExtractor, dataProcessor);
 
-        m_JobScheduler.start(job);
+        m_JobScheduler.start(job).get();
         m_JobScheduler.stop();
 
         assertEquals(0, dataProcessor.getNumberOfStreams());
@@ -174,7 +195,8 @@ public class JobSchedulerTest
     }
 
     @Test
-    public void testStart_GivenJobHasLatestRecordTimestamp()
+    public void testStart_GivenJobHasLatestRecordTimestamp() throws InterruptedException,
+            ExecutionException
     {
         JobDetails job = newJobWithElasticScheduler(1450000000000L, 1460000000000L);
         DataCounts dataCounts = new DataCounts();
@@ -185,7 +207,7 @@ public class JobSchedulerTest
         MockDataProcessor dataProcessor = new MockDataProcessor();
         m_JobScheduler = new JobScheduler(JOB_ID, BUCKET_SPAN, dataExtractor, dataProcessor);
 
-        m_JobScheduler.start(job);
+        m_JobScheduler.start(job).get();
         m_JobScheduler.stop();
 
         assertEquals(1, dataProcessor.getNumberOfStreams());
@@ -195,14 +217,15 @@ public class JobSchedulerTest
     }
 
     @Test
-    public void testStart_GivenLookbackStartTimeIsNull()
+    public void testStart_GivenLookbackStartTimeIsNull() throws InterruptedException,
+            ExecutionException
     {
         JobDetails job = newJobWithElasticScheduler(null, 1400000000000L);
         MockDataExtractor dataExtractor = new MockDataExtractor(Arrays.asList(1));
         MockDataProcessor dataProcessor = new MockDataProcessor();
         m_JobScheduler = new JobScheduler(JOB_ID, BUCKET_SPAN, dataExtractor, dataProcessor);
 
-        m_JobScheduler.start(job);
+        m_JobScheduler.start(job).get();
         m_JobScheduler.stop();
 
         assertEquals(1, dataProcessor.getNumberOfStreams());
