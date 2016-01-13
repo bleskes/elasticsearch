@@ -40,6 +40,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.log4j.Logger;
@@ -50,6 +51,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Preconditions;
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import com.prelert.job.DataCounts;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.JobDetails;
@@ -117,6 +120,9 @@ public class JobManager implements DataProcessor
     private static final String MAX_JOBS_FACTOR_NAME = "prelert.max.jobs.factor";
     private static final double DEFAULT_MAX_JOBS_FACTOR = 3.0;
 
+    private static final int LAST_DATA_TIME_CACHE_SIZE = 1000;
+    private static final int LAST_DATA_TIME_MIN_UPDATE_INTERVAL_MS = 1000;
+
     private final JobProvider m_JobProvider;
     private final ProcessManager m_ProcessManager;
     private final DataExtractorFactory m_DataExtractorFactory;
@@ -142,6 +148,15 @@ public class JobManager implements DataProcessor
     private boolean m_ArePartitionsAllowed = true;
 
     private final Map<String, JobScheduler> m_ScheduledJobs;
+
+    /**
+     * A cache that stores the epoch in seconds of the last
+     * time data was sent to a job. The cache is used to avoid
+     * updating a job with the same last data time multiple times,
+     * which in turn avoids any version conflict errors from
+     * the storage.
+     */
+    private final Cache<String, Long> m_LastDataTimePerJobCache;
 
     /**
      * constraints in the license key.
@@ -172,6 +187,9 @@ public class JobManager implements DataProcessor
         m_ObjectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
 
         m_ScheduledJobs = new HashMap<>();
+        m_LastDataTimePerJobCache = CacheBuilder.newBuilder()
+                .maximumSize(LAST_DATA_TIME_CACHE_SIZE)
+                .build();
 
         // This requires the process manager and Elasticsearch connection in
         // order to work, but failure is considered non-fatal
@@ -603,20 +621,40 @@ public class JobManager implements DataProcessor
 
     /**
      * Set time the job last received data.
-     * Updates the database document
+     * Updates the database document with the last time data was received
+     * only if the time is at least 2 seconds later than the previous time.
+     * The gap is required in order to avoid too frequent updates that can
+     * cause update conflicts to some storages.
      *
      * @param jobId
      * @param time
      * @return
      * @throws UnknownJobException
      */
-    private boolean updateLastDataTime(String jobId, Date time)
-    throws UnknownJobException
+    private void updateLastDataTime(String jobId, Date time) throws UnknownJobException
     {
+        long lastDataTimeEpochMs = retrieveCachedLastDataTimeEpochMs(jobId);
+        long newTimeEpochMs = time.getTime();
+        if (newTimeEpochMs - lastDataTimeEpochMs >= LAST_DATA_TIME_MIN_UPDATE_INTERVAL_MS)
+        {
+            m_LastDataTimePerJobCache.put(jobId, newTimeEpochMs);
+            Map<String, Object> update = new HashMap<>();
+            update.put(JobDetails.LAST_DATA_TIME, time);
+            m_JobProvider.updateJob(jobId, update);
+        }
+    }
 
-        Map<String, Object> update = new HashMap<>();
-        update.put(JobDetails.LAST_DATA_TIME, time);
-        return m_JobProvider.updateJob(jobId, update);
+    private long retrieveCachedLastDataTimeEpochMs(String jobId)
+    {
+        try
+        {
+            return m_LastDataTimePerJobCache.get(jobId, () -> 0L);
+        }
+        catch (ExecutionException e)
+        {
+            LOGGER.debug("Failed to load cached last data time for job: " + jobId, e);
+            return 0;
+        }
     }
 
     /**
