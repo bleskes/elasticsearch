@@ -25,6 +25,7 @@ import org.elasticsearch.action.ActionResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.client.FilterClient;
 import org.elasticsearch.common.inject.Inject;
+import org.elasticsearch.common.util.concurrent.ThreadContext;
 
 /**
  *
@@ -41,8 +42,10 @@ public class SecuredClient extends FilterClient {
 
     @Override
     protected <Request extends ActionRequest<Request>, Response extends ActionResponse, RequestBuilder extends ActionRequestBuilder<Request, Response, RequestBuilder>> void doExecute(
-            Action<Request, Response, RequestBuilder> action, Request request, ActionListener<Response> listener) {
-        this.shieldIntegration.bindInternalMarvelUser(request);
-        super.doExecute(action, request, listener);
+                Action<Request, Response, RequestBuilder> action, Request request, ActionListener<Response> listener) {
+        try (ThreadContext.StoredContext ctx = threadPool().getThreadContext().stashContext()) {
+            this.shieldIntegration.bindInternalMarvelUser();
+            super.doExecute(action, request, listener);
+        }
     }
 }

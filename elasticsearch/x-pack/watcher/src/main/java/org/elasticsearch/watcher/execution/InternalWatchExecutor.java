@@ -26,6 +26,9 @@ import org.elasticsearch.watcher.WatcherPlugin;
 import org.elasticsearch.watcher.support.ThreadPoolSettingsBuilder;
 
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.stream.Stream;
 
 /**
  *
@@ -58,6 +61,11 @@ public class InternalWatchExecutor implements WatchExecutor {
     @Override
     public BlockingQueue<Runnable> queue() {
         return executor().getQueue();
+    }
+
+    @Override
+    public Stream<Runnable> tasks() {
+        return executor().getTasks();
     }
 
     @Override

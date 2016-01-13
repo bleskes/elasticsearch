@@ -28,6 +28,7 @@ import org.elasticsearch.shield.authc.support.SecuredString;
 import org.elasticsearch.test.ShieldIntegTestCase;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -147,17 +148,17 @@ public class FieldLevelSecurityRandomTests extends ShieldIntegTestCase {
 
         for (String allowedField : allowedFields) {
             logger.info("Checking allowed field [{}]", allowedField);
-            SearchResponse response = client().prepareSearch("test")
+            SearchResponse response = client().filterWithHeader(Collections.singletonMap(BASIC_AUTH_HEADER, basicAuthHeaderValue("user1", USERS_PASSWD)))
+                    .prepareSearch("test")
                     .setQuery(matchQuery(allowedField, "value"))
-                    .putHeader(BASIC_AUTH_HEADER, basicAuthHeaderValue("user1", USERS_PASSWD))
                     .get();
             assertHitCount(response, 1);
         }
         for (String disallowedField : disAllowedFields) {
             logger.info("Checking disallowed field [{}]", disallowedField);
-            SearchResponse response = client().prepareSearch("test")
+            SearchResponse response = client().filterWithHeader(Collections.singletonMap(BASIC_AUTH_HEADER, basicAuthHeaderValue("user1", USERS_PASSWD)))
+                    .prepareSearch("test")
                     .setQuery(matchQuery(disallowedField, "value"))
-                    .putHeader(BASIC_AUTH_HEADER, basicAuthHeaderValue("user1", USERS_PASSWD))
                     .get();
             assertHitCount(response, 0);
         }
@@ -177,8 +178,8 @@ public class FieldLevelSecurityRandomTests extends ShieldIntegTestCase {
         }
         indexRandom(true, requests);
 
-        SearchResponse actual = client().prepareSearch("test")
-                .putHeader(BASIC_AUTH_HEADER, basicAuthHeaderValue("user2", USERS_PASSWD))
+        SearchResponse actual = client().filterWithHeader(Collections.singletonMap(BASIC_AUTH_HEADER, basicAuthHeaderValue("user2", USERS_PASSWD)))
+                .prepareSearch("test")
                 .addSort("_uid", SortOrder.ASC)
                 .setQuery(QueryBuilders.boolQuery()
                                 .should(QueryBuilders.termQuery("field1", "value"))
@@ -198,8 +199,8 @@ public class FieldLevelSecurityRandomTests extends ShieldIntegTestCase {
             assertThat(actual.getHits().getAt(i).getId(), equalTo(expected.getHits().getAt(i).getId()));
         }
 
-        actual = client().prepareSearch("test")
-                .putHeader(BASIC_AUTH_HEADER, basicAuthHeaderValue("user3", USERS_PASSWD))
+        actual = client().filterWithHeader(Collections.singletonMap(BASIC_AUTH_HEADER, basicAuthHeaderValue("user3", USERS_PASSWD)))
+                .prepareSearch("test")
                 .addSort("_uid", SortOrder.ASC)
                 .setQuery(QueryBuilders.boolQuery()
                                 .should(QueryBuilders.termQuery("field1", "value"))
@@ -219,8 +220,8 @@ public class FieldLevelSecurityRandomTests extends ShieldIntegTestCase {
             assertThat(actual.getHits().getAt(i).getId(), equalTo(expected.getHits().getAt(i).getId()));
         }
 
-        actual = client().prepareSearch("test")
-                .putHeader(BASIC_AUTH_HEADER, basicAuthHeaderValue("user4", USERS_PASSWD))
+        actual = client().filterWithHeader(Collections.singletonMap(BASIC_AUTH_HEADER, basicAuthHeaderValue("user4", USERS_PASSWD)))
+                .prepareSearch("test")
                 .addSort("_uid", SortOrder.ASC)
                 .setQuery(QueryBuilders.boolQuery()
                                 .should(QueryBuilders.termQuery("field1", "value"))

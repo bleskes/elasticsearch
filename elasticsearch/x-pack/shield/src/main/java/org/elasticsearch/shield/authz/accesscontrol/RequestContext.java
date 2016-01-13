@@ -17,6 +17,7 @@
 
 package org.elasticsearch.shield.authz.accesscontrol;
 
+import org.elasticsearch.common.util.concurrent.ThreadContext;
 import org.elasticsearch.transport.TransportRequest;
 
 import java.util.Objects;
@@ -51,10 +52,12 @@ public final class RequestContext {
         current.remove();
     }
 
+    private final ThreadContext threadContext;
     private final TransportRequest request;
 
-    public RequestContext(TransportRequest request) {
+    public RequestContext(TransportRequest request, ThreadContext threadContext) {
         this.request = Objects.requireNonNull(request);
+        this.threadContext = Objects.requireNonNull(threadContext);
     }
 
     /**
@@ -62,5 +65,9 @@ public final class RequestContext {
      */
     public TransportRequest getRequest() {
         return request;
+    }
+
+    public ThreadContext getThreadContext() {
+        return threadContext;
     }
 }

@@ -18,6 +18,8 @@
 package org.elasticsearch.shield.transport;
 
 import org.elasticsearch.ElasticsearchSecurityException;
+import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.util.concurrent.ThreadContext;
 import org.elasticsearch.shield.User;
 import org.elasticsearch.shield.action.ShieldActionMapper;
 import org.elasticsearch.shield.authc.AuthenticationService;
@@ -52,7 +54,7 @@ public class ServerTransportFilterTests extends ESTestCase {
         authzService = mock(AuthorizationService.class);
         channel = mock(NettyTransportChannel.class);
         when(channel.getProfileName()).thenReturn(NettyTransport.DEFAULT_PROFILE);
-        filter = new ServerTransportFilter.NodeProfile(authcService, authzService, new ShieldActionMapper(), false);
+        filter = new ServerTransportFilter.NodeProfile(authcService, authzService, new ShieldActionMapper(), new ThreadContext(Settings.EMPTY), false);
     }
 
     public void testInbound() throws Exception {

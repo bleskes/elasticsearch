@@ -105,7 +105,7 @@ public class ClearRealmCacheRequest extends BaseNodesRequest<ClearRealmCacheRequ
         }
 
         Node(ClearRealmCacheRequest request, String nodeId) {
-            super(request, nodeId);
+            super(nodeId);
             this.realms = request.realms;
             this.usernames = request.usernames;
         }

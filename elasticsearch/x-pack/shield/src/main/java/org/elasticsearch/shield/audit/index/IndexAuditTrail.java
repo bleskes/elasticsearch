@@ -18,6 +18,11 @@
 package org.elasticsearch.shield.audit.index;
 
 import org.elasticsearch.ElasticsearchException;
+import org.elasticsearch.action.Action;
+import org.elasticsearch.action.ActionListener;
+import org.elasticsearch.action.ActionRequest;
+import org.elasticsearch.action.ActionRequestBuilder;
+import org.elasticsearch.action.ActionResponse;
 import org.elasticsearch.action.admin.cluster.state.ClusterStateResponse;
 import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsRequest;
 import org.elasticsearch.action.admin.indices.mapping.put.PutMappingRequest;
@@ -29,6 +34,7 @@ import org.elasticsearch.action.bulk.BulkRequest;
 import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.client.Client;
+import org.elasticsearch.client.FilterClient;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.cluster.ClusterChangedEvent;
 import org.elasticsearch.cluster.ClusterService;
@@ -49,6 +55,7 @@ import org.elasticsearch.common.transport.TransportAddress;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.util.concurrent.AbstractRunnable;
 import org.elasticsearch.common.util.concurrent.EsExecutors;
+import org.elasticsearch.common.util.concurrent.ThreadContext;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentBuilderString;
 import org.elasticsearch.common.xcontent.XContentFactory;
@@ -537,7 +544,7 @@ public class IndexAuditTrail extends AbstractComponent implements AuditTrail, Cl
 
         Message msg = new Message().start();
         common("transport", type, msg.builder);
-        originAttributes(message, msg.builder, transport);
+        originAttributes(message, msg.builder, transport, threadPool.getThreadContext());
 
         if (action != null) {
             msg.builder.field(Field.ACTION, action);
@@ -569,7 +576,7 @@ public class IndexAuditTrail extends AbstractComponent implements AuditTrail, Cl
 
         Message msg = new Message().start();
         common("transport", type, msg.builder);
-        originAttributes(message, msg.builder, transport);
+        originAttributes(message, msg.builder, transport, threadPool.getThreadContext());
 
         if (action != null) {
             msg.builder.field(Field.ACTION, action);
@@ -643,10 +650,10 @@ public class IndexAuditTrail extends AbstractComponent implements AuditTrail, Cl
         return builder;
     }
 
-    private static XContentBuilder originAttributes(TransportMessage message, XContentBuilder builder, Transport transport) throws IOException {
+    private static XContentBuilder originAttributes(TransportMessage message, XContentBuilder builder, Transport transport, ThreadContext threadContext) throws IOException {
 
         // first checking if the message originated in a rest call
-        InetSocketAddress restAddress = RemoteHostHeader.restRemoteAddress(message);
+        InetSocketAddress restAddress = RemoteHostHeader.restRemoteAddress(threadContext);
         if (restAddress != null) {
             builder.field(Field.ORIGIN_TYPE, "rest");
             builder.field(Field.ORIGIN_ADDRESS, NetworkAddress.formatAddress(restAddress.getAddress()));
@@ -689,7 +696,20 @@ public class IndexAuditTrail extends AbstractComponent implements AuditTrail, Cl
     private void initializeClient() {
         if (indexToRemoteCluster == false) {
             // in the absence of client settings for remote indexing, fall back to the client that was passed in.
-            this.client = clientProvider.get();
+            Client unfiltered = clientProvider.get();
+            this.client = new FilterClient(unfiltered) {
+                @Override
+                protected <Request extends ActionRequest<Request>, Response extends ActionResponse, RequestBuilder extends ActionRequestBuilder<Request, Response, RequestBuilder>> void doExecute(Action<Request, Response, RequestBuilder> action, Request request, ActionListener<Response> listener) {
+                    try (ThreadContext.StoredContext ctx = threadPool().getThreadContext().stashContext()) {
+                        try {
+                            authenticationService.attachUserHeaderIfMissing(auditUser.user());
+                        } catch (IOException e) {
+                            throw new ElasticsearchException("failed to attach audit user to request", e);
+                        }
+                        super.doExecute(action, request, listener);
+                    }
+                }
+            };
         } else {
             Settings clientSettings = settings.getByPrefix("shield.audit.index.client.");
             String[] hosts = clientSettings.getAsArray("hosts");
@@ -775,7 +795,7 @@ public class IndexAuditTrail extends AbstractComponent implements AuditTrail, Cl
             assert !Thread.currentThread().isInterrupted() : "current thread has been interrupted before putting index template!!!";
 
             if (!indexToRemoteCluster) {
-                authenticationService.attachUserHeaderIfMissing(request, auditUser.user());
+                authenticationService.attachUserHeaderIfMissing(auditUser.user());
             }
             PutIndexTemplateResponse response = client.admin().indices().putTemplate(request).actionGet();
             if (!response.isAcknowledged()) {
@@ -792,18 +812,10 @@ public class IndexAuditTrail extends AbstractComponent implements AuditTrail, Cl
             }
             String index = resolve(INDEX_NAME_PREFIX, dateTime, rollover);
             IndicesExistsRequest existsRequest = new IndicesExistsRequest(index);
-            // TODO need to clean this up so we don't forget to attach the header...
-            if (!indexToRemoteCluster) {
-                authenticationService.attachUserHeaderIfMissing(existsRequest, auditUser.user());
-            }
 
             if (client.admin().indices().exists(existsRequest).get().isExists()) {
                 logger.debug("index [{}] exists so we need to update mappings", index);
                 PutMappingRequest putMappingRequest = new PutMappingRequest(index).type(DOC_TYPE).source(request.mappings().get(DOC_TYPE));
-                if (!indexToRemoteCluster) {
-                    authenticationService.attachUserHeaderIfMissing(putMappingRequest, auditUser.user());
-                }
-
                 PutMappingResponse putMappingResponse = client.admin().indices().putMapping(putMappingRequest).get();
                 if (!putMappingResponse.isAcknowledged()) {
                     throw new IllegalStateException("failed to put mappings for audit logging index [" + index + "]");
@@ -827,15 +839,7 @@ public class IndexAuditTrail extends AbstractComponent implements AuditTrail, Cl
 
         bulkProcessor = BulkProcessor.builder(client, new BulkProcessor.Listener() {
             @Override
-            public void beforeBulk(long executionId, BulkRequest request) {
-                try {
-                    if (!indexToRemoteCluster) {
-                        authenticationService.attachUserHeaderIfMissing(request, auditUser.user());
-                    }
-                } catch (IOException e) {
-                    throw new ElasticsearchException("failed to attach user header", e);
-                }
-            }
+            public void beforeBulk(long executionId, BulkRequest request) {}
 
             @Override
             public void afterBulk(long executionId, BulkRequest request, BulkResponse response) {
@@ -907,9 +911,6 @@ public class IndexAuditTrail extends AbstractComponent implements AuditTrail, Cl
                     IndexRequest indexRequest = client.prepareIndex()
                             .setIndex(resolve(INDEX_NAME_PREFIX, message.timestamp, rollover))
                             .setType(DOC_TYPE).setSource(message.builder).request();
-                    if (!indexToRemoteCluster) {
-                        authenticationService.attachUserHeaderIfMissing(indexRequest, auditUser.user());
-                    }
                     bulkProcessor.add(indexRequest);
                 } catch (InterruptedException e) {
                     logger.debug("index audit queue consumer interrupted", e);
