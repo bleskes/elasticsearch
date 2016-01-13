@@ -28,25 +28,18 @@
 package com.prelert.job;
 
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.util.Map;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectReader;
-
-import junit.framework.Assert;
-
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Logger;
-
 import org.junit.Test;
 
-import com.prelert.job.JobConfiguration;
-import com.prelert.job.SchedulerConfig;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectReader;
 
 
 public class SchedulerConfigTest
@@ -101,4 +94,3 @@ public class SchedulerConfigTest
         assertTrue(query.containsKey("match_all"));
     }
 }
-

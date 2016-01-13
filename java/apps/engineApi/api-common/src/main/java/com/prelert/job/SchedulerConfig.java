@@ -28,10 +28,9 @@
 package com.prelert.job;
 
 import java.util.Date;
-import java.util.Map;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -284,6 +283,4 @@ public class SchedulerConfig
         return Objects.hash(m_DataSource, m_Path, m_Tail, m_BaseUrl, m_Indexes,
                 m_Types, m_Search, m_StartTime, m_EndTime);
     }
-
 }
-

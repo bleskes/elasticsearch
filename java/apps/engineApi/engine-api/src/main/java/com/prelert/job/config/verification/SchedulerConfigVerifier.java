@@ -165,7 +165,7 @@ public final class SchedulerConfigVerifier
     {
         try
         {
-            URL url = new URL(value);
+            new URL(value);
         }
         catch (MalformedURLException e)
         {
@@ -174,5 +174,4 @@ public final class SchedulerConfigVerifier
             throw new JobConfigurationException(msg, ErrorCodes.SCHEDULER_INVALID_OPTION_VALUE);
         }
     }
-
 }
