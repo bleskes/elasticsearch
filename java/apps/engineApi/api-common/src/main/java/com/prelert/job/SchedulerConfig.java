@@ -79,7 +79,7 @@ public class SchedulerConfig
     public static final String BASE_URL = "baseUrl";
     public static final String INDEXES = "indexes";
     public static final String TYPES = "types";
-    public static final String SEARCH = "search";
+    public static final String QUERY = "query";
     public static final String START_TIME = "startTime";
     public static final String END_TIME = "endTime";
 
@@ -97,7 +97,7 @@ public class SchedulerConfig
     private String m_BaseUrl;
     private List<String> m_Indexes;
     private List<String> m_Types;
-    private Map<String, Object> m_Search;
+    private Map<String, Object> m_Query;
     private Date m_StartTime;
     private Date m_EndTime;
 
@@ -199,20 +199,20 @@ public class SchedulerConfig
 
     /**
      * For the ELASTICSEARCH data source only, the Elasticsearch query DSL
-     * representing the search to submit to Elasticsearch to get the input data.
+     * representing the query to submit to Elasticsearch to get the input data.
      * This should not include time bounds, as these are added separately.
-     * This class does not attempt to interpret the search.  The map will be
+     * This class does not attempt to interpret the query.  The map will be
      * converted back to an arbitrary JSON object.
      * @return The search query, or <code>null</code> if not set.
      */
-    public Map<String, Object> getSearch()
+    public Map<String, Object> getQuery()
     {
-        return m_Search;
+        return m_Query;
     }
 
-    public void setSearch(Map<String, Object> search)
+    public void setQuery(Map<String, Object> query)
     {
-        m_Search = search;
+        m_Query = query;
     }
 
     /**
@@ -272,7 +272,7 @@ public class SchedulerConfig
                 Objects.equals(this.m_BaseUrl, that.m_BaseUrl) &&
                 Objects.equals(this.m_Indexes, that.m_Indexes) &&
                 Objects.equals(this.m_Types, that.m_Types) &&
-                Objects.equals(this.m_Search, that.m_Search) &&
+                Objects.equals(this.m_Query, that.m_Query) &&
                 Objects.equals(this.m_StartTime, that.m_StartTime) &&
                 Objects.equals(this.m_EndTime, that.m_EndTime);
     }
@@ -281,6 +281,6 @@ public class SchedulerConfig
     public int hashCode()
     {
         return Objects.hash(m_DataSource, m_Path, m_Tail, m_BaseUrl, m_Indexes,
-                m_Types, m_Search, m_StartTime, m_EndTime);
+                m_Types, m_Query, m_StartTime, m_EndTime);
     }
 }

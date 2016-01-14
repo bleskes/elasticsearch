@@ -45,7 +45,7 @@ import com.fasterxml.jackson.databind.ObjectReader;
 public class SchedulerConfigTest
 {
     /**
-     * Test parsing of the opaque {@link SchedulerConfig#m_Search()} object
+     * Test parsing of the opaque {@link SchedulerConfig#m_Query()} object
      */
     @Test
     public void testAnalysisConfigRequiredFields()
@@ -62,7 +62,7 @@ public class SchedulerConfigTest
                     "\"baseUrl\":\"http://localhost:9200/\"," +
                     "\"indexes\":[\"farequote\"]," +
                     "\"types\":[\"farequote\"]," +
-                    "\"search\":{\"query\":{\"match_all\":{} } }" +
+                    "\"query\":{\"match_all\":{} }" +
                 "}," +
                 "\"analysisConfig\" : {" +
                     "\"bucketSpan\":3600," +
@@ -83,14 +83,11 @@ public class SchedulerConfigTest
         SchedulerConfig schedulerConfig = jobConfig.getSchedulerConfig();
         assertNotNull(schedulerConfig);
 
-        Map<String, Object> search = schedulerConfig.getSearch();
-        assertNotNull(search);
+        Map<String, Object> query = schedulerConfig.getQuery();
+        assertNotNull(query);
 
-        String searchAsJson = new ObjectMapper().writeValueAsString(search);
-        logger.info("Round trip of search is: " + searchAsJson);
-
-        assertTrue(search.containsKey("query"));
-        Map<String, Object> query = (Map<String, Object>)search.get("query");
+        String queryAsJson = new ObjectMapper().writeValueAsString(query);
+        logger.info("Round trip of query is: " + queryAsJson);
         assertTrue(query.containsKey("match_all"));
     }
 }

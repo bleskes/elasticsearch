@@ -49,7 +49,7 @@ public final class SchedulerConfigVerifier
      * <li>If data source is FILE
      *   <ol>
      *   <li>Check that path is not null or empty</li>
-     *   <li>Check that base URL, indexes, types, search, start time and end time are not specified</li>
+     *   <li>Check that base URL, indexes, types, query, start time and end time are not specified</li>
      *   </ol>
      * </li>
      * <li>If data source is FILE
@@ -57,7 +57,7 @@ public final class SchedulerConfigVerifier
      *   <li>Check that the base URL is valid</li>
      *   <li>Check that at least one index has been specified</li>
      *   <li>Check that at least one type has been specified</li>
-     *   <li>Check that the search is not null or empty</li>
+     *   <li>Check that the query is not null or empty</li>
      *   <li>Check that end time is greater than start time if they're both specified</li>
      *   <li>Check that path and tail are not specified</li>
      *   </ol>
@@ -75,7 +75,7 @@ public final class SchedulerConfigVerifier
                 checkFieldIsNull(dataSource, "baseUrl", config.getBaseUrl());
                 checkFieldIsNull(dataSource, "indexes", config.getIndexes());
                 checkFieldIsNull(dataSource, "types", config.getTypes());
-                checkFieldIsNull(dataSource, "search", config.getSearch());
+                checkFieldIsNull(dataSource, "query", config.getQuery());
                 checkFieldIsNull(dataSource, "startTime", config.getStartTime());
                 checkFieldIsNull(dataSource, "endTime", config.getEndTime());
                 break;
@@ -83,7 +83,7 @@ public final class SchedulerConfigVerifier
                 checkUrl("baseUrl", config.getBaseUrl());
                 checkFieldIsNotNullOrEmpty("indexes", config.getIndexes());
                 checkFieldIsNotNullOrEmpty("types", config.getTypes());
-                checkFieldIsNotNullOrEmpty("search", config.getSearch());
+                checkFieldIsNotNullOrEmpty("query", config.getQuery());
                 checkTimesInOrder("startTime", config.getStartTime(), config.getEndTime());
                 checkFieldIsNull(dataSource, "path", config.getPath());
                 checkFieldIsNull(dataSource, "tail", config.getTail());

@@ -109,13 +109,13 @@ public class SchedulerConfigVerifierTest
         conf.setIndexes(new ArrayList<String>(Arrays.asList("myindex")));
         conf.setTypes(new ArrayList<String>(Arrays.asList("mytype")));
         ObjectMapper mapper = new ObjectMapper();
-        conf.setSearch(mapper.readValue("{ \"query\" : { \"match_all\" : {} } }", new TypeReference<Map<String, Object>>(){}));
+        conf.setQuery(mapper.readValue("{ \"match_all\" : {} }", new TypeReference<Map<String, Object>>(){}));
 
         SchedulerConfigVerifier.verify(conf);
     }
 
     @Test
-    public void testCheckValidElasticsearch_NoSearch() throws JobConfigurationException
+    public void testCheckValidElasticsearch_NoQuery() throws JobConfigurationException
     {
         SchedulerConfig conf = new SchedulerConfig();
         conf.setDataSource(DataSource.ELASTICSEARCH);
@@ -139,7 +139,7 @@ public class SchedulerConfigVerifierTest
         conf.setIndexes(new ArrayList<String>(Arrays.asList("myindex")));
         conf.setTypes(new ArrayList<String>(Arrays.asList("mytype")));
         ObjectMapper mapper = new ObjectMapper();
-        conf.setSearch(mapper.readValue("{ \"query\" : { \"match_all\" : {} } }", new TypeReference<Map<String, Object>>(){}));
+        conf.setQuery(mapper.readValue("{ \"match_all\" : {} }", new TypeReference<Map<String, Object>>(){}));
         conf.setTail(true);
 
         m_ExpectedException.expect(JobConfigurationException.class);
