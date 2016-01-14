@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -61,6 +61,21 @@ public class ControlMsgToProcessWriterTest
 
         List<String> fields = Arrays.asList("foo", "bar");
         when(m_AnalysisConfig.analysisFields()).thenReturn(fields);
+    }
+
+    @Test
+    public void testWriteCalcInterimMessage_GivenNoCalcInterimResultsAdvanceTime() throws IOException
+    {
+        ControlMsgToProcessWriter writer = new ControlMsgToProcessWriter(m_LengthEncodedWriter,
+                m_AnalysisConfig);
+
+        writer.writeCalcInterimMessage(new InterimResultsParams(false, new TimeRange(null, 1234567890L)));
+
+        InOrder inOrder = inOrder(m_LengthEncodedWriter);
+        inOrder.verify(m_LengthEncodedWriter).writeNumFields(4);
+        inOrder.verify(m_LengthEncodedWriter, times(3)).writeField("");
+        inOrder.verify(m_LengthEncodedWriter).writeField("t1234567890");
+        verifyNoMoreInteractions(m_LengthEncodedWriter);
     }
 
     @Test
