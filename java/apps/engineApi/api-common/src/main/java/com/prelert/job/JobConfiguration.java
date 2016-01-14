@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -35,16 +35,19 @@ import com.prelert.job.transform.TransformConfig;
 
 
 /**
- * This class encapsulates all the data required to create a new job it
+ * This class encapsulates all the data required to create a new job. It
  * does not represent the state of a created job (see {@linkplain JobDetails}
  * for that).
  * <p>
- * If a value has not been set it will be <code>null</code> Object wrappers
+ * If a value has not been set it will be <code>null</code>. Object wrappers
  * are used around integral types &amp; booleans so they can take <code>null</code>
  * values.
  */
 public class JobConfiguration
 {
+    /**
+     * Max number of chars in a job id
+     */
     public static final int MAX_JOB_ID_LENGTH = 64;
 
     /**
@@ -65,11 +68,6 @@ public class JobConfiguration
         {
             PROHIBITED_JOB_ID_CHARACTERS_SET.add(ch);
         }
-
-
-    /**
-     * Max number of chars in a job id
-     */
     }
 
     private String m_ID;
@@ -77,6 +75,7 @@ public class JobConfiguration
 
     private AnalysisConfig m_AnalysisConfig;
     private AnalysisLimits m_AnalysisLimits;
+    private SchedulerConfig m_SchedulerConfig;
     private List<TransformConfig> m_Transforms;
     private DataDescription m_DataDescription;
     private String m_ReferenceJobId;
@@ -166,6 +165,21 @@ public class JobConfiguration
     public void setAnalysisLimits(AnalysisLimits options)
     {
         m_AnalysisLimits = options;
+    }
+
+    /**
+     * The scheduler configuration.
+     *
+     * @return Scheduler configuration or null if not set.
+     */
+    public SchedulerConfig getSchedulerConfig()
+    {
+        return m_SchedulerConfig;
+    }
+
+    public void setSchedulerConfig(SchedulerConfig config)
+    {
+        m_SchedulerConfig = config;
     }
 
     /**

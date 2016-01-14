@@ -29,19 +29,69 @@ package com.prelert.job;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 import org.junit.Test;
 
+import com.prelert.job.SchedulerConfig.DataSource;
 import com.prelert.job.transform.TransformConfig;
 
 public class JobDetailsTest
 {
+    @Test
+    public void testConstructor_GivenEmptyJobConfiguration()
+    {
+        JobConfiguration jobConfiguration = new JobConfiguration();
+
+        JobDetails jobDetails = new JobDetails("foo", jobConfiguration);
+
+        assertEquals("foo", jobDetails.getId());
+        assertEquals(JobStatus.CLOSED, jobDetails.getStatus());
+        assertNotNull(jobDetails.getCreateTime());
+        assertEquals(600L, jobDetails.getTimeout());
+        assertNull(jobDetails.getAnalysisConfig());
+        assertNull(jobDetails.getAnalysisLimits());
+        assertNull(jobDetails.getDataDescription());
+        assertNull(jobDetails.getDescription());
+        assertNull(jobDetails.getFinishedTime());
+        assertNull(jobDetails.getLastDataTime());
+        assertNull(jobDetails.getLocation());
+        assertNull(jobDetails.getModelDebugConfig());
+        assertNull(jobDetails.getModelSizeStats());
+        assertNull(jobDetails.getRenormalizationWindow());
+        assertNull(jobDetails.getResultsRetentionDays());
+        assertNull(jobDetails.getSchedulerConfig());
+        assertNull(jobDetails.getTransforms());
+
+        assertNull(jobDetails.getAlertsLongPollEndpoint());
+        assertNull(jobDetails.getBucketsEndpoint());
+        assertNull(jobDetails.getCategoryDefinitionsEndpoint());
+        assertNull(jobDetails.getLogsEndpoint());
+        assertNull(jobDetails.getRecordsEndpoint());
+    }
+
+    @Test
+    public void testConstructor_GivenJobConfigurationWithElasticsearchScheduler_ShouldFillDefaults()
+    {
+        SchedulerConfig schedulerConfig = new SchedulerConfig();
+        schedulerConfig.setDataSource(DataSource.ELASTICSEARCH);
+        schedulerConfig.setQuery(null);
+        JobConfiguration jobConfiguration = new JobConfiguration();
+        jobConfiguration.setSchedulerConfig(schedulerConfig);
+
+        JobDetails jobDetails = new JobDetails("foo", jobConfiguration);
+
+        Map<String, Object> schedulerQuery = jobDetails.getSchedulerConfig().getQuery();
+        assertNotNull(schedulerQuery);
+    }
 
     @Test
     public void testConstructor_GivenAnotherJobDetailsAndEmptyJobConfiguration()

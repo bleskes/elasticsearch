@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -67,6 +67,11 @@ public class ControlMsgToProcessWriter
     /**
      * This must match the code defined in the api::CAnomalyDetector C++ class.
      */
+    private static final String ADVANCE_TIME_MESSAGE_CODE = "t";
+
+    /**
+     * This must match the code defined in the api::CAnomalyDetector C++ class.
+     */
     private static final String UPDATE_MESSAGE_CODE = "u";
 
     /**
@@ -92,7 +97,7 @@ public class ControlMsgToProcessWriter
     /**
      * Send an instruction to calculate interim results to the C++ autodetect
      * process.
-     * @param interimResultsParams Parameters indicating whether interim resuls should be written
+     * @param interimResultsParams Parameters indicating whether interim results should be written
      * and for which buckets
      * @throws IOException
      */
@@ -102,6 +107,13 @@ public class ControlMsgToProcessWriter
         {
             writeControlCodeFollowedByTimeRange(INTERIM_MESSAGE_CODE,
                     interimResultsParams.getStart(), interimResultsParams.getEnd());
+        }
+        else
+        {
+            if (interimResultsParams.getEnd() != null && !interimResultsParams.getEnd().isEmpty())
+            {
+                writeMessage(ADVANCE_TIME_MESSAGE_CODE + interimResultsParams.getEnd());
+            }
         }
     }
 
@@ -129,7 +141,7 @@ public class ControlMsgToProcessWriter
 
     public void writeUpdateConfigMessage(String config) throws IOException
     {
-        writeMessage(new StringBuilder(UPDATE_MESSAGE_CODE).append(config).toString());
+        writeMessage(UPDATE_MESSAGE_CODE + config);
     }
 
     public void writeResetBucketsMessage(DataLoadParams params) throws IOException

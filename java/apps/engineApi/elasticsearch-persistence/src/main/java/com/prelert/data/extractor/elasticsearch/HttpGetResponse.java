@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -25,43 +25,43 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.utils.scheduler;
+package com.prelert.data.extractor.elasticsearch;
 
-import static org.junit.Assert.assertEquals;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.util.stream.Collectors;
 
-import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import org.junit.Before;
-import org.junit.Test;
-
-public class TaskSchedulerTest
+class HttpGetResponse
 {
-    private AtomicInteger m_TaskCount;
+    private static final String NEW_LINE = "\n";
 
-    @Before
-    public void setUp()
+    private final InputStream m_Stream;
+    private final int m_ResponseCode;
+
+    public HttpGetResponse(InputStream responseStream, int responseCode)
     {
-        m_TaskCount = new AtomicInteger(0);
+        m_Stream = responseStream;
+        m_ResponseCode = responseCode;
     }
 
-    @Test
-    public void testTaskRunsThriceGiven50MsPeriodAndWaitingFor180Ms()
+    public int getResponseCode()
     {
-        TaskScheduler scheduler = new TaskScheduler(() -> m_TaskCount.incrementAndGet(),
-                () -> LocalDateTime.now().plus(50, ChronoUnit.MILLIS));
-        scheduler.start();
+        return m_ResponseCode;
+    }
 
-        try
-        {
-            Thread.sleep(180);
-        }
-        catch (InterruptedException e)
-        {
-            e.printStackTrace();
-        }
+    public InputStream getStream()
+    {
+        return m_Stream;
+    }
 
-        assertEquals(3, m_TaskCount.get());
+    public String getResponseAsString() throws IOException
+    {
+        try (BufferedReader buffer = new BufferedReader(
+                new InputStreamReader(m_Stream, StandardCharsets.UTF_8))) {
+            return buffer.lines().collect(Collectors.joining(NEW_LINE));
+        }
     }
 }

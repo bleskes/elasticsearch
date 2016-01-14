@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -57,6 +57,7 @@ public class DataToProcessWriterFactory
         switch (dataDescription.getFormat())
         {
             case JSON:
+            case ELASTICSEARCH:
                 return new JsonDataToProcessWriter(writer, dataDescription, analysisConfig,
                         transforms, statusReporter, jobDataPersister, logger);
             case DELIMITED:

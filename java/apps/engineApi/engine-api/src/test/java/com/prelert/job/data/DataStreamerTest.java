@@ -27,7 +27,9 @@
 
 package com.prelert.job.data;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -49,11 +51,10 @@ import com.fasterxml.jackson.core.JsonParseException;
 import com.prelert.job.DataCounts;
 import com.prelert.job.JobException;
 import com.prelert.job.UnknownJobException;
-import com.prelert.job.data.DataStreamer;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.exceptions.JobInUseException;
 import com.prelert.job.exceptions.TooManyJobsException;
-import com.prelert.job.manager.JobManager;
+import com.prelert.job.manager.DataProcessor;
 import com.prelert.job.process.exceptions.MalformedJsonException;
 import com.prelert.job.process.exceptions.MissingFieldException;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
@@ -71,7 +72,7 @@ public class DataStreamerTest
     }
 
     @Test(expected = NullPointerException.class)
-    public void testConstructor_GivenNullJobManager()
+    public void testConstructor_GivenNullDataProcessor()
     {
         new DataStreamer(null);
     }
@@ -83,18 +84,18 @@ public class DataStreamerTest
             HighProportionOfBadTimestampsException, OutOfOrderRecordsException,
             TooManyJobsException, IOException, MalformedJsonException, JobException
     {
-        JobManager jobManager = mock(JobManager.class);
-        DataStreamer dataStreamer = new DataStreamer(jobManager);
+        DataProcessor dataProcessor = mock(DataProcessor.class);
+        DataStreamer dataStreamer = new DataStreamer(dataProcessor);
         InputStream inputStream = mock(InputStream.class);
         DataLoadParams params = mock(DataLoadParams.class);
 
-        when(jobManager.submitDataLoadJob("foo", inputStream, params)).thenReturn(
+        when(dataProcessor.submitDataLoadJob("foo", inputStream, params)).thenReturn(
                 new DataCounts());
 
         dataStreamer.streamData(null, "foo", inputStream, params);
 
-        verify(jobManager).submitDataLoadJob("foo", inputStream, params);
-        Mockito.verifyNoMoreInteractions(jobManager);
+        verify(dataProcessor).submitDataLoadJob("foo", inputStream, params);
+        Mockito.verifyNoMoreInteractions(dataProcessor);
     }
 
 
@@ -105,8 +106,8 @@ public class DataStreamerTest
             OutOfOrderRecordsException, TooManyJobsException, MalformedJsonException,
             IOException, JobException
     {
-        JobManager jobManager = mock(JobManager.class);
-        DataStreamer dataStreamer = new DataStreamer(jobManager);
+        DataProcessor dataProcessor = mock(DataProcessor.class);
+        DataStreamer dataStreamer = new DataStreamer(dataProcessor);
         InputStream inputStream = mock(InputStream.class);
         DataLoadParams params = mock(DataLoadParams.class);
 
@@ -134,11 +135,11 @@ public class DataStreamerTest
         {
             gzip.write("Hello World compressed".getBytes(StandardCharsets.UTF_8));
 
-            JobManager jobManager = mock(JobManager.class);
-            DataStreamer dataStreamer = new DataStreamer(jobManager);
+            DataProcessor dataProcessor = mock(DataProcessor.class);
+            DataStreamer dataStreamer = new DataStreamer(dataProcessor);
             DataLoadParams params = mock(DataLoadParams.class);
 
-            when(jobManager.submitDataLoadJob(Mockito.anyString(),
+            when(dataProcessor.submitDataLoadJob(Mockito.anyString(),
                                             Mockito.any(InputStream.class),
                                             Mockito.any(DataLoadParams.class)))
                           .thenReturn(new DataCounts());
@@ -148,7 +149,7 @@ public class DataStreamerTest
             // submitDataLoadJob should be called with a GZIPInputStream
             ArgumentCaptor<InputStream> streamArg = ArgumentCaptor.forClass(InputStream.class);
 
-            verify(jobManager).submitDataLoadJob(Mockito.anyString(),
+            verify(dataProcessor).submitDataLoadJob(Mockito.anyString(),
                                                 streamArg.capture(),
                                                 Mockito.any(DataLoadParams.class));
 

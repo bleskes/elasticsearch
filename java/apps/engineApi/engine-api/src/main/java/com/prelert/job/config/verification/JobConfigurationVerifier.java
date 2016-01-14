@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -53,6 +53,7 @@ public final class JobConfigurationVerifier
      * <li>Either an AnalysisConfig or Job reference must be set</li>
      * <li>Verify {@link AnalysisConfigVerifier#verify() AnalysisConfig}</li>
      * <li>Verify {@link AnalysisLimitsVerifier#verify() AnalysisLimits}</li>
+     * <li>Verify {@link SchedulerConfigVerifier#verify() SchedulerConfig}</li>
      * <li>Verify {@link DataDescriptionVerifier#verify() DataDescription}</li>
      * <li>Verify {@link TransformConfigsVerifier#verify() Transforms}</li>
      * <li>Verify all the transform outputs are used</li>
@@ -80,6 +81,12 @@ public final class JobConfigurationVerifier
         {
             AnalysisLimitsVerifier.verify(config.getAnalysisLimits());
         }
+
+        if (config.getSchedulerConfig() != null)
+        {
+            SchedulerConfigVerifier.verify(config.getSchedulerConfig());
+        }
+
         if (config.getDataDescription() != null)
         {
             DataDescriptionVerifier.verify(config.getDataDescription());

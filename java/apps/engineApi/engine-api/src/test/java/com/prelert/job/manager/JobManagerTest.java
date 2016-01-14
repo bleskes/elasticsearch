@@ -62,10 +62,10 @@ import com.prelert.job.Detector;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.JobDetails;
 import com.prelert.job.JobIdAlreadyExistsException;
-import com.prelert.job.JobStatus;
 import com.prelert.job.ModelDebugConfig;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.config.verification.JobConfigurationException;
+import com.prelert.job.data.extraction.DataExtractorFactory;
 import com.prelert.job.errorcodes.ErrorCodeMatcher;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.exceptions.JobInUseException;
@@ -91,6 +91,8 @@ public class JobManagerTest
 
     @Mock private JobProvider m_JobProvider;
     @Mock private ProcessManager m_ProcessManager;
+    @Mock private DataExtractorFactory m_DataExtractorFactory;
+    @Mock private JobLoggerFactory m_JobLoggerFactory;
 
     @Before
     public void setUp()
@@ -115,7 +117,7 @@ public class JobManagerTest
         givenProcessInfo(2);
         when(m_ProcessManager.jobIsRunning("foo")).thenReturn(false);
         when(m_ProcessManager.numberOfRunningJobs()).thenReturn(2);
-        JobManager jobManager = new JobManager(m_JobProvider, m_ProcessManager);
+        JobManager jobManager = createJobManager();
 
         m_ExpectedException.expect(TooManyJobsException.class);
         m_ExpectedException.expectMessage("Cannot reactivate job with id 'foo' - your license "
@@ -140,7 +142,7 @@ public class JobManagerTest
         givenProcessInfo(5);
         when(m_ProcessManager.jobIsRunning("foo")).thenReturn(false);
         when(m_ProcessManager.numberOfRunningJobs()).thenReturn(10000);
-        JobManager jobManager = new JobManager(m_JobProvider, m_ProcessManager);
+        JobManager jobManager = createJobManager();
 
         m_ExpectedException.expect(TooManyJobsException.class);
         m_ExpectedException.expectMessage("Cannot start job with id 'foo'. " +
@@ -165,7 +167,7 @@ public class JobManagerTest
         givenProcessInfo(5);
         when(m_ProcessManager.jobIsRunning("foo")).thenReturn(false);
         when(m_ProcessManager.numberOfRunningJobs()).thenReturn(10000);
-        JobManager jobManager = new JobManager(m_JobProvider, m_ProcessManager);
+        JobManager jobManager = createJobManager();
 
         m_ExpectedException.expect(TooManyJobsException.class);
         m_ExpectedException.expectMessage("Cannot start job with id 'foo'. " +
@@ -190,7 +192,7 @@ public class JobManagerTest
         givenProcessInfo(5);
         when(m_ProcessManager.jobIsRunning("foo")).thenReturn(false);
         when(m_ProcessManager.numberOfRunningJobs()).thenReturn(10000);
-        JobManager jobManager = new JobManager(m_JobProvider, m_ProcessManager);
+        JobManager jobManager = createJobManager();
 
         m_ExpectedException.expect(TooManyJobsException.class);
         m_ExpectedException.expectMessage("Cannot start job with id 'foo'. " +
@@ -218,7 +220,7 @@ public class JobManagerTest
         when(m_ProcessManager.jobIsRunning("foo")).thenReturn(false);
         when(m_ProcessManager.numberOfRunningJobs()).thenReturn(0);
         when(m_ProcessManager.processDataLoadJob("foo", inputStream, params)).thenReturn(new DataCounts());
-        JobManager jobManager = new JobManager(m_JobProvider, m_ProcessManager);
+        JobManager jobManager = createJobManager();
 
         DataCounts stats = jobManager.submitDataLoadJob("foo", inputStream, params);
         assertNotNull(stats);
@@ -226,7 +228,6 @@ public class JobManagerTest
         ArgumentCaptor<Map> updateCaptor = ArgumentCaptor.forClass(Map.class);
         verify(m_JobProvider).updateJob(eq("foo"), updateCaptor.capture());
         Map updates = updateCaptor.getValue();
-        assertEquals(JobStatus.RUNNING, updates.get(JobDetails.STATUS));
         assertNotNull(updates.get(JobDetails.LAST_DATA_TIME));
     }
 
@@ -236,7 +237,7 @@ public class JobManagerTest
     {
         givenProcessInfo(5);
         ModelDebugConfig config = new ModelDebugConfig(85.0, "bar");
-        JobManager jobManager = new JobManager(m_JobProvider, m_ProcessManager);
+        JobManager jobManager = createJobManager();
 
         jobManager.setModelDebugConfig("foo", config);
 
@@ -251,7 +252,7 @@ public class JobManagerTest
     public void testSetModelDebugConfig_GivenNull() throws UnknownJobException
     {
         givenProcessInfo(5);
-        JobManager jobManager = new JobManager(m_JobProvider, m_ProcessManager);
+        JobManager jobManager = createJobManager();
 
         jobManager.setModelDebugConfig("foo", null);
 
@@ -264,7 +265,7 @@ public class JobManagerTest
     public void testSetDesciption() throws UnknownJobException
     {
         givenProcessInfo(5);
-        JobManager jobManager = new JobManager(m_JobProvider, m_ProcessManager);
+        JobManager jobManager = createJobManager();
 
         jobManager.setDescription("foo", "foo job");
 
@@ -277,7 +278,7 @@ public class JobManagerTest
     public void testSetRenormalizationWindow() throws UnknownJobException
     {
         givenProcessInfo(5);
-        JobManager jobManager = new JobManager(m_JobProvider, m_ProcessManager);
+        JobManager jobManager = createJobManager();
 
         jobManager.setRenormalizationWindow("foo", 7L);
 
@@ -290,7 +291,7 @@ public class JobManagerTest
     public void testSetResultsRetentionDays() throws UnknownJobException
     {
         givenProcessInfo(5);
-        JobManager jobManager = new JobManager(m_JobProvider, m_ProcessManager);
+        JobManager jobManager = createJobManager();
 
         jobManager.setResultsRetentionDays("foo", 90L);
 
@@ -299,27 +300,11 @@ public class JobManagerTest
         assertEquals(new Long(90), jobUpdate.get(JobDetails.RESULTS_RETENTION_DAYS));
     }
 
-    private void givenProcessInfo(int maxLicenseJobs)
-    {
-        String info = String.format("{\"jobs\":\"%d\"}", maxLicenseJobs);
-        when(m_ProcessManager.getInfo()).thenReturn(info);
-    }
-
-    private void givenLicenseConstraints(int maxJobs, int maxDetectors, int maxPartitions)
-    {
-        String info = String.format("{\"%s\":%d, \"%s\":%d, \"%s\":%d}",
-                                 JobManager.JOBS_LICENSE_CONSTRAINT, maxJobs,
-                                 JobManager.DETECTORS_LICENSE_CONSTRAINT, maxDetectors,
-                                 JobManager.PARTITIONS_LICENSE_CONSTRAINT, maxPartitions);
-
-        when(m_ProcessManager.getInfo()).thenReturn(info);
-    }
-
     @Test
     public void testGetJob() throws UnknownJobException
     {
         givenLicenseConstraints(2, 2, 0);
-        JobManager jobManager = new JobManager(m_JobProvider, m_ProcessManager);
+        JobManager jobManager = createJobManager();
         when(m_JobProvider.getJobDetails("foo")).thenReturn(Optional.of(new JobDetails()));
 
         Optional<JobDetails> doc = jobManager.getJob("foo");
@@ -333,7 +318,7 @@ public class JobManagerTest
         givenLicenseConstraints(2, 2, 0);
         when(m_ProcessManager.numberOfRunningJobs()).thenReturn(3);
 
-        JobManager jobManager = new JobManager(m_JobProvider, m_ProcessManager);
+        JobManager jobManager = createJobManager();
 
         try
         {
@@ -357,7 +342,7 @@ public class JobManagerTest
         givenLicenseConstraints(5, 1, 0);
         when(m_ProcessManager.numberOfRunningJobs()).thenReturn(3);
 
-        JobManager jobManager = new JobManager(m_JobProvider, m_ProcessManager);
+        JobManager jobManager = createJobManager();
 
         try
         {
@@ -385,7 +370,7 @@ public class JobManagerTest
         givenLicenseConstraints(5, -1, 0);
         when(m_ProcessManager.numberOfRunningJobs()).thenReturn(3);
 
-        JobManager jobManager = new JobManager(m_JobProvider, m_ProcessManager);
+        JobManager jobManager = createJobManager();
 
         try
         {
@@ -410,7 +395,7 @@ public class JobManagerTest
     public void testWriteUpdateConfigMessage() throws JobInUseException, NativeProcessRunException
     {
         givenProcessInfo(5);
-        JobManager jobManager = new JobManager(m_JobProvider, m_ProcessManager);
+        JobManager jobManager = createJobManager();
 
         jobManager.writeUpdateConfigMessage("foo", "bar");
 
@@ -430,10 +415,31 @@ public class JobManagerTest
         when(m_ProcessManager.writeToJob(any(CsvRecordWriter.class), any(), any(), any(), any(), any(), any(), any()))
                     .thenAnswer(writeToWriter());
 
-        JobManager jobManager = new JobManager(m_JobProvider, m_ProcessManager);
+        JobManager jobManager = createJobManager();
         String answer = jobManager.previewTransforms("foo", mock(InputStream.class));
 
         assertEquals("csv,header,one\n", answer);
+    }
+
+    private void givenProcessInfo(int maxLicenseJobs)
+    {
+        String info = String.format("{\"jobs\":\"%d\"}", maxLicenseJobs);
+        when(m_ProcessManager.getInfo()).thenReturn(info);
+    }
+
+    private void givenLicenseConstraints(int maxJobs, int maxDetectors, int maxPartitions)
+    {
+        String info = String.format("{\"%s\":%d, \"%s\":%d, \"%s\":%d}",
+                                 JobManager.JOBS_LICENSE_CONSTRAINT, maxJobs,
+                                 JobManager.DETECTORS_LICENSE_CONSTRAINT, maxDetectors,
+                                 JobManager.PARTITIONS_LICENSE_CONSTRAINT, maxPartitions);
+        when(m_ProcessManager.getInfo()).thenReturn(info);
+    }
+
+    private JobManager createJobManager()
+    {
+        return new JobManager(m_JobProvider, m_ProcessManager, m_DataExtractorFactory,
+                m_JobLoggerFactory);
     }
 
     private static Answer<Object> writeToWriter()

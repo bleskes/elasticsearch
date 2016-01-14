@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -297,6 +297,13 @@ public abstract class AbstractDataLoad extends ResourceWithJobManager
                 throw new InvalidParametersException(msg, ErrorCodes.END_DATE_BEFORE_START_DATE);
             }
         }
+        else
+        {
+            if (!end.isEmpty())
+            {
+                epochEnd = paramToEpochIfValidOrThrow(endParam, end, LOGGER) / MILLISECONDS_IN_SECOND;
+            }
+        }
         return new TimeRange(epochStart, epochEnd);
     }
 
@@ -349,17 +356,23 @@ public abstract class AbstractDataLoad extends ResourceWithJobManager
 
     private void checkValidFlushArgumentsCombination(boolean calcInterim, String start, String end)
     {
-        if (calcInterim == false && (!start.isEmpty() || !end.isEmpty()))
+        if (calcInterim)
         {
-            String msg = Messages.getMessage(Messages.REST_INVALID_FLUSH_PARAMS_UNEXPECTED,
-                                START_QUERY_PARAM, END_QUERY_PARAM);
-            throwInvalidFlushParamsException(msg);
+            if (!isValidTimeRange(start, end))
+            {
+                String msg = Messages.getMessage(Messages.REST_INVALID_FLUSH_PARAMS_MISSING,
+                                                START_QUERY_PARAM);
+                throwInvalidFlushParamsException(msg);
+            }
         }
-        if (!isValidTimeRange(start, end))
+        else
         {
-            String msg = Messages.getMessage(Messages.REST_INVALID_FLUSH_PARAMS_MISSING,
-                                            START_QUERY_PARAM);
-            throwInvalidFlushParamsException(msg);
+            if (!start.isEmpty())
+            {
+                String msg = Messages.getMessage(Messages.REST_INVALID_FLUSH_PARAMS_UNEXPECTED,
+                                    START_QUERY_PARAM);
+                throwInvalidFlushParamsException(msg);
+            }
         }
     }
 
@@ -391,7 +404,7 @@ public abstract class AbstractDataLoad extends ResourceWithJobManager
     }
 
 
-    public DataPostResponse toDataPostResult(DataStreamerThread dataStreamer)
+    private DataPostResponse toDataPostResult(DataStreamerThread dataStreamer)
     {
         if (dataStreamer.getDataCounts() != null)
         {

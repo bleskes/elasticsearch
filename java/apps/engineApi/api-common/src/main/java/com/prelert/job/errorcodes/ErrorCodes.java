@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -47,7 +47,7 @@ import com.fasterxml.jackson.annotation.JsonValue;
 public enum ErrorCodes
 {
     /**
-     * Represents unknown errors typically those cause by
+     * Represents unknown errors, typically those caused by
      * internal server errors
      */
     UNKNOWN_ERROR(0),
@@ -216,6 +216,23 @@ public enum ErrorCodes
      * The transform argument is invalid
      */
     TRANSFORM_INVALID_ARGUMENT(10214),
+
+    /**
+     * The scheduler has been told to pull data from an unknown data source.
+     */
+    SCHEDULER_UNKNOWN_DATASOURCE(10301),
+
+    /**
+     * A field in the scheduler config is not supported for the chosen data
+     * source.
+     */
+    SCHEDULER_FIELD_NOT_SUPPORTED_FOR_DATASOURCE(10302),
+
+    /**
+     * A scheduler option that <em>is</em> appropriate for the chosen data
+     * source has an invalid value.
+     */
+    SCHEDULER_INVALID_OPTION_VALUE(10303),
 
     // Data store errors
     /**

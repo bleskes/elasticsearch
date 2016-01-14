@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -40,6 +40,7 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataCounts;
 import com.prelert.job.DataDescription;
+import com.prelert.job.DataDescription.DataFormat;
 import com.prelert.job.persistence.JobDataPersister;
 import com.prelert.job.process.exceptions.MalformedJsonException;
 import com.prelert.job.process.exceptions.MissingFieldException;
@@ -58,6 +59,8 @@ import com.prelert.job.transform.TransformConfigs;
  */
 class JsonDataToProcessWriter extends AbstractDataToProcessWriter
 {
+    private static final String ELASTICSEARCH_RECORD_HOLDING_FIELD = "_source";
+    private static final String EMPTY_STRING = "";
 
     public JsonDataToProcessWriter(RecordWriter recordWriter,
             DataDescription dataDescription, AnalysisConfig analysisConfig,
@@ -127,7 +130,8 @@ class JsonDataToProcessWriter extends AbstractDataToProcessWriter
         int recordsWritten = 0;
         int recordCount = 0;
 
-        JsonRecordReader recordReader = new JsonRecordReader(parser, m_InFieldIndexes, m_Logger);
+        JsonRecordReader recordReader = new JsonRecordReader(parser, m_InFieldIndexes,
+                getRecordHoldingField(), m_Logger);
         long inputFieldCount = recordReader.read(input, gotFields);
         while (inputFieldCount >= 0)
         {
@@ -159,6 +163,15 @@ class JsonDataToProcessWriter extends AbstractDataToProcessWriter
 
         m_Logger.debug(String.format("Transferred %d of %d Json records to autodetect.",
                 recordsWritten, recordCount));
+    }
+
+    private String getRecordHoldingField()
+    {
+        if (m_DataDescription.getFormat().equals(DataFormat.ELASTICSEARCH))
+        {
+            return ELASTICSEARCH_RECORD_HOLDING_FIELD;
+        }
+        return EMPTY_STRING;
     }
 
     /**

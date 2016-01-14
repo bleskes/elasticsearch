@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -336,7 +336,7 @@ public class DataTest extends ServiceTest
     {
         m_ExpectedException.expect(InvalidParametersException.class);
         m_ExpectedException.expectMessage(
-                "Invalid flush parameters: unexpected 'start' and/or 'end'.");
+                "Invalid flush parameters: unexpected 'start'.");
         m_ExpectedException.expect(hasErrorCode(ErrorCodes.INVALID_FLUSH_PARAMS));
 
         m_Data.flushUpload(JOB_ID, false, "1", "");
@@ -346,12 +346,16 @@ public class DataTest extends ServiceTest
     public void testFlushUpload_GivenNoInterimResultsAndEndSpecified() throws UnknownJobException,
             NativeProcessRunException, JobInUseException
     {
-        m_ExpectedException.expect(InvalidParametersException.class);
-        m_ExpectedException.expectMessage(
-                "Invalid flush parameters: unexpected 'start' and/or 'end'.");
-        m_ExpectedException.expect(hasErrorCode(ErrorCodes.INVALID_FLUSH_PARAMS));
-
         m_Data.flushUpload(JOB_ID, false, "", "1");
+
+        JobManager jobManager = jobManager();
+        ArgumentCaptor<InterimResultsParams> paramsCaptor = ArgumentCaptor.forClass(InterimResultsParams.class);
+        verify(jobManager).flushJob(eq(JOB_ID), paramsCaptor.capture());
+
+        InterimResultsParams params = paramsCaptor.getValue();
+        assertFalse(params.shouldCalculate());
+        assertEquals("", params.getStart());
+        assertEquals("1", params.getEnd());
     }
 
     @Test

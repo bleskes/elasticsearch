@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -47,6 +47,7 @@ class JsonRecordReader
 
     private final JsonParser m_Parser;
     private final Map<String, Integer> m_FieldMap;
+    private final String m_RecordHoldingField;
     private final Logger m_Logger;
     private int m_NestedLevel;
     private long m_FieldCount;
@@ -61,10 +62,12 @@ class JsonRecordReader
      * @param fieldMap Map to field name to record array index position
      * @param logger
      */
-    JsonRecordReader(JsonParser parser, Map<String, Integer> fieldMap, Logger logger)
+    JsonRecordReader(JsonParser parser, Map<String, Integer> fieldMap, String recordHoldingField,
+            Logger logger)
     {
         m_Parser = Objects.requireNonNull(parser);
         m_FieldMap = Objects.requireNonNull(fieldMap);
+        m_RecordHoldingField = Objects.requireNonNull(recordHoldingField);
         m_Logger = Objects.requireNonNull(logger);
     }
 
@@ -94,6 +97,7 @@ class JsonRecordReader
         Arrays.fill(record, "");
         m_FieldCount = 0;
         clearNestedLevel();
+        consumeToRecordHoldingField();
 
         JsonToken token = tryNextTokenOrReadToEndOnError();
         while (!(token == JsonToken.END_OBJECT && m_NestedLevel == 0))
@@ -127,6 +131,24 @@ class JsonRecordReader
         else
         {
             return -1;
+        }
+    }
+
+    private void consumeToRecordHoldingField() throws MalformedJsonException, IOException
+    {
+        if (m_RecordHoldingField.isEmpty())
+        {
+            return;
+        }
+        JsonToken token = null;
+        while ((token = tryNextTokenOrReadToEndOnError()) != null)
+        {
+            if (token == JsonToken.FIELD_NAME
+                    && m_Parser.getCurrentName().equals(m_RecordHoldingField))
+            {
+                tryNextTokenOrReadToEndOnError();
+                return;
+            }
         }
     }
 

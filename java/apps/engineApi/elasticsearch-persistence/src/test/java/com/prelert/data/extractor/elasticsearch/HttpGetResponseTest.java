@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -25,43 +25,26 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.utils.scheduler;
+package com.prelert.data.extractor.elasticsearch;
 
 import static org.junit.Assert.assertEquals;
 
-import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 
-import org.junit.Before;
 import org.junit.Test;
 
-public class TaskSchedulerTest
+public class HttpGetResponseTest
 {
-    private AtomicInteger m_TaskCount;
-
-    @Before
-    public void setUp()
-    {
-        m_TaskCount = new AtomicInteger(0);
-    }
-
     @Test
-    public void testTaskRunsThriceGiven50MsPeriodAndWaitingFor180Ms()
+    public void testGetResponseAsStream() throws IOException
     {
-        TaskScheduler scheduler = new TaskScheduler(() -> m_TaskCount.incrementAndGet(),
-                () -> LocalDateTime.now().plus(50, ChronoUnit.MILLIS));
-        scheduler.start();
+        InputStream stream = new ByteArrayInputStream("foo\nbar".getBytes(StandardCharsets.UTF_8));
+        HttpGetResponse response = new HttpGetResponse(stream, 200);
 
-        try
-        {
-            Thread.sleep(180);
-        }
-        catch (InterruptedException e)
-        {
-            e.printStackTrace();
-        }
-
-        assertEquals(3, m_TaskCount.get());
+        assertEquals("foo\nbar", response.getResponseAsString());
+        assertEquals(200, response.getResponseCode());
     }
 }

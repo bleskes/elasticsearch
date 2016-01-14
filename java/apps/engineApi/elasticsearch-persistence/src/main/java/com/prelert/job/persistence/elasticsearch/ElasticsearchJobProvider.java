@@ -403,31 +403,22 @@ public class ElasticsearchJobProvider implements JobProvider
         checkJobExists(jobId);
         ElasticsearchJobId elasticJobId = new ElasticsearchJobId(jobId);
 
-        int retryCount = UPDATE_JOB_RETRY_COUNT;
-        while (--retryCount >= 0)
+        LOGGER.trace("ES API CALL: update ID " + elasticJobId.getId() + " type " + JobDetails.TYPE +
+                " in index " + elasticJobId.getIndex() + " using map of new values");
+        try
         {
-            try
-            {
-                LOGGER.trace("ES API CALL: update ID " + elasticJobId.getId() + " type " + JobDetails.TYPE +
-                        " in index " + elasticJobId.getIndex() + " using map of new values");
-                m_Client.prepareUpdate(elasticJobId.getIndex(), JobDetails.TYPE, elasticJobId.getId())
-                                    .setDoc(updates)
-                                    .get();
-
-                break;
-            }
-            catch (VersionConflictEngineException e)
-            {
-                LOGGER.warn("Conflict updating job document " + elasticJobId.getId());
-            }
+            m_Client.prepareUpdate(elasticJobId.getIndex(), JobDetails.TYPE, elasticJobId.getId())
+                                .setDoc(updates)
+                                .setRetryOnConflict(UPDATE_JOB_RETRY_COUNT)
+                                .get();
         }
-
-        if (retryCount <= 0)
+        catch (VersionConflictEngineException e)
         {
             LOGGER.warn("Unable to update conflicted job document " + elasticJobId.getId() +
                     ". Updates = " + updates);
             return false;
         }
+
         return true;
     }
 

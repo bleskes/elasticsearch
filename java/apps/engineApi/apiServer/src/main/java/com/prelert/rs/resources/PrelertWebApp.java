@@ -53,8 +53,10 @@ import com.prelert.job.manager.JobManager;
 import com.prelert.job.persistence.JobProvider;
 import com.prelert.job.persistence.OldResultsRemover;
 import com.prelert.job.process.ProcessCtrl;
+import com.prelert.job.process.autodetect.JobLogger;
 import com.prelert.job.process.autodetect.ProcessFactory;
 import com.prelert.job.process.autodetect.ProcessManager;
+import com.prelert.rs.data.extraction.DataExtractorFactoryImpl;
 import com.prelert.rs.persistence.ElasticsearchFactory;
 import com.prelert.rs.persistence.ElasticsearchNodeClientFactory;
 import com.prelert.rs.persistence.ElasticsearchTransportClientFactory;
@@ -143,12 +145,13 @@ public class PrelertWebApp extends Application
         ElasticsearchFactory esFactory = createPersistenceFactory();
         JobProvider jobProvider = esFactory.newJobProvider();
 
-        m_JobManager = new JobManager(jobProvider, createProcessManager(jobProvider, esFactory));
+        m_JobManager = createJobManager(jobProvider, esFactory);
         m_AlertManager = new AlertManager(jobProvider, m_JobManager);
         m_ServerInfo = esFactory.newServerInfoFactory();
 
         writeServerInfoDailyStartingNow();
         scheduleOldResultsRemovalAtMidnight(jobProvider, esFactory);
+        m_JobManager.restartScheduledJobs();
 
         m_Singletons = new HashSet<>();
         m_Singletons.add(m_JobManager);
@@ -175,6 +178,12 @@ public class PrelertWebApp extends Application
         // can sometimes be desirable to frig it
         String numProcessors = System.getProperty(ES_PROCESSORS_PROP);
         return ElasticsearchNodeClientFactory.create(host, clusterName,portRange, numProcessors);
+    }
+
+    private JobManager createJobManager(JobProvider jobProvider, ElasticsearchFactory esFactory)
+    {
+        return new JobManager(jobProvider, createProcessManager(jobProvider, esFactory),
+                new DataExtractorFactoryImpl(), jobId -> JobLogger.create(jobId));
     }
 
     private void addEndPoints()

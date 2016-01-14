@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -26,7 +26,8 @@
  ************************************************************/
 package com.prelert.job.process.writer;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.mock;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -42,8 +43,6 @@ import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.prelert.job.process.exceptions.MalformedJsonException;
 
-import static org.mockito.Mockito.mock;
-
 public class JsonRecordReaderTest
 {
     @Test
@@ -53,7 +52,7 @@ public class JsonRecordReaderTest
         JsonParser parser = createParser(data);
         Map<String, Integer> fieldMap = createFieldMap();
 
-        JsonRecordReader reader = new JsonRecordReader(parser, fieldMap, mock(Logger.class));
+        JsonRecordReader reader = new JsonRecordReader(parser, fieldMap, "", mock(Logger.class));
 
         String record [] = new String[3];
         boolean gotFields [] = new boolean[3];
@@ -71,6 +70,29 @@ public class JsonRecordReaderTest
         assertEquals(-1, reader.read(record, gotFields));
     }
 
+    @Test
+    public void testRead_GivenNestedField() throws JsonParseException, IOException, MalformedJsonException
+    {
+        String data = "{\"a\":10, \"b\":20, \"c\":{\"d\":30, \"e\":40}}";
+        JsonParser parser = createParser(data);
+        Map<String, Integer> fieldMap = new HashMap<>();
+        fieldMap.put("a", 0);
+        fieldMap.put("b", 1);
+        fieldMap.put("c.e", 2);
+
+        JsonRecordReader reader = new JsonRecordReader(parser, fieldMap, "", mock(Logger.class));
+
+        String record [] = new String[3];
+        boolean gotFields [] = new boolean[3];
+
+        assertEquals(4, reader.read(record, gotFields));
+        assertEquals("10", record[0]);
+        assertEquals("20", record[1]);
+        assertEquals("40", record[2]);
+
+        assertEquals(-1, reader.read(record, gotFields));
+    }
+
     /**
      * There's a problem with the parser where in this case it skips over the first 2 records
      * instead of to the end of the first record which is invalid json.
@@ -84,7 +106,7 @@ public class JsonRecordReaderTest
         JsonParser parser = createParser(data);
         Map<String, Integer> fieldMap = createFieldMap();
 
-        JsonRecordReader reader = new JsonRecordReader(parser, fieldMap, mock(Logger.class));
+        JsonRecordReader reader = new JsonRecordReader(parser, fieldMap, "", mock(Logger.class));
 
         String record [] = new String[3];
         boolean gotFields [] = new boolean[3];
@@ -107,7 +129,7 @@ public class JsonRecordReaderTest
         JsonParser parser = createParser(data);
         Map<String, Integer> fieldMap = createFieldMap();
 
-        JsonRecordReader reader = new JsonRecordReader(parser, fieldMap, mock(Logger.class));
+        JsonRecordReader reader = new JsonRecordReader(parser, fieldMap, "", mock(Logger.class));
 
         String record [] = new String[3];
         boolean gotFields [] = new boolean[3];
@@ -138,7 +160,7 @@ public class JsonRecordReaderTest
         JsonParser parser = createParser(builder.toString());
         Map<String, Integer> fieldMap = createFieldMap();
 
-        JsonRecordReader reader = new JsonRecordReader(parser, fieldMap, mock(Logger.class));
+        JsonRecordReader reader = new JsonRecordReader(parser, fieldMap, "", mock(Logger.class));
         String record [] = new String[3];
         boolean gotFields [] = new boolean[3];
 
@@ -149,6 +171,34 @@ public class JsonRecordReaderTest
         }
     }
 
+    @Test
+    public void testRead_GivenDataEmbeddedInSource() throws JsonParseException, IOException,
+            MalformedJsonException
+    {
+        String data = "{\"took\": 1,\"hits\":{\"total\":1,\"hits\":["
+                + "{\"_index\":\"foo\",\"_source\":{\"a\":1,\"b\":2,\"c\":3}},"
+                + "{\"_index\":\"foo\",\"_source\":{\"a\":4,\"b\":5,\"c\":6}}"
+                + "]}}\n";
+        JsonParser parser = createParser(data);
+        Map<String, Integer> fieldMap = createFieldMap();
+
+        JsonRecordReader reader = new JsonRecordReader(parser, fieldMap, "_source", mock(Logger.class));
+
+        String record [] = new String[3];
+        boolean gotFields [] = new boolean[3];
+
+        assertEquals(3, reader.read(record, gotFields));
+        assertEquals("1", record[0]);
+        assertEquals("2", record[1]);
+        assertEquals("3", record[2]);
+
+        assertEquals(3, reader.read(record, gotFields));
+        assertEquals("4", record[0]);
+        assertEquals("5", record[1]);
+        assertEquals("6", record[2]);
+
+        assertEquals(-1, reader.read(record, gotFields));
+    }
 
     private JsonParser createParser(String input) throws JsonParseException, IOException
     {
