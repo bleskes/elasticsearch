@@ -97,7 +97,7 @@ public class ClusterStatsCollector extends AbstractCollector<ClusterStatsCollect
         DiscoveryNode sourceNode = localNode();
 
         // Adds a cluster info document
-        String resolvedIndex = dataIndexNameResolver.resolve(timestamp);
+        String resolvedIndex = resolveDataIndexName(timestamp);
         ClusterInfoMarvelDoc clusterInfoDoc = new ClusterInfoMarvelDoc(resolvedIndex, CLUSTER_INFO_TYPE, clusterUUID);
         clusterInfoDoc.setClusterUUID(clusterUUID);
         clusterInfoDoc.setTimestamp(timestamp);

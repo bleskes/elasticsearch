@@ -39,7 +39,7 @@ public abstract class Exporter  {
     protected final String type;
     protected final Config config;
     protected final ESLogger logger;
-    protected final IndexNameResolver indexNameResolver;
+    protected final MonitoringIndexNameResolver indexNameResolver;
     protected final @Nullable TimeValue bulkTimeout;
 
     public Exporter(String type, Config config) {
@@ -58,7 +58,7 @@ public abstract class Exporter  {
         return config.name;
     }
 
-    public IndexNameResolver indexNameResolver() {
+    public MonitoringIndexNameResolver indexNameResolver() {
         return indexNameResolver;
     }
 
@@ -140,7 +140,7 @@ public abstract class Exporter  {
     /**
      *
      */
-    public class DefaultIndexNameResolver implements IndexNameResolver {
+    public class DefaultIndexNameResolver implements MonitoringIndexNameResolver {
 
         private final DateTimeFormatter indexTimeFormatter;
 
@@ -166,6 +166,11 @@ public abstract class Exporter  {
         public String resolve(long timestamp) {
             return MarvelSettings.MONITORING_INDICES_PREFIX + String.valueOf(MarvelTemplateUtils.TEMPLATE_VERSION) + "-" +
                     indexTimeFormatter.print(timestamp);
+        }
+
+        @Override
+        public String indexPattern() {
+            return MarvelSettings.MONITORING_INDICES_PREFIX + String.valueOf(MarvelTemplateUtils.TEMPLATE_VERSION) + "-*";
         }
 
         @Override
