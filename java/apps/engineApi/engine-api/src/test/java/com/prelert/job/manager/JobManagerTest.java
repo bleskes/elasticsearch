@@ -92,6 +92,7 @@ public class JobManagerTest
     @Mock private JobProvider m_JobProvider;
     @Mock private ProcessManager m_ProcessManager;
     @Mock private DataExtractorFactory m_DataExtractorFactory;
+    @Mock private JobLoggerFactory m_JobLoggerFactory;
 
     @Before
     public void setUp()
@@ -437,7 +438,8 @@ public class JobManagerTest
 
     private JobManager createJobManager()
     {
-        return new JobManager(m_JobProvider, m_ProcessManager, m_DataExtractorFactory);
+        return new JobManager(m_JobProvider, m_ProcessManager, m_DataExtractorFactory,
+                m_JobLoggerFactory);
     }
 
     private static Answer<Object> writeToWriter()

@@ -120,6 +120,7 @@ public class JobManager implements DataProcessor
     private final JobProvider m_JobProvider;
     private final ProcessManager m_ProcessManager;
     private final DataExtractorFactory m_DataExtractorFactory;
+    private final JobLoggerFactory m_JobLoggerFactory;
 
     private AtomicLong m_IdSequence;
     private DateTimeFormatter m_JobIdDateFormat;
@@ -155,11 +156,12 @@ public class JobManager implements DataProcessor
      * @param jobDetailsProvider
      */
     public JobManager(JobProvider jobProvider, ProcessManager processManager,
-            DataExtractorFactory dataExtractorFactory)
+            DataExtractorFactory dataExtractorFactory, JobLoggerFactory jobLoggerFactory)
     {
         m_JobProvider = Objects.requireNonNull(jobProvider);
         m_ProcessManager = Objects.requireNonNull(processManager);
         m_DataExtractorFactory = Objects.requireNonNull(dataExtractorFactory);
+        m_JobLoggerFactory = Objects.requireNonNull(jobLoggerFactory);
 
         m_MaxAllowedJobs = calculateMaxJobsAllowed();
 
@@ -293,7 +295,7 @@ public class JobManager implements DataProcessor
     {
         LOGGER.info("Scheduling job: " + job.getId());
         JobScheduler jobScheduler = new JobScheduler(job.getId(), job.getAnalysisConfig()
-                .getBucketSpan(), m_DataExtractorFactory.newExtractor(job), this);
+                .getBucketSpan(), m_DataExtractorFactory.newExtractor(job), this, m_JobLoggerFactory);
         m_ScheduledJobs.put(job.getId(), jobScheduler);
         jobScheduler.start(job);
     }

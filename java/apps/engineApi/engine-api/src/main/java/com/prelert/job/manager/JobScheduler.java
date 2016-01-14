@@ -63,20 +63,22 @@ public class JobScheduler
             new DataLoadParams(false, new TimeRange(null, null));
 
     private final String m_JobId;
+    private final long m_BucketSpanMs;
     private final DataExtractor m_DataExtractor;
     private final DataProcessor m_DataProcessor;
-    private final long m_BucketSpanMs;
+    private final JobLoggerFactory m_JobLoggerFactory;
     private final TaskScheduler m_RealTimeScheduler;
     private volatile long m_LastBucketEndMs;
     private volatile Logger m_Logger;
 
     public JobScheduler(String jobId, long bucketSpan, DataExtractor dataExtractor,
-            DataProcessor dataProcessor)
+            DataProcessor dataProcessor, JobLoggerFactory jobLoggerFactory)
     {
         m_JobId = jobId;
         m_BucketSpanMs = bucketSpan * MILLIS_IN_SECOND;
         m_DataExtractor = Objects.requireNonNull(dataExtractor);
         m_DataProcessor = Objects.requireNonNull(dataProcessor);
+        m_JobLoggerFactory = Objects.requireNonNull(jobLoggerFactory);
         m_RealTimeScheduler = new TaskScheduler(createNextTask(), calculateNextTime());
     }
 
@@ -154,7 +156,7 @@ public class JobScheduler
 
     public Future<?> start(JobDetails job)
     {
-        m_Logger = JobLogger.create(m_JobId);
+        m_Logger = m_JobLoggerFactory.newLogger(m_JobId);
         updateLastBucketEndFromLatestRecordTimestamp(job);
         SchedulerConfig schedulerConfig = job.getSchedulerConfig();
         String lookbackStart = calcLookbackStart(schedulerConfig);

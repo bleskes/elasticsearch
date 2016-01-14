@@ -30,6 +30,7 @@ package com.prelert.job.manager;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
@@ -78,7 +79,7 @@ public class JobSchedulerTest
         JobDetails job = newJobWithElasticScheduler(1400000000000L, 1400000001000L);
         MockDataExtractor dataExtractor = new MockDataExtractor(Arrays.asList(1));
         MockDataProcessor dataProcessor = new MockDataProcessor();
-        m_JobScheduler = new JobScheduler(JOB_ID, BUCKET_SPAN, dataExtractor, dataProcessor);
+        m_JobScheduler = createJobScheduler(dataExtractor, dataProcessor);
 
         m_JobScheduler.start(job).get();
         m_JobScheduler.stop();
@@ -96,7 +97,7 @@ public class JobSchedulerTest
         JobDetails job = newJobWithElasticScheduler(1400000000000L, 1400000001000L);
         MockDataExtractor dataExtractor = new MockDataExtractor(Arrays.asList(3));
         MockDataProcessor dataProcessor = new MockDataProcessor();
-        m_JobScheduler = new JobScheduler(JOB_ID, BUCKET_SPAN, dataExtractor, dataProcessor);
+        m_JobScheduler = createJobScheduler(dataExtractor, dataProcessor);
 
         m_JobScheduler.start(job).get();
         m_JobScheduler.stop();
@@ -116,7 +117,7 @@ public class JobSchedulerTest
         JobDetails job = newJobWithElasticScheduler(1400000000000L, null);
         MockDataExtractor dataExtractor = new MockDataExtractor(Arrays.asList(1, 1, 1));
         MockDataProcessor dataProcessor = new MockDataProcessor();
-        m_JobScheduler = new JobScheduler(JOB_ID, BUCKET_SPAN, dataExtractor, dataProcessor);
+        m_JobScheduler = createJobScheduler(dataExtractor, dataProcessor);
 
         long nowMs = new Date().getTime();
         long bucketSpanMs = BUCKET_SPAN * 1000;
@@ -176,7 +177,7 @@ public class JobSchedulerTest
         MockDataExtractor dataExtractor = new MockDataExtractor(Arrays.asList(1, 1));
         MockDataProcessor dataProcessor = new MockDataProcessor();
         dataProcessor.setShouldThrow(true);
-        m_JobScheduler = new JobScheduler(JOB_ID, BUCKET_SPAN, dataExtractor, dataProcessor);
+        m_JobScheduler = createJobScheduler(dataExtractor, dataProcessor);
 
         m_JobScheduler.start(job).get();
         m_JobScheduler.stop();
@@ -205,7 +206,7 @@ public class JobSchedulerTest
 
         MockDataExtractor dataExtractor = new MockDataExtractor(Arrays.asList(1));
         MockDataProcessor dataProcessor = new MockDataProcessor();
-        m_JobScheduler = new JobScheduler(JOB_ID, BUCKET_SPAN, dataExtractor, dataProcessor);
+        m_JobScheduler = createJobScheduler(dataExtractor, dataProcessor);
 
         m_JobScheduler.start(job).get();
         m_JobScheduler.stop();
@@ -223,7 +224,7 @@ public class JobSchedulerTest
         JobDetails job = newJobWithElasticScheduler(null, 1400000000000L);
         MockDataExtractor dataExtractor = new MockDataExtractor(Arrays.asList(1));
         MockDataProcessor dataProcessor = new MockDataProcessor();
-        m_JobScheduler = new JobScheduler(JOB_ID, BUCKET_SPAN, dataExtractor, dataProcessor);
+        m_JobScheduler = createJobScheduler(dataExtractor, dataProcessor);
 
         m_JobScheduler.start(job).get();
         m_JobScheduler.stop();
@@ -249,6 +250,12 @@ public class JobSchedulerTest
         }
         job.setSchedulerConfig(schedulerConfig);
         return job;
+    }
+
+    private JobScheduler createJobScheduler(DataExtractor dataExtractor, DataProcessor dataProcessor)
+    {
+        return new JobScheduler(JOB_ID, BUCKET_SPAN, dataExtractor, dataProcessor,
+                jobId -> mock(Logger.class));
     }
 
     private static class MockDataExtractor implements DataExtractor
