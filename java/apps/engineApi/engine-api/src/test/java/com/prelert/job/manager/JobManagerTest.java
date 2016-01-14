@@ -35,11 +35,13 @@ import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Date;
 import java.util.Map;
 import java.util.Optional;
 
@@ -419,6 +421,26 @@ public class JobManagerTest
         String answer = jobManager.previewTransforms("foo", mock(InputStream.class));
 
         assertEquals("csv,header,one\n", answer);
+    }
+
+    @Test
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    public void testUpdateLastDataTime() throws UnknownJobException
+    {
+        givenProcessInfo(2);
+        JobManager jobManager = createJobManager();
+
+        jobManager.updateLastDataTime("foo", new Date(1450790609000L));
+
+        ArgumentCaptor<Map> updateCaptor = ArgumentCaptor.forClass(Map.class);
+        verify(m_JobProvider, times(1)).updateJob(eq("foo"), updateCaptor.capture());
+        Map updates = updateCaptor.getValue();
+        Date update = (Date) updates.get(JobDetails.LAST_DATA_TIME);
+        assertNotNull(update);
+        assertEquals(1450790609000L, update.getTime());
+
+        // Check immediate call doesn't do anything
+        jobManager.updateLastDataTime("foo", new Date(1450790609000L));
     }
 
     private void givenProcessInfo(int maxLicenseJobs)

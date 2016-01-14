@@ -631,7 +631,7 @@ public class JobManager implements DataProcessor
      * @return
      * @throws UnknownJobException
      */
-    private void updateLastDataTime(String jobId, Date time) throws UnknownJobException
+    public void updateLastDataTime(String jobId, Date time) throws UnknownJobException
     {
         long lastDataTimeEpochMs = retrieveCachedLastDataTimeEpochMs(jobId);
         long newTimeEpochMs = time.getTime();
