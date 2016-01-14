@@ -133,6 +133,7 @@ public class JobDetails
         m_AnalysisConfig = jobConfig.getAnalysisConfig();
         m_AnalysisLimits = jobConfig.getAnalysisLimits();
         m_SchedulerConfig = jobConfig.getSchedulerConfig();
+        invokeIfNotNull(m_SchedulerConfig, sc -> sc.fillDefaults());
         m_Transforms = jobConfig.getTransforms();
         m_ModelDebugConfig = jobConfig.getModelDebugConfig();
 

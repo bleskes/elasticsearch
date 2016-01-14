@@ -30,7 +30,6 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 
 import com.prelert.job.SchedulerConfig;
 import com.prelert.job.SchedulerConfig.DataSource;
@@ -83,7 +82,6 @@ public final class SchedulerConfigVerifier
                 checkUrl("baseUrl", config.getBaseUrl());
                 checkFieldIsNotNullOrEmpty("indexes", config.getIndexes());
                 checkFieldIsNotNullOrEmpty("types", config.getTypes());
-                checkFieldIsNotNullOrEmpty("query", config.getQuery());
                 checkTimesInOrder("startTime", config.getStartTime(), config.getEndTime());
                 checkFieldIsNull(dataSource, "path", config.getPath());
                 checkFieldIsNull(dataSource, "tail", config.getTail());
@@ -136,17 +134,6 @@ public final class SchedulerConfigVerifier
         String msg = Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_INVALID_OPTION_VALUE,
                                          fieldName, "" + value);
         throw new JobConfigurationException(msg, ErrorCodes.SCHEDULER_INVALID_OPTION_VALUE);
-    }
-
-    private static void checkFieldIsNotNullOrEmpty(String fieldName, Map<String, Object> value)
-            throws JobConfigurationException
-    {
-        if (value == null || value.isEmpty())
-        {
-            String msg = Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_INVALID_OPTION_VALUE,
-                                             fieldName, "" + value);
-            throw new JobConfigurationException(msg, ErrorCodes.SCHEDULER_INVALID_OPTION_VALUE);
-        }
     }
 
     private static void checkTimesInOrder(String startTimeFieldName, Date startTime, Date endTime)

@@ -28,6 +28,7 @@
 package com.prelert.job;
 
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -69,6 +70,11 @@ public class SchedulerConfig
             return DataSource.valueOf(valueUpperCase);
         }
     }
+
+    /**
+     * The default query for elasticsearch searches
+     */
+    private static final String MATCH_ALL_ES_QUERY = "match_all";
 
     /**
      * Serialisation names
@@ -244,6 +250,15 @@ public class SchedulerConfig
     public void setEndTime(Date endTime)
     {
         m_EndTime = endTime;
+    }
+
+    public void fillDefaults()
+    {
+        if (m_DataSource == DataSource.ELASTICSEARCH && m_Query == null)
+        {
+            m_Query = new HashMap<>();
+            m_Query.put(MATCH_ALL_ES_QUERY, new HashMap<String, Object>());
+        }
     }
 
     /**

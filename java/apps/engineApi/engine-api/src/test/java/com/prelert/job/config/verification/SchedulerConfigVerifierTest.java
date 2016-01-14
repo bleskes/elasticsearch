@@ -26,6 +26,8 @@
  ************************************************************/
 package com.prelert.job.config.verification;
 
+import static org.junit.Assert.assertTrue;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -123,11 +125,7 @@ public class SchedulerConfigVerifierTest
         conf.setIndexes(new ArrayList<String>(Arrays.asList("myindex")));
         conf.setTypes(new ArrayList<String>(Arrays.asList("mytype")));
 
-        m_ExpectedException.expect(JobConfigurationException.class);
-        m_ExpectedException.expect(
-                ErrorCodeMatcher.hasErrorCode(ErrorCodes.SCHEDULER_INVALID_OPTION_VALUE));
-
-        SchedulerConfigVerifier.verify(conf);
+        assertTrue(SchedulerConfigVerifier.verify(conf));
     }
 
     @Test

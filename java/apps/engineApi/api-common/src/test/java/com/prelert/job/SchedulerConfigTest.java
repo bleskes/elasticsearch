@@ -28,10 +28,12 @@
 package com.prelert.job;
 
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.log4j.BasicConfigurator;
@@ -40,6 +42,7 @@ import org.junit.Test;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
+import com.prelert.job.SchedulerConfig.DataSource;
 
 
 public class SchedulerConfigTest
@@ -89,5 +92,51 @@ public class SchedulerConfigTest
         String queryAsJson = new ObjectMapper().writeValueAsString(query);
         logger.info("Round trip of query is: " + queryAsJson);
         assertTrue(query.containsKey("match_all"));
+    }
+
+    @Test
+    public void testFillDefaults_GivenDataSourceIsFile()
+    {
+        SchedulerConfig schedulerConfig = new SchedulerConfig();
+        schedulerConfig.setDataSource(DataSource.FILE);
+
+        schedulerConfig.fillDefaults();
+
+        assertEquals(new SchedulerConfig(), schedulerConfig);
+    }
+
+    @Test
+    public void testFillDefaults_GivenDataSourceIsElasticsearchAndQueryIsNotNull()
+    {
+        SchedulerConfig originalSchedulerConfig = new SchedulerConfig();
+        originalSchedulerConfig.setDataSource(DataSource.ELASTICSEARCH);
+        originalSchedulerConfig.setQuery(new HashMap<String, Object>());
+
+        SchedulerConfig defaultedSchedulerConfig = new SchedulerConfig();
+        defaultedSchedulerConfig.setDataSource(DataSource.ELASTICSEARCH);
+        defaultedSchedulerConfig.setQuery(new HashMap<String, Object>());
+
+        defaultedSchedulerConfig.fillDefaults();
+
+        assertEquals(originalSchedulerConfig, defaultedSchedulerConfig);
+    }
+
+    @Test
+    public void testFillDefaults_GivenDataSourceIsElasticsearchAndQueryIsNull()
+    {
+        SchedulerConfig expectedSchedulerConfig = new SchedulerConfig();
+        expectedSchedulerConfig.setDataSource(DataSource.ELASTICSEARCH);
+        Map<String, Object> defaultQuery = new HashMap<>();
+        defaultQuery.put("match_all", new HashMap<String, Object>());
+        expectedSchedulerConfig.setQuery(defaultQuery);
+
+        SchedulerConfig defaultedSchedulerConfig = new SchedulerConfig();
+        defaultedSchedulerConfig.setDataSource(DataSource.ELASTICSEARCH);
+        defaultedSchedulerConfig.setQuery(null);
+
+        defaultedSchedulerConfig.fillDefaults();
+
+        assertEquals(expectedSchedulerConfig, defaultedSchedulerConfig);
+        assertTrue(defaultedSchedulerConfig.getQuery().containsKey("match_all"));
     }
 }
