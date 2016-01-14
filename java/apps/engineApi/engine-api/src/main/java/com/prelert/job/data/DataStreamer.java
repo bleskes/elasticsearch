@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -47,7 +47,7 @@ import com.prelert.job.UnknownJobException;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.exceptions.JobInUseException;
 import com.prelert.job.exceptions.TooManyJobsException;
-import com.prelert.job.manager.JobManager;
+import com.prelert.job.manager.DataProcessor;
 import com.prelert.job.messages.Messages;
 import com.prelert.job.process.exceptions.MalformedJsonException;
 import com.prelert.job.process.exceptions.MissingFieldException;
@@ -69,14 +69,14 @@ public class DataStreamer
 
     private final boolean m_ShouldPersistDataToDisk;
     private final String m_BaseDirectory;
-    private final JobManager m_JobManager;
+    private final DataProcessor m_DataProccesor;
 
-    public DataStreamer(JobManager jobManager)
+    public DataStreamer(DataProcessor dataProcessor)
     {
         // should we save uploaded data and where
         m_BaseDirectory = System.getProperty("persistbasedir");
         m_ShouldPersistDataToDisk = m_BaseDirectory != null;
-        m_JobManager = Objects.requireNonNull(jobManager);
+        m_DataProccesor = Objects.requireNonNull(dataProcessor);
     }
 
     /**
@@ -201,6 +201,6 @@ public class DataStreamer
             JsonParseException, JobInUseException, HighProportionOfBadTimestampsException,
             OutOfOrderRecordsException, TooManyJobsException, MalformedJsonException
     {
-        return m_JobManager.submitDataLoadJob(jobId, input, params);
+        return m_DataProccesor.submitDataLoadJob(jobId, input, params);
     }
 }
