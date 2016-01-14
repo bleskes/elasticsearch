@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -41,6 +41,9 @@ public class ElasticsearchMappingsTest
         StringBuilder expected = new StringBuilder();
         expected.append("{" +
                         "  \"job\": {" +
+                        "    \"_all\": {" +
+                        "      \"enabled\": false" +
+                        "    }," +
                         "    \"properties\": {" +
                         "      \"id\": {" +
                         "        \"type\": \"string\"," +
@@ -267,9 +270,6 @@ public class ElasticsearchMappingsTest
                         "          }" +
                         "        }" +
                         "      }" +
-                        "    }," +
-                        "    \"_all\": {" +
-                        "      \"enabled\": \"false\"" +
                         "    }" +
                         "  }" +
                         "}");
