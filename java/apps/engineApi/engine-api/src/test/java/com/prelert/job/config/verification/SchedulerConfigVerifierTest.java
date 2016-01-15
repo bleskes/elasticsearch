@@ -31,6 +31,9 @@ import static org.junit.Assert.assertTrue;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
 import java.util.Map;
 
 import org.junit.Rule;
@@ -127,8 +130,8 @@ public class SchedulerConfigVerifierTest
         SchedulerConfig conf = new SchedulerConfig();
         conf.setDataSource(DataSource.ELASTICSEARCH);
         conf.setBaseUrl("http://localhost:9200/");
-        conf.setIndexes(new ArrayList<String>(Arrays.asList("myindex")));
-        conf.setTypes(new ArrayList<String>(Arrays.asList("mytype")));
+        conf.setIndexes(Arrays.asList("myindex"));
+        conf.setTypes(Arrays.asList("mytype"));
         ObjectMapper mapper = new ObjectMapper();
         conf.setQuery(mapper.readValue("{ \"match_all\" : {} }", new TypeReference<Map<String, Object>>(){}));
 
@@ -141,8 +144,8 @@ public class SchedulerConfigVerifierTest
         SchedulerConfig conf = new SchedulerConfig();
         conf.setDataSource(DataSource.ELASTICSEARCH);
         conf.setBaseUrl("http://localhost:9200/");
-        conf.setIndexes(new ArrayList<String>(Arrays.asList("myindex")));
-        conf.setTypes(new ArrayList<String>(Arrays.asList("mytype")));
+        conf.setIndexes(Arrays.asList("myindex"));
+        conf.setTypes(Arrays.asList("mytype"));
 
         assertTrue(SchedulerConfigVerifier.verify(conf));
     }
@@ -153,8 +156,8 @@ public class SchedulerConfigVerifierTest
         SchedulerConfig conf = new SchedulerConfig();
         conf.setDataSource(DataSource.ELASTICSEARCH);
         conf.setBaseUrl("http://localhost:9200/");
-        conf.setIndexes(new ArrayList<String>(Arrays.asList("myindex")));
-        conf.setTypes(new ArrayList<String>(Arrays.asList("mytype")));
+        conf.setIndexes(Arrays.asList("myindex"));
+        conf.setTypes(Arrays.asList("mytype"));
         ObjectMapper mapper = new ObjectMapper();
         conf.setQuery(mapper.readValue("{ \"match_all\" : {} }", new TypeReference<Map<String, Object>>(){}));
         conf.setTail(true);
@@ -162,6 +165,126 @@ public class SchedulerConfigVerifierTest
         m_ExpectedException.expect(JobConfigurationException.class);
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.SCHEDULER_FIELD_NOT_SUPPORTED_FOR_DATASOURCE));
+        SchedulerConfigVerifier.verify(conf);
+    }
+
+    @Test
+    public void testCheckValidElasticsearch_GivenNullIndexes() throws JobConfigurationException,
+            IOException
+    {
+        SchedulerConfig conf = new SchedulerConfig();
+        conf.setDataSource(DataSource.ELASTICSEARCH);
+        conf.setBaseUrl("http://localhost:9200/");
+        conf.setIndexes(null);
+        conf.setTypes(new ArrayList<String>(Arrays.asList("mytype")));
+
+        m_ExpectedException.expect(JobConfigurationException.class);
+        m_ExpectedException.expect(
+                ErrorCodeMatcher.hasErrorCode(ErrorCodes.SCHEDULER_INVALID_OPTION_VALUE));
+        m_ExpectedException.expectMessage("Invalid indexes value 'null' in scheduler configuration");
+
+        SchedulerConfigVerifier.verify(conf);
+    }
+
+    @Test
+    public void testCheckValidElasticsearch_GivenEmptyIndexes() throws JobConfigurationException,
+            IOException
+    {
+        SchedulerConfig conf = new SchedulerConfig();
+        conf.setDataSource(DataSource.ELASTICSEARCH);
+        conf.setBaseUrl("http://localhost:9200/");
+        conf.setIndexes(Collections.emptyList());
+        conf.setTypes(Arrays.asList("mytype"));
+
+        m_ExpectedException.expect(JobConfigurationException.class);
+        m_ExpectedException.expect(
+                ErrorCodeMatcher.hasErrorCode(ErrorCodes.SCHEDULER_INVALID_OPTION_VALUE));
+        m_ExpectedException.expectMessage("Invalid indexes value '[]' in scheduler configuration");
+
+        SchedulerConfigVerifier.verify(conf);
+    }
+
+    @Test
+    public void testCheckValidElasticsearch_GivenIndexesContainsOnlyNulls()
+            throws JobConfigurationException, IOException
+    {
+        List<String> indexes = new ArrayList<>();
+        indexes.add(null);
+        indexes.add(null);
+
+        SchedulerConfig conf = new SchedulerConfig();
+        conf.setDataSource(DataSource.ELASTICSEARCH);
+        conf.setBaseUrl("http://localhost:9200/");
+        conf.setIndexes(indexes);
+        conf.setTypes(Arrays.asList("mytype"));
+
+        m_ExpectedException.expect(JobConfigurationException.class);
+        m_ExpectedException.expect(
+                ErrorCodeMatcher.hasErrorCode(ErrorCodes.SCHEDULER_INVALID_OPTION_VALUE));
+        m_ExpectedException.expectMessage("Invalid indexes value '[null, null]' in scheduler configuration");
+
+        SchedulerConfigVerifier.verify(conf);
+    }
+
+    @Test
+    public void testCheckValidElasticsearch_GivenIndexesContainsOnlyEmptyStrings()
+            throws JobConfigurationException, IOException
+    {
+        List<String> indexes = new ArrayList<>();
+        indexes.add("");
+        indexes.add("");
+
+        SchedulerConfig conf = new SchedulerConfig();
+        conf.setDataSource(DataSource.ELASTICSEARCH);
+        conf.setBaseUrl("http://localhost:9200/");
+        conf.setIndexes(indexes);
+        conf.setTypes(Arrays.asList("mytype"));
+
+        m_ExpectedException.expect(JobConfigurationException.class);
+        m_ExpectedException.expect(
+                ErrorCodeMatcher.hasErrorCode(ErrorCodes.SCHEDULER_INVALID_OPTION_VALUE));
+        m_ExpectedException.expectMessage("Invalid indexes value '[, ]' in scheduler configuration");
+
+        SchedulerConfigVerifier.verify(conf);
+    }
+
+    @Test
+    public void testCheckValidElasticsearch_GivenStartTimeIsEqualToEndTime()
+            throws JobConfigurationException, IOException
+    {
+        SchedulerConfig conf = new SchedulerConfig();
+        conf.setDataSource(DataSource.ELASTICSEARCH);
+        conf.setBaseUrl("http://localhost:9200/");
+        conf.setIndexes(Arrays.asList("myIndex"));
+        conf.setTypes(Arrays.asList("mytype"));
+        conf.setStartTime(new Date(1451606400000L));
+        conf.setEndTime(new Date(1451606400000L));
+
+        m_ExpectedException.expect(JobConfigurationException.class);
+        m_ExpectedException.expect(
+                ErrorCodeMatcher.hasErrorCode(ErrorCodes.SCHEDULER_INVALID_OPTION_VALUE));
+        m_ExpectedException.expectMessage("Invalid startTime value '01/01/16 00:00' in scheduler configuration");
+
+        SchedulerConfigVerifier.verify(conf);
+    }
+
+    @Test
+    public void testCheckValidElasticsearch_GivenStartTimeIsAfterEndTime()
+            throws JobConfigurationException, IOException
+    {
+        SchedulerConfig conf = new SchedulerConfig();
+        conf.setDataSource(DataSource.ELASTICSEARCH);
+        conf.setBaseUrl("http://localhost:9200/");
+        conf.setIndexes(Arrays.asList("myIndex"));
+        conf.setTypes(Arrays.asList("mytype"));
+        conf.setStartTime(new Date(1451606400000L));
+        conf.setEndTime(new Date(1351606400000L));
+
+        m_ExpectedException.expect(JobConfigurationException.class);
+        m_ExpectedException.expect(
+                ErrorCodeMatcher.hasErrorCode(ErrorCodes.SCHEDULER_INVALID_OPTION_VALUE));
+        m_ExpectedException.expectMessage("Invalid startTime value '01/01/16 00:00' in scheduler configuration");
+
         SchedulerConfigVerifier.verify(conf);
     }
 }
