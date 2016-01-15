@@ -263,7 +263,7 @@ public class SchedulerConfigVerifierTest
         m_ExpectedException.expect(JobConfigurationException.class);
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.SCHEDULER_INVALID_OPTION_VALUE));
-        m_ExpectedException.expectMessage("Invalid startTime value '01/01/16 00:00' in scheduler configuration");
+        m_ExpectedException.expectMessage("Invalid startTime value");
 
         SchedulerConfigVerifier.verify(conf);
     }
@@ -283,7 +283,7 @@ public class SchedulerConfigVerifierTest
         m_ExpectedException.expect(JobConfigurationException.class);
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.SCHEDULER_INVALID_OPTION_VALUE));
-        m_ExpectedException.expectMessage("Invalid startTime value '01/01/16 00:00' in scheduler configuration");
+        m_ExpectedException.expectMessage("Invalid startTime value");
 
         SchedulerConfigVerifier.verify(conf);
     }
