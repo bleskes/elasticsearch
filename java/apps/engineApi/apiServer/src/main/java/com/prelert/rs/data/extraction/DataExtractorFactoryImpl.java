@@ -81,7 +81,7 @@ public class DataExtractorFactoryImpl implements DataExtractorFactory
         }
         catch (JsonProcessingException e)
         {
-            throw new IllegalStateException();
+            throw new IllegalStateException(e);
         }
     }
 
