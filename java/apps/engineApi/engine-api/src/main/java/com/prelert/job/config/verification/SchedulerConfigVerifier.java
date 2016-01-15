@@ -87,9 +87,7 @@ public final class SchedulerConfigVerifier
                 checkFieldIsNull(dataSource, "tail", config.getTail());
                 break;
             default:
-                String msg = Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_UNKNOWN_DATASOURCE,
-                                                 config.getDataSource().toString());
-                throw new JobConfigurationException(msg, ErrorCodes.SCHEDULER_UNKNOWN_DATASOURCE);
+                throw new IllegalStateException();
         }
 
         return true;

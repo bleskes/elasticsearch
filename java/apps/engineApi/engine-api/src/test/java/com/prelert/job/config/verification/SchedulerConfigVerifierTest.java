@@ -51,6 +51,25 @@ public class SchedulerConfigVerifierTest
     public ExpectedException m_ExpectedException = ExpectedException.none();
 
     @Test
+    public void testVerify_GivenAllDataSources_DoesNotThrowIllegalStateException() throws JobConfigurationException
+    {
+        for (DataSource dataSource : DataSource.values())
+        {
+            SchedulerConfig conf = new SchedulerConfig();
+            conf.setDataSource(dataSource);
+
+            try
+            {
+                SchedulerConfigVerifier.verify(conf);
+            }
+            catch (JobConfigurationException e)
+            {
+                // Expected
+            }
+        }
+    }
+
+    @Test
     public void testCheckValidFile_AllOk() throws JobConfigurationException
     {
         SchedulerConfig conf = new SchedulerConfig();
