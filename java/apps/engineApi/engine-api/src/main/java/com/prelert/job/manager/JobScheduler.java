@@ -61,6 +61,7 @@ public class JobScheduler
     private static final int MILLIS_IN_SECOND = 1000;
     private static final DataLoadParams DATA_LOAD_PARAMS =
             new DataLoadParams(false, new TimeRange(null, null));
+    private static final int DEFAULT_TIME_OFFSET_MS = 100;
 
     private final String m_JobId;
     private final long m_BucketSpanMs;
@@ -149,7 +150,7 @@ public class JobScheduler
         return () -> {
             long nowMs = new Date().getTime();
             long bucketSurplus = nowMs - toBucketStartEpochMs(nowMs);
-            Date nextTime = new Date(nowMs - bucketSurplus + m_BucketSpanMs + 100);
+            Date nextTime = new Date(nowMs - bucketSurplus + m_BucketSpanMs + DEFAULT_TIME_OFFSET_MS);
             return LocalDateTime.ofInstant(nextTime.toInstant(), ZoneId.systemDefault());
         };
     }

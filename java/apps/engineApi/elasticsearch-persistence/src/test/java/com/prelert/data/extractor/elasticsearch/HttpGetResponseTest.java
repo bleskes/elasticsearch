@@ -28,10 +28,14 @@
 package com.prelert.data.extractor.elasticsearch;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 
 import org.junit.Test;
@@ -46,5 +50,22 @@ public class HttpGetResponseTest
 
         assertEquals("foo\nbar", response.getResponseAsString());
         assertEquals(200, response.getResponseCode());
+    }
+
+    @Test
+    public void testGetResponseAsStream_GivenStreamThrows() throws IOException
+    {
+        InputStream stream = mock(InputStream.class);
+        HttpGetResponse response = new HttpGetResponse(stream, 200);
+
+        try
+        {
+            response.getResponseAsString();
+            fail();
+        }
+        catch (UncheckedIOException e)
+        {
+            verify(stream).close();
+        }
     }
 }

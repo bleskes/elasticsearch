@@ -70,29 +70,39 @@ public final class SchedulerConfigVerifier
         switch (dataSource)
         {
             case FILE:
-                checkFieldIsNotNullOrEmpty("path", config.getPath());
-                checkFieldIsNull(dataSource, "baseUrl", config.getBaseUrl());
-                checkFieldIsNull(dataSource, "indexes", config.getIndexes());
-                checkFieldIsNull(dataSource, "types", config.getTypes());
-                checkFieldIsNull(dataSource, "query", config.getQuery());
-                checkFieldIsNull(dataSource, "startTime", config.getStartTime());
-                checkFieldIsNull(dataSource, "endTime", config.getEndTime());
+                verifyFileSchedulerConfig(config, dataSource);
                 break;
             case ELASTICSEARCH:
-                checkUrl("baseUrl", config.getBaseUrl());
-                checkFieldIsNotNullOrEmpty("indexes", config.getIndexes());
-                checkFieldIsNotNullOrEmpty("types", config.getTypes());
-                checkTimesInOrder("startTime", config.getStartTime(), config.getEndTime());
-                checkFieldIsNull(dataSource, "path", config.getPath());
-                checkFieldIsNull(dataSource, "tail", config.getTail());
+                verifyElasticsearchSchedulerConfig(config, dataSource);
                 break;
             default:
-                String msg = Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_UNKNOWN_DATASOURCE,
-                                                 config.getDataSource().toString());
-                throw new JobConfigurationException(msg, ErrorCodes.SCHEDULER_UNKNOWN_DATASOURCE);
+                throw new IllegalStateException();
         }
 
         return true;
+    }
+
+    private static void verifyFileSchedulerConfig(SchedulerConfig config, DataSource dataSource)
+            throws JobConfigurationException
+    {
+        checkFieldIsNotNullOrEmpty(SchedulerConfig.PATH, config.getPath());
+        checkFieldIsNull(dataSource, SchedulerConfig.BASE_URL, config.getBaseUrl());
+        checkFieldIsNull(dataSource, SchedulerConfig.INDEXES, config.getIndexes());
+        checkFieldIsNull(dataSource, SchedulerConfig.TYPES, config.getTypes());
+        checkFieldIsNull(dataSource, SchedulerConfig.QUERY, config.getQuery());
+        checkFieldIsNull(dataSource, SchedulerConfig.START_TIME, config.getStartTime());
+        checkFieldIsNull(dataSource, SchedulerConfig.END_TIME, config.getEndTime());
+    }
+
+    private static void verifyElasticsearchSchedulerConfig(SchedulerConfig config,
+            DataSource dataSource) throws JobConfigurationException
+    {
+        checkUrl(SchedulerConfig.BASE_URL, config.getBaseUrl());
+        checkFieldIsNotNullOrEmpty(SchedulerConfig.INDEXES, config.getIndexes());
+        checkFieldIsNotNullOrEmpty(SchedulerConfig.TYPES, config.getTypes());
+        checkTimesInOrder(SchedulerConfig.START_TIME, config.getStartTime(), config.getEndTime());
+        checkFieldIsNull(dataSource, SchedulerConfig.PATH, config.getPath());
+        checkFieldIsNull(dataSource, SchedulerConfig.TAIL, config.getTail());
     }
 
     private static void checkFieldIsNull(DataSource dataSource, String fieldName, Object value)
@@ -112,7 +122,7 @@ public final class SchedulerConfigVerifier
         if (value == null || value.isEmpty())
         {
             String msg = Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_INVALID_OPTION_VALUE,
-                                             fieldName, "" + value);
+                                             fieldName, value);
             throw new JobConfigurationException(msg, ErrorCodes.SCHEDULER_INVALID_OPTION_VALUE);
         }
     }
@@ -132,7 +142,7 @@ public final class SchedulerConfigVerifier
         }
 
         String msg = Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_INVALID_OPTION_VALUE,
-                                         fieldName, "" + value);
+                                         fieldName, value);
         throw new JobConfigurationException(msg, ErrorCodes.SCHEDULER_INVALID_OPTION_VALUE);
     }
 
@@ -142,7 +152,7 @@ public final class SchedulerConfigVerifier
         if (startTime != null && endTime != null && startTime.getTime() >= endTime.getTime())
         {
             String msg = Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_INVALID_OPTION_VALUE,
-                                             startTimeFieldName, "" + startTime);
+                                             startTimeFieldName, startTime);
             throw new JobConfigurationException(msg, ErrorCodes.SCHEDULER_INVALID_OPTION_VALUE);
         }
     }
@@ -157,7 +167,7 @@ public final class SchedulerConfigVerifier
         catch (MalformedURLException e)
         {
             String msg = Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_INVALID_OPTION_VALUE,
-                                                fieldName, "" + value);
+                                                fieldName, value);
             throw new JobConfigurationException(msg, ErrorCodes.SCHEDULER_INVALID_OPTION_VALUE);
         }
     }

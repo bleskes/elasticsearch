@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -27,7 +27,7 @@
 
 package com.prelert.utils.scheduler;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
@@ -47,7 +47,7 @@ public class TaskSchedulerTest
     }
 
     @Test
-    public void testTaskRunsThriceGiven50MsPeriodAndWaitingFor180Ms()
+    public void testTaskRunsThriceGiven50MsPeriodAndWaitingFor200Ms()
     {
         TaskScheduler scheduler = new TaskScheduler(() -> m_TaskCount.incrementAndGet(),
                 () -> LocalDateTime.now().plus(50, ChronoUnit.MILLIS));
@@ -55,13 +55,15 @@ public class TaskSchedulerTest
 
         try
         {
-            Thread.sleep(180);
+            Thread.sleep(200);
         }
         catch (InterruptedException e)
         {
             e.printStackTrace();
         }
+        scheduler.stop();
 
-        assertEquals(3, m_TaskCount.get());
+        assertTrue(m_TaskCount.get() >= 3);
+        assertTrue(m_TaskCount.get() <= 4);
     }
 }

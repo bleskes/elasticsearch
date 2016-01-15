@@ -123,6 +123,8 @@ public class JobManager implements DataProcessor
     private static final int LAST_DATA_TIME_CACHE_SIZE = 1000;
     private static final int LAST_DATA_TIME_MIN_UPDATE_INTERVAL_MS = 1000;
 
+    private static final int MAX_JOBS_TO_RESTART = 10000;
+
     private final JobProvider m_JobProvider;
     private final ProcessManager m_ProcessManager;
     private final DataExtractorFactory m_DataExtractorFactory;
@@ -972,7 +974,7 @@ public class JobManager implements DataProcessor
     {
         Preconditions.checkState(m_ScheduledJobs.isEmpty());
 
-        getJobs(0, 10000).queryResults().stream()
+        getJobs(0, MAX_JOBS_TO_RESTART).queryResults().stream()
                 .filter(job -> job.getSchedulerConfig() != null)
                 .forEach(job -> scheduleJob(job));
     }
