@@ -327,9 +327,9 @@ public class JobDetails
         return m_AnalysisLimits;
     }
 
-    public void setAnalysisLimits(AnalysisLimits options)
+    public void setAnalysisLimits(AnalysisLimits analysisLimits)
     {
-        m_AnalysisLimits = options;
+        m_AnalysisLimits = analysisLimits;
     }
 
     public SchedulerConfig getSchedulerConfig()
