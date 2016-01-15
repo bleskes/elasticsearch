@@ -70,27 +70,39 @@ public final class SchedulerConfigVerifier
         switch (dataSource)
         {
             case FILE:
-                checkFieldIsNotNullOrEmpty("path", config.getPath());
-                checkFieldIsNull(dataSource, "baseUrl", config.getBaseUrl());
-                checkFieldIsNull(dataSource, "indexes", config.getIndexes());
-                checkFieldIsNull(dataSource, "types", config.getTypes());
-                checkFieldIsNull(dataSource, "query", config.getQuery());
-                checkFieldIsNull(dataSource, "startTime", config.getStartTime());
-                checkFieldIsNull(dataSource, "endTime", config.getEndTime());
+                verifyFileSchedulerConfig(config, dataSource);
                 break;
             case ELASTICSEARCH:
-                checkUrl("baseUrl", config.getBaseUrl());
-                checkFieldIsNotNullOrEmpty("indexes", config.getIndexes());
-                checkFieldIsNotNullOrEmpty("types", config.getTypes());
-                checkTimesInOrder("startTime", config.getStartTime(), config.getEndTime());
-                checkFieldIsNull(dataSource, "path", config.getPath());
-                checkFieldIsNull(dataSource, "tail", config.getTail());
+                verifyElasticsearchSchedulerConfig(config, dataSource);
                 break;
             default:
                 throw new IllegalStateException();
         }
 
         return true;
+    }
+
+    private static void verifyFileSchedulerConfig(SchedulerConfig config, DataSource dataSource)
+            throws JobConfigurationException
+    {
+        checkFieldIsNotNullOrEmpty("path", config.getPath());
+        checkFieldIsNull(dataSource, "baseUrl", config.getBaseUrl());
+        checkFieldIsNull(dataSource, "indexes", config.getIndexes());
+        checkFieldIsNull(dataSource, "types", config.getTypes());
+        checkFieldIsNull(dataSource, "query", config.getQuery());
+        checkFieldIsNull(dataSource, "startTime", config.getStartTime());
+        checkFieldIsNull(dataSource, "endTime", config.getEndTime());
+    }
+
+    private static void verifyElasticsearchSchedulerConfig(SchedulerConfig config,
+            DataSource dataSource) throws JobConfigurationException
+    {
+        checkUrl("baseUrl", config.getBaseUrl());
+        checkFieldIsNotNullOrEmpty("indexes", config.getIndexes());
+        checkFieldIsNotNullOrEmpty("types", config.getTypes());
+        checkTimesInOrder("startTime", config.getStartTime(), config.getEndTime());
+        checkFieldIsNull(dataSource, "path", config.getPath());
+        checkFieldIsNull(dataSource, "tail", config.getTail());
     }
 
     private static void checkFieldIsNull(DataSource dataSource, String fieldName, Object value)
