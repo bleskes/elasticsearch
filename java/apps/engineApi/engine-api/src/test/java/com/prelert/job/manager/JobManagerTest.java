@@ -314,8 +314,9 @@ public class JobManagerTest
     }
 
     @Test
-    public void createJob_licensingConstraintMaxJobs()
-    throws UnknownJobException, JobConfigurationException, JobIdAlreadyExistsException, IOException
+    public void createJob_licensingConstraintMaxJobs() throws UnknownJobException,
+            JobConfigurationException, JobIdAlreadyExistsException, IOException,
+            CannotStartSchedulerWhileItIsStoppingException
     {
         givenLicenseConstraints(2, 2, 0);
         when(m_ProcessManager.numberOfRunningJobs()).thenReturn(3);
@@ -339,7 +340,7 @@ public class JobManagerTest
     @Test
     public void createJob_licensingConstraintMaxDetectors()
     throws UnknownJobException, JobIdAlreadyExistsException,
-            IOException, TooManyJobsException
+            IOException, TooManyJobsException, CannotStartSchedulerWhileItIsStoppingException
     {
         givenLicenseConstraints(5, 1, 0);
         when(m_ProcessManager.numberOfRunningJobs()).thenReturn(3);
@@ -365,9 +366,9 @@ public class JobManagerTest
     }
 
     @Test
-    public void createJob_licensingConstraintMaxPartitions()
-    throws UnknownJobException, JobIdAlreadyExistsException,
-            IOException, TooManyJobsException
+    public void createJob_licensingConstraintMaxPartitions() throws UnknownJobException,
+            JobIdAlreadyExistsException, IOException, TooManyJobsException,
+            CannotStartSchedulerWhileItIsStoppingException
     {
         givenLicenseConstraints(5, -1, 0);
         when(m_ProcessManager.numberOfRunningJobs()).thenReturn(3);

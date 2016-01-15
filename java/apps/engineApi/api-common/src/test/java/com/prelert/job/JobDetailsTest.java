@@ -57,6 +57,7 @@ public class JobDetailsTest
         assertEquals(JobStatus.CLOSED, jobDetails.getStatus());
         assertNotNull(jobDetails.getCreateTime());
         assertEquals(600L, jobDetails.getTimeout());
+        assertNull(jobDetails.getSchedulerStatus());
         assertNull(jobDetails.getAnalysisConfig());
         assertNull(jobDetails.getAnalysisLimits());
         assertNull(jobDetails.getDataDescription());
@@ -106,6 +107,7 @@ public class JobDetailsTest
         JobDetails anotherJobDetails = new JobDetails();
         anotherJobDetails.setId("anotherId");
         anotherJobDetails.setTimeout(10000L);
+        anotherJobDetails.setSchedulerStatus(JobSchedulerStatus.STOPPED);
         anotherJobDetails.setAnalysisConfig(anotherAnalysisConfig);
         anotherJobDetails.setAnalysisLimits(anotherAnalysisLimits);
         anotherJobDetails.setDataDescription(anotherDataDescription);
@@ -128,6 +130,7 @@ public class JobDetailsTest
 
         assertEquals("thisId", jobDetails.getId());
         assertEquals(JobStatus.CLOSED, jobDetails.getStatus());
+        assertEquals(JobSchedulerStatus.STOPPED, jobDetails.getSchedulerStatus());
         assertEquals(10000L, jobDetails.getTimeout());
         assertEquals(anotherAnalysisConfig, jobDetails.getAnalysisConfig());
         assertEquals(anotherAnalysisLimits, jobDetails.getAnalysisLimits());
@@ -226,6 +229,18 @@ public class JobDetailsTest
         Date createTime = new Date();
         jobDetails1.setCreateTime(createTime);
         jobDetails2.setCreateTime(createTime);
+
+        assertFalse(jobDetails1.equals(jobDetails2));
+    }
+
+    @Test
+    public void testEquals_GivenJobDetailsWithSchedulerStatus()
+    {
+        JobConfiguration jobConfiguration = new JobConfiguration();
+        JobDetails jobDetails1 = new JobDetails("foo", jobConfiguration);
+        jobDetails1.setSchedulerStatus(JobSchedulerStatus.STOPPED);
+        JobDetails jobDetails2 = new JobDetails("bar", jobConfiguration);
+        jobDetails2.setSchedulerStatus(JobSchedulerStatus.STARTED);
 
         assertFalse(jobDetails1.equals(jobDetails2));
     }

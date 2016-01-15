@@ -57,6 +57,7 @@ import com.prelert.job.DataCounts;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.JobDetails;
 import com.prelert.job.JobIdAlreadyExistsException;
+import com.prelert.job.JobSchedulerStatus;
 import com.prelert.job.ModelDebugConfig;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.alert.AlertObserver;
@@ -237,10 +238,11 @@ public class JobManager implements DataProcessor
      * @throws TooManyJobsException If the license is violated
      * @throws JobConfigurationException If the license is violated
      * @throws JobIdAlreadyExistsException If the alias is already taken
+     * @throws CannotStartSchedulerWhileItIsStoppingException If the job scheduler is still being stopped
      */
     public JobDetails createJob(JobConfiguration jobConfig) throws UnknownJobException,
             IOException, TooManyJobsException, JobConfigurationException,
-            JobIdAlreadyExistsException
+            JobIdAlreadyExistsException, CannotStartSchedulerWhileItIsStoppingException
     {
         checkCreateJobForTooManyJobsAgainstLicenseLimit();
 
@@ -311,11 +313,12 @@ public class JobManager implements DataProcessor
         return jobDetails;
     }
 
-    private void scheduleJob(JobDetails job)
+    private void scheduleJob(JobDetails job) throws CannotStartSchedulerWhileItIsStoppingException
     {
         LOGGER.info("Scheduling job: " + job.getId());
         JobScheduler jobScheduler = new JobScheduler(job.getId(), job.getAnalysisConfig()
-                .getBucketSpan(), m_DataExtractorFactory.newExtractor(job), this, m_JobLoggerFactory);
+                .getBucketSpan(), m_DataExtractorFactory.newExtractor(job), this, m_JobProvider,
+                m_JobLoggerFactory);
         m_ScheduledJobs.put(job.getId(), jobScheduler);
         jobScheduler.start(job);
     }
@@ -974,9 +977,19 @@ public class JobManager implements DataProcessor
     {
         Preconditions.checkState(m_ScheduledJobs.isEmpty());
 
-        getJobs(0, MAX_JOBS_TO_RESTART).queryResults().stream()
-                .filter(job -> job.getSchedulerConfig() != null)
-                .forEach(job -> scheduleJob(job));
+        for (JobDetails job : getJobs(0, MAX_JOBS_TO_RESTART).queryResults())
+        {
+            if (job.getSchedulerStatus() == JobSchedulerStatus.STARTED)
+            {
+                try
+                {
+                    scheduleJob(job);
+                } catch (CannotStartSchedulerWhileItIsStoppingException e)
+                {
+                    LOGGER.error("Failed to restart scheduler for job: " + job.getId(), e);
+                }
+            }
+        }
     }
 
     private static int calculateMaxJobsAllowed()

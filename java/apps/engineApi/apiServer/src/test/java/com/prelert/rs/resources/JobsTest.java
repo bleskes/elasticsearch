@@ -61,6 +61,7 @@ import com.prelert.job.errorcodes.ErrorCodeMatcher;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.exceptions.JobInUseException;
 import com.prelert.job.exceptions.TooManyJobsException;
+import com.prelert.job.manager.CannotStartSchedulerWhileItIsStoppingException;
 import com.prelert.job.persistence.QueryPage;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
 import com.prelert.rs.data.Acknowledgement;
@@ -162,7 +163,7 @@ public class JobsTest extends ServiceTest
     @Test
     public void testCreateJob_GivenValidConfig() throws UnknownJobException,
             JobConfigurationException, TooManyJobsException, JobIdAlreadyExistsException,
-            IOException
+            IOException, CannotStartSchedulerWhileItIsStoppingException
     {
         JobConfiguration config = createValidJobConfig();
 
@@ -178,7 +179,7 @@ public class JobsTest extends ServiceTest
     @Test
     public void testCreateJob_GivenInvalidConfig() throws UnknownJobException,
             JobConfigurationException, TooManyJobsException, JobIdAlreadyExistsException,
-            IOException
+            IOException, CannotStartSchedulerWhileItIsStoppingException
     {
         m_ExpectedException.expect(JobConfigurationException.class);
 
@@ -188,7 +189,7 @@ public class JobsTest extends ServiceTest
     @Test
     public void testCreateJob_GivenServerError() throws UnknownJobException,
             JobConfigurationException, TooManyJobsException, JobIdAlreadyExistsException,
-            IOException
+            IOException, CannotStartSchedulerWhileItIsStoppingException
     {
         JobConfiguration config = createValidJobConfig();
         when(jobManager().createJob(config)).thenReturn(null);

@@ -55,6 +55,7 @@ import com.prelert.job.config.verification.JobConfigurationVerifier;
 import com.prelert.job.exceptions.JobInUseException;
 import com.prelert.job.exceptions.TooManyJobsException;
 import com.prelert.job.logs.JobLogs;
+import com.prelert.job.manager.CannotStartSchedulerWhileItIsStoppingException;
 import com.prelert.job.manager.JobManager;
 import com.prelert.job.persistence.DataStoreException;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
@@ -166,9 +167,9 @@ public class Jobs extends ResourceWithJobManager
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public Response createJob(JobConfiguration config)
-    throws UnknownJobException, JobConfigurationException, IOException,
-            TooManyJobsException, JobIdAlreadyExistsException
+    public Response createJob(JobConfiguration config) throws UnknownJobException,
+            JobConfigurationException, IOException, TooManyJobsException,
+            JobIdAlreadyExistsException, CannotStartSchedulerWhileItIsStoppingException
     {
         LOGGER.debug("Creating new job");
 

@@ -55,6 +55,7 @@ public class JobDetails
      */
     public static final String ID = "id";
     public static final String STATUS = "status";
+    public static final String SCHEDULER_STATUS = "schedulerStatus";
     public static final String CREATE_TIME = "createTime";
     public static final String FINISHED_TIME = "finishedTime";
     public static final String LAST_DATA_TIME = "lastDataTime";
@@ -76,6 +77,7 @@ public class JobDetails
     private String m_JobId;
     private String m_Description;
     private JobStatus m_Status;
+    private JobSchedulerStatus m_SchedulerStatus;
 
     private Date m_CreateTime;
     private Date m_FinishedTime;
@@ -160,6 +162,7 @@ public class JobDetails
 
         m_Timeout = details.getTimeout();
 
+        m_SchedulerStatus = details.getSchedulerStatus();
         m_Description = details.getDescription();
         m_AnalysisConfig = details.getAnalysisConfig();
         m_AnalysisLimits = details.getAnalysisLimits();
@@ -241,6 +244,16 @@ public class JobDetails
     public void setStatus(JobStatus status)
     {
         m_Status = status;
+    }
+
+    public JobSchedulerStatus getSchedulerStatus()
+    {
+        return m_SchedulerStatus;
+    }
+
+    public void setSchedulerStatus(JobSchedulerStatus schedulerStatus)
+    {
+        m_SchedulerStatus = schedulerStatus;
     }
 
     /**
@@ -595,6 +608,7 @@ public class JobDetails
         return Objects.equals(this.m_JobId, that.m_JobId) &&
                 Objects.equals(this.m_Description, that.m_Description) &&
                 (this.m_Status == that.m_Status) &&
+                (this.m_SchedulerStatus == that.m_SchedulerStatus) &&
                 Objects.equals(this.m_CreateTime, that.m_CreateTime) &&
                 Objects.equals(this.m_FinishedTime, that.m_FinishedTime) &&
                 Objects.equals(this.m_LastDataTime, that.m_LastDataTime) &&
@@ -619,9 +633,9 @@ public class JobDetails
     @Override
     public int hashCode()
     {
-        return Objects.hash(m_JobId, m_Description, m_Status, m_CreateTime, m_FinishedTime,
-                m_LastDataTime, m_Timeout, m_AnalysisConfig, m_AnalysisLimits, m_DataDescription,
-                m_ModelDebugConfig, m_ModelSizeStats, m_Transforms, m_Counts,
+        return Objects.hash(m_JobId, m_Description, m_Status, m_SchedulerStatus,m_CreateTime,
+                m_FinishedTime, m_LastDataTime, m_Timeout, m_AnalysisConfig, m_AnalysisLimits,
+                m_DataDescription, m_ModelDebugConfig, m_ModelSizeStats, m_Transforms, m_Counts,
                 m_RenormalizationWindow, m_ResultsRetentionDays, m_Location, m_DataEndpoint,
                 m_CategoryDefinitionsEndpoint, m_BucketsEndpoint, m_RecordsEndpoint,
                 m_AlertsLongPollEndpoint);
