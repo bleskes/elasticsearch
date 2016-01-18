@@ -287,7 +287,7 @@ public class JobScheduler
      */
     public void stopManual()
     {
-        stop(true);
+        stop(JobSchedulerStatus.STOPPED);
     }
 
 
@@ -298,15 +298,15 @@ public class JobScheduler
      */
     public void stopAuto()
     {
-        stop(false);
+        stop(JobSchedulerStatus.STARTED);
     }
 
     /**
      * Stops the scheduler and blocks the current thread until
      * the scheduler is stopped.
-     * @param shouldSetStoppedStatus if {@code true} the status is set to STOPPED
+     * @param finalStatus the status of the scheduler after the stop operation is finished
      */
-    private void stop(boolean shouldSetStoppedStatus)
+    private void stop(JobSchedulerStatus finalStatus)
     {
         if (m_Status != JobSchedulerStatus.STARTED)
         {
@@ -323,8 +323,7 @@ public class JobScheduler
         if (m_IsLookbackOnly == false)
         {
             closeLogger();
-            updateStatus(shouldSetStoppedStatus ? JobSchedulerStatus.STOPPED
-                    : JobSchedulerStatus.STARTED);
+            updateStatus(finalStatus);
         }
     }
 
