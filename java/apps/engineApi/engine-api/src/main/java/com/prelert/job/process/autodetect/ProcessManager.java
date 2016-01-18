@@ -43,6 +43,7 @@ import java.util.concurrent.TimeoutException;
 import org.apache.log4j.Logger;
 
 import com.fasterxml.jackson.core.JsonParseException;
+import com.prelert.app.Shutdownable;
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataCounts;
 import com.prelert.job.DataDescription;
@@ -83,27 +84,9 @@ import com.prelert.job.transform.TransformConfigs;
  * purpose of which is to stop any running processes
  * before the JVM exits
  */
-public class ProcessManager
+public class ProcessManager implements Shutdownable
 {
     private static final int WAIT_SECONDS_BEFORE_RETRY_CLOSING = 10;
-    /**
-     * JVM shutdown hook stops all the running processes
-     */
-    private static class StopProcessShutdownHook extends Thread
-    {
-        ProcessManager m_ProcessManager;
-
-        public StopProcessShutdownHook(ProcessManager pm)
-        {
-            m_ProcessManager = pm;
-        }
-
-        @Override
-        public void run()
-        {
-            m_ProcessManager.stopAllJobs();
-        }
-    }
 
     private static final Logger LOGGER = Logger.getLogger(ProcessManager.class);
 
@@ -116,22 +99,7 @@ public class ProcessManager
     private final ProcessFactory m_ProcessFactory;
     private final DataPersisterFactory m_DataPersisterFactory;
 
-    public static ProcessManager create(JobProvider jobProvider, ProcessFactory processFactory,
-            DataPersisterFactory dataPersisterFactory)
-    {
-        ProcessManager processManager = new ProcessManager(jobProvider, processFactory,
-                dataPersisterFactory);
-        addShutdownHook(processManager);
-        return processManager;
-    }
-
-    private static void addShutdownHook(ProcessManager processManager)
-    {
-        StopProcessShutdownHook shutdownHook = new StopProcessShutdownHook(processManager);
-        Runtime.getRuntime().addShutdownHook(shutdownHook);
-    }
-
-    ProcessManager(JobProvider jobProvider, ProcessFactory processFactory,
+    public ProcessManager(JobProvider jobProvider, ProcessFactory processFactory,
             DataPersisterFactory dataPersisterFactory)
     {
         m_JobIdToProcessMap = new ConcurrentHashMap<String, ProcessAndDataDescription>();
@@ -907,15 +875,8 @@ public class ProcessManager
      * straight away once the input stream is closed but will stop
      * soon after once the data has been analysed.
      */
-    public void stop()
-    {
-        stopAllJobs();
-    }
-
-    /**
-     * Shutdown the executor service and stop all running processes
-     */
-    private void stopAllJobs()
+    @Override
+    public void shutdown()
     {
         LOGGER.info("Stopping all Engine API Jobs");
 

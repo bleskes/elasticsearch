@@ -74,6 +74,7 @@ import com.prelert.rs.data.Acknowledgement;
 import com.prelert.rs.data.ApiError;
 import com.prelert.rs.data.DataPostResponse;
 import com.prelert.rs.data.MultiDataPostResult;
+import com.prelert.rs.exception.ActionNotAllowedForScheduledJobException;
 import com.prelert.rs.exception.InvalidParametersException;
 import com.prelert.rs.provider.MapperUtils;
 
@@ -162,6 +163,11 @@ public abstract class AbstractDataLoad extends ResourceWithJobManager
         idSet.remove(null);
         idSet.remove("");
 
+        for (String id : idSet)
+        {
+            checkJobIsNotScheduled(id);
+        }
+
         if (idSet.size() == 0)
         {
             return Response.status(Response.Status.BAD_REQUEST).entity(result).build();
@@ -177,6 +183,14 @@ public abstract class AbstractDataLoad extends ResourceWithJobManager
 
         Response.Status statusCode = statusCodeForResponse(result);
         return Response.status(statusCode).entity(result).build();
+    }
+
+    private void checkJobIsNotScheduled(String jobId)
+    {
+        if (jobManager().isScheduledJob(jobId))
+        {
+            throw new ActionNotAllowedForScheduledJobException();
+        }
     }
 
     private MultiDataPostResult streamToSingleJob(String jobId, DataLoadParams params,
@@ -348,6 +362,7 @@ public abstract class AbstractDataLoad extends ResourceWithJobManager
     {
         LOGGER.debug("Post to flush data upload for job " + jobId +
                      " with " + CALC_INTERIM_PARAM + '=' + calcInterim);
+        checkJobIsNotScheduled(jobId);
         checkValidFlushArgumentsCombination(calcInterim, start, end);
         TimeRange timeRange = createTimeRange(START_QUERY_PARAM, start, END_QUERY_PARAM, end);
         jobManager().flushJob(jobId, new InterimResultsParams(calcInterim, timeRange));
@@ -398,6 +413,7 @@ public abstract class AbstractDataLoad extends ResourceWithJobManager
     throws UnknownJobException, NativeProcessRunException, JobInUseException
     {
         LOGGER.debug("Post to close data upload for job " + jobId);
+        checkJobIsNotScheduled(jobId);
         jobManager().closeJob(jobId);
         LOGGER.debug("Process finished successfully, Job Id = '" + jobId + "'");
         return Response.ok().entity(new Acknowledgement()).build();

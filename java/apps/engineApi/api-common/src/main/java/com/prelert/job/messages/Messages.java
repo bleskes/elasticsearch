@@ -111,12 +111,17 @@ public final class Messages
     public static final String JOB_DATA_CONCURRENT_USE_UPDATE = "job.data.concurrent.use.update";
     public static final String JOB_DATA_CONCURRENT_USE_UPLOAD = "job.data.concurrent.use.upload";
 
+    public static final String JOB_SCHEDULER_CANNOT_START_WHILE_STOPPING = "job.scheduler.cannot.start.while.stopping";
+    public static final String JOB_SCHEDULER_NO_SUCH_SCHEDULED_JOB = "job.scheduler.no.such.scheduled.job";
+
     public static final String JOB_MISSING_QUANTILES = "job.missing.quantiles";
     public static final String JOB_UNKNOWN_ID = "job.unknown.id";
     public static final String JOB_UNKNOWN_REFERENCE = "job.unknown.reference";
 
     public static final String JSON_JOB_CONFIG_MAPPING = "json.job.config.mapping.error";
     public static final String JSON_JOB_CONFIG_PARSE = "json.job.config.parse.error";
+
+    public static final String REST_ACTION_NOT_ALLOWED_FOR_SCHEDULED_JOB = "rest.action.not.allowed.for.scheduled.job";
 
     public static final String REST_INVALID_DATETIME_PARAMS = "rest.invalid.datetime.params";
     public static final String REST_INVALID_FLUSH_PARAMS_MISSING = "rest.invalid.flush.params.missing.argument";

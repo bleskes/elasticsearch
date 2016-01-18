@@ -403,7 +403,22 @@ public enum ErrorCodes
     /**
      * Influencers cannot alert on the probability
      */
-    CANNOT_ALERT_ON_PROB(60113);
+    CANNOT_ALERT_ON_PROB(60113),
+
+    /**
+     * A job's scheduler cannot start while it is still being stopped.
+     */
+    CANNOT_START_JOB_SCHEDULER_WHILE_IT_IS_STOPPING(60114),
+
+    /**
+     * There is no such scheduled job.
+     */
+    NO_SUCH_SCHEDULED_JOB(60115),
+
+    /**
+     * There is no such scheduled job.
+     */
+    ACTION_NOT_ALLOWED_FOR_SCHEDULED_JOB(60116);
 
 
     private long m_ErrorCode;

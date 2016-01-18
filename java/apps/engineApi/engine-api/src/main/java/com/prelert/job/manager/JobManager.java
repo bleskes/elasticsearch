@@ -53,10 +53,12 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Preconditions;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import com.prelert.app.Shutdownable;
 import com.prelert.job.DataCounts;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.JobDetails;
 import com.prelert.job.JobIdAlreadyExistsException;
+import com.prelert.job.JobSchedulerStatus;
 import com.prelert.job.ModelDebugConfig;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.alert.AlertObserver;
@@ -92,7 +94,7 @@ import com.prelert.job.transform.TransformConfigs;
  * Creates jobs and handles retrieving job configuration details from
  * the data store. New jobs have a unique job id see {@linkplain #generateJobId()}
  */
-public class JobManager implements DataProcessor
+public class JobManager implements DataProcessor, Shutdownable
 {
     private static final Logger LOGGER = Logger.getLogger(JobManager.class);
 
@@ -122,6 +124,8 @@ public class JobManager implements DataProcessor
 
     private static final int LAST_DATA_TIME_CACHE_SIZE = 1000;
     private static final int LAST_DATA_TIME_MIN_UPDATE_INTERVAL_MS = 1000;
+
+    private static final int MAX_JOBS_TO_RESTART = 10000;
 
     private final JobProvider m_JobProvider;
     private final ProcessManager m_ProcessManager;
@@ -235,10 +239,11 @@ public class JobManager implements DataProcessor
      * @throws TooManyJobsException If the license is violated
      * @throws JobConfigurationException If the license is violated
      * @throws JobIdAlreadyExistsException If the alias is already taken
+     * @throws CannotStartSchedulerWhileItIsStoppingException If the job scheduler is still being stopped
      */
     public JobDetails createJob(JobConfiguration jobConfig) throws UnknownJobException,
             IOException, TooManyJobsException, JobConfigurationException,
-            JobIdAlreadyExistsException
+            JobIdAlreadyExistsException, CannotStartSchedulerWhileItIsStoppingException
     {
         checkCreateJobForTooManyJobsAgainstLicenseLimit();
 
@@ -303,18 +308,20 @@ public class JobManager implements DataProcessor
 
         if (jobDetails.getSchedulerConfig() != null)
         {
-            scheduleJob(jobDetails);
+            createJobSchedulerAndStart(jobDetails);
         }
 
         return jobDetails;
     }
 
-    private void scheduleJob(JobDetails job)
+    private void createJobSchedulerAndStart(JobDetails job)
+            throws CannotStartSchedulerWhileItIsStoppingException
     {
-        LOGGER.info("Scheduling job: " + job.getId());
         JobScheduler jobScheduler = new JobScheduler(job.getId(), job.getAnalysisConfig()
-                .getBucketSpan(), m_DataExtractorFactory.newExtractor(job), this, m_JobLoggerFactory);
+                .getBucketSpan(), m_DataExtractorFactory.newExtractor(job), this, m_JobProvider,
+                m_JobLoggerFactory);
         m_ScheduledJobs.put(job.getId(), jobScheduler);
+        LOGGER.info("Starting scheduler for job: " + job.getId());
         jobScheduler.start(job);
     }
 
@@ -682,7 +689,7 @@ public class JobManager implements DataProcessor
 
         if (m_ScheduledJobs.containsKey(jobId))
         {
-            m_ScheduledJobs.get(jobId).stop();
+            m_ScheduledJobs.get(jobId).stopManual();
             m_ScheduledJobs.remove(jobId);
         }
 
@@ -968,13 +975,52 @@ public class JobManager implements DataProcessor
         return m_ProcessManager.removeAlertObserver(jobId, ao);
     }
 
+    public void startExistingJobScheduler(String jobId)
+            throws CannotStartSchedulerWhileItIsStoppingException, NoSuchScheduledJobException
+    {
+        checkJobHasBeenScheduled(jobId);
+        JobDetails job = getJob(jobId).get();
+        LOGGER.info("Starting scheduler for job: " + jobId);
+        m_ScheduledJobs.get(jobId).start(job);
+    }
+
+    public void stopExistingJobScheduler(String jobId) throws NoSuchScheduledJobException
+    {
+        checkJobHasBeenScheduled(jobId);
+        LOGGER.info("Stopping scheduler for job: " + jobId);
+        m_ScheduledJobs.get(jobId).stopManual();
+    }
+
+    private void checkJobHasBeenScheduled(String jobId) throws NoSuchScheduledJobException
+    {
+        if (!isScheduledJob(jobId))
+        {
+            throw new NoSuchScheduledJobException(jobId);
+        }
+    }
+
+    public boolean isScheduledJob(String jobId)
+    {
+        return m_ScheduledJobs.containsKey(jobId);
+    }
+
     public void restartScheduledJobs()
     {
         Preconditions.checkState(m_ScheduledJobs.isEmpty());
 
-        getJobs(0, 10000).queryResults().stream()
-                .filter(job -> job.getSchedulerConfig() != null)
-                .forEach(job -> scheduleJob(job));
+        for (JobDetails job : getJobs(0, MAX_JOBS_TO_RESTART).queryResults())
+        {
+            if (job.getSchedulerStatus() == JobSchedulerStatus.STARTED)
+            {
+                try
+                {
+                    createJobSchedulerAndStart(job);
+                } catch (CannotStartSchedulerWhileItIsStoppingException e)
+                {
+                    LOGGER.error("Failed to restart scheduler for job: " + job.getId(), e);
+                }
+            }
+        }
     }
 
     private static int calculateMaxJobsAllowed()
@@ -1002,5 +1048,18 @@ public class JobManager implements DataProcessor
                     readMaxJobsFactor, DEFAULT_MAX_JOBS_FACTOR));
             return DEFAULT_MAX_JOBS_FACTOR;
         }
+    }
+
+
+    @Override
+    public void shutdown()
+    {
+        for (String jobId : m_ScheduledJobs.keySet())
+        {
+            m_ScheduledJobs.get(jobId).stopAuto();
+        }
+        m_ScheduledJobs.clear();
+
+        m_ProcessManager.shutdown();
     }
 }

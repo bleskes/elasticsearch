@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -28,10 +28,14 @@
 package com.prelert.utils.scheduler;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.Date;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -47,7 +51,7 @@ public class TaskSchedulerTest
     }
 
     @Test
-    public void testTaskRunsThriceGiven50MsPeriodAndWaitingFor180Ms()
+    public void testTaskRunsThriceGiven50MsPeriodAndWaitingFor200Ms()
     {
         TaskScheduler scheduler = new TaskScheduler(() -> m_TaskCount.incrementAndGet(),
                 () -> LocalDateTime.now().plus(50, ChronoUnit.MILLIS));
@@ -55,13 +59,45 @@ public class TaskSchedulerTest
 
         try
         {
-            Thread.sleep(180);
+            Thread.sleep(200);
         }
         catch (InterruptedException e)
         {
             e.printStackTrace();
         }
+        scheduler.stop(1, TimeUnit.SECONDS);
 
-        assertEquals(3, m_TaskCount.get());
+        assertTrue(m_TaskCount.get() >= 3);
+        assertTrue(m_TaskCount.get() <= 4);
+    }
+
+    @Test
+    public void testStop_BlocksUntilRunningTaskTerminates() throws InterruptedException
+    {
+        AtomicLong firstTaskStart = new AtomicLong(0);
+        AtomicLong end = new AtomicLong(0);
+
+        Runnable task = () -> {
+            int id = m_TaskCount.incrementAndGet();
+            long now = new Date().getTime();
+            if (id == 1)
+            {
+                firstTaskStart.getAndSet(now);
+            }
+            while (now - firstTaskStart.get() <= 100)
+            {
+                now = new Date().getTime();
+            }
+            end.getAndSet(now);
+        };
+
+        TaskScheduler scheduler = new TaskScheduler(task,
+                () -> LocalDateTime.now().plus(80, ChronoUnit.MILLIS));
+
+        scheduler.start();
+        Thread.sleep(160);
+        assertTrue(scheduler.stop(1, TimeUnit.SECONDS));
+        assertEquals(1, m_TaskCount.get());
+        assertTrue(end.get() - firstTaskStart.get() >= 100);
     }
 }

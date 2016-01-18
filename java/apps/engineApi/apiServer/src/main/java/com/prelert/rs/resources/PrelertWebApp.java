@@ -134,6 +134,8 @@ public class PrelertWebApp extends Application
     private ScheduledExecutorService m_ServerStatsSchedule;
     private TaskScheduler m_OldResultsRemoverSchedule;
 
+    private final ShutdownThreadBuilder m_ShutdownThreadBuilder;
+
     public PrelertWebApp()
     {
         m_ResourceClasses = new HashSet<>();
@@ -141,6 +143,7 @@ public class PrelertWebApp extends Application
         addMessageReaders();
         addMessageWriters();
         addExceptionMappers();
+        m_ShutdownThreadBuilder = new ShutdownThreadBuilder();
 
         ElasticsearchFactory esFactory = createPersistenceFactory();
         JobProvider jobProvider = esFactory.newJobProvider();
@@ -157,6 +160,9 @@ public class PrelertWebApp extends Application
         m_Singletons.add(m_JobManager);
         m_Singletons.add(m_AlertManager);
         m_Singletons.add(m_ServerInfo);
+
+        m_ShutdownThreadBuilder.addTask(m_JobManager);
+        Runtime.getRuntime().addShutdownHook(m_ShutdownThreadBuilder.build());
     }
 
     private ElasticsearchFactory createPersistenceFactory()
@@ -190,15 +196,16 @@ public class PrelertWebApp extends Application
     {
         m_ResourceClasses.add(ApiBase.class);
         m_ResourceClasses.add(AlertsLongPoll.class);
-        m_ResourceClasses.add(Jobs.class);
-        m_ResourceClasses.add(Data.class);
-        m_ResourceClasses.add(DataLoad.class);
-        m_ResourceClasses.add(Preview.class);
         m_ResourceClasses.add(Buckets.class);
         m_ResourceClasses.add(CategoryDefinitions.class);
-        m_ResourceClasses.add(Records.class);
+        m_ResourceClasses.add(Control.class);
+        m_ResourceClasses.add(Data.class);
+        m_ResourceClasses.add(DataLoad.class);
+        m_ResourceClasses.add(Jobs.class);
         m_ResourceClasses.add(Influencers.class);
         m_ResourceClasses.add(Logs.class);
+        m_ResourceClasses.add(Preview.class);
+        m_ResourceClasses.add(Records.class);
     }
 
     private void addMessageReaders()
@@ -238,8 +245,7 @@ public class PrelertWebApp extends Application
                 esFactory.newResultsReaderFactory(jobProvider),
                 esFactory.newJobDataCountsPersisterFactory(),
                 esFactory.newUsagePersisterFactory());
-        return ProcessManager.create(jobProvider, processFactory,
-                esFactory.newDataPersisterFactory());
+        return new ProcessManager(jobProvider, processFactory, esFactory.newDataPersisterFactory());
     }
 
     private void writeServerInfoDailyStartingNow()

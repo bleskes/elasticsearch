@@ -31,26 +31,33 @@ import java.io.InputStream;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 import org.apache.log4j.Logger;
 
 import com.fasterxml.jackson.core.JsonParseException;
+import com.google.common.annotations.VisibleForTesting;
 import com.prelert.job.JobDetails;
+import com.prelert.job.JobSchedulerStatus;
 import com.prelert.job.SchedulerConfig;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.data.extraction.DataExtractor;
 import com.prelert.job.exceptions.JobInUseException;
 import com.prelert.job.exceptions.TooManyJobsException;
+import com.prelert.job.persistence.JobDetailsProvider;
 import com.prelert.job.process.autodetect.JobLogger;
 import com.prelert.job.process.exceptions.MalformedJsonException;
 import com.prelert.job.process.exceptions.MissingFieldException;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
 import com.prelert.job.process.params.DataLoadParams;
+import com.prelert.job.process.params.InterimResultsParams;
 import com.prelert.job.process.params.TimeRange;
 import com.prelert.job.status.HighProportionOfBadTimestampsException;
 import com.prelert.job.status.OutOfOrderRecordsException;
@@ -61,25 +68,32 @@ public class JobScheduler
     private static final int MILLIS_IN_SECOND = 1000;
     private static final DataLoadParams DATA_LOAD_PARAMS =
             new DataLoadParams(false, new TimeRange(null, null));
+    private static final int DEFAULT_TIME_OFFSET_MS = 100;
+    private static final int STOP_TIMEOUT_MINUTES = 60;
 
     private final String m_JobId;
     private final long m_BucketSpanMs;
     private final DataExtractor m_DataExtractor;
     private final DataProcessor m_DataProcessor;
+    private final JobDetailsProvider m_JobProvider;
     private final JobLoggerFactory m_JobLoggerFactory;
-    private final TaskScheduler m_RealTimeScheduler;
+    private volatile ExecutorService m_LookbackExecutor;
+    private volatile TaskScheduler m_RealTimeScheduler;
     private volatile long m_LastBucketEndMs;
     private volatile Logger m_Logger;
+    private volatile JobSchedulerStatus m_Status;
+    private volatile boolean m_IsLookbackOnly;
 
     public JobScheduler(String jobId, long bucketSpan, DataExtractor dataExtractor,
-            DataProcessor dataProcessor, JobLoggerFactory jobLoggerFactory)
+            DataProcessor dataProcessor, JobDetailsProvider jobProvider,
+            JobLoggerFactory jobLoggerFactory)
     {
         m_JobId = jobId;
         m_BucketSpanMs = bucketSpan * MILLIS_IN_SECOND;
         m_DataExtractor = Objects.requireNonNull(dataExtractor);
         m_DataProcessor = Objects.requireNonNull(dataProcessor);
+        m_JobProvider = Objects.requireNonNull(jobProvider);
         m_JobLoggerFactory = Objects.requireNonNull(jobLoggerFactory);
-        m_RealTimeScheduler = new TaskScheduler(createNextTask(), calculateNextTime());
     }
 
     private Runnable createNextTask()
@@ -110,7 +124,7 @@ public class JobScheduler
         }
 
         m_DataExtractor.newSearch(start, end, m_Logger);
-        while(m_DataExtractor.hasNext())
+        while (m_DataExtractor.hasNext() && m_Status == JobSchedulerStatus.STARTED)
         {
             Optional<InputStream> nextDataStream = m_DataExtractor.next();
             if (nextDataStream.isPresent())
@@ -123,8 +137,28 @@ public class JobScheduler
             }
         }
         m_LastBucketEndMs = Long.valueOf(end);
-        m_Logger.info("Finished extracting and processing data. Last bucket end is: "
-                + m_LastBucketEndMs + " ms");
+
+        // Only flush if we successfully submitted all data the extractor was
+        // asked to get
+        if (!m_DataExtractor.hasNext())
+        {
+            makeResultsAvailable();
+        }
+    }
+
+    private void makeResultsAvailable()
+    {
+        try
+        {
+            // This ensures the results are available as soon as possible in the
+            // case where we're searching specific time periods once and only once
+            m_DataProcessor.flushJob(m_JobId,
+                    new InterimResultsParams(false, new TimeRange(null, m_LastBucketEndMs / MILLIS_IN_SECOND)));
+        }
+        catch (UnknownJobException | NativeProcessRunException | JobInUseException e)
+        {
+            m_Logger.error("An error has occurred while flushing job '" + m_JobId + "'", e);
+        }
     }
 
     private boolean submitData(InputStream stream)
@@ -149,21 +183,47 @@ public class JobScheduler
         return () -> {
             long nowMs = new Date().getTime();
             long bucketSurplus = nowMs - toBucketStartEpochMs(nowMs);
-            Date nextTime = new Date(nowMs - bucketSurplus + m_BucketSpanMs + 100);
+            Date nextTime = new Date(nowMs - bucketSurplus + m_BucketSpanMs + DEFAULT_TIME_OFFSET_MS);
             return LocalDateTime.ofInstant(nextTime.toInstant(), ZoneId.systemDefault());
         };
     }
 
-    public Future<?> start(JobDetails job)
+    public void start(JobDetails job) throws CannotStartSchedulerWhileItIsStoppingException
     {
+        if (job.getSchedulerStatus() == JobSchedulerStatus.STOPPING)
+        {
+            throw new CannotStartSchedulerWhileItIsStoppingException(m_JobId);
+        }
+
         m_Logger = m_JobLoggerFactory.newLogger(m_JobId);
+        if (job.getSchedulerStatus() == JobSchedulerStatus.STARTED)
+        {
+            m_Logger.info("Cannot start scheduler as it is already started.");
+            return;
+        }
+        updateStatus(JobSchedulerStatus.STARTED);
+        m_LookbackExecutor = Executors.newSingleThreadExecutor();
         updateLastBucketEndFromLatestRecordTimestamp(job);
         SchedulerConfig schedulerConfig = job.getSchedulerConfig();
         String lookbackStart = calcLookbackStart(schedulerConfig);
         String lookbackEnd = calcLookbackEnd(schedulerConfig);
-        boolean startRealTime = schedulerConfig.getEndTime() == null;
-        return Executors.newSingleThreadExecutor().submit(
-                createLookbackAndStartRealTimeTask(lookbackStart, lookbackEnd, startRealTime));
+        m_IsLookbackOnly = schedulerConfig.getEndTime() != null;
+        m_LookbackExecutor.execute(createLookbackAndStartRealTimeTask(lookbackStart, lookbackEnd));
+    }
+
+    private void updateStatus(JobSchedulerStatus status)
+    {
+        m_Status = status;
+        Map<String, Object> updates = new HashMap<>();
+        updates.put(JobDetails.SCHEDULER_STATUS, status);
+        try
+        {
+            m_JobProvider.updateJob(m_JobId, updates);
+        }
+        catch (UnknownJobException e)
+        {
+            throw new IllegalStateException();
+        }
     }
 
     private void updateLastBucketEndFromLatestRecordTimestamp(JobDetails job)
@@ -173,7 +233,7 @@ public class JobScheduler
             return;
         }
         Date latestRecordTimestamp = job.getCounts().getLatestRecordTimeStamp();
-        m_LastBucketEndMs = toBucketStartEpochMs(latestRecordTimestamp) + m_BucketSpanMs;
+        m_LastBucketEndMs = latestRecordTimestamp.getTime() + MILLIS_IN_SECOND;
     }
 
     private String calcLookbackStart(SchedulerConfig schedulerConfig)
@@ -199,32 +259,98 @@ public class JobScheduler
         return String.valueOf(endEpochMs);
     }
 
-    private Runnable createLookbackAndStartRealTimeTask(String start, String end,
-            boolean startRealTime)
+    private Runnable createLookbackAndStartRealTimeTask(String start, String end)
     {
         return () -> {
             m_Logger.info("Starting lookback");
             extractAndProcessData(start, end);
             m_Logger.info("Lookback has finished");
-            if (startRealTime)
+            if (m_IsLookbackOnly)
+            {
+                closeLogger();
+                updateStatus(JobSchedulerStatus.STOPPED);
+            }
+            else
             {
                 m_Logger.info("Entering real-time mode");
+                m_RealTimeScheduler = new TaskScheduler(createNextTask(), calculateNextTime());
                 m_RealTimeScheduler.start();
             }
+            m_LookbackExecutor.shutdown();
         };
     }
 
-    public void stop()
+    /**
+     * Stops the scheduler and blocks the current thread until
+     * the scheduler is stopped. At the end of the stopping process
+     * the status is set to STOPPED.
+     */
+    public void stopManual()
     {
-        if (m_RealTimeScheduler != null)
+        stop(JobSchedulerStatus.STOPPED);
+    }
+
+
+    /**
+     * Stops the scheduler and blocks the current thread until
+     * the scheduler is stopped. At the end of the stopping process
+     * the status is set to STARTED.
+     */
+    public void stopAuto()
+    {
+        stop(JobSchedulerStatus.STARTED);
+    }
+
+    /**
+     * Stops the scheduler and blocks the current thread until
+     * the scheduler is stopped.
+     * @param finalStatus the status of the scheduler after the stop operation is finished
+     */
+    private void stop(JobSchedulerStatus finalStatus)
+    {
+        if (m_Status != JobSchedulerStatus.STARTED)
         {
-            m_RealTimeScheduler.stop();
+            return;
         }
-        if (m_Logger != null)
+
+        updateStatus(JobSchedulerStatus.STOPPING);
+
+        if (awaitLookbackTermination() == false || stopRealtimeScheduler() == false)
         {
-            m_Logger.info("Scheduler has stopped");
-            JobLogger.close(m_Logger);
-            m_Logger = null;
+            m_Logger.error("Unable to stop the scheduler.");
         }
+
+        if (m_IsLookbackOnly == false)
+        {
+            closeLogger();
+            updateStatus(finalStatus);
+        }
+    }
+
+    @VisibleForTesting
+    boolean awaitLookbackTermination()
+    {
+        try
+        {
+            return m_LookbackExecutor.awaitTermination(STOP_TIMEOUT_MINUTES, TimeUnit.MINUTES);
+        }
+        catch (InterruptedException e)
+        {
+            Thread.currentThread().interrupt();
+            return false;
+        }
+    }
+
+    private boolean stopRealtimeScheduler()
+    {
+        return m_RealTimeScheduler == null
+                || m_RealTimeScheduler.stop(STOP_TIMEOUT_MINUTES, TimeUnit.MINUTES);
+    }
+
+    private void closeLogger()
+    {
+        m_Logger.info("Scheduler has stopped");
+        JobLogger.close(m_Logger);
+        m_Logger = null;
     }
 }

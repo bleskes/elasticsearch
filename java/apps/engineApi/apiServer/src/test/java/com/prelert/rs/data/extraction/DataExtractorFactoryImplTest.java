@@ -27,62 +27,62 @@
 
 package com.prelert.rs.data.extraction;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Map;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.annotations.VisibleForTesting;
+import org.junit.Test;
+
 import com.prelert.data.extractor.elasticsearch.ElasticsearchDataExtractor;
+import com.prelert.job.DataDescription;
+import com.prelert.job.DataDescription.DataFormat;
 import com.prelert.job.JobDetails;
 import com.prelert.job.SchedulerConfig;
 import com.prelert.job.SchedulerConfig.DataSource;
 import com.prelert.job.data.extraction.DataExtractor;
-import com.prelert.job.data.extraction.DataExtractorFactory;
 
-public class DataExtractorFactoryImpl implements DataExtractorFactory
+public class DataExtractorFactoryImplTest
 {
-    @Override
-    public DataExtractor newExtractor(JobDetails job)
+    private DataExtractorFactoryImpl m_Factory = new DataExtractorFactoryImpl();
+
+    @Test
+    public void testNewExtractor_GivenDataSourceIsElasticsearch()
     {
-        SchedulerConfig schedulerConfig = job.getSchedulerConfig();
-        if (schedulerConfig.getDataSource() == DataSource.ELASTICSEARCH)
-        {
-            return createElasticsearchDataExtractor(job);
-        }
-        throw new IllegalArgumentException();
+        DataDescription dataDescription = new DataDescription();
+        dataDescription.setFormat(DataFormat.ELASTICSEARCH);
+        dataDescription.setTimeField("time");
+
+        SchedulerConfig schedulerConfig = new SchedulerConfig();
+        schedulerConfig.setDataSource(DataSource.ELASTICSEARCH);
+        schedulerConfig.setBaseUrl("http://localhost:9200");
+        schedulerConfig.setIndexes(Arrays.asList("foo"));
+        schedulerConfig.setTypes(Arrays.asList("bar"));
+        Map<String, Object> query = new HashMap<>();
+        query.put("match_all", new HashMap<String, Object>());
+        schedulerConfig.setQuery(query);
+
+        JobDetails job = new JobDetails();
+        job.setDataDescription(dataDescription);
+        job.setSchedulerConfig(schedulerConfig);
+
+        DataExtractor dataExtractor = m_Factory.newExtractor(job);
+
+        assertTrue(dataExtractor instanceof ElasticsearchDataExtractor);
+        assertEquals("\"match_all\":{}", m_Factory.stringifyElasticsearchQuery(query));
     }
 
-    private DataExtractor createElasticsearchDataExtractor(JobDetails job)
+    @Test (expected = IllegalArgumentException.class)
+    public void testNewExtractor_GivenDataSourceIsFile()
     {
-        String timeField = job.getDataDescription().getTimeField();
-        SchedulerConfig schedulerConfig = job.getSchedulerConfig();
-        return ElasticsearchDataExtractor.create(schedulerConfig.getBaseUrl(),
-                schedulerConfig.getIndexes(), schedulerConfig.getTypes(),
-                stringifyElasticsearchQuery(schedulerConfig.getQuery()), timeField);
-    }
+        SchedulerConfig schedulerConfig = new SchedulerConfig();
+        schedulerConfig.setDataSource(DataSource.FILE);
 
-    @VisibleForTesting
-    String stringifyElasticsearchQuery(Map<String, Object> queryMap)
-    {
-        String queryStr = writeObjectAsJson(queryMap);
-        if (queryStr.startsWith("{") && queryStr.endsWith("}"))
-        {
-            return queryStr.substring(1, queryStr.length() - 1);
-        }
-        return queryStr;
-    }
+        JobDetails job = new JobDetails();
+        job.setSchedulerConfig(schedulerConfig);
 
-    private static String writeObjectAsJson(Object obj)
-    {
-        ObjectMapper objectMapper = new ObjectMapper();
-        try
-        {
-            return objectMapper.writeValueAsString(obj);
-        }
-        catch (JsonProcessingException e)
-        {
-            throw new IllegalStateException(e);
-        }
+        m_Factory.newExtractor(job);
     }
-
 }

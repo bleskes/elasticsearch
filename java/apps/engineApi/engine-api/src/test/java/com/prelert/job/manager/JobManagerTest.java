@@ -33,6 +33,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -45,6 +46,7 @@ import java.util.Date;
 import java.util.Map;
 import java.util.Optional;
 
+import org.apache.log4j.Logger;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -65,8 +67,11 @@ import com.prelert.job.JobConfiguration;
 import com.prelert.job.JobDetails;
 import com.prelert.job.JobIdAlreadyExistsException;
 import com.prelert.job.ModelDebugConfig;
+import com.prelert.job.SchedulerConfig;
+import com.prelert.job.SchedulerConfig.DataSource;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.config.verification.JobConfigurationException;
+import com.prelert.job.data.extraction.DataExtractor;
 import com.prelert.job.data.extraction.DataExtractorFactory;
 import com.prelert.job.errorcodes.ErrorCodeMatcher;
 import com.prelert.job.errorcodes.ErrorCodes;
@@ -314,8 +319,9 @@ public class JobManagerTest
     }
 
     @Test
-    public void createJob_licensingConstraintMaxJobs()
-    throws UnknownJobException, JobConfigurationException, JobIdAlreadyExistsException, IOException
+    public void createJob_licensingConstraintMaxJobs() throws UnknownJobException,
+            JobConfigurationException, JobIdAlreadyExistsException, IOException,
+            CannotStartSchedulerWhileItIsStoppingException
     {
         givenLicenseConstraints(2, 2, 0);
         when(m_ProcessManager.numberOfRunningJobs()).thenReturn(3);
@@ -339,7 +345,7 @@ public class JobManagerTest
     @Test
     public void createJob_licensingConstraintMaxDetectors()
     throws UnknownJobException, JobIdAlreadyExistsException,
-            IOException, TooManyJobsException
+            IOException, TooManyJobsException, CannotStartSchedulerWhileItIsStoppingException
     {
         givenLicenseConstraints(5, 1, 0);
         when(m_ProcessManager.numberOfRunningJobs()).thenReturn(3);
@@ -365,9 +371,9 @@ public class JobManagerTest
     }
 
     @Test
-    public void createJob_licensingConstraintMaxPartitions()
-    throws UnknownJobException, JobIdAlreadyExistsException,
-            IOException, TooManyJobsException
+    public void createJob_licensingConstraintMaxPartitions() throws UnknownJobException,
+            JobIdAlreadyExistsException, IOException, TooManyJobsException,
+            CannotStartSchedulerWhileItIsStoppingException
     {
         givenLicenseConstraints(5, -1, 0);
         when(m_ProcessManager.numberOfRunningJobs()).thenReturn(3);
@@ -443,6 +449,77 @@ public class JobManagerTest
         jobManager.updateLastDataTime("foo", new Date(1450790609000L));
     }
 
+    @Test
+    public void testStartExistingScheduledJob_GivenNoScheduledJob() throws NoSuchScheduledJobException,
+            CannotStartSchedulerWhileItIsStoppingException
+    {
+        givenProcessInfo(2);
+        JobManager jobManager = createJobManager();
+
+        m_ExpectedException.expect(NoSuchScheduledJobException.class);
+        m_ExpectedException.expectMessage("There is no job 'foo' with a scheduler configured");
+        m_ExpectedException.expect(ErrorCodeMatcher.hasErrorCode(ErrorCodes.NO_SUCH_SCHEDULED_JOB));
+
+        jobManager.startExistingJobScheduler("foo");
+    }
+
+    @Test
+    public void testStartExistingScheduledJob_GivenStoppedScheduledJob()
+            throws NoSuchScheduledJobException, UnknownJobException,
+            CannotStartSchedulerWhileItIsStoppingException, TooManyJobsException,
+            JobConfigurationException, JobIdAlreadyExistsException, IOException
+    {
+        givenProcessInfo(2);
+        JobManager jobManager = createJobManager();
+        JobConfiguration jobConfig = createScheduledJobConfig();
+
+        when(m_JobProvider.jobIdIsUnique("foo")).thenReturn(true);
+        Logger jobLogger = mock(Logger.class);
+        when(m_JobLoggerFactory.newLogger("foo")).thenReturn(jobLogger);
+        DataExtractor dataExtractor = mock(DataExtractor.class);
+        when(m_DataExtractorFactory.newExtractor(any(JobDetails.class))).thenReturn(dataExtractor);
+
+        JobDetails job = jobManager.createJob(jobConfig);
+        DataCounts dataCounts = new DataCounts();
+        dataCounts.setLatestRecordTimeStamp(new Date(0));
+        job.setCounts(dataCounts);
+        when(m_JobProvider.getJobDetails("foo")).thenReturn(Optional.of(job));
+
+        // Stop it to be able to start it
+        jobManager.stopExistingJobScheduler("foo");
+
+        jobManager.startExistingJobScheduler("foo");
+
+        jobManager.stopExistingJobScheduler("foo");
+
+        verify(dataExtractor, times(2)).newSearch(anyString(), anyString(), eq(jobLogger));
+    }
+
+    @Test
+    public void testStopExistingScheduledJob_GivenNoScheduledJob() throws NoSuchScheduledJobException,
+            CannotStartSchedulerWhileItIsStoppingException
+    {
+        givenProcessInfo(2);
+        JobManager jobManager = createJobManager();
+
+        m_ExpectedException.expect(NoSuchScheduledJobException.class);
+        m_ExpectedException.expectMessage("There is no job 'foo' with a scheduler configured");
+        m_ExpectedException.expect(ErrorCodeMatcher.hasErrorCode(ErrorCodes.NO_SUCH_SCHEDULED_JOB));
+
+        jobManager.stopExistingJobScheduler("foo");
+    }
+
+    @Test
+    public void testShutdown()
+    {
+        givenProcessInfo(2);
+        JobManager jobManager = createJobManager();
+
+        jobManager.shutdown();
+
+        verify(m_ProcessManager).shutdown();
+    }
+
     private void givenProcessInfo(int maxLicenseJobs)
     {
         String info = String.format("{\"jobs\":\"%d\"}", maxLicenseJobs);
@@ -476,5 +553,21 @@ public class JobManagerTest
                 return null;
             }
         };
+    }
+
+    private static JobConfiguration createScheduledJobConfig()
+    {
+        AnalysisConfig analysisConfig = new AnalysisConfig();
+        analysisConfig.setBucketSpan(3600L);
+
+        SchedulerConfig schedulerConfig = new SchedulerConfig();
+        schedulerConfig.setDataSource(DataSource.ELASTICSEARCH);
+        schedulerConfig.setBaseUrl("http://localhost");
+
+        JobConfiguration jobConfig = new JobConfiguration();
+        jobConfig.setId("foo");
+        jobConfig.setAnalysisConfig(analysisConfig);
+        jobConfig.setSchedulerConfig(schedulerConfig);
+        return jobConfig;
     }
 }

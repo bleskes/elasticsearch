@@ -25,47 +25,52 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.data.extractor.elasticsearch;
+package com.prelert.rs.resources;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
+import java.util.ArrayList;
+import java.util.List;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.UncheckedIOException;
-import java.nio.charset.StandardCharsets;
+import com.prelert.app.Shutdownable;
 
-import org.junit.Test;
-
-public class HttpGetResponseTest
+public class ShutdownThreadBuilder
 {
-    @Test
-    public void testGetResponseAsStream() throws IOException
-    {
-        InputStream stream = new ByteArrayInputStream("foo\nbar".getBytes(StandardCharsets.UTF_8));
-        HttpGetResponse response = new HttpGetResponse(stream, 200);
+    private final List<Shutdownable> m_Tasks;
 
-        assertEquals("foo\nbar", response.getResponseAsString());
-        assertEquals(200, response.getResponseCode());
+    public ShutdownThreadBuilder()
+    {
+        m_Tasks = new ArrayList<>();
     }
 
-    @Test
-    public void testGetResponseAsStream_GivenStreamThrows() throws IOException
+    public ShutdownThreadBuilder addTask(Shutdownable task)
     {
-        InputStream stream = mock(InputStream.class);
-        HttpGetResponse response = new HttpGetResponse(stream, 200);
+        m_Tasks.add(task);
+        return this;
+    }
 
-        try
+    public Thread build()
+    {
+        return new ShutdownThread(m_Tasks);
+    }
+
+    private static class ShutdownThread extends Thread
+    {
+        private final List<Shutdownable> m_ShutdownTasks;
+
+        private ShutdownThread(List<Shutdownable> shutdownTasks)
         {
-            response.getResponseAsString();
-            fail();
+            m_ShutdownTasks = shutdownTasks;
         }
-        catch (UncheckedIOException e)
+
+        @Override
+        public void run()
         {
-            verify(stream).close();
+            for (Shutdownable task : m_ShutdownTasks)
+            {
+                synchronized (task)
+                {
+                    task.shutdown();
+                }
+            }
         }
     }
 }

@@ -25,47 +25,19 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.data.extractor.elasticsearch;
+package com.prelert.job.manager;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
+import com.prelert.job.JobException;
+import com.prelert.job.errorcodes.ErrorCodes;
+import com.prelert.job.messages.Messages;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.UncheckedIOException;
-import java.nio.charset.StandardCharsets;
-
-import org.junit.Test;
-
-public class HttpGetResponseTest
+public class CannotStartSchedulerWhileItIsStoppingException extends JobException
 {
-    @Test
-    public void testGetResponseAsStream() throws IOException
+    private static final long serialVersionUID = -2359537142811349135L;
+
+    public CannotStartSchedulerWhileItIsStoppingException(String jobId)
     {
-        InputStream stream = new ByteArrayInputStream("foo\nbar".getBytes(StandardCharsets.UTF_8));
-        HttpGetResponse response = new HttpGetResponse(stream, 200);
-
-        assertEquals("foo\nbar", response.getResponseAsString());
-        assertEquals(200, response.getResponseCode());
-    }
-
-    @Test
-    public void testGetResponseAsStream_GivenStreamThrows() throws IOException
-    {
-        InputStream stream = mock(InputStream.class);
-        HttpGetResponse response = new HttpGetResponse(stream, 200);
-
-        try
-        {
-            response.getResponseAsString();
-            fail();
-        }
-        catch (UncheckedIOException e)
-        {
-            verify(stream).close();
-        }
+        super(Messages.getMessage(Messages.JOB_SCHEDULER_CANNOT_START_WHILE_STOPPING, jobId),
+                ErrorCodes.CANNOT_START_JOB_SCHEDULER_WHILE_IT_IS_STOPPING);
     }
 }

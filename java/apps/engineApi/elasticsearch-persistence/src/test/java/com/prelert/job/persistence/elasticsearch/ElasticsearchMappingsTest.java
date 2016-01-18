@@ -57,6 +57,10 @@ public class ElasticsearchMappingsTest
                         "        \"type\": \"string\"," +
                         "        \"index\": \"not_analyzed\"" +
                         "      }," +
+                        "      \"schedulerStatus\": {" +
+                        "        \"type\": \"string\"," +
+                        "        \"index\": \"not_analyzed\"" +
+                        "      }," +
                         "      \"createTime\": {" +
                         "        \"type\": \"date\"" +
                         "      }," +

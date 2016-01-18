@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -36,12 +36,16 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
+import org.apache.log4j.Logger;
+
 /**
  * A scheduler that allows the periodic execution of a task
  * in a separate thread
  */
 public class TaskScheduler
 {
+    private static final Logger LOGGER = Logger.getLogger(TaskScheduler.class);
+
     private final ScheduledExecutorService m_Executor;
     private final Runnable m_Task;
     private final Supplier<LocalDateTime> m_NextTimeSupplier;
@@ -58,9 +62,30 @@ public class TaskScheduler
         scheduleNext();
     }
 
-    public void stop()
+    /**
+     * Attempts to stop the running task, if any, and cancels all future tasks.
+     * The method blocks until the scheduler has stopped, or if it times out.
+     *
+     * @param timeout the maximum time to wait
+     * @param unit the time unit of the timeout argument
+     * @return {@code true} if the scheduler stopped before timing out, or {@code false} otherwise
+     */
+    public boolean stop(long timeout, TimeUnit unit)
     {
         m_Executor.shutdownNow();
+        try
+        {
+            boolean success = m_Executor.awaitTermination(timeout, unit);
+            if (!success)
+            {
+                LOGGER.warn("Waiting for running task to terminate timed out");
+            }
+            return success;
+        } catch (InterruptedException e)
+        {
+            Thread.currentThread().interrupt();
+            return false;
+        }
     }
 
     private void scheduleNext()
