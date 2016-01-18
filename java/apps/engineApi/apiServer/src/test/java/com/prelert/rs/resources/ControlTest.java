@@ -25,19 +25,51 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.job.manager;
+package com.prelert.rs.resources;
 
-import com.prelert.job.JobException;
-import com.prelert.job.errorcodes.ErrorCodes;
-import com.prelert.job.messages.Messages;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.verify;
 
-public class CannotStartSchedulerWhileItIsStoppingException extends JobException
+import javax.ws.rs.core.Response;
+
+import org.junit.Before;
+import org.junit.Test;
+
+import com.prelert.job.UnknownJobException;
+import com.prelert.job.manager.CannotStartSchedulerWhileItIsStoppingException;
+import com.prelert.job.manager.NoSuchScheduledJobException;
+import com.prelert.rs.data.Acknowledgement;
+
+public class ControlTest extends ServiceTest
 {
-    private static final long serialVersionUID = -2359537142811349135L;
+    private Control m_Control;
 
-    public CannotStartSchedulerWhileItIsStoppingException(String jobId)
+    @Before
+    public void setUp() throws UnknownJobException
     {
-        super(Messages.getMessage(Messages.JOB_SCHEDULER_CANNOT_START_WHILE_STOPPING, jobId),
-                ErrorCodes.CANNOT_START_JOB_SCHEDULER_WHILE_IT_IS_STOPPING);
+        m_Control = new Control();
+        configureService(m_Control);
+    }
+
+    @Test
+    public void testStartScheduledJob()
+            throws CannotStartSchedulerWhileItIsStoppingException, NoSuchScheduledJobException
+    {
+        Response response = m_Control.startScheduledJob("foo");
+
+        Acknowledgement acknowledgement = (Acknowledgement) response.getEntity();
+        assertTrue(acknowledgement.getAcknowledgement());
+        verify(jobManager()).startExistingJobScheduler("foo");
+    }
+
+    @Test
+    public void testStopScheduledJob() throws UnknownJobException,
+            CannotStartSchedulerWhileItIsStoppingException, NoSuchScheduledJobException
+    {
+        Response response = m_Control.stopScheduledJob("foo");
+
+        Acknowledgement acknowledgement = (Acknowledgement) response.getEntity();
+        assertTrue(acknowledgement.getAcknowledgement());
+        verify(jobManager()).stopExistingJobScheduler("foo");
     }
 }

@@ -273,6 +273,36 @@ public class JobSchedulerTest
     }
 
     @Test
+    public void testStart_GivenAlreadyStarted() throws CannotStartSchedulerWhileItIsStoppingException
+    {
+        JobDetails job = newJobWithElasticScheduler(1400000000000L, null);
+        MockDataExtractor dataExtractor = new MockDataExtractor(Arrays.asList(1, 1, 1));
+        MockDataProcessor dataProcessor = new MockDataProcessor();
+        m_JobScheduler = createJobScheduler(dataExtractor, dataProcessor);
+
+        m_JobScheduler.start(job);
+        m_JobScheduler.start(job);
+        m_JobScheduler.stopManual();
+
+        assertEquals(1, dataExtractor.getSearchCount());
+    }
+
+    @Test
+    public void testStop_GivenAlreadyStopped() throws CannotStartSchedulerWhileItIsStoppingException
+    {
+        JobDetails job = newJobWithElasticScheduler(1400000000000L, null);
+        MockDataExtractor dataExtractor = new MockDataExtractor(Arrays.asList(1, 1, 1));
+        MockDataProcessor dataProcessor = new MockDataProcessor();
+        m_JobScheduler = createJobScheduler(dataExtractor, dataProcessor);
+
+        m_JobScheduler.start(job);
+        m_JobScheduler.stopManual();
+        m_JobScheduler.stopManual();
+
+        assertEquals(JobSchedulerStatus.STOPPED, m_CurrentStatus);
+    }
+
+    @Test
     public void testStopAuto() throws InterruptedException,
             ExecutionException, CannotStartSchedulerWhileItIsStoppingException
     {
@@ -385,6 +415,11 @@ public class JobSchedulerTest
         public String getEnd(int searchCount)
         {
             return m_Ends.get(searchCount);
+        }
+
+        public int getSearchCount()
+        {
+            return m_SearchCount;
         }
     }
 

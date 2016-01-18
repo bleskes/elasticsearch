@@ -81,7 +81,7 @@ public class JobScheduler
     private volatile TaskScheduler m_RealTimeScheduler;
     private volatile long m_LastBucketEndMs;
     private volatile Logger m_Logger;
-    private volatile boolean m_IsStopping;
+    private volatile JobSchedulerStatus m_Status;
     private volatile boolean m_IsLookbackOnly;
 
     public JobScheduler(String jobId, long bucketSpan, DataExtractor dataExtractor,
@@ -94,7 +94,6 @@ public class JobScheduler
         m_DataProcessor = Objects.requireNonNull(dataProcessor);
         m_JobProvider = Objects.requireNonNull(jobProvider);
         m_JobLoggerFactory = Objects.requireNonNull(jobLoggerFactory);
-        m_IsStopping = false;
     }
 
     private Runnable createNextTask()
@@ -125,7 +124,7 @@ public class JobScheduler
         }
 
         m_DataExtractor.newSearch(start, end, m_Logger);
-        while (m_DataExtractor.hasNext() && m_IsStopping == false)
+        while (m_DataExtractor.hasNext() && m_Status == JobSchedulerStatus.STARTED)
         {
             Optional<InputStream> nextDataStream = m_DataExtractor.next();
             if (nextDataStream.isPresent())
@@ -196,8 +195,13 @@ public class JobScheduler
             throw new CannotStartSchedulerWhileItIsStoppingException(m_JobId);
         }
 
-        updateStatus(JobSchedulerStatus.STARTED);
         m_Logger = m_JobLoggerFactory.newLogger(m_JobId);
+        if (job.getSchedulerStatus() == JobSchedulerStatus.STARTED)
+        {
+            m_Logger.info("Cannot start scheduler as it is already started.");
+            return;
+        }
+        updateStatus(JobSchedulerStatus.STARTED);
         m_LookbackExecutor = Executors.newSingleThreadExecutor();
         updateLastBucketEndFromLatestRecordTimestamp(job);
         SchedulerConfig schedulerConfig = job.getSchedulerConfig();
@@ -209,6 +213,7 @@ public class JobScheduler
 
     private void updateStatus(JobSchedulerStatus status)
     {
+        m_Status = status;
         Map<String, Object> updates = new HashMap<>();
         updates.put(JobDetails.SCHEDULER_STATUS, status);
         try
@@ -303,13 +308,11 @@ public class JobScheduler
      */
     private void stop(boolean shouldSetStoppedStatus)
     {
-        if (m_Logger == null)
+        if (m_Status != JobSchedulerStatus.STARTED)
         {
-            // It means it was never started
             return;
         }
 
-        m_IsStopping = true;
         updateStatus(JobSchedulerStatus.STOPPING);
 
         if (awaitLookbackTermination() == false || stopRealtimeScheduler() == false)
@@ -323,7 +326,6 @@ public class JobScheduler
             updateStatus(shouldSetStoppedStatus ? JobSchedulerStatus.STOPPED
                     : JobSchedulerStatus.STARTED);
         }
-        m_IsStopping = false;
     }
 
     @VisibleForTesting

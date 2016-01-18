@@ -112,6 +112,7 @@ public final class Messages
     public static final String JOB_DATA_CONCURRENT_USE_UPLOAD = "job.data.concurrent.use.upload";
 
     public static final String JOB_SCHEDULER_CANNOT_START_WHILE_STOPPING = "job.scheduler.cannot.start.while.stopping";
+    public static final String JOB_SCHEDULER_NO_SUCH_SCHEDULED_JOB = "job.scheduler.no.such.scheduled.job";
 
     public static final String JOB_MISSING_QUANTILES = "job.missing.quantiles";
     public static final String JOB_UNKNOWN_ID = "job.unknown.id";

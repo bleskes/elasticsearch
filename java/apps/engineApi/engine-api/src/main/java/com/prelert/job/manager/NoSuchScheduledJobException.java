@@ -31,13 +31,13 @@ import com.prelert.job.JobException;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.messages.Messages;
 
-public class CannotStartSchedulerWhileItIsStoppingException extends JobException
+public class NoSuchScheduledJobException extends JobException
 {
     private static final long serialVersionUID = -2359537142811349135L;
 
-    public CannotStartSchedulerWhileItIsStoppingException(String jobId)
+    public NoSuchScheduledJobException(String jobId)
     {
-        super(Messages.getMessage(Messages.JOB_SCHEDULER_CANNOT_START_WHILE_STOPPING, jobId),
-                ErrorCodes.CANNOT_START_JOB_SCHEDULER_WHILE_IT_IS_STOPPING);
+        super(Messages.getMessage(Messages.JOB_SCHEDULER_NO_SUCH_SCHEDULED_JOB, jobId),
+                ErrorCodes.NO_SUCH_SCHEDULED_JOB);
     }
 }

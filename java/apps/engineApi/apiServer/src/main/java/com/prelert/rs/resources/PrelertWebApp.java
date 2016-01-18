@@ -196,15 +196,16 @@ public class PrelertWebApp extends Application
     {
         m_ResourceClasses.add(ApiBase.class);
         m_ResourceClasses.add(AlertsLongPoll.class);
-        m_ResourceClasses.add(Jobs.class);
-        m_ResourceClasses.add(Data.class);
-        m_ResourceClasses.add(DataLoad.class);
-        m_ResourceClasses.add(Preview.class);
         m_ResourceClasses.add(Buckets.class);
         m_ResourceClasses.add(CategoryDefinitions.class);
-        m_ResourceClasses.add(Records.class);
+        m_ResourceClasses.add(Control.class);
+        m_ResourceClasses.add(Data.class);
+        m_ResourceClasses.add(DataLoad.class);
+        m_ResourceClasses.add(Jobs.class);
         m_ResourceClasses.add(Influencers.class);
         m_ResourceClasses.add(Logs.class);
+        m_ResourceClasses.add(Preview.class);
+        m_ResourceClasses.add(Records.class);
     }
 
     private void addMessageReaders()

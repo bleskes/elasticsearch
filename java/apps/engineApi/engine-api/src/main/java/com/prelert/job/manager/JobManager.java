@@ -308,19 +308,20 @@ public class JobManager implements DataProcessor, Shutdownable
 
         if (jobDetails.getSchedulerConfig() != null)
         {
-            scheduleJob(jobDetails);
+            createJobSchedulerAndStart(jobDetails);
         }
 
         return jobDetails;
     }
 
-    private void scheduleJob(JobDetails job) throws CannotStartSchedulerWhileItIsStoppingException
+    private void createJobSchedulerAndStart(JobDetails job)
+            throws CannotStartSchedulerWhileItIsStoppingException
     {
-        LOGGER.info("Scheduling job: " + job.getId());
         JobScheduler jobScheduler = new JobScheduler(job.getId(), job.getAnalysisConfig()
                 .getBucketSpan(), m_DataExtractorFactory.newExtractor(job), this, m_JobProvider,
                 m_JobLoggerFactory);
         m_ScheduledJobs.put(job.getId(), jobScheduler);
+        LOGGER.info("Starting scheduler for job: " + job.getId());
         jobScheduler.start(job);
     }
 
@@ -974,6 +975,30 @@ public class JobManager implements DataProcessor, Shutdownable
         return m_ProcessManager.removeAlertObserver(jobId, ao);
     }
 
+    public void startExistingJobScheduler(String jobId)
+            throws CannotStartSchedulerWhileItIsStoppingException, NoSuchScheduledJobException
+    {
+        checkJobHasBeenScheduled(jobId);
+        JobDetails job = getJob(jobId).get();
+        LOGGER.info("Starting scheduler for job: " + jobId);
+        m_ScheduledJobs.get(jobId).start(job);
+    }
+
+    public void stopExistingJobScheduler(String jobId) throws NoSuchScheduledJobException
+    {
+        checkJobHasBeenScheduled(jobId);
+        LOGGER.info("Stopping scheduler for job: " + jobId);
+        m_ScheduledJobs.get(jobId).stopManual();
+    }
+
+    private void checkJobHasBeenScheduled(String jobId) throws NoSuchScheduledJobException
+    {
+        if (m_ScheduledJobs.containsKey(jobId) == false)
+        {
+            throw new NoSuchScheduledJobException(jobId);
+        }
+    }
+
     public void restartScheduledJobs()
     {
         Preconditions.checkState(m_ScheduledJobs.isEmpty());
@@ -984,7 +1009,7 @@ public class JobManager implements DataProcessor, Shutdownable
             {
                 try
                 {
-                    scheduleJob(job);
+                    createJobSchedulerAndStart(job);
                 } catch (CannotStartSchedulerWhileItIsStoppingException e)
                 {
                     LOGGER.error("Failed to restart scheduler for job: " + job.getId(), e);
