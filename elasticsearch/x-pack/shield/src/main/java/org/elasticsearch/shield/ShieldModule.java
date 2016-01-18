@@ -32,6 +32,7 @@ public class ShieldModule extends AbstractShieldModule {
     @Override
     protected void configure(boolean clientMode) {
         if (!clientMode) {
+            bind(ShieldLifecycleService.class).asEagerSingleton();
             bind(ShieldSettingsFilter.class).asEagerSingleton();
         }
     }

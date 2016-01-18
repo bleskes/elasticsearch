@@ -56,12 +56,14 @@ public abstract class CachingUsernamePasswordRealm extends UsernamePasswordRealm
 
     public final void expire(String username) {
         if (cache != null) {
+            logger.trace("invalidating cache for user [{}] in realm [{}]", username, name());
             cache.invalidate(username);
         }
     }
 
     public final void expireAll() {
         if (cache != null) {
+            logger.trace("invalidating cache for all users in realm [{}]", name());
             cache.invalidateAll();
         }
     }

@@ -84,7 +84,7 @@ public class FileUserRolesStore {
         }
     }
 
-    synchronized void addListener(RefreshListener listener) {
+    public synchronized void addListener(RefreshListener listener) {
         listeners.add(listener);
     }
 
