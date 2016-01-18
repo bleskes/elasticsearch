@@ -220,7 +220,6 @@ public class JobSchedulerTest
 
         // Repeat to test that scheduler did not advance time
         m_JobScheduler.start(job);
-        assertEquals(JobSchedulerStatus.STARTED, m_CurrentStatus);
         m_JobScheduler.awaitLookbackTermination();
         m_JobScheduler.stopManual();
         assertEquals(JobSchedulerStatus.STOPPED, m_CurrentStatus);
