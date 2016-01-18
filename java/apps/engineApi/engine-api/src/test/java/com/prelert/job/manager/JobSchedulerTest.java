@@ -106,7 +106,6 @@ public class JobSchedulerTest
         m_JobScheduler = createJobScheduler(dataExtractor, dataProcessor);
 
         m_JobScheduler.start(job);
-        assertEquals(JobSchedulerStatus.STARTED, m_CurrentStatus);
         m_JobScheduler.awaitLookbackTermination();
         m_JobScheduler.stopManual();
         assertEquals(JobSchedulerStatus.STOPPED, m_CurrentStatus);
@@ -127,7 +126,6 @@ public class JobSchedulerTest
         m_JobScheduler = createJobScheduler(dataExtractor, dataProcessor);
 
         m_JobScheduler.start(job);
-        assertEquals(JobSchedulerStatus.STARTED, m_CurrentStatus);
         m_JobScheduler.awaitLookbackTermination();
         m_JobScheduler.stopManual();
         assertEquals(JobSchedulerStatus.STOPPED, m_CurrentStatus);
@@ -212,7 +210,6 @@ public class JobSchedulerTest
         m_JobScheduler = createJobScheduler(dataExtractor, dataProcessor);
 
         m_JobScheduler.start(job);
-        assertEquals(JobSchedulerStatus.STARTED, m_CurrentStatus);
         m_JobScheduler.awaitLookbackTermination();
         m_JobScheduler.stopManual();
         assertEquals(JobSchedulerStatus.STOPPED, m_CurrentStatus);
@@ -247,7 +244,6 @@ public class JobSchedulerTest
         m_JobScheduler = createJobScheduler(dataExtractor, dataProcessor);
 
         m_JobScheduler.start(job);
-        assertEquals(JobSchedulerStatus.STARTED, m_CurrentStatus);
         m_JobScheduler.awaitLookbackTermination();
         m_JobScheduler.stopManual();
         assertEquals(JobSchedulerStatus.STOPPED, m_CurrentStatus);
@@ -268,7 +264,6 @@ public class JobSchedulerTest
         m_JobScheduler = createJobScheduler(dataExtractor, dataProcessor);
 
         m_JobScheduler.start(job);
-        assertEquals(JobSchedulerStatus.STARTED, m_CurrentStatus);
         m_JobScheduler.awaitLookbackTermination();
         assertEquals(JobSchedulerStatus.STOPPED, m_CurrentStatus);
 
@@ -289,9 +284,7 @@ public class JobSchedulerTest
 
         m_JobScheduler.start(job);
         assertEquals(JobSchedulerStatus.STARTED, m_CurrentStatus);
-
-        // Wait for lookback to start
-        Thread.sleep(200);
+        m_JobScheduler.awaitLookbackTermination();
 
         m_JobScheduler.stopAuto();
 
