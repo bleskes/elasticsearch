@@ -57,6 +57,7 @@ import com.prelert.job.process.exceptions.MalformedJsonException;
 import com.prelert.job.process.exceptions.MissingFieldException;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
 import com.prelert.job.process.params.DataLoadParams;
+import com.prelert.job.process.params.InterimResultsParams;
 import com.prelert.job.process.params.TimeRange;
 import com.prelert.job.status.HighProportionOfBadTimestampsException;
 import com.prelert.job.status.OutOfOrderRecordsException;
@@ -124,7 +125,7 @@ public class JobScheduler
         }
 
         m_DataExtractor.newSearch(start, end, m_Logger);
-        while(m_DataExtractor.hasNext() && m_IsStopping == false)
+        while (m_DataExtractor.hasNext() && m_IsStopping == false)
         {
             Optional<InputStream> nextDataStream = m_DataExtractor.next();
             if (nextDataStream.isPresent())
@@ -137,6 +138,28 @@ public class JobScheduler
             }
         }
         m_LastBucketEndMs = Long.valueOf(end);
+
+        // Only flush if we successfully submitted all data the extractor was
+        // asked to get
+        if (!m_DataExtractor.hasNext())
+        {
+            makeResultsAvailable();
+        }
+    }
+
+    private void makeResultsAvailable()
+    {
+        try
+        {
+            // This ensures the results are available as soon as possible in the
+            // case where we're searching specific time periods once and only once
+            m_DataProcessor.flushJob(m_JobId,
+                    new InterimResultsParams(false, new TimeRange(null, m_LastBucketEndMs / MILLIS_IN_SECOND)));
+        }
+        catch (UnknownJobException | NativeProcessRunException | JobInUseException e)
+        {
+            m_Logger.error("An error has occurred while flushing job '" + m_JobId + "'", e);
+        }
     }
 
     private boolean submitData(InputStream stream)
@@ -191,7 +214,8 @@ public class JobScheduler
         try
         {
             m_JobProvider.updateJob(m_JobId, updates);
-        } catch (UnknownJobException e)
+        }
+        catch (UnknownJobException e)
         {
             throw new IllegalStateException();
         }
@@ -308,7 +332,8 @@ public class JobScheduler
         try
         {
             return m_LookbackExecutor.awaitTermination(STOP_TIMEOUT_MINUTES, TimeUnit.MINUTES);
-        } catch (InterruptedException e)
+        }
+        catch (InterruptedException e)
         {
             Thread.currentThread().interrupt();
             return false;

@@ -73,6 +73,7 @@ import com.prelert.job.process.exceptions.MalformedJsonException;
 import com.prelert.job.process.exceptions.MissingFieldException;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
 import com.prelert.job.process.params.DataLoadParams;
+import com.prelert.job.process.params.InterimResultsParams;
 import com.prelert.job.status.HighProportionOfBadTimestampsException;
 import com.prelert.job.status.OutOfOrderRecordsException;
 
@@ -436,6 +437,13 @@ public class JobSchedulerTest
                 throw new IllegalStateException();
             }
             return new DataCounts();
+        }
+
+        @Override
+        public void flushJob(String jobId, InterimResultsParams params)
+                throws UnknownJobException, NativeProcessRunException, JobInUseException
+        {
+            // NOOP
         }
     }
 

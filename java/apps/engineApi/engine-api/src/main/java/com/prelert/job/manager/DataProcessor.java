@@ -38,6 +38,7 @@ import com.prelert.job.process.exceptions.MalformedJsonException;
 import com.prelert.job.process.exceptions.MissingFieldException;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
 import com.prelert.job.process.params.DataLoadParams;
+import com.prelert.job.process.params.InterimResultsParams;
 import com.prelert.job.status.HighProportionOfBadTimestampsException;
 import com.prelert.job.status.OutOfOrderRecordsException;
 
@@ -72,4 +73,20 @@ public interface DataProcessor
             throws UnknownJobException, NativeProcessRunException, MissingFieldException,
             JsonParseException, JobInUseException, HighProportionOfBadTimestampsException,
             OutOfOrderRecordsException, TooManyJobsException, MalformedJsonException;
+
+    /**
+     * Flush the running job, ensuring that the native process has had the
+     * opportunity to process all data previously sent to it with none left
+     * sitting in buffers.
+     *
+     * @param jobId The job to flush
+     * @param interimResultsParams Parameters about whether interim results calculation
+     * should occur and for which period of time
+     * @throws UnknownJobException
+     * @throws NativeProcessRunException
+     * @throws JobInUseException if a data upload is part way through
+     */
+    public void flushJob(String jobId, InterimResultsParams interimResultsParams)
+            throws UnknownJobException, NativeProcessRunException, JobInUseException;
 }
+
