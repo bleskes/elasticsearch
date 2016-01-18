@@ -74,6 +74,7 @@ import com.prelert.job.status.OutOfOrderRecordsException;
 import com.prelert.rs.data.Acknowledgement;
 import com.prelert.rs.data.DataPostResponse;
 import com.prelert.rs.data.MultiDataPostResult;
+import com.prelert.rs.exception.ActionNotAllowedForScheduledJobException;
 import com.prelert.rs.exception.InvalidParametersException;
 import com.prelert.rs.provider.RestApiException;
 
@@ -471,6 +472,47 @@ public class DataTest extends ServiceTest
         assertEquals(200, response.getStatus());
         Acknowledgement acknowledgement = (Acknowledgement) response.getEntity();
         assertTrue(acknowledgement.getAcknowledgement());
+    }
+
+    @Test
+    public void testStreamData_GivenScheduledJob() throws IOException
+    {
+        when(jobManager().isScheduledJob(JOB_ID)).thenReturn(true);
+
+        HttpHeaders httpHeaders = mock(HttpHeaders.class);
+        InputStream inputStream = mock(InputStream.class);
+
+        m_ExpectedException.expect(ActionNotAllowedForScheduledJobException.class);
+        m_ExpectedException.expectMessage("This action is not allowed for a scheduled job");
+        m_ExpectedException.expect(hasErrorCode(ErrorCodes.ACTION_NOT_ALLOWED_FOR_SCHEDULED_JOB));
+
+        m_Data.streamData(httpHeaders, JOB_ID, inputStream, "", "");
+    }
+
+    @Test
+    public void testFlushUpload_GivenScheduledJob() throws UnknownJobException,
+            NativeProcessRunException, JobInUseException
+    {
+        when(jobManager().isScheduledJob(JOB_ID)).thenReturn(true);
+
+        m_ExpectedException.expect(ActionNotAllowedForScheduledJobException.class);
+        m_ExpectedException.expectMessage("This action is not allowed for a scheduled job");
+        m_ExpectedException.expect(hasErrorCode(ErrorCodes.ACTION_NOT_ALLOWED_FOR_SCHEDULED_JOB));
+
+        m_Data.flushUpload(JOB_ID, false, "", "");
+    }
+
+    @Test
+    public void testCommitUpload_GivenScheduledJob() throws UnknownJobException,
+            NativeProcessRunException, JobInUseException
+    {
+        when(jobManager().isScheduledJob(JOB_ID)).thenReturn(true);
+
+        m_ExpectedException.expect(ActionNotAllowedForScheduledJobException.class);
+        m_ExpectedException.expectMessage("This action is not allowed for a scheduled job");
+        m_ExpectedException.expect(hasErrorCode(ErrorCodes.ACTION_NOT_ALLOWED_FOR_SCHEDULED_JOB));
+
+        m_Data.commitUpload(JOB_ID);
     }
 
     private void givenLatency(Long latency)

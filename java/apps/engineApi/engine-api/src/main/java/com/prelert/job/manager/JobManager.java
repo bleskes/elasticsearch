@@ -993,10 +993,15 @@ public class JobManager implements DataProcessor, Shutdownable
 
     private void checkJobHasBeenScheduled(String jobId) throws NoSuchScheduledJobException
     {
-        if (m_ScheduledJobs.containsKey(jobId) == false)
+        if (!isScheduledJob(jobId))
         {
             throw new NoSuchScheduledJobException(jobId);
         }
+    }
+
+    public boolean isScheduledJob(String jobId)
+    {
+        return m_ScheduledJobs.containsKey(jobId);
     }
 
     public void restartScheduledJobs()

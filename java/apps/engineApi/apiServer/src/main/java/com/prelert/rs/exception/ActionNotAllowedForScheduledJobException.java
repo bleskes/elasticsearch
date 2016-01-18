@@ -25,9 +25,21 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.app;
+package com.prelert.rs.exception;
 
-public interface Shutdownable
+import javax.ws.rs.core.Response.Status;
+
+import com.prelert.job.errorcodes.ErrorCodes;
+import com.prelert.job.messages.Messages;
+import com.prelert.rs.provider.RestApiException;
+
+public class ActionNotAllowedForScheduledJobException extends RestApiException
 {
-    void shutdown();
+    private static final long serialVersionUID = -9098061222329760074L;
+
+    public ActionNotAllowedForScheduledJobException()
+    {
+        super(Messages.getMessage(Messages.REST_ACTION_NOT_ALLOWED_FOR_SCHEDULED_JOB),
+                ErrorCodes.ACTION_NOT_ALLOWED_FOR_SCHEDULED_JOB, Status.BAD_REQUEST);
+    }
 }

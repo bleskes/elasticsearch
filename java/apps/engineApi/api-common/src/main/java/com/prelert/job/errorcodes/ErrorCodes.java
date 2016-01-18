@@ -413,7 +413,12 @@ public enum ErrorCodes
     /**
      * There is no such scheduled job.
      */
-    NO_SUCH_SCHEDULED_JOB(60115);
+    NO_SUCH_SCHEDULED_JOB(60115),
+
+    /**
+     * There is no such scheduled job.
+     */
+    ACTION_NOT_ALLOWED_FOR_SCHEDULED_JOB(60116);
 
 
     private long m_ErrorCode;
