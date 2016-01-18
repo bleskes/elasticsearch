@@ -134,6 +134,8 @@ public class PrelertWebApp extends Application
     private ScheduledExecutorService m_ServerStatsSchedule;
     private TaskScheduler m_OldResultsRemoverSchedule;
 
+    private final ShutdownThreadBuilder m_ShutdownThreadBuilder;
+
     public PrelertWebApp()
     {
         m_ResourceClasses = new HashSet<>();
@@ -141,6 +143,7 @@ public class PrelertWebApp extends Application
         addMessageReaders();
         addMessageWriters();
         addExceptionMappers();
+        m_ShutdownThreadBuilder = new ShutdownThreadBuilder();
 
         ElasticsearchFactory esFactory = createPersistenceFactory();
         JobProvider jobProvider = esFactory.newJobProvider();
@@ -157,6 +160,8 @@ public class PrelertWebApp extends Application
         m_Singletons.add(m_JobManager);
         m_Singletons.add(m_AlertManager);
         m_Singletons.add(m_ServerInfo);
+
+        Runtime.getRuntime().addShutdownHook(m_ShutdownThreadBuilder.build());
     }
 
     private ElasticsearchFactory createPersistenceFactory()
@@ -182,7 +187,9 @@ public class PrelertWebApp extends Application
 
     private JobManager createJobManager(JobProvider jobProvider, ElasticsearchFactory esFactory)
     {
-        return new JobManager(jobProvider, createProcessManager(jobProvider, esFactory),
+        ProcessManager processManager = createProcessManager(jobProvider, esFactory);
+        m_ShutdownThreadBuilder.addTask(processManager);
+        return new JobManager(jobProvider, processManager,
                 new DataExtractorFactoryImpl(), jobId -> JobLogger.create(jobId));
     }
 
@@ -238,8 +245,7 @@ public class PrelertWebApp extends Application
                 esFactory.newResultsReaderFactory(jobProvider),
                 esFactory.newJobDataCountsPersisterFactory(),
                 esFactory.newUsagePersisterFactory());
-        return ProcessManager.create(jobProvider, processFactory,
-                esFactory.newDataPersisterFactory());
+        return new ProcessManager(jobProvider, processFactory, esFactory.newDataPersisterFactory());
     }
 
     private void writeServerInfoDailyStartingNow()

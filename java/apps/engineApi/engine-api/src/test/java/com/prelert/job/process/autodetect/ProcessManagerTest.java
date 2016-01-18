@@ -252,7 +252,7 @@ public class ProcessManagerTest
     }
 
     @Test
-    public void testStop_ClosesAllRunningJobs() throws NativeProcessRunException,
+    public void testShutdown_ClosesAllRunningJobs() throws NativeProcessRunException,
             JobInUseException, JsonParseException, UnknownJobException, MissingFieldException,
             HighProportionOfBadTimestampsException, OutOfOrderRecordsException,
             MalformedJsonException
@@ -278,7 +278,7 @@ public class ProcessManagerTest
         assertTrue(m_ProcessManager.jobIsRunning("job_1"));
         assertEquals(2, m_ProcessManager.numberOfRunningJobs());
 
-        m_ProcessManager.stop();
+        m_ProcessManager.shutdown();
 
         assertFalse(m_ProcessManager.jobIsRunning("job_1"));
         assertFalse(m_ProcessManager.jobIsRunning("job_2"));
