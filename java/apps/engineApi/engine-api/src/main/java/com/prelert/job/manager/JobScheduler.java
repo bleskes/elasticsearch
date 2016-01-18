@@ -204,7 +204,7 @@ public class JobScheduler
             return;
         }
         Date latestRecordTimestamp = job.getCounts().getLatestRecordTimeStamp();
-        m_LastBucketEndMs = toBucketStartEpochMs(latestRecordTimestamp) + m_BucketSpanMs;
+        m_LastBucketEndMs = latestRecordTimestamp.getTime() + MILLIS_IN_SECOND;
     }
 
     private String calcLookbackStart(SchedulerConfig schedulerConfig)
