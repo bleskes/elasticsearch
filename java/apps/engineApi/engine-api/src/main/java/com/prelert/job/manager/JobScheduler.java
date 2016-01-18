@@ -238,7 +238,8 @@ public class JobScheduler
             m_Logger.info("Lookback has finished");
             if (m_IsLookbackOnly)
             {
-                closeLoggerAndSetStatusToStopped();
+                closeLogger();
+                updateStatus(JobSchedulerStatus.STOPPED);
             }
             else
             {
@@ -252,9 +253,31 @@ public class JobScheduler
 
     /**
      * Stops the scheduler and blocks the current thread until
-     * the scheduler is stopped.
+     * the scheduler is stopped. At the end of the stopping process
+     * the status is set to STOPPED.
      */
-    public void stop()
+    public void stopManual()
+    {
+        stop(true);
+    }
+
+
+    /**
+     * Stops the scheduler and blocks the current thread until
+     * the scheduler is stopped. At the end of the stopping process
+     * the status is set to STARTED.
+     */
+    public void stopAuto()
+    {
+        stop(false);
+    }
+
+    /**
+     * Stops the scheduler and blocks the current thread until
+     * the scheduler is stopped.
+     * @param shouldSetStoppedStatus if {@code true} the status is set to STOPPED
+     */
+    private void stop(boolean shouldSetStoppedStatus)
     {
         if (m_Logger == null)
         {
@@ -265,14 +288,16 @@ public class JobScheduler
         m_IsStopping = true;
         updateStatus(JobSchedulerStatus.STOPPING);
 
-        if (awaitLookbackTermination() == false || stopRealtimeScheduler())
+        if (awaitLookbackTermination() == false || stopRealtimeScheduler() == false)
         {
             m_Logger.error("Unable to stop the scheduler.");
         }
 
         if (m_IsLookbackOnly == false)
         {
-            closeLoggerAndSetStatusToStopped();
+            closeLogger();
+            updateStatus(shouldSetStoppedStatus ? JobSchedulerStatus.STOPPED
+                    : JobSchedulerStatus.STARTED);
         }
         m_IsStopping = false;
     }
@@ -296,12 +321,10 @@ public class JobScheduler
                 || m_RealTimeScheduler.stop(STOP_TIMEOUT_MINUTES, TimeUnit.MINUTES);
     }
 
-    private void closeLoggerAndSetStatusToStopped()
+    private void closeLogger()
     {
         m_Logger.info("Scheduler has stopped");
         JobLogger.close(m_Logger);
         m_Logger = null;
-
-        updateStatus(JobSchedulerStatus.STOPPED);
     }
 }

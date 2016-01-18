@@ -444,6 +444,17 @@ public class JobManagerTest
         jobManager.updateLastDataTime("foo", new Date(1450790609000L));
     }
 
+    @Test
+    public void testShutdown()
+    {
+        givenProcessInfo(2);
+        JobManager jobManager = createJobManager();
+
+        jobManager.shutdown();
+
+        verify(m_ProcessManager).shutdown();
+    }
+
     private void givenProcessInfo(int maxLicenseJobs)
     {
         String info = String.format("{\"jobs\":\"%d\"}", maxLicenseJobs);

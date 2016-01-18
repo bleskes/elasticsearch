@@ -51,7 +51,6 @@ import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
-import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Logger;
 import org.junit.Before;
 import org.junit.Test;
@@ -108,7 +107,7 @@ public class JobSchedulerTest
         m_JobScheduler.start(job);
         assertEquals(JobSchedulerStatus.STARTED, m_CurrentStatus);
         m_JobScheduler.awaitLookbackTermination();
-        m_JobScheduler.stop();
+        m_JobScheduler.stopManual();
         assertEquals(JobSchedulerStatus.STOPPED, m_CurrentStatus);
 
         assertEquals(1, dataProcessor.getNumberOfStreams());
@@ -129,7 +128,7 @@ public class JobSchedulerTest
         m_JobScheduler.start(job);
         assertEquals(JobSchedulerStatus.STARTED, m_CurrentStatus);
         m_JobScheduler.awaitLookbackTermination();
-        m_JobScheduler.stop();
+        m_JobScheduler.stopManual();
         assertEquals(JobSchedulerStatus.STOPPED, m_CurrentStatus);
 
         assertEquals(3, dataProcessor.getNumberOfStreams());
@@ -144,8 +143,6 @@ public class JobSchedulerTest
     public void testStart_GivenLookbackAndRealtimeWithSingleStreams() throws InterruptedException,
             ExecutionException, CannotStartSchedulerWhileItIsStoppingException
     {
-        BasicConfigurator.configure();
-
         JobDetails job = newJobWithElasticScheduler(1400000000000L, null);
         MockDataExtractor dataExtractor = new MockDataExtractor(Arrays.asList(1, 1, 1));
         MockDataProcessor dataProcessor = new MockDataProcessor();
@@ -167,7 +164,7 @@ public class JobSchedulerTest
         {
             e.printStackTrace();
         }
-        m_JobScheduler.stop();
+        m_JobScheduler.stopManual();
         assertEquals(JobSchedulerStatus.STOPPED, m_CurrentStatus);
 
         assertTrue(dataProcessor.getNumberOfStreams() > 1);
@@ -216,7 +213,7 @@ public class JobSchedulerTest
         m_JobScheduler.start(job);
         assertEquals(JobSchedulerStatus.STARTED, m_CurrentStatus);
         m_JobScheduler.awaitLookbackTermination();
-        m_JobScheduler.stop();
+        m_JobScheduler.stopManual();
         assertEquals(JobSchedulerStatus.STOPPED, m_CurrentStatus);
 
         assertEquals(0, dataProcessor.getNumberOfStreams());
@@ -227,7 +224,7 @@ public class JobSchedulerTest
         m_JobScheduler.start(job);
         assertEquals(JobSchedulerStatus.STARTED, m_CurrentStatus);
         m_JobScheduler.awaitLookbackTermination();
-        m_JobScheduler.stop();
+        m_JobScheduler.stopManual();
         assertEquals(JobSchedulerStatus.STOPPED, m_CurrentStatus);
 
         assertEquals(0, dataProcessor.getNumberOfStreams());
@@ -251,7 +248,7 @@ public class JobSchedulerTest
         m_JobScheduler.start(job);
         assertEquals(JobSchedulerStatus.STARTED, m_CurrentStatus);
         m_JobScheduler.awaitLookbackTermination();
-        m_JobScheduler.stop();
+        m_JobScheduler.stopManual();
         assertEquals(JobSchedulerStatus.STOPPED, m_CurrentStatus);
 
         assertEquals(1, dataProcessor.getNumberOfStreams());
@@ -272,13 +269,36 @@ public class JobSchedulerTest
         m_JobScheduler.start(job);
         assertEquals(JobSchedulerStatus.STARTED, m_CurrentStatus);
         m_JobScheduler.awaitLookbackTermination();
-        m_JobScheduler.stop();
         assertEquals(JobSchedulerStatus.STOPPED, m_CurrentStatus);
 
         assertEquals(1, dataProcessor.getNumberOfStreams());
         assertEquals("0-0", dataProcessor.getStream(0));
         assertEquals("0", dataExtractor.getStart(0));
         assertEquals("1400000000000", dataExtractor.getEnd(0));
+    }
+
+    @Test
+    public void testStopAuto() throws InterruptedException,
+            ExecutionException, CannotStartSchedulerWhileItIsStoppingException
+    {
+        JobDetails job = newJobWithElasticScheduler(1400000000000L, null);
+        MockDataExtractor dataExtractor = new MockDataExtractor(Arrays.asList(1, 1, 1));
+        MockDataProcessor dataProcessor = new MockDataProcessor();
+        m_JobScheduler = createJobScheduler(dataExtractor, dataProcessor);
+
+        m_JobScheduler.start(job);
+        assertEquals(JobSchedulerStatus.STARTED, m_CurrentStatus);
+
+        // Wait for lookback to start
+        Thread.sleep(200);
+
+        m_JobScheduler.stopAuto();
+
+        // Wait enough time for real-time tasks to begin in case stop did not work
+        Thread.sleep(2000);
+
+        assertEquals(JobSchedulerStatus.STARTED, m_CurrentStatus);
+        assertEquals(1, dataProcessor.getNumberOfStreams());
     }
 
     private void recordSchedulerStatus() throws UnknownJobException

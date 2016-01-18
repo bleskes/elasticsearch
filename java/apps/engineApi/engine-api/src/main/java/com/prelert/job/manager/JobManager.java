@@ -53,6 +53,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Preconditions;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import com.prelert.app.Shutdownable;
 import com.prelert.job.DataCounts;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.JobDetails;
@@ -93,7 +94,7 @@ import com.prelert.job.transform.TransformConfigs;
  * Creates jobs and handles retrieving job configuration details from
  * the data store. New jobs have a unique job id see {@linkplain #generateJobId()}
  */
-public class JobManager implements DataProcessor
+public class JobManager implements DataProcessor, Shutdownable
 {
     private static final Logger LOGGER = Logger.getLogger(JobManager.class);
 
@@ -687,7 +688,7 @@ public class JobManager implements DataProcessor
 
         if (m_ScheduledJobs.containsKey(jobId))
         {
-            m_ScheduledJobs.get(jobId).stop();
+            m_ScheduledJobs.get(jobId).stopManual();
             m_ScheduledJobs.remove(jobId);
         }
 
@@ -1017,5 +1018,18 @@ public class JobManager implements DataProcessor
                     readMaxJobsFactor, DEFAULT_MAX_JOBS_FACTOR));
             return DEFAULT_MAX_JOBS_FACTOR;
         }
+    }
+
+
+    @Override
+    public void shutdown()
+    {
+        for (String jobId : m_ScheduledJobs.keySet())
+        {
+            m_ScheduledJobs.get(jobId).stopAuto();
+        }
+        m_ScheduledJobs.clear();
+
+        m_ProcessManager.shutdown();
     }
 }

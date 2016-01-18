@@ -161,6 +161,7 @@ public class PrelertWebApp extends Application
         m_Singletons.add(m_AlertManager);
         m_Singletons.add(m_ServerInfo);
 
+        m_ShutdownThreadBuilder.addTask(m_JobManager);
         Runtime.getRuntime().addShutdownHook(m_ShutdownThreadBuilder.build());
     }
 
@@ -187,9 +188,7 @@ public class PrelertWebApp extends Application
 
     private JobManager createJobManager(JobProvider jobProvider, ElasticsearchFactory esFactory)
     {
-        ProcessManager processManager = createProcessManager(jobProvider, esFactory);
-        m_ShutdownThreadBuilder.addTask(processManager);
-        return new JobManager(jobProvider, processManager,
+        return new JobManager(jobProvider, createProcessManager(jobProvider, esFactory),
                 new DataExtractorFactoryImpl(), jobId -> JobLogger.create(jobId));
     }
 
