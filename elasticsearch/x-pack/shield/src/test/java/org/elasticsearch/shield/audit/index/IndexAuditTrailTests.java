@@ -33,7 +33,6 @@ import org.elasticsearch.common.transport.DummyTransportAddress;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.elasticsearch.common.transport.LocalTransportAddress;
 import org.elasticsearch.common.transport.TransportAddress;
-import org.elasticsearch.env.Environment;
 import org.elasticsearch.index.IndexModule;
 import org.elasticsearch.index.IndexNotFoundException;
 import org.elasticsearch.rest.RestRequest;
@@ -216,9 +215,8 @@ public class IndexAuditTrailTests extends ShieldIntegTestCase {
         Transport transport = mock(Transport.class);
         when(transport.boundAddress()).thenReturn(new BoundTransportAddress(new TransportAddress[] { DummyTransportAddress.INSTANCE }, DummyTransportAddress.INSTANCE));
 
-        Environment env = new Environment(settings);
         threadPool = new ThreadPool("index audit trail tests");
-        auditor = new IndexAuditTrail(settings, user, env, authService, transport, Providers.of(client()), threadPool, mock(ClusterService.class));
+        auditor = new IndexAuditTrail(settings, user, authService, transport, Providers.of(client()), threadPool, mock(ClusterService.class));
         auditor.start(true);
     }
 
@@ -508,9 +506,10 @@ public class IndexAuditTrailTests extends ShieldIntegTestCase {
         final boolean runAs = randomBoolean();
         User user;
         if (runAs) {
-            user = new User.Simple("_username", new String[]{"r1"}, new User.Simple("running as", new String[] {"r2"}));
+            user = new User("_username", new String[]{"r1"},
+                    new User("running as", new String[] {"r2"}));
         } else {
-            user = new User.Simple("_username", new String[]{"r1"});
+            user = new User("_username", new String[]{"r1"});
         }
         auditor.accessGranted(user, "_action", message);
         awaitAuditDocumentCreation(resolveIndexName());
@@ -536,7 +535,7 @@ public class IndexAuditTrailTests extends ShieldIntegTestCase {
     public void testAccessGrantedMuted() throws Exception {
         initialize("access_granted");
         TransportMessage message = randomFrom(new RemoteHostMockMessage(), new LocalHostMockMessage(), new MockIndicesTransportMessage());
-        auditor.accessGranted(new User.Simple("_username", new String[]{"r1"}), "_action", message);
+        auditor.accessGranted(new User("_username", "r1"), "_action", message);
         try {
             getClient().prepareSearch(resolveIndexName()).setSize(0).setTerminateAfter(1).execute().actionGet();
             fail("Expected IndexNotFoundException");
@@ -577,9 +576,10 @@ public class IndexAuditTrailTests extends ShieldIntegTestCase {
         final boolean runAs = randomBoolean();
         User user;
         if (runAs) {
-            user = new User.Simple("_username", new String[]{"r1"}, new User.Simple("running as", new String[] {"r2"}));
+            user = new User("_username", new String[]{"r1"},
+                    new User("running as", new String[] {"r2"}));
         } else {
-            user = new User.Simple("_username", new String[]{"r1"});
+            user = new User("_username", new String[]{"r1"});
         }
         auditor.accessDenied(user, "_action", message);
         awaitAuditDocumentCreation(resolveIndexName());
@@ -605,7 +605,7 @@ public class IndexAuditTrailTests extends ShieldIntegTestCase {
     public void testAccessDenied_Muted() throws Exception {
         initialize("access_denied");
         TransportMessage message = randomFrom(new RemoteHostMockMessage(), new LocalHostMockMessage(), new MockIndicesTransportMessage());
-        auditor.accessDenied(new User.Simple("_username", new String[]{"r1"}), "_action", message);
+        auditor.accessDenied(new User("_username", "r1"), "_action", message);
         try {
             getClient().prepareSearch(resolveIndexName()).setSize(0).setTerminateAfter(1).execute().actionGet();
             fail("Expected IndexNotFoundException");
@@ -635,9 +635,10 @@ public class IndexAuditTrailTests extends ShieldIntegTestCase {
         final boolean runAs = randomBoolean();
         User user;
         if (runAs) {
-            user = new User.Simple("_username", new String[]{"r1"}, new User.Simple("running as", new String[] {"r2"}));
+            user = new User("_username", new String[]{"r1"},
+                    new User("running as", new String[] {"r2"}));
         } else {
-            user = new User.Simple("_username", new String[]{"r1"});
+            user = new User("_username", new String[]{"r1"});
         }
         auditor.tamperedRequest(user, "_action", message);
         awaitAuditDocumentCreation(resolveIndexName());
@@ -661,7 +662,7 @@ public class IndexAuditTrailTests extends ShieldIntegTestCase {
         initialize("tampered_request");
         TransportRequest message = new RemoteHostMockTransportRequest();
         if (randomBoolean()) {
-            auditor.tamperedRequest(new User.Simple("_username", new String[]{"r1"}), "_action", message);
+            auditor.tamperedRequest(new User("_username", new String[]{"r1"}), "_action", message);
         } else {
             auditor.tamperedRequest("_action", message);
         }
@@ -732,7 +733,7 @@ public class IndexAuditTrailTests extends ShieldIntegTestCase {
     public void testRunAsGranted() throws Exception {
         initialize();
         TransportMessage message = randomFrom(new RemoteHostMockMessage(), new LocalHostMockMessage(), new MockIndicesTransportMessage());
-        User user = new User.Simple("_username", new String[]{"r1"}, new User.Simple("running as", new String[] {"r2"}));
+        User user = new User("_username", new String[]{"r1"}, new User("running as", new String[] {"r2"}));
         auditor.runAsGranted(user, "_action", message);
         awaitAuditDocumentCreation(resolveIndexName());
 
@@ -749,7 +750,7 @@ public class IndexAuditTrailTests extends ShieldIntegTestCase {
     public void testRunAsGrantedMuted() throws Exception {
         initialize("run_as_granted");
         TransportMessage message = randomFrom(new RemoteHostMockMessage(), new LocalHostMockMessage(), new MockIndicesTransportMessage());
-        auditor.runAsGranted(new User.Simple("_username", new String[]{"r1"}, new User.Simple("running as", new String[]{"r2"})), "_action", message);
+        auditor.runAsGranted(new User("_username", new String[]{"r1"}, new User("running as", new String[]{"r2"})), "_action", message);
         try {
             getClient().prepareSearch(resolveIndexName()).setSize(0).setTerminateAfter(1).execute().actionGet();
             fail("Expected IndexNotFoundException");
@@ -761,7 +762,7 @@ public class IndexAuditTrailTests extends ShieldIntegTestCase {
     public void testRunAsDenied() throws Exception {
         initialize();
         TransportMessage message = randomFrom(new RemoteHostMockMessage(), new LocalHostMockMessage(), new MockIndicesTransportMessage());
-        User user = new User.Simple("_username", new String[]{"r1"}, new User.Simple("running as", new String[] {"r2"}));
+        User user = new User("_username", new String[]{"r1"}, new User("running as", new String[] {"r2"}));
         auditor.runAsDenied(user, "_action", message);
         awaitAuditDocumentCreation(resolveIndexName());
 
@@ -778,7 +779,7 @@ public class IndexAuditTrailTests extends ShieldIntegTestCase {
     public void testRunAsDeniedMuted() throws Exception {
         initialize("run_as_denied");
         TransportMessage message = randomFrom(new RemoteHostMockMessage(), new LocalHostMockMessage(), new MockIndicesTransportMessage());
-        auditor.runAsDenied(new User.Simple("_username", new String[]{"r1"}, new User.Simple("running as", new String[]{"r2"})), "_action", message);
+        auditor.runAsDenied(new User("_username", new String[]{"r1"}, new User("running as", new String[]{"r2"})), "_action", message);
         try {
             getClient().prepareSearch(resolveIndexName()).setSize(0).setTerminateAfter(1).execute().actionGet();
             fail("Expected IndexNotFoundException");

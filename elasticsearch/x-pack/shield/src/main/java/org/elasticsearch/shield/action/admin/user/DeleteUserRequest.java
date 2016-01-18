@@ -1,0 +1,72 @@
+/*
+ * ELASTICSEARCH CONFIDENTIAL
+ * __________________
+ *
+ *  [2014] Elasticsearch Incorporated. All Rights Reserved.
+ *
+ * NOTICE:  All information contained herein is, and remains
+ * the property of Elasticsearch Incorporated and its suppliers,
+ * if any.  The intellectual and technical concepts contained
+ * herein are proprietary to Elasticsearch Incorporated
+ * and its suppliers and may be covered by U.S. and Foreign Patents,
+ * patents in process, and are protected by trade secret or copyright law.
+ * Dissemination of this information or reproduction of this material
+ * is strictly forbidden unless prior written permission is obtained
+ * from Elasticsearch Incorporated.
+ */
+
+package org.elasticsearch.shield.action.admin.user;
+
+import org.elasticsearch.action.ActionRequest;
+import org.elasticsearch.action.ActionRequestValidationException;
+import org.elasticsearch.common.io.stream.StreamInput;
+import org.elasticsearch.common.io.stream.StreamOutput;
+
+import java.io.IOException;
+
+import static org.elasticsearch.action.ValidateActions.addValidationError;
+
+/**
+ * A request to delete a user from the shield administrative index by username
+ */
+public class DeleteUserRequest extends ActionRequest<DeleteUserRequest> {
+
+    private String username;
+
+    public DeleteUserRequest() {
+    }
+
+    public DeleteUserRequest(String user) {
+        this.username = user;
+    }
+
+    @Override
+    public ActionRequestValidationException validate() {
+        ActionRequestValidationException validationException = null;
+        if (username == null) {
+            validationException = addValidationError("user is missing", validationException);
+        }
+        return validationException;
+    }
+
+    public String user() {
+        return this.username;
+    }
+
+    public void user(String username) {
+        this.username = username;
+    }
+
+    @Override
+    public void readFrom(StreamInput in) throws IOException {
+        super.readFrom(in);
+        username = in.readString();
+    }
+
+    @Override
+    public void writeTo(StreamOutput out) throws IOException {
+        super.writeTo(out);
+        out.writeString(username);
+    }
+
+}

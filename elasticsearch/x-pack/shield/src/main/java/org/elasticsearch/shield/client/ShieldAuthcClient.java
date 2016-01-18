@@ -27,7 +27,10 @@ import org.elasticsearch.shield.action.authc.cache.ClearRealmCacheResponse;
 
 /**
  * A client to manage Shield's authentication
+ *
+ * @deprecated Use {@link ShieldClient} directly instead
  */
+@Deprecated
 public class ShieldAuthcClient {
 
     private final ElasticsearchClient client;

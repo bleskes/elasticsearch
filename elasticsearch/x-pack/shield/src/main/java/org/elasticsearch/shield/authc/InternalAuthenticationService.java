@@ -20,6 +20,7 @@ package org.elasticsearch.shield.authc;
 import org.elasticsearch.ElasticsearchSecurityException;
 import org.elasticsearch.common.Base64;
 import org.elasticsearch.common.ContextAndHeaderHolder;
+import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.component.AbstractComponent;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.io.stream.BytesStreamOutput;
@@ -138,10 +139,10 @@ public class InternalAuthenticationService extends AbstractComponent implements 
                 // wrap in a try catch because the user constructor could throw an exception if we are trying to runAs the system user
                 try {
                     if (runAsUser != null) {
-                        user = new User.Simple(user.principal(), user.roles(), runAsUser);
+                        user = new User(user.principal(), user.roles(), runAsUser);
                     } else {
                         // the requested run as user does not exist, but we don't throw an error here otherwise this could let information leak about users in the system... instead we'll just let the authz service fail throw an authorization error
-                        user = new User.Simple(user.principal(), user.roles(), new User.Simple(runAsUsername, null));
+                        user = new User(user.principal(), user.roles(), new User(runAsUsername, Strings.EMPTY_ARRAY));
                     }
                 } catch (Exception e) {
                     if (logger.isDebugEnabled()) {
@@ -315,10 +316,10 @@ public class InternalAuthenticationService extends AbstractComponent implements 
                 // wrap in a try catch because the user constructor could throw an exception if we are trying to runAs the system user
                 try {
                     if (runAsUser != null) {
-                        user = new User.Simple(user.principal(), user.roles(), runAsUser);
+                        user = new User(user.principal(), user.roles(), runAsUser);
                     } else {
                         // the requested run as user does not exist, but we don't throw an error here otherwise this could let information leak about users in the system... instead we'll just let the authz service fail throw an authorization error
-                        user = new User.Simple(user.principal(), user.roles(), new User.Simple(runAsUsername, null));
+                        user = new User(user.principal(), user.roles(), new User(runAsUsername, Strings.EMPTY_ARRAY));
                     }
                 } catch (Exception e) {
                     if (logger.isDebugEnabled()) {
