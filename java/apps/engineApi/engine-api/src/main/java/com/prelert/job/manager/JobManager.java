@@ -1015,7 +1015,8 @@ public class JobManager implements DataProcessor, Shutdownable
                 try
                 {
                     createJobSchedulerAndStart(job);
-                } catch (CannotStartSchedulerWhileItIsStoppingException e)
+                }
+                catch (CannotStartSchedulerWhileItIsStoppingException e)
                 {
                     LOGGER.error("Failed to restart scheduler for job: " + job.getId(), e);
                 }
