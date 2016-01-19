@@ -516,7 +516,7 @@ public class JobManagerTest
     @Test
     public void testRestartScheduledJobs() throws NoSuchScheduledJobException, UnknownJobException,
             CannotStartSchedulerWhileItIsStoppingException, TooManyJobsException,
-            JobConfigurationException, JobIdAlreadyExistsException, IOException
+            JobConfigurationException, JobIdAlreadyExistsException, IOException, InterruptedException
     {
         JobDetails nonScheduledJob = new JobDetails("non-scheduled", new JobConfiguration());
         nonScheduledJob.setSchedulerStatus(JobSchedulerStatus.STOPPED);
@@ -541,6 +541,8 @@ public class JobManagerTest
         JobManager jobManager = createJobManager();
 
         jobManager.restartScheduledJobs();
+
+        Thread.sleep(100);
 
         verify(m_JobLoggerFactory).newLogger("scheduled");
         verify(m_DataExtractorFactory).newExtractor(scheduledJob);
