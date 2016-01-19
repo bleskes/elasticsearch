@@ -22,6 +22,7 @@ import org.elasticsearch.action.admin.cluster.node.info.NodeInfo;
 import org.elasticsearch.action.admin.cluster.node.info.NodesInfoResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.cluster.health.ClusterHealthStatus;
+import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.shield.authc.support.SecuredString;
@@ -122,7 +123,7 @@ public abstract class ShieldIntegTestCase extends ESIntegTestCase {
         @Override
         protected void before() throws Throwable {
             Scope currentClusterScope = getCurrentClusterScope();
-            switch(currentClusterScope) {
+            switch (currentClusterScope) {
                 case SUITE:
                     if (customShieldSettingsSource == null) {
                         customShieldSettingsSource = new CustomShieldSettingsSource(sslTransportEnabled(), createTempDir(), currentClusterScope);
@@ -188,6 +189,7 @@ public abstract class ShieldIntegTestCase extends ESIntegTestCase {
 
     /**
      * Allows for us to get the system key that is being used for the cluster
+     *
      * @return the system key bytes
      */
     protected byte[] systemKey() {
