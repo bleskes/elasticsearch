@@ -65,8 +65,9 @@ public final class SchedulerConfigVerifier
      */
     public static boolean verify(SchedulerConfig config) throws JobConfigurationException
     {
-        DataSource dataSource = config.getDataSource();
+        checkFieldIsNotNegative(SchedulerConfig.QUERY_DELAY, config.getQueryDelay());
 
+        DataSource dataSource = config.getDataSource();
         switch (dataSource)
         {
             case FILE:
@@ -121,10 +122,16 @@ public final class SchedulerConfigVerifier
     {
         if (value == null || value.isEmpty())
         {
-            String msg = Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_INVALID_OPTION_VALUE,
-                                             fieldName, value);
-            throw new JobConfigurationException(msg, ErrorCodes.SCHEDULER_INVALID_OPTION_VALUE);
+            throwInvalidOptionValue(fieldName, value);
         }
+    }
+
+    private static void throwInvalidOptionValue(String fieldName, Object value)
+            throws JobConfigurationException
+    {
+        String msg = Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_INVALID_OPTION_VALUE,
+                fieldName, value);
+        throw new JobConfigurationException(msg, ErrorCodes.SCHEDULER_INVALID_OPTION_VALUE);
     }
 
     private static void checkFieldIsNotNullOrEmpty(String fieldName, List<String> value)
@@ -141,9 +148,16 @@ public final class SchedulerConfigVerifier
             }
         }
 
-        String msg = Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_INVALID_OPTION_VALUE,
-                                         fieldName, value);
-        throw new JobConfigurationException(msg, ErrorCodes.SCHEDULER_INVALID_OPTION_VALUE);
+        throwInvalidOptionValue(fieldName, value);
+    }
+
+    private static void checkFieldIsNotNegative(String fieldName, Long value)
+            throws JobConfigurationException
+    {
+        if (value != null && value < 0)
+        {
+            throwInvalidOptionValue(fieldName, value);
+        }
     }
 
     private static void checkTimesInOrder(String startTimeFieldName, Date startTime, Date endTime)
@@ -151,9 +165,7 @@ public final class SchedulerConfigVerifier
     {
         if (startTime != null && endTime != null && startTime.getTime() >= endTime.getTime())
         {
-            String msg = Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_INVALID_OPTION_VALUE,
-                                             startTimeFieldName, startTime);
-            throw new JobConfigurationException(msg, ErrorCodes.SCHEDULER_INVALID_OPTION_VALUE);
+            throwInvalidOptionValue(startTimeFieldName, startTime);
         }
     }
 
@@ -166,9 +178,7 @@ public final class SchedulerConfigVerifier
         }
         catch (MalformedURLException e)
         {
-            String msg = Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_INVALID_OPTION_VALUE,
-                                                fieldName, value);
-            throw new JobConfigurationException(msg, ErrorCodes.SCHEDULER_INVALID_OPTION_VALUE);
+            throwInvalidOptionValue(fieldName, value);
         }
     }
 }

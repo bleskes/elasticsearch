@@ -129,6 +129,7 @@ public class SchedulerConfigVerifierTest
     {
         SchedulerConfig conf = new SchedulerConfig();
         conf.setDataSource(DataSource.ELASTICSEARCH);
+        conf.setQueryDelay(90L);
         conf.setBaseUrl("http://localhost:9200/");
         conf.setIndexes(Arrays.asList("myindex"));
         conf.setTypes(Arrays.asList("mytype"));
@@ -149,6 +150,7 @@ public class SchedulerConfigVerifierTest
 
         assertTrue(SchedulerConfigVerifier.verify(conf));
     }
+
 
     @Test
     public void testCheckValidElasticsearch_InappropriateField() throws JobConfigurationException, IOException
@@ -264,6 +266,25 @@ public class SchedulerConfigVerifierTest
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.SCHEDULER_INVALID_OPTION_VALUE));
         m_ExpectedException.expectMessage("Invalid startTime value");
+
+        SchedulerConfigVerifier.verify(conf);
+    }
+
+    @Test
+    public void testCheckValidElasticsearch_GivenNegativeQueryDelay()
+            throws JobConfigurationException, IOException
+    {
+        SchedulerConfig conf = new SchedulerConfig();
+        conf.setDataSource(DataSource.ELASTICSEARCH);
+        conf.setQueryDelay(-10L);
+        conf.setBaseUrl("http://localhost:9200/");
+        conf.setIndexes(Arrays.asList("myIndex"));
+        conf.setTypes(Arrays.asList("mytype"));
+
+        m_ExpectedException.expect(JobConfigurationException.class);
+        m_ExpectedException.expect(
+                ErrorCodeMatcher.hasErrorCode(ErrorCodes.SCHEDULER_INVALID_OPTION_VALUE));
+        m_ExpectedException.expectMessage("Invalid queryDelay value");
 
         SchedulerConfigVerifier.verify(conf);
     }

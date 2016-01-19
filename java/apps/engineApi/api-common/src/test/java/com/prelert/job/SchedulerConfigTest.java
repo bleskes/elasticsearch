@@ -109,15 +109,17 @@ public class SchedulerConfigTest
     }
 
     @Test
-    public void testFillDefaults_GivenDataSourceIsElasticsearchAndQueryIsNotNull()
+    public void testFillDefaults_GivenDataSourceIsElasticsearchAndNothingToFill()
     {
         SchedulerConfig originalSchedulerConfig = new SchedulerConfig();
         originalSchedulerConfig.setDataSource(DataSource.ELASTICSEARCH);
         originalSchedulerConfig.setQuery(new HashMap<String, Object>());
+        originalSchedulerConfig.setQueryDelay(30L);
 
         SchedulerConfig defaultedSchedulerConfig = new SchedulerConfig();
         defaultedSchedulerConfig.setDataSource(DataSource.ELASTICSEARCH);
         defaultedSchedulerConfig.setQuery(new HashMap<String, Object>());
+        defaultedSchedulerConfig.setQueryDelay(30L);
 
         defaultedSchedulerConfig.fillDefaults();
 
@@ -125,22 +127,23 @@ public class SchedulerConfigTest
     }
 
     @Test
-    public void testFillDefaults_GivenDataSourceIsElasticsearchAndQueryIsNull()
+    public void testFillDefaults_GivenDataSourceIsElasticsearchAndDefaultsAreApplied()
     {
         SchedulerConfig expectedSchedulerConfig = new SchedulerConfig();
         expectedSchedulerConfig.setDataSource(DataSource.ELASTICSEARCH);
         Map<String, Object> defaultQuery = new HashMap<>();
         defaultQuery.put("match_all", new HashMap<String, Object>());
         expectedSchedulerConfig.setQuery(defaultQuery);
+        expectedSchedulerConfig.setQueryDelay(60L);
 
         SchedulerConfig defaultedSchedulerConfig = new SchedulerConfig();
         defaultedSchedulerConfig.setDataSource(DataSource.ELASTICSEARCH);
         defaultedSchedulerConfig.setQuery(null);
+        defaultedSchedulerConfig.setQueryDelay(null);
 
         defaultedSchedulerConfig.fillDefaults();
 
         assertEquals(expectedSchedulerConfig, defaultedSchedulerConfig);
-        assertTrue(defaultedSchedulerConfig.getQuery().containsKey("match_all"));
     }
 
     @Test
@@ -184,6 +187,17 @@ public class SchedulerConfigTest
         SchedulerConfig sc1 = createFullyPopulated();
         SchedulerConfig sc2 = createFullyPopulated();
         sc2.setDataSource(DataSource.FILE);
+
+        assertFalse(sc1.equals(sc2));
+        assertFalse(sc2.equals(sc1));
+    }
+
+    @Test
+    public void testEquals_GivenDifferentQueryDelay()
+    {
+        SchedulerConfig sc1 = createFullyPopulated();
+        SchedulerConfig sc2 = createFullyPopulated();
+        sc2.setQueryDelay(120L);
 
         assertFalse(sc1.equals(sc2));
         assertFalse(sc2.equals(sc1));
@@ -277,6 +291,7 @@ public class SchedulerConfigTest
         Map<String, Object> query = new HashMap<>();
         query.put("foo", new HashMap<>());
         sc.setQuery(query);
+        sc.setQueryDelay(90L);
         sc.setStartTime(new Date(0));
         sc.setEndTime(new Date(1000));
         sc.setPath("somePath");

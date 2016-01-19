@@ -32,6 +32,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
@@ -317,9 +318,10 @@ public class JobManager implements DataProcessor, Shutdownable
     private void createJobSchedulerAndStart(JobDetails job)
             throws CannotStartSchedulerWhileItIsStoppingException
     {
-        JobScheduler jobScheduler = new JobScheduler(job.getId(), job.getAnalysisConfig()
-                .getBucketSpan(), m_DataExtractorFactory.newExtractor(job), this, m_JobProvider,
-                m_JobLoggerFactory);
+        Duration bucketSpan = Duration.ofSeconds(job.getAnalysisConfig().getBucketSpan());
+        Duration queryDelay = Duration.ofSeconds(job.getSchedulerConfig().getQueryDelay());
+        JobScheduler jobScheduler = new JobScheduler(job.getId(), bucketSpan, queryDelay,
+                m_DataExtractorFactory.newExtractor(job), this, m_JobProvider, m_JobLoggerFactory);
         m_ScheduledJobs.put(job.getId(), jobScheduler);
         LOGGER.info("Starting scheduler for job: " + job.getId());
         jobScheduler.start(job);

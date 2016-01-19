@@ -28,6 +28,7 @@
 package com.prelert.job.manager;
 
 import java.io.InputStream;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Date;
@@ -68,11 +69,12 @@ public class JobScheduler
     private static final int MILLIS_IN_SECOND = 1000;
     private static final DataLoadParams DATA_LOAD_PARAMS =
             new DataLoadParams(false, new TimeRange(null, null));
-    private static final int DEFAULT_TIME_OFFSET_MS = 100;
     private static final int STOP_TIMEOUT_MINUTES = 60;
+    private static final int ADDITIONAL_QUERY_DELAY_MS = 100;
 
     private final String m_JobId;
     private final long m_BucketSpanMs;
+    private final long m_QueryDelayMs;
     private final DataExtractor m_DataExtractor;
     private final DataProcessor m_DataProcessor;
     private final JobDetailsProvider m_JobProvider;
@@ -84,12 +86,24 @@ public class JobScheduler
     private volatile JobSchedulerStatus m_Status;
     private volatile boolean m_IsLookbackOnly;
 
-    public JobScheduler(String jobId, long bucketSpan, DataExtractor dataExtractor,
-            DataProcessor dataProcessor, JobDetailsProvider jobProvider,
-            JobLoggerFactory jobLoggerFactory)
+    /**
+     * Constructor
+     *
+     * @param jobId the job Id
+     * @param bucketSpan the bucket span
+     * @param queryDelay the query delay
+     * @param dataExtractor the data extractor
+     * @param dataProcessor the data processor
+     * @param jobProvider the job provider
+     * @param jobLoggerFactory the factory to create a job logger
+     */
+    public JobScheduler(String jobId, Duration bucketSpan, Duration queryDelay,
+            DataExtractor dataExtractor, DataProcessor dataProcessor,
+            JobDetailsProvider jobProvider, JobLoggerFactory jobLoggerFactory)
     {
         m_JobId = jobId;
-        m_BucketSpanMs = bucketSpan * MILLIS_IN_SECOND;
+        m_BucketSpanMs = bucketSpan.toMillis();
+        m_QueryDelayMs = queryDelay.toMillis() + ADDITIONAL_QUERY_DELAY_MS;
         m_DataExtractor = Objects.requireNonNull(dataExtractor);
         m_DataProcessor = Objects.requireNonNull(dataProcessor);
         m_JobProvider = Objects.requireNonNull(jobProvider);
@@ -183,7 +197,7 @@ public class JobScheduler
         return () -> {
             long nowMs = new Date().getTime();
             long bucketSurplus = nowMs - toBucketStartEpochMs(nowMs);
-            Date nextTime = new Date(nowMs - bucketSurplus + m_BucketSpanMs + DEFAULT_TIME_OFFSET_MS);
+            Date nextTime = new Date(nowMs - bucketSurplus + m_BucketSpanMs + m_QueryDelayMs);
             return LocalDateTime.ofInstant(nextTime.toInstant(), ZoneId.systemDefault());
         };
     }
@@ -253,8 +267,12 @@ public class JobScheduler
 
     private String calcLookbackEnd(SchedulerConfig schedulerConfig)
     {
-        Date endTime = schedulerConfig.getEndTime() == null ?
-                new Date() : schedulerConfig.getEndTime();
+        Date endTime = schedulerConfig.getEndTime();
+        if (endTime == null)
+        {
+            long nowMs = new Date().getTime();
+            endTime = new Date(nowMs - m_QueryDelayMs);
+        }
         long endEpochMs = toBucketStartEpochMs(endTime);
         return String.valueOf(endEpochMs);
     }

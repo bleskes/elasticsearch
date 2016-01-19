@@ -41,6 +41,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -79,7 +80,13 @@ import com.prelert.job.status.OutOfOrderRecordsException;
 public class JobSchedulerTest
 {
     private static final String JOB_ID = "foo";
-    private static final long BUCKET_SPAN = 1L;
+    private static final Duration BUCKET_SPAN = Duration.ofSeconds(1);
+    private static final Duration QUERY_DELAY = Duration.ofSeconds(0);
+
+    /**
+     * Query delay milliseconds when query delay is configured to 0.
+     */
+    private static final long EFFECTIVE_QUERY_DELAY_MS = QUERY_DELAY.toMillis() + 100;
 
     @Mock private JobDetailsProvider m_JobProvider;
 
@@ -146,8 +153,8 @@ public class JobSchedulerTest
         MockDataProcessor dataProcessor = new MockDataProcessor();
         m_JobScheduler = createJobScheduler(dataExtractor, dataProcessor);
 
-        long nowMs = new Date().getTime();
-        long bucketSpanMs = BUCKET_SPAN * 1000;
+        long nowMs = new Date().getTime() - EFFECTIVE_QUERY_DELAY_MS;
+        long bucketSpanMs = BUCKET_SPAN.toMillis();
         long bucketEnd = (nowMs / bucketSpanMs) * bucketSpanMs;
 
         m_JobScheduler.start(job);
@@ -361,8 +368,8 @@ public class JobSchedulerTest
 
     private JobScheduler createJobScheduler(DataExtractor dataExtractor, DataProcessor dataProcessor)
     {
-        return new JobScheduler(JOB_ID, BUCKET_SPAN, dataExtractor, dataProcessor, m_JobProvider,
-                jobId -> mock(Logger.class));
+        return new JobScheduler(JOB_ID, BUCKET_SPAN, QUERY_DELAY, dataExtractor, dataProcessor,
+                m_JobProvider, jobId -> mock(Logger.class));
     }
 
     private static class MockDataExtractor implements DataExtractor
