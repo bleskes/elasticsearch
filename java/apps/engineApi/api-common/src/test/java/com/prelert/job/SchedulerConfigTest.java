@@ -29,10 +29,13 @@ package com.prelert.job;
 
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -138,5 +141,146 @@ public class SchedulerConfigTest
 
         assertEquals(expectedSchedulerConfig, defaultedSchedulerConfig);
         assertTrue(defaultedSchedulerConfig.getQuery().containsKey("match_all"));
+    }
+
+    @Test
+    public void testEquals_GivenDifferentClass()
+    {
+        assertFalse(new SchedulerConfig().equals("a string"));
+    }
+
+    @Test
+    public void testEquals_GivenSameRef()
+    {
+        SchedulerConfig schedulerConfig = new SchedulerConfig();
+        assertTrue(schedulerConfig.equals(schedulerConfig));
+    }
+
+    @Test
+    public void testEquals_GivenEqual()
+    {
+        SchedulerConfig sc1 = createFullyPopulated();
+        SchedulerConfig sc2 = createFullyPopulated();
+
+        assertTrue(sc1.equals(sc2));
+        assertTrue(sc2.equals(sc1));
+        assertEquals(sc1.hashCode(), sc2.hashCode());
+    }
+
+    @Test
+    public void testEquals_GivenDifferentBaseUrl()
+    {
+        SchedulerConfig sc1 = createFullyPopulated();
+        SchedulerConfig sc2 = createFullyPopulated();
+        sc2.setBaseUrl("http://localhost:8081");
+
+        assertFalse(sc1.equals(sc2));
+        assertFalse(sc2.equals(sc1));
+    }
+
+    @Test
+    public void testEquals_GivenDifferentDataSource()
+    {
+        SchedulerConfig sc1 = createFullyPopulated();
+        SchedulerConfig sc2 = createFullyPopulated();
+        sc2.setDataSource(DataSource.FILE);
+
+        assertFalse(sc1.equals(sc2));
+        assertFalse(sc2.equals(sc1));
+    }
+
+    @Test
+    public void testEquals_GivenDifferentIndexes()
+    {
+        SchedulerConfig sc1 = createFullyPopulated();
+        SchedulerConfig sc2 = createFullyPopulated();
+        sc2.setIndexes(Arrays.asList("thisOtherCrazyIndex"));
+
+        assertFalse(sc1.equals(sc2));
+        assertFalse(sc2.equals(sc1));
+    }
+
+    @Test
+    public void testEquals_GivenDifferentTypes()
+    {
+        SchedulerConfig sc1 = createFullyPopulated();
+        SchedulerConfig sc2 = createFullyPopulated();
+        sc2.setTypes(Arrays.asList("thisOtherCrazyType"));
+
+        assertFalse(sc1.equals(sc2));
+        assertFalse(sc2.equals(sc1));
+    }
+
+    @Test
+    public void testEquals_GivenDifferentQuery()
+    {
+        SchedulerConfig sc1 = createFullyPopulated();
+        SchedulerConfig sc2 = createFullyPopulated();
+        Map<String, Object> emptyQuery = new HashMap<>();
+        sc2.setQuery(emptyQuery);
+
+        assertFalse(sc1.equals(sc2));
+        assertFalse(sc2.equals(sc1));
+    }
+
+    @Test
+    public void testEquals_GivenDifferentStartTime()
+    {
+        SchedulerConfig sc1 = createFullyPopulated();
+        SchedulerConfig sc2 = createFullyPopulated();
+        sc2.setStartTime(new Date(42));
+
+        assertFalse(sc1.equals(sc2));
+        assertFalse(sc2.equals(sc1));
+    }
+
+    @Test
+    public void testEquals_GivenDifferentEndTime()
+    {
+        SchedulerConfig sc1 = createFullyPopulated();
+        SchedulerConfig sc2 = createFullyPopulated();
+        sc2.setEndTime(new Date(42));
+
+        assertFalse(sc1.equals(sc2));
+        assertFalse(sc2.equals(sc1));
+    }
+
+    @Test
+    public void testEquals_GivenDifferentPath()
+    {
+        SchedulerConfig sc1 = createFullyPopulated();
+        SchedulerConfig sc2 = createFullyPopulated();
+        sc2.setPath("thisOtherCrazyPath");
+
+        assertFalse(sc1.equals(sc2));
+        assertFalse(sc2.equals(sc1));
+    }
+
+    @Test
+    public void testEquals_GivenDifferentTail()
+    {
+        SchedulerConfig sc1 = createFullyPopulated();
+        SchedulerConfig sc2 = createFullyPopulated();
+        sc2.setTail(false);
+
+        assertFalse(sc1.equals(sc2));
+        assertFalse(sc2.equals(sc1));
+    }
+
+    private static SchedulerConfig createFullyPopulated()
+    {
+        SchedulerConfig sc = new SchedulerConfig();
+        sc.setBaseUrl("http://localhost:8080");
+        sc.setDataSource(DataSource.ELASTICSEARCH);
+        sc.setIndexes(Arrays.asList("myIndex"));
+        sc.setTypes(Arrays.asList("myType1", "myType2"));
+        Map<String, Object> query = new HashMap<>();
+        query.put("foo", new HashMap<>());
+        sc.setQuery(query);
+        sc.setStartTime(new Date(0));
+        sc.setEndTime(new Date(1000));
+        sc.setPath("somePath");
+        sc.setTail(true);
+        return sc;
     }
 }
