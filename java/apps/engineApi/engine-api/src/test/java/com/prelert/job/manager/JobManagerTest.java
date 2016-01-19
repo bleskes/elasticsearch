@@ -42,6 +42,7 @@ import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.Map;
 import java.util.Optional;
@@ -55,6 +56,7 @@ import org.junit.rules.ExpectedException;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -66,6 +68,7 @@ import com.prelert.job.Detector;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.JobDetails;
 import com.prelert.job.JobIdAlreadyExistsException;
+import com.prelert.job.JobSchedulerStatus;
 import com.prelert.job.ModelDebugConfig;
 import com.prelert.job.SchedulerConfig;
 import com.prelert.job.SchedulerConfig.DataSource;
@@ -79,6 +82,7 @@ import com.prelert.job.exceptions.JobInUseException;
 import com.prelert.job.exceptions.TooManyJobsException;
 import com.prelert.job.messages.Messages;
 import com.prelert.job.persistence.JobProvider;
+import com.prelert.job.persistence.QueryPage;
 import com.prelert.job.process.autodetect.ProcessManager;
 import com.prelert.job.process.exceptions.MalformedJsonException;
 import com.prelert.job.process.exceptions.MissingFieldException;
@@ -507,6 +511,44 @@ public class JobManagerTest
         m_ExpectedException.expect(ErrorCodeMatcher.hasErrorCode(ErrorCodes.NO_SUCH_SCHEDULED_JOB));
 
         jobManager.stopExistingJobScheduler("foo");
+    }
+
+    @Test
+    public void testRestartScheduledJobs() throws NoSuchScheduledJobException, UnknownJobException,
+            CannotStartSchedulerWhileItIsStoppingException, TooManyJobsException,
+            JobConfigurationException, JobIdAlreadyExistsException, IOException
+    {
+        JobDetails nonScheduledJob = new JobDetails("non-scheduled", new JobConfiguration());
+        nonScheduledJob.setSchedulerStatus(JobSchedulerStatus.STOPPED);
+
+        JobConfiguration jobConfig = createScheduledJobConfig();
+        JobDetails scheduledJob = new JobDetails("scheduled", jobConfig);
+        DataCounts dataCounts = new DataCounts();
+        dataCounts.setLatestRecordTimeStamp(new Date(0));
+        scheduledJob.setCounts(dataCounts);
+        scheduledJob.setSchedulerStatus(JobSchedulerStatus.STARTED);
+
+        QueryPage<JobDetails> jobsPage = new QueryPage<>(
+                Arrays.asList(nonScheduledJob, scheduledJob), 2);
+        when(m_JobProvider.getJobs(0, 10000)).thenReturn(jobsPage);
+
+        Logger jobLogger = mock(Logger.class);
+        when(m_JobLoggerFactory.newLogger("scheduled")).thenReturn(jobLogger);
+        DataExtractor dataExtractor = mock(DataExtractor.class);
+        when(m_DataExtractorFactory.newExtractor(any(JobDetails.class))).thenReturn(dataExtractor);
+
+        givenProcessInfo(2);
+        JobManager jobManager = createJobManager();
+
+        jobManager.restartScheduledJobs();
+
+        verify(m_JobLoggerFactory).newLogger("scheduled");
+        verify(m_DataExtractorFactory).newExtractor(scheduledJob);
+        verify(dataExtractor).newSearch(anyString(), anyString(), eq(jobLogger));
+        jobManager.shutdown();
+
+        // Verify no other calls to factories - means no other job was scheduled
+        Mockito.verifyNoMoreInteractions(m_JobLoggerFactory, m_DataExtractorFactory);
     }
 
     @Test
