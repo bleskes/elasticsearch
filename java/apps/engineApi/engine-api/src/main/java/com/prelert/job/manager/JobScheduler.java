@@ -190,17 +190,17 @@ public class JobScheduler
 
     public void start(JobDetails job) throws CannotStartSchedulerWhileItIsStoppingException
     {
-        if (job.getSchedulerStatus() == JobSchedulerStatus.STOPPING)
+        if (m_Status == JobSchedulerStatus.STOPPING)
         {
             throw new CannotStartSchedulerWhileItIsStoppingException(m_JobId);
         }
-
-        m_Logger = m_JobLoggerFactory.newLogger(m_JobId);
-        if (job.getSchedulerStatus() == JobSchedulerStatus.STARTED)
+        if (m_Status == JobSchedulerStatus.STARTED)
         {
             m_Logger.info("Cannot start scheduler as it is already started.");
             return;
         }
+
+        m_Logger = m_JobLoggerFactory.newLogger(m_JobId);
         updateStatus(JobSchedulerStatus.STARTED);
         m_LookbackExecutor = Executors.newSingleThreadExecutor();
         updateLastBucketEndFromLatestRecordTimestamp(job);
