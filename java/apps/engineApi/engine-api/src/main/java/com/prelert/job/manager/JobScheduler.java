@@ -222,7 +222,7 @@ public class JobScheduler
         }
         catch (UnknownJobException e)
         {
-            throw new IllegalStateException();
+            throw new IllegalStateException(e);
         }
     }
 
