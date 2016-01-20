@@ -41,6 +41,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -48,7 +49,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
-import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 import org.apache.log4j.Logger;
@@ -80,7 +80,13 @@ import com.prelert.job.status.OutOfOrderRecordsException;
 public class JobSchedulerTest
 {
     private static final String JOB_ID = "foo";
-    private static final long BUCKET_SPAN = 1L;
+    private static final Duration BUCKET_SPAN = Duration.ofSeconds(1);
+    private static final Duration QUERY_DELAY = Duration.ofSeconds(0);
+
+    /**
+     * Query delay milliseconds when query delay is configured to 0.
+     */
+    private static final long EFFECTIVE_QUERY_DELAY_MS = QUERY_DELAY.toMillis() + 100;
 
     @Mock private JobDetailsProvider m_JobProvider;
 
@@ -97,8 +103,8 @@ public class JobSchedulerTest
     }
 
     @Test
-    public void testStart_GivenLookbackOnlyAndSingleStream() throws InterruptedException,
-            ExecutionException, CannotStartSchedulerWhileItIsStoppingException
+    public void testStart_GivenLookbackOnlyAndSingleStream()
+            throws CannotStartSchedulerWhileItIsStoppingException
     {
         JobDetails job = newJobWithElasticScheduler(1400000000000L, 1400000001000L);
         MockDataExtractor dataExtractor = new MockDataExtractor(Arrays.asList(1));
@@ -117,8 +123,8 @@ public class JobSchedulerTest
     }
 
     @Test
-    public void testStart_GivenLookbackOnlyAndMultipleStreams() throws InterruptedException,
-            ExecutionException, CannotStartSchedulerWhileItIsStoppingException
+    public void testStart_GivenLookbackOnlyAndMultipleStreams()
+            throws CannotStartSchedulerWhileItIsStoppingException
     {
         JobDetails job = newJobWithElasticScheduler(1400000000000L, 1400000001000L);
         MockDataExtractor dataExtractor = new MockDataExtractor(Arrays.asList(3));
@@ -139,16 +145,16 @@ public class JobSchedulerTest
     }
 
     @Test
-    public void testStart_GivenLookbackAndRealtimeWithSingleStreams() throws InterruptedException,
-            ExecutionException, CannotStartSchedulerWhileItIsStoppingException
+    public void testStart_GivenLookbackAndRealtimeWithSingleStreams()
+            throws CannotStartSchedulerWhileItIsStoppingException
     {
         JobDetails job = newJobWithElasticScheduler(1400000000000L, null);
         MockDataExtractor dataExtractor = new MockDataExtractor(Arrays.asList(1, 1, 1));
         MockDataProcessor dataProcessor = new MockDataProcessor();
         m_JobScheduler = createJobScheduler(dataExtractor, dataProcessor);
 
-        long nowMs = new Date().getTime();
-        long bucketSpanMs = BUCKET_SPAN * 1000;
+        long nowMs = new Date().getTime() - EFFECTIVE_QUERY_DELAY_MS;
+        long bucketSpanMs = BUCKET_SPAN.toMillis();
         long bucketEnd = (nowMs / bucketSpanMs) * bucketSpanMs;
 
         m_JobScheduler.start(job);
@@ -201,7 +207,8 @@ public class JobSchedulerTest
     }
 
     @Test
-    public void testStart_GivenDataProcessorThrows() throws InterruptedException, ExecutionException, CannotStartSchedulerWhileItIsStoppingException
+    public void testStart_GivenDataProcessorThrows()
+            throws CannotStartSchedulerWhileItIsStoppingException
     {
         JobDetails job = newJobWithElasticScheduler(1400000000000L, 1400000001000L);
         MockDataExtractor dataExtractor = new MockDataExtractor(Arrays.asList(1, 1));
@@ -230,8 +237,8 @@ public class JobSchedulerTest
     }
 
     @Test
-    public void testStart_GivenJobHasLatestRecordTimestamp() throws InterruptedException,
-            ExecutionException, CannotStartSchedulerWhileItIsStoppingException
+    public void testStart_GivenJobHasLatestRecordTimestamp()
+            throws CannotStartSchedulerWhileItIsStoppingException
     {
         JobDetails job = newJobWithElasticScheduler(1450000000000L, 1460000000000L);
         DataCounts dataCounts = new DataCounts();
@@ -254,8 +261,8 @@ public class JobSchedulerTest
     }
 
     @Test
-    public void testStart_GivenLookbackStartTimeIsNull() throws InterruptedException,
-            ExecutionException, CannotStartSchedulerWhileItIsStoppingException
+    public void testStart_GivenLookbackStartTimeIsNull()
+            throws CannotStartSchedulerWhileItIsStoppingException
     {
         JobDetails job = newJobWithElasticScheduler(null, 1400000000000L);
         MockDataExtractor dataExtractor = new MockDataExtractor(Arrays.asList(1));
@@ -273,7 +280,8 @@ public class JobSchedulerTest
     }
 
     @Test
-    public void testStart_GivenAlreadyStarted() throws CannotStartSchedulerWhileItIsStoppingException
+    public void testStart_GivenAlreadyStarted()
+            throws CannotStartSchedulerWhileItIsStoppingException, InterruptedException
     {
         JobDetails job = newJobWithElasticScheduler(1400000000000L, null);
         MockDataExtractor dataExtractor = new MockDataExtractor(Arrays.asList(1, 1, 1));
@@ -281,10 +289,11 @@ public class JobSchedulerTest
         m_JobScheduler = createJobScheduler(dataExtractor, dataProcessor);
 
         m_JobScheduler.start(job);
+        Thread.sleep(100);
         m_JobScheduler.start(job);
         m_JobScheduler.stopManual();
 
-        assertEquals(1, dataExtractor.getSearchCount());
+        assertEquals(0, dataExtractor.getSearchCount());
     }
 
     @Test
@@ -304,7 +313,7 @@ public class JobSchedulerTest
 
     @Test
     public void testStopAuto() throws InterruptedException,
-            ExecutionException, CannotStartSchedulerWhileItIsStoppingException
+            CannotStartSchedulerWhileItIsStoppingException
     {
         JobDetails job = newJobWithElasticScheduler(1400000000000L, null);
         MockDataExtractor dataExtractor = new MockDataExtractor(Arrays.asList(1, 1, 1));
@@ -359,8 +368,8 @@ public class JobSchedulerTest
 
     private JobScheduler createJobScheduler(DataExtractor dataExtractor, DataProcessor dataProcessor)
     {
-        return new JobScheduler(JOB_ID, BUCKET_SPAN, dataExtractor, dataProcessor, m_JobProvider,
-                jobId -> mock(Logger.class));
+        return new JobScheduler(JOB_ID, BUCKET_SPAN, QUERY_DELAY, dataExtractor, dataProcessor,
+                m_JobProvider, jobId -> mock(Logger.class));
     }
 
     private static class MockDataExtractor implements DataExtractor

@@ -81,7 +81,8 @@ public class TaskScheduler
                 LOGGER.warn("Waiting for running task to terminate timed out");
             }
             return success;
-        } catch (InterruptedException e)
+        }
+        catch (InterruptedException e)
         {
             Thread.currentThread().interrupt();
             return false;

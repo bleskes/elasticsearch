@@ -80,6 +80,7 @@ public class SchedulerConfig
      * Serialisation names
      */
     public static final String DATA_SOURCE = "dataSource";
+    public static final String QUERY_DELAY = "queryDelay";
     public static final String PATH = "path";
     public static final String TAIL = "tail";
     public static final String BASE_URL = "baseUrl";
@@ -89,7 +90,14 @@ public class SchedulerConfig
     public static final String START_TIME = "startTime";
     public static final String END_TIME = "endTime";
 
+    private static final long DEFAULT_ELASTICSEARCH_QUERY_DELAY = 60L;
+
     private DataSource m_DataSource;
+
+    /**
+     * The delay in seconds before starting to query a period of time
+     */
+    private Long m_QueryDelay;
 
     /**
      * These values apply to the FILE data source
@@ -127,6 +135,16 @@ public class SchedulerConfig
     public void setDataSource(DataSource dataSource)
     {
         m_DataSource = dataSource;
+    }
+
+    public Long getQueryDelay()
+    {
+        return m_QueryDelay;
+    }
+
+    public void setQueryDelay(Long delay)
+    {
+        m_QueryDelay = delay;
     }
 
     /**
@@ -254,10 +272,28 @@ public class SchedulerConfig
 
     public void fillDefaults()
     {
-        if (m_DataSource == DataSource.ELASTICSEARCH && m_Query == null)
+        switch (m_DataSource)
+        {
+            case ELASTICSEARCH:
+                fillElasticsearchDefaults();
+                break;
+            case FILE:
+                break;
+            default:
+                throw new IllegalStateException();
+        }
+    }
+
+    private void fillElasticsearchDefaults()
+    {
+        if (m_Query == null)
         {
             m_Query = new HashMap<>();
             m_Query.put(MATCH_ALL_ES_QUERY, new HashMap<String, Object>());
+        }
+        if (m_QueryDelay == null)
+        {
+            m_QueryDelay = DEFAULT_ELASTICSEARCH_QUERY_DELAY;
         }
     }
 
@@ -282,6 +318,7 @@ public class SchedulerConfig
         SchedulerConfig that = (SchedulerConfig)other;
 
         return Objects.equals(this.m_DataSource, that.m_DataSource) &&
+                Objects.equals(this.m_QueryDelay, that.m_QueryDelay) &&
                 Objects.equals(this.m_Path, that.m_Path) &&
                 Objects.equals(this.m_Tail, that.m_Tail) &&
                 Objects.equals(this.m_BaseUrl, that.m_BaseUrl) &&
@@ -295,7 +332,7 @@ public class SchedulerConfig
     @Override
     public int hashCode()
     {
-        return Objects.hash(m_DataSource, m_Path, m_Tail, m_BaseUrl, m_Indexes,
+        return Objects.hash(m_DataSource, m_QueryDelay, m_Path, m_Tail, m_BaseUrl, m_Indexes,
                 m_Types, m_Query, m_StartTime, m_EndTime);
     }
 }
