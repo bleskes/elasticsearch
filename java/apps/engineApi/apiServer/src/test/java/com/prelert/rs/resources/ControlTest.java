@@ -36,8 +36,10 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.prelert.job.UnknownJobException;
+import com.prelert.job.exceptions.JobInUseException;
 import com.prelert.job.manager.CannotStartSchedulerWhileItIsStoppingException;
 import com.prelert.job.manager.NoSuchScheduledJobException;
+import com.prelert.job.process.exceptions.NativeProcessRunException;
 import com.prelert.rs.data.Acknowledgement;
 
 public class ControlTest extends ServiceTest
@@ -64,7 +66,8 @@ public class ControlTest extends ServiceTest
 
     @Test
     public void testStopScheduledJob() throws UnknownJobException,
-            CannotStartSchedulerWhileItIsStoppingException, NoSuchScheduledJobException
+            CannotStartSchedulerWhileItIsStoppingException, NoSuchScheduledJobException,
+            NativeProcessRunException, JobInUseException
     {
         Response response = m_Control.stopScheduledJob("foo");
 

@@ -994,11 +994,13 @@ public class JobManager implements DataProcessor, Shutdownable
         m_ScheduledJobs.get(jobId).start(job);
     }
 
-    public void stopExistingJobScheduler(String jobId) throws NoSuchScheduledJobException
+    public void stopExistingJobScheduler(String jobId) throws NoSuchScheduledJobException,
+            UnknownJobException, NativeProcessRunException, JobInUseException
     {
         checkJobHasBeenScheduled(jobId);
         LOGGER.info("Stopping scheduler for job: " + jobId);
         m_ScheduledJobs.get(jobId).stopManual();
+        closeJob(jobId);
     }
 
     private void checkJobHasBeenScheduled(String jobId) throws NoSuchScheduledJobException

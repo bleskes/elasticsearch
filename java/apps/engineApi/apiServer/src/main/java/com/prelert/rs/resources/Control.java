@@ -38,8 +38,10 @@ import javax.ws.rs.core.Response;
 import org.apache.log4j.Logger;
 
 import com.prelert.job.UnknownJobException;
+import com.prelert.job.exceptions.JobInUseException;
 import com.prelert.job.manager.CannotStartSchedulerWhileItIsStoppingException;
 import com.prelert.job.manager.NoSuchScheduledJobException;
+import com.prelert.job.process.exceptions.NativeProcessRunException;
 import com.prelert.rs.data.Acknowledgement;
 
 
@@ -84,12 +86,15 @@ public class Control extends ResourceWithJobManager
      * @return
      * @throws UnknownJobException
      * @throws NoSuchScheduledJobException
+     * @throws JobInUseException
+     * @throws NativeProcessRunException
      */
     @POST
     @Path("/scheduler/{jobId}/stop")
     @Produces(MediaType.APPLICATION_JSON)
     public Response stopScheduledJob(@PathParam("jobId") String jobId)
-            throws NoSuchScheduledJobException
+            throws NoSuchScheduledJobException, UnknownJobException, NativeProcessRunException,
+            JobInUseException
     {
         LOGGER.debug("Received request to stop scheduler for job: " + jobId);
         jobManager().stopExistingJobScheduler(jobId);
