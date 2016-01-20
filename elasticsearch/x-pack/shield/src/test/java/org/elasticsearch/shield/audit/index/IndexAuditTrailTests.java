@@ -65,6 +65,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 
 import static org.elasticsearch.shield.audit.index.IndexNameResolver.Rollover.DAILY;
 import static org.elasticsearch.shield.audit.index.IndexNameResolver.Rollover.HOURLY;
@@ -184,7 +185,7 @@ public class IndexAuditTrailTests extends ShieldIntegTestCase {
                         return builder.build();
                     }
             };
-            cluster2 = new InternalTestCluster("network", randomLong(), createTempDir(), numNodes, numNodes, cluster2Name, cluster2SettingsSource, 0, false, SECOND_CLUSTER_NODE_PREFIX, getMockPlugins());
+            cluster2 = new InternalTestCluster("network", randomLong(), createTempDir(), numNodes, numNodes, cluster2Name, cluster2SettingsSource, 0, false, SECOND_CLUSTER_NODE_PREFIX, getMockPlugins(), Function.identity());
             cluster2.beforeTest(getRandom(), 0.5);
             remoteClient = cluster2.client();
 
