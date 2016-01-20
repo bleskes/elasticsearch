@@ -235,6 +235,16 @@ public enum ErrorCodes
      */
     SCHEDULER_INVALID_OPTION_VALUE(10303),
 
+    /**
+     * When scheduler is configured the bucket span has to be explicitly set.
+     */
+    SCHEDULER_REQUIRES_BUCKET_SPAN(10304),
+
+    /**
+     * A job configured with an ELASTICSEARCH scheduler cannot support latency.
+     */
+    SCHEDULER_ELASTICSEARCH_DOES_NOT_SUPPORT_LATENCY(10305),
+
     // Data store errors
     /**
      * A generic exception from the data store

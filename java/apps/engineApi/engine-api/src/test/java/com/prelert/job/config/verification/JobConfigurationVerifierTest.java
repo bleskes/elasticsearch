@@ -45,6 +45,8 @@ import com.prelert.job.DataDescription;
 import com.prelert.job.DataDescription.DataFormat;
 import com.prelert.job.Detector;
 import com.prelert.job.JobConfiguration;
+import com.prelert.job.SchedulerConfig;
+import com.prelert.job.SchedulerConfig.DataSource;
 import com.prelert.job.errorcodes.ErrorCodeMatcher;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.transform.Condition;
@@ -385,6 +387,65 @@ public class JobConfigurationVerifierTest
         JobConfigurationVerifier.verify(jobConfig);
     }
 
+    @Test
+    public void testVerify_GivenSchedulerButNoBucketSpan() throws JobConfigurationException
+    {
+        m_ExpectedException.expect(JobConfigurationException.class);
+        m_ExpectedException.expectMessage(
+                "A job configured with scheduler requires that bucketSpan is specified");
+        m_ExpectedException.expect(ErrorCodeMatcher.hasErrorCode(
+                ErrorCodes.SCHEDULER_REQUIRES_BUCKET_SPAN));
+
+        SchedulerConfig schedulerConfig = createValidElasticsearchSchedulerConfig();
+        JobConfiguration jobConfig = buildJobConfigurationNoTransforms();
+        jobConfig.setSchedulerConfig(schedulerConfig);
+        jobConfig.getAnalysisConfig().setBucketSpan(null);
+
+        JobConfigurationVerifier.verify(jobConfig);
+    }
+
+    @Test
+    public void testVerify_GivenElasticsearchSchedulerAndNonZeroLatency() throws JobConfigurationException
+    {
+        m_ExpectedException.expect(JobConfigurationException.class);
+        m_ExpectedException.expectMessage(
+                "A job configured with an Elasticsearch scheduler cannot support latency");
+        m_ExpectedException.expect(ErrorCodeMatcher.hasErrorCode(
+                ErrorCodes.SCHEDULER_ELASTICSEARCH_DOES_NOT_SUPPORT_LATENCY));
+
+        SchedulerConfig schedulerConfig = createValidElasticsearchSchedulerConfig();
+        JobConfiguration jobConfig = buildJobConfigurationNoTransforms();
+        jobConfig.setSchedulerConfig(schedulerConfig);
+        jobConfig.getAnalysisConfig().setBucketSpan(1800L);
+        jobConfig.getAnalysisConfig().setLatency(3600L);
+
+        JobConfigurationVerifier.verify(jobConfig);
+    }
+
+    @Test
+    public void testVerify_GivenElasticsearchSchedulerAndZeroLatency() throws JobConfigurationException
+    {
+        SchedulerConfig schedulerConfig = createValidElasticsearchSchedulerConfig();
+        JobConfiguration jobConfig = buildJobConfigurationNoTransforms();
+        jobConfig.setSchedulerConfig(schedulerConfig);
+        jobConfig.getAnalysisConfig().setBucketSpan(1800L);
+        jobConfig.getAnalysisConfig().setLatency(0L);
+
+        assertTrue(JobConfigurationVerifier.verify(jobConfig));
+    }
+
+    @Test
+    public void testVerify_GivenElasticsearchSchedulerAndNullLatency() throws JobConfigurationException
+    {
+        SchedulerConfig schedulerConfig = createValidElasticsearchSchedulerConfig();
+        JobConfiguration jobConfig = buildJobConfigurationNoTransforms();
+        jobConfig.setSchedulerConfig(schedulerConfig);
+        jobConfig.getAnalysisConfig().setBucketSpan(1800L);
+        jobConfig.getAnalysisConfig().setLatency(null);
+
+        assertTrue(JobConfigurationVerifier.verify(jobConfig));
+    }
+
     private JobConfiguration buildJobConfigurationNoTransforms()
     {
         JobConfiguration jc = new JobConfiguration();
@@ -408,5 +469,13 @@ public class JobConfigurationVerifierTest
         return jc;
     }
 
-
+    private static SchedulerConfig createValidElasticsearchSchedulerConfig()
+    {
+        SchedulerConfig schedulerConfig = new SchedulerConfig();
+        schedulerConfig.setDataSource(DataSource.ELASTICSEARCH);
+        schedulerConfig.setBaseUrl("http://localhost:9200");
+        schedulerConfig.setIndexes(Arrays.asList("myIndex"));
+        schedulerConfig.setTypes(Arrays.asList("myType"));
+        return schedulerConfig;
+    }
 }
