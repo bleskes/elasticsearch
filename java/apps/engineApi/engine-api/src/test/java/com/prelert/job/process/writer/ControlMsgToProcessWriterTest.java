@@ -64,12 +64,14 @@ public class ControlMsgToProcessWriterTest
     }
 
     @Test
-    public void testWriteCalcInterimMessage_GivenNoCalcInterimResultsAdvanceTime() throws IOException
+    public void testWriteCalcInterimMessage_GivenAdvanceTime() throws IOException
     {
         ControlMsgToProcessWriter writer = new ControlMsgToProcessWriter(m_LengthEncodedWriter,
                 m_AnalysisConfig);
+        InterimResultsParams interimResultsParams = InterimResultsParams.newBuilder()
+                .advanceTime(1234567890L).build();
 
-        writer.writeCalcInterimMessage(new InterimResultsParams(false, new TimeRange(null, 1234567890L)));
+        writer.writeCalcInterimMessage(interimResultsParams);
 
         InOrder inOrder = inOrder(m_LengthEncodedWriter);
         inOrder.verify(m_LengthEncodedWriter).writeNumFields(4);
@@ -83,8 +85,10 @@ public class ControlMsgToProcessWriterTest
     {
         ControlMsgToProcessWriter writer = new ControlMsgToProcessWriter(m_LengthEncodedWriter,
                 m_AnalysisConfig);
+        InterimResultsParams interimResultsParams = InterimResultsParams.newBuilder()
+                .calcInterim(true).build();
 
-        writer.writeCalcInterimMessage(new InterimResultsParams(true, new TimeRange(null, null)));
+        writer.writeCalcInterimMessage(interimResultsParams);
 
         InOrder inOrder = inOrder(m_LengthEncodedWriter);
         inOrder.verify(m_LengthEncodedWriter).writeNumFields(4);
@@ -94,12 +98,13 @@ public class ControlMsgToProcessWriterTest
     }
 
     @Test
-    public void testWriteCalcInterimMessage_GivenNoCalcInterimResults() throws IOException
+    public void testWriteCalcInterimMessage_GivenNeitherCalcInterimNorAdvanceTime() throws IOException
     {
         ControlMsgToProcessWriter writer = new ControlMsgToProcessWriter(m_LengthEncodedWriter,
                 m_AnalysisConfig);
+        InterimResultsParams interimResultsParams = InterimResultsParams.newBuilder().build();
 
-        writer.writeCalcInterimMessage(new InterimResultsParams(false, new TimeRange(null, null)));
+        writer.writeCalcInterimMessage(interimResultsParams);
 
         verifyNoMoreInteractions(m_LengthEncodedWriter);
     }
@@ -109,13 +114,35 @@ public class ControlMsgToProcessWriterTest
     {
         ControlMsgToProcessWriter writer = new ControlMsgToProcessWriter(m_LengthEncodedWriter,
                 m_AnalysisConfig);
+        InterimResultsParams interimResultsParams = InterimResultsParams.newBuilder()
+                .calcInterim(true).forTimeRange(120L, 180L).build();
 
-        writer.writeCalcInterimMessage(new InterimResultsParams(true, new TimeRange(120L, 180L)));
+        writer.writeCalcInterimMessage(interimResultsParams);
 
         InOrder inOrder = inOrder(m_LengthEncodedWriter);
         inOrder.verify(m_LengthEncodedWriter).writeNumFields(4);
         inOrder.verify(m_LengthEncodedWriter, times(3)).writeField("");
         inOrder.verify(m_LengthEncodedWriter).writeField("i120 180");
+        verifyNoMoreInteractions(m_LengthEncodedWriter);
+    }
+
+    @Test
+    public void testWriteCalcInterimMessage_GivenCalcInterimAndAdvanceTime() throws IOException
+    {
+        ControlMsgToProcessWriter writer = new ControlMsgToProcessWriter(m_LengthEncodedWriter,
+                m_AnalysisConfig);
+        InterimResultsParams interimResultsParams = InterimResultsParams.newBuilder()
+                .calcInterim(true).advanceTime(180L).build();
+
+        writer.writeCalcInterimMessage(interimResultsParams);
+
+        InOrder inOrder = inOrder(m_LengthEncodedWriter);
+        inOrder.verify(m_LengthEncodedWriter).writeNumFields(4);
+        inOrder.verify(m_LengthEncodedWriter, times(3)).writeField("");
+        inOrder.verify(m_LengthEncodedWriter).writeField("t180");
+        inOrder.verify(m_LengthEncodedWriter).writeNumFields(4);
+        inOrder.verify(m_LengthEncodedWriter, times(3)).writeField("");
+        inOrder.verify(m_LengthEncodedWriter).writeField("i");
         verifyNoMoreInteractions(m_LengthEncodedWriter);
     }
 

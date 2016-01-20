@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -28,24 +28,94 @@
 package com.prelert.job.process.params;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
-
-import com.prelert.job.process.params.InterimResultsParams;
 
 public class InterimResultsParamsTest
 {
     @Test
-    public void testGetStart()
+    public void testBuilder_GivenDefault()
     {
-        assertEquals("", new InterimResultsParams(true, new TimeRange(null, null)).getStart());
-        assertEquals("42", new InterimResultsParams(true, new TimeRange(42L, null)).getStart());
+        InterimResultsParams params = InterimResultsParams.newBuilder().build();
+        assertFalse(params.shouldCalculateInterim());
+        assertFalse(params.shouldAdvanceTime());
+        assertEquals("", params.getStart());
+        assertEquals("", params.getEnd());
     }
 
     @Test
-    public void testGetEnd()
+    public void testBuilder_GivenCalcInterim()
     {
-        assertEquals("", new InterimResultsParams(true, new TimeRange(null, null)).getEnd());
-        assertEquals("1", new InterimResultsParams(true, new TimeRange(null, 1L)).getEnd());
+        InterimResultsParams params = InterimResultsParams.newBuilder().calcInterim(true).build();
+        assertTrue(params.shouldCalculateInterim());
+        assertFalse(params.shouldAdvanceTime());
+        assertEquals("", params.getStart());
+        assertEquals("", params.getEnd());
+    }
+
+    @Test
+    public void testBuilder_GivenCalcInterimAndStart()
+    {
+        InterimResultsParams params = InterimResultsParams.newBuilder().calcInterim(true)
+                .forTimeRange(42L, null).build();
+        assertTrue(params.shouldCalculateInterim());
+        assertFalse(params.shouldAdvanceTime());
+        assertEquals("42", params.getStart());
+        assertEquals("", params.getEnd());
+    }
+
+    @Test
+    public void testBuilder_GivenCalcInterimAndEnd()
+    {
+        InterimResultsParams params = InterimResultsParams.newBuilder().calcInterim(true)
+                .forTimeRange(null, 100L).build();
+        assertTrue(params.shouldCalculateInterim());
+        assertFalse(params.shouldAdvanceTime());
+        assertEquals("", params.getStart());
+        assertEquals("100", params.getEnd());
+    }
+
+    @Test
+    public void testBuilder_GivenCalcInterimAndStartAndEnd()
+    {
+        InterimResultsParams params = InterimResultsParams.newBuilder().calcInterim(true)
+                .forTimeRange(3600L, 7200L).build();
+        assertTrue(params.shouldCalculateInterim());
+        assertFalse(params.shouldAdvanceTime());
+        assertEquals("3600", params.getStart());
+        assertEquals("7200", params.getEnd());
+    }
+
+    @Test
+    public void testBuilder_GivenAdvanceTime()
+    {
+        InterimResultsParams params = InterimResultsParams.newBuilder().advanceTime(true).build();
+        assertFalse(params.shouldCalculateInterim());
+        assertTrue(params.shouldAdvanceTime());
+        assertEquals("", params.getStart());
+        assertEquals("", params.getEnd());
+    }
+
+    @Test
+    public void testBuilder_GivenAdvanceTimeWithTargetTime()
+    {
+        InterimResultsParams params = InterimResultsParams.newBuilder().advanceTime(1821L).build();
+        assertFalse(params.shouldCalculateInterim());
+        assertTrue(params.shouldAdvanceTime());
+        assertEquals("", params.getStart());
+        assertEquals("1821", params.getEnd());
+    }
+
+    @Test
+    public void testBuilder_GivenCalcInterimAndAdvanceTimeWithTargetTime()
+    {
+        InterimResultsParams params = InterimResultsParams.newBuilder().calcInterim(true)
+                .advanceTime(1940L).build();
+        assertTrue(params.shouldCalculateInterim());
+        assertTrue(params.shouldAdvanceTime());
+        assertEquals("", params.getStart());
+        assertEquals("1940", params.getEnd());
     }
 }

@@ -318,13 +318,21 @@ public class JobManager implements DataProcessor, Shutdownable
     private void createJobSchedulerAndStart(JobDetails job)
             throws CannotStartSchedulerWhileItIsStoppingException
     {
-        Duration bucketSpan = Duration.ofSeconds(job.getAnalysisConfig().getBucketSpan());
+        Duration frequency = getFrequencyOrDefault(job);
         Duration queryDelay = Duration.ofSeconds(job.getSchedulerConfig().getQueryDelay());
-        JobScheduler jobScheduler = new JobScheduler(job.getId(), bucketSpan, queryDelay,
+        JobScheduler jobScheduler = new JobScheduler(job.getId(), frequency, queryDelay,
                 m_DataExtractorFactory.newExtractor(job), this, m_JobProvider, m_JobLoggerFactory);
         m_ScheduledJobs.put(job.getId(), jobScheduler);
         LOGGER.info("Starting scheduler for job: " + job.getId());
         jobScheduler.start(job);
+    }
+
+    private static Duration getFrequencyOrDefault(JobDetails job)
+    {
+        Long frequency = job.getSchedulerConfig().getFrequency();
+        Long bucketSpan = job.getAnalysisConfig().getBucketSpan();
+        return frequency == null ? DefaultFrequency.ofBucketSpan(bucketSpan)
+                : Duration.ofSeconds(frequency);
     }
 
     private void checkCreateJobForTooManyJobsAgainstLicenseLimit() throws TooManyJobsException

@@ -81,6 +81,7 @@ public class SchedulerConfig
      */
     public static final String DATA_SOURCE = "dataSource";
     public static final String QUERY_DELAY = "queryDelay";
+    public static final String FREQUENCY = "frequency";
     public static final String PATH = "path";
     public static final String TAIL = "tail";
     public static final String BASE_URL = "baseUrl";
@@ -98,6 +99,11 @@ public class SchedulerConfig
      * The delay in seconds before starting to query a period of time
      */
     private Long m_QueryDelay;
+
+    /**
+     * The frequency in seconds with which queries are executed
+     */
+    private Long m_Frequency;
 
     /**
      * These values apply to the FILE data source
@@ -145,6 +151,16 @@ public class SchedulerConfig
     public void setQueryDelay(Long delay)
     {
         m_QueryDelay = delay;
+    }
+
+    public Long getFrequency()
+    {
+        return m_Frequency;
+    }
+
+    public void setFrequency(Long frequency)
+    {
+        m_Frequency = frequency;
     }
 
     /**
@@ -318,6 +334,7 @@ public class SchedulerConfig
         SchedulerConfig that = (SchedulerConfig)other;
 
         return Objects.equals(this.m_DataSource, that.m_DataSource) &&
+                Objects.equals(this.m_Frequency, that.m_Frequency) &&
                 Objects.equals(this.m_QueryDelay, that.m_QueryDelay) &&
                 Objects.equals(this.m_Path, that.m_Path) &&
                 Objects.equals(this.m_Tail, that.m_Tail) &&
@@ -332,7 +349,7 @@ public class SchedulerConfig
     @Override
     public int hashCode()
     {
-        return Objects.hash(m_DataSource, m_QueryDelay, m_Path, m_Tail, m_BaseUrl, m_Indexes,
-                m_Types, m_Query, m_StartTime, m_EndTime);
+        return Objects.hash(m_DataSource, m_Frequency, m_QueryDelay, m_Path, m_Tail, m_BaseUrl,
+                m_Indexes, m_Types, m_Query, m_StartTime, m_EndTime);
     }
 }

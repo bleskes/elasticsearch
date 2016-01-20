@@ -86,17 +86,22 @@ public abstract class AbstractDataLoad extends ResourceWithJobManager
     /**
      * Parameter to control whether interim results are calculated on a flush
      */
-    public static final String CALC_INTERIM_PARAM = "calcInterim";
+    private static final String CALC_INTERIM_PARAM = "calcInterim";
+
+    /**
+     * Parameter to control whether time should be advanced on a flush
+     */
+    public static final String ADVANCE_TIME_PARAM = "advanceTime";
 
     /** Parameter to specify start time of buckets to be reset */
-    public static final String RESET_START_PARAM = "resetStart";
+    static final String RESET_START_PARAM = "resetStart";
 
     /** Parameter to specify end time of buckets to be reset */
-    public static final String RESET_END_PARAM = "resetEnd";
+    static final String RESET_END_PARAM = "resetEnd";
 
-    public static final int MILLISECONDS_IN_SECOND = 1000;
+    private static final int MILLISECONDS_IN_SECOND = 1000;
 
-    public static final String JOB_SEPARATOR = ",";
+    private static final String JOB_SEPARATOR = ",";
 
     /**
      * Data upload endpoint.
@@ -346,6 +351,14 @@ public abstract class AbstractDataLoad extends ResourceWithJobManager
      * @param jobId
      * @param calcInterim Should interim results be calculated based on the data
      * up to the point of the flush?
+     * @param advanceTime Should time be advanced
+     * @param start If {@code calcInterim} is {@code true}, then interim results are calculated
+     * only for non-final buckets that are from {@code start} time onwards. If {@code advanceTime}
+     * is {@code true}, then {@code start} is not expected to be specified and interim results
+     * will be calculated for all non-final buckets after the point where time was advanced.
+     * @param end If {@code calcInterim} is {@code true}, then interim results are calculated
+     * only for non-final buckets that before {@code end}. If {@code advanceTime} is {@code true},
+     * then time is advanced to {@code end}.
      * @return
      * @throws UnknownJobException
      * @throws NativeProcessRunException
@@ -356,6 +369,7 @@ public abstract class AbstractDataLoad extends ResourceWithJobManager
     @Produces(MediaType.APPLICATION_JSON)
     public Response flushUpload(@PathParam("jobId") String jobId,
             @DefaultValue("false") @QueryParam(CALC_INTERIM_PARAM) boolean calcInterim,
+            @DefaultValue("false") @QueryParam(ADVANCE_TIME_PARAM) boolean advanceTime,
             @DefaultValue("") @QueryParam(START_QUERY_PARAM) String start,
             @DefaultValue("") @QueryParam(END_QUERY_PARAM) String end)
     throws UnknownJobException, NativeProcessRunException, JobInUseException
@@ -363,15 +377,23 @@ public abstract class AbstractDataLoad extends ResourceWithJobManager
         LOGGER.debug("Post to flush data upload for job " + jobId +
                      " with " + CALC_INTERIM_PARAM + '=' + calcInterim);
         checkJobIsNotScheduled(jobId);
-        checkValidFlushArgumentsCombination(calcInterim, start, end);
+        checkValidFlushArgumentsCombination(calcInterim, advanceTime, start, end);
         TimeRange timeRange = createTimeRange(START_QUERY_PARAM, start, END_QUERY_PARAM, end);
-        jobManager().flushJob(jobId, new InterimResultsParams(calcInterim, timeRange));
+        InterimResultsParams interimResultsParams = InterimResultsParams.newBuilder()
+                .calcInterim(calcInterim).advanceTime(advanceTime).forTimeRange(timeRange).build();
+        jobManager().flushJob(jobId, interimResultsParams);
         return Response.ok().entity(new Acknowledgement()).build();
     }
 
-    private void checkValidFlushArgumentsCombination(boolean calcInterim, String start, String end)
+    private void checkValidFlushArgumentsCombination(boolean calcInterim, boolean advanceTime,
+            String start, String end)
     {
-        if (calcInterim)
+        if (!calcInterim && !advanceTime)
+        {
+            checkFlushParamIsEmpty(START_QUERY_PARAM, start);
+            checkFlushParamIsEmpty(END_QUERY_PARAM, end);
+        }
+        else if (calcInterim && !advanceTime)
         {
             if (!isValidTimeRange(start, end))
             {
@@ -382,12 +404,23 @@ public abstract class AbstractDataLoad extends ResourceWithJobManager
         }
         else
         {
-            if (!start.isEmpty())
+            checkFlushParamIsEmpty(START_QUERY_PARAM, start);
+            if (end.isEmpty())
             {
-                String msg = Messages.getMessage(Messages.REST_INVALID_FLUSH_PARAMS_UNEXPECTED,
-                                    START_QUERY_PARAM);
+                String msg = Messages.getMessage(Messages.REST_INVALID_FLUSH_PARAMS_MISSING,
+                        END_QUERY_PARAM);
                 throwInvalidFlushParamsException(msg);
             }
+        }
+    }
+
+    private void checkFlushParamIsEmpty(String paramName, String paramValue)
+    {
+        if (!paramValue.isEmpty())
+        {
+            String msg = Messages.getMessage(Messages.REST_INVALID_FLUSH_PARAMS_UNEXPECTED,
+                    paramName);
+            throwInvalidFlushParamsException(msg);
         }
     }
 

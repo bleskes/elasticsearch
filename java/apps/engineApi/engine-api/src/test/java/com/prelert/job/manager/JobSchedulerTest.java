@@ -80,7 +80,7 @@ import com.prelert.job.status.OutOfOrderRecordsException;
 public class JobSchedulerTest
 {
     private static final String JOB_ID = "foo";
-    private static final Duration BUCKET_SPAN = Duration.ofSeconds(1);
+    private static final Duration FREQUENCY = Duration.ofSeconds(1);
     private static final Duration QUERY_DELAY = Duration.ofSeconds(0);
 
     /**
@@ -154,8 +154,8 @@ public class JobSchedulerTest
         m_JobScheduler = createJobScheduler(dataExtractor, dataProcessor);
 
         long nowMs = new Date().getTime() - EFFECTIVE_QUERY_DELAY_MS;
-        long bucketSpanMs = BUCKET_SPAN.toMillis();
-        long bucketEnd = (nowMs / bucketSpanMs) * bucketSpanMs;
+        long intervalMs = FREQUENCY.toMillis();
+        long intervalEnd = (nowMs / intervalMs) * intervalMs;
 
         m_JobScheduler.start(job);
         assertEquals(JobSchedulerStatus.STARTED, m_CurrentStatus);
@@ -177,32 +177,32 @@ public class JobSchedulerTest
         // To check the lookback end time we should be lenient as
         // it is possible that between the moment we recorded now
         // and the moment the lookback actually got executed,
-        // the current bucket end could have changed.
+        // the current interval end could have changed.
         assertEquals("0-0", dataProcessor.getStream(0));
         assertEquals("1400000000000", dataExtractor.getStart(0));
         long lookbackEnd = Long.parseLong(dataExtractor.getEnd(0));
-        assertTrue(lookbackEnd >= bucketEnd);
-        assertTrue(lookbackEnd <= bucketEnd + bucketSpanMs);
-        bucketEnd = lookbackEnd + bucketSpanMs;
+        assertTrue(lookbackEnd >= intervalEnd);
+        assertTrue(lookbackEnd <= intervalEnd + intervalMs);
+        intervalEnd = lookbackEnd + intervalMs;
 
         // The same is true for the first real-time search.
         // It is possible that by the time the first real-time
-        // gets executed, we have skipped buckets and therefore
-        // we are processing two buckets together.
+        // gets executed, we have skipped intervals and therefore
+        // we are processing two intervals together.
         assertEquals("1-0", dataProcessor.getStream(1));
         assertEquals(String.valueOf(lookbackEnd), dataExtractor.getStart(1));
         long firstRtEnd = Long.parseLong(dataExtractor.getEnd(1));
-        assertTrue(firstRtEnd >= bucketEnd);
-        assertTrue(firstRtEnd <= bucketEnd + bucketSpanMs);
-        bucketEnd = firstRtEnd + bucketSpanMs;
+        assertTrue(firstRtEnd >= intervalEnd);
+        assertTrue(firstRtEnd <= intervalEnd + intervalMs);
+        intervalEnd = firstRtEnd + intervalMs;
 
-        // The rest of real-time searches (if any) should span over exactly one bucket
+        // The rest of real-time searches (if any) should span over exactly one interval
         for (int i = 2; i < dataProcessor.getNumberOfStreams(); i++)
         {
             assertEquals("" + i + "-0", dataProcessor.getStream(i));
-            assertEquals(String.valueOf(bucketEnd - bucketSpanMs), dataExtractor.getStart(i));
-            assertEquals(String.valueOf(bucketEnd), dataExtractor.getEnd(i));
-            bucketEnd += bucketSpanMs;
+            assertEquals(String.valueOf(intervalEnd - intervalMs), dataExtractor.getStart(i));
+            assertEquals(String.valueOf(intervalEnd), dataExtractor.getEnd(i));
+            intervalEnd += intervalMs;
         }
     }
 
@@ -368,7 +368,7 @@ public class JobSchedulerTest
 
     private JobScheduler createJobScheduler(DataExtractor dataExtractor, DataProcessor dataProcessor)
     {
-        return new JobScheduler(JOB_ID, BUCKET_SPAN, QUERY_DELAY, dataExtractor, dataProcessor,
+        return new JobScheduler(JOB_ID, FREQUENCY, QUERY_DELAY, dataExtractor, dataProcessor,
                 m_JobProvider, jobId -> mock(Logger.class));
     }
 

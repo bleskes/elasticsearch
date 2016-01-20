@@ -204,6 +204,17 @@ public class SchedulerConfigTest
     }
 
     @Test
+    public void testEquals_GivenDifferentFrequency()
+    {
+        SchedulerConfig sc1 = createFullyPopulated();
+        SchedulerConfig sc2 = createFullyPopulated();
+        sc2.setFrequency(120L);
+
+        assertFalse(sc1.equals(sc2));
+        assertFalse(sc2.equals(sc1));
+    }
+
+    @Test
     public void testEquals_GivenDifferentIndexes()
     {
         SchedulerConfig sc1 = createFullyPopulated();
@@ -286,6 +297,7 @@ public class SchedulerConfigTest
         SchedulerConfig sc = new SchedulerConfig();
         sc.setBaseUrl("http://localhost:8080");
         sc.setDataSource(DataSource.ELASTICSEARCH);
+        sc.setFrequency(60L);
         sc.setIndexes(Arrays.asList("myIndex"));
         sc.setTypes(Arrays.asList("myType1", "myType2"));
         Map<String, Object> query = new HashMap<>();

@@ -95,25 +95,22 @@ public class ControlMsgToProcessWriter
     }
 
     /**
-     * Send an instruction to calculate interim results to the C++ autodetect
-     * process.
-     * @param interimResultsParams Parameters indicating whether interim results should be written
+     * Send an instruction to calculate interim results to the C++ autodetect process.
+     * @param params Parameters indicating whether interim results should be written
      * and for which buckets
      * @throws IOException
      */
-    public void writeCalcInterimMessage(InterimResultsParams interimResultsParams) throws IOException
+    public void writeCalcInterimMessage(InterimResultsParams params) throws IOException
     {
-        if (interimResultsParams.shouldCalculate())
+        if (params.shouldAdvanceTime())
         {
-            writeControlCodeFollowedByTimeRange(INTERIM_MESSAGE_CODE,
-                    interimResultsParams.getStart(), interimResultsParams.getEnd());
+            writeMessage(ADVANCE_TIME_MESSAGE_CODE + params.getEnd());
         }
-        else
+        if (params.shouldCalculateInterim())
         {
-            if (interimResultsParams.getEnd() != null && !interimResultsParams.getEnd().isEmpty())
-            {
-                writeMessage(ADVANCE_TIME_MESSAGE_CODE + interimResultsParams.getEnd());
-            }
+            String start = params.shouldAdvanceTime() ? "" : params.getStart();
+            String end = params.shouldAdvanceTime() ? "" : params.getEnd();
+            writeControlCodeFollowedByTimeRange(INTERIM_MESSAGE_CODE, start, end);
         }
     }
 

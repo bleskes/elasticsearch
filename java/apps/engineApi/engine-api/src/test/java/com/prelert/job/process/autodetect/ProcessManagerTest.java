@@ -444,7 +444,7 @@ public class ProcessManagerTest
 
     private static InterimResultsParams createNoInterimResults()
     {
-        return new InterimResultsParams(false, new TimeRange(null, null));
+        return InterimResultsParams.newBuilder().build();
     }
 
     private static DataLoadParams createNoPersistNoResetDataLoadParams()
