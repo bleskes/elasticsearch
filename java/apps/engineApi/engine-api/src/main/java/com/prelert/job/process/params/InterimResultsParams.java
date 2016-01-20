@@ -29,17 +29,19 @@ package com.prelert.job.process.params;
 
 import java.util.Objects;
 
+import com.google.common.base.Preconditions;
+
 public class InterimResultsParams
 {
     private final boolean m_CalcInterim;
-    private final boolean m_AdvanceTime;
     private final TimeRange m_TimeRange;
+    private final Long m_AdvanceTimeSeconds;
 
-    private InterimResultsParams(boolean calcInterim, boolean advanceTime, TimeRange timeRange)
+    private InterimResultsParams(boolean calcInterim, TimeRange timeRange, Long advanceTimeSeconds)
     {
         m_CalcInterim = calcInterim;
-        m_AdvanceTime = advanceTime;
         m_TimeRange = Objects.requireNonNull(timeRange);
+        m_AdvanceTimeSeconds = advanceTimeSeconds;
     }
 
     public boolean shouldCalculateInterim()
@@ -49,7 +51,7 @@ public class InterimResultsParams
 
     public boolean shouldAdvanceTime()
     {
-        return m_AdvanceTime;
+        return m_AdvanceTimeSeconds != null;
     }
 
     public String getStart()
@@ -62,6 +64,12 @@ public class InterimResultsParams
         return m_TimeRange.getEnd();
     }
 
+    public long getAdvanceTime()
+    {
+        Preconditions.checkState(shouldAdvanceTime());
+        return m_AdvanceTimeSeconds;
+    }
+
     public static Builder newBuilder()
     {
         return new Builder();
@@ -70,14 +78,14 @@ public class InterimResultsParams
     public static class Builder
     {
         private boolean m_CalcInterim;
-        private boolean m_AdvanceTime;
         private TimeRange m_TimeRange;
+        private Long m_AdvanceTimeSeconds;
 
         private Builder()
         {
             m_CalcInterim = false;
-            m_AdvanceTime = false;
             m_TimeRange = new TimeRange(null, null);
+            m_AdvanceTimeSeconds = null;
         }
 
         public Builder calcInterim(boolean value)
@@ -97,22 +105,15 @@ public class InterimResultsParams
             return this;
         }
 
-        public Builder advanceTime(boolean value)
-        {
-            m_AdvanceTime = value;
-            return this;
-        }
-
         public Builder advanceTime(long targetSeconds)
         {
-            m_AdvanceTime = true;
-            m_TimeRange = new TimeRange(null, targetSeconds);
+            m_AdvanceTimeSeconds = targetSeconds;
             return this;
         }
 
         public InterimResultsParams build()
         {
-            return new InterimResultsParams(m_CalcInterim, m_AdvanceTime, m_TimeRange);
+            return new InterimResultsParams(m_CalcInterim, m_TimeRange, m_AdvanceTimeSeconds);
         }
     }
 }

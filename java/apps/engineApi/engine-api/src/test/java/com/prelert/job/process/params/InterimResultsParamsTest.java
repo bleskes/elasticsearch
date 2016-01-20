@@ -91,31 +91,35 @@ public class InterimResultsParamsTest
     @Test
     public void testBuilder_GivenAdvanceTime()
     {
-        InterimResultsParams params = InterimResultsParams.newBuilder().advanceTime(true).build();
-        assertFalse(params.shouldCalculateInterim());
-        assertTrue(params.shouldAdvanceTime());
-        assertEquals("", params.getStart());
-        assertEquals("", params.getEnd());
-    }
-
-    @Test
-    public void testBuilder_GivenAdvanceTimeWithTargetTime()
-    {
         InterimResultsParams params = InterimResultsParams.newBuilder().advanceTime(1821L).build();
         assertFalse(params.shouldCalculateInterim());
-        assertTrue(params.shouldAdvanceTime());
         assertEquals("", params.getStart());
-        assertEquals("1821", params.getEnd());
+        assertEquals("", params.getEnd());
+        assertTrue(params.shouldAdvanceTime());
+        assertEquals(1821, params.getAdvanceTime());
     }
 
     @Test
-    public void testBuilder_GivenCalcInterimAndAdvanceTimeWithTargetTime()
+    public void testBuilder_GivenCalcInterimAndAdvanceTime()
     {
         InterimResultsParams params = InterimResultsParams.newBuilder().calcInterim(true)
                 .advanceTime(1940L).build();
         assertTrue(params.shouldCalculateInterim());
-        assertTrue(params.shouldAdvanceTime());
         assertEquals("", params.getStart());
-        assertEquals("1940", params.getEnd());
+        assertEquals("", params.getEnd());
+        assertTrue(params.shouldAdvanceTime());
+        assertEquals(1940, params.getAdvanceTime());
+    }
+
+    @Test
+    public void testBuilder_GivenCalcInterimWithTimeRangeAndAdvanceTime()
+    {
+        InterimResultsParams params = InterimResultsParams.newBuilder().calcInterim(true)
+                .forTimeRange(1L, 2L).advanceTime(1940L).build();
+        assertTrue(params.shouldCalculateInterim());
+        assertEquals("1", params.getStart());
+        assertEquals("2", params.getEnd());
+        assertTrue(params.shouldAdvanceTime());
+        assertEquals(1940, params.getAdvanceTime());
     }
 }

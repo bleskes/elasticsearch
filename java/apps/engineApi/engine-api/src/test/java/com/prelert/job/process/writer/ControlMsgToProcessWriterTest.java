@@ -132,7 +132,7 @@ public class ControlMsgToProcessWriterTest
         ControlMsgToProcessWriter writer = new ControlMsgToProcessWriter(m_LengthEncodedWriter,
                 m_AnalysisConfig);
         InterimResultsParams interimResultsParams = InterimResultsParams.newBuilder()
-                .calcInterim(true).advanceTime(180L).build();
+                .calcInterim(true).forTimeRange(50L, 100L).advanceTime(180L).build();
 
         writer.writeCalcInterimMessage(interimResultsParams);
 
@@ -142,7 +142,7 @@ public class ControlMsgToProcessWriterTest
         inOrder.verify(m_LengthEncodedWriter).writeField("t180");
         inOrder.verify(m_LengthEncodedWriter).writeNumFields(4);
         inOrder.verify(m_LengthEncodedWriter, times(3)).writeField("");
-        inOrder.verify(m_LengthEncodedWriter).writeField("i");
+        inOrder.verify(m_LengthEncodedWriter).writeField("i50 100");
         verifyNoMoreInteractions(m_LengthEncodedWriter);
     }
 

@@ -67,6 +67,7 @@ import com.prelert.job.process.exceptions.MissingFieldException;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
 import com.prelert.job.process.params.DataLoadParams;
 import com.prelert.job.process.params.InterimResultsParams;
+import com.prelert.job.process.params.InterimResultsParams.Builder;
 import com.prelert.job.process.params.TimeRange;
 import com.prelert.job.status.HighProportionOfBadTimestampsException;
 import com.prelert.job.status.OutOfOrderRecordsException;
@@ -369,48 +370,40 @@ public abstract class AbstractDataLoad extends ResourceWithJobManager
     @Produces(MediaType.APPLICATION_JSON)
     public Response flushUpload(@PathParam("jobId") String jobId,
             @DefaultValue("false") @QueryParam(CALC_INTERIM_PARAM) boolean calcInterim,
-            @DefaultValue("false") @QueryParam(ADVANCE_TIME_PARAM) boolean advanceTime,
             @DefaultValue("") @QueryParam(START_QUERY_PARAM) String start,
-            @DefaultValue("") @QueryParam(END_QUERY_PARAM) String end)
+            @DefaultValue("") @QueryParam(END_QUERY_PARAM) String end,
+            @DefaultValue("") @QueryParam(ADVANCE_TIME_PARAM) String advanceTime)
     throws UnknownJobException, NativeProcessRunException, JobInUseException
     {
         LOGGER.debug("Post to flush data upload for job " + jobId +
                      " with " + CALC_INTERIM_PARAM + '=' + calcInterim);
         checkJobIsNotScheduled(jobId);
-        checkValidFlushArgumentsCombination(calcInterim, advanceTime, start, end);
+        checkValidFlushArgumentsCombination(calcInterim, start, end);
         TimeRange timeRange = createTimeRange(START_QUERY_PARAM, start, END_QUERY_PARAM, end);
-        InterimResultsParams interimResultsParams = InterimResultsParams.newBuilder()
-                .calcInterim(calcInterim).advanceTime(advanceTime).forTimeRange(timeRange).build();
-        jobManager().flushJob(jobId, interimResultsParams);
+        Builder paramsBuilder = InterimResultsParams.newBuilder();
+        paramsBuilder.calcInterim(calcInterim).forTimeRange(timeRange);
+        if (!advanceTime.isEmpty())
+        {
+            long advanceTimeEpoch = paramToEpochIfValidOrThrow(ADVANCE_TIME_PARAM, advanceTime,
+                    LOGGER) / MILLISECONDS_IN_SECOND;
+            paramsBuilder.advanceTime(advanceTimeEpoch);
+        }
+        jobManager().flushJob(jobId, paramsBuilder.build());
         return Response.ok().entity(new Acknowledgement()).build();
     }
 
-    private void checkValidFlushArgumentsCombination(boolean calcInterim, boolean advanceTime,
-            String start, String end)
+    private void checkValidFlushArgumentsCombination(boolean calcInterim, String start, String end)
     {
-        if (!calcInterim && !advanceTime)
+        if (!calcInterim)
         {
             checkFlushParamIsEmpty(START_QUERY_PARAM, start);
             checkFlushParamIsEmpty(END_QUERY_PARAM, end);
         }
-        else if (calcInterim && !advanceTime)
+        else if (!isValidTimeRange(start, end))
         {
-            if (!isValidTimeRange(start, end))
-            {
-                String msg = Messages.getMessage(Messages.REST_INVALID_FLUSH_PARAMS_MISSING,
-                                                START_QUERY_PARAM);
-                throwInvalidFlushParamsException(msg);
-            }
-        }
-        else
-        {
-            checkFlushParamIsEmpty(START_QUERY_PARAM, start);
-            if (end.isEmpty())
-            {
-                String msg = Messages.getMessage(Messages.REST_INVALID_FLUSH_PARAMS_MISSING,
-                        END_QUERY_PARAM);
-                throwInvalidFlushParamsException(msg);
-            }
+            String msg = Messages.getMessage(Messages.REST_INVALID_FLUSH_PARAMS_MISSING,
+                                            START_QUERY_PARAM);
+            throwInvalidFlushParamsException(msg);
         }
     }
 

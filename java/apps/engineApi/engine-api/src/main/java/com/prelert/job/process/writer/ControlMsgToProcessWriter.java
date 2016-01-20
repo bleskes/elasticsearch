@@ -104,13 +104,12 @@ public class ControlMsgToProcessWriter
     {
         if (params.shouldAdvanceTime())
         {
-            writeMessage(ADVANCE_TIME_MESSAGE_CODE + params.getEnd());
+            writeMessage(ADVANCE_TIME_MESSAGE_CODE + params.getAdvanceTime());
         }
         if (params.shouldCalculateInterim())
         {
-            String start = params.shouldAdvanceTime() ? "" : params.getStart();
-            String end = params.shouldAdvanceTime() ? "" : params.getEnd();
-            writeControlCodeFollowedByTimeRange(INTERIM_MESSAGE_CODE, start, end);
+            writeControlCodeFollowedByTimeRange(INTERIM_MESSAGE_CODE, params.getStart(),
+                    params.getEnd());
         }
     }
 

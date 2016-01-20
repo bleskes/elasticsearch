@@ -340,7 +340,7 @@ public class DataTest extends ServiceTest
                 "Invalid flush parameters: unexpected 'start'.");
         m_ExpectedException.expect(hasErrorCode(ErrorCodes.INVALID_FLUSH_PARAMS));
 
-        m_Data.flushUpload(JOB_ID, false, false, "1", "");
+        m_Data.flushUpload(JOB_ID, false, "1", "", "");
     }
 
     @Test
@@ -352,7 +352,7 @@ public class DataTest extends ServiceTest
                 "Invalid flush parameters: unexpected 'end'.");
         m_ExpectedException.expect(hasErrorCode(ErrorCodes.INVALID_FLUSH_PARAMS));
 
-        m_Data.flushUpload(JOB_ID, false, false, "", "1");
+        m_Data.flushUpload(JOB_ID, false, "", "1", "");
     }
 
     @Test
@@ -364,7 +364,7 @@ public class DataTest extends ServiceTest
                 "Invalid flush parameters: 'start' has not been specified.");
         m_ExpectedException.expect(hasErrorCode(ErrorCodes.INVALID_FLUSH_PARAMS));
 
-        m_Data.flushUpload(JOB_ID, true, false, "", "1");
+        m_Data.flushUpload(JOB_ID, true, "", "1", "");
     }
 
     @Test
@@ -376,14 +376,14 @@ public class DataTest extends ServiceTest
                 "Invalid time range: end time '1' is earlier than start time '2'.");
         m_ExpectedException.expect(hasErrorCode(ErrorCodes.END_DATE_BEFORE_START_DATE));
 
-        m_Data.flushUpload(JOB_ID, true, false, "2", "1");
+        m_Data.flushUpload(JOB_ID, true, "2", "1", "");
     }
 
     @Test
     public void testFlushUpload_GivenInterimResultsAndStartAndEndSpecifiedAsEpochs()
             throws UnknownJobException, NativeProcessRunException, JobInUseException
     {
-        m_Data.flushUpload(JOB_ID, true, false, "1428494400", "1428498000");
+        m_Data.flushUpload(JOB_ID, true, "1428494400", "1428498000", "");
 
         JobManager jobManager = jobManager();
         ArgumentCaptor<InterimResultsParams> paramsCaptor = ArgumentCaptor.forClass(InterimResultsParams.class);
@@ -400,7 +400,7 @@ public class DataTest extends ServiceTest
     public void testFlushUpload_GivenInterimResultsAndStartAndEndSpecifiedAsIso()
             throws UnknownJobException, NativeProcessRunException, JobInUseException
     {
-        m_Data.flushUpload(JOB_ID, true, false, "2015-04-08T12:00:00Z", "2015-04-08T13:00:00Z");
+        m_Data.flushUpload(JOB_ID, true, "2015-04-08T12:00:00Z", "2015-04-08T13:00:00Z", "");
 
         JobManager jobManager = jobManager();
         ArgumentCaptor<InterimResultsParams> paramsCaptor = ArgumentCaptor.forClass(InterimResultsParams.class);
@@ -417,7 +417,7 @@ public class DataTest extends ServiceTest
     public void testFlushUpload_GivenInterimResultsAndStartAndEndSpecifiedAsIsoMilliseconds()
             throws UnknownJobException, NativeProcessRunException, JobInUseException
     {
-        m_Data.flushUpload(JOB_ID, true, false ,"2015-04-08T12:00:00.000Z", "2015-04-08T13:00:00.000Z");
+        m_Data.flushUpload(JOB_ID, true, "2015-04-08T12:00:00.000Z", "2015-04-08T13:00:00.000Z", "");
 
         JobManager jobManager = jobManager();
         ArgumentCaptor<InterimResultsParams> paramsCaptor = ArgumentCaptor.forClass(InterimResultsParams.class);
@@ -434,7 +434,7 @@ public class DataTest extends ServiceTest
     public void testFlushUpload_GivenInterimResultsAndSameStartAndEnd()
             throws UnknownJobException, NativeProcessRunException, JobInUseException
     {
-        m_Data.flushUpload(JOB_ID, true, false, "1428494400", "1428494400");
+        m_Data.flushUpload(JOB_ID, true, "1428494400", "1428494400", "");
 
         JobManager jobManager = jobManager();
         ArgumentCaptor<InterimResultsParams> paramsCaptor = ArgumentCaptor.forClass(InterimResultsParams.class);
@@ -451,7 +451,7 @@ public class DataTest extends ServiceTest
     public void testFlushUpload_GivenInterimResultsAndOnlyStartSpecified()
             throws UnknownJobException, NativeProcessRunException, JobInUseException
     {
-        m_Data.flushUpload("foo", true, false, "1428494400", "");
+        m_Data.flushUpload("foo", true, "1428494400", "", "");
 
         ArgumentCaptor<InterimResultsParams> paramsCaptor = ArgumentCaptor.forClass(InterimResultsParams.class);
         verify(jobManager()).flushJob(eq(JOB_ID), paramsCaptor.capture());
@@ -464,34 +464,22 @@ public class DataTest extends ServiceTest
     }
 
     @Test
-    public void testFlushUpload_GivenAdvanceTimeAndNoEndSpecified()
+    public void testFlushUpload_GivenInvalidAdvanceTime()
             throws UnknownJobException, NativeProcessRunException, JobInUseException
     {
-        m_ExpectedException.expect(InvalidParametersException.class);
+        m_ExpectedException.expect(RestApiException.class);
         m_ExpectedException.expectMessage(
-                "Invalid flush parameters: 'end' has not been specified.");
-        m_ExpectedException.expect(hasErrorCode(ErrorCodes.INVALID_FLUSH_PARAMS));
+                "Query param 'advanceTime' with value 'not a date' cannot be parsed as a date or converted to a number (epoch).");
+        m_ExpectedException.expect(hasErrorCode(ErrorCodes.UNPARSEABLE_DATE_ARGUMENT));
 
-        m_Data.flushUpload("foo", false, true, "", "");
+        m_Data.flushUpload("foo", false, "", "", "not a date");
     }
 
     @Test
-    public void testFlushUpload_GivenAdvanceTimeAndOnlyStartSpecified()
+    public void testFlushUpload_GivenValidAdvanceTime()
             throws UnknownJobException, NativeProcessRunException, JobInUseException
     {
-        m_ExpectedException.expect(InvalidParametersException.class);
-        m_ExpectedException.expectMessage(
-                "Invalid flush parameters: unexpected 'start'.");
-        m_ExpectedException.expect(hasErrorCode(ErrorCodes.INVALID_FLUSH_PARAMS));
-
-        m_Data.flushUpload("foo", false, true, "1428494400", "");
-    }
-
-    @Test
-    public void testFlushUpload_GivenAdvanceTimeAndEndSpecified()
-            throws UnknownJobException, NativeProcessRunException, JobInUseException
-    {
-        m_Data.flushUpload(JOB_ID, false, true, "", "2015-04-08T13:00:00.000Z");
+        m_Data.flushUpload(JOB_ID, false, "", "", "2015-04-08T13:00:00.000Z");
 
         JobManager jobManager = jobManager();
         ArgumentCaptor<InterimResultsParams> paramsCaptor = ArgumentCaptor.forClass(InterimResultsParams.class);
@@ -499,40 +487,17 @@ public class DataTest extends ServiceTest
 
         InterimResultsParams params = paramsCaptor.getValue();
         assertFalse(params.shouldCalculateInterim());
-        assertTrue(params.shouldAdvanceTime());
         assertEquals("", params.getStart());
-        assertEquals("1428498000", params.getEnd());
+        assertEquals("", params.getEnd());
+        assertTrue(params.shouldAdvanceTime());
+        assertEquals(1428498000L, params.getAdvanceTime());
     }
 
     @Test
-    public void testFlushUpload_GivenCalcInterimAndAdvanceTimeAndStartSpecified()
+    public void testFlushUpload_GivenCalcInterimAndAdvanceTime()
             throws UnknownJobException, NativeProcessRunException, JobInUseException
     {
-        m_ExpectedException.expect(InvalidParametersException.class);
-        m_ExpectedException.expectMessage(
-                "Invalid flush parameters: unexpected 'start'.");
-        m_ExpectedException.expect(hasErrorCode(ErrorCodes.INVALID_FLUSH_PARAMS));
-
-        m_Data.flushUpload(JOB_ID, true, true, "1", "");
-    }
-
-    @Test
-    public void testFlushUpload_GivenCalcInterimAndAdvanceTimeAndNoEndSpecified()
-            throws UnknownJobException, NativeProcessRunException, JobInUseException
-    {
-        m_ExpectedException.expect(InvalidParametersException.class);
-        m_ExpectedException.expectMessage(
-                "Invalid flush parameters: 'end' has not been specified.");
-        m_ExpectedException.expect(hasErrorCode(ErrorCodes.INVALID_FLUSH_PARAMS));
-
-        m_Data.flushUpload("foo", true, true, "", "");
-    }
-
-    @Test
-    public void testFlushUpload_GivenCalcInterimAndAdvanceTimeAndOnlyEndSpecified()
-            throws UnknownJobException, NativeProcessRunException, JobInUseException
-    {
-        m_Data.flushUpload(JOB_ID, true, true, "", "2015-04-08T13:00:00.000Z");
+        m_Data.flushUpload(JOB_ID, true, "", "", "3600");
 
         JobManager jobManager = jobManager();
         ArgumentCaptor<InterimResultsParams> paramsCaptor = ArgumentCaptor.forClass(InterimResultsParams.class);
@@ -540,9 +505,28 @@ public class DataTest extends ServiceTest
 
         InterimResultsParams params = paramsCaptor.getValue();
         assertTrue(params.shouldCalculateInterim());
-        assertTrue(params.shouldAdvanceTime());
         assertEquals("", params.getStart());
-        assertEquals("1428498000", params.getEnd());
+        assertEquals("", params.getEnd());
+        assertTrue(params.shouldAdvanceTime());
+        assertEquals(3600L, params.getAdvanceTime());
+    }
+
+    @Test
+    public void testFlushUpload_GivenCalcInterimWithTimeRangeAndAdvanceTime()
+            throws UnknownJobException, NativeProcessRunException, JobInUseException
+    {
+        m_Data.flushUpload("foo", true, "150", "300", "200");
+
+        JobManager jobManager = jobManager();
+        ArgumentCaptor<InterimResultsParams> paramsCaptor = ArgumentCaptor.forClass(InterimResultsParams.class);
+        verify(jobManager).flushJob(eq(JOB_ID), paramsCaptor.capture());
+
+        InterimResultsParams params = paramsCaptor.getValue();
+        assertTrue(params.shouldCalculateInterim());
+        assertEquals("150", params.getStart());
+        assertEquals("300", params.getEnd());
+        assertTrue(params.shouldAdvanceTime());
+        assertEquals(200L, params.getAdvanceTime());
     }
 
     @Test
@@ -582,7 +566,7 @@ public class DataTest extends ServiceTest
         m_ExpectedException.expectMessage("This action is not allowed for a scheduled job");
         m_ExpectedException.expect(hasErrorCode(ErrorCodes.ACTION_NOT_ALLOWED_FOR_SCHEDULED_JOB));
 
-        m_Data.flushUpload(JOB_ID, false, false, "", "");
+        m_Data.flushUpload(JOB_ID, false, "", "", "");
     }
 
     @Test
