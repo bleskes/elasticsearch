@@ -238,7 +238,7 @@ class JsonRecordReader
             {
                 token = tryNextTokenOrReadToEndOnError();
             }
-//            m_Logger.warn("Ignoring array field");
+            m_Logger.warn("Ignoring array field");
         }
         else
         {
