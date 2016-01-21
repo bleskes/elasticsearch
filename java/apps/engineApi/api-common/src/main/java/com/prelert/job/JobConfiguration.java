@@ -78,7 +78,6 @@ public class JobConfiguration
     private SchedulerConfig m_SchedulerConfig;
     private List<TransformConfig> m_Transforms;
     private DataDescription m_DataDescription;
-    private String m_ReferenceJobId;
     private Long m_Timeout;
     private ModelDebugConfig m_ModelDebugConfig;
     private Long m_RenormalizationWindow;
@@ -88,18 +87,11 @@ public class JobConfiguration
     {
     }
 
-    public JobConfiguration(String jobReferenceId)
-    {
-        this();
-        m_ReferenceJobId = jobReferenceId;
-    }
-
     public JobConfiguration(AnalysisConfig analysisConfig)
     {
         this();
         m_AnalysisConfig = analysisConfig;
     }
-
 
     /**
      * The human readable job Id
@@ -180,23 +172,6 @@ public class JobConfiguration
     public void setSchedulerConfig(SchedulerConfig config)
     {
         m_SchedulerConfig = config;
-    }
-
-    /**
-     * If the job is to be created with the same configuration as a previously
-     * run job then this is the id of that job. If set then this option
-     * overrides the {@linkplain #getAnalysisConfig()} settings i.e. they will
-     * be ignored.
-     * @return A String or <code>null</code> if not set
-     */
-    public String getReferenceJobId()
-    {
-        return m_ReferenceJobId;
-    }
-
-    public void setReferenceJobId(String refId)
-    {
-        m_ReferenceJobId = refId;
     }
 
     /**

@@ -116,7 +116,6 @@ public final class Messages
 
     public static final String JOB_MISSING_QUANTILES = "job.missing.quantiles";
     public static final String JOB_UNKNOWN_ID = "job.unknown.id";
-    public static final String JOB_UNKNOWN_REFERENCE = "job.unknown.reference";
 
     public static final String JSON_JOB_CONFIG_MAPPING = "json.job.config.mapping.error";
     public static final String JSON_JOB_CONFIG_PARSE = "json.job.config.parse.error";

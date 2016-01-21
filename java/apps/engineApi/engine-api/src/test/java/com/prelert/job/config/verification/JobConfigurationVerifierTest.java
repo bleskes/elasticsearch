@@ -61,8 +61,7 @@ public class JobConfigurationVerifierTest
     @Test
     public void testCheckValidId_IdTooLong() throws JobConfigurationException
     {
-        JobConfiguration conf = new JobConfiguration();
-        conf.setReferenceJobId("ref");
+        JobConfiguration conf = buildJobConfigurationNoTransforms();
         conf.setId("averyveryveryaveryveryveryaveryveryveryaveryveryveryaveryveryveryaveryveryverylongid");
 
         m_ExpectedException.expect(JobConfigurationException.class);
@@ -75,8 +74,7 @@ public class JobConfigurationVerifierTest
     @Test
     public void testCheckValidId_ProhibitedChars() throws JobConfigurationException
     {
-        JobConfiguration conf = new JobConfiguration();
-        conf.setReferenceJobId("ref");
+        JobConfiguration conf = buildJobConfigurationNoTransforms();
         conf.setId("?");
 
         m_ExpectedException.expect(JobConfigurationException.class);
@@ -89,8 +87,7 @@ public class JobConfigurationVerifierTest
     @Test
     public void testCheckValidId_UpperCaseChars() throws JobConfigurationException
     {
-        JobConfiguration conf = new JobConfiguration();
-        conf.setReferenceJobId("ref");
+        JobConfiguration conf = buildJobConfigurationNoTransforms();
 
         m_ExpectedException.expect(JobConfigurationException.class);
         m_ExpectedException.expect(
@@ -103,8 +100,7 @@ public class JobConfigurationVerifierTest
     @Test
     public void testCheckValidId_ControlChars() throws JobConfigurationException
     {
-        JobConfiguration conf = new JobConfiguration();
-        conf.setReferenceJobId("ref");
+        JobConfiguration conf = buildJobConfigurationNoTransforms();
 
         m_ExpectedException.expect(JobConfigurationException.class);
         m_ExpectedException.expect(
@@ -128,9 +124,6 @@ public class JobConfigurationVerifierTest
         {
             Assert.assertTrue(e.getErrorCode() == ErrorCodes.INCOMPLETE_CONFIGURATION);
         }
-
-        jc.setReferenceJobId("ref_id");
-        JobConfigurationVerifier.verify(jc);
 
         jc.setId("bad id with spaces");
         try
@@ -168,7 +161,6 @@ public class JobConfigurationVerifierTest
 
 
         jc.setId(null);
-        jc.setReferenceJobId(null);
         jc.setAnalysisConfig(new AnalysisConfig());
         try
         {

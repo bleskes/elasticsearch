@@ -68,6 +68,7 @@ public enum ErrorCodes
     /**
      * When creating a new job from an existing job this error
      * is returned if the reference job id is not known
+     * @deprecated since version 2.0.0, this functionality has been removed
      */
     UNKNOWN_JOB_REFERENCE(10103),
 

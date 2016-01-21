@@ -70,12 +70,13 @@ public final class JobConfigurationVerifier
     public static boolean verify(JobConfiguration config)
     throws JobConfigurationException
     {
-        checkEitherAnalysisConfigOrJobReferenceIdPresent(config);
-
-        if (config.getAnalysisConfig() != null)
+        if (config.getId() != null && config.getId().isEmpty() == false)
         {
-            AnalysisConfigVerifier.verify(config.getAnalysisConfig());
+            checkValidId(config.getId());
         }
+
+        checkAnalysisConfigIsPresent(config);
+        AnalysisConfigVerifier.verify(config.getAnalysisConfig());
 
         if (config.getAnalysisLimits() != null)
         {
@@ -98,11 +99,6 @@ public final class JobConfigurationVerifier
         checkValueNotNegative("renormalizationWindow", config.getRenormalizationWindow());
         checkValueNotNegative("resultsRetentionDays", config.getResultsRetentionDays());
 
-        if (config.getId() != null && config.getId().isEmpty() == false)
-        {
-            checkValidId(config.getId());
-        }
-
         if (config.getModelDebugConfig() != null)
         {
             ModelDebugConfigVerifier.verify(config.getModelDebugConfig());
@@ -111,10 +107,10 @@ public final class JobConfigurationVerifier
         return true;
     }
 
-    private static void checkEitherAnalysisConfigOrJobReferenceIdPresent(JobConfiguration config)
+    private static void checkAnalysisConfigIsPresent(JobConfiguration config)
             throws JobConfigurationException
     {
-        if (config.getAnalysisConfig() == null && config.getReferenceJobId() == null)
+        if (config.getAnalysisConfig() == null)
         {
             throw new JobConfigurationException(
                     Messages.getMessage(Messages.JOB_CONFIG_MISSING_ANALYSISCONFIG),

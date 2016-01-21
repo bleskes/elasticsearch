@@ -32,17 +32,13 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.mock;
 
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 import java.util.Map;
 
 import org.junit.Test;
 
 import com.prelert.job.SchedulerConfig.DataSource;
-import com.prelert.job.transform.TransformConfig;
 
 public class JobDetailsTest
 {
@@ -92,105 +88,6 @@ public class JobDetailsTest
 
         Map<String, Object> schedulerQuery = jobDetails.getSchedulerConfig().getQuery();
         assertNotNull(schedulerQuery);
-    }
-
-    @Test
-    public void testConstructor_GivenAnotherJobDetailsAndEmptyJobConfiguration()
-    {
-        AnalysisConfig anotherAnalysisConfig = mock(AnalysisConfig.class);
-        AnalysisLimits anotherAnalysisLimits = mock(AnalysisLimits.class);
-        DataDescription anotherDataDescription = mock(DataDescription.class);
-        TransformConfig anotherTransformConfig = mock(TransformConfig.class);
-        List<TransformConfig> anotherTransforms = new ArrayList<>();
-        anotherTransforms.add(anotherTransformConfig);
-
-        JobDetails anotherJobDetails = new JobDetails();
-        anotherJobDetails.setId("anotherId");
-        anotherJobDetails.setTimeout(10000L);
-        anotherJobDetails.setSchedulerStatus(JobSchedulerStatus.STOPPED);
-        anotherJobDetails.setAnalysisConfig(anotherAnalysisConfig);
-        anotherJobDetails.setAnalysisLimits(anotherAnalysisLimits);
-        anotherJobDetails.setDataDescription(anotherDataDescription);
-        anotherJobDetails.setDescription("Another");
-        anotherJobDetails.setRenormalizationWindow(4L);
-        anotherJobDetails.setResultsRetentionDays(60L);
-        anotherJobDetails.setTransforms(anotherTransforms);
-
-        JobConfiguration jobConfiguration = new JobConfiguration();
-        jobConfiguration.setTimeout(null);
-        jobConfiguration.setAnalysisConfig(null);
-        jobConfiguration.setAnalysisLimits(null);
-        jobConfiguration.setDataDescription(null);
-        jobConfiguration.setDescription(null);
-        jobConfiguration.setRenormalizationWindow(null);
-        jobConfiguration.setResultsRetentionDays(null);
-        jobConfiguration.setTransforms(null);
-
-        JobDetails jobDetails = new JobDetails("thisId", anotherJobDetails, jobConfiguration);
-
-        assertEquals("thisId", jobDetails.getId());
-        assertEquals(JobStatus.CLOSED, jobDetails.getStatus());
-        assertEquals(JobSchedulerStatus.STOPPED, jobDetails.getSchedulerStatus());
-        assertEquals(10000L, jobDetails.getTimeout());
-        assertEquals(anotherAnalysisConfig, jobDetails.getAnalysisConfig());
-        assertEquals(anotherAnalysisLimits, jobDetails.getAnalysisLimits());
-        assertEquals(anotherDataDescription, jobDetails.getDataDescription());
-        assertEquals("Another", jobDetails.getDescription());
-        assertEquals(4L, jobDetails.getRenormalizationWindow().longValue());
-        assertEquals(60L, jobDetails.getResultsRetentionDays().longValue());
-        assertEquals(anotherTransforms, jobDetails.getTransforms());
-    }
-
-    @Test
-    public void testConstructor_GivenAnotherJobDetailsAndOverridingJobConfiguration()
-    {
-        AnalysisConfig anotherAnalysisConfig = mock(AnalysisConfig.class);
-        AnalysisLimits anotherAnalysisLimits = mock(AnalysisLimits.class);
-        DataDescription anotherDataDescription = mock(DataDescription.class);
-        TransformConfig anotherTransformConfig = mock(TransformConfig.class);
-        List<TransformConfig> anotherTransforms = new ArrayList<>();
-        anotherTransforms.add(anotherTransformConfig);
-
-        JobDetails anotherJobDetails = new JobDetails();
-        anotherJobDetails.setId("anotherId");
-        anotherJobDetails.setTimeout(10000L);
-        anotherJobDetails.setAnalysisConfig(anotherAnalysisConfig);
-        anotherJobDetails.setAnalysisLimits(anotherAnalysisLimits);
-        anotherJobDetails.setDataDescription(anotherDataDescription);
-        anotherJobDetails.setDescription("Another");
-        anotherJobDetails.setRenormalizationWindow(4L);
-        anotherJobDetails.setResultsRetentionDays(60L);
-        anotherJobDetails.setTransforms(anotherTransforms);
-
-        AnalysisConfig overridingAnalysisConfig = mock(AnalysisConfig.class);
-        AnalysisLimits overridingAnalysisLimits = mock(AnalysisLimits.class);
-        DataDescription overridingDataDescription = mock(DataDescription.class);
-        TransformConfig overridingTransformConfig = mock(TransformConfig.class);
-        List<TransformConfig> overridingTransforms = new ArrayList<>();
-        anotherTransforms.add(overridingTransformConfig);
-
-        JobConfiguration jobConfiguration = new JobConfiguration();
-        jobConfiguration.setTimeout(5000L);
-        jobConfiguration.setAnalysisConfig(overridingAnalysisConfig);
-        jobConfiguration.setAnalysisLimits(overridingAnalysisLimits);
-        jobConfiguration.setDataDescription(overridingDataDescription);
-        jobConfiguration.setDescription("Overriding");
-        jobConfiguration.setRenormalizationWindow(5L);
-        jobConfiguration.setResultsRetentionDays(90L);
-        jobConfiguration.setTransforms(overridingTransforms);
-
-        JobDetails jobDetails = new JobDetails("thisId", anotherJobDetails, jobConfiguration);
-
-        assertEquals("thisId", jobDetails.getId());
-        assertEquals(JobStatus.CLOSED, jobDetails.getStatus());
-        assertEquals(5000L, jobDetails.getTimeout());
-        assertEquals(overridingAnalysisConfig, jobDetails.getAnalysisConfig());
-        assertEquals(overridingAnalysisLimits, jobDetails.getAnalysisLimits());
-        assertEquals(overridingDataDescription, jobDetails.getDataDescription());
-        assertEquals("Overriding", jobDetails.getDescription());
-        assertEquals(5L, jobDetails.getRenormalizationWindow().longValue());
-        assertEquals(90L, jobDetails.getResultsRetentionDays().longValue());
-        assertEquals(overridingTransforms, jobDetails.getTransforms());
     }
 
     @Test

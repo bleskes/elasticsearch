@@ -292,18 +292,7 @@ public class JobManager implements DataProcessor, Shutdownable
             }
         }
 
-        JobDetails jobDetails;
-
-        if (jobConfig.getReferenceJobId() != null &&
-                jobConfig.getReferenceJobId().isEmpty() == false)
-        {
-            JobDetails referenced = getReferencedJob(jobConfig.getReferenceJobId());
-            jobDetails = new JobDetails(jobId, referenced, jobConfig);
-        }
-        else
-        {
-            jobDetails = new JobDetails(jobId, jobConfig);
-        }
+        JobDetails jobDetails = new JobDetails(jobId, jobConfig);
 
         m_JobProvider.createJob(jobDetails);
 
@@ -825,31 +814,6 @@ public class JobManager implements DataProcessor, Shutdownable
     {
         return String.format("%s-%05d", m_JobIdDateFormat.format(LocalDateTime.now()),
                         m_IdSequence.incrementAndGet());
-    }
-
-    /**
-     * Get the Job details for the job Id. If the job cannot be found
-     * <code>null</code> is returned.
-     *
-     * @param refId
-     * @return <code>null</code> or the job details
-     * @throws UnknownJobException If there is no previously created
-     * job with the id <code>refId</code>
-     */
-    private JobDetails getReferencedJob(String refId)
-    throws UnknownJobException
-    {
-        Optional<JobDetails> job = m_JobProvider.getJobDetails(refId);
-
-        if (job.isPresent() == false)
-        {
-            String message = Messages.getMessage(Messages.JOB_UNKNOWN_REFERENCE, refId);
-
-            LOGGER.info(message);
-            throw new UnknownJobException(refId, message, ErrorCodes.UNKNOWN_JOB_REFERENCE);
-        }
-
-        return job.get();
     }
 
     /**
