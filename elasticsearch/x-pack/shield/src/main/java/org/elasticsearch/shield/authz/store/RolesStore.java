@@ -17,14 +17,13 @@
 
 package org.elasticsearch.shield.authz.store;
 
-import org.elasticsearch.shield.authz.Permission;
-import org.elasticsearch.shield.authz.RoleDescriptor;
+import org.elasticsearch.shield.authz.permission.Role;
 
 /**
  * An interface for looking up a role given a string role name
  */
 public interface RolesStore {
 
-    Permission.Global.Role role(String role);
+    Role role(String role);
 
 }

@@ -15,27 +15,21 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.shield.authz;
-
-import org.elasticsearch.shield.authz.privilege.SystemPrivilege;
-
-import java.util.function.Predicate;
+package org.elasticsearch.shield.authz.privilege;
 
 /**
  *
  */
-public class SystemRole {
+public class HealthAndStatsPrivilege extends GeneralPrivilege {
 
-    public static final SystemRole INSTANCE = new SystemRole();
+    public static final HealthAndStatsPrivilege INSTANCE = new HealthAndStatsPrivilege();
 
-    public static final String NAME = "__es_system_role";
+    public static final String NAME = "health_and_stats";
 
-    private static final Predicate<String> PREDICATE = SystemPrivilege.INSTANCE.predicate();
-
-    private SystemRole() {
-    }
-
-    public boolean check(String action) {
-        return PREDICATE.test(action);
+    private HealthAndStatsPrivilege() {
+        super(NAME, "cluster:monitor/health*",
+                    "cluster:monitor/stats*",
+                    "indices:monitor/stats*",
+                    "cluster:monitor/nodes/stats*");
     }
 }

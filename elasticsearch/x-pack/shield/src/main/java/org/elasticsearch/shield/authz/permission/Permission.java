@@ -15,27 +15,13 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.shield.authz;
-
-import org.elasticsearch.shield.authz.privilege.SystemPrivilege;
-
-import java.util.function.Predicate;
+package org.elasticsearch.shield.authz.permission;
 
 /**
- *
+ * Represents a permission in the system.
  */
-public class SystemRole {
+public interface Permission {
 
-    public static final SystemRole INSTANCE = new SystemRole();
+    boolean isEmpty();
 
-    public static final String NAME = "__es_system_role";
-
-    private static final Predicate<String> PREDICATE = SystemPrivilege.INSTANCE.predicate();
-
-    private SystemRole() {
-    }
-
-    public boolean check(String action) {
-        return PREDICATE.test(action);
-    }
 }
