@@ -105,6 +105,8 @@ public final class Messages
     public static final String JOB_CONFIG_SCHEDULER_UNKNOWN_DATASOURCE = "job.config.scheduler.unknown.datasource";
     public static final String JOB_CONFIG_SCHEDULER_FIELD_NOT_SUPPORTED = "job.config.scheduler.field.not.supported";
     public static final String JOB_CONFIG_SCHEDULER_INVALID_OPTION_VALUE = "job.config.scheduler.invalid.option.value";
+    public static final String JOB_CONFIG_SCHEDULER_REQUIRES_BUCKET_SPAN = "job.config.scheduler.requires.bucket.span";
+    public static final String JOB_CONFIG_SCHEDULER_ELASTICSEARCH_DOES_NOT_SUPPORT_LATENCY = "job.config.scheduler.elasticsearch.does.not.support.latency";
 
     public static final String JOB_DATA_CONCURRENT_USE_CLOSE = "job.data.concurrent.use.close";
     public static final String JOB_DATA_CONCURRENT_USE_FLUSH = "job.data.concurrent.use.flush";
@@ -116,7 +118,6 @@ public final class Messages
 
     public static final String JOB_MISSING_QUANTILES = "job.missing.quantiles";
     public static final String JOB_UNKNOWN_ID = "job.unknown.id";
-    public static final String JOB_UNKNOWN_REFERENCE = "job.unknown.reference";
 
     public static final String JSON_JOB_CONFIG_MAPPING = "json.job.config.mapping.error";
     public static final String JSON_JOB_CONFIG_PARSE = "json.job.config.parse.error";

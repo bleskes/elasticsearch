@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -29,20 +29,29 @@ package com.prelert.job.process.params;
 
 import java.util.Objects;
 
+import com.google.common.base.Preconditions;
+
 public class InterimResultsParams
 {
-    private final boolean m_ShouldCalculate;
+    private final boolean m_CalcInterim;
     private final TimeRange m_TimeRange;
+    private final Long m_AdvanceTimeSeconds;
 
-    public InterimResultsParams(boolean shouldCalculate, TimeRange timeRange)
+    private InterimResultsParams(boolean calcInterim, TimeRange timeRange, Long advanceTimeSeconds)
     {
-        m_ShouldCalculate = shouldCalculate;
+        m_CalcInterim = calcInterim;
         m_TimeRange = Objects.requireNonNull(timeRange);
+        m_AdvanceTimeSeconds = advanceTimeSeconds;
     }
 
-    public boolean shouldCalculate()
+    public boolean shouldCalculateInterim()
     {
-        return m_ShouldCalculate;
+        return m_CalcInterim;
+    }
+
+    public boolean shouldAdvanceTime()
+    {
+        return m_AdvanceTimeSeconds != null;
     }
 
     public String getStart()
@@ -53,5 +62,58 @@ public class InterimResultsParams
     public String getEnd()
     {
         return m_TimeRange.getEnd();
+    }
+
+    public long getAdvanceTime()
+    {
+        Preconditions.checkState(shouldAdvanceTime());
+        return m_AdvanceTimeSeconds;
+    }
+
+    public static Builder newBuilder()
+    {
+        return new Builder();
+    }
+
+    public static class Builder
+    {
+        private boolean m_CalcInterim;
+        private TimeRange m_TimeRange;
+        private Long m_AdvanceTimeSeconds;
+
+        private Builder()
+        {
+            m_CalcInterim = false;
+            m_TimeRange = new TimeRange(null, null);
+            m_AdvanceTimeSeconds = null;
+        }
+
+        public Builder calcInterim(boolean value)
+        {
+            m_CalcInterim = value;
+            return this;
+        }
+
+        public Builder forTimeRange(Long startSeconds, Long endSeconds)
+        {
+            return forTimeRange(new TimeRange(startSeconds, endSeconds));
+        }
+
+        public Builder forTimeRange(TimeRange timeRange)
+        {
+            m_TimeRange = timeRange;
+            return this;
+        }
+
+        public Builder advanceTime(long targetSeconds)
+        {
+            m_AdvanceTimeSeconds = targetSeconds;
+            return this;
+        }
+
+        public InterimResultsParams build()
+        {
+            return new InterimResultsParams(m_CalcInterim, m_TimeRange, m_AdvanceTimeSeconds);
+        }
     }
 }

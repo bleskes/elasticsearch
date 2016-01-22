@@ -68,6 +68,7 @@ public enum ErrorCodes
     /**
      * When creating a new job from an existing job this error
      * is returned if the reference job id is not known
+     * @deprecated since version 2.0.0, this functionality has been removed
      */
     UNKNOWN_JOB_REFERENCE(10103),
 
@@ -233,6 +234,16 @@ public enum ErrorCodes
      * source has an invalid value.
      */
     SCHEDULER_INVALID_OPTION_VALUE(10303),
+
+    /**
+     * When scheduler is configured the bucket span has to be explicitly set.
+     */
+    SCHEDULER_REQUIRES_BUCKET_SPAN(10304),
+
+    /**
+     * A job configured with an ELASTICSEARCH scheduler cannot support latency.
+     */
+    SCHEDULER_ELASTICSEARCH_DOES_NOT_SUPPORT_LATENCY(10305),
 
     // Data store errors
     /**

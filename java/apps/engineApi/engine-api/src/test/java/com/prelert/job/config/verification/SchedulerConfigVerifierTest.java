@@ -290,6 +290,25 @@ public class SchedulerConfigVerifierTest
     }
 
     @Test
+    public void testCheckValidElasticsearch_GivenNegativeFrequency()
+            throws JobConfigurationException, IOException
+    {
+        SchedulerConfig conf = new SchedulerConfig();
+        conf.setDataSource(DataSource.ELASTICSEARCH);
+        conf.setFrequency(-600L);
+        conf.setBaseUrl("http://localhost:9200/");
+        conf.setIndexes(Arrays.asList("myIndex"));
+        conf.setTypes(Arrays.asList("mytype"));
+
+        m_ExpectedException.expect(JobConfigurationException.class);
+        m_ExpectedException.expect(
+                ErrorCodeMatcher.hasErrorCode(ErrorCodes.SCHEDULER_INVALID_OPTION_VALUE));
+        m_ExpectedException.expectMessage("Invalid frequency value");
+
+        SchedulerConfigVerifier.verify(conf);
+    }
+
+    @Test
     public void testCheckValidElasticsearch_GivenStartTimeIsAfterEndTime()
             throws JobConfigurationException, IOException
     {

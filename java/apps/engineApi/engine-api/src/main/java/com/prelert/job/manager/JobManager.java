@@ -292,18 +292,7 @@ public class JobManager implements DataProcessor, Shutdownable
             }
         }
 
-        JobDetails jobDetails;
-
-        if (jobConfig.getReferenceJobId() != null &&
-                jobConfig.getReferenceJobId().isEmpty() == false)
-        {
-            JobDetails referenced = getReferencedJob(jobConfig.getReferenceJobId());
-            jobDetails = new JobDetails(jobId, referenced, jobConfig);
-        }
-        else
-        {
-            jobDetails = new JobDetails(jobId, jobConfig);
-        }
+        JobDetails jobDetails = new JobDetails(jobId, jobConfig);
 
         m_JobProvider.createJob(jobDetails);
 
@@ -318,13 +307,21 @@ public class JobManager implements DataProcessor, Shutdownable
     private void createJobSchedulerAndStart(JobDetails job)
             throws CannotStartSchedulerWhileItIsStoppingException
     {
-        Duration bucketSpan = Duration.ofSeconds(job.getAnalysisConfig().getBucketSpan());
+        Duration frequency = getFrequencyOrDefault(job);
         Duration queryDelay = Duration.ofSeconds(job.getSchedulerConfig().getQueryDelay());
-        JobScheduler jobScheduler = new JobScheduler(job.getId(), bucketSpan, queryDelay,
+        JobScheduler jobScheduler = new JobScheduler(job.getId(), frequency, queryDelay,
                 m_DataExtractorFactory.newExtractor(job), this, m_JobProvider, m_JobLoggerFactory);
         m_ScheduledJobs.put(job.getId(), jobScheduler);
         LOGGER.info("Starting scheduler for job: " + job.getId());
         jobScheduler.start(job);
+    }
+
+    private static Duration getFrequencyOrDefault(JobDetails job)
+    {
+        Long frequency = job.getSchedulerConfig().getFrequency();
+        Long bucketSpan = job.getAnalysisConfig().getBucketSpan();
+        return frequency == null ? DefaultFrequency.ofBucketSpan(bucketSpan)
+                : Duration.ofSeconds(frequency);
     }
 
     private void checkCreateJobForTooManyJobsAgainstLicenseLimit() throws TooManyJobsException
@@ -820,31 +817,6 @@ public class JobManager implements DataProcessor, Shutdownable
     }
 
     /**
-     * Get the Job details for the job Id. If the job cannot be found
-     * <code>null</code> is returned.
-     *
-     * @param refId
-     * @return <code>null</code> or the job details
-     * @throws UnknownJobException If there is no previously created
-     * job with the id <code>refId</code>
-     */
-    private JobDetails getReferencedJob(String refId)
-    throws UnknownJobException
-    {
-        Optional<JobDetails> job = m_JobProvider.getJobDetails(refId);
-
-        if (job.isPresent() == false)
-        {
-            String message = Messages.getMessage(Messages.JOB_UNKNOWN_REFERENCE, refId);
-
-            LOGGER.info(message);
-            throw new UnknownJobException(refId, message, ErrorCodes.UNKNOWN_JOB_REFERENCE);
-        }
-
-        return job.get();
-    }
-
-    /**
      * Get the analytics version string.
      *
      * @return
@@ -986,11 +958,13 @@ public class JobManager implements DataProcessor, Shutdownable
         m_ScheduledJobs.get(jobId).start(job);
     }
 
-    public void stopExistingJobScheduler(String jobId) throws NoSuchScheduledJobException
+    public void stopExistingJobScheduler(String jobId) throws NoSuchScheduledJobException,
+            UnknownJobException, NativeProcessRunException, JobInUseException
     {
         checkJobHasBeenScheduled(jobId);
         LOGGER.info("Stopping scheduler for job: " + jobId);
         m_ScheduledJobs.get(jobId).stopManual();
+        closeJob(jobId);
     }
 
     private void checkJobHasBeenScheduled(String jobId) throws NoSuchScheduledJobException

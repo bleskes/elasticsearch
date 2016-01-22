@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -91,11 +91,6 @@ public class JobsTest implements Closeable
     static final String ISO_8601_DATE_FORMAT_WITH_MS = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX";
 
 
-    /**
-     * This is a format string insert a reference job id.
-     */
-    static final String JOB_REFERENCE_CONFIG = "{\"referenceJobId\" : \"%s\"}";
-
     static final long FLIGHT_CENTRE_NUM_BUCKETS = 24;
     /**
      *  The number of input records in the farequote input data set
@@ -134,13 +129,6 @@ public class JobsTest implements Closeable
     public void close() throws IOException
     {
         m_WebServiceClient.close();
-    }
-
-
-    private JobDetails getJob(String jobId)
-    throws IOException
-    {
-        return m_WebServiceClient.getJob(jobId).getDocument();
     }
 
     /**
@@ -480,43 +468,6 @@ public class JobsTest implements Closeable
 
         return jobId;
     }
-
-    /**
-     * Create a new job base on configuration for job <code>refJobId</code>.
-     *
-     * @param refJobId The Job Id to use as the configuration for this
-     * new job
-     *
-     * @return The Id of the created job
-     * @throws ClientProtocolException
-     * @throws IOException
-     */
-    public String createJobFromFareQuoteTimeFormatRefId( String refJobId)
-    throws ClientProtocolException, IOException
-    {
-        String config = String.format(JOB_REFERENCE_CONFIG, refJobId);
-        String jobId = m_WebServiceClient.createJob(config);
-        if (jobId == null)
-        {
-            LOGGER.error("No Job Id returned by create job");
-            test(false);
-        }
-
-        // get job by location, verify
-        SingleDocument<JobDetails> doc = m_WebServiceClient.getJob(jobId);
-        if (doc.isExists() == false)
-        {
-            LOGGER.error("No Job " + jobId);
-        }
-        JobDetails job = doc.getDocument();
-
-        verifyFareQuoteTimeFormatJobTest(job, jobId);
-
-        test(jobId.equals(job.getId()));
-
-        return jobId;
-    }
-
 
     private void verifyFareQuoteTimeFormatJobTest(JobDetails job, String jobId)
     {
@@ -1685,9 +1636,6 @@ public class JobsTest implements Closeable
         File flightCentreMsJsonData = new File(prelertTestDataHome +
                 "/engine_api_integration_test/flightcentre_ms.json");
 
-        final long FLIGHT_CENTRE_NUM_BUCKETS = 24;
-        final long FARE_QUOTE_NUM_BUCKETS = 1439;
-
         test.getJobsTest();
 
         // Always delete the test named jobs first in case they
@@ -1748,26 +1696,6 @@ public class JobsTest implements Closeable
 
         test.testSortingRecords(farequoteTimeFormatJobId, start, end);
         test.testRecordScoreFilters(farequoteTimeFormatJobId);
-
-        //============================
-        // Create another job based on
-        // the config used above
-        //
-        JobDetails job = test.getJob(farequoteTimeFormatJobId);
-        test(job.getId().equals(farequoteTimeFormatJobId));
-        String refJobId = test.createJobFromFareQuoteTimeFormatRefId(job.getId());
-        test.getJobsTest();
-        test.uploadDataAndTestRecordsWereProcessed(refJobId, fareQuoteData, false);
-        test.closeJob(refJobId);
-        test.verifyJobResults(refJobId, 150, FARE_QUOTE_NUM_BUCKETS,
-                300, FARE_QUOTE_NUM_EVENTS);
-        test.testRecordScoreFilters(farequoteTimeFormatJobId);
-        test.testBucketScoreFilters(refJobId);
-        test.testReadLogFiles(refJobId);
-
-
-        jobUrls.add(refJobId);
-
 
         //=====================================================
         // timestamp in ms from the epoch for both csv and json

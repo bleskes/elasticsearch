@@ -73,7 +73,7 @@ public class JobScheduler
     private static final int ADDITIONAL_QUERY_DELAY_MS = 100;
 
     private final String m_JobId;
-    private final long m_BucketSpanMs;
+    private final long m_FrequencyMs;
     private final long m_QueryDelayMs;
     private final DataExtractor m_DataExtractor;
     private final DataProcessor m_DataProcessor;
@@ -81,7 +81,7 @@ public class JobScheduler
     private final JobLoggerFactory m_JobLoggerFactory;
     private volatile ExecutorService m_LookbackExecutor;
     private volatile TaskScheduler m_RealTimeScheduler;
-    private volatile long m_LastBucketEndMs;
+    private volatile long m_LastIntervalEndMs;
     private volatile Logger m_Logger;
     private volatile JobSchedulerStatus m_Status;
     private volatile boolean m_IsLookbackOnly;
@@ -90,19 +90,19 @@ public class JobScheduler
      * Constructor
      *
      * @param jobId the job Id
-     * @param bucketSpan the bucket span
+     * @param frequency the frequency of queries - it is also the results update refresh interval
      * @param queryDelay the query delay
      * @param dataExtractor the data extractor
      * @param dataProcessor the data processor
      * @param jobProvider the job provider
      * @param jobLoggerFactory the factory to create a job logger
      */
-    public JobScheduler(String jobId, Duration bucketSpan, Duration queryDelay,
+    public JobScheduler(String jobId, Duration frequency, Duration queryDelay,
             DataExtractor dataExtractor, DataProcessor dataProcessor,
             JobDetailsProvider jobProvider, JobLoggerFactory jobLoggerFactory)
     {
         m_JobId = jobId;
-        m_BucketSpanMs = bucketSpan.toMillis();
+        m_FrequencyMs = frequency.toMillis();
         m_QueryDelayMs = queryDelay.toMillis() + ADDITIONAL_QUERY_DELAY_MS;
         m_DataExtractor = Objects.requireNonNull(dataExtractor);
         m_DataProcessor = Objects.requireNonNull(dataProcessor);
@@ -113,21 +113,21 @@ public class JobScheduler
     private Runnable createNextTask()
     {
         return () -> {
-            long nextBucketEnd = toBucketStartEpochMs(new Date());
-            String start = String.valueOf(m_LastBucketEndMs);
-            String end = String.valueOf(nextBucketEnd);
+            long nextIntervalEnd = toIntervalStartEpochMs(new Date());
+            String start = String.valueOf(m_LastIntervalEndMs);
+            String end = String.valueOf(nextIntervalEnd);
             extractAndProcessData(start, end);
         };
     }
 
-    private long toBucketStartEpochMs(Date date)
+    private long toIntervalStartEpochMs(Date date)
     {
-        return toBucketStartEpochMs(date.getTime());
+        return toIntervalStartEpochMs(date.getTime());
     }
 
-    private long toBucketStartEpochMs(long epochMs)
+    private long toIntervalStartEpochMs(long epochMs)
     {
-        return (epochMs / m_BucketSpanMs) * m_BucketSpanMs;
+        return (epochMs / m_FrequencyMs) * m_FrequencyMs;
     }
 
     private void extractAndProcessData(String start, String end)
@@ -150,24 +150,24 @@ public class JobScheduler
                 }
             }
         }
-        m_LastBucketEndMs = Long.valueOf(end);
 
-        // Only flush if we successfully submitted all data the extractor was
-        // asked to get
-        if (!m_DataExtractor.hasNext())
-        {
-            makeResultsAvailable();
-        }
+        // Only update last interval end and flush if we successfully submitted all data
+        // the extractor was asked to get
+        m_LastIntervalEndMs = Long.valueOf(end);
+        makeResultsAvailable();
     }
 
     private void makeResultsAvailable()
     {
+        InterimResultsParams interimResultsParams = InterimResultsParams.newBuilder()
+                .calcInterim(true)
+                .advanceTime(m_LastIntervalEndMs / MILLIS_IN_SECOND)
+                .build();
         try
         {
             // This ensures the results are available as soon as possible in the
             // case where we're searching specific time periods once and only once
-            m_DataProcessor.flushJob(m_JobId,
-                    new InterimResultsParams(false, new TimeRange(null, m_LastBucketEndMs / MILLIS_IN_SECOND)));
+            m_DataProcessor.flushJob(m_JobId, interimResultsParams);
         }
         catch (UnknownJobException | NativeProcessRunException | JobInUseException e)
         {
@@ -196,8 +196,8 @@ public class JobScheduler
     {
         return () -> {
             long nowMs = new Date().getTime();
-            long bucketSurplus = nowMs - toBucketStartEpochMs(nowMs);
-            Date nextTime = new Date(nowMs - bucketSurplus + m_BucketSpanMs + m_QueryDelayMs);
+            long intervalSurplus = nowMs - toIntervalStartEpochMs(nowMs);
+            Date nextTime = new Date(nowMs - intervalSurplus + m_FrequencyMs + m_QueryDelayMs);
             return LocalDateTime.ofInstant(nextTime.toInstant(), ZoneId.systemDefault());
         };
     }
@@ -217,7 +217,7 @@ public class JobScheduler
         m_Logger = m_JobLoggerFactory.newLogger(m_JobId);
         updateStatus(JobSchedulerStatus.STARTED);
         m_LookbackExecutor = Executors.newSingleThreadExecutor();
-        updateLastBucketEndFromLatestRecordTimestamp(job);
+        updateLastIntervalEndFromLatestRecordTimestamp(job);
         SchedulerConfig schedulerConfig = job.getSchedulerConfig();
         String lookbackStart = calcLookbackStart(schedulerConfig);
         String lookbackEnd = calcLookbackEnd(schedulerConfig);
@@ -240,27 +240,27 @@ public class JobScheduler
         }
     }
 
-    private void updateLastBucketEndFromLatestRecordTimestamp(JobDetails job)
+    private void updateLastIntervalEndFromLatestRecordTimestamp(JobDetails job)
     {
         if (job.getCounts() == null || job.getCounts().getLatestRecordTimeStamp() == null)
         {
             return;
         }
         Date latestRecordTimestamp = job.getCounts().getLatestRecordTimeStamp();
-        m_LastBucketEndMs = latestRecordTimestamp.getTime() + MILLIS_IN_SECOND;
+        m_LastIntervalEndMs = latestRecordTimestamp.getTime() + MILLIS_IN_SECOND;
     }
 
     private String calcLookbackStart(SchedulerConfig schedulerConfig)
     {
         long startEpochMs = 0;
-        if (m_LastBucketEndMs > 0)
+        if (m_LastIntervalEndMs > 0)
         {
-            startEpochMs = m_LastBucketEndMs;
+            startEpochMs = m_LastIntervalEndMs;
         }
         else
         {
             Date startTime = schedulerConfig.getStartTime();
-            startEpochMs = startTime == null ? 0 : toBucketStartEpochMs(startTime);
+            startEpochMs = startTime == null ? 0 : toIntervalStartEpochMs(startTime);
         }
         return String.valueOf(startEpochMs);
     }
@@ -273,7 +273,7 @@ public class JobScheduler
             long nowMs = new Date().getTime();
             endTime = new Date(nowMs - m_QueryDelayMs);
         }
-        long endEpochMs = toBucketStartEpochMs(endTime);
+        long endEpochMs = toIntervalStartEpochMs(endTime);
         return String.valueOf(endEpochMs);
     }
 

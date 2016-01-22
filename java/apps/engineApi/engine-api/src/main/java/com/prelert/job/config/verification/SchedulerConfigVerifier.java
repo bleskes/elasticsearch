@@ -66,6 +66,7 @@ public final class SchedulerConfigVerifier
     public static boolean verify(SchedulerConfig config) throws JobConfigurationException
     {
         checkFieldIsNotNegative(SchedulerConfig.QUERY_DELAY, config.getQueryDelay());
+        checkFieldIsNotNegative(SchedulerConfig.FREQUENCY, config.getFrequency());
 
         DataSource dataSource = config.getDataSource();
         switch (dataSource)

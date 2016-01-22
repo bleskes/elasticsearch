@@ -28,10 +28,13 @@ package com.prelert.job.config.verification;
 
 import java.util.Set;
 
+import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataDescription;
 import com.prelert.job.DataDescription.DataFormat;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.ModelDebugConfig;
+import com.prelert.job.SchedulerConfig;
+import com.prelert.job.SchedulerConfig.DataSource;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.messages.Messages;
 import com.prelert.job.transform.TransformConfig;
@@ -70,12 +73,13 @@ public final class JobConfigurationVerifier
     public static boolean verify(JobConfiguration config)
     throws JobConfigurationException
     {
-        checkEitherAnalysisConfigOrJobReferenceIdPresent(config);
-
-        if (config.getAnalysisConfig() != null)
+        if (config.getId() != null && config.getId().isEmpty() == false)
         {
-            AnalysisConfigVerifier.verify(config.getAnalysisConfig());
+            checkValidId(config.getId());
         }
+
+        checkAnalysisConfigIsPresent(config);
+        AnalysisConfigVerifier.verify(config.getAnalysisConfig());
 
         if (config.getAnalysisLimits() != null)
         {
@@ -84,7 +88,7 @@ public final class JobConfigurationVerifier
 
         if (config.getSchedulerConfig() != null)
         {
-            SchedulerConfigVerifier.verify(config.getSchedulerConfig());
+            verifySchedulerConfig(config);
         }
 
         if (config.getDataDescription() != null)
@@ -98,11 +102,6 @@ public final class JobConfigurationVerifier
         checkValueNotNegative("renormalizationWindow", config.getRenormalizationWindow());
         checkValueNotNegative("resultsRetentionDays", config.getResultsRetentionDays());
 
-        if (config.getId() != null && config.getId().isEmpty() == false)
-        {
-            checkValidId(config.getId());
-        }
-
         if (config.getModelDebugConfig() != null)
         {
             ModelDebugConfigVerifier.verify(config.getModelDebugConfig());
@@ -111,15 +110,41 @@ public final class JobConfigurationVerifier
         return true;
     }
 
-    private static void checkEitherAnalysisConfigOrJobReferenceIdPresent(JobConfiguration config)
+    private static void checkAnalysisConfigIsPresent(JobConfiguration config)
             throws JobConfigurationException
     {
-        if (config.getAnalysisConfig() == null && config.getReferenceJobId() == null)
+        if (config.getAnalysisConfig() == null)
         {
             throw new JobConfigurationException(
                     Messages.getMessage(Messages.JOB_CONFIG_MISSING_ANALYSISCONFIG),
                     ErrorCodes.INCOMPLETE_CONFIGURATION);
         }
+    }
+
+    private static void verifySchedulerConfig(JobConfiguration config) throws JobConfigurationException
+    {
+        SchedulerConfig schedulerConfig = config.getSchedulerConfig();
+        SchedulerConfigVerifier.verify(schedulerConfig);
+
+        AnalysisConfig analysisConfig = config.getAnalysisConfig();
+        if (analysisConfig.getBucketSpan() == null)
+        {
+            throw new JobConfigurationException(
+                    Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_REQUIRES_BUCKET_SPAN),
+                    ErrorCodes.SCHEDULER_REQUIRES_BUCKET_SPAN);
+        }
+        if (schedulerConfig.getDataSource() == DataSource.ELASTICSEARCH
+                && !isNullOrZero(analysisConfig.getLatency()))
+        {
+            throw new JobConfigurationException(
+                    Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_ELASTICSEARCH_DOES_NOT_SUPPORT_LATENCY),
+                    ErrorCodes.SCHEDULER_ELASTICSEARCH_DOES_NOT_SUPPORT_LATENCY);
+        }
+    }
+
+    private static boolean isNullOrZero(Long value)
+    {
+        return value == null || value.longValue() == 0;
     }
 
     private static void checkValidTransforms(JobConfiguration config)
@@ -278,4 +303,5 @@ public final class JobConfigurationVerifier
                     ErrorCodes.INVALID_VALUE);
         }
     }
+
 }

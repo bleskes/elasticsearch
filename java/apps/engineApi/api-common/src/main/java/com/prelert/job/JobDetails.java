@@ -144,46 +144,6 @@ public class JobDetails
         m_ResultsRetentionDays = jobConfig.getResultsRetentionDays();
     }
 
-    /**
-     * Create a new Job with the passed <code>jobId</code> inheriting all the
-     * values set in the <code>details</code> argument, any fields set in
-     * <code>jobConfig</code> then override the settings in <code>details</code>.
-     *
-     * @param jobId the job id
-     * @param details the job details
-     * @param jobConfig the job configuration
-     */
-
-    public JobDetails(String jobId, JobDetails details, JobConfiguration jobConfig)
-    {
-        this();
-
-        m_JobId = jobId;
-
-        m_Timeout = details.getTimeout();
-
-        m_SchedulerStatus = details.getSchedulerStatus();
-        m_Description = details.getDescription();
-        m_AnalysisConfig = details.getAnalysisConfig();
-        m_AnalysisLimits = details.getAnalysisLimits();
-        m_SchedulerConfig = details.getSchedulerConfig();
-        m_DataDescription = details.getDataDescription();
-        m_RenormalizationWindow = details.getRenormalizationWindow();
-        m_ResultsRetentionDays = details.getResultsRetentionDays();
-        m_Transforms = details.getTransforms();
-
-        // only override these if explicitly set
-        invokeIfNotNull(jobConfig.getTimeout(), t -> m_Timeout = t);
-        invokeIfNotNull(jobConfig.getAnalysisConfig(), ac -> m_AnalysisConfig = ac);
-        invokeIfNotNull(jobConfig.getAnalysisLimits(), al -> m_AnalysisLimits = al);
-        invokeIfNotNull(jobConfig.getSchedulerConfig(), sc -> m_SchedulerConfig = sc);
-        invokeIfNotNull(jobConfig.getDataDescription(), dd -> m_DataDescription = dd);
-        invokeIfNotNull(jobConfig.getDescription(), d -> m_Description = d);
-        invokeIfNotNull(jobConfig.getRenormalizationWindow(), rw -> m_RenormalizationWindow = rw);
-        invokeIfNotNull(jobConfig.getResultsRetentionDays(), rrd -> m_ResultsRetentionDays = rrd);
-        invokeIfNotNull(jobConfig.getTransforms(), t -> m_Transforms = t);
-    }
-
     private <T> void invokeIfNotNull(T obj, Consumer<T> consumer)
     {
         if (obj != null)
