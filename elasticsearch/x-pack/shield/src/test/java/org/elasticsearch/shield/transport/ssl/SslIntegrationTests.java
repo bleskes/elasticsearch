@@ -29,6 +29,7 @@ import org.apache.http.impl.client.HttpClients;
 import org.elasticsearch.client.transport.NoNodeAvailableException;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.io.Streams;
+import org.elasticsearch.common.network.NetworkModule;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.elasticsearch.common.transport.TransportAddress;
@@ -58,7 +59,7 @@ public class SslIntegrationTests extends ShieldIntegTestCase {
     @Override
     protected Settings nodeSettings(int nodeOrdinal) {
         return settingsBuilder().put(super.nodeSettings(nodeOrdinal))
-                .put(Node.HTTP_ENABLED, true)
+                .put(NetworkModule.HTTP_ENABLED.getKey(), true)
                 .put(ShieldNettyHttpServerTransport.HTTP_SSL_SETTING, true).build();
     }
 

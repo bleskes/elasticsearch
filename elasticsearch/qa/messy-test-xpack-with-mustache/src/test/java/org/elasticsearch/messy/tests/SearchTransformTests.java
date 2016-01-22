@@ -188,6 +188,7 @@ public class SearchTransformTests extends ESIntegTestCase {
         assertThat(resultData, equalTo(expectedData));
     }
 
+    @SuppressWarnings("unchecked")
     public void testExecuteFailure() throws Exception {
         index("idx", "type", "1");
         ensureGreen("idx");
