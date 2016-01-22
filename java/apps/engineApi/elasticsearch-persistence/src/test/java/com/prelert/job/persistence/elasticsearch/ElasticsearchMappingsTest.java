@@ -176,6 +176,10 @@ public class ElasticsearchMappingsTest
                         "          }," +
                         "          \"detectors\": {" +
                         "            \"properties\": {" +
+                        "              \"name\": {" +
+                        "                \"type\": \"string\"," +
+                        "                \"index\": \"not_analyzed\"" +
+                        "              }," +
                         "              \"function\": {" +
                         "                \"type\": \"string\"," +
                         "                \"index\": \"not_analyzed\"" +

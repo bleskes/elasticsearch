@@ -28,19 +28,18 @@
 package com.prelert.job;
 
 import static org.junit.Assert.assertEquals;
-
+import static org.junit.Assert.assertTrue;
 import junit.framework.Assert;
 
 import org.junit.Test;
 
 public class DetectorTest
 {
-
-
     @Test
-    public void testHashCode_GivenEqual()
+    public void testEquals_GivenEqual()
     {
         Detector detector1 = new Detector();
+        detector1.setName("foo");
         detector1.setFunction("mean");
         detector1.setFieldName("field");
         detector1.setByFieldName("by");
@@ -49,6 +48,7 @@ public class DetectorTest
         detector1.setUseNull(false);
 
         Detector detector2 = new Detector();
+        detector2.setName("foo");
         detector2.setFunction("mean");
         detector2.setFieldName("field");
         detector2.setByFieldName("by");
@@ -56,11 +56,23 @@ public class DetectorTest
         detector2.setPartitionFieldName("partition");
         detector2.setUseNull(false);
 
+        assertTrue(detector1.equals(detector2));
+        assertTrue(detector2.equals(detector1));
         assertEquals(detector1.hashCode(), detector2.hashCode());
     }
 
     @Test
-    public void testEquals()
+    public void testEquals_GivenDifferentName()
+    {
+        Detector detector1 = createDetector();
+        Detector detector2 = createDetector();
+        detector2.setName("bar");
+
+        Assert.assertFalse(detector1.equals(detector2));
+    }
+
+    @Test
+    public void testEquals_GivenDifferentByFieldName()
     {
         Detector detector1 = createDetector();
         Detector detector2 = createDetector();
