@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -428,7 +428,7 @@ public class JsonDataToProcessWriterTest
     private JsonDataToProcessWriter createWriter()
     {
         return new JsonDataToProcessWriter(m_LengthEncodedWriter, m_DataDescription,
-                m_AnalysisConfig, new TransformConfigs(m_Transforms),
+                m_AnalysisConfig, null, new TransformConfigs(m_Transforms),
                 m_StatusReporter, m_DataPersister, m_Logger);
     }
 

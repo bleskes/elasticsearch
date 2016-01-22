@@ -745,6 +745,7 @@ public class JobManager implements DataProcessor, Shutdownable
         JobDetails job = result.get();
         m_ProcessManager.writeToJob(writer, job.getDataDescription(),
                             job.getAnalysisConfig(),
+                            job.getSchedulerConfig(),
                             new TransformConfigs(job.getTransforms()), input,
                             new NoneStatusReporter("preview-job"),
                             new NoneJobDataPersister(), LOGGER);

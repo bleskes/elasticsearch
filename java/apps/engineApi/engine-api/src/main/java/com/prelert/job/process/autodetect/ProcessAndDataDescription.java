@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -37,6 +37,7 @@ import org.apache.log4j.Logger;
 
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataDescription;
+import com.prelert.job.SchedulerConfig;
 import com.prelert.job.process.output.parsing.ResultsReader;
 import com.prelert.job.status.StatusReporter;
 import com.prelert.job.transform.TransformConfigs;
@@ -57,15 +58,16 @@ public class ProcessAndDataDescription
     private final BufferedReader m_ErrorReader;
     private final List<String> m_InterestingFields;
 
-    private ResultsReader m_OutputParser;
+    private final ResultsReader m_OutputParser;
     private Thread m_OutputParserThread;
 
-    private Logger m_JobLogger;
+    private final Logger m_JobLogger;
 
-    private StatusReporter m_StatusReporter;
-    private AnalysisConfig m_AnalysisConfig;
-    private TransformConfigs m_Transforms;
-    private List<File> m_FilesToDelete;
+    private final StatusReporter m_StatusReporter;
+    private final AnalysisConfig m_AnalysisConfig;
+    private final SchedulerConfig m_SchedulerConfig;
+    private final TransformConfigs m_Transforms;
+    private final List<File> m_FilesToDelete;
 
     private final Semaphore m_ProcessGuard;
 
@@ -91,7 +93,7 @@ public class ProcessAndDataDescription
     public ProcessAndDataDescription(Process process, String jobId,
             DataDescription dd,
             long timeout, AnalysisConfig analysisConfig,
-            TransformConfigs transforms,
+            SchedulerConfig schedulerConfig, TransformConfigs transforms,
             Logger logger, StatusReporter reporter,
             ResultsReader outputParser,
             List<File> filesToDelete)
@@ -105,6 +107,7 @@ public class ProcessAndDataDescription
                         StandardCharsets.UTF_8));
 
         m_AnalysisConfig = analysisConfig;
+        m_SchedulerConfig = schedulerConfig;
         m_InterestingFields = analysisConfig.analysisFields();
 
         m_Transforms = transforms;
@@ -187,6 +190,11 @@ public class ProcessAndDataDescription
     public AnalysisConfig getAnalysisConfig()
     {
         return m_AnalysisConfig;
+    }
+
+    public SchedulerConfig getSchedulerConfig()
+    {
+        return m_SchedulerConfig;
     }
 
     public TransformConfigs getTransforms()

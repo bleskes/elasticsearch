@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -38,6 +38,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataDescription;
 import com.prelert.job.DataDescription.DataFormat;
+import com.prelert.job.SchedulerConfig;
 import com.prelert.job.persistence.JobDataPersister;
 import com.prelert.job.status.StatusReporter;
 import com.prelert.job.transform.TransformConfigs;
@@ -50,6 +51,15 @@ public class DataToProcessWriterFactoryTest
     {
         DataDescription dataDescription = new DataDescription();
         dataDescription.setFormat(DataFormat.JSON);
+
+        assertTrue(createWriter(dataDescription) instanceof JsonDataToProcessWriter);
+    }
+
+    @Test
+    public void testCreate_GivenDataFormatIsElasticsearch()
+    {
+        DataDescription dataDescription = new DataDescription();
+        dataDescription.setFormat(DataFormat.ELASTICSEARCH);
 
         assertTrue(createWriter(dataDescription) instanceof JsonDataToProcessWriter);
     }
@@ -76,7 +86,7 @@ public class DataToProcessWriterFactoryTest
     {
         DataToProcessWriterFactory factory = new DataToProcessWriterFactory();
         return factory.create(mock(LengthEncodedWriter.class), dataDescription,
-                mock(AnalysisConfig.class), mock(TransformConfigs.class),
+                mock(AnalysisConfig.class), mock(SchedulerConfig.class), mock(TransformConfigs.class),
                 mock(StatusReporter.class), mock(JobDataPersister.class), mock(Logger.class));
     }
 }

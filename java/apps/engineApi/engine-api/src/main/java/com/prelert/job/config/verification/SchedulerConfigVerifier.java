@@ -48,15 +48,16 @@ public final class SchedulerConfigVerifier
      * <li>If data source is FILE
      *   <ol>
      *   <li>Check that path is not null or empty</li>
-     *   <li>Check that base URL, indexes, types, query, start time and end time are not specified</li>
+     *   <li>Check that base URL, indexes, types, query, aggregations, aggs, start time and end time are not specified</li>
      *   </ol>
      * </li>
-     * <li>If data source is FILE
+     * <li>If data source is ELASTICSEARCH
      *   <ol>
      *   <li>Check that the base URL is valid</li>
      *   <li>Check that at least one index has been specified</li>
      *   <li>Check that at least one type has been specified</li>
      *   <li>Check that the query is not null or empty</li>
+     *   <li>Check that at least one of aggregations and aggs is null</li>
      *   <li>Check that end time is greater than start time if they're both specified</li>
      *   <li>Check that path and tail are not specified</li>
      *   </ol>
@@ -91,6 +92,7 @@ public final class SchedulerConfigVerifier
         checkFieldIsNull(dataSource, SchedulerConfig.BASE_URL, config.getBaseUrl());
         checkFieldIsNull(dataSource, SchedulerConfig.INDEXES, config.getIndexes());
         checkFieldIsNull(dataSource, SchedulerConfig.TYPES, config.getTypes());
+        checkFieldIsNull(dataSource, SchedulerConfig.AGGREGATIONS, config.getAggregations());
         checkFieldIsNull(dataSource, SchedulerConfig.QUERY, config.getQuery());
         checkFieldIsNull(dataSource, SchedulerConfig.START_TIME, config.getStartTime());
         checkFieldIsNull(dataSource, SchedulerConfig.END_TIME, config.getEndTime());
@@ -102,6 +104,10 @@ public final class SchedulerConfigVerifier
         checkUrl(SchedulerConfig.BASE_URL, config.getBaseUrl());
         checkFieldIsNotNullOrEmpty(SchedulerConfig.INDEXES, config.getIndexes());
         checkFieldIsNotNullOrEmpty(SchedulerConfig.TYPES, config.getTypes());
+        if (config.getAggregations() != null)
+        {
+            checkFieldIsNull(dataSource, SchedulerConfig.AGGS, config.getAggs());
+        }
         checkTimesInOrder(SchedulerConfig.START_TIME, config.getStartTime(), config.getEndTime());
         checkFieldIsNull(dataSource, SchedulerConfig.PATH, config.getPath());
         checkFieldIsNull(dataSource, SchedulerConfig.TAIL, config.getTail());

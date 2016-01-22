@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -178,7 +178,7 @@ public class DataFormatWarningsTest
 
             try
             {
-                pm.writeToJob(dd, ac, new TransformConfigs(Arrays.<TransformConfig>asList()), bis,
+                pm.writeToJob(dd, ac, null, new TransformConfigs(Arrays.<TransformConfig>asList()), bis,
                         new NullOutputStream(),
                         statusReporter, dp, LOGGER);
                 Assert.assertTrue(false); // should throw
@@ -311,7 +311,7 @@ public class DataFormatWarningsTest
 
             try
             {
-                pm.writeToJob(dd, ac, new TransformConfigs(Arrays.<TransformConfig>asList()), bis, new NullOutputStream(),
+                pm.writeToJob(dd, ac, null, new TransformConfigs(Arrays.<TransformConfig>asList()), bis, new NullOutputStream(),
                         statusReporter, dp, LOGGER);
                 Assert.assertTrue(false); // should throw
             }
@@ -430,7 +430,7 @@ public class DataFormatWarningsTest
 
             try
             {
-                pm.writeToJob(dd, ac, new TransformConfigs(Arrays.<TransformConfig>asList()), bis, new NullOutputStream(),
+                pm.writeToJob(dd, ac, null, new TransformConfigs(Arrays.<TransformConfig>asList()), bis, new NullOutputStream(),
                         statusReporter, dp, LOGGER);
                 Assert.assertTrue(false); // should throw
             }
@@ -549,7 +549,7 @@ public class DataFormatWarningsTest
 
             try
             {
-                pm.writeToJob(dd, ac, new TransformConfigs(Arrays.<TransformConfig>asList()), bis, new NullOutputStream(),
+                pm.writeToJob(dd, ac, null, new TransformConfigs(Arrays.<TransformConfig>asList()), bis, new NullOutputStream(),
                         statusReporter, dp, LOGGER);
                 Assert.assertTrue(false); // should throw
             }

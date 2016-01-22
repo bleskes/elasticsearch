@@ -42,6 +42,7 @@ import org.junit.rules.ExpectedException;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import com.prelert.job.SchedulerConfig;
 import com.prelert.job.SchedulerConfig.DataSource;
 import com.prelert.job.errorcodes.ErrorCodeMatcher;

@@ -245,6 +245,16 @@ public enum ErrorCodes
      */
     SCHEDULER_ELASTICSEARCH_DOES_NOT_SUPPORT_LATENCY(10305),
 
+    /**
+     * A job configured with aggregations must use a summaryCountField.
+     */
+    SCHEDULER_AGGREGATIONS_REQUIRES_SUMMARY_COUNT_FIELD(10306),
+
+    /**
+     * A job configured with an ELASTICSEARCH scheduler must use the data format ELASTICSEARCH.
+     */
+    SCHEDULER_ELASTICSEARCH_REQUIRES_DATAFORMAT_ELASTICSEARCH(10307),
+
     // Data store errors
     /**
      * A generic exception from the data store

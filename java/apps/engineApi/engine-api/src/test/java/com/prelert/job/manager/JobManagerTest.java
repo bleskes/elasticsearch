@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -424,7 +424,7 @@ public class JobManagerTest
                 Optional.of(new JobDetails("foo", new JobConfiguration(new AnalysisConfig()))));
 
         when(m_ProcessManager.numberOfRunningJobs()).thenReturn(3);
-        when(m_ProcessManager.writeToJob(any(CsvRecordWriter.class), any(), any(), any(), any(), any(), any(), any()))
+        when(m_ProcessManager.writeToJob(any(CsvRecordWriter.class), any(), any(), any(), any(), any(), any(), any(), any()))
                     .thenAnswer(writeToWriter());
 
         JobManager jobManager = createJobManager();

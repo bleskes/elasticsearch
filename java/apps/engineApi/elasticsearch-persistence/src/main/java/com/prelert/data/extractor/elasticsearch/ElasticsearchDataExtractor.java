@@ -49,13 +49,14 @@ public class ElasticsearchDataExtractor implements DataExtractor
      * The search body contains sorting based on the time field
      * and a query. The query is composed by a bool query with
      * two must clauses, the recommended way to perform an AND query.
-     * There are 5 placeholders:
+     * There are 6 placeholders:
      * <ol>
      *   <li> time field
      *   <li> user defined query
      *   <li> time field
      *   <li> start time (epoch ms)
      *   <li> end time (epoch ms)
+     *   <li> aggregations (may be empty)
      * </ol
      */
     private static final String SEARCH_BODY_TEMPLATE = "{"
@@ -80,27 +81,34 @@ public class ElasticsearchDataExtractor implements DataExtractor
             + "        }"
             + "      }"
             + "    }"
-            + "  }"
+            + "  }%s"
             + "}";
+
+    private static final String AGGREGATION_TEMPLATE = ","
+            + "  %s";
 
     private static final Pattern SCROLL_ID_PATTERN = Pattern.compile(".*\"_scroll_id\":\"(.*?)\".*");
     private static final Pattern EMPTY_HITS_PATTERN = Pattern.compile(".*\"hits\":\\[\\]");
+    private static final Pattern EMPTY_AGGREGATIONS_PATTERN = Pattern.compile("\"aggregations\":.*\"buckets\":\\[\\]");
     private static final int OK_STATUS = 200;
     private static final String SLASH = "/";
     private static final String COMMA = ",";
-    private static final String SEARCH_SCROLL_END_POINT = "_search?scroll=60m&size=1000";
+    private static final String SEARCH_SCROLL_TEMPLATE = "_search?scroll=60m&size=%d";
+    private static final int UNAGGREGATED_SCROLL_SIZE = 1000;
     private static final String CONTINUE_SCROLL_END_POINT = "_search/scroll?scroll=60m";
 
     /**
-     * We want to read up until the "hits" array. 500 bytes (250 chars) should be enough
+     * We want to read up until the "hits" array. 1000 bytes (~= 1000 UTF-8
+     * chars given that field names and scroll ID are ASCII) should be enough
      */
-    private static final int PUSHBACK_BUFFER_BYTES = 500;
+    private static final int PUSHBACK_BUFFER_BYTES = 1000;
 
     private final HttpGetRequester m_HttpGetRequester;
     private final String m_BaseUrl;
     private final List<String> m_Indices;
     private final List<String> m_Types;
     private final String m_Search;
+    private final String m_Aggregations;
     private final String m_TimeField;
     private String m_ScrollId;
     private boolean m_IsScrollComplete;
@@ -109,21 +117,22 @@ public class ElasticsearchDataExtractor implements DataExtractor
     private Logger m_Logger;
 
     ElasticsearchDataExtractor(HttpGetRequester httpGetRequester, String baseUrl,
-            List<String> indices, List<String> types, String search, String timeField)
+            List<String> indices, List<String> types, String search, String aggregations, String timeField)
     {
         m_HttpGetRequester = Objects.requireNonNull(httpGetRequester);
         m_BaseUrl = Objects.requireNonNull(baseUrl);
         m_Indices = Objects.requireNonNull(indices);
         m_Types = Objects.requireNonNull(types);
         m_Search = Objects.requireNonNull(search);
+        m_Aggregations = aggregations;
         m_TimeField = Objects.requireNonNull(timeField);
     }
 
     public static ElasticsearchDataExtractor create(String baseUrl,
-            List<String> indices, List<String> types, String search, String timeField)
+            List<String> indices, List<String> types, String search, String aggregations, String timeField)
     {
         return new ElasticsearchDataExtractor(new HttpGetRequester(), baseUrl, indices, types,
-                search, timeField);
+                search, aggregations, timeField);
     }
 
     public void newSearch(String startEpochMs, String endEpochMs, Logger logger)
@@ -147,9 +156,9 @@ public class ElasticsearchDataExtractor implements DataExtractor
         }
         try
         {
-            PushbackInputStream stream = m_ScrollId == null ? initScroll() : continueScroll();
-            m_IsScrollComplete = stream == null
-                    || peekAndMatchInStream(stream, EMPTY_HITS_PATTERN).find();
+            PushbackInputStream stream = (m_ScrollId == null) ? initScroll() : continueScroll();
+            Pattern emptyPattern = (m_Aggregations == null) ? EMPTY_HITS_PATTERN : EMPTY_AGGREGATIONS_PATTERN;
+            m_IsScrollComplete = (stream == null) || peekAndMatchInStream(stream, emptyPattern).find();
             if (!m_IsScrollComplete)
             {
                 return Optional.of(stream);
@@ -172,7 +181,9 @@ public class ElasticsearchDataExtractor implements DataExtractor
     private PushbackInputStream initScroll() throws IOException
     {
         String url = buildInitScrollUrl();
-        HttpGetResponse response = m_HttpGetRequester.get(url, createSearchBody());
+        String searchBody = createSearchBody();
+        m_Logger.debug("About to submit body " + searchBody + " to URL " + url);
+        HttpGetResponse response = m_HttpGetRequester.get(url, searchBody);
         if (response.getResponseCode() != OK_STATUS)
         {
             m_Logger.error("Request '" + url + "' failed with status code: "
@@ -199,7 +210,10 @@ public class ElasticsearchDataExtractor implements DataExtractor
         urlBuilder.append(SLASH);
         urlBuilder.append(m_Types.stream().collect(Collectors.joining(COMMA)));
         urlBuilder.append(SLASH);
-        urlBuilder.append(SEARCH_SCROLL_END_POINT);
+        // With aggregations we don't want any hits returned for the raw data,
+        // just the aggregations
+        int size = (m_Aggregations != null) ? 0 : UNAGGREGATED_SCROLL_SIZE;
+        urlBuilder.append(String.format(SEARCH_SCROLL_TEMPLATE, size));
         return urlBuilder.toString();
     }
 
@@ -216,7 +230,13 @@ public class ElasticsearchDataExtractor implements DataExtractor
     private String createSearchBody()
     {
         return String.format(SEARCH_BODY_TEMPLATE,
-                m_TimeField, m_Search, m_TimeField, m_StartEpochMs, m_EndEpochMs);
+                m_TimeField, m_Search, m_TimeField, m_StartEpochMs, m_EndEpochMs,
+                createAggregations());
+    }
+
+    private String createAggregations()
+    {
+        return (m_Aggregations != null) ? String.format(AGGREGATION_TEMPLATE, m_Aggregations) : "";
     }
 
     private Matcher peekAndMatchInStream(PushbackInputStream stream, Pattern pattern)
@@ -232,16 +252,20 @@ public class ElasticsearchDataExtractor implements DataExtractor
 
     private PushbackInputStream continueScroll() throws IOException
     {
-        StringBuilder urlBuilder = newUrlBuilder();
-        urlBuilder.append(CONTINUE_SCROLL_END_POINT);
-        HttpGetResponse response = m_HttpGetRequester.get(urlBuilder.toString(), m_ScrollId);
-        if (response.getResponseCode() == OK_STATUS)
+        // Aggregations never need a continuation
+        if (m_Aggregations == null)
         {
-            return new PushbackInputStream(response.getStream(), PUSHBACK_BUFFER_BYTES);
+            StringBuilder urlBuilder = newUrlBuilder();
+            urlBuilder.append(CONTINUE_SCROLL_END_POINT);
+            HttpGetResponse response = m_HttpGetRequester.get(urlBuilder.toString(), m_ScrollId);
+            if (response.getResponseCode() == OK_STATUS)
+            {
+                return new PushbackInputStream(response.getStream(), PUSHBACK_BUFFER_BYTES);
+            }
+            m_Logger.error("Request '"  + urlBuilder.toString() + "' with scroll id '" + m_ScrollId
+                    + "' failed with status code: " + response.getResponseCode() + ". Response was:\n"
+                    + response.getResponseAsString());
         }
-        m_Logger.error("Request '"  + urlBuilder.toString() + "' with scroll id '" + m_ScrollId
-                + "' failed with status code: " + response.getResponseCode() + ". Response was:\n"
-                + response.getResponseAsString());
         return null;
     }
 }

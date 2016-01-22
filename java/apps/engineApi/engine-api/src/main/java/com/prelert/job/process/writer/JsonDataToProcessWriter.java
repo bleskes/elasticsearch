@@ -31,16 +31,19 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParser;
+
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataCounts;
 import com.prelert.job.DataDescription;
 import com.prelert.job.DataDescription.DataFormat;
+import com.prelert.job.SchedulerConfig;
 import com.prelert.job.persistence.JobDataPersister;
 import com.prelert.job.process.exceptions.MalformedJsonException;
 import com.prelert.job.process.exceptions.MissingFieldException;
@@ -60,15 +63,20 @@ import com.prelert.job.transform.TransformConfigs;
 class JsonDataToProcessWriter extends AbstractDataToProcessWriter
 {
     private static final String ELASTICSEARCH_RECORD_HOLDING_FIELD = "_source";
-    private static final String EMPTY_STRING = "";
+
+    /**
+     * Scheduler config.  May be <code>null</code>.
+     */
+    private SchedulerConfig m_SchedulerConfig;
 
     public JsonDataToProcessWriter(RecordWriter recordWriter,
             DataDescription dataDescription, AnalysisConfig analysisConfig,
-            TransformConfigs transforms, StatusReporter statusReporter,
-            JobDataPersister jobDataPersister, Logger logger)
+            SchedulerConfig schedulerConfig, TransformConfigs transforms,
+            StatusReporter statusReporter, JobDataPersister jobDataPersister, Logger logger)
     {
         super(recordWriter, dataDescription, analysisConfig, transforms,
                 statusReporter, jobDataPersister, logger);
+        m_SchedulerConfig = schedulerConfig;
     }
 
     /**
@@ -121,17 +129,15 @@ class JsonDataToProcessWriter extends AbstractDataToProcessWriter
         int numFields = outputFieldCount();
         String[] input = new String[numFields];
         String[] record = new String[numFields];
-        record[record.length -1] = ""; // The control field is always an empty string
+        record[record.length - 1] = ""; // The control field is always an empty string
 
         // We never expect to get the control field
         boolean [] gotFields = new boolean[analysisFields.size()];
 
-
         int recordsWritten = 0;
         int recordCount = 0;
 
-        JsonRecordReader recordReader = new JsonRecordReader(parser, m_InFieldIndexes,
-                getRecordHoldingField(), m_Logger);
+        JsonRecordReader recordReader = makeRecordReader(parser);
         long inputFieldCount = recordReader.read(input, gotFields);
         while (inputFieldCount >= 0)
         {
@@ -169,9 +175,23 @@ class JsonDataToProcessWriter extends AbstractDataToProcessWriter
     {
         if (m_DataDescription.getFormat().equals(DataFormat.ELASTICSEARCH))
         {
+            if (m_SchedulerConfig != null && m_SchedulerConfig.getAggregationsOrAggs() != null)
+            {
+                return SchedulerConfig.AGGREGATIONS;
+            }
             return ELASTICSEARCH_RECORD_HOLDING_FIELD;
         }
-        return EMPTY_STRING;
+        return "";
+    }
+
+    private JsonRecordReader makeRecordReader(JsonParser parser)
+    {
+        List<String> nestingOrder = (m_SchedulerConfig != null) ?
+                m_SchedulerConfig.buildAggregatedFieldList() : null;
+        return (nestingOrder != null) ?
+               new AggregatedJsonRecordReader(parser, m_InFieldIndexes, getRecordHoldingField(), m_Logger,
+                       nestingOrder) :
+               new SimpleJsonRecordReader(parser, m_InFieldIndexes, getRecordHoldingField(), m_Logger);
     }
 
     /**

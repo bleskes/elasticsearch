@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -424,7 +424,7 @@ public class ProcessManagerTest
         ByteArrayOutputStream output = new ByteArrayOutputStream();
 
 
-        DataCounts count = m_ProcessManager.writeToJob(dd, ac, tc, input, output, statusReporter,
+        DataCounts count = m_ProcessManager.writeToJob(dd, ac, null, tc, input, output, statusReporter,
                                     mock(JobDataPersister.class), mock(Logger.class));
 
         // the actual input is longer than 47 bytes but the counting input steam
