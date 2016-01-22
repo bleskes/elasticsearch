@@ -250,7 +250,7 @@ If not set 'skip' and 'take' default to 0 and 100 meaning the first 100 results 
 }
 
 The Engine API Dashboard gives a visual view of the results. This can be found
-here: http://localhost:8080/dashboard.
+here: http://localhost:5601/app/prelert
 
 In practice, most implementations will process the results programatically.
 For the purpose of this tutorial, we will continue using the cURL command line
