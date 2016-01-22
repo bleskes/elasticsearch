@@ -907,7 +907,6 @@ public class JobsTest implements Closeable
                 test(b.getBucketInfluencers().get(0).getProbability() >= 0.0);
                 test(b.getBucketInfluencers().get(0).getProbability() <= 1.0);
             }
-            test(b.getDetectors().size() == 0);
             test(b.getId() != null && b.getId().isEmpty() == false);
             long epoch = b.getEpoch();
             Date date = new Date(epoch * 1000);

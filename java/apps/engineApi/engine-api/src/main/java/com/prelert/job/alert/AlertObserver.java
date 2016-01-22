@@ -33,7 +33,6 @@ import java.util.List;
 import com.prelert.job.results.AnomalyRecord;
 import com.prelert.job.results.Bucket;
 import com.prelert.job.results.BucketInfluencer;
-import com.prelert.job.results.Detector;
 import com.prelert.job.results.Influencer;
 
 /**
@@ -186,14 +185,11 @@ public abstract class AlertObserver
             return records;
         }
 
-        for (Detector detector : bucket.getDetectors())
+        for (AnomalyRecord r : bucket.getRecords())
         {
-            for (AnomalyRecord r : detector.getRecords())
+            if (r.getNormalizedProbability() >= normalisedThreshold)
             {
-                if (r.getNormalizedProbability() >= normalisedThreshold)
-                {
-                    records.add(r);
-                }
+                records.add(r);
             }
         }
 

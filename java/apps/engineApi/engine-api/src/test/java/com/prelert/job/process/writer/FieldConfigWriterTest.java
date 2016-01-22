@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -115,17 +115,17 @@ public class FieldConfigWriterTest
 
         Assert.assertEquals(detectors.size(), section.size());
 
-        String value = fieldConfig.get(iniConfig.getGlobalSectionName(), "detector.1.clause");
+        String value = fieldConfig.get(iniConfig.getGlobalSectionName(), "detector.0.clause");
         Assert.assertEquals("Integer_Value by ts_hash", value);
-        value = fieldConfig.get(iniConfig.getGlobalSectionName(), "detector.2.clause");
+        value = fieldConfig.get(iniConfig.getGlobalSectionName(), "detector.1.clause");
         Assert.assertEquals("count by ipaddress", value);
-        value = fieldConfig.get(iniConfig.getGlobalSectionName(), "detector.3.clause");
+        value = fieldConfig.get(iniConfig.getGlobalSectionName(), "detector.2.clause");
         Assert.assertEquals("max(Integer_Value) over ts_hash", value);
-        value = fieldConfig.get(iniConfig.getGlobalSectionName(), "detector.4.clause");
+        value = fieldConfig.get(iniConfig.getGlobalSectionName(), "detector.3.clause");
         Assert.assertEquals("rare by ipaddress partitionfield=host", value);
-        value = fieldConfig.get(iniConfig.getGlobalSectionName(), "detector.5.clause");
+        value = fieldConfig.get(iniConfig.getGlobalSectionName(), "detector.4.clause");
         Assert.assertEquals("rare by \"weird field\"", value);
-        value = fieldConfig.get(iniConfig.getGlobalSectionName(), "detector.6.clause");
+        value = fieldConfig.get(iniConfig.getGlobalSectionName(), "detector.5.clause");
         // Ini4j meddles with escape characters itself, so the assertion below
         // fails even though the raw file is fine.  The file is never read by
         // Ini4j in the production system.
@@ -148,7 +148,7 @@ public class FieldConfigWriterTest
 
         fieldConfigWriter.write();
 
-        verify(writer).write("detector.1.clause = Integer_Value by ts_hash categorizationfield=foo\n");
+        verify(writer).write("detector.0.clause = Integer_Value by ts_hash categorizationfield=foo\n");
         verifyNoMoreInteractions(writer);
     }
 
@@ -169,10 +169,10 @@ public class FieldConfigWriterTest
 
         fieldConfigWriter.write();
 
-        verify(writer).write("detector.1.clause = Integer_Value by ts_hash\n" +
-                "influencer.1 = sun\n" +
-                "influencer.2 = moon\n" +
-                "influencer.3 = earth\n");
+        verify(writer).write("detector.0.clause = Integer_Value by ts_hash\n" +
+                "influencer.0 = sun\n" +
+                "influencer.1 = moon\n" +
+                "influencer.2 = earth\n");
         verifyNoMoreInteractions(writer);
     }
 }

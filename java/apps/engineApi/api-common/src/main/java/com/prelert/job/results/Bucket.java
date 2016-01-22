@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -44,7 +44,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 /**
  * Bucket Result POJO
  */
-@JsonIgnoreProperties({"epoch", "detectors", "normalisable"})
+@JsonIgnoreProperties({"epoch", "normalisable"})
 @JsonInclude(Include.NON_NULL)
 public class Bucket
 {
@@ -59,7 +59,6 @@ public class Bucket
     public static final String IS_INTERIM = "isInterim";
     public static final String RECORD_COUNT = "recordCount";
     public static final String EVENT_COUNT = "eventCount";
-    public static final String DETECTORS = "detectors";
     public static final String RECORDS = "records";
     public static final String BUCKET_INFLUENCERS = "bucketInfluencers";
     public static final String INFLUENCERS = "influencers";
@@ -81,7 +80,6 @@ public class Bucket
 
     private double m_MaxNormalizedProbability;
     private int m_RecordCount;
-    private List<Detector> m_Detectors;
     private List<AnomalyRecord> m_Records;
     private long m_EventCount;
     private boolean m_IsInterim;
@@ -91,7 +89,6 @@ public class Bucket
 
     public Bucket()
     {
-        m_Detectors = new ArrayList<>();
         m_Records = Collections.emptyList();
         m_Influencers = Collections.emptyList();
         m_BucketInfluencers = new ArrayList<>();
@@ -187,33 +184,6 @@ public class Bucket
         m_RecordCount = recordCount;
     }
 
-
-    /**
-     * Get the list of detectors that produced output in this bucket
-     *
-     * @return A list of detector
-     */
-    public List<Detector> getDetectors()
-    {
-        return m_Detectors;
-    }
-
-    public void setDetectors(List<Detector> detectors)
-    {
-        m_Detectors = detectors;
-    }
-
-
-    /**
-     * Add a detector that produced output in this bucket
-     *
-     */
-    public void addDetector(Detector detector)
-    {
-        m_Detectors.add(detector);
-    }
-
-
     /**
      * Get all the anomaly records associated with this bucket
      * @return All the anomaly records
@@ -294,9 +264,7 @@ public class Bucket
     }
 
     /**
-     * Compare all the fields and embedded anomaly records
-     * (if any), does not compare detectors as they are not
-     * serialized anyway.
+     * Compare all the fields and embedded anomaly records (if any)
      */
     @Override
     public boolean equals(Object other)
@@ -314,7 +282,6 @@ public class Bucket
         Bucket that = (Bucket)other;
 
         // m_HadBigNormalisedUpdate is deliberately excluded from the test
-        // don't bother testing detectors
         return Objects.equals(this.m_Timestamp, that.m_Timestamp)
                 && (this.m_EventCount == that.m_EventCount)
                 && (this.m_AnomalyScore == that.m_AnomalyScore)

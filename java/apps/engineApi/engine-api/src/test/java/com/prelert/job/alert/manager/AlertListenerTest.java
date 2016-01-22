@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -27,12 +27,15 @@
 
 package com.prelert.job.alert.manager;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 
 import java.net.URI;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.core.UriBuilder;
@@ -51,7 +54,6 @@ import com.prelert.job.manager.JobManager;
 import com.prelert.job.persistence.JobProvider;
 import com.prelert.job.results.AnomalyRecord;
 import com.prelert.job.results.Bucket;
-import com.prelert.job.results.Detector;
 
 public class AlertListenerTest
 {
@@ -179,17 +181,17 @@ public class AlertListenerTest
      */
     private Bucket createBucket()
     {
-        Detector d = new Detector("d1");
+        Bucket b = new Bucket();
+        List<AnomalyRecord> records = new ArrayList<>();
         for (int i=10; i<=100; i=i+10)
         {
             AnomalyRecord a1 = new AnomalyRecord();
             a1.setNormalizedProbability(i);
-            d.addRecord(a1);
+            records.add(a1);
         }
+        b.setRecords(records);
 
-        Bucket b = new Bucket();
         b.setAnomalyScore(40);
-        b.setDetectors(Arrays.asList(d));
         b.setEventCount(5);
         b.setId("testbucket");
         b.setInterim(false);

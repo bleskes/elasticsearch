@@ -82,7 +82,6 @@ import com.prelert.job.quantiles.Quantiles;
 import com.prelert.job.results.AnomalyRecord;
 import com.prelert.job.results.Bucket;
 import com.prelert.job.results.CategoryDefinition;
-import com.prelert.job.results.Detector;
 import com.prelert.job.results.Influencer;
 import com.prelert.job.usage.Usage;
 
@@ -415,7 +414,6 @@ public class ElasticsearchJobProvider implements JobProvider
             XContentBuilder bucketMapping = ElasticsearchMappings.bucketMapping();
             XContentBuilder categorizerStateMapping = ElasticsearchMappings.categorizerStateMapping();
             XContentBuilder categoryDefinitionMapping = ElasticsearchMappings.categoryDefinitionMapping();
-            XContentBuilder detectorMapping = ElasticsearchMappings.detectorMapping();
             XContentBuilder recordMapping = ElasticsearchMappings.recordMapping();
             XContentBuilder quantilesMapping = ElasticsearchMappings.quantilesMapping();
             XContentBuilder modelStateMapping = ElasticsearchMappings.modelStateMapping();
@@ -433,7 +431,6 @@ public class ElasticsearchJobProvider implements JobProvider
                     .addMapping(Bucket.TYPE, bucketMapping)
                     .addMapping(CategorizerState.TYPE, categorizerStateMapping)
                     .addMapping(CategoryDefinition.TYPE, categoryDefinitionMapping)
-                    .addMapping(Detector.TYPE, detectorMapping)
                     .addMapping(AnomalyRecord.TYPE, recordMapping)
                     .addMapping(Quantiles.TYPE, quantilesMapping)
                     .addMapping(ModelState.TYPE, modelStateMapping)

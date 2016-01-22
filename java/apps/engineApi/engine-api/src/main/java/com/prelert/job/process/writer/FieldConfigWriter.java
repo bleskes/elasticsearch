@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -31,8 +31,8 @@ import static com.prelert.job.process.writer.WriterConstants.EQUALS;
 
 import java.io.IOException;
 import java.io.OutputStreamWriter;
-import java.util.regex.Pattern;
 import java.util.Objects;
+import java.util.regex.Pattern;
 
 import org.apache.log4j.Logger;
 
@@ -83,7 +83,7 @@ public class FieldConfigWriter
         int counter = 0;
         for (Detector detector : m_Config.getDetectors())
         {
-            contents.append(DETECTOR_PREFIX).append(++counter)
+            contents.append(DETECTOR_PREFIX).append(counter++)
                     .append(DETECTOR_CLAUSE_SUFFIX).append(EQUALS);
             if (isNotNullOrEmpty(detector.getFunction()))
             {
@@ -148,7 +148,7 @@ public class FieldConfigWriter
             {
                 // Influencer fields are entire settings rather than part of a
                 // clause, so don't need quoting
-                contents.append(INFLUENCER_PREFIX).append(++counter)
+                contents.append(INFLUENCER_PREFIX).append(counter++)
                         .append(EQUALS).append(influencer).append(NEW_LINE);
             }
         }

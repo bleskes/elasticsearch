@@ -96,6 +96,7 @@ public class ElasticsearchMappings
     public static final String ES_TIMESTAMP = "@timestamp";
 
     private static final String DATE = "date";
+    private static final String INTEGER = "integer";
     private static final String LONG = "long";
     private static final String OBJECT = "object";
     private static final String PROPERTIES = "properties";
@@ -456,38 +457,6 @@ public class ElasticsearchMappings
     }
 
     /**
-     * Create the Elasticsearch mapping for {@linkplain com.prelert.job.results.Detector}.
-     * The '_all' field is disabled as the document isn't meant to be searched.
-     *
-     * @return
-     * @throws IOException
-     */
-    public static XContentBuilder detectorMapping()
-    throws IOException
-    {
-        return jsonBuilder()
-            .startObject()
-                .startObject(com.prelert.job.results.Detector.TYPE)
-                    .startObject(ALL)
-                        .field(ENABLED, false)
-                        // analyzer must be specified even though _all is disabled
-                        // because all types in the same index must have the same
-                        // analyzer for a given field
-                        .field(ANALYZER, WHITESPACE)
-                    .endObject()
-                    .startObject(PROPERTIES)
-                        .startObject(com.prelert.job.results.Detector.NAME)
-                            .field(TYPE, STRING).field(INDEX, NOT_ANALYZED)
-                        .endObject()
-                    .endObject()
-                .endObject()
-            .endObject();
-    }
-
-
-    /**
-     * Create the Elasticsearch mapping for {@linkplain com.prelert.job.results.Detector}.
-     * The '_all' field is disabled as the document isn't meant to be searched.
      * Records have a _parent mapping to a {@linkplain com.prelert.job.results.Bucket}.
      *
      * @return
@@ -511,6 +480,9 @@ public class ElasticsearchMappings
                         .endObject()
                         .startObject(ES_TIMESTAMP)
                             .field(TYPE, DATE).field(INCLUDE_IN_ALL, false)
+                        .endObject()
+                        .startObject(AnomalyRecord.DETECTOR_INDEX)
+                            .field(TYPE, INTEGER).field(INCLUDE_IN_ALL, false)
                         .endObject()
                         .startObject(AnomalyRecord.ACTUAL)
                             .field(TYPE, DOUBLE).field(INCLUDE_IN_ALL, false)

@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -32,8 +32,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 
-import org.apache.log4j.Logger;
-
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -45,7 +43,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * can be returned if the members have not been set.
  */
 @JsonInclude(Include.NON_NULL)
-@JsonIgnoreProperties({"parent", "id", "detectorName"})
+@JsonIgnoreProperties(value={"id", "parent"}, allowSetters=true)
 public class AnomalyRecord
 {
     /**
@@ -61,6 +59,7 @@ public class AnomalyRecord
     /**
      * Result fields (all detector types)
      */
+    public static final String DETECTOR_INDEX = "detectorIndex";
     public static final String PROBABILITY = "probability";
     public static final String BY_FIELD_NAME = "byFieldName";
     public static final String BY_FIELD_VALUE = "byFieldValue";
@@ -93,10 +92,8 @@ public class AnomalyRecord
     public static final String NORMALIZED_PROBABILITY = "normalizedProbability";
     public static final String INITIAL_NORMALIZED_PROBABILITY = "initialNormalizedProbability";
 
-    private static final Logger LOGGER = Logger.getLogger(AnomalyRecord.class);
-
-    private String m_DetectorName;
-    private int m_IdNum;
+    private String m_Id;
+    private int m_DetectorIndex;
     private double m_Probability;
     private String m_ByFieldName;
     private String m_ByFieldValue;
@@ -134,68 +131,22 @@ public class AnomalyRecord
      */
     public String getId()
     {
-        if (m_IdNum == 0)
-        {
-            return null;
-        }
-        return m_Parent + m_DetectorName + m_IdNum;
+        return m_Id;
     }
 
-    /**
-     * This should only be called by code that's reading records from the data
-     * store.  The ID must be set to the data stores's unique key to this
-     * anomaly record.
-     *
-     * TODO - this is a breach of encapsulation that should be rectified when
-     * a big enough change is made to justify invalidating all previously
-     * stored data.  Currently it makes an assumption about the format of the
-     * detector name, which should be opaque to the Java code.
-     */
     public void setId(String id)
     {
-        int epochLen = 0;
-        while (id.length() > epochLen && Character.isDigit(id.charAt(epochLen)))
-        {
-            ++epochLen;
-        }
-        int idStart = -1;
-        if (m_PartitionFieldValue == null || m_PartitionFieldValue.isEmpty())
-        {
-            idStart = id.lastIndexOf("/") + 1;
-        }
-        else
-        {
-            idStart = id.lastIndexOf("/" + m_PartitionFieldValue);
-            if (idStart >= epochLen)
-            {
-                idStart += 1 + m_PartitionFieldValue.length();
-            }
-        }
-        if (idStart <= epochLen)
-        {
-            LOGGER.error("Anomaly record ID not in expected format: " + id);
-            return;
-        }
-        m_Parent = id.substring(0, epochLen).intern();
-        m_DetectorName = id.substring(epochLen, idStart).intern();
-        m_IdNum = Integer.parseInt(id.substring(idStart));
+        m_Id = id;
     }
 
-
-    /**
-     * Generate the data store ID for this record.
-     *
-     * TODO - the current format is hard to parse back into its constituent
-     * parts, but cannot be changed without breaking backwards compatibility.
-     * If backwards compatibility is ever broken for some other reason then the
-     * opportunity should be taken to change this format.
-     */
-    public String generateNewId(String parent, String detectorName, int count)
+    public int getDetectorIndex()
     {
-        m_Parent = parent.intern();
-        m_DetectorName = detectorName.intern();
-        m_IdNum = count;
-        return getId();
+        return m_DetectorIndex;
+    }
+
+    public void setDetectorIndex(int detectorIndex)
+    {
+        m_DetectorIndex = detectorIndex;
     }
 
     public double getAnomalyScore()
@@ -420,7 +371,7 @@ public class AnomalyRecord
 
         // m_HadBigNormalisedUpdate is also deliberately excluded from the hash
 
-        return Objects.hash(m_Probability, m_AnomalyScore, m_InitialNormalizedProbability,
+        return Objects.hash(m_DetectorIndex, m_Probability, m_AnomalyScore, m_InitialNormalizedProbability,
                 m_NormalizedProbability, m_Typical, m_Actual, m_Function, m_FunctionDescription,
                 m_FieldName, m_ByFieldName, m_ByFieldValue, m_PartitionFieldName,
                 m_PartitionFieldValue, m_OverFieldName, m_OverFieldValue, m_Timestamp, m_Parent,
@@ -448,7 +399,8 @@ public class AnomalyRecord
         // from the data store
 
         // m_HadBigNormalisedUpdate is also deliberately excluded from the test
-        return this.m_Probability == that.m_Probability
+        return this.m_DetectorIndex == that.m_DetectorIndex
+                && this.m_Probability == that.m_Probability
                 && this.m_AnomalyScore == that.m_AnomalyScore
                 && this.m_NormalizedProbability == that.m_NormalizedProbability
                 && this.m_InitialNormalizedProbability == that.m_InitialNormalizedProbability
