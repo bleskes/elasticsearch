@@ -28,6 +28,7 @@
 package com.prelert.job.process.writer;
 
 import java.io.IOException;
+import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.Map;
 
@@ -40,6 +41,9 @@ import com.prelert.job.process.exceptions.MalformedJsonException;
 
 class SimpleJsonRecordReader extends AbstractJsonRecordReader
 {
+    private Deque<String> m_NestedFields;
+    private String m_NestedPrefix;
+
     /**
      * Create a reader that parses the mapped fields from JSON.
      *
@@ -78,9 +82,9 @@ class SimpleJsonRecordReader extends AbstractJsonRecordReader
     public long read(String[] record, boolean[] gotFields) throws IOException, MalformedJsonException
     {
         initArrays(record, gotFields);
-        consumeToRecordHoldingField();
         m_FieldCount = 0;
         clearNestedLevel();
+        consumeToRecordHoldingField();
 
         JsonToken token = tryNextTokenOrReadToEndOnError();
         while (!(token == JsonToken.END_OBJECT && m_NestedLevel == 0))
@@ -112,6 +116,13 @@ class SimpleJsonRecordReader extends AbstractJsonRecordReader
             return -1;
         }
         return m_FieldCount;
+    }
+
+    protected void clearNestedLevel()
+    {
+        m_NestedLevel = 0;
+        m_NestedFields = new ArrayDeque<String>();
+        m_NestedPrefix = "";
     }
 
     private void parseFieldValuePair(String[] record, boolean[] gotFields)

@@ -28,9 +28,7 @@
 package com.prelert.job.process.writer;
 
 import java.io.IOException;
-import java.util.ArrayDeque;
 import java.util.Arrays;
-import java.util.Deque;
 import java.util.Map;
 import java.util.Objects;
 
@@ -51,8 +49,6 @@ abstract class AbstractJsonRecordReader implements JsonRecordReader
     protected final Logger m_Logger;
     protected int m_NestedLevel;
     protected long m_FieldCount;
-    protected Deque<String> m_NestedFields;
-    protected String m_NestedPrefix;
     protected int m_ErrorCounter;
 
     /**
@@ -101,13 +97,6 @@ abstract class AbstractJsonRecordReader implements JsonRecordReader
         Arrays.fill(record, "");
     }
 
-    protected void clearNestedLevel()
-    {
-        m_NestedLevel = 0;
-        m_NestedFields = new ArrayDeque<String>();
-        m_NestedPrefix = "";
-    }
-
     /**
      * Returns null at the EOF or the next token
      * @return
@@ -132,6 +121,8 @@ abstract class AbstractJsonRecordReader implements JsonRecordReader
 
         return m_Parser.getCurrentToken();
     }
+
+    protected abstract void clearNestedLevel();
 
     /**
      * In some cases the parser doesn't recognise the '}' of a badly formed

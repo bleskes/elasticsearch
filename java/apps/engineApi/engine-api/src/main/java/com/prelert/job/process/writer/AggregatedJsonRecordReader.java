@@ -101,15 +101,14 @@ class AggregatedJsonRecordReader extends AbstractJsonRecordReader
             throws IOException, MalformedJsonException
     {
         initArrays(record, gotFields);
+        m_LatestDocCount = null;
+        m_FieldCount = 0;
         if (m_IsFirstTime)
         {
-            consumeToRecordHoldingField();
             clearNestedLevel();
+            consumeToRecordHoldingField();
             m_IsFirstTime = false;
         }
-
-        m_FieldCount = 0;
-        m_LatestDocCount = null;
 
         boolean gotInnerValue = false;
         JsonToken token = tryNextTokenOrReadToEndOnError();
@@ -182,6 +181,11 @@ class AggregatedJsonRecordReader extends AbstractJsonRecordReader
             return -1;
         }
         return m_FieldCount;
+    }
+
+    protected void clearNestedLevel()
+    {
+        m_NestedLevel = 0;
     }
 
     private boolean parseFieldValuePair(String[] record, boolean[] gotFields)
