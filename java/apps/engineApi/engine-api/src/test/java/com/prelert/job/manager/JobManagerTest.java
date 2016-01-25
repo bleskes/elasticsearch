@@ -404,6 +404,42 @@ public class JobManagerTest
     }
 
     @Test
+    public void testCreateJob_FillsDefaults()
+            throws NoSuchScheduledJobException, UnknownJobException,
+            CannotStartSchedulerWhileItIsStoppingException, TooManyJobsException,
+            JobConfigurationException, JobIdAlreadyExistsException, IOException,
+            NativeProcessRunException, JobInUseException
+    {
+        givenProcessInfo(2);
+        JobManager jobManager = createJobManager();
+
+        AnalysisConfig analysisConfig = new AnalysisConfig();
+        analysisConfig.setBucketSpan(3600L);
+        Detector detectorNullName = new Detector();
+        detectorNullName.setFunction("sum");
+        detectorNullName.setFieldName("revenue");
+        detectorNullName.setByFieldName("vendor");
+        Detector detectorWithName = new Detector();
+        detectorWithName.setName("Named");
+        detectorWithName.setFunction("sum");
+        detectorWithName.setFieldName("revenue");
+        detectorWithName.setByFieldName("vendor");
+
+        analysisConfig.setDetectors(Arrays.asList(detectorNullName, detectorWithName));
+
+        JobConfiguration jobConfig = new JobConfiguration();
+        jobConfig.setId("revenue-by-vendor");
+        jobConfig.setAnalysisConfig(analysisConfig);
+
+        when(m_JobProvider.jobIdIsUnique("revenue-by-vendor")).thenReturn(true);
+
+        JobDetails job = jobManager.createJob(jobConfig);
+
+        assertEquals("sum(revenue) by vendor", job.getAnalysisConfig().getDetectors().get(0).getName());
+        assertEquals("Named", job.getAnalysisConfig().getDetectors().get(1).getName());
+    }
+
+    @Test
     public void testWriteUpdateConfigMessage() throws JobInUseException, NativeProcessRunException
     {
         givenProcessInfo(5);

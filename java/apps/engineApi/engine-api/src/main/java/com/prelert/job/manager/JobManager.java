@@ -56,6 +56,7 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.prelert.app.Shutdownable;
 import com.prelert.job.DataCounts;
+import com.prelert.job.Detector;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.JobDetails;
 import com.prelert.job.JobIdAlreadyExistsException;
@@ -63,6 +64,7 @@ import com.prelert.job.JobSchedulerStatus;
 import com.prelert.job.ModelDebugConfig;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.alert.AlertObserver;
+import com.prelert.job.config.DefaultDetectorName;
 import com.prelert.job.config.DefaultFrequency;
 import com.prelert.job.config.verification.JobConfigurationException;
 import com.prelert.job.data.extraction.DataExtractorFactory;
@@ -295,6 +297,7 @@ public class JobManager implements DataProcessor, Shutdownable
         }
 
         JobDetails jobDetails = new JobDetails(jobId, jobConfig);
+        fillDefaults(jobDetails);
 
         m_JobProvider.createJob(jobDetails);
 
@@ -304,6 +307,17 @@ public class JobManager implements DataProcessor, Shutdownable
         }
 
         return jobDetails;
+    }
+
+    private void fillDefaults(JobDetails jobDetails)
+    {
+        for (Detector detector : jobDetails.getAnalysisConfig().getDetectors())
+        {
+            if (detector.getName() == null)
+            {
+                detector.setName(DefaultDetectorName.of(detector));
+            }
+        }
     }
 
     private void createJobSchedulerAndStart(JobDetails job)

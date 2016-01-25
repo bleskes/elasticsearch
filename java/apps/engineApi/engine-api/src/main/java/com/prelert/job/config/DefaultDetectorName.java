@@ -40,6 +40,13 @@ public class DefaultDetectorName
     private static final String PARTITION_FIELD_OPTION = " partitionfield=";
     private static final String EXCLUDE_FREQUENT_OPTION = " excludefrequent=";
 
+    public static String of(Detector detector)
+    {
+        StringBuilder sb = new StringBuilder();
+        appendOn(detector, sb);
+        return sb.toString();
+    }
+
     public static void appendOn(Detector detector, StringBuilder sb)
     {
         if (isNotNullOrEmpty(detector.getFunction()))
