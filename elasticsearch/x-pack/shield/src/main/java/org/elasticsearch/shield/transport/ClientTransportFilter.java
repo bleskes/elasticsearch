@@ -18,7 +18,7 @@
 package org.elasticsearch.shield.transport;
 
 import org.elasticsearch.common.inject.Inject;
-import org.elasticsearch.shield.User;
+import org.elasticsearch.shield.InternalSystemUser;
 import org.elasticsearch.shield.authc.AuthenticationService;
 import org.elasticsearch.transport.TransportRequest;
 
@@ -68,7 +68,7 @@ public interface ClientTransportFilter {
                 the system user will be attached. There cannot be a request outgoing from this
                 node that is not associated with a user.
              */
-            authcService.attachUserHeaderIfMissing(User.SYSTEM);
+            authcService.attachUserHeaderIfMissing(InternalSystemUser.INSTANCE);
         }
     }
 }
