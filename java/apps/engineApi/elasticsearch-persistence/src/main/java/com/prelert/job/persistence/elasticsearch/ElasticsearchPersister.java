@@ -40,6 +40,7 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 import org.elasticsearch.ElasticsearchException;
+import org.elasticsearch.action.admin.indices.flush.FlushRequest;
 import org.elasticsearch.action.admin.indices.refresh.RefreshRequest;
 import org.elasticsearch.action.bulk.BulkItemResponse;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
@@ -382,15 +383,20 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
 
 
     /**
-     * Refreshes the elastic search index
+     * Refreshes the Elasticsearch index.
+     * Blocks until results are searchable.
      * @return
      */
     @Override
     public boolean commitWrites()
     {
-        // refresh the index so the buckets are immediately searchable
-        LOGGER.trace("ES API CALL: refresh index " + m_JobId.getIndex());
-        m_Client.admin().indices().refresh(new RefreshRequest(m_JobId.getIndex())).actionGet();
+        String indexName = m_JobId.getIndex();
+        // Flush should empty the translog into Lucene
+        LOGGER.trace("ES API CALL: flush index " + indexName);
+        m_Client.admin().indices().flush(new FlushRequest(indexName)).actionGet();
+        // Refresh should wait for Lucene to make the data searchable
+        LOGGER.trace("ES API CALL: refresh index " + indexName);
+        m_Client.admin().indices().refresh(new RefreshRequest(indexName)).actionGet();
         return true;
     }
 

@@ -288,7 +288,6 @@ public class BlockingQueueRenormaliser implements Renormaliser
                     // a) The next normalisation starting
                     // b) A request to close the job returning
                     lastLogger.info("Renormaliser thread about to refresh indexes");
-                    lastLogger.trace("ES API CALL: refresh index " + BlockingQueueRenormaliser.this.m_JobId);
                     m_JobProvider.refreshIndex(BlockingQueueRenormaliser.this.m_JobId);
 
                     if (m_UpdatedQuantileQueue.isEmpty())

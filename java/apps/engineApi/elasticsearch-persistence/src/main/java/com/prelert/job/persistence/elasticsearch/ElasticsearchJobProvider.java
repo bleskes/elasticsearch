@@ -45,6 +45,7 @@ import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexResponse;
 import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsRequest;
 import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsResponse;
+import org.elasticsearch.action.admin.indices.flush.FlushRequest;
 import org.elasticsearch.action.admin.indices.refresh.RefreshRequest;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.search.SearchRequestBuilder;
@@ -1051,6 +1052,11 @@ public class ElasticsearchJobProvider implements JobProvider
     public void refreshIndex(String jobId)
     {
         String indexName = new ElasticsearchJobId(jobId).getIndex();
+        // Flush should empty the translog into Lucene
+        LOGGER.trace("ES API CALL: flush index " + indexName);
+        m_Client.admin().indices().flush(new FlushRequest(indexName)).actionGet();
+        // Refresh should wait for Lucene to make the data searchable
+        LOGGER.trace("ES API CALL: refresh index " + indexName);
         m_Client.admin().indices().refresh(new RefreshRequest(indexName)).actionGet();
     }
 }
