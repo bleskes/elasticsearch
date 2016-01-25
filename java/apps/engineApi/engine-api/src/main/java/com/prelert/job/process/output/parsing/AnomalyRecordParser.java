@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -62,6 +62,9 @@ final class AnomalyRecordParser extends FieldNameParser<AnomalyRecord>
         JsonToken token = m_Parser.nextToken();
         switch (fieldName)
         {
+        case AnomalyRecord.DETECTOR_INDEX:
+            record.setDetectorIndex(parseAsIntOrZero(fieldName));
+            break;
         case AnomalyRecord.PROBABILITY:
             record.setProbability(parseAsDoubleOrZero(fieldName));
             break;

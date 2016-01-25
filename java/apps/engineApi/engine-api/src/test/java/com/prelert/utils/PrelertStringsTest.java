@@ -25,59 +25,20 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.job.manager;
+package com.prelert.utils;
 
-import java.time.Duration;
+import static org.junit.Assert.assertEquals;
 
-import com.google.common.base.Preconditions;
+import org.junit.Test;
 
-/**
- * Factory methods for a sensible default for the scheduler frequency
- */
-final class DefaultFrequency
+public class PrelertStringsTest
 {
-    private static final int SECONDS_IN_MINUTE = 60;
-    private static final int TWO_MINS_SECONDS = 2 * SECONDS_IN_MINUTE;
-    private static final int TWENTY_MINS_SECONDS = 20 * SECONDS_IN_MINUTE;
-    private static final int HALF_DAY_SECONDS = 12 * 60 * SECONDS_IN_MINUTE;
-    private static final Duration TEN_MINUTES = Duration.ofMinutes(10);
-    private static final Duration ONE_HOUR = Duration.ofHours(1);
-
-    private DefaultFrequency()
+    @Test
+    public void testDoubleQuoteIfNotAlphaNumeric()
     {
-        // Do nothing
-    }
-
-    /**
-     * Creates a sensible default frequency for a given bucket span.
-     *
-     * The default depends on the bucket span:
-     * <ul>
-     *   <li> <= 2 mins -> 1 min
-     *   <li> <= 20 mins -> bucket span / 2
-     *   <li> <= 12 hours -> 10 mins
-     *   <li> > 12 hours -> 1 hour
-     * </ul>
-     *
-     * @param bucketSpanSeconds the bucket span in seconds
-     * @return the default frequency
-     */
-    public static Duration ofBucketSpan(long bucketSpanSeconds)
-    {
-        Preconditions.checkArgument(bucketSpanSeconds > 0);
-
-        if (bucketSpanSeconds <= TWO_MINS_SECONDS)
-        {
-            return Duration.ofSeconds(SECONDS_IN_MINUTE);
-        }
-        if (bucketSpanSeconds <= TWENTY_MINS_SECONDS)
-        {
-            return Duration.ofSeconds(bucketSpanSeconds / 2);
-        }
-        if (bucketSpanSeconds <= HALF_DAY_SECONDS)
-        {
-            return TEN_MINUTES;
-        }
-        return ONE_HOUR;
+        assertEquals("foo2", PrelertStrings.doubleQuoteIfNotAlphaNumeric("foo2"));
+        assertEquals("\"fo o\"", PrelertStrings.doubleQuoteIfNotAlphaNumeric("fo o"));
+        assertEquals("\" \"", PrelertStrings.doubleQuoteIfNotAlphaNumeric(" "));
+        assertEquals("\"ba\\\"r\\\"\"", PrelertStrings.doubleQuoteIfNotAlphaNumeric("ba\"r\""));
     }
 }

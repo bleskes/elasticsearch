@@ -59,6 +59,8 @@ import org.elasticsearch.index.engine.VersionConflictEngineException;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.node.Node;
+import org.elasticsearch.script.Script;
+import org.elasticsearch.script.ScriptService;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.sort.FieldSortBuilder;
 import org.elasticsearch.search.sort.SortBuilder;
@@ -82,7 +84,6 @@ import com.prelert.job.quantiles.Quantiles;
 import com.prelert.job.results.AnomalyRecord;
 import com.prelert.job.results.Bucket;
 import com.prelert.job.results.CategoryDefinition;
-import com.prelert.job.results.Detector;
 import com.prelert.job.results.Influencer;
 import com.prelert.job.usage.Usage;
 
@@ -415,7 +416,6 @@ public class ElasticsearchJobProvider implements JobProvider
             XContentBuilder bucketMapping = ElasticsearchMappings.bucketMapping();
             XContentBuilder categorizerStateMapping = ElasticsearchMappings.categorizerStateMapping();
             XContentBuilder categoryDefinitionMapping = ElasticsearchMappings.categoryDefinitionMapping();
-            XContentBuilder detectorMapping = ElasticsearchMappings.detectorMapping();
             XContentBuilder recordMapping = ElasticsearchMappings.recordMapping();
             XContentBuilder quantilesMapping = ElasticsearchMappings.quantilesMapping();
             XContentBuilder modelStateMapping = ElasticsearchMappings.modelStateMapping();
@@ -433,7 +433,6 @@ public class ElasticsearchJobProvider implements JobProvider
                     .addMapping(Bucket.TYPE, bucketMapping)
                     .addMapping(CategorizerState.TYPE, categorizerStateMapping)
                     .addMapping(CategoryDefinition.TYPE, categoryDefinitionMapping)
-                    .addMapping(Detector.TYPE, detectorMapping)
                     .addMapping(AnomalyRecord.TYPE, recordMapping)
                     .addMapping(Quantiles.TYPE, quantilesMapping)
                     .addMapping(ModelState.TYPE, modelStateMapping)
@@ -1058,6 +1057,36 @@ public class ElasticsearchJobProvider implements JobProvider
         // Refresh should wait for Lucene to make the data searchable
         LOGGER.trace("ES API CALL: refresh index " + indexName);
         m_Client.admin().indices().refresh(new RefreshRequest(indexName)).actionGet();
+    }
+
+    @Override
+    public boolean updateDetectorName(String jobId, int detectorIndex, String newName)
+            throws UnknownJobException
+    {
+        LOGGER.trace("ES API CALL: update detector name for job " + jobId + ", detector at index "
+                + detectorIndex + " by running Groovy script update-detector-name with params newName="
+                + newName);
+
+        Map<String, Object> scriptParams = new HashMap<>();
+        scriptParams.put("detectorIndex", detectorIndex);
+        scriptParams.put("newName", newName);
+        Script script = new Script("update-detector-name", ScriptService.ScriptType.FILE,
+                ScriptService.DEFAULT_LANG, scriptParams);
+
+        ElasticsearchJobId esJobId = new ElasticsearchJobId(jobId);
+
+        try
+        {
+            m_Client.prepareUpdate(esJobId.getIndex(), JobDetails.TYPE, esJobId.getId())
+                            .setScript(script)
+                            .setRetryOnConflict(3).get();
+        }
+        catch (IndexNotFoundException e)
+        {
+            throw new UnknownJobException(jobId);
+        }
+
+        return true;
     }
 }
 

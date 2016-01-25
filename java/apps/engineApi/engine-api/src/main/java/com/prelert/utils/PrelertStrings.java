@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -25,59 +25,53 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.job.results;
+package com.prelert.utils;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import java.util.regex.Pattern;
 
 /**
- * Represents the anomaly detector.
- * Only the detector name is serialised anomaly records aren't.
+ * Another String utilities class. Class name is prefixed with Prelert to avoid confusion
+ * with one of the myriad String utility classes out there.
  */
-@JsonInclude(Include.NON_NULL)
-@JsonIgnoreProperties({"records"})
-public class Detector
+public final class PrelertStrings
 {
-    public static final String TYPE = "detector";
-    public static final String NAME = "name";
-    public static final String RECORDS = "records";
-
-    private String m_Name;
-    private List<AnomalyRecord> m_Records;
-
-
-    public Detector()
+    private PrelertStrings()
     {
-        m_Records = new ArrayList<>();
+        // do nothing
     }
 
-    public Detector(String name)
-    {
-        this();
-        m_Name = name.intern();
-    }
+    private static final Pattern NEEDS_QUOTING = Pattern.compile("\\W");
 
-    public String getName()
+    /**
+     * Surrounds with double quotes the given {@code input} if it contains
+     * any non-word characters. Any double quotes contained in {@code input}
+     * will be escaped.
+     *
+     * @param input any non null string
+     * @return {@code input} when it does not contain non-word characters, or a new string
+     * that contains {@code input} surrounded by double quotes otherwise
+     */
+    public static String doubleQuoteIfNotAlphaNumeric(String input)
     {
-        return m_Name;
-    }
+        if (!NEEDS_QUOTING.matcher(input).find())
+        {
+            return input;
+        }
 
-    public void setName(String name)
-    {
-        m_Name = name.intern();
-    }
+        StringBuilder quoted = new StringBuilder();
+        quoted.append('\"');
 
-    public void addRecord(AnomalyRecord record)
-    {
-        m_Records.add(record);
-    }
+        for (int i = 0; i < input.length(); ++i)
+        {
+            char c = input.charAt(i);
+            if (c == '\"' || c == '\\')
+            {
+                quoted.append('\\');
+            }
+            quoted.append(c);
+        }
 
-    public List<AnomalyRecord> getRecords()
-    {
-        return m_Records;
+        quoted.append('\"');
+        return quoted.toString();
     }
 }

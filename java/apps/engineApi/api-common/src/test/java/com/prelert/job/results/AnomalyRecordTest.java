@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -27,9 +27,7 @@
 
 package com.prelert.job.results;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.util.Arrays;
@@ -40,52 +38,6 @@ import org.junit.Test;
 
 public class AnomalyRecordTest
 {
-    @Test
-    public void testGetId_GivenIdIsZero()
-    {
-        AnomalyRecord anomalyRecord = new AnomalyRecord();
-        anomalyRecord.setId("0");
-
-        assertNull(anomalyRecord.getId());
-    }
-
-    @Test
-    public void testSetId_GivenNoPartitionField()
-    {
-        AnomalyRecord anomalyRecord = new AnomalyRecord();
-
-        anomalyRecord.setId("1403701200individual metric/1");
-
-        assertEquals("1403701200", anomalyRecord.getParent());
-        assertEquals("1403701200individual metric/1", anomalyRecord.getId());
-    }
-
-    @Test
-    public void testSetId_GivenPartitionField()
-    {
-        AnomalyRecord anomalyRecord = new AnomalyRecord();
-        anomalyRecord.setFieldName("responsetime");
-        anomalyRecord.setPartitionFieldName("airline");
-        anomalyRecord.setPartitionFieldValue("AAL");
-
-        anomalyRecord.setId("1403701200individual metric/0/0/responsetime/airline/AAL1");
-
-        assertEquals("1403701200", anomalyRecord.getParent());
-        assertEquals("1403701200individual metric/0/0/responsetime/airline/AAL1",
-                anomalyRecord.getId());
-    }
-
-    @Test
-    public void testGenerateNewId()
-    {
-        AnomalyRecord anomalyRecord = new AnomalyRecord();
-        anomalyRecord.setId("1403701200individual metric/42");
-
-        anomalyRecord.generateNewId("1403704800", "population count/", 48);
-
-        assertEquals("1403704800population count/48", anomalyRecord.getId());
-    }
-
     @Test
     public void testResetBigNormalisedUpdateFlag()
     {

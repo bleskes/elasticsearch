@@ -45,6 +45,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 @JsonInclude(Include.NON_NULL)
 public class Detector
 {
+    public static final String NAME = "name";
     public static final String FUNCTION = "function";
     public static final String FIELD_NAME = "fieldName";
     public static final String BY_FIELD_NAME = "byFieldName";
@@ -210,6 +211,7 @@ public class Detector
                     c -> Character.toString(c)).collect(Collectors.toList()));
 
 
+    private String m_Name;
     private String m_Function;
     private String m_FieldName;
     private String m_ByFieldName;
@@ -221,6 +223,16 @@ public class Detector
     public Detector()
     {
 
+    }
+
+    public String getName()
+    {
+        return m_Name;
+    }
+
+    public void setName(String name)
+    {
+        m_Name = name;
     }
 
     /**
@@ -345,7 +357,8 @@ public class Detector
 
         Detector that = (Detector)other;
 
-        return Objects.equals(this.m_Function, that.m_Function) &&
+        return Objects.equals(this.m_Name, that.m_Name) &&
+               Objects.equals(this.m_Function, that.m_Function) &&
                Objects.equals(this.m_FieldName, that.m_FieldName) &&
                Objects.equals(this.m_ByFieldName, that.m_ByFieldName) &&
                Objects.equals(this.m_OverFieldName, that.m_OverFieldName) &&
@@ -357,7 +370,7 @@ public class Detector
     @Override
     public int hashCode()
     {
-        return Objects.hash(m_Function, m_FieldName, m_ByFieldName,
+        return Objects.hash(m_Name, m_Function, m_FieldName, m_ByFieldName,
                 m_OverFieldName, m_PartitionFieldName, m_UseNull, m_ExcludeFrequent);
     }
 }

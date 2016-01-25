@@ -77,6 +77,11 @@ public final class Messages
     public static final String JOB_CONFIG_OVERFIELD_INCOMPATIBLE_FUNCTION = "job.config.overField.incompatible.function";
     public static final String JOB_CONFIG_OVERFIELD_NEEDS_ANOTHER = "job.config.overField.needs.another";
     public static final String JOB_CONFIG_UPDATE_DESCRIPTION_INVALID = "job.config.update.description.invalid";
+    public static final String JOB_CONFIG_UPDATE_DETECTOR_NAME_INVALID_DETECTOR_INDEX = "job.config.update.detector.name.invalid.detector.index";
+    public static final String JOB_CONFIG_UPDATE_DETECTOR_NAME_DETECTOR_INDEX_SHOULD_BE_INTEGER = "job.config.update.detector.name.detector.index.should.be.integer";
+    public static final String JOB_CONFIG_UPDATE_DETECTOR_NAME_MISSING_PARAMS = "job.config.update.detector.name.missing.params";
+    public static final String JOB_CONFIG_UPDATE_DETECTOR_NAME_SHOULD_BE_STRING = "job.config.update.detector.name.should.be.string";
+    public static final String JOB_CONFIG_UPDATE_DETECTOR_NAME_FAILED = "job.config.update.detector.name.failed";
     public static final String JOB_CONFIG_UPDATE_INVALID_KEY = "job.config.update.invalid.key";
     public static final String JOB_CONFIG_UPDATE_MODEL_DEBUG_CONFIG_PARSE_ERROR = "job.config.update.model.debug.config.parse.error";
     public static final String JOB_CONFIG_UPDATE_NO_OBJECT = "job.config.update.no.object";

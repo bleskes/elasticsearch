@@ -176,6 +176,10 @@ public class ElasticsearchMappingsTest
                         "          }," +
                         "          \"detectors\": {" +
                         "            \"properties\": {" +
+                        "              \"name\": {" +
+                        "                \"type\": \"string\"," +
+                        "                \"index\": \"not_analyzed\"" +
+                        "              }," +
                         "              \"function\": {" +
                         "                \"type\": \"string\"," +
                         "                \"index\": \"not_analyzed\"" +
@@ -281,29 +285,5 @@ public class ElasticsearchMappingsTest
 
         assertEquals(expected.toString().replaceAll("\\s", ""),
                 ElasticsearchMappings.jobMapping().string());
-    }
-
-
-    @Test
-    public void testDetectorMapping() throws IOException
-    {
-        StringBuilder expected = new StringBuilder();
-        expected.append("{" +
-                        "  \"detector\": {" +
-                        "    \"_all\": {" +
-                        "      \"enabled\": false," +
-                        "      \"analyzer\": \"whitespace\"" +
-                        "    }," +
-                        "    \"properties\": {" +
-                        "      \"name\": {" +
-                        "        \"type\": \"string\"," +
-                        "        \"index\": \"not_analyzed\"" +
-                        "      }" +
-                        "    }" +
-                        "  }" +
-                        "}");
-
-        assertEquals(expected.toString().replaceAll("\\s", ""),
-                ElasticsearchMappings.detectorMapping().string());
     }
 }

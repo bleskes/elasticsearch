@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -36,9 +36,9 @@ import org.apache.log4j.Logger;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
+import com.prelert.job.results.AnomalyRecord;
 import com.prelert.job.results.Bucket;
 import com.prelert.job.results.BucketInfluencer;
-import com.prelert.job.results.Detector;
 import com.prelert.job.results.Influencer;
 import com.prelert.utils.json.AutoDetectParseException;
 import com.prelert.utils.json.FieldNameParser;
@@ -56,12 +56,6 @@ final class BucketParser extends FieldNameParser<Bucket>
     protected Bucket supply()
     {
         return new Bucket();
-    }
-
-    @Override
-    protected void postProcess(Bucket bucket)
-    {
-        setRecordCountToSumOfDetectorsRecords(bucket);
     }
 
     @Override
@@ -90,8 +84,8 @@ final class BucketParser extends FieldNameParser<Bucket>
         case Bucket.IS_INTERIM:
             bucket.setInterim(parseAsBooleanOrNull(fieldName));
             break;
-        case Bucket.DETECTORS:
-            bucket.setDetectors(parseDetectors(fieldName));
+        case Bucket.RECORDS:
+            bucket.setRecords(parseRecords(fieldName));
             break;
         case Bucket.BUCKET_INFLUENCERS:
             bucket.setBucketInfluencers(parseBucketInfluencers(fieldName));
@@ -121,11 +115,11 @@ final class BucketParser extends FieldNameParser<Bucket>
         }
     }
 
-    private List<Detector> parseDetectors(String fieldName) throws AutoDetectParseException,
+    private List<AnomalyRecord> parseRecords(String fieldName) throws AutoDetectParseException,
             IOException, JsonParseException
     {
-        List<Detector> detectors = new ArrayList<>();
-        parseArray(fieldName, () -> new DetectorParser(m_Parser).parseJson(), detectors);
+        List<AnomalyRecord> detectors = new ArrayList<>();
+        parseArray(fieldName, () -> new AnomalyRecordParser(m_Parser).parseJson(), detectors);
         return detectors;
     }
 
@@ -143,16 +137,5 @@ final class BucketParser extends FieldNameParser<Bucket>
         List<Influencer> influencers = new ArrayList<>();
         parseArray(fieldName, () -> new InfluencerParser(m_Parser).parseJson(), influencers);
         return influencers;
-    }
-
-    /** Set the record count to what was actually read */
-    private static void setRecordCountToSumOfDetectorsRecords(Bucket bucket)
-    {
-        int acc = 0;
-        for (Detector d : bucket.getDetectors())
-        {
-            acc += d.getRecords().size();
-        }
-        bucket.setRecordCount(acc);
     }
 }
