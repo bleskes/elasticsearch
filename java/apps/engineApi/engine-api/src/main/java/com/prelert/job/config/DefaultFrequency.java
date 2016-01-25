@@ -25,7 +25,7 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.job.manager;
+package com.prelert.job.config;
 
 import java.time.Duration;
 
@@ -34,7 +34,7 @@ import com.google.common.base.Preconditions;
 /**
  * Factory methods for a sensible default for the scheduler frequency
  */
-final class DefaultFrequency
+public final class DefaultFrequency
 {
     private static final int SECONDS_IN_MINUTE = 60;
     private static final int TWO_MINS_SECONDS = 2 * SECONDS_IN_MINUTE;
