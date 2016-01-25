@@ -34,11 +34,11 @@ import org.junit.Test;
 public class PrelertStringsTest
 {
     @Test
-    public void testDoubleQuoteIfContainsWhitespace()
+    public void testDoubleQuoteIfNotAlphaNumeric()
     {
-        assertEquals("foo", PrelertStrings.doubleQuoteIfContainsWhitespace("foo"));
-        assertEquals("\"fo o\"", PrelertStrings.doubleQuoteIfContainsWhitespace("fo o"));
-        assertEquals("\" \"", PrelertStrings.doubleQuoteIfContainsWhitespace(" "));
-        assertEquals("\"ba\\\"r\\\"\"", PrelertStrings.doubleQuoteIfContainsWhitespace("ba\"r\""));
+        assertEquals("foo2", PrelertStrings.doubleQuoteIfNotAlphaNumeric("foo2"));
+        assertEquals("\"fo o\"", PrelertStrings.doubleQuoteIfNotAlphaNumeric("fo o"));
+        assertEquals("\" \"", PrelertStrings.doubleQuoteIfNotAlphaNumeric(" "));
+        assertEquals("\"ba\\\"r\\\"\"", PrelertStrings.doubleQuoteIfNotAlphaNumeric("ba\"r\""));
     }
 }

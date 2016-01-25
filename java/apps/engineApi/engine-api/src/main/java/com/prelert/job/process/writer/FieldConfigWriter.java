@@ -110,6 +110,6 @@ public class FieldConfigWriter
 
     private static String quoteField(String field)
     {
-        return PrelertStrings.doubleQuoteIfContainsWhitespace(field);
+        return PrelertStrings.doubleQuoteIfNotAlphaNumeric(field);
     }
 }

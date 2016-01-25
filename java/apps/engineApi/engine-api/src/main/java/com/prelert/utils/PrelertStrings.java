@@ -51,7 +51,7 @@ public final class PrelertStrings
      * @return {@code input} when it does not contain non-word characters, or a new string
      * that contains {@code input} surrounded by double quotes otherwise
      */
-    public static String doubleQuoteIfContainsWhitespace(String input)
+    public static String doubleQuoteIfNotAlphaNumeric(String input)
     {
         if (!NEEDS_QUOTING.matcher(input).find())
         {

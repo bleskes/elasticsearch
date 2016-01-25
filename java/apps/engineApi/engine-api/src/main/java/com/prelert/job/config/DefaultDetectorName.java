@@ -93,7 +93,7 @@ public class DefaultDetectorName
 
     private static String quoteField(String field)
     {
-        return PrelertStrings.doubleQuoteIfContainsWhitespace(field);
+        return PrelertStrings.doubleQuoteIfNotAlphaNumeric(field);
     }
 
     private static boolean isNotNullOrEmpty(String arg)
