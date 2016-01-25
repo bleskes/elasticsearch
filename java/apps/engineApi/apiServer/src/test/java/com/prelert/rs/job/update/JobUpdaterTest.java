@@ -30,6 +30,10 @@ package com.prelert.rs.job.update;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.util.Arrays;
+import java.util.Optional;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -38,6 +42,9 @@ import org.junit.rules.ExpectedException;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import com.prelert.job.AnalysisConfig;
+import com.prelert.job.Detector;
+import com.prelert.job.JobDetails;
 import com.prelert.job.ModelDebugConfig;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.config.verification.JobConfigurationException;
@@ -95,7 +102,7 @@ public class JobUpdaterTest
         String update = "{\"dimitris\":\"foobar\"}";
 
         m_ExpectedException.expect(JobConfigurationException.class);
-        m_ExpectedException.expectMessage("Invalid key 'dimitris'. Valid keys for update are: description");
+        m_ExpectedException.expectMessage("Invalid key 'dimitris'. Valid keys for update are: detector,");
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_UPDATE_KEY));
 
@@ -151,5 +158,26 @@ public class JobUpdaterTest
 
         verify(m_JobManager).setResultsRetentionDays("foo", 3L);
         verify(m_JobManager, never()).writeUpdateConfigMessage(anyString(), anyString());
+    }
+
+    @Test
+    public void testUpdate_GivenValidDetectorNameUpdate() throws JobConfigurationException,
+            UnknownJobException, JobInUseException, NativeProcessRunException
+    {
+        String update = "{\"detector\": {\"index\":0,\"name\":\"the A train\"}}";
+
+        JobDetails job = new JobDetails();
+        job.setId("foo");
+        AnalysisConfig analysisConfig = new AnalysisConfig();
+        analysisConfig.setDetectors(Arrays.asList(new Detector()));
+        job.setAnalysisConfig(analysisConfig);
+
+        when(m_JobManager.updateDetectorName("foo", 0, "the A train")).thenReturn(true);
+
+        when(m_JobManager.getJob("foo")).thenReturn(Optional.of(job));
+
+        new JobUpdater(m_JobManager, "foo").update(update);
+
+        verify(m_JobManager).updateDetectorName("foo", 0, "the A train");
     }
 }

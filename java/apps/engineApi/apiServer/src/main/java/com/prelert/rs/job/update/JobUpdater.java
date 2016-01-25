@@ -65,6 +65,7 @@ public class JobUpdater
     private static final String MODEL_DEBUG_CONFIG_KEY = "modelDebugConfig";
     private static final String RENORMALIZATION_WINDOW_KEY = "renormalizationWindow";
     private static final String RESULTS_RETENTION_DAYS_KEY = "resultsRetentionDays";
+    private static final String DETECTOR_KEY = "detector";
     private static final Set<String> HIDDEN_PROPERTIES = new HashSet<>(
             Arrays.asList(MODEL_DEBUG_CONFIG_KEY));
 
@@ -84,6 +85,7 @@ public class JobUpdater
     private Map<String, Supplier<AbstractUpdater>> createUpdaterPerKeyMap()
     {
         return ImmutableMap.<String, Supplier<AbstractUpdater>>builder()
+                .put(DETECTOR_KEY, () -> new DetectorNameUpdater(m_JobManager, m_JobId))
                 .put(JOB_DESCRIPTION_KEY, () -> new JobDescriptionUpdater(m_JobManager, m_JobId))
                 .put(MODEL_DEBUG_CONFIG_KEY, () -> new ModelDebugConfigUpdater(m_JobManager, m_JobId, m_ConfigWriter))
                 .put(RENORMALIZATION_WINDOW_KEY, () -> new RenormalizationWindowUpdater(m_JobManager, m_JobId))

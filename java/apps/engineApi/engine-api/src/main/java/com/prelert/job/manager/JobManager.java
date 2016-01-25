@@ -206,7 +206,8 @@ public class JobManager implements DataProcessor, Shutdownable
      * Get the details of the specific job wrapped in a <code>Optional</code>
      *
      * @param jobId
-     * @return The JobDetails or throws UnknownJobException
+     * @return An {@code Optional} containing the {@code JobDetails} if a job with the given
+     * {@code jobId} exists, or an empty {@code Optional} otherwise
      */
     public Optional<JobDetails> getJob(String jobId)
     {
@@ -1028,6 +1029,11 @@ public class JobManager implements DataProcessor, Shutdownable
         }
     }
 
+    public boolean updateDetectorName(String jobId, int detectorIndex, String newName)
+            throws UnknownJobException
+    {
+        return m_JobProvider.updateDetectorName(jobId, detectorIndex, newName);
+    }
 
     @Override
     public void shutdown()

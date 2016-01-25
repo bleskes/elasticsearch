@@ -557,6 +557,17 @@ public class JobManagerTest
     }
 
     @Test
+    public void testUpdateDetectorName() throws UnknownJobException
+    {
+        givenProcessInfo(2);
+        JobManager jobManager = createJobManager();
+
+        jobManager.updateDetectorName("foo", 1, "bar");
+
+        verify(m_JobProvider).updateDetectorName("foo", 1, "bar");
+    }
+
+    @Test
     public void testShutdown()
     {
         givenProcessInfo(2);
