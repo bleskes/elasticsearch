@@ -35,7 +35,6 @@ import java.util.Objects;
 
 import org.apache.log4j.Logger;
 
-import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import com.prelert.job.SchedulerConfig;
@@ -49,7 +48,6 @@ import com.prelert.job.process.exceptions.MalformedJsonException;
  */
 class AggregatedJsonRecordReader extends AbstractJsonRecordReader
 {
-    private static final String AGG_BUCKETS = "buckets";
     private static final String AGG_KEY = "key";
     private static final String AGG_VALUE = "value";
 
