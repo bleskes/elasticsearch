@@ -81,11 +81,11 @@ public class DataExtractorFactoryImpl implements DataExtractorFactory
     {
         if (aggregationsMap != null)
         {
-            return "\"" + SchedulerConfig.AGGREGATIONS + "\": " + writeObjectAsJson(aggregationsMap);
+            return "\"" + SchedulerConfig.AGGREGATIONS + "\":" + writeObjectAsJson(aggregationsMap);
         }
         if (aggsMap != null)
         {
-            return "\"" + SchedulerConfig.AGGS + "\": " + writeObjectAsJson(aggsMap);
+            return "\"" + SchedulerConfig.AGGS + "\":" + writeObjectAsJson(aggsMap);
         }
         return null;
     }
