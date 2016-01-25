@@ -154,7 +154,7 @@ public class ElasticsearchJobProvider implements JobProvider
 
     /**
      * If the {@value ElasticsearchJobProvider#PRELERT_USAGE_INDEX} index does
-     * not exist create it here with the usage document mapping.
+     * not exist then create it here with the usage document mapping.
      */
     private void createUsageMeteringIndex()
     {
@@ -188,7 +188,43 @@ public class ElasticsearchJobProvider implements JobProvider
         {
             LOGGER.warn("Error creating the usage metering index", e);
         }
+    }
 
+    /**
+     * If the {@value ElasticsearchJobProvider#PRELERT_INFO_INDEX} index does
+     * not exist then create it here.
+     */
+    private void createInfoIndex()
+    {
+        try
+        {
+            LOGGER.trace("ES API CALL: index exists? " + PRELERT_INFO_INDEX);
+            boolean indexExists = m_Client.admin().indices()
+                    .exists(new IndicesExistsRequest(PRELERT_INFO_INDEX))
+                    .get().isExists();
+
+            if (indexExists == false)
+            {
+                LOGGER.info("Creating the internal '" + PRELERT_INFO_INDEX + "' index");
+
+                XContentBuilder usageMapping = ElasticsearchMappings.usageMapping();
+
+                LOGGER.trace("ES API CALL: create index " + PRELERT_INFO_INDEX);
+                m_Client.admin().indices().prepareCreate(PRELERT_INFO_INDEX)
+                                .setSettings(prelertIndexSettings())
+                                .get();
+                LOGGER.trace("ES API CALL: wait for yellow status " + PRELERT_INFO_INDEX);
+                m_Client.admin().cluster().prepareHealth(PRELERT_INFO_INDEX).setWaitForYellowStatus().execute().actionGet();
+            }
+        }
+        catch (InterruptedException | ExecutionException e)
+        {
+            LOGGER.warn("Error checking the info index", e);
+        }
+        catch (IOException e)
+        {
+            LOGGER.warn("Error creating the info index", e);
+        }
     }
 
     @Override
@@ -944,9 +980,10 @@ public class ElasticsearchJobProvider implements JobProvider
     @Override
     public boolean savePrelertInfo(String infoDoc)
     {
+        createInfoIndex();
+
         LOGGER.trace("ES API CALL: index type " + PRELERT_INFO_TYPE +
                 " in index " + PRELERT_INFO_INDEX + " with ID " + PRELERT_INFO_ID);
-
         m_Client.prepareIndex(PRELERT_INFO_INDEX, PRELERT_INFO_TYPE, PRELERT_INFO_ID)
                         .setSource(infoDoc)
                         .execute().actionGet();
