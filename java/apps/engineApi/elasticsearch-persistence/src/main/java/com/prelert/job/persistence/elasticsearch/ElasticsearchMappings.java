@@ -63,6 +63,12 @@ import com.prelert.job.usage.Usage;
  * must be set to <i>nested</i> so the arrays are searched properly
  * see https://www.elastic.co/guide/en/elasticsearch/guide/current/nested-objects.html
  *
+ * It is expected that indexes to which these mappings are applied have their
+ * default analyzer set to "keyword", which does not tokenise fields.  The
+ * index-wide default analyzer cannot be set via these mappings, so needs to be
+ * set in the index settings during index creation.  Then the _all field has its
+ * analyzer set to "whitespace" by these mappings, so that _all gets tokenised
+ * using whitespace.
  */
 public class ElasticsearchMappings
 {
@@ -74,6 +80,8 @@ public class ElasticsearchMappings
     public static final String NO = "no";
     public static final String ALL = "_all";
     public static final String ENABLED = "enabled";
+    public static final String ANALYZER = "analyzer";
+    public static final String WHITESPACE = "whitespace";
     public static final String INCLUDE_IN_ALL = "include_in_all";
     public static final String NESTED = "nested";
     public static final String COPY_TO = "copy_to";
@@ -115,6 +123,10 @@ public class ElasticsearchMappings
                 .startObject(JobDetails.TYPE)
                     .startObject(ALL)
                         .field(ENABLED, false)
+                        // analyzer must be specified even though _all is disabled
+                        // because all types in the same index must have the same
+                        // analyzer for a given field
+                        .field(ANALYZER, WHITESPACE)
                     .endObject()
                     .startObject(PROPERTIES)
                         .startObject(JobDetails.ID)
@@ -336,6 +348,10 @@ public class ElasticsearchMappings
                 .startObject(Bucket.TYPE)
                     .startObject(ALL)
                         .field(ENABLED, false)
+                        // analyzer must be specified even though _all is disabled
+                        // because all types in the same index must have the same
+                        // analyzer for a given field
+                        .field(ANALYZER, WHITESPACE)
                     .endObject()
                     .startObject(PROPERTIES)
                         .startObject(Bucket.ID)
@@ -397,6 +413,10 @@ public class ElasticsearchMappings
                         .field(ENABLED, false)
                         .startObject(ALL)
                             .field(ENABLED, false)
+                            // analyzer must be specified even though _all is disabled
+                            // because all types in the same index must have the same
+                            // analyzer for a given field
+                            .field(ANALYZER, WHITESPACE)
                         .endObject()
                     .endObject()
                 .endObject();
@@ -409,6 +429,10 @@ public class ElasticsearchMappings
                     .startObject(CategoryDefinition.TYPE)
                         .startObject(ALL)
                             .field(ENABLED, false)
+                            // analyzer must be specified even though _all is disabled
+                            // because all types in the same index must have the same
+                            // analyzer for a given field
+                            .field(ANALYZER, WHITESPACE)
                         .endObject()
                         .startObject(PROPERTIES)
                             .startObject(CategoryDefinition.CATEGORY_ID)
@@ -446,6 +470,10 @@ public class ElasticsearchMappings
                 .startObject(com.prelert.job.results.Detector.TYPE)
                     .startObject(ALL)
                         .field(ENABLED, false)
+                        // analyzer must be specified even though _all is disabled
+                        // because all types in the same index must have the same
+                        // analyzer for a given field
+                        .field(ANALYZER, WHITESPACE)
                     .endObject()
                     .startObject(PROPERTIES)
                         .startObject(com.prelert.job.results.Detector.NAME)
@@ -473,6 +501,9 @@ public class ElasticsearchMappings
                 .startObject(AnomalyRecord.TYPE)
                     .startObject(PARENT)
                         .field(TYPE, Bucket.TYPE)
+                    .endObject()
+                    .startObject(ALL)
+                        .field(ANALYZER, WHITESPACE)
                     .endObject()
                     .startObject(PROPERTIES)
                         .startObject(ElasticsearchPersister.JOB_ID_NAME)
@@ -606,6 +637,10 @@ public class ElasticsearchMappings
                 .startObject(Quantiles.TYPE)
                     .startObject(ALL)
                         .field(ENABLED, false)
+                        // analyzer must be specified even though _all is disabled
+                        // because all types in the same index must have the same
+                        // analyzer for a given field
+                        .field(ANALYZER, WHITESPACE)
                     .endObject()
                     .startObject(PROPERTIES)
                         .startObject(Quantiles.ID)
@@ -641,6 +676,10 @@ public class ElasticsearchMappings
                     .field(ENABLED, false)
                     .startObject(ALL)
                         .field(ENABLED, false)
+                        // analyzer must be specified even though _all is disabled
+                        // because all types in the same index must have the same
+                        // analyzer for a given field
+                        .field(ANALYZER, WHITESPACE)
                     .endObject()
                 .endObject()
             .endObject();
@@ -660,6 +699,10 @@ public class ElasticsearchMappings
                 .startObject(ModelSizeStats.TYPE)
                     .startObject(ALL)
                         .field(ENABLED,  false)
+                        // analyzer must be specified even though _all is disabled
+                        // because all types in the same index must have the same
+                        // analyzer for a given field
+                        .field(ANALYZER, WHITESPACE)
                     .endObject()
                     .startObject(PROPERTIES)
                         .startObject(ModelSizeStats.MODEL_BYTES)
@@ -700,6 +743,10 @@ public class ElasticsearchMappings
                 .startObject(Usage.TYPE)
                     .startObject(ALL)
                         .field(ENABLED, false)
+                        // analyzer must be specified even though _all is disabled
+                        // because all types in the same index must have the same
+                        // analyzer for a given field
+                        .field(ANALYZER, WHITESPACE)
                     .endObject()
                     .startObject(PROPERTIES)
                         .startObject(Usage.TIMESTAMP)
@@ -734,6 +781,10 @@ public class ElasticsearchMappings
                 .startObject(ElasticsearchJobDataPersister.TYPE)
                     .startObject(ALL)
                         .field(ENABLED, false)
+                        // analyzer must be specified even though _all is disabled
+                        // because all types in the same index must have the same
+                        // analyzer for a given field
+                        .field(ANALYZER, WHITESPACE)
                     .endObject()
                     .startObject(PROPERTIES)
                         .startObject("epoch")
@@ -775,6 +826,9 @@ public class ElasticsearchMappings
         return jsonBuilder()
             .startObject()
                 .startObject(Influencer.TYPE)
+                    .startObject(ALL)
+                        .field(ANALYZER, WHITESPACE)
+                    .endObject()
                     .startObject(PROPERTIES)
                         .startObject(ElasticsearchPersister.JOB_ID_NAME)
                             .field(TYPE, STRING).field(INDEX, NOT_ANALYZED).field(INCLUDE_IN_ALL, false)

@@ -50,6 +50,8 @@ import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
+import org.elasticsearch.cluster.metadata.IndexMetaData;
+import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.index.IndexNotFoundException;
 import org.elasticsearch.index.engine.VersionConflictEngineException;
@@ -101,6 +103,12 @@ public class ElasticsearchJobProvider implements JobProvider
     private static final String PRELERT_INFO_ID = "infoStats";
 
     private static final String _PARENT = "_parent";
+
+    private static final String SETTING_TRANSLOG_DURABILITY = "index.translog.durability";
+    private static final String ASYNC = "async";
+    private static final String SETTING_MAPPER_DYNAMIC = "index.mapper.dynamic";
+    private static final String SETTING_DEFAULT_ANALYZER_TYPE = "index.analysis.analyzer.default.type";
+    private static final String KEYWORD = "keyword";
 
     private static final List<String> SECONDARY_SORT = new ArrayList<>();
 
@@ -165,6 +173,7 @@ public class ElasticsearchJobProvider implements JobProvider
 
                 LOGGER.trace("ES API CALL: create index " + PRELERT_USAGE_INDEX);
                 m_Client.admin().indices().prepareCreate(PRELERT_USAGE_INDEX)
+                                .setSettings(prelertIndexSettings())
                                 .addMapping(Usage.TYPE, usageMapping)
                                 .get();
                 LOGGER.trace("ES API CALL: wait for yellow status " + PRELERT_USAGE_INDEX);
@@ -227,6 +236,32 @@ public class ElasticsearchJobProvider implements JobProvider
         return res.isExists();
     }
 
+    /**
+     * Build the Elasticsearch index settings that we want to apply to Prelert
+     * indexes.  It's better to do this in code rather than in elasticsearch.yml
+     * because then the settings can be applied regardless of whether we're
+     * using our own Elasticsearch to store results or a customer's pre-existing
+     * Elasticsearch.
+     * @return An Elasticsearch builder initialised with the desired settings
+     * for Prelert indexes.
+     */
+    private Settings.Builder prelertIndexSettings()
+    {
+        return Settings.settingsBuilder()
+                // Our indexes are small and one shard, no replicas puts the
+                // least possible burden on Elasticsearch
+                .put(IndexMetaData.SETTING_NUMBER_OF_SHARDS, 1)
+                .put(IndexMetaData.SETTING_NUMBER_OF_REPLICAS, 0)
+                // Sacrifice durability for performance: in the event of power
+                // failure we can lose the last 5 seconds of changes, but it's
+                // much faster
+                .put(SETTING_TRANSLOG_DURABILITY, ASYNC)
+                // We need to allow fields not mentioned in the mappings to
+                // pick up default mappings and be used in queries
+                .put(SETTING_MAPPER_DYNAMIC, true)
+                // By default "analyzed" fields won't be tokenised
+                .put(SETTING_DEFAULT_ANALYZER_TYPE, KEYWORD);
+    }
 
     @Override
     public Optional<JobDetails> getJobDetails(String jobId)
@@ -356,6 +391,7 @@ public class ElasticsearchJobProvider implements JobProvider
             LOGGER.trace("ES API CALL: create index " + job.getId());
             m_Client.admin().indices()
                     .prepareCreate(elasticJobId.getIndex())
+                    .setSettings(prelertIndexSettings())
                     .addMapping(JobDetails.TYPE, jobMapping)
                     .addMapping(Bucket.TYPE, bucketMapping)
                     .addMapping(CategorizerState.TYPE, categorizerStateMapping)

@@ -42,7 +42,8 @@ public class ElasticsearchMappingsTest
         expected.append("{" +
                         "  \"job\": {" +
                         "    \"_all\": {" +
-                        "      \"enabled\": false" +
+                        "      \"enabled\": false," +
+                        "      \"analyzer\":\"whitespace\"" +
                         "    }," +
                         "    \"properties\": {" +
                         "      \"id\": {" +
@@ -290,7 +291,8 @@ public class ElasticsearchMappingsTest
         expected.append("{" +
                         "  \"detector\": {" +
                         "    \"_all\": {" +
-                        "      \"enabled\": false" +
+                        "      \"enabled\": false," +
+                        "      \"analyzer\": \"whitespace\"" +
                         "    }," +
                         "    \"properties\": {" +
                         "      \"name\": {" +
