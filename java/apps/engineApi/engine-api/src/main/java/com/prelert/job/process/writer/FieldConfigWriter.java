@@ -32,12 +32,12 @@ import static com.prelert.job.process.writer.WriterConstants.EQUALS;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.util.Objects;
-import java.util.regex.Pattern;
 
 import org.apache.log4j.Logger;
 
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.Detector;
+import com.prelert.utils.PrelertStrings;
 
 public class FieldConfigWriter
 {
@@ -57,8 +57,6 @@ public class FieldConfigWriter
     // config file
 
     private static final char NEW_LINE = '\n';
-
-    private static final Pattern NEEDS_QUOTING = Pattern.compile("\\W");
 
     private final AnalysisConfig m_Config;
     private final OutputStreamWriter m_Writer;
@@ -160,26 +158,7 @@ public class FieldConfigWriter
 
     private static String quoteField(String field)
     {
-        if (!NEEDS_QUOTING.matcher(field).find())
-        {
-            return field;
-        }
-
-        StringBuilder quoted = new StringBuilder();
-        quoted.append('\"');
-
-        for (int i = 0; i < field.length(); ++i)
-        {
-            char c = field.charAt(i);
-            if (c == '\"' || c == '\\')
-            {
-                quoted.append('\\');
-            }
-            quoted.append(c);
-        }
-
-        quoted.append('\"');
-        return quoted.toString();
+        return PrelertStrings.doubleQuoteIfContainsWhitespace(field);
     }
 
     private static boolean isNotNullOrEmpty(String arg)
