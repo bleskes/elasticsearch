@@ -209,8 +209,6 @@ public class ElasticsearchJobProvider implements JobProvider
             {
                 LOGGER.info("Creating the internal '" + PRELERT_INFO_INDEX + "' index");
 
-                XContentBuilder usageMapping = ElasticsearchMappings.usageMapping();
-
                 LOGGER.trace("ES API CALL: create index " + PRELERT_INFO_INDEX);
                 m_Client.admin().indices().prepareCreate(PRELERT_INFO_INDEX)
                                 .setSettings(prelertIndexSettings())
