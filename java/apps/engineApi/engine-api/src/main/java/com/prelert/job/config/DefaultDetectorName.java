@@ -31,7 +31,7 @@ import com.google.common.base.Strings;
 import com.prelert.job.Detector;
 import com.prelert.utils.PrelertStrings;
 
-public class DefaultDetectorName
+public final class DefaultDetectorName
 {
     private static final String BY_TOKEN = " by ";
     private static final String OVER_TOKEN = " over ";
@@ -39,6 +39,11 @@ public class DefaultDetectorName
     private static final String USE_NULL_OPTION = " usenull=";
     private static final String PARTITION_FIELD_OPTION = " partitionfield=";
     private static final String EXCLUDE_FREQUENT_OPTION = " excludefrequent=";
+
+    private DefaultDetectorName()
+    {
+        // do nothing
+    }
 
     public static String of(Detector detector)
     {
