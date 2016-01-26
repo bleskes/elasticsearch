@@ -32,9 +32,7 @@ import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.apache.log4j.Logger;
 import org.elasticsearch.ElasticsearchException;
@@ -52,8 +50,6 @@ import org.elasticsearch.client.Client;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.index.query.HasParentQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.script.Script;
-import org.elasticsearch.script.ScriptService;
 import org.elasticsearch.search.SearchHit;
 
 import com.prelert.job.JobDetails;
@@ -335,13 +331,8 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
                 " in index " + m_JobId.getIndex() +
                 " by running Groovy script update-bucket-count with params count=" + count);
 
-        Map<String, Object> scriptParams = new HashMap<>();
-        scriptParams.put("count", count);
-        Script script = new Script("update-bucket-count", ScriptService.ScriptType.FILE,
-                ScriptService.DEFAULT_LANG, scriptParams);
-
         m_Client.prepareUpdate(m_JobId.getIndex(), JobDetails.TYPE, m_JobId.getId())
-                        .setScript(script)
+                        .setScript(ElasticsearchScripts.newUpdateBucketCount(count))
                         .setRetryOnConflict(3).get();
     }
 

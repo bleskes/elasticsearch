@@ -59,8 +59,6 @@ import org.elasticsearch.index.engine.VersionConflictEngineException;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.node.Node;
-import org.elasticsearch.script.Script;
-import org.elasticsearch.script.ScriptService;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.sort.FieldSortBuilder;
 import org.elasticsearch.search.sort.SortBuilder;
@@ -1061,18 +1059,12 @@ public class ElasticsearchJobProvider implements JobProvider
                 + detectorIndex + " by running Groovy script update-detector-name with params newName="
                 + newName);
 
-        Map<String, Object> scriptParams = new HashMap<>();
-        scriptParams.put("detectorIndex", detectorIndex);
-        scriptParams.put("newName", newName);
-        Script script = new Script("update-detector-name", ScriptService.ScriptType.FILE,
-                ScriptService.DEFAULT_LANG, scriptParams);
-
         ElasticsearchJobId esJobId = new ElasticsearchJobId(jobId);
 
         try
         {
             m_Client.prepareUpdate(esJobId.getIndex(), JobDetails.TYPE, esJobId.getId())
-                            .setScript(script)
+                            .setScript(ElasticsearchScripts.newUpdateDetectorName(detectorIndex, newName))
                             .setRetryOnConflict(3).get();
         }
         catch (IndexNotFoundException e)
