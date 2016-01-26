@@ -35,12 +35,12 @@ import java.util.regex.Pattern;
  */
 public final class PrelertStrings
 {
+    private static final Pattern NEEDS_QUOTING = Pattern.compile("\\W");
+
     private PrelertStrings()
     {
         // do nothing
     }
-
-    private static final Pattern NEEDS_QUOTING = Pattern.compile("\\W");
 
     /**
      * Surrounds with double quotes the given {@code input} if it contains
