@@ -221,10 +221,6 @@ public class ElasticsearchJobProvider implements JobProvider
         {
             LOGGER.warn("Error checking the info index", e);
         }
-        catch (IOException e)
-        {
-            LOGGER.warn("Error creating the info index", e);
-        }
     }
 
     @Override
