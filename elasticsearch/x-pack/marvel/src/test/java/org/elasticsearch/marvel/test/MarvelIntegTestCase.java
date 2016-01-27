@@ -18,6 +18,8 @@
 package org.elasticsearch.marvel.test;
 
 import org.elasticsearch.ElasticsearchException;
+import org.elasticsearch.client.Client;
+import org.elasticsearch.client.node.NodeClient;
 import org.elasticsearch.cluster.metadata.IndexTemplateMetaData;
 import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.io.Streams;
@@ -56,7 +58,9 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
+import static org.elasticsearch.shield.authc.support.UsernamePasswordToken.basicAuthHeaderValue;
 import static org.elasticsearch.test.hamcrest.ElasticsearchAssertions.assertAcked;
 import static org.elasticsearch.test.hamcrest.ElasticsearchAssertions.assertNoFailures;
 import static org.hamcrest.Matchers.allOf;
@@ -126,6 +130,16 @@ public abstract class MarvelIntegTestCase extends ESIntegTestCase {
     @Override
     protected Collection<Class<? extends Plugin>> transportClientPlugins() {
         return nodePlugins();
+    }
+
+    @Override
+    protected Function<Client,Client> getClientWrapper() {
+        if (shieldEnabled == false) {
+            return Function.identity();
+        }
+        Map<String, String> headers = Collections.singletonMap("Authorization",
+                basicAuthHeaderValue(ShieldSettings.TEST_USERNAME, new SecuredString(ShieldSettings.TEST_PASSWORD.toCharArray())));
+        return client -> (client instanceof NodeClient) ? client.filterWithHeader(headers) : client;
     }
 
     /**
@@ -398,7 +412,6 @@ public abstract class MarvelIntegTestCase extends ESIntegTestCase {
                 builder.remove("index.queries.cache.type");
 
                 builder.put("shield.enabled", true)
-                        .put("shield.user", "test:changeme")
                         .put("shield.authc.realms.esusers.type", ESUsersRealm.TYPE)
                         .put("shield.authc.realms.esusers.order", 0)
                         .put("shield.authc.realms.esusers.files.users", writeFile(folder, "users", USERS))

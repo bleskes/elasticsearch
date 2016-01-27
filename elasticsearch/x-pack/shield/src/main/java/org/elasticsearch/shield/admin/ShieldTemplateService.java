@@ -35,6 +35,7 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.util.concurrent.AbstractRunnable;
 import org.elasticsearch.gateway.GatewayService;
 import org.elasticsearch.shield.authc.AuthenticationService;
+import org.elasticsearch.shield.support.ClientWithUser;
 import org.elasticsearch.threadpool.ThreadPool;
 
 import java.io.ByteArrayOutputStream;
@@ -70,8 +71,7 @@ public class ShieldTemplateService extends AbstractComponent implements ClusterS
     }
 
     private void createShieldTemplate() {
-        Client client = this.clientProvider.get();
-        AuthenticationService authService = this.authProvider.get();
+        final Client client = getClient();
         try (InputStream is = getClass().getResourceAsStream("/" + SHIELD_TEMPLATE_NAME + ".json")) {
             ByteArrayOutputStream out = new ByteArrayOutputStream();
             Streams.copy(is, out);
@@ -79,7 +79,6 @@ public class ShieldTemplateService extends AbstractComponent implements ClusterS
             logger.info("--> putting the shield index template");
             PutIndexTemplateRequest putTemplateRequest = client.admin().indices()
                     .preparePutTemplate(SHIELD_TEMPLATE_NAME).setSource(template).request();
-            authService.attachUserHeaderIfMissing(putTemplateRequest, adminUser.user());
             PutIndexTemplateResponse templateResponse = client.admin().indices().putTemplate(putTemplateRequest).get();
             if (templateResponse.isAcknowledged() == false) {
                 throw new ElasticsearchException("adding template for shield admin index was not acknowledged");
@@ -91,6 +90,10 @@ public class ShieldTemplateService extends AbstractComponent implements ClusterS
                     SHIELD_ADMIN_INDEX_NAME + "]", e);
         }
 
+    }
+
+    Client getClient() {
+        return new ClientWithUser(clientProvider.get(), authProvider.get(), adminUser.user());
     }
 
     @Override

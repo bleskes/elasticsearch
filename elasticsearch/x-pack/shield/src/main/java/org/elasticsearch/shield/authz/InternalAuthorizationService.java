@@ -31,6 +31,7 @@ import org.elasticsearch.cluster.metadata.MetaData;
 import org.elasticsearch.common.component.AbstractComponent;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.util.concurrent.ThreadContext;
 import org.elasticsearch.common.util.set.Sets;
 import org.elasticsearch.search.action.SearchServiceTransportAction;
 import org.elasticsearch.shield.User;
@@ -47,6 +48,7 @@ import org.elasticsearch.shield.authz.permission.RunAsPermission;
 import org.elasticsearch.shield.authz.privilege.ClusterPrivilege;
 import org.elasticsearch.shield.authz.privilege.IndexPrivilege;
 import org.elasticsearch.shield.authz.store.RolesStore;
+import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportRequest;
 
 import java.util.ArrayList;
@@ -71,10 +73,12 @@ public class InternalAuthorizationService extends AbstractComponent implements A
     private final IndicesAndAliasesResolver[] indicesAndAliasesResolvers;
     private final AnonymousService anonymousService;
     private final AuthenticationFailureHandler authcFailureHandler;
+    private final ThreadContext threadContext;
 
     @Inject
     public InternalAuthorizationService(Settings settings, RolesStore rolesStore, ClusterService clusterService,
-                                        AuditTrail auditTrail, AnonymousService anonymousService, AuthenticationFailureHandler authcFailureHandler) {
+                                        AuditTrail auditTrail, AnonymousService anonymousService,
+                                        AuthenticationFailureHandler authcFailureHandler, ThreadPool threadPool) {
         super(settings);
         this.rolesStore = rolesStore;
         this.clusterService = clusterService;
@@ -84,6 +88,7 @@ public class InternalAuthorizationService extends AbstractComponent implements A
         };
         this.anonymousService = anonymousService;
         this.authcFailureHandler = authcFailureHandler;
+        this.threadContext = threadPool.getThreadContext();
     }
 
     @Override
@@ -118,7 +123,7 @@ public class InternalAuthorizationService extends AbstractComponent implements A
         // first we need to check if the user is the system. If it is, we'll just authorize the system access
         if (user.isSystem()) {
             if (SystemRole.INSTANCE.check(action)) {
-                request.putInContext(INDICES_PERMISSIONS_KEY, IndicesAccessControl.ALLOW_ALL);
+                setIndicesAccessControl(IndicesAccessControl.ALLOW_ALL);
                 grant(user, action, request);
                 return;
             }
@@ -161,7 +166,7 @@ public class InternalAuthorizationService extends AbstractComponent implements A
         if (ClusterPrivilege.ACTION_MATCHER.test(action)) {
             ClusterPermission cluster = permission.cluster();
             if (cluster != null && cluster.check(action)) {
-                request.putInContext(INDICES_PERMISSIONS_KEY, IndicesAccessControl.ALLOW_ALL);
+                setIndicesAccessControl(IndicesAccessControl.ALLOW_ALL);
                 grant(user, action, request);
                 return;
             }
@@ -203,7 +208,7 @@ public class InternalAuthorizationService extends AbstractComponent implements A
         if (!indicesAccessControl.isGranted()) {
             throw denial(user, action, request);
         } else {
-            request.putInContext(INDICES_PERMISSIONS_KEY, indicesAccessControl);
+            setIndicesAccessControl(indicesAccessControl);
         }
 
         //if we are creating an index we need to authorize potential aliases created at the same time
@@ -225,6 +230,12 @@ public class InternalAuthorizationService extends AbstractComponent implements A
         }
 
         grant(user, action, request);
+    }
+
+    private void setIndicesAccessControl(IndicesAccessControl accessControl) {
+        if (threadContext.getTransient(INDICES_PERMISSIONS_KEY) == null) {
+            threadContext.putTransient(INDICES_PERMISSIONS_KEY, accessControl);
+        }
     }
 
     private GlobalPermission permission(String[] roleNames) {
