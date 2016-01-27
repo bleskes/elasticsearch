@@ -361,7 +361,7 @@ public class ShieldPlugin extends Plugin {
     }
 
     public static boolean clientMode(Settings settings) {
-        return !"node".equals(settings.get(Client.CLIENT_TYPE_SETTING));
+        return !"node".equals(settings.get(Client.CLIENT_TYPE_SETTING_S.getKey()));
     }
 
     public static boolean shieldEnabled(Settings settings) {
