@@ -62,6 +62,7 @@ public class AnomalyRecord
     public static final String ACTUAL = "actual";
     public static final String IS_INTERIM = "isInterim";
     public static final String INFLUENCERS = "influencers";
+    public static final String RESULT_BUCKET_TIME = "resultBucketTime";
 
 
     /**

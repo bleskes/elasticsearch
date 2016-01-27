@@ -180,6 +180,7 @@ public class ProcessCtrl
     public static final String INFO_ARG = "--info";
     public static final String LIMIT_CONFIG_ARG = "--limitconfig=";
     public static final String LATENCY_ARG = "--latency=";
+    public static final String RESULT_FINALIZATION_WINDOW_ARG = "--resultFinalizationWindow=";
     public static final String MAX_ANOMALY_RECORDS_ARG;
     public static final String MODEL_DEBUG_CONFIG_ARG = "--modeldebugconfig=";
     public static final String PERIOD_ARG = "--period=";
@@ -625,6 +626,11 @@ public class ProcessCtrl
             {
                 String summaryCountField = SUMMARY_COUNT_FIELD_ARG + job.getAnalysisConfig().getSummaryCountFieldName();
                 command.add(summaryCountField);
+            }
+            if (job.getAnalysisConfig().getResultFinalizationWindow() != null)
+            {
+                String resultFinalizationWindow = RESULT_FINALIZATION_WINDOW_ARG + job.getAnalysisConfig().getResultFinalizationWindow();
+                command.add(resultFinalizationWindow);
             }
         }
 
