@@ -54,7 +54,7 @@ import com.prelert.job.errorcodes.ErrorCodeMatcher;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.manager.JobManager;
 
-public class DetectorNameUpdaterTest
+public class DetectorDescriptionUpdaterTest
 {
     private static final String JOB_ID = "foo";
 
@@ -82,7 +82,7 @@ public class DetectorNameUpdaterTest
         JsonNode node = new ObjectMapper().readTree("{\"index\":1}");
         when(m_JobManager.getJob("unknown")).thenReturn(Optional.empty());
 
-        new DetectorNameUpdater(m_JobManager, "unknown").update(node);
+        new DetectorDescriptionUpdater(m_JobManager, "unknown").update(node);
     }
 
     @Test
@@ -90,27 +90,27 @@ public class DetectorNameUpdaterTest
             JobConfigurationException, IOException
     {
         m_ExpectedException.expect(JobConfigurationException.class);
-        m_ExpectedException.expectMessage("Invalid parameters: expected [index, name]");
+        m_ExpectedException.expectMessage("Invalid parameters: expected [index, description]");
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_VALUE));
 
         JsonNode node = TextNode.valueOf("foo");
 
-        new DetectorNameUpdater(m_JobManager, JOB_ID).update(node);
+        new DetectorDescriptionUpdater(m_JobManager, JOB_ID).update(node);
     }
 
     @Test
-    public void testUpdate_GivenMissingNameParam() throws UnknownJobException,
+    public void testUpdate_GivenMissingDescriptionParam() throws UnknownJobException,
             JobConfigurationException, IOException
     {
         m_ExpectedException.expect(JobConfigurationException.class);
-        m_ExpectedException.expectMessage("Invalid parameters: expected [index, name]");
+        m_ExpectedException.expectMessage("Invalid parameters: expected [index, description]");
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_VALUE));
 
         JsonNode node = new ObjectMapper().readTree("{\"index\":1}");
 
-        new DetectorNameUpdater(m_JobManager, JOB_ID).update(node);
+        new DetectorDescriptionUpdater(m_JobManager, JOB_ID).update(node);
     }
 
     @Test
@@ -118,13 +118,13 @@ public class DetectorNameUpdaterTest
             JobConfigurationException, IOException
     {
         m_ExpectedException.expect(JobConfigurationException.class);
-        m_ExpectedException.expectMessage("Invalid parameters: expected [index, name]");
+        m_ExpectedException.expectMessage("Invalid parameters: expected [index, description]");
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_VALUE));
 
         JsonNode node = new ObjectMapper().readTree("{\"name\":\"bar\"}");
 
-        new DetectorNameUpdater(m_JobManager, JOB_ID).update(node);
+        new DetectorDescriptionUpdater(m_JobManager, JOB_ID).update(node);
     }
 
     @Test
@@ -132,13 +132,13 @@ public class DetectorNameUpdaterTest
             JobConfigurationException, IOException
     {
         m_ExpectedException.expect(JobConfigurationException.class);
-        m_ExpectedException.expectMessage("Invalid parameters: expected [index, name]");
+        m_ExpectedException.expectMessage("Invalid parameters: expected [index, description]");
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_VALUE));
 
         JsonNode node = new ObjectMapper().readTree("{}");
 
-        new DetectorNameUpdater(m_JobManager, JOB_ID).update(node);
+        new DetectorDescriptionUpdater(m_JobManager, JOB_ID).update(node);
     }
 
     @Test
@@ -150,23 +150,23 @@ public class DetectorNameUpdaterTest
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_VALUE));
 
-        JsonNode node = new ObjectMapper().readTree("{\"index\":\"a string\", \"name\":\"bar\"}");
+        JsonNode node = new ObjectMapper().readTree("{\"index\":\"a string\", \"description\":\"bar\"}");
 
-        new DetectorNameUpdater(m_JobManager, JOB_ID).update(node);
+        new DetectorDescriptionUpdater(m_JobManager, JOB_ID).update(node);
     }
 
     @Test
-    public void testUpdate_GivenNameIsNotString() throws UnknownJobException,
+    public void testUpdate_GivenDescriptionIsNotString() throws UnknownJobException,
             JobConfigurationException, IOException
     {
         m_ExpectedException.expect(JobConfigurationException.class);
-        m_ExpectedException.expectMessage("Invalid name: string expected; actual was: 1");
+        m_ExpectedException.expectMessage("Invalid description: string expected; actual was: 1");
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_VALUE));
 
-        JsonNode node = new ObjectMapper().readTree("{\"index\":0, \"name\":1}");
+        JsonNode node = new ObjectMapper().readTree("{\"index\":0, \"description\":1}");
 
-        new DetectorNameUpdater(m_JobManager, JOB_ID).update(node);
+        new DetectorDescriptionUpdater(m_JobManager, JOB_ID).update(node);
     }
 
     @Test
@@ -179,9 +179,9 @@ public class DetectorNameUpdaterTest
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_VALUE));
         givenJobHasNDetectors(2);
 
-        JsonNode node = new ObjectMapper().readTree("{\"index\":-1, \"name\":\"bar\"}");
+        JsonNode node = new ObjectMapper().readTree("{\"index\":-1, \"description\":\"bar\"}");
 
-        new DetectorNameUpdater(m_JobManager, JOB_ID).update(node);
+        new DetectorDescriptionUpdater(m_JobManager, JOB_ID).update(node);
     }
 
     @Test
@@ -194,9 +194,9 @@ public class DetectorNameUpdaterTest
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_VALUE));
         givenJobHasNDetectors(3);
 
-        JsonNode node = new ObjectMapper().readTree("{\"index\":3, \"name\":\"bar\"}");
+        JsonNode node = new ObjectMapper().readTree("{\"index\":3, \"description\":\"bar\"}");
 
-        new DetectorNameUpdater(m_JobManager, JOB_ID).update(node);
+        new DetectorDescriptionUpdater(m_JobManager, JOB_ID).update(node);
     }
 
     @Test
@@ -209,9 +209,9 @@ public class DetectorNameUpdaterTest
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_VALUE));
         givenJobHasNDetectors(3);
 
-        JsonNode node = new ObjectMapper().readTree("{\"index\":4, \"name\":\"bar\"}");
+        JsonNode node = new ObjectMapper().readTree("{\"index\":4, \"description\":\"bar\"}");
 
-        new DetectorNameUpdater(m_JobManager, JOB_ID).update(node);
+        new DetectorDescriptionUpdater(m_JobManager, JOB_ID).update(node);
     }
 
     @Test
@@ -225,22 +225,22 @@ public class DetectorNameUpdaterTest
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.UNKNOWN_ERROR));
         givenJobHasNDetectors(3);
 
-        JsonNode node = new ObjectMapper().readTree("{\"index\":0, \"name\":\"bar\"}");
+        JsonNode node = new ObjectMapper().readTree("{\"index\":0, \"description\":\"bar\"}");
 
-        new DetectorNameUpdater(m_JobManager, JOB_ID).update(node);
+        new DetectorDescriptionUpdater(m_JobManager, JOB_ID).update(node);
     }
 
     @Test
     public void testUpdate_GivenValidParams() throws UnknownJobException,
             JobConfigurationException, IOException
     {
-        JsonNode node = new ObjectMapper().readTree("{\"index\":1, \"name\":\"Ipanema\"}");
+        JsonNode node = new ObjectMapper().readTree("{\"index\":1, \"description\":\"Ipanema\"}");
         givenJobHasNDetectors(3);
         givenUpdateSucceeds(1, "Ipanema");
 
-        new DetectorNameUpdater(m_JobManager, JOB_ID).update(node);
+        new DetectorDescriptionUpdater(m_JobManager, JOB_ID).update(node);
 
-        verify(m_JobManager).updateDetectorName(JOB_ID, 1, "Ipanema");
+        verify(m_JobManager).updateDetectorDescription(JOB_ID, 1, "Ipanema");
     }
 
     private void givenJobHasNDetectors(int n)
@@ -257,6 +257,6 @@ public class DetectorNameUpdaterTest
 
     private void givenUpdateSucceeds(int detectorIndex, String newName) throws UnknownJobException
     {
-        when(m_JobManager.updateDetectorName(JOB_ID, detectorIndex, newName)).thenReturn(true);
+        when(m_JobManager.updateDetectorDescription(JOB_ID, detectorIndex, newName)).thenReturn(true);
     }
 }

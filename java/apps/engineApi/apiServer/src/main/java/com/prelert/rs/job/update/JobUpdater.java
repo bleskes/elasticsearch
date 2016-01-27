@@ -85,7 +85,7 @@ public class JobUpdater
     private Map<String, Supplier<AbstractUpdater>> createUpdaterPerKeyMap()
     {
         return ImmutableMap.<String, Supplier<AbstractUpdater>>builder()
-                .put(DETECTOR_KEY, () -> new DetectorNameUpdater(m_JobManager, m_JobId))
+                .put(DETECTOR_KEY, () -> new DetectorDescriptionUpdater(m_JobManager, m_JobId))
                 .put(JOB_DESCRIPTION_KEY, () -> new JobDescriptionUpdater(m_JobManager, m_JobId))
                 .put(MODEL_DEBUG_CONFIG_KEY, () -> new ModelDebugConfigUpdater(m_JobManager, m_JobId, m_ConfigWriter))
                 .put(RENORMALIZATION_WINDOW_KEY, () -> new RenormalizationWindowUpdater(m_JobManager, m_JobId))

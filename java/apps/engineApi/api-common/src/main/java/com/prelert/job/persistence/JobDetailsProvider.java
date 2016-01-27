@@ -140,14 +140,14 @@ public interface JobDetailsProvider extends Closeable
             throws UnknownJobException;
 
     /**
-     * Sets the name of detector at {@code detectorIndex} of job
-     * with id {@code jobId} to {@code newName}
+     * Sets the description of detector at {@code detectorIndex} of job
+     * with id {@code jobId} to {@code newDescription}
      *
      * @param detectorIndex the zero-based index of the detector in detectors list
-     * @param newName the new name
+     * @param newDescription the new description
      * @return {@code true} if update was successful
      * @throws UnknownJobException If there is no job with id <code>jobId</code>
      */
-    boolean updateDetectorName(String jobId, int detectorIndex, String newName)
+    boolean updateDetectorDescription(String jobId, int detectorIndex, String newDescription)
             throws UnknownJobException;
 }

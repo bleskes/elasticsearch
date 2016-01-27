@@ -415,17 +415,17 @@ public class JobManagerTest
 
         AnalysisConfig analysisConfig = new AnalysisConfig();
         analysisConfig.setBucketSpan(3600L);
-        Detector detectorNullName = new Detector();
-        detectorNullName.setFunction("sum");
-        detectorNullName.setFieldName("revenue");
-        detectorNullName.setByFieldName("vendor");
-        Detector detectorWithName = new Detector();
-        detectorWithName.setName("Named");
-        detectorWithName.setFunction("sum");
-        detectorWithName.setFieldName("revenue");
-        detectorWithName.setByFieldName("vendor");
+        Detector detectorNullDescription = new Detector();
+        detectorNullDescription.setFunction("sum");
+        detectorNullDescription.setFieldName("revenue");
+        detectorNullDescription.setByFieldName("vendor");
+        Detector detectorWithDescription = new Detector();
+        detectorWithDescription.setDetectorDescription("Named");
+        detectorWithDescription.setFunction("sum");
+        detectorWithDescription.setFieldName("revenue");
+        detectorWithDescription.setByFieldName("vendor");
 
-        analysisConfig.setDetectors(Arrays.asList(detectorNullName, detectorWithName));
+        analysisConfig.setDetectors(Arrays.asList(detectorNullDescription, detectorWithDescription));
 
         JobConfiguration jobConfig = new JobConfiguration();
         jobConfig.setId("revenue-by-vendor");
@@ -435,8 +435,8 @@ public class JobManagerTest
 
         JobDetails job = jobManager.createJob(jobConfig);
 
-        assertEquals("sum(revenue) by vendor", job.getAnalysisConfig().getDetectors().get(0).getName());
-        assertEquals("Named", job.getAnalysisConfig().getDetectors().get(1).getName());
+        assertEquals("sum(revenue) by vendor", job.getAnalysisConfig().getDetectors().get(0).getDetectorDescription());
+        assertEquals("Named", job.getAnalysisConfig().getDetectors().get(1).getDetectorDescription());
     }
 
     @Test
@@ -593,14 +593,14 @@ public class JobManagerTest
     }
 
     @Test
-    public void testUpdateDetectorName() throws UnknownJobException
+    public void testUpdateDetectorDescription() throws UnknownJobException
     {
         givenProcessInfo(2);
         JobManager jobManager = createJobManager();
 
-        jobManager.updateDetectorName("foo", 1, "bar");
+        jobManager.updateDetectorDescription("foo", 1, "bar");
 
-        verify(m_JobProvider).updateDetectorName("foo", 1, "bar");
+        verify(m_JobProvider).updateDetectorDescription("foo", 1, "bar");
     }
 
     @Test

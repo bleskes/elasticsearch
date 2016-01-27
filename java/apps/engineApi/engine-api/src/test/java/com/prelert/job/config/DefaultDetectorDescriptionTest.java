@@ -33,14 +33,14 @@ import org.junit.Test;
 
 import com.prelert.job.Detector;
 
-public class DefaultDetectorNameTest
+public class DefaultDetectorDescriptionTest
 {
     @Test
     public void testOf_GivenEmptyDetector()
     {
         Detector detector = new Detector();
 
-        assertEquals("", DefaultDetectorName.of(detector));
+        assertEquals("", DefaultDetectorDescription.of(detector));
     }
 
     @Test
@@ -49,7 +49,7 @@ public class DefaultDetectorNameTest
         Detector detector = new Detector();
         detector.setFieldName("value");
 
-        assertEquals("value", DefaultDetectorName.of(detector));
+        assertEquals("value", DefaultDetectorDescription.of(detector));
     }
 
     @Test
@@ -59,7 +59,7 @@ public class DefaultDetectorNameTest
         detector.setFunction("min");
         detector.setFieldName("value");
 
-        assertEquals("min(value)", DefaultDetectorName.of(detector));
+        assertEquals("min(value)", DefaultDetectorDescription.of(detector));
     }
 
     @Test
@@ -69,7 +69,7 @@ public class DefaultDetectorNameTest
         detector.setFunction("min");
         detector.setFieldName("val-ue");
 
-        assertEquals("min(\"val-ue\")", DefaultDetectorName.of(detector));
+        assertEquals("min(\"val-ue\")", DefaultDetectorDescription.of(detector));
     }
 
     @Test
@@ -85,6 +85,6 @@ public class DefaultDetectorNameTest
         detector.setExcludeFrequent("true");
 
         assertEquals("sum(value) by airline over region usenull=true partitionfield=planet excludefrequent=true",
-                DefaultDetectorName.of(detector));
+                DefaultDetectorDescription.of(detector));
     }
 }

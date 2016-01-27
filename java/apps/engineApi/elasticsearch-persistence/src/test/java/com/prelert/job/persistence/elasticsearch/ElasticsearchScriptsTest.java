@@ -55,12 +55,12 @@ public class ElasticsearchScriptsTest
     }
 
     @Test
-    public void testNewUpdateDetectorName()
+    public void testNewUpdateDetectorDescription()
     {
-        Script script = ElasticsearchScripts.newUpdateDetectorName(2, "Almost Blue");
-        assertEquals("update-detector-name", script.getScript());
+        Script script = ElasticsearchScripts.newUpdateDetectorDescription(2, "Almost Blue");
+        assertEquals("update-detector-description", script.getScript());
         assertEquals(2, script.getParams().size());
         assertEquals(2, script.getParams().get("detectorIndex"));
-        assertEquals("Almost Blue", script.getParams().get("newName"));
+        assertEquals("Almost Blue", script.getParams().get("newDescription"));
     }
 }

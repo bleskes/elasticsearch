@@ -64,7 +64,7 @@ import com.prelert.job.JobSchedulerStatus;
 import com.prelert.job.ModelDebugConfig;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.alert.AlertObserver;
-import com.prelert.job.config.DefaultDetectorName;
+import com.prelert.job.config.DefaultDetectorDescription;
 import com.prelert.job.config.DefaultFrequency;
 import com.prelert.job.config.verification.JobConfigurationException;
 import com.prelert.job.data.extraction.DataExtractorFactory;
@@ -313,9 +313,9 @@ public class JobManager implements DataProcessor, Shutdownable
     {
         for (Detector detector : jobDetails.getAnalysisConfig().getDetectors())
         {
-            if (detector.getName() == null)
+            if (detector.getDetectorDescription() == null)
             {
-                detector.setName(DefaultDetectorName.of(detector));
+                detector.setDetectorDescription(DefaultDetectorDescription.of(detector));
             }
         }
     }
@@ -1044,10 +1044,10 @@ public class JobManager implements DataProcessor, Shutdownable
         }
     }
 
-    public boolean updateDetectorName(String jobId, int detectorIndex, String newName)
+    public boolean updateDetectorDescription(String jobId, int detectorIndex, String newDescription)
             throws UnknownJobException
     {
-        return m_JobProvider.updateDetectorName(jobId, detectorIndex, newName);
+        return m_JobProvider.updateDetectorDescription(jobId, detectorIndex, newDescription);
     }
 
     @Override

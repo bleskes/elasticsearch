@@ -1052,19 +1052,20 @@ public class ElasticsearchJobProvider implements JobProvider
     }
 
     @Override
-    public boolean updateDetectorName(String jobId, int detectorIndex, String newName)
+    public boolean updateDetectorDescription(String jobId, int detectorIndex, String newDescription)
             throws UnknownJobException
     {
-        LOGGER.trace("ES API CALL: update detector name for job " + jobId + ", detector at index "
-                + detectorIndex + " by running Groovy script update-detector-name with params newName="
-                + newName);
+        LOGGER.trace("ES API CALL: update detector description for job " + jobId + ", detector at index "
+                + detectorIndex + " by running Groovy script update-detector-description with params newDescription="
+                + newDescription);
 
         ElasticsearchJobId esJobId = new ElasticsearchJobId(jobId);
 
         try
         {
             m_Client.prepareUpdate(esJobId.getIndex(), JobDetails.TYPE, esJobId.getId())
-                            .setScript(ElasticsearchScripts.newUpdateDetectorName(detectorIndex, newName))
+                            .setScript(ElasticsearchScripts.newUpdateDetectorDescription(
+                                    detectorIndex, newDescription))
                             .setRetryOnConflict(3).get();
         }
         catch (IndexNotFoundException e)

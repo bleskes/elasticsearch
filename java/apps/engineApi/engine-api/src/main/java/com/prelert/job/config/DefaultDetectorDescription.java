@@ -31,7 +31,7 @@ import com.google.common.base.Strings;
 import com.prelert.job.Detector;
 import com.prelert.utils.PrelertStrings;
 
-public final class DefaultDetectorName
+public final class DefaultDetectorDescription
 {
     private static final String BY_TOKEN = " by ";
     private static final String OVER_TOKEN = " over ";
@@ -40,11 +40,16 @@ public final class DefaultDetectorName
     private static final String PARTITION_FIELD_OPTION = " partitionfield=";
     private static final String EXCLUDE_FREQUENT_OPTION = " excludefrequent=";
 
-    private DefaultDetectorName()
+    private DefaultDetectorDescription()
     {
         // do nothing
     }
 
+    /**
+     * Returns the default description for the given {@code detector}
+     * @param detector the {@code Detector} for which a default description is requested
+     * @return the default description
+     */
     public static String of(Detector detector)
     {
         StringBuilder sb = new StringBuilder();
@@ -52,6 +57,12 @@ public final class DefaultDetectorName
         return sb.toString();
     }
 
+    /**
+     * Appends to the given {@code StringBuilder} the default description
+     * for the given {@code detector}
+     * @param detector the {@code Detector} for which a default description is requested
+     * @param sb the {@code StringBuilder} to append to
+     */
     public static void appendOn(Detector detector, StringBuilder sb)
     {
         if (isNotNullOrEmpty(detector.getFunction()))

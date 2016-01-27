@@ -161,10 +161,10 @@ public class JobUpdaterTest
     }
 
     @Test
-    public void testUpdate_GivenValidDetectorNameUpdate() throws JobConfigurationException,
+    public void testUpdate_GivenValidDetectorDescriptionUpdate() throws JobConfigurationException,
             UnknownJobException, JobInUseException, NativeProcessRunException
     {
-        String update = "{\"detector\": {\"index\":0,\"name\":\"the A train\"}}";
+        String update = "{\"detector\": {\"index\":0,\"description\":\"the A train\"}}";
 
         JobDetails job = new JobDetails();
         job.setId("foo");
@@ -172,12 +172,12 @@ public class JobUpdaterTest
         analysisConfig.setDetectors(Arrays.asList(new Detector()));
         job.setAnalysisConfig(analysisConfig);
 
-        when(m_JobManager.updateDetectorName("foo", 0, "the A train")).thenReturn(true);
+        when(m_JobManager.updateDetectorDescription("foo", 0, "the A train")).thenReturn(true);
 
         when(m_JobManager.getJob("foo")).thenReturn(Optional.of(job));
 
         new JobUpdater(m_JobManager, "foo").update(update);
 
-        verify(m_JobManager).updateDetectorName("foo", 0, "the A train");
+        verify(m_JobManager).updateDetectorDescription("foo", 0, "the A train");
     }
 }

@@ -176,7 +176,7 @@ public class ElasticsearchMappingsTest
                         "          }," +
                         "          \"detectors\": {" +
                         "            \"properties\": {" +
-                        "              \"name\": {" +
+                        "              \"detectorDescription\": {" +
                         "                \"type\": \"string\"," +
                         "                \"index\": \"not_analyzed\"" +
                         "              }," +

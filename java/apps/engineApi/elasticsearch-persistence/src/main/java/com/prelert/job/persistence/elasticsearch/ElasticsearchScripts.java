@@ -41,7 +41,7 @@ public final class ElasticsearchScripts
     // Script names
     private static final String UPDATE_BUCKET_COUNT = "update-bucket-count";
     private static final String UPDATE_USAGE = "update-usage";
-    private static final String UPDATE_DETECTOR_NAME = "update-detector-name";
+    private static final String UPDATE_DETECTOR_DESCRIPTION = "update-detector-description";
 
     // Script parameters
     private static final String COUNT_PARAM = "count";
@@ -49,7 +49,7 @@ public final class ElasticsearchScripts
     private static final String FIELD_COUNT_PARAM = "fieldCount";
     private static final String RECORD_COUNT_PARAM = "recordCount";
     private static final String DETECTOR_INDEX_PARAM = "detectorIndex";
-    private static final String NEW_NAME_PARAM = "newName";
+    private static final String NEW_DESCRIPTION_PARAM = "newDescription";
 
     private ElasticsearchScripts()
     {
@@ -75,12 +75,12 @@ public final class ElasticsearchScripts
                 ScriptService.DEFAULT_LANG, scriptParams);
     }
 
-    public static Script newUpdateDetectorName(int detectorIndex, String newName)
+    public static Script newUpdateDetectorDescription(int detectorIndex, String newDescription)
     {
         Map<String, Object> scriptParams = new HashMap<>();
         scriptParams.put(DETECTOR_INDEX_PARAM, detectorIndex);
-        scriptParams.put(NEW_NAME_PARAM, newName);
-        return new Script(UPDATE_DETECTOR_NAME, ScriptService.ScriptType.FILE,
+        scriptParams.put(NEW_DESCRIPTION_PARAM, newDescription);
+        return new Script(UPDATE_DETECTOR_DESCRIPTION, ScriptService.ScriptType.FILE,
                 ScriptService.DEFAULT_LANG, scriptParams);
     }
 }

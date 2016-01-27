@@ -247,7 +247,7 @@ public class ElasticsearchMappings
                                 .endObject()
                                 .startObject(AnalysisConfig.DETECTORS)
                                     .startObject(PROPERTIES)
-                                        .startObject(Detector.NAME)
+                                        .startObject(Detector.DETECTOR_DESCRIPTION)
                                             .field(TYPE, STRING).field(INDEX, NOT_ANALYZED)
                                         .endObject()
                                         .startObject(Detector.FUNCTION)

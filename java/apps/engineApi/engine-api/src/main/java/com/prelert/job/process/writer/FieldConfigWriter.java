@@ -38,7 +38,7 @@ import org.apache.log4j.Logger;
 import com.google.common.base.Strings;
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.Detector;
-import com.prelert.job.config.DefaultDetectorName;
+import com.prelert.job.config.DefaultDetectorDescription;
 import com.prelert.utils.PrelertStrings;
 
 public class FieldConfigWriter
@@ -80,7 +80,7 @@ public class FieldConfigWriter
             contents.append(DETECTOR_PREFIX).append(counter++)
                     .append(DETECTOR_CLAUSE_SUFFIX).append(EQUALS);
 
-            DefaultDetectorName.appendOn(detector, contents);
+            DefaultDetectorDescription.appendOn(detector, contents);
 
             if (Strings.isNullOrEmpty(m_Config.getCategorizationFieldName()) == false)
             {

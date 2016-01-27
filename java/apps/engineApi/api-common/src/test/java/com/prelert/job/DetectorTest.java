@@ -39,7 +39,7 @@ public class DetectorTest
     public void testEquals_GivenEqual()
     {
         Detector detector1 = new Detector();
-        detector1.setName("foo");
+        detector1.setDetectorDescription("foo");
         detector1.setFunction("mean");
         detector1.setFieldName("field");
         detector1.setByFieldName("by");
@@ -48,7 +48,7 @@ public class DetectorTest
         detector1.setUseNull(false);
 
         Detector detector2 = new Detector();
-        detector2.setName("foo");
+        detector2.setDetectorDescription("foo");
         detector2.setFunction("mean");
         detector2.setFieldName("field");
         detector2.setByFieldName("by");
@@ -62,11 +62,11 @@ public class DetectorTest
     }
 
     @Test
-    public void testEquals_GivenDifferentName()
+    public void testEquals_GivenDifferentDetectorDescription()
     {
         Detector detector1 = createDetector();
         Detector detector2 = createDetector();
-        detector2.setName("bar");
+        detector2.setDetectorDescription("bar");
 
         Assert.assertFalse(detector1.equals(detector2));
     }
