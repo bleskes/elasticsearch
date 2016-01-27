@@ -33,6 +33,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -237,6 +238,39 @@ public class AggregatedJsonRecordReaderTest
         assertEquals("farequote", record[4]);
 
         assertEquals(-1, reader.read(record, gotFields));
+    }
+
+    @Test(expected=IllegalArgumentException.class)
+    public void testConstructor_GivenNoNestingOrder() throws JsonParseException, IOException, MalformedJsonException
+    {
+        JsonParser parser = createParser("");
+        Map<String, Integer> fieldMap = createFieldMapWithNoTermField();
+        List<String> nestingOrder = Collections.emptyList();
+
+        AggregatedJsonRecordReader reader = new AggregatedJsonRecordReader(parser, fieldMap, "aggregations", mock(Logger.class), nestingOrder);
+    }
+
+    @Test(expected=MalformedJsonException.class)
+    public void testRead_GivenInvalidJson() throws JsonParseException, IOException, MalformedJsonException
+    {
+        String data =
+                "{" +
+                  "\"took\" : 88," +
+                  "\"timed_out\" : false," +
+                  "\"_shards\" : { \"total\" : 5, \"successful\" : 5, \"failed\" : 0 }," +
+                  "\"hits\" : { \"total\" : 86275, \"max_score\" : 0.0, \"hits\" : [ ] }," +
+                  "\"aggregations\" : {" +
+                    "\"time_level\" : {";
+        JsonParser parser = createParser(data);
+        Map<String, Integer> fieldMap = createFieldMapWithNoTermField();
+        List<String> nestingOrder = createNestingOrderWithNoTermField();
+
+        AggregatedJsonRecordReader reader = new AggregatedJsonRecordReader(parser, fieldMap, "aggregations", mock(Logger.class), nestingOrder);
+
+        String[] record = new String[4];
+        boolean[] gotFields = new boolean[4];
+
+        reader.read(record, gotFields);
     }
 
     private JsonParser createParser(String input) throws JsonParseException, IOException
