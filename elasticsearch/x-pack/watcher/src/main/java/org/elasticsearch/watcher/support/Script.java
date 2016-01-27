@@ -26,6 +26,7 @@ import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.script.ScriptService;
 import org.elasticsearch.script.ScriptService.ScriptType;
+import org.elasticsearch.script.ScriptSettings;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -37,7 +38,7 @@ import java.util.Map;
 public class Script implements ToXContent {
 
     public static final ScriptType DEFAULT_TYPE = ScriptType.INLINE;
-    public static final String DEFAULT_LANG = ScriptService.DEFAULT_LANG;
+    public static final String DEFAULT_LANG = ScriptSettings.DEFAULT_LANG;
 
     private final String script;
     private final @Nullable ScriptType type;

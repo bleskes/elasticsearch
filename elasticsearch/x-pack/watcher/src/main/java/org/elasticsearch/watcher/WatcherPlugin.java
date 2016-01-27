@@ -32,6 +32,7 @@ import org.elasticsearch.common.regex.Regex;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.settings.SettingsModule;
 import org.elasticsearch.plugins.Plugin;
+import org.elasticsearch.script.ScriptEngineRegistry;
 import org.elasticsearch.script.ScriptModule;
 import org.elasticsearch.shield.authz.AuthorizationModule;
 import org.elasticsearch.watcher.actions.WatcherActionModule;
@@ -197,7 +198,7 @@ public class WatcherPlugin extends Plugin {
     public void onModule(ScriptModule module) {
         module.registerScriptContext(ScriptServiceProxy.INSTANCE);
         if (enabled && !transportClient) {
-            module.addScriptEngine(XMustacheScriptEngineService.class);
+            module.addScriptEngine(new ScriptEngineRegistry.ScriptEngineRegistration(XMustacheScriptEngineService.class, XMustacheScriptEngineService.TYPES));
         }
     }
 
