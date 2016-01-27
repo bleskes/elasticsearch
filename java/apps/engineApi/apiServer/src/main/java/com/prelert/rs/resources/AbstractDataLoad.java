@@ -140,14 +140,12 @@ public abstract class AbstractDataLoad extends ResourceWithJobManager
         String [] jobIds = jobId.split(JOB_SEPARATOR);
         MultiDataPostResult result = new MultiDataPostResult();
 
-        DataLoadParams params;
-        String contentEncoding;
+        DataLoadParams params = createDataLoadParams(resetStart, resetEnd);
+        String contentEncoding = headers.getHeaderString(HttpHeaders.CONTENT_ENCODING);
 
         // Validate request parameters
         try
         {
-            params = createDataLoadParams(resetStart, resetEnd);
-            contentEncoding = headers.getHeaderString(HttpHeaders.CONTENT_ENCODING);
             if (params.isResettingBuckets())
             {
                 checkBucketResettingIsSupported(jobId);
