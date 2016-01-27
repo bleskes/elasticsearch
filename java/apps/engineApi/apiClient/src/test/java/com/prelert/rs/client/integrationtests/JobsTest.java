@@ -44,7 +44,6 @@ import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
-import org.apache.http.client.ClientProtocolException;
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -196,11 +195,9 @@ public class JobsTest implements Closeable
      * reads it back verifying all the correct properties are set.
      *
      * @return The Id of the created job
-     * @throws ClientProtocolException
      * @throws IOException
      */
-    public String createFlightCentreCsvJobTest()
-    throws ClientProtocolException, IOException
+    public String createFlightCentreCsvJobTest() throws IOException
     {
         final String FLIGHT_CENTRE_JOB_CONFIG = "{\"id\":\"flightcentre-csv\","
                 + "\"description\":\"Flight Centre Job\","
@@ -281,11 +278,9 @@ public class JobsTest implements Closeable
      * then reads it back verifying all the correct properties are set.
      *
      * @return The Id of the created job
-     * @throws ClientProtocolException
      * @throws IOException
      */
-    public String createFareQuoteTimeFormatJobTest()
-    throws ClientProtocolException, IOException
+    public String createFareQuoteTimeFormatJobTest() throws IOException
     {
         final String FARE_QUOTE_TIME_FORMAT_CONFIG = "{"
                 + "\"description\":\"Farequote Time Format Job\","
@@ -326,11 +321,10 @@ public class JobsTest implements Closeable
      * @param name The name for the job
      *
      * @return The Id of the created job
-     * @throws ClientProtocolException
      * @throws IOException
      */
     public String createFlightCentreMsCsvFormatJobTest(String baseUrl, String name)
-    throws ClientProtocolException, IOException
+            throws IOException
     {
         Detector d = new Detector();
         d.setName("responsetime by airline partitionfield=sourcetype");
@@ -404,11 +398,9 @@ public class JobsTest implements Closeable
      * from the epoch
      *
      * @return The Id of the created job
-     * @throws ClientProtocolException
      * @throws IOException
      */
-    public String createFlightCentreMsJsonFormatJobTest()
-    throws ClientProtocolException, IOException
+    public String createFlightCentreMsJsonFormatJobTest() throws IOException
     {
         Detector d = new Detector();
         d.setName("responsetime by airline");
@@ -517,11 +509,9 @@ public class JobsTest implements Closeable
      * reads it back verifying all the correct properties are set.
      *
      * @return The Id of the created job
-     * @throws ClientProtocolException
      * @throws IOException
      */
-    public String createFlightCentreJsonJobTest()
-    throws ClientProtocolException, IOException
+    public String createFlightCentreJsonJobTest() throws IOException
     {
         Detector d = new Detector();
         d.setName("FlightCentre analysis");
@@ -1454,11 +1444,9 @@ public class JobsTest implements Closeable
      *
      * @param jobId The job id
      *
-     * @throws ClientProtocolException
      * @throws IOException
      */
-    public void testReadLogFiles(String jobId)
-    throws ClientProtocolException, IOException
+    public void testReadLogFiles(String jobId) throws IOException
     {
         //tail
         String tail = m_WebServiceClient.tailLog(jobId, 2);

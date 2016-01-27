@@ -35,7 +35,6 @@ import java.util.Arrays;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.apache.http.client.ClientProtocolException;
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -93,8 +92,8 @@ public class TransformJobTest implements Closeable {
         m_WebServiceClient.close();
     }
 
-    public void createDateConcatJob(boolean useJson) throws ClientProtocolException,
-    IOException {
+    public void createDateConcatJob(boolean useJson) throws IOException
+    {
         String JOB_CONFIG = "{\"id\":\"concat-date-test\","
                 + "\"description\":\"Transform Job\","
                 + "\"analysisConfig\" : {"
@@ -137,7 +136,7 @@ public class TransformJobTest implements Closeable {
         test(tr.equals(job.getTransforms().get(0)));
     }
 
-    public void createSplitMetricJob(boolean useJson) throws ClientProtocolException, IOException
+    public void createSplitMetricJob(boolean useJson) throws IOException
     {
         String TRANSFORM_JOB_CONFIG = "{\"id\":\"concat-metricname-test\","
                 + "\"description\":\"Transform Job\","
@@ -304,8 +303,8 @@ public class TransformJobTest implements Closeable {
         }
     }
 
-    public static void main(String[] args) throws ClientProtocolException,
-    IOException {
+    public static void main(String[] args) throws IOException
+    {
         // configure log4j
         ConsoleAppender console = new ConsoleAppender();
         console.setLayout(new PatternLayout("%d [%p|%c|%C{1}] %m%n"));

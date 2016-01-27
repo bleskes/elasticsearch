@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -35,7 +35,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
-import org.apache.http.client.ClientProtocolException;
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -43,9 +42,9 @@ import org.apache.log4j.PatternLayout;
 
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataDescription;
+import com.prelert.job.DataDescription.DataFormat;
 import com.prelert.job.Detector;
 import com.prelert.job.JobConfiguration;
-import com.prelert.job.DataDescription.DataFormat;
 import com.prelert.job.results.AnomalyRecord;
 import com.prelert.job.results.Bucket;
 import com.prelert.rs.client.EngineApiClient;
@@ -78,8 +77,7 @@ public class MultiJobUploadTest
         m_WebServiceClient = new EngineApiClient(baseUrl);
     }
 
-    private String createFarequoteJob()
-    throws ClientProtocolException, IOException
+    private String createFarequoteJob() throws IOException
     {
         Detector d = new Detector();
         d.setFieldName("responsetime");
@@ -209,8 +207,7 @@ public class MultiJobUploadTest
         }
     }
 
-    private void deleteJobs(List<String> jobs)
-    throws ClientProtocolException, IOException
+    private void deleteJobs(List<String> jobs) throws IOException
     {
         for (String id : jobs)
         {
@@ -218,8 +215,7 @@ public class MultiJobUploadTest
         }
     }
 
-    public void doTest(String prelertTestDataHome)
-    throws ClientProtocolException, IOException
+    public void doTest(String prelertTestDataHome) throws IOException
     {
         List<String> jobIds = new ArrayList<String>();
         jobIds.add(this.createFarequoteJob());

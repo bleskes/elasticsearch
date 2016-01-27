@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -36,7 +36,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-import org.apache.http.client.ClientProtocolException;
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -98,18 +97,17 @@ public class NormalizationTest implements Closeable
         m_WebServiceClient.close();
     }
 
-    public String createFarequoteJob() throws ClientProtocolException, IOException
+    public String createFarequoteJob() throws IOException
     {
         return createFarequoteJob(TEST_FAREQUOTE, null);
     }
 
-    public String createFarequoteNoRenormalizationJob() throws ClientProtocolException, IOException
+    public String createFarequoteNoRenormalizationJob() throws IOException
     {
         return createFarequoteJob(TEST_FAREQUOTE_NO_RENORMALIZATION, 0L);
     }
 
-    private String createFarequoteJob(String jobId, Long renormalizationWindow)
-            throws ClientProtocolException, IOException
+    private String createFarequoteJob(String jobId, Long renormalizationWindow) throws IOException
     {
         Detector d = new Detector();
         d.setFieldName("responsetime");
@@ -408,17 +406,19 @@ public class NormalizationTest implements Closeable
 
     public boolean verifyNormalizedScoresAreEqualToInitialScores(String jobId) throws IOException
     {
-        ElasticsearchDirectClient directClient = new ElasticsearchDirectClient(
-                "http://localhost:9200/" + "prelertresults-" + jobId + "/");
-        Pagination<Bucket> allBuckets = m_WebServiceClient.prepareGetBuckets(jobId)
-                .take(1500L).expand(true).get();
-        for (Bucket bucket : allBuckets.getDocuments())
+        try (ElasticsearchDirectClient directClient = new ElasticsearchDirectClient(
+                "http://localhost:9200/" + "prelertresults-" + jobId + "/"))
         {
-            double normalizedScore = bucket.getAnomalyScore();
-            double initialScore = directClient.getBucketInitialScore(bucket.getId());
-            test(normalizedScore == initialScore);
+            Pagination<Bucket> allBuckets = m_WebServiceClient.prepareGetBuckets(jobId)
+                    .take(1500L).expand(true).get();
+            for (Bucket bucket : allBuckets.getDocuments())
+            {
+                double normalizedScore = bucket.getAnomalyScore();
+                double initialScore = directClient.getBucketInitialScore(bucket.getId());
+                test(normalizedScore == initialScore);
+            }
+            return true;
         }
-        return true;
     }
 
     /**

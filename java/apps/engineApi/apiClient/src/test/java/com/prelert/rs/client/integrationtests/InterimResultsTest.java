@@ -45,7 +45,6 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
-import org.apache.http.client.ClientProtocolException;
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -122,8 +121,7 @@ public class InterimResultsTest implements Closeable
     }
 
 
-    public String createFarequoteJob()
-    throws ClientProtocolException, IOException
+    public String createFarequoteJob() throws IOException
     {
         Detector d = new Detector();
         d.setFieldName("responsetime");

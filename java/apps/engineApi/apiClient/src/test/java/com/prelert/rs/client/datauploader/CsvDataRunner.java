@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -33,7 +33,6 @@ import java.io.PipedOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ThreadLocalRandom;
 
-import org.apache.http.client.ClientProtocolException;
 import org.apache.log4j.Logger;
 
 import com.prelert.rs.client.EngineApiClient;
@@ -47,269 +46,268 @@ import com.prelert.rs.client.EngineApiClient;
  */
 public class CsvDataRunner implements Runnable
 {
-	private static final Logger LOGGER = Logger.getLogger(CsvDataRunner.class);
+    private static final Logger LOGGER = Logger.getLogger(CsvDataRunner.class);
 
-	/**
-	 * Job configuration as a format string.
-	 * The bucketSpan value should be replaced
-	 */
-	public static final String JOB_CONFIG_TEMPLATE = "{\"analysisConfig\" : {"
-			+ "\"bucketSpan\":%d,"
-			+ "\"detectors\" :"
-			+ "[{\"function\":\"metric\",\"fieldName\":\"metric_value\",\"byFieldName\":\"metric_field\"}] },"
-			+ "\"dataDescription\":{\"fieldDelimiter\":\",\"} }}";
-
-
-	public static final String HEADER = "time,metric_field,metric_value";
-
-	public static final long DEFAULT_NUMBER_TIME_SERIES = 100000;
-	public static final long DEFAULT_TIME_SERIES_POINT_INTERVAL_SECS = 15;
-	public static final long DEFAULT_NUMBER_ITERATIONS = 100;
-	public static final long DEFAULT_BUCKETSPAN_SECS = 300;
+    /**
+     * Job configuration as a format string.
+     * The bucketSpan value should be replaced
+     */
+    public static final String JOB_CONFIG_TEMPLATE = "{\"analysisConfig\" : {"
+            + "\"bucketSpan\":%d,"
+            + "\"detectors\" :"
+            + "[{\"function\":\"metric\",\"fieldName\":\"metric_value\",\"byFieldName\":\"metric_field\"}] },"
+            + "\"dataDescription\":{\"fieldDelimiter\":\",\"} }}";
 
 
-	private EngineApiClient m_ApiClient;
+    public static final String HEADER = "time,metric_field,metric_value";
 
-	private String m_JobId;
-
-	// members are final as read by multiple threads
-	final private long m_NumTimeSeries;
-	final private long m_NumIterations;
-	final private long m_PointIntervalSecs;
-	final private long m_BucketSpan;
-
-	volatile private boolean m_Stop;
+    public static final long DEFAULT_NUMBER_TIME_SERIES = 100000;
+    public static final long DEFAULT_TIME_SERIES_POINT_INTERVAL_SECS = 15;
+    public static final long DEFAULT_NUMBER_ITERATIONS = 100;
+    public static final long DEFAULT_BUCKETSPAN_SECS = 300;
 
 
-	/**
-	 * Create the data generator with default settings.
-	 *
-	 * @param baseUrl REST API url e.g. <code>http://localhost:8080/engine/version/</code>
-	 */
-	public CsvDataRunner(String baseUrl)
-	{
-		this(baseUrl, DEFAULT_NUMBER_TIME_SERIES, DEFAULT_NUMBER_ITERATIONS,
-				DEFAULT_TIME_SERIES_POINT_INTERVAL_SECS, DEFAULT_BUCKETSPAN_SECS);
-	}
+    private EngineApiClient m_ApiClient;
 
-	/**
-	 *
-	 * @param baseUrl REST API url e.g. <code>http://localhost:8080/engine/version/</code>
-	 * @param numberTimeSeries Number of time series to create
-	 * @param numIterations A value <= 0 means there is no limit and the thread
-	 * will run indefinitely
-	 * @param pointIntervalSecs The time between writing each new data point
-	 * for each time series.
-	 * @param bucketSpanSecs The job bucketSpan
-	 */
-	public CsvDataRunner(String baseUrl, long numberTimeSeries, long numIterations,
-			long pointIntervalSecs, long bucketSpanSecs)
-	{
-		m_NumTimeSeries = numberTimeSeries;
-		m_NumIterations = numIterations;
-		m_PointIntervalSecs = pointIntervalSecs;
-		m_BucketSpan = bucketSpanSecs;
+    private String m_JobId;
 
-		m_ApiClient = new EngineApiClient(baseUrl);
+    // members are final as read by multiple threads
+    final private long m_NumTimeSeries;
+    final private long m_NumIterations;
+    final private long m_PointIntervalSecs;
+    final private long m_BucketSpan;
 
-		m_Stop = false;
-	}
+    volatile private boolean m_Stop;
 
 
-	public String createJob()
-	throws ClientProtocolException, IOException
-	{
-		String jobConfig = String.format(JOB_CONFIG_TEMPLATE, m_BucketSpan);
-		m_JobId = m_ApiClient.createJob(jobConfig);
+    /**
+     * Create the data generator with default settings.
+     *
+     * @param baseUrl REST API url e.g. <code>http://localhost:8080/engine/version/</code>
+     */
+    public CsvDataRunner(String baseUrl)
+    {
+        this(baseUrl, DEFAULT_NUMBER_TIME_SERIES, DEFAULT_NUMBER_ITERATIONS,
+                DEFAULT_TIME_SERIES_POINT_INTERVAL_SECS, DEFAULT_BUCKETSPAN_SECS);
+    }
 
-		return m_JobId;
-	}
+    /**
+     *
+     * @param baseUrl REST API url e.g. <code>http://localhost:8080/engine/version/</code>
+     * @param numberTimeSeries Number of time series to create
+     * @param numIterations A value <= 0 means there is no limit and the thread
+     * will run indefinitely
+     * @param pointIntervalSecs The time between writing each new data point
+     * for each time series.
+     * @param bucketSpanSecs The job bucketSpan
+     */
+    public CsvDataRunner(String baseUrl, long numberTimeSeries, long numIterations,
+            long pointIntervalSecs, long bucketSpanSecs)
+    {
+        m_NumTimeSeries = numberTimeSeries;
+        m_NumIterations = numIterations;
+        m_PointIntervalSecs = pointIntervalSecs;
+        m_BucketSpan = bucketSpanSecs;
 
-	/**
-	 * Stop the thread running (eventually)
-	 */
-	public void cancel()
-	{
-		m_Stop = true;
-	}
+        m_ApiClient = new EngineApiClient(baseUrl);
 
-	@Override
-	public void run()
-	{
-		if (m_JobId == null)
-		{
-			String msg = "Job must be created before the thread is started "
-					+ "call createJob() first";
-			LOGGER.error(msg);
-			throw new IllegalStateException(msg);
-		}
-
-
-
-		PipedInputStream inputStream = new PipedInputStream();
-		SoakTestProducer producer = new SoakTestProducer(inputStream);
-
-		Thread producerThread = new Thread(producer, "Producer-Thread");
-		producerThread.start();
-
-		try {
-			m_ApiClient.streamingUpload(m_JobId, inputStream, false);
-		} catch (IOException e) {
-			LOGGER.error("Error streaming data", e);
-		}
+        m_Stop = false;
+    }
 
 
-		try
-		{
-			producerThread.join();
-		}
-		catch (InterruptedException e)
-		{
-			LOGGER.error("Interupted joining producer thread", e);
-		}
-	}
+    public String createJob() throws IOException
+    {
+        String jobConfig = String.format(JOB_CONFIG_TEMPLATE, m_BucketSpan);
+        m_JobId = m_ApiClient.createJob(jobConfig);
 
-	/**
-	 * Producer thread.
-	 * Writes to a PipedOuptstream connected to the PipedInputStream
-	 * passed in the constructor
-	 */
-	private class SoakTestProducer implements Runnable
-	{
-		private PipedOutputStream m_OutputStream;
+        return m_JobId;
+    }
 
-		public SoakTestProducer(PipedInputStream sink)
-		{
-			try
-			{
-				m_OutputStream = new PipedOutputStream(sink);
-			}
-			catch (IOException e)
-			{
-				LOGGER.error(e);
-				m_OutputStream = null;
-			}
-		}
+    /**
+     * Stop the thread running (eventually)
+     */
+    public void cancel()
+    {
+        m_Stop = true;
+    }
 
-		@Override
-		public void run()
-		{
-			// HACK wait for the parent thread to open the connection
-			// before writing
-			try
-			{
-				Thread.sleep(1000);
-			}
-			catch (InterruptedException e1)
-			{
-				LOGGER.error("Producer interruputed pausing before write start");
-			}
+    @Override
+    public void run()
+    {
+        if (m_JobId == null)
+        {
+            String msg = "Job must be created before the thread is started "
+                    + "call createJob() first";
+            LOGGER.error(msg);
+            throw new IllegalStateException(msg);
+        }
 
 
-			try
-			{
-				writeHeader();
 
-				int iterationCount = 0;
-				while (++iterationCount <= m_NumIterations || m_NumIterations <= 0)
-				{
-					if (m_Stop)
-					{
-						break;
-					}
+        PipedInputStream inputStream = new PipedInputStream();
+        SoakTestProducer producer = new SoakTestProducer(inputStream);
 
-					long iterStartMs = System.currentTimeMillis();
-					long epoch = iterStartMs / 1000;
+        Thread producerThread = new Thread(producer, "Producer-Thread");
+        producerThread.start();
+
+        try {
+            m_ApiClient.streamingUpload(m_JobId, inputStream, false);
+        } catch (IOException e) {
+            LOGGER.error("Error streaming data", e);
+        }
 
 
-					long timeSeriesCount = 0;
-					while (++timeSeriesCount <= m_NumTimeSeries)
-					{
-						writeTimeSeriesRow(timeSeriesCount, epoch);
-					}
+        try
+        {
+            producerThread.join();
+        }
+        catch (InterruptedException e)
+        {
+            LOGGER.error("Interupted joining producer thread", e);
+        }
+    }
+
+    /**
+     * Producer thread.
+     * Writes to a PipedOuptstream connected to the PipedInputStream
+     * passed in the constructor
+     */
+    private class SoakTestProducer implements Runnable
+    {
+        private PipedOutputStream m_OutputStream;
+
+        public SoakTestProducer(PipedInputStream sink)
+        {
+            try
+            {
+                m_OutputStream = new PipedOutputStream(sink);
+            }
+            catch (IOException e)
+            {
+                LOGGER.error(e);
+                m_OutputStream = null;
+            }
+        }
+
+        @Override
+        public void run()
+        {
+            // HACK wait for the parent thread to open the connection
+            // before writing
+            try
+            {
+                Thread.sleep(1000);
+            }
+            catch (InterruptedException e1)
+            {
+                LOGGER.error("Producer interruputed pausing before write start");
+            }
 
 
-					long iterEndMs = System.currentTimeMillis();
-					LOGGER.info(String.format("%d metrics uploaded in  %d ms",
-							m_NumTimeSeries, iterEndMs - iterStartMs));
+            try
+            {
+                writeHeader();
+
+                int iterationCount = 0;
+                while (++iterationCount <= m_NumIterations || m_NumIterations <= 0)
+                {
+                    if (m_Stop)
+                    {
+                        break;
+                    }
+
+                    long iterStartMs = System.currentTimeMillis();
+                    long epoch = iterStartMs / 1000;
 
 
-					if (iterationCount >= m_NumIterations && m_NumIterations != 0)
-					{
-						// don't bother sleeping in the last loop
-						break;
-					}
-
-					long sleepTime = (iterStartMs + (m_PointIntervalSecs * 1000)) - iterEndMs;
-					LOGGER.info(String.format("Sleeping for %d ms", sleepTime));
-					if (sleepTime > 0)
-					{
-						try
-						{
-							Thread.sleep(sleepTime);
-						}
-						catch (InterruptedException e)
-						{
-							LOGGER.info("Producer interrupted while sleeping");
-							break;
-						}
-					}
+                    long timeSeriesCount = 0;
+                    while (++timeSeriesCount <= m_NumTimeSeries)
+                    {
+                        writeTimeSeriesRow(timeSeriesCount, epoch);
+                    }
 
 
-					synchronized (CsvDataRunner.this)
-					{
-						CsvDataRunner.this.notify();
-					}
-				}
-			}
-			finally
-			{
-				try
-				{
-					m_OutputStream.close();
-				}
-				catch (IOException e) {
-					LOGGER.error("Error closing pipedoutputstream", e);
-				}
-			}
-
-		}
+                    long iterEndMs = System.currentTimeMillis();
+                    LOGGER.info(String.format("%d metrics uploaded in  %d ms",
+                            m_NumTimeSeries, iterEndMs - iterStartMs));
 
 
-		private void writeHeader()
-		{
-			try
-			{
-				m_OutputStream.write(HEADER.getBytes(StandardCharsets.UTF_8));
-				m_OutputStream.write(10); // newline char
-			}
-			catch (IOException e)
-			{
-				LOGGER.error("Error writing csv header", e);
-			}
-		}
+                    if (iterationCount >= m_NumIterations && m_NumIterations != 0)
+                    {
+                        // don't bother sleeping in the last loop
+                        break;
+                    }
 
-		/**
-		 * Generate a random value for the time series using ThreadLocalRandom
-		 * @param timeSeriesId
-		 * @param epoch
-		 */
-		private void writeTimeSeriesRow(long timeSeriesId, long epoch)
-		{
-			String timeSeries = "metric" + timeSeriesId;
-			int value = ThreadLocalRandom.current().nextInt(512);
+                    long sleepTime = (iterStartMs + (m_PointIntervalSecs * 1000)) - iterEndMs;
+                    LOGGER.info(String.format("Sleeping for %d ms", sleepTime));
+                    if (sleepTime > 0)
+                    {
+                        try
+                        {
+                            Thread.sleep(sleepTime);
+                        }
+                        catch (InterruptedException e)
+                        {
+                            LOGGER.info("Producer interrupted while sleeping");
+                            break;
+                        }
+                    }
 
-			String row = String.format("%d,%s,%d", epoch, timeSeries, value);
-			try
-			{
-				m_OutputStream.write(row.getBytes(StandardCharsets.UTF_8));
-				m_OutputStream.write(10); // newline char
-			}
-			catch (IOException e)
-			{
-				LOGGER.error("Error writing csv row", e);
-			}
-		}
 
-	}
+                    synchronized (CsvDataRunner.this)
+                    {
+                        CsvDataRunner.this.notify();
+                    }
+                }
+            }
+            finally
+            {
+                try
+                {
+                    m_OutputStream.close();
+                }
+                catch (IOException e) {
+                    LOGGER.error("Error closing pipedoutputstream", e);
+                }
+            }
+
+        }
+
+
+        private void writeHeader()
+        {
+            try
+            {
+                m_OutputStream.write(HEADER.getBytes(StandardCharsets.UTF_8));
+                m_OutputStream.write(10); // newline char
+            }
+            catch (IOException e)
+            {
+                LOGGER.error("Error writing csv header", e);
+            }
+        }
+
+        /**
+         * Generate a random value for the time series using ThreadLocalRandom
+         * @param timeSeriesId
+         * @param epoch
+         */
+        private void writeTimeSeriesRow(long timeSeriesId, long epoch)
+        {
+            String timeSeries = "metric" + timeSeriesId;
+            int value = ThreadLocalRandom.current().nextInt(512);
+
+            String row = String.format("%d,%s,%d", epoch, timeSeries, value);
+            try
+            {
+                m_OutputStream.write(row.getBytes(StandardCharsets.UTF_8));
+                m_OutputStream.write(10); // newline char
+            }
+            catch (IOException e)
+            {
+                LOGGER.error("Error writing csv row", e);
+            }
+        }
+
+    }
 }

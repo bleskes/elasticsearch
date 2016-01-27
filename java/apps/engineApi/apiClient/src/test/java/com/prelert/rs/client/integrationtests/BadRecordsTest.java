@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -31,7 +31,6 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.io.PipedInputStream;
 
-import org.apache.http.client.ClientProtocolException;
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -79,11 +78,9 @@ public class BadRecordsTest implements Closeable
 	 * Generate records with unparsable dates the streaming client
 	 * should return {@link ErrorCodes#TOO_MANY_BAD_DATES} error.
 	 *
-	 * @throws ClientProtocolException
 	 * @throws IOException
 	 */
-	public void testUnparseableDates()
-	throws ClientProtocolException, IOException
+	public void testUnparseableDates() throws IOException
 	{
 		PipedInputStream inputStream = new PipedInputStream();
 
@@ -106,7 +103,6 @@ public class BadRecordsTest implements Closeable
 		test(error.getErrorCode() == ErrorCodes.TOO_MANY_BAD_DATES);
 
 		test(result.getResponses().get(0).getUploadSummary() == null);
-		LOGGER.info(error);
 
 
 		m_EngineApiClient.closeJob(jobId);
@@ -128,11 +124,9 @@ public class BadRecordsTest implements Closeable
 	 * The client should return with
 	 * {@link ErrorCodes#TOO_MANY_OUT_OF_ORDER_RECORDS} error.
 	 *
-	 * @throws ClientProtocolException
 	 * @throws IOException
 	 */
-	public void testOutOfOrderDates()
-	throws ClientProtocolException, IOException
+	public void testOutOfOrderDates() throws IOException
 	{
 		PipedInputStream inputStream = new PipedInputStream();
 
