@@ -139,7 +139,7 @@ public class ElasticsearchMappings
                             .field(TYPE, STRING).field(INDEX, NOT_ANALYZED)
                         .endObject()
                         .startObject(JobDetails.STATUS)
-                            .field(TYPE, STRING).field(INDEX, NOT_ANALYZED)
+                            .field(TYPE, STRING)
                         .endObject()
                         .startObject(JobDetails.SCHEDULER_STATUS)
                             .field(TYPE, STRING).field(INDEX, NOT_ANALYZED)

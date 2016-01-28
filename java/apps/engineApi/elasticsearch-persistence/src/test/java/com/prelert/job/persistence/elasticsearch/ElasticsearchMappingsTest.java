@@ -55,8 +55,7 @@ public class ElasticsearchMappingsTest
                         "        \"index\": \"not_analyzed\"" +
                         "      }," +
                         "      \"status\": {" +
-                        "        \"type\": \"string\"," +
-                        "        \"index\": \"not_analyzed\"" +
+                        "        \"type\": \"string\"" +
                         "      }," +
                         "      \"schedulerStatus\": {" +
                         "        \"type\": \"string\"," +
