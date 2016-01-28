@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -137,7 +137,7 @@ public class ProcessFactory
         ProcessAndDataDescription procAndDD = new ProcessAndDataDescription(
                 nativeProcess, jobId,
                 job.getDataDescription(), job.getTimeout(), job.getAnalysisConfig(),
-                new TransformConfigs(job.getTransforms()), logger,
+                job.getSchedulerConfig(), new TransformConfigs(job.getTransforms()), logger,
                 new StatusReporter(jobId, job.getCounts(),
                         new UsageReporter(jobId,
                                           m_UsagePersisterFactory.getInstance(logger),

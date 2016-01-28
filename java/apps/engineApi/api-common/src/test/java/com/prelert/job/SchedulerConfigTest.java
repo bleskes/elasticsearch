@@ -36,6 +36,7 @@ import static org.junit.Assert.assertTrue;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -95,6 +96,83 @@ public class SchedulerConfigTest
         String queryAsJson = new ObjectMapper().writeValueAsString(query);
         logger.info("Round trip of query is: " + queryAsJson);
         assertTrue(query.containsKey("match_all"));
+    }
+
+    /**
+     * Test parsing of the opaque {@link SchedulerConfig#m_Aggs()} object
+     */
+    @Test
+    public void testAggsParse()
+            throws IOException
+    {
+        BasicConfigurator.configure();
+        Logger logger = Logger.getLogger(SchedulerConfigTest.class);
+
+        String jobConfigStr =
+            "{" +
+                "\"id\":\"farequote\"," +
+                "\"schedulerConfig\" : {" +
+                    "\"dataSource\":\"ELASTICSEARCH\"," +
+                    "\"baseUrl\":\"http://localhost:9200/\"," +
+                    "\"indexes\":[\"farequote\"]," +
+                    "\"types\":[\"farequote\"]," +
+                    "\"query\":{\"match_all\":{} }," +
+                    "\"aggs\" : {" +
+                        "\"top_level_must_be_time\" : {" +
+                            "\"histogram\" : {" +
+                                "\"field\" : \"@timestamp\"," +
+                                "\"interval\" : 3600000" +
+                            "}," +
+                            "\"aggs\" : {" +
+                                "\"by_field_in_the_middle\" : { " +
+                                    "\"terms\" : {" +
+                                        "\"field\" : \"airline\"," +
+                                        "\"size\" : 0" +
+                                    "}," +
+                                    "\"aggs\" : {" +
+                                        "\"stats_last\" : {" +
+                                            "\"avg\" : {" +
+                                                "\"field\" : \"responsetime\"" +
+                                            "}" +
+                                        "}" +
+                                    "} " +
+                                "}" +
+                            "}" +
+                        "}" +
+                    "}" +
+                "}," +
+                "\"analysisConfig\" : {" +
+                    "\"bucketSpan\":3600," +
+                    "\"detectors\" :[{\"function\":\"avg\",\"fieldName\":\"responsetime\",\"byFieldName\":\"airline\"}]," +
+                    "\"influencers\" :[\"airline\"]" +
+                "}," +
+                "\"dataDescription\" : {" +
+                    "\"format\":\"ELASTICSEARCH\"," +
+                    "\"timeField\":\"@timestamp\"," +
+                    "\"timeFormat\":\"epoch_ms\"" +
+                "}" +
+            "}";
+
+        ObjectReader objectReader = new ObjectMapper().readerFor(JobConfiguration.class);
+        JobConfiguration jobConfig = objectReader.readValue(jobConfigStr);
+        assertNotNull(jobConfig);
+
+        SchedulerConfig schedulerConfig = jobConfig.getSchedulerConfig();
+        assertNotNull(schedulerConfig);
+
+        Map<String, Object> aggs = schedulerConfig.getAggregationsOrAggs();
+        assertNotNull(aggs);
+
+        String aggsAsJson = new ObjectMapper().writeValueAsString(aggs);
+        logger.info("Round trip of aggs is: " + aggsAsJson);
+        assertTrue(aggs.containsKey("top_level_must_be_time"));
+
+        List<String> aggregatedFieldList = schedulerConfig.buildAggregatedFieldList();
+        assertNotNull(aggregatedFieldList);
+        assertEquals(3, aggregatedFieldList.size());
+        assertEquals("@timestamp", aggregatedFieldList.get(0));
+        assertEquals("airline", aggregatedFieldList.get(1));
+        assertEquals("responsetime", aggregatedFieldList.get(2));
     }
 
     @Test

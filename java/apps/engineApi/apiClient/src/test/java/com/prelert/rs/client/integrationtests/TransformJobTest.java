@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -177,6 +177,7 @@ public class TransformJobTest implements Closeable {
 
 
         Detector d = new Detector();
+        d.setDetectorDescription("value by instance_metric");
         d.setFieldName("value");
         d.setByFieldName("instance_metric");
 

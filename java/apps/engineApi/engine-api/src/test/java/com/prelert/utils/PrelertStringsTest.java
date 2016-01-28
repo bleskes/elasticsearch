@@ -25,29 +25,20 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.job.process.writer;
+package com.prelert.utils;
 
-import java.io.IOException;
+import static org.junit.Assert.assertEquals;
 
-import com.prelert.job.process.exceptions.MalformedJsonException;
+import org.junit.Test;
 
-/**
- * Interface for classes that read the various styles of JSON input.
- */
-interface JsonRecordReader
+public class PrelertStringsTest
 {
-    /**
-     * Read some JSON and write to the record array.
-     *
-     * @param record Read fields are written to this array. This array is first filled with empty
-     * strings and will never contain a <code>null</code>
-     * @param gotFields boolean array each element is true if that field
-     * was read
-     *
-     * @return The number of fields in the JSON doc or -1 if nothing was read
-     * because the end of the stream was reached
-     * @throws IOException
-     * @throws MalformedJsonException
-     */
-    public long read(String[] record, boolean[] gotFields) throws IOException, MalformedJsonException;
+    @Test
+    public void testDoubleQuoteIfNotAlphaNumeric()
+    {
+        assertEquals("foo2", PrelertStrings.doubleQuoteIfNotAlphaNumeric("foo2"));
+        assertEquals("\"fo o\"", PrelertStrings.doubleQuoteIfNotAlphaNumeric("fo o"));
+        assertEquals("\" \"", PrelertStrings.doubleQuoteIfNotAlphaNumeric(" "));
+        assertEquals("\"ba\\\"r\\\"\"", PrelertStrings.doubleQuoteIfNotAlphaNumeric("ba\"r\""));
+    }
 }

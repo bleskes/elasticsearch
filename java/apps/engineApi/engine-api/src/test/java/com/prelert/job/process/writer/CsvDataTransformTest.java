@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -114,7 +114,7 @@ public class CsvDataTransformTest
         DummyStatusReporter statusReporter = new DummyStatusReporter(usageReporter);
         DummyJobDataPersister dataPersister = new DummyJobDataPersister();
 
-        pm.writeToJob(dd, ac, new TransformConfigs(Arrays.<TransformConfig>asList()), bis, bos, statusReporter, dataPersister, LOGGER);
+        pm.writeToJob(dd, ac, null, new TransformConfigs(Arrays.<TransformConfig>asList()), bis, bos, statusReporter, dataPersister, LOGGER);
 
         ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
 
@@ -236,7 +236,7 @@ public class CsvDataTransformTest
         DummyStatusReporter statusReporter = new DummyStatusReporter(usageReporter);
         DummyJobDataPersister dp = new DummyJobDataPersister();
 
-        pm.writeToJob(dd, ac, new TransformConfigs(Arrays.<TransformConfig>asList()), bis, bos, statusReporter, dp, LOGGER);
+        pm.writeToJob(dd, ac, null, new TransformConfigs(Arrays.<TransformConfig>asList()), bis, bos, statusReporter, dp, LOGGER);
 
         Assert.assertEquals(usageReporter.getTotalBytesRead(),
                 data.getBytes(StandardCharsets.UTF_8).length - 2);
@@ -353,7 +353,7 @@ public class CsvDataTransformTest
         DummyStatusReporter statusReporter = new DummyStatusReporter(usageReporter);
         DummyJobDataPersister dp = new DummyJobDataPersister();
 
-        pm.writeToJob(dd, ac, new TransformConfigs(Arrays.<TransformConfig>asList()), bis, bos, statusReporter, dp, LOGGER);
+        pm.writeToJob(dd, ac, null, new TransformConfigs(Arrays.<TransformConfig>asList()), bis, bos, statusReporter, dp, LOGGER);
         ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
 
         Assert.assertEquals(dp.getRecordCount(), 8);
@@ -479,7 +479,7 @@ public class CsvDataTransformTest
         DummyStatusReporter statusReporter = new DummyStatusReporter(usageReporter);
         DummyJobDataPersister dp = new DummyJobDataPersister();
 
-        pm.writeToJob(dd, ac, new TransformConfigs(Arrays.<TransformConfig>asList()), bis, bos, statusReporter, dp, LOGGER);
+        pm.writeToJob(dd, ac, null, new TransformConfigs(Arrays.<TransformConfig>asList()), bis, bos, statusReporter, dp, LOGGER);
         ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
 
         Assert.assertEquals(usageReporter.getTotalBytesRead(),
@@ -580,7 +580,7 @@ public class CsvDataTransformTest
 
         try
         {
-            pm.writeToJob(dd, ac, new TransformConfigs(Arrays.<TransformConfig>asList()),
+            pm.writeToJob(dd, ac, null, new TransformConfigs(Arrays.<TransformConfig>asList()),
             					bis, bos, statusReporter, dp, LOGGER);
             fail(); // should throw
         }
@@ -605,7 +605,7 @@ public class CsvDataTransformTest
         statusReporter = new DummyStatusReporter(usageReporter);
         try
         {
-            pm.writeToJob(dd, ac, new TransformConfigs(Arrays.<TransformConfig>asList()), bis, bos, statusReporter, dp, LOGGER);
+            pm.writeToJob(dd, ac, null, new TransformConfigs(Arrays.<TransformConfig>asList()), bis, bos, statusReporter, dp, LOGGER);
             Assert.assertTrue(false); // should throw
         }
         catch (MissingFieldException e)
@@ -673,7 +673,7 @@ public class CsvDataTransformTest
 
         try
         {
-            pm.writeToJob(dd, ac, new TransformConfigs(Arrays.<TransformConfig>asList()), bis, bos, statusReporter, dp, LOGGER);
+            pm.writeToJob(dd, ac, null, new TransformConfigs(Arrays.<TransformConfig>asList()), bis, bos, statusReporter, dp, LOGGER);
             Assert.assertTrue(false); // should throw
         }
         catch (MissingFieldException e)
@@ -708,7 +708,7 @@ public class CsvDataTransformTest
 
         try
         {
-            pm.writeToJob(dd, ac, new TransformConfigs(Arrays.<TransformConfig>asList()), bis, bos, statusReporter, dp, LOGGER);
+            pm.writeToJob(dd, ac, null, new TransformConfigs(Arrays.<TransformConfig>asList()), bis, bos, statusReporter, dp, LOGGER);
             Assert.assertTrue(false); // should throw
         }
         catch (MissingFieldException e)
@@ -811,7 +811,7 @@ public class CsvDataTransformTest
             DummyStatusReporter statusReporter = new DummyStatusReporter(usageReporter);
             DummyJobDataPersister dp = new DummyJobDataPersister();
 
-            pm.writeToJob(dd, ac, new TransformConfigs(Arrays.<TransformConfig>asList()), bis, bos, statusReporter, dp, LOGGER);
+            pm.writeToJob(dd, ac, null, new TransformConfigs(Arrays.<TransformConfig>asList()), bis, bos, statusReporter, dp, LOGGER);
 
             Assert.assertEquals(usageReporter.getTotalBytesRead(),
                     data.getBytes(StandardCharsets.UTF_8).length - 2);
@@ -941,7 +941,7 @@ public class CsvDataTransformTest
             DummyStatusReporter statusReporter = new DummyStatusReporter(usageReporter);
             DummyJobDataPersister dp = new DummyJobDataPersister();
 
-            pm.writeToJob(dd, ac, new TransformConfigs(Arrays.<TransformConfig>asList()), bis, bos, statusReporter, dp, LOGGER);
+            pm.writeToJob(dd, ac, null, new TransformConfigs(Arrays.<TransformConfig>asList()), bis, bos, statusReporter, dp, LOGGER);
             ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
 
             Assert.assertEquals(usageReporter.getTotalBytesRead(), statusReporter.getBytesRead());

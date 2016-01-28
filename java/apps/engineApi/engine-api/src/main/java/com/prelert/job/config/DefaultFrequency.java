@@ -25,29 +25,59 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.job.process.writer;
+package com.prelert.job.config;
 
-import java.io.IOException;
+import java.time.Duration;
 
-import com.prelert.job.process.exceptions.MalformedJsonException;
+import com.google.common.base.Preconditions;
 
 /**
- * Interface for classes that read the various styles of JSON input.
+ * Factory methods for a sensible default for the scheduler frequency
  */
-interface JsonRecordReader
+public final class DefaultFrequency
 {
+    private static final int SECONDS_IN_MINUTE = 60;
+    private static final int TWO_MINS_SECONDS = 2 * SECONDS_IN_MINUTE;
+    private static final int TWENTY_MINS_SECONDS = 20 * SECONDS_IN_MINUTE;
+    private static final int HALF_DAY_SECONDS = 12 * 60 * SECONDS_IN_MINUTE;
+    private static final Duration TEN_MINUTES = Duration.ofMinutes(10);
+    private static final Duration ONE_HOUR = Duration.ofHours(1);
+
+    private DefaultFrequency()
+    {
+        // Do nothing
+    }
+
     /**
-     * Read some JSON and write to the record array.
+     * Creates a sensible default frequency for a given bucket span.
      *
-     * @param record Read fields are written to this array. This array is first filled with empty
-     * strings and will never contain a <code>null</code>
-     * @param gotFields boolean array each element is true if that field
-     * was read
+     * The default depends on the bucket span:
+     * <ul>
+     *   <li> <= 2 mins -> 1 min
+     *   <li> <= 20 mins -> bucket span / 2
+     *   <li> <= 12 hours -> 10 mins
+     *   <li> > 12 hours -> 1 hour
+     * </ul>
      *
-     * @return The number of fields in the JSON doc or -1 if nothing was read
-     * because the end of the stream was reached
-     * @throws IOException
-     * @throws MalformedJsonException
+     * @param bucketSpanSeconds the bucket span in seconds
+     * @return the default frequency
      */
-    public long read(String[] record, boolean[] gotFields) throws IOException, MalformedJsonException;
+    public static Duration ofBucketSpan(long bucketSpanSeconds)
+    {
+        Preconditions.checkArgument(bucketSpanSeconds > 0);
+
+        if (bucketSpanSeconds <= TWO_MINS_SECONDS)
+        {
+            return Duration.ofSeconds(SECONDS_IN_MINUTE);
+        }
+        if (bucketSpanSeconds <= TWENTY_MINS_SECONDS)
+        {
+            return Duration.ofSeconds(bucketSpanSeconds / 2);
+        }
+        if (bucketSpanSeconds <= HALF_DAY_SECONDS)
+        {
+            return TEN_MINUTES;
+        }
+        return ONE_HOUR;
+    }
 }

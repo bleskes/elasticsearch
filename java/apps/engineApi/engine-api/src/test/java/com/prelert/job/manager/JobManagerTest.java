@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -404,6 +404,42 @@ public class JobManagerTest
     }
 
     @Test
+    public void testCreateJob_FillsDefaults()
+            throws NoSuchScheduledJobException, UnknownJobException,
+            CannotStartSchedulerWhileItIsStoppingException, TooManyJobsException,
+            JobConfigurationException, JobIdAlreadyExistsException, IOException,
+            NativeProcessRunException, JobInUseException
+    {
+        givenProcessInfo(2);
+        JobManager jobManager = createJobManager();
+
+        AnalysisConfig analysisConfig = new AnalysisConfig();
+        analysisConfig.setBucketSpan(3600L);
+        Detector detectorNullDescription = new Detector();
+        detectorNullDescription.setFunction("sum");
+        detectorNullDescription.setFieldName("revenue");
+        detectorNullDescription.setByFieldName("vendor");
+        Detector detectorWithDescription = new Detector();
+        detectorWithDescription.setDetectorDescription("Named");
+        detectorWithDescription.setFunction("sum");
+        detectorWithDescription.setFieldName("revenue");
+        detectorWithDescription.setByFieldName("vendor");
+
+        analysisConfig.setDetectors(Arrays.asList(detectorNullDescription, detectorWithDescription));
+
+        JobConfiguration jobConfig = new JobConfiguration();
+        jobConfig.setId("revenue-by-vendor");
+        jobConfig.setAnalysisConfig(analysisConfig);
+
+        when(m_JobProvider.jobIdIsUnique("revenue-by-vendor")).thenReturn(true);
+
+        JobDetails job = jobManager.createJob(jobConfig);
+
+        assertEquals("sum(revenue) by vendor", job.getAnalysisConfig().getDetectors().get(0).getDetectorDescription());
+        assertEquals("Named", job.getAnalysisConfig().getDetectors().get(1).getDetectorDescription());
+    }
+
+    @Test
     public void testWriteUpdateConfigMessage() throws JobInUseException, NativeProcessRunException
     {
         givenProcessInfo(5);
@@ -424,7 +460,7 @@ public class JobManagerTest
                 Optional.of(new JobDetails("foo", new JobConfiguration(new AnalysisConfig()))));
 
         when(m_ProcessManager.numberOfRunningJobs()).thenReturn(3);
-        when(m_ProcessManager.writeToJob(any(CsvRecordWriter.class), any(), any(), any(), any(), any(), any(), any()))
+        when(m_ProcessManager.writeToJob(any(CsvRecordWriter.class), any(), any(), any(), any(), any(), any(), any(), any()))
                     .thenAnswer(writeToWriter());
 
         JobManager jobManager = createJobManager();
@@ -554,6 +590,17 @@ public class JobManagerTest
 
         // Verify no other calls to factories - means no other job was scheduled
         Mockito.verifyNoMoreInteractions(m_JobLoggerFactory, m_DataExtractorFactory);
+    }
+
+    @Test
+    public void testUpdateDetectorDescription() throws UnknownJobException
+    {
+        givenProcessInfo(2);
+        JobManager jobManager = createJobManager();
+
+        jobManager.updateDetectorDescription("foo", 1, "bar");
+
+        verify(m_JobProvider).updateDetectorDescription("foo", 1, "bar");
     }
 
     @Test

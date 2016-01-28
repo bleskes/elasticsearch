@@ -45,11 +45,14 @@ import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexResponse;
 import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsRequest;
 import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsResponse;
+import org.elasticsearch.action.admin.indices.flush.FlushRequest;
 import org.elasticsearch.action.admin.indices.refresh.RefreshRequest;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
+import org.elasticsearch.cluster.metadata.IndexMetaData;
+import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.index.IndexNotFoundException;
 import org.elasticsearch.index.engine.VersionConflictEngineException;
@@ -79,7 +82,6 @@ import com.prelert.job.quantiles.Quantiles;
 import com.prelert.job.results.AnomalyRecord;
 import com.prelert.job.results.Bucket;
 import com.prelert.job.results.CategoryDefinition;
-import com.prelert.job.results.Detector;
 import com.prelert.job.results.Influencer;
 import com.prelert.job.usage.Usage;
 
@@ -101,6 +103,12 @@ public class ElasticsearchJobProvider implements JobProvider
     private static final String PRELERT_INFO_ID = "infoStats";
 
     private static final String _PARENT = "_parent";
+
+    private static final String SETTING_TRANSLOG_DURABILITY = "index.translog.durability";
+    private static final String ASYNC = "async";
+    private static final String SETTING_MAPPER_DYNAMIC = "index.mapper.dynamic";
+    private static final String SETTING_DEFAULT_ANALYZER_TYPE = "index.analysis.analyzer.default.type";
+    private static final String KEYWORD = "keyword";
 
     private static final List<String> SECONDARY_SORT = new ArrayList<>();
 
@@ -146,7 +154,7 @@ public class ElasticsearchJobProvider implements JobProvider
 
     /**
      * If the {@value ElasticsearchJobProvider#PRELERT_USAGE_INDEX} index does
-     * not exist create it here with the usage document mapping.
+     * not exist then create it here with the usage document mapping.
      */
     private void createUsageMeteringIndex()
     {
@@ -165,6 +173,7 @@ public class ElasticsearchJobProvider implements JobProvider
 
                 LOGGER.trace("ES API CALL: create index " + PRELERT_USAGE_INDEX);
                 m_Client.admin().indices().prepareCreate(PRELERT_USAGE_INDEX)
+                                .setSettings(prelertIndexSettings())
                                 .addMapping(Usage.TYPE, usageMapping)
                                 .get();
                 LOGGER.trace("ES API CALL: wait for yellow status " + PRELERT_USAGE_INDEX);
@@ -179,7 +188,37 @@ public class ElasticsearchJobProvider implements JobProvider
         {
             LOGGER.warn("Error creating the usage metering index", e);
         }
+    }
 
+    /**
+     * If the {@value ElasticsearchJobProvider#PRELERT_INFO_INDEX} index does
+     * not exist then create it here.
+     */
+    private void createInfoIndex()
+    {
+        try
+        {
+            LOGGER.trace("ES API CALL: index exists? " + PRELERT_INFO_INDEX);
+            boolean indexExists = m_Client.admin().indices()
+                    .exists(new IndicesExistsRequest(PRELERT_INFO_INDEX))
+                    .get().isExists();
+
+            if (indexExists == false)
+            {
+                LOGGER.info("Creating the internal '" + PRELERT_INFO_INDEX + "' index");
+
+                LOGGER.trace("ES API CALL: create index " + PRELERT_INFO_INDEX);
+                m_Client.admin().indices().prepareCreate(PRELERT_INFO_INDEX)
+                                .setSettings(prelertIndexSettings())
+                                .get();
+                LOGGER.trace("ES API CALL: wait for yellow status " + PRELERT_INFO_INDEX);
+                m_Client.admin().cluster().prepareHealth(PRELERT_INFO_INDEX).setWaitForYellowStatus().execute().actionGet();
+            }
+        }
+        catch (InterruptedException | ExecutionException e)
+        {
+            LOGGER.warn("Error checking the info index", e);
+        }
     }
 
     @Override
@@ -227,6 +266,32 @@ public class ElasticsearchJobProvider implements JobProvider
         return res.isExists();
     }
 
+    /**
+     * Build the Elasticsearch index settings that we want to apply to Prelert
+     * indexes.  It's better to do this in code rather than in elasticsearch.yml
+     * because then the settings can be applied regardless of whether we're
+     * using our own Elasticsearch to store results or a customer's pre-existing
+     * Elasticsearch.
+     * @return An Elasticsearch builder initialised with the desired settings
+     * for Prelert indexes.
+     */
+    private Settings.Builder prelertIndexSettings()
+    {
+        return Settings.settingsBuilder()
+                // Our indexes are small and one shard, no replicas puts the
+                // least possible burden on Elasticsearch
+                .put(IndexMetaData.SETTING_NUMBER_OF_SHARDS, 1)
+                .put(IndexMetaData.SETTING_NUMBER_OF_REPLICAS, 0)
+                // Sacrifice durability for performance: in the event of power
+                // failure we can lose the last 5 seconds of changes, but it's
+                // much faster
+                .put(SETTING_TRANSLOG_DURABILITY, ASYNC)
+                // We need to allow fields not mentioned in the mappings to
+                // pick up default mappings and be used in queries
+                .put(SETTING_MAPPER_DYNAMIC, true)
+                // By default "analyzed" fields won't be tokenised
+                .put(SETTING_DEFAULT_ANALYZER_TYPE, KEYWORD);
+    }
 
     @Override
     public Optional<JobDetails> getJobDetails(String jobId)
@@ -343,7 +408,6 @@ public class ElasticsearchJobProvider implements JobProvider
             XContentBuilder bucketMapping = ElasticsearchMappings.bucketMapping();
             XContentBuilder categorizerStateMapping = ElasticsearchMappings.categorizerStateMapping();
             XContentBuilder categoryDefinitionMapping = ElasticsearchMappings.categoryDefinitionMapping();
-            XContentBuilder detectorMapping = ElasticsearchMappings.detectorMapping();
             XContentBuilder recordMapping = ElasticsearchMappings.recordMapping();
             XContentBuilder quantilesMapping = ElasticsearchMappings.quantilesMapping();
             XContentBuilder modelStateMapping = ElasticsearchMappings.modelStateMapping();
@@ -356,11 +420,11 @@ public class ElasticsearchJobProvider implements JobProvider
             LOGGER.trace("ES API CALL: create index " + job.getId());
             m_Client.admin().indices()
                     .prepareCreate(elasticJobId.getIndex())
+                    .setSettings(prelertIndexSettings())
                     .addMapping(JobDetails.TYPE, jobMapping)
                     .addMapping(Bucket.TYPE, bucketMapping)
                     .addMapping(CategorizerState.TYPE, categorizerStateMapping)
                     .addMapping(CategoryDefinition.TYPE, categoryDefinitionMapping)
-                    .addMapping(Detector.TYPE, detectorMapping)
                     .addMapping(AnomalyRecord.TYPE, recordMapping)
                     .addMapping(Quantiles.TYPE, quantilesMapping)
                     .addMapping(ModelState.TYPE, modelStateMapping)
@@ -908,9 +972,10 @@ public class ElasticsearchJobProvider implements JobProvider
     @Override
     public boolean savePrelertInfo(String infoDoc)
     {
+        createInfoIndex();
+
         LOGGER.trace("ES API CALL: index type " + PRELERT_INFO_TYPE +
                 " in index " + PRELERT_INFO_INDEX + " with ID " + PRELERT_INFO_ID);
-
         m_Client.prepareIndex(PRELERT_INFO_INDEX, PRELERT_INFO_TYPE, PRELERT_INFO_ID)
                         .setSource(infoDoc)
                         .execute().actionGet();
@@ -978,7 +1043,37 @@ public class ElasticsearchJobProvider implements JobProvider
     public void refreshIndex(String jobId)
     {
         String indexName = new ElasticsearchJobId(jobId).getIndex();
+        // Flush should empty the translog into Lucene
+        LOGGER.trace("ES API CALL: flush index " + indexName);
+        m_Client.admin().indices().flush(new FlushRequest(indexName)).actionGet();
+        // Refresh should wait for Lucene to make the data searchable
+        LOGGER.trace("ES API CALL: refresh index " + indexName);
         m_Client.admin().indices().refresh(new RefreshRequest(indexName)).actionGet();
+    }
+
+    @Override
+    public boolean updateDetectorDescription(String jobId, int detectorIndex, String newDescription)
+            throws UnknownJobException
+    {
+        LOGGER.trace("ES API CALL: update detector description for job " + jobId + ", detector at index "
+                + detectorIndex + " by running Groovy script update-detector-description with params newDescription="
+                + newDescription);
+
+        ElasticsearchJobId esJobId = new ElasticsearchJobId(jobId);
+
+        try
+        {
+            m_Client.prepareUpdate(esJobId.getIndex(), JobDetails.TYPE, esJobId.getId())
+                            .setScript(ElasticsearchScripts.newUpdateDetectorDescription(
+                                    detectorIndex, newDescription))
+                            .setRetryOnConflict(3).get();
+        }
+        catch (IndexNotFoundException e)
+        {
+            throw new UnknownJobException(jobId);
+        }
+
+        return true;
     }
 }
 

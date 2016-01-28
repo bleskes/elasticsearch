@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -39,6 +39,7 @@ import org.junit.Test;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
+import com.prelert.job.results.AnomalyRecord;
 import com.prelert.job.results.Bucket;
 import com.prelert.job.results.BucketInfluencer;
 import com.prelert.job.results.Influencer;
@@ -57,16 +58,20 @@ public class BucketParserTest
                 + "\"anomalyScore\" : 50.0,"
                 + "\"id\" : \"1369437000\","
                 + "\"eventCount\" : 1693,"
+                + "\"recordCount\" : 2,"
                 + "\"isInterim\" : false,"
                 + "\"bucketInfluencers\": ["
-                    + "{\"influencerFieldName\":\"bucketTime\",\"probability\":0.03,\"rawAnomalyScore\":0.05,\"initialAnomalyScore\":95.4},"
-                    + "{\"influencerFieldName\":\"user\",\"probability\":0.02,\"rawAnomalyScore\":0.13,\"initialAnomalyScore\":33.2}"
+                +     "{\"influencerFieldName\":\"bucketTime\",\"probability\":0.03,\"rawAnomalyScore\":0.05,\"initialAnomalyScore\":95.4},"
+                +     "{\"influencerFieldName\":\"user\",\"probability\":0.02,\"rawAnomalyScore\":0.13,\"initialAnomalyScore\":33.2}"
                 + "],"
                 + "\"influencers\" : ["
-                    + "{\"probability\":0.9,\"initialAnomalyScore\":97.1948,\"influencerFieldName\":\"src_ip\",\"influencerFieldValue\":\"23.28.243.150\"},"
-                    + "{\"probability\":0.4,\"initialAnomalyScore\":12.1948,\"influencerFieldName\":\"dst_ip\",\"influencerFieldValue\":\"23.28.243.1\"}"
-                  + "],"
-                + "\"detectors\" : []"
+                +     "{\"probability\":0.9,\"initialAnomalyScore\":97.1948,\"influencerFieldName\":\"src_ip\",\"influencerFieldValue\":\"23.28.243.150\"},"
+                +     "{\"probability\":0.4,\"initialAnomalyScore\":12.1948,\"influencerFieldName\":\"dst_ip\",\"influencerFieldValue\":\"23.28.243.1\"}"
+                +   "],"
+                + "\"records\" : ["
+                +     "{\"detectorIndex\":0,\"probability\":0.03,\"typical\":42.0,\"actual\":0.2},"
+                +     "{\"detectorIndex\":1,\"probability\":0.01,\"typical\":60.0,\"actual\":0.01}"
+                + "]"
                 + "}";
 
         ByteArrayInputStream inputStream = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
@@ -79,10 +84,20 @@ public class BucketParserTest
         assertEquals(50.0, b.getAnomalyScore(), ERROR);
         assertEquals(50.0, b.getInitialAnomalyScore(), ERROR);
         assertEquals("1369437000", b.getId());
-        assertEquals(0, b.getRecordCount());
-        assertEquals(0, b.getDetectors().size());
+        assertEquals(2, b.getRecordCount());
         assertEquals(1693, b.getEventCount());
         assertFalse(b.isInterim());
+
+        List<AnomalyRecord> records = b.getRecords();
+        assertEquals(2, records.size());
+        assertEquals(0, records.get(0).getDetectorIndex());
+        assertEquals(0.03, records.get(0).getProbability(), ERROR);
+        assertEquals(42.0, records.get(0).getTypical(), ERROR);
+        assertEquals(0.2, records.get(0).getActual(), ERROR);
+        assertEquals(1, records.get(1).getDetectorIndex());
+        assertEquals(0.01, records.get(1).getProbability(), ERROR);
+        assertEquals(60.0, records.get(1).getTypical(), ERROR);
+        assertEquals(0.01, records.get(1).getActual(), ERROR);
 
         List<BucketInfluencer> bucketInfluencers = b.getBucketInfluencers();
         assertEquals(2, bucketInfluencers.size());

@@ -133,12 +133,29 @@ public final class JobConfigurationVerifier
                     Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_REQUIRES_BUCKET_SPAN),
                     ErrorCodes.SCHEDULER_REQUIRES_BUCKET_SPAN);
         }
-        if (schedulerConfig.getDataSource() == DataSource.ELASTICSEARCH
-                && !isNullOrZero(analysisConfig.getLatency()))
+        if (schedulerConfig.getDataSource() == DataSource.ELASTICSEARCH)
         {
-            throw new JobConfigurationException(
-                    Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_ELASTICSEARCH_DOES_NOT_SUPPORT_LATENCY),
-                    ErrorCodes.SCHEDULER_ELASTICSEARCH_DOES_NOT_SUPPORT_LATENCY);
+            if (!isNullOrZero(analysisConfig.getLatency()))
+            {
+                throw new JobConfigurationException(
+                        Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_ELASTICSEARCH_DOES_NOT_SUPPORT_LATENCY),
+                        ErrorCodes.SCHEDULER_ELASTICSEARCH_DOES_NOT_SUPPORT_LATENCY);
+            }
+            if (schedulerConfig.getAggregationsOrAggs() != null
+                    && !SchedulerConfig.DOC_COUNT.equals(analysisConfig.getSummaryCountFieldName()))
+            {
+                throw new JobConfigurationException(
+                        Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_AGGREGATIONS_REQUIRES_SUMMARY_COUNT_FIELD,
+                            DataSource.ELASTICSEARCH.toString(), SchedulerConfig.DOC_COUNT),
+                        ErrorCodes.SCHEDULER_AGGREGATIONS_REQUIRES_SUMMARY_COUNT_FIELD);
+            }
+            if (config.getDataDescription() == null
+                    || config.getDataDescription().getFormat() != DataFormat.ELASTICSEARCH)
+            {
+                throw new JobConfigurationException(
+                        Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_ELASTICSEARCH_REQUIRES_DATAFORMAT_ELASTICSEARCH),
+                        ErrorCodes.SCHEDULER_ELASTICSEARCH_REQUIRES_DATAFORMAT_ELASTICSEARCH);
+            }
         }
     }
 

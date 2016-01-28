@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -118,7 +118,7 @@ public class JsonDataTransformTest
         DummyStatusReporter statusReporter = new DummyStatusReporter(usageReporter);
         DummyJobDataPersister dataPersister = new DummyJobDataPersister();
 
-        pm.writeToJob(dd, ac, new TransformConfigs(Arrays.<TransformConfig>asList()), bis, bos, statusReporter,
+        pm.writeToJob(dd, ac, null, new TransformConfigs(Arrays.<TransformConfig>asList()), bis, bos, statusReporter,
                  dataPersister, LOGGER);
         ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
 
@@ -249,7 +249,7 @@ public class JsonDataTransformTest
         DummyStatusReporter statusReporter = new DummyStatusReporter(usageReporter);
         DummyJobDataPersister dp = new DummyJobDataPersister();
 
-        pm.writeToJob(dd, ac, new TransformConfigs(Arrays.<TransformConfig>asList()), bis, bos, statusReporter, dp, LOGGER);
+        pm.writeToJob(dd, ac, null, new TransformConfigs(Arrays.<TransformConfig>asList()), bis, bos, statusReporter, dp, LOGGER);
         ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
 
         Assert.assertEquals(usageReporter.getTotalBytesRead(), statusReporter.getBytesRead());
@@ -380,7 +380,7 @@ public class JsonDataTransformTest
         DummyStatusReporter statusReporter = new DummyStatusReporter(usageReporter);
         DummyJobDataPersister dp = new DummyJobDataPersister();
 
-        pm.writeToJob(dd, ac, new TransformConfigs(Arrays.<TransformConfig>asList()), bis, bos, statusReporter, dp, LOGGER);
+        pm.writeToJob(dd, ac, null, new TransformConfigs(Arrays.<TransformConfig>asList()), bis, bos, statusReporter, dp, LOGGER);
         ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
 
         Assert.assertEquals(usageReporter.getTotalBytesRead(),
@@ -513,7 +513,7 @@ public class JsonDataTransformTest
         DummyStatusReporter statusReporter = new DummyStatusReporter(usageReporter);
         DummyJobDataPersister dp = new DummyJobDataPersister();
 
-        pm.writeToJob(dd, ac, new TransformConfigs(Arrays.<TransformConfig>asList()), bis, bos, statusReporter, dp, LOGGER);
+        pm.writeToJob(dd, ac, null, new TransformConfigs(Arrays.<TransformConfig>asList()), bis, bos, statusReporter, dp, LOGGER);
         ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
 
         Assert.assertEquals(usageReporter.getTotalBytesRead(),
@@ -681,7 +681,7 @@ public class JsonDataTransformTest
 
             DataDescription dd = dds[count++];
 
-            pm.writeToJob(dd, ac, new TransformConfigs(Arrays.<TransformConfig>asList()), bis, bos, statusReporter, dp, LOGGER);
+            pm.writeToJob(dd, ac, null, new TransformConfigs(Arrays.<TransformConfig>asList()), bis, bos, statusReporter, dp, LOGGER);
             ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
 
             Assert.assertEquals(usageReporter.getTotalBytesRead(),
@@ -826,7 +826,7 @@ public class JsonDataTransformTest
             DummyStatusReporter statusReporter = new DummyStatusReporter(usageReporter);
             DummyJobDataPersister dp = new DummyJobDataPersister();
 
-            pm.writeToJob(dd, ac, new TransformConfigs(Arrays.<TransformConfig>asList()), bis, bos, statusReporter, dp, LOGGER);
+            pm.writeToJob(dd, ac, null, new TransformConfigs(Arrays.<TransformConfig>asList()), bis, bos, statusReporter, dp, LOGGER);
             ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
 
             Assert.assertEquals(usageReporter.getTotalBytesRead(),
@@ -953,7 +953,7 @@ public class JsonDataTransformTest
         DummyStatusReporter statusReporter = new DummyStatusReporter(usageReporter);
         DummyJobDataPersister dp = new DummyJobDataPersister();
 
-        pm.writeToJob(dd, ac, new TransformConfigs(Arrays.<TransformConfig>asList()), bis, bos, statusReporter, dp, LOGGER);
+        pm.writeToJob(dd, ac, null, new TransformConfigs(Arrays.<TransformConfig>asList()), bis, bos, statusReporter, dp, LOGGER);
         ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
 
         Assert.assertEquals(usageReporter.getTotalBytesRead(),
@@ -1099,7 +1099,7 @@ public class JsonDataTransformTest
             DummyStatusReporter statusReporter = new DummyStatusReporter(usageReporter);
             DummyJobDataPersister dp = new DummyJobDataPersister();
 
-            pm.writeToJob(dd, ac, new TransformConfigs(Arrays.<TransformConfig>asList()), bis, bos, statusReporter, dp, LOGGER);
+            pm.writeToJob(dd, ac, null, new TransformConfigs(Arrays.<TransformConfig>asList()), bis, bos, statusReporter, dp, LOGGER);
             ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
 
             Assert.assertEquals(usageReporter.getTotalBytesRead(),

@@ -31,6 +31,7 @@ import org.apache.log4j.Logger;
 
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataDescription;
+import com.prelert.job.SchedulerConfig;
 import com.prelert.job.persistence.JobDataPersister;
 import com.prelert.job.status.StatusReporter;
 import com.prelert.job.transform.TransformConfigs;
@@ -51,7 +52,8 @@ public class DataToProcessWriterFactory
      *  format is JSON or otherwise a {@link CsvDataToProcessWriter}
      */
     public DataToProcessWriter create(RecordWriter writer,
-            DataDescription dataDescription, AnalysisConfig analysisConfig, TransformConfigs transforms,
+            DataDescription dataDescription, AnalysisConfig analysisConfig,
+            SchedulerConfig schedulerConfig, TransformConfigs transforms,
             StatusReporter statusReporter, JobDataPersister jobDataPersister, Logger logger)
     {
         switch (dataDescription.getFormat())
@@ -59,7 +61,7 @@ public class DataToProcessWriterFactory
             case JSON:
             case ELASTICSEARCH:
                 return new JsonDataToProcessWriter(writer, dataDescription, analysisConfig,
-                        transforms, statusReporter, jobDataPersister, logger);
+                        schedulerConfig, transforms, statusReporter, jobDataPersister, logger);
             case DELIMITED:
                 return new CsvDataToProcessWriter(writer, dataDescription, analysisConfig,
                         transforms, statusReporter, jobDataPersister, logger);

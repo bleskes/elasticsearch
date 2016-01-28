@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -34,6 +34,7 @@ import java.io.InputStreamReader;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
+import java.nio.charset.StandardCharsets;
 
 import org.apache.log4j.Logger;
 
@@ -79,7 +80,7 @@ public class SingleLineDataToProcessWriter extends AbstractDataToProcessWriter
 
         m_StatusReporter.startNewIncrementalCount();
 
-        try (BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream)))
+        try (BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8)))
         {
             String[] header = {RAW};
             buildTransformsAndWriteHeader(header);

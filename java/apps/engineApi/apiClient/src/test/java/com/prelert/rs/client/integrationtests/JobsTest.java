@@ -232,6 +232,7 @@ public class JobsTest implements Closeable
         JobDetails job = doc.getDocument();
 
         Detector d = new Detector();
+        d.setDetectorDescription("responsetime by airline");
         d.setFieldName("responsetime");
         d.setByFieldName("airline");
         AnalysisConfig ac = new AnalysisConfig();
@@ -332,6 +333,7 @@ public class JobsTest implements Closeable
     throws ClientProtocolException, IOException
     {
         Detector d = new Detector();
+        d.setDetectorDescription("responsetime by airline partitionfield=sourcetype");
         d.setFieldName("responsetime");
         d.setByFieldName("airline");
         d.setPartitionFieldName("sourcetype");
@@ -409,6 +411,7 @@ public class JobsTest implements Closeable
     throws ClientProtocolException, IOException
     {
         Detector d = new Detector();
+        d.setDetectorDescription("responsetime by airline");
         d.setFieldName("responsetime");
         d.setByFieldName("airline");
         AnalysisConfig ac = new AnalysisConfig();
@@ -472,6 +475,7 @@ public class JobsTest implements Closeable
     private void verifyFareQuoteTimeFormatJobTest(JobDetails job, String jobId)
     {
         Detector d = new Detector();
+        d.setDetectorDescription("responsetime by airline");
         d.setFieldName("responsetime");
         d.setByFieldName("airline");
         AnalysisConfig ac = new AnalysisConfig();
@@ -520,6 +524,7 @@ public class JobsTest implements Closeable
     throws ClientProtocolException, IOException
     {
         Detector d = new Detector();
+        d.setDetectorDescription("FlightCentre analysis");
         d.setFieldName("responsetime");
         d.setByFieldName("airline");
         AnalysisConfig ac = new AnalysisConfig();
@@ -907,7 +912,6 @@ public class JobsTest implements Closeable
                 test(b.getBucketInfluencers().get(0).getProbability() >= 0.0);
                 test(b.getBucketInfluencers().get(0).getProbability() <= 1.0);
             }
-            test(b.getDetectors().size() == 0);
             test(b.getId() != null && b.getId().isEmpty() == false);
             long epoch = b.getEpoch();
             Date date = new Date(epoch * 1000);

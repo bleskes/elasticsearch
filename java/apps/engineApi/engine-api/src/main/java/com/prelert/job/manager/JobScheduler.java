@@ -153,7 +153,7 @@ public class JobScheduler
 
         // Only update last interval end and flush if we successfully submitted all data
         // the extractor was asked to get
-        m_LastIntervalEndMs = Long.valueOf(end);
+        m_LastIntervalEndMs = Long.parseLong(end);
         makeResultsAvailable();
     }
 

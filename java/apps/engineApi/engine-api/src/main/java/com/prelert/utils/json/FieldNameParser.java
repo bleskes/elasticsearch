@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -79,7 +79,6 @@ public abstract class FieldNameParser<T>
     {
         T result = supply();
         parse(result);
-        postProcess(result);
         return result;
     }
 
@@ -102,7 +101,6 @@ public abstract class FieldNameParser<T>
     {
         T result = supply();
         parseAfterStartObject(result);
-        postProcess(result);
         return result;
     }
 
@@ -157,15 +155,6 @@ public abstract class FieldNameParser<T>
 
     protected abstract void handleFieldName(String fieldName, T data)
             throws AutoDetectParseException, JsonParseException, IOException;
-
-    /**
-     * Override to perform some post processing on the parsed object
-     * @param obj the object of type T to be processed
-     */
-    protected void postProcess(T obj)
-    {
-        // Do nothing
-    }
 
     protected int parseAsIntOrZero(String fieldName) throws JsonParseException, IOException
     {

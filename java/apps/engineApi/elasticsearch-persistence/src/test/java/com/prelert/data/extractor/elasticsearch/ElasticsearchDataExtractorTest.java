@@ -169,7 +169,8 @@ public class ElasticsearchDataExtractorTest
                 + "            \"range\": {"
                 + "              \"time\": {"
                 + "                \"gte\": 1400000000,"
-                + "                \"lt\": 1500000000"
+                + "                \"lt\": 1500000000,"
+                + "                \"format\": \"epoch_millis\""
                 + "              }"
                 + "            }"
                 + "          }"
@@ -276,7 +277,7 @@ public class ElasticsearchDataExtractorTest
     private void createExtractor(MockHttpGetRequester httpGerRequester)
     {
         m_Extractor = new ElasticsearchDataExtractor(httpGerRequester, BASE_URL, INDICES, TYPES,
-                SEARCH, TIME_FIELD);
+                SEARCH, null, TIME_FIELD);
     }
 
     private static class MockHttpGetRequester extends HttpGetRequester

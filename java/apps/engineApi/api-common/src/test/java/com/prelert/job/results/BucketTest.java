@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -112,18 +112,6 @@ public class BucketTest
     }
 
     @Test
-    public void testEquals_GivenDifferentDetectors()
-    {
-        Bucket bucket1 = new Bucket();
-        bucket1.setDetectors(Arrays.asList(new Detector()));
-        Bucket bucket2 = new Bucket();
-        bucket2.setDetectors(null);
-
-        assertTrue(bucket1.equals(bucket2));
-        assertTrue(bucket2.equals(bucket1));
-    }
-
-    @Test
     public void testEquals_GivenOneHasRecordsAndTheOtherDoesNot()
     {
         Bucket bucket1 = new Bucket();
@@ -208,7 +196,6 @@ public class BucketTest
     @Test
     public void testEquals_GivenEqualBuckets()
     {
-        Detector detector = new Detector();
         AnomalyRecord record = new AnomalyRecord();
         Influencer influencer = new Influencer("testField", "testValue");
         BucketInfluencer bucketInfluencer = new BucketInfluencer();
@@ -219,7 +206,6 @@ public class BucketTest
         Bucket bucket1 = new Bucket();
         bucket1.setAnomalyScore(42.0);
         bucket1.setInitialAnomalyScore(92.0);
-        bucket1.setDetectors(Arrays.asList(detector));
         bucket1.setEventCount(134);
         bucket1.setId("13546461");
         bucket1.setInterim(true);
@@ -233,7 +219,6 @@ public class BucketTest
         Bucket bucket2 = new Bucket();
         bucket2.setAnomalyScore(42.0);
         bucket2.setInitialAnomalyScore(92.0);
-        bucket2.setDetectors(Arrays.asList(detector));
         bucket2.setEventCount(134);
         bucket2.setId("13546461");
         bucket2.setInterim(true);

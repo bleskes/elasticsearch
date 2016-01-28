@@ -28,6 +28,7 @@
 package com.prelert.rs.data.extraction;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.util.Arrays;
@@ -49,7 +50,7 @@ public class DataExtractorFactoryImplTest
     private DataExtractorFactoryImpl m_Factory = new DataExtractorFactoryImpl();
 
     @Test
-    public void testNewExtractor_GivenDataSourceIsElasticsearch()
+    public void testNewExtractor_GivenDataSourceIsElasticsearch_NoAggs()
     {
         DataDescription dataDescription = new DataDescription();
         dataDescription.setFormat(DataFormat.ELASTICSEARCH);
@@ -72,6 +73,52 @@ public class DataExtractorFactoryImplTest
 
         assertTrue(dataExtractor instanceof ElasticsearchDataExtractor);
         assertEquals("\"match_all\":{}", m_Factory.stringifyElasticsearchQuery(query));
+        assertNull(m_Factory.stringifyElasticsearchAggregations(null, null));
+    }
+
+    @Test
+    public void testNewExtractor_GivenDataSourceIsElasticsearch_Aggs()
+    {
+        DataDescription dataDescription = new DataDescription();
+        dataDescription.setFormat(DataFormat.ELASTICSEARCH);
+        dataDescription.setTimeField("time");
+
+        SchedulerConfig schedulerConfig = new SchedulerConfig();
+        schedulerConfig.setDataSource(DataSource.ELASTICSEARCH);
+        schedulerConfig.setBaseUrl("http://localhost:9200");
+        schedulerConfig.setIndexes(Arrays.asList("foo"));
+        schedulerConfig.setTypes(Arrays.asList("bar"));
+        Map<String, Object> query = new HashMap<>();
+        query.put("match_all", new HashMap<String, Object>());
+        schedulerConfig.setQuery(query);
+
+        // This block of nested maps builds the aggs structure required by Elasticsearch
+        Map<String, Object> avg = new HashMap<>();
+        avg.put("field", "responsetime");
+        Map<String, Object> valueLevel = new HashMap<>();
+        valueLevel.put("avg", avg);
+        Map<String, Object> nestedAggs = new HashMap<>();
+        nestedAggs.put("value_level", valueLevel);
+        Map<String, Object> histogram = new HashMap<>();
+        histogram.put("field", "time");
+        histogram.put("interval", 3600000);
+        Map<String, Object> timeLevel = new HashMap<>();
+        timeLevel.put("histogram", histogram);
+        timeLevel.put("aggs", nestedAggs);
+        Map<String, Object> aggs = new HashMap<>();
+        aggs.put("time_level", timeLevel);
+        schedulerConfig.setAggs(aggs);
+
+        JobDetails job = new JobDetails();
+        job.setDataDescription(dataDescription);
+        job.setSchedulerConfig(schedulerConfig);
+
+        DataExtractor dataExtractor = m_Factory.newExtractor(job);
+
+        assertTrue(dataExtractor instanceof ElasticsearchDataExtractor);
+        assertEquals("\"match_all\":{}", m_Factory.stringifyElasticsearchQuery(query));
+        assertEquals("\"aggs\":{\"time_level\":{\"histogram\":{\"field\":\"time\",\"interval\":3600000},\"aggs\":{\"value_level\":{\"avg\":{\"field\":\"responsetime\"}}}}}",
+                m_Factory.stringifyElasticsearchAggregations(null, aggs));
     }
 
     @Test (expected = IllegalArgumentException.class)

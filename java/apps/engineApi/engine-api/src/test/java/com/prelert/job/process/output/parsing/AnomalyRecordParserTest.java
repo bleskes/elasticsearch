@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -72,7 +72,8 @@ public class AnomalyRecordParserTest
     public void testParseJson_GivenAnomalyRecordWithAllFieldsPopulatedAndValid()
             throws JsonParseException, IOException, AutoDetectParseException
     {
-        String input = "{\"probability\": 0.01,"
+        String input = "{\"detectorIndex\": 3,"
+                + "\"probability\" : 0.01,"
                 + "\"anomalyScore\" : 42.0,"
                 + "\"normalizedProbability\" : 0.05,"
                 + "\"byFieldName\" : \"someByFieldName\","
@@ -98,6 +99,7 @@ public class AnomalyRecordParserTest
 
         AnomalyRecord anomalyRecord = new AnomalyRecordParser(parser).parseJson();
 
+        assertEquals(3, anomalyRecord.getDetectorIndex());
         assertEquals(0.01, anomalyRecord.getProbability(), ERROR);
         assertEquals(42.0, anomalyRecord.getAnomalyScore(), ERROR);
         assertEquals(0.05, anomalyRecord.getNormalizedProbability(), ERROR);

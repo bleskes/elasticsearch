@@ -25,59 +25,42 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.job.manager;
+package com.prelert.job.persistence.elasticsearch;
 
-import java.time.Duration;
+import static org.junit.Assert.assertEquals;
 
-import com.google.common.base.Preconditions;
+import org.elasticsearch.script.Script;
+import org.junit.Test;
 
-/**
- * Factory methods for a sensible default for the scheduler frequency
- */
-final class DefaultFrequency
+public class ElasticsearchScriptsTest
 {
-    private static final int SECONDS_IN_MINUTE = 60;
-    private static final int TWO_MINS_SECONDS = 2 * SECONDS_IN_MINUTE;
-    private static final int TWENTY_MINS_SECONDS = 20 * SECONDS_IN_MINUTE;
-    private static final int HALF_DAY_SECONDS = 12 * 60 * SECONDS_IN_MINUTE;
-    private static final Duration TEN_MINUTES = Duration.ofMinutes(10);
-    private static final Duration ONE_HOUR = Duration.ofHours(1);
-
-    private DefaultFrequency()
+    @Test
+    public void testNewUpdateBucketCount()
     {
-        // Do nothing
+        Script script = ElasticsearchScripts.newUpdateBucketCount(42L);
+        assertEquals("update-bucket-count", script.getScript());
+        assertEquals(1, script.getParams().size());
+        assertEquals(42L, script.getParams().get("count"));
     }
 
-    /**
-     * Creates a sensible default frequency for a given bucket span.
-     *
-     * The default depends on the bucket span:
-     * <ul>
-     *   <li> <= 2 mins -> 1 min
-     *   <li> <= 20 mins -> bucket span / 2
-     *   <li> <= 12 hours -> 10 mins
-     *   <li> > 12 hours -> 1 hour
-     * </ul>
-     *
-     * @param bucketSpanSeconds the bucket span in seconds
-     * @return the default frequency
-     */
-    public static Duration ofBucketSpan(long bucketSpanSeconds)
+    @Test
+    public void testNewUpdateUsage()
     {
-        Preconditions.checkArgument(bucketSpanSeconds > 0);
+        Script script = ElasticsearchScripts.newUpdateUsage(1L, 2L, 3L);
+        assertEquals("update-usage", script.getScript());
+        assertEquals(3, script.getParams().size());
+        assertEquals(1L, script.getParams().get("bytes"));
+        assertEquals(2L, script.getParams().get("fieldCount"));
+        assertEquals(3L, script.getParams().get("recordCount"));
+    }
 
-        if (bucketSpanSeconds <= TWO_MINS_SECONDS)
-        {
-            return Duration.ofSeconds(SECONDS_IN_MINUTE);
-        }
-        if (bucketSpanSeconds <= TWENTY_MINS_SECONDS)
-        {
-            return Duration.ofSeconds(bucketSpanSeconds / 2);
-        }
-        if (bucketSpanSeconds <= HALF_DAY_SECONDS)
-        {
-            return TEN_MINUTES;
-        }
-        return ONE_HOUR;
+    @Test
+    public void testNewUpdateDetectorDescription()
+    {
+        Script script = ElasticsearchScripts.newUpdateDetectorDescription(2, "Almost Blue");
+        assertEquals("update-detector-description", script.getScript());
+        assertEquals(2, script.getParams().size());
+        assertEquals(2, script.getParams().get("detectorIndex"));
+        assertEquals("Almost Blue", script.getParams().get("newDescription"));
     }
 }

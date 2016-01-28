@@ -27,13 +27,17 @@
 
 package com.prelert.job;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
@@ -58,7 +62,7 @@ public class SchedulerConfig
 
         /**
          * Case-insensitive from string method.
-         * Works with either ELASTICSEARCH, Elasticsearch, ElasticSearch, etc.
+         * Works with ELASTICSEARCH, Elasticsearch, ElasticSearch, etc.
          *
          * @param value String representation
          * @return The data source
@@ -70,6 +74,16 @@ public class SchedulerConfig
             return DataSource.valueOf(valueUpperCase);
         }
     }
+
+    /**
+     * The field name used to specify aggregation fields in Elasticsearch aggregations
+     */
+    private static final String FIELD = "field";
+
+    /**
+     * The field name used to specify document counts in Elasticsearch aggregations
+     */
+    public static final String DOC_COUNT = "doc_count";
 
     /**
      * The default query for elasticsearch searches
@@ -88,6 +102,8 @@ public class SchedulerConfig
     public static final String INDEXES = "indexes";
     public static final String TYPES = "types";
     public static final String QUERY = "query";
+    public static final String AGGREGATIONS = "aggregations";
+    public static final String AGGS = "aggs";
     public static final String START_TIME = "startTime";
     public static final String END_TIME = "endTime";
 
@@ -118,6 +134,8 @@ public class SchedulerConfig
     private List<String> m_Indexes;
     private List<String> m_Types;
     private Map<String, Object> m_Query;
+    private Map<String, Object> m_Aggregations;
+    private Map<String, Object> m_Aggs;
     private Date m_StartTime;
     private Date m_EndTime;
 
@@ -256,6 +274,99 @@ public class SchedulerConfig
     }
 
     /**
+     * For the ELASTICSEARCH data source only, optional Elasticsearch
+     * aggregations to apply to the search to be submitted to Elasticsearch to
+     * get the input data.  This class does not attempt to interpret the
+     * aggregations.  The map will be converted back to an arbitrary JSON object.
+     * Synonym for {@link getAggs()} (like Elasticsearch).
+     * @return The aggregations, or <code>null</code> if not set.
+     */
+    public Map<String, Object> getAggregations()
+    {
+        return m_Aggregations;
+    }
+
+    public void setAggregations(Map<String, Object> aggregations)
+    {
+        // It's only expected that one of aggregations or aggs will be set,
+        // having two member variables makes it easier to remember which the
+        // user used so their input can be recreated
+        m_Aggregations = aggregations;
+    }
+
+    /**
+     * For the ELASTICSEARCH data source only, optional Elasticsearch
+     * aggregations to apply to the search to be submitted to Elasticsearch to
+     * get the input data.  This class does not attempt to interpret the
+     * aggregations.  The map will be converted back to an arbitrary JSON object.
+     * Synonym for {@link getAggregations()} (like Elasticsearch).
+     * @return The aggregations, or <code>null</code> if not set.
+     */
+    public Map<String, Object> getAggs()
+    {
+        return m_Aggs;
+    }
+
+    public void setAggs(Map<String, Object> aggs)
+    {
+        // It's only expected that one of aggregations or aggs will be set,
+        // having two member variables makes it easier to remember which the
+        // user used so their input can be recreated
+        m_Aggs = aggs;
+    }
+
+    /**
+     * Convenience method to get either aggregations or aggs.
+     * @return The aggregations (whether initially specified in aggregations
+     * or aggs), or <code>null</code> if neither are set.
+     */
+    @JsonIgnore
+    public Map<String, Object> getAggregationsOrAggs()
+    {
+        return (m_Aggregations != null) ? m_Aggregations : m_Aggs;
+    }
+
+    /**
+     * Build the list of fields expected in the output from aggregations
+     * submitted to Elasticsearch.
+     * @return The list of fields, or <code>null</code> if there are no aggregations.
+     */
+    public List<String> buildAggregatedFieldList()
+    {
+        Map<String, Object> aggs = getAggregationsOrAggs();
+        if (aggs == null)
+        {
+            return null;
+        }
+
+        SortedMap<Integer, String> orderedFields = new TreeMap<>();
+
+        scanSubLevel(aggs, 0, orderedFields);
+
+        return new ArrayList<>(orderedFields.values());
+    }
+
+    private void scanSubLevel(Map<String, Object> subLevel, int depth,
+            SortedMap<Integer, String> orderedFields)
+    {
+        for (Map.Entry<String, Object> entry : subLevel.entrySet())
+        {
+            Object value = entry.getValue();
+            if (value instanceof Map<?, ?>)
+            {
+                scanSubLevel((Map<String, Object>)value, depth + 1, orderedFields);
+            }
+            else if (value instanceof String)
+            {
+                if (FIELD.equals(entry.getKey()))
+                {
+                    orderedFields.put(depth, (String)value);
+                }
+            }
+        }
+    }
+
+    /**
      * For the ELASTICSEARCH data source only, the time from which to pull input
      * data.  <code>null</code> means no earliest time.
      * @return The earliest time to search, or <code>null</code> if not set.
@@ -342,6 +453,8 @@ public class SchedulerConfig
                 Objects.equals(this.m_Indexes, that.m_Indexes) &&
                 Objects.equals(this.m_Types, that.m_Types) &&
                 Objects.equals(this.m_Query, that.m_Query) &&
+                Objects.equals(this.m_Aggregations, that.m_Aggregations) &&
+                Objects.equals(this.m_Aggs, that.m_Aggs) &&
                 Objects.equals(this.m_StartTime, that.m_StartTime) &&
                 Objects.equals(this.m_EndTime, that.m_EndTime);
     }
@@ -350,6 +463,6 @@ public class SchedulerConfig
     public int hashCode()
     {
         return Objects.hash(m_DataSource, m_Frequency, m_QueryDelay, m_Path, m_Tail, m_BaseUrl,
-                m_Indexes, m_Types, m_Query, m_StartTime, m_EndTime);
+                m_Indexes, m_Types, m_Query, m_Aggregations, m_Aggs, m_StartTime, m_EndTime);
     }
 }

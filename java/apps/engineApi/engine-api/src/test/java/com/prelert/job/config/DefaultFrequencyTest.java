@@ -25,13 +25,15 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.job.manager;
+package com.prelert.job.config;
 
 import static org.junit.Assert.assertEquals;
 
 import java.time.Duration;
 
 import org.junit.Test;
+
+import com.prelert.job.config.DefaultFrequency;
 
 public class DefaultFrequencyTest
 {

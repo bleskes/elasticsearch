@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -96,6 +96,7 @@ public class ProcessAndDataDescriptionTest
                 new DataDescription(),
                 60L,
                 new AnalysisConfig(),
+                null,
                 transformConfigs,
                 logger,
                 mock(StatusReporter.class),

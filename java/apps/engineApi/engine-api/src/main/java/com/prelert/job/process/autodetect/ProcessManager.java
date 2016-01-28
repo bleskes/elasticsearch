@@ -43,11 +43,13 @@ import java.util.concurrent.TimeoutException;
 import org.apache.log4j.Logger;
 
 import com.fasterxml.jackson.core.JsonParseException;
+
 import com.prelert.app.Shutdownable;
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataCounts;
 import com.prelert.job.DataDescription;
 import com.prelert.job.JobStatus;
+import com.prelert.job.SchedulerConfig;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.alert.AlertObserver;
 import com.prelert.job.errorcodes.ErrorCodes;
@@ -214,7 +216,8 @@ public class ProcessManager implements Shutdownable
 
             // write the data to the process
             stats = writeToJob(process.getDataDescription(), process.getAnalysisConfig(),
-                    process.getTransforms(), input, process.getProcess().getOutputStream(),
+                    process.getSchedulerConfig(), process.getTransforms(),
+                    input, process.getProcess().getOutputStream(),
                     process.getStatusReporter(),
                     jobDataPersister,
                     process.getLogger());
@@ -684,6 +687,7 @@ public class ProcessManager implements Shutdownable
     public DataCounts writeToJob(RecordWriter recordWriter,
             DataDescription dataDescription,
             AnalysisConfig analysisConfig,
+            SchedulerConfig schedulerConfig,
             TransformConfigs transforms,
             InputStream input,
             StatusReporter statusReporter,
@@ -693,7 +697,7 @@ public class ProcessManager implements Shutdownable
         HighProportionOfBadTimestampsException, OutOfOrderRecordsException, MalformedJsonException
     {
         DataToProcessWriter writer = new DataToProcessWriterFactory().create(recordWriter,
-                dataDescription, analysisConfig, transforms, statusReporter, dataPersister, jobLogger);
+                dataDescription, analysisConfig, schedulerConfig, transforms, statusReporter, dataPersister, jobLogger);
 
         return writer.write(input);
     }
@@ -727,6 +731,7 @@ public class ProcessManager implements Shutdownable
      */
     public DataCounts writeToJob(DataDescription dataDescription,
             AnalysisConfig analysisConfig,
+            SchedulerConfig schedulerConfig,
             TransformConfigs transforms,
             InputStream input, OutputStream output,
             StatusReporter statusReporter,
@@ -745,7 +750,7 @@ public class ProcessManager implements Shutdownable
         try
         {
             DataToProcessWriter writer = new DataToProcessWriterFactory().create(lengthEncodedWriter,
-                    dataDescription, analysisConfig, transforms, statusReporter, dataPersister, jobLogger);
+                    dataDescription, analysisConfig, schedulerConfig, transforms, statusReporter, dataPersister, jobLogger);
 
             return writer.write(countingStream);
         }

@@ -23,17 +23,17 @@
     <dependency>
       <groupId>org.eclipse.jetty</groupId>
       <artifactId>jetty-server</artifactId>
-      <version>9.3.6.v20151106</version>
+      <version>9.3.7.v20160115</version>
     </dependency>
     <dependency>
       <groupId>org.eclipse.jetty</groupId>
       <artifactId>jetty-servlet</artifactId>
-      <version>9.3.6.v20151106</version>
+      <version>9.3.7.v20160115</version>
     </dependency>
     <dependency>
       <groupId>org.eclipse.jetty</groupId>
       <artifactId>jetty-servlets</artifactId>
-      <version>9.3.6.v20151106</version>
+      <version>9.3.7.v20160115</version>
     </dependency>
     <dependency>
       <groupId>org.glassfish.jersey.containers</groupId>
@@ -161,7 +161,7 @@
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>findbugs-maven-plugin</artifactId>
-        <version>3.0.1</version>
+        <version>3.0.3</version>
         <configuration>
           <threshold>High</threshold>
           <effort>Default</effort>

@@ -56,6 +56,7 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.prelert.app.Shutdownable;
 import com.prelert.job.DataCounts;
+import com.prelert.job.Detector;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.JobDetails;
 import com.prelert.job.JobIdAlreadyExistsException;
@@ -63,6 +64,8 @@ import com.prelert.job.JobSchedulerStatus;
 import com.prelert.job.ModelDebugConfig;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.alert.AlertObserver;
+import com.prelert.job.config.DefaultDetectorDescription;
+import com.prelert.job.config.DefaultFrequency;
 import com.prelert.job.config.verification.JobConfigurationException;
 import com.prelert.job.data.extraction.DataExtractorFactory;
 import com.prelert.job.errorcodes.ErrorCodes;
@@ -206,7 +209,8 @@ public class JobManager implements DataProcessor, Shutdownable
      * Get the details of the specific job wrapped in a <code>Optional</code>
      *
      * @param jobId
-     * @return The JobDetails or throws UnknownJobException
+     * @return An {@code Optional} containing the {@code JobDetails} if a job with the given
+     * {@code jobId} exists, or an empty {@code Optional} otherwise
      */
     public Optional<JobDetails> getJob(String jobId)
     {
@@ -293,6 +297,7 @@ public class JobManager implements DataProcessor, Shutdownable
         }
 
         JobDetails jobDetails = new JobDetails(jobId, jobConfig);
+        fillDefaults(jobDetails);
 
         m_JobProvider.createJob(jobDetails);
 
@@ -302,6 +307,17 @@ public class JobManager implements DataProcessor, Shutdownable
         }
 
         return jobDetails;
+    }
+
+    private void fillDefaults(JobDetails jobDetails)
+    {
+        for (Detector detector : jobDetails.getAnalysisConfig().getDetectors())
+        {
+            if (detector.getDetectorDescription() == null)
+            {
+                detector.setDetectorDescription(DefaultDetectorDescription.of(detector));
+            }
+        }
     }
 
     private void createJobSchedulerAndStart(JobDetails job)
@@ -745,6 +761,7 @@ public class JobManager implements DataProcessor, Shutdownable
         JobDetails job = result.get();
         m_ProcessManager.writeToJob(writer, job.getDataDescription(),
                             job.getAnalysisConfig(),
+                            job.getSchedulerConfig(),
                             new TransformConfigs(job.getTransforms()), input,
                             new NoneStatusReporter("preview-job"),
                             new NoneJobDataPersister(), LOGGER);
@@ -1027,6 +1044,11 @@ public class JobManager implements DataProcessor, Shutdownable
         }
     }
 
+    public boolean updateDetectorDescription(String jobId, int detectorIndex, String newDescription)
+            throws UnknownJobException
+    {
+        return m_JobProvider.updateDetectorDescription(jobId, detectorIndex, newDescription);
+    }
 
     @Override
     public void shutdown()

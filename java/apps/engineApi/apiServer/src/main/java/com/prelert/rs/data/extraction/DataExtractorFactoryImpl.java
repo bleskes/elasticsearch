@@ -32,6 +32,7 @@ import java.util.Map;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
+
 import com.prelert.data.extractor.elasticsearch.ElasticsearchDataExtractor;
 import com.prelert.job.JobDetails;
 import com.prelert.job.SchedulerConfig;
@@ -58,7 +59,9 @@ public class DataExtractorFactoryImpl implements DataExtractorFactory
         SchedulerConfig schedulerConfig = job.getSchedulerConfig();
         return ElasticsearchDataExtractor.create(schedulerConfig.getBaseUrl(),
                 schedulerConfig.getIndexes(), schedulerConfig.getTypes(),
-                stringifyElasticsearchQuery(schedulerConfig.getQuery()), timeField);
+                stringifyElasticsearchQuery(schedulerConfig.getQuery()),
+                stringifyElasticsearchAggregations(schedulerConfig.getAggregations(), schedulerConfig.getAggs()),
+                timeField);
     }
 
     @VisibleForTesting
@@ -70,6 +73,21 @@ public class DataExtractorFactoryImpl implements DataExtractorFactory
             return queryStr.substring(1, queryStr.length() - 1);
         }
         return queryStr;
+    }
+
+    @VisibleForTesting
+    String stringifyElasticsearchAggregations(Map<String, Object> aggregationsMap,
+            Map<String, Object> aggsMap)
+    {
+        if (aggregationsMap != null)
+        {
+            return "\"" + SchedulerConfig.AGGREGATIONS + "\":" + writeObjectAsJson(aggregationsMap);
+        }
+        if (aggsMap != null)
+        {
+            return "\"" + SchedulerConfig.AGGS + "\":" + writeObjectAsJson(aggsMap);
+        }
+        return null;
     }
 
     private static String writeObjectAsJson(Object obj)

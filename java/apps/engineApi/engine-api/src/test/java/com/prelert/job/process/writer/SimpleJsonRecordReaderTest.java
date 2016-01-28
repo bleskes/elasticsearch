@@ -43,7 +43,7 @@ import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.prelert.job.process.exceptions.MalformedJsonException;
 
-public class JsonRecordReaderTest
+public class SimpleJsonRecordReaderTest
 {
     @Test
     public void testRead() throws JsonParseException, IOException, MalformedJsonException
@@ -52,7 +52,7 @@ public class JsonRecordReaderTest
         JsonParser parser = createParser(data);
         Map<String, Integer> fieldMap = createFieldMap();
 
-        JsonRecordReader reader = new JsonRecordReader(parser, fieldMap, "", mock(Logger.class));
+        SimpleJsonRecordReader reader = new SimpleJsonRecordReader(parser, fieldMap, "", mock(Logger.class));
 
         String record [] = new String[3];
         boolean gotFields [] = new boolean[3];
@@ -80,7 +80,7 @@ public class JsonRecordReaderTest
         fieldMap.put("b", 1);
         fieldMap.put("c.e", 2);
 
-        JsonRecordReader reader = new JsonRecordReader(parser, fieldMap, "", mock(Logger.class));
+        SimpleJsonRecordReader reader = new SimpleJsonRecordReader(parser, fieldMap, "", mock(Logger.class));
 
         String record [] = new String[3];
         boolean gotFields [] = new boolean[3];
@@ -106,7 +106,7 @@ public class JsonRecordReaderTest
         JsonParser parser = createParser(data);
         Map<String, Integer> fieldMap = createFieldMap();
 
-        JsonRecordReader reader = new JsonRecordReader(parser, fieldMap, "", mock(Logger.class));
+        SimpleJsonRecordReader reader = new SimpleJsonRecordReader(parser, fieldMap, "", mock(Logger.class));
 
         String record [] = new String[3];
         boolean gotFields [] = new boolean[3];
@@ -129,7 +129,7 @@ public class JsonRecordReaderTest
         JsonParser parser = createParser(data);
         Map<String, Integer> fieldMap = createFieldMap();
 
-        JsonRecordReader reader = new JsonRecordReader(parser, fieldMap, "", mock(Logger.class));
+        SimpleJsonRecordReader reader = new SimpleJsonRecordReader(parser, fieldMap, "", mock(Logger.class));
 
         String record [] = new String[3];
         boolean gotFields [] = new boolean[3];
@@ -152,7 +152,7 @@ public class JsonRecordReaderTest
         // missing a ':'
         String format = "{\"a\":1%1$d, \"b\"2%1$d, \"c\":3%1$d}\n";
         StringBuilder builder = new StringBuilder();
-        for (int i=0; i<JsonRecordReader.PARSE_ERRORS_LIMIT; i++)
+        for (int i=0; i<SimpleJsonRecordReader.PARSE_ERRORS_LIMIT; i++)
         {
             builder.append(String.format(format, i));
         }
@@ -160,11 +160,11 @@ public class JsonRecordReaderTest
         JsonParser parser = createParser(builder.toString());
         Map<String, Integer> fieldMap = createFieldMap();
 
-        JsonRecordReader reader = new JsonRecordReader(parser, fieldMap, "", mock(Logger.class));
+        SimpleJsonRecordReader reader = new SimpleJsonRecordReader(parser, fieldMap, "", mock(Logger.class));
         String record [] = new String[3];
         boolean gotFields [] = new boolean[3];
 
-        for (int i=0; i<JsonRecordReader.PARSE_ERRORS_LIMIT; i++)
+        for (int i=0; i<SimpleJsonRecordReader.PARSE_ERRORS_LIMIT; i++)
         {
             // this should throw after PARSE_ERRORS_LIMIT errors
             reader.read(record, gotFields);
@@ -182,7 +182,7 @@ public class JsonRecordReaderTest
         JsonParser parser = createParser(data);
         Map<String, Integer> fieldMap = createFieldMap();
 
-        JsonRecordReader reader = new JsonRecordReader(parser, fieldMap, "_source", mock(Logger.class));
+        SimpleJsonRecordReader reader = new SimpleJsonRecordReader(parser, fieldMap, "_source", mock(Logger.class));
 
         String record [] = new String[3];
         boolean gotFields [] = new boolean[3];

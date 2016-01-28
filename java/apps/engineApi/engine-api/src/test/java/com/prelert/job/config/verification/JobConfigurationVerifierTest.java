@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -30,14 +30,19 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Map;
 
 import junit.framework.Assert;
 
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.AnalysisLimits;
@@ -428,6 +433,7 @@ public class JobConfigurationVerifierTest
         SchedulerConfig schedulerConfig = createValidElasticsearchSchedulerConfig();
         JobConfiguration jobConfig = buildJobConfigurationNoTransforms();
         jobConfig.setSchedulerConfig(schedulerConfig);
+        jobConfig.getDataDescription().setFormat(DataFormat.ELASTICSEARCH);
         jobConfig.getAnalysisConfig().setBucketSpan(1800L);
         jobConfig.getAnalysisConfig().setLatency(0L);
 
@@ -440,8 +446,62 @@ public class JobConfigurationVerifierTest
         SchedulerConfig schedulerConfig = createValidElasticsearchSchedulerConfig();
         JobConfiguration jobConfig = buildJobConfigurationNoTransforms();
         jobConfig.setSchedulerConfig(schedulerConfig);
+        jobConfig.getDataDescription().setFormat(DataFormat.ELASTICSEARCH);
         jobConfig.getAnalysisConfig().setBucketSpan(1800L);
         jobConfig.getAnalysisConfig().setLatency(null);
+
+        assertTrue(JobConfigurationVerifier.verify(jobConfig));
+    }
+
+    @Test
+    public void testVerify_GivenElasticsearchSchedulerWithAggsAndCorrectSummaryCountField()
+            throws JobConfigurationException, IOException
+    {
+        SchedulerConfig schedulerConfig = createValidElasticsearchSchedulerConfigWithAggs();
+        JobConfiguration jobConfig = buildJobConfigurationNoTransforms();
+        jobConfig.setSchedulerConfig(schedulerConfig);
+        jobConfig.getDataDescription().setFormat(DataFormat.ELASTICSEARCH);
+        jobConfig.getAnalysisConfig().setBucketSpan(1800L);
+        jobConfig.getAnalysisConfig().setSummaryCountFieldName("doc_count");
+
+        assertTrue(JobConfigurationVerifier.verify(jobConfig));
+    }
+
+    @Test
+    public void testVerify_GivenElasticsearchSchedulerWithAggsAndNoSummaryCountField()
+            throws JobConfigurationException, IOException
+    {
+        m_ExpectedException.expect(JobConfigurationException.class);
+        m_ExpectedException.expectMessage(
+                "A scheduler job with aggregations for dataSource 'ELASTICSEARCH' must have summaryCountFieldName 'doc_count'");
+        m_ExpectedException.expect(ErrorCodeMatcher.hasErrorCode(
+                ErrorCodes.SCHEDULER_AGGREGATIONS_REQUIRES_SUMMARY_COUNT_FIELD));
+
+        SchedulerConfig schedulerConfig = createValidElasticsearchSchedulerConfigWithAggs();
+        JobConfiguration jobConfig = buildJobConfigurationNoTransforms();
+        jobConfig.setSchedulerConfig(schedulerConfig);
+        jobConfig.getDataDescription().setFormat(DataFormat.ELASTICSEARCH);
+        jobConfig.getAnalysisConfig().setBucketSpan(1800L);
+
+        assertTrue(JobConfigurationVerifier.verify(jobConfig));
+    }
+
+    @Test
+    public void testVerify_GivenElasticsearchSchedulerWithAggsAndWrongSummaryCountField()
+            throws JobConfigurationException, IOException
+    {
+        m_ExpectedException.expect(JobConfigurationException.class);
+        m_ExpectedException.expectMessage(
+                "A scheduler job with aggregations for dataSource 'ELASTICSEARCH' must have summaryCountFieldName 'doc_count'");
+        m_ExpectedException.expect(ErrorCodeMatcher.hasErrorCode(
+                ErrorCodes.SCHEDULER_AGGREGATIONS_REQUIRES_SUMMARY_COUNT_FIELD));
+
+        SchedulerConfig schedulerConfig = createValidElasticsearchSchedulerConfigWithAggs();
+        JobConfiguration jobConfig = buildJobConfigurationNoTransforms();
+        jobConfig.setSchedulerConfig(schedulerConfig);
+        jobConfig.getDataDescription().setFormat(DataFormat.ELASTICSEARCH);
+        jobConfig.getAnalysisConfig().setBucketSpan(1800L);
+        jobConfig.getAnalysisConfig().setSummaryCountFieldName("wrong");
 
         assertTrue(JobConfigurationVerifier.verify(jobConfig));
     }
@@ -476,6 +536,39 @@ public class JobConfigurationVerifierTest
         schedulerConfig.setBaseUrl("http://localhost:9200");
         schedulerConfig.setIndexes(Arrays.asList("myIndex"));
         schedulerConfig.setTypes(Arrays.asList("myType"));
+        return schedulerConfig;
+    }
+
+    private static SchedulerConfig createValidElasticsearchSchedulerConfigWithAggs()
+            throws IOException
+    {
+        SchedulerConfig schedulerConfig = createValidElasticsearchSchedulerConfig();
+        String aggStr = 
+                "{" +
+                    "\"buckets\" : {" +
+                        "\"histogram\" : {" +
+                            "\"field\" : \"time\"," +
+                            "\"interval\" : 3600000" +
+                        "}," +
+                        "\"aggs\" : {" +
+                            "\"byField\" : {" +
+                                "\"terms\" : {" +
+                                    "\"field\" : \"airline\"," +
+                                    "\"size\" : 0" +
+                                "}," +
+                                "\"aggs\" : {" +
+                                    "\"stats\" : {" +
+                                        "\"stats\" : {" +
+                                            "\"field\" : \"responsetime\"" +
+                                        "}" +
+                                    "}" +
+                                "}" +
+                            "}" +
+                        "}" +
+                    "}   " +
+                "}";
+        ObjectMapper mapper = new ObjectMapper();
+        schedulerConfig.setAggs(mapper.readValue(aggStr, new TypeReference<Map<String, Object>>(){}));
         return schedulerConfig;
     }
 }

@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -91,7 +91,6 @@ public final class ReservedFieldNames
         Bucket.IS_INTERIM,
         Bucket.RECORD_COUNT,
         Bucket.EVENT_COUNT,
-        Bucket.DETECTORS,
         Bucket.RECORDS,
         Bucket.BUCKET_INFLUENCERS,
         Bucket.INFLUENCERS,
@@ -104,9 +103,6 @@ public final class ReservedFieldNames
         BucketInfluencer.ANOMALY_SCORE,
         BucketInfluencer.RAW_ANOMALY_SCORE,
         BucketInfluencer.PROBABILITY,
-
-        Detector.NAME,
-        Detector.RECORDS,
 
         Influence.INFLUENCER_FIELD_NAME,
         Influence.INFLUENCER_FIELD_VALUES,
