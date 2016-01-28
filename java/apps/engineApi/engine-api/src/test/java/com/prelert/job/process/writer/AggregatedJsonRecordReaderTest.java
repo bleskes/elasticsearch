@@ -247,7 +247,7 @@ public class AggregatedJsonRecordReaderTest
         Map<String, Integer> fieldMap = createFieldMapWithNoTermField();
         List<String> nestingOrder = Collections.emptyList();
 
-        AggregatedJsonRecordReader reader = new AggregatedJsonRecordReader(parser, fieldMap, "aggregations", mock(Logger.class), nestingOrder);
+        new AggregatedJsonRecordReader(parser, fieldMap, "aggregations", mock(Logger.class), nestingOrder);
     }
 
     @Test(expected=MalformedJsonException.class)

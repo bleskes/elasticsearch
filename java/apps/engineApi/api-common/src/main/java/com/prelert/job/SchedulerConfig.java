@@ -346,6 +346,7 @@ public class SchedulerConfig
         return new ArrayList<>(orderedFields.values());
     }
 
+    @SuppressWarnings("unchecked")
     private void scanSubLevel(Map<String, Object> subLevel, int depth,
             SortedMap<Integer, String> orderedFields)
     {
