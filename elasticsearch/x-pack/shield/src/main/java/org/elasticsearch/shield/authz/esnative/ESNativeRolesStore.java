@@ -472,6 +472,9 @@ public class ESNativeRolesStore extends AbstractComponent implements RolesStore,
 
         @Override
         protected void doRun() throws Exception {
+            if (isStopped()) {
+                return;
+            }
             if (shieldIndexExists == false) {
                 logger.trace("cannot poll for role changes since shield admin index [{}] does not exist", ShieldTemplateService.SHIELD_ADMIN_INDEX_NAME);
                 return;
@@ -497,6 +500,9 @@ public class ESNativeRolesStore extends AbstractComponent implements RolesStore,
 
                 boolean keepScrolling = response.getHits().getHits().length > 0;
                 while (keepScrolling) {
+                    if (isStopped()) {
+                        return;
+                    }
                     for (final SearchHit hit : response.getHits().getHits()) {
                         final String roleName = hit.getId();
                         final long version = hit.version();
@@ -541,6 +547,11 @@ public class ESNativeRolesStore extends AbstractComponent implements RolesStore,
         @Override
         public void onFailure(Throwable t) {
             logger.error("error occurred while checking the native roles for changes", t);
+        }
+
+        private boolean isStopped() {
+            State state = state();
+            return state == State.STOPPED || state == State.STOPPING;
         }
     }
 
