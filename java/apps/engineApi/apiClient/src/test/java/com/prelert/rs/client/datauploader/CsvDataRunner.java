@@ -165,6 +165,14 @@ public class CsvDataRunner implements Runnable
         {
             LOGGER.error("Interupted joining producer thread", e);
         }
+
+        try
+        {
+            m_ApiClient.close();
+        } catch (IOException e)
+        {
+            LOGGER.error("Failed to close client", e);
+        }
     }
 
     /**
