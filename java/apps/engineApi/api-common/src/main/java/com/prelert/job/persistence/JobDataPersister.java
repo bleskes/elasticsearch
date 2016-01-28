@@ -44,23 +44,21 @@ public abstract class JobDataPersister
     protected int [] m_OverFieldMappings;
     protected int [] m_PartitionFieldMappings;
 
-
-
-	/**
-	 * Find each of the lists of requried fields (by, over, etc)
-	 * in <code>fieldMap</code> and save the indexes so the field mappings can
-	 * be used in calls to {@linkplain #persistRecord(long, String[])}
-	 *
-	 * @param fields
-	 * @param byFields
-	 * @param overFields
-	 * @param partitionFields
-	 * @param fieldMap Field -> index map for the record passed in
-	 * {@link #persistRecord())}
-	 */
-	public void setFieldMappings(List<String> fields,
-			List<String> byFields, List<String> overFields,
-			List<String> partitionFields, Map<String, Integer> fieldMap)
+    /**
+     * Find each of the lists of requried fields (by, over, etc)
+     * in <code>fieldMap</code> and save the indexes so the field mappings can
+     * be used in calls to {@linkplain #persistRecord(long, String[])}
+     *
+     * @param fields
+     * @param byFields
+     * @param overFields
+     * @param partitionFields
+     * @param fieldMap Field -> index map for the record passed in
+     * {@link #persistRecord())}
+     */
+    public void setFieldMappings(List<String> fields,
+            List<String> byFields, List<String> overFields,
+            List<String> partitionFields, Map<String, Integer> fieldMap)
     {
         m_FieldNames = new String [fields.size()];
         m_FieldNames = fields.<String>toArray(m_FieldNames);
@@ -119,26 +117,26 @@ public abstract class JobDataPersister
         }
     }
 
-	/**
-	 * Save the record as per the field mappings
-	 * set up in {@linkplain #setFieldMappings(List, List, List, List, String[])}
-	 * setFieldMappings must have been called so this class knows where to
-	 *
-	 *
-	 * @param epoch
-	 * @param record
-	 */
-	public abstract void persistRecord(long epoch, String[] record);
+    /**
+     * Save the record as per the field mappings
+     * set up in {@linkplain #setFieldMappings(List, List, List, List, String[])}
+     * setFieldMappings must have been called so this class knows where to
+     *
+     *
+     * @param epoch
+     * @param record
+     */
+    public abstract void persistRecord(long epoch, String[] record);
 
-	/**
-	 * Delete all the persisted records
-	 *
-	 * @return
-	 */
-	public abstract boolean deleteData();
+    /**
+     * Delete all the persisted records
+     *
+     * @return
+     */
+    public abstract boolean deleteData();
 
-	/**
-	 * Flush any records that may not have been persisted yet
-	 */
-	public abstract void flushRecords();
+    /**
+     * Flush any records that may not have been persisted yet
+     */
+    public abstract void flushRecords();
 }

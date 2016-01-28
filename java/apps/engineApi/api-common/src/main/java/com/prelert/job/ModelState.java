@@ -30,10 +30,10 @@ package com.prelert.job;
  */
 public class ModelState
 {
-	/**
-	 * The type of this class used when persisting the data
-	 */
-	public static final String TYPE = "modelState";
+    /**
+     * The type of this class used when persisting the data
+     */
+    public static final String TYPE = "modelState";
 
     private ModelState()
     {

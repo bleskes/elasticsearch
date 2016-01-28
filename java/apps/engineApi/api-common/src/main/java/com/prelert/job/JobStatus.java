@@ -25,5 +25,5 @@ package com.prelert.job;
  */
 public enum JobStatus
 {
-	RUNNING, CLOSING, CLOSED, FAILED;
+    RUNNING, CLOSING, CLOSED, FAILED;
 }

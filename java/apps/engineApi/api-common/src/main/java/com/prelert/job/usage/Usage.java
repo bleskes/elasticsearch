@@ -24,13 +24,13 @@ package com.prelert.job.usage;
  */
 public class Usage
 {
-	public static final String TYPE = "usage";
-	public static final String TIMESTAMP = "timestamp";
-	public static final String INPUT_BYTES = "inputBytes";
-	public static final String INPUT_FIELD_COUNT = "inputFieldCount";
-	public static final String INPUT_RECORD_COUNT = "inputRecordCount";
+    public static final String TYPE = "usage";
+    public static final String TIMESTAMP = "timestamp";
+    public static final String INPUT_BYTES = "inputBytes";
+    public static final String INPUT_FIELD_COUNT = "inputFieldCount";
+    public static final String INPUT_RECORD_COUNT = "inputRecordCount";
 
-	private Usage()
-	{
-	}
+    private Usage()
+    {
+    }
 }
