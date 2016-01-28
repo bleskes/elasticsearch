@@ -13,10 +13,10 @@
     <version>2.0.0</version>
   </parent>
 
-  <artifactId>api-common</artifactId>
+  <artifactId>prelert-engine-api-common</artifactId>
   <packaging>jar</packaging>
 
-  <name>api-common</name>
+  <name>prelert-engine-api-common</name>
   <url>http://maven.apache.org</url>
 
   <properties>

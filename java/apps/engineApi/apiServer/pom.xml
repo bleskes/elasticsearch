@@ -13,10 +13,10 @@
     <version>2.0.0</version>
   </parent>
 
-  <artifactId>apiServer</artifactId>
+  <artifactId>engine-api-server</artifactId>
   <packaging>jar</packaging>
 
-  <name>apiServer</name>
+  <name>engine-api-server</name>
   <url>http://maven.apache.org</url>
 
   <dependencies>
@@ -52,7 +52,7 @@
     <!-- prelert jars -->
     <dependency>
       <groupId>com.prelert</groupId>
-      <artifactId>api-common</artifactId>
+      <artifactId>prelert-engine-api-common</artifactId>
       <scope>provided</scope>
     </dependency>
     <dependency>

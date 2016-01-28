@@ -170,7 +170,7 @@
       <!-- Prelert modules -->
       <dependency>
         <groupId>com.prelert</groupId>
-        <artifactId>api-common</artifactId>
+        <artifactId>prelert-engine-api-common</artifactId>
         <version>2.0.0</version>
       </dependency>
       <dependency>
@@ -180,7 +180,7 @@
       </dependency>
       <dependency>
         <groupId>com.prelert</groupId>
-        <artifactId>apiServer</artifactId>
+        <artifactId>engine-api-server</artifactId>
         <version>2.0.0</version>
       </dependency>
       <dependency>
