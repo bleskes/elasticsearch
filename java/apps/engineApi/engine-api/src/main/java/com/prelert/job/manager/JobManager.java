@@ -614,17 +614,9 @@ public class JobManager implements DataProcessor, Shutdownable
         m_ProcessManager.flushJob(jobId, interimResultsParams);
     }
 
-    /**
-     * Stop the running job and mark it as finished.<br>
-     *
-     * @param jobId The job to stop
-     * @throws UnknownJobException
-     * @throws NativeProcessRunException
-     * @throws JobInUseException if the job cannot be closed because data is
-     * being streamed to it
-     */
-    public void closeJob(String jobId)
-    throws UnknownJobException, NativeProcessRunException, JobInUseException
+    @Override
+    public void closeJob(String jobId) throws UnknownJobException, NativeProcessRunException,
+            JobInUseException
     {
         LOGGER.debug("Finish job " + jobId);
 
@@ -981,7 +973,6 @@ public class JobManager implements DataProcessor, Shutdownable
         checkJobHasBeenScheduled(jobId);
         LOGGER.info("Stopping scheduler for job: " + jobId);
         m_ScheduledJobs.get(jobId).stopManual();
-        closeJob(jobId);
     }
 
     private void checkJobHasBeenScheduled(String jobId) throws NoSuchScheduledJobException

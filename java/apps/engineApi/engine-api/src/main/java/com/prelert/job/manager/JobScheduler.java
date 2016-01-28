@@ -285,27 +285,48 @@ public class JobScheduler
             m_Logger.info("Lookback has finished");
             if (m_IsLookbackOnly)
             {
-                closeLogger();
-                updateStatus(JobSchedulerStatus.STOPPED);
+                finishLookback();
             }
             else
             {
-                m_Logger.info("Entering real-time mode");
-                m_RealTimeScheduler = new TaskScheduler(createNextTask(), calculateNextTime());
-                m_RealTimeScheduler.start();
+                startRealTime();
             }
             m_LookbackExecutor.shutdown();
         };
+    }
+
+    private void finishLookback()
+    {
+        try
+        {
+            m_DataProcessor.closeJob(m_JobId);
+        } catch (UnknownJobException | NativeProcessRunException | JobInUseException e)
+        {
+            m_Logger.error("An error has occurred while closing the job", e);
+        }
+        closeLogger();
+        updateStatus(JobSchedulerStatus.STOPPED);
+    }
+
+    private void startRealTime()
+    {
+        m_Logger.info("Entering real-time mode");
+        m_RealTimeScheduler = new TaskScheduler(createNextTask(), calculateNextTime());
+        m_RealTimeScheduler.start();
     }
 
     /**
      * Stops the scheduler and blocks the current thread until
      * the scheduler is stopped. At the end of the stopping process
      * the status is set to STOPPED.
+     * @throws JobInUseException
+     * @throws NativeProcessRunException
+     * @throws UnknownJobException
      */
-    public void stopManual()
+    public void stopManual() throws UnknownJobException, NativeProcessRunException, JobInUseException
     {
         stop(JobSchedulerStatus.STOPPED);
+        m_DataProcessor.closeJob(m_JobId);
     }
 
 

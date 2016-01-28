@@ -86,7 +86,19 @@ public interface DataProcessor
      * @throws NativeProcessRunException
      * @throws JobInUseException if a data upload is part way through
      */
-    public void flushJob(String jobId, InterimResultsParams interimResultsParams)
+    void flushJob(String jobId, InterimResultsParams interimResultsParams)
             throws UnknownJobException, NativeProcessRunException, JobInUseException;
+
+    /**
+     * Stop the running job and mark it as finished.<br>
+     *
+     * @param jobId The job to stop
+     * @throws UnknownJobException
+     * @throws NativeProcessRunException
+     * @throws JobInUseException if the job cannot be closed because data is
+     * being streamed to it
+     */
+    void closeJob(String jobId) throws UnknownJobException, NativeProcessRunException,
+            JobInUseException;
 }
 
