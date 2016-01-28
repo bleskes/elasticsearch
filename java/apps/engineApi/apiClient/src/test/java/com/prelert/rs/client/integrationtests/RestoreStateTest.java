@@ -287,6 +287,17 @@ public class RestoreStateTest
         }
     }
 
+    public void close()
+    {
+        try
+        {
+             m_WebServiceClient.close();
+        } catch (IOException e)
+        {
+            LOGGER.error("Failed to close client", e);
+        }
+    }
+
     public static void main(String[] args) throws IOException
     {
         // configure log4j
@@ -318,6 +329,7 @@ public class RestoreStateTest
         test.doOneShotJob();
         test.compareDataCounts();
         test.compareResults();
+        test.close();
 
         LOGGER.info("Restore state test passed Ok");
     }

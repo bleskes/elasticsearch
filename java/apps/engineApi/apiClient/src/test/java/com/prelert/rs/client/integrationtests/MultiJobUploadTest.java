@@ -239,6 +239,14 @@ public class MultiJobUploadTest
 
         LOGGER.info("Deleting jobs");
         deleteJobs(jobIds);
+
+        try
+        {
+             m_WebServiceClient.close();
+        } catch (IOException e)
+        {
+            LOGGER.error("Failed to close client", e);
+        }
     }
 
     /**
