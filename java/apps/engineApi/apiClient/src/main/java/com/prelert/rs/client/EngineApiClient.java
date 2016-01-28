@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -27,36 +27,36 @@
 
 package com.prelert.rs.client;
 
-import java.io.ByteArrayInputStream;
 import java.io.Closeable;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.StringJoiner;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.zip.ZipInputStream;
 
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpStatus;
-import org.apache.http.client.ClientProtocolException;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpDelete;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpPut;
-import org.apache.http.client.methods.HttpUriRequest;
-import org.apache.http.entity.ByteArrayEntity;
-import org.apache.http.entity.ContentType;
-import org.apache.http.entity.InputStreamEntity;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.util.EntityUtils;
 import org.apache.log4j.Logger;
+import org.eclipse.jetty.client.HttpClient;
+import org.eclipse.jetty.client.api.ContentResponse;
+import org.eclipse.jetty.client.api.Request;
+import org.eclipse.jetty.client.api.Result;
+import org.eclipse.jetty.client.util.BufferingResponseListener;
+import org.eclipse.jetty.client.util.BytesContentProvider;
+import org.eclipse.jetty.client.util.DeferredContentProvider;
+import org.eclipse.jetty.client.util.InputStreamResponseListener;
+import org.eclipse.jetty.client.util.StringContentProvider;
+import org.eclipse.jetty.http.HttpHeader;
+import org.eclipse.jetty.http.HttpMethod;
+import org.eclipse.jetty.http.HttpStatus;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonParseException;
@@ -86,7 +86,7 @@ public class EngineApiClient implements Closeable
 
     private final String m_BaseUrl;
     private final ObjectMapper m_JsonMapper;
-    private final CloseableHttpClient m_HttpClient;
+    private final HttpClient m_HttpClient;
     private ApiError m_LastError;
 
     /**
@@ -99,7 +99,14 @@ public class EngineApiClient implements Closeable
     public EngineApiClient(String baseUrl)
     {
         m_BaseUrl = baseUrl;
-        m_HttpClient = HttpClients.createDefault();
+        m_HttpClient = new HttpClient();
+        try
+        {
+            m_HttpClient.start();
+        } catch (Exception e)
+        {
+            LOGGER.fatal("Failed to start the HTTP client", e);
+        }
         m_JsonMapper = new ObjectMapper();
         m_JsonMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
     }
@@ -110,7 +117,13 @@ public class EngineApiClient implements Closeable
     @Override
     public void close() throws IOException
     {
-        m_HttpClient.close();
+        try
+        {
+            m_HttpClient.stop();
+        } catch (Exception e)
+        {
+            throw new IOException(e);
+        }
     }
 
     /**
@@ -125,8 +138,7 @@ public class EngineApiClient implements Closeable
         String url = m_BaseUrl + "/jobs";
         LOGGER.debug("GET jobs: " + url);
 
-        Pagination<JobDetails> page = this.get(url,
-                new TypeReference<Pagination<JobDetails>>() {});
+        Pagination<JobDetails> page = get(url, new TypeReference<Pagination<JobDetails>>() {});
 
         if (page == null)
         {
@@ -152,7 +164,7 @@ public class EngineApiClient implements Closeable
         String url = m_BaseUrl + "/jobs/" + jobId;
         LOGGER.debug("GET job: " + url);
 
-        SingleDocument<JobDetails> doc = this.get(url,
+        SingleDocument<JobDetails> doc = get(url,
                 new TypeReference<SingleDocument<JobDetails>>() {});
 
         if (doc == null)
@@ -162,7 +174,6 @@ public class EngineApiClient implements Closeable
         return doc;
     }
 
-
     /**
      * Create a new Job from the <code>JobConfiguration</code> object.
      * <br>
@@ -171,16 +182,13 @@ public class EngineApiClient implements Closeable
      *
      * @param jobConfig the job configuration
      * @return The new job's Id or an empty string if there was an error
-     * @throws ClientProtocolException
      * @throws IOException
      */
-    public String createJob(JobConfiguration jobConfig)
-    throws ClientProtocolException, IOException
+    public String createJob(JobConfiguration jobConfig) throws IOException
     {
         String payLoad = m_JsonMapper.writeValueAsString(jobConfig);
         return createJob(payLoad);
     }
-
 
     /**
      * Create a new job with the configuration in <code>createJobPayload</code>
@@ -188,61 +196,51 @@ public class EngineApiClient implements Closeable
      *
      * @param createJobPayload The Json configuration for the new job
      * @return The new job's Id or an empty string if there was an error
-     *
-     * @throws ClientProtocolException
+     * @throws JsonMappingException
+     * @throws JsonParseException
      * @throws IOException
      */
-    public String createJob(String createJobPayload)
-    throws ClientProtocolException, IOException
+    public String createJob(String createJobPayload) throws JsonParseException,
+            JsonMappingException, IOException
+
     {
         String url = m_BaseUrl + "/jobs";
         LOGGER.debug("Create job: " + url);
 
-        HttpPost post = new HttpPost(url);
+        Request request = m_HttpClient.POST(url)
+                .header(HttpHeader.CONTENT_TYPE, "application/json")
+                .header(HttpHeader.CONTENT_ENCODING, "UTF-8")
+                .content(new StringContentProvider(createJobPayload));
 
-        StringEntity entity = new StringEntity(createJobPayload,
-                ContentType.create("application/json", "UTF-8"));
-        post.setEntity(entity);
+        ContentResponse response = executeRequest(request);
+        String content = response.getContentAsString();
 
-        try (CloseableHttpResponse response = m_HttpClient.execute(post))
+        if (response.getStatus() == HttpStatus.CREATED_201)
         {
-            HttpEntity responseEntity = response.getEntity();
-            String content = EntityUtils.toString(responseEntity);
+            Map<String, String> msg = m_JsonMapper.readValue(content,
+                    new TypeReference<Map<String, String>>() {} );
 
-            if (response.getStatusLine().getStatusCode() == HttpStatus.SC_CREATED)
+            m_LastError = null;
+
+            if (msg.containsKey("id"))
             {
-
-                Map<String, String> msg = m_JsonMapper.readValue(content,
-                        new TypeReference<Map<String, String>>() {} );
-
-                m_LastError = null;
-
-                if (msg.containsKey("id"))
-                {
-                    return msg.get("id");
-                }
-                else
-                {
-                    LOGGER.error("Job created but no 'id' field in returned content");
-                    LOGGER.error("Response Content = " + content);
-                }
+                return msg.get("id");
             }
             else
             {
-                String msg = String.format(
-                        "Error creating job status code = %d. "
-                        + "Returned content: %s",
-                        response.getStatusLine().getStatusCode(),
-                        content);
-
-                LOGGER.error(msg);
-
-                m_LastError = m_JsonMapper.readValue(content,
-                        new TypeReference<ApiError>() {} );
+                LOGGER.error("Job created but no 'id' field in returned content");
+                LOGGER.error("Response Content = " + content);
             }
-
-            return "";
         }
+        else
+        {
+            String msg = String.format("Error creating job status code = %d. "
+                    + "Returned content: %s", response.getStatus(), content);
+            LOGGER.error(msg);
+            m_LastError = m_JsonMapper.readValue(content, new TypeReference<ApiError>() {} );
+        }
+
+        return "";
     }
 
 
@@ -262,46 +260,56 @@ public class EngineApiClient implements Closeable
         String url = m_BaseUrl + "/jobs/" + jobId + "/update";
         LOGGER.debug("PUT job description: " + url);
 
-        HttpPut put = new HttpPut(url);
         String json = "{\"description\":\"" + description + "\"}";
-        put.setEntity(new StringEntity(json, ContentType.create("application/json", "UTF-8")));
+        Request request = m_HttpClient.newRequest(url)
+                .method(HttpMethod.PUT)
+                .header(HttpHeader.CONTENT_TYPE, "application/json")
+                .header(HttpHeader.CONTENT_ENCODING, "UTF-8")
+                .content(new StringContentProvider(json));
 
-        return executeRequest(put, "putting job description");
+        return executeRequest(request, "putting job description");
+    }
+
+    private ContentResponse executeRequest(Request request) throws IOException
+    {
+        try
+        {
+            return request.send();
+        }
+        catch (InterruptedException | TimeoutException | ExecutionException e)
+        {
+            LOGGER.error("An error occurred while executing an HTTP request", e);
+            throw new IOException(e);
+        }
     }
 
     /**
      * Executes an HTTP request and checks if the response was OK. If not, it logs the error.
      *
      * @return True if response was OK, otherwise false.
+     * @throws ExecutionException
+     * @throws TimeoutException
+     * @throws InterruptedException
+     * @throws JsonMappingException
+     * @throws JsonParseException
+     * @throws IOException
      */
-    private boolean executeRequest(HttpUriRequest httpRequest, String activityDescription)
-            throws IOException, JsonParseException, JsonMappingException
+    private boolean executeRequest(Request request, String activityDescription)
+            throws JsonParseException, JsonMappingException, IOException
     {
-        try (CloseableHttpResponse response = m_HttpClient.execute(httpRequest))
+        ContentResponse response = executeRequest(request);
+
+        if (response.getStatus() == HttpStatus.OK_200)
         {
-            if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK)
-            {
-                m_LastError = null;
-                return true;
-            }
-            else
-            {
-                String content = EntityUtils.toString(response.getEntity());
-                String msg = String.format(
-                        "Error %s. Status code = %d, "
-                        + "Returned content: %s",
-                        activityDescription,
-                        response.getStatusLine().getStatusCode(),
-                        content);
-
-                LOGGER.error(msg);
-
-                m_LastError = m_JsonMapper.readValue(content,
-                        new TypeReference<ApiError>() {} );
-
-                return false;
-            }
+            m_LastError = null;
+            return true;
         }
+        String content = response.getContentAsString();
+        String msg = String.format("Error %s. Status code = %d, Returned content: %s",
+                activityDescription, response.getStatus(), content);
+        LOGGER.error(msg);
+        m_LastError = m_JsonMapper.readValue(content, new TypeReference<ApiError>() {} );
+        return false;
     }
 
     /**
@@ -309,18 +317,15 @@ public class EngineApiClient implements Closeable
      *
      * @param jobId The Job's unique Id
      * @return If the job existed and was deleted return true else false
-     * @throws ClientProtocolException
      * @throws IOException
      */
-    public boolean deleteJob(String jobId)
-    throws ClientProtocolException, IOException
+    public boolean deleteJob(String jobId) throws IOException
     {
         String url = m_BaseUrl + "/jobs/" + jobId;
         LOGGER.debug("DELETE job: " + url);
 
-        HttpDelete delete = new HttpDelete(url);
-
-        return executeRequest(delete, "deleting job");
+        return executeRequest(m_HttpClient.newRequest(url).method(HttpMethod.DELETE),
+                "deleting job");
     }
 
     /**
@@ -337,61 +342,51 @@ public class EngineApiClient implements Closeable
      * @see #streamingUpload(String, InputStream, boolean)
      */
     public MultiDataPostResult chunkedUpload(String jobId, InputStream inputStream)
-    throws IOException
+            throws IOException
     {
         String postUrl = m_BaseUrl + "/data/" + jobId;
         LOGGER.debug("Uploading chunked data to " + postUrl);
 
         final int BUFF_SIZE = 4096 * 1024;
         byte [] buffer = new byte[BUFF_SIZE];
-        int read = 0;
         int uploadCount = 0;
         MultiDataPostResult uploadSummary = new MultiDataPostResult();
 
-        while ((read = inputStream.read(buffer)) > -1)
+        while (inputStream.read(buffer) > -1)
         {
-            ByteArrayEntity entity = new ByteArrayEntity(buffer, 0, read);
-            entity.setContentType("application/octet-stream");
-
             LOGGER.info("Upload " + ++uploadCount);
 
+            Request request = m_HttpClient.POST(postUrl)
+                    .header(HttpHeader.CONTENT_TYPE, "application/octet-stream")
+                    .content(new BytesContentProvider(buffer));
+            ContentResponse response = executeRequest(request);
 
-            HttpPost post = new HttpPost(postUrl);
-            post.setEntity(entity);
-            try (CloseableHttpResponse response = m_HttpClient.execute(post))
+            String content = response.getContentAsString();
+
+            if (response.getStatus() != HttpStatus.ACCEPTED_202)
             {
+                String msg = String.format(
+                        "Upload of chunk %d failed, status code = %d. Returned content: %s",
+                        uploadCount, response.getStatus(), content);
 
-                String content = EntityUtils.toString(response.getEntity());
+                LOGGER.error(msg);
 
-                if (response.getStatusLine().getStatusCode() != HttpStatus.SC_ACCEPTED)
+                uploadSummary = m_JsonMapper.readValue(content, new TypeReference<MultiDataPostResult>() {});
+
+                m_LastError = null;
+                for (DataPostResponse dpr : uploadSummary.getResponses())
                 {
-                    String msg = String.format(
-                            "Upload of chunk %d failed, status code = %d. "
-                            + "Returned content: %s",
-                            uploadCount, response.getStatusLine().getStatusCode(),
-                            content);
-
-                    LOGGER.error(msg);
-
-                    uploadSummary = m_JsonMapper.readValue(content, new TypeReference<MultiDataPostResult>() {});
-
-                    m_LastError = null;
-                    for (DataPostResponse dpr : uploadSummary.getResponses())
+                    if (dpr.getError() != null)
                     {
-                        if (dpr.getError() != null)
-                        {
-                            m_LastError = dpr.getError();
-                            break;
-                        }
+                        m_LastError = dpr.getError();
+                        break;
                     }
-
                 }
-                else
-                {
-                    m_LastError = null;
-
-                    uploadSummary = m_JsonMapper.readValue(content, new TypeReference<MultiDataPostResult>() {});
-                }
+            }
+            else
+            {
+                m_LastError = null;
+                uploadSummary = m_JsonMapper.readValue(content, new TypeReference<MultiDataPostResult>() {});
             }
         }
 
@@ -487,50 +482,71 @@ public class EngineApiClient implements Closeable
     {
         LOGGER.debug("Uploading data to " + postUrl);
 
-        InputStreamEntity entity = new InputStreamEntity(inputStream);
-        entity.setContentType("application/octet-stream");
-        entity.setChunked(true);
+        // It is possible that the server replies with an error and closes the stream.
+        // In that case, there could be a case where a thread that writes into the inputStream
+        // tries to write after the stream is closed. To avoid that, we make an asynchronous call
+        // and we offer the inputStream in a deferred manner.
 
-        HttpPost post = new HttpPost(postUrl);
+        CountDownLatch waitUntilRequestCompletesLatch = new CountDownLatch(1);
+        AtomicInteger statusHolder = new AtomicInteger();
+        DeferredContentProvider contentProvider = new DeferredContentProvider();
+        Request request = m_HttpClient.POST(postUrl)
+                .header(HttpHeader.CONTENT_TYPE, "application/octet-stream")
+                .content(contentProvider);
         if (compressed)
         {
-            post.addHeader("Content-Encoding", "gzip");
+            request.header(HttpHeader.CONTENT_ENCODING, "gzip");
         }
-        post.setEntity(entity);
-
-        try (CloseableHttpResponse response = m_HttpClient.execute(post))
+        BufferingResponseListener responseListener = new BufferingResponseListener()
         {
-            String content = EntityUtils.toString(response.getEntity());
-
-            if (response.getStatusLine().getStatusCode() != HttpStatus.SC_ACCEPTED)
+            @Override
+            public void onComplete(Result result)
             {
-                String msg = String.format(
-                        "Streaming upload failed, status code = %d. "
-                        + "Returned content: %s",
-                        response.getStatusLine().getStatusCode(),
-                        content);
-
-                LOGGER.error(msg);
-
-                if (convertResponseOnError)
-                {
-                    return convertContentFunction.apply(content);
-                }
-
-                if (content.isEmpty() == false)
-                {
-                    m_LastError = m_JsonMapper.readValue(content,
-                            new TypeReference<ApiError>() {} );
-                }
-                else
-                {
-                    m_LastError = null;
-                }
-
-                return defaultReturnValue;
+                statusHolder.getAndSet(result.getResponse().getStatus());
+                waitUntilRequestCompletesLatch.countDown();
             }
-            return convertContentFunction.apply(content);
+        };
+        request.send(responseListener);
+
+        final int BUFF_SIZE = 4096 * 1024;
+        byte[] buffer = new byte[BUFF_SIZE];
+        int bytesRead = 0;
+        while ((bytesRead = inputStream.read(buffer)) > -1)
+        {
+            contentProvider.offer(ByteBuffer.wrap(buffer, 0, bytesRead));
+            buffer = new byte[BUFF_SIZE];
         }
+        contentProvider.close();
+
+        try
+        {
+            waitUntilRequestCompletesLatch.await();
+        } catch (InterruptedException e)
+        {
+            LOGGER.error(e);
+            return defaultReturnValue;
+        }
+
+        String content = responseListener.getContentAsString();
+
+        if (statusHolder.get() != HttpStatus.ACCEPTED_202)
+        {
+            String msg = String.format(
+                    "Streaming upload failed, status code = %d. Returned content: %s",
+                    statusHolder.get(), content);
+
+            LOGGER.error(msg);
+
+            if (convertResponseOnError)
+            {
+                return convertContentFunction.apply(content);
+            }
+
+            m_LastError = content.isEmpty() ? null : m_JsonMapper.readValue(content,
+                    new TypeReference<ApiError>() {});
+            return defaultReturnValue;
+        }
+        return convertContentFunction.apply(content);
     }
 
     /**
@@ -607,31 +623,23 @@ public class EngineApiClient implements Closeable
                 jobId, calcInterim ? "true" : "false", start, end);
         LOGGER.debug("Flushing job " + flushUrl);
 
-        HttpPost post = new HttpPost(flushUrl);
-        try (CloseableHttpResponse response = m_HttpClient.execute(post))
+        ContentResponse response = executeRequest(m_HttpClient.POST(flushUrl));
+        String content = response.getContentAsString();
+
+        if (response.getStatus() != HttpStatus.OK_200)
         {
-            String content = EntityUtils.toString(response.getEntity());
+            String msg = String.format(
+                    "Error flushing job %s, status code = %d. Returned content: %s",
+                    jobId, response.getStatus(), content);
 
-            if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK)
-            {
-                String msg = String.format(
-                        "Error flushing job %s, status code = %d. "
-                        + "Returned content: %s",
-                        jobId,
-                        response.getStatusLine().getStatusCode(),
-                        content);
-
-                LOGGER.error(msg);
-
-                m_LastError = m_JsonMapper.readValue(content,
-                        new TypeReference<ApiError>() {} );
-
-                return false;
-            }
-            else
-            {
-                m_LastError = null;
-            }
+            LOGGER.error(msg);
+            m_LastError = m_JsonMapper.readValue(content,
+                    new TypeReference<ApiError>() {} );
+            return false;
+        }
+        else
+        {
+            m_LastError = null;
         }
 
         return true;
@@ -652,32 +660,22 @@ public class EngineApiClient implements Closeable
         String closeUrl = m_BaseUrl + "/data/" + jobId + "/close";
         LOGGER.debug("Closing job " + closeUrl);
 
-        HttpPost post = new HttpPost(closeUrl);
-        try (CloseableHttpResponse response = m_HttpClient.execute(post))
+        ContentResponse response = executeRequest(m_HttpClient.POST(closeUrl));
+        String content = response.getContentAsString();
+
+        if (response.getStatus() != HttpStatus.ACCEPTED_202
+                && response.getStatus() != HttpStatus.OK_200)
         {
-            String content = EntityUtils.toString(response.getEntity());
-
-            int statusCode = response.getStatusLine().getStatusCode();
-            if (statusCode != HttpStatus.SC_ACCEPTED && statusCode != HttpStatus.SC_OK)
-            {
-                String msg = String.format(
-                        "Error closing job %s, status code = %d. "
-                        + "Returned content: %s",
-                        jobId,
-                        response.getStatusLine().getStatusCode(),
-                        content);
-
-                LOGGER.error(msg);
-
-                m_LastError = m_JsonMapper.readValue(content,
-                        new TypeReference<ApiError>() {} );
-
-                return false;
-            }
-            else
-            {
-                m_LastError = null;
-            }
+            String msg = String.format(
+                    "Error closing job %s, status code = %d. Returned content: %s",
+                    jobId, response.getStatus(), content);
+            LOGGER.error(msg);
+            m_LastError = m_JsonMapper.readValue(content, new TypeReference<ApiError>() {});
+            return false;
+        }
+        else
+        {
+            m_LastError = null;
         }
 
         return true;
@@ -784,11 +782,9 @@ public class EngineApiClient implements Closeable
      *
      * @param jobId The Job's unique Id
      * @return The last 10 lines of the last log file
-     * @throws ClientProtocolException
      * @throws IOException
      */
-    public String tailLog(String jobId)
-    throws ClientProtocolException, IOException
+    public String tailLog(String jobId) throws IOException
     {
         return tailLog(jobId, 10);
     }
@@ -800,20 +796,17 @@ public class EngineApiClient implements Closeable
      * @param jobId The Job's unique Id
      * @param lineCount The number of lines to return
      * @return The last <code>lineCount</code> lines of the log file
-     * @throws ClientProtocolException
      * @throws IOException
      */
-    public String tailLog(String jobId, int lineCount)
-    throws ClientProtocolException, IOException
+    public String tailLog(String jobId, int lineCount) throws IOException
     {
         String url = String.format("%s/logs/%s/tail?lines=%d",
                 m_BaseUrl, jobId, lineCount);
 
         LOGGER.debug("GET tail log " + url);
 
-        return this.getStringContent(url);
+        return getStringContent(url);
     }
-
 
     /**
      * Tails the last <code>lineCount</code> lines from the named log file.
@@ -822,18 +815,16 @@ public class EngineApiClient implements Closeable
      * @param logfileName the name of the log file without the '.log' suffix.
      * @param lineCount The number of lines to return
      * @return The last <code>lineCount</code> lines of the log file
-     * @throws ClientProtocolException
      * @throws IOException
      */
-    public String tailLog(String jobId, String logfileName, int lineCount)
-    throws ClientProtocolException, IOException
+    public String tailLog(String jobId, String logfileName, int lineCount) throws IOException
     {
         String url = String.format("%s/logs/%s/%s/tail?lines=%d",
                 m_BaseUrl, jobId, logfileName, lineCount);
 
         LOGGER.debug("GET tail log " + url);
 
-        return this.getStringContent(url);
+        return getStringContent(url);
     }
 
     /**
@@ -843,39 +834,27 @@ public class EngineApiClient implements Closeable
      * @return If status code == 200 return the HTTP response content
      * else return an empty string.
      * @throws IOException
-     * @throws ClientProtocolException
      */
-    private String getStringContent(String url)
-    throws ClientProtocolException, IOException
+    private String getStringContent(String url) throws IOException
     {
-        HttpGet get = new HttpGet(url);
+        ContentResponse response = executeRequest(m_HttpClient.newRequest(url).method(HttpMethod.GET));
+        String content = response.getContentAsString();
 
-        try (CloseableHttpResponse response = m_HttpClient.execute(get))
+        if (response.getStatus() == HttpStatus.OK_200)
         {
-            String content = EntityUtils.toString(response.getEntity());
-
-            if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK)
-            {
-                m_LastError = null;
-                return content;
-            }
-            else
-            {
-                String msg = String.format(
-                        "Error reading string content. Status code = %d. "
-                                + "Returned content: %s",
-                                response.getStatusLine().getStatusCode(),
-                                content);
-
-                LOGGER.error(msg);
-
-                m_LastError = m_JsonMapper.readValue(content, new TypeReference<ApiError>() {});
-
-                return "";
-            }
+            m_LastError = null;
+            return content;
+        }
+        else
+        {
+            String msg = String.format(
+                    "Error reading string content. Status code = %d. Returned content: %s",
+                    response.getStatus(), content);
+            LOGGER.error(msg);
+            m_LastError = m_JsonMapper.readValue(content, new TypeReference<ApiError>() {});
+            return "";
         }
     }
-
 
     /**
      * Download the specified log file for the job.
@@ -885,18 +864,16 @@ public class EngineApiClient implements Closeable
      * @param jobId The Job's unique Id
      * @param logfileName the name of the log file without the '.log' suffix.
      * @return
-     * @throws ClientProtocolException
      * @throws IOException
      */
-    public String downloadLog(String jobId, String logfileName)
-    throws ClientProtocolException, IOException
+    public String downloadLog(String jobId, String logfileName) throws IOException
     {
         String url = String.format("%s/logs/%s/%s",
                 m_BaseUrl, jobId, logfileName);
 
         LOGGER.debug("GET log file " + url);
 
-        return this.getStringContent(url);
+        return getStringContent(url);
     }
 
 
@@ -908,60 +885,22 @@ public class EngineApiClient implements Closeable
      * will be blocked.</b>
      *
      * @param jobId The Job's unique Id
-     * @return A ZipInputStream for the log files. If the inputstream is
-     * empty an error may have occurred.  The caller MUST close this
+     * @return A ZipInputStream for the log files. If an error occurred, the inputstream
+     * may by empty or contain the server response. The caller MUST close this
      * ZipInputStream when they have finished with it.
-     * @throws ClientProtocolException
      * @throws IOException
      */
-    public ZipInputStream downloadAllLogs(String jobId)
-    throws ClientProtocolException, IOException
+    public ZipInputStream downloadAllLogs(String jobId) throws IOException
     {
         String url = String.format("%s/logs/%s", m_BaseUrl, jobId);
 
         LOGGER.debug("GET download logs " + url);
 
-        HttpGet get = new HttpGet(url);
-
-        CloseableHttpResponse response = m_HttpClient.execute(get);
-        try
-        {
-            if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK)
-            {
-                ZipInputStream result = new ZipInputStream(response.getEntity().getContent());
-                // In this case we DON'T want the response to be automatically
-                // closed - the caller MUST close the ZipInputStream when they
-                // are finished with it
-                m_LastError = null;
-                response = null;
-                return result;
-            }
-            else
-            {
-                String content = EntityUtils.toString(response.getEntity());
-                String msg = String.format(
-                        "Error downloading log files for job %s, status code = %d. "
-                                + "Returned content: %s",
-                                jobId,
-                                response.getStatusLine().getStatusCode(),
-                                content);
-
-                LOGGER.error(msg);
-
-                m_LastError = m_JsonMapper.readValue(content,
-                        new TypeReference<ApiError>() {} );
-
-                // return an empty stream
-                return new ZipInputStream(new ByteArrayInputStream(new byte[0]));
-            }
-        }
-        finally
-        {
-            if (response != null)
-            {
-                response.close();
-            }
-        }
+        m_LastError = null;
+        InputStreamResponseListener responseListener = new InputStreamResponseListener();
+        Request request = m_HttpClient.newRequest(url).method(HttpMethod.GET);
+        request.send(responseListener);
+        return new ZipInputStream(responseListener.getInputStream());
     }
 
 
@@ -990,29 +929,7 @@ public class EngineApiClient implements Closeable
     public <T> T get(String fullUrl, TypeReference<T> typeRef)
     throws JsonParseException, JsonMappingException, IOException
     {
-        HttpGet get = new HttpGet(fullUrl);
-        return get(get, typeRef, false);
-    }
-
-    /**
-     * A generic HTTP GET to any Url.
-     * See the documentation for {@linkplain #get(URI, TypeReference)}
-     *
-     * @param fullUrl
-     * @param typeRef
-     * @param errorOn404 If true then upon HTTP 404 status code the response is
-     * attempted to be parsed as an {@linkplain ApiError}
-     * @return
-     * @throws JsonParseException
-     * @throws JsonMappingException
-     * @throws IOException
-     * @see get(URI, TypeReference)
-     */
-    public <T> T get(String fullUrl, TypeReference<T> typeRef, boolean errorOn404)
-    throws JsonParseException, JsonMappingException, IOException
-    {
-        HttpGet get = new HttpGet(fullUrl);
-        return get(get, typeRef, errorOn404);
+        return get(fullUrl, typeRef, false);
     }
 
     /**
@@ -1040,39 +957,58 @@ public class EngineApiClient implements Closeable
     public <T> T get(URI uri, TypeReference<T> typeRef)
     throws JsonParseException, JsonMappingException, IOException
     {
-        HttpGet get = new HttpGet(uri);
-        return get(get, typeRef, false);
+        return get(m_HttpClient.newRequest(uri).method(HttpMethod.GET), typeRef, false);
     }
 
-    private <T> T get(HttpGet get, TypeReference<T> typeRef, boolean errorOn404)
+    /**
+     * A generic HTTP GET to any Url. The result is converted from Json to
+     * the type referenced in <code>typeRef</code>. A <code>TypeReference</code>
+     * has to be used to preserve the generic type information that is usually
+     * lost in due to erasure.
+     * <br>
+     * If the response code is 200 or 404 try to parse the returned content
+     * into an object of the generic parameter type <code>T</code>.
+     * The 404 status code is not considered an error it simply means an
+     * empty document was returned by the API.
+     * <br>
+     * This method is useful for paging through a set of results via the
+     * next or previous page links in a {@link Pagination} object.
+     *
+     * @param url
+     * @param typeRef
+     * @return A new T or <code>null</code>
+     * @throws JsonParseException
+     * @throws JsonMappingException
+     * @throws IOException
+     * @see get(String, TypeReference)
+     */
+    public <T> T get(String url, TypeReference<T> typeRef, boolean errorOn404)
     throws JsonParseException, JsonMappingException, IOException
     {
-        try (CloseableHttpResponse response = m_HttpClient.execute(get))
+        return get(m_HttpClient.newRequest(url).method(HttpMethod.GET), typeRef, errorOn404);
+    }
+
+    private <T> T get(Request request, TypeReference<T> typeRef, boolean errorOn404)
+    throws JsonParseException, JsonMappingException, IOException
+    {
+        ContentResponse response = executeRequest(request);
+        String content = response.getContentAsString();
+
+        // 404 errors return empty paging docs so still read them
+        if (response.getStatus() == HttpStatus.OK_200
+                || (response.getStatus() == HttpStatus.NOT_FOUND_404 && !errorOn404))
         {
-            HttpEntity entity = response.getEntity();
-            String content = EntityUtils.toString(entity);
-
-            // 404 errors return empty paging docs so still read them
-            if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK ||
-                (response.getStatusLine().getStatusCode() == HttpStatus.SC_NOT_FOUND && !errorOn404))
-            {
-                T docs = m_JsonMapper.readValue(content, typeRef);
-                m_LastError = null;
-                return docs;
-            }
-            else
-            {
-                String msg = String.format(
-                        "GET returned status code %d for url %s. "
-                        + "Returned content = %s",
-                        response.getStatusLine().getStatusCode(), get.getURI(),
-                        content);
-
-                LOGGER.error(msg);
-
-                m_LastError = m_JsonMapper.readValue(content,
-                        new TypeReference<ApiError>() {} );
-            }
+            T docs = m_JsonMapper.readValue(content, typeRef);
+            m_LastError = null;
+            return docs;
+        }
+        else
+        {
+            String msg = String.format(
+                    "GET returned status code %d for url %s. Returned content = %s",
+                    response.getStatus(), request.getURI(), content);
+            LOGGER.error(msg);
+            m_LastError = m_JsonMapper.readValue(content, new TypeReference<ApiError>() {} );
         }
 
         return null;

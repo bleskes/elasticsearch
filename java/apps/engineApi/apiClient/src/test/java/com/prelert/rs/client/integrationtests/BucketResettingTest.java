@@ -37,7 +37,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import org.apache.http.client.ClientProtocolException;
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -46,10 +45,10 @@ import org.apache.log4j.PatternLayout;
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataDescription;
 import com.prelert.job.DataDescription.DataFormat;
-import com.prelert.job.results.AnomalyRecord;
-import com.prelert.job.results.Bucket;
 import com.prelert.job.Detector;
 import com.prelert.job.JobConfiguration;
+import com.prelert.job.results.AnomalyRecord;
+import com.prelert.job.results.Bucket;
 import com.prelert.rs.client.EngineApiClient;
 import com.prelert.rs.data.ApiError;
 import com.prelert.rs.data.MultiDataPostResult;
@@ -101,7 +100,7 @@ public class BucketResettingTest implements Closeable
         m_WebServiceClient.close();
     }
 
-    public String createFarequoteJob() throws ClientProtocolException, IOException
+    public String createFarequoteJob() throws IOException
     {
         Detector d = new Detector();
         d.setFunction("non_zero_count");

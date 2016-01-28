@@ -33,16 +33,15 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import org.apache.http.client.ClientProtocolException;
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
 
 import com.prelert.job.AnalysisConfig;
+import com.prelert.job.DataCounts;
 import com.prelert.job.DataDescription;
 import com.prelert.job.DataDescription.DataFormat;
-import com.prelert.job.DataCounts;
 import com.prelert.job.Detector;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.JobDetails;
@@ -91,7 +90,7 @@ public class DataCountsTest implements Closeable
 
 
 	private String runFarequoteJob(File dataFile, boolean isJson, boolean compressed)
-	throws ClientProtocolException, IOException
+	throws IOException
 	{
 		Detector d = new Detector();
 		d.setFieldName("responsetime");

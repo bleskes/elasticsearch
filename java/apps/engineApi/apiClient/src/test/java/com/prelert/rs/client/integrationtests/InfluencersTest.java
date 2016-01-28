@@ -41,7 +41,6 @@ import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
-import org.apache.http.client.ClientProtocolException;
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -110,12 +109,11 @@ public class InfluencersTest
      * and one host in particular. The influencer is src_ip = 23.28.243.150
      *
      * @param filePath directory containing firewall.log
-     * @throws ClientProtocolException
      * @throws IOException
      * @throws ExecutionException
      * @throws InterruptedException
      */
-    private void doFirewallJob(String filePath) throws ClientProtocolException, IOException, InterruptedException, ExecutionException
+    private void doFirewallJob(String filePath) throws IOException, InterruptedException, ExecutionException
     {
         m_WebServiceClient.deleteJob(FIREWALL_JOB);
 
@@ -207,13 +205,11 @@ public class InfluencersTest
      * the password for user "nigella". The influencer src_ip = 23.28.243.150
      *
      * @param filePath
-     * @throws ClientProtocolException
      * @throws IOException
      * @throws ExecutionException
      * @throws InterruptedException
      */
-    private void doAuthDJob(String filePath)
-    throws ClientProtocolException, IOException, InterruptedException, ExecutionException
+    private void doAuthDJob(String filePath) throws IOException, InterruptedException, ExecutionException
     {
         m_WebServiceClient.deleteJob(SSH_AUTH_JOB);
 
@@ -307,10 +303,9 @@ public class InfluencersTest
      * The influencers are [(src_machine, 10.2.20.200), (user, nigella)]
      *
      * @param filePath
-     * @throws ClientProtocolException
      * @throws IOException
      */
-    private void doServerLogsJob(String filePath) throws ClientProtocolException, IOException
+    private void doServerLogsJob(String filePath) throws IOException
     {
         m_WebServiceClient.deleteJob(WEB_LOGS_JOB);
 
@@ -401,10 +396,9 @@ public class InfluencersTest
      * The influencer is [(src_ip, 10.2.20.200), (user, nigella)]
      *
      * @param filePath
-     * @throws ClientProtocolException
      * @throws IOException
      */
-    private void doBluecoatLogsJob(String filePath) throws ClientProtocolException, IOException
+    private void doBluecoatLogsJob(String filePath) throws IOException
     {
         m_WebServiceClient.deleteJob(BLUECOAT_LOGS_JOB);
 
@@ -475,10 +469,9 @@ public class InfluencersTest
      * so there are record and bucket level influencers.
      *
      * @param filePath
-     * @throws ClientProtocolException
      * @throws IOException
      */
-    private void doBucketOnlyInfluencers(String filePath) throws ClientProtocolException, IOException
+    private void doBucketOnlyInfluencers(String filePath) throws IOException
     {
         m_WebServiceClient.deleteJob(STATUS_CODES_RATES_JOB);
 
@@ -536,7 +529,7 @@ public class InfluencersTest
         }
     }
 
-    private void createJob(JobConfiguration jobConfig) throws ClientProtocolException, IOException
+    private void createJob(JobConfiguration jobConfig) throws IOException
     {
         String jobId = m_WebServiceClient.createJob(jobConfig);
         if (jobId == null || jobId.isEmpty())
@@ -582,8 +575,7 @@ public class InfluencersTest
         }
     }
 
-    public static void main(String[] args) throws ClientProtocolException, IOException,
-            InterruptedException, ExecutionException
+    public static void main(String[] args) throws IOException, InterruptedException, ExecutionException
     {
         // configure log4j
         ConsoleAppender console = new ConsoleAppender();

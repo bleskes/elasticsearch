@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -27,19 +27,16 @@
 
 package com.prelert.rs.client.integrationtests;
 
-import java.io.BufferedReader;
+import java.io.Closeable;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
 
-import org.apache.http.HttpEntity;
-import org.apache.http.client.ClientProtocolException;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
+import org.apache.log4j.Logger;
+import org.eclipse.jetty.client.HttpClient;
+import org.eclipse.jetty.client.api.ContentResponse;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -50,49 +47,64 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * to ES. To be used only to allow integration tests to verify
  * results that are not served vie the EngineApiClient.
  */
-class ElasticsearchDirectClient
+class ElasticsearchDirectClient implements Closeable
 {
+    private static final Logger LOGGER = Logger.getLogger(ElasticsearchDirectClient.class);
+
     private final String m_BaseUrl;
-    private final CloseableHttpClient m_HttpClient;
+    private final HttpClient m_HttpClient;
 
     public ElasticsearchDirectClient(String baseUrl)
     {
         m_BaseUrl = baseUrl;
-        m_HttpClient = HttpClients.createDefault();
+        m_HttpClient = new HttpClient();
+        try
+        {
+            m_HttpClient.start();
+        } catch (Exception e)
+        {
+            LOGGER.error("Failed to start HTTP client", e);
+            throw new RuntimeException(e);
+        }
     }
 
-    public double getBucketInitialScore(String bucketId) throws ClientProtocolException, IOException
+    @Override
+    public void close()
+    {
+        try
+        {
+            m_HttpClient.stop();
+        } catch (Exception e)
+        {
+            LOGGER.error("Failed to stop the HTTP client", e);
+        }
+    }
+
+    public double getBucketInitialScore(String bucketId) throws IOException
     {
         return getBucketField(bucketId, "initialAnomalyScore", Double.class);
     }
 
     private <T> T getBucketField(String bucketId, String field, Class<T> fieldType)
-            throws ClientProtocolException, IOException
+            throws IOException
     {
         String url = m_BaseUrl + "bucket/" + bucketId;
         return getField(url, field, fieldType);
     }
 
-    private <T> T getField(String url, String field, Class<T> fieldType)
-            throws ClientProtocolException, IOException
+    private <T> T getField(String url, String field, Class<T> fieldType) throws IOException
     {
-        HttpGet httpGet = new HttpGet(url);
-        try (CloseableHttpResponse response = m_HttpClient.execute(httpGet))
+        ContentResponse response = null;
+        try
         {
-            HttpEntity entity = response.getEntity();
-            String jsonContent = convertOneLineInputStreamToString(entity.getContent());
-            Map<String, Object> map = parseJsonAsMap(jsonContent);
-            return fieldType.cast(map.get(field));
-        }
-    }
-
-    private String convertOneLineInputStreamToString(InputStream stream) throws IOException
-    {
-        try (InputStreamReader i = new InputStreamReader(stream))
+            response = m_HttpClient.GET(url);
+        } catch (InterruptedException | ExecutionException | TimeoutException e)
         {
-            BufferedReader str = new BufferedReader(i);
-            return str.readLine();
+            LOGGER.error("An error occurred while executing an HTTP GET to " + url, e);
+            return null;
         }
+        Map<String, Object> map = parseJsonAsMap(response.getContentAsString());
+        return fieldType.cast(map.get(field));
     }
 
     @SuppressWarnings("unchecked")
