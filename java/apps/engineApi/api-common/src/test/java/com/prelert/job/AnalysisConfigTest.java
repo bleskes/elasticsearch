@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -53,8 +53,23 @@ public class AnalysisConfigTest
         det.setPartitionFieldName("sourcetype");
         ac.setDetectors(Arrays.asList(det));
 
+        Set<String> termFields = new TreeSet<String>(Arrays.asList(new String [] {
+                "airline", "sourcetype"}));
         Set<String> analysisFields = new TreeSet<String>(Arrays.asList(new String [] {
                 "responsetime", "airline", "sourcetype"}));
+
+        Assert.assertEquals(termFields.size(), ac.termFields().size());
+        Assert.assertEquals(analysisFields.size(), ac.analysisFields().size());
+
+        for (String s : ac.termFields())
+        {
+            Assert.assertTrue(termFields.contains(s));
+        }
+
+        for (String s : termFields)
+        {
+            Assert.assertTrue(ac.termFields().contains(s));
+        }
 
         for (String s : ac.analysisFields())
         {
@@ -118,11 +133,26 @@ public class AnalysisConfigTest
 
         ac.setDetectors(detectors);
 
+        termFields = new TreeSet<String>(Arrays.asList(new String [] {
+                "by_one", "by_two", "over_field",
+                "partition_one", "partition_two", "Influencer_Field"}));
         analysisFields = new TreeSet<String>(Arrays.asList(new String [] {
                 "metric1", "metric2", "by_one", "by_two", "over_field",
                 "partition_one", "partition_two", "Influencer_Field"}));
 
-        Assert.assertTrue(analysisFields.size() == ac.analysisFields().size());
+        Assert.assertEquals(termFields.size(), ac.termFields().size());
+        Assert.assertEquals(analysisFields.size(), ac.analysisFields().size());
+
+        for (String s : ac.termFields())
+        {
+            Assert.assertTrue(termFields.contains(s));
+        }
+
+        for (String s : termFields)
+        {
+            Assert.assertTrue(ac.termFields().contains(s));
+        }
+
         for (String s : ac.analysisFields())
         {
             Assert.assertTrue(analysisFields.contains(s));

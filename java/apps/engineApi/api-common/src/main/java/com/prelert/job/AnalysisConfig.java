@@ -207,6 +207,36 @@ public class AnalysisConfig
         m_Influencers = influencers;
     }
 
+    /**
+     * Return the list of term fields.
+     * These are the influencer fields, partition field,
+     * by field and over field of each detector.
+     * <code>null</code> and empty strings are filtered from the
+     * config.
+     *
+     * @return Set of term fields.
+     */
+    public Set<String> termFields()
+    {
+        Set<String> termFields = new TreeSet<>();
+
+        for (Detector d : getDetectors())
+        {
+            addIfNotNull(termFields, d.getByFieldName());
+            addIfNotNull(termFields, d.getOverFieldName());
+            addIfNotNull(termFields, d.getPartitionFieldName());
+        }
+
+        for (String i : getInfluencers())
+        {
+            addIfNotNull(termFields, i);
+        }
+
+        // remove empty strings
+        termFields.remove("");
+
+        return termFields;
+    }
 
     /**
      * Return the list of fields required by the analysis.
@@ -214,32 +244,26 @@ public class AnalysisConfig
      * by field and over field of each detector, plus the summary count
      * field and the categorization field name of the job.
      * <code>null</code> and empty strings are filtered from the
-     * config
+     * config.
      *
-     * @return List of required fields.
+     * @return List of required analysis fields.
      */
     public List<String> analysisFields()
     {
-        Set<String> fields = new TreeSet<>();
-        addIfNotNull(fields, m_CategorizationFieldName);
-        addIfNotNull(fields, m_SummaryCountFieldName);
+        Set<String> analysisFields = termFields();
+
+        addIfNotNull(analysisFields, m_CategorizationFieldName);
+        addIfNotNull(analysisFields, m_SummaryCountFieldName);
 
         for (Detector d : getDetectors())
         {
-            addIfNotNull(fields, d.getFieldName());
-            addIfNotNull(fields, d.getByFieldName());
-            addIfNotNull(fields, d.getOverFieldName());
-            addIfNotNull(fields, d.getPartitionFieldName());
-        }
-        for (String i : getInfluencers())
-        {
-            addIfNotNull(fields, i);
+            addIfNotNull(analysisFields, d.getFieldName());
         }
 
         // remove empty strings
-        fields.remove("");
+        analysisFields.remove("");
 
-        return new ArrayList<String>(fields);
+        return new ArrayList<String>(analysisFields);
     }
 
     private static void addIfNotNull(Set<String> fields, String field)

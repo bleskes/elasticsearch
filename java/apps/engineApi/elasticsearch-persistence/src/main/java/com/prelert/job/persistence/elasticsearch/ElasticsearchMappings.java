@@ -30,6 +30,7 @@ package com.prelert.job.persistence.elasticsearch;
 import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 
 import java.io.IOException;
+import java.util.Collection;
 
 import org.elasticsearch.common.xcontent.XContentBuilder;
 
@@ -51,6 +52,7 @@ import com.prelert.job.results.BucketInfluencer;
 import com.prelert.job.results.CategoryDefinition;
 import com.prelert.job.results.Influence;
 import com.prelert.job.results.Influencer;
+import com.prelert.job.results.ReservedFieldNames;
 import com.prelert.job.transform.TransformConfig;
 import com.prelert.job.usage.Usage;
 
@@ -462,13 +464,15 @@ public class ElasticsearchMappings
     /**
      * Records have a _parent mapping to a {@linkplain com.prelert.job.results.Bucket}.
      *
+     * @param termFieldNames Optionally, other field names to include in the
+     * mappings.  Pass <code>null</code> if not required.
      * @return
      * @throws IOException
      */
-    public static XContentBuilder recordMapping()
+    public static XContentBuilder recordMapping(Collection<String> termFieldNames)
     throws IOException
     {
-        return jsonBuilder()
+        XContentBuilder builder = jsonBuilder()
             .startObject()
                 .startObject(AnomalyRecord.TYPE)
                     .startObject(PARENT)
@@ -587,7 +591,24 @@ public class ElasticsearchMappings
                                     .field(TYPE, STRING)
                                 .endObject()
                             .endObject()
-                        .endObject()
+                        .endObject();
+
+        if (termFieldNames != null)
+        {
+            for (String fieldName : termFieldNames)
+            {
+                if (ReservedFieldNames.RESERVED_FIELD_NAMES.contains(fieldName))
+                {
+                    continue;
+                }
+                builder
+                        .startObject(fieldName)
+                            .field(TYPE, STRING)
+                        .endObject();
+            }
+        }
+
+        return builder
                     .endObject()
                 .endObject()
             .endObject();
@@ -792,13 +813,15 @@ public class ElasticsearchMappings
 
     /**
      * Influence results mapping
+     * @param influencerFieldNames Optionally, other field names to include in the
+     * mappings.  Pass <code>null</code> if not required.
      * @return
      * @throws IOException
      */
-    public static XContentBuilder influencerMapping()
+    public static XContentBuilder influencerMapping(Collection<String> influencerFieldNames)
     throws IOException
     {
-        return jsonBuilder()
+        XContentBuilder builder = jsonBuilder()
             .startObject()
                 .startObject(Influencer.TYPE)
                     .startObject(ALL)
@@ -828,7 +851,24 @@ public class ElasticsearchMappings
                         .endObject()
                         .startObject(Bucket.IS_INTERIM)
                             .field(TYPE, BOOLEAN).field(INCLUDE_IN_ALL, false)
-                        .endObject()
+                        .endObject();
+
+        if (influencerFieldNames != null)
+        {
+            for (String fieldName : influencerFieldNames)
+            {
+                if (ReservedFieldNames.RESERVED_FIELD_NAMES.contains(fieldName))
+                {
+                    continue;
+                }
+                builder
+                        .startObject(fieldName)
+                            .field(TYPE, STRING)
+                        .endObject();
+            }
+        }
+
+        return builder
                     .endObject()
                 .endObject()
             .endObject();

@@ -30,6 +30,7 @@ package com.prelert.job.persistence.elasticsearch;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -402,18 +403,20 @@ public class ElasticsearchJobProvider implements JobProvider
     @Override
     public boolean createJob(JobDetails job)
     {
+        Collection<String> termFields = (job.getAnalysisConfig() != null) ? job.getAnalysisConfig().termFields() : null;
+        Collection<String> influencers = (job.getAnalysisConfig() != null) ? job.getAnalysisConfig().getInfluencers() : null;
         try
         {
             XContentBuilder jobMapping = ElasticsearchMappings.jobMapping();
             XContentBuilder bucketMapping = ElasticsearchMappings.bucketMapping();
             XContentBuilder categorizerStateMapping = ElasticsearchMappings.categorizerStateMapping();
             XContentBuilder categoryDefinitionMapping = ElasticsearchMappings.categoryDefinitionMapping();
-            XContentBuilder recordMapping = ElasticsearchMappings.recordMapping();
+            XContentBuilder recordMapping = ElasticsearchMappings.recordMapping(termFields);
             XContentBuilder quantilesMapping = ElasticsearchMappings.quantilesMapping();
             XContentBuilder modelStateMapping = ElasticsearchMappings.modelStateMapping();
             XContentBuilder usageMapping = ElasticsearchMappings.usageMapping();
             XContentBuilder modelSizeStatsMapping = ElasticsearchMappings.modelSizeStatsMapping();
-            XContentBuilder influencerMapping = ElasticsearchMappings.influencerMapping();
+            XContentBuilder influencerMapping = ElasticsearchMappings.influencerMapping(influencers);
 
             ElasticsearchJobId elasticJobId = new ElasticsearchJobId(job.getId());
 
@@ -435,7 +438,6 @@ public class ElasticsearchJobProvider implements JobProvider
             LOGGER.trace("ES API CALL: wait for yellow status " + elasticJobId.getId());
             m_Client.admin().cluster().prepareHealth(elasticJobId.getIndex())
                     .setWaitForYellowStatus().execute().actionGet();
-
 
             String json = m_ObjectMapper.writeValueAsString(job);
 
