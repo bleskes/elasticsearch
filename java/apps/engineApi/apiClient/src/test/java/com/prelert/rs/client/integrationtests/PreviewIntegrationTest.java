@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -35,7 +35,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.Arrays;
 
-import org.apache.http.client.ClientProtocolException;
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -122,8 +121,7 @@ public class PreviewIntegrationTest implements Closeable
         deleteJob();
     }
 
-    private String createSingleLineWithTransformsJob() throws ClientProtocolException,
-            IOException
+    private String createSingleLineWithTransformsJob() throws IOException
     {
         Detector d = new Detector();
         d.setFunction("count");

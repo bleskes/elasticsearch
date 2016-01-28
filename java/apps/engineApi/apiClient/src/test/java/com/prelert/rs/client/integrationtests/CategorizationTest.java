@@ -34,7 +34,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.http.client.ClientProtocolException;
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -44,11 +43,11 @@ import com.prelert.job.AnalysisConfig;
 import com.prelert.job.AnalysisLimits;
 import com.prelert.job.DataDescription;
 import com.prelert.job.DataDescription.DataFormat;
+import com.prelert.job.Detector;
+import com.prelert.job.JobConfiguration;
 import com.prelert.job.results.AnomalyRecord;
 import com.prelert.job.results.Bucket;
 import com.prelert.job.results.CategoryDefinition;
-import com.prelert.job.Detector;
-import com.prelert.job.JobConfiguration;
 import com.prelert.rs.client.EngineApiClient;
 import com.prelert.rs.data.Pagination;
 import com.prelert.rs.data.SingleDocument;
@@ -162,7 +161,7 @@ public class CategorizationTest implements Closeable
         test(m_WebServiceClient.closeJob(m_JobId) == true);
     }
 
-    private String createCategorizationJob() throws ClientProtocolException, IOException
+    private String createCategorizationJob() throws IOException
     {
         Detector d = new Detector();
         d.setFunction(m_Function);

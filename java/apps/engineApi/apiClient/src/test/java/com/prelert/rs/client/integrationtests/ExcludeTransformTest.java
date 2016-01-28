@@ -35,7 +35,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import org.apache.http.client.ClientProtocolException;
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -81,8 +80,7 @@ public class ExcludeTransformTest implements Closeable
     }
 
 
-    private void createJob()
-    throws ClientProtocolException, IOException
+    private void createJob() throws IOException
     {
         m_WebServiceClient.deleteJob(JOB_ID);
 
@@ -195,8 +193,7 @@ public class ExcludeTransformTest implements Closeable
         m_WebServiceClient.close();
     }
 
-    public static void main(String[] args) throws ClientProtocolException,
-    IOException
+    public static void main(String[] args) throws IOException
     {
         // configure log4j
         ConsoleAppender console = new ConsoleAppender();

@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -44,7 +44,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
-import org.apache.http.client.ClientProtocolException;
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -109,8 +108,7 @@ public class AlertSubscriptionTest
 		m_BucketUris = Collections.synchronizedList(new ArrayList<URI>());
 	}
 
-	private void setupJobs(EngineApiClient client)
-	throws ClientProtocolException, IOException
+	private void setupJobs(EngineApiClient client) throws IOException
 	{
 		for (String s : JOB_IDS)
 		{
@@ -507,8 +505,8 @@ public class AlertSubscriptionTest
 	}
 
 
-	public void runTests(String baseUrl, String prelertTestDataHome)
-	throws ClientProtocolException, IOException, InterruptedException
+    public void runTests(String baseUrl, String prelertTestDataHome) throws IOException,
+            InterruptedException
 	{
 		EngineApiClient client = new EngineApiClient(baseUrl);
 		setupJobs(client);

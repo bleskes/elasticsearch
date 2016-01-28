@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -33,7 +33,6 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
-import org.apache.http.client.ClientProtocolException;
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -97,7 +96,7 @@ public class HierarchicalNormalizationTest implements Closeable
         m_WebServiceClient.close();
     }
 
-    private String createDifferentPartitionsJob() throws ClientProtocolException, IOException
+    private String createDifferentPartitionsJob() throws IOException
     {
         Detector d1 = new Detector();
         d1.setFunction("mean");
@@ -112,7 +111,7 @@ public class HierarchicalNormalizationTest implements Closeable
         return createJob(Arrays.asList(d1, d2), DIFFERENT_PARTITIONS_JOB_ID);
     }
 
-    private String createDifferentPersonsJob() throws ClientProtocolException, IOException
+    private String createDifferentPersonsJob() throws IOException
     {
         Detector d1 = new Detector();
         d1.setFunction("mean");
@@ -127,7 +126,7 @@ public class HierarchicalNormalizationTest implements Closeable
         return createJob(Arrays.asList(d1, d2), DIFFERENT_PERSONS_JOB_ID);
     }
 
-    private String createDifferentPersonsAndFunctionsJob() throws ClientProtocolException, IOException
+    private String createDifferentPersonsAndFunctionsJob() throws IOException
     {
         Detector d1 = new Detector();
         d1.setFunction("mean");
@@ -147,7 +146,7 @@ public class HierarchicalNormalizationTest implements Closeable
         return createJob(Arrays.asList(d1, d2, d3), DIFFERENT_PERSONS_AND_FUNCTIONS_JOB_ID);
     }
 
-    private String createDifferentFunctionFieldsJob() throws ClientProtocolException, IOException
+    private String createDifferentFunctionFieldsJob() throws IOException
     {
         Detector d1 = new Detector();
         d1.setFunction("mean");
@@ -162,8 +161,7 @@ public class HierarchicalNormalizationTest implements Closeable
         return createJob(Arrays.asList(d1, d2), DIFFERENT_FUNCTION_FIELDS_JOB_ID);
     }
 
-    private String createJob(List<Detector> detectors, String jobId)
-            throws ClientProtocolException, IOException
+    private String createJob(List<Detector> detectors, String jobId) throws IOException
     {
         AnalysisConfig ac = new AnalysisConfig();
         ac.setBucketSpan(600L);

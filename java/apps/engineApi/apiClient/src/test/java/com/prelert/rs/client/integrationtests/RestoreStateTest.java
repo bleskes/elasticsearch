@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -35,7 +35,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.http.client.ClientProtocolException;
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -93,7 +92,7 @@ public class RestoreStateTest
         m_TestDataHome = testDataHome;
     }
 
-    private void createJob(String jobId) throws ClientProtocolException, IOException
+    private void createJob(String jobId) throws IOException
     {
         Detector detector = new Detector();
         detector.setFieldName("responsetime");

@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -33,7 +33,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Arrays;
 
-import org.apache.http.client.ClientProtocolException;
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -86,7 +85,7 @@ public class HrdTransformTest implements Closeable
         m_WebServiceClient.close();
     }
 
-    public void createMaxBytesOverHrdJob() throws ClientProtocolException, IOException
+    public void createMaxBytesOverHrdJob() throws IOException
     {
         final String JOB_CONFIG = "{\"id\":\"" + MAX_BYTES_OVER_HRD_JOB + "\","
                 + "\"analysisConfig\" : {"
@@ -126,7 +125,7 @@ public class HrdTransformTest implements Closeable
 
     }
 
-    public void createInfoContentOverHrdJob() throws ClientProtocolException, IOException
+    public void createInfoContentOverHrdJob() throws IOException
     {
         final String TRANSFORM_JOB_CONFIG = "{\"id\":\"" + INFO_CONTENT_OVER_HRD_JOB + "\","
                 + "\"analysisConfig\" : {"
@@ -269,7 +268,7 @@ public class HrdTransformTest implements Closeable
         }
     }
 
-    public static void main(String[] args) throws ClientProtocolException, IOException
+    public static void main(String[] args) throws IOException
     {
         // configure log4j
         ConsoleAppender console = new ConsoleAppender();
