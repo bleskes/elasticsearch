@@ -74,6 +74,7 @@ import com.prelert.rs.data.SingleDocument;
 public class EngineApiClient implements Closeable
 {
     private static final Logger LOGGER = Logger.getLogger(EngineApiClient.class);
+    private static final int BUFFER_SIZE = 4096 * 1024;
 
     private final String m_BaseUrl;
     private final ObjectMapper m_JsonMapper;
@@ -340,8 +341,7 @@ public class EngineApiClient implements Closeable
         String postUrl = m_BaseUrl + "/data/" + jobId;
         LOGGER.debug("Uploading chunked data to " + postUrl);
 
-        final int BUFF_SIZE = 4096 * 1024;
-        byte [] buffer = new byte[BUFF_SIZE];
+        byte [] buffer = new byte[BUFFER_SIZE];
         int uploadCount = 0;
         MultiDataPostResult uploadSummary = new MultiDataPostResult();
 
@@ -501,13 +501,12 @@ public class EngineApiClient implements Closeable
         };
         request.send(responseListener);
 
-        final int BUFF_SIZE = 4096 * 1024;
-        byte[] buffer = new byte[BUFF_SIZE];
+        byte[] buffer = new byte[BUFFER_SIZE];
         int bytesRead = 0;
         while ((bytesRead = inputStream.read(buffer)) > -1)
         {
             contentProvider.offer(ByteBuffer.wrap(buffer, 0, bytesRead));
-            buffer = new byte[BUFF_SIZE];
+            buffer = new byte[BUFFER_SIZE];
         }
         contentProvider.close();
 
