@@ -51,8 +51,7 @@ public class ElasticsearchMappingsTest
                         "        \"index\": \"not_analyzed\"" +
                         "      }," +
                         "      \"description\": {" +
-                        "        \"type\": \"string\"," +
-                        "        \"index\": \"not_analyzed\"" +
+                        "        \"type\": \"string\"" +
                         "      }," +
                         "      \"status\": {" +
                         "        \"type\": \"string\"" +

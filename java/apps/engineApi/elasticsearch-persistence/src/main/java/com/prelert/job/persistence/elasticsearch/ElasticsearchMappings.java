@@ -135,9 +135,15 @@ public class ElasticsearchMappings
                         .startObject(JobDetails.ID)
                             .field(TYPE, STRING).field(INDEX, NOT_ANALYZED)
                         .endObject()
+                        // "description" is analyzed so that it has the same
+                        // mapping as a user field of the same name - this means
+                        // it doesn't have to be a reserved field name
                         .startObject(JobDetails.DESCRIPTION)
-                            .field(TYPE, STRING).field(INDEX, NOT_ANALYZED)
+                            .field(TYPE, STRING)
                         .endObject()
+                        // "status" is analyzed so that it has the same mapping
+                        // as a user field of the same name - this means it
+                        // doesn't have to be a reserved field name
                         .startObject(JobDetails.STATUS)
                             .field(TYPE, STRING)
                         .endObject()

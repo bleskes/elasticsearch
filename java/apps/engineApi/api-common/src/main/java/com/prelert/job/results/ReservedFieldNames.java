@@ -21,6 +21,20 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.prelert.job.AnalysisConfig;
+import com.prelert.job.AnalysisLimits;
+import com.prelert.job.DataCounts;
+import com.prelert.job.DataDescription;
+import com.prelert.job.Detector;
+import com.prelert.job.JobDetails;
+import com.prelert.job.ModelDebugConfig;
+import com.prelert.job.ModelSizeStats;
+import com.prelert.job.ModelState;
+import com.prelert.job.quantiles.Quantiles;
+import com.prelert.job.transform.TransformConfig;
+import com.prelert.job.usage.Usage;
+
+
 /**
  * Defines the field names that we use for our results.
  * Fields from the raw data with these names are not added to any result.  Even
@@ -37,9 +51,23 @@ public final class ReservedFieldNames
 
     /**
      * This array should be updated to contain all the field names that appear
-     * in our results.
+     * in any documents we store in our results index.  (The reason it's any
+     * documents we store and not just results documents is that Elasticsearch
+     * 2.x requires mappings for given fields be consistent across all types
+     * in a given index.)
      */
     private static final String[] RESERVED_FIELD_NAME_ARRAY = {
+
+        AnalysisConfig.BUCKET_SPAN,
+        AnalysisConfig.BATCH_SPAN,
+        AnalysisConfig.LATENCY,
+        AnalysisConfig.PERIOD,
+        AnalysisConfig.SUMMARY_COUNT_FIELD_NAME,
+        AnalysisConfig.CATEGORIZATION_FIELD_NAME,
+        AnalysisConfig.DETECTORS,
+
+        AnalysisLimits.MODEL_MEMORY_LIMIT,
+        AnalysisLimits.CATEGORIZATION_EXAMPLES_LIMIT,
 
         AnomalyCause.PROBABILITY,
         AnomalyCause.OVER_FIELD_NAME,
@@ -95,6 +123,38 @@ public final class ReservedFieldNames
         BucketInfluencer.RAW_ANOMALY_SCORE,
         BucketInfluencer.PROBABILITY,
 
+        CategoryDefinition.CATEGORY_ID,
+        CategoryDefinition.TERMS,
+        CategoryDefinition.REGEX,
+        CategoryDefinition.EXAMPLES,
+
+        DataCounts.BUCKET_COUNT,
+        DataCounts.PROCESSED_RECORD_COUNT,
+        DataCounts.PROCESSED_FIELD_COUNT,
+        DataCounts.INPUT_BYTES,
+        DataCounts.INPUT_RECORD_COUNT,
+        DataCounts.INPUT_FIELD_COUNT,
+        DataCounts.INVALID_DATE_COUNT,
+        DataCounts.MISSING_FIELD_COUNT,
+        DataCounts.OUT_OF_ORDER_TIME_COUNT,
+        DataCounts.FAILED_TRANSFORM_COUNT,
+        DataCounts.EXCLUDED_RECORD_COUNT,
+        DataCounts.LATEST_RECORD_TIME,
+
+        DataDescription.FORMAT,
+        DataDescription.TIME_FIELD_NAME,
+        DataDescription.TIME_FORMAT,
+        DataDescription.FIELD_DELIMITER,
+        DataDescription.QUOTE_CHARACTER,
+
+        Detector.DETECTOR_DESCRIPTION,
+        Detector.FUNCTION,
+        Detector.FIELD_NAME,
+        Detector.BY_FIELD_NAME,
+        Detector.OVER_FIELD_NAME,
+        Detector.PARTITION_FIELD_NAME,
+        Detector.USE_NULL,
+
         Influence.INFLUENCER_FIELD_NAME,
         Influence.INFLUENCER_FIELD_VALUES,
 
@@ -105,6 +165,46 @@ public final class ReservedFieldNames
         Influencer.INFLUENCER_FIELD_VALUE,
         Influencer.INITIAL_ANOMALY_SCORE,
         Influencer.ANOMALY_SCORE,
+
+        JobDetails.ID,
+        // JobDetails.DESCRIPTION is not reserved because it is an analyzed string
+        // JobDetails.STATUS is not reserved because it is an analyzed string
+        JobDetails.SCHEDULER_STATUS,
+        JobDetails.CREATE_TIME,
+        JobDetails.FINISHED_TIME,
+        JobDetails.LAST_DATA_TIME,
+        JobDetails.COUNTS,
+        JobDetails.TIMEOUT,
+        JobDetails.RENORMALIZATION_WINDOW,
+        JobDetails.RESULTS_RETENTION_DAYS,
+        JobDetails.ANALYSIS_CONFIG,
+        JobDetails.ANALYSIS_LIMITS,
+        JobDetails.TRANSFORMS,
+        JobDetails.MODEL_DEBUG_CONFIG,
+
+        ModelDebugConfig.BOUNDS_PERCENTILE,
+        ModelDebugConfig.TERMS,
+
+        ModelSizeStats.MODEL_BYTES,
+        ModelSizeStats.TOTAL_BY_FIELD_COUNT,
+        ModelSizeStats.TOTAL_OVER_FIELD_COUNT,
+        ModelSizeStats.TOTAL_PARTITION_FIELD_COUNT,
+        ModelSizeStats.BUCKET_ALLOCATION_FAILURES_COUNT,
+        ModelSizeStats.MEMORY_STATUS,
+
+        Quantiles.ID,
+        Quantiles.VERSION,
+        Quantiles.QUANTILE_STATE,
+
+        TransformConfig.TRANSFORM,
+        TransformConfig.ARGUMENTS,
+        TransformConfig.INPUTS,
+        TransformConfig.OUTPUTS,
+
+        Usage.TIMESTAMP,
+        Usage.INPUT_BYTES,
+        Usage.INPUT_FIELD_COUNT,
+        Usage.INPUT_RECORD_COUNT,
 
         JOB_ID_NAME
     };
