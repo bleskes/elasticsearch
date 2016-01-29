@@ -215,7 +215,7 @@ public class AlertSubscriptionTest
         EngineApiClient m_Client;
         String m_JobId;
         Double m_ScoreThreshold;
-        Double m_ProbabiltyThreshold;
+        Double m_ProbabilityThreshold;
         boolean m_ShouldTimeout;
         volatile boolean m_Quit;
         boolean m_TestPassed;
@@ -223,13 +223,13 @@ public class AlertSubscriptionTest
 
 
         public LongPollAlertTest(EngineApiClient client, String jobId,
-                Double scoreThreshold, Double probabiltyThreshold, boolean shouldTimeout,
+                Double scoreThreshold, Double probabilityThreshold, boolean shouldTimeout,
                 CountDownLatch latch)
         {
             m_Client = client;
             m_JobId = jobId;
             m_ScoreThreshold = scoreThreshold;
-            m_ProbabiltyThreshold = probabiltyThreshold;
+            m_ProbabilityThreshold = probabilityThreshold;
             m_ShouldTimeout = shouldTimeout;
             m_Latch = latch;
         }
@@ -259,9 +259,9 @@ public class AlertSubscriptionTest
             {
                 builder.score(m_ScoreThreshold);
             }
-            if (m_ProbabiltyThreshold != null)
+            if (m_ProbabilityThreshold != null)
             {
-                builder.probability(m_ProbabiltyThreshold);
+                builder.probability(m_ProbabilityThreshold);
             }
 
             return builder.get();
@@ -332,27 +332,29 @@ public class AlertSubscriptionTest
 
                 if (alert.isTimeout() == false)
                 {
-                    if (m_ScoreThreshold != null && m_ProbabiltyThreshold != null)
+                    if (m_ScoreThreshold != null && m_ProbabilityThreshold != null)
                     {
                         test(alert.getAnomalyScore() >= m_ScoreThreshold ||
-                                alert.getMaxNormalizedProbability() >= m_ProbabiltyThreshold);
+                                alert.getMaxNormalizedProbability() >= m_ProbabilityThreshold);
                     }
                     else if (m_ScoreThreshold != null)
                     {
                         test(alert.getAnomalyScore() >= m_ScoreThreshold);
                         test(alert.getRecords() == null);
                         test(alert.getBucket() != null);
+                        test(alert.getBucket().getTimestamp() != null);
                         test(alert.getBucket().getAnomalyScore() >= m_ScoreThreshold);
                     }
-                    else if (m_ProbabiltyThreshold != null)
+                    else if (m_ProbabilityThreshold != null)
                     {
-                        test(alert.getMaxNormalizedProbability() >= m_ProbabiltyThreshold);
+                        test(alert.getMaxNormalizedProbability() >= m_ProbabilityThreshold);
                         test(alert.getBucket() == null);
                         test(alert.getRecords() != null);
                         test(alert.getRecords().size() > 0);
                         for (AnomalyRecord r : alert.getRecords())
                         {
-                            test(r.getNormalizedProbability() >= m_ProbabiltyThreshold);
+                            test(r.getNormalizedProbability() >= m_ProbabilityThreshold);
+                            test(r.getTimestamp() != null);
                         }
                     }
 
@@ -364,7 +366,6 @@ public class AlertSubscriptionTest
                 {
                     LOGGER.info("Alert timed out for " + m_JobId);
                 }
-
 
                 m_TestPassed = true;
             }

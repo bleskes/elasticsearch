@@ -29,6 +29,8 @@ package com.prelert.job.alert.manager;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 
@@ -55,7 +57,7 @@ import com.prelert.job.persistence.JobProvider;
 import com.prelert.job.results.AnomalyRecord;
 import com.prelert.job.results.Bucket;
 
-public class AlertListenerTest
+public class AsyncResponseAlertObserverTest
 {
     @Mock private JobProvider m_JobProvider;
     @Mock private JobManager m_JobManager;
@@ -133,8 +135,9 @@ public class AlertListenerTest
 
         Mockito.verify(response).resume(argument.capture());
 
-        assertEquals(null, argument.getValue().getRecords());
-        assertTrue(argument.getValue().getBucket() != null);
+        assertNull(argument.getValue().getRecords());
+        assertNotNull(argument.getValue().getBucket());
+        assertNotNull(argument.getValue().getBucket().getTimestamp());
         assertEquals(8, argument.getValue().getBucket().getRecordCount());
         assertEquals(8, argument.getValue().getBucket().getRecords().size());
         assertFalse(argument.getValue().isInterim());
@@ -142,6 +145,7 @@ public class AlertListenerTest
         for (AnomalyRecord r : argument.getValue().getBucket().getRecords())
         {
             assertTrue(r.getNormalizedProbability() >= 30.0);
+            assertNotNull(r.getTimestamp());
         }
     }
 
@@ -164,13 +168,14 @@ public class AlertListenerTest
 
         Mockito.verify(response).resume(argument.capture());
 
-        assertEquals(null, argument.getValue().getBucket());
-        assertTrue(argument.getValue().getRecords() != null);
+        assertNull(argument.getValue().getBucket());
+        assertNotNull(argument.getValue().getRecords());
         assertEquals(6, argument.getValue().getRecords().size());
 
         for (AnomalyRecord r : argument.getValue().getRecords())
         {
             assertTrue(r.getNormalizedProbability() >= 50.0);
+            assertNotNull(r.getTimestamp());
         }
     }
 

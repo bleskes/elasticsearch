@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -60,7 +60,7 @@ class AsyncResponseAlertObserver extends AlertObserver
     @Override
     public void fire(Bucket bucket, AlertTrigger trigger)
     {
-        LOGGER.info(String.format("Alert fired in bucket %s, probablilty = %f, anomaly score = %f",
+        LOGGER.info(String.format("Alert fired in bucket %s, probability = %f, anomaly score = %f",
                                     bucket.getTimestamp(),
                                     bucket.getMaxNormalizedProbability(),
                                     bucket.getAnomalyScore()));

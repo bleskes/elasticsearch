@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -86,15 +86,15 @@ public class AlertsLongPoll extends ResourceWithJobManager
             @PathParam("jobId") String jobId,
             @DefaultValue("90") @QueryParam(TIMEOUT) int timeout,
             @QueryParam(SCORE) Double anomalyScoreThreshold,
-            @QueryParam(PROBABILITY) Double normalizedProbabiltyThreshold,
+            @QueryParam(PROBABILITY) Double normalizedProbabilityThreshold,
             @DefaultValue("bucket") @QueryParam(ALERT_ON) String alertTypes,
             @DefaultValue("false") @QueryParam(INCLUDE_INTERIM) boolean includeInterim,
             @Suspended final AsyncResponse asyncResponse)
     throws InterruptedException, UnknownJobException
     {
-        logEndpointCall(jobId, anomalyScoreThreshold, normalizedProbabiltyThreshold);
+        logEndpointCall(jobId, anomalyScoreThreshold, normalizedProbabilityThreshold);
 
-        if (anomalyScoreThreshold == null && normalizedProbabiltyThreshold == null)
+        if (anomalyScoreThreshold == null && normalizedProbabilityThreshold == null)
         {
             String msg = Messages.getMessage(Messages.REST_ALERT_MISSING_ARGUMENT);
             LOGGER.info(msg);
@@ -102,10 +102,10 @@ public class AlertsLongPoll extends ResourceWithJobManager
         }
 
         if (!isWithinRange0To100(anomalyScoreThreshold)
-                || !isWithinRange0To100(normalizedProbabiltyThreshold))
+                || !isWithinRange0To100(normalizedProbabilityThreshold))
         {
             String error = createThresholdOutOfRangeMsg(anomalyScoreThreshold,
-                    normalizedProbabiltyThreshold);
+                    normalizedProbabilityThreshold);
 
             String msg = Messages.getMessage(Messages.REST_ALERT_INVALID_THRESHOLD, error);
             LOGGER.info(msg);
@@ -120,7 +120,7 @@ public class AlertsLongPoll extends ResourceWithJobManager
         }
 
         AlertTrigger [] alertTriggers = createAlertTriggers(alertTypes, anomalyScoreThreshold,
-                                         normalizedProbabiltyThreshold, includeInterim);
+                                         normalizedProbabilityThreshold, includeInterim);
 
 
         checkArgumentsValidForAlertType(anomalyScoreThreshold, alertTriggers);
@@ -132,7 +132,7 @@ public class AlertsLongPoll extends ResourceWithJobManager
 
 
     AlertTrigger [] createAlertTriggers(String requested, Double anomalyScoreThreshold,
-                                        Double normalizedProbabiltyThreshold, boolean includeInterim)
+                                        Double normalizedProbabilityThreshold, boolean includeInterim)
     throws RestApiException
     {
         String [] split = requested.split(",");
@@ -145,7 +145,7 @@ public class AlertsLongPoll extends ResourceWithJobManager
         {
             try
             {
-                triggers[i++] = new AlertTrigger(normalizedProbabiltyThreshold, anomalyScoreThreshold,
+                triggers[i++] = new AlertTrigger(normalizedProbabilityThreshold, anomalyScoreThreshold,
                                             AlertType.fromString(s), includeInterim);
             }
             catch (IllegalArgumentException e)
@@ -161,7 +161,7 @@ public class AlertsLongPoll extends ResourceWithJobManager
     }
 
     /**
-     * normalizedProbabiltyThreshold can't be used with influencers
+     * normalizedProbabilityThreshold can't be used with influencers
      */
     private void checkArgumentsValidForAlertType(Double anomalyScoreThreshold,
                                                 AlertTrigger [] alertTriggers)
