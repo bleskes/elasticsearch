@@ -94,7 +94,8 @@ public class EngineApiClient implements Closeable
         try
         {
             m_HttpClient.start();
-        } catch (Exception e)
+        }
+        catch (Exception e)
         {
             LOGGER.fatal("Failed to start the HTTP client", e);
         }
@@ -111,7 +112,8 @@ public class EngineApiClient implements Closeable
         try
         {
             m_HttpClient.stop();
-        } catch (Exception e)
+        }
+        catch (Exception e)
         {
             throw new IOException(e);
         }
@@ -512,7 +514,8 @@ public class EngineApiClient implements Closeable
         try
         {
             waitUntilRequestCompletesLatch.await();
-        } catch (InterruptedException e)
+        }
+        catch (InterruptedException e)
         {
             LOGGER.error(e);
             return defaultReturnValue;
