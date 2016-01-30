@@ -29,7 +29,6 @@ import com.prelert.job.Detector;
 import com.prelert.job.JobDetails;
 import com.prelert.job.ModelDebugConfig;
 import com.prelert.job.ModelSizeStats;
-import com.prelert.job.ModelState;
 import com.prelert.job.quantiles.Quantiles;
 import com.prelert.job.transform.TransformConfig;
 import com.prelert.job.usage.Usage;
