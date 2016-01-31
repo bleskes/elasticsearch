@@ -87,7 +87,7 @@ public class TimeThrottleIntegrationTests extends AbstractWatcherIntegrationTest
                 .setSource(watchBuilder()
                         .trigger(schedule(interval("5s")))
                         .input(searchInput(matchAllRequest().indices("events")))
-                        .condition(compareCondition("ctx.payload.hits.total", CompareCondition.Op.GT, 0l))
+                        .condition(compareCondition("ctx.payload.hits.total", CompareCondition.Op.GT, 0L))
                         .transform(searchTransform(matchAllRequest().indices("events")))
                         .addAction("_id", indexAction("actions", "action"))
                         .defaultThrottlePeriod(TimeValue.timeValueSeconds(30)))
@@ -161,7 +161,7 @@ public class TimeThrottleIntegrationTests extends AbstractWatcherIntegrationTest
                 .setSource(watchBuilder()
                         .trigger(schedule(interval("1s")))
                         .input(searchInput(matchAllRequest().indices("events")))
-                        .condition(compareCondition("ctx.payload.hits.total", CompareCondition.Op.GT, 0l))
+                        .condition(compareCondition("ctx.payload.hits.total", CompareCondition.Op.GT, 0L))
                         .transform(searchTransform(matchAllRequest().indices("events")))
                         .addAction("_id", indexAction("actions", "action")))
                 .get();
