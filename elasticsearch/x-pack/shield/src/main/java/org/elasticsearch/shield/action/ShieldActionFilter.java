@@ -32,6 +32,7 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.util.concurrent.ThreadContext;
 import org.elasticsearch.license.plugin.core.LicenseUtils;
 import org.elasticsearch.shield.ShieldPlugin;
+import org.elasticsearch.shield.InternalSystemUser;
 import org.elasticsearch.shield.User;
 import org.elasticsearch.shield.action.interceptor.RequestInterceptor;
 import org.elasticsearch.shield.audit.AuditTrail;
@@ -141,7 +142,7 @@ public class ShieldActionFilter extends AbstractComponent implements ActionFilte
                 if (INTERNAL_PREDICATE.test(action)) {
                     try (ThreadContext.StoredContext ctx = threadContext.stashContext()) {
                         String shieldAction = actionMapper.action(action, request);
-                        User user = authcService.authenticate(shieldAction, request, User.SYSTEM);
+                        User user = authcService.authenticate(shieldAction, request, InternalSystemUser.INSTANCE);
                         authzService.authorize(user, shieldAction, request);
                         request = unsign(user, shieldAction, request);
 
@@ -169,7 +170,7 @@ public class ShieldActionFilter extends AbstractComponent implements ActionFilte
                  */
 
                 String shieldAction = actionMapper.action(action, request);
-                User user = authcService.authenticate(shieldAction, request, User.SYSTEM);
+                User user = authcService.authenticate(shieldAction, request, InternalSystemUser.INSTANCE);
                 authzService.authorize(user, shieldAction, request);
                 request = unsign(user, shieldAction, request);
 

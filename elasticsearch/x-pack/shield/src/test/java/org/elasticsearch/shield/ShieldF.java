@@ -17,6 +17,8 @@
 
 package org.elasticsearch.shield;
 
+import org.apache.lucene.util.IOUtils;
+import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.Version;
 import org.elasticsearch.common.io.PathUtils;
 import org.elasticsearch.common.settings.Settings;
@@ -29,6 +31,7 @@ import org.elasticsearch.shield.test.ShieldTestUtils;
 import org.elasticsearch.test.ShieldSettingsSource;
 import org.elasticsearch.xpack.XPackPlugin;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
@@ -76,8 +79,13 @@ public class ShieldF {
 
             @Override
             public void run() {
-                node.close();
-                latch.countDown();
+                try {
+                    IOUtils.close(node);
+                } catch (IOException ex) {
+                    throw new ElasticsearchException(ex);
+                } finally {
+                    latch.countDown();
+                }
             }
         });
         node.start();

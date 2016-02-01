@@ -47,6 +47,7 @@ import org.elasticsearch.watcher.WatcherPlugin;
 import org.elasticsearch.xpack.XPackPlugin;
 import org.junit.Before;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.text.MessageFormat;
 import java.util.Collections;
@@ -507,7 +508,7 @@ public class LdapUserSearchSessionFactoryTests extends LdapTestCase {
     }
 
     @Network
-    public void testThatLDAPServerConnectErrorDoesNotPreventNodeFromStarting() {
+    public void testThatLDAPServerConnectErrorDoesNotPreventNodeFromStarting() throws IOException {
         String groupSearchBase = "DC=ad,DC=test,DC=elasticsearch,DC=com";
         String userSearchBase = "CN=Users,DC=ad,DC=test,DC=elasticsearch,DC=com";
         Settings ldapSettings = settingsBuilder()

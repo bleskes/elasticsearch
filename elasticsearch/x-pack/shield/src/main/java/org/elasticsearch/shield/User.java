@@ -23,7 +23,6 @@ import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.shield.authz.SystemRole;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -32,8 +31,6 @@ import java.util.Arrays;
  * An authenticated user
  */
 public class User implements ToXContent {
-
-    public static final User SYSTEM = new System();
 
     private final String username;
     private final String[] roles;
@@ -49,7 +46,7 @@ public class User implements ToXContent {
         this.username = username;
         this.roles = roles == null ? Strings.EMPTY_ARRAY : roles;
         assert (runAs == null || runAs.runAs() == null) : "the runAs user should not be a user that can run as";
-        if (runAs == SYSTEM) {
+        if (runAs == InternalSystemUser.INSTANCE) {
             throw new ElasticsearchSecurityException("the runAs user cannot be the internal system user");
         }
         this.runAs = runAs;
@@ -81,10 +78,6 @@ public class User implements ToXContent {
         return runAs;
     }
 
-    public final boolean isSystem() {
-        return this == SYSTEM;
-    }
-
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
@@ -103,43 +96,6 @@ public class User implements ToXContent {
         return sb.toString();
     }
 
-    public static User readFrom(StreamInput input) throws IOException {
-        if (input.readBoolean()) {
-            String name = input.readString();
-            if (System.NAME.equals(name)) {
-                return SYSTEM;
-            } else {
-                throw new IllegalStateException("invalid system user");
-            }
-        }
-        String username = input.readString();
-        String[] roles = input.readStringArray();
-        if (input.readBoolean()) {
-            String runAsUsername = input.readString();
-            String[] runAsRoles = input.readStringArray();
-            return new User(username, roles, new User(runAsUsername, runAsRoles));
-        }
-        return new User(username, roles);
-    }
-
-    public static void writeTo(User user, StreamOutput output) throws IOException {
-        if (user.isSystem()) {
-            output.writeBoolean(true);
-            output.writeString(System.NAME);
-        } else {
-            output.writeBoolean(false);
-            output.writeString(user.principal());
-            output.writeStringArray(user.roles());
-            if (user.runAs == null) {
-                output.writeBoolean(false);
-            } else {
-                output.writeBoolean(true);
-                output.writeString(user.runAs.principal());
-                output.writeStringArray(user.runAs.roles());
-            }
-        }
-    }
-
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -152,7 +108,6 @@ public class User implements ToXContent {
         if (runAs != null ? !runAs.equals(user.runAs) : user.runAs != null) {
             return false;
         }
-
         return true;
     }
 
@@ -173,12 +128,47 @@ public class User implements ToXContent {
         return builder;
     }
 
-    private static class System extends User {
-        private static final String NAME = "__es_system_user";
-        private static final String[] ROLES = new String[] { SystemRole.NAME };
+    public static User readFrom(StreamInput input) throws IOException {
+        if (input.readBoolean()) {
+            String name = input.readString();
+            switch (name) {
+                case InternalSystemUser.NAME:
+                    return InternalSystemUser.INSTANCE;
+                case InternalShieldUser.NAME:
+                    return InternalShieldUser.INSTANCE;
+                default:
+                    throw new IllegalStateException("invalid internal user");
+            }
+        }
+        String username = input.readString();
+        String[] roles = input.readStringArray();
+        if (input.readBoolean()) {
+            String runAsUsername = input.readString();
+            String[] runAsRoles = input.readStringArray();
+            return new User(username, roles, new User(runAsUsername, runAsRoles));
+        }
+        return new User(username, roles);
+    }
 
-        private System() {
-            super(NAME, ROLES);
+    public static void writeTo(User user, StreamOutput output) throws IOException {
+        if (InternalSystemUser.is(user)) {
+            output.writeBoolean(true);
+            output.writeString(InternalSystemUser.NAME);
+        } if (InternalShieldUser.is(user)) {
+            output.writeBoolean(true);
+            output.writeString(InternalShieldUser.NAME);
+        } else {
+            output.writeBoolean(false);
+            output.writeString(user.principal());
+            output.writeStringArray(user.roles());
+            if (user.runAs == null) {
+                output.writeBoolean(false);
+            } else {
+                output.writeBoolean(true);
+                output.writeString(user.runAs.principal());
+                output.writeStringArray(user.runAs.roles());
+            }
         }
     }
+
 }
