@@ -227,6 +227,8 @@ public class JobScheduler
 
     private void updateStatus(JobSchedulerStatus status)
     {
+        m_Logger.info("Scheduler status changed to " + status);
+
         m_Status = status;
         Map<String, Object> updates = new HashMap<>();
         updates.put(JobDetails.SCHEDULER_STATUS, status);
@@ -287,7 +289,7 @@ public class JobScheduler
             {
                 finishLookback();
             }
-            else
+            else if (m_Status == JobSchedulerStatus.STARTED)
             {
                 startRealTime();
             }
@@ -304,15 +306,18 @@ public class JobScheduler
         {
             m_Logger.error("An error has occurred while closing the job", e);
         }
-        closeLogger();
         updateStatus(JobSchedulerStatus.STOPPED);
+        closeLogger();
     }
 
     private void startRealTime()
     {
-        m_Logger.info("Entering real-time mode");
-        m_RealTimeScheduler = new TaskScheduler(createNextTask(), calculateNextTime());
-        m_RealTimeScheduler.start();
+        synchronized (this)
+        {
+            m_Logger.info("Entering real-time mode");
+            m_RealTimeScheduler = new TaskScheduler(createNextTask(), calculateNextTime());
+            m_RealTimeScheduler.start();
+        }
     }
 
     /**
@@ -361,8 +366,8 @@ public class JobScheduler
 
         if (m_IsLookbackOnly == false)
         {
-            closeLogger();
             updateStatus(finalStatus);
+            closeLogger();
         }
     }
 
@@ -388,7 +393,6 @@ public class JobScheduler
 
     private void closeLogger()
     {
-        m_Logger.info("Scheduler has stopped");
         JobLogger.close(m_Logger);
         m_Logger = null;
     }
