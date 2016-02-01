@@ -44,8 +44,6 @@ public class RestGetRolesAction extends BaseRestHandler {
         super(settings, client);
         controller.registerHandler(RestRequest.Method.GET, "/_shield/role/", this);
         controller.registerHandler(RestRequest.Method.GET, "/_shield/role/{id}", this);
-        controller.registerHandler(RestRequest.Method.GET, "/_shield/roles/", this);
-        controller.registerHandler(RestRequest.Method.GET, "/_shield/roles/{id}", this);
     }
 
     @Override
