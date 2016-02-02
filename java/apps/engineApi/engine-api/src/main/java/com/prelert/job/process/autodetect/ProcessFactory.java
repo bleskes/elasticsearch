@@ -40,6 +40,7 @@ import com.prelert.job.JobDetails;
 import com.prelert.job.JobStatus;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.errorcodes.ErrorCodes;
+import com.prelert.job.logging.JobLogger;
 import com.prelert.job.persistence.JobDataCountsPersisterFactory;
 import com.prelert.job.persistence.JobProvider;
 import com.prelert.job.persistence.UsagePersisterFactory;

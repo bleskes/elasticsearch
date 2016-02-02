@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -25,7 +25,7 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.job.process.autodetect;
+package com.prelert.job.logging;
 
 import java.io.IOException;
 import java.nio.file.FileAlreadyExistsException;
@@ -41,6 +41,7 @@ import org.apache.log4j.Logger;
 import org.apache.log4j.RollingFileAppender;
 
 import com.prelert.job.process.ProcessCtrl;
+import com.prelert.job.process.autodetect.ProcessAndDataDescription;
 
 /**
  * Helper class for creating and closing the logger objects associated with

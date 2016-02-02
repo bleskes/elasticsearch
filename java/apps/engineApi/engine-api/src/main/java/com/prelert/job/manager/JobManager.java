@@ -71,6 +71,7 @@ import com.prelert.job.data.extraction.DataExtractorFactory;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.exceptions.JobInUseException;
 import com.prelert.job.exceptions.TooManyJobsException;
+import com.prelert.job.logging.JobLoggerFactory;
 import com.prelert.job.messages.Messages;
 import com.prelert.job.persistence.DataStoreException;
 import com.prelert.job.persistence.JobProvider;

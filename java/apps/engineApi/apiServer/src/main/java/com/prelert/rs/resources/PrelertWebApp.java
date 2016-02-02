@@ -49,11 +49,11 @@ import javax.ws.rs.core.Application;
 import org.apache.log4j.Logger;
 
 import com.prelert.job.alert.manager.AlertManager;
+import com.prelert.job.logging.JobLogger;
 import com.prelert.job.manager.JobManager;
 import com.prelert.job.persistence.JobProvider;
 import com.prelert.job.persistence.OldResultsRemover;
 import com.prelert.job.process.ProcessCtrl;
-import com.prelert.job.process.autodetect.JobLogger;
 import com.prelert.job.process.autodetect.ProcessFactory;
 import com.prelert.job.process.autodetect.ProcessManager;
 import com.prelert.rs.data.extraction.DataExtractorFactoryImpl;

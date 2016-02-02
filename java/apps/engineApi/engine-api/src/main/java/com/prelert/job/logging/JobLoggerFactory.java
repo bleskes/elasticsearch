@@ -25,7 +25,7 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.job.manager;
+package com.prelert.job.logging;
 
 import org.apache.log4j.Logger;
 
