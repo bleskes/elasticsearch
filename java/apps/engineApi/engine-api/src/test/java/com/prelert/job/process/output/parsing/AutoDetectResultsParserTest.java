@@ -64,6 +64,7 @@ import com.prelert.job.results.Bucket;
 import com.prelert.job.results.BucketInfluencer;
 import com.prelert.job.results.CategoryDefinition;
 import com.prelert.job.results.Influencer;
+import com.prelert.job.results.ModelDebugOutput;
 import com.prelert.utils.json.AutoDetectParseException;
 
 /**
@@ -149,6 +150,7 @@ public class AutoDetectResultsParserTest
         final List<Influencer> m_Influencers = new ArrayList<>();
         final List<CategoryDefinition> m_CategoryDefinitions = new ArrayList<>();
         final List<ModelSizeStats> m_ModelSizeStats = new ArrayList<>();
+        final List<ModelDebugOutput> m_ModelDebugOutput = new ArrayList<>();
         int m_BucketCount;
 
         @Override
@@ -173,6 +175,12 @@ public class AutoDetectResultsParserTest
         public void persistModelSizeStats(ModelSizeStats memUsagae)
         {
             m_ModelSizeStats.add(memUsagae);
+        }
+
+        @Override
+        public void persistModelDebugOutput(ModelDebugOutput modelDebugOutput)
+        {
+            m_ModelDebugOutput.add(modelDebugOutput);
         }
 
         @Override
