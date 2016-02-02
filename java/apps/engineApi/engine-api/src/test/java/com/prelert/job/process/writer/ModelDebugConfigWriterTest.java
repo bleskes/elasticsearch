@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -40,6 +40,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import com.prelert.job.ModelDebugConfig;
+import com.prelert.job.ModelDebugConfig.DebugDestination;
 
 public class ModelDebugConfigWriterTest
 {
@@ -69,14 +70,25 @@ public class ModelDebugConfigWriterTest
     }
 
     @Test
-    public void testWrite_GivenFullConfig() throws IOException
+    public void testWrite_GivenFileConfig() throws IOException
     {
         ModelDebugConfig modelDebugConfig = new ModelDebugConfig(65.0, "foo,bar");
         ModelDebugConfigWriter writer = new ModelDebugConfigWriter(modelDebugConfig, m_Writer);
 
         writer.write();
 
-        verify(m_Writer).write("boundspercentile = 65.0\nterms = foo,bar\n");
+        verify(m_Writer).write("writeto = FILE\nboundspercentile = 65.0\nterms = foo,bar\n");
+    }
+
+    @Test
+    public void testWrite_GivenFullConfig() throws IOException
+    {
+        ModelDebugConfig modelDebugConfig = new ModelDebugConfig(DebugDestination.DATA_STORE, 65.0, "foo,bar");
+        ModelDebugConfigWriter writer = new ModelDebugConfigWriter(modelDebugConfig, m_Writer);
+
+        writer.write();
+
+        verify(m_Writer).write("writeto = DATA_STORE\nboundspercentile = 65.0\nterms = foo,bar\n");
     }
 
 }

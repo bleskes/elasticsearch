@@ -267,6 +267,10 @@ public class ElasticsearchMappingsTest
                         "      \"modelDebugConfig\": {" +
                         "        \"type\": \"object\"," +
                         "        \"properties\": {" +
+                        "          \"writeTo\": {" +
+                        "            \"type\": \"string\"," +
+                        "            \"index\": \"no\"" +
+                        "          }," +
                         "          \"boundsPercentile\": {" +
                         "            \"type\": \"double\"," +
                         "            \"index\": \"no\"" +

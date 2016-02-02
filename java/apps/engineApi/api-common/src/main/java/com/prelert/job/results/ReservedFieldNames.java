@@ -103,7 +103,6 @@ public final class ReservedFieldNames
         AnomalyRecord.INITIAL_NORMALIZED_PROBABILITY,
 
         Bucket.ID,
-        Bucket.TIMESTAMP,
         Bucket.ANOMALY_SCORE,
         Bucket.MAX_NORMALIZED_PROBABILITY,
         Bucket.IS_INTERIM,
@@ -159,7 +158,6 @@ public final class ReservedFieldNames
 
         Influencer.ID,
         Influencer.PROBABILITY,
-        Influencer.TIMESTAMP,
         Influencer.INFLUENCER_FIELD_NAME,
         Influencer.INFLUENCER_FIELD_VALUE,
         Influencer.INITIAL_ANOMALY_SCORE,
@@ -181,8 +179,21 @@ public final class ReservedFieldNames
         JobDetails.TRANSFORMS,
         JobDetails.MODEL_DEBUG_CONFIG,
 
+        ModelDebugConfig.WRITE_TO,
         ModelDebugConfig.BOUNDS_PERCENTILE,
         ModelDebugConfig.TERMS,
+
+        ModelDebugOutput.PARTITION_FIELD_NAME,
+        ModelDebugOutput.PARTITION_FIELD_VALUE,
+        ModelDebugOutput.OVER_FIELD_NAME,
+        ModelDebugOutput.OVER_FIELD_VALUE,
+        ModelDebugOutput.BY_FIELD_NAME,
+        ModelDebugOutput.BY_FIELD_VALUE,
+        ModelDebugOutput.DEBUG_FEATURE,
+        ModelDebugOutput.DEBUG_LOWER,
+        ModelDebugOutput.DEBUG_UPPER,
+        ModelDebugOutput.DEBUG_MEAN,
+        ModelDebugOutput.ACTUAL,
 
         ModelSizeStats.MODEL_BYTES,
         ModelSizeStats.TOTAL_BY_FIELD_COUNT,

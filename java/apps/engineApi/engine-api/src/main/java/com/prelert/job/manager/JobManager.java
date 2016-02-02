@@ -565,6 +565,7 @@ public class JobManager implements DataProcessor, Shutdownable
         if (modelDebugConfig != null)
         {
             Map<String, Object> objectMap = new HashMap<>();
+            objectMap.put(ModelDebugConfig.WRITE_TO, modelDebugConfig.getWriteTo());
             objectMap.put(ModelDebugConfig.BOUNDS_PERCENTILE, modelDebugConfig.getBoundsPercentile());
             objectMap.put(ModelDebugConfig.TERMS, modelDebugConfig.getTerms());
             update.put(JobDetails.MODEL_DEBUG_CONFIG, objectMap);

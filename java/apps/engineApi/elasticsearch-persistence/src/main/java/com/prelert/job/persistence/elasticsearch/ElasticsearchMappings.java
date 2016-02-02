@@ -52,6 +52,7 @@ import com.prelert.job.results.BucketInfluencer;
 import com.prelert.job.results.CategoryDefinition;
 import com.prelert.job.results.Influence;
 import com.prelert.job.results.Influencer;
+import com.prelert.job.results.ModelDebugOutput;
 import com.prelert.job.results.ReservedFieldNames;
 import com.prelert.job.transform.TransformConfig;
 import com.prelert.job.usage.Usage;
@@ -331,6 +332,9 @@ public class ElasticsearchMappings
                         .startObject(JobDetails.MODEL_DEBUG_CONFIG)
                             .field(TYPE, OBJECT)
                             .startObject(PROPERTIES)
+                                .startObject(ModelDebugConfig.WRITE_TO)
+                                    .field(TYPE, STRING).field(INDEX, NO)
+                                .endObject()
                                 .startObject(ModelDebugConfig.BOUNDS_PERCENTILE)
                                     .field(TYPE, DOUBLE).field(INDEX, NO)
                                 .endObject()
@@ -768,7 +772,6 @@ public class ElasticsearchMappings
             .endObject();
     }
 
-
     /**
      * Mapping for the saved data records
      *
@@ -812,6 +815,76 @@ public class ElasticsearchMappings
                             .field(COPY_TO, "partitionField")
                             .field(INDEX, NOT_ANALYZED)
                         .endObject()
+                    .endObject()
+                .endObject()
+            .endObject();
+    }
+
+    /**
+     * Mapping for model debug output
+     *
+     * @param termFieldNames Optionally, other field names to include in the
+     * mappings.  Pass <code>null</code> if not required.
+     * @return
+     * @throws IOException
+     */
+    public static XContentBuilder modelDebugOutputMapping(Collection<String> termFieldNames)
+    throws IOException
+    {
+        XContentBuilder builder = jsonBuilder()
+            .startObject()
+                .startObject(ModelDebugOutput.TYPE)
+                    .startObject(ALL)
+                        .field(ANALYZER, WHITESPACE)
+                    .endObject()
+                    .startObject(PROPERTIES)
+                        .startObject(ElasticsearchPersister.JOB_ID_NAME)
+                            .field(TYPE, STRING).field(INDEX, NOT_ANALYZED).field(INCLUDE_IN_ALL, false)
+                        .endObject()
+                        .startObject(ElasticsearchMappings.ES_TIMESTAMP)
+                            .field(TYPE, DATE).field(INCLUDE_IN_ALL, false)
+                        .endObject()
+                        .startObject(ModelDebugOutput.PARTITION_FIELD_VALUE)
+                            .field(TYPE, STRING)
+                        .endObject()
+                        .startObject(ModelDebugOutput.OVER_FIELD_VALUE)
+                            .field(TYPE, STRING)
+                        .endObject()
+                        .startObject(ModelDebugOutput.BY_FIELD_VALUE)
+                            .field(TYPE, STRING)
+                        .endObject()
+                        .startObject(ModelDebugOutput.DEBUG_FEATURE)
+                            .field(TYPE, STRING).field(INDEX, NOT_ANALYZED).field(INCLUDE_IN_ALL, false)
+                        .endObject()
+                        .startObject(ModelDebugOutput.DEBUG_LOWER)
+                            .field(TYPE, DOUBLE).field(INCLUDE_IN_ALL, false)
+                        .endObject()
+                        .startObject(ModelDebugOutput.DEBUG_UPPER)
+                            .field(TYPE, DOUBLE).field(INCLUDE_IN_ALL, false)
+                        .endObject()
+                        .startObject(ModelDebugOutput.DEBUG_MEAN)
+                            .field(TYPE, DOUBLE).field(INCLUDE_IN_ALL, false)
+                        .endObject()
+                        .startObject(ModelDebugOutput.ACTUAL)
+                            .field(TYPE, DOUBLE).field(INCLUDE_IN_ALL, false)
+                        .endObject();
+
+        if (termFieldNames != null)
+        {
+            for (String fieldName : termFieldNames)
+            {
+                if (ReservedFieldNames.RESERVED_FIELD_NAMES.contains(fieldName))
+                {
+                    continue;
+                }
+                builder
+                        .startObject(fieldName)
+                            .field(TYPE, STRING)
+                        .endObject();
+            }
+        }
+
+        return builder
                     .endObject()
                 .endObject()
             .endObject();

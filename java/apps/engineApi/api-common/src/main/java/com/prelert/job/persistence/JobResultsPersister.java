@@ -23,6 +23,7 @@ import com.prelert.job.quantiles.Quantiles;
 import com.prelert.job.results.Bucket;
 import com.prelert.job.results.CategoryDefinition;
 import com.prelert.job.results.Influencer;
+import com.prelert.job.results.ModelDebugOutput;
 
 /**
  * Interface for classes that persist {@linkplain Bucket Buckets} and
@@ -53,6 +54,12 @@ public interface JobResultsPersister
      * @param modelSizeStats
      */
     void persistModelSizeStats(ModelSizeStats modelSizeStats);
+
+    /**
+     * Persist model debug output
+     * @param modelDebugOutput
+     */
+    void persistModelDebugOutput(ModelDebugOutput modelDebugOutput);
 
     /**
      * Persist the influencer

@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -55,6 +55,7 @@ import com.prelert.job.JobConfiguration;
 import com.prelert.job.JobDetails;
 import com.prelert.job.JobIdAlreadyExistsException;
 import com.prelert.job.ModelDebugConfig;
+import com.prelert.job.ModelDebugConfig.DebugDestination;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.config.verification.JobConfigurationException;
 import com.prelert.job.errorcodes.ErrorCodeMatcher;
@@ -208,8 +209,36 @@ public class JobsTest extends ServiceTest
         assertEquals(200, response.getStatus());
         assertTrue(((Acknowledgement) response.getEntity()).getAcknowledgement());
 
-        verify(jobManager()).setModelDebugConfig("foo", new ModelDebugConfig(90.0, "someTerm"));
+        verify(jobManager()).setModelDebugConfig("foo", new ModelDebugConfig(null, 90.0, "someTerm"));
         String expectedConfig = "[modelDebugConfig]\nboundspercentile = 90.0\nterms = someTerm\n";
+        verify(jobManager()).writeUpdateConfigMessage("foo", expectedConfig);
+    }
+
+    @Test
+    public void testUpdate_GivenValidModelDebugConfigChangeToFile() throws UnknownJobException,
+            JobConfigurationException, JobInUseException, NativeProcessRunException
+    {
+        Response response = m_Jobs.updateJob("foo",
+                "{\"modelDebugConfig\":{\"writeTo\":\"File\",\"boundsPercentile\":90.0, \"terms\":\"someTerm\"}}");
+        assertEquals(200, response.getStatus());
+        assertTrue(((Acknowledgement) response.getEntity()).getAcknowledgement());
+
+        verify(jobManager()).setModelDebugConfig("foo", new ModelDebugConfig(DebugDestination.FILE, 90.0, "someTerm"));
+        String expectedConfig = "[modelDebugConfig]\nwriteto = FILE\nboundspercentile = 90.0\nterms = someTerm\n";
+        verify(jobManager()).writeUpdateConfigMessage("foo", expectedConfig);
+    }
+
+    @Test
+    public void testUpdate_GivenValidModelDebugConfigChangeToDataStore() throws UnknownJobException,
+            JobConfigurationException, JobInUseException, NativeProcessRunException
+    {
+        Response response = m_Jobs.updateJob("foo",
+                "{\"modelDebugConfig\":{\"writeTo\":\"data_store\",\"boundsPercentile\":90.0, \"terms\":\"someTerm\"}}");
+        assertEquals(200, response.getStatus());
+        assertTrue(((Acknowledgement) response.getEntity()).getAcknowledgement());
+
+        verify(jobManager()).setModelDebugConfig("foo", new ModelDebugConfig(DebugDestination.DATA_STORE, 90.0, "someTerm"));
+        String expectedConfig = "[modelDebugConfig]\nwriteto = DATA_STORE\nboundspercentile = 90.0\nterms = someTerm\n";
         verify(jobManager()).writeUpdateConfigMessage("foo", expectedConfig);
     }
 

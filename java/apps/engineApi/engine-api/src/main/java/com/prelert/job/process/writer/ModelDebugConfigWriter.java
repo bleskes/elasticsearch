@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -39,6 +39,7 @@ import com.prelert.job.ModelDebugConfig;
 
 public class ModelDebugConfigWriter
 {
+    private static final String WRITE_TO_STR = "writeto";
     private static final String BOUNDS_PERCENTILE_STR = "boundspercentile";
     private static final String TERMS_STR = "terms";
 
@@ -54,6 +55,14 @@ public class ModelDebugConfigWriter
     public void write() throws IOException
     {
         StringBuilder contents = new StringBuilder();
+        if (m_ModelDebugConfig.getWriteTo() != null)
+        {
+            contents.append(WRITE_TO_STR)
+                    .append(EQUALS)
+                    .append(m_ModelDebugConfig.getWriteTo())
+                    .append(NEW_LINE);
+        }
+
         contents.append(BOUNDS_PERCENTILE_STR)
                 .append(EQUALS)
                 .append(m_ModelDebugConfig.getBoundsPercentile())

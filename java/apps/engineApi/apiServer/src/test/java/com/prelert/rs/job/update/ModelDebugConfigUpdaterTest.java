@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -105,7 +105,7 @@ public class ModelDebugConfigUpdaterTest
 
         new ModelDebugConfigUpdater(m_JobManager, "foo", m_ConfigWriter).update(node);
 
-        verify(m_JobManager).setModelDebugConfig("foo", new ModelDebugConfig(67.3, "a,b"));
+        verify(m_JobManager).setModelDebugConfig("foo", new ModelDebugConfig(null, 67.3, "a,b"));
         String expectedConfig = "[modelDebugConfig]\nboundspercentile = 67.3\nterms = a,b\n";
         assertEquals(expectedConfig, m_ConfigWriter.toString());
     }
