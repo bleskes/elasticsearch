@@ -18,13 +18,33 @@
 
 package com.prelert.job.data.extraction;
 
+import java.io.IOException;
 import java.io.InputStream;
-import java.util.Iterator;
 import java.util.Optional;
 
 import org.apache.log4j.Logger;
 
-public interface DataExtractor extends Iterator<Optional<InputStream>>
+public interface DataExtractor
 {
+    /**
+     * Set-up the extractor for a new search
+     *
+     * @param start start time
+     * @param end end time
+     * @param logger logger
+     */
     void newSearch(String start, String end, Logger logger);
+
+    /**
+     * @return {@code true} if the search has not finished yet, or {@code false} otherwise
+     */
+    boolean hasNext();
+
+    /**
+     * Returns the next available extracted data. Note that it is possible for the
+     * extracted data to be empty the last time this method can be called.
+     * @return an optional input stream with the next available extracted data
+     * @throws IOException if an error occurs while extracting the data
+     */
+    Optional<InputStream> next() throws IOException;
 }

@@ -63,6 +63,7 @@ import com.prelert.job.Detector;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.alert.AlertObserver;
 import com.prelert.job.exceptions.JobInUseException;
+import com.prelert.job.logging.JobLoggerFactory;
 import com.prelert.job.persistence.DataPersisterFactory;
 import com.prelert.job.persistence.JobDataCountsPersister;
 import com.prelert.job.persistence.JobDataPersister;
@@ -88,6 +89,7 @@ public class ProcessManagerTest
     @Mock private ProcessFactory m_ProcessFactory;
     @Mock private JobProvider m_JobProvider;
     @Mock private DataPersisterFactory m_DataPersisterFactory;
+    @Mock private JobLoggerFactory m_JobLoggerFactory;
 
     private ProcessManager m_ProcessManager;
 
@@ -96,7 +98,7 @@ public class ProcessManagerTest
     {
         MockitoAnnotations.initMocks(this);
         m_ProcessManager = new ProcessManager(m_JobProvider, m_ProcessFactory,
-                m_DataPersisterFactory);
+                m_DataPersisterFactory, m_JobLoggerFactory);
     }
 
     @Test

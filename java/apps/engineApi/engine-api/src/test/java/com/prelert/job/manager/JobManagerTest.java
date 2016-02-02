@@ -80,6 +80,7 @@ import com.prelert.job.errorcodes.ErrorCodeMatcher;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.exceptions.JobInUseException;
 import com.prelert.job.exceptions.TooManyJobsException;
+import com.prelert.job.logging.JobLoggerFactory;
 import com.prelert.job.messages.Messages;
 import com.prelert.job.persistence.JobProvider;
 import com.prelert.job.persistence.QueryPage;
@@ -588,6 +589,7 @@ public class JobManagerTest
         verify(dataExtractor).newSearch(anyString(), anyString(), eq(jobLogger));
         jobManager.shutdown();
 
+        verify(m_JobLoggerFactory).close("scheduled", jobLogger);
         // Verify no other calls to factories - means no other job was scheduled
         Mockito.verifyNoMoreInteractions(m_JobLoggerFactory, m_DataExtractorFactory);
     }

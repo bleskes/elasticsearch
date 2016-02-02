@@ -71,6 +71,7 @@ import com.prelert.job.data.extraction.DataExtractorFactory;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.exceptions.JobInUseException;
 import com.prelert.job.exceptions.TooManyJobsException;
+import com.prelert.job.logging.JobLoggerFactory;
 import com.prelert.job.messages.Messages;
 import com.prelert.job.persistence.DataStoreException;
 import com.prelert.job.persistence.JobProvider;
@@ -323,9 +324,10 @@ public class JobManager implements DataProcessor, Shutdownable
     private void createJobSchedulerAndStart(JobDetails job)
             throws CannotStartSchedulerWhileItIsStoppingException
     {
+        Duration bucketSpan = Duration.ofSeconds(job.getAnalysisConfig().getBucketSpan());
         Duration frequency = getFrequencyOrDefault(job);
         Duration queryDelay = Duration.ofSeconds(job.getSchedulerConfig().getQueryDelay());
-        JobScheduler jobScheduler = new JobScheduler(job.getId(), frequency, queryDelay,
+        JobScheduler jobScheduler = new JobScheduler(job.getId(), bucketSpan, frequency, queryDelay,
                 m_DataExtractorFactory.newExtractor(job), this, m_JobProvider, m_JobLoggerFactory);
         m_ScheduledJobs.put(job.getId(), jobScheduler);
         LOGGER.info("Starting scheduler for job: " + job.getId());

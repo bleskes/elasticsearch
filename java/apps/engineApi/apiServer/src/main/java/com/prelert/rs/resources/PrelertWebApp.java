@@ -49,11 +49,12 @@ import javax.ws.rs.core.Application;
 import org.apache.log4j.Logger;
 
 import com.prelert.job.alert.manager.AlertManager;
+import com.prelert.job.logging.JobLoggerFactory;
+import com.prelert.job.logging.DefaultJobLoggerFactory;
 import com.prelert.job.manager.JobManager;
 import com.prelert.job.persistence.JobProvider;
 import com.prelert.job.persistence.OldResultsRemover;
 import com.prelert.job.process.ProcessCtrl;
-import com.prelert.job.process.autodetect.JobLogger;
 import com.prelert.job.process.autodetect.ProcessFactory;
 import com.prelert.job.process.autodetect.ProcessManager;
 import com.prelert.rs.data.extraction.DataExtractorFactoryImpl;
@@ -148,7 +149,7 @@ public class PrelertWebApp extends Application
         ElasticsearchFactory esFactory = createPersistenceFactory();
         JobProvider jobProvider = esFactory.newJobProvider();
 
-        m_JobManager = createJobManager(jobProvider, esFactory);
+        m_JobManager = createJobManager(jobProvider, esFactory, new DefaultJobLoggerFactory());
         m_AlertManager = new AlertManager(jobProvider, m_JobManager);
         m_ServerInfo = esFactory.newServerInfoFactory();
 
@@ -186,10 +187,12 @@ public class PrelertWebApp extends Application
         return ElasticsearchNodeClientFactory.create(host, clusterName,portRange, numProcessors);
     }
 
-    private JobManager createJobManager(JobProvider jobProvider, ElasticsearchFactory esFactory)
+    private JobManager createJobManager(JobProvider jobProvider, ElasticsearchFactory esFactory,
+            JobLoggerFactory jobLoggerFactory)
     {
-        return new JobManager(jobProvider, createProcessManager(jobProvider, esFactory),
-                new DataExtractorFactoryImpl(), jobId -> JobLogger.create(jobId));
+        return new JobManager(jobProvider,
+                createProcessManager(jobProvider, esFactory, jobLoggerFactory),
+                new DataExtractorFactoryImpl(), jobLoggerFactory);
     }
 
     private void addEndPoints()
@@ -238,14 +241,16 @@ public class PrelertWebApp extends Application
     }
 
     private static ProcessManager createProcessManager(JobProvider jobProvider,
-            ElasticsearchFactory esFactory)
+            ElasticsearchFactory esFactory, JobLoggerFactory jobLoggerFactory)
     {
         ProcessFactory processFactory = new ProcessFactory(
                 jobProvider,
                 esFactory.newResultsReaderFactory(jobProvider),
                 esFactory.newJobDataCountsPersisterFactory(),
-                esFactory.newUsagePersisterFactory());
-        return new ProcessManager(jobProvider, processFactory, esFactory.newDataPersisterFactory());
+                esFactory.newUsagePersisterFactory(),
+                jobLoggerFactory);
+        return new ProcessManager(jobProvider, processFactory, esFactory.newDataPersisterFactory(),
+                jobLoggerFactory);
     }
 
     private void writeServerInfoDailyStartingNow()
