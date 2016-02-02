@@ -17,7 +17,7 @@
 
 package org.elasticsearch.shield.transport;
 
-import org.elasticsearch.shield.User;
+import org.elasticsearch.shield.SystemUser;
 import org.elasticsearch.shield.authc.AuthenticationService;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.transport.TransportRequest;
@@ -42,6 +42,6 @@ public class ClientTransportFilterTests extends ESTestCase {
     public void testOutbound() throws Exception {
         TransportRequest request = mock(TransportRequest.class);
         filter.outbound("_action", request);
-        verify(authcService).attachUserHeaderIfMissing(User.SYSTEM);
+        verify(authcService).attachUserHeaderIfMissing(SystemUser.INSTANCE);
     }
 }

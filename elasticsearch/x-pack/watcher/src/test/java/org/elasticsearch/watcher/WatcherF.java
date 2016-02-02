@@ -17,6 +17,8 @@
 
 package org.elasticsearch.watcher;
 
+import org.apache.lucene.util.IOUtils;
+import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.Version;
 import org.elasticsearch.common.SuppressForbidden;
 import org.elasticsearch.common.settings.Settings;
@@ -24,6 +26,7 @@ import org.elasticsearch.node.MockNode;
 import org.elasticsearch.node.Node;
 import org.elasticsearch.xpack.XPackPlugin;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.concurrent.CountDownLatch;
 
@@ -70,8 +73,13 @@ public class WatcherF {
 
             @Override
             public void run() {
-                node.close();
-                latch.countDown();
+                try {
+                    IOUtils.close(node);
+                } catch (IOException e) {
+                    throw new ElasticsearchException(e);
+                } finally {
+                    latch.countDown();
+                }
             }
         });
         node.start();

@@ -24,10 +24,9 @@ import org.elasticsearch.common.util.concurrent.ThreadContext;
 import org.elasticsearch.shield.action.ShieldActionMapper;
 import org.elasticsearch.shield.authc.AuthenticationService;
 import org.elasticsearch.shield.authz.AuthorizationService;
+import org.elasticsearch.shield.authz.AuthorizationUtils;
 import org.elasticsearch.shield.authz.accesscontrol.RequestContext;
 import org.elasticsearch.shield.license.ShieldLicenseState;
-import org.elasticsearch.shield.support.AutomatonPredicate;
-import org.elasticsearch.shield.support.Automatons;
 import org.elasticsearch.shield.transport.netty.ShieldNettyTransport;
 import org.elasticsearch.tasks.Task;
 import org.elasticsearch.threadpool.ThreadPool;
@@ -45,7 +44,6 @@ import org.elasticsearch.transport.TransportSettings;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import static org.elasticsearch.shield.transport.netty.ShieldNettyTransport.TRANSPORT_CLIENT_AUTH_DEFAULT;
@@ -61,8 +59,6 @@ import static org.elasticsearch.shield.transport.netty.ShieldNettyTransport.TRAN
 public class ShieldServerTransportService extends TransportService {
 
     public static final String SETTING_NAME = "shield.type";
-    // FIXME clean up this hack
-    static final Predicate<String> INTERNAL_PREDICATE = new AutomatonPredicate(Automatons.patterns("internal:*"));
 
     protected final AuthenticationService authcService;
     protected final AuthorizationService authzService;
@@ -90,10 +86,10 @@ public class ShieldServerTransportService extends TransportService {
 
     @Override
     public <T extends TransportResponse> void sendRequest(DiscoveryNode node, String action, TransportRequest request, TransportRequestOptions options, TransportResponseHandler<T> handler) {
-        // FIXME this is really just a hack. What happens is that we send a request and we always copy headers over
         // Sometimes a system action gets executed like a internal create index request or update mappings request
-        // which means that the user is copied over to system actions and these really fail for internal things...
-        if ((clientFilter instanceof ClientTransportFilter.Node) && INTERNAL_PREDICATE.test(action)) {
+        // which means that the user is copied over to system actions so we need to change the user
+        if ((clientFilter instanceof ClientTransportFilter.Node) &&
+                AuthorizationUtils.shouldReplaceUserWithSystem(threadPool.getThreadContext(), action)) {
             final ThreadContext.StoredContext original = threadPool.getThreadContext().newStoredContext();
             try (ThreadContext.StoredContext ctx = threadPool.getThreadContext().stashContext()) {
                 try {

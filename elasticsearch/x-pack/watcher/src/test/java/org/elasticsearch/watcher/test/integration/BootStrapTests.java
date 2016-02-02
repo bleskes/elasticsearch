@@ -117,7 +117,7 @@ public class BootStrapTests extends AbstractWatcherIntegrationTestCase {
         WatcherStatsResponse response = watcherClient().prepareWatcherStats().get();
         assertThat(response.getWatcherState(), equalTo(WatcherState.STARTED));
         // Only the valid watch should been loaded
-        assertThat(response.getWatchesCount(), equalTo(1l));
+        assertThat(response.getWatchesCount(), equalTo(1L));
         assertThat(watcherClient().prepareGetWatch("_id0").get().getId(), Matchers.equalTo("_id0"));
     }
 
@@ -197,7 +197,7 @@ public class BootStrapTests extends AbstractWatcherIntegrationTestCase {
 
         WatcherStatsResponse response = watcherClient().prepareWatcherStats().get();
         assertThat(response.getWatcherState(), equalTo(WatcherState.STARTED));
-        assertThat(response.getWatchesCount(), equalTo(1l));
+        assertThat(response.getWatchesCount(), equalTo(1L));
     }
 
     public void testDeletedWhileQueued() throws Exception {
@@ -234,7 +234,7 @@ public class BootStrapTests extends AbstractWatcherIntegrationTestCase {
                     .setSource(watchBuilder()
                                     .trigger(schedule(cron("0 0/5 * * * ? 2050")))
                                     .input(searchInput(searchRequest))
-                                    .condition(compareCondition("ctx.payload.hits.total", CompareCondition.Op.EQ, 1l))
+                                    .condition(compareCondition("ctx.payload.hits.total", CompareCondition.Op.EQ, 1L))
                                     .buildAsBytes(XContentType.JSON)
                     )
                     .setConsistencyLevel(WriteConsistencyLevel.ALL)
@@ -295,7 +295,7 @@ public class BootStrapTests extends AbstractWatcherIntegrationTestCase {
                 // that numRecords watch records have been processed as part of starting up.
                 WatcherStatsResponse response = watcherClient().prepareWatcherStats().get();
                 assertThat(response.getWatcherState(), equalTo(WatcherState.STARTED));
-                assertThat(response.getThreadPoolQueueSize(), equalTo(0l));
+                assertThat(response.getThreadPoolQueueSize(), equalTo(0L));
 
                 // but even then since the execution of the watch record is async it may take a little bit before
                 // the actual documents are in the output index
@@ -346,7 +346,7 @@ public class BootStrapTests extends AbstractWatcherIntegrationTestCase {
                 // that numRecords watch records have been processed as part of starting up.
                 WatcherStatsResponse response = watcherClient().prepareWatcherStats().get();
                 assertThat(response.getWatcherState(), equalTo(WatcherState.STARTED));
-                assertThat(response.getThreadPoolQueueSize(), equalTo(0l));
+                assertThat(response.getThreadPoolQueueSize(), equalTo(0L));
 
                 // but even then since the execution of the watch record is async it may take a little bit before
                 // the actual documents are in the output index
@@ -403,7 +403,7 @@ public class BootStrapTests extends AbstractWatcherIntegrationTestCase {
                 // that numRecords watch records have been processed as part of starting up.
                 WatcherStatsResponse response = watcherClient().prepareWatcherStats().get();
                 assertThat(response.getWatcherState(), equalTo(WatcherState.STARTED));
-                assertThat(response.getThreadPoolQueueSize(), equalTo(0l));
+                assertThat(response.getThreadPoolQueueSize(), equalTo(0L));
 
                 // but even then since the execution of the watch record is async it may take a little bit before
                 // the actual documents are in the output index
