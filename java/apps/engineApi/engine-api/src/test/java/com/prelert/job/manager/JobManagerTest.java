@@ -589,7 +589,7 @@ public class JobManagerTest
         verify(dataExtractor).newSearch(anyString(), anyString(), eq(jobLogger));
         jobManager.shutdown();
 
-        verify(m_JobLoggerFactory).close(jobLogger);
+        verify(m_JobLoggerFactory).close("scheduled", jobLogger);
         // Verify no other calls to factories - means no other job was scheduled
         Mockito.verifyNoMoreInteractions(m_JobLoggerFactory, m_DataExtractorFactory);
     }

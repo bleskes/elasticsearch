@@ -449,7 +449,7 @@ public class JobScheduler
 
     private void closeLogger()
     {
-        m_JobLoggerFactory.close(m_Logger);
+        m_JobLoggerFactory.close(m_JobId, m_Logger);
         m_Logger = null;
     }
 }

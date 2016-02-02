@@ -32,5 +32,5 @@ import org.apache.log4j.Logger;
 public interface JobLoggerFactory
 {
     Logger newLogger(String jobId);
-    void close(Logger logger);
+    void close(String jobId, Logger logger);
 }

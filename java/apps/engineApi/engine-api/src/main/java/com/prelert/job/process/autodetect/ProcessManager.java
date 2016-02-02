@@ -532,15 +532,13 @@ public class ProcessManager implements Shutdownable
                 }
 
                 setJobFinishedTimeAndStatus(jobId, process.getLogger(), JobStatus.FAILED);
-                // free the logger resources
-                m_JobLoggerFactory.close(process.getLogger());
 
                 throw npre;
             }
         }
         finally
         {
-            m_JobLoggerFactory.close(process.getLogger());
+            m_JobLoggerFactory.close(jobId, process.getLogger());
             process.releaseGuard();
         }
     }

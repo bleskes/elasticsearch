@@ -33,6 +33,8 @@ import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.apache.log4j.Appender;
 import org.apache.log4j.EnhancedPatternLayout;
@@ -43,9 +45,21 @@ import org.apache.log4j.RollingFileAppender;
 import com.prelert.job.process.ProcessCtrl;
 import com.prelert.job.process.autodetect.ProcessAndDataDescription;
 
+/**
+ * Thread-safe class to create/close job specific loggers
+ *
+ * The factory is responsible for counting references to the logger
+ * of a particular job and only really closes a logger when there are
+ * no more references to it.
+ */
 public class DefaultJobLoggerFactory implements JobLoggerFactory
 {
     private static final String LOG_FILE_APPENDER_NAME = "engine_api_file_appender";
+
+    /**
+     * Guarded by its own lock
+     */
+    private static final Map<String, Integer> REF_COUNT_MAP = new HashMap<>();
 
     /**
      * Create the job's logger.
@@ -76,6 +90,12 @@ public class DefaultJobLoggerFactory implements JobLoggerFactory
                 logger.addAppender(createRollingFileAppender(jobId));
             }
 
+            synchronized (REF_COUNT_MAP)
+            {
+                int increasedCount = REF_COUNT_MAP.getOrDefault(jobId, 0) + 1;
+                REF_COUNT_MAP.put(jobId, increasedCount);
+            }
+
             return logger;
         }
         catch (IOException e)
@@ -100,11 +120,22 @@ public class DefaultJobLoggerFactory implements JobLoggerFactory
             // pre-existing appender will be pointing to a directory of the
             // same name that must have been previously removed.  (See bug
             // 697 in Bugzilla.)
-            close(logger);
+            forceClose(logger);
         }
         catch (FileAlreadyExistsException e)
         {
             // Do nothing
+        }
+    }
+
+    private void forceClose(Logger logger)
+    {
+        Appender appender = logger.getAppender(LOG_FILE_APPENDER_NAME);
+
+        if (appender != null)
+        {
+            appender.close();
+            logger.removeAppender(LOG_FILE_APPENDER_NAME);
         }
     }
 
@@ -151,14 +182,20 @@ public class DefaultJobLoggerFactory implements JobLoggerFactory
      * @param logger
      */
     @Override
-    public void close(Logger logger)
+    public void close(String jobId, Logger logger)
     {
-        Appender appender = logger.getAppender(LOG_FILE_APPENDER_NAME);
-
-        if (appender != null)
+        synchronized (REF_COUNT_MAP)
         {
-            appender.close();
-            logger.removeAppender(LOG_FILE_APPENDER_NAME);
+            int decreasedCount = REF_COUNT_MAP.getOrDefault(jobId, 1) - 1;
+            if (decreasedCount <= 0)
+            {
+                forceClose(logger);
+                REF_COUNT_MAP.remove(jobId);
+            }
+            else
+            {
+                REF_COUNT_MAP.put(jobId, decreasedCount);
+            }
         }
     }
 }
