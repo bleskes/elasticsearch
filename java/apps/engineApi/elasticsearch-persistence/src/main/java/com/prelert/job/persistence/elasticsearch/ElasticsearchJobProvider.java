@@ -418,7 +418,7 @@ public class ElasticsearchJobProvider implements JobProvider
             XContentBuilder usageMapping = ElasticsearchMappings.usageMapping();
             XContentBuilder modelSizeStatsMapping = ElasticsearchMappings.modelSizeStatsMapping();
             XContentBuilder influencerMapping = ElasticsearchMappings.influencerMapping(influencers);
-            XContentBuilder modelDebugMapping = ElasticsearchMappings.modelDebugOutputMapping();
+            XContentBuilder modelDebugMapping = ElasticsearchMappings.modelDebugOutputMapping(termFields);
 
             ElasticsearchJobId elasticJobId = new ElasticsearchJobId(job.getId());
 
