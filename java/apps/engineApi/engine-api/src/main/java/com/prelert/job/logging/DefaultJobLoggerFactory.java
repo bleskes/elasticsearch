@@ -73,39 +73,7 @@ public class DefaultJobLoggerFactory implements JobLoggerFactory
 
             if (logger.getAppender(LOG_FILE_APPENDER_NAME) == null)
             {
-                Path logFile = FileSystems.getDefault().getPath(ProcessCtrl.LOG_DIR,
-                        jobId, "engine_api.log");
-                RollingFileAppender fileAppender = new RollingFileAppender(
-                        new EnhancedPatternLayout(
-                                "%d{yyyy-MM-dd HH:mm:ss,SSS zz} [%t] %-5p %c{3} - %m%n"),
-                                logFile.toString());
-
-                fileAppender.setName(LOG_FILE_APPENDER_NAME);
-                fileAppender.setMaxFileSize("1MB");
-                fileAppender.setMaxBackupIndex(9);
-
-                // Try to copy the maximum file size and maximum index from the
-                // first rolling file appender of the root logger (there will
-                // be one unless the user has meddled with the default config).
-                // If we fail the defaults set above will remain in force.
-                @SuppressWarnings("rawtypes")
-                Enumeration rootAppenders = Logger.getRootLogger().getAllAppenders();
-                while (rootAppenders.hasMoreElements())
-                {
-                    try
-                    {
-                        RollingFileAppender defaultFileAppender = (RollingFileAppender)rootAppenders.nextElement();
-                        fileAppender.setMaximumFileSize(defaultFileAppender.getMaximumFileSize());
-                        fileAppender.setMaxBackupIndex(defaultFileAppender.getMaxBackupIndex());
-                        break;
-                    }
-                    catch (ClassCastException e)
-                    {
-                        // Ignore it
-                    }
-                }
-
-                logger.addAppender(fileAppender);
+                logger.addAppender(createRollingFileAppender(jobId));
             }
 
             return logger;
@@ -138,6 +106,42 @@ public class DefaultJobLoggerFactory implements JobLoggerFactory
         {
             // Do nothing
         }
+    }
+
+    private RollingFileAppender createRollingFileAppender(String jobId) throws IOException
+    {
+        Path logFile = FileSystems.getDefault().getPath(ProcessCtrl.LOG_DIR, jobId,
+                "engine_api.log");
+        RollingFileAppender fileAppender = new RollingFileAppender(
+                new EnhancedPatternLayout(
+                        "%d{yyyy-MM-dd HH:mm:ss,SSS zz} [%t] %-5p %c{3} - %m%n"),
+                        logFile.toString());
+
+        fileAppender.setName(LOG_FILE_APPENDER_NAME);
+        fileAppender.setMaxFileSize("1MB");
+        fileAppender.setMaxBackupIndex(9);
+
+        // Try to copy the maximum file size and maximum index from the
+        // first rolling file appender of the root logger (there will
+        // be one unless the user has meddled with the default config).
+        // If we fail the defaults set above will remain in force.
+        @SuppressWarnings("rawtypes")
+        Enumeration rootAppenders = Logger.getRootLogger().getAllAppenders();
+        while (rootAppenders.hasMoreElements())
+        {
+            try
+            {
+                RollingFileAppender defaultFileAppender = (RollingFileAppender)rootAppenders.nextElement();
+                fileAppender.setMaximumFileSize(defaultFileAppender.getMaximumFileSize());
+                fileAppender.setMaxBackupIndex(defaultFileAppender.getMaxBackupIndex());
+                break;
+            }
+            catch (ClassCastException e)
+            {
+                // Ignore it
+            }
+        }
+        return fileAppender;
     }
 
     /**
