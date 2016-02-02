@@ -63,11 +63,20 @@ final class ModelDebugOutputParser extends FieldNameParser<ModelDebugOutput>
         case ModelDebugOutput.TIMESTAMP:
             modelDebugOutput.setTimestamp(new Date(parseAsLongOrZero(fieldName)));
             break;
+        case ModelDebugOutput.PARTITION_FIELD_NAME:
+            modelDebugOutput.setPartitionFieldName(parseAsStringOrNull(fieldName));
+            break;
         case ModelDebugOutput.PARTITION_FIELD_VALUE:
             modelDebugOutput.setPartitionFieldValue(parseAsStringOrNull(fieldName));
             break;
+        case ModelDebugOutput.OVER_FIELD_NAME:
+            modelDebugOutput.setOverFieldName(parseAsStringOrNull(fieldName));
+            break;
         case ModelDebugOutput.OVER_FIELD_VALUE:
             modelDebugOutput.setOverFieldValue(parseAsStringOrNull(fieldName));
+            break;
+        case ModelDebugOutput.BY_FIELD_NAME:
+            modelDebugOutput.setByFieldName(parseAsStringOrNull(fieldName));
             break;
         case ModelDebugOutput.BY_FIELD_VALUE:
             modelDebugOutput.setByFieldValue(parseAsStringOrNull(fieldName));
