@@ -224,7 +224,7 @@ public class AutoDetectResultsParser
                         persister.incrementBucketCount(1);
                         notifyObservers(bucket);
 
-                        logger.debug("Bucket number " + ++bucketCount + " parsed from output");
+                        logger.trace("Bucket number " + ++bucketCount + " parsed from output");
                         break;
                     case Quantiles.QUANTILE_STATE:
                         Quantiles quantiles = new QuantilesParser(parser).parseJsonAfterStartObject();
