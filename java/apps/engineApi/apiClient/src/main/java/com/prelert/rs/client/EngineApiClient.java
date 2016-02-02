@@ -1,29 +1,20 @@
-/************************************************************
- *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
- *                                                          *
- *----------------------------------------------------------*
- *----------------------------------------------------------*
- * WARNING:                                                 *
- * THIS FILE CONTAINS UNPUBLISHED PROPRIETARY               *
- * SOURCE CODE WHICH IS THE PROPERTY OF PRELERT LTD AND     *
- * PARENT OR SUBSIDIARY COMPANIES.                          *
- * PLEASE READ THE FOLLOWING AND TAKE CAREFUL NOTE:         *
- *                                                          *
- * This source code is confidential and any person who      *
- * receives a copy of it, or believes that they are viewing *
- * it without permission is asked to notify Prelert Ltd     *
- * on +44 (0)20 3567 1249 or email to legal@prelert.com.    *
- * All intellectual property rights in this source code     *
- * are owned by Prelert Ltd.  No part of this source code   *
- * may be reproduced, adapted or transmitted in any form or *
- * by any means, electronic, mechanical, photocopying,      *
- * recording or otherwise.                                  *
- *                                                          *
- *----------------------------------------------------------*
- *                                                          *
- *                                                          *
- ************************************************************/
+/****************************************************************************
+ *                                                                          *
+ * Copyright 2015-2016 Prelert Ltd                                          *
+ *                                                                          *
+ * Licensed under the Apache License, Version 2.0 (the "License");          *
+ * you may not use this file except in compliance with the License.         *
+ * You may obtain a copy of the License at                                  *
+ *                                                                          *
+ *    http://www.apache.org/licenses/LICENSE-2.0                            *
+ *                                                                          *
+ * Unless required by applicable law or agreed to in writing, software      *
+ * distributed under the License is distributed on an "AS IS" BASIS,        *
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. *
+ * See the License for the specific language governing permissions and      *
+ * limitations under the License.                                           *
+ *                                                                          *
+ ***************************************************************************/
 
 package com.prelert.rs.client;
 
@@ -83,6 +74,7 @@ import com.prelert.rs.data.SingleDocument;
 public class EngineApiClient implements Closeable
 {
     private static final Logger LOGGER = Logger.getLogger(EngineApiClient.class);
+    private static final int BUFFER_SIZE = 4096 * 1024;
 
     private final String m_BaseUrl;
     private final ObjectMapper m_JsonMapper;
@@ -103,7 +95,8 @@ public class EngineApiClient implements Closeable
         try
         {
             m_HttpClient.start();
-        } catch (Exception e)
+        }
+        catch (Exception e)
         {
             LOGGER.fatal("Failed to start the HTTP client", e);
         }
@@ -120,7 +113,8 @@ public class EngineApiClient implements Closeable
         try
         {
             m_HttpClient.stop();
-        } catch (Exception e)
+        }
+        catch (Exception e)
         {
             throw new IOException(e);
         }
@@ -347,8 +341,7 @@ public class EngineApiClient implements Closeable
         String postUrl = m_BaseUrl + "/data/" + jobId;
         LOGGER.debug("Uploading chunked data to " + postUrl);
 
-        final int BUFF_SIZE = 4096 * 1024;
-        byte [] buffer = new byte[BUFF_SIZE];
+        byte [] buffer = new byte[BUFFER_SIZE];
         int uploadCount = 0;
         MultiDataPostResult uploadSummary = new MultiDataPostResult();
 
@@ -508,20 +501,20 @@ public class EngineApiClient implements Closeable
         };
         request.send(responseListener);
 
-        final int BUFF_SIZE = 4096 * 1024;
-        byte[] buffer = new byte[BUFF_SIZE];
+        byte[] buffer = new byte[BUFFER_SIZE];
         int bytesRead = 0;
         while ((bytesRead = inputStream.read(buffer)) > -1)
         {
             contentProvider.offer(ByteBuffer.wrap(buffer, 0, bytesRead));
-            buffer = new byte[BUFF_SIZE];
+            buffer = new byte[BUFFER_SIZE];
         }
         contentProvider.close();
 
         try
         {
             waitUntilRequestCompletesLatch.await();
-        } catch (InterruptedException e)
+        }
+        catch (InterruptedException e)
         {
             LOGGER.error(e);
             return defaultReturnValue;

@@ -24,59 +24,39 @@
  *                                                          *
  *                                                          *
  ************************************************************/
+package com.prelert.job.results;
 
-package com.prelert.job.alert.manager;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
-import java.net.URI;
+import java.util.TreeSet;
 
-import javax.ws.rs.container.AsyncResponse;
-import javax.ws.rs.core.UriBuilder;
-
+import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Logger;
+import org.junit.Test;
 
-import com.prelert.job.alert.Alert;
-import com.prelert.job.alert.AlertObserver;
-import com.prelert.job.alert.AlertTrigger;
-import com.prelert.job.results.Bucket;
-
-class AsyncResponseAlertObserver extends AlertObserver
+public class ReservedFieldNamesTest
 {
-    private static final Logger LOGGER = Logger.getLogger(AsyncResponseAlertObserver.class);
-
-    private final AsyncResponse m_Response;
-    private final AlertManager m_Manager;
-    private final URI m_BaseUri;
-
-    public AsyncResponseAlertObserver(AsyncResponse response, AlertManager manager, String jobId,
-            AlertTrigger [] triggers, URI baseUri)
+    @Test
+    public void testContent()
     {
-        super(triggers, jobId);
+        BasicConfigurator.configure();
+        Logger logger = Logger.getLogger(ReservedFieldNamesTest.class);
 
-        m_Response = response;
-        m_Manager = manager;
-        m_BaseUri = baseUri;
-    }
+        logger.info("Reserved field names are: " + new TreeSet<String>(ReservedFieldNames.RESERVED_FIELD_NAMES));
 
-    @Override
-    public void fire(Bucket bucket, AlertTrigger trigger)
-    {
-        LOGGER.info(String.format("Alert fired in bucket %s, probability = %f, anomaly score = %f",
-                                    bucket.getTimestamp(),
-                                    bucket.getMaxNormalizedProbability(),
-                                    bucket.getAnomalyScore()));
+        assertFalse(ReservedFieldNames.RESERVED_FIELD_NAMES.contains("description"));
+        assertFalse(ReservedFieldNames.RESERVED_FIELD_NAMES.contains("dest"));
+        assertFalse(ReservedFieldNames.RESERVED_FIELD_NAMES.contains("dst"));
+        assertFalse(ReservedFieldNames.RESERVED_FIELD_NAMES.contains("host"));
+        assertFalse(ReservedFieldNames.RESERVED_FIELD_NAMES.contains("instance"));
+        assertFalse(ReservedFieldNames.RESERVED_FIELD_NAMES.contains("region"));
+        assertFalse(ReservedFieldNames.RESERVED_FIELD_NAMES.contains("source"));
+        assertFalse(ReservedFieldNames.RESERVED_FIELD_NAMES.contains("src"));
+        assertFalse(ReservedFieldNames.RESERVED_FIELD_NAMES.contains("status"));
+        assertFalse(ReservedFieldNames.RESERVED_FIELD_NAMES.contains("type"));
 
-        m_Manager.deregisterResponse(m_Response);
-
-        Alert alert = createAlert(bucket, trigger);
-
-        UriBuilder uriBuilder = UriBuilder.fromUri(m_BaseUri)
-                .path("results")
-                .path(getJobId())
-                .path("buckets")
-                .path(bucket.getId())
-                .queryParam("expand", true);
-        alert.setUri(uriBuilder.build());
-
-        m_Response.resume(alert);
+        // Ideally we'll get rid of this one day
+        assertTrue(ReservedFieldNames.RESERVED_FIELD_NAMES.contains("id"));
     }
 }

@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -49,6 +49,7 @@ import com.prelert.job.process.output.FlushAcknowledgement;
 import com.prelert.job.quantiles.Quantiles;
 import com.prelert.job.results.Bucket;
 import com.prelert.job.results.CategoryDefinition;
+import com.prelert.job.results.ModelDebugOutput;
 import com.prelert.utils.json.AutoDetectParseException;
 
 /**
@@ -244,6 +245,10 @@ public class AutoDetectResultsParser
                             modelSizeStats.getMemoryStatus()));
 
                         persister.persistModelSizeStats(modelSizeStats);
+                        break;
+                    case ModelDebugOutput.DEBUG_FEATURE:
+                        ModelDebugOutput modelDebugOutput = new ModelDebugOutputParser(parser).parseJsonAfterStartObject();
+                        persister.persistModelDebugOutput(modelDebugOutput);
                         break;
                     case FlushAcknowledgement.FLUSH:
                         FlushAcknowledgement ack = new FlushAcknowledgementParser(parser).parseJsonAfterStartObject();

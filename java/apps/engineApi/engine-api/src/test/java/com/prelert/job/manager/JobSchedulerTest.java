@@ -104,7 +104,8 @@ public class JobSchedulerTest
 
     @Test
     public void testStart_GivenLookbackOnlyAndSingleStream()
-            throws CannotStartSchedulerWhileItIsStoppingException
+            throws CannotStartSchedulerWhileItIsStoppingException, UnknownJobException,
+            NativeProcessRunException, JobInUseException
     {
         JobDetails job = newJobWithElasticScheduler(1400000000000L, 1400000001000L);
         MockDataExtractor dataExtractor = new MockDataExtractor(Arrays.asList(1));
@@ -115,6 +116,7 @@ public class JobSchedulerTest
         m_JobScheduler.awaitLookbackTermination();
         m_JobScheduler.stopManual();
         assertEquals(JobSchedulerStatus.STOPPED, m_CurrentStatus);
+        assertTrue(dataProcessor.isJobClosed());
 
         assertEquals(1, dataProcessor.getNumberOfStreams());
         assertEquals("0-0", dataProcessor.getStream(0));
@@ -124,7 +126,8 @@ public class JobSchedulerTest
 
     @Test
     public void testStart_GivenLookbackOnlyAndMultipleStreams()
-            throws CannotStartSchedulerWhileItIsStoppingException
+            throws CannotStartSchedulerWhileItIsStoppingException, UnknownJobException,
+            NativeProcessRunException, JobInUseException
     {
         JobDetails job = newJobWithElasticScheduler(1400000000000L, 1400000001000L);
         MockDataExtractor dataExtractor = new MockDataExtractor(Arrays.asList(3));
@@ -135,6 +138,7 @@ public class JobSchedulerTest
         m_JobScheduler.awaitLookbackTermination();
         m_JobScheduler.stopManual();
         assertEquals(JobSchedulerStatus.STOPPED, m_CurrentStatus);
+        assertTrue(dataProcessor.isJobClosed());
 
         assertEquals(3, dataProcessor.getNumberOfStreams());
         assertEquals("0-0", dataProcessor.getStream(0));
@@ -146,7 +150,8 @@ public class JobSchedulerTest
 
     @Test
     public void testStart_GivenLookbackAndRealtimeWithSingleStreams()
-            throws CannotStartSchedulerWhileItIsStoppingException
+            throws CannotStartSchedulerWhileItIsStoppingException, UnknownJobException,
+            NativeProcessRunException, JobInUseException
     {
         JobDetails job = newJobWithElasticScheduler(1400000000000L, null);
         MockDataExtractor dataExtractor = new MockDataExtractor(Arrays.asList(1, 1, 1));
@@ -171,6 +176,7 @@ public class JobSchedulerTest
         }
         m_JobScheduler.stopManual();
         assertEquals(JobSchedulerStatus.STOPPED, m_CurrentStatus);
+        assertTrue(dataProcessor.isJobClosed());
 
         assertTrue(dataProcessor.getNumberOfStreams() > 1);
 
@@ -208,7 +214,8 @@ public class JobSchedulerTest
 
     @Test
     public void testStart_GivenDataProcessorThrows()
-            throws CannotStartSchedulerWhileItIsStoppingException
+            throws CannotStartSchedulerWhileItIsStoppingException, UnknownJobException,
+            NativeProcessRunException, JobInUseException
     {
         JobDetails job = newJobWithElasticScheduler(1400000000000L, 1400000001000L);
         MockDataExtractor dataExtractor = new MockDataExtractor(Arrays.asList(1, 1));
@@ -220,6 +227,7 @@ public class JobSchedulerTest
         m_JobScheduler.awaitLookbackTermination();
         m_JobScheduler.stopManual();
         assertEquals(JobSchedulerStatus.STOPPED, m_CurrentStatus);
+        assertTrue(dataProcessor.isJobClosed());
 
         assertEquals(0, dataProcessor.getNumberOfStreams());
         assertEquals("1400000000000", dataExtractor.getStart(0));
@@ -238,7 +246,8 @@ public class JobSchedulerTest
 
     @Test
     public void testStart_GivenJobHasLatestRecordTimestamp()
-            throws CannotStartSchedulerWhileItIsStoppingException
+            throws CannotStartSchedulerWhileItIsStoppingException, UnknownJobException,
+            NativeProcessRunException, JobInUseException
     {
         JobDetails job = newJobWithElasticScheduler(1450000000000L, 1460000000000L);
         DataCounts dataCounts = new DataCounts();
@@ -253,6 +262,7 @@ public class JobSchedulerTest
         m_JobScheduler.awaitLookbackTermination();
         m_JobScheduler.stopManual();
         assertEquals(JobSchedulerStatus.STOPPED, m_CurrentStatus);
+        assertTrue(dataProcessor.isJobClosed());
 
         assertEquals(1, dataProcessor.getNumberOfStreams());
         assertEquals("0-0", dataProcessor.getStream(0));
@@ -272,6 +282,7 @@ public class JobSchedulerTest
         m_JobScheduler.start(job);
         m_JobScheduler.awaitLookbackTermination();
         assertEquals(JobSchedulerStatus.STOPPED, m_CurrentStatus);
+        assertTrue(dataProcessor.isJobClosed());
 
         assertEquals(1, dataProcessor.getNumberOfStreams());
         assertEquals("0-0", dataProcessor.getStream(0));
@@ -281,7 +292,8 @@ public class JobSchedulerTest
 
     @Test
     public void testStart_GivenAlreadyStarted()
-            throws CannotStartSchedulerWhileItIsStoppingException, InterruptedException
+            throws CannotStartSchedulerWhileItIsStoppingException, InterruptedException,
+            UnknownJobException, NativeProcessRunException, JobInUseException
     {
         JobDetails job = newJobWithElasticScheduler(1400000000000L, null);
         MockDataExtractor dataExtractor = new MockDataExtractor(Arrays.asList(1, 1, 1));
@@ -292,12 +304,15 @@ public class JobSchedulerTest
         Thread.sleep(100);
         m_JobScheduler.start(job);
         m_JobScheduler.stopManual();
+        assertTrue(dataProcessor.isJobClosed());
 
         assertEquals(0, dataExtractor.getSearchCount());
     }
 
     @Test
-    public void testStop_GivenAlreadyStopped() throws CannotStartSchedulerWhileItIsStoppingException
+    public void testStop_GivenAlreadyStopped()
+            throws CannotStartSchedulerWhileItIsStoppingException, UnknownJobException,
+            NativeProcessRunException, JobInUseException
     {
         JobDetails job = newJobWithElasticScheduler(1400000000000L, null);
         MockDataExtractor dataExtractor = new MockDataExtractor(Arrays.asList(1, 1, 1));
@@ -307,6 +322,7 @@ public class JobSchedulerTest
         m_JobScheduler.start(job);
         m_JobScheduler.stopManual();
         m_JobScheduler.stopManual();
+        assertTrue(dataProcessor.isJobClosed());
 
         assertEquals(JobSchedulerStatus.STOPPED, m_CurrentStatus);
     }
@@ -325,6 +341,7 @@ public class JobSchedulerTest
         m_JobScheduler.awaitLookbackTermination();
 
         m_JobScheduler.stopAuto();
+        assertFalse(dataProcessor.isJobClosed());
 
         // Wait enough time for real-time tasks to begin in case stop did not work
         Thread.sleep(2000);
@@ -436,6 +453,7 @@ public class JobSchedulerTest
     {
         private List<String> m_Streams = new ArrayList<>();
         private boolean m_ShouldThrow = false;
+        private boolean m_IsJobClosed = false;
 
         public void setShouldThrow(boolean value)
         {
@@ -450,6 +468,11 @@ public class JobSchedulerTest
         public int getNumberOfStreams()
         {
             return m_Streams.size();
+        }
+
+        public boolean isJobClosed()
+        {
+            return m_IsJobClosed;
         }
 
         @Override
@@ -480,6 +503,13 @@ public class JobSchedulerTest
                 throws UnknownJobException, NativeProcessRunException, JobInUseException
         {
             // NOOP
+        }
+
+        @Override
+        public void closeJob(String jobId) throws UnknownJobException, NativeProcessRunException,
+                JobInUseException
+        {
+            m_IsJobClosed = jobId.equals(JOB_ID);
         }
     }
 

@@ -33,6 +33,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.log4j.Logger;
 import org.elasticsearch.ElasticsearchException;
@@ -64,6 +65,7 @@ import com.prelert.job.results.BucketInfluencer;
 import com.prelert.job.results.CategoryDefinition;
 import com.prelert.job.results.Influence;
 import com.prelert.job.results.Influencer;
+import com.prelert.job.results.ModelDebugOutput;
 import com.prelert.job.results.ReservedFieldNames;
 
 /**
@@ -303,6 +305,40 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
         // for information at the API level
     }
 
+    /**
+     * Persist model debug output
+     * @param modelDebugOutput If <code>null</code> then returns straight away.
+     * @throws IOException
+     */
+    @Override
+    public void persistModelDebugOutput(ModelDebugOutput modelDebugOutput)
+    {
+        if (modelDebugOutput == null)
+        {
+            LOGGER.warn("No modelDebugOutput to persist for job " + m_JobId.getId());
+            return;
+        }
+
+        try
+        {
+            XContentBuilder content = serialiseModelDebugOutput(modelDebugOutput);
+
+            LOGGER.trace("ES API CALL: index type " + ModelDebugOutput.TYPE +
+                    " to index " + m_JobId.getIndex());
+            m_Client.prepareIndex(m_JobId.getIndex(), ModelDebugOutput.TYPE)
+                    .setSource(content)
+                    .execute().actionGet();
+        }
+        catch (IOException e)
+        {
+            LOGGER.error("Error writing modelDebugOutput", e);
+            return;
+        }
+
+        // Don't commit as we expect masses of these updates and they're not
+        // read again by this process
+    }
+
     @Override
     public void persistInfluencer(Influencer influencer)
     {
@@ -373,7 +409,6 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
                 .field(Bucket.MAX_NORMALIZED_PROBABILITY, bucket.getMaxNormalizedProbability())
                 .field(Bucket.RECORD_COUNT, bucket.getRecordCount())
                 .field(Bucket.EVENT_COUNT, bucket.getEventCount());
-
 
         if (bucket.isInterim())
         {
@@ -459,6 +494,57 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
                 .field(ModelSizeStats.BUCKET_ALLOCATION_FAILURES_COUNT, modelSizeStats.getBucketAllocationFailuresCount())
                 .field(ModelSizeStats.MEMORY_STATUS, modelSizeStats.getMemoryStatus())
                 .endObject();
+    }
+
+    /**
+     * Return the modelDebugOutput as serialisable content
+     * @param modelDebugOutput
+     * @return
+     * @throws IOException
+     */
+    private XContentBuilder serialiseModelDebugOutput(ModelDebugOutput modelDebugOutput)
+    throws IOException
+    {
+        XContentBuilder builder = jsonBuilder().startObject()
+                .field(JOB_ID_NAME, m_JobId.getId())
+                .field(ElasticsearchMappings.ES_TIMESTAMP, modelDebugOutput.getTimestamp())
+                .field(ModelDebugOutput.DEBUG_FEATURE, modelDebugOutput.getDebugFeature())
+                .field(ModelDebugOutput.DEBUG_LOWER, modelDebugOutput.getDebugLower())
+                .field(ModelDebugOutput.DEBUG_UPPER, modelDebugOutput.getDebugUpper())
+                .field(ModelDebugOutput.DEBUG_MEAN, modelDebugOutput.getDebugMean())
+                .field(ModelDebugOutput.ACTUAL, modelDebugOutput.getActual());
+
+        if (modelDebugOutput.getByFieldName() != null)
+        {
+            builder.field(ModelDebugOutput.BY_FIELD_NAME, modelDebugOutput.getByFieldName());
+            if (modelDebugOutput.getByFieldValue() != null &&
+                !ReservedFieldNames.RESERVED_FIELD_NAMES.contains(modelDebugOutput.getByFieldName()))
+            {
+                builder.field(modelDebugOutput.getByFieldName(), modelDebugOutput.getByFieldValue());
+            }
+        }
+        if (modelDebugOutput.getOverFieldName() != null)
+        {
+            builder.field(ModelDebugOutput.OVER_FIELD_NAME, modelDebugOutput.getOverFieldName());
+            if (modelDebugOutput.getOverFieldValue() != null &&
+                !ReservedFieldNames.RESERVED_FIELD_NAMES.contains(modelDebugOutput.getOverFieldName()))
+            {
+                builder.field(modelDebugOutput.getOverFieldName(), modelDebugOutput.getOverFieldValue());
+            }
+        }
+        if (modelDebugOutput.getPartitionFieldName() != null)
+        {
+            builder.field(ModelDebugOutput.PARTITION_FIELD_NAME, modelDebugOutput.getPartitionFieldName());
+            if (modelDebugOutput.getPartitionFieldValue() != null &&
+                !ReservedFieldNames.RESERVED_FIELD_NAMES.contains(modelDebugOutput.getPartitionFieldName()))
+            {
+                builder.field(modelDebugOutput.getPartitionFieldName(), modelDebugOutput.getPartitionFieldValue());
+            }
+        }
+
+        builder.endObject();
+
+        return builder;
     }
 
     /**

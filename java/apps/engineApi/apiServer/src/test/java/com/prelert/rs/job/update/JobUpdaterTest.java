@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -130,7 +130,7 @@ public class JobUpdaterTest
         new JobUpdater(m_JobManager, "foo").update(update);
 
         verify(m_JobManager).setDescription("foo", "foobar");
-        verify(m_JobManager).setModelDebugConfig("foo", new ModelDebugConfig(33.9, null));
+        verify(m_JobManager).setModelDebugConfig("foo", new ModelDebugConfig(null, 33.9, null));
 
         String expectedConfig = "[modelDebugConfig]\nboundspercentile = 33.9\nterms = \n";
         verify(m_JobManager).writeUpdateConfigMessage("foo", expectedConfig);

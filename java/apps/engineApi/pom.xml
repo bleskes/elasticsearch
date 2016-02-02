@@ -77,6 +77,24 @@
 
         </executions>
       </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-enforcer-plugin</artifactId>
+        <version>1.4.1</version>
+        <executions>
+          <execution>
+            <id>enforce</id>
+            <configuration>
+              <rules>
+                <dependencyConvergence/>
+              </rules>
+            </configuration>
+            <goals>
+              <goal>enforce</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
     </plugins>
   </build>
 
@@ -152,7 +170,7 @@
       <!-- Prelert modules -->
       <dependency>
         <groupId>com.prelert</groupId>
-        <artifactId>api-common</artifactId>
+        <artifactId>prelert-engine-api-common</artifactId>
         <version>2.0.0</version>
       </dependency>
       <dependency>
@@ -162,7 +180,7 @@
       </dependency>
       <dependency>
         <groupId>com.prelert</groupId>
-        <artifactId>apiServer</artifactId>
+        <artifactId>engine-api-server</artifactId>
         <version>2.0.0</version>
       </dependency>
       <dependency>

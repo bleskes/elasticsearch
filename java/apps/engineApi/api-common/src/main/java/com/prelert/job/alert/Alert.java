@@ -1,29 +1,20 @@
-/************************************************************
- *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
- *                                                          *
- *----------------------------------------------------------*
- *----------------------------------------------------------*
- * WARNING:                                                 *
- * THIS FILE CONTAINS UNPUBLISHED PROPRIETARY               *
- * SOURCE CODE WHICH IS THE PROPERTY OF PRELERT LTD AND     *
- * PARENT OR SUBSIDIARY COMPANIES.                          *
- * PLEASE READ THE FOLLOWING AND TAKE CAREFUL NOTE:         *
- *                                                          *
- * This source code is confidential and any person who      *
- * receives a copy of it, or believes that they are viewing *
- * it without permission is asked to notify Prelert Ltd     *
- * on +44 (0)20 3567 1249 or email to legal@prelert.com.    *
- * All intellectual property rights in this source code     *
- * are owned by Prelert Ltd.  No part of this source code   *
- * may be reproduced, adapted or transmitted in any form or *
- * by any means, electronic, mechanical, photocopying,      *
- * recording or otherwise.                                  *
- *                                                          *
- *----------------------------------------------------------*
- *                                                          *
- *                                                          *
- ************************************************************/
+/****************************************************************************
+ *                                                                          *
+ * Copyright 2015-2016 Prelert Ltd                                          *
+ *                                                                          *
+ * Licensed under the Apache License, Version 2.0 (the "License");          *
+ * you may not use this file except in compliance with the License.         *
+ * You may obtain a copy of the License at                                  *
+ *                                                                          *
+ *    http://www.apache.org/licenses/LICENSE-2.0                            *
+ *                                                                          *
+ * Unless required by applicable law or agreed to in writing, software      *
+ * distributed under the License is distributed on an "AS IS" BASIS,        *
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. *
+ * See the License for the specific language governing permissions and      *
+ * limitations under the License.                                           *
+ *                                                                          *
+ ***************************************************************************/
 package com.prelert.job.alert;
 
 import java.net.URI;
@@ -51,130 +42,129 @@ import com.prelert.job.results.Bucket;
 @JsonInclude(Include.NON_NULL)
 public class Alert
 {
-	public static final String TYPE = "alert";
+    public static final String TYPE = "alert";
 
-	public static final String JOB_ID = "JobId";
-	public static final String TIMESTAMP = "timestamp";
-	public static final String URI = "uri";
+    public static final String JOB_ID = "JobId";
+    public static final String TIMESTAMP = "timestamp";
+    public static final String URI = "uri";
 
 
-	private String m_JobId;
-	private Date m_Timestamp;
-	private URI m_Uri;
-	private double m_AnomalyScore;
-	private double m_MaxNormalizedProb;
-	private boolean m_IsTimeout;
-	private AlertType m_AlertType;
-	private Bucket m_Bucket;
-	private List<AnomalyRecord> m_Records;
-	private boolean m_IsInterim;
+    private String m_JobId;
+    private Date m_Timestamp;
+    private URI m_Uri;
+    private double m_AnomalyScore;
+    private double m_MaxNormalizedProb;
+    private boolean m_IsTimeout;
+    private AlertType m_AlertType;
+    private Bucket m_Bucket;
+    private List<AnomalyRecord> m_Records;
+    private boolean m_IsInterim;
 
-	public Alert()
-	{
-	    m_AlertType = AlertType.BUCKET;
-	}
+    public Alert()
+    {
+        m_AlertType = AlertType.BUCKET;
+    }
 
-	public String getJobId()
-	{
-		return m_JobId;
-	}
+    public String getJobId()
+    {
+        return m_JobId;
+    }
 
-	public void setJobId(String jobId)
-	{
-		this.m_JobId = jobId;
-	}
+    public void setJobId(String jobId)
+    {
+        this.m_JobId = jobId;
+    }
 
-	public Date getTimestamp()
-	{
-		return m_Timestamp;
-	}
+    public Date getTimestamp()
+    {
+        return m_Timestamp;
+    }
 
-	public void setTimestamp(Date timestamp)
-	{
-		m_Timestamp = timestamp;
-	}
+    public void setTimestamp(Date timestamp)
+    {
+        m_Timestamp = timestamp;
+    }
 
-	public double getAnomalyScore()
-	{
-		return m_AnomalyScore;
-	}
+    public double getAnomalyScore()
+    {
+        return m_AnomalyScore;
+    }
 
-	public void setAnomalyScore(double anomalyScore)
-	{
-		m_AnomalyScore = anomalyScore;
-	}
+    public void setAnomalyScore(double anomalyScore)
+    {
+        m_AnomalyScore = anomalyScore;
+    }
 
-	public double getMaxNormalizedProbability()
-	{
-		return m_MaxNormalizedProb;
-	}
+    public double getMaxNormalizedProbability()
+    {
+        return m_MaxNormalizedProb;
+    }
 
-	public void setMaxNormalizedProbability(double prob)
-	{
-		m_MaxNormalizedProb = prob;
-	}
+    public void setMaxNormalizedProbability(double prob)
+    {
+        m_MaxNormalizedProb = prob;
+    }
 
-	public URI getUri()
-	{
-		return m_Uri;
-	}
+    public URI getUri()
+    {
+        return m_Uri;
+    }
 
-	public void setUri(URI uri)
-	{
-		m_Uri = uri;
-	}
+    public void setUri(URI uri)
+    {
+        m_Uri = uri;
+    }
 
-	public boolean isTimeout()
-	{
-		return m_IsTimeout;
-	}
+    public boolean isTimeout()
+    {
+        return m_IsTimeout;
+    }
 
-	public void setTimeout(boolean timeout)
-	{
-		m_IsTimeout = timeout;
-	}
+    public void setTimeout(boolean timeout)
+    {
+        m_IsTimeout = timeout;
+    }
 
-	public Bucket getBucket()
-	{
-		return m_Bucket;
-	}
+    public Bucket getBucket()
+    {
+        return m_Bucket;
+    }
 
-	public void setBucket(Bucket bucket)
-	{
-		m_Bucket = bucket;
-	}
+    public void setBucket(Bucket bucket)
+    {
+        m_Bucket = bucket;
+    }
 
-	public List<AnomalyRecord> getRecords()
-	{
-		return m_Records;
-	}
+    public List<AnomalyRecord> getRecords()
+    {
+        return m_Records;
+    }
 
-	public void setRecords(List<AnomalyRecord> records)
-	{
-		m_Records = records;
-	}
+    public void setRecords(List<AnomalyRecord> records)
+    {
+        m_Records = records;
+    }
 
-	public AlertType getAlertType()
-	{
-	    return m_AlertType;
-	}
+    public AlertType getAlertType()
+    {
+        return m_AlertType;
+    }
 
-	public void setAlertType(AlertType value)
-	{
-	    m_AlertType = value;
-	}
+    public void setAlertType(AlertType value)
+    {
+        m_AlertType = value;
+    }
 
-	@JsonProperty("isInterim")
-	public boolean isInterim()
-	{
-	    return m_IsInterim;
-	}
+    @JsonProperty("isInterim")
+    public boolean isInterim()
+    {
+        return m_IsInterim;
+    }
 
-	@JsonProperty("isInterim")
-	public void setInterim(boolean value)
-	{
-	    m_IsInterim = value;
-	}
-
+    @JsonProperty("isInterim")
+    public void setInterim(boolean value)
+    {
+        m_IsInterim = value;
+    }
 
 }

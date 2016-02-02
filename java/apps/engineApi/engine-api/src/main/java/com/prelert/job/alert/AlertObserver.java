@@ -189,6 +189,7 @@ public abstract class AlertObserver
         {
             if (r.getNormalizedProbability() >= normalisedThreshold)
             {
+                r.setTimestamp(bucket.getTimestamp());
                 records.add(r);
             }
         }

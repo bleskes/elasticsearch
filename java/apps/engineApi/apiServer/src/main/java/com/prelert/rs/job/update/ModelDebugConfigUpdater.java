@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -79,7 +79,7 @@ class ModelDebugConfigUpdater extends AbstractUpdater
         m_ConfigWriter.write("[modelDebugConfig]\n");
         if (modelDebugConfig == null)
         {
-            modelDebugConfig = new ModelDebugConfig(-1.0, null);
+            modelDebugConfig = new ModelDebugConfig(null, -1.0, null);
         }
         try
         {

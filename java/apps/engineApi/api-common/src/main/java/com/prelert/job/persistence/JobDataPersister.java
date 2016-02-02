@@ -1,29 +1,20 @@
-/************************************************************
- *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
- *                                                          *
- *----------------------------------------------------------*
- *----------------------------------------------------------*
- * WARNING:                                                 *
- * THIS FILE CONTAINS UNPUBLISHED PROPRIETARY               *
- * SOURCE CODE WHICH IS THE PROPERTY OF PRELERT LTD AND     *
- * PARENT OR SUBSIDIARY COMPANIES.                          *
- * PLEASE READ THE FOLLOWING AND TAKE CAREFUL NOTE:         *
- *                                                          *
- * This source code is confidential and any person who      *
- * receives a copy of it, or believes that they are viewing *
- * it without permission is asked to notify Prelert Ltd     *
- * on +44 (0)20 3567 1249 or email to legal@prelert.com.    *
- * All intellectual property rights in this source code     *
- * are owned by Prelert Ltd.  No part of this source code   *
- * may be reproduced, adapted or transmitted in any form or *
- * by any means, electronic, mechanical, photocopying,      *
- * recording or otherwise.                                  *
- *                                                          *
- *----------------------------------------------------------*
- *                                                          *
- *                                                          *
- ************************************************************/
+/****************************************************************************
+ *                                                                          *
+ * Copyright 2015-2016 Prelert Ltd                                          *
+ *                                                                          *
+ * Licensed under the Apache License, Version 2.0 (the "License");          *
+ * you may not use this file except in compliance with the License.         *
+ * You may obtain a copy of the License at                                  *
+ *                                                                          *
+ *    http://www.apache.org/licenses/LICENSE-2.0                            *
+ *                                                                          *
+ * Unless required by applicable law or agreed to in writing, software      *
+ * distributed under the License is distributed on an "AS IS" BASIS,        *
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. *
+ * See the License for the specific language governing permissions and      *
+ * limitations under the License.                                           *
+ *                                                                          *
+ ***************************************************************************/
 
 package com.prelert.job.persistence;
 
@@ -53,23 +44,21 @@ public abstract class JobDataPersister
     protected int [] m_OverFieldMappings;
     protected int [] m_PartitionFieldMappings;
 
-
-
-	/**
-	 * Find each of the lists of requried fields (by, over, etc)
-	 * in <code>fieldMap</code> and save the indexes so the field mappings can
-	 * be used in calls to {@linkplain #persistRecord(long, String[])}
-	 *
-	 * @param fields
-	 * @param byFields
-	 * @param overFields
-	 * @param partitionFields
-	 * @param fieldMap Field -> index map for the record passed in
-	 * {@link #persistRecord())}
-	 */
-	public void setFieldMappings(List<String> fields,
-			List<String> byFields, List<String> overFields,
-			List<String> partitionFields, Map<String, Integer> fieldMap)
+    /**
+     * Find each of the lists of requried fields (by, over, etc)
+     * in <code>fieldMap</code> and save the indexes so the field mappings can
+     * be used in calls to {@linkplain #persistRecord(long, String[])}
+     *
+     * @param fields
+     * @param byFields
+     * @param overFields
+     * @param partitionFields
+     * @param fieldMap Field -> index map for the record passed in
+     * {@link #persistRecord())}
+     */
+    public void setFieldMappings(List<String> fields,
+            List<String> byFields, List<String> overFields,
+            List<String> partitionFields, Map<String, Integer> fieldMap)
     {
         m_FieldNames = new String [fields.size()];
         m_FieldNames = fields.<String>toArray(m_FieldNames);
@@ -128,26 +117,26 @@ public abstract class JobDataPersister
         }
     }
 
-	/**
-	 * Save the record as per the field mappings
-	 * set up in {@linkplain #setFieldMappings(List, List, List, List, String[])}
-	 * setFieldMappings must have been called so this class knows where to
-	 *
-	 *
-	 * @param epoch
-	 * @param record
-	 */
-	public abstract void persistRecord(long epoch, String[] record);
+    /**
+     * Save the record as per the field mappings
+     * set up in {@linkplain #setFieldMappings(List, List, List, List, String[])}
+     * setFieldMappings must have been called so this class knows where to
+     *
+     *
+     * @param epoch
+     * @param record
+     */
+    public abstract void persistRecord(long epoch, String[] record);
 
-	/**
-	 * Delete all the persisted records
-	 *
-	 * @return
-	 */
-	public abstract boolean deleteData();
+    /**
+     * Delete all the persisted records
+     *
+     * @return
+     */
+    public abstract boolean deleteData();
 
-	/**
-	 * Flush any records that may not have been persisted yet
-	 */
-	public abstract void flushRecords();
+    /**
+     * Flush any records that may not have been persisted yet
+     */
+    public abstract void flushRecords();
 }

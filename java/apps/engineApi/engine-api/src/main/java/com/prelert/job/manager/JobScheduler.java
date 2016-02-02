@@ -227,6 +227,8 @@ public class JobScheduler
 
     private void updateStatus(JobSchedulerStatus status)
     {
+        m_Logger.info("Scheduler status changed to " + status);
+
         m_Status = status;
         Map<String, Object> updates = new HashMap<>();
         updates.put(JobDetails.SCHEDULER_STATUS, status);
@@ -285,27 +287,51 @@ public class JobScheduler
             m_Logger.info("Lookback has finished");
             if (m_IsLookbackOnly)
             {
-                closeLogger();
-                updateStatus(JobSchedulerStatus.STOPPED);
+                finishLookback();
             }
-            else
+            else if (m_Status == JobSchedulerStatus.STARTED)
             {
-                m_Logger.info("Entering real-time mode");
-                m_RealTimeScheduler = new TaskScheduler(createNextTask(), calculateNextTime());
-                m_RealTimeScheduler.start();
+                startRealTime();
             }
             m_LookbackExecutor.shutdown();
         };
+    }
+
+    private void finishLookback()
+    {
+        try
+        {
+            m_DataProcessor.closeJob(m_JobId);
+        } catch (UnknownJobException | NativeProcessRunException | JobInUseException e)
+        {
+            m_Logger.error("An error has occurred while closing the job", e);
+        }
+        updateStatus(JobSchedulerStatus.STOPPED);
+        closeLogger();
+    }
+
+    private void startRealTime()
+    {
+        synchronized (this)
+        {
+            m_Logger.info("Entering real-time mode");
+            m_RealTimeScheduler = new TaskScheduler(createNextTask(), calculateNextTime());
+            m_RealTimeScheduler.start();
+        }
     }
 
     /**
      * Stops the scheduler and blocks the current thread until
      * the scheduler is stopped. At the end of the stopping process
      * the status is set to STOPPED.
+     * @throws JobInUseException
+     * @throws NativeProcessRunException
+     * @throws UnknownJobException
      */
-    public void stopManual()
+    public void stopManual() throws UnknownJobException, NativeProcessRunException, JobInUseException
     {
         stop(JobSchedulerStatus.STOPPED);
+        m_DataProcessor.closeJob(m_JobId);
     }
 
 
@@ -340,8 +366,8 @@ public class JobScheduler
 
         if (m_IsLookbackOnly == false)
         {
-            closeLogger();
             updateStatus(finalStatus);
+            closeLogger();
         }
     }
 
@@ -367,7 +393,6 @@ public class JobScheduler
 
     private void closeLogger()
     {
-        m_Logger.info("Scheduler has stopped");
         JobLogger.close(m_Logger);
         m_Logger = null;
     }

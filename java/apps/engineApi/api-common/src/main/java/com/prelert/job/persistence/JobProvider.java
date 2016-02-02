@@ -1,29 +1,20 @@
-/************************************************************
- *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
- *                                                          *
- *----------------------------------------------------------*
- *----------------------------------------------------------*
- * WARNING:                                                 *
- * THIS FILE CONTAINS UNPUBLISHED PROPRIETARY               *
- * SOURCE CODE WHICH IS THE PROPERTY OF PRELERT LTD AND     *
- * PARENT OR SUBSIDIARY COMPANIES.                          *
- * PLEASE READ THE FOLLOWING AND TAKE CAREFUL NOTE:         *
- *                                                          *
- * This source code is confidential and any person who      *
- * receives a copy of it, or believes that they are viewing *
- * it without permission is asked to notify Prelert Ltd     *
- * on +44 (0)20 3567 1249 or email to legal@prelert.com.    *
- * All intellectual property rights in this source code     *
- * are owned by Prelert Ltd.  No part of this source code   *
- * may be reproduced, adapted or transmitted in any form or *
- * by any means, electronic, mechanical, photocopying,      *
- * recording or otherwise.                                  *
- *                                                          *
- *----------------------------------------------------------*
- *                                                          *
- *                                                          *
- ************************************************************/
+/****************************************************************************
+ *                                                                          *
+ * Copyright 2015-2016 Prelert Ltd                                          *
+ *                                                                          *
+ * Licensed under the Apache License, Version 2.0 (the "License");          *
+ * you may not use this file except in compliance with the License.         *
+ * You may obtain a copy of the License at                                  *
+ *                                                                          *
+ *    http://www.apache.org/licenses/LICENSE-2.0                            *
+ *                                                                          *
+ * Unless required by applicable law or agreed to in writing, software      *
+ * distributed under the License is distributed on an "AS IS" BASIS,        *
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. *
+ * See the License for the specific language governing permissions and      *
+ * limitations under the License.                                           *
+ *                                                                          *
+ ***************************************************************************/
 
 package com.prelert.job.persistence;
 
@@ -32,18 +23,18 @@ import com.prelert.job.quantiles.Quantiles;
 
 public interface JobProvider extends JobDetailsProvider, JobResultsProvider
 {
-	/**
-	 * Get the persisted quantiles state for the job
-	 */
-	public Quantiles getQuantiles(String jobId)
-	throws UnknownJobException;
+    /**
+     * Get the persisted quantiles state for the job
+     */
+    public Quantiles getQuantiles(String jobId)
+    throws UnknownJobException;
 
-	/**
-	 * Refresh the datastore index so that all recent changes are
-	 * available to search operations. This is a synchronous blocking
-	 * call that should not return until the index has been refreshed.
-	 *
-	 * @param jobId
-	 */
-	public void refreshIndex(String jobId);
+    /**
+     * Refresh the datastore index so that all recent changes are
+     * available to search operations. This is a synchronous blocking
+     * call that should not return until the index has been refreshed.
+     *
+     * @param jobId
+     */
+    public void refreshIndex(String jobId);
 }

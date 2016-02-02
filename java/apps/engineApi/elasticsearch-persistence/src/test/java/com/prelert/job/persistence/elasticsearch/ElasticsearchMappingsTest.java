@@ -51,12 +51,10 @@ public class ElasticsearchMappingsTest
                         "        \"index\": \"not_analyzed\"" +
                         "      }," +
                         "      \"description\": {" +
-                        "        \"type\": \"string\"," +
-                        "        \"index\": \"not_analyzed\"" +
+                        "        \"type\": \"string\"" +
                         "      }," +
                         "      \"status\": {" +
-                        "        \"type\": \"string\"," +
-                        "        \"index\": \"not_analyzed\"" +
+                        "        \"type\": \"string\"" +
                         "      }," +
                         "      \"schedulerStatus\": {" +
                         "        \"type\": \"string\"," +
@@ -269,6 +267,10 @@ public class ElasticsearchMappingsTest
                         "      \"modelDebugConfig\": {" +
                         "        \"type\": \"object\"," +
                         "        \"properties\": {" +
+                        "          \"writeTo\": {" +
+                        "            \"type\": \"string\"," +
+                        "            \"index\": \"no\"" +
+                        "          }," +
                         "          \"boundsPercentile\": {" +
                         "            \"type\": \"double\"," +
                         "            \"index\": \"no\"" +

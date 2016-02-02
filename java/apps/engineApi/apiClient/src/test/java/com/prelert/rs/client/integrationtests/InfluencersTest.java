@@ -575,6 +575,17 @@ public class InfluencersTest
         }
     }
 
+    public void close()
+    {
+        try
+        {
+             m_WebServiceClient.close();
+        } catch (IOException e)
+        {
+            LOGGER.error("Failed to close client", e);
+        }
+    }
+
     public static void main(String[] args) throws IOException, InterruptedException, ExecutionException
     {
         // configure log4j
@@ -613,6 +624,8 @@ public class InfluencersTest
         test.deleteJobs();
 
         test.m_PollAlertService.shutdown();
+
+        test.close();
 
         LOGGER.info("All tests passed Ok");
     }

@@ -195,7 +195,7 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
     protected void buildDateTransform(Map<String, Integer> scratchAreaIndicies,
             Map<String, Integer> outFieldIndexes)
     {
-        boolean isDateFromatString = m_DataDescription.isTransformTime()
+        boolean isDateFormatString = m_DataDescription.isTransformTime()
                 && !m_DataDescription.isEpochMs();
 
         List<TransformIndex> readIndicies = new ArrayList<>();
@@ -231,7 +231,7 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
         writeIndicies.add(new TransformIndex(TransformFactory.OUTPUT_ARRAY_INDEX,
                 outFieldIndexes.get(m_DataDescription.getTimeField())));
 
-        if (isDateFromatString)
+        if (isDateFormatString)
         {
             m_DateTransform = new DateFormatTransform(m_DataDescription.getTimeFormat(),
                     readIndicies, writeIndicies, m_Logger);

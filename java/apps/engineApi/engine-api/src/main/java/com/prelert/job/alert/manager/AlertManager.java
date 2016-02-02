@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -80,7 +80,7 @@ public class AlertManager implements TimeoutHandler
      * @param jobId
      * @param timeoutSecs
      * @param anomalyScoreThreshold
-     * @param normalizedProbabiltyThreshold
+     * @param normalizedProbabilityThreshold
      * @throws UnknownJobException
      */
     public void registerRequest(AsyncResponse response, String jobId, URI baseUri,

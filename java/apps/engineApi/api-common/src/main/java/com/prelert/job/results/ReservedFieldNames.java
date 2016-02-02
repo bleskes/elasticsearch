@@ -1,34 +1,38 @@
-/************************************************************
- *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
- *                                                          *
- *----------------------------------------------------------*
- *----------------------------------------------------------*
- * WARNING:                                                 *
- * THIS FILE CONTAINS UNPUBLISHED PROPRIETARY               *
- * SOURCE CODE WHICH IS THE PROPERTY OF PRELERT LTD AND     *
- * PARENT OR SUBSIDIARY COMPANIES.                          *
- * PLEASE READ THE FOLLOWING AND TAKE CAREFUL NOTE:         *
- *                                                          *
- * This source code is confidential and any person who      *
- * receives a copy of it, or believes that they are viewing *
- * it without permission is asked to notify Prelert Ltd     *
- * on +44 (0)20 3567 1249 or email to legal@prelert.com.    *
- * All intellectual property rights in this source code     *
- * are owned by Prelert Ltd.  No part of this source code   *
- * may be reproduced, adapted or transmitted in any form or *
- * by any means, electronic, mechanical, photocopying,      *
- * recording or otherwise.                                  *
- *                                                          *
- *----------------------------------------------------------*
- *                                                          *
- *                                                          *
- ************************************************************/
+/****************************************************************************
+ *                                                                          *
+ * Copyright 2015-2016 Prelert Ltd                                          *
+ *                                                                          *
+ * Licensed under the Apache License, Version 2.0 (the "License");          *
+ * you may not use this file except in compliance with the License.         *
+ * You may obtain a copy of the License at                                  *
+ *                                                                          *
+ *    http://www.apache.org/licenses/LICENSE-2.0                            *
+ *                                                                          *
+ * Unless required by applicable law or agreed to in writing, software      *
+ * distributed under the License is distributed on an "AS IS" BASIS,        *
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. *
+ * See the License for the specific language governing permissions and      *
+ * limitations under the License.                                           *
+ *                                                                          *
+ ***************************************************************************/
 package com.prelert.job.results;
 
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
+
+import com.prelert.job.AnalysisConfig;
+import com.prelert.job.AnalysisLimits;
+import com.prelert.job.DataCounts;
+import com.prelert.job.DataDescription;
+import com.prelert.job.Detector;
+import com.prelert.job.JobDetails;
+import com.prelert.job.ModelDebugConfig;
+import com.prelert.job.ModelSizeStats;
+import com.prelert.job.quantiles.Quantiles;
+import com.prelert.job.transform.TransformConfig;
+import com.prelert.job.usage.Usage;
+
 
 /**
  * Defines the field names that we use for our results.
@@ -46,9 +50,23 @@ public final class ReservedFieldNames
 
     /**
      * This array should be updated to contain all the field names that appear
-     * in our results.
+     * in any documents we store in our results index.  (The reason it's any
+     * documents we store and not just results documents is that Elasticsearch
+     * 2.x requires mappings for given fields be consistent across all types
+     * in a given index.)
      */
     private static final String[] RESERVED_FIELD_NAME_ARRAY = {
+
+        AnalysisConfig.BUCKET_SPAN,
+        AnalysisConfig.BATCH_SPAN,
+        AnalysisConfig.LATENCY,
+        AnalysisConfig.PERIOD,
+        AnalysisConfig.SUMMARY_COUNT_FIELD_NAME,
+        AnalysisConfig.CATEGORIZATION_FIELD_NAME,
+        AnalysisConfig.DETECTORS,
+
+        AnalysisLimits.MODEL_MEMORY_LIMIT,
+        AnalysisLimits.CATEGORIZATION_EXAMPLES_LIMIT,
 
         AnomalyCause.PROBABILITY,
         AnomalyCause.OVER_FIELD_NAME,
@@ -85,7 +103,6 @@ public final class ReservedFieldNames
         AnomalyRecord.INITIAL_NORMALIZED_PROBABILITY,
 
         Bucket.ID,
-        Bucket.TIMESTAMP,
         Bucket.ANOMALY_SCORE,
         Bucket.MAX_NORMALIZED_PROBABILITY,
         Bucket.IS_INTERIM,
@@ -104,16 +121,100 @@ public final class ReservedFieldNames
         BucketInfluencer.RAW_ANOMALY_SCORE,
         BucketInfluencer.PROBABILITY,
 
+        CategoryDefinition.CATEGORY_ID,
+        CategoryDefinition.TERMS,
+        CategoryDefinition.REGEX,
+        CategoryDefinition.EXAMPLES,
+
+        DataCounts.BUCKET_COUNT,
+        DataCounts.PROCESSED_RECORD_COUNT,
+        DataCounts.PROCESSED_FIELD_COUNT,
+        DataCounts.INPUT_BYTES,
+        DataCounts.INPUT_RECORD_COUNT,
+        DataCounts.INPUT_FIELD_COUNT,
+        DataCounts.INVALID_DATE_COUNT,
+        DataCounts.MISSING_FIELD_COUNT,
+        DataCounts.OUT_OF_ORDER_TIME_COUNT,
+        DataCounts.FAILED_TRANSFORM_COUNT,
+        DataCounts.EXCLUDED_RECORD_COUNT,
+        DataCounts.LATEST_RECORD_TIME,
+
+        DataDescription.FORMAT,
+        DataDescription.TIME_FIELD_NAME,
+        DataDescription.TIME_FORMAT,
+        DataDescription.FIELD_DELIMITER,
+        DataDescription.QUOTE_CHARACTER,
+
+        Detector.DETECTOR_DESCRIPTION,
+        Detector.FUNCTION,
+        Detector.FIELD_NAME,
+        Detector.BY_FIELD_NAME,
+        Detector.OVER_FIELD_NAME,
+        Detector.PARTITION_FIELD_NAME,
+        Detector.USE_NULL,
+
         Influence.INFLUENCER_FIELD_NAME,
         Influence.INFLUENCER_FIELD_VALUES,
 
         Influencer.ID,
         Influencer.PROBABILITY,
-        Influencer.TIMESTAMP,
         Influencer.INFLUENCER_FIELD_NAME,
         Influencer.INFLUENCER_FIELD_VALUE,
         Influencer.INITIAL_ANOMALY_SCORE,
         Influencer.ANOMALY_SCORE,
+
+        JobDetails.ID,
+        // JobDetails.DESCRIPTION is not reserved because it is an analyzed string
+        // JobDetails.STATUS is not reserved because it is an analyzed string
+        JobDetails.SCHEDULER_STATUS,
+        JobDetails.CREATE_TIME,
+        JobDetails.FINISHED_TIME,
+        JobDetails.LAST_DATA_TIME,
+        JobDetails.COUNTS,
+        JobDetails.TIMEOUT,
+        JobDetails.RENORMALIZATION_WINDOW,
+        JobDetails.RESULTS_RETENTION_DAYS,
+        JobDetails.ANALYSIS_CONFIG,
+        JobDetails.ANALYSIS_LIMITS,
+        JobDetails.TRANSFORMS,
+        JobDetails.MODEL_DEBUG_CONFIG,
+
+        ModelDebugConfig.WRITE_TO,
+        ModelDebugConfig.BOUNDS_PERCENTILE,
+        ModelDebugConfig.TERMS,
+
+        ModelDebugOutput.PARTITION_FIELD_NAME,
+        ModelDebugOutput.PARTITION_FIELD_VALUE,
+        ModelDebugOutput.OVER_FIELD_NAME,
+        ModelDebugOutput.OVER_FIELD_VALUE,
+        ModelDebugOutput.BY_FIELD_NAME,
+        ModelDebugOutput.BY_FIELD_VALUE,
+        ModelDebugOutput.DEBUG_FEATURE,
+        ModelDebugOutput.DEBUG_LOWER,
+        ModelDebugOutput.DEBUG_UPPER,
+        ModelDebugOutput.DEBUG_MEAN,
+        ModelDebugOutput.ACTUAL,
+
+        ModelSizeStats.MODEL_BYTES,
+        ModelSizeStats.TOTAL_BY_FIELD_COUNT,
+        ModelSizeStats.TOTAL_OVER_FIELD_COUNT,
+        ModelSizeStats.TOTAL_PARTITION_FIELD_COUNT,
+        ModelSizeStats.BUCKET_ALLOCATION_FAILURES_COUNT,
+        ModelSizeStats.MEMORY_STATUS,
+
+        Quantiles.ID,
+        Quantiles.VERSION,
+        Quantiles.QUANTILE_STATE,
+
+        TransformConfig.TRANSFORM,
+        TransformConfig.ARGUMENTS,
+        TransformConfig.INPUTS,
+        TransformConfig.OUTPUTS,
+
+        Usage.TIMESTAMP,
+        Usage.INPUT_BYTES,
+        Usage.INPUT_FIELD_COUNT,
+        Usage.INPUT_RECORD_COUNT,
 
         JOB_ID_NAME
     };
