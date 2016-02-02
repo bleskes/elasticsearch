@@ -107,9 +107,6 @@ class CsvDataToProcessWriter extends AbstractDataToProcessWriter
                 new String(new char[] {DataDescription.LINE_ENDING}))
                 .maxLinesPerRow(MAX_LINES_PER_RECORD).build();
 
-        int recordsWritten = 0;
-        int lineCount = 0;
-
         m_StatusReporter.startNewIncrementalCount();
 
         try (CsvListReader csvReader = new CsvListReader(
@@ -144,8 +141,6 @@ class CsvDataToProcessWriter extends AbstractDataToProcessWriter
 
             while ((line = csvReader.read()) != null)
             {
-                lineCount++;
-
                 Arrays.fill(record, "");
 
                 if (maxIndex >= line.size())
@@ -175,10 +170,7 @@ class CsvDataToProcessWriter extends AbstractDataToProcessWriter
                 }
 
                 fillRecordFromLine(line, inputRecord);
-                if (applyTransformsAndWrite(inputRecord, record, inputFieldCount))
-                {
-                    ++recordsWritten;
-                }
+                applyTransformsAndWrite(inputRecord, record, inputFieldCount);
             }
 
             // This function can throw
@@ -190,9 +182,6 @@ class CsvDataToProcessWriter extends AbstractDataToProcessWriter
             // as it would suppress any exceptions from the try block
             m_JobDataPersister.flushRecords();
         }
-
-        m_Logger.debug(String.format("Transferred %d of %d CSV records to autodetect.",
-                recordsWritten, lineCount));
 
         return m_StatusReporter.incrementalStats();
     }
