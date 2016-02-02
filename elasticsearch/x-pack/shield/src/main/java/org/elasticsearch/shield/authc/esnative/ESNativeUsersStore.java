@@ -56,7 +56,7 @@ import org.elasticsearch.index.IndexNotFoundException;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
-import org.elasticsearch.shield.InternalShieldUser;
+import org.elasticsearch.shield.InternalClient;
 import org.elasticsearch.shield.ShieldTemplateService;
 import org.elasticsearch.shield.User;
 import org.elasticsearch.shield.action.realm.ClearRealmCacheRequest;
@@ -67,7 +67,6 @@ import org.elasticsearch.shield.authc.AuthenticationService;
 import org.elasticsearch.shield.authc.support.Hasher;
 import org.elasticsearch.shield.authc.support.SecuredString;
 import org.elasticsearch.shield.client.ShieldClient;
-import org.elasticsearch.shield.support.ClientWithUser;
 import org.elasticsearch.threadpool.ThreadPool;
 
 import java.util.ArrayList;
@@ -101,8 +100,7 @@ public class ESNativeUsersStore extends AbstractComponent implements ClusterStat
     private final Hasher hasher = Hasher.BCRYPT;
     private final List<ChangeListener> listeners = new CopyOnWriteArrayList<>();
     private final AtomicReference<State> state = new AtomicReference<>(State.INITIALIZED);
-    private final Provider<Client> clientProvider;
-    private final Provider<AuthenticationService> authProvider;
+    private final Provider<InternalClient> clientProvider;
     private final ThreadPool threadPool;
 
     private ScheduledFuture<?> versionChecker;
@@ -114,11 +112,10 @@ public class ESNativeUsersStore extends AbstractComponent implements ClusterStat
     private volatile boolean shieldIndexExists = false;
 
     @Inject
-    public ESNativeUsersStore(Settings settings, Provider<Client> clientProvider,
+    public ESNativeUsersStore(Settings settings, Provider<InternalClient> clientProvider,
                               Provider<AuthenticationService> authProvider, ThreadPool threadPool) {
         super(settings);
         this.clientProvider = clientProvider;
-        this.authProvider = authProvider;
         this.threadPool = threadPool;
     }
 
@@ -410,8 +407,7 @@ public class ESNativeUsersStore extends AbstractComponent implements ClusterStat
     public void start() {
         try {
             if (state.compareAndSet(State.INITIALIZED, State.STARTING)) {
-                this.authService = authProvider.get();
-                this.client = new ClientWithUser(clientProvider.get(), authService, InternalShieldUser.INSTANCE);
+                this.client = clientProvider.get();
                 this.scrollSize = settings.getAsInt("shield.authc.native.scroll.size", 1000);
                 this.scrollKeepAlive = settings.getAsTime("shield.authc.native.scroll.keep_alive", TimeValue.timeValueSeconds(10L));
 

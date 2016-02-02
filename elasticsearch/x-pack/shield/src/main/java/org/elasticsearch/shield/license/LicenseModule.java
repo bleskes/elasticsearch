@@ -29,7 +29,6 @@ public class LicenseModule extends AbstractShieldModule.Node {
 
     public LicenseModule(Settings settings, ShieldLicenseState shieldLicenseState) {
         super(settings);
-        verifyLicensePlugin();
         this.shieldLicenseState = shieldLicenseState;
     }
 
@@ -37,14 +36,6 @@ public class LicenseModule extends AbstractShieldModule.Node {
     protected void configureNode() {
         bind(ShieldLicensee.class).asEagerSingleton();
         bind(ShieldLicenseState.class).toInstance(shieldLicenseState);
-    }
-
-    private void verifyLicensePlugin() {
-        try {
-            getClass().getClassLoader().loadClass("org.elasticsearch.license.plugin.LicensePlugin");
-        } catch (ClassNotFoundException cnfe) {
-            throw new IllegalStateException("shield plugin requires the license plugin to be installed");
-        }
     }
 
 }

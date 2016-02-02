@@ -25,13 +25,13 @@ import org.elasticsearch.index.IndexNotFoundException;
 import org.elasticsearch.marvel.agent.exporter.MarvelTemplateUtils;
 import org.elasticsearch.marvel.agent.settings.MarvelSettings;
 import org.elasticsearch.marvel.test.MarvelIntegTestCase;
-import org.elasticsearch.node.Node;
 import org.elasticsearch.rest.RestStatus;
+import org.elasticsearch.shield.InternalClient;
 
 import static org.elasticsearch.test.hamcrest.ElasticsearchAssertions.assertAcked;
 import static org.hamcrest.Matchers.is;
 
-public class SecuredClientTests extends MarvelIntegTestCase {
+public class MarvelInternalClientTests extends MarvelIntegTestCase {
 
     @Override
     protected Settings nodeSettings(int nodeOrdinal) {
@@ -43,37 +43,37 @@ public class SecuredClientTests extends MarvelIntegTestCase {
     }
 
     public void testAllowedAccess() {
-        SecuredClient securedClient = internalCluster().getInstance(SecuredClient.class);
+        InternalClient internalClient = internalCluster().getInstance(InternalClient.class);
 
-        assertAccessIsAllowed(securedClient.admin().cluster().prepareHealth());
-        assertAccessIsAllowed(securedClient.admin().cluster().prepareClusterStats());
-        assertAccessIsAllowed(securedClient.admin().cluster().prepareState());
-        assertAccessIsAllowed(securedClient.admin().cluster().prepareNodesInfo());
-        assertAccessIsAllowed(securedClient.admin().cluster().prepareNodesStats());
-        assertAccessIsAllowed(securedClient.admin().cluster().prepareNodesHotThreads());
+        assertAccessIsAllowed(internalClient.admin().cluster().prepareHealth());
+        assertAccessIsAllowed(internalClient.admin().cluster().prepareClusterStats());
+        assertAccessIsAllowed(internalClient.admin().cluster().prepareState());
+        assertAccessIsAllowed(internalClient.admin().cluster().prepareNodesInfo());
+        assertAccessIsAllowed(internalClient.admin().cluster().prepareNodesStats());
+        assertAccessIsAllowed(internalClient.admin().cluster().prepareNodesHotThreads());
 
-        assertAccessIsAllowed(securedClient.admin().indices().prepareGetSettings());
-        assertAccessIsAllowed(securedClient.admin().indices().prepareSegments());
-        assertAccessIsAllowed(securedClient.admin().indices().prepareRecoveries());
-        assertAccessIsAllowed(securedClient.admin().indices().prepareStats());
+        assertAccessIsAllowed(internalClient.admin().indices().prepareGetSettings());
+        assertAccessIsAllowed(internalClient.admin().indices().prepareSegments());
+        assertAccessIsAllowed(internalClient.admin().indices().prepareRecoveries());
+        assertAccessIsAllowed(internalClient.admin().indices().prepareStats());
 
-        assertAccessIsAllowed(securedClient.admin().indices().prepareDelete(MarvelSettings.MARVEL_INDICES_PREFIX));
-        assertAccessIsAllowed(securedClient.admin().indices().prepareCreate(MarvelSettings.MARVEL_INDICES_PREFIX + "test"));
+        assertAccessIsAllowed(internalClient.admin().indices().prepareDelete(MarvelSettings.MARVEL_INDICES_PREFIX));
+        assertAccessIsAllowed(internalClient.admin().indices().prepareCreate(MarvelSettings.MARVEL_INDICES_PREFIX + "test"));
 
-        assertAccessIsAllowed(securedClient.admin().indices().preparePutTemplate("foo").setSource(MarvelTemplateUtils.loadTimestampedIndexTemplate()));
-        assertAccessIsAllowed(securedClient.admin().indices().prepareGetTemplates("foo"));
+        assertAccessIsAllowed(internalClient.admin().indices().preparePutTemplate("foo").setSource(MarvelTemplateUtils.loadTimestampedIndexTemplate()));
+        assertAccessIsAllowed(internalClient.admin().indices().prepareGetTemplates("foo"));
     }
 
     public void testDeniedAccess() {
-        SecuredClient securedClient = internalCluster().getInstance(SecuredClient.class);
-        assertAcked(securedClient.admin().indices().preparePutTemplate("foo").setSource(MarvelTemplateUtils.loadDataIndexTemplate()).get());
+        InternalClient internalClient = internalCluster().getInstance(InternalClient.class);
+        assertAcked(internalClient.admin().indices().preparePutTemplate("foo").setSource(MarvelTemplateUtils.loadDataIndexTemplate()).get());
 
         if (shieldEnabled) {
-            assertAccessIsDenied(securedClient.admin().indices().prepareDeleteTemplate("foo"));
-            assertAccessIsDenied(securedClient.admin().cluster().prepareGetRepositories());
+            assertAccessIsDenied(internalClient.admin().indices().prepareDeleteTemplate("foo"));
+            assertAccessIsDenied(internalClient.admin().cluster().prepareGetRepositories());
         } else {
-            assertAccessIsAllowed(securedClient.admin().indices().prepareDeleteTemplate("foo"));
-            assertAccessIsAllowed(securedClient.admin().cluster().prepareGetRepositories());
+            assertAccessIsAllowed(internalClient.admin().indices().prepareDeleteTemplate("foo"));
+            assertAccessIsAllowed(internalClient.admin().cluster().prepareGetRepositories());
         }
     }
 

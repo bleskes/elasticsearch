@@ -26,7 +26,7 @@ import org.elasticsearch.common.util.concurrent.ThreadContext;
 import org.elasticsearch.env.Environment;
 import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.shield.ShieldSettingsFilter;
-import org.elasticsearch.shield.InternalSystemUser;
+import org.elasticsearch.shield.SystemUser;
 import org.elasticsearch.shield.User;
 import org.elasticsearch.shield.audit.AuditTrail;
 import org.elasticsearch.shield.authc.support.SecuredString;
@@ -240,9 +240,9 @@ public class InternalAuthenticationServiceTests extends ESTestCase {
         User user2 = InternalAuthenticationService.decodeUser(text);
         assertThat(user, equalTo(user2));
 
-        text = InternalAuthenticationService.encodeUser(InternalSystemUser.INSTANCE, null);
+        text = InternalAuthenticationService.encodeUser(SystemUser.INSTANCE, null);
         user2 = InternalAuthenticationService.decodeUser(text);
-        assertThat(InternalSystemUser.INSTANCE, sameInstance(user2));
+        assertThat(SystemUser.INSTANCE, sameInstance(user2));
     }
 
     public void testUserHeader() throws Exception {
@@ -318,7 +318,7 @@ public class InternalAuthenticationServiceTests extends ESTestCase {
         when(firstRealm.supports(token)).thenReturn(true);
         when(firstRealm.authenticate(token)).thenReturn(user1);
         when(cryptoService.sign(InternalAuthenticationService.encodeUser(user1, null))).thenReturn("_signed_user");
-        User user2 = service.authenticate("_action", message, InternalSystemUser.INSTANCE);
+        User user2 = service.authenticate("_action", message, SystemUser.INSTANCE);
         assertThat(user1, sameInstance(user2));
         User user3 = threadContext.getTransient(InternalAuthenticationService.USER_KEY);
         assertThat(user3, sameInstance((Object) user2));
@@ -342,7 +342,7 @@ public class InternalAuthenticationServiceTests extends ESTestCase {
         when(firstRealm.supports(token)).thenReturn(true);
         when(firstRealm.authenticate(token)).thenReturn(user1);
         when(cryptoService.sign(InternalAuthenticationService.encodeUser(user1, null))).thenReturn("_signed_user");
-        User user2 = service.authenticate("_action", message, InternalSystemUser.INSTANCE);
+        User user2 = service.authenticate("_action", message, SystemUser.INSTANCE);
         assertThat(user1, sameInstance(user2));
         User user3 = threadContext.getTransient(InternalAuthenticationService.USER_KEY);
         assertThat(user3, sameInstance(user2));
@@ -356,7 +356,7 @@ public class InternalAuthenticationServiceTests extends ESTestCase {
         service = new InternalAuthenticationService(Settings.EMPTY, realms, auditTrail, cryptoService, anonymousService, new DefaultAuthenticationFailureHandler(), threadPool);
 
         threadContext1.putTransient(InternalAuthenticationService.USER_KEY, threadContext.getTransient(InternalAuthenticationService.USER_KEY));
-        User user = service.authenticate("_action", message1, InternalSystemUser.INSTANCE);
+        User user = service.authenticate("_action", message1, SystemUser.INSTANCE);
         assertThat(user, sameInstance(user1));
         verifyZeroInteractions(firstRealm);
         reset(firstRealm);
@@ -377,7 +377,7 @@ public class InternalAuthenticationServiceTests extends ESTestCase {
 
         when(threadPool.getThreadContext()).thenReturn(threadContext1);
         service = new InternalAuthenticationService(Settings.EMPTY, realms, auditTrail, cryptoService, anonymousService, new DefaultAuthenticationFailureHandler(), threadPool);
-        user = service.authenticate("_action", new InternalMessage(), InternalSystemUser.INSTANCE);
+        user = service.authenticate("_action", new InternalMessage(), SystemUser.INSTANCE);
         assertThat(user, equalTo(user1));
         verifyZeroInteractions(firstRealm);
     }
@@ -390,7 +390,7 @@ public class InternalAuthenticationServiceTests extends ESTestCase {
         when(firstRealm.supports(token)).thenReturn(true);
         when(firstRealm.token(threadContext)).thenReturn(token);
         when(firstRealm.authenticate(token)).thenReturn(user1);
-        User user2 = service.authenticate("_action", message, InternalSystemUser.INSTANCE);
+        User user2 = service.authenticate("_action", message, SystemUser.INSTANCE);
         assertThat(user1, sameInstance(user2));
         User user3 = threadContext.getTransient(InternalAuthenticationService.USER_KEY);
         assertThat(user3, sameInstance(user2));
@@ -403,7 +403,7 @@ public class InternalAuthenticationServiceTests extends ESTestCase {
         when(threadPool.getThreadContext()).thenReturn(threadContext1);
         service = new InternalAuthenticationService(Settings.EMPTY, realms, auditTrail, cryptoService, anonymousService, new DefaultAuthenticationFailureHandler(), threadPool);
         threadContext1.putTransient(InternalAuthenticationService.USER_KEY, threadContext.getTransient(InternalAuthenticationService.USER_KEY));
-        User user = service.authenticate("_action", message1, InternalSystemUser.INSTANCE);
+        User user = service.authenticate("_action", message1, SystemUser.INSTANCE);
         assertThat(user, sameInstance(user1));
         verifyZeroInteractions(firstRealm);
         reset(firstRealm);
@@ -421,7 +421,7 @@ public class InternalAuthenticationServiceTests extends ESTestCase {
 
         when(threadPool.getThreadContext()).thenReturn(threadContext1);
         service = new InternalAuthenticationService(settings, realms, auditTrail, cryptoService, anonymousService, new DefaultAuthenticationFailureHandler(), threadPool);
-        user = service.authenticate("_action", new InternalMessage(), InternalSystemUser.INSTANCE);
+        user = service.authenticate("_action", new InternalMessage(), SystemUser.INSTANCE);
         assertThat(user, equalTo(user1));
         verifyZeroInteractions(firstRealm);
 
@@ -434,7 +434,7 @@ public class InternalAuthenticationServiceTests extends ESTestCase {
         when(cryptoService.unsignAndVerify("_signed_user")).thenThrow(randomFrom(new RuntimeException(), new IllegalArgumentException(), new IllegalStateException()));
 
         try {
-            service.authenticate("_action", message, randomBoolean() ? InternalSystemUser.INSTANCE : null);
+            service.authenticate("_action", message, randomBoolean() ? SystemUser.INSTANCE : null);
         } catch (Exception e) {
             //expected
             verify(auditTrail).tamperedRequest("_action", message);
@@ -445,7 +445,7 @@ public class InternalAuthenticationServiceTests extends ESTestCase {
     public void testAttachIfMissing() throws Exception {
         User user;
         if (randomBoolean()) {
-            user = InternalSystemUser.INSTANCE;
+            user = SystemUser.INSTANCE;
         } else {
             user = new User("username", "r1", "r2");
         }
@@ -512,9 +512,9 @@ public class InternalAuthenticationServiceTests extends ESTestCase {
 
         InternalMessage message = new InternalMessage();
 
-        User user = service.authenticate("_action", message, InternalSystemUser.INSTANCE);
+        User user = service.authenticate("_action", message, SystemUser.INSTANCE);
         assertThat(user, notNullValue());
-        assertThat(user, sameInstance(InternalSystemUser.INSTANCE));
+        assertThat(user, sameInstance(SystemUser.INSTANCE));
     }
 
     public void testRealmTokenThrowingException() throws Exception {
@@ -640,7 +640,7 @@ public class InternalAuthenticationServiceTests extends ESTestCase {
 
         User authenticated = service.authenticate("_action", message, null);
 
-        assertThat(InternalSystemUser.is(authenticated), is(false));
+        assertThat(SystemUser.is(authenticated), is(false));
         assertThat(authenticated.runAs(), is(notNullValue()));
         assertThat(authenticated.principal(), is("lookup user"));
         assertThat(authenticated.roles(), arrayContaining("user"));
@@ -661,7 +661,7 @@ public class InternalAuthenticationServiceTests extends ESTestCase {
 
         User authenticated = service.authenticate(restRequest);
 
-        assertThat(InternalSystemUser.is(authenticated), is(false));
+        assertThat(SystemUser.is(authenticated), is(false));
         assertThat(authenticated.runAs(), is(notNullValue()));
         assertThat(authenticated.principal(), is("lookup user"));
         assertThat(authenticated.roles(), arrayContaining("user"));
@@ -683,7 +683,7 @@ public class InternalAuthenticationServiceTests extends ESTestCase {
 
         User authenticated = service.authenticate("_action", message, null);
 
-        assertThat(InternalSystemUser.is(authenticated), is(false));
+        assertThat(SystemUser.is(authenticated), is(false));
         assertThat(authenticated.runAs(), is(notNullValue()));
         assertThat(authenticated.principal(), is("lookup user"));
         assertThat(authenticated.roles(), arrayContaining("user"));
@@ -704,7 +704,7 @@ public class InternalAuthenticationServiceTests extends ESTestCase {
 
         User authenticated = service.authenticate(restRequest);
 
-        assertThat(InternalSystemUser.is(authenticated), is(false));
+        assertThat(SystemUser.is(authenticated), is(false));
         assertThat(authenticated.runAs(), is(notNullValue()));
         assertThat(authenticated.principal(), is("lookup user"));
         assertThat(authenticated.roles(), arrayContaining("user"));
