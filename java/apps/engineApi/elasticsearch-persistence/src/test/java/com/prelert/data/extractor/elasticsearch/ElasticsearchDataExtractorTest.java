@@ -191,7 +191,7 @@ public class ElasticsearchDataExtractorTest
     }
 
     @Test
-    public void testDataExtraction_GivenInitialResponseContainsNoScrollId()
+    public void testDataExtraction_GivenInitialResponseContainsNoScrollId() throws IOException
     {
         String initialResponse = "{}";
         List<HttpGetResponse> responses = Arrays.asList(new HttpGetResponse(
@@ -208,7 +208,7 @@ public class ElasticsearchDataExtractorTest
     }
 
     @Test
-    public void testDataExtraction_GivenInitialResponseDoesNotReturnOk()
+    public void testDataExtraction_GivenInitialResponseDoesNotReturnOk() throws IOException
     {
         String initialResponse = "";
         List<HttpGetResponse> responses = Arrays.asList(new HttpGetResponse(
@@ -247,7 +247,7 @@ public class ElasticsearchDataExtractorTest
     }
 
     @Test (expected = NoSuchElementException.class)
-    public void testNext_ThrowsGivenHasNotNext()
+    public void testNext_ThrowsGivenHasNotNext() throws IOException
     {
         String initialResponse = "{}";
         List<HttpGetResponse> responses = Arrays.asList(new HttpGetResponse(

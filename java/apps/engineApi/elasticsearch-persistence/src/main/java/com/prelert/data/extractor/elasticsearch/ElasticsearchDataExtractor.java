@@ -136,6 +136,7 @@ public class ElasticsearchDataExtractor implements DataExtractor
                 search, aggregations, timeField);
     }
 
+    @Override
     public void newSearch(String startEpochMs, String endEpochMs, Logger logger)
     {
         m_ScrollId = null;
@@ -149,7 +150,7 @@ public class ElasticsearchDataExtractor implements DataExtractor
     }
 
     @Override
-    public Optional<InputStream> next()
+    public Optional<InputStream> next() throws IOException
     {
         if (m_IsScrollComplete)
         {
@@ -160,17 +161,14 @@ public class ElasticsearchDataExtractor implements DataExtractor
             PushbackInputStream stream = (m_ScrollId == null) ? initScroll() : continueScroll();
             Pattern emptyPattern = (m_Aggregations == null) ? EMPTY_HITS_PATTERN : EMPTY_AGGREGATIONS_PATTERN;
             m_IsScrollComplete = (stream == null) || peekAndMatchInStream(stream, emptyPattern).find();
-            if (!m_IsScrollComplete)
-            {
-                return Optional.of(stream);
-            }
+            return m_IsScrollComplete ? Optional.empty() : Optional.of(stream);
         }
         catch (IOException e)
         {
             m_Logger.error("An error occurred during requesting data from: " + m_BaseUrl, e);
             m_IsScrollComplete = true;
+            throw e;
         }
-        return Optional.empty();
     }
 
     @Override
