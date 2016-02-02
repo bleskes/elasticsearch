@@ -62,21 +62,7 @@ public class DefaultJobLoggerFactory implements JobLoggerFactory
             logger.setAdditivity(false);
             logger.setLevel(Level.DEBUG);
 
-            try
-            {
-                Path logDir = FileSystems.getDefault().getPath(ProcessCtrl.LOG_DIR, jobId);
-                Files.createDirectory(logDir);
-
-                // If we get here then we had to create the directory.  In this
-                // case we always want to create the appender because any
-                // pre-existing appender will be pointing to a directory of the
-                // same name that must have been previously removed.  (See bug
-                // 697 in Bugzilla.)
-                close(logger);
-            }
-            catch (FileAlreadyExistsException e)
-            {
-            }
+            createLoggerDirectory(jobId, logger);
 
             // Get the base logger and use its configured log level.
             // If the logger is not configured it will be created and
@@ -131,6 +117,26 @@ public class DefaultJobLoggerFactory implements JobLoggerFactory
                     jobId), e);
 
             return logger;
+        }
+    }
+
+    private void createLoggerDirectory(String jobId, Logger logger) throws IOException
+    {
+        try
+        {
+            Path logDir = FileSystems.getDefault().getPath(ProcessCtrl.LOG_DIR, jobId);
+            Files.createDirectory(logDir);
+
+            // If we get here then we had to create the directory.  In this
+            // case we always want to create the appender because any
+            // pre-existing appender will be pointing to a directory of the
+            // same name that must have been previously removed.  (See bug
+            // 697 in Bugzilla.)
+            close(logger);
+        }
+        catch (FileAlreadyExistsException e)
+        {
+            // Do nothing
         }
     }
 
