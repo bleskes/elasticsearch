@@ -27,6 +27,8 @@
 
 package com.prelert.job.process.writer;
 
+import static org.mockito.Mockito.mock;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -46,6 +48,7 @@ import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataDescription;
 import com.prelert.job.DataDescription.DataFormat;
 import com.prelert.job.Detector;
+import com.prelert.job.logging.JobLoggerFactory;
 import com.prelert.job.persistence.DummyJobDataPersister;
 import com.prelert.job.process.autodetect.ProcessManager;
 import com.prelert.job.process.exceptions.MalformedJsonException;
@@ -107,8 +110,7 @@ public class JsonDataTransformTest
         det.setPartitionFieldName("sourcetype");
         ac.setDetectors(Arrays.asList(det));
 
-        // can create with null
-        ProcessManager pm = new ProcessManager(null, null, null);;
+        ProcessManager pm = createProcessManager();
 
         ByteArrayInputStream bis =
                 new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
@@ -238,8 +240,7 @@ public class JsonDataTransformTest
             Assert.assertTrue(analysisFields.contains(s));
         }
 
-        // can create with null
-        ProcessManager pm = new ProcessManager(null, null, null);;
+        ProcessManager pm = createProcessManager();
 
         ByteArrayInputStream bis =
                 new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
@@ -369,8 +370,7 @@ public class JsonDataTransformTest
             Assert.assertTrue(analysisFields.contains(s));
         }
 
-        // can create with null
-        ProcessManager pm = new ProcessManager(null, null, null);;
+        ProcessManager pm = createProcessManager();
 
         ByteArrayInputStream bis =
                 new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
@@ -502,8 +502,7 @@ public class JsonDataTransformTest
         }
 
 
-        // can create with null
-        ProcessManager pm = new ProcessManager(null, null, null);;
+        ProcessManager pm = createProcessManager();
 
         ByteArrayInputStream bis =
                 new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
@@ -665,8 +664,7 @@ public class JsonDataTransformTest
         DataDescription [] dds = new DataDescription [] {dateFormatDD, epochFormatDD,
                 epochMsFormatDD};
 
-        // can create with null
-        ProcessManager pm = new ProcessManager(null, null, null);;
+        ProcessManager pm = createProcessManager();
 
         int count = 0;
         for (String data : new String [] {dateFormatData, epochFormatData, epochMsFormatData})
@@ -815,8 +813,7 @@ public class JsonDataTransformTest
             }
             loop++;
 
-            // can create with null
-            ProcessManager pm = new ProcessManager(null, null, null);;
+            ProcessManager pm = createProcessManager();
 
             ByteArrayInputStream bis =
                     new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
@@ -942,8 +939,7 @@ public class JsonDataTransformTest
             Assert.assertTrue(analysisFields.contains(s));
         }
 
-        // can create with null
-        ProcessManager pm = new ProcessManager(null, null, null);;
+        ProcessManager pm = createProcessManager();
 
         ByteArrayInputStream bis =
                 new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
@@ -1088,8 +1084,7 @@ public class JsonDataTransformTest
             }
             loop++;
 
-            // can create with null
-            ProcessManager pm = new ProcessManager(null, null, null);;
+            ProcessManager pm = createProcessManager();
 
             ByteArrayInputStream bis =
                     new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
@@ -1157,5 +1152,10 @@ public class JsonDataTransformTest
                 }
             }
         }
+    }
+
+    private static ProcessManager createProcessManager()
+    {
+        return new ProcessManager(null, null, null, mock(JobLoggerFactory.class));
     }
 }

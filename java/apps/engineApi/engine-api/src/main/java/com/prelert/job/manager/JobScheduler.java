@@ -54,7 +54,6 @@ import com.prelert.job.UnknownJobException;
 import com.prelert.job.data.extraction.DataExtractor;
 import com.prelert.job.exceptions.JobInUseException;
 import com.prelert.job.exceptions.TooManyJobsException;
-import com.prelert.job.logging.JobLogger;
 import com.prelert.job.logging.JobLoggerFactory;
 import com.prelert.job.persistence.JobDetailsProvider;
 import com.prelert.job.process.exceptions.MalformedJsonException;
@@ -450,7 +449,7 @@ public class JobScheduler
 
     private void closeLogger()
     {
-        JobLogger.close(m_Logger);
+        m_JobLoggerFactory.close(m_Logger);
         m_Logger = null;
     }
 }

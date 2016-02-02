@@ -69,6 +69,7 @@ import com.prelert.job.UnknownJobException;
 import com.prelert.job.data.extraction.DataExtractor;
 import com.prelert.job.exceptions.JobInUseException;
 import com.prelert.job.exceptions.TooManyJobsException;
+import com.prelert.job.logging.JobLoggerFactory;
 import com.prelert.job.persistence.JobDetailsProvider;
 import com.prelert.job.process.exceptions.MalformedJsonException;
 import com.prelert.job.process.exceptions.MissingFieldException;
@@ -91,6 +92,8 @@ public class JobSchedulerTest
     private static final long EFFECTIVE_QUERY_DELAY_MS = QUERY_DELAY.toMillis() + 100;
 
     @Mock private JobDetailsProvider m_JobProvider;
+    @Mock private JobLoggerFactory m_JobLoggerFactory;
+    @Mock private Logger m_JobLogger;
 
     private JobSchedulerStatus m_CurrentStatus;
 
@@ -102,6 +105,7 @@ public class JobSchedulerTest
         MockitoAnnotations.initMocks(this);
         m_CurrentStatus = null;
         recordSchedulerStatus();
+        when(m_JobLoggerFactory.newLogger(JOB_ID)).thenReturn(m_JobLogger);
     }
 
     @Test
@@ -513,7 +517,7 @@ public class JobSchedulerTest
     private JobScheduler createJobScheduler(DataExtractor dataExtractor, DataProcessor dataProcessor)
     {
         return new JobScheduler(JOB_ID, BUCKET_SPAN, FREQUENCY, QUERY_DELAY, dataExtractor,
-                dataProcessor, m_JobProvider, jobId -> mock(Logger.class));
+                dataProcessor, m_JobProvider, m_JobLoggerFactory);
     }
 
     private static DataCounts newCounts(int recordCount, Long latestRecordTime)

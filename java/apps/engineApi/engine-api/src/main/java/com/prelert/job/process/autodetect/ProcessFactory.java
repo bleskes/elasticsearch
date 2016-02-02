@@ -40,7 +40,7 @@ import com.prelert.job.JobDetails;
 import com.prelert.job.JobStatus;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.errorcodes.ErrorCodes;
-import com.prelert.job.logging.JobLogger;
+import com.prelert.job.logging.JobLoggerFactory;
 import com.prelert.job.persistence.JobDataCountsPersisterFactory;
 import com.prelert.job.persistence.JobProvider;
 import com.prelert.job.persistence.UsagePersisterFactory;
@@ -60,15 +60,17 @@ public class ProcessFactory
     private final ResultsReaderFactory m_ResultsReaderFactory;
     private final JobDataCountsPersisterFactory m_DataCountsPersisterFactory;
     private final UsagePersisterFactory m_UsagePersisterFactory;
+    private final JobLoggerFactory m_JobLoggerFactory;
 
     public ProcessFactory(JobProvider jobProvider, ResultsReaderFactory resultsReaderFactory,
             JobDataCountsPersisterFactory dataCountsPersisterFactory,
-            UsagePersisterFactory usagePersisterFactory)
+            UsagePersisterFactory usagePersisterFactory, JobLoggerFactory jobLoggerFactory)
     {
         m_JobProvider = Objects.requireNonNull(jobProvider);
         m_ResultsReaderFactory = Objects.requireNonNull(resultsReaderFactory);
         m_DataCountsPersisterFactory = Objects.requireNonNull(dataCountsPersisterFactory);
         m_UsagePersisterFactory = Objects.requireNonNull(usagePersisterFactory);
+        m_JobLoggerFactory = Objects.requireNonNull(jobLoggerFactory);
     }
 
     /**
@@ -109,7 +111,7 @@ public class ProcessFactory
     {
         String jobId = job.getId();
 
-        Logger logger = JobLogger.create(job.getId());
+        Logger logger = m_JobLoggerFactory.newLogger(job.getId());
 
         Quantiles quantiles = null;
         if (restoreState)

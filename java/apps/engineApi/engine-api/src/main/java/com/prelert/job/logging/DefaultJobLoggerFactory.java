@@ -43,18 +43,9 @@ import org.apache.log4j.RollingFileAppender;
 import com.prelert.job.process.ProcessCtrl;
 import com.prelert.job.process.autodetect.ProcessAndDataDescription;
 
-/**
- * Helper class for creating and closing the logger objects associated with
- * a particular job
- */
-public final class JobLogger
+public class DefaultJobLoggerFactory implements JobLoggerFactory
 {
     private static final String LOG_FILE_APPENDER_NAME = "engine_api_file_appender";
-
-    private JobLogger()
-    {
-        // Do nothing
-    }
 
     /**
      * Create the job's logger.
@@ -62,7 +53,8 @@ public final class JobLogger
      * @param jobId
      * @return a {@link Logger} for the given {@code jobId}
      */
-    public static Logger create(String jobId)
+    @Override
+    public Logger newLogger(String jobId)
     {
         try
         {
@@ -80,7 +72,7 @@ public final class JobLogger
                 // pre-existing appender will be pointing to a directory of the
                 // same name that must have been previously removed.  (See bug
                 // 697 in Bugzilla.)
-                JobLogger.close(logger);
+                close(logger);
             }
             catch (FileAlreadyExistsException e)
             {
@@ -148,7 +140,8 @@ public final class JobLogger
      *
      * @param logger
      */
-    public static void close(Logger logger)
+    @Override
+    public void close(Logger logger)
     {
         Appender appender = logger.getAppender(LOG_FILE_APPENDER_NAME);
 

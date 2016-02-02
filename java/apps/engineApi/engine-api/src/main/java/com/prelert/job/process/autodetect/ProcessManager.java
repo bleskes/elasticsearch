@@ -32,6 +32,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Date;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executors;
@@ -53,7 +54,7 @@ import com.prelert.job.UnknownJobException;
 import com.prelert.job.alert.AlertObserver;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.exceptions.JobInUseException;
-import com.prelert.job.logging.JobLogger;
+import com.prelert.job.logging.JobLoggerFactory;
 import com.prelert.job.messages.Messages;
 import com.prelert.job.persistence.DataPersisterFactory;
 import com.prelert.job.persistence.JobDataPersister;
@@ -100,9 +101,10 @@ public class ProcessManager implements Shutdownable
     private final JobProvider m_JobProvider;
     private final ProcessFactory m_ProcessFactory;
     private final DataPersisterFactory m_DataPersisterFactory;
+    private final JobLoggerFactory m_JobLoggerFactory;
 
     public ProcessManager(JobProvider jobProvider, ProcessFactory processFactory,
-            DataPersisterFactory dataPersisterFactory)
+            DataPersisterFactory dataPersisterFactory, JobLoggerFactory jobLoggerFactory)
     {
         m_JobIdToProcessMap = new ConcurrentHashMap<String, ProcessAndDataDescription>();
 
@@ -112,6 +114,7 @@ public class ProcessManager implements Shutdownable
         m_JobProvider = jobProvider;
         m_ProcessFactory = processFactory;
         m_DataPersisterFactory = dataPersisterFactory;
+        m_JobLoggerFactory = Objects.requireNonNull(jobLoggerFactory);
     }
 
      /**
@@ -530,13 +533,14 @@ public class ProcessManager implements Shutdownable
 
                 setJobFinishedTimeAndStatus(jobId, process.getLogger(), JobStatus.FAILED);
                 // free the logger resources
-                JobLogger.close(process.getLogger());
+                m_JobLoggerFactory.close(process.getLogger());
 
                 throw npre;
             }
         }
         finally
         {
+            m_JobLoggerFactory.close(process.getLogger());
             process.releaseGuard();
         }
     }
@@ -569,9 +573,6 @@ public class ProcessManager implements Shutdownable
                 readProcessErrorOutput(process, sb);
                 process.getLogger().error(sb);
 
-                // free the logger resources
-                JobLogger.close(process.getLogger());
-
                 throw new NativeProcessRunException(sb.toString(),
                         ErrorCodes.NATIVE_PROCESS_ERROR);
             }
@@ -579,9 +580,6 @@ public class ProcessManager implements Shutdownable
             {
                 process.getLogger().info(msg);
             }
-
-            // free the logger resources
-            JobLogger.close(process.getLogger());
         }
         catch (IOException | InterruptedException e)
         {
@@ -590,9 +588,6 @@ public class ProcessManager implements Shutdownable
             process.getLogger().warn(msg, e);
 
             setJobFinishedTimeAndStatus(jobId, process.getLogger(), JobStatus.FAILED);
-
-            // free the logger resources
-            JobLogger.close(process.getLogger());
         }
     }
 

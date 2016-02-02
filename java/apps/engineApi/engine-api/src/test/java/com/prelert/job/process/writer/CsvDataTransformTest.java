@@ -28,6 +28,7 @@
 package com.prelert.job.process.writer;
 
 import static org.junit.Assert.fail;
+import static org.mockito.Mockito.mock;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -47,6 +48,7 @@ import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataDescription;
 import com.prelert.job.DataDescription.DataFormat;
 import com.prelert.job.Detector;
+import com.prelert.job.logging.JobLoggerFactory;
 import com.prelert.job.persistence.DummyJobDataPersister;
 import com.prelert.job.process.autodetect.ProcessManager;
 import com.prelert.job.process.exceptions.MalformedJsonException;
@@ -100,9 +102,7 @@ public class CsvDataTransformTest
             Assert.assertTrue(analysisFields.contains(s));
         }
 
-
-        // can create with null
-        ProcessManager pm = new ProcessManager(null, null, null);
+        ProcessManager pm = createProcessManager();
 
         ByteArrayInputStream bis =
                 new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
@@ -225,8 +225,7 @@ public class CsvDataTransformTest
         dd.setFieldDelimiter(',');
         dd.setQuoteCharacter('?');
 
-        // can create with null
-        ProcessManager pm = new ProcessManager(null, null, null);;
+        ProcessManager pm = createProcessManager();
 
         ByteArrayInputStream bis =
                 new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
@@ -342,8 +341,7 @@ public class CsvDataTransformTest
         dd.setTimeFormat("yyyy-MM-dd HH:mm:ssXXX");
 
 
-        // can create with null
-        ProcessManager pm = new ProcessManager(null, null, null);;
+        ProcessManager pm = createProcessManager();
 
         ByteArrayInputStream bis =
                 new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
@@ -468,8 +466,7 @@ public class CsvDataTransformTest
             Assert.assertTrue(analysisFields.contains(s));
         }
 
-        // can create with null
-        ProcessManager pm = new ProcessManager(null, null, null);;
+        ProcessManager pm = createProcessManager();
 
         ByteArrayInputStream bis =
                 new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
@@ -567,8 +564,7 @@ public class CsvDataTransformTest
         dd.setFormat(DataFormat.DELIMITED);
         dd.setFieldDelimiter(',');
 
-        // can create with null
-        ProcessManager pm = new ProcessManager(null, null, null);;
+        ProcessManager pm = createProcessManager();
 
         ByteArrayInputStream bis =
                 new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
@@ -659,8 +655,7 @@ public class CsvDataTransformTest
         d.setPartitionFieldName("missing_field");
         ac.setDetectors(Arrays.asList(d));
 
-        // can create with null
-        ProcessManager pm = new ProcessManager(null, null, null);;
+        ProcessManager pm = createProcessManager();
 
         ByteArrayInputStream bis =
                 new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
@@ -800,8 +795,7 @@ public class CsvDataTransformTest
                 Assert.assertTrue(analysisFields.contains(s));
             }
 
-            // can create with null
-            ProcessManager pm = new ProcessManager(null, null, null);;
+            ProcessManager pm = createProcessManager();
 
             ByteArrayInputStream bis =
                     new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
@@ -930,8 +924,7 @@ public class CsvDataTransformTest
             }
             loop++;
 
-            // can create with null
-            ProcessManager pm = new ProcessManager(null, null, null);;
+            ProcessManager pm = createProcessManager();
 
             ByteArrayInputStream bis =
                     new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
@@ -1007,5 +1000,10 @@ public class CsvDataTransformTest
                 lineCount++;
             }
         }
+    }
+
+    private static ProcessManager createProcessManager()
+    {
+        return new ProcessManager(null, null, null, mock(JobLoggerFactory.class));
     }
 }
