@@ -181,7 +181,7 @@ public class ElasticsearchDataExtractor implements DataExtractor
     {
         String url = buildInitScrollUrl();
         String searchBody = createSearchBody();
-        m_Logger.debug("About to submit body " + searchBody + " to URL " + url);
+        m_Logger.trace("About to submit body " + searchBody + " to URL " + url);
         HttpGetResponse response = m_HttpGetRequester.get(url, searchBody);
         if (response.getResponseCode() != OK_STATUS)
         {
