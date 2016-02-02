@@ -25,11 +25,12 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.job.manager;
+package com.prelert.job.logging;
 
 import org.apache.log4j.Logger;
 
 public interface JobLoggerFactory
 {
     Logger newLogger(String jobId);
+    void close(String jobId, Logger logger);
 }

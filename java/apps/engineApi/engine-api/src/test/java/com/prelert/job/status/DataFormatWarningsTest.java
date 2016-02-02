@@ -30,6 +30,7 @@ package com.prelert.job.status;
 
 import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 
 import java.io.ByteArrayInputStream;
@@ -53,6 +54,7 @@ import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataDescription;
 import com.prelert.job.DataDescription.DataFormat;
 import com.prelert.job.Detector;
+import com.prelert.job.logging.JobLoggerFactory;
 import com.prelert.job.persistence.JobDataCountsPersister;
 import com.prelert.job.persistence.JobDataPersister;
 import com.prelert.job.persistence.UsagePersister;
@@ -145,9 +147,7 @@ public class DataFormatWarningsTest
                 goodRecord = !goodRecord;
             }
 
-
-            // can create with null
-            ProcessManager pm = new ProcessManager(null, null, null);;
+            ProcessManager pm = createProcessManager();
 
             ByteArrayInputStream bis =
                     new ByteArrayInputStream(sb.toString().getBytes(StandardCharsets.UTF_8));
@@ -279,9 +279,7 @@ public class DataFormatWarningsTest
                 goodRecord = !goodRecord;
             }
 
-
-            // can create with null
-            ProcessManager pm = new ProcessManager(null, null, null);;
+            ProcessManager pm = createProcessManager();
 
             ByteArrayInputStream bis =
                     new ByteArrayInputStream(sb.toString().getBytes(StandardCharsets.UTF_8));
@@ -398,8 +396,7 @@ public class DataFormatWarningsTest
 
             }
 
-            // can create with null
-            ProcessManager pm = new ProcessManager(null, null, null);;
+            ProcessManager pm = createProcessManager();
 
             ByteArrayInputStream bis =
                     new ByteArrayInputStream(sb.toString().getBytes(StandardCharsets.UTF_8));
@@ -518,8 +515,7 @@ public class DataFormatWarningsTest
 
             }
 
-            // can create with null
-            ProcessManager pm = new ProcessManager(null, null, null);;
+            ProcessManager pm = createProcessManager();
 
             ByteArrayInputStream bis =
                     new ByteArrayInputStream(sb.toString().getBytes(StandardCharsets.UTF_8));
@@ -574,5 +570,10 @@ public class DataFormatWarningsTest
                 Assert.assertTrue(percentBad >= MAX_PERCENT_OUT_OF_ORDER_ERRORS);
             }
         }
+    }
+
+    private static ProcessManager createProcessManager()
+    {
+        return new ProcessManager(null, null, null, mock(JobLoggerFactory.class));
     }
 }
