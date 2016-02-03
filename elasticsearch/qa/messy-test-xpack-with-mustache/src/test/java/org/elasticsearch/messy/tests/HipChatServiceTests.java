@@ -15,15 +15,25 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.watcher.actions.hipchat.service;
+package org.elasticsearch.messy.tests;
 
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.plugins.Plugin;
+import org.elasticsearch.script.MockMustacheScriptEngine;
+import org.elasticsearch.script.mustache.MustachePlugin;
 import org.elasticsearch.test.junit.annotations.Network;
 import org.elasticsearch.test.junit.annotations.TestLogging;
 import org.elasticsearch.watcher.actions.hipchat.HipChatAction;
+import org.elasticsearch.watcher.actions.hipchat.service.HipChatAccount;
+import org.elasticsearch.watcher.actions.hipchat.service.HipChatMessage;
+import org.elasticsearch.watcher.actions.hipchat.service.HipChatService;
+import org.elasticsearch.watcher.actions.hipchat.service.SentMessages;
 import org.elasticsearch.watcher.test.AbstractWatcherIntegrationTestCase;
 import org.elasticsearch.watcher.transport.actions.put.PutWatchResponse;
+
+import java.util.Collection;
+import java.util.List;
 
 import static org.elasticsearch.index.query.QueryBuilders.boolQuery;
 import static org.elasticsearch.index.query.QueryBuilders.termQuery;
@@ -55,6 +65,20 @@ public class HipChatServiceTests extends AbstractWatcherIntegrationTestCase {
     }
 
     @Override
+    protected Collection<Class<? extends Plugin>> getMockPlugins() {
+        Collection<Class<? extends Plugin>> mockPlugins = super.getMockPlugins();
+        mockPlugins.remove(MockMustacheScriptEngine.TestPlugin.class);
+        return mockPlugins;
+    }
+
+    @Override
+    protected List<Class<? extends Plugin>> pluginTypes() {
+        List<Class<? extends Plugin>> types = super.pluginTypes();
+        types.add(MustachePlugin.class);
+        return types;
+    }
+
+    @Override
     protected Settings nodeSettings(int nodeOrdinal) {
         return Settings.builder()
                 .put(super.nodeSettings(nodeOrdinal))
@@ -77,7 +101,7 @@ public class HipChatServiceTests extends AbstractWatcherIntegrationTestCase {
     public void testSendMessageV1Account() throws Exception {
         HipChatService service = getInstanceFromMaster(HipChatService.class);
         HipChatMessage hipChatMessage = new HipChatMessage(
-                "/code HipChatServiceIT#testSendMessage_V1Account",
+                "/code HipChatServiceTests#testSendMessage_V1Account",
                 new String[] { "test-watcher", "test-watcher-2" },
                 null, // users are unsupported in v1
                 "watcher-tests",
@@ -95,7 +119,7 @@ public class HipChatServiceTests extends AbstractWatcherIntegrationTestCase {
         HipChatService service = getInstanceFromMaster(HipChatService.class);
         HipChatMessage.Color color = randomFrom(HipChatMessage.Color.values());
         HipChatMessage hipChatMessage = new HipChatMessage(
-                "/code HipChatServiceIT#testSendMessage_IntegrationAccount colored " + color.value(),
+                "/code HipChatServiceTests#testSendMessage_IntegrationAccount colored " + color.value(),
                 null, // custom rooms are unsupported by integration profiles
                 null, // users are unsupported by integration profiles
                 null, // custom "from" is not supported by integration profiles
@@ -113,7 +137,7 @@ public class HipChatServiceTests extends AbstractWatcherIntegrationTestCase {
         HipChatService service = getInstanceFromMaster(HipChatService.class);
         HipChatMessage.Color color = randomFrom(HipChatMessage.Color.values());
         HipChatMessage hipChatMessage = new HipChatMessage(
-                "/code HipChatServiceIT#testSendMessage_UserAccount colored " + color.value(),
+                "/code HipChatServiceTests#testSendMessage_UserAccount colored " + color.value(),
                 new String[] { "test-watcher", "test-watcher-2" },
                 new String[] { "watcher@elastic.co" },
                 null, // custom "from" is not supported by integration profiles
@@ -135,7 +159,7 @@ public class HipChatServiceTests extends AbstractWatcherIntegrationTestCase {
         switch (profile) {
             case USER:
                 account = "user_account";
-                actionBuilder = hipchatAction(account, "/code HipChatServiceIT#testWatchWithHipChatAction")
+                actionBuilder = hipchatAction(account, "/code {{ctx.payload.ref}}")
                         .addRooms("test-watcher", "test-watcher-2")
                         .addUsers("watcher@elastic.co")
                         .setFormat(HipChatMessage.Format.TEXT)
@@ -145,7 +169,7 @@ public class HipChatServiceTests extends AbstractWatcherIntegrationTestCase {
 
             case INTEGRATION:
                 account = "integration_account";
-                actionBuilder = hipchatAction(account, "/code HipChatServiceIT#testWatchWithHipChatAction")
+                actionBuilder = hipchatAction(account, "/code {{ctx.payload.ref}}")
                         .setFormat(HipChatMessage.Format.TEXT)
                         .setColor(color)
                         .setNotify(false);
@@ -154,7 +178,7 @@ public class HipChatServiceTests extends AbstractWatcherIntegrationTestCase {
             default:
                 assertThat(profile, is(HipChatAccount.Profile.V1));
                 account = "v1_account";
-                actionBuilder = hipchatAction(account, "/code HipChatServiceIT#testWatchWithHipChatAction")
+                actionBuilder = hipchatAction(account, "/code {{ctx.payload.ref}}")
                         .addRooms("test-watcher", "test-watcher-2")
                         .setFrom("watcher-test")
                         .setFormat(HipChatMessage.Format.TEXT)
@@ -164,7 +188,7 @@ public class HipChatServiceTests extends AbstractWatcherIntegrationTestCase {
 
         PutWatchResponse putWatchResponse = watcherClient().preparePutWatch("1").setSource(watchBuilder()
                 .trigger(schedule(interval("10m")))
-                .input(simpleInput("ref", "HipChatServiceIT#testWatchWithHipChatAction"))
+                .input(simpleInput("ref", "HipChatServiceTests#testWatchWithHipChatAction"))
                 .condition(alwaysCondition())
                 .addAction("hipchat", actionBuilder))
                 .execute().get();
@@ -191,10 +215,10 @@ public class HipChatServiceTests extends AbstractWatcherIntegrationTestCase {
     private void assertSentMessagesAreValid(int expectedMessageSize, SentMessages messages) {
         assertThat(messages.count(), is(expectedMessageSize));
         for (SentMessages.SentMessage message : messages) {
-            assertThat("Expected no failures, but got [" + message.failureReason + "]", message.successful(), is(true));
-            assertThat(message.request, notNullValue());
-            assertThat(message.response, notNullValue());
-            assertThat(message.response.status(), lessThan(300));
+            assertThat("Expected no failures, but got [" + message.getFailureReason() + "]", message.successful(), is(true));
+            assertThat(message.getRequest(), notNullValue());
+            assertThat(message.getResponse(), notNullValue());
+            assertThat(message.getResponse().status(), lessThan(300));
         }
     }
 }
