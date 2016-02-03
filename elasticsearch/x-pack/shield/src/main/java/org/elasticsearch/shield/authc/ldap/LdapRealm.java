@@ -21,7 +21,6 @@ import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.rest.RestController;
-import org.elasticsearch.shield.ShieldSettingsFilter;
 import org.elasticsearch.shield.authc.RealmConfig;
 import org.elasticsearch.shield.authc.ldap.support.AbstractLdapRealm;
 import org.elasticsearch.shield.authc.ldap.support.SessionFactory;
@@ -52,11 +51,6 @@ public class LdapRealm extends AbstractLdapRealm {
             super(TYPE, restController);
             this.watcherService = watcherService;
             this.clientSSLService = clientSSLService;
-        }
-
-        @Override
-        public void filterOutSensitiveSettings(String realmName, ShieldSettingsFilter filter) {
-            LdapUserSearchSessionFactory.filterOutSensitiveSettings(realmName, filter);
         }
 
         @Override
