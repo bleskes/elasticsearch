@@ -69,7 +69,8 @@
                 <resource>
                   <directory>${basedir}</directory>
                   <include>README.txt</include>
-                  <filtering>true</filtering>
+                  <exclude>apiClient/README.txt</exclude>
+                  <filtering>false</filtering>
                 </resource>
               </resources>
             </configuration>
