@@ -44,6 +44,9 @@ import java.util.Properties;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicLong;
 
+import javax.ws.rs.core.Feature;
+import javax.ws.rs.core.FeatureContext;
+
 import org.apache.log4j.Logger;
 
 import com.fasterxml.jackson.core.JsonParseException;
@@ -99,7 +102,7 @@ import com.prelert.job.transform.TransformConfigs;
  * Creates jobs and handles retrieving job configuration details from
  * the data store. New jobs have a unique job id see {@linkplain #generateJobId()}
  */
-public class JobManager implements DataProcessor, Shutdownable
+public class JobManager implements DataProcessor, Shutdownable, Feature
 {
     private static final Logger LOGGER = Logger.getLogger(JobManager.class);
 
@@ -205,6 +208,14 @@ public class JobManager implements DataProcessor, Shutdownable
         saveInfo();
     }
 
+    /**
+     * Required by the Feature interface.
+     */
+    @Override
+    public boolean configure(FeatureContext context)
+    {
+        return true;
+    }
 
     /**
      * Get the details of the specific job wrapped in a <code>Optional</code>
