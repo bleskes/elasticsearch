@@ -234,8 +234,6 @@ public class JobSchedulerTest
         assertTrue(firstRtEnd <= intervalEnd + intervalMs);
         assertTrue(flushParams.get(1).shouldCalculateInterim());
         assertTrue(flushParams.get(1).shouldAdvanceTime());
-        System.out.println("End time = " + firstRtEnd);
-        System.out.println("Advance time = " + flushParams.get(1).getAdvanceTime());
         assertEquals(firstRtEnd, flushParams.get(1).getAdvanceTime() * 1000);
         intervalEnd = firstRtEnd + intervalMs;
 
@@ -563,7 +561,6 @@ public class JobSchedulerTest
         @Override
         public void newSearch(String start, String end, Logger logger)
         {
-            System.out.println("Start = " + start + ", end = "  + end);
             if (m_SearchCount == m_BatchesPerSearch.size() - 1)
             {
                 throw new IllegalStateException();
