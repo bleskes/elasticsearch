@@ -41,29 +41,27 @@ public class JobDetails
     public static final long DEFAULT_TIMEOUT = 600;
     public static final long DEFAULT_BUCKETSPAN = 300;
 
+    public static final String TYPE = "job";
+
     /*
      * Field names used in serialisation
      */
-    public static final String ID = "id";
-    public static final String STATUS = "status";
-    public static final String SCHEDULER_STATUS = "schedulerStatus";
-    public static final String CREATE_TIME = "createTime";
-    public static final String FINISHED_TIME = "finishedTime";
-    public static final String LAST_DATA_TIME = "lastDataTime";
-
-    public static final String TIMEOUT = "timeout";
-
     public static final String ANALYSIS_CONFIG = "analysisConfig";
     public static final String ANALYSIS_LIMITS = "analysisLimits";
-    public static final String DATA_DESCRIPTION = "dataDescription";
     public static final String COUNTS = "counts";
-    public static final String TRANSFORMS = "transforms";
+    public static final String CREATE_TIME = "createTime";
+    public static final String DATA_DESCRIPTION = "dataDescription";
     public static final String DESCRIPTION = "description";
+    public static final String FINISHED_TIME = "finishedTime";
+    public static final String ID = "id";
+    public static final String LAST_DATA_TIME = "lastDataTime";
     public static final String MODEL_DEBUG_CONFIG = "modelDebugConfig";
     public static final String RENORMALIZATION_WINDOW = "renormalizationWindow";
     public static final String RESULTS_RETENTION_DAYS = "resultsRetentionDays";
-
-    public static final String TYPE = "job";
+    public static final String STATUS = "status";
+    public static final String SCHEDULER_STATUS = "schedulerStatus";
+    public static final String TIMEOUT = "timeout";
+    public static final String TRANSFORMS = "transforms";
 
     private String m_JobId;
     private String m_Description;
