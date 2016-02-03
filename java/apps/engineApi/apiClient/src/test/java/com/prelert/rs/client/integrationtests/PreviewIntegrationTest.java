@@ -218,10 +218,11 @@ public class PreviewIntegrationTest implements Closeable
             throw new IllegalStateException("Error property prelert.test.data.home is not set");
         }
 
-        PreviewIntegrationTest test = new PreviewIntegrationTest(prelertTestDataHome, baseUrl,
-                PREVIEW_WITH_SINGLE_LINE_FORMAT_JOB_ID);
-        test.execute();
-        test.close();
+        try (PreviewIntegrationTest test = new PreviewIntegrationTest(prelertTestDataHome, baseUrl,
+                PREVIEW_WITH_SINGLE_LINE_FORMAT_JOB_ID))
+        {
+            test.execute();
+        }
 
         LOGGER.info("All tests passed Ok");
     }

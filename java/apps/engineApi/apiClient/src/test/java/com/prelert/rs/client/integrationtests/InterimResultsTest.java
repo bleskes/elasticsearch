@@ -622,67 +622,66 @@ public class InterimResultsTest implements Closeable
         }
 
 
-        InterimResultsTest test = new InterimResultsTest(baseUrl);
         List<String> jobUrls = new ArrayList<>();
-
-        // Always delete the test job first in case it is hanging around
-        // from a previous run
-        test.m_WebServiceClient.deleteJob(TEST_JOB_ID);
-        jobUrls.add(TEST_JOB_ID);
-
-        File fareQuotePartData = new File(prelertTestDataHome +
-                "/engine_api_integration_test/farequote_part.csv");
-        // Farequote test
-        test.createFarequoteJob();
-
-
-
-        test.m_WebServiceClient.fileUpload(TEST_JOB_ID, fareQuotePartData, false);
-
-        // Wait a few seconds for the Engine to finish processing the uploaded data
-        // We want to register for an alert in response to the flush
-        try
+        try (InterimResultsTest test = new InterimResultsTest(baseUrl))
         {
-            Thread.sleep(5000);
+            // Always delete the test job first in case it is hanging around
+            // from a previous run
+            test.m_WebServiceClient.deleteJob(TEST_JOB_ID);
+            jobUrls.add(TEST_JOB_ID);
+
+            File fareQuotePartData = new File(prelertTestDataHome +
+                    "/engine_api_integration_test/farequote_part.csv");
+
+            // Farequote test
+            test.createFarequoteJob();
+
+            test.m_WebServiceClient.fileUpload(TEST_JOB_ID, fareQuotePartData, false);
+
+            // Wait a few seconds for the Engine to finish processing the uploaded data
+            // We want to register for an alert in response to the flush
+            try
+            {
+                Thread.sleep(5000);
+            }
+            catch (InterruptedException e)
+            {
+
+            }
+
+            // Register for alerts
+            AlertRequestBuilder requestBuilder = new AlertRequestBuilder(
+                                                        test.m_WebServiceClient, TEST_JOB_ID)
+                                                    .includeInterim()
+                                                    .score(10.0);
+
+            Future<Alert> alertFuture = test.m_PollAlertService.longPoll(requestBuilder);
+
+            // Flushing should fire an alert
+            InterimResultsTest.test(test.m_WebServiceClient.flushJob(TEST_JOB_ID, true) == true);
+
+
+            Alert alert = alertFuture.get();
+            InterimResultsTest.test(alert.isInterim());
+            InterimResultsTest.test(alert.getBucket().isInterim());
+
+            test.m_PollAlertService.shutdown();
+
+
+            test.verifyFarequoteInterimBuckets(TEST_JOB_ID, false);
+            test.verifyFarequoteInterimBuckets(TEST_JOB_ID, true);
+            test.verifyFarequoteInterimRecords(TEST_JOB_ID, false);
+            test.verifyFarequoteInterimRecords(TEST_JOB_ID, true);
+            test.verifyFarequoteInterimInfluencers(TEST_JOB_ID, true);
+            test.verifyFarequoteInterimInfluencers(TEST_JOB_ID, false);
+
+            test.verifyInterimResultsAreRecalculated();
+
+            //==========================
+            // Clean up test jobs
+            InterimResultsTest.test(test.m_WebServiceClient.closeJob(TEST_JOB_ID) == true);
+            test.deleteJobs(jobUrls);
         }
-        catch (InterruptedException e)
-        {
-
-        }
-
-        // Register for alerts
-        AlertRequestBuilder requestBuilder = new AlertRequestBuilder(
-                                                    test.m_WebServiceClient, TEST_JOB_ID)
-                                                .includeInterim()
-                                                .score(10.0);
-
-        Future<Alert> alertFuture = test.m_PollAlertService.longPoll(requestBuilder);
-
-        // Flushing should fire an alert
-        InterimResultsTest.test(test.m_WebServiceClient.flushJob(TEST_JOB_ID, true) == true);
-
-
-        Alert alert = alertFuture.get();
-        InterimResultsTest.test(alert.isInterim());
-        InterimResultsTest.test(alert.getBucket().isInterim());
-
-        test.m_PollAlertService.shutdown();
-
-
-        test.verifyFarequoteInterimBuckets(TEST_JOB_ID, false);
-        test.verifyFarequoteInterimBuckets(TEST_JOB_ID, true);
-        test.verifyFarequoteInterimRecords(TEST_JOB_ID, false);
-        test.verifyFarequoteInterimRecords(TEST_JOB_ID, true);
-        test.verifyFarequoteInterimInfluencers(TEST_JOB_ID, true);
-        test.verifyFarequoteInterimInfluencers(TEST_JOB_ID, false);
-
-        test.verifyInterimResultsAreRecalculated();
-        //==========================
-        // Clean up test jobs
-        InterimResultsTest.test(test.m_WebServiceClient.closeJob(TEST_JOB_ID) == true);
-        test.deleteJobs(jobUrls);
-
-        test.close();
 
         LOGGER.info("All tests passed Ok");
     }

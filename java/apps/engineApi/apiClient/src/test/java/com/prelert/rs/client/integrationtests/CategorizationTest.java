@@ -328,22 +328,25 @@ public class CategorizationTest implements Closeable
         expectedResultsForCount.put(HIGHEST_RECORD_PROBABILITY_THRESHOLD, 99.0);
         expectedResultsForCount.put(HIGHEST_ANOMALY_CATEGORY_ID, "43");
 
-        CategorizationTest test = new CategorizationTest(prelertTestDataHome, baseUrl,
-                COUNT_DEFAULT_EXAMPLES_LIMIT_ID, "count", expectedResultsForCount);
-        test.execute();
-        test.close();
+        try (CategorizationTest test = new CategorizationTest(prelertTestDataHome, baseUrl,
+                COUNT_DEFAULT_EXAMPLES_LIMIT_ID, "count", expectedResultsForCount))
+        {
+            test.execute();
+        }
 
-        test = new CategorizationTest(prelertTestDataHome, baseUrl,
-                COUNT_ZERO_EXAMPLES_LIMIT_ID, "count", expectedResultsForCount);
-        test.setExamplesByCategoryLimit(0);
-        test.execute();
-        test.close();
+        try (CategorizationTest test = new CategorizationTest(prelertTestDataHome, baseUrl,
+                COUNT_ZERO_EXAMPLES_LIMIT_ID, "count", expectedResultsForCount))
+        {
+            test.setExamplesByCategoryLimit(0);
+            test.execute();
+        }
 
-        test = new CategorizationTest(prelertTestDataHome, baseUrl,
-                COUNT_FIVE_EXAMPLES_LIMIT_ID, "count", expectedResultsForCount);
-        test.setExamplesByCategoryLimit(5);
-        test.execute();
-        test.close();
+        try (CategorizationTest test = new CategorizationTest(prelertTestDataHome, baseUrl,
+                COUNT_FIVE_EXAMPLES_LIMIT_ID, "count", expectedResultsForCount))
+        {
+            test.setExamplesByCategoryLimit(5);
+            test.execute();
+        }
 
         // Rare tests with default examples limits
         Map<String, Object> expectedResultsForRare = new HashMap<>();
@@ -351,10 +354,11 @@ public class CategorizationTest implements Closeable
         expectedResultsForRare.put(HIGHEST_ANOMALY_SCORE_THRESHOLD, 71.0);
         expectedResultsForRare.put(HIGHEST_RECORD_PROBABILITY_THRESHOLD, 16.0);
 
-        test = new CategorizationTest(prelertTestDataHome, baseUrl,
-                RARE_DEFAULT_EXAMPLES_LIMIT_ID, "rare", expectedResultsForRare);
-        test.execute();
-        test.close();
+        try (CategorizationTest test = new CategorizationTest(prelertTestDataHome, baseUrl,
+                RARE_DEFAULT_EXAMPLES_LIMIT_ID, "rare", expectedResultsForRare))
+        {
+            test.execute();
+        }
 
         LOGGER.info("All tests passed Ok");
     }
