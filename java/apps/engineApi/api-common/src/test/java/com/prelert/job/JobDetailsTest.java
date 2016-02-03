@@ -34,6 +34,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 
 import org.junit.Test;
@@ -56,6 +57,7 @@ public class JobDetailsTest
         assertNull(jobDetails.getSchedulerStatus());
         assertNull(jobDetails.getAnalysisConfig());
         assertNull(jobDetails.getAnalysisLimits());
+        assertNull(jobDetails.getCustomSettings());
         assertNull(jobDetails.getDataDescription());
         assertNull(jobDetails.getDescription());
         assertNull(jobDetails.getFinishedTime());
@@ -163,6 +165,22 @@ public class JobDetailsTest
 
         assertFalse(jobDetails1.equals(jobDetails2));
     }
+
+    @Test
+    public void testEquals_GivenDifferentCustomSettings()
+    {
+        JobConfiguration jobDetails1 = new JobConfiguration();
+        Map<String, Object> customSettings1 = new HashMap<>();
+        customSettings1.put("key1", "value1");
+        jobDetails1.setCustomSettings(customSettings1);
+        JobConfiguration jobDetails2 = new JobConfiguration();
+        Map<String, Object> customSettings2 = new HashMap<>();
+        customSettings2.put("key2", "value2");
+        jobDetails2.setCustomSettings(customSettings2);
+
+        assertFalse(jobDetails1.equals(jobDetails2));
+    }
+
 
     @Test
     public void testHashCode_GivenEqualJobDetails()

@@ -32,7 +32,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.collect.Sets;
 import com.prelert.job.JobDetails;
@@ -81,7 +80,8 @@ class DetectorDescriptionUpdater extends AbstractUpdater
 
     private UpdateParams parseParams(JsonNode node) throws JobConfigurationException
     {
-        Map<String, Object> updateParams = convertToMap(node);
+        Map<String, Object> updateParams = convertToMap(node, () -> Messages.getMessage(
+                Messages.JOB_CONFIG_UPDATE_DETECTOR_DESCRIPTION_MISSING_PARAMS, PARAMS));
         if (!PARAMS.equals(updateParams.keySet()))
         {
             String msg = Messages.getMessage(
@@ -104,20 +104,6 @@ class DetectorDescriptionUpdater extends AbstractUpdater
             throw new JobConfigurationException(msg, ErrorCodes.INVALID_VALUE);
         }
         return new UpdateParams((int) detectorIndex, (String) name);
-    }
-
-    private Map<String, Object> convertToMap(JsonNode node) throws JobConfigurationException
-    {
-        try
-        {
-            return JSON_MAPPER.convertValue(node, new TypeReference<Map<String, Object>>() {});
-        }
-        catch (IllegalArgumentException e)
-        {
-            String msg = Messages.getMessage(
-                    Messages.JOB_CONFIG_UPDATE_DETECTOR_DESCRIPTION_MISSING_PARAMS, PARAMS);
-            throw new JobConfigurationException(msg, ErrorCodes.INVALID_VALUE, e);
-        }
     }
 
     private static class UpdateParams

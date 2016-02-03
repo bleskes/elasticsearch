@@ -544,6 +544,14 @@ public class JobManager implements DataProcessor, Shutdownable
                             anomalyScoreThreshold, normalizedProbabilityThreshold);
     }
 
+    public void updateCustomSettings(String jobId, Map<String, Object> customSettings)
+            throws UnknownJobException
+    {
+        Map<String, Object> update = new HashMap<>();
+        update.put(JobDetails.CUSTOM_SETTINGS, customSettings);
+        m_JobProvider.updateJob(jobId, update);
+    }
+
     /**
      * Set the job's description.
      * If the description cannot be set an exception is thrown.

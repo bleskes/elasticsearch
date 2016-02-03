@@ -33,6 +33,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 import org.junit.Before;
@@ -134,6 +136,20 @@ public class JobUpdaterTest
 
         String expectedConfig = "[modelDebugConfig]\nboundspercentile = 33.9\nterms = \n";
         verify(m_JobManager).writeUpdateConfigMessage("foo", expectedConfig);
+    }
+
+    @Test
+    public void testUpdate_GivenValidCustomSettingsUpdate() throws UnknownJobException,
+            JobConfigurationException, JobInUseException, NativeProcessRunException
+    {
+        String update = "{\"customSettings\": {\"radio\":\"head\"}}";
+
+        new JobUpdater(m_JobManager, "foo").update(update);
+
+        Map<String, Object> expected = new HashMap<>();
+        expected.put("radio", "head");
+        verify(m_JobManager).updateCustomSettings("foo", expected);
+        verify(m_JobManager, never()).writeUpdateConfigMessage(anyString(), anyString());
     }
 
     @Test
