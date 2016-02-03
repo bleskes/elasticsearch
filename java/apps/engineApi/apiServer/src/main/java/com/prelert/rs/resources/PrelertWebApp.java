@@ -49,8 +49,8 @@ import javax.ws.rs.core.Application;
 import org.apache.log4j.Logger;
 
 import com.prelert.job.alert.manager.AlertManager;
-import com.prelert.job.logging.JobLoggerFactory;
 import com.prelert.job.logging.DefaultJobLoggerFactory;
+import com.prelert.job.logging.JobLoggerFactory;
 import com.prelert.job.manager.JobManager;
 import com.prelert.job.persistence.JobProvider;
 import com.prelert.job.persistence.OldResultsRemover;
@@ -149,7 +149,8 @@ public class PrelertWebApp extends Application
         ElasticsearchFactory esFactory = createPersistenceFactory();
         JobProvider jobProvider = esFactory.newJobProvider();
 
-        m_JobManager = createJobManager(jobProvider, esFactory, new DefaultJobLoggerFactory());
+        m_JobManager = createJobManager(jobProvider, esFactory,
+                new DefaultJobLoggerFactory(ProcessCtrl.LOG_DIR));
         m_AlertManager = new AlertManager(jobProvider, m_JobManager);
         m_ServerInfo = esFactory.newServerInfoFactory();
 

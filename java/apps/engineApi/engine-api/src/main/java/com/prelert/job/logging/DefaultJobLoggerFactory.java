@@ -42,9 +42,6 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.RollingFileAppender;
 
-import com.prelert.job.process.ProcessCtrl;
-import com.prelert.job.process.autodetect.ProcessAndDataDescription;
-
 /**
  * Thread-safe class to create/close job specific loggers
  *
@@ -60,6 +57,13 @@ public class DefaultJobLoggerFactory implements JobLoggerFactory
      * Guarded by its own lock
      */
     private static final Map<String, Integer> REF_COUNT_MAP = new HashMap<>();
+
+    private final String m_LogDir;
+
+    public DefaultJobLoggerFactory(String logDir)
+    {
+        m_LogDir = logDir;
+    }
 
     /**
      * Create the job's logger.
@@ -100,7 +104,7 @@ public class DefaultJobLoggerFactory implements JobLoggerFactory
         }
         catch (IOException e)
         {
-            Logger logger = Logger.getLogger(ProcessAndDataDescription.class);
+            Logger logger = Logger.getLogger(DefaultJobLoggerFactory.class);
             logger.error(String.format("Cannot create logger for job '%s' using default",
                     jobId), e);
 
@@ -112,7 +116,7 @@ public class DefaultJobLoggerFactory implements JobLoggerFactory
     {
         try
         {
-            Path logDir = FileSystems.getDefault().getPath(ProcessCtrl.LOG_DIR, jobId);
+            Path logDir = FileSystems.getDefault().getPath(m_LogDir, jobId);
             Files.createDirectory(logDir);
 
             // If we get here then we had to create the directory.  In this
@@ -141,8 +145,7 @@ public class DefaultJobLoggerFactory implements JobLoggerFactory
 
     private RollingFileAppender createRollingFileAppender(String jobId) throws IOException
     {
-        Path logFile = FileSystems.getDefault().getPath(ProcessCtrl.LOG_DIR, jobId,
-                "engine_api.log");
+        Path logFile = FileSystems.getDefault().getPath(m_LogDir, jobId, "engine_api.log");
         RollingFileAppender fileAppender = new RollingFileAppender(
                 new EnhancedPatternLayout(
                         "%d{yyyy-MM-dd HH:mm:ss,SSS zz} [%t] %-5p %c{3} - %m%n"),
