@@ -135,7 +135,7 @@ public class HipChatServiceTests extends AbstractWatcherIntegrationTestCase {
         switch (profile) {
             case USER:
                 account = "user_account";
-                actionBuilder = hipchatAction(account, "/code {{ctx.payload.ref}}")
+                actionBuilder = hipchatAction(account, "/code HipChatServiceIT#testWatchWithHipChatAction")
                         .addRooms("test-watcher", "test-watcher-2")
                         .addUsers("watcher@elastic.co")
                         .setFormat(HipChatMessage.Format.TEXT)
@@ -145,7 +145,7 @@ public class HipChatServiceTests extends AbstractWatcherIntegrationTestCase {
 
             case INTEGRATION:
                 account = "integration_account";
-                actionBuilder = hipchatAction(account, "/code {{ctx.payload.ref}}")
+                actionBuilder = hipchatAction(account, "/code HipChatServiceIT#testWatchWithHipChatAction")
                         .setFormat(HipChatMessage.Format.TEXT)
                         .setColor(color)
                         .setNotify(false);
@@ -154,7 +154,7 @@ public class HipChatServiceTests extends AbstractWatcherIntegrationTestCase {
             default:
                 assertThat(profile, is(HipChatAccount.Profile.V1));
                 account = "v1_account";
-                actionBuilder = hipchatAction(account, "/code {{ctx.payload.ref}}")
+                actionBuilder = hipchatAction(account, "/code HipChatServiceIT#testWatchWithHipChatAction")
                         .addRooms("test-watcher", "test-watcher-2")
                         .setFrom("watcher-test")
                         .setFormat(HipChatMessage.Format.TEXT)
