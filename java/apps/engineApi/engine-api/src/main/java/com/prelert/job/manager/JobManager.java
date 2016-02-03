@@ -304,7 +304,8 @@ public class JobManager implements DataProcessor, Shutdownable
 
         if (jobDetails.getSchedulerConfig() != null)
         {
-            createJobSchedulerAndStart(jobDetails);
+            LOGGER.info("Starting scheduler for job: " + jobId);
+            createJobScheduler(jobDetails).start(jobDetails);
         }
 
         return jobDetails;
@@ -321,8 +322,7 @@ public class JobManager implements DataProcessor, Shutdownable
         }
     }
 
-    private void createJobSchedulerAndStart(JobDetails job)
-            throws CannotStartSchedulerWhileItIsStoppingException
+    private JobScheduler createJobScheduler(JobDetails job)
     {
         Duration bucketSpan = Duration.ofSeconds(job.getAnalysisConfig().getBucketSpan());
         Duration frequency = getFrequencyOrDefault(job);
@@ -330,8 +330,7 @@ public class JobManager implements DataProcessor, Shutdownable
         JobScheduler jobScheduler = new JobScheduler(job.getId(), bucketSpan, frequency, queryDelay,
                 m_DataExtractorFactory.newExtractor(job), this, m_JobProvider, m_JobLoggerFactory);
         m_ScheduledJobs.put(job.getId(), jobScheduler);
-        LOGGER.info("Starting scheduler for job: " + job.getId());
-        jobScheduler.start(job);
+        return jobScheduler;
     }
 
     private static Duration getFrequencyOrDefault(JobDetails job)
@@ -972,7 +971,7 @@ public class JobManager implements DataProcessor, Shutdownable
     public void startExistingJobScheduler(String jobId)
             throws CannotStartSchedulerWhileItIsStoppingException, NoSuchScheduledJobException
     {
-        checkJobHasBeenScheduled(jobId);
+        checkJobHasScheduler(jobId);
         JobDetails job = getJob(jobId).get();
         LOGGER.info("Starting scheduler for job: " + jobId);
         m_ScheduledJobs.get(jobId).start(job);
@@ -981,12 +980,12 @@ public class JobManager implements DataProcessor, Shutdownable
     public void stopExistingJobScheduler(String jobId) throws NoSuchScheduledJobException,
             UnknownJobException, NativeProcessRunException, JobInUseException
     {
-        checkJobHasBeenScheduled(jobId);
+        checkJobHasScheduler(jobId);
         LOGGER.info("Stopping scheduler for job: " + jobId);
         m_ScheduledJobs.get(jobId).stopManual();
     }
 
-    private void checkJobHasBeenScheduled(String jobId) throws NoSuchScheduledJobException
+    void checkJobHasScheduler(String jobId) throws NoSuchScheduledJobException
     {
         if (!isScheduledJob(jobId))
         {
@@ -1005,11 +1004,17 @@ public class JobManager implements DataProcessor, Shutdownable
 
         for (JobDetails job : getJobs(0, MAX_JOBS_TO_RESTART).queryResults())
         {
+            if (job.getSchedulerConfig() == null)
+            {
+                continue;
+            }
+            JobScheduler jobScheduler = createJobScheduler(job);
             if (job.getSchedulerStatus() == JobSchedulerStatus.STARTED)
             {
                 try
                 {
-                    createJobSchedulerAndStart(job);
+                    LOGGER.info("Starting scheduler for job: " + job.getId());
+                    jobScheduler.start(job);
                 }
                 catch (CannotStartSchedulerWhileItIsStoppingException e)
                 {
