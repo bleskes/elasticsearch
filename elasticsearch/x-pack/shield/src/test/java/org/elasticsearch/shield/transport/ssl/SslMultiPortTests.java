@@ -97,7 +97,7 @@ public class SslMultiPortTests extends ShieldIntegTestCase {
 
     private TransportClient createTransportClient(Settings additionalSettings) {
         Settings settings = settingsBuilder().put(transportClientSettings())
-                .put("name", "programmatic_transport_client")
+                .put("node.name", "programmatic_transport_client")
                 .put("cluster.name", internalCluster().getClusterName())
                 .put(additionalSettings)
                 .build();
@@ -244,7 +244,7 @@ public class SslMultiPortTests extends ShieldIntegTestCase {
                 .put("shield.user", DEFAULT_USER_NAME + ":" + DEFAULT_PASSWORD)
                 .put("cluster.name", internalCluster().getClusterName())
                 .build();
-        try (TransportClient transportClient = TransportClient.builder().settings(settings).build()) {
+        try (TransportClient transportClient = TransportClient.builder().addPlugin(XPackPlugin.class).settings(settings).build()) {
             transportClient.addTransportAddress(randomFrom(internalCluster().getInstance(Transport.class).boundAddress().boundAddresses()));
             assertGreenClusterState(transportClient);
             fail("Expected NoNodeAvailableException");
@@ -262,7 +262,7 @@ public class SslMultiPortTests extends ShieldIntegTestCase {
                 .put("shield.user", DEFAULT_USER_NAME + ":" + DEFAULT_PASSWORD)
                 .put("cluster.name", internalCluster().getClusterName())
                 .build();
-        try (TransportClient transportClient = TransportClient.builder().settings(settings).build()) {
+        try (TransportClient transportClient = TransportClient.builder().addPlugin(XPackPlugin.class).settings(settings).build()) {
             transportClient.addTransportAddress(new InetSocketTransportAddress(InetAddress.getLoopbackAddress(), getProfilePort("client")));
             assertGreenClusterState(transportClient);
             fail("Expected NoNodeAvailableException");
@@ -280,7 +280,7 @@ public class SslMultiPortTests extends ShieldIntegTestCase {
                 .put("shield.user", DEFAULT_USER_NAME + ":" + DEFAULT_PASSWORD)
                 .put("cluster.name", internalCluster().getClusterName())
                 .build();
-        try (TransportClient transportClient = TransportClient.builder().settings(settings).build()) {
+        try (TransportClient transportClient = TransportClient.builder().addPlugin(XPackPlugin.class).settings(settings).build()) {
             transportClient.addTransportAddress(new InetSocketTransportAddress(InetAddress.getLoopbackAddress(), getProfilePort("no_client_auth")));
             assertGreenClusterState(transportClient);
             fail("Expected NoNodeAvailableException");
@@ -322,7 +322,7 @@ public class SslMultiPortTests extends ShieldIntegTestCase {
                 .put("shield.ssl.truststore.path", getDataPath("/org/elasticsearch/shield/transport/ssl/certs/simple/truststore-testnode-only.jks"))
                 .put("shield.ssl.truststore.password", "truststore-testnode-only")
                 .build();
-        try (TransportClient transportClient = TransportClient.builder().settings(settings).build()) {
+        try (TransportClient transportClient = TransportClient.builder().addPlugin(XPackPlugin.class).settings(settings).build()) {
             transportClient.addTransportAddress(new InetSocketTransportAddress(InetAddress.getLoopbackAddress(), getProfilePort("client")));
             assertGreenClusterState(transportClient);
             fail("Expected NoNodeAvailableException");
@@ -345,7 +345,7 @@ public class SslMultiPortTests extends ShieldIntegTestCase {
                 .put("shield.ssl.truststore.path", getDataPath("/org/elasticsearch/shield/transport/ssl/certs/simple/truststore-testnode-only.jks"))
                 .put("shield.ssl.truststore.password", "truststore-testnode-only")
                 .build();
-        try (TransportClient transportClient = TransportClient.builder().settings(settings).build()) {
+        try (TransportClient transportClient = TransportClient.builder().addPlugin(XPackPlugin.class).settings(settings).build()) {
             transportClient.addTransportAddress(randomFrom(internalCluster().getInstance(Transport.class).boundAddress().boundAddresses()));
                     assertGreenClusterState(transportClient);
             fail("Expected NoNodeAvailableException");
@@ -367,7 +367,7 @@ public class SslMultiPortTests extends ShieldIntegTestCase {
                 .put("shield.ssl.truststore.path", getDataPath("/org/elasticsearch/shield/transport/ssl/certs/simple/truststore-testnode-only.jks"))
                 .put("shield.ssl.truststore.password", "truststore-testnode-only")
                 .build();
-        try (TransportClient transportClient = TransportClient.builder().settings(settings).build()) {
+        try (TransportClient transportClient = TransportClient.builder().addPlugin(XPackPlugin.class).settings(settings).build()) {
             transportClient.addTransportAddress(new InetSocketTransportAddress(InetAddress.getLoopbackAddress(), getProfilePort("no_ssl")));
             assertGreenClusterState(transportClient);
             fail("Expected NoNodeAvailableException");
@@ -387,7 +387,7 @@ public class SslMultiPortTests extends ShieldIntegTestCase {
                 .put("cluster.name", internalCluster().getClusterName())
                 .put("shield.transport.ssl", true)
                 .build();
-        try (TransportClient transportClient = TransportClient.builder().settings(settings).build()) {
+        try (TransportClient transportClient = TransportClient.builder().addPlugin(XPackPlugin.class).settings(settings).build()) {
             transportClient.addTransportAddress(randomFrom(internalCluster().getInstance(Transport.class).boundAddress().boundAddresses()));
             assertGreenClusterState(transportClient);
             fail("Expected NoNodeAvailableException");
@@ -407,7 +407,7 @@ public class SslMultiPortTests extends ShieldIntegTestCase {
                 .put("cluster.name", internalCluster().getClusterName())
                 .put("shield.transport.ssl", true)
                 .build();
-        try (TransportClient transportClient = TransportClient.builder().settings(settings).build()) {
+        try (TransportClient transportClient = TransportClient.builder().addPlugin(XPackPlugin.class).settings(settings).build()) {
             transportClient.addTransportAddress(new InetSocketTransportAddress(InetAddress.getLoopbackAddress(), getProfilePort("client")));
             assertGreenClusterState(transportClient);
             fail("Expected NoNodeAvailableException");
@@ -427,7 +427,7 @@ public class SslMultiPortTests extends ShieldIntegTestCase {
                 .put("cluster.name", internalCluster().getClusterName())
                 .put("shield.transport.ssl", true)
                 .build();
-        try (TransportClient transportClient = TransportClient.builder().settings(settings).build()) {
+        try (TransportClient transportClient = TransportClient.builder().addPlugin(XPackPlugin.class).settings(settings).build()) {
             transportClient.addTransportAddress(new InetSocketTransportAddress(InetAddress.getLoopbackAddress(), getProfilePort("no_client_auth")));
             assertGreenClusterState(transportClient);
             fail("Expected NoNodeAvailableException");
@@ -447,7 +447,7 @@ public class SslMultiPortTests extends ShieldIntegTestCase {
                 .put("cluster.name", internalCluster().getClusterName())
                 .put("shield.transport.ssl", true)
                 .build();
-        try (TransportClient transportClient = TransportClient.builder().settings(settings).build()) {
+        try (TransportClient transportClient = TransportClient.builder().addPlugin(XPackPlugin.class).settings(settings).build()) {
             transportClient.addTransportAddress(new InetSocketTransportAddress(InetAddress.getLoopbackAddress(), getProfilePort("no_ssl")));
             assertGreenClusterState(transportClient);
             fail("Expected NoNodeAvailableException");
