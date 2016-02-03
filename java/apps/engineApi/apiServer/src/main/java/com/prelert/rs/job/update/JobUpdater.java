@@ -61,13 +61,15 @@ import com.prelert.rs.provider.JobConfigurationParseException;
 public class JobUpdater
 {
     private static final Logger LOGGER = Logger.getLogger(JobUpdater.class);
+
+    private static final String CUSTOM_SETTINGS = "customSettings";
+    private static final String DETECTOR_KEY = "detector";
     private static final String JOB_DESCRIPTION_KEY = "description";
     private static final String MODEL_DEBUG_CONFIG_KEY = "modelDebugConfig";
     private static final String RENORMALIZATION_WINDOW_KEY = "renormalizationWindow";
     private static final String RESULTS_RETENTION_DAYS_KEY = "resultsRetentionDays";
-    private static final String DETECTOR_KEY = "detector";
     private static final Set<String> HIDDEN_PROPERTIES = new HashSet<>(
-            Arrays.asList(MODEL_DEBUG_CONFIG_KEY));
+            Arrays.asList(CUSTOM_SETTINGS, MODEL_DEBUG_CONFIG_KEY));
 
     private final JobManager m_JobManager;
     private final String m_JobId;
@@ -85,6 +87,7 @@ public class JobUpdater
     private Map<String, Supplier<AbstractUpdater>> createUpdaterPerKeyMap()
     {
         return ImmutableMap.<String, Supplier<AbstractUpdater>>builder()
+                .put(CUSTOM_SETTINGS, () -> new CustomSettingsUpdater(m_JobManager, m_JobId))
                 .put(DETECTOR_KEY, () -> new DetectorDescriptionUpdater(m_JobManager, m_JobId))
                 .put(JOB_DESCRIPTION_KEY, () -> new JobDescriptionUpdater(m_JobManager, m_JobId))
                 .put(MODEL_DEBUG_CONFIG_KEY, () -> new ModelDebugConfigUpdater(m_JobManager, m_JobId, m_ConfigWriter))

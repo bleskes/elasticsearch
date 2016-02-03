@@ -44,6 +44,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
@@ -592,6 +593,21 @@ public class JobManagerTest
         verify(m_JobLoggerFactory).close("scheduled", jobLogger);
         // Verify no other calls to factories - means no other job was scheduled
         Mockito.verifyNoMoreInteractions(m_JobLoggerFactory, m_DataExtractorFactory);
+    }
+
+    @Test
+    public void testUpdateCustomSettings() throws UnknownJobException
+    {
+        givenProcessInfo(2);
+        JobManager jobManager = createJobManager();
+        Map<String, Object> customSettings = new HashMap<>();
+        customSettings.put("answer", 42);
+
+        jobManager.updateCustomSettings("foo", customSettings);
+
+        verify(m_JobProvider).updateJob(eq("foo"), m_JobUpdateCaptor.capture());
+        Map<String, Object> jobUpdate = m_JobUpdateCaptor.getValue();
+        assertEquals(customSettings, jobUpdate.get(JobDetails.CUSTOM_SETTINGS));
     }
 
     @Test

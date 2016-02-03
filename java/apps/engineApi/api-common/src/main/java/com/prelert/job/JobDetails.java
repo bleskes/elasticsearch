@@ -20,6 +20,7 @@ package com.prelert.job;
 import java.net.URI;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.function.Consumer;
 
@@ -50,6 +51,7 @@ public class JobDetails
     public static final String ANALYSIS_LIMITS = "analysisLimits";
     public static final String COUNTS = "counts";
     public static final String CREATE_TIME = "createTime";
+    public static final String CUSTOM_SETTINGS = "customSettings";
     public static final String DATA_DESCRIPTION = "dataDescription";
     public static final String DESCRIPTION = "description";
     public static final String FINISHED_TIME = "finishedTime";
@@ -84,6 +86,7 @@ public class JobDetails
     private DataCounts m_Counts;
     private Long m_RenormalizationWindow;
     private Long m_ResultsRetentionDays;
+    private Map<String, Object> m_CustomSettings;
 
     /* These URIs are transient they don't need to be persisted */
     private URI m_Location;
@@ -131,6 +134,7 @@ public class JobDetails
         invokeIfNotNull(jobConfig.getDataDescription(), dd -> m_DataDescription = dd);
         m_RenormalizationWindow = jobConfig.getRenormalizationWindow();
         m_ResultsRetentionDays = jobConfig.getResultsRetentionDays();
+        m_CustomSettings = jobConfig.getCustomSettings();
     }
 
     private <T> void invokeIfNotNull(T obj, Consumer<T> consumer)
@@ -518,6 +522,16 @@ public class JobDetails
         m_ResultsRetentionDays = resultsRetentionDays;
     }
 
+    public Map<String, Object> getCustomSettings()
+    {
+        return m_CustomSettings;
+    }
+
+    public void setCustomSettings(Map<String, Object> customSettings)
+    {
+        m_CustomSettings = customSettings;
+    }
+
     /**
      * Prints the more salient fields in a JSON-like format suitable for logging.
      * If every field was written it would spam the log file.
@@ -576,7 +590,8 @@ public class JobDetails
                 Objects.equals(this.m_CategoryDefinitionsEndpoint, that.m_CategoryDefinitionsEndpoint) &&
                 Objects.equals(this.m_BucketsEndpoint, that.m_BucketsEndpoint) &&
                 Objects.equals(this.m_AlertsLongPollEndpoint, that.m_AlertsLongPollEndpoint) &&
-                Objects.equals(this.m_RecordsEndpoint, that.m_RecordsEndpoint);
+                Objects.equals(this.m_RecordsEndpoint, that.m_RecordsEndpoint) &&
+                Objects.equals(this.m_CustomSettings, that.m_CustomSettings);
     }
 
     @Override
@@ -585,8 +600,8 @@ public class JobDetails
         return Objects.hash(m_JobId, m_Description, m_Status, m_SchedulerStatus,m_CreateTime,
                 m_FinishedTime, m_LastDataTime, m_Timeout, m_AnalysisConfig, m_AnalysisLimits,
                 m_DataDescription, m_ModelDebugConfig, m_ModelSizeStats, m_Transforms, m_Counts,
-                m_RenormalizationWindow, m_ResultsRetentionDays, m_Location, m_DataEndpoint,
-                m_CategoryDefinitionsEndpoint, m_BucketsEndpoint, m_RecordsEndpoint,
+                m_RenormalizationWindow, m_ResultsRetentionDays, m_CustomSettings, m_Location,
+                m_DataEndpoint, m_CategoryDefinitionsEndpoint, m_BucketsEndpoint, m_RecordsEndpoint,
                 m_AlertsLongPollEndpoint);
     }
 }
