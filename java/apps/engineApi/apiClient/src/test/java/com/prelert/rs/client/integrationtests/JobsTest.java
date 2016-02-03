@@ -1436,6 +1436,63 @@ public class JobsTest implements Closeable
         test(job.getDescription().equals(orignalDescription));
     }
 
+    /**
+     * Test updating the detectorDescription
+     *
+     * @param jobId The job id
+     * @throws IOException
+     */
+    public void testUpdateDetectorDescription() throws IOException
+    {
+        String jobId = "update-detector-description-job";
+        m_WebServiceClient.deleteJob(jobId);
+
+        String jobConfig = "{"
+                + "\"id\":\"" + jobId + "\","
+                + "\"analysisConfig\":{"
+                + "  \"bucketSpan\":300,"
+                + "  \"detectors\":["
+                + "    {\"detectorDescription\":\"before\", \"function\":\"count\"},"
+                + "    {\"function\":\"sum\", \"fieldName\":\"responseTime\",\"byFieldName\":\"airline\"}"
+                + "  ]"
+                + "}"
+                + "}";
+
+        m_WebServiceClient.createJob(jobConfig);
+        JobDetails job = m_WebServiceClient.getJob(jobId).getDocument();
+        List<Detector> detectors = job.getAnalysisConfig().getDetectors();
+        test(detectors.size() == 2);
+        test(detectors.get(0).getDetectorDescription().equals("before"));
+        test(detectors.get(1).getDetectorDescription().equals("sum(responseTime) by airline"));
+
+        m_WebServiceClient.updateJob(jobId, "{\"detector\":{\"index\":0,\"description\":\"after\"}}");
+
+        job = m_WebServiceClient.getJob(jobId).getDocument();
+        detectors = job.getAnalysisConfig().getDetectors();
+        test(detectors.get(0).getDetectorDescription().equals("after"));
+        test(detectors.get(1).getDetectorDescription().equals("sum(responseTime) by airline"));
+
+        m_WebServiceClient.updateJob(jobId, "{\"detector\":{\"index\":1,\"description\":\"Radiohead\"}}");
+
+        job = m_WebServiceClient.getJob(jobId).getDocument();
+        detectors = job.getAnalysisConfig().getDetectors();
+        test(detectors.get(0).getDetectorDescription().equals("after"));
+        test(detectors.get(1).getDetectorDescription().equals("Radiohead"));
+
+        // Invalid index
+        test(!m_WebServiceClient.updateJob(jobId,
+                "{\"detector\":{\"index\":2,\"description\":\"Radiohead\"}}"));
+        test("Invalid index: valid range is [0, 1]; actual was: 2".equals(
+                m_WebServiceClient.getLastError().getMessage()));
+
+        // Invalid description
+        test(!m_WebServiceClient.updateJob(jobId,
+                "{\"detector\":{\"index\":2,\"description\":42}}"));
+        test("Invalid description: string expected; actual was: 42".equals(
+                m_WebServiceClient.getLastError().getMessage()));
+
+        m_WebServiceClient.deleteJob(jobId);
+    }
 
     /**
      * Tails the log files with requesting different numbers of lines
@@ -1616,6 +1673,11 @@ public class JobsTest implements Closeable
 
         try (JobsTest test = new JobsTest(baseUrl))
         {
+            // Self-complete tests first
+            test.testUpdateDetectorDescription();
+
+            // Then the rest
+
             List<String> jobUrls = new ArrayList<>();
 
             File flightCentreData = new File(prelertTestDataHome +
