@@ -52,6 +52,10 @@ import org.apache.log4j.RollingFileAppender;
 public class DefaultJobLoggerFactory implements JobLoggerFactory
 {
     private static final String LOG_FILE_APPENDER_NAME = "engine_api_file_appender";
+    private static final String LOG_FILE_NAME = "engine_api.log";
+    private static final String MAX_FILE_SIZE = "1MB";
+    private static final int MAX_FILES_KEPT = 9;
+    private static final String PATTERN = "%d{yyyy-MM-dd HH:mm:ss,SSS zz} [%t] %-5p %c{3} - %m%n";
 
     /**
      * Guarded by its own lock
@@ -145,15 +149,13 @@ public class DefaultJobLoggerFactory implements JobLoggerFactory
 
     private RollingFileAppender createRollingFileAppender(String jobId) throws IOException
     {
-        Path logFile = FileSystems.getDefault().getPath(m_LogDir, jobId, "engine_api.log");
+        Path logFile = FileSystems.getDefault().getPath(m_LogDir, jobId, LOG_FILE_NAME);
         RollingFileAppender fileAppender = new RollingFileAppender(
-                new EnhancedPatternLayout(
-                        "%d{yyyy-MM-dd HH:mm:ss,SSS zz} [%t] %-5p %c{3} - %m%n"),
-                        logFile.toString());
+                new EnhancedPatternLayout(PATTERN), logFile.toString());
 
         fileAppender.setName(LOG_FILE_APPENDER_NAME);
-        fileAppender.setMaxFileSize("1MB");
-        fileAppender.setMaxBackupIndex(9);
+        fileAppender.setMaxFileSize(MAX_FILE_SIZE);
+        fileAppender.setMaxBackupIndex(MAX_FILES_KEPT);
 
         // Try to copy the maximum file size and maximum index from the
         // first rolling file appender of the root logger (there will
