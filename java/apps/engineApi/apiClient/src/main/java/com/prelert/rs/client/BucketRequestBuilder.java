@@ -28,9 +28,6 @@ import com.prelert.rs.data.SingleDocument;
 
 public class BucketRequestBuilder extends BaseJobRequestBuilder<Bucket>
 {
-    public static final String INCLUDE_INTERIM_QUERY_PARAM = "includeInterim";
-    public static final String EXPAND_QUERY_PARAM = "expand";
-
     private final String m_BucketId;
 
     private final Map<String, String> m_Params;
