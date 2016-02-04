@@ -27,7 +27,6 @@ import org.elasticsearch.marvel.agent.exporter.local.LocalExporter;
 import org.elasticsearch.marvel.agent.renderer.RendererRegistry;
 import org.elasticsearch.marvel.agent.settings.MarvelSettings;
 import org.elasticsearch.marvel.cleaner.CleanerService;
-import org.elasticsearch.marvel.shield.MarvelSettingsFilter;
 import org.elasticsearch.shield.InternalClient;
 import org.elasticsearch.test.ESTestCase;
 import org.junit.Before;
@@ -58,7 +57,6 @@ import static org.mockito.Mockito.when;
 public class ExportersTests extends ESTestCase {
     private Exporters exporters;
     private Map<String, Exporter.Factory> factories;
-    private MarvelSettingsFilter settingsFilter;
     private ClusterService clusterService;
     private ClusterSettings clusterSettings;
 
@@ -73,8 +71,7 @@ public class ExportersTests extends ESTestCase {
         // we always need to have the local exporter as it serves as the default one
         factories.put(LocalExporter.TYPE, new LocalExporter.Factory(new InternalClient.Insecure(client), clusterService, mock(RendererRegistry.class), mock(CleanerService.class)));
         clusterSettings = new ClusterSettings(Settings.EMPTY, new HashSet<>(Arrays.asList(MarvelSettings.COLLECTORS_SETTING, MarvelSettings.INTERVAL_SETTING, Exporters.EXPORTERS_SETTING)));
-        settingsFilter = mock(MarvelSettingsFilter.class);
-        exporters = new Exporters(Settings.EMPTY, factories, settingsFilter, clusterService, clusterSettings);
+        exporters = new Exporters(Settings.EMPTY, factories, clusterService, clusterSettings);
     }
 
     public void testInitExportersDefault() throws Exception {
@@ -190,7 +187,7 @@ public class ExportersTests extends ESTestCase {
         exporters = new Exporters(Settings.builder()
                 .put("marvel.agent.exporters._name0.type", "_type")
                 .put("marvel.agent.exporters._name1.type", "_type")
-                .build(), factories, settingsFilter, clusterService, clusterSettings) {
+                .build(), factories, clusterService, clusterSettings) {
             @Override
             CurrentExporters initExporters(Settings settings) {
                 settingsHolder.set(settings);
@@ -227,7 +224,7 @@ public class ExportersTests extends ESTestCase {
         Exporters exporters = new Exporters(Settings.builder()
                 .put("marvel.agent.exporters._name0.type", "mock")
                 .put("marvel.agent.exporters._name1.type", "mock_master_only")
-                .build(), factories, settingsFilter, clusterService, clusterSettings);
+                .build(), factories, clusterService, clusterSettings);
         exporters.start();
 
         DiscoveryNode localNode = mock(DiscoveryNode.class);
@@ -251,7 +248,7 @@ public class ExportersTests extends ESTestCase {
         Exporters exporters = new Exporters(Settings.builder()
                 .put("marvel.agent.exporters._name0.type", "mock")
                 .put("marvel.agent.exporters._name1.type", "mock_master_only")
-                .build(), factories, settingsFilter, clusterService, clusterSettings);
+                .build(), factories, clusterService, clusterSettings);
         exporters.start();
 
         DiscoveryNode localNode = mock(DiscoveryNode.class);

@@ -20,7 +20,6 @@ package org.elasticsearch.shield.authc;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.util.concurrent.ThreadContext;
 import org.elasticsearch.env.Environment;
-import org.elasticsearch.shield.ShieldSettingsFilter;
 import org.elasticsearch.shield.User;
 import org.elasticsearch.shield.authc.esusers.ESUsersRealm;
 import org.elasticsearch.shield.authc.ldap.LdapRealm;
@@ -48,7 +47,6 @@ import static org.mockito.Mockito.when;
  */
 public class RealmsTests extends ESTestCase {
     private Map<String, Realm.Factory> factories;
-    private ShieldSettingsFilter settingsFilter;
     private ShieldLicenseState shieldLicenseState;
 
     @Before
@@ -59,7 +57,6 @@ public class RealmsTests extends ESTestCase {
             DummyRealm.Factory factory = new DummyRealm.Factory("type_" + i, rarely());
             factories.put("type_" + i, factory);
         }
-        settingsFilter = mock(ShieldSettingsFilter.class);
         shieldLicenseState = mock(ShieldLicenseState.class);
         when(shieldLicenseState.customRealmsEnabled()).thenReturn(true);
     }
@@ -80,7 +77,7 @@ public class RealmsTests extends ESTestCase {
         }
         Settings settings = builder.build();
         Environment env = new Environment(settings);
-        Realms realms = new Realms(settings, env, factories, settingsFilter, shieldLicenseState);
+        Realms realms = new Realms(settings, env, factories, shieldLicenseState);
         realms.start();
         int i = 0;
         for (Realm realm : realms) {
@@ -102,7 +99,7 @@ public class RealmsTests extends ESTestCase {
                 .build();
         Environment env = new Environment(settings);
         try {
-            new Realms(settings, env, factories, settingsFilter, shieldLicenseState).start();
+            new Realms(settings, env, factories, shieldLicenseState).start();
             fail("Expected IllegalArgumentException");
         } catch (IllegalArgumentException e) {
             assertThat(e.getMessage(), containsString("multiple [esusers] realms are configured"));
@@ -111,7 +108,7 @@ public class RealmsTests extends ESTestCase {
 
     public void testWithEmptySettings() throws Exception {
         Realms realms = new Realms(Settings.EMPTY, new Environment(Settings.builder().put("path.home", createTempDir()).build()),
-                factories, settingsFilter, shieldLicenseState);
+                factories, shieldLicenseState);
         realms.start();
         Iterator<Realm> iter = realms.iterator();
         assertThat(iter.hasNext(), is(true));
@@ -138,7 +135,7 @@ public class RealmsTests extends ESTestCase {
         }
         Settings settings = builder.build();
         Environment env = new Environment(settings);
-        Realms realms = new Realms(settings, env, factories, settingsFilter, shieldLicenseState);
+        Realms realms = new Realms(settings, env, factories, shieldLicenseState);
         realms.start();
         int i = 0;
         // this is the iterator when licensed
@@ -170,7 +167,7 @@ public class RealmsTests extends ESTestCase {
                 .put("shield.authc.realms.custom.order", "1");
         Settings settings = builder.build();
         Environment env = new Environment(settings);
-        Realms realms = new Realms(settings, env, factories, settingsFilter, shieldLicenseState);
+        Realms realms = new Realms(settings, env, factories, shieldLicenseState);
         realms.start();
         int i = 0;
         // this is the iterator when licensed
@@ -211,7 +208,7 @@ public class RealmsTests extends ESTestCase {
         }
         Settings settings = builder.build();
         Environment env = new Environment(settings);
-        Realms realms = new Realms(settings, env, factories, mock(ShieldSettingsFilter.class), shieldLicenseState);
+        Realms realms = new Realms(settings, env, factories, shieldLicenseState);
         realms.start();
         Iterator<Realm> iterator = realms.iterator();
 
