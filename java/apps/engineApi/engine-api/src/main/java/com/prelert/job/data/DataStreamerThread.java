@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -50,11 +50,8 @@ public class DataStreamerThread extends Thread
     private JobException m_JobException;
     private IOException m_IOException;
 
-    public DataStreamerThread(DataStreamer dataStreamer,
-                            String jobId,
-                            String  contentEncoding,
-                            DataLoadParams params,
-                            InputStream input)
+    public DataStreamerThread(DataStreamer dataStreamer, String jobId, String contentEncoding,
+            DataLoadParams params, InputStream input)
     {
         super("DataStreamer-" + jobId);
 
@@ -111,7 +108,7 @@ public class DataStreamerThread extends Thread
      */
     public Optional<JobException> getJobException()
     {
-        return Optional.<JobException>ofNullable(m_JobException);
+        return Optional.ofNullable(m_JobException);
     }
 
     /**
@@ -121,7 +118,7 @@ public class DataStreamerThread extends Thread
      */
     public Optional<IOException> getIOException()
     {
-        return Optional.<IOException>ofNullable(m_IOException);
+        return Optional.ofNullable(m_IOException);
     }
 
     public String getJobId()
