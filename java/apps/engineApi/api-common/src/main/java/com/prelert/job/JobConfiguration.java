@@ -104,6 +104,16 @@ public class JobConfiguration
         m_ID = id;
     }
 
+    public Map<String, Object> getCustomSettings()
+    {
+        return m_CustomSettings;
+    }
+
+    public void setCustomSettings(Map<String, Object> customSettings)
+    {
+        m_CustomSettings = customSettings;
+    }
+
     /**
      * The job's human readable description
      * @return the job description
@@ -243,15 +253,5 @@ public class JobConfiguration
     public void setResultsRetentionDays(Long resultsRetentionDays)
     {
         m_ResultsRetentionDays = resultsRetentionDays;
-    }
-
-    public Map<String, Object> getCustomSettings()
-    {
-        return m_CustomSettings;
-    }
-
-    public void setCustomSettings(Map<String, Object> customSettings)
-    {
-        m_CustomSettings = customSettings;
     }
 }
