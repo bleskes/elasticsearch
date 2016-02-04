@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -26,11 +26,8 @@
  ************************************************************/
 package com.prelert.job.process.output.parsing;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -63,7 +60,6 @@ public class NormalisedResultsParser implements Runnable
     {
         try
         {
-            //printResults();
             parseResults();
         }
         catch (IOException e)
@@ -102,18 +98,5 @@ public class NormalisedResultsParser implements Runnable
         }
 
         m_Logger.info(resultCount + " records parsed from output");
-    }
-
-    /**
-     * Debugging print normalise output
-     * @throws IOException
-     */
-    @SuppressWarnings("unused")
-    private void printResults() throws IOException
-    {
-        try (BufferedReader in = new BufferedReader(new InputStreamReader(m_InputStream, StandardCharsets.UTF_8)))
-        {
-            in.lines().forEach(line -> System.out.println(line));
-        }
     }
 }
