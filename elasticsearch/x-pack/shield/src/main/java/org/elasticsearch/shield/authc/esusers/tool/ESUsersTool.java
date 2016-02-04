@@ -475,7 +475,7 @@ public class ESUsersTool extends CliTool {
                     if (!unknownRoles.isEmpty()) {
                         // at least one role is marked... so printing the legend
                         Path rolesFile = FileRolesStore.resolveFile(esusersSettings, env).toAbsolutePath();
-                        terminal.println();
+                        terminal.println("");
                         terminal.println(String.format(Locale.ROOT, " [*]   An unknown role. Please check [%s] to see available roles", rolesFile.toAbsolutePath()));
                     }
                 } else {
@@ -508,7 +508,7 @@ public class ESUsersTool extends CliTool {
                 if (unknownRolesFound) {
                     // at least one role is marked... so printing the legend
                     Path rolesFile = FileRolesStore.resolveFile(esusersSettings, env).toAbsolutePath();
-                    terminal.println();
+                    terminal.println("");
                     terminal.println(String.format(Locale.ROOT, " [*]   An unknown role. Please check [%s] to see available roles", rolesFile.toAbsolutePath()));
                 }
             }
