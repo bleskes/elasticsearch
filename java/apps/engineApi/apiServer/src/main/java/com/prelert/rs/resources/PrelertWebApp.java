@@ -65,6 +65,7 @@ import com.prelert.rs.provider.AcknowledgementWriter;
 import com.prelert.rs.provider.AlertMessageBodyWriter;
 import com.prelert.rs.provider.DataCountsWriter;
 import com.prelert.rs.provider.DataUploadExceptionMapper;
+import com.prelert.rs.provider.DetectorMessageBodyReader;
 import com.prelert.rs.provider.ElasticsearchExceptionMapper;
 import com.prelert.rs.provider.JobConfigurationMessageBodyReader;
 import com.prelert.rs.provider.JobExceptionMapper;
@@ -210,10 +211,12 @@ public class PrelertWebApp extends Application
         m_ResourceClasses.add(Logs.class);
         m_ResourceClasses.add(Preview.class);
         m_ResourceClasses.add(Records.class);
+        m_ResourceClasses.add(Validate.class);
     }
 
     private void addMessageReaders()
     {
+        m_ResourceClasses.add(DetectorMessageBodyReader.class);
         m_ResourceClasses.add(JobConfigurationMessageBodyReader.class);
     }
 

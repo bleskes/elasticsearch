@@ -137,6 +137,17 @@ public enum ErrorCodes
     INVALID_UPDATE_KEY(10115),
 
     /**
+     * The JSON configuration supplied to validate a detector
+     * could not be parsed. The JSON is invalid.
+     */
+    DETECTOR_PARSE_ERROR(10116),
+
+    /**
+     * The detector JSON contains a field that isn't recognised
+     */
+    DETECTOR_UNKNOWN_FIELD_ERROR(10117),
+
+    /**
      * The transform name isn't recognised
      */
     UNKNOWN_TRANSFORM(10201),

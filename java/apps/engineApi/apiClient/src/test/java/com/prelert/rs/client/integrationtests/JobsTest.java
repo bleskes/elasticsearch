@@ -229,7 +229,8 @@ public class JobsTest implements Closeable
         JobDetails job = doc.getDocument();
 
         Detector d = new Detector();
-        d.setDetectorDescription("responsetime by airline");
+        d.setDetectorDescription("metric(responsetime) by airline");
+        d.setFunction("metric");
         d.setFieldName("responsetime");
         d.setByFieldName("airline");
         AnalysisConfig ac = new AnalysisConfig();
@@ -327,7 +328,8 @@ public class JobsTest implements Closeable
             throws IOException
     {
         Detector d = new Detector();
-        d.setDetectorDescription("responsetime by airline partitionfield=sourcetype");
+        d.setDetectorDescription("metric(responsetime) by airline partitionfield=sourcetype");
+        d.setFunction("metric");
         d.setFieldName("responsetime");
         d.setByFieldName("airline");
         d.setPartitionFieldName("sourcetype");
@@ -403,7 +405,8 @@ public class JobsTest implements Closeable
     public String createFlightCentreMsJsonFormatJobTest() throws IOException
     {
         Detector d = new Detector();
-        d.setDetectorDescription("responsetime by airline");
+        d.setDetectorDescription("metric(responsetime) by airline");
+        d.setFunction("metric");
         d.setFieldName("responsetime");
         d.setByFieldName("airline");
         AnalysisConfig ac = new AnalysisConfig();
@@ -467,7 +470,8 @@ public class JobsTest implements Closeable
     private void verifyFareQuoteTimeFormatJobTest(JobDetails job, String jobId)
     {
         Detector d = new Detector();
-        d.setDetectorDescription("responsetime by airline");
+        d.setDetectorDescription("metric(responsetime) by airline");
+        d.setFunction("metric");
         d.setFieldName("responsetime");
         d.setByFieldName("airline");
         AnalysisConfig ac = new AnalysisConfig();
@@ -515,6 +519,7 @@ public class JobsTest implements Closeable
     {
         Detector d = new Detector();
         d.setDetectorDescription("FlightCentre analysis");
+        d.setFunction("metric");
         d.setFieldName("responsetime");
         d.setByFieldName("airline");
         AnalysisConfig ac = new AnalysisConfig();

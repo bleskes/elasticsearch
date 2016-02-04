@@ -110,6 +110,7 @@ public class NormalizationTest implements Closeable
     private String createFarequoteJob(String jobId, Long renormalizationWindow) throws IOException
     {
         Detector d = new Detector();
+        d.setFunction("metric");
         d.setFieldName("responsetime");
         d.setByFieldName("airline");
 
