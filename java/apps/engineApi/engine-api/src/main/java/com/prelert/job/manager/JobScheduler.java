@@ -341,13 +341,16 @@ public class JobScheduler
             m_Logger.info("Starting lookback");
             extractAndProcessData(start, end);
             m_Logger.info("Lookback has finished");
-            if (m_IsLookbackOnly)
+            if (m_Status == JobSchedulerStatus.STARTED)
             {
-                finishLookback();
-            }
-            else if (m_Status == JobSchedulerStatus.STARTED)
-            {
-                startRealTime();
+                if (m_IsLookbackOnly)
+                {
+                    finishLookback();
+                }
+                else
+                {
+                    startRealTime();
+                }
             }
             m_LookbackExecutor.shutdown();
         };
@@ -420,11 +423,8 @@ public class JobScheduler
             m_Logger.error("Unable to stop the scheduler.");
         }
 
-        if (m_IsLookbackOnly == false)
-        {
-            updateStatus(finalStatus);
-            closeLogger();
-        }
+        updateStatus(finalStatus);
+        closeLogger();
     }
 
     @VisibleForTesting

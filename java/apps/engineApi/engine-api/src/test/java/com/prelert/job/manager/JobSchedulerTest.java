@@ -460,7 +460,24 @@ public class JobSchedulerTest
     }
 
     @Test
-    public void testStopAuto() throws InterruptedException,
+    public void testStopAuto_GivenLookbackOnlyJob() throws InterruptedException,
+            CannotStartSchedulerWhileItIsStoppingException
+    {
+        JobDetails job = newJobWithElasticScheduler(1400000000000L, 1500000000000L);
+        MockDataExtractor dataExtractor = new MockDataExtractor(Arrays.asList(1));
+        MockDataProcessor dataProcessor = new MockDataProcessor(Arrays.asList(
+                newCounts(67, 1500000000000L)));
+        m_JobScheduler = createJobScheduler(dataExtractor, dataProcessor);
+
+        m_JobScheduler.start(job);
+        assertEquals(JobSchedulerStatus.STARTED, m_CurrentStatus);
+        m_JobScheduler.stopAuto();
+        assertEquals(JobSchedulerStatus.STARTED, m_CurrentStatus);
+        assertFalse(dataProcessor.isJobClosed());
+    }
+
+    @Test
+    public void testStopAuto_GivenRealTimeJob() throws InterruptedException,
             CannotStartSchedulerWhileItIsStoppingException
     {
         JobDetails job = newJobWithElasticScheduler(1400000000000L, null);
