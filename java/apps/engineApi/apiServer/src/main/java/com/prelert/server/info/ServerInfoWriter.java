@@ -44,7 +44,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
  */
 public class ServerInfoWriter
 {
-    private static Logger LOGGER = Logger.getLogger(ServerInfoWriter.class);
+    private static final Logger LOGGER = Logger.getLogger(ServerInfoWriter.class);
 
     private ServerInfoFactory m_ServerInfo;
     private File m_File;

@@ -50,11 +50,8 @@ import com.prelert.server.info.ServerInfoFactory;
 
 public class ElasticsearchServerInfo implements ServerInfoFactory, Feature
 {
-    public static final String ATTRIBUTES = "attributes";
-    public static final String CLIENT = "client";
+    private static final Logger LOGGER = Logger.getLogger(ElasticsearchServerInfo.class);
 
-
-    private static Logger LOGGER = Logger.getLogger(ElasticsearchServerInfo.class);
     private final Client m_Client;
 
     public ElasticsearchServerInfo(Client client)
