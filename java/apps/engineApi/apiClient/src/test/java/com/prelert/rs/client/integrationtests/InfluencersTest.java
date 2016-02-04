@@ -432,18 +432,26 @@ public class InfluencersTest implements Closeable
 
         Pagination<AnomalyRecord> records = m_WebServiceClient.prepareGetRecords(BLUECOAT_LOGS_JOB).get();
 
-        AnomalyRecord record = records.getDocuments().get(0);
-
-
-        test(record.getInfluencers().size() == 2);
-
+        // Top 5 records should contain 'nigella'
         Influence user = new Influence("user");
         user.addInfluenceFieldValue("nigella");
-        test(record.getInfluencers().indexOf(user) >= 0);
-
-        Influence src = new Influence("src_ip");
-        src.addInfluenceFieldValue("10.2.20.200");
-        test(record.getInfluencers().indexOf(user) >= 0);
+        for (int i = 0; i < 5; i++)
+        {
+            AnomalyRecord record = records.getDocuments().get(i);
+            test(record.getInfluencers().size() == 2);
+            if (record.getInfluencers().indexOf(user) >= 0)
+            {
+                Influence src = new Influence("src_ip");
+                src.addInfluenceFieldValue("10.2.20.200");
+                test(record.getInfluencers().indexOf(src) >= 0);
+                break;
+            }
+            if (i == 4)
+            {
+                LOGGER.error("Top 5 records do not contain a user 'nigella'");
+                test(false);
+            }
+        }
 
         Pagination<Influencer> pagination = m_WebServiceClient.prepareGetInfluencers(BLUECOAT_LOGS_JOB).get();
         test(pagination.getHitCount() > 1000);
