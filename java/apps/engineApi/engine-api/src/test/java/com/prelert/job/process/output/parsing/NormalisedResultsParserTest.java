@@ -29,8 +29,10 @@ package com.prelert.job.process.output.parsing;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -84,5 +86,18 @@ public class NormalisedResultsParserTest
         assertEquals(0.01, normalisedResults.get(0).getNormalizedScore(), ERROR);
         assertEquals(43.0, normalisedResults.get(1).getRawScore(), ERROR);
         assertEquals(0.02, normalisedResults.get(1).getNormalizedScore(), ERROR);
+    }
+
+    @Test
+    public void testRun_GivenIOException_DoesNotCrush() throws IOException
+    {
+        InputStream inputStream = mock(InputStream.class);
+
+        NormalisedResultsParser resultsParser = new NormalisedResultsParser(inputStream, m_Logger);
+
+        resultsParser.run();
+
+        List<NormalisedResult> normalisedResults = resultsParser.getNormalisedResults();
+        assertEquals(0, normalisedResults.size());
     }
 }
