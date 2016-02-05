@@ -343,6 +343,9 @@ public class ElasticsearchMappings
                                 .endObject()
                             .endObject()
                         .endObject()
+                        .startObject(JobDetails.CUSTOM_SETTINGS)
+                            .field(TYPE, OBJECT)
+                        .endObject()
                     .endObject()
                 .endObject()
             .endObject();
