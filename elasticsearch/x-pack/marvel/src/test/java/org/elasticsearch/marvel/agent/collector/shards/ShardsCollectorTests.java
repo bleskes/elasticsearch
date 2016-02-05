@@ -81,7 +81,8 @@ public class ShardsCollectorTests extends AbstractCollectorTestCase {
             assertThat(shardMarvelDoc.getClusterUUID(), equalTo(clusterState.metaData().clusterUUID()));
             assertThat(shardMarvelDoc.getTimestamp(), greaterThan(0L));
             assertThat(shardMarvelDoc.getType(), equalTo(ShardsCollector.TYPE));
-            assertThat(shardMarvelDoc.getId(), equalTo(ShardsCollector.id(clusterState.stateUUID(), ((ShardMarvelDoc) marvelDoc).getShardRouting())));
+            assertThat(shardMarvelDoc.getId(),
+                    equalTo(ShardsCollector.id(clusterState.stateUUID(), ((ShardMarvelDoc) marvelDoc).getShardRouting())));
             assertThat(shardMarvelDoc.getSourceNode(), notNullValue());
             assertThat(shardMarvelDoc.getClusterStateUUID(), equalTo(clusterState.stateUUID()));
 
@@ -142,7 +143,8 @@ public class ShardsCollectorTests extends AbstractCollectorTestCase {
             assertThat(shardMarvelDoc.getClusterUUID(), equalTo(clusterState.metaData().clusterUUID()));
             assertThat(shardMarvelDoc.getTimestamp(), greaterThan(0L));
             assertThat(shardMarvelDoc.getType(), equalTo(ShardsCollector.TYPE));
-            assertThat(shardMarvelDoc.getId(), equalTo(ShardsCollector.id(clusterState.stateUUID(), ((ShardMarvelDoc) marvelDoc).getShardRouting())));
+            assertThat(shardMarvelDoc.getId(),
+                    equalTo(ShardsCollector.id(clusterState.stateUUID(), ((ShardMarvelDoc) marvelDoc).getShardRouting())));
             assertThat(shardMarvelDoc.getClusterStateUUID(), equalTo(clusterState.stateUUID()));
 
             ShardRouting shardRouting = shardMarvelDoc.getShardRouting();

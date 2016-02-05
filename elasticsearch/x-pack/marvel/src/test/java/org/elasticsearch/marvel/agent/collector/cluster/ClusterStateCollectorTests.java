@@ -103,7 +103,8 @@ public class ClusterStateCollectorTests extends AbstractCollectorTestCase {
         assertThat(marvelDoc, instanceOf(ClusterStateMarvelDoc.class));
 
         ClusterStateMarvelDoc clusterStateMarvelDoc = (ClusterStateMarvelDoc) marvelDoc;
-        assertThat(clusterStateMarvelDoc.getClusterUUID(), equalTo(client().admin().cluster().prepareState().setMetaData(true).get().getState().metaData().clusterUUID()));
+        assertThat(clusterStateMarvelDoc.getClusterUUID(),
+                equalTo(client().admin().cluster().prepareState().setMetaData(true).get().getState().metaData().clusterUUID()));
         assertThat(clusterStateMarvelDoc.getTimestamp(), greaterThan(0L));
         assertThat(clusterStateMarvelDoc.getType(), equalTo(ClusterStateCollector.TYPE));
         assertThat(clusterStateMarvelDoc.getSourceNode(), notNullValue());
@@ -169,7 +170,7 @@ public class ClusterStateCollectorTests extends AbstractCollectorTestCase {
     }
 
     private void assertMarvelDocs(Collection<MarvelDoc> results, final int nbShards) {
-        assertThat("expecting 1 document for the cluster state and 2 documents per node", results, hasSize(1 + internalCluster().size() * 2));
+        assertThat("expecting 1 document for cluster state and 2 documents per node", results, hasSize(1 + internalCluster().size() * 2));
 
         final ClusterState clusterState = securedClient().admin().cluster().prepareState().get().getState();
         final String clusterUUID = clusterState.getMetaData().clusterUUID();
@@ -182,7 +183,8 @@ public class ClusterStateCollectorTests extends AbstractCollectorTestCase {
             assertThat(marvelDoc.getClusterUUID(), equalTo(clusterUUID));
             assertThat(marvelDoc.getTimestamp(), greaterThan(0L));
             assertThat(marvelDoc.getSourceNode(), notNullValue());
-            assertThat(marvelDoc, anyOf(instanceOf(ClusterStateMarvelDoc.class), instanceOf(ClusterStateNodeMarvelDoc.class), instanceOf(DiscoveryNodeMarvelDoc.class)));
+            assertThat(marvelDoc, anyOf(instanceOf(ClusterStateMarvelDoc.class), instanceOf(ClusterStateNodeMarvelDoc.class),
+                    instanceOf(DiscoveryNodeMarvelDoc.class)));
 
             if (marvelDoc instanceof ClusterStateMarvelDoc) {
                 ClusterStateMarvelDoc clusterStateMarvelDoc = (ClusterStateMarvelDoc) marvelDoc;
@@ -197,7 +199,8 @@ public class ClusterStateCollectorTests extends AbstractCollectorTestCase {
 
             } else if (marvelDoc instanceof DiscoveryNodeMarvelDoc) {
                 DiscoveryNodeMarvelDoc discoveryNodeMarvelDoc = (DiscoveryNodeMarvelDoc) marvelDoc;
-                assertThat(discoveryNodeMarvelDoc.getIndex(), equalTo(MarvelSettings.MARVEL_DATA_INDEX_PREFIX + MarvelTemplateUtils.TEMPLATE_VERSION));
+                assertThat(discoveryNodeMarvelDoc.getIndex(),
+                        equalTo(MarvelSettings.MARVEL_DATA_INDEX_PREFIX + MarvelTemplateUtils.TEMPLATE_VERSION));
                 assertThat(discoveryNodeMarvelDoc.getId(), not(isEmptyOrNullString()));
                 assertNotNull(discoveryNodeMarvelDoc.getNode());
                 discoveryNodes.add(discoveryNodeMarvelDoc);

@@ -78,7 +78,8 @@ public class PkiRealmTests extends ESTestCase {
 
     public void testAuthenticateBasedOnCertToken() throws Exception {
         X509Certificate certificate = readCert(getDataPath("/org/elasticsearch/shield/transport/ssl/certs/simple/testnode.cert"));
-        X509AuthenticationToken token = new X509AuthenticationToken(new X509Certificate[] { certificate }, "Elasticsearch Test Node", "CN=Elasticsearch Test Node,");
+        X509AuthenticationToken token = new X509AuthenticationToken(new X509Certificate[] { certificate }, "Elasticsearch Test Node",
+                "CN=Elasticsearch Test Node,");
         DnRoleMapper roleMapper = mock(DnRoleMapper.class);
         PkiRealm realm = new PkiRealm(new RealmConfig("", Settings.EMPTY, globalSettings), roleMapper);
         when(roleMapper.resolveRoles(anyString(), anyList())).thenReturn(Collections.<String>emptySet());
@@ -93,7 +94,8 @@ public class PkiRealmTests extends ESTestCase {
     public void testCustomUsernamePattern() throws Exception {
         X509Certificate certificate = readCert(getDataPath("/org/elasticsearch/shield/transport/ssl/certs/simple/testnode.cert"));
         DnRoleMapper roleMapper = mock(DnRoleMapper.class);
-        PkiRealm realm = new PkiRealm(new RealmConfig("", Settings.builder().put("username_pattern", "OU=(.*?),").build(), globalSettings), roleMapper);
+        PkiRealm realm = new PkiRealm(new RealmConfig("", Settings.builder().put("username_pattern", "OU=(.*?),").build(), globalSettings),
+                roleMapper);
         when(roleMapper.resolveRoles(anyString(), anyList())).thenReturn(Collections.<String>emptySet());
         ThreadContext threadContext = new ThreadContext(Settings.EMPTY);
         threadContext.putTransient(PkiRealm.PKI_CERT_HEADER_NAME, new X509Certificate[] { certificate });
@@ -162,7 +164,8 @@ public class PkiRealmTests extends ESTestCase {
         X500Principal principal = new X500Principal("CN=PKI Client");
         when(certificate.getSubjectX500Principal()).thenReturn(principal);
 
-        X509AuthenticationToken token = PkiRealm.token(new X509Certificate[]{certificate}, Pattern.compile(PkiRealm.DEFAULT_USERNAME_PATTERN), NoOpLogger.INSTANCE);
+        X509AuthenticationToken token = PkiRealm.token(new X509Certificate[]{certificate},
+                Pattern.compile(PkiRealm.DEFAULT_USERNAME_PATTERN), NoOpLogger.INSTANCE);
         assertThat(token, notNullValue());
         assertThat(token.principal(), is("PKI Client"));
         assertThat(token.dn(), is("CN=PKI Client"));
@@ -173,7 +176,8 @@ public class PkiRealmTests extends ESTestCase {
         X500Principal principal = new X500Principal("CN=PKI Client, OU=Shield");
         when(certificate.getSubjectX500Principal()).thenReturn(principal);
 
-        X509AuthenticationToken token = PkiRealm.token(new X509Certificate[]{certificate}, Pattern.compile(PkiRealm.DEFAULT_USERNAME_PATTERN), NoOpLogger.INSTANCE);
+        X509AuthenticationToken token = PkiRealm.token(new X509Certificate[]{certificate},
+                Pattern.compile(PkiRealm.DEFAULT_USERNAME_PATTERN), NoOpLogger.INSTANCE);
         assertThat(token, notNullValue());
         assertThat(token.principal(), is("PKI Client"));
         assertThat(token.dn(), is("CN=PKI Client, OU=Shield"));
@@ -184,7 +188,8 @@ public class PkiRealmTests extends ESTestCase {
         X500Principal principal = new X500Principal("EMAILADDRESS=pki@elastic.co, CN=PKI Client, OU=Shield");
         when(certificate.getSubjectX500Principal()).thenReturn(principal);
 
-        X509AuthenticationToken token = PkiRealm.token(new X509Certificate[]{certificate}, Pattern.compile(PkiRealm.DEFAULT_USERNAME_PATTERN), NoOpLogger.INSTANCE);
+        X509AuthenticationToken token = PkiRealm.token(new X509Certificate[]{certificate},
+                Pattern.compile(PkiRealm.DEFAULT_USERNAME_PATTERN), NoOpLogger.INSTANCE);
         assertThat(token, notNullValue());
         assertThat(token.principal(), is("PKI Client"));
         assertThat(token.dn(), is("EMAILADDRESS=pki@elastic.co, CN=PKI Client, OU=Shield"));

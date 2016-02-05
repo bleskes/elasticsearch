@@ -70,11 +70,13 @@ public class ExecutionVarsIntegrationTests extends AbstractWatcherIntegrationTes
                 .transform(scriptTransform("ctx.vars.watch_transform_value = ctx.vars.condition_value + 5; return ctx.payload;"))
                 .addAction(
                         "a1",
-                        scriptTransform("ctx.vars.a1_transform_value = ctx.vars.watch_transform_value + 10; ctx.payload.a1_transformed_value = ctx.vars.a1_transform_value; return ctx.payload;"),
+                        scriptTransform("ctx.vars.a1_transform_value = ctx.vars.watch_transform_value + 10; ctx.payload" +
+                                ".a1_transformed_value = ctx.vars.a1_transform_value; return ctx.payload;"),
                         loggingAction("_text"))
                 .addAction(
                         "a2",
-                        scriptTransform("ctx.vars.a2_transform_value = ctx.vars.watch_transform_value + 20; ctx.payload.a2_transformed_value = ctx.vars.a2_transform_value; return ctx.payload;"),
+                        scriptTransform("ctx.vars.a2_transform_value = ctx.vars.watch_transform_value + 20; ctx.payload" +
+                                ".a2_transformed_value = ctx.vars.a2_transform_value; return ctx.payload;"),
                         loggingAction("_text")))
                 .get();
 
@@ -135,11 +137,13 @@ public class ExecutionVarsIntegrationTests extends AbstractWatcherIntegrationTes
                 .transform(scriptTransform("ctx.vars.watch_transform_value = ctx.vars.condition_value + 5; return ctx.payload;"))
                 .addAction(
                         "a1",
-                        scriptTransform("ctx.vars.a1_transform_value = ctx.vars.watch_transform_value + 10; ctx.payload.a1_transformed_value = ctx.vars.a1_transform_value; return ctx.payload;"),
+                        scriptTransform("ctx.vars.a1_transform_value = ctx.vars.watch_transform_value + 10; ctx.payload" +
+                                ".a1_transformed_value = ctx.vars.a1_transform_value; return ctx.payload;"),
                         loggingAction("_text"))
                 .addAction(
                         "a2",
-                        scriptTransform("ctx.vars.a2_transform_value = ctx.vars.watch_transform_value + 20; ctx.payload.a2_transformed_value = ctx.vars.a2_transform_value; return ctx.payload;"),
+                        scriptTransform("ctx.vars.a2_transform_value = ctx.vars.watch_transform_value + 20; ctx.payload" +
+                                ".a2_transformed_value = ctx.vars.a2_transform_value; return ctx.payload;"),
                         loggingAction("_text")))
                 .get();
 

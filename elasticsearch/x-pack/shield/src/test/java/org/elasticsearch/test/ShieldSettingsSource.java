@@ -114,7 +114,8 @@ public class ShieldSettingsSource extends ClusterDiscoveryConfiguration.UnicastZ
      * @param parentFolder the parent folder that will contain all of the configuration files that need to be created
      * @param scope the scope of the test that is requiring an instance of ShieldSettingsSource
      */
-    public ShieldSettingsSource(int numOfNodes, boolean sslTransportEnabled, byte[] systemKey, Path parentFolder, ESIntegTestCase.Scope scope) {
+    public ShieldSettingsSource(int numOfNodes, boolean sslTransportEnabled, byte[] systemKey, Path parentFolder,
+                                ESIntegTestCase.Scope scope) {
         super(numOfNodes, DEFAULT_SETTINGS);
         this.systemKey = systemKey;
         this.parentFolder = parentFolder;
@@ -160,7 +161,8 @@ public class ShieldSettingsSource extends ClusterDiscoveryConfiguration.UnicastZ
         if (randomBoolean()) {
             builder.put("shield.user", transportClientUsername() + ":" + new String(transportClientPassword().internalChars()));
         } else {
-            builder.put(ThreadContext.PREFIX + ".Authorization", basicAuthHeaderValue(transportClientUsername(), transportClientPassword()));
+            builder.put(ThreadContext.PREFIX + ".Authorization", basicAuthHeaderValue(transportClientUsername(),
+                    transportClientPassword()));
         }
         return builder.build();
     }
@@ -220,11 +222,13 @@ public class ShieldSettingsSource extends ClusterDiscoveryConfiguration.UnicastZ
     }
 
     public Settings getNodeSSLSettings() {
-        return getSSLSettingsForStore("/org/elasticsearch/shield/transport/ssl/certs/simple/testnode.jks", "testnode", sslTransportEnabled, hostnameVerificationEnabled, hostnameVerificationResolveNameEnabled);
+        return getSSLSettingsForStore("/org/elasticsearch/shield/transport/ssl/certs/simple/testnode.jks", "testnode",
+                sslTransportEnabled, hostnameVerificationEnabled, hostnameVerificationResolveNameEnabled);
     }
 
     public Settings getClientSSLSettings() {
-        return getSSLSettingsForStore("/org/elasticsearch/shield/transport/ssl/certs/simple/testclient.jks", "testclient", sslTransportEnabled, hostnameVerificationEnabled, hostnameVerificationResolveNameEnabled);
+        return getSSLSettingsForStore("/org/elasticsearch/shield/transport/ssl/certs/simple/testclient.jks", "testclient",
+                sslTransportEnabled, hostnameVerificationEnabled, hostnameVerificationResolveNameEnabled);
     }
 
     /**
@@ -238,7 +242,8 @@ public class ShieldSettingsSource extends ClusterDiscoveryConfiguration.UnicastZ
         return getSSLSettingsForStore(resourcePathToStore, password, true, true, true);
     }
 
-    private static Settings getSSLSettingsForStore(String resourcePathToStore, String password, boolean sslTransportEnabled, boolean hostnameVerificationEnabled, boolean hostnameVerificationResolveNameEnabled) {
+    private static Settings getSSLSettingsForStore(String resourcePathToStore, String password, boolean sslTransportEnabled,
+                                                   boolean hostnameVerificationEnabled, boolean hostnameVerificationResolveNameEnabled) {
         Path store;
         try {
             store = PathUtils.get(ShieldSettingsSource.class.getResource(resourcePathToStore).toURI());

@@ -27,11 +27,9 @@ import org.elasticsearch.common.network.NetworkModule;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.TransportAddress;
 import org.elasticsearch.http.HttpServerTransport;
-import org.elasticsearch.node.Node;
 import org.elasticsearch.shield.ssl.ClientSSLService;
 import org.elasticsearch.shield.transport.netty.ShieldNettyHttpServerTransport;
 import org.elasticsearch.test.ShieldIntegTestCase;
-import org.elasticsearch.test.ShieldSettingsSource;
 import org.elasticsearch.test.rest.client.http.HttpRequestBuilder;
 import org.elasticsearch.test.rest.client.http.HttpResponse;
 import org.elasticsearch.transport.Transport;
@@ -44,6 +42,7 @@ import java.nio.file.Path;
 
 import static org.elasticsearch.common.settings.Settings.settingsBuilder;
 import static org.elasticsearch.shield.authc.support.UsernamePasswordToken.basicAuthHeaderValue;
+import static org.elasticsearch.test.ShieldSettingsSource.getSSLSettingsForStore;
 import static org.hamcrest.Matchers.containsString;
 
 public class SslClientAuthTests extends ShieldIntegTestCase {
@@ -85,7 +84,9 @@ public class SslClientAuthTests extends ShieldIntegTestCase {
     }
 
     public void testThatHttpWorksWithSslClientAuth() throws IOException {
-        Settings settings = settingsBuilder().put(ShieldSettingsSource.getSSLSettingsForStore("/org/elasticsearch/shield/transport/ssl/certs/simple/testclient.jks", "testclient")).build();
+        Settings settings = settingsBuilder()
+                .put(getSSLSettingsForStore("/org/elasticsearch/shield/transport/ssl/certs/simple/testclient.jks", "testclient"))
+                .build();
         ClientSSLService sslService = new ClientSSLService(settings);
 
         SSLConnectionSocketFactory socketFactory = new SSLConnectionSocketFactory(

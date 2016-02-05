@@ -26,7 +26,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
 /**
  * A supporting base class for injectable Licensee components.
  */
-public abstract class AbstractLicenseeComponent<T extends AbstractLicenseeComponent<T>> extends AbstractLifecycleComponent<T> implements Licensee {
+public abstract class AbstractLicenseeComponent<T extends AbstractLicenseeComponent<T>> extends AbstractLifecycleComponent<T>
+        implements Licensee {
 
     private final String id;
     private final LicenseeRegistry clientService;

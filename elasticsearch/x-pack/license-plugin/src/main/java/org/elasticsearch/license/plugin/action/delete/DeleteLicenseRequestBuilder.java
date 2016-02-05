@@ -19,7 +19,8 @@ package org.elasticsearch.license.plugin.action.delete;
 import org.elasticsearch.action.support.master.AcknowledgedRequestBuilder;
 import org.elasticsearch.client.ElasticsearchClient;
 
-public class DeleteLicenseRequestBuilder extends AcknowledgedRequestBuilder<DeleteLicenseRequest, DeleteLicenseResponse, DeleteLicenseRequestBuilder> {
+public class DeleteLicenseRequestBuilder extends AcknowledgedRequestBuilder<DeleteLicenseRequest, DeleteLicenseResponse,
+        DeleteLicenseRequestBuilder> {
 
     /**
      * Creates new get licenses request builder

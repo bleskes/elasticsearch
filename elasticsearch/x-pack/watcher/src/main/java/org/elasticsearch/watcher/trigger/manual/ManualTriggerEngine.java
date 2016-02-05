@@ -31,12 +31,12 @@ import static org.elasticsearch.watcher.support.Exceptions.illegalArgument;
 
 /**
  */
-public class ManualTriggerEngine implements TriggerEngine<ManualTrigger,ManualTriggerEvent> {
+public class ManualTriggerEngine implements TriggerEngine<ManualTrigger, ManualTriggerEvent> {
 
     static final String TYPE = "manual";
 
     @Inject
-    public ManualTriggerEngine(){
+    public ManualTriggerEngine() {
     }
 
     @Override
@@ -91,7 +91,8 @@ public class ManualTriggerEngine implements TriggerEngine<ManualTrigger,ManualTr
     }
 
     @Override
-    public ManualTriggerEvent parseTriggerEvent(TriggerService service, String watchId, String context, XContentParser parser) throws IOException {
+    public ManualTriggerEvent parseTriggerEvent(TriggerService service, String watchId, String context, XContentParser parser) throws
+            IOException {
         return ManualTriggerEvent.parse(service, watchId, context, parser);
     }
 }

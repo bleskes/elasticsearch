@@ -90,7 +90,8 @@ import java.util.concurrent.atomic.AtomicReference;
  * Registered listeners are notified using {@link #notifyAndSchedule(LicensesMetaData)}
  */
 @Singleton
-public class LicensesService extends AbstractLifecycleComponent<LicensesService> implements ClusterStateListener, LicensesManagerService, LicenseeRegistry {
+public class LicensesService extends AbstractLifecycleComponent<LicensesService> implements ClusterStateListener, LicensesManagerService,
+        LicenseeRegistry {
 
     public static final String REGISTER_TRIAL_LICENSE_ACTION_NAME = "internal:plugin/license/cluster/register_trial_license";
 
@@ -142,7 +143,8 @@ public class LicensesService extends AbstractLifecycleComponent<LicensesService>
 
     private static final FormatDateTimeFormatter DATE_FORMATTER = Joda.forPattern("EEEE, MMMMM dd, yyyy", Locale.ROOT);
 
-    private static final String ACKNOWLEDGEMENT_HEADER = "This license update requires acknowledgement. To acknowledge the license, please read the following messages and update the license again, this time with the \"acknowledge=true\" parameter:";
+    private static final String ACKNOWLEDGEMENT_HEADER = "This license update requires acknowledgement. To acknowledge the license, " +
+            "please read the following messages and update the license again, this time with the \"acknowledge=true\" parameter:";
 
     @Inject
     public LicensesService(Settings settings, ClusterService clusterService, ThreadPool threadPool, TransportService transportService) {
@@ -159,98 +161,100 @@ public class LicensesService extends AbstractLifecycleComponent<LicensesService>
 
     private void populateExpirationCallbacks() {
         expirationCallbacks.add(new ExpirationCallback.Pre(days(7), days(30), days(1)) {
-                    @Override
-                    public void on(License license) {
-                        String general = LoggerMessageFormat.format(null, "\n" +
-                                "#\n" +
-                                "# License will expire on [{}]. If you have a new license, please update it.\n" +
-                                "# Otherwise, please reach out to your support contact.\n" +
-                                "# ", DATE_FORMATTER.printer().print(license.expiryDate()));
-                        if (!registeredLicensees.isEmpty()) {
-                            StringBuilder builder = new StringBuilder(general);
-                            builder.append(System.lineSeparator());
-                            builder.append("# Commercial plugins operate with reduced functionality on license expiration:");
-                            for (InternalLicensee licensee : registeredLicensees) {
-                                if (licensee.expirationMessages().length > 0) {
-                                    builder.append(System.lineSeparator());
-                                    builder.append("# - ");
-                                    builder.append(licensee.id());
-                                    for (String message : licensee.expirationMessages()) {
-                                        builder.append(System.lineSeparator());
-                                        builder.append("#  - ");
-                                        builder.append(message);
+                                    @Override
+                                    public void on(License license) {
+                                        String general = LoggerMessageFormat.format(null, "\n" +
+                                                "#\n" +
+                                                "# License will expire on [{}]. If you have a new license, please update it.\n" +
+                                                "# Otherwise, please reach out to your support contact.\n" +
+                                                "# ", DATE_FORMATTER.printer().print(license.expiryDate()));
+                                        if (!registeredLicensees.isEmpty()) {
+                                            StringBuilder builder = new StringBuilder(general);
+                                            builder.append(System.lineSeparator());
+                                            builder.append("# Commercial plugins operate with reduced functionality on license " +
+                                                    "expiration:");
+                                            for (InternalLicensee licensee : registeredLicensees) {
+                                                if (licensee.expirationMessages().length > 0) {
+                                                    builder.append(System.lineSeparator());
+                                                    builder.append("# - ");
+                                                    builder.append(licensee.id());
+                                                    for (String message : licensee.expirationMessages()) {
+                                                        builder.append(System.lineSeparator());
+                                                        builder.append("#  - ");
+                                                        builder.append(message);
+                                                    }
+                                                }
+                                            }
+                                            logger.error(builder.toString());
+                                        } else {
+                                            logger.error(general);
+                                        }
                                     }
                                 }
-                            }
-                            logger.error(builder.toString());
-                        } else {
-                            logger.error(general);
-                        }
-                    }
-                }
         );
         expirationCallbacks.add(new ExpirationCallback.Pre(days(0), days(7), TimeValue.timeValueMinutes(10)) {
-                    @Override
-                    public void on(License license) {
-                        String general = LoggerMessageFormat.format(null, "\n" +
-                                "#\n" +
-                                "# License will expire on [{}]. If you have a new license, please update it.\n" +
-                                "# Otherwise, please reach out to your support contact.\n" +
-                                "# ", DATE_FORMATTER.printer().print(license.expiryDate()));
-                        if (!registeredLicensees.isEmpty()) {
-                            StringBuilder builder = new StringBuilder(general);
-                            builder.append(System.lineSeparator());
-                            builder.append("# Commercial plugins operate with reduced functionality on license expiration:");
-                            for (InternalLicensee licensee : registeredLicensees) {
-                                if (licensee.expirationMessages().length > 0) {
-                                    builder.append(System.lineSeparator());
-                                    builder.append("# - ");
-                                    builder.append(licensee.id());
-                                    for (String message : licensee.expirationMessages()) {
-                                        builder.append(System.lineSeparator());
-                                        builder.append("#  - ");
-                                        builder.append(message);
+                                    @Override
+                                    public void on(License license) {
+                                        String general = LoggerMessageFormat.format(null, "\n" +
+                                                "#\n" +
+                                                "# License will expire on [{}]. If you have a new license, please update it.\n" +
+                                                "# Otherwise, please reach out to your support contact.\n" +
+                                                "# ", DATE_FORMATTER.printer().print(license.expiryDate()));
+                                        if (!registeredLicensees.isEmpty()) {
+                                            StringBuilder builder = new StringBuilder(general);
+                                            builder.append(System.lineSeparator());
+                                            builder.append("# Commercial plugins operate with reduced functionality on license " +
+                                                    "expiration:");
+                                            for (InternalLicensee licensee : registeredLicensees) {
+                                                if (licensee.expirationMessages().length > 0) {
+                                                    builder.append(System.lineSeparator());
+                                                    builder.append("# - ");
+                                                    builder.append(licensee.id());
+                                                    for (String message : licensee.expirationMessages()) {
+                                                        builder.append(System.lineSeparator());
+                                                        builder.append("#  - ");
+                                                        builder.append(message);
+                                                    }
+                                                }
+                                            }
+                                            logger.error(builder.toString());
+                                        } else {
+                                            logger.error(general);
+                                        }
                                     }
                                 }
-                            }
-                            logger.error(builder.toString());
-                        } else {
-                            logger.error(general);
-                        }
-                    }
-                }
         );
         expirationCallbacks.add(new ExpirationCallback.Post(days(0), null, TimeValue.timeValueMinutes(10)) {
-                    @Override
-                    public void on(License license) {
-                        // logged when grace period begins
-                        String general = LoggerMessageFormat.format(null, "\n" +
-                                "#\n" +
-                                "# LICENSE EXPIRED ON [{}]. IF YOU HAVE A NEW LICENSE, PLEASE\n" +
-                                "# UPDATE IT. OTHERWISE, PLEASE REACH OUT TO YOUR SUPPORT CONTACT.\n" +
-                                "# ", DATE_FORMATTER.printer().print(license.expiryDate()));
-                        if (!registeredLicensees.isEmpty()) {
-                            StringBuilder builder = new StringBuilder(general);
-                            builder.append(System.lineSeparator());
-                            builder.append("# COMMERCIAL PLUGINS OPERATING WITH REDUCED FUNCTIONALITY");
-                            for (InternalLicensee licensee : registeredLicensees) {
-                                if (licensee.expirationMessages().length > 0) {
-                                    builder.append(System.lineSeparator());
-                                    builder.append("# - ");
-                                    builder.append(licensee.id());
-                                    for (String message : licensee.expirationMessages()) {
-                                        builder.append(System.lineSeparator());
-                                        builder.append("#  - ");
-                                        builder.append(message);
+                                    @Override
+                                    public void on(License license) {
+                                        // logged when grace period begins
+                                        String general = LoggerMessageFormat.format(null, "\n" +
+                                                "#\n" +
+                                                "# LICENSE EXPIRED ON [{}]. IF YOU HAVE A NEW LICENSE, PLEASE\n" +
+                                                "# UPDATE IT. OTHERWISE, PLEASE REACH OUT TO YOUR SUPPORT CONTACT.\n" +
+                                                "# ", DATE_FORMATTER.printer().print(license.expiryDate()));
+                                        if (!registeredLicensees.isEmpty()) {
+                                            StringBuilder builder = new StringBuilder(general);
+                                            builder.append(System.lineSeparator());
+                                            builder.append("# COMMERCIAL PLUGINS OPERATING WITH REDUCED FUNCTIONALITY");
+                                            for (InternalLicensee licensee : registeredLicensees) {
+                                                if (licensee.expirationMessages().length > 0) {
+                                                    builder.append(System.lineSeparator());
+                                                    builder.append("# - ");
+                                                    builder.append(licensee.id());
+                                                    for (String message : licensee.expirationMessages()) {
+                                                        builder.append(System.lineSeparator());
+                                                        builder.append("#  - ");
+                                                        builder.append(message);
+                                                    }
+                                                }
+                                            }
+                                            logger.error(builder.toString());
+                                        } else {
+                                            logger.error(general);
+                                        }
                                     }
                                 }
-                            }
-                            logger.error(builder.toString());
-                        } else {
-                            logger.error(general);
-                        }
-                    }
-                }
         );
     }
 
@@ -270,10 +274,12 @@ public class LicensesService extends AbstractLifecycleComponent<LicensesService>
                 final LicensesMetaData currentMetaData = clusterService.state().metaData().custom(LicensesMetaData.TYPE);
                 final License currentLicense = getLicense(currentMetaData);
                 Map<String, String[]> acknowledgeMessages = new HashMap<>(registeredLicensees.size() + 1);
-                if (currentLicense != null && !License.isAutoGeneratedLicense(currentLicense.signature()) // when current license is not an auto-generated license
+                if (currentLicense != null && !License.isAutoGeneratedLicense(currentLicense.signature()) // when current license is not
+                        // an auto-generated license
                         && currentLicense.issueDate() > newLicense.issueDate()) { // and has a later issue date
                     acknowledgeMessages.put("license",
-                            new String[] { "The new license is older than the currently installed license. Are you sure you want to override the current license?" });
+                            new String[]{"The new license is older than the currently installed license. Are you sure you want to " +
+                                    "override the current license?"});
                 }
                 for (InternalLicensee licensee : registeredLicensees) {
                     String[] listenerAcknowledgeMessages = licensee.acknowledgmentMessages(currentLicense, newLicense);
@@ -283,11 +289,13 @@ public class LicensesService extends AbstractLifecycleComponent<LicensesService>
                 }
                 if (!acknowledgeMessages.isEmpty()) {
                     // needs acknowledgement
-                    listener.onResponse(new LicensesUpdateResponse(false, LicensesStatus.VALID, ACKNOWLEDGEMENT_HEADER, acknowledgeMessages));
+                    listener.onResponse(new LicensesUpdateResponse(false, LicensesStatus.VALID, ACKNOWLEDGEMENT_HEADER,
+                            acknowledgeMessages));
                     return;
                 }
             }
-            clusterService.submitStateUpdateTask("register license [" + newLicense.uid() + "]", new AckedClusterStateUpdateTask<LicensesUpdateResponse>(request, listener) {
+            clusterService.submitStateUpdateTask("register license [" + newLicense.uid() + "]", new
+                    AckedClusterStateUpdateTask<LicensesUpdateResponse>(request, listener) {
                 @Override
                 protected LicensesUpdateResponse newResponse(boolean acknowledged) {
                     return new LicensesUpdateResponse(acknowledged, LicensesStatus.VALID);
@@ -328,7 +336,8 @@ public class LicensesService extends AbstractLifecycleComponent<LicensesService>
             this(acknowledged, status, null, Collections.<String, String[]>emptyMap());
         }
 
-        public LicensesUpdateResponse(boolean acknowledged, LicensesStatus status, String acknowledgementHeader, Map<String, String[]> acknowledgeMessages) {
+        public LicensesUpdateResponse(boolean acknowledged, LicensesStatus status, String acknowledgementHeader,
+                                      Map<String, String[]> acknowledgeMessages) {
             super(acknowledged);
             this.status = status;
             this.acknowledgeMessages = acknowledgeMessages;
@@ -352,7 +361,8 @@ public class LicensesService extends AbstractLifecycleComponent<LicensesService>
      * Remove license from the cluster state metadata
      */
     public void removeLicense(final DeleteLicenseRequest request, final ActionListener<ClusterStateUpdateResponse> listener) {
-        clusterService.submitStateUpdateTask("delete license", new AckedClusterStateUpdateTask<ClusterStateUpdateResponse>(request, listener) {
+        clusterService.submitStateUpdateTask("delete license",
+                new AckedClusterStateUpdateTask<ClusterStateUpdateResponse>(request, listener) {
             @Override
             protected ClusterStateUpdateResponse newResponse(boolean acknowledged) {
                 return new ClusterStateUpdateResponse(acknowledged);
@@ -575,7 +585,8 @@ public class LicensesService extends AbstractLifecycleComponent<LicensesService>
                         logger.debug("schedule [{}] after [{}]", expirationCallback, delay);
                     }
                 }
-                logger.debug("scheduled expiry callbacks for [{}] expiring after [{}]", license.uid(), TimeValue.timeValueMillis(expiryDuration));
+                logger.debug("scheduled expiry callbacks for [{}] expiring after [{}]", license.uid(),
+                        TimeValue.timeValueMillis(expiryDuration));
             }
         }
     }
@@ -636,15 +647,15 @@ public class LicensesService extends AbstractLifecycleComponent<LicensesService>
 
     public static abstract class ExpirationCallback {
 
-        public enum Orientation { PRE, POST }
+        public enum Orientation {PRE, POST}
 
         public static abstract class Pre extends ExpirationCallback {
 
             /**
              * Callback schedule prior to license expiry
              *
-             * @param min latest relative time to execute before license expiry
-             * @param max earliest relative time to execute before license expiry
+             * @param min       latest relative time to execute before license expiry
+             * @param max       earliest relative time to execute before license expiry
              * @param frequency interval between execution
              */
             public Pre(TimeValue min, TimeValue max, TimeValue frequency) {
@@ -673,8 +684,8 @@ public class LicensesService extends AbstractLifecycleComponent<LicensesService>
             /**
              * Callback schedule after license expiry
              *
-             * @param min earliest relative time to execute after license expiry
-             * @param max latest relative time to execute after license expiry
+             * @param min       earliest relative time to execute after license expiry
+             * @param max       latest relative time to execute after license expiry
              * @param frequency interval between execution
              */
             public Post(TimeValue min, TimeValue max, TimeValue frequency) {
@@ -696,9 +707,9 @@ public class LicensesService extends AbstractLifecycleComponent<LicensesService>
             public TimeValue delay(long expiryDuration) {
                 final long delay;
                 if (expiryDuration >= 0L) {
-                     delay = expiryDuration + min.getMillis();
+                    delay = expiryDuration + min.getMillis();
                 } else {
-                     delay = (-1L * expiryDuration) - min.getMillis();
+                    delay = (-1L * expiryDuration) - min.getMillis();
                 }
                 if (delay > 0L) {
                     return TimeValue.timeValueMillis(delay);
@@ -732,7 +743,8 @@ public class LicensesService extends AbstractLifecycleComponent<LicensesService>
 
         @Override
         public String toString() {
-            return LoggerMessageFormat.format(null, "ExpirationCallback:(orientation [{}],  min [{}], max [{}], freq [{}])", orientation.name(), min, max, frequency);
+            return LoggerMessageFormat.format(null, "ExpirationCallback:(orientation [{}],  min [{}], max [{}], freq [{}])",
+                    orientation.name(), min, max, frequency);
         }
     }
 
@@ -862,10 +874,12 @@ public class LicensesService extends AbstractLifecycleComponent<LicensesService>
     public void setGracePeriodDuration(TimeValue gracePeriodDuration) {
         this.gracePeriodDuration = gracePeriodDuration;
     }
+
     // only for adding expiration callbacks for tests
     public void setExpirationCallbacks(List<ExpirationCallback> expirationCallbacks) {
         this.expirationCallbacks = expirationCallbacks;
     }
+
     // TODO - temporary hack for tests, should be removed once we introduce `ClockMock`
     public void setTrialLicenseDuration(TimeValue trialLicenseDuration) {
         this.trialLicenseDuration = trialLicenseDuration;

@@ -112,7 +112,8 @@ public class LdapSessionFactoryTests extends LdapTestCase {
                 "wrongname={0},ou=people,o=sevenSeas",
                 "cn={0},ou=people,o=sevenSeas", //this last one should work
         };
-        RealmConfig config = new RealmConfig("ldap_realm", buildLdapSettings(ldapUrls(), userTemplates, groupSearchBase, LdapSearchScope.SUB_TREE), globalSettings);
+        RealmConfig config = new RealmConfig("ldap_realm", buildLdapSettings(ldapUrls(), userTemplates, groupSearchBase,
+                LdapSearchScope.SUB_TREE), globalSettings);
 
         LdapSessionFactory sessionFactory = new LdapSessionFactory(config, null);
 
@@ -132,7 +133,8 @@ public class LdapSessionFactoryTests extends LdapTestCase {
                 "wrongname={0},ou=people,o=sevenSeas",
                 "asdf={0},ou=people,o=sevenSeas", //none of these should work
         };
-        RealmConfig config = new RealmConfig("ldap_realm", buildLdapSettings(ldapUrls(), userTemplates, groupSearchBase, LdapSearchScope.SUB_TREE), globalSettings);
+        RealmConfig config = new RealmConfig("ldap_realm", buildLdapSettings(ldapUrls(), userTemplates, groupSearchBase,
+                LdapSearchScope.SUB_TREE), globalSettings);
 
         LdapSessionFactory ldapFac = new LdapSessionFactory(config, null);
 
@@ -148,7 +150,8 @@ public class LdapSessionFactoryTests extends LdapTestCase {
     public void testGroupLookupSubtree() throws Exception {
         String groupSearchBase = "o=sevenSeas";
         String userTemplate = "cn={0},ou=people,o=sevenSeas";
-        RealmConfig config = new RealmConfig("ldap_realm", buildLdapSettings(ldapUrls(), userTemplate, groupSearchBase, LdapSearchScope.SUB_TREE), globalSettings);
+        RealmConfig config = new RealmConfig("ldap_realm", buildLdapSettings(ldapUrls(), userTemplate, groupSearchBase,
+                LdapSearchScope.SUB_TREE), globalSettings);
 
         LdapSessionFactory ldapFac = new LdapSessionFactory(config, null);
 
@@ -164,7 +167,8 @@ public class LdapSessionFactoryTests extends LdapTestCase {
     public void testGroupLookupOneLevel() throws Exception {
         String groupSearchBase = "ou=crews,ou=groups,o=sevenSeas";
         String userTemplate = "cn={0},ou=people,o=sevenSeas";
-        RealmConfig config = new RealmConfig("ldap_realm", buildLdapSettings(ldapUrls(), userTemplate, groupSearchBase, LdapSearchScope.ONE_LEVEL), globalSettings);
+        RealmConfig config = new RealmConfig("ldap_realm", buildLdapSettings(ldapUrls(), userTemplate, groupSearchBase,
+                LdapSearchScope.ONE_LEVEL), globalSettings);
 
         LdapSessionFactory ldapFac = new LdapSessionFactory(config, null);
 
@@ -178,7 +182,8 @@ public class LdapSessionFactoryTests extends LdapTestCase {
     public void testGroupLookupBase() throws Exception {
         String groupSearchBase = "cn=HMS Lydia,ou=crews,ou=groups,o=sevenSeas";
         String userTemplate = "cn={0},ou=people,o=sevenSeas";
-        RealmConfig config = new RealmConfig("ldap_realm", buildLdapSettings(ldapUrls(), userTemplate, groupSearchBase, LdapSearchScope.BASE), globalSettings);
+        RealmConfig config = new RealmConfig("ldap_realm", buildLdapSettings(ldapUrls(), userTemplate, groupSearchBase,
+                LdapSearchScope.BASE), globalSettings);
 
         LdapSessionFactory ldapFac = new LdapSessionFactory(config, null);
 

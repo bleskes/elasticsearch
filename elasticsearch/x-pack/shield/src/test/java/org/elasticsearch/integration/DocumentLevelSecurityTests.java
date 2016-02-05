@@ -114,7 +114,8 @@ public class DocumentLevelSecurityTests extends ShieldIntegTestCase {
                 .setRefresh(true)
                 .get();
 
-        SearchResponse response = client().filterWithHeader(Collections.singletonMap(BASIC_AUTH_HEADER, basicAuthHeaderValue("user1", USERS_PASSWD)))
+        SearchResponse response = client()
+                .filterWithHeader(Collections.singletonMap(BASIC_AUTH_HEADER, basicAuthHeaderValue("user1", USERS_PASSWD)))
                 .prepareSearch("test")
                 .setQuery(randomBoolean() ? QueryBuilders.termQuery("field1", "value1") : QueryBuilders.matchAllQuery())
                 .get();
@@ -139,7 +140,8 @@ public class DocumentLevelSecurityTests extends ShieldIntegTestCase {
                 .get();
 
         Boolean realtime = randomFrom(true, false, null);
-        GetResponse response = client().filterWithHeader(Collections.singletonMap(BASIC_AUTH_HEADER, basicAuthHeaderValue("user1", USERS_PASSWD)))
+        GetResponse response = client()
+                .filterWithHeader(Collections.singletonMap(BASIC_AUTH_HEADER, basicAuthHeaderValue("user1", USERS_PASSWD)))
                 .prepareGet("test", "type1", "1")
                 .setRealtime(realtime)
                 .setRefresh(true)
@@ -179,7 +181,8 @@ public class DocumentLevelSecurityTests extends ShieldIntegTestCase {
                 .get();
 
         Boolean realtime = randomFrom(true, false, null);
-        MultiGetResponse response = client().filterWithHeader(Collections.singletonMap(BASIC_AUTH_HEADER, basicAuthHeaderValue("user1", USERS_PASSWD)))
+        MultiGetResponse response = client()
+                .filterWithHeader(Collections.singletonMap(BASIC_AUTH_HEADER, basicAuthHeaderValue("user1", USERS_PASSWD)))
                 .prepareMultiGet()
                 .add("test", "type1", "1")
                 .setRealtime(realtime)
@@ -220,7 +223,8 @@ public class DocumentLevelSecurityTests extends ShieldIntegTestCase {
 
     public void testTVApi() throws Exception {
         assertAcked(client().admin().indices().prepareCreate("test")
-                        .addMapping("type1", "field1", "type=string,term_vector=with_positions_offsets_payloads", "field2", "type=string,term_vector=with_positions_offsets_payloads")
+                        .addMapping("type1", "field1", "type=string,term_vector=with_positions_offsets_payloads",
+                                "field2", "type=string,term_vector=with_positions_offsets_payloads")
         );
         client().prepareIndex("test", "type1", "1").setSource("field1", "value1")
                 .setRefresh(true)
@@ -230,7 +234,8 @@ public class DocumentLevelSecurityTests extends ShieldIntegTestCase {
                 .get();
 
         Boolean realtime = randomFrom(true, false, null);
-        TermVectorsResponse response = client().filterWithHeader(Collections.singletonMap(BASIC_AUTH_HEADER, basicAuthHeaderValue("user1", USERS_PASSWD)))
+        TermVectorsResponse response = client()
+                .filterWithHeader(Collections.singletonMap(BASIC_AUTH_HEADER, basicAuthHeaderValue("user1", USERS_PASSWD)))
                 .prepareTermVectors("test", "type1", "1")
                 .setRealtime(realtime)
                 .get();
@@ -259,7 +264,8 @@ public class DocumentLevelSecurityTests extends ShieldIntegTestCase {
 
     public void testMTVApi() throws Exception {
         assertAcked(client().admin().indices().prepareCreate("test")
-                        .addMapping("type1", "field1", "type=string,term_vector=with_positions_offsets_payloads", "field2", "type=string,term_vector=with_positions_offsets_payloads")
+                        .addMapping("type1", "field1", "type=string,term_vector=with_positions_offsets_payloads",
+                                "field2", "type=string,term_vector=with_positions_offsets_payloads")
         );
         client().prepareIndex("test", "type1", "1").setSource("field1", "value1")
                 .setRefresh(true)
@@ -269,7 +275,8 @@ public class DocumentLevelSecurityTests extends ShieldIntegTestCase {
                 .get();
 
         Boolean realtime = randomFrom(true, false, null);
-        MultiTermVectorsResponse response = client().filterWithHeader(Collections.singletonMap(BASIC_AUTH_HEADER, basicAuthHeaderValue("user1", USERS_PASSWD)))
+        MultiTermVectorsResponse response = client()
+                .filterWithHeader(Collections.singletonMap(BASIC_AUTH_HEADER, basicAuthHeaderValue("user1", USERS_PASSWD)))
                 .prepareMultiTermVectors()
                 .add(new TermVectorsRequest("test", "type1", "1").realtime(realtime))
                 .get();
@@ -441,7 +448,8 @@ public class DocumentLevelSecurityTests extends ShieldIntegTestCase {
                 .get();
 
         // Percolator without a query just evaluates all percolator queries that are loaded, so we have a match:
-        PercolateResponse response = client().filterWithHeader(Collections.singletonMap(BASIC_AUTH_HEADER, basicAuthHeaderValue("user1", USERS_PASSWD)))
+        PercolateResponse response = client()
+                .filterWithHeader(Collections.singletonMap(BASIC_AUTH_HEADER, basicAuthHeaderValue("user1", USERS_PASSWD)))
                 .preparePercolate()
                 .setDocumentType("type")
                 .setPercolateDoc(new PercolateSourceBuilder.DocBuilder().setDoc("{}"))
@@ -449,7 +457,8 @@ public class DocumentLevelSecurityTests extends ShieldIntegTestCase {
         assertThat(response.getCount(), equalTo(1L));
         assertThat(response.getMatches()[0].getId().string(), equalTo("1"));
 
-        // Percolator with a query on a document that the current user can see. Percolator will have one query to evaluate, so there is a match:
+        // Percolator with a query on a document that the current user can see. Percolator will have one query to evaluate, so there is a
+        // match:
         response = client().filterWithHeader(Collections.singletonMap(BASIC_AUTH_HEADER, basicAuthHeaderValue("user1", USERS_PASSWD)))
                 .preparePercolate()
                 .setDocumentType("type")
@@ -459,7 +468,8 @@ public class DocumentLevelSecurityTests extends ShieldIntegTestCase {
         assertThat(response.getCount(), equalTo(1L));
         assertThat(response.getMatches()[0].getId().string(), equalTo("1"));
 
-        // Percolator with a query on a document that the current user can't see. Percolator will not have queries to evaluate, so there is no match:
+        // Percolator with a query on a document that the current user can't see. Percolator will not have queries to evaluate, so there
+        // is no match:
         response = client().filterWithHeader(Collections.singletonMap(BASIC_AUTH_HEADER, basicAuthHeaderValue("user2", USERS_PASSWD)))
                 .preparePercolate()
                 .setDocumentType("type")
@@ -496,7 +506,8 @@ public class DocumentLevelSecurityTests extends ShieldIntegTestCase {
         int max = scaledRandomIntBetween(4, 32);
         for (int i = 0; i < max; i++) {
             Boolean requestCache = randomFrom(true, null);
-            SearchResponse response = client().filterWithHeader(Collections.singletonMap(BASIC_AUTH_HEADER, basicAuthHeaderValue("user1", USERS_PASSWD)))
+            SearchResponse response = client()
+                    .filterWithHeader(Collections.singletonMap(BASIC_AUTH_HEADER, basicAuthHeaderValue("user1", USERS_PASSWD)))
                     .prepareSearch("test")
                     .setSize(0)
                     .setQuery(termQuery("field1", "value1"))
@@ -549,7 +560,8 @@ public class DocumentLevelSecurityTests extends ShieldIntegTestCase {
             fail("failed, because bulk request with updates shouldn't be allowed if field or document level security is enabled");
         } catch (ElasticsearchSecurityException e) {
             assertThat(e.status(), equalTo(RestStatus.BAD_REQUEST));
-            assertThat(e.getMessage(), equalTo("Can't execute an bulk request with update requests embedded if field or document level security is enabled"));
+            assertThat(e.getMessage(),
+                    equalTo("Can't execute an bulk request with update requests embedded if field or document level security is enabled"));
         }
         assertThat(client().prepareGet("test", "type", "1").get().getSource().get("field1").toString(), equalTo("value2"));
 

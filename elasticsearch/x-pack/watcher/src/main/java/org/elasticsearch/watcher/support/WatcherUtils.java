@@ -72,7 +72,8 @@ public final class WatcherUtils {
         return XContentHelper.convertToMap(builder.bytes(), false).v2();
     }
 
-    public static SearchRequest createSearchRequestFromPrototype(SearchRequest requestPrototype, WatchExecutionContext ctx, Payload payload) throws IOException {
+    public static SearchRequest createSearchRequestFromPrototype(SearchRequest requestPrototype, WatchExecutionContext ctx,
+                                                                 Payload payload) throws IOException {
         SearchRequest request = new SearchRequest()
                 .indicesOptions(requestPrototype.indicesOptions())
                 .searchType(requestPrototype.searchType())
@@ -130,7 +131,8 @@ public final class WatcherUtils {
                         if (token == XContentParser.Token.VALUE_STRING) {
                             indices.add(parser.textOrNull());
                         } else {
-                            throw new ElasticsearchParseException("could not read search request. expected string values in [" + currentFieldName + "] field, but instead found [" + token + "]");
+                            throw new ElasticsearchParseException("could not read search request. expected string values in [" +
+                                    currentFieldName + "] field, but instead found [" + token + "]");
                         }
                     }
                     searchRequest.indices(indices.toArray(new String[indices.size()]));
@@ -140,12 +142,14 @@ public final class WatcherUtils {
                         if (token == XContentParser.Token.VALUE_STRING) {
                             types.add(parser.textOrNull());
                         } else {
-                            throw new ElasticsearchParseException("could not read search request. expected string values in [" + currentFieldName + "] field, but instead found [" + token + "]");
+                            throw new ElasticsearchParseException("could not read search request. expected string values in [" +
+                                    currentFieldName + "] field, but instead found [" + token + "]");
                         }
                     }
                     searchRequest.types(types.toArray(new String[types.size()]));
                 } else {
-                    throw new ElasticsearchParseException("could not read search request. unexpected array field [" + currentFieldName + "]");
+                    throw new ElasticsearchParseException("could not read search request. unexpected array field [" +
+                            currentFieldName + "]");
                 }
             } else if (token == XContentParser.Token.START_OBJECT) {
                 if (ParseFieldMatcher.STRICT.match(currentFieldName, INDICES_OPTIONS_FIELD)) {
@@ -176,25 +180,30 @@ public final class WatcherUtils {
                                         expandClosed = false;
                                         break;
                                     default:
-                                        throw new ElasticsearchParseException("could not read search request. unknown value [" + parser.text() + "] for [" + currentFieldName + "] field ");
+                                        throw new ElasticsearchParseException("could not read search request. unknown value [" +
+                                                parser.text() + "] for [" + currentFieldName + "] field ");
                                 }
                             } else if (ParseFieldMatcher.STRICT.match(currentFieldName, IGNORE_UNAVAILABLE_FIELD)) {
                                 ignoreUnavailable = parser.booleanValue();
                             } else if (ParseFieldMatcher.STRICT.match(currentFieldName, ALLOW_NO_INDICES_FIELD)) {
                                 allowNoIndices = parser.booleanValue();
                             } else {
-                                throw new ElasticsearchParseException("could not read search request. unexpected index option [" + currentFieldName + "]");
+                                throw new ElasticsearchParseException("could not read search request. unexpected index option [" +
+                                        currentFieldName + "]");
                             }
                         } else {
-                            throw new ElasticsearchParseException("could not read search request. unexpected object field [" + currentFieldName + "]");
+                            throw new ElasticsearchParseException("could not read search request. unexpected object field [" +
+                                    currentFieldName + "]");
                         }
                     }
-                    indicesOptions = IndicesOptions.fromOptions(ignoreUnavailable, allowNoIndices, expandOpen, expandClosed, DEFAULT_INDICES_OPTIONS);
+                    indicesOptions = IndicesOptions.fromOptions(ignoreUnavailable, allowNoIndices, expandOpen, expandClosed,
+                            DEFAULT_INDICES_OPTIONS);
                 } else if (ParseFieldMatcher.STRICT.match(currentFieldName, TEMPLATE_FIELD)) {
                     Template template = Template.parse(parser, ParseFieldMatcher.STRICT);
                     searchRequest.template(template);
                 } else {
-                    throw new ElasticsearchParseException("could not read search request. unexpected object field [" + currentFieldName + "]");
+                    throw new ElasticsearchParseException("could not read search request. unexpected object field [" +
+                            currentFieldName + "]");
                 }
             } else if (token == XContentParser.Token.VALUE_STRING) {
                 if (ParseFieldMatcher.STRICT.match(currentFieldName, INDICES_FIELD)) {
@@ -206,7 +215,8 @@ public final class WatcherUtils {
                 } else if (ParseFieldMatcher.STRICT.match(currentFieldName, SEARCH_TYPE_FIELD)) {
                     searchType = SearchType.fromString(parser.text().toLowerCase(Locale.ROOT), ParseFieldMatcher.EMPTY);
                 } else {
-                    throw new ElasticsearchParseException("could not read search request. unexpected string field [" + currentFieldName + "]");
+                    throw new ElasticsearchParseException("could not read search request. unexpected string field [" +
+                            currentFieldName + "]");
                 }
             } else {
                 throw new ElasticsearchParseException("could not read search request. unexpected token [" + token + "]");
@@ -224,7 +234,8 @@ public final class WatcherUtils {
     /**
      * Writes the searchRequest to the specified builder.
      */
-    public static XContentBuilder writeSearchRequest(SearchRequest searchRequest, XContentBuilder builder, ToXContent.Params params) throws IOException {
+    public static XContentBuilder writeSearchRequest(SearchRequest searchRequest, XContentBuilder builder,
+                                                     ToXContent.Params params) throws IOException {
         if (searchRequest == null) {
             builder.nullValue();
             return builder;

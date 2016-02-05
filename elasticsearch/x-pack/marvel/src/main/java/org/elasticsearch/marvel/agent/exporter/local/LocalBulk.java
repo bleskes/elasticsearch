@@ -72,7 +72,7 @@ public class LocalBulk extends ExportBulk {
 
             // Get the appropriate renderer in order to render the MarvelDoc
             Renderer renderer = renderers.getRenderer(marvelDoc);
-            assert renderer != null : "unable to render marvel document of type [" + marvelDoc.getType() + "]. no renderer found in registry";
+            assert renderer != null : "unable to render marvel document of type [" + marvelDoc.getType() + "]. no renderer registered";
 
             if (renderer == null) {
                 logger.warn("local exporter [{}] - unable to render marvel document of type [{}]: no renderer found in registry",
@@ -151,8 +151,9 @@ public class LocalBulk extends ExportBulk {
             BulkItemResponse item = items[i];
             if (item.isFailed()) {
                 sb.append("\n[").append(i)
-                        .append("]: index [").append(item.getIndex()).append("], type [").append(item.getType()).append("], id [").append(item.getId())
-                        .append("], message [").append(item.getFailureMessage()).append("]");
+                        .append("]: index [").append(item.getIndex()).append("], type [").append(item.getType())
+                        .append("], id [").append(item.getId()).append("], message [").append(item.getFailureMessage())
+                        .append("]");
             }
         }
         return sb.toString();

@@ -26,7 +26,8 @@ import org.elasticsearch.watcher.support.clock.Clock;
 
 import java.io.IOException;
 
-public class ArrayCompareConditionFactory extends ConditionFactory<ArrayCompareCondition, ArrayCompareCondition.Result, ExecutableArrayCompareCondition> {
+public class ArrayCompareConditionFactory extends ConditionFactory<ArrayCompareCondition, ArrayCompareCondition.Result,
+        ExecutableArrayCompareCondition> {
 
     private final Clock clock;
 

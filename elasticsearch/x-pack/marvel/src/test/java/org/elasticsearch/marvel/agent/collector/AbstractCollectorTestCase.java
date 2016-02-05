@@ -52,6 +52,8 @@ import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
+import static org.elasticsearch.common.unit.TimeValue.timeValueMinutes;
+
 @ClusterScope(scope = ESIntegTestCase.Scope.SUITE, randomDynamicTemplates = false, transportClientRatio = 0.0)
 public class AbstractCollectorTestCase extends MarvelIntegTestCase {
 
@@ -105,7 +107,8 @@ public class AbstractCollectorTestCase extends MarvelIntegTestCase {
                 .maxNodes(Integer.MAX_VALUE)
                 .signature("_signature")
                 .type("trial")
-                .uid(String.valueOf(RandomizedTest.systemPropertyAsInt(SysGlobals.CHILDVM_SYSPROP_JVM_ID, 0)) + System.identityHashCode(AbstractCollectorTestCase.class))
+                .uid(String.valueOf(RandomizedTest.systemPropertyAsInt(SysGlobals.CHILDVM_SYSPROP_JVM_ID, 0)) +
+                        System.identityHashCode(AbstractCollectorTestCase.class))
                 .build();
     }
 
@@ -123,7 +126,7 @@ public class AbstractCollectorTestCase extends MarvelIntegTestCase {
     }
 
     protected static void beginGracefulPeriod() {
-        long expiryDate = System.currentTimeMillis() + TimeValue.timeValueMinutes(10).millis();
+        long expiryDate = System.currentTimeMillis() + timeValueMinutes(10).millis();
         long issueDate = expiryDate - randomDaysInMillis();
 
         final License license = createTestingLicense(issueDate, expiryDate);
@@ -136,7 +139,7 @@ public class AbstractCollectorTestCase extends MarvelIntegTestCase {
     }
 
     protected static void endGracefulPeriod() {
-        long expiryDate = System.currentTimeMillis() - MarvelSettings.MAX_LICENSE_GRACE_PERIOD.millis() - TimeValue.timeValueMinutes(10).millis();
+        long expiryDate = System.currentTimeMillis() - MarvelSettings.MAX_LICENSE_GRACE_PERIOD.millis() - timeValueMinutes(10).millis();
         long issueDate = expiryDate - randomDaysInMillis();
 
         final License license = createTestingLicense(issueDate, expiryDate);
@@ -181,14 +184,12 @@ public class AbstractCollectorTestCase extends MarvelIntegTestCase {
     }
 
     public boolean waitForNoBlocksOnNode(final String nodeId) throws Exception {
-        return assertBusy(new Callable<Boolean>() {
-            @Override
-            public Boolean call() throws Exception {
-                ClusterBlocks clusterBlocks = client(nodeId).admin().cluster().prepareState().setLocal(true).execute().actionGet().getState().blocks();
-                assertTrue(clusterBlocks.global().isEmpty());
-                assertTrue(clusterBlocks.indices().values().isEmpty());
-                return true;
-            }
+        return assertBusy(() -> {
+            ClusterBlocks clusterBlocks =
+                    client(nodeId).admin().cluster().prepareState().setLocal(true).execute().actionGet().getState().blocks();
+            assertTrue(clusterBlocks.global().isEmpty());
+            assertTrue(clusterBlocks.indices().values().isEmpty());
+            return true;
         }, 30L, TimeUnit.SECONDS);
     }
 

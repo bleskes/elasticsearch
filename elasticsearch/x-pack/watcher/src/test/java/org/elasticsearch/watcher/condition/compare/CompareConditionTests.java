@@ -143,7 +143,8 @@ public class CompareConditionTests extends ESTestCase {
         int payloadValue = randomInt(10);
         boolean met = op.eval(payloadValue, value);
 
-        ExecutableCompareCondition condition = new ExecutableCompareCondition(new CompareCondition("ctx.payload.value", op, value), logger, SystemClock.INSTANCE);
+        ExecutableCompareCondition condition = new ExecutableCompareCondition(
+                new CompareCondition("ctx.payload.value", op, value), logger, SystemClock.INSTANCE);
         WatchExecutionContext ctx = mockExecutionContext("_name", new Payload.Simple("value", payloadValue));
         assertThat(condition.execute(ctx).met(), is(met));
     }
@@ -155,7 +156,8 @@ public class CompareConditionTests extends ESTestCase {
         String value = "<{now-1d}>";
         DateTime payloadValue = clock.nowUTC();
 
-        ExecutableCompareCondition condition = new ExecutableCompareCondition(new CompareCondition("ctx.payload.value", op, value), logger, clock);
+        ExecutableCompareCondition condition = new ExecutableCompareCondition(
+                new CompareCondition("ctx.payload.value", op, value), logger, clock);
         WatchExecutionContext ctx = mockExecutionContext("_name", new Payload.Simple("value", payloadValue));
         assertThat(condition.execute(ctx).met(), is(met));
     }
@@ -167,7 +169,8 @@ public class CompareConditionTests extends ESTestCase {
         String value = "{{ctx.payload.value}}";
         Object payloadValue = new Object();
 
-        ExecutableCompareCondition condition = new ExecutableCompareCondition(new CompareCondition("ctx.payload.value", op, value), logger, clock);
+        ExecutableCompareCondition condition = new ExecutableCompareCondition(
+                new CompareCondition("ctx.payload.value", op, value), logger, clock);
         WatchExecutionContext ctx = mockExecutionContext("_name", new Payload.Simple("value", payloadValue));
         assertThat(condition.execute(ctx).met(), is(met));
     }

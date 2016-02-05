@@ -57,14 +57,14 @@ public class LicensesMetaData extends AbstractDiffable<MetaData.Custom> implemen
      * ever existed in the cluster state
      */
     public static final License LICENSE_TOMBSTONE = License.builder()
-                    .type("trial")
-                    .issuer("elasticsearch")
-                    .uid("TOMBSTONE")
-                    .issuedTo("")
-                    .maxNodes(0)
-                    .issueDate(0)
-                    .expiryDate(0)
-                    .build();
+            .type("trial")
+            .issuer("elasticsearch")
+            .uid("TOMBSTONE")
+            .issuedTo("")
+            .maxNodes(0)
+            .issueDate(0)
+            .expiryDate(0)
+            .build();
 
     public static final LicensesMetaData PROTO = new LicensesMetaData(null);
 
@@ -126,7 +126,8 @@ public class LicensesMetaData extends AbstractDiffable<MetaData.Custom> implemen
                                 if (parser.currentToken().isValue()) {
                                     // trial license
                                     byte[] data = decrypt(Base64.decode(parser.text()));
-                                    try (XContentParser trialLicenseParser = XContentFactory.xContent(XContentType.JSON).createParser(data)) {
+                                    try (XContentParser trialLicenseParser =
+                                                 XContentFactory.xContent(XContentType.JSON).createParser(data)) {
                                         trialLicenseParser.nextToken();
                                         License pre20TrialLicense = License.fromXContent(trialLicenseParser);
                                         pre20Licenses.add(TrialLicense.create(License.builder().fromPre20LicenseSpec(pre20TrialLicense)));
@@ -194,7 +195,8 @@ public class LicensesMetaData extends AbstractDiffable<MetaData.Custom> implemen
                 streamOutput.writeVInt(0); // no signed license
                 streamOutput.writeVInt(1); // one trial license
                 XContentBuilder contentBuilder = XContentFactory.contentBuilder(XContentType.JSON);
-                license.toXContent(contentBuilder, new ToXContent.MapParams(Collections.singletonMap(License.LICENSE_SPEC_VIEW_MODE, "true")));
+                license.toXContent(contentBuilder,
+                        new ToXContent.MapParams(Collections.singletonMap(License.LICENSE_SPEC_VIEW_MODE, "true")));
                 streamOutput.writeString(Base64.encodeBytes(encrypt(contentBuilder.bytes().toBytes())));
             }
         } else {

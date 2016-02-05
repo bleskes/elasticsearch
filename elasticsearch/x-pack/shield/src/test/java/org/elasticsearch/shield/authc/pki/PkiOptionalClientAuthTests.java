@@ -24,7 +24,6 @@ import org.elasticsearch.common.network.NetworkModule;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.elasticsearch.http.HttpServerTransport;
-import org.elasticsearch.node.Node;
 import org.elasticsearch.shield.authc.support.SecuredString;
 import org.elasticsearch.shield.authc.support.UsernamePasswordToken;
 import org.elasticsearch.shield.transport.SSLClientAuth;
@@ -48,6 +47,7 @@ import java.security.SecureRandom;
 
 import static org.elasticsearch.test.ShieldSettingsSource.DEFAULT_PASSWORD;
 import static org.elasticsearch.test.ShieldSettingsSource.DEFAULT_USER_NAME;
+import static org.elasticsearch.test.ShieldSettingsSource.getSSLSettingsForStore;
 import static org.hamcrest.Matchers.is;
 
 public class PkiOptionalClientAuthTests extends ShieldIntegTestCase {
@@ -72,7 +72,8 @@ public class PkiOptionalClientAuthTests extends ShieldIntegTestCase {
                 .put("shield.authc.realms.esusers.order", "0")
                 .put("shield.authc.realms.pki1.type", "pki")
                 .put("shield.authc.realms.pki1.order", "1")
-                .put("shield.authc.realms.pki1.truststore.path", getDataPath("/org/elasticsearch/shield/transport/ssl/certs/simple/truststore-testnode-only.jks"))
+                .put("shield.authc.realms.pki1.truststore.path",
+                        getDataPath("/org/elasticsearch/shield/transport/ssl/certs/simple/truststore-testnode-only.jks"))
                 .put("shield.authc.realms.pki1.truststore.password", "truststore-testnode-only")
                 .put("shield.authc.realms.pki1.files.role_mapping", getDataPath("role_mapping.yml"))
                 .put("transport.profiles.want_client_auth.port", randomClientPortRange)
@@ -99,7 +100,9 @@ public class PkiOptionalClientAuthTests extends ShieldIntegTestCase {
             HttpResponse response = requestBuilder.execute();
             assertThat(response.getStatusCode(), is(401));
 
-            requestBuilder.addHeader(UsernamePasswordToken.BASIC_AUTH_HEADER, UsernamePasswordToken.basicAuthHeaderValue(ShieldSettingsSource.DEFAULT_USER_NAME, new SecuredString(ShieldSettingsSource.DEFAULT_PASSWORD.toCharArray())));
+            requestBuilder.addHeader(UsernamePasswordToken.BASIC_AUTH_HEADER,
+                    UsernamePasswordToken.basicAuthHeaderValue(ShieldSettingsSource.DEFAULT_USER_NAME,
+                            new SecuredString(ShieldSettingsSource.DEFAULT_PASSWORD.toCharArray())));
             response = requestBuilder.execute();
             assertThat(response.getStatusCode(), is(200));
         }
@@ -107,10 +110,13 @@ public class PkiOptionalClientAuthTests extends ShieldIntegTestCase {
 
     public void testTransportClientWithoutClientCertificate() {
         Transport transport = internalCluster().getDataNodeInstance(Transport.class);
-        int port = ((InetSocketTransportAddress) randomFrom(transport.profileBoundAddresses().get("want_client_auth").boundAddresses())).address().getPort();
+        int port = ((InetSocketTransportAddress)
+                randomFrom(transport.profileBoundAddresses().get("want_client_auth").boundAddresses())).address().getPort();
 
+        Settings sslSettingsForStore = getSSLSettingsForStore
+                ("/org/elasticsearch/shield/transport/ssl/certs/simple/truststore-testnode-only.jks", "truststore-testnode-only");
         Settings settings = Settings.builder()
-                .put(ShieldSettingsSource.getSSLSettingsForStore("/org/elasticsearch/shield/transport/ssl/certs/simple/truststore-testnode-only.jks", "truststore-testnode-only"))
+                .put(sslSettingsForStore)
                 .put("shield.user", DEFAULT_USER_NAME + ":" + DEFAULT_PASSWORD)
                 .put("cluster.name", internalCluster().getClusterName())
                 .put("shield.transport.ssl", true)

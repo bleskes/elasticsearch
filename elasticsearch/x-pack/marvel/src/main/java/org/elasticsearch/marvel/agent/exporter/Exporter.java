@@ -149,7 +149,8 @@ public abstract class Exporter  {
             try {
                 indexTimeFormatter = DateTimeFormat.forPattern(indexTimeFormat).withZoneUTC();
             } catch (IllegalArgumentException e) {
-                throw new SettingsException("invalid marvel index name time format [" + indexTimeFormat + "] set for [" + settingFQN(INDEX_NAME_TIME_FORMAT_SETTING) + "]", e);
+                throw new SettingsException("invalid marvel index name time format [" + indexTimeFormat + "] set for [" +
+                        settingFQN(INDEX_NAME_TIME_FORMAT_SETTING) + "]", e);
             }
         }
 
@@ -163,7 +164,8 @@ public abstract class Exporter  {
 
         @Override
         public String resolve(long timestamp) {
-            return MarvelSettings.MARVEL_INDICES_PREFIX + String.valueOf(MarvelTemplateUtils.TEMPLATE_VERSION) + "-" + indexTimeFormatter.print(timestamp);
+            return MarvelSettings.MARVEL_INDICES_PREFIX + String.valueOf(MarvelTemplateUtils.TEMPLATE_VERSION) + "-" +
+                    indexTimeFormatter.print(timestamp);
         }
 
         @Override

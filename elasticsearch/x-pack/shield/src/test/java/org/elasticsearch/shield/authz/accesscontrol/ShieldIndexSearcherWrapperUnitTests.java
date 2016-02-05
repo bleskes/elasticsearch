@@ -92,7 +92,8 @@ public class ShieldIndexSearcherWrapperUnitTests extends ESTestCase {
         AnalysisService analysisService = new AnalysisService(indexSettings, Collections.emptyMap(), Collections.emptyMap(),
                 Collections.emptyMap(), Collections.emptyMap());
         SimilarityService similarityService = new SimilarityService(indexSettings, Collections.emptyMap());
-        mapperService = new MapperService(indexSettings, analysisService, similarityService, new IndicesModule().getMapperRegistry(), () -> null);
+        mapperService = new MapperService(indexSettings, analysisService, similarityService,
+                new IndicesModule().getMapperRegistry(), () -> null);
 
         ShardId shardId = new ShardId(index, 0);
         licenseState = mock(ShieldLicenseState.class);
@@ -124,12 +125,14 @@ public class ShieldIndexSearcherWrapperUnitTests extends ESTestCase {
         shieldIndexSearcherWrapper = new ShieldIndexSearcherWrapper(indexSettings, null, mapperService, null, threadContext, licenseState) {
             @Override
             protected IndicesAccessControl getIndicesAccessControl() {
-                IndicesAccessControl.IndexAccessControl indexAccessControl = new IndicesAccessControl.IndexAccessControl(true, emptySet(), null);
+                IndicesAccessControl.IndexAccessControl indexAccessControl = new IndicesAccessControl.IndexAccessControl(true,
+                        emptySet(), null);
                 return new IndicesAccessControl(true, singletonMap("_index", indexAccessControl));
             }
         };
 
-        FieldSubsetReader.FieldSubsetDirectoryReader result = (FieldSubsetReader.FieldSubsetDirectoryReader) shieldIndexSearcherWrapper.wrap(esIn);
+        FieldSubsetReader.FieldSubsetDirectoryReader result =
+                (FieldSubsetReader.FieldSubsetDirectoryReader) shieldIndexSearcherWrapper.wrap(esIn);
         assertThat(result.getFieldNames().size(), equalTo(11));
         assertThat(result.getFieldNames().contains("_uid"), is(true));
         assertThat(result.getFieldNames().contains("_id"), is(true));
@@ -142,7 +145,8 @@ public class ShieldIndexSearcherWrapperUnitTests extends ESTestCase {
         assertThat(result.getFieldNames().contains("_ttl"), is(true));
         assertThat(result.getFieldNames().contains("_size"), is(true));
         assertThat(result.getFieldNames().contains("_index"), is(true));
-        assertThat(result.getFieldNames().contains("_all"), is(false)); // _all contains actual user data and therefor can't be included by default
+        // _all contains actual user data and therefor can't be included by default
+        assertThat(result.getFieldNames().contains("_all"), is(false));
     }
 
     public void testWrapReaderWhenFeatureDisabled() throws Exception {
@@ -255,7 +259,6 @@ public class ShieldIndexSearcherWrapperUnitTests extends ESTestCase {
         BitsetFilterCache bitsetFilterCache = new BitsetFilterCache(settings, new BitsetFilterCache.Listener() {
             @Override
             public void onCache(ShardId shardId, Accountable accountable) {
-
             }
 
             @Override
@@ -364,12 +367,16 @@ public class ShieldIndexSearcherWrapperUnitTests extends ESTestCase {
         shieldIndexSearcherWrapper = new ShieldIndexSearcherWrapper(indexSettings, null, mapperService, null, threadContext, licenseState) {
             @Override
             protected IndicesAccessControl getIndicesAccessControl() {
-                IndicesAccessControl.IndexAccessControl indexAccessControl = new IndicesAccessControl.IndexAccessControl(true, singleton(expression), null);
+                IndicesAccessControl.IndexAccessControl indexAccessControl = new IndicesAccessControl.IndexAccessControl(true,
+                        singleton(expression), null);
                 return new IndicesAccessControl(true, singletonMap("_index", indexAccessControl));
             }
         };
-        FieldSubsetReader.FieldSubsetDirectoryReader result = (FieldSubsetReader.FieldSubsetDirectoryReader) shieldIndexSearcherWrapper.wrap(esIn);
-        assertThat(result.getFieldNames().size() - shieldIndexSearcherWrapper.getAllowedMetaFields().size(), equalTo(expectedFields.length));
+        FieldSubsetReader.FieldSubsetDirectoryReader result =
+                (FieldSubsetReader.FieldSubsetDirectoryReader) shieldIndexSearcherWrapper.wrap(esIn);
+
+        assertThat(result.getFieldNames().size() - shieldIndexSearcherWrapper.getAllowedMetaFields().size(),
+                equalTo(expectedFields.length));
         for (String expectedField : expectedFields) {
             assertThat(result.getFieldNames().contains(expectedField), is(true));
         }

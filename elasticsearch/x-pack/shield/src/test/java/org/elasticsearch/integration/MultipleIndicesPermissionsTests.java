@@ -168,7 +168,8 @@ public class MultipleIndicesPermissionsTests extends ShieldIntegTestCase {
 
         Client client = internalCluster().transportClient();
 
-        SearchResponse response = client.filterWithHeader(Collections.singletonMap(BASIC_AUTH_HEADER, basicAuthHeaderValue("user_a", PASSWD)))
+        SearchResponse response = client
+                .filterWithHeader(Collections.singletonMap(BASIC_AUTH_HEADER, basicAuthHeaderValue("user_a", PASSWD)))
                 .prepareSearch("a")
                 .get();
         assertNoFailures(response);
@@ -178,7 +179,8 @@ public class MultipleIndicesPermissionsTests extends ShieldIntegTestCase {
                 new String[] { "_all"} : randomBoolean() ?
                 new String[] { "*" } :
                 new String[] {};
-        response = client.filterWithHeader(Collections.singletonMap(BASIC_AUTH_HEADER, basicAuthHeaderValue("user_a", PASSWD)))
+        response = client
+                .filterWithHeader(Collections.singletonMap(BASIC_AUTH_HEADER, basicAuthHeaderValue("user_a", PASSWD)))
                 .prepareSearch(indices)
                 .get();
         assertNoFailures(response);
@@ -186,10 +188,12 @@ public class MultipleIndicesPermissionsTests extends ShieldIntegTestCase {
 
         try {
             indices = randomBoolean() ? new String[] { "a", "b" } : new String[] { "b", "a" };
-            client.filterWithHeader(Collections.singletonMap(BASIC_AUTH_HEADER, basicAuthHeaderValue("user_a", PASSWD)))
+            client
+                    .filterWithHeader(Collections.singletonMap(BASIC_AUTH_HEADER, basicAuthHeaderValue("user_a", PASSWD)))
                     .prepareSearch(indices)
                     .get();
-            fail("expected an authorization excpetion when trying to search on multiple indices where there are no search permissions on one/some of them");
+            fail("expected an authorization excpetion when trying to search on multiple indices where there are no search permissions on " +
+                    "one/some of them");
         } catch (ElasticsearchSecurityException e) {
             // expected
             assertThat(e.status(), is(RestStatus.FORBIDDEN));
