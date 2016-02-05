@@ -181,8 +181,9 @@ public class ServerMain
 
 
     /**
-     * Used to stop the Windows service.  (On Unix we just kill the
-     * process.)
+     * Used to stop the Windows service.  (On Unix we just kill the process.)
+     * @param args Not used, but required for methods called by the native
+     * Apache Commons Daemon service manager.
      */
     public static void close(String[] args)
     throws Exception
