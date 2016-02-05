@@ -32,7 +32,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -42,7 +41,6 @@ import org.junit.rules.ExpectedException;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
 import com.prelert.job.SchedulerConfig;
 import com.prelert.job.SchedulerConfig.DataSource;
 import com.prelert.job.errorcodes.ErrorCodeMatcher;
@@ -252,26 +250,6 @@ public class SchedulerConfigVerifierTest
     }
 
     @Test
-    public void testCheckValidElasticsearch_GivenStartTimeIsEqualToEndTime()
-            throws JobConfigurationException, IOException
-    {
-        SchedulerConfig conf = new SchedulerConfig();
-        conf.setDataSource(DataSource.ELASTICSEARCH);
-        conf.setBaseUrl("http://localhost:9200/");
-        conf.setIndexes(Arrays.asList("myIndex"));
-        conf.setTypes(Arrays.asList("mytype"));
-        conf.setStartTime(new Date(1451606400000L));
-        conf.setEndTime(new Date(1451606400000L));
-
-        m_ExpectedException.expect(JobConfigurationException.class);
-        m_ExpectedException.expect(
-                ErrorCodeMatcher.hasErrorCode(ErrorCodes.SCHEDULER_INVALID_OPTION_VALUE));
-        m_ExpectedException.expectMessage("Invalid startTime value");
-
-        SchedulerConfigVerifier.verify(conf);
-    }
-
-    @Test
     public void testCheckValidElasticsearch_GivenNegativeQueryDelay()
             throws JobConfigurationException, IOException
     {
@@ -305,26 +283,6 @@ public class SchedulerConfigVerifierTest
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.SCHEDULER_INVALID_OPTION_VALUE));
         m_ExpectedException.expectMessage("Invalid frequency value");
-
-        SchedulerConfigVerifier.verify(conf);
-    }
-
-    @Test
-    public void testCheckValidElasticsearch_GivenStartTimeIsAfterEndTime()
-            throws JobConfigurationException, IOException
-    {
-        SchedulerConfig conf = new SchedulerConfig();
-        conf.setDataSource(DataSource.ELASTICSEARCH);
-        conf.setBaseUrl("http://localhost:9200/");
-        conf.setIndexes(Arrays.asList("myIndex"));
-        conf.setTypes(Arrays.asList("mytype"));
-        conf.setStartTime(new Date(1451606400000L));
-        conf.setEndTime(new Date(1351606400000L));
-
-        m_ExpectedException.expect(JobConfigurationException.class);
-        m_ExpectedException.expect(
-                ErrorCodeMatcher.hasErrorCode(ErrorCodes.SCHEDULER_INVALID_OPTION_VALUE));
-        m_ExpectedException.expectMessage("Invalid startTime value");
 
         SchedulerConfigVerifier.verify(conf);
     }

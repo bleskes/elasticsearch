@@ -27,23 +27,38 @@
 
 package com.prelert.rs.resources;
 
+import static com.prelert.job.errorcodes.ErrorCodeMatcher.hasErrorCode;
+
 import static org.junit.Assert.assertTrue;
+
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.verify;
+
+import java.util.OptionalLong;
 
 import javax.ws.rs.core.Response;
 
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
+import org.mockito.ArgumentCaptor;
 
 import com.prelert.job.UnknownJobException;
+import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.exceptions.JobInUseException;
-import com.prelert.job.manager.CannotStartSchedulerWhileItIsStoppingException;
+import com.prelert.job.manager.CannotStartSchedulerException;
+import com.prelert.job.manager.CannotStopSchedulerException;
 import com.prelert.job.manager.NoSuchScheduledJobException;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
 import com.prelert.rs.data.Acknowledgement;
+import com.prelert.rs.exception.InvalidParametersException;
 
 public class ControlTest extends ServiceTest
 {
+    @Rule
+    public ExpectedException m_ExpectedException = ExpectedException.none();
+
     private Control m_Control;
 
     @Before
@@ -54,25 +69,78 @@ public class ControlTest extends ServiceTest
     }
 
     @Test
-    public void testStartScheduledJob()
-            throws CannotStartSchedulerWhileItIsStoppingException, NoSuchScheduledJobException
+    public void testStartScheduledJob_GivenEndEarlierThanStart()
+            throws CannotStartSchedulerException, NoSuchScheduledJobException
     {
-        Response response = m_Control.startScheduledJob("foo");
+        m_ExpectedException.expect(InvalidParametersException.class);
+        m_ExpectedException.expectMessage(
+                "Invalid time range: end time '2015-01-01T00:00:00Z' is earlier than start time '2016-01-01T00:00:00Z'");
+        m_ExpectedException.expect(hasErrorCode(ErrorCodes.END_DATE_BEFORE_START_DATE));
 
-        Acknowledgement acknowledgement = (Acknowledgement) response.getEntity();
-        assertTrue(acknowledgement.getAcknowledgement());
-        verify(jobManager()).startExistingJobScheduler("foo");
+        m_Control.startScheduledJob("foo", "2016-01-01T00:00:00Z", "2015-01-01T00:00:00Z");
     }
 
     @Test
-    public void testStopScheduledJob() throws UnknownJobException,
-            CannotStartSchedulerWhileItIsStoppingException, NoSuchScheduledJobException,
+    public void testStartScheduledJob_GivenEndEqualToStart()
+            throws CannotStartSchedulerException, NoSuchScheduledJobException
+    {
+        m_ExpectedException.expect(InvalidParametersException.class);
+        m_ExpectedException.expectMessage(
+                "Invalid time range: end time '2016-01-01T00:00:00Z' is earlier than start time '2016-01-01T00:00:00Z'");
+        m_ExpectedException.expect(hasErrorCode(ErrorCodes.END_DATE_BEFORE_START_DATE));
+
+        m_Control.startScheduledJob("foo", "2016-01-01T00:00:00Z", "2016-01-01T00:00:00Z");
+    }
+
+    @Test
+    public void testStartScheduledJob_GivenDefaultStartEndTimes()
+            throws CannotStartSchedulerException, NoSuchScheduledJobException
+    {
+        Response response = m_Control.startScheduledJob("foo", "", "");
+
+        Acknowledgement acknowledgement = (Acknowledgement) response.getEntity();
+        assertTrue(acknowledgement.getAcknowledgement());
+        verify(jobManager()).startJobScheduler("foo", 0, OptionalLong.empty());
+    }
+
+    @Test
+    public void testStartScheduledJob_GivenValidStartEndTimes()
+            throws CannotStartSchedulerException, NoSuchScheduledJobException
+    {
+        Response response = m_Control.startScheduledJob(
+                "foo", "2016-01-01T00:00:00Z", "2016-02-18T20:00:00Z");
+
+        Acknowledgement acknowledgement = (Acknowledgement) response.getEntity();
+        assertTrue(acknowledgement.getAcknowledgement());
+        verify(jobManager()).startJobScheduler("foo", 1451606400000L, OptionalLong.of(1455825600000L));
+    }
+
+    @Test
+    public void testStartScheduledJob_GivenValidStartIsNow()
+            throws CannotStartSchedulerException, NoSuchScheduledJobException
+    {
+        long now = System.currentTimeMillis();
+
+        Response response = m_Control.startScheduledJob("foo", "now", "");
+
+        Acknowledgement acknowledgement = (Acknowledgement) response.getEntity();
+        assertTrue(acknowledgement.getAcknowledgement());
+        ArgumentCaptor<Long> startTimeCaptor = ArgumentCaptor.forClass(Long.class);
+        verify(jobManager()).startJobScheduler(
+                eq("foo"), startTimeCaptor.capture(), eq(OptionalLong.empty()));
+        assertTrue(startTimeCaptor.getValue() >= now);
+        assertTrue(startTimeCaptor.getValue() < now + 300);
+    }
+
+    @Test
+    public void testStopScheduledJob()
+            throws CannotStopSchedulerException, NoSuchScheduledJobException, UnknownJobException,
             NativeProcessRunException, JobInUseException
     {
         Response response = m_Control.stopScheduledJob("foo");
 
         Acknowledgement acknowledgement = (Acknowledgement) response.getEntity();
         assertTrue(acknowledgement.getAcknowledgement());
-        verify(jobManager()).stopExistingJobScheduler("foo");
+        verify(jobManager()).stopJobScheduler("foo");
     }
 }

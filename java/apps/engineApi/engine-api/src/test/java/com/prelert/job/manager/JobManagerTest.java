@@ -50,6 +50,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.OptionalLong;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -82,6 +83,7 @@ import com.prelert.job.JobSchedulerStatus;
 import com.prelert.job.ModelDebugConfig;
 import com.prelert.job.SchedulerConfig;
 import com.prelert.job.SchedulerConfig.DataSource;
+import com.prelert.job.SchedulerState;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.config.verification.JobConfigurationException;
 import com.prelert.job.data.extraction.DataExtractor;
@@ -180,7 +182,7 @@ public class JobManagerTest
 
     @Test
     public void testDeleteJob_GivenNonRunningJob() throws UnknownJobException, DataStoreException,
-            NativeProcessRunException, JobInUseException
+            NativeProcessRunException, JobInUseException, CannotStopSchedulerException
     {
         givenProcessInfo(5);
         JobManager jobManager = createJobManager();
@@ -195,7 +197,7 @@ public class JobManagerTest
 
     @Test
     public void testDeleteJob_GivenRunningJob() throws UnknownJobException, DataStoreException,
-            NativeProcessRunException, JobInUseException
+            NativeProcessRunException, JobInUseException, CannotStopSchedulerException
     {
         givenProcessInfo(5);
         JobManager jobManager = createJobManager();
@@ -212,7 +214,7 @@ public class JobManagerTest
     public void testDeleteJob_GivenScheduledJob()
             throws UnknownJobException, DataStoreException, NativeProcessRunException,
             JobInUseException, TooManyJobsException, JobConfigurationException,
-            JobIdAlreadyExistsException, CannotStartSchedulerWhileItIsStoppingException
+            JobIdAlreadyExistsException, CannotStopSchedulerException
     {
         givenProcessInfo(5);
         JobManager jobManager = createJobManager();
@@ -512,7 +514,7 @@ public class JobManagerTest
     @Test
     public void createJob_licensingConstraintMaxJobs() throws UnknownJobException,
             JobConfigurationException, JobIdAlreadyExistsException, IOException,
-            CannotStartSchedulerWhileItIsStoppingException
+            CannotStartSchedulerException
     {
         givenLicenseConstraints(2, 2, 0);
         when(m_ProcessManager.numberOfRunningJobs()).thenReturn(3);
@@ -536,7 +538,7 @@ public class JobManagerTest
     @Test
     public void createJob_licensingConstraintMaxDetectors()
     throws UnknownJobException, JobIdAlreadyExistsException,
-            IOException, TooManyJobsException, CannotStartSchedulerWhileItIsStoppingException
+            IOException, TooManyJobsException, CannotStartSchedulerException
     {
         givenLicenseConstraints(5, 1, 0);
         when(m_ProcessManager.numberOfRunningJobs()).thenReturn(3);
@@ -564,7 +566,7 @@ public class JobManagerTest
     @Test
     public void createJob_licensingConstraintMaxPartitions() throws UnknownJobException,
             JobIdAlreadyExistsException, IOException, TooManyJobsException,
-            CannotStartSchedulerWhileItIsStoppingException
+            CannotStartSchedulerException
     {
         givenLicenseConstraints(5, -1, 0);
         when(m_ProcessManager.numberOfRunningJobs()).thenReturn(3);
@@ -593,7 +595,7 @@ public class JobManagerTest
     @Test
     public void testCreateJob_FillsDefaults()
             throws NoSuchScheduledJobException, UnknownJobException,
-            CannotStartSchedulerWhileItIsStoppingException, TooManyJobsException,
+            CannotStartSchedulerException, TooManyJobsException,
             JobConfigurationException, JobIdAlreadyExistsException, IOException,
             NativeProcessRunException, JobInUseException
     {
@@ -705,8 +707,8 @@ public class JobManagerTest
     }
 
     @Test
-    public void testStartExistingScheduledJob_GivenNoScheduledJob() throws NoSuchScheduledJobException,
-            CannotStartSchedulerWhileItIsStoppingException
+    public void testStartJobScheduler_GivenNoScheduledJob() throws NoSuchScheduledJobException,
+            CannotStartSchedulerException
     {
         givenProcessInfo(2);
         JobManager jobManager = createJobManager();
@@ -715,15 +717,14 @@ public class JobManagerTest
         m_ExpectedException.expectMessage("There is no job 'foo' with a scheduler configured");
         m_ExpectedException.expect(ErrorCodeMatcher.hasErrorCode(ErrorCodes.NO_SUCH_SCHEDULED_JOB));
 
-        jobManager.startExistingJobScheduler("foo");
+        jobManager.startJobScheduler("foo", 0, OptionalLong.empty());
     }
 
     @Test
-    public void testStartExistingScheduledJob_GivenStoppedScheduledJob()
-            throws NoSuchScheduledJobException, UnknownJobException,
-            CannotStartSchedulerWhileItIsStoppingException, TooManyJobsException,
-            JobConfigurationException, JobIdAlreadyExistsException, IOException,
-            NativeProcessRunException, JobInUseException
+    public void testStartJobScheduler_GivenNewlyCreatedJob() throws UnknownJobException,
+            TooManyJobsException, JobConfigurationException, JobIdAlreadyExistsException,
+            CannotStartSchedulerException, IOException, NoSuchScheduledJobException,
+            CannotStopSchedulerException, NativeProcessRunException, JobInUseException
     {
         givenProcessInfo(2);
         JobManager jobManager = createJobManager();
@@ -740,21 +741,18 @@ public class JobManagerTest
         job.setCounts(dataCounts);
         when(m_JobProvider.getJobDetails("foo")).thenReturn(Optional.of(job));
 
-        // Stop it to be able to start it
-        jobManager.stopExistingJobScheduler("foo");
+        jobManager.startJobScheduler("foo", 0, OptionalLong.empty());
 
-        jobManager.startExistingJobScheduler("foo");
+        jobManager.stopJobScheduler("foo");
 
-        jobManager.stopExistingJobScheduler("foo");
-
-        verify(dataExtractor, times(2)).newSearch(anyString(), anyString(), eq(jobLogger));
-        verify(m_ProcessManager, times(2)).closeJob("foo");
+        verify(dataExtractor).newSearch(anyString(), anyString(), eq(jobLogger));
+        verify(m_ProcessManager).closeJob("foo");
     }
 
     @Test
-    public void testStopExistingScheduledJob_GivenNoScheduledJob()
-            throws NoSuchScheduledJobException, CannotStartSchedulerWhileItIsStoppingException,
-            UnknownJobException, NativeProcessRunException, JobInUseException
+    public void testStopScheduledJob_GivenNoScheduledJob()
+            throws NoSuchScheduledJobException, CannotStopSchedulerException, UnknownJobException,
+            NativeProcessRunException, JobInUseException
     {
         givenProcessInfo(2);
         JobManager jobManager = createJobManager();
@@ -763,13 +761,13 @@ public class JobManagerTest
         m_ExpectedException.expectMessage("There is no job 'foo' with a scheduler configured");
         m_ExpectedException.expect(ErrorCodeMatcher.hasErrorCode(ErrorCodes.NO_SUCH_SCHEDULED_JOB));
 
-        jobManager.stopExistingJobScheduler("foo");
+        jobManager.stopJobScheduler("foo");
     }
 
     @Test
     public void testRestartScheduledJobs_GivenNonScheduledJobAndJobWithStartedScheduler()
             throws NoSuchScheduledJobException, UnknownJobException,
-            CannotStartSchedulerWhileItIsStoppingException, TooManyJobsException,
+            CannotStartSchedulerException, TooManyJobsException,
             JobConfigurationException, JobIdAlreadyExistsException, IOException, InterruptedException
     {
         JobDetails nonScheduledJob = new JobDetails("non-scheduled", new JobConfiguration());
@@ -780,10 +778,14 @@ public class JobManagerTest
         dataCounts.setLatestRecordTimeStamp(new Date(0));
         scheduledJob.setCounts(dataCounts);
         scheduledJob.setSchedulerStatus(JobSchedulerStatus.STARTED);
+        SchedulerState schedulerState = new SchedulerState();
+        schedulerState.setStartTimeMillis(0L);
+        schedulerState.setEndTimeMillis(null);
 
         QueryPage<JobDetails> jobsPage = new QueryPage<>(
                 Arrays.asList(nonScheduledJob, scheduledJob), 2);
         when(m_JobProvider.getJobs(0, 10000)).thenReturn(jobsPage);
+        when(m_JobProvider.getSchedulerState("scheduled")).thenReturn(Optional.of(schedulerState));
 
         Logger jobLogger = mock(Logger.class);
         when(m_JobLoggerFactory.newLogger("scheduled")).thenReturn(jobLogger);
@@ -809,7 +811,7 @@ public class JobManagerTest
 
     @Test
     public void testRestartScheduledJobs_GivenJobWithStoppedScheduler() throws NoSuchScheduledJobException, UnknownJobException,
-            CannotStartSchedulerWhileItIsStoppingException, TooManyJobsException,
+            CannotStartSchedulerException, TooManyJobsException,
             JobConfigurationException, JobIdAlreadyExistsException, IOException, InterruptedException
     {
         JobConfiguration jobConfig = createScheduledJobConfig();

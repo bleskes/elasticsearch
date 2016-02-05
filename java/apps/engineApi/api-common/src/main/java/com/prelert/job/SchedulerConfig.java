@@ -20,7 +20,6 @@ package com.prelert.job;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -96,8 +95,6 @@ public class SchedulerConfig
     public static final String QUERY = "query";
     public static final String AGGREGATIONS = "aggregations";
     public static final String AGGS = "aggs";
-    public static final String START_TIME = "startTime";
-    public static final String END_TIME = "endTime";
 
     private static final long DEFAULT_ELASTICSEARCH_QUERY_DELAY = 60L;
 
@@ -128,8 +125,6 @@ public class SchedulerConfig
     private Map<String, Object> m_Query;
     private Map<String, Object> m_Aggregations;
     private Map<String, Object> m_Aggs;
-    private Date m_StartTime;
-    private Date m_EndTime;
 
     /**
      * Default constructor
@@ -359,37 +354,6 @@ public class SchedulerConfig
         }
     }
 
-    /**
-     * For the ELASTICSEARCH data source only, the time from which to pull input
-     * data.  <code>null</code> means no earliest time.
-     * @return The earliest time to search, or <code>null</code> if not set.
-     */
-    public Date getStartTime()
-    {
-        return m_StartTime;
-    }
-
-    public void setStartTime(Date startTime)
-    {
-        m_StartTime = startTime;
-    }
-
-    /**
-     * For the ELASTICSEARCH data source only, the most recent time to which to
-     * pull input data.  <code>null</code> means no latest time, which in turn
-     * means the scheduler will periodically pull data on an ongoing basis.
-     * @return The latest time to search, or <code>null</code> if not set.
-     */
-    public Date getEndTime()
-    {
-        return m_EndTime;
-    }
-
-    public void setEndTime(Date endTime)
-    {
-        m_EndTime = endTime;
-    }
-
     public void fillDefaults()
     {
         switch (m_DataSource)
@@ -446,15 +410,13 @@ public class SchedulerConfig
                 Objects.equals(this.m_Indexes, that.m_Indexes) &&
                 Objects.equals(this.m_Types, that.m_Types) &&
                 Objects.equals(this.m_Query, that.m_Query) &&
-                Objects.equals(this.getAggregationsOrAggs(), that.getAggregationsOrAggs()) &&
-                Objects.equals(this.m_StartTime, that.m_StartTime) &&
-                Objects.equals(this.m_EndTime, that.m_EndTime);
+                Objects.equals(this.getAggregationsOrAggs(), that.getAggregationsOrAggs());
     }
 
     @Override
     public int hashCode()
     {
         return Objects.hash(m_DataSource, m_Frequency, m_QueryDelay, m_Path, m_Tail, m_BaseUrl,
-                m_Indexes, m_Types, m_Query, m_Aggregations, m_Aggs, m_StartTime, m_EndTime);
+                m_Indexes, m_Types, m_Query, m_Aggregations, m_Aggs);
     }
 }

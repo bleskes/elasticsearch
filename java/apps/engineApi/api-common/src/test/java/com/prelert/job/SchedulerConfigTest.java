@@ -35,7 +35,6 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -344,28 +343,6 @@ public class SchedulerConfigTest
     }
 
     @Test
-    public void testEquals_GivenDifferentStartTime()
-    {
-        SchedulerConfig sc1 = createFullyPopulated();
-        SchedulerConfig sc2 = createFullyPopulated();
-        sc2.setStartTime(new Date(42));
-
-        assertFalse(sc1.equals(sc2));
-        assertFalse(sc2.equals(sc1));
-    }
-
-    @Test
-    public void testEquals_GivenDifferentEndTime()
-    {
-        SchedulerConfig sc1 = createFullyPopulated();
-        SchedulerConfig sc2 = createFullyPopulated();
-        sc2.setEndTime(new Date(42));
-
-        assertFalse(sc1.equals(sc2));
-        assertFalse(sc2.equals(sc1));
-    }
-
-    @Test
     public void testEquals_GivenDifferentPath()
     {
         SchedulerConfig sc1 = createFullyPopulated();
@@ -402,8 +379,6 @@ public class SchedulerConfigTest
         aggs.put("bar", new HashMap<>());
         sc.setAggregations(aggs);
         sc.setQueryDelay(90L);
-        sc.setStartTime(new Date(0));
-        sc.setEndTime(new Date(1000));
         sc.setPath("somePath");
         sc.setTail(true);
         return sc;
