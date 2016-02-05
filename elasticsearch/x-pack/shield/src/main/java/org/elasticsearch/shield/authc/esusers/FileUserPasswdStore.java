@@ -32,6 +32,7 @@ import org.elasticsearch.shield.support.Validation;
 import org.elasticsearch.watcher.FileChangesListener;
 import org.elasticsearch.watcher.FileWatcher;
 import org.elasticsearch.watcher.ResourceWatcherService;
+import org.elasticsearch.xpack.XPackPlugin;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -110,7 +111,7 @@ public class FileUserPasswdStore {
     public static Path resolveFile(Settings settings, Environment env) {
         String location = settings.get("files.users");
         if (location == null) {
-            return ShieldPlugin.resolveConfigFile(env, "users");
+            return XPackPlugin.resolveConfigFile(env, "users");
         }
         return env.binFile().getParent().resolve(location);
     }

@@ -66,7 +66,7 @@ public class HttpClientTests extends ESTestCase {
 
     @Before
     public void init() throws Exception {
-        secretService = new SecretService.PlainText();
+        secretService = SecretService.Insecure.INSTANCE;
         authRegistry = new HttpAuthRegistry(singletonMap(BasicAuth.TYPE, new BasicAuthFactory(secretService)));
         webServer = startWebServer(9200, 9300);
         webPort = webServer.getPort();

@@ -78,7 +78,7 @@ public class MarvelPluginTests extends MarvelIntegTestCase {
                     break;
                 }
             }
-            assertThat("x-pack plugin not found", found, equalTo(true));
+            assertThat("xpack plugin not found", found, equalTo(true));
         }
     }
 

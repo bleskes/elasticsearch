@@ -27,9 +27,11 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.shield.InternalClient;
 import org.elasticsearch.shield.authc.support.SecuredString;
+import org.elasticsearch.shield.client.SecurityClient;
 import org.elasticsearch.test.ESIntegTestCase.SuppressLocalMode;
 import org.elasticsearch.test.transport.AssertingLocalTransport;
 import org.elasticsearch.test.transport.MockTransportService;
+import org.elasticsearch.xpack.XPackClient;
 import org.elasticsearch.xpack.XPackPlugin;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -279,6 +281,7 @@ public abstract class ShieldIntegTestCase extends ESIntegTestCase {
     }
 
     private class CustomShieldSettingsSource extends ShieldSettingsSource {
+
         private CustomShieldSettingsSource(boolean sslTransportEnabled, Path configDir, Scope scope) {
             super(maxNumberOfNodes(), sslTransportEnabled, configDir, scope);
         }
@@ -350,5 +353,13 @@ public abstract class ShieldIntegTestCase extends ESIntegTestCase {
 
     protected InternalClient internalClient(String node) {
         return internalCluster().getInstance(InternalClient.class, node);
+    }
+
+    protected SecurityClient securityClient() {
+        return securityClient(client());
+    }
+
+    public static SecurityClient securityClient(Client client) {
+        return randomBoolean() ? new XPackClient(client).security() : new SecurityClient(client);
     }
 }
