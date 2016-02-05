@@ -77,7 +77,7 @@ public class JobConfigurationMessageBodyReader implements MessageBodyReader<JobC
      public JobConfiguration readFrom(Class<JobConfiguration> bean, Type genericType,
                Annotation[] annotation, MediaType mediaType,
                MultivaluedMap<String, String> httpHeaders, InputStream input)
-                         throws IOException, WebApplicationException
+                         throws IOException
      {
           // Sanity check. The consumes annotation means only Json should be read
           if (!mediaType.equals(MediaType.APPLICATION_JSON_TYPE)
@@ -101,15 +101,16 @@ public class JobConfigurationMessageBodyReader implements MessageBodyReader<JobC
           {
               if (e.getCause() != null)
               {
-                  if (e.getCause() instanceof JobConfigurationException)
+                  Throwable cause = e.getCause();
+                  if (cause instanceof JobConfigurationException)
                   {
-                      JobConfigurationException jce = (JobConfigurationException)e.getCause();
+                      JobConfigurationException jce = (JobConfigurationException)cause;
                       throw new JobConfigurationParseException(jce.getMessage(), e,
                                            jce.getErrorCode());
                   }
-                  else if (e.getCause() instanceof UnknownOperatorException)
+                  else if (cause instanceof UnknownOperatorException)
                   {
-                      UnknownOperatorException uoe = (UnknownOperatorException)e.getCause();
+                      UnknownOperatorException uoe = (UnknownOperatorException)cause;
 
                       throw new JobConfigurationParseException(
                               Messages.getMessage(Messages.JOB_CONFIG_TRANSFORM_CONDITION_UNKNOWN_OPERATOR,

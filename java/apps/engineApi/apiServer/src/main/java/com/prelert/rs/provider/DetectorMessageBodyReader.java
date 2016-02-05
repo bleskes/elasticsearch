@@ -73,7 +73,7 @@ public class DetectorMessageBodyReader implements MessageBodyReader<Detector>
      public Detector readFrom(Class<Detector> bean, Type genericType,
                Annotation[] annotation, MediaType mediaType,
                MultivaluedMap<String, String> httpHeaders, InputStream input)
-                         throws IOException, WebApplicationException
+                         throws IOException
      {
           // Sanity check. The consumes annotation means only Json should be read
           if (!mediaType.equals(MediaType.APPLICATION_JSON_TYPE)
@@ -97,9 +97,10 @@ public class DetectorMessageBodyReader implements MessageBodyReader<Detector>
           {
               if (e.getCause() != null)
               {
-                  if (e.getCause() instanceof JobConfigurationException)
+                  Throwable cause = e.getCause();
+                  if (cause instanceof JobConfigurationException)
                   {
-                      JobConfigurationException jce = (JobConfigurationException)e.getCause();
+                      JobConfigurationException jce = (JobConfigurationException)cause;
                       throw new JobConfigurationParseException(jce.getMessage(), e,
                                            jce.getErrorCode());
                   }
