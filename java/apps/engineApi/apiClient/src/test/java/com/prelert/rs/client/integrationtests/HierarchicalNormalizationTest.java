@@ -394,46 +394,45 @@ public class HierarchicalNormalizationTest implements Closeable
         }
 
 
-        HierarchicalNormalizationTest test = new HierarchicalNormalizationTest(baseUrl);
+        try (HierarchicalNormalizationTest test = new HierarchicalNormalizationTest(baseUrl))
+        {
+            // Always delete the test job first in case it is hanging around
+            // from a previous run
+            test.m_WebServiceClient.deleteJob(DIFFERENT_PARTITIONS_JOB_ID);
+            test.m_WebServiceClient.deleteJob(DIFFERENT_PERSONS_JOB_ID);
+            test.m_WebServiceClient.deleteJob(DIFFERENT_PERSONS_AND_FUNCTIONS_JOB_ID);
+            test.m_WebServiceClient.deleteJob(DIFFERENT_FUNCTION_FIELDS_JOB_ID);
 
-        // Always delete the test job first in case it is hanging around
-        // from a previous run
-        test.m_WebServiceClient.deleteJob(DIFFERENT_PARTITIONS_JOB_ID);
-        test.m_WebServiceClient.deleteJob(DIFFERENT_PERSONS_JOB_ID);
-        test.m_WebServiceClient.deleteJob(DIFFERENT_PERSONS_AND_FUNCTIONS_JOB_ID);
-        test.m_WebServiceClient.deleteJob(DIFFERENT_FUNCTION_FIELDS_JOB_ID);
+            File data = new File(prelertTestDataHome
+                    + "/engine_api_integration_test/hierarchical_normalisation_test.csv");
 
-        File data = new File(prelertTestDataHome
-                + "/engine_api_integration_test/hierarchical_normalisation_test.csv");
+            test.createDifferentPartitionsJob();
+            test.m_WebServiceClient.fileUpload(DIFFERENT_PARTITIONS_JOB_ID, data, false);
+            test.m_WebServiceClient.closeJob(DIFFERENT_PARTITIONS_JOB_ID);
+            test.verifyDifferentPartitionsJob();
 
-        test.createDifferentPartitionsJob();
-        test.m_WebServiceClient.fileUpload(DIFFERENT_PARTITIONS_JOB_ID, data, false);
-        test.m_WebServiceClient.closeJob(DIFFERENT_PARTITIONS_JOB_ID);
-        test.verifyDifferentPartitionsJob();
+            test.createDifferentPersonsJob();
+            test.m_WebServiceClient.fileUpload(DIFFERENT_PERSONS_JOB_ID, data, false);
+            test.m_WebServiceClient.closeJob(DIFFERENT_PERSONS_JOB_ID);
+            test.verifyDifferentPersonsJob();
 
-        test.createDifferentPersonsJob();
-        test.m_WebServiceClient.fileUpload(DIFFERENT_PERSONS_JOB_ID, data, false);
-        test.m_WebServiceClient.closeJob(DIFFERENT_PERSONS_JOB_ID);
-        test.verifyDifferentPersonsJob();
+            test.createDifferentPersonsAndFunctionsJob();
+            test.m_WebServiceClient.fileUpload(DIFFERENT_PERSONS_AND_FUNCTIONS_JOB_ID, data, false);
+            test.m_WebServiceClient.closeJob(DIFFERENT_PERSONS_AND_FUNCTIONS_JOB_ID);
+            test.verifyDifferentPersonsAndFunctionsJob();
 
-        test.createDifferentPersonsAndFunctionsJob();
-        test.m_WebServiceClient.fileUpload(DIFFERENT_PERSONS_AND_FUNCTIONS_JOB_ID, data, false);
-        test.m_WebServiceClient.closeJob(DIFFERENT_PERSONS_AND_FUNCTIONS_JOB_ID);
-        test.verifyDifferentPersonsAndFunctionsJob();
+            test.createDifferentFunctionFieldsJob();
+            test.m_WebServiceClient.fileUpload(DIFFERENT_FUNCTION_FIELDS_JOB_ID, data, false);
+            test.m_WebServiceClient.closeJob(DIFFERENT_FUNCTION_FIELDS_JOB_ID);
+            test.verifyDifferentFunctionFieldsJob();
 
-        test.createDifferentFunctionFieldsJob();
-        test.m_WebServiceClient.fileUpload(DIFFERENT_FUNCTION_FIELDS_JOB_ID, data, false);
-        test.m_WebServiceClient.closeJob(DIFFERENT_FUNCTION_FIELDS_JOB_ID);
-        test.verifyDifferentFunctionFieldsJob();
-
-        //==========================
-        // Clean up test jobs
-        test(test.m_WebServiceClient.deleteJob(DIFFERENT_PARTITIONS_JOB_ID));
-        test(test.m_WebServiceClient.deleteJob(DIFFERENT_PERSONS_JOB_ID));
-        test(test.m_WebServiceClient.deleteJob(DIFFERENT_PERSONS_AND_FUNCTIONS_JOB_ID));
-        test(test.m_WebServiceClient.deleteJob(DIFFERENT_FUNCTION_FIELDS_JOB_ID));
-
-        test.close();
+            //==========================
+            // Clean up test jobs
+            test(test.m_WebServiceClient.deleteJob(DIFFERENT_PARTITIONS_JOB_ID));
+            test(test.m_WebServiceClient.deleteJob(DIFFERENT_PERSONS_JOB_ID));
+            test(test.m_WebServiceClient.deleteJob(DIFFERENT_PERSONS_AND_FUNCTIONS_JOB_ID));
+            test(test.m_WebServiceClient.deleteJob(DIFFERENT_FUNCTION_FIELDS_JOB_ID));
+        }
 
         LOGGER.info("All tests passed Ok");
     }

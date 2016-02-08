@@ -49,8 +49,8 @@ import javax.ws.rs.core.Application;
 import org.apache.log4j.Logger;
 
 import com.prelert.job.alert.manager.AlertManager;
-import com.prelert.job.logging.JobLoggerFactory;
 import com.prelert.job.logging.DefaultJobLoggerFactory;
+import com.prelert.job.logging.JobLoggerFactory;
 import com.prelert.job.manager.JobManager;
 import com.prelert.job.persistence.JobProvider;
 import com.prelert.job.persistence.OldResultsRemover;
@@ -65,6 +65,7 @@ import com.prelert.rs.provider.AcknowledgementWriter;
 import com.prelert.rs.provider.AlertMessageBodyWriter;
 import com.prelert.rs.provider.DataCountsWriter;
 import com.prelert.rs.provider.DataUploadExceptionMapper;
+import com.prelert.rs.provider.DetectorMessageBodyReader;
 import com.prelert.rs.provider.ElasticsearchExceptionMapper;
 import com.prelert.rs.provider.JobConfigurationMessageBodyReader;
 import com.prelert.rs.provider.JobExceptionMapper;
@@ -149,7 +150,8 @@ public class PrelertWebApp extends Application
         ElasticsearchFactory esFactory = createPersistenceFactory();
         JobProvider jobProvider = esFactory.newJobProvider();
 
-        m_JobManager = createJobManager(jobProvider, esFactory, new DefaultJobLoggerFactory());
+        m_JobManager = createJobManager(jobProvider, esFactory,
+                new DefaultJobLoggerFactory(ProcessCtrl.LOG_DIR));
         m_AlertManager = new AlertManager(jobProvider, m_JobManager);
         m_ServerInfo = esFactory.newServerInfoFactory();
 
@@ -209,10 +211,12 @@ public class PrelertWebApp extends Application
         m_ResourceClasses.add(Logs.class);
         m_ResourceClasses.add(Preview.class);
         m_ResourceClasses.add(Records.class);
+        m_ResourceClasses.add(Validate.class);
     }
 
     private void addMessageReaders()
     {
+        m_ResourceClasses.add(DetectorMessageBodyReader.class);
         m_ResourceClasses.add(JobConfigurationMessageBodyReader.class);
     }
 

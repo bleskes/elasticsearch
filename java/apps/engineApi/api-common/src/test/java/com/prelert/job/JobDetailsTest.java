@@ -33,7 +33,11 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 
 import org.junit.Test;
@@ -56,6 +60,7 @@ public class JobDetailsTest
         assertNull(jobDetails.getSchedulerStatus());
         assertNull(jobDetails.getAnalysisConfig());
         assertNull(jobDetails.getAnalysisLimits());
+        assertNull(jobDetails.getCustomSettings());
         assertNull(jobDetails.getDataDescription());
         assertNull(jobDetails.getDescription());
         assertNull(jobDetails.getFinishedTime());
@@ -105,16 +110,70 @@ public class JobDetailsTest
     }
 
     @Test
-    public void testEquals_GivenEqualJobDetails()
+    public void testEquals_GivenEqualJobDetails() throws URISyntaxException
     {
-        JobConfiguration jobConfiguration = new JobConfiguration();
-        JobDetails jobDetails1 = new JobDetails("foo", jobConfiguration);
-        JobDetails jobDetails2 = new JobDetails("foo", jobConfiguration);
-        Date createTime = new Date();
-        jobDetails1.setCreateTime(createTime);
-        jobDetails2.setCreateTime(createTime);
+        ModelSizeStats modelSizeStats = new ModelSizeStats();
+
+        JobDetails jobDetails1 = new JobDetails();
+        jobDetails1.setId("foo");
+        jobDetails1.setAlertsLongPollEndpoint(new URI("http://localhost:8080/alerts"));
+        jobDetails1.setAnalysisConfig(new AnalysisConfig());
+        jobDetails1.setAnalysisLimits(new AnalysisLimits());
+        jobDetails1.setBucketsEndpoint(new URI("http://localhost:8080/buckets"));
+        jobDetails1.setCategoryDefinitionsEndpoint(new URI("http://localhost:8080/categories"));
+        jobDetails1.setCounts(new DataCounts());
+        jobDetails1.setCreateTime(new Date(0));
+        jobDetails1.setCustomSettings(new HashMap<>());
+        jobDetails1.setDataDescription(new DataDescription());
+        jobDetails1.setDataEndpoint(new URI("http://localhost:8080/data"));
+        jobDetails1.setDescription("Blah blah");
+        jobDetails1.setFinishedTime(new Date(1000));
+        jobDetails1.setLastDataTime(new Date(500));
+        jobDetails1.setLocation(new URI("http://localhost:8080/"));
+        jobDetails1.setLogsEndpoint(new URI("http://localhost:8080/logs"));
+        jobDetails1.setModelDebugConfig(new ModelDebugConfig());
+        jobDetails1.setModelSizeStats(modelSizeStats);
+        jobDetails1.setRecordsEndpoint(new URI("http://localhost:8080/records"));
+        jobDetails1.setRenormalizationWindow(60L);
+        jobDetails1.setResultsRetentionDays(30L);
+        jobDetails1.setSchedulerConfig(new SchedulerConfig());
+        jobDetails1.setSchedulerStatus(JobSchedulerStatus.STOPPED);
+        jobDetails1.setStatus(JobStatus.RUNNING);
+        jobDetails1.setTimeout(3600L);
+        jobDetails1.setTransforms(Collections.emptyList());
+
+
+        JobDetails jobDetails2 = new JobDetails();
+        jobDetails2.setId("foo");
+        jobDetails2.setAlertsLongPollEndpoint(new URI("http://localhost:8080/alerts"));
+        jobDetails2.setAnalysisConfig(new AnalysisConfig());
+        jobDetails2.setAnalysisLimits(new AnalysisLimits());
+        jobDetails2.setBucketsEndpoint(new URI("http://localhost:8080/buckets"));
+        jobDetails2.setCategoryDefinitionsEndpoint(new URI("http://localhost:8080/categories"));
+        jobDetails2.setCounts(new DataCounts());
+        jobDetails2.setCreateTime(new Date(0));
+        jobDetails2.setCustomSettings(new HashMap<>());
+        jobDetails2.setDataDescription(new DataDescription());
+        jobDetails2.setDataEndpoint(new URI("http://localhost:8080/data"));
+        jobDetails2.setDescription("Blah blah");
+        jobDetails2.setFinishedTime(new Date(1000));
+        jobDetails2.setLastDataTime(new Date(500));
+        jobDetails2.setLocation(new URI("http://localhost:8080/"));
+        jobDetails2.setLogsEndpoint(new URI("http://localhost:8080/logs"));
+        jobDetails2.setModelDebugConfig(new ModelDebugConfig());
+        jobDetails2.setModelSizeStats(modelSizeStats);
+        jobDetails2.setRecordsEndpoint(new URI("http://localhost:8080/records"));
+        jobDetails2.setRenormalizationWindow(60L);
+        jobDetails2.setResultsRetentionDays(30L);
+        jobDetails2.setSchedulerConfig(new SchedulerConfig());
+        jobDetails2.setSchedulerStatus(JobSchedulerStatus.STOPPED);
+        jobDetails2.setStatus(JobStatus.RUNNING);
+        jobDetails2.setTimeout(3600L);
+        jobDetails2.setTransforms(Collections.emptyList());
 
         assertTrue(jobDetails1.equals(jobDetails2));
+        assertTrue(jobDetails2.equals(jobDetails1));
+        assertEquals(jobDetails1.hashCode(), jobDetails2.hashCode());
     }
 
     @Test
@@ -165,16 +224,18 @@ public class JobDetailsTest
     }
 
     @Test
-    public void testHashCode_GivenEqualJobDetails()
+    public void testEquals_GivenDifferentCustomSettings()
     {
-        JobConfiguration jobConfiguration = new JobConfiguration();
-        JobDetails jobDetails1 = new JobDetails("foo", jobConfiguration);
-        JobDetails jobDetails2 = new JobDetails("foo", jobConfiguration);
-        Date createTime = new Date();
-        jobDetails1.setCreateTime(createTime);
-        jobDetails2.setCreateTime(createTime);
+        JobConfiguration jobDetails1 = new JobConfiguration();
+        Map<String, Object> customSettings1 = new HashMap<>();
+        customSettings1.put("key1", "value1");
+        jobDetails1.setCustomSettings(customSettings1);
+        JobConfiguration jobDetails2 = new JobConfiguration();
+        Map<String, Object> customSettings2 = new HashMap<>();
+        customSettings2.put("key2", "value2");
+        jobDetails2.setCustomSettings(customSettings2);
 
-        assertEquals(jobDetails1.hashCode(), jobDetails2.hashCode());
+        assertFalse(jobDetails1.equals(jobDetails2));
     }
 
     @Test

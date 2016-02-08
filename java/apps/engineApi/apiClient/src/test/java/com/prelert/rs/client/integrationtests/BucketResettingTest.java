@@ -287,28 +287,27 @@ public class BucketResettingTest implements Closeable
 
         String farequoteJob = TEST_JOB_ID;
 
-        BucketResettingTest test = new BucketResettingTest(prelertTestDataHome, baseUrl);
         List<String> jobUrls = new ArrayList<>();
+        try (BucketResettingTest test = new BucketResettingTest(prelertTestDataHome, baseUrl))
+        {
+            // Always delete the test job first in case it is hanging around
+            // from a previous run
+            test.m_WebServiceClient.deleteJob(farequoteJob);
+            jobUrls.add(farequoteJob);
 
-        // Always delete the test job first in case it is hanging around
-        // from a previous run
-        test.m_WebServiceClient.deleteJob(farequoteJob);
-        jobUrls.add(farequoteJob);
+            File fareQuotePartData = new File(prelertTestDataHome +
+                    "/engine_api_integration_test/bucket_resetting/farequote-start.csv");
 
-        File fareQuotePartData = new File(prelertTestDataHome +
-                "/engine_api_integration_test/bucket_resetting/farequote-start.csv");
+            test.createFarequoteJob();
+            test.m_WebServiceClient.fileUpload(farequoteJob, fareQuotePartData, false);
 
-        test.createFarequoteJob();
-        test.m_WebServiceClient.fileUpload(farequoteJob, fareQuotePartData, false);
+            test.verifyBucketResetting();
 
-        test.verifyBucketResetting();
-
-        //==========================
-        // Clean up test jobs
-        BucketResettingTest.test(test.m_WebServiceClient.closeJob(farequoteJob) == true);
-        test.deleteJobs(jobUrls);
-
-        test.close();
+            //==========================
+            // Clean up test jobs
+            BucketResettingTest.test(test.m_WebServiceClient.closeJob(farequoteJob) == true);
+            test.deleteJobs(jobUrls);
+        }
 
         LOGGER.info("All tests passed Ok");
     }

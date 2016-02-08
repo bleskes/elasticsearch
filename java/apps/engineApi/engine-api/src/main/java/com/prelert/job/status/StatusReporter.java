@@ -384,11 +384,9 @@ public class StatusReporter
             return;
         }
 
-        String status = String.format("%d records written to autodetect with %d "
-                + "missing fields, %d were discarded because the date could not be "
-                + "read and %d were ignored because they weren't in ascending "
-                + "chronological order and %d transforms failed.", getProcessedRecordCount(),
-                getMissingFieldErrorCount(), getDateParseErrorsCount(),
+        String status = String.format("%d records written to autodetect; missingFieldCount=%d, "
+                + "invalidDateCount=%d, outOfOrderCount=%d, failedTransformCount=%d",
+                getProcessedRecordCount(), getMissingFieldErrorCount(), getDateParseErrorsCount(),
                 getOutOfOrderRecordCount(), getFailedTransformCount());
 
         m_Logger.info(status);

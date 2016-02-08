@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -38,6 +38,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
 import javax.ws.rs.WebApplicationException;
@@ -56,134 +57,134 @@ import com.prelert.job.transform.Condition;
 import com.prelert.job.transform.Operator;
 import com.prelert.job.transform.TransformConfig;
 
-public class JobConfigurationMessageBodyReaderTest 
+public class JobConfigurationMessageBodyReaderTest
 {
 
-	@Test
-	public void testIsReadable()
-	{
-		JobConfigurationMessageBodyReader reader = new JobConfigurationMessageBodyReader();
+    @Test
+    public void testIsReadable()
+    {
+        JobConfigurationMessageBodyReader reader = new JobConfigurationMessageBodyReader();
 
-		assertTrue(reader.isReadable(JobConfiguration.class,
-									mock(Type.class),
-									new Annotation [] {},
-									mock(MediaType.class)));
+        assertTrue(reader.isReadable(JobConfiguration.class,
+                                    mock(Type.class),
+                                    new Annotation [] {},
+                                    mock(MediaType.class)));
 
-		assertFalse(reader.isReadable(JobDetails.class,
-									mock(Type.class),
-									new Annotation [] {},
-									mock(MediaType.class)));
-	}
+        assertFalse(reader.isReadable(JobDetails.class,
+                                    mock(Type.class),
+                                    new Annotation [] {},
+                                    mock(MediaType.class)));
+    }
 
-	@Test(expected=WebApplicationException.class)
-	public void testInvalidMediaType() throws IOException
-	{
-		JobConfigurationMessageBodyReader reader = new JobConfigurationMessageBodyReader();
+    @Test(expected=WebApplicationException.class)
+    public void testInvalidMediaType() throws IOException
+    {
+        JobConfigurationMessageBodyReader reader = new JobConfigurationMessageBodyReader();
 
-		reader.readFrom(JobConfiguration.class, mock(Type.class), new Annotation [] {},
-						MediaType.APPLICATION_ATOM_XML_TYPE, new MultivaluedHashMap<String, String>(),
-						mock(InputStream.class));
-	}
+        reader.readFrom(JobConfiguration.class, mock(Type.class), new Annotation [] {},
+                        MediaType.APPLICATION_ATOM_XML_TYPE, new MultivaluedHashMap<String, String>(),
+                        mock(InputStream.class));
+    }
 
-	@Test
-	public void testReadConfigNoTransforms() throws IOException
-	{
-		final String FLIGHT_CENTRE_JOB_CONFIG = "{\"id\":\"flightcentre-csv\","
-				+ "\"description\":\"Flight Centre Job\","
-				+ "\"analysisConfig\" : {"
-				+ "\"bucketSpan\":3600,"
-				+ "\"detectors\":[{\"fieldName\":\"responsetime\",\"byFieldName\":\"airline\"}] "
-				+ "},"
-				+ "\"dataDescription\":{\"fieldDelimiter\":\",\", \"timeField\":\"_time\", \"timeFormat\" : \"epoch\"},"
-				+ "\"analysisLimits\": {\"modelMemoryLimit\":2000, \"categorizationExamplesLimit\":3}"
-				+ "}";
-
-
-		JobConfigurationMessageBodyReader reader = new JobConfigurationMessageBodyReader();
-
-		JobConfiguration config = reader.readFrom(JobConfiguration.class, mock(Type.class),
-												new Annotation [] {},
-												MediaType.APPLICATION_JSON_TYPE,
-												new MultivaluedHashMap<String, String>(),
-										new ByteArrayInputStream(FLIGHT_CENTRE_JOB_CONFIG.getBytes("UTF-8")));
+    @Test
+    public void testReadConfigNoTransforms() throws IOException
+    {
+        final String FLIGHT_CENTRE_JOB_CONFIG = "{\"id\":\"flightcentre-csv\","
+                + "\"description\":\"Flight Centre Job\","
+                + "\"analysisConfig\" : {"
+                + "\"bucketSpan\":3600,"
+                + "\"detectors\":[{\"fieldName\":\"responsetime\",\"byFieldName\":\"airline\"}] "
+                + "},"
+                + "\"dataDescription\":{\"fieldDelimiter\":\",\", \"timeField\":\"_time\", \"timeFormat\" : \"epoch\"},"
+                + "\"analysisLimits\": {\"modelMemoryLimit\":2000, \"categorizationExamplesLimit\":3}"
+                + "}";
 
 
-		Detector d = new Detector();
-		d.setFieldName("responsetime");
-		d.setByFieldName("airline");
+        JobConfigurationMessageBodyReader reader = new JobConfigurationMessageBodyReader();
 
-		AnalysisConfig ac = new AnalysisConfig();
-		ac.setBucketSpan(3600L);
-		ac.setDetectors(Arrays.asList(d));
-
-		DataDescription dd = new DataDescription();
-		dd.setFieldDelimiter(',');
-		dd.setTimeField("_time");
-
-		assertEquals("flightcentre-csv", config.getId());
-		assertEquals("Flight Centre Job", config.getDescription());
-
-		assertEquals(ac, config.getAnalysisConfig());
-		assertEquals(dd, config.getDataDescription());
-
-		AnalysisLimits al = new AnalysisLimits(2000, 3L);
-		assertEquals(al, config.getAnalysisLimits());
-
-		assertNull(config.getTransforms());
-	}
-
-	@Test
-	public void testReadConfig() throws IOException
-	{
-		final String FLIGHT_CENTRE_JOB_CONFIG = "{\"id\":\"flightcentre-csv\","
-				+ "\"description\":\"Flight Centre Job\","
-				+ "\"analysisConfig\" : {"
-				+ "\"bucketSpan\":3600,"
-				+ "\"detectors\":[{\"fieldName\":\"responsetime\",\"byFieldName\":\"airline\"}] },"
-				+ "\"transforms\":[{\"transform\":\"a_function\", \"inputs\":\"field1\", \"outputs\":\"out_field\"}],"
-				+ "\"dataDescription\":{\"fieldDelimiter\":\",\", \"timeField\":\"_time\", \"timeFormat\" : \"epoch\"},"
-				+ "\"analysisLimits\": {\"modelMemoryLimit\":2000}"
-				+ "}";
+        JobConfiguration config = reader.readFrom(JobConfiguration.class, mock(Type.class),
+                                                new Annotation [] {},
+                                                MediaType.APPLICATION_JSON_TYPE,
+                                                new MultivaluedHashMap<String, String>(),
+                                        new ByteArrayInputStream(FLIGHT_CENTRE_JOB_CONFIG.getBytes(StandardCharsets.UTF_8)));
 
 
-		JobConfigurationMessageBodyReader reader = new JobConfigurationMessageBodyReader();
+        Detector d = new Detector();
+        d.setFieldName("responsetime");
+        d.setByFieldName("airline");
 
-		JobConfiguration config = reader.readFrom(JobConfiguration.class, mock(Type.class),
-												new Annotation [] {},
-												MediaType.APPLICATION_JSON_TYPE,
-												new MultivaluedHashMap<String, String>(),
-										new ByteArrayInputStream(FLIGHT_CENTRE_JOB_CONFIG.getBytes("UTF-8")));
+        AnalysisConfig ac = new AnalysisConfig();
+        ac.setBucketSpan(3600L);
+        ac.setDetectors(Arrays.asList(d));
+
+        DataDescription dd = new DataDescription();
+        dd.setFieldDelimiter(',');
+        dd.setTimeField("_time");
+
+        assertEquals("flightcentre-csv", config.getId());
+        assertEquals("Flight Centre Job", config.getDescription());
+
+        assertEquals(ac, config.getAnalysisConfig());
+        assertEquals(dd, config.getDataDescription());
+
+        AnalysisLimits al = new AnalysisLimits(2000, 3L);
+        assertEquals(al, config.getAnalysisLimits());
+
+        assertNull(config.getTransforms());
+    }
+
+    @Test
+    public void testReadConfig() throws IOException
+    {
+        final String FLIGHT_CENTRE_JOB_CONFIG = "{\"id\":\"flightcentre-csv\","
+                + "\"description\":\"Flight Centre Job\","
+                + "\"analysisConfig\" : {"
+                + "\"bucketSpan\":3600,"
+                + "\"detectors\":[{\"fieldName\":\"responsetime\",\"byFieldName\":\"airline\"}] },"
+                + "\"transforms\":[{\"transform\":\"a_function\", \"inputs\":\"field1\", \"outputs\":\"out_field\"}],"
+                + "\"dataDescription\":{\"fieldDelimiter\":\",\", \"timeField\":\"_time\", \"timeFormat\" : \"epoch\"},"
+                + "\"analysisLimits\": {\"modelMemoryLimit\":2000}"
+                + "}";
 
 
-		Detector d = new Detector();
-		d.setFieldName("responsetime");
-		d.setByFieldName("airline");
+        JobConfigurationMessageBodyReader reader = new JobConfigurationMessageBodyReader();
 
-		AnalysisConfig ac = new AnalysisConfig();
-		ac.setBucketSpan(3600L);
-		ac.setDetectors(Arrays.asList(d));
+        JobConfiguration config = reader.readFrom(JobConfiguration.class, mock(Type.class),
+                                                new Annotation [] {},
+                                                MediaType.APPLICATION_JSON_TYPE,
+                                                new MultivaluedHashMap<String, String>(),
+                                        new ByteArrayInputStream(FLIGHT_CENTRE_JOB_CONFIG.getBytes("UTF-8")));
 
-		DataDescription dd = new DataDescription();
-		dd.setFieldDelimiter(',');
-		dd.setTimeField("_time");
 
-		assertEquals("flightcentre-csv", config.getId());
-		assertEquals("Flight Centre Job", config.getDescription());
+        Detector d = new Detector();
+        d.setFieldName("responsetime");
+        d.setByFieldName("airline");
 
-		assertEquals(ac, config.getAnalysisConfig());
-		assertEquals(dd, config.getDataDescription());
+        AnalysisConfig ac = new AnalysisConfig();
+        ac.setBucketSpan(3600L);
+        ac.setDetectors(Arrays.asList(d));
 
-		AnalysisLimits al = new AnalysisLimits(2000, null);
-		assertEquals(al, config.getAnalysisLimits());
+        DataDescription dd = new DataDescription();
+        dd.setFieldDelimiter(',');
+        dd.setTimeField("_time");
 
-		TransformConfig tr = new TransformConfig();
-		tr.setTransform("a_function");
-		tr.setInputs(Arrays.asList("field1"));
-		tr.setOutputs(Arrays.asList("out_field"));
+        assertEquals("flightcentre-csv", config.getId());
+        assertEquals("Flight Centre Job", config.getDescription());
 
-		assertEquals(1, config.getTransforms().size());
-		assertEquals(Arrays.asList(tr), config.getTransforms());
-	}
+        assertEquals(ac, config.getAnalysisConfig());
+        assertEquals(dd, config.getDataDescription());
+
+        AnalysisLimits al = new AnalysisLimits(2000, null);
+        assertEquals(al, config.getAnalysisLimits());
+
+        TransformConfig tr = new TransformConfig();
+        tr.setTransform("a_function");
+        tr.setInputs(Arrays.asList("field1"));
+        tr.setOutputs(Arrays.asList("out_field"));
+
+        assertEquals(1, config.getTransforms().size());
+        assertEquals(Arrays.asList(tr), config.getTransforms());
+    }
 
     @Test
     public void testReadConfig_transformHasCondition() throws IOException
@@ -239,53 +240,53 @@ public class JobConfigurationMessageBodyReaderTest
         assertEquals(Arrays.asList(tr), config.getTransforms());
     }
 
-	@Test
-	public void testReadConfigWithArrayOfTransformInputs() throws IOException
-	{
-		final String FARE_QUOTE_TIME_FORMAT_CONFIG = "{"
-				+ "\"description\":\"Farequote Time Format Job\","
-				+ "\"analysisConfig\" : {"
-				+ "\"detectors\":[{\"fieldName\":\"responsetime\",\"byFieldName\":\"airline\"}]},"
-				+ "\"transforms\":[{\"transform\":\"a_function\", \"inputs\":[\"field1\", \"field2\"], \"outputs\":[\"out_field\"]}],"
-				+ "\"dataDescription\":{\"fieldDelimiter\":\",\", \"timeField\":\"time\", "
-				+ "\"timeFormat\":\"yyyy-MM-dd HH:mm:ssX\"} }}";
+    @Test
+    public void testReadConfigWithArrayOfTransformInputs() throws IOException
+    {
+        final String FARE_QUOTE_TIME_FORMAT_CONFIG = "{"
+                + "\"description\":\"Farequote Time Format Job\","
+                + "\"analysisConfig\" : {"
+                + "\"detectors\":[{\"fieldName\":\"responsetime\",\"byFieldName\":\"airline\"}]},"
+                + "\"transforms\":[{\"transform\":\"a_function\", \"inputs\":[\"field1\", \"field2\"], \"outputs\":[\"out_field\"]}],"
+                + "\"dataDescription\":{\"fieldDelimiter\":\",\", \"timeField\":\"time\", "
+                + "\"timeFormat\":\"yyyy-MM-dd HH:mm:ssX\"} }}";
 
 
-		JobConfigurationMessageBodyReader reader = new JobConfigurationMessageBodyReader();
+        JobConfigurationMessageBodyReader reader = new JobConfigurationMessageBodyReader();
 
-		JobConfiguration config = reader.readFrom(JobConfiguration.class, mock(Type.class),
-												new Annotation [] {},
-												MediaType.APPLICATION_JSON_TYPE,
-												new MultivaluedHashMap<String, String>(),
-										new ByteArrayInputStream(FARE_QUOTE_TIME_FORMAT_CONFIG.getBytes("UTF-8")));
+        JobConfiguration config = reader.readFrom(JobConfiguration.class, mock(Type.class),
+                                                new Annotation [] {},
+                                                MediaType.APPLICATION_JSON_TYPE,
+                                                new MultivaluedHashMap<String, String>(),
+                                        new ByteArrayInputStream(FARE_QUOTE_TIME_FORMAT_CONFIG.getBytes("UTF-8")));
 
 
-		Detector d = new Detector();
-		d.setFieldName("responsetime");
-		d.setByFieldName("airline");
+        Detector d = new Detector();
+        d.setFieldName("responsetime");
+        d.setByFieldName("airline");
 
-		AnalysisConfig ac = new AnalysisConfig();
-		ac.setDetectors(Arrays.asList(d));
+        AnalysisConfig ac = new AnalysisConfig();
+        ac.setDetectors(Arrays.asList(d));
 
-		DataDescription dd = new DataDescription();
-		dd.setFieldDelimiter(',');
-		dd.setTimeFormat("yyyy-MM-dd HH:mm:ssX");
-		dd.setTimeField("time");
+        DataDescription dd = new DataDescription();
+        dd.setFieldDelimiter(',');
+        dd.setTimeFormat("yyyy-MM-dd HH:mm:ssX");
+        dd.setTimeField("time");
 
-		assertEquals("Farequote Time Format Job", config.getDescription());
+        assertEquals("Farequote Time Format Job", config.getDescription());
 
-		assertEquals(ac, config.getAnalysisConfig());
-		assertEquals(dd, config.getDataDescription());
+        assertEquals(ac, config.getAnalysisConfig());
+        assertEquals(dd, config.getDataDescription());
 
-		assertNull(config.getAnalysisLimits());
+        assertNull(config.getAnalysisLimits());
 
-		TransformConfig tr = new TransformConfig();
-		tr.setTransform("a_function");
-		tr.setInputs(Arrays.asList("field1", "field2"));
-		tr.setOutputs(Arrays.asList("out_field"));
+        TransformConfig tr = new TransformConfig();
+        tr.setTransform("a_function");
+        tr.setInputs(Arrays.asList("field1", "field2"));
+        tr.setOutputs(Arrays.asList("out_field"));
 
-		assertEquals(1, config.getTransforms().size());
-		assertEquals(Arrays.asList(tr), config.getTransforms());
-	}
+        assertEquals(1, config.getTransforms().size());
+        assertEquals(Arrays.asList(tr), config.getTransforms());
+    }
 
 }

@@ -44,6 +44,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
@@ -554,12 +555,12 @@ public class JobManagerTest
     }
 
     @Test
-    public void testRestartScheduledJobs() throws NoSuchScheduledJobException, UnknownJobException,
+    public void testRestartScheduledJobs_GivenNonScheduledJobAndJobWithStartedScheduler()
+            throws NoSuchScheduledJobException, UnknownJobException,
             CannotStartSchedulerWhileItIsStoppingException, TooManyJobsException,
             JobConfigurationException, JobIdAlreadyExistsException, IOException, InterruptedException
     {
         JobDetails nonScheduledJob = new JobDetails("non-scheduled", new JobConfiguration());
-        nonScheduledJob.setSchedulerStatus(JobSchedulerStatus.STOPPED);
 
         JobConfiguration jobConfig = createScheduledJobConfig();
         JobDetails scheduledJob = new JobDetails("scheduled", jobConfig);
@@ -592,6 +593,53 @@ public class JobManagerTest
         verify(m_JobLoggerFactory).close("scheduled", jobLogger);
         // Verify no other calls to factories - means no other job was scheduled
         Mockito.verifyNoMoreInteractions(m_JobLoggerFactory, m_DataExtractorFactory);
+    }
+
+    @Test
+    public void testRestartScheduledJobs_GivenJobWithStoppedScheduler() throws NoSuchScheduledJobException, UnknownJobException,
+            CannotStartSchedulerWhileItIsStoppingException, TooManyJobsException,
+            JobConfigurationException, JobIdAlreadyExistsException, IOException, InterruptedException
+    {
+        JobConfiguration jobConfig = createScheduledJobConfig();
+        JobDetails scheduledJob = new JobDetails("scheduled", jobConfig);
+        DataCounts dataCounts = new DataCounts();
+        dataCounts.setLatestRecordTimeStamp(new Date(0));
+        scheduledJob.setCounts(dataCounts);
+        scheduledJob.setSchedulerStatus(JobSchedulerStatus.STOPPED);
+
+        QueryPage<JobDetails> jobsPage = new QueryPage<>(Arrays.asList(scheduledJob), 1);
+        when(m_JobProvider.getJobs(0, 10000)).thenReturn(jobsPage);
+
+        DataExtractor dataExtractor = mock(DataExtractor.class);
+        when(m_DataExtractorFactory.newExtractor(any(JobDetails.class))).thenReturn(dataExtractor);
+
+        givenProcessInfo(2);
+        JobManager jobManager = createJobManager();
+
+        jobManager.restartScheduledJobs();
+
+        verify(m_DataExtractorFactory).newExtractor(scheduledJob);
+        jobManager.checkJobHasScheduler("scheduled");
+
+        jobManager.shutdown();
+
+        // Verify no other calls to factories - means no other job was scheduled
+        Mockito.verifyNoMoreInteractions(m_JobLoggerFactory, m_DataExtractorFactory);
+    }
+
+    @Test
+    public void testUpdateCustomSettings() throws UnknownJobException
+    {
+        givenProcessInfo(2);
+        JobManager jobManager = createJobManager();
+        Map<String, Object> customSettings = new HashMap<>();
+        customSettings.put("answer", 42);
+
+        jobManager.updateCustomSettings("foo", customSettings);
+
+        verify(m_JobProvider).updateJob(eq("foo"), m_JobUpdateCaptor.capture());
+        Map<String, Object> jobUpdate = m_JobUpdateCaptor.getValue();
+        assertEquals(customSettings, jobUpdate.get(JobDetails.CUSTOM_SETTINGS));
     }
 
     @Test

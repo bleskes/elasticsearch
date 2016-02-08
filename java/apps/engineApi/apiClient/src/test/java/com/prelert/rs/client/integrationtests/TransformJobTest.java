@@ -176,7 +176,8 @@ public class TransformJobTest implements Closeable {
 
 
         Detector d = new Detector();
-        d.setDetectorDescription("value by instance_metric");
+        d.setDetectorDescription("metric(value) by instance_metric");
+        d.setFunction("metric");
         d.setFieldName("value");
         d.setByFieldName("instance_metric");
 

@@ -27,6 +27,7 @@
 
 package com.prelert.rs.client.integrationtests;
 
+import java.io.Closeable;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -61,7 +62,7 @@ import com.prelert.rs.data.Pagination;
  * data so the results should also be identical. This test verifies that
  * the multi-upload works and the same results are produced.
  */
-public class MultiJobUploadTest
+public class MultiJobUploadTest implements Closeable
 {
     private static final Logger LOGGER = Logger.getLogger(MultiJobUploadTest.class);
 
@@ -249,6 +250,12 @@ public class MultiJobUploadTest
         }
     }
 
+    @Override
+    public void close() throws IOException
+    {
+        m_WebServiceClient.close();
+    }
+
     /**
      * Throws an exception if <code>condition</code> is false.
      *
@@ -298,8 +305,10 @@ public class MultiJobUploadTest
             throw new IllegalStateException("Error property prelert.test.data.home is not set");
         }
 
-        MultiJobUploadTest test = new MultiJobUploadTest(baseUrl);
-        test.doTest(prelertTestDataHome);
+        try (MultiJobUploadTest test = new MultiJobUploadTest(baseUrl))
+        {
+            test.doTest(prelertTestDataHome);
+        }
 
         LOGGER.info("Multi-Upload test completed successfully");
     }

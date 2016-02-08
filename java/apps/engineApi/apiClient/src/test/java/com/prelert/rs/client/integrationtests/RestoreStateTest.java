@@ -28,6 +28,7 @@ package com.prelert.rs.client.integrationtests;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
+import java.io.Closeable;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
@@ -69,7 +70,7 @@ import com.prelert.rs.data.SingleDocument;
  * <li>/engine_api_integration_test/flightcentre.csv</li>
  * </ol>
  */
-public class RestoreStateTest
+public class RestoreStateTest implements Closeable
 {
     private static final Logger LOGGER = Logger.getLogger(RestoreStateTest.class);
 
@@ -287,15 +288,10 @@ public class RestoreStateTest
         }
     }
 
-    public void close()
+    @Override
+    public void close() throws IOException
     {
-        try
-        {
-             m_WebServiceClient.close();
-        } catch (IOException e)
-        {
-            LOGGER.error("Failed to close client", e);
-        }
+         m_WebServiceClient.close();
     }
 
     public static void main(String[] args) throws IOException
@@ -321,15 +317,16 @@ public class RestoreStateTest
 
         LOGGER.info("Testing Service at " + baseUrl);
 
-        RestoreStateTest test = new RestoreStateTest(baseUrl, prelertTestDataHome);
-        test.deleteJob(SPLIT_JOB);
-        test.deleteJob(ONE_SHOT_JOB);
+        try (RestoreStateTest test = new RestoreStateTest(baseUrl, prelertTestDataHome))
+        {
+            test.deleteJob(SPLIT_JOB);
+            test.deleteJob(ONE_SHOT_JOB);
 
-        test.doSplitJob();
-        test.doOneShotJob();
-        test.compareDataCounts();
-        test.compareResults();
-        test.close();
+            test.doSplitJob();
+            test.doOneShotJob();
+            test.compareDataCounts();
+            test.compareResults();
+        }
 
         LOGGER.info("Restore state test passed Ok");
     }

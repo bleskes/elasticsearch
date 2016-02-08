@@ -178,6 +178,7 @@ public final class ReservedFieldNames
         JobDetails.ANALYSIS_LIMITS,
         JobDetails.TRANSFORMS,
         JobDetails.MODEL_DEBUG_CONFIG,
+        JobDetails.CUSTOM_SETTINGS,
 
         ModelDebugConfig.WRITE_TO,
         ModelDebugConfig.BOUNDS_PERCENTILE,

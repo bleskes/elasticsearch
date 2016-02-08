@@ -28,6 +28,7 @@ package com.prelert.rs.client.integrationtests;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
+import java.io.Closeable;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
@@ -72,7 +73,7 @@ import com.prelert.rs.data.Pagination;
  *
  * <br>Returns a non-zero value if the tests fail.
  */
-public class InfluencersTest
+public class InfluencersTest implements Closeable
 {
     private static final Logger LOGGER = Logger.getLogger(InfluencersTest.class);
 
@@ -431,18 +432,26 @@ public class InfluencersTest
 
         Pagination<AnomalyRecord> records = m_WebServiceClient.prepareGetRecords(BLUECOAT_LOGS_JOB).get();
 
-        AnomalyRecord record = records.getDocuments().get(0);
-
-
-        test(record.getInfluencers().size() == 2);
-
+        // Top 5 records should contain 'nigella'
         Influence user = new Influence("user");
         user.addInfluenceFieldValue("nigella");
-        test(record.getInfluencers().indexOf(user) >= 0);
-
-        Influence src = new Influence("src_ip");
-        src.addInfluenceFieldValue("10.2.20.200");
-        test(record.getInfluencers().indexOf(user) >= 0);
+        for (int i = 0; i < 5; i++)
+        {
+            AnomalyRecord record = records.getDocuments().get(i);
+            test(record.getInfluencers().size() == 2);
+            if (record.getInfluencers().indexOf(user) >= 0)
+            {
+                Influence src = new Influence("src_ip");
+                src.addInfluenceFieldValue("10.2.20.200");
+                test(record.getInfluencers().indexOf(src) >= 0);
+                break;
+            }
+            if (i == 4)
+            {
+                LOGGER.error("Top 5 records do not contain a user 'nigella'");
+                test(false);
+            }
+        }
 
         Pagination<Influencer> pagination = m_WebServiceClient.prepareGetInfluencers(BLUECOAT_LOGS_JOB).get();
         test(pagination.getHitCount() > 1000);
@@ -575,15 +584,10 @@ public class InfluencersTest
         }
     }
 
-    public void close()
+    @Override
+    public void close() throws IOException
     {
-        try
-        {
-             m_WebServiceClient.close();
-        } catch (IOException e)
-        {
-            LOGGER.error("Failed to close client", e);
-        }
+         m_WebServiceClient.close();
     }
 
     public static void main(String[] args) throws IOException, InterruptedException, ExecutionException
@@ -610,22 +614,20 @@ public class InfluencersTest
             return;
         }
 
-        InfluencersTest test = new InfluencersTest(baseUrl);
+        try (InfluencersTest test = new InfluencersTest(baseUrl))
+        {
+            String basePath = prelertTestDataHome + "/influence/security_story1";
+            test.doFirewallJob(basePath);
+            test.doAuthDJob(basePath);
+            test.doServerLogsJob(basePath);
+            test.doBluecoatLogsJob(basePath);
 
-        String basePath = prelertTestDataHome + "/influence/security_story1";
-        test.doFirewallJob(basePath);
-        test.doAuthDJob(basePath);
-        test.doServerLogsJob(basePath);
-        test.doBluecoatLogsJob(basePath);
+            String statusCodePath = prelertTestDataHome + "/engine_api_integration_test/influence";
+            test.doBucketOnlyInfluencers(statusCodePath);
 
-        String statusCodePath = prelertTestDataHome + "/engine_api_integration_test/influence";
-        test.doBucketOnlyInfluencers(statusCodePath);
-
-        test.deleteJobs();
-
-        test.m_PollAlertService.shutdown();
-
-        test.close();
+            test.deleteJobs();
+            test.m_PollAlertService.shutdown();
+        }
 
         LOGGER.info("All tests passed Ok");
     }

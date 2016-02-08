@@ -251,17 +251,30 @@ public class EngineApiClient implements Closeable
     public boolean setJobDescription(String jobId, String description)
     throws IOException
     {
-        String url = m_BaseUrl + "/jobs/" + jobId + "/update";
-        LOGGER.debug("PUT job description: " + url);
-
         String json = "{\"description\":\"" + description + "\"}";
+        return updateJob(jobId, json);
+    }
+
+    /**
+     * Submits a request to update a job
+     *
+     * @param jobId the id of the job to update
+     * @param updateJson the JSON containing the fields to update and their new values
+     * @return {@code true} if the update was successful, or {@code false} otherwise
+     * @throws IOException
+     */
+    public boolean updateJob(String jobId, String updateJson) throws IOException
+    {
+        String url = m_BaseUrl + "/jobs/" + jobId + "/update";
+        LOGGER.debug("PUT update job: " + url);
+
         Request request = m_HttpClient.newRequest(url)
                 .method(HttpMethod.PUT)
                 .header(HttpHeader.CONTENT_TYPE, "application/json")
                 .header(HttpHeader.CONTENT_ENCODING, "UTF-8")
-                .content(new StringContentProvider(json));
+                .content(new StringContentProvider(updateJson));
 
-        return executeRequest(request, "putting job description");
+        return executeRequest(request, "updating job");
     }
 
     private ContentResponse executeRequest(Request request) throws IOException

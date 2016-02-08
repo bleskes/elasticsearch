@@ -110,6 +110,7 @@ public class NormalizationTest implements Closeable
     private String createFarequoteJob(String jobId, Long renormalizationWindow) throws IOException
     {
         Detector d = new Detector();
+        d.setFunction("metric");
         d.setFieldName("responsetime");
         d.setByFieldName("airline");
 
@@ -492,38 +493,37 @@ public class NormalizationTest implements Closeable
             throw new IllegalStateException("Error property prelert.test.data.home is not set");
         }
 
-        NormalizationTest test = new NormalizationTest(baseUrl);
         List<String> jobUrls = new ArrayList<>();
+        try (NormalizationTest test = new NormalizationTest(baseUrl))
+        {
+            File fareQuoteData = new File(prelertTestDataHome + "/engine_api_integration_test/farequote.csv");
 
-        File fareQuoteData = new File(prelertTestDataHome + "/engine_api_integration_test/farequote.csv");
+            // Always delete the test job first in case it is hanging around
+            // from a previous run
 
-        // Always delete the test job first in case it is hanging around
-        // from a previous run
+            // Farequote test
+            test.m_WebServiceClient.deleteJob(TEST_FAREQUOTE);
+            jobUrls.add(TEST_FAREQUOTE);
+            test.createFarequoteJob();
+            test.m_WebServiceClient.fileUpload(TEST_FAREQUOTE, fareQuoteData, false);
+            test.m_WebServiceClient.closeJob(TEST_FAREQUOTE);
 
-        // Farequote test
-        test.m_WebServiceClient.deleteJob(TEST_FAREQUOTE);
-        jobUrls.add(TEST_FAREQUOTE);
-        test.createFarequoteJob();
-        test.m_WebServiceClient.fileUpload(TEST_FAREQUOTE, fareQuoteData, false);
-        test.m_WebServiceClient.closeJob(TEST_FAREQUOTE);
+            test.verifyFarequoteNormalisedBuckets(TEST_FAREQUOTE);
+            test.verifyFarequoteNormalisedRecords(TEST_FAREQUOTE);
 
-        test.verifyFarequoteNormalisedBuckets(TEST_FAREQUOTE);
-        test.verifyFarequoteNormalisedRecords(TEST_FAREQUOTE);
+            // Farequote no renormalization test
+            jobUrls.add(TEST_FAREQUOTE_NO_RENORMALIZATION);
+            test.m_WebServiceClient.deleteJob(TEST_FAREQUOTE_NO_RENORMALIZATION);
+            test.createFarequoteNoRenormalizationJob();
+            test.m_WebServiceClient.fileUpload(TEST_FAREQUOTE_NO_RENORMALIZATION, fareQuoteData, false);
+            test.m_WebServiceClient.closeJob(TEST_FAREQUOTE_NO_RENORMALIZATION);
 
-        // Farequote no renormalization test
-        jobUrls.add(TEST_FAREQUOTE_NO_RENORMALIZATION);
-        test.m_WebServiceClient.deleteJob(TEST_FAREQUOTE_NO_RENORMALIZATION);
-        test.createFarequoteNoRenormalizationJob();
-        test.m_WebServiceClient.fileUpload(TEST_FAREQUOTE_NO_RENORMALIZATION, fareQuoteData, false);
-        test.m_WebServiceClient.closeJob(TEST_FAREQUOTE_NO_RENORMALIZATION);
+            test.verifyNormalizedScoresAreEqualToInitialScores(TEST_FAREQUOTE_NO_RENORMALIZATION);
 
-        test.verifyNormalizedScoresAreEqualToInitialScores(TEST_FAREQUOTE_NO_RENORMALIZATION);
-
-        //==========================
-        // Clean up test jobs
-        test.deleteJobs(jobUrls);
-
-        test.close();
+            //==========================
+            // Clean up test jobs
+            test.deleteJobs(jobUrls);
+        }
 
         LOGGER.info("All tests passed Ok");
     }

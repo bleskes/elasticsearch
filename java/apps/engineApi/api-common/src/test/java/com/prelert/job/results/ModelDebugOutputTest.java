@@ -27,15 +27,11 @@
 
 package com.prelert.job.results;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
-
-import java.util.HashMap;
-import java.util.Map;
-
-import com.prelert.job.results.ModelDebugOutput;
 
 public class ModelDebugOutputTest
 {
@@ -78,5 +74,6 @@ public class ModelDebugOutputTest
 
         assertTrue(modelDebugOutput1.equals(modelDebugOutput2));
         assertTrue(modelDebugOutput2.equals(modelDebugOutput1));
+        assertEquals(modelDebugOutput1.hashCode(), modelDebugOutput2.hashCode());
     }
 }

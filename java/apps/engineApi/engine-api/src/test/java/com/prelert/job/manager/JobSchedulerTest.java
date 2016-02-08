@@ -234,9 +234,8 @@ public class JobSchedulerTest
         assertTrue(firstRtEnd <= intervalEnd + intervalMs);
         assertTrue(flushParams.get(1).shouldCalculateInterim());
         assertTrue(flushParams.get(1).shouldAdvanceTime());
-        System.out.println("End time = " + firstRtEnd);
-        System.out.println("Advance time = " + flushParams.get(1).getAdvanceTime());
-        assertEquals(firstRtEnd, flushParams.get(1).getAdvanceTime() * 1000);
+        assertEquals(Math.min(calcAlignedBucketEnd(realtimeLatestRecord_1), firstRtEnd),
+                flushParams.get(1).getAdvanceTime() * 1000);
         intervalEnd = firstRtEnd + intervalMs;
 
         // The rest of real-time searches (if any) should span over exactly one interval
@@ -247,16 +246,21 @@ public class JobSchedulerTest
             assertEquals(String.valueOf(intervalEnd), dataExtractor.getEnd(2));
             assertTrue(flushParams.get(2).shouldCalculateInterim());
             assertTrue(flushParams.get(2).shouldAdvanceTime());
-            long alignedBucketEndOfLatestRecordTime = (realtimeLatestRecord_2 / BUCKET_SPAN
-                    .toMillis()) * BUCKET_SPAN.toMillis();
-            if (alignedBucketEndOfLatestRecordTime != realtimeLatestRecord_2)
-            {
-                alignedBucketEndOfLatestRecordTime += BUCKET_SPAN.toMillis();
-            }
-            assertEquals(Math.min(alignedBucketEndOfLatestRecordTime, Long.parseLong(dataExtractor.getEnd(2))),
+            assertEquals(Math.min(calcAlignedBucketEnd(realtimeLatestRecord_2),
+                    Long.parseLong(dataExtractor.getEnd(2))),
                     flushParams.get(2).getAdvanceTime() * 1000);
             intervalEnd += intervalMs;
         }
+    }
+
+    private long calcAlignedBucketEnd(long timeMs)
+    {
+        long result = (timeMs / BUCKET_SPAN.toMillis()) * BUCKET_SPAN.toMillis();
+        if (result != timeMs)
+        {
+            result += BUCKET_SPAN.toMillis();
+        }
+        return result;
     }
 
     @Test
@@ -456,7 +460,24 @@ public class JobSchedulerTest
     }
 
     @Test
-    public void testStopAuto() throws InterruptedException,
+    public void testStopAuto_GivenLookbackOnlyJob() throws InterruptedException,
+            CannotStartSchedulerWhileItIsStoppingException
+    {
+        JobDetails job = newJobWithElasticScheduler(1400000000000L, 1500000000000L);
+        MockDataExtractor dataExtractor = new MockDataExtractor(Arrays.asList(1));
+        MockDataProcessor dataProcessor = new MockDataProcessor(Arrays.asList(
+                newCounts(67, 1500000000000L)));
+        m_JobScheduler = createJobScheduler(dataExtractor, dataProcessor);
+
+        m_JobScheduler.start(job);
+        assertEquals(JobSchedulerStatus.STARTED, m_CurrentStatus);
+        m_JobScheduler.stopAuto();
+        assertEquals(JobSchedulerStatus.STARTED, m_CurrentStatus);
+        assertFalse(dataProcessor.isJobClosed());
+    }
+
+    @Test
+    public void testStopAuto_GivenRealTimeJob() throws InterruptedException,
             CannotStartSchedulerWhileItIsStoppingException
     {
         JobDetails job = newJobWithElasticScheduler(1400000000000L, null);
@@ -563,7 +584,6 @@ public class JobSchedulerTest
         @Override
         public void newSearch(String start, String end, Logger logger)
         {
-            System.out.println("Start = " + start + ", end = "  + end);
             if (m_SearchCount == m_BatchesPerSearch.size() - 1)
             {
                 throw new IllegalStateException();

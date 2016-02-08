@@ -34,6 +34,8 @@ import java.util.concurrent.TimeUnit;
 
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.TimeoutHandler;
+import javax.ws.rs.core.Feature;
+import javax.ws.rs.core.FeatureContext;
 
 import org.apache.log4j.Logger;
 
@@ -57,7 +59,7 @@ import com.prelert.job.process.exceptions.ClosedJobException;
  * each alert has a unique id. The function {@linkplain #alertsAfterCursor(String)}
  * returns a list of alerts in the sequence after the alert Id (cursor) parameter
  */
-public class AlertManager implements TimeoutHandler
+public class AlertManager implements TimeoutHandler, Feature
 {
     private static final Logger LOGGER = Logger.getLogger(AlertManager.class);
 
@@ -71,6 +73,15 @@ public class AlertManager implements TimeoutHandler
         m_JobProvider = jobProvider;
         m_JobManager = jobManager;
         m_AsyncRepsonses = new HashMap<>();
+    }
+
+    /**
+     * Required by the Feature interface.
+     */
+    @Override
+    public boolean configure(FeatureContext context)
+    {
+        return true;
     }
 
     /**

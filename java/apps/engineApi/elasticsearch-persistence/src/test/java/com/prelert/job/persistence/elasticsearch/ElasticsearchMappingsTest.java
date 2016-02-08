@@ -280,6 +280,9 @@ public class ElasticsearchMappingsTest
                         "            \"index\": \"no\"" +
                         "          }" +
                         "        }" +
+                        "      }," +
+                        "      \"customSettings\": {" +
+                        "        \"type\": \"object\"" +
                         "      }" +
                         "    }" +
                         "  }" +

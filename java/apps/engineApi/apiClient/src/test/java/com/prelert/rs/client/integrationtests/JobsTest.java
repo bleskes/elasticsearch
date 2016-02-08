@@ -229,7 +229,8 @@ public class JobsTest implements Closeable
         JobDetails job = doc.getDocument();
 
         Detector d = new Detector();
-        d.setDetectorDescription("responsetime by airline");
+        d.setDetectorDescription("metric(responsetime) by airline");
+        d.setFunction("metric");
         d.setFieldName("responsetime");
         d.setByFieldName("airline");
         AnalysisConfig ac = new AnalysisConfig();
@@ -327,7 +328,8 @@ public class JobsTest implements Closeable
             throws IOException
     {
         Detector d = new Detector();
-        d.setDetectorDescription("responsetime by airline partitionfield=sourcetype");
+        d.setDetectorDescription("metric(responsetime) by airline partitionfield=sourcetype");
+        d.setFunction("metric");
         d.setFieldName("responsetime");
         d.setByFieldName("airline");
         d.setPartitionFieldName("sourcetype");
@@ -403,7 +405,8 @@ public class JobsTest implements Closeable
     public String createFlightCentreMsJsonFormatJobTest() throws IOException
     {
         Detector d = new Detector();
-        d.setDetectorDescription("responsetime by airline");
+        d.setDetectorDescription("metric(responsetime) by airline");
+        d.setFunction("metric");
         d.setFieldName("responsetime");
         d.setByFieldName("airline");
         AnalysisConfig ac = new AnalysisConfig();
@@ -467,7 +470,8 @@ public class JobsTest implements Closeable
     private void verifyFareQuoteTimeFormatJobTest(JobDetails job, String jobId)
     {
         Detector d = new Detector();
-        d.setDetectorDescription("responsetime by airline");
+        d.setDetectorDescription("metric(responsetime) by airline");
+        d.setFunction("metric");
         d.setFieldName("responsetime");
         d.setByFieldName("airline");
         AnalysisConfig ac = new AnalysisConfig();
@@ -515,6 +519,7 @@ public class JobsTest implements Closeable
     {
         Detector d = new Detector();
         d.setDetectorDescription("FlightCentre analysis");
+        d.setFunction("metric");
         d.setFieldName("responsetime");
         d.setByFieldName("airline");
         AnalysisConfig ac = new AnalysisConfig();
@@ -1436,6 +1441,63 @@ public class JobsTest implements Closeable
         test(job.getDescription().equals(orignalDescription));
     }
 
+    /**
+     * Test updating the detectorDescription
+     *
+     * @param jobId The job id
+     * @throws IOException
+     */
+    public void testUpdateDetectorDescription() throws IOException
+    {
+        String jobId = "update-detector-description-job";
+        m_WebServiceClient.deleteJob(jobId);
+
+        String jobConfig = "{"
+                + "\"id\":\"" + jobId + "\","
+                + "\"analysisConfig\":{"
+                + "  \"bucketSpan\":300,"
+                + "  \"detectors\":["
+                + "    {\"detectorDescription\":\"before\", \"function\":\"count\"},"
+                + "    {\"function\":\"sum\", \"fieldName\":\"responseTime\",\"byFieldName\":\"airline\"}"
+                + "  ]"
+                + "}"
+                + "}";
+
+        m_WebServiceClient.createJob(jobConfig);
+        JobDetails job = m_WebServiceClient.getJob(jobId).getDocument();
+        List<Detector> detectors = job.getAnalysisConfig().getDetectors();
+        test(detectors.size() == 2);
+        test(detectors.get(0).getDetectorDescription().equals("before"));
+        test(detectors.get(1).getDetectorDescription().equals("sum(responseTime) by airline"));
+
+        m_WebServiceClient.updateJob(jobId, "{\"detector\":{\"index\":0,\"description\":\"after\"}}");
+
+        job = m_WebServiceClient.getJob(jobId).getDocument();
+        detectors = job.getAnalysisConfig().getDetectors();
+        test(detectors.get(0).getDetectorDescription().equals("after"));
+        test(detectors.get(1).getDetectorDescription().equals("sum(responseTime) by airline"));
+
+        m_WebServiceClient.updateJob(jobId, "{\"detector\":{\"index\":1,\"description\":\"Radiohead\"}}");
+
+        job = m_WebServiceClient.getJob(jobId).getDocument();
+        detectors = job.getAnalysisConfig().getDetectors();
+        test(detectors.get(0).getDetectorDescription().equals("after"));
+        test(detectors.get(1).getDetectorDescription().equals("Radiohead"));
+
+        // Invalid index
+        test(!m_WebServiceClient.updateJob(jobId,
+                "{\"detector\":{\"index\":2,\"description\":\"Radiohead\"}}"));
+        test("Invalid index: valid range is [0, 1]; actual was: 2".equals(
+                m_WebServiceClient.getLastError().getMessage()));
+
+        // Invalid description
+        test(!m_WebServiceClient.updateJob(jobId,
+                "{\"detector\":{\"index\":2,\"description\":42}}"));
+        test("Invalid description: string expected; actual was: 42".equals(
+                m_WebServiceClient.getLastError().getMessage()));
+
+        m_WebServiceClient.deleteJob(jobId);
+    }
 
     /**
      * Tails the log files with requesting different numbers of lines
@@ -1614,133 +1676,139 @@ public class JobsTest implements Closeable
         }
 
 
-        JobsTest test = new JobsTest(baseUrl);
-        List<String> jobUrls = new ArrayList<>();
+        try (JobsTest test = new JobsTest(baseUrl))
+        {
+            // Self-complete tests first
+            test.testUpdateDetectorDescription();
 
-        File flightCentreData = new File(prelertTestDataHome +
-                "/engine_api_integration_test/flightcentre.csv.gz");
-        File fareQuoteData = new File(prelertTestDataHome +
-                "/engine_api_integration_test/farequote.csv");
-        File flightCentreJsonData = new File(prelertTestDataHome +
-                "/engine_api_integration_test/flightcentre.json");
-        File flightCentreMsData = new File(prelertTestDataHome +
-                "/engine_api_integration_test/flightcentre_ms.csv");
-        File flightCentreMsJsonData = new File(prelertTestDataHome +
-                "/engine_api_integration_test/flightcentre_ms.json");
+            // Then the rest
 
-        test.getJobsTest();
+            List<String> jobUrls = new ArrayList<>();
 
-        // Always delete the test named jobs first in case they
-        // are hanging around from a previous run
-        test.m_WebServiceClient.deleteJob("flightcentre-csv");
-        test.m_WebServiceClient.deleteJob("flightcentre-epoch-ms");
+            File flightCentreData = new File(prelertTestDataHome +
+                    "/engine_api_integration_test/flightcentre.csv.gz");
+            File fareQuoteData = new File(prelertTestDataHome +
+                    "/engine_api_integration_test/farequote.csv");
+            File flightCentreJsonData = new File(prelertTestDataHome +
+                    "/engine_api_integration_test/flightcentre.json");
+            File flightCentreMsData = new File(prelertTestDataHome +
+                    "/engine_api_integration_test/flightcentre_ms.csv");
+            File flightCentreMsJsonData = new File(prelertTestDataHome +
+                    "/engine_api_integration_test/flightcentre_ms.json");
 
+            test.getJobsTest();
 
-        //=================
-        // CSV & Gzip test
-        //
-        String flightCentreJobId = test.createFlightCentreCsvJobTest();
-        test.getJobsTest();
-
-        test.testSetDescription(flightCentreJobId);
-        test.uploadDataAndTestRecordsWereProcessed(flightCentreJobId, flightCentreData, true);
-        test.closeJob(flightCentreJobId);
-        test.testReadLogFiles(flightCentreJobId);
-        test.verifyJobResults(flightCentreJobId, 100, FLIGHT_CENTRE_NUM_BUCKETS,
-                3600, FLIGHT_CENTRE_NUM_EVENTS);
-        test.testBucketScoreFilters(flightCentreJobId);
-        jobUrls.add(flightCentreJobId);
+            // Always delete the test named jobs first in case they
+            // are hanging around from a previous run
+            test.m_WebServiceClient.deleteJob("flightcentre-csv");
+            test.m_WebServiceClient.deleteJob("flightcentre-epoch-ms");
 
 
-        //=================
-        // JSON test
-        //
-        String flightCentreJsonJobId = test.createFlightCentreJsonJobTest();
-        test.getJobsTest();
-        test.uploadDataAndTestRecordsWereProcessed(flightCentreJsonJobId, flightCentreJsonData, false);
-        test.closeJob(flightCentreJsonJobId);
-        test.testReadLogFiles(flightCentreJsonJobId);
-        test.testSetDescription(flightCentreJsonJobId);
-        test.verifyJobResults(flightCentreJsonJobId, 100, FLIGHT_CENTRE_NUM_BUCKETS,
-                3600, FLIGHT_CENTRE_NUM_EVENTS);
-        jobUrls.add(flightCentreJsonJobId);
+            //=================
+            // CSV & Gzip test
+            //
+            String flightCentreJobId = test.createFlightCentreCsvJobTest();
+            test.getJobsTest();
 
-        //=================
-        // Time format test
-        //
-        String farequoteTimeFormatJobId = test.createFareQuoteTimeFormatJobTest();
-        jobUrls.add(farequoteTimeFormatJobId);
-        test.getJobsTest();
-
-        test.slowUpload(farequoteTimeFormatJobId, fareQuoteData, 10);
-        test.closeJob(farequoteTimeFormatJobId);
-        test.verifyJobResults(farequoteTimeFormatJobId, 150, FARE_QUOTE_NUM_BUCKETS,
-                300, FARE_QUOTE_NUM_EVENTS);
-        test.testBucketScoreFilters(farequoteTimeFormatJobId);
-        test.testReadLogFiles(farequoteTimeFormatJobId);
-        test.testSetDescription(farequoteTimeFormatJobId);
-
-        // known dates for the farequote data
-        Date start = new Date(1359406800000L);
-        Date end = new Date(1359662400000L);
-        test.testBucketDateFilters(farequoteTimeFormatJobId, start, end);
-        test.testRecordDateFilters(farequoteTimeFormatJobId, start, end);
-
-        test.testSortingRecords(farequoteTimeFormatJobId, start, end);
-        test.testRecordScoreFilters(farequoteTimeFormatJobId);
-
-        //=====================================================
-        // timestamp in ms from the epoch for both csv and json
-        //
-        String jobId = test.createFlightCentreMsCsvFormatJobTest(baseUrl, "flightcentre-epoch-ms");
-        jobUrls.add(jobId);
-        test.getJobsTest();
-        test.uploadDataAndTestRecordsWereProcessed(jobId, flightCentreMsData, false);
-        test.closeJob(jobId);
-        test.verifyJobResults(jobId, 150, FLIGHT_CENTRE_NUM_BUCKETS,
-                3600, FLIGHT_CENTRE_NUM_EVENTS);
-        test.testReadLogFiles(jobId);
-        test.testBucketDateFilters(jobId, new Date(1350824400000L), new Date(1350913371000L));
-
-        jobId = test.createFlightCentreMsJsonFormatJobTest();
-        jobUrls.add(jobId);
-        test.getJobsTest();
-        test.uploadDataAndTestRecordsWereProcessed(jobId, flightCentreMsJsonData, false);
-        test.closeJob(jobId);
-        test.verifyJobResults(jobId, 150, FLIGHT_CENTRE_NUM_BUCKETS,
-                3600, FLIGHT_CENTRE_NUM_EVENTS);
-
-        start = new Date(1350824400000L);
-        end = new Date(1350913371000L);
-        test.testBucketDateFilters(jobId, start, end);
-        test.testRecordDateFilters(jobId, start, end);
-        test.testSortingRecords(jobId, start, end);
-
-        test.testReadLogFiles(jobId);
+            test.testSetDescription(flightCentreJobId);
+            test.uploadDataAndTestRecordsWereProcessed(flightCentreJobId, flightCentreData, true);
+            test.closeJob(flightCentreJobId);
+            test.testReadLogFiles(flightCentreJobId);
+            test.verifyJobResults(flightCentreJobId, 100, FLIGHT_CENTRE_NUM_BUCKETS,
+                    3600, FLIGHT_CENTRE_NUM_EVENTS);
+            test.testBucketScoreFilters(flightCentreJobId);
+            jobUrls.add(flightCentreJobId);
 
 
-        //=================
-        // double upload test (upload same file twice)
-        //
-        String doubleUploadTest = test.createFareQuoteTimeFormatJobTest();
-        jobUrls.add(doubleUploadTest);
+            //=================
+            // JSON test
+            //
+            String flightCentreJsonJobId = test.createFlightCentreJsonJobTest();
+            test.getJobsTest();
+            test.uploadDataAndTestRecordsWereProcessed(flightCentreJsonJobId, flightCentreJsonData, false);
+            test.closeJob(flightCentreJsonJobId);
+            test.testReadLogFiles(flightCentreJsonJobId);
+            test.testSetDescription(flightCentreJsonJobId);
+            test.verifyJobResults(flightCentreJsonJobId, 100, FLIGHT_CENTRE_NUM_BUCKETS,
+                    3600, FLIGHT_CENTRE_NUM_EVENTS);
+            jobUrls.add(flightCentreJsonJobId);
 
-        test.uploadDataAndTestRecordsWereProcessed(doubleUploadTest, fareQuoteData, false);
-        test.uploadDataAndTestNoRecordsWereProcessed(doubleUploadTest, fareQuoteData, false);
+            //=================
+            // Time format test
+            //
+            String farequoteTimeFormatJobId = test.createFareQuoteTimeFormatJobTest();
+            jobUrls.add(farequoteTimeFormatJobId);
+            test.getJobsTest();
 
-        test.closeJob(doubleUploadTest);
-        test.verifyJobResults(doubleUploadTest, 150, FARE_QUOTE_NUM_BUCKETS,
-                300, FARE_QUOTE_NUM_EVENTS);
+            test.slowUpload(farequoteTimeFormatJobId, fareQuoteData, 10);
+            test.closeJob(farequoteTimeFormatJobId);
+            test.verifyJobResults(farequoteTimeFormatJobId, 150, FARE_QUOTE_NUM_BUCKETS,
+                    300, FARE_QUOTE_NUM_EVENTS);
+            test.testBucketScoreFilters(farequoteTimeFormatJobId);
+            test.testReadLogFiles(farequoteTimeFormatJobId);
+            test.testSetDescription(farequoteTimeFormatJobId);
 
-        // known dates for the farequote data
-        start = new Date(1359406800000L);
-        end = new Date(1359662400000L);
-        test.testBucketDateFilters(doubleUploadTest, start, end);
+            // known dates for the farequote data
+            Date start = new Date(1359406800000L);
+            Date end = new Date(1359662400000L);
+            test.testBucketDateFilters(farequoteTimeFormatJobId, start, end);
+            test.testRecordDateFilters(farequoteTimeFormatJobId, start, end);
 
-        //==========================
-        // Clean up test jobs
-        test.deleteJobsTest(jobUrls);
-        test.close();
+            test.testSortingRecords(farequoteTimeFormatJobId, start, end);
+            test.testRecordScoreFilters(farequoteTimeFormatJobId);
+
+            //=====================================================
+            // timestamp in ms from the epoch for both csv and json
+            //
+            String jobId = test.createFlightCentreMsCsvFormatJobTest(baseUrl, "flightcentre-epoch-ms");
+            jobUrls.add(jobId);
+            test.getJobsTest();
+            test.uploadDataAndTestRecordsWereProcessed(jobId, flightCentreMsData, false);
+            test.closeJob(jobId);
+            test.verifyJobResults(jobId, 150, FLIGHT_CENTRE_NUM_BUCKETS,
+                    3600, FLIGHT_CENTRE_NUM_EVENTS);
+            test.testReadLogFiles(jobId);
+            test.testBucketDateFilters(jobId, new Date(1350824400000L), new Date(1350913371000L));
+
+            jobId = test.createFlightCentreMsJsonFormatJobTest();
+            jobUrls.add(jobId);
+            test.getJobsTest();
+            test.uploadDataAndTestRecordsWereProcessed(jobId, flightCentreMsJsonData, false);
+            test.closeJob(jobId);
+            test.verifyJobResults(jobId, 150, FLIGHT_CENTRE_NUM_BUCKETS,
+                    3600, FLIGHT_CENTRE_NUM_EVENTS);
+
+            start = new Date(1350824400000L);
+            end = new Date(1350913371000L);
+            test.testBucketDateFilters(jobId, start, end);
+            test.testRecordDateFilters(jobId, start, end);
+            test.testSortingRecords(jobId, start, end);
+
+            test.testReadLogFiles(jobId);
+
+
+            //=================
+            // double upload test (upload same file twice)
+            //
+            String doubleUploadTest = test.createFareQuoteTimeFormatJobTest();
+            jobUrls.add(doubleUploadTest);
+
+            test.uploadDataAndTestRecordsWereProcessed(doubleUploadTest, fareQuoteData, false);
+            test.uploadDataAndTestNoRecordsWereProcessed(doubleUploadTest, fareQuoteData, false);
+
+            test.closeJob(doubleUploadTest);
+            test.verifyJobResults(doubleUploadTest, 150, FARE_QUOTE_NUM_BUCKETS,
+                    300, FARE_QUOTE_NUM_EVENTS);
+
+            // known dates for the farequote data
+            start = new Date(1359406800000L);
+            end = new Date(1359662400000L);
+            test.testBucketDateFilters(doubleUploadTest, start, end);
+
+            //==========================
+            // Clean up test jobs
+            test.deleteJobsTest(jobUrls);
+        }
 
         LOGGER.info("All tests passed Ok");
     }

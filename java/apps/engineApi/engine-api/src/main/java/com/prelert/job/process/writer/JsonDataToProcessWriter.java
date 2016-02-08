@@ -38,7 +38,6 @@ import org.apache.log4j.Logger;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParser;
-
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataCounts;
 import com.prelert.job.DataDescription;
@@ -134,9 +133,6 @@ class JsonDataToProcessWriter extends AbstractDataToProcessWriter
         // We never expect to get the control field
         boolean [] gotFields = new boolean[analysisFields.size()];
 
-        int recordsWritten = 0;
-        int recordCount = 0;
-
         JsonRecordReader recordReader = makeRecordReader(parser);
         long inputFieldCount = recordReader.read(input, gotFields);
         while (inputFieldCount >= 0)
@@ -157,18 +153,10 @@ class JsonDataToProcessWriter extends AbstractDataToProcessWriter
                 record[inOut.m_Output] = (field == null) ? "" : field;
             }
 
-            if (applyTransformsAndWrite(input, record, inputFieldCount))
-            {
-                ++recordsWritten;
-            }
-
-            ++recordCount;
+            applyTransformsAndWrite(input, record, inputFieldCount);
 
             inputFieldCount = recordReader.read(input, gotFields);
         }
-
-        m_Logger.debug(String.format("Transferred %d of %d Json records to autodetect.",
-                recordsWritten, recordCount));
     }
 
     private String getRecordHoldingField()

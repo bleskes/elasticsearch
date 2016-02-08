@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -15,7 +15,7 @@
  * it without permission is asked to notify Prelert Ltd     *
  * on +44 (0)20 3567 1249 or email to legal@prelert.com.    *
  * All intellectual property rights in this source code     *
- * are owned by Prelert Ltd.  No part of this source code   *
+ * are owned by Prelert Ltd. No part of this source code    *
  * may be reproduced, adapted or transmitted in any form or *
  * by any means, electronic, mechanical, photocopying,      *
  * recording or otherwise.                                  *
@@ -27,54 +27,64 @@
 
 package com.prelert.rs.job.update;
 
-import java.util.Map;
-import java.util.Objects;
-import java.util.function.Supplier;
+import static org.mockito.Mockito.verify;
 
-import com.fasterxml.jackson.core.type.TypeReference;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.ExpectedException;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.DoubleNode;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.config.verification.JobConfigurationException;
+import com.prelert.job.errorcodes.ErrorCodeMatcher;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.manager.JobManager;
 
-abstract class AbstractUpdater
+public class CustomSettingsUpdaterTest
 {
-    protected static final ObjectMapper JSON_MAPPER = new ObjectMapper();
+    @Rule public ExpectedException m_ExpectedException = ExpectedException.none();
 
-    private final JobManager m_JobManager;
-    private final String m_JobId;
+    @Mock private JobManager m_JobManager;
 
-    AbstractUpdater(JobManager jobManager, String jobId)
+    @Before
+    public void setUp()
     {
-        m_JobManager = Objects.requireNonNull(jobManager);
-        m_JobId = Objects.requireNonNull(jobId);
+        MockitoAnnotations.initMocks(this);
     }
 
-    protected JobManager jobManager()
+    @Test
+    public void testUpdate_GivenValueIsNotAnObject() throws UnknownJobException, JobConfigurationException
     {
-        return m_JobManager;
+        JsonNode node = DoubleNode.valueOf(42.0);
+
+        m_ExpectedException.expect(JobConfigurationException.class);
+        m_ExpectedException.expectMessage(
+                "Invalid update value for customSettings: value has to be an object");
+        m_ExpectedException.expect(
+                ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_VALUE));
+
+        new CustomSettingsUpdater(m_JobManager, "foo").update(node);
     }
 
-    protected String jobId()
+    @Test
+    public void testUpdate_GivenObject() throws UnknownJobException, JobConfigurationException,
+            IOException
     {
-        return m_JobId;
-    }
+        JsonNode node = new ObjectMapper().readTree("{\"a\":1}");
 
-    protected final Map<String, Object> convertToMap(JsonNode node,
-            Supplier<String> errorMessageSupplier) throws JobConfigurationException
-    {
-        try
-        {
-            return JSON_MAPPER.convertValue(node, new TypeReference<Map<String, Object>>() {});
-        }
-        catch (IllegalArgumentException e)
-        {
-            throw new JobConfigurationException(errorMessageSupplier.get(),
-                    ErrorCodes.INVALID_VALUE, e);
-        }
-    }
+        new CustomSettingsUpdater(m_JobManager, "foo").update(node);
 
-    abstract void update(JsonNode node) throws UnknownJobException, JobConfigurationException;
+        Map<String, Object> expected = new HashMap<>();
+        expected.put("a", 1);
+        verify(m_JobManager).updateCustomSettings("foo", expected);
+    }
 }

@@ -30,8 +30,6 @@ import com.prelert.rs.data.Pagination;
 
 public class RecordsRequestBuilder extends BaseJobRequestBuilder<AnomalyRecord>
 {
-    public static final String INCLUDE_INTERIM_QUERY_PARAM = "includeInterim";
-
     private final Map<String, String> m_Params;
 
     /**

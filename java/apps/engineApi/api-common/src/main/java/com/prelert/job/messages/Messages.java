@@ -67,6 +67,7 @@ public final class Messages
     public static final String JOB_CONFIG_NO_DETECTORS = "job.config.no.detectors";
     public static final String JOB_CONFIG_OVERFIELD_INCOMPATIBLE_FUNCTION = "job.config.overField.incompatible.function";
     public static final String JOB_CONFIG_OVERFIELD_NEEDS_ANOTHER = "job.config.overField.needs.another";
+    public static final String JOB_CONFIG_UPDATE_CUSTOM_SETTINGS_INVALID = "job.config.update.custom.settings.invalid";
     public static final String JOB_CONFIG_UPDATE_DESCRIPTION_INVALID = "job.config.update.description.invalid";
     public static final String JOB_CONFIG_UPDATE_DETECTOR_DESCRIPTION_INVALID_DETECTOR_INDEX = "job.config.update.detector.description.invalid.detector.index";
     public static final String JOB_CONFIG_UPDATE_DETECTOR_DESCRIPTION_DETECTOR_INDEX_SHOULD_BE_INTEGER = "job.config.update.detector.description.detector.index.should.be.integer";
@@ -119,6 +120,9 @@ public final class Messages
 
     public static final String JSON_JOB_CONFIG_MAPPING = "json.job.config.mapping.error";
     public static final String JSON_JOB_CONFIG_PARSE = "json.job.config.parse.error";
+
+    public static final String JSON_DETECTOR_CONFIG_MAPPING = "json.detector.config.mapping.error";
+    public static final String JSON_DETECTOR_CONFIG_PARSE = "json.detector.config.parse.error";
 
     public static final String REST_ACTION_NOT_ALLOWED_FOR_SCHEDULED_JOB = "rest.action.not.allowed.for.scheduled.job";
 

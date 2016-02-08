@@ -62,10 +62,10 @@ public class DataStreamer
 
     /**
      * Persisted data files are named with this date format
-     * e.g. Tue_22_Apr_2014_091033
+     * e.g. 2014_01_28_091033_748
      */
     private static final DateTimeFormatter PERSISTED_FILE_NAME_DATE_FORMAT =
-            DateTimeFormatter.ofPattern("EEE_d_MMM_yyyy_HHmmss.SSS");
+            DateTimeFormatter.ofPattern("yyyy_MM_dd_HHmmss_SSS");
 
     private final boolean m_ShouldPersistDataToDisk;
     private final String m_BaseDirectory;

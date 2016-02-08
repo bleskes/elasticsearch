@@ -523,6 +523,10 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
                 builder.field(modelDebugOutput.getByFieldName(), modelDebugOutput.getByFieldValue());
             }
         }
+        if (modelDebugOutput.getByFieldValue() != null)
+        {
+            builder.field(ModelDebugOutput.BY_FIELD_VALUE, modelDebugOutput.getByFieldValue());
+        }
         if (modelDebugOutput.getOverFieldName() != null)
         {
             builder.field(ModelDebugOutput.OVER_FIELD_NAME, modelDebugOutput.getOverFieldName());
@@ -532,6 +536,10 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
                 builder.field(modelDebugOutput.getOverFieldName(), modelDebugOutput.getOverFieldValue());
             }
         }
+        if (modelDebugOutput.getOverFieldValue() != null)
+        {
+            builder.field(ModelDebugOutput.OVER_FIELD_VALUE, modelDebugOutput.getOverFieldValue());
+        }
         if (modelDebugOutput.getPartitionFieldName() != null)
         {
             builder.field(ModelDebugOutput.PARTITION_FIELD_NAME, modelDebugOutput.getPartitionFieldName());
@@ -540,6 +548,10 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
             {
                 builder.field(modelDebugOutput.getPartitionFieldName(), modelDebugOutput.getPartitionFieldValue());
             }
+        }
+        if (modelDebugOutput.getPartitionFieldValue() != null)
+        {
+            builder.field(ModelDebugOutput.PARTITION_FIELD_VALUE, modelDebugOutput.getPartitionFieldValue());
         }
 
         builder.endObject();

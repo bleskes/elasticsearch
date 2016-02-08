@@ -20,6 +20,7 @@ package com.prelert.job;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import com.prelert.job.transform.TransformConfig;
@@ -73,6 +74,7 @@ public class JobConfiguration
     private ModelDebugConfig m_ModelDebugConfig;
     private Long m_RenormalizationWindow;
     private Long m_ResultsRetentionDays;
+    private Map<String, Object> m_CustomSettings;
 
     public JobConfiguration()
     {
@@ -100,6 +102,16 @@ public class JobConfiguration
     public void setId(String id)
     {
         m_ID = id;
+    }
+
+    public Map<String, Object> getCustomSettings()
+    {
+        return m_CustomSettings;
+    }
+
+    public void setCustomSettings(Map<String, Object> customSettings)
+    {
+        m_CustomSettings = customSettings;
     }
 
     /**

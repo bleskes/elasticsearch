@@ -19,7 +19,6 @@ package com.prelert.job;
 
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.messages.Messages;
-//import com.prelert.job.messages.Messages;
 
 /**
  * This type of exception represents an error where

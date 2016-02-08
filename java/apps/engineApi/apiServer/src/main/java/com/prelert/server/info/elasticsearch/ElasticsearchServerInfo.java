@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -29,6 +29,9 @@ package com.prelert.server.info.elasticsearch;
 import java.io.IOException;
 import java.util.Date;
 
+import javax.ws.rs.core.Feature;
+import javax.ws.rs.core.FeatureContext;
+
 import org.apache.log4j.Logger;
 import org.elasticsearch.action.admin.cluster.node.info.NodeInfo;
 import org.elasticsearch.action.admin.cluster.node.info.NodesInfoAction;
@@ -45,18 +48,24 @@ import com.google.common.annotations.VisibleForTesting;
 import com.prelert.server.info.ServerInfo;
 import com.prelert.server.info.ServerInfoFactory;
 
-public class ElasticsearchServerInfo implements ServerInfoFactory
+public class ElasticsearchServerInfo implements ServerInfoFactory, Feature
 {
-    public static final String ATTRIBUTES = "attributes";
-    public static final String CLIENT = "client";
+    private static final Logger LOGGER = Logger.getLogger(ElasticsearchServerInfo.class);
 
-
-    private static Logger LOGGER = Logger.getLogger(ElasticsearchServerInfo.class);
     private final Client m_Client;
 
     public ElasticsearchServerInfo(Client client)
     {
         m_Client = client;
+    }
+
+    /**
+     * Required by the Feature interface.
+     */
+    @Override
+    public boolean configure(FeatureContext context)
+    {
+        return true;
     }
 
     @Override

@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -40,41 +40,37 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.MessageBodyReader;
 
 import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
-import com.prelert.job.JobConfiguration;
+import com.prelert.job.Detector;
 import com.prelert.job.config.verification.JobConfigurationException;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.messages.Messages;
-import com.prelert.job.transform.UnknownOperatorException;
 
 /**
- * JobConfiguration entity provider.
- * Reads the http message body and converts it to a JobConfiguration
+ * Detector entity provider.
+ * Reads the http message body and converts it to a Detector
  * bean. Only conversion from JSON is supported.
  */
 @Consumes(MediaType.APPLICATION_JSON)
-public class JobConfigurationMessageBodyReader implements MessageBodyReader<JobConfiguration>
+public class DetectorMessageBodyReader implements MessageBodyReader<Detector>
 {
      /**
       * The Object to JSON mapper.
       */
-     private static final ObjectReader OBJECT_READER = new ObjectMapper().readerFor(JobConfiguration.class)
-                                   .with(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY);
-
+     private static final ObjectReader OBJECT_READER = new ObjectMapper().readerFor(Detector.class);
 
      @Override
      public boolean isReadable(Class<?> type, Type genericType, Annotation[] annotations,
                MediaType mediaType)
      {
           // no need to check the media type because of the @Consumes annotation
-          return type == JobConfiguration.class;
+          return type == Detector.class;
      }
 
      @Override
-     public JobConfiguration readFrom(Class<JobConfiguration> bean, Type genericType,
+     public Detector readFrom(Class<Detector> bean, Type genericType,
                Annotation[] annotation, MediaType mediaType,
                MultivaluedMap<String, String> httpHeaders, InputStream input)
                          throws IOException
@@ -94,8 +90,8 @@ public class JobConfigurationMessageBodyReader implements MessageBodyReader<JobC
           catch (JsonParseException e)
           {
               throw new JobConfigurationParseException(
-                         Messages.getMessage(Messages.JSON_JOB_CONFIG_PARSE), e,
-                         ErrorCodes.JOB_CONFIG_PARSE_ERROR);
+                         Messages.getMessage(Messages.JSON_DETECTOR_CONFIG_PARSE), e,
+                         ErrorCodes.DETECTOR_PARSE_ERROR);
           }
           catch (JsonMappingException e)
           {
@@ -108,22 +104,11 @@ public class JobConfigurationMessageBodyReader implements MessageBodyReader<JobC
                       throw new JobConfigurationParseException(jce.getMessage(), e,
                                            jce.getErrorCode());
                   }
-                  else if (cause instanceof UnknownOperatorException)
-                  {
-                      UnknownOperatorException uoe = (UnknownOperatorException)cause;
-
-                      throw new JobConfigurationParseException(
-                              Messages.getMessage(Messages.JOB_CONFIG_TRANSFORM_CONDITION_UNKNOWN_OPERATOR,
-                                          uoe.getName()),
-                              uoe,
-                              ErrorCodes.UNKNOWN_OPERATOR);
-                  }
-
               }
 
               throw new JobConfigurationParseException(
-                         Messages.getMessage(Messages.JSON_JOB_CONFIG_MAPPING), e,
-                         ErrorCodes.JOB_CONFIG_UNKNOWN_FIELD_ERROR);
+                         Messages.getMessage(Messages.JSON_DETECTOR_CONFIG_MAPPING), e,
+                         ErrorCodes.DETECTOR_UNKNOWN_FIELD_ERROR);
           }
      }
 

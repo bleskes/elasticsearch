@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -25,56 +25,59 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.rs.job.update;
+package com.prelert.rs.resources;
 
-import java.util.Map;
-import java.util.Objects;
-import java.util.function.Supplier;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.verify;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.prelert.job.UnknownJobException;
+import javax.ws.rs.core.Response;
+
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.ExpectedException;
+
+import com.prelert.job.Detector;
 import com.prelert.job.config.verification.JobConfigurationException;
+import com.prelert.job.errorcodes.ErrorCodeMatcher;
 import com.prelert.job.errorcodes.ErrorCodes;
-import com.prelert.job.manager.JobManager;
+import com.prelert.rs.data.Acknowledgement;
 
-abstract class AbstractUpdater
+public class ValidateTest extends ServiceTest
 {
-    protected static final ObjectMapper JSON_MAPPER = new ObjectMapper();
+    @Rule public ExpectedException m_ExpectedException = ExpectedException.none();
 
-    private final JobManager m_JobManager;
-    private final String m_JobId;
+    private Validate m_Validate;
 
-    AbstractUpdater(JobManager jobManager, String jobId)
+    @Before
+    public void setUp()
     {
-        m_JobManager = Objects.requireNonNull(jobManager);
-        m_JobId = Objects.requireNonNull(jobId);
+        m_Validate = new Validate();
+        configureService(m_Validate);
     }
 
-    protected JobManager jobManager()
+    @Test
+    public void testValid() throws JobConfigurationException
     {
-        return m_JobManager;
+        Detector detector = new Detector();
+        detector.setFunction("count");
+        detector.setByFieldName("airline");
+        Response response = m_Validate.validateDetector(detector);
+
+        Acknowledgement acknowledgement = (Acknowledgement) response.getEntity();
+        assertTrue(acknowledgement.getAcknowledgement());
     }
 
-    protected String jobId()
+    @Test
+    public void testInvalid() throws JobConfigurationException
     {
-        return m_JobId;
-    }
+        m_ExpectedException.expect(JobConfigurationException.class);
+        m_ExpectedException.expectMessage("fieldName must be set when the 'mean' function is used");
+        m_ExpectedException.expect(ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_FIELD_SELECTION));
 
-    protected final Map<String, Object> convertToMap(JsonNode node,
-            Supplier<String> errorMessageSupplier) throws JobConfigurationException
-    {
-        try
-        {
-            return JSON_MAPPER.convertValue(node, new TypeReference<Map<String, Object>>() {});
-        }
-        catch (IllegalArgumentException e)
-        {
-            throw new JobConfigurationException(errorMessageSupplier.get(),
-                    ErrorCodes.INVALID_VALUE, e);
-        }
+        Detector detector = new Detector();
+        detector.setFunction("mean");
+        detector.setByFieldName("airline");
+        Response response = m_Validate.validateDetector(detector);
     }
-
-    abstract void update(JsonNode node) throws UnknownJobException, JobConfigurationException;
 }
