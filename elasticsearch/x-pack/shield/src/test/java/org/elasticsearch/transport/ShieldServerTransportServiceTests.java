@@ -18,7 +18,7 @@
 package org.elasticsearch.transport;
 
 import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.shield.ShieldPlugin;
+import org.elasticsearch.shield.Shield;
 import org.elasticsearch.shield.transport.ShieldServerTransportService;
 import org.elasticsearch.test.ShieldIntegTestCase;
 import org.elasticsearch.xpack.XPackPlugin;
@@ -34,7 +34,7 @@ public class ShieldServerTransportServiceTests extends ShieldIntegTestCase {
     protected Settings transportClientSettings() {
         return Settings.settingsBuilder()
                 .put(super.transportClientSettings())
-                .put(XPackPlugin.featureEnabledSetting(ShieldPlugin.NAME), true)
+                .put(XPackPlugin.featureEnabledSetting(Shield.NAME), true)
                 .build();
     }
 
