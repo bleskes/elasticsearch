@@ -32,7 +32,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.Date;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -74,29 +74,32 @@ public class TaskSchedulerTest
     @Test
     public void testStop_BlocksUntilRunningTaskTerminates() throws InterruptedException
     {
+        CountDownLatch firstTaskStartedLatch = new CountDownLatch(1);
         AtomicLong firstTaskStart = new AtomicLong(0);
         AtomicLong end = new AtomicLong(0);
 
         Runnable task = () -> {
             int id = m_TaskCount.incrementAndGet();
-            long now = new Date().getTime();
+            long now = System.currentTimeMillis();
             if (id == 1)
             {
                 firstTaskStart.getAndSet(now);
+                firstTaskStartedLatch.countDown();
             }
             while (now - firstTaskStart.get() <= 100)
             {
-                now = new Date().getTime();
+                now = System.currentTimeMillis();
             }
             end.getAndSet(now);
         };
 
-        TaskScheduler scheduler = new TaskScheduler(task,
-                () -> LocalDateTime.now().plus(80, ChronoUnit.MILLIS));
-
+        TaskScheduler scheduler = new TaskScheduler(task, () -> LocalDateTime.now());
         scheduler.start();
-        Thread.sleep(160);
+        firstTaskStartedLatch.await();
+
         assertTrue(scheduler.stop(1, TimeUnit.SECONDS));
+
+        assertTrue(System.currentTimeMillis() >= end.get());
         assertEquals(1, m_TaskCount.get());
         assertTrue(end.get() - firstTaskStart.get() >= 100);
     }
