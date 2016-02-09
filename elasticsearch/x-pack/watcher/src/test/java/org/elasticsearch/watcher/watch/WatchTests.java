@@ -189,7 +189,7 @@ public class WatchTests extends ESTestCase {
         ScheduleRegistry scheduleRegistry = registry(schedule);
         TriggerEngine triggerEngine = new ParseOnlyScheduleTriggerEngine(Settings.EMPTY, scheduleRegistry, clock);
         TriggerService triggerService = new TriggerService(Settings.EMPTY, singleton(triggerEngine));
-        SecretService secretService = new SecretService.PlainText();
+        SecretService secretService = SecretService.Insecure.INSTANCE;
 
         ExecutableInput input = randomInput();
         InputRegistry inputRegistry = registry(input);
@@ -239,7 +239,7 @@ public class WatchTests extends ESTestCase {
         ScheduleRegistry scheduleRegistry = registry(randomSchedule());
         TriggerEngine triggerEngine = new ParseOnlyScheduleTriggerEngine(Settings.EMPTY, scheduleRegistry, clock);
         TriggerService triggerService = new TriggerService(Settings.EMPTY, singleton(triggerEngine));
-        SecretService secretService = new SecretService.PlainText();
+        SecretService secretService = SecretService.Insecure.INSTANCE;
         ExecutableCondition condition = randomCondition();
         ConditionRegistry conditionRegistry = registry(condition);
         ExecutableInput input = randomInput();
@@ -270,7 +270,7 @@ public class WatchTests extends ESTestCase {
         ScheduleRegistry scheduleRegistry = registry(schedule);
         TriggerEngine triggerEngine = new ParseOnlyScheduleTriggerEngine(Settings.EMPTY, scheduleRegistry, SystemClock.INSTANCE);
         TriggerService triggerService = new TriggerService(Settings.EMPTY, singleton(triggerEngine));
-        SecretService secretService = new SecretService.PlainText();
+        SecretService secretService = SecretService.Insecure.INSTANCE;
 
         ConditionRegistry conditionRegistry = registry(new ExecutableAlwaysCondition(logger));
         InputRegistry inputRegistry = registry(new ExecutableNoneInput(logger));
