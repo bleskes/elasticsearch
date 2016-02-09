@@ -194,7 +194,7 @@ public class FileUserRolesStore {
         }
 
         if (usersRoles.isEmpty()) {
-            logger.warn("no entries found in users_roles file [{}]. use bin/shield/esusers to add users and role mappings", path
+            logger.warn("no entries found in users_roles file [{}]. use bin/xpack/esusers to add users and role mappings", path
                     .toAbsolutePath());
         }
 
