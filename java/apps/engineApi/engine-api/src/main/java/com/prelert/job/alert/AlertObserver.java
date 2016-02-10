@@ -32,8 +32,6 @@ import java.util.List;
 
 import com.prelert.job.results.AnomalyRecord;
 import com.prelert.job.results.Bucket;
-import com.prelert.job.results.BucketInfluencer;
-import com.prelert.job.results.Influencer;
 
 /**
  * The observer class for alerting
@@ -73,54 +71,13 @@ public abstract class AlertObserver
     public List<AlertTrigger> triggeredAlerts(Bucket bucket)
     {
         List<AlertTrigger> alerts = new ArrayList<>();
-
         for (AlertTrigger trigger : m_Triggers)
         {
-            boolean skipInterimResults = bucket.isInterim() && !trigger.isIncludeInterim();
-            if (skipInterimResults)
+            if (trigger.isTriggeredBy(bucket))
             {
-                continue;
-            }
-
-            switch (trigger.getAlertType())
-            {
-            case BUCKET:
-            {
-                if (wouldAlertTrigger(bucket.getMaxNormalizedProbability(),
-                                      bucket.getAnomalyScore(),
-                                      trigger))
-                {
-                    alerts.add(trigger);
-                }
-                break;
-            }
-            case BUCKETINFLUENCER:
-            {
-                for (BucketInfluencer bi : bucket.getBucketInfluencers())
-                {
-                    if (isGreaterOrEqual(bi.getAnomalyScore(), trigger.getAnomalyThreshold()))
-                    {
-                        alerts.add(trigger);
-                        break;
-                    }
-                }
-                break;
-            }
-            case INFLUENCER:
-            {
-                for (Influencer inf : bucket.getInfluencers())
-                {
-                    if (isGreaterOrEqual(inf.getAnomalyScore(), trigger.getAnomalyThreshold()))
-                    {
-                        alerts.add(trigger);
-                        break;
-                    }
-                }
-                break;
-            }
+                alerts.add(trigger);
             }
         }
-
         return alerts;
     }
 
@@ -142,33 +99,30 @@ public abstract class AlertObserver
         alert.setAnomalyScore(bucket.getAnomalyScore());
         alert.setMaxNormalizedProbability(bucket.getMaxNormalizedProbability());
 
-        for (AlertTrigger at : this.triggeredAlerts(bucket))
+        for (AlertTrigger at : triggeredAlerts(bucket))
         {
             switch (at.getAlertType())
             {
-            case INFLUENCER:
-            case BUCKETINFLUENCER:
-                alert.setBucket(bucket);
-                break;
-            case BUCKET:
-            {
-                List<AnomalyRecord> records = extractRecordsAboveThreshold(
-                                            at.getNormalisedThreshold(), bucket);
-
-                boolean isAnomalyScoreAlert = AlertObserver.isGreaterOrEqual(
-                                                        bucket.getAnomalyScore(),
-                                                        at.getAnomalyThreshold());
-                if (isAnomalyScoreAlert)
-                {
-                    bucket.setRecords(records);
-                    bucket.setRecordCount(records.size());
+                case INFLUENCER:
+                case BUCKETINFLUENCER:
                     alert.setBucket(bucket);
-                }
-                else
+                    break;
+                case BUCKET:
                 {
-                    alert.setRecords(records);
+                    List<AnomalyRecord> records = extractRecordsAboveThreshold(
+                                                at.getNormalisedThreshold(), bucket);
+
+                    if (at.triggersAnomalyThreshold(bucket.getAnomalyScore()))
+                    {
+                        bucket.setRecords(records);
+                        bucket.setRecordCount(records.size());
+                        alert.setBucket(bucket);
+                    }
+                    else
+                    {
+                        alert.setRecords(records);
+                    }
                 }
-            }
             }
         }
 
@@ -195,18 +149,6 @@ public abstract class AlertObserver
         }
 
         return records;
-    }
-
-    protected static boolean isGreaterOrEqual(double value, Double threshold)
-    {
-        return threshold == null ? false : value >= threshold;
-    }
-
-    private static boolean wouldAlertTrigger(double normalisedValue, double  anomalyScore,
-                                            AlertTrigger trigger)
-    {
-        return isGreaterOrEqual(normalisedValue, trigger.getNormalisedThreshold())
-                    || isGreaterOrEqual(anomalyScore, trigger.getAnomalyThreshold());
     }
 
     /**
