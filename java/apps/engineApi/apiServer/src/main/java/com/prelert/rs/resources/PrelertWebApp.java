@@ -165,6 +165,9 @@ public class PrelertWebApp extends Application
         m_Singletons.add(m_ServerInfo);
 
         m_ShutdownThreadBuilder.addTask(m_JobManager);
+        // The job provider must be the last shutdown task, as earlier shutdown
+        // tasks may depend on it
+        m_ShutdownThreadBuilder.addTask(jobProvider);
         Runtime.getRuntime().addShutdownHook(m_ShutdownThreadBuilder.build());
     }
 

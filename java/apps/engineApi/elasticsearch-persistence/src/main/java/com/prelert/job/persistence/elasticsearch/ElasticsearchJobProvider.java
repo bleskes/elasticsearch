@@ -139,18 +139,17 @@ public class ElasticsearchJobProvider implements JobProvider
     }
 
     /**
-     * Close the Elasticsearch node
+     * Close the Elasticsearch node or client
      */
     @Override
-    public void close() throws IOException
+    public void shutdown()
     {
+        m_Client.close();
+        LOGGER.info("Elasticsearch client shut down");
         if (m_Node != null)
         {
             m_Node.close();
-        }
-        else
-        {
-            m_Client.close();
+            LOGGER.info("Elasticsearch node shut down");
         }
     }
 

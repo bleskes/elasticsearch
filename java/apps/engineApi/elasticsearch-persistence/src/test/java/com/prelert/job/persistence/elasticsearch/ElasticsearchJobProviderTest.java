@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -69,13 +69,13 @@ public class ElasticsearchJobProviderTest
     }
 
     @Test
-    public void testClose() throws InterruptedException, ExecutionException, IOException
+    public void testShutdown() throws InterruptedException, ExecutionException, IOException
     {
         MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME)
                 .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true);
         ElasticsearchJobProvider provider = createProvider(clientBuilder.build());
 
-        provider.close();
+        provider.shutdown();
 
         verify(m_Node).close();
     }

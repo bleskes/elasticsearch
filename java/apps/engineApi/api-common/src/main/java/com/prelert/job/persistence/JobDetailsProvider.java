@@ -18,11 +18,11 @@
 
 package com.prelert.job.persistence;
 
-import java.io.Closeable;
 import java.util.Date;
 import java.util.Map;
 import java.util.Optional;
 
+import com.prelert.app.Shutdownable;
 import com.prelert.job.JobDetails;
 import com.prelert.job.JobIdAlreadyExistsException;
 import com.prelert.job.JobStatus;
@@ -31,7 +31,7 @@ import com.prelert.job.UnknownJobException;
 /**
  * General interface for classes that persist Jobs and job data
  */
-public interface JobDetailsProvider extends Closeable
+public interface JobDetailsProvider extends Shutdownable
 {
     /**
      * Store the Prelert info doc (version number etc)

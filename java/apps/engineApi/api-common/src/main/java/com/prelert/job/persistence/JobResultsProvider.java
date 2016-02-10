@@ -18,16 +18,16 @@
 
 package com.prelert.job.persistence;
 
-import java.io.Closeable;
 import java.util.Optional;
 
+import com.prelert.app.Shutdownable;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.results.AnomalyRecord;
 import com.prelert.job.results.Bucket;
 import com.prelert.job.results.CategoryDefinition;
 import com.prelert.job.results.Influencer;
 
-public interface JobResultsProvider extends Closeable
+public interface JobResultsProvider extends Shutdownable
 {
     /**
      * Get a page of result buckets for the job id

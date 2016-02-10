@@ -30,6 +30,8 @@ package com.prelert.rs.persistence;
 import java.util.Objects;
 
 import org.apache.log4j.Logger;
+import org.elasticsearch.common.logging.ESLoggerFactory;
+import org.elasticsearch.common.logging.log4j.Log4jESLoggerFactory;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.settings.Settings.Builder;
 import org.elasticsearch.node.Node;
@@ -47,6 +49,8 @@ public class ElasticsearchNodeClientFactory extends ElasticsearchFactory
     public static ElasticsearchFactory create(String elasticSearchHost,
             String elasticSearchClusterName, String portRange, String numProcessors)
     {
+        // Tell Elasticsearch to log via our log4j root logger
+        ESLoggerFactory.setDefaultFactory(new Log4jESLoggerFactory());
         Node node = NodeBuilder.nodeBuilder()
                 .settings(buildSettings(elasticSearchHost, portRange, numProcessors)).client(true)
                 .clusterName(elasticSearchClusterName).node();

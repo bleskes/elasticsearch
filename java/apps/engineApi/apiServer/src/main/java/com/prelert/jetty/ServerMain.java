@@ -47,7 +47,11 @@ import com.prelert.job.messages.Messages;
 
 /**
  * Instantiate and configure an embedded Jetty Server in Java.
- * Useful for running & debugging Jetty applications in an IDE
+ *
+ * This is the heart of the Engine API.  It is the entry point
+ * on all platforms, and also the trigger for shutting down when
+ * running as a Windows service.  (On *nix we shut down by
+ * sending a SIGTERM.)
  *
  * The String RESOURCE_PACKAGE is the Java package containing the
  * web resources or set APPLICATION_CLASS to a class extending
@@ -141,6 +145,7 @@ public class ServerMain
         // We start the server before adding the API handler so that the static
         // content is available immediately
         ms_Server.start();
+        LOGGER.info("Engine API now serving static content");
 
         // This serves the Engine API
         ServletContextHandler contextHandler = new ServletContextHandler();
@@ -173,10 +178,21 @@ public class ServerMain
         // some reason we used to get away without doing this in Jetty 9.1, but
         // it's essential in Jetty 9.3.
         contextHandler.start();
+        LOGGER.info("Engine API now serving REST endpoints");
 
         // Block until the server stops (otherwise the whole JVM would shut down
         // prematurely when main() exited)
         ms_Server.join();
+
+        // Although it's generally considered bad practice to call System.exit(),
+        // we need the shutdown hooks to execute here otherwise running jobs
+        // won't be closed and the Elasticsearch connection won't be gracefully
+        // shut down, and this could lead to data loss.  (Simply exiting from
+        // this main() function doesn't cut the mustard, as the Elasticsearch
+        // client has non-daemon threads that will keep the JVM alive and prevent
+        // shutdown hooks from running.)
+        LOGGER.info("Engine API about to exit");
+        System.exit(0);
     }
 
 
@@ -190,8 +206,14 @@ public class ServerMain
     {
         if (ms_Server != null)
         {
+            LOGGER.info("Stopping Jetty");
             ms_Server.stop();
             ms_Server = null;
+            LOGGER.info("Jetty stopped");
+        }
+        else
+        {
+            LOGGER.warn("Received request to stop Jetty when it was not started");
         }
     }
 }
