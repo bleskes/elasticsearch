@@ -83,14 +83,12 @@ public class ElasticsearchServerInfo implements ServerInfoFactory, Feature
         for (NodeInfo nodeInfo : nodeInfos)
         {
             // use the first data node
-            if (nodeInfo.getNode().isClientNode() && nodeInfo.getNode().isDataNode() == false)
+            if (nodeInfo.getNode().isDataNode())
             {
-                continue;
+                serverInfo.setHostname(nodeInfo.getHostname());
+                serverInfo.setTotalMemoryMb(nodeInfo.getJvm().getMem().getHeapMax().getMb());
+                break;
             }
-
-            serverInfo.setHostname(nodeInfo.getHostname());
-            serverInfo.setTotalMemoryMb(nodeInfo.getJvm().getMem().getHeapMax().getMb());
-            break;
         }
 
 
@@ -104,13 +102,12 @@ public class ElasticsearchServerInfo implements ServerInfoFactory, Feature
         for (NodeStats nodeStat : nodesStats)
         {
             // use the first data node
-            if (nodeStat.getNode().isClientNode() && nodeStat.getNode().isDataNode() == false)
+            if (nodeStat.getNode().isDataNode())
             {
-                continue;
+                serverInfo.setTotalDiskMb(nodeStat.getFs().getTotal().getTotal().getMb());
+                serverInfo.setAvailableDiskMb(nodeStat.getFs().getTotal().getAvailable().getMb());
+                break;
             }
-
-            serverInfo.setTotalDiskMb(nodeStat.getFs().getTotal().getTotal().getMb());
-            serverInfo.setAvailableDiskMb(nodeStat.getFs().getTotal().getAvailable().getMb());
         }
 
         return serverInfo;
