@@ -38,13 +38,12 @@ import org.elasticsearch.license.plugin.core.LicensesService;
 import org.elasticsearch.license.plugin.rest.RestDeleteLicenseAction;
 import org.elasticsearch.license.plugin.rest.RestGetLicenseAction;
 import org.elasticsearch.license.plugin.rest.RestPutLicenseAction;
-import org.elasticsearch.plugins.Plugin;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 
-public class LicensePlugin extends Plugin {
+public class Licensing {
 
     public static final String NAME = "license";
     private final boolean isEnabled;
@@ -55,7 +54,7 @@ public class LicensePlugin extends Plugin {
     }
 
     @Inject
-    public LicensePlugin(Settings settings) {
+    public Licensing(Settings settings) {
         if (DiscoveryNode.clientNode(settings)) {
             // Enable plugin only on node clients
             this.isEnabled = "node".equals(settings.get(Client.CLIENT_TYPE_SETTING_S.getKey()));
@@ -63,16 +62,6 @@ public class LicensePlugin extends Plugin {
             this.isEnabled = true;
         }
         transportClient = "transport".equals(settings.get(Client.CLIENT_TYPE_SETTING_S.getKey()));
-    }
-
-    @Override
-    public String name() {
-        return NAME;
-    }
-
-    @Override
-    public String description() {
-        return "Internal Elasticsearch Licensing Plugin";
     }
 
     public void onModule(NetworkModule module) {
@@ -89,7 +78,6 @@ public class LicensePlugin extends Plugin {
         module.registerAction(DeleteLicenseAction.INSTANCE, TransportDeleteLicenseAction.class);
     }
 
-    @Override
     public Collection<Class<? extends LifecycleComponent>> nodeServices() {
         Collection<Class<? extends LifecycleComponent>> services = new ArrayList<>();
         if (isEnabled) {
@@ -98,11 +86,9 @@ public class LicensePlugin extends Plugin {
         return services;
     }
 
-
-    @Override
     public Collection<Module> nodeModules() {
         if (isEnabled) {
-            return Collections.<Module>singletonList(new LicenseModule());
+            return Collections.<Module>singletonList(new LicensingModule());
         }
         return Collections.emptyList();
     }

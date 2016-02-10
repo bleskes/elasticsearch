@@ -28,6 +28,8 @@ import org.elasticsearch.shield.authc.support.RefreshListener;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.watcher.ResourceWatcherService;
+import org.elasticsearch.watcher.Watcher;
+import org.elasticsearch.xpack.XPackPlugin;
 import org.junit.After;
 import org.junit.Before;
 
@@ -236,7 +238,7 @@ public class FileUserRolesStoreTests extends ESTestCase {
             Path usersRoles = writeUsersRoles("role1:admin");
 
             Settings settings = Settings.builder()
-                    .put("watcher.enabled", "false")
+                    .put(XPackPlugin.featureEnabledSetting(Watcher.NAME), "false")
                     .put("path.home", createTempDir())
                     .build();
 
