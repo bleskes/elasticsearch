@@ -307,7 +307,7 @@ public class PrelertWebApp extends Application
 
         ServerInfoWriter writer = new ServerInfoWriter(m_ServerInfo, file);
 
-        LocalDate tomorrow = LocalDate.now(ZoneId.systemDefault()).plusDays(1l);
+        LocalDate tomorrow = LocalDate.now(ZoneId.systemDefault()).plusDays(1L);
         ZonedDateTime tomorrorwMidnight = ZonedDateTime.of(tomorrow, LocalTime.MIDNIGHT,
                                                     ZoneId.systemDefault());
 
@@ -315,7 +315,7 @@ public class PrelertWebApp extends Application
         long delaySeconds = now.until(tomorrorwMidnight, ChronoUnit.SECONDS);
 
         m_ServerStatsSchedule.scheduleAtFixedRate(() -> writer.writeStats(),
-                                                   delaySeconds, 3600l * 24l, TimeUnit.SECONDS);
+                                                   delaySeconds, 3600L * 24L, TimeUnit.SECONDS);
     }
 
     private void scheduleOldResultsRemovalAtMidnight(JobProvider jobProvider,

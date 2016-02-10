@@ -46,6 +46,12 @@ public class ElasticsearchNodeClientFactory extends ElasticsearchFactory
 
     private final Node m_Node;
 
+    private ElasticsearchNodeClientFactory(Node node)
+    {
+        super(node.client());
+        m_Node = Objects.requireNonNull(node);
+    }
+
     public static ElasticsearchFactory create(String elasticSearchHost,
             String elasticSearchClusterName, String portRange, String numProcessors)
     {
@@ -55,12 +61,6 @@ public class ElasticsearchNodeClientFactory extends ElasticsearchFactory
                 .settings(buildSettings(elasticSearchHost, portRange, numProcessors)).client(true)
                 .clusterName(elasticSearchClusterName).node();
         return new ElasticsearchNodeClientFactory(node);
-    }
-
-    private ElasticsearchNodeClientFactory(Node node)
-    {
-        super(node.client());
-        m_Node = Objects.requireNonNull(node);
     }
 
     /**
