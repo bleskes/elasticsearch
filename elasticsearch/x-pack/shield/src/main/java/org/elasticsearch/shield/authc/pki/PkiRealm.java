@@ -65,7 +65,8 @@ public class PkiRealm extends Realm<X509AuthenticationToken> {
     public PkiRealm(RealmConfig config, DnRoleMapper roleMapper) {
         super(TYPE, config);
         this.trustManagers = trustManagers(config.settings(), config.env());
-        this.principalPattern = Pattern.compile(config.settings().get("username_pattern", DEFAULT_USERNAME_PATTERN), Pattern.CASE_INSENSITIVE);
+        this.principalPattern = Pattern.compile(config.settings().get("username_pattern", DEFAULT_USERNAME_PATTERN),
+                Pattern.CASE_INSENSITIVE);
         this.roleMapper = roleMapper;
         checkSSLEnabled(config, logger);
     }
@@ -165,7 +166,8 @@ public class PkiRealm extends Realm<X509AuthenticationToken> {
             throw new IllegalArgumentException("no truststore password configured");
         }
 
-        String trustStoreAlgorithm = settings.get("truststore.algorithm", System.getProperty("ssl.TrustManagerFactory.algorithm", TrustManagerFactory.getDefaultAlgorithm()));
+        String trustStoreAlgorithm = settings.get("truststore.algorithm", System.getProperty("ssl.TrustManagerFactory.algorithm",
+                TrustManagerFactory.getDefaultAlgorithm()));
         TrustManager[] trustManagers;
         try (InputStream in = Files.newInputStream(env.binFile().getParent().resolve(truststorePath))) {
             // Load TrustStore
@@ -197,6 +199,7 @@ public class PkiRealm extends Realm<X509AuthenticationToken> {
     /**
      * Checks to see if both SSL and Client authentication are enabled on at least one network communication layer. If
      * not an error message will be logged
+     *
      * @param config this realm's configuration
      * @param logger the logger to use if there is a configuration issue
      */
@@ -205,13 +208,15 @@ public class PkiRealm extends Realm<X509AuthenticationToken> {
 
         // HTTP
         if (settings.getAsBoolean(ShieldNettyHttpServerTransport.HTTP_SSL_SETTING, ShieldNettyHttpServerTransport.HTTP_SSL_DEFAULT)
-                && SSLClientAuth.parse(settings.get(ShieldNettyHttpServerTransport.HTTP_CLIENT_AUTH_SETTING), ShieldNettyHttpServerTransport.HTTP_CLIENT_AUTH_DEFAULT).enabled()) {
+                && SSLClientAuth.parse(settings.get(ShieldNettyHttpServerTransport.HTTP_CLIENT_AUTH_SETTING),
+                ShieldNettyHttpServerTransport.HTTP_CLIENT_AUTH_DEFAULT).enabled()) {
             return;
         }
 
         // Default Transport
         final boolean ssl = settings.getAsBoolean(ShieldNettyTransport.TRANSPORT_SSL_SETTING, ShieldNettyTransport.TRANSPORT_SSL_DEFAULT);
-        final SSLClientAuth clientAuth = SSLClientAuth.parse(settings.get(ShieldNettyTransport.TRANSPORT_CLIENT_AUTH_SETTING), ShieldNettyTransport.TRANSPORT_CLIENT_AUTH_DEFAULT);
+        final SSLClientAuth clientAuth = SSLClientAuth.parse(settings.get(ShieldNettyTransport.TRANSPORT_CLIENT_AUTH_SETTING),
+                ShieldNettyTransport.TRANSPORT_CLIENT_AUTH_DEFAULT);
         if (ssl && clientAuth.enabled()) {
             return;
         }
@@ -226,7 +231,8 @@ public class PkiRealm extends Realm<X509AuthenticationToken> {
             }
         }
 
-        logger.error("PKI realm [{}] is enabled but cannot be used as neither HTTP or Transport have both SSL and client authentication enabled", config.name());
+        logger.error("PKI realm [{}] is enabled but cannot be used as neither HTTP or Transport have both SSL and client authentication " +
+                "enabled", config.name());
     }
 
     public static class Factory extends Realm.Factory<PkiRealm> {

@@ -105,7 +105,8 @@ public class DynamicIndexNameIntegrationTests extends AbstractWatcherIntegration
         flush();
         refresh();
 
-        SearchResponse response = searchHistory(searchSource().query(matchQuery("result.input.search.request.indices", indexNameDateMathExpressions)));
+        SearchResponse response = searchHistory(searchSource().query(matchQuery("result.input.search.request.indices",
+                indexNameDateMathExpressions)));
         assertThat(response.getHits().getTotalHits(), is(1L));
     }
 

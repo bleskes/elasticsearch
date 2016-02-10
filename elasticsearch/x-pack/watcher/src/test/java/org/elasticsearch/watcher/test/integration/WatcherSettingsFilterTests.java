@@ -70,7 +70,8 @@ public class WatcherSettingsFilterTests extends AbstractWatcherIntegrationTestCa
         Map<String, Object> nodes = (Map<String, Object>) response.get("nodes");
         for (Object node : nodes.values()) {
             Map<String, Object> settings = (Map<String, Object>) ((Map<String, Object>) node).get("settings");
-            assertThat(XContentMapValues.extractValue("watcher.actions.email.service.account._email.smtp.user", settings), is((Object) "_user"));
+            assertThat(XContentMapValues.extractValue("watcher.actions.email.service.account._email.smtp.user", settings),
+                    is((Object) "_user"));
             assertThat(XContentMapValues.extractValue("watcher.actions.email.service.account._email.smtp.password", settings), nullValue());
         }
     }
@@ -91,7 +92,8 @@ public class WatcherSettingsFilterTests extends AbstractWatcherIntegrationTestCa
             requestBuilder.body(body);
         }
         if (shieldEnabled()) {
-            requestBuilder.addHeader(BASIC_AUTH_HEADER, basicAuthHeaderValue(TEST_USERNAME, new SecuredString(TEST_PASSWORD.toCharArray())));
+            requestBuilder.addHeader(BASIC_AUTH_HEADER,
+                    basicAuthHeaderValue(TEST_USERNAME, new SecuredString(TEST_PASSWORD.toCharArray())));
         }
         return requestBuilder.execute();
     }

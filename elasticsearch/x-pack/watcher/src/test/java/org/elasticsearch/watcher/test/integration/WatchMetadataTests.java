@@ -69,7 +69,8 @@ public class WatchMetadataTests extends AbstractWatcherIntegrationTestCase {
         watcherClient().preparePutWatch("_name")
                 .setSource(watchBuilder()
                         .trigger(schedule(cron("0/5 * * * * ? *")))
-                        .input(searchInput(WatcherTestUtils.newInputSearchRequest("my-index").source(searchSource().query(matchAllQuery()))))
+                        .input(searchInput(WatcherTestUtils.newInputSearchRequest("my-index")
+                                .source(searchSource().query(matchAllQuery()))))
                         .condition(compareCondition("ctx.payload.hits.total", CompareCondition.Op.EQ, 1L))
                         .metadata(metadata))
                         .get();
@@ -100,7 +101,8 @@ public class WatchMetadataTests extends AbstractWatcherIntegrationTestCase {
         watcherClient().preparePutWatch("_name")
                 .setSource(watchBuilder()
                         .trigger(schedule(cron("0 0 0 1 1 ? 2050")))
-                        .input(searchInput(WatcherTestUtils.newInputSearchRequest("my-index").source(searchSource().query(matchAllQuery()))))
+                        .input(searchInput(WatcherTestUtils.newInputSearchRequest("my-index")
+                                .source(searchSource().query(matchAllQuery()))))
                         .condition(new AlwaysCondition())
                         .addAction("testLogger", loggingAction)
                         .defaultThrottlePeriod(TimeValue.timeValueSeconds(0))
@@ -108,7 +110,8 @@ public class WatchMetadataTests extends AbstractWatcherIntegrationTestCase {
                 .get();
 
         TriggerEvent triggerEvent = new ScheduleTriggerEvent(new DateTime(UTC), new DateTime(UTC));
-        ExecuteWatchResponse executeWatchResponse = watcherClient().prepareExecuteWatch("_name").setTriggerEvent(triggerEvent).setActionMode("_all", ActionExecutionMode.SIMULATE).get();
+        ExecuteWatchResponse executeWatchResponse = watcherClient().prepareExecuteWatch("_name")
+                .setTriggerEvent(triggerEvent).setActionMode("_all", ActionExecutionMode.SIMULATE).get();
         Map<String, Object> result = executeWatchResponse.getRecordSource().getAsMap();
         logger.info("result=\n{}", result);
 

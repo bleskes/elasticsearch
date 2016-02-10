@@ -30,7 +30,8 @@ import java.util.Map;
 /**
  * A execute watch action request builder.
  */
-public class ExecuteWatchRequestBuilder extends MasterNodeOperationRequestBuilder<ExecuteWatchRequest, ExecuteWatchResponse, ExecuteWatchRequestBuilder> {
+public class ExecuteWatchRequestBuilder extends MasterNodeOperationRequestBuilder<ExecuteWatchRequest, ExecuteWatchResponse,
+        ExecuteWatchRequestBuilder> {
 
     public ExecuteWatchRequestBuilder(ElasticsearchClient client) {
         super(client, ExecuteWatchAction.INSTANCE, new ExecuteWatchRequest());
@@ -47,9 +48,10 @@ public class ExecuteWatchRequestBuilder extends MasterNodeOperationRequestBuilde
         this.request().setId(id);
         return this;
     }
+
     /**
-    * @param ignoreCondition set if the condition for this execution be ignored
-    */
+     * @param ignoreCondition set if the condition for this execution be ignored
+     */
     public ExecuteWatchRequestBuilder setIgnoreCondition(boolean ignoreCondition) {
         request.setIgnoreCondition(ignoreCondition);
         return this;
@@ -106,8 +108,8 @@ public class ExecuteWatchRequestBuilder extends MasterNodeOperationRequestBuilde
     /**
      * Sets the mode in which the given action (identified by its id) will be handled.
      *
-     * @param actionId      The id of the action
-     * @param actionMode    The mode in which the action will be handled in the execution
+     * @param actionId   The id of the action
+     * @param actionMode The mode in which the action will be handled in the execution
      */
     public ExecuteWatchRequestBuilder setActionMode(String actionId, ActionExecutionMode actionMode) {
         request.setActionMode(actionId, actionMode);

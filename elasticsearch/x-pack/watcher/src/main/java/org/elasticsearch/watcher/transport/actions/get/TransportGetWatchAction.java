@@ -53,9 +53,11 @@ public class TransportGetWatchAction extends WatcherTransportAction<GetWatchRequ
 
     @Inject
     public TransportGetWatchAction(Settings settings, TransportService transportService, ClusterService clusterService,
-                                   ThreadPool threadPool, ActionFilters actionFilters, IndexNameExpressionResolver indexNameExpressionResolver,
-                                   WatcherService watcherService, WatcherLicensee watcherLicensee) {
-        super(settings, GetWatchAction.NAME, transportService, clusterService, threadPool, actionFilters, indexNameExpressionResolver, watcherLicensee, GetWatchRequest::new);
+                                   ThreadPool threadPool, ActionFilters actionFilters,
+                                   IndexNameExpressionResolver indexNameExpressionResolver, WatcherService watcherService,
+                                   WatcherLicensee watcherLicensee) {
+        super(settings, GetWatchAction.NAME, transportService, clusterService, threadPool, actionFilters, indexNameExpressionResolver,
+                watcherLicensee, GetWatchRequest::new);
         this.watcherService = watcherService;
     }
 
@@ -70,7 +72,8 @@ public class TransportGetWatchAction extends WatcherTransportAction<GetWatchRequ
     }
 
     @Override
-    protected void masterOperation(GetWatchRequest request, ClusterState state, ActionListener<GetWatchResponse> listener) throws ElasticsearchException {
+    protected void masterOperation(GetWatchRequest request, ClusterState state, ActionListener<GetWatchResponse> listener) throws
+            ElasticsearchException {
         if (!watcherLicensee.isGetWatchAllowed()) {
             listener.onFailure(LicenseUtils.newComplianceException(WatcherLicensee.ID));
             return;

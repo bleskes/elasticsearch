@@ -25,7 +25,6 @@ import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.network.NetworkModule;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.TransportAddress;
-import org.elasticsearch.node.Node;
 import org.elasticsearch.shield.authc.support.SecuredString;
 import org.elasticsearch.shield.authc.support.SecuredStringTests;
 import org.elasticsearch.shield.authc.support.UsernamePasswordToken;
@@ -86,7 +85,8 @@ public class RunAsIntegTests extends ShieldIntegTestCase {
     }
 
     public void testUserImpersonation() throws Exception {
-        try (TransportClient client = getTransportClient(Settings.builder().put("shield.user", TRANSPORT_CLIENT_USER + ":" + ShieldSettingsSource.DEFAULT_PASSWORD).build())) {
+        try (TransportClient client = getTransportClient(
+                Settings.builder().put("shield.user", TRANSPORT_CLIENT_USER + ":" + ShieldSettingsSource.DEFAULT_PASSWORD).build())) {
             //ensure the client can connect
             awaitBusy(() -> {
                 return client.connectedNodes().size() > 0;
@@ -102,7 +102,9 @@ public class RunAsIntegTests extends ShieldIntegTestCase {
 
             // let's run as without authorization
             try {
-                client.filterWithHeader(Collections.singletonMap(InternalAuthenticationService.RUN_AS_USER_HEADER, ShieldSettingsSource.DEFAULT_USER_NAME))
+                Map<String, String> headers = Collections.singletonMap(InternalAuthenticationService.RUN_AS_USER_HEADER,
+                        ShieldSettingsSource.DEFAULT_USER_NAME);
+                client.filterWithHeader(headers)
                         .admin().cluster().prepareHealth().get();
                 fail("run as should be unauthorized for the transport client user");
             } catch (ElasticsearchSecurityException e) {
@@ -111,7 +113,8 @@ public class RunAsIntegTests extends ShieldIntegTestCase {
             }
 
             Map<String, String> headers = new HashMap<>();
-            headers.put("Authorization", UsernamePasswordToken.basicAuthHeaderValue(RUN_AS_USER, new SecuredString(ShieldSettingsSource.DEFAULT_PASSWORD.toCharArray())));
+            headers.put("Authorization", UsernamePasswordToken.basicAuthHeaderValue(RUN_AS_USER,
+                    new SecuredString(ShieldSettingsSource.DEFAULT_PASSWORD.toCharArray())));
             headers.put(InternalAuthenticationService.RUN_AS_USER_HEADER, ShieldSettingsSource.DEFAULT_USER_NAME);
             // lets set the user
             ClusterHealthResponse response = client.filterWithHeader(headers).admin().cluster().prepareHealth().get();
@@ -123,7 +126,8 @@ public class RunAsIntegTests extends ShieldIntegTestCase {
         // use the transport client user and try to run as
         HttpResponse response = httpClient().method("GET")
                 .path("/_nodes")
-                .addHeader(UsernamePasswordToken.BASIC_AUTH_HEADER, UsernamePasswordToken.basicAuthHeaderValue(TRANSPORT_CLIENT_USER, SecuredStringTests.build(ShieldSettingsSource.DEFAULT_PASSWORD)))
+                .addHeader(UsernamePasswordToken.BASIC_AUTH_HEADER, UsernamePasswordToken.basicAuthHeaderValue(TRANSPORT_CLIENT_USER,
+                        SecuredStringTests.build(ShieldSettingsSource.DEFAULT_PASSWORD)))
                 .addHeader(InternalAuthenticationService.RUN_AS_USER_HEADER, ShieldSettingsSource.DEFAULT_USER_NAME)
                 .execute();
         assertThat(response.getStatusCode(), is(403));
@@ -131,21 +135,24 @@ public class RunAsIntegTests extends ShieldIntegTestCase {
         //the run as user shouldn't have access to the nodes api
         response = httpClient().method("GET")
                 .path("/_nodes")
-                .addHeader(UsernamePasswordToken.BASIC_AUTH_HEADER, UsernamePasswordToken.basicAuthHeaderValue(RUN_AS_USER, SecuredStringTests.build(ShieldSettingsSource.DEFAULT_PASSWORD)))
+                .addHeader(UsernamePasswordToken.BASIC_AUTH_HEADER, UsernamePasswordToken.basicAuthHeaderValue(RUN_AS_USER,
+                        SecuredStringTests.build(ShieldSettingsSource.DEFAULT_PASSWORD)))
                 .execute();
         assertThat(response.getStatusCode(), is(403));
 
         // but when running as a different user it should work
         response = httpClient().method("GET")
                 .path("/_nodes")
-                .addHeader(UsernamePasswordToken.BASIC_AUTH_HEADER, UsernamePasswordToken.basicAuthHeaderValue(RUN_AS_USER, SecuredStringTests.build(ShieldSettingsSource.DEFAULT_PASSWORD)))
+                .addHeader(UsernamePasswordToken.BASIC_AUTH_HEADER, UsernamePasswordToken.basicAuthHeaderValue(RUN_AS_USER,
+                        SecuredStringTests.build(ShieldSettingsSource.DEFAULT_PASSWORD)))
                 .addHeader(InternalAuthenticationService.RUN_AS_USER_HEADER, ShieldSettingsSource.DEFAULT_USER_NAME)
                 .execute();
         assertThat(response.getStatusCode(), is(200));
     }
 
     public void testEmptyUserImpersonationHeader() throws Exception {
-        try (TransportClient client = getTransportClient(Settings.builder().put("shield.user", TRANSPORT_CLIENT_USER + ":" + ShieldSettingsSource.DEFAULT_PASSWORD).build())) {
+        try (TransportClient client = getTransportClient(Settings.builder().put("shield.user", TRANSPORT_CLIENT_USER + ":" +
+                ShieldSettingsSource.DEFAULT_PASSWORD).build())) {
             //ensure the client can connect
             awaitBusy(() -> {
                 return client.connectedNodes().size() > 0;
@@ -153,7 +160,8 @@ public class RunAsIntegTests extends ShieldIntegTestCase {
 
             try {
                 Map<String, String> headers = new HashMap<>();
-                headers.put("Authorization", UsernamePasswordToken.basicAuthHeaderValue(RUN_AS_USER, new SecuredString(ShieldSettingsSource.DEFAULT_PASSWORD.toCharArray())));
+                headers.put("Authorization", UsernamePasswordToken.basicAuthHeaderValue(RUN_AS_USER,
+                        new SecuredString(ShieldSettingsSource.DEFAULT_PASSWORD.toCharArray())));
                 headers.put(InternalAuthenticationService.RUN_AS_USER_HEADER, "");
 
                 client.filterWithHeader(headers).admin().cluster().prepareHealth().get();
@@ -167,14 +175,16 @@ public class RunAsIntegTests extends ShieldIntegTestCase {
     public void testEmptyHeaderUsingHttp() throws Exception {
         HttpResponse response = httpClient().method("GET")
                 .path("/_nodes")
-                .addHeader(UsernamePasswordToken.BASIC_AUTH_HEADER, UsernamePasswordToken.basicAuthHeaderValue(RUN_AS_USER, SecuredStringTests.build(ShieldSettingsSource.DEFAULT_PASSWORD)))
+                .addHeader(UsernamePasswordToken.BASIC_AUTH_HEADER, UsernamePasswordToken.basicAuthHeaderValue(RUN_AS_USER,
+                        SecuredStringTests.build(ShieldSettingsSource.DEFAULT_PASSWORD)))
                 .addHeader(InternalAuthenticationService.RUN_AS_USER_HEADER, "")
                 .execute();
         assertThat(response.getStatusCode(), is(401));
     }
 
     public void testNonExistentRunAsUser() throws Exception {
-        try (TransportClient client = getTransportClient(Settings.builder().put("shield.user", TRANSPORT_CLIENT_USER + ":" + ShieldSettingsSource.DEFAULT_PASSWORD).build())) {
+        try (TransportClient client = getTransportClient(Settings.builder().put("shield.user", TRANSPORT_CLIENT_USER + ":" +
+                ShieldSettingsSource.DEFAULT_PASSWORD).build())) {
             //ensure the client can connect
             awaitBusy(() -> {
                 return client.connectedNodes().size() > 0;
@@ -182,7 +192,8 @@ public class RunAsIntegTests extends ShieldIntegTestCase {
 
             try {
                 Map<String, String> headers = new HashMap<>();
-                headers.put("Authorization", UsernamePasswordToken.basicAuthHeaderValue(RUN_AS_USER, new SecuredString(ShieldSettingsSource.DEFAULT_PASSWORD.toCharArray())));
+                headers.put("Authorization", UsernamePasswordToken.basicAuthHeaderValue(RUN_AS_USER,
+                        new SecuredString(ShieldSettingsSource.DEFAULT_PASSWORD.toCharArray())));
                 headers.put(InternalAuthenticationService.RUN_AS_USER_HEADER, "idontexist");
 
                 client.filterWithHeader(headers).admin().cluster().prepareHealth().get();
@@ -196,7 +207,8 @@ public class RunAsIntegTests extends ShieldIntegTestCase {
     public void testNonExistentRunAsUserUsingHttp() throws Exception {
         HttpResponse response = httpClient().method("GET")
                 .path("/_nodes")
-                .addHeader(UsernamePasswordToken.BASIC_AUTH_HEADER, UsernamePasswordToken.basicAuthHeaderValue(RUN_AS_USER, SecuredStringTests.build(ShieldSettingsSource.DEFAULT_PASSWORD)))
+                .addHeader(UsernamePasswordToken.BASIC_AUTH_HEADER, UsernamePasswordToken.basicAuthHeaderValue(RUN_AS_USER,
+                        SecuredStringTests.build(ShieldSettingsSource.DEFAULT_PASSWORD)))
                 .addHeader(InternalAuthenticationService.RUN_AS_USER_HEADER, "idontexist")
                 .execute();
         assertThat(response.getStatusCode(), is(403));

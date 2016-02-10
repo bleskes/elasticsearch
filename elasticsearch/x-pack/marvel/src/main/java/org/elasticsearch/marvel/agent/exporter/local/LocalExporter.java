@@ -31,7 +31,6 @@ import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.ClusterStateListener;
 import org.elasticsearch.cluster.block.ClusterBlockLevel;
 import org.elasticsearch.cluster.metadata.IndexMetaData;
-import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.collect.ImmutableOpenMap;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.regex.Regex;
@@ -49,6 +48,8 @@ import org.joda.time.DateTimeZone;
 
 import java.util.HashSet;
 import java.util.Set;
+
+import static org.elasticsearch.common.Strings.collectionToCommaDelimitedString;
 
 /**
  *
@@ -68,7 +69,8 @@ public class LocalExporter extends Exporter implements ClusterStateListener, Cle
     /** Version number of built-in templates **/
     private final Integer templateVersion;
 
-    public LocalExporter(Exporter.Config config, Client client, ClusterService clusterService, RendererRegistry renderers, CleanerService cleanerService) {
+    public LocalExporter(Exporter.Config config, Client client, ClusterService clusterService, RendererRegistry renderers,
+                         CleanerService cleanerService) {
         super(TYPE, config);
         this.client = client;
         this.clusterService = clusterService;
@@ -175,7 +177,8 @@ public class LocalExporter extends Exporter implements ClusterStateListener, Cle
 
         // Install the index template for timestamped indices first, so that other nodes can ship data
         if (!templateInstalled) {
-            logger.debug("local exporter [{}] - could not find existing marvel template for timestamped indices, installing a new one", name());
+            logger.debug("local exporter [{}] - could not find existing marvel template for timestamped indices, installing a new one",
+                    name());
             putTemplate(templateName, MarvelTemplateUtils.loadTimestampedIndexTemplate());
             // we'll get that template on the next cluster state update
             return null;
@@ -262,7 +265,8 @@ public class LocalExporter extends Exporter implements ClusterStateListener, Cle
                     cleanerService.validateRetention(exporterRetention);
                     retention = exporterRetention;
                 } catch (IllegalArgumentException e) {
-                    logger.warn("local exporter [{}] - unable to use custom history duration [{}]: {}", name(), exporterRetention, e.getMessage());
+                    logger.warn("local exporter [{}] - unable to use custom history duration [{}]: {}", name(), exporterRetention,
+                            e.getMessage());
                 }
             }
 
@@ -311,8 +315,9 @@ public class LocalExporter extends Exporter implements ClusterStateListener, Cle
     }
 
     private void deleteIndices(Set<String> indices) {
-        logger.trace("local exporter [{}] - deleting {} indices: {}", name(), indices.size(), Strings.collectionToCommaDelimitedString(indices));
-        client.admin().indices().delete(new DeleteIndexRequest(indices.toArray(new String[indices.size()])), new ActionListener<DeleteIndexResponse>() {
+        logger.trace("local exporter [{}] - deleting {} indices: {}", name(), indices.size(), collectionToCommaDelimitedString(indices));
+        client.admin().indices().delete(new DeleteIndexRequest(indices.toArray(new String[indices.size()])),
+                new ActionListener<DeleteIndexResponse>() {
             @Override
             public void onResponse(DeleteIndexResponse response) {
                 if (response.isAcknowledged()) {

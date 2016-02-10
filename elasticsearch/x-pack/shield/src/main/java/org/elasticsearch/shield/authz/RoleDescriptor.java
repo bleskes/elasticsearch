@@ -32,7 +32,6 @@ import org.elasticsearch.common.xcontent.XContentParser;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -131,7 +130,8 @@ public class RoleDescriptor implements ToXContent {
                     }
                 }
             } else {
-                throw new ElasticsearchParseException("failed to parse add role request indices, got value with wrong type [{}]", currentFieldName);
+                throw new ElasticsearchParseException("failed to parse add role request indices, got value with wrong type [{}]",
+                        currentFieldName);
             }
         }
         if (idxNames == null || idxNames.length == 0) {
@@ -198,7 +198,8 @@ public class RoleDescriptor implements ToXContent {
                         }
                     }
                 } else {
-                    throw new ElasticsearchParseException("failed to parse add role request, got value with wrong type [{}]", currentFieldName);
+                    throw new ElasticsearchParseException("failed to parse add role request, got value with wrong type [{}]",
+                            currentFieldName);
                 }
             }
             if (roleName == null) {
@@ -266,7 +267,8 @@ public class RoleDescriptor implements ToXContent {
         private String[] fields;
         private BytesReference query;
 
-        IndicesPrivilegesBuilder() {}
+        IndicesPrivilegesBuilder() {
+        }
 
         public IndicesPrivilegesBuilder indices(String[] indices) {
             this.indices = indices;
@@ -304,10 +306,11 @@ public class RoleDescriptor implements ToXContent {
         private String[] fields;
         private BytesReference query;
 
-        private IndicesPrivileges() {}
+        private IndicesPrivileges() {
+        }
 
         IndicesPrivileges(String[] privileges, String[] indices,
-                                 @Nullable String[] fields, @Nullable BytesReference query) {
+                          @Nullable String[] fields, @Nullable BytesReference query) {
             this.privileges = privileges;
             this.indices = indices;
             this.fields = fields;

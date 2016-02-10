@@ -34,7 +34,7 @@ import org.elasticsearch.shield.authc.support.SecuredString;
 import org.elasticsearch.shield.authz.RoleDescriptor;
 import org.elasticsearch.shield.authz.esnative.ESNativeRolesStore;
 import org.elasticsearch.shield.authz.permission.Role;
-import org.elasticsearch.shield.client.ShieldClient;
+import org.elasticsearch.shield.client.SecurityClient;
 import org.elasticsearch.test.ShieldIntegTestCase;
 import org.elasticsearch.test.ShieldSettingsSource;
 import org.junit.After;
@@ -55,7 +55,7 @@ import static org.hamcrest.Matchers.isOneOf;
 public class ESNativeTests extends ShieldIntegTestCase {
 
     public void testDeletingNonexistingUserAndRole() throws Exception {
-        ShieldClient c = new ShieldClient(client());
+        SecurityClient c = securityClient();
         DeleteUserResponse resp = c.prepareDeleteUser().user("joe").get();
         assertFalse("user shouldn't be found", resp.found());
         DeleteRoleResponse resp2 = c.prepareDeleteRole().role("role").get();
@@ -63,7 +63,7 @@ public class ESNativeTests extends ShieldIntegTestCase {
     }
 
     public void testGettingUserThatDoesntExist() throws Exception {
-        ShieldClient c = new ShieldClient(client());
+        SecurityClient c = securityClient();
         GetUsersResponse resp = c.prepareGetUsers().users("joe").get();
         assertFalse("user should not exist", resp.isExists());
         GetRolesResponse resp2 = c.prepareGetRoles().roles("role").get();
@@ -71,7 +71,7 @@ public class ESNativeTests extends ShieldIntegTestCase {
     }
 
     public void testAddAndGetUser() throws Exception {
-        ShieldClient c = new ShieldClient(client());
+        SecurityClient c = securityClient();
         logger.error("--> creating user");
         c.prepareAddUser()
                 .username("joe")
@@ -129,7 +129,7 @@ public class ESNativeTests extends ShieldIntegTestCase {
     }
 
     public void testAddAndGetRole() throws Exception {
-        ShieldClient c = new ShieldClient(client());
+        SecurityClient c = securityClient();
         logger.error("--> creating role");
         c.prepareAddRole()
                 .name("test_role")
@@ -183,7 +183,7 @@ public class ESNativeTests extends ShieldIntegTestCase {
     }
 
     public void testAddUserAndRoleThenAuth() throws Exception {
-        ShieldClient c = new ShieldClient(client());
+        SecurityClient c = securityClient();
         logger.error("--> creating role");
         c.prepareAddRole()
                 .name("test_role")
@@ -216,7 +216,7 @@ public class ESNativeTests extends ShieldIntegTestCase {
     }
 
     public void testUpdatingUserAndAuthentication() throws Exception {
-        ShieldClient c = new ShieldClient(client());
+        SecurityClient c = securityClient();
         logger.error("--> creating user");
         c.prepareAddUser()
                 .username("joe")
@@ -260,7 +260,7 @@ public class ESNativeTests extends ShieldIntegTestCase {
     }
 
     public void testCreateDeleteAuthenticate() {
-        ShieldClient c = new ShieldClient(client());
+        SecurityClient c = securityClient();
         logger.error("--> creating user");
         c.prepareAddUser()
                 .username("joe")
@@ -297,7 +297,7 @@ public class ESNativeTests extends ShieldIntegTestCase {
 
     public void testCreateAndUpdateRole() {
         final boolean authenticate = randomBoolean();
-        ShieldClient c = new ShieldClient(client());
+        SecurityClient c = securityClient();
         logger.error("--> creating role");
         c.prepareAddRole()
                 .name("test_role")
@@ -317,7 +317,8 @@ public class ESNativeTests extends ShieldIntegTestCase {
 
         if (authenticate) {
             final String token = basicAuthHeaderValue("joe", new SecuredString("s3krit".toCharArray()));
-            ClusterHealthResponse response = client().filterWithHeader(Collections.singletonMap("Authorization", token)).admin().cluster().prepareHealth().get();
+            ClusterHealthResponse response = client().filterWithHeader(Collections.singletonMap("Authorization", token)).admin().cluster()
+                    .prepareHealth().get();
             assertFalse(response.isTimedOut());
             c.prepareAddRole()
                     .name("test_role")
@@ -351,7 +352,7 @@ public class ESNativeTests extends ShieldIntegTestCase {
     }
 
     public void testAuthenticateWithDeletedRole() {
-        ShieldClient c = new ShieldClient(client());
+        SecurityClient c = securityClient();
         logger.error("--> creating role");
         c.prepareAddRole()
                 .name("test_role")
@@ -369,7 +370,8 @@ public class ESNativeTests extends ShieldIntegTestCase {
         ensureGreen(ShieldTemplateService.SHIELD_ADMIN_INDEX_NAME);
 
         final String token = basicAuthHeaderValue("joe", new SecuredString("s3krit".toCharArray()));
-        ClusterHealthResponse response = client().filterWithHeader(Collections.singletonMap("Authorization", token)).admin().cluster().prepareHealth().get();
+        ClusterHealthResponse response = client().filterWithHeader(Collections.singletonMap("Authorization", token)).admin().cluster()
+                .prepareHealth().get();
         assertFalse(response.isTimedOut());
         c.prepareDeleteRole().role("test_role").get();
         try {
@@ -383,7 +385,7 @@ public class ESNativeTests extends ShieldIntegTestCase {
     @Before
     public void ensureStoresStarted() throws Exception {
         // Clear the realm cache for all realms since we use a SUITE scoped cluster
-        ShieldClient client = new ShieldClient(client());
+        SecurityClient client = securityClient();
         client.prepareClearRealmCache().get();
 
         for (ESNativeUsersStore store : internalCluster().getInstances(ESNativeUsersStore.class)) {

@@ -31,7 +31,7 @@ import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.util.concurrent.ThreadContext;
 import org.elasticsearch.license.plugin.core.LicenseUtils;
-import org.elasticsearch.shield.ShieldPlugin;
+import org.elasticsearch.shield.Shield;
 import org.elasticsearch.shield.SystemUser;
 import org.elasticsearch.shield.User;
 import org.elasticsearch.shield.action.interceptor.RequestInterceptor;
@@ -75,9 +75,9 @@ public class ShieldActionFilter extends AbstractComponent implements ActionFilte
     private final ThreadContext threadContext;
 
     @Inject
-    public ShieldActionFilter(Settings settings, AuthenticationService authcService, AuthorizationService authzService, CryptoService cryptoService,
-                              AuditTrail auditTrail, ShieldLicenseState licenseState, ShieldActionMapper actionMapper, Set<RequestInterceptor> requestInterceptors,
-                              ThreadPool threadPool) {
+    public ShieldActionFilter(Settings settings, AuthenticationService authcService, AuthorizationService authzService,
+                              CryptoService cryptoService, AuditTrail auditTrail, ShieldLicenseState licenseState,
+                              ShieldActionMapper actionMapper,  Set<RequestInterceptor> requestInterceptors, ThreadPool threadPool) {
         super(settings);
         this.authcService = authcService;
         this.authzService = authzService;
@@ -93,14 +93,14 @@ public class ShieldActionFilter extends AbstractComponent implements ActionFilte
     public void apply(Task task, String action, ActionRequest request, ActionListener listener, ActionFilterChain chain) {
 
         /**
-            A functional requirement - when the license of shield is disabled (invalid/expires), shield will continue
-            to operate normally, except all read operations will be blocked.
+         A functional requirement - when the license of shield is disabled (invalid/expires), shield will continue
+         to operate normally, except all read operations will be blocked.
          */
         if (!licenseState.statsAndHealthEnabled() && LICENSE_EXPIRATION_ACTION_MATCHER.test(action)) {
             logger.error("blocking [{}] operation due to expired license. Cluster health, cluster stats and indices stats \n" +
                     "operations are blocked on shield license expiration. All data operations (read and write) continue to work. \n" +
                     "If you have a new license, please update it. Otherwise, please reach out to your support contact.", action);
-            throw LicenseUtils.newComplianceException(ShieldPlugin.NAME);
+            throw LicenseUtils.newComplianceException(Shield.NAME);
         }
 
         // only restore the context if it is not empty. This is needed because sometimes a response is sent to the user
@@ -220,13 +220,15 @@ public class ShieldActionFilter extends AbstractComponent implements ActionFilte
         private final ActionListener innerListener;
         private final ThreadContext.StoredContext threadContext;
 
-        private SigningListener(ShieldActionFilter filter, ActionListener innerListener, @Nullable ThreadContext.StoredContext threadContext) {
+        private SigningListener(ShieldActionFilter filter, ActionListener innerListener,
+                                @Nullable ThreadContext.StoredContext threadContext) {
             this.filter = filter;
             this.innerListener = innerListener;
             this.threadContext = threadContext;
         }
 
-        @Override @SuppressWarnings("unchecked")
+        @Override
+        @SuppressWarnings("unchecked")
         public void onResponse(Response response) {
             if (threadContext != null) {
                 threadContext.restore();

@@ -118,12 +118,14 @@ public class DayTimes implements Times {
     public void validate() {
         for (int i = 0; i < hour.length; i++) {
             if (!validHour(hour[i])) {
-                throw illegalArgument("invalid time [{}]. invalid time hour value [{}]. time hours must be between 0 and 23 incl.", this, hour[i]);
+                throw illegalArgument("invalid time [{}]. invalid time hour value [{}]. time hours must be between 0 and 23 incl.",
+                        this, hour[i]);
             }
         }
         for (int i = 0; i < minute.length; i++) {
             if (!validMinute(minute[i])) {
-                throw illegalArgument("invalid time [{}]. invalid time minute value [{}]. time minutes must be between 0 and 59 incl.", this, minute[i]);
+                throw illegalArgument("invalid time [{}]. invalid time minute value [{}]. time minutes must be between 0 and 59 incl.",
+                        this, minute[i]);
             }
         }
     }
@@ -218,7 +220,8 @@ public class DayTimes implements Times {
                         hours.add(parseHourValue(parser, token));
                     }
                 } else {
-                    throw new ElasticsearchParseException("invalid time hour value. expected string/number value or an array of string/number values, but found [{}]", token);
+                    throw new ElasticsearchParseException("invalid time hour value. expected string/number value or an array of " +
+                            "string/number values, but found [{}]", token);
                 }
             } else if (ParseFieldMatcher.STRICT.match(currentFieldName, MINUTE_FIELD)) {
                 if (token.isValue()) {
@@ -228,7 +231,8 @@ public class DayTimes implements Times {
                         minutes.add(parseMinuteValue(parser, token));
                     }
                 } else {
-                    throw new ElasticsearchParseException("invalid time minute value. expected string/number value or an array of string/number values, but found [{}]", token);
+                    throw new ElasticsearchParseException("invalid time minute value. expected string/number value or an array of " +
+                            "string/number values, but found [{}]", token);
                 }
             }
         }
@@ -246,7 +250,8 @@ public class DayTimes implements Times {
             case VALUE_NUMBER:
                 int hour = parser.intValue();
                 if (!DayTimes.validHour(hour)) {
-                    throw new ElasticsearchParseException("invalid time hour value [{}] (possible values may be between 0 and 23 incl.)", hour);
+                    throw new ElasticsearchParseException("invalid time hour value [{}] (possible values may be between 0 and 23 incl.)",
+                            hour);
                 }
                 return hour;
 
@@ -255,7 +260,8 @@ public class DayTimes implements Times {
                 try {
                     hour = Integer.valueOf(value);
                     if (!DayTimes.validHour(hour)) {
-                        throw new ElasticsearchParseException("invalid time hour value [{}] (possible values may be between 0 and 23 incl.)", hour);
+                        String msg = "invalid time hour value [{}] (possible values may be between 0 and 23 incl.)";
+                        throw new ElasticsearchParseException(msg, hour);
                     }
                     return hour;
                 } catch (NumberFormatException nfe) {
@@ -272,7 +278,8 @@ public class DayTimes implements Times {
             case VALUE_NUMBER:
                 int minute = parser.intValue();
                 if (!DayTimes.validMinute(minute)) {
-                    throw new ElasticsearchParseException("invalid time minute value [{}] (possible values may be between 0 and 59 incl.)", minute);
+                    throw new ElasticsearchParseException("invalid time minute value [{}] (possible values may be between 0 and 59 incl.)",
+                            minute);
                 }
                 return minute;
 
@@ -281,7 +288,8 @@ public class DayTimes implements Times {
                 try {
                     minute = Integer.valueOf(value);
                     if (!DayTimes.validMinute(minute)) {
-                        throw new ElasticsearchParseException("invalid time minute value [{}] (possible values may be between 0 and 59 incl.)", minute);
+                        throw new ElasticsearchParseException("invalid time minute value [{}] (possible values may be between 0 and 59 " +
+                                "incl.)", minute);
                     }
                     return minute;
                 } catch (NumberFormatException nfe) {

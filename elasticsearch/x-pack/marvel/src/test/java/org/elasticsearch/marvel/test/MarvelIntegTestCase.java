@@ -32,7 +32,7 @@ import org.elasticsearch.marvel.agent.AgentService;
 import org.elasticsearch.marvel.agent.exporter.MarvelTemplateUtils;
 import org.elasticsearch.marvel.agent.settings.MarvelSettings;
 import org.elasticsearch.plugins.Plugin;
-import org.elasticsearch.shield.ShieldPlugin;
+import org.elasticsearch.shield.Shield;
 import org.elasticsearch.shield.authc.esusers.ESUsersRealm;
 import org.elasticsearch.shield.authc.support.Hasher;
 import org.elasticsearch.shield.authc.support.SecuredString;
@@ -42,6 +42,7 @@ import org.elasticsearch.test.TestCluster;
 import org.elasticsearch.test.store.MockFSIndexStore;
 import org.elasticsearch.test.transport.AssertingLocalTransport;
 import org.elasticsearch.test.transport.MockTransportService;
+import org.elasticsearch.watcher.Watcher;
 import org.elasticsearch.xpack.XPackPlugin;
 import org.hamcrest.Matcher;
 import org.jboss.netty.util.internal.SystemPropertyUtil;
@@ -89,7 +90,7 @@ public abstract class MarvelIntegTestCase extends ESIntegTestCase {
                 .put(super.nodeSettings(nodeOrdinal))
 
                 //TODO: for now lets isolate marvel tests from watcher (randomize this later)
-                .put("watcher.enabled", false)
+                .put(XPackPlugin.featureEnabledSetting(Watcher.NAME), false)
                 // we do this by default in core, but for marvel this isn't needed and only adds noise.
                 .put("index.store.mock.check_index_on_close", false);
 
@@ -365,7 +366,8 @@ public abstract class MarvelIntegTestCase extends ESIntegTestCase {
     }
 
     protected void updateMarvelInterval(long value, TimeUnit timeUnit) {
-        assertAcked(client().admin().cluster().prepareUpdateSettings().setTransientSettings(Settings.builder().put(MarvelSettings.INTERVAL_SETTING.getKey(), value, timeUnit)));
+        assertAcked(client().admin().cluster().prepareUpdateSettings().setTransientSettings(
+                Settings.builder().put(MarvelSettings.INTERVAL_SETTING.getKey(), value, timeUnit)));
     }
 
     /** Shield related settings */
@@ -395,7 +397,10 @@ public abstract class MarvelIntegTestCase extends ESIntegTestCase {
 
         public static final String ROLES =
                 "test:\n" + // a user for the test infra.
-                "  cluster: cluster:monitor/nodes/info, cluster:monitor/nodes/stats, cluster:monitor/state, cluster:monitor/health, cluster:monitor/stats, cluster:monitor/task, cluster:admin/settings/update, cluster:admin/repository/delete, cluster:monitor/nodes/liveness, indices:admin/template/get, indices:admin/template/put, indices:admin/template/delete\n" +
+                        "  cluster: cluster:monitor/nodes/info, cluster:monitor/nodes/stats, cluster:monitor/state, " +
+                        "cluster:monitor/health, cluster:monitor/stats, cluster:monitor/task, cluster:admin/settings/update, " +
+                        "cluster:admin/repository/delete, cluster:monitor/nodes/liveness, indices:admin/template/get, " +
+                        "indices:admin/template/put, indices:admin/template/delete\n" +
                 "  indices:\n" +
                 "    '*': all\n" +
                 "\n" +
@@ -432,7 +437,7 @@ public abstract class MarvelIntegTestCase extends ESIntegTestCase {
                         .put("shield.audit.enabled", auditLogsEnabled)
                                 // Test framework sometimes randomily selects the 'index' or 'none' cache and that makes the
                                 // validation in ShieldPlugin fail. Shield can only run with this query cache impl
-                        .put(IndexModule.INDEX_QUERY_CACHE_TYPE_SETTING.getKey(), ShieldPlugin.OPT_OUT_QUERY_CACHE);
+                        .put(IndexModule.INDEX_QUERY_CACHE_TYPE_SETTING.getKey(), Shield.OPT_OUT_QUERY_CACHE);
             } catch (IOException ex) {
                 throw new RuntimeException("failed to build settings for shield", ex);
             }

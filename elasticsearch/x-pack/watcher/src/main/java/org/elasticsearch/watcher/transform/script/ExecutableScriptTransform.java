@@ -48,7 +48,8 @@ public class ExecutableScriptTransform extends ExecutableTransform<ScriptTransfo
         try {
             compiledScript = scriptService.compile(script);
         } catch (Exception e) {
-            throw invalidScript("failed to compile script [{}] with lang [{}] of type [{}]", e, script.script(), script.lang(), script.type(), e);
+            throw invalidScript("failed to compile script [{}] with lang [{}] of type [{}]", e, script.script(), script.lang(),
+                    script.type(), e);
         }
     }
 

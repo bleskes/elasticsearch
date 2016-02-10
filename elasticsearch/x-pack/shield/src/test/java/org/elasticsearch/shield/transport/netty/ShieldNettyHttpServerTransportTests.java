@@ -56,7 +56,8 @@ public class ShieldNettyHttpServerTransportTests extends ESTestCase {
 
     public void testDefaultClientAuth() throws Exception {
         Settings settings = Settings.builder().put(ShieldNettyHttpServerTransport.HTTP_SSL_SETTING, true).build();
-        ShieldNettyHttpServerTransport transport = new ShieldNettyHttpServerTransport(settings, mock(NetworkService.class), mock(BigArrays.class), mock(IPFilter.class), serverSSLService, mock(ThreadPool.class));
+        ShieldNettyHttpServerTransport transport = new ShieldNettyHttpServerTransport(settings, mock(NetworkService.class),
+                mock(BigArrays.class), mock(IPFilter.class), serverSSLService, mock(ThreadPool.class));
         NettyHttpMockUtil.setOpenChannelsHandlerToMock(transport);
         ChannelPipelineFactory factory = transport.configureServerChannelPipelineFactory();
         assertThat(factory.getPipeline().get(SslHandler.class).getEngine().getNeedClientAuth(), is(false));
@@ -68,7 +69,8 @@ public class ShieldNettyHttpServerTransportTests extends ESTestCase {
         Settings settings = Settings.builder()
                 .put(ShieldNettyHttpServerTransport.HTTP_SSL_SETTING, true)
                 .put(ShieldNettyHttpServerTransport.HTTP_CLIENT_AUTH_SETTING, value).build();
-        ShieldNettyHttpServerTransport transport = new ShieldNettyHttpServerTransport(settings, mock(NetworkService.class), mock(BigArrays.class), mock(IPFilter.class), serverSSLService, mock(ThreadPool.class));
+        ShieldNettyHttpServerTransport transport = new ShieldNettyHttpServerTransport(settings, mock(NetworkService.class),
+                mock(BigArrays.class), mock(IPFilter.class), serverSSLService, mock(ThreadPool.class));
         NettyHttpMockUtil.setOpenChannelsHandlerToMock(transport);
         ChannelPipelineFactory factory = transport.configureServerChannelPipelineFactory();
         assertThat(factory.getPipeline().get(SslHandler.class).getEngine().getNeedClientAuth(), is(false));
@@ -80,7 +82,8 @@ public class ShieldNettyHttpServerTransportTests extends ESTestCase {
         Settings settings = Settings.builder()
                 .put(ShieldNettyHttpServerTransport.HTTP_SSL_SETTING, true)
                 .put(ShieldNettyHttpServerTransport.HTTP_CLIENT_AUTH_SETTING, value).build();
-        ShieldNettyHttpServerTransport transport = new ShieldNettyHttpServerTransport(settings, mock(NetworkService.class), mock(BigArrays.class), mock(IPFilter.class), serverSSLService, mock(ThreadPool.class));
+        ShieldNettyHttpServerTransport transport = new ShieldNettyHttpServerTransport(settings, mock(NetworkService.class),
+                mock(BigArrays.class), mock(IPFilter.class), serverSSLService, mock(ThreadPool.class));
         NettyHttpMockUtil.setOpenChannelsHandlerToMock(transport);
         ChannelPipelineFactory factory = transport.configureServerChannelPipelineFactory();
         assertThat(factory.getPipeline().get(SslHandler.class).getEngine().getNeedClientAuth(), is(true));
@@ -92,7 +95,8 @@ public class ShieldNettyHttpServerTransportTests extends ESTestCase {
         Settings settings = Settings.builder()
                 .put(ShieldNettyHttpServerTransport.HTTP_SSL_SETTING, true)
                 .put(ShieldNettyHttpServerTransport.HTTP_CLIENT_AUTH_SETTING, value).build();
-        ShieldNettyHttpServerTransport transport = new ShieldNettyHttpServerTransport(settings, mock(NetworkService.class), mock(BigArrays.class), mock(IPFilter.class), serverSSLService, mock(ThreadPool.class));
+        ShieldNettyHttpServerTransport transport = new ShieldNettyHttpServerTransport(settings, mock(NetworkService.class),
+                mock(BigArrays.class), mock(IPFilter.class), serverSSLService, mock(ThreadPool.class));
         NettyHttpMockUtil.setOpenChannelsHandlerToMock(transport);
         ChannelPipelineFactory factory = transport.configureServerChannelPipelineFactory();
         assertThat(factory.getPipeline().get(SslHandler.class).getEngine().getNeedClientAuth(), is(false));

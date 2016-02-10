@@ -40,7 +40,8 @@ import java.util.concurrent.ScheduledFuture;
 public class CleanerService extends AbstractLifecycleComponent<CleanerService> {
 
     public static final String HISTORY_DURATION = "history.duration";
-    public static final Setting<TimeValue> HISTORY_SETTING = Setting.timeSetting("marvel." + HISTORY_DURATION, TimeValue.timeValueHours(7 * 24), true, Setting.Scope.CLUSTER);
+    public static final Setting<TimeValue> HISTORY_SETTING = Setting.timeSetting("marvel." + HISTORY_DURATION,
+            TimeValue.timeValueHours(7 * 24), true, Setting.Scope.CLUSTER);
 
     private final MarvelLicensee licensee;
     private final ThreadPool threadPool;
@@ -50,7 +51,8 @@ public class CleanerService extends AbstractLifecycleComponent<CleanerService> {
     private volatile IndicesCleaner runnable;
     private volatile TimeValue retention;
 
-    CleanerService(Settings settings, ClusterSettings clusterSettings, MarvelLicensee licensee, ThreadPool threadPool, ExecutionScheduler executionScheduler) {
+    CleanerService(Settings settings, ClusterSettings clusterSettings, MarvelLicensee licensee, ThreadPool threadPool,
+                   ExecutionScheduler executionScheduler) {
         super(settings);
         this.licensee = licensee;
         this.threadPool = threadPool;
@@ -105,7 +107,8 @@ public class CleanerService extends AbstractLifecycleComponent<CleanerService> {
             throw new IllegalArgumentException("invalid history duration setting value");
         }
         if (!licensee.allowUpdateRetention()) {
-            throw new IllegalArgumentException("license does not allow the history duration setting to be updated to value [" + retention + "]");
+            throw new IllegalArgumentException("license does not allow the history duration setting to be updated to value ["
+                    + retention + "]");
         }
     }
 

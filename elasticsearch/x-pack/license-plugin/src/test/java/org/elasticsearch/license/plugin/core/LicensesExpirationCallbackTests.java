@@ -27,6 +27,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static org.elasticsearch.common.unit.TimeValue.timeValueMillis;
 import static org.hamcrest.Matchers.equalTo;
 
 public class LicensesExpirationCallbackTests extends ESSingleNodeTestCase {
@@ -45,7 +46,7 @@ public class LicensesExpirationCallbackTests extends ESSingleNodeTestCase {
         TimeValue min = TimeValue.timeValueSeconds(postExpirySeconds - randomIntBetween(1, 3));
         TimeValue max = TimeValue.timeValueSeconds(postExpirySeconds + randomIntBetween(1, 10));
 
-        final LicensesService.ExpirationCallback.Post post = new LicensesService.ExpirationCallback.Post(min, max, TimeValue.timeValueMillis(10)) {
+        final LicensesService.ExpirationCallback.Post post = new LicensesService.ExpirationCallback.Post(min, max, timeValueMillis(10)) {
             @Override
             public void on(License license) {
             }
@@ -60,7 +61,7 @@ public class LicensesExpirationCallbackTests extends ESSingleNodeTestCase {
         TimeValue postExpiryDuration = TimeValue.timeValueSeconds(postExpirySeconds);
         TimeValue min = TimeValue.timeValueSeconds(postExpirySeconds - randomIntBetween(1, 3));
 
-        final LicensesService.ExpirationCallback.Post post = new LicensesService.ExpirationCallback.Post(min, null, TimeValue.timeValueMillis(10)) {
+        final LicensesService.ExpirationCallback.Post post = new LicensesService.ExpirationCallback.Post(min, null, timeValueMillis(10)) {
             @Override
             public void on(License license) {
             }
@@ -74,7 +75,7 @@ public class LicensesExpirationCallbackTests extends ESSingleNodeTestCase {
         TimeValue expiryDuration = TimeValue.timeValueSeconds(expirySeconds);
         TimeValue max = TimeValue.timeValueSeconds(expirySeconds + randomIntBetween(1, 10));
 
-        final LicensesService.ExpirationCallback.Pre pre = new LicensesService.ExpirationCallback.Pre(null, max, TimeValue.timeValueMillis(10)) {
+        final LicensesService.ExpirationCallback.Pre pre = new LicensesService.ExpirationCallback.Pre(null, max, timeValueMillis(10)) {
             @Override
             public void on(License license) {
             }
@@ -89,7 +90,7 @@ public class LicensesExpirationCallbackTests extends ESSingleNodeTestCase {
         TimeValue min = TimeValue.timeValueSeconds(expirySeconds - randomIntBetween(0, 3));
         TimeValue max = TimeValue.timeValueSeconds(expirySeconds + randomIntBetween(1, 10));
 
-        final LicensesService.ExpirationCallback.Pre pre = new LicensesService.ExpirationCallback.Pre(min, max, TimeValue.timeValueMillis(10)) {
+        final LicensesService.ExpirationCallback.Pre pre = new LicensesService.ExpirationCallback.Pre(min, max, timeValueMillis(10)) {
             @Override
             public void on(License license) {
             }
@@ -103,8 +104,9 @@ public class LicensesExpirationCallbackTests extends ESSingleNodeTestCase {
         final LicensesService licensesService = getInstanceFromNode(LicensesService.class);
         licensesService.setTrialLicenseDuration(TimeValue.timeValueSeconds(5));
         AtomicInteger counter = new AtomicInteger(0);
+        // 2000, 1600, 1200
         licensesService.setExpirationCallbacks(Collections.singletonList(
-                        preCallbackLatch(TimeValue.timeValueSeconds(1), TimeValue.timeValueSeconds(2), TimeValue.timeValueMillis(400), counter)) // 2000, 1600, 1200
+                        preCallbackLatch(TimeValue.timeValueSeconds(1), TimeValue.timeValueSeconds(2), timeValueMillis(400), counter))
         );
         licensesService.start();
         TestUtils.AssertingLicensee licensee = new TestUtils.AssertingLicensee("testPreExpirationNotification", logger);
@@ -118,8 +120,9 @@ public class LicensesExpirationCallbackTests extends ESSingleNodeTestCase {
         final LicensesService licensesService = getInstanceFromNode(LicensesService.class);
         licensesService.setTrialLicenseDuration(TimeValue.timeValueSeconds(3));
         AtomicInteger counter = new AtomicInteger(0);
+        // 700, 1700, 2700
         licensesService.setExpirationCallbacks(Collections.singletonList(
-                postCallbackLatch(TimeValue.timeValueMillis(700), TimeValue.timeValueSeconds(3), TimeValue.timeValueSeconds(1), counter)) // 700, 1700, 2700
+                postCallbackLatch(timeValueMillis(700), TimeValue.timeValueSeconds(3), TimeValue.timeValueSeconds(1), counter))
         );
         licensesService.start();
         TestUtils.AssertingLicensee licensee = new TestUtils.AssertingLicensee("testPostExpirationNotification", logger);
@@ -137,8 +140,10 @@ public class LicensesExpirationCallbackTests extends ESSingleNodeTestCase {
         AtomicInteger postCounter = new AtomicInteger(0);
         AtomicInteger preCounter = new AtomicInteger(0);
         licensesService.setExpirationCallbacks(Arrays.asList(
-                        preCallbackLatch(TimeValue.timeValueSeconds(1), TimeValue.timeValueSeconds(2), TimeValue.timeValueMillis(400), preCounter), // 2000, 1600, 1200
-                        postCallbackLatch(TimeValue.timeValueMillis(100), TimeValue.timeValueSeconds(2), TimeValue.timeValueMillis(400), postCounter)) // 100, 500, 900, 1300, 1700
+                        // 2000, 1600, 1200
+                        preCallbackLatch(TimeValue.timeValueSeconds(1), TimeValue.timeValueSeconds(2), timeValueMillis(400), preCounter),
+                        // 100, 500, 900, 1300, 1700
+                        postCallbackLatch(timeValueMillis(100), TimeValue.timeValueSeconds(2), timeValueMillis(400), postCounter))
         );
         licensesService.start();
         TestUtils.AssertingLicensee licensee = new TestUtils.AssertingLicensee("testMultipleExpirationNotification", logger);
@@ -152,7 +157,8 @@ public class LicensesExpirationCallbackTests extends ESSingleNodeTestCase {
         licensesService.stop();
     }
 
-    private static LicensesService.ExpirationCallback preCallbackLatch(TimeValue min, TimeValue max, TimeValue frequency, final AtomicInteger count) {
+    private static LicensesService.ExpirationCallback preCallbackLatch(TimeValue min, TimeValue max, TimeValue frequency,
+                                                                       final AtomicInteger count) {
         return new LicensesService.ExpirationCallback.Pre(min, max, frequency) {
             @Override
             public void on(License license) {
@@ -161,7 +167,8 @@ public class LicensesExpirationCallbackTests extends ESSingleNodeTestCase {
         };
     }
 
-    private static LicensesService.ExpirationCallback postCallbackLatch(TimeValue min, TimeValue max, TimeValue frequency, final AtomicInteger count) {
+    private static LicensesService.ExpirationCallback postCallbackLatch(TimeValue min, TimeValue max, TimeValue frequency,
+                                                                        final AtomicInteger count) {
         return new LicensesService.ExpirationCallback.Post(min, max, frequency) {
             @Override
             public void on(License license) {

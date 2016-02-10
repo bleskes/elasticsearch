@@ -146,7 +146,8 @@ public class ChainTransformTests extends ESTestCase {
         }
     }
 
-    private static class NamedExecutableTransform extends ExecutableTransform<NamedExecutableTransform.Transform, NamedExecutableTransform.Result> {
+    private static class NamedExecutableTransform extends ExecutableTransform<NamedExecutableTransform.Transform,
+            NamedExecutableTransform.Result> {
         private static final String TYPE = "named";
 
         public NamedExecutableTransform(String name) {
@@ -235,7 +236,8 @@ public class ChainTransformTests extends ESTestCase {
         }
     }
 
-    private static class FailingExecutableTransform extends ExecutableTransform<FailingExecutableTransform.Transform, FailingExecutableTransform.Result> {
+    private static class FailingExecutableTransform extends ExecutableTransform<FailingExecutableTransform.Transform,
+            FailingExecutableTransform.Result> {
         private static final String TYPE = "throwing";
 
         public FailingExecutableTransform(ESLogger logger) {

@@ -15,7 +15,7 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.watcher.test.integration;
+package org.elasticsearch.messy.tests;
 
 import org.apache.lucene.util.LuceneTestCase.BadApple;
 import org.elasticsearch.ExceptionsHelper;
@@ -30,6 +30,9 @@ import org.elasticsearch.discovery.zen.elect.ElectMasterService;
 import org.elasticsearch.discovery.zen.ping.ZenPing;
 import org.elasticsearch.discovery.zen.ping.ZenPingService;
 import org.elasticsearch.discovery.zen.ping.unicast.UnicastZenPing;
+import org.elasticsearch.plugins.Plugin;
+import org.elasticsearch.script.MockMustacheScriptEngine;
+import org.elasticsearch.script.mustache.MustachePlugin;
 import org.elasticsearch.test.ESIntegTestCase.ClusterScope;
 import org.elasticsearch.test.ESIntegTestCase.SuppressLocalMode;
 import org.elasticsearch.test.discovery.ClusterDiscoveryConfiguration;
@@ -45,6 +48,10 @@ import org.elasticsearch.watcher.test.WatcherTestUtils;
 import org.elasticsearch.watcher.transport.actions.delete.DeleteWatchResponse;
 import org.elasticsearch.watcher.transport.actions.stats.WatcherStatsResponse;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import static org.elasticsearch.index.query.QueryBuilders.termQuery;
@@ -93,6 +100,23 @@ public class NoMasterNodeTests extends AbstractWatcherIntegrationTestCase {
                 .build();
     }
 
+    @Override
+    protected Collection<Class<? extends Plugin>> nodePlugins() {
+        Collection<Class<? extends Plugin>> types = new ArrayList<>();
+        types.addAll(super.nodePlugins());
+        // TODO remove dependency on mustache
+        types.add(MustachePlugin.class);
+        return types;
+    }
+
+    @Override
+    protected Collection<Class<? extends Plugin>> getMockPlugins() {
+        Set<Class<? extends Plugin>> plugins = new HashSet<>(super.getMockPlugins());
+        // remove the mock because we use mustache here...
+        plugins.remove(MockMustacheScriptEngine.TestPlugin.class);
+        return plugins;
+    }
+
     public void testSimpleFailure() throws Exception {
         // we need 3 hosts here because we stop the master and start another - it doesn't restart the pre-existing node...
         config = new ClusterDiscoveryConfiguration.UnicastZen(3, Settings.EMPTY);
@@ -102,7 +126,8 @@ public class NoMasterNodeTests extends AbstractWatcherIntegrationTestCase {
 
         // Have a sample document in the index, the watch is going to evaluate
         client().prepareIndex("my-index", "my-type").setSource("field", "value").get();
-        SearchRequest searchRequest = WatcherTestUtils.newInputSearchRequest("my-index").source(searchSource().query(termQuery("field", "value")));
+        SearchRequest searchRequest = WatcherTestUtils.newInputSearchRequest("my-index").source(
+                searchSource().query(termQuery("field", "value")));
         WatchSourceBuilder watchSource = watchBuilder()
                 .trigger(schedule(cron("0/5 * * * * ? *")))
                 .input(searchInput(searchRequest))
@@ -211,7 +236,8 @@ public class NoMasterNodeTests extends AbstractWatcherIntegrationTestCase {
         ensureLicenseEnabled();
         for (int i = 1; i <= numberOfWatches; i++) {
             String watchName = "watch" + i;
-            SearchRequest searchRequest = WatcherTestUtils.newInputSearchRequest("my-index").source(searchSource().query(termQuery("field", "value")));
+            SearchRequest searchRequest = WatcherTestUtils.newInputSearchRequest("my-index").source(
+                    searchSource().query(termQuery("field", "value")));
             WatchSourceBuilder watchSource = watchBuilder()
                     .trigger(schedule(cron("0/5 * * * * ? *")))
                     .input(searchInput(searchRequest))
@@ -257,7 +283,8 @@ public class NoMasterNodeTests extends AbstractWatcherIntegrationTestCase {
             public void run () {
                 for (Client client : clients()) {
                     ClusterState state = client.admin().cluster().prepareState().setLocal(true).get().getState();
-                    assertThat("Node [" + state.nodes().localNode() + "] should have a NO_MASTER_BLOCK", state.blocks().hasGlobalBlock(DiscoverySettings.NO_MASTER_BLOCK_ID), is(true));
+                    assertThat("Node [" + state.nodes().localNode() + "] should have a NO_MASTER_BLOCK",
+                            state.blocks().hasGlobalBlock(DiscoverySettings.NO_MASTER_BLOCK_ID), is(true));
                 }
             }
         }, 30, TimeUnit.SECONDS);

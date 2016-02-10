@@ -112,8 +112,10 @@ public class SearchInputTests extends ESIntegTestCase {
             throw new RuntimeException("failed to create config dir");
 
         }
-        try (InputStream stream  = SearchInputTests.class.getResourceAsStream("/org/elasticsearch/watcher/input/search/config/scripts/test_disk_template.mustache");
-            OutputStream out = Files.newOutputStream(scriptPath.resolve("test_disk_template.mustache"))) {
+        String path = "/org/elasticsearch/watcher/input/search/config/scripts/test_disk_template.mustache";
+        try (InputStream stream  = SearchInputTests.class.getResourceAsStream("/org/elasticsearch/watcher/input/search/config/scripts" +
+                "/test_disk_template.mustache");
+             OutputStream out = Files.newOutputStream(scriptPath.resolve("test_disk_template.mustache"))) {
             Streams.copy(stream, out);
         } catch (IOException e) {
             throw new RuntimeException("failed to copy mustache template");
@@ -134,14 +136,16 @@ public class SearchInputTests extends ESIntegTestCase {
 
     public void testExecute() throws Exception {
         SearchSourceBuilder searchSourceBuilder = searchSource().query(
-                boolQuery().must(matchQuery("event_type", "a")).must(rangeQuery("_timestamp").from("{{ctx.trigger.scheduled_time}}||-30s").to("{{ctx.trigger.triggered_time}}")));
+                boolQuery().must(matchQuery("event_type", "a")).must(rangeQuery("_timestamp")
+                        .from("{{ctx.trigger.scheduled_time}}||-30s").to("{{ctx.trigger.triggered_time}}")));
         SearchRequest request = client()
                 .prepareSearch()
                 .setSearchType(ExecutableSearchInput.DEFAULT_SEARCH_TYPE)
                 .request()
                 .source(searchSourceBuilder);
 
-        ExecutableSearchInput searchInput = new ExecutableSearchInput(new SearchInput(request, null, null, null), logger, ClientProxy.of(client()), null);
+        ExecutableSearchInput searchInput = new ExecutableSearchInput(new SearchInput(request, null, null, null), logger,
+                ClientProxy.of(client()), null);
         WatchExecutionContext ctx = new TriggeredExecutionContext(
                 new Watch("test-watch",
                         new ScheduleTrigger(new IntervalSchedule(new IntervalSchedule.Interval(1, IntervalSchedule.Interval.Unit.MINUTES))),
@@ -202,7 +206,8 @@ public class SearchInputTests extends ESIntegTestCase {
     public void testSearchIndexedTemplate() throws Exception {
         WatchExecutionContext ctx = createContext();
 
-        PutIndexedScriptRequest indexedScriptRequest = client().preparePutIndexedScript("mustache","test-template", TEMPLATE_QUERY).request();
+        PutIndexedScriptRequest indexedScriptRequest = client().preparePutIndexedScript("mustache","test-template",
+                TEMPLATE_QUERY).request();
         assertThat(client().putIndexedScript(indexedScriptRequest).actionGet().isCreated(), is(true));
 
         Map<String, Object> params = new HashMap<>();
@@ -240,7 +245,8 @@ public class SearchInputTests extends ESIntegTestCase {
 
     public void testDifferentSearchType() throws Exception {
         SearchSourceBuilder searchSourceBuilder = searchSource().query(
-                boolQuery().must(matchQuery("event_type", "a")).must(rangeQuery("_timestamp").from("{{ctx.trigger.scheduled_time}}||-30s").to("{{ctx.trigger.triggered_time}}"))
+                boolQuery().must(matchQuery("event_type", "a")).must(rangeQuery("_timestamp")
+                        .from("{{ctx.trigger.scheduled_time}}||-30s").to("{{ctx.trigger.triggered_time}}"))
         );
         SearchType searchType = getRandomSupportedSearchType();
 
@@ -250,7 +256,8 @@ public class SearchInputTests extends ESIntegTestCase {
                 .request()
                 .source(searchSourceBuilder);
 
-        ExecutableSearchInput searchInput = new ExecutableSearchInput(new SearchInput(request, null, null, null), logger, ClientProxy.of(client()), null);
+        ExecutableSearchInput searchInput = new ExecutableSearchInput(new SearchInput(request, null, null, null), logger,
+                ClientProxy.of(client()), null);
         WatchExecutionContext ctx = new TriggeredExecutionContext(
                 new Watch("test-watch",
                         new ScheduleTrigger(new IntervalSchedule(new IntervalSchedule.Interval(1, IntervalSchedule.Interval.Unit.MINUTES))),
@@ -278,7 +285,8 @@ public class SearchInputTests extends ESIntegTestCase {
                 .setSearchType(ExecutableSearchInput.DEFAULT_SEARCH_TYPE)
                 .request()
                 .source(searchSource()
-                        .query(boolQuery().must(matchQuery("event_type", "a")).must(rangeQuery("_timestamp").from("{{ctx.trigger.scheduled_time}}||-30s").to("{{ctx.trigger.triggered_time}}"))));
+                        .query(boolQuery().must(matchQuery("event_type", "a")).must(rangeQuery("_timestamp")
+                                .from("{{ctx.trigger.scheduled_time}}||-30s").to("{{ctx.trigger.triggered_time}}"))));
 
         TimeValue timeout = randomBoolean() ? TimeValue.timeValueSeconds(randomInt(10)) : null;
         XContentBuilder builder = jsonBuilder().value(new SearchInput(request, null, timeout, null));

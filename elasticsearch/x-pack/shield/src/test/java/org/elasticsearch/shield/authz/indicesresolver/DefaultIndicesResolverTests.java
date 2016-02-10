@@ -71,7 +71,8 @@ public class DefaultIndicesResolverTests extends ESTestCase {
         MetaData.Builder mdBuilder = MetaData.builder()
                 .put(indexBuilder("foo").putAlias(AliasMetaData.builder("foofoobar")).settings(settings))
                 .put(indexBuilder("foobar").putAlias(AliasMetaData.builder("foofoobar")).settings(settings))
-                .put(indexBuilder("closed").state(IndexMetaData.State.CLOSE).putAlias(AliasMetaData.builder("foofoobar")).settings(settings))
+                .put(indexBuilder("closed").state(IndexMetaData.State.CLOSE)
+                        .putAlias(AliasMetaData.builder("foofoobar")).settings(settings))
                 .put(indexBuilder("foofoo-closed").state(IndexMetaData.State.CLOSE).settings(settings))
                 .put(indexBuilder("foobar-closed").state(IndexMetaData.State.CLOSE).settings(settings))
                 .put(indexBuilder("foofoo").putAlias(AliasMetaData.builder("barbaz")).settings(settings))
@@ -84,17 +85,27 @@ public class DefaultIndicesResolverTests extends ESTestCase {
         user = new User("user", "role");
 
         String[] authorizedIndices = new String[]{"bar", "bar-closed", "foofoobar", "foofoo", "missing", "foofoo-closed"};
-        when(authzService.authorizedIndicesAndAliases(user, SearchAction.NAME)).thenReturn(Collections.unmodifiableList(Arrays.asList(authorizedIndices)));
-        when(authzService.authorizedIndicesAndAliases(user, MultiSearchAction.NAME)).thenReturn(Collections.unmodifiableList(Arrays.asList(authorizedIndices)));
-        when(authzService.authorizedIndicesAndAliases(user, MultiGetAction.NAME)).thenReturn(Collections.unmodifiableList(Arrays.asList(authorizedIndices)));
-        when(authzService.authorizedIndicesAndAliases(user, IndicesAliasesAction.NAME)).thenReturn(Collections.unmodifiableList(Arrays.asList(authorizedIndices)));
-        when(authzService.authorizedIndicesAndAliases(user, GetAliasesAction.NAME)).thenReturn(Collections.unmodifiableList(Arrays.asList(authorizedIndices)));
-        when(authzService.authorizedIndicesAndAliases(user, DeleteIndexAction.NAME)).thenReturn(Collections.unmodifiableList(Arrays.asList(authorizedIndices)));
+        when(authzService.authorizedIndicesAndAliases(user, SearchAction.NAME))
+                .thenReturn(Collections.unmodifiableList(Arrays.asList(authorizedIndices)));
+        when(authzService.authorizedIndicesAndAliases(user, MultiSearchAction.NAME))
+                .thenReturn(Collections.unmodifiableList(Arrays.asList(authorizedIndices)));
+        when(authzService.authorizedIndicesAndAliases(user, MultiGetAction.NAME))
+                .thenReturn(Collections.unmodifiableList(Arrays.asList(authorizedIndices)));
+        when(authzService.authorizedIndicesAndAliases(user, IndicesAliasesAction.NAME))
+                .thenReturn(Collections.unmodifiableList(Arrays.asList(authorizedIndices)));
+        when(authzService.authorizedIndicesAndAliases(user, GetAliasesAction.NAME))
+                .thenReturn(Collections.unmodifiableList(Arrays.asList(authorizedIndices)));
+        when(authzService.authorizedIndicesAndAliases(user, DeleteIndexAction.NAME))
+                .thenReturn(Collections.unmodifiableList(Arrays.asList(authorizedIndices)));
         userNoIndices = new User("test", "test");
-        when(authzService.authorizedIndicesAndAliases(userNoIndices, IndicesAliasesAction.NAME)).thenReturn(Collections.<String>emptyList());
-        when(authzService.authorizedIndicesAndAliases(userNoIndices, GetAliasesAction.NAME)).thenReturn(Collections.<String>emptyList());
-        when(authzService.authorizedIndicesAndAliases(userNoIndices, SearchAction.NAME)).thenReturn(Collections.<String>emptyList());
-        when(authzService.authorizedIndicesAndAliases(userNoIndices, MultiSearchAction.NAME)).thenReturn(Collections.<String>emptyList());
+        when(authzService.authorizedIndicesAndAliases(userNoIndices, IndicesAliasesAction.NAME))
+                .thenReturn(Collections.<String>emptyList());
+        when(authzService.authorizedIndicesAndAliases(userNoIndices, GetAliasesAction.NAME))
+                .thenReturn(Collections.<String>emptyList());
+        when(authzService.authorizedIndicesAndAliases(userNoIndices, SearchAction.NAME))
+                .thenReturn(Collections.<String>emptyList());
+        when(authzService.authorizedIndicesAndAliases(userNoIndices, MultiSearchAction.NAME))
+                .thenReturn(Collections.<String>emptyList());
 
         defaultIndicesResolver = new DefaultIndicesAndAliasesResolver(authzService);
     }
@@ -708,7 +719,8 @@ public class DefaultIndicesResolverTests extends ESTestCase {
 
     public void testResolveMultiSearchWildcardsExpandOpen() {
         MultiSearchRequest request = new MultiSearchRequest();
-        request.add(Requests.searchRequest("bar*")).indicesOptions(randomFrom(IndicesOptions.strictExpandOpen(), IndicesOptions.lenientExpandOpen()));
+        request.add(Requests.searchRequest("bar*")).indicesOptions(
+                randomFrom(IndicesOptions.strictExpandOpen(), IndicesOptions.lenientExpandOpen()));
         request.add(Requests.searchRequest("foobar"));
         Set<String> indices = defaultIndicesResolver.resolve(user, MultiSearchAction.NAME, request, metaData);
         String[] expectedIndices = new String[]{"bar", "foobar"};
@@ -803,6 +815,8 @@ public class DefaultIndicesResolverTests extends ESTestCase {
     // TODO with the removal of DeleteByQuery is there another way to test resolving a write action?
 
     private static IndexMetaData.Builder indexBuilder(String index) {
-        return IndexMetaData.builder(index).settings(Settings.settingsBuilder().put(IndexMetaData.SETTING_NUMBER_OF_SHARDS, 1).put(IndexMetaData.SETTING_NUMBER_OF_REPLICAS, 0));
+        return IndexMetaData.builder(index).settings(Settings.settingsBuilder()
+                .put(IndexMetaData.SETTING_NUMBER_OF_SHARDS, 1)
+                .put(IndexMetaData.SETTING_NUMBER_OF_REPLICAS, 0));
     }
 }

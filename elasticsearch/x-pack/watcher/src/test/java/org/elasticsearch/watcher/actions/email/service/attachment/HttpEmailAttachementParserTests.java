@@ -47,14 +47,14 @@ import static org.mockito.Mockito.when;
 
 public class HttpEmailAttachementParserTests extends ESTestCase {
 
-    private SecretService.PlainText secretService;
+    private SecretService.Insecure secretService;
     private HttpAuthRegistry authRegistry;
     private HttpRequestTemplate.Parser httpRequestTemplateParser;
     private HttpClient httpClient;
 
     @Before
     public void init() throws Exception {
-        secretService = new SecretService.PlainText();
+        secretService = SecretService.Insecure.INSTANCE;
         authRegistry = new HttpAuthRegistry(singletonMap(BasicAuth.TYPE, new BasicAuthFactory(secretService)));
         httpRequestTemplateParser = new HttpRequestTemplate.Parser(authRegistry);
         httpClient = mock(HttpClient.class);
@@ -66,7 +66,8 @@ public class HttpEmailAttachementParserTests extends ESTestCase {
 
     public void testSerializationWorks() throws Exception {
         Map<String, EmailAttachmentParser> attachmentParsers = new HashMap<>();
-        attachmentParsers.put(HttpEmailAttachementParser.TYPE, new HttpEmailAttachementParser(httpClient, httpRequestTemplateParser, new MockTextTemplateEngine()));
+        attachmentParsers.put(HttpEmailAttachementParser.TYPE,
+                new HttpEmailAttachementParser(httpClient, httpRequestTemplateParser, new MockTextTemplateEngine()));
         EmailAttachmentsParser emailAttachmentsParser = new EmailAttachmentsParser(attachmentParsers);
 
         String id = "some-id";

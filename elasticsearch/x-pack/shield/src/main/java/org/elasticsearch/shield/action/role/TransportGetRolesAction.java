@@ -39,7 +39,8 @@ public class TransportGetRolesAction extends HandledTransportAction<GetRolesRequ
     public TransportGetRolesAction(Settings settings, ThreadPool threadPool, ActionFilters actionFilters,
                                    IndexNameExpressionResolver indexNameExpressionResolver,
                                    ESNativeRolesStore rolesStore, TransportService transportService) {
-        super(settings, GetRolesAction.NAME, threadPool, transportService, actionFilters, indexNameExpressionResolver, GetRolesRequest::new);
+        super(settings, GetRolesAction.NAME, threadPool, transportService, actionFilters, indexNameExpressionResolver,
+                GetRolesRequest::new);
         this.rolesStore = rolesStore;
     }
 

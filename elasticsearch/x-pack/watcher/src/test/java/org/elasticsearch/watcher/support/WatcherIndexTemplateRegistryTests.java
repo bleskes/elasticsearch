@@ -18,7 +18,6 @@
 package org.elasticsearch.watcher.support;
 
 import org.elasticsearch.action.admin.indices.template.get.GetIndexTemplatesResponse;
-import org.elasticsearch.cluster.metadata.IndexMetaData;
 import org.elasticsearch.common.settings.Setting;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.settings.SettingsModule;
@@ -59,7 +58,8 @@ public class WatcherIndexTemplateRegistryTests extends AbstractWatcherIntegratio
         assertBusy(new Runnable() {
             @Override
             public void run() {
-                GetIndexTemplatesResponse response = client().admin().indices().prepareGetTemplates(WatcherModule.HISTORY_TEMPLATE_NAME).get();
+                GetIndexTemplatesResponse response = client().admin().indices()
+                        .prepareGetTemplates(WatcherModule.HISTORY_TEMPLATE_NAME).get();
                 assertThat(response.getIndexTemplates().size(), equalTo(1));
                 // setting from the file on the classpath:
                 assertThat(response.getIndexTemplates().get(0).getSettings().getAsBoolean("index.mapper.dynamic", null), is(false));
@@ -74,7 +74,8 @@ public class WatcherIndexTemplateRegistryTests extends AbstractWatcherIntegratio
         assertBusy(new Runnable() {
             @Override
             public void run() {
-                GetIndexTemplatesResponse response = client().admin().indices().prepareGetTemplates(WatcherModule.HISTORY_TEMPLATE_NAME).get();
+                GetIndexTemplatesResponse response = client().admin().indices()
+                        .prepareGetTemplates(WatcherModule.HISTORY_TEMPLATE_NAME).get();
                 assertThat(response.getIndexTemplates().size(), equalTo(1));
                 // setting from the file on the classpath:
                 assertThat(response.getIndexTemplates().get(0).getSettings().getAsBoolean("index.mapper.dynamic", null), is(false));
