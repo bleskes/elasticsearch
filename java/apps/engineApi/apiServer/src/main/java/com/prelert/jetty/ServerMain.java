@@ -41,6 +41,8 @@ import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.servlets.CrossOriginFilter;
+import org.eclipse.jetty.util.log.Log;
+import org.eclipse.jetty.util.log.Slf4jLog;
 import org.glassfish.jersey.servlet.ServletProperties;
 
 import com.prelert.job.messages.Messages;
@@ -95,6 +97,11 @@ public class ServerMain
     public static void main(String[] args)
     throws Exception
     {
+        // Tell Jetty to log to our log4j framework, which it does via slf4j.
+        // (The bit that tells slf4j that it's a proxy for log4j is the Maven
+        // dependency on slf4j-log4j12.)
+        Log.setLog(new Slf4jLog());
+
         int jettyPort = JETTY_PORT;
         try
         {
