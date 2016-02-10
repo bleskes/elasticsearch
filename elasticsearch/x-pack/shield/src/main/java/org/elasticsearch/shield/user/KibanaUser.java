@@ -15,33 +15,27 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.shield;
+package org.elasticsearch.shield.user;
 
-import org.elasticsearch.shield.authz.privilege.SystemPrivilege;
-
-import java.util.function.Predicate;
+import org.elasticsearch.shield.authz.permission.KibanaRole;
+import org.elasticsearch.shield.user.User.ReservedUser;
 
 /**
- * Shield internal user that manages the {@code .shield}
- * index. Has permission to monitor the cluster as well as all actions that deal
- * with the shield admin index.
+ *
  */
-public class SystemUser extends User {
+public class KibanaUser extends ReservedUser {
 
-    public static final String NAME = "__es_system_user";
-    public static final String ROLE_NAME = "__es_system_role";
+    public static final String NAME = "kibana";
+    public static final String ROLE_NAME = KibanaRole.NAME;
+    public static final KibanaUser INSTANCE = new KibanaUser();
 
-    public static final User INSTANCE = new SystemUser();
-
-    private static final Predicate<String> PREDICATE = SystemPrivilege.INSTANCE.predicate();
-
-    private SystemUser() {
+    KibanaUser() {
         super(NAME, ROLE_NAME);
     }
 
     @Override
     public boolean equals(Object o) {
-        return o == INSTANCE;
+        return INSTANCE == o;
     }
 
     @Override
@@ -51,9 +45,5 @@ public class SystemUser extends User {
 
     public static boolean is(User user) {
         return INSTANCE.equals(user);
-    }
-
-    public static boolean isAuthorized(String action) {
-        return PREDICATE.test(action);
     }
 }

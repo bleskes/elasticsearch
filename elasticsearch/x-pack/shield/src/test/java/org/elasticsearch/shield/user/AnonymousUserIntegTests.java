@@ -15,7 +15,7 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.shield.authc;
+package org.elasticsearch.shield.user;
 
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -27,6 +27,7 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.elasticsearch.common.transport.TransportAddress;
 import org.elasticsearch.http.HttpServerTransport;
+import org.elasticsearch.shield.authz.InternalAuthorizationService;
 import org.elasticsearch.test.ShieldIntegTestCase;
 
 import java.io.InputStreamReader;
@@ -39,7 +40,7 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 
-public class AnonymousUserTests extends ShieldIntegTestCase {
+public class AnonymousUserIntegTests extends ShieldIntegTestCase {
     private boolean authorizationExceptionsEnabled = randomBoolean();
 
     @Override
@@ -47,14 +48,9 @@ public class AnonymousUserTests extends ShieldIntegTestCase {
         return Settings.builder()
                 .put(super.nodeSettings(nodeOrdinal))
                 .put(NetworkModule.HTTP_ENABLED.getKey(), true)
-                .put(AnonymousService.ROLES_SETTING.getKey(), "anonymous")
-                .put(AnonymousService.SETTING_AUTHORIZATION_EXCEPTION_ENABLED.getKey(), authorizationExceptionsEnabled)
+                .put(AnonymousUser.ROLES_SETTING.getKey(), "anonymous")
+                .put(InternalAuthorizationService.ANONYMOUS_AUTHORIZATION_EXCEPTION_SETTING.getKey(), authorizationExceptionsEnabled)
                 .build();
-    }
-
-    @Override
-    public boolean sslTransportEnabled() {
-        return false;
     }
 
     @Override
@@ -62,7 +58,7 @@ public class AnonymousUserTests extends ShieldIntegTestCase {
         return super.configRoles() + "\n" +
                 "anonymous:\n" +
                 "  indices:\n" +
-                "    - names: '*'" +
+                "    - names: '*'\n" +
                 "      privileges: [ READ ]\n";
     }
 

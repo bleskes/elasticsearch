@@ -15,7 +15,7 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.shield;
+package org.elasticsearch.shield.user;
 
 import org.elasticsearch.test.ESTestCase;
 
@@ -24,7 +24,7 @@ import static org.hamcrest.Matchers.is;
 /**
  *
  */
-public class SystemInternalUserTests extends ESTestCase {
+public class SystemUserTests extends ESTestCase {
 
     public void testIsAuthorized() throws Exception {
         assertThat(SystemUser.isAuthorized("indices:monitor/whatever"), is(true));

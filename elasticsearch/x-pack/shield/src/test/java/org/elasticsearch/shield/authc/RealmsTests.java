@@ -20,7 +20,8 @@ package org.elasticsearch.shield.authc;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.util.concurrent.ThreadContext;
 import org.elasticsearch.env.Environment;
-import org.elasticsearch.shield.User;
+import org.elasticsearch.shield.user.User;
+import org.elasticsearch.shield.authc.esnative.ReservedRealm;
 import org.elasticsearch.shield.authc.esnative.NativeRealm;
 import org.elasticsearch.shield.authc.file.FileRealm;
 import org.elasticsearch.shield.authc.ldap.LdapRealm;
@@ -39,7 +40,6 @@ import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.isOneOf;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -50,6 +50,7 @@ import static org.mockito.Mockito.when;
 public class RealmsTests extends ESTestCase {
     private Map<String, Realm.Factory> factories;
     private ShieldLicenseState shieldLicenseState;
+    private ReservedRealm reservedRealm;
 
     @Before
     public void init() throws Exception {
@@ -61,6 +62,7 @@ public class RealmsTests extends ESTestCase {
             factories.put("type_" + i, factory);
         }
         shieldLicenseState = mock(ShieldLicenseState.class);
+        reservedRealm = mock(ReservedRealm.class);
         when(shieldLicenseState.customRealmsEnabled()).thenReturn(true);
     }
 
@@ -80,10 +82,17 @@ public class RealmsTests extends ESTestCase {
         }
         Settings settings = builder.build();
         Environment env = new Environment(settings);
-        Realms realms = new Realms(settings, env, factories, shieldLicenseState);
+        Realms realms = new Realms(settings, env, factories, shieldLicenseState, reservedRealm);
         realms.start();
+
+        Iterator<Realm> iterator = realms.iterator();
+        assertThat(iterator.hasNext(), is(true));
+        Realm realm = iterator.next();
+        assertThat(realm, is(reservedRealm));
+
         int i = 0;
-        for (Realm realm : realms) {
+        while (iterator.hasNext()) {
+            realm = iterator.next();
             assertThat(realm.order(), equalTo(i));
             int index = orderToIndex.get(i);
             assertThat(realm.type(), equalTo("type_" + index));
@@ -102,7 +111,7 @@ public class RealmsTests extends ESTestCase {
                 .build();
         Environment env = new Environment(settings);
         try {
-            new Realms(settings, env, factories, shieldLicenseState).start();
+            new Realms(settings, env, factories, shieldLicenseState, reservedRealm).start();
             fail("Expected IllegalArgumentException");
         } catch (IllegalArgumentException e) {
             assertThat(e.getMessage(), containsString("multiple [file] realms are configured"));
@@ -111,18 +120,20 @@ public class RealmsTests extends ESTestCase {
 
     public void testWithEmptySettings() throws Exception {
         Realms realms = new Realms(Settings.EMPTY, new Environment(Settings.builder().put("path.home", createTempDir()).build()),
-                factories, shieldLicenseState);
+                factories, shieldLicenseState, reservedRealm);
         realms.start();
         Iterator<Realm> iter = realms.iterator();
         assertThat(iter.hasNext(), is(true));
         Realm realm = iter.next();
-        assertThat(realm, notNullValue());
-        assertThat(realm.type(), equalTo(NativeRealm.TYPE));
-        assertThat(realm.name(), equalTo("default_" + NativeRealm.TYPE));
+        assertThat(realm, is(reservedRealm));
         assertThat(iter.hasNext(), is(true));
         realm = iter.next();
         assertThat(realm.type(), equalTo(FileRealm.TYPE));
         assertThat(realm.name(), equalTo("default_" + FileRealm.TYPE));
+        assertThat(iter.hasNext(), is(true));
+        realm = iter.next();
+        assertThat(realm.type(), equalTo(NativeRealm.TYPE));
+        assertThat(realm.name(), equalTo("default_" + NativeRealm.TYPE));
         assertThat(iter.hasNext(), is(false));
     }
 
@@ -142,11 +153,17 @@ public class RealmsTests extends ESTestCase {
         }
         Settings settings = builder.build();
         Environment env = new Environment(settings);
-        Realms realms = new Realms(settings, env, factories, shieldLicenseState);
+        Realms realms = new Realms(settings, env, factories, shieldLicenseState, reservedRealm);
         realms.start();
-        int i = 0;
+
         // this is the iterator when licensed
-        for (Realm realm : realms) {
+        Iterator<Realm> iter = realms.iterator();
+        assertThat(iter.hasNext(), is(true));
+        Realm realm = iter.next();
+        assertThat(realm, is(reservedRealm));
+        int i = 0;
+        while (iter.hasNext()) {
+            realm = iter.next();
             assertThat(realm.order(), equalTo(i));
             int index = orderToIndex.get(i);
             assertThat(realm.type(), equalTo("type_" + index));
@@ -154,13 +171,21 @@ public class RealmsTests extends ESTestCase {
             i++;
         }
 
-        i = 0;
         when(shieldLicenseState.customRealmsEnabled()).thenReturn(false);
-        for (Realm realm : realms) {
-            assertThat(realm.type, isOneOf(FileRealm.TYPE, NativeRealm.TYPE));
-            i++;
-        }
-        assertThat(i, is(2));
+
+        iter = realms.iterator();
+        assertThat(iter.hasNext(), is(true));
+        realm = iter.next();
+        assertThat(realm, is(reservedRealm));
+        assertThat(iter.hasNext(), is(true));
+        realm = iter.next();
+        assertThat(realm.type(), equalTo(FileRealm.TYPE));
+        assertThat(realm.name(), equalTo("default_" + FileRealm.TYPE));
+        assertThat(iter.hasNext(), is(true));
+        realm = iter.next();
+        assertThat(realm.type(), equalTo(NativeRealm.TYPE));
+        assertThat(realm.name(), equalTo("default_" + NativeRealm.TYPE));
+        assertThat(iter.hasNext(), is(false));
     }
 
     public void testUnlicensedWithInternalRealms() throws Exception {
@@ -174,20 +199,31 @@ public class RealmsTests extends ESTestCase {
                 .put("xpack.security.authc.realms.custom.order", "1");
         Settings settings = builder.build();
         Environment env = new Environment(settings);
-        Realms realms = new Realms(settings, env, factories, shieldLicenseState);
+        Realms realms = new Realms(settings, env, factories, shieldLicenseState, reservedRealm);
         realms.start();
+        Iterator<Realm> iter = realms.iterator();
+        assertThat(iter.hasNext(), is(true));
+        Realm realm = iter.next();
+        assertThat(realm, is(reservedRealm));
+
         int i = 0;
         // this is the iterator when licensed
         List<String> types = new ArrayList<>();
-        for (Realm realm : realms) {
+        while (iter.hasNext()) {
+            realm = iter.next();
             i++;
             types.add(realm.type());
         }
         assertThat(types, contains("ldap", "type_0"));
 
-        i = 0;
         when(shieldLicenseState.customRealmsEnabled()).thenReturn(false);
-        for (Realm realm : realms) {
+        iter = realms.iterator();
+        assertThat(iter.hasNext(), is(true));
+        realm = iter.next();
+        assertThat(realm, is(reservedRealm));
+        i = 0;
+        while (iter.hasNext()) {
+            realm = iter.next();
             assertThat(realm.type, is("ldap"));
             i++;
         }
@@ -215,22 +251,25 @@ public class RealmsTests extends ESTestCase {
         }
         Settings settings = builder.build();
         Environment env = new Environment(settings);
-        Realms realms = new Realms(settings, env, factories, shieldLicenseState);
+        Realms realms = new Realms(settings, env, factories, shieldLicenseState, reservedRealm);
         realms.start();
         Iterator<Realm> iterator = realms.iterator();
+        Realm realm = iterator.next();
+        assertThat(realm, is(reservedRealm));
+        assertThat(iterator.hasNext(), is(true));
 
         int count = 0;
         while (iterator.hasNext()) {
-            Realm realm = iterator.next();
+            realm = iterator.next();
             Integer index = orderToIndex.get(realm.order());
             if (index == null) {
                 // Default realms are inserted when factories size is 1 and enabled is false
-                assertThat(realm.type(), equalTo(NativeRealm.TYPE));
-                assertThat(realm.name(), equalTo("default_" + NativeRealm.TYPE));
-                assertThat(iterator.hasNext(), is(true));
-                realm = iterator.next();
                 assertThat(realm.type(), equalTo(FileRealm.TYPE));
                 assertThat(realm.name(), equalTo("default_" + FileRealm.TYPE));
+                assertThat(iterator.hasNext(), is(true));
+                realm = iterator.next();
+                assertThat(realm.type(), equalTo(NativeRealm.TYPE));
+                assertThat(realm.name(), equalTo("default_" + NativeRealm.TYPE));
                 assertThat(iterator.hasNext(), is(false));
             } else {
                 assertThat(realm.type(), equalTo("type_" + index));
