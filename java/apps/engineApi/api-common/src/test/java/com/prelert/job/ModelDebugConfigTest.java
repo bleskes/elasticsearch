@@ -33,11 +33,28 @@ import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
-import com.prelert.job.ModelDebugConfig;
 import com.prelert.job.ModelDebugConfig.DebugDestination;
 
 public class ModelDebugConfigTest
 {
+    @Test
+    public void testIsEnabled_GivenNullBoundsPercentile()
+    {
+        ModelDebugConfig modelDebugConfig = new ModelDebugConfig();
+        modelDebugConfig.setBoundsPercentile(null);
+
+        assertFalse(modelDebugConfig.isEnabled());
+    }
+
+    @Test
+    public void testIsEnabled_GivenBoundsPercentile()
+    {
+        ModelDebugConfig modelDebugConfig = new ModelDebugConfig();
+        modelDebugConfig.setBoundsPercentile(0.95);
+
+        assertTrue(modelDebugConfig.isEnabled());
+    }
+
     @Test
     public void testEquals()
     {

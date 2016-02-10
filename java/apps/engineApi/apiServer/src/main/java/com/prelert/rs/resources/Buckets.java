@@ -129,7 +129,7 @@ public class Buckets extends ResourceWithJobManager
                     anomalySoreFilter, normalizedProbabilityFilter);
         }
 
-        Pagination<Bucket> buckets =paginationFromQueryPage(page, skip, take);
+        Pagination<Bucket> buckets = paginationFromQueryPage(page, skip, take);
 
         // paging
         if (buckets.isAllResults() == false)

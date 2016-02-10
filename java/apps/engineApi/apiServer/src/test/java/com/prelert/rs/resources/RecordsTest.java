@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -27,6 +27,11 @@
 
 package com.prelert.rs.resources;
 
+import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.when;
+
+import java.util.Arrays;
+
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -35,7 +40,10 @@ import org.junit.rules.ExpectedException;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.errorcodes.ErrorCodeMatcher;
 import com.prelert.job.errorcodes.ErrorCodes;
+import com.prelert.job.persistence.QueryPage;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
+import com.prelert.job.results.AnomalyRecord;
+import com.prelert.rs.data.Pagination;
 import com.prelert.rs.exception.InvalidParametersException;
 
 public class RecordsTest extends ServiceTest
@@ -71,5 +79,49 @@ public class RecordsTest extends ServiceTest
         m_ExpectedException.expect(ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_TAKE_PARAM));
 
         m_Records.records(JOB_ID, 0, -1, "", "", false, "", false, 0, 0);
+    }
+
+    @Test
+    public void testRecords_GivenOnePage() throws UnknownJobException, NativeProcessRunException
+    {
+        QueryPage<AnomalyRecord> queryResult = new QueryPage<>(Arrays.asList(new AnomalyRecord()), 1);
+
+        when(jobManager().records(JOB_ID, 0, 100, false, "normalizedProbability", true, 0, 0))
+                .thenReturn(queryResult);
+
+        Pagination<AnomalyRecord> results = m_Records.records(JOB_ID, 0, 100, "", "", false,
+                "normalizedProbability", true, 0, 0);
+        assertEquals(1, results.getHitCount());
+        assertEquals(100, results.getTake());
+    }
+
+    @Test
+    public void testRecords_GivenSortOnTimestamp() throws UnknownJobException,
+            NativeProcessRunException
+    {
+        QueryPage<AnomalyRecord> queryResult = new QueryPage<>(Arrays.asList(new AnomalyRecord()), 1);
+
+        when(jobManager().records(JOB_ID, 0, 100, false, "@timestamp", true, 0, 0))
+                .thenReturn(queryResult);
+
+        Pagination<AnomalyRecord> results = m_Records.records(JOB_ID, 0, 100, "", "", false,
+                "timestamp", true, 0, 0);
+        assertEquals(1, results.getHitCount());
+        assertEquals(100, results.getTake());
+    }
+
+    @Test
+    public void testRecords_GivenTimeRange() throws UnknownJobException,
+            NativeProcessRunException
+    {
+        QueryPage<AnomalyRecord> queryResult = new QueryPage<>(Arrays.asList(new AnomalyRecord()), 1);
+
+        when(jobManager().records(JOB_ID, 0, 100, 3600000L, 7200000L, false, "normalizedProbability", true, 0, 0))
+                .thenReturn(queryResult);
+
+        Pagination<AnomalyRecord> results = m_Records.records(JOB_ID, 0, 100, "3600", "7200", false,
+                "normalizedProbability", true, 0, 0);
+        assertEquals(1, results.getHitCount());
+        assertEquals(100, results.getTake());
     }
 }

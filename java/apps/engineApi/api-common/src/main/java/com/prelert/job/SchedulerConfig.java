@@ -19,6 +19,7 @@
 package com.prelert.job;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -320,14 +321,14 @@ public class SchedulerConfig
     /**
      * Build the list of fields expected in the output from aggregations
      * submitted to Elasticsearch.
-     * @return The list of fields, or <code>null</code> if there are no aggregations.
+     * @return The list of fields, or empty list if there are no aggregations.
      */
     public List<String> buildAggregatedFieldList()
     {
         Map<String, Object> aggs = getAggregationsOrAggs();
         if (aggs == null)
         {
-            return null;
+            return Collections.emptyList();
         }
 
         SortedMap<Integer, String> orderedFields = new TreeMap<>();
@@ -445,8 +446,7 @@ public class SchedulerConfig
                 Objects.equals(this.m_Indexes, that.m_Indexes) &&
                 Objects.equals(this.m_Types, that.m_Types) &&
                 Objects.equals(this.m_Query, that.m_Query) &&
-                Objects.equals(this.m_Aggregations, that.m_Aggregations) &&
-                Objects.equals(this.m_Aggs, that.m_Aggs) &&
+                Objects.equals(this.getAggregationsOrAggs(), that.getAggregationsOrAggs()) &&
                 Objects.equals(this.m_StartTime, that.m_StartTime) &&
                 Objects.equals(this.m_EndTime, that.m_EndTime);
     }
