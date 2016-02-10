@@ -32,6 +32,7 @@ import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.index.query.QueryParseContext;
 import org.elasticsearch.script.ScriptService.ScriptType;
 import org.elasticsearch.script.Template;
+import org.elasticsearch.search.aggregations.AggregatorParsers;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.watcher.execution.WatchExecutionContext;
 import org.elasticsearch.watcher.watch.Payload;
@@ -111,7 +112,8 @@ public final class WatcherUtils {
     /**
      * Reads a new search request instance for the specified parser.
      */
-    public static SearchRequest readSearchRequest(XContentParser parser, SearchType searchType, QueryParseContext context)
+    public static SearchRequest readSearchRequest(XContentParser parser, SearchType searchType, QueryParseContext context,
+            AggregatorParsers aggParsers)
             throws IOException {
         IndicesOptions indicesOptions = DEFAULT_INDICES_OPTIONS;
         SearchRequest searchRequest = new SearchRequest();
@@ -122,7 +124,7 @@ public final class WatcherUtils {
             if (token == XContentParser.Token.FIELD_NAME) {
                 currentFieldName = parser.currentName();
                 if (ParseFieldMatcher.STRICT.match(currentFieldName, BODY_FIELD)) {
-                    searchRequest.source(SearchSourceBuilder.parseSearchSource(parser, context));
+                    searchRequest.source(SearchSourceBuilder.parseSearchSource(parser, context, aggParsers));
                 }
             } else if (token == XContentParser.Token.START_ARRAY) {
                 if (ParseFieldMatcher.STRICT.match(currentFieldName, INDICES_FIELD)) {
