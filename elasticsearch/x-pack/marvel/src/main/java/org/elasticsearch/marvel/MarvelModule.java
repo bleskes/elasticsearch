@@ -15,7 +15,7 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.marvel.agent.settings;
+package org.elasticsearch.marvel;
 
 import org.elasticsearch.common.inject.AbstractModule;
 import org.elasticsearch.marvel.agent.AgentService;

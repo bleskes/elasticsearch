@@ -23,7 +23,7 @@ import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.settings.SettingsException;
 import org.elasticsearch.common.unit.TimeValue;
-import org.elasticsearch.marvel.agent.settings.MarvelSettings;
+import org.elasticsearch.marvel.MarvelSettings;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 
@@ -82,7 +82,7 @@ public abstract class Exporter  {
     public abstract void close();
 
     protected String settingFQN(String setting) {
-        return Exporters.EXPORTERS_SETTING + "." + config.name + "." + setting;
+        return MarvelSettings.EXPORTERS_SETTINGS.getKey() + config.name + "." + setting;
     }
 
     public static class Config {
@@ -149,7 +149,7 @@ public abstract class Exporter  {
             try {
                 indexTimeFormatter = DateTimeFormat.forPattern(indexTimeFormat).withZoneUTC();
             } catch (IllegalArgumentException e) {
-                throw new SettingsException("invalid marvel index name time format [" + indexTimeFormat + "] set for [" +
+                throw new SettingsException("invalid monitoring index name time format [" + indexTimeFormat + "] set for [" +
                         settingFQN(INDEX_NAME_TIME_FORMAT_SETTING) + "]", e);
             }
         }
@@ -164,7 +164,7 @@ public abstract class Exporter  {
 
         @Override
         public String resolve(long timestamp) {
-            return MarvelSettings.MARVEL_INDICES_PREFIX + String.valueOf(MarvelTemplateUtils.TEMPLATE_VERSION) + "-" +
+            return MarvelSettings.MONITORING_INDICES_PREFIX + String.valueOf(MarvelTemplateUtils.TEMPLATE_VERSION) + "-" +
                     indexTimeFormatter.print(timestamp);
         }
 

@@ -25,7 +25,7 @@ import org.elasticsearch.license.plugin.core.Licensee;
 import org.elasticsearch.marvel.agent.exporter.Exporter;
 import org.elasticsearch.marvel.agent.exporter.Exporters;
 import org.elasticsearch.marvel.agent.exporter.IndexNameResolver;
-import org.elasticsearch.marvel.agent.settings.MarvelSettings;
+import org.elasticsearch.marvel.MarvelSettings;
 import org.elasticsearch.marvel.license.MarvelLicensee;
 import org.elasticsearch.marvel.test.MarvelIntegTestCase;
 import org.elasticsearch.test.ESIntegTestCase.ClusterScope;
@@ -45,8 +45,8 @@ public abstract class AbstractIndicesCleanerTestCase extends MarvelIntegTestCase
     protected Settings nodeSettings(int nodeOrdinal) {
         Settings.Builder settings = Settings.builder()
                 .put(super.nodeSettings(nodeOrdinal))
-                .put(MarvelSettings.INTERVAL_SETTING.getKey(), "-1")
-                .put(CleanerService.HISTORY_SETTING.getKey(), "-1");
+                .put(MarvelSettings.INTERVAL.getKey(), "-1")
+                .put(MarvelSettings.HISTORY_DURATION.getKey(), "-1");
         return settings.build();
     }
 
@@ -61,7 +61,7 @@ public abstract class AbstractIndicesCleanerTestCase extends MarvelIntegTestCase
     public void testDeleteIndex() throws Exception {
         internalCluster().startNode();
 
-        createIndex(MarvelSettings.MARVEL_INDICES_PREFIX + "test", now().minusDays(10));
+        createIndex(MarvelSettings.MONITORING_INDICES_PREFIX + "test", now().minusDays(10));
         assertIndicesCount(1);
 
         CleanerService.Listener listener = getListener();
@@ -72,7 +72,7 @@ public abstract class AbstractIndicesCleanerTestCase extends MarvelIntegTestCase
     public void testIgnoreDataIndex() throws Exception {
         internalCluster().startNode();
 
-        createIndex(MarvelSettings.MARVEL_DATA_INDEX_PREFIX + "test", now().minusDays(10));
+        createIndex(MarvelSettings.MONITORING_DATA_INDEX_PREFIX + "test", now().minusDays(10));
         assertIndicesCount(1);
 
         CleanerService.Listener listener = getListener();
@@ -106,11 +106,11 @@ public abstract class AbstractIndicesCleanerTestCase extends MarvelIntegTestCase
         CleanerService.Listener listener = getListener();
 
         final DateTime now = now();
-        createIndex(MarvelSettings.MARVEL_INDICES_PREFIX + "one-year-ago", now.minusYears(1));
-        createIndex(MarvelSettings.MARVEL_INDICES_PREFIX + "six-months-ago", now.minusMonths(6));
-        createIndex(MarvelSettings.MARVEL_INDICES_PREFIX + "one-month-ago", now.minusMonths(1));
-        createIndex(MarvelSettings.MARVEL_INDICES_PREFIX + "ten-days-ago", now.minusDays(10));
-        createIndex(MarvelSettings.MARVEL_INDICES_PREFIX + "one-day-ago", now.minusDays(1));
+        createIndex(MarvelSettings.MONITORING_INDICES_PREFIX + "one-year-ago", now.minusYears(1));
+        createIndex(MarvelSettings.MONITORING_INDICES_PREFIX + "six-months-ago", now.minusMonths(6));
+        createIndex(MarvelSettings.MONITORING_INDICES_PREFIX + "one-month-ago", now.minusMonths(1));
+        createIndex(MarvelSettings.MONITORING_INDICES_PREFIX + "ten-days-ago", now.minusDays(10));
+        createIndex(MarvelSettings.MONITORING_INDICES_PREFIX + "one-day-ago", now.minusDays(1));
         assertIndicesCount(5);
 
         // Clean indices that have expired two years ago
@@ -141,12 +141,12 @@ public abstract class AbstractIndicesCleanerTestCase extends MarvelIntegTestCase
     public void testRetentionAsGlobalSetting() throws Exception {
         final int max = 10;
         final int retention = randomIntBetween(1, max);
-        internalCluster().startNode(Settings.builder().put(CleanerService.HISTORY_SETTING.getKey(),
+        internalCluster().startNode(Settings.builder().put(MarvelSettings.HISTORY_DURATION.getKey(),
                 String.format(Locale.ROOT, "%dd", retention)));
 
         final DateTime now = now();
         for (int i = 0; i < max; i++) {
-            createIndex(MarvelSettings.MARVEL_INDICES_PREFIX + String.valueOf(i), now.minusDays(i));
+            createIndex(MarvelSettings.MONITORING_INDICES_PREFIX + String.valueOf(i), now.minusDays(i));
         }
         assertIndicesCount(max);
 
@@ -161,12 +161,12 @@ public abstract class AbstractIndicesCleanerTestCase extends MarvelIntegTestCase
 
         // Default retention is between 3 and max days
         final int defaultRetention = randomIntBetween(3, max);
-        internalCluster().startNode(Settings.builder().put(CleanerService.HISTORY_SETTING.getKey(),
+        internalCluster().startNode(Settings.builder().put(MarvelSettings.HISTORY_DURATION.getKey(),
                 String.format(Locale.ROOT, "%dd", defaultRetention)));
 
         final DateTime now = now();
         for (int i = 0; i < max; i++) {
-            createIndex(MarvelSettings.MARVEL_INDICES_PREFIX + String.valueOf(i), now.minusDays(i));
+            createIndex(MarvelSettings.MONITORING_INDICES_PREFIX + String.valueOf(i), now.minusDays(i));
         }
         assertIndicesCount(max);
 
@@ -177,8 +177,8 @@ public abstract class AbstractIndicesCleanerTestCase extends MarvelIntegTestCase
         // Updates the retention setting for the exporter
         Exporters exporters = internalCluster().getInstance(Exporters.class);
         for (Exporter exporter : exporters) {
-            Settings transientSettings = Settings.builder().put("marvel.agent.exporters." + exporter.name() + "." +
-                    CleanerService.HISTORY_DURATION, String.format(Locale.ROOT, "%dd", exporterRetention)).build();
+            Settings transientSettings = Settings.builder().put("xpack.monitoring.agent.exporters." + exporter.name() + "." +
+                    MarvelSettings.HISTORY_DURATION_SETTING_NAME, String.format(Locale.ROOT, "%dd", exporterRetention)).build();
             assertAcked(client().admin().cluster().prepareUpdateSettings().setTransientSettings(transientSettings));
         }
 

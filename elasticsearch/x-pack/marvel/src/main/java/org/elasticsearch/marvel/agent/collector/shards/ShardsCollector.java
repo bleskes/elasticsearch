@@ -28,7 +28,7 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.discovery.DiscoveryService;
 import org.elasticsearch.marvel.agent.collector.AbstractCollector;
 import org.elasticsearch.marvel.agent.exporter.MarvelDoc;
-import org.elasticsearch.marvel.agent.settings.MarvelSettings;
+import org.elasticsearch.marvel.MarvelSettings;
 import org.elasticsearch.marvel.license.MarvelLicensee;
 
 import java.util.ArrayList;
@@ -79,7 +79,7 @@ public class ShardsCollector extends AbstractCollector<ShardsCollector> {
                             shardDoc.setClusterUUID(clusterUUID);
                             shardDoc.setTimestamp(timestamp);
                             if (shard.assignedToNode()) {
-                                // If the shard is assigned to a node, the shard marvel document
+                                // If the shard is assigned to a node, the shard monitoring document
                                 // refers to this node
                                 shardDoc.setSourceNode(clusterState.getNodes().get(shard.currentNodeId()));
                             }
