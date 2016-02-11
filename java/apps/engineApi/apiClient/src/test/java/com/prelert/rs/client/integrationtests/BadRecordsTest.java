@@ -50,167 +50,167 @@ import com.prelert.rs.data.MultiDataPostResult;
  */
 public class BadRecordsTest implements Closeable
 {
-	private static final Logger LOGGER = Logger.getLogger(BadRecordsTest.class);
+    private static final Logger LOGGER = Logger.getLogger(BadRecordsTest.class);
 
-	/**
-	 * The default base Url used in the test
-	 */
-	public static final String API_BASE_URL = "http://localhost:8080/engine/v2";
+    /**
+     * The default base Url used in the test
+     */
+    public static final String API_BASE_URL = "http://localhost:8080/engine/v2";
 
-	private EngineApiClient m_EngineApiClient;
+    private EngineApiClient m_EngineApiClient;
 
-	/**
-	 * Creates a new http client call {@linkplain #close()} once finished
-	 */
-	public BadRecordsTest(String baseUrl)
-	{
-		m_EngineApiClient = new EngineApiClient(baseUrl);
-	}
+    /**
+     * Creates a new http client call {@linkplain #close()} once finished
+     */
+    public BadRecordsTest(String baseUrl)
+    {
+        m_EngineApiClient = new EngineApiClient(baseUrl);
+    }
 
-	@Override
-	public void close() throws IOException
-	{
-		m_EngineApiClient.close();
-	}
-
-
-	/**
-	 * Generate records with unparsable dates the streaming client
-	 * should return {@link ErrorCodes#TOO_MANY_BAD_DATES} error.
-	 *
-	 * @throws IOException
-	 */
-	public void testUnparseableDates() throws IOException
-	{
-		PipedInputStream inputStream = new PipedInputStream();
-
-		BadRecordProducer producer = new BadRecordProducer(
-				BadRecordProducer.TestType.BAD_TIMESTAMP, inputStream);
-		Thread producerThread = new Thread(producer, "Producer-Thread");
-
-		JobConfiguration jc = producer.getJobConfiguration();
-		jc.setDescription("Bad dates test");
-		String jobId = m_EngineApiClient.createJob(jc);
-
-		producerThread.start();
-
-		MultiDataPostResult result = m_EngineApiClient.streamingUpload(jobId, inputStream, false);
-
-		test(result.anErrorOccurred());
-		test(result.getResponses().size() == 1);
-		ApiError error = result.getResponses().get(0).getError();
-		test(error != null);
-		test(error.getErrorCode() == ErrorCodes.TOO_MANY_BAD_DATES);
-
-		test(result.getResponses().get(0).getUploadSummary() == null);
+    @Override
+    public void close() throws IOException
+    {
+        m_EngineApiClient.close();
+    }
 
 
-		m_EngineApiClient.closeJob(jobId);
+    /**
+     * Generate records with unparsable dates the streaming client
+     * should return {@link ErrorCodes#TOO_MANY_BAD_DATES} error.
+     *
+     * @throws IOException
+     */
+    public void testUnparseableDates() throws IOException
+    {
+        PipedInputStream inputStream = new PipedInputStream();
 
-		try
-		{
-			producerThread.join();
-		}
-		catch (InterruptedException e)
-		{
-			LOGGER.error(e);
-		}
-	}
+        BadRecordProducer producer = new BadRecordProducer(
+                BadRecordProducer.TestType.BAD_TIMESTAMP, inputStream);
+        Thread producerThread = new Thread(producer, "Producer-Thread");
 
+        JobConfiguration jc = producer.getJobConfiguration();
+        jc.setDescription("Bad dates test");
+        String jobId = m_EngineApiClient.createJob(jc);
 
-	/**
-	 * Generate records with that are not in ascending time order.
-	 *
-	 * The client should return with
-	 * {@link ErrorCodes#TOO_MANY_OUT_OF_ORDER_RECORDS} error.
-	 *
-	 * @throws IOException
-	 */
-	public void testOutOfOrderDates() throws IOException
-	{
-		PipedInputStream inputStream = new PipedInputStream();
+        producerThread.start();
 
-		BadRecordProducer producer = new BadRecordProducer(
-				BadRecordProducer.TestType.OUT_OF_ORDER_RECORDS, inputStream);
-		Thread producerThread = new Thread(producer, "Producer-Thread");
+        MultiDataPostResult result = m_EngineApiClient.streamingUpload(jobId, inputStream, false);
 
-		JobConfiguration jc = producer.getJobConfiguration();
-		jc.setDescription("Out of order records test");
-		String jobId = m_EngineApiClient.createJob(jc);
+        test(result.anErrorOccurred());
+        test(result.getResponses().size() == 1);
+        ApiError error = result.getResponses().get(0).getError();
+        test(error != null);
+        test(error.getErrorCode() == ErrorCodes.TOO_MANY_BAD_DATES);
 
-		producerThread.start();
-
-		MultiDataPostResult result = m_EngineApiClient.streamingUpload(jobId, inputStream, false);
-
-		test(result.anErrorOccurred());
-		test(result.getResponses().size() == 1);
-		ApiError error = result.getResponses().get(0).getError();
-		test(error != null);
-		test(error.getErrorCode() == ErrorCodes.TOO_MANY_OUT_OF_ORDER_RECORDS);
-
-		test(result.getResponses().get(0).getUploadSummary() == null);
+        test(result.getResponses().get(0).getUploadSummary() == null);
 
 
-		m_EngineApiClient.closeJob(jobId);
+        m_EngineApiClient.closeJob(jobId);
 
-		try
-		{
-			producerThread.join();
-		}
-		catch (InterruptedException e)
-		{
-			LOGGER.error(e);
-		}
-	}
-
-
-	/**
-	 * Throws an exception if <code>condition</code> is false.
-	 *
-	 * @param condition
-	 * @throws IllegalStateException
-	 */
-	public static void test(boolean condition)
-	throws IllegalStateException
-	{
-		if (condition == false)
-		{
-			throw new IllegalStateException();
-		}
-	}
+        try
+        {
+            producerThread.join();
+        }
+        catch (InterruptedException e)
+        {
+            LOGGER.error(e);
+        }
+    }
 
 
-	/**
-	 * The program takes one argument which is the base Url of the RESTful API.
-	 * If no arguments are given then {@value #API_BASE_URL} is used.
-	 *
-	 * @param args
-	 * @throws IOException
-	 * @throws InterruptedException
-	 */
-	public static void main(String[] args)
-	throws IOException, InterruptedException
-	{
-		// configure log4j
-		ConsoleAppender console = new ConsoleAppender();
-		console.setLayout(new PatternLayout("%d [%p|%c|%C{1}] %m%n"));
-		console.setThreshold(Level.INFO);
-		console.activateOptions();
-		Logger.getRootLogger().addAppender(console);
+    /**
+     * Generate records with that are not in ascending time order.
+     *
+     * The client should return with
+     * {@link ErrorCodes#TOO_MANY_OUT_OF_ORDER_RECORDS} error.
+     *
+     * @throws IOException
+     */
+    public void testOutOfOrderDates() throws IOException
+    {
+        PipedInputStream inputStream = new PipedInputStream();
 
-		String baseUrl = API_BASE_URL;
-		if (args.length > 0)
-		{
-			baseUrl = args[0];
-		}
+        BadRecordProducer producer = new BadRecordProducer(
+                BadRecordProducer.TestType.OUT_OF_ORDER_RECORDS, inputStream);
+        Thread producerThread = new Thread(producer, "Producer-Thread");
+
+        JobConfiguration jc = producer.getJobConfiguration();
+        jc.setDescription("Out of order records test");
+        String jobId = m_EngineApiClient.createJob(jc);
+
+        producerThread.start();
+
+        MultiDataPostResult result = m_EngineApiClient.streamingUpload(jobId, inputStream, false);
+
+        test(result.anErrorOccurred());
+        test(result.getResponses().size() == 1);
+        ApiError error = result.getResponses().get(0).getError();
+        test(error != null);
+        test(error.getErrorCode() == ErrorCodes.TOO_MANY_OUT_OF_ORDER_RECORDS);
+
+        test(result.getResponses().get(0).getUploadSummary() == null);
 
 
-		BadRecordsTest test = new BadRecordsTest(baseUrl);
-		test.testUnparseableDates();
-		test.testOutOfOrderDates();
+        m_EngineApiClient.closeJob(jobId);
 
-		test.close();
+        try
+        {
+            producerThread.join();
+        }
+        catch (InterruptedException e)
+        {
+            LOGGER.error(e);
+        }
+    }
 
-		LOGGER.info("All tests passed Ok");
-	}
+
+    /**
+     * Throws an exception if <code>condition</code> is false.
+     *
+     * @param condition
+     * @throws IllegalStateException
+     */
+    public static void test(boolean condition)
+    throws IllegalStateException
+    {
+        if (condition == false)
+        {
+            throw new IllegalStateException();
+        }
+    }
+
+
+    /**
+     * The program takes one argument which is the base Url of the RESTful API.
+     * If no arguments are given then {@value #API_BASE_URL} is used.
+     *
+     * @param args
+     * @throws IOException
+     * @throws InterruptedException
+     */
+    public static void main(String[] args)
+    throws IOException, InterruptedException
+    {
+        // configure log4j
+        ConsoleAppender console = new ConsoleAppender();
+        console.setLayout(new PatternLayout("%d [%p|%c|%C{1}] %m%n"));
+        console.setThreshold(Level.INFO);
+        console.activateOptions();
+        Logger.getRootLogger().addAppender(console);
+
+        String baseUrl = API_BASE_URL;
+        if (args.length > 0)
+        {
+            baseUrl = args[0];
+        }
+
+
+        BadRecordsTest test = new BadRecordsTest(baseUrl);
+        test.testUnparseableDates();
+        test.testOutOfOrderDates();
+
+        test.close();
+
+        LOGGER.info("All tests passed Ok");
+    }
 }
