@@ -205,11 +205,11 @@ public class BadRecordsTest implements Closeable
         }
 
 
-        BadRecordsTest test = new BadRecordsTest(baseUrl);
-        test.testUnparseableDates();
-        test.testOutOfOrderDates();
-
-        test.close();
+        try (BadRecordsTest test = new BadRecordsTest(baseUrl))
+        {
+            test.testUnparseableDates();
+            test.testOutOfOrderDates();
+        }
 
         LOGGER.info("All tests passed Ok");
     }
