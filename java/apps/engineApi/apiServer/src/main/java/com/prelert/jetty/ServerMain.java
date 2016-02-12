@@ -141,7 +141,11 @@ public class ServerMain
         ms_Server = new Server(jettyPort);
 
         // Set up an access log for Jetty
-        ms_Server.setRequestLog(new NCSARequestLog(PrelertWebApp.getServerLogPath().toString() + "/jetty_access.log.yyyy_mm_dd"));
+        NCSARequestLog requestLogger = new NCSARequestLog(PrelertWebApp.getServerLogPath().toString() + "/jetty_access.log.yyyy_mm_dd");
+        requestLogger.setExtended(true);
+        requestLogger.setLogCookies(true);
+        requestLogger.setLogLatency(true);
+        ms_Server.setRequestLog(requestLogger);
 
         // This serves the Kibana-based dashboard.
         ResourceHandler dashboardHandler = new ResourceHandler();
