@@ -35,31 +35,18 @@ import com.prelert.job.errorcodes.ErrorCodes;
  */
 public class JobInUseException extends JobException
 {
-	private static final long serialVersionUID = -2759814168552580059L;
+    private static final long serialVersionUID = -2759814168552580059L;
 
-	private final String m_JobId;
-
-	/**
-	 * Create a new JobInUseException.
-	 *
-	 * @param jobId The Id of the job some operation was attempted on.
-	 * @param message Details of error explaining the context
-	 * @param The error code
-	 * @see ErrorCodes
-	 */
-	public JobInUseException(String jobId, String message, ErrorCodes errorCode)
-	{
-		super(message, errorCode);
-		m_JobId = jobId;
-	}
-
-	/**
-	 * Get the <i>JobId</i> that was the source of the error.
-	 * @return The job id string
-	 */
-	public String getJobId()
-	{
-		return m_JobId;
-	}
+    /**
+     * Create a new JobInUseException.
+     *
+     * @param message Details of error explaining the context
+     * @param The error code
+     * @see ErrorCodes
+     */
+    public JobInUseException(String message, ErrorCodes errorCode)
+    {
+        super(message, errorCode);
+    }
 }
 

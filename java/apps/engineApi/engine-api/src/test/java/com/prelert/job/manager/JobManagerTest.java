@@ -35,7 +35,9 @@ import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -47,6 +49,11 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import org.apache.log4j.Logger;
 import org.junit.After;
@@ -61,6 +68,7 @@ import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
+import org.mockito.stubbing.Stubber;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.prelert.job.AnalysisConfig;
@@ -83,6 +91,7 @@ import com.prelert.job.exceptions.JobInUseException;
 import com.prelert.job.exceptions.TooManyJobsException;
 import com.prelert.job.logging.JobLoggerFactory;
 import com.prelert.job.messages.Messages;
+import com.prelert.job.persistence.DataStoreException;
 import com.prelert.job.persistence.JobProvider;
 import com.prelert.job.persistence.QueryPage;
 import com.prelert.job.process.autodetect.ProcessManager;
@@ -90,6 +99,7 @@ import com.prelert.job.process.exceptions.MalformedJsonException;
 import com.prelert.job.process.exceptions.MissingFieldException;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
 import com.prelert.job.process.params.DataLoadParams;
+import com.prelert.job.process.params.InterimResultsParams;
 import com.prelert.job.process.writer.CsvRecordWriter;
 import com.prelert.job.status.HighProportionOfBadTimestampsException;
 import com.prelert.job.status.OutOfOrderRecordsException;
@@ -120,6 +130,158 @@ public class JobManagerTest
     }
 
     @Test
+    public void testCloseJob_GivenExistingJob() throws UnknownJobException, DataStoreException,
+            NativeProcessRunException, JobInUseException
+    {
+        givenProcessInfo(5);
+        JobManager jobManager = createJobManager();
+
+        jobManager.closeJob("foo");
+
+        verify(m_ProcessManager).closeJob("foo");
+    }
+
+    @Test
+    public void testCloseJob_GivenJobActionIsNotAvailable() throws NativeProcessRunException,
+            InterruptedException, ExecutionException
+    {
+        givenProcessInfo(5);
+        JobManager jobManager = createJobManager();
+        doAnswerSleep(200).when(m_ProcessManager).closeJob("foo");
+
+        ExecutorService executor = Executors.newFixedThreadPool(3);
+        Future<Throwable> task_1_result = executor.submit(
+                new ExceptionCallable(() -> jobManager.closeJob("foo")));
+        Future<Throwable> task_2_result = executor.submit(
+                new ExceptionCallable(() -> jobManager.closeJob("foo")));
+        Future<Throwable> task_3_result = executor.submit(
+                new ExceptionCallable(() -> jobManager.closeJob("bar")));
+        executor.shutdown();
+
+        Throwable result1 = task_1_result.get();
+        Throwable result2 = task_2_result.get();
+        Throwable result3 = task_3_result.get();
+        assertTrue(result1 == null || result2 == null);
+        assertNull(result3);
+        if (result1 == null)
+        {
+            assertTrue(result2 instanceof JobInUseException);
+        }
+        else
+        {
+            assertTrue(result1 instanceof JobInUseException);
+        }
+
+        verify(m_ProcessManager).closeJob("foo");
+        verify(m_ProcessManager).closeJob("bar");
+    }
+
+    @Test
+    public void testDeleteJob_GivenNonRunningJob() throws UnknownJobException, DataStoreException,
+            NativeProcessRunException, JobInUseException
+    {
+        givenProcessInfo(5);
+        JobManager jobManager = createJobManager();
+        when(m_ProcessManager.jobIsRunning("foo")).thenReturn(false);
+
+        jobManager.deleteJob("foo");
+
+        verify(m_ProcessManager, never()).closeJob("foo");
+        verify(m_ProcessManager).deletePersistedData("foo");
+        verify(m_JobProvider).deleteJob("foo");
+    }
+
+    @Test
+    public void testDeleteJob_GivenRunningJob() throws UnknownJobException, DataStoreException,
+            NativeProcessRunException, JobInUseException
+    {
+        givenProcessInfo(5);
+        JobManager jobManager = createJobManager();
+        when(m_ProcessManager.jobIsRunning("foo")).thenReturn(true);
+
+        jobManager.deleteJob("foo");
+
+        verify(m_ProcessManager).closeJob("foo");
+        verify(m_ProcessManager).deletePersistedData("foo");
+        verify(m_JobProvider).deleteJob("foo");
+    }
+
+    @Test
+    public void testDeleteJob_GivenJobActionIsNotAvailable() throws UnknownJobException,
+            DataStoreException, InterruptedException, ExecutionException
+    {
+        givenProcessInfo(5);
+        JobManager jobManager = createJobManager();
+        doAnswerSleep(200).when(m_JobProvider).deleteJob("foo");
+
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+        Future<Throwable> task_1_result = executor.submit(
+                new ExceptionCallable(() -> jobManager.deleteJob("foo")));
+        Future<Throwable> task_2_result = executor.submit(
+                new ExceptionCallable(() -> jobManager.deleteJob("foo")));
+        executor.shutdown();
+
+        Throwable result1 = task_1_result.get();
+        Throwable result2 = task_2_result.get();
+        assertTrue(result1 == null || result2 == null);
+        if (result1 == null)
+        {
+            assertTrue(result2 instanceof JobInUseException);
+        }
+        else
+        {
+            assertTrue(result1 instanceof JobInUseException);
+        }
+
+        verify(m_JobProvider).deleteJob("foo");
+    }
+
+    @Test
+    public void testFlushJob_GivenJobExists() throws UnknownJobException, NativeProcessRunException,
+            JobInUseException
+    {
+        givenProcessInfo(5);
+        JobManager jobManager = createJobManager();
+        InterimResultsParams params = InterimResultsParams.newBuilder().build();
+
+        jobManager.flushJob("foo", params);
+
+        verify(m_JobProvider).checkJobExists("foo");
+        verify(m_ProcessManager).flushJob("foo", params);
+    }
+
+    @Test
+    public void testFlushJob_GivenJobActionIsNotAvailable() throws UnknownJobException,
+            NativeProcessRunException, JobInUseException, InterruptedException, ExecutionException
+    {
+        givenProcessInfo(5);
+        JobManager jobManager = createJobManager();
+        InterimResultsParams params = InterimResultsParams.newBuilder().build();
+        doAnswerSleep(200).when(m_ProcessManager).flushJob("foo", params);
+
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+        Future<Throwable> task_1_result = executor.submit(
+                new ExceptionCallable(() -> jobManager.flushJob("foo", params)));
+        Future<Throwable> task_2_result = executor.submit(
+                new ExceptionCallable(() -> jobManager.flushJob("foo", params)));
+        executor.shutdown();
+
+        Throwable result1 = task_1_result.get();
+        Throwable result2 = task_2_result.get();
+        assertTrue(result1 == null || result2 == null);
+        if (result1 == null)
+        {
+            assertTrue(result2 instanceof JobInUseException);
+        }
+        else
+        {
+            assertTrue(result1 instanceof JobInUseException);
+        }
+
+        verify(m_ProcessManager).flushJob("foo", params);
+    }
+
+    @Test
     public void testSubmitDataLoadJob_GivenProcessIsRunningAsManyJobsAsLicenseAllows()
             throws JsonParseException, UnknownJobException, NativeProcessRunException,
             MissingFieldException, JobInUseException, HighProportionOfBadTimestampsException,
@@ -136,8 +298,6 @@ public class JobManagerTest
         m_ExpectedException.expectMessage("Cannot reactivate job with id 'foo' - your license "
                 + "limits you to 2 concurrently running jobs. You must close a job before you "
                 + "can reactivate another.");
-
-
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.LICENSE_VIOLATION));
 
@@ -219,7 +379,6 @@ public class JobManagerTest
     }
 
     @Test
-    @SuppressWarnings({ "rawtypes", "unchecked" })
     public void testSubmitDataLoadJob_GivenProcessIsRunSuccessfully()
             throws JsonParseException, UnknownJobException, NativeProcessRunException,
             MissingFieldException, JobInUseException, HighProportionOfBadTimestampsException,
@@ -227,20 +386,19 @@ public class JobManagerTest
     {
         InputStream inputStream = mock(InputStream.class);
         DataLoadParams params = mock(DataLoadParams.class);
-        when(m_JobProvider.getJobDetails("foo")).thenReturn(
-                Optional.of(new JobDetails("foo", new JobConfiguration())));
+        JobDetails job = new JobDetails("foo", new JobConfiguration());
+        when(m_JobProvider.getJobDetails("foo")).thenReturn(Optional.of(job));
         givenProcessInfo(5);
         when(m_ProcessManager.jobIsRunning("foo")).thenReturn(false);
         when(m_ProcessManager.numberOfRunningJobs()).thenReturn(0);
-        when(m_ProcessManager.processDataLoadJob("foo", inputStream, params)).thenReturn(new DataCounts());
+        when(m_ProcessManager.processDataLoadJob(job, inputStream, params)).thenReturn(new DataCounts());
         JobManager jobManager = createJobManager();
 
         DataCounts stats = jobManager.submitDataLoadJob("foo", inputStream, params);
         assertNotNull(stats);
 
-        ArgumentCaptor<Map> updateCaptor = ArgumentCaptor.forClass(Map.class);
-        verify(m_JobProvider).updateJob(eq("foo"), updateCaptor.capture());
-        Map updates = updateCaptor.getValue();
+        verify(m_JobProvider).updateJob(eq("foo"), m_JobUpdateCaptor.capture());
+        Map<String, Object> updates = m_JobUpdateCaptor.getValue();
         assertNotNull(updates.get(JobDetails.LAST_DATA_TIME));
     }
 
@@ -453,6 +611,36 @@ public class JobManagerTest
     }
 
     @Test
+    public void testWriteUpdateConfigMessage_GivenJobActionIsNotAvailable()
+            throws NativeProcessRunException, InterruptedException, ExecutionException
+    {
+        givenProcessInfo(5);
+        JobManager jobManager = createJobManager();
+        doAnswerSleep(200).when(m_ProcessManager).writeUpdateConfigMessage("foo", "bar");
+
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+        Future<Throwable> task_1_result = executor.submit(
+                new ExceptionCallable(() -> jobManager.writeUpdateConfigMessage("foo", "bar")));
+        Future<Throwable> task_2_result = executor.submit(
+                new ExceptionCallable(() -> jobManager.writeUpdateConfigMessage("foo", "bar")));
+        executor.shutdown();
+
+        Throwable result1 = task_1_result.get();
+        Throwable result2 = task_2_result.get();
+        assertTrue(result1 == null || result2 == null);
+        if (result1 == null)
+        {
+            assertTrue(result2 instanceof JobInUseException);
+        }
+        else
+        {
+            assertTrue(result1 instanceof JobInUseException);
+        }
+
+        verify(m_ProcessManager).writeUpdateConfigMessage("foo", "bar");
+    }
+
+    @Test
     public void testPreviewTransforms()
     throws JsonParseException, MissingFieldException, HighProportionOfBadTimestampsException,
     OutOfOrderRecordsException, MalformedJsonException, IOException, UnknownJobException
@@ -660,8 +848,6 @@ public class JobManagerTest
         JobManager jobManager = createJobManager();
 
         jobManager.shutdown();
-
-        verify(m_ProcessManager).shutdown();
     }
 
     private void givenProcessInfo(int maxLicenseJobs)
@@ -713,5 +899,46 @@ public class JobManagerTest
         jobConfig.setAnalysisConfig(analysisConfig);
         jobConfig.setSchedulerConfig(schedulerConfig);
         return jobConfig;
+    }
+
+    private static Stubber doAnswerSleep(long millis)
+    {
+        return doAnswer(new Answer<Void>()
+        {
+            @Override
+            public Void answer(InvocationOnMock invocation) throws Throwable
+            {
+                Thread.sleep(millis);
+                return null;
+            }
+        });
+    }
+
+    private static class ExceptionCallable implements Callable<Throwable>
+    {
+        private interface ExceptionTask
+        {
+            void run() throws Exception;
+        }
+
+        private final ExceptionTask m_Task;
+
+        private ExceptionCallable(ExceptionTask task)
+        {
+            m_Task = task;
+        }
+
+        @Override
+        public Throwable call()
+        {
+            try
+            {
+                m_Task.run();
+            } catch (Exception e)
+            {
+                return e;
+            }
+            return null;
+        }
     }
 }

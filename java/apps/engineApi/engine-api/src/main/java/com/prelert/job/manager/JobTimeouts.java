@@ -25,7 +25,7 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.job.process.autodetect;
+package com.prelert.job.manager;
 
 import java.time.Duration;
 import java.util.Objects;
@@ -39,14 +39,16 @@ import java.util.concurrent.TimeUnit;
 import org.apache.log4j.Logger;
 
 import com.prelert.app.Shutdownable;
+import com.prelert.job.UnknownJobException;
 import com.prelert.job.exceptions.JobInUseException;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
 
-public class JobTimeouts implements Shutdownable
+class JobTimeouts implements Shutdownable
 {
-    public interface JobCloser
+    interface JobCloser
     {
-        void closeJob(String jobId) throws JobInUseException, NativeProcessRunException;
+        void closeJob(String jobId) throws UnknownJobException, JobInUseException,
+                NativeProcessRunException;
     }
 
     private static final Logger LOGGER = Logger.getLogger(JobTimeouts.class);
@@ -129,7 +131,7 @@ public class JobTimeouts implements Shutdownable
                     }
                 }
             }
-            catch (NativeProcessRunException e)
+            catch (NativeProcessRunException | UnknownJobException e)
             {
                 LOGGER.error(String.format("Error in job %s finish timeout", m_JobId), e);
             }
@@ -191,7 +193,7 @@ public class JobTimeouts implements Shutdownable
                         return;
                     }
                 }
-                catch (NativeProcessRunException e)
+                catch (NativeProcessRunException | UnknownJobException e)
                 {
                     LOGGER.error("Error stopping running job " + jobId, e);
                 }

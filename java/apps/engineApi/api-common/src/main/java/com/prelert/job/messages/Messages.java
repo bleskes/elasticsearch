@@ -108,6 +108,7 @@ public final class Messages
     public static final String JOB_CONFIG_SCHEDULER_ELASTICSEARCH_REQUIRES_DATAFORMAT_ELASTICSEARCH = "job.config.scheduler.elasticsearch.requires.dataformat.elasticsearch";
 
     public static final String JOB_DATA_CONCURRENT_USE_CLOSE = "job.data.concurrent.use.close";
+    public static final String JOB_DATA_CONCURRENT_USE_DELETE = "job.data.concurrent.use.delete";
     public static final String JOB_DATA_CONCURRENT_USE_FLUSH = "job.data.concurrent.use.flush";
     public static final String JOB_DATA_CONCURRENT_USE_UPDATE = "job.data.concurrent.use.update";
     public static final String JOB_DATA_CONCURRENT_USE_UPLOAD = "job.data.concurrent.use.upload";
@@ -144,9 +145,9 @@ public final class Messages
     public static final String REST_ALERT_INVALID_TYPE = "rest.alert.invalid.type";
 
     public static final String PROCESS_ACTION_CLOSING_JOB = "process.action.closing.job";
+    public static final String PROCESS_ACTION_DELETING_JOB = "process.action.deleting.job";
     public static final String PROCESS_ACTION_FLUSHING_JOB = "process.action.flushing.job";
     public static final String PROCESS_ACTION_UPDATING_JOB = "process.action.updating.job";
-    public static final String PROCESS_ACTION_USING_JOB = "process.action.using.job";
     public static final String PROCESS_ACTION_WRITING_JOB = "process.action.writing.job";
 
     private Messages()
