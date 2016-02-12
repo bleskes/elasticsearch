@@ -365,11 +365,7 @@ public class ProcessManager implements Shutdownable
         ProcessAndDataDescription process = m_JobIdToProcessMap.get(jobId);
         if (process == null)
         {
-            LOGGER.warn("Native process for job '" + jobId +
-                     "' is not running - nothing to flush");
-            // tidy up
-            m_JobIdToTimeoutFuture.remove(jobId);
-
+            LOGGER.warn("Native process for job '" + jobId + "' is not running - nothing to flush");
             return;
         }
 
@@ -467,9 +463,6 @@ public class ProcessManager implements Shutdownable
         if (process == null)
         {
             LOGGER.warn("No job with id '" + jobId + "' to shutdown");
-            // tidy up
-            m_JobIdToTimeoutFuture.remove(jobId);
-
             return;
         }
 
