@@ -499,7 +499,6 @@ public class ProcessManager implements Shutdownable
             {
                 LOGGER.debug("No future to cancel in finishJob()");
             }
-            m_JobIdToTimeoutFuture.remove(jobId);
 
 
             try
@@ -507,7 +506,6 @@ public class ProcessManager implements Shutdownable
                 // check the process is running, throws if not
                 if (processStillRunning(process))
                 {
-                    m_JobIdToProcessMap.remove(jobId);
                     terminateProcess(jobId, process);
                 }
             }
@@ -521,7 +519,6 @@ public class ProcessManager implements Shutdownable
                 // clean up resources and re-throw
                 process.deleteAssociatedFiles();
 
-                m_JobIdToProcessMap.remove(jobId);
                 try
                 {
                     process.getProcess().getOutputStream().close();
@@ -538,6 +535,8 @@ public class ProcessManager implements Shutdownable
         }
         finally
         {
+            m_JobIdToProcessMap.remove(jobId);
+            m_JobIdToTimeoutFuture.remove(jobId);
             m_JobLoggerFactory.close(jobId, process.getLogger());
             process.releaseGuard();
         }
