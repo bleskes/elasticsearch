@@ -31,14 +31,11 @@ import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.time.Duration;
 import java.util.Date;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.apache.log4j.Logger;
@@ -89,32 +86,25 @@ import com.prelert.job.transform.TransformConfigs;
  */
 public class ProcessManager implements Shutdownable
 {
-    private static final int WAIT_SECONDS_BEFORE_RETRY_CLOSING = 10;
-
     private static final Logger LOGGER = Logger.getLogger(ProcessManager.class);
 
     private ConcurrentMap<String, ProcessAndDataDescription> m_JobIdToProcessMap;
-    private ConcurrentMap<String, ScheduledFuture<?>> m_JobIdToTimeoutFuture;
-
-    private ScheduledExecutorService m_ProcessTimeouts;
 
     private final JobProvider m_JobProvider;
     private final ProcessFactory m_ProcessFactory;
     private final DataPersisterFactory m_DataPersisterFactory;
     private final JobLoggerFactory m_JobLoggerFactory;
+    private final JobTimeouts m_JobTimeouts;
 
     public ProcessManager(JobProvider jobProvider, ProcessFactory processFactory,
             DataPersisterFactory dataPersisterFactory, JobLoggerFactory jobLoggerFactory)
     {
         m_JobIdToProcessMap = new ConcurrentHashMap<String, ProcessAndDataDescription>();
-
-        m_ProcessTimeouts = Executors.newScheduledThreadPool(1);
-        m_JobIdToTimeoutFuture = new ConcurrentHashMap<String, ScheduledFuture<?>>();
-
         m_JobProvider = jobProvider;
         m_ProcessFactory = processFactory;
         m_DataPersisterFactory = dataPersisterFactory;
         m_JobLoggerFactory = Objects.requireNonNull(jobLoggerFactory);
+        m_JobTimeouts = new JobTimeouts(jobId -> closeJob(jobId));
     }
 
      /**
@@ -170,19 +160,7 @@ public class ProcessManager implements Shutdownable
             JobInUseException, HighProportionOfBadTimestampsException, OutOfOrderRecordsException,
             MalformedJsonException
     {
-        // stop the timeout
-        ScheduledFuture<?> future = m_JobIdToTimeoutFuture.remove(jobId);
-        if (future != null)
-        {
-            if (future.cancel(false) == false)
-            {
-                LOGGER.warn("Failed to cancel future in dataToJob(...)");
-            }
-        }
-        else
-        {
-            LOGGER.debug("No future to cancel in dataToJob(...)");
-        }
+        m_JobTimeouts.stopTimeout(jobId);
 
         ProcessAndDataDescription process = m_JobIdToProcessMap.get(jobId);
         boolean isExistingProcess = process != null;
@@ -251,10 +229,7 @@ public class ProcessManager implements Shutdownable
         finally
         {
             process.releaseGuard();
-
-            // start a new timer
-            future = startShutdownTimer(jobId, process.getTimeout());
-            m_JobIdToTimeoutFuture.put(jobId, future);
+            m_JobTimeouts.startTimeout(jobId, Duration.ofSeconds(process.getTimeout()));
         }
 
         return stats;
@@ -483,16 +458,7 @@ public class ProcessManager implements Shutdownable
             process.getLogger().info("Closing job " + jobId);
 
             // cancel any time out futures
-            ScheduledFuture<?> future = m_JobIdToTimeoutFuture.get(jobId);
-            if (future != null && future.cancel(false) == false)
-            {
-                LOGGER.warn("Failed to cancel future in finishJob()");
-            }
-            else
-            {
-                LOGGER.debug("No future to cancel in finishJob()");
-            }
-
+            m_JobTimeouts.stopTimeout(jobId);
 
             try
             {
@@ -529,7 +495,6 @@ public class ProcessManager implements Shutdownable
         finally
         {
             m_JobIdToProcessMap.remove(jobId);
-            m_JobIdToTimeoutFuture.remove(jobId);
             m_JobLoggerFactory.close(jobId, process.getLogger());
             process.releaseGuard();
         }
@@ -782,124 +747,10 @@ public class ProcessManager implements Shutdownable
         }
     }
 
-    /**
-     * Add the timeout schedule for <code>jobId</code>.
-     * On time out it tries to shutdown the job but if the job
-     * is still running it schedules another task to try again in 10
-     * seconds.
-     *
-     * @param jobId
-     * @param timeoutSeconds
-     * @return
-     */
-    private ScheduledFuture<?> startShutdownTimer(String jobId, long timeoutSeconds)
-    {
-        return m_ProcessTimeouts.schedule(new FinishJobRunnable(jobId), timeoutSeconds,
-                TimeUnit.SECONDS);
-    }
-
-    private class FinishJobRunnable implements Runnable
-    {
-        private final String m_JobId;
-
-        public FinishJobRunnable(String jobId)
-        {
-            m_JobId = jobId;
-        }
-
-        @Override
-        public void run()
-        {
-            LOGGER.info("Timeout expired stopping process for job:" + m_JobId);
-
-            try
-            {
-                boolean notFinished = true;
-                while (notFinished)
-                {
-                    try
-                    {
-                        closeJob(m_JobId);
-                        notFinished = false;
-                    }
-                    catch (JobInUseException e)
-                    {
-                        if (ProcessManager.wait(m_JobId, WAIT_SECONDS_BEFORE_RETRY_CLOSING, e) == false)
-                        {
-                            return;
-                        }
-                    }
-                }
-            }
-            catch (NativeProcessRunException e)
-            {
-                LOGGER.error(String.format("Error in job %s finish timeout", m_JobId), e);
-            }
-        }
-    }
-
-    private static boolean wait(String jobId, int waitSeconds, JobInUseException e)
-    {
-        String msg = String.format(
-                "Job '%s' is reading data and cannot be shutdown " +
-                        "Rescheduling shutdown for %d seconds", jobId, waitSeconds);
-        LOGGER.warn(msg);
-
-        // wait then try again
-        try
-        {
-            Thread.sleep(waitSeconds * 1000);
-        }
-        catch (InterruptedException e1)
-        {
-            Thread.currentThread().interrupt();
-            LOGGER.warn("Interrupted waiting for job to stop", e);
-            return false;
-        }
-        return true;
-    }
-
-    /**
-     * Stop the process manager by shutting down the executor
-     * service and stop all running processes. Processes won't quit
-     * straight away once the input stream is closed but will stop
-     * soon after once the data has been analysed.
-     */
     @Override
     public void shutdown()
     {
-        LOGGER.info("Stopping all Engine API Jobs");
-
-        // Stop new being scheduled
-        m_ProcessTimeouts.shutdownNow();
-
-        LOGGER.info(String.format("Terminating %d active autodetect processes",
-                m_JobIdToTimeoutFuture.size()));
-
-        for (String jobId : m_JobIdToTimeoutFuture.keySet())
-        {
-            boolean notFinished = true;
-            while (notFinished)
-            {
-                try
-                {
-                    closeJob(jobId);
-                    notFinished = false;
-                }
-                catch (JobInUseException e)
-                {
-                    // wait then try again
-                    if (ProcessManager.wait(jobId, WAIT_SECONDS_BEFORE_RETRY_CLOSING, e) == false)
-                    {
-                        return;
-                    }
-                }
-                catch (NativeProcessRunException e)
-                {
-                    LOGGER.error("Error stopping running job " + jobId, e);
-                }
-            }
-        }
+        m_JobTimeouts.shutdown();
     }
 
     /**
