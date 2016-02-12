@@ -89,17 +89,11 @@ public class AlertTrigger
         switch (m_AlertType)
         {
             case BUCKET:
-            {
                 return isTriggeredByBucket(bucket.getMaxNormalizedProbability(), bucket.getAnomalyScore());
-            }
             case BUCKETINFLUENCER:
-            {
                 return isTriggeredByBucketInfluencers(bucket);
-            }
             case INFLUENCER:
-            {
                 return isTriggeredByInfluencers(bucket);
-            }
             default:
                 return false;
         }

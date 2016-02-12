@@ -177,7 +177,7 @@ class JsonDataToProcessWriter extends AbstractDataToProcessWriter
     {
         List<String> nestingOrder = (m_SchedulerConfig != null) ?
                 m_SchedulerConfig.buildAggregatedFieldList() : Collections.emptyList();
-        return (nestingOrder.isEmpty()) ? new SimpleJsonRecordReader(parser, m_InFieldIndexes,
+        return nestingOrder.isEmpty() ? new SimpleJsonRecordReader(parser, m_InFieldIndexes,
                 getRecordHoldingField(), m_Logger) : new AggregatedJsonRecordReader(parser,
                 m_InFieldIndexes, getRecordHoldingField(), m_Logger, nestingOrder);
     }
