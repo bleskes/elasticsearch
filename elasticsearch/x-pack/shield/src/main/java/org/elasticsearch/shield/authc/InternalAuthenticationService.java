@@ -272,7 +272,7 @@ public class InternalAuthenticationService extends AbstractComponent implements 
      * @throws ElasticsearchSecurityException If none of the configured realms successfully authenticated the
      *                                        request
      */
-    User authenticateWithRealms(String action, TransportMessage<?> message, User fallbackUser) throws ElasticsearchSecurityException {
+    User authenticateWithRealms(String action, TransportMessage message, User fallbackUser) throws ElasticsearchSecurityException {
         AuthenticationToken token;
         try {
             token = token(action, message);
@@ -355,7 +355,7 @@ public class InternalAuthenticationService extends AbstractComponent implements 
         return user;
     }
 
-    User authenticate(TransportMessage<?> message, AuthenticationToken token, String action) throws ElasticsearchSecurityException {
+    User authenticate(TransportMessage message, AuthenticationToken token, String action) throws ElasticsearchSecurityException {
         assert token != null : "cannot authenticate null tokens";
         try {
             for (Realm realm : realms) {
@@ -406,7 +406,7 @@ public class InternalAuthenticationService extends AbstractComponent implements 
     }
 
     @SuppressWarnings("unchecked")
-    AuthenticationToken token(String action, TransportMessage<?> message) {
+    AuthenticationToken token(String action, TransportMessage message) {
         AuthenticationToken token = threadContext.getTransient(TOKEN_KEY);
         if (token != null) {
             return token;
