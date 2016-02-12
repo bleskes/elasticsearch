@@ -34,6 +34,7 @@ import javax.servlet.DispatcherType;
 
 import org.apache.log4j.Logger;
 import org.eclipse.jetty.server.Handler;
+import org.eclipse.jetty.server.NCSARequestLog;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.HandlerCollection;
 import org.eclipse.jetty.server.handler.ResourceHandler;
@@ -46,6 +47,7 @@ import org.eclipse.jetty.util.log.Slf4jLog;
 import org.glassfish.jersey.servlet.ServletProperties;
 
 import com.prelert.job.messages.Messages;
+import com.prelert.rs.resources.PrelertWebApp;
 
 /**
  * Instantiate and configure an embedded Jetty Server in Java.
@@ -137,6 +139,9 @@ public class ServerMain
         Messages.load();
 
         ms_Server = new Server(jettyPort);
+
+        // Set up an access log for Jetty
+        ms_Server.setRequestLog(new NCSARequestLog(PrelertWebApp.getServerLogPath().toString() + "/jetty_access.log.yyyy_mm_dd"));
 
         // This serves the Kibana-based dashboard.
         ResourceHandler dashboardHandler = new ResourceHandler();

@@ -260,13 +260,23 @@ public class PrelertWebApp extends Application
                 jobLoggerFactory);
     }
 
+    /**
+     * Get the path to the main server log directory.
+     * This defaults to $PRELERT_HOME/logs/engine_api, but
+     * can be relocated.
+     */
+    public static Path getServerLogPath()
+    {
+        return Paths.get(ProcessCtrl.LOG_DIR, ENGINE_API_DIR);
+    }
+
     private void writeServerInfoDailyStartingNow()
     {
-        File serverInfoFile = new File(new File(ProcessCtrl.LOG_DIR, ENGINE_API_DIR), SERVER_INFO_FILE);
+        File serverInfoFile = new File(getServerLogPath().toString(), SERVER_INFO_FILE);
         try
         {
             // create path if missing
-            Path path = Paths.get(ProcessCtrl.LOG_DIR, ENGINE_API_DIR);
+            Path path = getServerLogPath();
             if (!Files.isDirectory(path))
             {
                 Files.createDirectory(path);
