@@ -43,7 +43,7 @@ public class TransportDeleteUserAction extends HandledTransportAction<DeleteUser
     @Override
     protected void doExecute(DeleteUserRequest request, final ActionListener<DeleteUserResponse> listener) {
         try {
-            usersStore.removeUser(request, new ActionListener<Boolean>() {
+            usersStore.deleteUser(request, new ActionListener<Boolean>() {
                 @Override
                 public void onResponse(Boolean found) {
                     listener.onResponse(new DeleteUserResponse(found));

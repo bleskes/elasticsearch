@@ -21,25 +21,24 @@ import org.elasticsearch.action.Action;
 import org.elasticsearch.client.ElasticsearchClient;
 
 /**
- * Action for adding a user to the shield administrative index
+ * Action for putting (adding/updating) a native user.
  */
-public class AddUserAction extends Action<AddUserRequest, AddUserResponse, AddUserRequestBuilder> {
+public class PutUserAction extends Action<PutUserRequest, PutUserResponse, PutUserRequestBuilder> {
 
-    public static final AddUserAction INSTANCE = new AddUserAction();
-    public static final String NAME = "cluster:admin/shield/user/add";
+    public static final PutUserAction INSTANCE = new PutUserAction();
+    public static final String NAME = "cluster:admin/shield/user/put";
 
-
-    protected AddUserAction() {
+    protected PutUserAction() {
         super(NAME);
     }
 
     @Override
-    public AddUserRequestBuilder newRequestBuilder(ElasticsearchClient client) {
-        return new AddUserRequestBuilder(client, this);
+    public PutUserRequestBuilder newRequestBuilder(ElasticsearchClient client) {
+        return new PutUserRequestBuilder(client, this);
     }
 
     @Override
-    public AddUserResponse newResponse() {
-        return new AddUserResponse();
+    public PutUserResponse newResponse() {
+        return new PutUserResponse();
     }
 }

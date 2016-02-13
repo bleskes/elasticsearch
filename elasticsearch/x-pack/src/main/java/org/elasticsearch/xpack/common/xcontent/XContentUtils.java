@@ -15,7 +15,7 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.watcher.support.xcontent;
+package org.elasticsearch.xpack.common.xcontent;
 
 import org.elasticsearch.ElasticsearchParseException;
 import org.elasticsearch.common.bytes.BytesReference;
@@ -31,9 +31,24 @@ import java.util.List;
 /**
  *
  */
-public class WatcherXContentUtils {
+public class XContentUtils {
 
-    private WatcherXContentUtils() {
+    private XContentUtils() {
+    }
+
+    /**
+     * Ensures that we're currently on the start of an object, or that the next token is a start of an object.
+     *
+     * @throws ElasticsearchParseException if the current or the next token is a {@code START_OBJECT}
+     */
+    public static void verifyObject(XContentParser parser) throws IOException, ElasticsearchParseException {
+        if (parser.currentToken() == XContentParser.Token.START_OBJECT) {
+            return;
+        }
+        XContentParser.Token token = parser.nextToken();
+        if (token != XContentParser.Token.START_OBJECT) {
+            throw new ElasticsearchParseException("expected a user object, but found token [{}]", parser.currentToken());
+        }
     }
 
     public static Tuple<XContentType, Object> convertToObject(BytesReference bytes) throws ElasticsearchParseException {

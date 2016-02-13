@@ -28,7 +28,6 @@ public class GetUsersAction extends Action<GetUsersRequest, GetUsersResponse, Ge
     public static final GetUsersAction INSTANCE = new GetUsersAction();
     public static final String NAME = "cluster:admin/shield/user/get";
 
-
     protected GetUsersAction() {
         super(NAME);
     }
