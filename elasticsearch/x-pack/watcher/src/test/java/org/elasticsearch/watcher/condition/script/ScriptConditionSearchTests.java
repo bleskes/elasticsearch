@@ -74,7 +74,7 @@ public class ScriptConditionSearchTests extends AbstractWatcherIntegrationTestCa
 
         SearchResponse response = client().prepareSearch("my-index")
                 .addAggregation(AggregationBuilders.dateHistogram("rate")
-                        .field("_timestamp").interval(DateHistogramInterval.HOUR).order(Histogram.Order.COUNT_DESC))
+                        .field("_timestamp").dateHistogramInterval(DateHistogramInterval.HOUR).order(Histogram.Order.COUNT_DESC))
                 .get();
 
         ExecutableScriptCondition condition = new ExecutableScriptCondition(
@@ -89,7 +89,7 @@ public class ScriptConditionSearchTests extends AbstractWatcherIntegrationTestCa
 
         response = client().prepareSearch("my-index")
                 .addAggregation(AggregationBuilders.dateHistogram("rate")
-                        .field("_timestamp").interval(DateHistogramInterval.HOUR).order(Histogram.Order.COUNT_DESC))
+                        .field("_timestamp").dateHistogramInterval(DateHistogramInterval.HOUR).order(Histogram.Order.COUNT_DESC))
                 .get();
 
         ctx = mockExecutionContext("_name", new Payload.XContent(response));

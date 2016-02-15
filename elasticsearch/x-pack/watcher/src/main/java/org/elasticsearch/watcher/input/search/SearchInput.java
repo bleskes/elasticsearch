@@ -26,6 +26,7 @@ import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.index.query.QueryParseContext;
+import org.elasticsearch.search.aggregations.AggregatorParsers;
 import org.elasticsearch.watcher.input.Input;
 import org.elasticsearch.watcher.support.SearchRequestEquivalence;
 import org.elasticsearch.watcher.support.WatcherDateTimeUtils;
@@ -122,7 +123,8 @@ public class SearchInput implements Input {
         return builder;
     }
 
-    public static SearchInput parse(String watchId, XContentParser parser, QueryParseContext context) throws IOException {
+    public static SearchInput parse(String watchId, XContentParser parser, QueryParseContext context, AggregatorParsers aggParsers)
+            throws IOException {
         SearchRequest request = null;
         Set<String> extract = null;
         TimeValue timeout = null;
@@ -135,7 +137,7 @@ public class SearchInput implements Input {
                 currentFieldName = parser.currentName();
             } else if (ParseFieldMatcher.STRICT.match(currentFieldName, Field.REQUEST)) {
                 try {
-                    request = WatcherUtils.readSearchRequest(parser, ExecutableSearchInput.DEFAULT_SEARCH_TYPE, context);
+                    request = WatcherUtils.readSearchRequest(parser, ExecutableSearchInput.DEFAULT_SEARCH_TYPE, context, aggParsers);
                 } catch (ElasticsearchParseException srpe) {
                     throw new ElasticsearchParseException("could not parse [{}] input for watch [{}]. failed to parse [{}]", srpe, TYPE,
                             watchId, currentFieldName);
