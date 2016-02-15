@@ -84,6 +84,7 @@ public class DynamicIndexNameIntegrationTests extends AbstractWatcherIntegration
         });
     }
 
+    @AwaitsFix(bugUrl="https://github.com/elastic/x-plugins/issues/1527")
     public void testDynamicIndexSearchInput() throws Exception {
         final String indexName = "idx-" + DateTimeFormat.forPattern("YYYY.MM.dd").print(timeWarp().clock().nowUTC());
         createIndex(indexName);
@@ -110,6 +111,7 @@ public class DynamicIndexNameIntegrationTests extends AbstractWatcherIntegration
         assertThat(response.getHits().getTotalHits(), is(1L));
     }
 
+    @AwaitsFix(bugUrl="https://github.com/elastic/x-plugins/issues/1527")
     public void testDynamicIndexSearchTransform() throws Exception {
         String indexName = "idx-" + DateTimeFormat.forPattern("YYYY.MM.dd").print(timeWarp().clock().nowUTC());
         createIndex(indexName);
