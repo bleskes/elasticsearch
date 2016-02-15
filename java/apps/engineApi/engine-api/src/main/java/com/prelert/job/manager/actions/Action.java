@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -25,26 +25,29 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.job.process.autodetect;
+package com.prelert.job.manager.actions;
 
 import com.prelert.job.messages.Messages;
 
-enum Action {
-    CLOSING(Messages.PROCESS_ACTION_CLOSING_JOB),
-    FLUSHING(Messages.PROCESS_ACTION_FLUSHING_JOB),
-    UPDATING(Messages.PROCESS_ACTION_UPDATING_JOB),
-    WRITING(Messages.PROCESS_ACTION_WRITING_JOB),
-    NONE(Messages.PROCESS_ACTION_USING_JOB);
+public enum Action {
+    CLOSING(Messages.JOB_DATA_CONCURRENT_USE_CLOSE, Messages.PROCESS_ACTION_CLOSING_JOB),
+    DELETING(Messages.JOB_DATA_CONCURRENT_USE_DELETE,Messages.PROCESS_ACTION_DELETING_JOB),
+    FLUSHING(Messages.JOB_DATA_CONCURRENT_USE_FLUSH,Messages.PROCESS_ACTION_FLUSHING_JOB),
+    UPDATING(Messages.JOB_DATA_CONCURRENT_USE_UPDATE,Messages.PROCESS_ACTION_UPDATING_JOB),
+    WRITING(Messages.JOB_DATA_CONCURRENT_USE_UPLOAD,Messages.PROCESS_ACTION_WRITING_JOB),
+    NONE("", "");
 
-    private final String m_ErrorString;
+    private final String m_MessageKey;
+    private final String m_VerbKey;
 
-    private Action(String messageKey)
+    private Action(String messageKey, String verbKey)
     {
-        m_ErrorString = Messages.getMessage(messageKey);
+        m_MessageKey = messageKey;
+        m_VerbKey = verbKey;
     }
 
-    public String getErrorString()
+    public String getErrorString(String jobId, Action actionInUse)
     {
-        return m_ErrorString;
+        return Messages.getMessage(m_MessageKey, jobId, Messages.getMessage(actionInUse.m_VerbKey));
     }
 }

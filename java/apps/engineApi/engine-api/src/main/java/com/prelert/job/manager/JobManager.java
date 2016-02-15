@@ -75,6 +75,9 @@ import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.exceptions.JobInUseException;
 import com.prelert.job.exceptions.TooManyJobsException;
 import com.prelert.job.logging.JobLoggerFactory;
+import com.prelert.job.manager.actions.Action;
+import com.prelert.job.manager.actions.ActionGuardian;
+import com.prelert.job.manager.actions.ActionGuardian.ActionTicket;
 import com.prelert.job.messages.Messages;
 import com.prelert.job.persistence.DataStoreException;
 import com.prelert.job.persistence.JobProvider;
@@ -135,10 +138,12 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
 
     private static final int MAX_JOBS_TO_RESTART = 10000;
 
+    private final ActionGuardian m_ActionGuardian;
     private final JobProvider m_JobProvider;
     private final ProcessManager m_ProcessManager;
     private final DataExtractorFactory m_DataExtractorFactory;
     private final JobLoggerFactory m_JobLoggerFactory;
+    private final JobTimeouts m_JobTimeouts;
 
     private final AtomicLong m_IdSequence;
     private final DateTimeFormatter m_JobIdDateFormat;
@@ -185,10 +190,12 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
     public JobManager(JobProvider jobProvider, ProcessManager processManager,
             DataExtractorFactory dataExtractorFactory, JobLoggerFactory jobLoggerFactory)
     {
+        m_ActionGuardian = new ActionGuardian();
         m_JobProvider = Objects.requireNonNull(jobProvider);
         m_ProcessManager = Objects.requireNonNull(processManager);
         m_DataExtractorFactory = Objects.requireNonNull(dataExtractorFactory);
         m_JobLoggerFactory = Objects.requireNonNull(jobLoggerFactory);
+        m_JobTimeouts = new JobTimeouts(jobId -> closeJob(jobId));
 
         m_MaxAllowedJobs = calculateMaxJobsAllowed();
 
@@ -626,32 +633,42 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
     public void flushJob(String jobId, InterimResultsParams interimResultsParams)
     throws UnknownJobException, NativeProcessRunException, JobInUseException
     {
-        LOGGER.debug("Flush job " + jobId);
+        try (ActionTicket actionTicket = m_ActionGuardian.tryAcquiringAction(jobId, Action.FLUSHING))
+        {
+            LOGGER.debug("Flush job " + jobId);
 
-        // First check the job is in the database.
-        // this method throws if it isn't
-        m_JobProvider.checkJobExists(jobId);
+            // First check the job is in the database.
+            // this method throws if it isn't
+            m_JobProvider.checkJobExists(jobId);
 
-        m_ProcessManager.flushJob(jobId, interimResultsParams);
+            m_ProcessManager.flushJob(jobId, interimResultsParams);
+        }
     }
 
     @Override
     public void closeJob(String jobId) throws UnknownJobException, NativeProcessRunException,
             JobInUseException
     {
-        LOGGER.debug("Finish job " + jobId);
+        try (ActionTicket actionTicket = m_ActionGuardian.tryAcquiringAction(jobId, Action.CLOSING))
+        {
+            LOGGER.debug("Finish job " + jobId);
 
-        // First check the job is in the database.
-        // this method throws if it isn't
-        m_JobProvider.checkJobExists(jobId);
+            // First check the job is in the database.
+            // this method throws if it isn't
+            m_JobProvider.checkJobExists(jobId);
 
-        m_ProcessManager.closeJob(jobId);
+            m_JobTimeouts.stopTimeout(jobId);
+            m_ProcessManager.closeJob(jobId);
+        }
     }
 
     public void writeUpdateConfigMessage(String jobId, String config) throws JobInUseException,
             NativeProcessRunException
     {
-        m_ProcessManager.writeUpdateConfigMessage(jobId, config);
+        try (ActionTicket actionTicket = m_ActionGuardian.tryAcquiringAction(jobId, Action.UPDATING))
+        {
+            m_ProcessManager.writeUpdateConfigMessage(jobId, config);
+        }
     }
 
     /**
@@ -708,22 +725,25 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
     public boolean deleteJob(String jobId)
     throws UnknownJobException, DataStoreException, NativeProcessRunException, JobInUseException
     {
-        LOGGER.debug("Deleting job '" + jobId + "'");
-
-        if (m_ProcessManager.jobIsRunning(jobId))
+        try (ActionTicket actionTicket = m_ActionGuardian.tryAcquiringAction(jobId, Action.DELETING))
         {
-            m_ProcessManager.closeJob(jobId);
+            LOGGER.debug("Deleting job '" + jobId + "'");
+
+            if (m_ProcessManager.jobIsRunning(jobId))
+            {
+                m_ProcessManager.closeJob(jobId);
+            }
+
+            if (m_ScheduledJobs.containsKey(jobId))
+            {
+                m_ScheduledJobs.get(jobId).stopManual();
+                m_ScheduledJobs.remove(jobId);
+            }
+
+            m_ProcessManager.deletePersistedData(jobId);
+
+            return m_JobProvider.deleteJob(jobId);
         }
-
-        if (m_ScheduledJobs.containsKey(jobId))
-        {
-            m_ScheduledJobs.get(jobId).stopManual();
-            m_ScheduledJobs.remove(jobId);
-        }
-
-        m_ProcessManager.deletePersistedData(jobId);
-
-        return m_JobProvider.deleteJob(jobId);
     }
 
     @Override
@@ -732,29 +752,42 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
         JsonParseException, JobInUseException, HighProportionOfBadTimestampsException,
         OutOfOrderRecordsException, TooManyJobsException, MalformedJsonException
     {
-        checkTooManyJobs(jobId);
-        DataCounts stats = tryProcessingDataLoadJob(jobId, input, params);
-        updateLastDataTime(jobId, new Date());
-        return stats;
+        try (ActionTicket actionTicket = m_ActionGuardian.tryAcquiringAction(jobId, Action.WRITING))
+        {
+            checkTooManyJobs(jobId);
+            Optional<JobDetails> jobDetails = m_JobProvider.getJobDetails(jobId);
+            if (!jobDetails.isPresent())
+            {
+                throw new UnknownJobException(jobId);
+            }
+            DataCounts stats = tryProcessingDataLoadJob(jobDetails.get(), input, params);
+            updateLastDataTime(jobId, new Date());
+            return stats;
+        }
     }
 
-    private DataCounts tryProcessingDataLoadJob(String jobId, InputStream input, DataLoadParams params)
+    private DataCounts tryProcessingDataLoadJob(JobDetails job, InputStream input, DataLoadParams params)
             throws UnknownJobException, MissingFieldException,
             JsonParseException, JobInUseException,
             HighProportionOfBadTimestampsException, OutOfOrderRecordsException,
             NativeProcessRunException, MalformedJsonException
     {
+        m_JobTimeouts.stopTimeout(job.getId());
         DataCounts stats;
         try
         {
-            stats = m_ProcessManager.processDataLoadJob(jobId, input, params);
+            stats = m_ProcessManager.processDataLoadJob(job, input, params);
         }
         catch (NativeProcessRunException ne)
         {
-            tryFinishingJob(jobId);
+            tryFinishingJob(job.getId());
 
             //rethrow
             throw ne;
+        }
+        finally
+        {
+            m_JobTimeouts.startTimeout(job.getId(), Duration.ofSeconds(job.getTimeout()));
         }
         return stats;
     }
@@ -1077,6 +1110,6 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
         }
         m_ScheduledJobs.clear();
 
-        m_ProcessManager.shutdown();
+        m_JobTimeouts.shutdown();
     }
 }

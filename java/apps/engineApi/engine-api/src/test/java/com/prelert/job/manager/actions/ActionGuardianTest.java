@@ -25,58 +25,48 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.rs.resources;
+package com.prelert.job.manager.actions;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
-import javax.ws.rs.core.Response;
-
-import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 
-import com.prelert.job.Detector;
-import com.prelert.job.config.verification.JobConfigurationException;
-import com.prelert.job.errorcodes.ErrorCodeMatcher;
 import com.prelert.job.errorcodes.ErrorCodes;
-import com.prelert.rs.data.Acknowledgement;
+import com.prelert.job.exceptions.JobInUseException;
+import com.prelert.job.manager.actions.ActionGuardian.ActionTicket;
 
-public class ValidateTest extends ServiceTest
+public class ActionGuardianTest
 {
-    @Rule public ExpectedException m_ExpectedException = ExpectedException.none();
-
-    private Validate m_Validate;
-
-    @Before
-    public void setUp()
+    @Test
+    public void testTryAcquiringAction_GivenAvailable() throws JobInUseException
     {
-        m_Validate = new Validate();
-        configureService(m_Validate);
+        ActionGuardian actionGuardian = new ActionGuardian();
+        try (ActionTicket actionTicket = actionGuardian.tryAcquiringAction("foo", Action.WRITING))
+        {
+            assertEquals(Action.WRITING, actionGuardian.getAction("foo"));
+            assertEquals(Action.NONE, actionGuardian.getAction("unknown"));
+        }
+        assertEquals(Action.NONE, actionGuardian.getAction("foo"));
     }
 
     @Test
-    public void testValid() throws JobConfigurationException
+    public void testTryAcquiringAction_GivenJobIsInUse() throws JobInUseException
     {
-        Detector detector = new Detector();
-        detector.setFunction("count");
-        detector.setByFieldName("airline");
-        Response response = m_Validate.validateDetector(detector);
-
-        Acknowledgement acknowledgement = (Acknowledgement) response.getEntity();
-        assertTrue(acknowledgement.getAcknowledgement());
-    }
-
-    @Test
-    public void testInvalid() throws JobConfigurationException
-    {
-        m_ExpectedException.expect(JobConfigurationException.class);
-        m_ExpectedException.expectMessage("fieldName must be set when the 'mean' function is used");
-        m_ExpectedException.expect(ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_FIELD_SELECTION));
-
-        Detector detector = new Detector();
-        detector.setFunction("mean");
-        detector.setByFieldName("airline");
-        m_Validate.validateDetector(detector);
+        ActionGuardian actionGuardian = new ActionGuardian();
+        try (ActionTicket deleting = actionGuardian.tryAcquiringAction("foo", Action.DELETING))
+        {
+            try (ActionTicket writing = actionGuardian.tryAcquiringAction("foo", Action.WRITING))
+            {
+                fail();
+            }
+            catch (JobInUseException e)
+            {
+                assertEquals("Cannot write to job foo while another connection is deleting the job", e.getMessage());
+                assertEquals(ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR, e.getErrorCode());
+            }
+            assertEquals(Action.DELETING, actionGuardian.getAction("foo"));
+        }
+        assertEquals(Action.NONE, actionGuardian.getAction("foo"));
     }
 }

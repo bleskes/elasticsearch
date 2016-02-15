@@ -27,9 +27,6 @@
 
 package com.prelert.job.process.autodetect;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -94,7 +91,6 @@ public class ProcessAndDataDescriptionTest
                 process,
                 "foo",
                 new DataDescription(),
-                60L,
                 new AnalysisConfig(),
                 null,
                 transformConfigs,
@@ -104,36 +100,5 @@ public class ProcessAndDataDescriptionTest
                 filesToDelete);
 
         return processAndDataDescription;
-    }
-
-    @Test
-    public void testAcquireRelease()
-    {
-        Logger logger = mock(Logger.class);
-
-        File file1 = createFile("file1", true);
-        File file2 = createFile("file2", false);
-        List<File> filesToDelete = Arrays.asList(file1, file2);
-
-        ProcessAndDataDescription processAndDataDescription = createProcess(filesToDelete, logger);
-        assertEquals(Action.NONE, processAndDataDescription.getAction());
-
-        assertTrue(processAndDataDescription.tryAcquireGuard(Action.WRITING));
-        assertEquals(Action.WRITING, processAndDataDescription.getAction());
-
-        assertTrue(processAndDataDescription.releaseGuard());
-        assertEquals(Action.NONE, processAndDataDescription.getAction());
-
-
-        assertTrue(processAndDataDescription.tryAcquireGuard(Action.CLOSING));
-        assertEquals(Action.CLOSING, processAndDataDescription.getAction());
-
-        assertFalse(processAndDataDescription.tryAcquireGuard(Action.WRITING));
-        assertFalse(processAndDataDescription.tryAcquireGuard(Action.FLUSHING));
-
-        assertEquals(Action.CLOSING, processAndDataDescription.getAction());
-
-        assertTrue(processAndDataDescription.releaseGuard());
-        assertEquals(Action.NONE, processAndDataDescription.getAction());
     }
 }

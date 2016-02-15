@@ -31,7 +31,6 @@ import java.io.File;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.concurrent.Semaphore;
 
 import org.apache.log4j.Logger;
 
@@ -44,8 +43,6 @@ import com.prelert.job.transform.TransformConfigs;
 
 /**
  * The native autodetect process, settings objects and output parsers.
- * Before writing to the process's outputstream the semaphore {@linkplain #guard()}
- * should be acquired and released immediately after.
  * ErrorReader is a buffered reader connected to the Process's error output.
  * {@link #getLogger} returns a logger that logs to the
  * jobs log directory
@@ -54,7 +51,6 @@ public class ProcessAndDataDescription
 {
     private final Process m_Process;
     private final DataDescription m_DataDescription;
-    private final long m_TimeoutSeconds;
     private final BufferedReader m_ErrorReader;
     private final List<String> m_InterestingFields;
 
@@ -69,19 +65,13 @@ public class ProcessAndDataDescription
     private final TransformConfigs m_Transforms;
     private final List<File> m_FilesToDelete;
 
-    private final Semaphore m_ProcessGuard;
-
-    private Action m_Action;
-
-
     /**
      * Object for grouping the native process, its data description
-     * and interesting fields and its timeout period.
+     * and interesting fields.
      *
      * @param process The native process.
      * @param jobId
      * @param dd
-     * @param timeout
      * @param interestingFields The list of fields used in the analysis
      * @param logger The job's logger
      * @param outputParser
@@ -92,7 +82,7 @@ public class ProcessAndDataDescription
      */
     public ProcessAndDataDescription(Process process, String jobId,
             DataDescription dd,
-            long timeout, AnalysisConfig analysisConfig,
+            AnalysisConfig analysisConfig,
             SchedulerConfig schedulerConfig, TransformConfigs transforms,
             Logger logger, StatusReporter reporter,
             ResultsReader outputParser,
@@ -100,7 +90,6 @@ public class ProcessAndDataDescription
     {
         m_Process = process;
         m_DataDescription = dd;
-        m_TimeoutSeconds = timeout;
 
         m_ErrorReader = new BufferedReader(
                 new InputStreamReader(m_Process.getErrorStream(),
@@ -121,9 +110,6 @@ public class ProcessAndDataDescription
         m_OutputParserThread.start();
 
         m_FilesToDelete = filesToDelete;
-
-        m_ProcessGuard = new Semaphore(1);
-        m_Action = Action.NONE;
     }
 
     public Process getProcess()
@@ -134,47 +120,6 @@ public class ProcessAndDataDescription
     public DataDescription getDataDescription()
     {
         return m_DataDescription;
-    }
-
-    /**
-     * Non-blocking tryAcquire call returns immediately.
-     * If the result is false someone else has acquired the semaphore
-     * If successful the {@linkplain #getAction()} member is set to <code>action</code>
-     * @param action
-     * @return
-     */
-    public boolean tryAcquireGuard(Action action)
-    {
-        if (m_ProcessGuard.tryAcquire())
-        {
-            m_Action = action;
-            return true;
-        }
-        return false;
-    }
-
-    /**
-     * Release the semaphore and set {@linkplain #getAction()} to Action.NONE.
-     * No checking is done that the thread that acquired the semaphore is
-     * the same as the one releasing it, the client should only ever call this
-     * method if {@linkplain #tryAcquireGuard(Action)} returned true.
-     * @return
-     */
-    public boolean releaseGuard()
-    {
-        m_Action = Action.NONE;
-        m_ProcessGuard.release();
-        return true;
-    }
-
-    /**
-     * The timeout value in seconds.
-     * The process is stopped once this interval has expired
-     * without any new data.
-     */
-    public long getTimeout()
-    {
-        return m_TimeoutSeconds;
     }
 
     /**
@@ -202,7 +147,6 @@ public class ProcessAndDataDescription
         return m_Transforms;
     }
 
-
     /**
      * The list of fields required for the analysis.
      * The remaining fields can be filtered out.
@@ -223,12 +167,6 @@ public class ProcessAndDataDescription
     {
         return m_StatusReporter;
     }
-
-    public Action getAction()
-    {
-        return m_Action;
-    }
-
 
     /**
      * Wait for the output parser thread to finish
