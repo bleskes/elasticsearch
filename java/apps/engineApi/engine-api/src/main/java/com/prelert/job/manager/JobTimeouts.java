@@ -57,12 +57,19 @@ class JobTimeouts implements Shutdownable
     private final JobCloser m_JobCloser;
     private final ScheduledExecutorService m_ScheduledExecutor;
     private final ConcurrentMap<String, ScheduledFuture<?>> m_JobIdToTimeoutFuture;
+    private final long m_WaitBeforeRetryMillis;
 
     public JobTimeouts(JobCloser jobCloser)
+    {
+        this(jobCloser, WAIT_SECONDS_BEFORE_RETRY_CLOSING * 1000);
+    }
+
+    JobTimeouts(JobCloser jobCloser, long waitBeforeRetryMillis)
     {
         m_JobCloser = Objects.requireNonNull(jobCloser);
         m_ScheduledExecutor = Executors.newScheduledThreadPool(1);
         m_JobIdToTimeoutFuture = new ConcurrentHashMap<String, ScheduledFuture<?>>();
+        m_WaitBeforeRetryMillis = waitBeforeRetryMillis;
     }
 
     /**
@@ -78,7 +85,7 @@ class JobTimeouts implements Shutdownable
     public void startTimeout(String jobId, Duration timeout)
     {
         ScheduledFuture<?> scheduledFuture = m_ScheduledExecutor.schedule(
-                new FinishJobRunnable(jobId), timeout.getSeconds(), TimeUnit.SECONDS);
+                new FinishJobRunnable(jobId), timeout.toMillis(), TimeUnit.MILLISECONDS);
         m_JobIdToTimeoutFuture.put(jobId, scheduledFuture);
     }
 
@@ -124,7 +131,7 @@ class JobTimeouts implements Shutdownable
                     }
                     catch (JobInUseException e)
                     {
-                        if (JobTimeouts.wait(m_JobId, e) == false)
+                        if (JobTimeouts.this.wait(m_JobId, e) == false)
                         {
                             return;
                         }
@@ -138,17 +145,17 @@ class JobTimeouts implements Shutdownable
         }
     }
 
-    private static boolean wait(String jobId, JobInUseException e)
+    private boolean wait(String jobId, JobInUseException e)
     {
         String msg = String.format(
                 "Job '%s' is reading data and cannot be shutdown " +
-                        "Rescheduling shutdown for %d seconds", jobId, WAIT_SECONDS_BEFORE_RETRY_CLOSING);
+                        "Rescheduling shutdown for %d milliseconds", jobId, m_WaitBeforeRetryMillis);
         LOGGER.warn(msg);
 
         // wait then try again
         try
         {
-            Thread.sleep(WAIT_SECONDS_BEFORE_RETRY_CLOSING * 1000);
+            Thread.sleep(m_WaitBeforeRetryMillis);
         }
         catch (InterruptedException e1)
         {
