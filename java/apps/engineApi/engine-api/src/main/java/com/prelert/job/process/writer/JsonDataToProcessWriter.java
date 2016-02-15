@@ -31,6 +31,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -175,11 +176,10 @@ class JsonDataToProcessWriter extends AbstractDataToProcessWriter
     private JsonRecordReader makeRecordReader(JsonParser parser)
     {
         List<String> nestingOrder = (m_SchedulerConfig != null) ?
-                m_SchedulerConfig.buildAggregatedFieldList() : null;
-        return (nestingOrder != null) ?
-               new AggregatedJsonRecordReader(parser, m_InFieldIndexes, getRecordHoldingField(), m_Logger,
-                       nestingOrder) :
-               new SimpleJsonRecordReader(parser, m_InFieldIndexes, getRecordHoldingField(), m_Logger);
+                m_SchedulerConfig.buildAggregatedFieldList() : Collections.emptyList();
+        return nestingOrder.isEmpty() ? new SimpleJsonRecordReader(parser, m_InFieldIndexes,
+                getRecordHoldingField(), m_Logger) : new AggregatedJsonRecordReader(parser,
+                m_InFieldIndexes, getRecordHoldingField(), m_Logger, nestingOrder);
     }
 
     /**

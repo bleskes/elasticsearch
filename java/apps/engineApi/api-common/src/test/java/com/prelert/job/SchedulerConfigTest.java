@@ -36,8 +36,8 @@ import static org.junit.Assert.assertTrue;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Date;
-import java.util.List;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.log4j.BasicConfigurator;
@@ -96,6 +96,12 @@ public class SchedulerConfigTest
         String queryAsJson = new ObjectMapper().writeValueAsString(query);
         logger.info("Round trip of query is: " + queryAsJson);
         assertTrue(query.containsKey("match_all"));
+    }
+
+    @Test
+    public void testBuildAggregatedFieldList_GivenNoAggregations()
+    {
+        assertTrue(new SchedulerConfig().buildAggregatedFieldList().isEmpty());
     }
 
     /**
@@ -168,7 +174,6 @@ public class SchedulerConfigTest
         assertTrue(aggs.containsKey("top_level_must_be_time"));
 
         List<String> aggregatedFieldList = schedulerConfig.buildAggregatedFieldList();
-        assertNotNull(aggregatedFieldList);
         assertEquals(3, aggregatedFieldList.size());
         assertEquals("@timestamp", aggregatedFieldList.get(0));
         assertEquals("airline", aggregatedFieldList.get(1));
@@ -327,6 +332,18 @@ public class SchedulerConfigTest
     }
 
     @Test
+    public void testEquals_GivenDifferentAggregations()
+    {
+        SchedulerConfig sc1 = createFullyPopulated();
+        SchedulerConfig sc2 = createFullyPopulated();
+        Map<String, Object> emptyAggs = new HashMap<>();
+        sc2.setAggregations(emptyAggs);
+
+        assertFalse(sc1.equals(sc2));
+        assertFalse(sc2.equals(sc1));
+    }
+
+    @Test
     public void testEquals_GivenDifferentStartTime()
     {
         SchedulerConfig sc1 = createFullyPopulated();
@@ -381,6 +398,9 @@ public class SchedulerConfigTest
         Map<String, Object> query = new HashMap<>();
         query.put("foo", new HashMap<>());
         sc.setQuery(query);
+        Map<String, Object> aggs = new HashMap<>();
+        aggs.put("bar", new HashMap<>());
+        sc.setAggregations(aggs);
         sc.setQueryDelay(90L);
         sc.setStartTime(new Date(0));
         sc.setEndTime(new Date(1000));

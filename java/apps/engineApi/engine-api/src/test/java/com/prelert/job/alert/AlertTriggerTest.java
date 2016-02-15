@@ -26,7 +26,7 @@
  ************************************************************/
 package com.prelert.job.alert;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
 

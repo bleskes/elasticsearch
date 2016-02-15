@@ -140,9 +140,9 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
     private final DataExtractorFactory m_DataExtractorFactory;
     private final JobLoggerFactory m_JobLoggerFactory;
 
-    private AtomicLong m_IdSequence;
-    private DateTimeFormatter m_JobIdDateFormat;
-    private ObjectMapper m_ObjectMapper;
+    private final AtomicLong m_IdSequence;
+    private final DateTimeFormatter m_JobIdDateFormat;
+    private final ObjectMapper m_ObjectMapper;
     private final int m_MaxAllowedJobs;
 
     /**

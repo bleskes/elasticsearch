@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -26,12 +26,15 @@
  ************************************************************/
 package com.prelert.job.alert;
 
+import com.prelert.job.results.Bucket;
+import com.prelert.job.results.BucketInfluencer;
+import com.prelert.job.results.Influencer;
+
 /**
  * Simple immutable class to encapsulate the alerting options
  */
 public class AlertTrigger
 {
-
     /** If null it means it was not specified. */
     private final Double m_AnomalyThreshold;
 
@@ -44,10 +47,7 @@ public class AlertTrigger
 
     public AlertTrigger(Double normlizedProbThreshold, Double anomalyThreshold, AlertType type)
     {
-        m_NormalisedThreshold = normlizedProbThreshold;
-        m_AnomalyThreshold = anomalyThreshold;
-        m_AlertType = type;
-        m_IncludeInterim = false;
+        this(normlizedProbThreshold, anomalyThreshold, type, false);
     }
 
     public AlertTrigger(Double normlizedProbThreshold, Double anomalyThreshold,
@@ -59,14 +59,14 @@ public class AlertTrigger
         m_IncludeInterim = includeInterim;
     }
 
-    public Double getAnomalyThreshold()
-    {
-        return m_AnomalyThreshold;
-    }
-
     public Double getNormalisedThreshold()
     {
         return m_NormalisedThreshold;
+    }
+
+    public Double getAnomalyThreshold()
+    {
+        return m_AnomalyThreshold;
     }
 
     public AlertType getAlertType()
@@ -77,5 +77,65 @@ public class AlertTrigger
     public boolean isIncludeInterim()
     {
         return m_IncludeInterim;
+    }
+
+    boolean isTriggeredBy(Bucket bucket)
+    {
+        if (bucket.isInterim() && !m_IncludeInterim)
+        {
+            return false;
+        }
+
+        switch (m_AlertType)
+        {
+            case BUCKET:
+                return isTriggeredByBucket(bucket.getMaxNormalizedProbability(), bucket.getAnomalyScore());
+            case BUCKETINFLUENCER:
+                return isTriggeredByBucketInfluencers(bucket);
+            case INFLUENCER:
+                return isTriggeredByInfluencers(bucket);
+            default:
+                return false;
+        }
+    }
+
+    private boolean isTriggeredByBucket(double normalisedValue, double anomalyScore)
+    {
+        return isGreaterOrEqual(normalisedValue, m_NormalisedThreshold)
+                    || isGreaterOrEqual(anomalyScore, m_AnomalyThreshold);
+    }
+
+    private static boolean isGreaterOrEqual(double value, Double threshold)
+    {
+        return threshold == null ? false : value >= threshold;
+    }
+
+    private boolean isTriggeredByBucketInfluencers(Bucket bucket)
+    {
+        for (BucketInfluencer bi : bucket.getBucketInfluencers())
+        {
+            if (isGreaterOrEqual(bi.getAnomalyScore(), m_AnomalyThreshold))
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean isTriggeredByInfluencers(Bucket bucket)
+    {
+        for (Influencer inf : bucket.getInfluencers())
+        {
+            if (isGreaterOrEqual(inf.getAnomalyScore(), m_AnomalyThreshold))
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    boolean triggersAnomalyThreshold(double value)
+    {
+        return isGreaterOrEqual(value, m_AnomalyThreshold);
     }
 }

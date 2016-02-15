@@ -33,6 +33,28 @@ import org.junit.Test;
 
 public class ModelSizeStatsTest
 {
+    @Test
+    public void testDefaultConstructor()
+    {
+        ModelSizeStats stats = new ModelSizeStats();
+        assertEquals("modelSizeStats", stats.getId());
+        assertEquals(0, stats.getModelBytes());
+        assertEquals(0, stats.getTotalByFieldCount());
+        assertEquals(0, stats.getTotalOverFieldCount());
+        assertEquals(0, stats.getTotalPartitionFieldCount());
+        assertEquals(0, stats.getBucketAllocationFailuresCount());
+        assertEquals("OK", stats.getMemoryStatus());
+    }
+
+    @Test
+    public void testSetId_DoesNothing()
+    {
+        ModelSizeStats stats = new ModelSizeStats();
+
+        stats.setId("foo");
+
+        assertEquals("modelSizeStats", stats.getId());
+    }
 
     @Test
     public void testSetMemoryStatus_GivenNull()

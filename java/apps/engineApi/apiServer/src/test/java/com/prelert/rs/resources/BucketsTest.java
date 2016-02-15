@@ -97,7 +97,6 @@ public class BucketsTest extends ServiceTest
         Pagination<Bucket> results = m_Buckets.buckets("foo", false, false, 0, 100, "", "", 0.0, 0.0);
         assertEquals(1, results.getHitCount());
         assertEquals(100, results.getTake());
-
     }
 
     @Test

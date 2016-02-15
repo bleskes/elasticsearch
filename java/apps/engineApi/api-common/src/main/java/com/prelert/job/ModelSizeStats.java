@@ -60,7 +60,6 @@ public class ModelSizeStats
     public ModelSizeStats()
     {
         m_ModelBytes = 0;
-        m_ModelBytes = 0;
         m_TotalByFieldCount = 0;
         m_TotalOverFieldCount = 0;
         m_TotalPartitionFieldCount = 0;
@@ -73,6 +72,10 @@ public class ModelSizeStats
         return TYPE;
     }
 
+    /**
+     * Does nothing. Needed for serialisation.
+     * @param id The id will be ignored
+     */
     public void setId(String id)
     {
     }

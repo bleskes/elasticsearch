@@ -59,6 +59,7 @@ import org.elasticsearch.index.IndexNotFoundException;
 import org.elasticsearch.index.engine.VersionConflictEngineException;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.indices.IndexAlreadyExistsException;
 import org.elasticsearch.node.Node;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.sort.FieldSortBuilder;
@@ -132,25 +133,34 @@ public class ElasticsearchJobProvider implements JobProvider
         m_ObjectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
         m_ObjectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
-        createUsageMeteringIndex();
-
         LOGGER.info("Connecting to Elasticsearch cluster '" + m_Client.settings().get("cluster.name")
                 + "'");
+
+        // This call was added because if we try to connect to Elasticsearch
+        // while it's doing the recovery operations it does at startup then we
+        // can get weird effects like indexes being reported as not existing
+        // when they do.  See EL16-182 in Jira.
+        LOGGER.trace("ES API CALL: wait for yellow status on whole cluster");
+        m_Client.admin().cluster().prepareHealth().setWaitForYellowStatus().execute().actionGet();
+
+        LOGGER.info("Elasticsearch cluster '" + m_Client.settings().get("cluster.name")
+                + "' now ready to use");
+
+        createUsageMeteringIndex();
     }
 
     /**
-     * Close the Elasticsearch node
+     * Close the Elasticsearch node or client
      */
     @Override
-    public void close() throws IOException
+    public void shutdown()
     {
+        m_Client.close();
+        LOGGER.info("Elasticsearch client shut down");
         if (m_Node != null)
         {
             m_Node.close();
-        }
-        else
-        {
-            m_Client.close();
+            LOGGER.info("Elasticsearch node shut down");
         }
     }
 
@@ -186,7 +196,7 @@ public class ElasticsearchJobProvider implements JobProvider
         {
             LOGGER.warn("Error checking the usage metering index", e);
         }
-        catch (IOException e)
+        catch (IndexAlreadyExistsException | IOException e)
         {
             LOGGER.warn("Error creating the usage metering index", e);
         }

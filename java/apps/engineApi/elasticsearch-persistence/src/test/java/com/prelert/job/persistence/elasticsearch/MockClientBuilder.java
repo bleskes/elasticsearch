@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -36,12 +36,16 @@ import static org.mockito.Mockito.when;
 import java.util.concurrent.ExecutionException;
 
 import org.elasticsearch.action.ActionFuture;
+import org.elasticsearch.action.ListenableActionFuture;
+import org.elasticsearch.action.admin.cluster.health.ClusterHealthRequestBuilder;
+import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
 import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsRequest;
 import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsResponse;
 import org.elasticsearch.action.get.GetRequestBuilder;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.client.AdminClient;
 import org.elasticsearch.client.Client;
+import org.elasticsearch.client.ClusterAdminClient;
 import org.elasticsearch.client.IndicesAdminClient;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.index.IndexNotFoundException;
@@ -53,6 +57,7 @@ public class MockClientBuilder
     @Mock private Client m_Client;
 
     @Mock private AdminClient m_AdminClient;
+    @Mock private ClusterAdminClient m_ClusterAdminClient;
     @Mock private IndicesAdminClient m_IndicesAdminClient;
     @Mock private ActionFuture<IndicesExistsResponse> m_IndexNotExistsResponseFuture;
 
@@ -60,12 +65,27 @@ public class MockClientBuilder
     {
         m_Client = mock(Client.class);
         m_AdminClient = mock(AdminClient.class);
+        m_ClusterAdminClient = mock(ClusterAdminClient.class);
         m_IndicesAdminClient = mock(IndicesAdminClient.class);
 
         when(m_Client.admin()).thenReturn(m_AdminClient);
+        when(m_AdminClient.cluster()).thenReturn(m_ClusterAdminClient);
         when(m_AdminClient.indices()).thenReturn(m_IndicesAdminClient);
         Settings settings = Settings.builder().put("cluster.name", clusterName).build();
         when(m_Client.settings()).thenReturn(settings);
+    }
+
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    public MockClientBuilder addClusterStatusYellowResponse() throws InterruptedException, ExecutionException
+    {
+        ListenableActionFuture<ClusterHealthResponse> actionFuture = mock(ListenableActionFuture.class);
+        ClusterHealthRequestBuilder clusterHealthRequestBuilder = mock(ClusterHealthRequestBuilder.class);
+
+        when(m_ClusterAdminClient.prepareHealth()).thenReturn(clusterHealthRequestBuilder);
+        when(clusterHealthRequestBuilder.setWaitForYellowStatus()).thenReturn(clusterHealthRequestBuilder);
+        when(clusterHealthRequestBuilder.execute()).thenReturn(actionFuture);
+        when(actionFuture.actionGet()).thenReturn(mock(ClusterHealthResponse.class));
+        return this;
     }
 
     @SuppressWarnings({ "rawtypes", "unchecked" })

@@ -165,6 +165,9 @@ public class PrelertWebApp extends Application
         m_Singletons.add(m_ServerInfo);
 
         m_ShutdownThreadBuilder.addTask(m_JobManager);
+        // The job provider must be the last shutdown task, as earlier shutdown
+        // tasks may depend on it
+        m_ShutdownThreadBuilder.addTask(jobProvider);
         Runtime.getRuntime().addShutdownHook(m_ShutdownThreadBuilder.build());
     }
 
@@ -257,13 +260,23 @@ public class PrelertWebApp extends Application
                 jobLoggerFactory);
     }
 
+    /**
+     * Get the path to the main server log directory.
+     * This defaults to $PRELERT_HOME/logs/engine_api, but
+     * can be relocated.
+     */
+    public static Path getServerLogPath()
+    {
+        return Paths.get(ProcessCtrl.LOG_DIR, ENGINE_API_DIR);
+    }
+
     private void writeServerInfoDailyStartingNow()
     {
-        File serverInfoFile = new File(new File(ProcessCtrl.LOG_DIR, ENGINE_API_DIR), SERVER_INFO_FILE);
+        File serverInfoFile = new File(getServerLogPath().toString(), SERVER_INFO_FILE);
         try
         {
             // create path if missing
-            Path path = Paths.get(ProcessCtrl.LOG_DIR, ENGINE_API_DIR);
+            Path path = getServerLogPath();
             if (!Files.isDirectory(path))
             {
                 Files.createDirectory(path);
@@ -304,7 +317,7 @@ public class PrelertWebApp extends Application
 
         ServerInfoWriter writer = new ServerInfoWriter(m_ServerInfo, file);
 
-        LocalDate tomorrow = LocalDate.now(ZoneId.systemDefault()).plusDays(1l);
+        LocalDate tomorrow = LocalDate.now(ZoneId.systemDefault()).plusDays(1L);
         ZonedDateTime tomorrorwMidnight = ZonedDateTime.of(tomorrow, LocalTime.MIDNIGHT,
                                                     ZoneId.systemDefault());
 
@@ -312,7 +325,7 @@ public class PrelertWebApp extends Application
         long delaySeconds = now.until(tomorrorwMidnight, ChronoUnit.SECONDS);
 
         m_ServerStatsSchedule.scheduleAtFixedRate(() -> writer.writeStats(),
-                                                   delaySeconds, 3600l * 24l, TimeUnit.SECONDS);
+                                                   delaySeconds, 3600L * 24L, TimeUnit.SECONDS);
     }
 
     private void scheduleOldResultsRemovalAtMidnight(JobProvider jobProvider,
