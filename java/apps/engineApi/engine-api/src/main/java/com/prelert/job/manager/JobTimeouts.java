@@ -118,30 +118,7 @@ class JobTimeouts implements Shutdownable
         public void run()
         {
             LOGGER.info("Timeout expired stopping process for job:" + m_JobId);
-
-            try
-            {
-                boolean notFinished = true;
-                while (notFinished)
-                {
-                    try
-                    {
-                        m_JobCloser.closeJob(m_JobId);
-                        notFinished = false;
-                    }
-                    catch (JobInUseException e)
-                    {
-                        if (JobTimeouts.this.wait(m_JobId, e) == false)
-                        {
-                            return;
-                        }
-                    }
-                }
-            }
-            catch (NativeProcessRunException | UnknownJobException e)
-            {
-                LOGGER.error(String.format("Error in job %s finish timeout", m_JobId), e);
-            }
+            tryClosingJob(m_JobId);
         }
     }
 
@@ -184,26 +161,31 @@ class JobTimeouts implements Shutdownable
 
         for (String jobId : m_JobIdToTimeoutFuture.keySet())
         {
-            boolean notFinished = true;
-            while (notFinished)
+            tryClosingJob(jobId);
+        }
+    }
+
+    private void tryClosingJob(String jobId)
+    {
+        boolean notFinished = true;
+        while (notFinished)
+        {
+            try
             {
-                try
+                m_JobCloser.closeJob(jobId);
+                notFinished = false;
+            }
+            catch (JobInUseException e)
+            {
+                // wait then try again
+                if (wait(jobId, e) == false)
                 {
-                    m_JobCloser.closeJob(jobId);
-                    notFinished = false;
+                    return;
                 }
-                catch (JobInUseException e)
-                {
-                    // wait then try again
-                    if (wait(jobId, e) == false)
-                    {
-                        return;
-                    }
-                }
-                catch (NativeProcessRunException | UnknownJobException e)
-                {
-                    LOGGER.error("Error stopping running job " + jobId, e);
-                }
+            }
+            catch (NativeProcessRunException | UnknownJobException e)
+            {
+                LOGGER.error("Error closing job " + jobId, e);
             }
         }
     }
