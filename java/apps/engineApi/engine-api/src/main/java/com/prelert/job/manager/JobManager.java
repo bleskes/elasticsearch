@@ -346,20 +346,13 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
 
     private void checkCreateJobForTooManyJobsAgainstLicenseLimit() throws TooManyJobsException
     {
-        if (areMoreJobsRunningThanLicenseLimit())
+        if (m_BackendInfo.isLicenseJobLimitViolated(m_ProcessManager.numberOfRunningJobs()))
         {
             String message = Messages.getMessage(Messages.LICENSE_LIMIT_JOBS, m_BackendInfo.getLicenseJobLimit());
 
             LOGGER.info(message);
             throw new TooManyJobsException(m_BackendInfo.getLicenseJobLimit(), message, ErrorCodes.LICENSE_VIOLATION);
         }
-    }
-
-    private boolean areMoreJobsRunningThanLicenseLimit()
-    {
-        // Negative m_LicenseJobLimit means unlimited
-        return m_BackendInfo.getLicenseJobLimit() >= 0 &&
-                m_ProcessManager.numberOfRunningJobs() >= m_BackendInfo.getLicenseJobLimit();
     }
 
     /**
@@ -826,7 +819,7 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
     private void checkDataLoadForTooManyJobsAgainstLicenseLimit(String jobId)
             throws TooManyJobsException
     {
-        if (areMoreJobsRunningThanLicenseLimit())
+        if (m_BackendInfo.isLicenseJobLimitViolated(m_ProcessManager.numberOfRunningJobs()))
         {
             String message = Messages.getMessage(Messages.LICENSE_LIMIT_JOBS_REACTIVATE,
                                         jobId, m_BackendInfo.getLicenseJobLimit());

@@ -176,4 +176,9 @@ class BackendInfo
     {
         return m_ArePartitionsAllowed;
     }
+
+    public boolean isLicenseJobLimitViolated(int numberOfRunningJobs)
+    {
+        return m_LicenceJobLimit >= 0 && numberOfRunningJobs >= m_LicenceJobLimit;
+    }
 }
