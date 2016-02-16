@@ -50,8 +50,6 @@ import javax.ws.rs.core.FeatureContext;
 import org.apache.log4j.Logger;
 
 import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import com.google.common.base.Preconditions;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
@@ -145,7 +143,6 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
 
     private final AtomicLong m_IdSequence;
     private final DateTimeFormatter m_JobIdDateFormat;
-    private final ObjectMapper m_ObjectMapper;
     private final int m_MaxAllowedJobs;
     private final BackendInfo m_BackendInfo;
 
@@ -186,9 +183,6 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
 
         m_IdSequence = new AtomicLong();
         m_JobIdDateFormat = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
-
-        m_ObjectMapper = new ObjectMapper();
-        m_ObjectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
 
         m_ScheduledJobs = new HashMap<>();
         m_LastDataTimePerJobCache = CacheBuilder.newBuilder()
