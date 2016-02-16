@@ -33,8 +33,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -42,7 +40,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.atomic.AtomicLong;
 
 import javax.ws.rs.core.Feature;
 import javax.ws.rs.core.FeatureContext;
@@ -50,16 +47,11 @@ import javax.ws.rs.core.FeatureContext;
 import org.apache.log4j.Logger;
 
 import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Preconditions;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.prelert.app.Shutdownable;
 import com.prelert.job.DataCounts;
-import com.prelert.job.Detector;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.JobDetails;
 import com.prelert.job.JobIdAlreadyExistsException;
@@ -67,7 +59,6 @@ import com.prelert.job.JobSchedulerStatus;
 import com.prelert.job.ModelDebugConfig;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.alert.AlertObserver;
-import com.prelert.job.config.DefaultDetectorDescription;
 import com.prelert.job.config.DefaultFrequency;
 import com.prelert.job.config.verification.JobConfigurationException;
 import com.prelert.job.data.extraction.DataExtractorFactory;
@@ -102,8 +93,17 @@ import com.prelert.job.transform.TransformConfigs;
 
 
 /**
- * Creates jobs and handles retrieving job configuration details from
- * the data store. New jobs have a unique job id see {@linkplain #generateJobId()}
+ * Allows interactions with jobs. The managed interactions include:
+ *
+ * <ul>
+ *   <li>creation
+ *   <li>deletion
+ *   <li>flushing
+ *   <li>updating
+ *   <li>sending of data
+ *   <li>fetching jobs and results
+ *   <li>starting/stopping of scheduled jobs
+ * </ul
  */
 public class JobManager implements DataProcessor, Shutdownable, Feature
 {
@@ -145,24 +145,9 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
     private final JobLoggerFactory m_JobLoggerFactory;
     private final JobTimeouts m_JobTimeouts;
 
-    private final AtomicLong m_IdSequence;
-    private final DateTimeFormatter m_JobIdDateFormat;
-    private final ObjectMapper m_ObjectMapper;
+    private final JobFactory m_JobFactory;
     private final int m_MaxAllowedJobs;
-
-    /**
-     * These default to unlimited (indicated by negative limits), but may be
-     * overridden by constraints in the license key.
-     */
-    private int m_LicenseJobLimit = -1;
-    private int m_MaxDetectorsPerJob = -1;
-
-    /**
-     * The constraint on whether partition fields are allowed.
-     * See https://anomaly.atlassian.net/wiki/display/EN/Electronic+license+keys
-     * and bug 1034 in Bugzilla for background.
-     */
-    private boolean m_ArePartitionsAllowed = true;
+    private final BackendInfo m_BackendInfo;
 
     private final Map<String, JobScheduler> m_ScheduledJobs;
 
@@ -199,20 +184,15 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
 
         m_MaxAllowedJobs = calculateMaxJobsAllowed();
 
-        m_IdSequence = new AtomicLong();
-        m_JobIdDateFormat = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
-
-        m_ObjectMapper = new ObjectMapper();
-        m_ObjectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
-
         m_ScheduledJobs = new HashMap<>();
         m_LastDataTimePerJobCache = CacheBuilder.newBuilder()
                 .maximumSize(LAST_DATA_TIME_CACHE_SIZE)
                 .build();
 
-        // This requires the process manager and Elasticsearch connection in
+        // This requires the process manager and data storage connection in
         // order to work, but failure is considered non-fatal
-        saveInfo();
+        m_BackendInfo = BackendInfo.fromJson(m_ProcessManager.getInfo(), m_JobProvider, apiVersion());
+        m_JobFactory = new JobFactory(m_BackendInfo);
     }
 
     /**
@@ -258,86 +238,31 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
      *
      * @param jobConfig
      * @return The new job or <code>null</code> if an exception occurs.
-     * @throws UnknownJobException
-     * @throws IOException
      * @throws TooManyJobsException If the license is violated
      * @throws JobConfigurationException If the license is violated
-     * @throws JobIdAlreadyExistsException If the alias is already taken
+     * @throws JobIdAlreadyExistsException If the id is already taken
      * @throws CannotStartSchedulerWhileItIsStoppingException If the job scheduler is still being stopped
      */
-    public JobDetails createJob(JobConfiguration jobConfig) throws UnknownJobException,
-            IOException, TooManyJobsException, JobConfigurationException,
-            JobIdAlreadyExistsException, CannotStartSchedulerWhileItIsStoppingException
+    public JobDetails createJob(JobConfiguration jobConfig)
+            throws TooManyJobsException, JobConfigurationException, JobIdAlreadyExistsException,
+            CannotStartSchedulerWhileItIsStoppingException
     {
-        checkCreateJobForTooManyJobsAgainstLicenseLimit();
+        JobDetails jobDetails = m_JobFactory.create(jobConfig, m_ProcessManager.numberOfRunningJobs());
 
-        // Negative m_MaxDetectorsPerJob means unlimited
-        if (m_MaxDetectorsPerJob >= 0 &&
-            jobConfig.getAnalysisConfig() != null &&
-            jobConfig.getAnalysisConfig().getDetectors().size() > m_MaxDetectorsPerJob)
+        if (!m_JobProvider.jobIdIsUnique(jobDetails.getId()))
         {
-
-            String message = Messages.getMessage(
-                                Messages.LICENSE_LIMIT_DETECTORS,
-                                m_MaxDetectorsPerJob,
-                                jobConfig.getAnalysisConfig().getDetectors().size());
-
-            LOGGER.info(message);
-            throw new JobConfigurationException(message, ErrorCodes.LICENSE_VIOLATION);
+            throw new JobIdAlreadyExistsException(jobDetails.getId());
         }
-
-        if (!m_ArePartitionsAllowed && jobConfig.getAnalysisConfig() != null)
-        {
-            for (com.prelert.job.Detector detector :
-                        jobConfig.getAnalysisConfig().getDetectors())
-            {
-                String partitionFieldName = detector.getPartitionFieldName();
-                if (partitionFieldName != null &&
-                    partitionFieldName.length() > 0)
-                {
-                    String message = Messages.getMessage(Messages.LICENSE_LIMIT_PARTITIONS);
-                    LOGGER.info(message);
-                    throw new JobConfigurationException(message, ErrorCodes.LICENSE_VIOLATION);
-                }
-            }
-        }
-
-        String jobId = jobConfig.getId();
-        if (jobId == null || jobId.isEmpty())
-        {
-            jobId = generateJobId();
-        }
-        else
-        {
-            if (!m_JobProvider.jobIdIsUnique(jobId))
-            {
-                throw new JobIdAlreadyExistsException(jobId);
-            }
-        }
-
-        JobDetails jobDetails = new JobDetails(jobId, jobConfig);
-        fillDefaults(jobDetails);
 
         m_JobProvider.createJob(jobDetails);
 
         if (jobDetails.getSchedulerConfig() != null)
         {
-            LOGGER.info("Starting scheduler for job: " + jobId);
+            LOGGER.info("Starting scheduler for job: " + jobDetails.getId());
             createJobScheduler(jobDetails).start(jobDetails);
         }
 
         return jobDetails;
-    }
-
-    private void fillDefaults(JobDetails jobDetails)
-    {
-        for (Detector detector : jobDetails.getAnalysisConfig().getDetectors())
-        {
-            if (detector.getDetectorDescription() == null)
-            {
-                detector.setDetectorDescription(DefaultDetectorDescription.of(detector));
-            }
-        }
     }
 
     private JobScheduler createJobScheduler(JobDetails job)
@@ -357,24 +282,6 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
         Long bucketSpan = job.getAnalysisConfig().getBucketSpan();
         return frequency == null ? DefaultFrequency.ofBucketSpan(bucketSpan)
                 : Duration.ofSeconds(frequency);
-    }
-
-    private void checkCreateJobForTooManyJobsAgainstLicenseLimit() throws TooManyJobsException
-    {
-        if (areMoreJobsRunningThanLicenseLimit())
-        {
-            String message = Messages.getMessage(Messages.LICENSE_LIMIT_JOBS, m_LicenseJobLimit);
-
-            LOGGER.info(message);
-            throw new TooManyJobsException(m_LicenseJobLimit, message, ErrorCodes.LICENSE_VIOLATION);
-        }
-    }
-
-    private boolean areMoreJobsRunningThanLicenseLimit()
-    {
-        // Negative m_LicenseJobLimit means unlimited
-        return m_LicenseJobLimit >= 0 &&
-                m_ProcessManager.numberOfRunningJobs() >= m_LicenseJobLimit;
     }
 
     /**
@@ -841,13 +748,14 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
     private void checkDataLoadForTooManyJobsAgainstLicenseLimit(String jobId)
             throws TooManyJobsException
     {
-        if (areMoreJobsRunningThanLicenseLimit())
+        if (m_BackendInfo.isLicenseJobLimitViolated(m_ProcessManager.numberOfRunningJobs()))
         {
             String message = Messages.getMessage(Messages.LICENSE_LIMIT_JOBS_REACTIVATE,
-                                        jobId, m_LicenseJobLimit);
+                                        jobId, m_BackendInfo.getLicenseJobLimit());
 
             LOGGER.info(message);
-            throw new TooManyJobsException(m_LicenseJobLimit, message, ErrorCodes.LICENSE_VIOLATION);
+            throw new TooManyJobsException(m_BackendInfo.getLicenseJobLimit(), message,
+                    ErrorCodes.LICENSE_VIOLATION);
         }
     }
 
@@ -865,21 +773,6 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
     }
 
     /**
-     * The job id is a concatenation of the date in 'yyyyMMddHHmmss' format
-     * and a sequence number that is a minimum of 5 digits wide left padded
-     * with zeros.<br>
-     * e.g. the first Id created 23rd November 2013 at 11am
-     *     '20131125110000-00001'
-     *
-     * @return The new unique job Id
-     */
-    private String generateJobId()
-    {
-        return String.format("%s-%05d", m_JobIdDateFormat.format(LocalDateTime.now()),
-                        m_IdSequence.incrementAndGet());
-    }
-
-    /**
      * Get the analytics version string.
      *
      * @return
@@ -887,88 +780,6 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
     public String getAnalyticsVersion()
     {
         return  m_ProcessManager.getAnalyticsVersion();
-    }
-
-    /**
-     * Attempt to get usage and license info from the C++ process, add extra
-     * fields and persist to Elasticsearch.  Any failures are logged but do not
-     * otherwise impact operation of this process.  Additionally, any license
-     * constraints are extracted from the same info document.
-     */
-    private void saveInfo()
-    {
-        // This will be a JSON document in string form
-        String backendInfo = m_ProcessManager.getInfo();
-
-        // Try to parse the string returned from the C++ process and extract
-        // any license constraints
-        ObjectNode doc;
-        try
-        {
-            doc = (ObjectNode)m_ObjectMapper.readTree(backendInfo);
-
-            // Negative numbers indicate no constraint, i.e. unlimited maximums
-            JsonNode constraint = doc.get(JOBS_LICENSE_CONSTRAINT);
-            if (constraint != null)
-            {
-                m_LicenseJobLimit = constraint.asInt(-1);
-            }
-            else
-            {
-                m_LicenseJobLimit = -1;
-            }
-            LOGGER.info("License job limit = " + m_LicenseJobLimit);
-            constraint = doc.get(DETECTORS_LICENSE_CONSTRAINT);
-            if (constraint != null)
-            {
-                m_MaxDetectorsPerJob = constraint.asInt(-1);
-            }
-            else
-            {
-                m_MaxDetectorsPerJob = -1;
-            }
-            LOGGER.info("Max detectors per job = " + m_MaxDetectorsPerJob);
-            constraint = doc.get(PARTITIONS_LICENSE_CONSTRAINT);
-            if (constraint != null)
-            {
-                int val = constraint.asInt(-1);
-                // See https://anomaly.atlassian.net/wiki/display/EN/Electronic+license+keys
-                // and bug 1034 in Bugzilla for the reason behind this
-                // seemingly weird condition.
-                m_ArePartitionsAllowed = (val < 0);
-            }
-            else
-            {
-                m_ArePartitionsAllowed = true;
-            }
-            LOGGER.info("Are partitions allowed = " + m_ArePartitionsAllowed);
-        }
-        catch (IOException e)
-        {
-            LOGGER.warn("Failed to parse JSON document " + backendInfo, e);
-            return;
-        }
-        catch (ClassCastException e)
-        {
-            LOGGER.warn("Parsed non-object JSON document " + backendInfo, e);
-            return;
-        }
-
-        // Try to add extra fields (just appVer for now)
-        doc.put(APP_VER_FIELDNAME, apiVersion());
-
-        // Try to persist the modified document
-        try
-        {
-            m_JobProvider.savePrelertInfo(doc.toString());
-        }
-        catch (Exception e)
-        {
-            LOGGER.warn("Error writing Prelert info to Elasticsearch", e);
-            return;
-        }
-
-        LOGGER.info("Wrote Prelert info " + doc.toString() + " to Elasticsearch");
     }
 
     public String apiVersion()
