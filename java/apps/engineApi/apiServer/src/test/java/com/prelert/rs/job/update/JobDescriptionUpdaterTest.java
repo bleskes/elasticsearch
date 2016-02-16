@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -27,6 +27,7 @@
 
 package com.prelert.rs.job.update;
 
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 import java.io.IOException;
@@ -61,7 +62,7 @@ public class JobDescriptionUpdaterTest
     }
 
     @Test
-    public void testUpdate_GivenNonText() throws UnknownJobException,
+    public void testPrepareUpdate_GivenNonText() throws UnknownJobException,
             JobConfigurationException, JsonProcessingException, IOException
     {
         JsonNode node = DoubleNode.valueOf(42.0);
@@ -71,16 +72,29 @@ public class JobDescriptionUpdaterTest
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_VALUE));
 
-        new JobDescriptionUpdater(m_JobManager, "foo").update(node);
+        new JobDescriptionUpdater(m_JobManager, "foo").prepareUpdate(node);
     }
 
     @Test
-    public void testUpdate_GivenText() throws UnknownJobException,
+    public void testPrepareUpdate_GivenText() throws UnknownJobException,
             JobConfigurationException, JsonProcessingException, IOException
     {
         JsonNode node = TextNode.valueOf("blah blah...");
 
-        new JobDescriptionUpdater(m_JobManager, "foo").update(node);
+        new JobDescriptionUpdater(m_JobManager, "foo").prepareUpdate(node);
+
+        verify(m_JobManager, never()).setDescription("foo", "blah blah...");
+    }
+
+    @Test
+    public void testCommit_GivenText() throws UnknownJobException,
+            JobConfigurationException, JsonProcessingException, IOException
+    {
+        JsonNode node = TextNode.valueOf("blah blah...");
+
+        JobDescriptionUpdater updater = new JobDescriptionUpdater(m_JobManager, "foo");
+        updater.prepareUpdate(node);
+        updater.commit();
 
         verify(m_JobManager).setDescription("foo", "blah blah...");
     }

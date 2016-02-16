@@ -29,6 +29,7 @@ package com.prelert.rs.job.update;
 
 import java.io.IOException;
 import java.io.StringWriter;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -96,6 +97,21 @@ public class JobUpdater
                 .build();
     }
 
+    /**
+     * Performs a job update according to the given JSON input. The update is done in 2 steps:
+     * <ol>
+     *   <li> Prepare update (performs validations)
+     *   <li> Commit update
+     * </ol>
+     * If there are invalid updates, none of the updates is applied.
+     *
+     * @param updateJson the JSON input that contains the requested updates
+     * @return a {@code RESPONSE}
+     * @throws JobConfigurationException If some of the updates are invalid
+     * @throws UnknownJobException If the job does not exist
+     * @throws JobInUseException If the job is unavailable for updating
+     * @throws NativeProcessRunException If an error occurs in job process
+     */
     public Response update(String updateJson) throws JobConfigurationException, UnknownJobException,
             JobInUseException, NativeProcessRunException
     {
@@ -107,12 +123,20 @@ public class JobUpdater
                     ErrorCodes.JOB_CONFIG_PARSE_ERROR);
         }
 
+        List<AbstractUpdater> updaters = new ArrayList<>();
         Iterator<Entry<String, JsonNode>> fieldsIterator = node.fields();
         while (fieldsIterator.hasNext())
         {
             Entry<String, JsonNode> keyValue = fieldsIterator.next();
             LOGGER.debug("Updating job config for key: " + keyValue.getKey());
-            createKeyValueUpdater(keyValue.getKey()).update(keyValue.getValue());
+            AbstractUpdater updater = createKeyValueUpdater(keyValue.getKey());
+            updaters.add(updater);
+            updater.prepareUpdate(keyValue.getValue());
+        }
+
+        for (AbstractUpdater updater : updaters)
+        {
+            updater.commit();
         }
 
         writeUpdateConfigMessage();

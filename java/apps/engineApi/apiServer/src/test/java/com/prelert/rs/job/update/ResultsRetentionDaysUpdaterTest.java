@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -27,6 +27,7 @@
 
 package com.prelert.rs.job.update;
 
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 import java.io.IOException;
@@ -62,7 +63,7 @@ public class ResultsRetentionDaysUpdaterTest
     }
 
     @Test
-    public void testUpdate_GivenText() throws UnknownJobException,
+    public void testPrepareUpdate_GivenText() throws UnknownJobException,
             JobConfigurationException, JsonProcessingException, IOException
     {
         JsonNode node = TextNode.valueOf("5");
@@ -73,11 +74,11 @@ public class ResultsRetentionDaysUpdaterTest
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_VALUE));
 
-        new ResultsRetentionDaysUpdater(m_JobManager, "foo").update(node);
+        new ResultsRetentionDaysUpdater(m_JobManager, "foo").prepareUpdate(node);
     }
 
     @Test
-    public void testUpdate_GivenNegativeInteger() throws UnknownJobException,
+    public void testPrepareUpdate_GivenNegativeInteger() throws UnknownJobException,
             JobConfigurationException, JsonProcessingException, IOException
     {
         JsonNode node = LongNode.valueOf(-3);
@@ -88,27 +89,42 @@ public class ResultsRetentionDaysUpdaterTest
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_VALUE));
 
-        new ResultsRetentionDaysUpdater(m_JobManager, "foo").update(node);
+        new ResultsRetentionDaysUpdater(m_JobManager, "foo").prepareUpdate(node);
     }
 
     @Test
-    public void testUpdate_GivenInteger() throws UnknownJobException,
+    public void testPrepareUpdate_GivenInteger() throws UnknownJobException,
             JobConfigurationException, JsonProcessingException, IOException
     {
         JsonNode node = LongNode.valueOf(5);
 
-        new ResultsRetentionDaysUpdater(m_JobManager, "foo").update(node);
+        new ResultsRetentionDaysUpdater(m_JobManager, "foo").prepareUpdate(node);
+
+        verify(m_JobManager, never()).setResultsRetentionDays("foo", 5L);
+    }
+
+    @Test
+    public void testCommit_GivenInteger() throws UnknownJobException,
+            JobConfigurationException, JsonProcessingException, IOException
+    {
+        JsonNode node = LongNode.valueOf(5);
+
+        ResultsRetentionDaysUpdater updater = new ResultsRetentionDaysUpdater(m_JobManager, "foo");
+        updater.prepareUpdate(node);
+        updater.commit();
 
         verify(m_JobManager).setResultsRetentionDays("foo", 5L);
     }
 
     @Test
-    public void testUpdate_GivenNull() throws UnknownJobException,
+    public void testCommit_GivenNull() throws UnknownJobException,
             JobConfigurationException, JsonProcessingException, IOException
     {
         JsonNode node = NullNode.getInstance();
 
-        new ResultsRetentionDaysUpdater(m_JobManager, "foo").update(node);
+        ResultsRetentionDaysUpdater updater = new ResultsRetentionDaysUpdater(m_JobManager, "foo");
+        updater.prepareUpdate(node);
+        updater.commit();
 
         verify(m_JobManager).setResultsRetentionDays("foo", null);
     }

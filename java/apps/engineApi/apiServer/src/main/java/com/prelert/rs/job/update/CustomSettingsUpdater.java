@@ -37,16 +37,23 @@ import com.prelert.job.messages.Messages;
 
 class CustomSettingsUpdater extends AbstractUpdater
 {
+    private Map<String, Object> m_NewCustomSettings;
+
     public CustomSettingsUpdater(JobManager jobManager, String jobId)
     {
         super(jobManager, jobId);
     }
 
     @Override
-    void update(JsonNode node) throws UnknownJobException, JobConfigurationException
+    void prepareUpdate(JsonNode node) throws JobConfigurationException
     {
-        Map<String, Object> customSettings = convertToMap(node, () -> Messages.getMessage(
+        m_NewCustomSettings = convertToMap(node, () -> Messages.getMessage(
                 Messages.JOB_CONFIG_UPDATE_CUSTOM_SETTINGS_INVALID));
-        jobManager().updateCustomSettings(jobId(), customSettings);
+    }
+
+    @Override
+    void commit() throws UnknownJobException, JobConfigurationException
+    {
+        jobManager().updateCustomSettings(jobId(), m_NewCustomSettings);
     }
 }

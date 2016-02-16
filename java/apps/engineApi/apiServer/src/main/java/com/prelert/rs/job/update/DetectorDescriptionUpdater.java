@@ -48,37 +48,33 @@ class DetectorDescriptionUpdater extends AbstractUpdater
     private static final Set<String> PARAMS = Sets.newLinkedHashSet(
             Arrays.asList(DETECTOR_INDEX, DESCRIPTION));
 
+    private UpdateParams m_Update;
+
     public DetectorDescriptionUpdater(JobManager jobManager, String jobId)
     {
         super(jobManager, jobId);
     }
 
     @Override
-    void update(JsonNode node) throws UnknownJobException, JobConfigurationException
+    void prepareUpdate(JsonNode node) throws UnknownJobException, JobConfigurationException
     {
         Optional<JobDetails> job = jobManager().getJob(jobId());
         if (!job.isPresent())
         {
             throw new UnknownJobException(jobId());
         }
-        UpdateParams params = parseParams(node);
+        parseParams(node);
         int detectorsCount = job.get().getAnalysisConfig().getDetectors().size();
-        if (params.detectorIndex < 0 || params.detectorIndex >= detectorsCount)
+        if (m_Update.detectorIndex < 0 || m_Update.detectorIndex >= detectorsCount)
         {
             String msg = Messages.getMessage(
                     Messages.JOB_CONFIG_UPDATE_DETECTOR_DESCRIPTION_INVALID_DETECTOR_INDEX, 0,
-                    detectorsCount - 1, params.detectorIndex);
+                    detectorsCount - 1, m_Update.detectorIndex);
             throw new JobConfigurationException(msg, ErrorCodes.INVALID_VALUE);
-        }
-        if (jobManager().updateDetectorDescription(jobId(), params.detectorIndex, params.name) == false)
-        {
-            throw new JobConfigurationException(
-                    Messages.getMessage(Messages.JOB_CONFIG_UPDATE_DETECTOR_DESCRIPTION_FAILED),
-                    ErrorCodes.UNKNOWN_ERROR);
         }
     }
 
-    private UpdateParams parseParams(JsonNode node) throws JobConfigurationException
+    private void parseParams(JsonNode node) throws JobConfigurationException
     {
         Map<String, Object> updateParams = convertToMap(node, () -> Messages.getMessage(
                 Messages.JOB_CONFIG_UPDATE_DETECTOR_DESCRIPTION_MISSING_PARAMS, PARAMS));
@@ -103,7 +99,19 @@ class DetectorDescriptionUpdater extends AbstractUpdater
                     Messages.JOB_CONFIG_UPDATE_DETECTOR_DESCRIPTION_SHOULD_BE_STRING, name);
             throw new JobConfigurationException(msg, ErrorCodes.INVALID_VALUE);
         }
-        return new UpdateParams((int) detectorIndex, (String) name);
+        m_Update = new UpdateParams((int) detectorIndex, (String) name);
+    }
+
+    @Override
+    void commit() throws UnknownJobException, JobConfigurationException
+    {
+        if (jobManager().updateDetectorDescription(
+                jobId(), m_Update.detectorIndex, m_Update.name) == false)
+        {
+            throw new JobConfigurationException(
+                    Messages.getMessage(Messages.JOB_CONFIG_UPDATE_DETECTOR_DESCRIPTION_FAILED),
+                    ErrorCodes.UNKNOWN_ERROR);
+        }
     }
 
     private static class UpdateParams

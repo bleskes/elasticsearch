@@ -27,6 +27,9 @@
 
 package com.prelert.rs.job.update;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
+
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -42,6 +45,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
 import com.prelert.job.AnalysisConfig;
@@ -124,7 +128,7 @@ public class JobUpdaterTest
     }
 
     @Test
-    public void testUpdate_GivenTwoUpdates() throws UnknownJobException,
+    public void testUpdate_GivenTwoValidUpdates() throws UnknownJobException,
             JobConfigurationException, JobInUseException, NativeProcessRunException
     {
         String update = "{\"description\":\"foobar\", \"modelDebugConfig\":{\"boundsPercentile\":33.9}}";
@@ -136,6 +140,26 @@ public class JobUpdaterTest
 
         String expectedConfig = "[modelDebugConfig]\nboundspercentile = 33.9\nterms = \n";
         verify(m_JobManager).writeUpdateConfigMessage("foo", expectedConfig);
+    }
+
+    @Test
+    public void testUpdate_GivenTwoUpdatesSecondBeingInvalid_ShouldApplyNone()
+            throws UnknownJobException, JobConfigurationException, JobInUseException,
+            NativeProcessRunException
+    {
+        String update = "{\"description\":\"foobar\", \"modelDebugConfig\":{\"boundsPercentile\":1000.0}}";
+
+        try
+        {
+            new JobUpdater(m_JobManager, "foo").update(update);
+            fail();
+        }
+        catch (JobConfigurationException e)
+        {
+            assertEquals("Invalid modelDebugConfig: boundsPercentile has to be in [0, 100]", e.getMessage());
+        }
+
+        Mockito.verifyNoMoreInteractions(m_JobManager);
     }
 
     @Test

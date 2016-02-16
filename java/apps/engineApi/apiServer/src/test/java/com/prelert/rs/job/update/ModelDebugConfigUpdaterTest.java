@@ -28,6 +28,8 @@
 package com.prelert.rs.job.update;
 
 import static org.junit.Assert.assertEquals;
+
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 import java.io.IOException;
@@ -44,6 +46,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.NullNode;
+import com.prelert.job.JobException;
 import com.prelert.job.ModelDebugConfig;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.config.verification.JobConfigurationException;
@@ -67,8 +70,7 @@ public class ModelDebugConfigUpdaterTest
     }
 
     @Test
-    public void testUpdate_GivenInvalidJson() throws UnknownJobException,
-            JobConfigurationException, JsonProcessingException, IOException
+    public void testPrepareUpdate_GivenInvalidJson() throws JobException, IOException
     {
         String update = "{\"invalidKey\":3.0}";
         JsonNode node = new ObjectMapper().readTree(update);
@@ -78,12 +80,11 @@ public class ModelDebugConfigUpdaterTest
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_VALUE));
 
-        new ModelDebugConfigUpdater(m_JobManager, "foo", m_ConfigWriter).update(node);
+        new ModelDebugConfigUpdater(m_JobManager, "foo", m_ConfigWriter).prepareUpdate(node);
     }
 
     @Test
-    public void testUpdate_GivenBoundsPercentileIsOutOfBounds() throws UnknownJobException,
-    JobConfigurationException, JsonProcessingException, IOException
+    public void testPrepareUpdate_GivenBoundsPercentileIsOutOfBounds() throws JobException, IOException
     {
         String update = "{\"boundsPercentile\":300.0}";
         JsonNode node = new ObjectMapper().readTree(update);
@@ -93,17 +94,29 @@ public class ModelDebugConfigUpdaterTest
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_VALUE));
 
-        new ModelDebugConfigUpdater(m_JobManager, "foo", m_ConfigWriter).update(node);
+        new ModelDebugConfigUpdater(m_JobManager, "foo", m_ConfigWriter).prepareUpdate(node);
     }
 
     @Test
-    public void testUpdate_GivenValid() throws UnknownJobException,
-    JobConfigurationException, JsonProcessingException, IOException
+    public void testPrepareUpdate_GivenValid() throws JobException, IOException
     {
         String update = "{\"boundsPercentile\":67.3, \"terms\":\"a,b\"}";
         JsonNode node = new ObjectMapper().readTree(update);
 
-        new ModelDebugConfigUpdater(m_JobManager, "foo", m_ConfigWriter).update(node);
+        new ModelDebugConfigUpdater(m_JobManager, "foo", m_ConfigWriter).prepareUpdate(node);
+
+        verify(m_JobManager, never()).setModelDebugConfig("foo", new ModelDebugConfig(null, 67.3, "a,b"));
+    }
+
+    @Test
+    public void testCommit_GivenValid() throws JobException, IOException
+    {
+        String update = "{\"boundsPercentile\":67.3, \"terms\":\"a,b\"}";
+        JsonNode node = new ObjectMapper().readTree(update);
+
+        ModelDebugConfigUpdater updater = new ModelDebugConfigUpdater(m_JobManager, "foo", m_ConfigWriter);
+        updater.prepareUpdate(node);
+        updater.commit();
 
         verify(m_JobManager).setModelDebugConfig("foo", new ModelDebugConfig(null, 67.3, "a,b"));
         String expectedConfig = "[modelDebugConfig]\nboundspercentile = 67.3\nterms = a,b\n";
@@ -111,12 +124,13 @@ public class ModelDebugConfigUpdaterTest
     }
 
     @Test
-    public void testUpdate_GivenNull() throws UnknownJobException,
-    JobConfigurationException, JsonProcessingException, IOException
+    public void testCommit_GivenNull() throws JobException, IOException
     {
         JsonNode node = NullNode.getInstance();
 
-        new ModelDebugConfigUpdater(m_JobManager, "foo", m_ConfigWriter).update(node);
+        ModelDebugConfigUpdater updater = new ModelDebugConfigUpdater(m_JobManager, "foo", m_ConfigWriter);
+        updater.prepareUpdate(node);
+        updater.commit();
 
         verify(m_JobManager).setModelDebugConfig("foo", null);
         String expectedConfig = "[modelDebugConfig]\nboundspercentile = -1.0\nterms = \n";

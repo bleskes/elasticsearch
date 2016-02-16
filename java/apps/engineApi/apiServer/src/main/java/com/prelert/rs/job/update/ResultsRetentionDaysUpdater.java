@@ -36,25 +36,28 @@ import com.prelert.job.messages.Messages;
 
 class ResultsRetentionDaysUpdater extends AbstractUpdater
 {
+    private Long m_NewRetentionDays;
+
     public ResultsRetentionDaysUpdater(JobManager jobManager, String jobId)
     {
         super(jobManager, jobId);
     }
 
     @Override
-    void update(JsonNode node) throws UnknownJobException, JobConfigurationException
+    void prepareUpdate(JsonNode node) throws UnknownJobException, JobConfigurationException
     {
         if (node.isIntegralNumber() || node.isNull())
         {
-            Long resultsRetentionDays = node.isIntegralNumber() ? node.asLong() : null;
-            if (resultsRetentionDays != null && resultsRetentionDays < 0)
+            m_NewRetentionDays = node.isIntegralNumber() ? node.asLong() : null;
+            if (m_NewRetentionDays != null && m_NewRetentionDays < 0)
             {
                 throwInvalidValue();
             }
-            jobManager().setResultsRetentionDays(jobId(), resultsRetentionDays);
-            return;
         }
-        throwInvalidValue();
+        else
+        {
+            throwInvalidValue();
+        }
     }
 
     private void throwInvalidValue() throws JobConfigurationException
@@ -62,5 +65,11 @@ class ResultsRetentionDaysUpdater extends AbstractUpdater
         throw new JobConfigurationException(
                 Messages.getMessage(Messages.JOB_CONFIG_UPDATE_RESULTS_RETENTION_DAYS_INVALID),
                 ErrorCodes.INVALID_VALUE);
+    }
+
+    @Override
+    void commit() throws UnknownJobException
+    {
+        jobManager().setResultsRetentionDays(jobId(), m_NewRetentionDays);
     }
 }

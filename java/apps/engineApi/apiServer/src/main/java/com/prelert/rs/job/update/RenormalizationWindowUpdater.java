@@ -36,25 +36,28 @@ import com.prelert.job.messages.Messages;
 
 class RenormalizationWindowUpdater extends AbstractUpdater
 {
+    private Long m_NewRenormalizationWindow;
+
     public RenormalizationWindowUpdater(JobManager jobManager, String jobId)
     {
         super(jobManager, jobId);
     }
 
     @Override
-    void update(JsonNode node) throws UnknownJobException, JobConfigurationException
+    void prepareUpdate(JsonNode node) throws UnknownJobException, JobConfigurationException
     {
         if (node.isIntegralNumber() || node.isNull())
         {
-            Long renormalizationWindow = node.isIntegralNumber() ? node.asLong() : null;
-            if (renormalizationWindow != null && renormalizationWindow < 0)
+            m_NewRenormalizationWindow = node.isIntegralNumber() ? node.asLong() : null;
+            if (m_NewRenormalizationWindow != null && m_NewRenormalizationWindow < 0)
             {
                 throwInvalidValue();
             }
-            jobManager().setRenormalizationWindow(jobId(), renormalizationWindow);
-            return;
         }
-        throwInvalidValue();
+        else
+        {
+            throwInvalidValue();
+        }
     }
 
     private void throwInvalidValue() throws JobConfigurationException
@@ -62,5 +65,11 @@ class RenormalizationWindowUpdater extends AbstractUpdater
         throw new JobConfigurationException(
                 Messages.getMessage(Messages.JOB_CONFIG_UPDATE_RENORMALIZATION_WINDOW_INVALID),
                 ErrorCodes.INVALID_VALUE);
+    }
+
+    @Override
+    void commit() throws UnknownJobException
+    {
+        jobManager().setRenormalizationWindow(jobId(), m_NewRenormalizationWindow);
     }
 }
