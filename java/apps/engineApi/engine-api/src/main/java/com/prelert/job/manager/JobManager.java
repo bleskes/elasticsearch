@@ -638,6 +638,7 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
 
             if (m_ProcessManager.jobIsRunning(jobId))
             {
+                m_JobTimeouts.stopTimeout(jobId);
                 m_ProcessManager.closeJob(jobId);
             }
 
