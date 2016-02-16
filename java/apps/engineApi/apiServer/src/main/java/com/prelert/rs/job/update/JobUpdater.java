@@ -64,7 +64,7 @@ public class JobUpdater
     private static final Logger LOGGER = Logger.getLogger(JobUpdater.class);
 
     private static final String CUSTOM_SETTINGS = "customSettings";
-    private static final String DETECTOR_KEY = "detector";
+    private static final String DETECTOR_KEY = "detectors";
     private static final String JOB_DESCRIPTION_KEY = "description";
     private static final String MODEL_DEBUG_CONFIG_KEY = "modelDebugConfig";
     private static final String RENORMALIZATION_WINDOW_KEY = "renormalizationWindow";

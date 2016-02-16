@@ -108,7 +108,7 @@ public class JobUpdaterTest
         String update = "{\"dimitris\":\"foobar\"}";
 
         m_ExpectedException.expect(JobConfigurationException.class);
-        m_ExpectedException.expectMessage("Invalid key 'dimitris'. Valid keys for update are: detector,");
+        m_ExpectedException.expectMessage("Invalid key 'dimitris'. Valid keys for update are: detectors,");
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_UPDATE_KEY));
 
@@ -204,7 +204,7 @@ public class JobUpdaterTest
     public void testUpdate_GivenValidDetectorDescriptionUpdate() throws JobConfigurationException,
             UnknownJobException, JobInUseException, NativeProcessRunException
     {
-        String update = "{\"detector\": {\"index\":0,\"description\":\"the A train\"}}";
+        String update = "{\"detectors\": [{\"index\":0,\"description\":\"the A train\"}]}";
 
         JobDetails job = new JobDetails();
         job.setId("foo");
