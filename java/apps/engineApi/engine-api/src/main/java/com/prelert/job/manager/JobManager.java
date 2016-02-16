@@ -50,10 +50,8 @@ import javax.ws.rs.core.FeatureContext;
 import org.apache.log4j.Logger;
 
 import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Preconditions;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
@@ -149,20 +147,7 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
     private final DateTimeFormatter m_JobIdDateFormat;
     private final ObjectMapper m_ObjectMapper;
     private final int m_MaxAllowedJobs;
-
-    /**
-     * These default to unlimited (indicated by negative limits), but may be
-     * overridden by constraints in the license key.
-     */
-    private int m_LicenseJobLimit = -1;
-    private int m_MaxDetectorsPerJob = -1;
-
-    /**
-     * The constraint on whether partition fields are allowed.
-     * See https://anomaly.atlassian.net/wiki/display/EN/Electronic+license+keys
-     * and bug 1034 in Bugzilla for background.
-     */
-    private boolean m_ArePartitionsAllowed = true;
+    private final BackendInfo m_BackendInfo;
 
     private final Map<String, JobScheduler> m_ScheduledJobs;
 
@@ -210,9 +195,9 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
                 .maximumSize(LAST_DATA_TIME_CACHE_SIZE)
                 .build();
 
-        // This requires the process manager and Elasticsearch connection in
+        // This requires the process manager and data storage connection in
         // order to work, but failure is considered non-fatal
-        saveInfo();
+        m_BackendInfo = BackendInfo.fromJson(m_ProcessManager.getInfo(), m_JobProvider, apiVersion());
     }
 
     /**
@@ -272,21 +257,21 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
         checkCreateJobForTooManyJobsAgainstLicenseLimit();
 
         // Negative m_MaxDetectorsPerJob means unlimited
-        if (m_MaxDetectorsPerJob >= 0 &&
+        if (m_BackendInfo.getMaxDetectorsPerJob() >= 0 &&
             jobConfig.getAnalysisConfig() != null &&
-            jobConfig.getAnalysisConfig().getDetectors().size() > m_MaxDetectorsPerJob)
+            jobConfig.getAnalysisConfig().getDetectors().size() > m_BackendInfo.getMaxDetectorsPerJob())
         {
 
             String message = Messages.getMessage(
                                 Messages.LICENSE_LIMIT_DETECTORS,
-                                m_MaxDetectorsPerJob,
+                                m_BackendInfo.getMaxDetectorsPerJob(),
                                 jobConfig.getAnalysisConfig().getDetectors().size());
 
             LOGGER.info(message);
             throw new JobConfigurationException(message, ErrorCodes.LICENSE_VIOLATION);
         }
 
-        if (!m_ArePartitionsAllowed && jobConfig.getAnalysisConfig() != null)
+        if (!m_BackendInfo.arePartitionsAllowed() && jobConfig.getAnalysisConfig() != null)
         {
             for (com.prelert.job.Detector detector :
                         jobConfig.getAnalysisConfig().getDetectors())
@@ -363,18 +348,18 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
     {
         if (areMoreJobsRunningThanLicenseLimit())
         {
-            String message = Messages.getMessage(Messages.LICENSE_LIMIT_JOBS, m_LicenseJobLimit);
+            String message = Messages.getMessage(Messages.LICENSE_LIMIT_JOBS, m_BackendInfo.getLicenseJobLimit());
 
             LOGGER.info(message);
-            throw new TooManyJobsException(m_LicenseJobLimit, message, ErrorCodes.LICENSE_VIOLATION);
+            throw new TooManyJobsException(m_BackendInfo.getLicenseJobLimit(), message, ErrorCodes.LICENSE_VIOLATION);
         }
     }
 
     private boolean areMoreJobsRunningThanLicenseLimit()
     {
         // Negative m_LicenseJobLimit means unlimited
-        return m_LicenseJobLimit >= 0 &&
-                m_ProcessManager.numberOfRunningJobs() >= m_LicenseJobLimit;
+        return m_BackendInfo.getLicenseJobLimit() >= 0 &&
+                m_ProcessManager.numberOfRunningJobs() >= m_BackendInfo.getLicenseJobLimit();
     }
 
     /**
@@ -844,10 +829,11 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
         if (areMoreJobsRunningThanLicenseLimit())
         {
             String message = Messages.getMessage(Messages.LICENSE_LIMIT_JOBS_REACTIVATE,
-                                        jobId, m_LicenseJobLimit);
+                                        jobId, m_BackendInfo.getLicenseJobLimit());
 
             LOGGER.info(message);
-            throw new TooManyJobsException(m_LicenseJobLimit, message, ErrorCodes.LICENSE_VIOLATION);
+            throw new TooManyJobsException(m_BackendInfo.getLicenseJobLimit(), message,
+                    ErrorCodes.LICENSE_VIOLATION);
         }
     }
 
@@ -887,88 +873,6 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
     public String getAnalyticsVersion()
     {
         return  m_ProcessManager.getAnalyticsVersion();
-    }
-
-    /**
-     * Attempt to get usage and license info from the C++ process, add extra
-     * fields and persist to Elasticsearch.  Any failures are logged but do not
-     * otherwise impact operation of this process.  Additionally, any license
-     * constraints are extracted from the same info document.
-     */
-    private void saveInfo()
-    {
-        // This will be a JSON document in string form
-        String backendInfo = m_ProcessManager.getInfo();
-
-        // Try to parse the string returned from the C++ process and extract
-        // any license constraints
-        ObjectNode doc;
-        try
-        {
-            doc = (ObjectNode)m_ObjectMapper.readTree(backendInfo);
-
-            // Negative numbers indicate no constraint, i.e. unlimited maximums
-            JsonNode constraint = doc.get(JOBS_LICENSE_CONSTRAINT);
-            if (constraint != null)
-            {
-                m_LicenseJobLimit = constraint.asInt(-1);
-            }
-            else
-            {
-                m_LicenseJobLimit = -1;
-            }
-            LOGGER.info("License job limit = " + m_LicenseJobLimit);
-            constraint = doc.get(DETECTORS_LICENSE_CONSTRAINT);
-            if (constraint != null)
-            {
-                m_MaxDetectorsPerJob = constraint.asInt(-1);
-            }
-            else
-            {
-                m_MaxDetectorsPerJob = -1;
-            }
-            LOGGER.info("Max detectors per job = " + m_MaxDetectorsPerJob);
-            constraint = doc.get(PARTITIONS_LICENSE_CONSTRAINT);
-            if (constraint != null)
-            {
-                int val = constraint.asInt(-1);
-                // See https://anomaly.atlassian.net/wiki/display/EN/Electronic+license+keys
-                // and bug 1034 in Bugzilla for the reason behind this
-                // seemingly weird condition.
-                m_ArePartitionsAllowed = (val < 0);
-            }
-            else
-            {
-                m_ArePartitionsAllowed = true;
-            }
-            LOGGER.info("Are partitions allowed = " + m_ArePartitionsAllowed);
-        }
-        catch (IOException e)
-        {
-            LOGGER.warn("Failed to parse JSON document " + backendInfo, e);
-            return;
-        }
-        catch (ClassCastException e)
-        {
-            LOGGER.warn("Parsed non-object JSON document " + backendInfo, e);
-            return;
-        }
-
-        // Try to add extra fields (just appVer for now)
-        doc.put(APP_VER_FIELDNAME, apiVersion());
-
-        // Try to persist the modified document
-        try
-        {
-            m_JobProvider.savePrelertInfo(doc.toString());
-        }
-        catch (Exception e)
-        {
-            LOGGER.warn("Error writing Prelert info to Elasticsearch", e);
-            return;
-        }
-
-        LOGGER.info("Wrote Prelert info " + doc.toString() + " to Elasticsearch");
     }
 
     public String apiVersion()
