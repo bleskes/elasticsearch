@@ -186,6 +186,7 @@ class JobTimeouts implements Shutdownable
             catch (NativeProcessRunException | UnknownJobException e)
             {
                 LOGGER.error("Error closing job " + jobId, e);
+                return;
             }
         }
     }

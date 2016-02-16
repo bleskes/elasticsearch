@@ -30,6 +30,7 @@ package com.prelert.job.manager;
 import static org.junit.Assert.assertTrue;
 
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -176,5 +177,33 @@ public class JobTimeoutsTest
 
         verify(m_JobCloser, times(2)).closeJob("foo");
         verify(m_JobCloser).closeJob("bar");
+    }
+
+    @Test
+    public void testShutdown_GivenCloseJobThrowsUnknownJobException()
+            throws UnknownJobException, JobInUseException, NativeProcessRunException
+    {
+        doThrow(new UnknownJobException("foo")).when(m_JobCloser).closeJob("foo");
+
+        JobTimeouts jobTimeouts = new JobTimeouts(m_JobCloser, 100);
+        jobTimeouts.startTimeout("foo", Duration.ofSeconds(1));
+
+        jobTimeouts.shutdown();
+
+        verify(m_JobCloser).closeJob("foo");
+    }
+
+    @Test
+    public void testShutdown_GivenCloseJobThrowsNativeProcessRunException()
+            throws UnknownJobException, JobInUseException, NativeProcessRunException
+    {
+        doThrow(new NativeProcessRunException("some error")).when(m_JobCloser).closeJob("foo");
+
+        JobTimeouts jobTimeouts = new JobTimeouts(m_JobCloser, 100);
+        jobTimeouts.startTimeout("foo", Duration.ofSeconds(1));
+
+        jobTimeouts.shutdown();
+
+        verify(m_JobCloser).closeJob("foo");
     }
 }
