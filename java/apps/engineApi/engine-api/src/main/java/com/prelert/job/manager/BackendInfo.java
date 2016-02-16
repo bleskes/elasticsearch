@@ -131,10 +131,10 @@ class BackendInfo
         }
         catch (Exception e)
         {
-            LOGGER.warn("Error writing Prelert info to Elasticsearch", e);
+            LOGGER.warn("Error persisting Prelert info", e);
         }
 
-        LOGGER.info("Wrote Prelert info " + doc.toString() + " to Elasticsearch");
+        LOGGER.info("Persisted Prelert info: " + doc.toString());
 
         return new BackendInfo(licenseJobLimit, maxDetectorsPerJob, arePartitionsAllowed);
     }
