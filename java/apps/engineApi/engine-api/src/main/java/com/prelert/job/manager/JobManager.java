@@ -33,8 +33,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -42,7 +40,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.atomic.AtomicLong;
 
 import javax.ws.rs.core.Feature;
 import javax.ws.rs.core.FeatureContext;
@@ -55,7 +52,6 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.prelert.app.Shutdownable;
 import com.prelert.job.DataCounts;
-import com.prelert.job.Detector;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.JobDetails;
 import com.prelert.job.JobIdAlreadyExistsException;
@@ -63,7 +59,6 @@ import com.prelert.job.JobSchedulerStatus;
 import com.prelert.job.ModelDebugConfig;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.alert.AlertObserver;
-import com.prelert.job.config.DefaultDetectorDescription;
 import com.prelert.job.config.DefaultFrequency;
 import com.prelert.job.config.verification.JobConfigurationException;
 import com.prelert.job.data.extraction.DataExtractorFactory;
@@ -98,8 +93,17 @@ import com.prelert.job.transform.TransformConfigs;
 
 
 /**
- * Creates jobs and handles retrieving job configuration details from
- * the data store. New jobs have a unique job id see {@linkplain #generateJobId()}
+ * Allows interactions with jobs. The managed interactions include:
+ *
+ * <ul>
+ *   <li>creation
+ *   <li>deletion
+ *   <li>flushing
+ *   <li>updating
+ *   <li>sending of data
+ *   <li>fetching jobs and results
+ *   <li>starting/stopping of scheduled jobs
+ * </ul
  */
 public class JobManager implements DataProcessor, Shutdownable, Feature
 {
@@ -141,8 +145,7 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
     private final JobLoggerFactory m_JobLoggerFactory;
     private final JobTimeouts m_JobTimeouts;
 
-    private final AtomicLong m_IdSequence;
-    private final DateTimeFormatter m_JobIdDateFormat;
+    private final JobFactory m_JobFactory;
     private final int m_MaxAllowedJobs;
     private final BackendInfo m_BackendInfo;
 
@@ -181,9 +184,6 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
 
         m_MaxAllowedJobs = calculateMaxJobsAllowed();
 
-        m_IdSequence = new AtomicLong();
-        m_JobIdDateFormat = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
-
         m_ScheduledJobs = new HashMap<>();
         m_LastDataTimePerJobCache = CacheBuilder.newBuilder()
                 .maximumSize(LAST_DATA_TIME_CACHE_SIZE)
@@ -192,6 +192,7 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
         // This requires the process manager and data storage connection in
         // order to work, but failure is considered non-fatal
         m_BackendInfo = BackendInfo.fromJson(m_ProcessManager.getInfo(), m_JobProvider, apiVersion());
+        m_JobFactory = new JobFactory(m_BackendInfo);
     }
 
     /**
@@ -237,86 +238,31 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
      *
      * @param jobConfig
      * @return The new job or <code>null</code> if an exception occurs.
-     * @throws UnknownJobException
-     * @throws IOException
      * @throws TooManyJobsException If the license is violated
      * @throws JobConfigurationException If the license is violated
-     * @throws JobIdAlreadyExistsException If the alias is already taken
+     * @throws JobIdAlreadyExistsException If the id is already taken
      * @throws CannotStartSchedulerWhileItIsStoppingException If the job scheduler is still being stopped
      */
-    public JobDetails createJob(JobConfiguration jobConfig) throws UnknownJobException,
-            IOException, TooManyJobsException, JobConfigurationException,
-            JobIdAlreadyExistsException, CannotStartSchedulerWhileItIsStoppingException
+    public JobDetails createJob(JobConfiguration jobConfig)
+            throws TooManyJobsException, JobConfigurationException, JobIdAlreadyExistsException,
+            CannotStartSchedulerWhileItIsStoppingException
     {
-        checkCreateJobForTooManyJobsAgainstLicenseLimit();
+        JobDetails jobDetails = m_JobFactory.create(jobConfig, m_ProcessManager.numberOfRunningJobs());
 
-        // Negative m_MaxDetectorsPerJob means unlimited
-        if (m_BackendInfo.getMaxDetectorsPerJob() >= 0 &&
-            jobConfig.getAnalysisConfig() != null &&
-            jobConfig.getAnalysisConfig().getDetectors().size() > m_BackendInfo.getMaxDetectorsPerJob())
+        if (!m_JobProvider.jobIdIsUnique(jobDetails.getId()))
         {
-
-            String message = Messages.getMessage(
-                                Messages.LICENSE_LIMIT_DETECTORS,
-                                m_BackendInfo.getMaxDetectorsPerJob(),
-                                jobConfig.getAnalysisConfig().getDetectors().size());
-
-            LOGGER.info(message);
-            throw new JobConfigurationException(message, ErrorCodes.LICENSE_VIOLATION);
+            throw new JobIdAlreadyExistsException(jobDetails.getId());
         }
-
-        if (!m_BackendInfo.arePartitionsAllowed() && jobConfig.getAnalysisConfig() != null)
-        {
-            for (com.prelert.job.Detector detector :
-                        jobConfig.getAnalysisConfig().getDetectors())
-            {
-                String partitionFieldName = detector.getPartitionFieldName();
-                if (partitionFieldName != null &&
-                    partitionFieldName.length() > 0)
-                {
-                    String message = Messages.getMessage(Messages.LICENSE_LIMIT_PARTITIONS);
-                    LOGGER.info(message);
-                    throw new JobConfigurationException(message, ErrorCodes.LICENSE_VIOLATION);
-                }
-            }
-        }
-
-        String jobId = jobConfig.getId();
-        if (jobId == null || jobId.isEmpty())
-        {
-            jobId = generateJobId();
-        }
-        else
-        {
-            if (!m_JobProvider.jobIdIsUnique(jobId))
-            {
-                throw new JobIdAlreadyExistsException(jobId);
-            }
-        }
-
-        JobDetails jobDetails = new JobDetails(jobId, jobConfig);
-        fillDefaults(jobDetails);
 
         m_JobProvider.createJob(jobDetails);
 
         if (jobDetails.getSchedulerConfig() != null)
         {
-            LOGGER.info("Starting scheduler for job: " + jobId);
+            LOGGER.info("Starting scheduler for job: " + jobDetails.getId());
             createJobScheduler(jobDetails).start(jobDetails);
         }
 
         return jobDetails;
-    }
-
-    private void fillDefaults(JobDetails jobDetails)
-    {
-        for (Detector detector : jobDetails.getAnalysisConfig().getDetectors())
-        {
-            if (detector.getDetectorDescription() == null)
-            {
-                detector.setDetectorDescription(DefaultDetectorDescription.of(detector));
-            }
-        }
     }
 
     private JobScheduler createJobScheduler(JobDetails job)
@@ -336,17 +282,6 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
         Long bucketSpan = job.getAnalysisConfig().getBucketSpan();
         return frequency == null ? DefaultFrequency.ofBucketSpan(bucketSpan)
                 : Duration.ofSeconds(frequency);
-    }
-
-    private void checkCreateJobForTooManyJobsAgainstLicenseLimit() throws TooManyJobsException
-    {
-        if (m_BackendInfo.isLicenseJobLimitViolated(m_ProcessManager.numberOfRunningJobs()))
-        {
-            String message = Messages.getMessage(Messages.LICENSE_LIMIT_JOBS, m_BackendInfo.getLicenseJobLimit());
-
-            LOGGER.info(message);
-            throw new TooManyJobsException(m_BackendInfo.getLicenseJobLimit(), message, ErrorCodes.LICENSE_VIOLATION);
-        }
     }
 
     /**
@@ -835,21 +770,6 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
         {
             LOGGER.warn("Error finishing job after submitDataLoadJob failed", e);
         }
-    }
-
-    /**
-     * The job id is a concatenation of the date in 'yyyyMMddHHmmss' format
-     * and a sequence number that is a minimum of 5 digits wide left padded
-     * with zeros.<br>
-     * e.g. the first Id created 23rd November 2013 at 11am
-     *     '20131125110000-00001'
-     *
-     * @return The new unique job Id
-     */
-    private String generateJobId()
-    {
-        return String.format("%s-%05d", m_JobIdDateFormat.format(LocalDateTime.now()),
-                        m_IdSequence.incrementAndGet());
     }
 
     /**
