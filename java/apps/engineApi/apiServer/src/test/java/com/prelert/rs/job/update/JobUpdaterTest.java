@@ -53,6 +53,7 @@ import com.prelert.job.Detector;
 import com.prelert.job.JobDetails;
 import com.prelert.job.ModelDebugConfig;
 import com.prelert.job.UnknownJobException;
+import com.prelert.job.audit.Auditor;
 import com.prelert.job.config.verification.JobConfigurationException;
 import com.prelert.job.errorcodes.ErrorCodeMatcher;
 import com.prelert.job.errorcodes.ErrorCodes;
@@ -66,11 +67,13 @@ public class JobUpdaterTest
     @Rule public ExpectedException m_ExpectedException = ExpectedException.none();
 
     @Mock private JobManager m_JobManager;
+    @Mock private Auditor m_Auditor;
 
     @Before
     public void setUp()
     {
         MockitoAnnotations.initMocks(this);
+        when(m_JobManager.audit(anyString())).thenReturn(m_Auditor);
     }
 
     @Test
@@ -125,6 +128,8 @@ public class JobUpdaterTest
 
         verify(m_JobManager).setDescription("foo", "foobar");
         verify(m_JobManager, never()).writeUpdateConfigMessage(anyString(), anyString());
+        verify(m_JobManager).audit("foo");
+        verify(m_Auditor).info("Job updated");
     }
 
     @Test

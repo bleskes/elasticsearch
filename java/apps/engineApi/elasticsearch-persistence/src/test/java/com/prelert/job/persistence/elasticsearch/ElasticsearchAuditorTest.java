@@ -1,0 +1,143 @@
+/************************************************************
+ *                                                          *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
+ *                                                          *
+ *----------------------------------------------------------*
+ *----------------------------------------------------------*
+ * WARNING:                                                 *
+ * THIS FILE CONTAINS UNPUBLISHED PROPRIETARY               *
+ * SOURCE CODE WHICH IS THE PROPERTY OF PRELERT LTD AND     *
+ * PARENT OR SUBSIDIARY COMPANIES.                          *
+ * PLEASE READ THE FOLLOWING AND TAKE CAREFUL NOTE:         *
+ *                                                          *
+ * This source code is confidential and any person who      *
+ * receives a copy of it, or believes that they are viewing *
+ * it without permission is asked to notify Prelert Ltd     *
+ * on +44 (0)20 3567 1249 or email to legal@prelert.com.    *
+ * All intellectual property rights in this source code     *
+ * are owned by Prelert Ltd.  No part of this source code   *
+ * may be reproduced, adapted or transmitted in any form or *
+ * by any means, electronic, mechanical, photocopying,      *
+ * recording or otherwise.                                  *
+ *                                                          *
+ *----------------------------------------------------------*
+ *                                                          *
+ *                                                          *
+ ************************************************************/
+
+package com.prelert.job.persistence.elasticsearch;
+
+import static org.junit.Assert.assertEquals;
+
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+import java.io.IOException;
+
+import org.elasticsearch.action.ListenableActionFuture;
+import org.elasticsearch.action.index.IndexRequestBuilder;
+import org.elasticsearch.action.index.IndexResponse;
+import org.elasticsearch.client.Client;
+import org.elasticsearch.index.IndexNotFoundException;
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.prelert.job.audit.AuditMessage;
+import com.prelert.job.audit.Severity;
+
+public class ElasticsearchAuditorTest
+{
+    @Mock private Client m_Client;
+    @Mock private ListenableActionFuture<IndexResponse> m_IndexResponse;
+    @Captor private ArgumentCaptor<String> m_IndexCaptor;
+    @Captor private ArgumentCaptor<String> m_JsonCaptor;
+
+    @Before
+    public void setUp()
+    {
+        MockitoAnnotations.initMocks(this);
+    }
+
+    @Test
+    public void testInfo()
+    {
+        givenClientPersistsSuccessfully();
+        ElasticsearchAuditor auditor = new ElasticsearchAuditor(m_Client, "prelert-int", "foo");
+
+        auditor.info("Here is my info");
+
+        assertEquals("prelert-int", m_IndexCaptor.getValue());
+        AuditMessage auditMessage = parseAuditMessage();
+        assertEquals("foo", auditMessage.getJobId());
+        assertEquals("Here is my info", auditMessage.getMessage());
+        assertEquals(Severity.INFO, auditMessage.getSeverity());
+    }
+
+    @Test
+    public void testWarning()
+    {
+        givenClientPersistsSuccessfully();
+        ElasticsearchAuditor auditor = new ElasticsearchAuditor(m_Client, "someIndex", "bar");
+
+        auditor.warning("Here is my warning");
+
+        assertEquals("someIndex", m_IndexCaptor.getValue());
+        AuditMessage auditMessage = parseAuditMessage();
+        assertEquals("bar", auditMessage.getJobId());
+        assertEquals("Here is my warning", auditMessage.getMessage());
+        assertEquals(Severity.WARNING, auditMessage.getSeverity());
+    }
+
+    @Test
+    public void testError()
+    {
+        givenClientPersistsSuccessfully();
+        ElasticsearchAuditor auditor = new ElasticsearchAuditor(m_Client, "someIndex", "foobar");
+
+        auditor.error("Here is my error");
+
+        assertEquals("someIndex", m_IndexCaptor.getValue());
+        AuditMessage auditMessage = parseAuditMessage();
+        assertEquals("foobar", auditMessage.getJobId());
+        assertEquals("Here is my error", auditMessage.getMessage());
+        assertEquals(Severity.ERROR, auditMessage.getSeverity());
+    }
+
+    @Test
+    public void testError_GivenNoSuchIndex()
+    {
+        when(m_Client.prepareIndex("someIndex", "auditMessage"))
+                .thenThrow(new IndexNotFoundException("someIndex"));
+
+        ElasticsearchAuditor auditor = new ElasticsearchAuditor(m_Client, "someIndex", "foobar");
+
+        auditor.error("Here is my error");
+    }
+
+    private void givenClientPersistsSuccessfully()
+    {
+        IndexRequestBuilder indexRequestBuilder = mock(IndexRequestBuilder.class);
+        when(indexRequestBuilder.setSource(m_JsonCaptor.capture())).thenReturn(indexRequestBuilder);
+        when(indexRequestBuilder.execute()).thenReturn(m_IndexResponse);
+        when(m_Client.prepareIndex(m_IndexCaptor.capture(), eq("auditMessage")))
+                .thenReturn(indexRequestBuilder);
+    }
+
+    private AuditMessage parseAuditMessage()
+    {
+        try
+        {
+            return new ObjectMapper().readValue(m_JsonCaptor.getValue(), AuditMessage.class);
+        }
+        catch (IOException e)
+        {
+            return new AuditMessage();
+        }
+    }
+}

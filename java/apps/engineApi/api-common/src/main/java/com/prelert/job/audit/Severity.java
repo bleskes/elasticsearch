@@ -16,41 +16,11 @@
  *                                                                          *
  ***************************************************************************/
 
-package com.prelert.job.persistence;
+package com.prelert.job.audit;
 
-import com.prelert.job.ModelSnapshot;
-import com.prelert.job.UnknownJobException;
-import com.prelert.job.audit.Auditor;
-import com.prelert.job.quantiles.Quantiles;
-
-public interface JobProvider extends JobDetailsProvider, JobResultsProvider
+public enum Severity
 {
-    /**
-     * Get the persisted quantiles state for the job
-     */
-    public Quantiles getQuantiles(String jobId)
-    throws UnknownJobException;
-
-    /**
-     * Get the model snapshot for the job that has the highest restore priority
-     */
-    public ModelSnapshot getModelSnapshotByPriority(String jobId)
-    throws UnknownJobException;
-
-    /**
-     * Refresh the datastore index so that all recent changes are
-     * available to search operations. This is a synchronous blocking
-     * call that should not return until the index has been refreshed.
-     *
-     * @param jobId
-     */
-    public void refreshIndex(String jobId);
-
-    /**
-     * Get an auditor for the given job
-     *
-     * @param the job id
-     * @return the {@code Auditor}
-     */
-    Auditor audit(String jobId);
+    INFO,
+    WARNING,
+    ERROR
 }

@@ -59,8 +59,13 @@ class HttpGetResponse
 
     public String getResponseAsString() throws IOException
     {
+        return getStreamAsString(m_Stream);
+    }
+
+    public static String getStreamAsString(InputStream stream) throws IOException
+    {
         try (BufferedReader buffer = new BufferedReader(
-                new InputStreamReader(m_Stream, StandardCharsets.UTF_8))) {
+                new InputStreamReader(stream, StandardCharsets.UTF_8))) {
             return buffer.lines().collect(Collectors.joining(NEW_LINE));
         }
     }

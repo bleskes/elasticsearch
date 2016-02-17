@@ -45,6 +45,17 @@ public final class Messages
     public static final String LOGFILE_MISSING = "logfile.missing";
     public static final String LOGFILE_MISSING_DIRECTORY = "logfile.missing.directory";
 
+    public static final String JOB_AUDIT_CREATED = "job.audit.created";
+    public static final String JOB_AUDIT_DELETED = "job.audit.deleted";
+    public static final String JOB_AUDIT_UPDATED = "job.audit.updated";
+    public static final String JOB_AUDIT_SCHEDULE_STARTED_FROM_TO = "job.audit.schedule.started.from.to";
+    public static final String JOB_AUDIT_SCHEDULE_STARTED_REALTIME = "job.audit.schedule.started.realtime";
+    public static final String JOB_AUDIT_SCHEDULE_LOOKBACK_COMPLETED = "job.audit.schedule.lookback.completed";
+    public static final String JOB_AUDIT_SCHEDULE_STOPPED = "job.audit.schedule.stopped";
+    public static final String JOB_AUDIT_SCHEDULE_NO_DATA = "job.audit.schedule.no.data";
+    public static final String JOB_AUDIT_SCHEDULE_DATA_EXTRACTION_ERROR = "job.audit.schedule.data.extraction.error";
+    public static final String JOB_AUDIT_SCHEDULE_DATA_EXTRACTION_RECOVERED = "job.audit.schedule.data.extraction.recovered";
+
     public static final String JOB_CONFIG_BYFIELD_INCOMPATIBLE_FUNCTION = "job.config.byField.incompatible.function";
     public static final String JOB_CONFIG_BYFIELD_NEEDS_ANOTHER = "job.config.byField.needs.another";
     public static final String JOB_CONFIG_DATAFORMAT_REQUIRES_TRANSFORM = "job.config.dataformat.requires.transform";

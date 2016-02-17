@@ -79,6 +79,7 @@ import com.prelert.job.ModelSnapshot;
 import com.prelert.job.ModelState;
 import com.prelert.job.SchedulerState;
 import com.prelert.job.UnknownJobException;
+import com.prelert.job.audit.Auditor;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.persistence.BatchedResultsIterator;
 import com.prelert.job.persistence.DataStoreException;
@@ -1198,5 +1199,10 @@ public class ElasticsearchJobProvider implements JobProvider
         }
         return result;
     }
-}
 
+    @Override
+    public Auditor audit(String jobId)
+    {
+        return new ElasticsearchAuditor(m_Client, PRELERT_INFO_INDEX, jobId);
+    }
+}
