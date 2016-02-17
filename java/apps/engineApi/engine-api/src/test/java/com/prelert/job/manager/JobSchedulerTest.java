@@ -30,6 +30,7 @@ package com.prelert.job.manager;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+
 import static org.mockito.Matchers.anyMapOf;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
@@ -203,7 +204,6 @@ public class JobSchedulerTest
         }
         m_JobScheduler.stopManual();
         assertEquals(JobSchedulerStatus.STOPPED, m_CurrentStatus);
-        assertTrue(dataProcessor.isJobClosed());
 
         assertTrue(dataProcessor.getNumberOfStreams() > 1);
         assertTrue(dataProcessor.getNumberOfStreams() <= 3);
@@ -291,7 +291,6 @@ public class JobSchedulerTest
         }
         m_JobScheduler.stopManual();
         assertEquals(JobSchedulerStatus.STOPPED, m_CurrentStatus);
-        assertTrue(dataProcessor.isJobClosed());
 
         assertEquals(2, dataProcessor.getNumberOfStreams());
         List<InterimResultsParams> flushParams = dataProcessor.getFlushParams();
@@ -433,7 +432,6 @@ public class JobSchedulerTest
         Thread.sleep(100);
         m_JobScheduler.start(job);
         m_JobScheduler.stopManual();
-        assertTrue(dataProcessor.isJobClosed());
 
         assertEquals(0, dataExtractor.getSearchCount());
     }
@@ -454,7 +452,6 @@ public class JobSchedulerTest
         m_JobScheduler.start(job);
         m_JobScheduler.stopManual();
         m_JobScheduler.stopManual();
-        assertTrue(dataProcessor.isJobClosed());
 
         assertEquals(JobSchedulerStatus.STOPPED, m_CurrentStatus);
     }

@@ -32,6 +32,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
@@ -121,6 +122,7 @@ public class JobManagerTest
     public void setUp()
     {
         MockitoAnnotations.initMocks(this);
+        when(m_JobProvider.jobIdIsUnique(anyString())).thenReturn(true);
     }
 
     @After
@@ -198,6 +200,31 @@ public class JobManagerTest
         givenProcessInfo(5);
         JobManager jobManager = createJobManager();
         when(m_ProcessManager.jobIsRunning("foo")).thenReturn(true);
+
+        jobManager.deleteJob("foo");
+
+        verify(m_ProcessManager).closeJob("foo");
+        verify(m_ProcessManager).deletePersistedData("foo");
+        verify(m_JobProvider).deleteJob("foo");
+    }
+
+    @Test
+    public void testDeleteJob_GivenScheduledJob()
+            throws UnknownJobException, DataStoreException, NativeProcessRunException,
+            JobInUseException, TooManyJobsException, JobConfigurationException,
+            JobIdAlreadyExistsException, CannotStartSchedulerWhileItIsStoppingException
+    {
+        givenProcessInfo(5);
+        JobManager jobManager = createJobManager();
+
+        JobConfiguration jobConfig = createScheduledJobConfig();
+        Logger jobLogger = mock(Logger.class);
+        when(m_JobLoggerFactory.newLogger("foo")).thenReturn(jobLogger);
+        DataExtractor dataExtractor = mock(DataExtractor.class);
+        when(m_DataExtractorFactory.newExtractor(any(JobDetails.class))).thenReturn(dataExtractor);
+        when(m_ProcessManager.jobIsRunning("foo")).thenReturn(true);
+
+        jobManager.createJob(jobConfig);
 
         jobManager.deleteJob("foo");
 
@@ -591,8 +618,6 @@ public class JobManagerTest
         jobConfig.setId("revenue-by-vendor");
         jobConfig.setAnalysisConfig(analysisConfig);
 
-        when(m_JobProvider.jobIdIsUnique("revenue-by-vendor")).thenReturn(true);
-
         JobDetails job = jobManager.createJob(jobConfig);
 
         assertEquals("sum(revenue) by vendor", job.getAnalysisConfig().getDetectors().get(0).getDetectorDescription());
@@ -704,7 +729,6 @@ public class JobManagerTest
         JobManager jobManager = createJobManager();
         JobConfiguration jobConfig = createScheduledJobConfig();
 
-        when(m_JobProvider.jobIdIsUnique("foo")).thenReturn(true);
         Logger jobLogger = mock(Logger.class);
         when(m_JobLoggerFactory.newLogger("foo")).thenReturn(jobLogger);
         DataExtractor dataExtractor = mock(DataExtractor.class);

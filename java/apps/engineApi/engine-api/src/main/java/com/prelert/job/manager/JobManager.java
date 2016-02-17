@@ -839,6 +839,7 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
         checkJobHasScheduler(jobId);
         LOGGER.info("Stopping scheduler for job: " + jobId);
         m_ScheduledJobs.get(jobId).stopManual();
+        closeJob(jobId);
     }
 
     void checkJobHasScheduler(String jobId) throws NoSuchScheduledJobException

@@ -390,7 +390,6 @@ public class JobScheduler
     public void stopManual() throws UnknownJobException, NativeProcessRunException, JobInUseException
     {
         stop(JobSchedulerStatus.STOPPED);
-        m_DataProcessor.closeJob(m_JobId);
     }
 
 
