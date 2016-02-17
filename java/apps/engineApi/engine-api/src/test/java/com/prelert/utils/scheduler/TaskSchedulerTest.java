@@ -51,24 +51,29 @@ public class TaskSchedulerTest
     }
 
     @Test
-    public void testTaskRunsThriceGiven50MsPeriodAndWaitingFor200Ms()
+    public void testTaskRunsPeriodically() throws InterruptedException
     {
-        TaskScheduler scheduler = new TaskScheduler(() -> m_TaskCount.incrementAndGet(),
+        AtomicLong startMillis = new AtomicLong();
+        CountDownLatch latch = new CountDownLatch(3);
+
+        Runnable task = () -> {
+            if (m_TaskCount.incrementAndGet() == 1)
+            {
+                startMillis.set(System.currentTimeMillis());
+            }
+            latch.countDown();
+        };
+
+        TaskScheduler scheduler = new TaskScheduler(task,
                 () -> LocalDateTime.now().plus(50, ChronoUnit.MILLIS));
         scheduler.start();
-
-        try
-        {
-            Thread.sleep(200);
-        }
-        catch (InterruptedException e)
-        {
-            e.printStackTrace();
-        }
+        latch.await();
         scheduler.stop(1, TimeUnit.SECONDS);
+        long endMillis = System.currentTimeMillis();
 
-        assertTrue(m_TaskCount.get() >= 3);
-        assertTrue(m_TaskCount.get() <= 4);
+        assertTrue(m_TaskCount.get() == 3);
+        assertTrue(endMillis - startMillis.get() > 100);
+        assertTrue(endMillis - startMillis.get() < 200);
     }
 
     @Test
