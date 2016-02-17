@@ -101,7 +101,7 @@ class JobTimeouts implements Shutdownable
         }
         else
         {
-            LOGGER.debug("No future to cancel for job:" + jobId);
+            LOGGER.trace("No future to cancel for job:" + jobId);
         }
     }
 
