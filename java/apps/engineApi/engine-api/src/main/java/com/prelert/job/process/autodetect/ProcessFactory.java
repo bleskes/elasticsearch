@@ -37,6 +37,7 @@ import org.apache.log4j.Logger;
 
 import com.prelert.job.JobDetails;
 import com.prelert.job.JobStatus;
+import com.prelert.job.ModelSnapshot;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.logging.JobLoggerFactory;
@@ -87,6 +88,7 @@ public class ProcessFactory
         String jobId = job.getId();
         Logger logger = m_JobLoggerFactory.newLogger(job.getId());
         Quantiles quantiles = m_JobProvider.getQuantiles(jobId);
+        ModelSnapshot modelSnapshot = m_JobProvider.getModelSnapshotByPriority(jobId);
 
         Process nativeProcess = null;
         List<File> filesToDelete = new ArrayList<>();
@@ -94,7 +96,8 @@ public class ProcessFactory
         {
             // if state is null or empty it will be ignored
             // else it is used to restore the quantiles
-            nativeProcess = ProcessCtrl.buildAutoDetect(job, quantiles, logger, filesToDelete);
+            nativeProcess = ProcessCtrl.buildAutoDetect(job, quantiles, logger,
+                    filesToDelete, modelSnapshot);
         }
         catch (IOException e)
         {

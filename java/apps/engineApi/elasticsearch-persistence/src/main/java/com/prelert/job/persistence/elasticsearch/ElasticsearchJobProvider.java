@@ -75,6 +75,7 @@ import com.prelert.job.CategorizerState;
 import com.prelert.job.JobDetails;
 import com.prelert.job.JobStatus;
 import com.prelert.job.ModelSizeStats;
+import com.prelert.job.ModelSnapshot;
 import com.prelert.job.ModelState;
 import com.prelert.job.SchedulerState;
 import com.prelert.job.UnknownJobException;
@@ -428,6 +429,7 @@ public class ElasticsearchJobProvider implements JobProvider
             XContentBuilder recordMapping = ElasticsearchMappings.recordMapping(termFields);
             XContentBuilder quantilesMapping = ElasticsearchMappings.quantilesMapping();
             XContentBuilder modelStateMapping = ElasticsearchMappings.modelStateMapping();
+            XContentBuilder modelSnapshotMapping = ElasticsearchMappings.modelSnapshotMapping();
             XContentBuilder usageMapping = ElasticsearchMappings.usageMapping();
             XContentBuilder modelSizeStatsMapping = ElasticsearchMappings.modelSizeStatsMapping();
             XContentBuilder influencerMapping = ElasticsearchMappings.influencerMapping(influencers);
@@ -446,6 +448,7 @@ public class ElasticsearchJobProvider implements JobProvider
                     .addMapping(AnomalyRecord.TYPE, recordMapping)
                     .addMapping(Quantiles.TYPE, quantilesMapping)
                     .addMapping(ModelState.TYPE, modelStateMapping)
+                    .addMapping(ModelSnapshot.TYPE, modelSnapshotMapping)
                     .addMapping(Usage.TYPE, usageMapping)
                     .addMapping(ModelSizeStats.TYPE, modelSizeStatsMapping)
                     .addMapping(Influencer.TYPE, influencerMapping)
@@ -1026,6 +1029,48 @@ public class ElasticsearchJobProvider implements JobProvider
             LOGGER.error("Missing index when getting quantiles", e);
             throw new UnknownJobException(jobId);
         }
+    }
+
+    @Override
+    public ModelSnapshot getModelSnapshotByPriority(String jobId)
+    throws UnknownJobException
+    {
+        ElasticsearchJobId elasticJobId = new ElasticsearchJobId(jobId);
+
+        LOGGER.trace("ES API CALL: search all of type " + ModelSnapshot.TYPE
+                + " from index " + elasticJobId.getIndex()
+                + " with sort descending on field " + ModelSnapshot.RESTORE_PRIORITY
+                + " take 1");
+
+        SortBuilder sb = new FieldSortBuilder(ModelSnapshot.RESTORE_PRIORITY)
+                .order(SortOrder.DESC);
+        SearchRequestBuilder searchRequestBuilder = m_Client.prepareSearch(elasticJobId.getIndex())
+                .setTypes(ModelSnapshot.TYPE)
+                .setSize(1)
+                .addSort(sb);
+
+        SearchResponse response = null;
+        try
+        {
+            response = searchRequestBuilder.get();
+        }
+        catch (IndexNotFoundException e)
+        {
+            LOGGER.error("Missing index when getting model snapshot", e);
+            throw new UnknownJobException(jobId);
+        }
+
+        for (SearchHit hit : response.getHits().getHits())
+        {
+            Map<String, Object> m = hit.getSource();
+
+            // replace logstash timestamp name with timestamp
+            m.put(ModelSnapshot.TIMESTAMP, m.remove(ElasticsearchMappings.ES_TIMESTAMP));
+
+            return m_ObjectMapper.convertValue(m, ModelSnapshot.class);
+        }
+
+        return null;
     }
 
     private boolean checkQuantilesVersion(String jobId, GetResponse response)

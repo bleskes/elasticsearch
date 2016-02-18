@@ -29,6 +29,7 @@ import com.prelert.job.Detector;
 import com.prelert.job.JobDetails;
 import com.prelert.job.ModelDebugConfig;
 import com.prelert.job.ModelSizeStats;
+import com.prelert.job.ModelSnapshot;
 import com.prelert.job.quantiles.Quantiles;
 import com.prelert.job.transform.TransformConfig;
 import com.prelert.job.usage.Usage;
@@ -203,8 +204,15 @@ public final class ReservedFieldNames
         ModelSizeStats.BUCKET_ALLOCATION_FAILURES_COUNT,
         ModelSizeStats.MEMORY_STATUS,
 
+        ModelSnapshot.TIMESTAMP,
+        // ModelSnapshot.DESCRIPTION is not reserved because it is an analyzed string
+        ModelSnapshot.RESTORE_PRIORITY,
+        ModelSnapshot.SNAPSHOT_ID,
+        ModelSnapshot.SNAPSHOT_DOC_COUNT,
+
         Quantiles.ID,
         Quantiles.VERSION,
+        Quantiles.TIMESTAMP,
         Quantiles.QUANTILE_STATE,
 
         TransformConfig.TRANSFORM,

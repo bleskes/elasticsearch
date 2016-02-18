@@ -42,6 +42,7 @@ import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import com.prelert.job.ModelSizeStats;
+import com.prelert.job.ModelSnapshot;
 import com.prelert.job.alert.AlertObserver;
 import com.prelert.job.alert.AlertTrigger;
 import com.prelert.job.persistence.JobResultsPersister;
@@ -233,6 +234,10 @@ public class AutoDetectResultsParser
                         logger.debug("Quantiles parsed from output - will " +
                                     "trigger renormalisation of scores");
                         renormaliser.renormalise(quantiles, logger);
+                        break;
+                    case ModelSnapshot.SNAPSHOT_ID:
+                        ModelSnapshot modelSnapshot = new ModelSnapshotParser(parser).parseJsonAfterStartObject();
+                        persister.persistModelSnapshot(modelSnapshot);
                         break;
                     case ModelSizeStats.TYPE:
                         ModelSizeStats modelSizeStats = new ModelSizeStatsParser(parser).parseJsonAfterStartObject();

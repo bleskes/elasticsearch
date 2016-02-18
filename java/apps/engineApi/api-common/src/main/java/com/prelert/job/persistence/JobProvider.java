@@ -18,6 +18,7 @@
 
 package com.prelert.job.persistence;
 
+import com.prelert.job.ModelSnapshot;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.quantiles.Quantiles;
 
@@ -27,6 +28,12 @@ public interface JobProvider extends JobDetailsProvider, JobResultsProvider
      * Get the persisted quantiles state for the job
      */
     public Quantiles getQuantiles(String jobId)
+    throws UnknownJobException;
+
+    /**
+     * Get the model snapshot for the job that has the highest restore priority
+     */
+    public ModelSnapshot getModelSnapshotByPriority(String jobId)
     throws UnknownJobException;
 
     /**
