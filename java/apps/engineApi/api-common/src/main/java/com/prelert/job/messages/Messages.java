@@ -114,7 +114,9 @@ public final class Messages
     public static final String JOB_DATA_CONCURRENT_USE_UPDATE = "job.data.concurrent.use.update";
     public static final String JOB_DATA_CONCURRENT_USE_UPLOAD = "job.data.concurrent.use.upload";
 
-    public static final String JOB_SCHEDULER_CANNOT_START_WHILE_STOPPING = "job.scheduler.cannot.start.while.stopping";
+    public static final String JOB_SCHEDULER_CANNOT_START = "job.scheduler.cannot.start";
+    public static final String JOB_SCHEDULER_CANNOT_STOP_IN_CURRENT_STATE = "job.scheduler.cannot.stop.in.current.state";
+    public static final String JOB_SCHEDULER_FAILED_TO_STOP = "job.scheduler.failed.to.stop";
     public static final String JOB_SCHEDULER_NO_SUCH_SCHEDULED_JOB = "job.scheduler.no.such.scheduled.job";
 
     public static final String JOB_MISSING_QUANTILES = "job.missing.quantiles";

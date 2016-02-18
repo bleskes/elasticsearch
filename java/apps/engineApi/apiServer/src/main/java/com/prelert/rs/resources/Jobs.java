@@ -55,7 +55,8 @@ import com.prelert.job.config.verification.JobConfigurationVerifier;
 import com.prelert.job.exceptions.JobInUseException;
 import com.prelert.job.exceptions.TooManyJobsException;
 import com.prelert.job.logs.JobLogs;
-import com.prelert.job.manager.CannotStartSchedulerWhileItIsStoppingException;
+import com.prelert.job.manager.CannotStartSchedulerException;
+import com.prelert.job.manager.CannotStopSchedulerException;
 import com.prelert.job.manager.JobManager;
 import com.prelert.job.persistence.DataStoreException;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
@@ -169,7 +170,7 @@ public class Jobs extends ResourceWithJobManager
     @Produces(MediaType.APPLICATION_JSON)
     public Response createJob(JobConfiguration config) throws UnknownJobException,
             JobConfigurationException, IOException, TooManyJobsException,
-            JobIdAlreadyExistsException, CannotStartSchedulerWhileItIsStoppingException
+            JobIdAlreadyExistsException, CannotStartSchedulerException
     {
         LOGGER.debug("Creating new job");
 
@@ -222,17 +223,18 @@ public class Jobs extends ResourceWithJobManager
      * @throws JobInUseException If the job cannot be deleted because the
      * native process is in use.
      * @throws DataStoreException
+     * @throws CannotStopSchedulerException If the job is scheduled and its scheduler fails to stop
      */
     @DELETE
     @Path("/{jobId}")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response deleteJob(@PathParam("jobId") String jobId)
-    throws UnknownJobException, NativeProcessRunException, JobInUseException, DataStoreException
+    public Response deleteJob(@PathParam("jobId") String jobId) throws UnknownJobException,
+            NativeProcessRunException, JobInUseException, DataStoreException,
+            CannotStopSchedulerException
     {
         LOGGER.debug("Delete job '" + jobId + "'");
 
-        JobManager manager = jobManager();
-        boolean deleted = manager.deleteJob(jobId);
+        boolean deleted = jobManager().deleteJob(jobId);
 
         if (deleted)
         {

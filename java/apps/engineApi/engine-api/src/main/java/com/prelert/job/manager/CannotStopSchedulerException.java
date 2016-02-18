@@ -29,15 +29,18 @@ package com.prelert.job.manager;
 
 import com.prelert.job.JobException;
 import com.prelert.job.errorcodes.ErrorCodes;
-import com.prelert.job.messages.Messages;
 
-public class CannotStartSchedulerWhileItIsStoppingException extends JobException
+public class CannotStopSchedulerException extends JobException
 {
     private static final long serialVersionUID = -2359537142811349135L;
 
-    public CannotStartSchedulerWhileItIsStoppingException(String jobId)
+    public CannotStopSchedulerException(String msg)
     {
-        super(Messages.getMessage(Messages.JOB_SCHEDULER_CANNOT_START_WHILE_STOPPING, jobId),
-                ErrorCodes.CANNOT_START_JOB_SCHEDULER_WHILE_IT_IS_STOPPING);
+        super(msg, ErrorCodes.CANNOT_STOP_JOB_SCHEDULER);
+    }
+
+    public CannotStopSchedulerException(String msg, Throwable cause)
+    {
+        super(msg, ErrorCodes.CANNOT_STOP_JOB_SCHEDULER, cause);
     }
 }

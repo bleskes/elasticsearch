@@ -429,19 +429,24 @@ public enum ErrorCodes
     CANNOT_ALERT_ON_PROB(60113),
 
     /**
-     * A job's scheduler cannot start while it is still being stopped.
+     * A job's scheduler cannot be started.
      */
-    CANNOT_START_JOB_SCHEDULER_WHILE_IT_IS_STOPPING(60114),
+    CANNOT_START_JOB_SCHEDULER(60114),
+
+    /**
+     * A job's scheduler cannot be stopped.
+     */
+    CANNOT_STOP_JOB_SCHEDULER(60115),
 
     /**
      * There is no such scheduled job.
      */
-    NO_SUCH_SCHEDULED_JOB(60115),
+    NO_SUCH_SCHEDULED_JOB(60116),
 
     /**
-     * There is no such scheduled job.
+     * The requested action is not allowed for a scheduled job.
      */
-    ACTION_NOT_ALLOWED_FOR_SCHEDULED_JOB(60116);
+    ACTION_NOT_ALLOWED_FOR_SCHEDULED_JOB(60117);
 
 
     private long m_ErrorCode;

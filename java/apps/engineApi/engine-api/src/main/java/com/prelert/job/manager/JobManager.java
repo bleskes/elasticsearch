@@ -38,6 +38,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.OptionalLong;
 import java.util.Properties;
 import java.util.concurrent.ExecutionException;
 
@@ -57,6 +58,7 @@ import com.prelert.job.JobDetails;
 import com.prelert.job.JobIdAlreadyExistsException;
 import com.prelert.job.JobSchedulerStatus;
 import com.prelert.job.ModelDebugConfig;
+import com.prelert.job.SchedulerState;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.alert.AlertObserver;
 import com.prelert.job.config.DefaultFrequency;
@@ -240,12 +242,10 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
      * @return The new job or <code>null</code> if an exception occurs.
      * @throws TooManyJobsException If the license is violated
      * @throws JobConfigurationException If the license is violated
-     * @throws JobIdAlreadyExistsException If the id is already taken
-     * @throws CannotStartSchedulerWhileItIsStoppingException If the job scheduler is still being stopped
+     * @throws JobIdAlreadyExistsException If the alias is already taken
      */
     public JobDetails createJob(JobConfiguration jobConfig)
-            throws TooManyJobsException, JobConfigurationException, JobIdAlreadyExistsException,
-            CannotStartSchedulerWhileItIsStoppingException
+            throws TooManyJobsException, JobConfigurationException, JobIdAlreadyExistsException
     {
         JobDetails jobDetails = m_JobFactory.create(jobConfig, m_ProcessManager.numberOfRunningJobs());
 
@@ -258,8 +258,7 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
 
         if (jobDetails.getSchedulerConfig() != null)
         {
-            LOGGER.info("Starting scheduler for job: " + jobDetails.getId());
-            createJobScheduler(jobDetails).start(jobDetails);
+            createJobScheduler(jobDetails);
         }
 
         return jobDetails;
@@ -628,24 +627,29 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
      * @throws NativeProcessRunException
      * @throws JobInUseException If the job cannot be deleted because the
      * native process is in use.
+     * @throws CannotStopSchedulerException If the job is scheduled and its scheduler fails to stop
      */
-    public boolean deleteJob(String jobId)
-    throws UnknownJobException, DataStoreException, NativeProcessRunException, JobInUseException
+    public boolean deleteJob(String jobId) throws UnknownJobException, DataStoreException,
+            NativeProcessRunException, JobInUseException, CannotStopSchedulerException
     {
         try (ActionTicket actionTicket = m_ActionGuardian.tryAcquiringAction(jobId, Action.DELETING))
         {
             LOGGER.debug("Deleting job '" + jobId + "'");
 
+            if (m_ScheduledJobs.containsKey(jobId))
+            {
+                JobScheduler jobScheduler = m_ScheduledJobs.get(jobId);
+                if (jobScheduler.isStarted())
+                {
+                    jobScheduler.stopManual();
+                }
+                m_ScheduledJobs.remove(jobId);
+            }
+
             if (m_ProcessManager.jobIsRunning(jobId))
             {
                 m_JobTimeouts.stopTimeout(jobId);
                 m_ProcessManager.closeJob(jobId);
-            }
-
-            if (m_ScheduledJobs.containsKey(jobId))
-            {
-                m_ScheduledJobs.get(jobId).stopManual();
-                m_ScheduledJobs.remove(jobId);
             }
 
             m_ProcessManager.deletePersistedData(jobId);
@@ -824,17 +828,18 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
         return m_ProcessManager.removeAlertObserver(jobId, ao);
     }
 
-    public void startExistingJobScheduler(String jobId)
-            throws CannotStartSchedulerWhileItIsStoppingException, NoSuchScheduledJobException
+    public void startJobScheduler(String jobId, long startMs, OptionalLong endMs)
+            throws CannotStartSchedulerException, NoSuchScheduledJobException
     {
         checkJobHasScheduler(jobId);
         JobDetails job = getJob(jobId).get();
         LOGGER.info("Starting scheduler for job: " + jobId);
-        m_ScheduledJobs.get(jobId).start(job);
+        m_ScheduledJobs.get(jobId).start(job, startMs, endMs);
     }
 
-    public void stopExistingJobScheduler(String jobId) throws NoSuchScheduledJobException,
-            UnknownJobException, NativeProcessRunException, JobInUseException
+    public void stopJobScheduler(String jobId)
+            throws NoSuchScheduledJobException, CannotStopSchedulerException, UnknownJobException,
+            NativeProcessRunException, JobInUseException
     {
         checkJobHasScheduler(jobId);
         LOGGER.info("Stopping scheduler for job: " + jobId);
@@ -861,23 +866,40 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
 
         for (JobDetails job : getJobs(0, MAX_JOBS_TO_RESTART).queryResults())
         {
-            if (job.getSchedulerConfig() == null)
+            if (job.getSchedulerConfig() != null)
             {
-                continue;
-            }
-            JobScheduler jobScheduler = createJobScheduler(job);
-            if (job.getSchedulerStatus() == JobSchedulerStatus.STARTED)
-            {
-                try
+                JobScheduler jobScheduler = createJobScheduler(job);
+                if (job.getSchedulerStatus() == JobSchedulerStatus.STARTED)
                 {
-                    LOGGER.info("Starting scheduler for job: " + job.getId());
-                    jobScheduler.start(job);
-                }
-                catch (CannotStartSchedulerWhileItIsStoppingException e)
-                {
-                    LOGGER.error("Failed to restart scheduler for job: " + job.getId(), e);
+                    restartScheduledJob(job, jobScheduler);
                 }
             }
+        }
+    }
+
+    private void restartScheduledJob(JobDetails job, JobScheduler scheduler)
+    {
+        Optional<SchedulerState> optionalSchedulerState = m_JobProvider.getSchedulerState(job.getId());
+        if (!optionalSchedulerState.isPresent())
+        {
+            LOGGER.error("Failed to restart scheduler for job: " + job.getId()
+                    + ". No schedulerState could be found.");
+            return;
+        }
+        SchedulerState schedulerState = optionalSchedulerState.get();
+        long startTimeMs = schedulerState.getStartTimeMillis() == null ? 0
+                : schedulerState.getStartTimeMillis();
+        OptionalLong endTimeMs = schedulerState.getEndTimeMillis() == null ? OptionalLong.empty()
+                : OptionalLong.of(schedulerState.getEndTimeMillis());
+
+        try
+        {
+            LOGGER.info("Starting scheduler for job: " + job.getId());
+            scheduler.start(job, startTimeMs, endTimeMs);
+        }
+        catch (CannotStartSchedulerException e)
+        {
+            LOGGER.error("Failed to restart scheduler for job: " + job.getId(), e);
         }
     }
 

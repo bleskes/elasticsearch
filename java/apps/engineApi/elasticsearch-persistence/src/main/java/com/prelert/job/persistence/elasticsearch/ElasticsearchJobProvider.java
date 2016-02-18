@@ -27,6 +27,8 @@
 
 package com.prelert.job.persistence.elasticsearch;
 
+import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -74,6 +76,7 @@ import com.prelert.job.JobDetails;
 import com.prelert.job.JobStatus;
 import com.prelert.job.ModelSizeStats;
 import com.prelert.job.ModelState;
+import com.prelert.job.SchedulerState;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.persistence.BatchedResultsIterator;
@@ -1089,6 +1092,60 @@ public class ElasticsearchJobProvider implements JobProvider
         }
 
         return true;
+    }
+
+    @Override
+    public boolean updateSchedulerState(String jobId, SchedulerState schedulerState)
+            throws UnknownJobException
+    {
+        LOGGER.trace("ES API CALL: update scheduler state for job " + jobId);
+
+        ElasticsearchJobId esJobId = new ElasticsearchJobId(jobId);
+
+        try
+        {
+            m_Client.prepareIndex(esJobId.getIndex(), SchedulerState.TYPE, SchedulerState.TYPE)
+                    .setSource(jsonBuilder()
+                            .startObject()
+                                .field(SchedulerState.START_TIME_MILLIS, schedulerState.getStartTimeMillis())
+                                .field(SchedulerState.END_TIME_MILLIS, schedulerState.getEndTimeMillis())
+                            .endObject())
+                    .execute().actionGet();
+        }
+        catch (IndexNotFoundException e)
+        {
+            throw new UnknownJobException(jobId);
+        }
+        catch (IOException e)
+        {
+            LOGGER.error("Error while updating schedulerState", e);
+        }
+
+        return true;
+    }
+
+    @Override
+    public Optional<SchedulerState> getSchedulerState(String jobId)
+    {
+        Optional<SchedulerState> result = Optional.empty();
+        ElasticsearchJobId esJobId = new ElasticsearchJobId(jobId);
+        GetResponse response = null;
+        try
+        {
+            response = m_Client.prepareGet(esJobId.getIndex(), SchedulerState.TYPE, SchedulerState.TYPE).get();
+        }
+        catch (IndexNotFoundException e)
+        {
+            LOGGER.warn("No schedulerState could be retrieved for job: " + jobId, e);
+        }
+
+        if (response != null && response.isExists())
+        {
+            SchedulerState schedulerState = m_ObjectMapper.convertValue(response.getSource(),
+                    SchedulerState.class);
+            result = Optional.of(schedulerState);
+        }
+        return result;
     }
 }
 

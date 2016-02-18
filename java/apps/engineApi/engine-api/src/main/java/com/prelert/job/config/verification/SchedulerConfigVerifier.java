@@ -28,7 +28,6 @@ package com.prelert.job.config.verification;
 
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Date;
 import java.util.List;
 
 import com.prelert.job.SchedulerConfig;
@@ -94,8 +93,6 @@ public final class SchedulerConfigVerifier
         checkFieldIsNull(dataSource, SchedulerConfig.TYPES, config.getTypes());
         checkFieldIsNull(dataSource, SchedulerConfig.AGGREGATIONS, config.getAggregations());
         checkFieldIsNull(dataSource, SchedulerConfig.QUERY, config.getQuery());
-        checkFieldIsNull(dataSource, SchedulerConfig.START_TIME, config.getStartTime());
-        checkFieldIsNull(dataSource, SchedulerConfig.END_TIME, config.getEndTime());
     }
 
     private static void verifyElasticsearchSchedulerConfig(SchedulerConfig config,
@@ -108,7 +105,6 @@ public final class SchedulerConfigVerifier
         {
             checkFieldIsNull(dataSource, SchedulerConfig.AGGS, config.getAggs());
         }
-        checkTimesInOrder(SchedulerConfig.START_TIME, config.getStartTime(), config.getEndTime());
         checkFieldIsNull(dataSource, SchedulerConfig.PATH, config.getPath());
         checkFieldIsNull(dataSource, SchedulerConfig.TAIL, config.getTail());
     }
@@ -164,15 +160,6 @@ public final class SchedulerConfigVerifier
         if (value != null && value < 0)
         {
             throwInvalidOptionValue(fieldName, value);
-        }
-    }
-
-    private static void checkTimesInOrder(String startTimeFieldName, Date startTime, Date endTime)
-            throws JobConfigurationException
-    {
-        if (startTime != null && endTime != null && startTime.getTime() >= endTime.getTime())
-        {
-            throwInvalidOptionValue(startTimeFieldName, startTime);
         }
     }
 
