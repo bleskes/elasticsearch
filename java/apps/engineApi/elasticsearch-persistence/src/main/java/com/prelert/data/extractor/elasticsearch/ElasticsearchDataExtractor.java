@@ -242,10 +242,14 @@ public class ElasticsearchDataExtractor implements DataExtractor
             throws IOException
     {
         byte[] peek = new byte[PUSHBACK_BUFFER_BYTES];
-        stream.read(peek);
-        String peekString = new String(peek, StandardCharsets.UTF_8);
+        int bytesRead = stream.read(peek);
+
+        // We make the assumption here that invalid byte sequences will be read as invalid char
+        // rather than throwing an exception
+        String peekString = new String(peek, 0, bytesRead, StandardCharsets.UTF_8);
+
         Matcher matcher = pattern.matcher(peekString);
-        stream.unread(peek);
+        stream.unread(peek, 0, bytesRead);
         return matcher;
     }
 
