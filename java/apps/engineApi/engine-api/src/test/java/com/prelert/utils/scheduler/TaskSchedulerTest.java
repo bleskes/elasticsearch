@@ -72,8 +72,8 @@ public class TaskSchedulerTest
         long endMillis = System.currentTimeMillis();
 
         assertTrue(m_TaskCount.get() == 3);
-        assertTrue(endMillis - startMillis.get() > 100);
-        assertTrue(endMillis - startMillis.get() < 200);
+        assertTrue(endMillis - startMillis.get() > 90);
+        assertTrue(endMillis - startMillis.get() < 160);
     }
 
     @Test
