@@ -53,6 +53,7 @@ public final class Messages
     public static final String JOB_AUDIT_SCHEDULE_LOOKBACK_COMPLETED = "job.audit.schedule.lookback.completed";
     public static final String JOB_AUDIT_SCHEDULE_STOPPED = "job.audit.schedule.stopped";
     public static final String JOB_AUDIT_SCHEDULE_NO_DATA = "job.audit.schedule.no.data";
+    public static final String JOB_AUDIR_SCHEDULE_DATA_SEEN_AGAIN = "job.audit.schedule.data.seen.again";
     public static final String JOB_AUDIT_SCHEDULE_DATA_EXTRACTION_ERROR = "job.audit.schedule.data.extraction.error";
     public static final String JOB_AUDIT_SCHEDULE_DATA_EXTRACTION_RECOVERED = "job.audit.schedule.data.extraction.recovered";
 

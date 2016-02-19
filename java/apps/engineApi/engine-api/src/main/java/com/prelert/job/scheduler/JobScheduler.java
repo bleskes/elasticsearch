@@ -76,7 +76,6 @@ public class JobScheduler
             new DataLoadParams(false, new TimeRange(null, null));
     private static final int STOP_TIMEOUT_MINUTES = 60;
     private static final int ADDITIONAL_QUERY_DELAY_MS = 100;
-    private static final int EMPTY_DATA_WARN_COUNT = 10;
 
     private final String m_JobId;
     private final long m_BucketSpanMs;
@@ -92,9 +91,7 @@ public class JobScheduler
     private volatile Logger m_Logger;
     private volatile JobSchedulerStatus m_Status;
     private volatile boolean m_IsLookbackOnly;
-    private volatile boolean m_HasDataExtractionProblems;
-    private volatile String m_LastDataExtractionProblem;
-    private volatile int m_EmptyDataCount;
+    private final ProblemTracker m_ProblemTracker;
 
     /**
      * Constructor
@@ -121,7 +118,7 @@ public class JobScheduler
         m_JobProvider = Objects.requireNonNull(jobProvider);
         m_JobLoggerFactory = Objects.requireNonNull(jobLoggerFactory);
         m_Status = JobSchedulerStatus.STOPPED;
-        m_EmptyDataCount = 0;
+        m_ProblemTracker = new ProblemTracker(() -> m_JobProvider.audit(m_JobId));
     }
 
     private Runnable createNextTask()
@@ -150,15 +147,10 @@ public class JobScheduler
             return;
         }
 
-        boolean hadErrors = m_HasDataExtractionProblems;
-        String previousProblem = m_LastDataExtractionProblem;
-
         Date latestRecordTimestamp = null;
-        m_HasDataExtractionProblems = false;
-        m_LastDataExtractionProblem = null;
         m_DataExtractor.newSearch(String.valueOf(start), String.valueOf(end), m_Logger);
         while (m_DataExtractor.hasNext() && m_Status == JobSchedulerStatus.STARTED
-                && !m_HasDataExtractionProblems)
+                && !m_ProblemTracker.hasDataExtractionProblems())
         {
             Optional<InputStream> extractedData = tryExtractingNextAvailableData();
             if (extractedData.isPresent())
@@ -171,35 +163,19 @@ public class JobScheduler
             }
         }
 
-        // If there was a failure return without advancing time in order to retry
-        if (m_HasDataExtractionProblems)
+        // Only advance time when there are no problems in order to retry
+        if (!m_ProblemTracker.hasDataExtractionProblems())
         {
-            if (!Objects.equals(previousProblem, m_LastDataExtractionProblem))
-            {
-                audit().error(Messages.getMessage(Messages.JOB_AUDIT_SCHEDULE_DATA_EXTRACTION_ERROR,
-                        m_LastDataExtractionProblem));
-            }
-            return;
+            m_ProblemTracker.updateEmptyDataCount(latestRecordTimestamp == null);
+            updateLastEndTime(latestRecordTimestamp, end);
+            makeResultsAvailable();
         }
-
-        if (hadErrors)
-        {
-            auditDataExtractionRecovered();
-        }
-
-        updateEmptyDataCount(latestRecordTimestamp == null);
-        updateLastEndTime(latestRecordTimestamp, end);
-        makeResultsAvailable();
+        m_ProblemTracker.finishReport();
     }
 
     private Auditor audit()
     {
         return m_JobProvider.audit(m_JobId);
-    }
-
-    private void auditDataExtractionRecovered()
-    {
-        audit().info(Messages.getMessage(Messages.JOB_AUDIT_SCHEDULE_DATA_EXTRACTION_RECOVERED));
     }
 
     private Optional<InputStream> tryExtractingNextAvailableData()
@@ -210,30 +186,9 @@ public class JobScheduler
         }
         catch (IOException e)
         {
-            m_HasDataExtractionProblems = true;
-            m_LastDataExtractionProblem = e.getMessage();
+            m_ProblemTracker.reportProblem(e.getMessage());
             m_Logger.error("An error occurred while extracting data", e);
             return Optional.empty();
-        }
-    }
-
-    private void updateEmptyDataCount(boolean empty)
-    {
-        if (empty && m_EmptyDataCount < EMPTY_DATA_WARN_COUNT)
-        {
-            m_EmptyDataCount++;
-            if (m_EmptyDataCount == EMPTY_DATA_WARN_COUNT)
-            {
-                audit().warning(Messages.getMessage(Messages.JOB_AUDIT_SCHEDULE_NO_DATA));
-            }
-        }
-        else if (!empty)
-        {
-            if (m_EmptyDataCount >= EMPTY_DATA_WARN_COUNT)
-            {
-                auditDataExtractionRecovered();
-            }
-            m_EmptyDataCount = 0;
         }
     }
 
@@ -297,8 +252,7 @@ public class JobScheduler
                 | TooManyJobsException | MalformedJsonException e)
         {
             m_Logger.error("An error has occurred while submitting data to job '" + m_JobId + "'", e);
-            m_HasDataExtractionProblems = true;
-            m_LastDataExtractionProblem = e.getMessage();
+            m_ProblemTracker.reportProblem(e.getMessage());
         }
         return new DataCounts();
     }
