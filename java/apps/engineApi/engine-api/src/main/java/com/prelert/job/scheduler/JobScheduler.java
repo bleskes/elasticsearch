@@ -25,7 +25,7 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.job.manager;
+package com.prelert.job.scheduler;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -50,12 +50,13 @@ import com.prelert.job.DataCounts;
 import com.prelert.job.JobDetails;
 import com.prelert.job.JobSchedulerStatus;
 import com.prelert.job.UnknownJobException;
+import com.prelert.job.audit.Auditor;
 import com.prelert.job.data.extraction.DataExtractor;
 import com.prelert.job.exceptions.JobInUseException;
 import com.prelert.job.exceptions.TooManyJobsException;
 import com.prelert.job.logging.JobLoggerFactory;
 import com.prelert.job.messages.Messages;
-import com.prelert.job.persistence.JobDetailsProvider;
+import com.prelert.job.persistence.JobProvider;
 import com.prelert.job.process.exceptions.MalformedJsonException;
 import com.prelert.job.process.exceptions.MissingFieldException;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
@@ -66,6 +67,7 @@ import com.prelert.job.process.params.TimeRange;
 import com.prelert.job.status.HighProportionOfBadTimestampsException;
 import com.prelert.job.status.OutOfOrderRecordsException;
 import com.prelert.utils.scheduler.TaskScheduler;
+import com.prelert.utils.time.TimeUtils;
 
 public class JobScheduler
 {
@@ -81,7 +83,7 @@ public class JobScheduler
     private final long m_QueryDelayMs;
     private final DataExtractor m_DataExtractor;
     private final DataProcessor m_DataProcessor;
-    private final JobDetailsProvider m_JobProvider;
+    private final JobProvider m_JobProvider;
     private final JobLoggerFactory m_JobLoggerFactory;
     private volatile ExecutorService m_LookbackExecutor;
     private volatile TaskScheduler m_RealTimeScheduler;
@@ -89,7 +91,7 @@ public class JobScheduler
     private volatile Logger m_Logger;
     private volatile JobSchedulerStatus m_Status;
     private volatile boolean m_IsLookbackOnly;
-    private volatile boolean m_HasDataExtractionProblems;
+    private final ProblemTracker m_ProblemTracker;
 
     /**
      * Constructor
@@ -105,7 +107,7 @@ public class JobScheduler
      */
     public JobScheduler(String jobId, Duration bucketSpan, Duration frequency, Duration queryDelay,
             DataExtractor dataExtractor, DataProcessor dataProcessor,
-            JobDetailsProvider jobProvider, JobLoggerFactory jobLoggerFactory)
+            JobProvider jobProvider, JobLoggerFactory jobLoggerFactory)
     {
         m_JobId = jobId;
         m_BucketSpanMs = bucketSpan.toMillis();
@@ -116,6 +118,7 @@ public class JobScheduler
         m_JobProvider = Objects.requireNonNull(jobProvider);
         m_JobLoggerFactory = Objects.requireNonNull(jobLoggerFactory);
         m_Status = JobSchedulerStatus.STOPPED;
+        m_ProblemTracker = new ProblemTracker(() -> m_JobProvider.audit(m_JobId));
     }
 
     private Runnable createNextTask()
@@ -139,18 +142,16 @@ public class JobScheduler
 
     private void extractAndProcessData(long start, long end)
     {
-        if (start == end)
+        if (end <= start)
         {
             return;
         }
 
         Date latestRecordTimestamp = null;
-        m_HasDataExtractionProblems = false;
         m_DataExtractor.newSearch(String.valueOf(start), String.valueOf(end), m_Logger);
         while (m_DataExtractor.hasNext() && m_Status == JobSchedulerStatus.STARTED
-                && !m_HasDataExtractionProblems)
+                && !m_ProblemTracker.hasDataExtractionProblems())
         {
-            m_HasDataExtractionProblems = false;
             Optional<InputStream> extractedData = tryExtractingNextAvailableData();
             if (extractedData.isPresent())
             {
@@ -162,14 +163,19 @@ public class JobScheduler
             }
         }
 
-        // If there was a failure return without advancing time in order to retry
-        if (m_HasDataExtractionProblems)
+        // Only advance time when there are no problems in order to retry
+        if (!m_ProblemTracker.hasDataExtractionProblems())
         {
-            return;
+            m_ProblemTracker.updateEmptyDataCount(latestRecordTimestamp == null);
+            updateLastEndTime(latestRecordTimestamp, end);
+            makeResultsAvailable();
         }
+        m_ProblemTracker.finishReport();
+    }
 
-        updateLastEndTime(latestRecordTimestamp, end);
-        makeResultsAvailable();
+    private Auditor audit()
+    {
+        return m_JobProvider.audit(m_JobId);
     }
 
     private Optional<InputStream> tryExtractingNextAvailableData()
@@ -180,8 +186,8 @@ public class JobScheduler
         }
         catch (IOException e)
         {
-            m_HasDataExtractionProblems = true;
-            m_Logger.error("An error occurred while extracting data");
+            m_ProblemTracker.reportProblem(e.getMessage());
+            m_Logger.error("An error occurred while extracting data", e);
             return Optional.empty();
         }
     }
@@ -246,7 +252,7 @@ public class JobScheduler
                 | TooManyJobsException | MalformedJsonException e)
         {
             m_Logger.error("An error has occurred while submitting data to job '" + m_JobId + "'", e);
-            m_HasDataExtractionProblems = true;
+            m_ProblemTracker.reportProblem(e.getMessage());
         }
         return new DataCounts();
     }
@@ -308,9 +314,15 @@ public class JobScheduler
     private Runnable createLookbackAndStartRealTimeTask(long start, long end)
     {
         return () -> {
-            m_Logger.info("Starting lookback");
-            extractAndProcessData(start, end);
-            m_Logger.info("Lookback has finished");
+            boolean runLookback = end > start;
+            if (runLookback)
+            {
+                m_Logger.info("Starting lookback");
+                auditLookbackStarted(start, end);
+                extractAndProcessData(start, end);
+                m_Logger.info("Lookback has finished");
+                audit().info(Messages.getMessage(Messages.JOB_AUDIT_SCHEDULER_LOOKBACK_COMPLETED));
+            }
             if (m_Status == JobSchedulerStatus.STARTED)
             {
                 if (m_IsLookbackOnly)
@@ -319,11 +331,18 @@ public class JobScheduler
                 }
                 else
                 {
-                    startRealTime();
+                    startRealTime(runLookback);
                 }
             }
             m_LookbackExecutor.shutdown();
         };
+    }
+
+    private void auditLookbackStarted(long start, long end)
+    {
+        String msg = Messages.getMessage(Messages.JOB_AUDIT_SCHEDULER_STARTED_FROM_TO,
+                TimeUtils.formatEpochMillisAsIso(start), TimeUtils.formatEpochMillisAsIso(end));
+        audit().info(msg);
     }
 
     private void finishLookback()
@@ -345,11 +364,23 @@ public class JobScheduler
             updateStatus(finalStatus);
             m_JobLoggerFactory.close(m_JobId, m_Logger);
             m_Logger = null;
+            if (finalStatus == JobSchedulerStatus.STOPPED)
+            {
+                audit().info(Messages.getMessage(Messages.JOB_AUDIT_SCHEDULER_STOPPED));
+            }
         }
     }
 
-    private void startRealTime()
+    private void startRealTime(boolean wasLookbackRun)
     {
+        if (wasLookbackRun)
+        {
+            audit().info(Messages.getMessage(Messages.JOB_AUDIT_SCHEDULER_CONTINUED_REALTIME));
+        }
+        else
+        {
+            audit().info(Messages.getMessage(Messages.JOB_AUDIT_SCHEDULER_STARTED_REALTIME));
+        }
         m_Logger.info("Entering real-time mode");
         m_RealTimeScheduler = new TaskScheduler(createNextTask(), calculateNextTime());
         m_RealTimeScheduler.start();

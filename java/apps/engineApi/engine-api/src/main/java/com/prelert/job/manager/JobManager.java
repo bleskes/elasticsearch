@@ -61,6 +61,7 @@ import com.prelert.job.ModelDebugConfig;
 import com.prelert.job.SchedulerState;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.alert.AlertObserver;
+import com.prelert.job.audit.Auditor;
 import com.prelert.job.config.DefaultFrequency;
 import com.prelert.job.config.verification.JobConfigurationException;
 import com.prelert.job.data.extraction.DataExtractorFactory;
@@ -88,6 +89,10 @@ import com.prelert.job.results.AnomalyRecord;
 import com.prelert.job.results.Bucket;
 import com.prelert.job.results.CategoryDefinition;
 import com.prelert.job.results.Influencer;
+import com.prelert.job.scheduler.CannotStartSchedulerException;
+import com.prelert.job.scheduler.CannotStopSchedulerException;
+import com.prelert.job.scheduler.DataProcessor;
+import com.prelert.job.scheduler.JobScheduler;
 import com.prelert.job.status.HighProportionOfBadTimestampsException;
 import com.prelert.job.status.OutOfOrderRecordsException;
 import com.prelert.job.status.none.NoneStatusReporter;
@@ -255,6 +260,7 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
         }
 
         m_JobProvider.createJob(jobDetails);
+        audit(jobDetails.getId()).info(Messages.getMessage(Messages.JOB_AUDIT_CREATED));
 
         if (jobDetails.getSchedulerConfig() != null)
         {
@@ -661,7 +667,12 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
 
             m_ProcessManager.deletePersistedData(jobId);
 
-            return m_JobProvider.deleteJob(jobId);
+            boolean success = m_JobProvider.deleteJob(jobId);
+            if (success)
+            {
+                audit(jobId).info(Messages.getMessage(Messages.JOB_AUDIT_DELETED));
+            }
+            return success;
         }
     }
 
@@ -957,5 +968,10 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
         m_ScheduledJobs.clear();
 
         m_JobTimeouts.shutdown();
+    }
+
+    public Auditor audit(String jobId)
+    {
+        return m_JobProvider.audit(jobId);
     }
 }

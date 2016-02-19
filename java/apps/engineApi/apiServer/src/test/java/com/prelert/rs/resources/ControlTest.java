@@ -47,8 +47,6 @@ import org.mockito.ArgumentCaptor;
 import com.prelert.job.JobException;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.errorcodes.ErrorCodes;
-import com.prelert.job.manager.CannotStartSchedulerException;
-import com.prelert.job.manager.NoSuchScheduledJobException;
 import com.prelert.rs.data.Acknowledgement;
 import com.prelert.rs.exception.InvalidParametersException;
 
@@ -67,8 +65,7 @@ public class ControlTest extends ServiceTest
     }
 
     @Test
-    public void testStartScheduledJob_GivenEndEarlierThanStart()
-            throws CannotStartSchedulerException, NoSuchScheduledJobException, UnknownJobException
+    public void testStartScheduledJob_GivenEndEarlierThanStart() throws JobException
     {
         m_ExpectedException.expect(InvalidParametersException.class);
         m_ExpectedException.expectMessage(

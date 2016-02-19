@@ -142,6 +142,7 @@ public class JobUpdater
         }
 
         writeUpdateConfigMessage();
+        m_JobManager.audit(m_JobId).info(Messages.getMessage(Messages.JOB_AUDIT_UPDATED));
         return Response.ok(new Acknowledgement()).build();
     }
 

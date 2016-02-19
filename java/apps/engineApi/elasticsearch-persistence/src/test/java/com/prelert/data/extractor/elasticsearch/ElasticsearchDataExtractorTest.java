@@ -45,7 +45,9 @@ import java.util.stream.Collectors;
 
 import org.apache.log4j.Logger;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
@@ -56,6 +58,8 @@ public class ElasticsearchDataExtractorTest
     private static final List<String> TYPES = Arrays.asList("dataType");
     private static final String SEARCH = "\"match_all\": {}";
     private static final String TIME_FIELD = "time";
+
+    @Rule public ExpectedException m_ExpectedException = ExpectedException.none();
 
     @Mock private Logger m_Logger;
 
@@ -193,24 +197,30 @@ public class ElasticsearchDataExtractorTest
     @Test
     public void testDataExtraction_GivenInitialResponseContainsNoScrollId() throws IOException
     {
+        m_ExpectedException.expect(IOException.class);
+        m_ExpectedException.expectMessage("Field '_scroll_id' was expected but not found in response:\n{}");
+
         String initialResponse = "{}";
-        List<HttpGetResponse> responses = Arrays.asList(new HttpGetResponse(
-                toStream(initialResponse), 200));
+        HttpGetResponse httpGetResponse = new HttpGetResponse(
+                toStream(initialResponse), 200);
+        List<HttpGetResponse> responses = Arrays.asList(httpGetResponse);
         MockHttpGetRequester requester = new MockHttpGetRequester(responses);
         createExtractor(requester);
 
         m_Extractor.newSearch("1400000000", "1500000000", m_Logger);
 
         assertTrue(m_Extractor.hasNext());
-        assertFalse(m_Extractor.next().isPresent());
-        assertFalse(m_Extractor.hasNext());
-        requester.assertEqualRequestsToResponses();
+        m_Extractor.next();
     }
 
     @Test
     public void testDataExtraction_GivenInitialResponseDoesNotReturnOk() throws IOException
     {
-        String initialResponse = "";
+        m_ExpectedException.expect(IOException.class);
+        m_ExpectedException.expectMessage(
+                "Request 'http://localhost:9200/dataIndex/dataType/_search?scroll=60m&size=1000' failed with status code: 500. Response was:\n{}");
+
+        String initialResponse = "{}";
         List<HttpGetResponse> responses = Arrays.asList(new HttpGetResponse(
                 toStream(initialResponse), 500));
         MockHttpGetRequester requester = new MockHttpGetRequester(responses);
@@ -219,20 +229,23 @@ public class ElasticsearchDataExtractorTest
         m_Extractor.newSearch("1400000000", "1500000000", m_Logger);
 
         assertTrue(m_Extractor.hasNext());
-        assertFalse(m_Extractor.next().isPresent());
-        assertFalse(m_Extractor.hasNext());
-        requester.assertEqualRequestsToResponses();
+        m_Extractor.next();
     }
 
     @Test
     public void testDataExtraction_GivenScrollResponseDoesNotReturnOk() throws IOException
     {
+        m_ExpectedException.expect(IOException.class);
+        m_ExpectedException.expectMessage(
+                "Request 'http://localhost:9200/_search/scroll?scroll=60m' with scroll id 'c2Nhbjs2OzM0NDg1ODpzRlBLc0FXNlNyNm5JWUc1' "
+                + "failed with status code: 500. Response was:\n{}");
+
         String initialResponse = "{"
                 + "\"_scroll_id\":\"c2Nhbjs2OzM0NDg1ODpzRlBLc0FXNlNyNm5JWUc1\","
                 + "}";
         List<HttpGetResponse> responses = Arrays.asList(
                 new HttpGetResponse(toStream(initialResponse), 200),
-                new HttpGetResponse(toStream(""), 500));
+                new HttpGetResponse(toStream("{}"), 500));
         MockHttpGetRequester requester = new MockHttpGetRequester(responses);
         createExtractor(requester);
 
@@ -241,24 +254,28 @@ public class ElasticsearchDataExtractorTest
         assertTrue(m_Extractor.hasNext());
         assertEquals(initialResponse, streamToString(m_Extractor.next().get()));
         assertTrue(m_Extractor.hasNext());
-        assertFalse(m_Extractor.next().isPresent());
-        assertFalse(m_Extractor.hasNext());
-        requester.assertEqualRequestsToResponses();
+        m_Extractor.next();
     }
 
-    @Test (expected = NoSuchElementException.class)
+    @Test
     public void testNext_ThrowsGivenHasNotNext() throws IOException
     {
-        String initialResponse = "{}";
-        List<HttpGetResponse> responses = Arrays.asList(new HttpGetResponse(
-                toStream(initialResponse), 200));
+        m_ExpectedException.expect(NoSuchElementException.class);
+
+        String initialResponse = "{"
+                + "\"_scroll_id\":\"c2Nhbjs2OzM0NDg1ODpzRlBLc0FXNlNyNm5JWUc1\","
+                + "\"hits\":[]"
+                + "}";
+        List<HttpGetResponse> responses = Arrays.asList(
+                new HttpGetResponse(toStream(initialResponse), 200));
         MockHttpGetRequester requester = new MockHttpGetRequester(responses);
         createExtractor(requester);
-        m_Extractor.newSearch("1400000000", "1500000000", m_Logger);
-        assertTrue(m_Extractor.hasNext());
-        m_Extractor.next();
-        assertFalse(m_Extractor.hasNext());
 
+        m_Extractor.newSearch("1400000000", "1500000000", m_Logger);
+
+        assertTrue(m_Extractor.hasNext());
+        assertFalse(m_Extractor.next().isPresent());
+        assertFalse(m_Extractor.hasNext());
         m_Extractor.next();
     }
 

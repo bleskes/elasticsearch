@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -27,6 +27,7 @@
 
 package com.prelert.rs.resources;
 
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -43,6 +44,7 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
 import com.prelert.job.alert.manager.AlertManager;
+import com.prelert.job.audit.Auditor;
 import com.prelert.job.manager.JobManager;
 
 /**
@@ -52,14 +54,18 @@ public class ServiceTest
 {
     protected static final URI BASE_URI = new JerseyUriBuilder().uri("http://localhost/test").build();
 
-    protected final JobManager m_JobManager;
-    protected final AlertManager m_AlertManager;
-    protected final UriInfo m_UriInfo;
+    private final JobManager m_JobManager;
+    private final Auditor m_Auditor;
+    private final AlertManager m_AlertManager;
+    private final UriInfo m_UriInfo;
 
     protected ServiceTest()
     {
         m_JobManager = mock(JobManager.class);
+        m_Auditor = mock(Auditor.class);
+        when(m_JobManager.audit(anyString())).thenReturn(m_Auditor);
         m_AlertManager = mock(AlertManager.class);
+
         m_UriInfo = mock(UriInfo.class);
         when(m_UriInfo.getBaseUri()).thenReturn(BASE_URI);
         when(m_UriInfo.getBaseUriBuilder()).thenAnswer(new Answer<UriBuilder>()
@@ -86,6 +92,11 @@ public class ServiceTest
     protected JobManager jobManager()
     {
         return m_JobManager;
+    }
+
+    protected Auditor auditor()
+    {
+        return m_Auditor;
     }
 
     protected AlertManager alertManager()

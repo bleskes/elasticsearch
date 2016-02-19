@@ -25,22 +25,20 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.job.manager;
+package com.prelert.job.scheduler;
 
 import com.prelert.job.JobException;
+import com.prelert.job.JobSchedulerStatus;
 import com.prelert.job.errorcodes.ErrorCodes;
+import com.prelert.job.messages.Messages;
 
-public class CannotStopSchedulerException extends JobException
+public class CannotStartSchedulerException extends JobException
 {
     private static final long serialVersionUID = -2359537142811349135L;
 
-    public CannotStopSchedulerException(String msg)
+    public CannotStartSchedulerException(String jobId, JobSchedulerStatus status)
     {
-        super(msg, ErrorCodes.CANNOT_STOP_JOB_SCHEDULER);
-    }
-
-    public CannotStopSchedulerException(String msg, Throwable cause)
-    {
-        super(msg, ErrorCodes.CANNOT_STOP_JOB_SCHEDULER, cause);
+        super(Messages.getMessage(Messages.JOB_SCHEDULER_CANNOT_START, jobId, status),
+                ErrorCodes.CANNOT_START_JOB_SCHEDULER);
     }
 }

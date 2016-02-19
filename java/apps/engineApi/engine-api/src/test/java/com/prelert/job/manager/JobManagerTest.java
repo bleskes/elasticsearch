@@ -86,6 +86,7 @@ import com.prelert.job.SchedulerConfig;
 import com.prelert.job.SchedulerConfig.DataSource;
 import com.prelert.job.SchedulerState;
 import com.prelert.job.UnknownJobException;
+import com.prelert.job.audit.Auditor;
 import com.prelert.job.config.verification.JobConfigurationException;
 import com.prelert.job.data.extraction.DataExtractor;
 import com.prelert.job.data.extraction.DataExtractorFactory;
@@ -105,6 +106,8 @@ import com.prelert.job.process.exceptions.NativeProcessRunException;
 import com.prelert.job.process.params.DataLoadParams;
 import com.prelert.job.process.params.InterimResultsParams;
 import com.prelert.job.process.writer.CsvRecordWriter;
+import com.prelert.job.scheduler.CannotStartSchedulerException;
+import com.prelert.job.scheduler.CannotStopSchedulerException;
 import com.prelert.job.status.HighProportionOfBadTimestampsException;
 import com.prelert.job.status.OutOfOrderRecordsException;
 
@@ -120,12 +123,14 @@ public class JobManagerTest
     @Mock private ProcessManager m_ProcessManager;
     @Mock private DataExtractorFactory m_DataExtractorFactory;
     @Mock private JobLoggerFactory m_JobLoggerFactory;
+    @Mock private Auditor m_Auditor;
 
     @Before
     public void setUp()
     {
         MockitoAnnotations.initMocks(this);
         when(m_JobProvider.jobIdIsUnique(anyString())).thenReturn(true);
+        when(m_JobProvider.audit(anyString())).thenReturn(m_Auditor);
     }
 
     @After
@@ -188,12 +193,15 @@ public class JobManagerTest
         givenProcessInfo(5);
         JobManager jobManager = createJobManager();
         when(m_ProcessManager.jobIsRunning("foo")).thenReturn(false);
+        when(m_JobProvider.deleteJob("foo")).thenReturn(true);
 
         jobManager.deleteJob("foo");
 
         verify(m_ProcessManager, never()).closeJob("foo");
         verify(m_ProcessManager).deletePersistedData("foo");
         verify(m_JobProvider).deleteJob("foo");
+        verify(m_JobProvider).audit("foo");
+        verify(m_Auditor).info("Job deleted");
     }
 
     @Test
@@ -638,6 +646,8 @@ public class JobManagerTest
 
         assertEquals("sum(revenue) by vendor", job.getAnalysisConfig().getDetectors().get(0).getDetectorDescription());
         assertEquals("Named", job.getAnalysisConfig().getDetectors().get(1).getDetectorDescription());
+        verify(m_JobProvider).audit("revenue-by-vendor");
+        verify(m_Auditor).info("Job created");
     }
 
     @Test
