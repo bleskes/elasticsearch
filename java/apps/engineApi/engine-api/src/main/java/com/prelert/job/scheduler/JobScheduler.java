@@ -142,7 +142,7 @@ public class JobScheduler
 
     private void extractAndProcessData(long start, long end)
     {
-        if (start == end)
+        if (end <= start)
         {
             return;
         }
@@ -314,11 +314,15 @@ public class JobScheduler
     private Runnable createLookbackAndStartRealTimeTask(long start, long end)
     {
         return () -> {
-            m_Logger.info("Starting lookback");
-            auditLookbackStarted(start, end);
-            extractAndProcessData(start, end);
-            m_Logger.info("Lookback has finished");
-            audit().info(Messages.getMessage(Messages.JOB_AUDIT_SCHEDULER_LOOKBACK_COMPLETED));
+            boolean runLookback = end > start;
+            if (runLookback)
+            {
+                m_Logger.info("Starting lookback");
+                auditLookbackStarted(start, end);
+                extractAndProcessData(start, end);
+                m_Logger.info("Lookback has finished");
+                audit().info(Messages.getMessage(Messages.JOB_AUDIT_SCHEDULER_LOOKBACK_COMPLETED));
+            }
             if (m_Status == JobSchedulerStatus.STARTED)
             {
                 if (m_IsLookbackOnly)
@@ -327,7 +331,7 @@ public class JobScheduler
                 }
                 else
                 {
-                    startRealTime();
+                    startRealTime(runLookback);
                 }
             }
             m_LookbackExecutor.shutdown();
@@ -367,10 +371,17 @@ public class JobScheduler
         }
     }
 
-    private void startRealTime()
+    private void startRealTime(boolean wasLookbackRun)
     {
+        if (wasLookbackRun)
+        {
+            audit().info(Messages.getMessage(Messages.JOB_AUDIT_SCHEDULER_CONTINUED_REALTIME));
+        }
+        else
+        {
+            audit().info(Messages.getMessage(Messages.JOB_AUDIT_SCHEDULER_STARTED_REALTIME));
+        }
         m_Logger.info("Entering real-time mode");
-        audit().info(Messages.getMessage(Messages.JOB_AUDIT_SCHEDULER_STARTED_REALTIME));
         m_RealTimeScheduler = new TaskScheduler(createNextTask(), calculateNextTime());
         m_RealTimeScheduler.start();
     }

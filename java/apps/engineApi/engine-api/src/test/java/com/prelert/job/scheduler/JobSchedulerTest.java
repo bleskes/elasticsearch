@@ -65,13 +65,16 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.prelert.job.DataCounts;
+import com.prelert.job.JobConfiguration;
 import com.prelert.job.JobDetails;
+import com.prelert.job.JobException;
 import com.prelert.job.JobSchedulerStatus;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.audit.Auditor;
@@ -123,6 +126,38 @@ public class JobSchedulerTest
         when(m_JobLoggerFactory.newLogger(JOB_ID)).thenReturn(m_JobLogger);
         m_StatusChangedLatch = new CountDownLatch(1);
         when(m_JobProvider.audit(anyString())).thenReturn(m_Auditor);
+    }
+
+    @Test
+    public void testStart_GivenEndIsEarlierThanStart() throws JobException
+    {
+        DataExtractor dataExtractor = mock(DataExtractor.class);
+        DataProcessor dataProcessor = mock(DataProcessor.class);
+        m_JobScheduler = createJobScheduler(dataExtractor, dataProcessor);
+
+        m_JobScheduler.start(new JobDetails("foo", new JobConfiguration()), 1000L,
+                OptionalLong.of(500));
+
+        waitUntilStatusBecomes(JobSchedulerStatus.STOPPED);
+        verify(dataProcessor).closeJob("foo");
+        verify(m_Auditor).info("Scheduler stopped");
+        Mockito.verifyNoMoreInteractions(dataExtractor, dataProcessor, m_Auditor);
+    }
+
+    @Test
+    public void testStart_GivenSameStartAndEnd() throws JobException
+    {
+        DataExtractor dataExtractor = mock(DataExtractor.class);
+        DataProcessor dataProcessor = mock(DataProcessor.class);
+        m_JobScheduler = createJobScheduler(dataExtractor, dataProcessor);
+
+        m_JobScheduler.start(new JobDetails("foo", new JobConfiguration()), 1000L,
+                OptionalLong.of(1000));
+
+        waitUntilStatusBecomes(JobSchedulerStatus.STOPPED);
+        verify(dataProcessor).closeJob("foo");
+        verify(m_Auditor).info("Scheduler stopped");
+        Mockito.verifyNoMoreInteractions(dataExtractor, dataProcessor, m_Auditor);
     }
 
     @Test
@@ -287,7 +322,7 @@ public class JobSchedulerTest
         verify(m_JobProvider, times(4)).audit(JOB_ID);
         verify(m_Auditor).info(startsWith("Scheduler started (from:"));
         verify(m_Auditor).info(startsWith("Scheduler lookback completed"));
-        verify(m_Auditor).info(startsWith("Scheduler started in real-time"));
+        verify(m_Auditor).info(startsWith("Scheduler continued in real-time"));
         verify(m_Auditor).info(startsWith("Scheduler stopped"));
     }
 
