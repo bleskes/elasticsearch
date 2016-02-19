@@ -318,7 +318,7 @@ public class JobScheduler
             auditLookbackStarted(start, end);
             extractAndProcessData(start, end);
             m_Logger.info("Lookback has finished");
-            audit().info(Messages.getMessage(Messages.JOB_AUDIT_SCHEDULE_LOOKBACK_COMPLETED));
+            audit().info(Messages.getMessage(Messages.JOB_AUDIT_SCHEDULER_LOOKBACK_COMPLETED));
             if (m_Status == JobSchedulerStatus.STARTED)
             {
                 if (m_IsLookbackOnly)
@@ -336,7 +336,7 @@ public class JobScheduler
 
     private void auditLookbackStarted(long start, long end)
     {
-        String msg = Messages.getMessage(Messages.JOB_AUDIT_SCHEDULE_STARTED_FROM_TO,
+        String msg = Messages.getMessage(Messages.JOB_AUDIT_SCHEDULER_STARTED_FROM_TO,
                 TimeUtils.formatEpochMillisAsIso(start), TimeUtils.formatEpochMillisAsIso(end));
         audit().info(msg);
     }
@@ -362,7 +362,7 @@ public class JobScheduler
             m_Logger = null;
             if (finalStatus == JobSchedulerStatus.STOPPED)
             {
-                audit().info(Messages.getMessage(Messages.JOB_AUDIT_SCHEDULE_STOPPED));
+                audit().info(Messages.getMessage(Messages.JOB_AUDIT_SCHEDULER_STOPPED));
             }
         }
     }
@@ -370,7 +370,7 @@ public class JobScheduler
     private void startRealTime()
     {
         m_Logger.info("Entering real-time mode");
-        audit().info(Messages.getMessage(Messages.JOB_AUDIT_SCHEDULE_STARTED_REALTIME));
+        audit().info(Messages.getMessage(Messages.JOB_AUDIT_SCHEDULER_STARTED_REALTIME));
         m_RealTimeScheduler = new TaskScheduler(createNextTask(), calculateNextTime());
         m_RealTimeScheduler.start();
     }

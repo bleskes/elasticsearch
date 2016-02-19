@@ -103,7 +103,7 @@ public class ProblemTrackerTest
             m_ProblemTracker.updateEmptyDataCount(true);
         }
 
-        verify(m_Auditor).warning("Schedule has been retrieving no data for a while");
+        verify(m_Auditor).warning("Scheduler has been retrieving no data for a while");
     }
 
     @Test
@@ -114,7 +114,7 @@ public class ProblemTrackerTest
             m_ProblemTracker.updateEmptyDataCount(true);
         }
 
-        verify(m_Auditor, times(1)).warning("Schedule has been retrieving no data for a while");
+        verify(m_Auditor, times(1)).warning("Scheduler has been retrieving no data for a while");
     }
 
     @Test
@@ -138,8 +138,8 @@ public class ProblemTrackerTest
         }
         m_ProblemTracker.updateEmptyDataCount(false);
 
-        verify(m_Auditor).warning("Schedule has been retrieving no data for a while");
-        verify(m_Auditor).info("Schedule has started retrieving data again");
+        verify(m_Auditor).warning("Scheduler has been retrieving no data for a while");
+        verify(m_Auditor).info("Scheduler has started retrieving data again");
     }
 
     @Test

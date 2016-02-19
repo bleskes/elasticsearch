@@ -87,10 +87,6 @@ import com.prelert.job.process.exceptions.MissingFieldException;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
 import com.prelert.job.process.params.DataLoadParams;
 import com.prelert.job.process.params.InterimResultsParams;
-import com.prelert.job.scheduler.CannotStartSchedulerException;
-import com.prelert.job.scheduler.CannotStopSchedulerException;
-import com.prelert.job.scheduler.DataProcessor;
-import com.prelert.job.scheduler.JobScheduler;
 import com.prelert.job.status.HighProportionOfBadTimestampsException;
 import com.prelert.job.status.OutOfOrderRecordsException;
 
@@ -154,9 +150,9 @@ public class JobSchedulerTest
         assertFalse(flushParams.get(0).shouldAdvanceTime());
 
         verify(m_JobProvider, times(3)).audit(JOB_ID);
-        verify(m_Auditor).info(startsWith("Schedule started (from:"));
-        verify(m_Auditor).info(startsWith("Schedule lookback completed"));
-        verify(m_Auditor).info(startsWith("Schedule stopped"));
+        verify(m_Auditor).info(startsWith("Scheduler started (from:"));
+        verify(m_Auditor).info(startsWith("Scheduler lookback completed"));
+        verify(m_Auditor).info(startsWith("Scheduler stopped"));
     }
 
     @Test
@@ -289,10 +285,10 @@ public class JobSchedulerTest
         }
 
         verify(m_JobProvider, times(4)).audit(JOB_ID);
-        verify(m_Auditor).info(startsWith("Schedule started (from:"));
-        verify(m_Auditor).info(startsWith("Schedule lookback completed"));
-        verify(m_Auditor).info(startsWith("Schedule started in real-time"));
-        verify(m_Auditor).info(startsWith("Schedule stopped"));
+        verify(m_Auditor).info(startsWith("Scheduler started (from:"));
+        verify(m_Auditor).info(startsWith("Scheduler lookback completed"));
+        verify(m_Auditor).info(startsWith("Scheduler started in real-time"));
+        verify(m_Auditor).info(startsWith("Scheduler stopped"));
     }
 
     @Test

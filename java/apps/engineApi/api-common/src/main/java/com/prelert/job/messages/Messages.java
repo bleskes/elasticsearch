@@ -48,14 +48,14 @@ public final class Messages
     public static final String JOB_AUDIT_CREATED = "job.audit.created";
     public static final String JOB_AUDIT_DELETED = "job.audit.deleted";
     public static final String JOB_AUDIT_UPDATED = "job.audit.updated";
-    public static final String JOB_AUDIT_SCHEDULE_STARTED_FROM_TO = "job.audit.schedule.started.from.to";
-    public static final String JOB_AUDIT_SCHEDULE_STARTED_REALTIME = "job.audit.schedule.started.realtime";
-    public static final String JOB_AUDIT_SCHEDULE_LOOKBACK_COMPLETED = "job.audit.schedule.lookback.completed";
-    public static final String JOB_AUDIT_SCHEDULE_STOPPED = "job.audit.schedule.stopped";
-    public static final String JOB_AUDIT_SCHEDULE_NO_DATA = "job.audit.schedule.no.data";
-    public static final String JOB_AUDIR_SCHEDULE_DATA_SEEN_AGAIN = "job.audit.schedule.data.seen.again";
-    public static final String JOB_AUDIT_SCHEDULE_DATA_EXTRACTION_ERROR = "job.audit.schedule.data.extraction.error";
-    public static final String JOB_AUDIT_SCHEDULE_DATA_EXTRACTION_RECOVERED = "job.audit.schedule.data.extraction.recovered";
+    public static final String JOB_AUDIT_SCHEDULER_STARTED_FROM_TO = "job.audit.scheduler.started.from.to";
+    public static final String JOB_AUDIT_SCHEDULER_STARTED_REALTIME = "job.audit.scheduler.started.realtime";
+    public static final String JOB_AUDIT_SCHEDULER_LOOKBACK_COMPLETED = "job.audit.scheduler.lookback.completed";
+    public static final String JOB_AUDIT_SCHEDULER_STOPPED = "job.audit.scheduler.stopped";
+    public static final String JOB_AUDIT_SCHEDULER_NO_DATA = "job.audit.scheduler.no.data";
+    public static final String JOB_AUDIR_SCHEDULER_DATA_SEEN_AGAIN = "job.audit.scheduler.data.seen.again";
+    public static final String JOB_AUDIT_SCHEDULER_DATA_EXTRACTION_ERROR = "job.audit.scheduler.data.extraction.error";
+    public static final String JOB_AUDIT_SCHEDULER_DATA_EXTRACTION_RECOVERED = "job.audit.scheduler.data.extraction.recovered";
 
     public static final String JOB_CONFIG_BYFIELD_INCOMPATIBLE_FUNCTION = "job.config.byField.incompatible.function";
     public static final String JOB_CONFIG_BYFIELD_NEEDS_ANOTHER = "job.config.byField.needs.another";

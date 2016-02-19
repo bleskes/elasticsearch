@@ -74,7 +74,7 @@ class ProblemTracker
         {
             m_PreviousDataExtractionProblem = problemMessage;
             m_Auditor.get().error(Messages.getMessage(
-                    Messages.JOB_AUDIT_SCHEDULE_DATA_EXTRACTION_ERROR, problemMessage));
+                    Messages.JOB_AUDIT_SCHEDULER_DATA_EXTRACTION_ERROR, problemMessage));
         }
     }
 
@@ -92,14 +92,14 @@ class ProblemTracker
             m_EmptyDataCount++;
             if (m_EmptyDataCount == EMPTY_DATA_WARN_COUNT)
             {
-                m_Auditor.get().warning(Messages.getMessage(Messages.JOB_AUDIT_SCHEDULE_NO_DATA));
+                m_Auditor.get().warning(Messages.getMessage(Messages.JOB_AUDIT_SCHEDULER_NO_DATA));
             }
         }
         else if (!empty)
         {
             if (m_EmptyDataCount >= EMPTY_DATA_WARN_COUNT)
             {
-                m_Auditor.get().info(Messages.getMessage(Messages.JOB_AUDIR_SCHEDULE_DATA_SEEN_AGAIN));
+                m_Auditor.get().info(Messages.getMessage(Messages.JOB_AUDIR_SCHEDULER_DATA_SEEN_AGAIN));
             }
             m_EmptyDataCount = 0;
         }
@@ -118,7 +118,7 @@ class ProblemTracker
         if (!m_HasDataExtractionProblems && m_HadDataExtractionProblems)
         {
             m_Auditor.get().info(Messages.getMessage(
-                    Messages.JOB_AUDIT_SCHEDULE_DATA_EXTRACTION_RECOVERED));
+                    Messages.JOB_AUDIT_SCHEDULER_DATA_EXTRACTION_RECOVERED));
         }
 
         m_HadDataExtractionProblems = m_HasDataExtractionProblems;
