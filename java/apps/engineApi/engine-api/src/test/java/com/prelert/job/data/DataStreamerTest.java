@@ -54,11 +54,11 @@ import com.prelert.job.UnknownJobException;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.exceptions.JobInUseException;
 import com.prelert.job.exceptions.TooManyJobsException;
-import com.prelert.job.manager.DataProcessor;
 import com.prelert.job.process.exceptions.MalformedJsonException;
 import com.prelert.job.process.exceptions.MissingFieldException;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
 import com.prelert.job.process.params.DataLoadParams;
+import com.prelert.job.scheduler.DataProcessor;
 import com.prelert.job.status.HighProportionOfBadTimestampsException;
 import com.prelert.job.status.OutOfOrderRecordsException;
 

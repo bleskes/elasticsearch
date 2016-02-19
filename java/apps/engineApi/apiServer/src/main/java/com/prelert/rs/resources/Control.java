@@ -44,11 +44,11 @@ import org.apache.log4j.Logger;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.exceptions.JobInUseException;
-import com.prelert.job.manager.CannotStartSchedulerException;
-import com.prelert.job.manager.CannotStopSchedulerException;
 import com.prelert.job.manager.NoSuchScheduledJobException;
 import com.prelert.job.messages.Messages;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
+import com.prelert.job.scheduler.CannotStartSchedulerException;
+import com.prelert.job.scheduler.CannotStopSchedulerException;
 import com.prelert.rs.data.Acknowledgement;
 import com.prelert.rs.exception.InvalidParametersException;
 

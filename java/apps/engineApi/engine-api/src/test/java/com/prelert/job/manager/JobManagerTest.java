@@ -106,6 +106,8 @@ import com.prelert.job.process.exceptions.NativeProcessRunException;
 import com.prelert.job.process.params.DataLoadParams;
 import com.prelert.job.process.params.InterimResultsParams;
 import com.prelert.job.process.writer.CsvRecordWriter;
+import com.prelert.job.scheduler.CannotStartSchedulerException;
+import com.prelert.job.scheduler.CannotStopSchedulerException;
 import com.prelert.job.status.HighProportionOfBadTimestampsException;
 import com.prelert.job.status.OutOfOrderRecordsException;
 

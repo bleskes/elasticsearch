@@ -25,7 +25,7 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.job.manager;
+package com.prelert.job.scheduler;
 
 import java.io.IOException;
 import java.io.InputStream;

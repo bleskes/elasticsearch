@@ -25,7 +25,7 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.job.manager;
+package com.prelert.job.scheduler;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -87,6 +87,10 @@ import com.prelert.job.process.exceptions.MissingFieldException;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
 import com.prelert.job.process.params.DataLoadParams;
 import com.prelert.job.process.params.InterimResultsParams;
+import com.prelert.job.scheduler.CannotStartSchedulerException;
+import com.prelert.job.scheduler.CannotStopSchedulerException;
+import com.prelert.job.scheduler.DataProcessor;
+import com.prelert.job.scheduler.JobScheduler;
 import com.prelert.job.status.HighProportionOfBadTimestampsException;
 import com.prelert.job.status.OutOfOrderRecordsException;
 
