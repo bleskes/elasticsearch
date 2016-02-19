@@ -35,6 +35,7 @@ import static org.mockito.Matchers.anyMapOf;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.startsWith;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -115,17 +116,18 @@ public class JobSchedulerTest
     private volatile JobSchedulerStatus m_CurrentStatus;
 
     private JobScheduler m_JobScheduler;
-    private volatile CountDownLatch m_StatusChangedLatch;
+    private volatile CountDownLatch m_SchedulerStoppedAuditedLatch;
 
     @Before
     public void setUp() throws UnknownJobException
     {
         MockitoAnnotations.initMocks(this);
         m_CurrentStatus = null;
-        recordSchedulerStatus();
         when(m_JobLoggerFactory.newLogger(JOB_ID)).thenReturn(m_JobLogger);
-        m_StatusChangedLatch = new CountDownLatch(1);
+        m_SchedulerStoppedAuditedLatch = new CountDownLatch(1);
         when(m_JobProvider.audit(anyString())).thenReturn(m_Auditor);
+        recordSchedulerStatus();
+        recordSchedulerStoppedAudited();
     }
 
     @Test
@@ -138,7 +140,7 @@ public class JobSchedulerTest
         m_JobScheduler.start(new JobDetails("foo", new JobConfiguration()), 1000L,
                 OptionalLong.of(500));
 
-        waitUntilStatusBecomes(JobSchedulerStatus.STOPPED);
+        waitUntilSchedulerStoppedIsAudited();
         verify(dataProcessor).closeJob("foo");
         verify(m_Auditor).info("Scheduler stopped");
         Mockito.verifyNoMoreInteractions(dataExtractor, dataProcessor, m_Auditor);
@@ -154,7 +156,7 @@ public class JobSchedulerTest
         m_JobScheduler.start(new JobDetails("foo", new JobConfiguration()), 1000L,
                 OptionalLong.of(1000));
 
-        waitUntilStatusBecomes(JobSchedulerStatus.STOPPED);
+        waitUntilSchedulerStoppedIsAudited();
         verify(dataProcessor).closeJob("foo");
         verify(m_Auditor).info("Scheduler stopped");
         Mockito.verifyNoMoreInteractions(dataExtractor, dataProcessor, m_Auditor);
@@ -170,7 +172,7 @@ public class JobSchedulerTest
         m_JobScheduler = createJobScheduler(dataExtractor, dataProcessor);
 
         m_JobScheduler.start(new JobDetails(), 1400000000000L, OptionalLong.of(1400000001000L));
-        waitUntilStatusBecomes(JobSchedulerStatus.STOPPED);
+        waitUntilSchedulerStoppedIsAudited();
         assertEquals(JobSchedulerStatus.STOPPED, m_CurrentStatus);
         assertTrue(dataProcessor.isJobClosed());
 
@@ -202,7 +204,7 @@ public class JobSchedulerTest
         m_JobScheduler = createJobScheduler(dataExtractor, dataProcessor);
 
         m_JobScheduler.start(new JobDetails(), 1400000000000L, OptionalLong.of(1400000001000L));
-        waitUntilStatusBecomes(JobSchedulerStatus.STOPPED);
+        waitUntilSchedulerStoppedIsAudited();
         assertEquals(JobSchedulerStatus.STOPPED, m_CurrentStatus);
         assertTrue(dataProcessor.isJobClosed());
 
@@ -229,7 +231,7 @@ public class JobSchedulerTest
         m_JobScheduler = createJobScheduler(dataExtractor, dataProcessor);
 
         m_JobScheduler.start(new JobDetails(), 1400000000000L, OptionalLong.of(1400000000000L));
-        waitUntilStatusBecomes(JobSchedulerStatus.STOPPED);
+        waitUntilSchedulerStoppedIsAudited();
         assertEquals(JobSchedulerStatus.STOPPED, m_CurrentStatus);
         assertTrue(dataProcessor.isJobClosed());
 
@@ -383,7 +385,7 @@ public class JobSchedulerTest
         m_JobScheduler = createJobScheduler(dataExtractor, dataProcessor);
 
         m_JobScheduler.start(new JobDetails(), 1400000000000L, OptionalLong.of(1400000001000L));
-        waitUntilStatusBecomes(JobSchedulerStatus.STOPPED);
+        waitUntilSchedulerStoppedIsAudited();
         assertEquals(JobSchedulerStatus.STOPPED, m_CurrentStatus);
         assertTrue(dataProcessor.isJobClosed());
 
@@ -394,25 +396,11 @@ public class JobSchedulerTest
 
         // Repeat to test that scheduler did not advance time
         m_JobScheduler.start(new JobDetails(), 1400000000000L, OptionalLong.of(1400000001000L));
-        waitUntilStatusBecomes(JobSchedulerStatus.STOPPED);
-        assertEquals(JobSchedulerStatus.STOPPED, m_CurrentStatus);
+        waitUntilSchedulerStoppedIsAudited();
 
         assertEquals(0, dataProcessor.getNumberOfStreams());
         assertEquals("1400000000000", dataExtractor.getStart(0));
         assertEquals("1400000001000", dataExtractor.getEnd(0));
-
-        m_JobScheduler.start(new JobDetails(), 1400000000000L, OptionalLong.of(1400000001000L));
-        waitUntilStatusBecomes(JobSchedulerStatus.STOPPED);
-        m_JobScheduler.start(new JobDetails(), 1400000000000L, OptionalLong.of(1400000001000L));
-        waitUntilStatusBecomes(JobSchedulerStatus.STOPPED);
-        m_JobScheduler.start(new JobDetails(), 1400000000000L, OptionalLong.of(1400000001000L));
-        waitUntilStatusBecomes(JobSchedulerStatus.STOPPED);
-        m_JobScheduler.start(new JobDetails(), 1400000000000L, OptionalLong.of(1400000001000L));
-        waitUntilStatusBecomes(JobSchedulerStatus.STOPPED);
-        m_JobScheduler.start(new JobDetails(), 1400000000000L, OptionalLong.of(1400000001000L));
-        waitUntilStatusBecomes(JobSchedulerStatus.STOPPED);
-        m_JobScheduler.start(new JobDetails(), 1400000000000L, OptionalLong.of(1400000001000L));
-        waitUntilStatusBecomes(JobSchedulerStatus.STOPPED);
     }
 
     @Test
@@ -427,7 +415,7 @@ public class JobSchedulerTest
         m_JobScheduler = createJobScheduler(dataExtractor, dataProcessor);
 
         m_JobScheduler.start(new JobDetails(), 1400000000000L, OptionalLong.of(1400000001000L));
-        waitUntilStatusBecomes(JobSchedulerStatus.STOPPED);
+        waitUntilSchedulerStoppedIsAudited();
         assertEquals(JobSchedulerStatus.STOPPED, m_CurrentStatus);
         assertTrue(dataProcessor.isJobClosed());
 
@@ -450,7 +438,7 @@ public class JobSchedulerTest
         m_JobScheduler = createJobScheduler(dataExtractor, dataProcessor);
 
         m_JobScheduler.start(job, 1450000000000L, OptionalLong.of(1460000000000L));
-        waitUntilStatusBecomes(JobSchedulerStatus.STOPPED);
+        waitUntilSchedulerStoppedIsAudited();
         assertEquals(JobSchedulerStatus.STOPPED, m_CurrentStatus);
         assertTrue(dataProcessor.isJobClosed());
 
@@ -479,7 +467,7 @@ public class JobSchedulerTest
         m_JobScheduler = createJobScheduler(dataExtractor, dataProcessor);
 
         m_JobScheduler.start(job, 1455000000000L, OptionalLong.of(1460000000000L));
-        waitUntilStatusBecomes(JobSchedulerStatus.STOPPED);
+        waitUntilSchedulerStoppedIsAudited();
         assertEquals(JobSchedulerStatus.STOPPED, m_CurrentStatus);
         assertTrue(dataProcessor.isJobClosed());
 
@@ -590,30 +578,35 @@ public class JobSchedulerTest
                 @SuppressWarnings("unchecked")
                 Map<String, Object> updates = (Map<String, Object>) invocation.getArguments()[1];
                 m_CurrentStatus = (JobSchedulerStatus) updates.get("schedulerStatus");
-                m_StatusChangedLatch.countDown();
                 return true;
             }
         });
     }
 
-    private void waitUntilStatusBecomes(JobSchedulerStatus status)
+    private void recordSchedulerStoppedAudited()
     {
-        while (m_CurrentStatus != status)
+        doAnswer(new Answer<Void>()
         {
-            try
+            @Override
+            public Void answer(InvocationOnMock invocation) throws Throwable
             {
-                m_StatusChangedLatch.await();
-            } catch (InterruptedException e)
-            {
-                throw new IllegalStateException(e);
+                m_SchedulerStoppedAuditedLatch.countDown();
+                return null;
             }
-            resetStatusChangedLatch();
-        }
+        }).when(m_Auditor).info("Scheduler stopped");
     }
 
-    private synchronized void resetStatusChangedLatch()
+    private void waitUntilSchedulerStoppedIsAudited()
     {
-        m_StatusChangedLatch = new CountDownLatch(1);
+        try
+        {
+            m_SchedulerStoppedAuditedLatch.await();
+        }
+        catch (InterruptedException e)
+        {
+            throw new IllegalStateException(e);
+        }
+        m_SchedulerStoppedAuditedLatch = new CountDownLatch(1);
     }
 
     private JobScheduler createJobScheduler(DataExtractor dataExtractor, DataProcessor dataProcessor)
