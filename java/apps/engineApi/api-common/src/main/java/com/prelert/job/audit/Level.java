@@ -18,7 +18,7 @@
 
 package com.prelert.job.audit;
 
-public enum Severity
+public enum Level
 {
     INFO,
     WARNING,

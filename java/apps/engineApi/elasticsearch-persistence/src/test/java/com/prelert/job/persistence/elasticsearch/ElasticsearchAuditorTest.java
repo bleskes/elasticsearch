@@ -39,6 +39,7 @@ import org.elasticsearch.action.ListenableActionFuture;
 import org.elasticsearch.action.index.IndexRequestBuilder;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.client.Client;
+import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.index.IndexNotFoundException;
 import org.junit.Before;
 import org.junit.Test;
@@ -49,14 +50,14 @@ import org.mockito.MockitoAnnotations;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.prelert.job.audit.AuditMessage;
-import com.prelert.job.audit.Severity;
+import com.prelert.job.audit.Level;
 
 public class ElasticsearchAuditorTest
 {
     @Mock private Client m_Client;
     @Mock private ListenableActionFuture<IndexResponse> m_IndexResponse;
     @Captor private ArgumentCaptor<String> m_IndexCaptor;
-    @Captor private ArgumentCaptor<String> m_JsonCaptor;
+    @Captor private ArgumentCaptor<XContentBuilder> m_JsonCaptor;
 
     @Before
     public void setUp()
@@ -76,7 +77,7 @@ public class ElasticsearchAuditorTest
         AuditMessage auditMessage = parseAuditMessage();
         assertEquals("foo", auditMessage.getJobId());
         assertEquals("Here is my info", auditMessage.getMessage());
-        assertEquals(Severity.INFO, auditMessage.getSeverity());
+        assertEquals(Level.INFO, auditMessage.getLevel());
     }
 
     @Test
@@ -91,7 +92,7 @@ public class ElasticsearchAuditorTest
         AuditMessage auditMessage = parseAuditMessage();
         assertEquals("bar", auditMessage.getJobId());
         assertEquals("Here is my warning", auditMessage.getMessage());
-        assertEquals(Severity.WARNING, auditMessage.getSeverity());
+        assertEquals(Level.WARNING, auditMessage.getLevel());
     }
 
     @Test
@@ -106,7 +107,7 @@ public class ElasticsearchAuditorTest
         AuditMessage auditMessage = parseAuditMessage();
         assertEquals("foobar", auditMessage.getJobId());
         assertEquals("Here is my error", auditMessage.getMessage());
-        assertEquals(Severity.ERROR, auditMessage.getSeverity());
+        assertEquals(Level.ERROR, auditMessage.getLevel());
     }
 
     @Test
@@ -133,7 +134,9 @@ public class ElasticsearchAuditorTest
     {
         try
         {
-            return new ObjectMapper().readValue(m_JsonCaptor.getValue(), AuditMessage.class);
+            String json = m_JsonCaptor.getValue().string();
+            json = json.replace("@timestamp", "timestamp");
+            return new ObjectMapper().readValue(json, AuditMessage.class);
         }
         catch (IOException e)
         {

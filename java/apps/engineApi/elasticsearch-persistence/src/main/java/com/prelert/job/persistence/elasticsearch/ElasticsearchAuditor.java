@@ -27,14 +27,16 @@
 
 package com.prelert.job.persistence.elasticsearch;
 
+import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
+
+import java.io.IOException;
 import java.util.Objects;
 
 import org.apache.log4j.Logger;
 import org.elasticsearch.client.Client;
+import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.index.IndexNotFoundException;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.prelert.job.audit.AuditMessage;
 import com.prelert.job.audit.Auditor;
 
@@ -45,14 +47,12 @@ public class ElasticsearchAuditor implements Auditor
     private final Client m_Client;
     private final String m_Index;
     private final String m_JobId;
-    private final ObjectMapper m_ObjectMapper;
 
     public ElasticsearchAuditor(Client client, String index, String jobId)
     {
         m_Client = Objects.requireNonNull(client);
         m_Index = index;
         m_JobId = jobId;
-        m_ObjectMapper = new ObjectMapper();
     }
 
     @Override
@@ -77,15 +77,23 @@ public class ElasticsearchAuditor implements Auditor
     {
         try
         {
-            String json = m_ObjectMapper.writeValueAsString(message);
             m_Client.prepareIndex(m_Index, AuditMessage.TYPE)
-                    .setSource(json)
+                    .setSource(serialise(message))
                     .execute().actionGet();
         }
-        catch (JsonProcessingException | IndexNotFoundException e)
+        catch (IOException | IndexNotFoundException e)
         {
             LOGGER.error("Error writing auditMessage", e);
             return;
         }
+    }
+
+    private XContentBuilder serialise(AuditMessage message) throws IOException
+    {
+        return jsonBuilder().startObject()
+                .field(ElasticsearchMappings.ES_TIMESTAMP, message.getTimestamp())
+                .field(AuditMessage.JOB_ID, message.getJobId())
+                .field(AuditMessage.LEVEL, message.getLevel())
+                .field(AuditMessage.MESSAGE, message.getMessage());
     }
 }

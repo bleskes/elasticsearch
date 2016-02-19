@@ -42,7 +42,7 @@ public class AuditMessageTest
     {
         AuditMessage auditMessage = new AuditMessage();
         assertNull(auditMessage.getMessage());
-        assertNull(auditMessage.getSeverity());
+        assertNull(auditMessage.getLevel());
         assertNull(auditMessage.getTimestamp());
     }
 
@@ -52,7 +52,7 @@ public class AuditMessageTest
         AuditMessage info = AuditMessage.newInfo("foo", "some info");
         assertEquals("foo", info.getJobId());
         assertEquals("some info", info.getMessage());
-        assertEquals(Severity.INFO, info.getSeverity());
+        assertEquals(Level.INFO, info.getLevel());
         assertDateBetweenStartAndNow(info.getTimestamp());
     }
 
@@ -62,7 +62,7 @@ public class AuditMessageTest
         AuditMessage warning = AuditMessage.newWarning("bar", "some warning");
         assertEquals("bar", warning.getJobId());
         assertEquals("some warning", warning.getMessage());
-        assertEquals(Severity.WARNING, warning.getSeverity());
+        assertEquals(Level.WARNING, warning.getLevel());
         assertDateBetweenStartAndNow(warning.getTimestamp());
     }
 
@@ -72,7 +72,7 @@ public class AuditMessageTest
         AuditMessage error = AuditMessage.newError("foo", "some error");
         assertEquals("foo", error.getJobId());
         assertEquals("some error", error.getMessage());
-        assertEquals(Severity.ERROR, error.getSeverity());
+        assertEquals(Level.ERROR, error.getLevel());
         assertDateBetweenStartAndNow(error.getTimestamp());
     }
 

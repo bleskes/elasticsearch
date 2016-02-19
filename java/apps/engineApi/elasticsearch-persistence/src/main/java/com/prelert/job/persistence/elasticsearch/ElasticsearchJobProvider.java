@@ -79,6 +79,7 @@ import com.prelert.job.ModelSnapshot;
 import com.prelert.job.ModelState;
 import com.prelert.job.SchedulerState;
 import com.prelert.job.UnknownJobException;
+import com.prelert.job.audit.AuditMessage;
 import com.prelert.job.audit.Auditor;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.persistence.BatchedResultsIterator;
@@ -227,12 +228,13 @@ public class ElasticsearchJobProvider implements JobProvider
                 LOGGER.trace("ES API CALL: create index " + PRELERT_INFO_INDEX);
                 m_Client.admin().indices().prepareCreate(PRELERT_INFO_INDEX)
                                 .setSettings(prelertIndexSettings())
+                                .addMapping(AuditMessage.TYPE, ElasticsearchMappings.auditMessageMapping())
                                 .get();
                 LOGGER.trace("ES API CALL: wait for yellow status " + PRELERT_INFO_INDEX);
                 m_Client.admin().cluster().prepareHealth(PRELERT_INFO_INDEX).setWaitForYellowStatus().execute().actionGet();
             }
         }
-        catch (InterruptedException | ExecutionException e)
+        catch (InterruptedException | ExecutionException | IOException e)
         {
             LOGGER.warn("Error checking the info index", e);
         }

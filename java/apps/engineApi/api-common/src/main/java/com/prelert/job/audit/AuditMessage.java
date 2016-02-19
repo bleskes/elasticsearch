@@ -24,20 +24,24 @@ public class AuditMessage
 {
     public static final String TYPE = "auditMessage";
 
+    public static final String JOB_ID = "jobId";
+    public static final String MESSAGE = "message";
+    public static final String LEVEL = "level";
+
     private String m_JobId;
     private String m_Message;
-    private Severity m_Severity;
+    private Level m_Level;
     private Date m_Timestamp;
 
     public AuditMessage()
     {
     }
 
-    private AuditMessage(String jobId, String message, Severity severity)
+    private AuditMessage(String jobId, String message, Level severity)
     {
         m_JobId = jobId;
         m_Message = message;
-        m_Severity = severity;
+        m_Level = severity;
         m_Timestamp = new Date();
     }
 
@@ -61,14 +65,14 @@ public class AuditMessage
         m_Message = message;
     }
 
-    public Severity getSeverity()
+    public Level getLevel()
     {
-        return m_Severity;
+        return m_Level;
     }
 
-    public void setSeverity(Severity severity)
+    public void setLevel(Level level)
     {
-        m_Severity = severity;
+        m_Level = level;
     }
 
     public Date getTimestamp()
@@ -83,16 +87,16 @@ public class AuditMessage
 
     public static AuditMessage newInfo(String jobId, String message)
     {
-        return new AuditMessage(jobId, message, Severity.INFO);
+        return new AuditMessage(jobId, message, Level.INFO);
     }
 
     public static AuditMessage newWarning(String jobId, String message)
     {
-        return new AuditMessage(jobId, message, Severity.WARNING);
+        return new AuditMessage(jobId, message, Level.WARNING);
     }
 
     public static AuditMessage newError(String jobId, String message)
     {
-        return new AuditMessage(jobId, message, Severity.ERROR);
+        return new AuditMessage(jobId, message, Level.ERROR);
     }
 }
