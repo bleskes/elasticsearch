@@ -18,6 +18,7 @@
 
 package com.prelert.job.persistence;
 
+import com.prelert.job.ModelSnapshot;
 import com.prelert.job.results.Bucket;
 import com.prelert.job.results.Influencer;
 
@@ -40,6 +41,12 @@ public interface JobDataDeleter
      * @param influencer the influencer to delete
      */
     void deleteInfluencer(Influencer influencer);
+
+    /**
+     * Delete a {@code ModelSnapshot}
+     * @param modelSnapshot the model snapshot to delete
+     */
+    void deleteModelSnapshot(ModelSnapshot modelSnapshot);
 
     /**
      * Commit the deletions and give the chance to implementors

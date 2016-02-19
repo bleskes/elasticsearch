@@ -44,6 +44,8 @@ import org.elasticsearch.index.query.HasParentQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 
+import com.prelert.job.ModelSnapshot;
+import com.prelert.job.ModelState;
 import com.prelert.job.persistence.JobDataDeleter;
 import com.prelert.job.results.AnomalyRecord;
 import com.prelert.job.results.Bucket;
@@ -59,6 +61,8 @@ public class ElasticsearchBulkDeleter implements JobDataDeleter
     private long m_DeletedBucketCount;
     private long m_DeletedRecordCount;
     private long m_DeletedInfluencerCount;
+    private long m_DeletedModelSnapshotCount;
+    private long m_DeletedModelStateCount;
 
     public ElasticsearchBulkDeleter(Client client, String jobId)
     {
@@ -68,6 +72,8 @@ public class ElasticsearchBulkDeleter implements JobDataDeleter
         m_DeletedBucketCount = 0;
         m_DeletedRecordCount = 0;
         m_DeletedInfluencerCount = 0;
+        m_DeletedModelSnapshotCount = 0;
+        m_DeletedModelStateCount = 0;
     }
 
     @Override
@@ -76,7 +82,7 @@ public class ElasticsearchBulkDeleter implements JobDataDeleter
         deleteRecords(bucket);
         m_BulkRequestBuilder.add(
                 m_Client.prepareDelete(m_JobId.getIndex(), Bucket.TYPE, bucket.getId()));
-        m_DeletedBucketCount++;
+        ++m_DeletedBucketCount;
     }
 
     @Override
@@ -98,7 +104,7 @@ public class ElasticsearchBulkDeleter implements JobDataDeleter
                     .setType(AnomalyRecord.TYPE)
                     .setId(hit.getId());
             m_BulkRequestBuilder.add(deleteRequest);
-            m_DeletedRecordCount++;
+            ++m_DeletedRecordCount;
         }
     }
 
@@ -107,7 +113,29 @@ public class ElasticsearchBulkDeleter implements JobDataDeleter
     {
         m_BulkRequestBuilder.add(
                 m_Client.prepareDelete(m_JobId.getIndex(), Influencer.TYPE, influencer.getId()));
-        m_DeletedInfluencerCount++;
+        ++m_DeletedInfluencerCount;
+    }
+
+    @Override
+    public void deleteModelSnapshot(ModelSnapshot modelSnapshot)
+    {
+        String snapshotId = modelSnapshot.getSnapshotId();
+        int docCount = modelSnapshot.getSnapshotDocCount();
+
+        // Deduce the document IDs of the state documents from the information
+        // in the snapshot document - we cannot query the state itself as it's
+        // too big and has no mappings
+        for (int i = 0; i < docCount; ++i)
+        {
+            String stateId = snapshotId + '_' + i;
+            m_BulkRequestBuilder.add(
+                    m_Client.prepareDelete(m_JobId.getIndex(), ModelState.TYPE, stateId));
+            ++m_DeletedModelStateCount;
+        }
+
+        m_BulkRequestBuilder.add(
+                m_Client.prepareDelete(m_JobId.getIndex(), ModelSnapshot.TYPE, snapshotId));
+        ++m_DeletedModelSnapshotCount;
     }
 
     @Override
@@ -118,8 +146,13 @@ public class ElasticsearchBulkDeleter implements JobDataDeleter
             return;
         }
 
-        LOGGER.debug("Requesting deletion of " + m_DeletedInfluencerCount + " influencers, "
-                 + m_DeletedBucketCount + " buckets, " + " and " + m_DeletedRecordCount + " records");
+        LOGGER.debug("Requesting deletion of "
+                 + m_DeletedInfluencerCount + " influencers, "
+                 + m_DeletedBucketCount + " buckets, "
+                 + m_DeletedRecordCount + " records, "
+                 + m_DeletedModelSnapshotCount + " model snapshots, "
+                 + " and "
+                 + m_DeletedModelStateCount + " model state documents");
 
         try
         {

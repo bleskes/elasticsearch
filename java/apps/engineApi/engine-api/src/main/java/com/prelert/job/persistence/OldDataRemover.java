@@ -96,7 +96,7 @@ public class OldDataRemover
             long cutoffEpochSeconds = startOfDayEpoch - (retentionDays * SECONDS_IN_DAY);
             LOGGER.info("Removing model snapshots for job with ID '" + job.getId()
                     + "' that have a timestamp before: " + cutoffEpochSeconds);
-            // TODO (job.getId(), cutoffEpochSeconds * MILLISECONDS_IN_SECOND);
+            deleteModelStateBefore(job.getId(), cutoffEpochSeconds * MILLISECONDS_IN_SECOND);
         }
         LOGGER.info("Removal of expired model snapshots is complete");
     }
@@ -127,26 +127,36 @@ public class OldDataRemover
         LOGGER.info("Removal of expired results is complete");
     }
 
-    private void deleteResultsBefore(String jobId, long cutoffEpochMs)
+    private void deleteModelStateBefore(String jobId, long cutoffEpochMs)
     {
         JobDataDeleter deleter = m_DataDeleterFactory.newDeleter(jobId);
-        deleteResultsBefore(
-                m_JobProvider.newBatchedInfluencersIterator(jobId).timeRange(0, cutoffEpochMs),
-                influencer -> deleter.deleteInfluencer(influencer)
-        );
-        deleteResultsBefore(
-                m_JobProvider.newBatchedBucketsIterator(jobId).timeRange(0, cutoffEpochMs),
-                influencer -> deleter.deleteBucket(influencer)
+        deleteDataBefore(
+                m_JobProvider.newBatchedModelSnapshotIterator(jobId).timeRange(0, cutoffEpochMs),
+                influencer -> deleter.deleteModelSnapshot(influencer)
         );
         deleter.commit();
     }
 
-    private <T> void deleteResultsBefore(BatchedResultsIterator<T> influencersIterator,
+    private void deleteResultsBefore(String jobId, long cutoffEpochMs)
+    {
+        JobDataDeleter deleter = m_DataDeleterFactory.newDeleter(jobId);
+        deleteDataBefore(
+                m_JobProvider.newBatchedInfluencersIterator(jobId).timeRange(0, cutoffEpochMs),
+                influencer -> deleter.deleteInfluencer(influencer)
+        );
+        deleteDataBefore(
+                m_JobProvider.newBatchedBucketsIterator(jobId).timeRange(0, cutoffEpochMs),
+                bucket -> deleter.deleteBucket(bucket)
+        );
+        deleter.commit();
+    }
+
+    private <T> void deleteDataBefore(BatchedResultsIterator<T> resultsIterator,
             Consumer<T> deleteFunction)
     {
-        while(influencersIterator.hasNext())
+        while (resultsIterator.hasNext())
         {
-            Deque<T> batch = nextBatch(influencersIterator);
+            Deque<T> batch = nextBatch(resultsIterator);
             if (batch.isEmpty())
             {
                 return;

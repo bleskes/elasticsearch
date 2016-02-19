@@ -987,6 +987,12 @@ public class ElasticsearchJobProvider implements JobProvider
         return new ElasticsearchBatchedInfluencersIterator(m_Client, jobId, m_ObjectMapper);
     }
 
+    @Override
+    public BatchedResultsIterator<ModelSnapshot> newBatchedModelSnapshotIterator(String jobId)
+    {
+        return new ElasticsearchBatchedModelSnapshotIterator(m_Client, jobId, m_ObjectMapper);
+    }
+
     /**
      * Always returns true
      */
