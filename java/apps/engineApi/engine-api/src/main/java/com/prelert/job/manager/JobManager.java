@@ -829,9 +829,13 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
     }
 
     public void startJobScheduler(String jobId, long startMs, OptionalLong endMs)
-            throws CannotStartSchedulerException, NoSuchScheduledJobException
+            throws CannotStartSchedulerException, NoSuchScheduledJobException, UnknownJobException
     {
         checkJobHasScheduler(jobId);
+
+        m_JobProvider.updateSchedulerState(jobId,
+                new SchedulerState(startMs, endMs.isPresent() ? endMs.getAsLong() : null));
+
         JobDetails job = getJob(jobId).get();
         LOGGER.info("Starting scheduler for job: " + jobId);
         m_ScheduledJobs.get(jobId).start(job, startMs, endMs);

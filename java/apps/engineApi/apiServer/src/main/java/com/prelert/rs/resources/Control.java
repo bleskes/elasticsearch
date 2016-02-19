@@ -84,7 +84,7 @@ public class Control extends ResourceWithJobManager
     public Response startScheduledJob(@PathParam("jobId") String jobId,
             @DefaultValue("") @QueryParam(START_QUERY_PARAM) String start,
             @DefaultValue("") @QueryParam(END_QUERY_PARAM) String end)
-            throws CannotStartSchedulerException, NoSuchScheduledJobException
+            throws CannotStartSchedulerException, NoSuchScheduledJobException, UnknownJobException
     {
         LOGGER.debug("Received request to start scheduler for job: " + jobId);
 

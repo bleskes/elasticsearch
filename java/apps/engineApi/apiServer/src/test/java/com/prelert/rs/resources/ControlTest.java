@@ -44,13 +44,11 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.mockito.ArgumentCaptor;
 
+import com.prelert.job.JobException;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.errorcodes.ErrorCodes;
-import com.prelert.job.exceptions.JobInUseException;
 import com.prelert.job.manager.CannotStartSchedulerException;
-import com.prelert.job.manager.CannotStopSchedulerException;
 import com.prelert.job.manager.NoSuchScheduledJobException;
-import com.prelert.job.process.exceptions.NativeProcessRunException;
 import com.prelert.rs.data.Acknowledgement;
 import com.prelert.rs.exception.InvalidParametersException;
 
@@ -70,7 +68,7 @@ public class ControlTest extends ServiceTest
 
     @Test
     public void testStartScheduledJob_GivenEndEarlierThanStart()
-            throws CannotStartSchedulerException, NoSuchScheduledJobException
+            throws CannotStartSchedulerException, NoSuchScheduledJobException, UnknownJobException
     {
         m_ExpectedException.expect(InvalidParametersException.class);
         m_ExpectedException.expectMessage(
@@ -81,8 +79,7 @@ public class ControlTest extends ServiceTest
     }
 
     @Test
-    public void testStartScheduledJob_GivenEndEqualToStart()
-            throws CannotStartSchedulerException, NoSuchScheduledJobException
+    public void testStartScheduledJob_GivenEndEqualToStart() throws JobException
     {
         m_ExpectedException.expect(InvalidParametersException.class);
         m_ExpectedException.expectMessage(
@@ -93,8 +90,7 @@ public class ControlTest extends ServiceTest
     }
 
     @Test
-    public void testStartScheduledJob_GivenDefaultStartEndTimes()
-            throws CannotStartSchedulerException, NoSuchScheduledJobException
+    public void testStartScheduledJob_GivenDefaultStartEndTimes() throws JobException
     {
         Response response = m_Control.startScheduledJob("foo", "", "");
 
@@ -104,8 +100,7 @@ public class ControlTest extends ServiceTest
     }
 
     @Test
-    public void testStartScheduledJob_GivenValidStartEndTimes()
-            throws CannotStartSchedulerException, NoSuchScheduledJobException
+    public void testStartScheduledJob_GivenValidStartEndTimes() throws JobException
     {
         Response response = m_Control.startScheduledJob(
                 "foo", "2016-01-01T00:00:00Z", "2016-02-18T20:00:00Z");
@@ -116,8 +111,7 @@ public class ControlTest extends ServiceTest
     }
 
     @Test
-    public void testStartScheduledJob_GivenValidStartIsNow()
-            throws CannotStartSchedulerException, NoSuchScheduledJobException
+    public void testStartScheduledJob_GivenValidStartIsNow() throws JobException
     {
         long now = System.currentTimeMillis();
 
@@ -133,9 +127,7 @@ public class ControlTest extends ServiceTest
     }
 
     @Test
-    public void testStopScheduledJob()
-            throws CannotStopSchedulerException, NoSuchScheduledJobException, UnknownJobException,
-            NativeProcessRunException, JobInUseException
+    public void testStopScheduledJob() throws JobException
     {
         Response response = m_Control.stopScheduledJob("foo");
 

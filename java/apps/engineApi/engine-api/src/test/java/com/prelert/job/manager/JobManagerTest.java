@@ -78,6 +78,7 @@ import com.prelert.job.DataCounts;
 import com.prelert.job.Detector;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.JobDetails;
+import com.prelert.job.JobException;
 import com.prelert.job.JobIdAlreadyExistsException;
 import com.prelert.job.JobSchedulerStatus;
 import com.prelert.job.ModelDebugConfig;
@@ -707,8 +708,7 @@ public class JobManagerTest
     }
 
     @Test
-    public void testStartJobScheduler_GivenNoScheduledJob() throws NoSuchScheduledJobException,
-            CannotStartSchedulerException
+    public void testStartJobScheduler_GivenNoScheduledJob() throws JobException
     {
         givenProcessInfo(2);
         JobManager jobManager = createJobManager();
@@ -747,6 +747,7 @@ public class JobManagerTest
 
         verify(dataExtractor).newSearch(anyString(), anyString(), eq(jobLogger));
         verify(m_ProcessManager).closeJob("foo");
+        verify(m_JobProvider).updateSchedulerState("foo", new SchedulerState(0L, null));
     }
 
     @Test

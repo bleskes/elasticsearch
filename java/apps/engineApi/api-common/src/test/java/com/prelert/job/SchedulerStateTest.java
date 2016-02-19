@@ -46,9 +46,7 @@ public class SchedulerStateTest
         schedulerState1.setStartTimeMillis(18L);
         schedulerState1.setEndTimeMillis(42L);
 
-        SchedulerState schedulerState2 = new SchedulerState();
-        schedulerState2.setStartTimeMillis(18L);
-        schedulerState2.setEndTimeMillis(42L);
+        SchedulerState schedulerState2 = new SchedulerState(18L, 42L);
 
         assertTrue(schedulerState1.equals(schedulerState2));
         assertTrue(schedulerState2.equals(schedulerState1));

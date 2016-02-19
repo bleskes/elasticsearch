@@ -32,6 +32,13 @@ public class SchedulerState
 
     public SchedulerState()
     {
+        // Default constructor needed for serialization
+    }
+
+    public SchedulerState(Long startTimeMillis, Long endTimeMillis)
+    {
+        m_StartTimeMillis = startTimeMillis;
+        m_EndTimeMillis = endTimeMillis;
     }
 
     public Long getStartTimeMillis()
