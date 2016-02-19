@@ -189,6 +189,18 @@ public class JobUpdaterTest
     }
 
     @Test
+    public void testUpdate_GivenValidModelSnapshotRetentionDaysUpdate() throws UnknownJobException,
+            JobConfigurationException, JobInUseException, NativeProcessRunException
+    {
+        String update = "{\"modelSnapshotRetentionDays\": 9}";
+
+        new JobUpdater(m_JobManager, "foo").update(update);
+
+        verify(m_JobManager).setModelSnapshotRetentionDays("foo", 9L);
+        verify(m_JobManager, never()).writeUpdateConfigMessage(anyString(), anyString());
+    }
+
+    @Test
     public void testUpdate_GivenValidResultsRetentionDaysUpdate() throws UnknownJobException,
             JobConfigurationException, JobInUseException, NativeProcessRunException
     {

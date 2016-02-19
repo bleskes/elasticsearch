@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -69,6 +69,8 @@ public class JobDetailsTest
         assertNull(jobDetails.getModelDebugConfig());
         assertNull(jobDetails.getModelSizeStats());
         assertNull(jobDetails.getRenormalizationWindow());
+        assertNull(jobDetails.getBackgroundPersistInterval());
+        assertNull(jobDetails.getModelSnapshotRetentionDays());
         assertNull(jobDetails.getResultsRetentionDays());
         assertNull(jobDetails.getSchedulerConfig());
         assertNull(jobDetails.getTransforms());
@@ -135,6 +137,8 @@ public class JobDetailsTest
         jobDetails1.setModelSizeStats(modelSizeStats);
         jobDetails1.setRecordsEndpoint(new URI("http://localhost:8080/records"));
         jobDetails1.setRenormalizationWindow(60L);
+        jobDetails1.setBackgroundPersistInterval(10000L);
+        jobDetails1.setModelSnapshotRetentionDays(10L);
         jobDetails1.setResultsRetentionDays(30L);
         jobDetails1.setSchedulerConfig(new SchedulerConfig());
         jobDetails1.setSchedulerStatus(JobSchedulerStatus.STOPPED);
@@ -164,6 +168,8 @@ public class JobDetailsTest
         jobDetails2.setModelSizeStats(modelSizeStats);
         jobDetails2.setRecordsEndpoint(new URI("http://localhost:8080/records"));
         jobDetails2.setRenormalizationWindow(60L);
+        jobDetails2.setBackgroundPersistInterval(10000L);
+        jobDetails2.setModelSnapshotRetentionDays(10L);
         jobDetails2.setResultsRetentionDays(30L);
         jobDetails2.setSchedulerConfig(new SchedulerConfig());
         jobDetails2.setSchedulerStatus(JobSchedulerStatus.STOPPED);
@@ -208,6 +214,28 @@ public class JobDetailsTest
         jobDetails1.setRenormalizationWindow(3L);
         JobConfiguration jobDetails2 = new JobConfiguration();
         jobDetails2.setRenormalizationWindow(4L);
+
+        assertFalse(jobDetails1.equals(jobDetails2));
+    }
+
+    @Test
+    public void testEquals_GivenDifferentBackgroundPersistInterval()
+    {
+        JobConfiguration jobDetails1 = new JobConfiguration();
+        jobDetails1.setBackgroundPersistInterval(10000L);
+        JobConfiguration jobDetails2 = new JobConfiguration();
+        jobDetails2.setBackgroundPersistInterval(8000L);
+
+        assertFalse(jobDetails1.equals(jobDetails2));
+    }
+
+    @Test
+    public void testEquals_GivenDifferentModelSnapshotRetentionDays()
+    {
+        JobConfiguration jobDetails1 = new JobConfiguration();
+        jobDetails1.setModelSnapshotRetentionDays(10L);
+        JobConfiguration jobDetails2 = new JobConfiguration();
+        jobDetails2.setModelSnapshotRetentionDays(8L);
 
         assertFalse(jobDetails1.equals(jobDetails2));
     }

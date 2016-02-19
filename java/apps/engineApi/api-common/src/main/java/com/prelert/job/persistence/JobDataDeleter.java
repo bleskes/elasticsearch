@@ -18,7 +18,32 @@
 
 package com.prelert.job.persistence;
 
-public interface JobResultsDeleterFactory
+import com.prelert.job.results.Bucket;
+import com.prelert.job.results.Influencer;
+
+public interface JobDataDeleter
 {
-    JobResultsDeleter newDeleter(String jobId);
+    /**
+     * Delete a {@code Bucket} and its records
+     * @param bucket the bucket to delete
+     */
+    void deleteBucket(Bucket bucket);
+
+    /**
+     * Delete the records of a {@code Bucket}
+     * @param bucket the bucket whose records to delete
+     */
+    void deleteRecords(Bucket bucket);
+
+    /**
+     * Delete an {@code Influencer}
+     * @param influencer the influencer to delete
+     */
+    void deleteInfluencer(Influencer influencer);
+
+    /**
+     * Commit the deletions and give the chance to implementors
+     * to perform clean-up
+     */
+    void commit();
 }

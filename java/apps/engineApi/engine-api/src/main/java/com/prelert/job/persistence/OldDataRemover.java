@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -44,22 +44,61 @@ import com.prelert.job.UnknownJobException;
  * A class that removes results from all the jobs that
  * have expired their respected retention time.
  */
-public class OldResultsRemover
+public class OldDataRemover
 {
-    private static final Logger LOGGER = Logger.getLogger(OldResultsRemover.class);
+    private static final Logger LOGGER = Logger.getLogger(OldDataRemover.class);
 
     private static final int MAX_TAKE = 10000;
 
     private static final int SECONDS_IN_DAY = 86400;
     private static final int MILLISECONDS_IN_SECOND = 1000;
 
-    private final JobProvider m_JobProvider;
-    private final JobResultsDeleterFactory m_ResultsDeleterFactory;
+    private static final long DEFAULT_MODEL_SNAPSHOT_RETENTION_DAYS = 7L;
 
-    public OldResultsRemover(JobProvider jobProvider, JobResultsDeleterFactory resultsDeleterFactory)
+    private final JobProvider m_JobProvider;
+    private final JobDataDeleterFactory m_DataDeleterFactory;
+
+    public OldDataRemover(JobProvider jobProvider, JobDataDeleterFactory dataDeleterFactory)
     {
         m_JobProvider = Objects.requireNonNull(jobProvider);
-        m_ResultsDeleterFactory = Objects.requireNonNull(resultsDeleterFactory);
+        m_DataDeleterFactory = Objects.requireNonNull(dataDeleterFactory);
+    }
+
+    /**
+     * Removes old results and model snapshots.  Does this by calling
+     * {@link #removeOldSnapshots() removeOldSnapshots} and
+     * {@link #removeOldResults() removeOldResults} methods one after the other.
+     */
+    public void removeOldData()
+    {
+        removeOldSnapshots();
+        removeOldResults();
+    }
+
+    /**
+     * Removes all model snapshots that have expired the configured retention time
+     * of their respective job. A snapshot is deleted if its timestamp is earlier
+     * than the start of the current day (local time-zone) minus the retention
+     * period.
+     */
+    public void removeOldSnapshots()
+    {
+        LOGGER.info("Initialising removal of expired model snapshots");
+        List<JobDetails> jobs = m_JobProvider.getJobs(0, MAX_TAKE).queryResults();
+        long startOfDayEpoch = LocalDate.now().atStartOfDay(ZoneId.systemDefault()).toEpochSecond();
+        for (JobDetails job : jobs)
+        {
+            Long retentionDays = job.getModelSnapshotRetentionDays();
+            if (retentionDays == null)
+            {
+                retentionDays = DEFAULT_MODEL_SNAPSHOT_RETENTION_DAYS;
+            }
+            long cutoffEpochSeconds = startOfDayEpoch - (retentionDays * SECONDS_IN_DAY);
+            LOGGER.info("Removing model snapshots for job with ID '" + job.getId()
+                    + "' that have a timestamp before: " + cutoffEpochSeconds);
+            // TODO (job.getId(), cutoffEpochSeconds * MILLISECONDS_IN_SECOND);
+        }
+        LOGGER.info("Removal of expired model snapshots is complete");
     }
 
     /**
@@ -90,7 +129,7 @@ public class OldResultsRemover
 
     private void deleteResultsBefore(String jobId, long cutoffEpochMs)
     {
-        JobResultsDeleter deleter = m_ResultsDeleterFactory.newDeleter(jobId);
+        JobDataDeleter deleter = m_DataDeleterFactory.newDeleter(jobId);
         deleteResultsBefore(
                 m_JobProvider.newBatchedInfluencersIterator(jobId).timeRange(0, cutoffEpochMs),
                 influencer -> deleter.deleteInfluencer(influencer)

@@ -80,6 +80,7 @@ public final class Messages
     public static final String JOB_CONFIG_UPDATE_NO_OBJECT = "job.config.update.no.object";
     public static final String JOB_CONFIG_UPDATE_PARSE_ERROR = "job.config.update.parse.error";
     public static final String JOB_CONFIG_UPDATE_RENORMALIZATION_WINDOW_INVALID = "job.config.update.renormalization.window.invalid";
+    public static final String JOB_CONFIG_UPDATE_MODEL_SNAPSHOT_RETENTION_DAYS_INVALID = "job.config.update.model.snapshot.retention.days.invalid";
     public static final String JOB_CONFIG_UPDATE_RESULTS_RETENTION_DAYS_INVALID = "job.config.update.results.retention.days.invalid";
     public static final String JOB_CONFIG_TRANSFORM_CIRCULAR_DEPENDENCY = "job.config.transform.circular.dependency";
     public static final String JOB_CONFIG_TRANSFORM_CONDITION_INVALID_OPERATOR = "job.config.transform.condition.invalid.operator";

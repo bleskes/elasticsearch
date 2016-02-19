@@ -174,6 +174,8 @@ public final class ReservedFieldNames
         JobDetails.COUNTS,
         JobDetails.TIMEOUT,
         JobDetails.RENORMALIZATION_WINDOW,
+        JobDetails.BACKGROUND_PERSIST_INTERVAL,
+        JobDetails.MODEL_SNAPSHOT_RETENTION_DAYS,
         JobDetails.RESULTS_RETENTION_DAYS,
         JobDetails.ANALYSIS_CONFIG,
         JobDetails.ANALYSIS_LIMITS,

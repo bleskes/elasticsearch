@@ -197,7 +197,7 @@ public class ProcessCtrl
      * Roughly how often should the C++ process persist state?  A staggering
      * factor that varies by job is added to this.
      */
-    public static final int BASE_PERSIST_INTERVAL = 10800; // 3 hours
+    public static final long DEFAULT_BASE_PERSIST_INTERVAL = 10800; // 3 hours
 
     /**
      * Roughly how often should the C++ process output quantiles when no
@@ -672,7 +672,9 @@ public class ProcessCtrl
             command.add(persistUrlBase);
 
             // Persist model state every few hours even if the job isn't closed
-            int persistInterval = BASE_PERSIST_INTERVAL + intervalStagger;
+            long persistInterval = (job.getBackgroundPersistInterval() == null) ?
+                    (DEFAULT_BASE_PERSIST_INTERVAL + intervalStagger) :
+                    job.getBackgroundPersistInterval();
             command.add(PERSIST_INTERVAL_ARG + persistInterval);
         }
 

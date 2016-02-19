@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -44,12 +44,12 @@ import org.elasticsearch.index.query.HasParentQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 
-import com.prelert.job.persistence.JobResultsDeleter;
+import com.prelert.job.persistence.JobDataDeleter;
 import com.prelert.job.results.AnomalyRecord;
 import com.prelert.job.results.Bucket;
 import com.prelert.job.results.Influencer;
 
-public class ElasticsearchBulkDeleter implements JobResultsDeleter
+public class ElasticsearchBulkDeleter implements JobDataDeleter
 {
     private static final Logger LOGGER = Logger.getLogger(ElasticsearchBulkDeleter.class);
 

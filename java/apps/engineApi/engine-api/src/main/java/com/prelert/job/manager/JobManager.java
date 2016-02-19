@@ -517,6 +517,13 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
         m_JobProvider.updateJob(jobId, update);
     }
 
+    public void setModelSnapshotRetentionDays(String jobId, Long retentionDays) throws UnknownJobException
+    {
+        Map<String, Object> update = new HashMap<>();
+        update.put(JobDetails.MODEL_SNAPSHOT_RETENTION_DAYS, retentionDays);
+        m_JobProvider.updateJob(jobId, update);
+    }
+
     public void setResultsRetentionDays(String jobId, Long retentionDays) throws UnknownJobException
     {
         Map<String, Object> update = new HashMap<>();

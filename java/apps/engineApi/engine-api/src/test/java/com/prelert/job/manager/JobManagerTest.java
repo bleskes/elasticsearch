@@ -489,6 +489,19 @@ public class JobManagerTest
     }
 
     @Test
+    public void testSetModelSnapshotRetentionDays() throws UnknownJobException
+    {
+        givenProcessInfo(5);
+        JobManager jobManager = createJobManager();
+
+        jobManager.setModelSnapshotRetentionDays("foo", 20L);
+
+        verify(m_JobProvider).updateJob(eq("foo"), m_JobUpdateCaptor.capture());
+        Map<String, Object> jobUpdate = m_JobUpdateCaptor.getValue();
+        assertEquals(new Long(20), jobUpdate.get(JobDetails.MODEL_SNAPSHOT_RETENTION_DAYS));
+    }
+
+    @Test
     public void testSetResultsRetentionDays() throws UnknownJobException
     {
         givenProcessInfo(5);

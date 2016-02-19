@@ -53,7 +53,7 @@ import com.prelert.job.logging.DefaultJobLoggerFactory;
 import com.prelert.job.logging.JobLoggerFactory;
 import com.prelert.job.manager.JobManager;
 import com.prelert.job.persistence.JobProvider;
-import com.prelert.job.persistence.OldResultsRemover;
+import com.prelert.job.persistence.OldDataRemover;
 import com.prelert.job.process.ProcessCtrl;
 import com.prelert.job.process.autodetect.ProcessFactory;
 import com.prelert.job.process.autodetect.ProcessManager;
@@ -134,7 +134,7 @@ public class PrelertWebApp extends Application
     private ServerInfoFactory m_ServerInfo;
 
     private ScheduledExecutorService m_ServerStatsSchedule;
-    private TaskScheduler m_OldResultsRemoverSchedule;
+    private TaskScheduler m_OldDataRemoverSchedule;
 
     private final ShutdownThreadBuilder m_ShutdownThreadBuilder;
 
@@ -156,7 +156,7 @@ public class PrelertWebApp extends Application
         m_ServerInfo = esFactory.newServerInfoFactory();
 
         writeServerInfoDailyStartingNow();
-        scheduleOldResultsRemovalAtMidnight(jobProvider, esFactory);
+        scheduleOldDataRemovalAtMidnight(jobProvider, esFactory);
         m_JobManager.restartScheduledJobs();
 
         m_Singletons = new HashSet<>();
@@ -328,15 +328,15 @@ public class PrelertWebApp extends Application
                                                    delaySeconds, 3600L * 24L, TimeUnit.SECONDS);
     }
 
-    private void scheduleOldResultsRemovalAtMidnight(JobProvider jobProvider,
+    private void scheduleOldDataRemovalAtMidnight(JobProvider jobProvider,
             ElasticsearchFactory esFactory)
     {
-        OldResultsRemover oldResultsRemover = new OldResultsRemover(jobProvider,
-                esFactory.newJobResultsDeleterFactory());
-        m_OldResultsRemoverSchedule = TaskScheduler
-                .newMidnightTaskScheduler(() -> oldResultsRemover.removeOldResults(),
+        OldDataRemover oldDataRemover = new OldDataRemover(jobProvider,
+                esFactory.newJobDataDeleterFactory());
+        m_OldDataRemoverSchedule = TaskScheduler
+                .newMidnightTaskScheduler(() -> oldDataRemover.removeOldData(),
                         OLD_RESULTS_REMOVAL_PAST_MIDNIGHT_OFFSET_MINUTES);
-        m_OldResultsRemoverSchedule.start();
+        m_OldDataRemoverSchedule.start();
     }
 
     @Override

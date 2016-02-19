@@ -34,7 +34,7 @@ import org.elasticsearch.client.Client;
 import com.prelert.job.persistence.DataPersisterFactory;
 import com.prelert.job.persistence.JobDataCountsPersisterFactory;
 import com.prelert.job.persistence.JobProvider;
-import com.prelert.job.persistence.JobResultsDeleterFactory;
+import com.prelert.job.persistence.JobDataDeleterFactory;
 import com.prelert.job.persistence.UsagePersisterFactory;
 import com.prelert.job.persistence.elasticsearch.ElasticsearchBulkDeleter;
 import com.prelert.job.persistence.elasticsearch.ElasticsearchJobDataCountsPersister;
@@ -88,7 +88,7 @@ public abstract class ElasticsearchFactory
         return new ElasticsearchServerInfo(m_Client);
     }
 
-    public JobResultsDeleterFactory newJobResultsDeleterFactory()
+    public JobDataDeleterFactory newJobDataDeleterFactory()
     {
         return jobId -> new ElasticsearchBulkDeleter(m_Client, jobId);
     }
