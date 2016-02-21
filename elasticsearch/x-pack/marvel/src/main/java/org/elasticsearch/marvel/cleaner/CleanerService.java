@@ -25,6 +25,7 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.util.concurrent.AbstractRunnable;
 import org.elasticsearch.common.util.concurrent.FutureUtils;
+import org.elasticsearch.marvel.MarvelSettings;
 import org.elasticsearch.marvel.license.MarvelLicensee;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.joda.time.DateTime;
@@ -35,13 +36,10 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ScheduledFuture;
 
 /**
- * CleanerService takes care of deleting old marvel indices.
+ * CleanerService takes care of deleting old monitoring indices.
  */
 public class CleanerService extends AbstractLifecycleComponent<CleanerService> {
 
-    public static final String HISTORY_DURATION = "history.duration";
-    public static final Setting<TimeValue> HISTORY_SETTING = Setting.timeSetting("marvel." + HISTORY_DURATION,
-            TimeValue.timeValueHours(7 * 24), true, Setting.Scope.CLUSTER);
 
     private final MarvelLicensee licensee;
     private final ThreadPool threadPool;
@@ -57,7 +55,7 @@ public class CleanerService extends AbstractLifecycleComponent<CleanerService> {
         this.licensee = licensee;
         this.threadPool = threadPool;
         this.executionScheduler = executionScheduler;
-        clusterSettings.addSettingsUpdateConsumer(HISTORY_SETTING, this::setRetention, this::validateRetention);
+        clusterSettings.addSettingsUpdateConsumer(MarvelSettings.HISTORY_DURATION, this::setRetention, this::validateRetention);
     }
 
     @Inject
@@ -152,10 +150,10 @@ public class CleanerService extends AbstractLifecycleComponent<CleanerService> {
             TimeValue globalRetention = retention;
             if (globalRetention == null) {
                 try {
-                    globalRetention = HISTORY_SETTING.get(settings);
+                    globalRetention = MarvelSettings.HISTORY_DURATION.get(settings);
                     validateRetention(globalRetention);
                 } catch (IllegalArgumentException e) {
-                    globalRetention = HISTORY_SETTING.get(Settings.EMPTY);
+                    globalRetention = MarvelSettings.HISTORY_DURATION.get(Settings.EMPTY);
                 }
             }
 

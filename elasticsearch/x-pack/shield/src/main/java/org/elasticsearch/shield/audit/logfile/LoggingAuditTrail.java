@@ -108,7 +108,7 @@ public class LoggingAuditTrail extends AbstractLifecycleComponent<LoggingAuditTr
     }
 
     @Override
-    public void anonymousAccessDenied(String action, TransportMessage<?> message) {
+    public void anonymousAccessDenied(String action, TransportMessage message) {
         String indices = indicesString(message);
         if (indices != null) {
             if (logger.isDebugEnabled()) {
@@ -140,7 +140,7 @@ public class LoggingAuditTrail extends AbstractLifecycleComponent<LoggingAuditTr
     }
 
     @Override
-    public void authenticationFailed(AuthenticationToken token, String action, TransportMessage<?> message) {
+    public void authenticationFailed(AuthenticationToken token, String action, TransportMessage message) {
         String indices = indicesString(message);
         if (indices != null) {
             if (logger.isDebugEnabled()) {
@@ -173,7 +173,7 @@ public class LoggingAuditTrail extends AbstractLifecycleComponent<LoggingAuditTr
     }
 
     @Override
-    public void authenticationFailed(String action, TransportMessage<?> message) {
+    public void authenticationFailed(String action, TransportMessage message) {
         String indices = indicesString(message);
         if (indices != null) {
             if (logger.isDebugEnabled()) {
@@ -206,7 +206,7 @@ public class LoggingAuditTrail extends AbstractLifecycleComponent<LoggingAuditTr
     }
 
     @Override
-    public void authenticationFailed(String realm, AuthenticationToken token, String action, TransportMessage<?> message) {
+    public void authenticationFailed(String realm, AuthenticationToken token, String action, TransportMessage message) {
         if (logger.isTraceEnabled()) {
             String indices = indicesString(message);
             if (indices != null) {
@@ -230,7 +230,7 @@ public class LoggingAuditTrail extends AbstractLifecycleComponent<LoggingAuditTr
     }
 
     @Override
-    public void accessGranted(User user, String action, TransportMessage<?> message) {
+    public void accessGranted(User user, String action, TransportMessage message) {
         String indices = indicesString(message);
 
         // special treatment for internal system actions - only log on trace
@@ -270,7 +270,7 @@ public class LoggingAuditTrail extends AbstractLifecycleComponent<LoggingAuditTr
     }
 
     @Override
-    public void accessDenied(User user, String action, TransportMessage<?> message) {
+    public void accessDenied(User user, String action, TransportMessage message) {
         String indices = indicesString(message);
         if (indices != null) {
             if (logger.isDebugEnabled()) {
@@ -293,7 +293,7 @@ public class LoggingAuditTrail extends AbstractLifecycleComponent<LoggingAuditTr
     }
 
     @Override
-    public void tamperedRequest(String action, TransportMessage<?> message) {
+    public void tamperedRequest(String action, TransportMessage message) {
         String indices = indicesString(message);
         if (indices != null) {
             if (logger.isDebugEnabled()) {
@@ -315,7 +315,7 @@ public class LoggingAuditTrail extends AbstractLifecycleComponent<LoggingAuditTr
     }
 
     @Override
-    public void tamperedRequest(User user, String action, TransportMessage<?> request) {
+    public void tamperedRequest(User user, String action, TransportMessage request) {
         String indices = indicesString(request);
         if (indices != null) {
             if (logger.isDebugEnabled()) {
@@ -352,7 +352,7 @@ public class LoggingAuditTrail extends AbstractLifecycleComponent<LoggingAuditTr
     }
 
     @Override
-    public void runAsGranted(User user, String action, TransportMessage<?> message) {
+    public void runAsGranted(User user, String action, TransportMessage message) {
         if (logger.isDebugEnabled()) {
             logger.debug("{}[transport] [run_as_granted]\t{}, principal=[{}], run_as_principal=[{}], action=[{}], request=[{}]", prefix,
                     originAttributes(message, transport, threadContext), user.principal(), user.runAs().principal(), action,
@@ -364,7 +364,7 @@ public class LoggingAuditTrail extends AbstractLifecycleComponent<LoggingAuditTr
     }
 
     @Override
-    public void runAsDenied(User user, String action, TransportMessage<?> message) {
+    public void runAsDenied(User user, String action, TransportMessage message) {
         if (logger.isDebugEnabled()) {
             logger.debug("{}[transport] [run_as_denied]\t{}, principal=[{}], run_as_principal=[{}], action=[{}], request=[{}]", prefix,
                     originAttributes(message, transport, threadContext), user.principal(), user.runAs().principal(), action,
@@ -442,7 +442,7 @@ public class LoggingAuditTrail extends AbstractLifecycleComponent<LoggingAuditTr
         return builder.toString();
     }
 
-    static String indicesString(TransportMessage<?> message) {
+    static String indicesString(TransportMessage message) {
         String[] indices = indices(message);
         return indices == null ? null : arrayToCommaDelimitedString(indices);
     }

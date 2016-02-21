@@ -27,7 +27,7 @@ import org.elasticsearch.discovery.DiscoveryService;
 import org.elasticsearch.index.IndexNotFoundException;
 import org.elasticsearch.marvel.agent.collector.AbstractCollectorTestCase;
 import org.elasticsearch.marvel.agent.exporter.MarvelDoc;
-import org.elasticsearch.marvel.agent.settings.MarvelSettings;
+import org.elasticsearch.marvel.MarvelSettings;
 import org.elasticsearch.marvel.license.MarvelLicensee;
 import org.elasticsearch.test.ESIntegTestCase.ClusterScope;
 
@@ -63,7 +63,7 @@ public class IndicesStatsCollectorTests extends AbstractCollectorTestCase {
     }
 
     public void testEmptyClusterAllIndices() throws Exception {
-        final String node = internalCluster().startNode(settingsBuilder().put(MarvelSettings.INDICES_SETTING.getKey(), MetaData.ALL));
+        final String node = internalCluster().startNode(settingsBuilder().put(MarvelSettings.INDICES.getKey(), MetaData.ALL));
         waitForNoBlocksOnNode(node);
 
         try {
@@ -74,7 +74,7 @@ public class IndicesStatsCollectorTests extends AbstractCollectorTestCase {
     }
 
     public void testEmptyClusterMissingIndex() throws Exception {
-        final String node = internalCluster().startNode(settingsBuilder().put(MarvelSettings.INDICES_SETTING.getKey(), "unknown"));
+        final String node = internalCluster().startNode(settingsBuilder().put(MarvelSettings.INDICES.getKey(), "unknown"));
         waitForNoBlocksOnNode(node);
 
         try {

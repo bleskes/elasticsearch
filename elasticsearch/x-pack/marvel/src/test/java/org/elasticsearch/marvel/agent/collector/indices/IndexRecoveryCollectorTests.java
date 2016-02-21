@@ -27,7 +27,7 @@ import org.elasticsearch.index.IndexNotFoundException;
 import org.elasticsearch.indices.recovery.RecoveryState;
 import org.elasticsearch.marvel.agent.collector.AbstractCollectorTestCase;
 import org.elasticsearch.marvel.agent.exporter.MarvelDoc;
-import org.elasticsearch.marvel.agent.settings.MarvelSettings;
+import org.elasticsearch.marvel.MarvelSettings;
 import org.elasticsearch.marvel.license.MarvelLicensee;
 import org.elasticsearch.test.ESIntegTestCase.ClusterScope;
 
@@ -59,8 +59,8 @@ public class IndexRecoveryCollectorTests extends AbstractCollectorTestCase {
     protected Settings nodeSettings(int nodeOrdinal) {
         return settingsBuilder()
                 .put(super.nodeSettings(nodeOrdinal))
-                .put(MarvelSettings.INDEX_RECOVERY_ACTIVE_ONLY_SETTING.getKey(), activeOnly)
-                .put(MarvelSettings.INDICES_SETTING.getKey(), indexName)
+                .put(MarvelSettings.INDEX_RECOVERY_ACTIVE_ONLY.getKey(), activeOnly)
+                .put(MarvelSettings.INDICES.getKey(), indexName)
                 .build();
     }
 
@@ -72,7 +72,7 @@ public class IndexRecoveryCollectorTests extends AbstractCollectorTestCase {
         logger.info("--> collect index recovery data");
         Collection<MarvelDoc> results = newIndexRecoveryCollector(node1).doCollect();
 
-        logger.info("--> no indices created, expecting 0 marvel documents");
+        logger.info("--> no indices created, expecting 0 monitoring documents");
         assertNotNull(results);
         assertThat(results, is(empty()));
 
@@ -179,7 +179,7 @@ public class IndexRecoveryCollectorTests extends AbstractCollectorTestCase {
     }
 
     public void testEmptyCluster() throws Exception {
-        final String node = internalCluster().startNode(settingsBuilder().put(MarvelSettings.INDICES_SETTING.getKey(),
+        final String node = internalCluster().startNode(settingsBuilder().put(MarvelSettings.INDICES.getKey(),
                 Strings.EMPTY_ARRAY));
         waitForNoBlocksOnNode(node);
 
@@ -191,7 +191,7 @@ public class IndexRecoveryCollectorTests extends AbstractCollectorTestCase {
     }
 
     public void testEmptyClusterAllIndices() throws Exception {
-        final String node = internalCluster().startNode(settingsBuilder().put(MarvelSettings.INDICES_SETTING.getKey(), MetaData.ALL));
+        final String node = internalCluster().startNode(settingsBuilder().put(MarvelSettings.INDICES.getKey(), MetaData.ALL));
         waitForNoBlocksOnNode(node);
 
         try {
@@ -202,7 +202,7 @@ public class IndexRecoveryCollectorTests extends AbstractCollectorTestCase {
     }
 
     public void testEmptyClusterMissingIndex() throws Exception {
-        final String node = internalCluster().startNode(settingsBuilder().put(MarvelSettings.INDICES_SETTING.getKey(), "unknown"));
+        final String node = internalCluster().startNode(settingsBuilder().put(MarvelSettings.INDICES.getKey(), "unknown"));
         waitForNoBlocksOnNode(node);
 
         try {
