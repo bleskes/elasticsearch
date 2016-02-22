@@ -264,28 +264,28 @@ public class PrelertWebApp extends Application
      * Get the path to the main server log directory.
      * This defaults to $PRELERT_HOME/logs/engine_api, but
      * can be relocated.
+     *
+     * This method attempts to ensure that the directory exists before
+     * returning, but if this proves impossible it will not throw an exception,
+     * but will return the path to the non-existent directory.
      */
     public static Path getServerLogPath()
     {
-        return Paths.get(ProcessCtrl.LOG_DIR, ENGINE_API_DIR);
-    }
-
-    private void writeServerInfoDailyStartingNow()
-    {
-        File serverInfoFile = new File(getServerLogPath().toString(), SERVER_INFO_FILE);
+        Path serverLogPath = Paths.get(ProcessCtrl.LOG_DIR, ENGINE_API_DIR);
         try
         {
-            // create path if missing
-            Path path = getServerLogPath();
-            if (!Files.isDirectory(path))
-            {
-                Files.createDirectory(path);
-            }
+            Files.createDirectories(serverLogPath);
         }
         catch (IOException e)
         {
             LOGGER.error("Error creating log file directory", e);
         }
+        return serverLogPath;
+    }
+
+    private void writeServerInfoDailyStartingNow()
+    {
+        File serverInfoFile = new File(getServerLogPath().toString(), SERVER_INFO_FILE);
 
         ServerInfoWriter writer = new ServerInfoWriter(m_ServerInfo, serverInfoFile);
         writer.writeInfo();
