@@ -26,6 +26,7 @@ import com.prelert.app.Shutdownable;
 import com.prelert.job.JobDetails;
 import com.prelert.job.JobIdAlreadyExistsException;
 import com.prelert.job.JobStatus;
+import com.prelert.job.SchedulerState;
 import com.prelert.job.UnknownJobException;
 
 /**
@@ -141,4 +142,21 @@ public interface JobDetailsProvider extends Shutdownable
      */
     boolean updateDetectorDescription(String jobId, int detectorIndex, String newDescription)
             throws UnknownJobException;
+
+    /**
+     * Updates the scheduler state for the given job
+     * @param jobId the job id
+     * @param schedulerState the new scheduler state
+     * @return {@code true} if update was successful
+     * @throws UnknownJobException If there is no job with id <code>jobId</code>
+     */
+    boolean updateSchedulerState(String jobId, SchedulerState schedulerState)
+            throws UnknownJobException;
+
+    /**
+     * Retrieves the state of the scheduler for the given job
+     * @param jobId the job id
+     * @return the scheduler state or empty if none exists
+     */
+    Optional<SchedulerState> getSchedulerState(String jobId);
 }

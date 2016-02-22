@@ -54,6 +54,7 @@ import org.elasticsearch.search.SearchHit;
 
 import com.prelert.job.JobDetails;
 import com.prelert.job.ModelSizeStats;
+import com.prelert.job.ModelSnapshot;
 import com.prelert.job.persistence.JobRenormaliser;
 import com.prelert.job.persistence.JobResultsPersister;
 import com.prelert.job.quantiles.Quantiles;
@@ -224,13 +225,10 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
     }
 
     /**
-     * The quantiles objects are written with one of two keys, such that
-     * the latest quantiles will overwrite the previous ones.  For each ES index,
-     * which corresponds to a job, there can only be 2 quantiles documents,
-     * one for system change quantiles and the other for unusual behaviour
-     * quantiles.
+     * The quantiles objects are written with a fixed ID, so that the
+     * latest quantiles will overwrite the previous ones.  For each ES index,
+     * which corresponds to a job, there can only be one quantiles document.
      * @param quantiles If <code>null</code> then returns straight away.
-     * @throws IOException
      */
     @Override
     public void persistQuantiles(Quantiles quantiles)
@@ -267,11 +265,40 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
         commitWrites();
     }
 
+    /**
+     * Write a model snapshot description to Elasticsearch.  Note that this is
+     * only the description - the actual model state is persisted separately.
+     * @param modelSnapshot If <code>null</code> then returns straight away.
+     */
+    @Override
+    public void persistModelSnapshot(ModelSnapshot modelSnapshot)
+    {
+        if (modelSnapshot == null)
+        {
+            LOGGER.warn("No model snapshot to persist for job " + m_JobId.getId());
+            return;
+        }
+
+        try
+        {
+            XContentBuilder content = serialiseModelSnapshot(modelSnapshot);
+
+            LOGGER.trace("ES API CALL: index type " + ModelSnapshot.TYPE +
+                    " to index " + m_JobId.getIndex() + " with ID " + modelSnapshot.getSnapshotId());
+            m_Client.prepareIndex(m_JobId.getIndex(), ModelSnapshot.TYPE, modelSnapshot.getSnapshotId())
+                    .setSource(content)
+                    .execute().actionGet();
+        }
+        catch (IOException e)
+        {
+            LOGGER.error("Error writing model snapshot", e);
+            return;
+        }
+    }
 
     /**
      * Persist the memory usage data
      * @param modelSizeStats If <code>null</code> then returns straight away.
-     * @throws IOException
      */
     @Override
     public void persistModelSizeStats(ModelSizeStats modelSizeStats)
@@ -307,7 +334,6 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
     /**
      * Persist model debug output
      * @param modelDebugOutput If <code>null</code> then returns straight away.
-     * @throws IOException
      */
     @Override
     public void persistModelDebugOutput(ModelDebugOutput modelDebugOutput)
@@ -473,6 +499,25 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
                 .field(Quantiles.ID, quantiles.getId())
                 .field(Quantiles.VERSION, quantiles.getVersion())
                 .field(Quantiles.QUANTILE_STATE, quantiles.getState())
+                .endObject();
+    }
+
+    /**
+     * Return the model snapshot description as serialisable content
+     * @param modelSnapshot
+     * @return
+     * @throws IOException
+     */
+    private XContentBuilder serialiseModelSnapshot(ModelSnapshot modelSnapshot)
+    throws IOException
+    {
+        return jsonBuilder().startObject()
+                .field(JOB_ID_NAME, m_JobId.getId())
+                .field(ElasticsearchMappings.ES_TIMESTAMP, modelSnapshot.getTimestamp())
+                .field(ModelSnapshot.DESCRIPTION, modelSnapshot.getDescription())
+                .field(ModelSnapshot.RESTORE_PRIORITY, modelSnapshot.getRestorePriority())
+                .field(ModelSnapshot.SNAPSHOT_ID, modelSnapshot.getSnapshotId())
+                .field(ModelSnapshot.SNAPSHOT_DOC_COUNT, modelSnapshot.getSnapshotDocCount())
                 .endObject();
     }
 

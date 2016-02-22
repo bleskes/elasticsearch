@@ -141,6 +141,14 @@ public class ElasticsearchMappingsTest
                         "        \"type\": \"long\"," +
                         "        \"index\": \"no\"" +
                         "      }," +
+                        "      \"backgroundPersistInterval\": {" +
+                        "        \"type\": \"long\"," +
+                        "        \"index\": \"no\"" +
+                        "      }," +
+                        "      \"modelSnapshotRetentionDays\": {" +
+                        "        \"type\": \"long\"," +
+                        "        \"index\": \"no\"" +
+                        "      }," +
                         "      \"resultsRetentionDays\": {" +
                         "        \"type\": \"long\"," +
                         "        \"index\": \"no\"" +

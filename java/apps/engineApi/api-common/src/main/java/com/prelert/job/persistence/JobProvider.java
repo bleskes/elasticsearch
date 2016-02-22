@@ -18,7 +18,9 @@
 
 package com.prelert.job.persistence;
 
+import com.prelert.job.ModelSnapshot;
 import com.prelert.job.UnknownJobException;
+import com.prelert.job.audit.Auditor;
 import com.prelert.job.quantiles.Quantiles;
 
 public interface JobProvider extends JobDetailsProvider, JobResultsProvider
@@ -30,6 +32,12 @@ public interface JobProvider extends JobDetailsProvider, JobResultsProvider
     throws UnknownJobException;
 
     /**
+     * Get the model snapshot for the job that has the highest restore priority
+     */
+    public ModelSnapshot getModelSnapshotByPriority(String jobId)
+    throws UnknownJobException;
+
+    /**
      * Refresh the datastore index so that all recent changes are
      * available to search operations. This is a synchronous blocking
      * call that should not return until the index has been refreshed.
@@ -37,4 +45,12 @@ public interface JobProvider extends JobDetailsProvider, JobResultsProvider
      * @param jobId
      */
     public void refreshIndex(String jobId);
+
+    /**
+     * Get an auditor for the given job
+     *
+     * @param the job id
+     * @return the {@code Auditor}
+     */
+    Auditor audit(String jobId);
 }

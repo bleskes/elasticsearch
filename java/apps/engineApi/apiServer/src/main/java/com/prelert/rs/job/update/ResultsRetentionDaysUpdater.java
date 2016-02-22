@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -27,14 +27,11 @@
 
 package com.prelert.rs.job.update;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.prelert.job.UnknownJobException;
-import com.prelert.job.config.verification.JobConfigurationException;
-import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.manager.JobManager;
 import com.prelert.job.messages.Messages;
 
-class ResultsRetentionDaysUpdater extends AbstractUpdater
+class ResultsRetentionDaysUpdater extends AbstractLongUpdater
 {
     public ResultsRetentionDaysUpdater(JobManager jobManager, String jobId)
     {
@@ -42,25 +39,14 @@ class ResultsRetentionDaysUpdater extends AbstractUpdater
     }
 
     @Override
-    void update(JsonNode node) throws UnknownJobException, JobConfigurationException
+    void commit() throws UnknownJobException
     {
-        if (node.isIntegralNumber() || node.isNull())
-        {
-            Long resultsRetentionDays = node.isIntegralNumber() ? node.asLong() : null;
-            if (resultsRetentionDays != null && resultsRetentionDays < 0)
-            {
-                throwInvalidValue();
-            }
-            jobManager().setResultsRetentionDays(jobId(), resultsRetentionDays);
-            return;
-        }
-        throwInvalidValue();
+        jobManager().setResultsRetentionDays(jobId(), getNewValue());
     }
 
-    private void throwInvalidValue() throws JobConfigurationException
+    @Override
+    protected String getInvalidMessageKey()
     {
-        throw new JobConfigurationException(
-                Messages.getMessage(Messages.JOB_CONFIG_UPDATE_RESULTS_RETENTION_DAYS_INVALID),
-                ErrorCodes.INVALID_VALUE);
+        return Messages.JOB_CONFIG_UPDATE_RESULTS_RETENTION_DAYS_INVALID;
     }
 }

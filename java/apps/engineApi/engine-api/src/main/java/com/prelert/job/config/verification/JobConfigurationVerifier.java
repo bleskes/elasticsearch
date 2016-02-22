@@ -100,6 +100,8 @@ public final class JobConfigurationVerifier
 
         checkValueNotNegative("timeout", config.getTimeout());
         checkValueNotNegative("renormalizationWindow", config.getRenormalizationWindow());
+        checkValueNotNegative("backgroundPersistInterval", config.getBackgroundPersistInterval());
+        checkValueNotNegative("modelSnapshotRetentionDays", config.getModelSnapshotRetentionDays());
         checkValueNotNegative("resultsRetentionDays", config.getResultsRetentionDays());
 
         if (config.getModelDebugConfig() != null)

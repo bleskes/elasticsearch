@@ -27,6 +27,8 @@
 
 package com.prelert.job.persistence.elasticsearch;
 
+import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -73,8 +75,12 @@ import com.prelert.job.CategorizerState;
 import com.prelert.job.JobDetails;
 import com.prelert.job.JobStatus;
 import com.prelert.job.ModelSizeStats;
+import com.prelert.job.ModelSnapshot;
 import com.prelert.job.ModelState;
+import com.prelert.job.SchedulerState;
 import com.prelert.job.UnknownJobException;
+import com.prelert.job.audit.AuditMessage;
+import com.prelert.job.audit.Auditor;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.persistence.BatchedResultsIterator;
 import com.prelert.job.persistence.DataStoreException;
@@ -222,12 +228,13 @@ public class ElasticsearchJobProvider implements JobProvider
                 LOGGER.trace("ES API CALL: create index " + PRELERT_INFO_INDEX);
                 m_Client.admin().indices().prepareCreate(PRELERT_INFO_INDEX)
                                 .setSettings(prelertIndexSettings())
+                                .addMapping(AuditMessage.TYPE, ElasticsearchMappings.auditMessageMapping())
                                 .get();
                 LOGGER.trace("ES API CALL: wait for yellow status " + PRELERT_INFO_INDEX);
                 m_Client.admin().cluster().prepareHealth(PRELERT_INFO_INDEX).setWaitForYellowStatus().execute().actionGet();
             }
         }
-        catch (InterruptedException | ExecutionException e)
+        catch (InterruptedException | ExecutionException | IOException e)
         {
             LOGGER.warn("Error checking the info index", e);
         }
@@ -425,6 +432,7 @@ public class ElasticsearchJobProvider implements JobProvider
             XContentBuilder recordMapping = ElasticsearchMappings.recordMapping(termFields);
             XContentBuilder quantilesMapping = ElasticsearchMappings.quantilesMapping();
             XContentBuilder modelStateMapping = ElasticsearchMappings.modelStateMapping();
+            XContentBuilder modelSnapshotMapping = ElasticsearchMappings.modelSnapshotMapping();
             XContentBuilder usageMapping = ElasticsearchMappings.usageMapping();
             XContentBuilder modelSizeStatsMapping = ElasticsearchMappings.modelSizeStatsMapping();
             XContentBuilder influencerMapping = ElasticsearchMappings.influencerMapping(influencers);
@@ -443,6 +451,7 @@ public class ElasticsearchJobProvider implements JobProvider
                     .addMapping(AnomalyRecord.TYPE, recordMapping)
                     .addMapping(Quantiles.TYPE, quantilesMapping)
                     .addMapping(ModelState.TYPE, modelStateMapping)
+                    .addMapping(ModelSnapshot.TYPE, modelSnapshotMapping)
                     .addMapping(Usage.TYPE, usageMapping)
                     .addMapping(ModelSizeStats.TYPE, modelSizeStatsMapping)
                     .addMapping(Influencer.TYPE, influencerMapping)
@@ -981,6 +990,12 @@ public class ElasticsearchJobProvider implements JobProvider
         return new ElasticsearchBatchedInfluencersIterator(m_Client, jobId, m_ObjectMapper);
     }
 
+    @Override
+    public BatchedResultsIterator<ModelSnapshot> newBatchedModelSnapshotIterator(String jobId)
+    {
+        return new ElasticsearchBatchedModelSnapshotIterator(m_Client, jobId, m_ObjectMapper);
+    }
+
     /**
      * Always returns true
      */
@@ -1023,6 +1038,48 @@ public class ElasticsearchJobProvider implements JobProvider
             LOGGER.error("Missing index when getting quantiles", e);
             throw new UnknownJobException(jobId);
         }
+    }
+
+    @Override
+    public ModelSnapshot getModelSnapshotByPriority(String jobId)
+    throws UnknownJobException
+    {
+        ElasticsearchJobId elasticJobId = new ElasticsearchJobId(jobId);
+
+        LOGGER.trace("ES API CALL: search all of type " + ModelSnapshot.TYPE
+                + " from index " + elasticJobId.getIndex()
+                + " with sort descending on field " + ModelSnapshot.RESTORE_PRIORITY
+                + " take 1");
+
+        SortBuilder sb = new FieldSortBuilder(ModelSnapshot.RESTORE_PRIORITY)
+                .order(SortOrder.DESC);
+        SearchRequestBuilder searchRequestBuilder = m_Client.prepareSearch(elasticJobId.getIndex())
+                .setTypes(ModelSnapshot.TYPE)
+                .setSize(1)
+                .addSort(sb);
+
+        SearchResponse response = null;
+        try
+        {
+            response = searchRequestBuilder.get();
+        }
+        catch (IndexNotFoundException e)
+        {
+            LOGGER.error("Missing index when getting model snapshot", e);
+            throw new UnknownJobException(jobId);
+        }
+
+        for (SearchHit hit : response.getHits().getHits())
+        {
+            Map<String, Object> m = hit.getSource();
+
+            // replace logstash timestamp name with timestamp
+            m.put(ModelSnapshot.TIMESTAMP, m.remove(ElasticsearchMappings.ES_TIMESTAMP));
+
+            return m_ObjectMapper.convertValue(m, ModelSnapshot.class);
+        }
+
+        return null;
     }
 
     private boolean checkQuantilesVersion(String jobId, GetResponse response)
@@ -1090,5 +1147,64 @@ public class ElasticsearchJobProvider implements JobProvider
 
         return true;
     }
-}
 
+    @Override
+    public boolean updateSchedulerState(String jobId, SchedulerState schedulerState)
+            throws UnknownJobException
+    {
+        LOGGER.trace("ES API CALL: update scheduler state for job " + jobId);
+
+        ElasticsearchJobId esJobId = new ElasticsearchJobId(jobId);
+
+        try
+        {
+            m_Client.prepareIndex(esJobId.getIndex(), SchedulerState.TYPE, SchedulerState.TYPE)
+                    .setSource(jsonBuilder()
+                            .startObject()
+                                .field(SchedulerState.START_TIME_MILLIS, schedulerState.getStartTimeMillis())
+                                .field(SchedulerState.END_TIME_MILLIS, schedulerState.getEndTimeMillis())
+                            .endObject())
+                    .execute().actionGet();
+        }
+        catch (IndexNotFoundException e)
+        {
+            throw new UnknownJobException(jobId);
+        }
+        catch (IOException e)
+        {
+            LOGGER.error("Error while updating schedulerState", e);
+        }
+
+        return true;
+    }
+
+    @Override
+    public Optional<SchedulerState> getSchedulerState(String jobId)
+    {
+        Optional<SchedulerState> result = Optional.empty();
+        ElasticsearchJobId esJobId = new ElasticsearchJobId(jobId);
+        GetResponse response = null;
+        try
+        {
+            response = m_Client.prepareGet(esJobId.getIndex(), SchedulerState.TYPE, SchedulerState.TYPE).get();
+        }
+        catch (IndexNotFoundException e)
+        {
+            LOGGER.warn("No schedulerState could be retrieved for job: " + jobId, e);
+        }
+
+        if (response != null && response.isExists())
+        {
+            SchedulerState schedulerState = m_ObjectMapper.convertValue(response.getSource(),
+                    SchedulerState.class);
+            result = Optional.of(schedulerState);
+        }
+        return result;
+    }
+
+    @Override
+    public Auditor audit(String jobId)
+    {
+        return new ElasticsearchAuditor(m_Client, PRELERT_INFO_INDEX, jobId);
+    }
+}

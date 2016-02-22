@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -47,6 +47,7 @@ import com.prelert.job.AnalysisLimits;
 import com.prelert.job.DataDescription;
 import com.prelert.job.JobDetails;
 import com.prelert.job.ModelDebugConfig;
+import com.prelert.job.ModelSnapshot;
 import com.prelert.job.process.writer.AnalysisLimitsWriter;
 import com.prelert.job.process.writer.FieldConfigWriter;
 import com.prelert.job.process.writer.ModelDebugConfigWriter;
@@ -179,11 +180,13 @@ public class ProcessCtrl
     public static final String INFO_ARG = "--info";
     public static final String LIMIT_CONFIG_ARG = "--limitconfig=";
     public static final String LATENCY_ARG = "--latency=";
+    public static final String RESULT_FINALIZATION_WINDOW_ARG = "--resultFinalizationWindow=";
     public static final String MAX_ANOMALY_RECORDS_ARG;
     public static final String MODEL_DEBUG_CONFIG_ARG = "--modeldebugconfig=";
     public static final String PERIOD_ARG = "--period=";
     public static final String PERSIST_INTERVAL_ARG = "--persistInterval=";
     public static final String MAX_QUANTILE_INTERVAL_ARG = "--maxQuantileInterval=";
+    public static final String RESTORE_SNAPSHOT_ID = "--restoreSnapshotId=";
     public static final String PERSIST_URL_BASE_ARG = "--persistUrlBase=";
     public static final String SUMMARY_COUNT_FIELD_ARG = "--summarycountfield=";
     public static final String TIME_FIELD_ARG = "--timefield=";
@@ -195,7 +198,7 @@ public class ProcessCtrl
      * Roughly how often should the C++ process persist state?  A staggering
      * factor that varies by job is added to this.
      */
-    public static final int BASE_PERSIST_INTERVAL = 10800; // 3 hours
+    public static final long DEFAULT_BASE_PERSIST_INTERVAL = 10800; // 3 hours
 
     /**
      * Roughly how often should the C++ process output quantiles when no
@@ -509,17 +512,20 @@ public class ProcessCtrl
      * @param logger The job's logger
      * @param filesToDelete This method will append File objects that need to be
      * deleted when the process completes
+     * @param modelSnapshot The model snapshot to restore on startup, or null if
+     * no model snapshot is to be restored
      *
      * @return A Java Process object
      * @throws IOException
      */
     public static Process buildAutoDetect(JobDetails job, Quantiles quantiles, Logger logger,
-            List<File> filesToDelete)
+            List<File> filesToDelete, ModelSnapshot modelSnapshot)
     throws IOException
     {
         logger.info("PRELERT_HOME is set to " + PRELERT_HOME);
 
-        List<String> command = ProcessCtrl.buildAutoDetectCommand(job, logger);
+        String restoreSnapshotId = (modelSnapshot == null) ? null : modelSnapshot.getSnapshotId();
+        List<String> command = ProcessCtrl.buildAutoDetectCommand(job, logger, restoreSnapshotId);
 
         if (job.getAnalysisLimits() != null)
         {
@@ -584,7 +590,8 @@ public class ProcessCtrl
         return pb.start();
     }
 
-    static List<String> buildAutoDetectCommand(JobDetails job, Logger logger)
+    static List<String> buildAutoDetectCommand(JobDetails job, Logger logger,
+            String restoreSnapshotId)
     {
         List<String> command = new ArrayList<>();
         command.add(AUTODETECT_PATH);
@@ -619,6 +626,11 @@ public class ProcessCtrl
             {
                 String summaryCountField = SUMMARY_COUNT_FIELD_ARG + job.getAnalysisConfig().getSummaryCountFieldName();
                 command.add(summaryCountField);
+            }
+            if (job.getAnalysisConfig().getResultFinalizationWindow() != null)
+            {
+                String resultFinalizationWindow = RESULT_FINALIZATION_WINDOW_ARG + job.getAnalysisConfig().getResultFinalizationWindow();
+                command.add(resultFinalizationWindow);
             }
         }
 
@@ -656,12 +668,19 @@ public class ProcessCtrl
         }
         else
         {
+            if (restoreSnapshotId != null && !restoreSnapshotId.isEmpty())
+            {
+                command.add(RESTORE_SNAPSHOT_ID + restoreSnapshotId);
+            }
+
             String persistUrlBase = PERSIST_URL_BASE_ARG +
                     "http://localhost:" + ES_HTTP_PORT + '/' + ES_INDEX_PREFIX + job.getId();
             command.add(persistUrlBase);
 
             // Persist model state every few hours even if the job isn't closed
-            int persistInterval = BASE_PERSIST_INTERVAL + intervalStagger;
+            long persistInterval = (job.getBackgroundPersistInterval() == null) ?
+                    (DEFAULT_BASE_PERSIST_INTERVAL + intervalStagger) :
+                    job.getBackgroundPersistInterval();
             command.add(PERSIST_INTERVAL_ARG + persistInterval);
         }
 

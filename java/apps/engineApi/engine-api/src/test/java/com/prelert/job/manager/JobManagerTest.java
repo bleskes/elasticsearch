@@ -32,10 +32,13 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -47,6 +50,12 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.OptionalLong;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import org.apache.log4j.Logger;
 import org.junit.After;
@@ -61,6 +70,7 @@ import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
+import org.mockito.stubbing.Stubber;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.prelert.job.AnalysisConfig;
@@ -68,12 +78,15 @@ import com.prelert.job.DataCounts;
 import com.prelert.job.Detector;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.JobDetails;
+import com.prelert.job.JobException;
 import com.prelert.job.JobIdAlreadyExistsException;
 import com.prelert.job.JobSchedulerStatus;
 import com.prelert.job.ModelDebugConfig;
 import com.prelert.job.SchedulerConfig;
 import com.prelert.job.SchedulerConfig.DataSource;
+import com.prelert.job.SchedulerState;
 import com.prelert.job.UnknownJobException;
+import com.prelert.job.audit.Auditor;
 import com.prelert.job.config.verification.JobConfigurationException;
 import com.prelert.job.data.extraction.DataExtractor;
 import com.prelert.job.data.extraction.DataExtractorFactory;
@@ -83,6 +96,7 @@ import com.prelert.job.exceptions.JobInUseException;
 import com.prelert.job.exceptions.TooManyJobsException;
 import com.prelert.job.logging.JobLoggerFactory;
 import com.prelert.job.messages.Messages;
+import com.prelert.job.persistence.DataStoreException;
 import com.prelert.job.persistence.JobProvider;
 import com.prelert.job.persistence.QueryPage;
 import com.prelert.job.process.autodetect.ProcessManager;
@@ -90,7 +104,10 @@ import com.prelert.job.process.exceptions.MalformedJsonException;
 import com.prelert.job.process.exceptions.MissingFieldException;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
 import com.prelert.job.process.params.DataLoadParams;
+import com.prelert.job.process.params.InterimResultsParams;
 import com.prelert.job.process.writer.CsvRecordWriter;
+import com.prelert.job.scheduler.CannotStartSchedulerException;
+import com.prelert.job.scheduler.CannotStopSchedulerException;
 import com.prelert.job.status.HighProportionOfBadTimestampsException;
 import com.prelert.job.status.OutOfOrderRecordsException;
 
@@ -106,17 +123,200 @@ public class JobManagerTest
     @Mock private ProcessManager m_ProcessManager;
     @Mock private DataExtractorFactory m_DataExtractorFactory;
     @Mock private JobLoggerFactory m_JobLoggerFactory;
+    @Mock private Auditor m_Auditor;
 
     @Before
     public void setUp()
     {
         MockitoAnnotations.initMocks(this);
+        when(m_JobProvider.jobIdIsUnique(anyString())).thenReturn(true);
+        when(m_JobProvider.audit(anyString())).thenReturn(m_Auditor);
     }
 
     @After
     public void tearDown()
     {
         System.clearProperty("prelert.max.jobs.factor");
+    }
+
+    @Test
+    public void testCloseJob_GivenExistingJob() throws UnknownJobException, DataStoreException,
+            NativeProcessRunException, JobInUseException
+    {
+        givenProcessInfo(5);
+        JobManager jobManager = createJobManager();
+
+        jobManager.closeJob("foo");
+
+        verify(m_ProcessManager).closeJob("foo");
+    }
+
+    @Test
+    public void testCloseJob_GivenJobActionIsNotAvailable() throws NativeProcessRunException,
+            InterruptedException, ExecutionException
+    {
+        givenProcessInfo(5);
+        JobManager jobManager = createJobManager();
+        doAnswerSleep(200).when(m_ProcessManager).closeJob("foo");
+
+        ExecutorService executor = Executors.newFixedThreadPool(3);
+        Future<Throwable> task_1_result = executor.submit(
+                new ExceptionCallable(() -> jobManager.closeJob("foo")));
+        Future<Throwable> task_2_result = executor.submit(
+                new ExceptionCallable(() -> jobManager.closeJob("foo")));
+        Future<Throwable> task_3_result = executor.submit(
+                new ExceptionCallable(() -> jobManager.closeJob("bar")));
+        executor.shutdown();
+
+        Throwable result1 = task_1_result.get();
+        Throwable result2 = task_2_result.get();
+        Throwable result3 = task_3_result.get();
+        assertTrue(result1 == null || result2 == null);
+        assertNull(result3);
+        if (result1 == null)
+        {
+            assertTrue(result2 instanceof JobInUseException);
+        }
+        else
+        {
+            assertTrue(result1 instanceof JobInUseException);
+        }
+
+        verify(m_ProcessManager).closeJob("foo");
+        verify(m_ProcessManager).closeJob("bar");
+    }
+
+    @Test
+    public void testDeleteJob_GivenNonRunningJob() throws UnknownJobException, DataStoreException,
+            NativeProcessRunException, JobInUseException, CannotStopSchedulerException
+    {
+        givenProcessInfo(5);
+        JobManager jobManager = createJobManager();
+        when(m_ProcessManager.jobIsRunning("foo")).thenReturn(false);
+        when(m_JobProvider.deleteJob("foo")).thenReturn(true);
+
+        jobManager.deleteJob("foo");
+
+        verify(m_ProcessManager, never()).closeJob("foo");
+        verify(m_ProcessManager).deletePersistedData("foo");
+        verify(m_JobProvider).deleteJob("foo");
+        verify(m_JobProvider).audit("foo");
+        verify(m_Auditor).info("Job deleted");
+    }
+
+    @Test
+    public void testDeleteJob_GivenRunningJob() throws UnknownJobException, DataStoreException,
+            NativeProcessRunException, JobInUseException, CannotStopSchedulerException
+    {
+        givenProcessInfo(5);
+        JobManager jobManager = createJobManager();
+        when(m_ProcessManager.jobIsRunning("foo")).thenReturn(true);
+
+        jobManager.deleteJob("foo");
+
+        verify(m_ProcessManager).closeJob("foo");
+        verify(m_ProcessManager).deletePersistedData("foo");
+        verify(m_JobProvider).deleteJob("foo");
+    }
+
+    @Test
+    public void testDeleteJob_GivenScheduledJob()
+            throws UnknownJobException, DataStoreException, NativeProcessRunException,
+            JobInUseException, TooManyJobsException, JobConfigurationException,
+            JobIdAlreadyExistsException, CannotStopSchedulerException
+    {
+        givenProcessInfo(5);
+        JobManager jobManager = createJobManager();
+
+        JobConfiguration jobConfig = createScheduledJobConfig();
+        Logger jobLogger = mock(Logger.class);
+        when(m_JobLoggerFactory.newLogger("foo")).thenReturn(jobLogger);
+        DataExtractor dataExtractor = mock(DataExtractor.class);
+        when(m_DataExtractorFactory.newExtractor(any(JobDetails.class))).thenReturn(dataExtractor);
+        when(m_ProcessManager.jobIsRunning("foo")).thenReturn(true);
+
+        jobManager.createJob(jobConfig);
+
+        jobManager.deleteJob("foo");
+
+        verify(m_ProcessManager).closeJob("foo");
+        verify(m_ProcessManager).deletePersistedData("foo");
+        verify(m_JobProvider).deleteJob("foo");
+    }
+
+    @Test
+    public void testDeleteJob_GivenJobActionIsNotAvailable() throws UnknownJobException,
+            DataStoreException, InterruptedException, ExecutionException
+    {
+        givenProcessInfo(5);
+        JobManager jobManager = createJobManager();
+        doAnswerSleep(200).when(m_JobProvider).deleteJob("foo");
+
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+        Future<Throwable> task_1_result = executor.submit(
+                new ExceptionCallable(() -> jobManager.deleteJob("foo")));
+        Future<Throwable> task_2_result = executor.submit(
+                new ExceptionCallable(() -> jobManager.deleteJob("foo")));
+        executor.shutdown();
+
+        Throwable result1 = task_1_result.get();
+        Throwable result2 = task_2_result.get();
+        assertTrue(result1 == null || result2 == null);
+        if (result1 == null)
+        {
+            assertTrue(result2 instanceof JobInUseException);
+        }
+        else
+        {
+            assertTrue(result1 instanceof JobInUseException);
+        }
+
+        verify(m_JobProvider).deleteJob("foo");
+    }
+
+    @Test
+    public void testFlushJob_GivenJobExists() throws UnknownJobException, NativeProcessRunException,
+            JobInUseException
+    {
+        givenProcessInfo(5);
+        JobManager jobManager = createJobManager();
+        InterimResultsParams params = InterimResultsParams.newBuilder().build();
+
+        jobManager.flushJob("foo", params);
+
+        verify(m_JobProvider).checkJobExists("foo");
+        verify(m_ProcessManager).flushJob("foo", params);
+    }
+
+    @Test
+    public void testFlushJob_GivenJobActionIsNotAvailable() throws UnknownJobException,
+            NativeProcessRunException, JobInUseException, InterruptedException, ExecutionException
+    {
+        givenProcessInfo(5);
+        JobManager jobManager = createJobManager();
+        InterimResultsParams params = InterimResultsParams.newBuilder().build();
+        doAnswerSleep(200).when(m_ProcessManager).flushJob("foo", params);
+
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+        Future<Throwable> task_1_result = executor.submit(
+                new ExceptionCallable(() -> jobManager.flushJob("foo", params)));
+        Future<Throwable> task_2_result = executor.submit(
+                new ExceptionCallable(() -> jobManager.flushJob("foo", params)));
+        executor.shutdown();
+
+        Throwable result1 = task_1_result.get();
+        Throwable result2 = task_2_result.get();
+        assertTrue(result1 == null || result2 == null);
+        if (result1 == null)
+        {
+            assertTrue(result2 instanceof JobInUseException);
+        }
+        else
+        {
+            assertTrue(result1 instanceof JobInUseException);
+        }
+
+        verify(m_ProcessManager).flushJob("foo", params);
     }
 
     @Test
@@ -136,8 +336,6 @@ public class JobManagerTest
         m_ExpectedException.expectMessage("Cannot reactivate job with id 'foo' - your license "
                 + "limits you to 2 concurrently running jobs. You must close a job before you "
                 + "can reactivate another.");
-
-
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.LICENSE_VIOLATION));
 
@@ -219,7 +417,6 @@ public class JobManagerTest
     }
 
     @Test
-    @SuppressWarnings({ "rawtypes", "unchecked" })
     public void testSubmitDataLoadJob_GivenProcessIsRunSuccessfully()
             throws JsonParseException, UnknownJobException, NativeProcessRunException,
             MissingFieldException, JobInUseException, HighProportionOfBadTimestampsException,
@@ -227,20 +424,19 @@ public class JobManagerTest
     {
         InputStream inputStream = mock(InputStream.class);
         DataLoadParams params = mock(DataLoadParams.class);
-        when(m_JobProvider.getJobDetails("foo")).thenReturn(
-                Optional.of(new JobDetails("foo", new JobConfiguration())));
+        JobDetails job = new JobDetails("foo", new JobConfiguration());
+        when(m_JobProvider.getJobDetails("foo")).thenReturn(Optional.of(job));
         givenProcessInfo(5);
         when(m_ProcessManager.jobIsRunning("foo")).thenReturn(false);
         when(m_ProcessManager.numberOfRunningJobs()).thenReturn(0);
-        when(m_ProcessManager.processDataLoadJob("foo", inputStream, params)).thenReturn(new DataCounts());
+        when(m_ProcessManager.processDataLoadJob(job, inputStream, params)).thenReturn(new DataCounts());
         JobManager jobManager = createJobManager();
 
         DataCounts stats = jobManager.submitDataLoadJob("foo", inputStream, params);
         assertNotNull(stats);
 
-        ArgumentCaptor<Map> updateCaptor = ArgumentCaptor.forClass(Map.class);
-        verify(m_JobProvider).updateJob(eq("foo"), updateCaptor.capture());
-        Map updates = updateCaptor.getValue();
+        verify(m_JobProvider).updateJob(eq("foo"), m_JobUpdateCaptor.capture());
+        Map<String, Object> updates = m_JobUpdateCaptor.getValue();
         assertNotNull(updates.get(JobDetails.LAST_DATA_TIME));
     }
 
@@ -301,6 +497,19 @@ public class JobManagerTest
     }
 
     @Test
+    public void testSetModelSnapshotRetentionDays() throws UnknownJobException
+    {
+        givenProcessInfo(5);
+        JobManager jobManager = createJobManager();
+
+        jobManager.setModelSnapshotRetentionDays("foo", 20L);
+
+        verify(m_JobProvider).updateJob(eq("foo"), m_JobUpdateCaptor.capture());
+        Map<String, Object> jobUpdate = m_JobUpdateCaptor.getValue();
+        assertEquals(new Long(20), jobUpdate.get(JobDetails.MODEL_SNAPSHOT_RETENTION_DAYS));
+    }
+
+    @Test
     public void testSetResultsRetentionDays() throws UnknownJobException
     {
         givenProcessInfo(5);
@@ -327,7 +536,7 @@ public class JobManagerTest
     @Test
     public void createJob_licensingConstraintMaxJobs() throws UnknownJobException,
             JobConfigurationException, JobIdAlreadyExistsException, IOException,
-            CannotStartSchedulerWhileItIsStoppingException
+            CannotStartSchedulerException
     {
         givenLicenseConstraints(2, 2, 0);
         when(m_ProcessManager.numberOfRunningJobs()).thenReturn(3);
@@ -351,7 +560,7 @@ public class JobManagerTest
     @Test
     public void createJob_licensingConstraintMaxDetectors()
     throws UnknownJobException, JobIdAlreadyExistsException,
-            IOException, TooManyJobsException, CannotStartSchedulerWhileItIsStoppingException
+            IOException, TooManyJobsException, CannotStartSchedulerException
     {
         givenLicenseConstraints(5, 1, 0);
         when(m_ProcessManager.numberOfRunningJobs()).thenReturn(3);
@@ -379,7 +588,7 @@ public class JobManagerTest
     @Test
     public void createJob_licensingConstraintMaxPartitions() throws UnknownJobException,
             JobIdAlreadyExistsException, IOException, TooManyJobsException,
-            CannotStartSchedulerWhileItIsStoppingException
+            CannotStartSchedulerException
     {
         givenLicenseConstraints(5, -1, 0);
         when(m_ProcessManager.numberOfRunningJobs()).thenReturn(3);
@@ -408,7 +617,7 @@ public class JobManagerTest
     @Test
     public void testCreateJob_FillsDefaults()
             throws NoSuchScheduledJobException, UnknownJobException,
-            CannotStartSchedulerWhileItIsStoppingException, TooManyJobsException,
+            CannotStartSchedulerException, TooManyJobsException,
             JobConfigurationException, JobIdAlreadyExistsException, IOException,
             NativeProcessRunException, JobInUseException
     {
@@ -433,12 +642,12 @@ public class JobManagerTest
         jobConfig.setId("revenue-by-vendor");
         jobConfig.setAnalysisConfig(analysisConfig);
 
-        when(m_JobProvider.jobIdIsUnique("revenue-by-vendor")).thenReturn(true);
-
         JobDetails job = jobManager.createJob(jobConfig);
 
         assertEquals("sum(revenue) by vendor", job.getAnalysisConfig().getDetectors().get(0).getDetectorDescription());
         assertEquals("Named", job.getAnalysisConfig().getDetectors().get(1).getDetectorDescription());
+        verify(m_JobProvider).audit("revenue-by-vendor");
+        verify(m_Auditor).info("Job created");
     }
 
     @Test
@@ -448,6 +657,36 @@ public class JobManagerTest
         JobManager jobManager = createJobManager();
 
         jobManager.writeUpdateConfigMessage("foo", "bar");
+
+        verify(m_ProcessManager).writeUpdateConfigMessage("foo", "bar");
+    }
+
+    @Test
+    public void testWriteUpdateConfigMessage_GivenJobActionIsNotAvailable()
+            throws NativeProcessRunException, InterruptedException, ExecutionException
+    {
+        givenProcessInfo(5);
+        JobManager jobManager = createJobManager();
+        doAnswerSleep(200).when(m_ProcessManager).writeUpdateConfigMessage("foo", "bar");
+
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+        Future<Throwable> task_1_result = executor.submit(
+                new ExceptionCallable(() -> jobManager.writeUpdateConfigMessage("foo", "bar")));
+        Future<Throwable> task_2_result = executor.submit(
+                new ExceptionCallable(() -> jobManager.writeUpdateConfigMessage("foo", "bar")));
+        executor.shutdown();
+
+        Throwable result1 = task_1_result.get();
+        Throwable result2 = task_2_result.get();
+        assertTrue(result1 == null || result2 == null);
+        if (result1 == null)
+        {
+            assertTrue(result2 instanceof JobInUseException);
+        }
+        else
+        {
+            assertTrue(result1 instanceof JobInUseException);
+        }
 
         verify(m_ProcessManager).writeUpdateConfigMessage("foo", "bar");
     }
@@ -492,8 +731,7 @@ public class JobManagerTest
     }
 
     @Test
-    public void testStartExistingScheduledJob_GivenNoScheduledJob() throws NoSuchScheduledJobException,
-            CannotStartSchedulerWhileItIsStoppingException
+    public void testStartJobScheduler_GivenNoScheduledJob() throws JobException
     {
         givenProcessInfo(2);
         JobManager jobManager = createJobManager();
@@ -502,21 +740,19 @@ public class JobManagerTest
         m_ExpectedException.expectMessage("There is no job 'foo' with a scheduler configured");
         m_ExpectedException.expect(ErrorCodeMatcher.hasErrorCode(ErrorCodes.NO_SUCH_SCHEDULED_JOB));
 
-        jobManager.startExistingJobScheduler("foo");
+        jobManager.startJobScheduler("foo", 0, OptionalLong.empty());
     }
 
     @Test
-    public void testStartExistingScheduledJob_GivenStoppedScheduledJob()
-            throws NoSuchScheduledJobException, UnknownJobException,
-            CannotStartSchedulerWhileItIsStoppingException, TooManyJobsException,
-            JobConfigurationException, JobIdAlreadyExistsException, IOException,
-            NativeProcessRunException, JobInUseException
+    public void testStartJobScheduler_GivenNewlyCreatedJob() throws UnknownJobException,
+            TooManyJobsException, JobConfigurationException, JobIdAlreadyExistsException,
+            CannotStartSchedulerException, IOException, NoSuchScheduledJobException,
+            CannotStopSchedulerException, NativeProcessRunException, JobInUseException
     {
         givenProcessInfo(2);
         JobManager jobManager = createJobManager();
         JobConfiguration jobConfig = createScheduledJobConfig();
 
-        when(m_JobProvider.jobIdIsUnique("foo")).thenReturn(true);
         Logger jobLogger = mock(Logger.class);
         when(m_JobLoggerFactory.newLogger("foo")).thenReturn(jobLogger);
         DataExtractor dataExtractor = mock(DataExtractor.class);
@@ -528,21 +764,19 @@ public class JobManagerTest
         job.setCounts(dataCounts);
         when(m_JobProvider.getJobDetails("foo")).thenReturn(Optional.of(job));
 
-        // Stop it to be able to start it
-        jobManager.stopExistingJobScheduler("foo");
+        jobManager.startJobScheduler("foo", 0, OptionalLong.empty());
 
-        jobManager.startExistingJobScheduler("foo");
+        jobManager.stopJobScheduler("foo");
 
-        jobManager.stopExistingJobScheduler("foo");
-
-        verify(dataExtractor, times(2)).newSearch(anyString(), anyString(), eq(jobLogger));
-        verify(m_ProcessManager, times(2)).closeJob("foo");
+        verify(dataExtractor).newSearch(anyString(), anyString(), eq(jobLogger));
+        verify(m_ProcessManager).closeJob("foo");
+        verify(m_JobProvider).updateSchedulerState("foo", new SchedulerState(0L, null));
     }
 
     @Test
-    public void testStopExistingScheduledJob_GivenNoScheduledJob()
-            throws NoSuchScheduledJobException, CannotStartSchedulerWhileItIsStoppingException,
-            UnknownJobException, NativeProcessRunException, JobInUseException
+    public void testStopScheduledJob_GivenNoScheduledJob()
+            throws NoSuchScheduledJobException, CannotStopSchedulerException, UnknownJobException,
+            NativeProcessRunException, JobInUseException
     {
         givenProcessInfo(2);
         JobManager jobManager = createJobManager();
@@ -551,13 +785,13 @@ public class JobManagerTest
         m_ExpectedException.expectMessage("There is no job 'foo' with a scheduler configured");
         m_ExpectedException.expect(ErrorCodeMatcher.hasErrorCode(ErrorCodes.NO_SUCH_SCHEDULED_JOB));
 
-        jobManager.stopExistingJobScheduler("foo");
+        jobManager.stopJobScheduler("foo");
     }
 
     @Test
     public void testRestartScheduledJobs_GivenNonScheduledJobAndJobWithStartedScheduler()
             throws NoSuchScheduledJobException, UnknownJobException,
-            CannotStartSchedulerWhileItIsStoppingException, TooManyJobsException,
+            CannotStartSchedulerException, TooManyJobsException,
             JobConfigurationException, JobIdAlreadyExistsException, IOException, InterruptedException
     {
         JobDetails nonScheduledJob = new JobDetails("non-scheduled", new JobConfiguration());
@@ -568,10 +802,14 @@ public class JobManagerTest
         dataCounts.setLatestRecordTimeStamp(new Date(0));
         scheduledJob.setCounts(dataCounts);
         scheduledJob.setSchedulerStatus(JobSchedulerStatus.STARTED);
+        SchedulerState schedulerState = new SchedulerState();
+        schedulerState.setStartTimeMillis(0L);
+        schedulerState.setEndTimeMillis(null);
 
         QueryPage<JobDetails> jobsPage = new QueryPage<>(
                 Arrays.asList(nonScheduledJob, scheduledJob), 2);
         when(m_JobProvider.getJobs(0, 10000)).thenReturn(jobsPage);
+        when(m_JobProvider.getSchedulerState("scheduled")).thenReturn(Optional.of(schedulerState));
 
         Logger jobLogger = mock(Logger.class);
         when(m_JobLoggerFactory.newLogger("scheduled")).thenReturn(jobLogger);
@@ -597,7 +835,7 @@ public class JobManagerTest
 
     @Test
     public void testRestartScheduledJobs_GivenJobWithStoppedScheduler() throws NoSuchScheduledJobException, UnknownJobException,
-            CannotStartSchedulerWhileItIsStoppingException, TooManyJobsException,
+            CannotStartSchedulerException, TooManyJobsException,
             JobConfigurationException, JobIdAlreadyExistsException, IOException, InterruptedException
     {
         JobConfiguration jobConfig = createScheduledJobConfig();
@@ -660,8 +898,6 @@ public class JobManagerTest
         JobManager jobManager = createJobManager();
 
         jobManager.shutdown();
-
-        verify(m_ProcessManager).shutdown();
     }
 
     private void givenProcessInfo(int maxLicenseJobs)
@@ -713,5 +949,46 @@ public class JobManagerTest
         jobConfig.setAnalysisConfig(analysisConfig);
         jobConfig.setSchedulerConfig(schedulerConfig);
         return jobConfig;
+    }
+
+    private static Stubber doAnswerSleep(long millis)
+    {
+        return doAnswer(new Answer<Void>()
+        {
+            @Override
+            public Void answer(InvocationOnMock invocation) throws Throwable
+            {
+                Thread.sleep(millis);
+                return null;
+            }
+        });
+    }
+
+    private static class ExceptionCallable implements Callable<Throwable>
+    {
+        private interface ExceptionTask
+        {
+            void run() throws Exception;
+        }
+
+        private final ExceptionTask m_Task;
+
+        private ExceptionCallable(ExceptionTask task)
+        {
+            m_Task = task;
+        }
+
+        @Override
+        public Throwable call()
+        {
+            try
+            {
+                m_Task.run();
+            } catch (Exception e)
+            {
+                return e;
+            }
+            return null;
+        }
     }
 }

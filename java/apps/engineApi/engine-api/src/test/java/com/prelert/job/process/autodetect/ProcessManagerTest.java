@@ -32,7 +32,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -44,6 +43,7 @@ import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Optional;
 
 import org.apache.log4j.Logger;
 import org.junit.Before;
@@ -60,9 +60,9 @@ import com.prelert.job.DataCounts;
 import com.prelert.job.DataDescription;
 import com.prelert.job.DataDescription.DataFormat;
 import com.prelert.job.Detector;
+import com.prelert.job.JobDetails;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.alert.AlertObserver;
-import com.prelert.job.exceptions.JobInUseException;
 import com.prelert.job.logging.JobLoggerFactory;
 import com.prelert.job.persistence.DataPersisterFactory;
 import com.prelert.job.persistence.JobDataCountsPersister;
@@ -84,12 +84,15 @@ import com.prelert.job.usage.UsageReporter;
 
 public class ProcessManagerTest
 {
+    private static final String JOB_ID = "foo";
+
     @Rule public ExpectedException m_ExpectedException = ExpectedException.none();
 
     @Mock private ProcessFactory m_ProcessFactory;
     @Mock private JobProvider m_JobProvider;
     @Mock private DataPersisterFactory m_DataPersisterFactory;
     @Mock private JobLoggerFactory m_JobLoggerFactory;
+    private JobDetails m_Job;
 
     private ProcessManager m_ProcessManager;
 
@@ -99,267 +102,131 @@ public class ProcessManagerTest
         MockitoAnnotations.initMocks(this);
         m_ProcessManager = new ProcessManager(m_JobProvider, m_ProcessFactory,
                 m_DataPersisterFactory, m_JobLoggerFactory);
+        m_Job = new JobDetails();
+        m_Job.setId(JOB_ID);
+        when(m_JobProvider.getJobDetails(JOB_ID)).thenReturn(Optional.of(m_Job));
     }
 
     @Test
     public void testProcessDataLoadJob_GivenRunningProcess() throws UnknownJobException,
             NativeProcessRunException, JsonParseException, MissingFieldException,
-            JobInUseException, HighProportionOfBadTimestampsException, OutOfOrderRecordsException,
+            HighProportionOfBadTimestampsException, OutOfOrderRecordsException,
             MalformedJsonException
     {
         MockProcessBuilder mockProcessBuilder = new MockProcessBuilder();
-        ProcessAndDataDescription process = mockProcessBuilder
-                .withAvailableWriting().stillRunning(true).build();
-        when(m_ProcessFactory.createProcess("foo")).thenReturn(process);
+        ProcessAndDataDescription process = mockProcessBuilder.stillRunning(true).build();
+        when(m_ProcessFactory.createProcess(m_Job)).thenReturn(process);
 
         InputStream inputStream = createInputStream("time");
-        m_ProcessManager.processDataLoadJob("foo", inputStream, createNoPersistNoResetDataLoadParams());
+        m_ProcessManager.processDataLoadJob(m_Job, inputStream, createNoPersistNoResetDataLoadParams());
 
-        assertTrue(m_ProcessManager.jobIsRunning("foo"));
+        assertTrue(m_ProcessManager.jobIsRunning(JOB_ID));
         String output = mockProcessBuilder.getOutput().trim();
         assertTrue(output.startsWith("time"));
-        verify(process).releaseGuard();
     }
 
     @Test
     public void testFlush_GivenJobWithoutRunningProcess() throws NativeProcessRunException,
-            JobInUseException, UnknownJobException
+            UnknownJobException
     {
-        MockProcessBuilder mockProcessBuilder = new MockProcessBuilder();
-        ProcessAndDataDescription process = mockProcessBuilder
-                .withAvailableWriting()
-                .withAvailableFlushing()
-                .stillRunning(false)
-                .build();
-        when(m_ProcessFactory.createProcess("foo")).thenReturn(process);
-
-        m_ProcessManager.flushJob("foo", createNoInterimResults());
-
-        String output = mockProcessBuilder.getOutput().trim();
-        assertTrue(output.isEmpty());
+        m_ProcessManager.flushJob(JOB_ID, createNoInterimResults());
     }
 
     @Test
     public void testFlush_GivenJobWithRunningProcess() throws NativeProcessRunException,
-            JobInUseException, JsonParseException, UnknownJobException, MissingFieldException,
+            JsonParseException, UnknownJobException, MissingFieldException,
             HighProportionOfBadTimestampsException, OutOfOrderRecordsException,
             MalformedJsonException
     {
         MockProcessBuilder mockProcessBuilder = new MockProcessBuilder();
-        ProcessAndDataDescription process = mockProcessBuilder
-                .withAvailableWriting()
-                .withAvailableFlushing()
-                .stillRunning(true)
-                .build();
-        when(m_ProcessFactory.createProcess("foo")).thenReturn(process);
+        ProcessAndDataDescription process = mockProcessBuilder.stillRunning(true).build();
+        when(m_ProcessFactory.createProcess(m_Job)).thenReturn(process);
 
         InputStream inputStream = createInputStream("");
-        m_ProcessManager.processDataLoadJob("foo", inputStream, createNoPersistNoResetDataLoadParams());
+        m_ProcessManager.processDataLoadJob(m_Job, inputStream, createNoPersistNoResetDataLoadParams());
 
-        m_ProcessManager.flushJob("foo", createNoInterimResults());
+        m_ProcessManager.flushJob(JOB_ID, createNoInterimResults());
 
         String output = mockProcessBuilder.getOutput().trim();
         assertTrue(output.startsWith("f"));
-        verify(process, times(2)).releaseGuard();
-    }
-
-    @Test
-    public void testFlush_GivenJobWithRunningProcessThatIsStillInUse() throws NativeProcessRunException,
-            JobInUseException, JsonParseException, UnknownJobException, MissingFieldException,
-            HighProportionOfBadTimestampsException, OutOfOrderRecordsException,
-            MalformedJsonException
-    {
-        m_ExpectedException.expect(JobInUseException.class);
-
-        MockProcessBuilder mockProcessBuilder = new MockProcessBuilder();
-        ProcessAndDataDescription process = mockProcessBuilder
-                .withAvailableWriting()
-                .withAction(Action.WRITING)
-                .stillRunning(true)
-                .build();
-        when(m_ProcessFactory.createProcess("foo")).thenReturn(process);
-
-        InputStream inputStream = createInputStream("");
-        m_ProcessManager.processDataLoadJob("foo", inputStream, createNoPersistNoResetDataLoadParams());
-
-        m_ProcessManager.flushJob("foo", createNoInterimResults());
     }
 
     @Test
     public void testClose_GivenJobWithRunningProcess() throws NativeProcessRunException,
-            JobInUseException, JsonParseException, UnknownJobException, MissingFieldException,
+            JsonParseException, UnknownJobException, MissingFieldException,
             HighProportionOfBadTimestampsException, OutOfOrderRecordsException,
             MalformedJsonException
     {
         MockProcessBuilder mockProcessBuilder = new MockProcessBuilder();
-        ProcessAndDataDescription process = mockProcessBuilder
-                .withAvailableWriting()
-                .withAvailableClosing()
-                .stillRunning(true)
-                .build();
-        when(m_ProcessFactory.createProcess("foo")).thenReturn(process);
+        ProcessAndDataDescription process = mockProcessBuilder.stillRunning(true).build();
+        when(m_ProcessFactory.createProcess(m_Job)).thenReturn(process);
 
         InputStream inputStream = createInputStream("");
-        m_ProcessManager.processDataLoadJob("foo", inputStream, createNoPersistNoResetDataLoadParams());
-        assertTrue(m_ProcessManager.jobIsRunning("foo"));
+        m_ProcessManager.processDataLoadJob(m_Job, inputStream, createNoPersistNoResetDataLoadParams());
+        assertTrue(m_ProcessManager.jobIsRunning(JOB_ID));
         assertEquals(1, m_ProcessManager.numberOfRunningJobs());
 
-        m_ProcessManager.closeJob("foo");
+        m_ProcessManager.closeJob(JOB_ID);
 
-        assertFalse(m_ProcessManager.jobIsRunning("foo"));
+        assertFalse(m_ProcessManager.jobIsRunning(JOB_ID));
         assertEquals(0, m_ProcessManager.numberOfRunningJobs());
-        verify(process, times(2)).releaseGuard();
-    }
-
-    @Test
-    public void testClose_GivenJobWithRunningProcessThatIsStillInUse() throws NativeProcessRunException,
-            JobInUseException, JsonParseException, UnknownJobException, MissingFieldException,
-            HighProportionOfBadTimestampsException, OutOfOrderRecordsException,
-            MalformedJsonException
-    {
-        m_ExpectedException.expect(JobInUseException.class);
-
-        MockProcessBuilder mockProcessBuilder = new MockProcessBuilder();
-        ProcessAndDataDescription process = mockProcessBuilder
-                .withAvailableWriting()
-                .withAction(Action.WRITING)
-                .stillRunning(true)
-                .build();
-        when(m_ProcessFactory.createProcess("foo")).thenReturn(process);
-
-        InputStream inputStream = createInputStream("");
-        m_ProcessManager.processDataLoadJob("foo", inputStream, createNoPersistNoResetDataLoadParams());
-        assertEquals(1, m_ProcessManager.numberOfRunningJobs());
-
-        m_ProcessManager.closeJob("foo");
     }
 
     @Test
     public void testClose_GivenJobWithoutRunningProcess() throws NativeProcessRunException,
-            JobInUseException, JsonParseException, UnknownJobException, MissingFieldException,
+            JsonParseException, UnknownJobException, MissingFieldException,
             HighProportionOfBadTimestampsException, OutOfOrderRecordsException,
             MalformedJsonException
     {
         MockProcessBuilder mockProcessBuilder = new MockProcessBuilder();
-        ProcessAndDataDescription process = mockProcessBuilder
-                .withAvailableWriting()
-                .withAvailableClosing()
-                .stillRunning(false)
-                .build();
-        when(m_ProcessFactory.createProcess("foo")).thenReturn(process);
+        ProcessAndDataDescription process = mockProcessBuilder.stillRunning(false).build();
+        when(m_ProcessFactory.createProcess(m_Job)).thenReturn(process);
 
-        m_ProcessManager.closeJob("foo");
+        m_ProcessManager.closeJob(JOB_ID);
 
-        assertEquals(0, m_ProcessManager.numberOfRunningJobs());
-    }
-
-    @Test
-    public void testShutdown_ClosesAllRunningJobs() throws NativeProcessRunException,
-            JobInUseException, JsonParseException, UnknownJobException, MissingFieldException,
-            HighProportionOfBadTimestampsException, OutOfOrderRecordsException,
-            MalformedJsonException
-    {
-        MockProcessBuilder mockProcessBuilder = new MockProcessBuilder();
-        ProcessAndDataDescription process1 = mockProcessBuilder
-                .withAvailableWriting()
-                .withAvailableClosing()
-                .stillRunning(true)
-                .build();
-        ProcessAndDataDescription process2 = mockProcessBuilder
-                .withAvailableWriting()
-                .withAvailableClosing()
-                .stillRunning(true)
-                .build();
-        when(m_ProcessFactory.createProcess("job_1")).thenReturn(process1);
-        when(m_ProcessFactory.createProcess("job_2")).thenReturn(process2);
-
-        InputStream inputStream = createInputStream("");
-        m_ProcessManager.processDataLoadJob("job_1", inputStream, createNoPersistNoResetDataLoadParams());
-        m_ProcessManager.processDataLoadJob("job_2", inputStream, createNoPersistNoResetDataLoadParams());
-        assertTrue(m_ProcessManager.jobIsRunning("job_1"));
-        assertTrue(m_ProcessManager.jobIsRunning("job_1"));
-        assertEquals(2, m_ProcessManager.numberOfRunningJobs());
-
-        m_ProcessManager.shutdown();
-
-        assertFalse(m_ProcessManager.jobIsRunning("job_1"));
-        assertFalse(m_ProcessManager.jobIsRunning("job_2"));
         assertEquals(0, m_ProcessManager.numberOfRunningJobs());
     }
 
     @Test
     public void testWriteUpdateConfigMessage_GivenJobWithoutProcess()
-            throws NativeProcessRunException, JobInUseException
+            throws NativeProcessRunException
     {
-        m_ProcessManager.writeUpdateConfigMessage("foo", "bar");
+        m_ProcessManager.writeUpdateConfigMessage(JOB_ID, "bar");
     }
 
     @Test
     public void testWriteUpdateConfigMessage_GivenJobRunningProcess()
-            throws UnknownJobException, NativeProcessRunException, JobInUseException,
-            JsonParseException, MissingFieldException, HighProportionOfBadTimestampsException,
+            throws UnknownJobException, NativeProcessRunException, JsonParseException,
+            MissingFieldException, HighProportionOfBadTimestampsException,
             OutOfOrderRecordsException, MalformedJsonException
     {
         MockProcessBuilder mockProcessBuilder = new MockProcessBuilder();
-        ProcessAndDataDescription process = mockProcessBuilder
-                .withAvailableWriting()
-                .withAvailableUpdating()
-                .stillRunning(true)
-                .build();
-        when(m_ProcessFactory.createProcess("foo")).thenReturn(process);
+        ProcessAndDataDescription process = mockProcessBuilder.stillRunning(true).build();
+        when(m_ProcessFactory.createProcess(m_Job)).thenReturn(process);
 
         InputStream inputStream = createInputStream("");
-        m_ProcessManager.processDataLoadJob("foo", inputStream, createNoPersistNoResetDataLoadParams());
+        m_ProcessManager.processDataLoadJob(m_Job, inputStream, createNoPersistNoResetDataLoadParams());
 
-        m_ProcessManager.writeUpdateConfigMessage("foo", "bar");
+        m_ProcessManager.writeUpdateConfigMessage(JOB_ID, "bar");
 
         String output = mockProcessBuilder.getOutput().trim();
         assertTrue(output.startsWith("ubar"));
-        verify(process, times(2)).releaseGuard();
-    }
-
-    @Test
-    public void testWriteUpdateConfigMessage_GivenJobRunningProcessThatIsStillInUse()
-            throws UnknownJobException, NativeProcessRunException, JobInUseException,
-            JsonParseException, MissingFieldException, HighProportionOfBadTimestampsException,
-            OutOfOrderRecordsException, MalformedJsonException
-    {
-        m_ExpectedException.expect(JobInUseException.class);
-        m_ExpectedException.expectMessage(
-                "Cannot update job foo while another connection is writing to the job");
-
-        MockProcessBuilder mockProcessBuilder = new MockProcessBuilder();
-        ProcessAndDataDescription process = mockProcessBuilder
-                .withAvailableWriting()
-                .withAction(Action.WRITING)
-                .stillRunning(true)
-                .build();
-        when(m_ProcessFactory.createProcess("foo")).thenReturn(process);
-
-        InputStream inputStream = createInputStream("");
-        m_ProcessManager.processDataLoadJob("foo", inputStream, createNoPersistNoResetDataLoadParams());
-
-        m_ProcessManager.writeUpdateConfigMessage("foo", "bar");
     }
 
     @Test
     public void testAddAlertObserver_GivenRunningJob() throws UnknownJobException,
             NativeProcessRunException, JsonParseException, MissingFieldException,
-            JobInUseException, HighProportionOfBadTimestampsException, OutOfOrderRecordsException,
+            HighProportionOfBadTimestampsException, OutOfOrderRecordsException,
             MalformedJsonException, ClosedJobException
     {
         MockProcessBuilder mockProcessBuilder = new MockProcessBuilder();
-        ProcessAndDataDescription process = mockProcessBuilder
-                .withAvailableWriting()
-                .withAvailableClosing()
-                .stillRunning(true)
-                .build();
-        when(m_ProcessFactory.createProcess("foo")).thenReturn(process);
+        ProcessAndDataDescription process = mockProcessBuilder.stillRunning(true).build();
+        when(m_ProcessFactory.createProcess(m_Job)).thenReturn(process);
         InputStream inputStream = createInputStream("");
-        m_ProcessManager.processDataLoadJob("foo", inputStream, createNoPersistNoResetDataLoadParams());
+        m_ProcessManager.processDataLoadJob(m_Job, inputStream, createNoPersistNoResetDataLoadParams());
 
         AlertObserver alertObserver = mock(AlertObserver.class);
-        m_ProcessManager.addAlertObserver("foo", alertObserver);
+        m_ProcessManager.addAlertObserver(JOB_ID, alertObserver);
 
         verify(process.getResultsReader()).addAlertObserver(alertObserver);
     }
@@ -374,21 +241,20 @@ public class ProcessManagerTest
     @Test
     public void testRemoveAlertObserver_GivenRunningJob() throws UnknownJobException,
             NativeProcessRunException, JsonParseException, MissingFieldException,
-            JobInUseException, HighProportionOfBadTimestampsException, OutOfOrderRecordsException,
+            HighProportionOfBadTimestampsException, OutOfOrderRecordsException,
             MalformedJsonException, ClosedJobException
     {
         MockProcessBuilder mockProcessBuilder = new MockProcessBuilder();
-        ProcessAndDataDescription process = mockProcessBuilder.withAvailableWriting()
-                .withAvailableClosing().stillRunning(true).build();
-        when(m_ProcessFactory.createProcess("foo")).thenReturn(process);
+        ProcessAndDataDescription process = mockProcessBuilder.stillRunning(true).build();
+        when(m_ProcessFactory.createProcess(m_Job)).thenReturn(process);
         InputStream inputStream = createInputStream("");
-        m_ProcessManager.processDataLoadJob("foo", inputStream,
+        m_ProcessManager.processDataLoadJob(m_Job, inputStream,
                 createNoPersistNoResetDataLoadParams());
 
         AlertObserver alertObserver = mock(AlertObserver.class);
         when(process.getResultsReader().removeAlertObserver(alertObserver)).thenReturn(true);
 
-        assertTrue(m_ProcessManager.removeAlertObserver("foo", alertObserver));
+        assertTrue(m_ProcessManager.removeAlertObserver(JOB_ID, alertObserver));
 
         verify(process.getResultsReader()).removeAlertObserver(alertObserver);
     }
@@ -398,7 +264,6 @@ public class ProcessManagerTest
     {
         assertFalse(m_ProcessManager.removeAlertObserver("nonRunning", null));
     }
-
 
     @Test
     public void testWriteToJob()
@@ -418,7 +283,7 @@ public class ProcessManagerTest
 
         TransformConfigs tc = new TransformConfigs(Collections.emptyList());
 
-        StatusReporter statusReporter = new StatusReporter("foo", mock(UsageReporter.class),
+        StatusReporter statusReporter = new StatusReporter(JOB_ID, mock(UsageReporter.class),
                                             mock(JobDataCountsPersister.class), mock(Logger.class));
 
         String data = "time,value\n1452095662,1\n1452098662,2\n1452098662,3";
@@ -457,7 +322,6 @@ public class ProcessManagerTest
     private static class MockProcessBuilder
     {
         private static final DataFormat DEFAULT_DATA_FORMAT = DataFormat.DELIMITED;
-        private static final long DEFAULT_CLOSE_TIMEOUT = 60L;
 
         private final ProcessAndDataDescription m_Process;
 
@@ -473,8 +337,6 @@ public class ProcessManagerTest
         MockProcessBuilder()
         {
             m_Process = mock(ProcessAndDataDescription.class);
-
-            when(m_Process.getTimeout()).thenReturn(DEFAULT_CLOSE_TIMEOUT);
 
             m_JavaProcess = mock(Process.class);
 
@@ -501,36 +363,6 @@ public class ProcessManagerTest
 
             m_ResultsReader = mock(ResultsReader.class);
             when(m_Process.getResultsReader()).thenReturn(m_ResultsReader);
-        }
-
-        MockProcessBuilder withAvailableWriting()
-        {
-            when(m_Process.tryAcquireGuard(Action.WRITING)).thenReturn(true);
-            return this;
-        }
-
-        MockProcessBuilder withAvailableFlushing()
-        {
-            when(m_Process.tryAcquireGuard(Action.FLUSHING)).thenReturn(true);
-            return this;
-        }
-
-        MockProcessBuilder withAvailableUpdating()
-        {
-            when(m_Process.tryAcquireGuard(Action.UPDATING)).thenReturn(true);
-            return this;
-        }
-
-        MockProcessBuilder withAvailableClosing()
-        {
-            when(m_Process.tryAcquireGuard(Action.CLOSING)).thenReturn(true);
-            return this;
-        }
-
-        MockProcessBuilder withAction(Action action)
-        {
-            when(m_Process.getAction()).thenReturn(action);
-            return this;
         }
 
         MockProcessBuilder stillRunning(Boolean isRunning)

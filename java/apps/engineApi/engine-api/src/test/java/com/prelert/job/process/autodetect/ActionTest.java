@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -31,14 +31,37 @@ import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
 
+import com.prelert.job.manager.actions.Action;
+
 public class ActionTest
 {
     @Test
-    public void testGetErrorString()
+    public void testGetErrorString_GivenVariousActionsInUse()
     {
-        assertEquals("closing", Action.CLOSING.getErrorString());
-        assertEquals("flushing", Action.FLUSHING.getErrorString());
-        assertEquals("writing to", Action.WRITING.getErrorString());
-        assertEquals("using", Action.NONE.getErrorString());
+        assertEquals("Cannot close job foo while another connection is closing the job",
+                Action.CLOSING.getErrorString("foo", Action.CLOSING));
+        assertEquals("Cannot close job foo while another connection is deleting the job",
+                Action.CLOSING.getErrorString("foo", Action.DELETING));
+        assertEquals("Cannot close job bar while another connection is flushing the job",
+                Action.CLOSING.getErrorString("bar", Action.FLUSHING));
+        assertEquals("Cannot close job foo while another connection is updating the job",
+                Action.CLOSING.getErrorString("foo", Action.UPDATING));
+        assertEquals("Cannot close job foo while another connection is writing to the job",
+                Action.CLOSING.getErrorString("foo", Action.WRITING));
+    }
+
+    @Test
+    public void testGetErrorString_GivenVariousActions()
+    {
+        assertEquals("Cannot close job foo while another connection is flushing the job",
+                Action.CLOSING.getErrorString("foo", Action.FLUSHING));
+        assertEquals("Cannot delete job foo while another connection is flushing the job",
+                Action.DELETING.getErrorString("foo", Action.FLUSHING));
+        assertEquals("Cannot flush job bar while another connection is flushing the job",
+                Action.FLUSHING.getErrorString("bar", Action.FLUSHING));
+        assertEquals("Cannot update job foo while another connection is flushing the job",
+                Action.UPDATING.getErrorString("foo", Action.FLUSHING));
+        assertEquals("Cannot write to job foo while another connection is flushing the job",
+                Action.WRITING.getErrorString("foo", Action.FLUSHING));
     }
 }

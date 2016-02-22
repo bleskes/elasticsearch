@@ -27,6 +27,9 @@
 
 package com.prelert.rs.job.update;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
+
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -42,6 +45,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
 import com.prelert.job.AnalysisConfig;
@@ -49,6 +53,7 @@ import com.prelert.job.Detector;
 import com.prelert.job.JobDetails;
 import com.prelert.job.ModelDebugConfig;
 import com.prelert.job.UnknownJobException;
+import com.prelert.job.audit.Auditor;
 import com.prelert.job.config.verification.JobConfigurationException;
 import com.prelert.job.errorcodes.ErrorCodeMatcher;
 import com.prelert.job.errorcodes.ErrorCodes;
@@ -62,11 +67,13 @@ public class JobUpdaterTest
     @Rule public ExpectedException m_ExpectedException = ExpectedException.none();
 
     @Mock private JobManager m_JobManager;
+    @Mock private Auditor m_Auditor;
 
     @Before
     public void setUp()
     {
         MockitoAnnotations.initMocks(this);
+        when(m_JobManager.audit(anyString())).thenReturn(m_Auditor);
     }
 
     @Test
@@ -104,7 +111,7 @@ public class JobUpdaterTest
         String update = "{\"dimitris\":\"foobar\"}";
 
         m_ExpectedException.expect(JobConfigurationException.class);
-        m_ExpectedException.expectMessage("Invalid key 'dimitris'. Valid keys for update are: detector,");
+        m_ExpectedException.expectMessage("Invalid key 'dimitris'. Valid keys for update are: detectors,");
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_UPDATE_KEY));
 
@@ -121,10 +128,12 @@ public class JobUpdaterTest
 
         verify(m_JobManager).setDescription("foo", "foobar");
         verify(m_JobManager, never()).writeUpdateConfigMessage(anyString(), anyString());
+        verify(m_JobManager).audit("foo");
+        verify(m_Auditor).info("Job updated");
     }
 
     @Test
-    public void testUpdate_GivenTwoUpdates() throws UnknownJobException,
+    public void testUpdate_GivenTwoValidUpdates() throws UnknownJobException,
             JobConfigurationException, JobInUseException, NativeProcessRunException
     {
         String update = "{\"description\":\"foobar\", \"modelDebugConfig\":{\"boundsPercentile\":33.9}}";
@@ -136,6 +145,26 @@ public class JobUpdaterTest
 
         String expectedConfig = "[modelDebugConfig]\nboundspercentile = 33.9\nterms = \n";
         verify(m_JobManager).writeUpdateConfigMessage("foo", expectedConfig);
+    }
+
+    @Test
+    public void testUpdate_GivenTwoUpdatesSecondBeingInvalid_ShouldApplyNone()
+            throws UnknownJobException, JobConfigurationException, JobInUseException,
+            NativeProcessRunException
+    {
+        String update = "{\"description\":\"foobar\", \"modelDebugConfig\":{\"boundsPercentile\":1000.0}}";
+
+        try
+        {
+            new JobUpdater(m_JobManager, "foo").update(update);
+            fail();
+        }
+        catch (JobConfigurationException e)
+        {
+            assertEquals("Invalid modelDebugConfig: boundsPercentile has to be in [0, 100]", e.getMessage());
+        }
+
+        Mockito.verifyNoMoreInteractions(m_JobManager);
     }
 
     @Test
@@ -165,6 +194,18 @@ public class JobUpdaterTest
     }
 
     @Test
+    public void testUpdate_GivenValidModelSnapshotRetentionDaysUpdate() throws UnknownJobException,
+            JobConfigurationException, JobInUseException, NativeProcessRunException
+    {
+        String update = "{\"modelSnapshotRetentionDays\": 9}";
+
+        new JobUpdater(m_JobManager, "foo").update(update);
+
+        verify(m_JobManager).setModelSnapshotRetentionDays("foo", 9L);
+        verify(m_JobManager, never()).writeUpdateConfigMessage(anyString(), anyString());
+    }
+
+    @Test
     public void testUpdate_GivenValidResultsRetentionDaysUpdate() throws UnknownJobException,
             JobConfigurationException, JobInUseException, NativeProcessRunException
     {
@@ -180,7 +221,7 @@ public class JobUpdaterTest
     public void testUpdate_GivenValidDetectorDescriptionUpdate() throws JobConfigurationException,
             UnknownJobException, JobInUseException, NativeProcessRunException
     {
-        String update = "{\"detector\": {\"index\":0,\"description\":\"the A train\"}}";
+        String update = "{\"detectors\": [{\"index\":0,\"description\":\"the A train\"}]}";
 
         JobDetails job = new JobDetails();
         job.setId("foo");

@@ -32,12 +32,12 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 
 import org.apache.log4j.Logger;
 
 import com.prelert.job.JobDetails;
 import com.prelert.job.JobStatus;
+import com.prelert.job.ModelSnapshot;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.logging.JobLoggerFactory;
@@ -74,50 +74,21 @@ public class ProcessFactory
     }
 
     /**
-     * Create a new autodetect process restoring its state if persisted
-     *
-     * @param jobId
-     * @return
-     * @throws UnknownJobException If there is no job with <code>jobId</code>
-     * @throws NativeProcessRunException
-     */
-    public ProcessAndDataDescription createProcess(String jobId) throws UnknownJobException,
-            NativeProcessRunException
-    {
-        Optional<JobDetails> job = m_JobProvider.getJobDetails(jobId);
-
-        if (!job.isPresent())
-        {
-            throw new UnknownJobException(jobId);
-        }
-
-        return createProcess(job.get(), true);
-    }
-
-    /**
      * Create a new autodetect process from the JobDetails restoring
-     * its state if <code>restoreState</code> is true.
+     * its state.
      *
      * @param job
-     * @param restoreState Will attempt to restore the state but it isn't an
-     * error if there is no state to restore
      * @return
-     * @throws UnknownJobException If there is no job with <code>jobId</code>
      * @throws NativeProcessRunException If an error is encountered creating
      * the native process
      */
-    private ProcessAndDataDescription createProcess(JobDetails job, boolean restoreState)
+    public ProcessAndDataDescription createProcess(JobDetails job)
             throws UnknownJobException, NativeProcessRunException
     {
         String jobId = job.getId();
-
         Logger logger = m_JobLoggerFactory.newLogger(job.getId());
-
-        Quantiles quantiles = null;
-        if (restoreState)
-        {
-            quantiles = m_JobProvider.getQuantiles(jobId);
-        }
+        Quantiles quantiles = m_JobProvider.getQuantiles(jobId);
+        ModelSnapshot modelSnapshot = m_JobProvider.getModelSnapshotByPriority(jobId);
 
         Process nativeProcess = null;
         List<File> filesToDelete = new ArrayList<>();
@@ -125,7 +96,8 @@ public class ProcessFactory
         {
             // if state is null or empty it will be ignored
             // else it is used to restore the quantiles
-            nativeProcess = ProcessCtrl.buildAutoDetect(job, quantiles, logger, filesToDelete);
+            nativeProcess = ProcessCtrl.buildAutoDetect(job, quantiles, logger,
+                    filesToDelete, modelSnapshot);
         }
         catch (IOException e)
         {
@@ -139,7 +111,7 @@ public class ProcessFactory
 
         ProcessAndDataDescription procAndDD = new ProcessAndDataDescription(
                 nativeProcess, jobId,
-                job.getDataDescription(), job.getTimeout(), job.getAnalysisConfig(),
+                job.getDataDescription(), job.getAnalysisConfig(),
                 job.getSchedulerConfig(), new TransformConfigs(job.getTransforms()), logger,
                 new StatusReporter(jobId, job.getCounts(),
                         new UsageReporter(jobId,

@@ -73,6 +73,8 @@ public class JobConfiguration
     private Long m_Timeout;
     private ModelDebugConfig m_ModelDebugConfig;
     private Long m_RenormalizationWindow;
+    private Long m_BackgroundPersistInterval;
+    private Long m_ModelSnapshotRetentionDays;
     private Long m_ResultsRetentionDays;
     private Map<String, Object> m_CustomSettings;
 
@@ -228,6 +230,24 @@ public class JobConfiguration
     }
 
     /**
+     * The background persistence interval in seconds
+     * @return background persistence interval in seconds
+     */
+    public Long getBackgroundPersistInterval()
+    {
+        return m_BackgroundPersistInterval;
+    }
+
+    /**
+     * Set the background persistence interval
+     * @param backgroundPersistInterval the persistence interval in seconds
+     */
+    public void setBackgroundPersistInterval(Long backgroundPersistInterval)
+    {
+        m_BackgroundPersistInterval = backgroundPersistInterval;
+    }
+
+    /**
      * The duration of the renormalization window in days
      * @return renormalization window in days
      */
@@ -243,6 +263,16 @@ public class JobConfiguration
     public void setRenormalizationWindow(Long renormalizationWindow)
     {
         m_RenormalizationWindow = renormalizationWindow;
+    }
+
+    public Long getModelSnapshotRetentionDays()
+    {
+        return m_ModelSnapshotRetentionDays;
+    }
+
+    public void setModelSnapshotRetentionDays(Long modelSnapshotRetentionDays)
+    {
+        m_ModelSnapshotRetentionDays = modelSnapshotRetentionDays;
     }
 
     public Long getResultsRetentionDays()

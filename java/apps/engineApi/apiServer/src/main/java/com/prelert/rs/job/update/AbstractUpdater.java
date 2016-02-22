@@ -76,5 +76,6 @@ abstract class AbstractUpdater
         }
     }
 
-    abstract void update(JsonNode node) throws UnknownJobException, JobConfigurationException;
+    abstract void prepareUpdate(JsonNode node) throws UnknownJobException, JobConfigurationException;
+    abstract void commit() throws UnknownJobException, JobConfigurationException;
 }

@@ -58,6 +58,7 @@ public class AnalysisConfig
     public static final String SUMMARY_COUNT_FIELD_NAME = "summaryCountFieldName";
     public static final String DETECTORS = "detectors";
     public static final String INFLUENCERS = "influencers";
+    public static final String RESULT_FINALISATION_WINDOW = "resultFinalizationWindow";
 
     private static final String PRELERT_CATEGORY_FIELD = "prelertcategory";
     public static final Set<String> AUTO_CREATED_FIELDS = new HashSet<>(
@@ -74,6 +75,7 @@ public class AnalysisConfig
     private String m_SummaryCountFieldName;
     private List<Detector> m_Detectors;
     private List<String> m_Influencers;
+    private Long m_ResultFinalizationWindow;
 
     /**
      * Default constructor
@@ -227,6 +229,19 @@ public class AnalysisConfig
         termFields.remove("");
 
         return termFields;
+    }
+
+    /** 
+    * The results finalization windows size (as measured in half buckets)
+    */
+    public Long getResultFinalizationWindow()
+    {
+        return m_ResultFinalizationWindow;
+    }
+
+    public void setResultFinalizationWindow(Long resultFinalizationWindow)
+    {
+        m_ResultFinalizationWindow = resultFinalizationWindow;
     }
 
     /**

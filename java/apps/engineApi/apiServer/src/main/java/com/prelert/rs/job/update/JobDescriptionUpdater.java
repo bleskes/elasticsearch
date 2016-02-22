@@ -36,13 +36,15 @@ import com.prelert.job.messages.Messages;
 
 class JobDescriptionUpdater extends AbstractUpdater
 {
+    private String m_NewDescription;
+
     public JobDescriptionUpdater(JobManager jobManager, String jobId)
     {
         super(jobManager, jobId);
     }
 
     @Override
-    void update(JsonNode node) throws UnknownJobException, JobConfigurationException
+    void prepareUpdate(JsonNode node) throws JobConfigurationException
     {
         if (node.isTextual() == false)
         {
@@ -50,6 +52,12 @@ class JobDescriptionUpdater extends AbstractUpdater
                     Messages.getMessage(Messages.JOB_CONFIG_UPDATE_DESCRIPTION_INVALID),
                     ErrorCodes.INVALID_VALUE);
         }
-        jobManager().setDescription(jobId(), node.asText());
+        m_NewDescription = node.asText();
+    }
+
+    @Override
+    void commit() throws UnknownJobException
+    {
+        jobManager().setDescription(jobId(), m_NewDescription);
     }
 }

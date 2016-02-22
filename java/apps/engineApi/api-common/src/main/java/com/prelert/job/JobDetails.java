@@ -59,6 +59,8 @@ public class JobDetails
     public static final String LAST_DATA_TIME = "lastDataTime";
     public static final String MODEL_DEBUG_CONFIG = "modelDebugConfig";
     public static final String RENORMALIZATION_WINDOW = "renormalizationWindow";
+    public static final String BACKGROUND_PERSIST_INTERVAL = "backgroundPersistInterval";
+    public static final String MODEL_SNAPSHOT_RETENTION_DAYS = "modelSnapshotRetentionDays";
     public static final String RESULTS_RETENTION_DAYS = "resultsRetentionDays";
     public static final String STATUS = "status";
     public static final String SCHEDULER_STATUS = "schedulerStatus";
@@ -85,6 +87,8 @@ public class JobDetails
     private ModelDebugConfig m_ModelDebugConfig;
     private DataCounts m_Counts;
     private Long m_RenormalizationWindow;
+    private Long m_BackgroundPersistInterval;
+    private Long m_ModelSnapshotRetentionDays;
     private Long m_ResultsRetentionDays;
     private Map<String, Object> m_CustomSettings;
 
@@ -133,6 +137,8 @@ public class JobDetails
 
         invokeIfNotNull(jobConfig.getDataDescription(), dd -> m_DataDescription = dd);
         m_RenormalizationWindow = jobConfig.getRenormalizationWindow();
+        m_BackgroundPersistInterval = jobConfig.getBackgroundPersistInterval();
+        m_ModelSnapshotRetentionDays = jobConfig.getModelSnapshotRetentionDays();
         m_ResultsRetentionDays = jobConfig.getResultsRetentionDays();
         m_CustomSettings = jobConfig.getCustomSettings();
     }
@@ -512,6 +518,34 @@ public class JobDetails
         m_RenormalizationWindow = renormalizationWindow;
     }
 
+    /**
+     * The background persistence interval in seconds
+     * @return background persistence interval in seconds
+     */
+    public Long getBackgroundPersistInterval()
+    {
+        return m_BackgroundPersistInterval;
+    }
+
+    /**
+     * Set the background persistence interval
+     * @param backgroundPersistInterval the persistence interval in seconds
+     */
+    public void setBackgroundPersistInterval(Long backgroundPersistInterval)
+    {
+        m_BackgroundPersistInterval = backgroundPersistInterval;
+    }
+
+    public Long getModelSnapshotRetentionDays()
+    {
+        return m_ModelSnapshotRetentionDays;
+    }
+
+    public void setModelSnapshotRetentionDays(Long modelSnapshotRetentionDays)
+    {
+        m_ModelSnapshotRetentionDays = modelSnapshotRetentionDays;
+    }
+
     public Long getResultsRetentionDays()
     {
         return m_ResultsRetentionDays;
@@ -584,6 +618,8 @@ public class JobDetails
                 Objects.equals(this.m_Transforms, that.m_Transforms) &&
                 Objects.equals(this.m_Counts, that.m_Counts) &&
                 Objects.equals(this.m_RenormalizationWindow, that.m_RenormalizationWindow) &&
+                Objects.equals(this.m_BackgroundPersistInterval, that.m_BackgroundPersistInterval) &&
+                Objects.equals(this.m_ModelSnapshotRetentionDays, that.m_ModelSnapshotRetentionDays) &&
                 Objects.equals(this.m_ResultsRetentionDays, that.m_ResultsRetentionDays) &&
                 Objects.equals(this.m_Location, that.m_Location) &&
                 Objects.equals(this.m_DataEndpoint, that.m_DataEndpoint) &&
@@ -600,8 +636,8 @@ public class JobDetails
         return Objects.hash(m_JobId, m_Description, m_Status, m_SchedulerStatus,m_CreateTime,
                 m_FinishedTime, m_LastDataTime, m_Timeout, m_AnalysisConfig, m_AnalysisLimits,
                 m_DataDescription, m_ModelDebugConfig, m_ModelSizeStats, m_Transforms, m_Counts,
-                m_RenormalizationWindow, m_ResultsRetentionDays, m_CustomSettings, m_Location,
-                m_DataEndpoint, m_CategoryDefinitionsEndpoint, m_BucketsEndpoint, m_RecordsEndpoint,
-                m_AlertsLongPollEndpoint);
+                m_RenormalizationWindow, m_BackgroundPersistInterval, m_ModelSnapshotRetentionDays,
+                m_ResultsRetentionDays, m_CustomSettings, m_Location, m_DataEndpoint,
+                m_CategoryDefinitionsEndpoint, m_BucketsEndpoint, m_RecordsEndpoint, m_AlertsLongPollEndpoint);
     }
 }

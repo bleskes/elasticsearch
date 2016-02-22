@@ -19,6 +19,7 @@
 package com.prelert.job.persistence;
 
 import com.prelert.job.ModelSizeStats;
+import com.prelert.job.ModelSnapshot;
 import com.prelert.job.quantiles.Quantiles;
 import com.prelert.job.results.Bucket;
 import com.prelert.job.results.CategoryDefinition;
@@ -48,6 +49,12 @@ public interface JobResultsPersister
      * @param quantiles
      */
     void persistQuantiles(Quantiles quantiles);
+
+    /**
+     * Persist a model snapshot description
+     * @param modelSnapshot
+     */
+    void persistModelSnapshot(ModelSnapshot modelSnapshot);
 
     /**
      * Persist the memory usage data

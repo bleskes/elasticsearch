@@ -28,7 +28,6 @@
 package com.prelert.rs.resources;
 
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.verify;
 
 import javax.ws.rs.core.Response;
 
@@ -78,6 +77,6 @@ public class ValidateTest extends ServiceTest
         Detector detector = new Detector();
         detector.setFunction("mean");
         detector.setByFieldName("airline");
-        Response response = m_Validate.validateDetector(detector);
+        m_Validate.validateDetector(detector);
     }
 }

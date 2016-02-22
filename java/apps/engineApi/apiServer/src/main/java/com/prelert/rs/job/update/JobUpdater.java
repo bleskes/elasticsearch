@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -29,6 +29,7 @@ package com.prelert.rs.job.update;
 
 import java.io.IOException;
 import java.io.StringWriter;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -63,10 +64,11 @@ public class JobUpdater
     private static final Logger LOGGER = Logger.getLogger(JobUpdater.class);
 
     private static final String CUSTOM_SETTINGS = "customSettings";
-    private static final String DETECTOR_KEY = "detector";
+    private static final String DETECTOR_KEY = "detectors";
     private static final String JOB_DESCRIPTION_KEY = "description";
     private static final String MODEL_DEBUG_CONFIG_KEY = "modelDebugConfig";
     private static final String RENORMALIZATION_WINDOW_KEY = "renormalizationWindow";
+    private static final String MODEL_SNAPSHOT_RETENTION_DAYS_KEY = "modelSnapshotRetentionDays";
     private static final String RESULTS_RETENTION_DAYS_KEY = "resultsRetentionDays";
     private static final Set<String> HIDDEN_PROPERTIES = new HashSet<>(
             Arrays.asList(CUSTOM_SETTINGS, MODEL_DEBUG_CONFIG_KEY));
@@ -92,10 +94,26 @@ public class JobUpdater
                 .put(JOB_DESCRIPTION_KEY, () -> new JobDescriptionUpdater(m_JobManager, m_JobId))
                 .put(MODEL_DEBUG_CONFIG_KEY, () -> new ModelDebugConfigUpdater(m_JobManager, m_JobId, m_ConfigWriter))
                 .put(RENORMALIZATION_WINDOW_KEY, () -> new RenormalizationWindowUpdater(m_JobManager, m_JobId))
+                .put(MODEL_SNAPSHOT_RETENTION_DAYS_KEY, () -> new ModelSnapshotRetentionDaysUpdater(m_JobManager, m_JobId))
                 .put(RESULTS_RETENTION_DAYS_KEY, () -> new ResultsRetentionDaysUpdater(m_JobManager, m_JobId))
                 .build();
     }
 
+    /**
+     * Performs a job update according to the given JSON input. The update is done in 2 steps:
+     * <ol>
+     *   <li> Prepare update (performs validations)
+     *   <li> Commit update
+     * </ol>
+     * If there are invalid updates, none of the updates is applied.
+     *
+     * @param updateJson the JSON input that contains the requested updates
+     * @return a {@code RESPONSE}
+     * @throws JobConfigurationException If some of the updates are invalid
+     * @throws UnknownJobException If the job does not exist
+     * @throws JobInUseException If the job is unavailable for updating
+     * @throws NativeProcessRunException If an error occurs in job process
+     */
     public Response update(String updateJson) throws JobConfigurationException, UnknownJobException,
             JobInUseException, NativeProcessRunException
     {
@@ -107,15 +125,24 @@ public class JobUpdater
                     ErrorCodes.JOB_CONFIG_PARSE_ERROR);
         }
 
+        List<AbstractUpdater> updaters = new ArrayList<>();
         Iterator<Entry<String, JsonNode>> fieldsIterator = node.fields();
         while (fieldsIterator.hasNext())
         {
             Entry<String, JsonNode> keyValue = fieldsIterator.next();
             LOGGER.debug("Updating job config for key: " + keyValue.getKey());
-            createKeyValueUpdater(keyValue.getKey()).update(keyValue.getValue());
+            AbstractUpdater updater = createKeyValueUpdater(keyValue.getKey());
+            updaters.add(updater);
+            updater.prepareUpdate(keyValue.getValue());
+        }
+
+        for (AbstractUpdater updater : updaters)
+        {
+            updater.commit();
         }
 
         writeUpdateConfigMessage();
+        m_JobManager.audit(m_JobId).info(Messages.getMessage(Messages.JOB_AUDIT_UPDATED));
         return Response.ok(new Acknowledgement()).build();
     }
 

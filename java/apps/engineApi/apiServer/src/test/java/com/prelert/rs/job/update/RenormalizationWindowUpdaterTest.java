@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -27,6 +27,7 @@
 
 package com.prelert.rs.job.update;
 
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 import java.io.IOException;
@@ -62,7 +63,7 @@ public class RenormalizationWindowUpdaterTest
     }
 
     @Test
-    public void testUpdate_GivenText() throws UnknownJobException,
+    public void testPrepareUpdate_GivenText() throws UnknownJobException,
             JobConfigurationException, JsonProcessingException, IOException
     {
         JsonNode node = TextNode.valueOf("5");
@@ -73,12 +74,12 @@ public class RenormalizationWindowUpdaterTest
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_VALUE));
 
-        new RenormalizationWindowUpdater(m_JobManager, "foo").update(node);
+        new RenormalizationWindowUpdater(m_JobManager, "foo").prepareUpdate(node);
     }
 
 
     @Test
-    public void testUpdate_GivenNegativeInteger() throws UnknownJobException,
+    public void testPrepareUpdate_GivenNegativeInteger() throws UnknownJobException,
             JobConfigurationException, JsonProcessingException, IOException
     {
         JsonNode node = LongNode.valueOf(-3);
@@ -89,16 +90,29 @@ public class RenormalizationWindowUpdaterTest
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_VALUE));
 
-        new RenormalizationWindowUpdater(m_JobManager, "foo").update(node);
+        new RenormalizationWindowUpdater(m_JobManager, "foo").prepareUpdate(node);
     }
 
     @Test
-    public void testUpdate_GivenInteger() throws UnknownJobException,
+    public void testPrepareUpdate_GivenInteger() throws UnknownJobException,
             JobConfigurationException, JsonProcessingException, IOException
     {
         JsonNode node = LongNode.valueOf(5);
 
-        new RenormalizationWindowUpdater(m_JobManager, "foo").update(node);
+        new RenormalizationWindowUpdater(m_JobManager, "foo").prepareUpdate(node);
+
+        verify(m_JobManager, never()).setRenormalizationWindow("foo", 5L);
+    }
+
+    @Test
+    public void testCommit_GivenInteger() throws UnknownJobException,
+            JobConfigurationException, JsonProcessingException, IOException
+    {
+        JsonNode node = LongNode.valueOf(5);
+
+        RenormalizationWindowUpdater updater = new RenormalizationWindowUpdater(m_JobManager, "foo");
+        updater.prepareUpdate(node);
+        updater.commit();
 
         verify(m_JobManager).setRenormalizationWindow("foo", 5L);
     }
@@ -109,7 +123,9 @@ public class RenormalizationWindowUpdaterTest
     {
         JsonNode node = NullNode.getInstance();
 
-        new RenormalizationWindowUpdater(m_JobManager, "foo").update(node);
+        RenormalizationWindowUpdater updater = new RenormalizationWindowUpdater(m_JobManager, "foo");
+        updater.prepareUpdate(node);
+        updater.commit();
 
         verify(m_JobManager).setRenormalizationWindow("foo", null);
     }

@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -25,26 +25,55 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.job.process.autodetect;
+package com.prelert.job;
 
-import com.prelert.job.messages.Messages;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
-enum Action {
-    CLOSING(Messages.PROCESS_ACTION_CLOSING_JOB),
-    FLUSHING(Messages.PROCESS_ACTION_FLUSHING_JOB),
-    UPDATING(Messages.PROCESS_ACTION_UPDATING_JOB),
-    WRITING(Messages.PROCESS_ACTION_WRITING_JOB),
-    NONE(Messages.PROCESS_ACTION_USING_JOB);
+import java.util.Date;
 
-    private final String m_ErrorString;
+import org.junit.Test;
 
-    private Action(String messageKey)
+public class ModelSnapshotTest
+{
+    @Test
+    public void testEquals_GivenSameObject()
     {
-        m_ErrorString = Messages.getMessage(messageKey);
+        ModelSnapshot modelSnapshot = new ModelSnapshot();
+
+        assertTrue(modelSnapshot.equals(modelSnapshot));
     }
 
-    public String getErrorString()
+    @Test
+    public void testEquals_GivenObjectOfDifferentClass()
     {
-        return m_ErrorString;
+        ModelSnapshot modelSnapshot = new ModelSnapshot();
+
+        assertFalse(modelSnapshot.equals("a string"));
+    }
+
+    @Test
+    public void testEquals_GivenEqualModelSnapshots()
+    {
+        Date now = new Date();
+
+        ModelSnapshot modelSnapshot1 = new ModelSnapshot();
+        modelSnapshot1.setTimestamp(now);
+        modelSnapshot1.setDescription("a snapshot");
+        modelSnapshot1.setRestorePriority(1234L);
+        modelSnapshot1.setSnapshotId("my_id");
+        modelSnapshot1.setSnapshotDocCount(7);
+
+        ModelSnapshot modelSnapshot2 = new ModelSnapshot();
+        modelSnapshot2.setTimestamp(now);
+        modelSnapshot2.setDescription("a snapshot");
+        modelSnapshot2.setRestorePriority(1234L);
+        modelSnapshot2.setSnapshotId("my_id");
+        modelSnapshot2.setSnapshotDocCount(7);
+
+        assertTrue(modelSnapshot1.equals(modelSnapshot2));
+        assertTrue(modelSnapshot2.equals(modelSnapshot1));
+        assertEquals(modelSnapshot1.hashCode(), modelSnapshot2.hashCode());
     }
 }

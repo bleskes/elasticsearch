@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -52,21 +52,21 @@ import com.prelert.job.JobDetails;
 import com.prelert.job.results.Bucket;
 import com.prelert.job.results.Influencer;
 
-public class OldResultsRemoverTest
+public class OldDataRemoverTest
 {
     private static final String JOB_WITH_RETENTION_ID = "foo";
     private static final String JOB_NO_RETENTION_ID = "bar";
 
     @Mock private JobProvider m_JobProvider;
-    @Mock private JobResultsDeleterFactory m_DeleterFactory;
+    @Mock private JobDataDeleterFactory m_DeleterFactory;
 
-    private OldResultsRemover m_OldResultsRemover;
+    private OldDataRemover m_OldDataRemover;
 
     @Before
     public void setUp()
     {
         MockitoAnnotations.initMocks(this);
-        m_OldResultsRemover = new OldResultsRemover(m_JobProvider, m_DeleterFactory);
+        m_OldDataRemover = new OldDataRemover(m_JobProvider, m_DeleterFactory);
     }
 
     @Test
@@ -104,10 +104,10 @@ public class OldResultsRemoverTest
         when(m_JobProvider.newBatchedBucketsIterator(JOB_WITH_RETENTION_ID)).thenReturn(bucketsIterator);
         when(m_JobProvider.newBatchedInfluencersIterator(JOB_WITH_RETENTION_ID)).thenReturn(influencersIterator);
 
-        JobResultsDeleter deleter = mock(JobResultsDeleter.class);
+        JobDataDeleter deleter = mock(JobDataDeleter.class);
         when(m_DeleterFactory.newDeleter(JOB_WITH_RETENTION_ID)).thenReturn(deleter);
 
-        m_OldResultsRemover.removeOldResults();
+        m_OldDataRemover.removeOldResults();
 
         verify(m_DeleterFactory).newDeleter(JOB_WITH_RETENTION_ID);
         ArgumentCaptor<Bucket> bucketCaptor = ArgumentCaptor.forClass(Bucket.class);

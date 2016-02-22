@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -87,8 +87,7 @@ public class ProcessCtrlTest
         dd.setTimeField("tf");
         job.setDataDescription(dd);
 
-
-        List<String> command = ProcessCtrl.buildAutoDetectCommand(job, m_Logger);
+        List<String> command = ProcessCtrl.buildAutoDetectCommand(job, m_Logger, null);
 
         assertEquals(13, command.size());
         assertTrue(command.contains(ProcessCtrl.AUTODETECT_PATH));
@@ -118,7 +117,7 @@ public class ProcessCtrlTest
         JobDetails job = new JobDetails();
         job.setId("unit-test-job");
 
-        List<String> command = ProcessCtrl.buildAutoDetectCommand(job, m_Logger);
+        List<String> command = ProcessCtrl.buildAutoDetectCommand(job, m_Logger, null);
 
         assertTrue(command.contains(ProcessCtrl.TIME_FIELD_ARG + "time"));
     }
@@ -133,12 +132,12 @@ public class ProcessCtrlTest
 
         int expectedPersistInterval = 10800 + ProcessCtrl.calculateStaggeringInterval(job.getId());
 
-        List<String> command = ProcessCtrl.buildAutoDetectCommand(job, m_Logger);
+        List<String> command = ProcessCtrl.buildAutoDetectCommand(job, m_Logger, null);
         assertFalse(command.contains(ProcessCtrl.PERSIST_INTERVAL_ARG + expectedPersistInterval));
 
         System.getProperties().remove(ProcessCtrl.DONT_PERSIST_MODEL_STATE);
 
-        command = ProcessCtrl.buildAutoDetectCommand(job, m_Logger);
+        command = ProcessCtrl.buildAutoDetectCommand(job, m_Logger, null);
         assertTrue(command.contains(ProcessCtrl.PERSIST_INTERVAL_ARG + expectedPersistInterval));
     }
 

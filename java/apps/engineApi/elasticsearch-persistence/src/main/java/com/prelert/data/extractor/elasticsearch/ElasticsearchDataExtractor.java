@@ -185,18 +185,16 @@ public class ElasticsearchDataExtractor implements DataExtractor
         HttpGetResponse response = m_HttpGetRequester.get(url, searchBody);
         if (response.getResponseCode() != OK_STATUS)
         {
-            m_Logger.error("Request '" + url + "' failed with status code: "
+            throw new IOException("Request '" + url + "' failed with status code: "
                     + response.getResponseCode() + ". Response was:\n" + response.getResponseAsString());
-            return null;
         }
         PushbackInputStream pushbackStream = new PushbackInputStream(response.getStream(),
                 PUSHBACK_BUFFER_BYTES);
         Matcher matcher = peekAndMatchInStream(pushbackStream, SCROLL_ID_PATTERN);
         if (!matcher.find())
         {
-            m_Logger.error("Field '_scroll_id' was expected but not found in response:\n"
-                    + response.getResponseAsString());
-            return null;
+            throw new IOException("Field '_scroll_id' was expected but not found in response:\n"
+                    + HttpGetResponse.getStreamAsString(pushbackStream));
         }
         m_ScrollId = matcher.group(1);
         return pushbackStream;
@@ -242,10 +240,14 @@ public class ElasticsearchDataExtractor implements DataExtractor
             throws IOException
     {
         byte[] peek = new byte[PUSHBACK_BUFFER_BYTES];
-        stream.read(peek);
-        String peekString = new String(peek, StandardCharsets.UTF_8);
+        int bytesRead = stream.read(peek);
+
+        // We make the assumption here that invalid byte sequences will be read as invalid char
+        // rather than throwing an exception
+        String peekString = new String(peek, 0, bytesRead, StandardCharsets.UTF_8);
+
         Matcher matcher = pattern.matcher(peekString);
-        stream.unread(peek);
+        stream.unread(peek, 0, bytesRead);
         return matcher;
     }
 
@@ -261,7 +263,7 @@ public class ElasticsearchDataExtractor implements DataExtractor
             {
                 return new PushbackInputStream(response.getStream(), PUSHBACK_BUFFER_BYTES);
             }
-            m_Logger.error("Request '"  + urlBuilder.toString() + "' with scroll id '" + m_ScrollId
+            throw new IOException("Request '"  + urlBuilder.toString() + "' with scroll id '" + m_ScrollId
                     + "' failed with status code: " + response.getResponseCode() + ". Response was:\n"
                     + response.getResponseAsString());
         }

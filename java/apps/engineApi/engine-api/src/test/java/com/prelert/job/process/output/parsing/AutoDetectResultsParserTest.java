@@ -53,6 +53,7 @@ import org.mockito.Mockito;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.prelert.job.ModelSizeStats;
+import com.prelert.job.ModelSnapshot;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.alert.AlertObserver;
 import com.prelert.job.alert.AlertTrigger;
@@ -151,6 +152,7 @@ public class AutoDetectResultsParserTest
         final List<CategoryDefinition> m_CategoryDefinitions = new ArrayList<>();
         final List<ModelSizeStats> m_ModelSizeStats = new ArrayList<>();
         final List<ModelDebugOutput> m_ModelDebugOutput = new ArrayList<>();
+        final SortedMap<String, ModelSnapshot> m_ModelSnapshots = new TreeMap<>();
         int m_BucketCount;
 
         @Override
@@ -169,6 +171,12 @@ public class AutoDetectResultsParserTest
         public void persistQuantiles(Quantiles quantiles)
         {
             m_Quantiles.put(quantiles.getId(), quantiles);
+        }
+
+        @Override
+        public void persistModelSnapshot(ModelSnapshot modelSnapshot)
+        {
+            m_ModelSnapshots.put(modelSnapshot.getSnapshotId(), modelSnapshot);
         }
 
         @Override

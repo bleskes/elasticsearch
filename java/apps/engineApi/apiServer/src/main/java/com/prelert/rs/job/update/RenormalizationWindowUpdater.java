@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -27,14 +27,11 @@
 
 package com.prelert.rs.job.update;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.prelert.job.UnknownJobException;
-import com.prelert.job.config.verification.JobConfigurationException;
-import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.manager.JobManager;
 import com.prelert.job.messages.Messages;
 
-class RenormalizationWindowUpdater extends AbstractUpdater
+class RenormalizationWindowUpdater extends AbstractLongUpdater
 {
     public RenormalizationWindowUpdater(JobManager jobManager, String jobId)
     {
@@ -42,25 +39,14 @@ class RenormalizationWindowUpdater extends AbstractUpdater
     }
 
     @Override
-    void update(JsonNode node) throws UnknownJobException, JobConfigurationException
+    void commit() throws UnknownJobException
     {
-        if (node.isIntegralNumber() || node.isNull())
-        {
-            Long renormalizationWindow = node.isIntegralNumber() ? node.asLong() : null;
-            if (renormalizationWindow != null && renormalizationWindow < 0)
-            {
-                throwInvalidValue();
-            }
-            jobManager().setRenormalizationWindow(jobId(), renormalizationWindow);
-            return;
-        }
-        throwInvalidValue();
+        jobManager().setRenormalizationWindow(jobId(), getNewValue());
     }
 
-    private void throwInvalidValue() throws JobConfigurationException
+    @Override
+    protected String getInvalidMessageKey()
     {
-        throw new JobConfigurationException(
-                Messages.getMessage(Messages.JOB_CONFIG_UPDATE_RENORMALIZATION_WINDOW_INVALID),
-                ErrorCodes.INVALID_VALUE);
+        return Messages.JOB_CONFIG_UPDATE_RENORMALIZATION_WINDOW_INVALID;
     }
 }

@@ -28,6 +28,8 @@
 package com.prelert.job.persistence.elasticsearch;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -35,6 +37,7 @@ import static org.mockito.Mockito.when;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 
 import org.elasticsearch.action.get.GetResponse;
@@ -47,6 +50,7 @@ import org.junit.rules.ExpectedException;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import com.prelert.job.SchedulerState;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.errorcodes.ErrorCodeMatcher;
 import com.prelert.job.errorcodes.ErrorCodes;
@@ -178,6 +182,59 @@ public class ElasticsearchJobProviderTest
         Quantiles quantiles = provider.getQuantiles(JOB_ID);
 
         assertEquals("", quantiles.getState());
+    }
+
+    @Test
+    public void testGetSchedulerState_GivenNoIndexForJob() throws InterruptedException,
+            ExecutionException, UnknownJobException
+    {
+        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME)
+                .addClusterStatusYellowResponse()
+                .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true)
+                .throwMissingIndexOnPrepareGet(INDEX_NAME, SchedulerState.TYPE, SchedulerState.TYPE);
+
+        ElasticsearchJobProvider provider = createProvider(clientBuilder.build());
+
+        assertFalse(provider.getSchedulerState(JOB_ID).isPresent());
+    }
+
+    @Test
+    public void testGetSchedulerState_GivenNoSchedulerStateForJob() throws InterruptedException,
+            ExecutionException, UnknownJobException
+    {
+        GetResponse getResponse = createGetResponse(false, null);
+
+        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME)
+                .addClusterStatusYellowResponse()
+                .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true)
+                .prepareGet(INDEX_NAME, SchedulerState.TYPE, SchedulerState.TYPE, getResponse);
+
+        ElasticsearchJobProvider provider = createProvider(clientBuilder.build());
+
+        assertFalse(provider.getSchedulerState(JOB_ID).isPresent());
+    }
+
+    @Test
+    public void testGetSchedulerState_GivenSchedulerStateForJob() throws InterruptedException,
+            ExecutionException, UnknownJobException
+    {
+        Map<String, Object> source = new HashMap<>();
+        source.put(SchedulerState.START_TIME_MILLIS, 18L);
+        source.put(SchedulerState.END_TIME_MILLIS, 42L);
+        GetResponse getResponse = createGetResponse(true, source);
+
+        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME)
+                .addClusterStatusYellowResponse()
+                .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true)
+                .prepareGet(INDEX_NAME, SchedulerState.TYPE, SchedulerState.TYPE, getResponse);
+
+        ElasticsearchJobProvider provider = createProvider(clientBuilder.build());
+
+        Optional<SchedulerState> schedulerState = provider.getSchedulerState(JOB_ID);
+
+        assertTrue(schedulerState.isPresent());
+        assertEquals(18L, schedulerState.get().getStartTimeMillis().longValue());
+        assertEquals(42L, schedulerState.get().getEndTimeMillis().longValue());
     }
 
     private ElasticsearchJobProvider createProvider(Client client)

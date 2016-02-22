@@ -43,7 +43,9 @@ import com.prelert.job.Detector;
 import com.prelert.job.JobDetails;
 import com.prelert.job.ModelDebugConfig;
 import com.prelert.job.ModelSizeStats;
+import com.prelert.job.ModelSnapshot;
 import com.prelert.job.ModelState;
+import com.prelert.job.audit.AuditMessage;
 import com.prelert.job.quantiles.Quantiles;
 import com.prelert.job.results.AnomalyCause;
 import com.prelert.job.results.AnomalyRecord;
@@ -228,6 +230,12 @@ public class ElasticsearchMappings
                             .field(TYPE, LONG).field(INDEX, NO)
                         .endObject()
                         .startObject(JobDetails.RENORMALIZATION_WINDOW)
+                            .field(TYPE, LONG).field(INDEX, NO)
+                        .endObject()
+                        .startObject(JobDetails.BACKGROUND_PERSIST_INTERVAL)
+                            .field(TYPE, LONG).field(INDEX, NO)
+                        .endObject()
+                        .startObject(JobDetails.MODEL_SNAPSHOT_RETENTION_DAYS)
                             .field(TYPE, LONG).field(INDEX, NO)
                         .endObject()
                         .startObject(JobDetails.RESULTS_RETENTION_DAYS)
@@ -694,6 +702,55 @@ public class ElasticsearchMappings
             .endObject();
     }
 
+    /**
+     * Create the Elasticsearch mapping for {@linkplain ModelState}.
+     * The model state could potentially be huge (over a gigabyte in size)
+     * so all analysis by Elasticsearch is disabled.  The only way to
+     * retrieve the model state is by knowing the ID of a particular
+     * document or by searching for all documents of this type.
+     *
+     * @return
+     * @throws IOException
+     */
+    public static XContentBuilder modelSnapshotMapping()
+    throws IOException
+    {
+        return jsonBuilder()
+            .startObject()
+                .startObject(ModelSnapshot.TYPE)
+                    .startObject(ALL)
+                        .field(ENABLED, false)
+                        // analyzer must be specified even though _all is disabled
+                        // because all types in the same index must have the same
+                        // analyzer for a given field
+                        .field(ANALYZER, WHITESPACE)
+                    .endObject()
+                    .startObject(PROPERTIES)
+                        .startObject(ElasticsearchPersister.JOB_ID_NAME)
+                            .field(TYPE, STRING).field(INDEX, NOT_ANALYZED)
+                        .endObject()
+                        .startObject(ModelSnapshot.TIMESTAMP)
+                            .field(TYPE, DATE)
+                        .endObject()
+                        // "description" is analyzed so that it has the same
+                        // mapping as a user field of the same name - this means
+                        // it doesn't have to be a reserved field name
+                        .startObject(ModelSnapshot.DESCRIPTION)
+                            .field(TYPE, STRING)
+                        .endObject()
+                        .startObject(ModelSnapshot.RESTORE_PRIORITY)
+                            .field(TYPE, LONG)
+                        .endObject()
+                        .startObject(ModelSnapshot.SNAPSHOT_ID)
+                            .field(TYPE, STRING).field(INDEX, NOT_ANALYZED)
+                        .endObject()
+                        .startObject(ModelSnapshot.SNAPSHOT_DOC_COUNT)
+                            .field(TYPE, INTEGER)
+                        .endObject()
+                    .endObject()
+                .endObject()
+            .endObject();
+    }
 
     /**
      * Create the Elasticsearch mapping for {@linkplain ModelSizeStats}.
@@ -956,4 +1013,17 @@ public class ElasticsearchMappings
             .endObject();
     }
 
+    public static XContentBuilder auditMessageMapping() throws IOException
+    {
+        return jsonBuilder()
+                .startObject()
+                    .startObject(AuditMessage.TYPE)
+                        .startObject(PROPERTIES)
+                            .startObject(ES_TIMESTAMP)
+                                .field(TYPE, DATE)
+                            .endObject()
+                        .endObject()
+                    .endObject()
+                .endObject();
+    }
 }

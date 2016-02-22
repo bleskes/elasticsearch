@@ -74,6 +74,8 @@ public abstract class ResourceWithJobManager
      */
     public static final String END_QUERY_PARAM = "end";
 
+    private static final String NOW = "now";
+
     /**
      * Application context injected by the framework
      */
@@ -231,8 +233,9 @@ public abstract class ResourceWithJobManager
     }
 
     /**
-     * If the date is an empty string, it returns 0. Otherwise, it
-     * first tries to parse the date first as a Long and convert that
+     * If the date is an empty string, it returns 0.
+     * If the date is "now", it returns current epoch time.
+     * Otherwise, it first tries to parse the date first as a Long and convert that
      * to an epoch time. If the long number has more than 10 digits
      * it is considered a time in milliseconds else if 10 or less digits
      * it is in seconds. If that fails it tries to parse the string
@@ -247,6 +250,10 @@ public abstract class ResourceWithJobManager
      */
     protected long paramToEpochIfValidOrThrow(String paramName, String date, Logger logger)
     {
+        if (NOW.equals(date))
+        {
+            return System.currentTimeMillis();
+        }
         long epochStart = 0;
         if (date.isEmpty() == false)
         {

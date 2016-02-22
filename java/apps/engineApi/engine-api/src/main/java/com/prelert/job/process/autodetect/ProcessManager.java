@@ -35,27 +35,21 @@ import java.util.Date;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.apache.log4j.Logger;
 
 import com.fasterxml.jackson.core.JsonParseException;
-import com.prelert.app.Shutdownable;
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataCounts;
 import com.prelert.job.DataDescription;
+import com.prelert.job.JobDetails;
 import com.prelert.job.JobStatus;
 import com.prelert.job.SchedulerConfig;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.alert.AlertObserver;
 import com.prelert.job.errorcodes.ErrorCodes;
-import com.prelert.job.exceptions.JobInUseException;
 import com.prelert.job.logging.JobLoggerFactory;
-import com.prelert.job.messages.Messages;
 import com.prelert.job.persistence.DataPersisterFactory;
 import com.prelert.job.persistence.JobDataPersister;
 import com.prelert.job.persistence.JobProvider;
@@ -82,21 +76,12 @@ import com.prelert.job.transform.TransformConfigs;
 /**
  * Manages the native autodetect processes channelling
  * data to them and parsing the results.
- *
- * This class registers a JVM shutdown hook the
- * purpose of which is to stop any running processes
- * before the JVM exits
  */
-public class ProcessManager implements Shutdownable
+public class ProcessManager
 {
-    private static final int WAIT_SECONDS_BEFORE_RETRY_CLOSING = 10;
-
     private static final Logger LOGGER = Logger.getLogger(ProcessManager.class);
 
     private ConcurrentMap<String, ProcessAndDataDescription> m_JobIdToProcessMap;
-    private ConcurrentMap<String, ScheduledFuture<?>> m_JobIdToTimeoutFuture;
-
-    private ScheduledExecutorService m_ProcessTimeouts;
 
     private final JobProvider m_JobProvider;
     private final ProcessFactory m_ProcessFactory;
@@ -107,10 +92,6 @@ public class ProcessManager implements Shutdownable
             DataPersisterFactory dataPersisterFactory, JobLoggerFactory jobLoggerFactory)
     {
         m_JobIdToProcessMap = new ConcurrentHashMap<String, ProcessAndDataDescription>();
-
-        m_ProcessTimeouts = Executors.newScheduledThreadPool(1);
-        m_JobIdToTimeoutFuture = new ConcurrentHashMap<String, ScheduledFuture<?>>();
-
         m_JobProvider = jobProvider;
         m_ProcessFactory = processFactory;
         m_DataPersisterFactory = dataPersisterFactory;
@@ -137,7 +118,7 @@ public class ProcessManager implements Shutdownable
      * For CSV data if a configured field is missing from the header
      * a {@linkplain MissingFieldException} is thrown
      *
-     * @param jobId
+     * @param job
      * @param input
      * @param params
      * @return True if successful or false if the data can't be written because
@@ -147,61 +128,36 @@ public class ProcessManager implements Shutdownable
      * @throws MissingFieldException If a configured field is missing from
      * the CSV header
      * @throws JsonParseException
-     * @throws JobInUseException if the data cannot be written to because
-     * the job is already handling data
      * @throws HighProportionOfBadTimestampsException
      * @throws OutOfOrderRecordsException
      * @throws MalformedJsonException
      * @return Count of records, fields, bytes, etc written
      */
-    public DataCounts processDataLoadJob(String jobId, InputStream input, DataLoadParams params)
-    throws UnknownJobException, NativeProcessRunException, MissingFieldException,
-        JsonParseException, JobInUseException, HighProportionOfBadTimestampsException,
-        OutOfOrderRecordsException, MalformedJsonException
-    {
-        JobDataPersister persister = params.isPersisting() ? m_DataPersisterFactory
-                .newDataPersister(jobId) : new NoneJobDataPersister();
-        return processDataLoadJob(jobId, input, persister, params);
-    }
-
-    private DataCounts processDataLoadJob(String jobId, InputStream input,
-            JobDataPersister jobDataPersister, DataLoadParams params) throws UnknownJobException,
-            NativeProcessRunException, MissingFieldException, JsonParseException,
-            JobInUseException, HighProportionOfBadTimestampsException, OutOfOrderRecordsException,
+    public DataCounts processDataLoadJob(JobDetails job, InputStream input, DataLoadParams params)
+            throws UnknownJobException, NativeProcessRunException, MissingFieldException,
+            JsonParseException, HighProportionOfBadTimestampsException, OutOfOrderRecordsException,
             MalformedJsonException
     {
-        // stop the timeout
-        ScheduledFuture<?> future = m_JobIdToTimeoutFuture.remove(jobId);
-        if (future != null)
-        {
-            if (future.cancel(false) == false)
-            {
-                LOGGER.warn("Failed to cancel future in dataToJob(...)");
-            }
-        }
-        else
-        {
-            LOGGER.debug("No future to cancel in dataToJob(...)");
-        }
+        JobDataPersister persister = params.isPersisting() ? m_DataPersisterFactory
+                .newDataPersister(job.getId()) : new NoneJobDataPersister();
+        return processDataLoadJob(job, input, persister, params);
+    }
 
-        ProcessAndDataDescription process = m_JobIdToProcessMap.get(jobId);
+    private DataCounts processDataLoadJob(JobDetails job, InputStream input,
+            JobDataPersister jobDataPersister, DataLoadParams params) throws UnknownJobException,
+            NativeProcessRunException, MissingFieldException, JsonParseException,
+            HighProportionOfBadTimestampsException, OutOfOrderRecordsException,
+            MalformedJsonException
+    {
+        ProcessAndDataDescription process = m_JobIdToProcessMap.get(job.getId());
         boolean isExistingProcess = process != null;
 
-        if (!isExistingProcess)
+        if (process == null)
         {
             // create the new process and restore its state
             // if it has been saved
-            process = m_ProcessFactory.createProcess(jobId);
-            m_JobIdToProcessMap.put(jobId, process);
-        }
-
-        // We can't write data if someone is already writing to the process.
-        if (process.tryAcquireGuard(Action.WRITING) == false)
-        {
-            String msg = Messages.getMessage(Messages.JOB_DATA_CONCURRENT_USE_UPLOAD, jobId,
-                    process.getAction().getErrorString());
-            LOGGER.warn(msg);
-            throw new JobInUseException(jobId, msg, ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR);
+            process = m_ProcessFactory.createProcess(job);
+            m_JobIdToProcessMap.put(job.getId(), process);
         }
 
         DataCounts stats = new DataCounts();
@@ -214,7 +170,7 @@ public class ProcessManager implements Shutdownable
 
             if (params.isResettingBuckets())
             {
-                writeResetBucketsControlMessage(jobId, params, process, isExistingProcess);
+                writeResetBucketsControlMessage(job.getId(), params, process, isExistingProcess);
             }
 
             // write the data to the process
@@ -231,7 +187,7 @@ public class ProcessManager implements Shutdownable
         }
         catch (IOException e)
         {
-            String msg = String.format("Exception writing to process for job %s", jobId);
+            String msg = String.format("Exception writing to process for job %s", job.getId());
 
             StringBuilder sb = new StringBuilder(msg)
                     .append('\n').append(e.toString()).append('\n');
@@ -248,15 +204,6 @@ public class ProcessManager implements Shutdownable
             throw new NativeProcessRunException(sb.toString(),
                     ErrorCodes.NATIVE_PROCESS_WRITE_ERROR);
         }
-        finally
-        {
-            process.releaseGuard();
-
-            // start a new timer
-            future = startShutdownTimer(jobId, process.getTimeout());
-            m_JobIdToTimeoutFuture.put(jobId, future);
-        }
-
         return stats;
     }
 
@@ -277,8 +224,8 @@ public class ProcessManager implements Shutdownable
         }
     }
 
-    public void writeUpdateConfigMessage(String jobId, String config) throws JobInUseException,
-            NativeProcessRunException
+    public void writeUpdateConfigMessage(String jobId, String config)
+            throws NativeProcessRunException
     {
         ProcessAndDataDescription process = m_JobIdToProcessMap.get(jobId);
         if (process == null)
@@ -294,15 +241,6 @@ public class ProcessManager implements Shutdownable
             return;
         }
 
-        if (process.tryAcquireGuard(Action.UPDATING) == false)
-        {
-            String msg = Messages.getMessage(Messages.JOB_DATA_CONCURRENT_USE_UPDATE, jobId,
-                    process.getAction().getErrorString());
-            LOGGER.info(msg);
-            process.getLogger().info(msg);
-            throw new JobInUseException(jobId, msg, ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR);
-        }
-
         ControlMsgToProcessWriter writer = ControlMsgToProcessWriter.create(
                 process.getProcess().getOutputStream(),
                 process.getAnalysisConfig());
@@ -316,10 +254,6 @@ public class ProcessManager implements Shutdownable
         {
             String msg = String.format("Exception updating process for job %s", jobId);
             throwNativeProcessRunExceptionFromIoException(process, e, msg);
-        }
-        finally
-        {
-            process.releaseGuard();
         }
     }
 
@@ -354,36 +288,20 @@ public class ProcessManager implements Shutdownable
      * @param interimResultsParams Parameters about whether interim results calculation
      * should occur and for which period of time
      * @throws NativeProcessRunException If the process has already terminated
-     * @throws JobInUseException if the job cannot be closed because data is
-     * being streamed to it
      */
     public void flushJob(String jobId, InterimResultsParams interimResultsParams)
-    throws NativeProcessRunException, JobInUseException
+            throws NativeProcessRunException
     {
         LOGGER.info("Flushing job " + jobId);
 
         ProcessAndDataDescription process = m_JobIdToProcessMap.get(jobId);
         if (process == null)
         {
-            LOGGER.warn("Native process for job '" + jobId +
-                     "' is not running - nothing to flush");
-            // tidy up
-            m_JobIdToTimeoutFuture.remove(jobId);
-
+            LOGGER.warn("Native process for job '" + jobId + "' is not running - nothing to flush");
             return;
         }
 
         process.getLogger().info("Flushing job " + jobId);
-
-        if (process.tryAcquireGuard(Action.FLUSHING) == false)
-        {
-            String msg = Messages.getMessage(Messages.JOB_DATA_CONCURRENT_USE_FLUSH, jobId,
-                    process.getAction().getErrorString());
-            LOGGER.info(msg);
-            process.getLogger().info(msg);
-            throw new JobInUseException(jobId, msg, ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR);
-        }
-
 
         // write the data to the process
         try
@@ -423,10 +341,6 @@ public class ProcessManager implements Shutdownable
             String msg = String.format("Exception flushing process for job %s", jobId);
             throwNativeProcessRunExceptionFromIoException(process, ioe, msg);
         }
-        finally
-        {
-            process.releaseGuard();
-        }
     }
 
     private void throwNativeProcessRunExceptionFromIoException(ProcessAndDataDescription process,
@@ -451,10 +365,8 @@ public class ProcessManager implements Shutdownable
      *
      * @param jobId
      * @throws NativeProcessRunException If the process has already terminated
-     * @throws JobInUseException if the job cannot be closed because data is
-     * being streamed to it
      */
-    public void closeJob(String jobId) throws NativeProcessRunException, JobInUseException
+    public void closeJob(String jobId) throws NativeProcessRunException
     {
         /*
          * Be careful modifying this function because is can throw exceptions in
@@ -467,20 +379,7 @@ public class ProcessManager implements Shutdownable
         if (process == null)
         {
             LOGGER.warn("No job with id '" + jobId + "' to shutdown");
-            // tidy up
-            m_JobIdToTimeoutFuture.remove(jobId);
-
             return;
-        }
-
-
-        if (process.tryAcquireGuard(Action.CLOSING) == false)
-        {
-            String msg = Messages.getMessage(Messages.JOB_DATA_CONCURRENT_USE_CLOSE, jobId,
-                    process.getAction().getErrorString());
-            LOGGER.info(msg);
-            process.getLogger().info(msg);
-            throw new JobInUseException(jobId, msg, ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR);
         }
 
         try
@@ -489,25 +388,11 @@ public class ProcessManager implements Shutdownable
 
             process.getLogger().info("Closing job " + jobId);
 
-            // cancel any time out futures
-            ScheduledFuture<?> future = m_JobIdToTimeoutFuture.get(jobId);
-            if (future != null && future.cancel(false) == false)
-            {
-                LOGGER.warn("Failed to cancel future in finishJob()");
-            }
-            else
-            {
-                LOGGER.debug("No future to cancel in finishJob()");
-            }
-            m_JobIdToTimeoutFuture.remove(jobId);
-
-
             try
             {
                 // check the process is running, throws if not
                 if (processStillRunning(process))
                 {
-                    m_JobIdToProcessMap.remove(jobId);
                     terminateProcess(jobId, process);
                 }
             }
@@ -521,7 +406,6 @@ public class ProcessManager implements Shutdownable
                 // clean up resources and re-throw
                 process.deleteAssociatedFiles();
 
-                m_JobIdToProcessMap.remove(jobId);
                 try
                 {
                     process.getProcess().getOutputStream().close();
@@ -538,8 +422,8 @@ public class ProcessManager implements Shutdownable
         }
         finally
         {
+            m_JobIdToProcessMap.remove(jobId);
             m_JobLoggerFactory.close(jobId, process.getLogger());
-            process.releaseGuard();
         }
     }
 
@@ -787,126 +671,6 @@ public class ProcessManager implements Shutdownable
         catch (IOException e)
         {
             jobLogger.warn("Exception flushing lengthEncodedWriter", e);
-        }
-    }
-
-    /**
-     * Add the timeout schedule for <code>jobId</code>.
-     * On time out it tries to shutdown the job but if the job
-     * is still running it schedules another task to try again in 10
-     * seconds.
-     *
-     * @param jobId
-     * @param timeoutSeconds
-     * @return
-     */
-    private ScheduledFuture<?> startShutdownTimer(String jobId, long timeoutSeconds)
-    {
-        return m_ProcessTimeouts.schedule(new FinishJobRunnable(jobId), timeoutSeconds,
-                TimeUnit.SECONDS);
-    }
-
-    private class FinishJobRunnable implements Runnable
-    {
-        private final String m_JobId;
-
-        public FinishJobRunnable(String jobId)
-        {
-            m_JobId = jobId;
-        }
-
-        @Override
-        public void run()
-        {
-            LOGGER.info("Timeout expired stopping process for job:" + m_JobId);
-
-            try
-            {
-                boolean notFinished = true;
-                while (notFinished)
-                {
-                    try
-                    {
-                        closeJob(m_JobId);
-                        notFinished = false;
-                    }
-                    catch (JobInUseException e)
-                    {
-                        if (ProcessManager.wait(m_JobId, WAIT_SECONDS_BEFORE_RETRY_CLOSING, e) == false)
-                        {
-                            return;
-                        }
-                    }
-                }
-            }
-            catch (NativeProcessRunException e)
-            {
-                LOGGER.error(String.format("Error in job %s finish timeout", m_JobId), e);
-            }
-        }
-    }
-
-    private static boolean wait(String jobId, int waitSeconds, JobInUseException e)
-    {
-        String msg = String.format(
-                "Job '%s' is reading data and cannot be shutdown " +
-                        "Rescheduling shutdown for %d seconds", jobId, waitSeconds);
-        LOGGER.warn(msg);
-
-        // wait then try again
-        try
-        {
-            Thread.sleep(waitSeconds * 1000);
-        }
-        catch (InterruptedException e1)
-        {
-            Thread.currentThread().interrupt();
-            LOGGER.warn("Interrupted waiting for job to stop", e);
-            return false;
-        }
-        return true;
-    }
-
-    /**
-     * Stop the process manager by shutting down the executor
-     * service and stop all running processes. Processes won't quit
-     * straight away once the input stream is closed but will stop
-     * soon after once the data has been analysed.
-     */
-    @Override
-    public void shutdown()
-    {
-        LOGGER.info("Stopping all Engine API Jobs");
-
-        // Stop new being scheduled
-        m_ProcessTimeouts.shutdownNow();
-
-        LOGGER.info(String.format("Terminating %d active autodetect processes",
-                m_JobIdToTimeoutFuture.size()));
-
-        for (String jobId : m_JobIdToTimeoutFuture.keySet())
-        {
-            boolean notFinished = true;
-            while (notFinished)
-            {
-                try
-                {
-                    closeJob(jobId);
-                    notFinished = false;
-                }
-                catch (JobInUseException e)
-                {
-                    // wait then try again
-                    if (ProcessManager.wait(jobId, WAIT_SECONDS_BEFORE_RETRY_CLOSING, e) == false)
-                    {
-                        return;
-                    }
-                }
-                catch (NativeProcessRunException e)
-                {
-                    LOGGER.error("Error stopping running job " + jobId, e);
-                }
-            }
         }
     }
 

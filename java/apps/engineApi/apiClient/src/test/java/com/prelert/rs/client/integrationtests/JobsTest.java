@@ -1470,14 +1470,8 @@ public class JobsTest implements Closeable
         test(detectors.get(0).getDetectorDescription().equals("before"));
         test(detectors.get(1).getDetectorDescription().equals("sum(responseTime) by airline"));
 
-        m_WebServiceClient.updateJob(jobId, "{\"detector\":{\"index\":0,\"description\":\"after\"}}");
-
-        job = m_WebServiceClient.getJob(jobId).getDocument();
-        detectors = job.getAnalysisConfig().getDetectors();
-        test(detectors.get(0).getDetectorDescription().equals("after"));
-        test(detectors.get(1).getDetectorDescription().equals("sum(responseTime) by airline"));
-
-        m_WebServiceClient.updateJob(jobId, "{\"detector\":{\"index\":1,\"description\":\"Radiohead\"}}");
+        m_WebServiceClient.updateJob(jobId,
+                "{\"detectors\":[{\"index\":0,\"description\":\"after\"}, {\"index\":1,\"description\":\"Radiohead\"}]}");
 
         job = m_WebServiceClient.getJob(jobId).getDocument();
         detectors = job.getAnalysisConfig().getDetectors();
@@ -1486,13 +1480,13 @@ public class JobsTest implements Closeable
 
         // Invalid index
         test(!m_WebServiceClient.updateJob(jobId,
-                "{\"detector\":{\"index\":2,\"description\":\"Radiohead\"}}"));
+                "{\"detectors\":[{\"index\":2,\"description\":\"Radiohead\"}]}"));
         test("Invalid index: valid range is [0, 1]; actual was: 2".equals(
                 m_WebServiceClient.getLastError().getMessage()));
 
         // Invalid description
         test(!m_WebServiceClient.updateJob(jobId,
-                "{\"detector\":{\"index\":2,\"description\":42}}"));
+                "{\"detectors\":[{\"index\":2,\"description\":42}]}"));
         test("Invalid description: string expected; actual was: 42".equals(
                 m_WebServiceClient.getLastError().getMessage()));
 

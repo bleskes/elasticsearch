@@ -44,6 +44,7 @@ import com.prelert.rs.provider.JobConfigurationParseException;
 class ModelDebugConfigUpdater extends AbstractUpdater
 {
     private final StringWriter m_ConfigWriter;
+    private ModelDebugConfig m_NewConfig;
 
     public ModelDebugConfigUpdater(JobManager jobManager, String jobId, StringWriter configWriter)
     {
@@ -52,17 +53,15 @@ class ModelDebugConfigUpdater extends AbstractUpdater
     }
 
     @Override
-    void update(JsonNode node) throws UnknownJobException, JobConfigurationException
+    void prepareUpdate(JsonNode node) throws UnknownJobException, JobConfigurationException
     {
-        ModelDebugConfig modelDebugConfig = null;
         try
         {
-            modelDebugConfig = JSON_MAPPER.convertValue(node, ModelDebugConfig.class);
-            if (modelDebugConfig != null)
+            m_NewConfig = JSON_MAPPER.convertValue(node, ModelDebugConfig.class);
+            if (m_NewConfig != null)
             {
-                ModelDebugConfigVerifier.verify(modelDebugConfig);
+                ModelDebugConfigVerifier.verify(m_NewConfig);
             }
-            jobManager().setModelDebugConfig(jobId(), modelDebugConfig);
         }
         catch (IllegalArgumentException e)
         {
@@ -70,8 +69,13 @@ class ModelDebugConfigUpdater extends AbstractUpdater
                     Messages.getMessage(Messages.JOB_CONFIG_UPDATE_MODEL_DEBUG_CONFIG_PARSE_ERROR),
                     e.getCause(), ErrorCodes.INVALID_VALUE);
         }
+    }
 
-        write(modelDebugConfig);
+    @Override
+    void commit() throws JobConfigurationException, UnknownJobException
+    {
+        jobManager().setModelDebugConfig(jobId(), m_NewConfig);
+        write(m_NewConfig);
     }
 
     private void write(ModelDebugConfig modelDebugConfig) throws JobConfigurationException

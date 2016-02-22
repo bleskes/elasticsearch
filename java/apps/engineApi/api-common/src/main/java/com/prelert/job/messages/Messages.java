@@ -45,6 +45,19 @@ public final class Messages
     public static final String LOGFILE_MISSING = "logfile.missing";
     public static final String LOGFILE_MISSING_DIRECTORY = "logfile.missing.directory";
 
+    public static final String JOB_AUDIT_CREATED = "job.audit.created";
+    public static final String JOB_AUDIT_DELETED = "job.audit.deleted";
+    public static final String JOB_AUDIT_UPDATED = "job.audit.updated";
+    public static final String JOB_AUDIT_SCHEDULER_STARTED_FROM_TO = "job.audit.scheduler.started.from.to";
+    public static final String JOB_AUDIT_SCHEDULER_CONTINUED_REALTIME = "job.audit.scheduler.continued.realtime";
+    public static final String JOB_AUDIT_SCHEDULER_STARTED_REALTIME = "job.audit.scheduler.started.realtime";
+    public static final String JOB_AUDIT_SCHEDULER_LOOKBACK_COMPLETED = "job.audit.scheduler.lookback.completed";
+    public static final String JOB_AUDIT_SCHEDULER_STOPPED = "job.audit.scheduler.stopped";
+    public static final String JOB_AUDIT_SCHEDULER_NO_DATA = "job.audit.scheduler.no.data";
+    public static final String JOB_AUDIR_SCHEDULER_DATA_SEEN_AGAIN = "job.audit.scheduler.data.seen.again";
+    public static final String JOB_AUDIT_SCHEDULER_DATA_EXTRACTION_ERROR = "job.audit.scheduler.data.extraction.error";
+    public static final String JOB_AUDIT_SCHEDULER_DATA_EXTRACTION_RECOVERED = "job.audit.scheduler.data.extraction.recovered";
+
     public static final String JOB_CONFIG_BYFIELD_INCOMPATIBLE_FUNCTION = "job.config.byField.incompatible.function";
     public static final String JOB_CONFIG_BYFIELD_NEEDS_ANOTHER = "job.config.byField.needs.another";
     public static final String JOB_CONFIG_DATAFORMAT_REQUIRES_TRANSFORM = "job.config.dataformat.requires.transform";
@@ -69,6 +82,7 @@ public final class Messages
     public static final String JOB_CONFIG_OVERFIELD_NEEDS_ANOTHER = "job.config.overField.needs.another";
     public static final String JOB_CONFIG_UPDATE_CUSTOM_SETTINGS_INVALID = "job.config.update.custom.settings.invalid";
     public static final String JOB_CONFIG_UPDATE_DESCRIPTION_INVALID = "job.config.update.description.invalid";
+    public static final String JOB_CONFIG_UPDATE_DETECTOR_DESCRIPTION_INVALID = "job.config.update.detector.description.invalid";
     public static final String JOB_CONFIG_UPDATE_DETECTOR_DESCRIPTION_INVALID_DETECTOR_INDEX = "job.config.update.detector.description.invalid.detector.index";
     public static final String JOB_CONFIG_UPDATE_DETECTOR_DESCRIPTION_DETECTOR_INDEX_SHOULD_BE_INTEGER = "job.config.update.detector.description.detector.index.should.be.integer";
     public static final String JOB_CONFIG_UPDATE_DETECTOR_DESCRIPTION_MISSING_PARAMS = "job.config.update.detector.description.missing.params";
@@ -79,6 +93,7 @@ public final class Messages
     public static final String JOB_CONFIG_UPDATE_NO_OBJECT = "job.config.update.no.object";
     public static final String JOB_CONFIG_UPDATE_PARSE_ERROR = "job.config.update.parse.error";
     public static final String JOB_CONFIG_UPDATE_RENORMALIZATION_WINDOW_INVALID = "job.config.update.renormalization.window.invalid";
+    public static final String JOB_CONFIG_UPDATE_MODEL_SNAPSHOT_RETENTION_DAYS_INVALID = "job.config.update.model.snapshot.retention.days.invalid";
     public static final String JOB_CONFIG_UPDATE_RESULTS_RETENTION_DAYS_INVALID = "job.config.update.results.retention.days.invalid";
     public static final String JOB_CONFIG_TRANSFORM_CIRCULAR_DEPENDENCY = "job.config.transform.circular.dependency";
     public static final String JOB_CONFIG_TRANSFORM_CONDITION_INVALID_OPERATOR = "job.config.transform.condition.invalid.operator";
@@ -108,11 +123,14 @@ public final class Messages
     public static final String JOB_CONFIG_SCHEDULER_ELASTICSEARCH_REQUIRES_DATAFORMAT_ELASTICSEARCH = "job.config.scheduler.elasticsearch.requires.dataformat.elasticsearch";
 
     public static final String JOB_DATA_CONCURRENT_USE_CLOSE = "job.data.concurrent.use.close";
+    public static final String JOB_DATA_CONCURRENT_USE_DELETE = "job.data.concurrent.use.delete";
     public static final String JOB_DATA_CONCURRENT_USE_FLUSH = "job.data.concurrent.use.flush";
     public static final String JOB_DATA_CONCURRENT_USE_UPDATE = "job.data.concurrent.use.update";
     public static final String JOB_DATA_CONCURRENT_USE_UPLOAD = "job.data.concurrent.use.upload";
 
-    public static final String JOB_SCHEDULER_CANNOT_START_WHILE_STOPPING = "job.scheduler.cannot.start.while.stopping";
+    public static final String JOB_SCHEDULER_CANNOT_START = "job.scheduler.cannot.start";
+    public static final String JOB_SCHEDULER_CANNOT_STOP_IN_CURRENT_STATE = "job.scheduler.cannot.stop.in.current.state";
+    public static final String JOB_SCHEDULER_FAILED_TO_STOP = "job.scheduler.failed.to.stop";
     public static final String JOB_SCHEDULER_NO_SUCH_SCHEDULED_JOB = "job.scheduler.no.such.scheduled.job";
 
     public static final String JOB_MISSING_QUANTILES = "job.missing.quantiles";
@@ -144,9 +162,9 @@ public final class Messages
     public static final String REST_ALERT_INVALID_TYPE = "rest.alert.invalid.type";
 
     public static final String PROCESS_ACTION_CLOSING_JOB = "process.action.closing.job";
+    public static final String PROCESS_ACTION_DELETING_JOB = "process.action.deleting.job";
     public static final String PROCESS_ACTION_FLUSHING_JOB = "process.action.flushing.job";
     public static final String PROCESS_ACTION_UPDATING_JOB = "process.action.updating.job";
-    public static final String PROCESS_ACTION_USING_JOB = "process.action.using.job";
     public static final String PROCESS_ACTION_WRITING_JOB = "process.action.writing.job";
 
     private Messages()

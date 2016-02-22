@@ -21,6 +21,7 @@ package com.prelert.job.persistence;
 import java.util.Optional;
 
 import com.prelert.app.Shutdownable;
+import com.prelert.job.ModelSnapshot;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.results.AnomalyRecord;
 import com.prelert.job.results.Bucket;
@@ -273,4 +274,13 @@ public interface JobResultsProvider extends Shutdownable
      * @return an influencer {@link BatchedResultsIterator}
      */
     BatchedResultsIterator<Influencer> newBatchedInfluencersIterator(String jobId);
+
+    /**
+     * Returns a {@link BatchedResultsIterator} that allows querying
+     * and iterating over a number of model snapshots of the given job
+     *
+     * @param jobId the id of the job for which model snapshots are requested
+     * @return a model snapshot {@link BatchedResultsIterator}
+     */
+    BatchedResultsIterator<ModelSnapshot> newBatchedModelSnapshotIterator(String jobId);
 }

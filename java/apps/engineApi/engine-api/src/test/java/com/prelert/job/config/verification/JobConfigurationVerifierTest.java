@@ -378,6 +378,21 @@ public class JobConfigurationVerifierTest
     }
 
     @Test
+    public void testVerify_GivenNegativeModelSnapshotRetentionDays() throws JobConfigurationException
+    {
+        m_ExpectedException.expect(JobConfigurationException.class);
+        m_ExpectedException.expectMessage(
+                "modelSnapshotRetentionDays cannot be < 0. Value = -1");
+        m_ExpectedException.expect(ErrorCodeMatcher.hasErrorCode(
+                ErrorCodes.INVALID_VALUE));
+
+        JobConfiguration jobConfig = buildJobConfigurationNoTransforms();
+        jobConfig.setModelSnapshotRetentionDays(-1L);
+
+        JobConfigurationVerifier.verify(jobConfig);
+    }
+
+    @Test
     public void testVerify_GivenNegativeResultsRetentionDays() throws JobConfigurationException
     {
         m_ExpectedException.expect(JobConfigurationException.class);
@@ -543,7 +558,7 @@ public class JobConfigurationVerifierTest
             throws IOException
     {
         SchedulerConfig schedulerConfig = createValidElasticsearchSchedulerConfig();
-        String aggStr = 
+        String aggStr =
                 "{" +
                     "\"buckets\" : {" +
                         "\"histogram\" : {" +
