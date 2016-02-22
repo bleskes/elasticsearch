@@ -230,24 +230,6 @@ public class JobConfiguration
     }
 
     /**
-     * The duration of the renormalization window in days
-     * @return renormalization window in days
-     */
-    public Long getRenormalizationWindow()
-    {
-        return m_RenormalizationWindow;
-    }
-
-    /**
-     * Set the renormalization window duration
-     * @param renormalizationWindow the renormalization window in days
-     */
-    public void setRenormalizationWindow(Long renormalizationWindow)
-    {
-        m_RenormalizationWindow = renormalizationWindow;
-    }
-
-    /**
      * The background persistence interval in seconds
      * @return background persistence interval in seconds
      */
@@ -263,6 +245,24 @@ public class JobConfiguration
     public void setBackgroundPersistInterval(Long backgroundPersistInterval)
     {
         m_BackgroundPersistInterval = backgroundPersistInterval;
+    }
+
+    /**
+     * The duration of the renormalization window in days
+     * @return renormalization window in days
+     */
+    public Long getRenormalizationWindow()
+    {
+        return m_RenormalizationWindow;
+    }
+
+    /**
+     * Set the renormalization window duration
+     * @param renormalizationWindow the renormalization window in days
+     */
+    public void setRenormalizationWindow(Long renormalizationWindow)
+    {
+        m_RenormalizationWindow = renormalizationWindow;
     }
 
     public Long getModelSnapshotRetentionDays()

@@ -32,17 +32,15 @@ import com.prelert.job.UnknownJobException;
 import com.prelert.job.config.verification.JobConfigurationException;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.manager.JobManager;
+import com.prelert.job.messages.Messages;
 
-abstract class RetentionDaysUpdater extends AbstractUpdater
+abstract class AbstractLongUpdater extends AbstractUpdater
 {
-    private Long m_NewRetentionDays;
-    private String m_InvalidValidMessage;
+    private Long m_NewValue;
 
-    public RetentionDaysUpdater(JobManager jobManager, String jobId,
-            String invalidValidMessage)
+    public AbstractLongUpdater(JobManager jobManager, String jobId)
     {
         super(jobManager, jobId);
-        m_InvalidValidMessage = invalidValidMessage;
     }
 
     @Override
@@ -50,8 +48,8 @@ abstract class RetentionDaysUpdater extends AbstractUpdater
     {
         if (node.isIntegralNumber() || node.isNull())
         {
-            m_NewRetentionDays = node.isIntegralNumber() ? node.asLong() : null;
-            if (m_NewRetentionDays != null && m_NewRetentionDays < 0)
+            m_NewValue = node.isIntegralNumber() ? node.asLong() : null;
+            if (m_NewValue != null && m_NewValue < 0)
             {
                 throwInvalidValue();
             }
@@ -62,14 +60,16 @@ abstract class RetentionDaysUpdater extends AbstractUpdater
         }
     }
 
-    protected Long newRetentionDays()
+    protected Long getNewValue()
     {
-        return m_NewRetentionDays;
+        return m_NewValue;
     }
 
     private void throwInvalidValue() throws JobConfigurationException
     {
-        throw new JobConfigurationException(
-                m_InvalidValidMessage, ErrorCodes.INVALID_VALUE);
+        throw new JobConfigurationException(Messages.getMessage(getInvalidMessageKey()),
+                ErrorCodes.INVALID_VALUE);
     }
+
+    protected abstract String getInvalidMessageKey();
 }

@@ -35,6 +35,7 @@ public class AuditMessage
 
     public AuditMessage()
     {
+        // Default constructor
     }
 
     private AuditMessage(String jobId, String message, Level severity)

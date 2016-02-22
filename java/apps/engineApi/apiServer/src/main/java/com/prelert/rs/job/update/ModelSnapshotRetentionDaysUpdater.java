@@ -28,20 +28,25 @@
 package com.prelert.rs.job.update;
 
 import com.prelert.job.UnknownJobException;
-import com.prelert.job.messages.Messages;
 import com.prelert.job.manager.JobManager;
+import com.prelert.job.messages.Messages;
 
-class ModelSnapshotRetentionDaysUpdater extends RetentionDaysUpdater
+class ModelSnapshotRetentionDaysUpdater extends AbstractLongUpdater
 {
     public ModelSnapshotRetentionDaysUpdater(JobManager jobManager, String jobId)
     {
-        super(jobManager, jobId,
-                Messages.getMessage(Messages.JOB_CONFIG_UPDATE_MODEL_SNAPSHOT_RETENTION_DAYS_INVALID));
+        super(jobManager, jobId);
     }
 
     @Override
     void commit() throws UnknownJobException
     {
-        jobManager().setModelSnapshotRetentionDays(jobId(), newRetentionDays());
+        jobManager().setModelSnapshotRetentionDays(jobId(), getNewValue());
+    }
+
+    @Override
+    protected String getInvalidMessageKey()
+    {
+        return Messages.JOB_CONFIG_UPDATE_MODEL_SNAPSHOT_RETENTION_DAYS_INVALID;
     }
 }
