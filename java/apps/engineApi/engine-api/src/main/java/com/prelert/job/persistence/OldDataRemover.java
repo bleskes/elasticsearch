@@ -66,12 +66,12 @@ public class OldDataRemover
 
     /**
      * Removes old results and model snapshots.  Does this by calling
-     * {@link #removeOldSnapshots() removeOldSnapshots} and
+     * {@link #removeOldModelSnapshots() removeOldModelSnapshots} and
      * {@link #removeOldResults() removeOldResults} methods one after the other.
      */
     public void removeOldData()
     {
-        removeOldSnapshots();
+        removeOldModelSnapshots();
         removeOldResults();
     }
 
@@ -81,7 +81,7 @@ public class OldDataRemover
      * than the start of the current day (local time-zone) minus the retention
      * period.
      */
-    public void removeOldSnapshots()
+    public void removeOldModelSnapshots()
     {
         LOGGER.info("Initialising removal of expired model snapshots");
         List<JobDetails> jobs = m_JobProvider.getJobs(0, MAX_TAKE).queryResults();
@@ -132,7 +132,7 @@ public class OldDataRemover
         JobDataDeleter deleter = m_DataDeleterFactory.newDeleter(jobId);
         deleteDataBefore(
                 m_JobProvider.newBatchedModelSnapshotIterator(jobId).timeRange(0, cutoffEpochMs),
-                influencer -> deleter.deleteModelSnapshot(influencer)
+                modelSnapshot -> deleter.deleteModelSnapshot(modelSnapshot)
         );
         deleter.commit();
     }
