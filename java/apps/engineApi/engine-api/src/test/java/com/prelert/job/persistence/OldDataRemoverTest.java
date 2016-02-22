@@ -88,7 +88,7 @@ public class OldDataRemoverTest
         modelSnapshotBatch.add(modelSnapshot1);
         modelSnapshotBatch.add(modelSnapshot2);
         List<Deque<ModelSnapshot>> modelSnapshotBatches = Arrays.asList(modelSnapshotBatch);
-        MockBatchedResultsIterator<ModelSnapshot> modelSnapshotIterator = new MockBatchedResultsIterator<>(0, cutoffEpochMs, bucketBatches);
+        MockBatchedResultsIterator<ModelSnapshot> modelSnapshotIterator = new MockBatchedResultsIterator<>(0, cutoffEpochMs, modelSnapshotBatches);
 
         when(m_JobProvider.newBatchedModelSnapshotIterator(JOB_WITH_RETENTION_ID)).thenReturn(modelSnapshotIterator);
 
@@ -101,7 +101,6 @@ public class OldDataRemoverTest
         ArgumentCaptor<ModelSnapshot> modelSnapshotCaptor = ArgumentCaptor.forClass(ModelSnapshot.class);
         verify(deleter, times(2)).deleteModelSnapshot(modelSnapshotCaptor.capture());
         assertEquals(Arrays.asList(modelSnapshot1, modelSnapshot2), modelSnapshotCaptor.getAllValues());
-        verify(deleter).deleteInfluencer(influencer);
         verify(deleter).commit();
 
         Mockito.verifyNoMoreInteractions(m_DeleterFactory, deleter);
