@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -27,49 +27,26 @@
 
 package com.prelert.rs.job.update;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.prelert.job.UnknownJobException;
-import com.prelert.job.config.verification.JobConfigurationException;
-import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.manager.JobManager;
 import com.prelert.job.messages.Messages;
 
-class RenormalizationWindowUpdater extends AbstractUpdater
+class RenormalizationWindowUpdater extends AbstractLongUpdater
 {
-    private Long m_NewRenormalizationWindow;
-
     public RenormalizationWindowUpdater(JobManager jobManager, String jobId)
     {
         super(jobManager, jobId);
     }
 
     @Override
-    void prepareUpdate(JsonNode node) throws UnknownJobException, JobConfigurationException
+    void commit() throws UnknownJobException
     {
-        if (node.isIntegralNumber() || node.isNull())
-        {
-            m_NewRenormalizationWindow = node.isIntegralNumber() ? node.asLong() : null;
-            if (m_NewRenormalizationWindow != null && m_NewRenormalizationWindow < 0)
-            {
-                throwInvalidValue();
-            }
-        }
-        else
-        {
-            throwInvalidValue();
-        }
-    }
-
-    private void throwInvalidValue() throws JobConfigurationException
-    {
-        throw new JobConfigurationException(
-                Messages.getMessage(Messages.JOB_CONFIG_UPDATE_RENORMALIZATION_WINDOW_INVALID),
-                ErrorCodes.INVALID_VALUE);
+        jobManager().setRenormalizationWindow(jobId(), getNewValue());
     }
 
     @Override
-    void commit() throws UnknownJobException
+    protected String getInvalidMessageKey()
     {
-        jobManager().setRenormalizationWindow(jobId(), m_NewRenormalizationWindow);
+        return Messages.JOB_CONFIG_UPDATE_RENORMALIZATION_WINDOW_INVALID;
     }
 }

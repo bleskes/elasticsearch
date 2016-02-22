@@ -27,26 +27,49 @@
 
 package com.prelert.rs.job.update;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.prelert.job.UnknownJobException;
+import com.prelert.job.config.verification.JobConfigurationException;
+import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.manager.JobManager;
 import com.prelert.job.messages.Messages;
 
-class ModelSnapshotRetentionDaysUpdater extends AbstractLongUpdater
+abstract class AbstractLongUpdater extends AbstractUpdater
 {
-    public ModelSnapshotRetentionDaysUpdater(JobManager jobManager, String jobId)
+    private Long m_NewValue;
+
+    public AbstractLongUpdater(JobManager jobManager, String jobId)
     {
         super(jobManager, jobId);
     }
 
     @Override
-    void commit() throws UnknownJobException
+    void prepareUpdate(JsonNode node) throws UnknownJobException, JobConfigurationException
     {
-        jobManager().setModelSnapshotRetentionDays(jobId(), getNewValue());
+        if (node.isIntegralNumber() || node.isNull())
+        {
+            m_NewValue = node.isIntegralNumber() ? node.asLong() : null;
+            if (m_NewValue != null && m_NewValue < 0)
+            {
+                throwInvalidValue();
+            }
+        }
+        else
+        {
+            throwInvalidValue();
+        }
     }
 
-    @Override
-    protected String getInvalidMessageKey()
+    protected Long getNewValue()
     {
-        return Messages.JOB_CONFIG_UPDATE_MODEL_SNAPSHOT_RETENTION_DAYS_INVALID;
+        return m_NewValue;
     }
+
+    private void throwInvalidValue() throws JobConfigurationException
+    {
+        throw new JobConfigurationException(Messages.getMessage(getInvalidMessageKey()),
+                ErrorCodes.INVALID_VALUE);
+    }
+
+    protected abstract String getInvalidMessageKey();
 }
