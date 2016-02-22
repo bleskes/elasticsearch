@@ -317,11 +317,7 @@ public class JobScheduler
             boolean runLookback = end > start;
             if (runLookback)
             {
-                m_Logger.info("Starting lookback");
-                auditLookbackStarted(start, end);
-                extractAndProcessData(start, end);
-                m_Logger.info("Lookback has finished");
-                audit().info(Messages.getMessage(Messages.JOB_AUDIT_SCHEDULER_LOOKBACK_COMPLETED));
+                runLookback(start, end);
             }
             if (m_Status == JobSchedulerStatus.STARTED)
             {
@@ -338,6 +334,15 @@ public class JobScheduler
         };
     }
 
+    private void runLookback(long start, long end)
+    {
+        m_Logger.info("Starting lookback");
+        auditLookbackStarted(start, end);
+        extractAndProcessData(start, end);
+        m_Logger.info("Lookback has finished");
+        audit().info(Messages.getMessage(Messages.JOB_AUDIT_SCHEDULER_LOOKBACK_COMPLETED));
+    }
+
     private void auditLookbackStarted(long start, long end)
     {
         String msg = Messages.getMessage(Messages.JOB_AUDIT_SCHEDULER_STARTED_FROM_TO,
@@ -350,7 +355,8 @@ public class JobScheduler
         try
         {
             m_DataProcessor.closeJob(m_JobId);
-        } catch (UnknownJobException | NativeProcessRunException | JobInUseException e)
+        }
+        catch (UnknownJobException | NativeProcessRunException | JobInUseException e)
         {
             m_Logger.error("An error has occurred while closing the job", e);
         }
