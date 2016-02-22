@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -27,21 +27,49 @@
 
 package com.prelert.rs.job.update;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.prelert.job.UnknownJobException;
-import com.prelert.job.messages.Messages;
+import com.prelert.job.config.verification.JobConfigurationException;
+import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.manager.JobManager;
+import com.prelert.job.messages.Messages;
 
-class ResultsRetentionDaysUpdater extends RetentionDaysUpdater
+class ResultsRetentionDaysUpdater extends AbstractUpdater
 {
+    private Long m_NewRetentionDays;
+
     public ResultsRetentionDaysUpdater(JobManager jobManager, String jobId)
     {
-        super(jobManager, jobId,
-                Messages.getMessage(Messages.JOB_CONFIG_UPDATE_RESULTS_RETENTION_DAYS_INVALID));
+        super(jobManager, jobId);
+    }
+
+    @Override
+    void prepareUpdate(JsonNode node) throws UnknownJobException, JobConfigurationException
+    {
+        if (node.isIntegralNumber() || node.isNull())
+        {
+            m_NewRetentionDays = node.isIntegralNumber() ? node.asLong() : null;
+            if (m_NewRetentionDays != null && m_NewRetentionDays < 0)
+            {
+                throwInvalidValue();
+            }
+        }
+        else
+        {
+            throwInvalidValue();
+        }
+    }
+
+    private void throwInvalidValue() throws JobConfigurationException
+    {
+        throw new JobConfigurationException(
+                Messages.getMessage(Messages.JOB_CONFIG_UPDATE_RESULTS_RETENTION_DAYS_INVALID),
+                ErrorCodes.INVALID_VALUE);
     }
 
     @Override
     void commit() throws UnknownJobException
     {
-        jobManager().setResultsRetentionDays(jobId(), newRetentionDays());
+        jobManager().setResultsRetentionDays(jobId(), m_NewRetentionDays);
     }
 }
