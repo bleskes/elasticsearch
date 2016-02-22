@@ -55,7 +55,7 @@ public class TransportDeleteRoleAction extends HandledTransportAction<DeleteRole
                 }
             });
         } catch (Exception e) {
-            logger.error("failed to delete role [{}]", e);
+            logger.error("failed to delete role [{}]", e, request.name());
             listener.onFailure(e);
         }
     }

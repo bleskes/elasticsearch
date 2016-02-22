@@ -17,6 +17,7 @@
 
 package org.elasticsearch.watcher.actions.logging;
 
+import org.elasticsearch.common.SuppressLoggerChecks;
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
@@ -31,30 +32,35 @@ public enum LoggingLevel implements ToXContent {
 
     ERROR() {
         @Override
+        @SuppressLoggerChecks(reason = "logger delegation")
         void log(ESLogger logger, String text) {
             logger.error(text);
         }
     },
     WARN() {
         @Override
+        @SuppressLoggerChecks(reason = "logger delegation")
         void log(ESLogger logger, String text) {
             logger.warn(text);
         }
     },
     INFO() {
         @Override
+        @SuppressLoggerChecks(reason = "logger delegation")
         void log(ESLogger logger, String text) {
             logger.info(text);
         }
     },
     DEBUG() {
         @Override
+        @SuppressLoggerChecks(reason = "logger delegation")
         void log(ESLogger logger, String text) {
             logger.debug(text);
         }
     },
     TRACE() {
         @Override
+        @SuppressLoggerChecks(reason = "logger delegation")
         void log(ESLogger logger, String text) {
             logger.trace(text);
         }
