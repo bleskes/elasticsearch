@@ -27,21 +27,49 @@
 
 package com.prelert.rs.job.update;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.prelert.job.UnknownJobException;
-import com.prelert.job.messages.Messages;
+import com.prelert.job.config.verification.JobConfigurationException;
+import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.manager.JobManager;
 
-class ModelSnapshotRetentionDaysUpdater extends RetentionDaysUpdater
+abstract class RetentionDaysUpdater extends AbstractUpdater
 {
-    public ModelSnapshotRetentionDaysUpdater(JobManager jobManager, String jobId)
+    private Long m_NewRetentionDays;
+    private String m_InvalidValidMessage;
+
+    public RetentionDaysUpdater(JobManager jobManager, String jobId,
+            String invalidValidMessage)
     {
-        super(jobManager, jobId,
-                Messages.getMessage(Messages.JOB_CONFIG_UPDATE_MODEL_SNAPSHOT_RETENTION_DAYS_INVALID));
+        super(jobManager, jobId);
+        m_InvalidValidMessage = invalidValidMessage;
     }
 
     @Override
-    void commit() throws UnknownJobException
+    void prepareUpdate(JsonNode node) throws UnknownJobException, JobConfigurationException
     {
-        jobManager().setModelSnapshotRetentionDays(jobId(), newRetentionDays());
+        if (node.isIntegralNumber() || node.isNull())
+        {
+            m_NewRetentionDays = node.isIntegralNumber() ? node.asLong() : null;
+            if (m_NewRetentionDays != null && m_NewRetentionDays < 0)
+            {
+                throwInvalidValue();
+            }
+        }
+        else
+        {
+            throwInvalidValue();
+        }
+    }
+
+    protected Long newRetentionDays()
+    {
+        return m_NewRetentionDays;
+    }
+
+    private void throwInvalidValue() throws JobConfigurationException
+    {
+        throw new JobConfigurationException(
+                m_InvalidValidMessage, ErrorCodes.INVALID_VALUE);
     }
 }
