@@ -27,7 +27,7 @@
 
 package com.prelert.job.persistence;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertArrayEquals;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -38,7 +38,6 @@ import org.junit.Test;
 
 public class JobDataPersisterTest
 {
-
     @Test
     public void testSetFieldMappings()
     {
@@ -155,7 +154,4 @@ public class JobDataPersisterTest
             assertArrayEquals(new int [] {2}, persister.getPartitionFieldMappings());
         }
     }
-
-
-
 }
