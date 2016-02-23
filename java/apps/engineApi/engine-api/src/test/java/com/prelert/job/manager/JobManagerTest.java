@@ -898,6 +898,9 @@ public class JobManagerTest
         JobManager jobManager = createJobManager();
 
         jobManager.shutdown();
+
+        verify(m_JobProvider).audit("");
+        verify(m_Auditor).info("System shut down");
     }
 
     private void givenProcessInfo(int maxLicenseJobs)

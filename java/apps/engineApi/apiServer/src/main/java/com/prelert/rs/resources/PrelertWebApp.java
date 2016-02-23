@@ -52,6 +52,7 @@ import com.prelert.job.alert.manager.AlertManager;
 import com.prelert.job.logging.DefaultJobLoggerFactory;
 import com.prelert.job.logging.JobLoggerFactory;
 import com.prelert.job.manager.JobManager;
+import com.prelert.job.messages.Messages;
 import com.prelert.job.persistence.JobProvider;
 import com.prelert.job.persistence.OldDataRemover;
 import com.prelert.job.process.ProcessCtrl;
@@ -169,6 +170,8 @@ public class PrelertWebApp extends Application
         // tasks may depend on it
         m_ShutdownThreadBuilder.addTask(jobProvider);
         Runtime.getRuntime().addShutdownHook(m_ShutdownThreadBuilder.build());
+
+        m_JobManager.systemAudit().info(Messages.getMessage(Messages.SYSTEM_AUDIT_STARTED));
     }
 
     private ElasticsearchFactory createPersistenceFactory()

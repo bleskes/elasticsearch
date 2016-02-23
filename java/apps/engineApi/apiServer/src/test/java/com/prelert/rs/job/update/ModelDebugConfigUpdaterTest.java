@@ -42,13 +42,11 @@ import org.junit.rules.ExpectedException;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.NullNode;
 import com.prelert.job.JobException;
 import com.prelert.job.ModelDebugConfig;
-import com.prelert.job.UnknownJobException;
 import com.prelert.job.config.verification.JobConfigurationException;
 import com.prelert.job.errorcodes.ErrorCodeMatcher;
 import com.prelert.job.errorcodes.ErrorCodes;

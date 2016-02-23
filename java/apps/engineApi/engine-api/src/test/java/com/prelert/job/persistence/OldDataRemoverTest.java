@@ -49,6 +49,7 @@ import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
 import com.prelert.job.JobDetails;
+import com.prelert.job.ModelSnapshot;
 import com.prelert.job.results.Bucket;
 import com.prelert.job.results.Influencer;
 
@@ -67,6 +68,42 @@ public class OldDataRemoverTest
     {
         MockitoAnnotations.initMocks(this);
         m_OldDataRemover = new OldDataRemover(m_JobProvider, m_DeleterFactory);
+    }
+
+    @Test
+    public void testRemoveOldModelSnapshots()
+    {
+        JobDetails jobWithRetention = new JobDetails();
+        jobWithRetention.setId(JOB_WITH_RETENTION_ID);
+        jobWithRetention.setModelSnapshotRetentionDays(10L);
+        List<JobDetails> jobs = Arrays.asList(jobWithRetention);
+        when(m_JobProvider.getJobs(0, 10000)).thenReturn(new QueryPage<>(jobs, 1));
+
+        long startOfDayEpochMs = LocalDate.now().atStartOfDay(ZoneId.systemDefault()).toEpochSecond() * 1000;
+        long cutoffEpochMs = startOfDayEpochMs - 10 * 86400000L;
+
+        ModelSnapshot modelSnapshot1 = new ModelSnapshot();
+        ModelSnapshot modelSnapshot2 = new ModelSnapshot();
+        Deque<ModelSnapshot> modelSnapshotBatch = new ArrayDeque<>();
+        modelSnapshotBatch.add(modelSnapshot1);
+        modelSnapshotBatch.add(modelSnapshot2);
+        List<Deque<ModelSnapshot>> modelSnapshotBatches = Arrays.asList(modelSnapshotBatch);
+        MockBatchedResultsIterator<ModelSnapshot> modelSnapshotIterator = new MockBatchedResultsIterator<>(0, cutoffEpochMs, modelSnapshotBatches);
+
+        when(m_JobProvider.newBatchedModelSnapshotIterator(JOB_WITH_RETENTION_ID)).thenReturn(modelSnapshotIterator);
+
+        JobDataDeleter deleter = mock(JobDataDeleter.class);
+        when(m_DeleterFactory.newDeleter(JOB_WITH_RETENTION_ID)).thenReturn(deleter);
+
+        m_OldDataRemover.removeOldModelSnapshots();
+
+        verify(m_DeleterFactory).newDeleter(JOB_WITH_RETENTION_ID);
+        ArgumentCaptor<ModelSnapshot> modelSnapshotCaptor = ArgumentCaptor.forClass(ModelSnapshot.class);
+        verify(deleter, times(2)).deleteModelSnapshot(modelSnapshotCaptor.capture());
+        assertEquals(Arrays.asList(modelSnapshot1, modelSnapshot2), modelSnapshotCaptor.getAllValues());
+        verify(deleter).commit();
+
+        Mockito.verifyNoMoreInteractions(m_DeleterFactory, deleter);
     }
 
     @Test

@@ -143,7 +143,6 @@ public class ServerMain
         // Set up an access log for Jetty
         NCSARequestLog requestLogger = new NCSARequestLog(PrelertWebApp.getServerLogPath().toString() + "/jetty_access.log.yyyy_mm_dd");
         requestLogger.setExtended(true);
-        requestLogger.setLogCookies(true);
         requestLogger.setLogLatency(true);
         ms_Server.setRequestLog(requestLogger);
 

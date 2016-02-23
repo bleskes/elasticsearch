@@ -58,6 +58,9 @@ public final class Messages
     public static final String JOB_AUDIT_SCHEDULER_DATA_EXTRACTION_ERROR = "job.audit.scheduler.data.extraction.error";
     public static final String JOB_AUDIT_SCHEDULER_DATA_EXTRACTION_RECOVERED = "job.audit.scheduler.data.extraction.recovered";
 
+    public static final String SYSTEM_AUDIT_STARTED = "system.audit.started";
+    public static final String SYSTEM_AUDIT_SHUTDOWN = "system.audit.shutdown";
+
     public static final String JOB_CONFIG_BYFIELD_INCOMPATIBLE_FUNCTION = "job.config.byField.incompatible.function";
     public static final String JOB_CONFIG_BYFIELD_NEEDS_ANOTHER = "job.config.byField.needs.another";
     public static final String JOB_CONFIG_DATAFORMAT_REQUIRES_TRANSFORM = "job.config.dataformat.requires.transform";

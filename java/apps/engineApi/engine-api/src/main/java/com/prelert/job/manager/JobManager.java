@@ -968,10 +968,17 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
         m_ScheduledJobs.clear();
 
         m_JobTimeouts.shutdown();
+
+        systemAudit().info(Messages.getMessage(Messages.SYSTEM_AUDIT_SHUTDOWN));
     }
 
     public Auditor audit(String jobId)
     {
         return m_JobProvider.audit(jobId);
+    }
+
+    public Auditor systemAudit()
+    {
+        return m_JobProvider.audit("");
     }
 }
