@@ -409,7 +409,7 @@ public class ElasticsearchMappings
                             .field(TYPE, LONG)
                         .endObject()
                         .startObject(Bucket.BUCKET_INFLUENCERS)
-                            .startObject(TYPE, NESTED)
+                            .field(TYPE, NESTED)
                             .startObject(PROPERTIES)
                                 .startObject(BucketInfluencer.INFLUENCER_FIELD_NAME)
                                     .field(TYPE, STRING).field(INDEX, NOT_ANALYZED)
