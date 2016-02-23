@@ -821,7 +821,7 @@ public class JobManagerTest
 
         jobManager.restartScheduledJobs();
 
-        Thread.sleep(100);
+        Thread.sleep(200);
 
         verify(m_JobLoggerFactory).newLogger("scheduled");
         verify(m_DataExtractorFactory).newExtractor(scheduledJob);

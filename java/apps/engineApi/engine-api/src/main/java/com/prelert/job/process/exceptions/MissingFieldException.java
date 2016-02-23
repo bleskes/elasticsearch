@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -35,18 +35,18 @@ import com.prelert.job.errorcodes.ErrorCodes;
  */
 public class MissingFieldException extends JobException
 {
-	private static final long serialVersionUID = -5303432170987377451L;
+    private static final long serialVersionUID = -5303432170987377451L;
 
-	private final String m_MissingFieldName;
+    private final String m_MissingFieldName;
 
-	public MissingFieldException(String fieldName, String message)
-	{
-		super(message, ErrorCodes.MISSING_FIELD);
-		m_MissingFieldName = fieldName;
-	}
+    public MissingFieldException(String fieldName, String message)
+    {
+        super(message, ErrorCodes.MISSING_FIELD);
+        m_MissingFieldName = fieldName;
+    }
 
-	public String getMissingFieldName()
-	{
-		return m_MissingFieldName;
-	}
+    public String getMissingFieldName()
+    {
+        return m_MissingFieldName;
+    }
 }

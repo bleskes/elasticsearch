@@ -18,9 +18,11 @@
 
 package com.prelert.job.persistence;
 
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+
+import com.google.common.primitives.Ints;
 
 /**
  * Persist the records sent the the API.
@@ -44,77 +46,29 @@ public abstract class JobDataPersister
     protected int [] m_OverFieldMappings;
     protected int [] m_PartitionFieldMappings;
 
-    /**
-     * Find each of the lists of requried fields (by, over, etc)
-     * in <code>fieldMap</code> and save the indexes so the field mappings can
-     * be used in calls to {@linkplain #persistRecord(long, String[])}
-     *
-     * @param fields
-     * @param byFields
-     * @param overFields
-     * @param partitionFields
-     * @param fieldMap Field -> index map for the record passed in
-     * {@link #persistRecord())}
-     */
     public void setFieldMappings(List<String> fields,
             List<String> byFields, List<String> overFields,
             List<String> partitionFields, Map<String, Integer> fieldMap)
     {
-        m_FieldNames = new String [fields.size()];
-        m_FieldNames = fields.<String>toArray(m_FieldNames);
-        m_FieldMappings = new int [fields.size()];
-        m_ByFieldMappings = new int [byFields.size()];
-        m_OverFieldMappings = new int [overFields.size()];
-        m_PartitionFieldMappings = new int [partitionFields.size()];
+        m_FieldNames = fields.toArray(new String[fields.size()]);
+        m_FieldMappings = extractMappings(fields, fieldMap);
+        m_ByFieldMappings = extractMappings(byFields, fieldMap);
+        m_OverFieldMappings = extractMappings(overFields, fieldMap);
+        m_PartitionFieldMappings = extractMappings(partitionFields, fieldMap);
+    }
 
-        List<List<String>> allFieldTypes = Arrays.asList(fields, byFields,
-                overFields, partitionFields);
-
-        int [][] allFieldMappings = new int [][] {m_FieldMappings, m_ByFieldMappings,
-                m_OverFieldMappings, m_PartitionFieldMappings};
-
-        int i = 0;
-        for (List<String> fieldType : allFieldTypes)
+    private static int[] extractMappings(List<String> fields, Map<String, Integer> fieldMap)
+    {
+        List<Integer> mappings = new ArrayList<>();
+        for (int i = 0; i < fields.size(); i++)
         {
-            int j = 0;
-            for (String f : fieldType)
+            Integer index = fieldMap.get(fields.get(i));
+            if (index != null)
             {
-                Integer index = fieldMap.get(f);
-                if (index != null)
-                {
-                    allFieldMappings[i][j] = index;
-                }
-                else
-                {
-                    // not found in header - so resize and delete from the array
-                    int [] tmp = new int [allFieldMappings[i].length -1];
-                    System.arraycopy(allFieldMappings[i], 0, tmp, 0, j);
-                    System.arraycopy(allFieldMappings[i], j+1, tmp, j, tmp.length - j);
-
-                    //allFieldMappings[i] = tmp;
-                    switch (i)
-                    {
-                        case 0:
-                            m_FieldMappings = tmp;
-                            break;
-                        case 1:
-                            m_ByFieldMappings = tmp;
-                            break;
-                        case 2:
-                            m_OverFieldMappings = tmp;
-                            break;
-                        case 3:
-                            m_PartitionFieldMappings = tmp;
-                            break;
-                        default:
-                            break;
-                    }
-                }
-
-                j++;
+                mappings.add(index);
             }
-            i++;
         }
+        return Ints.toArray(mappings);
     }
 
     /**

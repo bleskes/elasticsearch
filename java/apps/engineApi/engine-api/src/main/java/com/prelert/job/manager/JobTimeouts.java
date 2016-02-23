@@ -53,6 +53,7 @@ class JobTimeouts implements Shutdownable
 
     private static final Logger LOGGER = Logger.getLogger(JobTimeouts.class);
     private static final int WAIT_SECONDS_BEFORE_RETRY_CLOSING = 10;
+    private static final int MILLIS_IN_SECOND = 1000;
 
     private final JobCloser m_JobCloser;
     private final ScheduledExecutorService m_ScheduledExecutor;
@@ -61,7 +62,7 @@ class JobTimeouts implements Shutdownable
 
     public JobTimeouts(JobCloser jobCloser)
     {
-        this(jobCloser, WAIT_SECONDS_BEFORE_RETRY_CLOSING * 1000);
+        this(jobCloser, WAIT_SECONDS_BEFORE_RETRY_CLOSING * MILLIS_IN_SECOND);
     }
 
     JobTimeouts(JobCloser jobCloser, long waitBeforeRetryMillis)
