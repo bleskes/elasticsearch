@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -36,24 +36,24 @@ import com.prelert.job.errorcodes.ErrorCodes;
  */
 public class NativeProcessRunException extends JobException
 {
-	private static final long serialVersionUID = 5722287151589093943L;
+    private static final long serialVersionUID = 5722287151589093943L;
 
-	/**
-	 * Create exception with error code ErrorCode.NATIVE_PROCESS_ERROR
-	 * @param message
-	 */
-	public NativeProcessRunException(String message)
-	{
-		super(message, ErrorCodes.NATIVE_PROCESS_ERROR);
-	}
+    /**
+     * Create exception with error code ErrorCode.NATIVE_PROCESS_ERROR
+     * @param message
+     */
+    public NativeProcessRunException(String message)
+    {
+        super(message, ErrorCodes.NATIVE_PROCESS_ERROR);
+    }
 
-	public NativeProcessRunException(String message, ErrorCodes errorCode)
-	{
-		super(message, errorCode);
-	}
+    public NativeProcessRunException(String message, ErrorCodes errorCode)
+    {
+        super(message, errorCode);
+    }
 
-	public NativeProcessRunException(String message, ErrorCodes errorCode, Throwable cause)
-	{
-		super(message, errorCode, cause);
-	}
+    public NativeProcessRunException(String message, ErrorCodes errorCode, Throwable cause)
+    {
+        super(message, errorCode, cause);
+    }
 }

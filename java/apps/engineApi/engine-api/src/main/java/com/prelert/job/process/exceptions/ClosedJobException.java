@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -36,10 +36,10 @@ import com.prelert.job.errorcodes.ErrorCodes;
  */
 public class ClosedJobException extends JobException
 {
-	private static final long serialVersionUID = 5491387807381215423L;
+    private static final long serialVersionUID = 5491387807381215423L;
 
-	public ClosedJobException(String message)
-	{
-		super(message, ErrorCodes.JOB_NOT_RUNNING);
-	}
+    public ClosedJobException(String message)
+    {
+        super(message, ErrorCodes.JOB_NOT_RUNNING);
+    }
 }
