@@ -75,7 +75,7 @@ public class MockClientBuilder
         when(m_Client.settings()).thenReturn(settings);
     }
 
-    @SuppressWarnings({ "rawtypes", "unchecked" })
+    @SuppressWarnings({ "unchecked" })
     public MockClientBuilder addClusterStatusYellowResponse() throws InterruptedException, ExecutionException
     {
         ListenableActionFuture<ClusterHealthResponse> actionFuture = mock(ListenableActionFuture.class);
