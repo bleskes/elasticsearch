@@ -15,7 +15,7 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.shield.action.role;
+package org.elasticsearch.shield.action.user;
 
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.support.ActionFilters;
@@ -23,38 +23,39 @@ import org.elasticsearch.action.support.HandledTransportAction;
 import org.elasticsearch.cluster.metadata.IndexNameExpressionResolver;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.shield.authz.esnative.ESNativeRolesStore;
+import org.elasticsearch.shield.authc.esnative.ESNativeUsersStore;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportService;
 
-public class TransportAddRoleAction extends HandledTransportAction<AddRoleRequest, AddRoleResponse> {
+public class TransportPutUserAction extends HandledTransportAction<PutUserRequest, PutUserResponse> {
 
-    private final ESNativeRolesStore rolesStore;
+    private final ESNativeUsersStore usersStore;
 
     @Inject
-    public TransportAddRoleAction(Settings settings, ThreadPool threadPool, ActionFilters actionFilters,
+    public TransportPutUserAction(Settings settings, ThreadPool threadPool, ActionFilters actionFilters,
                                   IndexNameExpressionResolver indexNameExpressionResolver,
-                                  ESNativeRolesStore rolesStore, TransportService transportService) {
-        super(settings, AddRoleAction.NAME, threadPool, transportService, actionFilters, indexNameExpressionResolver, AddRoleRequest::new);
-        this.rolesStore = rolesStore;
+                                  ESNativeUsersStore usersStore, TransportService transportService) {
+        super(settings, PutUserAction.NAME, threadPool, transportService, actionFilters, indexNameExpressionResolver, PutUserRequest::new);
+        this.usersStore = usersStore;
     }
 
     @Override
-    protected void doExecute(AddRoleRequest request, ActionListener<AddRoleResponse> listener) {
-        rolesStore.addRole(request, new ActionListener<Boolean>() {
+    protected void doExecute(final PutUserRequest request, final ActionListener<PutUserResponse> listener) {
+        usersStore.putUser(request, new ActionListener<Boolean>() {
             @Override
             public void onResponse(Boolean created) {
                 if (created) {
-                    logger.info("added role [{}]", request.name());
+                    logger.info("added user [{}]", request.username());
                 } else {
-                    logger.info("updated role [{}]", request.name());
+                    logger.info("updated user [{}]", request.username());
                 }
-                listener.onResponse(new AddRoleResponse(created));
+                listener.onResponse(new PutUserResponse(created));
             }
 
             @Override
-            public void onFailure(Throwable t) {
-                listener.onFailure(t);
+            public void onFailure(Throwable e) {
+                logger.error("failed to add user: ", e);
+                listener.onFailure(e);
             }
         });
     }

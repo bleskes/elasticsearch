@@ -58,7 +58,7 @@ public class ESNativeTests extends ShieldIntegTestCase {
         SecurityClient c = securityClient();
         DeleteUserResponse resp = c.prepareDeleteUser("joe").get();
         assertFalse("user shouldn't be found", resp.found());
-        DeleteRoleResponse resp2 = c.prepareDeleteRole().role("role").get();
+        DeleteRoleResponse resp2 = c.prepareDeleteRole("role").get();
         assertFalse("role shouldn't be found", resp2.found());
     }
 
@@ -66,7 +66,7 @@ public class ESNativeTests extends ShieldIntegTestCase {
         SecurityClient c = securityClient();
         GetUsersResponse resp = c.prepareGetUsers().usernames("joe").get();
         assertFalse("user should not exist", resp.hasUsers());
-        GetRolesResponse resp2 = c.prepareGetRoles().roles("role").get();
+        GetRolesResponse resp2 = c.prepareGetRoles().names("role").get();
         assertFalse("role should not exist", resp2.isExists());
     }
 
@@ -119,8 +119,7 @@ public class ESNativeTests extends ShieldIntegTestCase {
     public void testAddAndGetRole() throws Exception {
         SecurityClient c = securityClient();
         logger.error("--> creating role");
-        c.prepareAddRole()
-                .name("test_role")
+        c.preparePutRole("test_role")
                 .cluster("all", "none")
                 .runAs("root", "nobody")
                 .addIndices(new String[]{"index"}, new String[]{"read"},
@@ -129,20 +128,18 @@ public class ESNativeTests extends ShieldIntegTestCase {
         logger.error("--> waiting for .shield index");
         ensureGreen(ShieldTemplateService.SHIELD_ADMIN_INDEX_NAME);
         logger.info("--> retrieving role");
-        GetRolesResponse resp = c.prepareGetRoles().roles("test_role").get();
+        GetRolesResponse resp = c.prepareGetRoles().names("test_role").get();
         assertTrue("role should exist", resp.isExists());
         RoleDescriptor testRole = resp.roles().get(0);
         assertNotNull(testRole);
 
-        c.prepareAddRole()
-                .name("test_role2")
+        c.preparePutRole("test_role2")
                 .cluster("all", "none")
                 .runAs("root", "nobody")
                 .addIndices(new String[]{"index"}, new String[]{"read"},
                         new String[]{"body", "title"}, new BytesArray("{\"query\": {\"match_all\": {}}}"))
                 .get();
-        c.prepareAddRole()
-                .name("test_role3")
+        c.preparePutRole("test_role3")
                 .cluster("all", "none")
                 .runAs("root", "nobody")
                 .addIndices(new String[]{"index"}, new String[]{"read"},
@@ -158,23 +155,22 @@ public class ESNativeTests extends ShieldIntegTestCase {
         assertEquals("should be 3 roles total", 3, allRolesResp.roles().size());
 
         logger.info("--> retrieving all roles");
-        GetRolesResponse someRolesResp = c.prepareGetRoles().roles("test_role", "test_role3").get();
+        GetRolesResponse someRolesResp = c.prepareGetRoles().names("test_role", "test_role3").get();
         assertTrue("roles should exist", someRolesResp.isExists());
         assertEquals("should be 2 roles total", 2, someRolesResp.roles().size());
 
         logger.info("--> deleting role");
-        DeleteRoleResponse delResp = c.prepareDeleteRole().role("test_role").get();
+        DeleteRoleResponse delResp = c.prepareDeleteRole("test_role").get();
         assertTrue(delResp.found());
         logger.info("--> retrieving role");
-        GetRolesResponse resp2 = c.prepareGetRoles().roles("test_role").get();
+        GetRolesResponse resp2 = c.prepareGetRoles().names("test_role").get();
         assertFalse("role should not exist after being deleted", resp2.isExists());
     }
 
     public void testAddUserAndRoleThenAuth() throws Exception {
         SecurityClient c = securityClient();
         logger.error("--> creating role");
-        c.prepareAddRole()
-                .name("test_role")
+        c.preparePutRole("test_role")
                 .cluster("all")
                 .addIndices(new String[]{"*"}, new String[]{"read"},
                         new String[]{"body", "title"}, new BytesArray("{\"match_all\": {}}"))
@@ -271,8 +267,7 @@ public class ESNativeTests extends ShieldIntegTestCase {
         final boolean authenticate = randomBoolean();
         SecurityClient c = securityClient();
         logger.error("--> creating role");
-        c.prepareAddRole()
-                .name("test_role")
+        c.preparePutRole("test_role")
                 .cluster("all")
                 .addIndices(new String[]{"*"}, new String[]{"read"},
                         new String[]{"body", "title"}, new BytesArray("{\"match_all\": {}}"))
@@ -288,8 +283,7 @@ public class ESNativeTests extends ShieldIntegTestCase {
             ClusterHealthResponse response = client().filterWithHeader(Collections.singletonMap("Authorization", token)).admin().cluster()
                     .prepareHealth().get();
             assertFalse(response.isTimedOut());
-            c.prepareAddRole()
-                    .name("test_role")
+            c.preparePutRole("test_role")
                     .cluster("none")
                     .addIndices(new String[]{"*"}, new String[]{"read"},
                             new String[]{"body", "title"}, new BytesArray("{\"match_all\": {}}"))
@@ -301,17 +295,16 @@ public class ESNativeTests extends ShieldIntegTestCase {
                 assertThat(e.status(), is(RestStatus.FORBIDDEN));
             }
         } else {
-            GetRolesResponse getRolesResponse = c.prepareGetRoles().roles("test_role").get();
+            GetRolesResponse getRolesResponse = c.prepareGetRoles().names("test_role").get();
             assertTrue("test_role does not exist!", getRolesResponse.isExists());
             assertTrue("any cluster permission should be authorized",
                     Role.builder(getRolesResponse.roles().get(0)).build().cluster().check("cluster:admin/foo"));
-            c.prepareAddRole()
-                    .name("test_role")
+            c.preparePutRole("test_role")
                     .cluster("none")
                     .addIndices(new String[]{"*"}, new String[]{"read"},
                             new String[]{"body", "title"}, new BytesArray("{\"match_all\": {}}"))
                     .get();
-            getRolesResponse = c.prepareGetRoles().roles("test_role").get();
+            getRolesResponse = c.prepareGetRoles().names("test_role").get();
             assertTrue("test_role does not exist!", getRolesResponse.isExists());
 
             assertFalse("no cluster permission should be authorized",
@@ -322,8 +315,7 @@ public class ESNativeTests extends ShieldIntegTestCase {
     public void testAuthenticateWithDeletedRole() {
         SecurityClient c = securityClient();
         logger.error("--> creating role");
-        c.prepareAddRole()
-                .name("test_role")
+        c.preparePutRole("test_role")
                 .cluster("all")
                 .addIndices(new String[]{"*"}, new String[]{"read"},
                         new String[]{"body", "title"}, new BytesArray("{\"match_all\": {}}"))
@@ -337,7 +329,7 @@ public class ESNativeTests extends ShieldIntegTestCase {
         ClusterHealthResponse response = client().filterWithHeader(Collections.singletonMap("Authorization", token)).admin().cluster()
                 .prepareHealth().get();
         assertFalse(response.isTimedOut());
-        c.prepareDeleteRole().role("test_role").get();
+        c.prepareDeleteRole("test_role").get();
         try {
             client().filterWithHeader(Collections.singletonMap("Authorization", token)).admin().cluster().prepareHealth().get();
             fail("user should not be able to execute any actions!");
