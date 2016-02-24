@@ -33,6 +33,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.function.Supplier;
 
 import org.apache.log4j.Logger;
 import org.elasticsearch.ElasticsearchException;
@@ -206,22 +207,13 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
     @Override
     public void persistCategoryDefinition(CategoryDefinition category)
     {
-        XContentBuilder content = null;
-        try
-        {
-            content = serialiseCategoryDefinition(category);
-        }
-        catch (IOException e)
-        {
-            LOGGER.error("Error writing category definition", e);
-            return;
-        }
-        String categoryId = String.valueOf(category.getCategoryId());
-        LOGGER.trace("ES API CALL: index type " + CategoryDefinition.TYPE +
-                " to index " + m_JobId.getIndex() + " with ID " + categoryId);
-        m_Client.prepareIndex(m_JobId.getIndex(), CategoryDefinition.TYPE, categoryId)
-                .setSource(content)
-                .execute().actionGet();
+        Persistable persistable = new Persistable(category, () -> CategoryDefinition.TYPE,
+                () -> String.valueOf(category.getCategoryId()),
+                () -> serialiseCategoryDefinition(category));
+        persistable.persist();
+
+        // Don't commit as we expect masses of these updates and they're not
+        // read again by this process
     }
 
     /**
@@ -233,36 +225,17 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
     @Override
     public void persistQuantiles(Quantiles quantiles)
     {
-        if (quantiles == null)
+        Persistable persistable = new Persistable(quantiles, () -> Quantiles.TYPE,
+                () -> quantiles.getId(), () -> serialiseQuantiles(quantiles));
+        if (persistable.persist())
         {
-            LOGGER.warn("No quantiles to persist for job " + m_JobId.getId());
-            return;
+            // Refresh the index when persisting quantiles so that previously
+            // persisted results will be available for searching.  Do this using the
+            // indices API rather than the index API (used to write the quantiles
+            // above), because this will refresh all shards rather than just the
+            // shard that the quantiles document itself was written to.
+            commitWrites();
         }
-
-        try
-        {
-            XContentBuilder content = serialiseQuantiles(quantiles);
-
-            LOGGER.trace("ES API CALL: index type " + Quantiles.TYPE +
-                    " to index " + m_JobId.getIndex() + " with ID " + quantiles.getId());
-            m_Client.prepareIndex(m_JobId.getIndex(), Quantiles.TYPE, quantiles.getId())
-                    .setSource(content)
-                    .execute().actionGet();
-
-            // Don't warn on overwrite as we expect this
-        }
-        catch (IOException e)
-        {
-            LOGGER.error("Error writing quantiles", e);
-            return;
-        }
-
-        // Refresh the index when persisting quantiles so that previously
-        // persisted results will be available for searching.  Do this using the
-        // indices API rather than the index API (used to write the quantiles
-        // above), because this will refresh all shards rather than just the
-        // shard that the quantiles document itself was written to.
-        commitWrites();
     }
 
     /**
@@ -273,27 +246,9 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
     @Override
     public void persistModelSnapshot(ModelSnapshot modelSnapshot)
     {
-        if (modelSnapshot == null)
-        {
-            LOGGER.warn("No model snapshot to persist for job " + m_JobId.getId());
-            return;
-        }
-
-        try
-        {
-            XContentBuilder content = serialiseModelSnapshot(modelSnapshot);
-
-            LOGGER.trace("ES API CALL: index type " + ModelSnapshot.TYPE +
-                    " to index " + m_JobId.getIndex() + " with ID " + modelSnapshot.getSnapshotId());
-            m_Client.prepareIndex(m_JobId.getIndex(), ModelSnapshot.TYPE, modelSnapshot.getSnapshotId())
-                    .setSource(content)
-                    .execute().actionGet();
-        }
-        catch (IOException e)
-        {
-            LOGGER.error("Error writing model snapshot", e);
-            return;
-        }
+        Persistable persistable = new Persistable(modelSnapshot, () -> ModelSnapshot.TYPE,
+                () -> modelSnapshot.getSnapshotId(), () -> serialiseModelSnapshot(modelSnapshot));
+        persistable.persist();
     }
 
     /**
@@ -303,29 +258,9 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
     @Override
     public void persistModelSizeStats(ModelSizeStats modelSizeStats)
     {
-        if (modelSizeStats == null)
-        {
-            LOGGER.warn("No modelSizeStats to persist for job " + m_JobId.getId());
-            return;
-        }
-
-        try
-        {
-            XContentBuilder content = serialiseModelSizeStats(modelSizeStats);
-
-            LOGGER.trace("ES API CALL: index type " + ModelSizeStats.TYPE +
-                    " to index " + m_JobId.getIndex() + " with ID " + modelSizeStats.getId());
-            m_Client.prepareIndex(m_JobId.getIndex(), ModelSizeStats.TYPE, modelSizeStats.getId())
-                    .setSource(content)
-                    .execute().actionGet();
-
-            // Don't warn on overwrite as we expect this
-        }
-        catch (IOException e)
-        {
-            LOGGER.error("Error writing modelSizeStats", e);
-            return;
-        }
+        Persistable persistable = new Persistable(modelSizeStats, () -> ModelSizeStats.TYPE,
+                () -> modelSizeStats.getId(), () -> serialiseModelSizeStats(modelSizeStats));
+        persistable.persist();
 
         // Don't commit as we expect masses of these updates and they're only
         // for information at the API level
@@ -338,27 +273,9 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
     @Override
     public void persistModelDebugOutput(ModelDebugOutput modelDebugOutput)
     {
-        if (modelDebugOutput == null)
-        {
-            LOGGER.warn("No modelDebugOutput to persist for job " + m_JobId.getId());
-            return;
-        }
-
-        try
-        {
-            XContentBuilder content = serialiseModelDebugOutput(modelDebugOutput);
-
-            LOGGER.trace("ES API CALL: index type " + ModelDebugOutput.TYPE +
-                    " to index " + m_JobId.getIndex());
-            m_Client.prepareIndex(m_JobId.getIndex(), ModelDebugOutput.TYPE)
-                    .setSource(content)
-                    .execute().actionGet();
-        }
-        catch (IOException e)
-        {
-            LOGGER.error("Error writing modelDebugOutput", e);
-            return;
-        }
+        Persistable persistable = new Persistable(modelDebugOutput, () -> ModelDebugOutput.TYPE,
+                () -> null, () -> serialiseModelDebugOutput(modelDebugOutput));
+        persistable.persist();
 
         // Don't commit as we expect masses of these updates and they're not
         // read again by this process
@@ -367,22 +284,12 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
     @Override
     public void persistInfluencer(Influencer influencer)
     {
-        XContentBuilder content = null;
-        try
-        {
-            content = serialiseInfluencer(influencer, false);
-        }
-        catch (IOException e)
-        {
-            LOGGER.error("Error writing influencer", e);
-            return;
-        }
-        String id = influencer.getId();
-        LOGGER.trace("ES API CALL: index type " + Influencer.TYPE +
-                " to index " + m_JobId.getIndex() + " with ID " + id);
-        m_Client.prepareIndex(m_JobId.getIndex(), Influencer.TYPE, id)
-                .setSource(content)
-                .execute().actionGet();
+        Persistable persistable = new Persistable(influencer, () -> Influencer.TYPE,
+                () -> influencer.getId(), () -> serialiseInfluencer(influencer, false));
+        persistable.persist();
+
+        // Don't commit as we expect masses of these updates and they're not
+        // read again by this process
     }
 
     @Override
@@ -396,7 +303,6 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
                         .setScript(ElasticsearchScripts.newUpdateBucketCount(count))
                         .setRetryOnConflict(3).get();
     }
-
 
     /**
      * Refreshes the Elasticsearch index.
@@ -414,6 +320,130 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
         LOGGER.trace("ES API CALL: refresh index " + indexName);
         m_Client.admin().indices().refresh(new RefreshRequest(indexName)).actionGet();
         return true;
+    }
+
+    @Override
+    public void updateBucket(Bucket bucket)
+    {
+        try
+        {
+            m_Client.prepareIndex(m_JobId.getIndex(), Bucket.TYPE, bucket.getId())
+                    .setSource(serialiseBucket(bucket)).execute().actionGet();
+        }
+        catch (IOException e)
+        {
+            LOGGER.error("Error updating bucket state", e);
+        }
+    }
+
+    @Override
+    public void updateRecords(String bucketId, List<AnomalyRecord> records)
+    {
+        try
+        {
+            // Now bulk update the records within the bucket
+            BulkRequestBuilder bulkRequest = m_Client.prepareBulk();
+            boolean addedAny = false;
+            for (AnomalyRecord record : records)
+            {
+                String recordId = record.getId();
+
+                LOGGER.trace("ES BULK ACTION: update ID " + recordId + " type " + AnomalyRecord.TYPE +
+                        " in index " + m_JobId.getIndex() + " using map of new values");
+
+                bulkRequest.add(
+                        m_Client.prepareIndex(m_JobId.getIndex(), AnomalyRecord.TYPE, recordId)
+                                .setSource(serialiseRecord(record, record.getTimestamp()))
+                                 // Need to specify the parent ID when updating a child
+                                .setParent(bucketId));
+
+                addedAny = true;
+            }
+
+            if (addedAny)
+            {
+                LOGGER.trace("ES API CALL: bulk request with " +
+                        bulkRequest.numberOfActions() + " actions");
+                BulkResponse bulkResponse = bulkRequest.execute().actionGet();
+                if (bulkResponse.hasFailures())
+                {
+                    LOGGER.error("BulkResponse has errors");
+                    for (BulkItemResponse item : bulkResponse.getItems())
+                    {
+                        LOGGER.error(item.getFailureMessage());
+                    }
+                }
+            }
+        }
+        catch (IOException | ElasticsearchException e)
+        {
+            LOGGER.error("Error updating anomaly records", e);
+        }
+    }
+
+    @Override
+    public void updateInfluencer(Influencer influencer)
+    {
+        persistInfluencer(influencer);
+    }
+
+    private interface Serialiser
+    {
+        XContentBuilder serialise() throws IOException;
+    }
+
+    private class Persistable
+    {
+        private final Object m_Object;
+        private final Supplier<String> m_TypeSupplier;
+        private final Supplier<String> m_IdSupplier;
+        private final Serialiser m_Serialiser;
+
+        Persistable(Object object, Supplier<String> typeSupplier, Supplier<String> idSupplier,
+                Serialiser serialiser)
+        {
+            m_Object = object;
+            m_TypeSupplier = typeSupplier;
+            m_IdSupplier = idSupplier;
+            m_Serialiser = serialiser;
+        }
+
+        boolean persist()
+        {
+            String type = m_TypeSupplier.get();
+            String id = m_IdSupplier.get();
+
+            if (m_Object == null)
+            {
+                LOGGER.warn("No " + type + " to persist for job " + m_JobId.getId());
+                return false;
+            }
+
+            logCall(type, id);
+
+            try
+            {
+                m_Client.prepareIndex(m_JobId.getIndex(), type, m_IdSupplier.get())
+                        .setSource(m_Serialiser.serialise())
+                        .execute().actionGet();
+                return true;
+            }
+            catch (IOException e)
+            {
+                LOGGER.error("Error writing " + m_TypeSupplier.get(), e);
+                return false;
+            }
+        }
+
+        private void logCall(String type, String id)
+        {
+            String msg = "ES API CALL: index type " + type + " to index " + m_JobId.getIndex();
+            if (id != null)
+            {
+                msg += " with ID " + m_IdSupplier.get();
+            }
+            LOGGER.trace(msg);
+        }
     }
 
     /**
@@ -853,7 +883,6 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
                 .field(Influencer.INITIAL_ANOMALY_SCORE, influencer.getInitialAnomalyScore())
                 .field(Influencer.ANOMALY_SCORE, influencer.getAnomalyScore());
 
-
         if (isInterim)
         {
             builder.field(Bucket.IS_INTERIM, true);
@@ -867,70 +896,5 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
         builder.endObject();
 
         return builder;
-    }
-
-    @Override
-    public void updateBucket(Bucket bucket)
-    {
-        try
-        {
-            m_Client.prepareIndex(m_JobId.getIndex(), Bucket.TYPE, bucket.getId())
-                    .setSource(serialiseBucket(bucket)).execute().actionGet();
-        }
-        catch (IOException e)
-        {
-            LOGGER.error("Error updating bucket state", e);
-        }
-    }
-
-    @Override
-    public void updateRecords(String bucketId, List<AnomalyRecord> records)
-    {
-        try
-        {
-            // Now bulk update the records within the bucket
-            BulkRequestBuilder bulkRequest = m_Client.prepareBulk();
-            boolean addedAny = false;
-            for (AnomalyRecord record : records)
-            {
-                String recordId = record.getId();
-
-                LOGGER.trace("ES BULK ACTION: update ID " + recordId + " type " + AnomalyRecord.TYPE +
-                        " in index " + m_JobId.getIndex() + " using map of new values");
-
-                bulkRequest.add(
-                        m_Client.prepareIndex(m_JobId.getIndex(), AnomalyRecord.TYPE, recordId)
-                                .setSource(serialiseRecord(record, record.getTimestamp()))
-                                 // Need to specify the parent ID when updating a child
-                                .setParent(bucketId));
-
-                addedAny = true;
-            }
-
-            if (addedAny)
-            {
-                LOGGER.trace("ES API CALL: bulk request with " +
-                        bulkRequest.numberOfActions() + " actions");
-                BulkResponse bulkResponse = bulkRequest.execute().actionGet();
-                if (bulkResponse.hasFailures())
-                {
-                    LOGGER.error("BulkResponse has errors");
-                    for (BulkItemResponse item : bulkResponse.getItems())
-                    {
-                        LOGGER.error(item.getFailureMessage());
-                    }
-                }
-            }
-        }
-        catch (IOException | ElasticsearchException e)
-        {
-            LOGGER.error("Error updating anomaly records", e);
-        }
-    }
-
-    @Override
-    public void updateInfluencer(Influencer influencer)
-    {
-        persistInfluencer(influencer);
     }
 }
