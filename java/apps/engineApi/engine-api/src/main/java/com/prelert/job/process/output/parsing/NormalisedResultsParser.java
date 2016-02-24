@@ -34,7 +34,6 @@ import java.util.List;
 import org.apache.log4j.Logger;
 
 import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import com.prelert.job.normalisation.NormalisedResult;
@@ -73,7 +72,7 @@ public class NormalisedResultsParser implements Runnable
         return m_Results;
     }
 
-    private void parseResults() throws JsonParseException, IOException
+    private void parseResults() throws IOException
     {
         JsonParser parser = new JsonFactory().createParser(m_InputStream);
         parser.configure(JsonParser.Feature.ALLOW_BACKSLASH_ESCAPING_ANY_CHARACTER, true);

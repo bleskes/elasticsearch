@@ -38,7 +38,6 @@ import java.util.List;
 import org.junit.Test;
 
 import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.prelert.job.results.Influence;
 import com.prelert.utils.json.AutoDetectParseException;
@@ -55,7 +54,7 @@ public class InfluenceParserTest
     }
 
     @Test
-    public void testParseJson() throws JsonParseException, IOException, AutoDetectParseException
+    public void testParseJson() throws IOException
     {
         String json = "{"
                             + "\"host\": [\"web-server\", \"localhost\"]"
@@ -75,7 +74,7 @@ public class InfluenceParserTest
     }
 
     @Test
-    public void testParseJson_noScores() throws JsonParseException, IOException, AutoDetectParseException
+    public void testParseJson_noScores() throws IOException
     {
         String json = "{"
                             + "\"user\": []"
@@ -93,7 +92,7 @@ public class InfluenceParserTest
     }
 
     @Test(expected = AutoDetectParseException.class)
-    public void testParseScores_InvalidJson() throws JsonParseException, IOException, AutoDetectParseException
+    public void testParseScores_InvalidJson() throws IOException
     {
         // invalid json
         String json = "{"
@@ -106,7 +105,7 @@ public class InfluenceParserTest
     }
 
     @Test
-    public void testParseJson_withTwoInfluencers() throws JsonParseException, IOException, AutoDetectParseException
+    public void testParseJson_withTwoInfluencers() throws IOException
     {
         String json = "{"
                             + "\"host\": [\"web-server\", \"localhost\"],"
@@ -135,8 +134,7 @@ public class InfluenceParserTest
     }
 
 
-    private static final JsonParser createJsonParser(String input) throws JsonParseException,
-    IOException
+    private static final JsonParser createJsonParser(String input) throws IOException
     {
         ByteArrayInputStream inputStream = new ByteArrayInputStream(input.getBytes(StandardCharsets.UTF_8));
         return new JsonFactory().createParser(inputStream);

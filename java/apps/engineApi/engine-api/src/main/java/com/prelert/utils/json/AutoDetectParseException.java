@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -27,16 +27,23 @@
 
 package com.prelert.utils.json;
 
+import java.io.IOException;
+
 /**
  * Data parsing exception
  */
-public class AutoDetectParseException extends Exception
+public class AutoDetectParseException extends IOException
 {
-	public AutoDetectParseException(String message)
-	{
-		super(message);
-	}
+    public AutoDetectParseException(String message)
+    {
+        super(message);
+    }
 
-	private static final long serialVersionUID = 332779889832738472L;
+    public AutoDetectParseException(Throwable cause)
+    {
+        super(cause);
+    }
+
+    private static final long serialVersionUID = 332779889832738472L;
 
 }

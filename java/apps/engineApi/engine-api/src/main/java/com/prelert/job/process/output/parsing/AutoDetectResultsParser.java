@@ -38,7 +38,6 @@ import java.util.Set;
 import org.apache.log4j.Logger;
 
 import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import com.prelert.job.ModelSizeStats;
@@ -101,13 +100,10 @@ public class AutoDetectResultsParser
      * @param renormaliser
      * @param logger
      * @return
-     * @throws JsonParseException
-     * @throws IOException
      * @throws AutoDetectParseException
      */
     public void parseResults(InputStream inputStream, JobResultsPersister persister,
-            Renormaliser renormaliser, Logger logger)
-    throws JsonParseException, IOException, AutoDetectParseException
+            Renormaliser renormaliser, Logger logger) throws AutoDetectParseException
     {
         synchronized (m_AcknowledgedFlushes)
         {
@@ -119,6 +115,10 @@ public class AutoDetectResultsParser
         try
         {
             parseResultsInternal(inputStream, persister, renormaliser, logger);
+        }
+        catch (IOException e)
+        {
+            throw new AutoDetectParseException(e);
         }
         finally
         {
@@ -176,8 +176,7 @@ public class AutoDetectResultsParser
 
 
     private void parseResultsInternal(InputStream inputStream, JobResultsPersister persister,
-            Renormaliser renormaliser, Logger logger)
-    throws JsonParseException, IOException, AutoDetectParseException
+            Renormaliser renormaliser, Logger logger) throws IOException
     {
         JsonParser parser = new JsonFactory().createParser(inputStream);
         parser.configure(JsonParser.Feature.ALLOW_BACKSLASH_ESCAPING_ANY_CHARACTER, true);

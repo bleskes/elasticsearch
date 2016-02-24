@@ -32,6 +32,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+
 import static org.mockito.Mockito.mock;
 
 import java.io.ByteArrayInputStream;
@@ -249,8 +250,7 @@ public class AutoDetectResultsParserTest
     }
 
     @Test
-    public void testParser() throws JsonParseException, IOException,
-    AutoDetectParseException, UnknownJobException
+    public void testParser() throws IOException
     {
         BasicConfigurator.configure();
         Logger logger = Logger.getLogger(AutoDetectResultsParserTest.class);

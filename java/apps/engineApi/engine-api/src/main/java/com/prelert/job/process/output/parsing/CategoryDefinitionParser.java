@@ -55,8 +55,7 @@ final class CategoryDefinitionParser extends FieldNameParser<CategoryDefinition>
     }
 
     @Override
-    protected void handleFieldName(String fieldName, CategoryDefinition category)
-            throws AutoDetectParseException, JsonParseException, IOException
+    protected void handleFieldName(String fieldName, CategoryDefinition category) throws IOException
     {
         JsonToken token = m_Parser.nextToken();
         switch (fieldName)

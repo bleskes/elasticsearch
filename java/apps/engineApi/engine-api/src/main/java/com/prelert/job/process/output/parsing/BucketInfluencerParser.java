@@ -30,11 +30,9 @@ import java.io.IOException;
 
 import org.apache.log4j.Logger;
 
-import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import com.prelert.job.results.BucketInfluencer;
-import com.prelert.utils.json.AutoDetectParseException;
 import com.prelert.utils.json.FieldNameParser;
 
 final class BucketInfluencerParser extends FieldNameParser<BucketInfluencer>
@@ -53,8 +51,7 @@ final class BucketInfluencerParser extends FieldNameParser<BucketInfluencer>
     }
 
     @Override
-    protected void handleFieldName(String fieldName, BucketInfluencer influencer)
-            throws AutoDetectParseException, JsonParseException, IOException
+    protected void handleFieldName(String fieldName, BucketInfluencer influencer) throws IOException
     {
         JsonToken token = m_Parser.nextToken();
         switch (fieldName)

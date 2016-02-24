@@ -35,17 +35,14 @@ import java.util.Date;
 import org.junit.Test;
 
 import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import com.prelert.job.quantiles.Quantiles;
-import com.prelert.utils.json.AutoDetectParseException;
 
 public class QuantilesParserTest
 {
     @Test
-    public void testParseJson()
-            throws JsonParseException, IOException, AutoDetectParseException
+    public void testParseJson() throws IOException
     {
         String input = "{\"timestamp\": 1,"
                      + " \"quantileState\": \"quantile-state\"}";
@@ -62,8 +59,7 @@ public class QuantilesParserTest
         assertEquals(JsonToken.END_OBJECT, parser.getCurrentToken());
     }
 
-    private static final JsonParser createJsonParser(String input) throws JsonParseException,
-            IOException
+    private static final JsonParser createJsonParser(String input) throws IOException
     {
         ByteArrayInputStream inputStream = new ByteArrayInputStream(input.getBytes());
         return new JsonFactory().createParser(inputStream);

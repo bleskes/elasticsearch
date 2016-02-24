@@ -56,8 +56,7 @@ final class AnomalyRecordParser extends FieldNameParser<AnomalyRecord>
     }
 
     @Override
-    protected void handleFieldName(String fieldName, AnomalyRecord record)
-            throws AutoDetectParseException, JsonParseException, IOException
+    protected void handleFieldName(String fieldName, AnomalyRecord record) throws IOException
     {
         JsonToken token = m_Parser.nextToken();
         switch (fieldName)

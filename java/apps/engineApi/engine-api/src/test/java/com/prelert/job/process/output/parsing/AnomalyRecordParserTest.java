@@ -57,8 +57,7 @@ public class AnomalyRecordParserTest
     }
 
     @Test
-    public void testParseJson_GivenEmptyInput()
-            throws JsonParseException, IOException, AutoDetectParseException
+    public void testParseJson_GivenEmptyInput() throws IOException
     {
         String input = "{}";
         JsonParser parser = createJsonParser(input);
@@ -70,7 +69,7 @@ public class AnomalyRecordParserTest
 
     @Test
     public void testParseJson_GivenAnomalyRecordWithAllFieldsPopulatedAndValid()
-            throws JsonParseException, IOException, AutoDetectParseException
+            throws IOException
     {
         String input = "{\"detectorIndex\": 3,"
                 + "\"probability\" : 0.01,"
@@ -129,8 +128,7 @@ public class AnomalyRecordParserTest
     }
 
 
-    private static final JsonParser createJsonParser(String input) throws JsonParseException,
-            IOException
+    private static final JsonParser createJsonParser(String input) throws IOException
     {
         ByteArrayInputStream inputStream = new ByteArrayInputStream(input.getBytes());
         return new JsonFactory().createParser(inputStream);

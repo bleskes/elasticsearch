@@ -59,8 +59,7 @@ final class BucketParser extends FieldNameParser<Bucket>
     }
 
     @Override
-    protected void handleFieldName(String fieldName, Bucket bucket)
-            throws AutoDetectParseException, JsonParseException, IOException
+    protected void handleFieldName(String fieldName, Bucket bucket) throws IOException
     {
         JsonToken token = m_Parser.nextToken();
         switch (fieldName)

@@ -55,8 +55,7 @@ final class InfluenceParser extends FieldNameParser<List<Influence>>
     }
 
     @Override
-    protected void handleFieldName(String fieldName, List<Influence> influences)
-            throws AutoDetectParseException, JsonParseException, IOException
+    protected void handleFieldName(String fieldName, List<Influence> influences) throws IOException
     {
         Influence influence = new Influence();
         influence.setInfluencerFieldName(fieldName);

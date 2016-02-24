@@ -35,15 +35,13 @@ import java.nio.charset.StandardCharsets;
 import org.junit.Test;
 
 import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.prelert.job.results.Influencer;
-import com.prelert.utils.json.AutoDetectParseException;
 
 public class InfluencerParserTest
 {
     @Test
-    public void testParse() throws JsonParseException, IOException, AutoDetectParseException
+    public void testParse() throws IOException
     {
         String json = "{"
                 + "\"probability\": 0.2,"
@@ -64,7 +62,7 @@ public class InfluencerParserTest
     }
 
     @Test
-    public void testParseJson() throws JsonParseException, IOException, AutoDetectParseException
+    public void testParseJson() throws IOException
     {
         String json = "{\"probability\":0.9,\"initialAnomalyScore\":97.1948,\"influencerFieldName\":\"src_ip\",\"influencerFieldValue\":\"23.28.243.150\"},";
 
@@ -91,8 +89,7 @@ public class InfluencerParserTest
         assertEquals("23.28.243.1", inf.getInfluencerFieldValue());
     }
 
-    private static final JsonParser createJsonParser(String input) throws JsonParseException,
-    IOException
+    private static final JsonParser createJsonParser(String input) throws IOException
     {
         ByteArrayInputStream inputStream = new ByteArrayInputStream(input.getBytes(StandardCharsets.UTF_8));
         return new JsonFactory().createParser(inputStream);

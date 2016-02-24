@@ -69,7 +69,7 @@ public class ResultsReader implements Runnable
         {
             m_Parser.parseResults(m_Stream, m_ResultsPersister, m_Renormaliser, m_Logger);
         }
-        catch (IOException | AutoDetectParseException e)
+        catch (AutoDetectParseException e)
         {
             m_Logger.info("Error parsing autodetect_api output", e);
         }

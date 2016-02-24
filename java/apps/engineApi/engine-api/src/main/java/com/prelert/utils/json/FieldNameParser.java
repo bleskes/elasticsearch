@@ -71,14 +71,19 @@ public abstract class FieldNameParser<T>
      * parsing fails an exception will be thrown.
      *
      * @return The populated data
-     * @throws JsonParseException
-     * @throws IOException
      * @throws AutoDetectParseException
      */
-    public T parseJson() throws JsonParseException, IOException, AutoDetectParseException
+    public T parseJson() throws AutoDetectParseException
     {
         T result = supply();
-        parse(result);
+        try
+        {
+            parse(result);
+        }
+        catch (IOException e)
+        {
+            throw new AutoDetectParseException(e);
+        }
         return result;
     }
 
@@ -93,18 +98,23 @@ public abstract class FieldNameParser<T>
      * parsing fails an exception will be thrown.
      *
      * @return The populated data
-     * @throws JsonParseException
-     * @throws IOException
      * @throws AutoDetectParseException
      */
-    public T parseJsonAfterStartObject() throws JsonParseException, IOException, AutoDetectParseException
+    public T parseJsonAfterStartObject() throws AutoDetectParseException
     {
         T result = supply();
-        parseAfterStartObject(result);
+        try
+        {
+            parseAfterStartObject(result);
+        }
+        catch (IOException e)
+        {
+            throw new AutoDetectParseException(e);
+        }
         return result;
     }
 
-    private void parse(T data) throws AutoDetectParseException, JsonParseException, IOException
+    private void parse(T data) throws IOException
     {
         JsonToken token = m_Parser.getCurrentToken();
         if (JsonToken.START_OBJECT != token)
@@ -119,8 +129,7 @@ public abstract class FieldNameParser<T>
         parseAfterStartObject(data);
     }
 
-    private void parseAfterStartObject(T data) throws AutoDetectParseException, JsonParseException,
-            IOException
+    private void parseAfterStartObject(T data) throws IOException
     {
         JsonToken token = m_Parser.getCurrentToken();
         while (token != JsonToken.END_OBJECT)
@@ -153,10 +162,9 @@ public abstract class FieldNameParser<T>
      */
     protected abstract T supply();
 
-    protected abstract void handleFieldName(String fieldName, T data)
-            throws AutoDetectParseException, JsonParseException, IOException;
+    protected abstract void handleFieldName(String fieldName, T data) throws IOException;
 
-    protected int parseAsIntOrZero(String fieldName) throws JsonParseException, IOException
+    protected int parseAsIntOrZero(String fieldName) throws IOException
     {
         if (m_Parser.getCurrentToken() == JsonToken.VALUE_NUMBER_INT)
         {
@@ -166,7 +174,7 @@ public abstract class FieldNameParser<T>
         return 0;
     }
 
-    protected long parseAsLongOrZero(String fieldName) throws JsonParseException, IOException
+    protected long parseAsLongOrZero(String fieldName) throws IOException
     {
         if (m_Parser.getCurrentToken() == JsonToken.VALUE_NUMBER_INT)
         {
@@ -176,7 +184,7 @@ public abstract class FieldNameParser<T>
         return 0;
     }
 
-    protected double parseAsDoubleOrZero(String fieldName) throws JsonParseException, IOException
+    protected double parseAsDoubleOrZero(String fieldName) throws IOException
     {
         JsonToken token = m_Parser.getCurrentToken();
         if (token == JsonToken.VALUE_NUMBER_FLOAT || token == JsonToken.VALUE_NUMBER_INT)
@@ -187,7 +195,7 @@ public abstract class FieldNameParser<T>
         return 0.0;
     }
 
-    protected String parseAsStringOrNull(String fieldName) throws JsonParseException, IOException
+    protected String parseAsStringOrNull(String fieldName) throws IOException
     {
         if (m_Parser.getCurrentToken() == JsonToken.VALUE_STRING)
         {
@@ -197,7 +205,7 @@ public abstract class FieldNameParser<T>
         return null;
     }
 
-    protected Boolean parseAsBooleanOrNull(String fieldName) throws JsonParseException, IOException
+    protected Boolean parseAsBooleanOrNull(String fieldName) throws IOException
     {
         JsonToken token = m_Parser.getCurrentToken();
         if (token == JsonToken.VALUE_TRUE)
@@ -213,7 +221,7 @@ public abstract class FieldNameParser<T>
     }
 
     protected <E> void parseArray(String fieldName, ElementParser<E> elementParser,
-            Collection<E> result) throws AutoDetectParseException, IOException, JsonParseException
+            Collection<E> result) throws IOException
     {
         JsonToken token = m_Parser.getCurrentToken();
         if (token != JsonToken.START_ARRAY)
