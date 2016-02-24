@@ -536,12 +536,21 @@ public class JobSchedulerTest
         MockDataProcessor dataProcessor = new MockDataProcessor(Arrays.asList(
                 newCounts(67, 1500000000000L)));
         m_JobScheduler = createJobScheduler(dataExtractor, dataProcessor);
-
         m_JobScheduler.start(new JobDetails(), 1400000000000L, OptionalLong.of(1500000000000L));
-        assertEquals(JobSchedulerStatus.STARTED, m_CurrentStatus);
+
+        boolean lookbackFinished = m_CurrentStatus != JobSchedulerStatus.STARTED;
         m_JobScheduler.stopAuto();
-        assertEquals(JobSchedulerStatus.STARTED, m_CurrentStatus);
-        assertFalse(dataProcessor.isJobClosed());
+
+        if (lookbackFinished)
+        {
+            assertEquals(JobSchedulerStatus.STOPPED, m_CurrentStatus);
+            assertTrue(dataProcessor.isJobClosed());
+        }
+        else
+        {
+            assertEquals(JobSchedulerStatus.STARTED, m_CurrentStatus);
+            assertFalse(dataProcessor.isJobClosed());
+        }
     }
 
     @Test
