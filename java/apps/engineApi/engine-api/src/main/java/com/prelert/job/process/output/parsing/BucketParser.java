@@ -33,14 +33,12 @@ import java.util.List;
 
 import org.apache.log4j.Logger;
 
-import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import com.prelert.job.results.AnomalyRecord;
 import com.prelert.job.results.Bucket;
 import com.prelert.job.results.BucketInfluencer;
 import com.prelert.job.results.Influencer;
-import com.prelert.utils.json.AutoDetectParseException;
 import com.prelert.utils.json.FieldNameParser;
 
 final class BucketParser extends FieldNameParser<Bucket>
@@ -114,24 +112,21 @@ final class BucketParser extends FieldNameParser<Bucket>
         }
     }
 
-    private List<AnomalyRecord> parseRecords(String fieldName) throws AutoDetectParseException,
-            IOException, JsonParseException
+    private List<AnomalyRecord> parseRecords(String fieldName) throws IOException
     {
         List<AnomalyRecord> detectors = new ArrayList<>();
         parseArray(fieldName, () -> new AnomalyRecordParser(m_Parser).parseJson(), detectors);
         return detectors;
     }
 
-    private List<BucketInfluencer> parseBucketInfluencers(String fieldName)
-            throws AutoDetectParseException, IOException, JsonParseException
+    private List<BucketInfluencer> parseBucketInfluencers(String fieldName) throws IOException
     {
         List<BucketInfluencer> influencers = new ArrayList<>();
         parseArray(fieldName, () -> new BucketInfluencerParser(m_Parser).parseJson(), influencers);
         return influencers;
     }
 
-    private List<Influencer> parseInfluencers(String fieldName)
-            throws AutoDetectParseException, IOException, JsonParseException
+    private List<Influencer> parseInfluencers(String fieldName) throws IOException
     {
         List<Influencer> influencers = new ArrayList<>();
         parseArray(fieldName, () -> new InfluencerParser(m_Parser).parseJson(), influencers);

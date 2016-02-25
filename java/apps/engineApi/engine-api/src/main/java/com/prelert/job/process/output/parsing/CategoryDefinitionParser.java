@@ -32,11 +32,9 @@ import java.util.List;
 
 import org.apache.log4j.Logger;
 
-import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import com.prelert.job.results.CategoryDefinition;
-import com.prelert.utils.json.AutoDetectParseException;
 import com.prelert.utils.json.FieldNameParser;
 
 final class CategoryDefinitionParser extends FieldNameParser<CategoryDefinition>
@@ -79,8 +77,7 @@ final class CategoryDefinitionParser extends FieldNameParser<CategoryDefinition>
         }
     }
 
-    private List<String> parseExamples(String fieldName) throws AutoDetectParseException,
-            IOException, JsonParseException
+    private List<String> parseExamples(String fieldName) throws IOException
     {
         List<String> examples = new ArrayList<>();
         parseArray(fieldName, () -> parseAsStringOrNull(fieldName), examples);
