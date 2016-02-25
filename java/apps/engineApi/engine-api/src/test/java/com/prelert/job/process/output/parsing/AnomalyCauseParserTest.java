@@ -36,16 +36,14 @@ import java.util.List;
 import org.junit.Test;
 
 import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.prelert.job.results.AnomalyCause;
 import com.prelert.job.results.Influence;
-import com.prelert.utils.json.AutoDetectParseException;
 
 public class AnomalyCauseParserTest
 {
     @Test
-    public void testParseJson() throws JsonParseException, IOException, AutoDetectParseException
+    public void testParseJson() throws IOException
     {
         String json = "{"
                 + "\"fieldName\" : \"groundspeed\","

@@ -34,17 +34,14 @@ import java.io.IOException;
 import org.junit.Test;
 
 import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import com.prelert.job.process.output.FlushAcknowledgement;
-import com.prelert.utils.json.AutoDetectParseException;
 
 public class FlushAcknowledgementParserTest
 {
     @Test
-    public void testParseJson()
-            throws JsonParseException, IOException, AutoDetectParseException
+    public void testParseJson() throws IOException
     {
         String input = "{\"flush\": \"job-id\"}";
         JsonParser parser = createJsonParser(input);
@@ -58,8 +55,7 @@ public class FlushAcknowledgementParserTest
     }
 
 
-    private static final JsonParser createJsonParser(String input) throws JsonParseException,
-    IOException
+    private static final JsonParser createJsonParser(String input) throws IOException
     {
         ByteArrayInputStream inputStream = new ByteArrayInputStream(input.getBytes());
         return new JsonFactory().createParser(inputStream);

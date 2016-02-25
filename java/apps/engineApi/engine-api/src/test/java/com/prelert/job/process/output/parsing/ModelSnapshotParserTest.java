@@ -44,8 +44,7 @@ import com.prelert.utils.json.AutoDetectParseException;
 public class ModelSnapshotParserTest
 {
     @Test (expected = AutoDetectParseException.class)
-    public void testParseJson_GivenInvalidJson()
-            throws JsonParseException, IOException, AutoDetectParseException
+    public void testParseJson_GivenInvalidJson() throws IOException
     {
         String input = "\"snapshotId\": \"123\" }";
         JsonParser parser = createJsonParser(input);

@@ -352,6 +352,15 @@ public class JobScheduler
 
     private void finishLookback()
     {
+        synchronized (this)
+        {
+            if (m_Status != JobSchedulerStatus.STARTED)
+            {
+                // Stop has already been called
+                return;
+            }
+            updateStatus(JobSchedulerStatus.STOPPING);
+        }
         try
         {
             m_DataProcessor.closeJob(m_JobId);

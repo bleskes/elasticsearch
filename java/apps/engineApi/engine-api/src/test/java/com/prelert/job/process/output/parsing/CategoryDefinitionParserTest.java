@@ -35,7 +35,6 @@ import java.util.Arrays;
 import org.junit.Test;
 
 import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import com.prelert.job.results.CategoryDefinition;
@@ -45,7 +44,7 @@ public class CategoryDefinitionParserTest
 {
     @Test (expected = AutoDetectParseException.class)
     public void testParseJson_GivenCategoryDefinitionWithExamplesThatIsNotAnArrayObject()
-            throws JsonParseException, IOException, AutoDetectParseException
+            throws IOException
     {
         String input = "{\"categoryDefinition\": 1, \"examples\": \"bar\"}";
         JsonParser parser = createJsonParser(input);
@@ -56,7 +55,7 @@ public class CategoryDefinitionParserTest
 
     @Test
     public void testParseJson_GivenCategoryDefinitionWithAllFieldsPopulatedAndValid()
-            throws JsonParseException, IOException, AutoDetectParseException
+            throws IOException
     {
         String input = "{\"categoryDefinition\": 1,"
                      + " \"terms\":\"foo bar\","
@@ -75,8 +74,7 @@ public class CategoryDefinitionParserTest
         assertEquals(JsonToken.END_OBJECT, parser.getCurrentToken());
     }
 
-    private static final JsonParser createJsonParser(String input) throws JsonParseException,
-            IOException
+    private static final JsonParser createJsonParser(String input) throws IOException
     {
         ByteArrayInputStream inputStream = new ByteArrayInputStream(input.getBytes());
         return new JsonFactory().createParser(inputStream);

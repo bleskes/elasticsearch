@@ -31,11 +31,9 @@ import java.util.Date;
 
 import org.apache.log4j.Logger;
 
-import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import com.prelert.job.ModelSnapshot;
-import com.prelert.utils.json.AutoDetectParseException;
 import com.prelert.utils.json.FieldNameParser;
 
 final class ModelSnapshotParser extends FieldNameParser<ModelSnapshot>
@@ -54,8 +52,7 @@ final class ModelSnapshotParser extends FieldNameParser<ModelSnapshot>
     }
 
     @Override
-    protected void handleFieldName(String fieldName, ModelSnapshot modelSnapshot)
-            throws AutoDetectParseException, JsonParseException, IOException
+    protected void handleFieldName(String fieldName, ModelSnapshot modelSnapshot) throws IOException
     {
         JsonToken token = m_Parser.nextToken();
         switch (fieldName)

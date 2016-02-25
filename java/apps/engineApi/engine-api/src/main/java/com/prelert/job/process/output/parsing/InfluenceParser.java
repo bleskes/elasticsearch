@@ -32,10 +32,8 @@ import java.util.List;
 
 import org.apache.log4j.Logger;
 
-import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.prelert.job.results.Influence;
-import com.prelert.utils.json.AutoDetectParseException;
 import com.prelert.utils.json.FieldNameParser;
 
 
@@ -55,8 +53,7 @@ final class InfluenceParser extends FieldNameParser<List<Influence>>
     }
 
     @Override
-    protected void handleFieldName(String fieldName, List<Influence> influences)
-            throws AutoDetectParseException, JsonParseException, IOException
+    protected void handleFieldName(String fieldName, List<Influence> influences) throws IOException
     {
         Influence influence = new Influence();
         influence.setInfluencerFieldName(fieldName);
@@ -66,8 +63,7 @@ final class InfluenceParser extends FieldNameParser<List<Influence>>
         influences.add(influence);
     }
 
-    private List<String> parseValues(String fieldName) throws AutoDetectParseException,
-            IOException, JsonParseException
+    private List<String> parseValues(String fieldName) throws IOException
     {
         List<String> influenceValues = new ArrayList<>();
         parseArray(fieldName, () -> parseAsStringOrNull(fieldName), influenceValues);

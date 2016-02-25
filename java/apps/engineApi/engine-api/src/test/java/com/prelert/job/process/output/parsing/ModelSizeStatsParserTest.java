@@ -34,15 +34,13 @@ import java.io.IOException;
 import org.junit.Test;
 
 import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.prelert.job.ModelSizeStats;
-import com.prelert.utils.json.AutoDetectParseException;
 
 public class ModelSizeStatsParserTest
 {
     @Test
-    public void testParse() throws JsonParseException, IOException, AutoDetectParseException
+    public void testParse() throws IOException
     {
         String input = "{\"modelSizeStats\": 1,"
                 + "\"totalByFieldCount\" : 2,"
@@ -64,8 +62,7 @@ public class ModelSizeStatsParserTest
         assertEquals("OK", stats.getMemoryStatus());
     }
 
-    private static final JsonParser createJsonParser(String input) throws JsonParseException,
-            IOException
+    private static final JsonParser createJsonParser(String input) throws IOException
     {
         ByteArrayInputStream inputStream = new ByteArrayInputStream(input.getBytes());
         return new JsonFactory().createParser(inputStream);

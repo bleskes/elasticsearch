@@ -35,7 +35,6 @@ import java.util.Date;
 import org.junit.Test;
 
 import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import com.prelert.job.results.ModelDebugOutput;
@@ -44,8 +43,7 @@ import com.prelert.utils.json.AutoDetectParseException;
 public class ModelDebugOutputParserTest
 {
     @Test (expected = AutoDetectParseException.class)
-    public void testParseJson_GivenInvalidJson()
-            throws JsonParseException, IOException, AutoDetectParseException
+    public void testParseJson_GivenInvalidJson() throws IOException
     {
         String input = "\"debugFeature\": \"sum\" }";
         JsonParser parser = createJsonParser(input);
@@ -56,7 +54,7 @@ public class ModelDebugOutputParserTest
 
     @Test
     public void testParseJson_GivenModelDebugOutputWithAllFieldsPopulatedAndValid()
-            throws JsonParseException, IOException, AutoDetectParseException
+            throws IOException
     {
         String input = "{\"debugFeature\": \"sum\","
                      + " \"partitionFieldName\":\"pn\","
@@ -91,8 +89,7 @@ public class ModelDebugOutputParserTest
         assertEquals(JsonToken.END_OBJECT, parser.getCurrentToken());
     }
 
-    private static final JsonParser createJsonParser(String input) throws JsonParseException,
-            IOException
+    private static final JsonParser createJsonParser(String input) throws IOException
     {
         ByteArrayInputStream inputStream = new ByteArrayInputStream(input.getBytes());
         return new JsonFactory().createParser(inputStream);

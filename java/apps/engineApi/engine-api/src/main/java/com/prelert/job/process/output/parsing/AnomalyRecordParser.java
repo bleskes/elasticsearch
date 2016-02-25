@@ -32,12 +32,10 @@ import java.util.List;
 
 import org.apache.log4j.Logger;
 
-import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import com.prelert.job.results.AnomalyCause;
 import com.prelert.job.results.AnomalyRecord;
-import com.prelert.utils.json.AutoDetectParseException;
 import com.prelert.utils.json.FieldNameParser;
 
 final class AnomalyRecordParser extends FieldNameParser<AnomalyRecord>
@@ -56,8 +54,7 @@ final class AnomalyRecordParser extends FieldNameParser<AnomalyRecord>
     }
 
     @Override
-    protected void handleFieldName(String fieldName, AnomalyRecord record)
-            throws AutoDetectParseException, JsonParseException, IOException
+    protected void handleFieldName(String fieldName, AnomalyRecord record) throws IOException
     {
         JsonToken token = m_Parser.nextToken();
         switch (fieldName)
@@ -124,8 +121,7 @@ final class AnomalyRecordParser extends FieldNameParser<AnomalyRecord>
         }
     }
 
-    private List<AnomalyCause> parseCauses(String fieldName) throws AutoDetectParseException,
-            IOException, JsonParseException
+    private List<AnomalyCause> parseCauses(String fieldName) throws IOException
     {
         List<AnomalyCause> causes = new ArrayList<>();
         parseArray(fieldName, () -> new AnomalyCauseParser(m_Parser).parseJson(), causes);

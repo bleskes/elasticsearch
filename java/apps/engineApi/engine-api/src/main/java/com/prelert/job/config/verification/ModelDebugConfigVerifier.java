@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -28,9 +28,12 @@ package com.prelert.job.config.verification;
 
 import com.prelert.job.ModelDebugConfig;
 import com.prelert.job.errorcodes.ErrorCodes;
+import com.prelert.job.messages.Messages;
 
 public final class ModelDebugConfigVerifier
 {
+    private static final double MAX_PERCENTILE = 100.0;
+
     private ModelDebugConfigVerifier()
     {
     }
@@ -48,9 +51,10 @@ public final class ModelDebugConfigVerifier
     public static boolean verify(ModelDebugConfig config) throws JobConfigurationException
     {
         if (config.isEnabled() &&
-                (config.getBoundsPercentile() < 0.0 || config.getBoundsPercentile() > 100.0))
+                (config.getBoundsPercentile() < 0.0 || config.getBoundsPercentile() > MAX_PERCENTILE))
         {
-            String msg = "Invalid modelDebugConfig: boundsPercentile has to be in [0, 100]";
+            String msg = Messages.getMessage(
+                    Messages.JOB_CONFIG_MODEL_DEBUG_CONFIG_INVALID_BOUNDS_PERCENTILE);
             throw new JobConfigurationException(msg, ErrorCodes.INVALID_VALUE);
         }
         return true;

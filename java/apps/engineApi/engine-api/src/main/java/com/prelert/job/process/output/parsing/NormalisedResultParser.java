@@ -50,10 +50,9 @@ public class NormalisedResultParser
     /**
      * Read a NormalisedResult from the JSON parser
      * @return the {@link NormalisedResult} that was read
-     * @throws JsonParseException
      * @throws IOException
      */
-    public NormalisedResult parseJson() throws JsonParseException, IOException
+    public NormalisedResult parseJson() throws IOException
     {
         NormalisedResult result = new NormalisedResult();
 

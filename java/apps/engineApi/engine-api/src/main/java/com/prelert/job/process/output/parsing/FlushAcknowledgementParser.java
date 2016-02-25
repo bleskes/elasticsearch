@@ -30,11 +30,9 @@ import java.io.IOException;
 
 import org.apache.log4j.Logger;
 
-import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import com.prelert.job.process.output.FlushAcknowledgement;
-import com.prelert.utils.json.AutoDetectParseException;
 import com.prelert.utils.json.FieldNameParser;
 
 final class FlushAcknowledgementParser extends FieldNameParser<FlushAcknowledgement>
@@ -53,8 +51,7 @@ final class FlushAcknowledgementParser extends FieldNameParser<FlushAcknowledgem
     }
 
     @Override
-    protected void handleFieldName(String fieldName, FlushAcknowledgement ack)
-            throws AutoDetectParseException, JsonParseException, IOException
+    protected void handleFieldName(String fieldName, FlushAcknowledgement ack) throws IOException
     {
         JsonToken token = m_Parser.nextToken();
         if (FlushAcknowledgement.FLUSH.equals(fieldName))

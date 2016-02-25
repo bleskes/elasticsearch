@@ -27,6 +27,7 @@
 package com.prelert.job.process.output.parsing;
 
 import static org.junit.Assert.assertEquals;
+
 import static org.mockito.Mockito.verify;
 
 import java.io.ByteArrayInputStream;
@@ -64,7 +65,7 @@ public class NormalisedResultParserTest
     }
 
     @Test
-    public void testParseJson_GivenEmptyInput() throws JsonParseException, IOException
+    public void testParseJson_GivenEmptyInput() throws IOException
     {
         String input = "";
         JsonParser parser = createJsonParser(input);
@@ -77,7 +78,7 @@ public class NormalisedResultParserTest
     }
 
     @Test
-    public void testParseJson_GivenEmptyJson() throws JsonParseException, IOException
+    public void testParseJson_GivenEmptyJson() throws IOException
     {
         String input = "{}";
         JsonParser parser = createJsonParser(input);
@@ -90,7 +91,7 @@ public class NormalisedResultParserTest
     }
 
     @Test
-    public void testParseJson_GivenEmptyUnknownField() throws JsonParseException, IOException
+    public void testParseJson_GivenEmptyUnknownField() throws IOException
     {
         String input = "{\"foo\":\"0.0\"}";
         JsonParser parser = createJsonParser(input);
@@ -104,7 +105,7 @@ public class NormalisedResultParserTest
     }
 
     @Test
-    public void testParseJson_GivenEmptyList() throws JsonParseException, IOException
+    public void testParseJson_GivenEmptyList() throws IOException
     {
         String input = "[]";
         JsonParser parser = createJsonParser(input);
@@ -121,7 +122,7 @@ public class NormalisedResultParserTest
     }
 
     @Test
-    public void testParseJson_GivenValidNormalisationResults() throws JsonParseException, IOException
+    public void testParseJson_GivenValidNormalisationResults() throws IOException
     {
         String input = "{\"rawScore\":\"42.0\", \"normalizedScore\":\"0.01\"}\n" +
                 "{\"rawScore\":\"43.0\", \"normalizedScore\":\"0.02\"}";
@@ -141,8 +142,7 @@ public class NormalisedResultParserTest
     }
 
     @Test
-    public void testParseJson_GivenRawScoreIsNotNumber() throws JsonParseException,
-            IOException
+    public void testParseJson_GivenRawScoreIsNotNumber() throws IOException
     {
         String input = "{\"rawScore\":\"invalid\"}";
         JsonParser parser = createJsonParser(input);
@@ -156,8 +156,7 @@ public class NormalisedResultParserTest
     }
 
     @Test
-    public void testParseJson_GivenRawScoreIsNotFollowedByValueString()
-            throws JsonParseException, IOException
+    public void testParseJson_GivenRawScoreIsNotFollowedByValueString() throws IOException
     {
         String input = "{\"rawScore\":[]}";
         JsonParser parser = createJsonParser(input);
@@ -187,8 +186,7 @@ public class NormalisedResultParserTest
     }
 
     @Test
-    public void testParseJson_GivenNormalisedScoreIsNotNumber() throws JsonParseException,
-            IOException
+    public void testParseJson_GivenNormalisedScoreIsNotNumber() throws IOException
     {
         String input = "{\"normalizedScore\":\"invalid\"}";
         JsonParser parser = createJsonParser(input);
@@ -202,8 +200,7 @@ public class NormalisedResultParserTest
     }
 
     @Test
-    public void testParseJson_GivenNormalisedScoreIsNotFollowedByValueString()
-            throws JsonParseException, IOException
+    public void testParseJson_GivenNormalisedScoreIsNotFollowedByValueString() throws IOException
     {
         String input = "{\"normalizedScore\":[]}";
         JsonParser parser = createJsonParser(input);
@@ -219,8 +216,7 @@ public class NormalisedResultParserTest
     }
 
     @Test
-    public void testParseJson_GivenNormalisedScoreIsFollowedEmptyValue()
-            throws JsonParseException, IOException
+    public void testParseJson_GivenNormalisedScoreIsFollowedEmptyValue() throws IOException
     {
         String input = "{\"normalizedScore\":\"\"}";
         JsonParser parser = createJsonParser(input);
@@ -232,8 +228,7 @@ public class NormalisedResultParserTest
         assertEquals(0.0, normalisedResult.getNormalizedScore(), ERROR);
     }
 
-    private static final JsonParser createJsonParser(String input) throws JsonParseException,
-            IOException
+    private static final JsonParser createJsonParser(String input) throws IOException
     {
         ByteArrayInputStream inputStream = new ByteArrayInputStream(input.getBytes());
         return new JsonFactory().createParser(inputStream);

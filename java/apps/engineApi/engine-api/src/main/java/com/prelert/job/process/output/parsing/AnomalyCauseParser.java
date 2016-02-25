@@ -30,11 +30,9 @@ import java.io.IOException;
 
 import org.apache.log4j.Logger;
 
-import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import com.prelert.job.results.AnomalyCause;
-import com.prelert.utils.json.AutoDetectParseException;
 import com.prelert.utils.json.FieldNameParser;
 
 final class AnomalyCauseParser extends FieldNameParser<AnomalyCause>
@@ -53,8 +51,7 @@ final class AnomalyCauseParser extends FieldNameParser<AnomalyCause>
     }
 
     @Override
-    protected void handleFieldName(String fieldName, AnomalyCause cause)
-            throws AutoDetectParseException, JsonParseException, IOException
+    protected void handleFieldName(String fieldName, AnomalyCause cause) throws IOException
     {
         JsonToken token = m_Parser.nextToken();
         switch (fieldName)

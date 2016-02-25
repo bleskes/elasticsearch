@@ -742,8 +742,7 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
                             new NoneStatusReporter("preview-job"),
                             new NoneJobDataPersister(), LOGGER);
 
-        String text = new String(output.toByteArray(), StandardCharsets.UTF_8);
-        return text;
+        return new String(output.toByteArray(), StandardCharsets.UTF_8);
     }
 
     private void checkTooManyJobs(String jobId) throws TooManyJobsException

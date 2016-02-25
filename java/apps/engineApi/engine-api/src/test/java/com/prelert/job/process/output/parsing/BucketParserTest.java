@@ -37,20 +37,18 @@ import java.util.List;
 import org.junit.Test;
 
 import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.prelert.job.results.AnomalyRecord;
 import com.prelert.job.results.Bucket;
 import com.prelert.job.results.BucketInfluencer;
 import com.prelert.job.results.Influencer;
-import com.prelert.utils.json.AutoDetectParseException;
 
 public class BucketParserTest
 {
     private static final double ERROR = 0.0001;
 
     @Test
-    public void testParseJson() throws JsonParseException, IOException, AutoDetectParseException
+    public void testParseJson() throws IOException
     {
         String json = "{"
                 + "\"timestamp\" : 1369437000,"
