@@ -32,8 +32,19 @@ import com.prelert.rs.data.MultiDataPostResult;
  * The job should have been created already and the job's data endpoint known
  * as it is the first argument to this program, the second is the file to upload.
  */
-public class StreamFile
+public final class StreamFile
 {
+    private static final String USAGE = ""
+            + "A filename and job id must be specified:\n"
+            + "Usage:\n"
+            + "\tjava -cp '.:./*' com.prelert.rs.client.StreamFile data_endpoint data_file [--help --compressed --close]\n"
+            + "Where data_endpoint is the full Url to a Engine API jobs\n"
+            + "data endpoint e.g. http://localhost:8080:/engine/<version>/data/<job_id>\n"
+            + "Options:\n"
+            + "\t--compressed If the source file is gzip compressed\n"
+            + "\t--close If the job should be closed after the file is uploaded\n"
+            + "\t--help Show this help";
+
     private StreamFile()
     {
     }
@@ -47,22 +58,13 @@ public class StreamFile
      * @param args
      * @throws IOException
      */
-    public static void main(String[] args)
-    throws IOException
+    public static void main(String[] args) throws IOException
     {
         List<String> argsList = Arrays.asList(args);
 
         if (argsList.size() < 2 || argsList.contains("--help"))
         {
-            System.out.println("A filename and job id must be specified: ");
-            System.out.println("Usage:");
-            System.out.println("\tjava -cp '.:./*' com.prelert.rs.client.StreamFile data_endpoint data_file [--help --compressed --close]");
-            System.out.println("Where data_endpoint is the full Url to a Engine API jobs");
-            System.out.println("data endpoint e.g. http://localhost:8080:/engine/<version>/data/<job_id>");
-            System.out.println("Options:");
-            System.out.println("\t--compressed If the source file is gzip compressed");
-            System.out.println("\t--close If the job should be closed after the file is uploaded");
-            System.out.println("\t--help Show this help");
+            System.out.println(USAGE);
             return;
         }
 
@@ -82,10 +84,8 @@ public class StreamFile
         lastIndex = url.lastIndexOf("/data");
         String baseUrl = url.substring(0, lastIndex);
 
-
-        FileInputStream fs = new FileInputStream(new File(filename));
-
-        try (EngineApiClient engineApiClient = new EngineApiClient(baseUrl))
+        try (EngineApiClient engineApiClient = new EngineApiClient(baseUrl);
+             FileInputStream fs = new FileInputStream(new File(filename)))
         {
             long start = System.currentTimeMillis();
 
@@ -100,8 +100,7 @@ public class StreamFile
 
             if (uploaded.anErrorOccurred() == false)
             {
-                System.out.println(String.format("%s uploaded in %dms",
-                        filename, end - start));
+                System.out.println(String.format("%s uploaded in %dms", filename, end - start));
             }
         }
     }
