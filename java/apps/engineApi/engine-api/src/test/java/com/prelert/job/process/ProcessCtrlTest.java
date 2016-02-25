@@ -75,11 +75,12 @@ public class ProcessCtrlTest
         job.setId("unit-test-job");
 
         AnalysisConfig ac = new AnalysisConfig();
-        ac.setBatchSpan(100l);
-        ac.setBucketSpan(120l);
-        ac.setLatency(360l);
-        ac.setPeriod(20l);
+        ac.setBatchSpan(100L);
+        ac.setBucketSpan(120L);
+        ac.setLatency(360L);
+        ac.setPeriod(20L);
         ac.setSummaryCountFieldName("summaryField");
+        ac.setResultFinalizationWindow(7200L);
         job.setAnalysisConfig(ac);
 
         DataDescription dd = new DataDescription();
@@ -89,13 +90,14 @@ public class ProcessCtrlTest
 
         List<String> command = ProcessCtrl.buildAutoDetectCommand(job, m_Logger, null);
 
-        assertEquals(13, command.size());
+        assertEquals(14, command.size());
         assertTrue(command.contains(ProcessCtrl.AUTODETECT_PATH));
         assertTrue(command.contains(ProcessCtrl.BATCH_SPAN_ARG + "100"));
         assertTrue(command.contains(ProcessCtrl.BUCKET_SPAN_ARG + "120"));
         assertTrue(command.contains(ProcessCtrl.LATENCY_ARG + "360"));
         assertTrue(command.contains(ProcessCtrl.PERIOD_ARG + "20"));
         assertTrue(command.contains(ProcessCtrl.SUMMARY_COUNT_FIELD_ARG + "summaryField"));
+        assertTrue(command.contains(ProcessCtrl.RESULT_FINALIZATION_WINDOW_ARG + "7200"));
 
         assertTrue(command.contains(ProcessCtrl.LENGTH_ENCODED_INPUT_ARG));
         assertTrue(command.contains(ProcessCtrl.MAX_ANOMALY_RECORDS_ARG));
@@ -160,6 +162,4 @@ public class ProcessCtrlTest
         assertTrue(command.contains(ProcessCtrl.LOG_ID_ARG + jobId));
         assertTrue(command.contains(ProcessCtrl.LENGTH_ENCODED_INPUT_ARG));
     }
-
-
 }

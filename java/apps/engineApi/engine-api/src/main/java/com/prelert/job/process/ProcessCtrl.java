@@ -602,36 +602,14 @@ public class ProcessCtrl
 
         if (job.getAnalysisConfig() != null)
         {
-            if (job.getAnalysisConfig().getBucketSpan() != null)
-            {
-                String bucketspan = BUCKET_SPAN_ARG + job.getAnalysisConfig().getBucketSpan();
-                command.add(bucketspan);
-            }
-            if (job.getAnalysisConfig().getBatchSpan() != null)
-            {
-                String batchspan = BATCH_SPAN_ARG + job.getAnalysisConfig().getBatchSpan();
-                command.add(batchspan);
-            }
-            if (job.getAnalysisConfig().getLatency() != null)
-            {
-                String latency = LATENCY_ARG + job.getAnalysisConfig().getLatency();
-                command.add(latency);
-            }
-            if (job.getAnalysisConfig().getPeriod() != null)
-            {
-                String period = PERIOD_ARG + job.getAnalysisConfig().getPeriod();
-                command.add(period);
-            }
-            if (job.getAnalysisConfig().getSummaryCountFieldName() != null)
-            {
-                String summaryCountField = SUMMARY_COUNT_FIELD_ARG + job.getAnalysisConfig().getSummaryCountFieldName();
-                command.add(summaryCountField);
-            }
-            if (job.getAnalysisConfig().getResultFinalizationWindow() != null)
-            {
-                String resultFinalizationWindow = RESULT_FINALIZATION_WINDOW_ARG + job.getAnalysisConfig().getResultFinalizationWindow();
-                command.add(resultFinalizationWindow);
-            }
+            addIfNotNull(job.getAnalysisConfig().getBucketSpan(), BUCKET_SPAN_ARG, command);
+            addIfNotNull(job.getAnalysisConfig().getBatchSpan(), BATCH_SPAN_ARG, command);
+            addIfNotNull(job.getAnalysisConfig().getLatency(), LATENCY_ARG, command);
+            addIfNotNull(job.getAnalysisConfig().getPeriod(), PERIOD_ARG, command);
+            addIfNotNull(job.getAnalysisConfig().getSummaryCountFieldName(),
+                    SUMMARY_COUNT_FIELD_ARG, command);
+            addIfNotNull(job.getAnalysisConfig().getResultFinalizationWindow(),
+                    RESULT_FINALIZATION_WINDOW_ARG, command);
         }
 
         // Input is always length encoded
@@ -688,6 +666,15 @@ public class ProcessCtrl
         command.add(MAX_QUANTILE_INTERVAL_ARG + maxQuantileInterval);
 
         return command;
+    }
+
+    private static <T> void addIfNotNull(T object, String argKey, List<String> command)
+    {
+        if (object != null)
+        {
+            String resultFinalizationWindow = argKey + object;
+            command.add(resultFinalizationWindow);
+        }
     }
 
     /**
@@ -777,21 +764,11 @@ public class ProcessCtrl
     {
         List<String> command = new ArrayList<>();
         command.add(NORMALIZE_PATH);
-
-        if (bucketSpan != null)
-        {
-            String bucketSpanArg = BUCKET_SPAN_ARG + bucketSpan.toString();
-            command.add(bucketSpanArg);
-        }
-
-        String logId = LOG_ID_ARG + jobId;
-        command.add(logId);
-
+        addIfNotNull(bucketSpan, BUCKET_SPAN_ARG, command);
+        command.add(LOG_ID_ARG + jobId);
         command.add(LENGTH_ENCODED_INPUT_ARG);
-
         return command;
     }
-
 
     /**
      * Write the normaliser init state to file.
