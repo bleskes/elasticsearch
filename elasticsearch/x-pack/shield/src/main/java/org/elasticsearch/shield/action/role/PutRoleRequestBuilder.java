@@ -22,8 +22,6 @@ import org.elasticsearch.client.ElasticsearchClient;
 import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.bytes.BytesReference;
 
-import java.util.Arrays;
-
 /**
  * Builder for requests to add a role to the administrative index
  */
@@ -37,18 +35,23 @@ public class PutRoleRequestBuilder extends ActionRequestBuilder<PutRoleRequest, 
         super(client, action, new PutRoleRequest());
     }
 
+    public PutRoleRequestBuilder source(String name, BytesReference source) throws Exception {
+        request.source(name, source);
+        return this;
+    }
+
     public PutRoleRequestBuilder name(String name) {
         request.name(name);
         return this;
     }
 
-    public PutRoleRequestBuilder cluster(String... cluster) {
-        request.cluster(Arrays.asList(cluster));
+    public PutRoleRequestBuilder cluster(String... clusterPrivileges) {
+        request.cluster(clusterPrivileges);
         return this;
     }
 
     public PutRoleRequestBuilder runAs(String... runAsUsers) {
-        request.runAs(Arrays.asList(runAsUsers));
+        request.runAs(runAsUsers);
         return this;
     }
 
