@@ -49,7 +49,7 @@ import static org.mockito.Mockito.when;
 
 /**
  */
-public class ScriptConditionSearchTests extends AbstractWatcherIntegrationTestCase {
+public class ScriptConditionSearchIT extends AbstractWatcherIntegrationTestCase {
     private ThreadPool tp = null;
     private ScriptServiceProxy scriptService;
 
