@@ -35,6 +35,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -58,6 +59,7 @@ import com.prelert.job.JobDetails;
 import com.prelert.job.JobIdAlreadyExistsException;
 import com.prelert.job.JobSchedulerStatus;
 import com.prelert.job.ModelDebugConfig;
+import com.prelert.job.ModelSnapshot;
 import com.prelert.job.SchedulerState;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.alert.AlertObserver;
@@ -383,6 +385,86 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
         }
 
         return buckets;
+    }
+
+    public QueryPage<ModelSnapshot> modelSnapshots(String jobId, int skip, int take,
+            long epochStartMs, long epochEndMs, String sortField, String description)
+            throws UnknownJobException
+    {
+        return m_JobProvider.modelSnapshots(jobId, skip, take, epochStartMs, epochEndMs,
+                sortField, description);
+    }
+
+    public boolean revertToSnapshot(String jobId, long epochEndMs, String description)
+            throws JobInUseException, UnknownJobException, NoSuchModelSnapshotException
+    {
+        try (ActionTicket actionTicket = m_ActionGuardian.tryAcquiringAction(jobId, Action.REVERTING))
+        {
+            LOGGER.debug("Reverting model snapshot for job '" + jobId + "'");
+
+            if (m_ProcessManager.jobIsRunning(jobId))
+            {
+                throw new JobInUseException(Messages.getMessage(Messages.REST_JOB_NOT_CLOSED_REVERT),
+                        ErrorCodes.JOB_NOT_CLOSED);
+            }
+
+            List<ModelSnapshot> revertCandidates = m_JobProvider.modelSnapshots(jobId, 0, 1,
+                    0, epochEndMs, ModelSnapshot.TIMESTAMP, description).queryResults();
+
+            if (revertCandidates == null || revertCandidates.isEmpty())
+            {
+                throw new NoSuchModelSnapshotException(jobId);
+            }
+
+            ModelSnapshot modelSnapshot = revertCandidates.get(0);
+            // Add 1 to the current time so that if this call immediately follows
+            // a job close this restore priority is higher rather than equal
+            modelSnapshot.setRestorePriority(System.currentTimeMillis() + 1);
+
+            boolean success = m_JobProvider.updateModelSnapshot(jobId, modelSnapshot);
+            if (success)
+            {
+                audit(jobId).info(Messages.getMessage(Messages.JOB_AUDIT_REVERTED,
+                        modelSnapshot.getDescription()));
+            }
+            return success;
+        }
+    }
+
+    public boolean updateModelSnapshotDescription(String jobId, String oldDescription,
+            String newDescription)
+            throws JobInUseException, UnknownJobException, NoSuchModelSnapshotException,
+            DescriptionAlreadyUsedException
+    {
+        try (ActionTicket actionTicket = m_ActionGuardian.tryAcquiringAction(jobId, Action.UPDATING))
+        {
+            List<ModelSnapshot> changeCandidates = m_JobProvider.modelSnapshots(jobId, 0, 1,
+                    0, 0, null, oldDescription).queryResults();
+
+            if (changeCandidates == null || changeCandidates.isEmpty())
+            {
+                throw new NoSuchModelSnapshotException(jobId);
+            }
+
+            if (oldDescription.equals(newDescription))
+            {
+                // Request to change description to itself is a silent no-op
+                return false;
+            }
+
+            List<ModelSnapshot> clashCandidates = m_JobProvider.modelSnapshots(jobId, 0, 1,
+                    0, 0, null, newDescription).queryResults();
+
+            if (clashCandidates != null && !clashCandidates.isEmpty())
+            {
+                throw new DescriptionAlreadyUsedException(jobId, newDescription);
+            }
+
+            ModelSnapshot modelSnapshot = changeCandidates.get(0);
+            modelSnapshot.setDescription(newDescription);
+
+            return m_JobProvider.updateModelSnapshot(jobId, modelSnapshot);
+        }
     }
 
     public QueryPage<CategoryDefinition> categoryDefinitions(String jobId, int skip, int take)

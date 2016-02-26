@@ -215,6 +215,7 @@ public class PrelertWebApp extends Application
         m_ResourceClasses.add(Jobs.class);
         m_ResourceClasses.add(Influencers.class);
         m_ResourceClasses.add(Logs.class);
+        m_ResourceClasses.add(ModelSnapshots.class);
         m_ResourceClasses.add(Preview.class);
         m_ResourceClasses.add(Records.class);
         m_ResourceClasses.add(Validate.class);

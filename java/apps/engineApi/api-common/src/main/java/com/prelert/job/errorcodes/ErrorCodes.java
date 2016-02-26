@@ -446,7 +446,32 @@ public enum ErrorCodes
     /**
      * The requested action is not allowed for a scheduled job.
      */
-    ACTION_NOT_ALLOWED_FOR_SCHEDULED_JOB(60117);
+    ACTION_NOT_ALLOWED_FOR_SCHEDULED_JOB(60117),
+
+    /**
+     * The revert to snapshot parameters are invalid.
+     */
+    INVALID_REVERT_PARAMS(60118),
+
+    /**
+     * No model snapshot exists that matches the reversion request.
+     */
+    NO_SUCH_MODEL_SNAPSHOT(60119),
+
+    /**
+     * Can only revert a model snapshot for a job that is in the CLOSED state.
+     */
+    JOB_NOT_CLOSED(60120),
+
+    /**
+     * The change snapshot description parameters are invalid.
+     */
+    INVALID_DESCRIPTION_PARAMS(60121),
+
+    /**
+     * The snapshot description has already been used for this job.
+     */
+    DESCRIPTION_ALREADY_USED(60122);
 
 
     private long m_ErrorCode;

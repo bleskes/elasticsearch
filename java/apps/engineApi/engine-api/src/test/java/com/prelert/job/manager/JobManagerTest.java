@@ -82,6 +82,7 @@ import com.prelert.job.JobException;
 import com.prelert.job.JobIdAlreadyExistsException;
 import com.prelert.job.JobSchedulerStatus;
 import com.prelert.job.ModelDebugConfig;
+import com.prelert.job.ModelSnapshot;
 import com.prelert.job.SchedulerConfig;
 import com.prelert.job.SchedulerConfig.DataSource;
 import com.prelert.job.SchedulerState;
@@ -878,6 +879,107 @@ public class JobManagerTest
         verify(m_JobProvider).updateJob(eq("foo"), m_JobUpdateCaptor.capture());
         Map<String, Object> jobUpdate = m_JobUpdateCaptor.getValue();
         assertEquals(customSettings, jobUpdate.get(JobDetails.CUSTOM_SETTINGS));
+    }
+
+    @Test
+    public void testRevertModelSnapshot_GivenSnapshotExists()
+            throws JobInUseException, UnknownJobException, NoSuchModelSnapshotException
+    {
+        givenProcessInfo(2);
+        JobManager jobManager = createJobManager();
+
+        ModelSnapshot modelSnapshot = new ModelSnapshot();
+        modelSnapshot.setDescription("my description");
+        modelSnapshot.setRestorePriority(1);
+
+        QueryPage<ModelSnapshot> modelSnapshotPage = new QueryPage<>(Arrays.asList(modelSnapshot), 1);
+        when(m_JobProvider.modelSnapshots("foo", 0, 1, 0, 0, ModelSnapshot.TIMESTAMP, "my description")).thenReturn(modelSnapshotPage);
+        when(m_JobProvider.updateModelSnapshot("foo", modelSnapshot)).thenReturn(true);
+
+        assertTrue(jobManager.revertToSnapshot("foo", 0, "my description"));
+        assertTrue(modelSnapshot.getRestorePriority() > 1);
+    }
+
+    @Test
+    public void testRevertModelSnapshot_GivenSnapshotDoesNotExist()
+            throws JobInUseException, UnknownJobException, NoSuchModelSnapshotException
+    {
+        givenProcessInfo(2);
+        JobManager jobManager = createJobManager();
+
+        ModelSnapshot modelSnapshot = new ModelSnapshot();
+        modelSnapshot.setDescription("my description");
+        modelSnapshot.setRestorePriority(1);
+
+        QueryPage<ModelSnapshot> modelSnapshotPage = new QueryPage<>(null, 0);
+        when(m_JobProvider.modelSnapshots("foo", 0, 1, 0, 0, ModelSnapshot.TIMESTAMP, "my description")).thenReturn(modelSnapshotPage);
+
+        m_ExpectedException.expect(NoSuchModelSnapshotException.class);
+        m_ExpectedException.expectMessage("No matching model snapshot exists for job 'foo'");
+        m_ExpectedException.expect(ErrorCodeMatcher.hasErrorCode(ErrorCodes.NO_SUCH_MODEL_SNAPSHOT));
+
+        jobManager.revertToSnapshot("foo", 0, "my description");
+    }
+
+    @Test
+    public void updateModelSnapshotDescription_GivenValidOldAndNew()
+            throws JobInUseException, UnknownJobException, NoSuchModelSnapshotException, DescriptionAlreadyUsedException
+    {
+        givenProcessInfo(2);
+        JobManager jobManager = createJobManager();
+
+        ModelSnapshot oldModelSnapshot = new ModelSnapshot();
+        oldModelSnapshot.setDescription("old description");
+
+        QueryPage<ModelSnapshot> oldModelSnapshotPage = new QueryPage<>(Arrays.asList(oldModelSnapshot), 1);
+        QueryPage<ModelSnapshot> clashingModelSnapshotPage = new QueryPage<>(null, 0);
+        when(m_JobProvider.modelSnapshots("foo", 0, 1, 0, 0, null, "old description")).thenReturn(oldModelSnapshotPage);
+        when(m_JobProvider.modelSnapshots("foo", 0, 1, 0, 0, null, "new description")).thenReturn(clashingModelSnapshotPage);
+        when(m_JobProvider.updateModelSnapshot("foo", oldModelSnapshot)).thenReturn(true);
+
+        assertTrue(jobManager.updateModelSnapshotDescription("foo", "old description", "new description"));
+        assertEquals("new description", oldModelSnapshot.getDescription());
+    }
+
+    @Test
+    public void updateModelSnapshotDescription_GivenOldDescriptionNotFound()
+            throws JobInUseException, UnknownJobException, NoSuchModelSnapshotException, DescriptionAlreadyUsedException
+    {
+        givenProcessInfo(2);
+        JobManager jobManager = createJobManager();
+
+        QueryPage<ModelSnapshot> oldModelSnapshotPage = new QueryPage<>(null, 0);
+        when(m_JobProvider.modelSnapshots("foo", 0, 1, 0, 0, null, "old description")).thenReturn(oldModelSnapshotPage);
+
+        m_ExpectedException.expect(NoSuchModelSnapshotException.class);
+        m_ExpectedException.expectMessage("No matching model snapshot exists for job 'foo'");
+        m_ExpectedException.expect(ErrorCodeMatcher.hasErrorCode(ErrorCodes.NO_SUCH_MODEL_SNAPSHOT));
+
+        jobManager.updateModelSnapshotDescription("foo", "old description", "new description");
+    }
+
+    @Test
+    public void updateModelSnapshotDescription_GivenClashingOldAndNew()
+            throws JobInUseException, UnknownJobException, NoSuchModelSnapshotException, DescriptionAlreadyUsedException
+    {
+        givenProcessInfo(2);
+        JobManager jobManager = createJobManager();
+
+        ModelSnapshot oldModelSnapshot = new ModelSnapshot();
+        oldModelSnapshot.setDescription("old description");
+        ModelSnapshot clashingModelSnapshot = new ModelSnapshot();
+        clashingModelSnapshot.setDescription("new description");
+
+        QueryPage<ModelSnapshot> oldModelSnapshotPage = new QueryPage<>(Arrays.asList(oldModelSnapshot), 1);
+        QueryPage<ModelSnapshot> clashingModelSnapshotPage = new QueryPage<>(Arrays.asList(clashingModelSnapshot), 1);
+        when(m_JobProvider.modelSnapshots("foo", 0, 1, 0, 0, null, "old description")).thenReturn(oldModelSnapshotPage);
+        when(m_JobProvider.modelSnapshots("foo", 0, 1, 0, 0, null, "new description")).thenReturn(clashingModelSnapshotPage);
+
+        m_ExpectedException.expect(DescriptionAlreadyUsedException.class);
+        m_ExpectedException.expectMessage("Model snapshot description 'new description' has already been used for job 'foo'");
+        m_ExpectedException.expect(ErrorCodeMatcher.hasErrorCode(ErrorCodes.DESCRIPTION_ALREADY_USED));
+
+        jobManager.updateModelSnapshotDescription("foo", "old description", "new description");
     }
 
     @Test

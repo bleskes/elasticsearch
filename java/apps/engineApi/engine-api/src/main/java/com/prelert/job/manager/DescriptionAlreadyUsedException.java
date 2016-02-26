@@ -25,30 +25,19 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.job.manager.actions;
+package com.prelert.job.manager;
 
+import com.prelert.job.JobException;
+import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.messages.Messages;
 
-public enum Action {
-    CLOSING(Messages.JOB_DATA_CONCURRENT_USE_CLOSE, Messages.PROCESS_ACTION_CLOSING_JOB),
-    DELETING(Messages.JOB_DATA_CONCURRENT_USE_DELETE, Messages.PROCESS_ACTION_DELETING_JOB),
-    FLUSHING(Messages.JOB_DATA_CONCURRENT_USE_FLUSH, Messages.PROCESS_ACTION_FLUSHING_JOB),
-    UPDATING(Messages.JOB_DATA_CONCURRENT_USE_UPDATE, Messages.PROCESS_ACTION_UPDATING_JOB),
-    WRITING(Messages.JOB_DATA_CONCURRENT_USE_UPLOAD, Messages.PROCESS_ACTION_WRITING_JOB),
-    REVERTING(Messages.JOB_DATA_CONCURRENT_USE_REVERT, Messages.PROCESS_ACTION_REVERTING_JOB),
-    NONE("", "");
+public class DescriptionAlreadyUsedException extends JobException
+{
+    private static final long serialVersionUID = -2359573142813149135L;
 
-    private final String m_MessageKey;
-    private final String m_VerbKey;
-
-    private Action(String messageKey, String verbKey)
+    public DescriptionAlreadyUsedException(String jobId, String description)
     {
-        m_MessageKey = messageKey;
-        m_VerbKey = verbKey;
-    }
-
-    public String getErrorString(String jobId, Action actionInUse)
-    {
-        return Messages.getMessage(m_MessageKey, jobId, Messages.getMessage(actionInUse.m_VerbKey));
+        super(Messages.getMessage(Messages.REST_DESCRIPTION_ALREADY_USED, description, jobId),
+                ErrorCodes.DESCRIPTION_ALREADY_USED);
     }
 }

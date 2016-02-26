@@ -48,6 +48,7 @@ public final class Messages
     public static final String JOB_AUDIT_CREATED = "job.audit.created";
     public static final String JOB_AUDIT_DELETED = "job.audit.deleted";
     public static final String JOB_AUDIT_UPDATED = "job.audit.updated";
+    public static final String JOB_AUDIT_REVERTED = "job.audit.reverted";
     public static final String JOB_AUDIT_SCHEDULER_STARTED_FROM_TO = "job.audit.scheduler.started.from.to";
     public static final String JOB_AUDIT_SCHEDULER_CONTINUED_REALTIME = "job.audit.scheduler.continued.realtime";
     public static final String JOB_AUDIT_SCHEDULER_STARTED_REALTIME = "job.audit.scheduler.started.realtime";
@@ -131,6 +132,7 @@ public final class Messages
     public static final String JOB_DATA_CONCURRENT_USE_FLUSH = "job.data.concurrent.use.flush";
     public static final String JOB_DATA_CONCURRENT_USE_UPDATE = "job.data.concurrent.use.update";
     public static final String JOB_DATA_CONCURRENT_USE_UPLOAD = "job.data.concurrent.use.upload";
+    public static final String JOB_DATA_CONCURRENT_USE_REVERT = "job.data.concurrent.use.revert";
 
     public static final String JOB_SCHEDULER_CANNOT_START = "job.scheduler.cannot.start";
     public static final String JOB_SCHEDULER_CANNOT_STOP_IN_CURRENT_STATE = "job.scheduler.cannot.stop.in.current.state";
@@ -158,6 +160,11 @@ public final class Messages
     public static final String REST_GZIP_ERROR = "rest.gzip.error";
     public static final String REST_START_AFTER_END = "rest.start.after.end";
     public static final String REST_RESET_BUCKET_NO_LATENCY = "rest.reset.bucket.no.latency";
+    public static final String REST_INVALID_REVERT_PARAMS = "rest.invalid.revert.params";
+    public static final String REST_JOB_NOT_CLOSED_REVERT = "rest.job.not.closed.revert";
+    public static final String REST_NO_SUCH_MODEL_SNAPSHOT = "rest.no.such.model.snapshot";
+    public static final String REST_INVALID_DESCRIPTION_PARAMS = "rest.invalid.description.params";
+    public static final String REST_DESCRIPTION_ALREADY_USED = "rest.description.already.used";
 
     public static final String REST_ALERT_MISSING_ARGUMENT = "rest.alert.missing.argument";
     public static final String REST_ALERT_INVALID_TIMEOUT = "rest.alert.invalid.timeout";
@@ -170,6 +177,8 @@ public final class Messages
     public static final String PROCESS_ACTION_FLUSHING_JOB = "process.action.flushing.job";
     public static final String PROCESS_ACTION_UPDATING_JOB = "process.action.updating.job";
     public static final String PROCESS_ACTION_WRITING_JOB = "process.action.writing.job";
+    public static final String PROCESS_ACTION_REVERTING_JOB = "process.action.reverting.job";
+
 
     private Messages()
     {

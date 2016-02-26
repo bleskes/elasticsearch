@@ -43,6 +43,7 @@ import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.logging.JobLoggerFactory;
 import com.prelert.job.persistence.JobDataCountsPersisterFactory;
 import com.prelert.job.persistence.JobProvider;
+import com.prelert.job.persistence.QueryPage;
 import com.prelert.job.persistence.UsagePersisterFactory;
 import com.prelert.job.process.ProcessCtrl;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
@@ -88,7 +89,9 @@ public class ProcessFactory
         String jobId = job.getId();
         Logger logger = m_JobLoggerFactory.newLogger(job.getId());
         Quantiles quantiles = m_JobProvider.getQuantiles(jobId);
-        ModelSnapshot modelSnapshot = m_JobProvider.getModelSnapshotByPriority(jobId);
+        QueryPage<ModelSnapshot> page = m_JobProvider.modelSnapshots(jobId, 0, 1);
+        List<ModelSnapshot> modelSnapshots = page.queryResults();
+        ModelSnapshot modelSnapshot = (modelSnapshots == null || modelSnapshots.isEmpty()) ? null : modelSnapshots.get(0);
 
         Process nativeProcess = null;
         List<File> filesToDelete = new ArrayList<>();

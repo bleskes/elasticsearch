@@ -725,7 +725,7 @@ public class ElasticsearchJobProvider implements JobProvider
         SortBuilder sb = null;
         if (sortField != null)
         {
-            sb = new FieldSortBuilder(sortField)
+            sb = new FieldSortBuilder(esSortField(sortField))
                         .missing("_last")
                         .order(descending ? SortOrder.DESC : SortOrder.ASC);
         }
@@ -831,7 +831,7 @@ public class ElasticsearchJobProvider implements JobProvider
         SortBuilder sb = null;
         if (sortField != null)
         {
-            sb = new FieldSortBuilder(sortField)
+            sb = new FieldSortBuilder(esSortField(sortField))
                         .missing("_last")
                         .order(descending ? SortOrder.DESC : SortOrder.ASC);
         }
@@ -863,7 +863,7 @@ public class ElasticsearchJobProvider implements JobProvider
 
         for (String sortField : secondarySort)
         {
-            searchBuilder.addSort(sortField, descending ? SortOrder.DESC : SortOrder.ASC);
+            searchBuilder.addSort(esSortField(sortField), descending ? SortOrder.DESC : SortOrder.ASC);
         }
 
 
@@ -948,7 +948,7 @@ public class ElasticsearchJobProvider implements JobProvider
 
         if (sortField != null)
         {
-            SortBuilder sb = new FieldSortBuilder(sortField).order(
+            SortBuilder sb = new FieldSortBuilder(esSortField(sortField)).order(
                     sortDescending ? SortOrder.DESC : SortOrder.ASC);
             searchRequestBuilder.addSort(sb);
         }
@@ -1041,45 +1041,80 @@ public class ElasticsearchJobProvider implements JobProvider
     }
 
     @Override
-    public ModelSnapshot getModelSnapshotByPriority(String jobId)
+    public QueryPage<ModelSnapshot> modelSnapshots(String jobId,
+            int skip, int take)
     throws UnknownJobException
     {
-        ElasticsearchJobId elasticJobId = new ElasticsearchJobId(jobId);
+        return modelSnapshots(jobId, skip, take, 0, 0, null, null);
+    }
 
-        LOGGER.trace("ES API CALL: search all of type " + ModelSnapshot.TYPE
-                + " from index " + elasticJobId.getIndex()
-                + " with sort descending on field " + ModelSnapshot.RESTORE_PRIORITY
-                + " take 1");
+    @Override
+    public QueryPage<ModelSnapshot> modelSnapshots(String jobId,
+            int skip, int take, long startEpochMs, long endEpochMs,
+            String sortField, String description)
+    throws UnknownJobException
+    {
+        ResultsFilterBuilder fb = (description == null || description.isEmpty()) ?
+                new ResultsFilterBuilder() :
+                new ResultsFilterBuilder(QueryBuilders.termQuery(ModelSnapshot.DESCRIPTION, description));
 
-        SortBuilder sb = new FieldSortBuilder(ModelSnapshot.RESTORE_PRIORITY)
-                .order(SortOrder.DESC);
-        SearchRequestBuilder searchRequestBuilder = m_Client.prepareSearch(elasticJobId.getIndex())
-                .setTypes(ModelSnapshot.TYPE)
-                .setSize(1)
-                .addSort(sb);
+        return modelSnapshots(new ElasticsearchJobId(jobId), skip, take,
+                (sortField == null || sortField.isEmpty()) ? ModelSnapshot.RESTORE_PRIORITY : sortField,
+                fb.timeRange(ElasticsearchMappings.ES_TIMESTAMP, startEpochMs, endEpochMs).build());
+    }
 
-        SearchResponse response = null;
+    private QueryPage<ModelSnapshot> modelSnapshots(ElasticsearchJobId jobId,
+            int skip, int take, String sortField, QueryBuilder fb) throws UnknownJobException
+    {
+        SortBuilder sb = new FieldSortBuilder(esSortField(sortField)).order(SortOrder.DESC);
+
+        SearchResponse searchResponse;
         try
         {
-            response = searchRequestBuilder.get();
+            LOGGER.trace("ES API CALL: search all of type " + ModelSnapshot.TYPE +
+                    " from index " + jobId.getIndex() + " sort ascending " + sortField +
+                    " with filter after sort skip " + skip + " take " + take);
+            searchResponse = m_Client.prepareSearch(jobId.getIndex())
+                                        .setTypes(ModelSnapshot.TYPE)
+                                        .addSort(sb)
+                                        .setPostFilter(fb)
+                                        .setFrom(skip).setSize(take)
+                                        .get();
         }
         catch (IndexNotFoundException e)
         {
-            LOGGER.error("Missing index when getting model snapshot", e);
-            throw new UnknownJobException(jobId);
+            throw new UnknownJobException(jobId.getId());
         }
 
-        for (SearchHit hit : response.getHits().getHits())
+        List<ModelSnapshot> results = new ArrayList<>();
+
+        for (SearchHit hit : searchResponse.getHits().getHits())
         {
-            Map<String, Object> m = hit.getSource();
+            // Remove the Kibana/Logstash '@timestamp' entry as stored in Elasticsearch,
+            // and replace using the API 'timestamp' key.
+            Object timestamp = hit.getSource().remove(ElasticsearchMappings.ES_TIMESTAMP);
+            hit.getSource().put(ModelSnapshot.TIMESTAMP, timestamp);
 
-            // replace logstash timestamp name with timestamp
-            m.put(ModelSnapshot.TIMESTAMP, m.remove(ElasticsearchMappings.ES_TIMESTAMP));
+            ModelSnapshot modelSnapshot = m_ObjectMapper.convertValue(hit.getSource(), ModelSnapshot.class);
 
-            return m_ObjectMapper.convertValue(m, ModelSnapshot.class);
+            results.add(modelSnapshot);
         }
 
-        return null;
+        return new QueryPage<>(results, searchResponse.getHits().getTotalHits());
+    }
+
+    @Override
+    public boolean updateModelSnapshot(String jobId, ModelSnapshot modelSnapshot)
+    throws UnknownJobException
+    {
+        // For Elasticsearch the update can be done in exactly the same way as
+        // the original persist
+        ElasticsearchPersister persister = new ElasticsearchPersister(jobId, m_Client);
+        persister.persistModelSnapshot(modelSnapshot);
+
+        // Commit so that when the REST API call that triggered the update
+        // returns the updated document is searchable
+        return persister.commitWrites();
     }
 
     private boolean checkQuantilesVersion(String jobId, GetResponse response)
@@ -1206,5 +1241,10 @@ public class ElasticsearchJobProvider implements JobProvider
     public Auditor audit(String jobId)
     {
         return new ElasticsearchAuditor(m_Client, PRELERT_INFO_INDEX, jobId);
+    }
+
+    private String esSortField(String sortField)
+    {
+        return sortField.equals(Bucket.TIMESTAMP) ? ElasticsearchMappings.ES_TIMESTAMP : sortField;
     }
 }

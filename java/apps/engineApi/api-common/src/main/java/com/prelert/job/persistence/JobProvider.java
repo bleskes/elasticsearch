@@ -21,6 +21,7 @@ package com.prelert.job.persistence;
 import com.prelert.job.ModelSnapshot;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.audit.Auditor;
+import com.prelert.job.persistence.QueryPage;
 import com.prelert.job.quantiles.Quantiles;
 
 public interface JobProvider extends JobDetailsProvider, JobResultsProvider
@@ -32,10 +33,45 @@ public interface JobProvider extends JobDetailsProvider, JobResultsProvider
     throws UnknownJobException;
 
     /**
-     * Get the model snapshot for the job that has the highest restore priority
+     * Get model snapshots for the job ordered by descending restore priority.
+     *
+     * @param jobId the job id
+     * @param skip number of snapshots to skip
+     * @param take number of snapshots to retrieve
+     * @return page of model snapshots
      */
-    public ModelSnapshot getModelSnapshotByPriority(String jobId)
+    public QueryPage<ModelSnapshot> modelSnapshots(String jobId,
+            int skip, int take)
     throws UnknownJobException;
+
+    /**
+     * Get model snapshots for the job ordered by descending restore priority.
+     *
+     * @param jobId the job id
+     * @param skip number of snapshots to skip
+     * @param take number of snapshots to retrieve
+     * @param startEpochMs earliest time to include (inclusive)
+     * @param endEpochMs latest time to include (exclusive)
+     * @param sortField optional sort field name (may be null)
+     * @param description optional description to match (null for all)
+     * @return page of model snapshots
+     */
+    public QueryPage<ModelSnapshot> modelSnapshots(String jobId,
+            int skip, int take, long startEpochMs, long endEpochMs,
+            String sortField, String description)
+    throws UnknownJobException;
+
+    /**
+     * Update a persisted model snapshot metadata document to match the
+     * argument supplied.
+     *
+     * @param jobId the job id
+     * @param modelSnapshot the updated model snapshot object to be stored
+     * @return {@code true} if update was successful
+     * @throws UnknownJobException If there is no job with id <code>jobId</code>
+     */
+    public boolean updateModelSnapshot(String jobId, ModelSnapshot modelSnapshot)
+            throws UnknownJobException;
 
     /**
      * Refresh the datastore index so that all recent changes are
@@ -49,7 +85,7 @@ public interface JobProvider extends JobDetailsProvider, JobResultsProvider
     /**
      * Get an auditor for the given job
      *
-     * @param the job id
+     * @param jobId the job id
      * @return the {@code Auditor}
      */
     Auditor audit(String jobId);
