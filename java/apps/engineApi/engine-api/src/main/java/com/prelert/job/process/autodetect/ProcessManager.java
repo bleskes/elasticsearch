@@ -644,6 +644,8 @@ public class ProcessManager
         }
         finally
         {
+            countingStream.close();
+
             // flush the writer but catch any exception so it does not suppress
             // any exception thrown in the try block
             tryFlushingWriter(lengthEncodedWriter, jobLogger);
