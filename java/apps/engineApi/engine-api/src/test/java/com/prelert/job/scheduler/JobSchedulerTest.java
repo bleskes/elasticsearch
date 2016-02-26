@@ -538,6 +538,10 @@ public class JobSchedulerTest
         m_JobScheduler = createJobScheduler(dataExtractor, dataProcessor);
         m_JobScheduler.start(new JobDetails(), 1400000000000L, OptionalLong.of(1500000000000L));
 
+        while (m_CurrentStatus == null)
+        {
+        }
+
         boolean lookbackFinished = m_CurrentStatus != JobSchedulerStatus.STARTED;
         m_JobScheduler.stopAuto();
 
@@ -753,7 +757,8 @@ public class JobSchedulerTest
             try
             {
                 m_Streams.add(streamToString(input));
-            } catch (IOException e)
+            }
+            catch (IOException e)
             {
                 throw new IllegalStateException();
             }
