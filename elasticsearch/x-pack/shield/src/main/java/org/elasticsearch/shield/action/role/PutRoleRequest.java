@@ -42,7 +42,8 @@ public class PutRoleRequest extends ActionRequest<PutRoleRequest> {
     private String[] clusterPrivileges = Strings.EMPTY_ARRAY;
     private List<RoleDescriptor.IndicesPrivileges> indicesPrivileges = new ArrayList<>();
     private String[] runAs = Strings.EMPTY_ARRAY;
-
+    private boolean refresh = true;
+    
     public PutRoleRequest() {
     }
 
@@ -80,6 +81,10 @@ public class PutRoleRequest extends ActionRequest<PutRoleRequest> {
         this.runAs = usernames;
     }
 
+    public void refresh(boolean refresh) {
+        this.refresh = refresh;
+    }
+
     public String name() {
         return name;
     }
@@ -96,6 +101,10 @@ public class PutRoleRequest extends ActionRequest<PutRoleRequest> {
         return runAs;
     }
 
+    public boolean refresh() {
+        return refresh;
+    }
+
     @Override
     public void readFrom(StreamInput in) throws IOException {
         super.readFrom(in);
@@ -107,6 +116,7 @@ public class PutRoleRequest extends ActionRequest<PutRoleRequest> {
             indicesPrivileges.add(RoleDescriptor.IndicesPrivileges.createFrom(in));
         }
         runAs = in.readStringArray();
+        refresh = in.readBoolean();
     }
 
     @Override
@@ -119,6 +129,7 @@ public class PutRoleRequest extends ActionRequest<PutRoleRequest> {
             index.writeTo(out);
         }
         out.writeStringArray(runAs);
+        out.writeBoolean(refresh);
     }
 
     RoleDescriptor roleDescriptor() {

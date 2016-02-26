@@ -86,8 +86,6 @@ public class ESNativeTests extends ShieldIntegTestCase {
         logger.info("--> adding two more users");
         c.preparePutUser("joe2", "s3kirt2".toCharArray(), "role2", "user").get();
         c.preparePutUser("joe3", "s3kirt3".toCharArray(), "role3", "user").get();
-        // Since getting multiple users relies on them being visible to search, perform a refresh
-        refresh();
         GetUsersResponse allUsersResp = c.prepareGetUsers().get();
         assertTrue("users should exist", allUsersResp.hasUsers());
         assertEquals("should be 3 users total", 3, allUsersResp.users().length);
@@ -146,9 +144,6 @@ public class ESNativeTests extends ShieldIntegTestCase {
                         new String[]{"body", "title"}, new BytesArray("{\"query\": {\"match_all\": {}}}"))
                 .get();
 
-        // Refresh to make new roles visible
-        refresh();
-
         logger.info("--> retrieving all roles");
         GetRolesResponse allRolesResp = c.prepareGetRoles().get();
         assertTrue("roles should exist", allRolesResp.hasRoles());
@@ -177,7 +172,6 @@ public class ESNativeTests extends ShieldIntegTestCase {
                 .get();
         logger.error("--> creating user");
         c.preparePutUser("joe", "s3krit".toCharArray(), "test_role").get();
-        refresh();
         logger.error("--> waiting for .shield index");
         ensureGreen(ShieldTemplateService.SECURITY_INDEX_NAME);
         logger.info("--> retrieving user");
@@ -199,7 +193,6 @@ public class ESNativeTests extends ShieldIntegTestCase {
         SecurityClient c = securityClient();
         logger.error("--> creating user");
         c.preparePutUser("joe", "s3krit".toCharArray(), ShieldSettingsSource.DEFAULT_ROLE).get();
-        refresh();
         logger.error("--> waiting for .shield index");
         ensureGreen(ShieldTemplateService.SECURITY_INDEX_NAME);
         logger.info("--> retrieving user");
@@ -235,7 +228,6 @@ public class ESNativeTests extends ShieldIntegTestCase {
         SecurityClient c = securityClient();
         logger.error("--> creating user");
         c.preparePutUser("joe", "s3krit".toCharArray(), ShieldSettingsSource.DEFAULT_ROLE).get();
-        refresh();
         logger.error("--> waiting for .shield index");
         ensureGreen(ShieldTemplateService.SECURITY_INDEX_NAME);
         logger.info("--> retrieving user");
@@ -274,7 +266,6 @@ public class ESNativeTests extends ShieldIntegTestCase {
                 .get();
         logger.error("--> creating user");
         c.preparePutUser("joe", "s3krit".toCharArray(), "test_role").get();
-        refresh();
         logger.error("--> waiting for .shield index");
         ensureGreen(ShieldTemplateService.SECURITY_INDEX_NAME);
 
@@ -322,7 +313,6 @@ public class ESNativeTests extends ShieldIntegTestCase {
                         new String[]{"body", "title"}, new BytesArray("{\"match_all\": {}}"))
                 .get();
         c.preparePutUser("joe", "s3krit".toCharArray(), "test_role").get();
-        refresh();
         logger.error("--> waiting for .shield index");
         ensureGreen(ShieldTemplateService.SECURITY_INDEX_NAME);
 
