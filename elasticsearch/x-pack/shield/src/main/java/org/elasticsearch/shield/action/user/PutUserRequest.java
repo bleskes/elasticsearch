@@ -19,6 +19,9 @@ package org.elasticsearch.shield.action.user;
 
 import org.elasticsearch.action.ActionRequest;
 import org.elasticsearch.action.ActionRequestValidationException;
+import org.elasticsearch.common.Nullable;
+import org.elasticsearch.common.bytes.BytesArray;
+import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.shield.authc.support.CharArrays;
@@ -53,9 +56,7 @@ public class PutUserRequest extends ActionRequest<PutUserRequest> {
         if (roles == null) {
             validationException = addValidationError("roles are missing", validationException);
         }
-        if (passwordHash == null) {
-            validationException = addValidationError("passwordHash is missing", validationException);
-        }
+        // we do not check for a password hash here since it is possible that the user exists and we don't want to update the password
         return validationException;
     }
 
@@ -79,7 +80,7 @@ public class PutUserRequest extends ActionRequest<PutUserRequest> {
         this.metadata = metadata;
     }
 
-    public void passwordHash(char[] passwordHash) {
+    public void passwordHash(@Nullable char[] passwordHash) {
         this.passwordHash = passwordHash;
     }
 
@@ -107,6 +108,7 @@ public class PutUserRequest extends ActionRequest<PutUserRequest> {
         return metadata;
     }
 
+    @Nullable
     public char[] passwordHash() {
         return passwordHash;
     }
@@ -119,7 +121,12 @@ public class PutUserRequest extends ActionRequest<PutUserRequest> {
     public void readFrom(StreamInput in) throws IOException {
         super.readFrom(in);
         username = in.readString();
-        passwordHash = CharArrays.utf8BytesToChars(in.readByteArray());
+        BytesReference passwordHashRef = in.readBytesReference();
+        if (passwordHashRef == BytesArray.EMPTY) {
+            passwordHash = null;
+        } else {
+            passwordHash = CharArrays.utf8BytesToChars(passwordHashRef.array());
+        }
         roles = in.readStringArray();
         fullName = in.readOptionalString();
         email = in.readOptionalString();
@@ -131,7 +138,13 @@ public class PutUserRequest extends ActionRequest<PutUserRequest> {
     public void writeTo(StreamOutput out) throws IOException {
         super.writeTo(out);
         out.writeString(username);
-        out.writeByteArray(CharArrays.toUtf8Bytes(passwordHash));
+        BytesReference passwordHashRef;
+        if (passwordHash == null) {
+            passwordHashRef = null;
+        } else {
+            passwordHashRef = new BytesArray(CharArrays.toUtf8Bytes(passwordHash));
+        }
+        out.writeBytesReference(passwordHashRef);
         out.writeStringArray(roles);
         out.writeOptionalString(fullName);
         out.writeOptionalString(email);
