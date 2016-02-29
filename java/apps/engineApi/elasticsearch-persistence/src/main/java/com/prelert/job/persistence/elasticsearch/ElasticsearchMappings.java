@@ -359,7 +359,6 @@ public class ElasticsearchMappings
             .endObject();
     }
 
-
     /**
      * Create the Elasticsearch mapping for {@linkplain com.prelert.job.results.Bucket}.
      * The '_all' field is disabled as the document isn't meant to be searched.
@@ -427,6 +426,55 @@ public class ElasticsearchMappings
                                     .field(TYPE, DOUBLE)
                                 .endObject()
                             .endObject()
+                        .endObject()
+                    .endObject()
+                .endObject()
+            .endObject();
+    }
+
+    /**
+     * Create the Elasticsearch mapping for {@linkplain com.prelert.job.results.BucketInfluencer}.
+     *
+     * @return
+     * @throws IOException
+     */
+    public static XContentBuilder bucketInfluencerMapping()
+    throws IOException
+    {
+        return jsonBuilder()
+            .startObject()
+                .startObject(BucketInfluencer.TYPE)
+                    .startObject(ALL)
+                        .field(ENABLED, false)
+                        // analyzer must be specified even though _all is disabled
+                        // because all types in the same index must have the same
+                        // analyzer for a given field
+                        .field(ANALYZER, WHITESPACE)
+                    .endObject()
+                    .startObject(PROPERTIES)
+                        .startObject(ElasticsearchPersister.JOB_ID_NAME)
+                            .field(TYPE, STRING).field(INDEX, NOT_ANALYZED)
+                        .endObject()
+                        .startObject(ES_TIMESTAMP)
+                            .field(TYPE, DATE)
+                        .endObject()
+                        .startObject(Bucket.IS_INTERIM)
+                            .field(TYPE, BOOLEAN)
+                        .endObject()
+                        .startObject(BucketInfluencer.INFLUENCER_FIELD_NAME)
+                            .field(TYPE, STRING).field(INDEX, NOT_ANALYZED)
+                        .endObject()
+                        .startObject(BucketInfluencer.INITIAL_ANOMALY_SCORE)
+                            .field(TYPE, DOUBLE)
+                        .endObject()
+                        .startObject(BucketInfluencer.ANOMALY_SCORE)
+                            .field(TYPE, DOUBLE)
+                        .endObject()
+                        .startObject(BucketInfluencer.RAW_ANOMALY_SCORE)
+                            .field(TYPE, DOUBLE)
+                        .endObject()
+                        .startObject(BucketInfluencer.PROBABILITY)
+                            .field(TYPE, DOUBLE)
                         .endObject()
                     .endObject()
                 .endObject()

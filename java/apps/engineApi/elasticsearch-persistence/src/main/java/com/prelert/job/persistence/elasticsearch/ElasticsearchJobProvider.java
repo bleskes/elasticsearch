@@ -89,6 +89,7 @@ import com.prelert.job.persistence.QueryPage;
 import com.prelert.job.quantiles.Quantiles;
 import com.prelert.job.results.AnomalyRecord;
 import com.prelert.job.results.Bucket;
+import com.prelert.job.results.BucketInfluencer;
 import com.prelert.job.results.CategoryDefinition;
 import com.prelert.job.results.Influencer;
 import com.prelert.job.results.ModelDebugOutput;
@@ -427,6 +428,7 @@ public class ElasticsearchJobProvider implements JobProvider
         {
             XContentBuilder jobMapping = ElasticsearchMappings.jobMapping();
             XContentBuilder bucketMapping = ElasticsearchMappings.bucketMapping();
+            XContentBuilder bucketInfluencerMapping = ElasticsearchMappings.bucketInfluencerMapping();
             XContentBuilder categorizerStateMapping = ElasticsearchMappings.categorizerStateMapping();
             XContentBuilder categoryDefinitionMapping = ElasticsearchMappings.categoryDefinitionMapping();
             XContentBuilder recordMapping = ElasticsearchMappings.recordMapping(termFields);
@@ -446,6 +448,7 @@ public class ElasticsearchJobProvider implements JobProvider
                     .setSettings(prelertIndexSettings())
                     .addMapping(JobDetails.TYPE, jobMapping)
                     .addMapping(Bucket.TYPE, bucketMapping)
+                    .addMapping(BucketInfluencer.TYPE, bucketInfluencerMapping)
                     .addMapping(CategorizerState.TYPE, categorizerStateMapping)
                     .addMapping(CategoryDefinition.TYPE, categoryDefinitionMapping)
                     .addMapping(AnomalyRecord.TYPE, recordMapping)
