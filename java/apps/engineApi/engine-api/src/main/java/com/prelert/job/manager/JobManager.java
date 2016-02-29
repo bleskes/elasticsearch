@@ -891,15 +891,15 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
         // Try to add extra fields (just appVer for now)
         try
         {
-            Properties props = new Properties();
             // Try to get the API version as recorded by Maven at build time
             InputStream is = getClass().getResourceAsStream("/META-INF/maven/com.prelert/engine-api/pom.properties");
             if (is != null)
             {
                 try
                 {
+                    Properties props = new Properties();
                     props.load(is);
-                    return props.getProperty("version");
+                    return props.getProperty("version", "");
                 }
                 finally
                 {
