@@ -34,6 +34,8 @@ import static org.mockito.Mockito.when;
 import java.net.URISyntaxException;
 import java.util.Arrays;
 
+import javax.ws.rs.core.Response;
+
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -43,6 +45,9 @@ import com.prelert.job.ModelSnapshot;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.errorcodes.ErrorCodeMatcher;
 import com.prelert.job.errorcodes.ErrorCodes;
+import com.prelert.job.exceptions.JobInUseException;
+import com.prelert.job.manager.DescriptionAlreadyUsedException;
+import com.prelert.job.manager.NoSuchModelSnapshotException;
 import com.prelert.job.persistence.QueryPage;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
 import com.prelert.rs.data.Pagination;
@@ -186,6 +191,72 @@ public class ModelSnapshotsTest extends ServiceTest
         m_ExpectedException.expect(ErrorCodeMatcher.hasErrorCode(ErrorCodes.UNPARSEABLE_DATE_ARGUMENT));
 
         m_ModelSnapshots.modelSnapshots("foo", 0, 100, "invalid", "also invalid", "", "");
+    }
+
+    @Test
+    public void testRevert_GivenNoArgs() throws JobInUseException, UnknownJobException,
+            NoSuchModelSnapshotException
+    {
+        m_ExpectedException.expect(InvalidParametersException.class);
+        m_ExpectedException.expectMessage("Cannot revert to a model snapshot as no parameters were specified.");
+        m_ExpectedException.expect(ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_REVERT_PARAMS));
+
+        m_ModelSnapshots.revertToSnapshot("foo", "", "");
+    }
+
+    @Test
+    public void testRevert_GivenInvalidArgs() throws JobInUseException, UnknownJobException,
+            NoSuchModelSnapshotException
+    {
+        m_ExpectedException.expect(RestApiException.class);
+        m_ExpectedException.expectMessage("Query param 'time' with value 'invalid' cannot be parsed as a date or converted to a number (epoch)");
+        m_ExpectedException.expect(ErrorCodeMatcher.hasErrorCode(ErrorCodes.UNPARSEABLE_DATE_ARGUMENT));
+
+        m_ModelSnapshots.revertToSnapshot("foo", "invalid", "fine");
+    }
+
+    @Test
+    public void testRevert_GivenValidTime() throws JobInUseException, UnknownJobException,
+            NoSuchModelSnapshotException
+    {
+        when(jobManager().revertToSnapshot("foo", 1000L, "")).thenReturn(true);
+
+        Response response = m_ModelSnapshots.revertToSnapshot("foo", "1", "");
+
+        assertEquals(200, response.getStatus());
+    }
+
+    @Test
+    public void testRevert_GivenValidDescription() throws JobInUseException, UnknownJobException,
+            NoSuchModelSnapshotException
+    {
+        when(jobManager().revertToSnapshot("foo", 0L, "my description")).thenReturn(true);
+
+        Response response = m_ModelSnapshots.revertToSnapshot("foo", "", "my description");
+
+        assertEquals(200, response.getStatus());
+    }
+
+    @Test
+    public void testUpdateDescription_GivenMissingArg() throws JobInUseException, UnknownJobException,
+            NoSuchModelSnapshotException, DescriptionAlreadyUsedException
+    {
+        m_ExpectedException.expect(InvalidParametersException.class);
+        m_ExpectedException.expectMessage("Both old and new descriptions must be provided when changing a model snapshot description.");
+        m_ExpectedException.expect(ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_DESCRIPTION_PARAMS));
+
+        m_ModelSnapshots.updateDescription("foo", "", "new description");
+    }
+
+    @Test
+    public void testUpdateDescription_GivenValidDescription() throws JobInUseException, UnknownJobException,
+            NoSuchModelSnapshotException, DescriptionAlreadyUsedException
+    {
+        when(jobManager().updateModelSnapshotDescription("foo", "old description", "new description")).thenReturn(true);
+
+        Response response = m_ModelSnapshots.updateDescription("foo", "old description", "new description");
+
+        assertEquals(200, response.getStatus());
     }
 
 }
