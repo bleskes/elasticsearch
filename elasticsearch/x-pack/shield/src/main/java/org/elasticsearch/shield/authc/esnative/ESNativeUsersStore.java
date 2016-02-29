@@ -230,7 +230,7 @@ public class ESNativeUsersStore extends AbstractComponent implements ClusterStat
                 @Override
                 public void onFailure(Throwable t) {
                     if (t instanceof IndexNotFoundException) {
-                        logger.trace("could not retrieve users because shield index does not exist");
+                        logger.trace("could not retrieve users because security index does not exist");
                     } else {
                         logger.info("failed to retrieve users", t);
                     }
@@ -281,7 +281,7 @@ public class ESNativeUsersStore extends AbstractComponent implements ClusterStat
                 @Override
                 public void onFailure(Throwable t) {
                     if (t instanceof IndexNotFoundException) {
-                        logger.trace("could not retrieve user because shield index does not exist", t);
+                        logger.trace("could not retrieve user because security index does not exist", t);
                     } else {
                         logger.info("failed to retrieve user", t);
                     }
@@ -291,7 +291,7 @@ public class ESNativeUsersStore extends AbstractComponent implements ClusterStat
                 }
             });
         } catch (IndexNotFoundException infe) {
-            logger.trace("could not retrieve user because shield index does not exist");
+            logger.trace("could not retrieve user because security index does not exist");
             listener.onResponse(null);
         } catch (Exception e) {
             logger.error("unable to retrieve user", e);
@@ -373,7 +373,7 @@ public class ESNativeUsersStore extends AbstractComponent implements ClusterStat
 
         if (clusterState.blocks().hasGlobalBlock(GatewayService.STATE_NOT_RECOVERED_BLOCK)) {
             // wait until the gateway has recovered from disk, otherwise we
-            // think may not have the .shield index but they it may not have
+            // think may not have the .security index but they it may not have
             // been restored from the cluster state on disk yet
             logger.debug("native users store waiting until gateway has recovered from disk");
             return false;
@@ -387,12 +387,12 @@ public class ESNativeUsersStore extends AbstractComponent implements ClusterStat
 
         IndexMetaData metaData = clusterState.metaData().index(ShieldTemplateService.SECURITY_INDEX_NAME);
         if (metaData == null) {
-            logger.debug("shield user index [{}] does not exist, so service can start", ShieldTemplateService.SECURITY_INDEX_NAME);
+            logger.debug("security index [{}] does not exist, so service can start", ShieldTemplateService.SECURITY_INDEX_NAME);
             return true;
         }
 
         if (clusterState.routingTable().index(ShieldTemplateService.SECURITY_INDEX_NAME).allPrimaryShardsActive()) {
-            logger.debug("shield user index [{}] all primary shards started, so service can start",
+            logger.debug("security index [{}] all primary shards started, so service can start",
                     ShieldTemplateService.SECURITY_INDEX_NAME);
             return true;
         }
@@ -411,7 +411,7 @@ public class ESNativeUsersStore extends AbstractComponent implements ClusterStat
                 try {
                     poller.doRun();
                 } catch (Exception e) {
-                    logger.warn("failed to do initial poll of shield users", e);
+                    logger.warn("failed to do initial poll of users", e);
                 }
                 versionChecker = threadPool.scheduleWithFixedDelay(poller,
                         settings.getAsTime("shield.authc.native.reload.interval", TimeValue.timeValueSeconds(30L)));
@@ -488,7 +488,7 @@ public class ESNativeUsersStore extends AbstractComponent implements ClusterStat
         final boolean exists = event.state().metaData().indices().get(ShieldTemplateService.SECURITY_INDEX_NAME) != null;
         // make sure all the primaries are active
         if (exists && event.state().routingTable().index(ShieldTemplateService.SECURITY_INDEX_NAME).allPrimaryShardsActive()) {
-            logger.debug("shield user index [{}] all primary shards started, so polling can start",
+            logger.debug("security index [{}] all primary shards started, so polling can start",
                     ShieldTemplateService.SECURITY_INDEX_NAME);
             shieldIndexExists = true;
         } else {
@@ -540,7 +540,7 @@ public class ESNativeUsersStore extends AbstractComponent implements ClusterStat
                 return;
             }
             if (shieldIndexExists == false) {
-                logger.trace("cannot poll for user changes since shield admin index [{}] does not exist", ShieldTemplateService
+                logger.trace("cannot poll for user changes since security index [{}] does not exist", ShieldTemplateService
                         .SECURITY_INDEX_NAME);
                 return;
             }
@@ -647,7 +647,7 @@ public class ESNativeUsersStore extends AbstractComponent implements ClusterStat
                     keepScrolling = response.getHits().getHits().length > 0;
                 }
             } catch (IndexNotFoundException e) {
-                logger.trace("shield user index does not exist", e);
+                logger.trace("security index does not exist", e);
             } finally {
                 if (response != null) {
                     ClearScrollRequest clearScrollRequest = client.prepareClearScroll().addScrollId(response.getScrollId()).request();
