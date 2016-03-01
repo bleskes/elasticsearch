@@ -139,8 +139,8 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
 
     public static final String DEFAULT_RECORD_SORT_FIELD = AnomalyRecord.PROBABILITY;
 
-    private static final String MAX_JOBS_FACTOR_NAME = "prelert.max.jobs.factor";
-    private static final double DEFAULT_MAX_JOBS_FACTOR = 3.0;
+    private static final String MAX_JOBS_FACTOR_NAME = "max.jobs.factor";
+    private static final double DEFAULT_MAX_JOBS_FACTOR = 6.0;
 
     private static final int LAST_DATA_TIME_CACHE_SIZE = 1000;
     private static final int LAST_DATA_TIME_MIN_UPDATE_INTERVAL_MS = 1000;

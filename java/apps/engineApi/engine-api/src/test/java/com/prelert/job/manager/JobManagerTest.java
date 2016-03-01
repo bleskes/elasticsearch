@@ -137,7 +137,7 @@ public class JobManagerTest
     @After
     public void tearDown()
     {
-        System.clearProperty("prelert.max.jobs.factor");
+        System.clearProperty("max.jobs.factor");
     }
 
     @Test
@@ -373,7 +373,7 @@ public class JobManagerTest
             MissingFieldException, JobInUseException, HighProportionOfBadTimestampsException,
             OutOfOrderRecordsException, TooManyJobsException, MalformedJsonException
     {
-        System.setProperty("prelert.max.jobs.factor", "5.0");
+        System.setProperty("max.jobs.factor", "5.0");
         when(m_JobProvider.getJobDetails("foo")).thenReturn(
                 Optional.of(new JobDetails("foo", new JobConfiguration())));
         givenProcessInfo(5);
@@ -398,7 +398,7 @@ public class JobManagerTest
             MissingFieldException, JobInUseException, HighProportionOfBadTimestampsException,
             OutOfOrderRecordsException, TooManyJobsException, MalformedJsonException
     {
-        System.setProperty("prelert.max.jobs.factor", "invalid");
+        System.setProperty("max.jobs.factor", "invalid");
         when(m_JobProvider.getJobDetails("foo")).thenReturn(
                 Optional.of(new JobDetails("foo", new JobConfiguration())));
         givenProcessInfo(5);
