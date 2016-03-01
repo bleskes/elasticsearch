@@ -44,13 +44,13 @@ import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.delete.DeleteAction;
 import org.elasticsearch.action.delete.DeleteRequestBuilder;
+import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.search.SearchAction;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.index.query.HasParentQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.search.SearchHit;
 
 import com.prelert.job.JobDetails;
@@ -132,17 +132,17 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
             XContentBuilder content = serialiseBucket(bucket);
 
             LOGGER.trace("ES API CALL: index type " + Bucket.TYPE +
-                    " to index " + m_JobId.getIndex() + " with ID " + bucket.getId() +
-                    ", interim " + bucket.isInterim());
-
-            m_Client.prepareIndex(m_JobId.getIndex(), Bucket.TYPE, bucket.getId())
+                    " to index " + m_JobId.getIndex() + " with ID " + bucket.getId());
+            IndexResponse response = m_Client.prepareIndex(m_JobId.getIndex(), Bucket.TYPE, bucket.getId())
                     .setSource(content)
                     .execute().actionGet();
 
-            // Delete any interim results that exist before this bucket
-            if (!bucket.isInterim())
+            if (response.isCreated() == false)
             {
-            	deletePriorInterimRecords(bucket);
+                LOGGER.debug(String.format("Bucket %s document has been overwritten",
+                        bucket.getId()));
+
+                deleteRecords(bucket);
             }
 
             if (bucket.getInfluencers() != null && bucket.getInfluencers().isEmpty() == false)
@@ -197,7 +197,6 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
                     }
                 }
             }
-            commitWrites();
         }
         catch (IOException e)
         {
@@ -486,10 +485,10 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
         return builder;
     }
 
-    private void deleteRecordsById(String id)
+    private void deleteRecords(Bucket bucket)
     {
         HasParentQueryBuilder recordsQuery = QueryBuilders.hasParentQuery(Bucket.TYPE,
-                QueryBuilders.matchQuery(Bucket.ID, id));
+                QueryBuilders.matchQuery(Bucket.ID, bucket.getId()));
 
         SearchResponse searchResponse = SearchAction.INSTANCE.newRequestBuilder(m_Client)
                 .setIndices(m_JobId.getIndex())
@@ -497,38 +496,11 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
                 .execute().actionGet();
 
         DeleteRequestBuilder deleteRequest = DeleteAction.INSTANCE.newRequestBuilder(m_Client)
-                .setIndex(m_JobId.getIndex()).setParent(id);
+                .setIndex(m_JobId.getIndex()).setParent(bucket.getId());
         for (SearchHit hit : searchResponse.getHits())
         {
-        	LOGGER.trace("Removing records that are in unwanted buckets " + hit.toString());
             deleteRequest.setType(AnomalyRecord.TYPE).setId(hit.getId()).execute().actionGet();
         }
-    }
-
-    private void deletePriorInterimRecords(Bucket bucket)
-    {
-    	// Delete interim results before the time of the current bucket: records and buckets
-    	LOGGER.trace("Deleting prior interim records for bucket at " + bucket.getId());
-
-    	QueryBuilder qb = QueryBuilders.boolQuery().must(
-    			QueryBuilders.rangeQuery(Bucket.ID)
-    				.from("0")
-    				.to(bucket.getId())
-    				.includeUpper(true))
-    			.must(QueryBuilders.matchQuery(Bucket.IS_INTERIM, "true"));
-
-    	SearchResponse searchResponse = SearchAction.INSTANCE.newRequestBuilder(m_Client)
-    			.setIndices(m_JobId.getIndex())
-    			.setQuery(qb)
-    			.execute().actionGet();
-
-    	for (SearchHit hit : searchResponse.getHits())
-    	{
-    		LOGGER.trace("- Got search hit for bucket: " + hit.toString() + ", " + hit.getId());
-    		deleteRecordsById(hit.getId());
-    		DeleteAction.INSTANCE.newRequestBuilder(m_Client).setIndex(m_JobId.getIndex())
-    			.setType(Bucket.TYPE).setId(hit.getId()).execute().actionGet();
-    	}
     }
 
     private XContentBuilder serialiseCategoryDefinition(CategoryDefinition category)
