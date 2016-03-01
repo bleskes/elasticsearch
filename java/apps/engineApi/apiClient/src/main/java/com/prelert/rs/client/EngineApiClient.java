@@ -339,7 +339,7 @@ public class EngineApiClient implements Closeable
      * Read the input stream in 4Mb chunks and upload making a new connection
      * for each chunk.
      * The data is not set line-by-line or broken in chunks on newline
-     * boundaries it is send in fixed size blocks. The API will manage
+     * boundaries; it is sent in fixed size blocks. The API will manage
      * reconstructing the records from the chunks.
      *
      * @param jobId The Job's unique Id

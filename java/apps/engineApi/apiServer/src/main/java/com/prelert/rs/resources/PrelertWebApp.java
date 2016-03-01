@@ -192,7 +192,7 @@ public class PrelertWebApp extends Application
         // The number of processors affects the size of ES thread pools, so it
         // can sometimes be desirable to frig it
         String numProcessors = System.getProperty(ES_PROCESSORS_PROP);
-        return ElasticsearchNodeClientFactory.create(host, clusterName,portRange, numProcessors);
+        return ElasticsearchNodeClientFactory.create(host, clusterName, portRange, numProcessors);
     }
 
     private JobManager createJobManager(JobProvider jobProvider, ElasticsearchFactory esFactory,
