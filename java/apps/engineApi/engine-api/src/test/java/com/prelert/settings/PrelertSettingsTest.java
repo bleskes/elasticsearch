@@ -57,7 +57,9 @@ public class PrelertSettingsTest
         String content = "";
         try (InputStream input = new ByteArrayInputStream(content.getBytes(StandardCharsets.UTF_8)))
         {
-            PrelertSettings.parseSettings(input);
+            Map<Object, Object> settings = PrelertSettings.parseSettings(input);
+
+            assertNull(settings);
         }
     }
 

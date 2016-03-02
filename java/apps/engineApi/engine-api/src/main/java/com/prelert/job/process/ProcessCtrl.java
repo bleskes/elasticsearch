@@ -70,7 +70,22 @@ public class ProcessCtrl
     private static final Logger LOGGER = Logger.getLogger(ProcessCtrl.class);
 
     /**
-     * System property storing the Elasticsearch HTTP port
+     * Config setting storing the Elasticsearch HTTP port
+     */
+    public static final String ES_HOST_PROP = "es.host";
+
+    /**
+     * Default Elasticsearch host
+     */
+    public static final String DEFAULT_ES_HOST = "localhost";
+
+    /**
+     * Host for the Elasticsearch we'll pass on to the Autodetect API program
+     */
+    public static final String ES_HOST;
+
+    /**
+     * Config setting storing the Elasticsearch HTTP port
      */
     public static final String ES_HTTP_PORT_PROP = "es.http.port";
 
@@ -125,11 +140,11 @@ public class ProcessCtrl
      */
     public static final String LIB_PATH_ENV;
     /**
-     * Name of the System property containing the value of Prelert Home
+     * Name of the config setting containing the value of Prelert Home
      */
     public static final String PRELERT_HOME_PROPERTY = "prelert.home";
     /**
-     * Name of the System property path to the logs directory
+     * Name of the config setting containing the path to the logs directory
      */
     public static final String PRELERT_LOGS_PROPERTY = "prelert.logs";
     /**
@@ -138,7 +153,7 @@ public class ProcessCtrl
     public static final String MAX_ANOMALY_RECORDS_PROPERTY = "max.anomaly.records";
     private static final String DEFAULT_MAX_NUM_RECORDS = "500";
     /**
-     * OSX library path variable
+     * Mac OS X library path variable
      */
     private static final String OSX_LIB_PATH_ENV = "DYLD_LIBRARY_PATH";
     /**
@@ -223,7 +238,7 @@ public class ProcessCtrl
     private static final String QUANTILES_FILE_EXTENSION = ".json";
 
     /**
-     * System property storing the flag that disables model persistence
+     * Config setting storing the flag that disables model persistence
      */
     public static final String DONT_PERSIST_MODEL_STATE = "no.model.state.persist";
 
@@ -240,6 +255,7 @@ public class ProcessCtrl
     static
     {
         ES_HTTP_PORT = PrelertSettings.getSettingText(ES_HTTP_PORT_PROP, DEFAULT_ES_HTTP_PORT);
+        ES_HOST = PrelertSettings.getSettingText(ES_HOST_PROP, DEFAULT_ES_HOST);
 
         String prelertHome = PrelertSettings.getSettingText(PRELERT_HOME_PROPERTY, ".");
 
@@ -607,7 +623,7 @@ public class ProcessCtrl
         if (PrelertSettings.getSetting(DONT_PERSIST_MODEL_STATE) != null)
         {
             logger.info("Will not persist model state - " +
-                    DONT_PERSIST_MODEL_STATE + " property was specified");
+                    DONT_PERSIST_MODEL_STATE + " setting was set");
         }
         else
         {
@@ -617,7 +633,7 @@ public class ProcessCtrl
             }
 
             String persistUrlBase = PERSIST_URL_BASE_ARG +
-                    "http://localhost:" + ES_HTTP_PORT + '/' + ES_INDEX_PREFIX + job.getId();
+                    "http://" + ES_HOST + ":" + ES_HTTP_PORT + "/" + ES_INDEX_PREFIX + job.getId();
             command.add(persistUrlBase);
 
             // Persist model state every few hours even if the job isn't closed

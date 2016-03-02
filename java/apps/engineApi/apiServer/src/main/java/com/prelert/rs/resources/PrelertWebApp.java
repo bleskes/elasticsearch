@@ -93,10 +93,6 @@ public class PrelertWebApp extends Application
      */
     public static final String DEFAULT_CLUSTER_NAME = "prelert";
 
-    private static final String DEFAULT_ES_HOST = "localhost";
-
-    private static final String ES_HOST_PROP = "es.host";
-
     public static final String ES_CLUSTER_NAME_PROP = "es.cluster.name";
 
     public static final String ES_TRANSPORT_PORT_RANGE = "es.transport.tcp.port";
@@ -177,15 +173,15 @@ public class PrelertWebApp extends Application
 
     private ElasticsearchFactory createPersistenceFactory()
     {
-        String host = PrelertSettings.getSettingText(ES_HOST_PROP, DEFAULT_ES_HOST);
+        String host = PrelertSettings.getSettingText(ProcessCtrl.ES_HOST_PROP, ProcessCtrl.DEFAULT_ES_HOST);
         String clusterName = PrelertSettings.getSettingText(ES_CLUSTER_NAME_PROP, DEFAULT_CLUSTER_NAME);
         String portRange = PrelertSettings.getSettingText(ES_TRANSPORT_PORT_RANGE, DEFAULT_ES_TRANSPORT_PORT_RANGE);
 
         String resultsStorageClient = PrelertSettings.getSettingText(RESULTS_STORAGE_CLIENT_PROP, ES_NODE);
         if (resultsStorageClient.equals(ES_TRANSPORT))
         {
-            LOGGER.info("Connecting to Elasticsearch via transport client");
             String hostAndPort = host + ":" + portRange.split("-", 2)[0];
+            LOGGER.info("Connecting to Elasticsearch via transport client to " + hostAndPort);
             return ElasticsearchTransportClientFactory.create(hostAndPort, clusterName);
         }
 

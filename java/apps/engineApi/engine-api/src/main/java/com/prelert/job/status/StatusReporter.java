@@ -108,14 +108,9 @@ public class StatusReporter
 
     private static int readIntPropertyOrDefault(String key, int defaultValue)
     {
-        String prop = PrelertSettings.getSettingText(key);
-        // This relies on the inconsistent behaviour that Integer.parseInt()
-        // throws a NumberFormatException for a null argument.
-        // Double.parseDouble() doesn't, so beware!
-        // See http://bugs.java.com/view_bug.do?bug_id=4787924
         try
         {
-            return Integer.parseInt(prop);
+            return Integer.parseInt(PrelertSettings.getSettingText(key));
         }
         catch (NumberFormatException e)
         {
