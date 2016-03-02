@@ -186,13 +186,17 @@ public class PrelertWebApp extends Application
         {
             LOGGER.info("Connecting to Elasticsearch via transport client");
             String hostAndPort = host + ":" + portRange.split("-", 2)[0];
-            return ElasticsearchTransportClientFactory.create(host, clusterName);
+            return ElasticsearchTransportClientFactory.create(hostAndPort, clusterName);
         }
 
         LOGGER.info("Connecting to Elasticsearch via node client");
         // The number of processors affects the size of ES thread pools, so it
         // can sometimes be desirable to frig it
-        String numProcessors = PrelertSettings.getSettingText(ES_PROCESSORS_PROP);
+        String numProcessors = null;
+        if (PrelertSettings.getSetting(ES_PROCESSORS_PROP) != null)
+        {
+            numProcessors = PrelertSettings.getSettingText(ES_PROCESSORS_PROP);
+        }
         return ElasticsearchNodeClientFactory.create(host, clusterName, portRange, numProcessors);
     }
 

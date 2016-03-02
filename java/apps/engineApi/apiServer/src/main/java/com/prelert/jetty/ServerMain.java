@@ -107,18 +107,11 @@ public class ServerMain
         Log.setLog(new Slf4jLog());
 
         int jettyPort = JETTY_PORT;
-        String portProp = PrelertSettings.getSettingText(JETTY_PORT_PROPERTY);
+        String portProp = PrelertSettings.getSettingText(JETTY_PORT_PROPERTY, Integer.toString(JETTY_PORT));
         try
         {
-            if (portProp == null)
-            {
-                LOGGER.info("Using default port " + JETTY_PORT);
-            }
-            else
-            {
-                jettyPort = Integer.parseInt(portProp);
-                LOGGER.info("Using port " + jettyPort);
-            }
+            jettyPort = Integer.parseInt(portProp);
+            LOGGER.info("Using port " + jettyPort);
         }
         catch (NumberFormatException e)
         {

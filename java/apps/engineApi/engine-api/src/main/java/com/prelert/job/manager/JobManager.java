@@ -1016,11 +1016,7 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
 
     private static double readMaxJobsFactorOrDefault()
     {
-        String readMaxJobsFactor = PrelertSettings.getSettingText(MAX_JOBS_FACTOR_NAME);
-        if (readMaxJobsFactor == null)
-        {
-            return DEFAULT_MAX_JOBS_FACTOR;
-        }
+        String readMaxJobsFactor = PrelertSettings.getSettingText(MAX_JOBS_FACTOR_NAME, Double.toString(DEFAULT_MAX_JOBS_FACTOR));
         try
         {
             return Double.parseDouble(readMaxJobsFactor);
