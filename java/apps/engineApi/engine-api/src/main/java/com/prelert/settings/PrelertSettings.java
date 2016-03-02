@@ -30,8 +30,8 @@ package com.prelert.settings;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.InputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -166,9 +166,7 @@ public final class PrelertSettings
         }
 
         // This is a setting where we'll accept config file values
-        Map<Object, Object> fileSettings = getFileSettings();
-        Object fileValue = fileSettings.get(settingName);
-        return (fileValue != null) ? fileValue : defaultValue;
+        return getFileSettings().getOrDefault(settingName, defaultValue);
     }
 
     /**
@@ -194,9 +192,7 @@ public final class PrelertSettings
         Object setting = getSetting(settingName, defaultValue);
         if (setting instanceof String)
         {
-            @SuppressWarnings("unchecked")
-            String strSetting = (String)setting;
-            return strSetting;
+            return (String) setting;
         }
         return "" + setting;
     }

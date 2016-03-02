@@ -33,16 +33,15 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.ByteArrayInputStream;
-import java.io.InputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
-
 import org.yaml.snakeyaml.error.YAMLException;
 
 
@@ -58,7 +57,7 @@ public class PrelertSettingsTest
         String content = "";
         try (InputStream input = new ByteArrayInputStream(content.getBytes(StandardCharsets.UTF_8)))
         {
-            Map<Object, Object> settings = PrelertSettings.parseSettings(input);
+            PrelertSettings.parseSettings(input);
         }
     }
 
@@ -75,7 +74,7 @@ public class PrelertSettingsTest
         String content = "name: value: unexpected";
         try (InputStream input = new ByteArrayInputStream(content.getBytes(StandardCharsets.UTF_8)))
         {
-            Map<Object, Object> settings = PrelertSettings.parseSettings(input);
+            PrelertSettings.parseSettings(input);
         }
     }
 
