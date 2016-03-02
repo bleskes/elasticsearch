@@ -564,6 +564,14 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
         m_JobProvider.updateJob(jobId, update);
     }
 
+    public void updateIgnoreInitialBuckets(String jobId, Boolean ignoreInitialBuckets)
+            throws UnknownJobException
+    {
+        Map<String, Object> update = new HashMap<>();
+        update.put(JobDetails.IGNORE_INITIAL_BUCKETS, ignoreInitialBuckets);
+        m_JobProvider.updateJob(jobId, update);
+    }
+
     /**
      * Set the job's description.
      * If the description cannot be set an exception is thrown.
@@ -775,6 +783,11 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
             }
             DataCounts stats = tryProcessingDataLoadJob(jobDetails.get(), input, params);
             updateLastDataTime(jobId, new Date());
+            if (Boolean.TRUE.equals(jobDetails.get().isIgnoreInitialBuckets())
+                    && stats.getProcessedRecordCount() > 0)
+            {
+                updateIgnoreInitialBuckets(jobId, null);
+            }
             return stats;
         }
     }
@@ -1058,5 +1071,26 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
     public Auditor systemAudit()
     {
         return m_JobProvider.audit("");
+    }
+
+    public void setIgnoreInitialBucketsToAllJobs()
+    {
+        LOGGER.info("Setting ignoreInitialBuckets to all jobs");
+        for (JobDetails job : getJobs(0, MAX_JOBS_TO_RESTART).queryResults())
+        {
+            // Only set if job has seen data
+            DataCounts counts = job.getCounts();
+            if (counts != null && counts.getProcessedRecordCount() > 0)
+            {
+                try
+                {
+                    updateIgnoreInitialBuckets(job.getId(), true);
+                }
+                catch (UnknownJobException e)
+                {
+                    LOGGER.error("Could not set ignoreInitialBuckets on job " + e.getJobId(), e);
+                }
+            }
+        }
     }
 }

@@ -101,6 +101,8 @@ public class PrelertWebApp extends Application
 
     private static final String ES_PROCESSORS_PROP = "es.processors";
 
+    private static final String IGNORE_INITIAL_BUCKETS_PROP = "ignoreInitialBuckets";
+
     /**
      * This property specifies the client that should be used to connect
      * to the storage of the results.
@@ -155,7 +157,7 @@ public class PrelertWebApp extends Application
 
         writeServerInfoDailyStartingNow();
         scheduleOldDataRemovalAtMidnight(jobProvider, esFactory);
-        m_JobManager.restartScheduledJobs();
+        restartJobManager();
 
         m_Singletons = new HashSet<>();
         m_Singletons.add(m_JobManager);
@@ -202,6 +204,15 @@ public class PrelertWebApp extends Application
         return new JobManager(jobProvider,
                 createProcessManager(jobProvider, esFactory, jobLoggerFactory),
                 new DataExtractorFactoryImpl(), jobLoggerFactory);
+    }
+
+    private void restartJobManager()
+    {
+        if (PrelertSettings.getSetting(IGNORE_INITIAL_BUCKETS_PROP) != null)
+        {
+            m_JobManager.setIgnoreInitialBucketsToAllJobs();
+        }
+        m_JobManager.restartScheduledJobs();
     }
 
     private void addEndPoints()

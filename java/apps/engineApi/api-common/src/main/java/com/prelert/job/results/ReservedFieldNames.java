@@ -181,6 +181,7 @@ public final class ReservedFieldNames
         JobDetails.ANALYSIS_LIMITS,
         JobDetails.TRANSFORMS,
         JobDetails.MODEL_DEBUG_CONFIG,
+        JobDetails.IGNORE_INITIAL_BUCKETS,
         JobDetails.CUSTOM_SETTINGS,
 
         ModelDebugConfig.WRITE_TO,

@@ -89,9 +89,11 @@ public class ProcessCtrlTest
         dd.setTimeField("tf");
         job.setDataDescription(dd);
 
+        job.setIgnoreInitialBuckets(true);
+
         List<String> command = ProcessCtrl.buildAutoDetectCommand(job, m_Logger, null);
 
-        assertEquals(14, command.size());
+        assertEquals(15, command.size());
         assertTrue(command.contains(ProcessCtrl.AUTODETECT_PATH));
         assertTrue(command.contains(ProcessCtrl.BATCH_SPAN_ARG + "100"));
         assertTrue(command.contains(ProcessCtrl.BUCKET_SPAN_ARG + "120"));
@@ -112,6 +114,7 @@ public class ProcessCtrlTest
         assertTrue(command.contains(ProcessCtrl.MAX_QUANTILE_INTERVAL_ARG + expectedMaxQuantileInterval));
         assertTrue(command.contains(ProcessCtrl.PERSIST_URL_BASE_ARG +
                         "http://localhost:" + ProcessCtrl.ES_HTTP_PORT + "/prelertresults-unit-test-job"));
+        assertTrue(command.contains(ProcessCtrl.IGNORE_INITIAL_BUCKETS_ARG));
     }
 
     @Test
@@ -142,6 +145,17 @@ public class ProcessCtrlTest
 
         command = ProcessCtrl.buildAutoDetectCommand(job, m_Logger, null);
         assertTrue(command.contains(ProcessCtrl.PERSIST_INTERVAL_ARG + expectedPersistInterval));
+    }
+
+    @Test
+    public void testBuildAutoDetectCommand_GivenNoIgnoreInitialBuckets()
+    {
+        JobDetails job = new JobDetails();
+        job.setId("foo");
+
+        List<String> command = ProcessCtrl.buildAutoDetectCommand(job, m_Logger, null);
+
+        assertFalse(command.contains(ProcessCtrl.IGNORE_INITIAL_BUCKETS_ARG));
     }
 
     @Test

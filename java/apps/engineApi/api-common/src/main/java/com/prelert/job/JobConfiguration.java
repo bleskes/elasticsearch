@@ -76,6 +76,7 @@ public class JobConfiguration
     private Long m_BackgroundPersistInterval;
     private Long m_ModelSnapshotRetentionDays;
     private Long m_ResultsRetentionDays;
+    private Boolean m_IgnoreInitialBuckets;
     private Map<String, Object> m_CustomSettings;
 
     public JobConfiguration()
@@ -283,5 +284,15 @@ public class JobConfiguration
     public void setResultsRetentionDays(Long resultsRetentionDays)
     {
         m_ResultsRetentionDays = resultsRetentionDays;
+    }
+
+    public Boolean isIgnoreInitialBuckets()
+    {
+        return m_IgnoreInitialBuckets;
+    }
+
+    public void setIgnoreInitialBucket(Boolean ignoreInitialBuckets)
+    {
+        m_IgnoreInitialBuckets = ignoreInitialBuckets;
     }
 }
