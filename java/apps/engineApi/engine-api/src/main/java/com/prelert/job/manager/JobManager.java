@@ -559,17 +559,21 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
     public void updateCustomSettings(String jobId, Map<String, Object> customSettings)
             throws UnknownJobException
     {
+        updateJobTopLevelKeyValue(jobId, JobDetails.CUSTOM_SETTINGS, customSettings);
+    }
+
+    private void updateJobTopLevelKeyValue(String jobId, String key, Object value)
+            throws UnknownJobException
+    {
         Map<String, Object> update = new HashMap<>();
-        update.put(JobDetails.CUSTOM_SETTINGS, customSettings);
+        update.put(key, value);
         m_JobProvider.updateJob(jobId, update);
     }
 
     public void updateIgnoreInitialBuckets(String jobId, Boolean ignoreInitialBuckets)
             throws UnknownJobException
     {
-        Map<String, Object> update = new HashMap<>();
-        update.put(JobDetails.IGNORE_INITIAL_BUCKETS, ignoreInitialBuckets);
-        m_JobProvider.updateJob(jobId, update);
+        updateJobTopLevelKeyValue(jobId, JobDetails.IGNORE_INITIAL_BUCKETS, ignoreInitialBuckets);
     }
 
     /**
@@ -583,9 +587,7 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
     public void setDescription(String jobId, String description)
     throws UnknownJobException
     {
-        Map<String, Object> update = new HashMap<>();
-        update.put(JobDetails.DESCRIPTION, description);
-        m_JobProvider.updateJob(jobId, update);
+        updateJobTopLevelKeyValue(jobId, JobDetails.DESCRIPTION, description);
     }
 
     public void setModelDebugConfig(String jobId, ModelDebugConfig modelDebugConfig)
@@ -609,23 +611,17 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
 
     public void setRenormalizationWindow(String jobId, Long renormalizationWindow) throws UnknownJobException
     {
-        Map<String, Object> update = new HashMap<>();
-        update.put(JobDetails.RENORMALIZATION_WINDOW, renormalizationWindow);
-        m_JobProvider.updateJob(jobId, update);
+        updateJobTopLevelKeyValue(jobId, JobDetails.RENORMALIZATION_WINDOW, renormalizationWindow);
     }
 
     public void setModelSnapshotRetentionDays(String jobId, Long retentionDays) throws UnknownJobException
     {
-        Map<String, Object> update = new HashMap<>();
-        update.put(JobDetails.MODEL_SNAPSHOT_RETENTION_DAYS, retentionDays);
-        m_JobProvider.updateJob(jobId, update);
+        updateJobTopLevelKeyValue(jobId, JobDetails.MODEL_SNAPSHOT_RETENTION_DAYS, retentionDays);
     }
 
     public void setResultsRetentionDays(String jobId, Long retentionDays) throws UnknownJobException
     {
-        Map<String, Object> update = new HashMap<>();
-        update.put(JobDetails.RESULTS_RETENTION_DAYS, retentionDays);
-        m_JobProvider.updateJob(jobId, update);
+        updateJobTopLevelKeyValue(jobId, JobDetails.RESULTS_RETENTION_DAYS, retentionDays);
     }
 
     /**
@@ -700,9 +696,7 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
         if (newTimeEpochMs - lastDataTimeEpochMs >= LAST_DATA_TIME_MIN_UPDATE_INTERVAL_MS)
         {
             m_LastDataTimePerJobCache.put(jobId, newTimeEpochMs);
-            Map<String, Object> update = new HashMap<>();
-            update.put(JobDetails.LAST_DATA_TIME, time);
-            m_JobProvider.updateJob(jobId, update);
+            updateJobTopLevelKeyValue(jobId, JobDetails.LAST_DATA_TIME, time);
         }
     }
 
