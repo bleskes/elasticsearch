@@ -194,7 +194,7 @@ public class Detector
 
     /**
      * field names cannot contain any of these characters
-     *     [, ], (, ), =, ", \, -
+     *     ", \
      */
     public static final Character [] PROHIBITED_FIELDNAME_CHARACTERS = {'"', '\\'};
     public static final String PROHIBITED = String.join(",",
