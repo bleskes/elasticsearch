@@ -385,7 +385,7 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
      * Get a single result bucket
      *
      * @param jobId
-     * @param bucketId
+     * @param timestamp
      * @param expand Include anomaly records. If false the bucket's records
      *  are set to <code>null</code> so they aren't serialised
      * @param includeInterim Include interim results
@@ -394,10 +394,10 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
      * @throws UnknownJobException
      */
     public Optional<Bucket> bucket(String jobId,
-            String bucketId, boolean expand, boolean includeInterim)
+            String timestamp, boolean expand, boolean includeInterim)
     throws NativeProcessRunException, UnknownJobException
     {
-         Optional<Bucket> result = m_JobProvider.bucket(jobId, bucketId, expand, includeInterim);
+    	Optional<Bucket> result = m_JobProvider.bucket(jobId, timestamp, expand, includeInterim);
 
         if (result.isPresent() && !expand)
         {

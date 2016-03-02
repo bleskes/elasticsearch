@@ -169,7 +169,7 @@ public class Buckets extends ResourceWithJobManager
      *
      *
      * @param jobId
-     * @param bucketId
+     * @param timestamp
      * @param expand Return anomaly records in-line with the bucket,
      * default is false
      * @param includeInterim Include interim results - default is false
@@ -178,31 +178,31 @@ public class Buckets extends ResourceWithJobManager
      * @throws NativeProcessRunException
      */
     @GET
-    @Path("/{jobId}/buckets/{bucketId}")
+    @Path("/{jobId}/buckets/{timestamp}")
     @Produces(MediaType.APPLICATION_JSON)
     public Response bucket(@PathParam("jobId") String jobId,
-            @PathParam("bucketId") String bucketId,
+            @PathParam("timestamp") String timestamp,
             @DefaultValue("false") @QueryParam(EXPAND_QUERY_PARAM) boolean expand,
             @DefaultValue("false") @QueryParam(INCLUDE_INTERIM_QUERY_PARAM) boolean includeInterim)
     throws NativeProcessRunException, UnknownJobException
     {
         LOGGER.debug(String.format("Get %sbucket %s for job %s, %s interim results",
-                expand ? "expanded " : "", bucketId, jobId,
+                expand ? "expanded " : "", timestamp, jobId,
                 includeInterim ? "including" : "excluding"));
 
         JobManager manager = jobManager();
-        Optional<Bucket> b = manager.bucket(jobId, bucketId, expand, includeInterim);
-        SingleDocument<Bucket> bucket = singleDocFromOptional(b, bucketId, Bucket.TYPE);
+        Optional<Bucket> b = manager.bucket(jobId, timestamp, expand, includeInterim);
+        SingleDocument<Bucket> bucket = singleDocFromOptional(b, timestamp, Bucket.TYPE);
 
         if (bucket.isExists())
         {
             LOGGER.debug(String.format("Returning bucket %s for job %s",
-                    bucketId, jobId));
+            		timestamp, jobId));
         }
         else
         {
             LOGGER.debug(String.format("Cannot find bucket %s for job %s",
-                    bucketId, jobId));
+            		timestamp, jobId));
 
             return Response.status(Response.Status.NOT_FOUND).entity(bucket).build();
         }

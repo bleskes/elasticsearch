@@ -87,13 +87,13 @@ public interface JobResultsProvider extends Shutdownable
      * Get the bucket by Id from the job.
      *
      * @param jobId
-     * @param bucketId
+     * @param timestamp
      * @param expand Include anomaly records
      * @param includeInterim Include interim results
      * @return Optional Bucket
      * @throws UnknownJobException If the job id is no recognised
      */
-    Optional<Bucket> bucket(String jobId, String bucketId, boolean expand, boolean includeInterim)
+    Optional<Bucket> bucket(String jobId, String timestamp, boolean expand, boolean includeInterim)
             throws UnknownJobException;
 
     /**

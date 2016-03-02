@@ -25,8 +25,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 
-import org.apache.log4j.Logger;
-
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -35,7 +33,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 /**
  * Bucket Result POJO
  */
-@JsonIgnoreProperties({"epoch", "normalisable"})
+@JsonIgnoreProperties({"epoch", "normalisable", "id"})
 @JsonInclude(Include.NON_NULL)
 public class Bucket
 {
@@ -61,8 +59,7 @@ public class Bucket
      */
     public static final String TYPE = "bucket";
 
-    private static final Logger LOGGER = Logger.getLogger(Bucket.class);
-
+    private String m_Id;
     private Date m_Timestamp;
     private double m_AnomalyScore;
 
@@ -85,35 +82,14 @@ public class Bucket
         m_BucketInfluencers = new ArrayList<>();
     }
 
-    /**
-     * The bucket Id is the bucket's timestamp in seconds
-     * from the epoch. As the id is derived from the timestamp
-     * field it doesn't need to be serialised, however, in the
-     * past it was serialised accidentally, so it still is.
-     *
-     * @return The bucket id
-     */
     public String getId()
     {
-        return Long.toString(getEpoch()).intern();
+        return m_Id;
     }
 
-    /**
-     * Set the ID and derive the timestamp from it.  It MUST be
-     * a number that corresponds to the bucket's timestamp in seconds
-     * from the epoch.
-     */
     public void setId(String id)
     {
-        try
-        {
-            long epoch = Long.parseLong(id);
-            m_Timestamp = new Date(epoch * 1000);
-        }
-        catch (NumberFormatException nfe)
-        {
-            LOGGER.error("Could not parse ID " + id + " as a long");
-        }
+    	m_Id = id;
     }
 
     /**

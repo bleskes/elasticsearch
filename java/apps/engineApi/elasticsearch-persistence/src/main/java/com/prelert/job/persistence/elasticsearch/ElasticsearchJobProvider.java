@@ -64,6 +64,7 @@ import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.indices.IndexAlreadyExistsException;
 import org.elasticsearch.node.Node;
 import org.elasticsearch.search.SearchHit;
+import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.sort.FieldSortBuilder;
 import org.elasticsearch.search.sort.SortBuilder;
 import org.elasticsearch.search.sort.SortOrder;
@@ -643,17 +644,25 @@ public class ElasticsearchJobProvider implements JobProvider
 
     @Override
     public Optional<Bucket> bucket(String jobId,
-            String bucketId, boolean expand, boolean includeInterim)
+            String timestamp, boolean expand, boolean includeInterim)
     throws UnknownJobException
     {
         ElasticsearchJobId elasticJobId = new ElasticsearchJobId(jobId);
-        GetResponse response;
+        SearchHits hits;
 
         try
         {
-            LOGGER.trace("ES API CALL: get ID " + bucketId + " type " + Bucket.TYPE +
+            LOGGER.debug("ES API CALL: get ID " + timestamp + " type " + Bucket.TYPE +
                     " from index " + elasticJobId.getIndex());
-            response = m_Client.prepareGet(elasticJobId.getIndex(), Bucket.TYPE, bucketId).get();
+            
+            QueryBuilder qb = QueryBuilders.matchQuery(ElasticsearchMappings.ES_TIMESTAMP, timestamp);
+            
+            SearchResponse searchResponse = m_Client.prepareSearch(elasticJobId.getIndex())
+                    .setTypes(Bucket.TYPE)
+                    .setQuery(qb)
+                    .get();
+            hits = searchResponse.getHits();
+            LOGGER.debug("Got hits: " + hits.getTotalHits());
         }
         catch (IndexNotFoundException e)
         {
@@ -661,14 +670,15 @@ public class ElasticsearchJobProvider implements JobProvider
         }
 
         Optional<Bucket> doc = Optional.<Bucket>empty();
-        if (response.isExists())
+        if (hits.getTotalHits() == 1L)
         {
+        	SearchHit hit = hits.getAt(0);
             // Remove the Kibana/Logstash '@timestamp' entry as stored in Elasticsearch,
             // and replace using the API 'timestamp' key.
-            Object timestamp = response.getSource().remove(ElasticsearchMappings.ES_TIMESTAMP);
-            response.getSource().put(Bucket.TIMESTAMP, timestamp);
+            Object ts = hit.getSource().remove(ElasticsearchMappings.ES_TIMESTAMP);
+            hit.getSource().put(Bucket.TIMESTAMP, ts);
 
-            Bucket bucket = m_ObjectMapper.convertValue(response.getSource(), Bucket.class);
+            Bucket bucket = m_ObjectMapper.convertValue(hit.getSource(), Bucket.class);
             if (includeInterim || bucket.isInterim() == false)
             {
                 if (expand && bucket.getRecordCount() > 0)

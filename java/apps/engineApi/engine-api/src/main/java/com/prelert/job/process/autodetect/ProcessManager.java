@@ -370,7 +370,7 @@ public class ProcessManager
     {
         /*
          * Be careful modifying this function because is can throw exceptions in
-         * different places there are quite a lot of code paths through it.
+         * different places; there are quite a lot of code paths through it.
          * Some code appears repeated but it is because of the multiple code paths
          */
         LOGGER.info("Closing job " + jobId);

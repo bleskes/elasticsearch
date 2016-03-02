@@ -45,6 +45,9 @@ import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.index.query.QueryBuilder;
+import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.search.SearchHit;
 
 import com.prelert.job.JobDetails;
 import com.prelert.job.ModelSizeStats;
@@ -126,7 +129,7 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
 
             LOGGER.trace("ES API CALL: index type " + Bucket.TYPE +
                     " to index " + m_JobId.getIndex() + " with ID " + bucket.getId());
-            IndexResponse response = m_Client.prepareIndex(m_JobId.getIndex(), Bucket.TYPE, bucket.getId())
+            m_Client.prepareIndex(m_JobId.getIndex(), Bucket.TYPE, bucket.getId())
                     .setSource(content)
                     .execute().actionGet();
 
@@ -145,6 +148,8 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
             persistBucketInfluencersStandalone(bucket.getBucketInfluencers(),
                     bucket.getTimestamp(), bucket.isInterim());
 
+            deletePriorInterimResults();
+            
             if (bucket.getInfluencers() != null && bucket.getInfluencers().isEmpty() == false)
             {
                 BulkRequestBuilder addInfluencersRequest = m_Client.prepareBulk();
@@ -162,6 +167,7 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
 
                 LOGGER.trace("ES API CALL: bulk request with " + addInfluencersRequest.numberOfActions() + " actions");
                 BulkResponse addInfluencersResponse = addInfluencersRequest.execute().actionGet();
+                // iterate IDs over this
                 if (addInfluencersResponse.hasFailures())
                 {
                     LOGGER.error("Bulk index of Influencers has errors");
@@ -188,6 +194,7 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
 
                 LOGGER.trace("ES API CALL: bulk request with " + addRecordsRequest.numberOfActions() + " actions");
                 BulkResponse addRecordsResponse = addRecordsRequest.execute().actionGet();
+                // iterate IDs over this
                 if (addRecordsResponse.hasFailures())
                 {
                     LOGGER.error("Bulk index of AnomalyRecord has errors");
@@ -505,7 +512,6 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
     {
         XContentBuilder builder = jsonBuilder().startObject()
                 .field(JOB_ID_NAME, m_JobId.getId())
-                .field(Bucket.ID, bucket.getId())
                 .field(ElasticsearchMappings.ES_TIMESTAMP, bucket.getTimestamp())
                 .field(Bucket.ANOMALY_SCORE, bucket.getAnomalyScore())
                 .field(Bucket.INITIAL_ANOMALY_SCORE, bucket.getInitialAnomalyScore())
@@ -531,6 +537,31 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
         builder.endObject();
 
         return builder;
+    }
+    
+    private void deletePriorInterimResults(Bucket bucket)
+    {
+    	// Delete interim results before the time of the current bucket: records and buckets
+    	LOGGER.trace("Deleting prior interim records for bucket at " + bucket.getId());
+
+    	QueryBuilder qb = QueryBuilders.boolQuery().must(
+    			QueryBuilders.rangeQuery(ElasticsearchMappings.ES_TIMESTAMP)
+    				.from(new Date(0))
+    				.to(bucket.getTimestamp())
+    	            .includeUpper(true))
+    	            .must(QueryBuilders.matchQuery(Bucket.IS_INTERIM, "true"));
+    	
+    	SearchResponse searchResponse = m_Client.prepareSearch(m_JobId.getIndex())
+    			.setTypes(Bucket.TYPE)
+    			.setQuery(qb)
+    			.get();
+
+    	for (SearchHit hit : searchResponse.getHits())
+    	{
+    		LOGGER.debug("- Got search hit for bucket: " + hit.toString() + ", " + hit.getId());
+    		DeleteAction.INSTANCE.newRequestBuilder(m_Client).setIndex(m_JobId.getIndex())
+    			.setType(Bucket.TYPE).setId(hit.getId()).execute().actionGet();
+    	}
     }
 
     private XContentBuilder serialiseCategoryDefinition(CategoryDefinition category)
