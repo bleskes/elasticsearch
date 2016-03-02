@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -35,6 +35,7 @@ import com.google.common.math.LongMath;
 import com.prelert.job.DataCounts;
 import com.prelert.job.persistence.JobDataCountsPersister;
 import com.prelert.job.usage.UsageReporter;
+import com.prelert.settings.PrelertSettings;
 
 
 /**
@@ -97,17 +98,21 @@ public class StatusReporter
         m_TotalRecordStats = new DataCounts();
         m_IncrementalRecordStats = new DataCounts();
 
-        m_AcceptablePercentDateParseErrors = readPropertyOrDefault(
+        m_AcceptablePercentDateParseErrors = readIntPropertyOrDefault(
                 ACCEPTABLE_PERCENTAGE_DATE_PARSE_ERRORS_PROP,
                 ACCEPTABLE_PERCENTAGE_DATE_PARSE_ERRORS);
-        m_AcceptablePercentOutOfOrderErrors = readPropertyOrDefault(
+        m_AcceptablePercentOutOfOrderErrors = readIntPropertyOrDefault(
                 ACCEPTABLE_PERCENTAGE_OUT_OF_ORDER_ERRORS_PROP,
                 ACCEPTABLE_PERCENTAGE_OUT_OF_ORDER_ERRORS);
     }
 
-    private static int readPropertyOrDefault(String key, int defaultValue)
+    private static int readIntPropertyOrDefault(String key, int defaultValue)
     {
-        String prop = System.getProperty(key);
+        String prop = PrelertSettings.getSettingText(key);
+        // This relies on the inconsistent behaviour that Integer.parseInt()
+        // throws a NumberFormatException for a null argument.
+        // Double.parseDouble() doesn't, so beware!
+        // See http://bugs.java.com/view_bug.do?bug_id=4787924
         try
         {
             return Integer.parseInt(prop);

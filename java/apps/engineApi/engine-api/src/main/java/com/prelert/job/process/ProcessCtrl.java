@@ -52,6 +52,7 @@ import com.prelert.job.process.writer.AnalysisLimitsWriter;
 import com.prelert.job.process.writer.FieldConfigWriter;
 import com.prelert.job.process.writer.ModelDebugConfigWriter;
 import com.prelert.job.quantiles.Quantiles;
+import com.prelert.settings.PrelertSettings;
 
 
 /**
@@ -66,6 +67,8 @@ import com.prelert.job.quantiles.Quantiles;
  */
 public class ProcessCtrl
 {
+    private static final Logger LOGGER = Logger.getLogger(ProcessCtrl.class);
+
     /**
      * System property storing the Elasticsearch HTTP port
      */
@@ -126,10 +129,6 @@ public class ProcessCtrl
      */
     public static final String PRELERT_HOME_PROPERTY = "prelert.home";
     /**
-     * Name of the environment variable PRELERT_HOME
-     */
-    public static final String PRELERT_HOME_ENV = "PRELERT_HOME";
-    /**
      * Name of the System property path to the logs directory
      */
     public static final String PRELERT_LOGS_PROPERTY = "prelert.logs";
@@ -137,26 +136,23 @@ public class ProcessCtrl
      * The maximum number of anomaly records that will be written each bucket
      */
     public static final String MAX_ANOMALY_RECORDS_PROPERTY = "max.anomaly.records";
-    /**
-     * Name of the environment variable PRELERT_LOGS
-     */
-    public static final String PRELERT_LOGS_ENV = "PRELERT_LOGS";
+    private static final String DEFAULT_MAX_NUM_RECORDS = "500";
     /**
      * OSX library path variable
      */
-    public static final String OSX_LIB_PATH_ENV = "DYLD_LIBRARY_PATH";
+    private static final String OSX_LIB_PATH_ENV = "DYLD_LIBRARY_PATH";
     /**
      * Linux library path variable
      */
-    public static final String LINUX_LIB_PATH_ENV = "LD_LIBRARY_PATH";
+    private static final String LINUX_LIB_PATH_ENV = "LD_LIBRARY_PATH";
     /**
      * Windows library path variable
      */
-    public static final String WIN_LIB_PATH_ENV = "Path";
+    private static final String WIN_LIB_PATH_ENV = "Path";
     /**
      * Solaris library path variable
      */
-    public static final String SOLARIS_LIB_PATH_ENV = "LD_LIBRARY_PATH_64";
+    private static final String SOLARIS_LIB_PATH_ENV = "LD_LIBRARY_PATH_64";
 
     /*
      * General arguments
@@ -243,54 +239,25 @@ public class ProcessCtrl
      */
     static
     {
-        if (System.getProperty(ES_HTTP_PORT_PROP) != null)
-        {
-            ES_HTTP_PORT = System.getProperty(ES_HTTP_PORT_PROP);
-        }
-        else
-        {
-            ES_HTTP_PORT = DEFAULT_ES_HTTP_PORT;
-        }
+        ES_HTTP_PORT = PrelertSettings.getSettingText(ES_HTTP_PORT_PROP, DEFAULT_ES_HTTP_PORT);
 
-        String prelertHome = "";
-        if (System.getProperty(PRELERT_HOME_PROPERTY) != null)
+        String prelertHome = PrelertSettings.getSettingText(PRELERT_HOME_PROPERTY, ".");
+
+        String logPath = PrelertSettings.getSettingText(PRELERT_LOGS_PROPERTY, "logs");
+
+        String maxNumRecords = PrelertSettings.getSettingText(MAX_ANOMALY_RECORDS_PROPERTY, DEFAULT_MAX_NUM_RECORDS);
+        try
         {
-            prelertHome = System.getProperty(PRELERT_HOME_PROPERTY);
+            Integer.parseInt(maxNumRecords);
+
+            // this is an integer so use it
         }
-        else if (System.getenv().containsKey(PRELERT_HOME_ENV))
+        catch (NumberFormatException e)
         {
-            prelertHome = System.getenv().get(PRELERT_HOME_ENV);
-        }
+            LOGGER.error("Cannot parse " + MAX_ANOMALY_RECORDS_PROPERTY + "="
+                    + maxNumRecords + " as a number");
 
-        String logPath = null;
-        if (System.getProperty(PRELERT_LOGS_PROPERTY) != null)
-        {
-            logPath = System.getProperty(PRELERT_LOGS_PROPERTY);
-        }
-        else if (System.getenv().containsKey(PRELERT_LOGS_ENV))
-        {
-            logPath = System.getenv().get(PRELERT_LOGS_ENV);
-        }
-
-        String maxNumRecords = "500";
-        if (System.getProperty(MAX_ANOMALY_RECORDS_PROPERTY) != null)
-        {
-            try
-            {
-                Integer.parseInt(System.getProperty(MAX_ANOMALY_RECORDS_PROPERTY));
-
-                // this is an integer so use it
-                maxNumRecords = System.getProperty(MAX_ANOMALY_RECORDS_PROPERTY);
-
-            }
-            catch (NumberFormatException e)
-            {
-
-                Logger.getLogger(ProcessCtrl.class).error(
-                            "Cannot parse " + MAX_ANOMALY_RECORDS_PROPERTY + "="
-                            + System.getProperty(MAX_ANOMALY_RECORDS_PROPERTY) +
-                            " as a number");
-            }
+            maxNumRecords = DEFAULT_MAX_NUM_RECORDS;
         }
         MAX_ANOMALY_RECORDS_ARG = "--maxAnomalyRecords=" + maxNumRecords;
 
@@ -342,8 +309,6 @@ public class ProcessCtrl
         LIB_PATH = libDir.getPath() + File.pathSeparatorChar + cotsDir.getPath();
     }
 
-    private static final Logger LOGGER = Logger.getLogger(ProcessCtrl.class);
-
     private ProcessCtrl()
     {
 
@@ -358,7 +323,7 @@ public class ProcessCtrl
         // Always clear inherited environment variables
         pb.environment().clear();
 
-        pb.environment().put(PRELERT_HOME_ENV, PRELERT_HOME);
+        pb.environment().put(PrelertSettings.PRELERT_HOME_ENV, PRELERT_HOME);
         pb.environment().put(LIB_PATH_ENV, LIB_PATH);
 
         LOGGER.debug(String.format("Process Environment = " + pb.environment().toString()));
@@ -639,7 +604,7 @@ public class ProcessCtrl
 
         // Supply a URL for persisting/restoring model state unless model
         // persistence has been explicitly disabled.
-        if (System.getProperty(DONT_PERSIST_MODEL_STATE) != null)
+        if (PrelertSettings.getSetting(DONT_PERSIST_MODEL_STATE) != null)
         {
             logger.info("Will not persist model state - " +
                     DONT_PERSIST_MODEL_STATE + " property was specified");

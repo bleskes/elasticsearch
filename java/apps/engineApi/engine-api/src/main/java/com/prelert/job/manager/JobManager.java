@@ -99,6 +99,7 @@ import com.prelert.job.status.HighProportionOfBadTimestampsException;
 import com.prelert.job.status.OutOfOrderRecordsException;
 import com.prelert.job.status.none.NoneStatusReporter;
 import com.prelert.job.transform.TransformConfigs;
+import com.prelert.settings.PrelertSettings;
 
 
 /**
@@ -1015,7 +1016,7 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
 
     private static double readMaxJobsFactorOrDefault()
     {
-        String readMaxJobsFactor = System.getProperty(MAX_JOBS_FACTOR_NAME);
+        String readMaxJobsFactor = PrelertSettings.getSettingText(MAX_JOBS_FACTOR_NAME);
         if (readMaxJobsFactor == null)
         {
             return DEFAULT_MAX_JOBS_FACTOR;

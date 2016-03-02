@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -48,6 +48,7 @@ import com.prelert.job.UnknownJobException;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.messages.Messages;
 import com.prelert.job.process.ProcessCtrl;
+import com.prelert.settings.PrelertSettings;
 
 /**
  * Read/Tail the logs
@@ -78,7 +79,7 @@ public class JobLogs
      */
     public JobLogs()
     {
-        m_DontDelete = System.getProperty(DONT_DELETE_LOGS_PROP) != null;
+        m_DontDelete = PrelertSettings.getSetting(DONT_DELETE_LOGS_PROP) != null;
     }
 
     /**

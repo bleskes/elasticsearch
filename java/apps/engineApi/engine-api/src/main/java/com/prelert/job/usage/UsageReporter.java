@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -30,6 +30,7 @@ package com.prelert.job.usage;
 import org.apache.log4j.Logger;
 
 import com.prelert.job.persistence.UsagePersister;
+import com.prelert.settings.PrelertSettings;
 
 /**
  * Reports the number of bytes, fields and records read.
@@ -66,7 +67,7 @@ public class UsageReporter
 
 		m_LastUpdateTimeMs = System.currentTimeMillis();
 
-		String interval = System.getProperty(UPDATE_INTERVAL_PROP);
+		String interval = PrelertSettings.getSettingText(UPDATE_INTERVAL_PROP);
 		if (interval != null)
 		{
 			try

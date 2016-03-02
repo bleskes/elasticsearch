@@ -76,6 +76,7 @@ import com.prelert.rs.provider.PaginationWriter;
 import com.prelert.rs.provider.SingleDocumentWriter;
 import com.prelert.server.info.ServerInfoFactory;
 import com.prelert.server.info.ServerInfoWriter;
+import com.prelert.settings.PrelertSettings;
 import com.prelert.utils.scheduler.TaskScheduler;
 
 /**
@@ -92,15 +93,15 @@ public class PrelertWebApp extends Application
      */
     public static final String DEFAULT_CLUSTER_NAME = "prelert";
 
-    private static final String DEFAULT_ES_NODE_HOST = "localhost";
-
-    private static final String DEFAULT_ES_TRANSPORT_HOST = "localhost:9300";
+    private static final String DEFAULT_ES_HOST = "localhost";
 
     private static final String ES_HOST_PROP = "es.host";
 
     public static final String ES_CLUSTER_NAME_PROP = "es.cluster.name";
 
-    public static final String ES_TRANSPORT_PORT_RANGE = "es.transport.port";
+    public static final String ES_TRANSPORT_PORT_RANGE = "es.transport.tcp.port";
+
+    private static final String DEFAULT_ES_TRANSPORT_PORT_RANGE = "9300-9400";
 
     private static final String ES_PROCESSORS_PROP = "es.processors";
 
@@ -176,22 +177,22 @@ public class PrelertWebApp extends Application
 
     private ElasticsearchFactory createPersistenceFactory()
     {
-        String host = getPropertyOrDefault(ES_HOST_PROP, DEFAULT_ES_NODE_HOST);
-        String clusterName = getPropertyOrDefault(ES_CLUSTER_NAME_PROP, DEFAULT_CLUSTER_NAME);
+        String host = PrelertSettings.getSettingText(ES_HOST_PROP, DEFAULT_ES_HOST);
+        String clusterName = PrelertSettings.getSettingText(ES_CLUSTER_NAME_PROP, DEFAULT_CLUSTER_NAME);
+        String portRange = PrelertSettings.getSettingText(ES_TRANSPORT_PORT_RANGE, DEFAULT_ES_TRANSPORT_PORT_RANGE);
 
-        String resultsStorageClient = System.getProperty(RESULTS_STORAGE_CLIENT_PROP, ES_NODE);
+        String resultsStorageClient = PrelertSettings.getSettingText(RESULTS_STORAGE_CLIENT_PROP, ES_NODE);
         if (resultsStorageClient.equals(ES_TRANSPORT))
         {
-            LOGGER.info("Connecting to elasticsearch via transport client");
-            host = getPropertyOrDefault(ES_HOST_PROP, DEFAULT_ES_TRANSPORT_HOST);
+            LOGGER.info("Connecting to Elasticsearch via transport client");
+            String hostAndPort = host + ":" + portRange.split("-", 2)[0];
             return ElasticsearchTransportClientFactory.create(host, clusterName);
         }
 
-        LOGGER.info("Connecting to elasticsearch via node client");
-        String portRange = System.getProperty(ES_TRANSPORT_PORT_RANGE);
+        LOGGER.info("Connecting to Elasticsearch via node client");
         // The number of processors affects the size of ES thread pools, so it
         // can sometimes be desirable to frig it
-        String numProcessors = System.getProperty(ES_PROCESSORS_PROP);
+        String numProcessors = PrelertSettings.getSettingText(ES_PROCESSORS_PROP);
         return ElasticsearchNodeClientFactory.create(host, clusterName, portRange, numProcessors);
     }
 
@@ -243,12 +244,6 @@ public class PrelertWebApp extends Application
         m_ResourceClasses.add(NativeProcessRunExceptionMapper.class);
         m_ResourceClasses.add(JobExceptionMapper.class);
         m_ResourceClasses.add(DataUploadExceptionMapper.class);
-    }
-
-    private static String getPropertyOrDefault(String key, String defaultValue)
-    {
-        String propertyValue = System.getProperty(key);
-        return propertyValue == null ? defaultValue : propertyValue;
     }
 
     private static ProcessManager createProcessManager(JobProvider jobProvider,

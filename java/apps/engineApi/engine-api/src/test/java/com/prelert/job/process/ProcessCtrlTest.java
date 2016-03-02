@@ -42,6 +42,7 @@ import org.mockito.MockitoAnnotations;
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataDescription;
 import com.prelert.job.JobDetails;
+import com.prelert.settings.PrelertSettings;
 
 public class ProcessCtrlTest
 {
@@ -64,7 +65,7 @@ public class ProcessCtrlTest
 
         assertEquals(2, pb.environment().size());
 
-        assertEquals(ProcessCtrl.PRELERT_HOME, pb.environment().get(ProcessCtrl.PRELERT_HOME_ENV));
+        assertEquals(ProcessCtrl.PRELERT_HOME, pb.environment().get(PrelertSettings.PRELERT_HOME_ENV));
         assertEquals(ProcessCtrl.LIB_PATH, pb.environment().get(ProcessCtrl.LIB_PATH_ENV));
     }
 

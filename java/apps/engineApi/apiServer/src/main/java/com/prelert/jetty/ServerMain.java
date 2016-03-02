@@ -48,6 +48,7 @@ import org.glassfish.jersey.servlet.ServletProperties;
 
 import com.prelert.job.messages.Messages;
 import com.prelert.rs.resources.PrelertWebApp;
+import com.prelert.settings.PrelertSettings;
 
 /**
  * Instantiate and configure an embedded Jetty Server in Java.
@@ -84,6 +85,7 @@ public class ServerMain
 
     private static final String JETTY_PORT_PROPERTY = "jetty.port";
     private static final String JETTY_HOME_PROPERTY = "jetty.home";
+    private static final String DEFAULT_JETTY_HOME = "cots/jetty";
 
     /**
      * The server - held as a static member variable to allow close() to
@@ -105,9 +107,9 @@ public class ServerMain
         Log.setLog(new Slf4jLog());
 
         int jettyPort = JETTY_PORT;
+        String portProp = PrelertSettings.getSettingText(JETTY_PORT_PROPERTY);
         try
         {
-            String portProp = System.getProperty(JETTY_PORT_PROPERTY);
             if (portProp == null)
             {
                 LOGGER.info("Using default port " + JETTY_PORT);
@@ -122,18 +124,12 @@ public class ServerMain
         {
             LOGGER.warn(String.format("Error parsing %s property value '%s' "
                     + "cannot not be parsed as an integer",
-                    JETTY_PORT_PROPERTY, System.getProperty(JETTY_PORT_PROPERTY)));
+                    JETTY_PORT_PROPERTY, portProp));
 
             LOGGER.info("Using default port " + JETTY_PORT);
         }
 
-        String jettyHome = System.getProperty(JETTY_HOME_PROPERTY);
-        if (jettyHome == null)
-        {
-            LOGGER.info("Using default " + JETTY_HOME_PROPERTY +
-                            " of current directory");
-            jettyHome = ".";
-        }
+        String jettyHome = PrelertSettings.getSettingText(JETTY_HOME_PROPERTY, DEFAULT_JETTY_HOME);
 
         // load the resources here so they are cached
         Messages.load();

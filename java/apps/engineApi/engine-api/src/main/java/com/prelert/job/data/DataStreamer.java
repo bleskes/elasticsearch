@@ -55,6 +55,7 @@ import com.prelert.job.process.params.DataLoadParams;
 import com.prelert.job.scheduler.DataProcessor;
 import com.prelert.job.status.HighProportionOfBadTimestampsException;
 import com.prelert.job.status.OutOfOrderRecordsException;
+import com.prelert.settings.PrelertSettings;
 
 public class DataStreamer
 {
@@ -74,8 +75,8 @@ public class DataStreamer
     public DataStreamer(DataProcessor dataProcessor)
     {
         // should we save uploaded data and where
-        m_BaseDirectory = System.getProperty("persistbasedir");
-        m_ShouldPersistDataToDisk = m_BaseDirectory != null;
+        m_ShouldPersistDataToDisk = PrelertSettings.getSetting("persistbasedir") != null;
+        m_BaseDirectory = PrelertSettings.getSettingText("persistbasedir");
         m_DataProccesor = Objects.requireNonNull(dataProcessor);
     }
 
