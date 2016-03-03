@@ -99,6 +99,10 @@ public class PrelertWebApp extends Application
 
     private static final String DEFAULT_ES_TRANSPORT_PORT_RANGE = "9300-9400";
 
+    public static final String ES_NETWORK_PUBLISH_HOST_PROP = "es.network.publish_host";
+
+    private static final String DEFAULT_NETWORK_PUBLISH_HOST = "127.0.0.1";
+
     private static final String ES_PROCESSORS_PROP = "es.processors";
 
     private static final String IGNORE_INITIAL_BUCKETS_PROP = "ignoreInitialBuckets";
@@ -111,6 +115,7 @@ public class PrelertWebApp extends Application
      * <ul>
      * <li> <b>es-node</b> will connect to the es.host via a node client
      * <li> <b>es-transport</b> will create a transport client that is aware of the nodes specified in es.host
+     * <li> <b>es-auto</b> will choose es-node if es.host is localhost or localhost6; otherwise es-transport
      * </ul>
      */
     private static final String RESULTS_STORAGE_CLIENT_PROP = "results.storage.client";
@@ -175,16 +180,36 @@ public class PrelertWebApp extends Application
 
     private ElasticsearchFactory createPersistenceFactory()
     {
-        String host = PrelertSettings.getSettingText(ProcessCtrl.ES_HOST_PROP, ProcessCtrl.DEFAULT_ES_HOST);
+        String esHost = PrelertSettings.getSettingText(ProcessCtrl.ES_HOST_PROP, ProcessCtrl.DEFAULT_ES_HOST);
         String clusterName = PrelertSettings.getSettingText(ES_CLUSTER_NAME_PROP, DEFAULT_CLUSTER_NAME);
         String portRange = PrelertSettings.getSettingText(ES_TRANSPORT_PORT_RANGE, DEFAULT_ES_TRANSPORT_PORT_RANGE);
 
         String resultsStorageClient = PrelertSettings.getSettingText(RESULTS_STORAGE_CLIENT_PROP, ES_NODE);
+        // Treat any unknown values as though they were es-auto
+        if (!(resultsStorageClient.equals(ES_TRANSPORT) || resultsStorageClient.equals(ES_NODE)))
+        {
+            // We deliberately DON'T try to detect when es.host is set to the
+            // hostname of the current machine, as this scenario is taken to
+            // mean that Elasticsearch is running on the current host but is
+            // being managed independently of the Engine API
+            if (esHost.equals("localhost") || esHost.equals("localhost6"))
+            {
+                resultsStorageClient = ES_NODE;
+            }
+            else
+            {
+                resultsStorageClient = ES_TRANSPORT;
+            }
+            LOGGER.info("Set " + RESULTS_STORAGE_CLIENT_PROP + " to " +
+                    resultsStorageClient + " because " +
+                    ProcessCtrl.ES_HOST_PROP + " is set to " + esHost);
+        }
+
         if (resultsStorageClient.equals(ES_TRANSPORT))
         {
-            String hostAndPort = host + ":" + portRange.split("-", 2)[0];
-            LOGGER.info("Connecting to Elasticsearch via transport client to " + hostAndPort);
-            return ElasticsearchTransportClientFactory.create(hostAndPort, clusterName);
+            String esHostAndPort = esHost + ":" + portRange.split("-", 2)[0];
+            LOGGER.info("Connecting to Elasticsearch via transport client to " + esHostAndPort);
+            return ElasticsearchTransportClientFactory.create(esHostAndPort, clusterName);
         }
 
         LOGGER.info("Connecting to Elasticsearch via node client");
@@ -195,7 +220,8 @@ public class PrelertWebApp extends Application
         {
             numProcessors = PrelertSettings.getSettingText(ES_PROCESSORS_PROP);
         }
-        return ElasticsearchNodeClientFactory.create(host, clusterName, portRange, numProcessors);
+        String networkPublishHost = PrelertSettings.getSettingText(ES_NETWORK_PUBLISH_HOST_PROP, DEFAULT_NETWORK_PUBLISH_HOST);
+        return ElasticsearchNodeClientFactory.create(esHost, networkPublishHost, clusterName, portRange, numProcessors);
     }
 
     private JobManager createJobManager(JobProvider jobProvider, ElasticsearchFactory esFactory,

@@ -35,7 +35,11 @@
 
 # Should we use the Elasticsearch Node Client (es-node) or Transport Client
 # (es-transport) to connect to the Elasticsearch cluster that stores the results?
-# results.storage.client: es-node
+# Any other value means the most appropriate client will be automatically
+# determined at run time, with the Node Client being preferred when the Engine
+# API is being used with its bundled Elasticsearch and the Transport Client
+# otherwise.
+# results.storage.client: es-auto
 
 # Elasticsearch cluster name
 # es.cluster.name: prelert
@@ -49,7 +53,14 @@
 # TCP port range for Elasticsearch's transport protocol
 # es.transport.tcp.port: 9300-9400
 
+# Only relevant when using the Elasticsearch Node Client, this sets the network
+# interface through which the embedded node will publish updates.  It must be
+# set to the IP address of a non-loopback network interface if the Node Client
+# is to be used to connect to a remote cluster.
+# es.network.publish_host: 127.0.0.1
+
 # Override determination of the number of processors on the machine (for the
-# purpose of deciding thread pool sizes)
-# es.processors: 4
+# purpose of deciding thread pool sizes.  Leave blank for automatic
+# determination or set to a specific number.
+# es.processors: ""
 

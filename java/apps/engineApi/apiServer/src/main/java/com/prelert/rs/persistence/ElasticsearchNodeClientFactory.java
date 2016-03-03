@@ -53,12 +53,13 @@ public class ElasticsearchNodeClientFactory extends ElasticsearchFactory
     }
 
     public static ElasticsearchFactory create(String elasticSearchHost,
-            String elasticSearchClusterName, String portRange, String numProcessors)
+            String networkPublishHost, String elasticSearchClusterName,
+            String portRange, String numProcessors)
     {
         // Tell Elasticsearch to log via our log4j root logger
         ESLoggerFactory.setDefaultFactory(new Log4jESLoggerFactory());
         Node node = NodeBuilder.nodeBuilder()
-                .settings(buildSettings(elasticSearchHost, portRange, numProcessors)).client(true)
+                .settings(buildSettings(elasticSearchHost, networkPublishHost, portRange, numProcessors)).client(true)
                 .clusterName(elasticSearchClusterName).node();
         return new ElasticsearchNodeClientFactory(node);
     }
@@ -68,15 +69,22 @@ public class ElasticsearchNodeClientFactory extends ElasticsearchFactory
      * attempt multicast discovery and to only look for another node to connect
      * to on the given host.
      */
-    private static Settings buildSettings(String host, String portRange, String numProcessors)
+    private static Settings buildSettings(String host, String networkPublishHost,
+            String portRange, String numProcessors)
     {
         // Multicast discovery is expected to be disabled on the Elasticsearch
         // data node, so disable it for this embedded node too and tell it to
         // expect the data node to be on the same machine
         Builder builder = Settings.builder()
                 .put("http.enabled", "false")
+                .put("network.publish_host", networkPublishHost)
                 .put("discovery.zen.ping.unicast.hosts", host);
 
+        if (networkPublishHost != null && networkPublishHost.isEmpty() == false)
+        {
+            LOGGER.info("Using network " + networkPublishHost + " for Elasticsearch publishing");
+            builder.put("network.publish_host", networkPublishHost);
+        }
         if (portRange != null && portRange.isEmpty() == false)
         {
             LOGGER.info("Using TCP port range " + portRange + " to connect to Elasticsearch");
