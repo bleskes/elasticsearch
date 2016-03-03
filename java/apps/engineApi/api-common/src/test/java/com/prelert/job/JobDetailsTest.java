@@ -64,6 +64,7 @@ public class JobDetailsTest
         assertNull(jobDetails.getDataDescription());
         assertNull(jobDetails.getDescription());
         assertNull(jobDetails.getFinishedTime());
+        assertNull(jobDetails.isIgnoreInitialBuckets());
         assertNull(jobDetails.getLastDataTime());
         assertNull(jobDetails.getLocation());
         assertNull(jobDetails.getModelDebugConfig());
@@ -80,6 +81,18 @@ public class JobDetailsTest
         assertNull(jobDetails.getCategoryDefinitionsEndpoint());
         assertNull(jobDetails.getLogsEndpoint());
         assertNull(jobDetails.getRecordsEndpoint());
+    }
+
+    @Test
+    public void testConstructor_GivenJobConfigurationWithIgnoreInitialBuckets()
+    {
+        JobConfiguration jobConfiguration = new JobConfiguration();
+        jobConfiguration.setIgnoreInitialBucket(true);
+
+        JobDetails jobDetails = new JobDetails("foo", jobConfiguration);
+
+        assertEquals("foo", jobDetails.getId());
+        assertEquals(true, jobDetails.isIgnoreInitialBuckets());
     }
 
     @Test
@@ -130,6 +143,7 @@ public class JobDetailsTest
         jobDetails1.setDataEndpoint(new URI("http://localhost:8080/data"));
         jobDetails1.setDescription("Blah blah");
         jobDetails1.setFinishedTime(new Date(1000));
+        jobDetails1.setIgnoreInitialBuckets(true);
         jobDetails1.setLastDataTime(new Date(500));
         jobDetails1.setLocation(new URI("http://localhost:8080/"));
         jobDetails1.setLogsEndpoint(new URI("http://localhost:8080/logs"));
@@ -161,6 +175,7 @@ public class JobDetailsTest
         jobDetails2.setDataEndpoint(new URI("http://localhost:8080/data"));
         jobDetails2.setDescription("Blah blah");
         jobDetails2.setFinishedTime(new Date(1000));
+        jobDetails2.setIgnoreInitialBuckets(true);
         jobDetails2.setLastDataTime(new Date(500));
         jobDetails2.setLocation(new URI("http://localhost:8080/"));
         jobDetails2.setLogsEndpoint(new URI("http://localhost:8080/logs"));
@@ -183,7 +198,7 @@ public class JobDetailsTest
     }
 
     @Test
-    public void testEquals_GivenJobDetailsWithDifferentIds()
+    public void testEquals_GivenDifferentIds()
     {
         JobConfiguration jobConfiguration = new JobConfiguration();
         JobDetails jobDetails1 = new JobDetails("foo", jobConfiguration);
@@ -196,7 +211,7 @@ public class JobDetailsTest
     }
 
     @Test
-    public void testEquals_GivenJobDetailsWithSchedulerStatus()
+    public void testEquals_GivenDifferentSchedulerStatus()
     {
         JobConfiguration jobConfiguration = new JobConfiguration();
         JobDetails jobDetails1 = new JobDetails("foo", jobConfiguration);
@@ -264,6 +279,18 @@ public class JobDetailsTest
         jobDetails2.setCustomSettings(customSettings2);
 
         assertFalse(jobDetails1.equals(jobDetails2));
+    }
+
+    @Test
+    public void testEquals_GivenDifferentIgnoreInitialBuckets()
+    {
+        JobDetails job1 = new JobDetails();
+        job1.setIgnoreInitialBuckets(false);
+        JobDetails job2 = new JobDetails();
+        job2.setIgnoreInitialBuckets(true);
+
+        assertFalse(job1.equals(job2));
+        assertFalse(job2.equals(job1));
     }
 
     @Test
