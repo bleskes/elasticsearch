@@ -42,16 +42,9 @@ import org.elasticsearch.action.admin.indices.refresh.RefreshRequest;
 import org.elasticsearch.action.bulk.BulkItemResponse;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;
-import org.elasticsearch.action.delete.DeleteAction;
-import org.elasticsearch.action.delete.DeleteRequestBuilder;
 import org.elasticsearch.action.index.IndexResponse;
-import org.elasticsearch.action.search.SearchAction;
-import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.index.query.HasParentQueryBuilder;
-import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.search.SearchHit;
 
 import com.prelert.job.JobDetails;
 import com.prelert.job.ModelSizeStats;
@@ -142,8 +135,15 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
                 LOGGER.debug(String.format("Bucket %s document has been overwritten",
                         bucket.getId()));
 
-                deleteRecords(bucket);
+                ElasticsearchBulkDeleter deleter = new ElasticsearchBulkDeleter(m_Client, m_JobId, true);
+                deleter.deleteRecords(bucket);
+                deleter.deleteBucketInfluencers(bucket);
+                deleter.deleteInfluencers(bucket);
+                deleter.commit();
             }
+
+            persistBucketInfluencersStandalone(bucket.getBucketInfluencers(),
+                    bucket.getTimestamp(), bucket.isInterim());
 
             if (bucket.getInfluencers() != null && bucket.getInfluencers().isEmpty() == false)
             {
@@ -327,12 +327,60 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
     {
         try
         {
+            LOGGER.trace("ES API CALL: index type " + Bucket.TYPE +
+                    " to index " + m_JobId.getIndex() + " with ID " + bucket.getId());
             m_Client.prepareIndex(m_JobId.getIndex(), Bucket.TYPE, bucket.getId())
                     .setSource(serialiseBucket(bucket)).execute().actionGet();
         }
         catch (IOException e)
         {
             LOGGER.error("Error updating bucket state", e);
+            return;
+        }
+
+        // If the update to the bucket was successful, also update the
+        // standalone copies of the nested bucket influencers
+        try
+        {
+            persistBucketInfluencersStandalone(bucket.getBucketInfluencers(),
+                    bucket.getTimestamp(), bucket.isInterim());
+        }
+        catch (IOException e)
+        {
+            LOGGER.error("Error updating standalone bucket influencer state", e);
+            return;
+        }
+    }
+
+    private void persistBucketInfluencersStandalone(List<BucketInfluencer> bucketInfluencers,
+            Date bucketTime, boolean isInterim) throws IOException
+    {
+        if (bucketInfluencers != null && bucketInfluencers.isEmpty() == false)
+        {
+            BulkRequestBuilder addBucketInfluencersRequest = m_Client.prepareBulk();
+
+            for (BucketInfluencer bucketInfluencer : bucketInfluencers)
+            {
+                XContentBuilder content = serialiseBucketInfluencerStandalone(bucketInfluencer,
+                        bucketTime, isInterim);
+                String id = bucketInfluencer.getId(bucketTime);
+                LOGGER.trace("ES BULK ACTION: index type " + BucketInfluencer.TYPE +
+                        " to index " + m_JobId.getIndex() + " ID = " + id);
+                addBucketInfluencersRequest.add(
+                        m_Client.prepareIndex(m_JobId.getIndex(), BucketInfluencer.TYPE, id)
+                        .setSource(content));
+            }
+
+            LOGGER.trace("ES API CALL: bulk request with " + addBucketInfluencersRequest.numberOfActions() + " actions");
+            BulkResponse addBucketInfluencersResponse = addBucketInfluencersRequest.execute().actionGet();
+            if (addBucketInfluencersResponse.hasFailures())
+            {
+                LOGGER.error("Bulk index of Bucket Influencers has errors");
+                for (BulkItemResponse item : addBucketInfluencersResponse.getItems())
+                {
+                    LOGGER.error(item.getFailureMessage());
+                }
+            }
         }
     }
 
@@ -475,7 +523,7 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
             builder.startArray(Bucket.BUCKET_INFLUENCERS);
             for (BucketInfluencer bucketInfluencer : bucket.getBucketInfluencers())
             {
-                serialiseBucketInfluencer(bucketInfluencer, builder);
+                serialiseBucketInfluencerNested(bucketInfluencer, builder);
             }
             builder.endArray();
         }
@@ -483,24 +531,6 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
         builder.endObject();
 
         return builder;
-    }
-
-    private void deleteRecords(Bucket bucket)
-    {
-        HasParentQueryBuilder recordsQuery = QueryBuilders.hasParentQuery(Bucket.TYPE,
-                QueryBuilders.matchQuery(Bucket.ID, bucket.getId()));
-
-        SearchResponse searchResponse = SearchAction.INSTANCE.newRequestBuilder(m_Client)
-                .setIndices(m_JobId.getIndex())
-                .setQuery(recordsQuery)
-                .execute().actionGet();
-
-        DeleteRequestBuilder deleteRequest = DeleteAction.INSTANCE.newRequestBuilder(m_Client)
-                .setIndex(m_JobId.getIndex()).setParent(bucket.getId());
-        for (SearchHit hit : searchResponse.getHits())
-        {
-            deleteRequest.setType(AnomalyRecord.TYPE).setId(hit.getId()).execute().actionGet();
-        }
     }
 
     private XContentBuilder serialiseCategoryDefinition(CategoryDefinition category)
@@ -853,7 +883,29 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
         builder.endObject();
     }
 
-    private void serialiseBucketInfluencer(BucketInfluencer bucketInfluencer,
+    private XContentBuilder serialiseBucketInfluencerStandalone(BucketInfluencer bucketInfluencer,
+            Date bucketTime, boolean isInterim) throws IOException
+    {
+        XContentBuilder builder = jsonBuilder().startObject()
+                .field(JOB_ID_NAME, m_JobId.getId())
+                .field(ElasticsearchMappings.ES_TIMESTAMP, bucketTime)
+                .field(BucketInfluencer.PROBABILITY, bucketInfluencer.getProbability())
+                .field(BucketInfluencer.INFLUENCER_FIELD_NAME, bucketInfluencer.getInfluencerFieldName())
+                .field(BucketInfluencer.INITIAL_ANOMALY_SCORE, bucketInfluencer.getInitialAnomalyScore())
+                .field(BucketInfluencer.ANOMALY_SCORE, bucketInfluencer.getAnomalyScore())
+                .field(BucketInfluencer.RAW_ANOMALY_SCORE, bucketInfluencer.getRawAnomalyScore());
+
+        if (isInterim)
+        {
+            builder.field(Bucket.IS_INTERIM, true);
+        }
+
+        builder.endObject();
+
+        return builder;
+    }
+
+    private void serialiseBucketInfluencerNested(BucketInfluencer bucketInfluencer,
             XContentBuilder bucketBuilder) throws IOException
     {
         bucketBuilder.startObject()

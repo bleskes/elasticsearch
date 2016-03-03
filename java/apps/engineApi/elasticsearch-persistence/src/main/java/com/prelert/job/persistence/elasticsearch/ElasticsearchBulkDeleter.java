@@ -40,7 +40,7 @@ import org.elasticsearch.action.delete.DeleteRequestBuilder;
 import org.elasticsearch.action.search.SearchAction;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
-import org.elasticsearch.index.query.HasParentQueryBuilder;
+import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 
@@ -49,6 +49,7 @@ import com.prelert.job.ModelState;
 import com.prelert.job.persistence.JobDataDeleter;
 import com.prelert.job.results.AnomalyRecord;
 import com.prelert.job.results.Bucket;
+import com.prelert.job.results.BucketInfluencer;
 import com.prelert.job.results.Influencer;
 
 public class ElasticsearchBulkDeleter implements JobDataDeleter
@@ -60,26 +61,36 @@ public class ElasticsearchBulkDeleter implements JobDataDeleter
     private final BulkRequestBuilder m_BulkRequestBuilder;
     private long m_DeletedBucketCount;
     private long m_DeletedRecordCount;
+    private long m_DeletedBucketInfluencerCount;
     private long m_DeletedInfluencerCount;
     private long m_DeletedModelSnapshotCount;
     private long m_DeletedModelStateCount;
+    private boolean m_Quiet;
 
-    public ElasticsearchBulkDeleter(Client client, String jobId)
+    public ElasticsearchBulkDeleter(Client client, ElasticsearchJobId jobId, boolean quiet)
     {
         m_Client = Objects.requireNonNull(client);
-        m_JobId = new ElasticsearchJobId(jobId);
+        m_JobId = Objects.requireNonNull(jobId);
         m_BulkRequestBuilder = client.prepareBulk();
         m_DeletedBucketCount = 0;
         m_DeletedRecordCount = 0;
+        m_DeletedBucketInfluencerCount = 0;
         m_DeletedInfluencerCount = 0;
         m_DeletedModelSnapshotCount = 0;
         m_DeletedModelStateCount = 0;
+        m_Quiet = quiet;
+    }
+
+    public ElasticsearchBulkDeleter(Client client, String jobId)
+    {
+        this(client, new ElasticsearchJobId(jobId), false);
     }
 
     @Override
     public void deleteBucket(Bucket bucket)
     {
         deleteRecords(bucket);
+        deleteBucketInfluencers(bucket);
         m_BulkRequestBuilder.add(
                 m_Client.prepareDelete(m_JobId.getIndex(), Bucket.TYPE, bucket.getId()));
         ++m_DeletedBucketCount;
@@ -88,11 +99,17 @@ public class ElasticsearchBulkDeleter implements JobDataDeleter
     @Override
     public void deleteRecords(Bucket bucket)
     {
-        HasParentQueryBuilder recordsQuery = QueryBuilders.hasParentQuery(Bucket.TYPE,
-                QueryBuilders.matchQuery(Bucket.ID, bucket.getId()));
+        // Find the records using the time stamp rather than a parent-child
+        // relationship.  The parent-child filter involves two queries behind
+        // the scenes, and Elasticsearch documentation claims it's significantly
+        // slower.  Here we rely on the record timestamps being identical to the
+        // bucket timestamp.
+        QueryBuilder recordsQuery = QueryBuilders.termQuery(ElasticsearchMappings.ES_TIMESTAMP,
+                bucket.getTimestamp().getTime());
 
         SearchResponse searchResponse = SearchAction.INSTANCE.newRequestBuilder(m_Client)
                 .setIndices(m_JobId.getIndex())
+                .setTypes(AnomalyRecord.TYPE)
                 .setQuery(recordsQuery)
                 .execute().actionGet();
 
@@ -100,11 +117,59 @@ public class ElasticsearchBulkDeleter implements JobDataDeleter
         {
             DeleteRequestBuilder deleteRequest = DeleteAction.INSTANCE.newRequestBuilder(m_Client)
                     .setIndex(m_JobId.getIndex())
-                    .setParent(bucket.getId())
+                    .setParent(hit.field(ElasticsearchMappings.PARENT).getValue().toString())
                     .setType(AnomalyRecord.TYPE)
                     .setId(hit.getId());
             m_BulkRequestBuilder.add(deleteRequest);
             ++m_DeletedRecordCount;
+        }
+    }
+
+    public void deleteBucketInfluencers(Bucket bucket)
+    {
+        // Find the bucket influencers using the time stamp, relying on the
+        // bucket influencer timestamps being identical to the bucket timestamp.
+        QueryBuilder bucketInfluencersQuery = QueryBuilders.termQuery(ElasticsearchMappings.ES_TIMESTAMP,
+                bucket.getTimestamp().getTime());
+
+        SearchResponse searchResponse = SearchAction.INSTANCE.newRequestBuilder(m_Client)
+                .setIndices(m_JobId.getIndex())
+                .setTypes(BucketInfluencer.TYPE)
+                .setQuery(bucketInfluencersQuery)
+                .execute().actionGet();
+
+        for (SearchHit hit : searchResponse.getHits())
+        {
+            DeleteRequestBuilder deleteRequest = DeleteAction.INSTANCE.newRequestBuilder(m_Client)
+                    .setIndex(m_JobId.getIndex())
+                    .setType(BucketInfluencer.TYPE)
+                    .setId(hit.getId());
+            m_BulkRequestBuilder.add(deleteRequest);
+            ++m_DeletedBucketInfluencerCount;
+        }
+    }
+
+    public void deleteInfluencers(Bucket bucket)
+    {
+        // Find the influencers using the time stamp, relying on the influencer
+        // timestamps being identical to the bucket timestamp.
+        QueryBuilder influencersQuery = QueryBuilders.termQuery(ElasticsearchMappings.ES_TIMESTAMP,
+                bucket.getTimestamp().getTime());
+
+        SearchResponse searchResponse = SearchAction.INSTANCE.newRequestBuilder(m_Client)
+                .setIndices(m_JobId.getIndex())
+                .setTypes(Influencer.TYPE)
+                .setQuery(influencersQuery)
+                .execute().actionGet();
+
+        for (SearchHit hit : searchResponse.getHits())
+        {
+            DeleteRequestBuilder deleteRequest = DeleteAction.INSTANCE.newRequestBuilder(m_Client)
+                    .setIndex(m_JobId.getIndex())
+                    .setType(Influencer.TYPE)
+                    .setId(hit.getId());
+            m_BulkRequestBuilder.add(deleteRequest);
+            ++m_DeletedInfluencerCount;
         }
     }
 
@@ -146,13 +211,17 @@ public class ElasticsearchBulkDeleter implements JobDataDeleter
             return;
         }
 
-        LOGGER.debug("Requesting deletion of "
-                 + m_DeletedInfluencerCount + " influencers, "
-                 + m_DeletedBucketCount + " buckets, "
-                 + m_DeletedRecordCount + " records, "
-                 + m_DeletedModelSnapshotCount + " model snapshots, "
-                 + " and "
-                 + m_DeletedModelStateCount + " model state documents");
+        if (!m_Quiet)
+        {
+            LOGGER.debug("Requesting deletion of "
+                     + m_DeletedBucketCount + " buckets, "
+                     + m_DeletedRecordCount + " records, "
+                     + m_DeletedBucketInfluencerCount + " bucket influencers, "
+                     + m_DeletedInfluencerCount + " influencers, "
+                     + m_DeletedModelSnapshotCount + " model snapshots, "
+                     + " and "
+                     + m_DeletedModelStateCount + " model state documents");
+        }
 
         try
         {

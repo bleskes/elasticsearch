@@ -62,7 +62,7 @@ public class Influencer
     }
 
     /**
-     *ID is the concatenation of influencer field & value & timestamp
+     * ID is the concatenation of influencer field name and value and timestamp
      * @return
      */
     public String getId()

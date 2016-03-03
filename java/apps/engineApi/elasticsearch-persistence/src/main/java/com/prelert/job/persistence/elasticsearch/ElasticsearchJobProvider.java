@@ -112,8 +112,6 @@ public class ElasticsearchJobProvider implements JobProvider
     private static final String PRELERT_INFO_TYPE = "info";
     private static final String PRELERT_INFO_ID = "infoStats";
 
-    private static final String _PARENT = "_parent";
-
     private static final String SETTING_TRANSLOG_DURABILITY = "index.translog.durability";
     private static final String ASYNC = "async";
     private static final String SETTING_MAPPER_DYNAMIC = "index.mapper.dynamic";
@@ -855,7 +853,7 @@ public class ElasticsearchJobProvider implements JobProvider
                 .setTypes(AnomalyRecord.TYPE)
                 .setPostFilter(recordFilter)
                 .setFrom(skip).setSize(take)
-                .addField(_PARENT)   // include the parent id
+                .addField(ElasticsearchMappings.PARENT)   // include the parent id
                 .setFetchSource(true);  // the field option turns off source so request it explicitly
 
 
@@ -897,7 +895,7 @@ public class ElasticsearchJobProvider implements JobProvider
 
             // set the ID and parent ID
             record.setId(hit.getId());
-            record.setParent(hit.field(_PARENT).getValue().toString());
+            record.setParent(hit.field(ElasticsearchMappings.PARENT).getValue().toString());
 
             results.add(record);
         }

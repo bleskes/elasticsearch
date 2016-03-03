@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -57,5 +57,11 @@ class ElasticsearchJobId
     String getIndex()
     {
         return m_IndexName;
+    }
+
+    @Override
+    public String toString()
+    {
+        return m_JobId;
     }
 }
