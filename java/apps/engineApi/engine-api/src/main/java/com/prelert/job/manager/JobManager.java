@@ -425,6 +425,7 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
             boolean success = m_JobProvider.updateModelSnapshot(jobId, modelSnapshot);
             if (success)
             {
+                updateIgnoreInitialBuckets(jobId, true);
                 audit(jobId).info(Messages.getMessage(Messages.JOB_AUDIT_REVERTED,
                         modelSnapshot.getDescription()));
             }

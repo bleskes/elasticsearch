@@ -953,6 +953,10 @@ public class JobManagerTest
 
         assertTrue(jobManager.revertToSnapshot("foo", 0, "my description"));
         assertTrue(modelSnapshot.getRestorePriority() > 1);
+
+        verify(m_JobProvider).updateJob(eq("foo"), m_JobUpdateCaptor.capture());
+        assertTrue(m_JobUpdateCaptor.getValue().containsKey(JobDetails.IGNORE_INITIAL_BUCKETS));
+        assertEquals(Boolean.TRUE, m_JobUpdateCaptor.getValue().get(JobDetails.IGNORE_INITIAL_BUCKETS));
     }
 
     @Test
@@ -974,6 +978,8 @@ public class JobManagerTest
         m_ExpectedException.expect(ErrorCodeMatcher.hasErrorCode(ErrorCodes.NO_SUCH_MODEL_SNAPSHOT));
 
         jobManager.revertToSnapshot("foo", 0, "my description");
+
+        verify(m_JobProvider, never()).updateJob(eq("foo"), anyMapOf(String.class, Object.class));
     }
 
     @Test
