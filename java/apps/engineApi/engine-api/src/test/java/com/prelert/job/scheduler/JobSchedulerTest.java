@@ -577,7 +577,6 @@ public class JobSchedulerTest
         Thread.sleep(1200);
 
         assertEquals(JobSchedulerStatus.STARTED, m_CurrentStatus);
-        assertEquals(0, dataProcessor.getNumberOfStreams());
     }
 
     private void recordSchedulerStatus() throws UnknownJobException
