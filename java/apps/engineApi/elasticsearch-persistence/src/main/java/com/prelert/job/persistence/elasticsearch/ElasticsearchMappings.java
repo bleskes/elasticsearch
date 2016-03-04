@@ -226,7 +226,7 @@ public class ElasticsearchMappings
                                 .endObject()
                             .endObject()
                         .endObject()
-                        .startObject(JobDetails.IGNORE_INITIAL_BUCKETS)
+                        .startObject(JobDetails.IGNORE_DOWNTIME)
                             .field(TYPE, BOOLEAN).field(INDEX, NO)
                         .endObject()
                         .startObject(JobDetails.TIMEOUT)

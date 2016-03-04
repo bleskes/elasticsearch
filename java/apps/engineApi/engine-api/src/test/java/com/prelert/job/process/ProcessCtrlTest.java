@@ -89,7 +89,7 @@ public class ProcessCtrlTest
         dd.setTimeField("tf");
         job.setDataDescription(dd);
 
-        job.setIgnoreInitialBuckets(true);
+        job.setIgnoreDowntime(true);
 
         List<String> command = ProcessCtrl.buildAutoDetectCommand(job, m_Logger, null);
 
@@ -114,7 +114,7 @@ public class ProcessCtrlTest
         assertTrue(command.contains(ProcessCtrl.MAX_QUANTILE_INTERVAL_ARG + expectedMaxQuantileInterval));
         assertTrue(command.contains(ProcessCtrl.PERSIST_URL_BASE_ARG +
                         "http://localhost:" + ProcessCtrl.ES_HTTP_PORT + "/prelertresults-unit-test-job"));
-        assertTrue(command.contains(ProcessCtrl.IGNORE_INITIAL_BUCKETS_ARG));
+        assertTrue(command.contains(ProcessCtrl.IGNORE_DOWNTIME_ARG));
     }
 
     @Test
@@ -148,14 +148,14 @@ public class ProcessCtrlTest
     }
 
     @Test
-    public void testBuildAutoDetectCommand_GivenNoIgnoreInitialBuckets()
+    public void testBuildAutoDetectCommand_GivenNoIgnoreDowntime()
     {
         JobDetails job = new JobDetails();
         job.setId("foo");
 
         List<String> command = ProcessCtrl.buildAutoDetectCommand(job, m_Logger, null);
 
-        assertFalse(command.contains(ProcessCtrl.IGNORE_INITIAL_BUCKETS_ARG));
+        assertFalse(command.contains("--ignoreDowntime"));
     }
 
     @Test

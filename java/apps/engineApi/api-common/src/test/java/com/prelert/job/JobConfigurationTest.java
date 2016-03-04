@@ -30,13 +30,14 @@ package com.prelert.job;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import java.util.Arrays;
 import java.util.List;
 
-import junit.framework.Assert;
-
 import org.junit.Test;
+
+import junit.framework.Assert;
 
 
 public class JobConfigurationTest
@@ -110,5 +111,13 @@ public class JobConfigurationTest
         JobConfiguration config = new JobConfiguration();
         config.setRenormalizationWindow(3L);
         assertEquals(3L, config.getRenormalizationWindow().longValue());
+    }
+
+    @Test
+    public void testSetIgnoreDowntime()
+    {
+        JobConfiguration config = new JobConfiguration();
+        config.setIgnoreDowntime(true);
+        assertTrue(config.isIgnoreDowntime());
     }
 }

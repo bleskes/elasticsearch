@@ -425,7 +425,7 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
             boolean success = m_JobProvider.updateModelSnapshot(jobId, modelSnapshot);
             if (success)
             {
-                updateIgnoreInitialBuckets(jobId, true);
+                updateIgnoreDowntime(jobId, true);
                 audit(jobId).info(Messages.getMessage(Messages.JOB_AUDIT_REVERTED,
                         modelSnapshot.getDescription()));
             }
@@ -571,10 +571,10 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
         m_JobProvider.updateJob(jobId, update);
     }
 
-    public void updateIgnoreInitialBuckets(String jobId, Boolean ignoreInitialBuckets)
+    public void updateIgnoreDowntime(String jobId, Boolean ignoreDowntime)
             throws UnknownJobException
     {
-        updateJobTopLevelKeyValue(jobId, JobDetails.IGNORE_INITIAL_BUCKETS, ignoreInitialBuckets);
+        updateJobTopLevelKeyValue(jobId, JobDetails.IGNORE_DOWNTIME, ignoreDowntime);
     }
 
     /**
@@ -778,10 +778,10 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
             }
             DataCounts stats = tryProcessingDataLoadJob(jobDetails.get(), input, params);
             updateLastDataTime(jobId, new Date());
-            if (Boolean.TRUE.equals(jobDetails.get().isIgnoreInitialBuckets())
+            if (Boolean.TRUE.equals(jobDetails.get().isIgnoreDowntime())
                     && stats.getProcessedRecordCount() > 0)
             {
-                updateIgnoreInitialBuckets(jobId, null);
+                updateIgnoreDowntime(jobId, null);
             }
             return stats;
         }
@@ -1068,9 +1068,9 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
         return m_JobProvider.audit("");
     }
 
-    public void setIgnoreInitialBucketsToAllJobs()
+    public void setIgnoreDowntimeToAllJobs()
     {
-        LOGGER.info("Setting ignoreInitialBuckets to all jobs");
+        LOGGER.info("Setting ignoreDowntime to all jobs");
         for (JobDetails job : getJobs(0, MAX_JOBS_TO_RESTART).queryResults())
         {
             // Only set if job has seen data
@@ -1079,11 +1079,11 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
             {
                 try
                 {
-                    updateIgnoreInitialBuckets(job.getId(), true);
+                    updateIgnoreDowntime(job.getId(), true);
                 }
                 catch (UnknownJobException e)
                 {
-                    LOGGER.error("Could not set ignoreInitialBuckets on job " + e.getJobId(), e);
+                    LOGGER.error("Could not set ignoreDowntime on job " + e.getJobId(), e);
                 }
             }
         }

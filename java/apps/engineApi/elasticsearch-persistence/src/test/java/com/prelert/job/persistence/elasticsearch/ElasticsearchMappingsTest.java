@@ -133,7 +133,7 @@ public class ElasticsearchMappingsTest
                         "          }" +
                         "        }" +
                         "      }," +
-                        "      \"ignoreInitialBuckets\": {" +
+                        "      \"ignoreDowntime\": {" +
                         "        \"type\": \"boolean\"," +
                         "        \"index\": \"no\"" +
                         "      }," +

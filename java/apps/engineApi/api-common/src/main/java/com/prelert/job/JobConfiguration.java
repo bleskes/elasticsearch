@@ -76,7 +76,7 @@ public class JobConfiguration
     private Long m_BackgroundPersistInterval;
     private Long m_ModelSnapshotRetentionDays;
     private Long m_ResultsRetentionDays;
-    private Boolean m_IgnoreInitialBuckets;
+    private Boolean m_IgnoreDowntime;
     private Map<String, Object> m_CustomSettings;
 
     public JobConfiguration()
@@ -286,13 +286,13 @@ public class JobConfiguration
         m_ResultsRetentionDays = resultsRetentionDays;
     }
 
-    public Boolean isIgnoreInitialBuckets()
+    public Boolean isIgnoreDowntime()
     {
-        return m_IgnoreInitialBuckets;
+        return m_IgnoreDowntime;
     }
 
-    public void setIgnoreInitialBucket(Boolean ignoreInitialBuckets)
+    public void setIgnoreDowntime(Boolean ignoreDowntime)
     {
-        m_IgnoreInitialBuckets = ignoreInitialBuckets;
+        m_IgnoreDowntime = ignoreDowntime;
     }
 }

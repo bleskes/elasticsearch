@@ -105,7 +105,7 @@ public class PrelertWebApp extends Application
 
     private static final String ES_PROCESSORS_PROP = "es.processors";
 
-    private static final String IGNORE_INITIAL_BUCKETS_PROP = "ignoreInitialBuckets";
+    private static final String IGNORE_DOWNTIME_PROP = "ignoreDowntime";
 
     /**
      * This property specifies the client that should be used to connect
@@ -235,9 +235,9 @@ public class PrelertWebApp extends Application
 
     private void restartJobManager()
     {
-        if (PrelertSettings.getSetting(IGNORE_INITIAL_BUCKETS_PROP) != null)
+        if (PrelertSettings.getSetting(IGNORE_DOWNTIME_PROP) != null)
         {
-            m_JobManager.setIgnoreInitialBucketsToAllJobs();
+            m_JobManager.setIgnoreDowntimeToAllJobs();
         }
         m_JobManager.restartScheduledJobs();
     }

@@ -56,7 +56,7 @@ public class JobDetails
     public static final String DESCRIPTION = "description";
     public static final String FINISHED_TIME = "finishedTime";
     public static final String ID = "id";
-    public static final String IGNORE_INITIAL_BUCKETS = "ignoreInitialBuckets";
+    public static final String IGNORE_DOWNTIME = "ignoreDowntime";
     public static final String LAST_DATA_TIME = "lastDataTime";
     public static final String MODEL_DEBUG_CONFIG = "modelDebugConfig";
     public static final String RENORMALIZATION_WINDOW = "renormalizationWindow";
@@ -87,7 +87,7 @@ public class JobDetails
     private List<TransformConfig> m_Transforms;
     private ModelDebugConfig m_ModelDebugConfig;
     private DataCounts m_Counts;
-    private Boolean m_IgnoreInitialBuckets;
+    private Boolean m_IgnoreDowntime;
     private Long m_RenormalizationWindow;
     private Long m_BackgroundPersistInterval;
     private Long m_ModelSnapshotRetentionDays;
@@ -138,7 +138,7 @@ public class JobDetails
         m_ModelDebugConfig = jobConfig.getModelDebugConfig();
 
         invokeIfNotNull(jobConfig.getDataDescription(), dd -> m_DataDescription = dd);
-        m_IgnoreInitialBuckets = jobConfig.isIgnoreInitialBuckets();
+        m_IgnoreDowntime = jobConfig.isIgnoreDowntime();
         m_RenormalizationWindow = jobConfig.getRenormalizationWindow();
         m_BackgroundPersistInterval = jobConfig.getBackgroundPersistInterval();
         m_ModelSnapshotRetentionDays = jobConfig.getModelSnapshotRetentionDays();
@@ -307,14 +307,14 @@ public class JobDetails
         m_AnalysisLimits = analysisLimits;
     }
 
-    public Boolean isIgnoreInitialBuckets()
+    public Boolean isIgnoreDowntime()
     {
-        return m_IgnoreInitialBuckets;
+        return m_IgnoreDowntime;
     }
 
-    public void setIgnoreInitialBuckets(Boolean ignoreInitialBuckets)
+    public void setIgnoreDowntime(Boolean ignoreDowntime)
     {
-        m_IgnoreInitialBuckets = ignoreInitialBuckets;
+        m_IgnoreDowntime = ignoreDowntime;
     }
 
     public SchedulerConfig getSchedulerConfig()
@@ -630,7 +630,7 @@ public class JobDetails
                 Objects.equals(this.m_ModelSizeStats, that.m_ModelSizeStats) &&
                 Objects.equals(this.m_Transforms, that.m_Transforms) &&
                 Objects.equals(this.m_Counts, that.m_Counts) &&
-                Objects.equals(this.m_IgnoreInitialBuckets, that.m_IgnoreInitialBuckets) &&
+                Objects.equals(this.m_IgnoreDowntime, that.m_IgnoreDowntime) &&
                 Objects.equals(this.m_RenormalizationWindow, that.m_RenormalizationWindow) &&
                 Objects.equals(this.m_BackgroundPersistInterval, that.m_BackgroundPersistInterval) &&
                 Objects.equals(this.m_ModelSnapshotRetentionDays, that.m_ModelSnapshotRetentionDays) &&
@@ -651,7 +651,7 @@ public class JobDetails
                 m_FinishedTime, m_LastDataTime, m_Timeout, m_AnalysisConfig, m_AnalysisLimits,
                 m_DataDescription, m_ModelDebugConfig, m_ModelSizeStats, m_Transforms, m_Counts,
                 m_RenormalizationWindow, m_BackgroundPersistInterval, m_ModelSnapshotRetentionDays,
-                m_ResultsRetentionDays, m_IgnoreInitialBuckets, m_CustomSettings, m_Location,
+                m_ResultsRetentionDays, m_IgnoreDowntime, m_CustomSettings, m_Location,
                 m_DataEndpoint, m_CategoryDefinitionsEndpoint, m_BucketsEndpoint, m_RecordsEndpoint,
                 m_AlertsLongPollEndpoint);
     }

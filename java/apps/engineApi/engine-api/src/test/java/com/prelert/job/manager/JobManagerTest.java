@@ -443,7 +443,7 @@ public class JobManagerTest
     }
 
     @Test
-    public void testSubmitDataLoadJob_GivenProcessIsRunSuccessfullyAndJobShouldIgnoreInitialBucketsAndPositiveProcessedRecordCount()
+    public void testSubmitDataLoadJob_GivenProcessIsRunSuccessfullyAndJobShouldIgnoreDowntimeAndPositiveProcessedRecordCount()
             throws JsonParseException, UnknownJobException, NativeProcessRunException,
             MissingFieldException, JobInUseException, HighProportionOfBadTimestampsException,
             OutOfOrderRecordsException, TooManyJobsException, MalformedJsonException
@@ -451,7 +451,7 @@ public class JobManagerTest
         InputStream inputStream = mock(InputStream.class);
         DataLoadParams params = mock(DataLoadParams.class);
         JobDetails job = new JobDetails("foo", new JobConfiguration());
-        job.setIgnoreInitialBuckets(true);
+        job.setIgnoreDowntime(true);
         when(m_JobProvider.getJobDetails("foo")).thenReturn(Optional.of(job));
         givenProcessInfo(5);
         when(m_ProcessManager.jobIsRunning("foo")).thenReturn(false);
@@ -466,12 +466,12 @@ public class JobManagerTest
 
         verify(m_JobProvider, times(2)).updateJob(eq("foo"), m_JobUpdateCaptor.capture());
         assertNotNull(m_JobUpdateCaptor.getAllValues().get(0).get(JobDetails.LAST_DATA_TIME));
-        assertTrue(m_JobUpdateCaptor.getAllValues().get(1).containsKey(JobDetails.IGNORE_INITIAL_BUCKETS));
-        assertNull(m_JobUpdateCaptor.getAllValues().get(1).get(JobDetails.IGNORE_INITIAL_BUCKETS));
+        assertTrue(m_JobUpdateCaptor.getAllValues().get(1).containsKey(JobDetails.IGNORE_DOWNTIME));
+        assertNull(m_JobUpdateCaptor.getAllValues().get(1).get(JobDetails.IGNORE_DOWNTIME));
     }
 
     @Test
-    public void testSubmitDataLoadJob_GivenProcessIsRunSuccessfullyAndJobShouldIgnoreInitialBucketsAndZeroProcessedRecordCount()
+    public void testSubmitDataLoadJob_GivenProcessIsRunSuccessfullyAndJobShouldIgnoreDowntimeAndZeroProcessedRecordCount()
             throws JsonParseException, UnknownJobException, NativeProcessRunException,
             MissingFieldException, JobInUseException, HighProportionOfBadTimestampsException,
             OutOfOrderRecordsException, TooManyJobsException, MalformedJsonException
@@ -479,7 +479,7 @@ public class JobManagerTest
         InputStream inputStream = mock(InputStream.class);
         DataLoadParams params = mock(DataLoadParams.class);
         JobDetails job = new JobDetails("foo", new JobConfiguration());
-        job.setIgnoreInitialBuckets(true);
+        job.setIgnoreDowntime(true);
         when(m_JobProvider.getJobDetails("foo")).thenReturn(Optional.of(job));
         givenProcessInfo(5);
         when(m_ProcessManager.jobIsRunning("foo")).thenReturn(false);
@@ -955,8 +955,8 @@ public class JobManagerTest
         assertTrue(modelSnapshot.getRestorePriority() > 1);
 
         verify(m_JobProvider).updateJob(eq("foo"), m_JobUpdateCaptor.capture());
-        assertTrue(m_JobUpdateCaptor.getValue().containsKey(JobDetails.IGNORE_INITIAL_BUCKETS));
-        assertEquals(Boolean.TRUE, m_JobUpdateCaptor.getValue().get(JobDetails.IGNORE_INITIAL_BUCKETS));
+        assertTrue(m_JobUpdateCaptor.getValue().containsKey(JobDetails.IGNORE_DOWNTIME));
+        assertEquals(Boolean.TRUE, m_JobUpdateCaptor.getValue().get(JobDetails.IGNORE_DOWNTIME));
     }
 
     @Test
@@ -1067,7 +1067,7 @@ public class JobManagerTest
     }
 
     @Test
-    public void testSetIgnoreInitialBucketsToAllJobs() throws UnknownJobException
+    public void testSetIgnoreDowntimeToAllJobs() throws UnknownJobException
     {
         DataCounts countsWithPositiveProcessedRecordCount = new DataCounts();
         countsWithPositiveProcessedRecordCount.setProcessedRecordCount(1L);
@@ -1087,7 +1087,7 @@ public class JobManagerTest
         JobDetails jobThatIsUnknown = new JobDetails();
         jobThatIsUnknown.setId("jobThatIsUnknown");
         jobThatIsUnknown.setCounts(countsWithPositiveProcessedRecordCount);
-        jobThatIsUnknown.setIgnoreInitialBuckets(true);
+        jobThatIsUnknown.setIgnoreDowntime(true);
         when(m_JobProvider.updateJob(eq("jobThatIsUnknown"), anyMapOf(String.class, Object.class)))
                 .thenThrow(new UnknownJobException("jobThatIsUnknown"));
 
@@ -1098,18 +1098,18 @@ public class JobManagerTest
         givenProcessInfo(2);
         JobManager jobManager = createJobManager();
 
-        jobManager.setIgnoreInitialBucketsToAllJobs();
+        jobManager.setIgnoreDowntimeToAllJobs();
 
         verify(m_JobProvider).updateJob(eq("jobThatHasSeenData"), m_JobUpdateCaptor.capture());
-        assertTrue(m_JobUpdateCaptor.getValue().containsKey(JobDetails.IGNORE_INITIAL_BUCKETS));
-        assertEquals(Boolean.TRUE, m_JobUpdateCaptor.getValue().get(JobDetails.IGNORE_INITIAL_BUCKETS));
+        assertTrue(m_JobUpdateCaptor.getValue().containsKey(JobDetails.IGNORE_DOWNTIME));
+        assertEquals(Boolean.TRUE, m_JobUpdateCaptor.getValue().get(JobDetails.IGNORE_DOWNTIME));
 
         verify(m_JobProvider, never()).updateJob(eq("jobThatHasNotSeenData"), anyMapOf(String.class, Object.class));
         verify(m_JobProvider, never()).updateJob(eq("jobWithNullCounts"), anyMapOf(String.class, Object.class));
 
         verify(m_JobProvider).updateJob(eq("jobThatIsUnknown"), m_JobUpdateCaptor.capture());
-        assertTrue(m_JobUpdateCaptor.getValue().containsKey(JobDetails.IGNORE_INITIAL_BUCKETS));
-        assertEquals(Boolean.TRUE, m_JobUpdateCaptor.getValue().get(JobDetails.IGNORE_INITIAL_BUCKETS));
+        assertTrue(m_JobUpdateCaptor.getValue().containsKey(JobDetails.IGNORE_DOWNTIME));
+        assertEquals(Boolean.TRUE, m_JobUpdateCaptor.getValue().get(JobDetails.IGNORE_DOWNTIME));
     }
 
     private void givenProcessInfo(int maxLicenseJobs)

@@ -64,7 +64,7 @@ public class JobDetailsTest
         assertNull(jobDetails.getDataDescription());
         assertNull(jobDetails.getDescription());
         assertNull(jobDetails.getFinishedTime());
-        assertNull(jobDetails.isIgnoreInitialBuckets());
+        assertNull(jobDetails.isIgnoreDowntime());
         assertNull(jobDetails.getLastDataTime());
         assertNull(jobDetails.getLocation());
         assertNull(jobDetails.getModelDebugConfig());
@@ -84,15 +84,15 @@ public class JobDetailsTest
     }
 
     @Test
-    public void testConstructor_GivenJobConfigurationWithIgnoreInitialBuckets()
+    public void testConstructor_GivenJobConfigurationWithIgnoreDowntime()
     {
         JobConfiguration jobConfiguration = new JobConfiguration();
-        jobConfiguration.setIgnoreInitialBucket(true);
+        jobConfiguration.setIgnoreDowntime(true);
 
         JobDetails jobDetails = new JobDetails("foo", jobConfiguration);
 
         assertEquals("foo", jobDetails.getId());
-        assertEquals(true, jobDetails.isIgnoreInitialBuckets());
+        assertEquals(true, jobDetails.isIgnoreDowntime());
     }
 
     @Test
@@ -143,7 +143,7 @@ public class JobDetailsTest
         jobDetails1.setDataEndpoint(new URI("http://localhost:8080/data"));
         jobDetails1.setDescription("Blah blah");
         jobDetails1.setFinishedTime(new Date(1000));
-        jobDetails1.setIgnoreInitialBuckets(true);
+        jobDetails1.setIgnoreDowntime(true);
         jobDetails1.setLastDataTime(new Date(500));
         jobDetails1.setLocation(new URI("http://localhost:8080/"));
         jobDetails1.setLogsEndpoint(new URI("http://localhost:8080/logs"));
@@ -175,7 +175,7 @@ public class JobDetailsTest
         jobDetails2.setDataEndpoint(new URI("http://localhost:8080/data"));
         jobDetails2.setDescription("Blah blah");
         jobDetails2.setFinishedTime(new Date(1000));
-        jobDetails2.setIgnoreInitialBuckets(true);
+        jobDetails2.setIgnoreDowntime(true);
         jobDetails2.setLastDataTime(new Date(500));
         jobDetails2.setLocation(new URI("http://localhost:8080/"));
         jobDetails2.setLogsEndpoint(new URI("http://localhost:8080/logs"));
@@ -282,12 +282,12 @@ public class JobDetailsTest
     }
 
     @Test
-    public void testEquals_GivenDifferentIgnoreInitialBuckets()
+    public void testEquals_GivenDifferentIgnoreDowntime()
     {
         JobDetails job1 = new JobDetails();
-        job1.setIgnoreInitialBuckets(false);
+        job1.setIgnoreDowntime(false);
         JobDetails job2 = new JobDetails();
-        job2.setIgnoreInitialBuckets(true);
+        job2.setIgnoreDowntime(true);
 
         assertFalse(job1.equals(job2));
         assertFalse(job2.equals(job1));

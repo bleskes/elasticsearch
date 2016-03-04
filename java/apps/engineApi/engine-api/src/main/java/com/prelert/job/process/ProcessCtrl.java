@@ -179,7 +179,7 @@ public class ProcessCtrl
      */
     public static final String BUCKET_SPAN_ARG = "--bucketspan=";
     public static final String DELETE_STATE_FILES_ARG = "--deleteStateFiles";
-    public static final String IGNORE_INITIAL_BUCKETS_ARG = "--ignoreInitialBuckets";
+    public static final String IGNORE_DOWNTIME_ARG = "--ignoreDowntime";
     public static final String LENGTH_ENCODED_INPUT_ARG = "--lengthEncodedInput";
     public static final String MODEL_CONFIG_ARG = "--modelconfig=";
     public static final String QUANTILES_STATE_PATH_ARG = "--quantilesState=";
@@ -647,9 +647,9 @@ public class ProcessCtrl
         int maxQuantileInterval = BASE_MAX_QUANTILE_INTERVAL + intervalStagger;
         command.add(MAX_QUANTILE_INTERVAL_ARG + maxQuantileInterval);
 
-        if (Boolean.TRUE.equals(job.isIgnoreInitialBuckets()))
+        if (Boolean.TRUE.equals(job.isIgnoreDowntime()))
         {
-            command.add(IGNORE_INITIAL_BUCKETS_ARG);
+            command.add(IGNORE_DOWNTIME_ARG);
         }
 
         return command;
