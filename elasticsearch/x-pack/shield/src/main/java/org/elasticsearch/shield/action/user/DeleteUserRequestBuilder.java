@@ -34,4 +34,9 @@ public class DeleteUserRequestBuilder extends ActionRequestBuilder<DeleteUserReq
         request.username(username);
         return this;
     }
+
+    public DeleteUserRequestBuilder refresh(boolean refresh) {
+        request.refresh(refresh);
+        return this;
+    }
 }

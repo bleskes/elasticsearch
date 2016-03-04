@@ -134,12 +134,12 @@ public class FieldLevelSecurityRandomTests extends ShieldIntegTestCase {
         String[] fieldMappers = new String[(allowedFields.size() + disAllowedFields.size()) * 2];
         for (String field : allowedFields) {
             fieldMappers[j++] = field;
-            fieldMappers[j++] = "type=string";
+            fieldMappers[j++] = "type=text";
             doc.put(field, "value");
         }
         for (String field : disAllowedFields) {
             fieldMappers[j++] = field;
-            fieldMappers[j++] = "type=string";
+            fieldMappers[j++] = "type=text";
             doc.put(field, "value");
         }
         assertAcked(client().admin().indices().prepareCreate("test")
@@ -169,7 +169,7 @@ public class FieldLevelSecurityRandomTests extends ShieldIntegTestCase {
 
     public void testDuel() throws Exception {
         assertAcked(client().admin().indices().prepareCreate("test")
-                        .addMapping("type1", "field1", "type=string", "field2", "type=string", "field3", "type=string")
+                        .addMapping("type1", "field1", "type=text", "field2", "type=text", "field3", "type=text")
         );
 
         int numDocs = scaledRandomIntBetween(32, 128);
