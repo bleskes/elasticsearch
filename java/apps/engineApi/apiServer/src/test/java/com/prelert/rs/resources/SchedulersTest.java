@@ -50,18 +50,18 @@ import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.rs.data.Acknowledgement;
 import com.prelert.rs.exception.InvalidParametersException;
 
-public class ControlTest extends ServiceTest
+public class SchedulersTest extends ServiceTest
 {
     @Rule
     public ExpectedException m_ExpectedException = ExpectedException.none();
 
-    private Control m_Control;
+    private Schedulers m_Schedulers;
 
     @Before
     public void setUp() throws UnknownJobException
     {
-        m_Control = new Control();
-        configureService(m_Control);
+        m_Schedulers = new Schedulers();
+        configureService(m_Schedulers);
     }
 
     @Test
@@ -72,7 +72,7 @@ public class ControlTest extends ServiceTest
                 "Invalid time range: end time '2015-01-01T00:00:00Z' is earlier than start time '2016-01-01T00:00:00Z'");
         m_ExpectedException.expect(hasErrorCode(ErrorCodes.END_DATE_BEFORE_START_DATE));
 
-        m_Control.startScheduledJob("foo", "2016-01-01T00:00:00Z", "2015-01-01T00:00:00Z");
+        m_Schedulers.startScheduledJob("foo", "2016-01-01T00:00:00Z", "2015-01-01T00:00:00Z");
     }
 
     @Test
@@ -83,13 +83,13 @@ public class ControlTest extends ServiceTest
                 "Invalid time range: end time '2016-01-01T00:00:00Z' is earlier than start time '2016-01-01T00:00:00Z'");
         m_ExpectedException.expect(hasErrorCode(ErrorCodes.END_DATE_BEFORE_START_DATE));
 
-        m_Control.startScheduledJob("foo", "2016-01-01T00:00:00Z", "2016-01-01T00:00:00Z");
+        m_Schedulers.startScheduledJob("foo", "2016-01-01T00:00:00Z", "2016-01-01T00:00:00Z");
     }
 
     @Test
     public void testStartScheduledJob_GivenDefaultStartEndTimes() throws JobException
     {
-        Response response = m_Control.startScheduledJob("foo", "", "");
+        Response response = m_Schedulers.startScheduledJob("foo", "", "");
 
         Acknowledgement acknowledgement = (Acknowledgement) response.getEntity();
         assertTrue(acknowledgement.getAcknowledgement());
@@ -99,7 +99,7 @@ public class ControlTest extends ServiceTest
     @Test
     public void testStartScheduledJob_GivenValidStartEndTimes() throws JobException
     {
-        Response response = m_Control.startScheduledJob(
+        Response response = m_Schedulers.startScheduledJob(
                 "foo", "2016-01-01T00:00:00Z", "2016-02-18T20:00:00Z");
 
         Acknowledgement acknowledgement = (Acknowledgement) response.getEntity();
@@ -112,7 +112,7 @@ public class ControlTest extends ServiceTest
     {
         long now = System.currentTimeMillis();
 
-        Response response = m_Control.startScheduledJob("foo", "now", "");
+        Response response = m_Schedulers.startScheduledJob("foo", "now", "");
 
         Acknowledgement acknowledgement = (Acknowledgement) response.getEntity();
         assertTrue(acknowledgement.getAcknowledgement());
@@ -126,7 +126,7 @@ public class ControlTest extends ServiceTest
     @Test
     public void testStopScheduledJob() throws JobException
     {
-        Response response = m_Control.stopScheduledJob("foo");
+        Response response = m_Schedulers.stopScheduledJob("foo");
 
         Acknowledgement acknowledgement = (Acknowledgement) response.getEntity();
         assertTrue(acknowledgement.getAcknowledgement());

@@ -54,18 +54,18 @@ import com.prelert.rs.exception.InvalidParametersException;
 
 
 /**
- * Control REST paths are operations that allow the user
- * to control actions with regard to the operations of the engine.
+ * API scheduler management end point.
+ * Allows start/end of a job scheduler.
  */
-@Path("/control")
-public class Control extends ResourceWithJobManager
+@Path("/schedulers")
+public class Schedulers extends ResourceWithJobManager
 {
-    private static final Logger LOGGER = Logger.getLogger(Control.class);
+    private static final Logger LOGGER = Logger.getLogger(Schedulers.class);
 
     /**
      * The name of this endpoint
      */
-    public static final String ENDPOINT = "control";
+    public static final String ENDPOINT = "schedulers";
 
     /**
      * Starts the scheduler for the given job
@@ -79,7 +79,7 @@ public class Control extends ResourceWithJobManager
      * @throws CannotStartSchedulerException
      */
     @POST
-    @Path("/scheduler/{jobId}/start")
+    @Path("/{jobId}/start")
     @Produces(MediaType.APPLICATION_JSON)
     public Response startScheduledJob(@PathParam("jobId") String jobId,
             @DefaultValue("") @QueryParam(START_QUERY_PARAM) String start,
@@ -117,7 +117,7 @@ public class Control extends ResourceWithJobManager
      * @throws UnknownJobException
      */
     @POST
-    @Path("/scheduler/{jobId}/stop")
+    @Path("/{jobId}/stop")
     @Produces(MediaType.APPLICATION_JSON)
     public Response stopScheduledJob(@PathParam("jobId") String jobId)
             throws NoSuchScheduledJobException, CannotStopSchedulerException, UnknownJobException,

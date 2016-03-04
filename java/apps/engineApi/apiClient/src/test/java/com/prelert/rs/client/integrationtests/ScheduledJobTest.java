@@ -67,7 +67,7 @@ public class ScheduledJobTest implements AutoCloseable
     private static final String API_BASE_URL = "http://localhost:8080/engine/v2";
 
     private static final String START_SCHEDULER_URL_TEMPLATE =
-            API_BASE_URL + "/control/scheduler/" + TEST_JOB_ID + "/start?end=%s";
+            API_BASE_URL + "/schedulers/" + TEST_JOB_ID + "/start?end=%s";
 
     private static final String INDEX_NAME = "test-data-scheduled-job-test";
     private static final String TYPE_NAME = "record";
@@ -249,7 +249,7 @@ public class ScheduledJobTest implements AutoCloseable
             count++;
             try
             {
-                Thread.sleep(1000);
+                Thread.sleep(3000);
             }
             catch (InterruptedException e)
             {

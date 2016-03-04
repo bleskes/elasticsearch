@@ -248,7 +248,7 @@ public class PrelertWebApp extends Application
         m_ResourceClasses.add(AlertsLongPoll.class);
         m_ResourceClasses.add(Buckets.class);
         m_ResourceClasses.add(CategoryDefinitions.class);
-        m_ResourceClasses.add(Control.class);
+        m_ResourceClasses.add(Schedulers.class);
         m_ResourceClasses.add(Data.class);
         m_ResourceClasses.add(DataLoad.class);
         m_ResourceClasses.add(Jobs.class);
