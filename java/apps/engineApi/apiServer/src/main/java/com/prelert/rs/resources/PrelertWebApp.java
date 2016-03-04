@@ -121,6 +121,7 @@ public class PrelertWebApp extends Application
     private static final String RESULTS_STORAGE_CLIENT_PROP = "results.storage.client";
     private static final String ES_NODE = "es-node";
     private static final String ES_TRANSPORT = "es-transport";
+    private static final String ES_AUTO = "es-auto";
 
     public static final String PERSIST_RECORDS = "persist.records";
 
@@ -184,7 +185,7 @@ public class PrelertWebApp extends Application
         String clusterName = PrelertSettings.getSettingText(ES_CLUSTER_NAME_PROP, DEFAULT_CLUSTER_NAME);
         String portRange = PrelertSettings.getSettingText(ES_TRANSPORT_PORT_RANGE, DEFAULT_ES_TRANSPORT_PORT_RANGE);
 
-        String resultsStorageClient = PrelertSettings.getSettingText(RESULTS_STORAGE_CLIENT_PROP, ES_NODE);
+        String resultsStorageClient = PrelertSettings.getSettingText(RESULTS_STORAGE_CLIENT_PROP, ES_AUTO);
         // Treat any unknown values as though they were es-auto
         if (!(resultsStorageClient.equals(ES_TRANSPORT) || resultsStorageClient.equals(ES_NODE)))
         {
