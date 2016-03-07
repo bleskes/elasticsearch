@@ -18,22 +18,25 @@
 
 package com.prelert.job;
 
-import java.util.Arrays;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
-/**
- * Jobs whether running or complete are in one of these states.
- * When a job is created it is initialised in to the status closed
- * i.e. it is not running.
- */
-public enum JobStatus
+import org.junit.Test;
+
+public class JobStatusTest
 {
-    RUNNING, CLOSING, CLOSED, FAILED, PAUSING, PAUSED;
-
-    /**
-     * @return {@code true} if status matches any of the given {@code candidates}
-     */
-    public boolean isAnyOf(JobStatus... candidates)
+    @Test
+    public void testIsAnyOf()
     {
-        return Arrays.stream(candidates).anyMatch(candidate -> this == candidate);
+        assertFalse(JobStatus.RUNNING.isAnyOf());
+        assertFalse(JobStatus.RUNNING.isAnyOf(JobStatus.CLOSED, JobStatus.CLOSING, JobStatus.FAILED,
+                JobStatus.PAUSED, JobStatus.PAUSING));
+        assertFalse(JobStatus.CLOSED.isAnyOf(JobStatus.RUNNING, JobStatus.CLOSING, JobStatus.FAILED,
+                JobStatus.PAUSED, JobStatus.PAUSING));
+
+        assertTrue(JobStatus.RUNNING.isAnyOf(JobStatus.RUNNING));
+        assertTrue(JobStatus.RUNNING.isAnyOf(JobStatus.RUNNING, JobStatus.CLOSED));
+        assertTrue(JobStatus.PAUSED.isAnyOf(JobStatus.PAUSED, JobStatus.PAUSING));
+        assertTrue(JobStatus.PAUSING.isAnyOf(JobStatus.PAUSED, JobStatus.PAUSING));
     }
 }

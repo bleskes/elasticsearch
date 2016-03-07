@@ -44,6 +44,12 @@ public class ActionTest
                 Action.CLOSING.getErrorString("foo", Action.DELETING));
         assertEquals("Cannot close job bar while another connection is flushing the job",
                 Action.CLOSING.getErrorString("bar", Action.FLUSHING));
+        assertEquals("Cannot close job bar while another connection is pausing the job",
+                Action.CLOSING.getErrorString("bar", Action.PAUSING));
+        assertEquals("Cannot close job bar while another connection is resuming the job",
+                Action.CLOSING.getErrorString("bar", Action.RESUMING));
+        assertEquals("Cannot close job bar while another connection is reverting the model snapshot for the job",
+                Action.CLOSING.getErrorString("bar", Action.REVERTING));
         assertEquals("Cannot close job foo while another connection is updating the job",
                 Action.CLOSING.getErrorString("foo", Action.UPDATING));
         assertEquals("Cannot close job foo while another connection is writing to the job",
@@ -59,6 +65,12 @@ public class ActionTest
                 Action.DELETING.getErrorString("foo", Action.FLUSHING));
         assertEquals("Cannot flush job bar while another connection is flushing the job",
                 Action.FLUSHING.getErrorString("bar", Action.FLUSHING));
+        assertEquals("Cannot pause job foo while another connection is flushing the job",
+                Action.PAUSING.getErrorString("foo", Action.FLUSHING));
+        assertEquals("Cannot resume job foo while another connection is flushing the job",
+                Action.RESUMING.getErrorString("foo", Action.FLUSHING));
+        assertEquals("Cannot revert model snapshot for job foo while another connection is flushing the job",
+                Action.REVERTING.getErrorString("foo", Action.FLUSHING));
         assertEquals("Cannot update job foo while another connection is flushing the job",
                 Action.UPDATING.getErrorString("foo", Action.FLUSHING));
         assertEquals("Cannot write to job foo while another connection is flushing the job",

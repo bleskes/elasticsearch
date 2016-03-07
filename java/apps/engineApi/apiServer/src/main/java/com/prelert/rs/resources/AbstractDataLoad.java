@@ -33,7 +33,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 
 import javax.ws.rs.Consumes;
@@ -75,7 +74,6 @@ import com.prelert.rs.data.Acknowledgement;
 import com.prelert.rs.data.ApiError;
 import com.prelert.rs.data.DataPostResponse;
 import com.prelert.rs.data.MultiDataPostResult;
-import com.prelert.rs.exception.ActionNotAllowedForScheduledJobException;
 import com.prelert.rs.exception.InvalidParametersException;
 import com.prelert.rs.provider.MapperUtils;
 
@@ -187,14 +185,6 @@ public abstract class AbstractDataLoad extends ResourceWithJobManager
 
         Response.Status statusCode = statusCodeForResponse(result);
         return Response.status(statusCode).entity(result).build();
-    }
-
-    private void checkJobIsNotScheduled(String jobId)
-    {
-        if (jobManager().isScheduledJob(jobId))
-        {
-            throw new ActionNotAllowedForScheduledJobException();
-        }
     }
 
     private MultiDataPostResult streamToSingleJob(String jobId, DataLoadParams params,
@@ -327,8 +317,8 @@ public abstract class AbstractDataLoad extends ResourceWithJobManager
 
     private void checkBucketResettingIsSupported(String jobId) throws UnknownJobException
     {
-        Optional<JobDetails> job = jobManager().getJob(jobId);
-        AnalysisConfig config = job.get().getAnalysisConfig();
+        JobDetails job = jobManager().getJobOrThrowIfUnknown(jobId);
+        AnalysisConfig config = job.getAnalysisConfig();
         checkLatencyIsNonZero(config.getLatency());
     }
 

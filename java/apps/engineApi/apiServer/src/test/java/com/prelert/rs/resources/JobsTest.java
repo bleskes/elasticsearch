@@ -27,6 +27,8 @@
 
 package com.prelert.rs.resources;
 
+import static com.prelert.job.errorcodes.ErrorCodeMatcher.hasErrorCode;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
@@ -55,6 +57,7 @@ import com.prelert.job.DataDescription;
 import com.prelert.job.Detector;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.JobDetails;
+import com.prelert.job.JobException;
 import com.prelert.job.JobIdAlreadyExistsException;
 import com.prelert.job.ModelDebugConfig;
 import com.prelert.job.ModelDebugConfig.DebugDestination;
@@ -70,6 +73,7 @@ import com.prelert.job.scheduler.CannotStartSchedulerException;
 import com.prelert.rs.data.Acknowledgement;
 import com.prelert.rs.data.Pagination;
 import com.prelert.rs.data.SingleDocument;
+import com.prelert.rs.exception.ActionNotAllowedForScheduledJobException;
 import com.prelert.rs.exception.InvalidParametersException;
 
 public class JobsTest extends ServiceTest
@@ -242,6 +246,50 @@ public class JobsTest extends ServiceTest
         verify(jobManager()).setModelDebugConfig("foo", new ModelDebugConfig(DebugDestination.DATA_STORE, 90.0, "someTerm"));
         String expectedConfig = "[modelDebugConfig]\nwriteto = DATA_STORE\nboundspercentile = 90.0\nterms = someTerm\n";
         verify(jobManager()).writeUpdateConfigMessage("foo", expectedConfig);
+    }
+
+    @Test
+    public void testPauseJob_GivenScheduledJob() throws JobException
+    {
+        when(jobManager().isScheduledJob("foo")).thenReturn(true);
+
+        m_ExpectedException.expect(ActionNotAllowedForScheduledJobException.class);
+        m_ExpectedException.expectMessage("This action is not allowed for a scheduled job");
+        m_ExpectedException.expect(hasErrorCode(ErrorCodes.ACTION_NOT_ALLOWED_FOR_SCHEDULED_JOB));
+
+        m_Jobs.pauseJob("foo");
+    }
+
+    @Test
+    public void testPauseJob() throws JobException
+    {
+        when(jobManager().isScheduledJob("bar")).thenReturn(false);
+
+        m_Jobs.pauseJob("bar");
+
+        verify(jobManager()).pauseJob("bar");
+    }
+
+    @Test
+    public void testResumeJob_GivenScheduledJob() throws JobException
+    {
+        when(jobManager().isScheduledJob("foo")).thenReturn(true);
+
+        m_ExpectedException.expect(ActionNotAllowedForScheduledJobException.class);
+        m_ExpectedException.expectMessage("This action is not allowed for a scheduled job");
+        m_ExpectedException.expect(hasErrorCode(ErrorCodes.ACTION_NOT_ALLOWED_FOR_SCHEDULED_JOB));
+
+        m_Jobs.resumeJob("foo");
+    }
+
+    @Test
+    public void testResumeJob() throws JobException
+    {
+        when(jobManager().isScheduledJob("bar")).thenReturn(false);
+
+        m_Jobs.resumeJob("bar");
+
+        verify(jobManager()).resumeJob("bar");
     }
 
     private static void verifyJobHasIdAndEndpoints(String jobId, JobDetails job)

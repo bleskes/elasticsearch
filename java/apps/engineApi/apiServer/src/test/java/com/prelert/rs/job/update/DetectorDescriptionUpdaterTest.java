@@ -34,7 +34,6 @@ import static org.mockito.Mockito.when;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -65,24 +64,12 @@ public class DetectorDescriptionUpdaterTest
     private JobDetails m_Job;
 
     @Before
-    public void setUp()
+    public void setUp() throws UnknownJobException
     {
         MockitoAnnotations.initMocks(this);
         m_Job = new JobDetails();
         m_Job.setId(JOB_ID);
-        when(m_JobManager.getJob(JOB_ID)).thenReturn(Optional.of(m_Job));
-    }
-
-    @Test
-    public void testPrepareUpdate_GivenUnknownJob() throws JobException, IOException
-    {
-        m_ExpectedException.expect(UnknownJobException.class);
-        m_ExpectedException.expect(ErrorCodeMatcher.hasErrorCode(ErrorCodes.MISSING_JOB_ERROR));
-
-        JsonNode node = new ObjectMapper().readTree("[{\"index\":1}]");
-        when(m_JobManager.getJob("unknown")).thenReturn(Optional.empty());
-
-        new DetectorDescriptionUpdater(m_JobManager, "unknown").prepareUpdate(node);
+        when(m_JobManager.getJobOrThrowIfUnknown(JOB_ID)).thenReturn(m_Job);
     }
 
     @Test

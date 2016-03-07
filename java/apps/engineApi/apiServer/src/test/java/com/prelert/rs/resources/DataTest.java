@@ -28,9 +28,11 @@
 package com.prelert.rs.resources;
 
 import static com.prelert.job.errorcodes.ErrorCodeMatcher.hasErrorCode;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
@@ -43,7 +45,6 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
@@ -102,9 +103,8 @@ public class DataTest extends ServiceTest
         configureService(m_Data);
         JobDetails jobDetails = new JobDetails();
         jobDetails.setAnalysisConfig(m_AnalysisConfig);
-        Optional<JobDetails> job = Optional.of(jobDetails);
 
-        when(jobManager().getJob(JOB_ID)).thenReturn(job);
+        when(jobManager().getJobOrThrowIfUnknown(JOB_ID)).thenReturn(jobDetails);
     }
 
     @Test

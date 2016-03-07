@@ -471,7 +471,17 @@ public enum ErrorCodes
     /**
      * The snapshot description has already been used for this job.
      */
-    DESCRIPTION_ALREADY_USED(60122);
+    DESCRIPTION_ALREADY_USED(60122),
+
+    /**
+     * The job cannot be paused.
+     */
+    CANNOT_PAUSE_JOB(60123),
+
+    /**
+     * The job cannot be resumed.
+     */
+    CANNOT_RESUME_JOB(60124);
 
 
     private long m_ErrorCode;

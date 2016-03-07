@@ -32,7 +32,6 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -62,13 +61,9 @@ class DetectorDescriptionUpdater extends AbstractUpdater
     @Override
     void prepareUpdate(JsonNode node) throws UnknownJobException, JobConfigurationException
     {
-        Optional<JobDetails> job = jobManager().getJob(jobId());
-        if (!job.isPresent())
-        {
-            throw new UnknownJobException(jobId());
-        }
+        JobDetails job = jobManager().getJobOrThrowIfUnknown(jobId());
         parseParams(node);
-        int detectorsCount = job.get().getAnalysisConfig().getDetectors().size();
+        int detectorsCount = job.getAnalysisConfig().getDetectors().size();
         for (UpdateParams update : m_Updates)
         {
             validateDetectorIndex(update, detectorsCount);

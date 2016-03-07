@@ -57,6 +57,8 @@ import com.prelert.job.config.verification.JobConfigurationVerifier;
 import com.prelert.job.exceptions.JobInUseException;
 import com.prelert.job.exceptions.TooManyJobsException;
 import com.prelert.job.logs.JobLogs;
+import com.prelert.job.manager.CannotPauseJobException;
+import com.prelert.job.manager.CannotResumeJobException;
 import com.prelert.job.manager.JobManager;
 import com.prelert.job.persistence.DataStoreException;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
@@ -254,6 +256,27 @@ public class Jobs extends ResourceWithJobManager
         }
     }
 
+    @POST
+    @Path("/{jobId}/pause")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response pauseJob(@PathParam("jobId") String jobId) throws JobInUseException,
+            NativeProcessRunException, UnknownJobException, CannotPauseJobException
+    {
+        checkJobIsNotScheduled(jobId);
+        jobManager().pauseJob(jobId);
+        return Response.ok().entity(new Acknowledgement()).build();
+    }
+
+    @POST
+    @Path("/{jobId}/resume")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response resumeJob(@PathParam("jobId") String jobId)
+            throws JobInUseException, UnknownJobException, CannotResumeJobException
+    {
+        checkJobIsNotScheduled(jobId);
+        jobManager().resumeJob(jobId);
+        return Response.ok().entity(new Acknowledgement()).build();
+    }
 
     /**
      * Sets the URLs to the data, logs & results endpoints and the

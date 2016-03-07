@@ -25,32 +25,20 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.job.manager.actions;
+package com.prelert.job.manager;
 
+import com.prelert.job.JobException;
+import com.prelert.job.JobStatus;
+import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.messages.Messages;
 
-public enum Action {
-    CLOSING(Messages.JOB_DATA_CONCURRENT_USE_CLOSE, Messages.PROCESS_ACTION_CLOSING_JOB),
-    DELETING(Messages.JOB_DATA_CONCURRENT_USE_DELETE, Messages.PROCESS_ACTION_DELETING_JOB),
-    FLUSHING(Messages.JOB_DATA_CONCURRENT_USE_FLUSH, Messages.PROCESS_ACTION_FLUSHING_JOB),
-    PAUSING(Messages.JOB_DATA_CONCURRENT_USE_PAUSE, Messages.PROCESS_ACTION_PAUSING_JOB),
-    RESUMING(Messages.JOB_DATA_CONCURRENT_USE_RESUME, Messages.PROCESS_ACTION_RESUMING_JOB),
-    REVERTING(Messages.JOB_DATA_CONCURRENT_USE_REVERT, Messages.PROCESS_ACTION_REVERTING_JOB),
-    UPDATING(Messages.JOB_DATA_CONCURRENT_USE_UPDATE, Messages.PROCESS_ACTION_UPDATING_JOB),
-    WRITING(Messages.JOB_DATA_CONCURRENT_USE_UPLOAD, Messages.PROCESS_ACTION_WRITING_JOB),
-    NONE("", "");
+public class CannotPauseJobException extends JobException
+{
+    private static final long serialVersionUID = 1L;
 
-    private final String m_MessageKey;
-    private final String m_VerbKey;
-
-    private Action(String messageKey, String verbKey)
+    public CannotPauseJobException(String jobId, JobStatus status)
     {
-        m_MessageKey = messageKey;
-        m_VerbKey = verbKey;
-    }
-
-    public String getErrorString(String jobId, Action actionInUse)
-    {
-        return Messages.getMessage(m_MessageKey, jobId, Messages.getMessage(actionInUse.m_VerbKey));
+        super(Messages.getMessage(Messages.JOB_CANNOT_PAUSE, jobId, status),
+                ErrorCodes.CANNOT_PAUSE_JOB);
     }
 }

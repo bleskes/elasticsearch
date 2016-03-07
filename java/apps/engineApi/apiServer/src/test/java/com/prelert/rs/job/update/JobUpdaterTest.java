@@ -38,7 +38,6 @@ import static org.mockito.Mockito.when;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -244,7 +243,7 @@ public class JobUpdaterTest
 
         when(m_JobManager.updateDetectorDescription("foo", 0, "the A train")).thenReturn(true);
 
-        when(m_JobManager.getJob("foo")).thenReturn(Optional.of(job));
+        when(m_JobManager.getJobOrThrowIfUnknown("foo")).thenReturn(job);
 
         new JobUpdater(m_JobManager, "foo").update(update);
 

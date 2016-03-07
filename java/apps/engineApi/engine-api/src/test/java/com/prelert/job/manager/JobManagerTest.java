@@ -83,6 +83,7 @@ import com.prelert.job.JobDetails;
 import com.prelert.job.JobException;
 import com.prelert.job.JobIdAlreadyExistsException;
 import com.prelert.job.JobSchedulerStatus;
+import com.prelert.job.JobStatus;
 import com.prelert.job.ModelDebugConfig;
 import com.prelert.job.ModelSnapshot;
 import com.prelert.job.SchedulerConfig;
@@ -265,14 +266,10 @@ public class JobManagerTest
         Throwable result1 = task_1_result.get();
         Throwable result2 = task_2_result.get();
         assertTrue(result1 == null || result2 == null);
-        if (result1 == null)
-        {
-            assertTrue(result2 instanceof JobInUseException);
-        }
-        else
-        {
-            assertTrue(result1 instanceof JobInUseException);
-        }
+        Throwable exception = result1 != null ? result1 : result2;
+        assertTrue(exception instanceof JobInUseException);
+        assertEquals("Cannot delete job foo while another connection is deleting the job",
+                exception.getMessage());
 
         verify(m_JobProvider).deleteJob("foo");
     }
@@ -431,6 +428,26 @@ public class JobManagerTest
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.TOO_MANY_JOBS_RUNNING_CONCURRENTLY));
 
         jobManager.submitDataLoadJob("foo", mock(InputStream.class), mock(DataLoadParams.class));
+    }
+
+    @Test
+    public void testSubmitDataLoadJob_GivenPausedJob() throws JobException, JsonParseException
+    {
+        JobDetails job = new JobDetails("foo", new JobConfiguration());
+        job.setStatus(JobStatus.PAUSED);
+
+        InputStream inputStream = mock(InputStream.class);
+        DataLoadParams params = mock(DataLoadParams.class);
+        when(m_JobProvider.getJobDetails("foo")).thenReturn(Optional.of(job));
+        givenProcessInfo(5);
+        JobManager jobManager = createJobManager();
+
+        DataCounts stats = jobManager.submitDataLoadJob("foo", inputStream, params);
+        assertNotNull(stats);
+        assertEquals(0, stats.getProcessedRecordCount());
+
+        verify(m_ProcessManager, never()).processDataLoadJob(job, inputStream, params);
+        verify(m_JobProvider, never()).updateJob(eq("foo"), anyMapOf(String.class, Object.class));
     }
 
     @Test
@@ -628,6 +645,29 @@ public class JobManagerTest
 
         Optional<JobDetails> doc = jobManager.getJob("foo");
         assertTrue(doc.isPresent());
+    }
+
+    @Test
+    public void testGetJobOrThrowIfUnknown_GivenUnknownJob() throws UnknownJobException
+    {
+        givenLicenseConstraints(2, 2, 0);
+        JobManager jobManager = createJobManager();
+        when(m_JobProvider.getJobDetails("foo")).thenReturn(Optional.empty());
+
+        m_ExpectedException.expect(UnknownJobException.class);
+
+        jobManager.getJobOrThrowIfUnknown("foo");
+    }
+
+    @Test
+    public void testGetJobOrThrowIfUnknown_GivenKnownJob() throws UnknownJobException
+    {
+        givenLicenseConstraints(2, 2, 0);
+        JobManager jobManager = createJobManager();
+        JobDetails job = new JobDetails();
+        when(m_JobProvider.getJobDetails("foo")).thenReturn(Optional.of(job));
+
+        assertEquals(job, jobManager.getJobOrThrowIfUnknown("foo"));
     }
 
     @Test
@@ -1156,6 +1196,215 @@ public class JobManagerTest
         verify(m_JobProvider).updateJob(eq("jobThatIsUnknown"), m_JobUpdateCaptor.capture());
         assertTrue(m_JobUpdateCaptor.getValue().containsKey(JobDetails.IGNORE_DOWNTIME));
         assertEquals(IgnoreDowntime.ONCE, m_JobUpdateCaptor.getValue().get(JobDetails.IGNORE_DOWNTIME));
+    }
+
+    @Test (expected = IllegalStateException.class)
+    public void testPauseJob_GivenScheduledJob() throws JobException
+    {
+        givenProcessInfo(2);
+        JobManager jobManager = createJobManager();
+
+        JobConfiguration jobConfig = createScheduledJobConfig();
+        Logger jobLogger = mock(Logger.class);
+        when(m_JobLoggerFactory.newLogger("foo")).thenReturn(jobLogger);
+        DataExtractor dataExtractor = mock(DataExtractor.class);
+        when(m_DataExtractorFactory.newExtractor(any(JobDetails.class))).thenReturn(dataExtractor);
+
+        jobManager.createJob(jobConfig);
+
+        jobManager.pauseJob("foo");
+    }
+
+    @Test
+    public void testPauseJob_GivenPausedJob() throws JobException
+    {
+        givenProcessInfo(2);
+        JobManager jobManager = createJobManager();
+
+        JobDetails job = new JobDetails();
+        job.setId("foo");
+        job.setStatus(JobStatus.PAUSED);
+        when(m_JobProvider.getJobDetails("foo")).thenReturn(Optional.of(job));
+
+        m_ExpectedException.expect(CannotPauseJobException.class);
+        m_ExpectedException.expectMessage("Cannot pause job 'foo' while its status is PAUSED");
+        m_ExpectedException.expect(ErrorCodeMatcher.hasErrorCode(ErrorCodes.CANNOT_PAUSE_JOB));
+
+        jobManager.pauseJob("foo");
+    }
+
+    @Test
+    public void testPauseJob_GivenClosedJob() throws JobException
+    {
+        givenProcessInfo(2);
+        JobManager jobManager = createJobManager();
+        JobDetails job = new JobDetails();
+        job.setId("foo");
+        job.setStatus(JobStatus.CLOSED);
+
+        when(m_JobProvider.getJobDetails("foo")).thenReturn(Optional.of(job));
+        when(m_ProcessManager.jobIsRunning("foo")).thenReturn(false);
+
+        jobManager.pauseJob("foo");
+
+        verify(m_ProcessManager, never()).closeJob("foo");
+
+        ArgumentCaptor<JobStatus> statusCaptor = ArgumentCaptor.forClass(JobStatus.class);
+        verify(m_JobProvider, times(2)).setJobStatus(eq("foo"), statusCaptor.capture());
+        assertEquals(JobStatus.PAUSING, statusCaptor.getAllValues().get(0));
+        assertEquals(JobStatus.PAUSED, statusCaptor.getAllValues().get(1));
+
+        verify(m_JobProvider).updateJob(eq("foo"), m_JobUpdateCaptor.capture());
+        assertTrue(m_JobUpdateCaptor.getValue().containsKey(JobDetails.IGNORE_DOWNTIME));
+        assertEquals(IgnoreDowntime.ONCE, m_JobUpdateCaptor.getValue().get(JobDetails.IGNORE_DOWNTIME));
+    }
+
+    @Test
+    public void testPauseJob_GivenRunningJob() throws JobException
+    {
+        givenProcessInfo(2);
+        JobManager jobManager = createJobManager();
+        JobDetails job = new JobDetails();
+        job.setId("foo");
+        job.setStatus(JobStatus.RUNNING);
+
+        when(m_JobProvider.getJobDetails("foo")).thenReturn(Optional.of(job));
+        when(m_ProcessManager.jobIsRunning("foo")).thenReturn(true);
+
+        jobManager.pauseJob("foo");
+
+        verify(m_ProcessManager).closeJob("foo");
+
+        ArgumentCaptor<JobStatus> statusCaptor = ArgumentCaptor.forClass(JobStatus.class);
+        verify(m_JobProvider, times(2)).setJobStatus(eq("foo"), statusCaptor.capture());
+        assertEquals(JobStatus.PAUSING, statusCaptor.getAllValues().get(0));
+        assertEquals(JobStatus.PAUSED, statusCaptor.getAllValues().get(1));
+
+        verify(m_JobProvider).updateJob(eq("foo"), m_JobUpdateCaptor.capture());
+        assertTrue(m_JobUpdateCaptor.getValue().containsKey(JobDetails.IGNORE_DOWNTIME));
+        assertEquals(IgnoreDowntime.ONCE, m_JobUpdateCaptor.getValue().get(JobDetails.IGNORE_DOWNTIME));
+    }
+
+    @Test
+    public void testPauseJob_GivenJobActionIsNotAvailable()
+            throws JobException, InterruptedException, ExecutionException
+    {
+        givenProcessInfo(2);
+        JobManager jobManager = createJobManager();
+        JobDetails job = new JobDetails();
+        job.setId("foo");
+
+        when(m_JobProvider.getJobDetails("foo")).thenReturn(Optional.of(job));
+        when(m_ProcessManager.jobIsRunning("foo")).thenReturn(true);
+        doAnswerSleep(200).when(m_ProcessManager).closeJob("foo");
+
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+        Future<Throwable> task_1_result = executor.submit(
+                new ExceptionCallable(() -> jobManager.pauseJob("foo")));
+        Future<Throwable> task_2_result = executor.submit(
+                new ExceptionCallable(() -> jobManager.pauseJob("foo")));
+        executor.shutdown();
+
+        Throwable result1 = task_1_result.get();
+        Throwable result2 = task_2_result.get();
+        assertTrue(result1 == null || result2 == null);
+        Throwable exception = result1 != null ? result1 : result2;
+        assertTrue(exception instanceof JobInUseException);
+        assertEquals("Cannot pause job foo while another connection is pausing the job",
+                exception.getMessage());
+
+        verify(m_ProcessManager).closeJob("foo");
+
+        ArgumentCaptor<JobStatus> statusCaptor = ArgumentCaptor.forClass(JobStatus.class);
+        verify(m_JobProvider, times(2)).setJobStatus(eq("foo"), statusCaptor.capture());
+        assertEquals(JobStatus.PAUSING, statusCaptor.getAllValues().get(0));
+        assertEquals(JobStatus.PAUSED, statusCaptor.getAllValues().get(1));
+
+        verify(m_JobProvider).updateJob(eq("foo"), m_JobUpdateCaptor.capture());
+        assertTrue(m_JobUpdateCaptor.getValue().containsKey(JobDetails.IGNORE_DOWNTIME));
+        assertEquals(IgnoreDowntime.ONCE, m_JobUpdateCaptor.getValue().get(JobDetails.IGNORE_DOWNTIME));
+    }
+
+    @Test (expected = IllegalStateException.class)
+    public void testResumeJob_GivenScheduledJob() throws JobException
+    {
+        givenProcessInfo(2);
+        JobManager jobManager = createJobManager();
+
+        JobConfiguration jobConfig = createScheduledJobConfig();
+        Logger jobLogger = mock(Logger.class);
+        when(m_JobLoggerFactory.newLogger("foo")).thenReturn(jobLogger);
+        DataExtractor dataExtractor = mock(DataExtractor.class);
+        when(m_DataExtractorFactory.newExtractor(any(JobDetails.class))).thenReturn(dataExtractor);
+
+        jobManager.createJob(jobConfig);
+
+        jobManager.resumeJob("foo");
+    }
+
+    @Test
+    public void testResumeJob_GivenClosedJob() throws JobException
+    {
+        givenProcessInfo(2);
+        JobManager jobManager = createJobManager();
+
+        JobDetails job = new JobDetails();
+        job.setId("foo");
+        job.setStatus(JobStatus.CLOSED);
+        when(m_JobProvider.getJobDetails("foo")).thenReturn(Optional.of(job));
+
+        m_ExpectedException.expect(CannotResumeJobException.class);
+        m_ExpectedException.expectMessage("Cannot resume job 'foo' while its status is CLOSED");
+        m_ExpectedException.expect(ErrorCodeMatcher.hasErrorCode(ErrorCodes.CANNOT_RESUME_JOB));
+
+        jobManager.resumeJob("foo");
+    }
+
+    @Test
+    public void testResumeJob_GivenPausedJob() throws JobException
+    {
+        givenProcessInfo(2);
+        JobManager jobManager = createJobManager();
+
+        JobDetails job = new JobDetails();
+        job.setId("foo");
+        job.setStatus(JobStatus.PAUSED);
+        when(m_JobProvider.getJobDetails("foo")).thenReturn(Optional.of(job));
+
+        jobManager.resumeJob("foo");
+
+        verify(m_JobProvider).setJobStatus("foo", JobStatus.CLOSED);
+    }
+
+    @Test
+    public void testResumeJob_GivenJobActionIsNotAvailable()
+            throws JobException, InterruptedException, ExecutionException
+    {
+        givenProcessInfo(2);
+        JobManager jobManager = createJobManager();
+        JobDetails job = new JobDetails();
+        job.setId("foo");
+        job.setStatus(JobStatus.PAUSED);
+        when(m_JobProvider.getJobDetails("foo")).thenReturn(Optional.of(job));
+
+        doAnswerSleep(200).when(m_JobProvider).setJobStatus("foo", JobStatus.CLOSED);
+
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+        Future<Throwable> task_1_result = executor.submit(
+                new ExceptionCallable(() -> jobManager.resumeJob("foo")));
+        Future<Throwable> task_2_result = executor.submit(
+                new ExceptionCallable(() -> jobManager.resumeJob("foo")));
+        executor.shutdown();
+
+        Throwable result1 = task_1_result.get();
+        Throwable result2 = task_2_result.get();
+        assertTrue(result1 == null || result2 == null);
+        Throwable exception = result1 != null ? result1 : result2;
+        assertTrue(exception instanceof JobInUseException);
+        assertEquals("Cannot resume job foo while another connection is resuming the job",
+                exception.getMessage());
+
+        verify(m_JobProvider).setJobStatus("foo", JobStatus.CLOSED);
     }
 
     private void givenProcessInfo(int maxLicenseJobs)

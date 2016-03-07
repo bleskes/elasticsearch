@@ -61,6 +61,7 @@ import com.prelert.job.JobDetails;
 import com.prelert.job.JobException;
 import com.prelert.job.JobIdAlreadyExistsException;
 import com.prelert.job.JobSchedulerStatus;
+import com.prelert.job.JobStatus;
 import com.prelert.job.ModelDebugConfig;
 import com.prelert.job.ModelSnapshot;
 import com.prelert.job.SchedulerState;
@@ -232,6 +233,24 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
     public Optional<JobDetails> getJob(String jobId)
     {
         return m_JobProvider.getJobDetails(jobId);
+    }
+
+    /**
+     * Returns the non-null {@code JobDetails} object for the given {@code jobId}
+     * or throws {@link UnknownJobException}
+     *
+     * @param jobId
+     * @return the {@code JobDetails} if a job with the given {@code jobId} exists
+     * @throws UnknownJobException if there is no job with matching the given {@code jobId}
+     */
+    public JobDetails getJobOrThrowIfUnknown(String jobId) throws UnknownJobException
+    {
+        Optional<JobDetails> job = m_JobProvider.getJobDetails(jobId);
+        if (!job.isPresent())
+        {
+            throw new UnknownJobException(jobId);
+        }
+        return job.get();
     }
 
     /**
@@ -780,14 +799,14 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
         try (ActionTicket actionTicket = m_ActionGuardian.tryAcquiringAction(jobId, Action.WRITING))
         {
             checkTooManyJobs(jobId);
-            Optional<JobDetails> jobDetails = m_JobProvider.getJobDetails(jobId);
-            if (!jobDetails.isPresent())
+            JobDetails jobDetails = getJobOrThrowIfUnknown(jobId);
+            if (jobDetails.getStatus().isAnyOf(JobStatus.PAUSING, JobStatus.PAUSED))
             {
-                throw new UnknownJobException(jobId);
+                return new DataCounts();
             }
-            DataCounts stats = tryProcessingDataLoadJob(jobDetails.get(), input, params);
+            DataCounts stats = tryProcessingDataLoadJob(jobDetails, input, params);
             updateLastDataTime(jobId, new Date());
-            if (IgnoreDowntime.ONCE == jobDetails.get().getIgnoreDowntime()
+            if (IgnoreDowntime.ONCE == jobDetails.getIgnoreDowntime()
                     && stats.getProcessedRecordCount() > 0)
             {
                 updateIgnoreDowntime(jobId, null);
@@ -837,13 +856,7 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
     {
         ByteArrayOutputStream output = new ByteArrayOutputStream();
         CsvRecordWriter writer = new CsvRecordWriter(output);
-        Optional<JobDetails> result = m_JobProvider.getJobDetails(jobId);
-        if (result.isPresent() == false)
-        {
-            throw new UnknownJobException(jobId);
-        }
-
-        JobDetails job = result.get();
+        JobDetails job = getJobOrThrowIfUnknown(jobId);
         m_ProcessManager.writeToJob(writer, job.getDataDescription(),
                             job.getAnalysisConfig(),
                             job.getSchedulerConfig(),
@@ -962,7 +975,7 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
         m_JobProvider.updateSchedulerState(jobId,
                 new SchedulerState(startMs, endMs.isPresent() ? endMs.getAsLong() : null));
 
-        JobDetails job = getJob(jobId).get();
+        JobDetails job = getJobOrThrowIfUnknown(jobId);
         LOGGER.info("Starting scheduler for job: " + jobId);
         m_ScheduledJobs.get(jobId).start(job, startMs, endMs);
     }
@@ -1104,6 +1117,70 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
                     LOGGER.error("Could not set ignoreDowntime on job " + e.getJobId(), e);
                 }
             }
+        }
+    }
+
+    /**
+     * Pauses a job. While a job is paused, any data submitted to it will be
+     * accepted but not processed. After resuming a job, the gap between the latest
+     * processed data and the first new data will be ignored, i.e. no results will
+     * be created for the gap and the models will be unaffected.
+     *
+     * @param jobId the job id
+     * @throws JobInUseException if the job is used by another action
+     * @throws NativeProcessRunException if the native process fails while closing the job
+     * @throws UnknownJobException if there is no job for the given {@code jobId}
+     * @throws CannotPauseJobException if the job cannot be paused in its current state
+     */
+    public void pauseJob(String jobId) throws JobInUseException, NativeProcessRunException,
+            UnknownJobException, CannotPauseJobException
+    {
+        Preconditions.checkState(!isScheduledJob(jobId));
+        LOGGER.info("Pausing job " + jobId);
+
+        try (ActionTicket actionTicket = m_ActionGuardian.tryAcquiringAction(jobId, Action.PAUSING))
+        {
+            JobDetails job = getJobOrThrowIfUnknown(jobId);
+            if (!job.getStatus().isAnyOf(JobStatus.RUNNING, JobStatus.CLOSED))
+            {
+                throw new CannotPauseJobException(jobId, job.getStatus());
+            }
+
+            if (m_ProcessManager.jobIsRunning(jobId))
+            {
+                m_JobTimeouts.stopTimeout(jobId);
+                m_ProcessManager.closeJob(jobId);
+            }
+
+            m_JobProvider.setJobStatus(jobId, JobStatus.PAUSING);
+            updateIgnoreDowntime(jobId, IgnoreDowntime.ONCE);
+            m_JobProvider.setJobStatus(jobId, JobStatus.PAUSED);
+        }
+    }
+
+    /**
+     * Resumes a job.
+     *
+     * @param jobId the job id
+     * @throws JobInUseException if the job is used by another action
+     * @throws UnknownJobException if there is no job for the given {@code jobId}
+     * @throws CannotResumeJobException if the job cannot be resumed in its current state
+     */
+    public void resumeJob(String jobId)
+            throws JobInUseException, UnknownJobException, CannotResumeJobException
+    {
+        Preconditions.checkState(!isScheduledJob(jobId));
+        LOGGER.info("Resuming job " + jobId);
+
+        try (ActionTicket actionTicket = m_ActionGuardian.tryAcquiringAction(jobId, Action.RESUMING))
+        {
+            JobDetails job = getJobOrThrowIfUnknown(jobId);
+            if (job.getStatus() != JobStatus.PAUSED)
+            {
+                throw new CannotResumeJobException(jobId, job.getStatus());
+            }
+
+            m_JobProvider.setJobStatus(jobId, JobStatus.CLOSED);
         }
     }
 }

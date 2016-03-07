@@ -53,6 +53,7 @@ import com.prelert.job.messages.Messages;
 import com.prelert.job.persistence.QueryPage;
 import com.prelert.rs.data.Pagination;
 import com.prelert.rs.data.SingleDocument;
+import com.prelert.rs.exception.ActionNotAllowedForScheduledJobException;
 import com.prelert.rs.provider.RestApiException;
 import com.prelert.server.info.ServerInfoFactory;
 
@@ -391,5 +392,17 @@ public abstract class ResourceWithJobManager
         doc.setType(docType);
 
         return doc;
+    }
+
+    /**
+     * Throws {@link ActionNotAllowedForScheduledJobException} if the job is scheduled
+     * @param jobId the job ID
+     */
+    protected void checkJobIsNotScheduled(String jobId)
+    {
+        if (jobManager().isScheduledJob(jobId))
+        {
+            throw new ActionNotAllowedForScheduledJobException();
+        }
     }
 }
