@@ -87,6 +87,7 @@ public class JobScheduler
     private final JobLoggerFactory m_JobLoggerFactory;
     private volatile ExecutorService m_LookbackExecutor;
     private volatile TaskScheduler m_RealTimeScheduler;
+    private volatile long m_LookbackStartTimeMs;
     private volatile Long m_LastEndTimeMs;
     private volatile Logger m_Logger;
     private volatile JobSchedulerStatus m_Status;
@@ -124,7 +125,7 @@ public class JobScheduler
     private Runnable createNextTask()
     {
         return () -> {
-            long start = m_LastEndTimeMs;
+            long start = m_LastEndTimeMs == null ? m_LookbackStartTimeMs : m_LastEndTimeMs;
             long end = toIntervalStartEpochMs(new Date());
             extractAndProcessData(start, end);
         };
@@ -223,6 +224,11 @@ public class JobScheduler
 
     private void makeResultsAvailable()
     {
+        if (m_LastEndTimeMs == null)
+        {
+            return;
+        }
+
         Builder flushParamsBuilder = InterimResultsParams.newBuilder().calcInterim(true);
         if (isInRealTimeMode())
         {
@@ -279,11 +285,11 @@ public class JobScheduler
         updateStatus(JobSchedulerStatus.STARTED);
         m_LookbackExecutor = Executors.newSingleThreadExecutor();
         initLastEndTime(job);
-        long lookbackStart = (m_LastEndTimeMs != null && m_LastEndTimeMs > startMs) ?
+        m_LookbackStartTimeMs = (m_LastEndTimeMs != null && m_LastEndTimeMs > startMs) ?
                 m_LastEndTimeMs : startMs;
         long lookbackEnd =  endMs.orElse(System.currentTimeMillis() - m_QueryDelayMs);
         m_IsLookbackOnly = endMs.isPresent();
-        m_LookbackExecutor.execute(createLookbackAndStartRealTimeTask(lookbackStart, lookbackEnd));
+        m_LookbackExecutor.execute(createLookbackAndStartRealTimeTask(m_LookbackStartTimeMs, lookbackEnd));
     }
 
     private void updateStatus(JobSchedulerStatus status)

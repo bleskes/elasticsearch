@@ -368,6 +368,37 @@ public class JobSchedulerTest
     }
 
     @Test
+    public void testStart_GivenLookbackWithEmptyDataAndRealtimeWithEmptyData()
+            throws CannotStartSchedulerException, CannotStopSchedulerException
+    {
+        MockDataExtractor dataExtractor = new MockDataExtractor(Arrays.asList(1, 1));
+        MockDataProcessor dataProcessor = new MockDataProcessor(Arrays.asList(
+                newCounts(0, null),
+                newCounts(0, null)));
+        m_JobScheduler = createJobScheduler(dataExtractor, dataProcessor);
+
+        m_JobScheduler.start(new JobDetails(), 1400000000000L, OptionalLong.empty());
+        assertEquals(JobSchedulerStatus.STARTED, m_CurrentStatus);
+
+        // Give time to scheduler to perform at least one real-time search
+        try
+        {
+            Thread.sleep(1200);
+        }
+        catch (InterruptedException e)
+        {
+            e.printStackTrace();
+        }
+        m_JobScheduler.stopManual();
+        assertEquals(JobSchedulerStatus.STOPPED, m_CurrentStatus);
+
+        assertEquals(2, dataProcessor.getNumberOfStreams());
+        assertEquals("1400000000000", dataExtractor.getStart(0));
+        assertEquals("1400000000000", dataExtractor.getStart(1));
+        assertTrue(dataProcessor.getFlushParams().isEmpty());
+    }
+
+    @Test
     public void testStart_GivenDataProcessorThrows()
             throws CannotStartSchedulerException, CannotStopSchedulerException
     {
