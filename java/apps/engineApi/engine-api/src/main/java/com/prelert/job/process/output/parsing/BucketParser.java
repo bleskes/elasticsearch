@@ -90,6 +90,8 @@ final class BucketParser extends FieldNameParser<Bucket>
         case Bucket.INFLUENCERS:
             bucket.setInfluencers(parseInfluencers(fieldName));
             break;
+        case Bucket.BUCKET_SPAN:
+        	bucket.setBucketSpan(parseAsLongOrZero(fieldName));
         default:
             LOGGER.warn(String.format("Parse error unknown field in Bucket %s:%s",
                     fieldName, token.asString()));

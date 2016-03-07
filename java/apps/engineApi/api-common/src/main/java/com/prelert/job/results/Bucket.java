@@ -51,6 +51,7 @@ public class Bucket
     public static final String RECORDS = "records";
     public static final String BUCKET_INFLUENCERS = "bucketInfluencers";
     public static final String INFLUENCERS = "influencers";
+    public static final String BUCKET_SPAN = "bucketSpan";
 
     public static final String ES_TIMESTAMP = "@timestamp";
 
@@ -62,6 +63,7 @@ public class Bucket
     private String m_Id;
     private Date m_Timestamp;
     private double m_AnomalyScore;
+    private long m_BucketSpan;
 
     @JsonIgnoreProperties(value={INITIAL_ANOMALY_SCORE}, allowSetters=true)
     private double m_InitialAnomalyScore;
@@ -109,6 +111,16 @@ public class Bucket
     public void setTimestamp(Date timestamp)
     {
         m_Timestamp = timestamp;
+    }
+
+    public long getBucketSpan()
+    {
+    	return m_BucketSpan;
+    }
+
+    public void setBucketSpan(long l)
+    {
+    	m_BucketSpan = l;
     }
 
     public double getAnomalyScore()
@@ -226,7 +238,7 @@ public class Bucket
     {
         // m_HadBigNormalisedUpdate is deliberately excluded from the hash
         return Objects.hash(m_Timestamp, m_EventCount, m_InitialAnomalyScore, m_AnomalyScore,
-                m_MaxNormalizedProbability, m_RecordCount, m_Records, m_IsInterim,
+                m_MaxNormalizedProbability, m_RecordCount, m_Records, m_IsInterim, m_BucketSpan,
                 m_BucketInfluencers, m_Influencers);
     }
 
@@ -251,6 +263,7 @@ public class Bucket
         // m_HadBigNormalisedUpdate is deliberately excluded from the test
         return Objects.equals(this.m_Timestamp, that.m_Timestamp)
                 && (this.m_EventCount == that.m_EventCount)
+                && (this.m_BucketSpan == that.m_BucketSpan)
                 && (this.m_AnomalyScore == that.m_AnomalyScore)
                 && (this.m_InitialAnomalyScore == that.m_InitialAnomalyScore)
                 && (this.m_MaxNormalizedProbability == that.m_MaxNormalizedProbability)
