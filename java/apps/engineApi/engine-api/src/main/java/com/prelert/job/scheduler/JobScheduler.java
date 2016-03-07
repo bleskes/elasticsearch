@@ -30,6 +30,7 @@ package com.prelert.job.scheduler;
 import java.io.IOException;
 import java.io.InputStream;
 import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Date;
@@ -75,7 +76,11 @@ public class JobScheduler
     private static final DataLoadParams DATA_LOAD_PARAMS =
             new DataLoadParams(false, new TimeRange(null, null));
     private static final int STOP_TIMEOUT_MINUTES = 60;
-    private static final int ADDITIONAL_QUERY_DELAY_MS = 100;
+
+    /**
+     * A small delay to ensure task is run after the specified time
+     */
+    private static final int NEXT_TASK_DELAY_MS = 100;
 
     private final String m_JobId;
     private final long m_BucketSpanMs;
@@ -113,7 +118,7 @@ public class JobScheduler
         m_JobId = jobId;
         m_BucketSpanMs = bucketSpan.toMillis();
         m_FrequencyMs = frequency.toMillis();
-        m_QueryDelayMs = queryDelay.toMillis() + ADDITIONAL_QUERY_DELAY_MS;
+        m_QueryDelayMs = queryDelay.toMillis();
         m_DataExtractor = Objects.requireNonNull(dataExtractor);
         m_DataProcessor = Objects.requireNonNull(dataProcessor);
         m_JobProvider = Objects.requireNonNull(jobProvider);
@@ -126,14 +131,10 @@ public class JobScheduler
     {
         return () -> {
             long start = m_LastEndTimeMs == null ? m_LookbackStartTimeMs : m_LastEndTimeMs;
-            long end = toIntervalStartEpochMs(new Date());
+            long nowMinusQueryDelay = System.currentTimeMillis() - m_QueryDelayMs;
+            long end = toIntervalStartEpochMs(nowMinusQueryDelay);
             extractAndProcessData(start, end);
         };
-    }
-
-    private long toIntervalStartEpochMs(Date date)
-    {
-        return toIntervalStartEpochMs(date.getTime());
     }
 
     private long toIntervalStartEpochMs(long epochMs)
@@ -266,10 +267,9 @@ public class JobScheduler
     private Supplier<LocalDateTime> calculateNextTime()
     {
         return () -> {
-            long nowMs = new Date().getTime();
-            long intervalSurplus = nowMs - toIntervalStartEpochMs(nowMs);
-            Date nextTime = new Date(nowMs - intervalSurplus + m_FrequencyMs + m_QueryDelayMs);
-            return LocalDateTime.ofInstant(nextTime.toInstant(), ZoneId.systemDefault());
+            long nextTimeMs = toIntervalStartEpochMs(System.currentTimeMillis() + m_FrequencyMs)
+                    + NEXT_TASK_DELAY_MS;
+            return LocalDateTime.ofInstant(Instant.ofEpochMilli(nextTimeMs), ZoneId.systemDefault());
         };
     }
 

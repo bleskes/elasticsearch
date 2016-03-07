@@ -58,6 +58,7 @@ import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import org.apache.log4j.Logger;
@@ -100,11 +101,6 @@ public class JobSchedulerTest
     private static final Duration BUCKET_SPAN = Duration.ofSeconds(2);
     private static final Duration FREQUENCY = Duration.ofSeconds(1);
     private static final Duration QUERY_DELAY = Duration.ofSeconds(0);
-
-    /**
-     * Query delay milliseconds when query delay is configured to 0.
-     */
-    private static final long EFFECTIVE_QUERY_DELAY_MS = QUERY_DELAY.toMillis() + 100;
 
     @Rule public ExpectedException m_ExpectedException = ExpectedException.none();
 
@@ -244,81 +240,66 @@ public class JobSchedulerTest
     public void testStart_GivenLookbackAndRealtimeWithSingleStreams()
             throws CannotStartSchedulerException, CannotStopSchedulerException
     {
-        long lookbackLatestRecordTime = new Date().getTime() - EFFECTIVE_QUERY_DELAY_MS;
-        long realtimeLatestRecord_1 = lookbackLatestRecordTime + 100;
-        long realtimeLatestRecord_2 = lookbackLatestRecordTime + 1000;
+        long lookbackLatestRecordTime = System.currentTimeMillis() - 100;
+        long[] latestRecordTimes = { lookbackLatestRecordTime, lookbackLatestRecordTime + 1000,
+                lookbackLatestRecordTime + 2000 };
 
+        int numberOfSearches = 3;
         MockDataExtractor dataExtractor = new MockDataExtractor(Arrays.asList(1, 1, 1));
         MockDataProcessor dataProcessor = new MockDataProcessor(Arrays.asList(
-                newCounts(67, lookbackLatestRecordTime),
-                newCounts(23, realtimeLatestRecord_1),
-                newCounts(55, realtimeLatestRecord_2)));
+                newCounts(67, latestRecordTimes[0]),
+                newCounts(23, latestRecordTimes[1]),
+                newCounts(55, latestRecordTimes[2])),
+                new CountDownLatch(numberOfSearches));
         m_JobScheduler = createJobScheduler(dataExtractor, dataProcessor);
 
-        long nowMs = new Date().getTime() - EFFECTIVE_QUERY_DELAY_MS;
-        long intervalMs = FREQUENCY.toMillis();
-        long intervalEnd = (nowMs / intervalMs) * intervalMs;
+        long schedulerStartedTimeMs = System.currentTimeMillis();
 
         m_JobScheduler.start(new JobDetails(), 1400000000000L, OptionalLong.empty());
         assertEquals(JobSchedulerStatus.STARTED, m_CurrentStatus);
-
-        // Give time to scheduler to perform at least one real-time search
-        try
-        {
-            Thread.sleep(2000);
-        }
-        catch (InterruptedException e)
-        {
-            e.printStackTrace();
-        }
+        assertTrue(dataProcessor.awaitForCountDownLatch());
         m_JobScheduler.stopManual();
         assertEquals(JobSchedulerStatus.STOPPED, m_CurrentStatus);
 
-        assertTrue(dataProcessor.getNumberOfStreams() > 1);
-        assertTrue(dataProcessor.getNumberOfStreams() <= 3);
+        assertEquals(numberOfSearches, dataProcessor.getNumberOfStreams());
         List<InterimResultsParams> flushParams = dataProcessor.getFlushParams();
-        assertTrue(flushParams.size() > 1);
+        assertEquals(numberOfSearches, flushParams.size());
 
-        // To check the lookback end time we should be lenient as
-        // it is possible that between the moment we recorded now
-        // and the moment the lookback actually got executed,
-        // the current interval end could have changed.
-        assertEquals("0-0", dataProcessor.getStream(0));
-        assertEquals("1400000000000", dataExtractor.getStart(0));
         long lookbackEnd = Long.parseLong(dataExtractor.getEnd(0));
-        assertTrue(lookbackEnd >= intervalEnd);
-        assertTrue(lookbackEnd <= intervalEnd + intervalMs);
-        intervalEnd = ((lookbackEnd + intervalMs) / intervalMs) * intervalMs;
-        assertTrue(flushParams.get(0).shouldCalculateInterim());
-        assertFalse(flushParams.get(0).shouldAdvanceTime());
-
-        // The same is true for the first real-time search.
-        // It is possible that by the time the first real-time
-        // gets executed, we have skipped intervals and therefore
-        // we are processing two intervals together.
-        assertEquals("1-0", dataProcessor.getStream(1));
-        assertEquals(String.valueOf(lookbackLatestRecordTime + 1), dataExtractor.getStart(1));
-        long firstRtEnd = Long.parseLong(dataExtractor.getEnd(1));
-        assertTrue(firstRtEnd >= intervalEnd);
-        assertTrue(firstRtEnd <= intervalEnd + intervalMs);
-        assertTrue(flushParams.get(1).shouldCalculateInterim());
-        assertTrue(flushParams.get(1).shouldAdvanceTime());
-        assertEquals(Math.min(calcAlignedBucketEnd(realtimeLatestRecord_1), firstRtEnd),
-                flushParams.get(1).getAdvanceTime() * 1000);
-        intervalEnd = firstRtEnd + intervalMs;
-
-        // The rest of real-time searches (if any) should span over exactly one interval
-        if (dataProcessor.getNumberOfStreams() > 2)
+        long firstRealTimeEnd = Long.parseLong(dataExtractor.getEnd(1));
+        for (int i = 0; i < numberOfSearches; i++)
         {
-            assertEquals("2-0", dataProcessor.getStream(2));
-            assertEquals(String.valueOf(intervalEnd - intervalMs), dataExtractor.getStart(2));
-            assertEquals(String.valueOf(intervalEnd), dataExtractor.getEnd(2));
-            assertTrue(flushParams.get(2).shouldCalculateInterim());
-            assertTrue(flushParams.get(2).shouldAdvanceTime());
-            assertEquals(Math.min(calcAlignedBucketEnd(realtimeLatestRecord_2),
-                    Long.parseLong(dataExtractor.getEnd(2))),
-                    flushParams.get(2).getAdvanceTime() * 1000);
-            intervalEnd += intervalMs;
+            assertEquals(i + "-0", dataProcessor.getStream(i));
+            assertTrue(flushParams.get(i).shouldCalculateInterim());
+            long searchStart = Long.parseLong(dataExtractor.getStart(i));
+            long searchEnd = Long.parseLong(dataExtractor.getEnd(i));
+
+            // Assert lookback
+            if (i == 0)
+            {
+                assertEquals("1400000000000", dataExtractor.getStart(i));
+                assertTrue(lookbackEnd >= schedulerStartedTimeMs);
+                assertTrue(lookbackEnd <= schedulerStartedTimeMs + 1000);
+                assertFalse(flushParams.get(i).shouldAdvanceTime());
+                continue;
+            }
+
+            if (i == 1)
+            {
+                // Assert first real-time search
+                assertEquals(lookbackLatestRecordTime + 1, searchStart);
+                assertTrue(firstRealTimeEnd > lookbackLatestRecordTime + 1);
+            }
+            else
+            {
+                // Assert rest of real-time searches
+                assertEquals(dataExtractor.getEnd(i - 1), dataExtractor.getStart(i));
+                assertEquals(searchStart + FREQUENCY.toMillis(), searchEnd);
+            }
+
+            assertTrue(flushParams.get(i).shouldAdvanceTime());
+            assertEquals(Math.min(calcAlignedBucketEnd(latestRecordTimes[i]), searchEnd),
+                                    flushParams.get(i).getAdvanceTime() * 1000);
         }
 
         verify(m_JobProvider, times(4)).audit(JOB_ID);
@@ -332,32 +313,25 @@ public class JobSchedulerTest
     public void testStart_GivenLookbackAndRealtimeWithEmptyData()
             throws CannotStartSchedulerException, CannotStopSchedulerException
     {
-        long lookbackLatestRecordTime = new Date().getTime() - EFFECTIVE_QUERY_DELAY_MS;
+        long lookbackLatestRecordTime = new Date().getTime() - 100;
 
+        int numberOfSearches = 2;
         MockDataExtractor dataExtractor = new MockDataExtractor(Arrays.asList(1, 1));
         MockDataProcessor dataProcessor = new MockDataProcessor(Arrays.asList(
                 newCounts(67, lookbackLatestRecordTime),
-                newCounts(0, null)));
+                newCounts(0, null)),
+                new CountDownLatch(numberOfSearches));
         m_JobScheduler = createJobScheduler(dataExtractor, dataProcessor);
 
         m_JobScheduler.start(new JobDetails(), 1400000000000L, OptionalLong.empty());
         assertEquals(JobSchedulerStatus.STARTED, m_CurrentStatus);
-
-        // Give time to scheduler to perform at least one real-time search
-        try
-        {
-            Thread.sleep(1200);
-        }
-        catch (InterruptedException e)
-        {
-            e.printStackTrace();
-        }
+        assertTrue(dataProcessor.awaitForCountDownLatch());
         m_JobScheduler.stopManual();
         assertEquals(JobSchedulerStatus.STOPPED, m_CurrentStatus);
 
-        assertEquals(2, dataProcessor.getNumberOfStreams());
+        assertEquals(numberOfSearches, dataProcessor.getNumberOfStreams());
         List<InterimResultsParams> flushParams = dataProcessor.getFlushParams();
-        assertEquals(2, flushParams.size());
+        assertEquals(numberOfSearches, flushParams.size());
 
         assertTrue(flushParams.get(0).shouldCalculateInterim());
         assertFalse(flushParams.get(0).shouldAdvanceTime());
@@ -371,28 +345,21 @@ public class JobSchedulerTest
     public void testStart_GivenLookbackWithEmptyDataAndRealtimeWithEmptyData()
             throws CannotStartSchedulerException, CannotStopSchedulerException
     {
+        int numberOfSearches = 2;
         MockDataExtractor dataExtractor = new MockDataExtractor(Arrays.asList(1, 1));
         MockDataProcessor dataProcessor = new MockDataProcessor(Arrays.asList(
                 newCounts(0, null),
-                newCounts(0, null)));
+                newCounts(0, null)),
+                new CountDownLatch(numberOfSearches));
         m_JobScheduler = createJobScheduler(dataExtractor, dataProcessor);
 
         m_JobScheduler.start(new JobDetails(), 1400000000000L, OptionalLong.empty());
         assertEquals(JobSchedulerStatus.STARTED, m_CurrentStatus);
-
-        // Give time to scheduler to perform at least one real-time search
-        try
-        {
-            Thread.sleep(1200);
-        }
-        catch (InterruptedException e)
-        {
-            e.printStackTrace();
-        }
+        assertTrue(dataProcessor.awaitForCountDownLatch());
         m_JobScheduler.stopManual();
         assertEquals(JobSchedulerStatus.STOPPED, m_CurrentStatus);
 
-        assertEquals(2, dataProcessor.getNumberOfStreams());
+        assertEquals(numberOfSearches, dataProcessor.getNumberOfStreams());
         assertEquals("1400000000000", dataExtractor.getStart(0));
         assertEquals("1400000000000", dataExtractor.getStart(1));
         assertTrue(dataProcessor.getFlushParams().isEmpty());
@@ -436,7 +403,7 @@ public class JobSchedulerTest
 
     @Test
     public void testStart_GivenDataExtractorThrows() throws CannotStartSchedulerException,
-            CannotStopSchedulerException, IOException, InterruptedException
+            CannotStopSchedulerException, IOException
     {
         DataExtractor dataExtractor = mock(DataExtractor.class);
         when(dataExtractor.hasNext()).thenReturn(true);
@@ -589,24 +556,24 @@ public class JobSchedulerTest
     }
 
     @Test
-    public void testStopAuto_GivenRealTimeJob() throws InterruptedException,
-            CannotStartSchedulerException
+    public void testStopAuto_GivenRealTimeJob() throws CannotStartSchedulerException
     {
         MockDataExtractor dataExtractor = new MockDataExtractor(Arrays.asList(1, 1, 1));
         MockDataProcessor dataProcessor = new MockDataProcessor(Arrays.asList(
                 newCounts(67, 1400000000300L),
                 newCounts(23, 1400000000600L),
-                newCounts(55, 1400000000900L)));
+                newCounts(55, 1400000000900L)),
+                new CountDownLatch(2));
         m_JobScheduler = createJobScheduler(dataExtractor, dataProcessor);
 
         m_JobScheduler.start(new JobDetails(), 1400000000000L, OptionalLong.empty());
         assertEquals(JobSchedulerStatus.STARTED, m_CurrentStatus);
-        m_JobScheduler.stopAuto();
-        assertFalse(dataProcessor.isJobClosed());
 
         // Wait enough time for real-time tasks to begin in case stop did not work
-        Thread.sleep(1200);
+        assertTrue(dataProcessor.awaitForCountDownLatch());
 
+        m_JobScheduler.stopAuto();
+        assertFalse(dataProcessor.isJobClosed());
         assertEquals(JobSchedulerStatus.STARTED, m_CurrentStatus);
     }
 
@@ -740,10 +707,37 @@ public class JobSchedulerTest
         private boolean m_ShouldThrow = false;
         private boolean m_IsJobClosed = false;
         private int m_StreamCount = 0;
+        private final CountDownLatch m_CountDownLatch;
 
         MockDataProcessor(List<DataCounts> countsPerStream)
         {
+            this(countsPerStream, new CountDownLatch(0));
+        }
+
+        MockDataProcessor(List<DataCounts> countsPerStream, CountDownLatch countDownLatch)
+        {
             m_CountsPerStream = countsPerStream;
+            m_CountDownLatch = countDownLatch;
+        }
+
+        /**
+         * Wait until there are as many streams processed as the count down
+         * latch provided upon construction. This method has a timeout of 10 seconds.
+         * No test should need more than 10 seconds.
+         *
+         * @return {@code true} if latch was counted down to 0 or {@code false} if it timed out
+         */
+        public boolean awaitForCountDownLatch()
+        {
+            try
+            {
+                m_CountDownLatch.await(10, TimeUnit.SECONDS);
+            }
+            catch (InterruptedException e)
+            {
+                return false;
+            }
+            return true;
         }
 
         public void setShouldThrow(boolean value)
@@ -780,6 +774,7 @@ public class JobSchedulerTest
             assertEquals(JOB_ID, jobId);
             assertFalse(params.isPersisting());
             assertFalse(params.isResettingBuckets());
+            m_CountDownLatch.countDown();
             if (m_ShouldThrow)
             {
                 throw new UnknownJobException(JOB_ID);
