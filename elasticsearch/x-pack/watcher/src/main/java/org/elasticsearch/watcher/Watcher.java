@@ -50,6 +50,7 @@ import org.elasticsearch.watcher.execution.ExecutionModule;
 import org.elasticsearch.watcher.history.HistoryModule;
 import org.elasticsearch.watcher.history.HistoryStore;
 import org.elasticsearch.watcher.input.InputModule;
+import org.elasticsearch.watcher.input.chain.ChainInputFactory;
 import org.elasticsearch.watcher.license.LicenseModule;
 import org.elasticsearch.watcher.license.WatcherLicensee;
 import org.elasticsearch.watcher.rest.action.RestAckWatchAction;
@@ -66,14 +67,14 @@ import org.elasticsearch.watcher.support.WatcherIndexTemplateRegistry.TemplateCo
 import org.elasticsearch.watcher.support.clock.ClockModule;
 import org.elasticsearch.watcher.support.http.HttpClient;
 import org.elasticsearch.watcher.support.http.HttpClientModule;
-import org.elasticsearch.watcher.support.init.InitializingModule;
-import org.elasticsearch.watcher.support.init.InitializingService;
 import org.elasticsearch.watcher.support.init.proxy.ScriptServiceProxy;
+import org.elasticsearch.watcher.support.init.proxy.WatcherClientProxy;
 import org.elasticsearch.watcher.support.secret.SecretModule;
 import org.elasticsearch.watcher.support.secret.SecretService;
 import org.elasticsearch.watcher.support.text.TextTemplateModule;
 import org.elasticsearch.watcher.support.validation.WatcherSettingsValidation;
 import org.elasticsearch.watcher.transform.TransformModule;
+import org.elasticsearch.watcher.transform.chain.ChainTransformFactory;
 import org.elasticsearch.watcher.transport.actions.ack.AckWatchAction;
 import org.elasticsearch.watcher.transport.actions.ack.TransportAckWatchAction;
 import org.elasticsearch.watcher.transport.actions.activate.ActivateWatchAction;
@@ -94,6 +95,7 @@ import org.elasticsearch.watcher.trigger.TriggerModule;
 import org.elasticsearch.watcher.trigger.schedule.ScheduleModule;
 import org.elasticsearch.watcher.watch.WatchModule;
 import org.elasticsearch.xpack.XPackPlugin;
+import org.elasticsearch.xpack.common.init.LazyInitializationModule;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
@@ -145,7 +147,6 @@ public class Watcher {
         }
         return Arrays.<Module>asList(
                 new WatcherModule(settings),
-                new InitializingModule(),
                 new LicenseModule(),
                 new WatchModule(),
                 new TextTemplateModule(),
@@ -168,10 +169,6 @@ public class Watcher {
             return Collections.emptyList();
         }
         return Arrays.<Class<? extends LifecycleComponent>>asList(
-            // the initialization service must be first in the list
-            // as other services may depend on one of the initialized
-            // constructs
-            InitializingService.class,
             WatcherLicensee.class,
             EmailService.class,
             HipChatService.class,
@@ -263,6 +260,15 @@ public class Watcher {
             module.registerAction(ActivateWatchAction.INSTANCE, TransportActivateWatchAction.class);
             module.registerAction(WatcherServiceAction.INSTANCE, TransportWatcherServiceAction.class);
             module.registerAction(ExecuteWatchAction.INSTANCE, TransportExecuteWatchAction.class);
+        }
+    }
+
+    public void onModule(LazyInitializationModule module) {
+        if (enabled) {
+            module.registerLazyInitializable(WatcherClientProxy.class);
+            module.registerLazyInitializable(ScriptServiceProxy.class);
+            module.registerLazyInitializable(ChainTransformFactory.class);
+            module.registerLazyInitializable(ChainInputFactory.class);
         }
     }
 

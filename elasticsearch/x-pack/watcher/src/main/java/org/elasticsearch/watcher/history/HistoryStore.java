@@ -26,7 +26,7 @@ import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.index.engine.VersionConflictEngineException;
 import org.elasticsearch.watcher.WatcherModule;
 import org.elasticsearch.watcher.execution.ExecutionState;
-import org.elasticsearch.watcher.support.init.proxy.ClientProxy;
+import org.elasticsearch.watcher.support.init.proxy.WatcherClientProxy;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
@@ -48,7 +48,7 @@ public class HistoryStore extends AbstractComponent {
 
     static final DateTimeFormatter indexTimeFormat = DateTimeFormat.forPattern("YYYY.MM.dd");
 
-    private final ClientProxy client;
+    private final WatcherClientProxy client;
 
     private final ReadWriteLock readWriteLock = new ReentrantReadWriteLock();
     private final Lock putUpdateLock = readWriteLock.readLock();
@@ -56,7 +56,7 @@ public class HistoryStore extends AbstractComponent {
     private final AtomicBoolean started = new AtomicBoolean(false);
 
     @Inject
-    public HistoryStore(Settings settings, ClientProxy client) {
+    public HistoryStore(Settings settings, WatcherClientProxy client) {
         super(settings);
         this.client = client;
     }

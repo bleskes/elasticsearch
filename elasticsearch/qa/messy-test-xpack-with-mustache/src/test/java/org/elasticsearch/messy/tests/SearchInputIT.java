@@ -46,7 +46,7 @@ import org.elasticsearch.watcher.input.search.SearchInput;
 import org.elasticsearch.watcher.input.search.SearchInputFactory;
 import org.elasticsearch.watcher.input.simple.ExecutableSimpleInput;
 import org.elasticsearch.watcher.input.simple.SimpleInput;
-import org.elasticsearch.watcher.support.init.proxy.ClientProxy;
+import org.elasticsearch.watcher.support.init.proxy.WatcherClientProxy;
 import org.elasticsearch.watcher.support.text.TextTemplate;
 import org.elasticsearch.watcher.trigger.schedule.IntervalSchedule;
 import org.elasticsearch.watcher.trigger.schedule.ScheduleTrigger;
@@ -144,7 +144,7 @@ public class SearchInputIT extends ESIntegTestCase {
                 .source(searchSourceBuilder);
 
         ExecutableSearchInput searchInput = new ExecutableSearchInput(new SearchInput(request, null, null, null), logger,
-                ClientProxy.of(client()), null);
+                WatcherClientProxy.of(client()), null);
         WatchExecutionContext ctx = new TriggeredExecutionContext(
                 new Watch("test-watch",
                         new ScheduleTrigger(new IntervalSchedule(new IntervalSchedule.Interval(1, IntervalSchedule.Interval.Unit.MINUTES))),
@@ -256,7 +256,7 @@ public class SearchInputIT extends ESIntegTestCase {
                 .source(searchSourceBuilder);
 
         ExecutableSearchInput searchInput = new ExecutableSearchInput(new SearchInput(request, null, null, null), logger,
-                ClientProxy.of(client()), null);
+                WatcherClientProxy.of(client()), null);
         WatchExecutionContext ctx = new TriggeredExecutionContext(
                 new Watch("test-watch",
                         new ScheduleTrigger(new IntervalSchedule(new IntervalSchedule.Interval(1, IntervalSchedule.Interval.Unit.MINUTES))),
@@ -293,7 +293,7 @@ public class SearchInputIT extends ESIntegTestCase {
         parser.nextToken();
 
         IndicesQueriesRegistry indicesQueryRegistry = internalCluster().getInstance(IndicesQueriesRegistry.class);
-        SearchInputFactory factory = new SearchInputFactory(Settings.EMPTY, ClientProxy.of(client()), indicesQueryRegistry, null);
+        SearchInputFactory factory = new SearchInputFactory(Settings.EMPTY, WatcherClientProxy.of(client()), indicesQueryRegistry, null);
 
         SearchInput searchInput = factory.parseInput("_id", parser);
         assertEquals(SearchInput.TYPE, searchInput.type());
@@ -323,7 +323,7 @@ public class SearchInputIT extends ESIntegTestCase {
 
         SearchInput si = siBuilder.build();
 
-        ExecutableSearchInput searchInput = new ExecutableSearchInput(si, logger, ClientProxy.of(client()), null);
+        ExecutableSearchInput searchInput = new ExecutableSearchInput(si, logger, WatcherClientProxy.of(client()), null);
         return searchInput.execute(ctx, new Payload.Simple());
     }
 

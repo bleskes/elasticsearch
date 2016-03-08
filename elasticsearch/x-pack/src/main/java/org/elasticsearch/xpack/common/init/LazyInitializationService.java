@@ -15,7 +15,7 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.watcher.support.init;
+package org.elasticsearch.xpack.common.init;
 
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.common.component.AbstractLifecycleComponent;
@@ -26,15 +26,15 @@ import org.elasticsearch.common.settings.Settings;
 import java.util.Set;
 
 /**
- * A service to lazy initialize {@link InitializingService.Initializable} constructs.
+ * A service to lazy initialize {@link LazyInitializable} constructs.
  */
-public class InitializingService extends AbstractLifecycleComponent {
+public class LazyInitializationService extends AbstractLifecycleComponent {
 
     private final Injector injector;
-    private final Set<Initializable> initializables;
+    private final Set<LazyInitializable> initializables;
 
     @Inject
-    public InitializingService(Settings settings, Injector injector, Set<Initializable> initializables) {
+    public LazyInitializationService(Settings settings, Injector injector, Set<LazyInitializable> initializables) {
         super(settings);
         this.injector = injector;
         this.initializables = initializables;
@@ -42,7 +42,8 @@ public class InitializingService extends AbstractLifecycleComponent {
 
     @Override
     protected void doStart() throws ElasticsearchException {
-        for (Initializable initializable : initializables) {
+        for (LazyInitializable initializable : initializables) {
+            logger.trace("lazy initialization of [{}]", initializable);
             initializable.init(injector);
         }
     }
@@ -53,10 +54,5 @@ public class InitializingService extends AbstractLifecycleComponent {
 
     @Override
     protected void doClose() throws ElasticsearchException {
-    }
-
-    public interface Initializable {
-
-        void init(Injector injector);
     }
 }
