@@ -88,8 +88,8 @@ public class ElasticsearchDataExtractor implements DataExtractor
     private static final String AGGREGATION_TEMPLATE = ","
             + "  %s";
 
-    private static final Pattern SCROLL_ID_PATTERN = Pattern.compile(".*\"_scroll_id\":\"(.*?)\".*");
-    private static final Pattern EMPTY_HITS_PATTERN = Pattern.compile(".*\"hits\":\\[\\]");
+    private static final Pattern SCROLL_ID_PATTERN = Pattern.compile("\"_scroll_id\":\"(.*?)\"");
+    private static final Pattern EMPTY_HITS_PATTERN = Pattern.compile("\"hits\":\\[\\]");
     private static final Pattern EMPTY_AGGREGATIONS_PATTERN = Pattern.compile("\"aggregations\":.*\"buckets\":\\[\\]");
     private static final int OK_STATUS = 200;
     private static final String SLASH = "/";
