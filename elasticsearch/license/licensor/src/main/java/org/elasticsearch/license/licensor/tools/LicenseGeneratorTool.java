@@ -24,7 +24,7 @@ import joptsimple.OptionSpec;
 import org.elasticsearch.cli.Command;
 import org.elasticsearch.cli.ExitCodes;
 import org.elasticsearch.cli.UserError;
-import org.elasticsearch.common.cli.Terminal;
+import org.elasticsearch.cli.Terminal;
 import org.elasticsearch.common.io.PathUtils;
 import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
@@ -68,7 +68,7 @@ public class LicenseGeneratorTool extends Command {
     }
 
     @Override
-    protected int execute(Terminal terminal, OptionSet options) throws Exception {
+    protected void execute(Terminal terminal, OptionSet options) throws Exception {
         Path publicKeyPath = PathUtils.get(publicKeyPathOption.value(options));
         Path privateKeyPath = PathUtils.get(privateKeyPathOption.value(options));
         String licenseSpecString = null;
@@ -80,7 +80,6 @@ public class LicenseGeneratorTool extends Command {
             licenseSpecPath = PathUtils.get(licenseFileOption.value(options));
         }
         execute(terminal, publicKeyPath, privateKeyPath, licenseSpecString, licenseSpecPath);
-        return ExitCodes.OK;
     }
 
     // pkg private for testing
