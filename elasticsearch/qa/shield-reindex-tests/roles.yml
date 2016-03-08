@@ -16,13 +16,13 @@ minimal:
   indices:
     - names: source
       privileges:
-        - search
+        - read
         - write
         - create_index
         - indices:admin/refresh
     - names: dest
       privileges:
-        - search
+        - read
         - write
         - create_index
         - indices:admin/refresh
@@ -31,7 +31,7 @@ minimal:
 readonly:
   indices:
     - names: '*'
-      privileges: [ search ]
+      privileges: [ read ]
 
 # Write operations on destination index, none on source index
 dest_only:
@@ -44,7 +44,7 @@ can_not_see_hidden_docs:
   indices:
     - names: source
       privileges:
-        - search
+        - read
         - write
         - create_index
         - indices:admin/refresh
@@ -55,7 +55,7 @@ can_not_see_hidden_docs:
               hidden: true
     - names: dest
       privileges:
-        - search
+        - read
         - write
         - create_index
         - indices:admin/refresh
@@ -65,7 +65,7 @@ can_not_see_hidden_fields:
   indices:
     - names: source
       privileges:
-        - search
+        - read
         - write
         - create_index
         - indices:admin/refresh
@@ -74,7 +74,7 @@ can_not_see_hidden_fields:
          - bar
     - names: dest
       privileges:
-        - search
+        - read
         - write
         - create_index
         - indices:admin/refresh
