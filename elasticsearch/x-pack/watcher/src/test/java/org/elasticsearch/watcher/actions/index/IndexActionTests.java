@@ -32,7 +32,7 @@ import org.elasticsearch.watcher.actions.Action;
 import org.elasticsearch.watcher.actions.Action.Result.Status;
 import org.elasticsearch.watcher.execution.WatchExecutionContext;
 import org.elasticsearch.watcher.support.WatcherDateTimeUtils;
-import org.elasticsearch.watcher.support.init.proxy.ClientProxy;
+import org.elasticsearch.watcher.support.init.proxy.WatcherClientProxy;
 import org.elasticsearch.watcher.support.xcontent.XContentSource;
 import org.elasticsearch.watcher.test.WatcherTestUtils;
 import org.elasticsearch.watcher.watch.Payload;
@@ -84,7 +84,7 @@ public class IndexActionTests extends ESIntegTestCase {
         }
 
         IndexAction action = new IndexAction("test-index", "test-type", timestampField, null, null);
-        ExecutableIndexAction executable = new ExecutableIndexAction(action, logger, ClientProxy.of(client()), null);
+        ExecutableIndexAction executable = new ExecutableIndexAction(action, logger, WatcherClientProxy.of(client()), null);
         DateTime executionTime = DateTime.now(UTC);
         Payload payload = randomBoolean() ? new Payload.Simple("foo", "bar") : new Payload.Simple("_doc", singletonMap("foo", "bar"));
         WatchExecutionContext ctx = WatcherTestUtils.mockExecutionContext("_id", executionTime, payload);
@@ -144,7 +144,7 @@ public class IndexActionTests extends ESIntegTestCase {
         );
 
         IndexAction action = new IndexAction("test-index", "test-type", timestampField, null, null);
-        ExecutableIndexAction executable = new ExecutableIndexAction(action, logger, ClientProxy.of(client()), null);
+        ExecutableIndexAction executable = new ExecutableIndexAction(action, logger, WatcherClientProxy.of(client()), null);
         DateTime executionTime = DateTime.now(UTC);
         WatchExecutionContext ctx = WatcherTestUtils.mockExecutionContext("_id", executionTime, new Payload.Simple("_doc", list));
 
@@ -208,7 +208,7 @@ public class IndexActionTests extends ESIntegTestCase {
         }
         builder.endObject();
 
-        IndexActionFactory actionParser = new IndexActionFactory(Settings.EMPTY, ClientProxy.of(client()));
+        IndexActionFactory actionParser = new IndexActionFactory(Settings.EMPTY, WatcherClientProxy.of(client()));
         XContentParser parser = JsonXContent.jsonXContent.createParser(builder.bytes());
         parser.nextToken();
 
@@ -236,7 +236,7 @@ public class IndexActionTests extends ESIntegTestCase {
             }
         }
         builder.endObject();
-        IndexActionFactory actionParser = new IndexActionFactory(Settings.EMPTY, ClientProxy.of(client()));
+        IndexActionFactory actionParser = new IndexActionFactory(Settings.EMPTY, WatcherClientProxy.of(client()));
         XContentParser parser = JsonXContent.jsonXContent.createParser(builder.bytes());
         parser.nextToken();
         try {
