@@ -28,6 +28,7 @@
 package com.prelert.job.persistence.elasticsearch;
 
 import java.util.Objects;
+import java.util.function.LongSupplier;
 
 import org.apache.log4j.Logger;
 import org.elasticsearch.action.ShardOperationFailedException;
@@ -108,7 +109,7 @@ public class ElasticsearchBulkDeleter implements JobDataDeleter
         deleteTypeByBucket(bucket, AnomalyRecord.TYPE, () -> ++m_DeletedRecordCount);
     }
 
-    private void deleteTypeByBucket(Bucket bucket, String type, Runnable deleteCounter)
+    private void deleteTypeByBucket(Bucket bucket, String type, LongSupplier deleteCounter)
     {
         QueryBuilder query = QueryBuilders.termQuery(ElasticsearchMappings.ES_TIMESTAMP,
                 bucket.getTimestamp().getTime());
@@ -131,7 +132,7 @@ public class ElasticsearchBulkDeleter implements JobDataDeleter
                 deleteRequest.setParent(parentField.getValue().toString());
             }
             m_BulkRequestBuilder.add(deleteRequest);
-            deleteCounter.run();
+            deleteCounter.getAsLong();
         }
     }
 

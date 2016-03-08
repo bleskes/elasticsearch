@@ -193,7 +193,7 @@ public class PrelertWebApp extends Application
             // hostname of the current machine, as this scenario is taken to
             // mean that Elasticsearch is running on the current host but is
             // being managed independently of the Engine API
-            if (esHost.equals("localhost") || esHost.equals("localhost6"))
+            if ("localhost".equals(esHost) || "localhost6".equals(esHost))
             {
                 resultsStorageClient = ES_NODE;
             }
