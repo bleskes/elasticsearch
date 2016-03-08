@@ -18,6 +18,7 @@
 package org.elasticsearch.xpack;
 
 import org.elasticsearch.client.Client;
+import org.elasticsearch.marvel.client.MonitoringClient;
 import org.elasticsearch.shield.authc.support.SecuredString;
 import org.elasticsearch.shield.client.SecurityClient;
 import org.elasticsearch.watcher.client.WatcherClient;
@@ -34,13 +35,20 @@ import static org.elasticsearch.shield.authc.support.UsernamePasswordToken.basic
 public class XPackClient {
 
     private final Client client;
+
+    private final MonitoringClient monitoringClient;
     private final SecurityClient securityClient;
     private final WatcherClient watcherClient;
 
     public XPackClient(Client client) {
         this.client = client;
+        this.monitoringClient = new MonitoringClient(client);
         this.securityClient = new SecurityClient(client);
         this.watcherClient = new WatcherClient(client);
+    }
+
+    public MonitoringClient monitoring() {
+        return monitoringClient;
     }
 
     public SecurityClient security() {

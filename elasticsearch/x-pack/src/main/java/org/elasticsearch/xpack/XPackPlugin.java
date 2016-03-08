@@ -199,6 +199,7 @@ public class XPackPlugin extends Plugin {
     }
 
     public void onModule(LazyInitializationModule module) {
+        marvel.onModule(module);
         watcher.onModule(module);
     }
 
