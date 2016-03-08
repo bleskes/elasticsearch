@@ -56,6 +56,7 @@ import com.prelert.app.Shutdownable;
 import com.prelert.job.DataCounts;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.JobDetails;
+import com.prelert.job.JobException;
 import com.prelert.job.JobIdAlreadyExistsException;
 import com.prelert.job.JobSchedulerStatus;
 import com.prelert.job.ModelDebugConfig;
@@ -784,6 +785,15 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
                 updateIgnoreDowntime(jobId, null);
             }
             return stats;
+        }
+        catch (JobException e)
+        {
+            // Scheduled jobs perform their own auditing
+            if (!isScheduledJob(jobId))
+            {
+                audit(jobId).error(e.getMessage());
+            }
+            throw e;
         }
     }
 

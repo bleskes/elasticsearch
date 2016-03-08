@@ -334,14 +334,21 @@ public class JobManagerTest
         when(m_ProcessManager.numberOfRunningJobs()).thenReturn(2);
         JobManager jobManager = createJobManager();
 
-        m_ExpectedException.expect(TooManyJobsException.class);
-        m_ExpectedException.expectMessage("Cannot reactivate job with id 'foo' - your license "
+        String expectedError = "Cannot reactivate job with id 'foo' - your license "
                 + "limits you to 2 concurrently running jobs. You must close a job before you "
-                + "can reactivate another.");
-        m_ExpectedException.expect(
-                ErrorCodeMatcher.hasErrorCode(ErrorCodes.LICENSE_VIOLATION));
-
-        jobManager.submitDataLoadJob("foo", mock(InputStream.class), mock(DataLoadParams.class));
+                + "can reactivate another.";
+        try
+        {
+            jobManager.submitDataLoadJob("foo", mock(InputStream.class), mock(DataLoadParams.class));
+            fail();
+        }
+        catch (TooManyJobsException e)
+        {
+            assertEquals(expectedError, e.getMessage());
+            assertEquals(ErrorCodes.LICENSE_VIOLATION, e.getErrorCode());
+            verify(m_JobProvider).audit("foo");
+            verify(m_Auditor).error(expectedError);
+        }
     }
 
     @Test
@@ -357,15 +364,22 @@ public class JobManagerTest
         when(m_ProcessManager.numberOfRunningJobs()).thenReturn(10000);
         JobManager jobManager = createJobManager();
 
-        m_ExpectedException.expect(TooManyJobsException.class);
-        m_ExpectedException.expectMessage("Cannot start job with id 'foo'. " +
+        String expectedError = "Cannot start job with id 'foo'. " +
                 "The maximum number of concurrently running jobs is limited as a function " +
                 "of the number of CPU cores see this error code's help documentation " +
-                "for details of how to elevate the setting");
-        m_ExpectedException.expect(
-                ErrorCodeMatcher.hasErrorCode(ErrorCodes.TOO_MANY_JOBS_RUNNING_CONCURRENTLY));
-
-        jobManager.submitDataLoadJob("foo", mock(InputStream.class), mock(DataLoadParams.class));
+                "for details of how to elevate the setting";
+        try
+        {
+            jobManager.submitDataLoadJob("foo", mock(InputStream.class), mock(DataLoadParams.class));
+            fail();
+        }
+        catch (TooManyJobsException e)
+        {
+            assertEquals(expectedError, e.getMessage());
+            assertEquals(ErrorCodes.TOO_MANY_JOBS_RUNNING_CONCURRENTLY, e.getErrorCode());
+            verify(m_JobProvider).audit("foo");
+            verify(m_Auditor).error(expectedError);
+        }
     }
 
     @Test
@@ -973,11 +987,16 @@ public class JobManagerTest
         QueryPage<ModelSnapshot> modelSnapshotPage = new QueryPage<>(null, 0);
         when(m_JobProvider.modelSnapshots("foo", 0, 1, 0, 0, ModelSnapshot.TIMESTAMP, "my description")).thenReturn(modelSnapshotPage);
 
-        m_ExpectedException.expect(NoSuchModelSnapshotException.class);
-        m_ExpectedException.expectMessage("No matching model snapshot exists for job 'foo'");
-        m_ExpectedException.expect(ErrorCodeMatcher.hasErrorCode(ErrorCodes.NO_SUCH_MODEL_SNAPSHOT));
-
-        jobManager.revertToSnapshot("foo", 0, "my description");
+        try
+        {
+            jobManager.revertToSnapshot("foo", 0, "my description");
+            fail();
+        }
+        catch (NoSuchModelSnapshotException e)
+        {
+            assertEquals("No matching model snapshot exists for job 'foo'", e.getMessage());
+            assertEquals(ErrorCodes.NO_SUCH_MODEL_SNAPSHOT, e.getErrorCode());
+        }
 
         verify(m_JobProvider, never()).updateJob(eq("foo"), anyMapOf(String.class, Object.class));
     }
