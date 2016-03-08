@@ -45,9 +45,6 @@ import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.index.query.QueryBuilder;
-import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.search.SearchHit;
 
 import com.prelert.job.JobDetails;
 import com.prelert.job.ModelSizeStats;
@@ -125,31 +122,38 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
 
         try
         {
-            XContentBuilder content = serialiseBucket(bucket);
-
-            LOGGER.trace("ES API CALL: index type " + Bucket.TYPE +
-                    " to index " + m_JobId.getIndex() + " with ID " + bucket.getId());
-            m_Client.prepareIndex(m_JobId.getIndex(), Bucket.TYPE, bucket.getId())
-                    .setSource(content)
-                    .execute().actionGet();
-
-            if (response.isCreated() == false)
-            {
-                LOGGER.debug(String.format("Bucket %s document has been overwritten",
-                        bucket.getId()));
-
+        	if (bucket.isInterim() == false)
+        	{
+        		// Delete older interim results, if any exist
+        		// Older results might not have been committed to the data store, so
+        		// this performs a blanket search for any older interim results
+        		ElasticsearchBulkDeleter deleter = new ElasticsearchBulkDeleter(m_Client, m_JobId, true);
+        		deleter.deletePriorInterimResults(bucket.getTimestamp());
+        	}
+        	else
+        	{
+        		// If a bucket reset occurred, this interim bucket replaces an existing interim bucket
+        		// A flush should have committed previous writes to the data store
                 ElasticsearchBulkDeleter deleter = new ElasticsearchBulkDeleter(m_Client, m_JobId, true);
                 deleter.deleteRecords(bucket);
                 deleter.deleteBucketInfluencers(bucket);
                 deleter.deleteInfluencers(bucket);
+                deleter.deleteBucketByTime(bucket);
                 deleter.commit();
-            }
+        	}
+
+            XContentBuilder content = serialiseBucket(bucket);
+
+            LOGGER.trace("ES API CALL: index type " + Bucket.TYPE +
+                    " to index " + m_JobId.getIndex() + " at epoch " + bucket.getEpoch());
+            IndexResponse response = m_Client.prepareIndex(m_JobId.getIndex(), Bucket.TYPE)
+                    .setSource(content)
+                    .execute().actionGet();
+            bucket.setId(response.getId());
 
             persistBucketInfluencersStandalone(bucket.getBucketInfluencers(),
                     bucket.getTimestamp(), bucket.isInterim());
 
-            deletePriorInterimResults();
-            
             if (bucket.getInfluencers() != null && bucket.getInfluencers().isEmpty() == false)
             {
                 BulkRequestBuilder addInfluencersRequest = m_Client.prepareBulk();
@@ -167,7 +171,6 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
 
                 LOGGER.trace("ES API CALL: bulk request with " + addInfluencersRequest.numberOfActions() + " actions");
                 BulkResponse addInfluencersResponse = addInfluencersRequest.execute().actionGet();
-                // iterate IDs over this
                 if (addInfluencersResponse.hasFailures())
                 {
                     LOGGER.error("Bulk index of Influencers has errors");
@@ -186,7 +189,8 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
                     content = serialiseRecord(record, bucket.getTimestamp());
 
                     LOGGER.trace("ES BULK ACTION: index type " + AnomalyRecord.TYPE +
-                            " to index " + m_JobId.getIndex() + " with auto-generated ID ");
+                            " to index " + m_JobId.getIndex() + " with auto-generated ID, for bucket "
+                            + bucket.getId());
                     addRecordsRequest.add(m_Client.prepareIndex(m_JobId.getIndex(), AnomalyRecord.TYPE)
                             .setSource(content)
                             .setParent(bucket.getId()));
@@ -404,7 +408,8 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
                 String recordId = record.getId();
 
                 LOGGER.trace("ES BULK ACTION: update ID " + recordId + " type " + AnomalyRecord.TYPE +
-                        " in index " + m_JobId.getIndex() + " using map of new values");
+                        " in index " + m_JobId.getIndex() + " using map of new values, for bucket " +
+                		bucketId);
 
                 bulkRequest.add(
                         m_Client.prepareIndex(m_JobId.getIndex(), AnomalyRecord.TYPE, recordId)
@@ -537,31 +542,6 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
         builder.endObject();
 
         return builder;
-    }
-    
-    private void deletePriorInterimResults(Bucket bucket)
-    {
-    	// Delete interim results before the time of the current bucket: records and buckets
-    	LOGGER.trace("Deleting prior interim records for bucket at " + bucket.getId());
-
-    	QueryBuilder qb = QueryBuilders.boolQuery().must(
-    			QueryBuilders.rangeQuery(ElasticsearchMappings.ES_TIMESTAMP)
-    				.from(new Date(0))
-    				.to(bucket.getTimestamp())
-    	            .includeUpper(true))
-    	            .must(QueryBuilders.matchQuery(Bucket.IS_INTERIM, "true"));
-    	
-    	SearchResponse searchResponse = m_Client.prepareSearch(m_JobId.getIndex())
-    			.setTypes(Bucket.TYPE)
-    			.setQuery(qb)
-    			.get();
-
-    	for (SearchHit hit : searchResponse.getHits())
-    	{
-    		LOGGER.debug("- Got search hit for bucket: " + hit.toString() + ", " + hit.getId());
-    		DeleteAction.INSTANCE.newRequestBuilder(m_Client).setIndex(m_JobId.getIndex())
-    			.setType(Bucket.TYPE).setId(hit.getId()).execute().actionGet();
-    	}
     }
 
     private XContentBuilder serialiseCategoryDefinition(CategoryDefinition category)

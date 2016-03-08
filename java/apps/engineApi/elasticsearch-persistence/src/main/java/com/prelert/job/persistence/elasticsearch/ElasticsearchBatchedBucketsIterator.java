@@ -55,6 +55,8 @@ class ElasticsearchBatchedBucketsIterator extends ElasticsearchBatchedResultsIte
         Object timestamp = hit.getSource().remove(ElasticsearchMappings.ES_TIMESTAMP);
         hit.getSource().put(Bucket.TIMESTAMP, timestamp);
 
-        return objectMapper.convertValue(hit.getSource(), Bucket.class);
+        Bucket bucket = objectMapper.convertValue(hit.getSource(), Bucket.class);
+        bucket.setId(hit.getId());
+		return bucket;
     }
 }

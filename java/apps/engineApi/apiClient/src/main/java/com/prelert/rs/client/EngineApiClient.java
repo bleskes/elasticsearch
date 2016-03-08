@@ -708,9 +708,9 @@ public class EngineApiClient implements Closeable
      *
      * @return A {@link BucketRequestBuilder}
      */
-    public BucketRequestBuilder prepareGetBucket(String jobId, String bucketId)
+    public BucketRequestBuilder prepareGetBucket(String jobId, String bucketTimestamp)
     {
-        return new BucketRequestBuilder(this, jobId, bucketId);
+        return new BucketRequestBuilder(this, jobId, bucketTimestamp);
     }
 
     /**

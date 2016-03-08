@@ -348,7 +348,7 @@ public class InterimResultsTest implements Closeable
             }
 
             SingleDocument<Bucket> bucketDoc =
-                    m_WebServiceClient.prepareGetBucket(jobId, bucket.getId())
+                    m_WebServiceClient.prepareGetBucket(jobId, Long.toString(bucket.getEpoch()))
                             .expand(true)
                             .includeInterim(includeInterim).get();
 

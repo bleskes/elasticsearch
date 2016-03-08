@@ -416,7 +416,7 @@ public class NormalizationTest implements Closeable
             for (Bucket bucket : allBuckets.getDocuments())
             {
                 double normalizedScore = bucket.getAnomalyScore();
-                double initialScore = directClient.getBucketInitialScore(bucket.getId());
+                double initialScore = directClient.getBucketInitialScore(bucket.getTimestamp());
                 test(normalizedScore == initialScore);
             }
             return true;

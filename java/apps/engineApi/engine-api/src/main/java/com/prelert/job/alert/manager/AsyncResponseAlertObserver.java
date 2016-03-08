@@ -73,7 +73,7 @@ class AsyncResponseAlertObserver extends AlertObserver
                 .path("results")
                 .path(getJobId())
                 .path("buckets")
-                .path(bucket.getId())
+                .path(Long.toString(bucket.getEpoch()))
                 .queryParam("expand", true);
         alert.setUri(uriBuilder.build());
 

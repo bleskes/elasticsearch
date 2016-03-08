@@ -27,6 +27,7 @@
 
 package com.prelert.job.persistence.elasticsearch;
 
+import java.util.Date;
 import java.util.Objects;
 import java.util.function.LongSupplier;
 
@@ -150,6 +151,11 @@ public class ElasticsearchBulkDeleter implements JobDataDeleter
         deleteTypeByBucket(bucket, Influencer.TYPE, () -> ++m_DeletedInfluencerCount);
     }
 
+    public void deleteBucketByTime(Bucket bucket)
+    {
+    	deleteTypeByBucket(bucket, Bucket.TYPE, () -> ++m_DeletedBucketCount);
+    }
+
     @Override
     public void deleteInfluencer(Influencer influencer)
     {
@@ -178,6 +184,46 @@ public class ElasticsearchBulkDeleter implements JobDataDeleter
         m_BulkRequestBuilder.add(
                 m_Client.prepareDelete(m_JobId.getIndex(), ModelSnapshot.TYPE, snapshotId));
         ++m_DeletedModelSnapshotCount;
+    }
+
+    public void deletePriorInterimResults(Date latestTime)
+    {
+    	QueryBuilder qb = QueryBuilders.boolQuery().must(
+    			QueryBuilders.rangeQuery(ElasticsearchMappings.ES_TIMESTAMP)
+    				.from(new Date(0))
+    				.to(latestTime)
+    	            .includeUpper(true))
+    	            .must(QueryBuilders.matchQuery(Bucket.IS_INTERIM, "true"));
+
+    	SearchResponse searchResponse = m_Client.prepareSearch(m_JobId.getIndex())
+    			.setTypes(Bucket.TYPE, AnomalyRecord.TYPE, Influencer.TYPE, BucketInfluencer.TYPE)
+    			.setQuery(qb)
+    			.get();
+
+    	for (SearchHit hit : searchResponse.getHits())
+    	{
+    		LOGGER.trace("Search hit for bucket: " + hit.toString() + ", " + hit.getId());
+    		String type = hit.getType();
+    		if (type.equals(Bucket.TYPE))
+    		{
+    			++m_DeletedBucketCount;
+    		}
+    		else if (type.equals(AnomalyRecord.TYPE))
+    		{
+    			++m_DeletedRecordCount;
+    		}
+    		else if (type.equals(BucketInfluencer.TYPE))
+    		{
+    			++m_DeletedBucketInfluencerCount;
+    		}
+    		else if (type.equals(Influencer.TYPE))
+    		{
+    			++m_DeletedInfluencerCount;
+    		}
+    		m_BulkRequestBuilder.add(
+    				m_Client.prepareDelete(m_JobId.getIndex(), hit.getType(), hit.getId()));
+    	}
+    	commit();
     }
 
     @Override

@@ -596,15 +596,14 @@ public class ElasticsearchJobProvider implements JobProvider
     private QueryPage<Bucket> buckets(ElasticsearchJobId jobId, boolean expand, boolean includeInterim,
             int skip, int take, QueryBuilder fb) throws UnknownJobException
     {
-        SortBuilder sb = new FieldSortBuilder(Bucket.ID)
-                    .unmappedType("string")
+        SortBuilder sb = new FieldSortBuilder(ElasticsearchMappings.ES_TIMESTAMP)
                     .order(SortOrder.ASC);
 
         SearchResponse searchResponse;
         try
         {
             LOGGER.trace("ES API CALL: search all of type " + Bucket.TYPE +
-                    " from index " + jobId.getIndex() + " sort ascending " + Bucket.ID +
+                    " from index " + jobId.getIndex() + " sort ascending " + ElasticsearchMappings.ES_TIMESTAMP +
                     " with filter after sort skip " + skip + " take " + take);
             searchResponse = m_Client.prepareSearch(jobId.getIndex())
                                         .setTypes(Bucket.TYPE)
@@ -629,6 +628,7 @@ public class ElasticsearchJobProvider implements JobProvider
             hit.getSource().put(Bucket.TIMESTAMP, timestamp);
 
             Bucket bucket = m_ObjectMapper.convertValue(hit.getSource(), Bucket.class);
+            bucket.setId(hit.getId());
 
             if (expand && bucket.getRecordCount() > 0)
             {
@@ -652,17 +652,26 @@ public class ElasticsearchJobProvider implements JobProvider
 
         try
         {
-            LOGGER.debug("ES API CALL: get ID " + timestamp + " type " + Bucket.TYPE +
+            LOGGER.trace("ES API CALL: get ID " + timestamp + " type " + Bucket.TYPE +
                     " from index " + elasticJobId.getIndex());
-            
-            QueryBuilder qb = QueryBuilders.matchQuery(ElasticsearchMappings.ES_TIMESTAMP, timestamp);
-            
+            long epoch = 0;
+            try
+            {
+            	epoch = Long.parseLong(timestamp);
+            }
+            catch (NumberFormatException nfe)
+            {
+            	LOGGER.error("Could not parse timestamp " + timestamp + " as an epoch value");
+            }
+            Date dateTime = new Date(epoch * 1000);
+
+            QueryBuilder qb = QueryBuilders.matchQuery(ElasticsearchMappings.ES_TIMESTAMP, dateTime);
+
             SearchResponse searchResponse = m_Client.prepareSearch(elasticJobId.getIndex())
                     .setTypes(Bucket.TYPE)
                     .setQuery(qb)
                     .get();
             hits = searchResponse.getHits();
-            LOGGER.debug("Got hits: " + hits.getTotalHits());
         }
         catch (IndexNotFoundException e)
         {
@@ -679,6 +688,7 @@ public class ElasticsearchJobProvider implements JobProvider
             hit.getSource().put(Bucket.TIMESTAMP, ts);
 
             Bucket bucket = m_ObjectMapper.convertValue(hit.getSource(), Bucket.class);
+            bucket.setId(hit.getId());
             if (includeInterim || bucket.isInterim() == false)
             {
                 if (expand && bucket.getRecordCount() > 0)

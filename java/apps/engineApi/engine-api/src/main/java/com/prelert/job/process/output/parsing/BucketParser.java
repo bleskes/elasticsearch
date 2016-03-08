@@ -92,8 +92,9 @@ final class BucketParser extends FieldNameParser<Bucket>
             break;
         case Bucket.BUCKET_SPAN:
         	bucket.setBucketSpan(parseAsLongOrZero(fieldName));
+        	break;
         default:
-            LOGGER.warn(String.format("Parse error unknown field in Bucket %s:%s",
+            LOGGER.warn(String.format("Parse error: unknown field in Bucket %s:%s",
                     fieldName, token.asString()));
             break;
         }
@@ -116,9 +117,9 @@ final class BucketParser extends FieldNameParser<Bucket>
 
     private List<AnomalyRecord> parseRecords(String fieldName) throws IOException
     {
-        List<AnomalyRecord> detectors = new ArrayList<>();
-        parseArray(fieldName, () -> new AnomalyRecordParser(m_Parser).parseJson(), detectors);
-        return detectors;
+        List<AnomalyRecord> anomalyRecords = new ArrayList<>();
+        parseArray(fieldName, () -> new AnomalyRecordParser(m_Parser).parseJson(), anomalyRecords);
+        return anomalyRecords;
     }
 
     private List<BucketInfluencer> parseBucketInfluencers(String fieldName) throws IOException
