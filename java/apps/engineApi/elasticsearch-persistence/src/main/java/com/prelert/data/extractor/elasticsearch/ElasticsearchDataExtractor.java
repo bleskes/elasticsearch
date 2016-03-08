@@ -99,10 +99,12 @@ public class ElasticsearchDataExtractor implements DataExtractor
     private static final String CONTINUE_SCROLL_END_POINT = "_search/scroll?scroll=60m";
 
     /**
-     * We want to read up until the "hits" array. 1000 bytes (~= 1000 UTF-8
-     * chars given that field names and scroll ID are ASCII) should be enough
+     * We want to read up until the "hits" array.  32KB (~= 32000 UTF-8
+     * chars given that field names and scroll ID are ASCII) should be enough.
+     * The longest reported scroll ID is 20708 characters - see
+     * http://elasticsearch-users.115913.n3.nabble.com/Ridiculously-long-Scroll-id-td4038567.html
      */
-    private static final int PUSHBACK_BUFFER_BYTES = 1000;
+    private static final int PUSHBACK_BUFFER_BYTES = 32768;
 
     private final HttpGetRequester m_HttpGetRequester;
     private final String m_BaseUrl;
