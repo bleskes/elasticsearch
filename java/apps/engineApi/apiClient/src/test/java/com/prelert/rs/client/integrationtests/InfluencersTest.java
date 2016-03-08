@@ -381,9 +381,9 @@ public class InfluencersTest implements Closeable
 
         // Test filtering based on anomalyScore
         test(m_WebServiceClient.prepareGetInfluencers(WEB_LOGS_JOB)
-                .anomalyScoreThreshold(90.0)
+                .anomalyScoreThreshold(80.0)
                 .get()
-                .getHitCount() == 19);
+                .getHitCount() == 2);
     }
 
     /**

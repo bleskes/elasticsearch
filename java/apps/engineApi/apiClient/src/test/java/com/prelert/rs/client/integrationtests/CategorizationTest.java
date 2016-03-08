@@ -352,7 +352,7 @@ public class CategorizationTest implements Closeable
         Map<String, Object> expectedResultsForRare = new HashMap<>();
         expectedResultsForRare.put(HIGHEST_ANOMALY_BUCKET_ID, "1428678000");
         expectedResultsForRare.put(HIGHEST_ANOMALY_SCORE_THRESHOLD, 71.0);
-        expectedResultsForRare.put(HIGHEST_RECORD_PROBABILITY_THRESHOLD, 16.0);
+        expectedResultsForRare.put(HIGHEST_RECORD_PROBABILITY_THRESHOLD, 10.0);
 
         try (CategorizationTest test = new CategorizationTest(prelertTestDataHome, baseUrl,
                 RARE_DEFAULT_EXAMPLES_LIMIT_ID, "rare", expectedResultsForRare))
