@@ -54,6 +54,7 @@ public class JobDetails
     public static final String CUSTOM_SETTINGS = "customSettings";
     public static final String DATA_DESCRIPTION = "dataDescription";
     public static final String DESCRIPTION = "description";
+    public static final String ENDPOINTS = "endpoints";
     public static final String FINISHED_TIME = "finishedTime";
     public static final String ID = "id";
     public static final String IGNORE_DOWNTIME = "ignoreDowntime";
@@ -67,6 +68,15 @@ public class JobDetails
     public static final String SCHEDULER_STATUS = "schedulerStatus";
     public static final String TIMEOUT = "timeout";
     public static final String TRANSFORMS = "transforms";
+
+    /** Endpoints key names */
+    public static final String ALERT_LONG_POLL_ENDPOINT_KEY= "alertsLongPoll";
+    public static final String BUCKETS_ENDPOINT_KEY = "buckets";
+    public static final String CATEGORY_DEFINITIONS_ENDPOINT_KEY = "categoryDefinitions";
+    public static final String DATA_ENDPOINT_KEY = "data";
+    public static final String LOGS_ENDPOINT_KEY = "logs";
+    public static final String RECORDS_ENDPOINT_KEY = "records";
+
 
     private String m_JobId;
     private String m_Description;
@@ -94,15 +104,9 @@ public class JobDetails
     private Long m_ResultsRetentionDays;
     private Map<String, Object> m_CustomSettings;
 
-    /* These URIs are transient they don't need to be persisted */
+    /* The endpoints should not be persisted in the storage */
     private URI m_Location;
-    private URI m_DataEndpoint;
-    private URI m_BucketsEndpoint;
-    private URI m_CategoryDefinitionsEndpoint;
-    private URI m_RecordsEndpoint;
-    private URI m_LogsEndpoint;
-    private URI m_AlertsLongPollEndpoint;
-
+    private Map<String, URI> m_Endpoints;
 
     /**
      * Default constructor required for serialisation
@@ -188,6 +192,26 @@ public class JobDetails
     public void setDescription(String description)
     {
         m_Description = description;
+    }
+
+    public Map<String, URI> getEndpoints()
+    {
+        return m_Endpoints;
+    }
+
+    public void setEndpoints(Map<String, URI> endpoints)
+    {
+        m_Endpoints = endpoints;
+    }
+
+    public URI getLocation()
+    {
+        return m_Location;
+    }
+
+    public void setLocation(URI location)
+    {
+        m_Location = location;
     }
 
     /**
@@ -377,123 +401,6 @@ public class JobDetails
         m_Transforms = transforms;
     }
 
-    /**
-     * The URI of this resource
-     * @return The URI of this job
-     */
-    public URI getLocation()
-    {
-        return m_Location;
-    }
-
-    /**
-     * Set the URI path of this resource
-     */
-    public void setLocation(URI location)
-    {
-        m_Location = location;
-    }
-
-    /**
-     * This Job's data endpoint as the full URL
-     *
-     * @return The Job's data URI
-     */
-    public URI getDataEndpoint()
-    {
-        return m_DataEndpoint;
-    }
-
-    /**
-     * Set this Job's data endpoint
-     */
-    public void setDataEndpoint(URI value)
-    {
-        m_DataEndpoint = value;
-    }
-
-    /**
-     * This Job's buckets endpoint as the full URL path
-     *
-     * @return The Job's buckets URI
-     */
-    public URI getBucketsEndpoint()
-    {
-        return m_BucketsEndpoint;
-    }
-
-    /**
-     * Set this Job's buckets endpoint
-     */
-    public void setBucketsEndpoint(URI results)
-    {
-        m_BucketsEndpoint = results;
-    }
-
-    public URI getCategoryDefinitionsEndpoint()
-    {
-        return m_CategoryDefinitionsEndpoint;
-    }
-
-    public void setCategoryDefinitionsEndpoint(URI categoryDefinitions)
-    {
-        m_CategoryDefinitionsEndpoint = categoryDefinitions;
-    }
-
-    /**
-     * This Job's results endpoint as the full URL path
-     *
-     * @return The Job's results URI
-     */
-    public URI getRecordsEndpoint()
-    {
-        return m_RecordsEndpoint;
-    }
-
-    /**
-     * Set this Job's records endpoint
-     */
-    public void setRecordsEndpoint(URI results)
-    {
-        m_RecordsEndpoint = results;
-    }
-
-
-    /**
-     * This Job's logs endpoint as the full URL
-     *
-     * @return The Job's logs URI
-     */
-    public URI getLogsEndpoint()
-    {
-        return m_LogsEndpoint;
-    }
-
-    /**
-     * Set this Job's logs endpoint
-     */
-    public void setLogsEndpoint(URI value)
-    {
-        m_LogsEndpoint = value;
-    }
-
-    /**
-     * This Job's alert long poll endpoint
-     *
-     * @return The Job's logs URI
-     */
-    public URI getAlertsLongPollEndpoint()
-    {
-        return m_AlertsLongPollEndpoint;
-    }
-
-    /**
-     * Set this Job's alert long poll endpoint
-     */
-    public void setAlertsLongPollEndpoint(URI value)
-    {
-        m_AlertsLongPollEndpoint = value;
-    }
 
     /**
      * Processed records count
@@ -635,13 +542,9 @@ public class JobDetails
                 Objects.equals(this.m_BackgroundPersistInterval, that.m_BackgroundPersistInterval) &&
                 Objects.equals(this.m_ModelSnapshotRetentionDays, that.m_ModelSnapshotRetentionDays) &&
                 Objects.equals(this.m_ResultsRetentionDays, that.m_ResultsRetentionDays) &&
-                Objects.equals(this.m_Location, that.m_Location) &&
-                Objects.equals(this.m_DataEndpoint, that.m_DataEndpoint) &&
-                Objects.equals(this.m_CategoryDefinitionsEndpoint, that.m_CategoryDefinitionsEndpoint) &&
-                Objects.equals(this.m_BucketsEndpoint, that.m_BucketsEndpoint) &&
-                Objects.equals(this.m_AlertsLongPollEndpoint, that.m_AlertsLongPollEndpoint) &&
-                Objects.equals(this.m_RecordsEndpoint, that.m_RecordsEndpoint) &&
-                Objects.equals(this.m_CustomSettings, that.m_CustomSettings);
+                Objects.equals(this.m_CustomSettings, that.m_CustomSettings) &&
+                Objects.equals(this.m_Endpoints, that.m_Endpoints) &&
+                Objects.equals(this.m_Location, that.m_Location);
     }
 
     @Override
@@ -651,8 +554,6 @@ public class JobDetails
                 m_FinishedTime, m_LastDataTime, m_Timeout, m_AnalysisConfig, m_AnalysisLimits,
                 m_DataDescription, m_ModelDebugConfig, m_ModelSizeStats, m_Transforms, m_Counts,
                 m_RenormalizationWindow, m_BackgroundPersistInterval, m_ModelSnapshotRetentionDays,
-                m_ResultsRetentionDays, m_IgnoreDowntime, m_CustomSettings, m_Location,
-                m_DataEndpoint, m_CategoryDefinitionsEndpoint, m_BucketsEndpoint, m_RecordsEndpoint,
-                m_AlertsLongPollEndpoint);
+                m_ResultsRetentionDays, m_IgnoreDowntime, m_CustomSettings, m_Endpoints, m_Location);
     }
 }

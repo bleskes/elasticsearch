@@ -29,6 +29,8 @@ package com.prelert.rs.resources;
 
 import java.io.IOException;
 import java.net.URI;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 import javax.ws.rs.Consumes;
@@ -266,43 +268,47 @@ public class Jobs extends ResourceWithJobManager
                 .build();
         job.setLocation(location);
 
+        Map<String, URI> endpoints = new HashMap<>();
+
         URI data = m_UriInfo.getBaseUriBuilder()
                 .path(Data.ENDPOINT)
                 .path(job.getId())
                 .build();
-        job.setDataEndpoint(data);
+        endpoints.put(JobDetails.DATA_ENDPOINT_KEY, data);
 
         URI buckets = m_UriInfo.getBaseUriBuilder()
                 .path(RESULTS)
                 .path(job.getId())
                 .path(Buckets.ENDPOINT)
                 .build();
-        job.setBucketsEndpoint(buckets);
+        endpoints.put(JobDetails.BUCKETS_ENDPOINT_KEY, buckets);
 
         URI categoryDefinitions = m_UriInfo.getBaseUriBuilder()
                 .path(RESULTS)
                 .path(job.getId())
                 .path(CategoryDefinitions.ENDPOINT)
                 .build();
-        job.setCategoryDefinitionsEndpoint(categoryDefinitions);
+        endpoints.put(JobDetails.CATEGORY_DEFINITIONS_ENDPOINT_KEY, categoryDefinitions);
 
         URI records = m_UriInfo.getBaseUriBuilder()
                 .path(RESULTS)
                 .path(job.getId())
                 .path(Records.ENDPOINT)
                 .build();
-        job.setRecordsEndpoint(records);
+        endpoints.put(JobDetails.RECORDS_ENDPOINT_KEY, records);
 
         URI logs = m_UriInfo.getBaseUriBuilder()
                 .path(Logs.ENDPOINT)
                 .path(job.getId())
                 .build();
-        job.setLogsEndpoint(logs);
+        endpoints.put(JobDetails.LOGS_ENDPOINT_KEY, logs);
 
         URI longpoll = m_UriInfo.getBaseUriBuilder()
                 .path(AlertsLongPoll.ENDPOINT)
                 .path(job.getId())
                 .build();
-        job.setAlertsLongPollEndpoint(longpoll);
+        endpoints.put(JobDetails.ALERT_LONG_POLL_ENDPOINT_KEY, longpoll);
+
+        job.setEndpoints(endpoints);
     }
 }

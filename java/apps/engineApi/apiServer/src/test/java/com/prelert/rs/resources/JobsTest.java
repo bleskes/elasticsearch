@@ -32,6 +32,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -39,6 +40,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Arrays;
+import java.util.Map;
 import java.util.Optional;
 
 import javax.ws.rs.core.Response;
@@ -246,16 +248,17 @@ public class JobsTest extends ServiceTest
     {
         assertEquals(jobId, job.getId());
         assertEquals(createUri("http://localhost/test/jobs/" + jobId), job.getLocation());
-        assertEquals(createUri("http://localhost/test/data/" + jobId), job.getDataEndpoint());
+        Map<String, URI> endpoints = job.getEndpoints();
+        assertEquals(createUri("http://localhost/test/data/" + jobId), endpoints.get("data"));
         assertEquals(createUri("http://localhost/test/results/" + jobId + "/buckets"),
-                job.getBucketsEndpoint());
+                endpoints.get("buckets"));
         assertEquals(createUri("http://localhost/test/results/" + jobId + "/categorydefinitions"),
-                job.getCategoryDefinitionsEndpoint());
+                endpoints.get("categoryDefinitions"));
         assertEquals(createUri("http://localhost/test/results/" + jobId + "/records"),
-                job.getRecordsEndpoint());
-        assertEquals(createUri("http://localhost/test/logs/" + jobId), job.getLogsEndpoint());
+                endpoints.get("records"));
+        assertEquals(createUri("http://localhost/test/logs/" + jobId), endpoints.get("logs"));
         assertEquals(createUri("http://localhost/test/alerts_longpoll/" + jobId),
-                            job.getAlertsLongPollEndpoint());
+                endpoints.get("alertsLongPoll"));
     }
 
     private static URI createUri(String url)

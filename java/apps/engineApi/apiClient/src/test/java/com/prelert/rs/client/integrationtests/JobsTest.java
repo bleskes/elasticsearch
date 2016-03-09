@@ -251,11 +251,11 @@ public class JobsTest implements Closeable
         test(job.getDescription().equals("Flight Centre Job"));
 
         test(job.getLocation().toString().equals(m_BaseUrl + "/jobs/" + jobId));
-        test(job.getRecordsEndpoint().toString().equals(m_BaseUrl + "/results/" + jobId + "/records"));
-        test(job.getBucketsEndpoint().toString().equals(m_BaseUrl + "/results/" + jobId + "/buckets"));
-        test(job.getDataEndpoint().toString().equals(m_BaseUrl + "/data/" + jobId));
-        test(job.getCategoryDefinitionsEndpoint().toString().equals(m_BaseUrl + "/results/"+ jobId + "/categorydefinitions"));
-        test(job.getAlertsLongPollEndpoint().toString().equals(m_BaseUrl + "/alerts_longpoll/" + jobId));
+        test(job.getEndpoints().get("records").toString().equals(m_BaseUrl + "/results/" + jobId + "/records"));
+        test(job.getEndpoints().get("buckets").toString().equals(m_BaseUrl + "/results/" + jobId + "/buckets"));
+        test(job.getEndpoints().get("data").toString().equals(m_BaseUrl + "/data/" + jobId));
+        test(job.getEndpoints().get("categoryDefinitions").toString().equals(m_BaseUrl + "/results/"+ jobId + "/categorydefinitions"));
+        test(job.getEndpoints().get("alertsLongPoll").toString().equals(m_BaseUrl + "/alerts_longpoll/" + jobId));
 
         test(job.getLastDataTime() == null);
         test(job.getFinishedTime() == null);
@@ -373,9 +373,9 @@ public class JobsTest implements Closeable
         test(job.getDescription() == null);
 
         test(job.getLocation().toString().equals(baseUrl + "/jobs/" + jobId));
-        test(job.getRecordsEndpoint().toString().equals(baseUrl + "/results/" + jobId + "/records"));
-        test(job.getBucketsEndpoint().toString().equals(baseUrl + "/results/" + jobId + "/buckets"));
-        test(job.getDataEndpoint().toString().equals(baseUrl + "/data/" + jobId));
+        test(job.getEndpoints().get("records").toString().equals(baseUrl + "/results/" + jobId + "/records"));
+        test(job.getEndpoints().get("buckets").toString().equals(baseUrl + "/results/" + jobId + "/buckets"));
+        test(job.getEndpoints().get("data").toString().equals(baseUrl + "/data/" + jobId));
 
         test(job.getLastDataTime() == null);
         test(job.getFinishedTime() == null);
@@ -443,9 +443,9 @@ public class JobsTest implements Closeable
         test(job.getAnalysisLimits() == null);
 
         test(job.getLocation().toString().equals(m_BaseUrl + "/jobs/" + jobId));
-        test(job.getRecordsEndpoint().toString().equals(m_BaseUrl + "/results/" + jobId + "/records"));
-        test(job.getBucketsEndpoint().toString().equals(m_BaseUrl + "/results/" + jobId + "/buckets"));
-        test(job.getDataEndpoint().toString().equals(m_BaseUrl + "/data/" + jobId));
+        test(job.getEndpoints().get("records").toString().equals(m_BaseUrl + "/results/" + jobId + "/records"));
+        test(job.getEndpoints().get("buckets").toString().equals(m_BaseUrl + "/results/" + jobId + "/buckets"));
+        test(job.getEndpoints().get("data").toString().equals(m_BaseUrl + "/data/" + jobId));
 
         test(job.getLastDataTime() == null);
         test(job.getFinishedTime() == null);
@@ -489,9 +489,9 @@ public class JobsTest implements Closeable
         test(job.getDescription().equals("Farequote Time Format Job"));
 
         test(job.getLocation().toString().equals(m_BaseUrl + "/jobs/" + jobId));
-        test(job.getRecordsEndpoint().toString().equals(m_BaseUrl + "/results/" + jobId + "/records"));
-        test(job.getBucketsEndpoint().toString().equals(m_BaseUrl + "/results/" + jobId + "/buckets"));
-        test(job.getDataEndpoint().toString().equals(m_BaseUrl + "/data/" + jobId));
+        test(job.getEndpoints().get("records").toString().equals(m_BaseUrl + "/results/" + jobId + "/records"));
+        test(job.getEndpoints().get("buckets").toString().equals(m_BaseUrl + "/results/" + jobId + "/buckets"));
+        test(job.getEndpoints().get("data").toString().equals(m_BaseUrl + "/data/" + jobId));
 
         test(job.getLastDataTime() == null);
         test(job.getFinishedTime() == null);
@@ -554,9 +554,9 @@ public class JobsTest implements Closeable
         test(job.getAnalysisLimits() == null);
 
         test(job.getLocation().toString().equals(m_BaseUrl + "/jobs/" + jobId));
-        test(job.getRecordsEndpoint().toString().equals(m_BaseUrl + "/results/" + jobId + "/records"));
-        test(job.getBucketsEndpoint().toString().equals(m_BaseUrl + "/results/" + jobId + "/buckets"));
-        test(job.getDataEndpoint().toString().equals(m_BaseUrl + "/data/" + jobId));
+        test(job.getEndpoints().get("records").toString().equals(m_BaseUrl + "/results/" + jobId + "/records"));
+        test(job.getEndpoints().get("buckets").toString().equals(m_BaseUrl + "/results/" + jobId + "/buckets"));
+        test(job.getEndpoints().get("data").toString().equals(m_BaseUrl + "/data/" + jobId));
 
         test(job.getLastDataTime() == null);
         test(job.getFinishedTime() == null);
