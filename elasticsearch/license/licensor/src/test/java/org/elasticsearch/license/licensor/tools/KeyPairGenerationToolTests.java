@@ -46,7 +46,7 @@ public class KeyPairGenerationToolTests extends CommandTestCase {
         e = expectThrows(UserError.class, () -> {
             execute("--publicKeyPath", dne.toString(), "--privateKeyPath", exists.toString());
         });
-        assertThat(e.getMessage(), containsString("pri"));
+        assertThat(e.getMessage(), containsString("existing"));
         assertEquals(ExitCodes.USAGE, e.exitCode);
     }
 
