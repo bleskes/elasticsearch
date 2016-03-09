@@ -38,9 +38,4 @@ public class CannotStopSchedulerException extends JobException
     {
         super(msg, ErrorCodes.CANNOT_STOP_JOB_SCHEDULER);
     }
-
-    public CannotStopSchedulerException(String msg, Throwable cause)
-    {
-        super(msg, ErrorCodes.CANNOT_STOP_JOB_SCHEDULER, cause);
-    }
 }

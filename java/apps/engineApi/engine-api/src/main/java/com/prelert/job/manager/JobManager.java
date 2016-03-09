@@ -41,6 +41,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.Properties;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 
 import javax.ws.rs.core.Feature;
@@ -149,6 +150,13 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
 
     private static final int MAX_JOBS_TO_RESTART = 10000;
 
+    /**
+     * constraints in the license key.
+     */
+    public static final String JOBS_LICENSE_CONSTRAINT = "jobs";
+    public static final String DETECTORS_LICENSE_CONSTRAINT = "detectors";
+    public static final String PARTITIONS_LICENSE_CONSTRAINT = "partitions";
+
     private final ActionGuardian m_ActionGuardian;
     private final JobProvider m_JobProvider;
     private final ProcessManager m_ProcessManager;
@@ -160,7 +168,12 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
     private final int m_MaxAllowedJobs;
     private final BackendInfo m_BackendInfo;
 
-    private final Map<String, JobScheduler> m_ScheduledJobs;
+    /**
+     * A map holding schedulers by jobId.
+     * The map is concurrent to ensure correct visibility as it is expected
+     * to be accessed by multiple threads.
+     */
+    private final ConcurrentHashMap<String, JobScheduler> m_ScheduledJobs;
 
     /**
      * A cache that stores the epoch in seconds of the last
@@ -170,13 +183,6 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
      * the storage.
      */
     private final Cache<String, Long> m_LastDataTimePerJobCache;
-
-    /**
-     * constraints in the license key.
-     */
-    public static final String JOBS_LICENSE_CONSTRAINT = "jobs";
-    public static final String DETECTORS_LICENSE_CONSTRAINT = "detectors";
-    public static final String PARTITIONS_LICENSE_CONSTRAINT = "partitions";
 
     /**
      * Create a JobManager
@@ -195,7 +201,7 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
 
         m_MaxAllowedJobs = calculateMaxJobsAllowed();
 
-        m_ScheduledJobs = new HashMap<>();
+        m_ScheduledJobs = new ConcurrentHashMap<>();
         m_LastDataTimePerJobCache = CacheBuilder.newBuilder()
                 .maximumSize(LAST_DATA_TIME_CACHE_SIZE)
                 .build();
@@ -732,20 +738,22 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
     public boolean deleteJob(String jobId) throws UnknownJobException, DataStoreException,
             NativeProcessRunException, JobInUseException, CannotStopSchedulerException
     {
+        LOGGER.debug("Deleting job '" + jobId + "'");
+
+        // Try to stop scheduler before getting the Action to delete to avoid a jobInUseException
+        // in case the scheduler is in the middle of submitting data
+        if (m_ScheduledJobs.containsKey(jobId))
+        {
+            JobScheduler jobScheduler = m_ScheduledJobs.get(jobId);
+            if (jobScheduler.isStarted())
+            {
+                jobScheduler.stopManual();
+            }
+            m_ScheduledJobs.remove(jobId);
+        }
+
         try (ActionTicket actionTicket = m_ActionGuardian.tryAcquiringAction(jobId, Action.DELETING))
         {
-            LOGGER.debug("Deleting job '" + jobId + "'");
-
-            if (m_ScheduledJobs.containsKey(jobId))
-            {
-                JobScheduler jobScheduler = m_ScheduledJobs.get(jobId);
-                if (jobScheduler.isStarted())
-                {
-                    jobScheduler.stopManual();
-                }
-                m_ScheduledJobs.remove(jobId);
-            }
-
             if (m_ProcessManager.jobIsRunning(jobId))
             {
                 m_JobTimeouts.stopTimeout(jobId);
