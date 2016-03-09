@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -58,7 +58,7 @@ final class ModelSizeStatsParser extends FieldNameParser<ModelSizeStats>
         JsonToken token = m_Parser.nextToken();
         switch (fieldName)
         {
-        case ModelSizeStats.TYPE:
+        case ModelSizeStats.MODEL_BYTES:
             modelSizeStats.setModelBytes(parseAsLongOrZero(fieldName));
             break;
         case ModelSizeStats.TOTAL_BY_FIELD_COUNT:

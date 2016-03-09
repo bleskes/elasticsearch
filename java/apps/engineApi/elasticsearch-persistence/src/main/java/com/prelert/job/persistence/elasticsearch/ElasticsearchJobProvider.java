@@ -1105,13 +1105,18 @@ public class ElasticsearchJobProvider implements JobProvider
     }
 
     @Override
-    public boolean updateModelSnapshot(String jobId, ModelSnapshot modelSnapshot)
-    throws UnknownJobException
+    public boolean updateModelSnapshot(String jobId, ModelSnapshot modelSnapshot,
+            boolean restoreModelSizeStats) throws UnknownJobException
     {
         // For Elasticsearch the update can be done in exactly the same way as
         // the original persist
         ElasticsearchPersister persister = new ElasticsearchPersister(jobId, m_Client);
         persister.persistModelSnapshot(modelSnapshot);
+
+        if (restoreModelSizeStats && modelSnapshot.getModelSizeStats() != null)
+        {
+            persister.persistModelSizeStats(modelSnapshot.getModelSizeStats());
+        }
 
         // Commit so that when the REST API call that triggered the update
         // returns the updated document is searchable

@@ -238,7 +238,7 @@ public class AutoDetectResultsParser
                         ModelSnapshot modelSnapshot = new ModelSnapshotParser(parser).parseJsonAfterStartObject();
                         persister.persistModelSnapshot(modelSnapshot);
                         break;
-                    case ModelSizeStats.TYPE:
+                    case ModelSizeStats.MODEL_BYTES:
                         ModelSizeStats modelSizeStats = new ModelSizeStatsParser(parser).parseJsonAfterStartObject();
                         logger.trace(String.format("Parsed ModelSizeStats: %d / %d / %d / %d / %d / %s",
                             modelSizeStats.getModelBytes(),

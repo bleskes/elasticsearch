@@ -17,6 +17,8 @@
  ***************************************************************************/
 package com.prelert.job;
 
+import java.util.Objects;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 /**
@@ -147,4 +149,36 @@ public class ModelSizeStats
         return m_MemoryStatus.name();
     }
 
+    @Override
+    public int hashCode()
+    {
+        return Objects.hash(m_ModelBytes, m_TotalByFieldCount, m_TotalOverFieldCount, m_TotalPartitionFieldCount,
+                m_BucketAllocationFailuresCount, m_MemoryStatus);
+    }
+
+    /**
+     * Compare all the fields.
+     */
+    @Override
+    public boolean equals(Object other)
+    {
+        if (this == other)
+        {
+            return true;
+        }
+
+        if (other instanceof ModelSizeStats == false)
+        {
+            return false;
+        }
+
+        ModelSizeStats that = (ModelSizeStats) other;
+
+        return this.m_ModelBytes == that.m_ModelBytes
+                && this.m_TotalByFieldCount == that.m_TotalByFieldCount
+                && this.m_TotalOverFieldCount == that.m_TotalOverFieldCount
+                && this.m_TotalPartitionFieldCount == that.m_TotalPartitionFieldCount
+                && this.m_BucketAllocationFailuresCount == that.m_BucketAllocationFailuresCount
+                && Objects.equals(this.m_MemoryStatus, that.m_MemoryStatus);
+    }
 }

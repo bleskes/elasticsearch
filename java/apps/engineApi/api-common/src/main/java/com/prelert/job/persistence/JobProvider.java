@@ -67,11 +67,13 @@ public interface JobProvider extends JobDetailsProvider, JobResultsProvider
      *
      * @param jobId the job id
      * @param modelSnapshot the updated model snapshot object to be stored
+     * @param restoreModelSizeStats should the model size stats in this
+     * snapshot be made the current ones for this job?
      * @return {@code true} if update was successful
      * @throws UnknownJobException If there is no job with id <code>jobId</code>
      */
-    public boolean updateModelSnapshot(String jobId, ModelSnapshot modelSnapshot)
-            throws UnknownJobException;
+    public boolean updateModelSnapshot(String jobId, ModelSnapshot modelSnapshot,
+            boolean restoreModelSizeStats) throws UnknownJobException;
 
     /**
      * Refresh the datastore index so that all recent changes are

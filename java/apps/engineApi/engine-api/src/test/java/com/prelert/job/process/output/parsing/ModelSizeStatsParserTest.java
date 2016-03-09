@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -42,7 +42,7 @@ public class ModelSizeStatsParserTest
     @Test
     public void testParse() throws IOException
     {
-        String input = "{\"modelSizeStats\": 1,"
+        String input = "{\"modelBytes\": 1,"
                 + "\"totalByFieldCount\" : 2,"
                 + "\"totalOverFieldCount\" : 3,"
                 + "\"totalPartitionFieldCount\" : 4,"

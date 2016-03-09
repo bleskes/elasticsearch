@@ -129,7 +129,8 @@ public class ElasticsearchMappingsTest
                         "            \"type\": \"long\"" +
                         "          }," +
                         "          \"memoryStatus\": {" +
-                        "            \"type\": \"string\"" +
+                        "            \"type\": \"string\"," +
+                        "            \"index\": \"not_analyzed\"" +
                         "          }" +
                         "        }" +
                         "      }," +

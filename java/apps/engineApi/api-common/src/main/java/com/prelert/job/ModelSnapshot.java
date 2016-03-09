@@ -50,6 +50,7 @@ public class ModelSnapshot
     private long m_RestorePriority;
     private String m_SnapshotId;
     private int m_SnapshotDocCount;
+    private ModelSizeStats m_ModelSizeStats;
 
     public Date getTimestamp()
     {
@@ -101,10 +102,21 @@ public class ModelSnapshot
         m_SnapshotDocCount = snapshotDocCount;
     }
 
+    public ModelSizeStats getModelSizeStats()
+    {
+        return m_ModelSizeStats;
+    }
+
+    public void setModelSizeStats(ModelSizeStats modelSizeStats)
+    {
+        m_ModelSizeStats = modelSizeStats;
+    }
+
     @Override
     public int hashCode()
     {
-        return Objects.hash(m_Timestamp, m_Description, m_RestorePriority, m_SnapshotId, m_SnapshotDocCount);
+        return Objects.hash(m_Timestamp, m_Description, m_RestorePriority, m_SnapshotId,
+                m_SnapshotDocCount, m_ModelSizeStats);
     }
 
     /**
@@ -129,7 +141,8 @@ public class ModelSnapshot
                 && Objects.equals(this.m_Description, that.m_Description)
                 && this.m_RestorePriority == that.m_RestorePriority
                 && Objects.equals(this.m_SnapshotId, that.m_SnapshotId)
-                && this.m_SnapshotDocCount == that.m_SnapshotDocCount;
+                && this.m_SnapshotDocCount == that.m_SnapshotDocCount
+                && Objects.equals(this.m_ModelSizeStats, that.m_ModelSizeStats);
     }
 }
 

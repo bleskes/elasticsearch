@@ -429,7 +429,7 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
             // a job close this restore priority is higher rather than equal
             modelSnapshot.setRestorePriority(System.currentTimeMillis() + 1);
 
-            boolean success = m_JobProvider.updateModelSnapshot(jobId, modelSnapshot);
+            boolean success = m_JobProvider.updateModelSnapshot(jobId, modelSnapshot, true);
             if (success)
             {
                 updateIgnoreDowntime(jobId, true);
@@ -472,7 +472,7 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
             ModelSnapshot modelSnapshot = changeCandidates.get(0);
             modelSnapshot.setDescription(newDescription);
 
-            return m_JobProvider.updateModelSnapshot(jobId, modelSnapshot);
+            return m_JobProvider.updateModelSnapshot(jobId, modelSnapshot, false);
         }
     }
 

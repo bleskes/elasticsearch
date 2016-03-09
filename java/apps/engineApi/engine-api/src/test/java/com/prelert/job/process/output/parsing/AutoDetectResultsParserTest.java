@@ -507,7 +507,7 @@ public class AutoDetectResultsParserTest
     @Test
     public void testParse_GivenModelSizeStats() throws JsonParseException, IOException, AutoDetectParseException
     {
-        String json = "{\"modelSizeStats\":300}";
+        String json = "{\"modelBytes\":300}";
         InputStream inputStream = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
         Logger logger = mock(Logger.class);
         ResultsPersister persister = new ResultsPersister();

@@ -33,6 +33,7 @@ import org.apache.log4j.Logger;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
+import com.prelert.job.ModelSizeStats;
 import com.prelert.job.ModelSnapshot;
 import com.prelert.utils.json.FieldNameParser;
 
@@ -71,6 +72,9 @@ final class ModelSnapshotParser extends FieldNameParser<ModelSnapshot>
             break;
         case ModelSnapshot.SNAPSHOT_DOC_COUNT:
             modelSnapshot.setSnapshotDocCount(parseAsIntOrZero(fieldName));
+            break;
+        case ModelSizeStats.TYPE:
+            modelSnapshot.setModelSizeStats(new ModelSizeStatsParser(m_Parser).parseJson());
             break;
         default:
             LOGGER.warn(String.format("Parse error unknown field in ModelSnapshot %s:%s",

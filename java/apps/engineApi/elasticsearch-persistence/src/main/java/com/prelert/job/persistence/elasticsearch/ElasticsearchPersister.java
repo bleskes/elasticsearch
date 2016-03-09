@@ -571,14 +571,41 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
     private XContentBuilder serialiseModelSnapshot(ModelSnapshot modelSnapshot)
     throws IOException
     {
-        return jsonBuilder().startObject()
+        XContentBuilder builder = jsonBuilder().startObject()
                 .field(JOB_ID_NAME, m_JobId.getId())
                 .field(ElasticsearchMappings.ES_TIMESTAMP, modelSnapshot.getTimestamp())
                 .field(ModelSnapshot.DESCRIPTION, modelSnapshot.getDescription())
                 .field(ModelSnapshot.RESTORE_PRIORITY, modelSnapshot.getRestorePriority())
                 .field(ModelSnapshot.SNAPSHOT_ID, modelSnapshot.getSnapshotId())
-                .field(ModelSnapshot.SNAPSHOT_DOC_COUNT, modelSnapshot.getSnapshotDocCount())
-                .endObject();
+                .field(ModelSnapshot.SNAPSHOT_DOC_COUNT, modelSnapshot.getSnapshotDocCount());
+
+        if (modelSnapshot.getModelSizeStats() != null)
+        {
+            builder.startObject(ModelSizeStats.TYPE);
+            serialiseModelSizeStatsContent(modelSnapshot.getModelSizeStats(), builder);
+            builder.endObject();
+        }
+
+        return builder.endObject();
+    }
+
+    /**
+     * Add the modelSizeStats serialisable content to an existing JSON builder
+     * @param modelSizeStats
+     * @param builder
+     * @return
+     * @throws IOException
+     */
+    private XContentBuilder serialiseModelSizeStatsContent(ModelSizeStats modelSizeStats, XContentBuilder builder)
+    throws IOException
+    {
+        return builder
+                .field(ModelSizeStats.MODEL_BYTES, modelSizeStats.getModelBytes())
+                .field(ModelSizeStats.TOTAL_BY_FIELD_COUNT, modelSizeStats.getTotalByFieldCount())
+                .field(ModelSizeStats.TOTAL_OVER_FIELD_COUNT, modelSizeStats.getTotalOverFieldCount())
+                .field(ModelSizeStats.TOTAL_PARTITION_FIELD_COUNT, modelSizeStats.getTotalPartitionFieldCount())
+                .field(ModelSizeStats.BUCKET_ALLOCATION_FAILURES_COUNT, modelSizeStats.getBucketAllocationFailuresCount())
+                .field(ModelSizeStats.MEMORY_STATUS, modelSizeStats.getMemoryStatus());
     }
 
     /**
@@ -590,14 +617,9 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
     private XContentBuilder serialiseModelSizeStats(ModelSizeStats modelSizeStats)
     throws IOException
     {
-        return jsonBuilder().startObject()
-                .field(ModelSizeStats.MODEL_BYTES, modelSizeStats.getModelBytes())
-                .field(ModelSizeStats.TOTAL_BY_FIELD_COUNT, modelSizeStats.getTotalByFieldCount())
-                .field(ModelSizeStats.TOTAL_OVER_FIELD_COUNT, modelSizeStats.getTotalOverFieldCount())
-                .field(ModelSizeStats.TOTAL_PARTITION_FIELD_COUNT, modelSizeStats.getTotalPartitionFieldCount())
-                .field(ModelSizeStats.BUCKET_ALLOCATION_FAILURES_COUNT, modelSizeStats.getBucketAllocationFailuresCount())
-                .field(ModelSizeStats.MEMORY_STATUS, modelSizeStats.getMemoryStatus())
-                .endObject();
+        XContentBuilder builder = jsonBuilder().startObject();
+        serialiseModelSizeStatsContent(modelSizeStats, builder);
+        return builder.endObject();
     }
 
     /**

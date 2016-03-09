@@ -64,6 +64,7 @@ public class ModelSnapshotTest
         modelSnapshot1.setRestorePriority(1234L);
         modelSnapshot1.setSnapshotId("my_id");
         modelSnapshot1.setSnapshotDocCount(7);
+        modelSnapshot1.setModelSizeStats(new ModelSizeStats());
 
         ModelSnapshot modelSnapshot2 = new ModelSnapshot();
         modelSnapshot2.setTimestamp(now);
@@ -71,6 +72,7 @@ public class ModelSnapshotTest
         modelSnapshot2.setRestorePriority(1234L);
         modelSnapshot2.setSnapshotId("my_id");
         modelSnapshot2.setSnapshotDocCount(7);
+        modelSnapshot2.setModelSizeStats(new ModelSizeStats());
 
         assertTrue(modelSnapshot1.equals(modelSnapshot2));
         assertTrue(modelSnapshot2.equals(modelSnapshot1));

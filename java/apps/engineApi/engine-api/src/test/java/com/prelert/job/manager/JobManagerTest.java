@@ -963,7 +963,7 @@ public class JobManagerTest
 
         QueryPage<ModelSnapshot> modelSnapshotPage = new QueryPage<>(Arrays.asList(modelSnapshot), 1);
         when(m_JobProvider.modelSnapshots("foo", 0, 1, 0, 0, ModelSnapshot.TIMESTAMP, "my description")).thenReturn(modelSnapshotPage);
-        when(m_JobProvider.updateModelSnapshot("foo", modelSnapshot)).thenReturn(true);
+        when(m_JobProvider.updateModelSnapshot("foo", modelSnapshot, true)).thenReturn(true);
 
         assertTrue(jobManager.revertToSnapshot("foo", 0, "my description"));
         assertTrue(modelSnapshot.getRestorePriority() > 1);
@@ -1015,7 +1015,7 @@ public class JobManagerTest
         QueryPage<ModelSnapshot> clashingModelSnapshotPage = new QueryPage<>(null, 0);
         when(m_JobProvider.modelSnapshots("foo", 0, 1, 0, 0, null, "old description")).thenReturn(oldModelSnapshotPage);
         when(m_JobProvider.modelSnapshots("foo", 0, 1, 0, 0, null, "new description")).thenReturn(clashingModelSnapshotPage);
-        when(m_JobProvider.updateModelSnapshot("foo", oldModelSnapshot)).thenReturn(true);
+        when(m_JobProvider.updateModelSnapshot("foo", oldModelSnapshot, false)).thenReturn(true);
 
         assertTrue(jobManager.updateModelSnapshotDescription("foo", "old description", "new description"));
         assertEquals("new description", oldModelSnapshot.getDescription());
