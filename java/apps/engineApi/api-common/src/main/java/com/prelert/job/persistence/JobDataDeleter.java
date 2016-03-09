@@ -53,4 +53,10 @@ public interface JobDataDeleter
      * to perform clean-up
      */
     void commit();
+
+    /**
+     * Commit the deletions asynchronously - don't force a merge
+     */
+    void commitAsync();
+
 }

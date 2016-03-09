@@ -153,7 +153,7 @@ public class ElasticsearchBulkDeleter implements JobDataDeleter
 
     public void deleteBucketByTime(Bucket bucket)
     {
-    	deleteTypeByBucket(bucket, Bucket.TYPE, () -> ++m_DeletedBucketCount);
+        deleteTypeByBucket(bucket, Bucket.TYPE, () -> ++m_DeletedBucketCount);
     }
 
     @Override
@@ -188,46 +188,82 @@ public class ElasticsearchBulkDeleter implements JobDataDeleter
 
     public void deletePriorInterimResults(Date latestTime)
     {
-    	QueryBuilder qb = QueryBuilders.boolQuery().must(
-    			QueryBuilders.rangeQuery(ElasticsearchMappings.ES_TIMESTAMP)
-    				.from(new Date(0))
-    				.to(latestTime)
-    	            .includeUpper(true))
-    	            .must(QueryBuilders.matchQuery(Bucket.IS_INTERIM, "true"));
+        QueryBuilder qb = QueryBuilders.boolQuery()
+                .filter(QueryBuilders.termQuery(Bucket.IS_INTERIM, "true"));
+//                .filter(QueryBuilders.rangeQuery(ElasticsearchMappings.ES_TIMESTAMP)
+//                    .from(new Date(0))
+//                    .to(latestTime)
+//                    .includeUpper(true));
 
-    	SearchResponse searchResponse = m_Client.prepareSearch(m_JobId.getIndex())
-    			.setTypes(Bucket.TYPE, AnomalyRecord.TYPE, Influencer.TYPE, BucketInfluencer.TYPE)
-    			.setQuery(qb)
-    			.get();
+        SearchResponse searchResponse = m_Client.prepareSearch(m_JobId.getIndex())
+                .setTypes(Bucket.TYPE, AnomalyRecord.TYPE, Influencer.TYPE, BucketInfluencer.TYPE)
+                .setQuery(qb)
+                .get();
 
-    	for (SearchHit hit : searchResponse.getHits())
-    	{
-    		LOGGER.trace("Search hit for bucket: " + hit.toString() + ", " + hit.getId());
-    		String type = hit.getType();
-    		if (type.equals(Bucket.TYPE))
-    		{
-    			++m_DeletedBucketCount;
-    		}
-    		else if (type.equals(AnomalyRecord.TYPE))
-    		{
-    			++m_DeletedRecordCount;
-    		}
-    		else if (type.equals(BucketInfluencer.TYPE))
-    		{
-    			++m_DeletedBucketInfluencerCount;
-    		}
-    		else if (type.equals(Influencer.TYPE))
-    		{
-    			++m_DeletedInfluencerCount;
-    		}
-    		m_BulkRequestBuilder.add(
-    				m_Client.prepareDelete(m_JobId.getIndex(), hit.getType(), hit.getId()));
-    	}
-    	commit();
+        for (SearchHit hit : searchResponse.getHits())
+        {
+            LOGGER.trace("Search hit for bucket: " + hit.toString() + ", " + hit.getId());
+            String type = hit.getType();
+            if (type.equals(Bucket.TYPE))
+            {
+                ++m_DeletedBucketCount;
+            }
+            else if (type.equals(AnomalyRecord.TYPE))
+            {
+                ++m_DeletedRecordCount;
+            }
+            else if (type.equals(BucketInfluencer.TYPE))
+            {
+                ++m_DeletedBucketInfluencerCount;
+            }
+            else if (type.equals(Influencer.TYPE))
+            {
+                ++m_DeletedInfluencerCount;
+            }
+            m_BulkRequestBuilder.add(
+                    m_Client.prepareDelete(m_JobId.getIndex(), hit.getType(), hit.getId()));
+        }
+    }
+
+    public void deleteById(String type, String id)
+    {
+        m_BulkRequestBuilder.add(
+                m_Client.prepareDelete(m_JobId.getIndex(), type, id));
     }
 
     @Override
     public void commit()
+    {
+        if (m_BulkRequestBuilder.numberOfActions() == 0)
+        {
+            return;
+        }
+
+        if (!m_Quiet)
+        {
+            LOGGER.debug("Requesting deletion of "
+                     + m_DeletedBucketCount + " buckets, "
+                     + m_DeletedRecordCount + " records, "
+                     + m_DeletedBucketInfluencerCount + " bucket influencers, "
+                     + m_DeletedInfluencerCount + " influencers, "
+                     + m_DeletedModelSnapshotCount + " model snapshots, "
+                     + " and "
+                     + m_DeletedModelStateCount + " model state documents");
+        }
+
+        try
+        {
+            executeBulkRequest();
+            forceMerge();
+        }
+        catch (RuntimeException e)
+        {
+            LOGGER.error("Failed to perform bulk delete", e);
+        }
+    }
+
+    @Override
+    public void commitAsync()
     {
         if (m_BulkRequestBuilder.numberOfActions() == 0)
         {
@@ -263,7 +299,10 @@ public class ElasticsearchBulkDeleter implements JobDataDeleter
         {
             LOGGER.error(bulkResponse.buildFailureMessage());
         }
+    }
 
+    private void forceMerge()
+    {
         // We need to do a force-merge request to ACTUALLY delete the results from disk
         ForceMergeResponse forceMergeResponse = ForceMergeAction.INSTANCE.newRequestBuilder(m_Client)
                 .setIndices(m_JobId.getIndex())
