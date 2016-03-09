@@ -90,7 +90,7 @@ public class ElasticsearchDataExtractor implements DataExtractor
 
     private static final Pattern SCROLL_ID_PATTERN = Pattern.compile("\"_scroll_id\":\"(.*?)\"");
     private static final Pattern EMPTY_HITS_PATTERN = Pattern.compile("\"hits\":\\[\\]");
-    private static final Pattern EMPTY_AGGREGATIONS_PATTERN = Pattern.compile("\"aggregations\":.*\"buckets\":\\[\\]");
+    private static final Pattern EMPTY_AGGREGATIONS_PATTERN = Pattern.compile("\"aggregations\":.*?\"buckets\":\\[\\]");
     private static final int OK_STATUS = 200;
     private static final String SLASH = "/";
     private static final String COMMA = ",";
@@ -113,11 +113,11 @@ public class ElasticsearchDataExtractor implements DataExtractor
     private final String m_Search;
     private final String m_Aggregations;
     private final String m_TimeField;
-    private String m_ScrollId;
-    private boolean m_IsScrollComplete;
-    private String m_StartEpochMs;
-    private String m_EndEpochMs;
-    private Logger m_Logger;
+    private volatile String m_ScrollId;
+    private volatile boolean m_IsScrollComplete;
+    private volatile String m_StartEpochMs;
+    private volatile String m_EndEpochMs;
+    private volatile Logger m_Logger;
 
     ElasticsearchDataExtractor(HttpGetRequester httpGetRequester, String baseUrl,
             List<String> indices, List<String> types, String search, String aggregations, String timeField)

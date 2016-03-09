@@ -63,6 +63,8 @@ public class ElasticsearchDataExtractorTest
 
     @Mock private Logger m_Logger;
 
+    private String m_Aggregations;
+
     private ElasticsearchDataExtractor m_Extractor;
 
     @Before
@@ -279,6 +281,118 @@ public class ElasticsearchDataExtractorTest
         m_Extractor.next();
     }
 
+    @Test
+    public void testDataExtractionWithAggregations() throws IOException
+    {
+        m_Aggregations = "{\"aggs\":{\"my-aggs\": {\"terms\":{\"field\":\"foo\"}}}}";
+
+        String initialResponse = "{"
+                + "\"_scroll_id\":\"r2d2bjs2OzM0NDg1ODpzRlBLc0FXNlNyNm5JWUc1\","
+                + "\"took\":17,"
+                + "\"timed_out\":false,"
+                + "\"_shards\":{"
+                + "  \"total\":1,"
+                + "  \"successful\":1,"
+                + "  \"failed\":0"
+                + "},"
+                + "\"aggregations\":{"
+                + "  \"my-aggs\":{"
+                + "    \"buckets\":["
+                + "      {"
+                + "        \"key\":\"foo\""
+                + "      }"
+                + "    ]"
+                + "  }"
+                + "}"
+                + "}";
+
+        List<HttpGetResponse> responses = Arrays.asList(
+                new HttpGetResponse(toStream(initialResponse), 200));
+
+        MockHttpGetRequester requester = new MockHttpGetRequester(responses);
+        createExtractor(requester);
+
+        m_Extractor.newSearch("1400000000", "1500000000", m_Logger);
+
+        assertTrue(m_Extractor.hasNext());
+        assertEquals(initialResponse, streamToString(m_Extractor.next().get()));
+        assertFalse(m_Extractor.next().isPresent());
+        assertFalse(m_Extractor.hasNext());
+
+        requester.assertEqualRequestsToResponses();
+
+        assertEquals(1, requester.m_RequestParams.size());
+        RequestParams requestParams = requester.getRequestParams(0);
+        assertEquals("http://localhost:9200/dataIndex/dataType/_search?scroll=60m&size=0", requestParams.url);
+        String expectedSearchBody = "{"
+                + "  \"sort\": ["
+                + "    {\"time\": {\"order\": \"asc\"}}"
+                + "  ],"
+                + "  \"query\": {"
+                + "    \"filtered\": {"
+                + "      \"filter\": {"
+                + "        \"bool\": {"
+                + "          \"must\": {"
+                + "            \"match_all\": {}"
+                + "          },"
+                + "          \"must\": {"
+                + "            \"range\": {"
+                + "              \"time\": {"
+                + "                \"gte\": 1400000000,"
+                + "                \"lt\": 1500000000,"
+                + "                \"format\": \"epoch_millis\""
+                + "              }"
+                + "            }"
+                + "          }"
+                + "        }"
+                + "      }"
+                + "    }"
+                + "  },"
+                + "  {\"aggs\":{\"my-aggs\": {\"terms\":{\"field\":\"foo\"}}}}"
+                + "}";
+        assertEquals(expectedSearchBody, requestParams.requestBody);
+    }
+
+    @Test
+    public void testDataExtractionWithAggregations_GivenResponseHasEmptyBuckets() throws IOException
+    {
+        m_Aggregations = "{\"aggs\":{\"my-aggs\": {\"terms\":{\"field\":\"foo\"}}}}";
+
+        String initialResponse = "{"
+                + "\"_scroll_id\":\"r2d2bjs2OzM0NDg1ODpzRlBLc0FXNlNyNm5JWUc1\","
+                + "\"took\":17,"
+                + "\"timed_out\":false,"
+                + "\"_shards\":{"
+                + "  \"total\":1,"
+                + "  \"successful\":1,"
+                + "  \"failed\":0"
+                + "},"
+                + "\"aggregations\":{"
+                + "  \"my-aggs\":{"
+                + "    \"buckets\":[]"
+                + "  }"
+                + "}"
+                + "}";
+
+        List<HttpGetResponse> responses = Arrays.asList(
+                new HttpGetResponse(toStream(initialResponse), 200));
+
+        MockHttpGetRequester requester = new MockHttpGetRequester(responses);
+        createExtractor(requester);
+
+        m_Extractor.newSearch("1400000000", "1500000000", m_Logger);
+
+        assertTrue(m_Extractor.hasNext());
+        assertFalse(m_Extractor.next().isPresent());
+        assertFalse(m_Extractor.hasNext());
+
+        requester.assertEqualRequestsToResponses();
+
+        assertEquals(1, requester.m_RequestParams.size());
+        RequestParams requestParams = requester.getRequestParams(0);
+        assertEquals("http://localhost:9200/dataIndex/dataType/_search?scroll=60m&size=0", requestParams.url);
+    }
+
     private static InputStream toStream(String input)
     {
         return new ByteArrayInputStream(input.getBytes(StandardCharsets.UTF_8));
@@ -294,7 +408,7 @@ public class ElasticsearchDataExtractorTest
     private void createExtractor(MockHttpGetRequester httpGerRequester)
     {
         m_Extractor = new ElasticsearchDataExtractor(httpGerRequester, BASE_URL, INDICES, TYPES,
-                SEARCH, null, TIME_FIELD);
+                SEARCH, m_Aggregations, TIME_FIELD);
     }
 
     private static class MockHttpGetRequester extends HttpGetRequester
