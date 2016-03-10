@@ -41,6 +41,7 @@ import org.mockito.MockitoAnnotations;
 
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataDescription;
+import com.prelert.job.IgnoreDowntime;
 import com.prelert.job.JobDetails;
 import com.prelert.settings.PrelertSettings;
 
@@ -89,7 +90,7 @@ public class ProcessCtrlTest
         dd.setTimeField("tf");
         job.setDataDescription(dd);
 
-        job.setIgnoreDowntime(true);
+        job.setIgnoreDowntime(IgnoreDowntime.ONCE);
 
         List<String> command = ProcessCtrl.buildAutoDetectCommand(job, m_Logger, null);
 

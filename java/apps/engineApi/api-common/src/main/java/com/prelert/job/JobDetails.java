@@ -97,7 +97,7 @@ public class JobDetails
     private List<TransformConfig> m_Transforms;
     private ModelDebugConfig m_ModelDebugConfig;
     private DataCounts m_Counts;
-    private Boolean m_IgnoreDowntime;
+    private IgnoreDowntime m_IgnoreDowntime;
     private Long m_RenormalizationWindow;
     private Long m_BackgroundPersistInterval;
     private Long m_ModelSnapshotRetentionDays;
@@ -142,7 +142,7 @@ public class JobDetails
         m_ModelDebugConfig = jobConfig.getModelDebugConfig();
 
         invokeIfNotNull(jobConfig.getDataDescription(), dd -> m_DataDescription = dd);
-        m_IgnoreDowntime = jobConfig.isIgnoreDowntime();
+        m_IgnoreDowntime = jobConfig.getIgnoreDowntime();
         m_RenormalizationWindow = jobConfig.getRenormalizationWindow();
         m_BackgroundPersistInterval = jobConfig.getBackgroundPersistInterval();
         m_ModelSnapshotRetentionDays = jobConfig.getModelSnapshotRetentionDays();
@@ -331,12 +331,12 @@ public class JobDetails
         m_AnalysisLimits = analysisLimits;
     }
 
-    public Boolean isIgnoreDowntime()
+    public IgnoreDowntime getIgnoreDowntime()
     {
         return m_IgnoreDowntime;
     }
 
-    public void setIgnoreDowntime(Boolean ignoreDowntime)
+    public void setIgnoreDowntime(IgnoreDowntime ignoreDowntime)
     {
         m_IgnoreDowntime = ignoreDowntime;
     }

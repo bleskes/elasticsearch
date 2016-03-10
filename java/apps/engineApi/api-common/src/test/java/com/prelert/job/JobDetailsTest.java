@@ -65,7 +65,7 @@ public class JobDetailsTest
         assertNull(jobDetails.getDescription());
         assertNull(jobDetails.getEndpoints());
         assertNull(jobDetails.getFinishedTime());
-        assertNull(jobDetails.isIgnoreDowntime());
+        assertNull(jobDetails.getIgnoreDowntime());
         assertNull(jobDetails.getLastDataTime());
         assertNull(jobDetails.getLocation());
         assertNull(jobDetails.getModelDebugConfig());
@@ -82,12 +82,12 @@ public class JobDetailsTest
     public void testConstructor_GivenJobConfigurationWithIgnoreDowntime()
     {
         JobConfiguration jobConfiguration = new JobConfiguration();
-        jobConfiguration.setIgnoreDowntime(true);
+        jobConfiguration.setIgnoreDowntime(IgnoreDowntime.ONCE);
 
         JobDetails jobDetails = new JobDetails("foo", jobConfiguration);
 
         assertEquals("foo", jobDetails.getId());
-        assertEquals(true, jobDetails.isIgnoreDowntime());
+        assertEquals(IgnoreDowntime.ONCE, jobDetails.getIgnoreDowntime());
     }
 
     @Test
@@ -137,7 +137,7 @@ public class JobDetailsTest
         jobDetails1.setDescription("Blah blah");
         jobDetails1.setEndpoints(endpoints);
         jobDetails1.setFinishedTime(new Date(1000));
-        jobDetails1.setIgnoreDowntime(true);
+        jobDetails1.setIgnoreDowntime(IgnoreDowntime.ALWAYS);
         jobDetails1.setLastDataTime(new Date(500));
         jobDetails1.setLocation(new URI("http://localhost:8080/jobs/foo"));
         jobDetails1.setModelDebugConfig(new ModelDebugConfig());
@@ -164,7 +164,7 @@ public class JobDetailsTest
         jobDetails2.setDescription("Blah blah");
         jobDetails2.setEndpoints(endpoints);
         jobDetails2.setFinishedTime(new Date(1000));
-        jobDetails2.setIgnoreDowntime(true);
+        jobDetails2.setIgnoreDowntime(IgnoreDowntime.ALWAYS);
         jobDetails2.setLastDataTime(new Date(500));
         jobDetails2.setLocation(new URI("http://localhost:8080/jobs/foo"));
         jobDetails2.setModelDebugConfig(new ModelDebugConfig());
@@ -272,9 +272,9 @@ public class JobDetailsTest
     public void testEquals_GivenDifferentIgnoreDowntime()
     {
         JobDetails job1 = new JobDetails();
-        job1.setIgnoreDowntime(false);
+        job1.setIgnoreDowntime(IgnoreDowntime.NEVER);
         JobDetails job2 = new JobDetails();
-        job2.setIgnoreDowntime(true);
+        job2.setIgnoreDowntime(IgnoreDowntime.ONCE);
 
         assertFalse(job1.equals(job2));
         assertFalse(job2.equals(job1));

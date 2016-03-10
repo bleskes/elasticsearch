@@ -30,16 +30,12 @@ package com.prelert.rs.job.update;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
-import java.util.Set;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 import javax.ws.rs.core.Response;
 
@@ -47,7 +43,6 @@ import org.apache.log4j.Logger;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.config.verification.JobConfigurationException;
@@ -66,12 +61,11 @@ public class JobUpdater
     private static final String CUSTOM_SETTINGS = "customSettings";
     private static final String DETECTOR_KEY = "detectors";
     private static final String JOB_DESCRIPTION_KEY = "description";
+    private static final String IGNORE_DOWNTIME_KEY = "ignoreDowntime";
     private static final String MODEL_DEBUG_CONFIG_KEY = "modelDebugConfig";
     private static final String RENORMALIZATION_WINDOW_KEY = "renormalizationWindow";
     private static final String MODEL_SNAPSHOT_RETENTION_DAYS_KEY = "modelSnapshotRetentionDays";
     private static final String RESULTS_RETENTION_DAYS_KEY = "resultsRetentionDays";
-    private static final Set<String> HIDDEN_PROPERTIES = new HashSet<>(
-            Arrays.asList(CUSTOM_SETTINGS, MODEL_DEBUG_CONFIG_KEY));
 
     private final JobManager m_JobManager;
     private final String m_JobId;
@@ -92,6 +86,7 @@ public class JobUpdater
                 .put(CUSTOM_SETTINGS, () -> new CustomSettingsUpdater(m_JobManager, m_JobId))
                 .put(DETECTOR_KEY, () -> new DetectorDescriptionUpdater(m_JobManager, m_JobId))
                 .put(JOB_DESCRIPTION_KEY, () -> new JobDescriptionUpdater(m_JobManager, m_JobId))
+                .put(IGNORE_DOWNTIME_KEY, () -> new IgnoreDowntimeUpdater(m_JobManager, m_JobId))
                 .put(MODEL_DEBUG_CONFIG_KEY, () -> new ModelDebugConfigUpdater(m_JobManager, m_JobId, m_ConfigWriter))
                 .put(RENORMALIZATION_WINDOW_KEY, () -> new RenormalizationWindowUpdater(m_JobManager, m_JobId))
                 .put(MODEL_SNAPSHOT_RETENTION_DAYS_KEY, () -> new ModelSnapshotRetentionDaysUpdater(m_JobManager, m_JobId))
@@ -165,18 +160,11 @@ public class JobUpdater
     {
         if (m_UpdaterPerKey.containsKey(key) == false)
         {
-            throw new JobConfigurationException(createInvalidKeyMsg(key),
+            throw new JobConfigurationException(
+                    Messages.getMessage(Messages.JOB_CONFIG_UPDATE_INVALID_KEY, key),
                     ErrorCodes.INVALID_UPDATE_KEY);
         }
         return m_UpdaterPerKey.get(key).get();
-    }
-
-    private String createInvalidKeyMsg(String key)
-    {
-        List<String> keys = m_UpdaterPerKey.keySet().stream()
-                .filter(k -> !HIDDEN_PROPERTIES.contains(k)).collect(Collectors.toList());
-        String validKeys = Joiner.on(", ").join(keys).toString();
-        return Messages.getMessage(Messages.JOB_CONFIG_UPDATE_INVALID_KEY, key, validKeys);
     }
 
     private void writeUpdateConfigMessage() throws JobInUseException, NativeProcessRunException

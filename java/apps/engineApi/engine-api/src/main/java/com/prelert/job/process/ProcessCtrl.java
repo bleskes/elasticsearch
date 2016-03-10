@@ -45,6 +45,7 @@ import org.apache.log4j.Logger;
 
 import com.prelert.job.AnalysisLimits;
 import com.prelert.job.DataDescription;
+import com.prelert.job.IgnoreDowntime;
 import com.prelert.job.JobDetails;
 import com.prelert.job.ModelDebugConfig;
 import com.prelert.job.ModelSnapshot;
@@ -647,7 +648,8 @@ public class ProcessCtrl
         int maxQuantileInterval = BASE_MAX_QUANTILE_INTERVAL + intervalStagger;
         command.add(MAX_QUANTILE_INTERVAL_ARG + maxQuantileInterval);
 
-        if (Boolean.TRUE.equals(job.isIgnoreDowntime()))
+        if (job.getIgnoreDowntime() == IgnoreDowntime.ONCE
+                || job.getIgnoreDowntime() == IgnoreDowntime.ALWAYS)
         {
             command.add(IGNORE_DOWNTIME_ARG);
         }

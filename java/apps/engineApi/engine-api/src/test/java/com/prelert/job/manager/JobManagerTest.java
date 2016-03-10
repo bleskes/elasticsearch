@@ -77,6 +77,7 @@ import com.fasterxml.jackson.core.JsonParseException;
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataCounts;
 import com.prelert.job.Detector;
+import com.prelert.job.IgnoreDowntime;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.JobDetails;
 import com.prelert.job.JobException;
@@ -457,7 +458,7 @@ public class JobManagerTest
     }
 
     @Test
-    public void testSubmitDataLoadJob_GivenProcessIsRunSuccessfullyAndJobShouldIgnoreDowntimeAndPositiveProcessedRecordCount()
+    public void testSubmitDataLoadJob_GivenProcessIsRunSuccessfullyAndJobShouldIgnoreDowntimeOnceAndPositiveProcessedRecordCount()
             throws JsonParseException, UnknownJobException, NativeProcessRunException,
             MissingFieldException, JobInUseException, HighProportionOfBadTimestampsException,
             OutOfOrderRecordsException, TooManyJobsException, MalformedJsonException
@@ -465,7 +466,7 @@ public class JobManagerTest
         InputStream inputStream = mock(InputStream.class);
         DataLoadParams params = mock(DataLoadParams.class);
         JobDetails job = new JobDetails("foo", new JobConfiguration());
-        job.setIgnoreDowntime(true);
+        job.setIgnoreDowntime(IgnoreDowntime.ONCE);
         when(m_JobProvider.getJobDetails("foo")).thenReturn(Optional.of(job));
         givenProcessInfo(5);
         when(m_ProcessManager.jobIsRunning("foo")).thenReturn(false);
@@ -485,7 +486,7 @@ public class JobManagerTest
     }
 
     @Test
-    public void testSubmitDataLoadJob_GivenProcessIsRunSuccessfullyAndJobShouldIgnoreDowntimeAndZeroProcessedRecordCount()
+    public void testSubmitDataLoadJob_GivenProcessIsRunSuccessfullyAndJobShouldIgnoreDowntimeAlwaysAndPositiveProcessedRecordCount()
             throws JsonParseException, UnknownJobException, NativeProcessRunException,
             MissingFieldException, JobInUseException, HighProportionOfBadTimestampsException,
             OutOfOrderRecordsException, TooManyJobsException, MalformedJsonException
@@ -493,7 +494,33 @@ public class JobManagerTest
         InputStream inputStream = mock(InputStream.class);
         DataLoadParams params = mock(DataLoadParams.class);
         JobDetails job = new JobDetails("foo", new JobConfiguration());
-        job.setIgnoreDowntime(true);
+        job.setIgnoreDowntime(IgnoreDowntime.ALWAYS);
+        when(m_JobProvider.getJobDetails("foo")).thenReturn(Optional.of(job));
+        givenProcessInfo(5);
+        when(m_ProcessManager.jobIsRunning("foo")).thenReturn(false);
+        when(m_ProcessManager.numberOfRunningJobs()).thenReturn(0);
+        DataCounts counts = new DataCounts();
+        counts.setProcessedRecordCount(1L);
+        when(m_ProcessManager.processDataLoadJob(job, inputStream, params)).thenReturn(counts);
+        JobManager jobManager = createJobManager();
+
+        DataCounts actualCounts = jobManager.submitDataLoadJob("foo", inputStream, params);
+        assertEquals(actualCounts, counts);
+
+        verify(m_JobProvider).updateJob(eq("foo"), m_JobUpdateCaptor.capture());
+        assertNotNull(m_JobUpdateCaptor.getValue().get(JobDetails.LAST_DATA_TIME));
+    }
+
+    @Test
+    public void testSubmitDataLoadJob_GivenProcessIsRunSuccessfullyAndJobShouldIgnoreDowntimeOnceAndZeroProcessedRecordCount()
+            throws JsonParseException, UnknownJobException, NativeProcessRunException,
+            MissingFieldException, JobInUseException, HighProportionOfBadTimestampsException,
+            OutOfOrderRecordsException, TooManyJobsException, MalformedJsonException
+    {
+        InputStream inputStream = mock(InputStream.class);
+        DataLoadParams params = mock(DataLoadParams.class);
+        JobDetails job = new JobDetails("foo", new JobConfiguration());
+        job.setIgnoreDowntime(IgnoreDowntime.ONCE);
         when(m_JobProvider.getJobDetails("foo")).thenReturn(Optional.of(job));
         givenProcessInfo(5);
         when(m_ProcessManager.jobIsRunning("foo")).thenReturn(false);
@@ -970,7 +997,7 @@ public class JobManagerTest
 
         verify(m_JobProvider).updateJob(eq("foo"), m_JobUpdateCaptor.capture());
         assertTrue(m_JobUpdateCaptor.getValue().containsKey(JobDetails.IGNORE_DOWNTIME));
-        assertEquals(Boolean.TRUE, m_JobUpdateCaptor.getValue().get(JobDetails.IGNORE_DOWNTIME));
+        assertEquals(IgnoreDowntime.ONCE, m_JobUpdateCaptor.getValue().get(JobDetails.IGNORE_DOWNTIME));
     }
 
     @Test
@@ -1106,7 +1133,7 @@ public class JobManagerTest
         JobDetails jobThatIsUnknown = new JobDetails();
         jobThatIsUnknown.setId("jobThatIsUnknown");
         jobThatIsUnknown.setCounts(countsWithPositiveProcessedRecordCount);
-        jobThatIsUnknown.setIgnoreDowntime(true);
+        jobThatIsUnknown.setIgnoreDowntime(IgnoreDowntime.ONCE);
         when(m_JobProvider.updateJob(eq("jobThatIsUnknown"), anyMapOf(String.class, Object.class)))
                 .thenThrow(new UnknownJobException("jobThatIsUnknown"));
 
@@ -1121,14 +1148,14 @@ public class JobManagerTest
 
         verify(m_JobProvider).updateJob(eq("jobThatHasSeenData"), m_JobUpdateCaptor.capture());
         assertTrue(m_JobUpdateCaptor.getValue().containsKey(JobDetails.IGNORE_DOWNTIME));
-        assertEquals(Boolean.TRUE, m_JobUpdateCaptor.getValue().get(JobDetails.IGNORE_DOWNTIME));
+        assertEquals(IgnoreDowntime.ONCE, m_JobUpdateCaptor.getValue().get(JobDetails.IGNORE_DOWNTIME));
 
         verify(m_JobProvider, never()).updateJob(eq("jobThatHasNotSeenData"), anyMapOf(String.class, Object.class));
         verify(m_JobProvider, never()).updateJob(eq("jobWithNullCounts"), anyMapOf(String.class, Object.class));
 
         verify(m_JobProvider).updateJob(eq("jobThatIsUnknown"), m_JobUpdateCaptor.capture());
         assertTrue(m_JobUpdateCaptor.getValue().containsKey(JobDetails.IGNORE_DOWNTIME));
-        assertEquals(Boolean.TRUE, m_JobUpdateCaptor.getValue().get(JobDetails.IGNORE_DOWNTIME));
+        assertEquals(IgnoreDowntime.ONCE, m_JobUpdateCaptor.getValue().get(JobDetails.IGNORE_DOWNTIME));
     }
 
     private void givenProcessInfo(int maxLicenseJobs)

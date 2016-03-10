@@ -76,7 +76,7 @@ public class JobConfiguration
     private Long m_BackgroundPersistInterval;
     private Long m_ModelSnapshotRetentionDays;
     private Long m_ResultsRetentionDays;
-    private Boolean m_IgnoreDowntime;
+    private IgnoreDowntime m_IgnoreDowntime;
     private Map<String, Object> m_CustomSettings;
 
     public JobConfiguration()
@@ -286,12 +286,12 @@ public class JobConfiguration
         m_ResultsRetentionDays = resultsRetentionDays;
     }
 
-    public Boolean isIgnoreDowntime()
+    public IgnoreDowntime getIgnoreDowntime()
     {
         return m_IgnoreDowntime;
     }
 
-    public void setIgnoreDowntime(Boolean ignoreDowntime)
+    public void setIgnoreDowntime(IgnoreDowntime ignoreDowntime)
     {
         m_IgnoreDowntime = ignoreDowntime;
     }
