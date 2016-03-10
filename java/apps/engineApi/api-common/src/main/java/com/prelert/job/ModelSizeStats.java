@@ -80,6 +80,7 @@ public class ModelSizeStats
      */
     public void setId(String id)
     {
+        // Do nothing - ID is fixed
     }
 
     public void setModelBytes(long m)

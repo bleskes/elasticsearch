@@ -110,30 +110,6 @@ public class ElasticsearchMappingsTest
                         "          }" +
                         "        }" +
                         "      }," +
-                        "      \"modelSizeStats\": {" +
-                        "        \"type\": \"object\"," +
-                        "        \"properties\": {" +
-                        "          \"modelBytes\": {" +
-                        "            \"type\": \"long\"" +
-                        "          }," +
-                        "          \"totalByFieldCount\": {" +
-                        "            \"type\": \"long\"" +
-                        "          }," +
-                        "          \"totalOverFieldCount\": {" +
-                        "            \"type\": \"long\"" +
-                        "          }," +
-                        "          \"totalPartitionFieldCount\": {" +
-                        "            \"type\": \"long\"" +
-                        "          }," +
-                        "          \"bucketAllocationFailuresCount\": {" +
-                        "            \"type\": \"long\"" +
-                        "          }," +
-                        "          \"memoryStatus\": {" +
-                        "            \"type\": \"string\"," +
-                        "            \"index\": \"not_analyzed\"" +
-                        "          }" +
-                        "        }" +
-                        "      }," +
                         "      \"ignoreDowntime\": {" +
                         "        \"type\": \"boolean\"," +
                         "        \"index\": \"no\"" +

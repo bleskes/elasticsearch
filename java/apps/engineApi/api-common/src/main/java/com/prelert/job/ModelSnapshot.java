@@ -39,6 +39,7 @@ public class ModelSnapshot
     public static final String RESTORE_PRIORITY = "restorePriority";
     public static final String SNAPSHOT_ID = "snapshotId";
     public static final String SNAPSHOT_DOC_COUNT = "snapshotDocCount";
+    public static final String LATEST_RECORD_TIME = "latestRecordTimeStamp";
 
     /**
      * Elasticsearch type
@@ -51,6 +52,7 @@ public class ModelSnapshot
     private String m_SnapshotId;
     private int m_SnapshotDocCount;
     private ModelSizeStats m_ModelSizeStats;
+    private Date m_LatestRecordTimeStamp;
 
     public Date getTimestamp()
     {
@@ -112,11 +114,21 @@ public class ModelSnapshot
         m_ModelSizeStats = modelSizeStats;
     }
 
+    public Date getLatestRecordTimeStamp()
+    {
+        return m_LatestRecordTimeStamp;
+    }
+
+    public void setLatestRecordTimeStamp(Date latestRecordTimeStamp)
+    {
+        m_LatestRecordTimeStamp = latestRecordTimeStamp;
+    }
+
     @Override
     public int hashCode()
     {
         return Objects.hash(m_Timestamp, m_Description, m_RestorePriority, m_SnapshotId,
-                m_SnapshotDocCount, m_ModelSizeStats);
+                m_SnapshotDocCount, m_ModelSizeStats, m_LatestRecordTimeStamp);
     }
 
     /**
@@ -142,7 +154,8 @@ public class ModelSnapshot
                 && this.m_RestorePriority == that.m_RestorePriority
                 && Objects.equals(this.m_SnapshotId, that.m_SnapshotId)
                 && this.m_SnapshotDocCount == that.m_SnapshotDocCount
-                && Objects.equals(this.m_ModelSizeStats, that.m_ModelSizeStats);
+                && Objects.equals(this.m_ModelSizeStats, that.m_ModelSizeStats)
+                && Objects.equals(this.m_LatestRecordTimeStamp, that.m_LatestRecordTimeStamp);
     }
 }
 

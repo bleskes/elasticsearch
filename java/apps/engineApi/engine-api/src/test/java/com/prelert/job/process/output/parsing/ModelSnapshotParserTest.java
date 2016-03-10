@@ -27,6 +27,7 @@
 package com.prelert.job.process.output.parsing;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -61,7 +62,9 @@ public class ModelSnapshotParserTest
                      + " \"description\":\"Very interesting\","
                      + " \"restorePriority\":123,"
                      + " \"timestamp\":1234567890000,"
-                     + " \"snapshotDocCount\": 3}";
+                     + " \"snapshotDocCount\":3,"
+                     + " \"modelSizeStats\":{\"modelBytes\":54321},"
+                     + " \"latestRecordTimeStamp\": 1111111111111}";
         JsonParser parser = createJsonParser(input);
         parser.nextToken();
 
@@ -72,6 +75,9 @@ public class ModelSnapshotParserTest
         assertEquals("Very interesting", modelSnapshot.getDescription());
         assertEquals(123L, modelSnapshot.getRestorePriority());
         assertEquals(3, modelSnapshot.getSnapshotDocCount());
+        assertNotNull(modelSnapshot.getModelSizeStats());
+        assertEquals(54321L, modelSnapshot.getModelSizeStats().getModelBytes());
+        assertEquals(new Date(1111111111111L), modelSnapshot.getLatestRecordTimeStamp());
 
         assertEquals(JsonToken.END_OBJECT, parser.getCurrentToken());
     }

@@ -212,6 +212,8 @@ public final class ReservedFieldNames
         ModelSnapshot.RESTORE_PRIORITY,
         ModelSnapshot.SNAPSHOT_ID,
         ModelSnapshot.SNAPSHOT_DOC_COUNT,
+        ModelSizeStats.TYPE,
+        ModelSnapshot.LATEST_RECORD_TIME,
 
         Quantiles.ID,
         Quantiles.VERSION,

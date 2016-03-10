@@ -462,6 +462,11 @@ public class ElasticsearchJobProvider implements JobProvider
             m_Client.admin().cluster().prepareHealth(elasticJobId.getIndex())
                     .setWaitForYellowStatus().execute().actionGet();
 
+            if (job.getModelSizeStats() != null)
+            {
+                LOGGER.warn("Initial job model size stats non-null on job creation - removed them");
+                job.setModelSizeStats(null);
+            }
             String json = m_ObjectMapper.writeValueAsString(job);
 
             LOGGER.trace("ES API CALL: index " + JobDetails.TYPE +

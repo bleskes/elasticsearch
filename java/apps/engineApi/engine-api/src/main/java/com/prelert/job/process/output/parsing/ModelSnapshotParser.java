@@ -76,6 +76,9 @@ final class ModelSnapshotParser extends FieldNameParser<ModelSnapshot>
         case ModelSizeStats.TYPE:
             modelSnapshot.setModelSizeStats(new ModelSizeStatsParser(m_Parser).parseJson());
             break;
+        case ModelSnapshot.LATEST_RECORD_TIME:
+            modelSnapshot.setLatestRecordTimeStamp(new Date(parseAsLongOrZero(fieldName)));
+            break;
         default:
             LOGGER.warn(String.format("Parse error unknown field in ModelSnapshot %s:%s",
                     fieldName, token.asString()));

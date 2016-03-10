@@ -585,6 +585,10 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
             serialiseModelSizeStatsContent(modelSnapshot.getModelSizeStats(), builder);
             builder.endObject();
         }
+        if (modelSnapshot.getLatestRecordTimeStamp() != null)
+        {
+            builder.field(ModelSnapshot.LATEST_RECORD_TIME, modelSnapshot.getLatestRecordTimeStamp());
+        }
 
         return builder.endObject();
     }
