@@ -401,10 +401,11 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
             throws UnknownJobException
     {
         return m_JobProvider.modelSnapshots(jobId, skip, take, epochStartMs, epochEndMs,
-                sortField, description);
+                sortField, null, description);
     }
 
-    public boolean revertToSnapshot(String jobId, long epochEndMs, String description)
+    public ModelSnapshot revertToSnapshot(String jobId, long epochEndMs, String snapshotId,
+            String description)
             throws JobInUseException, UnknownJobException, NoSuchModelSnapshotException
     {
         try (ActionTicket actionTicket = m_ActionGuardian.tryAcquiringAction(jobId, Action.REVERTING))
@@ -418,7 +419,7 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
             }
 
             List<ModelSnapshot> revertCandidates = m_JobProvider.modelSnapshots(jobId, 0, 1,
-                    0, epochEndMs, ModelSnapshot.TIMESTAMP, description).queryResults();
+                    0, epochEndMs, ModelSnapshot.TIMESTAMP, snapshotId, description).queryResults();
 
             if (revertCandidates == null || revertCandidates.isEmpty())
             {
@@ -430,18 +431,18 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
             // a job close this restore priority is higher rather than equal
             modelSnapshot.setRestorePriority(System.currentTimeMillis() + 1);
 
-            boolean success = m_JobProvider.updateModelSnapshot(jobId, modelSnapshot, true);
-            if (success)
-            {
-                updateIgnoreDowntime(jobId, IgnoreDowntime.ONCE);
-                audit(jobId).info(Messages.getMessage(Messages.JOB_AUDIT_REVERTED,
-                        modelSnapshot.getDescription()));
-            }
-            return success;
+            // In addition to the checked exceptions, this may throw an
+            // ElasticsearchException if it fails
+            m_JobProvider.updateModelSnapshot(jobId, modelSnapshot, true);
+
+            updateIgnoreDowntime(jobId, IgnoreDowntime.ONCE);
+            audit(jobId).info(Messages.getMessage(Messages.JOB_AUDIT_REVERTED,
+                    modelSnapshot.getDescription()));
+            return modelSnapshot;
         }
     }
 
-    public boolean updateModelSnapshotDescription(String jobId, String oldDescription,
+    public ModelSnapshot updateModelSnapshotDescription(String jobId, String snapshotId,
             String newDescription)
             throws JobInUseException, UnknownJobException, NoSuchModelSnapshotException,
             DescriptionAlreadyUsedException
@@ -449,21 +450,15 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
         try (ActionTicket actionTicket = m_ActionGuardian.tryAcquiringAction(jobId, Action.UPDATING))
         {
             List<ModelSnapshot> changeCandidates = m_JobProvider.modelSnapshots(jobId, 0, 1,
-                    0, 0, null, oldDescription).queryResults();
+                    0, 0, null, snapshotId, null).queryResults();
 
             if (changeCandidates == null || changeCandidates.isEmpty())
             {
                 throw new NoSuchModelSnapshotException(jobId);
             }
 
-            if (oldDescription.equals(newDescription))
-            {
-                // Request to change description to itself is a silent no-op
-                return false;
-            }
-
             List<ModelSnapshot> clashCandidates = m_JobProvider.modelSnapshots(jobId, 0, 1,
-                    0, 0, null, newDescription).queryResults();
+                    0, 0, null, null, newDescription).queryResults();
 
             if (clashCandidates != null && !clashCandidates.isEmpty())
             {
@@ -473,7 +468,11 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
             ModelSnapshot modelSnapshot = changeCandidates.get(0);
             modelSnapshot.setDescription(newDescription);
 
-            return m_JobProvider.updateModelSnapshot(jobId, modelSnapshot, false);
+            // In addition to the checked exceptions, this may throw an
+            // ElasticsearchException if it fails
+            m_JobProvider.updateModelSnapshot(jobId, modelSnapshot, false);
+
+            return modelSnapshot;
         }
     }
 

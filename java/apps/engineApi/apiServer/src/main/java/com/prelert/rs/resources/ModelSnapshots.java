@@ -27,9 +27,11 @@
 
 package com.prelert.rs.resources;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.ws.rs.Consumes;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -43,6 +45,10 @@ import javax.ws.rs.core.Response;
 
 import org.apache.log4j.Logger;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
 import com.prelert.job.ModelSnapshot;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.errorcodes.ErrorCodes;
@@ -52,8 +58,9 @@ import com.prelert.job.manager.DescriptionAlreadyUsedException;
 import com.prelert.job.manager.NoSuchModelSnapshotException;
 import com.prelert.job.messages.Messages;
 import com.prelert.job.persistence.QueryPage;
-import com.prelert.rs.data.Acknowledgement;
+import com.prelert.job.process.exceptions.MalformedJsonException;
 import com.prelert.rs.data.Pagination;
+import com.prelert.rs.data.SingleDocument;
 import com.prelert.rs.exception.InvalidParametersException;
 import com.prelert.rs.validation.PaginationParamsValidator;
 
@@ -73,8 +80,6 @@ public class ModelSnapshots extends ResourceWithJobManager
 
     public static final String SORT_QUERY_PARAM = "sort";
     public static final String TIME_QUERY_PARAM = "time";
-    public static final String OLD_PARAM = "old";
-    public static final String NEW_PARAM = "new";
 
     /**
      * Get the model snapshot results (in pages) for the job.  Optionally filtering
@@ -160,6 +165,7 @@ public class ModelSnapshots extends ResourceWithJobManager
      *
      * @param jobId
      * @param time revert to a snapshot with a timestamp no later than this time
+     * @param snapshotId the snapshot ID of the snapshot to revert to
      * @param description the description of the snapshot to revert to
      * @return
      * @throws JobInUseException
@@ -171,13 +177,14 @@ public class ModelSnapshots extends ResourceWithJobManager
     @Produces(MediaType.APPLICATION_JSON)
     public Response revertToSnapshot(@PathParam("jobId") String jobId,
             @DefaultValue("") @QueryParam(TIME_QUERY_PARAM) String time,
+            @DefaultValue("") @QueryParam(ModelSnapshot.SNAPSHOT_ID) String snapshotId,
             @DefaultValue("") @QueryParam(ModelSnapshot.DESCRIPTION) String description)
             throws JobInUseException, UnknownJobException, NoSuchModelSnapshotException
     {
         LOGGER.debug("Received request to revert to time '" + time
                 + "' description '" + description + "'");
 
-        if (time.isEmpty() && description.isEmpty())
+        if (time.isEmpty() && snapshotId.isEmpty() && description.isEmpty())
         {
             throw new InvalidParametersException(Messages.getMessage(Messages.REST_INVALID_REVERT_PARAMS),
                     ErrorCodes.INVALID_REVERT_PARAMS);
@@ -188,40 +195,79 @@ public class ModelSnapshots extends ResourceWithJobManager
         // to the end of a range
         long endEpochMs = (timeEpochMs > 0) ? (timeEpochMs + 1) : 0;
 
-        jobManager().revertToSnapshot(jobId, endEpochMs, description);
-        return Response.ok(new Acknowledgement()).build();
+        ModelSnapshot revertedTo = jobManager().revertToSnapshot(jobId, endEpochMs, snapshotId, description);
+
+        SingleDocument<ModelSnapshot> doc = new SingleDocument<>();
+        doc.setDocument(revertedTo);
+        doc.setDocumentId(revertedTo.getSnapshotId());
+        doc.setType(ModelSnapshot.TYPE);
+
+        return Response.ok(doc).build();
     }
 
     /**
      * Attempt to revert to the most recent snapshot matching specified criteria.
      *
      * @param jobId
-     * @param oldDescription current description of model snapshot to be changed
-     * @param newDescription new description to set
+     * @param snapshotId snapshot ID of the snapshot whose description is to be updated
+     * @param updateJson JSON containing the new snapshot description
      * @return
      * @throws UnknownJobException
      * @throws NoSuchModelSnapshotException
      */
     @PUT
-    @Path("/{jobId}/description")
+    @Path("/{jobId}/{snapshotId}/description")
     @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
     public Response updateDescription(@PathParam("jobId") String jobId,
-            @DefaultValue("") @QueryParam(OLD_PARAM) String oldDescription,
-            @DefaultValue("") @QueryParam(NEW_PARAM) String newDescription)
+            @DefaultValue("") @PathParam("snapshotId") String snapshotId,
+            @DefaultValue("") String updateJson)
             throws JobInUseException, UnknownJobException, NoSuchModelSnapshotException,
-            DescriptionAlreadyUsedException
+            DescriptionAlreadyUsedException, MalformedJsonException
     {
-        LOGGER.debug("Received request to change model snapshot description from '"
-                + oldDescription + "' to '" + newDescription + "'");
+        LOGGER.debug("Received request to change model snapshot description using '"
+                + updateJson + "' for snapshot ID '" + snapshotId + "'");
 
-        if (oldDescription.isEmpty() || newDescription.isEmpty())
+        String newDescription = parseDescriptionFromJson(updateJson);
+
+        if (snapshotId.isEmpty() || newDescription.isEmpty())
         {
             throw new InvalidParametersException(Messages.getMessage(Messages.REST_INVALID_DESCRIPTION_PARAMS),
                     ErrorCodes.INVALID_DESCRIPTION_PARAMS);
         }
 
-        jobManager().updateModelSnapshotDescription(jobId, oldDescription, newDescription);
-        return Response.ok(new Acknowledgement()).build();
+        ModelSnapshot updatedDesc = jobManager().updateModelSnapshotDescription(jobId, snapshotId, newDescription);
+
+        SingleDocument<ModelSnapshot> doc = new SingleDocument<>();
+        doc.setDocument(updatedDesc);
+        doc.setDocumentId(updatedDesc.getSnapshotId());
+        doc.setType(ModelSnapshot.TYPE);
+
+        return Response.ok(doc).build();
     }
 
+    /**
+     * Given a string representing description update JSON, get the description
+     * out of it.  Irrelevant junk in the JSON document is tolerated.
+     */
+    private String parseDescriptionFromJson(String updateJson) throws MalformedJsonException
+    {
+        if (updateJson != null && !updateJson.isEmpty())
+        {
+            try
+            {
+                ObjectNode objNode = new ObjectMapper().readValue(updateJson, ObjectNode.class);
+                JsonNode descNode = objNode.get(ModelSnapshot.DESCRIPTION);
+                if (descNode != null)
+                {
+                    return descNode.asText();
+                }
+            }
+            catch (IOException e)
+            {
+                throw new MalformedJsonException(e);
+            }
+        }
+        return "";
+    }
 }

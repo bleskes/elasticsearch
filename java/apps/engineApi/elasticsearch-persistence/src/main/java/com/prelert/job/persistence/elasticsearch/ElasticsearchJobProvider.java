@@ -1051,18 +1051,42 @@ public class ElasticsearchJobProvider implements JobProvider
             int skip, int take)
     throws UnknownJobException
     {
-        return modelSnapshots(jobId, skip, take, 0, 0, null, null);
+        return modelSnapshots(jobId, skip, take, 0, 0, null, null, null);
     }
 
     @Override
     public QueryPage<ModelSnapshot> modelSnapshots(String jobId,
             int skip, int take, long startEpochMs, long endEpochMs,
-            String sortField, String description)
+            String sortField, String snapshotId, String description)
     throws UnknownJobException
     {
-        ResultsFilterBuilder fb = (description == null || description.isEmpty()) ?
-                new ResultsFilterBuilder() :
-                new ResultsFilterBuilder(QueryBuilders.termQuery(ModelSnapshot.DESCRIPTION, description));
+        boolean haveId = (snapshotId != null && !snapshotId.isEmpty());
+        boolean haveDescription = (description != null && !description.isEmpty());
+        ResultsFilterBuilder fb;
+        if (haveId || haveDescription)
+        {
+            QueryBuilder query;
+            if (haveId && haveDescription)
+            {
+                query = QueryBuilders.boolQuery()
+                        .must(QueryBuilders.termQuery(ModelSnapshot.SNAPSHOT_ID, snapshotId))
+                        .must(QueryBuilders.termQuery(ModelSnapshot.DESCRIPTION, description));
+            }
+            else if (haveId)
+            {
+                query = QueryBuilders.termQuery(ModelSnapshot.SNAPSHOT_ID, snapshotId);
+            }
+            else
+            {
+                query = QueryBuilders.termQuery(ModelSnapshot.DESCRIPTION, description);
+            }
+
+            fb = new ResultsFilterBuilder(query);
+        }
+        else
+        {
+            fb = new ResultsFilterBuilder();
+        }
 
         return modelSnapshots(new ElasticsearchJobId(jobId), skip, take,
                 (sortField == null || sortField.isEmpty()) ? ModelSnapshot.RESTORE_PRIORITY : sortField,
@@ -1110,7 +1134,7 @@ public class ElasticsearchJobProvider implements JobProvider
     }
 
     @Override
-    public boolean updateModelSnapshot(String jobId, ModelSnapshot modelSnapshot,
+    public void updateModelSnapshot(String jobId, ModelSnapshot modelSnapshot,
             boolean restoreModelSizeStats) throws UnknownJobException
     {
         // For Elasticsearch the update can be done in exactly the same way as
@@ -1125,7 +1149,7 @@ public class ElasticsearchJobProvider implements JobProvider
 
         // Commit so that when the REST API call that triggered the update
         // returns the updated document is searchable
-        return persister.commitWrites();
+        persister.commitWrites();
     }
 
     private boolean checkQuantilesVersion(String jobId, GetResponse response)

@@ -53,12 +53,13 @@ public interface JobProvider extends JobDetailsProvider, JobResultsProvider
      * @param startEpochMs earliest time to include (inclusive)
      * @param endEpochMs latest time to include (exclusive)
      * @param sortField optional sort field name (may be null)
+     * @param snapshotId optional snapshot ID to match (null for all)
      * @param description optional description to match (null for all)
      * @return page of model snapshots
      */
     public QueryPage<ModelSnapshot> modelSnapshots(String jobId,
             int skip, int take, long startEpochMs, long endEpochMs,
-            String sortField, String description)
+            String sortField, String snapshotId, String description)
     throws UnknownJobException;
 
     /**
@@ -69,10 +70,9 @@ public interface JobProvider extends JobDetailsProvider, JobResultsProvider
      * @param modelSnapshot the updated model snapshot object to be stored
      * @param restoreModelSizeStats should the model size stats in this
      * snapshot be made the current ones for this job?
-     * @return {@code true} if update was successful
      * @throws UnknownJobException If there is no job with id <code>jobId</code>
      */
-    public boolean updateModelSnapshot(String jobId, ModelSnapshot modelSnapshot,
+    public void updateModelSnapshot(String jobId, ModelSnapshot modelSnapshot,
             boolean restoreModelSizeStats) throws UnknownJobException;
 
     /**
