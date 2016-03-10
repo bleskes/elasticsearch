@@ -19,26 +19,29 @@ package org.elasticsearch.marvel;
 
 import java.util.Locale;
 
-public enum MonitoringIds {
+public enum MonitoredSystem {
 
-    ES("es");
+    ES("es"),
+    KIBANA("kibana");
 
-    private final String id;
+    private final String system;
 
-    MonitoringIds(String id) {
-        this.id = id;
+    MonitoredSystem(String system) {
+        this.system = system;
     }
 
-    public String getId() {
-        return id;
+    public String getSystem() {
+        return system;
     }
 
-    public static MonitoringIds fromId(String id) {
-        switch (id.toLowerCase(Locale.ROOT)) {
+    public static MonitoredSystem fromSystem(String system) {
+        switch (system.toLowerCase(Locale.ROOT)) {
             case "es":
                 return ES;
+            case "kibana":
+                return KIBANA;
             default:
-                throw new IllegalArgumentException("Unknown monitoring id [" + id + "]");
+                throw new IllegalArgumentException("Unknown monitoring system [" + system + "]");
         }
     }
 }
