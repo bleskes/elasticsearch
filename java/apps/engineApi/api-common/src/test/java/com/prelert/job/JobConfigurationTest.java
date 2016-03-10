@@ -99,17 +99,17 @@ public class JobConfigurationTest
     }
 
     @Test
-    public void testDefaultRenormalizationWindow()
+    public void testDefaultRenormalizationWindowDays()
     {
-        assertNull(new JobConfiguration().getRenormalizationWindow());
+        assertNull(new JobConfiguration().getRenormalizationWindowDays());
     }
 
     @Test
-    public void testSetRenormalizationWindow()
+    public void testSetRenormalizationWindowDays()
     {
         JobConfiguration config = new JobConfiguration();
-        config.setRenormalizationWindow(3L);
-        assertEquals(3L, config.getRenormalizationWindow().longValue());
+        config.setRenormalizationWindowDays(3L);
+        assertEquals(3L, config.getRenormalizationWindowDays().longValue());
     }
 
     @Test

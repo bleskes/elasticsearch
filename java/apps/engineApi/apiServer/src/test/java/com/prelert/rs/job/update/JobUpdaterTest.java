@@ -195,14 +195,14 @@ public class JobUpdaterTest
     }
 
     @Test
-    public void testUpdate_GivenValidRenormalizationWindowUpdate() throws UnknownJobException,
+    public void testUpdate_GivenValidRenormalizationWindowDaysUpdate() throws UnknownJobException,
             JobConfigurationException, JobInUseException, NativeProcessRunException
     {
-        String update = "{\"renormalizationWindow\": 3}";
+        String update = "{\"renormalizationWindowDays\": 3}";
 
         new JobUpdater(m_JobManager, "foo").update(update);
 
-        verify(m_JobManager).setRenormalizationWindow("foo", 3L);
+        verify(m_JobManager).setRenormalizationWindowDays("foo", 3L);
         verify(m_JobManager, never()).writeUpdateConfigMessage(anyString(), anyString());
     }
 

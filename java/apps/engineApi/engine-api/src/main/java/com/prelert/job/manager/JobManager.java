@@ -617,9 +617,9 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
         m_JobProvider.updateJob(jobId, update);
     }
 
-    public void setRenormalizationWindow(String jobId, Long renormalizationWindow) throws UnknownJobException
+    public void setRenormalizationWindowDays(String jobId, Long renormalizationWindowDays) throws UnknownJobException
     {
-        updateJobTopLevelKeyValue(jobId, JobDetails.RENORMALIZATION_WINDOW, renormalizationWindow);
+        updateJobTopLevelKeyValue(jobId, JobDetails.RENORMALIZATION_WINDOW_DAYS, renormalizationWindowDays);
     }
 
     public void setModelSnapshotRetentionDays(String jobId, Long retentionDays) throws UnknownJobException

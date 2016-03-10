@@ -99,7 +99,7 @@ public final class JobConfigurationVerifier
         checkValidTransforms(config);
 
         checkValueNotNegative("timeout", config.getTimeout());
-        checkValueNotNegative("renormalizationWindow", config.getRenormalizationWindow());
+        checkValueNotNegative("renormalizationWindowDays", config.getRenormalizationWindowDays());
         checkValueNotNegative("backgroundPersistInterval", config.getBackgroundPersistInterval());
         checkValueNotNegative("modelSnapshotRetentionDays", config.getModelSnapshotRetentionDays());
         checkValueNotNegative("resultsRetentionDays", config.getResultsRetentionDays());

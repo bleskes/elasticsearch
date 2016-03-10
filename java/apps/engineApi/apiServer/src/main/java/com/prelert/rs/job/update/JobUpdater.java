@@ -63,7 +63,7 @@ public class JobUpdater
     private static final String JOB_DESCRIPTION_KEY = "description";
     private static final String IGNORE_DOWNTIME_KEY = "ignoreDowntime";
     private static final String MODEL_DEBUG_CONFIG_KEY = "modelDebugConfig";
-    private static final String RENORMALIZATION_WINDOW_KEY = "renormalizationWindow";
+    private static final String RENORMALIZATION_WINDOW_DAYS_KEY = "renormalizationWindowDays";
     private static final String MODEL_SNAPSHOT_RETENTION_DAYS_KEY = "modelSnapshotRetentionDays";
     private static final String RESULTS_RETENTION_DAYS_KEY = "resultsRetentionDays";
 
@@ -88,7 +88,7 @@ public class JobUpdater
                 .put(JOB_DESCRIPTION_KEY, () -> new JobDescriptionUpdater(m_JobManager, m_JobId))
                 .put(IGNORE_DOWNTIME_KEY, () -> new IgnoreDowntimeUpdater(m_JobManager, m_JobId))
                 .put(MODEL_DEBUG_CONFIG_KEY, () -> new ModelDebugConfigUpdater(m_JobManager, m_JobId, m_ConfigWriter))
-                .put(RENORMALIZATION_WINDOW_KEY, () -> new RenormalizationWindowUpdater(m_JobManager, m_JobId))
+                .put(RENORMALIZATION_WINDOW_DAYS_KEY, () -> new RenormalizationWindowDaysUpdater(m_JobManager, m_JobId))
                 .put(MODEL_SNAPSHOT_RETENTION_DAYS_KEY, () -> new ModelSnapshotRetentionDaysUpdater(m_JobManager, m_JobId))
                 .put(RESULTS_RETENTION_DAYS_KEY, () -> new ResultsRetentionDaysUpdater(m_JobManager, m_JobId))
                 .build();

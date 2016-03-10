@@ -60,7 +60,7 @@ public class JobDetails
     public static final String IGNORE_DOWNTIME = "ignoreDowntime";
     public static final String LAST_DATA_TIME = "lastDataTime";
     public static final String MODEL_DEBUG_CONFIG = "modelDebugConfig";
-    public static final String RENORMALIZATION_WINDOW = "renormalizationWindow";
+    public static final String RENORMALIZATION_WINDOW_DAYS = "renormalizationWindowDays";
     public static final String BACKGROUND_PERSIST_INTERVAL = "backgroundPersistInterval";
     public static final String MODEL_SNAPSHOT_RETENTION_DAYS = "modelSnapshotRetentionDays";
     public static final String RESULTS_RETENTION_DAYS = "resultsRetentionDays";
@@ -98,7 +98,7 @@ public class JobDetails
     private ModelDebugConfig m_ModelDebugConfig;
     private DataCounts m_Counts;
     private IgnoreDowntime m_IgnoreDowntime;
-    private Long m_RenormalizationWindow;
+    private Long m_RenormalizationWindowDays;
     private Long m_BackgroundPersistInterval;
     private Long m_ModelSnapshotRetentionDays;
     private Long m_ResultsRetentionDays;
@@ -143,7 +143,7 @@ public class JobDetails
 
         invokeIfNotNull(jobConfig.getDataDescription(), dd -> m_DataDescription = dd);
         m_IgnoreDowntime = jobConfig.getIgnoreDowntime();
-        m_RenormalizationWindow = jobConfig.getRenormalizationWindow();
+        m_RenormalizationWindowDays = jobConfig.getRenormalizationWindowDays();
         m_BackgroundPersistInterval = jobConfig.getBackgroundPersistInterval();
         m_ModelSnapshotRetentionDays = jobConfig.getModelSnapshotRetentionDays();
         m_ResultsRetentionDays = jobConfig.getResultsRetentionDays();
@@ -424,18 +424,18 @@ public class JobDetails
      * The duration of the renormalization window in days
      * @return renormalization window in days
      */
-    public Long getRenormalizationWindow()
+    public Long getRenormalizationWindowDays()
     {
-        return m_RenormalizationWindow;
+        return m_RenormalizationWindowDays;
     }
 
     /**
      * Set the renormalization window duration
-     * @param renormalizationWindow the renormalization window in days
+     * @param renormalizationWindowDays the renormalization window in days
      */
-    public void setRenormalizationWindow(Long renormalizationWindow)
+    public void setRenormalizationWindowDays(Long renormalizationWindowDays)
     {
-        m_RenormalizationWindow = renormalizationWindow;
+        m_RenormalizationWindowDays = renormalizationWindowDays;
     }
 
     /**
@@ -538,7 +538,7 @@ public class JobDetails
                 Objects.equals(this.m_Transforms, that.m_Transforms) &&
                 Objects.equals(this.m_Counts, that.m_Counts) &&
                 Objects.equals(this.m_IgnoreDowntime, that.m_IgnoreDowntime) &&
-                Objects.equals(this.m_RenormalizationWindow, that.m_RenormalizationWindow) &&
+                Objects.equals(this.m_RenormalizationWindowDays, that.m_RenormalizationWindowDays) &&
                 Objects.equals(this.m_BackgroundPersistInterval, that.m_BackgroundPersistInterval) &&
                 Objects.equals(this.m_ModelSnapshotRetentionDays, that.m_ModelSnapshotRetentionDays) &&
                 Objects.equals(this.m_ResultsRetentionDays, that.m_ResultsRetentionDays) &&
@@ -553,7 +553,7 @@ public class JobDetails
         return Objects.hash(m_JobId, m_Description, m_Status, m_SchedulerStatus,m_CreateTime,
                 m_FinishedTime, m_LastDataTime, m_Timeout, m_AnalysisConfig, m_AnalysisLimits,
                 m_DataDescription, m_ModelDebugConfig, m_ModelSizeStats, m_Transforms, m_Counts,
-                m_RenormalizationWindow, m_BackgroundPersistInterval, m_ModelSnapshotRetentionDays,
+                m_RenormalizationWindowDays, m_BackgroundPersistInterval, m_ModelSnapshotRetentionDays,
                 m_ResultsRetentionDays, m_IgnoreDowntime, m_CustomSettings, m_Endpoints, m_Location);
     }
 }

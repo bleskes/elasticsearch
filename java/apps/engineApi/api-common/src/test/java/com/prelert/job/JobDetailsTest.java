@@ -70,7 +70,7 @@ public class JobDetailsTest
         assertNull(jobDetails.getLocation());
         assertNull(jobDetails.getModelDebugConfig());
         assertNull(jobDetails.getModelSizeStats());
-        assertNull(jobDetails.getRenormalizationWindow());
+        assertNull(jobDetails.getRenormalizationWindowDays());
         assertNull(jobDetails.getBackgroundPersistInterval());
         assertNull(jobDetails.getModelSnapshotRetentionDays());
         assertNull(jobDetails.getResultsRetentionDays());
@@ -142,7 +142,7 @@ public class JobDetailsTest
         jobDetails1.setLocation(new URI("http://localhost:8080/jobs/foo"));
         jobDetails1.setModelDebugConfig(new ModelDebugConfig());
         jobDetails1.setModelSizeStats(modelSizeStats);
-        jobDetails1.setRenormalizationWindow(60L);
+        jobDetails1.setRenormalizationWindowDays(60L);
         jobDetails1.setBackgroundPersistInterval(10000L);
         jobDetails1.setModelSnapshotRetentionDays(10L);
         jobDetails1.setResultsRetentionDays(30L);
@@ -169,7 +169,7 @@ public class JobDetailsTest
         jobDetails2.setLocation(new URI("http://localhost:8080/jobs/foo"));
         jobDetails2.setModelDebugConfig(new ModelDebugConfig());
         jobDetails2.setModelSizeStats(modelSizeStats);
-        jobDetails2.setRenormalizationWindow(60L);
+        jobDetails2.setRenormalizationWindowDays(60L);
         jobDetails2.setBackgroundPersistInterval(10000L);
         jobDetails2.setModelSnapshotRetentionDays(10L);
         jobDetails2.setResultsRetentionDays(30L);
@@ -210,12 +210,12 @@ public class JobDetailsTest
     }
 
     @Test
-    public void testEquals_GivenDifferentRenormalizationWindow()
+    public void testEquals_GivenDifferentRenormalizationWindowDays()
     {
         JobConfiguration jobDetails1 = new JobConfiguration();
-        jobDetails1.setRenormalizationWindow(3L);
+        jobDetails1.setRenormalizationWindowDays(3L);
         JobConfiguration jobDetails2 = new JobConfiguration();
-        jobDetails2.setRenormalizationWindow(4L);
+        jobDetails2.setRenormalizationWindowDays(4L);
 
         assertFalse(jobDetails1.equals(jobDetails2));
     }

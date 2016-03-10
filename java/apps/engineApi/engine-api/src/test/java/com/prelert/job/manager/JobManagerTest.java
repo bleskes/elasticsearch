@@ -581,16 +581,16 @@ public class JobManagerTest
     }
 
     @Test
-    public void testSetRenormalizationWindow() throws UnknownJobException
+    public void testSetRenormalizationWindowDays() throws UnknownJobException
     {
         givenProcessInfo(5);
         JobManager jobManager = createJobManager();
 
-        jobManager.setRenormalizationWindow("foo", 7L);
+        jobManager.setRenormalizationWindowDays("foo", 7L);
 
         verify(m_JobProvider).updateJob(eq("foo"), m_JobUpdateCaptor.capture());
         Map<String, Object> jobUpdate = m_JobUpdateCaptor.getValue();
-        assertEquals(new Long(7), jobUpdate.get(JobDetails.RENORMALIZATION_WINDOW));
+        assertEquals(new Long(7), jobUpdate.get(JobDetails.RENORMALIZATION_WINDOW_DAYS));
     }
 
     @Test

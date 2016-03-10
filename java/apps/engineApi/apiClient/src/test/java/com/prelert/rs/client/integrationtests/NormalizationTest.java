@@ -107,7 +107,8 @@ public class NormalizationTest implements Closeable
         return createFarequoteJob(TEST_FAREQUOTE_NO_RENORMALIZATION, 0L);
     }
 
-    private String createFarequoteJob(String jobId, Long renormalizationWindow) throws IOException
+    private String createFarequoteJob(String jobId, Long renormalizationWindowDays)
+            throws IOException
     {
         Detector d = new Detector();
         d.setFunction("metric");
@@ -128,7 +129,7 @@ public class NormalizationTest implements Closeable
         config.setDescription("Farequote normalisation test");
         config.setId(jobId);
         config.setDataDescription(dd);
-        config.setRenormalizationWindow(renormalizationWindow);
+        config.setRenormalizationWindowDays(renormalizationWindowDays);
 
         test(jobId.equals(m_WebServiceClient.createJob(config)));
         return jobId;

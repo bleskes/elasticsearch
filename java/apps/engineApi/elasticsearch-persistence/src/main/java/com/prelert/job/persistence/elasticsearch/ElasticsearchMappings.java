@@ -209,7 +209,7 @@ public class ElasticsearchMappings
                         .startObject(JobDetails.TIMEOUT)
                             .field(TYPE, LONG).field(INDEX, NO)
                         .endObject()
-                        .startObject(JobDetails.RENORMALIZATION_WINDOW)
+                        .startObject(JobDetails.RENORMALIZATION_WINDOW_DAYS)
                             .field(TYPE, LONG).field(INDEX, NO)
                         .endObject()
                         .startObject(JobDetails.BACKGROUND_PERSIST_INTERVAL)

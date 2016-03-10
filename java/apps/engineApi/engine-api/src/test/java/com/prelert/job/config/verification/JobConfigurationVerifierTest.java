@@ -35,15 +35,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Map;
 
-import junit.framework.Assert;
-
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.AnalysisLimits;
 import com.prelert.job.DataDescription;
@@ -58,6 +55,8 @@ import com.prelert.job.transform.Condition;
 import com.prelert.job.transform.Operator;
 import com.prelert.job.transform.TransformConfig;
 import com.prelert.job.transform.TransformType;
+
+import junit.framework.Assert;
 
 
 public class JobConfigurationVerifierTest
@@ -363,16 +362,16 @@ public class JobConfigurationVerifierTest
     }
 
     @Test
-    public void testVerify_GivenNegativeRenormalizationWindow() throws JobConfigurationException
+    public void testVerify_GivenNegativeRenormalizationWindowDays() throws JobConfigurationException
     {
         m_ExpectedException.expect(JobConfigurationException.class);
         m_ExpectedException.expectMessage(
-                "renormalizationWindow cannot be < 0. Value = -1");
+                "renormalizationWindowDays cannot be < 0. Value = -1");
         m_ExpectedException.expect(ErrorCodeMatcher.hasErrorCode(
                 ErrorCodes.INVALID_VALUE));
 
         JobConfiguration jobConfig = buildJobConfigurationNoTransforms();
-        jobConfig.setRenormalizationWindow(-1L);
+        jobConfig.setRenormalizationWindowDays(-1L);
 
         JobConfigurationVerifier.verify(jobConfig);
     }

@@ -101,9 +101,9 @@ class ScoresUpdater
 
     private long getNormalisationWindowOrDefault(JobDetails job)
     {
-        if (job.getRenormalizationWindow() != null)
+        if (job.getRenormalizationWindowDays() != null)
         {
-            return job.getRenormalizationWindow() * SECONDS_IN_DAY * MILLISECONDS_IN_SECOND;
+            return job.getRenormalizationWindowDays() * SECONDS_IN_DAY * MILLISECONDS_IN_SECOND;
         }
         return Math.max(DEFAULT_RENORMALISATION_WINDOW_MS,
                 DEFAULT_BUCKETS_IN_RENORMALISATION_WINDOW * m_BucketSpan * MILLISECONDS_IN_SECOND);

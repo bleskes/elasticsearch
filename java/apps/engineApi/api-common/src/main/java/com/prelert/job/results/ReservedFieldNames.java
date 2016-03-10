@@ -173,7 +173,7 @@ public final class ReservedFieldNames
         JobDetails.LAST_DATA_TIME,
         JobDetails.COUNTS,
         JobDetails.TIMEOUT,
-        JobDetails.RENORMALIZATION_WINDOW,
+        JobDetails.RENORMALIZATION_WINDOW_DAYS,
         JobDetails.BACKGROUND_PERSIST_INTERVAL,
         JobDetails.MODEL_SNAPSHOT_RETENTION_DAYS,
         JobDetails.RESULTS_RETENTION_DAYS,

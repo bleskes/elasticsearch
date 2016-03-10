@@ -118,7 +118,7 @@ public class ElasticsearchMappingsTest
                         "        \"type\": \"long\"," +
                         "        \"index\": \"no\"" +
                         "      }," +
-                        "      \"renormalizationWindow\": {" +
+                        "      \"renormalizationWindowDays\": {" +
                         "        \"type\": \"long\"," +
                         "        \"index\": \"no\"" +
                         "      }," +

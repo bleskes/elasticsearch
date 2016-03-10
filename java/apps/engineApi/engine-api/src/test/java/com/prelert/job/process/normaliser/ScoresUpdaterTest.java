@@ -410,7 +410,7 @@ public class ScoresUpdaterTest
             throws UnknownJobException, NativeProcessRunException
     {
         // 1 day
-        m_Job.setRenormalizationWindow(1L);
+        m_Job.setRenormalizationWindowDays(1L);
 
         Bucket bucket = new Bucket();
         bucket.setId("0");

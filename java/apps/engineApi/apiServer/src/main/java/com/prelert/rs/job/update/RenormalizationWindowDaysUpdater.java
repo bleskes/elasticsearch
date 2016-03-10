@@ -31,9 +31,9 @@ import com.prelert.job.UnknownJobException;
 import com.prelert.job.manager.JobManager;
 import com.prelert.job.messages.Messages;
 
-class RenormalizationWindowUpdater extends AbstractLongUpdater
+class RenormalizationWindowDaysUpdater extends AbstractLongUpdater
 {
-    public RenormalizationWindowUpdater(JobManager jobManager, String jobId)
+    public RenormalizationWindowDaysUpdater(JobManager jobManager, String jobId)
     {
         super(jobManager, jobId);
     }
@@ -41,12 +41,12 @@ class RenormalizationWindowUpdater extends AbstractLongUpdater
     @Override
     void commit() throws UnknownJobException
     {
-        jobManager().setRenormalizationWindow(jobId(), getNewValue());
+        jobManager().setRenormalizationWindowDays(jobId(), getNewValue());
     }
 
     @Override
     protected String getInvalidMessageKey()
     {
-        return Messages.JOB_CONFIG_UPDATE_RENORMALIZATION_WINDOW_INVALID;
+        return Messages.JOB_CONFIG_UPDATE_RENORMALIZATION_WINDOW_DAYS_INVALID;
     }
 }

@@ -72,7 +72,7 @@ public class JobConfiguration
     private DataDescription m_DataDescription;
     private Long m_Timeout;
     private ModelDebugConfig m_ModelDebugConfig;
-    private Long m_RenormalizationWindow;
+    private Long m_RenormalizationWindowDays;
     private Long m_BackgroundPersistInterval;
     private Long m_ModelSnapshotRetentionDays;
     private Long m_ResultsRetentionDays;
@@ -252,18 +252,18 @@ public class JobConfiguration
      * The duration of the renormalization window in days
      * @return renormalization window in days
      */
-    public Long getRenormalizationWindow()
+    public Long getRenormalizationWindowDays()
     {
-        return m_RenormalizationWindow;
+        return m_RenormalizationWindowDays;
     }
 
     /**
      * Set the renormalization window duration
-     * @param renormalizationWindow the renormalization window in days
+     * @param renormalizationWindowDays the renormalization window in days
      */
-    public void setRenormalizationWindow(Long renormalizationWindow)
+    public void setRenormalizationWindowDays(Long renormalizationWindowDays)
     {
-        m_RenormalizationWindow = renormalizationWindow;
+        m_RenormalizationWindowDays = renormalizationWindowDays;
     }
 
     public Long getModelSnapshotRetentionDays()
