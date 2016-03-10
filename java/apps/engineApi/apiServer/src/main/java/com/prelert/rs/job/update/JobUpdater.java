@@ -30,16 +30,12 @@ package com.prelert.rs.job.update;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
-import java.util.Set;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 import javax.ws.rs.core.Response;
 
@@ -47,7 +43,6 @@ import org.apache.log4j.Logger;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.config.verification.JobConfigurationException;
@@ -71,8 +66,6 @@ public class JobUpdater
     private static final String RENORMALIZATION_WINDOW_KEY = "renormalizationWindow";
     private static final String MODEL_SNAPSHOT_RETENTION_DAYS_KEY = "modelSnapshotRetentionDays";
     private static final String RESULTS_RETENTION_DAYS_KEY = "resultsRetentionDays";
-    private static final Set<String> HIDDEN_PROPERTIES = new HashSet<>(
-            Arrays.asList(CUSTOM_SETTINGS, MODEL_DEBUG_CONFIG_KEY));
 
     private final JobManager m_JobManager;
     private final String m_JobId;
@@ -167,18 +160,11 @@ public class JobUpdater
     {
         if (m_UpdaterPerKey.containsKey(key) == false)
         {
-            throw new JobConfigurationException(createInvalidKeyMsg(key),
+            throw new JobConfigurationException(
+                    Messages.getMessage(Messages.JOB_CONFIG_UPDATE_INVALID_KEY, key),
                     ErrorCodes.INVALID_UPDATE_KEY);
         }
         return m_UpdaterPerKey.get(key).get();
-    }
-
-    private String createInvalidKeyMsg(String key)
-    {
-        List<String> keys = m_UpdaterPerKey.keySet().stream()
-                .filter(k -> !HIDDEN_PROPERTIES.contains(k)).collect(Collectors.toList());
-        String validKeys = Joiner.on(", ").join(keys).toString();
-        return Messages.getMessage(Messages.JOB_CONFIG_UPDATE_INVALID_KEY, key, validKeys);
     }
 
     private void writeUpdateConfigMessage() throws JobInUseException, NativeProcessRunException
