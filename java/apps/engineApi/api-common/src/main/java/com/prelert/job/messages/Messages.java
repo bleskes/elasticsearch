@@ -94,6 +94,7 @@ public final class Messages
     public static final String JOB_CONFIG_UPDATE_DETECTOR_DESCRIPTION_SHOULD_BE_STRING = "job.config.update.detector.description.should.be.string";
     public static final String JOB_CONFIG_UPDATE_DETECTOR_DESCRIPTION_FAILED = "job.config.update.detector.description.failed";
     public static final String JOB_CONFIG_UPDATE_INVALID_KEY = "job.config.update.invalid.key";
+    public static final String JOB_CONFIG_UPDATE_IGNORE_DOWNTIME_PARSE_ERROR = "job.config.update.ignore.downtime.parse.error";
     public static final String JOB_CONFIG_UPDATE_MODEL_DEBUG_CONFIG_PARSE_ERROR = "job.config.update.model.debug.config.parse.error";
     public static final String JOB_CONFIG_UPDATE_NO_OBJECT = "job.config.update.no.object";
     public static final String JOB_CONFIG_UPDATE_PARSE_ERROR = "job.config.update.parse.error";

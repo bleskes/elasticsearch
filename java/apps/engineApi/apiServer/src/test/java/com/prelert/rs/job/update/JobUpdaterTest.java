@@ -50,6 +50,7 @@ import org.mockito.MockitoAnnotations;
 
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.Detector;
+import com.prelert.job.IgnoreDowntime;
 import com.prelert.job.JobDetails;
 import com.prelert.job.ModelDebugConfig;
 import com.prelert.job.UnknownJobException;
@@ -178,6 +179,18 @@ public class JobUpdaterTest
         Map<String, Object> expected = new HashMap<>();
         expected.put("radio", "head");
         verify(m_JobManager).updateCustomSettings("foo", expected);
+        verify(m_JobManager, never()).writeUpdateConfigMessage(anyString(), anyString());
+    }
+
+    @Test
+    public void testUpdate_GivenValidIgnoreDowntimeUpdate() throws UnknownJobException,
+            JobConfigurationException, JobInUseException, NativeProcessRunException
+    {
+        String update = "{\"ignoreDowntime\": \"always\"}";
+
+        new JobUpdater(m_JobManager, "foo").update(update);
+
+        verify(m_JobManager).updateIgnoreDowntime("foo", IgnoreDowntime.ALWAYS);
         verify(m_JobManager, never()).writeUpdateConfigMessage(anyString(), anyString());
     }
 
