@@ -204,7 +204,7 @@ public class ElasticsearchMappings
                             .endObject()
                         .endObject()
                         .startObject(JobDetails.IGNORE_DOWNTIME)
-                            .field(TYPE, BOOLEAN).field(INDEX, NO)
+                            .field(TYPE, STRING).field(INDEX, NOT_ANALYZED)
                         .endObject()
                         .startObject(JobDetails.TIMEOUT)
                             .field(TYPE, LONG).field(INDEX, NO)

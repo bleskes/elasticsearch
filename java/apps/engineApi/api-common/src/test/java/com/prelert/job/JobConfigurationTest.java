@@ -30,7 +30,6 @@ package com.prelert.job;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
 
 import java.util.Arrays;
 import java.util.List;
@@ -117,7 +116,7 @@ public class JobConfigurationTest
     public void testSetIgnoreDowntime()
     {
         JobConfiguration config = new JobConfiguration();
-        config.setIgnoreDowntime(true);
-        assertTrue(config.isIgnoreDowntime());
+        config.setIgnoreDowntime(IgnoreDowntime.ONCE);
+        assertEquals(IgnoreDowntime.ONCE, config.getIgnoreDowntime());
     }
 }

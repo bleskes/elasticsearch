@@ -111,8 +111,8 @@ public class ElasticsearchMappingsTest
                         "        }" +
                         "      }," +
                         "      \"ignoreDowntime\": {" +
-                        "        \"type\": \"boolean\"," +
-                        "        \"index\": \"no\"" +
+                        "        \"type\": \"string\"," +
+                        "        \"index\": \"not_analyzed\"" +
                         "      }," +
                         "      \"timeout\": {" +
                         "        \"type\": \"long\"," +

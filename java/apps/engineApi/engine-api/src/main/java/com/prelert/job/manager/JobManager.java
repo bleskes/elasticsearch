@@ -55,6 +55,7 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.prelert.app.Shutdownable;
 import com.prelert.job.DataCounts;
+import com.prelert.job.IgnoreDowntime;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.JobDetails;
 import com.prelert.job.JobException;
@@ -432,7 +433,7 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
             boolean success = m_JobProvider.updateModelSnapshot(jobId, modelSnapshot, true);
             if (success)
             {
-                updateIgnoreDowntime(jobId, true);
+                updateIgnoreDowntime(jobId, IgnoreDowntime.ONCE);
                 audit(jobId).info(Messages.getMessage(Messages.JOB_AUDIT_REVERTED,
                         modelSnapshot.getDescription()));
             }
@@ -578,7 +579,7 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
         m_JobProvider.updateJob(jobId, update);
     }
 
-    public void updateIgnoreDowntime(String jobId, Boolean ignoreDowntime)
+    public void updateIgnoreDowntime(String jobId, IgnoreDowntime ignoreDowntime)
             throws UnknownJobException
     {
         updateJobTopLevelKeyValue(jobId, JobDetails.IGNORE_DOWNTIME, ignoreDowntime);
@@ -787,7 +788,7 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
             }
             DataCounts stats = tryProcessingDataLoadJob(jobDetails.get(), input, params);
             updateLastDataTime(jobId, new Date());
-            if (Boolean.TRUE.equals(jobDetails.get().isIgnoreDowntime())
+            if (IgnoreDowntime.ONCE == jobDetails.get().getIgnoreDowntime()
                     && stats.getProcessedRecordCount() > 0)
             {
                 updateIgnoreDowntime(jobId, null);
@@ -1097,7 +1098,7 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
             {
                 try
                 {
-                    updateIgnoreDowntime(job.getId(), true);
+                    updateIgnoreDowntime(job.getId(), IgnoreDowntime.ONCE);
                 }
                 catch (UnknownJobException e)
                 {
