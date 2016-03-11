@@ -41,6 +41,7 @@ import java.util.stream.Collectors;
 
 import org.apache.log4j.Logger;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.prelert.job.data.extraction.DataExtractor;
 
 public class ElasticsearchDataExtractor implements DataExtractor
@@ -88,7 +89,7 @@ public class ElasticsearchDataExtractor implements DataExtractor
     private static final String AGGREGATION_TEMPLATE = ","
             + "  %s";
 
-    private static final Pattern SCROLL_ID_PATTERN = Pattern.compile("\"_scroll_id\":\"(.*?)\"");
+    static final Pattern SCROLL_ID_PATTERN = Pattern.compile("\"_scroll_id\":\"(.*?)\"");
     private static final Pattern EMPTY_HITS_PATTERN = Pattern.compile("\"hits\":\\[\\]");
     private static final Pattern EMPTY_AGGREGATIONS_PATTERN = Pattern.compile("\"aggregations\":.*?\"buckets\":\\[\\]");
     private static final int OK_STATUS = 200;
@@ -238,11 +239,12 @@ public class ElasticsearchDataExtractor implements DataExtractor
         return (m_Aggregations != null) ? String.format(AGGREGATION_TEMPLATE, m_Aggregations) : "";
     }
 
-    private Matcher peekAndMatchInStream(PushbackInputStream stream, Pattern pattern)
+    @VisibleForTesting
+    static Matcher peekAndMatchInStream(PushbackInputStream stream, Pattern pattern)
             throws IOException
     {
         byte[] peek = new byte[PUSHBACK_BUFFER_BYTES];
-        int bytesRead = stream.read(peek);
+        int bytesRead = readUntilEndOrLimit(stream, peek);
 
         // We make the assumption here that invalid byte sequences will be read as invalid char
         // rather than throwing an exception
@@ -251,6 +253,33 @@ public class ElasticsearchDataExtractor implements DataExtractor
         Matcher matcher = pattern.matcher(peekString);
         stream.unread(peek, 0, bytesRead);
         return matcher;
+    }
+
+    /**
+     * Reads from a stream until it has read at least {@link #PUSHBACK_BUFFER_BYTES}
+     * or the stream ends.
+     *
+     * @param stream the stream
+     * @param buffer the buffer where the stream is read into
+     * @return the number of total bytes read
+     * @throws IOException
+     */
+    private static int readUntilEndOrLimit(PushbackInputStream stream, byte[] buffer)
+            throws IOException
+    {
+        int totalBytesRead = 0;
+        int bytesRead = 0;
+
+        while (bytesRead >= 0 && totalBytesRead < PUSHBACK_BUFFER_BYTES)
+        {
+            bytesRead = stream.read(buffer, totalBytesRead, PUSHBACK_BUFFER_BYTES - totalBytesRead);
+            if (bytesRead > 0)
+            {
+                totalBytesRead += bytesRead;
+            }
+        }
+
+        return totalBytesRead;
     }
 
     private PushbackInputStream continueScroll() throws IOException
