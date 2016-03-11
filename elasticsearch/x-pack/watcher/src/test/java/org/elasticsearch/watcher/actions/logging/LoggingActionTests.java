@@ -18,6 +18,7 @@
 package org.elasticsearch.watcher.actions.logging;
 
 import org.elasticsearch.ElasticsearchParseException;
+import org.elasticsearch.common.SuppressLoggerChecks;
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentBuilder;
@@ -202,6 +203,7 @@ public class LoggingActionTests extends ESTestCase {
         }
     }
 
+    @SuppressLoggerChecks(reason = "mock usage")
     static void verifyLogger(ESLogger logger, LoggingLevel level, String text) {
         switch (level) {
             case ERROR:
