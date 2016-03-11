@@ -31,16 +31,24 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyInt;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.PushbackInputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.regex.Matcher;
 import java.util.stream.Collectors;
 
 import org.apache.log4j.Logger;
@@ -50,6 +58,8 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 
 public class ElasticsearchDataExtractorTest
 {
@@ -391,6 +401,111 @@ public class ElasticsearchDataExtractorTest
         assertEquals(1, requester.m_RequestParams.size());
         RequestParams requestParams = requester.getRequestParams(0);
         assertEquals("http://localhost:9200/dataIndex/dataType/_search?scroll=60m&size=0", requestParams.url);
+    }
+
+    @Test
+    public void testPeekAndMatchInStream() throws IOException
+    {
+        String initialResponse = "{"
+                + "\"_scroll_id\":\"c2Nhbjs2OzM0NDg1ODpzRlBLc0FXNlNyNm5JWUc1\","
+                + "\"took\":17,"
+                + "\"timed_out\":false,"
+                + "\"_shards\":{"
+                + "  \"total\":1,"
+                + "  \"successful\":1,"
+                + "  \"failed\":0"
+                + "},"
+                + "\"hits\":{"
+                + "  \"total\":1437,"
+                + "  \"max_score\":null,"
+                + "  \"hits\":["
+                + "    \"_index\":\"dataIndex\","
+                + "    \"_type\":\"dataType\","
+                + "    \"_id\":\"1403481600\","
+                + "    \"_score\":null,"
+                + "    \"_source\":{"
+                + "      \"id\":\"1403481600\""
+                + "    }"
+                + "  ]"
+                + "}"
+                + "}";
+        PushbackInputStream stream = new PushbackInputStream(toStream(initialResponse), 328);
+
+        Matcher matcher = ElasticsearchDataExtractor.peekAndMatchInStream(stream,
+                ElasticsearchDataExtractor.SCROLL_ID_PATTERN);
+
+        assertTrue(matcher.find());
+        assertEquals("c2Nhbjs2OzM0NDg1ODpzRlBLc0FXNlNyNm5JWUc1", matcher.group(1));
+        assertEquals(initialResponse, HttpGetResponse.getStreamAsString(stream));
+    }
+
+    @Test
+    public void testPeekAndMatchInStream_GivenStreamCannotBeReadAtOnce() throws IOException
+    {
+        String response = "{"
+                + "\"_scroll_id\":\"c2Nhbjs2OzM0NDg1ODpzRlBLc0FXNlNyNm5JWUc1\","
+                + "\"took\":17,"
+                + "\"timed_out\":false,"
+                + "\"_shards\":{"
+                + "  \"total\":1,"
+                + "  \"successful\":1,"
+                + "  \"failed\":0"
+                + "},"
+                + "\"hits\":{"
+                + "  \"total\":1437,"
+                + "  \"max_score\":null,"
+                + "  \"hits\":["
+                + "    \"_index\":\"dataIndex\","
+                + "    \"_type\":\"dataType\","
+                + "    \"_id\":\"1403481600\","
+                + "    \"_score\":null,"
+                + "    \"_source\":{"
+                + "      \"id\":\"1403481600\""
+                + "    }"
+                + "  ]"
+                + "}"
+                + "}";
+
+        // Imitate a stream that does not get fully read during the first read invocation
+        PushbackInputStream stream = mock(PushbackInputStream.class);
+        AtomicInteger invocationCount = new AtomicInteger(0);
+        when(stream.read(any(byte[].class), anyInt(), anyInt())).thenAnswer(new Answer<Integer>()
+        {
+            @Override
+            public Integer answer(InvocationOnMock invocation) throws Throwable
+            {
+                byte[] buffer = (byte[]) invocation.getArguments()[0];
+                int offset = (int) invocation.getArguments()[1];
+                int length = (int) invocation.getArguments()[2];
+                byte[] responseBytes = response.getBytes();
+                invocationCount.incrementAndGet();
+                if (invocationCount.get() == 1 && offset == 0 && length == 32768)
+                {
+                    System.arraycopy(responseBytes, 0, buffer, 0, 20);
+                    return 20;
+                }
+                else if (invocationCount.get() == 2  && offset == 20 && length == 32748)
+                {
+                    System.arraycopy(responseBytes, 20, buffer, 20, responseBytes.length - 20);
+                    return responseBytes.length - 20;
+                }
+                else if (invocationCount.get() == 3  && offset == responseBytes.length
+                        && length == (32768 - responseBytes.length))
+                {
+                    return -1;
+                }
+                else
+                {
+                    throw new RuntimeException("Unexpected invocation");
+                }
+            }
+        });
+
+        Matcher matcher = ElasticsearchDataExtractor.peekAndMatchInStream(stream,
+                ElasticsearchDataExtractor.SCROLL_ID_PATTERN);
+
+        assertTrue(matcher.find());
+        assertEquals("c2Nhbjs2OzM0NDg1ODpzRlBLc0FXNlNyNm5JWUc1", matcher.group(1));
     }
 
     private static InputStream toStream(String input)
