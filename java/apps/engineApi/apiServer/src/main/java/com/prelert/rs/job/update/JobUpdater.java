@@ -58,6 +58,7 @@ public class JobUpdater
 {
     private static final Logger LOGGER = Logger.getLogger(JobUpdater.class);
 
+    private static final String BACKGROUND_PERSIST_INTERVAL_KEY = "backgroundPersistInterval";
     private static final String CUSTOM_SETTINGS = "customSettings";
     private static final String DETECTOR_KEY = "detectors";
     private static final String JOB_DESCRIPTION_KEY = "description";
@@ -83,6 +84,7 @@ public class JobUpdater
     private Map<String, Supplier<AbstractUpdater>> createUpdaterPerKeyMap()
     {
         return ImmutableMap.<String, Supplier<AbstractUpdater>>builder()
+                .put(BACKGROUND_PERSIST_INTERVAL_KEY, () -> new BackgroundPersistIntervalUpdater(m_JobManager, m_JobId))
                 .put(CUSTOM_SETTINGS, () -> new CustomSettingsUpdater(m_JobManager, m_JobId))
                 .put(DETECTOR_KEY, () -> new DetectorDescriptionUpdater(m_JobManager, m_JobId))
                 .put(JOB_DESCRIPTION_KEY, () -> new JobDescriptionUpdater(m_JobManager, m_JobId))

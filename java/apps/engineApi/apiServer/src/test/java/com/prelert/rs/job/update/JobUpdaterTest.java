@@ -168,6 +168,18 @@ public class JobUpdaterTest
     }
 
     @Test
+    public void testUpdate_GivenValidBackgroundPersistIntervalUpdate() throws UnknownJobException,
+            JobConfigurationException, JobInUseException, NativeProcessRunException
+    {
+        String update = "{\"backgroundPersistInterval\": 7200}";
+
+        new JobUpdater(m_JobManager, "foo").update(update);
+
+        verify(m_JobManager).setBackgroundPersistInterval("foo", 7200L);
+        verify(m_JobManager, never()).writeUpdateConfigMessage(anyString(), anyString());
+    }
+
+    @Test
     public void testUpdate_GivenValidCustomSettingsUpdate() throws UnknownJobException,
             JobConfigurationException, JobInUseException, NativeProcessRunException
     {

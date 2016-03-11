@@ -651,6 +651,12 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
         updateJobTopLevelKeyValue(jobId, JobDetails.RESULTS_RETENTION_DAYS, retentionDays);
     }
 
+    public void setBackgroundPersistInterval(String jobId, Long backgroundPersistInterval)
+            throws UnknownJobException
+    {
+        updateJobTopLevelKeyValue(jobId, JobDetails.BACKGROUND_PERSIST_INTERVAL, backgroundPersistInterval);
+    }
+
     /**
      * Flush the running job, ensuring that the native process has had the
      * opportunity to process all data previously sent to it with none left

@@ -598,6 +598,19 @@ public class JobManagerTest
     }
 
     @Test
+    public void testSetBackgroundPersistInterval() throws UnknownJobException
+    {
+        givenProcessInfo(5);
+        JobManager jobManager = createJobManager();
+
+        jobManager.setBackgroundPersistInterval("foo", 36000L);
+
+        verify(m_JobProvider).updateJob(eq("foo"), m_JobUpdateCaptor.capture());
+        Map<String, Object> jobUpdate = m_JobUpdateCaptor.getValue();
+        assertEquals(36000L, jobUpdate.get(JobDetails.BACKGROUND_PERSIST_INTERVAL));
+    }
+
+    @Test
     public void testSetRenormalizationWindowDays() throws UnknownJobException
     {
         givenProcessInfo(5);
