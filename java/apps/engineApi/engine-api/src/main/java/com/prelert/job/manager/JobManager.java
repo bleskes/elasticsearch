@@ -1055,24 +1055,9 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
     private static int calculateMaxJobsAllowed()
     {
         int cores = Runtime.getRuntime().availableProcessors();
-        double factor = readMaxJobsFactorOrDefault();
+        double factor = PrelertSettings.getSettingOrDefault(MAX_JOBS_FACTOR_NAME,
+                DEFAULT_MAX_JOBS_FACTOR);
         return (int) Math.ceil(cores * factor);
-    }
-
-    private static double readMaxJobsFactorOrDefault()
-    {
-        String readMaxJobsFactor = PrelertSettings.getSettingText(MAX_JOBS_FACTOR_NAME, Double.toString(DEFAULT_MAX_JOBS_FACTOR));
-        try
-        {
-            return Double.parseDouble(readMaxJobsFactor);
-        }
-        catch (NumberFormatException e)
-        {
-            LOGGER.warn(String.format(
-                    "Max jobs factor is invalid: %s. Default value of %f is used.",
-                    readMaxJobsFactor, DEFAULT_MAX_JOBS_FACTOR));
-            return DEFAULT_MAX_JOBS_FACTOR;
-        }
     }
 
     public boolean updateDetectorDescription(String jobId, int detectorIndex, String newDescription)

@@ -181,11 +181,11 @@ public class PrelertWebApp extends Application
 
     private ElasticsearchFactory createPersistenceFactory()
     {
-        String esHost = PrelertSettings.getSettingText(ProcessCtrl.ES_HOST_PROP, ProcessCtrl.DEFAULT_ES_HOST);
-        String clusterName = PrelertSettings.getSettingText(ES_CLUSTER_NAME_PROP, DEFAULT_CLUSTER_NAME);
-        String portRange = PrelertSettings.getSettingText(ES_TRANSPORT_PORT_RANGE, DEFAULT_ES_TRANSPORT_PORT_RANGE);
+        String esHost = PrelertSettings.getSettingOrDefault(ProcessCtrl.ES_HOST_PROP, ProcessCtrl.DEFAULT_ES_HOST);
+        String clusterName = PrelertSettings.getSettingOrDefault(ES_CLUSTER_NAME_PROP, DEFAULT_CLUSTER_NAME);
+        String portRange = PrelertSettings.getSettingOrDefault(ES_TRANSPORT_PORT_RANGE, DEFAULT_ES_TRANSPORT_PORT_RANGE);
 
-        String resultsStorageClient = PrelertSettings.getSettingText(RESULTS_STORAGE_CLIENT_PROP, ES_AUTO);
+        String resultsStorageClient = PrelertSettings.getSettingOrDefault(RESULTS_STORAGE_CLIENT_PROP, ES_AUTO);
         // Treat any unknown values as though they were es-auto
         if (!(resultsStorageClient.equals(ES_TRANSPORT) || resultsStorageClient.equals(ES_NODE)))
         {
@@ -216,12 +216,9 @@ public class PrelertWebApp extends Application
         LOGGER.info("Connecting to Elasticsearch via node client");
         // The number of processors affects the size of ES thread pools, so it
         // can sometimes be desirable to frig it
-        String numProcessors = null;
-        if (PrelertSettings.getSetting(ES_PROCESSORS_PROP) != null)
-        {
-            numProcessors = PrelertSettings.getSettingText(ES_PROCESSORS_PROP);
-        }
-        String networkPublishHost = PrelertSettings.getSettingText(ES_NETWORK_PUBLISH_HOST_PROP, DEFAULT_NETWORK_PUBLISH_HOST);
+        String numProcessors = PrelertSettings.getSettingOrDefault(ES_PROCESSORS_PROP, "");
+        String networkPublishHost = PrelertSettings.getSettingOrDefault(
+                ES_NETWORK_PUBLISH_HOST_PROP, DEFAULT_NETWORK_PUBLISH_HOST);
         return ElasticsearchNodeClientFactory.create(esHost, networkPublishHost, clusterName, portRange, numProcessors);
     }
 
@@ -235,7 +232,7 @@ public class PrelertWebApp extends Application
 
     private void restartJobManager()
     {
-        if (PrelertSettings.getSetting(IGNORE_DOWNTIME_PROP) != null)
+        if (PrelertSettings.isSet(IGNORE_DOWNTIME_PROP))
         {
             m_JobManager.setIgnoreDowntimeToAllJobs();
         }

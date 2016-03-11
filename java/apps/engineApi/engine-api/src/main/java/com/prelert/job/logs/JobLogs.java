@@ -79,7 +79,7 @@ public class JobLogs
      */
     public JobLogs()
     {
-        m_DontDelete = PrelertSettings.getSetting(DONT_DELETE_LOGS_PROP) != null;
+        m_DontDelete = PrelertSettings.isSet(DONT_DELETE_LOGS_PROP);
     }
 
     /**

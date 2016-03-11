@@ -93,12 +93,12 @@ public class ProcessCtrl
     /**
      * Default Elasticsearch HTTP port
      */
-    public static final String DEFAULT_ES_HTTP_PORT = "9200";
+    public static final int DEFAULT_ES_HTTP_PORT = 9200;
 
     /**
      * Elasticsearch HTTP port we'll pass on to the Autodetect API program
      */
-    public static final String ES_HTTP_PORT;
+    public static final int ES_HTTP_PORT;
 
     /**
      * Autodetect API native program name
@@ -152,7 +152,7 @@ public class ProcessCtrl
      * The maximum number of anomaly records that will be written each bucket
      */
     public static final String MAX_ANOMALY_RECORDS_PROPERTY = "max.anomaly.records";
-    private static final String DEFAULT_MAX_NUM_RECORDS = "500";
+    private static final int DEFAULT_MAX_NUM_RECORDS = 500;
     /**
      * Mac OS X library path variable
      */
@@ -256,27 +256,15 @@ public class ProcessCtrl
      */
     static
     {
-        ES_HTTP_PORT = PrelertSettings.getSettingText(ES_HTTP_PORT_PROP, DEFAULT_ES_HTTP_PORT);
-        ES_HOST = PrelertSettings.getSettingText(ES_HOST_PROP, DEFAULT_ES_HOST);
+        ES_HTTP_PORT = PrelertSettings.getSettingOrDefault(ES_HTTP_PORT_PROP, DEFAULT_ES_HTTP_PORT);
+        ES_HOST = PrelertSettings.getSettingOrDefault(ES_HOST_PROP, DEFAULT_ES_HOST);
 
-        String prelertHome = PrelertSettings.getSettingText(PRELERT_HOME_PROPERTY, ".");
+        String prelertHome = PrelertSettings.getSettingOrDefault(PRELERT_HOME_PROPERTY, ".");
 
-        String logPath = PrelertSettings.getSettingText(PRELERT_LOGS_PROPERTY, "logs");
+        String logPath = PrelertSettings.getSettingOrDefault(PRELERT_LOGS_PROPERTY, "logs");
 
-        String maxNumRecords = PrelertSettings.getSettingText(MAX_ANOMALY_RECORDS_PROPERTY, DEFAULT_MAX_NUM_RECORDS);
-        try
-        {
-            Integer.parseInt(maxNumRecords);
-
-            // this is an integer so use it
-        }
-        catch (NumberFormatException e)
-        {
-            LOGGER.error("Cannot parse " + MAX_ANOMALY_RECORDS_PROPERTY + "="
-                    + maxNumRecords + " as a number");
-
-            maxNumRecords = DEFAULT_MAX_NUM_RECORDS;
-        }
+        int maxNumRecords = PrelertSettings.getSettingOrDefault(MAX_ANOMALY_RECORDS_PROPERTY,
+                DEFAULT_MAX_NUM_RECORDS);
         MAX_ANOMALY_RECORDS_ARG = "--maxAnomalyRecords=" + maxNumRecords;
 
         PRELERT_HOME = prelertHome;
@@ -622,7 +610,7 @@ public class ProcessCtrl
 
         // Supply a URL for persisting/restoring model state unless model
         // persistence has been explicitly disabled.
-        if (PrelertSettings.getSetting(DONT_PERSIST_MODEL_STATE) != null)
+        if (PrelertSettings.isSet(DONT_PERSIST_MODEL_STATE))
         {
             logger.info("Will not persist model state - " +
                     DONT_PERSIST_MODEL_STATE + " setting was set");

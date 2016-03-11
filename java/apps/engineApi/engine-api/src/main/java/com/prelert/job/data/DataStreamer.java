@@ -75,8 +75,8 @@ public class DataStreamer
     public DataStreamer(DataProcessor dataProcessor)
     {
         // should we save uploaded data and where
-        m_ShouldPersistDataToDisk = PrelertSettings.getSetting("persistbasedir") != null;
-        m_BaseDirectory = PrelertSettings.getSettingText("persistbasedir");
+        m_ShouldPersistDataToDisk = PrelertSettings.isSet("persistbasedir");
+        m_BaseDirectory = PrelertSettings.getSettingOrDefault("persistbasedir", ".");
         m_DataProccesor = Objects.requireNonNull(dataProcessor);
     }
 

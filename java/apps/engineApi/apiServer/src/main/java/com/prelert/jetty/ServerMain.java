@@ -106,23 +106,10 @@ public class ServerMain
         // dependency on slf4j-log4j12.)
         Log.setLog(new Slf4jLog());
 
-        int jettyPort = JETTY_PORT;
-        String portProp = PrelertSettings.getSettingText(JETTY_PORT_PROPERTY, Integer.toString(JETTY_PORT));
-        try
-        {
-            jettyPort = Integer.parseInt(portProp);
-            LOGGER.info("Using port " + jettyPort);
-        }
-        catch (NumberFormatException e)
-        {
-            LOGGER.warn(String.format("Error parsing %s property value '%s' "
-                    + "cannot not be parsed as an integer",
-                    JETTY_PORT_PROPERTY, portProp));
+        int jettyPort = PrelertSettings.getSettingOrDefault(JETTY_PORT_PROPERTY, JETTY_PORT);
+        LOGGER.info("Using port " + jettyPort);
 
-            LOGGER.info("Using default port " + JETTY_PORT);
-        }
-
-        String jettyHome = PrelertSettings.getSettingText(JETTY_HOME_PROPERTY, DEFAULT_JETTY_HOME);
+        String jettyHome = PrelertSettings.getSettingOrDefault(JETTY_HOME_PROPERTY, DEFAULT_JETTY_HOME);
 
         // load the resources here so they are cached
         Messages.load();

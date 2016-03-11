@@ -28,6 +28,7 @@
 package com.prelert.settings;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -47,7 +48,6 @@ import org.yaml.snakeyaml.error.YAMLException;
 
 public class PrelertSettingsTest
 {
-
     @Rule
     public ExpectedException m_ExpectedException = ExpectedException.none();
 
@@ -154,19 +154,57 @@ public class PrelertSettingsTest
     }
 
     @Test
-    public void testGetSetting_GivenSystemProperty()
+    public void testGetSettingOrDefault_GivenSystemPropertyShouldMatchString()
     {
          System.setProperty("testproperty", "testvalue");
 
-         Object valueNoDefault = PrelertSettings.getSetting("testproperty");
-         Object valueGivenDefault = PrelertSettings.getSetting("testproperty", "default");
-         String strValueNoDefault = PrelertSettings.getSettingText("testproperty");
-         String strValueGivenDefault = PrelertSettings.getSettingText("testproperty", "default");
+         assertTrue(PrelertSettings.isSet("testproperty"));
+         assertEquals("testvalue", PrelertSettings.getSettingOrDefault("testproperty", "default"));
+    }
 
-         assertEquals("testvalue", valueNoDefault);
-         assertEquals("testvalue", valueGivenDefault);
-         assertEquals("testvalue", strValueNoDefault);
-         assertEquals("testvalue", strValueGivenDefault);
+    @Test
+    public void testGetSettingOrDefault_GivenSystemPropertyShouldMatchInteger()
+    {
+         System.setProperty("testproperty", "42");
+
+         assertTrue(PrelertSettings.isSet("testproperty"));
+         assertEquals(new Integer(42), PrelertSettings.getSettingOrDefault("testproperty", 4));
+    }
+
+    @Test
+    public void testGetSettingOrDefault_GivenSystemPropertyShouldMatchLong()
+    {
+         System.setProperty("testproperty", "42");
+
+         assertTrue(PrelertSettings.isSet("testproperty"));
+         assertEquals(new Long(42), PrelertSettings.getSettingOrDefault("testproperty", 4L));
+    }
+
+    @Test
+    public void testGetSettingOrDefault_GivenSystemPropertyShouldMatchFloat()
+    {
+         System.setProperty("testproperty", "42.2");
+
+         assertTrue(PrelertSettings.isSet("testproperty"));
+         assertEquals(new Float(42.2), PrelertSettings.getSettingOrDefault("testproperty", 3.14f));
+    }
+
+    @Test
+    public void testGetSettingOrDefault_GivenSystemPropertyShouldMatchDouble()
+    {
+         System.setProperty("testproperty", "42.2");
+
+         assertTrue(PrelertSettings.isSet("testproperty"));
+         assertEquals(new Double(42.2), PrelertSettings.getSettingOrDefault("testproperty", 3.14));
+    }
+
+    @Test
+    public void testGetSettingOrDefault_GivenSystemPropertyDoesNotMatchType()
+    {
+         System.setProperty("testproperty", "a string");
+
+         assertTrue(PrelertSettings.isSet("testproperty"));
+         assertEquals(new Integer(3), PrelertSettings.getSettingOrDefault("testproperty", 3));
     }
 
     @Test
@@ -174,15 +212,8 @@ public class PrelertSettingsTest
     {
          System.clearProperty("testproperty");
 
-         Object valueNoDefault = PrelertSettings.getSetting("testproperty");
-         Object valueGivenDefault = PrelertSettings.getSetting("testproperty", "default");
-         String strValueNoDefault = PrelertSettings.getSettingText("testproperty");
-         String strValueGivenDefault = PrelertSettings.getSettingText("testproperty", "default");
-
-         assertNull(valueNoDefault);
-         assertEquals("default", valueGivenDefault);
-         assertEquals("null", strValueNoDefault);
-         assertEquals("default", strValueGivenDefault);
+         assertFalse(PrelertSettings.isSet("testproperty"));
+         assertEquals("default", PrelertSettings.getSettingOrDefault("testproperty", "default"));
     }
 
     @Test
@@ -190,28 +221,19 @@ public class PrelertSettingsTest
     {
          System.clearProperty("prelert.home");
 
-         Object valueNoDefault = PrelertSettings.getSetting("prelert.home");
-         Object valueGivenDefault = PrelertSettings.getSetting("prelert.home", ".");
-         String strValueNoDefault = PrelertSettings.getSettingText("prelert.home");
-         String strValueGivenDefault = PrelertSettings.getSettingText("prelert.home", ".");
-
          // Don't mess with the $PRELERT_HOME environment variable as this could
          // have side effects.  When tests run as part of full builds it will be
          // set.
          String prelertHomeEnv = System.getenv("PRELERT_HOME");
          if (prelertHomeEnv == null)
          {
-             assertNull(valueNoDefault);
-             assertEquals(".", valueGivenDefault);
-             assertEquals("null", strValueNoDefault);
-             assertEquals(".", strValueGivenDefault);
+             assertFalse(PrelertSettings.isSet("prelert.home"));
+             assertEquals(".", PrelertSettings.getSettingOrDefault("prelert.home", "."));
          }
          else
          {
-             assertEquals(prelertHomeEnv, valueNoDefault);
-             assertEquals(prelertHomeEnv, valueGivenDefault);
-             assertEquals(prelertHomeEnv, strValueNoDefault);
-             assertEquals(prelertHomeEnv, strValueGivenDefault);
+             assertTrue(PrelertSettings.isSet("prelert.home"));
+             assertEquals(prelertHomeEnv, PrelertSettings.getSettingOrDefault("prelert.home", "."));
          }
     }
 }

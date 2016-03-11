@@ -35,6 +35,8 @@ import java.io.InputStream;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
+import java.util.function.Function;
 
 import org.apache.log4j.Logger;
 // NB: Using SnakeYAML because that's what Elasticsearch uses and it makes our
@@ -49,7 +51,7 @@ import org.yaml.snakeyaml.error.YAMLException;
  * Wrapper for Prelert settings.
  *
  * The majority of these can be set either via a config file or via a JVM system
- * property.  In the event of both being specified the JVM system property takes
+ * property. In the event of both being specified the JVM system property takes
  * precedence.
  *
  * A smaller number of settings are configured via either a JVM system property
@@ -126,31 +128,110 @@ public final class PrelertSettings
     }
 
     /**
-     * Get a setting in its natural form.  The caller should know the expected
-     * form, and is responsible for validating that the actual form is as
-     * expected.
-     * @param settingName Name of the setting to get.
-     * @return The setting value, or null if not set.
+     * Returns {@code true} if a setting with the given {@code settingName} is set
+     * @param settingName Name of the setting to check if it is set
+     * @return {@code true} if a setting with the given {@code settingName} is set
      */
-    public static Object getSetting(String settingName)
+    public static boolean isSet(String settingName)
     {
-        return getSetting(settingName, null);
+        return getSetting(settingName, s -> s) != null;
     }
 
     /**
-     * Get a setting in its natural form.  The caller should know the expected
-     * form, and is responsible for validating that the actual form is as
-     * expected.
-     * @param settingName Name of the setting to get.
-     * @return The setting value, or the supplied default value if not set.
+     * Get a setting or return the specified {@code defaultValue}. If a setting
+     * is set but its type does not match the type of the {@code defaultValue},
+     * the latter will be returned.
+     *
+     * @param settingName Name of the setting to get
+     * @param defaultValue The default value
+     * @return The setting value, or the supplied default value if no setting is
+     * present or its type does not match that of the default value
      */
-    public static Object getSetting(String settingName, Object defaultValue)
+    public static <T> T getSettingOrDefault(String settingName, T defaultValue)
+    {
+        Objects.requireNonNull(defaultValue);
+
+        @SuppressWarnings("unchecked")
+        Class<T> resultType = (Class<T>) defaultValue.getClass();
+
+        Object setting = getSetting(settingName, createMapperForClass(resultType));
+        if (setting != null && resultType.isInstance(setting))
+        {
+            return resultType.cast(setting);
+        }
+        else if (setting != null)
+        {
+            LOGGER.warn("Cannot apply value " + setting.toString() + " for setting '" + settingName
+                    + "': expected value of type " + resultType.getName() + ". Default value "
+                    + defaultValue + " is going to be used instead.");
+        }
+        return defaultValue;
+    }
+
+    /**
+     * Picks an appropriate mapper for String values to be converted into the target {@code clazz}
+     * Supports:
+     * <ul>
+     * <li>Integer
+     * <li>Long
+     * <li>Float
+     * <li>Double
+     * </ul>
+     *
+     * @param clazz The target class
+     * @return A mapper that converts a String into the target {@code clazz} if possible or an
+     * identity otherwise
+     */
+    private static Function<String, Object> createMapperForClass(Class<?> clazz)
+    {
+        if (clazz.equals(Integer.class))
+        {
+            return s -> Integer.valueOf(s);
+        }
+        else if (clazz.equals(Long.class))
+        {
+            return s-> Long.valueOf(s);
+        }
+        else if (clazz.equals(Float.class))
+        {
+            return s-> Float.valueOf(s);
+        }
+        else if (clazz.equals(Double.class))
+        {
+            return s->Double.valueOf(s);
+        }
+        return obj -> obj;
+    }
+
+    /**
+     * <p>
+     * Looks up a setting in the following order:
+     * <ol>
+     * <li> system properties
+     * <li> environment variables (only for a set of pre-specified settings)
+     * <li> settings YAML file
+     * </ol>
+     * </p>
+     * If a system property is found, it is converted using the {@code mapper}
+     *
+     * @param settingName Name of the setting to get
+     * @param mapper A mapper that is used to convert a system property String value
+     * @return The retrieved setting
+     */
+    private static Object getSetting(String settingName, Function<String, Object> mapper)
     {
         // System properties always take precedence
-        Object prop = System.getProperty(settingName);
+        String prop = System.getProperty(settingName);
         if (prop != null)
         {
-            return prop;
+            try
+            {
+                return mapper.apply(prop);
+            }
+            catch (NumberFormatException e)
+            {
+                return prop;
+            }
         }
 
         // Is this one of the special properties where the second choice is the
@@ -158,43 +239,11 @@ public final class PrelertSettings
         String correspondingEnvVar = ENVIRONMENT_SETTINGS.get(settingName);
         if (correspondingEnvVar != null)
         {
-            if (System.getenv().containsKey(correspondingEnvVar))
-            {
-                return System.getenv().get(correspondingEnvVar);
-            }
-            return defaultValue;
+            return System.getenv().get(correspondingEnvVar);
         }
 
         // This is a setting where we'll accept config file values
-        return getFileSettings().getOrDefault(settingName, defaultValue);
-    }
-
-    /**
-     * Get a setting in String form.  This will convert a setting to a string
-     * even if it wasn't a string in the underlying config file.
-     * @param settingName Name of the setting to get.
-     * @return The setting value converted to a string, or null if not set.
-     */
-    public static String getSettingText(String settingName)
-    {
-        return getSettingText(settingName, null);
-    }
-
-    /**
-     * Get a setting in String form.  This will convert a setting to a string
-     * even if it wasn't a string in the underlying config file.
-     * @param settingName Name of the setting to get.
-     * @return The setting value converted to a string, or the supplied default
-     * value if not set.
-     */
-    public static String getSettingText(String settingName, String defaultValue)
-    {
-        Object setting = getSetting(settingName, defaultValue);
-        if (setting instanceof String)
-        {
-            return (String) setting;
-        }
-        return "" + setting;
+        return getFileSettings().get(settingName);
     }
 
     /**
@@ -214,7 +263,7 @@ public final class PrelertSettings
             if (!ms_LoadedFile)
             {
                 File configFile = new File(
-                        new File(getSettingText(PRELERT_HOME_PROPERTY, DEFAULT_PRELERT_HOME),
+                        new File(getSettingOrDefault(PRELERT_HOME_PROPERTY, DEFAULT_PRELERT_HOME),
                                 ENGINE_CONFIG_DIRECTORY),
                         ENGINE_CONFIG_FILE);
                 ms_FileSettings = loadSettingsFile(configFile);
@@ -274,5 +323,4 @@ public final class PrelertSettings
         Yaml yaml = new Yaml(new SafeConstructor());
         return (Map<Object, Object>)yaml.load(input);
     }
-
 }

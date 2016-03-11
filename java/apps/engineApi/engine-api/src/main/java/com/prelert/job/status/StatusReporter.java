@@ -98,24 +98,12 @@ public class StatusReporter
         m_TotalRecordStats = new DataCounts();
         m_IncrementalRecordStats = new DataCounts();
 
-        m_AcceptablePercentDateParseErrors = readIntPropertyOrDefault(
+        m_AcceptablePercentDateParseErrors = PrelertSettings.getSettingOrDefault(
                 ACCEPTABLE_PERCENTAGE_DATE_PARSE_ERRORS_PROP,
                 ACCEPTABLE_PERCENTAGE_DATE_PARSE_ERRORS);
-        m_AcceptablePercentOutOfOrderErrors = readIntPropertyOrDefault(
+        m_AcceptablePercentOutOfOrderErrors = PrelertSettings.getSettingOrDefault(
                 ACCEPTABLE_PERCENTAGE_OUT_OF_ORDER_ERRORS_PROP,
                 ACCEPTABLE_PERCENTAGE_OUT_OF_ORDER_ERRORS);
-    }
-
-    private static int readIntPropertyOrDefault(String key, int defaultValue)
-    {
-        try
-        {
-            return Integer.parseInt(PrelertSettings.getSettingText(key));
-        }
-        catch (NumberFormatException e)
-        {
-            return defaultValue;
-        }
     }
 
     public StatusReporter(String jobId, DataCounts counts,

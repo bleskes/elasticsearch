@@ -67,17 +67,9 @@ public class UsageReporter
 
         m_LastUpdateTimeMs = System.currentTimeMillis();
 
-        String interval = PrelertSettings.getSettingText(UPDATE_INTERVAL_PROP, Long.toString(UPDATE_AFTER_COUNT_SECS));
-        try
-        {
-            m_UpdateIntervalMs = Long.parseLong(interval) * 1000;
-            m_Logger.info("Setting usage update interval to " + interval + " seconds");
-        }
-        catch (NumberFormatException e)
-        {
-            m_Logger.warn("Cannot parse '" + UPDATE_INTERVAL_PROP +
-                    "' property = " + interval, e);
-        }
+        long interval = PrelertSettings.getSettingOrDefault(UPDATE_INTERVAL_PROP, UPDATE_AFTER_COUNT_SECS);
+        m_UpdateIntervalMs = interval * 1000;
+        m_Logger.info("Setting usage update interval to " + interval + " seconds");
     }
 
     /**
