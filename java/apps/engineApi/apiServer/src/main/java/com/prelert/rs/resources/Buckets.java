@@ -67,7 +67,7 @@ public class Buckets extends ResourceWithJobManager
      */
     public static final String ENDPOINT = "buckets";
 
-
+    private static final String TIMESTAMP_PARAM = "timestamp";
     public static final String EXPAND_QUERY_PARAM = "expand";
     public static final String INCLUDE_INTERIM_QUERY_PARAM = "includeInterim";
 
@@ -181,7 +181,7 @@ public class Buckets extends ResourceWithJobManager
     @Path("/{jobId}/buckets/{timestamp}")
     @Produces(MediaType.APPLICATION_JSON)
     public Response bucket(@PathParam("jobId") String jobId,
-            @PathParam("timestamp") String timestamp,
+            @PathParam(TIMESTAMP_PARAM) String timestamp,
             @DefaultValue("false") @QueryParam(EXPAND_QUERY_PARAM) boolean expand,
             @DefaultValue("false") @QueryParam(INCLUDE_INTERIM_QUERY_PARAM) boolean includeInterim)
     throws NativeProcessRunException, UnknownJobException
@@ -191,23 +191,20 @@ public class Buckets extends ResourceWithJobManager
                 includeInterim ? "including" : "excluding"));
 
         JobManager manager = jobManager();
-        Optional<Bucket> b = manager.bucket(jobId, timestamp, expand, includeInterim);
+        long timestampMillis = paramToEpochIfValidOrThrow(TIMESTAMP_PARAM, timestamp, LOGGER);
+        Optional<Bucket> b = manager.bucket(jobId, timestampMillis, expand, includeInterim);
         SingleDocument<Bucket> bucket = singleDocFromOptional(b, timestamp, Bucket.TYPE);
 
         if (bucket.isExists())
         {
-            LOGGER.debug(String.format("Returning bucket %s for job %s",
-            		timestamp, jobId));
+            LOGGER.debug(String.format("Returning bucket %s for job %s", timestamp, jobId));
         }
         else
         {
-            LOGGER.debug(String.format("Cannot find bucket %s for job %s",
-            		timestamp, jobId));
-
+            LOGGER.debug(String.format("Cannot find bucket %s for job %s", timestamp, jobId));
             return Response.status(Response.Status.NOT_FOUND).entity(bucket).build();
         }
 
         return Response.ok(bucket).build();
     }
-
 }

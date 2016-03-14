@@ -73,7 +73,7 @@ public class ScoresUpdaterTest
     private static final long DEFAULT_END_TIME = 3600;
     private static final String AB = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
     private static Random ms_Rnd = new Random();
-    
+
     private JobDetails m_Job;
     @Mock private JobProvider m_JobProvider;
     @Mock private JobRenormaliser m_JobRenormaliser;
@@ -81,24 +81,24 @@ public class ScoresUpdaterTest
     @Mock private Logger m_Logger;
 
     private ScoresUpdater m_ScoresUpdater;
-    
+
     private String randomString()
     {
-    	StringBuilder sb = new StringBuilder(12);
-    	for (int i = 0; i < 12; i++)
-    	{
-    		sb.append(AB.charAt(ms_Rnd.nextInt(AB.length())));
-    	}
-    	return sb.toString();
+        StringBuilder sb = new StringBuilder(12);
+        for (int i = 0; i < 12; i++)
+        {
+            sb.append(AB.charAt(ms_Rnd.nextInt(AB.length())));
+        }
+        return sb.toString();
     }
 
     private Bucket generateBucket()
     {
-    	Bucket bucket = new Bucket();
-    	bucket.setId(randomString());    	
-    	return bucket;
+        Bucket bucket = new Bucket();
+        bucket.setId(randomString());
+        return bucket;
     }
-    
+
     @Before
     public void setUp() throws UnknownJobException
     {

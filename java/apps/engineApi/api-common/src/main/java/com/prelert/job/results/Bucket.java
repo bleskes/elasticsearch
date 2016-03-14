@@ -91,7 +91,7 @@ public class Bucket
 
     public void setId(String id)
     {
-    	m_Id = id;
+        m_Id = id;
     }
 
     /**
@@ -115,12 +115,12 @@ public class Bucket
 
     public long getBucketSpan()
     {
-    	return m_BucketSpan;
+        return m_BucketSpan;
     }
 
     public void setBucketSpan(long l)
     {
-    	m_BucketSpan = l;
+        m_BucketSpan = l;
     }
 
     public double getAnomalyScore()

@@ -30,6 +30,7 @@ package com.prelert.rs.resources;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+
 import static org.mockito.Mockito.when;
 
 import java.net.URISyntaxException;
@@ -200,7 +201,7 @@ public class BucketsTest extends ServiceTest
     {
         Optional<Bucket> queryResult = Optional.of(new Bucket());
 
-        when(jobManager().bucket("bar", "42", false, true)).thenReturn(queryResult);
+        when(jobManager().bucket("bar", 42000L, false, true)).thenReturn(queryResult);
 
         Response response = m_Buckets.bucket("bar", "42", false, true);
 
@@ -218,7 +219,7 @@ public class BucketsTest extends ServiceTest
     {
         Optional<Bucket> queryResult = Optional.empty();
 
-        when(jobManager().bucket("bar", "42", false, true)).thenReturn(queryResult);
+        when(jobManager().bucket("bar", 42000L, false, true)).thenReturn(queryResult);
 
         Response response = m_Buckets.bucket("bar", "42", false, true);
         @SuppressWarnings("unchecked")

@@ -434,7 +434,7 @@ public class ElasticsearchMappings
                             .field(TYPE, LONG)
                         .endObject()
                         .startObject(Bucket.BUCKET_SPAN)
-                        	.field(TYPE, LONG)
+                            .field(TYPE, LONG)
                         .endObject()
                         .startObject(Bucket.BUCKET_INFLUENCERS)
                             .field(TYPE, NESTED)

@@ -127,8 +127,8 @@ class ElasticsearchDirectClient implements Closeable
     {
         JsonFactory factory = new JsonFactory();
         ObjectMapper mapper = new ObjectMapper(factory);
-        TypeReference<HashMap<String, Object>> typeRefHash
-        	= new TypeReference<HashMap<String, Object>>() {};
+        TypeReference<HashMap<String, Object>> typeRefHash =
+                new TypeReference<HashMap<String, Object>>() {};
 
         Map<String, Object> map = mapper.readValue(json, typeRefHash);
         map = (Map<String, Object>)map.get("hits");

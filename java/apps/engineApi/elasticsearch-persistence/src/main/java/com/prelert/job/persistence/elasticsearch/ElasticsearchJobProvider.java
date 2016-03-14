@@ -643,29 +643,18 @@ public class ElasticsearchJobProvider implements JobProvider
 
 
     @Override
-    public Optional<Bucket> bucket(String jobId,
-            String timestamp, boolean expand, boolean includeInterim)
-    throws UnknownJobException
+    public Optional<Bucket> bucket(String jobId, long timestampMillis, boolean expand,
+            boolean includeInterim) throws UnknownJobException
     {
         ElasticsearchJobId elasticJobId = new ElasticsearchJobId(jobId);
         SearchHits hits;
 
         try
         {
-            LOGGER.trace("ES API CALL: get ID " + timestamp + " type " + Bucket.TYPE +
+            LOGGER.trace("ES API CALL: get Bucket with timestamp " + timestampMillis +
                     " from index " + elasticJobId.getIndex());
-            long epoch = 0;
-            try
-            {
-            	epoch = Long.parseLong(timestamp);
-            }
-            catch (NumberFormatException nfe)
-            {
-            	LOGGER.error("Could not parse timestamp " + timestamp + " as an epoch value");
-            }
-            Date dateTime = new Date(epoch * 1000);
-
-            QueryBuilder qb = QueryBuilders.matchQuery(ElasticsearchMappings.ES_TIMESTAMP, dateTime);
+            QueryBuilder qb = QueryBuilders.matchQuery(ElasticsearchMappings.ES_TIMESTAMP,
+                    new Date(timestampMillis));
 
             SearchResponse searchResponse = m_Client.prepareSearch(elasticJobId.getIndex())
                     .setTypes(Bucket.TYPE)
@@ -681,7 +670,7 @@ public class ElasticsearchJobProvider implements JobProvider
         Optional<Bucket> doc = Optional.<Bucket>empty();
         if (hits.getTotalHits() == 1L)
         {
-        	SearchHit hit = hits.getAt(0);
+            SearchHit hit = hits.getAt(0);
             // Remove the Kibana/Logstash '@timestamp' entry as stored in Elasticsearch,
             // and replace using the API 'timestamp' key.
             Object ts = hit.getSource().remove(ElasticsearchMappings.ES_TIMESTAMP);

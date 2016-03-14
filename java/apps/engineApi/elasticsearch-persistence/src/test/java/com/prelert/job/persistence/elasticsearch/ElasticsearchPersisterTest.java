@@ -1,3 +1,31 @@
+/************************************************************
+ *                                                          *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
+ *                                                          *
+ *----------------------------------------------------------*
+ *----------------------------------------------------------*
+ * WARNING:                                                 *
+ * THIS FILE CONTAINS UNPUBLISHED PROPRIETARY               *
+ * SOURCE CODE WHICH IS THE PROPERTY OF PRELERT LTD AND     *
+ * PARENT OR SUBSIDIARY COMPANIES.                          *
+ * PLEASE READ THE FOLLOWING AND TAKE CAREFUL NOTE:         *
+ *                                                          *
+ * This source code is confidential and any person who      *
+ * receives a copy of it, or believes that they are viewing *
+ * it without permission is asked to notify Prelert Ltd     *
+ * on +44 (0)20 3567 1249 or email to legal@prelert.com.    *
+ * All intellectual property rights in this source code     *
+ * are owned by Prelert Ltd.  No part of this source code   *
+ * may be reproduced, adapted or transmitted in any form or *
+ * by any means, electronic, mechanical, photocopying,      *
+ * recording or otherwise.                                  *
+ *                                                          *
+ *----------------------------------------------------------*
+ *                                                          *
+ *                                                          *
+ ************************************************************/
+
+
 package com.prelert.job.persistence.elasticsearch;
 
 import java.io.IOException;
@@ -8,29 +36,20 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.ExecutionException;
 import java.util.Random;
+import java.util.concurrent.ExecutionException;
 
-import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.common.transport.InetSocketTransportAddress;
-import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.index.IndexNotFoundException;
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.client.transport.TransportClient;
+import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.transport.InetSocketTransportAddress;
+import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.index.IndexNotFoundException;
 
-import com.prelert.job.persistence.elasticsearch.ElasticsearchPersister;
-import com.prelert.job.quantiles.Quantiles;
-import com.prelert.job.persistence.elasticsearch.ElasticsearchJobDataPersister;
-import com.prelert.job.results.AnomalyRecord;
-import com.prelert.job.results.Bucket;
-import com.prelert.job.results.CategoryDefinition;
-import com.prelert.job.results.Influencer;
-import com.prelert.job.results.ModelDebugOutput;
-import com.prelert.job.usage.Usage;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -40,6 +59,13 @@ import com.prelert.job.ModelSizeStats;
 import com.prelert.job.ModelSnapshot;
 import com.prelert.job.ModelState;
 import com.prelert.job.UnknownJobException;
+import com.prelert.job.quantiles.Quantiles;
+import com.prelert.job.results.AnomalyRecord;
+import com.prelert.job.results.Bucket;
+import com.prelert.job.results.CategoryDefinition;
+import com.prelert.job.results.Influencer;
+import com.prelert.job.results.ModelDebugOutput;
+import com.prelert.job.usage.Usage;
 
 public class ElasticsearchPersisterTest
 {
@@ -219,8 +245,8 @@ public class ElasticsearchPersisterTest
         createBucket("1234567850", true, persister);
         try
         {
-        	Thread.sleep(2000);
-        	
+            Thread.sleep(2000);
+
         } catch (InterruptedException e)
         {
         }
@@ -232,12 +258,12 @@ public class ElasticsearchPersisterTest
 
         try
         {
-        	Thread.sleep(2000);
-        	
+            Thread.sleep(2000);
+
         } catch (InterruptedException e)
         {
         }
-        
+
         createBucket("1234567850", false, persister);
 
         createBucket("1234567880", true, persister);
