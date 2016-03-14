@@ -1277,6 +1277,9 @@ public class JobManagerTest
         verify(m_JobProvider).updateJob(eq("foo"), m_JobUpdateCaptor.capture());
         assertTrue(m_JobUpdateCaptor.getValue().containsKey(JobDetails.IGNORE_DOWNTIME));
         assertEquals(IgnoreDowntime.ONCE, m_JobUpdateCaptor.getValue().get(JobDetails.IGNORE_DOWNTIME));
+
+        verify(m_JobProvider).audit("foo");
+        verify(m_Auditor).info("Job paused");
     }
 
     @Test
@@ -1303,6 +1306,9 @@ public class JobManagerTest
         verify(m_JobProvider).updateJob(eq("foo"), m_JobUpdateCaptor.capture());
         assertTrue(m_JobUpdateCaptor.getValue().containsKey(JobDetails.IGNORE_DOWNTIME));
         assertEquals(IgnoreDowntime.ONCE, m_JobUpdateCaptor.getValue().get(JobDetails.IGNORE_DOWNTIME));
+
+        verify(m_JobProvider).audit("foo");
+        verify(m_Auditor).info("Job paused");
     }
 
     @Test
@@ -1394,6 +1400,8 @@ public class JobManagerTest
         jobManager.resumeJob("foo");
 
         verify(m_JobProvider).setJobStatus("foo", JobStatus.CLOSED);
+        verify(m_JobProvider).audit("foo");
+        verify(m_Auditor).info("Job resumed");
     }
 
     @Test

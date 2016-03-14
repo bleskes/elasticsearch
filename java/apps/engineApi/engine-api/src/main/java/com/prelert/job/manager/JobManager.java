@@ -1154,6 +1154,8 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
             m_JobProvider.setJobStatus(jobId, JobStatus.PAUSING);
             updateIgnoreDowntime(jobId, IgnoreDowntime.ONCE);
             m_JobProvider.setJobStatus(jobId, JobStatus.PAUSED);
+
+            audit(jobId).info(Messages.getMessage(Messages.JOB_AUDIT_PAUSED));
         }
     }
 
@@ -1180,6 +1182,7 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
             }
 
             m_JobProvider.setJobStatus(jobId, JobStatus.CLOSED);
+            audit(jobId).info(Messages.getMessage(Messages.JOB_AUDIT_RESUMED));
         }
     }
 }
