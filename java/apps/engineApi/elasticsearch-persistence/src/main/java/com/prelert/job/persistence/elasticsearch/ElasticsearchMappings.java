@@ -101,6 +101,11 @@ public class ElasticsearchMappings
      */
     public static final String ES_TIMESTAMP = "@timestamp";
 
+    /**
+     * Name of the Elasticsearch field by which documents are sorted by default
+     */
+    public static final String ES_DOC = "_doc";
+
     private static final String DATE = "date";
     private static final String INTEGER = "integer";
     private static final String LONG = "long";

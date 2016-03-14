@@ -120,7 +120,7 @@ public class ElasticsearchBulkDeleter implements JobDataDeleter
                 .setIndices(m_JobId.getIndex())
                 .setTypes(type)
                 .setQuery(query)
-                .addSort(SortBuilders.fieldSort("_doc"))
+                .addSort(SortBuilders.fieldSort(ElasticsearchMappings.ES_DOC))
                 .execute().actionGet();
 
         for (SearchHit hit : searchResponse.getHits())
@@ -200,7 +200,7 @@ public class ElasticsearchBulkDeleter implements JobDataDeleter
         SearchResponse searchResponse = m_Client.prepareSearch(m_JobId.getIndex())
                 .setTypes(Bucket.TYPE, AnomalyRecord.TYPE, Influencer.TYPE, BucketInfluencer.TYPE)
                 .setQuery(qb)
-                .addSort(SortBuilders.fieldSort("_doc"))
+                .addSort(SortBuilders.fieldSort(ElasticsearchMappings.ES_DOC))
                 .get();
 
         for (SearchHit hit : searchResponse.getHits())
