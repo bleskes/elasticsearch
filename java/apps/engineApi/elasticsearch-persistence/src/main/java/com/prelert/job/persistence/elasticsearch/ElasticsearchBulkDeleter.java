@@ -229,38 +229,22 @@ public class ElasticsearchBulkDeleter implements JobDataDeleter
     }
 
     @Override
-    public void commit()
+    public void commitAndFreeDiskSpace()
     {
-        if (m_BulkRequestBuilder.numberOfActions() == 0)
-        {
-            return;
-        }
-
-        if (!m_Quiet)
-        {
-            LOGGER.debug("Requesting deletion of "
-                     + m_DeletedBucketCount + " buckets, "
-                     + m_DeletedRecordCount + " records, "
-                     + m_DeletedBucketInfluencerCount + " bucket influencers, "
-                     + m_DeletedInfluencerCount + " influencers, "
-                     + m_DeletedModelSnapshotCount + " model snapshots, "
-                     + " and "
-                     + m_DeletedModelStateCount + " model state documents");
-        }
-
-        try
-        {
-            executeBulkRequest();
-            forceMerge();
-        }
-        catch (RuntimeException e)
-        {
-            LOGGER.error("Failed to perform bulk delete", e);
-        }
+        commit(true);
     }
 
     @Override
-    public void commitAsync()
+    public void commit()
+    {
+        commit(false);
+    }
+
+    /**
+     * Commits the deletions and if {@code forceMerge} is {@code true}, it
+     * forces a merge which removes the data from disk.
+     */
+    private void commit(boolean forceMerge)
     {
         if (m_BulkRequestBuilder.numberOfActions() == 0)
         {
@@ -282,6 +266,10 @@ public class ElasticsearchBulkDeleter implements JobDataDeleter
         try
         {
             executeBulkRequest();
+            if (forceMerge)
+            {
+                forceMerge();
+            }
         }
         catch (RuntimeException e)
         {

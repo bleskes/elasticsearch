@@ -105,7 +105,7 @@ public class OldDataRemoverTest
         ArgumentCaptor<ModelSnapshot> modelSnapshotCaptor = ArgumentCaptor.forClass(ModelSnapshot.class);
         verify(deleter, times(2)).deleteModelSnapshot(modelSnapshotCaptor.capture());
         assertEquals(Arrays.asList(modelSnapshot1, modelSnapshot2), modelSnapshotCaptor.getAllValues());
-        verify(deleter).commit();
+        verify(deleter).commitAndFreeDiskSpace();
 
         Mockito.verifyNoMoreInteractions(m_DeleterFactory, deleter);
     }
@@ -155,7 +155,7 @@ public class OldDataRemoverTest
         verify(deleter, times(2)).deleteBucket(bucketCaptor.capture());
         assertEquals(Arrays.asList(bucket1, bucket2), bucketCaptor.getAllValues());
         verify(deleter).deleteInfluencer(influencer);
-        verify(deleter).commit();
+        verify(deleter).commitAndFreeDiskSpace();
 
         Mockito.verifyNoMoreInteractions(m_DeleterFactory, deleter);
     }

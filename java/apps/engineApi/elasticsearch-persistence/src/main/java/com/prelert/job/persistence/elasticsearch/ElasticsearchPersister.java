@@ -143,7 +143,7 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
                 deleter.deletePriorInterimResults(bucket.getTimestamp());
                 m_SearchStopwatch.stop();
                 m_DeleteStopwatch.start();
-                deleter.commitAsync();
+                deleter.commit();
                 m_DeleteStopwatch.stop();
             }
             else
@@ -158,7 +158,7 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
                 deleter.deleteBucketByTime(bucket);
                 m_NonInterimSearchStopwatch.stop();
                 m_NonInterimDeleteStopwatch.start();
-                deleter.commitAsync();
+                deleter.commit();
                 m_NonInterimDeleteStopwatch.stop();
             }
 
