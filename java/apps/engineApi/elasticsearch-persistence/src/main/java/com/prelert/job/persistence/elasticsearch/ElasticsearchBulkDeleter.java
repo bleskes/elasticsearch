@@ -191,7 +191,7 @@ public class ElasticsearchBulkDeleter implements JobDataDeleter
     public void deletePriorInterimResults(Date latestTime)
     {
         QueryBuilder qb = QueryBuilders.boolQuery()
-                .filter(QueryBuilders.termQuery(Bucket.IS_INTERIM, "true"))
+                .filter(QueryBuilders.termQuery(Bucket.IS_INTERIM, true))
                 .filter(QueryBuilders.rangeQuery(ElasticsearchMappings.ES_TIMESTAMP)
                     .from(new Date(0))
                     .to(latestTime)
