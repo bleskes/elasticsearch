@@ -46,6 +46,7 @@ import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHitField;
+import org.elasticsearch.search.sort.SortBuilders;
 
 import com.prelert.job.ModelSnapshot;
 import com.prelert.job.ModelState;
@@ -119,6 +120,7 @@ public class ElasticsearchBulkDeleter implements JobDataDeleter
                 .setIndices(m_JobId.getIndex())
                 .setTypes(type)
                 .setQuery(query)
+                .addSort(SortBuilders.fieldSort("_doc"))
                 .execute().actionGet();
 
         for (SearchHit hit : searchResponse.getHits())
@@ -189,15 +191,16 @@ public class ElasticsearchBulkDeleter implements JobDataDeleter
     public void deletePriorInterimResults(Date latestTime)
     {
         QueryBuilder qb = QueryBuilders.boolQuery()
-                .filter(QueryBuilders.termQuery(Bucket.IS_INTERIM, "true"));
-//                .filter(QueryBuilders.rangeQuery(ElasticsearchMappings.ES_TIMESTAMP)
-//                    .from(new Date(0))
-//                    .to(latestTime)
-//                    .includeUpper(true));
+                .filter(QueryBuilders.termQuery(Bucket.IS_INTERIM, "true"))
+                .filter(QueryBuilders.rangeQuery(ElasticsearchMappings.ES_TIMESTAMP)
+                    .from(new Date(0))
+                    .to(latestTime)
+                    .includeUpper(true));
 
         SearchResponse searchResponse = m_Client.prepareSearch(m_JobId.getIndex())
                 .setTypes(Bucket.TYPE, AnomalyRecord.TYPE, Influencer.TYPE, BucketInfluencer.TYPE)
                 .setQuery(qb)
+                .addSort(SortBuilders.fieldSort("_doc"))
                 .get();
 
         for (SearchHit hit : searchResponse.getHits())
