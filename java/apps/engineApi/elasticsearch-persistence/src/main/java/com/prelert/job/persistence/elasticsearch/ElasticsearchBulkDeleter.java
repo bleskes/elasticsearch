@@ -228,12 +228,6 @@ public class ElasticsearchBulkDeleter implements JobDataDeleter
         }
     }
 
-    public void deleteById(String type, String id)
-    {
-        m_BulkRequestBuilder.add(
-                m_Client.prepareDelete(m_JobId.getIndex(), type, id));
-    }
-
     @Override
     public void commit()
     {
