@@ -1090,6 +1090,13 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
         return m_JobProvider.audit("");
     }
 
+    /**
+     * Sets {@link IgnoreDowntime#ONCE} to all jobs that satisfy the following criteria:
+     * <ul>
+     * <li>have no {@code ignoreDowntime} set
+     * <li>have at least one processed record
+     * </ul>
+     */
     public void setIgnoreDowntimeToAllJobs()
     {
         LOGGER.info("Setting ignoreDowntime to all jobs");
@@ -1097,7 +1104,8 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
         {
             // Only set if job has seen data
             DataCounts counts = job.getCounts();
-            if (counts != null && counts.getProcessedRecordCount() > 0)
+            if (job.getIgnoreDowntime() == null
+                    && counts != null && counts.getProcessedRecordCount() > 0)
             {
                 try
                 {

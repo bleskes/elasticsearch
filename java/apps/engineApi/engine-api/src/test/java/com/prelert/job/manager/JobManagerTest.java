@@ -49,6 +49,7 @@ import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalLong;
@@ -1175,6 +1176,11 @@ public class JobManagerTest
         jobThatHasSeenData.setId("jobThatHasSeenData");
         jobThatHasSeenData.setCounts(countsWithPositiveProcessedRecordCount);
 
+        JobDetails jobWithIgnoreDowntimeSet = new JobDetails();
+        jobWithIgnoreDowntimeSet.setId("jobWithIgnoreDowntimeSet");
+        jobWithIgnoreDowntimeSet.setCounts(countsWithPositiveProcessedRecordCount);
+        jobWithIgnoreDowntimeSet.setIgnoreDowntime(IgnoreDowntime.ALWAYS);
+
         JobDetails jobThatHasNotSeenData = new JobDetails();
         jobThatHasNotSeenData.setId("jobThatHasNotSeenData");
         jobThatHasNotSeenData.setCounts(new DataCounts());
@@ -1186,12 +1192,12 @@ public class JobManagerTest
         JobDetails jobThatIsUnknown = new JobDetails();
         jobThatIsUnknown.setId("jobThatIsUnknown");
         jobThatIsUnknown.setCounts(countsWithPositiveProcessedRecordCount);
-        jobThatIsUnknown.setIgnoreDowntime(IgnoreDowntime.ONCE);
         when(m_JobProvider.updateJob(eq("jobThatIsUnknown"), anyMapOf(String.class, Object.class)))
                 .thenThrow(new UnknownJobException("jobThatIsUnknown"));
 
-        QueryPage<JobDetails> jobsPage = new QueryPage<>(Arrays.asList(jobThatHasSeenData,
-                jobThatHasNotSeenData, jobWithNullCounts, jobThatIsUnknown), 4);
+        List<JobDetails> jobs = Arrays.asList(jobThatHasSeenData, jobWithIgnoreDowntimeSet,
+                jobThatHasNotSeenData, jobWithNullCounts, jobThatIsUnknown);
+        QueryPage<JobDetails> jobsPage = new QueryPage<>(jobs, jobs.size());
         when(m_JobProvider.getJobs(0, 10000)).thenReturn(jobsPage);
 
         givenProcessInfo(2);
@@ -1203,6 +1209,7 @@ public class JobManagerTest
         assertTrue(m_JobUpdateCaptor.getValue().containsKey(JobDetails.IGNORE_DOWNTIME));
         assertEquals(IgnoreDowntime.ONCE, m_JobUpdateCaptor.getValue().get(JobDetails.IGNORE_DOWNTIME));
 
+        verify(m_JobProvider, never()).updateJob(eq("jobWithIgnoreDowntimeSet"), anyMapOf(String.class, Object.class));
         verify(m_JobProvider, never()).updateJob(eq("jobThatHasNotSeenData"), anyMapOf(String.class, Object.class));
         verify(m_JobProvider, never()).updateJob(eq("jobWithNullCounts"), anyMapOf(String.class, Object.class));
 
