@@ -88,24 +88,19 @@ public class PrelertWebApp extends Application
 {
     private static final Logger LOGGER = Logger.getLogger(PrelertWebApp.class);
 
-    /**
-     * The default Elasticsearch Cluster name
-     */
+    public static final String ES_CLUSTER_NAME_PROP = "es.cluster.name";
     public static final String DEFAULT_CLUSTER_NAME = "prelert";
 
-    public static final String ES_CLUSTER_NAME_PROP = "es.cluster.name";
-
     public static final String ES_TRANSPORT_PORT_RANGE = "es.transport.tcp.port";
-
     private static final String DEFAULT_ES_TRANSPORT_PORT_RANGE = "9300-9400";
 
     public static final String ES_NETWORK_PUBLISH_HOST_PROP = "es.network.publish_host";
-
     private static final String DEFAULT_NETWORK_PUBLISH_HOST = "127.0.0.1";
 
     private static final String ES_PROCESSORS_PROP = "es.processors";
 
-    private static final String IGNORE_DOWNTIME_PROP = "ignoreDowntime";
+    private static final String IGNORE_DOWNTIME_ON_STARTUP_PROP = "ignore.downtime.on.startup";
+    private static final boolean DEFAULT_IGNORE_DOWNTIME_ON_STARTUP = true;
 
     /**
      * This property specifies the client that should be used to connect
@@ -232,7 +227,8 @@ public class PrelertWebApp extends Application
 
     private void restartJobManager()
     {
-        if (PrelertSettings.isSet(IGNORE_DOWNTIME_PROP))
+        if (PrelertSettings.getSettingOrDefault(IGNORE_DOWNTIME_ON_STARTUP_PROP,
+                DEFAULT_IGNORE_DOWNTIME_ON_STARTUP))
         {
             m_JobManager.setIgnoreDowntimeToAllJobs();
         }
