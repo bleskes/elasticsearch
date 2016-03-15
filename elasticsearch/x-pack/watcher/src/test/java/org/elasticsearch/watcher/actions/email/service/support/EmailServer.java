@@ -54,7 +54,7 @@ public class EmailServer {
 
     private final SMTPServer server;
 
-    public EmailServer(String host, int port, final String username, final String password) {
+    public EmailServer(String host, int port, final String username, final String password, final ESLogger logger) {
         server = new SMTPServer(new SimpleMessageListenerAdapter(new SimpleMessageListener() {
             @Override
             public boolean accept(String from, String recipient) {
@@ -70,8 +70,8 @@ public class EmailServer {
                         try {
                             listener.on(msg);
                         } catch (Exception e) {
+                            logger.error("Unexpected failure", e);
                             fail(e.getMessage());
-                            e.printStackTrace();
                         }
                     }
                 } catch (MessagingException me) {
@@ -116,7 +116,7 @@ public class EmailServer {
             @Override
             public boolean onPortNumber(int port) {
                 try {
-                    EmailServer server = new EmailServer("localhost", port, username, password);
+                    EmailServer server = new EmailServer("localhost", port, username, password, logger);
                     server.start();
                     emailServer.set(server);
                     return true;
