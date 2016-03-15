@@ -181,9 +181,7 @@ public class WatcherScheduleEngineBenchmark {
                                     jvmUsedHeapSpace.inc(heapUsed.bytes());
                                     Thread.sleep(1000);
                                 }
-                            } catch (InterruptedException e) {
-                                e.printStackTrace();
-                            }
+                            } catch (InterruptedException ignored) {}
                         }
                     });
                     sampleThread.start();
