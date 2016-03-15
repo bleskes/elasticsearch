@@ -76,7 +76,7 @@ public class SchedulerConfigVerifierTest
     {
         SchedulerConfig conf = new SchedulerConfig();
         conf.setDataSource(DataSource.FILE);
-        conf.setPath("myfile.csv");
+        conf.setFilePath("myfile.csv");
 
         SchedulerConfigVerifier.verify(conf);
     }
@@ -99,7 +99,7 @@ public class SchedulerConfigVerifierTest
     {
         SchedulerConfig conf = new SchedulerConfig();
         conf.setDataSource(DataSource.FILE);
-        conf.setPath("");
+        conf.setFilePath("");
 
         m_ExpectedException.expect(JobConfigurationException.class);
         m_ExpectedException.expect(
@@ -113,7 +113,7 @@ public class SchedulerConfigVerifierTest
     {
         SchedulerConfig conf = new SchedulerConfig();
         conf.setDataSource(DataSource.FILE);
-        conf.setPath("myfile.csv");
+        conf.setFilePath("myfile.csv");
         conf.setBaseUrl("http://localhost:9200/");
 
         m_ExpectedException.expect(JobConfigurationException.class);
@@ -161,7 +161,7 @@ public class SchedulerConfigVerifierTest
         conf.setTypes(Arrays.asList("mytype"));
         ObjectMapper mapper = new ObjectMapper();
         conf.setQuery(mapper.readValue("{ \"match_all\" : {} }", new TypeReference<Map<String, Object>>(){}));
-        conf.setTail(true);
+        conf.setTailFile(true);
 
         m_ExpectedException.expect(JobConfigurationException.class);
         m_ExpectedException.expect(

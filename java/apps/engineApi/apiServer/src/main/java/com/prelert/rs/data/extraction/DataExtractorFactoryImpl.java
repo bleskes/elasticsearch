@@ -27,11 +27,17 @@
 
 package com.prelert.rs.data.extraction;
 
+import java.nio.charset.StandardCharsets;
+import java.security.GeneralSecurityException;
+import java.util.Base64;
 import java.util.Map;
+import java.util.Objects;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
+
+import org.apache.log4j.Logger;
 
 import com.prelert.data.extractor.elasticsearch.ElasticsearchDataExtractor;
 import com.prelert.job.JobDetails;
@@ -39,9 +45,19 @@ import com.prelert.job.SchedulerConfig;
 import com.prelert.job.SchedulerConfig.DataSource;
 import com.prelert.job.data.extraction.DataExtractor;
 import com.prelert.job.data.extraction.DataExtractorFactory;
+import com.prelert.job.password.PasswordManager;
 
 public class DataExtractorFactoryImpl implements DataExtractorFactory
 {
+    private static final Logger LOGGER = Logger.getLogger(DataExtractorFactoryImpl.class);
+
+    private final PasswordManager m_PasswordManager;
+
+    public DataExtractorFactoryImpl(PasswordManager passwordManager)
+    {
+        m_PasswordManager = Objects.requireNonNull(passwordManager);
+    }
+
     @Override
     public DataExtractor newExtractor(JobDetails job)
     {
@@ -58,10 +74,39 @@ public class DataExtractorFactoryImpl implements DataExtractorFactory
         String timeField = job.getDataDescription().getTimeField();
         SchedulerConfig schedulerConfig = job.getSchedulerConfig();
         return ElasticsearchDataExtractor.create(schedulerConfig.getBaseUrl(),
+                createBasicAuthHeader(schedulerConfig.getUsername(), schedulerConfig.getEncryptedPassword()),
                 schedulerConfig.getIndexes(), schedulerConfig.getTypes(),
                 stringifyElasticsearchQuery(schedulerConfig.getQuery()),
                 stringifyElasticsearchAggregations(schedulerConfig.getAggregations(), schedulerConfig.getAggs()),
                 timeField);
+    }
+
+    @VisibleForTesting
+    String createBasicAuthHeader(String username, String encryptedPassword)
+    {
+        if (username == null)
+        {
+            return null;
+        }
+
+        String password = null;
+        try
+        {
+            password = m_PasswordManager.decryptPassword(encryptedPassword);
+        }
+        catch (GeneralSecurityException e)
+        {
+            LOGGER.error("Problem decrypting password", e);
+        }
+        if (password == null)
+        {
+            return null;
+        }
+
+        String toEncode = username + ":" + password;
+        // The decision to use ISO 8859-1 is based on:
+        // http://stackoverflow.com/questions/7242316/what-encoding-should-i-use-for-http-basic-authentication
+        return "Basic " + Base64.getMimeEncoder().encodeToString(toEncode.getBytes(StandardCharsets.ISO_8859_1));
     }
 
     @VisibleForTesting

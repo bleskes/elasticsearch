@@ -32,6 +32,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.security.GeneralSecurityException;
 import java.time.Duration;
 import java.util.Date;
 import java.util.HashMap;
@@ -79,6 +80,7 @@ import com.prelert.job.manager.actions.Action;
 import com.prelert.job.manager.actions.ActionGuardian;
 import com.prelert.job.manager.actions.ActionGuardian.ActionTicket;
 import com.prelert.job.messages.Messages;
+import com.prelert.job.password.PasswordManager;
 import com.prelert.job.persistence.DataStoreException;
 import com.prelert.job.persistence.JobProvider;
 import com.prelert.job.persistence.QueryPage;
@@ -164,6 +166,7 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
     private final ProcessManager m_ProcessManager;
     private final DataExtractorFactory m_DataExtractorFactory;
     private final JobLoggerFactory m_JobLoggerFactory;
+    private final PasswordManager m_PasswordManager;
     private final JobTimeouts m_JobTimeouts;
 
     private final JobFactory m_JobFactory;
@@ -192,13 +195,15 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
      * @param jobDetailsProvider
      */
     public JobManager(JobProvider jobProvider, ProcessManager processManager,
-            DataExtractorFactory dataExtractorFactory, JobLoggerFactory jobLoggerFactory)
+            DataExtractorFactory dataExtractorFactory, JobLoggerFactory jobLoggerFactory,
+            PasswordManager passwordManager)
     {
         m_ActionGuardian = new ActionGuardian();
         m_JobProvider = Objects.requireNonNull(jobProvider);
         m_ProcessManager = Objects.requireNonNull(processManager);
         m_DataExtractorFactory = Objects.requireNonNull(dataExtractorFactory);
         m_JobLoggerFactory = Objects.requireNonNull(jobLoggerFactory);
+        m_PasswordManager = Objects.requireNonNull(passwordManager);
         m_JobTimeouts = new JobTimeouts(jobId -> closeJob(jobId));
 
         m_MaxAllowedJobs = calculateMaxJobsAllowed();
@@ -282,7 +287,7 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
     public JobDetails createJob(JobConfiguration jobConfig)
             throws TooManyJobsException, JobConfigurationException, JobIdAlreadyExistsException
     {
-        JobDetails jobDetails = m_JobFactory.create(jobConfig, m_ProcessManager.numberOfRunningJobs());
+        JobDetails jobDetails = m_JobFactory.create(securePasswords(jobConfig), m_ProcessManager.numberOfRunningJobs());
 
         if (!m_JobProvider.jobIdIsUnique(jobDetails.getId()))
         {
@@ -300,13 +305,32 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
         return jobDetails;
     }
 
+    private JobConfiguration securePasswords(JobConfiguration jobConfig)
+            throws JobConfigurationException
+    {
+        if (jobConfig != null && jobConfig.getSchedulerConfig() != null)
+        {
+            try
+            {
+                m_PasswordManager.secureStorage(jobConfig.getSchedulerConfig());
+            }
+            catch (GeneralSecurityException e)
+            {
+                throw new JobConfigurationException(Messages.getMessage(Messages.JOB_CONFIG_CANNOT_ENCRYPT_PASSWORD),
+                        ErrorCodes.ENCRYPTION_FAILURE_ERROR, e);
+            }
+        }
+        return jobConfig;
+    }
+
     private JobScheduler createJobScheduler(JobDetails job)
     {
         Duration bucketSpan = Duration.ofSeconds(job.getAnalysisConfig().getBucketSpan());
         Duration frequency = getFrequencyOrDefault(job);
         Duration queryDelay = Duration.ofSeconds(job.getSchedulerConfig().getQueryDelay());
         JobScheduler jobScheduler = new JobScheduler(job.getId(), bucketSpan, frequency, queryDelay,
-                m_DataExtractorFactory.newExtractor(job), this, m_JobProvider, m_JobLoggerFactory);
+                m_DataExtractorFactory.newExtractor(job), this, m_JobProvider,
+                m_JobLoggerFactory);
         m_ScheduledJobs.put(job.getId(), jobScheduler);
         return jobScheduler;
     }

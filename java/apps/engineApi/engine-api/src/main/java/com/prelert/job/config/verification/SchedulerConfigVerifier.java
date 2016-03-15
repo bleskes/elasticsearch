@@ -87,8 +87,11 @@ public final class SchedulerConfigVerifier
     private static void verifyFileSchedulerConfig(SchedulerConfig config, DataSource dataSource)
             throws JobConfigurationException
     {
-        checkFieldIsNotNullOrEmpty(SchedulerConfig.PATH, config.getPath());
+        checkFieldIsNotNullOrEmpty(SchedulerConfig.FILE_PATH, config.getFilePath());
         checkFieldIsNull(dataSource, SchedulerConfig.BASE_URL, config.getBaseUrl());
+        checkFieldIsNull(dataSource, SchedulerConfig.USERNAME, config.getUsername());
+        checkFieldIsNull(dataSource, SchedulerConfig.PASSWORD, config.getPassword());
+        checkFieldIsNull(dataSource, SchedulerConfig.ENCRYPTED_PASSWORD, config.getEncryptedPassword());
         checkFieldIsNull(dataSource, SchedulerConfig.INDEXES, config.getIndexes());
         checkFieldIsNull(dataSource, SchedulerConfig.TYPES, config.getTypes());
         checkFieldIsNull(dataSource, SchedulerConfig.AGGREGATIONS, config.getAggregations());
@@ -99,14 +102,43 @@ public final class SchedulerConfigVerifier
             DataSource dataSource) throws JobConfigurationException
     {
         checkUrl(SchedulerConfig.BASE_URL, config.getBaseUrl());
+        checkUserPass(config.getUsername(), config.getPassword(), config.getEncryptedPassword());
         checkFieldIsNotNullOrEmpty(SchedulerConfig.INDEXES, config.getIndexes());
         checkFieldIsNotNullOrEmpty(SchedulerConfig.TYPES, config.getTypes());
         if (config.getAggregations() != null)
         {
             checkFieldIsNull(dataSource, SchedulerConfig.AGGS, config.getAggs());
         }
-        checkFieldIsNull(dataSource, SchedulerConfig.PATH, config.getPath());
-        checkFieldIsNull(dataSource, SchedulerConfig.TAIL, config.getTail());
+        checkFieldIsNull(dataSource, SchedulerConfig.FILE_PATH, config.getFilePath());
+        checkFieldIsNull(dataSource, SchedulerConfig.TAIL_FILE, config.getTailFile());
+    }
+
+    private static void checkUserPass(String username, String password, String encryptedPassword)
+            throws JobConfigurationException
+    {
+        if (username == null && password == null && encryptedPassword == null)
+        {
+            // It's acceptable to have no credentials
+            return;
+        }
+
+        if (username == null)
+        {
+            String msg = Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_INCOMPLETE_CREDENTIALS);
+            throw new JobConfigurationException(msg, ErrorCodes.SCHEDULER_INCOMPLETE_CREDENTIALS);
+        }
+
+        if (password == null && encryptedPassword == null)
+        {
+            String msg = Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_INCOMPLETE_CREDENTIALS);
+            throw new JobConfigurationException(msg, ErrorCodes.SCHEDULER_INCOMPLETE_CREDENTIALS);
+        }
+
+        if (password != null && encryptedPassword != null)
+        {
+            String msg = Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_MULTIPLE_PASSWORDS);
+            throw new JobConfigurationException(msg, ErrorCodes.SCHEDULER_MULTIPLE_PASSWORDS);
+        }
     }
 
     private static void checkFieldIsNull(DataSource dataSource, String fieldName, Object value)

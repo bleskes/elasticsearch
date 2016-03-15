@@ -148,6 +148,11 @@ public enum ErrorCodes
     DETECTOR_UNKNOWN_FIELD_ERROR(10117),
 
     /**
+     * Failed to encrypt password.
+     */
+    ENCRYPTION_FAILURE_ERROR(10118),
+
+    /**
      * The transform name isn't recognised
      */
     UNKNOWN_TRANSFORM(10201),
@@ -256,6 +261,16 @@ public enum ErrorCodes
      * A job configured with an ELASTICSEARCH scheduler must use the data format ELASTICSEARCH.
      */
     SCHEDULER_ELASTICSEARCH_REQUIRES_DATAFORMAT_ELASTICSEARCH(10307),
+
+    /**
+     * Both username and password must be specified if either is.
+     */
+    SCHEDULER_INCOMPLETE_CREDENTIALS(10308),
+
+    /**
+     * Both plain text and encrypted passwords were provided.
+     */
+    SCHEDULER_MULTIPLE_PASSWORDS(10309),
 
     // Data store errors
     /**

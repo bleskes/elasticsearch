@@ -45,6 +45,7 @@ import com.prelert.job.ModelDebugConfig;
 import com.prelert.job.ModelSizeStats;
 import com.prelert.job.ModelSnapshot;
 import com.prelert.job.ModelState;
+import com.prelert.job.SchedulerConfig;
 import com.prelert.job.audit.AuditMessage;
 import com.prelert.job.quantiles.Quantiles;
 import com.prelert.job.results.AnomalyCause;
@@ -314,6 +315,54 @@ public class ElasticsearchMappings
                                 .endObject()
                                 .startObject(TransformConfig.OUTPUTS)
                                     .field(TYPE, STRING).field(INDEX, NOT_ANALYZED)
+                                .endObject()
+                            .endObject()
+                        .endObject()
+                        .startObject(JobDetails.SCHEDULER_CONFIG)
+                            .field(TYPE, OBJECT)
+                            .startObject(PROPERTIES)
+                                .startObject(SchedulerConfig.DATA_SOURCE)
+                                    .field(TYPE, STRING).field(INDEX, NOT_ANALYZED)
+                                .endObject()
+                                .startObject(SchedulerConfig.QUERY_DELAY)
+                                    .field(TYPE, LONG)
+                                .endObject()
+                                .startObject(SchedulerConfig.FREQUENCY)
+                                    .field(TYPE, LONG)
+                                .endObject()
+                                .startObject(SchedulerConfig.FILE_PATH)
+                                    .field(TYPE, STRING).field(INDEX, NOT_ANALYZED)
+                                .endObject()
+                                .startObject(SchedulerConfig.TAIL_FILE)
+                                    .field(TYPE, BOOLEAN)
+                                .endObject()
+                                .startObject(SchedulerConfig.BASE_URL)
+                                    .field(TYPE, STRING).field(INDEX, NOT_ANALYZED)
+                                .endObject()
+                                // "username" is analyzed so that it has the
+                                // same mapping as a user field of the same
+                                // name - this means it doesn't have to be a
+                                // reserved field name
+                                .startObject(SchedulerConfig.USERNAME)
+                                    .field(TYPE, STRING)
+                                .endObject()
+                                .startObject(SchedulerConfig.ENCRYPTED_PASSWORD)
+                                    .field(TYPE, STRING).field(INDEX, NOT_ANALYZED)
+                                .endObject()
+                                .startObject(SchedulerConfig.INDEXES)
+                                    .field(TYPE, STRING).field(INDEX, NOT_ANALYZED)
+                                .endObject()
+                                .startObject(SchedulerConfig.TYPES)
+                                    .field(TYPE, STRING).field(INDEX, NOT_ANALYZED)
+                                .endObject()
+                                .startObject(SchedulerConfig.QUERY)
+                                    .field(TYPE, OBJECT)
+                                .endObject()
+                                .startObject(SchedulerConfig.AGGREGATIONS)
+                                    .field(TYPE, OBJECT)
+                                .endObject()
+                                .startObject(SchedulerConfig.AGGS)
+                                    .field(TYPE, OBJECT)
                                 .endObject()
                             .endObject()
                         .endObject()

@@ -35,12 +35,17 @@ import java.net.URL;
 class HttpGetRequester
 {
     private static final String GET = "GET";
+    private static final String AUTH_HEADER = "Authorization";
 
-    public HttpGetResponse get(String url, String requestBody) throws IOException
+    public HttpGetResponse get(String url, String authHeader, String requestBody) throws IOException
     {
         URL urlObject = new URL(url);
         HttpURLConnection connection = (HttpURLConnection) urlObject.openConnection();
         connection.setRequestMethod(GET);
+        if (authHeader != null)
+        {
+            connection.setRequestProperty(AUTH_HEADER, authHeader);
+        }
         connection.setDoOutput(true);
         writeRequestBody(requestBody, connection);
         return new HttpGetResponse(connection.getInputStream(), connection.getResponseCode());
