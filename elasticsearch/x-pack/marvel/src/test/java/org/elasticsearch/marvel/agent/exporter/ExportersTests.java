@@ -339,7 +339,6 @@ public class ExportersTests extends ESTestCase {
         }
     }
 
-
     static class TestFactory extends Exporter.Factory<TestFactory.TestExporter> {
         public TestFactory(String type, boolean singleton) {
             super(type, singleton);
@@ -436,13 +435,13 @@ public class ExportersTests extends ESTestCase {
             }
 
             @Override
-            public ExportBulk add(Collection<MonitoringDoc> docs) throws Exception {
+            public ExportBulk add(Collection<MonitoringDoc> docs) throws ExportException {
                 count.addAndGet(docs.size());
                 return this;
             }
 
             @Override
-            public void flush() throws Exception {
+            public void flush() throws ExportException {
             }
 
             AtomicInteger getCount() {
