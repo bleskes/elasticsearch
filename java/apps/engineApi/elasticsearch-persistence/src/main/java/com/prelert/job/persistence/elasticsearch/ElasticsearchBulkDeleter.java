@@ -193,39 +193,52 @@ public class ElasticsearchBulkDeleter implements JobDataDeleter
         QueryBuilder qb = QueryBuilders.boolQuery()
                 .filter(QueryBuilders.termQuery(Bucket.IS_INTERIM, true))
                 .filter(QueryBuilders.rangeQuery(ElasticsearchMappings.ES_TIMESTAMP)
-                    .from(new Date(0))
-                    .to(latestTime)
+                    .from(0L)
+                    .to(latestTime.getTime())
+                    .format("epoch_millis")
                     .includeUpper(true));
 
         SearchResponse searchResponse = m_Client.prepareSearch(m_JobId.getIndex())
                 .setTypes(Bucket.TYPE, AnomalyRecord.TYPE, Influencer.TYPE, BucketInfluencer.TYPE)
                 .setQuery(qb)
                 .addSort(SortBuilders.fieldSort(ElasticsearchMappings.ES_DOC))
+                .setScroll("5m")
+                .setSize(1000)
                 .get();
 
-        for (SearchHit hit : searchResponse.getHits())
+        String scrollId = searchResponse.getScrollId();
+        long totalHits = searchResponse.getHits().totalHits();
+        long totalDeletedCount = 0;
+        while (totalDeletedCount < totalHits)
         {
-            LOGGER.trace("Search hit for bucket: " + hit.toString() + ", " + hit.getId());
-            String type = hit.getType();
-            if (type.equals(Bucket.TYPE))
+            for (SearchHit hit : searchResponse.getHits())
             {
-                ++m_DeletedBucketCount;
+                LOGGER.trace("Search hit for bucket: " + hit.toString() + ", " + hit.getId());
+                String type = hit.getType();
+                if (type.equals(Bucket.TYPE))
+                {
+                    ++m_DeletedBucketCount;
+                }
+                else if (type.equals(AnomalyRecord.TYPE))
+                {
+                    ++m_DeletedRecordCount;
+                }
+                else if (type.equals(BucketInfluencer.TYPE))
+                {
+                    ++m_DeletedBucketInfluencerCount;
+                }
+                else if (type.equals(Influencer.TYPE))
+                {
+                    ++m_DeletedInfluencerCount;
+                }
+                ++totalDeletedCount;
+                m_BulkRequestBuilder.add(
+                        m_Client.prepareDelete(m_JobId.getIndex(), hit.getType(), hit.getId()));
             }
-            else if (type.equals(AnomalyRecord.TYPE))
-            {
-                ++m_DeletedRecordCount;
-            }
-            else if (type.equals(BucketInfluencer.TYPE))
-            {
-                ++m_DeletedBucketInfluencerCount;
-            }
-            else if (type.equals(Influencer.TYPE))
-            {
-                ++m_DeletedInfluencerCount;
-            }
-            m_BulkRequestBuilder.add(
-                    m_Client.prepareDelete(m_JobId.getIndex(), hit.getType(), hit.getId()));
+
+            searchResponse = m_Client.prepareSearchScroll(scrollId).setScroll("5m").get();
         }
+
     }
 
     @Override
