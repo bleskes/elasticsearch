@@ -757,11 +757,11 @@ public class JobsTest implements Closeable
             validateBuckets(Arrays.asList(new Bucket[]{bucket.getDocument()}),
                     bucketSpan, 0, false);
 
+            // Ask for missing bucket
             SingleDocument<Bucket> nonExistentBucket = m_WebServiceClient.prepareGetBucket(jobId,
-                    "missing_bucket").get();
+                    "1234567890").get();
             test(nonExistentBucket.isExists() == false);
             test(nonExistentBucket.getDocument() == null);
-            test(nonExistentBucket.getDocumentId().equals("missing_bucket"));
             test(nonExistentBucket.getType().equals(Bucket.TYPE));
 
 
@@ -833,11 +833,11 @@ public class JobsTest implements Closeable
             validateBuckets(Arrays.asList(new Bucket[]{bucket.getDocument()}),
                     bucketSpan, 0, true);
 
+            // Ask for missing bucket
             SingleDocument<Bucket> nonExistentBucket = m_WebServiceClient.prepareGetBucket(jobId,
-                    "missing_bucket").get();
+                    "1234567890").get();
             test(nonExistentBucket.isExists() == false);
             test(nonExistentBucket.getDocument() == null);
-            test(nonExistentBucket.getDocumentId().equals("missing_bucket"));
             test(nonExistentBucket.getType().equals(Bucket.TYPE));
 
 

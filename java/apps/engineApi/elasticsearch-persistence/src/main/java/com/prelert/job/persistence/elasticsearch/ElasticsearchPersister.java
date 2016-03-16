@@ -432,6 +432,7 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
     {
         ElasticsearchBulkDeleter deleter = new ElasticsearchBulkDeleter(m_Client, m_JobId, true);
         deleter.deleteInterimResults();
+        deleter.commit();
     }
 
     private interface Serialiser
