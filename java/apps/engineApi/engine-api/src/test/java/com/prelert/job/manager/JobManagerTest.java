@@ -33,6 +33,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import static org.mockito.AdditionalMatchers.not;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyMapOf;
 import static org.mockito.Matchers.anyString;
@@ -67,6 +68,7 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
@@ -136,7 +138,8 @@ public class JobManagerTest
     public void setUp()
     {
         MockitoAnnotations.initMocks(this);
-        when(m_JobProvider.jobIdIsUnique(anyString())).thenReturn(true);
+        when(m_JobProvider.jobIdIsUnique("not-unique")).thenReturn(false);
+        when(m_JobProvider.jobIdIsUnique(not(eq("not-unique")))).thenReturn(true);
         when(m_JobProvider.audit(anyString())).thenReturn(m_Auditor);
     }
 
@@ -242,7 +245,7 @@ public class JobManagerTest
         when(m_DataExtractorFactory.newExtractor(any(JobDetails.class))).thenReturn(dataExtractor);
         when(m_ProcessManager.jobIsRunning("foo")).thenReturn(true);
 
-        jobManager.createJob(jobConfig);
+        jobManager.createJob(jobConfig, false);
 
         jobManager.deleteJob("foo");
 
@@ -687,18 +690,20 @@ public class JobManagerTest
     }
 
     @Test
-    public void createJob_licensingConstraintMaxJobs() throws UnknownJobException,
+    public void testCreateJob_licensingConstraintMaxJobs() throws UnknownJobException,
             JobConfigurationException, JobIdAlreadyExistsException, IOException,
-            CannotStartSchedulerException
+            CannotStartSchedulerException, DataStoreException, NativeProcessRunException,
+            JobInUseException, CannotStopSchedulerException
     {
         givenLicenseConstraints(2, 2, 0);
-        when(m_ProcessManager.numberOfRunningJobs()).thenReturn(3);
+        when(m_ProcessManager.jobIsRunning(any())).thenReturn(false);
+        when(m_ProcessManager.numberOfRunningJobs()).thenReturn(2);
 
         JobManager jobManager = createJobManager();
 
         try
         {
-            jobManager.createJob(new JobConfiguration());
+            jobManager.createJob(new JobConfiguration(), false);
             fail();
         }
         catch (TooManyJobsException e)
@@ -711,11 +716,57 @@ public class JobManagerTest
     }
 
     @Test
-    public void createJob_licensingConstraintMaxDetectors()
+    public void testCreateJob_licensingConstraintOnLimitAndOverwriting() throws UnknownJobException,
+            JobConfigurationException, JobIdAlreadyExistsException, IOException,
+            CannotStartSchedulerException, DataStoreException, NativeProcessRunException,
+            JobInUseException, CannotStopSchedulerException
+    {
+        givenLicenseConstraints(2, 2, 0);
+        when(m_ProcessManager.jobIsRunning("not-unique")).thenReturn(true);
+        when(m_ProcessManager.numberOfRunningJobs()).thenReturn(2);
+        Mockito.doThrow(new NativeProcessRunException("mock", ErrorCodes.NATIVE_PROCESS_ERROR)).when(m_ProcessManager).closeJob("not-unique");
+
+        AnalysisConfig analysisConfig = new AnalysisConfig();
+        analysisConfig.setBucketSpan(3600L);
+        Detector detector = new Detector();
+        detector.setFunction("count");
+
+        analysisConfig.setDetectors(Arrays.asList(detector));
+
+        JobConfiguration jobConfig = new JobConfiguration();
+        jobConfig.setId("not-unique");
+        jobConfig.setAnalysisConfig(analysisConfig);
+
+        JobManager jobManager = createJobManager();
+
+        try
+        {
+            jobManager.createJob(jobConfig, true);
+            fail();
+        }
+        catch (TooManyJobsException tmje)
+        {
+            // Usually creating a third job when 2 are allowed and 2 are running
+            // would throw a license exception, but in the case of overwriting
+            // one of the running jobs we shouldn't get this
+            fail();
+        }
+        catch (NativeProcessRunException npre)
+        {
+            assertEquals(ErrorCodes.NATIVE_PROCESS_ERROR, npre.getErrorCode());
+
+            assertEquals("mock", npre.getMessage());
+        }
+    }
+
+    @Test
+    public void testCreateJob_licensingConstraintMaxDetectors()
     throws UnknownJobException, JobIdAlreadyExistsException,
-            IOException, TooManyJobsException, CannotStartSchedulerException
+            IOException, TooManyJobsException, CannotStartSchedulerException, DataStoreException, NativeProcessRunException,
+            JobInUseException, CannotStopSchedulerException
     {
         givenLicenseConstraints(5, 1, 0);
+        when(m_ProcessManager.jobIsRunning(any())).thenReturn(false);
         when(m_ProcessManager.numberOfRunningJobs()).thenReturn(3);
 
         JobManager jobManager = createJobManager();
@@ -726,7 +777,7 @@ public class JobManagerTest
             // create 2 detectors
             ac.getDetectors().add(new Detector());
             ac.getDetectors().add(new Detector());
-            jobManager.createJob(new JobConfiguration(ac));
+            jobManager.createJob(new JobConfiguration(ac), false);
             fail();
         }
         catch (JobConfigurationException e)
@@ -739,11 +790,13 @@ public class JobManagerTest
     }
 
     @Test
-    public void createJob_licensingConstraintMaxPartitions() throws UnknownJobException,
+    public void testCreateJob_licensingConstraintMaxPartitions() throws UnknownJobException,
             JobIdAlreadyExistsException, IOException, TooManyJobsException,
-            CannotStartSchedulerException
+            CannotStartSchedulerException, DataStoreException, NativeProcessRunException,
+            JobInUseException, CannotStopSchedulerException
     {
         givenLicenseConstraints(5, -1, 0);
+        when(m_ProcessManager.jobIsRunning(any())).thenReturn(false);
         when(m_ProcessManager.numberOfRunningJobs()).thenReturn(3);
 
         JobManager jobManager = createJobManager();
@@ -755,7 +808,7 @@ public class JobManagerTest
             Detector d = new Detector();
             d.setPartitionFieldName("pfield");
             ac.getDetectors().add(d);
-            jobManager.createJob(new JobConfiguration(ac));
+            jobManager.createJob(new JobConfiguration(ac), false);
             fail();
         }
         catch (JobConfigurationException e)
@@ -768,11 +821,43 @@ public class JobManagerTest
     }
 
     @Test
+    public void testCreateJob_OverwriteExisting()
+            throws NoSuchScheduledJobException, UnknownJobException,
+            CannotStartSchedulerException, TooManyJobsException,
+            JobConfigurationException, JobIdAlreadyExistsException, IOException,
+            NativeProcessRunException, JobInUseException, DataStoreException,
+            CannotStopSchedulerException
+    {
+        givenProcessInfo(2);
+        JobManager jobManager = createJobManager();
+        when(m_JobProvider.deleteJob("not-unique")).thenReturn(true);
+
+        AnalysisConfig analysisConfig = new AnalysisConfig();
+        analysisConfig.setBucketSpan(3600L);
+        Detector detector = new Detector();
+        detector.setFunction("count");
+
+        analysisConfig.setDetectors(Arrays.asList(detector));
+
+        JobConfiguration jobConfig = new JobConfiguration();
+        jobConfig.setId("not-unique");
+        jobConfig.setAnalysisConfig(analysisConfig);
+
+        JobDetails job = jobManager.createJob(jobConfig, true);
+
+        verify(m_JobProvider, times(2)).audit("not-unique");
+        InOrder inOrder = Mockito.inOrder(m_Auditor, m_Auditor);
+        inOrder.verify(m_Auditor).info(eq("Job deleted"));
+        inOrder.verify(m_Auditor).info(eq("Job created"));
+    }
+
+    @Test
     public void testCreateJob_FillsDefaults()
             throws NoSuchScheduledJobException, UnknownJobException,
             CannotStartSchedulerException, TooManyJobsException,
             JobConfigurationException, JobIdAlreadyExistsException, IOException,
-            NativeProcessRunException, JobInUseException
+            NativeProcessRunException, JobInUseException, DataStoreException,
+            CannotStopSchedulerException
     {
         givenProcessInfo(2);
         JobManager jobManager = createJobManager();
@@ -795,7 +880,7 @@ public class JobManagerTest
         jobConfig.setId("revenue-by-vendor");
         jobConfig.setAnalysisConfig(analysisConfig);
 
-        JobDetails job = jobManager.createJob(jobConfig);
+        JobDetails job = jobManager.createJob(jobConfig, false);
 
         assertEquals("sum(revenue) by vendor", job.getAnalysisConfig().getDetectors().get(0).getDetectorDescription());
         assertEquals("Named", job.getAnalysisConfig().getDetectors().get(1).getDetectorDescription());
@@ -900,7 +985,8 @@ public class JobManagerTest
     public void testStartJobScheduler_GivenNewlyCreatedJob() throws UnknownJobException,
             TooManyJobsException, JobConfigurationException, JobIdAlreadyExistsException,
             CannotStartSchedulerException, IOException, NoSuchScheduledJobException,
-            CannotStopSchedulerException, NativeProcessRunException, JobInUseException
+            CannotStopSchedulerException, NativeProcessRunException, JobInUseException,
+            DataStoreException
     {
         givenProcessInfo(2);
         JobManager jobManager = createJobManager();
@@ -911,7 +997,7 @@ public class JobManagerTest
         DataExtractor dataExtractor = mock(DataExtractor.class);
         when(m_DataExtractorFactory.newExtractor(any(JobDetails.class))).thenReturn(dataExtractor);
 
-        JobDetails job = jobManager.createJob(jobConfig);
+        JobDetails job = jobManager.createJob(jobConfig, false);
         DataCounts dataCounts = new DataCounts();
         dataCounts.setLatestRecordTimeStamp(new Date(0));
         job.setCounts(dataCounts);
@@ -1232,7 +1318,7 @@ public class JobManagerTest
         DataExtractor dataExtractor = mock(DataExtractor.class);
         when(m_DataExtractorFactory.newExtractor(any(JobDetails.class))).thenReturn(dataExtractor);
 
-        jobManager.createJob(jobConfig);
+        jobManager.createJob(jobConfig, false);
 
         jobManager.pauseJob("foo");
     }
@@ -1365,7 +1451,7 @@ public class JobManagerTest
         DataExtractor dataExtractor = mock(DataExtractor.class);
         when(m_DataExtractorFactory.newExtractor(any(JobDetails.class))).thenReturn(dataExtractor);
 
-        jobManager.createJob(jobConfig);
+        jobManager.createJob(jobConfig, false);
 
         jobManager.resumeJob("foo");
     }
