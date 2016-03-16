@@ -106,6 +106,8 @@ public class PrelertWebApp extends Application
 
     private static final String ENCRYPTION_KEY_FILE = "aes.key";
     private static final String ENCRYPTION_TRANSFORMATION = "AES/CBC/PKCS5Padding";
+    // The size of this array may need to be changed if the transformation on the line above is changed
+    private static final byte[] DEV_KEY_BYTES = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 };
 
     /**
      * This property specifies the client that should be used to connect
@@ -234,15 +236,29 @@ public class PrelertWebApp extends Application
 
     private PasswordManager createPasswordManager()
     {
-        File keyFile = new File(ProcessCtrl.CONFIG_DIR, ENCRYPTION_KEY_FILE);
+        PasswordManager passwordManager = null;
         try
         {
-            return new PasswordManager(ENCRYPTION_TRANSFORMATION, keyFile);
-        }
-        catch (IOException ioe)
-        {
-            LOGGER.error("Problem reading encryption key file " +
-                    keyFile.getAbsolutePath(), ioe);
+            File keyFile = new File(ProcessCtrl.CONFIG_DIR, ENCRYPTION_KEY_FILE);
+            try
+            {
+                return new PasswordManager(ENCRYPTION_TRANSFORMATION, keyFile);
+            }
+            catch (IOException ioe)
+            {
+                LOGGER.error("Problem reading encryption key file " +
+                        keyFile.getAbsolutePath(), ioe);
+            }
+            // The installer will always create an encryption key, so we only
+            // get here when developers run the API outside of an installed
+            // build OR if a customer deletes their encryption key file.
+            passwordManager = new PasswordManager(ENCRYPTION_TRANSFORMATION,
+                    DEV_KEY_BYTES);
+            LOGGER.warn("Falling back to internal development encryption key - " +
+                    "ENCRYPTED PASSWORDS ARE NOT SECURE!");
+            LOGGER.warn("Create a " + DEV_KEY_BYTES.length + " byte file " +
+                    keyFile.getAbsolutePath() + " with minimal read permissions " +
+                    "to ensure your passwords are securely encrypted");
         }
         catch (NoSuchAlgorithmException nsae)
         {
@@ -252,7 +268,7 @@ public class PrelertWebApp extends Application
                     " not supported", nsae);
         }
 
-        return null;
+        return passwordManager;
     }
 
     private void restartJobManager()
