@@ -33,7 +33,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 import org.apache.log4j.Logger;
@@ -47,7 +46,6 @@ import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 
-import com.google.common.base.Stopwatch;
 import com.prelert.job.JobDetails;
 import com.prelert.job.ModelSizeStats;
 import com.prelert.job.ModelSnapshot;
@@ -102,12 +100,6 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
     private final Client m_Client;
     private final ElasticsearchJobId m_JobId;
 
-    private Stopwatch m_SearchStopwatch = Stopwatch.createUnstarted();
-    private Stopwatch m_DeleteStopwatch = Stopwatch.createUnstarted();
-    private Stopwatch m_OverallStopwatch = Stopwatch.createUnstarted();
-    private Stopwatch m_NonInterimSearchStopwatch = Stopwatch.createUnstarted();
-    private Stopwatch m_NonInterimDeleteStopwatch = Stopwatch.createUnstarted();
-
     /**
      * Create with the Elasticsearch client. Data will be written to
      * the index <code>jobId</code>
@@ -131,37 +123,6 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
 
         try
         {
-            m_OverallStopwatch.start();
-
-            if (bucket.isInterim() == false)
-            {
-                // Delete older interim results, if any exist
-                // Older results might not have been committed to the data store, so
-                // this performs a blanket search for any older interim results
-                ElasticsearchBulkDeleter deleter = new ElasticsearchBulkDeleter(m_Client, m_JobId, true);
-                m_SearchStopwatch.start();
-                deleter.deletePriorInterimResults(bucket.getTimestamp());
-                m_SearchStopwatch.stop();
-                m_DeleteStopwatch.start();
-                deleter.commit();
-                m_DeleteStopwatch.stop();
-            }
-            else
-            {
-                // If a bucket reset occurred, this interim bucket replaces an existing interim bucket
-                // A flush should have committed previous writes to the data store
-                ElasticsearchBulkDeleter deleter = new ElasticsearchBulkDeleter(m_Client, m_JobId, true);
-                m_NonInterimSearchStopwatch.start();
-                deleter.deleteRecords(bucket);
-                deleter.deleteBucketInfluencers(bucket);
-                deleter.deleteInfluencers(bucket);
-                deleter.deleteBucketByTime(bucket);
-                m_NonInterimSearchStopwatch.stop();
-                m_NonInterimDeleteStopwatch.start();
-                deleter.commit();
-                m_NonInterimDeleteStopwatch.stop();
-            }
-
             XContentBuilder content = serialiseBucket(bucket);
 
             LOGGER.trace("ES API CALL: index type " + Bucket.TYPE +
@@ -218,7 +179,6 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
 
                 LOGGER.trace("ES API CALL: bulk request with " + addRecordsRequest.numberOfActions() + " actions");
                 BulkResponse addRecordsResponse = addRecordsRequest.execute().actionGet();
-                // iterate IDs over this
                 if (addRecordsResponse.hasFailures())
                 {
                     LOGGER.error("Bulk index of AnomalyRecord has errors");
@@ -228,12 +188,6 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
                     }
                 }
             }
-            m_OverallStopwatch.stop();
-            LOGGER.info("Overall time: " + m_OverallStopwatch.elapsed(TimeUnit.MILLISECONDS) +
-                    "\nInterimSearch time: " + m_SearchStopwatch.elapsed(TimeUnit.MILLISECONDS) +
-                    "\nInterimDelete time: " + m_DeleteStopwatch.elapsed(TimeUnit.MILLISECONDS) +
-                    "\nNonInt Search time: " + m_NonInterimSearchStopwatch.elapsed(TimeUnit.MILLISECONDS) +
-                    "\nNonInt Delete time: " + m_NonInterimDeleteStopwatch.elapsed(TimeUnit.MILLISECONDS));
         }
         catch (IOException e)
         {
@@ -471,6 +425,13 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
     public void updateInfluencer(Influencer influencer)
     {
         persistInfluencer(influencer);
+    }
+
+    @Override
+    public void deleteInterimResults()
+    {
+        ElasticsearchBulkDeleter deleter = new ElasticsearchBulkDeleter(m_Client, m_JobId, true);
+        deleter.deleteInterimResults();
     }
 
     private interface Serialiser

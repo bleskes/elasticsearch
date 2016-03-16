@@ -27,7 +27,6 @@
 
 package com.prelert.job.persistence.elasticsearch;
 
-import java.util.Date;
 import java.util.Objects;
 import java.util.function.LongSupplier;
 
@@ -188,15 +187,9 @@ public class ElasticsearchBulkDeleter implements JobDataDeleter
         ++m_DeletedModelSnapshotCount;
     }
 
-    public void deletePriorInterimResults(Date latestTime)
+    public void deleteInterimResults()
     {
-        QueryBuilder qb = QueryBuilders.boolQuery()
-                .filter(QueryBuilders.termQuery(Bucket.IS_INTERIM, true))
-                .filter(QueryBuilders.rangeQuery(ElasticsearchMappings.ES_TIMESTAMP)
-                    .from(0L)
-                    .to(latestTime.getTime())
-                    .format("epoch_millis")
-                    .includeUpper(true));
+        QueryBuilder qb = QueryBuilders.termQuery(Bucket.IS_INTERIM, true);
 
         SearchResponse searchResponse = m_Client.prepareSearch(m_JobId.getIndex())
                 .setTypes(Bucket.TYPE, AnomalyRecord.TYPE, Influencer.TYPE, BucketInfluencer.TYPE)
@@ -238,7 +231,6 @@ public class ElasticsearchBulkDeleter implements JobDataDeleter
 
             searchResponse = m_Client.prepareSearchScroll(scrollId).setScroll("5m").get();
         }
-
     }
 
     @Override

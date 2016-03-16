@@ -32,7 +32,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-
 import static org.mockito.Mockito.mock;
 
 import java.io.ByteArrayInputStream;
@@ -219,6 +218,11 @@ public class AutoDetectResultsParserTest
         public void persistInfluencer(Influencer influencer)
         {
             m_Influencers.add(influencer);
+        }
+
+        @Override
+        public void deleteInterimResults()
+        {
         }
     }
 
@@ -495,13 +499,15 @@ public class AutoDetectResultsParserTest
         InputStream inputStream = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
         Logger logger = mock(Logger.class);
         JobResultsPersister persister = mock(JobResultsPersister.class);
+
         Renormaliser renormaliser = mock(Renormaliser.class);
 
         AutoDetectResultsParser parser = new AutoDetectResultsParser();
 
         parser.parseResults(inputStream, persister, renormaliser, logger);
 
-        Mockito.verifyZeroInteractions(persister);
+        // should be one call to deleteInterimResults()
+        Mockito.verify(persister).deleteInterimResults();
     }
 
     @Test

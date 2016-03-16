@@ -243,26 +243,11 @@ public class ElasticsearchPersisterTest
         createBucket("1234567830", true, persister);
         createBucket("1234567840", true, persister);
         createBucket("1234567850", true, persister);
-        try
-        {
-            Thread.sleep(2000);
-
-        } catch (InterruptedException e)
-        {
-        }
 
         createBucket("1234567830", false, persister);
 
         createBucket("1234567860", true, persister);
         createBucket("1234567870", true, persister);
-
-        try
-        {
-            Thread.sleep(2000);
-
-        } catch (InterruptedException e)
-        {
-        }
 
         createBucket("1234567850", false, persister);
 
