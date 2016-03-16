@@ -67,6 +67,7 @@ public final class Messages
     public static final String JOB_CANNOT_PAUSE = "job.cannot.pause";
     public static final String JOB_CANNOT_RESUME = "job.cannot.resume";
 
+    public static final String JOB_CONFIG_CANNOT_ENCRYPT_PASSWORD = "job.config.cannot.encrypt.password";
     public static final String JOB_CONFIG_BYFIELD_INCOMPATIBLE_FUNCTION = "job.config.byField.incompatible.function";
     public static final String JOB_CONFIG_BYFIELD_NEEDS_ANOTHER = "job.config.byField.needs.another";
     public static final String JOB_CONFIG_DATAFORMAT_REQUIRES_TRANSFORM = "job.config.dataformat.requires.transform";
@@ -133,6 +134,8 @@ public final class Messages
     public static final String JOB_CONFIG_SCHEDULER_ELASTICSEARCH_DOES_NOT_SUPPORT_LATENCY = "job.config.scheduler.elasticsearch.does.not.support.latency";
     public static final String JOB_CONFIG_SCHEDULER_AGGREGATIONS_REQUIRES_SUMMARY_COUNT_FIELD = "job.config.scheduler.aggregations.requires.summary.count.field";
     public static final String JOB_CONFIG_SCHEDULER_ELASTICSEARCH_REQUIRES_DATAFORMAT_ELASTICSEARCH = "job.config.scheduler.elasticsearch.requires.dataformat.elasticsearch";
+    public static final String JOB_CONFIG_SCHEDULER_INCOMPLETE_CREDENTIALS = "job.config.scheduler.incomplete.credentials";
+    public static final String JOB_CONFIG_SCHEDULER_MULTIPLE_PASSWORDS = "job.config.scheduler.multiple.passwords";
 
     public static final String JOB_DATA_CONCURRENT_USE_CLOSE = "job.data.concurrent.use.close";
     public static final String JOB_DATA_CONCURRENT_USE_DELETE = "job.data.concurrent.use.delete";

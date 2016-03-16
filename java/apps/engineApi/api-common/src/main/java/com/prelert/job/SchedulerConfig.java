@@ -42,7 +42,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
  * <code>null</code> values.
  */
 @JsonInclude(Include.NON_NULL)
-public class SchedulerConfig
+public class SchedulerConfig implements PasswordStorage
 {
     /**
      * Enum of the acceptable data sources.
@@ -87,9 +87,12 @@ public class SchedulerConfig
     public static final String DATA_SOURCE = "dataSource";
     public static final String QUERY_DELAY = "queryDelay";
     public static final String FREQUENCY = "frequency";
-    public static final String PATH = "path";
-    public static final String TAIL = "tail";
+    public static final String FILE_PATH = "filePath";
+    public static final String TAIL_FILE = "tailFile";
     public static final String BASE_URL = "baseUrl";
+    public static final String USERNAME = "username";
+    public static final String PASSWORD = "password";
+    public static final String ENCRYPTED_PASSWORD = "encryptedPassword";
     public static final String INDEXES = "indexes";
     public static final String TYPES = "types";
     public static final String QUERY = "query";
@@ -113,8 +116,16 @@ public class SchedulerConfig
     /**
      * These values apply to the FILE data source
      */
-    private String m_Path;
-    private Boolean m_Tail;
+    private String m_FilePath;
+    private Boolean m_TailFile;
+
+    /**
+     * Used for data sources that require credentials.  May be null in the case
+     * where credentials are sometimes needed and sometimes not (e.g. Elasticsearch).
+     */
+    private String m_Username;
+    private String m_Password;
+    private String m_EncryptedPassword;
 
     /**
      * These values apply to the ELASTICSEARCH data source
@@ -172,14 +183,14 @@ public class SchedulerConfig
      * For the FILE data source only, the path to the file.
      * @return The path to the file, or <code>null</code> if not set.
      */
-    public String getPath()
+    public String getFilePath()
     {
-        return m_Path;
+        return m_FilePath;
     }
 
-    public void setPath(String path)
+    public void setFilePath(String filePath)
     {
-        m_Path = path;
+        m_FilePath = filePath;
     }
 
     /**
@@ -187,14 +198,14 @@ public class SchedulerConfig
      * just be read from once.
      * @return Should the file be tailed?  (<code>null</code> if not set.)
      */
-    public Boolean getTail()
+    public Boolean getTailFile()
     {
-        return m_Tail;
+        return m_TailFile;
     }
 
-    public void setTail(Boolean tail)
+    public void setTailFile(Boolean tailFile)
     {
-        m_Tail = tail;
+        m_TailFile = tailFile;
     }
 
     /**
@@ -210,6 +221,53 @@ public class SchedulerConfig
     public void setBaseUrl(String baseUrl)
     {
         m_BaseUrl = baseUrl;
+    }
+
+    /**
+     * The username to use to connect to the data source (if any).
+     * @return The username, or <code>null</code> if not set.
+     */
+    public String getUsername()
+    {
+        return m_Username;
+    }
+
+    public void setUsername(String username)
+    {
+        m_Username = username;
+    }
+
+    /**
+     * The plain text password to use to connect to the data source (if any).
+     * This is likely to return <code>null</code> most of the time, as the
+     * intention is that it is only present it initial configurations, and gets
+     * replaced with an encrypted password as soon as possible after receipt.
+     * @return The password, or <code>null</code> if not set.
+     */
+    public String getPassword()
+    {
+        return m_Password;
+    }
+
+    public void setPassword(String password)
+    {
+        m_Password = password;
+    }
+
+    /**
+     * The encrypted password to use to connect to the data source (if any).
+     * A class outside this package is responsible for encrypting and decrypting
+     * the password.
+     * @return The password, or <code>null</code> if not set.
+     */
+    public String getEncryptedPassword()
+    {
+        return m_EncryptedPassword;
+    }
+
+    public void setEncryptedPassword(String encryptedPassword)
+    {
+        m_EncryptedPassword = encryptedPassword;
     }
 
     /**
@@ -404,9 +462,12 @@ public class SchedulerConfig
         return Objects.equals(this.m_DataSource, that.m_DataSource) &&
                 Objects.equals(this.m_Frequency, that.m_Frequency) &&
                 Objects.equals(this.m_QueryDelay, that.m_QueryDelay) &&
-                Objects.equals(this.m_Path, that.m_Path) &&
-                Objects.equals(this.m_Tail, that.m_Tail) &&
+                Objects.equals(this.m_FilePath, that.m_FilePath) &&
+                Objects.equals(this.m_TailFile, that.m_TailFile) &&
                 Objects.equals(this.m_BaseUrl, that.m_BaseUrl) &&
+                Objects.equals(this.m_Username, that.m_Username) &&
+                Objects.equals(this.m_Password, that.m_Password) &&
+                Objects.equals(this.m_EncryptedPassword, that.m_EncryptedPassword) &&
                 Objects.equals(this.m_Indexes, that.m_Indexes) &&
                 Objects.equals(this.m_Types, that.m_Types) &&
                 Objects.equals(this.m_Query, that.m_Query) &&
@@ -416,7 +477,8 @@ public class SchedulerConfig
     @Override
     public int hashCode()
     {
-        return Objects.hash(m_DataSource, m_Frequency, m_QueryDelay, m_Path, m_Tail, m_BaseUrl,
+        return Objects.hash(m_DataSource, m_Frequency, m_QueryDelay, m_FilePath,
+                m_TailFile, m_BaseUrl, m_Username, m_Password, m_EncryptedPassword,
                 m_Indexes, m_Types, m_Query, m_Aggregations, m_Aggs);
     }
 }

@@ -32,6 +32,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.NoSuchAlgorithmException;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZoneId;
@@ -53,6 +54,7 @@ import com.prelert.job.logging.DefaultJobLoggerFactory;
 import com.prelert.job.logging.JobLoggerFactory;
 import com.prelert.job.manager.JobManager;
 import com.prelert.job.messages.Messages;
+import com.prelert.job.password.PasswordManager;
 import com.prelert.job.persistence.JobProvider;
 import com.prelert.job.persistence.OldDataRemover;
 import com.prelert.job.process.ProcessCtrl;
@@ -101,6 +103,9 @@ public class PrelertWebApp extends Application
 
     private static final String IGNORE_DOWNTIME_ON_STARTUP_PROP = "ignore.downtime.on.startup";
     private static final boolean DEFAULT_IGNORE_DOWNTIME_ON_STARTUP = true;
+
+    private static final String ENCRYPTION_KEY_FILE = "aes.key";
+    private static final String ENCRYPTION_TRANSFORMATION = "AES/CBC/PKCS5Padding";
 
     /**
      * This property specifies the client that should be used to connect
@@ -220,9 +225,34 @@ public class PrelertWebApp extends Application
     private JobManager createJobManager(JobProvider jobProvider, ElasticsearchFactory esFactory,
             JobLoggerFactory jobLoggerFactory)
     {
+        PasswordManager passwordManager = createPasswordManager();
         return new JobManager(jobProvider,
                 createProcessManager(jobProvider, esFactory, jobLoggerFactory),
-                new DataExtractorFactoryImpl(), jobLoggerFactory);
+                new DataExtractorFactoryImpl(passwordManager), jobLoggerFactory,
+                passwordManager);
+    }
+
+    private PasswordManager createPasswordManager()
+    {
+        File keyFile = new File(ProcessCtrl.CONFIG_DIR, ENCRYPTION_KEY_FILE);
+        try
+        {
+            return new PasswordManager(ENCRYPTION_TRANSFORMATION, keyFile);
+        }
+        catch (IOException ioe)
+        {
+            LOGGER.error("Problem reading encryption key file " +
+                    keyFile.getAbsolutePath(), ioe);
+        }
+        catch (NoSuchAlgorithmException nsae)
+        {
+            // This should never happen outside dev as the JVM spec says all
+            // JVMs must support AES/CBC/PKCS5Padding
+            LOGGER.error("Encryption algorithm " + ENCRYPTION_TRANSFORMATION +
+                    " not supported", nsae);
+        }
+
+        return null;
     }
 
     private void restartJobManager()

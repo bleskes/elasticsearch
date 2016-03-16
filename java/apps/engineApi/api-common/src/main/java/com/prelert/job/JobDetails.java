@@ -60,6 +60,7 @@ public class JobDetails
     public static final String IGNORE_DOWNTIME = "ignoreDowntime";
     public static final String LAST_DATA_TIME = "lastDataTime";
     public static final String MODEL_DEBUG_CONFIG = "modelDebugConfig";
+    public static final String SCHEDULER_CONFIG = "schedulerConfig";
     public static final String RENORMALIZATION_WINDOW_DAYS = "renormalizationWindowDays";
     public static final String BACKGROUND_PERSIST_INTERVAL = "backgroundPersistInterval";
     public static final String MODEL_SNAPSHOT_RETENTION_DAYS = "modelSnapshotRetentionDays";

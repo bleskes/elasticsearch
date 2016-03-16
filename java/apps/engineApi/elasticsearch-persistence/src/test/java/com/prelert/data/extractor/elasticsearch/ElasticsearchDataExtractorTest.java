@@ -520,9 +520,9 @@ public class ElasticsearchDataExtractorTest
         }
     }
 
-    private void createExtractor(MockHttpGetRequester httpGerRequester)
+    private void createExtractor(MockHttpGetRequester httpGetRequester)
     {
-        m_Extractor = new ElasticsearchDataExtractor(httpGerRequester, BASE_URL, INDICES, TYPES,
+        m_Extractor = new ElasticsearchDataExtractor(httpGetRequester, BASE_URL, null, INDICES, TYPES,
                 SEARCH, m_Aggregations, TIME_FIELD);
     }
 
@@ -530,6 +530,7 @@ public class ElasticsearchDataExtractorTest
     {
         private List<HttpGetResponse> m_Responses;
         private int m_RequestCount = 0;
+        private int m_AuthRequestCount = 0;
         private List<RequestParams> m_RequestParams;
 
         public MockHttpGetRequester(List<HttpGetResponse> responses)
@@ -539,9 +540,13 @@ public class ElasticsearchDataExtractorTest
         }
 
         @Override
-        public HttpGetResponse get(String url, String requestBody)
+        public HttpGetResponse get(String url, String authHeader, String requestBody)
         {
             m_RequestParams.add(new RequestParams(url, requestBody));
+            if (authHeader != null)
+            {
+                ++m_AuthRequestCount;
+            }
             return m_Responses.get(m_RequestCount++);
         }
 

@@ -253,6 +253,56 @@ public class ElasticsearchMappingsTest
                         "          }" +
                         "        }" +
                         "      }," +
+                        "      \"schedulerConfig\": {" +
+                        "        \"type\": \"object\"," +
+                        "        \"properties\": {" +
+                        "          \"dataSource\": {" +
+                        "            \"type\": \"string\"," +
+                        "            \"index\": \"not_analyzed\"" +
+                        "          }," +
+                        "          \"queryDelay\": {" +
+                        "            \"type\": \"long\"" +
+                        "          }," +
+                        "          \"frequency\": {" +
+                        "            \"type\": \"long\"" +
+                        "          }," +
+                        "          \"filePath\": {" +
+                        "            \"type\": \"string\"," +
+                        "            \"index\": \"not_analyzed\"" +
+                        "          }," +
+                        "          \"tailFile\": {" +
+                        "            \"type\": \"boolean\"" +
+                        "          }," +
+                        "          \"baseUrl\": {" +
+                        "            \"type\": \"string\"," +
+                        "            \"index\": \"not_analyzed\"" +
+                        "          }," +
+                        "          \"username\": {" +
+                        "            \"type\": \"string\"" +
+                        "          }," +
+                        "          \"encryptedPassword\": {" +
+                        "            \"type\": \"string\"," +
+                        "            \"index\": \"not_analyzed\"" +
+                        "          }," +
+                        "          \"indexes\": {" +
+                        "            \"type\": \"string\"," +
+                        "            \"index\": \"not_analyzed\"" +
+                        "          }," +
+                        "          \"types\": {" +
+                        "            \"type\": \"string\"," +
+                        "            \"index\": \"not_analyzed\"" +
+                        "          }," +
+                        "          \"query\": {" +
+                        "            \"type\": \"object\"" +
+                        "          }," +
+                        "          \"aggregations\": {" +
+                        "            \"type\": \"object\"" +
+                        "          }," +
+                        "          \"aggs\": {" +
+                        "            \"type\": \"object\"" +
+                        "          }" +
+                        "        }" +
+                        "      }," +
                         "      \"modelDebugConfig\": {" +
                         "        \"type\": \"object\"," +
                         "        \"properties\": {" +

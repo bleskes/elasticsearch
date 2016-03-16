@@ -28,10 +28,15 @@
 package com.prelert.rs.data.extraction;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import java.nio.charset.StandardCharsets;
+import java.security.GeneralSecurityException;
+import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -44,13 +49,22 @@ import com.prelert.job.JobDetails;
 import com.prelert.job.SchedulerConfig;
 import com.prelert.job.SchedulerConfig.DataSource;
 import com.prelert.job.data.extraction.DataExtractor;
+import com.prelert.job.password.PasswordManager;
 
 public class DataExtractorFactoryImplTest
 {
-    private DataExtractorFactoryImpl m_Factory = new DataExtractorFactoryImpl();
+    private PasswordManager m_PasswordManager;
+    private DataExtractorFactoryImpl m_Factory;
+
+    public DataExtractorFactoryImplTest() throws NoSuchAlgorithmException
+    {
+        m_PasswordManager = new PasswordManager("AES/CBC/PKCS5Padding",
+                new byte[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 });
+        m_Factory = new DataExtractorFactoryImpl(m_PasswordManager);
+    }
 
     @Test
-    public void testNewExtractor_GivenDataSourceIsElasticsearch_NoAggs()
+    public void testNewExtractor_GivenDataSourceIsElasticsearch_NoAggs_NoAuth()
     {
         DataDescription dataDescription = new DataDescription();
         dataDescription.setFormat(DataFormat.ELASTICSEARCH);
@@ -72,6 +86,39 @@ public class DataExtractorFactoryImplTest
         DataExtractor dataExtractor = m_Factory.newExtractor(job);
 
         assertTrue(dataExtractor instanceof ElasticsearchDataExtractor);
+        assertNull(m_Factory.createBasicAuthHeader(null, null));
+        assertEquals("\"match_all\":{}", m_Factory.stringifyElasticsearchQuery(query));
+        assertNull(m_Factory.stringifyElasticsearchAggregations(null, null));
+    }
+
+    @Test
+    public void testNewExtractor_GivenDataSourceIsElasticsearch_NoAggs_Auth()
+            throws GeneralSecurityException
+    {
+        DataDescription dataDescription = new DataDescription();
+        dataDescription.setFormat(DataFormat.ELASTICSEARCH);
+        dataDescription.setTimeField("time");
+
+        SchedulerConfig schedulerConfig = new SchedulerConfig();
+        schedulerConfig.setDataSource(DataSource.ELASTICSEARCH);
+        schedulerConfig.setBaseUrl("http://localhost:9200");
+        schedulerConfig.setIndexes(Arrays.asList("foo"));
+        schedulerConfig.setTypes(Arrays.asList("bar"));
+        schedulerConfig.setUsername("dave");
+        schedulerConfig.setPassword("my_password!");
+        m_PasswordManager.secureStorage(schedulerConfig);
+        Map<String, Object> query = new HashMap<>();
+        query.put("match_all", new HashMap<String, Object>());
+        schedulerConfig.setQuery(query);
+
+        JobDetails job = new JobDetails();
+        job.setDataDescription(dataDescription);
+        job.setSchedulerConfig(schedulerConfig);
+
+        DataExtractor dataExtractor = m_Factory.newExtractor(job);
+
+        assertTrue(dataExtractor instanceof ElasticsearchDataExtractor);
+        assertNotNull(m_Factory.createBasicAuthHeader(schedulerConfig.getUsername(), schedulerConfig.getEncryptedPassword()));
         assertEquals("\"match_all\":{}", m_Factory.stringifyElasticsearchQuery(query));
         assertNull(m_Factory.stringifyElasticsearchAggregations(null, null));
     }
@@ -131,5 +178,30 @@ public class DataExtractorFactoryImplTest
         job.setSchedulerConfig(schedulerConfig);
 
         m_Factory.newExtractor(job);
+    }
+
+    @Test
+    public void testCreateAuthHeader_GivenNoUsername()
+    {
+        assertNull(m_Factory.createBasicAuthHeader(null, "my_password!"));
+    }
+
+    @Test
+    public void testCreateAuthHeader_GivenNoPassword()
+    {
+        assertNull(m_Factory.createBasicAuthHeader("dave", null));
+    }
+
+    @Test
+    public void testCreateAuthHeader_GivenUsernameAndNoPassword()
+    {
+        // Here "JQLd/2uaGoyOrwJW3ynShOT7e+GFsy0MAeozErZ9Wy0=" is a base 64
+        // encoded encrypted version of "my_password!"
+        String authHeader = m_Factory.createBasicAuthHeader("dave",
+                "JQLd/2uaGoyOrwJW3ynShOT7e+GFsy0MAeozErZ9Wy0=");
+        assertNotNull(authHeader);
+        assertTrue(authHeader.startsWith("Basic "));
+        String decoded = new String(Base64.getMimeDecoder().decode(authHeader.substring(6)), StandardCharsets.ISO_8859_1);
+        assertEquals("dave:my_password!", decoded);
     }
 }

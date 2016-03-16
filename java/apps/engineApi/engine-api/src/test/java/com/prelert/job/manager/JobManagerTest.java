@@ -101,6 +101,7 @@ import com.prelert.job.exceptions.JobInUseException;
 import com.prelert.job.exceptions.TooManyJobsException;
 import com.prelert.job.logging.JobLoggerFactory;
 import com.prelert.job.messages.Messages;
+import com.prelert.job.password.PasswordManager;
 import com.prelert.job.persistence.DataStoreException;
 import com.prelert.job.persistence.JobProvider;
 import com.prelert.job.persistence.QueryPage;
@@ -128,6 +129,7 @@ public class JobManagerTest
     @Mock private ProcessManager m_ProcessManager;
     @Mock private DataExtractorFactory m_DataExtractorFactory;
     @Mock private JobLoggerFactory m_JobLoggerFactory;
+    @Mock private PasswordManager m_PasswordManager;
     @Mock private Auditor m_Auditor;
 
     @Before
@@ -1453,7 +1455,7 @@ public class JobManagerTest
     private JobManager createJobManager()
     {
         return new JobManager(m_JobProvider, m_ProcessManager, m_DataExtractorFactory,
-                m_JobLoggerFactory);
+                m_JobLoggerFactory, m_PasswordManager);
     }
 
     private static Answer<Object> writeToWriter()

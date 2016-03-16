@@ -30,6 +30,7 @@ import com.prelert.job.JobDetails;
 import com.prelert.job.ModelDebugConfig;
 import com.prelert.job.ModelSizeStats;
 import com.prelert.job.ModelSnapshot;
+import com.prelert.job.SchedulerConfig;
 import com.prelert.job.quantiles.Quantiles;
 import com.prelert.job.transform.TransformConfig;
 import com.prelert.job.usage.Usage;
@@ -219,6 +220,20 @@ public final class ReservedFieldNames
         Quantiles.VERSION,
         Quantiles.TIMESTAMP,
         Quantiles.QUANTILE_STATE,
+
+        SchedulerConfig.DATA_SOURCE,
+        SchedulerConfig.QUERY_DELAY,
+        SchedulerConfig.FREQUENCY,
+        SchedulerConfig.FILE_PATH,
+        SchedulerConfig.TAIL_FILE,
+        SchedulerConfig.BASE_URL,
+        // SchedulerConfig.USERNAME, is not reserved because it is an analyzed string
+        SchedulerConfig.ENCRYPTED_PASSWORD,
+        SchedulerConfig.INDEXES,
+        SchedulerConfig.TYPES,
+        SchedulerConfig.QUERY,
+        SchedulerConfig.AGGREGATIONS,
+        SchedulerConfig.AGGS,
 
         TransformConfig.TRANSFORM,
         TransformConfig.ARGUMENTS,

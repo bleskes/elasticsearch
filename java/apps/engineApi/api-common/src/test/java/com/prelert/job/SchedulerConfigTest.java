@@ -347,7 +347,7 @@ public class SchedulerConfigTest
     {
         SchedulerConfig sc1 = createFullyPopulated();
         SchedulerConfig sc2 = createFullyPopulated();
-        sc2.setPath("thisOtherCrazyPath");
+        sc2.setFilePath("thisOtherCrazyPath");
 
         assertFalse(sc1.equals(sc2));
         assertFalse(sc2.equals(sc1));
@@ -358,7 +358,7 @@ public class SchedulerConfigTest
     {
         SchedulerConfig sc1 = createFullyPopulated();
         SchedulerConfig sc2 = createFullyPopulated();
-        sc2.setTail(false);
+        sc2.setTailFile(false);
 
         assertFalse(sc1.equals(sc2));
         assertFalse(sc2.equals(sc1));
@@ -379,8 +379,8 @@ public class SchedulerConfigTest
         aggs.put("bar", new HashMap<>());
         sc.setAggregations(aggs);
         sc.setQueryDelay(90L);
-        sc.setPath("somePath");
-        sc.setTail(true);
+        sc.setFilePath("somePath");
+        sc.setTailFile(true);
         return sc;
     }
 }
