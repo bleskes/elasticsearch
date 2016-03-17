@@ -65,7 +65,8 @@
 # es.processors: ""
 
 # ------------------------------------------------------------------------------
-# These settings relate to the lifecycle of the engine API
+# These settings relate to the lifecycle of the Engine API
 #
-# Should downtime (i.e. gap in data) be ignored after restarting the engine?
+# Should downtime (i.e. gap in data) be ignored after restarting the Engine API?
 # ignore.downtime.on.startup: true
+
