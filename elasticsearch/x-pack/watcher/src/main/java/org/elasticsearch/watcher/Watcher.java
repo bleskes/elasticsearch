@@ -33,7 +33,6 @@ import org.elasticsearch.common.settings.Setting;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.settings.SettingsModule;
 import org.elasticsearch.script.ScriptModule;
-import org.elasticsearch.shield.Shield;
 import org.elasticsearch.watcher.actions.WatcherActionModule;
 import org.elasticsearch.watcher.actions.email.service.EmailService;
 import org.elasticsearch.watcher.actions.email.service.InternalEmailService;
@@ -132,12 +131,6 @@ public class Watcher {
         transportClient = "transport".equals(settings.get(Client.CLIENT_TYPE_SETTING_S.getKey()));
         enabled = enabled(settings);
         validAutoCreateIndex(settings);
-
-        // adding the watcher privileges to shield
-        if (Shield.enabled(settings)) {
-            Shield.registerClusterPrivilege("manage_watcher", "cluster:admin/xpack/watcher/*", "cluster:monitor/xpack/watcher/*");
-            Shield.registerClusterPrivilege("monitor_watcher", "cluster:monitor/xpack/watcher/*");
-        }
     }
 
     public Collection<Module> nodeModules() {
