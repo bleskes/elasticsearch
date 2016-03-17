@@ -506,8 +506,7 @@ public class AutoDetectResultsParserTest
 
         parser.parseResults(inputStream, persister, renormaliser, logger);
 
-        // should be one call to deleteInterimResults()
-        Mockito.verify(persister).deleteInterimResults();
+        Mockito.verifyZeroInteractions(persister);
     }
 
     @Test
