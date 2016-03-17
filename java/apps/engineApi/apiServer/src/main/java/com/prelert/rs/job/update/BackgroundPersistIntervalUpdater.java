@@ -28,6 +28,7 @@
 package com.prelert.rs.job.update;
 
 import com.prelert.job.UnknownJobException;
+import com.prelert.job.config.verification.JobConfigurationVerifier;
 import com.prelert.job.manager.JobManager;
 import com.prelert.job.messages.Messages;
 
@@ -35,7 +36,7 @@ class BackgroundPersistIntervalUpdater extends AbstractLongUpdater
 {
     public BackgroundPersistIntervalUpdater(JobManager jobManager, String jobId)
     {
-        super(jobManager, jobId);
+        super(jobManager, jobId, JobConfigurationVerifier.MIN_BACKGROUND_PERSIST_INTERVAL);
     }
 
     @Override

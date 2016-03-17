@@ -44,6 +44,8 @@ import com.prelert.job.transform.verification.TransformConfigsVerifier;
 
 public final class JobConfigurationVerifier
 {
+    public static final long MIN_BACKGROUND_PERSIST_INTERVAL = 3600;
+
     private JobConfigurationVerifier()
     {
     }
@@ -98,11 +100,11 @@ public final class JobConfigurationVerifier
 
         checkValidTransforms(config);
 
-        checkValueNotNegative("timeout", config.getTimeout());
-        checkValueNotNegative("renormalizationWindowDays", config.getRenormalizationWindowDays());
-        checkValueNotNegative("backgroundPersistInterval", config.getBackgroundPersistInterval());
-        checkValueNotNegative("modelSnapshotRetentionDays", config.getModelSnapshotRetentionDays());
-        checkValueNotNegative("resultsRetentionDays", config.getResultsRetentionDays());
+        checkValueNotLessThan(0, "timeout", config.getTimeout());
+        checkValueNotLessThan(0, "renormalizationWindowDays", config.getRenormalizationWindowDays());
+        checkValueNotLessThan(MIN_BACKGROUND_PERSIST_INTERVAL, "backgroundPersistInterval", config.getBackgroundPersistInterval());
+        checkValueNotLessThan(0, "modelSnapshotRetentionDays", config.getModelSnapshotRetentionDays());
+        checkValueNotLessThan(0, "resultsRetentionDays", config.getResultsRetentionDays());
 
         if (config.getModelDebugConfig() != null)
         {
@@ -312,13 +314,13 @@ public final class JobConfigurationVerifier
         }
     }
 
-    private static void checkValueNotNegative(String name, Long value)
+    private static void checkValueNotLessThan(long minVal, String name, Long value)
             throws JobConfigurationException
     {
-        if (value != null && value < 0)
+        if (value != null && value < minVal)
         {
             throw new JobConfigurationException(
-                    Messages.getMessage(Messages.JOB_CONFIG_NEGATIVE_FIELD_VALUE, name, value),
+                    Messages.getMessage(Messages.JOB_CONFIG_FIELD_VALUE_TOO_LOW, name, minVal, value),
                     ErrorCodes.INVALID_VALUE);
         }
     }

@@ -35,7 +35,7 @@ class RenormalizationWindowDaysUpdater extends AbstractLongUpdater
 {
     public RenormalizationWindowDaysUpdater(JobManager jobManager, String jobId)
     {
-        super(jobManager, jobId);
+        super(jobManager, jobId, 0);
     }
 
     @Override

@@ -35,7 +35,7 @@ class ModelSnapshotRetentionDaysUpdater extends AbstractLongUpdater
 {
     public ModelSnapshotRetentionDaysUpdater(JobManager jobManager, String jobId)
     {
-        super(jobManager, jobId);
+        super(jobManager, jobId, 0);
     }
 
     @Override

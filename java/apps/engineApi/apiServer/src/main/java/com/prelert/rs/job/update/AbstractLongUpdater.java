@@ -37,10 +37,12 @@ import com.prelert.job.messages.Messages;
 abstract class AbstractLongUpdater extends AbstractUpdater
 {
     private Long m_NewValue;
+    private long m_MinVal;
 
-    public AbstractLongUpdater(JobManager jobManager, String jobId)
+    public AbstractLongUpdater(JobManager jobManager, String jobId, long minVal)
     {
         super(jobManager, jobId);
+        m_MinVal = minVal;
     }
 
     @Override
@@ -49,7 +51,7 @@ abstract class AbstractLongUpdater extends AbstractUpdater
         if (node.isIntegralNumber() || node.isNull())
         {
             m_NewValue = node.isIntegralNumber() ? node.asLong() : null;
-            if (m_NewValue != null && m_NewValue < 0)
+            if (m_NewValue != null && m_NewValue < m_MinVal)
             {
                 throwInvalidValue();
             }
