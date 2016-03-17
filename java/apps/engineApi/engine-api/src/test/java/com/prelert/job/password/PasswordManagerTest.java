@@ -35,6 +35,9 @@ import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.security.NoSuchAlgorithmException;
 
@@ -134,6 +137,18 @@ public class PasswordManagerTest
         assertNotNull(storage.getEncryptedPassword());
         assertFalse("my_new_password!".equals(storage.getEncryptedPassword()));
         assertFalse("already_encrypted".equals(storage.getEncryptedPassword()));
+    }
+
+    @Test
+    public void testConstructFromFile_GivenExists() throws NoSuchAlgorithmException, IOException
+    {
+        PasswordManager mgr = new PasswordManager("AES/CBC/PKCS5Padding", new File("pom.xml"));
+    }
+
+    @Test(expected = FileNotFoundException.class)
+    public void testConstructFromFile_GivenDoesNotExist() throws NoSuchAlgorithmException, IOException
+    {
+        PasswordManager mgr = new PasswordManager("AES/CBC/PKCS5Padding", new File("does_not_exist"));
     }
 
     private static class SimplePasswordStorage implements PasswordStorage
