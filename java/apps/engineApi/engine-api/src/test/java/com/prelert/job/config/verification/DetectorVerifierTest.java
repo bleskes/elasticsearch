@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -25,6 +25,8 @@
  *                                                          *
  ************************************************************/
 package com.prelert.job.config.verification;
+
+import static org.junit.Assert.assertTrue;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -474,5 +476,35 @@ public class DetectorVerifierTest
             {
             }
         }
+    }
+
+    @Test
+    public void testVerifyExcludeFrequent_GivenNotSet() throws JobConfigurationException
+    {
+        assertTrue(DetectorVerifier.verifyExcludeFrequent(null));
+        assertTrue(DetectorVerifier.verifyExcludeFrequent(""));
+    }
+
+    @Test
+    public void testVerifyExcludeFrequent_GivenValidWord() throws JobConfigurationException
+    {
+        assertTrue(DetectorVerifier.verifyExcludeFrequent("true"));
+        assertTrue(DetectorVerifier.verifyExcludeFrequent("false"));
+        assertTrue(DetectorVerifier.verifyExcludeFrequent("by"));
+        assertTrue(DetectorVerifier.verifyExcludeFrequent("over"));
+    }
+
+    @Test(expected = JobConfigurationException.class)
+    public void testVerifyExcludeFrequent_GivenInvalidWord() throws JobConfigurationException
+    {
+        DetectorVerifier.verifyExcludeFrequent("bananas");
+    }
+
+    @Test
+    public void testVerifyExcludeFrequent_GivenNumber() throws JobConfigurationException
+    {
+        assertTrue(DetectorVerifier.verifyExcludeFrequent("0"));
+        assertTrue(DetectorVerifier.verifyExcludeFrequent("1"));
+        assertTrue(DetectorVerifier.verifyExcludeFrequent("-1"));
     }
 }

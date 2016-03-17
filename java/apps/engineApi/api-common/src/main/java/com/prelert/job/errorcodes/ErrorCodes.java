@@ -153,6 +153,11 @@ public enum ErrorCodes
     ENCRYPTION_FAILURE_ERROR(10118),
 
     /**
+     * The 'excludeFrequent' option is set to an invalid value.
+     */
+    INVALID_EXCLUDEFREQUENT_SETTING(10119),
+
+    /**
      * The transform name isn't recognised
      */
     UNKNOWN_TRANSFORM(10201),

@@ -318,7 +318,6 @@ public class Detector
     /**
      * Excludes frequently-occuring metrics from the analysis;
      * can apply to 'by' field, 'over' field, or both
-     * It will be validated by the C++ process
      *
      * @return the value that the user set
      */
