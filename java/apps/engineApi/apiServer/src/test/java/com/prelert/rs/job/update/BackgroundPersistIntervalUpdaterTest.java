@@ -96,25 +96,25 @@ public class BackgroundPersistIntervalUpdaterTest
     public void testPrepareUpdate_GivenInteger() throws UnknownJobException,
             JobConfigurationException, JsonProcessingException, IOException
     {
-        JsonNode node = LongNode.valueOf(5);
+        JsonNode node = LongNode.valueOf(7200);
 
         new BackgroundPersistIntervalUpdater(m_JobManager, "foo").prepareUpdate(node);
 
-        verify(m_JobManager, never()).setBackgroundPersistInterval("foo", 5L);
+        verify(m_JobManager, never()).setBackgroundPersistInterval("foo", 7200L);
     }
 
     @Test
     public void testCommit_GivenInteger() throws UnknownJobException,
             JobConfigurationException, JsonProcessingException, IOException
     {
-        JsonNode node = LongNode.valueOf(5);
+        JsonNode node = LongNode.valueOf(7200);
 
         BackgroundPersistIntervalUpdater updater = new BackgroundPersistIntervalUpdater(
                 m_JobManager, "foo");
         updater.prepareUpdate(node);
         updater.commit();
 
-        verify(m_JobManager).setBackgroundPersistInterval("foo", 5L);
+        verify(m_JobManager).setBackgroundPersistInterval("foo", 7200L);
     }
 
     @Test

@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -51,8 +51,8 @@ public final class AnalysisLimitsVerifier
     {
         if (al.getCategorizationExamplesLimit() != null && al.getCategorizationExamplesLimit() < 0)
         {
-            String msg = Messages.getMessage(Messages.JOB_CONFIG_NEGATIVE_FIELD_VALUE,
-                    AnalysisLimits.CATEGORIZATION_EXAMPLES_LIMIT, al.getCategorizationExamplesLimit());
+            String msg = Messages.getMessage(Messages.JOB_CONFIG_FIELD_VALUE_TOO_LOW,
+                    AnalysisLimits.CATEGORIZATION_EXAMPLES_LIMIT, 0, al.getCategorizationExamplesLimit());
             throw new JobConfigurationException(msg, ErrorCodes.INVALID_VALUE);
         }
         return true;

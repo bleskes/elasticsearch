@@ -32,6 +32,9 @@ import com.prelert.job.messages.Messages;
 
 public final class DetectorVerifier
 {
+    private static final String[] VALID_EXCLUDE_FREQUENT_SETTINGS = {
+            "true", "false", "t", "f", "yes", "no", "y", "n", "on", "off", "by", "over", "all" };
+
     private DetectorVerifier()
     {
     }
@@ -159,9 +162,50 @@ public final class DetectorVerifier
             verifyFieldName(field);
         }
 
+        verifyExcludeFrequent(detector.getExcludeFrequent());
+
         return true;
     }
 
+    /**
+     * Check that the setting of the excludeFrequent option is valid.
+     * This validation is designed to match that applied by the C++ code.
+     * @param excludeFrequent The setting as a string.
+     * @return true
+     * @throws JobConfigurationException
+     */
+    static boolean verifyExcludeFrequent(String excludeFrequent) throws JobConfigurationException
+    {
+        // Not set is fine
+        if (excludeFrequent == null || excludeFrequent.isEmpty())
+        {
+            return true;
+        }
+
+        // Any of these words are fine
+        for (String word : VALID_EXCLUDE_FREQUENT_SETTINGS)
+        {
+            if (word.equalsIgnoreCase(excludeFrequent))
+            {
+                return true;
+            }
+        }
+
+        // Convertible to a number (which will then be interpreted as a boolean)
+        // is fine
+        try
+        {
+            Long.parseLong(excludeFrequent);
+        }
+        catch (NumberFormatException nfe)
+        {
+            throw new JobConfigurationException(
+                    Messages.getMessage(Messages.JOB_CONFIG_INVALID_EXCLUDEFREQUENT_SETTING, excludeFrequent),
+                    ErrorCodes.INVALID_EXCLUDEFREQUENT_SETTING);
+        }
+
+        return true;
+    }
 
     /**
      * Check that the characters used in a field name will not cause problems.

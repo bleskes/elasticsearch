@@ -51,6 +51,7 @@ public final class Messages
     public static final String JOB_AUDIT_RESUMED = "job.audit.resumed";
     public static final String JOB_AUDIT_UPDATED = "job.audit.updated";
     public static final String JOB_AUDIT_REVERTED = "job.audit.reverted";
+    public static final String JOB_AUDIT_SNAPSHOT_DELETED = "job.audit.snapshot.deleted";
     public static final String JOB_AUDIT_SCHEDULER_STARTED_FROM_TO = "job.audit.scheduler.started.from.to";
     public static final String JOB_AUDIT_SCHEDULER_CONTINUED_REALTIME = "job.audit.scheduler.continued.realtime";
     public static final String JOB_AUDIT_SCHEDULER_STARTED_REALTIME = "job.audit.scheduler.started.realtime";
@@ -67,6 +68,7 @@ public final class Messages
     public static final String JOB_CANNOT_PAUSE = "job.cannot.pause";
     public static final String JOB_CANNOT_RESUME = "job.cannot.resume";
 
+    public static final String JOB_CONFIG_INVALID_EXCLUDEFREQUENT_SETTING = "job.config.invalid.excludefrequent.setting";
     public static final String JOB_CONFIG_CANNOT_ENCRYPT_PASSWORD = "job.config.cannot.encrypt.password";
     public static final String JOB_CONFIG_BYFIELD_INCOMPATIBLE_FUNCTION = "job.config.byField.incompatible.function";
     public static final String JOB_CONFIG_BYFIELD_NEEDS_ANOTHER = "job.config.byField.needs.another";
@@ -85,7 +87,7 @@ public final class Messages
     public static final String JOB_CONFIG_FUNCTION_INCOMPATIBLE_PRESUMMARIZED = "job.config.function.incompatible.presummarized";
     public static final String JOB_CONFIG_MISSING_ANALYSISCONFIG = "job.config.missing.analysisconfig";
     public static final String JOB_CONFIG_MODEL_DEBUG_CONFIG_INVALID_BOUNDS_PERCENTILE = "job.config.model.debug.config.invalid.bounds.percentile";
-    public static final String JOB_CONFIG_NEGATIVE_FIELD_VALUE = "job.config.negative.field.value";
+    public static final String JOB_CONFIG_FIELD_VALUE_TOO_LOW = "job.config.field.value.too.low";
     public static final String JOB_CONFIG_NO_ANALYSIS_FIELD = "job.config.no.analysis.field";
     public static final String JOB_CONFIG_NO_ANALYSIS_FIELD_NOT_COUNT = "job.config.no.analysis.field.not.count";
     public static final String JOB_CONFIG_NO_DETECTORS = "job.config.no.detectors";
@@ -177,6 +179,7 @@ public final class Messages
     public static final String REST_NO_SUCH_MODEL_SNAPSHOT = "rest.no.such.model.snapshot";
     public static final String REST_INVALID_DESCRIPTION_PARAMS = "rest.invalid.description.params";
     public static final String REST_DESCRIPTION_ALREADY_USED = "rest.description.already.used";
+    public static final String REST_CANNOT_DELETE_HIGHEST_PRIORITY = "rest.cannot.delete.highest.priority";
 
     public static final String REST_ALERT_MISSING_ARGUMENT = "rest.alert.missing.argument";
     public static final String REST_ALERT_INVALID_TIMEOUT = "rest.alert.invalid.timeout";

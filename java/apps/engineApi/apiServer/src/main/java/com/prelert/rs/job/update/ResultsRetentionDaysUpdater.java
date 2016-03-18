@@ -35,7 +35,7 @@ class ResultsRetentionDaysUpdater extends AbstractLongUpdater
 {
     public ResultsRetentionDaysUpdater(JobManager jobManager, String jobId)
     {
-        super(jobManager, jobId);
+        super(jobManager, jobId, 0);
     }
 
     @Override

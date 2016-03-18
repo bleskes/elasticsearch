@@ -42,12 +42,13 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
 import com.prelert.job.ModelSnapshot;
+import com.prelert.job.NoSuchModelSnapshotException;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.errorcodes.ErrorCodeMatcher;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.exceptions.JobInUseException;
+import com.prelert.job.manager.CannotDeleteSnapshotException;
 import com.prelert.job.manager.DescriptionAlreadyUsedException;
-import com.prelert.job.manager.NoSuchModelSnapshotException;
 import com.prelert.job.persistence.QueryPage;
 import com.prelert.job.process.exceptions.MalformedJsonException;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
@@ -282,7 +283,7 @@ public class ModelSnapshotsTest extends ServiceTest
             NoSuchModelSnapshotException, DescriptionAlreadyUsedException, MalformedJsonException
     {
         ModelSnapshot modelSnapshot = new ModelSnapshot();
-        modelSnapshot.setSnapshotId("foo");
+        modelSnapshot.setSnapshotId("123");
         when(jobManager().updateModelSnapshotDescription("foo", "123", "new description")).thenReturn(modelSnapshot);
 
         Response response = m_ModelSnapshots.updateDescription("foo", "123", "{ \"description\" : \"new description\" }");
@@ -290,4 +291,16 @@ public class ModelSnapshotsTest extends ServiceTest
         assertEquals(200, response.getStatus());
     }
 
+    @Test
+    public void testDelete_GivenValidId() throws JobInUseException, UnknownJobException,
+            NoSuchModelSnapshotException, CannotDeleteSnapshotException
+    {
+        ModelSnapshot modelSnapshot = new ModelSnapshot();
+        modelSnapshot.setSnapshotId("123");
+        when(jobManager().deleteModelSnapshot("foo", "123")).thenReturn(modelSnapshot);
+
+        Response response = m_ModelSnapshots.deleteModelSnapshot("foo", "123");
+
+        assertEquals(200, response.getStatus());
+    }
 }

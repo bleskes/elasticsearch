@@ -31,13 +31,13 @@ import com.prelert.job.JobException;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.messages.Messages;
 
-public class NoSuchModelSnapshotException extends JobException
+public class CannotDeleteSnapshotException extends JobException
 {
-    private static final long serialVersionUID = -2359537142813149135L;
+    private static final long serialVersionUID = -2159573142813147139L;
 
-    public NoSuchModelSnapshotException(String jobId)
+    public CannotDeleteSnapshotException(String jobId, String snapshotId)
     {
-        super(Messages.getMessage(Messages.REST_NO_SUCH_MODEL_SNAPSHOT, jobId),
-                ErrorCodes.NO_SUCH_MODEL_SNAPSHOT);
+        super(Messages.getMessage(Messages.REST_CANNOT_DELETE_HIGHEST_PRIORITY, snapshotId, jobId),
+                ErrorCodes.CANNOT_DELETE_HIGHEST_PRIORITY);
     }
 }

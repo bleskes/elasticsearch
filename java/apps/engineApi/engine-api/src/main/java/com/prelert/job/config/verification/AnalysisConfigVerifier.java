@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -48,10 +48,10 @@ public final class AnalysisConfigVerifier
      */
     public static boolean verify(AnalysisConfig config) throws JobConfigurationException
     {
-        checkFieldIsNotNegativeIfSpecified("BucketSpan", config.getBucketSpan());
-        checkFieldIsNotNegativeIfSpecified("BatchSpan", config.getBatchSpan());
-        checkFieldIsNotNegativeIfSpecified("Latency", config.getLatency());
-        checkFieldIsNotNegativeIfSpecified("Period", config.getPeriod());
+        checkFieldIsNotNegativeIfSpecified("bucketSpan", config.getBucketSpan());
+        checkFieldIsNotNegativeIfSpecified("batchSpan", config.getBatchSpan());
+        checkFieldIsNotNegativeIfSpecified("latency", config.getLatency());
+        checkFieldIsNotNegativeIfSpecified("period", config.getPeriod());
         DetectorVerifier.verifyFieldName(config.getSummaryCountFieldName());
         DetectorVerifier.verifyFieldName(config.getCategorizationFieldName());
         verifyDetectors(config);
@@ -64,8 +64,8 @@ public final class AnalysisConfigVerifier
     {
         if (value != null && value < 0)
         {
-            String msg = Messages.getMessage(Messages.JOB_CONFIG_NEGATIVE_FIELD_VALUE,
-                                                fieldName, value);
+            String msg = Messages.getMessage(Messages.JOB_CONFIG_FIELD_VALUE_TOO_LOW,
+                                                fieldName, 0, value);
             throw new JobConfigurationException(msg, ErrorCodes.INVALID_VALUE);
         }
     }
@@ -79,7 +79,8 @@ public final class AnalysisConfigVerifier
                     ErrorCodes.INCOMPLETE_CONFIGURATION);
         }
 
-        boolean isSummarised = config.getSummaryCountFieldName() != null && !config.getSummaryCountFieldName().isEmpty();
+        boolean isSummarised = config.getSummaryCountFieldName() != null &&
+                !config.getSummaryCountFieldName().isEmpty();
         for (Detector d : config.getDetectors())
         {
             DetectorVerifier.verify(d, isSummarised);

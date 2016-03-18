@@ -65,6 +65,7 @@ import com.prelert.job.JobSchedulerStatus;
 import com.prelert.job.JobStatus;
 import com.prelert.job.ModelDebugConfig;
 import com.prelert.job.ModelSnapshot;
+import com.prelert.job.NoSuchModelSnapshotException;
 import com.prelert.job.SchedulerState;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.alert.AlertObserver;
@@ -279,23 +280,60 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
      * document store. The details of the newly created job are returned.
      *
      * @param jobConfig
+     * @param overwrite If another job with the same name exists, should
+     * it be overwritten?
      * @return The new job or <code>null</code> if an exception occurs.
      * @throws TooManyJobsException If the license is violated
      * @throws JobConfigurationException If the license is violated
-     * @throws JobIdAlreadyExistsException If the alias is already taken
+     * @throws JobIdAlreadyExistsException If the job ID is already taken
+     * @throws DataStoreException Possible only if overwriting
+     * @throws NativeProcessRunException Possible only if overwriting
+     * @throws JobInUseException Possible only if overwriting
+     * @throws CannotStopSchedulerException Possible only if overwriting
      */
-    public JobDetails createJob(JobConfiguration jobConfig)
-            throws TooManyJobsException, JobConfigurationException, JobIdAlreadyExistsException
+    public JobDetails createJob(JobConfiguration jobConfig, boolean overwrite)
+            throws TooManyJobsException, JobConfigurationException, JobIdAlreadyExistsException,
+            DataStoreException, NativeProcessRunException, JobInUseException,
+            CannotStopSchedulerException
     {
-        JobDetails jobDetails = m_JobFactory.create(securePasswords(jobConfig), m_ProcessManager.numberOfRunningJobs());
-
-        if (!m_JobProvider.jobIdIsUnique(jobDetails.getId()))
+        int numberOfRunningJobsForLicenseCheck = m_ProcessManager.numberOfRunningJobs();
+        // Don't count the new job ID as a running job for license checking
+        // purposes.  If the user is trying to overwrite a running job, it's
+        // more intuitive to get a "job in use" exception rather than a "license
+        // violation" exception.
+        if (jobConfig.getId() != null && m_ProcessManager.jobIsRunning(jobConfig.getId()))
         {
-            throw new JobIdAlreadyExistsException(jobDetails.getId());
+            --numberOfRunningJobsForLicenseCheck;
+        }
+
+        JobDetails jobDetails = m_JobFactory.create(securePasswords(jobConfig), numberOfRunningJobsForLicenseCheck);
+        String jobId = jobDetails.getId();
+        if (!m_JobProvider.jobIdIsUnique(jobId))
+        {
+            try
+            {
+                // A job with the desired ID already exists - try to delete it
+                // if we've been told to overwrite
+                if (overwrite == false || deleteJob(jobId) == false)
+                {
+                    throw new JobIdAlreadyExistsException(jobId);
+                }
+                LOGGER.debug("Overwriting job '" + jobId + "'");
+            }
+            catch (UnknownJobException e)
+            {
+                // This implies another request to delete the job has executed
+                // at the same time as the overwrite request.  In this case we
+                // should be good to continue, as long as the createJob method
+                // in com.prelert.rs.resources.Jobs only allows one job creation
+                // at a time (which it did at the time of writing this comment).
+                LOGGER.warn("Independent deletion of job '" + jobId +
+                        "' occurred whilst overwriting it");
+            }
         }
 
         m_JobProvider.createJob(jobDetails);
-        audit(jobDetails.getId()).info(Messages.getMessage(Messages.JOB_AUDIT_CREATED));
+        audit(jobId).info(Messages.getMessage(Messages.JOB_AUDIT_CREATED));
 
         if (jobDetails.getSchedulerConfig() != null)
         {
@@ -516,6 +554,34 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
             m_JobProvider.updateModelSnapshot(jobId, modelSnapshot, false);
 
             return modelSnapshot;
+        }
+    }
+
+    public ModelSnapshot deleteModelSnapshot(String jobId, String snapshotId)
+            throws JobInUseException, UnknownJobException, NoSuchModelSnapshotException,
+            CannotDeleteSnapshotException
+    {
+        try (ActionTicket actionTicket = m_ActionGuardian.tryAcquiringAction(jobId, Action.UPDATING))
+        {
+            LOGGER.debug("Deleting model snapshot '" + snapshotId + "' for job '" + jobId + "'");
+
+            List<ModelSnapshot> highestPriority = m_JobProvider.modelSnapshots(jobId, 0, 1).queryResults();
+            if (highestPriority == null || highestPriority.isEmpty())
+            {
+                throw new NoSuchModelSnapshotException(jobId);
+            }
+
+            String highestPriorityId = highestPriority.get(0).getSnapshotId();
+            if (highestPriorityId.equals(snapshotId))
+            {
+                throw new CannotDeleteSnapshotException(jobId, highestPriorityId);
+            }
+
+            ModelSnapshot deletedSnapshot = m_JobProvider.deleteModelSnapshot(jobId, snapshotId);
+
+            audit(jobId).info(Messages.getMessage(Messages.JOB_AUDIT_SNAPSHOT_DELETED,
+                    deletedSnapshot.getDescription()));
+            return deletedSnapshot;
         }
     }
 

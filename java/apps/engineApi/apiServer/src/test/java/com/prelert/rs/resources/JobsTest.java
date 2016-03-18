@@ -67,9 +67,11 @@ import com.prelert.job.errorcodes.ErrorCodeMatcher;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.exceptions.JobInUseException;
 import com.prelert.job.exceptions.TooManyJobsException;
+import com.prelert.job.persistence.DataStoreException;
 import com.prelert.job.persistence.QueryPage;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
 import com.prelert.job.scheduler.CannotStartSchedulerException;
+import com.prelert.job.scheduler.CannotStopSchedulerException;
 import com.prelert.rs.data.Acknowledgement;
 import com.prelert.rs.data.Pagination;
 import com.prelert.rs.data.SingleDocument;
@@ -170,15 +172,16 @@ public class JobsTest extends ServiceTest
     @Test
     public void testCreateJob_GivenValidConfig() throws UnknownJobException,
             JobConfigurationException, TooManyJobsException, JobIdAlreadyExistsException,
-            IOException, CannotStartSchedulerException
+            IOException, CannotStartSchedulerException, DataStoreException,
+            NativeProcessRunException, JobInUseException, CannotStopSchedulerException
     {
         JobConfiguration config = createValidJobConfig();
 
         JobDetails job = new JobDetails();
         job.setId("foo");
-        when(jobManager().createJob(config)).thenReturn(job);
+        when(jobManager().createJob(config, false)).thenReturn(job);
 
-        Response response = m_Jobs.createJob(config);
+        Response response = m_Jobs.createJob(false, config);
 
         assertEquals("{\"id\":\"foo\"}\n", response.getEntity());
     }
@@ -186,22 +189,24 @@ public class JobsTest extends ServiceTest
     @Test
     public void testCreateJob_GivenInvalidConfig() throws UnknownJobException,
             JobConfigurationException, TooManyJobsException, JobIdAlreadyExistsException,
-            IOException, CannotStartSchedulerException
+            IOException, CannotStartSchedulerException, DataStoreException,
+            NativeProcessRunException, JobInUseException, CannotStopSchedulerException
     {
         m_ExpectedException.expect(JobConfigurationException.class);
 
-        m_Jobs.createJob(new JobConfiguration());
+        m_Jobs.createJob(false, new JobConfiguration());
     }
 
     @Test
     public void testCreateJob_GivenServerError() throws UnknownJobException,
             JobConfigurationException, TooManyJobsException, JobIdAlreadyExistsException,
-            IOException, CannotStartSchedulerException
+            IOException, CannotStartSchedulerException, DataStoreException,
+            NativeProcessRunException, JobInUseException, CannotStopSchedulerException
     {
         JobConfiguration config = createValidJobConfig();
-        when(jobManager().createJob(config)).thenReturn(null);
+        when(jobManager().createJob(config, false)).thenReturn(null);
 
-        Response response = m_Jobs.createJob(config);
+        Response response = m_Jobs.createJob(false, config);
 
         assertEquals(500, response.getStatus());
     }

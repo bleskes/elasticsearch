@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -170,7 +170,7 @@ public class AnalysisConfigVerifierTest
         AnalysisConfig analysisConfig = new AnalysisConfig();
         analysisConfig.setBucketSpan(-1L);
         m_ExpectedException.expect(JobConfigurationException.class);
-        m_ExpectedException.expectMessage("BucketSpan cannot be < 0. Value = -1");
+        m_ExpectedException.expectMessage("bucketSpan cannot be less than 0. Value = -1");
 
         AnalysisConfigVerifier.verify(analysisConfig);
     }
@@ -181,7 +181,7 @@ public class AnalysisConfigVerifierTest
         AnalysisConfig analysisConfig = new AnalysisConfig();
         analysisConfig.setBatchSpan(-1L);
         m_ExpectedException.expect(JobConfigurationException.class);
-        m_ExpectedException.expectMessage("BatchSpan cannot be < 0. Value = -1");
+        m_ExpectedException.expectMessage("batchSpan cannot be less than 0. Value = -1");
 
         AnalysisConfigVerifier.verify(analysisConfig);
     }
@@ -192,7 +192,7 @@ public class AnalysisConfigVerifierTest
         AnalysisConfig analysisConfig = new AnalysisConfig();
         analysisConfig.setLatency(-1L);
         m_ExpectedException.expect(JobConfigurationException.class);
-        m_ExpectedException.expectMessage("Latency cannot be < 0. Value = -1");
+        m_ExpectedException.expectMessage("latency cannot be less than 0. Value = -1");
 
         AnalysisConfigVerifier.verify(analysisConfig);
     }
@@ -203,7 +203,7 @@ public class AnalysisConfigVerifierTest
         AnalysisConfig analysisConfig = new AnalysisConfig();
         analysisConfig.setPeriod(-1L);
         m_ExpectedException.expect(JobConfigurationException.class);
-        m_ExpectedException.expectMessage("Period cannot be < 0. Value = -1");
+        m_ExpectedException.expectMessage("period cannot be less than 0. Value = -1");
 
         AnalysisConfigVerifier.verify(analysisConfig);
     }

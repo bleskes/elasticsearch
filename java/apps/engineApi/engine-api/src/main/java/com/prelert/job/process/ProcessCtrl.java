@@ -261,7 +261,8 @@ public class ProcessCtrl
 
         String prelertHome = PrelertSettings.getSettingOrDefault(PRELERT_HOME_PROPERTY, ".");
 
-        String logPath = PrelertSettings.getSettingOrDefault(PRELERT_LOGS_PROPERTY, "logs");
+        String logPath = PrelertSettings.getSettingOrDefault(PRELERT_LOGS_PROPERTY,
+                prelertHome + "/logs");
 
         int maxNumRecords = PrelertSettings.getSettingOrDefault(MAX_ANOMALY_RECORDS_PROPERTY,
                 DEFAULT_MAX_NUM_RECORDS);

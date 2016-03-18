@@ -77,6 +77,7 @@ import com.prelert.job.JobStatus;
 import com.prelert.job.ModelSizeStats;
 import com.prelert.job.ModelSnapshot;
 import com.prelert.job.ModelState;
+import com.prelert.job.NoSuchModelSnapshotException;
 import com.prelert.job.SchedulerState;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.audit.AuditMessage;
@@ -552,7 +553,7 @@ public class ElasticsearchJobProvider implements JobProvider
                     .indices().delete(new DeleteIndexRequest(elasticJobId.getIndex())).get();
             return response.isAcknowledged();
         }
-        catch (InterruptedException|ExecutionException e)
+        catch (InterruptedException | ExecutionException e)
         {
             String msg = "Error deleting index '" + elasticJobId.getIndex() + "'";
             ErrorCodes errorCode = ErrorCodes.DATA_STORE_ERROR;
@@ -1150,6 +1151,26 @@ public class ElasticsearchJobProvider implements JobProvider
         // Commit so that when the REST API call that triggered the update
         // returns the updated document is searchable
         persister.commitWrites();
+    }
+
+    @Override
+    public ModelSnapshot deleteModelSnapshot(String jobId, String snapshotId)
+            throws UnknownJobException, NoSuchModelSnapshotException
+    {
+        List<ModelSnapshot> deleteCandidates = modelSnapshots(jobId, 0, 1,
+                    0, 0, null, snapshotId, null).queryResults();
+        if (deleteCandidates == null || deleteCandidates.isEmpty())
+        {
+            throw new NoSuchModelSnapshotException(jobId);
+        }
+
+        ModelSnapshot modelSnapshot = deleteCandidates.get(0);
+
+        ElasticsearchBulkDeleter deleter = new ElasticsearchBulkDeleter(m_Client, jobId);
+        deleter.deleteModelSnapshot(modelSnapshot);
+        deleter.commit();
+
+        return modelSnapshot;
     }
 
     private boolean checkQuantilesVersion(String jobId, GetResponse response)

@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -172,26 +172,35 @@ public class Jobs extends ResourceWithJobManager
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public Response createJob(JobConfiguration config) throws UnknownJobException,
+    public Response createJob(@DefaultValue("false") @QueryParam("overwrite") boolean overwrite,
+            JobConfiguration config) throws UnknownJobException,
             JobConfigurationException, IOException, TooManyJobsException,
-            JobIdAlreadyExistsException, CannotStartSchedulerException
+            JobIdAlreadyExistsException, CannotStartSchedulerException,
+            DataStoreException, NativeProcessRunException, JobInUseException,
+            CannotStopSchedulerException
     {
         LOGGER.debug("Creating new job");
 
-        // throws if a bad config
-        try
+        JobDetails job = null;
+        // Only allow one job creation at any time - this avoids potential race
+        // conditions with too many jobs due to licensing or number of CPU cores
+        // when overwriting
+        synchronized (ENDPOINT)
         {
-            JobConfigurationVerifier.verify(config);
-        }
-        catch (JobConfigurationException e)
-        {
-            // log error and rethrow
-            LOGGER.error("Bad job configuration ", e);
-            throw e;
-        }
+            // throws if a bad config
+            try
+            {
+                JobConfigurationVerifier.verify(config);
+            }
+            catch (JobConfigurationException e)
+            {
+                // log error and rethrow
+                LOGGER.error("Bad job configuration ", e);
+                throw e;
+            }
 
-        JobManager manager = jobManager();
-        JobDetails job = manager.createJob(config);
+            job = jobManager().createJob(config, overwrite);
+        }
         if (job == null)
         {
             LOGGER.debug("Failed to create job");

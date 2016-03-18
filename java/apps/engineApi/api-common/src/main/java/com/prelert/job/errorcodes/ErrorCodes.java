@@ -153,6 +153,11 @@ public enum ErrorCodes
     ENCRYPTION_FAILURE_ERROR(10118),
 
     /**
+     * The 'excludeFrequent' option is set to an invalid value.
+     */
+    INVALID_EXCLUDEFREQUENT_SETTING(10119),
+
+    /**
      * The transform name isn't recognised
      */
     UNKNOWN_TRANSFORM(10201),
@@ -496,7 +501,12 @@ public enum ErrorCodes
     /**
      * The job cannot be resumed.
      */
-    CANNOT_RESUME_JOB(60124);
+    CANNOT_RESUME_JOB(60124),
+
+    /**
+     * Deleting the highest priority model snapshot is not allowed.
+     */
+    CANNOT_DELETE_HIGHEST_PRIORITY(60125);
 
 
     private long m_ErrorCode;

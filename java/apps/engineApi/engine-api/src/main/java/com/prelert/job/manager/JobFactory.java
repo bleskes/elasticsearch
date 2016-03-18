@@ -83,7 +83,6 @@ class JobFactory
             jobConfig.getAnalysisConfig() != null &&
             jobConfig.getAnalysisConfig().getDetectors().size() > m_BackendInfo.getMaxDetectorsPerJob())
         {
-
             String message = Messages.getMessage(
                                 Messages.LICENSE_LIMIT_DETECTORS,
                                 m_BackendInfo.getMaxDetectorsPerJob(),
@@ -92,7 +91,7 @@ class JobFactory
             LOGGER.info(message);
             throw new JobConfigurationException(message, ErrorCodes.LICENSE_VIOLATION);
         }
-        
+
         if (!m_BackendInfo.arePartitionsAllowed() && jobConfig.getAnalysisConfig() != null)
         {
             for (com.prelert.job.Detector detector :

@@ -366,7 +366,7 @@ public class JobConfigurationVerifierTest
     {
         m_ExpectedException.expect(JobConfigurationException.class);
         m_ExpectedException.expectMessage(
-                "renormalizationWindowDays cannot be < 0. Value = -1");
+                "renormalizationWindowDays cannot be less than 0. Value = -1");
         m_ExpectedException.expect(ErrorCodeMatcher.hasErrorCode(
                 ErrorCodes.INVALID_VALUE));
 
@@ -381,7 +381,7 @@ public class JobConfigurationVerifierTest
     {
         m_ExpectedException.expect(JobConfigurationException.class);
         m_ExpectedException.expectMessage(
-                "modelSnapshotRetentionDays cannot be < 0. Value = -1");
+                "modelSnapshotRetentionDays cannot be less than 0. Value = -1");
         m_ExpectedException.expect(ErrorCodeMatcher.hasErrorCode(
                 ErrorCodes.INVALID_VALUE));
 
@@ -392,11 +392,26 @@ public class JobConfigurationVerifierTest
     }
 
     @Test
+    public void testVerify_GivenLowBackgroundPersistInterval() throws JobConfigurationException
+    {
+        m_ExpectedException.expect(JobConfigurationException.class);
+        m_ExpectedException.expectMessage(
+                "backgroundPersistInterval cannot be less than 3,600. Value = 3,599");
+        m_ExpectedException.expect(ErrorCodeMatcher.hasErrorCode(
+                ErrorCodes.INVALID_VALUE));
+
+        JobConfiguration jobConfig = buildJobConfigurationNoTransforms();
+        jobConfig.setBackgroundPersistInterval(3599L);
+
+        JobConfigurationVerifier.verify(jobConfig);
+    }
+
+    @Test
     public void testVerify_GivenNegativeResultsRetentionDays() throws JobConfigurationException
     {
         m_ExpectedException.expect(JobConfigurationException.class);
         m_ExpectedException.expectMessage(
-                "resultsRetentionDays cannot be < 0. Value = -1");
+                "resultsRetentionDays cannot be less than 0. Value = -1");
         m_ExpectedException.expect(ErrorCodeMatcher.hasErrorCode(
                 ErrorCodes.INVALID_VALUE));
 
