@@ -65,6 +65,7 @@ import com.prelert.job.JobSchedulerStatus;
 import com.prelert.job.JobStatus;
 import com.prelert.job.ModelDebugConfig;
 import com.prelert.job.ModelSnapshot;
+import com.prelert.job.NoSuchModelSnapshotException;
 import com.prelert.job.SchedulerState;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.alert.AlertObserver;
@@ -553,6 +554,34 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
             m_JobProvider.updateModelSnapshot(jobId, modelSnapshot, false);
 
             return modelSnapshot;
+        }
+    }
+
+    public ModelSnapshot deleteModelSnapshot(String jobId, String snapshotId)
+            throws JobInUseException, UnknownJobException, NoSuchModelSnapshotException,
+            CannotDeleteSnapshotException
+    {
+        try (ActionTicket actionTicket = m_ActionGuardian.tryAcquiringAction(jobId, Action.UPDATING))
+        {
+            LOGGER.debug("Deleting model snapshot '" + snapshotId + "' for job '" + jobId + "'");
+
+            List<ModelSnapshot> highestPriority = m_JobProvider.modelSnapshots(jobId, 0, 1).queryResults();
+            if (highestPriority == null || highestPriority.isEmpty())
+            {
+                throw new NoSuchModelSnapshotException(jobId);
+            }
+
+            String highestPriorityId = highestPriority.get(0).getSnapshotId();
+            if (highestPriorityId.equals(snapshotId))
+            {
+                throw new CannotDeleteSnapshotException(jobId, highestPriorityId);
+            }
+
+            ModelSnapshot deletedSnapshot = m_JobProvider.deleteModelSnapshot(jobId, snapshotId);
+
+            audit(jobId).info(Messages.getMessage(Messages.JOB_AUDIT_SNAPSHOT_DELETED,
+                    deletedSnapshot.getDescription()));
+            return deletedSnapshot;
         }
     }
 

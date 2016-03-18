@@ -501,7 +501,12 @@ public enum ErrorCodes
     /**
      * The job cannot be resumed.
      */
-    CANNOT_RESUME_JOB(60124);
+    CANNOT_RESUME_JOB(60124),
+
+    /**
+     * Deleting the highest priority model snapshot is not allowed.
+     */
+    CANNOT_DELETE_HIGHEST_PRIORITY(60125);
 
 
     private long m_ErrorCode;

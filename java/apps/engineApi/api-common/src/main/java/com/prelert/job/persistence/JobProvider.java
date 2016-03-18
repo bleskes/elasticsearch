@@ -19,6 +19,7 @@
 package com.prelert.job.persistence;
 
 import com.prelert.job.ModelSnapshot;
+import com.prelert.job.NoSuchModelSnapshotException;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.audit.Auditor;
 import com.prelert.job.persistence.QueryPage;
@@ -74,6 +75,17 @@ public interface JobProvider extends JobDetailsProvider, JobResultsProvider
      */
     public void updateModelSnapshot(String jobId, ModelSnapshot modelSnapshot,
             boolean restoreModelSizeStats) throws UnknownJobException;
+
+    /**
+     * Delete a persisted model snapshot.
+     *
+     * @param jobId the job ID
+     * @param snapshotId the ID of the snapshot to be deleted
+     * @throws UnknownJobException If there is no job with ID <code>jobId</code>
+     * @throws NoSuchModelSnapshotException If there is no snapshot with ID <code>snapshotId</code> for the job
+     */
+    public ModelSnapshot deleteModelSnapshot(String jobId, String snapshotId)
+            throws UnknownJobException, NoSuchModelSnapshotException;
 
     /**
      * Refresh the datastore index so that all recent changes are

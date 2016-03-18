@@ -33,6 +33,7 @@ import java.util.List;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DefaultValue;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -50,12 +51,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import com.prelert.job.ModelSnapshot;
+import com.prelert.job.NoSuchModelSnapshotException;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.exceptions.JobInUseException;
 import com.prelert.job.manager.JobManager;
+import com.prelert.job.manager.CannotDeleteSnapshotException;
 import com.prelert.job.manager.DescriptionAlreadyUsedException;
-import com.prelert.job.manager.NoSuchModelSnapshotException;
 import com.prelert.job.messages.Messages;
 import com.prelert.job.persistence.QueryPage;
 import com.prelert.job.process.exceptions.MalformedJsonException;
@@ -181,8 +183,9 @@ public class ModelSnapshots extends ResourceWithJobManager
             @DefaultValue("") @QueryParam(ModelSnapshot.DESCRIPTION) String description)
             throws JobInUseException, UnknownJobException, NoSuchModelSnapshotException
     {
-        LOGGER.debug("Received request to revert to time '" + time
-                + "' description '" + description + "'");
+        LOGGER.debug("Received request to revert to time '" + time +
+                "' description '" + description + "' snapshot id '" +
+                snapshotId + "' for job '" +jobId + "'");
 
         if (time.isEmpty() && snapshotId.isEmpty() && description.isEmpty())
         {
@@ -206,7 +209,7 @@ public class ModelSnapshots extends ResourceWithJobManager
     }
 
     /**
-     * Attempt to revert to the most recent snapshot matching specified criteria.
+     * Attempt to update the description of the specified snapshot.
      *
      * @param jobId
      * @param snapshotId snapshot ID of the snapshot whose description is to be updated
@@ -220,13 +223,14 @@ public class ModelSnapshots extends ResourceWithJobManager
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     public Response updateDescription(@PathParam("jobId") String jobId,
-            @DefaultValue("") @PathParam("snapshotId") String snapshotId,
+            @PathParam("snapshotId") String snapshotId,
             @DefaultValue("") String updateJson)
             throws JobInUseException, UnknownJobException, NoSuchModelSnapshotException,
             DescriptionAlreadyUsedException, MalformedJsonException
     {
         LOGGER.debug("Received request to change model snapshot description using '"
-                + updateJson + "' for snapshot ID '" + snapshotId + "'");
+                + updateJson + "' for snapshot ID '" + snapshotId +
+                "' for job '" +jobId + "'");
 
         String newDescription = parseDescriptionFromJson(updateJson);
 
@@ -241,6 +245,37 @@ public class ModelSnapshots extends ResourceWithJobManager
         SingleDocument<ModelSnapshot> doc = new SingleDocument<>();
         doc.setDocument(updatedDesc);
         doc.setDocumentId(updatedDesc.getSnapshotId());
+        doc.setType(ModelSnapshot.TYPE);
+
+        return Response.ok(doc).build();
+    }
+
+    /**
+     * Attempt to delete the specified snapshot.
+     * Deleting the snapshot with the highest restore priority is not allowed.
+     *
+     * @param jobId
+     * @param snapshotId snapshot ID of the snapshot to delete
+     * @return
+     * @throws UnknownJobException
+     * @throws NoSuchModelSnapshotException
+     */
+    @DELETE
+    @Path("/{jobId}/{snapshotId}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response deleteModelSnapshot(@PathParam("jobId") String jobId,
+            @PathParam("snapshotId") String snapshotId)
+            throws JobInUseException, UnknownJobException, NoSuchModelSnapshotException,
+            CannotDeleteSnapshotException
+    {
+        LOGGER.debug("Received request to delete model snapshot '" + snapshotId +
+                "' for job '" +jobId + "'");
+
+        ModelSnapshot deleted = jobManager().deleteModelSnapshot(jobId, snapshotId);
+
+        SingleDocument<ModelSnapshot> doc = new SingleDocument<>();
+        doc.setDocument(deleted);
+        doc.setDocumentId(deleted.getSnapshotId());
         doc.setType(ModelSnapshot.TYPE);
 
         return Response.ok(doc).build();

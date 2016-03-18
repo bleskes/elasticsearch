@@ -89,6 +89,7 @@ import com.prelert.job.JobSchedulerStatus;
 import com.prelert.job.JobStatus;
 import com.prelert.job.ModelDebugConfig;
 import com.prelert.job.ModelSnapshot;
+import com.prelert.job.NoSuchModelSnapshotException;
 import com.prelert.job.SchedulerConfig;
 import com.prelert.job.SchedulerConfig.DataSource;
 import com.prelert.job.SchedulerState;
@@ -1168,6 +1169,84 @@ public class JobManagerTest
         }
 
         verify(m_JobProvider, never()).updateJob(eq("foo"), anyMapOf(String.class, Object.class));
+    }
+
+    @Test
+    public void testDeleteModelSnapshot_GivenSnapshotExistsAndNotHighestPriority()
+            throws JobInUseException, UnknownJobException, NoSuchModelSnapshotException,
+            CannotDeleteSnapshotException
+    {
+        givenProcessInfo(2);
+        JobManager jobManager = createJobManager();
+
+        ModelSnapshot modelSnapshot1 = new ModelSnapshot();
+        modelSnapshot1.setSnapshotId("1");
+        modelSnapshot1.setRestorePriority(1);
+        ModelSnapshot modelSnapshot2 = new ModelSnapshot();
+        modelSnapshot2.setSnapshotId("2");
+        modelSnapshot2.setRestorePriority(2);
+
+        QueryPage<ModelSnapshot> modelSnapshotPage = new QueryPage<>(Arrays.asList(modelSnapshot2), 1);
+        when(m_JobProvider.modelSnapshots("foo", 0, 1)).thenReturn(modelSnapshotPage);
+        when(m_JobProvider.deleteModelSnapshot("foo", "1")).thenReturn(modelSnapshot1);
+
+        ModelSnapshot deletedSnapshot = jobManager.deleteModelSnapshot("foo", "1");
+        assertNotNull(deletedSnapshot);
+
+        verify(m_JobProvider).modelSnapshots("foo", 0, 1);
+        assertEquals("1", deletedSnapshot.getSnapshotId());
+    }
+
+    @Test
+    public void testDeleteModelSnapshot_GivenSnapshotExistsButHighestPriority()
+            throws JobInUseException, UnknownJobException, NoSuchModelSnapshotException,
+            CannotDeleteSnapshotException
+    {
+        givenProcessInfo(2);
+        JobManager jobManager = createJobManager();
+
+        ModelSnapshot modelSnapshot1 = new ModelSnapshot();
+        modelSnapshot1.setSnapshotId("1");
+        modelSnapshot1.setRestorePriority(1);
+        ModelSnapshot modelSnapshot2 = new ModelSnapshot();
+        modelSnapshot2.setSnapshotId("2");
+        modelSnapshot2.setRestorePriority(2);
+
+        QueryPage<ModelSnapshot> modelSnapshotPage = new QueryPage<>(Arrays.asList(modelSnapshot2), 1);
+        when(m_JobProvider.modelSnapshots("foo", 0, 1)).thenReturn(modelSnapshotPage);
+        when(m_JobProvider.deleteModelSnapshot("foo", "2")).thenReturn(modelSnapshot2);
+
+        m_ExpectedException.expect(CannotDeleteSnapshotException.class);
+        m_ExpectedException.expectMessage("Model snapshot '2' is the active snapshot for job 'foo', so cannot be deleted");
+        m_ExpectedException.expect(ErrorCodeMatcher.hasErrorCode(ErrorCodes.CANNOT_DELETE_HIGHEST_PRIORITY));
+
+        jobManager.deleteModelSnapshot("foo", "2");
+    }
+
+    @Test
+    public void testDeleteModelSnapshot_GivenSnapshotDoesNotExist()
+            throws JobInUseException, UnknownJobException, NoSuchModelSnapshotException,
+            CannotDeleteSnapshotException
+    {
+        givenProcessInfo(2);
+        JobManager jobManager = createJobManager();
+
+        ModelSnapshot modelSnapshot1 = new ModelSnapshot();
+        modelSnapshot1.setSnapshotId("1");
+        modelSnapshot1.setRestorePriority(1);
+        ModelSnapshot modelSnapshot2 = new ModelSnapshot();
+        modelSnapshot2.setSnapshotId("2");
+        modelSnapshot2.setRestorePriority(2);
+
+        QueryPage<ModelSnapshot> modelSnapshotPage = new QueryPage<>(Arrays.asList(modelSnapshot2), 1);
+        when(m_JobProvider.modelSnapshots("foo", 0, 1)).thenReturn(modelSnapshotPage);
+        when(m_JobProvider.deleteModelSnapshot("foo", "3")).thenThrow(new NoSuchModelSnapshotException("foo"));
+
+        m_ExpectedException.expect(NoSuchModelSnapshotException.class);
+        m_ExpectedException.expectMessage("No matching model snapshot exists for job 'foo'");
+        m_ExpectedException.expect(ErrorCodeMatcher.hasErrorCode(ErrorCodes.NO_SUCH_MODEL_SNAPSHOT));
+
+        jobManager.deleteModelSnapshot("foo", "3");
     }
 
     @Test

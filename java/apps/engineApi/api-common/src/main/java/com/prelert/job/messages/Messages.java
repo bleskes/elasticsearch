@@ -51,6 +51,7 @@ public final class Messages
     public static final String JOB_AUDIT_RESUMED = "job.audit.resumed";
     public static final String JOB_AUDIT_UPDATED = "job.audit.updated";
     public static final String JOB_AUDIT_REVERTED = "job.audit.reverted";
+    public static final String JOB_AUDIT_SNAPSHOT_DELETED = "job.audit.snapshot.deleted";
     public static final String JOB_AUDIT_SCHEDULER_STARTED_FROM_TO = "job.audit.scheduler.started.from.to";
     public static final String JOB_AUDIT_SCHEDULER_CONTINUED_REALTIME = "job.audit.scheduler.continued.realtime";
     public static final String JOB_AUDIT_SCHEDULER_STARTED_REALTIME = "job.audit.scheduler.started.realtime";
@@ -178,6 +179,7 @@ public final class Messages
     public static final String REST_NO_SUCH_MODEL_SNAPSHOT = "rest.no.such.model.snapshot";
     public static final String REST_INVALID_DESCRIPTION_PARAMS = "rest.invalid.description.params";
     public static final String REST_DESCRIPTION_ALREADY_USED = "rest.description.already.used";
+    public static final String REST_CANNOT_DELETE_HIGHEST_PRIORITY = "rest.cannot.delete.highest.priority";
 
     public static final String REST_ALERT_MISSING_ARGUMENT = "rest.alert.missing.argument";
     public static final String REST_ALERT_INVALID_TIMEOUT = "rest.alert.invalid.timeout";

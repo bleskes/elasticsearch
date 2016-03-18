@@ -50,6 +50,7 @@ import org.mockito.MockitoAnnotations;
 
 import com.prelert.job.JobDetails;
 import com.prelert.job.ModelSnapshot;
+import com.prelert.job.UnknownJobException;
 import com.prelert.job.results.Bucket;
 import com.prelert.job.results.Influencer;
 
@@ -71,7 +72,7 @@ public class OldDataRemoverTest
     }
 
     @Test
-    public void testRemoveOldModelSnapshots()
+    public void testRemoveOldModelSnapshots() throws UnknownJobException
     {
         JobDetails jobWithRetention = new JobDetails();
         jobWithRetention.setId(JOB_WITH_RETENTION_ID);
@@ -84,6 +85,8 @@ public class OldDataRemoverTest
 
         ModelSnapshot modelSnapshot1 = new ModelSnapshot();
         ModelSnapshot modelSnapshot2 = new ModelSnapshot();
+        ModelSnapshot modelSnapshot3 = new ModelSnapshot();
+        modelSnapshot3.setSnapshotId("highest priority");
         Deque<ModelSnapshot> modelSnapshotBatch = new ArrayDeque<>();
         modelSnapshotBatch.add(modelSnapshot1);
         modelSnapshotBatch.add(modelSnapshot2);
@@ -91,6 +94,7 @@ public class OldDataRemoverTest
         MockBatchedResultsIterator<ModelSnapshot> modelSnapshotIterator = new MockBatchedResultsIterator<>(0, cutoffEpochMs, modelSnapshotBatches);
 
         when(m_JobProvider.newBatchedModelSnapshotIterator(JOB_WITH_RETENTION_ID)).thenReturn(modelSnapshotIterator);
+        when(m_JobProvider.modelSnapshots(JOB_WITH_RETENTION_ID, 0, 1)).thenReturn(new QueryPage<ModelSnapshot>(Arrays.asList(modelSnapshot3), 1));
 
         JobDataDeleter deleter = mock(JobDataDeleter.class);
         when(m_DeleterFactory.newDeleter(JOB_WITH_RETENTION_ID)).thenReturn(deleter);

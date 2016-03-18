@@ -89,8 +89,7 @@ public class ProcessFactory
         String jobId = job.getId();
         Logger logger = m_JobLoggerFactory.newLogger(job.getId());
         Quantiles quantiles = m_JobProvider.getQuantiles(jobId);
-        QueryPage<ModelSnapshot> page = m_JobProvider.modelSnapshots(jobId, 0, 1);
-        List<ModelSnapshot> modelSnapshots = page.queryResults();
+        List<ModelSnapshot> modelSnapshots = m_JobProvider.modelSnapshots(jobId, 0, 1).queryResults();
         ModelSnapshot modelSnapshot = (modelSnapshots == null || modelSnapshots.isEmpty()) ? null : modelSnapshots.get(0);
 
         Process nativeProcess = null;

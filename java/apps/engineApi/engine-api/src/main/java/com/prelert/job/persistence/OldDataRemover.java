@@ -38,6 +38,7 @@ import java.util.function.Consumer;
 import org.apache.log4j.Logger;
 
 import com.prelert.job.JobDetails;
+import com.prelert.job.ModelSnapshot;
 import com.prelert.job.UnknownJobException;
 
 /**
@@ -129,10 +130,34 @@ public class OldDataRemover
 
     private void deleteModelStateBefore(String jobId, long cutoffEpochMs)
     {
+        // Don't delete the highest priority model snapshot
+        List<ModelSnapshot> highestPriority = null;
+        try
+        {
+            highestPriority = m_JobProvider.modelSnapshots(jobId, 0, 1).queryResults();
+        }
+        catch (UnknownJobException e)
+        {
+            LOGGER.warn("Failed to retrieve highest priority model snapshot for job '"
+                    + e.getJobId() + "'. " + "The job appears to have been deleted.");
+        }
+        if (highestPriority == null || highestPriority.isEmpty())
+        {
+            // There are no snapshots at all, so nothing to delete
+            return;
+        }
+
+        String highestPriorityId = highestPriority.get(0).getSnapshotId();
+
         JobDataDeleter deleter = m_DataDeleterFactory.newDeleter(jobId);
         deleteDataBefore(
                 m_JobProvider.newBatchedModelSnapshotIterator(jobId).timeRange(0, cutoffEpochMs),
-                modelSnapshot -> deleter.deleteModelSnapshot(modelSnapshot)
+                modelSnapshot -> {
+                    if (!highestPriorityId.equals(modelSnapshot.getSnapshotId()))
+                    {
+                        deleter.deleteModelSnapshot(modelSnapshot);
+                    }
+                }
         );
         deleter.commit();
     }
