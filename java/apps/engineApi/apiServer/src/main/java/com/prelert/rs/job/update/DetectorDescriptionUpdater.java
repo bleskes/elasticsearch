@@ -95,7 +95,7 @@ class DetectorDescriptionUpdater extends AbstractUpdater
             throw new JobConfigurationException(msg, ErrorCodes.INVALID_VALUE);
         }
         Object detectorIndex = updateParams.get(DETECTOR_INDEX);
-        Object name = updateParams.get(DESCRIPTION);
+        Object description = updateParams.get(DESCRIPTION);
         if (!(detectorIndex instanceof Integer))
         {
             String msg = Messages.getMessage(
@@ -103,13 +103,13 @@ class DetectorDescriptionUpdater extends AbstractUpdater
                     detectorIndex);
             throw new JobConfigurationException(msg, ErrorCodes.INVALID_VALUE);
         }
-        if (!(name instanceof String))
+        if (!(description instanceof String))
         {
             String msg = Messages.getMessage(
-                    Messages.JOB_CONFIG_UPDATE_DETECTOR_DESCRIPTION_SHOULD_BE_STRING, name);
+                    Messages.JOB_CONFIG_UPDATE_DETECTOR_DESCRIPTION_SHOULD_BE_STRING, description);
             throw new JobConfigurationException(msg, ErrorCodes.INVALID_VALUE);
         }
-        m_Updates.add(new UpdateParams((int) detectorIndex, (String) name));
+        m_Updates.add(new UpdateParams((int) detectorIndex, (String) description));
     }
 
     private void validateDetectorIndex(UpdateParams update, int detectorsCount)
@@ -130,7 +130,7 @@ class DetectorDescriptionUpdater extends AbstractUpdater
         for (UpdateParams update : m_Updates)
         {
             if (jobManager().updateDetectorDescription(
-                    jobId(), update.detectorIndex, update.name) == false)
+                    jobId(), update.detectorIndex, update.detectorDescription) == false)
             {
                 throw new JobConfigurationException(
                         Messages.getMessage(Messages.JOB_CONFIG_UPDATE_DETECTOR_DESCRIPTION_FAILED),
@@ -142,12 +142,12 @@ class DetectorDescriptionUpdater extends AbstractUpdater
     private static class UpdateParams
     {
         final int detectorIndex;
-        final String name;
+        final String detectorDescription;
 
-        public UpdateParams(int detectorIndex, String name)
+        public UpdateParams(int detectorIndex, String detectorDescription)
         {
             this.detectorIndex = detectorIndex;
-            this.name = name;
+            this.detectorDescription = detectorDescription;
         }
     }
 }
