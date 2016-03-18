@@ -195,7 +195,7 @@ public final class DetectorVerifier
         // is fine
         try
         {
-            long num = Long.parseLong(excludeFrequent);
+            Long.parseLong(excludeFrequent);
         }
         catch (NumberFormatException nfe)
         {

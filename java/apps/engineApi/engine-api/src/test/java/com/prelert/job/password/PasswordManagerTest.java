@@ -35,8 +35,10 @@ import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
+import java.io.EOFException;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.security.NoSuchAlgorithmException;
@@ -60,7 +62,6 @@ public class PasswordManagerTest
         PasswordManager mgr = new PasswordManager("AES/CBC/PKCS5Padding", TEST_KEY_BYTES);
 
         String encrypted = mgr.encryptPassword(null);
-
         assertNull(encrypted);
     }
 
@@ -70,7 +71,6 @@ public class PasswordManagerTest
         PasswordManager mgr = new PasswordManager("AES/CBC/PKCS5Padding", TEST_KEY_BYTES);
 
         String decrypted = mgr.decryptPassword(null);
-
         assertNull(decrypted);
     }
 
@@ -140,15 +140,56 @@ public class PasswordManagerTest
     }
 
     @Test
-    public void testConstructFromFile_GivenExists() throws NoSuchAlgorithmException, IOException
+    public void testConstructFromFile_GivenExists() throws GeneralSecurityException, IOException
     {
-        PasswordManager mgr = new PasswordManager("AES/CBC/PKCS5Padding", new File("pom.xml"));
+        File testFile = new File("test.key");
+        try (FileOutputStream strm = new FileOutputStream(testFile))
+        {
+            strm.write(TEST_KEY_BYTES);
+        }
+
+        PasswordManager mgrFromFile = new PasswordManager("AES/CBC/PKCS5Padding", testFile);
+
+        String orig = "my_password!";
+
+        String encrypted = mgrFromFile.encryptPassword(orig);
+        assertFalse(orig.equals(encrypted));
+
+        // Decrypt with a different password manager initialised directly with
+        // the key bytes rather than reading them from a file - this proves
+        // that reading from a file is equivalent
+        PasswordManager mgr = new PasswordManager("AES/CBC/PKCS5Padding", TEST_KEY_BYTES);
+
+        String roundTripped = mgr.decryptPassword(encrypted);
+        assertEquals(orig, roundTripped);
+
+        assertTrue(testFile.delete());
+    }
+
+    @Test(expected = EOFException.class)
+    public void testConstructFromFile_GivenTooShort() throws NoSuchAlgorithmException, IOException
+    {
+        File testFile = new File("test.key");
+        try
+        {
+            try (FileOutputStream strm = new FileOutputStream(testFile))
+            {
+                strm.write(7);
+            }
+
+            PasswordManager mgrFromFile = new PasswordManager("AES/CBC/PKCS5Padding", testFile);
+        }
+        finally
+        {
+            testFile.delete();
+        }
     }
 
     @Test(expected = FileNotFoundException.class)
     public void testConstructFromFile_GivenDoesNotExist() throws NoSuchAlgorithmException, IOException
     {
-        PasswordManager mgr = new PasswordManager("AES/CBC/PKCS5Padding", new File("does_not_exist"));
+        PasswordManager mgrFromFile = new PasswordManager("AES/CBC/PKCS5Padding",
+                new File("does_not_exist"));
     }
 
     private static class SimplePasswordStorage implements PasswordStorage

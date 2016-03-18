@@ -135,6 +135,74 @@ public class SchedulerConfigVerifierTest
         ObjectMapper mapper = new ObjectMapper();
         conf.setQuery(mapper.readValue("{ \"match_all\" : {} }", new TypeReference<Map<String, Object>>(){}));
 
+        assertTrue(SchedulerConfigVerifier.verify(conf));
+    }
+
+    @Test
+    public void testCheckValidElasticsearch_WithUsernameAndPassword() throws JobConfigurationException, IOException
+    {
+        SchedulerConfig conf = new SchedulerConfig();
+        conf.setDataSource(DataSource.ELASTICSEARCH);
+        conf.setQueryDelay(90L);
+        conf.setBaseUrl("http://localhost:9200/");
+        conf.setIndexes(Arrays.asList("myindex"));
+        conf.setTypes(Arrays.asList("mytype"));
+        conf.setUsername("dave");
+        conf.setPassword("secret");
+        ObjectMapper mapper = new ObjectMapper();
+        conf.setQuery(mapper.readValue("{ \"match_all\" : {} }", new TypeReference<Map<String, Object>>(){}));
+
+        assertTrue(SchedulerConfigVerifier.verify(conf));
+    }
+
+    @Test
+    public void testCheckValidElasticsearch_WithUsernameAndEncryptedPassword() throws JobConfigurationException, IOException
+    {
+        SchedulerConfig conf = new SchedulerConfig();
+        conf.setDataSource(DataSource.ELASTICSEARCH);
+        conf.setQueryDelay(90L);
+        conf.setBaseUrl("http://localhost:9200/");
+        conf.setIndexes(Arrays.asList("myindex"));
+        conf.setTypes(Arrays.asList("mytype"));
+        conf.setUsername("dave");
+        conf.setEncryptedPassword("already_encrypted");
+        ObjectMapper mapper = new ObjectMapper();
+        conf.setQuery(mapper.readValue("{ \"match_all\" : {} }", new TypeReference<Map<String, Object>>(){}));
+
+        assertTrue(SchedulerConfigVerifier.verify(conf));
+    }
+
+    @Test
+    public void testCheckValidElasticsearch_WithPasswordNoUsername() throws JobConfigurationException
+    {
+        SchedulerConfig conf = new SchedulerConfig();
+        conf.setDataSource(DataSource.ELASTICSEARCH);
+        conf.setBaseUrl("http://localhost:9200/");
+        conf.setIndexes(Arrays.asList("myindex"));
+        conf.setTypes(Arrays.asList("mytype"));
+        conf.setPassword("secret");
+
+        m_ExpectedException.expect(JobConfigurationException.class);
+        m_ExpectedException.expect(
+                ErrorCodeMatcher.hasErrorCode(ErrorCodes.SCHEDULER_INCOMPLETE_CREDENTIALS));
+        SchedulerConfigVerifier.verify(conf);
+    }
+
+    @Test
+    public void testCheckValidElasticsearch_BothPasswordAndEncryptedPassword() throws JobConfigurationException
+    {
+        SchedulerConfig conf = new SchedulerConfig();
+        conf.setDataSource(DataSource.ELASTICSEARCH);
+        conf.setBaseUrl("http://localhost:9200/");
+        conf.setIndexes(Arrays.asList("myindex"));
+        conf.setTypes(Arrays.asList("mytype"));
+        conf.setUsername("dave");
+        conf.setPassword("secret");
+        conf.setEncryptedPassword("already_encrypted");
+
+        m_ExpectedException.expect(JobConfigurationException.class);
+        m_ExpectedException.expect(
+                ErrorCodeMatcher.hasErrorCode(ErrorCodes.SCHEDULER_MULTIPLE_PASSWORDS));
         SchedulerConfigVerifier.verify(conf);
     }
 
@@ -149,7 +217,6 @@ public class SchedulerConfigVerifierTest
 
         assertTrue(SchedulerConfigVerifier.verify(conf));
     }
-
 
     @Test
     public void testCheckValidElasticsearch_InappropriateField() throws JobConfigurationException, IOException
