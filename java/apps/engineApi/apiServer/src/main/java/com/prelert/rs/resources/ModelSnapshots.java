@@ -61,6 +61,7 @@ import com.prelert.job.manager.DescriptionAlreadyUsedException;
 import com.prelert.job.messages.Messages;
 import com.prelert.job.persistence.QueryPage;
 import com.prelert.job.process.exceptions.MalformedJsonException;
+import com.prelert.rs.data.Acknowledgement;
 import com.prelert.rs.data.Pagination;
 import com.prelert.rs.data.SingleDocument;
 import com.prelert.rs.exception.InvalidParametersException;
@@ -271,14 +272,9 @@ public class ModelSnapshots extends ResourceWithJobManager
         LOGGER.debug("Received request to delete model snapshot '" + snapshotId +
                 "' for job '" +jobId + "'");
 
-        ModelSnapshot deleted = jobManager().deleteModelSnapshot(jobId, snapshotId);
+        jobManager().deleteModelSnapshot(jobId, snapshotId);
 
-        SingleDocument<ModelSnapshot> doc = new SingleDocument<>();
-        doc.setDocument(deleted);
-        doc.setDocumentId(deleted.getSnapshotId());
-        doc.setType(ModelSnapshot.TYPE);
-
-        return Response.ok(doc).build();
+        return Response.ok().entity(new Acknowledgement()).build();
     }
 
     /**
