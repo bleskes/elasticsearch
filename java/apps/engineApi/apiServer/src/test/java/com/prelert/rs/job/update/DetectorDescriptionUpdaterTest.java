@@ -265,6 +265,23 @@ public class DetectorDescriptionUpdaterTest
     }
 
     @Test
+    public void testCommit_GivenEmptyDescription() throws JobException, IOException
+    {
+        JsonNode node = new ObjectMapper().readTree("[{\"index\":1, \"description\":\"\"}]");
+        givenJobHasNDetectors(3);
+        m_Job.getAnalysisConfig().getDetectors().get(1).setFunction("mean");
+        m_Job.getAnalysisConfig().getDetectors().get(1).setFieldName("responsetime");
+        m_Job.getAnalysisConfig().getDetectors().get(1).setByFieldName("airline");
+        givenUpdateSucceeds(1, "mean(responsetime) by airline");
+
+        DetectorDescriptionUpdater updater = new DetectorDescriptionUpdater(m_JobManager, JOB_ID);
+        updater.prepareUpdate(node);
+        updater.commit();
+
+        verify(m_JobManager).updateDetectorDescription(JOB_ID, 1, "mean(responsetime) by airline");
+    }
+
+    @Test
     public void testCommit_GivenMultipleValidParams() throws JobException, IOException
     {
         JsonNode node = new ObjectMapper().readTree(

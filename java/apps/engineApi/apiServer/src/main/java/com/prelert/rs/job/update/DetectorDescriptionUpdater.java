@@ -38,6 +38,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.collect.Sets;
 import com.prelert.job.JobDetails;
 import com.prelert.job.UnknownJobException;
+import com.prelert.job.config.DefaultDetectorDescription;
 import com.prelert.job.config.verification.JobConfigurationException;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.manager.JobManager;
@@ -67,6 +68,7 @@ class DetectorDescriptionUpdater extends AbstractUpdater
         for (UpdateParams update : m_Updates)
         {
             validateDetectorIndex(update, detectorsCount);
+            fillDefaultDescriptionIfEmpty(job, update);
         }
     }
 
@@ -124,6 +126,15 @@ class DetectorDescriptionUpdater extends AbstractUpdater
         }
     }
 
+    private void fillDefaultDescriptionIfEmpty(JobDetails job, UpdateParams update)
+    {
+        if (update.detectorDescription.isEmpty())
+        {
+            update.detectorDescription = DefaultDetectorDescription.of(
+                    job.getAnalysisConfig().getDetectors().get(update.detectorIndex));
+        }
+    }
+
     @Override
     void commit() throws UnknownJobException, JobConfigurationException
     {
@@ -142,7 +153,7 @@ class DetectorDescriptionUpdater extends AbstractUpdater
     private static class UpdateParams
     {
         final int detectorIndex;
-        final String detectorDescription;
+        String detectorDescription;
 
         public UpdateParams(int detectorIndex, String detectorDescription)
         {
