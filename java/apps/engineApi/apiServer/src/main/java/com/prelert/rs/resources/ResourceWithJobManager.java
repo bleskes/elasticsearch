@@ -388,7 +388,6 @@ public abstract class ResourceWithJobManager
             doc.setDocument(opt.get());
         }
 
-        doc.setDocumentId(docId);
         doc.setType(docType);
 
         return doc;

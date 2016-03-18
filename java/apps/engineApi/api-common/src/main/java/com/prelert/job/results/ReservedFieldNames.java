@@ -104,7 +104,6 @@ public final class ReservedFieldNames
         AnomalyRecord.NORMALIZED_PROBABILITY,
         AnomalyRecord.INITIAL_NORMALIZED_PROBABILITY,
 
-        Bucket.ID,
         Bucket.ANOMALY_SCORE,
         Bucket.MAX_NORMALIZED_PROBABILITY,
         Bucket.IS_INTERIM,

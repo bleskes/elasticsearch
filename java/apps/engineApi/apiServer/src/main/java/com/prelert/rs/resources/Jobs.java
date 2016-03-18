@@ -152,7 +152,6 @@ public class Jobs extends ResourceWithJobManager
         {
             job = new SingleDocument<>();
             job.setType(JobDetails.TYPE);
-            job.setDocumentId(jobId);
         }
 
         if (job.isExists())

@@ -751,7 +751,6 @@ public class JobsTest implements Closeable
 
             test(bucket.isExists() == true);
             test(bucket.getDocument() != null);
-            test(bucket.getDocumentId().equals(Long.toString(lastBucketTime)));
             test(bucket.getType().equals(Bucket.TYPE));
 
             validateBuckets(Arrays.asList(new Bucket[]{bucket.getDocument()}),
@@ -827,7 +826,7 @@ public class JobsTest implements Closeable
 
             test(bucket.isExists() == true);
             test(bucket.getDocument() != null);
-            test(bucket.getDocumentId().equals(Long.toString(lastBucketTime)));
+            test(bucket.getDocument().getEpoch() ==  lastBucketTime);
             test(bucket.getType().equals(Bucket.TYPE));
 
             validateBuckets(Arrays.asList(new Bucket[]{bucket.getDocument()}),

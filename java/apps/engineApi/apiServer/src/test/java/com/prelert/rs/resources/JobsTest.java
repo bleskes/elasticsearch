@@ -28,13 +28,11 @@
 package com.prelert.rs.resources;
 
 import static com.prelert.job.errorcodes.ErrorCodeMatcher.hasErrorCode;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -147,7 +145,7 @@ public class JobsTest extends ServiceTest
         @SuppressWarnings("unchecked")
         SingleDocument<JobDetails> entity = (SingleDocument<JobDetails>) response.getEntity();
         assertTrue(entity.isExists());
-        assertEquals("foo", entity.getDocumentId());
+        assertEquals("foo", entity.getDocument().getId());
         assertEquals(JobDetails.TYPE, entity.getType());
         assertEquals(job, entity.getDocument());
     }
@@ -164,7 +162,6 @@ public class JobsTest extends ServiceTest
         SingleDocument<JobDetails> result = (SingleDocument<JobDetails>) response.getEntity();
 
         assertEquals(JobDetails.TYPE, result.getType());
-        assertEquals("foo", result.getDocumentId());
         assertNull(result.getDocument());
         assertFalse(result.isExists());
     }

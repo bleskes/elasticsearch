@@ -30,7 +30,6 @@ package com.prelert.rs.resources;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-
 import static org.mockito.Mockito.when;
 
 import java.net.URISyntaxException;
@@ -208,7 +207,6 @@ public class BucketsTest extends ServiceTest
         @SuppressWarnings("unchecked")
         SingleDocument<Bucket> result = (SingleDocument<Bucket>)response.getEntity();
         assertTrue(result.isExists());
-        assertEquals("42", result.getDocumentId());
         assertEquals(Bucket.TYPE, result.getType());
 
         assertEquals(200, response.getStatus());

@@ -40,7 +40,6 @@ public class Bucket
     /*
      * Field Names
      */
-    public static final String ID = "id";
     public static final String TIMESTAMP = "timestamp";
     public static final String ANOMALY_SCORE = "anomalyScore";
     public static final String INITIAL_ANOMALY_SCORE = "initialAnomalyScore";
@@ -113,11 +112,17 @@ public class Bucket
         m_Timestamp = timestamp;
     }
 
+    /**
+     * Bucketspan expressed in seconds
+     */
     public long getBucketSpan()
     {
         return m_BucketSpan;
     }
 
+    /**
+     * Bucketspan expressed in seconds
+     */
     public void setBucketSpan(long l)
     {
         m_BucketSpan = l;
@@ -237,7 +242,7 @@ public class Bucket
     public int hashCode()
     {
         // m_HadBigNormalisedUpdate is deliberately excluded from the hash
-        return Objects.hash(m_Timestamp, m_EventCount, m_InitialAnomalyScore, m_AnomalyScore,
+        return Objects.hash(m_Id, m_Timestamp, m_EventCount, m_InitialAnomalyScore, m_AnomalyScore,
                 m_MaxNormalizedProbability, m_RecordCount, m_Records, m_IsInterim, m_BucketSpan,
                 m_BucketInfluencers, m_Influencers);
     }
@@ -261,7 +266,8 @@ public class Bucket
         Bucket that = (Bucket)other;
 
         // m_HadBigNormalisedUpdate is deliberately excluded from the test
-        return Objects.equals(this.m_Timestamp, that.m_Timestamp)
+        return Objects.equals(this.m_Id, that.m_Id)
+                && (this.m_Timestamp == that.m_Timestamp)
                 && (this.m_EventCount == that.m_EventCount)
                 && (this.m_BucketSpan == that.m_BucketSpan)
                 && (this.m_AnomalyScore == that.m_AnomalyScore)

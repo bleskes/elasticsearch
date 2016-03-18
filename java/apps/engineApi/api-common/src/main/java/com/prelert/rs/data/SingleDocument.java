@@ -35,7 +35,6 @@ public class SingleDocument<T>
 {
     private boolean m_Exists;
     private String m_Type;
-    private String m_Id;
 
     private T m_Document;
 
@@ -65,20 +64,6 @@ public class SingleDocument<T>
     public void setType(String type)
     {
         this.m_Type = type;
-    }
-
-    /**
-     * The id of the requested document
-     * @return The document Id
-     */
-    public String getDocumentId()
-    {
-        return m_Id;
-    }
-
-    public void setDocumentId(String id)
-    {
-        this.m_Id = id;
     }
 
     /**

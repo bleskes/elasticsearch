@@ -57,6 +57,6 @@ class ElasticsearchBatchedBucketsIterator extends ElasticsearchBatchedResultsIte
 
         Bucket bucket = objectMapper.convertValue(hit.getSource(), Bucket.class);
         bucket.setId(hit.getId());
-		return bucket;
+        return bucket;
     }
 }

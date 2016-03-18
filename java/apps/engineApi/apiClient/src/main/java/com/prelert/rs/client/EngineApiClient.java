@@ -705,6 +705,7 @@ public class EngineApiClient implements Closeable
      * the request can be configured and executed
      *
      * @param jobId The jobId for which a bucket is requested
+     * @param bucketTimestamp The timestamp of the bucket in seconds
      *
      * @return A {@link BucketRequestBuilder}
      */

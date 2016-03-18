@@ -35,10 +35,10 @@ import javax.ws.rs.Consumes;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
@@ -49,7 +49,6 @@ import org.apache.log4j.Logger;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-
 import com.prelert.job.ModelSnapshot;
 import com.prelert.job.NoSuchModelSnapshotException;
 import com.prelert.job.UnknownJobException;
@@ -58,6 +57,9 @@ import com.prelert.job.exceptions.JobInUseException;
 import com.prelert.job.manager.JobManager;
 import com.prelert.job.manager.CannotDeleteSnapshotException;
 import com.prelert.job.manager.DescriptionAlreadyUsedException;
+import com.prelert.job.manager.DescriptionAlreadyUsedException;
+import com.prelert.job.manager.JobManager;
+import com.prelert.job.manager.NoSuchModelSnapshotException;
 import com.prelert.job.messages.Messages;
 import com.prelert.job.persistence.QueryPage;
 import com.prelert.job.process.exceptions.MalformedJsonException;
@@ -203,7 +205,6 @@ public class ModelSnapshots extends ResourceWithJobManager
 
         SingleDocument<ModelSnapshot> doc = new SingleDocument<>();
         doc.setDocument(revertedTo);
-        doc.setDocumentId(revertedTo.getSnapshotId());
         doc.setType(ModelSnapshot.TYPE);
 
         return Response.ok(doc).build();
@@ -245,7 +246,6 @@ public class ModelSnapshots extends ResourceWithJobManager
 
         SingleDocument<ModelSnapshot> doc = new SingleDocument<>();
         doc.setDocument(updatedDesc);
-        doc.setDocumentId(updatedDesc.getSnapshotId());
         doc.setType(ModelSnapshot.TYPE);
 
         return Response.ok(doc).build();
