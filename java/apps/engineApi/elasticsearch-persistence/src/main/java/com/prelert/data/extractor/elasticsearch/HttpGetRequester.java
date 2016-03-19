@@ -32,10 +32,26 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLSession;
+
 class HttpGetRequester
 {
     private static final String GET = "GET";
     private static final String AUTH_HEADER = "Authorization";
+
+    static
+    {
+        // This is the equivalent of "curl -k", i.e. tolerate connecting to an
+        // Elasticsearch with a certificate that doesn't match its hostname.
+        HttpsURLConnection.setDefaultHostnameVerifier(new HostnameVerifier() {
+            public boolean verify(String hostname, SSLSession session)
+            {
+                return true;
+            }
+        });
+    }
 
     public HttpGetResponse get(String url, String authHeader, String requestBody) throws IOException
     {
