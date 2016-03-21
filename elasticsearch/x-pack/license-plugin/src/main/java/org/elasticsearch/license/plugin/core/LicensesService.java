@@ -20,7 +20,7 @@ import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.cluster.AckedClusterStateUpdateTask;
 import org.elasticsearch.cluster.ClusterChangedEvent;
-import org.elasticsearch.cluster.ClusterService;
+import org.elasticsearch.cluster.service.ClusterService;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.ClusterStateListener;
 import org.elasticsearch.cluster.ClusterStateUpdateTask;
@@ -185,9 +185,9 @@ public class LicensesService extends AbstractLifecycleComponent<LicensesService>
                                                     }
                                                 }
                                             }
-                                            logger.error(builder.toString());
+                                            logger.error("{}", builder);
                                         } else {
-                                            logger.error(general);
+                                            logger.error("{}", general);
                                         }
                                     }
                                 }
@@ -217,9 +217,9 @@ public class LicensesService extends AbstractLifecycleComponent<LicensesService>
                                                     }
                                                 }
                                             }
-                                            logger.error(builder.toString());
+                                            logger.error("{}", builder.toString());
                                         } else {
-                                            logger.error(general);
+                                            logger.error("{}", general);
                                         }
                                     }
                                 }
@@ -249,9 +249,9 @@ public class LicensesService extends AbstractLifecycleComponent<LicensesService>
                                                     }
                                                 }
                                             }
-                                            logger.error(builder.toString());
+                                            logger.error("{}", builder.toString());
                                         } else {
-                                            logger.error(general);
+                                            logger.error("{}", general);
                                         }
                                     }
                                 }
@@ -411,7 +411,7 @@ public class LicensesService extends AbstractLifecycleComponent<LicensesService>
             public void clusterStateProcessed(String source, ClusterState oldState, ClusterState newState) {
                 LicensesMetaData licensesMetaData = newState.metaData().custom(LicensesMetaData.TYPE);
                 if (logger.isDebugEnabled()) {
-                    logger.debug("registered trial license", licensesMetaData);
+                    logger.debug("registered trial license: {}", licensesMetaData);
                 }
             }
 

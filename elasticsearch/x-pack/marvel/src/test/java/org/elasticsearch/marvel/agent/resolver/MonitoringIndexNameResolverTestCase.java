@@ -18,10 +18,11 @@
 package org.elasticsearch.marvel.agent.resolver;
 
 import org.elasticsearch.common.bytes.BytesReference;
+import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentHelper;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.common.xcontent.support.XContentMapValues;
-import org.elasticsearch.marvel.MonitoringIds;
+import org.elasticsearch.marvel.MonitoredSystem;
 import org.elasticsearch.marvel.agent.exporter.MonitoringDoc;
 import org.elasticsearch.test.ESTestCase;
 
@@ -52,10 +53,14 @@ import static org.hamcrest.Matchers.startsWith;
 public abstract class MonitoringIndexNameResolverTestCase<M extends MonitoringDoc, R extends MonitoringIndexNameResolver<M>>
         extends ESTestCase {
 
+    private final ResolversRegistry resolversRegistry = new ResolversRegistry(Settings.EMPTY);
+
     /**
      * @return the {@link MonitoringIndexNameResolver} to test
      */
-    protected abstract R newResolver();
+    protected R newResolver() {
+        return (R) resolversRegistry.getResolver(newMarvelDoc());
+    }
 
     /**
      * @return a new randomly created {@link MonitoringDoc} instance to use in tests
@@ -64,7 +69,7 @@ public abstract class MonitoringIndexNameResolverTestCase<M extends MonitoringDo
 
     public void testMarvelDoc() {
         MonitoringDoc doc = newMarvelDoc();
-        assertThat(doc.getMonitoringId(), equalTo(MonitoringIds.fromId(doc.getMonitoringId()).getId()));
+        assertThat(doc.getMonitoringId(), equalTo(MonitoredSystem.fromSystem(doc.getMonitoringId()).getSystem()));
         assertThat(doc.getMonitoringVersion(), not(isEmptyOrNullString()));
         assertThat(doc.getClusterUUID(), not(isEmptyOrNullString()));
         assertThat(doc.getTimestamp(), greaterThan(0L));
@@ -190,7 +195,7 @@ public abstract class MonitoringIndexNameResolverTestCase<M extends MonitoringDo
     }
 
     protected static String randomMonitoringId() {
-        return randomFrom(MonitoringIds.values()).getId();
+        return randomFrom(MonitoredSystem.values()).getSystem();
     }
 
     @SuppressWarnings("unchecked")

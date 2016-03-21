@@ -23,7 +23,6 @@ import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentBuilderString;
 import org.elasticsearch.marvel.agent.collector.cluster.DiscoveryNodeMonitoringDoc;
-import org.elasticsearch.marvel.agent.exporter.MarvelTemplateUtils;
 import org.elasticsearch.marvel.agent.resolver.MonitoringIndexNameResolver;
 
 import java.io.IOException;
@@ -32,8 +31,8 @@ public class DiscoveryNodeResolver extends MonitoringIndexNameResolver.Data<Disc
 
     public static final String TYPE = "node";
 
-    public DiscoveryNodeResolver() {
-        super(MarvelTemplateUtils.TEMPLATE_VERSION);
+    public DiscoveryNodeResolver(int version) {
+        super(version);
     }
 
     @Override

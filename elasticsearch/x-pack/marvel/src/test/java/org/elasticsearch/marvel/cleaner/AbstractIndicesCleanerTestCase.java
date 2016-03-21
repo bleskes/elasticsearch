@@ -23,7 +23,7 @@ import org.elasticsearch.license.core.License;
 import org.elasticsearch.license.plugin.core.LicenseState;
 import org.elasticsearch.license.plugin.core.Licensee;
 import org.elasticsearch.marvel.MarvelSettings;
-import org.elasticsearch.marvel.MonitoringIds;
+import org.elasticsearch.marvel.MonitoredSystem;
 import org.elasticsearch.marvel.agent.exporter.Exporter;
 import org.elasticsearch.marvel.agent.exporter.Exporters;
 import org.elasticsearch.marvel.agent.exporter.MarvelTemplateUtils;
@@ -228,7 +228,7 @@ public abstract class AbstractIndicesCleanerTestCase extends MarvelIntegTestCase
     }
 
     private MonitoringDoc randomMonitoringDoc() {
-        return new MonitoringDoc(randomFrom(MonitoringIds.values()).getId(), VersionUtils.randomVersion(random()).toString());
+        return new MonitoringDoc(randomFrom(MonitoredSystem.values()).getSystem(), VersionUtils.randomVersion(random()).toString());
     }
 
     /**
@@ -245,7 +245,7 @@ public abstract class AbstractIndicesCleanerTestCase extends MarvelIntegTestCase
         MonitoringDoc monitoringDoc = randomMonitoringDoc();
         monitoringDoc.setTimestamp(creationDate.getMillis());
 
-        MonitoringIndexNameResolver.Timestamped resolver = new MockTimestampedIndexNameResolver(monitoringDoc.getMonitoringId(), version);
+        MonitoringIndexNameResolver.Timestamped resolver = new MockTimestampedIndexNameResolver(MonitoredSystem.ES, version);
         createIndex(resolver.index(monitoringDoc), creationDate);
     }
 

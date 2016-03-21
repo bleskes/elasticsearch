@@ -17,6 +17,7 @@
 
 package org.elasticsearch.shield.authc.esusers;
 
+import org.elasticsearch.common.SuppressLoggerChecks;
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.logging.ESLoggerFactory;
 import org.elasticsearch.common.settings.Settings;
@@ -191,6 +192,7 @@ public class FileUserPasswdStoreTests extends ESTestCase {
         assertThat(new String(users.get("sha")), equalTo("{SHA}cojt0Pw//L6ToM8G41aOKFIWh7w="));
     }
 
+    @SuppressLoggerChecks(reason = "mock usage")
     public void testParseFile_Empty() throws Exception {
         Path empty = createTempFile();
         ESLogger log = ESLoggerFactory.getLogger("test");

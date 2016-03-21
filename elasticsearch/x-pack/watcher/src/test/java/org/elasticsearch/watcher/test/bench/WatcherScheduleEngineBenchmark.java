@@ -67,6 +67,7 @@ import static org.elasticsearch.watcher.trigger.schedule.Schedules.interval;
 
 /**
  */
+@SuppressForbidden(reason = "benchmark")
 public class WatcherScheduleEngineBenchmark {
 
     private final static Settings SETTINGS = Settings.builder()
@@ -76,7 +77,6 @@ public class WatcherScheduleEngineBenchmark {
             .put("http.cors.enabled", true)
             .build();
 
-    @SuppressForbidden(reason = "not really code or a test")
     public static void main(String[] args) throws Exception {
         System.setProperty("es.logger.prefix", "");
 
@@ -181,9 +181,7 @@ public class WatcherScheduleEngineBenchmark {
                                     jvmUsedHeapSpace.inc(heapUsed.bytes());
                                     Thread.sleep(1000);
                                 }
-                            } catch (InterruptedException e) {
-                                e.printStackTrace();
-                            }
+                            } catch (InterruptedException ignored) {}
                         }
                     });
                     sampleThread.start();
@@ -264,6 +262,7 @@ public class WatcherScheduleEngineBenchmark {
         }
     }
 
+    @SuppressForbidden(reason = "benchmark")
     private static class BenchStats {
 
         private final String name;

@@ -64,25 +64,25 @@ public class DocumentAndFieldLevelSecurityTests extends ShieldIntegTestCase {
     protected String configRoles() {
         return super.configRoles() +
                 "\nrole1:\n" +
-                "  cluster: all\n" +
+                "  cluster: [ all ]\n" +
                 "  indices:\n" +
-                "    '*':\n" +
-                "      privileges: ALL\n" +
-                "      fields: field1\n" +
+                "    - names: '*'\n" +
+                "      privileges: [ ALL ]\n" +
+                "      fields: [ field1 ]\n" +
                 "      query: '{\"term\" : {\"field1\" : \"value1\"}}'\n" +
                 "role2:\n" +
-                "  cluster: all\n" +
+                "  cluster: [ all ]\n" +
                 "  indices:\n" +
-                "    '*':\n" +
-                "      privileges: ALL\n" +
-                "      fields: field2\n" +
+                "    - names: '*'\n" +
+                "      privileges: [ ALL ]\n" +
+                "      fields: [ field2 ]\n" +
                 "      query: '{\"term\" : {\"field2\" : \"value2\"}}'\n" +
                 "role3:\n" +
-                "  cluster: all\n" +
+                "  cluster: [ all ]\n" +
                 "  indices:\n" +
-                "    '*':\n" +
-                "      privileges: ALL\n" +
-                "      fields: field1\n" +
+                "    - names: '*'\n" +
+                "      privileges: [ ALL ]\n" +
+                "      fields: [ field1 ]\n" +
                 "      query: '{\"term\" : {\"field2\" : \"value2\"}}'\n";
     }
 

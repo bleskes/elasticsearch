@@ -44,7 +44,6 @@ public class DataAttachment implements EmailAttachmentParser.EmailAttachment {
         } else {
             builder.field("format", "json");
         }
-
         return builder.endObject().endObject();
     }
 
