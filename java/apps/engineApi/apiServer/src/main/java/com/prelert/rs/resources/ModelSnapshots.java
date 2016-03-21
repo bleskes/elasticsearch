@@ -57,7 +57,6 @@ import com.prelert.job.exceptions.JobInUseException;
 import com.prelert.job.manager.JobManager;
 import com.prelert.job.manager.CannotDeleteSnapshotException;
 import com.prelert.job.manager.DescriptionAlreadyUsedException;
-import com.prelert.job.manager.DescriptionAlreadyUsedException;
 import com.prelert.job.manager.JobManager;
 import com.prelert.job.messages.Messages;
 import com.prelert.job.persistence.QueryPage;
