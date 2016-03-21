@@ -227,8 +227,8 @@ If not set 'skip' and 'take' default to 0 and 100 meaning the first 100 results 
   "nextPage" : "http://localhost:8080/engine/v2/results/farequote/buckets?skip=100&take=100&expand=false",
   "previousPage" : null,
   "documents" : [ {
-    "id" : "1403481600",
     "timestamp" : "2014-06-23T00:00:00.000+0000",
+    "bucketSpan" : 3600,
     "rawAnomalyScore" : 0.0,
     "recordCount" : 0,
     "eventCount" : 649,
@@ -236,8 +236,8 @@ If not set 'skip' and 'take' default to 0 and 100 meaning the first 100 results 
     "anomalyScore" : 0.0,
     "maxNormalizedProbability" : 0.0
   }, {
-    "id" : "1403485200",
     "timestamp" : "2014-06-23T01:00:00.000+0000",
+    "bucketSpan" : 3600,
     "rawAnomalyScore" : 0.0,
     "recordCount" : 0,
     "eventCount" : 627,
@@ -255,7 +255,7 @@ here: http://localhost:5601/app/prelert
 In practice, most implementations will process the results programatically.
 For the purpose of this tutorial, we will continue using the cURL command line
 and jump straight to the bucket with the maximum anomalyScore. This has the
-following id: 1403712000.
+following timestamp: 1403712000.
 
 We can request the details of just this one bucket interval as follows:
 
@@ -266,8 +266,8 @@ curl 'http://localhost:8080/engine/v2/results/farequote/buckets/1403712000?expan
   "exists" : true,
   "type" : "bucket",
   "document" : {
-    "id" : "1403712000",
     "timestamp" : "2014-06-25T16:00:00.000+0000",
+    "bucketSpan" : 3600,
     "rawAnomalyScore" : 26.0817,
     "recordCount" : 1,
     "eventCount" : 909,
