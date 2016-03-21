@@ -266,8 +266,7 @@ public class Bucket
         Bucket that = (Bucket)other;
 
         // m_HadBigNormalisedUpdate is deliberately excluded from the test
-        return Objects.equals(this.m_Id, that.m_Id)
-                && (this.m_Timestamp == that.m_Timestamp)
+        return Objects.equals(this.m_Timestamp, that.m_Timestamp)
                 && (this.m_EventCount == that.m_EventCount)
                 && (this.m_BucketSpan == that.m_BucketSpan)
                 && (this.m_AnomalyScore == that.m_AnomalyScore)
