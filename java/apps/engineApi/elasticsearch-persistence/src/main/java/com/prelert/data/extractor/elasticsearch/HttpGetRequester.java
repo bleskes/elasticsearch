@@ -79,19 +79,23 @@ class HttpGetRequester
      */
     private static final class NoOpTrustManager implements X509TrustManager
     {
+        private static final X509Certificate[] EMPTY_CERTIFICATE_ARRAY = new X509Certificate[0];
+
         public void checkClientTrusted(X509Certificate[] chain, String authType)
                 throws CertificateException
         {
+            // Ignore certificate problems
         }
 
         public void checkServerTrusted(X509Certificate[] chain, String authType)
                 throws CertificateException
         {
+            // Ignore certificate problems
         }
 
         public X509Certificate[] getAcceptedIssuers()
         {
-            return null;
+            return EMPTY_CERTIFICATE_ARRAY;
         }
     }
 
