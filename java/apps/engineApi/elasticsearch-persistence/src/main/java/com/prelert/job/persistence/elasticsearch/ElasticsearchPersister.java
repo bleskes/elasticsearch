@@ -510,7 +510,8 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
                 .field(Bucket.INITIAL_ANOMALY_SCORE, bucket.getInitialAnomalyScore())
                 .field(Bucket.MAX_NORMALIZED_PROBABILITY, bucket.getMaxNormalizedProbability())
                 .field(Bucket.RECORD_COUNT, bucket.getRecordCount())
-                .field(Bucket.EVENT_COUNT, bucket.getEventCount());
+                .field(Bucket.EVENT_COUNT, bucket.getEventCount())
+                .field(Bucket.BUCKET_SPAN, bucket.getBucketSpan());
 
         if (bucket.isInterim())
         {
