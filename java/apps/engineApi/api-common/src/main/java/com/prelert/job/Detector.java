@@ -68,6 +68,7 @@ public class Detector
     public static final String HIGH_INFO_CONTENT = "high_info_content";
     public static final String METRIC = "metric";
     public static final String MEAN = "mean";
+    public static final String MEDIAN = "median";
     public static final String HIGH_MEAN = "high_mean";
     public static final String LOW_MEAN = "low_mean";
     public static final String AVG = "avg";
@@ -108,6 +109,7 @@ public class Detector
                 MEAN, AVG,
                 HIGH_MEAN, HIGH_AVG,
                 LOW_MEAN, LOW_AVG,
+                MEDIAN,
                 MIN,
                 MAX,
                 SUM,
@@ -148,6 +150,7 @@ public class Detector
                 MEAN, AVG,
                 HIGH_MEAN, HIGH_AVG,
                 LOW_MEAN, LOW_AVG,
+                MEDIAN,
                 MIN,
                 MAX,
                 SUM,

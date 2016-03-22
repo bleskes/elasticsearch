@@ -261,6 +261,7 @@ public class DetectorVerifierTest
         difference.remove(Detector.AVG);
         difference.remove(Detector.LOW_AVG);
         difference.remove(Detector.HIGH_AVG);
+        difference.remove(Detector.MEDIAN);
         difference.remove(Detector.MIN);
         difference.remove(Detector.MAX);
         difference.remove(Detector.SUM);
@@ -322,11 +323,13 @@ public class DetectorVerifierTest
         // some functions require a fieldname
         d.setFieldName("f");
         for (String f : new String[] { Detector.METRIC, Detector.MEAN, Detector.HIGH_MEAN,
-                Detector.LOW_MEAN, Detector.AVG, Detector.HIGH_AVG, Detector.LOW_AVG, Detector.MAX,
-                Detector.MIN, Detector.SUM, Detector.LOW_SUM, Detector.HIGH_SUM, Detector.NON_NULL_SUM,
-                Detector.LOW_NON_NULL_SUM, Detector.HIGH_NON_NULL_SUM, Detector.DISTINCT_COUNT, Detector.DC,
-                Detector.HIGH_DISTINCT_COUNT, Detector.HIGH_DC, Detector.LOW_DISTINCT_COUNT, Detector.LOW_DC,
-                Detector.INFO_CONTENT, Detector.LOW_INFO_CONTENT, Detector.HIGH_INFO_CONTENT })
+                Detector.LOW_MEAN, Detector.AVG, Detector.HIGH_AVG, Detector.LOW_AVG,
+                Detector.MEDIAN, Detector.MAX, Detector.MIN, Detector.SUM, Detector.LOW_SUM,
+                Detector.HIGH_SUM, Detector.NON_NULL_SUM, Detector.LOW_NON_NULL_SUM,
+                Detector.HIGH_NON_NULL_SUM, Detector.DISTINCT_COUNT, Detector.DC,
+                Detector.HIGH_DISTINCT_COUNT, Detector.HIGH_DC, Detector.LOW_DISTINCT_COUNT,
+                Detector.LOW_DC, Detector.INFO_CONTENT, Detector.LOW_INFO_CONTENT,
+                Detector.HIGH_INFO_CONTENT })
         {
             d.setFunction(f);
             DetectorVerifier.verify(d, false);
@@ -374,7 +377,7 @@ public class DetectorVerifierTest
         }
 
 
-        // these functions cant have a field
+        // these functions cant have an over field
         d.setOverFieldName(null);
         for (String f : new String [] {Detector.HIGH_COUNT,
                 Detector.LOW_COUNT, Detector.NON_ZERO_COUNT, Detector.NZC,
