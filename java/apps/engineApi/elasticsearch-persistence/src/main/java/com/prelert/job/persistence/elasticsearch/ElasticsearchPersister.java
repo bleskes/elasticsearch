@@ -33,6 +33,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Supplier;
 
 import org.apache.log4j.Logger;
@@ -60,7 +61,6 @@ import com.prelert.job.results.CategoryDefinition;
 import com.prelert.job.results.Influence;
 import com.prelert.job.results.Influencer;
 import com.prelert.job.results.ModelDebugOutput;
-import com.prelert.job.results.ReservedFieldNames;
 
 /**
  * Saves result Buckets and Quantiles to Elasticsearch<br>
@@ -644,13 +644,14 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
                 .field(ModelDebugOutput.DEBUG_MEAN, modelDebugOutput.getDebugMean())
                 .field(ModelDebugOutput.ACTUAL, modelDebugOutput.getActual());
 
+        ElasticsearchDotNotationReverser reverser = new ElasticsearchDotNotationReverser();
+
         if (modelDebugOutput.getByFieldName() != null)
         {
             builder.field(ModelDebugOutput.BY_FIELD_NAME, modelDebugOutput.getByFieldName());
-            if (modelDebugOutput.getByFieldValue() != null &&
-                !ReservedFieldNames.RESERVED_FIELD_NAMES.contains(modelDebugOutput.getByFieldName()))
+            if (modelDebugOutput.getByFieldValue() != null)
             {
-                builder.field(modelDebugOutput.getByFieldName(), modelDebugOutput.getByFieldValue());
+                reverser.add(modelDebugOutput.getByFieldName(), modelDebugOutput.getByFieldValue());
             }
         }
         if (modelDebugOutput.getByFieldValue() != null)
@@ -660,10 +661,9 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
         if (modelDebugOutput.getOverFieldName() != null)
         {
             builder.field(ModelDebugOutput.OVER_FIELD_NAME, modelDebugOutput.getOverFieldName());
-            if (modelDebugOutput.getOverFieldValue() != null &&
-                !ReservedFieldNames.RESERVED_FIELD_NAMES.contains(modelDebugOutput.getOverFieldName()))
+            if (modelDebugOutput.getOverFieldValue() != null)
             {
-                builder.field(modelDebugOutput.getOverFieldName(), modelDebugOutput.getOverFieldValue());
+                reverser.add(modelDebugOutput.getOverFieldName(), modelDebugOutput.getOverFieldValue());
             }
         }
         if (modelDebugOutput.getOverFieldValue() != null)
@@ -673,15 +673,19 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
         if (modelDebugOutput.getPartitionFieldName() != null)
         {
             builder.field(ModelDebugOutput.PARTITION_FIELD_NAME, modelDebugOutput.getPartitionFieldName());
-            if (modelDebugOutput.getPartitionFieldValue() != null &&
-                !ReservedFieldNames.RESERVED_FIELD_NAMES.contains(modelDebugOutput.getPartitionFieldName()))
+            if (modelDebugOutput.getPartitionFieldValue() != null)
             {
-                builder.field(modelDebugOutput.getPartitionFieldName(), modelDebugOutput.getPartitionFieldValue());
+                reverser.add(modelDebugOutput.getPartitionFieldName(), modelDebugOutput.getPartitionFieldValue());
             }
         }
         if (modelDebugOutput.getPartitionFieldValue() != null)
         {
             builder.field(ModelDebugOutput.PARTITION_FIELD_VALUE, modelDebugOutput.getPartitionFieldValue());
+        }
+
+        for (Map.Entry<String, Object> entry : reverser.getMappingsMap().entrySet())
+        {
+            builder.field(entry.getKey(), entry.getValue());
         }
 
         builder.endObject();
@@ -709,15 +713,15 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
                 .field(AnomalyRecord.INITIAL_NORMALIZED_PROBABILITY, record.getInitialNormalizedProbability())
                 .field(ElasticsearchMappings.ES_TIMESTAMP, bucketTime);
 
+        ElasticsearchDotNotationReverser reverser = new ElasticsearchDotNotationReverser();
         List<String> topLevelExcludes = new ArrayList<>();
 
         if (record.getByFieldName() != null)
         {
             builder.field(AnomalyRecord.BY_FIELD_NAME, record.getByFieldName());
-            if (record.getByFieldValue() != null &&
-                !ReservedFieldNames.RESERVED_FIELD_NAMES.contains(record.getByFieldName()))
+            if (record.getByFieldValue() != null)
             {
-                builder.field(record.getByFieldName(), record.getByFieldValue());
+                reverser.add(record.getByFieldName(), record.getByFieldValue());
                 topLevelExcludes.add(record.getByFieldName());
             }
         }
@@ -752,10 +756,9 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
         if (record.getPartitionFieldName() != null)
         {
             builder.field(AnomalyRecord.PARTITION_FIELD_NAME, record.getPartitionFieldName());
-            if (record.getPartitionFieldValue() != null &&
-                !ReservedFieldNames.RESERVED_FIELD_NAMES.contains(record.getPartitionFieldName()))
+            if (record.getPartitionFieldValue() != null)
             {
-                builder.field(record.getPartitionFieldName(), record.getPartitionFieldValue());
+                reverser.add(record.getPartitionFieldName(), record.getPartitionFieldValue());
                 topLevelExcludes.add(record.getPartitionFieldName());
             }
         }
@@ -766,10 +769,9 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
         if (record.getOverFieldName() != null)
         {
             builder.field(AnomalyRecord.OVER_FIELD_NAME, record.getOverFieldName());
-            if (record.getOverFieldValue() != null &&
-                !ReservedFieldNames.RESERVED_FIELD_NAMES.contains(record.getOverFieldName()))
+            if (record.getOverFieldValue() != null)
             {
-                builder.field(record.getOverFieldName(), record.getOverFieldValue());
+                reverser.add(record.getOverFieldName(), record.getOverFieldValue());
                 topLevelExcludes.add(record.getOverFieldName());
             }
         }
@@ -803,12 +805,16 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
             {
                 if (influence.getInfluencerFieldName() != null &&
                     !influence.getInfluencerFieldValues().isEmpty() &&
-                    !topLevelExcludes.contains(influence.getInfluencerFieldName()) &&
-                    !ReservedFieldNames.RESERVED_FIELD_NAMES.contains(influence.getInfluencerFieldName()))
+                    !topLevelExcludes.contains(influence.getInfluencerFieldName()))
                 {
-                    builder.field(influence.getInfluencerFieldName(), influence.getInfluencerFieldValues().get(0));
+                    reverser.add(influence.getInfluencerFieldName(), influence.getInfluencerFieldValues().get(0));
                 }
             }
+        }
+
+        for (Map.Entry<String, Object> entry : reverser.getMappingsMap().entrySet())
+        {
+            builder.field(entry.getKey(), entry.getValue());
         }
 
         builder.endObject();
@@ -831,13 +837,14 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
                 .field(AnomalyCause.ACTUAL, cause.getActual())
                 .field(AnomalyCause.TYPICAL, cause.getTypical());
 
+        ElasticsearchDotNotationReverser reverser = new ElasticsearchDotNotationReverser();
+
         if (cause.getByFieldName() != null)
         {
             builder.field(AnomalyCause.BY_FIELD_NAME, cause.getByFieldName());
-            if (cause.getByFieldValue() != null &&
-                !ReservedFieldNames.RESERVED_FIELD_NAMES.contains(cause.getByFieldName()))
+            if (cause.getByFieldValue() != null)
             {
-                builder.field(cause.getByFieldName(), cause.getByFieldValue());
+                reverser.add(cause.getByFieldName(), cause.getByFieldValue());
             }
         }
         if (cause.getByFieldValue() != null)
@@ -859,10 +866,9 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
         if (cause.getPartitionFieldName() != null)
         {
             builder.field(AnomalyCause.PARTITION_FIELD_NAME, cause.getPartitionFieldName());
-            if (cause.getPartitionFieldValue() != null &&
-                !ReservedFieldNames.RESERVED_FIELD_NAMES.contains(cause.getPartitionFieldName()))
+            if (cause.getPartitionFieldValue() != null)
             {
-                builder.field(cause.getPartitionFieldName(), cause.getPartitionFieldValue());
+                reverser.add(cause.getPartitionFieldName(), cause.getPartitionFieldValue());
             }
         }
         if (cause.getPartitionFieldValue() != null)
@@ -872,15 +878,19 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
         if (cause.getOverFieldName() != null)
         {
             builder.field(AnomalyCause.OVER_FIELD_NAME, cause.getOverFieldName());
-            if (cause.getOverFieldValue() != null &&
-                !ReservedFieldNames.RESERVED_FIELD_NAMES.contains(cause.getOverFieldName()))
+            if (cause.getOverFieldValue() != null)
             {
-                builder.field(cause.getOverFieldName(), cause.getOverFieldValue());
+                reverser.add(cause.getOverFieldName(), cause.getOverFieldValue());
             }
         }
         if (cause.getOverFieldValue() != null)
         {
             builder.field(AnomalyCause.OVER_FIELD_VALUE, cause.getOverFieldValue());
+        }
+
+        for (Map.Entry<String, Object> entry : reverser.getMappingsMap().entrySet())
+        {
+            builder.field(entry.getKey(), entry.getValue());
         }
 
         builder.endObject();
@@ -966,9 +976,11 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
             builder.field(Bucket.IS_INTERIM, true);
         }
 
-        if (!ReservedFieldNames.RESERVED_FIELD_NAMES.contains(influencer.getInfluencerFieldName()))
+        ElasticsearchDotNotationReverser reverser = new ElasticsearchDotNotationReverser();
+        reverser.add(influencer.getInfluencerFieldName(), influencer.getInfluencerFieldValue());
+        for (Map.Entry<String, Object> entry : reverser.getMappingsMap().entrySet())
         {
-            builder.field(influencer.getInfluencerFieldName(), influencer.getInfluencerFieldValue());
+            builder.field(entry.getKey(), entry.getValue());
         }
 
         builder.endObject();

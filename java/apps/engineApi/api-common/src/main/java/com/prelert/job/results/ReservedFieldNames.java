@@ -84,7 +84,7 @@ public final class ReservedFieldNames
         AnomalyCause.INFLUENCERS,
         AnomalyCause.FIELD_NAME,
 
-        AnomalyRecord.ID,
+        AnomalyRecord.DETECTOR_INDEX,
         AnomalyRecord.PROBABILITY,
         AnomalyRecord.BY_FIELD_NAME,
         AnomalyRecord.BY_FIELD_VALUE,
@@ -105,6 +105,7 @@ public final class ReservedFieldNames
         AnomalyRecord.INITIAL_NORMALIZED_PROBABILITY,
 
         Bucket.ANOMALY_SCORE,
+        Bucket.BUCKET_SPAN,
         Bucket.MAX_NORMALIZED_PROBABILITY,
         Bucket.IS_INTERIM,
         Bucket.RECORD_COUNT,
