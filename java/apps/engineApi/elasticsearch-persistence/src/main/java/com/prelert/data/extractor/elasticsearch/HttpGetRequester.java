@@ -63,6 +63,9 @@ class HttpGetRequester
     private static final SSLSocketFactory TRUSTING_SOCKET_FACTORY;
     private static final HostnameVerifier TRUSTING_HOSTNAME_VERIFIER;
 
+    private static final int CONNECT_TIMEOUT_MILLIS = 30000;
+    private static final int READ_TIMEOUT_MILLIS = 600000;
+
     /**
      * Hostname verifier that ignores hostname discrepancies.
      */
@@ -121,6 +124,9 @@ class HttpGetRequester
     {
         URL urlObject = new URL(url);
         HttpURLConnection connection = (HttpURLConnection) urlObject.openConnection();
+        connection.setConnectTimeout(CONNECT_TIMEOUT_MILLIS);
+        connection.setReadTimeout(READ_TIMEOUT_MILLIS);
+
         // TODO: we could add a config option to allow users who want to
         // rigorously enforce valid certificates to do so
         if (connection instanceof HttpsURLConnection)
