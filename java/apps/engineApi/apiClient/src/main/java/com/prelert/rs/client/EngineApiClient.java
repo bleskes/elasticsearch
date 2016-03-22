@@ -705,12 +705,13 @@ public class EngineApiClient implements Closeable
      * the request can be configured and executed
      *
      * @param jobId The jobId for which a bucket is requested
+     * @param bucketTimestamp The timestamp of the bucket in seconds
      *
      * @return A {@link BucketRequestBuilder}
      */
-    public BucketRequestBuilder prepareGetBucket(String jobId, String bucketId)
+    public BucketRequestBuilder prepareGetBucket(String jobId, String bucketTimestamp)
     {
-        return new BucketRequestBuilder(this, jobId, bucketId);
+        return new BucketRequestBuilder(this, jobId, bucketTimestamp);
     }
 
     /**

@@ -148,7 +148,6 @@ class SimpleJsonRecordReader extends AbstractJsonRecordReader
             {
                 token = tryNextTokenOrReadToEndOnError();
             }
-            m_Logger.warn("Ignoring array field");
         }
         else
         {

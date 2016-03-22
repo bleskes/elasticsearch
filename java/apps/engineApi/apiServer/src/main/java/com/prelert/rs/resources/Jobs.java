@@ -145,14 +145,13 @@ public class Jobs extends ResourceWithJobManager
         Optional<JobDetails> result = manager.getJob(jobId);
         if (result.isPresent())
         {
-            job = singleDocFromOptional(result, jobId, JobDetails.TYPE);
+            job = singleDocFromOptional(result, JobDetails.TYPE);
             setEndPointLinks(job.getDocument());
         }
         else
         {
             job = new SingleDocument<>();
             job.setType(JobDetails.TYPE);
-            job.setDocumentId(jobId);
         }
 
         if (job.isExists())

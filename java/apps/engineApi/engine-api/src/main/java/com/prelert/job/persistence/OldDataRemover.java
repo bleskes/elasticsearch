@@ -159,7 +159,7 @@ public class OldDataRemover
                     }
                 }
         );
-        deleter.commit();
+        deleter.commitAndFreeDiskSpace();
     }
 
     private void deleteResultsBefore(String jobId, long cutoffEpochMs)
@@ -173,7 +173,7 @@ public class OldDataRemover
                 m_JobProvider.newBatchedBucketsIterator(jobId).timeRange(0, cutoffEpochMs),
                 bucket -> deleter.deleteBucket(bucket)
         );
-        deleter.commit();
+        deleter.commitAndFreeDiskSpace();
     }
 
     private <T> void deleteDataBefore(BatchedResultsIterator<T> resultsIterator,

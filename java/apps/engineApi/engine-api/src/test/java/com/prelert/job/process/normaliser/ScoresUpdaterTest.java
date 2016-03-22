@@ -39,9 +39,11 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
 import java.util.Deque;
 import java.util.List;
 import java.util.Optional;
+import java.util.Random;
 
 import org.apache.log4j.Logger;
 import org.junit.Before;
@@ -69,6 +71,8 @@ public class ScoresUpdaterTest
     private static final long DEFAULT_BUCKET_SPAN = 3600;
     private static final long DEFAULT_START_TIME = 0;
     private static final long DEFAULT_END_TIME = 3600;
+    private static final String AB = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+    private static Random ms_Rnd = new Random();
 
     private JobDetails m_Job;
     @Mock private JobProvider m_JobProvider;
@@ -77,6 +81,23 @@ public class ScoresUpdaterTest
     @Mock private Logger m_Logger;
 
     private ScoresUpdater m_ScoresUpdater;
+
+    private String randomString()
+    {
+        StringBuilder sb = new StringBuilder(12);
+        for (int i = 0; i < 12; i++)
+        {
+            sb.append(AB.charAt(ms_Rnd.nextInt(AB.length())));
+        }
+        return sb.toString();
+    }
+
+    private Bucket generateBucket()
+    {
+        Bucket bucket = new Bucket();
+        bucket.setId(randomString());
+        return bucket;
+    }
 
     @Before
     public void setUp() throws UnknownJobException
@@ -101,8 +122,8 @@ public class ScoresUpdaterTest
     public void testUpdate_GivenBucketWithZeroScoreAndNoRecords()
             throws UnknownJobException, NativeProcessRunException
     {
-        Bucket bucket = new Bucket();
-        bucket.setId("0");
+        Bucket bucket = generateBucket();
+        bucket.setTimestamp(new Date(0));
         bucket.setAnomalyScore(0.0);
         bucket.addBucketInfluencer(createTimeBucketInfluencer(0.7, 0.0));
         Deque<Bucket> buckets = new ArrayDeque<>();
@@ -113,15 +134,15 @@ public class ScoresUpdaterTest
 
         verifyNormaliserWasInvoked(0);
         verifyBucketWasNotUpdated(bucket);
-        verifyBucketRecordsWereNotUpdated("0");
+        verifyBucketRecordsWereNotUpdated(bucket.getId());
     }
 
     @Test
     public void testUpdate_GivenBucketWithNonZeroScoreButNoBucketInfluencers()
             throws UnknownJobException, NativeProcessRunException
     {
-        Bucket bucket = new Bucket();
-        bucket.setId("0");
+        Bucket bucket = generateBucket();
+        bucket.setTimestamp(new Date(0));
         bucket.setAnomalyScore(0.0);
         bucket.setBucketInfluencers(null);
         Deque<Bucket> buckets = new ArrayDeque<>();
@@ -132,15 +153,15 @@ public class ScoresUpdaterTest
 
         verifyNormaliserWasInvoked(0);
         verifyBucketWasNotUpdated(bucket);
-        verifyBucketRecordsWereNotUpdated("0");
+        verifyBucketRecordsWereNotUpdated(bucket.getId());
     }
 
     @Test
     public void testUpdate_GivenSingleBucketWithoutBigChangeAndNoRecords()
             throws UnknownJobException, NativeProcessRunException
     {
-        Bucket bucket = new Bucket();
-        bucket.setId("0");
+        Bucket bucket = generateBucket();
+        bucket.setTimestamp(new Date(0));;
         bucket.setAnomalyScore(30.0);
         bucket.addBucketInfluencer(createTimeBucketInfluencer(0.04, 30.0));
         Deque<Bucket> buckets = new ArrayDeque<>();
@@ -151,14 +172,14 @@ public class ScoresUpdaterTest
 
         verifyNormaliserWasInvoked(1);
         verifyBucketWasNotUpdated(bucket);
-        verifyBucketRecordsWereNotUpdated("0");
+        verifyBucketRecordsWereNotUpdated(bucket.getId());
     }
 
     @Test
     public void testUpdate_GivenSingleBucketWithoutBigChangeAndRecordsWithoutBigChange()
             throws UnknownJobException, NativeProcessRunException
     {
-        Bucket bucket = new Bucket();
+        Bucket bucket = generateBucket();
         bucket.setAnomalyScore(30.0);
         bucket.addBucketInfluencer(createTimeBucketInfluencer(0.04, 30.0));
         List<AnomalyRecord> records = new ArrayList<>();
@@ -169,7 +190,7 @@ public class ScoresUpdaterTest
         bucket.setRecords(records);
         bucket.setRecordCount(2);
 
-        bucket.setId("0");
+        bucket.setTimestamp(new Date(0));;
         Deque<Bucket> buckets = new ArrayDeque<>();
         buckets.add(bucket);
         givenProviderReturnsBuckets(DEFAULT_START_TIME, DEFAULT_END_TIME, buckets);
@@ -178,15 +199,15 @@ public class ScoresUpdaterTest
 
         verifyNormaliserWasInvoked(1);
         verifyBucketWasNotUpdated(bucket);
-        verifyBucketRecordsWereNotUpdated("0");
+        verifyBucketRecordsWereNotUpdated(bucket.getId());
     }
 
     @Test
     public void testUpdate_GivenSingleBucketWithBigChangeAndNoRecords()
             throws UnknownJobException, NativeProcessRunException
     {
-        Bucket bucket = new Bucket();
-        bucket.setId("0");
+        Bucket bucket = generateBucket();
+        bucket.setTimestamp(new Date(0));
         bucket.setAnomalyScore(42.0);
         bucket.addBucketInfluencer(createTimeBucketInfluencer(0.04, 42.0));
         bucket.setMaxNormalizedProbability(50.0);
@@ -200,15 +221,15 @@ public class ScoresUpdaterTest
 
         verifyNormaliserWasInvoked(1);
         verifyBucketWasUpdated(bucket);
-        verifyBucketRecordsWereNotUpdated("0");
+        verifyBucketRecordsWereNotUpdated(bucket.getId());
     }
 
     @Test
     public void testUpdate_GivenSingleBucketWithoutBigChangeAndSomeRecordsWithBigChange()
             throws UnknownJobException, NativeProcessRunException
     {
-        Bucket bucket = new Bucket();
-        bucket.setId("0");
+        Bucket bucket = generateBucket();
+        bucket.setTimestamp(new Date(0));
         bucket.setAnomalyScore(42.0);
         bucket.addBucketInfluencer(createTimeBucketInfluencer(0.04, 42.0));
         bucket.setMaxNormalizedProbability(50.0);
@@ -230,15 +251,15 @@ public class ScoresUpdaterTest
 
         verifyNormaliserWasInvoked(1);
         verifyBucketWasNotUpdated(bucket);
-        verifyRecordsWereUpdated("0", Arrays.asList(record1, record3));
+        verifyRecordsWereUpdated(bucket.getId(), Arrays.asList(record1, record3));
     }
 
     @Test
     public void testUpdate_GivenSingleBucketWithBigChangeAndSomeRecordsWithBigChange()
             throws UnknownJobException, NativeProcessRunException
     {
-        Bucket bucket = new Bucket();
-        bucket.setId("0");
+        Bucket bucket = generateBucket();
+        bucket.setTimestamp(new Date(0));
         bucket.setAnomalyScore(42.0);
         bucket.addBucketInfluencer(createTimeBucketInfluencer(0.04, 42.0));
         bucket.setMaxNormalizedProbability(50.0);
@@ -260,7 +281,7 @@ public class ScoresUpdaterTest
 
         verifyNormaliserWasInvoked(1);
         verifyBucketWasUpdated(bucket);
-        verifyRecordsWereUpdated("0", Arrays.asList(record1, record3));
+        verifyRecordsWereUpdated(bucket.getId(), Arrays.asList(record1, record3));
     }
 
     @Test
@@ -270,8 +291,8 @@ public class ScoresUpdaterTest
         Deque<Bucket> batch1 = new ArrayDeque<>();
         for (int i = 0; i < 10000; ++i)
         {
-            Bucket bucket = new Bucket();
-            bucket.setId(String.valueOf(i));
+            Bucket bucket = generateBucket();
+            bucket.setTimestamp(new Date(i * 1000));
             bucket.setAnomalyScore(42.0);
             bucket.addBucketInfluencer(createTimeBucketInfluencer(0.04, 42.0));
             bucket.setMaxNormalizedProbability(50.0);
@@ -279,8 +300,8 @@ public class ScoresUpdaterTest
             batch1.add(bucket);
         }
 
-        Bucket secondBatchBucket = new Bucket();
-        secondBatchBucket.setId("10000");
+        Bucket secondBatchBucket = generateBucket();
+        secondBatchBucket.setTimestamp(new Date(10000 * 1000));
         secondBatchBucket.addBucketInfluencer(createTimeBucketInfluencer(0.04, 42.0));
         secondBatchBucket.setAnomalyScore(42.0);
         secondBatchBucket.setMaxNormalizedProbability(50.0);
@@ -309,16 +330,16 @@ public class ScoresUpdaterTest
     public void testUpdate_GivenTwoBucketsWithFirstHavingEnoughRecordsToForceSecondNormalisation()
             throws UnknownJobException, NativeProcessRunException
     {
-        Bucket bucket1 = new Bucket();
-        bucket1.setId("0");
+        Bucket bucket1 = generateBucket();
+        bucket1.setTimestamp(new Date(0));
         bucket1.setAnomalyScore(42.0);
         bucket1.addBucketInfluencer(createTimeBucketInfluencer(0.04, 42.0));
         bucket1.setMaxNormalizedProbability(50.0);
         bucket1.raiseBigNormalisedUpdateFlag();
         when(m_JobProvider.expandBucket(JOB_ID, false, bucket1)).thenReturn(100000);
 
-        Bucket bucket2 = new Bucket();
-        bucket2.setId("10000");
+        Bucket bucket2 = generateBucket();
+        bucket2.setTimestamp(new Date(10000 * 1000));
         bucket2.addBucketInfluencer(createTimeBucketInfluencer(0.04, 42.0));
         bucket2.setAnomalyScore(42.0);
         bucket2.setMaxNormalizedProbability(50.0);
@@ -360,8 +381,8 @@ public class ScoresUpdaterTest
     public void testDefaultRenormalizationWindowBasedOnTime()
             throws UnknownJobException, NativeProcessRunException
     {
-        Bucket bucket = new Bucket();
-        bucket.setId("0");
+        Bucket bucket = generateBucket();
+        bucket.setTimestamp(new Date(0));
         bucket.setAnomalyScore(42.0);
         bucket.addBucketInfluencer(createTimeBucketInfluencer(0.04, 42.0));
         bucket.setMaxNormalizedProbability(50.0);
@@ -376,7 +397,7 @@ public class ScoresUpdaterTest
 
         verifyNormaliserWasInvoked(1);
         verifyBucketWasUpdated(bucket);
-        verifyBucketRecordsWereNotUpdated("0");
+        verifyBucketRecordsWereNotUpdated(bucket.getId());
     }
 
     @Test
@@ -386,8 +407,8 @@ public class ScoresUpdaterTest
         m_Job.getAnalysisConfig().setBucketSpan(86400L);
         // Bucket span is a day, so default window should be 8640000000 ms
 
-        Bucket bucket = new Bucket();
-        bucket.setId("0");
+        Bucket bucket = generateBucket();
+        bucket.setTimestamp(new Date(0));
         bucket.setAnomalyScore(42.0);
         bucket.addBucketInfluencer(createTimeBucketInfluencer(0.04, 42.0));
         bucket.setMaxNormalizedProbability(50.0);
@@ -402,7 +423,7 @@ public class ScoresUpdaterTest
 
         verifyNormaliserWasInvoked(1);
         verifyBucketWasUpdated(bucket);
-        verifyBucketRecordsWereNotUpdated("0");
+        verifyBucketRecordsWereNotUpdated(bucket.getId());
     }
 
     @Test
@@ -412,8 +433,8 @@ public class ScoresUpdaterTest
         // 1 day
         m_Job.setRenormalizationWindowDays(1L);
 
-        Bucket bucket = new Bucket();
-        bucket.setId("0");
+        Bucket bucket = generateBucket();
+        bucket.setTimestamp(new Date(0));
         bucket.setAnomalyScore(42.0);
         bucket.addBucketInfluencer(createTimeBucketInfluencer(0.04, 42.0));
         bucket.setMaxNormalizedProbability(50.0);
@@ -428,7 +449,7 @@ public class ScoresUpdaterTest
 
         verifyNormaliserWasInvoked(1);
         verifyBucketWasUpdated(bucket);
-        verifyBucketRecordsWereNotUpdated("0");
+        verifyBucketRecordsWereNotUpdated(bucket.getId());
     }
 
     private void verifyNormaliserWasInvoked(int times) throws NativeProcessRunException,

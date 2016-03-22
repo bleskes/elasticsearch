@@ -43,7 +43,6 @@ import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.logging.JobLoggerFactory;
 import com.prelert.job.persistence.JobDataCountsPersisterFactory;
 import com.prelert.job.persistence.JobProvider;
-import com.prelert.job.persistence.QueryPage;
 import com.prelert.job.persistence.UsagePersisterFactory;
 import com.prelert.job.process.ProcessCtrl;
 import com.prelert.job.process.exceptions.NativeProcessRunException;

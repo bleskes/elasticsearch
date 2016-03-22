@@ -212,7 +212,6 @@ class AggregatedJsonRecordReader extends AbstractJsonRecordReader
             {
                 token = tryNextTokenOrReadToEndOnError();
             }
-            m_Logger.warn("Ignoring array field");
             return false;
         }
 

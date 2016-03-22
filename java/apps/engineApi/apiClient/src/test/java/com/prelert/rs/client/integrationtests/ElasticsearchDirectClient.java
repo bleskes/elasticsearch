@@ -29,14 +29,21 @@ package com.prelert.rs.client.integrationtests;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TimeZone;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
 import org.apache.log4j.Logger;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.api.ContentResponse;
+import org.eclipse.jetty.client.util.StringContentProvider;
+import org.eclipse.jetty.http.HttpMethod;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -45,7 +52,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 /**
  * This class implements an ES client that enables direct calls
  * to ES. To be used only to allow integration tests to verify
- * results that are not served vie the EngineApiClient.
+ * results that are not served via the EngineApiClient.
  */
 class ElasticsearchDirectClient implements Closeable
 {
@@ -80,42 +87,53 @@ class ElasticsearchDirectClient implements Closeable
         }
     }
 
-    public double getBucketInitialScore(String bucketId) throws IOException
+    public double getBucketInitialScore(Date timestamp) throws IOException
     {
-        return getBucketField(bucketId, "initialAnomalyScore", Double.class);
+        return getBucketField(timestamp, "initialAnomalyScore", Double.class);
     }
 
-    private <T> T getBucketField(String bucketId, String field, Class<T> fieldType)
+    private <T> T getBucketField(Date timestamp, String field, Class<T> fieldType)
             throws IOException
     {
-        String url = m_BaseUrl + "bucket/" + bucketId;
-        return getField(url, field, fieldType);
+        String url = m_BaseUrl + "bucket/_search";
+        TimeZone tz = TimeZone.getTimeZone("UTC");
+        DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mmZ");
+        df.setTimeZone(tz);
+        String isoTime = df.format(timestamp);
+        String query = "{\"query\": {\"match\": {\"@timestamp\":\"" + isoTime + "\"}}}";
+        return getField(url, query, field, fieldType);
     }
 
-    private <T> T getField(String url, String field, Class<T> fieldType) throws IOException
+    private <T> T getField(String url, String query, String field, Class<T> fieldType) throws IOException
     {
         ContentResponse response = null;
         try
         {
-            response = m_HttpClient.GET(url);
+            response = m_HttpClient.newRequest(url)
+                    .method(HttpMethod.GET)
+                    .content(new StringContentProvider(query), "text/json")
+                    .send();
         } catch (InterruptedException | ExecutionException | TimeoutException e)
         {
             LOGGER.error("An error occurred while executing an HTTP GET to " + url, e);
             return null;
         }
-        Map<String, Object> map = parseJsonAsMap(response.getContentAsString());
+        Map<String, Object> map = parseJsonHitAsMap(response.getContentAsString());
         return fieldType.cast(map.get(field));
     }
 
     @SuppressWarnings("unchecked")
-    private Map<String,Object> parseJsonAsMap(String json) throws IOException
+    private Map<String,Object> parseJsonHitAsMap(String json) throws IOException
     {
         JsonFactory factory = new JsonFactory();
         ObjectMapper mapper = new ObjectMapper(factory);
-        TypeReference<HashMap<String,Object>> typeRef
-                = new TypeReference<HashMap<String,Object>>() {};
+        TypeReference<HashMap<String, Object>> typeRefHash =
+                new TypeReference<HashMap<String, Object>>() {};
 
-        Map<String,Object> map = mapper.readValue(json, typeRef);
+        Map<String, Object> map = mapper.readValue(json, typeRefHash);
+        map = (Map<String, Object>)map.get("hits");
+        ArrayList<Object> list = (ArrayList<Object>)map.get("hits");
+        map = (Map<String, Object>)list.get(0);
         return (Map<String, Object>) map.get("_source");
     }
 }

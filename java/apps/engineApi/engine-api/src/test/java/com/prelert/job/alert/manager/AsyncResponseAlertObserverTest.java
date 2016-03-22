@@ -111,7 +111,7 @@ public class AsyncResponseAlertObserverTest
                                 .path("results")
                                 .path("foo")
                                 .path("buckets")
-                                .path(bucket.getId())
+                                .path(Long.toString(bucket.getEpoch()))
                                 .queryParam("expand", true)
                                 .build();
         assertEquals(uri, argument.getValue().getUri());

@@ -54,10 +54,10 @@ public class BucketParserTest
                 + "\"timestamp\" : 1369437000,"
                 + "\"maxNormalizedProbability\" : 2.0,"
                 + "\"anomalyScore\" : 50.0,"
-                + "\"id\" : \"1369437000\","
                 + "\"eventCount\" : 1693,"
                 + "\"recordCount\" : 2,"
                 + "\"isInterim\" : false,"
+                + "\"bucketSpan\" : 5580,"
                 + "\"bucketInfluencers\": ["
                 +     "{\"influencerFieldName\":\"bucketTime\",\"probability\":0.03,\"rawAnomalyScore\":0.05,\"initialAnomalyScore\":95.4},"
                 +     "{\"influencerFieldName\":\"user\",\"probability\":0.02,\"rawAnomalyScore\":0.13,\"initialAnomalyScore\":33.2}"
@@ -81,10 +81,10 @@ public class BucketParserTest
         assertEquals(2.0, b.getMaxNormalizedProbability(), ERROR);
         assertEquals(50.0, b.getAnomalyScore(), ERROR);
         assertEquals(50.0, b.getInitialAnomalyScore(), ERROR);
-        assertEquals("1369437000", b.getId());
         assertEquals(2, b.getRecordCount());
         assertEquals(1693, b.getEventCount());
         assertFalse(b.isInterim());
+        assertEquals(5580l, b.getBucketSpan());
 
         List<AnomalyRecord> records = b.getRecords();
         assertEquals(2, records.size());

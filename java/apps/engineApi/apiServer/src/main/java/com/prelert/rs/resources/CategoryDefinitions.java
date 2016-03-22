@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -140,9 +140,9 @@ public class CategoryDefinitions extends ResourceWithJobManager
                     categoryId, jobId));
 
             return Response.status(Response.Status.NOT_FOUND)
-                    .entity(singleDocFromOptional(category,categoryId, CategoryDefinition.TYPE)).build();
+                    .entity(singleDocFromOptional(category, CategoryDefinition.TYPE)).build();
         }
 
-        return Response.ok(singleDocFromOptional(category,categoryId, CategoryDefinition.TYPE)).build();
+        return Response.ok(singleDocFromOptional(category, CategoryDefinition.TYPE)).build();
     }
 }

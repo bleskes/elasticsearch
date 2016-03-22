@@ -28,20 +28,20 @@ import com.prelert.rs.data.SingleDocument;
 
 public class BucketRequestBuilder extends BaseJobRequestBuilder<Bucket>
 {
-    private final String m_BucketId;
+    private final String m_BucketTimestamp;
 
     private final Map<String, String> m_Params;
 
     /**
      * @param client The Engine API client
      * @param jobId The Job's unique Id
-     * @param bucketId The id of the requested bucket
+     * @param bucketTimestamp The timestamp of the requested bucket
      */
-    public BucketRequestBuilder(EngineApiClient client, String jobId, String bucketId)
+    public BucketRequestBuilder(EngineApiClient client, String jobId, String bucketTimestamp)
     {
         super(client, jobId);
         m_Params = new HashMap<>();
-        m_BucketId = bucketId;
+        m_BucketTimestamp = bucketTimestamp;
     }
 
     /**
@@ -77,7 +77,7 @@ public class BucketRequestBuilder extends BaseJobRequestBuilder<Bucket>
     public SingleDocument<Bucket> get() throws IOException
     {
         StringBuilder url = new StringBuilder();
-        url.append(baseUrl()).append("/results/").append(jobId()).append("/buckets/").append(m_BucketId);
+        url.append(baseUrl()).append("/results/").append(jobId()).append("/buckets/").append(m_BucketTimestamp);
         appendParams(m_Params, url);
         return createHttpGetRequester().getSingleDocument(url.toString(),
                 new TypeReference<SingleDocument<Bucket>>() {});

@@ -45,6 +45,7 @@ import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHitField;
+import org.elasticsearch.search.sort.SortBuilders;
 
 import com.prelert.job.ModelSnapshot;
 import com.prelert.job.ModelState;
@@ -118,6 +119,7 @@ public class ElasticsearchBulkDeleter implements JobDataDeleter
                 .setIndices(m_JobId.getIndex())
                 .setTypes(type)
                 .setQuery(query)
+                .addSort(SortBuilders.fieldSort(ElasticsearchMappings.ES_DOC))
                 .execute().actionGet();
 
         for (SearchHit hit : searchResponse.getHits())
@@ -150,6 +152,11 @@ public class ElasticsearchBulkDeleter implements JobDataDeleter
         deleteTypeByBucket(bucket, Influencer.TYPE, () -> ++m_DeletedInfluencerCount);
     }
 
+    public void deleteBucketByTime(Bucket bucket)
+    {
+        deleteTypeByBucket(bucket, Bucket.TYPE, () -> ++m_DeletedBucketCount);
+    }
+
     @Override
     public void deleteInfluencer(Influencer influencer)
     {
@@ -180,8 +187,69 @@ public class ElasticsearchBulkDeleter implements JobDataDeleter
         ++m_DeletedModelSnapshotCount;
     }
 
+    public void deleteInterimResults()
+    {
+        QueryBuilder qb = QueryBuilders.termQuery(Bucket.IS_INTERIM, true);
+
+        SearchResponse searchResponse = m_Client.prepareSearch(m_JobId.getIndex())
+                .setTypes(Bucket.TYPE, AnomalyRecord.TYPE, Influencer.TYPE, BucketInfluencer.TYPE)
+                .setQuery(qb)
+                .addSort(SortBuilders.fieldSort(ElasticsearchMappings.ES_DOC))
+                .setScroll("5m")
+                .setSize(1000)
+                .get();
+
+        String scrollId = searchResponse.getScrollId();
+        long totalHits = searchResponse.getHits().totalHits();
+        long totalDeletedCount = 0;
+        while (totalDeletedCount < totalHits)
+        {
+            for (SearchHit hit : searchResponse.getHits())
+            {
+                LOGGER.trace("Search hit for bucket: " + hit.toString() + ", " + hit.getId());
+                String type = hit.getType();
+                if (type.equals(Bucket.TYPE))
+                {
+                    ++m_DeletedBucketCount;
+                }
+                else if (type.equals(AnomalyRecord.TYPE))
+                {
+                    ++m_DeletedRecordCount;
+                }
+                else if (type.equals(BucketInfluencer.TYPE))
+                {
+                    ++m_DeletedBucketInfluencerCount;
+                }
+                else if (type.equals(Influencer.TYPE))
+                {
+                    ++m_DeletedInfluencerCount;
+                }
+                ++totalDeletedCount;
+                m_BulkRequestBuilder.add(
+                        m_Client.prepareDelete(m_JobId.getIndex(), hit.getType(), hit.getId()));
+            }
+
+            searchResponse = m_Client.prepareSearchScroll(scrollId).setScroll("5m").get();
+        }
+    }
+
+    @Override
+    public void commitAndFreeDiskSpace()
+    {
+        commit(true);
+    }
+
     @Override
     public void commit()
+    {
+        commit(false);
+    }
+
+    /**
+     * Commits the deletions and if {@code forceMerge} is {@code true}, it
+     * forces a merge which removes the data from disk.
+     */
+    private void commit(boolean forceMerge)
     {
         if (m_BulkRequestBuilder.numberOfActions() == 0)
         {
@@ -203,6 +271,10 @@ public class ElasticsearchBulkDeleter implements JobDataDeleter
         try
         {
             executeBulkRequest();
+            if (forceMerge)
+            {
+                forceMerge();
+            }
         }
         catch (RuntimeException e)
         {
@@ -217,7 +289,10 @@ public class ElasticsearchBulkDeleter implements JobDataDeleter
         {
             LOGGER.error(bulkResponse.buildFailureMessage());
         }
+    }
 
+    private void forceMerge()
+    {
         // We need to do a force-merge request to ACTUALLY delete the results from disk
         ForceMergeResponse forceMergeResponse = ForceMergeAction.INSTANCE.newRequestBuilder(m_Client)
                 .setIndices(m_JobId.getIndex())

@@ -81,6 +81,11 @@ public interface JobResultsPersister
     void incrementBucketCount(long count);
 
     /**
+     * Delete any existing interim results
+     */
+    void deleteInterimResults();
+
+    /**
      * Once all the job data has been written this function will be
      * called to commit the data if the implementing persister requires
      * it.

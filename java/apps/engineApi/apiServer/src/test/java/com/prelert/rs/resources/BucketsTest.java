@@ -200,14 +200,13 @@ public class BucketsTest extends ServiceTest
     {
         Optional<Bucket> queryResult = Optional.of(new Bucket());
 
-        when(jobManager().bucket("bar", "42", false, true)).thenReturn(queryResult);
+        when(jobManager().bucket("bar", 42000L, false, true)).thenReturn(queryResult);
 
         Response response = m_Buckets.bucket("bar", "42", false, true);
 
         @SuppressWarnings("unchecked")
         SingleDocument<Bucket> result = (SingleDocument<Bucket>)response.getEntity();
         assertTrue(result.isExists());
-        assertEquals("42", result.getDocumentId());
         assertEquals(Bucket.TYPE, result.getType());
 
         assertEquals(200, response.getStatus());
@@ -218,7 +217,7 @@ public class BucketsTest extends ServiceTest
     {
         Optional<Bucket> queryResult = Optional.empty();
 
-        when(jobManager().bucket("bar", "42", false, true)).thenReturn(queryResult);
+        when(jobManager().bucket("bar", 42000L, false, true)).thenReturn(queryResult);
 
         Response response = m_Buckets.bucket("bar", "42", false, true);
         @SuppressWarnings("unchecked")

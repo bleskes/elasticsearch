@@ -138,7 +138,6 @@ public class CategoryDefinitionsTest extends ServiceTest
         SingleDocument<CategoryDefinition> doc = (SingleDocument<CategoryDefinition>)response.getEntity();
 
         assertEquals(CategoryDefinition.TYPE, doc.getType());
-        assertEquals("7", doc.getDocumentId());
         assertEquals(false, doc.isExists());
         assertEquals(Response.Status.NOT_FOUND.getStatusCode(), response.getStatus());
     }

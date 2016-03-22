@@ -49,8 +49,12 @@ public interface JobDataDeleter
     void deleteModelSnapshot(ModelSnapshot modelSnapshot);
 
     /**
-     * Commit the deletions and give the chance to implementors
-     * to perform clean-up
+     * Commit the deletions and remove data from disk if possible
+     */
+    void commitAndFreeDiskSpace();
+
+    /**
+     * Commit the deletions without enforcing the removal of data from disk
      */
     void commit();
 }

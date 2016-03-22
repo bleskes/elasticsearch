@@ -751,17 +751,16 @@ public class JobsTest implements Closeable
 
             test(bucket.isExists() == true);
             test(bucket.getDocument() != null);
-            test(bucket.getDocumentId().equals(Long.toString(lastBucketTime)));
             test(bucket.getType().equals(Bucket.TYPE));
 
             validateBuckets(Arrays.asList(new Bucket[]{bucket.getDocument()}),
                     bucketSpan, 0, false);
 
+            // Ask for missing bucket
             SingleDocument<Bucket> nonExistentBucket = m_WebServiceClient.prepareGetBucket(jobId,
-                    "missing_bucket").get();
+                    "1234567890").get();
             test(nonExistentBucket.isExists() == false);
             test(nonExistentBucket.getDocument() == null);
-            test(nonExistentBucket.getDocumentId().equals("missing_bucket"));
             test(nonExistentBucket.getType().equals(Bucket.TYPE));
 
 
@@ -827,17 +826,17 @@ public class JobsTest implements Closeable
 
             test(bucket.isExists() == true);
             test(bucket.getDocument() != null);
-            test(bucket.getDocumentId().equals(Long.toString(lastBucketTime)));
+            test(bucket.getDocument().getEpoch() ==  lastBucketTime);
             test(bucket.getType().equals(Bucket.TYPE));
 
             validateBuckets(Arrays.asList(new Bucket[]{bucket.getDocument()}),
                     bucketSpan, 0, true);
 
+            // Ask for missing bucket
             SingleDocument<Bucket> nonExistentBucket = m_WebServiceClient.prepareGetBucket(jobId,
-                    "missing_bucket").get();
+                    "1234567890").get();
             test(nonExistentBucket.isExists() == false);
             test(nonExistentBucket.getDocument() == null);
-            test(nonExistentBucket.getDocumentId().equals("missing_bucket"));
             test(nonExistentBucket.getType().equals(Bucket.TYPE));
 
 
@@ -891,7 +890,6 @@ public class JobsTest implements Closeable
     {
         test(buckets.size() > 0);
 
-
         for (Bucket b : buckets)
         {
             test(b.getAnomalyScore() >= 0.0);
@@ -907,7 +905,6 @@ public class JobsTest implements Closeable
                 test(b.getBucketInfluencers().get(0).getProbability() >= 0.0);
                 test(b.getBucketInfluencers().get(0).getProbability() <= 1.0);
             }
-            test(b.getId() != null && b.getId().isEmpty() == false);
             long epoch = b.getEpoch();
             Date date = new Date(epoch * 1000);
 

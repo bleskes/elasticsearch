@@ -64,6 +64,7 @@ import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.indices.IndexAlreadyExistsException;
 import org.elasticsearch.node.Node;
 import org.elasticsearch.search.SearchHit;
+import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.sort.FieldSortBuilder;
 import org.elasticsearch.search.sort.SortBuilder;
 import org.elasticsearch.search.sort.SortOrder;
@@ -595,15 +596,14 @@ public class ElasticsearchJobProvider implements JobProvider
     private QueryPage<Bucket> buckets(ElasticsearchJobId jobId, boolean expand, boolean includeInterim,
             int skip, int take, QueryBuilder fb) throws UnknownJobException
     {
-        SortBuilder sb = new FieldSortBuilder(Bucket.ID)
-                    .unmappedType("string")
+        SortBuilder sb = new FieldSortBuilder(ElasticsearchMappings.ES_TIMESTAMP)
                     .order(SortOrder.ASC);
 
         SearchResponse searchResponse;
         try
         {
             LOGGER.trace("ES API CALL: search all of type " + Bucket.TYPE +
-                    " from index " + jobId.getIndex() + " sort ascending " + Bucket.ID +
+                    " from index " + jobId.getIndex() + " sort ascending " + ElasticsearchMappings.ES_TIMESTAMP +
                     " with filter after sort skip " + skip + " take " + take);
             searchResponse = m_Client.prepareSearch(jobId.getIndex())
                                         .setTypes(Bucket.TYPE)
@@ -628,6 +628,7 @@ public class ElasticsearchJobProvider implements JobProvider
             hit.getSource().put(Bucket.TIMESTAMP, timestamp);
 
             Bucket bucket = m_ObjectMapper.convertValue(hit.getSource(), Bucket.class);
+            bucket.setId(hit.getId());
 
             if (expand && bucket.getRecordCount() > 0)
             {
@@ -642,18 +643,24 @@ public class ElasticsearchJobProvider implements JobProvider
 
 
     @Override
-    public Optional<Bucket> bucket(String jobId,
-            String bucketId, boolean expand, boolean includeInterim)
-    throws UnknownJobException
+    public Optional<Bucket> bucket(String jobId, long timestampMillis, boolean expand,
+            boolean includeInterim) throws UnknownJobException
     {
         ElasticsearchJobId elasticJobId = new ElasticsearchJobId(jobId);
-        GetResponse response;
+        SearchHits hits;
 
         try
         {
-            LOGGER.trace("ES API CALL: get ID " + bucketId + " type " + Bucket.TYPE +
+            LOGGER.trace("ES API CALL: get Bucket with timestamp " + timestampMillis +
                     " from index " + elasticJobId.getIndex());
-            response = m_Client.prepareGet(elasticJobId.getIndex(), Bucket.TYPE, bucketId).get();
+            QueryBuilder qb = QueryBuilders.matchQuery(ElasticsearchMappings.ES_TIMESTAMP,
+                    new Date(timestampMillis));
+
+            SearchResponse searchResponse = m_Client.prepareSearch(elasticJobId.getIndex())
+                    .setTypes(Bucket.TYPE)
+                    .setQuery(qb)
+                    .get();
+            hits = searchResponse.getHits();
         }
         catch (IndexNotFoundException e)
         {
@@ -661,14 +668,16 @@ public class ElasticsearchJobProvider implements JobProvider
         }
 
         Optional<Bucket> doc = Optional.<Bucket>empty();
-        if (response.isExists())
+        if (hits.getTotalHits() == 1L)
         {
+            SearchHit hit = hits.getAt(0);
             // Remove the Kibana/Logstash '@timestamp' entry as stored in Elasticsearch,
             // and replace using the API 'timestamp' key.
-            Object timestamp = response.getSource().remove(ElasticsearchMappings.ES_TIMESTAMP);
-            response.getSource().put(Bucket.TIMESTAMP, timestamp);
+            Object ts = hit.getSource().remove(ElasticsearchMappings.ES_TIMESTAMP);
+            hit.getSource().put(Bucket.TIMESTAMP, ts);
 
-            Bucket bucket = m_ObjectMapper.convertValue(response.getSource(), Bucket.class);
+            Bucket bucket = m_ObjectMapper.convertValue(hit.getSource(), Bucket.class);
+            bucket.setId(hit.getId());
             if (includeInterim || bucket.isInterim() == false)
             {
                 if (expand && bucket.getRecordCount() > 0)

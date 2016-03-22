@@ -31,6 +31,7 @@ import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Map;
 
 import org.elasticsearch.common.xcontent.XContentBuilder;
 
@@ -56,7 +57,6 @@ import com.prelert.job.results.CategoryDefinition;
 import com.prelert.job.results.Influence;
 import com.prelert.job.results.Influencer;
 import com.prelert.job.results.ModelDebugOutput;
-import com.prelert.job.results.ReservedFieldNames;
 import com.prelert.job.transform.TransformConfig;
 import com.prelert.job.usage.Usage;
 
@@ -81,17 +81,17 @@ public class ElasticsearchMappings
     /**
      * String constants used in mappings
      */
-    public static final String NOT_ANALYZED = "not_analyzed";
-    public static final String INDEX = "index";
-    public static final String NO = "no";
-    public static final String ALL = "_all";
-    public static final String ENABLED = "enabled";
-    public static final String ANALYZER = "analyzer";
-    public static final String WHITESPACE = "whitespace";
-    public static final String INCLUDE_IN_ALL = "include_in_all";
-    public static final String NESTED = "nested";
-    public static final String COPY_TO = "copy_to";
-    public static final String PARENT = "_parent";
+    static final String NOT_ANALYZED = "not_analyzed";
+    static final String INDEX = "index";
+    static final String NO = "no";
+    static final String ALL = "_all";
+    static final String ENABLED = "enabled";
+    static final String ANALYZER = "analyzer";
+    static final String WHITESPACE = "whitespace";
+    static final String INCLUDE_IN_ALL = "include_in_all";
+    static final String NESTED = "nested";
+    static final String COPY_TO = "copy_to";
+    static final String PARENT = "_parent";
 
     /**
      * Name of the field used to store the timestamp in Elasticsearch.
@@ -99,17 +99,22 @@ public class ElasticsearchMappings
      * API Bucket Resource, and is chosen for consistency with the default field name used by
      * Logstash and Kibana.
      */
-    public static final String ES_TIMESTAMP = "@timestamp";
+    static final String ES_TIMESTAMP = "@timestamp";
 
-    private static final String DATE = "date";
-    private static final String INTEGER = "integer";
-    private static final String LONG = "long";
-    private static final String OBJECT = "object";
-    private static final String PROPERTIES = "properties";
-    private static final String STRING = "string";
-    private static final String DOUBLE = "double";
-    private static final String BOOLEAN = "boolean";
-    private static final String TYPE = "type";
+    /**
+     * Name of the Elasticsearch field by which documents are sorted by default
+     */
+    static final String ES_DOC = "_doc";
+
+    static final String DATE = "date";
+    static final String INTEGER = "integer";
+    static final String LONG = "long";
+    static final String OBJECT = "object";
+    static final String PROPERTIES = "properties";
+    static final String STRING = "string";
+    static final String DOUBLE = "double";
+    static final String BOOLEAN = "boolean";
+    static final String TYPE = "type";
 
     private ElasticsearchMappings()
     {
@@ -409,9 +414,6 @@ public class ElasticsearchMappings
                         .field(ANALYZER, WHITESPACE)
                     .endObject()
                     .startObject(PROPERTIES)
-                        .startObject(Bucket.ID)
-                            .field(TYPE, STRING).field(INDEX, NOT_ANALYZED)
-                        .endObject()
                         .startObject(ElasticsearchPersister.JOB_ID_NAME)
                             .field(TYPE, STRING).field(INDEX, NOT_ANALYZED)
                         .endObject()
@@ -434,6 +436,9 @@ public class ElasticsearchMappings
                             .field(TYPE, LONG)
                         .endObject()
                         .startObject(Bucket.EVENT_COUNT)
+                            .field(TYPE, LONG)
+                        .endObject()
+                        .startObject(Bucket.BUCKET_SPAN)
                             .field(TYPE, LONG)
                         .endObject()
                         .startObject(Bucket.BUCKET_INFLUENCERS)
@@ -694,16 +699,14 @@ public class ElasticsearchMappings
 
         if (termFieldNames != null)
         {
+            ElasticsearchDotNotationReverser reverser = new ElasticsearchDotNotationReverser();
             for (String fieldName : termFieldNames)
             {
-                if (ReservedFieldNames.RESERVED_FIELD_NAMES.contains(fieldName))
-                {
-                    continue;
-                }
-                builder
-                        .startObject(fieldName)
-                            .field(TYPE, STRING)
-                        .endObject();
+                reverser.add(fieldName, "");
+            }
+            for (Map.Entry<String, Object> entry : reverser.getMappingsMap().entrySet())
+            {
+                builder.field(entry.getKey(), entry.getValue());
             }
         }
 
@@ -712,7 +715,6 @@ public class ElasticsearchMappings
                 .endObject()
             .endObject();
     }
-
 
     /**
      * Create the Elasticsearch mapping for {@linkplain Quantiles}.
@@ -1034,16 +1036,14 @@ public class ElasticsearchMappings
 
         if (termFieldNames != null)
         {
+            ElasticsearchDotNotationReverser reverser = new ElasticsearchDotNotationReverser();
             for (String fieldName : termFieldNames)
             {
-                if (ReservedFieldNames.RESERVED_FIELD_NAMES.contains(fieldName))
-                {
-                    continue;
-                }
-                builder
-                        .startObject(fieldName)
-                            .field(TYPE, STRING)
-                        .endObject();
+                reverser.add(fieldName, "");
+            }
+            for (Map.Entry<String, Object> entry : reverser.getMappingsMap().entrySet())
+            {
+                builder.field(entry.getKey(), entry.getValue());
             }
         }
 
@@ -1097,16 +1097,14 @@ public class ElasticsearchMappings
 
         if (influencerFieldNames != null)
         {
+            ElasticsearchDotNotationReverser reverser = new ElasticsearchDotNotationReverser();
             for (String fieldName : influencerFieldNames)
             {
-                if (ReservedFieldNames.RESERVED_FIELD_NAMES.contains(fieldName))
-                {
-                    continue;
-                }
-                builder
-                        .startObject(fieldName)
-                            .field(TYPE, STRING)
-                        .endObject();
+                reverser.add(fieldName, "");
+            }
+            for (Map.Entry<String, Object> entry : reverser.getMappingsMap().entrySet())
+            {
+                builder.field(entry.getKey(), entry.getValue());
             }
         }
 

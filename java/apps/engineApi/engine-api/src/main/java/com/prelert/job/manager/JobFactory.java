@@ -151,7 +151,8 @@ class JobFactory
     {
         for (Detector detector : jobDetails.getAnalysisConfig().getDetectors())
         {
-            if (detector.getDetectorDescription() == null)
+            if (detector.getDetectorDescription() == null ||
+                    detector.getDetectorDescription().isEmpty())
             {
                 detector.setDetectorDescription(DefaultDetectorDescription.of(detector));
             }
