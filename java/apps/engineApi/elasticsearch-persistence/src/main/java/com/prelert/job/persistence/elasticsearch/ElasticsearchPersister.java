@@ -683,7 +683,7 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
             builder.field(ModelDebugOutput.PARTITION_FIELD_VALUE, modelDebugOutput.getPartitionFieldValue());
         }
 
-        for (Map.Entry<String, Object> entry : reverser.getMappingsMap().entrySet())
+        for (Map.Entry<String, Object> entry : reverser.getResultsMap().entrySet())
         {
             builder.field(entry.getKey(), entry.getValue());
         }
@@ -812,7 +812,7 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
             }
         }
 
-        for (Map.Entry<String, Object> entry : reverser.getMappingsMap().entrySet())
+        for (Map.Entry<String, Object> entry : reverser.getResultsMap().entrySet())
         {
             builder.field(entry.getKey(), entry.getValue());
         }
@@ -888,7 +888,7 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
             builder.field(AnomalyCause.OVER_FIELD_VALUE, cause.getOverFieldValue());
         }
 
-        for (Map.Entry<String, Object> entry : reverser.getMappingsMap().entrySet())
+        for (Map.Entry<String, Object> entry : reverser.getResultsMap().entrySet())
         {
             builder.field(entry.getKey(), entry.getValue());
         }
@@ -978,7 +978,7 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
 
         ElasticsearchDotNotationReverser reverser = new ElasticsearchDotNotationReverser();
         reverser.add(influencer.getInfluencerFieldName(), influencer.getInfluencerFieldValue());
-        for (Map.Entry<String, Object> entry : reverser.getMappingsMap().entrySet())
+        for (Map.Entry<String, Object> entry : reverser.getResultsMap().entrySet())
         {
             builder.field(entry.getKey(), entry.getValue());
         }
