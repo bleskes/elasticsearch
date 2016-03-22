@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -193,7 +193,7 @@ public class Buckets extends ResourceWithJobManager
         JobManager manager = jobManager();
         long timestampMillis = paramToEpochIfValidOrThrow(TIMESTAMP_PARAM, timestamp, LOGGER);
         Optional<Bucket> b = manager.bucket(jobId, timestampMillis, expand, includeInterim);
-        SingleDocument<Bucket> bucket = singleDocFromOptional(b, timestamp, Bucket.TYPE);
+        SingleDocument<Bucket> bucket = singleDocFromOptional(b, Bucket.TYPE);
 
         if (bucket.isExists())
         {

@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -375,11 +375,10 @@ public abstract class ResourceWithJobManager
     /**
      * Utility method for creating generic single document objects
      * @param opt
-     * @param docId
      * @param docType
      * @return
      */
-    protected <T> SingleDocument<T> singleDocFromOptional(Optional<T> opt, String docId, String docType)
+    protected <T> SingleDocument<T> singleDocFromOptional(Optional<T> opt, String docType)
     {
         SingleDocument<T> doc = new SingleDocument<T>();
         doc.setExists(opt.isPresent());

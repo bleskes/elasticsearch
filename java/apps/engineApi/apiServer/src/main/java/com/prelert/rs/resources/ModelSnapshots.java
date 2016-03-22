@@ -54,7 +54,6 @@ import com.prelert.job.NoSuchModelSnapshotException;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.exceptions.JobInUseException;
-import com.prelert.job.manager.JobManager;
 import com.prelert.job.manager.CannotDeleteSnapshotException;
 import com.prelert.job.manager.DescriptionAlreadyUsedException;
 import com.prelert.job.manager.JobManager;
