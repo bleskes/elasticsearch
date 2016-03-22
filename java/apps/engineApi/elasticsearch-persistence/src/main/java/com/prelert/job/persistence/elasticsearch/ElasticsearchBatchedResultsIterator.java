@@ -38,6 +38,7 @@ import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.index.IndexNotFoundException;
 import org.elasticsearch.search.SearchHit;
+import org.elasticsearch.search.sort.SortBuilders;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.prelert.job.UnknownJobException;
@@ -111,6 +112,7 @@ abstract class ElasticsearchBatchedResultsIterator<T> implements BatchedResultsI
                     .setSize(BATCH_SIZE)
                     .setTypes(getType())
                     .setQuery(m_FilterBuilder.build())
+                    .addSort(SortBuilders.fieldSort(ElasticsearchMappings.ES_DOC))
                     .get();
             m_TotalHits = searchResponse.getHits().getTotalHits();
             m_ScrollId = searchResponse.getScrollId();

@@ -67,6 +67,7 @@ import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.sort.FieldSortBuilder;
 import org.elasticsearch.search.sort.SortBuilder;
+import org.elasticsearch.search.sort.SortBuilders;
 import org.elasticsearch.search.sort.SortOrder;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -659,6 +660,7 @@ public class ElasticsearchJobProvider implements JobProvider
             SearchResponse searchResponse = m_Client.prepareSearch(elasticJobId.getIndex())
                     .setTypes(Bucket.TYPE)
                     .setQuery(qb)
+                    .addSort(SortBuilders.fieldSort(ElasticsearchMappings.ES_DOC))
                     .get();
             hits = searchResponse.getHits();
         }
@@ -868,6 +870,7 @@ public class ElasticsearchJobProvider implements JobProvider
                 .setTypes(AnomalyRecord.TYPE)
                 .setPostFilter(recordFilter)
                 .setFrom(skip).setSize(take)
+                .addSort(sb == null ? SortBuilders.fieldSort(ElasticsearchMappings.ES_DOC) : sb)
                 .addField(ElasticsearchMappings.PARENT)   // include the parent id
                 .setFetchSource(true);  // the field option turns off source so request it explicitly
 
@@ -962,12 +965,11 @@ public class ElasticsearchJobProvider implements JobProvider
                 .setPostFilter(filterBuilder)
                 .setFrom(skip).setSize(take);
 
-        if (sortField != null)
-        {
-            SortBuilder sb = new FieldSortBuilder(esSortField(sortField)).order(
-                    sortDescending ? SortOrder.DESC : SortOrder.ASC);
-            searchRequestBuilder.addSort(sb);
-        }
+        SortBuilder sb = sortField == null ? SortBuilders.fieldSort(ElasticsearchMappings.ES_DOC)
+                : new FieldSortBuilder(esSortField(sortField))
+                        .order(sortDescending ? SortOrder.DESC : SortOrder.ASC);
+        searchRequestBuilder.addSort(sb);
+
         SearchResponse response = null;
         try
         {

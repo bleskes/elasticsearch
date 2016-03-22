@@ -30,6 +30,7 @@ package com.prelert.job.persistence.elasticsearch;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -49,6 +50,7 @@ import org.elasticsearch.index.IndexNotFoundException;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
+import org.elasticsearch.search.sort.SortBuilder;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -207,6 +209,7 @@ public class ElasticsearchBatchedResultsIteratorTest
             when(requestBuilder.setSize(10000)).thenReturn(requestBuilder);
             when(requestBuilder.setTypes("String")).thenReturn(requestBuilder);
             when(requestBuilder.setQuery(any(QueryBuilder.class))).thenReturn(requestBuilder);
+            when(requestBuilder.addSort(any(SortBuilder.class))).thenReturn(requestBuilder);
             when(requestBuilder.get()).thenReturn(searchResponse);
         }
 
