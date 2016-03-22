@@ -25,6 +25,7 @@ import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.network.NetworkModule;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.TransportAddress;
+import org.elasticsearch.shield.Security;
 import org.elasticsearch.shield.authc.support.SecuredString;
 import org.elasticsearch.shield.authc.support.SecuredStringTests;
 import org.elasticsearch.shield.authc.support.UsernamePasswordToken;
@@ -85,8 +86,8 @@ public class RunAsIntegTests extends ShieldIntegTestCase {
     }
 
     public void testUserImpersonation() throws Exception {
-        try (TransportClient client = getTransportClient(
-                Settings.builder().put("shield.user", TRANSPORT_CLIENT_USER + ":" + ShieldSettingsSource.DEFAULT_PASSWORD).build())) {
+        try (TransportClient client = getTransportClient(Settings.builder()
+                .put(Security.USER_SETTING.getKey(), TRANSPORT_CLIENT_USER + ":" + ShieldSettingsSource.DEFAULT_PASSWORD).build())) {
             //ensure the client can connect
             awaitBusy(() -> {
                 return client.connectedNodes().size() > 0;
@@ -151,8 +152,8 @@ public class RunAsIntegTests extends ShieldIntegTestCase {
     }
 
     public void testEmptyUserImpersonationHeader() throws Exception {
-        try (TransportClient client = getTransportClient(Settings.builder().put("shield.user", TRANSPORT_CLIENT_USER + ":" +
-                ShieldSettingsSource.DEFAULT_PASSWORD).build())) {
+        try (TransportClient client = getTransportClient(Settings.builder()
+                .put(Security.USER_SETTING.getKey(), TRANSPORT_CLIENT_USER + ":" + ShieldSettingsSource.DEFAULT_PASSWORD).build())) {
             //ensure the client can connect
             awaitBusy(() -> {
                 return client.connectedNodes().size() > 0;
@@ -183,8 +184,8 @@ public class RunAsIntegTests extends ShieldIntegTestCase {
     }
 
     public void testNonExistentRunAsUser() throws Exception {
-        try (TransportClient client = getTransportClient(Settings.builder().put("shield.user", TRANSPORT_CLIENT_USER + ":" +
-                ShieldSettingsSource.DEFAULT_PASSWORD).build())) {
+        try (TransportClient client = getTransportClient(Settings.builder()
+                .put(Security.USER_SETTING.getKey(), TRANSPORT_CLIENT_USER + ":" + ShieldSettingsSource.DEFAULT_PASSWORD).build())) {
             //ensure the client can connect
             awaitBusy(() -> {
                 return client.connectedNodes().size() > 0;

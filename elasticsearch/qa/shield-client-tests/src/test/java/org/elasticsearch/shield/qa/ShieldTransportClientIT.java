@@ -25,6 +25,7 @@ import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.TransportAddress;
 import org.elasticsearch.plugins.Plugin;
+import org.elasticsearch.shield.Security;
 import org.elasticsearch.shield.authc.support.SecuredString;
 import org.elasticsearch.test.ESIntegTestCase;
 import org.elasticsearch.xpack.XPackPlugin;
@@ -47,7 +48,7 @@ public class ShieldTransportClientIT extends ESIntegTestCase {
     @Override
     protected Settings externalClusterClientSettings() {
         return Settings.builder()
-                .put("shield.user", ADMIN_USER_PW)
+                .put(Security.USER_SETTING.getKey(), ADMIN_USER_PW)
                 .build();
     }
 
@@ -68,7 +69,7 @@ public class ShieldTransportClientIT extends ESIntegTestCase {
 
     public void testThatTransportClientAuthenticationWithTransportClientRole() throws Exception {
         Settings settings = Settings.builder()
-                .put("shield.user", TRANSPORT_USER_PW)
+                .put(Security.USER_SETTING.getKey(), TRANSPORT_USER_PW)
                 .build();
         try (TransportClient client = transportClient(settings)) {
             boolean connected = awaitBusy(() -> {
@@ -90,7 +91,7 @@ public class ShieldTransportClientIT extends ESIntegTestCase {
     public void testTransportClientWithAdminUser() throws Exception {
         final boolean useTransportUser = randomBoolean();
         Settings settings = Settings.builder()
-                .put("shield.user", useTransportUser ? TRANSPORT_USER_PW : ADMIN_USER_PW)
+                .put(Security.USER_SETTING.getKey(), useTransportUser ? TRANSPORT_USER_PW : ADMIN_USER_PW)
                 .build();
         try (TransportClient client = transportClient(settings)) {
             boolean connected = awaitBusy(() -> {

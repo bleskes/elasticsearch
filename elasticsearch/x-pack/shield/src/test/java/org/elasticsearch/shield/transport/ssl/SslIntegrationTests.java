@@ -60,7 +60,7 @@ public class SslIntegrationTests extends ShieldIntegTestCase {
     protected Settings nodeSettings(int nodeOrdinal) {
         return settingsBuilder().put(super.nodeSettings(nodeOrdinal))
                 .put(NetworkModule.HTTP_ENABLED.getKey(), true)
-                .put(ShieldNettyHttpServerTransport.HTTP_SSL_SETTING, true).build();
+                .put(ShieldNettyHttpServerTransport.SSL_SETTING.getKey(), true).build();
     }
 
     @Override
@@ -74,7 +74,7 @@ public class SslIntegrationTests extends ShieldIntegTestCase {
                 .put(transportClientSettings())
                 .put("node.name", "programmatic_transport_client")
                 .put("cluster.name", internalCluster().getClusterName())
-                .putArray("shield.ssl.ciphers", new String[]{"TLS_ECDH_anon_WITH_RC4_128_SHA", "SSL_RSA_WITH_3DES_EDE_CBC_SHA"})
+                .putArray("xpack.security.ssl.ciphers", new String[]{"TLS_ECDH_anon_WITH_RC4_128_SHA", "SSL_RSA_WITH_3DES_EDE_CBC_SHA"})
                 .build()).build()) {
 
             TransportAddress transportAddress = randomFrom(internalCluster().getInstance(Transport.class).boundAddress().boundAddresses());
@@ -93,7 +93,7 @@ public class SslIntegrationTests extends ShieldIntegTestCase {
                 .put(transportClientSettings())
                 .put("node.name", "programmatic_transport_client")
                 .put("cluster.name", internalCluster().getClusterName())
-                .putArray("shield.ssl.supported_protocols", new String[]{"SSLv3"})
+                .putArray("xpack.security.ssl.supported_protocols", new String[]{"SSLv3"})
                 .build()).build()) {
 
             TransportAddress transportAddress = randomFrom(internalCluster().getInstance(Transport.class).boundAddress().boundAddresses());
