@@ -21,6 +21,7 @@ package org.elasticsearch.cluster;
 
 import com.carrotsearch.hppc.cursors.ObjectCursor;
 import org.elasticsearch.cluster.metadata.IndexMetaData;
+import org.elasticsearch.cluster.metadata.IndexGraveyard;
 import org.elasticsearch.cluster.metadata.MetaData;
 import org.elasticsearch.cluster.node.DiscoveryNodes;
 import org.elasticsearch.index.Index;
@@ -29,6 +30,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * An event received by the local node, signaling that the cluster state has changed.
@@ -122,28 +124,20 @@ public class ClusterChangedEvent {
      * Returns the indices deleted in this event
      */
     public List<Index> indicesDeleted() {
-        // If the new cluster state has a new cluster UUID, the likely scenario is that a node was elected
-        // master that has had its data directory wiped out, in which case we don't want to delete the indices and lose data;
-        // rather we want to import them as dangling indices instead.  So we check here if the cluster UUID differs from the previous
-        // cluster UUID, in which case, we don't want to delete indices that the master erroneously believes shouldn't exist.
-        // See test DiscoveryWithServiceDisruptionsIT.testIndicesDeleted()
-        // See discussion on https://github.com/elastic/elasticsearch/pull/9952 and
-        // https://github.com/elastic/elasticsearch/issues/11665
-        if (metaDataChanged() == false || isNewCluster()) {
+        if (metaDataChanged() == false) {
             return Collections.emptyList();
         }
-        List<Index> deleted = null;
-        for (ObjectCursor<IndexMetaData> cursor : previousState.metaData().indices().values()) {
-            IndexMetaData index = cursor.value;
-            IndexMetaData current = state.metaData().index(index.getIndex());
-            if (current == null) {
-                if (deleted == null) {
-                    deleted = new ArrayList<>();
-                }
-                deleted.add(index.getIndex());
-            }
-        }
-        return deleted == null ? Collections.<Index>emptyList() : deleted;
+        // Since we are now maintaining explicit index tombstones in the cluster state to denote
+        // index deletions, we use the tombstones to decide which indices should be deleted.  In
+        // particular, we look at the difference between the previous state's tombstone list and
+        // the current state's tombstone list.  All the entries that were added to the current state's
+        // tombstone list must be deleted on this node.  It is possible when a node leaves and rejoins
+        // the cluster, for it to re-process the same index deletes (or process deletes about indices
+        // it never knew about).  This is not an issue because there are safeguards in place in the
+        // delete store operation in case the index folder doesn't exist on the file system.
+        List<IndexGraveyard.Tombstone> addedTombstones = state.metaData().indexGraveyard().diff(
+            previousState.metaData().indexGraveyard()).getAdded();
+        return addedTombstones.stream().map(tombstone -> tombstone.getIndex()).collect(Collectors.toList());
     }
 
     /**
@@ -218,12 +212,4 @@ public class ClusterChangedEvent {
         return nodesRemoved() || nodesAdded();
     }
 
-    // Determines whether or not the current cluster state represents an entirely
-    // different cluster from the previous cluster state, which will happen when a
-    // master node is elected that has never been part of the cluster before.
-    private boolean isNewCluster() {
-        final String prevClusterUUID = previousState.metaData().clusterUUID();
-        final String currClusterUUID = state.metaData().clusterUUID();
-        return prevClusterUUID.equals(currClusterUUID) == false;
-    }
 }

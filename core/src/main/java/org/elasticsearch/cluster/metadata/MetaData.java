@@ -135,7 +135,8 @@ public class MetaData implements Iterable<IndexMetaData>, Diffable<MetaData>, Fr
         //noinspection unchecked
         T proto = (T) customPrototypes.get(type);
         if (proto == null) {
-            throw new IllegalArgumentException("No custom metadata prototype registered for type [" + type + "], node likely missing plugins");
+            throw new IllegalArgumentException("No custom metadata prototype registered for type [" + type +
+                                               "], node likely missing plugins");
         }
         return proto;
     }
@@ -144,7 +145,9 @@ public class MetaData implements Iterable<IndexMetaData>, Diffable<MetaData>, Fr
     public static final Setting<Boolean> SETTING_READ_ONLY_SETTING =
         Setting.boolSetting("cluster.blocks.read_only", false, Property.Dynamic, Property.NodeScope);
 
-    public static final ClusterBlock CLUSTER_READ_ONLY_BLOCK = new ClusterBlock(6, "cluster read-only (api)", false, false, RestStatus.FORBIDDEN, EnumSet.of(ClusterBlockLevel.WRITE, ClusterBlockLevel.METADATA_WRITE));
+    public static final ClusterBlock CLUSTER_READ_ONLY_BLOCK =
+        new ClusterBlock(6, "cluster read-only (api)", false, false, RestStatus.FORBIDDEN, EnumSet.of(ClusterBlockLevel.WRITE,
+                         ClusterBlockLevel.METADATA_WRITE));
 
     public static final MetaData EMPTY_META_DATA = builder().build();
 
@@ -165,6 +168,7 @@ public class MetaData implements Iterable<IndexMetaData>, Diffable<MetaData>, Fr
     private final ImmutableOpenMap<String, IndexMetaData> indices;
     private final ImmutableOpenMap<String, IndexTemplateMetaData> templates;
     private final ImmutableOpenMap<String, Custom> customs;
+    private final IndexGraveyard indexGraveyard;
 
     private final transient int totalNumberOfShards; // Transient ? not serializable anyway?
     private final int numberOfShards;
@@ -176,7 +180,10 @@ public class MetaData implements Iterable<IndexMetaData>, Diffable<MetaData>, Fr
     private final SortedMap<String, AliasOrIndex> aliasAndIndexLookup;
 
     @SuppressWarnings("unchecked")
-    MetaData(String clusterUUID, long version, Settings transientSettings, Settings persistentSettings, ImmutableOpenMap<String, IndexMetaData> indices, ImmutableOpenMap<String, IndexTemplateMetaData> templates, ImmutableOpenMap<String, Custom> customs, String[] allIndices, String[] allOpenIndices, String[] allClosedIndices, SortedMap<String, AliasOrIndex> aliasAndIndexLookup) {
+    MetaData(String clusterUUID, long version, Settings transientSettings, Settings persistentSettings,
+             ImmutableOpenMap<String, IndexMetaData> indices, ImmutableOpenMap<String, IndexTemplateMetaData> templates,
+             ImmutableOpenMap<String, Custom> customs, IndexGraveyard indexGraveyard, String[] allIndices,
+             String[] allOpenIndices, String[] allClosedIndices, SortedMap<String, AliasOrIndex> aliasAndIndexLookup) {
         this.clusterUUID = clusterUUID;
         this.version = version;
         this.transientSettings = transientSettings;
@@ -185,6 +192,7 @@ public class MetaData implements Iterable<IndexMetaData>, Diffable<MetaData>, Fr
         this.indices = indices;
         this.customs = customs;
         this.templates = templates;
+        this.indexGraveyard = indexGraveyard;
         int totalNumberOfShards = 0;
         int numberOfShards = 0;
         for (ObjectCursor<IndexMetaData> cursor : indices.values()) {
@@ -496,6 +504,13 @@ public class MetaData implements Iterable<IndexMetaData>, Diffable<MetaData>, Fr
         return this.customs;
     }
 
+    /**
+     * The collection of index deletions in the cluster.
+     */
+    public IndexGraveyard indexGraveyard() {
+        return indexGraveyard;
+    }
+
     public <T extends Custom> T custom(String type) {
         return (T) customs.get(type);
     }
@@ -574,6 +589,9 @@ public class MetaData implements Iterable<IndexMetaData>, Diffable<MetaData>, Fr
             }
         }
         if (customCount1 != customCount2) return false;
+        if (metaData1.indexGraveyard.isEquals(metaData2.indexGraveyard) == false) {
+            return false;
+        }
         return true;
     }
 
@@ -609,7 +627,7 @@ public class MetaData implements Iterable<IndexMetaData>, Diffable<MetaData>, Fr
         private Diff<ImmutableOpenMap<String, IndexMetaData>> indices;
         private Diff<ImmutableOpenMap<String, IndexTemplateMetaData>> templates;
         private Diff<ImmutableOpenMap<String, Custom>> customs;
-
+        private Diff<IndexGraveyard> indexGraveyard;
 
         public MetaDataDiff(MetaData before, MetaData after) {
             clusterUUID = after.clusterUUID;
@@ -619,6 +637,7 @@ public class MetaData implements Iterable<IndexMetaData>, Diffable<MetaData>, Fr
             indices = DiffableUtils.diff(before.indices, after.indices, DiffableUtils.getStringKeySerializer());
             templates = DiffableUtils.diff(before.templates, after.templates, DiffableUtils.getStringKeySerializer());
             customs = DiffableUtils.diff(before.customs, after.customs, DiffableUtils.getStringKeySerializer());
+            indexGraveyard = after.indexGraveyard.diff(before.indexGraveyard);
         }
 
         public MetaDataDiff(StreamInput in) throws IOException {
@@ -640,6 +659,7 @@ public class MetaData implements Iterable<IndexMetaData>, Diffable<MetaData>, Fr
                     return lookupPrototypeSafe(key).readDiffFrom(in);
                 }
             });
+            indexGraveyard = new IndexGraveyard.IndexGraveyardDiff(in);
         }
 
         @Override
@@ -651,6 +671,7 @@ public class MetaData implements Iterable<IndexMetaData>, Diffable<MetaData>, Fr
             indices.writeTo(out);
             templates.writeTo(out);
             customs.writeTo(out);
+            indexGraveyard.writeTo(out);
         }
 
         @Override
@@ -663,6 +684,7 @@ public class MetaData implements Iterable<IndexMetaData>, Diffable<MetaData>, Fr
             builder.indices(indices.apply(part.indices));
             builder.templates(templates.apply(part.templates));
             builder.customs(customs.apply(part.customs));
+            builder.indexGraveyard(indexGraveyard.apply(part.indexGraveyard));
             return builder.build();
         }
     }
@@ -688,6 +710,7 @@ public class MetaData implements Iterable<IndexMetaData>, Diffable<MetaData>, Fr
             Custom customIndexMetaData = lookupPrototypeSafe(type).readFrom(in);
             builder.putCustom(type, customIndexMetaData);
         }
+        builder.indexGraveyard(new IndexGraveyard(in));
         return builder.build();
     }
 
@@ -710,6 +733,7 @@ public class MetaData implements Iterable<IndexMetaData>, Diffable<MetaData>, Fr
             out.writeString(cursor.key);
             cursor.value.writeTo(out);
         }
+        indexGraveyard.writeTo(out);
     }
 
     public static Builder builder() {
@@ -786,6 +810,7 @@ public class MetaData implements Iterable<IndexMetaData>, Diffable<MetaData>, Fr
                     metaData.getIndices(),
                     metaData.getTemplates(),
                     metaData.getCustoms(),
+                    metaData.indexGraveyard(),
                     metaData.getConcreteAllIndices(),
                     metaData.getConcreteAllOpenIndices(),
                     metaData.getConcreteAllClosedIndices(),
@@ -807,12 +832,14 @@ public class MetaData implements Iterable<IndexMetaData>, Diffable<MetaData>, Fr
         private final ImmutableOpenMap.Builder<String, IndexMetaData> indices;
         private final ImmutableOpenMap.Builder<String, IndexTemplateMetaData> templates;
         private final ImmutableOpenMap.Builder<String, Custom> customs;
+        private IndexGraveyard indexGraveyard;
 
         public Builder() {
             clusterUUID = "_na_";
             indices = ImmutableOpenMap.builder();
             templates = ImmutableOpenMap.builder();
             customs = ImmutableOpenMap.builder();
+            indexGraveyard = new IndexGraveyard();
         }
 
         public Builder(MetaData metaData) {
@@ -823,6 +850,7 @@ public class MetaData implements Iterable<IndexMetaData>, Diffable<MetaData>, Fr
             this.indices = ImmutableOpenMap.builder(metaData.indices);
             this.templates = ImmutableOpenMap.builder(metaData.templates);
             this.customs = ImmutableOpenMap.builder(metaData.customs);
+            this.indexGraveyard = new IndexGraveyard(metaData.indexGraveyard);
         }
 
         public Builder put(IndexMetaData.Builder indexMetaDataBuilder) {
@@ -913,6 +941,15 @@ public class MetaData implements Iterable<IndexMetaData>, Diffable<MetaData>, Fr
         public Builder customs(ImmutableOpenMap<String, Custom> customs) {
             this.customs.putAll(customs);
             return this;
+        }
+
+        public Builder indexGraveyard(final IndexGraveyard indexGraveyard) {
+            this.indexGraveyard = indexGraveyard;
+            return this;
+        }
+
+        public IndexGraveyard indexGraveyard() {
+            return indexGraveyard;
         }
 
         public Builder updateSettings(Settings settings, String... indices) {
@@ -1032,7 +1069,8 @@ public class MetaData implements Iterable<IndexMetaData>, Diffable<MetaData>, Fr
                 }
             }
             aliasAndIndexLookup = Collections.unmodifiableSortedMap(aliasAndIndexLookup);
-            return new MetaData(clusterUUID, version, transientSettings, persistentSettings, indices.build(), templates.build(), customs.build(), allIndices, allOpenIndices, allClosedIndices, aliasAndIndexLookup);
+            return new MetaData(clusterUUID, version, transientSettings, persistentSettings, indices.build(), templates.build(),
+                                customs.build(), indexGraveyard, allIndices, allOpenIndices, allClosedIndices, aliasAndIndexLookup);
         }
 
         public static String toXContent(MetaData metaData) throws IOException {
@@ -1089,6 +1127,10 @@ public class MetaData implements Iterable<IndexMetaData>, Diffable<MetaData>, Fr
                     builder.endObject();
                 }
             }
+
+            // write the index tombstones, its toXContent already takes care of writing the array
+            metaData.indexGraveyard.toXContent(builder, params);
+
             builder.endObject();
         }
 
@@ -1143,6 +1185,12 @@ public class MetaData implements Iterable<IndexMetaData>, Diffable<MetaData>, Fr
                             Custom custom = proto.fromXContent(parser);
                             builder.putCustom(custom.type(), custom);
                         }
+                    }
+                } else if (token == XContentParser.Token.START_ARRAY) {
+                    if (IndexGraveyard.TOMBSTONES_KEY.equals(currentFieldName)) {
+                        builder.indexGraveyard(IndexGraveyard.fromXContent(parser));
+                    } else {
+                        throw new IllegalArgumentException("Unexpected array [" + currentFieldName + "]");
                     }
                 } else if (token.isValue()) {
                     if ("version".equals(currentFieldName)) {

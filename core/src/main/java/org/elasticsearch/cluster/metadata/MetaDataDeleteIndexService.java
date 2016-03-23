@@ -38,6 +38,7 @@ import org.elasticsearch.index.Index;
 import org.elasticsearch.snapshots.SnapshotsService;
 import org.elasticsearch.threadpool.ThreadPool;
 
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -99,6 +100,10 @@ public class MetaDataDeleteIndexService extends AbstractComponent {
                     routingTableBuilder.remove(indexName);
                     clusterBlocksBuilder.removeIndexBlocks(indexName);
                     metaDataBuilder.remove(indexName);
+                    // create the index tombstone in the cluster state
+                    Optional<IndexGraveyard.Tombstone> maybePurged = metaDataBuilder.indexGraveyard().addTombstone(index);
+                    maybePurged.ifPresent(tombstone -> logger.debug("[{}] index deletion was purged from the cluster state " +
+                                                                    "due to reaching capacity.", tombstone.getIndex()));
                 }
                 // wait for events from all nodes that it has been removed from their respective metadata...
                 int count = currentState.nodes().size();

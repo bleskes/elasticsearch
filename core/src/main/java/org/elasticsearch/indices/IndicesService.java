@@ -56,6 +56,7 @@ import org.elasticsearch.common.util.concurrent.EsExecutors;
 import org.elasticsearch.env.NodeEnvironment;
 import org.elasticsearch.env.ShardLock;
 import org.elasticsearch.gateway.MetaDataStateFormat;
+import org.elasticsearch.gateway.MetaStateService;
 import org.elasticsearch.index.Index;
 import org.elasticsearch.index.IndexModule;
 import org.elasticsearch.index.IndexNotFoundException;
@@ -144,6 +145,7 @@ public class IndicesService extends AbstractLifecycleComponent<IndicesService> i
     private final TimeValue cleanInterval;
     private final IndicesRequestCache indicesRequestCache;
     private final IndicesQueryCache indicesQueryCache;
+    private final MetaStateService metaStateService;
 
     @Override
     protected void doStart() {
@@ -155,7 +157,9 @@ public class IndicesService extends AbstractLifecycleComponent<IndicesService> i
     public IndicesService(Settings settings, PluginsService pluginsService, NodeEnvironment nodeEnv,
                           ClusterSettings clusterSettings, AnalysisRegistry analysisRegistry,
                           IndicesQueriesRegistry indicesQueriesRegistry, IndexNameExpressionResolver indexNameExpressionResolver,
-                          ClusterService clusterService, MapperRegistry mapperRegistry, ThreadPool threadPool, IndexScopedSettings indexScopedSettings, CircuitBreakerService circuitBreakerService) {
+                          ClusterService clusterService, MapperRegistry mapperRegistry, ThreadPool threadPool,
+                          IndexScopedSettings indexScopedSettings, CircuitBreakerService circuitBreakerService,
+                          MetaStateService metaStateService) {
         super(settings);
         this.threadPool = threadPool;
         this.pluginsService = pluginsService;
@@ -183,8 +187,7 @@ public class IndicesService extends AbstractLifecycleComponent<IndicesService> i
         });
         this.cleanInterval = INDICES_CACHE_CLEAN_INTERVAL_SETTING.get(settings);
         this.cacheCleaner = new CacheCleaner(indicesFieldDataCache, indicesRequestCache,  logger, threadPool, this.cleanInterval);
-
-
+        this.metaStateService = metaStateService;
     }
 
     @Override
@@ -629,21 +632,46 @@ public class IndicesService extends AbstractLifecycleComponent<IndicesService> i
      * given index. If the index uses a shared filesystem this method always
      * returns false.
      * @param index {@code Index} to check whether deletion is allowed
-     * @param indexSettings {@code IndexSettings} for the given index
+     * @param indexSettings {@code IndexSettings} for the given index, can be null iff closed is true
      * @return true if the index can be deleted on this node
      */
     public boolean canDeleteIndexContents(Index index, IndexSettings indexSettings, boolean closed) {
         final IndexService indexService = indexService(index);
         // Closed indices may be deleted, even if they are on a shared
         // filesystem. Since it is closed we aren't deleting it for relocation
-        if (indexSettings.isOnSharedFilesystem() == false || closed) {
+        if (closed || indexSettings.isOnSharedFilesystem() == false) {
             if (indexService == null && nodeEnv.hasNodeFile()) {
-                return true;
+                // if none of the index paths exist for the index, its already been deleted and/or doesn't exist
+                return FileSystemUtils.exists(nodeEnv.indexPaths(index));
             }
         } else {
             logger.trace("{} skipping index directory deletion due to shadow replicas", index);
         }
         return false;
+    }
+
+    /**
+     * Verify that the contents on disk for the given index is deleted; if not, delete the contents if allowed.
+     * @param index {@code Index} to make sure its deleted from disk
+     * @param clusterState the current {@code ClusterState}
+     * @return true if the index contents is deleted on this node
+     */
+    public boolean tryDeleteIndexContents(final Index index, final ClusterState clusterState) {
+        boolean success = false;
+        if (canDeleteIndexContents(index, null, false)) {
+            try {
+                final IndexMetaData metaData = metaStateService.loadIndexState(index);
+                deleteClosedIndex("deleted index was not assigned to local node", metaData, clusterState);
+                success = true;
+            } catch (IOException e) {
+               success = false;
+            }
+        }
+        if (success == false) {
+            logger.warn("[{}] Deletion request unsuccessful, likely scenario is an index was " +
+                        "created and deleted while the node was offline.", index);
+        }
+        return success;
     }
 
     /**

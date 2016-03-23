@@ -637,6 +637,10 @@ public class ClusterState implements ToXContent, Diffable<ClusterState> {
             return this;
         }
 
+        public MetaData metaData() {
+            return metaData;
+        }
+
         public Builder blocks(ClusterBlocks.Builder blocksBuilder) {
             return blocks(blocksBuilder.build());
         }

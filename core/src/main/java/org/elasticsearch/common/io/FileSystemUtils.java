@@ -107,6 +107,20 @@ public final class FileSystemUtils {
         }
     }
 
+    /**
+     * Deletes all files and subdirectories in the given path directories
+     * @throws java.lang.IllegalArgumentException if the given path is not a directory
+     */
+    public static void deleteAllFiles(Path... paths) throws IOException {
+        for (Path path : paths) {
+            try (DirectoryStream<Path> stream = Files.newDirectoryStream(path)) {
+                for (Path fileOrDir : stream) {
+                    IOUtils.rm(fileOrDir);
+                }
+            }
+        }
+    }
+
 
     /**
      * Check that a directory exists, is a directory and is readable

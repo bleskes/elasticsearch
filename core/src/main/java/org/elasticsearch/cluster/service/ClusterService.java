@@ -571,6 +571,8 @@ public class ClusterService extends AbstractLifecycleComponent<ClusterService> {
                 if (previousClusterState.metaData() != newClusterState.metaData()) {
                     builder.metaData(MetaData.builder(newClusterState.metaData()).version(newClusterState.metaData().version() + 1));
                 }
+                final int numPurged = builder.metaData().indexGraveyard().purge(); // purge old index tombstone entries
+                logger.debug("Purged {} entries from index tombstones in cluster state for exceeding expiration window.", numPurged);
                 newClusterState = builder.build();
                 for (UpdateTask<T> task : proccessedListeners) {
                     if (task.listener instanceof AckedClusterStateTaskListener) {

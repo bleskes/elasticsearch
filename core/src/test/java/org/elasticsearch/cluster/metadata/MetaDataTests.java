@@ -20,10 +20,12 @@
 package org.elasticsearch.cluster.metadata;
 
 import org.elasticsearch.Version;
+import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.common.xcontent.json.JsonXContent;
+import org.elasticsearch.index.Index;
 import org.elasticsearch.test.ESTestCase;
 
 import java.io.IOException;
@@ -146,5 +148,16 @@ public class MetaDataTests extends ESTestCase {
         } catch (IllegalArgumentException e) {
             assertEquals("Unexpected field [random]", e.getMessage());
         }
+    }
+
+    public void testMetaDataGlobalStateChangesOnIndexDeletions() {
+        final IndexGraveyard graveyard1 = new IndexGraveyard();
+        graveyard1.addTombstone(new Index("idx1", Strings.randomBase64UUID()));
+        final MetaData metaData1 = MetaData.builder().indexGraveyard(graveyard1).build();
+        final MetaData metaData2 = MetaData.builder(metaData1).build();
+        metaData2.indexGraveyard().addTombstone(new Index("idx2", Strings.randomBase64UUID()));
+        assertFalse("metadata not equal after adding index deletions", MetaData.isGlobalStateEquals(metaData1, metaData2));
+        final MetaData metaData3 = MetaData.builder(metaData2).build();
+        assertTrue("metadata equal when not adding index deletions", MetaData.isGlobalStateEquals(metaData2, metaData3));
     }
 }

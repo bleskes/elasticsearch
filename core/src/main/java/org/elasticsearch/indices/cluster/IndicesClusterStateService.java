@@ -229,19 +229,22 @@ public class IndicesClusterStateService extends AbstractLifecycleComponent<Indic
                 logger.debug("[{}] cleaning index, no longer part of the metadata", index);
             }
             final IndexService idxService = indicesService.indexService(index);
-            final IndexSettings indexSettings;
+            IndexMetaData metaData;
             if (idxService != null) {
-                indexSettings = idxService.getIndexSettings();
+                final IndexSettings indexSettings = idxService.getIndexSettings();
                 deleteIndex(index, "index no longer part of the metadata");
+                sendDeletedEvent(event.state(), index, indexSettings, localNodeId);
+            } else if ((metaData = previousState.metaData().index(index)) != null) {
+                // The deleted index was part of the previous cluster state, but not loaded on the local node
+                final IndexSettings indexSettings = new IndexSettings(metaData, settings);
+                indicesService.deleteClosedIndex("deleted index was not assigned to local node", metaData, event.state());
+                sendDeletedEvent(event.state(), index, indexSettings, localNodeId);
             } else {
-                final IndexMetaData metaData = previousState.metaData().getIndexSafe(index);
-                indexSettings = new IndexSettings(metaData, settings);
-                indicesService.deleteClosedIndex("closed index no longer part of the metadata", metaData, event.state());
-            }
-            try {
-                nodeIndexDeletedAction.nodeIndexDeleted(event.state(), index, indexSettings, localNodeId);
-            } catch (Throwable e) {
-                logger.debug("failed to send to master index {} deleted event", e, index);
+                // The previous cluster state's metadata also does not contain the index,
+                // which is what happens on node startup when an index was deleted while the
+                // node was not part of the cluster.  In this case, try reading the index
+                // metadata from disk.  If its not there, there is nothing to delete.
+                indicesService.tryDeleteIndexContents(index, event.state());
             }
         }
 
@@ -255,6 +258,14 @@ public class IndicesClusterStateService extends AbstractLifecycleComponent<Indic
                     indexService.index());
                 deleteIndex(indexService.index(), "isn't part of metadata (explicit check)");
             }
+        }
+    }
+
+    private void sendDeletedEvent(final ClusterState state, final Index index, final IndexSettings idxSettings, final String localNodeId) {
+        try {
+            nodeIndexDeletedAction.nodeIndexDeleted(state, index, idxSettings, localNodeId);
+        } catch (Throwable e) {
+            logger.debug("failed to send to master index {} deleted event", e, index);
         }
     }
 
