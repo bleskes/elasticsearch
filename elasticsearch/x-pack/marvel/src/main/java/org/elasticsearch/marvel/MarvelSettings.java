@@ -25,7 +25,6 @@ import org.elasticsearch.common.settings.Setting;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.settings.SettingsModule;
 import org.elasticsearch.common.unit.TimeValue;
-import org.elasticsearch.marvel.agent.exporter.MarvelTemplateUtils;
 import org.elasticsearch.xpack.XPackPlugin;
 
 import java.util.Collections;
@@ -35,7 +34,6 @@ import java.util.function.Function;
 import static org.elasticsearch.common.settings.Setting.Property;
 import static org.elasticsearch.common.settings.Setting.boolSetting;
 import static org.elasticsearch.common.settings.Setting.groupSetting;
-import static org.elasticsearch.common.settings.Setting.intSetting;
 import static org.elasticsearch.common.settings.Setting.listSetting;
 import static org.elasticsearch.common.settings.Setting.timeSetting;
 
@@ -134,13 +132,6 @@ public class MarvelSettings extends AbstractComponent {
                         Property.Dynamic, Property.NodeScope);
 
     /**
-     * The index setting that holds the template version
-     */
-    public static final Setting<Integer> INDEX_TEMPLATE_VERSION =
-            intSetting("index.xpack.monitoring.template.version", MarvelTemplateUtils.TEMPLATE_VERSION,
-                    Property.Dynamic, Property.IndexScope);
-
-    /**
      * Settings/Options per configured exporter
      */
     public static final Setting<Settings> EXPORTERS_SETTINGS =
@@ -159,7 +150,6 @@ public class MarvelSettings extends AbstractComponent {
         module.registerSetting(HISTORY_DURATION);
         module.registerSetting(EXPORTERS_SETTINGS);
         module.registerSetting(ENABLED);
-        module.registerSetting(INDEX_TEMPLATE_VERSION);
 
         module.registerSettingsFilter("xpack.monitoring.agent.exporters.*.auth.*");
         module.registerSettingsFilter("xpack.monitoring.agent.exporters.*.ssl.*");
