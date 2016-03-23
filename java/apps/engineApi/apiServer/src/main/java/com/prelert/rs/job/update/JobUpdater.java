@@ -123,12 +123,14 @@ public class JobUpdater
         }
 
         List<AbstractUpdater> updaters = new ArrayList<>();
+        List<String> keysToUpdate = new ArrayList<>();
         Iterator<Entry<String, JsonNode>> fieldsIterator = node.fields();
         while (fieldsIterator.hasNext())
         {
             Entry<String, JsonNode> keyValue = fieldsIterator.next();
             LOGGER.debug("Updating job config for key: " + keyValue.getKey());
             AbstractUpdater updater = createKeyValueUpdater(keyValue.getKey());
+            keysToUpdate.add(keyValue.getKey());
             updaters.add(updater);
             updater.prepareUpdate(keyValue.getValue());
         }
@@ -139,7 +141,7 @@ public class JobUpdater
         }
 
         writeUpdateConfigMessage();
-        m_JobManager.audit(m_JobId).info(Messages.getMessage(Messages.JOB_AUDIT_UPDATED));
+        m_JobManager.audit(m_JobId).info(Messages.getMessage(Messages.JOB_AUDIT_UPDATED, keysToUpdate));
         return Response.ok(new Acknowledgement()).build();
     }
 

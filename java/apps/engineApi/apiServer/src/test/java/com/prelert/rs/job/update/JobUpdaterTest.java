@@ -129,7 +129,7 @@ public class JobUpdaterTest
         verify(m_JobManager).setDescription("foo", "foobar");
         verify(m_JobManager, never()).writeUpdateConfigMessage(anyString(), anyString());
         verify(m_JobManager).audit("foo");
-        verify(m_Auditor).info("Job updated");
+        verify(m_Auditor).info("Job updated: [description]");
     }
 
     @Test
