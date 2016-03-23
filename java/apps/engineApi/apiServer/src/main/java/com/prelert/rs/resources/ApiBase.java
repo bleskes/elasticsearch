@@ -64,7 +64,7 @@ public class ApiBase extends ResourceWithJobManager
                 + "<tr><td>Hostname</td><td>%s</td></tr>"
 	            + "<tr><td>OS Name</td><td>%s</td></tr>"
 	            + "<tr><td>OS Version</td><td>%s</td></tr>"
-	            + "<tr><td>JVM Heap Size MB</td><td>%d</td></tr>"
+	            + "<tr><td>Total Memory Size MB</td><td>%d</td></tr>"
 	            + "<tr><td>Total Disk MB</td><td>%d</td></tr>"
 	            + "<tr><td>Available Disk MB</td><td>%d</td></tr>"
 	        + "</table>";

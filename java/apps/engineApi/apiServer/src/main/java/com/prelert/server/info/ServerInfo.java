@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -52,6 +52,7 @@ public class ServerInfo
     {
         m_OsName = SystemUtils.OS_NAME;
         m_OsVersion = SystemUtils.OS_VERSION;
+        m_Hostname = HostnameFinder.findHostname();
     }
 
     public String getOsName()

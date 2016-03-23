@@ -73,25 +73,6 @@ public class ElasticsearchServerInfo implements ServerInfoFactory, Feature
     {
         ServerInfo serverInfo = new ServerInfo();
 
-        NodeInfo[] nodeInfos = this.nodesInfo();
-
-        if (nodeInfos.length == 0)
-        {
-            LOGGER.error("No NodeInfo returned");
-        }
-
-        for (NodeInfo nodeInfo : nodeInfos)
-        {
-            // use the first data node
-            if (nodeInfo.getNode().isDataNode())
-            {
-                serverInfo.setHostname(nodeInfo.getHostname());
-                serverInfo.setTotalMemoryMb(nodeInfo.getJvm().getMem().getHeapMax().getMb());
-                break;
-            }
-        }
-
-
         NodeStats[] nodesStats = this.nodesStats();
 
         if (nodesStats.length == 0)
@@ -104,8 +85,30 @@ public class ElasticsearchServerInfo implements ServerInfoFactory, Feature
             // use the first data node
             if (nodeStat.getNode().isDataNode())
             {
-                serverInfo.setTotalDiskMb(nodeStat.getFs().getTotal().getTotal().getMb());
-                serverInfo.setAvailableDiskMb(nodeStat.getFs().getTotal().getAvailable().getMb());
+                try
+                {
+                    serverInfo.setTotalDiskMb(nodeStat.getFs().getTotal().getTotal().getMb());
+                }
+                catch (NullPointerException npe)
+                {
+                    LOGGER.warn("Failed to get total disk MB");
+                }
+                try
+                {
+                    serverInfo.setAvailableDiskMb(nodeStat.getFs().getTotal().getAvailable().getMb());
+                }
+                catch (NullPointerException npe)
+                {
+                    LOGGER.warn("Failed to get available disk MB");
+                }
+                try
+                {
+                    serverInfo.setTotalMemoryMb(nodeStat.getOs().getMem().getTotal().getMb());
+                }
+                catch (NullPointerException npe)
+                {
+                    LOGGER.warn("Failed to get total memory MB");
+                }
                 break;
             }
         }

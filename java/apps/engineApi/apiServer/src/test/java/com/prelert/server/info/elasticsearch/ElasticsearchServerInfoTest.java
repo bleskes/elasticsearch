@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -28,6 +28,7 @@
 package com.prelert.server.info.elasticsearch;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -100,11 +101,10 @@ public class ElasticsearchServerInfoTest
 
         assertEquals(SystemUtils.OS_NAME, info.getOsName());
         assertEquals(SystemUtils.OS_VERSION, info.getOsVersion());
-        assertNull(info.getHostname());
+        assertNotNull(info.getHostname());
         assertNull(info.getTotalDiskMb());
         assertNull(info.getTotalMemoryMb());
         assertNull(info.getAvailableDiskMb());
-
     }
 
     private class TestServerInfo extends ElasticsearchServerInfo
