@@ -957,7 +957,7 @@ public class ElasticsearchMappings
                         .field(ANALYZER, WHITESPACE)
                     .endObject()
                     .startObject(PROPERTIES)
-                        .startObject("epoch")
+                        .startObject(ES_TIMESTAMP)
                             .field(TYPE, DATE)
                         .endObject()
                         .startObject(ElasticsearchJobDataPersister.FIELDS)

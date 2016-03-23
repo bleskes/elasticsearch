@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -156,7 +156,8 @@ public class ElasticsearchJobDataPersister extends JobDataPersister
 
                 String [] bufferedRecord = m_BufferedRecords[count];
                 // epoch in ms
-                jsonBuilder.startObject().field("epoch", m_Epochs[count] * 1000);
+                jsonBuilder.startObject().field(ElasticsearchMappings.ES_TIMESTAMP,
+                        m_Epochs[count] * 1000);
 
 
                 for (int i=0; i<m_FieldNames.length; i++)
