@@ -108,6 +108,7 @@ public class BucketResettingTest implements Closeable
 
         AnalysisConfig ac = new AnalysisConfig();
         ac.setBucketSpan(BUCKET_SPAN);
+        ac.setOverlappingBuckets(false);
         ac.setLatency(LATENCY_BUCKETS * BUCKET_SPAN);
         ac.setDetectors(Arrays.asList(d));
 

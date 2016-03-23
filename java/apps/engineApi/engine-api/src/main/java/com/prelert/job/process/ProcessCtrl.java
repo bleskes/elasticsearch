@@ -38,11 +38,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Random;
 
 import org.apache.commons.lang.SystemUtils;
 import org.apache.log4j.Logger;
 
+import com.prelert.job.AnalysisConfig;
 import com.prelert.job.AnalysisLimits;
 import com.prelert.job.DataDescription;
 import com.prelert.job.IgnoreDowntime;
@@ -609,8 +611,15 @@ public class ProcessCtrl
             addIfNotNull(job.getAnalysisConfig().getPeriod(), PERIOD_ARG, command);
             addIfNotNull(job.getAnalysisConfig().getSummaryCountFieldName(),
                     SUMMARY_COUNT_FIELD_ARG, command);
-            addIfNotNull(job.getAnalysisConfig().getResultFinalizationWindow(),
-                    RESULT_FINALIZATION_WINDOW_ARG, command);
+            if (Objects.equals(job.getAnalysisConfig().getOverlappingBuckets(), true))
+            {
+                Long window = job.getAnalysisConfig().getResultFinalizationWindow();
+                if (window == null)
+                {
+                    window = AnalysisConfig.DEFAULT_RESULT_FINALIZATION_WINDOW;
+                }
+                command.add(RESULT_FINALIZATION_WINDOW_ARG + window.toString());
+            }
         }
 
         // Input is always length encoded
@@ -679,8 +688,8 @@ public class ProcessCtrl
     {
         if (object != null)
         {
-            String resultFinalizationWindow = argKey + object;
-            command.add(resultFinalizationWindow);
+            String param = argKey + object;
+            command.add(param);
         }
     }
 

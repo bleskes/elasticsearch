@@ -26,6 +26,9 @@
  ************************************************************/
 package com.prelert.job.config.verification;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.Detector;
 import com.prelert.job.errorcodes.ErrorCodes;
@@ -44,6 +47,7 @@ public final class AnalysisConfigVerifier
      * <li>Check that if non-null Latency is &lt= MAX_LATENCY </li>
      * <li>Check there is at least one detector configured</li>
      * <li>Check all the detectors are configured correctly</li>
+     * <li>Check that OVERLAPPING_BUCKETS is set appropriately</li>
      * </ol>
      */
     public static boolean verify(AnalysisConfig config) throws JobConfigurationException
@@ -79,11 +83,57 @@ public final class AnalysisConfigVerifier
                     ErrorCodes.INCOMPLETE_CONFIGURATION);
         }
 
+        // If any detector function is rare/freq_rare, mustn't use overlapping buckets
+        boolean mustNotUseOverlappingBuckets = false;
+        // If overlappingBuckets are not set, default to true if all the detectors
+        // work with it
+
+        @SuppressWarnings("unused")
+        boolean canUseOverlappingBuckets = true;
+        List<String> illegalFunctions = new ArrayList<>();
+
         boolean isSummarised = config.getSummaryCountFieldName() != null &&
                 !config.getSummaryCountFieldName().isEmpty();
         for (Detector d : config.getDetectors())
         {
             DetectorVerifier.verify(d, isSummarised);
+
+            if (Detector.NO_OVERLAPPING_BUCKETS_FUNCTIONS.contains(d.getFunction()))
+            {
+                illegalFunctions.add(d.getFunction());
+                mustNotUseOverlappingBuckets = true;
+            }
+            if (Detector.OVERLAPPING_BUCKETS_FUNCTIONS_NOT_NEEDED.contains(d.getFunction()))
+            {
+                canUseOverlappingBuckets = false;
+            }
+        }
+
+        if (config.getOverlappingBuckets() == null)
+        {
+            /* Uncomment this when overlappingBuckets are turned on by default
+             *
+            // Wasn't specified: turn on by default if detectors allow
+            if (mustNotUseOverlappingBuckets == false &&
+                    canUseOverlappingBuckets == true)
+            {
+                config.setOverlappingBuckets(true);
+            }
+            else
+            {
+                config.setOverlappingBuckets(false);
+            }
+            */
+        }
+        else
+        {
+            if (config.getOverlappingBuckets() && mustNotUseOverlappingBuckets == true)
+            {
+                throw new JobConfigurationException(
+                        Messages.getMessage(Messages.JOB_CONFIG_OVERLAPPING_BUCKETS_INCOMPATIBLE_FUNCTION,
+                                            illegalFunctions.toString()),
+                        ErrorCodes.INVALID_FUNCTION);
+            }
         }
     }
 

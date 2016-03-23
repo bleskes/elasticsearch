@@ -204,7 +204,8 @@ public class JobsTest implements Closeable
                 + "\"analysisConfig\" : {"
                 + "\"bucketSpan\":3600,"
                 //+ "\"detectors\":[{\"function\":\"count\"}, {\"fieldName\":\"responsetime\",\"byFieldName\":\"airline\"}] "
-                + "\"detectors\":[{\"fieldName\":\"responsetime\",\"byFieldName\":\"airline\"}] "
+                + "\"detectors\":[{\"fieldName\":\"responsetime\",\"byFieldName\":\"airline\"}],"
+                + "\"overlappingBuckets\":false"
                 + "},"
                 + "\"dataDescription\":{\"fieldDelimiter\":\",\", \"timeField\":\"_time\", \"timeFormat\" : \"epoch\"},"
                 + "\"analysisLimits\": {\"modelMemoryLimit\":2000}"
@@ -235,6 +236,7 @@ public class JobsTest implements Closeable
         d.setByFieldName("airline");
         AnalysisConfig ac = new AnalysisConfig();
         ac.setBucketSpan(3600L);
+        ac.setOverlappingBuckets(false);
         ac.setDetectors(Arrays.asList(d));
 
         DataDescription dd = new DataDescription();
@@ -286,7 +288,8 @@ public class JobsTest implements Closeable
         final String FARE_QUOTE_TIME_FORMAT_CONFIG = "{"
                 + "\"description\":\"Farequote Time Format Job\","
                 + "\"analysisConfig\" : {"
-                + "\"detectors\":[{\"fieldName\":\"responsetime\",\"byFieldName\":\"airline\"}] "
+                + "\"detectors\":[{\"fieldName\":\"responsetime\",\"byFieldName\":\"airline\"}], "
+                + "\"overlappingBuckets\":false"
                 + "},"
                 + "\"dataDescription\":{\"fieldDelimiter\":\",\", \"timeField\":\"time\", "
                 + "\"timeFormat\":\"yyyy-MM-dd HH:mm:ssX\"} }}";
@@ -336,6 +339,7 @@ public class JobsTest implements Closeable
         AnalysisConfig ac = new AnalysisConfig();
         ac.setBucketSpan(3600L);
         ac.setDetectors(Arrays.asList(d));
+        ac.setOverlappingBuckets(false);
 
         DataDescription dd = new DataDescription();
         dd.setFormat(DataFormat.DELIMITED);
@@ -412,6 +416,7 @@ public class JobsTest implements Closeable
         AnalysisConfig ac = new AnalysisConfig();
         ac.setBucketSpan(3600L);
         ac.setDetectors(Arrays.asList(d));
+        ac.setOverlappingBuckets(false);
 
         DataDescription dd = new DataDescription();
         dd.setFormat(DataFormat.JSON);
@@ -476,6 +481,7 @@ public class JobsTest implements Closeable
         d.setByFieldName("airline");
         AnalysisConfig ac = new AnalysisConfig();
         ac.setDetectors(Arrays.asList(d));
+        ac.setOverlappingBuckets(false);
 
         DataDescription dd = new DataDescription();
         dd.setFieldDelimiter(',');
@@ -524,6 +530,7 @@ public class JobsTest implements Closeable
         d.setByFieldName("airline");
         AnalysisConfig ac = new AnalysisConfig();
         ac.setBucketSpan(3600L);
+        ac.setOverlappingBuckets(false);
         ac.setDetectors(Arrays.asList(d));
 
         DataDescription dd = new DataDescription();
@@ -1455,6 +1462,7 @@ public class JobsTest implements Closeable
                 + "\"id\":\"" + jobId + "\","
                 + "\"analysisConfig\":{"
                 + "  \"bucketSpan\":300,"
+                + "  \"overlappingBuckets\":false,"
                 + "  \"detectors\":["
                 + "    {\"detectorDescription\":\"before\", \"function\":\"count\"},"
                 + "    {\"function\":\"sum\", \"fieldName\":\"responseTime\",\"byFieldName\":\"airline\"}"

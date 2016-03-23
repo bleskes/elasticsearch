@@ -96,7 +96,7 @@ public class UpdateInterimResultsTest implements Closeable
         ac.setBucketSpan(BUCKET_SPAN);
         ac.setLatency(LATENCY_BUCKETS * BUCKET_SPAN);
         ac.setDetectors(Arrays.asList(d));
-        ac.setResultFinalizationWindow(2l);
+        ac.setOverlappingBuckets(true);
 
         DataDescription dd = new DataDescription();
         dd.setFormat(DataFormat.DELIMITED);

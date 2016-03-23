@@ -82,7 +82,7 @@ public class ProcessCtrlTest
         ac.setLatency(360L);
         ac.setPeriod(20L);
         ac.setSummaryCountFieldName("summaryField");
-        ac.setResultFinalizationWindow(7200L);
+        ac.setOverlappingBuckets(true);
         job.setAnalysisConfig(ac);
 
         DataDescription dd = new DataDescription();
@@ -101,7 +101,7 @@ public class ProcessCtrlTest
         assertTrue(command.contains(ProcessCtrl.LATENCY_ARG + "360"));
         assertTrue(command.contains(ProcessCtrl.PERIOD_ARG + "20"));
         assertTrue(command.contains(ProcessCtrl.SUMMARY_COUNT_FIELD_ARG + "summaryField"));
-        assertTrue(command.contains(ProcessCtrl.RESULT_FINALIZATION_WINDOW_ARG + "7200"));
+        assertTrue(command.contains(ProcessCtrl.RESULT_FINALIZATION_WINDOW_ARG + "2"));
 
         assertTrue(command.contains(ProcessCtrl.LENGTH_ENCODED_INPUT_ARG));
         assertTrue(command.contains(ProcessCtrl.MAX_ANOMALY_RECORDS_ARG));

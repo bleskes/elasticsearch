@@ -98,6 +98,7 @@ public class DataCountsTest implements Closeable
 
 		AnalysisConfig ac = new AnalysisConfig();
 		ac.setBucketSpan(300L);
+		ac.setOverlappingBuckets(false);
 		ac.setDetectors(Arrays.asList(d));
 
 		DataDescription dd = new DataDescription();

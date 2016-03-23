@@ -130,6 +130,7 @@ public class InterimResultsTest implements Closeable
         AnalysisConfig ac = new AnalysisConfig();
         ac.setBucketSpan(BUCKET_SPAN);
         ac.setLatency(LATENCY_BUCKETS * BUCKET_SPAN);
+        ac.setOverlappingBuckets(false);
         ac.setDetectors(Arrays.asList(d));
         ac.setInfluencers(Arrays.asList("responsetime", "airline"));
 

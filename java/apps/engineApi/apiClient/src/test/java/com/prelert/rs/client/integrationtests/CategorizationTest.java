@@ -173,6 +173,7 @@ public class CategorizationTest implements Closeable
         AnalysisConfig ac = new AnalysisConfig();
         ac.setBucketSpan(BUCKET_SPAN);
         ac.setCategorizationFieldName("message");
+        ac.setOverlappingBuckets(false);
         ac.setDetectors(Arrays.asList(d));
 
         DataDescription dd = new DataDescription();

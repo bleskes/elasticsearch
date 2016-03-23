@@ -58,11 +58,14 @@ public class AnalysisConfig
     public static final String SUMMARY_COUNT_FIELD_NAME = "summaryCountFieldName";
     public static final String DETECTORS = "detectors";
     public static final String INFLUENCERS = "influencers";
-    public static final String RESULT_FINALISATION_WINDOW = "resultFinalizationWindow";
+    public static final String OVERLAPPING_BUCKETS = "overlappingBuckets";
+    public static final String RESULT_FINALIZATION_WINDOW = "resultFinalizationWindow";
 
     private static final String PRELERT_CATEGORY_FIELD = "prelertcategory";
     public static final Set<String> AUTO_CREATED_FIELDS = new HashSet<>(
             Arrays.asList(PRELERT_CATEGORY_FIELD));
+
+    public static final Long DEFAULT_RESULT_FINALIZATION_WINDOW = 2l;
 
     /**
      * These values apply to all detectors
@@ -75,6 +78,7 @@ public class AnalysisConfig
     private String m_SummaryCountFieldName;
     private List<Detector> m_Detectors;
     private List<String> m_Influencers;
+    private Boolean m_OverlappingBuckets;
     private Long m_ResultFinalizationWindow;
 
     /**
@@ -231,17 +235,24 @@ public class AnalysisConfig
         return termFields;
     }
 
-    /** 
-    * The results finalization windows size (as measured in half buckets)
-    */
+    public Boolean getOverlappingBuckets()
+    {
+        return m_OverlappingBuckets;
+    }
+
+    public void setOverlappingBuckets(Boolean b)
+    {
+        m_OverlappingBuckets = b;
+    }
+
     public Long getResultFinalizationWindow()
     {
         return m_ResultFinalizationWindow;
     }
 
-    public void setResultFinalizationWindow(Long resultFinalizationWindow)
+    public void setResultFinalizationWindow(Long l)
     {
-        m_ResultFinalizationWindow = resultFinalizationWindow;
+        m_ResultFinalizationWindow = l;
     }
 
     /**
@@ -356,15 +367,16 @@ public class AnalysisConfig
                 Objects.equals(this.m_Latency, that.m_Latency) &&
                 Objects.equals(this.m_Period, that.m_Period) &&
                 Objects.equals(this.m_SummaryCountFieldName, that.m_SummaryCountFieldName) &&
-                Objects.equals(this.m_Influencers, that.m_Influencers);
+                Objects.equals(this.m_Influencers, that.m_Influencers) &&
+                Objects.equals(this.m_OverlappingBuckets, that.m_OverlappingBuckets) &&
+                Objects.equals(this.m_ResultFinalizationWindow,  that.m_ResultFinalizationWindow);
     }
 
     @Override
     public int hashCode()
     {
         return Objects.hash(m_Detectors, m_BucketSpan, m_BatchSpan, m_Latency, m_Period,
-                m_SummaryCountFieldName, m_Influencers);
+                m_SummaryCountFieldName, m_Influencers, m_OverlappingBuckets, m_ResultFinalizationWindow);
     }
-
 
 }

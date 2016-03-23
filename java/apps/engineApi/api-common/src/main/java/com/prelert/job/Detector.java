@@ -213,6 +213,22 @@ public class Detector
             ));
 
     /**
+     * The set of functions that should not be used with overlapping buckets
+     */
+    public static final Set<String> NO_OVERLAPPING_BUCKETS_FUNCTIONS =
+            new HashSet<String>(Arrays.<String>asList(new String [] {
+                    RARE, FREQ_RARE
+            }));
+
+    /**
+     * The set of functions that should not be used with overlapping buckets
+     */
+    public static final Set<String> OVERLAPPING_BUCKETS_FUNCTIONS_NOT_NEEDED =
+            new HashSet<String>(Arrays.<String>asList(new String [] {
+                    MIN, MAX, TIME_OF_DAY, TIME_OF_WEEK
+            }));
+
+    /**
      * field names cannot contain any of these characters
      *     ", \
      */
