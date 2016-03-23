@@ -593,6 +593,8 @@ public class JobsTest implements Closeable
     public void slowUpload(String jobId, final File dataFile, final long sleepTimeMs)
     throws IOException
     {
+        LOGGER.info("Performing slow upload for job: " + jobId);
+
         final PipedInputStream pipedIn = new PipedInputStream();
         final PipedOutputStream pipedOut = new PipedOutputStream(pipedIn);
 

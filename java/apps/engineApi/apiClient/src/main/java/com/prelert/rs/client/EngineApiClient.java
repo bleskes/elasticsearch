@@ -74,7 +74,9 @@ import com.prelert.rs.data.SingleDocument;
 public class EngineApiClient implements Closeable
 {
     private static final Logger LOGGER = Logger.getLogger(EngineApiClient.class);
-    private static final int BUFFER_SIZE = 4096 * 1024;
+    private static final int MAX_BUFFER_SIZE = 4096 * 1024;
+    private static final int MIN_BUFFER_GROWTH = 1024;
+    private static final double BUFFER_GROWTH_FACTOR = 0.1;
 
     private final String m_BaseUrl;
     private final ObjectMapper m_JsonMapper;
@@ -354,7 +356,7 @@ public class EngineApiClient implements Closeable
         String postUrl = m_BaseUrl + "/data/" + jobId;
         LOGGER.debug("Uploading chunked data to " + postUrl);
 
-        byte [] buffer = new byte[BUFFER_SIZE];
+        byte [] buffer = new byte[MAX_BUFFER_SIZE];
         int uploadCount = 0;
         MultiDataPostResult uploadSummary = new MultiDataPostResult();
 
@@ -514,12 +516,12 @@ public class EngineApiClient implements Closeable
         };
         request.send(responseListener);
 
-        byte[] buffer = new byte[BUFFER_SIZE];
+        byte[] buffer = new byte[MAX_BUFFER_SIZE];
         int bytesRead = 0;
         while ((bytesRead = inputStream.read(buffer)) > -1)
         {
             contentProvider.offer(ByteBuffer.wrap(buffer, 0, bytesRead));
-            buffer = new byte[BUFFER_SIZE];
+            buffer = new byte[chooseBufferSize(bytesRead, buffer.length)];
         }
         contentProvider.close();
 
@@ -553,6 +555,20 @@ public class EngineApiClient implements Closeable
             return defaultReturnValue;
         }
         return convertContentFunction.apply(content);
+    }
+
+    private static int chooseBufferSize(int bytesRead, int currentBufferSize)
+    {
+        if (bytesRead >= MAX_BUFFER_SIZE)
+        {
+            return MAX_BUFFER_SIZE;
+        }
+        if (bytesRead < currentBufferSize)
+        {
+            return bytesRead;
+        }
+        int growth = Math.max(MIN_BUFFER_GROWTH, (int) (BUFFER_GROWTH_FACTOR * currentBufferSize));
+        return Math.min(MAX_BUFFER_SIZE, currentBufferSize + growth);
     }
 
     /**
