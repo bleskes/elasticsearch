@@ -59,6 +59,7 @@ class HttpGetRequester
     private static final String TLS = "TLS";
     private static final String GET = "GET";
     private static final String AUTH_HEADER = "Authorization";
+    private static final int OK_STATUS = 200;
 
     private static final SSLSocketFactory TRUSTING_SOCKET_FACTORY;
     private static final HostnameVerifier TRUSTING_HOSTNAME_VERIFIER;
@@ -148,6 +149,10 @@ class HttpGetRequester
         }
         connection.setDoOutput(true);
         writeRequestBody(requestBody, connection);
+        if (connection.getResponseCode() != OK_STATUS)
+        {
+            return new HttpGetResponse(connection.getErrorStream(), connection.getResponseCode());
+        }
         return new HttpGetResponse(connection.getInputStream(), connection.getResponseCode());
     }
 
