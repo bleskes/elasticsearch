@@ -164,8 +164,8 @@ public class ElasticsearchDataExtractor implements DataExtractor
         try
         {
             PushbackInputStream stream = (m_ScrollId == null) ? initScroll() : continueScroll();
-            Pattern emptyPattern = (m_Aggregations == null) ? EMPTY_HITS_PATTERN : EMPTY_AGGREGATIONS_PATTERN;
-            m_IsScrollComplete = (stream == null) || peekAndMatchInStream(stream, emptyPattern).find();
+            updateScrollId(stream);
+            updateIsScrollComplete(stream);
             return m_IsScrollComplete ? Optional.empty() : Optional.of(stream);
         }
         catch (IOException e)
@@ -193,16 +193,7 @@ public class ElasticsearchDataExtractor implements DataExtractor
             throw new IOException("Request '" + url + "' failed with status code: "
                     + response.getResponseCode() + ". Response was:\n" + response.getResponseAsString());
         }
-        PushbackInputStream pushbackStream = new PushbackInputStream(response.getStream(),
-                PUSHBACK_BUFFER_BYTES);
-        Matcher matcher = peekAndMatchInStream(pushbackStream, SCROLL_ID_PATTERN);
-        if (!matcher.find())
-        {
-            throw new IOException("Field '_scroll_id' was expected but not found in response:\n"
-                    + HttpGetResponse.getStreamAsString(pushbackStream));
-        }
-        m_ScrollId = matcher.group(1);
-        return pushbackStream;
+        return new PushbackInputStream(response.getStream(), PUSHBACK_BUFFER_BYTES);
     }
 
     private String buildInitScrollUrl()
@@ -239,6 +230,28 @@ public class ElasticsearchDataExtractor implements DataExtractor
     private String createAggregations()
     {
         return (m_Aggregations != null) ? String.format(AGGREGATION_TEMPLATE, m_Aggregations) : "";
+    }
+
+    private void updateScrollId(PushbackInputStream stream) throws IOException
+    {
+        if (stream == null)
+        {
+            return;
+        }
+
+        Matcher matcher = peekAndMatchInStream(stream, SCROLL_ID_PATTERN);
+        if (!matcher.find())
+        {
+            throw new IOException("Field '_scroll_id' was expected but not found in response:\n"
+                    + HttpGetResponse.getStreamAsString(stream));
+        }
+        m_ScrollId = matcher.group(1);
+    }
+
+    private void updateIsScrollComplete(PushbackInputStream stream) throws IOException
+    {
+        Pattern emptyPattern = (m_Aggregations == null) ? EMPTY_HITS_PATTERN : EMPTY_AGGREGATIONS_PATTERN;
+        m_IsScrollComplete = (stream == null) || peekAndMatchInStream(stream, emptyPattern).find();
     }
 
     @VisibleForTesting

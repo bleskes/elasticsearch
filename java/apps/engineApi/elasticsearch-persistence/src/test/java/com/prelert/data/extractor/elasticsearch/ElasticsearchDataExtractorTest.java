@@ -111,6 +111,7 @@ public class ElasticsearchDataExtractorTest
                 + "}";
 
         String scrollResponse = "{"
+                + "\"_scroll_id\":\"secondScrollId\","
                 + "\"took\":8,"
                 + "\"timed_out\":false,"
                 + "\"_shards\":{"
@@ -134,6 +135,7 @@ public class ElasticsearchDataExtractorTest
                 + "}";
 
         String scrollEndResponse = "{"
+                + "\"_scroll_id\":\"thirdScrollId\","
                 + "\"took\":8,"
                 + "\"timed_out\":false,"
                 + "\"_shards\":{"
@@ -203,7 +205,7 @@ public class ElasticsearchDataExtractorTest
 
         RequestParams thirdRequestParams = requester.getRequestParams(2);
         assertEquals("http://localhost:9200/_search/scroll?scroll=60m", thirdRequestParams.url);
-        assertEquals("c2Nhbjs2OzM0NDg1ODpzRlBLc0FXNlNyNm5JWUc1", thirdRequestParams.requestBody);
+        assertEquals("secondScrollId", thirdRequestParams.requestBody);
     }
 
     @Test
