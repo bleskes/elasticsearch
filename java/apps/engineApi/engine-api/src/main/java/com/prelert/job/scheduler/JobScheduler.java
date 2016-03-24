@@ -150,7 +150,7 @@ public class JobScheduler
         }
 
         Date latestRecordTimestamp = null;
-        m_DataExtractor.newSearch(String.valueOf(start), String.valueOf(end), m_Logger);
+        m_DataExtractor.newSearch(start, end, m_Logger);
         while (m_DataExtractor.hasNext() && m_Status == JobSchedulerStatus.STARTED
                 && !m_ProblemTracker.hasDataExtractionProblems())
         {

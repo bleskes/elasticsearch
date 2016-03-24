@@ -31,6 +31,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PushbackInputStream;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Objects;
@@ -74,9 +78,9 @@ public class ElasticsearchDataExtractor implements DataExtractor
             + "          \"must\": {"
             + "            \"range\": {"
             + "              \"%s\": {"
-            + "                \"gte\": %s,"
-            + "                \"lt\": %s,"
-            + "                \"format\": \"epoch_millis\""
+            + "                \"gte\": \"%s\","
+            + "                \"lt\": \"%s\","
+            + "                \"format\": \"date_time\""
             + "              }"
             + "            }"
             + "          }"
@@ -117,8 +121,8 @@ public class ElasticsearchDataExtractor implements DataExtractor
     private final String m_TimeField;
     private volatile String m_ScrollId;
     private volatile boolean m_IsScrollComplete;
-    private volatile String m_StartEpochMs;
-    private volatile String m_EndEpochMs;
+    private volatile String m_StartTime;
+    private volatile String m_EndTime;
     private volatile Logger m_Logger;
 
     ElasticsearchDataExtractor(HttpGetRequester httpGetRequester, String baseUrl, String authHeader,
@@ -142,16 +146,23 @@ public class ElasticsearchDataExtractor implements DataExtractor
     }
 
     @Override
-    public void newSearch(String startEpochMs, String endEpochMs, Logger logger)
+    public void newSearch(long startEpochMs, long endEpochMs, Logger logger)
     {
         m_ScrollId = null;
         m_IsScrollComplete = false;
-        m_StartEpochMs = startEpochMs;
-        m_EndEpochMs = endEpochMs;
+        m_StartTime = formatAsDateTime(startEpochMs);
+        m_EndTime = formatAsDateTime(endEpochMs);
         m_Logger = logger;
 
         m_Logger.info("Requesting data from '" + m_BaseUrl + "' within [" + startEpochMs + ", "
                 + endEpochMs + ")");
+    }
+
+    private static String formatAsDateTime(long epochMs)
+    {
+        Instant instant = Instant.ofEpochMilli(epochMs);
+        ZonedDateTime dateTime = ZonedDateTime.ofInstant(instant, ZoneOffset.UTC);
+        return dateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX"));
     }
 
     @Override
@@ -223,7 +234,7 @@ public class ElasticsearchDataExtractor implements DataExtractor
     private String createSearchBody()
     {
         return String.format(SEARCH_BODY_TEMPLATE,
-                m_TimeField, m_Search, m_TimeField, m_StartEpochMs, m_EndEpochMs,
+                m_TimeField, m_Search, m_TimeField, m_StartTime, m_EndTime,
                 createAggregations());
     }
 

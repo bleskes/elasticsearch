@@ -35,6 +35,7 @@ import static org.junit.Assert.fail;
 
 import static org.mockito.AdditionalMatchers.not;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyMapOf;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
@@ -1008,7 +1009,7 @@ public class JobManagerTest
 
         jobManager.stopJobScheduler("foo");
 
-        verify(dataExtractor).newSearch(anyString(), anyString(), eq(jobLogger));
+        verify(dataExtractor).newSearch(anyLong(), anyLong(), eq(jobLogger));
         verify(m_ProcessManager).closeJob("foo");
         verify(m_JobProvider).updateSchedulerState("foo", new SchedulerState(0L, null));
     }
@@ -1065,7 +1066,7 @@ public class JobManagerTest
 
         verify(m_JobLoggerFactory).newLogger("scheduled");
         verify(m_DataExtractorFactory).newExtractor(scheduledJob);
-        verify(dataExtractor).newSearch(anyString(), anyString(), eq(jobLogger));
+        verify(dataExtractor).newSearch(anyLong(), anyLong(), eq(jobLogger));
         jobManager.shutdown();
 
         verify(m_JobLoggerFactory).close("scheduled", jobLogger);

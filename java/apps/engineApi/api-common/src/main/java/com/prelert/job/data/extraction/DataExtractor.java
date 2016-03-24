@@ -33,7 +33,7 @@ public interface DataExtractor
      * @param end end time
      * @param logger logger
      */
-    void newSearch(String start, String end, Logger logger);
+    void newSearch(long start, long end, Logger logger);
 
     /**
      * @return {@code true} if the search has not finished yet, or {@code false} otherwise
