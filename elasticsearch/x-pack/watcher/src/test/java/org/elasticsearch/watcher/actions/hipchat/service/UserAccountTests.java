@@ -161,7 +161,7 @@ public class UserAccountTests extends ESTestCase {
                 }))
                 .build();
 
-        logger.info("expected (r1): " + jsonBuilder().value(reqR1).bytes().toUtf8());
+        logger.info("expected (r1): {}", jsonBuilder().value(reqR1).bytes().toUtf8());
 
         HttpResponse resR1 = mock(HttpResponse.class);
         when(resR1.status()).thenReturn(200);
@@ -191,7 +191,7 @@ public class UserAccountTests extends ESTestCase {
                 }))
                 .build();
 
-        logger.info("expected (r2): " + jsonBuilder().value(reqR1).bytes().toUtf8());
+        logger.info("expected (r2): {}", jsonBuilder().value(reqR1).bytes().toUtf8());
 
         HttpResponse resR2 = mock(HttpResponse.class);
         when(resR2.status()).thenReturn(200);
@@ -218,7 +218,7 @@ public class UserAccountTests extends ESTestCase {
                 }))
                 .build();
 
-        logger.info("expected (u1): " + jsonBuilder().value(reqU1).bytes().toUtf8());
+        logger.info("expected (u1): {}", jsonBuilder().value(reqU1).bytes().toUtf8());
 
         HttpResponse resU1 = mock(HttpResponse.class);
         when(resU1.status()).thenReturn(200);
@@ -245,7 +245,7 @@ public class UserAccountTests extends ESTestCase {
                 }))
                 .build();
 
-        logger.info("expected (u2): " + jsonBuilder().value(reqU2).bytes().toUtf8());
+        logger.info("expected (u2): {}", jsonBuilder().value(reqU2).bytes().toUtf8());
 
         HttpResponse resU2 = mock(HttpResponse.class);
         when(resU2.status()).thenReturn(200);

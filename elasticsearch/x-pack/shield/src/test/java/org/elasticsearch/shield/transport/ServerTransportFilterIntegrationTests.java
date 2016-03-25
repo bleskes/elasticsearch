@@ -168,7 +168,7 @@ public class ServerTransportFilterIntegrationTests extends ShieldIntegTestCase {
                         " master");
             } catch (MasterNotDiscoveredException e) {
                 // expected
-                logger.error("expected:  " + e);
+                logger.error("expected exception", e);
             }
         }
     }

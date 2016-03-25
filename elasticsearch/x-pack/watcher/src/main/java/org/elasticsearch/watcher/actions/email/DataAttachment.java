@@ -45,8 +45,8 @@ public enum DataAttachment implements ToXContent {
         }
 
         @Override
-        public Attachment create(Map<String, Object> data) {
-            return new Attachment.XContent.Yaml("data", "data.yml", new Payload.Simple(data));
+        public Attachment create(String id, Map<String, Object> data) {
+            return new Attachment.XContent.Yaml(id, id, new Payload.Simple(data));
         }
 
         @Override
@@ -62,8 +62,8 @@ public enum DataAttachment implements ToXContent {
         }
 
         @Override
-        public Attachment create(Map<String, Object> data) {
-            return new Attachment.XContent.Json("data", "data.json", new Payload.Simple(data));
+        public Attachment create(String id, Map<String, Object> data) {
+            return new Attachment.XContent.Json(id, id, new Payload.Simple(data));
         }
 
         @Override
@@ -76,7 +76,7 @@ public enum DataAttachment implements ToXContent {
 
     public abstract String contentType();
 
-    public abstract Attachment create(Map<String, Object> data);
+    public abstract Attachment create(String id, Map<String, Object> data);
 
     public static DataAttachment resolve(String format) {
         switch (format.toLowerCase(Locale.ROOT)) {

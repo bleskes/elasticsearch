@@ -17,6 +17,7 @@
 
 package org.elasticsearch.watcher.actions.email.service.attachment;
 
+import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.watcher.actions.email.service.Attachment;
@@ -36,6 +37,11 @@ public interface EmailAttachmentParser<T extends EmailAttachmentParser.EmailAtta
          * @return A type to identify the email attachment, same as the parser identifier
          */
         String type();
+
+        /**
+         * @return The id of this attachment
+         */
+        String id();
     }
 
     /**
@@ -60,6 +66,6 @@ public interface EmailAttachmentParser<T extends EmailAttachmentParser.EmailAtta
      * @param attachment The typed attachment
      * @return An attachment that is ready to be used in a MimeMessage
      */
-    Attachment toAttachment(WatchExecutionContext context, Payload payload, T attachment);
+    Attachment toAttachment(WatchExecutionContext context, Payload payload, T attachment) throws ElasticsearchException;
 
 }

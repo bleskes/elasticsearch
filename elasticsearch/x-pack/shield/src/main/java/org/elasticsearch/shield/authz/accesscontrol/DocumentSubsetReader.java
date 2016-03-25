@@ -28,7 +28,7 @@ import org.apache.lucene.util.BitSet;
 import org.apache.lucene.util.BitSetIterator;
 import org.apache.lucene.util.Bits;
 import org.elasticsearch.ExceptionsHelper;
-import org.elasticsearch.common.logging.support.LoggerMessageFormat;
+import org.elasticsearch.common.logging.LoggerMessageFormat;
 import org.elasticsearch.index.cache.bitset.BitsetFilterCache;
 
 import java.io.IOException;
@@ -38,7 +38,8 @@ import java.io.IOException;
  */
 public final class DocumentSubsetReader extends FilterLeafReader {
 
-    public static DirectoryReader wrap(DirectoryReader in, BitsetFilterCache bitsetFilterCache, Query roleQuery) throws IOException {
+    public static DocumentSubsetDirectoryReader wrap(DirectoryReader in, BitsetFilterCache bitsetFilterCache,
+            Query roleQuery) throws IOException {
         return new DocumentSubsetDirectoryReader(in, bitsetFilterCache, roleQuery);
     }
 

@@ -18,6 +18,7 @@
 package org.elasticsearch.watcher.test.bench;
 
 import org.elasticsearch.common.Randomness;
+import org.elasticsearch.common.SuppressForbidden;
 import org.elasticsearch.common.metrics.MeanMetric;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.watcher.support.clock.SystemClock;
@@ -45,6 +46,7 @@ import static org.elasticsearch.watcher.trigger.schedule.Schedules.interval;
 /**
  *
  */
+@SuppressForbidden(reason = "benchmark")
 public class ScheduleEngineTriggerBenchmark {
 
     public static void main(String[] args) throws Exception {

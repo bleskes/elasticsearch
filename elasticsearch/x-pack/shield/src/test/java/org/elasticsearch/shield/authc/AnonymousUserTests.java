@@ -62,7 +62,8 @@ public class AnonymousUserTests extends ShieldIntegTestCase {
         return super.configRoles() + "\n" +
                 "anonymous:\n" +
                 "  indices:\n" +
-                "    '*': READ";
+                "    - names: '*'" +
+                "      privileges: [ READ ]\n";
     }
 
     public void testAnonymousViaHttp() throws Exception {

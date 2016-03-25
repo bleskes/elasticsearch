@@ -25,7 +25,7 @@ import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.watcher.condition.Condition;
 import org.elasticsearch.watcher.condition.compare.LenientCompare;
-import org.elasticsearch.watcher.support.xcontent.WatcherXContentUtils;
+import org.elasticsearch.xpack.common.xcontent.XContentUtils;
 
 import java.io.IOException;
 import java.util.List;
@@ -161,7 +161,7 @@ public class ArrayCompareCondition implements Condition {
                                                         "boolean or null value, but found [{}] instead", TYPE, watchId, path,
                                                         op.name().toLowerCase(Locale.ROOT), token);
                                             }
-                                            value = WatcherXContentUtils.readValue(parser, token);
+                                            value = XContentUtils.readValue(parser, token);
                                             haveValue = true;
                                         } else if (ParseFieldMatcher.STRICT.match(parser.currentName(), Field.QUANTIFIER)) {
                                             if (quantifier != null) {

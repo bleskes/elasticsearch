@@ -44,7 +44,6 @@ public class DataAttachment implements EmailAttachmentParser.EmailAttachment {
         } else {
             builder.field("format", "json");
         }
-
         return builder.endObject().endObject();
     }
 
@@ -65,6 +64,10 @@ public class DataAttachment implements EmailAttachmentParser.EmailAttachment {
     @Override
     public int hashCode() {
         return Objects.hash(id, dataAttachment);
+    }
+
+    public String id() {
+        return id;
     }
 
     public static Builder builder(String id) {
