@@ -59,6 +59,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
+import static java.util.Collections.emptyMap;
+import static java.util.Collections.emptySet;
 import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 import static org.elasticsearch.test.VersionUtils.randomVersion;
 import static org.hamcrest.Matchers.containsString;
@@ -100,7 +102,7 @@ public class TransportMonitoringBulkActionTests extends ESTestCase {
         clusterService =  new ClusterService(Settings.EMPTY, null, new ClusterSettings(Settings.EMPTY,
                 ClusterSettings.BUILT_IN_CLUSTER_SETTINGS), threadPool,
                 new ClusterName(TransportMonitoringBulkActionTests.class.getName()));
-        clusterService.setLocalNode(new DiscoveryNode("node", DummyTransportAddress.INSTANCE, Version.CURRENT));
+        clusterService.setLocalNode(new DiscoveryNode("node", DummyTransportAddress.INSTANCE, emptyMap(), emptySet(), Version.CURRENT));
         clusterService.setNodeConnectionsService(new NodeConnectionsService(Settings.EMPTY, null, null) {
             @Override
             public void connectToAddedNodes(ClusterChangedEvent event) {
