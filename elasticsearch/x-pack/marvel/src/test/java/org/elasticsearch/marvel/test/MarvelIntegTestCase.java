@@ -85,11 +85,12 @@ public abstract class MarvelIntegTestCase extends ESIntegTestCase {
      * <p>
      * Control this by overriding {@link #enableShield()}, which defaults to enabling it randomly.
      */
-    protected Boolean shieldEnabled;
+    // SCARY: This needs to be static or lots of tests randomly fail, but it's not used statically!
+    protected static Boolean shieldEnabled;
     /**
      * Enables individual tests to control the behavior.
      * <p>
-     * Control this by overriding {@link #enableWatcher()}, which defaults to enabling it randomly.
+     * Control this by overriding {@link #enableWatcher()}, which defaults to disabling it (this will change!).
      */
     protected Boolean watcherEnabled;
 
@@ -101,8 +102,10 @@ public abstract class MarvelIntegTestCase extends ESIntegTestCase {
         if (watcherEnabled == null) {
             watcherEnabled = enableWatcher();
         }
-        logger.info("--> shield {}", shieldEnabled ? "enabled" : "disabled");
+
+        logger.debug("--> shield {}", shieldEnabled ? "enabled" : "disabled");
         logger.debug("--> watcher {}", watcherEnabled ? "enabled" : "disabled");
+
         return super.buildTestCluster(scope, seed);
     }
 
@@ -186,7 +189,9 @@ public abstract class MarvelIntegTestCase extends ESIntegTestCase {
      * Override and return {@code false} to force running without Watcher.
      */
     protected boolean enableWatcher() {
-        return randomBoolean();
+        // Once randomDefault() becomes the default again, then this should only be actively disabled when
+        // trying to figure out exactly how many indices are at play
+        return false;
     }
 
     protected void stopCollection() {
