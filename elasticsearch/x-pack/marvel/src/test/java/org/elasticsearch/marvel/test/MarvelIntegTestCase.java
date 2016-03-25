@@ -403,7 +403,8 @@ public abstract class MarvelIntegTestCase extends ESIntegTestCase {
                 assertFalse(value instanceof Map);
             }
         } else {
-            assertTrue("expecting field [" + rebuildName(parent, field) + "] to be present in monitoring document", values.containsKey(field));
+            assertTrue("expecting field [" + rebuildName(parent, field) + "] to be present in monitoring document",
+                       values.containsKey(field));
         }
     }
 
