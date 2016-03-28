@@ -28,7 +28,7 @@ public class LicenseTests extends AbstractLicenseeTestCase {
     private SimpleLicenseeRegistry licenseeRegistry = new SimpleLicenseeRegistry();
 
     public void testPlatinumGoldTrialLicenseCanDoEverything() throws Exception {
-        licenseeRegistry.setOperationMode(randomTrialGoldOrPlatinumMode());
+        licenseeRegistry.setOperationMode(randomTrialStandardGoldOrPlatinumMode());
         WatcherLicensee watcherLicensee = new WatcherLicensee(Settings.EMPTY, licenseeRegistry);
         licenseeRegistry.register(watcherLicensee);
 
@@ -53,7 +53,7 @@ public class LicenseTests extends AbstractLicenseeTestCase {
     }
 
     public void testExpiredPlatinumGoldTrialLicenseIsRestricted() throws Exception {
-        licenseeRegistry.setOperationMode(randomTrialGoldOrPlatinumMode());
+        licenseeRegistry.setOperationMode(randomTrialStandardGoldOrPlatinumMode());
         WatcherLicensee watcherLicensee = new WatcherLicensee(Settings.EMPTY, licenseeRegistry);
         licenseeRegistry.register(watcherLicensee);
         licenseeRegistry.disable();
@@ -68,12 +68,12 @@ public class LicenseTests extends AbstractLicenseeTestCase {
 
         assertLicenseBasicOrNoneOrExpiredBehaviour(watcherLicensee);
 
-        licenseeRegistry.setOperationMode(randomTrialGoldOrPlatinumMode());
+        licenseeRegistry.setOperationMode(randomTrialStandardGoldOrPlatinumMode());
         assertLicenseGoldPlatinumTrialBehaviour(watcherLicensee);
     }
 
     public void testDowngradingToBasicLicenseWorks() {
-        licenseeRegistry.setOperationMode(randomTrialGoldOrPlatinumMode());
+        licenseeRegistry.setOperationMode(randomTrialStandardGoldOrPlatinumMode());
         WatcherLicensee watcherLicensee = new WatcherLicensee(Settings.EMPTY, licenseeRegistry);
         licenseeRegistry.register(watcherLicensee);
 
@@ -84,14 +84,14 @@ public class LicenseTests extends AbstractLicenseeTestCase {
     }
 
     public void testUpgradingExpiredLicenseWorks() {
-        licenseeRegistry.setOperationMode(randomTrialGoldOrPlatinumMode());
+        licenseeRegistry.setOperationMode(randomTrialStandardGoldOrPlatinumMode());
         WatcherLicensee watcherLicensee = new WatcherLicensee(Settings.EMPTY, licenseeRegistry);
         licenseeRegistry.register(watcherLicensee);
         licenseeRegistry.disable();
 
         assertLicenseBasicOrNoneOrExpiredBehaviour(watcherLicensee);
 
-        licenseeRegistry.setOperationMode(randomTrialGoldOrPlatinumMode());
+        licenseeRegistry.setOperationMode(randomTrialStandardGoldOrPlatinumMode());
         assertLicenseGoldPlatinumTrialBehaviour(watcherLicensee);
     }
 
