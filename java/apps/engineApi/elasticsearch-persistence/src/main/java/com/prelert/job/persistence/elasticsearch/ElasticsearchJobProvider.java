@@ -1048,8 +1048,7 @@ public class ElasticsearchJobProvider implements JobProvider
                 LOGGER.info("There are currently no quantiles for job " + jobId);
                 return new Quantiles();
             }
-            return checkQuantilesVersion(jobId, response) ? createQuantiles(jobId, response)
-                    : new Quantiles();
+            return createQuantiles(jobId, response);
         }
         catch (IndexNotFoundException e)
         {
@@ -1184,31 +1183,14 @@ public class ElasticsearchJobProvider implements JobProvider
         return modelSnapshot;
     }
 
-    private boolean checkQuantilesVersion(String jobId, GetResponse response)
+    private Quantiles createQuantiles(String jobId, GetResponse response)
     {
-        Object version = response.getSource().get(Quantiles.VERSION);
-        if (!Quantiles.CURRENT_VERSION.equals(version.toString()))
-        {
-            LOGGER.warn(
-                    "Cannot restore quantiles: version of quantiles for job " + jobId + " is older "
-                            + "than the current one. New quantiles will be used instead.");
-            return false;
-        }
-        return true;
-    }
-
-    private static Quantiles createQuantiles(String jobId, GetResponse response)
-    {
-        Quantiles quantiles = new Quantiles();
+        Quantiles quantiles = m_ObjectMapper.convertValue(response.getSource(), Quantiles.class);
         Object state = response.getSource().get(Quantiles.QUANTILE_STATE);
-        if (state == null)
+        if (quantiles.getQuantileState() == null)
         {
             LOGGER.error("Inconsistency - no " + Quantiles.QUANTILE_STATE
                     + " field in quantiles for job " + jobId);
-        }
-        else
-        {
-            quantiles.setState(state.toString());
         }
         return quantiles;
     }

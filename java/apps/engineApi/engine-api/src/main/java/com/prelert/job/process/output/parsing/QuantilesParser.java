@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -63,7 +63,7 @@ final class QuantilesParser extends FieldNameParser<Quantiles>
             quantiles.setTimestamp(new Date(seconds * 1000));
             break;
         case Quantiles.QUANTILE_STATE:
-            quantiles.setState(parseAsStringOrNull(fieldName));
+            quantiles.setQuantileState(parseAsStringOrNull(fieldName));
             break;
         default:
             LOGGER.warn(String.format("Parse error unknown field in Quantiles %s:%s",

@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -53,10 +53,10 @@ public class QuantilesTest
     public void testEquals_GivenEqualQuantilesObject()
     {
         Quantiles quantiles1 = new Quantiles();
-        quantiles1.setState("foo");
+        quantiles1.setQuantileState("foo");
 
         Quantiles quantiles2 = new Quantiles();
-        quantiles2.setState("foo");
+        quantiles2.setQuantileState("foo");
 
         assertTrue(quantiles1.equals(quantiles2));
         assertTrue(quantiles2.equals(quantiles1));
@@ -66,10 +66,10 @@ public class QuantilesTest
     public void testEquals_GivenDifferentState()
     {
         Quantiles quantiles1 = new Quantiles();
-        quantiles1.setState("bar1");
+        quantiles1.setQuantileState("bar1");
 
         Quantiles quantiles2 = new Quantiles();
-        quantiles2.setState("bar2");
+        quantiles2.setQuantileState("bar2");
 
         assertFalse(quantiles1.equals(quantiles2));
         assertFalse(quantiles2.equals(quantiles1));
@@ -79,10 +79,10 @@ public class QuantilesTest
     public void testHashCode_GivenEqualObject()
     {
         Quantiles quantiles1 = new Quantiles();
-        quantiles1.setState("foo");
+        quantiles1.setQuantileState("foo");
 
         Quantiles quantiles2 = new Quantiles();
-        quantiles2.setState("foo");
+        quantiles2.setQuantileState("foo");
 
         assertEquals(quantiles1.hashCode(), quantiles2.hashCode());
     }

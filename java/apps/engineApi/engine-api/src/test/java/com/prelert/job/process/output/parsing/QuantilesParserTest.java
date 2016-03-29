@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -50,11 +50,8 @@ public class QuantilesParserTest
         parser.nextToken();
 
         Quantiles quantile = new QuantilesParser(parser).parseJson();
-        assertEquals("quantile-state", quantile.getState());
+        assertEquals("quantile-state", quantile.getQuantileState());
         assertEquals(new Date(1000l), quantile.getTimestamp());
-        assertEquals(Quantiles.QUANTILES_ID, quantile.getId());
-        assertEquals(Quantiles.CURRENT_VERSION, quantile.getVersion());
-
 
         assertEquals(JsonToken.END_OBJECT, parser.getCurrentToken());
     }

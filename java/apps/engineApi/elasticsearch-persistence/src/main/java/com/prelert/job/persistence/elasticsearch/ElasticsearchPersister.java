@@ -217,7 +217,7 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
     public void persistQuantiles(Quantiles quantiles)
     {
         Persistable persistable = new Persistable(quantiles, () -> Quantiles.TYPE,
-                () -> quantiles.getId(), () -> serialiseQuantiles(quantiles));
+                () -> quantiles.QUANTILES_ID, () -> serialiseQuantiles(quantiles));
         if (persistable.persist())
         {
             // Refresh the index when persisting quantiles so that previously
@@ -556,9 +556,8 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
     throws IOException
     {
         return jsonBuilder().startObject()
-                .field(Quantiles.ID, quantiles.getId())
-                .field(Quantiles.VERSION, quantiles.getVersion())
-                .field(Quantiles.QUANTILE_STATE, quantiles.getState())
+                .field(ElasticsearchMappings.ES_TIMESTAMP, quantiles.getTimestamp())
+                .field(Quantiles.QUANTILE_STATE, quantiles.getQuantileState())
                 .endObject();
     }
 
