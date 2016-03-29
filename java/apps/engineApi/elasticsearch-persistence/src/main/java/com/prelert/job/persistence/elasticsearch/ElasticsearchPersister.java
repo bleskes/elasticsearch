@@ -355,7 +355,6 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
             {
                 XContentBuilder content = serialiseBucketInfluencerStandalone(bucketInfluencer,
                         bucketTime, isInterim);
-                String id = bucketInfluencer.getId(bucketTime);
                 LOGGER.trace("ES BULK ACTION: index type " + BucketInfluencer.TYPE +
                         " to index " + m_JobId.getIndex() + " with auto-generated ID");
                 addBucketInfluencersRequest.add(
