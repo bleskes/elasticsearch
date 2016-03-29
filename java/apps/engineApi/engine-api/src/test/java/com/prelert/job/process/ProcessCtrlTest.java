@@ -178,4 +178,23 @@ public class ProcessCtrlTest
         assertTrue(command.contains(ProcessCtrl.LOG_ID_ARG + jobId));
         assertTrue(command.contains(ProcessCtrl.LENGTH_ENCODED_INPUT_ARG));
     }
+
+    @Test
+    public void testSupportBundleCommand()
+    {
+        if (System.getProperty("os.name").contains("Windows"))
+        {
+            assertEquals(ProcessCtrl.SUPPORT_BUNDLE_CMD,
+                    ProcessCtrl.PRELERT_HOME + "\\bin\\prelert_support_bundle.ps1");
+            assertEquals(ProcessCtrl.SUPPORT_BUNDLE_DIR,
+                    ProcessCtrl.PRELERT_HOME + "\\bundle");
+        }
+        else
+        {
+            assertEquals(ProcessCtrl.SUPPORT_BUNDLE_CMD,
+                    ProcessCtrl.PRELERT_HOME + "/bin/prelert_support_bundle.sh");
+            assertEquals(ProcessCtrl.SUPPORT_BUNDLE_DIR,
+                    ProcessCtrl.PRELERT_HOME + "/bundle");
+        }
+    }
 }

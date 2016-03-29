@@ -196,6 +196,7 @@ public final class Messages
     public static final String PROCESS_ACTION_UPDATING_JOB = "process.action.updating.job";
     public static final String PROCESS_ACTION_WRITING_JOB = "process.action.writing.job";
 
+    public static final String SUPPORT_BUNDLE_SCRIPT_ERROR = "support.bundle.script.error";
 
     private Messages()
     {

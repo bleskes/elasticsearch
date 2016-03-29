@@ -15,7 +15,6 @@
  * limitations under the License.                                           *
  *                                                                          *
  ***************************************************************************/
-
 package com.prelert.job.errorcodes;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -506,7 +505,13 @@ public enum ErrorCodes
     /**
      * Deleting the highest priority model snapshot is not allowed.
      */
-    CANNOT_DELETE_HIGHEST_PRIORITY(60125);
+    CANNOT_DELETE_HIGHEST_PRIORITY(60125),
+
+    // Support bundle errors
+    /**
+     * Error running the support bundle script
+     */
+    SUPPORT_BUNDLE_EXECUTION_ERROR(70101);
 
 
     private long m_ErrorCode;

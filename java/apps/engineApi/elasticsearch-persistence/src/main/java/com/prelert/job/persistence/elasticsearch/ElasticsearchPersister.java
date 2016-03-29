@@ -217,7 +217,7 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
     public void persistQuantiles(Quantiles quantiles)
     {
         Persistable persistable = new Persistable(quantiles, () -> Quantiles.TYPE,
-                () -> quantiles.QUANTILES_ID, () -> serialiseQuantiles(quantiles));
+                () -> Quantiles.QUANTILES_ID, () -> serialiseQuantiles(quantiles));
         if (persistable.persist())
         {
             // Refresh the index when persisting quantiles so that previously

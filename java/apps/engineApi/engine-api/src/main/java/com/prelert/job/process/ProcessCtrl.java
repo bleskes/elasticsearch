@@ -314,6 +314,23 @@ public class ProcessCtrl
         File libDir = new File(PRELERT_HOME, libSubDirectory);
         File cotsDir = new File(new File(PRELERT_HOME, "cots"), libSubDirectory);
         LIB_PATH = libDir.getPath() + File.pathSeparatorChar + cotsDir.getPath();
+
+        // Support bundle command
+        String bundleScript = null;
+        String bundleFile = null;
+        if (SystemUtils.IS_OS_WINDOWS)
+        {
+            bundleScript = "prelert_support_bundle.ps1";
+            bundleFile = "prelert_support_bundle.zip";
+        }
+        else
+        {
+            bundleScript = "prelert_support_bundle.sh";
+            bundleFile = "prelert_support_bundle.tar.bz2";
+        }
+
+        SUPPORT_BUNDLE_CMD = new File(BIN_DIR, bundleScript).getPath();
+        SUPPORT_BUNDLE_DIR = new File(PRELERT_HOME, "bundle").getPath();
     }
 
     private ProcessCtrl()

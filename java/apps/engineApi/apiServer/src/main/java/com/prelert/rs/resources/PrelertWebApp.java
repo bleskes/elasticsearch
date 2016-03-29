@@ -297,6 +297,7 @@ public class PrelertWebApp extends Application
         m_ResourceClasses.add(Preview.class);
         m_ResourceClasses.add(Records.class);
         m_ResourceClasses.add(Validate.class);
+        m_ResourceClasses.add(Support.class);
     }
 
     private void addMessageReaders()
