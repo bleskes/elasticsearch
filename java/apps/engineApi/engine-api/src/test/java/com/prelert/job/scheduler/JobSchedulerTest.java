@@ -174,8 +174,8 @@ public class JobSchedulerTest
 
         assertEquals(1, dataProcessor.getNumberOfStreams());
         assertEquals("0-0", dataProcessor.getStream(0));
-        assertEquals("1400000000000", dataExtractor.getStart(0));
-        assertEquals("1400000001000", dataExtractor.getEnd(0));
+        assertEquals(1400000000000L, dataExtractor.getStart(0));
+        assertEquals(1400000001000L, dataExtractor.getEnd(0));
 
         List<InterimResultsParams> flushParams = dataProcessor.getFlushParams();
         assertEquals(1, flushParams.size());
@@ -208,8 +208,8 @@ public class JobSchedulerTest
         assertEquals("0-0", dataProcessor.getStream(0));
         assertEquals("0-1", dataProcessor.getStream(1));
         assertEquals("0-2", dataProcessor.getStream(2));
-        assertEquals("1400000000000", dataExtractor.getStart(0));
-        assertEquals("1400000001000", dataExtractor.getEnd(0));
+        assertEquals(1400000000000L, dataExtractor.getStart(0));
+        assertEquals(1400000001000L, dataExtractor.getEnd(0));
 
         List<InterimResultsParams> flushParams = dataProcessor.getFlushParams();
         assertEquals(1, flushParams.size());
@@ -265,19 +265,19 @@ public class JobSchedulerTest
         List<InterimResultsParams> flushParams = dataProcessor.getFlushParams();
         assertEquals(numberOfSearches, flushParams.size());
 
-        long lookbackEnd = Long.parseLong(dataExtractor.getEnd(0));
-        long firstRealTimeEnd = Long.parseLong(dataExtractor.getEnd(1));
+        long lookbackEnd = dataExtractor.getEnd(0);
+        long firstRealTimeEnd = dataExtractor.getEnd(1);
         for (int i = 0; i < numberOfSearches; i++)
         {
             assertEquals(i + "-0", dataProcessor.getStream(i));
             assertTrue(flushParams.get(i).shouldCalculateInterim());
-            long searchStart = Long.parseLong(dataExtractor.getStart(i));
-            long searchEnd = Long.parseLong(dataExtractor.getEnd(i));
+            long searchStart = dataExtractor.getStart(i);
+            long searchEnd = dataExtractor.getEnd(i);
 
             // Assert lookback
             if (i == 0)
             {
-                assertEquals("1400000000000", dataExtractor.getStart(i));
+                assertEquals(1400000000000L, dataExtractor.getStart(i));
                 assertTrue(lookbackEnd >= schedulerStartedTimeMs);
                 assertTrue(lookbackEnd <= schedulerStartedTimeMs + 1000);
                 assertFalse(flushParams.get(i).shouldAdvanceTime());
@@ -360,8 +360,8 @@ public class JobSchedulerTest
         assertEquals(JobSchedulerStatus.STOPPED, m_CurrentStatus);
 
         assertEquals(numberOfSearches, dataProcessor.getNumberOfStreams());
-        assertEquals("1400000000000", dataExtractor.getStart(0));
-        assertEquals("1400000000000", dataExtractor.getStart(1));
+        assertEquals(1400000000000L, dataExtractor.getStart(0));
+        assertEquals(1400000000000L, dataExtractor.getStart(1));
         assertTrue(dataProcessor.getFlushParams().isEmpty());
     }
 
@@ -388,8 +388,8 @@ public class JobSchedulerTest
         assertTrue(dataProcessor.isJobClosed());
 
         assertEquals(0, dataProcessor.getNumberOfStreams());
-        assertEquals("1400000000000", dataExtractor.getStart(0));
-        assertEquals("1400000001000", dataExtractor.getEnd(0));
+        assertEquals(1400000000000L, dataExtractor.getStart(0));
+        assertEquals(1400000001000L, dataExtractor.getEnd(0));
         assertEquals(0, dataProcessor.getFlushParams().size());
 
         // Repeat to test that scheduler did not advance time
@@ -397,8 +397,8 @@ public class JobSchedulerTest
         waitUntilSchedulerStoppedIsAudited();
 
         assertEquals(0, dataProcessor.getNumberOfStreams());
-        assertEquals("1400000000000", dataExtractor.getStart(0));
-        assertEquals("1400000001000", dataExtractor.getEnd(0));
+        assertEquals(1400000000000L, dataExtractor.getStart(0));
+        assertEquals(1400000001000L, dataExtractor.getEnd(0));
     }
 
     @Test
@@ -442,8 +442,8 @@ public class JobSchedulerTest
 
         assertEquals(1, dataProcessor.getNumberOfStreams());
         assertEquals("0-0", dataProcessor.getStream(0));
-        assertEquals("1455000001000", dataExtractor.getStart(0));
-        assertEquals("1460000000000", dataExtractor.getEnd(0));
+        assertEquals(1455000001000L, dataExtractor.getStart(0));
+        assertEquals(1460000000000L, dataExtractor.getEnd(0));
         List<InterimResultsParams> flushParams = dataProcessor.getFlushParams();
         assertEquals(1, flushParams.size());
         assertTrue(flushParams.get(0).shouldCalculateInterim());
@@ -471,8 +471,8 @@ public class JobSchedulerTest
 
         assertEquals(1, dataProcessor.getNumberOfStreams());
         assertEquals("0-0", dataProcessor.getStream(0));
-        assertEquals("1455000000000", dataExtractor.getStart(0));
-        assertEquals("1460000000000", dataExtractor.getEnd(0));
+        assertEquals(1455000000000L, dataExtractor.getStart(0));
+        assertEquals(1460000000000L, dataExtractor.getEnd(0));
         List<InterimResultsParams> flushParams = dataProcessor.getFlushParams();
         assertEquals(1, flushParams.size());
         assertTrue(flushParams.get(0).shouldCalculateInterim());
@@ -649,8 +649,8 @@ public class JobSchedulerTest
         private final List<Integer> m_BatchesPerSearch;
         private int m_SearchCount = -1;
         private int m_StreamCount = -1;
-        private final List<String> m_Starts = new ArrayList<>();
-        private final List<String> m_Ends = new ArrayList<>();
+        private final List<Long> m_Starts = new ArrayList<>();
+        private final List<Long> m_Ends = new ArrayList<>();
 
         public MockDataExtractor(List<Integer> batchesPerSearch)
         {
@@ -676,7 +676,7 @@ public class JobSchedulerTest
         }
 
         @Override
-        public void newSearch(String start, String end, Logger logger)
+        public void newSearch(long start, long end, Logger logger)
         {
             if (m_SearchCount == m_BatchesPerSearch.size() - 1)
             {
@@ -688,12 +688,12 @@ public class JobSchedulerTest
             m_Ends.add(end);
         }
 
-        public String getStart(int searchCount)
+        public long getStart(int searchCount)
         {
             return m_Starts.get(searchCount);
         }
 
-        public String getEnd(int searchCount)
+        public long getEnd(int searchCount)
         {
             return m_Ends.get(searchCount);
         }

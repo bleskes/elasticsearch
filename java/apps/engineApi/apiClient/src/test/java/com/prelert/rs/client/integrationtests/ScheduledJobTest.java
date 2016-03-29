@@ -76,6 +76,16 @@ public class ScheduledJobTest implements AutoCloseable
     private static final String ES_RECORD_INDEX_URL = ES_INDEX_URL + TYPE_NAME + "/";
     private static final String ES_REFRESH_INDEX_URL = ES_INDEX_URL + "_refresh";
 
+    private static final String DATA_INDEX_MAPPINGS = "{"
+            + "\"mappings\":{"
+            + "  \"record\": {"
+            + "    \"properties\": {"
+            + "      \"timestamp\": {\"type\":\"date\"}"
+            + "    }"
+            + "  }"
+            + "}"
+            + "}";
+
     private static final String RECORD_TEMPLATE = "{"
             + "\"timestamp\": %s"
             + "}";
@@ -105,7 +115,7 @@ public class ScheduledJobTest implements AutoCloseable
         m_EngineApiClient.deleteJob(TEST_JOB_ID);
 
         generateDataInElasticsearch();
-        createCategorizationJob();
+        createScheduledJob();
         startScheduler();
         waitUntilSchedulerStatusIs(JobSchedulerStatus.STOPPED);
 
@@ -136,6 +146,7 @@ public class ScheduledJobTest implements AutoCloseable
     private void generateDataInElasticsearch()
     {
         LOGGER.info("Generating data...");
+        createDataIndex();
         ZonedDateTime now = ZonedDateTime.now(ZoneOffset.UTC);
         ZonedDateTime currentTime = now.minus(30, ChronoUnit.DAYS);
         while (currentTime.isBefore(now))
@@ -147,6 +158,21 @@ public class ScheduledJobTest implements AutoCloseable
         }
         refreshIndex();
         LOGGER.info("Completed data generation");
+    }
+
+    private void createDataIndex()
+    {
+        try
+        {
+            m_HttpClient.POST(ES_INDEX_URL)
+            .content(new StringContentProvider(DATA_INDEX_MAPPINGS))
+            .send();
+        }
+        catch (InterruptedException | TimeoutException | ExecutionException e)
+        {
+            LOGGER.error("Error uploading data to Elasticsearch", e);
+            throw new RuntimeException(e);
+        }
     }
 
     private void indexDocument(String jsonDoc)
@@ -178,7 +204,7 @@ public class ScheduledJobTest implements AutoCloseable
         }
     }
 
-    private String createCategorizationJob() throws IOException
+    private String createScheduledJob() throws IOException
     {
         Detector d = new Detector();
         d.setFunction("count");
