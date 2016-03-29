@@ -58,18 +58,6 @@ public class BucketInfluencer
     {
     }
 
-    /**
-     * ID is the concatenation of influencer field and timestamp
-     * @return
-     */
-    public String getId(Date bucketTime)
-    {
-        return new StringBuilder(m_InfluenceField)
-                .append('_')
-                .append(bucketTime.getTime() / 1000)
-                .toString();
-    }
-
     public double getProbability()
     {
         return m_Probability;
