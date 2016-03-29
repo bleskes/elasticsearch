@@ -72,10 +72,12 @@ import org.elasticsearch.search.sort.SortOrder;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationConfig;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.prelert.job.CategorizerState;
 import com.prelert.job.JobDetails;
 import com.prelert.job.JobStatus;
+import com.prelert.job.JsonViews;
 import com.prelert.job.ModelSizeStats;
 import com.prelert.job.ModelSnapshot;
 import com.prelert.job.ModelState;
@@ -140,6 +142,8 @@ public class ElasticsearchJobProvider implements JobProvider
         m_ObjectMapper = new ObjectMapper();
         m_ObjectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
         m_ObjectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        // When we serialise objects with multiple views we want to choose the datastore view
+        m_ObjectMapper.setConfig(m_ObjectMapper.getSerializationConfig().withView(JsonViews.DatastoreView.class));
 
         LOGGER.info("Connecting to Elasticsearch cluster '" + m_Client.settings().get("cluster.name")
                 + "'");
@@ -363,12 +367,12 @@ public class ElasticsearchJobProvider implements JobProvider
     public QueryPage<JobDetails> getJobs(int skip, int take)
     {
         QueryBuilder fb = QueryBuilders.matchAllQuery();
-        SortBuilder sb = new FieldSortBuilder(JobDetails.ID)
+        SortBuilder sb = new FieldSortBuilder(ElasticsearchPersister.JOB_ID_NAME)
                                 .unmappedType("string")
                                 .order(SortOrder.ASC);
 
         LOGGER.trace("ES API CALL: search all of type " + JobDetails.TYPE +
-                " from all indexes sort ascending " + JobDetails.ID +
+                " from all indexes sort ascending " + ElasticsearchPersister.JOB_ID_NAME +
                 " skip " + skip + " take " + take);
         SearchResponse response = m_Client.prepareSearch("_all")
                 .setTypes(JobDetails.TYPE)

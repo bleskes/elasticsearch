@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -41,6 +41,7 @@ import javax.ws.rs.ext.MessageBodyWriter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.prelert.job.JsonViews;
 import com.prelert.rs.data.Pagination;
 
 
@@ -54,43 +55,50 @@ import com.prelert.rs.data.Pagination;
  */
 public class PaginationWriter<T> implements MessageBodyWriter<Pagination<T>>
 {
-	/**
-	 * The Object to JSON mapper.
-	 * Writes dates in ISO 8601 format
-	 */
-	private static final ObjectWriter OBJECT_WRITER =
-			new ObjectMapper()
-				.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
-				.writer().withDefaultPrettyPrinter();
+    /**
+     * The Object to JSON mapper.
+     * Writes dates in ISO 8601 format.
+     * When serialising objects with multiple views, chooses the REST API view.
+     */
+    private static final ObjectWriter OBJECT_WRITER;
 
-	@Override
-	public boolean isWriteable(Class<?> type, Type genericType,
-			Annotation[] annotations, MediaType mediaType)
-	{
-		// no need to check the media type because of the @Produces annotation
-		return type == Pagination.class &&
-				genericType instanceof ParameterizedType;
-	}
+    static
+    {
+        ObjectMapper mapper = new ObjectMapper()
+                .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
+        OBJECT_WRITER = mapper
+                .setConfig(mapper.getSerializationConfig().withView(JsonViews.RestApiView.class))
+                .writer().withDefaultPrettyPrinter();
+    }
 
-	@Override
-	public long getSize(Pagination<T> arg0, Class<?> arg1, Type arg2,
-			Annotation[] arg3, MediaType arg4)
-	{
-		// deprecated by JAX-RS 2.0
-		return 0;
-	}
+    @Override
+    public boolean isWriteable(Class<?> type, Type genericType,
+            Annotation[] annotations, MediaType mediaType)
+    {
+        // no need to check the media type because of the @Produces annotation
+        return type == Pagination.class &&
+                genericType instanceof ParameterizedType;
+    }
 
-	/**
-	 * Write the Pagination object bean
-	 */
-	@Override
-	public void writeTo(Pagination<T> bean, Class<?> type, Type genericType,
-			Annotation[] annotations, MediaType mediaType,
-			MultivaluedMap<String, Object> httpHeaders,
-			OutputStream entityStream)
-	throws IOException, WebApplicationException
-	{
-		OBJECT_WRITER.writeValue(entityStream, bean);
-	}
+    @Override
+    public long getSize(Pagination<T> arg0, Class<?> arg1, Type arg2,
+            Annotation[] arg3, MediaType arg4)
+    {
+        // deprecated by JAX-RS 2.0
+        return 0;
+    }
+
+    /**
+     * Write the Pagination object bean
+     */
+    @Override
+    public void writeTo(Pagination<T> bean, Class<?> type, Type genericType,
+            Annotation[] annotations, MediaType mediaType,
+            MultivaluedMap<String, Object> httpHeaders,
+            OutputStream entityStream)
+    throws IOException, WebApplicationException
+    {
+        OBJECT_WRITER.writeValue(entityStream, bean);
+    }
 
 }
