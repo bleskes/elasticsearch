@@ -88,14 +88,6 @@ public class ElasticsearchDataExtractor implements DataExtractor
     private static final String AGGREGATION_TEMPLATE = ","
             + "  %s";
 
-    /**
-     * We want to read up until the "hits" array.  32KB (~= 32000 UTF-8
-     * chars given that field names and scroll ID are ASCII) should be enough.
-     * The longest reported scroll ID is 20708 characters - see
-     * http://elasticsearch-users.115913.n3.nabble.com/Ridiculously-long-Scroll-id-td4038567.html
-     */
-    private static final int PUSHBACK_BUFFER_BYTES = 32768;
-
     private static final int OK_STATUS = 200;
     private static final String SLASH = "/";
     private static final String COMMA = ",";
@@ -127,8 +119,8 @@ public class ElasticsearchDataExtractor implements DataExtractor
         m_Search = Objects.requireNonNull(search);
         m_Aggregations = aggregations;
         m_TimeField = Objects.requireNonNull(timeField);
-        m_ScrollState =  m_Aggregations == null ? ScrollState.createDefault(PUSHBACK_BUFFER_BYTES)
-                : ScrollState.createAggregated(PUSHBACK_BUFFER_BYTES);
+        m_ScrollState =  m_Aggregations == null ? ScrollState.createDefault()
+                : ScrollState.createAggregated();
     }
 
     public static ElasticsearchDataExtractor create(String baseUrl, String authHeader,

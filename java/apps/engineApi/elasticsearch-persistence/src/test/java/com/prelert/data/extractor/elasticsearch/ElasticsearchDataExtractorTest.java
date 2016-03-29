@@ -199,12 +199,165 @@ public class ElasticsearchDataExtractorTest
     }
 
     @Test
-    public void testDataExtraction_GivenInitialResponseContainsNoScrollId() throws IOException
+    public void testDataExtraction_GivenInitialResponseContainsLongScrollId() throws IOException
+    {
+        StringBuilder scrollId = new StringBuilder();
+        for (int i = 0; i < 300 * 1024; i++)
+        {
+            scrollId.append("a");
+        }
+
+        String initialResponse = "{"
+                + "\"_scroll_id\":\""+ scrollId + "\","
+                + "\"took\":17,"
+                + "\"timed_out\":false,"
+                + "\"_shards\":{"
+                + "  \"total\":1,"
+                + "  \"successful\":1,"
+                + "  \"failed\":0"
+                + "},"
+                + "\"hits\":{"
+                + "  \"total\":1437,"
+                + "  \"max_score\":null,"
+                + "  \"hits\":["
+                + "    \"_index\":\"dataIndex\","
+                + "    \"_type\":\"dataType\","
+                + "    \"_id\":\"1403481600\","
+                + "    \"_score\":null,"
+                + "    \"_source\":{"
+                + "      \"id\":\"1403481600\""
+                + "    }"
+                + "  ]"
+                + "}"
+                + "}";
+
+        String scrollEndResponse = "{"
+                + "\"_scroll_id\":\""+ scrollId + "\","
+                + "\"took\":8,"
+                + "\"timed_out\":false,"
+                + "\"_shards\":{"
+                + "  \"total\":1,"
+                + "  \"successful\":1,"
+                + "  \"failed\":0"
+                + "},"
+                + "\"hits\":{"
+                + "  \"total\":1437,"
+                + "  \"max_score\":null,"
+                + "  \"hits\":[]"
+                + "}"
+                + "}";
+
+        List<HttpGetResponse> responses = Arrays.asList(
+                new HttpGetResponse(toStream(initialResponse), 200),
+                new HttpGetResponse(toStream(scrollEndResponse), 200));
+        MockHttpGetRequester requester = new MockHttpGetRequester(responses);
+        createExtractor(requester);
+
+        m_Extractor.newSearch(1400000000L, 1500000000L, m_Logger);
+
+        assertTrue(m_Extractor.hasNext());
+        m_Extractor.next();
+        assertTrue(m_Extractor.hasNext());
+        m_Extractor.next();
+        assertFalse(m_Extractor.hasNext());
+
+        assertEquals(scrollId.toString(), requester.getRequestParams(1).requestBody);
+    }
+
+    @Test
+    public void testDataExtraction_GivenInitialResponseContainsNoHitsAndNoScrollId() throws IOException
     {
         m_ExpectedException.expect(IOException.class);
         m_ExpectedException.expectMessage("Field '_scroll_id' was expected but not found in response:\n{}");
 
         String initialResponse = "{}";
+        HttpGetResponse httpGetResponse = new HttpGetResponse(
+                toStream(initialResponse), 200);
+        List<HttpGetResponse> responses = Arrays.asList(httpGetResponse);
+        MockHttpGetRequester requester = new MockHttpGetRequester(responses);
+        createExtractor(requester);
+
+        m_Extractor.newSearch(1400000000L, 1500000000L, m_Logger);
+
+        assertTrue(m_Extractor.hasNext());
+        m_Extractor.next();
+    }
+
+    @Test
+    public void testDataExtraction_GivenInitialResponseContainsHitsButNoScrollId() throws IOException
+    {
+        String initialResponse = "{"
+                + "\"took\":17,"
+                + "\"timed_out\":false,"
+                + "\"_shards\":{"
+                + "  \"total\":1,"
+                + "  \"successful\":1,"
+                + "  \"failed\":0"
+                + "},"
+                + "\"hits\":{"
+                + "  \"total\":1437,"
+                + "  \"max_score\":null,"
+                + "  \"hits\":["
+                + "    \"_index\":\"dataIndex\","
+                + "    \"_type\":\"dataType\","
+                + "    \"_id\":\"1403481600\","
+                + "    \"_score\":null,"
+                + "    \"_source\":{"
+                + "      \"id\":\"1403481600\""
+                + "    }"
+                + "  ]"
+                + "}"
+                + "}";
+        m_ExpectedException.expect(IOException.class);
+        m_ExpectedException.expectMessage("Field '_scroll_id' was expected but not found in response:\n" + initialResponse);
+
+        HttpGetResponse httpGetResponse = new HttpGetResponse(
+                toStream(initialResponse), 200);
+        List<HttpGetResponse> responses = Arrays.asList(httpGetResponse);
+        MockHttpGetRequester requester = new MockHttpGetRequester(responses);
+        createExtractor(requester);
+
+        m_Extractor.newSearch(1400000000L, 1500000000L, m_Logger);
+
+        assertTrue(m_Extractor.hasNext());
+        m_Extractor.next();
+    }
+
+    @Test
+    public void testDataExtraction_GivenInitialResponseContainsTooLongScrollId() throws IOException
+    {
+        StringBuilder scrollId = new StringBuilder();
+        for (int i = 0; i < 1024 * 1024; i++)
+        {
+            scrollId.append("a");
+        }
+
+        String initialResponse = "{"
+                + "\"_scroll_id\":\""+ scrollId + "\","
+                + "\"took\":17,"
+                + "\"timed_out\":false,"
+                + "\"_shards\":{"
+                + "  \"total\":1,"
+                + "  \"successful\":1,"
+                + "  \"failed\":0"
+                + "},"
+                + "\"hits\":{"
+                + "  \"total\":1437,"
+                + "  \"max_score\":null,"
+                + "  \"hits\":["
+                + "    \"_index\":\"dataIndex\","
+                + "    \"_type\":\"dataType\","
+                + "    \"_id\":\"1403481600\","
+                + "    \"_score\":null,"
+                + "    \"_source\":{"
+                + "      \"id\":\"1403481600\""
+                + "    }"
+                + "  ]"
+                + "}"
+                + "}";
+        m_ExpectedException.expect(IOException.class);
+        m_ExpectedException.expectMessage("Field '_scroll_id' was expected but not found in response:\n" + initialResponse);
+
         HttpGetResponse httpGetResponse = new HttpGetResponse(
                 toStream(initialResponse), 200);
         List<HttpGetResponse> responses = Arrays.asList(httpGetResponse);
@@ -246,6 +399,7 @@ public class ElasticsearchDataExtractorTest
 
         String initialResponse = "{"
                 + "\"_scroll_id\":\"c2Nhbjs2OzM0NDg1ODpzRlBLc0FXNlNyNm5JWUc1\","
+                + "\"hits\":[..."
                 + "}";
         List<HttpGetResponse> responses = Arrays.asList(
                 new HttpGetResponse(toStream(initialResponse), 200),

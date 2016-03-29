@@ -35,33 +35,61 @@ import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import com.google.common.annotations.VisibleForTesting;
-
+/**
+ * Holds the state of an Elasticsearch scroll.
+ */
 class ScrollState
 {
-    static final Pattern SCROLL_ID_PATTERN = Pattern.compile("\"_scroll_id\":\"(.*?)\"");
-    static final Pattern EMPTY_HITS_PATTERN = Pattern.compile("\"hits\":\\[\\]");
-    static final Pattern EMPTY_AGGREGATIONS_PATTERN = Pattern.compile("\"aggregations\":.*?\"buckets\":\\[\\]");
+    private static final Pattern SCROLL_ID_PATTERN = Pattern.compile("\"_scroll_id\":\"(.*?)\"");
+    private static final Pattern DEFAULT_PEEK_END_PATTERN = Pattern.compile("\"hits\":\\[(.)");
+    private static final Pattern AGGREGATED_PEEK_END_PATTERN = Pattern.compile("\"aggregations\":.*?\"buckets\":\\[(.)");
+    private static final String CLOSING_SQUARE_BRACKET = "]";
 
-    private final int m_BufferSize;
-    private final Pattern m_ScrollCompletePattern;
+    /**
+     * We want to read up until the "hits" or "buckets" array. Scroll IDs can be
+     * quite long in clusters that have many nodes/shards. The longest reported
+     * scroll ID is 20708 characters - see
+     * http://elasticsearch-users.115913.n3.nabble.com/Ridiculously-long-Scroll-id-td4038567.html
+     * <br>
+     * We set a max byte limit for the stream peeking to 1 MB.
+     */
+    private static final int MAX_PEEK_BYTES = 1024 * 1024;
+
+    /**
+     * We try to search for the scroll ID and whether the scroll is complete every time
+     * we have read a chunk of size 32 KB.
+     */
+    private static final int PEEK_CHUNK_SIZE = 32 * 1024;
+
+    private final int m_PeekMaxSize;
+    private final int m_PeekChunkSize;
+    private final Pattern m_PeekEndPattern;
     private volatile String m_ScrollId;
     private volatile boolean m_IsComplete;
 
-    private ScrollState(int bufferSize, Pattern scrollCompletePattern)
+    private ScrollState(int peekMaxSize, int peekChunkSize, Pattern scrollCompletePattern)
     {
-        m_BufferSize = bufferSize;
-        m_ScrollCompletePattern = Objects.requireNonNull(scrollCompletePattern);
+        m_PeekMaxSize = peekMaxSize;
+        m_PeekChunkSize = peekChunkSize;
+        m_PeekEndPattern = Objects.requireNonNull(scrollCompletePattern);
     }
 
-    public static ScrollState createDefault(int bufferSize)
+    /**
+     * Creates a {@code ScrollState} for a search without aggregations
+     * @return the {@code ScrollState}
+     */
+    public static ScrollState createDefault()
     {
-        return new ScrollState(bufferSize, EMPTY_HITS_PATTERN);
+        return new ScrollState(MAX_PEEK_BYTES, PEEK_CHUNK_SIZE, DEFAULT_PEEK_END_PATTERN);
     }
 
-    public static ScrollState createAggregated(int bufferSize)
+    /**
+     * Creates a {@code ScrollState} for a search with aggregations
+     * @return the {@code ScrollState}
+     */
+    public static ScrollState createAggregated()
     {
-        return new ScrollState(bufferSize, EMPTY_AGGREGATIONS_PATTERN);
+        return new ScrollState(MAX_PEEK_BYTES, PEEK_CHUNK_SIZE, AGGREGATED_PEEK_END_PATTERN);
     }
 
     public final void reset()
@@ -86,6 +114,19 @@ class ScrollState
         m_IsComplete = true;
     }
 
+    /**
+     * Peeks into the stream and updates the scroll ID and whether the scroll is complete.
+     * <p>
+     * <em>After calling that method the given stream cannot be reused.
+     * Use the returned stream instead.</em>
+     * </p>
+     *
+     * @param stream the stream
+     * @return a new {@code InputStream} object which should be used instead of the given stream
+     * for further processing
+     * @throws IOException if an I/O error occurs while manipulating the stream or the stream
+     * contains no scroll ID
+     */
     public InputStream updateFromStream(InputStream stream) throws IOException
     {
         if (stream == null)
@@ -95,71 +136,70 @@ class ScrollState
             return null;
         }
 
-        PushbackInputStream pushbackStream = new PushbackInputStream(stream, m_BufferSize);
-        updateScrollId(pushbackStream);
-        updateIsScrollComplete(pushbackStream);
-        return pushbackStream;
-    }
-
-    private void updateScrollId(PushbackInputStream stream) throws IOException
-    {
-        if (stream == null)
-        {
-            return;
-        }
-
-        Matcher matcher = peekAndMatchInStream(stream, SCROLL_ID_PATTERN);
-        if (!matcher.find())
-        {
-            throw new IOException("Field '_scroll_id' was expected but not found in response:\n"
-                    + HttpGetResponse.getStreamAsString(stream));
-        }
-        m_ScrollId = matcher.group(1);
-    }
-
-    private void updateIsScrollComplete(PushbackInputStream stream) throws IOException
-    {
-        m_IsComplete = (stream == null) || peekAndMatchInStream(stream, m_ScrollCompletePattern).find();
-    }
-
-    @VisibleForTesting
-    Matcher peekAndMatchInStream(PushbackInputStream stream, Pattern pattern) throws IOException
-    {
-        byte[] peek = new byte[m_BufferSize];
-        int bytesRead = readUntilEndOrLimit(stream, peek);
-
-        // We make the assumption here that invalid byte sequences will be read as invalid char
-        // rather than throwing an exception
-        String peekString = new String(peek, 0, bytesRead, StandardCharsets.UTF_8);
-
-        Matcher matcher = pattern.matcher(peekString);
-        stream.unread(peek, 0, bytesRead);
-        return matcher;
-    }
-
-    /**
-     * Reads from a stream until it has read at least {@link #PUSHBACK_BUFFER_BYTES}
-     * or the stream ends.
-     *
-     * @param stream the stream
-     * @param buffer the buffer where the stream is read into
-     * @return the number of total bytes read
-     * @throws IOException
-     */
-    private int readUntilEndOrLimit(PushbackInputStream stream, byte[] buffer) throws IOException
-    {
+        PushbackInputStream pushbackStream = new PushbackInputStream(stream, m_PeekMaxSize);
+        byte[] buffer = new byte[m_PeekMaxSize];
         int totalBytesRead = 0;
-        int bytesRead = 0;
+        int currentChunkSize = 0;
 
-        while (bytesRead >= 0 && totalBytesRead < m_BufferSize)
+        int bytesRead = 0;
+        while (bytesRead >= 0 && totalBytesRead < m_PeekMaxSize)
         {
-            bytesRead = stream.read(buffer, totalBytesRead, m_BufferSize - totalBytesRead);
+            bytesRead = stream.read(buffer, totalBytesRead,
+                    Math.min(m_PeekChunkSize, m_PeekMaxSize - totalBytesRead));
             if (bytesRead > 0)
             {
                 totalBytesRead += bytesRead;
+                currentChunkSize += bytesRead;
+            }
+
+            if (bytesRead < 0 || currentChunkSize >= m_PeekChunkSize)
+            {
+                // We make the assumption here that invalid byte sequences will be read as invalid
+                // char rather than throwing an exception
+                String peekString = new String(buffer, 0, totalBytesRead, StandardCharsets.UTF_8);
+
+                if (matchScrollState(peekString))
+                {
+                    break;
+                }
+                currentChunkSize = 0;
             }
         }
 
-        return totalBytesRead;
+        pushbackStream.unread(buffer, 0, totalBytesRead);
+
+        if (m_ScrollId == null)
+        {
+            throw new IOException("Field '_scroll_id' was expected but not found in response:\n"
+                    + HttpGetResponse.getStreamAsString(pushbackStream));
+        }
+        return pushbackStream;
+    }
+
+    /**
+     * Searches the peek end pattern into the given {@code sequence}. If it is matched,
+     * it also searches for the scroll ID and updates the state accordingly.
+     *
+     * @param sequence the String to search into
+     * @return {@code true} if the peek end pattern was matched or {@code false} otherwise
+     */
+    private boolean matchScrollState(String sequence)
+    {
+        Matcher peekEndMatcher = m_PeekEndPattern.matcher(sequence);
+        if (peekEndMatcher.find())
+        {
+            Matcher scrollIdMatcher = SCROLL_ID_PATTERN.matcher(sequence);
+            if (!scrollIdMatcher.find())
+            {
+                m_ScrollId = null;
+            }
+            else
+            {
+                m_ScrollId = scrollIdMatcher.group(1);
+                m_IsComplete = CLOSING_SQUARE_BRACKET.equals(peekEndMatcher.group(1));
+                return true;
+            }
+        }
+        return false;
     }
 }
