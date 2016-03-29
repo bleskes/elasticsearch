@@ -18,6 +18,7 @@ package org.elasticsearch.license.plugin;
 
 import org.elasticsearch.action.ActionModule;
 import org.elasticsearch.client.Client;
+import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.cluster.metadata.MetaData;
 import org.elasticsearch.common.component.LifecycleComponent;
 import org.elasticsearch.common.inject.Inject;
@@ -54,7 +55,7 @@ public class Licensing {
 
     @Inject
     public Licensing(Settings settings) {
-        this.transportClient = "transport".equals(settings.get(Client.CLIENT_TYPE_SETTING_S.getKey()));
+        this.transportClient = TransportClient.CLIENT_TYPE.equals(settings.get(Client.CLIENT_TYPE_SETTING_S.getKey()));
         isEnabled = transportClient == false;
     }
 
