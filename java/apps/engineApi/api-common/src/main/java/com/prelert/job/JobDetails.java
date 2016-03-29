@@ -57,7 +57,6 @@ public class JobDetails
     public static final String DESCRIPTION = "description";
     public static final String ENDPOINTS = "endpoints";
     public static final String FINISHED_TIME = "finishedTime";
-    public static final String ID = "id";
     public static final String IGNORE_DOWNTIME = "ignoreDowntime";
     public static final String LAST_DATA_TIME = "lastDataTime";
     public static final String MODEL_DEBUG_CONFIG = "modelDebugConfig";
@@ -200,7 +199,7 @@ public class JobDetails
      * once set. This method is provided for the Jackson object mapper to
      * de-serialise this class from Json.
      *
-     * @param id the job id
+     * @param jobId the job id
      */
     public void setJobId(String jobId)
     {

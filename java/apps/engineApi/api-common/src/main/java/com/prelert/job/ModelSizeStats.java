@@ -31,7 +31,7 @@ public class ModelSizeStats
     /**
      * Field Names
      */
-    public static final String ID = "id";
+    public static final String MODEL_SIZE_STATS_ID = "modelSizeStatsId";
     public static final String MODEL_BYTES = "modelBytes";
     public static final String TOTAL_BY_FIELD_COUNT = "totalByFieldCount";
     public static final String TOTAL_OVER_FIELD_COUNT = "totalOverFieldCount";
@@ -69,7 +69,7 @@ public class ModelSizeStats
         m_MemoryStatus = MemoryStatus.OK;
     }
 
-    public String getId()
+    public String getModelSizeStatsId()
     {
         return TYPE;
     }
@@ -78,7 +78,7 @@ public class ModelSizeStats
      * Does nothing. Needed for serialisation.
      * @param id The id will be ignored
      */
-    public void setId(String id)
+    public void setModelSizeStatsId(String id)
     {
         // Do nothing - ID is fixed
     }

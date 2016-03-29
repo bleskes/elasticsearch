@@ -993,6 +993,7 @@ public class ElasticsearchJobProvider implements JobProvider
             m.put(Bucket.TIMESTAMP, m.remove(ElasticsearchMappings.ES_TIMESTAMP));
 
             Influencer influencer = m_ObjectMapper.convertValue(m, Influencer.class);
+            influencer.setId(hit.getId());
 
             influencers.add(influencer);
         }

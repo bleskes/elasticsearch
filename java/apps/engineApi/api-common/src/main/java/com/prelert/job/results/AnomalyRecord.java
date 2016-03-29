@@ -43,11 +43,6 @@ public class AnomalyRecord
     public static final String TYPE = "record";
 
     /**
-     * Data store ID field
-     */
-    public static final String ID = "id";
-
-    /**
      * Result fields (all detector types)
      */
     public static final String DETECTOR_INDEX = "detectorIndex";

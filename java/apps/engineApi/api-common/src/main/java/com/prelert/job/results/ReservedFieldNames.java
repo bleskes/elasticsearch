@@ -158,7 +158,6 @@ public final class ReservedFieldNames
         Influence.INFLUENCER_FIELD_NAME,
         Influence.INFLUENCER_FIELD_VALUES,
 
-        Influencer.ID,
         Influencer.PROBABILITY,
         Influencer.INFLUENCER_FIELD_NAME,
         Influencer.INFLUENCER_FIELD_VALUE,

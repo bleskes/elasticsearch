@@ -160,6 +160,14 @@ public class ElasticsearchBulkDeleter implements JobDataDeleter
     @Override
     public void deleteInfluencer(Influencer influencer)
     {
+        String id = influencer.getId();
+        if (id == null)
+        {
+            LOGGER.error("Cannot delete specific influencer without an ID",
+                // This means we get a stack trace to show where the request came from
+                new NullPointerException());
+            return;
+        }
         m_BulkRequestBuilder.add(
                 m_Client.prepareDelete(m_JobId.getIndex(), Influencer.TYPE, influencer.getId()));
         ++m_DeletedInfluencerCount;
