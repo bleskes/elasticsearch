@@ -19,8 +19,10 @@ package org.elasticsearch.marvel.agent.exporter;
 
 import org.elasticsearch.Version;
 import org.elasticsearch.client.Client;
+import org.elasticsearch.cluster.ClusterName;
+import org.elasticsearch.cluster.ClusterState;
+import org.elasticsearch.cluster.node.DiscoveryNodes;
 import org.elasticsearch.cluster.service.ClusterService;
-import org.elasticsearch.cluster.node.DiscoveryNode;
 import org.elasticsearch.common.settings.ClusterSettings;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.settings.SettingsException;
@@ -89,48 +91,40 @@ public class ExportersTests extends ESTestCase {
     public void testInitExportersDefault() throws Exception {
         Exporter.Factory factory = new TestFactory("_type", true);
         factories.put("_type", factory);
-        Exporters.CurrentExporters internalExporters = exporters.initExporters(Settings.builder()
-                .build());
+        Map<String, Exporter> internalExporters = exporters.initExporters(Settings.builder().build());
 
         assertThat(internalExporters, notNullValue());
-        assertThat(internalExporters.settings.getAsMap().size(), is(0));
-        assertThat(internalExporters.exporters.size(), is(1));
-        assertThat(internalExporters.exporters, hasKey("default_" + LocalExporter.TYPE));
-        assertThat(internalExporters.exporters.get("default_" + LocalExporter.TYPE), instanceOf(LocalExporter.class));
+        assertThat(internalExporters.size(), is(1));
+        assertThat(internalExporters, hasKey("default_" + LocalExporter.TYPE));
+        assertThat(internalExporters.get("default_" + LocalExporter.TYPE), instanceOf(LocalExporter.class));
     }
 
     public void testInitExportersSingle() throws Exception {
         Exporter.Factory factory = new TestFactory("_type", true);
         factories.put("_type", factory);
-        Exporters.CurrentExporters internalExporters = exporters.initExporters(Settings.builder()
+        Map<String, Exporter> internalExporters = exporters.initExporters(Settings.builder()
                 .put("_name.type", "_type")
                 .build());
 
         assertThat(internalExporters, notNullValue());
-        assertThat(internalExporters.settings.getAsMap().size(), is(1));
-        assertThat(internalExporters.settings.getAsMap(), hasEntry("_name.type", "_type"));
-        assertThat(internalExporters.exporters.size(), is(1));
-        assertThat(internalExporters.exporters, hasKey("_name"));
-        assertThat(internalExporters.exporters.get("_name"), instanceOf(TestFactory.TestExporter.class));
-        assertThat(internalExporters.exporters.get("_name").type, is("_type"));
+        assertThat(internalExporters.size(), is(1));
+        assertThat(internalExporters, hasKey("_name"));
+        assertThat(internalExporters.get("_name"), instanceOf(TestFactory.TestExporter.class));
+        assertThat(internalExporters.get("_name").type, is("_type"));
     }
 
     public void testInitExportersSingleDisabled() throws Exception {
         Exporter.Factory factory = new TestFactory("_type", true);
         factories.put("_type", factory);
-        Exporters.CurrentExporters internalExporters = exporters.initExporters(Settings.builder()
+        Map<String, Exporter> internalExporters = exporters.initExporters(Settings.builder()
                 .put("_name.type", "_type")
                 .put("_name.enabled", false)
                 .build());
 
         assertThat(internalExporters, notNullValue());
-        assertThat(internalExporters.settings.getAsMap().size(), is(2));
-        assertThat(internalExporters.settings.getAsMap(), hasEntry("_name.type", "_type"));
-        assertThat(internalExporters.settings.getAsMap(), hasEntry("_name.enabled", "false"));
 
         // the only configured exporter is disabled... yet we intentionally don't fallback on the default
-
-        assertThat(internalExporters.exporters.size(), is(0));
+        assertThat(internalExporters.size(), is(0));
     }
 
     public void testInitExportersSingleUnknownType() throws Exception {
@@ -158,22 +152,19 @@ public class ExportersTests extends ESTestCase {
     public void testInitExportersMultipleSameType() throws Exception {
         Exporter.Factory factory = new TestFactory("_type", false);
         factories.put("_type", factory);
-        Exporters.CurrentExporters internalExporters = exporters.initExporters(Settings.builder()
+        Map<String, Exporter> internalExporters = exporters.initExporters(Settings.builder()
                 .put("_name0.type", "_type")
                 .put("_name1.type", "_type")
                 .build());
 
         assertThat(internalExporters, notNullValue());
-        assertThat(internalExporters.settings.getAsMap().size(), is(2));
-        assertThat(internalExporters.settings.getAsMap(), hasEntry("_name0.type", "_type"));
-        assertThat(internalExporters.settings.getAsMap(), hasEntry("_name1.type", "_type"));
-        assertThat(internalExporters.exporters.size(), is(2));
-        assertThat(internalExporters.exporters, hasKey("_name0"));
-        assertThat(internalExporters.exporters.get("_name0"), instanceOf(TestFactory.TestExporter.class));
-        assertThat(internalExporters.exporters.get("_name0").type, is("_type"));
-        assertThat(internalExporters.exporters, hasKey("_name1"));
-        assertThat(internalExporters.exporters.get("_name1"), instanceOf(TestFactory.TestExporter.class));
-        assertThat(internalExporters.exporters.get("_name1").type, is("_type"));
+        assertThat(internalExporters.size(), is(2));
+        assertThat(internalExporters, hasKey("_name0"));
+        assertThat(internalExporters.get("_name0"), instanceOf(TestFactory.TestExporter.class));
+        assertThat(internalExporters.get("_name0").type, is("_type"));
+        assertThat(internalExporters, hasKey("_name1"));
+        assertThat(internalExporters.get("_name1"), instanceOf(TestFactory.TestExporter.class));
+        assertThat(internalExporters.get("_name1").type, is("_type"));
     }
 
     public void testInitExportersMultipleSameTypeSingletons() throws Exception {
@@ -196,12 +187,15 @@ public class ExportersTests extends ESTestCase {
 
         final AtomicReference<Settings> settingsHolder = new AtomicReference<>();
 
-        exporters = new Exporters(Settings.builder()
+        Settings nodeSettings = Settings.builder()
                 .put("xpack.monitoring.agent.exporters._name0.type", "_type")
                 .put("xpack.monitoring.agent.exporters._name1.type", "_type")
-                .build(), factories, clusterService, clusterSettings) {
+                .build();
+        clusterSettings = new ClusterSettings(nodeSettings, new HashSet<>(Arrays.asList(MarvelSettings.EXPORTERS_SETTINGS)));
+
+        exporters = new Exporters(nodeSettings, factories, clusterService, clusterSettings) {
             @Override
-            CurrentExporters initExporters(Settings settings) {
+            Map<String, Exporter> initExporters(Settings settings) {
                 settingsHolder.set(settings);
                 return super.initExporters(settings);
             }
@@ -239,9 +233,9 @@ public class ExportersTests extends ESTestCase {
                 .build(), factories, clusterService, clusterSettings);
         exporters.start();
 
-        DiscoveryNode localNode = mock(DiscoveryNode.class);
-        when(localNode.isMasterNode()).thenReturn(true);
-        when(clusterService.localNode()).thenReturn(localNode);
+        DiscoveryNodes nodes = mock(DiscoveryNodes.class);
+        when(nodes.isLocalNodeElectedMaster()).thenReturn(true);
+        when(clusterService.state()).thenReturn(ClusterState.builder(ClusterName.DEFAULT).nodes(nodes).build());
 
         ExportBulk bulk = exporters.openBulk();
         assertThat(bulk, notNullValue());
@@ -263,9 +257,9 @@ public class ExportersTests extends ESTestCase {
                 .build(), factories, clusterService, clusterSettings);
         exporters.start();
 
-        DiscoveryNode localNode = mock(DiscoveryNode.class);
-        when(localNode.isMasterNode()).thenReturn(false);
-        when(clusterService.localNode()).thenReturn(localNode);
+        DiscoveryNodes nodes = mock(DiscoveryNodes.class);
+        when(nodes.isLocalNodeElectedMaster()).thenReturn(false);
+        when(clusterService.state()).thenReturn(ClusterState.builder(ClusterName.DEFAULT).nodes(nodes).build());
 
         ExportBulk bulk = exporters.openBulk();
         assertThat(bulk, notNullValue());
@@ -355,16 +349,12 @@ public class ExportersTests extends ESTestCase {
             }
 
             @Override
-            public void export(Collection<MonitoringDoc> monitoringDocs) throws Exception {
-            }
-
-            @Override
             public ExportBulk openBulk() {
                 return mock(ExportBulk.class);
             }
 
             @Override
-            public void close() {
+            public void doClose() {
             }
         }
     }
@@ -418,7 +408,7 @@ public class ExportersTests extends ESTestCase {
             }
 
             @Override
-            public void close() {
+            public void doClose() {
             }
 
             public int getExportedCount() {
