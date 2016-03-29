@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -56,6 +56,8 @@ class ElasticsearchBatchedInfluencersIterator extends ElasticsearchBatchedResult
         Object timestamp = hit.getSource().remove(ElasticsearchMappings.ES_TIMESTAMP);
         hit.getSource().put(Bucket.TIMESTAMP, timestamp);
 
-        return objectMapper.convertValue(hit.getSource(), Influencer.class);
+        Influencer influencer = objectMapper.convertValue(hit.getSource(), Influencer.class);
+        influencer.setId(hit.getId());
+        return influencer;
     }
 }
