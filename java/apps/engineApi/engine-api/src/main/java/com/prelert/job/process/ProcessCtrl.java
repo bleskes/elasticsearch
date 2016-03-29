@@ -523,14 +523,13 @@ public class ProcessCtrl
             command.add(MODEL_CONFIG_ARG + modelConfigFile);
         }
 
-
         // Restoring the quantiles
-        if (quantiles != null && !quantiles.getState().isEmpty())
+        if (quantiles != null && !quantiles.getQuantileState().isEmpty())
         {
             logger.info("Restoring quantiles for job '" + job.getId() + "'");
 
             Path normalisersStateFilePath =
-                    writeNormaliserInitState(job.getId(), quantiles.getState());
+                    writeNormaliserInitState(job.getId(), quantiles.getQuantileState());
 
             String quantilesStateFileArg = QUANTILES_STATE_PATH_ARG + normalisersStateFilePath;
             command.add(quantilesStateFileArg);

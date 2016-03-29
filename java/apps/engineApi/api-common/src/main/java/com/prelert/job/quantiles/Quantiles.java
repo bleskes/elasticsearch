@@ -32,13 +32,10 @@ import com.google.common.base.Strings;
 public class Quantiles
 {
     public static final String QUANTILES_ID = "hierarchical";
-    public static final String CURRENT_VERSION = "1";
 
     /**
      * Field Names
      */
-    public static final String ID = "id";
-    public static final String VERSION = "version";
     public static final String TIMESTAMP = "timestamp";
     public static final String QUANTILE_STATE = "quantileState";
 
@@ -48,17 +45,7 @@ public class Quantiles
     public static final String TYPE = "quantiles";
 
     private Date m_Timestamp;
-    private String m_State;
-
-    public String getId()
-    {
-        return QUANTILES_ID;
-    }
-
-    public String getVersion()
-    {
-        return CURRENT_VERSION;
-    }
+    private String m_QuantileState;
 
     public Date getTimestamp()
     {
@@ -70,20 +57,20 @@ public class Quantiles
         m_Timestamp = timestamp;
     }
 
-    public String getState()
+    public String getQuantileState()
     {
-        return Strings.nullToEmpty(m_State);
+        return Strings.nullToEmpty(m_QuantileState);
     }
 
-    public void setState(String state)
+    public void setQuantileState(String quantileState)
     {
-        m_State = state;
+        m_QuantileState = quantileState;
     }
 
     @Override
     public int hashCode()
     {
-        return Objects.hashCode(m_State);
+        return Objects.hashCode(m_QuantileState);
     }
 
     /**
@@ -104,7 +91,7 @@ public class Quantiles
 
         Quantiles that = (Quantiles) other;
 
-        return Objects.equals(this.m_State, that.m_State);
+        return Objects.equals(this.m_QuantileState, that.m_QuantileState);
     }
 }
 

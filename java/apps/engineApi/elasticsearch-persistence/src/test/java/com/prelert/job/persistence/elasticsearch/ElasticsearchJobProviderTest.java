@@ -119,15 +119,14 @@ public class ElasticsearchJobProviderTest
 
         Quantiles quantiles = provider.getQuantiles(JOB_ID);
 
-        assertEquals("", quantiles.getState());
+        assertEquals("", quantiles.getQuantileState());
     }
 
     @Test
-    public void testGetQuantiles_GivenQuantilesHaveDifferentVersion() throws InterruptedException,
-            ExecutionException, UnknownJobException
+    public void testGetQuantiles_GivenQuantilesHaveNonEmptyState()
+            throws InterruptedException, ExecutionException, UnknownJobException
     {
         Map<String, Object> source = new HashMap<>();
-        source.put(Quantiles.VERSION, "-1");
         source.put(Quantiles.QUANTILE_STATE, "state");
         GetResponse getResponse = createGetResponse(true, source);
 
@@ -140,16 +139,14 @@ public class ElasticsearchJobProviderTest
 
         Quantiles quantiles = provider.getQuantiles(JOB_ID);
 
-        assertEquals("", quantiles.getState());
+        assertEquals("state", quantiles.getQuantileState());
     }
 
     @Test
-    public void testGetQuantiles_GivenQuantilesHaveCurrentVersionAndNonEmptyState()
+    public void testGetQuantiles_GivenQuantilesHaveEmptyState()
             throws InterruptedException, ExecutionException, UnknownJobException
     {
         Map<String, Object> source = new HashMap<>();
-        source.put(Quantiles.VERSION, Quantiles.CURRENT_VERSION);
-        source.put(Quantiles.QUANTILE_STATE, "state");
         GetResponse getResponse = createGetResponse(true, source);
 
         MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME)
@@ -161,27 +158,7 @@ public class ElasticsearchJobProviderTest
 
         Quantiles quantiles = provider.getQuantiles(JOB_ID);
 
-        assertEquals("state", quantiles.getState());
-    }
-
-    @Test
-    public void testGetQuantiles_GivenQuantilesHaveCurrentVersionAndEmptyState()
-            throws InterruptedException, ExecutionException, UnknownJobException
-    {
-        Map<String, Object> source = new HashMap<>();
-        source.put(Quantiles.VERSION, Quantiles.CURRENT_VERSION);
-        GetResponse getResponse = createGetResponse(true, source);
-
-        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME)
-                .addClusterStatusYellowResponse()
-                .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true)
-                .prepareGet(INDEX_NAME, Quantiles.TYPE, Quantiles.QUANTILES_ID, getResponse);
-
-        ElasticsearchJobProvider provider = createProvider(clientBuilder.build());
-
-        Quantiles quantiles = provider.getQuantiles(JOB_ID);
-
-        assertEquals("", quantiles.getState());
+        assertEquals("", quantiles.getQuantileState());
     }
 
     @Test

@@ -208,7 +208,6 @@ public final class ReservedFieldNames
         ModelSizeStats.BUCKET_ALLOCATION_FAILURES_COUNT,
         ModelSizeStats.MEMORY_STATUS,
 
-        ModelSnapshot.TIMESTAMP,
         // ModelSnapshot.DESCRIPTION is not reserved because it is an analyzed string
         ModelSnapshot.RESTORE_PRIORITY,
         ModelSnapshot.SNAPSHOT_ID,
@@ -216,9 +215,6 @@ public final class ReservedFieldNames
         ModelSizeStats.TYPE,
         ModelSnapshot.LATEST_RECORD_TIME,
 
-        Quantiles.ID,
-        Quantiles.VERSION,
-        Quantiles.TIMESTAMP,
         Quantiles.QUANTILE_STATE,
 
         SchedulerConfig.DATA_SOURCE,

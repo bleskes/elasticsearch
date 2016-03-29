@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -149,7 +149,7 @@ public class BlockingQueueRenormaliser implements Renormaliser
             try
             {
                 m_UpdatedQuantileQueue.put(new QuantileInfo(QuantileInfo.InfoType.RENORMALISATION,
-                    quantiles.getState(), endBucketEpochMS, logger));
+                    quantiles.getQuantileState(), endBucketEpochMS, logger));
             }
             catch (InterruptedException e)
             {
