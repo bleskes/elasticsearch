@@ -169,7 +169,7 @@ public class ElasticsearchBulkDeleter implements JobDataDeleter
             return;
         }
         m_BulkRequestBuilder.add(
-                m_Client.prepareDelete(m_JobId.getIndex(), Influencer.TYPE, influencer.getId()));
+                m_Client.prepareDelete(m_JobId.getIndex(), Influencer.TYPE, id));
         ++m_DeletedInfluencerCount;
     }
 
