@@ -51,7 +51,10 @@ import java.util.Collections;
 
 public class XPackPlugin extends Plugin {
 
-    public static final String NAME = "xpack";
+    public static final String NAME = "x-pack";
+
+    // inside of YAML settings we still use xpack do not having handle issues with dashes
+    public static final String SETTINGS_NAME = "xpack";
 
     // TODO: clean up this library to not ask for write access to all system properties!
     static {
@@ -240,7 +243,7 @@ public class XPackPlugin extends Plugin {
     }
 
     public static String featureSettingPrefix(String featureName) {
-        return NAME + "." + featureName;
+        return SETTINGS_NAME + "." + featureName;
     }
 
     public static String legacyFeatureEnabledSetting(String featureName) {
@@ -263,6 +266,6 @@ public class XPackPlugin extends Plugin {
     }
 
     public static Path resolveXPackExtensionsFile(Environment env) {
-        return env.pluginsFile().resolve("xpack").resolve("extensions");
+        return env.pluginsFile().resolve(XPackPlugin.NAME).resolve("extensions");
     }
 }
