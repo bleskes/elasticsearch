@@ -85,12 +85,8 @@ public class ElasticsearchDataExtractor implements DataExtractor
             + "  }%s"
             + "}";
 
-    private static final String AGGREGATION_TEMPLATE = ","
-            + "  %s";
-
-    private static final String CLEAR_SCROLL_TEMPLATE = "{"
-            + "\"scroll_id\":[\"%s\"]"
-            + "}";
+    private static final String AGGREGATION_TEMPLATE = ",  %s";
+    private static final String CLEAR_SCROLL_TEMPLATE = "{\"scroll_id\":[\"%s\"]}";
 
     private static final int OK_STATUS = 200;
     private static final String SLASH = "/";
