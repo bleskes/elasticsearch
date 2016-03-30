@@ -25,6 +25,7 @@ import org.elasticsearch.marvel.MonitoredSystem;
 import org.elasticsearch.marvel.agent.resolver.bulk.MonitoringBulkResolver;
 import org.elasticsearch.marvel.test.MarvelIntegTestCase;
 import org.elasticsearch.search.SearchHit;
+import org.elasticsearch.test.junit.annotations.TestLogging;
 
 import java.util.List;
 import java.util.Map;
@@ -39,6 +40,7 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 
+@TestLogging("_root:DEBUG")
 public class MonitoringBulkTests extends MarvelIntegTestCase {
 
     @Override
