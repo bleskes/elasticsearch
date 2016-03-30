@@ -58,6 +58,7 @@ class HttpRequester
 
     private static final String TLS = "TLS";
     private static final String GET = "GET";
+    private static final String DELETE = "DELETE";
     private static final String AUTH_HEADER = "Authorization";
     private static final int OK_STATUS = 200;
 
@@ -123,6 +124,17 @@ class HttpRequester
 
     public HttpResponse get(String url, String authHeader, String requestBody) throws IOException
     {
+        return request(url, authHeader, requestBody, GET);
+    }
+
+    public HttpResponse delete(String url, String authHeader, String requestBody) throws IOException
+    {
+        return request(url, authHeader, requestBody, DELETE);
+    }
+
+    private HttpResponse request(String url, String authHeader, String requestBody, String method)
+            throws IOException
+    {
         URL urlObject = new URL(url);
         HttpURLConnection connection = (HttpURLConnection) urlObject.openConnection();
         connection.setConnectTimeout(CONNECT_TIMEOUT_MILLIS);
@@ -142,7 +154,7 @@ class HttpRequester
             }
             httpsConnection.setHostnameVerifier(TRUSTING_HOSTNAME_VERIFIER);
         }
-        connection.setRequestMethod(GET);
+        connection.setRequestMethod(method);
         if (authHeader != null)
         {
             connection.setRequestProperty(AUTH_HEADER, authHeader);

@@ -88,12 +88,17 @@ public class ElasticsearchDataExtractor implements DataExtractor
     private static final String AGGREGATION_TEMPLATE = ","
             + "  %s";
 
+    private static final String CLEAR_SCROLL_TEMPLATE = "{"
+            + "\"scroll_id\":[\"%s\"]"
+            + "}";
+
     private static final int OK_STATUS = 200;
     private static final String SLASH = "/";
     private static final String COMMA = ",";
-    private static final String SEARCH_SCROLL_TEMPLATE = "_search?scroll=60m&size=%d";
     private static final int UNAGGREGATED_SCROLL_SIZE = 1000;
+    private static final String SEARCH_SCROLL_TEMPLATE = "_search?scroll=60m&size=%d";
     private static final String CONTINUE_SCROLL_END_POINT = "_search/scroll?scroll=60m";
+    private static final String CLEAR_SCROLL_END_POINT = "_search/scroll";
 
     private final HttpRequester m_HttpRequester;
     private final String m_BaseUrl;
@@ -160,13 +165,33 @@ public class ElasticsearchDataExtractor implements DataExtractor
         {
             InputStream stream = (m_ScrollState.getScrollId() == null) ? initScroll() : continueScroll();
             stream = m_ScrollState.updateFromStream(stream);
-            return m_ScrollState.isComplete() ? Optional.empty() : Optional.of(stream);
+            if (m_ScrollState.isComplete())
+            {
+                clearScroll();
+                return Optional.empty();
+            }
+            return Optional.of(stream);
         }
         catch (IOException e)
         {
             m_Logger.error("An error occurred during requesting data from: " + m_BaseUrl, e);
             m_ScrollState.forceComplete();
             throw e;
+        }
+    }
+
+    private void clearScroll()
+    {
+        StringBuilder urlBuilder = newUrlBuilder();
+        urlBuilder.append(CLEAR_SCROLL_END_POINT);
+        try
+        {
+            m_HttpRequester.delete(urlBuilder.toString(), m_AuthHeader,
+                    String.format(CLEAR_SCROLL_TEMPLATE, m_ScrollState.getScrollId()));
+        }
+        catch (IOException e)
+        {
+            m_Logger.error("An error ocurred during clearing scroll context", e);
         }
     }
 

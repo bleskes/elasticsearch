@@ -160,7 +160,7 @@ public class ElasticsearchDataExtractorTest
 
         requester.assertEqualRequestsToResponses();
 
-        RequestParams firstRequestParams = requester.getRequestParams(0);
+        RequestParams firstRequestParams = requester.getGetRequestParams(0);
         assertEquals("http://localhost:9200/dataIndex/dataType/_search?scroll=60m&size=1000", firstRequestParams.url);
         String expectedSearchBody = "{"
                 + "  \"sort\": ["
@@ -189,13 +189,18 @@ public class ElasticsearchDataExtractorTest
                 + "}";
         assertEquals(expectedSearchBody, firstRequestParams.requestBody);
 
-        RequestParams secondRequestParams = requester.getRequestParams(1);
+        RequestParams secondRequestParams = requester.getGetRequestParams(1);
         assertEquals("http://localhost:9200/_search/scroll?scroll=60m", secondRequestParams.url);
         assertEquals("c2Nhbjs2OzM0NDg1ODpzRlBLc0FXNlNyNm5JWUc1", secondRequestParams.requestBody);
 
-        RequestParams thirdRequestParams = requester.getRequestParams(2);
+        RequestParams thirdRequestParams = requester.getGetRequestParams(2);
         assertEquals("http://localhost:9200/_search/scroll?scroll=60m", thirdRequestParams.url);
         assertEquals("secondScrollId", thirdRequestParams.requestBody);
+
+        assertEquals("http://localhost:9200/_search/scroll", requester.getDeleteRequestParams(0).url);
+        assertEquals("{\"scroll_id\":[\"thirdScrollId\"]}",
+                requester.getDeleteRequestParams(0).requestBody);
+        assertEquals(1, requester.m_DeleteRequestParams.size());
     }
 
     @Test
@@ -261,7 +266,7 @@ public class ElasticsearchDataExtractorTest
         m_Extractor.next();
         assertFalse(m_Extractor.hasNext());
 
-        assertEquals(scrollId.toString(), requester.getRequestParams(1).requestBody);
+        assertEquals(scrollId.toString(), requester.getGetRequestParams(1).requestBody);
     }
 
     @Test
@@ -477,8 +482,8 @@ public class ElasticsearchDataExtractorTest
 
         requester.assertEqualRequestsToResponses();
 
-        assertEquals(1, requester.m_RequestParams.size());
-        RequestParams requestParams = requester.getRequestParams(0);
+        assertEquals(1, requester.m_GetRequestParams.size());
+        RequestParams requestParams = requester.getGetRequestParams(0);
         assertEquals("http://localhost:9200/dataIndex/dataType/_search?scroll=60m&size=0", requestParams.url);
         String expectedSearchBody = "{"
                 + "  \"sort\": ["
@@ -507,6 +512,11 @@ public class ElasticsearchDataExtractorTest
                 + "  {\"aggs\":{\"my-aggs\": {\"terms\":{\"field\":\"foo\"}}}}"
                 + "}";
         assertEquals(expectedSearchBody, requestParams.requestBody);
+
+        assertEquals("http://localhost:9200/_search/scroll", requester.getDeleteRequestParams(0).url);
+        assertEquals("{\"scroll_id\":[\"r2d2bjs2OzM0NDg1ODpzRlBLc0FXNlNyNm5JWUc1\"]}",
+                requester.getDeleteRequestParams(0).requestBody);
+        assertEquals(1, requester.m_DeleteRequestParams.size());
     }
 
     @Test
@@ -544,8 +554,8 @@ public class ElasticsearchDataExtractorTest
 
         requester.assertEqualRequestsToResponses();
 
-        assertEquals(1, requester.m_RequestParams.size());
-        RequestParams requestParams = requester.getRequestParams(0);
+        assertEquals(1, requester.m_GetRequestParams.size());
+        RequestParams requestParams = requester.getGetRequestParams(0);
         assertEquals("http://localhost:9200/dataIndex/dataType/_search?scroll=60m&size=0", requestParams.url);
     }
 
@@ -572,18 +582,20 @@ public class ElasticsearchDataExtractorTest
         private List<HttpResponse> m_Responses;
         private int m_RequestCount = 0;
         private int m_AuthRequestCount = 0;
-        private List<RequestParams> m_RequestParams;
+        private List<RequestParams> m_GetRequestParams;
+        private List<RequestParams> m_DeleteRequestParams;
 
         public MockHttpRequester(List<HttpResponse> responses)
         {
             m_Responses = responses;
-            m_RequestParams = new ArrayList<>(responses.size());
+            m_GetRequestParams = new ArrayList<>(responses.size());
+            m_DeleteRequestParams = new ArrayList<>();
         }
 
         @Override
         public HttpResponse get(String url, String authHeader, String requestBody)
         {
-            m_RequestParams.add(new RequestParams(url, requestBody));
+            m_GetRequestParams.add(new RequestParams(url, requestBody));
             if (authHeader != null)
             {
                 ++m_AuthRequestCount;
@@ -591,14 +603,26 @@ public class ElasticsearchDataExtractorTest
             return m_Responses.get(m_RequestCount++);
         }
 
-        public RequestParams getRequestParams(int callCount)
+        @Override
+        public HttpResponse delete(String url, String authHeader, String requestBody)
         {
-            return m_RequestParams.get(callCount);
+            m_DeleteRequestParams.add(new RequestParams(url, requestBody));
+            return null;
+        }
+
+        public RequestParams getGetRequestParams(int callCount)
+        {
+            return m_GetRequestParams.get(callCount);
+        }
+
+        public RequestParams getDeleteRequestParams(int callCount)
+        {
+            return m_DeleteRequestParams.get(callCount);
         }
 
         public void assertEqualRequestsToResponses()
         {
-            assertEquals(m_Responses.size(), m_RequestParams.size());
+            assertEquals(m_Responses.size(), m_GetRequestParams.size());
         }
     }
 

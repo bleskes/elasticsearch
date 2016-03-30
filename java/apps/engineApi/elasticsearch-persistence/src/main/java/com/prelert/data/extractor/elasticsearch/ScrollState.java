@@ -110,7 +110,6 @@ class ScrollState
 
     public void forceComplete()
     {
-        m_ScrollId = null;
         m_IsComplete = true;
     }
 
@@ -131,7 +130,6 @@ class ScrollState
     {
         if (stream == null)
         {
-            m_ScrollId = null;
             m_IsComplete = true;
             return null;
         }
