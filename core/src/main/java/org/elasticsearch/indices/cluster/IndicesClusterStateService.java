@@ -237,14 +237,14 @@ public class IndicesClusterStateService extends AbstractLifecycleComponent<Indic
             } else if ((metaData = previousState.metaData().index(index)) != null) {
                 // The deleted index was part of the previous cluster state, but not loaded on the local node
                 final IndexSettings indexSettings = new IndexSettings(metaData, settings);
-                indicesService.deleteClosedIndex("deleted index was not assigned to local node", metaData, event.state());
+                indicesService.deleteUnassignedIndex("deleted index was not assigned to local node", metaData, event.state());
                 sendDeletedEvent(event.state(), index, indexSettings, localNodeId);
             } else {
                 // The previous cluster state's metadata also does not contain the index,
                 // which is what happens on node startup when an index was deleted while the
                 // node was not part of the cluster.  In this case, try reading the index
                 // metadata from disk.  If its not there, there is nothing to delete.
-                indicesService.tryDeleteIndexContents(index, event.state());
+                indicesService.verifyIndexIsDeleted(index, event.state());
             }
         }
 

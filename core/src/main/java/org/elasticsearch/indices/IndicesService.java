@@ -454,7 +454,7 @@ public class IndicesService extends AbstractLifecycleComponent<IndicesService> i
                 final IndexSettings indexSettings = indexService.getIndexSettings();
                 listener.afterIndexDeleted(indexService.index(), indexSettings.getSettings());
                 // now we are done - try to wipe data on disk if possible
-                deleteIndexStore(reason, indexService.index(), indexSettings, false);
+                deleteIndexStore(reason, indexService.index(), indexSettings, true);
             }
         } catch (IOException ex) {
             throw new ElasticsearchException("failed to remove index " + index, ex);
@@ -510,7 +510,10 @@ public class IndicesService extends AbstractLifecycleComponent<IndicesService> i
         removeIndex(index, reason, true);
     }
 
-    public void deleteClosedIndex(String reason, IndexMetaData metaData, ClusterState clusterState) {
+    /**
+     * deletes an index that is not assigned to this node. This methods cleans up all disk folders relating to the index
+     * but do not deal with in-memory structures. For those call {@link #deleteIndex(Index, String)} */
+    public void deleteUnassignedIndex(String reason, IndexMetaData metaData, ClusterState clusterState) {
         if (nodeEnv.hasNodeFile()) {
             String indexName = metaData.getIndex().getName();
             try {
@@ -520,7 +523,7 @@ public class IndicesService extends AbstractLifecycleComponent<IndicesService> i
                 }
                 deleteIndexStore(reason, metaData, clusterState, true);
             } catch (IOException e) {
-                logger.warn("[{}] failed to delete closed index", e, metaData.getIndex());
+                logger.warn("[{}] failed to delete unassigned index (reason [{}])", e, metaData.getIndex(), reason);
             }
         }
     }
@@ -528,8 +531,10 @@ public class IndicesService extends AbstractLifecycleComponent<IndicesService> i
     /**
      * Deletes the index store trying to acquire all shards locks for this index.
      * This method will delete the metadata for the index even if the actual shards can't be locked.
+     *
+     * package private for testing
      */
-    public void deleteIndexStore(String reason, IndexMetaData metaData, ClusterState clusterState, boolean closed) throws IOException {
+    void deleteIndexStore(String reason, IndexMetaData metaData, ClusterState clusterState, boolean indexIsDeleted) throws IOException {
         if (nodeEnv.hasNodeFile()) {
             synchronized (this) {
                 Index index = metaData.getIndex();
@@ -542,22 +547,22 @@ public class IndicesService extends AbstractLifecycleComponent<IndicesService> i
                     // we do not delete the store if it is a master eligible node and the index is still in the cluster state
                     // because we want to keep the meta data for indices around even if no shards are left here
                     final IndexMetaData idxMeta = clusterState.metaData().index(index.getName());
-                    throw new IllegalStateException("Can't delete closed index store for [" + index.getName() + "] - it's still part of the cluster state [" + idxMeta.getIndexUUID() + "] [" + metaData.getIndexUUID() + "]");
+                    throw new IllegalStateException("Can't delete index store for [" + index.getName() + "] - it's still part of the cluster state [" + idxMeta.getIndexUUID() + "] [" + metaData.getIndexUUID() + "]");
                 }
             }
             final IndexSettings indexSettings = buildIndexSettings(metaData);
-            deleteIndexStore(reason, indexSettings.getIndex(), indexSettings, closed);
+            deleteIndexStore(reason, indexSettings.getIndex(), indexSettings, indexIsDeleted);
         }
     }
 
-    private void deleteIndexStore(String reason, Index index, IndexSettings indexSettings, boolean closed) throws IOException {
+    private void deleteIndexStore(String reason, Index index, IndexSettings indexSettings, boolean indexDeleted) throws IOException {
         boolean success = false;
         try {
             // we are trying to delete the index store here - not a big deal if the lock can't be obtained
             // the store metadata gets wiped anyway even without the lock this is just best effort since
             // every shards deletes its content under the shard lock it owns.
             logger.debug("{} deleting index store reason [{}]", index, reason);
-            if (canDeleteIndexContents(index, indexSettings, closed)) {
+            if (canDeleteIndexContents(index, indexSettings, indexDeleted)) {
                 nodeEnv.deleteIndexDirectorySafe(index, 0, indexSettings);
             }
             success = true;
@@ -632,17 +637,17 @@ public class IndicesService extends AbstractLifecycleComponent<IndicesService> i
      * given index. If the index uses a shared filesystem this method always
      * returns false.
      * @param index {@code Index} to check whether deletion is allowed
-     * @param indexSettings {@code IndexSettings} for the given index, can be null iff closed is true
+     * @param indexSettings {@code IndexSettings} for the given index
+     * @param indexIsDeleted true if the index has been delete from the cluster
      * @return true if the index can be deleted on this node
      */
-    public boolean canDeleteIndexContents(Index index, IndexSettings indexSettings, boolean closed) {
-        final IndexService indexService = indexService(index);
+    boolean canDeleteIndexContents(Index index, IndexSettings indexSettings, boolean indexIsDeleted) {
         // Closed indices may be deleted, even if they are on a shared
-        // filesystem. Since it is closed we aren't deleting it for relocation
-        if (closed || indexSettings.isOnSharedFilesystem() == false) {
+        // filesystem. Since it is indexIsDeleted we aren't deleting it for relocation
+        if (indexIsDeleted || indexSettings.isOnSharedFilesystem() == false) {
+            final IndexService indexService = indexService(index);
             if (indexService == null && nodeEnv.hasNodeFile()) {
-                // if none of the index paths exist for the index, its already been deleted and/or doesn't exist
-                return FileSystemUtils.exists(nodeEnv.indexPaths(index));
+                return true;
             }
         } else {
             logger.trace("{} skipping index directory deletion due to shadow replicas", index);
@@ -654,24 +659,18 @@ public class IndicesService extends AbstractLifecycleComponent<IndicesService> i
      * Verify that the contents on disk for the given index is deleted; if not, delete the contents if allowed.
      * @param index {@code Index} to make sure its deleted from disk
      * @param clusterState the current {@code ClusterState}
-     * @return true if the index contents is deleted on this node
      */
-    public boolean tryDeleteIndexContents(final Index index, final ClusterState clusterState) {
-        boolean success = false;
-        if (canDeleteIndexContents(index, null, false)) {
+    public void verifyIndexIsDeleted(final Index index, final ClusterState clusterState) {
+        if (nodeEnv.hasNodeFile() && FileSystemUtils.exists(nodeEnv.indexPaths(index))) {
+            final IndexMetaData metaData;
             try {
-                final IndexMetaData metaData = metaStateService.loadIndexState(index);
-                deleteClosedIndex("deleted index was not assigned to local node", metaData, clusterState);
-                success = true;
+                metaData = metaStateService.loadIndexState(index);
             } catch (IOException e) {
-               success = false;
+                logger.warn("[{}] failed to load state file from a stale deleted index, folders will be left on disk", e, index);
+                return;
             }
+            deleteUnassignedIndex("stale deleted index", metaData, clusterState);
         }
-        if (success == false) {
-            logger.warn("[{}] Deletion request unsuccessful, likely scenario is an index was " +
-                        "created and deleted while the node was offline.", index);
-        }
-        return success;
     }
 
     /**
