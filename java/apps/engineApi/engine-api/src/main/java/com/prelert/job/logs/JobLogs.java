@@ -337,11 +337,11 @@ public class JobLogs
      * return as a byte array.
      *
      * @param logDirectory The directory containing the log files
-     * @param jobId The zip file will contain a directory with this name
+     * @param root The zip file contents will be in a directory with this name
      * @return
      * @throws UnknownJobException
      */
-    public byte[] zippedLogFiles(File logDirectory, String jobId)
+    public byte[] zippedLogFiles(File logDirectory, String root)
     throws UnknownJobException
     {
         File[] listOfFiles = logDirectory.listFiles();
@@ -350,7 +350,7 @@ public class JobLogs
         {
             String msg = Messages.getMessage(Messages.LOGFILE_MISSING_DIRECTORY, logDirectory);
             LOGGER.error(msg);
-            throw new UnknownJobException(jobId, msg, ErrorCodes.CANNOT_OPEN_DIRECTORY);
+            throw new UnknownJobException(root, msg, ErrorCodes.CANNOT_OPEN_DIRECTORY);
         }
 
         ByteArrayOutputStream byteos = new ByteArrayOutputStream();
@@ -359,36 +359,10 @@ public class JobLogs
             byte [] buffer = new byte[65536];
 
             // add a directory
-            zos.putNextEntry(new ZipEntry(jobId + "/"));
+            zos.putNextEntry(new ZipEntry(root + "/"));
 
 
-            for (File file : listOfFiles)
-            {
-                try
-                {
-                    FileInputStream in = new FileInputStream(file);
-                    ZipEntry entry = new ZipEntry(jobId + "/" + file.getName());
-                    zos.putNextEntry(entry);
-
-                    int len;
-                    while ((len = in.read(buffer)) > 0)
-                    {
-                        zos.write(buffer, 0, len);
-                    }
-
-                    in.close();
-                    zos.closeEntry();
-                }
-                catch (FileNotFoundException e)
-                {
-                    LOGGER.error("Missing log file '" + file
-                            + "' will not be added to zipped logs file");
-                }
-                catch (IOException e)
-                {
-                    LOGGER.error("Error zipping log file", e);
-                }
-            }
+            addFiles(root, listOfFiles, zos, buffer);
 
             zos.finish();
 
@@ -399,6 +373,43 @@ public class JobLogs
         }
 
         return byteos.toByteArray();
+    }
+
+    private void addFiles(String root, File[] listOfFiles, ZipOutputStream zos,
+            byte[] buffer)
+    {
+        for (File file : listOfFiles)
+        {
+            if (file.isDirectory())
+            {
+                addFiles(root + "/" + file.getName(), file.listFiles(), zos, buffer);
+            }
+
+            try
+            {
+                FileInputStream in = new FileInputStream(file);
+                ZipEntry entry = new ZipEntry(root + "/" + file.getName());
+                zos.putNextEntry(entry);
+
+                int len;
+                while ((len = in.read(buffer)) > 0)
+                {
+                    zos.write(buffer, 0, len);
+                }
+
+                in.close();
+                zos.closeEntry();
+            }
+            catch (FileNotFoundException e)
+            {
+                LOGGER.error("Missing log file '" + file
+                        + "' will not be added to zipped logs file");
+            }
+            catch (IOException e)
+            {
+                LOGGER.error("Error zipping log file", e);
+            }
+        }
     }
 
 

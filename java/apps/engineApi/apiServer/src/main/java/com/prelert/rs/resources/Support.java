@@ -27,8 +27,7 @@
 package com.prelert.rs.resources;
 
 import java.io.BufferedReader;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -44,10 +43,14 @@ import org.apache.log4j.Logger;
 
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.errorcodes.ErrorCodes;
+import com.prelert.job.logs.JobLogs;
 import com.prelert.job.messages.Messages;
 import com.prelert.job.process.ProcessCtrl;
 import com.prelert.rs.data.ApiError;
 
+/**
+ * The support endpoint
+ */
 @Path("support")
 public class Support {
     private static final Logger LOGGER = Logger.getLogger(Support.class);
@@ -57,8 +60,10 @@ public class Support {
      */
     public static final String SUPPORT = "support";
 
+
     /**
-     *
+     * Run the support bundle script returning the generated files & logs
+     * as a compressed binary stream.
      */
     @GET
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
@@ -94,11 +99,11 @@ public class Support {
 
         try
         {
-            return Response.ok(new FileInputStream(ProcessCtrl.SUPPORT_BUNDLE_TARGET))
-                    .header("Content-Disposition", "attachment; filename=\"support_bundle.tar.bz2\"")
+            return Response.ok(zippedLogFiles())
+                    .header("Content-Disposition", "attachment; filename=\"prelert_support_bundle.zip\"")
                     .build();
         }
-        catch (FileNotFoundException e)
+        catch (UnknownJobException e)
         {
             LOGGER.error("Support bundle output not found", e);
 
@@ -109,6 +114,11 @@ public class Support {
         }
     }
 
+    private byte[] zippedLogFiles() throws UnknownJobException
+    {
+        JobLogs logs = new JobLogs();
+        return logs.zippedLogFiles(new File(ProcessCtrl.LOG_DIR), "prelert_support_bundle" );
+    }
 
     private Response buildErrorResponse(String message, String cause)
     {
