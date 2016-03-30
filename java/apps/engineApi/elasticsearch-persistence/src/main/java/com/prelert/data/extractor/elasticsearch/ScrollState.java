@@ -110,7 +110,6 @@ class ScrollState
 
     public void forceComplete()
     {
-        m_ScrollId = null;
         m_IsComplete = true;
     }
 
@@ -131,7 +130,6 @@ class ScrollState
     {
         if (stream == null)
         {
-            m_ScrollId = null;
             m_IsComplete = true;
             return null;
         }
@@ -171,7 +169,7 @@ class ScrollState
         if (m_ScrollId == null)
         {
             throw new IOException("Field '_scroll_id' was expected but not found in response:\n"
-                    + HttpGetResponse.getStreamAsString(pushbackStream));
+                    + HttpResponse.getStreamAsString(pushbackStream));
         }
         return pushbackStream;
     }
