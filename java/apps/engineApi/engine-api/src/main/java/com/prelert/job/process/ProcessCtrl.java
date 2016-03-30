@@ -122,6 +122,10 @@ public class ProcessCtrl
      */
     public static final String CONFIG_DIR;
     /**
+     * The bin directory. Equivalent to $PRELERT_HOME/bin
+     */
+    public static final String BIN_DIR;
+    /**
      * The full to the autodetect program
      */
     public static final String AUTODETECT_PATH;
@@ -169,6 +173,14 @@ public class ProcessCtrl
      * Solaris library path variable
      */
     private static final String SOLARIS_LIB_PATH_ENV = "LD_LIBRARY_PATH_64";
+    /**
+     * Executable script to create the support bundle
+     */
+    public static final String SUPPORT_BUNDLE_CMD;
+    /**
+     * The no archive arg for the support bundle command
+     */
+    public static final String NO_ARCHIVE_ARG = "--no-archive";
 
     /*
      * General arguments
@@ -269,10 +281,11 @@ public class ProcessCtrl
         MAX_ANOMALY_RECORDS_ARG = "--maxAnomalyRecords=" + maxNumRecords;
 
         PRELERT_HOME = prelertHome;
-        File executable = new File(new File(PRELERT_HOME, "bin"), AUTODETECT_API);
+        BIN_DIR = new File(PRELERT_HOME, "bin").getPath();
+        File executable = new File(BIN_DIR, AUTODETECT_API);
         AUTODETECT_PATH = executable.getPath();
 
-        executable = new File(new File(PRELERT_HOME, "bin"), NORMALIZE_API);
+        executable = new File(BIN_DIR, NORMALIZE_API);
         NORMALIZE_PATH = executable.getPath();
 
         if (logPath != null)
@@ -317,20 +330,16 @@ public class ProcessCtrl
 
         // Support bundle command
         String bundleScript = null;
-        String bundleFile = null;
         if (SystemUtils.IS_OS_WINDOWS)
         {
             bundleScript = "prelert_support_bundle.ps1";
-            bundleFile = "prelert_support_bundle.zip";
         }
         else
         {
             bundleScript = "prelert_support_bundle.sh";
-            bundleFile = "prelert_support_bundle.tar.bz2";
         }
 
         SUPPORT_BUNDLE_CMD = new File(BIN_DIR, bundleScript).getPath();
-        SUPPORT_BUNDLE_DIR = new File(PRELERT_HOME, "bundle").getPath();
     }
 
     private ProcessCtrl()

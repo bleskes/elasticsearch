@@ -76,13 +76,13 @@ public class Support {
         try
         {
             proc = Runtime.getRuntime().exec(new String [] {ProcessCtrl.SUPPORT_BUNDLE_CMD,
-                                            ProcessCtrl.SUPPORT_BUNDLE_DIR});
+                                            ProcessCtrl.NO_ARCHIVE_ARG});
             int exitValue = proc.waitFor();
             if (exitValue != 0)
             {
                 return buildErrorResponse(
                         Messages.getMessage(Messages.SUPPORT_BUNDLE_SCRIPT_ERROR,
-                             ProcessCtrl.SUPPORT_BUNDLE_CMD + " " + ProcessCtrl.SUPPORT_BUNDLE_DIR),
+                             ProcessCtrl.SUPPORT_BUNDLE_CMD + " " + ProcessCtrl.NO_ARCHIVE_ARG),
                         readString(proc.getErrorStream()));
             }
         }
@@ -92,10 +92,9 @@ public class Support {
 
             return buildErrorResponse(
                     Messages.getMessage(Messages.SUPPORT_BUNDLE_SCRIPT_ERROR,
-                           ProcessCtrl.SUPPORT_BUNDLE_CMD + " " + ProcessCtrl.SUPPORT_BUNDLE_DIR),
+                           ProcessCtrl.SUPPORT_BUNDLE_CMD + " " + ProcessCtrl.NO_ARCHIVE_ARG),
                            e.toString());
         }
-
 
         try
         {
@@ -109,7 +108,7 @@ public class Support {
 
             return buildErrorResponse(
                     Messages.getMessage(Messages.SUPPORT_BUNDLE_SCRIPT_ERROR,
-                           ProcessCtrl.SUPPORT_BUNDLE_CMD + " " + ProcessCtrl.SUPPORT_BUNDLE_DIR),
+                           ProcessCtrl.SUPPORT_BUNDLE_CMD + " " + ProcessCtrl.NO_ARCHIVE_ARG),
                            e.toString());
         }
     }
@@ -130,7 +129,6 @@ public class Support {
                         .type(MediaType.APPLICATION_JSON)
                         .entity(error.toJson()).build();
     }
-
 
     private String readString(InputStream input) throws IOException
     {

@@ -28,7 +28,6 @@
 package com.prelert.job.logs;
 
 import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.DirectoryStream;
@@ -37,7 +36,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -167,21 +165,21 @@ public class ZipLogsTest
 
 	private void deleteDirectory(Path dir) throws IOException
 	{
-        DirectoryStream<Path> stream = Files.newDirectoryStream(dir);
-        for (Path p : stream)
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(dir))
         {
-            if (p.toFile().isDirectory())
+            for (Path p : stream)
             {
-                deleteDirectory(p);
-            }
-            if (p.toFile().isFile())
-            {
-                Files.delete(p);
+                if (p.toFile().isDirectory())
+                {
+                    deleteDirectory(p);
+                }
+                if (p.toFile().isFile())
+                {
+                    Files.delete(p);
+                }
             }
         }
 
         Files.delete(dir);
-
 	}
-
 }

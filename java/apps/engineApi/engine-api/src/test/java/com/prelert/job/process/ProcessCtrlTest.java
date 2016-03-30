@@ -185,16 +185,12 @@ public class ProcessCtrlTest
         if (System.getProperty("os.name").contains("Windows"))
         {
             assertEquals(ProcessCtrl.SUPPORT_BUNDLE_CMD,
-                    ProcessCtrl.PRELERT_HOME + "\\bin\\prelert_support_bundle.ps1");
-            assertEquals(ProcessCtrl.SUPPORT_BUNDLE_DIR,
-                    ProcessCtrl.PRELERT_HOME + "\\bundle");
+                    ProcessCtrl.BIN_DIR + "\\prelert_support_bundle.ps1");
         }
         else
         {
             assertEquals(ProcessCtrl.SUPPORT_BUNDLE_CMD,
-                    ProcessCtrl.PRELERT_HOME + "/bin/prelert_support_bundle.sh");
-            assertEquals(ProcessCtrl.SUPPORT_BUNDLE_DIR,
-                    ProcessCtrl.PRELERT_HOME + "/bundle");
+                    ProcessCtrl.BIN_DIR + "/prelert_support_bundle.sh");
         }
     }
 }
