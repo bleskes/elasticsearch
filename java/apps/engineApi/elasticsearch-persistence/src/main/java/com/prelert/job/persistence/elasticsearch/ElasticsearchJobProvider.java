@@ -72,7 +72,6 @@ import org.elasticsearch.search.sort.SortOrder;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationConfig;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.prelert.job.CategorizerState;
 import com.prelert.job.JobDetails;
@@ -1191,7 +1190,6 @@ public class ElasticsearchJobProvider implements JobProvider
     private Quantiles createQuantiles(String jobId, GetResponse response)
     {
         Quantiles quantiles = m_ObjectMapper.convertValue(response.getSource(), Quantiles.class);
-        Object state = response.getSource().get(Quantiles.QUANTILE_STATE);
         if (quantiles.getQuantileState() == null)
         {
             LOGGER.error("Inconsistency - no " + Quantiles.QUANTILE_STATE

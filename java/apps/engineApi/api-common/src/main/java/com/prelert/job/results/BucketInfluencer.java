@@ -17,7 +17,6 @@
  ***************************************************************************/
 package com.prelert.job.results;
 
-import java.util.Date;
 import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
