@@ -171,7 +171,7 @@ class ScrollState
         if (m_ScrollId == null)
         {
             throw new IOException("Field '_scroll_id' was expected but not found in response:\n"
-                    + HttpGetResponse.getStreamAsString(pushbackStream));
+                    + HttpResponse.getStreamAsString(pushbackStream));
         }
         return pushbackStream;
     }

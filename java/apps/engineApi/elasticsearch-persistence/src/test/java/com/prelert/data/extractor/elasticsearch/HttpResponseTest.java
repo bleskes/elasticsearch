@@ -40,13 +40,13 @@ import java.nio.charset.StandardCharsets;
 
 import org.junit.Test;
 
-public class HttpGetResponseTest
+public class HttpResponseTest
 {
     @Test
     public void testGetResponseAsStream() throws IOException
     {
         InputStream stream = new ByteArrayInputStream("foo\nbar".getBytes(StandardCharsets.UTF_8));
-        HttpGetResponse response = new HttpGetResponse(stream, 200);
+        HttpResponse response = new HttpResponse(stream, 200);
 
         assertEquals("foo\nbar", response.getResponseAsString());
         assertEquals(200, response.getResponseCode());
@@ -56,7 +56,7 @@ public class HttpGetResponseTest
     public void testGetResponseAsStream_GivenStreamThrows() throws IOException
     {
         InputStream stream = mock(InputStream.class);
-        HttpGetResponse response = new HttpGetResponse(stream, 200);
+        HttpResponse response = new HttpResponse(stream, 200);
 
         try
         {

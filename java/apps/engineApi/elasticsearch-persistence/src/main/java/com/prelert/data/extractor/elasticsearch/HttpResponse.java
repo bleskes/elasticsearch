@@ -34,14 +34,14 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.stream.Collectors;
 
-class HttpGetResponse
+class HttpResponse
 {
     private static final String NEW_LINE = "\n";
 
     private final InputStream m_Stream;
     private final int m_ResponseCode;
 
-    public HttpGetResponse(InputStream responseStream, int responseCode)
+    public HttpResponse(InputStream responseStream, int responseCode)
     {
         m_Stream = responseStream;
         m_ResponseCode = responseCode;

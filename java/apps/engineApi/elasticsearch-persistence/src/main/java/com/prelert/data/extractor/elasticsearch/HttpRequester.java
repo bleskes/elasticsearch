@@ -48,13 +48,13 @@ import org.apache.log4j.Logger;
 
 
 /**
- * Gets data from an HTTP or HTTPS URL by sending a request body.
+ * Executes requests from an HTTP or HTTPS URL by sending a request body.
  * HTTP or HTTPS is deduced from the supplied URL.
  * Invalid certificates are tolerated for HTTPS access, similar to "curl -k".
  */
-class HttpGetRequester
+class HttpRequester
 {
-    private static final Logger LOGGER = Logger.getLogger(HttpGetRequester.class);
+    private static final Logger LOGGER = Logger.getLogger(HttpRequester.class);
 
     private static final String TLS = "TLS";
     private static final String GET = "GET";
@@ -121,7 +121,7 @@ class HttpGetRequester
         TRUSTING_HOSTNAME_VERIFIER = new NoOpHostnameVerifier();
     }
 
-    public HttpGetResponse get(String url, String authHeader, String requestBody) throws IOException
+    public HttpResponse get(String url, String authHeader, String requestBody) throws IOException
     {
         URL urlObject = new URL(url);
         HttpURLConnection connection = (HttpURLConnection) urlObject.openConnection();
@@ -151,9 +151,9 @@ class HttpGetRequester
         writeRequestBody(requestBody, connection);
         if (connection.getResponseCode() != OK_STATUS)
         {
-            return new HttpGetResponse(connection.getErrorStream(), connection.getResponseCode());
+            return new HttpResponse(connection.getErrorStream(), connection.getResponseCode());
         }
-        return new HttpGetResponse(connection.getInputStream(), connection.getResponseCode());
+        return new HttpResponse(connection.getInputStream(), connection.getResponseCode());
     }
 
     private static void writeRequestBody(String requestBody, HttpURLConnection connection)

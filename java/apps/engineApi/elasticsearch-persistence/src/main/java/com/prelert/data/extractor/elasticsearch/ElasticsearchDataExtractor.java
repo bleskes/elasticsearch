@@ -95,7 +95,7 @@ public class ElasticsearchDataExtractor implements DataExtractor
     private static final int UNAGGREGATED_SCROLL_SIZE = 1000;
     private static final String CONTINUE_SCROLL_END_POINT = "_search/scroll?scroll=60m";
 
-    private final HttpGetRequester m_HttpGetRequester;
+    private final HttpRequester m_HttpRequester;
     private final String m_BaseUrl;
     private final String m_AuthHeader;
     private final List<String> m_Indices;
@@ -108,10 +108,10 @@ public class ElasticsearchDataExtractor implements DataExtractor
     private volatile String m_EndTime;
     private volatile Logger m_Logger;
 
-    ElasticsearchDataExtractor(HttpGetRequester httpGetRequester, String baseUrl, String authHeader,
+    ElasticsearchDataExtractor(HttpRequester httpRequester, String baseUrl, String authHeader,
             List<String> indices, List<String> types, String search, String aggregations, String timeField)
     {
-        m_HttpGetRequester = Objects.requireNonNull(httpGetRequester);
+        m_HttpRequester = Objects.requireNonNull(httpRequester);
         m_BaseUrl = Objects.requireNonNull(baseUrl);
         m_AuthHeader = authHeader;
         m_Indices = Objects.requireNonNull(indices);
@@ -126,7 +126,7 @@ public class ElasticsearchDataExtractor implements DataExtractor
     public static ElasticsearchDataExtractor create(String baseUrl, String authHeader,
             List<String> indices, List<String> types, String search, String aggregations, String timeField)
     {
-        return new ElasticsearchDataExtractor(new HttpGetRequester(), baseUrl, authHeader, indices, types,
+        return new ElasticsearchDataExtractor(new HttpRequester(), baseUrl, authHeader, indices, types,
                 search, aggregations, timeField);
     }
 
@@ -181,7 +181,7 @@ public class ElasticsearchDataExtractor implements DataExtractor
         String url = buildInitScrollUrl();
         String searchBody = createSearchBody();
         m_Logger.trace("About to submit body " + searchBody + " to URL " + url);
-        HttpGetResponse response = m_HttpGetRequester.get(url, m_AuthHeader, searchBody);
+        HttpResponse response = m_HttpRequester.get(url, m_AuthHeader, searchBody);
         if (response.getResponseCode() != OK_STATUS)
         {
             throw new IOException("Request '" + url + "' failed with status code: "
@@ -233,7 +233,7 @@ public class ElasticsearchDataExtractor implements DataExtractor
         {
             StringBuilder urlBuilder = newUrlBuilder();
             urlBuilder.append(CONTINUE_SCROLL_END_POINT);
-            HttpGetResponse response = m_HttpGetRequester.get(urlBuilder.toString(), m_AuthHeader,
+            HttpResponse response = m_HttpRequester.get(urlBuilder.toString(), m_AuthHeader,
                     m_ScrollState.getScrollId());
             if (response.getResponseCode() == OK_STATUS)
             {
