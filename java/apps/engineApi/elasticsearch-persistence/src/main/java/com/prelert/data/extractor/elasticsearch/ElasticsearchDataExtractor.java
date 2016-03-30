@@ -96,8 +96,9 @@ public class ElasticsearchDataExtractor implements DataExtractor
     private static final String SLASH = "/";
     private static final String COMMA = ",";
     private static final int UNAGGREGATED_SCROLL_SIZE = 1000;
-    private static final String SEARCH_SCROLL_TEMPLATE = "_search?scroll=60m&size=%d";
-    private static final String CONTINUE_SCROLL_END_POINT = "_search/scroll?scroll=60m";
+    private static final int SCROLL_CONTEXT_MINUTES = 60;
+    private static final String SEARCH_SCROLL_TEMPLATE = "_search?scroll=" + SCROLL_CONTEXT_MINUTES + "m&size=%d";
+    private static final String CONTINUE_SCROLL_END_POINT = "_search/scroll?scroll=" + SCROLL_CONTEXT_MINUTES + "m";
     private static final String CLEAR_SCROLL_END_POINT = "_search/scroll";
 
     private final HttpRequester m_HttpRequester;
