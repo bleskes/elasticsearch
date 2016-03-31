@@ -18,6 +18,7 @@
 package com.prelert.job;
 
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -510,6 +511,27 @@ public class JobDetails
     public void setCustomSettings(Map<String, Object> customSettings)
     {
         m_CustomSettings = customSettings;
+    }
+
+    /**
+     * Get a list of all input data fields mentioned in the job configuration.
+     * @return the list of fields - never <code>null</code>
+     */
+    public List<String> allFields()
+    {
+        List<String> allFields = (m_AnalysisConfig != null) ?
+                m_AnalysisConfig.analysisFields() : new ArrayList<>();
+
+        if (m_DataDescription != null)
+        {
+            String timeField = m_DataDescription.getTimeField();
+            if (timeField != null && !timeField.isEmpty())
+            {
+                allFields.add(timeField);
+            }
+        }
+
+        return allFields;
     }
 
     /**

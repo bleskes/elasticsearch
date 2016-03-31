@@ -94,6 +94,7 @@ public final class SchedulerConfigVerifier
         checkFieldIsNull(dataSource, SchedulerConfig.ENCRYPTED_PASSWORD, config.getEncryptedPassword());
         checkFieldIsNull(dataSource, SchedulerConfig.INDEXES, config.getIndexes());
         checkFieldIsNull(dataSource, SchedulerConfig.TYPES, config.getTypes());
+        checkFieldIsNull(dataSource, SchedulerConfig.RETRIEVE_WHOLE_SOURCE, config.getRetrieveWholeSource());
         checkFieldIsNull(dataSource, SchedulerConfig.AGGREGATIONS, config.getAggregations());
         checkFieldIsNull(dataSource, SchedulerConfig.QUERY, config.getQuery());
     }

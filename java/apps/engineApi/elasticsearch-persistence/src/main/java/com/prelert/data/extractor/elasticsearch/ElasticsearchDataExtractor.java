@@ -41,6 +41,9 @@ import java.util.stream.Collectors;
 
 import org.apache.log4j.Logger;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import com.prelert.job.data.extraction.DataExtractor;
 
 public class ElasticsearchDataExtractor implements DataExtractor
@@ -86,6 +89,7 @@ public class ElasticsearchDataExtractor implements DataExtractor
             + "}";
 
     private static final String AGGREGATION_TEMPLATE = ",  %s";
+    private static final String FIELDS_TEMPLATE = ",  \"fields\": %s";
     private static final String CLEAR_SCROLL_TEMPLATE = "{\"scroll_id\":[\"%s\"]}";
 
     private static final int OK_STATUS = 200;
@@ -104,6 +108,7 @@ public class ElasticsearchDataExtractor implements DataExtractor
     private final List<String> m_Types;
     private final String m_Search;
     private final String m_Aggregations;
+    private final List<String> m_Fields;
     private final String m_TimeField;
     private final ScrollState m_ScrollState;
     private volatile String m_StartTime;
@@ -111,7 +116,8 @@ public class ElasticsearchDataExtractor implements DataExtractor
     private volatile Logger m_Logger;
 
     ElasticsearchDataExtractor(HttpRequester httpRequester, String baseUrl, String authHeader,
-            List<String> indices, List<String> types, String search, String aggregations, String timeField)
+            List<String> indices, List<String> types, String search, String aggregations,
+            List<String> fields, String timeField)
     {
         m_HttpRequester = Objects.requireNonNull(httpRequester);
         m_BaseUrl = Objects.requireNonNull(baseUrl);
@@ -120,16 +126,18 @@ public class ElasticsearchDataExtractor implements DataExtractor
         m_Types = Objects.requireNonNull(types);
         m_Search = Objects.requireNonNull(search);
         m_Aggregations = aggregations;
+        m_Fields = fields;
         m_TimeField = Objects.requireNonNull(timeField);
         m_ScrollState =  m_Aggregations == null ? ScrollState.createDefault()
                 : ScrollState.createAggregated();
     }
 
     public static ElasticsearchDataExtractor create(String baseUrl, String authHeader,
-            List<String> indices, List<String> types, String search, String aggregations, String timeField)
+            List<String> indices, List<String> types, String search, String aggregations,
+            List<String> fields, String timeField)
     {
         return new ElasticsearchDataExtractor(new HttpRequester(), baseUrl, authHeader, indices, types,
-                search, aggregations, timeField);
+                search, aggregations, fields, timeField);
     }
 
     @Override
@@ -240,12 +248,31 @@ public class ElasticsearchDataExtractor implements DataExtractor
     {
         return String.format(SEARCH_BODY_TEMPLATE,
                 m_TimeField, m_Search, m_TimeField, m_StartTime, m_EndTime,
-                createAggregations());
+                createResultsFormatSpec());
+    }
+
+    private String createResultsFormatSpec()
+    {
+        return (m_Aggregations != null) ? createAggregations() :
+                ((m_Fields != null) ? createFieldDataFields() : "");
     }
 
     private String createAggregations()
     {
-        return (m_Aggregations != null) ? String.format(AGGREGATION_TEMPLATE, m_Aggregations) : "";
+        return String.format(AGGREGATION_TEMPLATE, m_Aggregations);
+    }
+
+    private String createFieldDataFields()
+    {
+        try
+        {
+            return String.format(FIELDS_TEMPLATE, new ObjectMapper().writeValueAsString(m_Fields));
+        }
+        catch (JsonProcessingException e)
+        {
+            m_Logger.error("Could not convert field list to JSON: " + m_Fields, e);
+        }
+        return "";
     }
 
     private InputStream continueScroll() throws IOException

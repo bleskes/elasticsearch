@@ -64,6 +64,7 @@ public class ElasticsearchDataExtractorTest
     @Mock private Logger m_Logger;
 
     private String m_Aggregations;
+    private List<String> m_Fields;
 
     private ElasticsearchDataExtractor m_Extractor;
 
@@ -443,6 +444,139 @@ public class ElasticsearchDataExtractorTest
     }
 
     @Test
+    public void testDataExtractionWithFields() throws IOException
+    {
+        m_Fields = Arrays.asList("id");
+
+        String initialResponse = "{"
+                + "\"_scroll_id\":\"c2Nhbjs2OzM0NDg1ODpzRlBLc0FXNlNyNm5JWUc1\","
+                + "\"took\":17,"
+                + "\"timed_out\":false,"
+                + "\"_shards\":{"
+                + "  \"total\":1,"
+                + "  \"successful\":1,"
+                + "  \"failed\":0"
+                + "},"
+                + "\"hits\":{"
+                + "  \"total\":1437,"
+                + "  \"max_score\":null,"
+                + "  \"hits\":["
+                + "    \"_index\":\"dataIndex\","
+                + "    \"_type\":\"dataType\","
+                + "    \"_id\":\"1403481600\","
+                + "    \"_score\":null,"
+                + "    \"fields\":{"
+                + "      \"id\":[\"1403481600\"]"
+                + "    }"
+                + "  ]"
+                + "}"
+                + "}";
+
+        String scrollResponse = "{"
+                + "\"_scroll_id\":\"secondScrollId\","
+                + "\"took\":8,"
+                + "\"timed_out\":false,"
+                + "\"_shards\":{"
+                + "  \"total\":1,"
+                + "  \"successful\":1,"
+                + "  \"failed\":0"
+                + "},"
+                + "\"hits\":{"
+                + "  \"total\":1437,"
+                + "  \"max_score\":null,"
+                + "  \"hits\":["
+                + "    \"_index\":\"dataIndex\","
+                + "    \"_type\":\"dataType\","
+                + "    \"_id\":\"1403782200\","
+                + "    \"_score\":null,"
+                + "    \"fields\":{"
+                + "      \"id\":[\"1403782200\"]"
+                + "    }"
+                + "  ]"
+                + "}"
+                + "}";
+
+        String scrollEndResponse = "{"
+                + "\"_scroll_id\":\"thirdScrollId\","
+                + "\"took\":8,"
+                + "\"timed_out\":false,"
+                + "\"_shards\":{"
+                + "  \"total\":1,"
+                + "  \"successful\":1,"
+                + "  \"failed\":0"
+                + "},"
+                + "\"hits\":{"
+                + "  \"total\":1437,"
+                + "  \"max_score\":null,"
+                + "  \"hits\":[]"
+                + "}"
+                + "}";
+
+        List<HttpResponse> responses = Arrays.asList(
+                new HttpResponse(toStream(initialResponse), 200),
+                new HttpResponse(toStream(scrollResponse), 200),
+                new HttpResponse(toStream(scrollEndResponse), 200));
+
+        MockHttpRequester requester = new MockHttpRequester(responses);
+        createExtractor(requester);
+
+        m_Extractor.newSearch(1400000000L, 1500000000L, m_Logger);
+
+        assertTrue(m_Extractor.hasNext());
+        assertEquals(initialResponse, streamToString(m_Extractor.next().get()));
+        assertTrue(m_Extractor.hasNext());
+        assertEquals(scrollResponse, streamToString(m_Extractor.next().get()));
+        assertTrue(m_Extractor.hasNext());
+        assertFalse(m_Extractor.next().isPresent());
+        assertFalse(m_Extractor.hasNext());
+
+        requester.assertEqualRequestsToResponses();
+
+        RequestParams firstRequestParams = requester.getGetRequestParams(0);
+        assertEquals("http://localhost:9200/dataIndex/dataType/_search?scroll=60m&size=1000", firstRequestParams.url);
+        String expectedSearchBody = "{"
+                + "  \"sort\": ["
+                + "    {\"time\": {\"order\": \"asc\"}}"
+                + "  ],"
+                + "  \"query\": {"
+                + "    \"filtered\": {"
+                + "      \"filter\": {"
+                + "        \"bool\": {"
+                + "          \"must\": {"
+                + "            \"match_all\": {}"
+                + "          },"
+                + "          \"must\": {"
+                + "            \"range\": {"
+                + "              \"time\": {"
+                + "                \"gte\": \"1970-01-17T04:53:20.000Z\","
+                + "                \"lt\": \"1970-01-18T08:40:00.000Z\","
+                + "                \"format\": \"date_time\""
+                + "              }"
+                + "            }"
+                + "          }"
+                + "        }"
+                + "      }"
+                + "    }"
+                + "  },"
+                + "  \"fields\": [\"id\"]"
+                + "}";
+        assertEquals(expectedSearchBody, firstRequestParams.requestBody);
+
+        RequestParams secondRequestParams = requester.getGetRequestParams(1);
+        assertEquals("http://localhost:9200/_search/scroll?scroll=60m", secondRequestParams.url);
+        assertEquals("c2Nhbjs2OzM0NDg1ODpzRlBLc0FXNlNyNm5JWUc1", secondRequestParams.requestBody);
+
+        RequestParams thirdRequestParams = requester.getGetRequestParams(2);
+        assertEquals("http://localhost:9200/_search/scroll?scroll=60m", thirdRequestParams.url);
+        assertEquals("secondScrollId", thirdRequestParams.requestBody);
+
+        assertEquals("http://localhost:9200/_search/scroll", requester.getDeleteRequestParams(0).url);
+        assertEquals("{\"scroll_id\":[\"thirdScrollId\"]}",
+                requester.getDeleteRequestParams(0).requestBody);
+        assertEquals(1, requester.m_DeleteRequestParams.size());
+    }
+
+    @Test
     public void testDataExtractionWithAggregations() throws IOException
     {
         m_Aggregations = "{\"aggs\":{\"my-aggs\": {\"terms\":{\"field\":\"foo\"}}}}";
@@ -574,7 +708,7 @@ public class ElasticsearchDataExtractorTest
     private void createExtractor(MockHttpRequester httpRequester)
     {
         m_Extractor = new ElasticsearchDataExtractor(httpRequester, BASE_URL, null, INDICES, TYPES,
-                SEARCH, m_Aggregations, TIME_FIELD);
+                SEARCH, m_Aggregations, m_Fields, TIME_FIELD);
     }
 
     private static class MockHttpRequester extends HttpRequester

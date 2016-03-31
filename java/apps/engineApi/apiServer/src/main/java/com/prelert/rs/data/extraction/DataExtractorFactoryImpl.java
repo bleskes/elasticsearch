@@ -78,6 +78,7 @@ public class DataExtractorFactoryImpl implements DataExtractorFactory
                 schedulerConfig.getIndexes(), schedulerConfig.getTypes(),
                 stringifyElasticsearchQuery(schedulerConfig.getQuery()),
                 stringifyElasticsearchAggregations(schedulerConfig.getAggregations(), schedulerConfig.getAggs()),
+                Boolean.TRUE.equals(schedulerConfig.getRetrieveWholeSource()) ? null : job.allFields(),
                 timeField);
     }
 
