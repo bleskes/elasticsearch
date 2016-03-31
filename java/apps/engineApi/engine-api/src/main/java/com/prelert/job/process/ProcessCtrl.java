@@ -282,11 +282,11 @@ public class ProcessCtrl
         else
         {
             File logDir = new File(PRELERT_HOME, "logs");
-            LOG_DIR = logDir.toString();
+            LOG_DIR = logDir.getPath();
         }
 
         File configDir = new File(PRELERT_HOME, "config");
-        CONFIG_DIR = configDir.toString();
+        CONFIG_DIR = configDir.getPath();
 
         String libSubDirectory = "lib";
         if (SystemUtils.IS_OS_MAC_OSX)
@@ -504,7 +504,7 @@ public class ProcessCtrl
             File limitConfigFile = File.createTempFile("limitconfig", CONF_EXTENSION);
             filesToDelete.add(limitConfigFile);
             writeLimits(job.getAnalysisLimits(), limitConfigFile);
-            String limits = LIMIT_CONFIG_ARG + limitConfigFile.toString();
+            String limits = LIMIT_CONFIG_ARG + limitConfigFile.getPath();
             command.add(limits);
         }
 
@@ -513,13 +513,13 @@ public class ProcessCtrl
             File modelDebugConfigFile = File.createTempFile("modeldebugconfig", CONF_EXTENSION);
             filesToDelete.add(modelDebugConfigFile);
             writeModelDebugConfig(job.getModelDebugConfig(), modelDebugConfigFile);
-            String modelDebugConfig = MODEL_DEBUG_CONFIG_ARG + modelDebugConfigFile.toString();
+            String modelDebugConfig = MODEL_DEBUG_CONFIG_ARG + modelDebugConfigFile.getPath();
             command.add(modelDebugConfig);
         }
 
         if (modelConfigFilePresent())
         {
-            String modelConfigFile = new File(CONFIG_DIR, PRELERT_MODEL_CONF).toString();
+            String modelConfigFile = new File(CONFIG_DIR, PRELERT_MODEL_CONF).getPath();
             command.add(MODEL_CONFIG_ARG + modelConfigFile);
         }
 
@@ -549,7 +549,7 @@ public class ProcessCtrl
                 new FieldConfigWriter(job.getAnalysisConfig(), osw, logger).write();
             }
 
-            String fieldConfig = FIELD_CONFIG_ARG + fieldConfigFile.toString();
+            String fieldConfig = FIELD_CONFIG_ARG + fieldConfigFile.getPath();
             command.add(fieldConfig);
         }
 
@@ -723,7 +723,7 @@ public class ProcessCtrl
 
         if (modelConfigFilePresent())
         {
-            String modelConfigFile = new File(CONFIG_DIR, PRELERT_MODEL_CONF).toString();
+            String modelConfigFile = new File(CONFIG_DIR, PRELERT_MODEL_CONF).getPath();
             command.add(MODEL_CONFIG_ARG + modelConfigFile);
         }
 
@@ -765,7 +765,7 @@ public class ProcessCtrl
                                                 QUANTILES_FILE_EXTENSION);
 
         try (OutputStreamWriter osw = new OutputStreamWriter(
-                new FileOutputStream(stateFile.toString()),
+                new FileOutputStream(stateFile.toFile().getPath()),
                 StandardCharsets.UTF_8))
         {
             osw.write(state);
