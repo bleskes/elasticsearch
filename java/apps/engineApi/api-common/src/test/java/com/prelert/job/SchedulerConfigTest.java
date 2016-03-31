@@ -187,7 +187,10 @@ public class SchedulerConfigTest
 
         schedulerConfig.fillDefaults();
 
-        assertEquals(new SchedulerConfig(), schedulerConfig);
+        SchedulerConfig expectedSchedulerConfig = new SchedulerConfig();
+        expectedSchedulerConfig.setTailFile(false);
+
+        assertEquals(expectedSchedulerConfig, schedulerConfig);
     }
 
     @Test
@@ -197,11 +200,13 @@ public class SchedulerConfigTest
         originalSchedulerConfig.setDataSource(DataSource.ELASTICSEARCH);
         originalSchedulerConfig.setQuery(new HashMap<String, Object>());
         originalSchedulerConfig.setQueryDelay(30L);
+        originalSchedulerConfig.setRetrieveWholeSource(true);
 
         SchedulerConfig defaultedSchedulerConfig = new SchedulerConfig();
         defaultedSchedulerConfig.setDataSource(DataSource.ELASTICSEARCH);
         defaultedSchedulerConfig.setQuery(new HashMap<String, Object>());
         defaultedSchedulerConfig.setQueryDelay(30L);
+        defaultedSchedulerConfig.setRetrieveWholeSource(true);
 
         defaultedSchedulerConfig.fillDefaults();
 
@@ -217,6 +222,7 @@ public class SchedulerConfigTest
         defaultQuery.put("match_all", new HashMap<String, Object>());
         expectedSchedulerConfig.setQuery(defaultQuery);
         expectedSchedulerConfig.setQueryDelay(60L);
+        expectedSchedulerConfig.setRetrieveWholeSource(false);
 
         SchedulerConfig defaultedSchedulerConfig = new SchedulerConfig();
         defaultedSchedulerConfig.setDataSource(DataSource.ELASTICSEARCH);

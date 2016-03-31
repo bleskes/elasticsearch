@@ -93,6 +93,52 @@ public class SimpleJsonRecordReaderTest
         assertEquals(-1, reader.read(record, gotFields));
     }
 
+    @Test
+    public void testRead_GivenSingleValueArrays() throws JsonParseException, IOException, MalformedJsonException
+    {
+        String data = "{\"a\":[10], \"b\":20, \"c\":{\"d\":30, \"e\":[40]}}";
+        JsonParser parser = createParser(data);
+        Map<String, Integer> fieldMap = new HashMap<>();
+        fieldMap.put("a", 0);
+        fieldMap.put("b", 1);
+        fieldMap.put("c.e", 2);
+
+        SimpleJsonRecordReader reader = new SimpleJsonRecordReader(parser, fieldMap, "", mock(Logger.class));
+
+        String record [] = new String[3];
+        boolean gotFields [] = new boolean[3];
+
+        assertEquals(4, reader.read(record, gotFields));
+        assertEquals("10", record[0]);
+        assertEquals("20", record[1]);
+        assertEquals("40", record[2]);
+
+        assertEquals(-1, reader.read(record, gotFields));
+    }
+
+    @Test
+    public void testRead_GivenMultiValueArrays() throws JsonParseException, IOException, MalformedJsonException
+    {
+        String data = "{\"a\":[10, 11], \"b\":20, \"c\":{\"d\":30, \"e\":[40, 50]}}";
+        JsonParser parser = createParser(data);
+        Map<String, Integer> fieldMap = new HashMap<>();
+        fieldMap.put("a", 0);
+        fieldMap.put("b", 1);
+        fieldMap.put("c.e", 2);
+
+        SimpleJsonRecordReader reader = new SimpleJsonRecordReader(parser, fieldMap, "", mock(Logger.class));
+
+        String record [] = new String[3];
+        boolean gotFields [] = new boolean[3];
+
+        assertEquals(2, reader.read(record, gotFields));
+        assertEquals("", record[0]);
+        assertEquals("20", record[1]);
+        assertEquals("", record[2]);
+
+        assertEquals(-1, reader.read(record, gotFields));
+    }
+
     /**
      * There's a problem with the parser where in this case it skips over the first 2 records
      * instead of to the end of the first record which is invalid json.

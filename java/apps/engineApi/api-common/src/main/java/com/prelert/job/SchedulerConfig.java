@@ -38,7 +38,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
  * data from.
  * <p>
  * If a value has not been set it will be <code>null</code>.
- * Object wrappers are used around integral types &amp; booleans so they can take
+ * Object wrappers are used around integral types and booleans so they can take
  * <code>null</code> values.
  */
 @JsonInclude(Include.NON_NULL)
@@ -98,6 +98,7 @@ public class SchedulerConfig implements PasswordStorage
     public static final String QUERY = "query";
     public static final String AGGREGATIONS = "aggregations";
     public static final String AGGS = "aggs";
+    public static final String RETRIEVE_WHOLE_SOURCE = "retrieveWholeSource";
 
     private static final long DEFAULT_ELASTICSEARCH_QUERY_DELAY = 60L;
 
@@ -136,6 +137,7 @@ public class SchedulerConfig implements PasswordStorage
     private Map<String, Object> m_Query;
     private Map<String, Object> m_Aggregations;
     private Map<String, Object> m_Aggs;
+    private Boolean m_RetrieveWholeSource;
 
     /**
      * Default constructor
@@ -319,6 +321,21 @@ public class SchedulerConfig implements PasswordStorage
     }
 
     /**
+     * For the ELASTICSEARCH data source only, should the whole _source document
+     * be retrieved for analysis, or just the analysis fields?
+     * @return Should the whole of _source be retrieved?  (<code>null</code> if not set.)
+     */
+    public Boolean getRetrieveWholeSource()
+    {
+        return m_RetrieveWholeSource;
+    }
+
+    public void setRetrieveWholeSource(Boolean retrieveWholeSource)
+    {
+        m_RetrieveWholeSource = retrieveWholeSource;
+    }
+
+    /**
      * For the ELASTICSEARCH data source only, optional Elasticsearch
      * aggregations to apply to the search to be submitted to Elasticsearch to
      * get the input data.  This class does not attempt to interpret the
@@ -420,6 +437,7 @@ public class SchedulerConfig implements PasswordStorage
                 fillElasticsearchDefaults();
                 break;
             case FILE:
+                fillFileDefaults();
                 break;
             default:
                 throw new IllegalStateException();
@@ -436,6 +454,18 @@ public class SchedulerConfig implements PasswordStorage
         if (m_QueryDelay == null)
         {
             m_QueryDelay = DEFAULT_ELASTICSEARCH_QUERY_DELAY;
+        }
+        if (m_RetrieveWholeSource == null)
+        {
+            m_RetrieveWholeSource = false;
+        }
+    }
+
+    private void fillFileDefaults()
+    {
+        if (m_TailFile == null)
+        {
+            m_TailFile = false;
         }
     }
 
@@ -471,6 +501,7 @@ public class SchedulerConfig implements PasswordStorage
                 Objects.equals(this.m_Indexes, that.m_Indexes) &&
                 Objects.equals(this.m_Types, that.m_Types) &&
                 Objects.equals(this.m_Query, that.m_Query) &&
+                Objects.equals(this.m_RetrieveWholeSource, that.m_RetrieveWholeSource) &&
                 Objects.equals(this.getAggregationsOrAggs(), that.getAggregationsOrAggs());
     }
 
@@ -479,6 +510,6 @@ public class SchedulerConfig implements PasswordStorage
     {
         return Objects.hash(m_DataSource, m_Frequency, m_QueryDelay, m_FilePath,
                 m_TailFile, m_BaseUrl, m_Username, m_Password, m_EncryptedPassword,
-                m_Indexes, m_Types, m_Query, m_Aggregations, m_Aggs);
+                m_Indexes, m_Types, m_Query, m_RetrieveWholeSource, getAggregationsOrAggs());
     }
 }

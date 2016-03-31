@@ -226,6 +226,7 @@ public final class ReservedFieldNames
         SchedulerConfig.INDEXES,
         SchedulerConfig.TYPES,
         SchedulerConfig.QUERY,
+        SchedulerConfig.RETRIEVE_WHOLE_SOURCE,
         SchedulerConfig.AGGREGATIONS,
         SchedulerConfig.AGGS,
 

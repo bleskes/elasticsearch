@@ -62,7 +62,8 @@ import com.prelert.job.transform.TransformConfigs;
  */
 class JsonDataToProcessWriter extends AbstractDataToProcessWriter
 {
-    private static final String ELASTICSEARCH_RECORD_HOLDING_FIELD = "_source";
+    private static final String ELASTICSEARCH_SOURCE_FIELD = "_source";
+    private static final String ELASTICSEARCH_FIELDS_FIELD = "fields";
 
     /**
      * Scheduler config.  May be <code>null</code>.
@@ -164,11 +165,18 @@ class JsonDataToProcessWriter extends AbstractDataToProcessWriter
     {
         if (m_DataDescription.getFormat().equals(DataFormat.ELASTICSEARCH))
         {
-            if (m_SchedulerConfig != null && m_SchedulerConfig.getAggregationsOrAggs() != null)
+            if (m_SchedulerConfig != null)
             {
-                return SchedulerConfig.AGGREGATIONS;
+                if (m_SchedulerConfig.getAggregationsOrAggs() != null)
+                {
+                    return SchedulerConfig.AGGREGATIONS;
+                }
+                if (!Boolean.TRUE.equals(m_SchedulerConfig.getRetrieveWholeSource()))
+                {
+                    return ELASTICSEARCH_FIELDS_FIELD;
+                }
             }
-            return ELASTICSEARCH_RECORD_HOLDING_FIELD;
+            return ELASTICSEARCH_SOURCE_FIELD;
         }
         return "";
     }

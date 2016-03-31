@@ -135,6 +135,8 @@ class SimpleJsonRecordReader extends AbstractJsonRecordReader
             return;
         }
 
+        String fieldValue = null;
+
         if (token == JsonToken.START_OBJECT)
         {
             ++m_NestedLevel;
@@ -143,17 +145,44 @@ class SimpleJsonRecordReader extends AbstractJsonRecordReader
         }
         else if (token == JsonToken.START_ARRAY)
         {
-            // consume the whole array but do nothing with it
+            // Consume the whole array.  If it contains one scalar element, treat
+            // the array as a scalar with that value.  If it contains more than
+            // one element, or an object, completely ignore the array.
+            int count = 0;
             while (token != JsonToken.END_ARRAY)
             {
                 token = tryNextTokenOrReadToEndOnError();
+                ++count;
+                if (token == JsonToken.VALUE_STRING
+                        || token == JsonToken.VALUE_NUMBER_INT
+                        || token == JsonToken.VALUE_NUMBER_FLOAT
+                        || token == JsonToken.VALUE_FALSE
+                        || token == JsonToken.VALUE_TRUE)
+                {
+                    if (count == 1)
+                    {
+                        fieldValue = m_Parser.getText();
+                    }
+                }
+            }
+            // 2 means scalar followed by end array token
+            if (count > 2)
+            {
+                fieldValue = null;
             }
         }
-        else
+        else if (token == JsonToken.VALUE_STRING
+                || token == JsonToken.VALUE_NUMBER_INT
+                || token == JsonToken.VALUE_NUMBER_FLOAT
+                || token == JsonToken.VALUE_FALSE
+                || token == JsonToken.VALUE_TRUE)
+        {
+            fieldValue = m_Parser.getText();
+        }
+
+        if (fieldValue != null)
         {
             ++m_FieldCount;
-
-            String fieldValue = m_Parser.getText();
 
             Integer index = m_FieldMap.get(m_NestedPrefix + fieldName);
             if (index != null)

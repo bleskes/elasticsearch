@@ -76,6 +76,8 @@ public class JobDetailsTest
         assertNull(jobDetails.getResultsRetentionDays());
         assertNull(jobDetails.getSchedulerConfig());
         assertNull(jobDetails.getTransforms());
+        assertNotNull(jobDetails.allFields());
+        assertTrue(jobDetails.allFields().isEmpty());
     }
 
     @Test

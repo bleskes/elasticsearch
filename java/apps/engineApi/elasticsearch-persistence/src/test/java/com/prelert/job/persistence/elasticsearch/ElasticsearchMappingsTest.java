@@ -292,6 +292,9 @@ public class ElasticsearchMappingsTest
                         "            \"type\": \"string\"," +
                         "            \"index\": \"not_analyzed\"" +
                         "          }," +
+                        "          \"retrieveWholeSource\": {" +
+                        "            \"type\": \"boolean\"" +
+                        "          }," +
                         "          \"query\": {" +
                         "            \"type\": \"object\"" +
                         "          }," +
