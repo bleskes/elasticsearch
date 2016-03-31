@@ -141,7 +141,7 @@ public class ElasticsearchMappings
                         .field(ANALYZER, WHITESPACE)
                     .endObject()
                     .startObject(PROPERTIES)
-                        .startObject(JobDetails.ID)
+                        .startObject(ElasticsearchPersister.JOB_ID_NAME)
                             .field(TYPE, STRING).field(INDEX, NOT_ANALYZED)
                         .endObject()
                         // "description" is analyzed so that it has the same

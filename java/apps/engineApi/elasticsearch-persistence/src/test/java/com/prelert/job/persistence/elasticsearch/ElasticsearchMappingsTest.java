@@ -46,7 +46,7 @@ public class ElasticsearchMappingsTest
                         "      \"analyzer\":\"whitespace\"" +
                         "    }," +
                         "    \"properties\": {" +
-                        "      \"id\": {" +
+                        "      \"jobId\": {" +
                         "        \"type\": \"string\"," +
                         "        \"index\": \"not_analyzed\"" +
                         "      }," +

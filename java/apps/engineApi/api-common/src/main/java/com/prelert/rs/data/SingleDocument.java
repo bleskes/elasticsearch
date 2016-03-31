@@ -29,7 +29,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
  *
  * @param <T> the requested document type
  */
-@JsonPropertyOrder({"documentId", "exists", "type", "document"})
+@JsonPropertyOrder({"exists", "type", "document"})
 @JsonInclude(Include.NON_NULL)
 public class SingleDocument<T>
 {
@@ -49,7 +49,7 @@ public class SingleDocument<T>
 
     public void setExists(boolean exists)
     {
-        this.m_Exists = exists;
+        m_Exists = exists;
     }
 
     /**
@@ -63,7 +63,7 @@ public class SingleDocument<T>
 
     public void setType(String type)
     {
-        this.m_Type = type;
+        m_Type = type;
     }
 
     /**

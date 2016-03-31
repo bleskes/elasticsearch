@@ -158,14 +158,12 @@ public final class ReservedFieldNames
         Influence.INFLUENCER_FIELD_NAME,
         Influence.INFLUENCER_FIELD_VALUES,
 
-        Influencer.ID,
         Influencer.PROBABILITY,
         Influencer.INFLUENCER_FIELD_NAME,
         Influencer.INFLUENCER_FIELD_VALUE,
         Influencer.INITIAL_ANOMALY_SCORE,
         Influencer.ANOMALY_SCORE,
 
-        JobDetails.ID,
         // JobDetails.DESCRIPTION is not reserved because it is an analyzed string
         // JobDetails.STATUS is not reserved because it is an analyzed string
         JobDetails.SCHEDULER_STATUS,

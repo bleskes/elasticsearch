@@ -26,6 +26,7 @@ import java.util.function.Consumer;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonView;
 import com.prelert.job.transform.TransformConfig;
 
 /**
@@ -56,7 +57,6 @@ public class JobDetails
     public static final String DESCRIPTION = "description";
     public static final String ENDPOINTS = "endpoints";
     public static final String FINISHED_TIME = "finishedTime";
-    public static final String ID = "id";
     public static final String IGNORE_DOWNTIME = "ignoreDowntime";
     public static final String LAST_DATA_TIME = "lastDataTime";
     public static final String MODEL_DEBUG_CONFIG = "modelDebugConfig";
@@ -77,7 +77,6 @@ public class JobDetails
     public static final String DATA_ENDPOINT_KEY = "data";
     public static final String LOGS_ENDPOINT_KEY = "logs";
     public static final String RECORDS_ENDPOINT_KEY = "records";
-
 
     private String m_JobId;
     private String m_Description;
@@ -160,9 +159,11 @@ public class JobDetails
     }
 
     /**
-     * Return the Job Id
+     * Return the Job Id.
+     * This name is preferred when serialising to the REST API.
      * @return The job Id string
      */
+    @JsonView(JsonViews.RestApiView.class)
     public String getId()
     {
         return m_JobId;
@@ -179,6 +180,30 @@ public class JobDetails
     public void setId(String id)
     {
         m_JobId = id;
+    }
+
+    /**
+     * Return the Job Id.
+     * This name is preferred when serialising to the data store.
+     * @return The job Id string
+     */
+    @JsonView(JsonViews.DatastoreView.class)
+    public String getJobId()
+    {
+        return m_JobId;
+    }
+
+    /**
+     * Set the job's Id.
+     * In general this method should not be used as the Id does not change
+     * once set. This method is provided for the Jackson object mapper to
+     * de-serialise this class from Json.
+     *
+     * @param jobId the job id
+     */
+    public void setJobId(String jobId)
+    {
+        m_JobId = jobId;
     }
 
     /**

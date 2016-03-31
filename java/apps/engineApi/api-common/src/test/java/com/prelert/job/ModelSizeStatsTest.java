@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -37,7 +37,7 @@ public class ModelSizeStatsTest
     public void testDefaultConstructor()
     {
         ModelSizeStats stats = new ModelSizeStats();
-        assertEquals("modelSizeStats", stats.getId());
+        assertEquals("modelSizeStats", stats.getModelSizeStatsId());
         assertEquals(0, stats.getModelBytes());
         assertEquals(0, stats.getTotalByFieldCount());
         assertEquals(0, stats.getTotalOverFieldCount());
@@ -47,13 +47,13 @@ public class ModelSizeStatsTest
     }
 
     @Test
-    public void testSetId_DoesNothing()
+    public void testSetModelSizeStatsId_DoesNothing()
     {
         ModelSizeStats stats = new ModelSizeStats();
 
-        stats.setId("foo");
+        stats.setModelSizeStatsId("foo");
 
-        assertEquals("modelSizeStats", stats.getId());
+        assertEquals("modelSizeStats", stats.getModelSizeStatsId());
     }
 
     @Test

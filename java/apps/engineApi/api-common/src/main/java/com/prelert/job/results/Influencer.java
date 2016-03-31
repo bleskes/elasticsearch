@@ -34,7 +34,6 @@ public class Influencer
     /*
      * Field names
      */
-    public static final String ID = "id";
     public static final String PROBABILITY = "probability";
     public static final String TIMESTAMP = "timestamp";
     public static final String INFLUENCER_FIELD_NAME = "influencerFieldName";
@@ -42,6 +41,7 @@ public class Influencer
     public static final String INITIAL_ANOMALY_SCORE = "initialAnomalyScore";
     public static final String ANOMALY_SCORE = "anomalyScore";
 
+    private String m_Id;
     private Date m_Timestamp;
     private String m_InfluenceField;
     private String m_InfluenceValue;
@@ -62,17 +62,17 @@ public class Influencer
     }
 
     /**
-     * ID is the concatenation of influencer field name and value and timestamp
-     * @return
+     * Data store ID of this record.  May be null for records that have not been
+     * read from the data store.
      */
     public String getId()
     {
-        return new StringBuilder(m_InfluenceField)
-                .append('_')
-                .append(m_InfluenceValue)
-                .append('_')
-                .append(m_Timestamp.getTime() / 1000)
-                .toString();
+        return m_Id;
+    }
+
+    public void setId(String id)
+    {
+        m_Id = id;
     }
 
     public double getProbability()
@@ -82,7 +82,7 @@ public class Influencer
 
     public void setProbability(double probability)
     {
-        this.m_Probability = probability;
+        m_Probability = probability;
     }
 
 
@@ -93,7 +93,7 @@ public class Influencer
 
     public void setTimestamp(Date date)
     {
-        this.m_Timestamp = date;
+        m_Timestamp = date;
     }
 
 
@@ -104,7 +104,7 @@ public class Influencer
 
     public void setInfluencerFieldName(String fieldName)
     {
-        this.m_InfluenceField = fieldName;
+        m_InfluenceField = fieldName;
     }
 
 
@@ -115,7 +115,7 @@ public class Influencer
 
     public void setInfluencerFieldValue(String fieldValue)
     {
-        this.m_InfluenceValue = fieldValue;
+        m_InfluenceValue = fieldValue;
     }
 
     public double getInitialAnomalyScore()
@@ -125,7 +125,7 @@ public class Influencer
 
     public void setInitialAnomalyScore(double influenceScore)
     {
-        this.m_InitialAnomalyScore = influenceScore;
+        m_InitialAnomalyScore = influenceScore;
     }
 
     public double getAnomalyScore()
@@ -167,6 +167,12 @@ public class Influencer
     @Override
     public int hashCode()
     {
+        // ID is NOT included in the hash, so that a record from the data store
+        // will hash the same as a record representing the same anomaly that did
+        // not come from the data store
+
+        // m_HadBigNormalisedUpdate is also deliberately excluded from the hash
+
         return Objects.hash(m_Timestamp, m_InfluenceField, m_InfluenceValue, m_InitialAnomalyScore,
                 m_AnomalyScore, m_Probability, m_IsInterim);
     }
@@ -191,6 +197,11 @@ public class Influencer
 
         Influencer other = (Influencer) obj;
 
+        // ID is NOT compared, so that a record from the data store will compare
+        // equal to a record representing the same anomaly that did not come
+        // from the data store
+
+        // m_HadBigNormalisedUpdate is also deliberately excluded from the test
         return Objects.equals(m_Timestamp, other.m_Timestamp) &&
                 Objects.equals(m_InfluenceField, other.m_InfluenceField) &&
                 Objects.equals(m_InfluenceValue, other.m_InfluenceValue) &&

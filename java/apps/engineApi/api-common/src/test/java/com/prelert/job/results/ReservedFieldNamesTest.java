@@ -55,8 +55,9 @@ public class ReservedFieldNamesTest
         assertFalse(ReservedFieldNames.RESERVED_FIELD_NAMES.contains("src"));
         assertFalse(ReservedFieldNames.RESERVED_FIELD_NAMES.contains("status"));
         assertFalse(ReservedFieldNames.RESERVED_FIELD_NAMES.contains("type"));
+        assertFalse(ReservedFieldNames.RESERVED_FIELD_NAMES.contains("id"));
 
-        // Ideally we'll get rid of this one day
-        assertTrue(ReservedFieldNames.RESERVED_FIELD_NAMES.contains("id"));
+        assertTrue(ReservedFieldNames.RESERVED_FIELD_NAMES.contains("jobId"));
+        assertTrue(ReservedFieldNames.RESERVED_FIELD_NAMES.contains("@timestamp"));
     }
 }

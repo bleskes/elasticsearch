@@ -144,9 +144,9 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
                     influencer.setTimestamp(bucket.getTimestamp());
                     content = serialiseInfluencer(influencer, bucket.isInterim());
                     LOGGER.trace("ES BULK ACTION: index type " + Influencer.TYPE +
-                            " to index " + m_JobId.getIndex() + " ID = " + influencer.getId());
+                            " to index " + m_JobId.getIndex() + " with auto-generated ID");
                     addInfluencersRequest.add(
-                            m_Client.prepareIndex(m_JobId.getIndex(), Influencer.TYPE, influencer.getId())
+                            m_Client.prepareIndex(m_JobId.getIndex(), Influencer.TYPE)
                             .setSource(content));
                 }
 
@@ -250,7 +250,8 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
     public void persistModelSizeStats(ModelSizeStats modelSizeStats)
     {
         Persistable persistable = new Persistable(modelSizeStats, () -> ModelSizeStats.TYPE,
-                () -> modelSizeStats.getId(), () -> serialiseModelSizeStats(modelSizeStats));
+                () -> modelSizeStats.getModelSizeStatsId(),
+                () -> serialiseModelSizeStats(modelSizeStats));
         persistable.persist();
 
         // Don't commit as we expect masses of these updates and they're only
@@ -354,11 +355,10 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
             {
                 XContentBuilder content = serialiseBucketInfluencerStandalone(bucketInfluencer,
                         bucketTime, isInterim);
-                String id = bucketInfluencer.getId(bucketTime);
                 LOGGER.trace("ES BULK ACTION: index type " + BucketInfluencer.TYPE +
-                        " to index " + m_JobId.getIndex() + " ID = " + id);
+                        " to index " + m_JobId.getIndex() + " with auto-generated ID");
                 addBucketInfluencersRequest.add(
-                        m_Client.prepareIndex(m_JobId.getIndex(), BucketInfluencer.TYPE, id)
+                        m_Client.prepareIndex(m_JobId.getIndex(), BucketInfluencer.TYPE)
                         .setSource(content));
             }
 
@@ -489,6 +489,10 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
             if (id != null)
             {
                 msg += " with ID " + m_IdSupplier.get();
+            }
+            else
+            {
+                msg += " with auto-generated ID";
             }
             LOGGER.trace(msg);
         }

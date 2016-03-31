@@ -31,24 +31,16 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.PushbackInputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.regex.Matcher;
 import java.util.stream.Collectors;
 
 import org.apache.log4j.Logger;
@@ -58,8 +50,6 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 
 public class ElasticsearchDataExtractorTest
 {
@@ -150,12 +140,12 @@ public class ElasticsearchDataExtractorTest
                 + "}"
                 + "}";
 
-        List<HttpGetResponse> responses = Arrays.asList(
-                new HttpGetResponse(toStream(initialResponse), 200),
-                new HttpGetResponse(toStream(scrollResponse), 200),
-                new HttpGetResponse(toStream(scrollEndResponse), 200));
+        List<HttpResponse> responses = Arrays.asList(
+                new HttpResponse(toStream(initialResponse), 200),
+                new HttpResponse(toStream(scrollResponse), 200),
+                new HttpResponse(toStream(scrollEndResponse), 200));
 
-        MockHttpGetRequester requester = new MockHttpGetRequester(responses);
+        MockHttpRequester requester = new MockHttpRequester(responses);
         createExtractor(requester);
 
         m_Extractor.newSearch(1400000000L, 1500000000L, m_Logger);
@@ -170,7 +160,7 @@ public class ElasticsearchDataExtractorTest
 
         requester.assertEqualRequestsToResponses();
 
-        RequestParams firstRequestParams = requester.getRequestParams(0);
+        RequestParams firstRequestParams = requester.getGetRequestParams(0);
         assertEquals("http://localhost:9200/dataIndex/dataType/_search?scroll=60m&size=1000", firstRequestParams.url);
         String expectedSearchBody = "{"
                 + "  \"sort\": ["
@@ -199,26 +189,184 @@ public class ElasticsearchDataExtractorTest
                 + "}";
         assertEquals(expectedSearchBody, firstRequestParams.requestBody);
 
-        RequestParams secondRequestParams = requester.getRequestParams(1);
+        RequestParams secondRequestParams = requester.getGetRequestParams(1);
         assertEquals("http://localhost:9200/_search/scroll?scroll=60m", secondRequestParams.url);
         assertEquals("c2Nhbjs2OzM0NDg1ODpzRlBLc0FXNlNyNm5JWUc1", secondRequestParams.requestBody);
 
-        RequestParams thirdRequestParams = requester.getRequestParams(2);
+        RequestParams thirdRequestParams = requester.getGetRequestParams(2);
         assertEquals("http://localhost:9200/_search/scroll?scroll=60m", thirdRequestParams.url);
         assertEquals("secondScrollId", thirdRequestParams.requestBody);
+
+        assertEquals("http://localhost:9200/_search/scroll", requester.getDeleteRequestParams(0).url);
+        assertEquals("{\"scroll_id\":[\"thirdScrollId\"]}",
+                requester.getDeleteRequestParams(0).requestBody);
+        assertEquals(1, requester.m_DeleteRequestParams.size());
     }
 
     @Test
-    public void testDataExtraction_GivenInitialResponseContainsNoScrollId() throws IOException
+    public void testDataExtraction_GivenInitialResponseContainsLongScrollId() throws IOException
+    {
+        StringBuilder scrollId = new StringBuilder();
+        for (int i = 0; i < 300 * 1024; i++)
+        {
+            scrollId.append("a");
+        }
+
+        String initialResponse = "{"
+                + "\"_scroll_id\":\""+ scrollId + "\","
+                + "\"took\":17,"
+                + "\"timed_out\":false,"
+                + "\"_shards\":{"
+                + "  \"total\":1,"
+                + "  \"successful\":1,"
+                + "  \"failed\":0"
+                + "},"
+                + "\"hits\":{"
+                + "  \"total\":1437,"
+                + "  \"max_score\":null,"
+                + "  \"hits\":["
+                + "    \"_index\":\"dataIndex\","
+                + "    \"_type\":\"dataType\","
+                + "    \"_id\":\"1403481600\","
+                + "    \"_score\":null,"
+                + "    \"_source\":{"
+                + "      \"id\":\"1403481600\""
+                + "    }"
+                + "  ]"
+                + "}"
+                + "}";
+
+        String scrollEndResponse = "{"
+                + "\"_scroll_id\":\""+ scrollId + "\","
+                + "\"took\":8,"
+                + "\"timed_out\":false,"
+                + "\"_shards\":{"
+                + "  \"total\":1,"
+                + "  \"successful\":1,"
+                + "  \"failed\":0"
+                + "},"
+                + "\"hits\":{"
+                + "  \"total\":1437,"
+                + "  \"max_score\":null,"
+                + "  \"hits\":[]"
+                + "}"
+                + "}";
+
+        List<HttpResponse> responses = Arrays.asList(
+                new HttpResponse(toStream(initialResponse), 200),
+                new HttpResponse(toStream(scrollEndResponse), 200));
+        MockHttpRequester requester = new MockHttpRequester(responses);
+        createExtractor(requester);
+
+        m_Extractor.newSearch(1400000000L, 1500000000L, m_Logger);
+
+        assertTrue(m_Extractor.hasNext());
+        m_Extractor.next();
+        assertTrue(m_Extractor.hasNext());
+        m_Extractor.next();
+        assertFalse(m_Extractor.hasNext());
+
+        assertEquals(scrollId.toString(), requester.getGetRequestParams(1).requestBody);
+    }
+
+    @Test
+    public void testDataExtraction_GivenInitialResponseContainsNoHitsAndNoScrollId() throws IOException
     {
         m_ExpectedException.expect(IOException.class);
         m_ExpectedException.expectMessage("Field '_scroll_id' was expected but not found in response:\n{}");
 
         String initialResponse = "{}";
-        HttpGetResponse httpGetResponse = new HttpGetResponse(
+        HttpResponse httpGetResponse = new HttpResponse(
                 toStream(initialResponse), 200);
-        List<HttpGetResponse> responses = Arrays.asList(httpGetResponse);
-        MockHttpGetRequester requester = new MockHttpGetRequester(responses);
+        List<HttpResponse> responses = Arrays.asList(httpGetResponse);
+        MockHttpRequester requester = new MockHttpRequester(responses);
+        createExtractor(requester);
+
+        m_Extractor.newSearch(1400000000L, 1500000000L, m_Logger);
+
+        assertTrue(m_Extractor.hasNext());
+        m_Extractor.next();
+    }
+
+    @Test
+    public void testDataExtraction_GivenInitialResponseContainsHitsButNoScrollId() throws IOException
+    {
+        String initialResponse = "{"
+                + "\"took\":17,"
+                + "\"timed_out\":false,"
+                + "\"_shards\":{"
+                + "  \"total\":1,"
+                + "  \"successful\":1,"
+                + "  \"failed\":0"
+                + "},"
+                + "\"hits\":{"
+                + "  \"total\":1437,"
+                + "  \"max_score\":null,"
+                + "  \"hits\":["
+                + "    \"_index\":\"dataIndex\","
+                + "    \"_type\":\"dataType\","
+                + "    \"_id\":\"1403481600\","
+                + "    \"_score\":null,"
+                + "    \"_source\":{"
+                + "      \"id\":\"1403481600\""
+                + "    }"
+                + "  ]"
+                + "}"
+                + "}";
+        m_ExpectedException.expect(IOException.class);
+        m_ExpectedException.expectMessage("Field '_scroll_id' was expected but not found in response:\n" + initialResponse);
+
+        HttpResponse httpGetResponse = new HttpResponse(
+                toStream(initialResponse), 200);
+        List<HttpResponse> responses = Arrays.asList(httpGetResponse);
+        MockHttpRequester requester = new MockHttpRequester(responses);
+        createExtractor(requester);
+
+        m_Extractor.newSearch(1400000000L, 1500000000L, m_Logger);
+
+        assertTrue(m_Extractor.hasNext());
+        m_Extractor.next();
+    }
+
+    @Test
+    public void testDataExtraction_GivenInitialResponseContainsTooLongScrollId() throws IOException
+    {
+        StringBuilder scrollId = new StringBuilder();
+        for (int i = 0; i < 1024 * 1024; i++)
+        {
+            scrollId.append("a");
+        }
+
+        String initialResponse = "{"
+                + "\"_scroll_id\":\""+ scrollId + "\","
+                + "\"took\":17,"
+                + "\"timed_out\":false,"
+                + "\"_shards\":{"
+                + "  \"total\":1,"
+                + "  \"successful\":1,"
+                + "  \"failed\":0"
+                + "},"
+                + "\"hits\":{"
+                + "  \"total\":1437,"
+                + "  \"max_score\":null,"
+                + "  \"hits\":["
+                + "    \"_index\":\"dataIndex\","
+                + "    \"_type\":\"dataType\","
+                + "    \"_id\":\"1403481600\","
+                + "    \"_score\":null,"
+                + "    \"_source\":{"
+                + "      \"id\":\"1403481600\""
+                + "    }"
+                + "  ]"
+                + "}"
+                + "}";
+        m_ExpectedException.expect(IOException.class);
+        m_ExpectedException.expectMessage("Field '_scroll_id' was expected but not found in response:\n" + initialResponse);
+
+        HttpResponse httpGetResponse = new HttpResponse(
+                toStream(initialResponse), 200);
+        List<HttpResponse> responses = Arrays.asList(httpGetResponse);
+        MockHttpRequester requester = new MockHttpRequester(responses);
         createExtractor(requester);
 
         m_Extractor.newSearch(1400000000L, 1500000000L, m_Logger);
@@ -235,9 +383,9 @@ public class ElasticsearchDataExtractorTest
                 "Request 'http://localhost:9200/dataIndex/dataType/_search?scroll=60m&size=1000' failed with status code: 500. Response was:\n{}");
 
         String initialResponse = "{}";
-        List<HttpGetResponse> responses = Arrays.asList(new HttpGetResponse(
+        List<HttpResponse> responses = Arrays.asList(new HttpResponse(
                 toStream(initialResponse), 500));
-        MockHttpGetRequester requester = new MockHttpGetRequester(responses);
+        MockHttpRequester requester = new MockHttpRequester(responses);
         createExtractor(requester);
 
         m_Extractor.newSearch(1400000000L, 1500000000L, m_Logger);
@@ -256,11 +404,12 @@ public class ElasticsearchDataExtractorTest
 
         String initialResponse = "{"
                 + "\"_scroll_id\":\"c2Nhbjs2OzM0NDg1ODpzRlBLc0FXNlNyNm5JWUc1\","
+                + "\"hits\":[..."
                 + "}";
-        List<HttpGetResponse> responses = Arrays.asList(
-                new HttpGetResponse(toStream(initialResponse), 200),
-                new HttpGetResponse(toStream("{}"), 500));
-        MockHttpGetRequester requester = new MockHttpGetRequester(responses);
+        List<HttpResponse> responses = Arrays.asList(
+                new HttpResponse(toStream(initialResponse), 200),
+                new HttpResponse(toStream("{}"), 500));
+        MockHttpRequester requester = new MockHttpRequester(responses);
         createExtractor(requester);
 
         m_Extractor.newSearch(1400000000L, 1500000000L, m_Logger);
@@ -280,9 +429,9 @@ public class ElasticsearchDataExtractorTest
                 + "\"_scroll_id\":\"c2Nhbjs2OzM0NDg1ODpzRlBLc0FXNlNyNm5JWUc1\","
                 + "\"hits\":[]"
                 + "}";
-        List<HttpGetResponse> responses = Arrays.asList(
-                new HttpGetResponse(toStream(initialResponse), 200));
-        MockHttpGetRequester requester = new MockHttpGetRequester(responses);
+        List<HttpResponse> responses = Arrays.asList(
+                new HttpResponse(toStream(initialResponse), 200));
+        MockHttpRequester requester = new MockHttpRequester(responses);
         createExtractor(requester);
 
         m_Extractor.newSearch(1400000000L, 1500000000L, m_Logger);
@@ -318,10 +467,10 @@ public class ElasticsearchDataExtractorTest
                 + "}"
                 + "}";
 
-        List<HttpGetResponse> responses = Arrays.asList(
-                new HttpGetResponse(toStream(initialResponse), 200));
+        List<HttpResponse> responses = Arrays.asList(
+                new HttpResponse(toStream(initialResponse), 200));
 
-        MockHttpGetRequester requester = new MockHttpGetRequester(responses);
+        MockHttpRequester requester = new MockHttpRequester(responses);
         createExtractor(requester);
 
         m_Extractor.newSearch(1400000000L, 1500000000L, m_Logger);
@@ -333,8 +482,8 @@ public class ElasticsearchDataExtractorTest
 
         requester.assertEqualRequestsToResponses();
 
-        assertEquals(1, requester.m_RequestParams.size());
-        RequestParams requestParams = requester.getRequestParams(0);
+        assertEquals(1, requester.m_GetRequestParams.size());
+        RequestParams requestParams = requester.getGetRequestParams(0);
         assertEquals("http://localhost:9200/dataIndex/dataType/_search?scroll=60m&size=0", requestParams.url);
         String expectedSearchBody = "{"
                 + "  \"sort\": ["
@@ -363,6 +512,11 @@ public class ElasticsearchDataExtractorTest
                 + "  {\"aggs\":{\"my-aggs\": {\"terms\":{\"field\":\"foo\"}}}}"
                 + "}";
         assertEquals(expectedSearchBody, requestParams.requestBody);
+
+        assertEquals("http://localhost:9200/_search/scroll", requester.getDeleteRequestParams(0).url);
+        assertEquals("{\"scroll_id\":[\"r2d2bjs2OzM0NDg1ODpzRlBLc0FXNlNyNm5JWUc1\"]}",
+                requester.getDeleteRequestParams(0).requestBody);
+        assertEquals(1, requester.m_DeleteRequestParams.size());
     }
 
     @Test
@@ -386,10 +540,10 @@ public class ElasticsearchDataExtractorTest
                 + "}"
                 + "}";
 
-        List<HttpGetResponse> responses = Arrays.asList(
-                new HttpGetResponse(toStream(initialResponse), 200));
+        List<HttpResponse> responses = Arrays.asList(
+                new HttpResponse(toStream(initialResponse), 200));
 
-        MockHttpGetRequester requester = new MockHttpGetRequester(responses);
+        MockHttpRequester requester = new MockHttpRequester(responses);
         createExtractor(requester);
 
         m_Extractor.newSearch(1400000000L, 1500000000L, m_Logger);
@@ -400,114 +554,9 @@ public class ElasticsearchDataExtractorTest
 
         requester.assertEqualRequestsToResponses();
 
-        assertEquals(1, requester.m_RequestParams.size());
-        RequestParams requestParams = requester.getRequestParams(0);
+        assertEquals(1, requester.m_GetRequestParams.size());
+        RequestParams requestParams = requester.getGetRequestParams(0);
         assertEquals("http://localhost:9200/dataIndex/dataType/_search?scroll=60m&size=0", requestParams.url);
-    }
-
-    @Test
-    public void testPeekAndMatchInStream() throws IOException
-    {
-        String initialResponse = "{"
-                + "\"_scroll_id\":\"c2Nhbjs2OzM0NDg1ODpzRlBLc0FXNlNyNm5JWUc1\","
-                + "\"took\":17,"
-                + "\"timed_out\":false,"
-                + "\"_shards\":{"
-                + "  \"total\":1,"
-                + "  \"successful\":1,"
-                + "  \"failed\":0"
-                + "},"
-                + "\"hits\":{"
-                + "  \"total\":1437,"
-                + "  \"max_score\":null,"
-                + "  \"hits\":["
-                + "    \"_index\":\"dataIndex\","
-                + "    \"_type\":\"dataType\","
-                + "    \"_id\":\"1403481600\","
-                + "    \"_score\":null,"
-                + "    \"_source\":{"
-                + "      \"id\":\"1403481600\""
-                + "    }"
-                + "  ]"
-                + "}"
-                + "}";
-        PushbackInputStream stream = new PushbackInputStream(toStream(initialResponse), 328);
-
-        Matcher matcher = ElasticsearchDataExtractor.peekAndMatchInStream(stream,
-                ElasticsearchDataExtractor.SCROLL_ID_PATTERN);
-
-        assertTrue(matcher.find());
-        assertEquals("c2Nhbjs2OzM0NDg1ODpzRlBLc0FXNlNyNm5JWUc1", matcher.group(1));
-        assertEquals(initialResponse, HttpGetResponse.getStreamAsString(stream));
-    }
-
-    @Test
-    public void testPeekAndMatchInStream_GivenStreamCannotBeReadAtOnce() throws IOException
-    {
-        String response = "{"
-                + "\"_scroll_id\":\"c2Nhbjs2OzM0NDg1ODpzRlBLc0FXNlNyNm5JWUc1\","
-                + "\"took\":17,"
-                + "\"timed_out\":false,"
-                + "\"_shards\":{"
-                + "  \"total\":1,"
-                + "  \"successful\":1,"
-                + "  \"failed\":0"
-                + "},"
-                + "\"hits\":{"
-                + "  \"total\":1437,"
-                + "  \"max_score\":null,"
-                + "  \"hits\":["
-                + "    \"_index\":\"dataIndex\","
-                + "    \"_type\":\"dataType\","
-                + "    \"_id\":\"1403481600\","
-                + "    \"_score\":null,"
-                + "    \"_source\":{"
-                + "      \"id\":\"1403481600\""
-                + "    }"
-                + "  ]"
-                + "}"
-                + "}";
-
-        // Imitate a stream that does not get fully read during the first read invocation
-        PushbackInputStream stream = mock(PushbackInputStream.class);
-        AtomicInteger invocationCount = new AtomicInteger(0);
-        when(stream.read(any(byte[].class), anyInt(), anyInt())).thenAnswer(new Answer<Integer>()
-        {
-            @Override
-            public Integer answer(InvocationOnMock invocation) throws Throwable
-            {
-                byte[] buffer = (byte[]) invocation.getArguments()[0];
-                int offset = (int) invocation.getArguments()[1];
-                int length = (int) invocation.getArguments()[2];
-                byte[] responseBytes = response.getBytes();
-                invocationCount.incrementAndGet();
-                if (invocationCount.get() == 1 && offset == 0 && length == 32768)
-                {
-                    System.arraycopy(responseBytes, 0, buffer, 0, 20);
-                    return 20;
-                }
-                else if (invocationCount.get() == 2  && offset == 20 && length == 32748)
-                {
-                    System.arraycopy(responseBytes, 20, buffer, 20, responseBytes.length - 20);
-                    return responseBytes.length - 20;
-                }
-                else if (invocationCount.get() == 3  && offset == responseBytes.length
-                        && length == (32768 - responseBytes.length))
-                {
-                    return -1;
-                }
-                else
-                {
-                    throw new RuntimeException("Unexpected invocation");
-                }
-            }
-        });
-
-        Matcher matcher = ElasticsearchDataExtractor.peekAndMatchInStream(stream,
-                ElasticsearchDataExtractor.SCROLL_ID_PATTERN);
-
-        assertTrue(matcher.find());
-        assertEquals("c2Nhbjs2OzM0NDg1ODpzRlBLc0FXNlNyNm5JWUc1", matcher.group(1));
     }
 
     private static InputStream toStream(String input)
@@ -522,29 +571,31 @@ public class ElasticsearchDataExtractorTest
         }
     }
 
-    private void createExtractor(MockHttpGetRequester httpGetRequester)
+    private void createExtractor(MockHttpRequester httpRequester)
     {
-        m_Extractor = new ElasticsearchDataExtractor(httpGetRequester, BASE_URL, null, INDICES, TYPES,
+        m_Extractor = new ElasticsearchDataExtractor(httpRequester, BASE_URL, null, INDICES, TYPES,
                 SEARCH, m_Aggregations, TIME_FIELD);
     }
 
-    private static class MockHttpGetRequester extends HttpGetRequester
+    private static class MockHttpRequester extends HttpRequester
     {
-        private List<HttpGetResponse> m_Responses;
+        private List<HttpResponse> m_Responses;
         private int m_RequestCount = 0;
         private int m_AuthRequestCount = 0;
-        private List<RequestParams> m_RequestParams;
+        private List<RequestParams> m_GetRequestParams;
+        private List<RequestParams> m_DeleteRequestParams;
 
-        public MockHttpGetRequester(List<HttpGetResponse> responses)
+        public MockHttpRequester(List<HttpResponse> responses)
         {
             m_Responses = responses;
-            m_RequestParams = new ArrayList<>(responses.size());
+            m_GetRequestParams = new ArrayList<>(responses.size());
+            m_DeleteRequestParams = new ArrayList<>();
         }
 
         @Override
-        public HttpGetResponse get(String url, String authHeader, String requestBody)
+        public HttpResponse get(String url, String authHeader, String requestBody)
         {
-            m_RequestParams.add(new RequestParams(url, requestBody));
+            m_GetRequestParams.add(new RequestParams(url, requestBody));
             if (authHeader != null)
             {
                 ++m_AuthRequestCount;
@@ -552,14 +603,26 @@ public class ElasticsearchDataExtractorTest
             return m_Responses.get(m_RequestCount++);
         }
 
-        public RequestParams getRequestParams(int callCount)
+        @Override
+        public HttpResponse delete(String url, String authHeader, String requestBody)
         {
-            return m_RequestParams.get(callCount);
+            m_DeleteRequestParams.add(new RequestParams(url, requestBody));
+            return null;
+        }
+
+        public RequestParams getGetRequestParams(int callCount)
+        {
+            return m_GetRequestParams.get(callCount);
+        }
+
+        public RequestParams getDeleteRequestParams(int callCount)
+        {
+            return m_DeleteRequestParams.get(callCount);
         }
 
         public void assertEqualRequestsToResponses()
         {
-            assertEquals(m_Responses.size(), m_RequestParams.size());
+            assertEquals(m_Responses.size(), m_GetRequestParams.size());
         }
     }
 

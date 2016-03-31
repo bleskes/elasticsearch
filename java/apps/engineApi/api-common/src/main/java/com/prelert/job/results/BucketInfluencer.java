@@ -17,7 +17,6 @@
  ***************************************************************************/
 package com.prelert.job.results;
 
-import java.util.Date;
 import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -56,18 +55,6 @@ public class BucketInfluencer
 
     public BucketInfluencer()
     {
-    }
-
-    /**
-     * ID is the concatenation of influencer field and timestamp
-     * @return
-     */
-    public String getId(Date bucketTime)
-    {
-        return new StringBuilder(m_InfluenceField)
-                .append('_')
-                .append(bucketTime.getTime() / 1000)
-                .toString();
     }
 
     public double getProbability()
