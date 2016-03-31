@@ -43,7 +43,6 @@ import org.apache.log4j.Logger;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
 import com.prelert.job.data.extraction.DataExtractor;
 
 public class ElasticsearchDataExtractor implements DataExtractor
@@ -111,8 +110,8 @@ public class ElasticsearchDataExtractor implements DataExtractor
     private final List<String> m_Fields;
     private final String m_TimeField;
     private final ScrollState m_ScrollState;
-    private volatile String m_StartTime;
-    private volatile String m_EndTime;
+    private volatile long m_StartTime;
+    private volatile long m_EndTime;
     private volatile Logger m_Logger;
 
     ElasticsearchDataExtractor(HttpRequester httpRequester, String baseUrl, String authHeader,
@@ -144,19 +143,12 @@ public class ElasticsearchDataExtractor implements DataExtractor
     public void newSearch(long startEpochMs, long endEpochMs, Logger logger)
     {
         m_ScrollState.reset();
-        m_StartTime = formatAsDateTime(startEpochMs);
-        m_EndTime = formatAsDateTime(endEpochMs);
+        m_StartTime = startEpochMs;
+        m_EndTime = endEpochMs;
         m_Logger = logger;
 
         m_Logger.info("Requesting data from '" + m_BaseUrl + "' within [" + startEpochMs + ", "
                 + endEpochMs + ")");
-    }
-
-    private static String formatAsDateTime(long epochMs)
-    {
-        Instant instant = Instant.ofEpochMilli(epochMs);
-        ZonedDateTime dateTime = ZonedDateTime.ofInstant(instant, ZoneOffset.UTC);
-        return dateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX"));
     }
 
     @Override
@@ -246,8 +238,8 @@ public class ElasticsearchDataExtractor implements DataExtractor
 
     private String createSearchBody()
     {
-        return String.format(SEARCH_BODY_TEMPLATE,
-                m_TimeField, m_Search, m_TimeField, m_StartTime, m_EndTime,
+        return String.format(SEARCH_BODY_TEMPLATE, m_TimeField, m_Search, m_TimeField,
+                formatAsDateTime(m_StartTime), formatAsDateTime(m_EndTime),
                 createResultsFormatSpec());
     }
 
@@ -255,6 +247,13 @@ public class ElasticsearchDataExtractor implements DataExtractor
     {
         return (m_Aggregations != null) ? createAggregations() :
                 ((m_Fields != null) ? createFieldDataFields() : "");
+    }
+
+    private static String formatAsDateTime(long epochMs)
+    {
+        Instant instant = Instant.ofEpochMilli(epochMs);
+        ZonedDateTime dateTime = ZonedDateTime.ofInstant(instant, ZoneOffset.UTC);
+        return dateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX"));
     }
 
     private String createAggregations()
