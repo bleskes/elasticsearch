@@ -384,30 +384,32 @@ public class JobLogs
             {
                 addFiles(root + "/" + file.getName(), file.listFiles(), zos, buffer);
             }
-
-            try
+            else
             {
-                FileInputStream in = new FileInputStream(file);
-                ZipEntry entry = new ZipEntry(root + "/" + file.getName());
-                zos.putNextEntry(entry);
-
-                int len;
-                while ((len = in.read(buffer)) > 0)
+                try
                 {
-                    zos.write(buffer, 0, len);
-                }
+                    FileInputStream in = new FileInputStream(file);
+                    ZipEntry entry = new ZipEntry(root + "/" + file.getName());
+                    zos.putNextEntry(entry);
 
-                in.close();
-                zos.closeEntry();
-            }
-            catch (FileNotFoundException e)
-            {
-                LOGGER.error("Missing log file '" + file
-                        + "' will not be added to zipped logs file");
-            }
-            catch (IOException e)
-            {
-                LOGGER.error("Error zipping log file", e);
+                    int len;
+                    while ((len = in.read(buffer)) > 0)
+                    {
+                        zos.write(buffer, 0, len);
+                    }
+
+                    in.close();
+                    zos.closeEntry();
+                }
+                catch (FileNotFoundException e)
+                {
+                    LOGGER.error("Missing log file '" + file
+                            + "' will not be added to zipped logs file");
+                }
+                catch (IOException e)
+                {
+                    LOGGER.error("Error zipping log file", e);
+                }
             }
         }
     }
