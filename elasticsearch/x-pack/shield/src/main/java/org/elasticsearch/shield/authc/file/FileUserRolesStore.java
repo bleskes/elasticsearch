@@ -15,7 +15,7 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.shield.authc.esusers;
+package org.elasticsearch.shield.authc.file;
 
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.common.Strings;
@@ -193,7 +193,7 @@ public class FileUserRolesStore {
         }
 
         if (usersRoles.isEmpty()) {
-            logger.warn("no entries found in users_roles file [{}]. use bin/xpack/esusers to add users and role mappings", path
+            logger.warn("no entries found in users_roles file [{}]. use bin/xpack/users to add users and role mappings", path
                     .toAbsolutePath());
         }
 

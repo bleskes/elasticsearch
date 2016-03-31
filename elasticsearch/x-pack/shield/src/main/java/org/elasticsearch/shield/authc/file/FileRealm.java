@@ -15,7 +15,7 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.shield.authc.esusers;
+package org.elasticsearch.shield.authc.file;
 
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.settings.Settings;
@@ -32,14 +32,14 @@ import org.elasticsearch.watcher.ResourceWatcherService;
 /**
  *
  */
-public class ESUsersRealm extends CachingUsernamePasswordRealm {
+public class FileRealm extends CachingUsernamePasswordRealm {
 
-    public static final String TYPE = "esusers";
+    public static final String TYPE = "file";
 
     final FileUserPasswdStore userPasswdStore;
     final FileUserRolesStore userRolesStore;
 
-    public ESUsersRealm(RealmConfig config, FileUserPasswdStore userPasswdStore, FileUserRolesStore userRolesStore) {
+    public FileRealm(RealmConfig config, FileUserPasswdStore userPasswdStore, FileUserRolesStore userRolesStore) {
         super(TYPE, config);
         Listener listener = new Listener();
         this.userPasswdStore = userPasswdStore;
@@ -79,7 +79,7 @@ public class ESUsersRealm extends CachingUsernamePasswordRealm {
         }
     }
 
-    public static class Factory extends UsernamePasswordRealm.Factory<ESUsersRealm> {
+    public static class Factory extends UsernamePasswordRealm.Factory<FileRealm> {
 
         private final Settings settings;
         private final Environment env;
@@ -94,13 +94,13 @@ public class ESUsersRealm extends CachingUsernamePasswordRealm {
         }
 
         @Override
-        public ESUsersRealm create(RealmConfig config) {
-            return new ESUsersRealm(config, new FileUserPasswdStore(config, watcherService),
+        public FileRealm create(RealmConfig config) {
+            return new FileRealm(config, new FileUserPasswdStore(config, watcherService),
                     new FileUserRolesStore(config, watcherService));
         }
 
         @Override
-        public ESUsersRealm createDefault(String name) {
+        public FileRealm createDefault(String name) {
             RealmConfig config = new RealmConfig(name, Settings.EMPTY, settings, env);
             return create(config);
         }

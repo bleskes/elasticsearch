@@ -26,6 +26,8 @@ import org.elasticsearch.marvel.agent.exporter.MonitoringDoc;
 
 import java.io.IOException;
 
+import static java.util.Collections.emptyMap;
+import static java.util.Collections.emptySet;
 import static org.hamcrest.Matchers.equalTo;
 
 public class DataResolverTests extends MonitoringIndexNameResolverTestCase {
@@ -42,7 +44,7 @@ public class DataResolverTests extends MonitoringIndexNameResolverTestCase {
         MonitoringDoc doc = new MonitoringDoc(randomMonitoringId(), randomAsciiOfLength(2));
         doc.setClusterUUID(randomAsciiOfLength(5));
         doc.setTimestamp(Math.abs(randomLong()));
-        doc.setSourceNode(new DiscoveryNode("id", DummyTransportAddress.INSTANCE, Version.CURRENT));
+        doc.setSourceNode(new DiscoveryNode("id", DummyTransportAddress.INSTANCE, emptyMap(), emptySet(), Version.CURRENT));
         return doc;
     }
 

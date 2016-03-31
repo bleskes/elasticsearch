@@ -15,7 +15,7 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.shield.authc.esusers;
+package org.elasticsearch.shield.authc.file;
 
 import org.elasticsearch.common.SuppressLoggerChecks;
 import org.elasticsearch.common.logging.ESLogger;
@@ -93,7 +93,7 @@ public class FileUserPasswdStoreTests extends ESTestCase {
                 .put("files.users", file.toAbsolutePath())
                 .build();
 
-        RealmConfig config = new RealmConfig("esusers-test", esusersSettings, settings, env);
+        RealmConfig config = new RealmConfig("file-test", esusersSettings, settings, env);
         ResourceWatcherService watcherService = new ResourceWatcherService(settings, threadPool);
         FileUserPasswdStore store = new FileUserPasswdStore(config, watcherService);
         assertThat(store.usersCount(), is(0));
@@ -109,7 +109,7 @@ public class FileUserPasswdStoreTests extends ESTestCase {
                 .build();
 
 
-        RealmConfig config = new RealmConfig("esusers-test", esusersSettings, settings, env);
+        RealmConfig config = new RealmConfig("file-test", esusersSettings, settings, env);
         ResourceWatcherService watcherService = new ResourceWatcherService(settings, threadPool);
         final CountDownLatch latch = new CountDownLatch(1);
 
@@ -148,7 +148,7 @@ public class FileUserPasswdStoreTests extends ESTestCase {
                 .build();
 
 
-        RealmConfig config = new RealmConfig("esusers-test", esusersSettings, settings, env);
+        RealmConfig config = new RealmConfig("file-test", esusersSettings, settings, env);
         ResourceWatcherService watcherService = new ResourceWatcherService(settings, threadPool);
         final CountDownLatch latch = new CountDownLatch(1);
 
