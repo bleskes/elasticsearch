@@ -153,16 +153,9 @@ class SimpleJsonRecordReader extends AbstractJsonRecordReader
             {
                 token = tryNextTokenOrReadToEndOnError();
                 ++count;
-                if (token == JsonToken.VALUE_STRING
-                        || token == JsonToken.VALUE_NUMBER_INT
-                        || token == JsonToken.VALUE_NUMBER_FLOAT
-                        || token == JsonToken.VALUE_FALSE
-                        || token == JsonToken.VALUE_TRUE)
+                if (token.isScalarValue() && count == 1)
                 {
-                    if (count == 1)
-                    {
-                        fieldValue = m_Parser.getText();
-                    }
+                    fieldValue = tokenToString(token);
                 }
             }
             // 2 means scalar followed by end array token
@@ -171,13 +164,9 @@ class SimpleJsonRecordReader extends AbstractJsonRecordReader
                 fieldValue = null;
             }
         }
-        else if (token == JsonToken.VALUE_STRING
-                || token == JsonToken.VALUE_NUMBER_INT
-                || token == JsonToken.VALUE_NUMBER_FLOAT
-                || token == JsonToken.VALUE_FALSE
-                || token == JsonToken.VALUE_TRUE)
+        else if (token.isScalarValue())
         {
-            fieldValue = m_Parser.getText();
+            fieldValue = tokenToString(token);
         }
 
         if (fieldValue != null)
@@ -191,5 +180,20 @@ class SimpleJsonRecordReader extends AbstractJsonRecordReader
                 gotFields[index] = true;
             }
         }
+    }
+
+    /**
+     * Get the text representation of the current token unless it's a null.
+     * Nulls are replaced with empty strings to match the way the rest of the
+     * product treats them (which in turn is shaped by the fact that CSV
+     * cannot distinguish empty string and null).
+     */
+    private String tokenToString(JsonToken token) throws IOException
+    {
+        if (token == null || token == JsonToken.VALUE_NULL)
+        {
+            return "";
+        }
+        return m_Parser.getText();
     }
 }
