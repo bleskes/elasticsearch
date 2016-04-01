@@ -27,9 +27,11 @@
 package com.prelert.job.process.output.parsing;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.util.Date;
 
 import org.junit.Test;
 
@@ -47,18 +49,24 @@ public class ModelSizeStatsParserTest
                 + "\"totalOverFieldCount\" : 3,"
                 + "\"totalPartitionFieldCount\" : 4,"
                 + "\"bucketAllocationFailuresCount\" : 5,"
-                + "\"memoryStatus\" : \"OK\""
+                + "\"memoryStatus\" : \"OK\","
+                + "\"bucketTime\" : 1444333321"
                 + "}";
         JsonParser parser = createJsonParser(input);
         parser.nextToken();
 
+        Date d1 = new Date();
         ModelSizeStats stats = new ModelSizeStatsParser(parser).parseJson();
+        Date d2 = new Date();
 
         assertEquals(1L, stats.getModelBytes());
         assertEquals(2L, stats.getTotalByFieldCount());
         assertEquals(3L, stats.getTotalOverFieldCount());
         assertEquals(4L, stats.getTotalPartitionFieldCount());
         assertEquals(5L, stats.getBucketAllocationFailuresCount());
+        assertEquals(1444333321000L, stats.getTimestamp().getTime());
+        assertTrue(stats.getReportTime().getTime() >= d1.getTime());
+        assertTrue(stats.getReportTime().getTime() <= d2.getTime());
         assertEquals("OK", stats.getMemoryStatus());
     }
 

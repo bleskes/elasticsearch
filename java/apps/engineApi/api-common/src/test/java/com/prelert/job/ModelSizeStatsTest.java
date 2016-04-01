@@ -47,13 +47,13 @@ public class ModelSizeStatsTest
     }
 
     @Test
-    public void testSetModelSizeStatsId_DoesNothing()
+    public void testSetModelSizeStatsId()
     {
         ModelSizeStats stats = new ModelSizeStats();
 
         stats.setModelSizeStatsId("foo");
 
-        assertEquals("modelSizeStats", stats.getModelSizeStatsId());
+        assertEquals("foo", stats.getModelSizeStatsId());
     }
 
     @Test

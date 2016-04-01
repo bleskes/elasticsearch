@@ -991,7 +991,7 @@ public class EngineApiClient implements Closeable
      * <br>
      * If the response code is 200 or 404 try to parse the returned content
      * into an object of the generic parameter type <code>T</code>.
-     * The 404 status code is not considered an error it simply means an
+     * The 404 status code is not considered an error: it simply means an
      * empty document was returned by the API.
      * <br>
      * This method is useful for paging through a set of results via the
@@ -1012,6 +1012,116 @@ public class EngineApiClient implements Closeable
     }
 
     private <T> T get(Request request, TypeReference<T> typeRef, boolean errorOn404)
+    throws JsonParseException, JsonMappingException, IOException
+    {
+        ContentResponse response = executeRequest(request);
+        String content = response.getContentAsString();
+
+        // 404 errors return empty paging docs so still read them
+        if (response.getStatus() == HttpStatus.OK_200
+                || (response.getStatus() == HttpStatus.NOT_FOUND_404 && !errorOn404))
+        {
+            T docs = m_JsonMapper.readValue(content, typeRef);
+            m_LastError = null;
+            return docs;
+        }
+        else
+        {
+            String msg = String.format(
+                    "GET returned status code %d for url %s. Returned content = %s",
+                    response.getStatus(), request.getURI(), content);
+            LOGGER.error(msg);
+            m_LastError = m_JsonMapper.readValue(content, new TypeReference<ApiError>() {} );
+        }
+
+        return null;
+    }
+
+    /**
+     * A generic HTTP POST to any Url. The result is converted from Json to
+     * the type referenced in <code>typeRef</code>. A <code>TypeReference</code>
+     * has to be used to preserve the generic type information that is usually
+     * lost in due to erasure.
+     * <br>
+     * If the response code is 200 or 404 try to parse the returned content
+     * into an object of the generic parameter type <code>T</code>.
+     * The 404 status code is not considered an error it simply means an
+     * empty document was returned by the API.
+     * <br>
+     * This method is useful for paging through a set of results via the
+     * next or previous page links in a {@link Pagination} object.
+     *
+     * @param fullUrl
+     * @param typeRef
+     * @return A new T or <code>null</code>
+     * @throws JsonParseException
+     * @throws JsonMappingException
+     * @throws IOException
+     * @see get(URI, TypeReference)
+     */
+    public <T> T post(String fullUrl, TypeReference<T> typeRef)
+    throws JsonParseException, JsonMappingException, IOException
+    {
+        return post(fullUrl, typeRef, false);
+    }
+
+    /**
+     * A generic HTTP POST to any Url. The result is converted from Json to
+     * the type referenced in <code>typeRef</code>. A <code>TypeReference</code>
+     * has to be used to preserve the generic type information that is usually
+     * lost in due to erasure.
+     * <br>
+     * If the response code is 200 or 404 try to parse the returned content
+     * into an object of the generic parameter type <code>T</code>.
+     * The 404 status code is not considered an error it simply means an
+     * empty document was returned by the API.
+     * <br>
+     * This method is useful for paging through a set of results via the
+     * next or previous page links in a {@link Pagination} object.
+     *
+     * @param uri
+     * @param typeRef
+     * @return A new T or <code>null</code>
+     * @throws JsonParseException
+     * @throws JsonMappingException
+     * @throws IOException
+     * @see post(String, TypeReference)
+     */
+    public <T> T post(URI uri, TypeReference<T> typeRef)
+    throws JsonParseException, JsonMappingException, IOException
+    {
+        return post(m_HttpClient.newRequest(uri).method(HttpMethod.POST), typeRef, false);
+    }
+
+    /**
+     * A generic HTTP POST to any Url. The result is converted from Json to
+     * the type referenced in <code>typeRef</code>. A <code>TypeReference</code>
+     * has to be used to preserve the generic type information that is usually
+     * lost in due to erasure.
+     * <br>
+     * If the response code is 200 or 404 try to parse the returned content
+     * into an object of the generic parameter type <code>T</code>.
+     * The 404 status code is not considered an error: it simply means an
+     * empty document was returned by the API.
+     * <br>
+     * This method is useful for paging through a set of results via the
+     * next or previous page links in a {@link Pagination} object.
+     *
+     * @param url
+     * @param typeRef
+     * @return A new T or <code>null</code>
+     * @throws JsonParseException
+     * @throws JsonMappingException
+     * @throws IOException
+     * @see post(String, TypeReference)
+     */
+    public <T> T post(String url, TypeReference<T> typeRef, boolean errorOn404)
+    throws JsonParseException, JsonMappingException, IOException
+    {
+        return post(m_HttpClient.newRequest(url).method(HttpMethod.POST), typeRef, errorOn404);
+    }
+
+    private <T> T post(Request request, TypeReference<T> typeRef, boolean errorOn404)
     throws JsonParseException, JsonMappingException, IOException
     {
         ContentResponse response = executeRequest(request);

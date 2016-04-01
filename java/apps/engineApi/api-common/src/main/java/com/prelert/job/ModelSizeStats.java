@@ -17,6 +17,7 @@
  ***************************************************************************/
 package com.prelert.job;
 
+import java.util.Date;
 import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -38,6 +39,10 @@ public class ModelSizeStats
     public static final String TOTAL_PARTITION_FIELD_COUNT = "totalPartitionFieldCount";
     public static final String BUCKET_ALLOCATION_FAILURES_COUNT = "bucketAllocationFailuresCount";
     public static final String MEMORY_STATUS = "memoryStatus";
+    public static final String REPORT_TIME = "reportTime";
+    public static final String BUCKET_TIME = "bucketTime";
+    public static final String TIMESTAMP = "timestamp";
+    public static final String ES_TIMESTAMP = "@timestamp";
 
     /**
      * Elasticsearch type
@@ -58,6 +63,9 @@ public class ModelSizeStats
     private long m_TotalPartitionFieldCount;
     private long m_BucketAllocationFailuresCount;
     private MemoryStatus m_MemoryStatus;
+    private Date m_Timestamp;
+    private Date m_ReportTime;
+    private String m_Id = TYPE;
 
     public ModelSizeStats()
     {
@@ -67,20 +75,17 @@ public class ModelSizeStats
         m_TotalPartitionFieldCount = 0;
         m_BucketAllocationFailuresCount = 0;
         m_MemoryStatus = MemoryStatus.OK;
+        m_ReportTime = new Date();
     }
 
     public String getModelSizeStatsId()
     {
-        return TYPE;
+        return m_Id;
     }
 
-    /**
-     * Does nothing. Needed for serialisation.
-     * @param id The id will be ignored
-     */
     public void setModelSizeStatsId(String id)
     {
-        // Do nothing - ID is fixed
+        m_Id = id;
     }
 
     public void setModelBytes(long m)
@@ -150,11 +155,31 @@ public class ModelSizeStats
         return m_MemoryStatus.name();
     }
 
+    public Date getTimestamp()
+    {
+        return m_Timestamp;
+    }
+
+    public void setTimestamp(Date d)
+    {
+        m_Timestamp = d;
+    }
+
+    public Date getReportTime()
+    {
+        return m_ReportTime;
+    }
+
+    public void setReportTime(Date d)
+    {
+        m_ReportTime = d;
+    }
+
     @Override
     public int hashCode()
     {
         return Objects.hash(m_ModelBytes, m_TotalByFieldCount, m_TotalOverFieldCount, m_TotalPartitionFieldCount,
-                m_BucketAllocationFailuresCount, m_MemoryStatus);
+                m_BucketAllocationFailuresCount, m_MemoryStatus, m_Timestamp, m_ReportTime);
     }
 
     /**
@@ -180,6 +205,8 @@ public class ModelSizeStats
                 && this.m_TotalOverFieldCount == that.m_TotalOverFieldCount
                 && this.m_TotalPartitionFieldCount == that.m_TotalPartitionFieldCount
                 && this.m_BucketAllocationFailuresCount == that.m_BucketAllocationFailuresCount
-                && Objects.equals(this.m_MemoryStatus, that.m_MemoryStatus);
+                && Objects.equals(this.m_MemoryStatus, that.m_MemoryStatus)
+                && Objects.equals(this.m_Timestamp, that.m_Timestamp)
+                && Objects.equals(this.m_ReportTime, that.m_ReportTime);
     }
 }

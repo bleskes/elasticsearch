@@ -27,6 +27,7 @@
 package com.prelert.job.process.output.parsing;
 
 import java.io.IOException;
+import java.util.Date;
 
 import org.apache.log4j.Logger;
 
@@ -77,10 +78,29 @@ final class ModelSizeStatsParser extends FieldNameParser<ModelSizeStats>
             int status = parseAsIntOrZero(fieldName);
             modelSizeStats.setMemoryStatus(MemoryStatus.values()[status].name());
             break;
+        case ModelSizeStats.BUCKET_TIME:
+            modelSizeStats.setTimestamp(parseTimestamp(token));
+            break;
         default:
             LOGGER.warn(String.format("Parse error unknown field in ModelSizeStats %s:%s",
                     fieldName, token.asString()));
             break;
         }
     }
+
+    private Date parseTimestamp(JsonToken token) throws IOException
+    {
+        long val = 0;
+        if (token == JsonToken.VALUE_NUMBER_INT)
+        {
+            // convert seconds to ms
+            val = m_Parser.getLongValue() * 1000;
+        }
+        else
+        {
+            LOGGER.warn("Cannot parse " + token.asString() + " as a long");
+        }
+        return new Date(val);
+    }
+
 }

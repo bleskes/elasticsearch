@@ -249,7 +249,15 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
     @Override
     public void persistModelSizeStats(ModelSizeStats modelSizeStats)
     {
+        LOGGER.debug("Persisting model size stats, for size " + modelSizeStats.getModelBytes());
         Persistable persistable = new Persistable(modelSizeStats, () -> ModelSizeStats.TYPE,
+                () -> modelSizeStats.getModelSizeStatsId(),
+                () -> serialiseModelSizeStats(modelSizeStats));
+        persistable.persist();
+
+        modelSizeStats.setModelSizeStatsId(null);
+
+        persistable = new Persistable(modelSizeStats, () -> ModelSizeStats.TYPE,
                 () -> modelSizeStats.getModelSizeStatsId(),
                 () -> serialiseModelSizeStats(modelSizeStats));
         persistable.persist();
@@ -612,7 +620,9 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
                 .field(ModelSizeStats.TOTAL_OVER_FIELD_COUNT, modelSizeStats.getTotalOverFieldCount())
                 .field(ModelSizeStats.TOTAL_PARTITION_FIELD_COUNT, modelSizeStats.getTotalPartitionFieldCount())
                 .field(ModelSizeStats.BUCKET_ALLOCATION_FAILURES_COUNT, modelSizeStats.getBucketAllocationFailuresCount())
-                .field(ModelSizeStats.MEMORY_STATUS, modelSizeStats.getMemoryStatus());
+                .field(ModelSizeStats.MEMORY_STATUS, modelSizeStats.getMemoryStatus())
+                .field(ModelSizeStats.ES_TIMESTAMP, modelSizeStats.getTimestamp())
+                .field(ModelSizeStats.REPORT_TIME, modelSizeStats.getReportTime());
     }
 
     /**

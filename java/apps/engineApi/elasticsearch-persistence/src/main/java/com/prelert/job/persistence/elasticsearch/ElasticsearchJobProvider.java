@@ -346,6 +346,11 @@ public class ElasticsearchJobProvider implements JobProvider
             }
             else
             {
+                // Remove the Kibana/Logstash '@timestamp' entry as stored in Elasticsearch,
+                // and replace using the API 'timestamp' key.
+                Object timestamp = modelSizeStatsResponse.getSource().remove(ModelSizeStats.ES_TIMESTAMP);
+                modelSizeStatsResponse.getSource().put(ModelSizeStats.TIMESTAMP, timestamp);
+
                 ModelSizeStats modelSizeStats = m_ObjectMapper.convertValue(
                     modelSizeStatsResponse.getSource(), ModelSizeStats.class);
                 details.setModelSizeStats(modelSizeStats);
@@ -408,6 +413,11 @@ public class ElasticsearchJobProvider implements JobProvider
             }
             else
             {
+                // Remove the Kibana/Logstash '@timestamp' entry as stored in Elasticsearch,
+                // and replace using the API 'timestamp' key.
+                Object timestamp = modelSizeStatsResponse.getSource().remove(ModelSizeStats.ES_TIMESTAMP);
+                modelSizeStatsResponse.getSource().put(ModelSizeStats.TIMESTAMP, timestamp);
+
                 ModelSizeStats modelSizeStats = m_ObjectMapper.convertValue(
                     modelSizeStatsResponse.getSource(), ModelSizeStats.class);
                 job.setModelSizeStats(modelSizeStats);
@@ -1140,8 +1150,16 @@ public class ElasticsearchJobProvider implements JobProvider
             Object timestamp = hit.getSource().remove(ElasticsearchMappings.ES_TIMESTAMP);
             hit.getSource().put(ModelSnapshot.TIMESTAMP, timestamp);
 
-            ModelSnapshot modelSnapshot = m_ObjectMapper.convertValue(hit.getSource(), ModelSnapshot.class);
+            Object o = hit.getSource().get(ModelSizeStats.TYPE);
+            if (o instanceof Map)
+            {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> map = (Map<String, Object>)o;
+                Object ts = map.remove(ModelSizeStats.ES_TIMESTAMP);
+                map.put(ModelSizeStats.TIMESTAMP, ts);
+            }
 
+            ModelSnapshot modelSnapshot = m_ObjectMapper.convertValue(hit.getSource(), ModelSnapshot.class);
             results.add(modelSnapshot);
         }
 
