@@ -54,7 +54,7 @@ public class OldDataRemover
     private static final int SECONDS_IN_DAY = 86400;
     private static final int MILLISECONDS_IN_SECOND = 1000;
 
-    private static final long DEFAULT_MODEL_SNAPSHOT_RETENTION_DAYS = 7L;
+    private static final long DEFAULT_MODEL_SNAPSHOT_RETENTION_DAYS = 1L;
 
     private final JobProvider m_JobProvider;
     private final JobDataDeleterFactory m_DataDeleterFactory;
