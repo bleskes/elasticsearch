@@ -38,7 +38,7 @@ version number is lower we recommend upgrading to a newer version.
 <body>
 <h1>Prelert Engine API 2.0.3</h1>
 <h2>Analytics Version:</h2>
-<p>Model State Version 25<br>prelert_autodetect_api (64 bit): Version based on 6.1.4 (Build DEVELOPMENT BUILD by henry) Copyright (c) Prelert Ltd 2006-2016<br></p>
+<p>Model State Version 25<br>prelert_autodetect_api (64 bit): Version 6.1.4 (Build ce9cd52f473cc7) Copyright (c) Prelert Ltd 2006-2016<br></p>
 <div><table><tr><td>Hostname</td><td>hostname.local</td></tr><tr><td>OS Name</td><td>Linux</td></tr><tr><td>OS Version</td><td>3.10.0</td></tr><tr><td>Total Memory Size MB</td><td>16384</td></tr><tr><td>Total Disk MB</td><td>475672</td></tr><tr><td>Available Disk MB</td><td>117076</td></tr></table></div></body>
 </html>
 
