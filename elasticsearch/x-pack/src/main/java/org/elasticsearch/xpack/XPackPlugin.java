@@ -20,6 +20,7 @@ package org.elasticsearch.xpack;
 import org.elasticsearch.SpecialPermission;
 import org.elasticsearch.action.ActionModule;
 import org.elasticsearch.client.Client;
+import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.component.LifecycleComponent;
 import org.elasticsearch.common.inject.Module;
 import org.elasticsearch.common.network.NetworkModule;
@@ -50,7 +51,10 @@ import java.util.Collections;
 
 public class XPackPlugin extends Plugin {
 
-    public static final String NAME = "xpack";
+    public static final String NAME = "x-pack";
+
+    // inside of YAML settings we still use xpack do not having handle issues with dashes
+    public static final String SETTINGS_NAME = "xpack";
 
     // TODO: clean up this library to not ask for write access to all system properties!
     static {
@@ -206,7 +210,7 @@ public class XPackPlugin extends Plugin {
     }
 
     public static boolean transportClientMode(Settings settings) {
-        return !"node".equals(settings.get(Client.CLIENT_TYPE_SETTING_S.getKey()));
+        return TransportClient.CLIENT_TYPE.equals(settings.get(Client.CLIENT_TYPE_SETTING_S.getKey()));
     }
 
     public static boolean isTribeNode(Settings settings) {
@@ -239,7 +243,7 @@ public class XPackPlugin extends Plugin {
     }
 
     public static String featureSettingPrefix(String featureName) {
-        return NAME + "." + featureName;
+        return SETTINGS_NAME + "." + featureName;
     }
 
     public static String legacyFeatureEnabledSetting(String featureName) {
@@ -262,6 +266,6 @@ public class XPackPlugin extends Plugin {
     }
 
     public static Path resolveXPackExtensionsFile(Environment env) {
-        return env.pluginsFile().resolve("xpack").resolve("extensions");
+        return env.pluginsFile().resolve(XPackPlugin.NAME).resolve("extensions");
     }
 }

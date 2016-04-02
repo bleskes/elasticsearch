@@ -1,0 +1,57 @@
+/*
+ * ELASTICSEARCH CONFIDENTIAL
+ * __________________
+ *
+ *  [2014] Elasticsearch Incorporated. All Rights Reserved.
+ *
+ * NOTICE:  All information contained herein is, and remains
+ * the property of Elasticsearch Incorporated and its suppliers,
+ * if any.  The intellectual and technical concepts contained
+ * herein are proprietary to Elasticsearch Incorporated
+ * and its suppliers and may be covered by U.S. and Foreign Patents,
+ * patents in process, and are protected by trade secret or copyright law.
+ * Dissemination of this information or reproduction of this material
+ * is strictly forbidden unless prior written permission is obtained
+ * from Elasticsearch Incorporated.
+ */
+
+apply plugin: 'elasticsearch.rest-test'
+
+dependencies {
+  testCompile project(path: ':x-plugins:elasticsearch:x-pack', configuration: 'runtime')
+}
+
+// bring in monitoring rest test suite
+task copyMonitoringRestTests(type: Copy) {
+  into project.sourceSets.test.output.resourcesDir
+  from project(':x-plugins:elasticsearch:x-pack').sourceSets.test.resources.srcDirs
+  include 'rest-api-spec/test/monitoring/**'
+}
+
+integTest {
+  dependsOn copyMonitoringRestTests
+
+  cluster {
+    plugin 'x-pack', project(':x-plugins:elasticsearch:x-pack')
+    setting 'xpack.monitoring.agent.interval', '3s'
+    extraConfigFile 'x-pack/roles.yml', 'roles.yml'
+    setupCommand 'setupTestAdminUser',
+                 'bin/x-pack/users', 'useradd', 'test_admin', '-p', 'changeme', '-r', 'admin'
+    setupCommand 'setupMonitoredSystemUser',
+                 'bin/x-pack/users', 'useradd', 'monitored_system', '-p', 'changeme', '-r', 'monitored_system,required_for_test'
+    setupCommand 'setupPowerlessUser',
+                 'bin/x-pack/users', 'useradd', 'no_monitored_system', '-p', 'changeme', '-r', 'required_for_test'
+
+    waitCondition = { node, ant ->
+      File tmpFile = new File(node.cwd, 'wait.success')
+      ant.get(src: "http://${node.httpUri()}",
+              dest: tmpFile.toString(),
+              username: 'test_admin',
+              password: 'changeme',
+              ignoreerrors: true,
+              retries: 10)
+      return tmpFile.exists()
+    }
+  }
+}
+
