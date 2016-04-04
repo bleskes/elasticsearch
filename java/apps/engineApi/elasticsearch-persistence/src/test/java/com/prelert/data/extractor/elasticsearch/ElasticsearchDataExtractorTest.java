@@ -275,7 +275,7 @@ public class ElasticsearchDataExtractorTest
     public void testDataExtraction_GivenInitialResponseContainsNoHitsAndNoScrollId() throws IOException
     {
         m_ExpectedException.expect(IOException.class);
-        m_ExpectedException.expectMessage("Field '_scroll_id' was expected but not found in response:\n{}");
+        m_ExpectedException.expectMessage("Field '_scroll_id' was expected but not found in first 2 bytes of response:\n{}");
 
         String initialResponse = "{}";
         HttpResponse httpGetResponse = new HttpResponse(
@@ -316,7 +316,7 @@ public class ElasticsearchDataExtractorTest
                 + "}"
                 + "}";
         m_ExpectedException.expect(IOException.class);
-        m_ExpectedException.expectMessage("Field '_scroll_id' was expected but not found in response:\n" + initialResponse);
+        m_ExpectedException.expectMessage("Field '_scroll_id' was expected but not found in first 272 bytes of response:\n" + initialResponse);
 
         HttpResponse httpGetResponse = new HttpResponse(
                 toStream(initialResponse), 200);
@@ -363,7 +363,7 @@ public class ElasticsearchDataExtractorTest
                 + "}"
                 + "}";
         m_ExpectedException.expect(IOException.class);
-        m_ExpectedException.expectMessage("Field '_scroll_id' was expected but not found in response:\n" + initialResponse);
+        m_ExpectedException.expectMessage("Field '_scroll_id' was expected but not found in first 1048576 bytes of response:\n" + initialResponse);
 
         HttpResponse httpGetResponse = new HttpResponse(
                 toStream(initialResponse), 200);

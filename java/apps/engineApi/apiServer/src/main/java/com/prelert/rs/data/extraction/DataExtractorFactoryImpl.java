@@ -77,8 +77,8 @@ public class DataExtractorFactoryImpl implements DataExtractorFactory
                 createBasicAuthHeader(schedulerConfig.getUsername(), schedulerConfig.getEncryptedPassword()),
                 schedulerConfig.getIndexes(), schedulerConfig.getTypes(),
                 stringifyElasticsearchQuery(schedulerConfig.getQuery()),
-                stringifyElasticsearchScriptFields(schedulerConfig.getScriptFields()),
                 stringifyElasticsearchAggregations(schedulerConfig.getAggregations(), schedulerConfig.getAggs()),
+                stringifyElasticsearchScriptFields(schedulerConfig.getScriptFields()),
                 Boolean.TRUE.equals(schedulerConfig.getRetrieveWholeSource()) ? null : job.allFields(),
                 timeField);
     }

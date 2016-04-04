@@ -182,7 +182,7 @@ public class ElasticsearchDataExtractor implements DataExtractor
         m_ScriptFields = scriptFields;
         m_Fields = fields;
         m_TimeField = Objects.requireNonNull(timeField);
-        m_ScrollState =  m_Aggregations == null ? ScrollState.createDefault()
+        m_ScrollState = m_Aggregations == null ? ScrollState.createDefault()
                 : ScrollState.createAggregated();
     }
 
