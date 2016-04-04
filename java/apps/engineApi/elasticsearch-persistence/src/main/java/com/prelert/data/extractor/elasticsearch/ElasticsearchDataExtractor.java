@@ -145,6 +145,7 @@ public class ElasticsearchDataExtractor implements DataExtractor
     private static final Pattern INDEX_PATTERN = Pattern.compile("\"_index\":\"(.*?)\"");
     private static final Pattern NUMBER_OF_SHARDS_PATTERN = Pattern.compile("\"number_of_shards\":\"(.*?)\"");
     private static final long CHUNK_THRESHOLD_MS = 3600000;
+    private static final long MIN_CHUNK_SIZE_MS = 10000L;
 
     private final HttpRequester m_HttpRequester;
     private final String m_BaseUrl;
@@ -229,7 +230,8 @@ public class ElasticsearchDataExtractor implements DataExtractor
             {
                 String index = matchString(response, INDEX_PATTERN);
                 long shards = readNumberOfShards(index);
-                m_Chunk = (shards * UNAGGREGATED_SCROLL_SIZE * dataTimeSpread) / totalHits;
+                m_Chunk = Math.max(MIN_CHUNK_SIZE_MS,
+                        (shards * UNAGGREGATED_SCROLL_SIZE * dataTimeSpread) / totalHits);
             }
         }
         else

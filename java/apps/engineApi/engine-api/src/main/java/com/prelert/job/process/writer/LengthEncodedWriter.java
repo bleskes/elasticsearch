@@ -136,10 +136,6 @@ public class LengthEncodedWriter implements RecordWriter
         m_OutputStream.write(utf8Bytes);
     }
 
-
-    /* (non-Javadoc)
-     * @see com.prelert.job.process.writer.RecordWriter#flush()
-     */
     @Override
     public void flush() throws IOException
     {
