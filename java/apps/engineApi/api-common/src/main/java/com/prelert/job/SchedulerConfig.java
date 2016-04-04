@@ -552,7 +552,8 @@ public class SchedulerConfig implements PasswordStorage
                 Objects.equals(this.m_Query, that.m_Query) &&
                 Objects.equals(this.m_RetrieveWholeSource, that.m_RetrieveWholeSource) &&
                 Objects.equals(this.m_ScrollSize, that.m_ScrollSize) &&
-                Objects.equals(this.getAggregationsOrAggs(), that.getAggregationsOrAggs());
+                Objects.equals(this.getAggregationsOrAggs(), that.getAggregationsOrAggs()) &&
+                Objects.equals(this.m_ScriptFields, that.m_ScriptFields);
     }
 
     @Override
@@ -560,6 +561,6 @@ public class SchedulerConfig implements PasswordStorage
     {
         return Objects.hash(m_DataSource, m_Frequency, m_QueryDelay, m_FilePath, m_TailFile,
                 m_BaseUrl, m_Username, m_Password, m_EncryptedPassword, m_Indexes, m_Types, m_Query,
-                m_RetrieveWholeSource, m_ScrollSize, getAggregationsOrAggs());
+                m_RetrieveWholeSource, m_ScrollSize, getAggregationsOrAggs(), m_ScriptFields);
     }
 }
