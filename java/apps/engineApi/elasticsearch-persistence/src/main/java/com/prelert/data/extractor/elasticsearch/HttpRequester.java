@@ -159,8 +159,11 @@ class HttpRequester
         {
             connection.setRequestProperty(AUTH_HEADER, authHeader);
         }
-        connection.setDoOutput(true);
-        writeRequestBody(requestBody, connection);
+        if (requestBody != null)
+        {
+            connection.setDoOutput(true);
+            writeRequestBody(requestBody, connection);
+        }
         if (connection.getResponseCode() != OK_STATUS)
         {
             return new HttpResponse(connection.getErrorStream(), connection.getResponseCode());

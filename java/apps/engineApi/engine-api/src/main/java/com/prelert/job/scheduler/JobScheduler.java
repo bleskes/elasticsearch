@@ -150,7 +150,7 @@ public class JobScheduler
         }
 
         Date latestRecordTimestamp = null;
-        m_DataExtractor.newSearch(start, end, m_Logger);
+        newSearch(start, end);
         while (m_DataExtractor.hasNext() && m_Status == JobSchedulerStatus.STARTED
                 && !m_ProblemTracker.hasDataExtractionProblems())
         {
@@ -170,6 +170,20 @@ public class JobScheduler
         m_ProblemTracker.updateEmptyDataCount(latestRecordTimestamp == null);
         m_ProblemTracker.finishReport();
         makeResultsAvailable();
+    }
+
+    private void newSearch(long start, long end)
+    {
+        try
+        {
+            m_DataExtractor.newSearch(start, end, m_Logger);
+        }
+        catch (IOException e)
+        {
+            m_ProblemTracker.reportProblem(e.getMessage());
+            m_Logger.error("An error has occurred while starting a new search for ["
+                    + start + ", " + end + ")", e);
+        }
     }
 
     private Auditor audit()
