@@ -101,7 +101,6 @@ public class AnomalyRecord
     private double m_AnomalyScore;
     private double m_NormalizedProbability;
 
-    @JsonIgnoreProperties(value={INITIAL_NORMALIZED_PROBABILITY}, allowSetters=true)
     private double m_InitialNormalizedProbability;
 
     private Date   m_Timestamp;

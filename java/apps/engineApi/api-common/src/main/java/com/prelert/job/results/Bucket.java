@@ -64,7 +64,6 @@ public class Bucket
     private double m_AnomalyScore;
     private long m_BucketSpan;
 
-    @JsonIgnoreProperties(value={INITIAL_ANOMALY_SCORE}, allowSetters=true)
     private double m_InitialAnomalyScore;
 
     private double m_MaxNormalizedProbability;
