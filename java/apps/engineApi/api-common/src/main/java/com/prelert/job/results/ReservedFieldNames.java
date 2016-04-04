@@ -229,6 +229,7 @@ public final class ReservedFieldNames
         SchedulerConfig.RETRIEVE_WHOLE_SOURCE,
         SchedulerConfig.AGGREGATIONS,
         SchedulerConfig.AGGS,
+        SchedulerConfig.SCRIPT_FIELDS,
 
         TransformConfig.TRANSFORM,
         TransformConfig.ARGUMENTS,

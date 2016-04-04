@@ -31,6 +31,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 
 /**
@@ -96,9 +97,14 @@ public class SchedulerConfig implements PasswordStorage
     public static final String INDEXES = "indexes";
     public static final String TYPES = "types";
     public static final String QUERY = "query";
+    public static final String RETRIEVE_WHOLE_SOURCE = "retrieveWholeSource";
     public static final String AGGREGATIONS = "aggregations";
     public static final String AGGS = "aggs";
-    public static final String RETRIEVE_WHOLE_SOURCE = "retrieveWholeSource";
+    /**
+     * Named to match Elasticsearch, hence lowercase_with_underscores instead
+     * of camelCase
+     */
+    public static final String SCRIPT_FIELDS = "script_fields";
 
     private static final long DEFAULT_ELASTICSEARCH_QUERY_DELAY = 60L;
 
@@ -137,6 +143,7 @@ public class SchedulerConfig implements PasswordStorage
     private Map<String, Object> m_Query;
     private Map<String, Object> m_Aggregations;
     private Map<String, Object> m_Aggs;
+    private Map<String, Object> m_ScriptFields;
     private Boolean m_RetrieveWholeSource;
 
     /**
@@ -333,6 +340,25 @@ public class SchedulerConfig implements PasswordStorage
     public void setRetrieveWholeSource(Boolean retrieveWholeSource)
     {
         m_RetrieveWholeSource = retrieveWholeSource;
+    }
+
+    /**
+     * For the ELASTICSEARCH data source only, optional Elasticsearch
+     * script_fields to add to the search to be submitted to Elasticsearch to
+     * get the input data.  This class does not attempt to interpret the
+     * script fields.  The map will be converted back to an arbitrary JSON object.
+     * @return The script fields, or <code>null</code> if not set.
+     */
+    @JsonProperty("script_fields")
+    public Map<String, Object> getScriptFields()
+    {
+        return m_ScriptFields;
+    }
+
+    @JsonProperty("script_fields")
+    public void setScriptFields(Map<String, Object> scriptFields)
+    {
+        m_ScriptFields = scriptFields;
     }
 
     /**

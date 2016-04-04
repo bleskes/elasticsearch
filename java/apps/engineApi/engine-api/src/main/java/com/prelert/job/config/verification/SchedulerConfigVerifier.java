@@ -97,6 +97,7 @@ public final class SchedulerConfigVerifier
         checkFieldIsNull(dataSource, SchedulerConfig.RETRIEVE_WHOLE_SOURCE, config.getRetrieveWholeSource());
         checkFieldIsNull(dataSource, SchedulerConfig.AGGREGATIONS, config.getAggregations());
         checkFieldIsNull(dataSource, SchedulerConfig.QUERY, config.getQuery());
+        checkFieldIsNull(dataSource, SchedulerConfig.SCRIPT_FIELDS, config.getScriptFields());
     }
 
     private static void verifyElasticsearchSchedulerConfig(SchedulerConfig config,
@@ -108,7 +109,13 @@ public final class SchedulerConfigVerifier
         checkFieldIsNotNullOrEmpty(SchedulerConfig.TYPES, config.getTypes());
         if (config.getAggregations() != null)
         {
+            // Not allowed both aggs and aggregations
             checkFieldIsNull(dataSource, SchedulerConfig.AGGS, config.getAggs());
+        }
+        if (Boolean.TRUE.equals(config.getRetrieveWholeSource()))
+        {
+            // Not allowed script_fields when retrieveWholeSource is true
+            checkFieldIsNull(dataSource, SchedulerConfig.SCRIPT_FIELDS, config.getScriptFields());
         }
         checkFieldIsNull(dataSource, SchedulerConfig.FILE_PATH, config.getFilePath());
         checkFieldIsNull(dataSource, SchedulerConfig.TAIL_FILE, config.getTailFile());

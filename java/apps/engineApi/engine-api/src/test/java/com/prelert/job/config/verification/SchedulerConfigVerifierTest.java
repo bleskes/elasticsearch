@@ -237,6 +237,39 @@ public class SchedulerConfigVerifierTest
     }
 
     @Test
+    public void testCheckValidElasticsearch_GivenScriptFieldsNotWholeSource() throws JobConfigurationException, IOException
+    {
+        SchedulerConfig conf = new SchedulerConfig();
+        conf.setDataSource(DataSource.ELASTICSEARCH);
+        conf.setBaseUrl("http://localhost:9200/");
+        conf.setIndexes(Arrays.asList("myindex"));
+        conf.setTypes(Arrays.asList("mytype"));
+        ObjectMapper mapper = new ObjectMapper();
+        conf.setScriptFields(mapper.readValue("{ \"twiceresponsetime\" : { \"script\" : { \"lang\" : \"expression\", \"inline\" : \"doc['responsetime'].value * 2\" } } }", new TypeReference<Map<String, Object>>(){}));
+        conf.setRetrieveWholeSource(false);
+
+        assertTrue(SchedulerConfigVerifier.verify(conf));
+    }
+
+    @Test
+    public void testCheckValidElasticsearch_GivenScriptFieldsAndWholeSource() throws JobConfigurationException, IOException
+    {
+        SchedulerConfig conf = new SchedulerConfig();
+        conf.setDataSource(DataSource.ELASTICSEARCH);
+        conf.setBaseUrl("http://localhost:9200/");
+        conf.setIndexes(Arrays.asList("myindex"));
+        conf.setTypes(Arrays.asList("mytype"));
+        ObjectMapper mapper = new ObjectMapper();
+        conf.setScriptFields(mapper.readValue("{ \"twiceresponsetime\" : { \"script\" : { \"lang\" : \"expression\", \"inline\" : \"doc['responsetime'].value * 2\" } } }", new TypeReference<Map<String, Object>>(){}));
+        conf.setRetrieveWholeSource(true);
+
+        m_ExpectedException.expect(JobConfigurationException.class);
+        m_ExpectedException.expect(
+                ErrorCodeMatcher.hasErrorCode(ErrorCodes.SCHEDULER_FIELD_NOT_SUPPORTED_FOR_DATASOURCE));
+        SchedulerConfigVerifier.verify(conf);
+    }
+
+    @Test
     public void testCheckValidElasticsearch_GivenNullIndexes() throws JobConfigurationException,
             IOException
     {

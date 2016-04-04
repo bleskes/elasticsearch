@@ -77,6 +77,7 @@ public class DataExtractorFactoryImpl implements DataExtractorFactory
                 createBasicAuthHeader(schedulerConfig.getUsername(), schedulerConfig.getEncryptedPassword()),
                 schedulerConfig.getIndexes(), schedulerConfig.getTypes(),
                 stringifyElasticsearchQuery(schedulerConfig.getQuery()),
+                stringifyElasticsearchScriptFields(schedulerConfig.getScriptFields()),
                 stringifyElasticsearchAggregations(schedulerConfig.getAggregations(), schedulerConfig.getAggs()),
                 Boolean.TRUE.equals(schedulerConfig.getRetrieveWholeSource()) ? null : job.allFields(),
                 timeField);
@@ -132,6 +133,16 @@ public class DataExtractorFactoryImpl implements DataExtractorFactory
         if (aggsMap != null)
         {
             return "\"" + SchedulerConfig.AGGS + "\":" + writeObjectAsJson(aggsMap);
+        }
+        return null;
+    }
+
+    @VisibleForTesting
+    String stringifyElasticsearchScriptFields(Map<String, Object> scriptFieldsMap)
+    {
+        if (scriptFieldsMap != null)
+        {
+            return "\"" + SchedulerConfig.SCRIPT_FIELDS + "\":" + writeObjectAsJson(scriptFieldsMap);
         }
         return null;
     }

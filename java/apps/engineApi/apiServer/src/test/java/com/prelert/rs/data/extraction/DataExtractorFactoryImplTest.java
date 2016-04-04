@@ -38,6 +38,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.junit.Test;
@@ -89,6 +90,7 @@ public class DataExtractorFactoryImplTest
         assertNull(m_Factory.createBasicAuthHeader(null, null));
         assertEquals("\"match_all\":{}", m_Factory.stringifyElasticsearchQuery(query));
         assertNull(m_Factory.stringifyElasticsearchAggregations(null, null));
+        assertNull(m_Factory.stringifyElasticsearchScriptFields(null));
     }
 
     @Test
@@ -121,6 +123,7 @@ public class DataExtractorFactoryImplTest
         assertNotNull(m_Factory.createBasicAuthHeader(schedulerConfig.getUsername(), schedulerConfig.getEncryptedPassword()));
         assertEquals("\"match_all\":{}", m_Factory.stringifyElasticsearchQuery(query));
         assertNull(m_Factory.stringifyElasticsearchAggregations(null, null));
+        assertNull(m_Factory.stringifyElasticsearchScriptFields(null));
     }
 
     @Test
@@ -146,10 +149,10 @@ public class DataExtractorFactoryImplTest
         valueLevel.put("avg", avg);
         Map<String, Object> nestedAggs = new HashMap<>();
         nestedAggs.put("value_level", valueLevel);
-        Map<String, Object> histogram = new HashMap<>();
+        Map<String, Object> histogram = new LinkedHashMap<>();
         histogram.put("field", "time");
         histogram.put("interval", 3600000);
-        Map<String, Object> timeLevel = new HashMap<>();
+        Map<String, Object> timeLevel = new LinkedHashMap<>();
         timeLevel.put("histogram", histogram);
         timeLevel.put("aggs", nestedAggs);
         Map<String, Object> aggs = new HashMap<>();
@@ -166,6 +169,44 @@ public class DataExtractorFactoryImplTest
         assertEquals("\"match_all\":{}", m_Factory.stringifyElasticsearchQuery(query));
         assertEquals("\"aggs\":{\"time_level\":{\"histogram\":{\"field\":\"time\",\"interval\":3600000},\"aggs\":{\"value_level\":{\"avg\":{\"field\":\"responsetime\"}}}}}",
                 m_Factory.stringifyElasticsearchAggregations(null, aggs));
+    }
+
+    @Test
+    public void testNewExtractor_GivenDataSourceIsElasticsearch_ScriptFields()
+    {
+        DataDescription dataDescription = new DataDescription();
+        dataDescription.setFormat(DataFormat.ELASTICSEARCH);
+        dataDescription.setTimeField("time");
+
+        SchedulerConfig schedulerConfig = new SchedulerConfig();
+        schedulerConfig.setDataSource(DataSource.ELASTICSEARCH);
+        schedulerConfig.setBaseUrl("http://localhost:9200");
+        schedulerConfig.setIndexes(Arrays.asList("foo"));
+        schedulerConfig.setTypes(Arrays.asList("bar"));
+        Map<String, Object> query = new HashMap<>();
+        query.put("match_all", new HashMap<String, Object>());
+        schedulerConfig.setQuery(query);
+
+        // This block of nested maps builds the script_fields structure required by Elasticsearch
+        Map<String, Object> script = new LinkedHashMap<>();
+        script.put("lang", "expression");
+        script.put("inline", "doc['responsetime'].value * 2");
+        Map<String, Object> twiceResponseTime = new HashMap<>();
+        twiceResponseTime.put("script", script);
+        Map<String, Object> scriptFields = new HashMap<>();
+        scriptFields.put("twiceresponsetime", twiceResponseTime);
+        schedulerConfig.setScriptFields(scriptFields);
+
+        JobDetails job = new JobDetails();
+        job.setDataDescription(dataDescription);
+        job.setSchedulerConfig(schedulerConfig);
+
+        DataExtractor dataExtractor = m_Factory.newExtractor(job);
+
+        assertTrue(dataExtractor instanceof ElasticsearchDataExtractor);
+        assertEquals("\"match_all\":{}", m_Factory.stringifyElasticsearchQuery(query));
+        assertEquals("\"script_fields\":{\"twiceresponsetime\":{\"script\":{\"lang\":\"expression\",\"inline\":\"doc['responsetime'].value * 2\"}}}",
+                m_Factory.stringifyElasticsearchScriptFields(scriptFields));
     }
 
     @Test (expected = IllegalArgumentException.class)

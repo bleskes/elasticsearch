@@ -64,6 +64,7 @@ public class ElasticsearchDataExtractorTest
     @Mock private Logger m_Logger;
 
     private String m_Aggregations;
+    private String m_ScriptFields;
     private List<String> m_Fields;
 
     private ElasticsearchDataExtractor m_Extractor;
@@ -708,7 +709,7 @@ public class ElasticsearchDataExtractorTest
     private void createExtractor(MockHttpRequester httpRequester)
     {
         m_Extractor = new ElasticsearchDataExtractor(httpRequester, BASE_URL, null, INDICES, TYPES,
-                SEARCH, m_Aggregations, m_Fields, TIME_FIELD);
+                SEARCH, m_Aggregations, m_ScriptFields, m_Fields, TIME_FIELD);
     }
 
     private static class MockHttpRequester extends HttpRequester

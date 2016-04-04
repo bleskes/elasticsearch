@@ -124,7 +124,8 @@ public class ElasticsearchDataExtractor implements DataExtractor
             + "}";
 
     private static final String AGGREGATION_TEMPLATE = ",  %s";
-    private static final String FIELDS_TEMPLATE = ",  \"fields\": %s";
+    private static final String SCRIPT_FIELDS_TEMPLATE = ",  %s";
+    private static final String FIELDS_TEMPLATE = "%s,  \"fields\": %s";
     private static final String CLEAR_SCROLL_TEMPLATE = "{\"scroll_id\":[\"%s\"]}";
 
     private static final int OK_STATUS = 200;
@@ -152,6 +153,7 @@ public class ElasticsearchDataExtractor implements DataExtractor
     private final List<String> m_Types;
     private final String m_Search;
     private final String m_Aggregations;
+    private final String m_ScriptFields;
     private final List<String> m_Fields;
     private final String m_TimeField;
     private final ScrollState m_ScrollState;
@@ -168,7 +170,7 @@ public class ElasticsearchDataExtractor implements DataExtractor
 
     ElasticsearchDataExtractor(HttpRequester httpRequester, String baseUrl, String authHeader,
             List<String> indices, List<String> types, String search, String aggregations,
-            List<String> fields, String timeField)
+            String scriptFields, List<String> fields, String timeField)
     {
         m_HttpRequester = Objects.requireNonNull(httpRequester);
         m_BaseUrl = Objects.requireNonNull(baseUrl);
@@ -177,6 +179,7 @@ public class ElasticsearchDataExtractor implements DataExtractor
         m_Types = Objects.requireNonNull(types);
         m_Search = Objects.requireNonNull(search);
         m_Aggregations = aggregations;
+        m_ScriptFields = scriptFields;
         m_Fields = fields;
         m_TimeField = Objects.requireNonNull(timeField);
         m_ScrollState =  m_Aggregations == null ? ScrollState.createDefault()
@@ -185,10 +188,10 @@ public class ElasticsearchDataExtractor implements DataExtractor
 
     public static ElasticsearchDataExtractor create(String baseUrl, String authHeader,
             List<String> indices, List<String> types, String search, String aggregations,
-            List<String> fields, String timeField)
+            String scriptFields, List<String> fields, String timeField)
     {
         return new ElasticsearchDataExtractor(new HttpRequester(), baseUrl, authHeader, indices, types,
-                search, aggregations, fields, timeField);
+                search, aggregations, scriptFields, fields, timeField);
     }
 
     @Override
@@ -449,13 +452,19 @@ public class ElasticsearchDataExtractor implements DataExtractor
     {
         try
         {
-            return String.format(FIELDS_TEMPLATE, new ObjectMapper().writeValueAsString(m_Fields));
+            return String.format(FIELDS_TEMPLATE, createScriptFields(),
+                    new ObjectMapper().writeValueAsString(m_Fields));
         }
         catch (JsonProcessingException e)
         {
             m_Logger.error("Could not convert field list to JSON: " + m_Fields, e);
         }
         return "";
+    }
+
+    private String createScriptFields()
+    {
+        return (m_ScriptFields != null) ? String.format(SCRIPT_FIELDS_TEMPLATE, m_ScriptFields) : "";
     }
 
     private InputStream continueScroll() throws IOException
