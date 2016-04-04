@@ -25,7 +25,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
  * Provide access to the C++ model memory usage numbers
  * for the Java process.
  */
-@JsonIgnoreProperties({"id"})
+@JsonIgnoreProperties({"modelSizeStatsId"})
 public class ModelSizeStats
 {
     /**
