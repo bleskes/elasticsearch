@@ -184,12 +184,14 @@ public class ProcessCtrlTest
     {
         if (System.getProperty("os.name").contains("Windows"))
         {
-            assertEquals(ProcessCtrl.SUPPORT_BUNDLE_CMD,
+            assertEquals(ProcessCtrl.SUPPORT_BUNDLE_CMD[0], "powershell");
+            assertEquals(ProcessCtrl.SUPPORT_BUNDLE_CMD[1], "-File");
+            assertEquals(ProcessCtrl.SUPPORT_BUNDLE_CMD[2],
                     ProcessCtrl.BIN_DIR + "\\prelert_support_bundle.ps1");
         }
         else
         {
-            assertEquals(ProcessCtrl.SUPPORT_BUNDLE_CMD,
+            assertEquals(ProcessCtrl.SUPPORT_BUNDLE_CMD[0],
                     ProcessCtrl.BIN_DIR + "/prelert_support_bundle.sh");
         }
     }

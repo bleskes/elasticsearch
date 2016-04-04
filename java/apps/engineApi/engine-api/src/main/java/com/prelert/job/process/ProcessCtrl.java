@@ -176,7 +176,8 @@ public class ProcessCtrl
     /**
      * Executable script to create the support bundle
      */
-    public static final String SUPPORT_BUNDLE_CMD;
+    public static final String[] SUPPORT_BUNDLE_CMD;
+
     /**
      * The no archive arg for the support bundle command
      */
@@ -329,17 +330,20 @@ public class ProcessCtrl
         LIB_PATH = libDir.getPath() + File.pathSeparatorChar + cotsDir.getPath();
 
         // Support bundle command
-        String bundleScript = null;
+        String[] bundleCmd;
         if (SystemUtils.IS_OS_WINDOWS)
         {
-            bundleScript = "prelert_support_bundle.ps1";
+            String bundleScript = new File(BIN_DIR, "prelert_support_bundle.ps1").getPath();
+            // Windows doesn't automatically execute .ps1 files in PowerShell
+            bundleCmd = new String[] { "powershell", "-File", bundleScript, ProcessCtrl.NO_ARCHIVE_ARG };
         }
         else
         {
-            bundleScript = "prelert_support_bundle.sh";
+            String bundleScript = new File(BIN_DIR, "prelert_support_bundle.sh").getPath();
+            bundleCmd = new String[] { bundleScript, ProcessCtrl.NO_ARCHIVE_ARG };
         }
 
-        SUPPORT_BUNDLE_CMD = new File(BIN_DIR, bundleScript).getPath();
+        SUPPORT_BUNDLE_CMD = bundleCmd;
     }
 
     private ProcessCtrl()

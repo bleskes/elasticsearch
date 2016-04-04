@@ -52,7 +52,8 @@ import com.prelert.rs.data.ApiError;
  * The support endpoint
  */
 @Path("support")
-public class Support {
+public class Support
+{
     private static final Logger LOGGER = Logger.getLogger(Support.class);
 
     /**
@@ -62,7 +63,7 @@ public class Support {
 
 
     /**
-     * Run the support bundle script returning the generated files & logs
+     * Run the support bundle script returning the generated files and logs
      * as a compressed binary stream.
      */
     @GET
@@ -72,27 +73,27 @@ public class Support {
     {
         LOGGER.info("Support Bundle request");
 
-        Process proc;
         try
         {
-            proc = Runtime.getRuntime().exec(new String [] {ProcessCtrl.SUPPORT_BUNDLE_CMD,
-                                            ProcessCtrl.NO_ARCHIVE_ARG});
+            Process proc = Runtime.getRuntime().exec(ProcessCtrl.SUPPORT_BUNDLE_CMD);
+            // Close the support bundle script's STDIN so PowerShell exits
+            proc.getOutputStream().close();
             int exitValue = proc.waitFor();
             if (exitValue != 0)
             {
                 return buildErrorResponse(
                         Messages.getMessage(Messages.SUPPORT_BUNDLE_SCRIPT_ERROR,
-                             ProcessCtrl.SUPPORT_BUNDLE_CMD + " " + ProcessCtrl.NO_ARCHIVE_ARG),
+                             String.join(" ", ProcessCtrl.SUPPORT_BUNDLE_CMD)),
                         readString(proc.getErrorStream()));
             }
         }
-        catch (SecurityException | IOException |InterruptedException e)
+        catch (SecurityException | IOException | InterruptedException e)
         {
             LOGGER.error("Cannot execute support bundle script", e);
 
             return buildErrorResponse(
                     Messages.getMessage(Messages.SUPPORT_BUNDLE_SCRIPT_ERROR,
-                           ProcessCtrl.SUPPORT_BUNDLE_CMD + " " + ProcessCtrl.NO_ARCHIVE_ARG),
+                           String.join(" ", ProcessCtrl.SUPPORT_BUNDLE_CMD)),
                            e.toString());
         }
 
@@ -108,7 +109,7 @@ public class Support {
 
             return buildErrorResponse(
                     Messages.getMessage(Messages.SUPPORT_BUNDLE_SCRIPT_ERROR,
-                           ProcessCtrl.SUPPORT_BUNDLE_CMD + " " + ProcessCtrl.NO_ARCHIVE_ARG),
+                           String.join(" ", ProcessCtrl.SUPPORT_BUNDLE_CMD)),
                            e.toString());
         }
     }
