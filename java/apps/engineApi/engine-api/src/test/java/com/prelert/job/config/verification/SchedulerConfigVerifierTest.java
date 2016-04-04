@@ -134,6 +134,7 @@ public class SchedulerConfigVerifierTest
         conf.setTypes(Arrays.asList("mytype"));
         ObjectMapper mapper = new ObjectMapper();
         conf.setQuery(mapper.readValue("{ \"match_all\" : {} }", new TypeReference<Map<String, Object>>(){}));
+        conf.setScrollSize(2000);
 
         assertTrue(SchedulerConfigVerifier.verify(conf));
     }
@@ -383,6 +384,25 @@ public class SchedulerConfigVerifierTest
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.SCHEDULER_INVALID_OPTION_VALUE));
         m_ExpectedException.expectMessage("Invalid frequency value");
+
+        SchedulerConfigVerifier.verify(conf);
+    }
+
+    @Test
+    public void testCheckValidElasticsearch_GivenNegativeScrollSize()
+            throws JobConfigurationException, IOException
+    {
+        SchedulerConfig conf = new SchedulerConfig();
+        conf.setDataSource(DataSource.ELASTICSEARCH);
+        conf.setScrollSize(-1000);
+        conf.setBaseUrl("http://localhost:9200/");
+        conf.setIndexes(Arrays.asList("myIndex"));
+        conf.setTypes(Arrays.asList("mytype"));
+
+        m_ExpectedException.expect(JobConfigurationException.class);
+        m_ExpectedException.expect(
+                ErrorCodeMatcher.hasErrorCode(ErrorCodes.SCHEDULER_INVALID_OPTION_VALUE));
+        m_ExpectedException.expectMessage("Invalid scrollSize value");
 
         SchedulerConfigVerifier.verify(conf);
     }

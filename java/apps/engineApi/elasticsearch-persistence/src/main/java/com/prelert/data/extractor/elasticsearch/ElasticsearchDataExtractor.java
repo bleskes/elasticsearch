@@ -131,7 +131,6 @@ public class ElasticsearchDataExtractor implements DataExtractor
     private static final int OK_STATUS = 200;
     private static final String SLASH = "/";
     private static final String COMMA = ",";
-    private static final int UNAGGREGATED_SCROLL_SIZE = 1000;
     private static final int SCROLL_CONTEXT_MINUTES = 60;
     private static final String INDEX_SETTINGS_END_POINT = "%s/_settings";
     private static final String SEARCH_SIZE_ONE_END_POINT = "_search?size=1";
@@ -157,6 +156,7 @@ public class ElasticsearchDataExtractor implements DataExtractor
     private final String m_ScriptFields;
     private final List<String> m_Fields;
     private final String m_TimeField;
+    private final int m_ScrollSize;
     private final ScrollState m_ScrollState;
     private volatile long m_CurrentStartTime;
     private volatile long m_CurrentEndTime;
@@ -171,7 +171,7 @@ public class ElasticsearchDataExtractor implements DataExtractor
 
     ElasticsearchDataExtractor(HttpRequester httpRequester, String baseUrl, String authHeader,
             List<String> indices, List<String> types, String search, String aggregations,
-            String scriptFields, List<String> fields, String timeField)
+            String scriptFields, List<String> fields, String timeField, int scrollSize)
     {
         m_HttpRequester = Objects.requireNonNull(httpRequester);
         m_BaseUrl = Objects.requireNonNull(baseUrl);
@@ -183,16 +183,17 @@ public class ElasticsearchDataExtractor implements DataExtractor
         m_ScriptFields = scriptFields;
         m_Fields = fields;
         m_TimeField = Objects.requireNonNull(timeField);
-        m_ScrollState = m_Aggregations == null ? ScrollState.createDefault()
+        m_ScrollSize = scrollSize;
+        m_ScrollState =  m_Aggregations == null ? ScrollState.createDefault()
                 : ScrollState.createAggregated();
     }
 
     public static ElasticsearchDataExtractor create(String baseUrl, String authHeader,
             List<String> indices, List<String> types, String search, String aggregations,
-            String scriptFields, List<String> fields, String timeField)
+            String scriptFields, List<String> fields, String timeField, int scrollSize)
     {
         return new ElasticsearchDataExtractor(new HttpRequester(), baseUrl, authHeader, indices, types,
-                search, aggregations, scriptFields, fields, timeField);
+                search, aggregations, scriptFields, fields, timeField, scrollSize);
     }
 
     @Override
@@ -231,7 +232,7 @@ public class ElasticsearchDataExtractor implements DataExtractor
                 String index = matchString(response, INDEX_PATTERN);
                 long shards = readNumberOfShards(index);
                 m_Chunk = Math.max(MIN_CHUNK_SIZE_MS,
-                        (shards * UNAGGREGATED_SCROLL_SIZE * dataTimeSpread) / totalHits);
+                        (shards * m_ScrollSize * dataTimeSpread) / totalHits);
             }
         }
         else
@@ -420,7 +421,7 @@ public class ElasticsearchDataExtractor implements DataExtractor
         StringBuilder urlBuilder = buildUrlWithIndicesAndTypes();
         // With aggregations we don't want any hits returned for the raw data,
         // just the aggregations
-        int size = (m_Aggregations != null) ? 0 : UNAGGREGATED_SCROLL_SIZE;
+        int size = (m_Aggregations != null) ? 0 : m_ScrollSize;
         urlBuilder.append(String.format(SEARCH_SCROLL_END_POINT, size));
         return urlBuilder.toString();
     }

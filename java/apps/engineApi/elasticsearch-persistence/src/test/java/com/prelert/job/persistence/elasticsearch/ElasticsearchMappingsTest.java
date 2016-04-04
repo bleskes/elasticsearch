@@ -303,6 +303,9 @@ public class ElasticsearchMappingsTest
                         "          }," +
                         "          \"aggs\": {" +
                         "            \"type\": \"object\"" +
+                        "          }," +
+                        "          \"scrollSize\": {" +
+                        "            \"type\": \"integer\"" +
                         "          }" +
                         "        }" +
                         "      }," +

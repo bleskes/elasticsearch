@@ -98,14 +98,17 @@ public class SchedulerConfig implements PasswordStorage
     public static final String TYPES = "types";
     public static final String QUERY = "query";
     public static final String RETRIEVE_WHOLE_SOURCE = "retrieveWholeSource";
+    public static final String SCROLL_SIZE = "scrollSize";
     public static final String AGGREGATIONS = "aggregations";
     public static final String AGGS = "aggs";
+
     /**
      * Named to match Elasticsearch, hence lowercase_with_underscores instead
      * of camelCase
      */
     public static final String SCRIPT_FIELDS = "script_fields";
 
+    private static final int DEFAULT_SCROLL_SIZE = 1000;
     private static final long DEFAULT_ELASTICSEARCH_QUERY_DELAY = 60L;
 
     private DataSource m_DataSource;
@@ -145,6 +148,7 @@ public class SchedulerConfig implements PasswordStorage
     private Map<String, Object> m_Aggs;
     private Map<String, Object> m_ScriptFields;
     private Boolean m_RetrieveWholeSource;
+    private Integer m_ScrollSize;
 
     /**
      * Default constructor
@@ -343,6 +347,21 @@ public class SchedulerConfig implements PasswordStorage
     }
 
     /**
+     * For the ELASTICSEARCH data source only, get the size of documents to
+     * be retrieved from each shard via a scroll search
+     * @return The size of documents to be retrieved from each shard via a scroll search
+     */
+    public Integer getScrollSize()
+    {
+        return m_ScrollSize;
+    }
+
+    public void setScrollSize(Integer scrollSize)
+    {
+        m_ScrollSize = scrollSize;
+    }
+
+    /**
      * For the ELASTICSEARCH data source only, optional Elasticsearch
      * script_fields to add to the search to be submitted to Elasticsearch to
      * get the input data.  This class does not attempt to interpret the
@@ -485,6 +504,10 @@ public class SchedulerConfig implements PasswordStorage
         {
             m_RetrieveWholeSource = false;
         }
+        if (m_ScrollSize == null)
+        {
+            m_ScrollSize = DEFAULT_SCROLL_SIZE;
+        }
     }
 
     private void fillFileDefaults()
@@ -528,14 +551,15 @@ public class SchedulerConfig implements PasswordStorage
                 Objects.equals(this.m_Types, that.m_Types) &&
                 Objects.equals(this.m_Query, that.m_Query) &&
                 Objects.equals(this.m_RetrieveWholeSource, that.m_RetrieveWholeSource) &&
+                Objects.equals(this.m_ScrollSize, that.m_ScrollSize) &&
                 Objects.equals(this.getAggregationsOrAggs(), that.getAggregationsOrAggs());
     }
 
     @Override
     public int hashCode()
     {
-        return Objects.hash(m_DataSource, m_Frequency, m_QueryDelay, m_FilePath,
-                m_TailFile, m_BaseUrl, m_Username, m_Password, m_EncryptedPassword,
-                m_Indexes, m_Types, m_Query, m_RetrieveWholeSource, getAggregationsOrAggs());
+        return Objects.hash(m_DataSource, m_Frequency, m_QueryDelay, m_FilePath, m_TailFile,
+                m_BaseUrl, m_Username, m_Password, m_EncryptedPassword, m_Indexes, m_Types, m_Query,
+                m_RetrieveWholeSource, m_ScrollSize, getAggregationsOrAggs());
     }
 }

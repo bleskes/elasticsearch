@@ -230,6 +230,7 @@ public final class ReservedFieldNames
         SchedulerConfig.AGGREGATIONS,
         SchedulerConfig.AGGS,
         SchedulerConfig.SCRIPT_FIELDS,
+        SchedulerConfig.SCROLL_SIZE,
 
         TransformConfig.TRANSFORM,
         TransformConfig.ARGUMENTS,

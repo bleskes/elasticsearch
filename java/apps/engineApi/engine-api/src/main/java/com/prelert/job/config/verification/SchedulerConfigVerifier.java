@@ -98,6 +98,7 @@ public final class SchedulerConfigVerifier
         checkFieldIsNull(dataSource, SchedulerConfig.AGGREGATIONS, config.getAggregations());
         checkFieldIsNull(dataSource, SchedulerConfig.QUERY, config.getQuery());
         checkFieldIsNull(dataSource, SchedulerConfig.SCRIPT_FIELDS, config.getScriptFields());
+        checkFieldIsNull(dataSource, SchedulerConfig.SCROLL_SIZE, config.getScrollSize());
     }
 
     private static void verifyElasticsearchSchedulerConfig(SchedulerConfig config,
@@ -117,6 +118,7 @@ public final class SchedulerConfigVerifier
             // Not allowed script_fields when retrieveWholeSource is true
             checkFieldIsNull(dataSource, SchedulerConfig.SCRIPT_FIELDS, config.getScriptFields());
         }
+        checkFieldIsNotNegative(SchedulerConfig.SCROLL_SIZE, config.getScrollSize());
         checkFieldIsNull(dataSource, SchedulerConfig.FILE_PATH, config.getFilePath());
         checkFieldIsNull(dataSource, SchedulerConfig.TAIL_FILE, config.getTailFile());
     }
@@ -194,10 +196,10 @@ public final class SchedulerConfigVerifier
         throwInvalidOptionValue(fieldName, value);
     }
 
-    private static void checkFieldIsNotNegative(String fieldName, Long value)
+    private static void checkFieldIsNotNegative(String fieldName, Number value)
             throws JobConfigurationException
     {
-        if (value != null && value < 0)
+        if (value != null && value.longValue() < 0)
         {
             throwInvalidOptionValue(fieldName, value);
         }

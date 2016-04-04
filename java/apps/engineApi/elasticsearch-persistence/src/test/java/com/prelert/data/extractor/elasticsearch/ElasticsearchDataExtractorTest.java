@@ -709,7 +709,7 @@ public class ElasticsearchDataExtractorTest
     private void createExtractor(MockHttpRequester httpRequester)
     {
         m_Extractor = new ElasticsearchDataExtractor(httpRequester, BASE_URL, null, INDICES, TYPES,
-                SEARCH, m_Aggregations, m_ScriptFields, m_Fields, TIME_FIELD);
+                SEARCH, m_Aggregations, m_ScriptFields, m_Fields, TIME_FIELD, 1000);
     }
 
     private static class MockHttpRequester extends HttpRequester

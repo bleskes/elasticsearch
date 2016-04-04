@@ -33,12 +33,11 @@ import java.util.Base64;
 import java.util.Map;
 import java.util.Objects;
 
+import org.apache.log4j.Logger;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
-
-import org.apache.log4j.Logger;
-
 import com.prelert.data.extractor.elasticsearch.ElasticsearchDataExtractor;
 import com.prelert.job.JobDetails;
 import com.prelert.job.SchedulerConfig;
@@ -80,7 +79,8 @@ public class DataExtractorFactoryImpl implements DataExtractorFactory
                 stringifyElasticsearchAggregations(schedulerConfig.getAggregations(), schedulerConfig.getAggs()),
                 stringifyElasticsearchScriptFields(schedulerConfig.getScriptFields()),
                 Boolean.TRUE.equals(schedulerConfig.getRetrieveWholeSource()) ? null : job.allFields(),
-                timeField);
+                timeField,
+                schedulerConfig.getScrollSize());
     }
 
     @VisibleForTesting

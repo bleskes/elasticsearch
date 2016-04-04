@@ -201,12 +201,14 @@ public class SchedulerConfigTest
         originalSchedulerConfig.setQuery(new HashMap<String, Object>());
         originalSchedulerConfig.setQueryDelay(30L);
         originalSchedulerConfig.setRetrieveWholeSource(true);
+        originalSchedulerConfig.setScrollSize(2000);
 
         SchedulerConfig defaultedSchedulerConfig = new SchedulerConfig();
         defaultedSchedulerConfig.setDataSource(DataSource.ELASTICSEARCH);
         defaultedSchedulerConfig.setQuery(new HashMap<String, Object>());
         defaultedSchedulerConfig.setQueryDelay(30L);
         defaultedSchedulerConfig.setRetrieveWholeSource(true);
+        defaultedSchedulerConfig.setScrollSize(2000);
 
         defaultedSchedulerConfig.fillDefaults();
 
@@ -223,6 +225,7 @@ public class SchedulerConfigTest
         expectedSchedulerConfig.setQuery(defaultQuery);
         expectedSchedulerConfig.setQueryDelay(60L);
         expectedSchedulerConfig.setRetrieveWholeSource(false);
+        expectedSchedulerConfig.setScrollSize(1000);
 
         SchedulerConfig defaultedSchedulerConfig = new SchedulerConfig();
         defaultedSchedulerConfig.setDataSource(DataSource.ELASTICSEARCH);
@@ -286,6 +289,17 @@ public class SchedulerConfigTest
         SchedulerConfig sc1 = createFullyPopulated();
         SchedulerConfig sc2 = createFullyPopulated();
         sc2.setQueryDelay(120L);
+
+        assertFalse(sc1.equals(sc2));
+        assertFalse(sc2.equals(sc1));
+    }
+
+    @Test
+    public void testEquals_GivenDifferentScrollSize()
+    {
+        SchedulerConfig sc1 = createFullyPopulated();
+        SchedulerConfig sc2 = createFullyPopulated();
+        sc2.setScrollSize(1);
 
         assertFalse(sc1.equals(sc2));
         assertFalse(sc2.equals(sc1));
@@ -376,6 +390,7 @@ public class SchedulerConfigTest
         sc.setBaseUrl("http://localhost:8080");
         sc.setDataSource(DataSource.ELASTICSEARCH);
         sc.setFrequency(60L);
+        sc.setScrollSize(5000);
         sc.setIndexes(Arrays.asList("myIndex"));
         sc.setTypes(Arrays.asList("myType1", "myType2"));
         Map<String, Object> query = new HashMap<>();

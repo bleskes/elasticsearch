@@ -79,6 +79,7 @@ public class DataExtractorFactoryImplTest
         Map<String, Object> query = new HashMap<>();
         query.put("match_all", new HashMap<String, Object>());
         schedulerConfig.setQuery(query);
+        schedulerConfig.setScrollSize(1000);
 
         JobDetails job = new JobDetails();
         job.setDataDescription(dataDescription);
@@ -112,6 +113,7 @@ public class DataExtractorFactoryImplTest
         Map<String, Object> query = new HashMap<>();
         query.put("match_all", new HashMap<String, Object>());
         schedulerConfig.setQuery(query);
+        schedulerConfig.setScrollSize(1000);
 
         JobDetails job = new JobDetails();
         job.setDataDescription(dataDescription);
@@ -155,6 +157,7 @@ public class DataExtractorFactoryImplTest
         Map<String, Object> timeLevel = new LinkedHashMap<>();
         timeLevel.put("histogram", histogram);
         timeLevel.put("aggs", nestedAggs);
+        schedulerConfig.setScrollSize(1000);
         Map<String, Object> aggs = new HashMap<>();
         aggs.put("time_level", timeLevel);
         schedulerConfig.setAggs(aggs);
@@ -186,6 +189,7 @@ public class DataExtractorFactoryImplTest
         Map<String, Object> query = new HashMap<>();
         query.put("match_all", new HashMap<String, Object>());
         schedulerConfig.setQuery(query);
+        schedulerConfig.setScrollSize(1000);
 
         // This block of nested maps builds the script_fields structure required by Elasticsearch
         Map<String, Object> script = new LinkedHashMap<>();
