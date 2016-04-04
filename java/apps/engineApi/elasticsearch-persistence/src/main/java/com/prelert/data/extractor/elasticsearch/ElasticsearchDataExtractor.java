@@ -138,9 +138,9 @@ public class ElasticsearchDataExtractor implements DataExtractor
     private static final String CONTINUE_SCROLL_END_POINT = "_search/scroll?scroll=" + SCROLL_CONTEXT_MINUTES + "m";
     private static final String CLEAR_SCROLL_END_POINT = "_search/scroll";
 
-    private static final Pattern TOTAL_HITS_PATTERN = Pattern.compile("\"hits\":\\{\"total\":(.*?),");
-    private static final Pattern EARLIEST_TIME_PATTERN = Pattern.compile("\"earliestTime\":\\{\"value\":(.*?),");
-    private static final Pattern LATEST_TIME_PATTERN = Pattern.compile("\"latestTime\":\\{\"value\":(.*?),");
+    private static final Pattern TOTAL_HITS_PATTERN = Pattern.compile("\"hits\":\\{.*?\"total\":(.*?),");
+    private static final Pattern EARLIEST_TIME_PATTERN = Pattern.compile("\"earliestTime\":\\{.*?\"value\":(.*?),");
+    private static final Pattern LATEST_TIME_PATTERN = Pattern.compile("\"latestTime\":\\{.*?\"value\":(.*?),");
     private static final Pattern INDEX_PATTERN = Pattern.compile("\"_index\":\"(.*?)\"");
     private static final Pattern NUMBER_OF_SHARDS_PATTERN = Pattern.compile("\"number_of_shards\":\"(.*?)\"");
     private static final long CHUNK_THRESHOLD_MS = 3600000;

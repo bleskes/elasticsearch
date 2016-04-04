@@ -29,6 +29,7 @@ package com.prelert.data.extractor.elasticsearch;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.BufferedReader;
@@ -692,6 +693,421 @@ public class ElasticsearchDataExtractorTest
         assertEquals(1, requester.m_GetRequestParams.size());
         RequestParams requestParams = requester.getGetRequestParams(0);
         assertEquals("http://localhost:9200/dataIndex/dataType/_search?scroll=60m&size=0", requestParams.url);
+    }
+
+    @Test
+    public void testChunkedDataExtraction() throws IOException
+    {
+        String dataSummaryResponse = "{"
+                + "\"took\":17,"
+                + "\"timed_out\":false,"
+                + "\"_shards\":{"
+                + "  \"total\":1,"
+                + "  \"successful\":1,"
+                + "  \"failed\":0"
+                + "},"
+                + "\"hits\":{"
+                + "  \"total\":10000,"
+                + "  \"max_score\":null,"
+                + "  \"hits\":["
+                + "    \"_index\":\"dataIndex\","
+                + "    \"_type\":\"dataType\","
+                + "    \"_id\":\"1403481600\","
+                + "    \"_score\":null,"
+                + "    \"_source\":{"
+                + "      \"id\":\"1403481600\""
+                + "    }"
+                + "  ]"
+                + "},"
+                + "\"aggregations\":{"
+                +   "\"earliestTime\":{"
+                +     "\"value\":1400000001000,"
+                +     "\"value_as_string\":\"2014-05-13T16:53:21Z\""
+                +   "},"
+                +   "\"latestTime\":{"
+                +     "\"value\":1400007201000,"
+                +     "\"value_as_string\":\"2014-05-13T17:16:01Z\""
+                +   "}"
+                + "}"
+                + "}";
+
+        String indexResponse = "{"
+                + "\"dataIndex\":{"
+                + "  \"settings\":{"
+                + "    \"index\":{"
+                + "      \"creation_date\":0,"
+                + "      \"number_of_shards\":\"5\","
+                + "      \"number_of_replicas\":\"1\""
+                + "    }"
+                + "  }"
+                + "}";
+
+        String initialResponse1 = "{"
+                + "\"_scroll_id\":\"scrollId_1\","
+                + "\"took\":17,"
+                + "\"timed_out\":false,"
+                + "\"_shards\":{"
+                + "  \"total\":1,"
+                + "  \"successful\":1,"
+                + "  \"failed\":0"
+                + "},"
+                + "\"hits\":{"
+                + "  \"total\":10000,"
+                + "  \"max_score\":null,"
+                + "  \"hits\":["
+                + "    \"_index\":\"dataIndex\","
+                + "    \"_type\":\"dataType\","
+                + "    \"_id\":\"1403481600\","
+                + "    \"_score\":null,"
+                + "    \"_source\":{"
+                + "      \"id\":\"1403481600\""
+                + "    }"
+                + "  ]"
+                + "}"
+                + "}";
+
+        String continueResponse1 = "{"
+                + "\"_scroll_id\":\"scrollId_2\","
+                + "\"took\":8,"
+                + "\"timed_out\":false,"
+                + "\"_shards\":{"
+                + "  \"total\":1,"
+                + "  \"successful\":1,"
+                + "  \"failed\":0"
+                + "},"
+                + "\"hits\":{"
+                + "  \"total\":10000,"
+                + "  \"max_score\":null,"
+                + "  \"hits\":["
+                + "    \"_index\":\"dataIndex\","
+                + "    \"_type\":\"dataType\","
+                + "    \"_id\":\"1403782200\","
+                + "    \"_score\":null,"
+                + "    \"_source\":{"
+                + "      \"id\":\"1403782200\""
+                + "    }"
+                + "  ]"
+                + "}"
+                + "}";
+
+        String endResponse1 = "{"
+                + "\"_scroll_id\":\"scrollId_3\","
+                + "\"took\":8,"
+                + "\"timed_out\":false,"
+                + "\"_shards\":{"
+                + "  \"total\":1,"
+                + "  \"successful\":1,"
+                + "  \"failed\":0"
+                + "},"
+                + "\"hits\":{"
+                + "  \"total\":10000,"
+                + "  \"max_score\":null,"
+                + "  \"hits\":[]"
+                + "}"
+                + "}";
+
+        String initialResponse2 = "{"
+                + "\"_scroll_id\":\"scrollId_4\","
+                + "\"hits\":{"
+                + "  \"total\":10000,"
+                + "  \"hits\":["
+                + "    \"_index\":\"dataIndex\""
+                + "  ]"
+                + "}"
+                + "}";
+
+        String endResponse2 = "{"
+                + "\"_scroll_id\":\"scrollId_5\","
+                + "\"hits\":[]"
+                + "}";
+
+        String initialResponse3 = "{"
+                + "\"_scroll_id\":\"scrollId_6\","
+                + "\"hits\":[]"
+                + "}";
+
+        String dataSummaryResponse2 = "{"
+                + "\"took\":17,"
+                + "\"timed_out\":false,"
+                + "\"_shards\":{"
+                + "  \"total\":1,"
+                + "  \"successful\":1,"
+                + "  \"failed\":0"
+                + "},"
+                + "\"hits\":{"
+                + "  \"total\":1,"
+                + "  \"max_score\":null,"
+                + "  \"hits\":["
+                + "    \"_index\":\"dataIndex\","
+                + "    \"_type\":\"dataType\","
+                + "    \"_id\":\"1403481600\","
+                + "    \"_score\":null,"
+                + "    \"_source\":{"
+                + "      \"id\":\"1403481600\""
+                + "    }"
+                + "  ]"
+                + "},"
+                + "\"aggregations\":{"
+                +   "\"earliestTime\":{"
+                +     "\"value\":1400007201000,"
+                +     "\"value_as_string\":\"2014-05-13T17:16:01Z\""
+                +   "},"
+                +   "\"latestTime\":{"
+                +     "\"value\":1400007201000,"
+                +     "\"value_as_string\":\"2014-05-13T17:16:01Z\""
+                +   "}"
+                + "}"
+                + "}";
+
+        String initialResponse4 = "{"
+                + "\"_scroll_id\":\"scrollId_7\","
+                + "\"hits\":{"
+                + "  \"total\":1,"
+                + "  \"hits\":["
+                + "    \"_index\":\"dataIndex\""
+                + "  ]"
+                + "}"
+                + "}";
+
+        String endResponse4 = "{"
+                + "\"_scroll_id\":\"scrollId_8\","
+                + "\"hits\":[]"
+                + "}";
+
+        List<HttpResponse> responses = Arrays.asList(
+                new HttpResponse(toStream(dataSummaryResponse), 200),
+                new HttpResponse(toStream(indexResponse), 200),
+                new HttpResponse(toStream(initialResponse1), 200),
+                new HttpResponse(toStream(continueResponse1), 200),
+                new HttpResponse(toStream(endResponse1), 200),
+                new HttpResponse(toStream(initialResponse2), 200),
+                new HttpResponse(toStream(endResponse2), 200),
+                new HttpResponse(toStream(initialResponse3), 200),
+                new HttpResponse(toStream(dataSummaryResponse2), 200),
+                new HttpResponse(toStream(initialResponse4), 200),
+                new HttpResponse(toStream(endResponse4), 200));
+
+        MockHttpRequester requester = new MockHttpRequester(responses);
+        createExtractor(requester);
+
+        m_Extractor.newSearch(1400000000000L, 1407200000000L, m_Logger);
+
+        assertTrue(m_Extractor.hasNext());
+        assertEquals(initialResponse1, streamToString(m_Extractor.next().get()));
+        assertTrue(m_Extractor.hasNext());
+        assertEquals(continueResponse1, streamToString(m_Extractor.next().get()));
+        assertTrue(m_Extractor.hasNext());
+        assertEquals(initialResponse2, streamToString(m_Extractor.next().get()));
+        assertTrue(m_Extractor.hasNext());
+        assertEquals(initialResponse4, streamToString(m_Extractor.next().get()));
+        assertFalse(m_Extractor.next().isPresent());
+        assertFalse(m_Extractor.hasNext());
+
+        requester.assertEqualRequestsToResponses();
+
+        int requestCount = 0;
+        RequestParams requestParams = requester.getGetRequestParams(requestCount++);
+        assertEquals("http://localhost:9200/dataIndex/dataType/_search?size=1", requestParams.url);
+        String expectedDataSummaryBody = "{"
+                + "  \"sort\": [\"_doc\"],"
+                + "  \"query\": {"
+                + "    \"filtered\": {"
+                + "      \"filter\": {"
+                + "        \"range\": {"
+                + "          \"time\": {"
+                + "            \"gte\": \"2014-05-13T16:53:20.000Z\","
+                + "            \"lt\": \"2014-08-05T00:53:20.000Z\","
+                + "            \"format\": \"date_time\""
+                + "          }"
+                + "        }"
+                + "      }"
+                + "    }"
+                + "  },"
+                + "  \"aggs\":{"
+                + "    \"earliestTime\":{"
+                + "      \"min\":{\"field\":\"time\"}"
+                + "    },"
+                + "    \"latestTime\":{"
+                + "      \"max\":{\"field\":\"time\"}"
+                + "    }"
+                + "  }"
+                + "}";
+        assertEquals(expectedDataSummaryBody.replace(" ", ""), requestParams.requestBody);
+
+        requestParams = requester.getGetRequestParams(requestCount++);
+        assertEquals("http://localhost:9200/dataIndex/_settings", requestParams.url);
+        assertNull(requestParams.requestBody);
+
+        requestParams = requester.getGetRequestParams(requestCount++);
+        assertEquals("http://localhost:9200/dataIndex/dataType/_search?scroll=60m&size=1000", requestParams.url);
+        String expectedSearchBody = "{"
+                + "  \"sort\": ["
+                + "    {\"time\": {\"order\": \"asc\"}}"
+                + "  ],"
+                + "  \"query\": {"
+                + "    \"filtered\": {"
+                + "      \"filter\": {"
+                + "        \"bool\": {"
+                + "          \"must\": {"
+                + "            \"match_all\": {}"
+                + "          },"
+                + "          \"must\": {"
+                + "            \"range\": {"
+                + "              \"time\": {"
+                + "                \"gte\": \"2014-05-13T16:53:21.000Z\","
+                + "                \"lt\": \"2014-05-13T17:53:21.000Z\","
+                + "                \"format\": \"date_time\""
+                + "              }"
+                + "            }"
+                + "          }"
+                + "        }"
+                + "      }"
+                + "    }"
+                + "  }"
+                + "}";
+        assertEquals(expectedSearchBody, requestParams.requestBody);
+
+        requestParams = requester.getGetRequestParams(requestCount++);
+        assertEquals("http://localhost:9200/_search/scroll?scroll=60m", requestParams.url);
+        assertEquals("scrollId_1", requestParams.requestBody);
+
+        requestParams = requester.getGetRequestParams(requestCount++);
+        assertEquals("http://localhost:9200/_search/scroll?scroll=60m", requestParams.url);
+        assertEquals("scrollId_2", requestParams.requestBody);
+
+        requestParams = requester.getGetRequestParams(requestCount++);
+        expectedSearchBody = "{"
+                + "  \"sort\": ["
+                + "    {\"time\": {\"order\": \"asc\"}}"
+                + "  ],"
+                + "  \"query\": {"
+                + "    \"filtered\": {"
+                + "      \"filter\": {"
+                + "        \"bool\": {"
+                + "          \"must\": {"
+                + "            \"match_all\": {}"
+                + "          },"
+                + "          \"must\": {"
+                + "            \"range\": {"
+                + "              \"time\": {"
+                + "                \"gte\": \"2014-05-13T17:53:21.000Z\","
+                + "                \"lt\": \"2014-05-13T18:53:21.000Z\","
+                + "                \"format\": \"date_time\""
+                + "              }"
+                + "            }"
+                + "          }"
+                + "        }"
+                + "      }"
+                + "    }"
+                + "  }"
+                + "}";
+        assertEquals("http://localhost:9200/dataIndex/dataType/_search?scroll=60m&size=1000", requestParams.url);
+        assertEquals(expectedSearchBody, requestParams.requestBody);
+
+        requestParams = requester.getGetRequestParams(requestCount++);
+        assertEquals("http://localhost:9200/_search/scroll?scroll=60m", requestParams.url);
+        assertEquals("scrollId_4", requestParams.requestBody);
+
+        requestParams = requester.getGetRequestParams(requestCount++);
+        expectedSearchBody = "{"
+                + "  \"sort\": ["
+                + "    {\"time\": {\"order\": \"asc\"}}"
+                + "  ],"
+                + "  \"query\": {"
+                + "    \"filtered\": {"
+                + "      \"filter\": {"
+                + "        \"bool\": {"
+                + "          \"must\": {"
+                + "            \"match_all\": {}"
+                + "          },"
+                + "          \"must\": {"
+                + "            \"range\": {"
+                + "              \"time\": {"
+                + "                \"gte\": \"2014-05-13T18:53:21.000Z\","
+                + "                \"lt\": \"2014-05-13T19:53:21.000Z\","
+                + "                \"format\": \"date_time\""
+                + "              }"
+                + "            }"
+                + "          }"
+                + "        }"
+                + "      }"
+                + "    }"
+                + "  }"
+                + "}";
+        assertEquals("http://localhost:9200/dataIndex/dataType/_search?scroll=60m&size=1000", requestParams.url);
+        assertEquals(expectedSearchBody, requestParams.requestBody);
+
+        requestParams = requester.getGetRequestParams(requestCount++);
+        assertEquals("http://localhost:9200/dataIndex/dataType/_search?size=1", requestParams.url);
+        expectedDataSummaryBody = "{"
+                + "  \"sort\": [\"_doc\"],"
+                + "  \"query\": {"
+                + "    \"filtered\": {"
+                + "      \"filter\": {"
+                + "        \"range\": {"
+                + "          \"time\": {"
+                + "            \"gte\": \"2014-05-13T18:53:21.000Z\","
+                + "            \"lt\": \"2014-08-05T00:53:20.000Z\","
+                + "            \"format\": \"date_time\""
+                + "          }"
+                + "        }"
+                + "      }"
+                + "    }"
+                + "  },"
+                + "  \"aggs\":{"
+                + "    \"earliestTime\":{"
+                + "      \"min\":{\"field\":\"time\"}"
+                + "    },"
+                + "    \"latestTime\":{"
+                + "      \"max\":{\"field\":\"time\"}"
+                + "    }"
+                + "  }"
+                + "}";
+        assertEquals(expectedDataSummaryBody.replace(" ", ""), requestParams.requestBody);
+
+        requestParams = requester.getGetRequestParams(requestCount++);
+        expectedSearchBody = "{"
+                + "  \"sort\": ["
+                + "    {\"time\": {\"order\": \"asc\"}}"
+                + "  ],"
+                + "  \"query\": {"
+                + "    \"filtered\": {"
+                + "      \"filter\": {"
+                + "        \"bool\": {"
+                + "          \"must\": {"
+                + "            \"match_all\": {}"
+                + "          },"
+                + "          \"must\": {"
+                + "            \"range\": {"
+                + "              \"time\": {"
+                + "                \"gte\": \"2014-05-13T18:53:21.000Z\","
+                + "                \"lt\": \"2014-08-05T00:53:20.000Z\","
+                + "                \"format\": \"date_time\""
+                + "              }"
+                + "            }"
+                + "          }"
+                + "        }"
+                + "      }"
+                + "    }"
+                + "  }"
+                + "}";
+        assertEquals("http://localhost:9200/dataIndex/dataType/_search?scroll=60m&size=1000", requestParams.url);
+        assertEquals(expectedSearchBody, requestParams.requestBody);
+
+        requestParams = requester.getGetRequestParams(requestCount++);
+        assertEquals("http://localhost:9200/_search/scroll?scroll=60m", requestParams.url);
+        assertEquals("scrollId_7", requestParams.requestBody);
+
+        assertEquals(requestCount, requester.m_RequestCount);
+
+        String[] deletedScrollIds = {"scrollId_3", "scrollId_5", "scrollId_6", "scrollId_8"};
+        assertEquals(4, requester.m_DeleteRequestParams.size());
+        for (int i = 0; i < deletedScrollIds.length; i++)
+        {
+            assertEquals("http://localhost:9200/_search/scroll", requester.getDeleteRequestParams(i).url);
+            assertEquals(String.format("{\"scroll_id\":[\"%s\"]}", deletedScrollIds[i]),
+                    requester.getDeleteRequestParams(i).requestBody);
+        }
     }
 
     private static InputStream toStream(String input)
