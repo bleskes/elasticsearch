@@ -149,7 +149,7 @@ public class ElasticsearchDataExtractorTest
         MockHttpRequester requester = new MockHttpRequester(responses);
         createExtractor(requester);
 
-        m_Extractor.newSearch(1400000000L, 1500000000L, m_Logger);
+        m_Extractor.newSearch(1400000000L, 1403600000L, m_Logger);
 
         assertTrue(m_Extractor.hasNext());
         assertEquals(initialResponse, streamToString(m_Extractor.next().get()));
@@ -178,7 +178,7 @@ public class ElasticsearchDataExtractorTest
                 + "            \"range\": {"
                 + "              \"time\": {"
                 + "                \"gte\": \"1970-01-17T04:53:20.000Z\","
-                + "                \"lt\": \"1970-01-18T08:40:00.000Z\","
+                + "                \"lt\": \"1970-01-17T05:53:20.000Z\","
                 + "                \"format\": \"date_time\""
                 + "              }"
                 + "            }"
@@ -259,7 +259,7 @@ public class ElasticsearchDataExtractorTest
         MockHttpRequester requester = new MockHttpRequester(responses);
         createExtractor(requester);
 
-        m_Extractor.newSearch(1400000000L, 1500000000L, m_Logger);
+        m_Extractor.newSearch(1400000000L, 1403600000L, m_Logger);
 
         assertTrue(m_Extractor.hasNext());
         m_Extractor.next();
@@ -283,7 +283,7 @@ public class ElasticsearchDataExtractorTest
         MockHttpRequester requester = new MockHttpRequester(responses);
         createExtractor(requester);
 
-        m_Extractor.newSearch(1400000000L, 1500000000L, m_Logger);
+        m_Extractor.newSearch(1400000000L, 1403600000L, m_Logger);
 
         assertTrue(m_Extractor.hasNext());
         m_Extractor.next();
@@ -323,7 +323,7 @@ public class ElasticsearchDataExtractorTest
         MockHttpRequester requester = new MockHttpRequester(responses);
         createExtractor(requester);
 
-        m_Extractor.newSearch(1400000000L, 1500000000L, m_Logger);
+        m_Extractor.newSearch(1400000000L, 1403600000L, m_Logger);
 
         assertTrue(m_Extractor.hasNext());
         m_Extractor.next();
@@ -370,7 +370,7 @@ public class ElasticsearchDataExtractorTest
         MockHttpRequester requester = new MockHttpRequester(responses);
         createExtractor(requester);
 
-        m_Extractor.newSearch(1400000000L, 1500000000L, m_Logger);
+        m_Extractor.newSearch(1400000000L, 1403600000L, m_Logger);
 
         assertTrue(m_Extractor.hasNext());
         m_Extractor.next();
@@ -389,7 +389,7 @@ public class ElasticsearchDataExtractorTest
         MockHttpRequester requester = new MockHttpRequester(responses);
         createExtractor(requester);
 
-        m_Extractor.newSearch(1400000000L, 1500000000L, m_Logger);
+        m_Extractor.newSearch(1400000000L, 1403600000L, m_Logger);
 
         assertTrue(m_Extractor.hasNext());
         m_Extractor.next();
@@ -413,7 +413,7 @@ public class ElasticsearchDataExtractorTest
         MockHttpRequester requester = new MockHttpRequester(responses);
         createExtractor(requester);
 
-        m_Extractor.newSearch(1400000000L, 1500000000L, m_Logger);
+        m_Extractor.newSearch(1400000000L, 1403600000L, m_Logger);
 
         assertTrue(m_Extractor.hasNext());
         assertEquals(initialResponse, streamToString(m_Extractor.next().get()));
@@ -435,7 +435,7 @@ public class ElasticsearchDataExtractorTest
         MockHttpRequester requester = new MockHttpRequester(responses);
         createExtractor(requester);
 
-        m_Extractor.newSearch(1400000000L, 1500000000L, m_Logger);
+        m_Extractor.newSearch(1400000000L, 1403600000L, m_Logger);
 
         assertTrue(m_Extractor.hasNext());
         assertFalse(m_Extractor.next().isPresent());
@@ -520,7 +520,7 @@ public class ElasticsearchDataExtractorTest
         MockHttpRequester requester = new MockHttpRequester(responses);
         createExtractor(requester);
 
-        m_Extractor.newSearch(1400000000L, 1500000000L, m_Logger);
+        m_Extractor.newSearch(1400000000L, 1403600000L, m_Logger);
 
         assertTrue(m_Extractor.hasNext());
         assertEquals(initialResponse, streamToString(m_Extractor.next().get()));
@@ -549,7 +549,7 @@ public class ElasticsearchDataExtractorTest
                 + "            \"range\": {"
                 + "              \"time\": {"
                 + "                \"gte\": \"1970-01-17T04:53:20.000Z\","
-                + "                \"lt\": \"1970-01-18T08:40:00.000Z\","
+                + "                \"lt\": \"1970-01-17T05:53:20.000Z\","
                 + "                \"format\": \"date_time\""
                 + "              }"
                 + "            }"
@@ -607,7 +607,7 @@ public class ElasticsearchDataExtractorTest
         MockHttpRequester requester = new MockHttpRequester(responses);
         createExtractor(requester);
 
-        m_Extractor.newSearch(1400000000L, 1500000000L, m_Logger);
+        m_Extractor.newSearch(1400000000L, 1403600000L, m_Logger);
 
         assertTrue(m_Extractor.hasNext());
         assertEquals(initialResponse, streamToString(m_Extractor.next().get()));
@@ -634,7 +634,7 @@ public class ElasticsearchDataExtractorTest
                 + "            \"range\": {"
                 + "              \"time\": {"
                 + "                \"gte\": \"1970-01-17T04:53:20.000Z\","
-                + "                \"lt\": \"1970-01-18T08:40:00.000Z\","
+                + "                \"lt\": \"1970-01-17T05:53:20.000Z\","
                 + "                \"format\": \"date_time\""
                 + "              }"
                 + "            }"
@@ -680,7 +680,7 @@ public class ElasticsearchDataExtractorTest
         MockHttpRequester requester = new MockHttpRequester(responses);
         createExtractor(requester);
 
-        m_Extractor.newSearch(1400000000L, 1500000000L, m_Logger);
+        m_Extractor.newSearch(1400000000L, 1403600000L, m_Logger);
 
         assertTrue(m_Extractor.hasNext());
         assertFalse(m_Extractor.next().isPresent());

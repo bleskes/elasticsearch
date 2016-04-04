@@ -150,7 +150,7 @@ public class JobScheduler
         }
 
         Date latestRecordTimestamp = null;
-        m_DataExtractor.newSearch(start, end, m_Logger);
+        newSearch(start, end);
         while (m_DataExtractor.hasNext() && m_Status == JobSchedulerStatus.STARTED
                 && !m_ProblemTracker.hasDataExtractionProblems())
         {
@@ -161,18 +161,29 @@ public class JobScheduler
                 if (counts.getLatestRecordTimeStamp() != null)
                 {
                     latestRecordTimestamp = counts.getLatestRecordTimeStamp();
+                    m_LastEndTimeMs = latestRecordTimestamp.getTime() + 1;
                 }
             }
         }
 
-        // Only advance time when there are no problems in order to retry
-        if (!m_ProblemTracker.hasDataExtractionProblems())
-        {
-            m_ProblemTracker.updateEmptyDataCount(latestRecordTimestamp == null);
-            updateLastEndTime(latestRecordTimestamp, end);
-            makeResultsAvailable();
-        }
+        updateLastEndTime(latestRecordTimestamp, end);
+        m_ProblemTracker.updateEmptyDataCount(latestRecordTimestamp == null);
         m_ProblemTracker.finishReport();
+        makeResultsAvailable();
+    }
+
+    private void newSearch(long start, long end)
+    {
+        try
+        {
+            m_DataExtractor.newSearch(start, end, m_Logger);
+        }
+        catch (IOException e)
+        {
+            m_ProblemTracker.reportProblem(e.getMessage());
+            m_Logger.error("An error has occurred while starting a new search for ["
+                    + start + ", " + end + ")", e);
+        }
     }
 
     private Auditor audit()
@@ -196,18 +207,13 @@ public class JobScheduler
 
     private void updateLastEndTime(Date latestRecordTimestamp, long searchEndTimeMs)
     {
-        if (latestRecordTimestamp == null)
-        {
-            return;
-        }
-
-        if (isInRealTimeMode())
+        // Only update last end time when there are no problems in order to retry
+        // from the last time when data were successfully processed
+        if (!m_ProblemTracker.hasDataExtractionProblems()
+                && latestRecordTimestamp != null
+                && isInRealTimeMode())
         {
             m_LastEndTimeMs = Math.min(searchEndTimeMs, alignToBucketEnd(latestRecordTimestamp));
-        }
-        else
-        {
-            m_LastEndTimeMs = latestRecordTimestamp.getTime() + 1;
         }
     }
 
