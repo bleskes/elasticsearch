@@ -1110,6 +1110,119 @@ public class ElasticsearchDataExtractorTest
         }
     }
 
+    @Test
+    public void testChunkedDataExtraction_GivenZeroHits() throws IOException
+    {
+        String dataSummaryResponse = "{"
+                + "\"took\":17,"
+                + "\"timed_out\":false,"
+                + "\"_shards\":{"
+                + "  \"total\":1,"
+                + "  \"successful\":1,"
+                + "  \"failed\":0"
+                + "},"
+                + "\"hits\":{"
+                + "  \"total\":0,"
+                + "  \"max_score\":null,"
+                + "  \"hits\":[]"
+                + "},"
+                + "\"aggregations\":{"
+                +   "\"earliestTime\":null,"
+                +   "\"latestTime\":null"
+                + "}"
+                + "}";
+
+        String searchResponse = "{"
+                + "\"_scroll_id\":\"scrollId_1\","
+                + "\"took\":17,"
+                + "\"timed_out\":false,"
+                + "\"_shards\":{"
+                + "  \"total\":1,"
+                + "  \"successful\":1,"
+                + "  \"failed\":0"
+                + "},"
+                + "\"hits\":{"
+                + "  \"total\":0,"
+                + "  \"max_score\":null,"
+                + "  \"hits\":[]"
+                + "}"
+                + "}";
+
+
+        List<HttpResponse> responses = Arrays.asList(
+                new HttpResponse(toStream(dataSummaryResponse), 200),
+                new HttpResponse(toStream(searchResponse), 200));
+
+        MockHttpRequester requester = new MockHttpRequester(responses);
+        createExtractor(requester);
+
+        m_Extractor.newSearch(1400000000000L, 1407200000000L, m_Logger);
+
+        assertTrue(m_Extractor.hasNext());
+        assertFalse(m_Extractor.next().isPresent());
+        assertFalse(m_Extractor.hasNext());
+    }
+
+    @Test
+    public void testChunkedDataExtraction_GivenDataSummaryRequestIsNotOk() throws IOException
+    {
+        String dataSummaryResponse = "{}";
+
+        m_ExpectedException.expect(IOException.class);
+        m_ExpectedException.expectMessage("Request 'http://localhost:9200/dataIndex/dataType/_search?size=1' "
+                + "failed with status code: 400. Response was:\n" + dataSummaryResponse);
+
+        List<HttpResponse> responses = Arrays.asList(
+                new HttpResponse(toStream(dataSummaryResponse), 400));
+
+        MockHttpRequester requester = new MockHttpRequester(responses);
+        createExtractor(requester);
+
+        m_Extractor.newSearch(1400000000000L, 1407200000000L, m_Logger);
+    }
+
+    @Test
+    public void testChunkedDataExtraction_GivenEmptyDataSummaryResponse() throws IOException
+    {
+        String dataSummaryResponse = "{}";
+
+        m_ExpectedException.expect(IOException.class);
+        m_ExpectedException.expectMessage("Failed to parse string from pattern"
+                + " '\"hits\":\\{.*?\"total\":(.*?),'. Response was:\n" + dataSummaryResponse);
+
+        List<HttpResponse> responses = Arrays.asList(
+                new HttpResponse(toStream(dataSummaryResponse), 200));
+
+        MockHttpRequester requester = new MockHttpRequester(responses);
+        createExtractor(requester);
+
+        m_Extractor.newSearch(1400000000000L, 1407200000000L, m_Logger);
+    }
+
+    @Test
+    public void testChunkedDataExtraction_GivenTotalHitsCannotBeParsed() throws IOException
+    {
+        String dataSummaryResponse = "{"
+                + "\"hits\":{"
+                + "  \"total\":\"NaN\","
+                + "  \"max_score\":null,"
+                + "  \"hits\":[]"
+                + "},"
+                + "}";
+
+        m_ExpectedException.expect(IOException.class);
+        m_ExpectedException.expectMessage("Failed to parse long from pattern"
+                + " '\"hits\":\\{.*?\"total\":(.*?),'. Response was:\n" + dataSummaryResponse);
+
+        List<HttpResponse> responses = Arrays.asList(
+                new HttpResponse(toStream(dataSummaryResponse), 200));
+
+        MockHttpRequester requester = new MockHttpRequester(responses);
+        createExtractor(requester);
+
+        m_Extractor.newSearch(1400000000000L, 1407200000000L, m_Logger);
+    }
+
     private static InputStream toStream(String input)
     {
         return new ByteArrayInputStream(input.getBytes(StandardCharsets.UTF_8));

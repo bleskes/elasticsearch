@@ -292,8 +292,8 @@ public class ElasticsearchDataExtractor implements DataExtractor
         }
         catch (NumberFormatException e)
         {
-            throw new IOException("Failed to parse long from pattern \"" + pattern
-                    + "\". Response was:\n" + response, e);
+            throw new IOException("Failed to parse long from pattern '" + pattern
+                    + "'. Response was:\n" + response, e);
         }
     }
 
@@ -306,8 +306,8 @@ public class ElasticsearchDataExtractor implements DataExtractor
         }
         catch (NumberFormatException e)
         {
-            throw new IOException("Failed to parse double from pattern \"" + pattern
-                    + "\". Response was:\n" + response, e);
+            throw new IOException("Failed to parse double from pattern '" + pattern
+                    + "'. Response was:\n" + response, e);
         }
     }
 
@@ -316,8 +316,8 @@ public class ElasticsearchDataExtractor implements DataExtractor
         Matcher matcher = pattern.matcher(response);
         if (!matcher.find())
         {
-            throw new IOException("Failed to parse string from pattern \"" + pattern
-                    + "\". Response was:\n" + response);
+            throw new IOException("Failed to parse string from pattern '" + pattern
+                    + "'. Response was:\n" + response);
         }
         return matcher.group(1);
     }
