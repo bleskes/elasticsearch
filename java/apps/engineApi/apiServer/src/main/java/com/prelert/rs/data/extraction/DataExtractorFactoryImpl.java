@@ -38,7 +38,7 @@ import org.apache.log4j.Logger;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
-import com.prelert.data.extractor.elasticsearch.ElasticsearchDataExtractor;
+import com.prelert.data.extractors.elasticsearch.ElasticsearchDataExtractor;
 import com.prelert.job.JobDetails;
 import com.prelert.job.SchedulerConfig;
 import com.prelert.job.SchedulerConfig.DataSource;

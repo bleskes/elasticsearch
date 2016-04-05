@@ -25,7 +25,7 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.data.extractor.elasticsearch;
+package com.prelert.data.extractors.elasticsearch;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
@@ -39,6 +39,8 @@ import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 
 import org.junit.Test;
+
+import com.prelert.data.extractors.elasticsearch.HttpResponse;
 
 public class HttpResponseTest
 {

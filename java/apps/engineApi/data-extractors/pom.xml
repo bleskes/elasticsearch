@@ -1,113 +1,40 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<?xml version="1.0"?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <modelVersion>4.0.0</modelVersion>
 
   <!--
-    Build the Jetty server used in the Engine.
-    Installs Jetty & JavaX RS dependencies.
+    Contains various implementations of com.prelert.job.data.extraction.DataExtractor interface
   -->
-
   <parent>
     <groupId>com.prelert</groupId>
     <artifactId>engineAPI</artifactId>
     <version>2.0.4</version>
   </parent>
 
-  <artifactId>engine-api-server</artifactId>
-  <packaging>jar</packaging>
+  <artifactId>data-extractors</artifactId>
 
-  <name>engine-api-server</name>
+  <name>data-extractors</name>
   <url>http://maven.apache.org</url>
 
-  <dependencies>
-    <dependency>
-      <groupId>org.eclipse.jetty</groupId>
-      <artifactId>jetty-server</artifactId>
-      <version>9.3.7.v20160115</version>
-    </dependency>
-    <dependency>
-      <groupId>org.eclipse.jetty</groupId>
-      <artifactId>jetty-servlet</artifactId>
-      <version>9.3.7.v20160115</version>
-    </dependency>
-    <dependency>
-      <groupId>org.eclipse.jetty</groupId>
-      <artifactId>jetty-servlets</artifactId>
-      <version>9.3.7.v20160115</version>
-    </dependency>
-    <dependency>
-      <groupId>org.glassfish.jersey.containers</groupId>
-      <artifactId>jersey-container-servlet</artifactId>
-      <version>2.22.1</version>
-    </dependency>
-    <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-log4j12</artifactId>
-      <version>1.7.14</version>
-    </dependency>
-    <dependency>
-      <groupId>net.java.dev.jna</groupId>
-      <artifactId>jna</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.elasticsearch</groupId>
-      <artifactId>elasticsearch</artifactId>
-    </dependency>
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+  </properties>
 
-    <!-- prelert jars -->
+
+  <dependencies>
+    <!-- provided jars -->
     <dependency>
       <groupId>com.prelert</groupId>
       <artifactId>prelert-engine-api-common</artifactId>
       <scope>provided</scope>
     </dependency>
-    <dependency>
-      <groupId>com.prelert</groupId>
-      <artifactId>data-extractors</artifactId>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.prelert</groupId>
-      <artifactId>engine-api</artifactId>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.prelert</groupId>
-      <artifactId>elasticsearch-persistence</artifactId>
-      <scope>provided</scope>
-    </dependency>
   </dependencies>
 
-
   <build>
+
     <plugins>
-
-    <!-- compiler -->
-    <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.1</version>
-        <configuration>
-          <source>1.8</source>
-          <target>1.8</target>
-          <verbose>false</verbose>
-        </configuration>
-      </plugin>
-
-      <!-- Set main class in jar file -->
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-jar-plugin</artifactId>
-        <version>2.4</version>
-        <configuration>
-          <archive>
-            <manifest>
-              <addClasspath>true</addClasspath>
-              <mainClass>com.prelert.jetty.ServerMain</mainClass>
-            </manifest>
-          </archive>
-        </configuration>
-      </plugin>
-
+      <!-- install dependencies -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-dependency-plugin</artifactId>
@@ -130,6 +57,7 @@
             </configuration>
           </execution>
 
+          <!-- install target jar -->
           <execution>
             <id>copy</id>
             <phase>install</phase>
@@ -152,7 +80,6 @@
 
         </executions>
       </plugin>
-
     </plugins>
   </build>
 

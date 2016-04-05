@@ -43,7 +43,7 @@ import java.util.Map;
 
 import org.junit.Test;
 
-import com.prelert.data.extractor.elasticsearch.ElasticsearchDataExtractor;
+import com.prelert.data.extractors.elasticsearch.ElasticsearchDataExtractor;
 import com.prelert.job.DataDescription;
 import com.prelert.job.DataDescription.DataFormat;
 import com.prelert.job.JobDetails;

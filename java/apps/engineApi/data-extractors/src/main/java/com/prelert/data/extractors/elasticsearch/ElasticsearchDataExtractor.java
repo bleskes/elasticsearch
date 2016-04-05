@@ -25,7 +25,7 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.data.extractor.elasticsearch;
+package com.prelert.data.extractors.elasticsearch;
 
 import java.io.IOException;
 import java.io.InputStream;
