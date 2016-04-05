@@ -69,7 +69,7 @@ public class CustomSettingsUpdaterTest
 
         m_ExpectedException.expect(JobConfigurationException.class);
         m_ExpectedException.expectMessage(
-                "Invalid update value for customSettings: value has to be an object");
+                "Invalid update value for customSettings: value must be an object");
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_VALUE));
 

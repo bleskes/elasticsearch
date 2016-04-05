@@ -161,7 +161,7 @@ public class JobUpdaterTest
         }
         catch (JobConfigurationException e)
         {
-            assertEquals("Invalid modelDebugConfig: boundsPercentile has to be in [0, 100]", e.getMessage());
+            assertEquals("Invalid modelDebugConfig: boundsPercentile must be in the range [0, 100]", e.getMessage());
         }
 
         Mockito.verifyNoMoreInteractions(m_JobManager);

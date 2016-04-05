@@ -68,7 +68,7 @@ public class JobDescriptionUpdaterTest
         JsonNode node = DoubleNode.valueOf(42.0);
 
         m_ExpectedException.expect(JobConfigurationException.class);
-        m_ExpectedException.expectMessage("Invalid update value for job description: value has to be a string");
+        m_ExpectedException.expectMessage("Invalid update value for job description: value must be a string");
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_VALUE));
 

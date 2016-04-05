@@ -70,7 +70,7 @@ public class BackgroundPersistIntervalUpdaterTest
 
         m_ExpectedException.expect(JobConfigurationException.class);
         m_ExpectedException.expectMessage(
-                "Invalid update value for backgroundPersistInterval: value has to be an exact number of seconds");
+                "Invalid update value for backgroundPersistInterval: value must be an exact number of seconds");
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_VALUE));
 
@@ -85,7 +85,7 @@ public class BackgroundPersistIntervalUpdaterTest
 
         m_ExpectedException.expect(JobConfigurationException.class);
         m_ExpectedException.expectMessage(
-                "Invalid update value for backgroundPersistInterval: value has to be an exact number of seconds");
+                "Invalid update value for backgroundPersistInterval: value must be an exact number of seconds");
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_VALUE));
 

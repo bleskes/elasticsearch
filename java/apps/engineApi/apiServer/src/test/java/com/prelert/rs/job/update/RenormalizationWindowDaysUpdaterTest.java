@@ -70,7 +70,7 @@ public class RenormalizationWindowDaysUpdaterTest
 
         m_ExpectedException.expect(JobConfigurationException.class);
         m_ExpectedException.expectMessage(
-                "Invalid update value for renormalizationWindowDays: value has to be an exact number of days");
+                "Invalid update value for renormalizationWindowDays: value must be an exact number of days");
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_VALUE));
 
@@ -86,7 +86,7 @@ public class RenormalizationWindowDaysUpdaterTest
 
         m_ExpectedException.expect(JobConfigurationException.class);
         m_ExpectedException.expectMessage(
-                "Invalid update value for renormalizationWindowDays: value has to be an exact number of days");
+                "Invalid update value for renormalizationWindowDays: value must be an exact number of days");
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_VALUE));
 

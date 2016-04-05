@@ -88,7 +88,7 @@ public class ModelDebugConfigUpdaterTest
         JsonNode node = new ObjectMapper().readTree(update);
 
         m_ExpectedException.expect(JobConfigurationException.class);
-        m_ExpectedException.expectMessage("Invalid modelDebugConfig: boundsPercentile has to be in [0, 100]");
+        m_ExpectedException.expectMessage("Invalid modelDebugConfig: boundsPercentile must be in the range [0, 100]");
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_VALUE));
 

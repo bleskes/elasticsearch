@@ -76,7 +76,7 @@ public class DetectorDescriptionUpdaterTest
     public void testPrepareUpdate_GivenParamIsNotArray() throws JobException, IOException
     {
         m_ExpectedException.expect(JobConfigurationException.class);
-        m_ExpectedException.expectMessage("Invalid update value for detectors: value has to be an array");
+        m_ExpectedException.expectMessage("Invalid update value for detectors: value must be an array");
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_VALUE));
 

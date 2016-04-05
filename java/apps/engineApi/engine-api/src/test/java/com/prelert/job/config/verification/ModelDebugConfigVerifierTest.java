@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -45,7 +45,7 @@ public class ModelDebugConfigVerifierTest
     {
         m_ExpectedException.expect(JobConfigurationException.class);
         m_ExpectedException.expectMessage(
-                "Invalid modelDebugConfig: boundsPercentile has to be in [0, 100]");
+                "Invalid modelDebugConfig: boundsPercentile must be in the range [0, 100]");
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_VALUE));
 
@@ -57,7 +57,7 @@ public class ModelDebugConfigVerifierTest
     {
         m_ExpectedException.expect(JobConfigurationException.class);
         m_ExpectedException.expectMessage(
-                "Invalid modelDebugConfig: boundsPercentile has to be in [0, 100]");
+                "Invalid modelDebugConfig: boundsPercentile must be in the range [0, 100]");
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_VALUE));
 
