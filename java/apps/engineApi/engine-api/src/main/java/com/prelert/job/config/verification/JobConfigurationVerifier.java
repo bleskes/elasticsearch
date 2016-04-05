@@ -27,6 +27,7 @@
 package com.prelert.job.config.verification;
 
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataDescription;
@@ -45,6 +46,13 @@ import com.prelert.job.transform.verification.TransformConfigsVerifier;
 public final class JobConfigurationVerifier
 {
     public static final long MIN_BACKGROUND_PERSIST_INTERVAL = 3600;
+
+    private static final int MAX_JOB_ID_LENGTH = 64;
+
+    /**
+     * Valid jobId characters. Note that '.' is allowed but not documented.
+     */
+    private static final Pattern VALID_JOB_ID_CHAR_PATTERN = Pattern.compile("[a-z0-9_\\-\\.]+");
 
     private JobConfigurationVerifier()
     {
@@ -278,11 +286,10 @@ public final class JobConfigurationVerifier
 
     private static void checkValidIdLength(String jobId) throws JobConfigurationException
     {
-        if (jobId.length() > JobConfiguration.MAX_JOB_ID_LENGTH)
+        if (jobId.length() > MAX_JOB_ID_LENGTH)
         {
             throw new JobConfigurationException(
-                    Messages.getMessage(Messages.JOB_CONFIG_ID_TOO_LONG,
-                            JobConfiguration.MAX_JOB_ID_LENGTH),
+                    Messages.getMessage(Messages.JOB_CONFIG_ID_TOO_LONG, MAX_JOB_ID_LENGTH),
                             ErrorCodes.JOB_ID_TOO_LONG);
         }
     }
@@ -290,27 +297,11 @@ public final class JobConfigurationVerifier
     private static void checkIdContainsValidCharacters(String jobId)
             throws JobConfigurationException
     {
-        for (char c : jobId.toCharArray())
+        if (!VALID_JOB_ID_CHAR_PATTERN.matcher(jobId).matches())
         {
-            if (JobConfiguration.PROHIBITED_JOB_ID_CHARACTERS_SET.contains(c))
-            {
-                throw new JobConfigurationException(
-                        Messages.getMessage(Messages.JOB_CONFIG_INVALID_JOBID_CHARS,
-                                c, JobConfiguration.PROHIBITED_JOB_ID_CHARACTERS),
-                        ErrorCodes.PROHIBITIED_CHARACTER_IN_JOB_ID);
-            }
-            if (Character.isUpperCase(c))
-            {
-                throw new JobConfigurationException(
-                        Messages.getMessage(Messages.JOB_CONFIG_ID_CONTAINS_UPPERCASE_CHARS),
-                        ErrorCodes.PROHIBITIED_CHARACTER_IN_JOB_ID);
-            }
-            if (Character.isISOControl(c))
-            {
-                throw new JobConfigurationException(
-                        Messages.getMessage(Messages.JOB_CONFIG_ID_CONTAINS_CONTROL_CHARS),
-                        ErrorCodes.PROHIBITIED_CHARACTER_IN_JOB_ID);
-            }
+            throw new JobConfigurationException(
+                    Messages.getMessage(Messages.JOB_CONFIG_INVALID_JOBID_CHARS),
+                    ErrorCodes.PROHIBITIED_CHARACTER_IN_JOB_ID);
         }
     }
 

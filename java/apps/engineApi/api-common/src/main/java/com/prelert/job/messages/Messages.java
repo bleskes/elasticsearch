@@ -77,8 +77,6 @@ public final class Messages
     public static final String JOB_CONFIG_FUNCTION_REQUIRES_BYFIELD = "job.config.function.requires.byfield";
     public static final String JOB_CONFIG_FUNCTION_REQUIRES_FIELDNAME = "job.config.function.requires.fieldname";
     public static final String JOB_CONFIG_FUNCTION_REQUIRES_OVERFIELD = "job.config.function.requires.overfield";
-    public static final String JOB_CONFIG_ID_CONTAINS_CONTROL_CHARS = "job.config.id.contains.control.chars";
-    public static final String JOB_CONFIG_ID_CONTAINS_UPPERCASE_CHARS = "job.config.id.contains.uppercase.chars";
     public static final String JOB_CONFIG_ID_TOO_LONG = "job.config.id.too.long";
     public static final String JOB_CONFIG_ID_ALREADY_TAKEN = "job.config.id.already.taken";
     public static final String JOB_CONFIG_INVALID_FIELDNAME_CHARS = "job.config.invalid.fieldname.chars";
@@ -93,6 +91,7 @@ public final class Messages
     public static final String JOB_CONFIG_NO_DETECTORS = "job.config.no.detectors";
     public static final String JOB_CONFIG_OVERFIELD_INCOMPATIBLE_FUNCTION = "job.config.overField.incompatible.function";
     public static final String JOB_CONFIG_OVERFIELD_NEEDS_ANOTHER = "job.config.overField.needs.another";
+
     public static final String JOB_CONFIG_UPDATE_CUSTOM_SETTINGS_INVALID = "job.config.update.custom.settings.invalid";
     public static final String JOB_CONFIG_UPDATE_DESCRIPTION_INVALID = "job.config.update.description.invalid";
     public static final String JOB_CONFIG_UPDATE_DETECTOR_DESCRIPTION_INVALID = "job.config.update.detector.description.invalid";
@@ -110,6 +109,7 @@ public final class Messages
     public static final String JOB_CONFIG_UPDATE_RENORMALIZATION_WINDOW_DAYS_INVALID = "job.config.update.renormalization.window.days.invalid";
     public static final String JOB_CONFIG_UPDATE_MODEL_SNAPSHOT_RETENTION_DAYS_INVALID = "job.config.update.model.snapshot.retention.days.invalid";
     public static final String JOB_CONFIG_UPDATE_RESULTS_RETENTION_DAYS_INVALID = "job.config.update.results.retention.days.invalid";
+
     public static final String JOB_CONFIG_TRANSFORM_CIRCULAR_DEPENDENCY = "job.config.transform.circular.dependency";
     public static final String JOB_CONFIG_TRANSFORM_CONDITION_INVALID_OPERATOR = "job.config.transform.condition.invalid.operator";
     public static final String JOB_CONFIG_TRANSFORM_CONDITION_INVALID_VALUE_NULL = "job.config.transform.condition.invalid.value.null";
@@ -129,6 +129,7 @@ public final class Messages
     public static final String JOB_CONFIG_TRANSFORM_OUTPUT_NAME_USED_MORE_THAN_ONCE = "job.config.transform.output.name.used.more.than.once";
     public static final String JOB_CONFIG_TRANSFORM_UNKNOWN_TYPE = "job.config.transform.unknown.type";
     public static final String JOB_CONFIG_UNKNOWN_FUNCTION = "job.config.unknown.function";
+
     public static final String JOB_CONFIG_SCHEDULER_UNKNOWN_DATASOURCE = "job.config.scheduler.unknown.datasource";
     public static final String JOB_CONFIG_SCHEDULER_FIELD_NOT_SUPPORTED = "job.config.scheduler.field.not.supported";
     public static final String JOB_CONFIG_SCHEDULER_INVALID_OPTION_VALUE = "job.config.scheduler.invalid.option.value";

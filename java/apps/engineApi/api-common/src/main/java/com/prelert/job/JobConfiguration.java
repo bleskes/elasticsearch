@@ -18,10 +18,8 @@
 
 package com.prelert.job;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import com.prelert.job.transform.TransformConfig;
 
@@ -37,31 +35,6 @@ import com.prelert.job.transform.TransformConfig;
  */
 public class JobConfiguration
 {
-    /**
-     * Max number of chars in a job id
-     */
-    public static final int MAX_JOB_ID_LENGTH = 64;
-
-    /**
-     * Characters that cannot be in a job id: '\\', '/', '*', '?', '&quot;', '&lt;', '&gt;', '|', ' ', ','
-     */
-    public static final Set<Character> PROHIBITED_JOB_ID_CHARACTERS_SET;
-    public static final String PROHIBITED_JOB_ID_CHARACTERS;
-    static
-    {
-        // frustrating work around to initialise both the set
-        // and string from the same chars
-
-        char [] prohibited = {'\\', '/', '*', '?', '"', '<', '>', '|', ' ', ','};
-        PROHIBITED_JOB_ID_CHARACTERS = new String(prohibited);
-
-        PROHIBITED_JOB_ID_CHARACTERS_SET = new HashSet<Character>();
-        for (char ch : prohibited)
-        {
-            PROHIBITED_JOB_ID_CHARACTERS_SET.add(ch);
-        }
-    }
-
     private String m_ID;
     private String m_Description;
 

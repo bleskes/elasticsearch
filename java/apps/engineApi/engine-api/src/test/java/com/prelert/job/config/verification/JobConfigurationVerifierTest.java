@@ -58,7 +58,6 @@ import com.prelert.job.transform.TransformType;
 
 import junit.framework.Assert;
 
-
 public class JobConfigurationVerifierTest
 {
     @Rule
@@ -78,29 +77,46 @@ public class JobConfigurationVerifierTest
     }
 
     @Test
-    public void testCheckValidId_ProhibitedChars() throws JobConfigurationException
+    public void testCheckValidId_GivenAllValidChars() throws JobConfigurationException
     {
         JobConfiguration conf = buildJobConfigurationNoTransforms();
-        conf.setId("?");
+        conf.setId("abcdefghijklmnopqrstuvwxyz-0123456789_.");
 
-        m_ExpectedException.expect(JobConfigurationException.class);
-        m_ExpectedException.expect(
-                ErrorCodeMatcher.hasErrorCode(ErrorCodes.PROHIBITIED_CHARACTER_IN_JOB_ID));
-
-        JobConfigurationVerifier.verify(conf);
+        assertTrue(JobConfigurationVerifier.verify(conf));
     }
 
     @Test
-    public void testCheckValidId_UpperCaseChars() throws JobConfigurationException
+    public void testCheckValidId_GivenEmpty() throws JobConfigurationException
     {
         JobConfiguration conf = buildJobConfigurationNoTransforms();
+        conf.setId("");
 
-        m_ExpectedException.expect(JobConfigurationException.class);
-        m_ExpectedException.expect(
-                ErrorCodeMatcher.hasErrorCode(ErrorCodes.PROHIBITIED_CHARACTER_IN_JOB_ID));
+        assertTrue(JobConfigurationVerifier.verify(conf));
+    }
 
-        conf.setId("UPPERCASE");
-        JobConfigurationVerifier.verify(conf);
+    @Test
+    public void testCheckValidId_ProhibitedChars() throws JobConfigurationException
+    {
+        String invalidChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ!@#$%^&*()+?\"'~±/\\[]{},<>=";
+
+        JobConfiguration conf = buildJobConfigurationNoTransforms();
+
+        for (char c : invalidChars.toCharArray())
+        {
+            conf.setId(Character.toString(c));
+
+            try
+            {
+                JobConfigurationVerifier.verify(conf);
+                fail("Character '" + c + "' should not be valid");
+            }
+            catch (JobConfigurationException e)
+            {
+                assertEquals(ErrorCodes.PROHIBITIED_CHARACTER_IN_JOB_ID, e.getErrorCode());
+                assertEquals("Invalid job id; must be lowercase alphanumeric and may contain"
+                        + " hyphens or underscores", e.getMessage());
+            }
+        }
     }
 
     @Test
