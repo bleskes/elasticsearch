@@ -230,6 +230,17 @@ public enum ErrorCodes
     TRANSFORM_INVALID_ARGUMENT(10214),
 
     /**
+     * The JSON configuration supplied to validate a transform
+     * could not be parsed. The JSON is invalid.
+     */
+    TRANSFORM_PARSE_ERROR(10215),
+
+    /**
+     * The transform JSON contains a field that isn't recognised
+     */
+    TRANSFORM_UNKNOWN_FIELD_ERROR(10216),
+
+    /**
      * The scheduler has been told to pull data from an unknown data source.
      */
     SCHEDULER_UNKNOWN_DATASOURCE(10301),

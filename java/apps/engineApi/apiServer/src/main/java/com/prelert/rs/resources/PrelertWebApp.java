@@ -76,6 +76,8 @@ import com.prelert.rs.provider.MultiDataPostResultWriter;
 import com.prelert.rs.provider.NativeProcessRunExceptionMapper;
 import com.prelert.rs.provider.PaginationWriter;
 import com.prelert.rs.provider.SingleDocumentWriter;
+import com.prelert.rs.provider.TransformConfigMessageBodyReader;
+import com.prelert.rs.provider.TransformConfigArrayMessageBodyReader;
 import com.prelert.server.info.ServerInfoFactory;
 import com.prelert.server.info.ServerInfoWriter;
 import com.prelert.settings.PrelertSettings;
@@ -304,6 +306,8 @@ public class PrelertWebApp extends Application
     {
         m_ResourceClasses.add(DetectorMessageBodyReader.class);
         m_ResourceClasses.add(JobConfigurationMessageBodyReader.class);
+        m_ResourceClasses.add(TransformConfigMessageBodyReader.class);
+        m_ResourceClasses.add(TransformConfigArrayMessageBodyReader.class);
     }
 
     private void addMessageWriters()

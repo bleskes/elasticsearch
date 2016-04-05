@@ -163,6 +163,9 @@ public final class Messages
     public static final String JSON_DETECTOR_CONFIG_MAPPING = "json.detector.config.mapping.error";
     public static final String JSON_DETECTOR_CONFIG_PARSE = "json.detector.config.parse.error";
 
+    public static final String JSON_TRANSFORM_CONFIG_MAPPING = "json.transform.config.mapping.error";
+    public static final String JSON_TRANSFORM_CONFIG_PARSE = "json.transform.config.parse.error";
+
     public static final String REST_ACTION_NOT_ALLOWED_FOR_SCHEDULED_JOB = "rest.action.not.allowed.for.scheduled.job";
 
     public static final String REST_INVALID_DATETIME_PARAMS = "rest.invalid.datetime.params";

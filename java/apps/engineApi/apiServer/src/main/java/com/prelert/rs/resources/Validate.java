@@ -27,6 +27,8 @@
 
 package com.prelert.rs.resources;
 
+import java.util.Arrays;
+import java.util.List;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
@@ -40,6 +42,10 @@ import org.apache.log4j.Logger;
 import com.prelert.job.Detector;
 import com.prelert.job.config.verification.DetectorVerifier;
 import com.prelert.job.config.verification.JobConfigurationException;
+import com.prelert.job.transform.TransformConfig;
+import com.prelert.job.transform.TransformConfigurationException;
+import com.prelert.job.transform.verification.TransformConfigsVerifier;
+import com.prelert.job.transform.verification.TransformConfigVerifier;
 import com.prelert.rs.data.Acknowledgement;
 
 
@@ -72,6 +78,56 @@ public class Validate extends ResourceWithJobManager
     {
         LOGGER.trace("Received request to validate detector");
         DetectorVerifier.verify(detector, false);
+        return Response.ok(new Acknowledgement()).build();
+    }
+
+    /**
+     * Validates JSON representing a single transform.
+     *
+     * @param transform The transform to be validated
+     * @return
+     * @throws JobConfigurationException
+     */
+    @POST
+    @Path("/transform")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response validateTransform(TransformConfig transform) throws JobConfigurationException
+    {
+        LOGGER.trace("Received request to validate transform");
+        try
+        {
+            TransformConfigVerifier.verify(transform);
+        }
+        catch (TransformConfigurationException e)
+        {
+            throw new JobConfigurationException(e.getMessage(), e.getErrorCode());
+        }
+        return Response.ok(new Acknowledgement()).build();
+    }
+
+    /**
+     * Validates JSON representing a list of transforms.
+     *
+     * @param transforms The transforms to be validated
+     * @return
+     * @throws JobConfigurationException
+     */
+    @POST
+    @Path("/transforms")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response validateTransforms(TransformConfig[] transforms) throws JobConfigurationException
+    {
+        LOGGER.trace("Received request to validate transforms");
+        try
+        {
+            TransformConfigsVerifier.verify(Arrays.asList(transforms));
+        }
+        catch (TransformConfigurationException e)
+        {
+            throw new JobConfigurationException(e.getMessage(), e.getErrorCode());
+        }
         return Response.ok(new Acknowledgement()).build();
     }
 }

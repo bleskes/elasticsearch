@@ -29,6 +29,8 @@ package com.prelert.rs.resources;
 
 import static org.junit.Assert.assertTrue;
 
+import java.util.Arrays;
+
 import javax.ws.rs.core.Response;
 
 import org.junit.Before;
@@ -40,7 +42,9 @@ import com.prelert.job.Detector;
 import com.prelert.job.config.verification.JobConfigurationException;
 import com.prelert.job.errorcodes.ErrorCodeMatcher;
 import com.prelert.job.errorcodes.ErrorCodes;
+import com.prelert.job.transform.TransformConfig;
 import com.prelert.rs.data.Acknowledgement;
+
 
 public class ValidateTest extends ServiceTest
 {
@@ -56,7 +60,7 @@ public class ValidateTest extends ServiceTest
     }
 
     @Test
-    public void testValid() throws JobConfigurationException
+    public void testValidDetector() throws JobConfigurationException
     {
         Detector detector = new Detector();
         detector.setFunction("count");
@@ -68,7 +72,7 @@ public class ValidateTest extends ServiceTest
     }
 
     @Test
-    public void testInvalid() throws JobConfigurationException
+    public void testInvalidDetector() throws JobConfigurationException
     {
         m_ExpectedException.expect(JobConfigurationException.class);
         m_ExpectedException.expectMessage("fieldName must be set when the 'mean' function is used");
@@ -78,5 +82,68 @@ public class ValidateTest extends ServiceTest
         detector.setFunction("mean");
         detector.setByFieldName("airline");
         m_Validate.validateDetector(detector);
+    }
+
+    @Test
+    public void testValidTransformConfig() throws JobConfigurationException
+    {
+        TransformConfig transformConfig = new TransformConfig();
+        transformConfig.setTransform("concat");
+        transformConfig.setInputs(Arrays.asList("one", "two"));
+        transformConfig.setOutputs(Arrays.asList("oneplustwo"));
+        Response response = m_Validate.validateTransform(transformConfig);
+
+        Acknowledgement acknowledgement = (Acknowledgement) response.getEntity();
+        assertTrue(acknowledgement.getAcknowledgement());
+    }
+
+    @Test
+    public void testInvalidTransformConfig() throws JobConfigurationException
+    {
+        m_ExpectedException.expect(JobConfigurationException.class);
+        m_ExpectedException.expectMessage("Transform type concat expected [2‥+∞) input(s), got 1");
+        m_ExpectedException.expect(ErrorCodeMatcher.hasErrorCode(ErrorCodes.TRANSFORM_INVALID_INPUT_COUNT));
+
+        TransformConfig transformConfig = new TransformConfig();
+        transformConfig.setTransform("concat");
+        transformConfig.setInputs(Arrays.asList("justone"));
+        transformConfig.setOutputs(Arrays.asList("stilljustone"));
+        m_Validate.validateTransform(transformConfig);
+    }
+
+    @Test
+    public void testValidTransformConfigArray() throws JobConfigurationException
+    {
+        TransformConfig transformConfig1 = new TransformConfig();
+        transformConfig1.setTransform("concat");
+        transformConfig1.setInputs(Arrays.asList("one", "two"));
+        transformConfig1.setOutputs(Arrays.asList("oneplustwo"));
+        TransformConfig transformConfig2 = new TransformConfig();
+        transformConfig2.setTransform("domain_split");
+        transformConfig2.setInputs(Arrays.asList("domain"));
+        transformConfig2.setOutputs(Arrays.asList("sub_domain", "highest_registered_domain"));
+        Response response = m_Validate.validateTransforms(new TransformConfig[] { transformConfig1, transformConfig2 });
+
+        Acknowledgement acknowledgement = (Acknowledgement) response.getEntity();
+        assertTrue(acknowledgement.getAcknowledgement());
+    }
+
+    @Test
+    public void testInvalidTransformConfigArray() throws JobConfigurationException
+    {
+        m_ExpectedException.expect(JobConfigurationException.class);
+        m_ExpectedException.expectMessage("Transform type concat with inputs [one, two] has a circular dependency");
+        m_ExpectedException.expect(ErrorCodeMatcher.hasErrorCode(ErrorCodes.TRANSFORM_HAS_CIRCULAR_DEPENDENCY));
+
+        TransformConfig transformConfig1 = new TransformConfig();
+        transformConfig1.setTransform("concat");
+        transformConfig1.setInputs(Arrays.asList("one", "two"));
+        transformConfig1.setOutputs(Arrays.asList("three"));
+        TransformConfig transformConfig2 = new TransformConfig();
+        transformConfig2.setTransform("concat");
+        transformConfig2.setInputs(Arrays.asList("two", "three"));
+        transformConfig2.setOutputs(Arrays.asList("one"));
+        Response response = m_Validate.validateTransforms(new TransformConfig[] { transformConfig1, transformConfig2 });
+        m_Validate.validateTransforms(new TransformConfig[] { transformConfig1, transformConfig2 });
     }
 }
