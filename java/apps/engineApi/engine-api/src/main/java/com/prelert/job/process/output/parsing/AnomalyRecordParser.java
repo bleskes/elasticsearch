@@ -114,6 +114,9 @@ final class AnomalyRecordParser extends FieldNameParser<AnomalyRecord>
         case AnomalyRecord.CAUSES:
             record.setCauses(parseCauses(fieldName));
             break;
+        case AnomalyRecord.BUCKET_SPAN:
+            record.setBucketSpan(parseAsLongOrZero(fieldName));
+            break;
         default:
             LOGGER.warn(String.format("Parse error unknown field in Anomaly Record %s:%s",
                     fieldName, token.asString()));
