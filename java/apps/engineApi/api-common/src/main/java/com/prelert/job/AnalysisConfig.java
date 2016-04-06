@@ -207,7 +207,7 @@ public class AnalysisConfig
      * <code>null</code> and empty strings are filtered from the
      * config.
      *
-     * @return Set of term fields.
+     * @return Set of term fields - never <code>null</code>
      */
     public Set<String> termFields()
     {
@@ -252,7 +252,7 @@ public class AnalysisConfig
      * <code>null</code> and empty strings are filtered from the
      * config.
      *
-     * @return List of required analysis fields.
+     * @return List of required analysis fields - never <code>null</code>
      */
     public List<String> analysisFields()
     {

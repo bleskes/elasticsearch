@@ -23,6 +23,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.function.Consumer;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -514,24 +516,47 @@ public class JobDetails
     }
 
     /**
-     * Get a list of all input data fields mentioned in the job configuration.
+     * Get a list of all input data fields mentioned in the job configuration,
+     * namely analysis fields, time field and transform input fields.
      * @return the list of fields - never <code>null</code>
      */
     public List<String> allFields()
     {
-        List<String> allFields = (m_AnalysisConfig != null) ?
-                m_AnalysisConfig.analysisFields() : new ArrayList<>();
+        Set<String> allFields = new TreeSet<>();
 
+        // analysis fields
+        if (m_AnalysisConfig != null)
+        {
+            allFields.addAll(m_AnalysisConfig.analysisFields());
+        }
+
+        // transform input fields
+        if (m_Transforms != null)
+        {
+            for (TransformConfig tc : m_Transforms)
+            {
+                 List<String> inputFields = tc.getInputs();
+                 if (inputFields != null)
+                 {
+                     allFields.addAll(inputFields);
+                 }
+            }
+        }
+
+        // time field
         if (m_DataDescription != null)
         {
             String timeField = m_DataDescription.getTimeField();
-            if (timeField != null && !timeField.isEmpty())
+            if (timeField != null)
             {
                 allFields.add(timeField);
             }
         }
 
-        return allFields;
+        // remove empty strings
+        allFields.remove("");
+
+        return new ArrayList<String>(allFields);
     }
 
     /**

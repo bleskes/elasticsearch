@@ -207,6 +207,17 @@ public class ElasticsearchDataExtractor implements DataExtractor
         if (endEpochMs - startEpochMs > CHUNK_THRESHOLD_MS)
         {
             setUpChunkedSearch();
+
+            // This debug is inside the long duration search block to reduce log spam
+            if (m_Fields == null)
+            {
+                m_Logger.debug("Will retrieve whole _source document from Elasticsearch");
+            }
+            else
+            {
+                m_Logger.debug("Will request only the following field(s) from Elasticsearch: "
+                        + String.join(" ", m_Fields));
+            }
         }
 
         m_Logger.info("Requesting data from '" + m_BaseUrl + "' within [" + startEpochMs + ", "
