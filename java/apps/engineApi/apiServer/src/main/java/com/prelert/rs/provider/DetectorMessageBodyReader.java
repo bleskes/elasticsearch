@@ -27,18 +27,6 @@
 
 package com.prelert.rs.provider;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Type;
-
-import javax.ws.rs.Consumes;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.MultivaluedMap;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.ext.MessageBodyReader;
-
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -53,63 +41,48 @@ import com.prelert.job.messages.Messages;
  * Reads the http message body and converts it to a Detector
  * bean. Only conversion from JSON is supported.
  */
-@Consumes(MediaType.APPLICATION_JSON)
-public class DetectorMessageBodyReader implements MessageBodyReader<Detector>
+public class DetectorMessageBodyReader extends AbstractMessageBodyReader<Detector>
 {
-     /**
-      * The Object to JSON mapper.
-      */
-     private static final ObjectReader OBJECT_READER = new ObjectMapper().readerFor(Detector.class);
+    /**
+     * The Object to JSON mapper.
+     */
+    private static final ObjectReader OBJECT_READER = new ObjectMapper().readerFor(Detector.class);
 
-     @Override
-     public boolean isReadable(Class<?> type, Type genericType, Annotation[] annotations,
-               MediaType mediaType)
-     {
-          // no need to check the media type because of the @Consumes annotation
-          return type == Detector.class;
-     }
+    @Override
+    protected Class<?> getType()
+    {
+        return Detector.class;
+    }
 
-     @Override
-     public Detector readFrom(Class<Detector> bean, Type genericType,
-               Annotation[] annotation, MediaType mediaType,
-               MultivaluedMap<String, String> httpHeaders, InputStream input)
-                         throws IOException
-     {
-          // Sanity check. The consumes annotation means only Json should be read
-          if (!mediaType.equals(MediaType.APPLICATION_JSON_TYPE)
-               && !mediaType.equals(MediaType.APPLICATION_JSON_TYPE.withCharset("UTF-8")))
-          {
-               throw new WebApplicationException(
-                         Response.status(Response.Status.UNSUPPORTED_MEDIA_TYPE).build());
-          }
+    @Override
+    protected ObjectReader getObjectReader()
+    {
+        return OBJECT_READER;
+    }
 
-          try
-          {
-               return OBJECT_READER.readValue(input);
-          }
-          catch (JsonParseException e)
-          {
-              throw new JobConfigurationParseException(
-                         Messages.getMessage(Messages.JSON_DETECTOR_CONFIG_PARSE), e,
-                         ErrorCodes.DETECTOR_PARSE_ERROR);
-          }
-          catch (JsonMappingException e)
-          {
-              if (e.getCause() != null)
-              {
-                  Throwable cause = e.getCause();
-                  if (cause instanceof JobConfigurationException)
-                  {
-                      JobConfigurationException jce = (JobConfigurationException)cause;
-                      throw new JobConfigurationParseException(jce.getMessage(), e,
-                                           jce.getErrorCode());
-                  }
-              }
+    @Override
+    protected JobConfigurationParseException handle(JsonParseException e)
+    {
+        return new JobConfigurationParseException(
+                Messages.getMessage(Messages.JSON_DETECTOR_CONFIG_PARSE), e,
+                ErrorCodes.DETECTOR_PARSE_ERROR);
+    }
 
-              throw new JobConfigurationParseException(
-                         Messages.getMessage(Messages.JSON_DETECTOR_CONFIG_MAPPING), e,
-                         ErrorCodes.DETECTOR_UNKNOWN_FIELD_ERROR);
-          }
-     }
+    @Override
+    protected JobConfigurationParseException handle(JsonMappingException e)
+    {
+        if (e.getCause() != null)
+        {
+            Throwable cause = e.getCause();
+            if (cause instanceof JobConfigurationException)
+            {
+                JobConfigurationException jce = (JobConfigurationException) cause;
+                throw new JobConfigurationParseException(jce.getMessage(), e, jce.getErrorCode());
+            }
+        }
 
+        throw new JobConfigurationParseException(
+                Messages.getMessage(Messages.JSON_DETECTOR_CONFIG_MAPPING), e,
+                ErrorCodes.DETECTOR_UNKNOWN_FIELD_ERROR);
+    }
 }

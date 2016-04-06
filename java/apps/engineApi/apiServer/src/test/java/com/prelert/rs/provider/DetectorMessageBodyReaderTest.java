@@ -30,6 +30,7 @@ package com.prelert.rs.provider;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+
 import static org.mockito.Mockito.mock;
 
 import java.io.ByteArrayInputStream;
@@ -50,7 +51,6 @@ import com.prelert.job.JobConfiguration;
 
 public class DetectorMessageBodyReaderTest
 {
-
     @Test
     public void testIsReadable()
     {
