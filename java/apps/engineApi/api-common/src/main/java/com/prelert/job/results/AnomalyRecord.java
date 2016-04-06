@@ -57,8 +57,7 @@ public class AnomalyRecord
     public static final String ACTUAL = "actual";
     public static final String IS_INTERIM = "isInterim";
     public static final String INFLUENCERS = "influencers";
-    public static final String RESULT_BUCKET_TIME = "resultBucketTime";
-
+    public static final String BUCKET_SPAN = "bucketSpan";
 
     /**
      * Metric Results (including population metrics)
@@ -103,7 +102,8 @@ public class AnomalyRecord
 
     private double m_InitialNormalizedProbability;
 
-    private Date   m_Timestamp;
+    private Date m_Timestamp;
+    private long m_BucketSpan;
 
     private List<Influence> m_Influencers;
 
@@ -173,6 +173,22 @@ public class AnomalyRecord
     public void setTimestamp(Date timestamp)
     {
         m_Timestamp = timestamp;
+    }
+
+    /**
+     * Bucketspan expressed in seconds
+     */
+    public long getBucketSpan()
+    {
+        return m_BucketSpan;
+    }
+
+    /**
+     * Bucketspan expressed in seconds
+     */
+    public void setBucketSpan(long bucketSpan)
+    {
+        m_BucketSpan = bucketSpan;
     }
 
     public double getProbability()

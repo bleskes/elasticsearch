@@ -724,7 +724,8 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
                 .field(AnomalyRecord.ANOMALY_SCORE, record.getAnomalyScore())
                 .field(AnomalyRecord.NORMALIZED_PROBABILITY, record.getNormalizedProbability())
                 .field(AnomalyRecord.INITIAL_NORMALIZED_PROBABILITY, record.getInitialNormalizedProbability())
-                .field(ElasticsearchMappings.ES_TIMESTAMP, bucketTime);
+                .field(ElasticsearchMappings.ES_TIMESTAMP, bucketTime)
+                .field(AnomalyRecord.BUCKET_SPAN, record.getBucketSpan());
 
         ElasticsearchDotNotationReverser reverser = new ElasticsearchDotNotationReverser();
         List<String> topLevelExcludes = new ArrayList<>();

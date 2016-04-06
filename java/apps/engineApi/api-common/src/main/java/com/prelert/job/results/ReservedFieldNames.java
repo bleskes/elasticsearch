@@ -103,6 +103,7 @@ public final class ReservedFieldNames
         AnomalyRecord.ANOMALY_SCORE,
         AnomalyRecord.NORMALIZED_PROBABILITY,
         AnomalyRecord.INITIAL_NORMALIZED_PROBABILITY,
+        AnomalyRecord.BUCKET_SPAN,
 
         Bucket.ANOMALY_SCORE,
         Bucket.BUCKET_SPAN,

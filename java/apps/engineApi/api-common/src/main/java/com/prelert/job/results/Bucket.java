@@ -122,9 +122,9 @@ public class Bucket
     /**
      * Bucketspan expressed in seconds
      */
-    public void setBucketSpan(long l)
+    public void setBucketSpan(long bucketSpan)
     {
-        m_BucketSpan = l;
+        m_BucketSpan = bucketSpan;
     }
 
     public double getAnomalyScore()
