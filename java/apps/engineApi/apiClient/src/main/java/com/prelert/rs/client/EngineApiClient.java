@@ -980,7 +980,7 @@ public class EngineApiClient implements Closeable
     public <T> T get(URI uri, TypeReference<T> typeRef)
     throws JsonParseException, JsonMappingException, IOException
     {
-        return get(m_HttpClient.newRequest(uri).method(HttpMethod.GET), typeRef, false);
+        return executeRequest(m_HttpClient.newRequest(uri).method(HttpMethod.GET), typeRef, false);
     }
 
     /**
@@ -1008,10 +1008,10 @@ public class EngineApiClient implements Closeable
     public <T> T get(String url, TypeReference<T> typeRef, boolean errorOn404)
     throws JsonParseException, JsonMappingException, IOException
     {
-        return get(m_HttpClient.newRequest(url).method(HttpMethod.GET), typeRef, errorOn404);
+        return executeRequest(m_HttpClient.newRequest(url).method(HttpMethod.GET), typeRef, errorOn404);
     }
 
-    private <T> T get(Request request, TypeReference<T> typeRef, boolean errorOn404)
+    private <T> T executeRequest(Request request, TypeReference<T> typeRef, boolean errorOn404)
     throws JsonParseException, JsonMappingException, IOException
     {
         ContentResponse response = executeRequest(request);
@@ -1027,8 +1027,8 @@ public class EngineApiClient implements Closeable
         }
         else
         {
-            String msg = String.format(
-                    "GET returned status code %d for url %s. Returned content = %s",
+            String msg = String.format(request.getMethod() +
+                    " returned status code %d for url %s. Returned content = %s",
                     response.getStatus(), request.getURI(), content);
             LOGGER.error(msg);
             m_LastError = m_JsonMapper.readValue(content, new TypeReference<ApiError>() {} );
@@ -1090,7 +1090,7 @@ public class EngineApiClient implements Closeable
     public <T> T post(URI uri, TypeReference<T> typeRef)
     throws JsonParseException, JsonMappingException, IOException
     {
-        return post(m_HttpClient.newRequest(uri).method(HttpMethod.POST), typeRef, false);
+        return executeRequest(m_HttpClient.newRequest(uri).method(HttpMethod.POST), typeRef, false);
     }
 
     /**
@@ -1118,33 +1118,8 @@ public class EngineApiClient implements Closeable
     public <T> T post(String url, TypeReference<T> typeRef, boolean errorOn404)
     throws JsonParseException, JsonMappingException, IOException
     {
-        return post(m_HttpClient.newRequest(url).method(HttpMethod.POST), typeRef, errorOn404);
-    }
-
-    private <T> T post(Request request, TypeReference<T> typeRef, boolean errorOn404)
-    throws JsonParseException, JsonMappingException, IOException
-    {
-        ContentResponse response = executeRequest(request);
-        String content = response.getContentAsString();
-
-        // 404 errors return empty paging docs so still read them
-        if (response.getStatus() == HttpStatus.OK_200
-                || (response.getStatus() == HttpStatus.NOT_FOUND_404 && !errorOn404))
-        {
-            T docs = m_JsonMapper.readValue(content, typeRef);
-            m_LastError = null;
-            return docs;
-        }
-        else
-        {
-            String msg = String.format(
-                    "GET returned status code %d for url %s. Returned content = %s",
-                    response.getStatus(), request.getURI(), content);
-            LOGGER.error(msg);
-            m_LastError = m_JsonMapper.readValue(content, new TypeReference<ApiError>() {} );
-        }
-
-        return null;
+        return executeRequest(m_HttpClient.newRequest(url).method(HttpMethod.POST), typeRef,
+                errorOn404);
     }
 
     /**
