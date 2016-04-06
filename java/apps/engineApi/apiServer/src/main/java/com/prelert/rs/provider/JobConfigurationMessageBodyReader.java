@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -27,18 +27,6 @@
 
 package com.prelert.rs.provider;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Type;
-
-import javax.ws.rs.Consumes;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.MultivaluedMap;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.ext.MessageBodyReader;
-
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonMappingException;
@@ -55,76 +43,58 @@ import com.prelert.job.transform.UnknownOperatorException;
  * Reads the http message body and converts it to a JobConfiguration
  * bean. Only conversion from JSON is supported.
  */
-@Consumes(MediaType.APPLICATION_JSON)
-public class JobConfigurationMessageBodyReader implements MessageBodyReader<JobConfiguration>
+public class JobConfigurationMessageBodyReader extends AbstractMessageBodyReader<JobConfiguration>
 {
-     /**
-      * The Object to JSON mapper.
-      */
-     private static final ObjectReader OBJECT_READER = new ObjectMapper().readerFor(JobConfiguration.class)
-                                   .with(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY);
+    /**
+     * The Object to JSON mapper.
+     */
+    private static final ObjectReader OBJECT_READER = new ObjectMapper()
+            .readerFor(JobConfiguration.class)
+            .with(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY);
 
+    @Override
+    protected Class<?> getType()
+    {
+        return JobConfiguration.class;
+    }
 
-     @Override
-     public boolean isReadable(Class<?> type, Type genericType, Annotation[] annotations,
-               MediaType mediaType)
-     {
-          // no need to check the media type because of the @Consumes annotation
-          return type == JobConfiguration.class;
-     }
+    @Override
+    protected ObjectReader getObjectReader()
+    {
+        return OBJECT_READER;
+    }
 
-     @Override
-     public JobConfiguration readFrom(Class<JobConfiguration> bean, Type genericType,
-               Annotation[] annotation, MediaType mediaType,
-               MultivaluedMap<String, String> httpHeaders, InputStream input)
-                         throws IOException
-     {
-          // Sanity check. The consumes annotation means only Json should be read
-          if (!mediaType.equals(MediaType.APPLICATION_JSON_TYPE)
-               && !mediaType.equals(MediaType.APPLICATION_JSON_TYPE.withCharset("UTF-8")))
-          {
-               throw new WebApplicationException(
-                         Response.status(Response.Status.UNSUPPORTED_MEDIA_TYPE).build());
-          }
+    @Override
+    protected JobConfigurationParseException handle(JsonParseException e)
+    {
+        return new JobConfigurationParseException(
+                Messages.getMessage(Messages.JSON_JOB_CONFIG_PARSE), e,
+                ErrorCodes.JOB_CONFIG_PARSE_ERROR);
+    }
 
-          try
-          {
-               return OBJECT_READER.readValue(input);
-          }
-          catch (JsonParseException e)
-          {
-              throw new JobConfigurationParseException(
-                         Messages.getMessage(Messages.JSON_JOB_CONFIG_PARSE), e,
-                         ErrorCodes.JOB_CONFIG_PARSE_ERROR);
-          }
-          catch (JsonMappingException e)
-          {
-              if (e.getCause() != null)
-              {
-                  Throwable cause = e.getCause();
-                  if (cause instanceof JobConfigurationException)
-                  {
-                      JobConfigurationException jce = (JobConfigurationException)cause;
-                      throw new JobConfigurationParseException(jce.getMessage(), e,
-                                           jce.getErrorCode());
-                  }
-                  else if (cause instanceof UnknownOperatorException)
-                  {
-                      UnknownOperatorException uoe = (UnknownOperatorException)cause;
+    @Override
+    protected JobConfigurationParseException handle(JsonMappingException e)
+    {
+        if (e.getCause() != null)
+        {
+            Throwable cause = e.getCause();
+            if (cause instanceof JobConfigurationException)
+            {
+                JobConfigurationException jce = (JobConfigurationException) cause;
+                return new JobConfigurationParseException(jce.getMessage(), e, jce.getErrorCode());
+            }
+            else if (cause instanceof UnknownOperatorException)
+            {
+                UnknownOperatorException uoe = (UnknownOperatorException) cause;
 
-                      throw new JobConfigurationParseException(
-                              Messages.getMessage(Messages.JOB_CONFIG_TRANSFORM_CONDITION_UNKNOWN_OPERATOR,
-                                          uoe.getName()),
-                              uoe,
-                              ErrorCodes.UNKNOWN_OPERATOR);
-                  }
+                return new JobConfigurationParseException(Messages.getMessage(
+                        Messages.JOB_CONFIG_TRANSFORM_CONDITION_UNKNOWN_OPERATOR, uoe.getName()),
+                        uoe, ErrorCodes.UNKNOWN_OPERATOR);
+            }
+        }
 
-              }
-
-              throw new JobConfigurationParseException(
-                         Messages.getMessage(Messages.JSON_JOB_CONFIG_MAPPING), e,
-                         ErrorCodes.JOB_CONFIG_UNKNOWN_FIELD_ERROR);
-          }
-     }
-
+        return new JobConfigurationParseException(
+                Messages.getMessage(Messages.JSON_JOB_CONFIG_MAPPING), e,
+                ErrorCodes.JOB_CONFIG_UNKNOWN_FIELD_ERROR);
+    }
 }

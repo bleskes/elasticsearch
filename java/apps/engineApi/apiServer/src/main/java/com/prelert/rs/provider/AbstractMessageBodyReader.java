@@ -27,54 +27,61 @@
 
 package com.prelert.rs.provider;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Type;
+
+import javax.ws.rs.Consumes;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.ext.MessageBodyReader;
+
 import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
-import com.prelert.job.errorcodes.ErrorCodes;
-import com.prelert.job.messages.Messages;
-import com.prelert.job.transform.TransformConfig;
 
-/**
- * TransformConfig[] entity provider.
- * Reads the http message body and converts it to an array of TransformConfig
- * beans. Only conversion from JSON is supported.
- */
-public class TransformConfigArrayMessageBodyReader extends AbstractMessageBodyReader<TransformConfig[]>
+@Consumes(MediaType.APPLICATION_JSON)
+abstract class AbstractMessageBodyReader<T> implements MessageBodyReader<T>
 {
-    /**
-     * The Object to JSON mapper.
-     */
-    private static final ObjectReader OBJECT_READER = new ObjectMapper()
-            .readerFor(TransformConfig[].class)
-            .with(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY);
-
     @Override
-    protected Class<?> getType()
+    public boolean isReadable(Class<?> type, Type genericType, Annotation[] annotations,
+              MediaType mediaType)
     {
-        return TransformConfig[].class;
+         // no need to check the media type because of the @Consumes annotation
+         return type == getType();
     }
 
     @Override
-    protected ObjectReader getObjectReader()
+    public T readFrom(Class<T> bean, Type genericType, Annotation[] annotation, MediaType mediaType,
+            MultivaluedMap<String, String> httpHeaders, InputStream input) throws IOException
     {
-        return OBJECT_READER;
+         // Sanity check. The consumes annotation means only Json should be read
+         if (!mediaType.equals(MediaType.APPLICATION_JSON_TYPE)
+              && !mediaType.equals(MediaType.APPLICATION_JSON_TYPE.withCharset("UTF-8")))
+         {
+              throw new WebApplicationException(
+                        Response.status(Response.Status.UNSUPPORTED_MEDIA_TYPE).build());
+         }
+
+         try
+         {
+              return getObjectReader().readValue(input);
+         }
+         catch (JsonParseException e)
+         {
+             throw handle(e);
+         }
+         catch (JsonMappingException e)
+         {
+             throw handle(e);
+         }
     }
 
-    @Override
-    protected JobConfigurationParseException handle(JsonParseException e)
-    {
-        return new JobConfigurationParseException(
-              Messages.getMessage(Messages.JSON_TRANSFORM_CONFIG_PARSE), e,
-              ErrorCodes.TRANSFORM_PARSE_ERROR);
-    }
-
-    @Override
-    protected JobConfigurationParseException handle(JsonMappingException e)
-    {
-        return new JobConfigurationParseException(
-                Messages.getMessage(Messages.JSON_TRANSFORM_CONFIG_MAPPING), e,
-                ErrorCodes.TRANSFORM_UNKNOWN_FIELD_ERROR);
-    }
+    protected abstract Class<?> getType();
+    protected abstract ObjectReader getObjectReader();
+    protected abstract JobConfigurationParseException handle(JsonParseException e);
+    protected abstract JobConfigurationParseException handle(JsonMappingException e);
 }
