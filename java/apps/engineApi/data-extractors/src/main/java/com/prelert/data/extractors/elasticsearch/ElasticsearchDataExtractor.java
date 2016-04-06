@@ -209,14 +209,22 @@ public class ElasticsearchDataExtractor implements DataExtractor
             setUpChunkedSearch();
 
             // This debug is inside the long duration search block to reduce log spam
-            if (m_Fields == null)
+            if (m_Aggregations != null)
             {
-                m_Logger.debug("Will retrieve whole _source document from Elasticsearch");
+                m_Logger.debug("Will use the following Elasticsearch aggregations: "
+                        + m_Aggregations);
             }
             else
             {
-                m_Logger.debug("Will request only the following field(s) from Elasticsearch: "
-                        + String.join(" ", m_Fields));
+                if (m_Fields != null)
+                {
+                    m_Logger.debug("Will request only the following field(s) from Elasticsearch: "
+                            + String.join(" ", m_Fields));
+                }
+                else
+                {
+                    m_Logger.debug("Will retrieve whole _source document from Elasticsearch");
+                }
             }
         }
 
