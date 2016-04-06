@@ -28,7 +28,6 @@
 package com.prelert.rs.resources;
 
 import java.util.Arrays;
-import java.util.List;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
