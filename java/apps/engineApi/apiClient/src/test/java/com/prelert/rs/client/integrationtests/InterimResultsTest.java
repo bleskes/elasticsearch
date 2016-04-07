@@ -401,6 +401,8 @@ public class InterimResultsTest implements Closeable
         {
             page = m_WebServiceClient.prepareGetRecords(jobId).skip(skip).take(take)
                     .includeInterim(includeInterim).get();
+            skip += take;
+            pagedRecords.addAll(page.getDocuments());                    
         }
 
         int recordIndex = 0;
