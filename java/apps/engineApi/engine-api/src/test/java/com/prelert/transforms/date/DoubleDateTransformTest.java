@@ -28,7 +28,9 @@
 package com.prelert.transforms.date;
 
 import static com.prelert.transforms.TransformTestUtils.createIndexArray;
+
 import static org.junit.Assert.assertEquals;
+
 import static org.mockito.Mockito.mock;
 
 import java.util.List;
@@ -55,15 +57,15 @@ public class DoubleDateTransformTest
         DoubleDateTransform transformer = new DoubleDateTransform(false,
                                         readIndicies, writeIndicies, mock(Logger.class));
 
-    	String [] input = {"1000"};
-    	String [] scratch = {};
-    	String [] output = new String[1];
-    	String [][] readWriteArea = {input, scratch, output};
+        String [] input = {"1000"};
+        String [] scratch = {};
+        String [] output = new String[1];
+        String [][] readWriteArea = {input, scratch, output};
 
-		transformer.transform(readWriteArea);
+        transformer.transform(readWriteArea);
 
-		assertEquals(1000, transformer.epoch());
-		assertEquals("1000", output[0]);
+        assertEquals(1000000, transformer.epochMs());
+        assertEquals("1000", output[0]);
     }
 
     @Test
@@ -75,15 +77,15 @@ public class DoubleDateTransformTest
         DoubleDateTransform transformer = new DoubleDateTransform(true,
                                         readIndicies, writeIndicies, mock(Logger.class));
 
-		String [] input = {"1000"};
-		String [] scratch = {};
-		String [] output = new String[1];
+        String [] input = {"1000"};
+        String [] scratch = {};
+        String [] output = new String[1];
         String [][] readWriteArea = {input, scratch, output};
 
         transformer.transform(readWriteArea);
 
-		assertEquals(1, transformer.epoch());
-		assertEquals("1", output[0]);
+        assertEquals(1000, transformer.epochMs());
+        assertEquals("1", output[0]);
     }
 
     @Test
@@ -98,9 +100,9 @@ public class DoubleDateTransformTest
         DoubleDateTransform transformer = new DoubleDateTransform(false,
                                         readIndicies, writeIndicies, mock(Logger.class));
 
-		String [] input = {"invalid"};
-		String [] scratch = {};
-		String [] output = new String[1];
+        String [] input = {"invalid"};
+        String [] scratch = {};
+        String [] output = new String[1];
         String [][] readWriteArea = {input, scratch, output};
 
         transformer.transform(readWriteArea);

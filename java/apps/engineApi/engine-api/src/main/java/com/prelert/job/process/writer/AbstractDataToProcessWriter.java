@@ -86,8 +86,8 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
     private String [][] m_ReadWriteArea;
 
     // epoch in seconds
-    private long m_LatestEpoch;
-    private long m_LatestEpochThisUpload;
+    private long m_LatestEpochMs;
+    private long m_LatestEpochMsThisUpload;
 
 
     protected AbstractDataToProcessWriter(RecordWriter recordWriter,
@@ -106,11 +106,11 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
         m_PostDateTransforms = new ArrayList<>();
         m_DateInputTransforms = new ArrayList<>();
         Date date = statusReporter.getLatestRecordTime();
-        m_LatestEpochThisUpload = 0;
-        m_LatestEpoch = 0;
+        m_LatestEpochMsThisUpload = 0;
+        m_LatestEpochMs = 0;
         if (date != null)
         {
-            m_LatestEpoch  = date.getTime() / MS_IN_SECOND;
+            m_LatestEpochMs  = date.getTime();
         }
 
         m_ReadWriteArea = new String[3][];
@@ -289,17 +289,19 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
             return false;
         }
 
-        long epoch = m_DateTransform.epoch();
-        if (epoch < m_LatestEpoch - m_AnalysisConfig.getLatency())
+        long epochMs = m_DateTransform.epochMs();
+
+        // Records have epoch seconds timestamp so compare for out of order in seconds
+        if (epochMs / MS_IN_SECOND < m_LatestEpochMs / MS_IN_SECOND - m_AnalysisConfig.getLatency())
         {
             // out of order
             m_StatusReporter.reportOutOfOrderRecord(m_InFieldIndexes.size());
 
-            if (epoch > m_LatestEpochThisUpload)
+            if (epochMs > m_LatestEpochMsThisUpload)
             {
                 // record this timestamp even if the record won't be processed
-                m_LatestEpochThisUpload = epoch;
-                m_StatusReporter.reportLatestTimeIncrementalStats(m_LatestEpochThisUpload);
+                m_LatestEpochMsThisUpload = epochMs;
+                m_StatusReporter.reportLatestTimeIncrementalStats(m_LatestEpochMsThisUpload);
             }
             return false;
         }
@@ -310,13 +312,12 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
             return false;
         }
 
-        m_LatestEpoch = Math.max(m_LatestEpoch, epoch);
-        m_LatestEpochThisUpload = m_LatestEpoch;
-
+        m_LatestEpochMs = Math.max(m_LatestEpochMs, epochMs);
+        m_LatestEpochMsThisUpload = m_LatestEpochMs;
 
         m_RecordWriter.writeRecord(output);
-        m_JobDataPersister.persistRecord(epoch, output);
-        m_StatusReporter.reportRecordWritten(numberOfFieldsRead, m_LatestEpoch);
+        m_JobDataPersister.persistRecord(epochMs / MS_IN_SECOND, output);
+        m_StatusReporter.reportRecordWritten(numberOfFieldsRead, m_LatestEpochMs);
 
         return true;
     }

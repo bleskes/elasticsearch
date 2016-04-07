@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -29,6 +29,7 @@ package com.prelert.job.status;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
@@ -157,7 +158,7 @@ public class StatusReporterTest
         assertEquals(3, m_StatusReporter.incrementalStats().getProcessedFieldCount());
         assertEquals(1, m_StatusReporter.incrementalStats().getFailedTransformCount());
         assertEquals(1, m_StatusReporter.incrementalStats().getExcludedRecordCount());
-        assertEquals(1000, m_StatusReporter.incrementalStats().getLatestRecordTimeStamp().getTime() / 1000);
+        assertEquals(1000, m_StatusReporter.incrementalStats().getLatestRecordTimeStamp().getTime());
 
         assertEquals(m_StatusReporter.incrementalStats(), m_StatusReporter.runningTotalStats());
 
@@ -172,7 +173,7 @@ public class StatusReporterTest
     {
         m_StatusReporter.startNewIncrementalCount();
         m_StatusReporter.reportLatestTimeIncrementalStats(5001L);
-        assertEquals(5001L, m_StatusReporter.incrementalStats().getLatestRecordTimeStamp().getTime() / 1000L);
+        assertEquals(5001L, m_StatusReporter.incrementalStats().getLatestRecordTimeStamp().getTime());
     }
 
     @Test
@@ -186,7 +187,7 @@ public class StatusReporterTest
         assertEquals(5, m_StatusReporter.incrementalStats().getInputFieldCount());
         assertEquals(1, m_StatusReporter.incrementalStats().getProcessedRecordCount());
         assertEquals(3, m_StatusReporter.incrementalStats().getProcessedFieldCount());
-        assertEquals(2000, m_StatusReporter.incrementalStats().getLatestRecordTimeStamp().getTime() / 1000);
+        assertEquals(2000, m_StatusReporter.incrementalStats().getLatestRecordTimeStamp().getTime());
 
         m_StatusReporter.reportRecordWritten(5, 3000);
         m_StatusReporter.reportMissingField();
@@ -194,7 +195,7 @@ public class StatusReporterTest
         assertEquals(10, m_StatusReporter.incrementalStats().getInputFieldCount());
         assertEquals(2, m_StatusReporter.incrementalStats().getProcessedRecordCount());
         assertEquals(5, m_StatusReporter.incrementalStats().getProcessedFieldCount());
-        assertEquals(3000, m_StatusReporter.incrementalStats().getLatestRecordTimeStamp().getTime() / 1000);
+        assertEquals(3000, m_StatusReporter.incrementalStats().getLatestRecordTimeStamp().getTime());
 
         assertEquals(m_StatusReporter.incrementalStats(), m_StatusReporter.runningTotalStats());
 
@@ -216,7 +217,7 @@ public class StatusReporterTest
         assertEquals(500, m_StatusReporter.incrementalStats().getInputFieldCount());
         assertEquals(100, m_StatusReporter.incrementalStats().getProcessedRecordCount());
         assertEquals(300, m_StatusReporter.incrementalStats().getProcessedFieldCount());
-        assertEquals(100, m_StatusReporter.incrementalStats().getLatestRecordTimeStamp().getTime() / 1000);
+        assertEquals(100, m_StatusReporter.incrementalStats().getLatestRecordTimeStamp().getTime());
 
         verify(m_JobDataCountsPersister, times(1)).persistDataCounts(anyString(), any(DataCounts.class));
     }
@@ -236,7 +237,7 @@ public class StatusReporterTest
         assertEquals(5000, m_StatusReporter.incrementalStats().getInputFieldCount());
         assertEquals(1000, m_StatusReporter.incrementalStats().getProcessedRecordCount());
         assertEquals(3000, m_StatusReporter.incrementalStats().getProcessedFieldCount());
-        assertEquals(1000, m_StatusReporter.incrementalStats().getLatestRecordTimeStamp().getTime() / 1000);
+        assertEquals(1000, m_StatusReporter.incrementalStats().getLatestRecordTimeStamp().getTime());
 
         verify(m_JobDataCountsPersister, times(10)).persistDataCounts(anyString(), any(DataCounts.class));
     }
@@ -256,7 +257,7 @@ public class StatusReporterTest
         assertEquals(10000, m_StatusReporter.incrementalStats().getInputFieldCount());
         assertEquals(2000, m_StatusReporter.incrementalStats().getProcessedRecordCount());
         assertEquals(6000, m_StatusReporter.incrementalStats().getProcessedFieldCount());
-        assertEquals(2000, m_StatusReporter.incrementalStats().getLatestRecordTimeStamp().getTime() / 1000);
+        assertEquals(2000, m_StatusReporter.incrementalStats().getLatestRecordTimeStamp().getTime());
 
         verify(m_JobDataCountsPersister, times(11)).persistDataCounts(anyString(), any(DataCounts.class));
     }
@@ -276,7 +277,7 @@ public class StatusReporterTest
         assertEquals(100000, m_StatusReporter.incrementalStats().getInputFieldCount());
         assertEquals(20000, m_StatusReporter.incrementalStats().getProcessedRecordCount());
         assertEquals(60000, m_StatusReporter.incrementalStats().getProcessedFieldCount());
-        assertEquals(20000, m_StatusReporter.incrementalStats().getLatestRecordTimeStamp().getTime() / 1000);
+        assertEquals(20000, m_StatusReporter.incrementalStats().getLatestRecordTimeStamp().getTime());
 
         verify(m_JobDataCountsPersister, times(29)).persistDataCounts(anyString(), any(DataCounts.class));
     }
@@ -296,7 +297,7 @@ public class StatusReporterTest
         assertEquals(150000, m_StatusReporter.incrementalStats().getInputFieldCount());
         assertEquals(30000, m_StatusReporter.incrementalStats().getProcessedRecordCount());
         assertEquals(90000, m_StatusReporter.incrementalStats().getProcessedFieldCount());
-        assertEquals(30000, m_StatusReporter.incrementalStats().getLatestRecordTimeStamp().getTime() / 1000);
+        assertEquals(30000, m_StatusReporter.incrementalStats().getLatestRecordTimeStamp().getTime());
 
         verify(m_JobDataCountsPersister, times(30)).persistDataCounts(anyString(), any(DataCounts.class));
     }
@@ -313,7 +314,7 @@ public class StatusReporterTest
         dc.setMissingFieldCount(1l);
         dc.setProcessedFieldCount(5l);
         dc.setProcessedRecordCount(2l);
-        dc.setLatestRecordTimeStamp(new Date(3000 * 1000));
+        dc.setLatestRecordTimeStamp(new Date(3000));
 
         m_StatusReporter.reportRecordWritten(5, 2000);
         m_StatusReporter.reportRecordWritten(5, 3000);

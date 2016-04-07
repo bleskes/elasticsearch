@@ -454,7 +454,7 @@ public class JobSchedulerTest
 
         assertEquals(1, dataProcessor.getNumberOfStreams());
         assertEquals("0-0", dataProcessor.getStream(0));
-        assertEquals(1455000001000L, dataExtractor.getStart(0));
+        assertEquals(1455000000001L, dataExtractor.getStart(0));
         assertEquals(1460000000000L, dataExtractor.getEnd(0));
         List<InterimResultsParams> flushParams = dataProcessor.getFlushParams();
         assertEquals(1, flushParams.size());
