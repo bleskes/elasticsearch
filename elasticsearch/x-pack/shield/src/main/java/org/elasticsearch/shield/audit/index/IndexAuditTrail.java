@@ -622,7 +622,7 @@ public class IndexAuditTrail extends AbstractComponent implements AuditTrail, Cl
         msg.builder.field(Field.ORIGIN_TYPE, "rest");
         SocketAddress address = request.getRemoteAddress();
         if (address instanceof InetSocketAddress) {
-            msg.builder.field(Field.ORIGIN_ADDRESS, NetworkAddress.formatAddress(((InetSocketAddress) request.getRemoteAddress())
+            msg.builder.field(Field.ORIGIN_ADDRESS, NetworkAddress.format(((InetSocketAddress) request.getRemoteAddress())
                     .getAddress()));
         } else {
             msg.builder.field(Field.ORIGIN_ADDRESS, address);
@@ -638,7 +638,7 @@ public class IndexAuditTrail extends AbstractComponent implements AuditTrail, Cl
         Message msg = new Message().start();
         common(layer, type, msg.builder);
 
-        msg.builder.field(Field.ORIGIN_ADDRESS, NetworkAddress.formatAddress(originAddress));
+        msg.builder.field(Field.ORIGIN_ADDRESS, NetworkAddress.format(originAddress));
         msg.builder.field(Field.TRANSPORT_PROFILE, profile);
         msg.builder.field(Field.RULE, rule);
 
@@ -661,7 +661,7 @@ public class IndexAuditTrail extends AbstractComponent implements AuditTrail, Cl
         InetSocketAddress restAddress = RemoteHostHeader.restRemoteAddress(threadContext);
         if (restAddress != null) {
             builder.field(Field.ORIGIN_TYPE, "rest");
-            builder.field(Field.ORIGIN_ADDRESS, NetworkAddress.formatAddress(restAddress.getAddress()));
+            builder.field(Field.ORIGIN_ADDRESS, NetworkAddress.format(restAddress.getAddress()));
             return builder;
         }
 
@@ -671,7 +671,7 @@ public class IndexAuditTrail extends AbstractComponent implements AuditTrail, Cl
             builder.field(Field.ORIGIN_TYPE, "transport");
             if (address instanceof InetSocketTransportAddress) {
                 builder.field(Field.ORIGIN_ADDRESS,
-                        NetworkAddress.formatAddress(((InetSocketTransportAddress) address).address().getAddress()));
+                        NetworkAddress.format(((InetSocketTransportAddress) address).address().getAddress()));
             } else {
                 builder.field(Field.ORIGIN_ADDRESS, address);
             }

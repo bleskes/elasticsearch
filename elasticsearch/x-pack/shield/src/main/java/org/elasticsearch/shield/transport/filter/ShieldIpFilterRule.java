@@ -167,7 +167,7 @@ public class ShieldIpFilterRule implements IpFilterRule {
             }
 
             assert transportAddress instanceof InetSocketTransportAddress;
-            ruleSpec.append(NetworkAddress.formatAddress(((InetSocketTransportAddress) transportAddress).address().getAddress()));
+            ruleSpec.append(NetworkAddress.format(((InetSocketTransportAddress) transportAddress).address().getAddress()));
         }
         return ruleSpec.toString();
     }
