@@ -80,11 +80,15 @@ class JobTimeouts implements Shutdownable
      * seconds.
      *
      * @param jobId
-     * @param timeoutSeconds
+     * @param timeout The duration of the timeout. If <= 0 no timeout will be applied.
      * @return
      */
     public void startTimeout(String jobId, Duration timeout)
     {
+        if (timeout.isZero() || timeout.isNegative())
+        {
+            return;
+        }
         ScheduledFuture<?> scheduledFuture = m_ScheduledExecutor.schedule(
                 new FinishJobRunnable(jobId), timeout.toMillis(), TimeUnit.MILLISECONDS);
         m_JobIdToTimeoutFuture.put(jobId, scheduledFuture);
