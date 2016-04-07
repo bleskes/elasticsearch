@@ -615,6 +615,7 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
     throws IOException
     {
         return builder
+                .field(JOB_ID_NAME, m_JobId.getId())
                 .field(ModelSizeStats.MODEL_BYTES, modelSizeStats.getModelBytes())
                 .field(ModelSizeStats.TOTAL_BY_FIELD_COUNT, modelSizeStats.getTotalByFieldCount())
                 .field(ModelSizeStats.TOTAL_OVER_FIELD_COUNT, modelSizeStats.getTotalOverFieldCount())
