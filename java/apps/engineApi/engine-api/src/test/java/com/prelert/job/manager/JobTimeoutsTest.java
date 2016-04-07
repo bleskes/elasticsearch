@@ -31,6 +31,7 @@ import static org.junit.Assert.assertTrue;
 
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -46,6 +47,7 @@ import org.mockito.MockitoAnnotations;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
+import com.prelert.job.JobException;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.exceptions.JobInUseException;
@@ -84,6 +86,30 @@ public class JobTimeoutsTest
 
         verify(m_JobCloser).closeJob("foo");
         assertTrue(end - start > 95);
+    }
+
+    @Test
+    public void testStartTimeout_GivenZero() throws InterruptedException, JobException
+    {
+        JobTimeouts jobTimeouts = new JobTimeouts(m_JobCloser);
+
+        jobTimeouts.startTimeout("foo", Duration.ZERO);
+
+        Thread.sleep(100);
+
+        verify(m_JobCloser, never()).closeJob("foo");
+    }
+
+    @Test
+    public void testStartTimeout_GivenNegative() throws InterruptedException, JobException
+    {
+        JobTimeouts jobTimeouts = new JobTimeouts(m_JobCloser);
+
+        jobTimeouts.startTimeout("foo", Duration.ofSeconds(-1));
+
+        Thread.sleep(100);
+
+        verify(m_JobCloser, never()).closeJob("foo");
     }
 
     @Test

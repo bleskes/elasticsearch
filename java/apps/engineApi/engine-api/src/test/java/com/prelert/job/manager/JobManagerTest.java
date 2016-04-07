@@ -845,7 +845,7 @@ public class JobManagerTest
         jobConfig.setId("not-unique");
         jobConfig.setAnalysisConfig(analysisConfig);
 
-        JobDetails job = jobManager.createJob(jobConfig, true);
+        jobManager.createJob(jobConfig, true);
 
         verify(m_JobProvider, times(2)).audit("not-unique");
         InOrder inOrder = Mockito.inOrder(m_Auditor, m_Auditor);
@@ -854,7 +854,7 @@ public class JobManagerTest
     }
 
     @Test
-    public void testCreateJob_FillsDefaults()
+    public void testCreateJob_FillsDefaultDetectorDescriptions()
             throws NoSuchScheduledJobException, UnknownJobException,
             CannotStartSchedulerException, TooManyJobsException,
             JobConfigurationException, JobIdAlreadyExistsException, IOException,
@@ -888,6 +888,30 @@ public class JobManagerTest
         assertEquals("Named", job.getAnalysisConfig().getDetectors().get(1).getDetectorDescription());
         verify(m_JobProvider).audit("revenue-by-vendor");
         verify(m_Auditor).info("Job created");
+    }
+
+    @Test
+    public void testCreateJob_GivenScheduledJobSetsTimeoutToZero() throws JobException
+    {
+        givenProcessInfo(2);
+        JobManager jobManager = createJobManager();
+
+        JobConfiguration jobConfig = createScheduledJobConfig();
+        jobConfig.setTimeout(900L);
+
+        Logger jobLogger = mock(Logger.class);
+        when(m_JobLoggerFactory.newLogger("foo")).thenReturn(jobLogger);
+        DataExtractor dataExtractor = mock(DataExtractor.class);
+        when(m_DataExtractorFactory.newExtractor(any(JobDetails.class))).thenReturn(dataExtractor);
+        when(m_ProcessManager.jobIsRunning("foo")).thenReturn(true);
+
+        JobDetails scheduledJob = jobManager.createJob(jobConfig, false);
+
+        jobConfig.setSchedulerConfig(null);
+        JobDetails normalJob = jobManager.createJob(jobConfig, false);
+
+        assertEquals(0, scheduledJob.getTimeout());
+        assertEquals(900, normalJob.getTimeout());
     }
 
     @Test

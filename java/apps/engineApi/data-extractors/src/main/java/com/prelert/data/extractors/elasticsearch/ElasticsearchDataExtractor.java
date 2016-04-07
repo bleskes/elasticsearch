@@ -161,6 +161,7 @@ public class ElasticsearchDataExtractor implements DataExtractor
     private volatile long m_CurrentStartTime;
     private volatile long m_CurrentEndTime;
     private volatile long m_EndTime;
+    private volatile boolean m_IsFirstSearch;
 
     /**
      * The interval of each scroll search. Will be null when search is not chunked.
@@ -186,6 +187,7 @@ public class ElasticsearchDataExtractor implements DataExtractor
         m_ScrollSize = scrollSize;
         m_ScrollState =  m_Aggregations == null ? ScrollState.createDefault()
                 : ScrollState.createAggregated();
+        m_IsFirstSearch = true;
     }
 
     public static ElasticsearchDataExtractor create(String baseUrl, String authHeader,
@@ -207,29 +209,37 @@ public class ElasticsearchDataExtractor implements DataExtractor
         if (endEpochMs - startEpochMs > CHUNK_THRESHOLD_MS)
         {
             setUpChunkedSearch();
+        }
 
-            // This debug is inside the long duration search block to reduce log spam
-            if (m_Aggregations != null)
-            {
-                m_Logger.debug("Will use the following Elasticsearch aggregations: "
-                        + m_Aggregations);
-            }
-            else
-            {
-                if (m_Fields != null)
-                {
-                    m_Logger.debug("Will request only the following field(s) from Elasticsearch: "
-                            + String.join(" ", m_Fields));
-                }
-                else
-                {
-                    m_Logger.debug("Will retrieve whole _source document from Elasticsearch");
-                }
-            }
+        if (m_IsFirstSearch)
+        {
+            logExtractorInfo();
+            m_IsFirstSearch = false;
         }
 
         m_Logger.info("Requesting data from '" + m_BaseUrl + "' within [" + startEpochMs + ", "
                 + endEpochMs + ")");
+    }
+
+    private void logExtractorInfo()
+    {
+        if (m_Aggregations != null)
+        {
+            m_Logger.debug("Will use the following Elasticsearch aggregations: "
+                    + m_Aggregations);
+        }
+        else
+        {
+            if (m_Fields != null)
+            {
+                m_Logger.debug("Will request only the following field(s) from Elasticsearch: "
+                        + String.join(" ", m_Fields));
+            }
+            else
+            {
+                m_Logger.debug("Will retrieve whole _source document from Elasticsearch");
+            }
+        }
     }
 
     private void setUpChunkedSearch() throws IOException
