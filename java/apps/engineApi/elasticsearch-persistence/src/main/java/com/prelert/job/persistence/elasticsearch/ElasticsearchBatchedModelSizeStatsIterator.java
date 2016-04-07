@@ -56,7 +56,7 @@ public class ElasticsearchBatchedModelSizeStatsIterator extends ElasticsearchBat
         hit.getSource().put(ModelSizeStats.TIMESTAMP, timestamp);
 
         ModelSizeStats result = objectMapper.convertValue(hit.getSource(), ModelSizeStats.class);
-        result.setId(hit.getId());
+        result.setModelSizeStatsId(hit.getId());
         return result;
     }
 }

@@ -37,7 +37,7 @@ public class ModelSizeStatsTest
     public void testDefaultConstructor()
     {
         ModelSizeStats stats = new ModelSizeStats();
-        assertEquals("modelSizeStats", stats.getId());
+        assertEquals("modelSizeStats", stats.getModelSizeStatsId());
         assertEquals(0, stats.getModelBytes());
         assertEquals(0, stats.getTotalByFieldCount());
         assertEquals(0, stats.getTotalOverFieldCount());
@@ -51,9 +51,9 @@ public class ModelSizeStatsTest
     {
         ModelSizeStats stats = new ModelSizeStats();
 
-        stats.setId("foo");
+        stats.setModelSizeStatsId("foo");
 
-        assertEquals("foo", stats.getId());
+        assertEquals("foo", stats.getModelSizeStatsId());
     }
 
     @Test
