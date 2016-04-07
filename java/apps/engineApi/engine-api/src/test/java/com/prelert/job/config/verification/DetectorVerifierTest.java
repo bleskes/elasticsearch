@@ -236,7 +236,8 @@ public class DetectorVerifierTest
                 Detector.METRIC, Detector.MEAN, Detector.HIGH_MEAN, Detector.LOW_MEAN, Detector.AVG,
                 Detector.HIGH_AVG, Detector.LOW_AVG, Detector.MAX, Detector.MIN, Detector.SUM,
                 Detector.LOW_SUM, Detector.HIGH_SUM, Detector.NON_NULL_SUM,
-                Detector.LOW_NON_NULL_SUM, Detector.HIGH_NON_NULL_SUM })
+                Detector.LOW_NON_NULL_SUM, Detector.HIGH_NON_NULL_SUM, Detector.POPULATION_VARIANCE,
+                Detector.LOW_POPULATION_VARIANCE, Detector.HIGH_POPULATION_VARIANCE })
         {
             d.setFunction(f);
             DetectorVerifier.verify(d, false);
@@ -270,6 +271,9 @@ public class DetectorVerifierTest
         difference.remove(Detector.NON_NULL_SUM);
         difference.remove(Detector.LOW_NON_NULL_SUM);
         difference.remove(Detector.HIGH_NON_NULL_SUM);
+        difference.remove(Detector.POPULATION_VARIANCE);
+        difference.remove(Detector.LOW_POPULATION_VARIANCE);
+        difference.remove(Detector.HIGH_POPULATION_VARIANCE);
         difference.remove(Detector.DISTINCT_COUNT);
         difference.remove(Detector.HIGH_DISTINCT_COUNT);
         difference.remove(Detector.LOW_DISTINCT_COUNT);
@@ -326,7 +330,9 @@ public class DetectorVerifierTest
                 Detector.LOW_MEAN, Detector.AVG, Detector.HIGH_AVG, Detector.LOW_AVG,
                 Detector.MEDIAN, Detector.MAX, Detector.MIN, Detector.SUM, Detector.LOW_SUM,
                 Detector.HIGH_SUM, Detector.NON_NULL_SUM, Detector.LOW_NON_NULL_SUM,
-                Detector.HIGH_NON_NULL_SUM, Detector.DISTINCT_COUNT, Detector.DC,
+                Detector.HIGH_NON_NULL_SUM, Detector.POPULATION_VARIANCE,
+                Detector.LOW_POPULATION_VARIANCE, Detector.HIGH_POPULATION_VARIANCE,
+                Detector.DISTINCT_COUNT, Detector.DC,
                 Detector.HIGH_DISTINCT_COUNT, Detector.HIGH_DC, Detector.LOW_DISTINCT_COUNT,
                 Detector.LOW_DC, Detector.INFO_CONTENT, Detector.LOW_INFO_CONTENT,
                 Detector.HIGH_INFO_CONTENT })

@@ -82,6 +82,12 @@ public class Detector
     public static final String NON_NULL_SUM = "non_null_sum";
     public static final String LOW_NON_NULL_SUM = "low_non_null_sum";
     public static final String HIGH_NON_NULL_SUM = "high_non_null_sum";
+    /**
+     * Population variance is called varp to match Splunk
+     */
+    public static final String POPULATION_VARIANCE = "varp";
+    public static final String LOW_POPULATION_VARIANCE = "varp";
+    public static final String HIGH_POPULATION_VARIANCE = "varp";
     public static final String TIME_OF_DAY = "time_of_day";
     public static final String TIME_OF_WEEK = "time_of_week";
 
@@ -90,7 +96,8 @@ public class Detector
      * The set of valid function names.
      */
     public static final Set<String> ANALYSIS_FUNCTIONS =
-            new HashSet<String>(Arrays.<String>asList(new String [] {
+            new HashSet<>(Arrays.asList(
+                // The convention here is that synonyms (only) go on the same line
                 COUNT,
                 HIGH_COUNT,
                 LOW_COUNT,
@@ -118,28 +125,33 @@ public class Detector
                 NON_NULL_SUM,
                 LOW_NON_NULL_SUM,
                 HIGH_NON_NULL_SUM,
-                TIME_OF_DAY, TIME_OF_WEEK
-            }));
+                POPULATION_VARIANCE,
+                LOW_POPULATION_VARIANCE,
+                HIGH_POPULATION_VARIANCE,
+                TIME_OF_DAY,
+                TIME_OF_WEEK
+            ));
 
     /**
      * The set of functions that do not require a field, by field or over field
      */
     public static final Set<String> COUNT_WITHOUT_FIELD_FUNCTIONS =
-            new HashSet<String>(Arrays.<String>asList(new String [] {
+            new HashSet<>(Arrays.asList(
                 COUNT,
                 HIGH_COUNT,
                 LOW_COUNT,
                 NON_ZERO_COUNT, NZC,
                 LOW_NON_ZERO_COUNT, LOW_NZC,
                 HIGH_NON_ZERO_COUNT, HIGH_NZC,
-                TIME_OF_DAY, TIME_OF_WEEK
-            }));
+                TIME_OF_DAY,
+                TIME_OF_WEEK
+            ));
 
     /**
      * The set of functions that require a fieldname
      */
     public static final Set<String> FIELD_NAME_FUNCTIONS =
-            new HashSet<String>(Arrays.<String>asList(new String [] {
+            new HashSet<>(Arrays.asList(
                 DISTINCT_COUNT, DC,
                 LOW_DISTINCT_COUNT, LOW_DC,
                 HIGH_DISTINCT_COUNT, HIGH_DC,
@@ -158,42 +170,44 @@ public class Detector
                 HIGH_SUM,
                 NON_NULL_SUM,
                 LOW_NON_NULL_SUM,
-                HIGH_NON_NULL_SUM
-            }));
+                HIGH_NON_NULL_SUM,
+                POPULATION_VARIANCE,
+                LOW_POPULATION_VARIANCE,
+                HIGH_POPULATION_VARIANCE
+            ));
 
     /**
      * The set of functions that require a by fieldname
      */
     public static final Set<String> BY_FIELD_NAME_FUNCTIONS =
-            new HashSet<String>(Arrays.<String>asList(new String [] {
+            new HashSet<>(Arrays.asList(
                 RARE,
                 FREQ_RARE
-            }));
+            ));
 
     /**
      * The set of functions that require a over fieldname
      */
     public static final Set<String> OVER_FIELD_NAME_FUNCTIONS =
-            new HashSet<String>(Arrays.<String>asList(new String [] {
+            new HashSet<>(Arrays.asList(
                 FREQ_RARE
-            }));
+            ));
 
     /**
      * The set of functions that cannot have a by fieldname
      */
     public static final Set<String> NO_BY_FIELD_NAME_FUNCTIONS =
-            new HashSet<String>(Arrays.<String>asList(new String [] {
-            }));
+            new HashSet<>();
 
     /**
      * The set of functions that cannot have an over fieldname
      */
     public static final Set<String> NO_OVER_FIELD_NAME_FUNCTIONS =
-            new HashSet<String>(Arrays.<String>asList(new String [] {
+            new HashSet<>(Arrays.asList(
                 NON_ZERO_COUNT, NZC,
                 LOW_NON_ZERO_COUNT, LOW_NZC,
                 HIGH_NON_ZERO_COUNT, HIGH_NZC
-            }));
+            ));
 
     /**
      * field names cannot contain any of these characters
