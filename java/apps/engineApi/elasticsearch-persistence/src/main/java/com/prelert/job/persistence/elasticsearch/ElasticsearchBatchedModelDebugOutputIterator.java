@@ -54,7 +54,8 @@ class ElasticsearchBatchedModelDebugOutputIterator extends ElasticsearchBatchedR
         // and replace using the API 'timestamp' key.
         Object timestamp = hit.getSource().remove(ElasticsearchMappings.ES_TIMESTAMP);
         hit.getSource().put(ModelDebugOutput.TIMESTAMP, timestamp);
-
-        return objectMapper.convertValue(hit.getSource(), ModelDebugOutput.class);
+        ModelDebugOutput result = objectMapper.convertValue(hit.getSource(), ModelDebugOutput.class);
+        result.setId(hit.getId());
+        return result;
     }
 }

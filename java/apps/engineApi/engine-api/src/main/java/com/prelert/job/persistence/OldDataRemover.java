@@ -103,7 +103,7 @@ public class OldDataRemover
                     + "' that have a timestamp before: " + cutoffEpochSeconds);
             deleteModelDebugOutputBefore(job.getId(), cutoffEpochSeconds * MILLISECONDS_IN_SECOND);
         }
-        LOGGER.info("Removal of expired model snapshots is complete");
+        LOGGER.info("Removal of expired ModelDebugOutput records is complete");
     }
 
     /**
@@ -129,7 +129,7 @@ public class OldDataRemover
                     + "' that have a timestamp before: " + cutoffEpochSeconds);
             deleteModelSizeStatsBefore(job.getId(), cutoffEpochSeconds * MILLISECONDS_IN_SECOND);
         }
-        LOGGER.info("Removal of expired model snapshots is complete");
+        LOGGER.info("Removal of expired ModelSizeStats records is complete");
     }
 
     /**

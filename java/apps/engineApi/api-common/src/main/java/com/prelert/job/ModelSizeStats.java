@@ -78,12 +78,12 @@ public class ModelSizeStats
         m_ReportTime = new Date();
     }
 
-    public String getModelSizeStatsId()
+    public String getId()
     {
         return m_Id;
     }
 
-    public void setModelSizeStatsId(String id)
+    public void setId(String id)
     {
         m_Id = id;
     }

@@ -208,7 +208,7 @@ public class ElasticsearchBulkDeleter implements JobDataDeleter
     @Override
     public void deleteModelSizeStats(ModelSizeStats modelSizeStats)
     {
-        String id = modelSizeStats.getModelSizeStatsId();
+        String id = modelSizeStats.getId();
         m_BulkRequestBuilder.add(
                 m_Client.prepareDelete(m_JobId.getIndex(), ModelSizeStats.TYPE, id));
     }

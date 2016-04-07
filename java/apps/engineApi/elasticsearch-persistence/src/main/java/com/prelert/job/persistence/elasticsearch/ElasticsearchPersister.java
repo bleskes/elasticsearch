@@ -251,14 +251,14 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
     {
         LOGGER.trace("Persisting model size stats, for size " + modelSizeStats.getModelBytes());
         Persistable persistable = new Persistable(modelSizeStats, () -> ModelSizeStats.TYPE,
-                () -> modelSizeStats.getModelSizeStatsId(),
+                () -> modelSizeStats.getId(),
                 () -> serialiseModelSizeStats(modelSizeStats));
         persistable.persist();
 
-        modelSizeStats.setModelSizeStatsId(null);
+        modelSizeStats.setId(null);
 
         persistable = new Persistable(modelSizeStats, () -> ModelSizeStats.TYPE,
-                () -> modelSizeStats.getModelSizeStatsId(),
+                () -> modelSizeStats.getId(),
                 () -> serialiseModelSizeStats(modelSizeStats));
         persistable.persist();
 
