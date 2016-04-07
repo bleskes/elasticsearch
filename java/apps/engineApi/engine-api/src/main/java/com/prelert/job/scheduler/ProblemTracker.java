@@ -84,8 +84,9 @@ class ProblemTracker
      * is reported and a warning was issued previously, a recovery info is reported.
      *
      * @param empty Whether data was seen since last report
+     * @return {@code true} if an empty data warning was issued, {@code false} otherwise
      */
-    public void updateEmptyDataCount(boolean empty)
+    public boolean updateEmptyDataCount(boolean empty)
     {
         if (empty && m_EmptyDataCount < EMPTY_DATA_WARN_COUNT)
         {
@@ -93,6 +94,7 @@ class ProblemTracker
             if (m_EmptyDataCount == EMPTY_DATA_WARN_COUNT)
             {
                 m_Auditor.get().warning(Messages.getMessage(Messages.JOB_AUDIT_SCHEDULER_NO_DATA));
+                return true;
             }
         }
         else if (!empty)
@@ -103,6 +105,7 @@ class ProblemTracker
             }
             m_EmptyDataCount = 0;
         }
+        return false;
     }
 
     public boolean hasDataExtractionProblems()

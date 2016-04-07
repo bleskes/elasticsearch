@@ -169,7 +169,10 @@ public class JobScheduler
         }
 
         updateLastEndTime(latestRecordTimestamp, end);
-        m_ProblemTracker.updateEmptyDataCount(latestRecordTimestamp == null);
+        if (m_ProblemTracker.updateEmptyDataCount(latestRecordTimestamp == null))
+        {
+            closeJob();
+        }
         m_ProblemTracker.finishReport();
 
         if (m_LastEndTimeMs != null && !m_LastEndTimeMs.equals(previousLastEndTimeMs))
@@ -376,6 +379,12 @@ public class JobScheduler
             }
             updateStatus(JobSchedulerStatus.STOPPING);
         }
+        closeJob();
+        updateFinalStatusAndCloseLogger(JobSchedulerStatus.STOPPED);
+    }
+
+    private void closeJob()
+    {
         try
         {
             m_DataProcessor.closeJob(m_JobId);
@@ -384,7 +393,6 @@ public class JobScheduler
         {
             m_Logger.error("An error has occurred while closing the job", e);
         }
-        updateFinalStatusAndCloseLogger(JobSchedulerStatus.STOPPED);
     }
 
     private void updateFinalStatusAndCloseLogger(JobSchedulerStatus finalStatus)

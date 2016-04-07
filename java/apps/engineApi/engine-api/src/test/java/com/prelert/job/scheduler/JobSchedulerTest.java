@@ -99,8 +99,6 @@ public class JobSchedulerTest
 {
     private static final String JOB_ID = "foo";
     private static final Duration BUCKET_SPAN = Duration.ofSeconds(2);
-    private static final Duration FREQUENCY = Duration.ofSeconds(1);
-    private static final Duration QUERY_DELAY = Duration.ofSeconds(0);
 
     @Rule public ExpectedException m_ExpectedException = ExpectedException.none();
 
@@ -111,6 +109,8 @@ public class JobSchedulerTest
 
     private volatile JobSchedulerStatus m_CurrentStatus;
 
+    private Duration m_Frequency;
+    private Duration m_QueryDelay;
     private JobScheduler m_JobScheduler;
     private volatile CountDownLatch m_SchedulerStoppedAuditedLatch;
 
@@ -119,6 +119,8 @@ public class JobSchedulerTest
     {
         MockitoAnnotations.initMocks(this);
         m_CurrentStatus = null;
+        m_Frequency = Duration.ofSeconds(1);
+        m_QueryDelay = Duration.ofSeconds(0);
         when(m_JobLoggerFactory.newLogger(JOB_ID)).thenReturn(m_JobLogger);
         m_SchedulerStoppedAuditedLatch = new CountDownLatch(1);
         when(m_JobProvider.audit(anyString())).thenReturn(m_Auditor);
@@ -294,7 +296,7 @@ public class JobSchedulerTest
             {
                 // Assert rest of real-time searches
                 assertEquals(dataExtractor.getEnd(i - 1), dataExtractor.getStart(i));
-                assertEquals(searchStart + FREQUENCY.toMillis(), searchEnd);
+                assertEquals(searchStart + m_Frequency.toMillis(), searchEnd);
             }
 
             assertTrue(flushParams.get(i).shouldAdvanceTime());
@@ -341,11 +343,22 @@ public class JobSchedulerTest
     public void testStart_GivenLookbackWithEmptyDataAndRealtimeWithEmptyData()
             throws CannotStartSchedulerException, CannotStopSchedulerException
     {
-        int numberOfSearches = 2;
-        MockDataExtractor dataExtractor = new MockDataExtractor(Arrays.asList(1, 1));
-        MockDataProcessor dataProcessor = new MockDataProcessor(Arrays.asList(
-                newCounts(0, null),
-                newCounts(0, null)),
+        // Minimise the time the test takes by setting frequency to 1.
+        // In addition to the minimum query delay of 100ms this means an effective
+        // frequency of 101ms.
+        m_Frequency = Duration.ofMillis(1);
+
+        // 1 for lookback and 9 empty real-time searches in order to get the no data warning
+        int numberOfSearches = 10;
+        List<Integer> batchesPerSearch = new ArrayList<>();
+        List<DataCounts> responseDataCounts = new ArrayList<>();
+        for (int i = 0; i < numberOfSearches; i++)
+        {
+            batchesPerSearch.add(1);
+            responseDataCounts.add(newCounts(0, null));
+        }
+        MockDataExtractor dataExtractor = new MockDataExtractor(batchesPerSearch);
+        MockDataProcessor dataProcessor = new MockDataProcessor(responseDataCounts,
                 new CountDownLatch(numberOfSearches));
         m_JobScheduler = createJobScheduler(dataExtractor, dataProcessor);
 
@@ -359,6 +372,9 @@ public class JobSchedulerTest
         assertEquals(1400000000000L, dataExtractor.getStart(0));
         assertEquals(1400000000000L, dataExtractor.getStart(1));
         assertTrue(dataProcessor.getFlushParams().isEmpty());
+
+        assertTrue(dataProcessor.isJobClosed());
+        verify(m_Auditor).warning("Scheduler has been retrieving no data for a while");
     }
 
     @Test
@@ -617,7 +633,7 @@ public class JobSchedulerTest
 
     private JobScheduler createJobScheduler(DataExtractor dataExtractor, DataProcessor dataProcessor)
     {
-        return new JobScheduler(JOB_ID, BUCKET_SPAN, FREQUENCY, QUERY_DELAY, dataExtractor,
+        return new JobScheduler(JOB_ID, BUCKET_SPAN, m_Frequency, m_QueryDelay, dataExtractor,
                 dataProcessor, m_JobProvider, m_JobLoggerFactory);
     }
 

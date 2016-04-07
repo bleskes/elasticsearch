@@ -157,5 +157,11 @@ class JobFactory
                 detector.setDetectorDescription(DefaultDetectorDescription.of(detector));
             }
         }
+
+        // Disable auto-close for scheduled jobs
+        if (jobDetails.getSchedulerConfig() != null)
+        {
+            jobDetails.setTimeout(0);
+        }
     }
 }
