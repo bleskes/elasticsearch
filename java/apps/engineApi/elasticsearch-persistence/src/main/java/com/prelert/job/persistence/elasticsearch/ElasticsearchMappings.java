@@ -92,6 +92,9 @@ public class ElasticsearchMappings
     static final String NESTED = "nested";
     static final String COPY_TO = "copy_to";
     static final String PARENT = "_parent";
+    static final String PROPERTIES = "properties";
+    static final String TYPE = "type";
+    static final String DYNAMIC = "dynamic";
 
     /**
      * Name of the field used to store the timestamp in Elasticsearch.
@@ -106,15 +109,16 @@ public class ElasticsearchMappings
      */
     static final String ES_DOC = "_doc";
 
+    /**
+     * Elasticsearch data types
+     */
     static final String DATE = "date";
     static final String INTEGER = "integer";
     static final String LONG = "long";
     static final String OBJECT = "object";
-    static final String PROPERTIES = "properties";
     static final String STRING = "string";
     static final String DOUBLE = "double";
     static final String BOOLEAN = "boolean";
-    static final String TYPE = "type";
 
     private ElasticsearchMappings()
     {
@@ -365,12 +369,19 @@ public class ElasticsearchMappings
                                 .endObject()
                                 .startObject(SchedulerConfig.QUERY)
                                     .field(TYPE, OBJECT)
+                                    .field(DYNAMIC, false)
                                 .endObject()
                                 .startObject(SchedulerConfig.AGGREGATIONS)
                                     .field(TYPE, OBJECT)
+                                    .field(DYNAMIC, false)
                                 .endObject()
                                 .startObject(SchedulerConfig.AGGS)
                                     .field(TYPE, OBJECT)
+                                    .field(DYNAMIC, false)
+                                .endObject()
+                                .startObject(SchedulerConfig.SCRIPT_FIELDS)
+                                    .field(TYPE, OBJECT)
+                                    .field(DYNAMIC, false)
                                 .endObject()
                                 .startObject(SchedulerConfig.SCROLL_SIZE)
                                     .field(TYPE, INTEGER)
@@ -393,6 +404,7 @@ public class ElasticsearchMappings
                         .endObject()
                         .startObject(JobDetails.CUSTOM_SETTINGS)
                             .field(TYPE, OBJECT)
+                            .field(DYNAMIC, false)
                         .endObject()
                     .endObject()
                 .endObject()

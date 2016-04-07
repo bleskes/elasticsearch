@@ -296,13 +296,20 @@ public class ElasticsearchMappingsTest
                         "            \"type\": \"boolean\"" +
                         "          }," +
                         "          \"query\": {" +
-                        "            \"type\": \"object\"" +
+                        "            \"type\": \"object\"," +
+                        "            \"dynamic\": false" +
                         "          }," +
                         "          \"aggregations\": {" +
-                        "            \"type\": \"object\"" +
+                        "            \"type\": \"object\"," +
+                        "            \"dynamic\": false" +
                         "          }," +
                         "          \"aggs\": {" +
-                        "            \"type\": \"object\"" +
+                        "            \"type\": \"object\"," +
+                        "            \"dynamic\": false" +
+                        "          }," +
+                        "          \"script_fields\": {" +
+                        "            \"type\": \"object\"," +
+                        "            \"dynamic\": false" +
                         "          }," +
                         "          \"scrollSize\": {" +
                         "            \"type\": \"integer\"" +
@@ -327,7 +334,8 @@ public class ElasticsearchMappingsTest
                         "        }" +
                         "      }," +
                         "      \"customSettings\": {" +
-                        "        \"type\": \"object\"" +
+                        "        \"type\": \"object\"," +
+                        "        \"dynamic\": false" +
                         "      }" +
                         "    }" +
                         "  }" +
