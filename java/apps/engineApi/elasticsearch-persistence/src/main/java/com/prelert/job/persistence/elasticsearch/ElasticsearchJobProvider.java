@@ -1028,6 +1028,18 @@ public class ElasticsearchJobProvider implements JobProvider
         return new ElasticsearchBatchedModelSnapshotIterator(m_Client, jobId, m_ObjectMapper);
     }
 
+    @Override
+    public BatchedResultsIterator<ModelDebugOutput> newBatchedModelDebugOutputIterator(String jobId)
+    {
+        return new ElasticsearchBatchedModelDebugOutputIterator(m_Client, jobId, m_ObjectMapper);
+    }
+
+    @Override
+    public BatchedResultsIterator<ModelSizeStats> newBatchedModelSizeStatsIterator(String jobId)
+    {
+        return new ElasticsearchBatchedModelSizeStatsIterator(m_Client, jobId, m_ObjectMapper);
+    }
+
     /**
      * Always returns true
      */

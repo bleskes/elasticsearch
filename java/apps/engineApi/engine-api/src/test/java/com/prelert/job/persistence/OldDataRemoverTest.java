@@ -49,10 +49,12 @@ import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
 import com.prelert.job.JobDetails;
+import com.prelert.job.ModelSizeStats;
 import com.prelert.job.ModelSnapshot;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.results.Bucket;
 import com.prelert.job.results.Influencer;
+import com.prelert.job.results.ModelDebugOutput;
 
 public class OldDataRemoverTest
 {
@@ -155,6 +157,92 @@ public class OldDataRemoverTest
         verify(deleter, times(2)).deleteBucket(bucketCaptor.capture());
         assertEquals(Arrays.asList(bucket1, bucket2), bucketCaptor.getAllValues());
         verify(deleter).deleteInfluencer(influencer);
+        verify(deleter).commitAndFreeDiskSpace();
+
+        Mockito.verifyNoMoreInteractions(m_DeleterFactory, deleter);
+    }
+
+    @Test
+    public void testRemoveOldModelDebugOutput()
+    {
+        JobDetails jobNoRetention = new JobDetails();
+        jobNoRetention.setId(JOB_NO_RETENTION_ID);
+        jobNoRetention.setResultsRetentionDays(null);
+
+        JobDetails jobWithRetention = new JobDetails();
+        jobWithRetention.setId(JOB_WITH_RETENTION_ID);
+        jobWithRetention.setResultsRetentionDays(10L);
+        List<JobDetails> jobs = Arrays.asList(jobNoRetention, jobWithRetention);
+        when(m_JobProvider.getJobs(0, 10000)).thenReturn(new QueryPage<>(jobs, 1));
+
+        long startOfDayEpochMs = LocalDate.now().atStartOfDay(ZoneId.systemDefault()).toEpochSecond() * 1000;
+        long cutoffEpochMs = startOfDayEpochMs - 10 * 86400000L;
+
+        ModelDebugOutput debug1 = new ModelDebugOutput();
+        ModelDebugOutput debug2 = new ModelDebugOutput();
+
+        Deque<ModelDebugOutput> debugBatch1 = new ArrayDeque<>();
+        Deque<ModelDebugOutput> debugBatch2 = new ArrayDeque<>();
+        debugBatch1.add(debug1);
+        debugBatch2.addLast(debug2);
+        List<Deque<ModelDebugOutput>> debugBatches = Arrays.asList(debugBatch1, debugBatch2);
+
+        MockBatchedResultsIterator<ModelDebugOutput> debugIterator = new MockBatchedResultsIterator<>(0, cutoffEpochMs, debugBatches);
+
+        when(m_JobProvider.newBatchedModelDebugOutputIterator(JOB_WITH_RETENTION_ID)).thenReturn(debugIterator);
+
+        JobDataDeleter deleter = mock(JobDataDeleter.class);
+        when(m_DeleterFactory.newDeleter(JOB_WITH_RETENTION_ID)).thenReturn(deleter);
+
+        m_OldDataRemover.removeOldModelDebugOutput();
+
+        verify(m_DeleterFactory).newDeleter(JOB_WITH_RETENTION_ID);
+        ArgumentCaptor<ModelDebugOutput>debugCaptor = ArgumentCaptor.forClass(ModelDebugOutput.class);
+        verify(deleter, times(2)).deleteModelDebugOutput(debugCaptor.capture());
+        assertEquals(Arrays.asList(debug1, debug2), debugCaptor.getAllValues());
+        verify(deleter).commitAndFreeDiskSpace();
+
+        Mockito.verifyNoMoreInteractions(m_DeleterFactory, deleter);
+    }
+
+    @Test
+    public void testRemoveOldModelSizeStats()
+    {
+        JobDetails jobNoRetention = new JobDetails();
+        jobNoRetention.setId(JOB_NO_RETENTION_ID);
+        jobNoRetention.setResultsRetentionDays(null);
+
+        JobDetails jobWithRetention = new JobDetails();
+        jobWithRetention.setId(JOB_WITH_RETENTION_ID);
+        jobWithRetention.setResultsRetentionDays(10L);
+        List<JobDetails> jobs = Arrays.asList(jobNoRetention, jobWithRetention);
+        when(m_JobProvider.getJobs(0, 10000)).thenReturn(new QueryPage<>(jobs, 1));
+
+        long startOfDayEpochMs = LocalDate.now().atStartOfDay(ZoneId.systemDefault()).toEpochSecond() * 1000;
+        long cutoffEpochMs = startOfDayEpochMs - 10 * 86400000L;
+
+        ModelSizeStats stats1 = new ModelSizeStats();
+        ModelSizeStats stats2 = new ModelSizeStats();
+
+        Deque<ModelSizeStats> statsBatch1 = new ArrayDeque<>();
+        Deque<ModelSizeStats> statsBatch2 = new ArrayDeque<>();
+        statsBatch1.add(stats1);
+        statsBatch2.add(stats2);
+        List<Deque<ModelSizeStats>> statsBatches = Arrays.asList(statsBatch1, statsBatch2);
+
+        MockBatchedResultsIterator<ModelSizeStats> statsIterator = new MockBatchedResultsIterator<>(0, cutoffEpochMs, statsBatches);
+
+        when(m_JobProvider.newBatchedModelSizeStatsIterator(JOB_WITH_RETENTION_ID)).thenReturn(statsIterator);
+
+        JobDataDeleter deleter = mock(JobDataDeleter.class);
+        when(m_DeleterFactory.newDeleter(JOB_WITH_RETENTION_ID)).thenReturn(deleter);
+
+        m_OldDataRemover.removeOldModelSizeStats();
+
+        verify(m_DeleterFactory).newDeleter(JOB_WITH_RETENTION_ID);
+        ArgumentCaptor<ModelSizeStats>statsCaptor = ArgumentCaptor.forClass(ModelSizeStats.class);
+        verify(deleter, times(2)).deleteModelSizeStats(statsCaptor.capture());
+        assertEquals(Arrays.asList(stats1, stats2), statsCaptor.getAllValues());
         verify(deleter).commitAndFreeDiskSpace();
 
         Mockito.verifyNoMoreInteractions(m_DeleterFactory, deleter);

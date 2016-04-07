@@ -47,6 +47,7 @@ import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHitField;
 import org.elasticsearch.search.sort.SortBuilders;
 
+import com.prelert.job.ModelSizeStats;
 import com.prelert.job.ModelSnapshot;
 import com.prelert.job.ModelState;
 import com.prelert.job.persistence.JobDataDeleter;
@@ -54,6 +55,7 @@ import com.prelert.job.results.AnomalyRecord;
 import com.prelert.job.results.Bucket;
 import com.prelert.job.results.BucketInfluencer;
 import com.prelert.job.results.Influencer;
+import com.prelert.job.results.ModelDebugOutput;
 
 public class ElasticsearchBulkDeleter implements JobDataDeleter
 {
@@ -193,6 +195,22 @@ public class ElasticsearchBulkDeleter implements JobDataDeleter
         m_BulkRequestBuilder.add(
                 m_Client.prepareDelete(m_JobId.getIndex(), ModelSnapshot.TYPE, snapshotId));
         ++m_DeletedModelSnapshotCount;
+    }
+
+    @Override
+    public void deleteModelDebugOutput(ModelDebugOutput modelDebugOutput)
+    {
+        String id = modelDebugOutput.getId();
+        m_BulkRequestBuilder.add(
+                m_Client.prepareDelete(m_JobId.getIndex(), ModelDebugOutput.TYPE, id));
+    }
+
+    @Override
+    public void deleteModelSizeStats(ModelSizeStats modelSizeStats)
+    {
+        String id = modelSizeStats.getModelSizeStatsId();
+        m_BulkRequestBuilder.add(
+                m_Client.prepareDelete(m_JobId.getIndex(), ModelSizeStats.TYPE, id));
     }
 
     public void deleteInterimResults()

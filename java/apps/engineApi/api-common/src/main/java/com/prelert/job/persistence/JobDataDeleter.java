@@ -18,9 +18,11 @@
 
 package com.prelert.job.persistence;
 
+import com.prelert.job.ModelSizeStats;
 import com.prelert.job.ModelSnapshot;
 import com.prelert.job.results.Bucket;
 import com.prelert.job.results.Influencer;
+import com.prelert.job.results.ModelDebugOutput;
 
 public interface JobDataDeleter
 {
@@ -47,6 +49,18 @@ public interface JobDataDeleter
      * @param modelSnapshot the model snapshot to delete
      */
     void deleteModelSnapshot(ModelSnapshot modelSnapshot);
+
+    /**
+     * Delete a {@code ModelDebugOutput} record
+     * @param modelDebugOutput to delete
+     */
+    void deleteModelDebugOutput(ModelDebugOutput modelDebugOutput);
+
+    /**
+     * Delete a {@code ModelSizeStats} record
+     * @param modelSizeStats to delete
+     */
+    void deleteModelSizeStats(ModelSizeStats modelSizeStats);
 
     /**
      * Commit the deletions and remove data from disk if possible

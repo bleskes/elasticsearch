@@ -67,13 +67,69 @@ public class OldDataRemover
 
     /**
      * Removes old results and model snapshots.  Does this by calling
-     * {@link #removeOldModelSnapshots() removeOldModelSnapshots} and
-     * {@link #removeOldResults() removeOldResults} methods one after the other.
+     * {@link #removeOldModelSnapshots() removeOldModelSnapshots},
+     * {@link #removeOldResults() removeOldResults},
+     * {@link #removeOldModelDebugOutput() removeOldModelDebugOutput} &
+     * {@link #removeOldModelSizeStats() removeOldModelSizeStats} methods.
      */
     public void removeOldData()
     {
         removeOldModelSnapshots();
         removeOldResults();
+        removeOldModelDebugOutput();
+        removeOldModelSizeStats();
+    }
+
+    /**
+     * Removes all ModelDebugOutputs that have expired the configured retention time
+     * of their respective job. A record is deleted if its timestamp is earlier
+     * than the start of the current day (local time-zone) minus the retention
+     * period.
+     */
+    public void removeOldModelDebugOutput()
+    {
+        LOGGER.info("Initialising removal of expired ModelDebugOutput records");
+        List<JobDetails> jobs = m_JobProvider.getJobs(0, MAX_TAKE).queryResults();
+        long startOfDayEpoch = LocalDate.now().atStartOfDay(ZoneId.systemDefault()).toEpochSecond();
+        for (JobDetails job : jobs)
+        {
+            Long retentionDays = job.getResultsRetentionDays();
+            if (retentionDays == null)
+            {
+                continue;
+            }
+            long cutoffEpochSeconds = startOfDayEpoch - (retentionDays * SECONDS_IN_DAY);
+            LOGGER.info("Removing ModelDebugOutput for job with ID '" + job.getId()
+                    + "' that have a timestamp before: " + cutoffEpochSeconds);
+            deleteModelDebugOutputBefore(job.getId(), cutoffEpochSeconds * MILLISECONDS_IN_SECOND);
+        }
+        LOGGER.info("Removal of expired model snapshots is complete");
+    }
+
+    /**
+     * Removes all ModelSizeStats that have expired the configured retention time
+     * of their respective job. A record is deleted if its timestamp is earlier
+     * than the start of the current day (local time-zone) minus the retention
+     * period.
+     */
+    public void removeOldModelSizeStats()
+    {
+        LOGGER.info("Initialising removal of expired ModelSizeStats records");
+        List<JobDetails> jobs = m_JobProvider.getJobs(0, MAX_TAKE).queryResults();
+        long startOfDayEpoch = LocalDate.now().atStartOfDay(ZoneId.systemDefault()).toEpochSecond();
+        for (JobDetails job : jobs)
+        {
+            Long retentionDays = job.getResultsRetentionDays();
+            if (retentionDays == null)
+            {
+                continue;
+            }
+            long cutoffEpochSeconds = startOfDayEpoch - (retentionDays * SECONDS_IN_DAY);
+            LOGGER.info("Removing ModelSizeStats for job with ID '" + job.getId()
+                    + "' that have a timestamp before: " + cutoffEpochSeconds);
+            deleteModelSizeStatsBefore(job.getId(), cutoffEpochSeconds * MILLISECONDS_IN_SECOND);
+        }
+        LOGGER.info("Removal of expired model snapshots is complete");
     }
 
     /**
@@ -126,6 +182,24 @@ public class OldDataRemover
             deleteResultsBefore(job.getId(), cutoffEpochSeconds * MILLISECONDS_IN_SECOND);
         }
         LOGGER.info("Removal of expired results is complete");
+    }
+
+    private void deleteModelDebugOutputBefore(String jobId, long cutoffEpochMs)
+    {
+        JobDataDeleter deleter = m_DataDeleterFactory.newDeleter(jobId);
+        deleteDataBefore(
+                m_JobProvider.newBatchedModelDebugOutputIterator(jobId).timeRange(0, cutoffEpochMs),
+                modelDebugOutput -> deleter.deleteModelDebugOutput(modelDebugOutput));
+        deleter.commitAndFreeDiskSpace();
+    }
+
+    private void deleteModelSizeStatsBefore(String jobId, long cutoffEpochMs)
+    {
+        JobDataDeleter deleter = m_DataDeleterFactory.newDeleter(jobId);
+        deleteDataBefore(
+                m_JobProvider.newBatchedModelSizeStatsIterator(jobId).timeRange(0, cutoffEpochMs),
+                modelSizeStats -> deleter.deleteModelSizeStats(modelSizeStats));
+        deleter.commitAndFreeDiskSpace();
     }
 
     private void deleteModelStateBefore(String jobId, long cutoffEpochMs)
