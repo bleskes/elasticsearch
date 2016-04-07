@@ -24,6 +24,7 @@ import org.elasticsearch.shield.authc.esnative.NativeUsersStore.ChangeListener;
 import org.elasticsearch.shield.authc.support.Hasher;
 import org.elasticsearch.shield.authc.support.SecuredString;
 import org.elasticsearch.shield.authc.support.UsernamePasswordToken;
+import org.elasticsearch.shield.user.AnonymousUser;
 import org.elasticsearch.shield.user.KibanaUser;
 import org.elasticsearch.shield.user.User;
 import org.elasticsearch.shield.user.XPackUser;
@@ -52,6 +53,7 @@ public class ReservedRealmTests extends ESTestCase {
 
     @Before
     public void setupMocks() {
+        AnonymousUser.initialize(Settings.EMPTY);
         usersStore = mock(NativeUsersStore.class);
         when(usersStore.started()).thenReturn(true);
     }
