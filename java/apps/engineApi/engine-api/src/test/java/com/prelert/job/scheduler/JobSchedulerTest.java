@@ -331,14 +331,10 @@ public class JobSchedulerTest
 
         assertEquals(numberOfSearches, dataProcessor.getNumberOfStreams());
         List<InterimResultsParams> flushParams = dataProcessor.getFlushParams();
-        assertEquals(numberOfSearches, flushParams.size());
+        assertEquals(1, flushParams.size());
 
         assertTrue(flushParams.get(0).shouldCalculateInterim());
         assertFalse(flushParams.get(0).shouldAdvanceTime());
-        assertTrue(flushParams.get(1).shouldCalculateInterim());
-        assertTrue(flushParams.get(1).shouldAdvanceTime());
-        long expectedAdvanceTime = (lookbackLatestRecordTime + 1) / 1000;
-        assertEquals(expectedAdvanceTime, flushParams.get(1).getAdvanceTime());
     }
 
     @Test

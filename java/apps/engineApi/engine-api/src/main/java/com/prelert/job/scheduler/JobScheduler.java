@@ -47,6 +47,7 @@ import java.util.function.Supplier;
 import org.apache.log4j.Logger;
 
 import com.fasterxml.jackson.core.JsonParseException;
+import com.google.common.base.Preconditions;
 import com.prelert.job.DataCounts;
 import com.prelert.job.JobDetails;
 import com.prelert.job.JobSchedulerStatus;
@@ -149,6 +150,7 @@ public class JobScheduler
             return;
         }
 
+        Long previousLastEndTimeMs = m_LastEndTimeMs;
         Date latestRecordTimestamp = null;
         newSearch(start, end);
         while (m_DataExtractor.hasNext() && m_Status == JobSchedulerStatus.STARTED
@@ -169,7 +171,11 @@ public class JobScheduler
         updateLastEndTime(latestRecordTimestamp, end);
         m_ProblemTracker.updateEmptyDataCount(latestRecordTimestamp == null);
         m_ProblemTracker.finishReport();
-        makeResultsAvailable();
+
+        if (m_LastEndTimeMs != null && !m_LastEndTimeMs.equals(previousLastEndTimeMs))
+        {
+            makeResultsAvailable();
+        }
     }
 
     private void newSearch(long start, long end)
@@ -231,10 +237,7 @@ public class JobScheduler
 
     private void makeResultsAvailable()
     {
-        if (m_LastEndTimeMs == null)
-        {
-            return;
-        }
+        Preconditions.checkState(m_LastEndTimeMs != null);
 
         Builder flushParamsBuilder = InterimResultsParams.newBuilder().calcInterim(true);
         if (isInRealTimeMode())
