@@ -376,9 +376,9 @@ public class ElasticsearchJobProvider implements JobProvider
                                 .order(SortOrder.ASC);
 
         LOGGER.trace("ES API CALL: search all of type " + JobDetails.TYPE +
-                " from all indexes sort ascending " + ElasticsearchPersister.JOB_ID_NAME +
-                " skip " + skip + " take " + take);
-        SearchResponse response = m_Client.prepareSearch("_all")
+                " from index pattern prelertresults-* sort ascending "
+                + ElasticsearchPersister.JOB_ID_NAME + " skip " + skip + " take " + take);
+        SearchResponse response = m_Client.prepareSearch(ElasticsearchJobId.INDEX_PREFIX + "*")
                 .setTypes(JobDetails.TYPE)
                 .setPostFilter(fb)
                 .setFrom(skip).setSize(take)

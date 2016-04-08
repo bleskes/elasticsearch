@@ -38,7 +38,7 @@ class ElasticsearchJobId
     /**
      * If this is changed, ProcessCtrl.ES_INDEX_PREFIX should also be changed
      */
-    private static final String INDEX_PREFIX = "prelertresults-";
+    public static final String INDEX_PREFIX = "prelertresults-";
 
     private final String m_JobId;
     private final String m_IndexName;
