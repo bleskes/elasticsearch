@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -53,8 +53,8 @@ public class AnomalyCauseParserTest
                 + "\"partitionFieldName\" : \"aircrafttype\","
                 + "\"partitionFieldValue\" : \"A321\","
                 + "\"function\" : \"mean\","
-                + "\"typical\" : 442.616,"
-                + "\"actual\" : 10.0,"
+                + "\"typical\" : [ 442.616 ],"
+                + "\"actual\" : [ 10.0 ],"
                 + "\"influencers\" : {"
                    + "\"host\": [\"web-server\", \"localhost\"],"
                    + "\"user\": [\"cat\"]"
@@ -69,18 +69,18 @@ public class AnomalyCauseParserTest
         parser.nextToken();
         AnomalyCause cause = new AnomalyCauseParser(parser).parseJson();
 
-        assertEquals(cause.getFieldName(), "groundspeed");
-        assertEquals(cause.getProbability(), 6.04434E-49, 0.0001);
-        assertEquals(cause.getByFieldName(), "status");
-        assertEquals(cause.getByFieldValue(), "Climb");
-        assertEquals(cause.getPartitionFieldName(), "aircrafttype");
-        assertEquals(cause.getPartitionFieldValue(), "A321");
-        assertEquals(cause.getFunction(), "mean");
-        assertEquals(cause.getTypical(), 442.616, 0.001);
-        assertEquals(cause.getActual(), 10.0, 0.0001);
-        assertEquals(cause.getFunction(), "mean");
-        assertEquals(cause.getOverFieldName(), "callsign");
-        assertEquals(cause.getOverFieldValue(), "HVN600");
+        assertEquals("groundspeed", cause.getFieldName());
+        assertEquals(6.04434E-49, cause.getProbability(), 0.0001);
+        assertEquals("status", cause.getByFieldName());
+        assertEquals("Climb", cause.getByFieldValue());
+        assertEquals("aircrafttype", cause.getPartitionFieldName());
+        assertEquals("A321", cause.getPartitionFieldValue());
+        assertEquals("mean", cause.getFunction());
+        assertEquals(442.616, cause.getTypical()[0], 0.001);
+        assertEquals(10.0, cause.getActual()[0], 0.0001);
+        assertEquals("mean", cause.getFunction());
+        assertEquals("callsign", cause.getOverFieldName());
+        assertEquals("HVN600", cause.getOverFieldValue());
 
         List<Influence> influences = cause.getInfluencers();
 

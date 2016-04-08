@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -144,7 +144,7 @@ public class AnomalyCauseTest
     {
         AnomalyCause cause1 = createFullyPopulatedAnomalyCause();
         AnomalyCause cause2 = createFullyPopulatedAnomalyCause();
-        cause2.setTypical(cause1.getTypical() + 1.0);
+        cause2.setTypical(new double[] { cause1.getTypical()[0] + 1.0 });
 
         assertFalse(cause1.equals(cause2));
         assertFalse(cause2.equals(cause1));
@@ -155,7 +155,7 @@ public class AnomalyCauseTest
     {
         AnomalyCause cause1 = createFullyPopulatedAnomalyCause();
         AnomalyCause cause2 = createFullyPopulatedAnomalyCause();
-        cause2.setActual(cause1.getActual() + 1.0);
+        cause2.setActual(new double[] { cause1.getActual()[0] + 1.0 });
 
         assertFalse(cause1.equals(cause2));
         assertFalse(cause2.equals(cause1));
@@ -204,8 +204,8 @@ public class AnomalyCauseTest
         cause.setPartitionFieldValue("partitionValue");
         cause.setFunction("functionName");
         cause.setFunctionDescription("functionDesc");
-        cause.setTypical(42.0);
-        cause.setActual(100.0);
+        cause.setTypical(new double[] { 42.0 });
+        cause.setActual(new double[] { 100.0 });
         cause.setFieldName("fieldName");
         cause.setOverFieldName("overName");
         cause.setOverFieldValue("overValue");

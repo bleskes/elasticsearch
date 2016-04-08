@@ -91,10 +91,10 @@ final class AnomalyRecordParser extends FieldNameParser<AnomalyRecord>
             record.setFunctionDescription(parseAsStringOrNull(fieldName));
             break;
         case AnomalyRecord.TYPICAL:
-            record.setTypical(parseAsDoubleOrZero(fieldName));
+            record.setTypical(parsePrimitiveDoubleArray(fieldName));
             break;
         case AnomalyRecord.ACTUAL:
-            record.setActual(parseAsDoubleOrZero(fieldName));
+            record.setActual(parsePrimitiveDoubleArray(fieldName));
             break;
         case AnomalyRecord.FIELD_NAME:
             record.setFieldName(parseAsStringOrNull(fieldName));

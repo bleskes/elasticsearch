@@ -162,7 +162,7 @@ public class UpdateInterimResultsTest implements Closeable
         test(firstInterimBuckets.get(0).getEpoch() == 1400043000l);
         test(firstInterimBuckets.get(1).getEpoch() == 1400044000l);
         test(firstInterimBuckets.get(1).getRecordCount() == 1);
-        test(firstInterimBuckets.get(1).getRecords().get(0).getActual() == 16.0);
+        test(firstInterimBuckets.get(1).getRecords().get(0).getActual()[0] == 16.0);
 
         // Play in 1 more record, flush (with interim), check same interim result
         playData(dataChunk4);
@@ -173,7 +173,7 @@ public class UpdateInterimResultsTest implements Closeable
         test(secondInterimBuckets.get(0).getEpoch() == 1400043000l);
         test(secondInterimBuckets.get(1).getEpoch() == 1400044000l);
         test(secondInterimBuckets.get(1).getRecordCount() == 1);
-        test(secondInterimBuckets.get(1).getRecords().get(0).getActual() == 16.0);
+        test(secondInterimBuckets.get(1).getRecords().get(0).getActual()[0] == 16.0);
 
         // Play in rest of data, close, verify no interim results
         playData(dataChunk5);
@@ -186,7 +186,7 @@ public class UpdateInterimResultsTest implements Closeable
         test(bucket.isExists());
         LOGGER.debug("RecordCount: " + bucket.getDocument().getRecordCount());
         test(bucket.getDocument().getRecordCount() == 1);
-        test(bucket.getDocument().getRecords().get(0).getActual() == 14.0);
+        test(bucket.getDocument().getRecords().get(0).getActual()[0] == 14.0);
     }
 
     private void playData(String data) throws IOException

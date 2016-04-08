@@ -746,11 +746,25 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
         }
         if (record.getTypical() != null)
         {
-            builder.field(AnomalyRecord.TYPICAL, record.getTypical());
+            if (record.getTypical().length == 1)
+            {
+                builder.field(AnomalyRecord.TYPICAL, record.getTypical()[0]);
+            }
+            else
+            {
+                builder.field(AnomalyRecord.TYPICAL, record.getTypical());
+            }
         }
         if (record.getActual() != null)
         {
-            builder.field(AnomalyRecord.ACTUAL, record.getActual());
+            if (record.getTypical().length == 1)
+            {
+                builder.field(AnomalyRecord.ACTUAL, record.getActual()[0]);
+            }
+            else
+            {
+                builder.field(AnomalyRecord.ACTUAL, record.getActual());
+            }
         }
         if (record.isInterim())
         {
@@ -848,9 +862,30 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
     throws IOException
     {
         builder.startObject()
-                .field(AnomalyCause.PROBABILITY, cause.getProbability())
-                .field(AnomalyCause.ACTUAL, cause.getActual())
-                .field(AnomalyCause.TYPICAL, cause.getTypical());
+                .field(AnomalyCause.PROBABILITY, cause.getProbability());
+
+        if (cause.getTypical() != null)
+        {
+            if (cause.getTypical().length == 1)
+            {
+                builder.field(AnomalyCause.TYPICAL, cause.getTypical()[0]);
+            }
+            else
+            {
+                builder.field(AnomalyCause.TYPICAL, cause.getTypical());
+            }
+        }
+        if (cause.getActual() != null)
+        {
+            if (cause.getActual().length == 1)
+            {
+                builder.field(AnomalyCause.ACTUAL, cause.getActual()[0]);
+            }
+            else
+            {
+                builder.field(AnomalyCause.ACTUAL, cause.getActual());
+            }
+        }
 
         ElasticsearchDotNotationReverser reverser = new ElasticsearchDotNotationReverser();
 

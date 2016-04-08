@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -78,10 +78,10 @@ final class AnomalyCauseParser extends FieldNameParser<AnomalyCause>
             cause.setFunctionDescription(parseAsStringOrNull(fieldName));
             break;
         case AnomalyCause.TYPICAL:
-            cause.setTypical(parseAsDoubleOrZero(fieldName));
+            cause.setTypical(parsePrimitiveDoubleArray(fieldName));
             break;
         case AnomalyCause.ACTUAL:
-            cause.setActual(parseAsDoubleOrZero(fieldName));
+            cause.setActual(parsePrimitiveDoubleArray(fieldName));
             break;
         case AnomalyCause.FIELD_NAME:
             cause.setFieldName(parseAsStringOrNull(fieldName));

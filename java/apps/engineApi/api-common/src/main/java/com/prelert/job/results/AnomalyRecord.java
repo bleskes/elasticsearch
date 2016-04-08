@@ -18,11 +18,14 @@
 
 package com.prelert.job.results;
 
+import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonFormat.Feature;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -87,8 +90,8 @@ public class AnomalyRecord
     private String m_PartitionFieldValue;
     private String m_Function;
     private String m_FunctionDescription;
-    private Double m_Typical;
-    private Double m_Actual;
+    private double[] m_Typical;
+    private double[] m_Actual;
     private boolean m_IsInterim;
 
     private String m_FieldName;
@@ -262,22 +265,26 @@ public class AnomalyRecord
         m_FunctionDescription = functionDescription.intern();
     }
 
-    public Double getTypical()
+    @JsonFormat(with = { Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY, Feature.WRITE_SINGLE_ELEM_ARRAYS_UNWRAPPED })
+    public double[] getTypical()
     {
         return m_Typical;
     }
 
-    public void setTypical(Double typical)
+    @JsonFormat(with = { Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY, Feature.WRITE_SINGLE_ELEM_ARRAYS_UNWRAPPED })
+    public void setTypical(double[] typical)
     {
         m_Typical = typical;
     }
 
-    public Double getActual()
+    @JsonFormat(with = { Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY, Feature.WRITE_SINGLE_ELEM_ARRAYS_UNWRAPPED })
+    public double[] getActual()
     {
         return m_Actual;
     }
 
-    public void setActual(Double actual)
+    @JsonFormat(with = { Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY, Feature.WRITE_SINGLE_ELEM_ARRAYS_UNWRAPPED })
+    public void setActual(double[] actual)
     {
         m_Actual = actual;
     }
@@ -374,10 +381,10 @@ public class AnomalyRecord
         // m_HadBigNormalisedUpdate is also deliberately excluded from the hash
 
         return Objects.hash(m_DetectorIndex, m_Probability, m_AnomalyScore, m_InitialNormalizedProbability,
-                m_NormalizedProbability, m_Typical, m_Actual, m_Function, m_FunctionDescription,
-                m_FieldName, m_ByFieldName, m_ByFieldValue, m_PartitionFieldName,
-                m_PartitionFieldValue, m_OverFieldName, m_OverFieldValue, m_Timestamp, m_Parent,
-                m_IsInterim, m_Causes, m_Influencers);
+                m_NormalizedProbability, Arrays.hashCode(m_Typical), Arrays.hashCode(m_Actual),
+                m_Function, m_FunctionDescription, m_FieldName, m_ByFieldName, m_ByFieldValue,
+                m_PartitionFieldName, m_PartitionFieldValue, m_OverFieldName, m_OverFieldValue,
+                m_Timestamp, m_Parent, m_IsInterim, m_Causes, m_Influencers);
     }
 
 
@@ -406,8 +413,8 @@ public class AnomalyRecord
                 && this.m_AnomalyScore == that.m_AnomalyScore
                 && this.m_NormalizedProbability == that.m_NormalizedProbability
                 && this.m_InitialNormalizedProbability == that.m_InitialNormalizedProbability
-                && Objects.equals(this.m_Typical, that.m_Typical)
-                && Objects.equals(this.m_Actual, that.m_Actual)
+                && Objects.deepEquals(this.m_Typical, that.m_Typical)
+                && Objects.deepEquals(this.m_Actual, that.m_Actual)
                 && Objects.equals(this.m_Function, that.m_Function)
                 && Objects.equals(this.m_FunctionDescription, that.m_FunctionDescription)
                 && Objects.equals(this.m_FieldName, that.m_FieldName)

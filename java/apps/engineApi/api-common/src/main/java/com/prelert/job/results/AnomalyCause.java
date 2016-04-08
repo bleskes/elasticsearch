@@ -18,9 +18,12 @@
 
 package com.prelert.job.results;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonFormat.Feature;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
@@ -59,8 +62,8 @@ public class AnomalyCause
     private String m_PartitionFieldValue;
     private String m_Function;
     private String m_FunctionDescription;
-    private double m_Typical;
-    private double m_Actual;
+    private double[] m_Typical;
+    private double[] m_Actual;
 
     private String m_FieldName;
 
@@ -141,22 +144,26 @@ public class AnomalyCause
         m_FunctionDescription = functionDescription.intern();
     }
 
-    public double getTypical()
+    @JsonFormat(with = { Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY, Feature.WRITE_SINGLE_ELEM_ARRAYS_UNWRAPPED })
+    public double[] getTypical()
     {
         return m_Typical;
     }
 
-    public void setTypical(double typical)
+    @JsonFormat(with = { Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY, Feature.WRITE_SINGLE_ELEM_ARRAYS_UNWRAPPED })
+    public void setTypical(double[] typical)
     {
         m_Typical = typical;
     }
 
-    public double getActual()
+    @JsonFormat(with = { Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY, Feature.WRITE_SINGLE_ELEM_ARRAYS_UNWRAPPED })
+    public double[] getActual()
     {
         return m_Actual;
     }
 
-    public void setActual(double actual)
+    @JsonFormat(with = { Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY, Feature.WRITE_SINGLE_ELEM_ARRAYS_UNWRAPPED })
+    public void setActual(double[] actual)
     {
         m_Actual = actual;
     }
@@ -205,8 +212,8 @@ public class AnomalyCause
     public int hashCode()
     {
         return Objects.hash(m_Probability,
-                m_Actual,
-                m_Typical,
+                Arrays.hashCode(m_Actual),
+                Arrays.hashCode(m_Typical),
                 m_ByFieldName,
                 m_ByFieldValue,
                 m_FieldName,
@@ -235,8 +242,8 @@ public class AnomalyCause
         AnomalyCause that = (AnomalyCause)other;
 
         return this.m_Probability == that.m_Probability &&
-                Objects.equals(this.m_Typical, that.m_Typical) &&
-                Objects.equals(this.m_Actual, that.m_Actual) &&
+                Objects.deepEquals(this.m_Typical, that.m_Typical) &&
+                Objects.deepEquals(this.m_Actual, that.m_Actual) &&
                 Objects.equals(this.m_Function, that.m_Function) &&
                 Objects.equals(this.m_FunctionDescription, that.m_FunctionDescription) &&
                 Objects.equals(this.m_FieldName, that.m_FieldName) &&

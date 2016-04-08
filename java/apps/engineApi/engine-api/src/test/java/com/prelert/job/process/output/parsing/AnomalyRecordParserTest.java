@@ -43,7 +43,7 @@ import com.prelert.utils.json.AutoDetectParseException;
 
 public class AnomalyRecordParserTest
 {
-    private static final double ERROR = 0.001;
+    private static final double EPSILON = 0.000001;
 
 
     @Test (expected = AutoDetectParseException.class)
@@ -81,8 +81,8 @@ public class AnomalyRecordParserTest
                 + "\"partitionFieldValue\" : \"somePartitionFieldValue\","
                 + "\"function\" : \"someFunction\","
                 + "\"functionDescription\" : \"someFunctionDesc\","
-                + "\"typical\" : 3.3,"
-                + "\"actual\" : 1.3,"
+                + "\"typical\" : [ 3.3 ],"
+                + "\"actual\" : [ 1.3 ],"
                 + "\"fieldName\" : \"someFieldName\","
                 + "\"overFieldName\" : \"someOverFieldName\","
                 + "\"overFieldValue\" : \"someOverFieldValue\","
@@ -99,25 +99,25 @@ public class AnomalyRecordParserTest
         AnomalyRecord anomalyRecord = new AnomalyRecordParser(parser).parseJson();
 
         assertEquals(3, anomalyRecord.getDetectorIndex());
-        assertEquals(0.01, anomalyRecord.getProbability(), ERROR);
-        assertEquals(42.0, anomalyRecord.getAnomalyScore(), ERROR);
-        assertEquals(0.05, anomalyRecord.getNormalizedProbability(), ERROR);
-        assertEquals(0.05, anomalyRecord.getInitialNormalizedProbability(), ERROR);
+        assertEquals(0.01, anomalyRecord.getProbability(), EPSILON);
+        assertEquals(42.0, anomalyRecord.getAnomalyScore(), EPSILON);
+        assertEquals(0.05, anomalyRecord.getNormalizedProbability(), EPSILON);
+        assertEquals(0.05, anomalyRecord.getInitialNormalizedProbability(), EPSILON);
         assertEquals("someByFieldName", anomalyRecord.getByFieldName());
         assertEquals("someByFieldValue", anomalyRecord.getByFieldValue());
         assertEquals("somePartitionFieldName", anomalyRecord.getPartitionFieldName());
         assertEquals("somePartitionFieldValue", anomalyRecord.getPartitionFieldValue());
         assertEquals("someFunction", anomalyRecord.getFunction());
         assertEquals("someFunctionDesc", anomalyRecord.getFunctionDescription());
-        assertEquals(3.3, anomalyRecord.getTypical(), ERROR);
-        assertEquals(1.3, anomalyRecord.getActual(), ERROR);
+        assertEquals(3.3, anomalyRecord.getTypical()[0], EPSILON);
+        assertEquals(1.3, anomalyRecord.getActual()[0], EPSILON);
         assertEquals("someFieldName", anomalyRecord.getFieldName());
         assertEquals("someOverFieldName", anomalyRecord.getOverFieldName());
         assertEquals("someOverFieldValue", anomalyRecord.getOverFieldValue());
         assertTrue(anomalyRecord.isInterim());
         assertEquals(2, anomalyRecord.getCauses().size());
-        assertEquals(0.01, anomalyRecord.getCauses().get(0).getProbability(), ERROR);
-        assertEquals(0.02, anomalyRecord.getCauses().get(1).getProbability(), ERROR);
+        assertEquals(0.01, anomalyRecord.getCauses().get(0).getProbability(), EPSILON);
+        assertEquals(0.02, anomalyRecord.getCauses().get(1).getProbability(), EPSILON);
 
         assertEquals(2, anomalyRecord.getInfluencers().size());
         assertEquals("host", anomalyRecord.getInfluencers().get(0).getInfluencerFieldName());

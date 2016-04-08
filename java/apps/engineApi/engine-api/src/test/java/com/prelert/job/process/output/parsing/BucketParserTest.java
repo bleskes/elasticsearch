@@ -45,7 +45,7 @@ import com.prelert.job.results.Influencer;
 
 public class BucketParserTest
 {
-    private static final double ERROR = 0.0001;
+    private static final double EPSILON = 0.000001;
 
     @Test
     public void testParseJson() throws IOException
@@ -67,8 +67,8 @@ public class BucketParserTest
                 +     "{\"probability\":0.4,\"initialAnomalyScore\":12.1948,\"influencerFieldName\":\"dst_ip\",\"influencerFieldValue\":\"23.28.243.1\"}"
                 +   "],"
                 + "\"records\" : ["
-                +     "{\"detectorIndex\":0,\"probability\":0.03,\"typical\":42.0,\"actual\":0.2},"
-                +     "{\"detectorIndex\":1,\"probability\":0.01,\"typical\":60.0,\"actual\":0.01}"
+                +     "{\"detectorIndex\":0,\"probability\":0.03,\"typical\":[42.0],\"actual\":[0.2]},"
+                +     "{\"detectorIndex\":1,\"probability\":0.01,\"typical\":[60.0],\"actual\":[0.01]}"
                 + "]"
                 + "}";
 
@@ -78,9 +78,9 @@ public class BucketParserTest
         parser.nextToken();
         Bucket b = new BucketParser(parser).parseJson();
         assertEquals(1369437000000l, b.getTimestamp().getTime());
-        assertEquals(2.0, b.getMaxNormalizedProbability(), ERROR);
-        assertEquals(50.0, b.getAnomalyScore(), ERROR);
-        assertEquals(50.0, b.getInitialAnomalyScore(), ERROR);
+        assertEquals(2.0, b.getMaxNormalizedProbability(), EPSILON);
+        assertEquals(50.0, b.getAnomalyScore(), EPSILON);
+        assertEquals(50.0, b.getInitialAnomalyScore(), EPSILON);
         assertEquals(2, b.getRecordCount());
         assertEquals(1693, b.getEventCount());
         assertFalse(b.isInterim());
@@ -89,27 +89,27 @@ public class BucketParserTest
         List<AnomalyRecord> records = b.getRecords();
         assertEquals(2, records.size());
         assertEquals(0, records.get(0).getDetectorIndex());
-        assertEquals(0.03, records.get(0).getProbability(), ERROR);
-        assertEquals(42.0, records.get(0).getTypical(), ERROR);
-        assertEquals(0.2, records.get(0).getActual(), ERROR);
+        assertEquals(0.03, records.get(0).getProbability(), EPSILON);
+        assertEquals(42.0, records.get(0).getTypical()[0], EPSILON);
+        assertEquals(0.2, records.get(0).getActual()[0], EPSILON);
         assertEquals(1, records.get(1).getDetectorIndex());
-        assertEquals(0.01, records.get(1).getProbability(), ERROR);
-        assertEquals(60.0, records.get(1).getTypical(), ERROR);
-        assertEquals(0.01, records.get(1).getActual(), ERROR);
+        assertEquals(0.01, records.get(1).getProbability(), EPSILON);
+        assertEquals(60.0, records.get(1).getTypical()[0], EPSILON);
+        assertEquals(0.01, records.get(1).getActual()[0], EPSILON);
 
         List<BucketInfluencer> bucketInfluencers = b.getBucketInfluencers();
         assertEquals(2, bucketInfluencers.size());
         assertEquals("bucketTime", bucketInfluencers.get(0).getInfluencerFieldName());
-        assertEquals(0.03, bucketInfluencers.get(0).getProbability(), ERROR);
-        assertEquals(0.05, bucketInfluencers.get(0).getRawAnomalyScore(), ERROR);
-        assertEquals(95.4, bucketInfluencers.get(0).getInitialAnomalyScore(), ERROR);
-        assertEquals(95.4, bucketInfluencers.get(0).getAnomalyScore(), ERROR);
+        assertEquals(0.03, bucketInfluencers.get(0).getProbability(), EPSILON);
+        assertEquals(0.05, bucketInfluencers.get(0).getRawAnomalyScore(), EPSILON);
+        assertEquals(95.4, bucketInfluencers.get(0).getInitialAnomalyScore(), EPSILON);
+        assertEquals(95.4, bucketInfluencers.get(0).getAnomalyScore(), EPSILON);
 
         assertEquals("user", bucketInfluencers.get(1).getInfluencerFieldName());
-        assertEquals(0.02, bucketInfluencers.get(1).getProbability(), ERROR);
-        assertEquals(0.13, bucketInfluencers.get(1).getRawAnomalyScore(), ERROR);
-        assertEquals(33.2, bucketInfluencers.get(1).getInitialAnomalyScore(), ERROR);
-        assertEquals(33.2, bucketInfluencers.get(1).getAnomalyScore(), ERROR);
+        assertEquals(0.02, bucketInfluencers.get(1).getProbability(), EPSILON);
+        assertEquals(0.13, bucketInfluencers.get(1).getRawAnomalyScore(), EPSILON);
+        assertEquals(33.2, bucketInfluencers.get(1).getInitialAnomalyScore(), EPSILON);
+        assertEquals(33.2, bucketInfluencers.get(1).getAnomalyScore(), EPSILON);
 
         List<Influencer> influencers = b.getInfluencers();
         assertEquals(2, influencers.size());

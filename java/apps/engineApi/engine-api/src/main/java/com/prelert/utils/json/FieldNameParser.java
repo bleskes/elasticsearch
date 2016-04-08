@@ -28,7 +28,9 @@
 package com.prelert.utils.json;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 import org.apache.log4j.Logger;
 
@@ -237,5 +239,12 @@ public abstract class FieldNameParser<T>
             result.add(elementParser.parse());
             token = m_Parser.nextToken();
         }
+    }
+
+    protected double[] parsePrimitiveDoubleArray(String fieldName) throws IOException
+    {
+        List<Double> list = new ArrayList<>();
+        parseArray(fieldName, () -> parseAsDoubleOrZero(fieldName), list);
+        return list.stream().mapToDouble(d -> d).toArray();
     }
 }

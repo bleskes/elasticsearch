@@ -90,7 +90,7 @@ public class AnomalyRecordTest
     {
         AnomalyRecord record1 = createFullyPopulatedRecord();
         AnomalyRecord record2 = createFullyPopulatedRecord();
-        record1.setActual(record1.getActual() + 1.0);
+        record1.setActual(new double[] { record1.getActual()[0] + 1.0 });
 
         assertFalse(record1.equals(record2));
         assertFalse(record2.equals(record1));
@@ -290,7 +290,7 @@ public class AnomalyRecordTest
     {
         AnomalyRecord record1 = createFullyPopulatedRecord();
         AnomalyRecord record2 = createFullyPopulatedRecord();
-        record1.setTypical(record1.getTypical() + 42.0);
+        record1.setTypical(new double[] { record1.getTypical()[0] + 42.0 });
 
         assertFalse(record1.equals(record2));
         assertFalse(record2.equals(record1));
@@ -299,7 +299,7 @@ public class AnomalyRecordTest
     private static AnomalyRecord createFullyPopulatedRecord()
     {
         AnomalyRecord record = new AnomalyRecord();
-        record.setActual(42.0);
+        record.setActual(new double[] { 42.0 });
         record.setAnomalyScore(99.0);
         record.setByFieldName("airline");
         record.setByFieldValue("AAL");
@@ -316,7 +316,7 @@ public class AnomalyRecordTest
         record.setPartitionFieldValue("earth");
         record.setProbability(0.00042);
         record.setTimestamp(new Date(0));
-        record.setTypical(0.5);
+        record.setTypical(new double[] { 0.5 });
         record.setId("1403701200individual metric/planet/earth42");
         return record;
     }
