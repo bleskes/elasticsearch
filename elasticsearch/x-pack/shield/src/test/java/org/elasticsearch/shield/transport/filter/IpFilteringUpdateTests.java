@@ -28,7 +28,6 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Locale;
 
-import static org.elasticsearch.common.settings.Settings.settingsBuilder;
 import static org.elasticsearch.test.ESIntegTestCase.Scope.TEST;
 import static org.elasticsearch.test.hamcrest.ElasticsearchAssertions.assertAcked;
 import static org.hamcrest.Matchers.is;
@@ -48,7 +47,7 @@ public class IpFilteringUpdateTests extends ShieldIntegTestCase {
     @Override
     protected Settings nodeSettings(int nodeOrdinal) {
         String randomClientPortRange = randomClientPort + "-" + (randomClientPort+100);
-        return settingsBuilder()
+        return Settings.builder()
                 .put(super.nodeSettings(nodeOrdinal))
                 .put(NetworkModule.HTTP_ENABLED.getKey(), httpEnabled)
                 .put("xpack.security.transport.filter.deny", "127.0.0.200")
@@ -65,14 +64,14 @@ public class IpFilteringUpdateTests extends ShieldIntegTestCase {
         assertConnectionAccepted(".http", "127.0.0.8");
         assertConnectionAccepted("client", "127.0.0.8");
 
-        Settings settings = settingsBuilder()
+        Settings settings = Settings.builder()
                 .put("xpack.security.transport.filter.allow", "127.0.0.1")
                 .put("xpack.security.transport.filter.deny", "127.0.0.8")
                 .build();
         updateSettings(settings);
         assertConnectionRejected("default", "127.0.0.8");
 
-        settings = settingsBuilder()
+        settings = Settings.builder()
                 .putArray("xpack.security.http.filter.allow", "127.0.0.1")
                 .putArray("xpack.security.http.filter.deny", "127.0.0.8")
                 .build();
@@ -80,7 +79,7 @@ public class IpFilteringUpdateTests extends ShieldIntegTestCase {
         assertConnectionRejected("default", "127.0.0.8");
         assertConnectionRejected(".http", "127.0.0.8");
 
-        settings = settingsBuilder()
+        settings = Settings.builder()
                 .put("transport.profiles.client.xpack.security.filter.allow", "127.0.0.1")
                 .put("transport.profiles.client.xpack.security.filter.deny", "127.0.0.8")
                 .build();
@@ -99,7 +98,7 @@ public class IpFilteringUpdateTests extends ShieldIntegTestCase {
         assertThat(clusterState.metaData().settings().get("transport.profiles.client.xpack.security.filter.deny"), is("127.0.0.8"));
 
         // now disable ip filtering dynamically and make sure nothing is rejected
-        settings = settingsBuilder()
+        settings = Settings.builder()
                 .put(IPFilter.IP_FILTER_ENABLED_SETTING.getKey(), false)
                 .put(IPFilter.IP_FILTER_ENABLED_HTTP_SETTING.getKey(), true)
                 .build();
@@ -119,7 +118,7 @@ public class IpFilteringUpdateTests extends ShieldIntegTestCase {
         // now also disable for HTTP
         if (httpEnabled) {
             assertConnectionRejected(".http", "127.0.0.8");
-            settings = settingsBuilder()
+            settings = Settings.builder()
                     .put(IPFilter.IP_FILTER_ENABLED_HTTP_SETTING.getKey(), false)
                     .build();
             // as we permanently switch between persistent and transient settings, just set both here to make sure we overwrite
@@ -131,13 +130,13 @@ public class IpFilteringUpdateTests extends ShieldIntegTestCase {
 
     // issue #762, occured because in the above test we use HTTP and transport
     public void testThatDisablingIpFilterWorksAsExpected() throws Exception {
-        Settings settings = settingsBuilder()
+        Settings settings = Settings.builder()
                 .put("xpack.security.transport.filter.deny", "127.0.0.8")
                 .build();
         updateSettings(settings);
         assertConnectionRejected("default", "127.0.0.8");
 
-        settings = settingsBuilder()
+        settings = Settings.builder()
                 .put(IPFilter.IP_FILTER_ENABLED_SETTING.getKey(), false)
                 .build();
         updateSettings(settings);
@@ -145,13 +144,13 @@ public class IpFilteringUpdateTests extends ShieldIntegTestCase {
     }
 
     public void testThatDisablingIpFilterForProfilesWorksAsExpected() throws Exception {
-        Settings settings = settingsBuilder()
+        Settings settings = Settings.builder()
                 .put("transport.profiles.client.xpack.security.filter.deny", "127.0.0.8")
                 .build();
         updateSettings(settings);
         assertConnectionRejected("client", "127.0.0.8");
 
-        settings = settingsBuilder()
+        settings = Settings.builder()
                 .put(IPFilter.IP_FILTER_ENABLED_SETTING.getKey(), false)
                 .build();
         updateSettings(settings);

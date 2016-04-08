@@ -34,7 +34,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.elasticsearch.common.settings.Settings.settingsBuilder;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
@@ -52,11 +51,11 @@ public class ServerSSLServiceTests extends ESTestCase {
     @Before
     public void setup() throws Exception {
         testnodeStore = getDataPath("/org/elasticsearch/shield/transport/ssl/certs/simple/testnode.jks");
-        env = new Environment(settingsBuilder().put("path.home", createTempDir()).build());
+        env = new Environment(Settings.builder().put("path.home", createTempDir()).build());
     }
 
     public void testThatInvalidProtocolThrowsException() throws Exception {
-        Settings settings = settingsBuilder()
+        Settings settings = Settings.builder()
                 .put("xpack.security.ssl.protocol", "non-existing")
                 .put("xpack.security.ssl.keystore.path", testnodeStore)
                 .put("xpack.security.ssl.keystore.password", "testnode")
@@ -74,13 +73,13 @@ public class ServerSSLServiceTests extends ESTestCase {
     public void testThatCustomTruststoreCanBeSpecified() throws Exception {
         Path testClientStore = getDataPath("/org/elasticsearch/shield/transport/ssl/certs/simple/testclient.jks");
 
-        Settings settings = settingsBuilder()
+        Settings settings = Settings.builder()
                 .put("xpack.security.ssl.keystore.path", testnodeStore)
                 .put("xpack.security.ssl.keystore.password", "testnode")
                 .build();
         ServerSSLService sslService = new ServerSSLService(settings, env);
 
-        Settings.Builder settingsBuilder = settingsBuilder()
+        Settings.Builder settingsBuilder = Settings.builder()
                 .put("truststore.path", testClientStore)
                 .put("truststore.password", "testclient");
 
@@ -92,7 +91,7 @@ public class ServerSSLServiceTests extends ESTestCase {
     }
 
     public void testThatSslContextCachingWorks() throws Exception {
-        ServerSSLService sslService = new ServerSSLService(settingsBuilder()
+        ServerSSLService sslService = new ServerSSLService(Settings.builder()
             .put("xpack.security.ssl.keystore.path", testnodeStore)
             .put("xpack.security.ssl.keystore.password", "testnode")
             .build(), env);
@@ -105,7 +104,7 @@ public class ServerSSLServiceTests extends ESTestCase {
 
     public void testThatKeyStoreAndKeyCanHaveDifferentPasswords() throws Exception {
         Path differentPasswordsStore = getDataPath("/org/elasticsearch/shield/transport/ssl/certs/simple/testnode-different-passwords.jks");
-        new ServerSSLService(settingsBuilder()
+        new ServerSSLService(Settings.builder()
                 .put("xpack.security.ssl.keystore.path", differentPasswordsStore)
                 .put("xpack.security.ssl.keystore.password", "testnode")
                 .put("xpack.security.ssl.keystore.key_password", "testnode1")
@@ -115,7 +114,7 @@ public class ServerSSLServiceTests extends ESTestCase {
     public void testIncorrectKeyPasswordThrowsException() throws Exception {
         Path differentPasswordsStore = getDataPath("/org/elasticsearch/shield/transport/ssl/certs/simple/testnode-different-passwords.jks");
         try {
-            new ServerSSLService(settingsBuilder()
+            new ServerSSLService(Settings.builder()
                     .put("xpack.security.ssl.keystore.path", differentPasswordsStore)
                     .put("xpack.security.ssl.keystore.password", "testnode")
                     .build(), env).createSSLEngine();
@@ -126,7 +125,7 @@ public class ServerSSLServiceTests extends ESTestCase {
     }
 
     public void testThatSSLv3IsNotEnabled() throws Exception {
-        ServerSSLService sslService = new ServerSSLService(settingsBuilder()
+        ServerSSLService sslService = new ServerSSLService(Settings.builder()
                 .put("xpack.security.ssl.keystore.path", testnodeStore)
                 .put("xpack.security.ssl.keystore.password", "testnode")
                 .build(), env);
@@ -135,7 +134,7 @@ public class ServerSSLServiceTests extends ESTestCase {
     }
 
     public void testThatSSLSessionCacheHasDefaultLimits() throws Exception {
-        ServerSSLService sslService = new ServerSSLService(settingsBuilder()
+        ServerSSLService sslService = new ServerSSLService(Settings.builder()
                 .put("xpack.security.ssl.keystore.path", testnodeStore)
                 .put("xpack.security.ssl.keystore.password", "testnode")
                 .build(), env);
@@ -145,7 +144,7 @@ public class ServerSSLServiceTests extends ESTestCase {
     }
 
     public void testThatSettingSSLSessionCacheLimitsWorks() throws Exception {
-        ServerSSLService sslService = new ServerSSLService(settingsBuilder()
+        ServerSSLService sslService = new ServerSSLService(Settings.builder()
                 .put("xpack.security.ssl.keystore.path", testnodeStore)
                 .put("xpack.security.ssl.keystore.password", "testnode")
                 .put("xpack.security.ssl.session.cache_size", "300")
@@ -167,7 +166,7 @@ public class ServerSSLServiceTests extends ESTestCase {
     }
 
     public void testThatCreateSSLEngineWithOnlyTruststoreDoesNotWork() throws Exception {
-        ServerSSLService sslService = new ServerSSLService(settingsBuilder()
+        ServerSSLService sslService = new ServerSSLService(Settings.builder()
                 .put("xpack.security.ssl.truststore.path", testnodeStore)
                 .put("xpack.security.ssl.truststore.password", "testnode")
                 .build(), env);
@@ -180,7 +179,7 @@ public class ServerSSLServiceTests extends ESTestCase {
     }
 
     public void testThatTruststorePasswordIsRequired() throws Exception {
-        ServerSSLService sslService = new ServerSSLService(settingsBuilder()
+        ServerSSLService sslService = new ServerSSLService(Settings.builder()
                 .put("xpack.security.ssl.keystore.path", testnodeStore)
                 .put("xpack.security.ssl.keystore.password", "testnode")
                 .put("xpack.security.ssl.truststore.path", testnodeStore)
@@ -194,7 +193,7 @@ public class ServerSSLServiceTests extends ESTestCase {
     }
 
     public void testThatKeystorePasswordIsRequired() throws Exception {
-        ServerSSLService sslService = new ServerSSLService(settingsBuilder()
+        ServerSSLService sslService = new ServerSSLService(Settings.builder()
                 .put("xpack.security.ssl.keystore.path", testnodeStore)
                 .build(), env);
         try {
@@ -209,7 +208,7 @@ public class ServerSSLServiceTests extends ESTestCase {
         List<String> ciphers = new ArrayList<>(SSLSettings.Globals.DEFAULT_CIPHERS);
         ciphers.add("foo");
         ciphers.add("bar");
-        ServerSSLService sslService = new ServerSSLService(settingsBuilder()
+        ServerSSLService sslService = new ServerSSLService(Settings.builder()
                 .put("xpack.security.ssl.keystore.path", testnodeStore)
                 .put("xpack.security.ssl.keystore.password", "testnode")
                 .putArray("xpack.security.ssl.ciphers", ciphers.toArray(new String[ciphers.size()]))
@@ -221,7 +220,7 @@ public class ServerSSLServiceTests extends ESTestCase {
     }
 
     public void testInvalidCiphersOnlyThrowsException() throws Exception {
-        ServerSSLService sslService = new ServerSSLService(settingsBuilder()
+        ServerSSLService sslService = new ServerSSLService(Settings.builder()
                 .put("xpack.security.ssl.keystore.path", testnodeStore)
                 .put("xpack.security.ssl.keystore.password", "testnode")
                 .putArray("xpack.security.ssl.ciphers", new String[] { "foo", "bar" })
@@ -235,7 +234,7 @@ public class ServerSSLServiceTests extends ESTestCase {
     }
 
     public void testThatSSLSocketFactoryHasProperCiphersAndProtocols() throws Exception {
-        ServerSSLService sslService = new ServerSSLService(settingsBuilder()
+        ServerSSLService sslService = new ServerSSLService(Settings.builder()
                 .put("xpack.security.ssl.keystore.path", testnodeStore)
                 .put("xpack.security.ssl.keystore.password", "testnode")
                 .build(), env);

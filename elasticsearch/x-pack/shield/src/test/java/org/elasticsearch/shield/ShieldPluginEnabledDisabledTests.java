@@ -76,7 +76,7 @@ public class ShieldPluginEnabledDisabledTests extends ShieldIntegTestCase {
     @Override
     protected Settings nodeSettings(int nodeOrdinal) {
         logger.info("******* shield is {}", enabled ? "enabled" : "disabled");
-        return Settings.settingsBuilder()
+        return Settings.builder()
                 .put(super.nodeSettings(nodeOrdinal))
                 .put(XPackPlugin.featureEnabledSetting(Security.NAME), enabled)
                 .put(NetworkModule.HTTP_ENABLED.getKey(), true)
@@ -85,7 +85,7 @@ public class ShieldPluginEnabledDisabledTests extends ShieldIntegTestCase {
 
     @Override
     protected Settings transportClientSettings() {
-        return Settings.settingsBuilder()
+        return Settings.builder()
                 .put(super.transportClientSettings())
                 .put(XPackPlugin.featureEnabledSetting(Security.NAME), enabled)
                 .build();

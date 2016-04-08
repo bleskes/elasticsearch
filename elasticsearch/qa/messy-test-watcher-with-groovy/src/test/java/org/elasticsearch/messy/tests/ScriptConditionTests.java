@@ -90,7 +90,7 @@ public class ScriptConditionTests extends ESTestCase {
     }
 
     public void testParserValid() throws Exception {
-        ScriptConditionFactory factory = new ScriptConditionFactory(Settings.settingsBuilder().build(), getScriptServiceProxy(tp));
+        ScriptConditionFactory factory = new ScriptConditionFactory(Settings.builder().build(), getScriptServiceProxy(tp));
 
         XContentBuilder builder = createConditionContent("ctx.payload.hits.total > 1", null, ScriptType.INLINE);
 
@@ -117,7 +117,7 @@ public class ScriptConditionTests extends ESTestCase {
     }
 
     public void testParserInvalid() throws Exception {
-        ScriptConditionFactory factory = new ScriptConditionFactory(Settings.settingsBuilder().build(), getScriptServiceProxy(tp));
+        ScriptConditionFactory factory = new ScriptConditionFactory(Settings.builder().build(), getScriptServiceProxy(tp));
         XContentBuilder builder = XContentFactory.jsonBuilder();
         builder.startObject().endObject();
         XContentParser parser = XContentFactory.xContent(builder.bytes()).createParser(builder.bytes());
@@ -132,7 +132,7 @@ public class ScriptConditionTests extends ESTestCase {
     }
 
     public void testScriptConditionParserBadScript() throws Exception {
-        ScriptConditionFactory conditionParser = new ScriptConditionFactory(Settings.settingsBuilder().build(), getScriptServiceProxy(tp));
+        ScriptConditionFactory conditionParser = new ScriptConditionFactory(Settings.builder().build(), getScriptServiceProxy(tp));
         ScriptType scriptType = randomFrom(ScriptType.values());
         String script;
         switch (scriptType) {
@@ -158,7 +158,7 @@ public class ScriptConditionTests extends ESTestCase {
     }
 
     public void testScriptConditionParser_badLang() throws Exception {
-        ScriptConditionFactory conditionParser = new ScriptConditionFactory(Settings.settingsBuilder().build(), getScriptServiceProxy(tp));
+        ScriptConditionFactory conditionParser = new ScriptConditionFactory(Settings.builder().build(), getScriptServiceProxy(tp));
         ScriptType scriptType = ScriptType.INLINE;
         String script = "return true";
         XContentBuilder builder = createConditionContent(script, "not_a_valid_lang", scriptType);

@@ -33,7 +33,6 @@ import java.net.InetAddress;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import static org.elasticsearch.common.settings.Settings.settingsBuilder;
 import static org.elasticsearch.test.ShieldSettingsSource.DEFAULT_PASSWORD;
 import static org.elasticsearch.test.ShieldSettingsSource.DEFAULT_USER_NAME;
 import static org.elasticsearch.test.ShieldSettingsSource.getSSLSettingsForStore;
@@ -76,7 +75,7 @@ public class SslMultiPortTests extends ShieldIntegTestCase {
             throw new RuntimeException(e);
         }
 
-        return settingsBuilder()
+        return Settings.builder()
                 .put(super.nodeSettings(nodeOrdinal))
                 // client set up here
                 .put("transport.profiles.client.port", randomClientPortRange)
@@ -100,7 +99,7 @@ public class SslMultiPortTests extends ShieldIntegTestCase {
     }
 
     private TransportClient createTransportClient(Settings additionalSettings) {
-        Settings settings = settingsBuilder().put(transportClientSettings())
+        Settings settings = Settings.builder().put(transportClientSettings())
                 .put("node.name", "programmatic_transport_client")
                 .put("cluster.name", internalCluster().getClusterName())
                 .put(additionalSettings)
@@ -235,7 +234,7 @@ public class SslMultiPortTests extends ShieldIntegTestCase {
      * Uses a transport client with SSL disabled. This test connects to the no_ssl profile, which should always succeed
      */
     public void testThatTransportClientCanConnectToNoSslProfile() throws Exception {
-        Settings settings = settingsBuilder()
+        Settings settings = Settings.builder()
                 .put(Security.USER_SETTING.getKey(), DEFAULT_USER_NAME + ":" + DEFAULT_PASSWORD)
                 .put("cluster.name", internalCluster().getClusterName())
                 .build();
@@ -250,7 +249,7 @@ public class SslMultiPortTests extends ShieldIntegTestCase {
      * as a non-ssl transport client cannot connect to a ssl profile
      */
     public void testThatTransportClientCannotConnectToDefaultProfile() throws Exception {
-        Settings settings = settingsBuilder()
+        Settings settings = Settings.builder()
                 .put(Security.USER_SETTING.getKey(), DEFAULT_USER_NAME + ":" + DEFAULT_PASSWORD)
                 .put("cluster.name", internalCluster().getClusterName())
                 .build();
@@ -268,7 +267,7 @@ public class SslMultiPortTests extends ShieldIntegTestCase {
      * as a non-ssl transport client cannot connect to a ssl profile
      */
     public void testThatTransportClientCannotConnectToClientProfile() throws Exception {
-        Settings settings = settingsBuilder()
+        Settings settings = Settings.builder()
                 .put(Security.USER_SETTING.getKey(), DEFAULT_USER_NAME + ":" + DEFAULT_PASSWORD)
                 .put("cluster.name", internalCluster().getClusterName())
                 .build();
@@ -286,7 +285,7 @@ public class SslMultiPortTests extends ShieldIntegTestCase {
      * as a non-ssl transport client cannot connect to a ssl profile
      */
     public void testThatTransportClientCannotConnectToNoClientAuthProfile() throws Exception {
-        Settings settings = settingsBuilder()
+        Settings settings = Settings.builder()
                 .put(Security.USER_SETTING.getKey(), DEFAULT_USER_NAME + ":" + DEFAULT_PASSWORD)
                 .put("cluster.name", internalCluster().getClusterName())
                 .build();
@@ -306,7 +305,7 @@ public class SslMultiPortTests extends ShieldIntegTestCase {
      * the testnode certificate and does not require to present a certificate, so this connection should always succeed
      */
     public void testThatTransportClientWithOnlyTruststoreCanConnectToNoClientAuthProfile() throws Exception {
-        Settings settings = settingsBuilder()
+        Settings settings = Settings.builder()
                 .put(Security.USER_SETTING.getKey(), DEFAULT_USER_NAME + ":" + DEFAULT_PASSWORD)
                 .put("cluster.name", internalCluster().getClusterName())
                 .put(ShieldNettyTransport.SSL_SETTING.getKey(), true)
@@ -328,7 +327,7 @@ public class SslMultiPortTests extends ShieldIntegTestCase {
      * the client has no certificate to present
      */
     public void testThatTransportClientWithOnlyTruststoreCannotConnectToClientProfile() throws Exception {
-        Settings settings = settingsBuilder()
+        Settings settings = Settings.builder()
                 .put(Security.USER_SETTING.getKey(), DEFAULT_USER_NAME + ":" + DEFAULT_PASSWORD)
                 .put("cluster.name", internalCluster().getClusterName())
                 .put(ShieldNettyTransport.SSL_SETTING.getKey(), true)
@@ -352,7 +351,7 @@ public class SslMultiPortTests extends ShieldIntegTestCase {
      * the client has no certificate to present
      */
     public void testThatTransportClientWithOnlyTruststoreCannotConnectToDefaultProfile() throws Exception {
-        Settings settings = settingsBuilder()
+        Settings settings = Settings.builder()
                 .put(Security.USER_SETTING.getKey(), DEFAULT_USER_NAME + ":" + DEFAULT_PASSWORD)
                 .put("cluster.name", internalCluster().getClusterName())
                 .put(ShieldNettyTransport.SSL_SETTING.getKey(), true)
@@ -375,7 +374,7 @@ public class SslMultiPortTests extends ShieldIntegTestCase {
      * SSL so the connection should never succeed
      */
     public void testThatTransportClientWithOnlyTruststoreCannotConnectToNoSslProfile() throws Exception {
-        Settings settings = settingsBuilder()
+        Settings settings = Settings.builder()
                 .put(Security.USER_SETTING.getKey(), DEFAULT_USER_NAME + ":" + DEFAULT_PASSWORD)
                 .put("cluster.name", internalCluster().getClusterName())
                 .put(ShieldNettyTransport.SSL_SETTING.getKey(), true)
@@ -398,7 +397,7 @@ public class SslMultiPortTests extends ShieldIntegTestCase {
      * will never be trusted by the default truststore so the connection should always fail
      */
     public void testThatSSLTransportClientWithNoTruststoreCannotConnectToDefaultProfile() throws Exception {
-        Settings settings = settingsBuilder()
+        Settings settings = Settings.builder()
                 .put(Security.USER_SETTING.getKey(), DEFAULT_USER_NAME + ":" + DEFAULT_PASSWORD)
                 .put("cluster.name", internalCluster().getClusterName())
                 .put(ShieldNettyTransport.SSL_SETTING.getKey(), true)
@@ -418,7 +417,7 @@ public class SslMultiPortTests extends ShieldIntegTestCase {
      * will never be trusted by the default truststore so the connection should always fail
      */
     public void testThatSSLTransportClientWithNoTruststoreCannotConnectToClientProfile() throws Exception {
-        Settings settings = settingsBuilder()
+        Settings settings = Settings.builder()
                 .put(Security.USER_SETTING.getKey(), DEFAULT_USER_NAME + ":" + DEFAULT_PASSWORD)
                 .put("cluster.name", internalCluster().getClusterName())
                 .put(ShieldNettyTransport.SSL_SETTING.getKey(), true)
@@ -438,7 +437,7 @@ public class SslMultiPortTests extends ShieldIntegTestCase {
      * will never be trusted by the default truststore so the connection should always fail
      */
     public void testThatSSLTransportClientWithNoTruststoreCannotConnectToNoClientAuthProfile() throws Exception {
-        Settings settings = settingsBuilder()
+        Settings settings = Settings.builder()
                 .put(Security.USER_SETTING.getKey(), DEFAULT_USER_NAME + ":" + DEFAULT_PASSWORD)
                 .put("cluster.name", internalCluster().getClusterName())
                 .put(ShieldNettyTransport.SSL_SETTING.getKey(), true)
@@ -459,7 +458,7 @@ public class SslMultiPortTests extends ShieldIntegTestCase {
      * will not work
      */
     public void testThatSSLTransportClientWithNoTruststoreCannotConnectToNoSslProfile() throws Exception {
-        Settings settings = settingsBuilder()
+        Settings settings = Settings.builder()
                 .put(Security.USER_SETTING.getKey(), DEFAULT_USER_NAME + ":" + DEFAULT_PASSWORD)
                 .put("cluster.name", internalCluster().getClusterName())
                 .put(ShieldNettyTransport.SSL_SETTING.getKey(), true)
