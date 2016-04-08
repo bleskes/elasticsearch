@@ -31,7 +31,6 @@ import java.net.InetSocketAddress;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import static org.elasticsearch.common.settings.Settings.settingsBuilder;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.Matchers.containsString;
@@ -44,7 +43,7 @@ public class SslHostnameVerificationTests extends ShieldIntegTestCase {
 
     @Override
     protected Settings nodeSettings(int nodeOrdinal) {
-        Settings.Builder settingsBuilder = settingsBuilder().put(super.nodeSettings(nodeOrdinal));
+        Settings.Builder settingsBuilder = Settings.builder().put(super.nodeSettings(nodeOrdinal));
         Path keystore;
         try {
             /*
@@ -84,7 +83,7 @@ public class SslHostnameVerificationTests extends ShieldIntegTestCase {
         assertThat(transportAddress, instanceOf(InetSocketTransportAddress.class));
         InetSocketAddress inetSocketAddress = ((InetSocketTransportAddress) transportAddress).address();
 
-        Settings settings = settingsBuilder().put(transportClientSettings())
+        Settings settings = Settings.builder().put(transportClientSettings())
                 .put(ShieldNettyTransport.HOSTNAME_VERIFICATION_SETTING.getKey(), true)
                 .build();
 

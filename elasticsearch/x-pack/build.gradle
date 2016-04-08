@@ -1,4 +1,3 @@
-
 /*
  * ELASTICSEARCH CONFIDENTIAL
  * __________________
@@ -89,8 +88,6 @@ compileTestJava.options.compilerArgs << "-Xlint:-deprecation,-rawtypes,-serial,-
 
 ext.expansions = [
   'project.version': version,
-  // Used in marvel index templates
-  'monitoring.template.version': '1',
   // Used in watcher index templates
   'watcher.template.version': '1',
 ]

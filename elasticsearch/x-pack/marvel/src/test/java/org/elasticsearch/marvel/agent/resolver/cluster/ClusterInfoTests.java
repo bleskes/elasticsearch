@@ -35,8 +35,6 @@ import org.junit.Before;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import static org.elasticsearch.marvel.agent.exporter.MarvelTemplateUtils.dataTemplateName;
-import static org.elasticsearch.marvel.agent.exporter.MarvelTemplateUtils.indexTemplateName;
 import static org.elasticsearch.test.ESIntegTestCase.Scope.TEST;
 import static org.elasticsearch.test.hamcrest.ElasticsearchAssertions.assertHitCount;
 import static org.hamcrest.Matchers.equalTo;
@@ -131,8 +129,7 @@ public class ClusterInfoTests extends MarvelIntegTestCase {
         assertThat(clusterStats, instanceOf(Map.class));
         assertThat(((Map) clusterStats).size(), greaterThan(0));
 
-        waitForMarvelTemplate(indexTemplateName());
-        waitForMarvelTemplate(dataTemplateName());
+        waitForMarvelTemplates();
 
         logger.debug("--> check that the cluster_info is not indexed");
         securedFlush();
