@@ -283,6 +283,7 @@ public class DetectorVerifierTest
         difference.remove(Detector.INFO_CONTENT);
         difference.remove(Detector.LOW_INFO_CONTENT);
         difference.remove(Detector.HIGH_INFO_CONTENT);
+        difference.remove(Detector.LAT_LONG);
         for (String f : difference)
         {
             d.setFunction(f);
@@ -335,7 +336,7 @@ public class DetectorVerifierTest
                 Detector.DISTINCT_COUNT, Detector.DC,
                 Detector.HIGH_DISTINCT_COUNT, Detector.HIGH_DC, Detector.LOW_DISTINCT_COUNT,
                 Detector.LOW_DC, Detector.INFO_CONTENT, Detector.LOW_INFO_CONTENT,
-                Detector.HIGH_INFO_CONTENT })
+                Detector.HIGH_INFO_CONTENT, Detector.LAT_LONG })
         {
             d.setFunction(f);
             DetectorVerifier.verify(d, false);

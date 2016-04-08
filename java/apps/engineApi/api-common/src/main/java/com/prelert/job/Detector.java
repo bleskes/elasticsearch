@@ -90,6 +90,7 @@ public class Detector
     public static final String HIGH_POPULATION_VARIANCE = "varp";
     public static final String TIME_OF_DAY = "time_of_day";
     public static final String TIME_OF_WEEK = "time_of_week";
+    public static final String LAT_LONG = "lat_long";
 
 
     /**
@@ -129,7 +130,8 @@ public class Detector
                 LOW_POPULATION_VARIANCE,
                 HIGH_POPULATION_VARIANCE,
                 TIME_OF_DAY,
-                TIME_OF_WEEK
+                TIME_OF_WEEK,
+                LAT_LONG
             ));
 
     /**
@@ -173,7 +175,8 @@ public class Detector
                 HIGH_NON_NULL_SUM,
                 POPULATION_VARIANCE,
                 LOW_POPULATION_VARIANCE,
-                HIGH_POPULATION_VARIANCE
+                HIGH_POPULATION_VARIANCE,
+                LAT_LONG
             ));
 
     /**
