@@ -52,6 +52,7 @@ import org.eclipse.jetty.http.HttpStatus;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.prelert.job.JobConfiguration;
@@ -103,6 +104,7 @@ public class EngineApiClient implements Closeable
             LOGGER.fatal("Failed to start the HTTP client", e);
         }
         m_JsonMapper = new ObjectMapper();
+        m_JsonMapper.configure(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY, true);
         m_JsonMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
     }
 

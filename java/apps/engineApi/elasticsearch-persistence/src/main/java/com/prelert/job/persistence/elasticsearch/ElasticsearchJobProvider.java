@@ -141,6 +141,7 @@ public class ElasticsearchJobProvider implements JobProvider
         m_ObjectMapper = new ObjectMapper();
         m_ObjectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
         m_ObjectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        m_ObjectMapper.configure(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY, true);
         // When we serialise objects with multiple views we want to choose the datastore view
         m_ObjectMapper.setConfig(m_ObjectMapper.getSerializationConfig().withView(JsonViews.DatastoreView.class));
 

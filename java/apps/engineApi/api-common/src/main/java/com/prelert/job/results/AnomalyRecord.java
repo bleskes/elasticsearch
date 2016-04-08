@@ -265,25 +265,23 @@ public class AnomalyRecord
         m_FunctionDescription = functionDescription.intern();
     }
 
-    @JsonFormat(with = { Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY, Feature.WRITE_SINGLE_ELEM_ARRAYS_UNWRAPPED })
+    @JsonFormat(with = Feature.WRITE_SINGLE_ELEM_ARRAYS_UNWRAPPED)
     public double[] getTypical()
     {
         return m_Typical;
     }
 
-    @JsonFormat(with = { Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY, Feature.WRITE_SINGLE_ELEM_ARRAYS_UNWRAPPED })
     public void setTypical(double[] typical)
     {
         m_Typical = typical;
     }
 
-    @JsonFormat(with = { Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY, Feature.WRITE_SINGLE_ELEM_ARRAYS_UNWRAPPED })
+    @JsonFormat(with = Feature.WRITE_SINGLE_ELEM_ARRAYS_UNWRAPPED)
     public double[] getActual()
     {
         return m_Actual;
     }
 
-    @JsonFormat(with = { Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY, Feature.WRITE_SINGLE_ELEM_ARRAYS_UNWRAPPED })
     public void setActual(double[] actual)
     {
         m_Actual = actual;
