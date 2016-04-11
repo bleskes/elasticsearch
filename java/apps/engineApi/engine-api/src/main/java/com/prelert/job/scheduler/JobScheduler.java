@@ -493,8 +493,8 @@ public class JobScheduler
                 || m_RealTimeScheduler.stop(STOP_TIMEOUT_MINUTES, TimeUnit.MINUTES);
     }
 
-    public boolean isStarted()
+    public boolean isStopped()
     {
-        return m_Status == JobSchedulerStatus.STARTED;
+        return m_Status == JobSchedulerStatus.STOPPED;
     }
 }

@@ -859,7 +859,7 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
         if (m_ScheduledJobs.containsKey(jobId))
         {
             JobScheduler jobScheduler = m_ScheduledJobs.get(jobId);
-            if (jobScheduler.isStarted())
+            if (!jobScheduler.isStopped())
             {
                 jobScheduler.stopManual();
             }
