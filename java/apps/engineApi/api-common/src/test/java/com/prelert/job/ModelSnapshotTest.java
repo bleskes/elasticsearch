@@ -58,13 +58,15 @@ public class ModelSnapshotTest
     {
         Date now = new Date();
 
+        ModelSizeStats modelSizeStats = new ModelSizeStats();
+
         ModelSnapshot modelSnapshot1 = new ModelSnapshot();
         modelSnapshot1.setTimestamp(now);
         modelSnapshot1.setDescription("a snapshot");
         modelSnapshot1.setRestorePriority(1234L);
         modelSnapshot1.setSnapshotId("my_id");
         modelSnapshot1.setSnapshotDocCount(7);
-        modelSnapshot1.setModelSizeStats(new ModelSizeStats());
+        modelSnapshot1.setModelSizeStats(modelSizeStats);
 
         ModelSnapshot modelSnapshot2 = new ModelSnapshot();
         modelSnapshot2.setTimestamp(now);
@@ -72,7 +74,7 @@ public class ModelSnapshotTest
         modelSnapshot2.setRestorePriority(1234L);
         modelSnapshot2.setSnapshotId("my_id");
         modelSnapshot2.setSnapshotDocCount(7);
-        modelSnapshot2.setModelSizeStats(new ModelSizeStats());
+        modelSnapshot2.setModelSizeStats(modelSizeStats);
 
         assertTrue(modelSnapshot1.equals(modelSnapshot2));
         assertTrue(modelSnapshot2.equals(modelSnapshot1));
