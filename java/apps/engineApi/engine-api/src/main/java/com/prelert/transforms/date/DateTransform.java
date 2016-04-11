@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -35,12 +35,14 @@ import com.prelert.transforms.Transform;
 import com.prelert.transforms.TransformException;
 
 /**
- * Abstract class introduces the {@link #epoch()} method for
+ * Abstract class introduces the {@link #epochMs()} method for
  * date transforms
  */
 public abstract class DateTransform extends Transform
 {
-    protected long m_Epoch;
+    protected static final int SECONDS_TO_MS = 1000;
+
+    private long m_EpochMs;
 
     public DateTransform(List<TransformIndex> readIndicies, List<TransformIndex> writeIndicies, Logger logger)
     {
@@ -51,9 +53,9 @@ public abstract class DateTransform extends Transform
      * The epoch time from the last transform
      * @return
      */
-    public long epoch()
+    public long epochMs()
     {
-        return m_Epoch;
+        return m_EpochMs;
     }
 
     /**
@@ -79,9 +81,12 @@ public abstract class DateTransform extends Transform
         {
             throw new ParseTimestampException("Cannot parse null string");
         }
-        return parseAndWriteDate(field, readWriteArea);
+
+        m_EpochMs = toEpochMs(field);
+        TransformIndex writeIndex = m_WriteIndicies.get(0);
+        readWriteArea[writeIndex.array][writeIndex.index] = Long.toString(m_EpochMs / SECONDS_TO_MS);
+        return TransformResult.OK;
     }
 
-    protected abstract TransformResult parseAndWriteDate(String field, String[][] readWriteArea)
-            throws TransformException;
+    protected abstract long toEpochMs(String field) throws TransformException;
 }

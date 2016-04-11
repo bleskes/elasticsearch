@@ -325,7 +325,7 @@ public class JobScheduler
     {
         if (job.getCounts() != null && job.getCounts().getLatestRecordTimeStamp() != null)
         {
-            m_LastEndTimeMs = job.getCounts().getLatestRecordTimeStamp().getTime() + MILLIS_IN_SECOND;
+            m_LastEndTimeMs = job.getCounts().getLatestRecordTimeStamp().getTime() + 1;
         }
     }
 

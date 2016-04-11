@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -44,7 +44,6 @@ public class DoubleDateTransform extends DateTransform
 {
     private final boolean m_IsMillisecond;
 
-
     public DoubleDateTransform(boolean isMillisecond, List<TransformIndex> readIndicies,
             List<TransformIndex> writeIndicies, Logger logger)
     {
@@ -53,23 +52,16 @@ public class DoubleDateTransform extends DateTransform
     }
 
     @Override
-    protected TransformResult parseAndWriteDate(String field, String[][] readWriteArea) throws TransformException
+    protected long toEpochMs(String field) throws TransformException
     {
         try
         {
-            // parse as a double and throw away the fractional
-            // component
             long longValue = Double.valueOf(field).longValue();
-            m_Epoch = m_IsMillisecond ? longValue / 1000 : longValue;
-
-            TransformIndex writeIndex = m_WriteIndicies.get(0);
-            readWriteArea[writeIndex.array][writeIndex.index] = Long.toString(m_Epoch);
-            return TransformResult.OK;
+            return m_IsMillisecond ? longValue : longValue * SECONDS_TO_MS;
         }
         catch (NumberFormatException e)
         {
-            String message = String.format(
-                    "Cannot parse timestamp '%s' as epoch value", field);
+            String message = String.format("Cannot parse timestamp '%s' as epoch value", field);
             throw new ParseTimestampException(message);
         }
     }

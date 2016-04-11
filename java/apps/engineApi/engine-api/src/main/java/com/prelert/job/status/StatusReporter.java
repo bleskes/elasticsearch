@@ -65,11 +65,8 @@ public class StatusReporter
     public static final String ACCEPTABLE_PERCENTAGE_OUT_OF_ORDER_ERRORS_PROP =
             "max.percent.outoforder.errors";
 
-    private static final int SECONDS_TO_MS = 1000;
-
     private DataCounts m_TotalRecordStats;
     private DataCounts m_IncrementalRecordStats;
-
 
     private long m_AnalyzedFieldsPerRecord = 1;
 
@@ -121,18 +118,18 @@ public class StatusReporter
      * @param inputFieldCount Number of fields in the record.
      * Note this is not the number of processed fields (by field etc)
      * but the actual number of fields in the record
-     * @param latestRecordTime The time of the latest record written
-     * in seconds from the epoch.
+     * @param latestRecordTimeMs The time of the latest record written
+     * in milliseconds from the epoch.
      *
      * @throws HighProportionOfBadTimestampsException
      * @throws OutOfOrderRecordsException
      */
-    public void reportRecordWritten(long inputFieldCount, long latestRecordTime)
+    public void reportRecordWritten(long inputFieldCount, long latestRecordTimeMs)
     throws HighProportionOfBadTimestampsException, OutOfOrderRecordsException
     {
         m_UsageReporter.addFieldsRecordsRead(inputFieldCount);
 
-        Date latestDate = new Date(latestRecordTime * SECONDS_TO_MS);
+        Date latestDate = new Date(latestRecordTimeMs);
 
         m_TotalRecordStats.incrementInputFieldCount(inputFieldCount);
         m_TotalRecordStats.incrementProcessedRecordCount(1);
@@ -163,11 +160,11 @@ public class StatusReporter
 
     /**
      * Update only the incremental stats with the newest record time
-     * @param latestRecordTime
+     * @param latestRecordTimeMs latest record time as epoch millis
      */
-    public void reportLatestTimeIncrementalStats(long latestRecordTime)
+    public void reportLatestTimeIncrementalStats(long latestRecordTimeMs)
     {
-        m_IncrementalRecordStats.setLatestRecordTimeStamp(new Date(latestRecordTime * SECONDS_TO_MS));
+        m_IncrementalRecordStats.setLatestRecordTimeStamp(new Date(latestRecordTimeMs));
     }
 
     /**

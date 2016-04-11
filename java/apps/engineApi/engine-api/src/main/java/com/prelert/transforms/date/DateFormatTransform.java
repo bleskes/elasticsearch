@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -56,15 +56,11 @@ public class DateFormatTransform extends DateTransform
     }
 
     @Override
-    protected TransformResult parseAndWriteDate(String field, String[][] readWriteArea) throws TransformException
+    protected long toEpochMs(String field) throws TransformException
     {
         try
         {
-            m_Epoch = m_DateToEpochConverter.toEpochSeconds(field);
-
-            TransformIndex writeIndex = m_WriteIndicies.get(0);
-            readWriteArea[writeIndex.array][writeIndex.index] = Long.toString(m_Epoch);
-            return TransformResult.OK;
+            return m_DateToEpochConverter.toEpochMillis(field);
         }
         catch (DateTimeParseException pe)
         {

@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -28,7 +28,9 @@
 package com.prelert.transforms.date;
 
 import static com.prelert.transforms.TransformTestUtils.createIndexArray;
+
 import static org.junit.Assert.assertEquals;
+
 import static org.mockito.Mockito.mock;
 
 import java.util.Collections;
@@ -53,17 +55,17 @@ public class DateFormatTransformTest
         List<TransformIndex> readIndicies = createIndexArray(new TransformIndex(0, 0));
         List<TransformIndex> writeIndicies = createIndexArray(new TransformIndex(2, 0));
 
-        DateFormatTransform transformer = new DateFormatTransform("yyyy-MM-dd HH:mm:ssXXX",
+        DateFormatTransform transformer = new DateFormatTransform("yyyy-MM-dd HH:mm:ss.SSSXXX",
                                         readIndicies, writeIndicies, mock(Logger.class));
 
-        String [] input = {"2014-01-01 13:42:56Z"};
+        String [] input = {"2014-01-01 13:42:56.500Z"};
         String [] scratch = {};
         String [] output = new String[1];
         String [][] readWriteArea = {input, scratch, output};
 
         transformer.transform(readWriteArea);
 
-        assertEquals(1388583776, transformer.epoch());
+        assertEquals(1388583776500L, transformer.epochMs());
         assertEquals("1388583776", output[0]);
     }
 
@@ -153,7 +155,7 @@ public class DateFormatTransformTest
 
         transformer.transform(readWriteArea);
 
-        assertEquals(1388534400, transformer.epoch());
+        assertEquals(1388534400000L, transformer.epochMs());
         assertEquals("1388534400", output[0]);
     }
 

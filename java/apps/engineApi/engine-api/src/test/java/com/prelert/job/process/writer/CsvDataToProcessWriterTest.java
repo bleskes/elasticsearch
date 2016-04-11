@@ -29,6 +29,7 @@ package com.prelert.job.process.writer;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyLong;
 import static org.mockito.Mockito.doAnswer;
@@ -296,10 +297,10 @@ public class CsvDataToProcessWriterTest
         assertWrittenRecordsEqualTo(expectedRecords);
 
         verify(m_StatusReporter, times(1)).reportMissingField();
-        verify(m_StatusReporter, times(1)).reportRecordWritten(2, 1);
-        verify(m_StatusReporter, times(1)).reportRecordWritten(2, 2);
-        verify(m_StatusReporter, times(1)).reportRecordWritten(2, 3);
-        verify(m_StatusReporter, times(1)).reportRecordWritten(2, 4);
+        verify(m_StatusReporter, times(1)).reportRecordWritten(2, 1000);
+        verify(m_StatusReporter, times(1)).reportRecordWritten(2, 2000);
+        verify(m_StatusReporter, times(1)).reportRecordWritten(2, 3000);
+        verify(m_StatusReporter, times(1)).reportRecordWritten(2, 4000);
         verify(m_StatusReporter, times(1)).reportDateParseError(2);
         verify(m_StatusReporter).finishReporting();
         verify(m_DataPersister).flushRecords();

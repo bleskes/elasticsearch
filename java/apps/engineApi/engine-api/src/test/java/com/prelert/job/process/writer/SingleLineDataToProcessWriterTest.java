@@ -29,6 +29,7 @@ package com.prelert.job.process.writer;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.times;
@@ -129,9 +130,9 @@ public class SingleLineDataToProcessWriterTest
         verify(m_StatusReporter, times(1)).getLatestRecordTime();
         verify(m_StatusReporter, times(1)).startNewIncrementalCount();
         verify(m_StatusReporter, times(1)).setAnalysedFieldsPerRecord(1);
-        verify(m_StatusReporter, times(1)).reportRecordWritten(1, 1430301600);
-        verify(m_StatusReporter, times(1)).reportRecordWritten(1, 1430305200);
-        verify(m_StatusReporter, times(1)).reportRecordWritten(1, 1430308800);
+        verify(m_StatusReporter, times(1)).reportRecordWritten(1, 1430301600000L);
+        verify(m_StatusReporter, times(1)).reportRecordWritten(1, 1430305200000L);
+        verify(m_StatusReporter, times(1)).reportRecordWritten(1, 1430308800000L);
         verify(m_StatusReporter, times(1)).incrementalStats();
 
         List<String[]> expectedRecords = new ArrayList<>();
@@ -171,8 +172,8 @@ public class SingleLineDataToProcessWriterTest
         verify(m_StatusReporter, times(1)).getLatestRecordTime();
         verify(m_StatusReporter, times(1)).startNewIncrementalCount();
         verify(m_StatusReporter, times(1)).setAnalysedFieldsPerRecord(1);
-        verify(m_StatusReporter, times(1)).reportRecordWritten(1, 1430301600);
-        verify(m_StatusReporter, times(1)).reportRecordWritten(1, 1430308800);
+        verify(m_StatusReporter, times(1)).reportRecordWritten(1, 1430301600000L);
+        verify(m_StatusReporter, times(1)).reportRecordWritten(1, 1430308800000L);
         verify(m_StatusReporter, times(2)).reportFailedTransform();
         verify(m_StatusReporter, times(3)).reportDateParseError(1);
         verify(m_StatusReporter, times(1)).incrementalStats();
