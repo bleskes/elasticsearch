@@ -47,4 +47,9 @@ public interface DataExtractor
      * @throws IOException if an error occurs while extracting the data
      */
     Optional<InputStream> next() throws IOException;
+
+    /**
+     * Cancels the current search
+     */
+    void cancel();
 }

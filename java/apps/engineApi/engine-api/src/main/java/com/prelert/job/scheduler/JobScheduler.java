@@ -442,7 +442,7 @@ public class JobScheduler
             }
             updateStatus(JobSchedulerStatus.STOPPING);
         }
-        awaitTermination();
+        cancelAndAwaitTermination();
         updateFinalStatusAndCloseLogger(JobSchedulerStatus.STOPPED);
     }
 
@@ -461,12 +461,13 @@ public class JobScheduler
             }
             updateStatus(JobSchedulerStatus.STOPPING);
         }
-        awaitTermination();
+        cancelAndAwaitTermination();
         updateFinalStatusAndCloseLogger(JobSchedulerStatus.STARTED);
     }
 
-    private void awaitTermination()
+    private void cancelAndAwaitTermination()
     {
+        m_DataExtractor.cancel();
         if (awaitLookbackTermination() == false || stopRealtimeScheduler() == false)
         {
             m_Logger.error("Unable to stop the scheduler.");

@@ -162,6 +162,7 @@ public class ElasticsearchDataExtractor implements DataExtractor
     private volatile long m_CurrentEndTime;
     private volatile long m_EndTime;
     private volatile boolean m_IsFirstSearch;
+    private volatile boolean m_IsCancelled;
 
     /**
      * The interval of each scroll search. Will be null when search is not chunked.
@@ -188,6 +189,7 @@ public class ElasticsearchDataExtractor implements DataExtractor
         m_ScrollState =  m_Aggregations == null ? ScrollState.createDefault()
                 : ScrollState.createAggregated();
         m_IsFirstSearch = true;
+        m_IsCancelled = false;
     }
 
     public static ElasticsearchDataExtractor create(String baseUrl, String authHeader,
@@ -420,7 +422,7 @@ public class ElasticsearchDataExtractor implements DataExtractor
     @Override
     public boolean hasNext()
     {
-        return !m_ScrollState.isComplete() || m_CurrentEndTime < m_EndTime;
+        return !m_IsCancelled && (!m_ScrollState.isComplete() || m_CurrentEndTime < m_EndTime);
     }
 
     private InputStream initScroll() throws IOException
@@ -518,5 +520,12 @@ public class ElasticsearchDataExtractor implements DataExtractor
                     + response.getResponseAsString());
         }
         return null;
+    }
+
+    @Override
+    public void cancel()
+    {
+        m_IsCancelled = true;
+        clearScroll();
     }
 }
