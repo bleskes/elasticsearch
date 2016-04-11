@@ -18,8 +18,8 @@
 
 package com.prelert.job.results;
 
-import java.util.Arrays;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
@@ -37,7 +37,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * can be returned if the members have not been set.
  */
 @JsonInclude(Include.NON_NULL)
-@JsonIgnoreProperties(value={"id", "parent"}, allowSetters=true)
+@JsonIgnoreProperties({"id", "parent"})
 public class AnomalyRecord
 {
     /**

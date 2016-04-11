@@ -20,10 +20,11 @@ package com.prelert.job.results;
 import java.util.Date;
 import java.util.Objects;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-@JsonIgnoreProperties(value={"id", "initialAnomalyScore"}, allowSetters=true)
+@JsonIgnoreProperties(value={"initialAnomalyScore"}, allowSetters=true)
 public class Influencer
 {
     /**
@@ -42,6 +43,7 @@ public class Influencer
     public static final String ANOMALY_SCORE = "anomalyScore";
 
     private String m_Id;
+
     private Date m_Timestamp;
     private String m_InfluenceField;
     private String m_InfluenceValue;
@@ -65,11 +67,13 @@ public class Influencer
      * Data store ID of this record.  May be null for records that have not been
      * read from the data store.
      */
+    @JsonIgnore
     public String getId()
     {
         return m_Id;
     }
 
+    @JsonIgnore
     public void setId(String id)
     {
         m_Id = id;
