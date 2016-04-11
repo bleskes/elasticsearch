@@ -131,10 +131,10 @@ public class SimpleJsonRecordReaderTest
         String record [] = new String[3];
         boolean gotFields [] = new boolean[3];
 
-        assertEquals(2, reader.read(record, gotFields));
-        assertEquals("", record[0]);
+        assertEquals(4, reader.read(record, gotFields));
+        assertEquals("10,11", record[0]);
         assertEquals("20", record[1]);
-        assertEquals("", record[2]);
+        assertEquals("40,50", record[2]);
 
         assertEquals(-1, reader.read(record, gotFields));
     }

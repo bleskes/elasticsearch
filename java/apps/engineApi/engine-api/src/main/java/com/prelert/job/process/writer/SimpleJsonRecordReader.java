@@ -135,51 +135,60 @@ class SimpleJsonRecordReader extends AbstractJsonRecordReader
             return;
         }
 
-        String fieldValue = null;
-
         if (token == JsonToken.START_OBJECT)
         {
             ++m_NestedLevel;
             m_NestedFields.push(fieldName);
             m_NestedPrefix = m_NestedPrefix + fieldName + ".";
         }
-        else if (token == JsonToken.START_ARRAY)
+        else
         {
-            // Consume the whole array.  If it contains one scalar element, treat
-            // the array as a scalar with that value.  If it contains more than
-            // one element, or an object, completely ignore the array.
-            int count = 0;
+            if (token == JsonToken.START_ARRAY || token.isScalarValue())
+            {
+                ++m_FieldCount;
+
+                // Only do the donkey work of converting the field value to a
+                // string if we need it
+                Integer index = m_FieldMap.get(m_NestedPrefix + fieldName);
+                if (index != null)
+                {
+                    record[index] = parseSingleFieldValue(token);
+                    gotFields[index] = true;
+                }
+            }
+        }
+    }
+
+    private String parseSingleFieldValue(JsonToken token)
+            throws IOException, MalformedJsonException
+    {
+        if (token == JsonToken.START_ARRAY)
+        {
+            // Convert any scalar values in the array to a comma delimited
+            // string.  (Arrays of more complex objects are ignored.)
+            StringBuilder strBuilder = new StringBuilder();
+            boolean needComma = false;
             while (token != JsonToken.END_ARRAY)
             {
                 token = tryNextTokenOrReadToEndOnError();
-                ++count;
-                if (token.isScalarValue() && count == 1)
+                if (token.isScalarValue())
                 {
-                    fieldValue = tokenToString(token);
+                    if (needComma)
+                    {
+                        strBuilder.append(',');
+                    }
+                    else
+                    {
+                        needComma = true;
+                    }
+                    strBuilder.append(tokenToString(token));
                 }
             }
-            // 2 means scalar followed by end array token
-            if (count > 2)
-            {
-                fieldValue = null;
-            }
-        }
-        else if (token.isScalarValue())
-        {
-            fieldValue = tokenToString(token);
+
+            return strBuilder.toString();
         }
 
-        if (fieldValue != null)
-        {
-            ++m_FieldCount;
-
-            Integer index = m_FieldMap.get(m_NestedPrefix + fieldName);
-            if (index != null)
-            {
-                record[index] = fieldValue;
-                gotFields[index] = true;
-            }
-        }
+        return tokenToString(token);
     }
 
     /**
