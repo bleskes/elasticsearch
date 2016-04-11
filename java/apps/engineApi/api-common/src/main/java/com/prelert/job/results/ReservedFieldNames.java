@@ -66,6 +66,9 @@ public final class ReservedFieldNames
         AnalysisConfig.SUMMARY_COUNT_FIELD_NAME,
         AnalysisConfig.CATEGORIZATION_FIELD_NAME,
         AnalysisConfig.DETECTORS,
+        AnalysisConfig.INFLUENCERS,
+        AnalysisConfig.OVERLAPPING_BUCKETS,
+        AnalysisConfig.RESULT_FINALIZATION_WINDOW,
 
         AnalysisLimits.MODEL_MEMORY_LIMIT,
         AnalysisLimits.CATEGORIZATION_EXAMPLES_LIMIT,
