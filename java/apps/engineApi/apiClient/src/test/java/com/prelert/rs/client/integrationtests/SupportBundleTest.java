@@ -91,7 +91,7 @@ public class SupportBundleTest implements Closeable
     {
         String url = String.format("%s/support", baseUrl);
 
-        LOGGER.info("GET support bundel" + url);
+        LOGGER.info("GET support bundle: " + url);
 
         InputStreamResponseListener responseListener = new InputStreamResponseListener();
         Request request = m_HttpClient.newRequest(url).method(HttpMethod.GET);
@@ -151,7 +151,7 @@ public class SupportBundleTest implements Closeable
 
             if (found == false)
             {
-                LOGGER.error(file + " missing from teh support download");
+                LOGGER.error(file + " missing from the support download");
                 test(found);
             }
         }
