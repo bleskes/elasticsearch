@@ -91,8 +91,9 @@ public class ElasticsearchDataExtractor implements DataExtractor
 
     /**
      * The data summary query returns the earliest and latest data times for a time range.
-     * There are 3 placeholders:
+     * There are 4 placeholders:
      * <ol>
+     *   <li> the user query
      *   <li> time field
      *   <li> start time (String in date_time format)
      *   <li> end time (String in date_time format)
@@ -103,11 +104,16 @@ public class ElasticsearchDataExtractor implements DataExtractor
             + "\"query\":{"
             +   "\"filtered\":{"
             +     "\"filter\":{"
-            +       "\"range\":{"
-            +         "\"%1$s\":{"
-            +           "\"gte\":\"%2$s\","
-            +           "\"lt\":\"%3$s\","
-            +           "\"format\":\"date_time\""
+            +       "\"bool\":{"
+            +         "\"must\":{%1$s},"
+            +         "\"must\":{"
+            +           "\"range\":{"
+            +             "\"%2$s\":{"
+            +               "\"gte\":\"%3$s\","
+            +               "\"lt\":\"%4$s\","
+            +               "\"format\":\"date_time\""
+            +             "}"
+            +           "}"
             +         "}"
             +       "}"
             +     "}"
@@ -115,10 +121,10 @@ public class ElasticsearchDataExtractor implements DataExtractor
             + "},"
             + "\"aggs\":{"
             +   "\"earliestTime\":{"
-            +     "\"min\":{\"field\":\"%1$s\"}"
+            +     "\"min\":{\"field\":\"%2$s\"}"
             +   "},"
             +   "\"latestTime\":{"
-            +     "\"max\":{\"field\":\"%1$s\"}"
+            +     "\"max\":{\"field\":\"%2$s\"}"
             +   "}"
             + "}"
             + "}";
@@ -292,7 +298,7 @@ public class ElasticsearchDataExtractor implements DataExtractor
     private String createDataSummaryQuery(long start, long end)
     {
         return String.format(DATA_SUMMARY_QUERY_TEMPLATE,
-                m_TimeField, formatAsDateTime(start), formatAsDateTime(end));
+                m_Search, m_TimeField, formatAsDateTime(start), formatAsDateTime(end));
     }
 
     private long readNumberOfShards(String index) throws IOException
