@@ -63,7 +63,7 @@ public class HttpConnectionTimeoutTests extends ESTestCase {
     public void testDefaultTimeoutCustom() throws Exception {
         Environment environment = new Environment(Settings.builder().put("path.home", createTempDir()).build());
         HttpClient httpClient = new HttpClient(Settings.builder()
-                .put("watcher.http.default_connection_timeout", "5s")
+                .put("xpack.watcher.http.default_connection_timeout", "5s")
                 .build()
                 , mock(HttpAuthRegistry.class), environment).start();
 
@@ -90,7 +90,7 @@ public class HttpConnectionTimeoutTests extends ESTestCase {
     public void testTimeoutCustomPerRequest() throws Exception {
         Environment environment = new Environment(Settings.builder().put("path.home", createTempDir()).build());
         HttpClient httpClient = new HttpClient(Settings.builder()
-                .put("watcher.http.default_connection_timeout", "10s")
+                .put("xpack.watcher.http.default_connection_timeout", "10s")
                 .build()
                 , mock(HttpAuthRegistry.class), environment).start();
 
