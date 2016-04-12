@@ -55,6 +55,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.base.Strings;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.JobDetails;
 import com.prelert.job.results.CategoryDefinition;
@@ -520,7 +521,9 @@ public class EngineApiClient implements Closeable
 
         byte[] buffer = new byte[MAX_BUFFER_SIZE];
         int bytesRead = 0;
-        while ((bytesRead = inputStream.read(buffer)) > -1)
+        while ((bytesRead = inputStream.read(buffer)) > -1
+                && !contentProvider.isClosed()
+                && waitUntilRequestCompletesLatch.getCount() > 0)
         {
             contentProvider.offer(ByteBuffer.wrap(buffer, 0, bytesRead));
             buffer = new byte[chooseBufferSize(bytesRead, buffer.length)];
@@ -537,7 +540,7 @@ public class EngineApiClient implements Closeable
             return defaultReturnValue;
         }
 
-        String content = responseListener.getContentAsString();
+        String content = Strings.nullToEmpty(responseListener.getContentAsString());
 
         if (statusHolder.get() != HttpStatus.ACCEPTED_202)
         {
