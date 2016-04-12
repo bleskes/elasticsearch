@@ -529,6 +529,7 @@ public class EngineApiClient implements Closeable
             buffer = new byte[chooseBufferSize(bytesRead, buffer.length)];
         }
         contentProvider.close();
+        inputStream.close();
 
         try
         {
