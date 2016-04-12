@@ -146,11 +146,11 @@ public class TransformJobTest implements Closeable {
 
         if (useJson)
         {
-            TRANSFORM_JOB_CONFIG +=  "\"dataDescription\":{\"format\":\"JSON\", \"timeField\":\"timestamp\", \"timeFormat\":\"epoch\"} }}";
+            TRANSFORM_JOB_CONFIG +=  "\"dataDescription\":{\"format\":\"JSON\", \"timeField\":\"timestamp\", \"timeFormat\":\"epoch\"} }";
         }
         else
         {
-            TRANSFORM_JOB_CONFIG += "\"dataDescription\":{\"fieldDelimiter\":\",\", \"timeField\":\"timestamp\", \"timeFormat\":\"epoch\"} }}";
+            TRANSFORM_JOB_CONFIG += "\"dataDescription\":{\"fieldDelimiter\":\",\", \"timeField\":\"timestamp\", \"timeFormat\":\"epoch\"} }";
         }
 
 

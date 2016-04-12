@@ -292,7 +292,8 @@ public class JobsTest implements Closeable
                 + "\"overlappingBuckets\":false"
                 + "},"
                 + "\"dataDescription\":{\"fieldDelimiter\":\",\", \"timeField\":\"time\", "
-                + "\"timeFormat\":\"yyyy-MM-dd HH:mm:ssX\"} }}";
+                + "\"timeFormat\":\"yyyy-MM-dd HH:mm:ssX\"}"
+                + "}";
 
         String jobId = m_WebServiceClient.createJob(FARE_QUOTE_TIME_FORMAT_CONFIG);
         if (jobId == null || jobId.isEmpty())
