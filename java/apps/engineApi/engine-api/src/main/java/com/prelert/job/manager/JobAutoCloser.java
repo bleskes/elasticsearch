@@ -46,7 +46,13 @@ import com.prelert.job.UnknownJobException;
 import com.prelert.job.exceptions.JobInUseException;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
 
-class JobTimeouts implements Shutdownable
+/**
+ * Manages the automatic closing of running jobs.
+ * When a job is started to run it is expected to be added to the {@code JobAutoCloser}.
+ * Jobs will automatically be closed either after their timeout expires or upon shutdown.
+ * Jobs with zero or negative timeout will only be closed upon shutdown.
+ */
+class JobAutoCloser implements Shutdownable
 {
     interface JobCloser
     {
@@ -54,7 +60,7 @@ class JobTimeouts implements Shutdownable
                 NativeProcessRunException;
     }
 
-    private static final Logger LOGGER = Logger.getLogger(JobTimeouts.class);
+    private static final Logger LOGGER = Logger.getLogger(JobAutoCloser.class);
     private static final int WAIT_SECONDS_BEFORE_RETRY_CLOSING = 10;
     private static final int MILLIS_IN_SECOND = 1000;
 
@@ -64,12 +70,12 @@ class JobTimeouts implements Shutdownable
 
     private final long m_WaitBeforeRetryMillis;
 
-    public JobTimeouts(JobCloser jobCloser)
+    public JobAutoCloser(JobCloser jobCloser)
     {
         this(jobCloser, WAIT_SECONDS_BEFORE_RETRY_CLOSING * MILLIS_IN_SECOND);
     }
 
-    JobTimeouts(JobCloser jobCloser, long waitBeforeRetryMillis)
+    JobAutoCloser(JobCloser jobCloser, long waitBeforeRetryMillis)
     {
         m_JobCloser = Objects.requireNonNull(jobCloser);
         m_ScheduledExecutor = Executors.newScheduledThreadPool(1);
@@ -101,6 +107,10 @@ class JobTimeouts implements Shutdownable
         }
     }
 
+    /**
+     * Cancels the timeout for the given job.
+     * @param jobId
+     */
     public void stopTimeout(String jobId)
     {
         ScheduledFuture<?> future = m_JobIdToTimeoutFuture.remove(jobId);
@@ -156,7 +166,7 @@ class JobTimeouts implements Shutdownable
     }
 
     /**
-     * Stop the process manager by shutting down the executor
+     * Stop the job auto closer by shutting down the executor
      * service and stop all running processes. Processes won't quit
      * straight away once the input stream is closed but will stop
      * soon after once the data has been analysed.

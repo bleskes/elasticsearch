@@ -168,7 +168,7 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
     private final DataExtractorFactory m_DataExtractorFactory;
     private final JobLoggerFactory m_JobLoggerFactory;
     private final PasswordManager m_PasswordManager;
-    private final JobTimeouts m_JobTimeouts;
+    private final JobAutoCloser m_JobAutoCloser;
 
     private final JobFactory m_JobFactory;
     private final int m_MaxAllowedJobs;
@@ -205,7 +205,7 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
         m_DataExtractorFactory = Objects.requireNonNull(dataExtractorFactory);
         m_JobLoggerFactory = Objects.requireNonNull(jobLoggerFactory);
         m_PasswordManager = Objects.requireNonNull(passwordManager);
-        m_JobTimeouts = new JobTimeouts(jobId -> closeJob(jobId));
+        m_JobAutoCloser = new JobAutoCloser(jobId -> closeJob(jobId));
 
         m_MaxAllowedJobs = calculateMaxJobsAllowed();
 
@@ -785,7 +785,7 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
             // this method throws if it isn't
             m_JobProvider.checkJobExists(jobId);
 
-            m_JobTimeouts.stopTimeout(jobId);
+            m_JobAutoCloser.stopTimeout(jobId);
             m_ProcessManager.closeJob(jobId);
         }
     }
@@ -870,7 +870,7 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
         {
             if (m_ProcessManager.jobIsRunning(jobId))
             {
-                m_JobTimeouts.stopTimeout(jobId);
+                m_JobAutoCloser.stopTimeout(jobId);
                 m_ProcessManager.closeJob(jobId);
             }
 
@@ -925,7 +925,7 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
             HighProportionOfBadTimestampsException, OutOfOrderRecordsException,
             NativeProcessRunException, MalformedJsonException
     {
-        m_JobTimeouts.stopTimeout(job.getId());
+        m_JobAutoCloser.stopTimeout(job.getId());
         DataCounts stats;
         try
         {
@@ -940,7 +940,7 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
         }
         finally
         {
-            m_JobTimeouts.startTimeout(job.getId(), Duration.ofSeconds(job.getTimeout()));
+            m_JobAutoCloser.startTimeout(job.getId(), Duration.ofSeconds(job.getTimeout()));
         }
         return stats;
     }
@@ -1164,7 +1164,7 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
         }
         m_ScheduledJobs.clear();
 
-        m_JobTimeouts.shutdown();
+        m_JobAutoCloser.shutdown();
 
         systemAudit().info(Messages.getMessage(Messages.SYSTEM_AUDIT_SHUTDOWN));
     }
@@ -1236,7 +1236,7 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
 
             if (m_ProcessManager.jobIsRunning(jobId))
             {
-                m_JobTimeouts.stopTimeout(jobId);
+                m_JobAutoCloser.stopTimeout(jobId);
                 m_ProcessManager.closeJob(jobId);
             }
 

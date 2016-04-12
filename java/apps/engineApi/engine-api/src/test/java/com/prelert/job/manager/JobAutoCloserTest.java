@@ -53,9 +53,9 @@ import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.exceptions.JobInUseException;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
 
-public class JobTimeoutsTest
+public class JobAutoCloserTest
 {
-    @Mock private JobTimeouts.JobCloser m_JobCloser;
+    @Mock private JobAutoCloser.JobCloser m_JobCloser;
 
     @Before
     public void setUp()
@@ -77,10 +77,10 @@ public class JobTimeoutsTest
             }
         }).when(m_JobCloser).closeJob("foo");
 
-        JobTimeouts jobTimeouts = new JobTimeouts(m_JobCloser);
+        JobAutoCloser autoCloser = new JobAutoCloser(m_JobCloser);
 
         long start = System.currentTimeMillis();
-        jobTimeouts.startTimeout("foo", Duration.ofMillis(100));
+        autoCloser.startTimeout("foo", Duration.ofMillis(100));
         latch.await();
         long end = System.currentTimeMillis();
 
@@ -91,9 +91,9 @@ public class JobTimeoutsTest
     @Test
     public void testStartTimeout_GivenZero() throws InterruptedException, JobException
     {
-        JobTimeouts jobTimeouts = new JobTimeouts(m_JobCloser);
+        JobAutoCloser autoCloser = new JobAutoCloser(m_JobCloser);
 
-        jobTimeouts.startTimeout("foo", Duration.ZERO);
+        autoCloser.startTimeout("foo", Duration.ZERO);
 
         Thread.sleep(100);
 
@@ -103,9 +103,9 @@ public class JobTimeoutsTest
     @Test
     public void testStartTimeout_GivenNegative() throws InterruptedException, JobException
     {
-        JobTimeouts jobTimeouts = new JobTimeouts(m_JobCloser);
+        JobAutoCloser autoCloser = new JobAutoCloser(m_JobCloser);
 
-        jobTimeouts.startTimeout("foo", Duration.ofSeconds(-1));
+        autoCloser.startTimeout("foo", Duration.ofSeconds(-1));
 
         Thread.sleep(100);
 
@@ -132,10 +132,10 @@ public class JobTimeoutsTest
             }
         }).when(m_JobCloser).closeJob("foo");
 
-        JobTimeouts jobTimeouts = new JobTimeouts(m_JobCloser, 100);
+        JobAutoCloser autoCloser = new JobAutoCloser(m_JobCloser, 100);
 
         long start = System.currentTimeMillis();
-        jobTimeouts.startTimeout("foo", Duration.ofMillis(100));
+        autoCloser.startTimeout("foo", Duration.ofMillis(100));
         latch.await();
         long end = System.currentTimeMillis();
 
@@ -146,17 +146,17 @@ public class JobTimeoutsTest
     @Test
     public void testStopTimeout_GivenNoTimeout()
     {
-        JobTimeouts jobTimeouts = new JobTimeouts(m_JobCloser);
-        jobTimeouts.stopTimeout("foo");
+        JobAutoCloser autoCloser = new JobAutoCloser(m_JobCloser);
+        autoCloser.stopTimeout("foo");
     }
 
     @Test
     public void testStopTimeout_GivenTimeout() throws InterruptedException
     {
-        JobTimeouts jobTimeouts = new JobTimeouts(m_JobCloser);
-        jobTimeouts.startTimeout("foo", Duration.ofMillis(100));
+        JobAutoCloser autoCloser = new JobAutoCloser(m_JobCloser);
+        autoCloser.startTimeout("foo", Duration.ofMillis(100));
 
-        jobTimeouts.stopTimeout("foo");
+        autoCloser.stopTimeout("foo");
 
         Thread.sleep(200);
 
@@ -167,13 +167,13 @@ public class JobTimeoutsTest
     public void testShutdown() throws UnknownJobException, JobInUseException,
             NativeProcessRunException
     {
-        JobTimeouts jobTimeouts = new JobTimeouts(m_JobCloser);
-        jobTimeouts.startTimeout("foo", Duration.ofSeconds(1));
-        jobTimeouts.startTimeout("bar", Duration.ofSeconds(5));
-        jobTimeouts.startTimeout("no_timeout", Duration.ofSeconds(0));
-        jobTimeouts.startTimeout("no_timeout_2", Duration.ofSeconds(-1));
+        JobAutoCloser autoCloser = new JobAutoCloser(m_JobCloser);
+        autoCloser.startTimeout("foo", Duration.ofSeconds(1));
+        autoCloser.startTimeout("bar", Duration.ofSeconds(5));
+        autoCloser.startTimeout("no_timeout", Duration.ofSeconds(0));
+        autoCloser.startTimeout("no_timeout_2", Duration.ofSeconds(-1));
 
-        jobTimeouts.shutdown();
+        autoCloser.shutdown();
 
         verify(m_JobCloser).closeJob("foo");
         verify(m_JobCloser).closeJob("bar");
@@ -199,11 +199,11 @@ public class JobTimeoutsTest
             }
         }).when(m_JobCloser).closeJob("foo");
 
-        JobTimeouts jobTimeouts = new JobTimeouts(m_JobCloser, 100);
-        jobTimeouts.startTimeout("foo", Duration.ofSeconds(1));
-        jobTimeouts.startTimeout("bar", Duration.ofSeconds(5));
+        JobAutoCloser autoCloser = new JobAutoCloser(m_JobCloser, 100);
+        autoCloser.startTimeout("foo", Duration.ofSeconds(1));
+        autoCloser.startTimeout("bar", Duration.ofSeconds(5));
 
-        jobTimeouts.shutdown();
+        autoCloser.shutdown();
 
         verify(m_JobCloser, times(2)).closeJob("foo");
         verify(m_JobCloser).closeJob("bar");
@@ -215,10 +215,10 @@ public class JobTimeoutsTest
     {
         doThrow(new UnknownJobException("foo")).when(m_JobCloser).closeJob("foo");
 
-        JobTimeouts jobTimeouts = new JobTimeouts(m_JobCloser, 100);
-        jobTimeouts.startTimeout("foo", Duration.ofSeconds(1));
+        JobAutoCloser autoCloser = new JobAutoCloser(m_JobCloser, 100);
+        autoCloser.startTimeout("foo", Duration.ofSeconds(1));
 
-        jobTimeouts.shutdown();
+        autoCloser.shutdown();
 
         verify(m_JobCloser).closeJob("foo");
     }
@@ -229,10 +229,10 @@ public class JobTimeoutsTest
     {
         doThrow(new NativeProcessRunException("some error")).when(m_JobCloser).closeJob("foo");
 
-        JobTimeouts jobTimeouts = new JobTimeouts(m_JobCloser, 100);
-        jobTimeouts.startTimeout("foo", Duration.ofSeconds(1));
+        JobAutoCloser autoCloser = new JobAutoCloser(m_JobCloser, 100);
+        autoCloser.startTimeout("foo", Duration.ofSeconds(1));
 
-        jobTimeouts.shutdown();
+        autoCloser.shutdown();
 
         verify(m_JobCloser).closeJob("foo");
     }
