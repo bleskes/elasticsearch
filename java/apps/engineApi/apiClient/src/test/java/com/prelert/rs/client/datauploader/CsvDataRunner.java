@@ -56,8 +56,8 @@ public class CsvDataRunner implements Runnable
             + "\"bucketSpan\":%d,"
             + "\"detectors\" :"
             + "[{\"function\":\"metric\",\"fieldName\":\"metric_value\",\"byFieldName\":\"metric_field\"}] },"
-            + "\"dataDescription\":{\"fieldDelimiter\":\",\"} }}";
-
+            + "\"dataDescription\":{\"fieldDelimiter\":\",\"}"
+            + "}";
 
     public static final String HEADER = "time,metric_field,metric_value";
 
