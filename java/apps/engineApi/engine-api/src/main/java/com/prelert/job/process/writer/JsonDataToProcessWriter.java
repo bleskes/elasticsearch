@@ -70,12 +70,12 @@ class JsonDataToProcessWriter extends AbstractDataToProcessWriter
      */
     private SchedulerConfig m_SchedulerConfig;
 
-    public JsonDataToProcessWriter(RecordWriter recordWriter,
+    public JsonDataToProcessWriter(boolean includeControlField, RecordWriter recordWriter,
             DataDescription dataDescription, AnalysisConfig analysisConfig,
             SchedulerConfig schedulerConfig, TransformConfigs transforms,
             StatusReporter statusReporter, JobDataPersister jobDataPersister, Logger logger)
     {
-        super(recordWriter, dataDescription, analysisConfig, transforms,
+        super(includeControlField, recordWriter, dataDescription, analysisConfig, transforms,
                 statusReporter, jobDataPersister, logger);
         m_SchedulerConfig = schedulerConfig;
     }
@@ -130,7 +130,6 @@ class JsonDataToProcessWriter extends AbstractDataToProcessWriter
         int numFields = outputFieldCount();
         String[] input = new String[numFields];
         String[] record = new String[numFields];
-        record[record.length - 1] = ""; // The control field is always an empty string
 
         // We never expect to get the control field
         boolean [] gotFields = new boolean[analysisFields.size()];

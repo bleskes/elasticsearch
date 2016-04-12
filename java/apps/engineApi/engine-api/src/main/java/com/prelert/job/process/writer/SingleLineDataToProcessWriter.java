@@ -62,12 +62,12 @@ public class SingleLineDataToProcessWriter extends AbstractDataToProcessWriter
 {
     private static final String RAW = "raw";
 
-    protected SingleLineDataToProcessWriter(RecordWriter recordWriter,
+    protected SingleLineDataToProcessWriter(boolean includeControlField, RecordWriter recordWriter,
             DataDescription dataDescription, AnalysisConfig analysisConfig,
             TransformConfigs transformConfigs, StatusReporter statusReporter,
             JobDataPersister jobDataPersister, Logger logger)
     {
-        super(recordWriter, dataDescription, analysisConfig, transformConfigs, statusReporter,
+        super(includeControlField, recordWriter, dataDescription, analysisConfig, transformConfigs, statusReporter,
                 jobDataPersister, logger);
     }
 

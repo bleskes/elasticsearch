@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -91,15 +91,15 @@ public class AbstractDataToProcessWriterTest
     @Mock private Logger m_Logger;
 
 
-	@Test
-	public void testInputFields_MulitpleInputsSingleOutput() throws MissingFieldException, IOException
-	{
-	    DummyJobDataPersister persister = new DummyJobDataPersister();
+    @Test
+    public void testInputFields_MulitpleInputsSingleOutput() throws MissingFieldException, IOException
+    {
+        DummyJobDataPersister persister = new DummyJobDataPersister();
 
-	    DataDescription dd = new DataDescription();
-		dd.setTimeField("timeField");
+        DataDescription dd = new DataDescription();
+        dd.setTimeField("timeField");
 
-		AnalysisConfig ac = new AnalysisConfig();
+        AnalysisConfig ac = new AnalysisConfig();
         Detector detector = new Detector();
         detector.setFieldName("value");
         detector.setByFieldName("host-metric");
@@ -113,22 +113,22 @@ public class AbstractDataToProcessWriterTest
         TransformConfigs transforms = new TransformConfigs(Arrays.asList(tc));
 
 
-		AbstractDataToProcessWriter writer = new CsvDataToProcessWriter(m_LengthEncodedWriter
-				, dd, ac, transforms, m_StatusReporter, persister, m_Logger);
+        AbstractDataToProcessWriter writer = new CsvDataToProcessWriter(true, m_LengthEncodedWriter
+                , dd, ac, transforms, m_StatusReporter, persister, m_Logger);
 
-		Set<String> inputFields = new HashSet<>(writer.inputFields());
-		assertEquals(4, inputFields.size());
-		assertTrue(inputFields.contains("timeField"));
-		assertTrue(inputFields.contains("value"));
-		assertTrue(inputFields.contains("host"));
-		assertTrue(inputFields.contains("metric"));
+        Set<String> inputFields = new HashSet<>(writer.inputFields());
+        assertEquals(4, inputFields.size());
+        assertTrue(inputFields.contains("timeField"));
+        assertTrue(inputFields.contains("value"));
+        assertTrue(inputFields.contains("host"));
+        assertTrue(inputFields.contains("metric"));
 
 
-		String [] header = {"timeField", "metric", "host", "value"};
-		writer.buildTransformsAndWriteHeader(header);
-		List<Transform> trs = writer.m_PostDateTransforms;
-		assertEquals(1, trs.size());
-		Transform tr = trs.get(0);
+        String [] header = {"timeField", "metric", "host", "value"};
+        writer.buildTransformsAndWriteHeader(header);
+        List<Transform> trs = writer.m_PostDateTransforms;
+        assertEquals(1, trs.size());
+        Transform tr = trs.get(0);
 
         List<TransformIndex> readIndicies = tr.getReadIndicies();
         assertEquals(readIndicies.get(0), new TransformIndex(0, 2));
@@ -138,43 +138,43 @@ public class AbstractDataToProcessWriterTest
         assertEquals(writeIndicies.get(0), new TransformIndex(2, 1));
 
 
-		Map<String, Integer> inputIndicies = writer.getInputFieldIndicies();
-		assertEquals(4, inputIndicies.size());
-		Assert.assertEquals(new Integer(0), inputIndicies.get("timeField"));
-		Assert.assertEquals(new Integer(1), inputIndicies.get("metric"));
-		Assert.assertEquals(new Integer(2), inputIndicies.get("host"));
-		Assert.assertEquals(new Integer(3), inputIndicies.get("value"));
+        Map<String, Integer> inputIndicies = writer.getInputFieldIndicies();
+        assertEquals(4, inputIndicies.size());
+        Assert.assertEquals(new Integer(0), inputIndicies.get("timeField"));
+        Assert.assertEquals(new Integer(1), inputIndicies.get("metric"));
+        Assert.assertEquals(new Integer(2), inputIndicies.get("host"));
+        Assert.assertEquals(new Integer(3), inputIndicies.get("value"));
 
-		Map<String, Integer> outputIndicies = writer.getOutputFieldIndicies();
-		assertEquals(4, outputIndicies.size());
-		Assert.assertEquals(new Integer(0), outputIndicies.get("timeField"));
-		Assert.assertEquals(new Integer(1), outputIndicies.get("host-metric"));
-		Assert.assertEquals(new Integer(2), outputIndicies.get("value"));
-		Assert.assertEquals(new Integer(3), outputIndicies.get(LengthEncodedWriter.CONTROL_FIELD_NAME));
+        Map<String, Integer> outputIndicies = writer.getOutputFieldIndicies();
+        assertEquals(4, outputIndicies.size());
+        Assert.assertEquals(new Integer(0), outputIndicies.get("timeField"));
+        Assert.assertEquals(new Integer(1), outputIndicies.get("host-metric"));
+        Assert.assertEquals(new Integer(2), outputIndicies.get("value"));
+        Assert.assertEquals(new Integer(3), outputIndicies.get(LengthEncodedWriter.CONTROL_FIELD_NAME));
 
 
-		List<InputOutputMap> inOutMaps = writer.getInputOutputMap();
-		assertEquals(1, inOutMaps.size());
-		assertEquals(inOutMaps.get(0).m_Input, 3);
-		assertEquals(inOutMaps.get(0).m_Output, 2);
+        List<InputOutputMap> inOutMaps = writer.getInputOutputMap();
+        assertEquals(1, inOutMaps.size());
+        assertEquals(inOutMaps.get(0).m_Input, 3);
+        assertEquals(inOutMaps.get(0).m_Output, 2);
 
-		// The persister's field mappings are the same as the output indicies
+        // The persister's field mappings are the same as the output indicies
         assertArrayEquals(new String[] {"value"}, persister.getFieldNames());
         assertArrayEquals(new int [] {2}, persister.getFieldMappings());
         assertArrayEquals(new int [] {1}, persister.getByFieldMappings());
         assertArrayEquals(new int [0], persister.getOverFieldMappings());
         assertArrayEquals(new int [0],  persister.getPartitionFieldMappings());
-	}
+    }
 
-	@Test
-	public void testInputFields_SingleInputMulitpleOutputs() throws MissingFieldException, IOException
-	{
-	    DummyJobDataPersister persister = new DummyJobDataPersister();
+    @Test
+    public void testInputFields_SingleInputMulitpleOutputs() throws MissingFieldException, IOException
+    {
+        DummyJobDataPersister persister = new DummyJobDataPersister();
 
-		DataDescription dd = new DataDescription();
-		dd.setTimeField("timeField");
+        DataDescription dd = new DataDescription();
+        dd.setTimeField("timeField");
 
-		AnalysisConfig ac = new AnalysisConfig();
+        AnalysisConfig ac = new AnalysisConfig();
         Detector detector = new Detector();
         detector.setFieldName("value");
         detector.setByFieldName(TransformType.DOMAIN_SPLIT.defaultOutputNames().get(0));
@@ -188,61 +188,61 @@ public class AbstractDataToProcessWriterTest
         TransformConfigs transforms = new TransformConfigs(Arrays.asList(tc));
 
 
-		AbstractDataToProcessWriter writer = new CsvDataToProcessWriter(m_LengthEncodedWriter
-				, dd, ac, transforms, m_StatusReporter, persister, m_Logger);
+        AbstractDataToProcessWriter writer = new CsvDataToProcessWriter(true, m_LengthEncodedWriter
+                , dd, ac, transforms, m_StatusReporter, persister, m_Logger);
 
-		Set<String> inputFields = new HashSet<>(writer.inputFields());
+        Set<String> inputFields = new HashSet<>(writer.inputFields());
 
-		assertEquals(3, inputFields.size());
-		assertTrue(inputFields.contains("timeField"));
-		assertTrue(inputFields.contains("value"));
-		assertTrue(inputFields.contains("domain"));
+        assertEquals(3, inputFields.size());
+        assertTrue(inputFields.contains("timeField"));
+        assertTrue(inputFields.contains("value"));
+        assertTrue(inputFields.contains("domain"));
 
-		String [] header = {"timeField", "domain", "value"};
-		writer.buildTransformsAndWriteHeader(header);
-		List<Transform> trs = writer.m_PostDateTransforms;
-		assertEquals(1, trs.size());
+        String [] header = {"timeField", "domain", "value"};
+        writer.buildTransformsAndWriteHeader(header);
+        List<Transform> trs = writer.m_PostDateTransforms;
+        assertEquals(1, trs.size());
 
-		Map<String, Integer> inputIndicies = writer.getInputFieldIndicies();
-		assertEquals(3, inputIndicies.size());
-		Assert.assertEquals(new Integer(0), inputIndicies.get("timeField"));
-		Assert.assertEquals(new Integer(1), inputIndicies.get("domain"));
-		Assert.assertEquals(new Integer(2), inputIndicies.get("value"));
+        Map<String, Integer> inputIndicies = writer.getInputFieldIndicies();
+        assertEquals(3, inputIndicies.size());
+        Assert.assertEquals(new Integer(0), inputIndicies.get("timeField"));
+        Assert.assertEquals(new Integer(1), inputIndicies.get("domain"));
+        Assert.assertEquals(new Integer(2), inputIndicies.get("value"));
 
-		Map<String, Integer> outputIndicies = writer.getOutputFieldIndicies();
+        Map<String, Integer> outputIndicies = writer.getOutputFieldIndicies();
 
-		List<String> allOutputs = new ArrayList<>(TransformType.DOMAIN_SPLIT.defaultOutputNames());
-		allOutputs.add("value");
-		Collections.sort(allOutputs);  // outputs are in alphabetical order
+        List<String> allOutputs = new ArrayList<>(TransformType.DOMAIN_SPLIT.defaultOutputNames());
+        allOutputs.add("value");
+        Collections.sort(allOutputs);  // outputs are in alphabetical order
 
-		assertEquals(5, outputIndicies.size()); // time + control field + outputs
-		Assert.assertEquals(new Integer(0), outputIndicies.get("timeField"));
+        assertEquals(5, outputIndicies.size()); // time + control field + outputs
+        Assert.assertEquals(new Integer(0), outputIndicies.get("timeField"));
 
-		int count = 1;
-		for (String f : allOutputs)
-		{
-			Assert.assertEquals(new Integer(count++), outputIndicies.get(f));
-		}
-		Assert.assertEquals(new Integer(allOutputs.size() + 1),
-						outputIndicies.get(LengthEncodedWriter.CONTROL_FIELD_NAME));
+        int count = 1;
+        for (String f : allOutputs)
+        {
+            Assert.assertEquals(new Integer(count++), outputIndicies.get(f));
+        }
+        Assert.assertEquals(new Integer(allOutputs.size() + 1),
+                        outputIndicies.get(LengthEncodedWriter.CONTROL_FIELD_NAME));
 
 
-		List<InputOutputMap> inOutMaps = writer.getInputOutputMap();
-		assertEquals(1, inOutMaps.size());
-		assertEquals(inOutMaps.get(0).m_Input, 2);
-		assertEquals(inOutMaps.get(0).m_Output, allOutputs.indexOf("value") + 1);
+        List<InputOutputMap> inOutMaps = writer.getInputOutputMap();
+        assertEquals(1, inOutMaps.size());
+        assertEquals(inOutMaps.get(0).m_Input, 2);
+        assertEquals(inOutMaps.get(0).m_Output, allOutputs.indexOf("value") + 1);
 
-		Transform tr = trs.get(0);
+        Transform tr = trs.get(0);
         assertEquals(tr.getReadIndicies().get(0), new TransformIndex(0, 1));
 
         List<TransformIndex> writeIndicies = new ArrayList<>();
-		int [] outIndices = new int [TransformType.DOMAIN_SPLIT.defaultOutputNames().size()];
-		for (int i = 0; i < outIndices.length; i++)
-		{
-			writeIndicies.add(new TransformIndex(2,
-			                allOutputs.indexOf(TransformType.DOMAIN_SPLIT.defaultOutputNames().get(i)) + 1));
-		}
-		assertEquals(writeIndicies, tr.getWriteIndicies());
+        int [] outIndices = new int [TransformType.DOMAIN_SPLIT.defaultOutputNames().size()];
+        for (int i = 0; i < outIndices.length; i++)
+        {
+            writeIndicies.add(new TransformIndex(2,
+                            allOutputs.indexOf(TransformType.DOMAIN_SPLIT.defaultOutputNames().get(i)) + 1));
+        }
+        assertEquals(writeIndicies, tr.getWriteIndicies());
 
 
         // The persister's field mappings are the same as the output indicies
@@ -253,24 +253,24 @@ public class AbstractDataToProcessWriterTest
         assertArrayEquals(new int [] {outputIndicies.get(TransformType.DOMAIN_SPLIT.defaultOutputNames().get(1))},
                                     persister.getOverFieldMappings());
         assertArrayEquals(new int [0],  persister.getPartitionFieldMappings());
-	}
+    }
 
 
-	/**
-	 * Only one output of the transform is used
-	 * @throws MissingFieldException
-	 * @throws IOException
-	 */
-	@Test
-	public void testInputFields_SingleInputMulitpleOutputs_OnlyOneOutputUsed()
-	throws MissingFieldException, IOException
-	{
-	    DummyJobDataPersister persister = new DummyJobDataPersister();
+    /**
+     * Only one output of the transform is used
+     * @throws MissingFieldException
+     * @throws IOException
+     */
+    @Test
+    public void testInputFields_SingleInputMulitpleOutputs_OnlyOneOutputUsed()
+    throws MissingFieldException, IOException
+    {
+        DummyJobDataPersister persister = new DummyJobDataPersister();
 
-		DataDescription dd = new DataDescription();
-		dd.setTimeField("timeField");
+        DataDescription dd = new DataDescription();
+        dd.setTimeField("timeField");
 
-		AnalysisConfig ac = new AnalysisConfig();
+        AnalysisConfig ac = new AnalysisConfig();
         Detector detector = new Detector();
         detector.setFieldName("value");
         detector.setByFieldName(TransformType.DOMAIN_SPLIT.defaultOutputNames().get(0));
@@ -283,57 +283,57 @@ public class AbstractDataToProcessWriterTest
         TransformConfigs transforms = new TransformConfigs(Arrays.asList(tc));
 
 
-		AbstractDataToProcessWriter writer = new CsvDataToProcessWriter(m_LengthEncodedWriter
-				, dd, ac, transforms, m_StatusReporter, persister, m_Logger);
+        AbstractDataToProcessWriter writer = new CsvDataToProcessWriter(true, m_LengthEncodedWriter
+                , dd, ac, transforms, m_StatusReporter, persister, m_Logger);
 
-		Set<String> inputFields = new HashSet<>(writer.inputFields());
+        Set<String> inputFields = new HashSet<>(writer.inputFields());
 
-		assertEquals(3, inputFields.size());
-		assertTrue(inputFields.contains("timeField"));
-		assertTrue(inputFields.contains("value"));
-		assertTrue(inputFields.contains("domain"));
+        assertEquals(3, inputFields.size());
+        assertTrue(inputFields.contains("timeField"));
+        assertTrue(inputFields.contains("value"));
+        assertTrue(inputFields.contains("domain"));
 
-		String [] header = {"timeField", "domain", "value"};
-		writer.buildTransformsAndWriteHeader(header);
-		List<Transform> trs = writer.m_PostDateTransforms;
-		assertEquals(1, trs.size());
+        String [] header = {"timeField", "domain", "value"};
+        writer.buildTransformsAndWriteHeader(header);
+        List<Transform> trs = writer.m_PostDateTransforms;
+        assertEquals(1, trs.size());
 
-		Map<String, Integer> inputIndicies = writer.getInputFieldIndicies();
-		assertEquals(3, inputIndicies.size());
-		Assert.assertEquals(new Integer(0), inputIndicies.get("timeField"));
-		Assert.assertEquals(new Integer(1), inputIndicies.get("domain"));
-		Assert.assertEquals(new Integer(2), inputIndicies.get("value"));
+        Map<String, Integer> inputIndicies = writer.getInputFieldIndicies();
+        assertEquals(3, inputIndicies.size());
+        Assert.assertEquals(new Integer(0), inputIndicies.get("timeField"));
+        Assert.assertEquals(new Integer(1), inputIndicies.get("domain"));
+        Assert.assertEquals(new Integer(2), inputIndicies.get("value"));
 
-		Map<String, Integer> outputIndicies = writer.getOutputFieldIndicies();
+        Map<String, Integer> outputIndicies = writer.getOutputFieldIndicies();
 
-		List<String> allOutputs = new ArrayList<>();
-		allOutputs.add(TransformType.DOMAIN_SPLIT.defaultOutputNames().get(0));
-		allOutputs.add("value");
-		Collections.sort(allOutputs);  // outputs are in alphabetical order
+        List<String> allOutputs = new ArrayList<>();
+        allOutputs.add(TransformType.DOMAIN_SPLIT.defaultOutputNames().get(0));
+        allOutputs.add("value");
+        Collections.sort(allOutputs);  // outputs are in alphabetical order
 
-		assertEquals(4, outputIndicies.size()); // time + control field + outputs
-		Assert.assertEquals(new Integer(0), outputIndicies.get("timeField"));
+        assertEquals(4, outputIndicies.size()); // time + control field + outputs
+        Assert.assertEquals(new Integer(0), outputIndicies.get("timeField"));
 
-		int count = 1;
-		for (String f : allOutputs)
-		{
-			Assert.assertEquals(new Integer(count++), outputIndicies.get(f));
-		}
-		Assert.assertEquals(new Integer(allOutputs.size() + 1),
-						outputIndicies.get(LengthEncodedWriter.CONTROL_FIELD_NAME));
+        int count = 1;
+        for (String f : allOutputs)
+        {
+            Assert.assertEquals(new Integer(count++), outputIndicies.get(f));
+        }
+        Assert.assertEquals(new Integer(allOutputs.size() + 1),
+                        outputIndicies.get(LengthEncodedWriter.CONTROL_FIELD_NAME));
 
 
-		List<InputOutputMap> inOutMaps = writer.getInputOutputMap();
-		assertEquals(1, inOutMaps.size());
-		assertEquals(inOutMaps.get(0).m_Input, 2);
-		assertEquals(inOutMaps.get(0).m_Output, allOutputs.indexOf("value") + 1);
+        List<InputOutputMap> inOutMaps = writer.getInputOutputMap();
+        assertEquals(1, inOutMaps.size());
+        assertEquals(inOutMaps.get(0).m_Input, 2);
+        assertEquals(inOutMaps.get(0).m_Output, allOutputs.indexOf("value") + 1);
 
-		Transform tr = trs.get(0);
+        Transform tr = trs.get(0);
         assertEquals(tr.getReadIndicies().get(0), new TransformIndex(0, 1));
 
-		TransformIndex ti = new TransformIndex(2,
-		                allOutputs.indexOf(TransformType.DOMAIN_SPLIT.defaultOutputNames().get(0)) + 1);
-		assertEquals(tr.getWriteIndicies().get(0), ti);
+        TransformIndex ti = new TransformIndex(2,
+                        allOutputs.indexOf(TransformType.DOMAIN_SPLIT.defaultOutputNames().get(0)) + 1);
+        assertEquals(tr.getWriteIndicies().get(0), ti);
 
 
         // The persister's field mappings are the same as the output indicies
@@ -343,7 +343,7 @@ public class AbstractDataToProcessWriterTest
                 persister.getByFieldMappings());
         assertArrayEquals(new int [0], persister.getOverFieldMappings());
         assertArrayEquals(new int [0],  persister.getPartitionFieldMappings());
-	}
+    }
 
 
 
@@ -379,7 +379,7 @@ public class AbstractDataToProcessWriterTest
         TransformConfigs transforms = new TransformConfigs(Arrays.asList(concatTc, hrdTc));
 
 
-        AbstractDataToProcessWriter writer = new CsvDataToProcessWriter(m_LengthEncodedWriter
+        AbstractDataToProcessWriter writer = new CsvDataToProcessWriter(true, m_LengthEncodedWriter
                 , dd, ac, transforms, m_StatusReporter, persister, m_Logger);
 
         Set<String> inputFields = new HashSet<>(writer.inputFields());
@@ -439,7 +439,7 @@ public class AbstractDataToProcessWriterTest
 
         TransformConfigs transforms = new TransformConfigs(Arrays.asList(excludeConfig));
 
-        AbstractDataToProcessWriter writer = new CsvDataToProcessWriter(m_LengthEncodedWriter
+        AbstractDataToProcessWriter writer = new CsvDataToProcessWriter(true, m_LengthEncodedWriter
                 , dd, ac, transforms, m_StatusReporter, m_DataPersister, m_Logger);
 
         String [] header = {"datetime", "metric", "value"};
@@ -508,7 +508,7 @@ public class AbstractDataToProcessWriterTest
 
         TransformConfigs transforms = new TransformConfigs(Arrays.asList(upperTc, concatTc, splitTc));
 
-        AbstractDataToProcessWriter writer = new CsvDataToProcessWriter(m_LengthEncodedWriter,
+        AbstractDataToProcessWriter writer = new CsvDataToProcessWriter(true, m_LengthEncodedWriter,
                    dd, ac, transforms, m_StatusReporter, persister, m_Logger);
 
 

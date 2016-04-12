@@ -1,9 +1,6 @@
-package com.prelert.job.process.writer;
-
-import java.io.IOException;
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -27,17 +24,24 @@ import java.io.IOException;
  *                                                          *
  *                                                          *
  ************************************************************/
+package com.prelert.job.process.writer;
+
+import java.io.IOException;
 
 import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+
+import org.supercsv.io.CsvListWriter;
+import org.supercsv.prefs.CsvPreference;
 
 /**
  * Write the records to the output stream as UTF 8 encoded CSV
  */
 public class CsvRecordWriter implements RecordWriter
 {
-    private OutputStream m_OutputStream;
+    private CsvListWriter m_Writer;
 
     /**
      * Create the writer on the OutputStream <code>os</code>.
@@ -46,37 +50,26 @@ public class CsvRecordWriter implements RecordWriter
      */
     public CsvRecordWriter(OutputStream os)
     {
-        m_OutputStream = os;
+        m_Writer = new CsvListWriter(new OutputStreamWriter(os, StandardCharsets.UTF_8),
+                CsvPreference.STANDARD_PREFERENCE);
     }
 
     @Override
     public void writeRecord(String[] record) throws IOException
     {
-        for (int i=0; i<record.length -1; i++)
-        {
-            m_OutputStream.write(record[i].getBytes(StandardCharsets.UTF_8));
-            m_OutputStream.write(',');
-        }
-        m_OutputStream.write(record[record.length -1].getBytes(StandardCharsets.UTF_8));
-        m_OutputStream.write('\n');
+        m_Writer.write(record);
     }
 
     @Override
     public void writeRecord(List<String> record) throws IOException
     {
-        for (int i=0; i<record.size() -1; i++)
-        {
-            m_OutputStream.write(record.get(i).getBytes(StandardCharsets.UTF_8));
-            m_OutputStream.write(',');
-        }
-        m_OutputStream.write(record.get(record.size()-1).getBytes(StandardCharsets.UTF_8));
-        m_OutputStream.write('\n');
+        m_Writer.write(record);
     }
 
     @Override
     public void flush() throws IOException
     {
-        m_OutputStream.flush();
+        m_Writer.flush();
     }
 
 }

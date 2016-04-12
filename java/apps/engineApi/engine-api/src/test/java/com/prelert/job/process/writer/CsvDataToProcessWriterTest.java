@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -419,7 +419,7 @@ public class CsvDataToProcessWriterTest
 
     private CsvDataToProcessWriter createWriter()
     {
-        return new CsvDataToProcessWriter(m_LengthEncodedWriter, m_DataDescription,
+        return new CsvDataToProcessWriter(true, m_LengthEncodedWriter, m_DataDescription,
                 m_AnalysisConfig, new TransformConfigs(m_Transforms),
                 m_StatusReporter, m_DataPersister, m_Logger);
     }

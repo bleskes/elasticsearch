@@ -51,7 +51,7 @@ public class DataToProcessWriterFactory
      * @return A {@link JsonDataToProcessWriter} if the data
      *  format is JSON or otherwise a {@link CsvDataToProcessWriter}
      */
-    public DataToProcessWriter create(RecordWriter writer,
+    public DataToProcessWriter create(boolean includeControlField, RecordWriter writer,
             DataDescription dataDescription, AnalysisConfig analysisConfig,
             SchedulerConfig schedulerConfig, TransformConfigs transforms,
             StatusReporter statusReporter, JobDataPersister jobDataPersister, Logger logger)
@@ -60,13 +60,13 @@ public class DataToProcessWriterFactory
         {
             case JSON:
             case ELASTICSEARCH:
-                return new JsonDataToProcessWriter(writer, dataDescription, analysisConfig,
+                return new JsonDataToProcessWriter(includeControlField, writer, dataDescription, analysisConfig,
                         schedulerConfig, transforms, statusReporter, jobDataPersister, logger);
             case DELIMITED:
-                return new CsvDataToProcessWriter(writer, dataDescription, analysisConfig,
+                return new CsvDataToProcessWriter(includeControlField, writer, dataDescription, analysisConfig,
                         transforms, statusReporter, jobDataPersister, logger);
             case SINGLE_LINE:
-                return new SingleLineDataToProcessWriter(writer, dataDescription, analysisConfig,
+                return new SingleLineDataToProcessWriter(includeControlField, writer, dataDescription, analysisConfig,
                         transforms, statusReporter, jobDataPersister, logger);
             default:
                 throw new IllegalArgumentException();

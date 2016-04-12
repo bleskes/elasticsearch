@@ -952,13 +952,13 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
         ByteArrayOutputStream output = new ByteArrayOutputStream();
         CsvRecordWriter writer = new CsvRecordWriter(output);
         JobDetails job = getJobOrThrowIfUnknown(jobId);
-        m_ProcessManager.writeToJob(writer, job.getDataDescription(),
+        m_ProcessManager.writeToJob(false, writer, job.getDataDescription(),
                             job.getAnalysisConfig(),
                             job.getSchedulerConfig(),
                             new TransformConfigs(job.getTransforms()), input,
                             new NoneStatusReporter("preview-job"),
                             new NoneJobDataPersister(), LOGGER);
-
+        writer.flush();
         return new String(output.toByteArray(), StandardCharsets.UTF_8);
     }
 

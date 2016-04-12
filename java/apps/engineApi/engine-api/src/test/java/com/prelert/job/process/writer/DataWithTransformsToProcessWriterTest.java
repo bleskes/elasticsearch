@@ -90,11 +90,11 @@ public class DataWithTransformsToProcessWriterTest
         }).when(m_LengthEncodedWriter).writeRecord(any(String[].class));
     }
 
-	@Test
+    @Test
     public void testCsvWriteWithConcat() throws MissingFieldException,
             HighProportionOfBadTimestampsException, OutOfOrderRecordsException, IOException,
             MalformedJsonException
-	{
+    {
         StringBuilder input = new StringBuilder();
         input.append("time,host,metric,value\n");
         input.append("1,hostA,foo,3.0\n");
@@ -117,13 +117,13 @@ public class DataWithTransformsToProcessWriterTest
 
         verify(m_StatusReporter).finishReporting();
         verify(m_DataPersister).flushRecords();
-	}
+    }
 
-	@Test
+    @Test
     public void testJsonWriteWithConcat() throws MissingFieldException,
             HighProportionOfBadTimestampsException, OutOfOrderRecordsException, IOException,
             MalformedJsonException
-	{
+    {
         StringBuilder input = new StringBuilder();
         input.append("{\"time\" : 1, \"host\" : \"hostA\", \"metric\" : \"foo\", \"value\" : 3.0}\n");
         input.append("{\"time\" : 2, \"host\" : \"hostB\", \"metric\" : \"bar\", \"value\" : 2.0}\n");
@@ -145,7 +145,7 @@ public class DataWithTransformsToProcessWriterTest
 
         verify(m_StatusReporter).finishReporting();
         verify(m_DataPersister).flushRecords();
-	}
+    }
 
 
     private static InputStream createInputStream(String input)
@@ -174,13 +174,13 @@ public class DataWithTransformsToProcessWriterTest
 
         if (doCsv)
         {
-            return new CsvDataToProcessWriter(m_LengthEncodedWriter, dd,
+            return new CsvDataToProcessWriter(true, m_LengthEncodedWriter, dd,
                 ac, tcs,
                 m_StatusReporter, m_DataPersister, m_Logger);
         }
         else
         {
-            return new JsonDataToProcessWriter(m_LengthEncodedWriter, dd,
+            return new JsonDataToProcessWriter(true, m_LengthEncodedWriter, dd,
                     ac, null, tcs,
                     m_StatusReporter, m_DataPersister, m_Logger);
         }

@@ -85,7 +85,7 @@ public class DataToProcessWriterFactoryTest
     private static DataToProcessWriter createWriter(DataDescription dataDescription)
     {
         DataToProcessWriterFactory factory = new DataToProcessWriterFactory();
-        return factory.create(mock(LengthEncodedWriter.class), dataDescription,
+        return factory.create(true, mock(LengthEncodedWriter.class), dataDescription,
                 mock(AnalysisConfig.class), mock(SchedulerConfig.class), mock(TransformConfigs.class),
                 mock(StatusReporter.class), mock(JobDataPersister.class), mock(Logger.class));
     }

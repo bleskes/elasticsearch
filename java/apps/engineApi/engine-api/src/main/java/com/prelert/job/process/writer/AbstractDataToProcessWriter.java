@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -67,6 +67,8 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
     protected static final int TIME_FIELD_OUT_INDEX = 0;
     private static final int MS_IN_SECOND = 1000;
 
+    protected final boolean m_IncludeControlField;
+
     protected final RecordWriter m_RecordWriter;
     protected final DataDescription m_DataDescription;
     protected final AnalysisConfig m_AnalysisConfig;
@@ -90,11 +92,12 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
     private long m_LatestEpochMsThisUpload;
 
 
-    protected AbstractDataToProcessWriter(RecordWriter recordWriter,
+    protected AbstractDataToProcessWriter(boolean includeControlField, RecordWriter recordWriter,
             DataDescription dataDescription, AnalysisConfig analysisConfig,
             TransformConfigs transformConfigs, StatusReporter statusReporter,
             JobDataPersister jobDataPersister, Logger logger)
     {
+        m_IncludeControlField = includeControlField;
         m_RecordWriter = Objects.requireNonNull(recordWriter);
         m_DataDescription = Objects.requireNonNull(dataDescription);
         m_AnalysisConfig = Objects.requireNonNull(analysisConfig);
@@ -465,19 +468,22 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
         }
 
         // control field
-        fieldIndexes.put(LengthEncodedWriter.CONTROL_FIELD_NAME, index);
+        if (m_IncludeControlField)
+        {
+            fieldIndexes.put(LengthEncodedWriter.CONTROL_FIELD_NAME, index);
+        }
 
         return fieldIndexes;
     }
 
     /**
-     * The number of fields used in the analysis +
-     * the time and control fields
+     * The number of fields used in the analysis field,
+     * the time field and (sometimes) the control field
      * @return
      */
     public int outputFieldCount()
     {
-        return m_AnalysisConfig.analysisFields().size() + 2;
+        return m_AnalysisConfig.analysisFields().size() + (m_IncludeControlField ? 2 : 1);
     }
 
     protected Map<String, Integer> getOutputFieldIndicies()

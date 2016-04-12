@@ -428,7 +428,7 @@ public class JsonDataToProcessWriterTest
 
     private JsonDataToProcessWriter createWriter()
     {
-        return new JsonDataToProcessWriter(m_LengthEncodedWriter, m_DataDescription,
+        return new JsonDataToProcessWriter(true, m_LengthEncodedWriter, m_DataDescription,
                 m_AnalysisConfig, null, new TransformConfigs(m_Transforms),
                 m_StatusReporter, m_DataPersister, m_Logger);
     }

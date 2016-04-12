@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -56,10 +56,11 @@ public class CsvRecordWriterTest
             writer.writeRecord(record1);
             writer.writeRecord(record2);
         }
+        writer.flush();
 
         String output = new String(bos.toByteArray(), StandardCharsets.UTF_8);
-        String [] lines = output.split("\\n");
-        Assert.assertEquals(1 + NUM_RECORDS *2 , lines.length);
+        String [] lines = output.split("\\r?\\n");
+        Assert.assertEquals(1 + NUM_RECORDS * 2 , lines.length);
 
         String [] fields = lines[0].split(",");
         Assert.assertArrayEquals(fields, header);
@@ -91,9 +92,10 @@ public class CsvRecordWriterTest
             writer.writeRecord(Arrays.asList(record1));
             writer.writeRecord(Arrays.asList(record2));
         }
+        writer.flush();
 
         String output = new String(bos.toByteArray(), StandardCharsets.UTF_8);
-        String [] lines = output.split("\\n");
+        String [] lines = output.split("\\r?\\n");
         Assert.assertEquals(1 + NUM_RECORDS *2 , lines.length);
 
         String [] fields = lines[0].split(",");

@@ -965,13 +965,13 @@ public class JobManagerTest
                 Optional.of(new JobDetails("foo", new JobConfiguration(new AnalysisConfig()))));
 
         when(m_ProcessManager.numberOfRunningJobs()).thenReturn(3);
-        when(m_ProcessManager.writeToJob(any(CsvRecordWriter.class), any(), any(), any(), any(), any(), any(), any(), any()))
+        when(m_ProcessManager.writeToJob(eq(false), any(CsvRecordWriter.class), any(), any(), any(), any(), any(), any(), any(), any()))
                     .thenAnswer(writeToWriter());
 
         JobManager jobManager = createJobManager();
         String answer = jobManager.previewTransforms("foo", mock(InputStream.class));
 
-        assertEquals("csv,header,one\n", answer);
+        assertEquals("csv,header,one\r\n", answer);
     }
 
     @Test
@@ -1655,8 +1655,9 @@ public class JobManagerTest
             @Override
             public Object answer(InvocationOnMock invocation) throws IOException
             {
-                CsvRecordWriter writer = (CsvRecordWriter) invocation.getArguments()[0];
+                CsvRecordWriter writer = (CsvRecordWriter) invocation.getArguments()[1];
                 writer.writeRecord(new String [] {"csv","header","one"});
+                writer.flush();
                 return null;
             }
         };

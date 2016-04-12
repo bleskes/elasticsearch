@@ -561,7 +561,7 @@ public class ProcessManager
      * @throws MalformedJsonException
      * @return Count of records, fields, bytes, etc written
      */
-    public DataCounts writeToJob(RecordWriter recordWriter,
+    public DataCounts writeToJob(boolean includeControlField, RecordWriter recordWriter,
             DataDescription dataDescription,
             AnalysisConfig analysisConfig,
             SchedulerConfig schedulerConfig,
@@ -573,7 +573,7 @@ public class ProcessManager
     throws JsonParseException, MissingFieldException, IOException,
         HighProportionOfBadTimestampsException, OutOfOrderRecordsException, MalformedJsonException
     {
-        DataToProcessWriter writer = new DataToProcessWriterFactory().create(recordWriter,
+        DataToProcessWriter writer = new DataToProcessWriterFactory().create(includeControlField, recordWriter,
                 dataDescription, analysisConfig, schedulerConfig, transforms, statusReporter, dataPersister, jobLogger);
 
         return writer.write(input);
@@ -626,7 +626,7 @@ public class ProcessManager
 
         try
         {
-            DataToProcessWriter writer = new DataToProcessWriterFactory().create(lengthEncodedWriter,
+            DataToProcessWriter writer = new DataToProcessWriterFactory().create(true, lengthEncodedWriter,
                     dataDescription, analysisConfig, schedulerConfig, transforms, statusReporter, dataPersister, jobLogger);
 
             return writer.write(countingStream);

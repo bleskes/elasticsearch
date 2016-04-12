@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -223,7 +223,7 @@ public class SingleLineDataToProcessWriterTest
 
     private SingleLineDataToProcessWriter createWriter()
     {
-        return new SingleLineDataToProcessWriter(m_LengthEncodedWriter, m_DataDescription,
+        return new SingleLineDataToProcessWriter(true, m_LengthEncodedWriter, m_DataDescription,
                 m_AnalysisConfig, new TransformConfigs(m_TransformConfigs), m_StatusReporter,
                 m_DataPersister, m_Logger);
     }

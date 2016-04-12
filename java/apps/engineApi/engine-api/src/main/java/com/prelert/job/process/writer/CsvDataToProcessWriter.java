@@ -75,12 +75,12 @@ class CsvDataToProcessWriter extends AbstractDataToProcessWriter
      */
     private static final int MAX_LINES_PER_RECORD = 10000;
 
-    public CsvDataToProcessWriter(RecordWriter recordWriter,
+    public CsvDataToProcessWriter(boolean includeControlField, RecordWriter recordWriter,
             DataDescription dataDescription, AnalysisConfig analysisConfig,
             TransformConfigs transforms, StatusReporter statusReporter,
             JobDataPersister jobDataPersister, Logger logger)
     {
-        super(recordWriter, dataDescription, analysisConfig, transforms,
+        super(includeControlField, recordWriter, dataDescription, analysisConfig, transforms,
                 statusReporter, jobDataPersister, logger);
     }
 
@@ -132,13 +132,10 @@ class CsvDataToProcessWriter extends AbstractDataToProcessWriter
                 maxIndex = Math.max(index, maxIndex);
             }
 
-
             int numFields = outputFieldCount();
             String[] record = new String[numFields];
-            record[record.length -1] = ""; // The control field is always an empty string
 
             List<String> line;
-
             while ((line = csvReader.read()) != null)
             {
                 Arrays.fill(record, "");
