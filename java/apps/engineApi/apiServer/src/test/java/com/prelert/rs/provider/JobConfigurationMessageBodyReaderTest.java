@@ -249,8 +249,8 @@ public class JobConfigurationMessageBodyReaderTest
                 + "\"detectors\":[{\"fieldName\":\"responsetime\",\"byFieldName\":\"airline\"}]},"
                 + "\"transforms\":[{\"transform\":\"a_function\", \"inputs\":[\"field1\", \"field2\"], \"outputs\":[\"out_field\"]}],"
                 + "\"dataDescription\":{\"fieldDelimiter\":\",\", \"timeField\":\"time\", "
-                + "\"timeFormat\":\"yyyy-MM-dd HH:mm:ssX\"} }}";
-
+                + "\"timeFormat\":\"yyyy-MM-dd HH:mm:ssX\"}"
+                + "}";
 
         JobConfigurationMessageBodyReader reader = new JobConfigurationMessageBodyReader();
 

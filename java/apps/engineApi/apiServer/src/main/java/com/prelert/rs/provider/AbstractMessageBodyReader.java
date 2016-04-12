@@ -39,7 +39,9 @@ import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.MessageBodyReader;
 
+import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectReader;
 
@@ -68,7 +70,15 @@ abstract class AbstractMessageBodyReader<T> implements MessageBodyReader<T>
 
          try
          {
-              return getObjectReader().readValue(input);
+              try (JsonParser parser = new JsonFactory().createParser(input))
+              {
+                  T ret = getObjectReader().readValue(parser);
+                  if (parser.nextToken() != null)
+                  {
+                      throw new JsonMappingException("Unexpected token after end of expected JSON: " + parser.getText());
+                  }
+                  return ret;
+              }
          }
          catch (JsonParseException e)
          {

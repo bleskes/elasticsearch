@@ -48,6 +48,7 @@ import org.junit.Test;
 
 import com.prelert.job.Detector;
 import com.prelert.job.JobConfiguration;
+import com.prelert.rs.provider.JobConfigurationParseException;
 
 public class DetectorMessageBodyReaderTest
 {
@@ -99,4 +100,18 @@ public class DetectorMessageBodyReaderTest
         assertEquals(expected, detector);
     }
 
+    @Test(expected=JobConfigurationParseException.class)
+    public void testReadDetector_GivenTrailingJunk() throws IOException
+    {
+        final String FLIGHT_CENTRE_DETECTOR_PLUS_JUNK =
+                "{\"function\":\"max\",\"fieldName\":\"responsetime\",\"byFieldName\":\"airline\"}junk";
+
+        DetectorMessageBodyReader reader = new DetectorMessageBodyReader();
+
+        reader.readFrom(Detector.class, mock(Type.class),
+                                                new Annotation [] {},
+                                                MediaType.APPLICATION_JSON_TYPE,
+                                                new MultivaluedHashMap<String, String>(),
+                                        new ByteArrayInputStream(FLIGHT_CENTRE_DETECTOR_PLUS_JUNK.getBytes(StandardCharsets.UTF_8)));
+    }
 }
