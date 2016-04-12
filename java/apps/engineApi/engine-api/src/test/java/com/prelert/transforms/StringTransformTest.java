@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -207,5 +207,64 @@ public class StringTransformTest
 
         assertEquals(TransformResult.OK, upperCase.transform(readWriteArea));
         assertEquals("b", output[0]);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testGeoUnhashTransform_GivenZeroInputs() throws TransformException
+    {
+        List<TransformIndex> readIndicies = createIndexArray();
+        List<TransformIndex> writeIndicies = createIndexArray(new TransformIndex(2, 1));
+
+        StringTransform.createGeoUnhash(readIndicies, writeIndicies, mock(Logger.class));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testGeoUnhashTransform_GivenTwoInputs() throws TransformException
+    {
+        List<TransformIndex> readIndicies = createIndexArray(
+                new TransformIndex(0, 0), new TransformIndex(0, 1));
+        List<TransformIndex> writeIndicies = createIndexArray(new TransformIndex(2, 1));
+
+        StringTransform.createGeoUnhash(readIndicies, writeIndicies, mock(Logger.class));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testGeoUnhashTransform_GivenZeroOutputs() throws TransformException
+    {
+        List<TransformIndex> readIndicies = createIndexArray(new TransformIndex(0, 1));
+        List<TransformIndex> writeIndicies = createIndexArray();
+
+        StringTransform.createGeoUnhash(readIndicies, writeIndicies, mock(Logger.class));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testGeoUnhashTransform_GivenTwoOutputs() throws TransformException
+    {
+        List<TransformIndex> readIndicies = createIndexArray(new TransformIndex(0, 1));
+        List<TransformIndex> writeIndicies = createIndexArray(
+                new TransformIndex(1, 1), new TransformIndex(1, 2));
+
+        StringTransform.createGeoUnhash(readIndicies, writeIndicies, mock(Logger.class));
+    }
+
+    @Test
+    public void testGeoUnhashTransform_GivenSingleInputAndSingleOutput() throws TransformException
+    {
+        List<TransformIndex> readIndicies = createIndexArray(new TransformIndex(0, 1));
+        List<TransformIndex> writeIndicies = createIndexArray(new TransformIndex(2, 0));
+
+        StringTransform upperCase = StringTransform.createGeoUnhash(readIndicies, writeIndicies,
+                mock(Logger.class));
+
+        String [] input = {"  a ", "drm3btev3e86", " c", "d", "e"};
+        String [] scratch = {};
+        String [] output = new String [1];
+        String [][] readWriteArea = {input, scratch, output};
+
+        assertEquals(TransformResult.OK, upperCase.transform(readWriteArea));
+        String[] splitLatLong = output[0].split(",");
+        assertEquals(2, splitLatLong.length);
+        assertEquals(41.12, Double.parseDouble(splitLatLong[0]), 0.001);
+        assertEquals(-71.34, Double.parseDouble(splitLatLong[1]), 0.001);
     }
 }

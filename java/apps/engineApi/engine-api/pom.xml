@@ -65,6 +65,13 @@
       <artifactId>snakeyaml</artifactId>
       <version>1.15</version>
     </dependency>
+    <!-- For Elasticsearch 2.1 the geohash functions are in here - this changes
+         to the lucene-spatial package in later versions of Elasticsearch, so
+         this dependency needs changing when we upgrade -->
+    <dependency>
+      <groupId>org.elasticsearch</groupId>
+      <artifactId>elasticsearch</artifactId>
+    </dependency>
   </dependencies>
 
 

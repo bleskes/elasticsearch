@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -26,6 +26,15 @@
  ************************************************************/
 
 package com.prelert.transforms;
+
+// These are in elasticsearch-2.1.2.jar even though the "org.apache.lucene" bit
+// suggests otherwise.  For later versions of Elasticsearch, the required imports
+// change to org.apache.lucene.spatial.util.GeoEncodingUtils.mortonUnhashLat
+// org.apache.lucene.spatial.util.GeoEncodingUtils.mortonUnhashLon and
+// org.apache.lucene.spatial.util.GeoHashUtils.mortonEncode.
+import static org.apache.lucene.util.XGeoHashUtils.mortonEncode;
+import static org.apache.lucene.util.XGeoUtils.mortonUnhashLat;
+import static org.apache.lucene.util.XGeoUtils.mortonUnhashLon;
 
 import java.util.List;
 import java.util.function.Function;
@@ -73,5 +82,23 @@ public class StringTransform extends Transform
             List<TransformIndex> writeIndicies, Logger logger)
     {
         return new StringTransform(s -> s.trim(), readIndicies, writeIndicies, logger);
+    }
+
+    public static StringTransform createGeoUnhash(List<TransformIndex> readIndicies,
+            List<TransformIndex> writeIndicies, Logger logger)
+    {
+        return new StringTransform(s -> geoUnhash(s), readIndicies, writeIndicies, logger);
+    }
+
+    /**
+     * Convert a Geohash (https://en.wikipedia.org/wiki/Geohash) value to a
+     * string of the form "latitude,longitude".
+     */
+    private static String geoUnhash(String geoHash)
+    {
+        long hash = mortonEncode(geoHash);
+        StringBuilder strBuilder = new StringBuilder();
+        return strBuilder.append(mortonUnhashLat(hash))
+                .append(',').append(mortonUnhashLon(hash)).toString();
     }
 }

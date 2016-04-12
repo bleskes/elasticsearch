@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -40,7 +40,7 @@ import com.prelert.transforms.Transform.TransformIndex;
 /**
  * Create transforms from the configuration object.
  * Transforms need to know where to read strings from and where
- * write the output to hence input & output maps required by the
+ * write the output to hence input and output maps required by the
  * create method.
  */
 public class TransformFactory
@@ -152,8 +152,10 @@ public class TransformFactory
                 return StringTransform.createUpperCase(readIndicies, writeIndicies, logger);
             case TRIM:
                 return StringTransform.createTrim(readIndicies, writeIndicies, logger);
+            case GEO_UNHASH:
+                return StringTransform.createGeoUnhash(readIndicies, writeIndicies, logger);
             default:
-                // This code will never be hit it's to
+                // This code will never be hit - it's to
                 // keep the compiler happy.
                 throw new IllegalArgumentException("Unknown transform type " + type);
         }

@@ -48,7 +48,9 @@ public enum TransformType
     UPPERCASE(Names.UPPERCASE_NAME, Range.singleton(1), Range.singleton(0), Range.singleton(1),
             Arrays.asList("uppercase")),
     TRIM(Names.TRIM_NAME, Range.singleton(1), Range.singleton(0), Range.singleton(1),
-            Arrays.asList("trim"));
+            Arrays.asList("trim")),
+    GEO_UNHASH(Names.GEO_UNHASH_NAME, Range.singleton(1), Range.singleton(0), Range.singleton(1),
+            Arrays.asList("latLong"));
 
     /**
      * Transform names.
@@ -68,6 +70,7 @@ public enum TransformType
         public static final String LOWERCASE_NAME = "lowercase";
         public static final String UPPERCASE_NAME = "uppercase";
         public static final String TRIM_NAME = "trim";
+        public static final String GEO_UNHASH_NAME = "geo_unhash";
 
         private Names()
         {
