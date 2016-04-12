@@ -170,11 +170,15 @@ public class JobTimeoutsTest
         JobTimeouts jobTimeouts = new JobTimeouts(m_JobCloser);
         jobTimeouts.startTimeout("foo", Duration.ofSeconds(1));
         jobTimeouts.startTimeout("bar", Duration.ofSeconds(5));
+        jobTimeouts.startTimeout("no_timeout", Duration.ofSeconds(0));
+        jobTimeouts.startTimeout("no_timeout_2", Duration.ofSeconds(-1));
 
         jobTimeouts.shutdown();
 
         verify(m_JobCloser).closeJob("foo");
         verify(m_JobCloser).closeJob("bar");
+        verify(m_JobCloser).closeJob("no_timeout");
+        verify(m_JobCloser).closeJob("no_timeout_2");
     }
 
     @Test

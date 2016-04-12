@@ -31,10 +31,13 @@ import java.time.Duration;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.Delayed;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.apache.log4j.Logger;
 
@@ -58,6 +61,7 @@ class JobTimeouts implements Shutdownable
     private final JobCloser m_JobCloser;
     private final ScheduledExecutorService m_ScheduledExecutor;
     private final ConcurrentMap<String, ScheduledFuture<?>> m_JobIdToTimeoutFuture;
+
     private final long m_WaitBeforeRetryMillis;
 
     public JobTimeouts(JobCloser jobCloser)
@@ -87,11 +91,14 @@ class JobTimeouts implements Shutdownable
     {
         if (timeout.isZero() || timeout.isNegative())
         {
-            return;
+            m_JobIdToTimeoutFuture.put(jobId, new NullScheduledFuture());
         }
-        ScheduledFuture<?> scheduledFuture = m_ScheduledExecutor.schedule(
-                new FinishJobRunnable(jobId), timeout.toMillis(), TimeUnit.MILLISECONDS);
-        m_JobIdToTimeoutFuture.put(jobId, scheduledFuture);
+        else
+        {
+            ScheduledFuture<?> scheduledFuture = m_ScheduledExecutor.schedule(
+                    new FinishJobRunnable(jobId), timeout.toMillis(), TimeUnit.MILLISECONDS);
+            m_JobIdToTimeoutFuture.put(jobId, scheduledFuture);
+        }
     }
 
     public void stopTimeout(String jobId)
@@ -193,6 +200,52 @@ class JobTimeouts implements Shutdownable
                 LOGGER.error("Error closing job " + jobId, e);
                 return;
             }
+        }
+    }
+
+    private static class NullScheduledFuture implements ScheduledFuture<Void>
+    {
+        @Override
+        public long getDelay(TimeUnit unit)
+        {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public int compareTo(Delayed o)
+        {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public boolean cancel(boolean mayInterruptIfRunning)
+        {
+            return true;
+        }
+
+        @Override
+        public boolean isCancelled()
+        {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public boolean isDone()
+        {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public Void get() throws InterruptedException, ExecutionException
+        {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public Void get(long timeout, TimeUnit unit)
+                throws InterruptedException, ExecutionException, TimeoutException
+        {
+            throw new UnsupportedOperationException();
         }
     }
 }
