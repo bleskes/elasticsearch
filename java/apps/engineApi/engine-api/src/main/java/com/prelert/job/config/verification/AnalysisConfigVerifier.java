@@ -83,51 +83,63 @@ public final class AnalysisConfigVerifier
                     ErrorCodes.INCOMPLETE_CONFIGURATION);
         }
 
-        // If any detector function is rare/freq_rare, mustn't use overlapping buckets
-        boolean mustNotUseOverlappingBuckets = false;
-        // If overlappingBuckets are not set, default to true if all the detectors
-        // work with it
-
-        @SuppressWarnings("unused")
-        boolean canUseOverlappingBuckets = true;
-        List<String> illegalFunctions = new ArrayList<>();
-
         boolean isSummarised = config.getSummaryCountFieldName() != null &&
                 !config.getSummaryCountFieldName().isEmpty();
         for (Detector d : config.getDetectors())
         {
             DetectorVerifier.verify(d, isSummarised);
+        }
 
+        verifyOverlappingBucketsConfig(config);
+    }
+
+    private static void verifyOverlappingBucketsConfig(AnalysisConfig config) throws JobConfigurationException
+    {
+        // If any detector function is rare/freq_rare, mustn't use overlapping buckets
+        boolean mustNotUse = false;
+
+        // If overlappingBuckets are not set, default to true if all the detectors
+        // work with it
+        boolean canUse = true;
+        List<String> illegalFunctions = new ArrayList<>();
+        for (Detector d : config.getDetectors())
+        {
             if (Detector.NO_OVERLAPPING_BUCKETS_FUNCTIONS.contains(d.getFunction()))
             {
                 illegalFunctions.add(d.getFunction());
-                mustNotUseOverlappingBuckets = true;
+                mustNotUse = true;
             }
             if (Detector.OVERLAPPING_BUCKETS_FUNCTIONS_NOT_NEEDED.contains(d.getFunction()))
             {
-                canUseOverlappingBuckets = false;
+                canUse = false;
             }
         }
+        setOverlappingBucketsConfig(config, mustNotUse, canUse, illegalFunctions, false);
+    }
 
+    private static void setOverlappingBucketsConfig(AnalysisConfig config, boolean mustNotUse,
+            boolean canUse, List<String> illegalFunctions, boolean defaultOn)
+                    throws JobConfigurationException
+    {
         if (config.getOverlappingBuckets() == null)
         {
-            /* Uncomment this when overlappingBuckets are turned on by default
-             *
-            // Wasn't specified: turn on by default if detectors allow
-            if (mustNotUseOverlappingBuckets == false &&
-                    canUseOverlappingBuckets == true)
+            if (defaultOn == true)
             {
-                config.setOverlappingBuckets(true);
+                // Wasn't specified: turn on by default if detectors allow
+                if (mustNotUse == false &&
+                        canUse == true)
+                {
+                    config.setOverlappingBuckets(true);
+                }
+                else
+                {
+                    config.setOverlappingBuckets(false);
+                }
             }
-            else
-            {
-                config.setOverlappingBuckets(false);
-            }
-            */
         }
         else
         {
-            if (config.getOverlappingBuckets() && mustNotUseOverlappingBuckets == true)
+            if (config.getOverlappingBuckets() == true && mustNotUse == true)
             {
                 throw new JobConfigurationException(
                         Messages.getMessage(Messages.JOB_CONFIG_OVERLAPPING_BUCKETS_INCOMPATIBLE_FUNCTION,
@@ -136,5 +148,4 @@ public final class AnalysisConfigVerifier
             }
         }
     }
-
 }

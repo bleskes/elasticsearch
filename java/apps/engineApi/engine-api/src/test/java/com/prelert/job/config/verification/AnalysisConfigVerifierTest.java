@@ -241,60 +241,64 @@ public class AnalysisConfigVerifierTest
         List<Detector> detectors;
         Detector detector;
 
+        boolean onByDefault = false;
+
         /* Uncomment this when overlappingBuckets turned on by default
-         *
-        // Test overlappingBuckets unset
-        analysisConfig = new AnalysisConfig();
-        analysisConfig.setBucketSpan(5000L);
-        analysisConfig.setBatchSpan(0L);
-        detectors = new ArrayList<>();
-        detector = new Detector();
-        detector.setFunction("count");
-        detectors.add(detector);
-        detector = new Detector();
-        detector.setFunction("mean");
-        detector.setFieldName("value");
-        detectors.add(detector);
-        analysisConfig.setDetectors(detectors);
-        assertTrue(AnalysisConfigVerifier.verify(analysisConfig));
-        assertTrue(analysisConfig.getOverlappingBuckets());
+         */
+        if (onByDefault)
+        {
+            // Test overlappingBuckets unset
+            analysisConfig = new AnalysisConfig();
+            analysisConfig.setBucketSpan(5000L);
+            analysisConfig.setBatchSpan(0L);
+            detectors = new ArrayList<>();
+            detector = new Detector();
+            detector.setFunction("count");
+            detectors.add(detector);
+            detector = new Detector();
+            detector.setFunction("mean");
+            detector.setFieldName("value");
+            detectors.add(detector);
+            analysisConfig.setDetectors(detectors);
+            assertTrue(AnalysisConfigVerifier.verify(analysisConfig));
+            assertTrue(analysisConfig.getOverlappingBuckets());
 
-        // Test overlappingBuckets unset
-        analysisConfig = new AnalysisConfig();
-        analysisConfig.setBucketSpan(5000L);
-        analysisConfig.setBatchSpan(0L);
-        detectors = new ArrayList<>();
-        detector = new Detector();
-        detector.setFunction("count");
-        detectors.add(detector);
-        detector = new Detector();
-        detector.setFunction("rare");
-        detector.setByFieldName("value");
-        detectors.add(detector);
-        analysisConfig.setDetectors(detectors);
-        assertTrue(AnalysisConfigVerifier.verify(analysisConfig));
-        assertFalse(analysisConfig.getOverlappingBuckets());
+            // Test overlappingBuckets unset
+            analysisConfig = new AnalysisConfig();
+            analysisConfig.setBucketSpan(5000L);
+            analysisConfig.setBatchSpan(0L);
+            detectors = new ArrayList<>();
+            detector = new Detector();
+            detector.setFunction("count");
+            detectors.add(detector);
+            detector = new Detector();
+            detector.setFunction("rare");
+            detector.setByFieldName("value");
+            detectors.add(detector);
+            analysisConfig.setDetectors(detectors);
+            assertTrue(AnalysisConfigVerifier.verify(analysisConfig));
+            assertFalse(analysisConfig.getOverlappingBuckets());
 
-        // Test overlappingBuckets unset
-        analysisConfig = new AnalysisConfig();
-        analysisConfig.setBucketSpan(5000L);
-        analysisConfig.setBatchSpan(0L);
-        detectors = new ArrayList<>();
-        detector = new Detector();
-        detector.setFunction("count");
-        detectors.add(detector);
-        detector = new Detector();
-        detector.setFunction("min");
-        detector.setFieldName("value");
-        detectors.add(detector);
-        detector = new Detector();
-        detector.setFunction("max");
-        detector.setFieldName("value");
-        detectors.add(detector);
-        analysisConfig.setDetectors(detectors);
-        assertTrue(AnalysisConfigVerifier.verify(analysisConfig));
-        assertFalse(analysisConfig.getOverlappingBuckets());
-        */
+            // Test overlappingBuckets unset
+            analysisConfig = new AnalysisConfig();
+            analysisConfig.setBucketSpan(5000L);
+            analysisConfig.setBatchSpan(0L);
+            detectors = new ArrayList<>();
+            detector = new Detector();
+            detector.setFunction("count");
+            detectors.add(detector);
+            detector = new Detector();
+            detector.setFunction("min");
+            detector.setFieldName("value");
+            detectors.add(detector);
+            detector = new Detector();
+            detector.setFunction("max");
+            detector.setFieldName("value");
+            detectors.add(detector);
+            analysisConfig.setDetectors(detectors);
+            assertTrue(AnalysisConfigVerifier.verify(analysisConfig));
+            assertFalse(analysisConfig.getOverlappingBuckets());
+        }
 
         // Test overlappingBuckets set
         analysisConfig = new AnalysisConfig();

@@ -213,7 +213,7 @@ public class Detector
             ));
 
     /**
-     * The set of functions that should not be used with overlapping buckets
+     * The set of functions that must not be used with overlapping buckets
      */
     public static final Set<String> NO_OVERLAPPING_BUCKETS_FUNCTIONS =
             new HashSet<String>(Arrays.<String>asList(new String [] {
@@ -222,6 +222,7 @@ public class Detector
 
     /**
      * The set of functions that should not be used with overlapping buckets
+     * as they gain no benefit but have overhead
      */
     public static final Set<String> OVERLAPPING_BUCKETS_FUNCTIONS_NOT_NEEDED =
             new HashSet<String>(Arrays.<String>asList(new String [] {

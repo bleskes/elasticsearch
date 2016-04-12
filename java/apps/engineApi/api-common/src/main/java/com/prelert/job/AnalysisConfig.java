@@ -65,7 +65,7 @@ public class AnalysisConfig
     public static final Set<String> AUTO_CREATED_FIELDS = new HashSet<>(
             Arrays.asList(PRELERT_CATEGORY_FIELD));
 
-    public static final Long DEFAULT_RESULT_FINALIZATION_WINDOW = 2l;
+    public static final long DEFAULT_RESULT_FINALIZATION_WINDOW = 2L;
 
     /**
      * These values apply to all detectors
