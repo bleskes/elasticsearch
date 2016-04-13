@@ -27,9 +27,11 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.util.concurrent.ThreadContext;
 import org.elasticsearch.env.Environment;
 import org.elasticsearch.rest.RestRequest;
-import org.elasticsearch.shield.SystemUser;
-import org.elasticsearch.shield.User;
+import org.elasticsearch.shield.user.AnonymousUser;
+import org.elasticsearch.shield.user.SystemUser;
+import org.elasticsearch.shield.user.User;
 import org.elasticsearch.shield.audit.AuditTrail;
+import org.elasticsearch.shield.authc.esnative.ReservedRealm;
 import org.elasticsearch.shield.authc.support.SecuredString;
 import org.elasticsearch.shield.authc.support.UsernamePasswordToken;
 import org.elasticsearch.shield.crypto.CryptoService;
@@ -38,6 +40,7 @@ import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.test.rest.FakeRestRequest;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportMessage;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.rules.ExpectedException;
@@ -83,7 +86,6 @@ public class InternalAuthenticationServiceTests extends ESTestCase {
     AuditTrail auditTrail;
     AuthenticationToken token;
     CryptoService cryptoService;
-    AnonymousService anonymousService;
     ThreadPool threadPool;
     ThreadContext threadContext;
 
@@ -99,7 +101,8 @@ public class InternalAuthenticationServiceTests extends ESTestCase {
         Settings settings = Settings.builder().put("path.home", createTempDir()).build();
         ShieldLicenseState shieldLicenseState = mock(ShieldLicenseState.class);
         when(shieldLicenseState.customRealmsEnabled()).thenReturn(true);
-        realms = new Realms(Settings.EMPTY, new Environment(settings), Collections.<String, Realm.Factory>emptyMap(), shieldLicenseState) {
+        realms = new Realms(Settings.EMPTY, new Environment(settings), Collections.<String, Realm.Factory>emptyMap(), shieldLicenseState,
+                mock(ReservedRealm.class)) {
 
             @Override
             protected void doStart() {
@@ -112,12 +115,16 @@ public class InternalAuthenticationServiceTests extends ESTestCase {
         cryptoService = mock(CryptoService.class);
 
         auditTrail = mock(AuditTrail.class);
-        anonymousService = mock(AnonymousService.class);
         threadPool = mock(ThreadPool.class);
         threadContext = new ThreadContext(Settings.EMPTY);
         when(threadPool.getThreadContext()).thenReturn(threadContext);
-        service = new InternalAuthenticationService(Settings.EMPTY, realms, auditTrail, cryptoService, anonymousService,
+        service = new InternalAuthenticationService(Settings.EMPTY, realms, auditTrail, cryptoService,
                 new DefaultAuthenticationFailureHandler(), threadPool);
+    }
+
+    @After
+    public void resetAnonymous() {
+        AnonymousUser.initialize(Settings.EMPTY);
     }
 
     @SuppressWarnings("unchecked")
@@ -356,7 +363,7 @@ public class InternalAuthenticationServiceTests extends ESTestCase {
         InternalMessage message1 = new InternalMessage();
         ThreadContext threadContext1 = new ThreadContext(Settings.EMPTY);
         when(threadPool.getThreadContext()).thenReturn(threadContext1);
-        service = new InternalAuthenticationService(Settings.EMPTY, realms, auditTrail, cryptoService, anonymousService,
+        service = new InternalAuthenticationService(Settings.EMPTY, realms, auditTrail, cryptoService,
                 new DefaultAuthenticationFailureHandler(), threadPool);
 
         threadContext1.putTransient(InternalAuthenticationService.USER_KEY,
@@ -370,7 +377,7 @@ public class InternalAuthenticationServiceTests extends ESTestCase {
         // checking authentication from the user header
         threadContext1 = new ThreadContext(Settings.EMPTY);
         when(threadPool.getThreadContext()).thenReturn(threadContext1);
-        service = new InternalAuthenticationService(Settings.EMPTY, realms, auditTrail, cryptoService, anonymousService,
+        service = new InternalAuthenticationService(Settings.EMPTY, realms, auditTrail, cryptoService,
                 new DefaultAuthenticationFailureHandler(), threadPool);
         threadContext1.putHeader(InternalAuthenticationService.USER_KEY, threadContext.getHeader(InternalAuthenticationService.USER_KEY));
         when(cryptoService.unsignAndVerify("_signed_user")).thenReturn(InternalAuthenticationService.encodeUser(user1, null));
@@ -382,7 +389,7 @@ public class InternalAuthenticationServiceTests extends ESTestCase {
         threadContext1.readHeaders(input);
 
         when(threadPool.getThreadContext()).thenReturn(threadContext1);
-        service = new InternalAuthenticationService(Settings.EMPTY, realms, auditTrail, cryptoService, anonymousService,
+        service = new InternalAuthenticationService(Settings.EMPTY, realms, auditTrail, cryptoService,
                 new DefaultAuthenticationFailureHandler(), threadPool);
         user = service.authenticate("_action", new InternalMessage(), SystemUser.INSTANCE);
         assertThat(user, equalTo(user1));
@@ -390,8 +397,8 @@ public class InternalAuthenticationServiceTests extends ESTestCase {
     }
 
     public void testAutheticateTransportContextAndHeaderNoSigning() throws Exception {
-        Settings settings = Settings.builder().put(InternalAuthenticationService.SETTING_SIGN_USER_HEADER, false).build();
-        service = new InternalAuthenticationService(settings, realms, auditTrail, cryptoService, anonymousService,
+        Settings settings = Settings.builder().put(InternalAuthenticationService.SIGN_USER_HEADER.getKey(), false).build();
+        service = new InternalAuthenticationService(settings, realms, auditTrail, cryptoService,
                 new DefaultAuthenticationFailureHandler(), threadPool);
 
         User user1 = new User("username", "r1", "r2");
@@ -410,7 +417,7 @@ public class InternalAuthenticationServiceTests extends ESTestCase {
         InternalMessage message1 = new InternalMessage();
         ThreadContext threadContext1 = new ThreadContext(Settings.EMPTY);
         when(threadPool.getThreadContext()).thenReturn(threadContext1);
-        service = new InternalAuthenticationService(Settings.EMPTY, realms, auditTrail, cryptoService, anonymousService,
+        service = new InternalAuthenticationService(Settings.EMPTY, realms, auditTrail, cryptoService,
                 new DefaultAuthenticationFailureHandler(), threadPool);
         threadContext1.putTransient(InternalAuthenticationService.USER_KEY,
                 threadContext.getTransient(InternalAuthenticationService.USER_KEY));
@@ -431,7 +438,7 @@ public class InternalAuthenticationServiceTests extends ESTestCase {
         threadContext1.readHeaders(input);
 
         when(threadPool.getThreadContext()).thenReturn(threadContext1);
-        service = new InternalAuthenticationService(settings, realms, auditTrail, cryptoService, anonymousService,
+        service = new InternalAuthenticationService(settings, realms, auditTrail, cryptoService,
                 new DefaultAuthenticationFailureHandler(), threadPool);
         user = service.authenticate("_action", new InternalMessage(), SystemUser.INSTANCE);
         assertThat(user, equalTo(user1));
@@ -482,16 +489,16 @@ public class InternalAuthenticationServiceTests extends ESTestCase {
     }
 
     public void testAnonymousUserRest() throws Exception {
-        String username = randomBoolean() ? AnonymousService.ANONYMOUS_USERNAME : "user1";
+        String username = randomBoolean() ? AnonymousUser.DEFAULT_ANONYMOUS_USERNAME : "user1";
         Settings.Builder builder = Settings.builder()
-                .putArray("shield.authc.anonymous.roles", "r1", "r2", "r3");
-        if (username != AnonymousService.ANONYMOUS_USERNAME) {
-            builder.put("shield.authc.anonymous.username", username);
+                .putArray(AnonymousUser.ROLES_SETTING.getKey(), "r1", "r2", "r3");
+        if (username.equals(AnonymousUser.DEFAULT_ANONYMOUS_USERNAME) == false) {
+            builder.put(AnonymousUser.USERNAME_SETTING.getKey(), username);
         }
         Settings settings = builder.build();
-        AnonymousService holder = new AnonymousService(settings);
-        service = new InternalAuthenticationService(settings, realms, auditTrail, cryptoService, holder,
-                new DefaultAuthenticationFailureHandler(), threadPool);
+        AnonymousUser.initialize(settings);
+        service = new InternalAuthenticationService(settings, realms, auditTrail, cryptoService, new DefaultAuthenticationFailureHandler(),
+                threadPool);
 
         RestRequest request = new FakeRestRequest();
 
@@ -506,24 +513,26 @@ public class InternalAuthenticationServiceTests extends ESTestCase {
 
     public void testAnonymousUserTransportNoDefaultUser() throws Exception {
         Settings settings = Settings.builder()
-                .putArray("shield.authc.anonymous.roles", "r1", "r2", "r3")
+                .putArray(AnonymousUser.ROLES_SETTING.getKey(), "r1", "r2", "r3")
                 .build();
-        service = new InternalAuthenticationService(settings, realms, auditTrail, cryptoService, new AnonymousService(settings),
+        AnonymousUser.initialize(settings);
+        service = new InternalAuthenticationService(settings, realms, auditTrail, cryptoService,
                 new DefaultAuthenticationFailureHandler(), threadPool);
 
         InternalMessage message = new InternalMessage();
 
         User user = service.authenticate("_action", message, null);
         assertThat(user, notNullValue());
-        assertThat(user.principal(), equalTo(AnonymousService.ANONYMOUS_USERNAME));
+        assertThat(user.principal(), equalTo(AnonymousUser.DEFAULT_ANONYMOUS_USERNAME));
         assertThat(user.roles(), arrayContainingInAnyOrder("r1", "r2", "r3"));
     }
 
     public void testAnonymousUserTransportWithDefaultUser() throws Exception {
         Settings settings = Settings.builder()
-                .putArray("shield.authc.anonymous.roles", "r1", "r2", "r3")
+                .putArray(AnonymousUser.ROLES_SETTING.getKey(), "r1", "r2", "r3")
                 .build();
-        service = new InternalAuthenticationService(settings, realms, auditTrail, cryptoService, new AnonymousService(settings),
+        AnonymousUser.initialize(settings);
+        service = new InternalAuthenticationService(settings, realms, auditTrail, cryptoService,
                 new DefaultAuthenticationFailureHandler(), threadPool);
 
         InternalMessage message = new InternalMessage();

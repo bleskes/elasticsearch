@@ -31,8 +31,8 @@ import org.elasticsearch.common.transport.LocalTransportAddress;
 import org.elasticsearch.common.transport.TransportAddress;
 import org.elasticsearch.common.util.concurrent.ThreadContext;
 import org.elasticsearch.rest.RestRequest;
-import org.elasticsearch.shield.SystemUser;
-import org.elasticsearch.shield.User;
+import org.elasticsearch.shield.user.SystemUser;
+import org.elasticsearch.shield.user.User;
 import org.elasticsearch.shield.audit.logfile.CapturingLogger.Level;
 import org.elasticsearch.shield.authc.AuthenticationToken;
 import org.elasticsearch.shield.rest.RemoteHostHeader;
@@ -121,9 +121,9 @@ public class LoggingAuditTrailTests extends ESTestCase {
     @Before
     public void init() throws Exception {
         settings = Settings.builder()
-                .put("shield.audit.logfile.prefix.emit_node_host_address", randomBoolean())
-                .put("shield.audit.logfile.prefix.emit_node_host_name", randomBoolean())
-                .put("shield.audit.logfile.prefix.emit_node_name", randomBoolean())
+                .put("xpack.security.audit.logfile.prefix.emit_node_host_address", randomBoolean())
+                .put("xpack.security.audit.logfile.prefix.emit_node_host_name", randomBoolean())
+                .put("xpack.security.audit.logfile.prefix.emit_node_name", randomBoolean())
                 .build();
         transport = mock(Transport.class);
         when(transport.lifecycleState()).thenReturn(Lifecycle.State.STARTED);
@@ -185,12 +185,12 @@ public class LoggingAuditTrailTests extends ESTestCase {
                 case WARN:
                 case INFO:
                     assertMsg(logger, Level.WARN, prefix + "[rest] [anonymous_access_denied]\torigin_address=[" +
-                            NetworkAddress.formatAddress(address) + "], uri=[_uri]");
+                            NetworkAddress.format(address) + "], uri=[_uri]");
                     break;
                 case DEBUG:
                 case TRACE:
                     assertMsg(logger, Level.DEBUG, prefix + "[rest] [anonymous_access_denied]\torigin_address=[" +
-                            NetworkAddress.formatAddress(address) + "], uri=[_uri], request_body=[" + expectedMessage + "]");
+                            NetworkAddress.format(address) + "], uri=[_uri], request_body=[" + expectedMessage + "]");
             }
         }
     }
@@ -277,12 +277,12 @@ public class LoggingAuditTrailTests extends ESTestCase {
                 case WARN:
                 case INFO:
                     assertMsg(logger, Level.ERROR, prefix + "[rest] [authentication_failed]\torigin_address=[" +
-                            NetworkAddress.formatAddress(address) + "], principal=[_principal], uri=[_uri]");
+                            NetworkAddress.format(address) + "], principal=[_principal], uri=[_uri]");
                     break;
                 case DEBUG:
                 case TRACE:
                     assertMsg(logger, Level.DEBUG, prefix + "[rest] [authentication_failed]\torigin_address=[" +
-                            NetworkAddress.formatAddress(address) + "], principal=[_principal], uri=[_uri], request_body=[" +
+                            NetworkAddress.format(address) + "], principal=[_principal], uri=[_uri], request_body=[" +
                             expectedMessage + "]");
             }
         }
@@ -304,12 +304,12 @@ public class LoggingAuditTrailTests extends ESTestCase {
                 case WARN:
                 case INFO:
                     assertMsg(logger, Level.ERROR, prefix + "[rest] [authentication_failed]\torigin_address=[" +
-                            NetworkAddress.formatAddress(address) + "], uri=[_uri]");
+                            NetworkAddress.format(address) + "], uri=[_uri]");
                     break;
                 case DEBUG:
                 case TRACE:
                     assertMsg(logger, Level.DEBUG, prefix + "[rest] [authentication_failed]\torigin_address=[" +
-                            NetworkAddress.formatAddress(address) + "], uri=[_uri], request_body=[" + expectedMessage + "]");
+                            NetworkAddress.format(address) + "], uri=[_uri], request_body=[" + expectedMessage + "]");
             }
         }
     }
@@ -361,7 +361,7 @@ public class LoggingAuditTrailTests extends ESTestCase {
                     break;
                 case TRACE:
                     assertMsg(logger, Level.TRACE, prefix + "[rest] [authentication_failed]\trealm=[_realm], origin_address=[" +
-                            NetworkAddress.formatAddress(address) + "], principal=[_principal], uri=[_uri], request_body=[" +
+                            NetworkAddress.format(address) + "], principal=[_principal], uri=[_uri], request_body=[" +
                             expectedMessage + "]");
             }
         }
@@ -612,7 +612,7 @@ public class LoggingAuditTrailTests extends ESTestCase {
                 case ERROR:
                     assertMsg(logger, Level.ERROR, String.format(Locale.ROOT, prefix +
                             "[ip_filter] [connection_denied]\torigin_address=[%s], transport_profile=[%s], rule=[deny %s]",
-                            NetworkAddress.formatAddress(inetAddress), "default", "_all"));
+                            NetworkAddress.format(inetAddress), "default", "_all"));
                     break;
                 case WARN:
                 case INFO:
@@ -640,7 +640,7 @@ public class LoggingAuditTrailTests extends ESTestCase {
                 case TRACE:
                     assertMsg(logger, Level.TRACE, String.format(Locale.ROOT, prefix + "[ip_filter] " +
                             "[connection_granted]\torigin_address=[%s], transport_profile=[default], rule=[allow default:accept_all]",
-                            NetworkAddress.formatAddress(inetAddress)));
+                            NetworkAddress.format(inetAddress)));
             }
         }
     }
@@ -704,7 +704,7 @@ public class LoggingAuditTrailTests extends ESTestCase {
         InetSocketAddress restAddress = RemoteHostHeader.restRemoteAddress(threadContext);
         if (restAddress != null) {
             assertThat(text, equalTo("origin_type=[rest], origin_address=[" +
-                    NetworkAddress.formatAddress(restAddress.getAddress()) + "]"));
+                    NetworkAddress.format(restAddress.getAddress()) + "]"));
             return;
         }
         TransportAddress address = message.remoteAddress();
@@ -716,7 +716,7 @@ public class LoggingAuditTrailTests extends ESTestCase {
 
         if (address instanceof InetSocketTransportAddress) {
             assertThat(text, equalTo("origin_type=[transport], origin_address=[" +
-                    NetworkAddress.formatAddress(((InetSocketTransportAddress) address).address().getAddress()) + "]"));
+                    NetworkAddress.format(((InetSocketTransportAddress) address).address().getAddress()) + "]"));
         } else {
             assertThat(text, equalTo("origin_type=[transport], origin_address=[" + address + "]"));
         }

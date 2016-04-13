@@ -21,6 +21,7 @@ import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.util.concurrent.ThreadContext;
 import org.elasticsearch.shield.authc.AuthenticationService;
+import org.elasticsearch.shield.user.User;
 import org.elasticsearch.threadpool.ThreadPool;
 
 import java.io.IOException;
@@ -34,6 +35,8 @@ public interface SecurityContext {
     void executeAs(User user, Runnable runnable);
 
     <V> V executeAs(User user, Callable<V> callable);
+
+    User getUser();
 
     class Insecure implements SecurityContext {
 
@@ -54,6 +57,11 @@ public interface SecurityContext {
             } catch (Exception e) {
                 throw new ElasticsearchException(e);
             }
+        }
+
+        @Override
+        public User getUser() {
+            return null;
         }
     }
 
@@ -82,6 +90,11 @@ public interface SecurityContext {
             } catch (Exception e) {
                 throw new ElasticsearchException(e);
             }
+        }
+
+        @Override
+        public User getUser() {
+            return authcService.getCurrentUser();
         }
 
         private void setUser(User user) {

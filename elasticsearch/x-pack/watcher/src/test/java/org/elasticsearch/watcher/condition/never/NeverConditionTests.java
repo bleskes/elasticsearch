@@ -39,7 +39,7 @@ public class NeverConditionTests extends ESTestCase {
     }
 
     public void testParserValid() throws Exception {
-        NeverConditionFactory factory = new NeverConditionFactory(Settings.settingsBuilder().build());
+        NeverConditionFactory factory = new NeverConditionFactory(Settings.builder().build());
         XContentBuilder builder = jsonBuilder();
         builder.startObject();
         builder.endObject();
@@ -52,7 +52,7 @@ public class NeverConditionTests extends ESTestCase {
     }
 
     public void testParserInvalid() throws Exception {
-        ConditionFactory factory = new NeverConditionFactory(Settings.settingsBuilder().build());
+        ConditionFactory factory = new NeverConditionFactory(Settings.builder().build());
         XContentBuilder builder = jsonBuilder();
         builder.startObject();
         builder.field("foo", "bar");

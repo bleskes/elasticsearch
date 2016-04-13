@@ -22,6 +22,8 @@ import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.elasticsearch.common.transport.TransportAddress;
+import org.elasticsearch.shield.Security;
+import org.elasticsearch.shield.transport.netty.ShieldNettyTransport;
 import org.elasticsearch.test.ShieldIntegTestCase;
 import org.elasticsearch.transport.Transport;
 import org.elasticsearch.xpack.XPackPlugin;
@@ -31,7 +33,6 @@ import java.net.InetAddress;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import static org.elasticsearch.common.settings.Settings.settingsBuilder;
 import static org.elasticsearch.test.ShieldSettingsSource.DEFAULT_PASSWORD;
 import static org.elasticsearch.test.ShieldSettingsSource.DEFAULT_USER_NAME;
 import static org.elasticsearch.test.ShieldSettingsSource.getSSLSettingsForStore;
@@ -74,20 +75,21 @@ public class SslMultiPortTests extends ShieldIntegTestCase {
             throw new RuntimeException(e);
         }
 
-        return settingsBuilder()
+        return Settings.builder()
                 .put(super.nodeSettings(nodeOrdinal))
                 // client set up here
                 .put("transport.profiles.client.port", randomClientPortRange)
                 // make sure this is "localhost", no matter if ipv4 or ipv6, but be consistent
                 .put("transport.profiles.client.bind_host", "localhost")
-                .put("transport.profiles.client.shield.truststore.path", store.toAbsolutePath()) // settings for client truststore
-                .put("transport.profiles.client.shield.truststore.password", "testnode-client-profile")
+                .put("transport.profiles.client.xpack.security.truststore.path", store.toAbsolutePath()) // settings for client truststore
+                .put("transport.profiles.client.xpack.security.truststore.password", "testnode-client-profile")
                 .put("transport.profiles.no_ssl.port", randomNonSslPortRange)
                 .put("transport.profiles.no_ssl.bind_host", "localhost")
-                .put("transport.profiles.no_ssl.shield.ssl", "false")
+                .put(randomFrom(
+                        "transport.profiles.no_ssl.xpack.security.ssl.enabled", "transport.profiles.no_ssl.xpack.security.ssl"), "false")
                 .put("transport.profiles.no_client_auth.port", randomNoClientAuthPortRange)
                 .put("transport.profiles.no_client_auth.bind_host", "localhost")
-                .put("transport.profiles.no_client_auth.shield.ssl.client.auth", false)
+                .put("transport.profiles.no_client_auth.xpack.security.ssl.client.auth", false)
                 .build();
     }
 
@@ -97,7 +99,7 @@ public class SslMultiPortTests extends ShieldIntegTestCase {
     }
 
     private TransportClient createTransportClient(Settings additionalSettings) {
-        Settings settings = settingsBuilder().put(transportClientSettings())
+        Settings settings = Settings.builder().put(transportClientSettings())
                 .put("node.name", "programmatic_transport_client")
                 .put("cluster.name", internalCluster().getClusterName())
                 .put(additionalSettings)
@@ -232,8 +234,8 @@ public class SslMultiPortTests extends ShieldIntegTestCase {
      * Uses a transport client with SSL disabled. This test connects to the no_ssl profile, which should always succeed
      */
     public void testThatTransportClientCanConnectToNoSslProfile() throws Exception {
-        Settings settings = settingsBuilder()
-                .put("shield.user", DEFAULT_USER_NAME + ":" + DEFAULT_PASSWORD)
+        Settings settings = Settings.builder()
+                .put(Security.USER_SETTING.getKey(), DEFAULT_USER_NAME + ":" + DEFAULT_PASSWORD)
                 .put("cluster.name", internalCluster().getClusterName())
                 .build();
         try (TransportClient transportClient = TransportClient.builder().settings(settings).addPlugin(XPackPlugin.class).build()) {
@@ -247,8 +249,8 @@ public class SslMultiPortTests extends ShieldIntegTestCase {
      * as a non-ssl transport client cannot connect to a ssl profile
      */
     public void testThatTransportClientCannotConnectToDefaultProfile() throws Exception {
-        Settings settings = settingsBuilder()
-                .put("shield.user", DEFAULT_USER_NAME + ":" + DEFAULT_PASSWORD)
+        Settings settings = Settings.builder()
+                .put(Security.USER_SETTING.getKey(), DEFAULT_USER_NAME + ":" + DEFAULT_PASSWORD)
                 .put("cluster.name", internalCluster().getClusterName())
                 .build();
         try (TransportClient transportClient = TransportClient.builder().addPlugin(XPackPlugin.class).settings(settings).build()) {
@@ -265,8 +267,8 @@ public class SslMultiPortTests extends ShieldIntegTestCase {
      * as a non-ssl transport client cannot connect to a ssl profile
      */
     public void testThatTransportClientCannotConnectToClientProfile() throws Exception {
-        Settings settings = settingsBuilder()
-                .put("shield.user", DEFAULT_USER_NAME + ":" + DEFAULT_PASSWORD)
+        Settings settings = Settings.builder()
+                .put(Security.USER_SETTING.getKey(), DEFAULT_USER_NAME + ":" + DEFAULT_PASSWORD)
                 .put("cluster.name", internalCluster().getClusterName())
                 .build();
         try (TransportClient transportClient = TransportClient.builder().addPlugin(XPackPlugin.class).settings(settings).build()) {
@@ -283,8 +285,8 @@ public class SslMultiPortTests extends ShieldIntegTestCase {
      * as a non-ssl transport client cannot connect to a ssl profile
      */
     public void testThatTransportClientCannotConnectToNoClientAuthProfile() throws Exception {
-        Settings settings = settingsBuilder()
-                .put("shield.user", DEFAULT_USER_NAME + ":" + DEFAULT_PASSWORD)
+        Settings settings = Settings.builder()
+                .put(Security.USER_SETTING.getKey(), DEFAULT_USER_NAME + ":" + DEFAULT_PASSWORD)
                 .put("cluster.name", internalCluster().getClusterName())
                 .build();
         try (TransportClient transportClient = TransportClient.builder().addPlugin(XPackPlugin.class).settings(settings).build()) {
@@ -303,13 +305,13 @@ public class SslMultiPortTests extends ShieldIntegTestCase {
      * the testnode certificate and does not require to present a certificate, so this connection should always succeed
      */
     public void testThatTransportClientWithOnlyTruststoreCanConnectToNoClientAuthProfile() throws Exception {
-        Settings settings = settingsBuilder()
-                .put("shield.user", DEFAULT_USER_NAME + ":" + DEFAULT_PASSWORD)
+        Settings settings = Settings.builder()
+                .put(Security.USER_SETTING.getKey(), DEFAULT_USER_NAME + ":" + DEFAULT_PASSWORD)
                 .put("cluster.name", internalCluster().getClusterName())
-                .put("shield.transport.ssl", true)
-                .put("shield.ssl.truststore.path",
+                .put(ShieldNettyTransport.SSL_SETTING.getKey(), true)
+                .put("xpack.security.ssl.truststore.path",
                         getDataPath("/org/elasticsearch/shield/transport/ssl/certs/simple/truststore-testnode-only.jks"))
-                .put("shield.ssl.truststore.password", "truststore-testnode-only")
+                .put("xpack.security.ssl.truststore.password", "truststore-testnode-only")
                 .build();
         try (TransportClient transportClient = TransportClient.builder().settings(settings).addPlugin(XPackPlugin.class).build()) {
             transportClient.addTransportAddress(new InetSocketTransportAddress(InetAddress.getLoopbackAddress(),
@@ -325,13 +327,13 @@ public class SslMultiPortTests extends ShieldIntegTestCase {
      * the client has no certificate to present
      */
     public void testThatTransportClientWithOnlyTruststoreCannotConnectToClientProfile() throws Exception {
-        Settings settings = settingsBuilder()
-                .put("shield.user", DEFAULT_USER_NAME + ":" + DEFAULT_PASSWORD)
+        Settings settings = Settings.builder()
+                .put(Security.USER_SETTING.getKey(), DEFAULT_USER_NAME + ":" + DEFAULT_PASSWORD)
                 .put("cluster.name", internalCluster().getClusterName())
-                .put("shield.transport.ssl", true)
-                .put("shield.ssl.truststore.path",
+                .put(ShieldNettyTransport.SSL_SETTING.getKey(), true)
+                .put("xpack.security.ssl.truststore.path",
                         getDataPath("/org/elasticsearch/shield/transport/ssl/certs/simple/truststore-testnode-only.jks"))
-                .put("shield.ssl.truststore.password", "truststore-testnode-only")
+                .put("xpack.security.ssl.truststore.password", "truststore-testnode-only")
                 .build();
         try (TransportClient transportClient = TransportClient.builder().addPlugin(XPackPlugin.class).settings(settings).build()) {
             transportClient.addTransportAddress(new InetSocketTransportAddress(InetAddress.getLoopbackAddress(), getProfilePort("client")));
@@ -349,13 +351,13 @@ public class SslMultiPortTests extends ShieldIntegTestCase {
      * the client has no certificate to present
      */
     public void testThatTransportClientWithOnlyTruststoreCannotConnectToDefaultProfile() throws Exception {
-        Settings settings = settingsBuilder()
-                .put("shield.user", DEFAULT_USER_NAME + ":" + DEFAULT_PASSWORD)
+        Settings settings = Settings.builder()
+                .put(Security.USER_SETTING.getKey(), DEFAULT_USER_NAME + ":" + DEFAULT_PASSWORD)
                 .put("cluster.name", internalCluster().getClusterName())
-                .put("shield.transport.ssl", true)
-                .put("shield.ssl.truststore.path",
+                .put(ShieldNettyTransport.SSL_SETTING.getKey(), true)
+                .put("xpack.security.ssl.truststore.path",
                         getDataPath("/org/elasticsearch/shield/transport/ssl/certs/simple/truststore-testnode-only.jks"))
-                .put("shield.ssl.truststore.password", "truststore-testnode-only")
+                .put("xpack.security.ssl.truststore.password", "truststore-testnode-only")
                 .build();
         try (TransportClient transportClient = TransportClient.builder().addPlugin(XPackPlugin.class).settings(settings).build()) {
             transportClient.addTransportAddress(randomFrom(internalCluster().getInstance(Transport.class).boundAddress().boundAddresses()));
@@ -372,13 +374,13 @@ public class SslMultiPortTests extends ShieldIntegTestCase {
      * SSL so the connection should never succeed
      */
     public void testThatTransportClientWithOnlyTruststoreCannotConnectToNoSslProfile() throws Exception {
-        Settings settings = settingsBuilder()
-                .put("shield.user", DEFAULT_USER_NAME + ":" + DEFAULT_PASSWORD)
+        Settings settings = Settings.builder()
+                .put(Security.USER_SETTING.getKey(), DEFAULT_USER_NAME + ":" + DEFAULT_PASSWORD)
                 .put("cluster.name", internalCluster().getClusterName())
-                .put("shield.transport.ssl", true)
-                .put("shield.ssl.truststore.path",
+                .put(ShieldNettyTransport.SSL_SETTING.getKey(), true)
+                .put("xpack.security.ssl.truststore.path",
                         getDataPath("/org/elasticsearch/shield/transport/ssl/certs/simple/truststore-testnode-only.jks"))
-                .put("shield.ssl.truststore.password", "truststore-testnode-only")
+                .put("xpack.security.ssl.truststore.password", "truststore-testnode-only")
                 .build();
         try (TransportClient transportClient = TransportClient.builder().addPlugin(XPackPlugin.class).settings(settings).build()) {
             transportClient.addTransportAddress(new InetSocketTransportAddress(InetAddress.getLoopbackAddress(), getProfilePort("no_ssl")));
@@ -395,10 +397,10 @@ public class SslMultiPortTests extends ShieldIntegTestCase {
      * will never be trusted by the default truststore so the connection should always fail
      */
     public void testThatSSLTransportClientWithNoTruststoreCannotConnectToDefaultProfile() throws Exception {
-        Settings settings = settingsBuilder()
-                .put("shield.user", DEFAULT_USER_NAME + ":" + DEFAULT_PASSWORD)
+        Settings settings = Settings.builder()
+                .put(Security.USER_SETTING.getKey(), DEFAULT_USER_NAME + ":" + DEFAULT_PASSWORD)
                 .put("cluster.name", internalCluster().getClusterName())
-                .put("shield.transport.ssl", true)
+                .put(ShieldNettyTransport.SSL_SETTING.getKey(), true)
                 .build();
         try (TransportClient transportClient = TransportClient.builder().addPlugin(XPackPlugin.class).settings(settings).build()) {
             transportClient.addTransportAddress(randomFrom(internalCluster().getInstance(Transport.class).boundAddress().boundAddresses()));
@@ -415,10 +417,10 @@ public class SslMultiPortTests extends ShieldIntegTestCase {
      * will never be trusted by the default truststore so the connection should always fail
      */
     public void testThatSSLTransportClientWithNoTruststoreCannotConnectToClientProfile() throws Exception {
-        Settings settings = settingsBuilder()
-                .put("shield.user", DEFAULT_USER_NAME + ":" + DEFAULT_PASSWORD)
+        Settings settings = Settings.builder()
+                .put(Security.USER_SETTING.getKey(), DEFAULT_USER_NAME + ":" + DEFAULT_PASSWORD)
                 .put("cluster.name", internalCluster().getClusterName())
-                .put("shield.transport.ssl", true)
+                .put(ShieldNettyTransport.SSL_SETTING.getKey(), true)
                 .build();
         try (TransportClient transportClient = TransportClient.builder().addPlugin(XPackPlugin.class).settings(settings).build()) {
             transportClient.addTransportAddress(new InetSocketTransportAddress(InetAddress.getLoopbackAddress(), getProfilePort("client")));
@@ -435,10 +437,10 @@ public class SslMultiPortTests extends ShieldIntegTestCase {
      * will never be trusted by the default truststore so the connection should always fail
      */
     public void testThatSSLTransportClientWithNoTruststoreCannotConnectToNoClientAuthProfile() throws Exception {
-        Settings settings = settingsBuilder()
-                .put("shield.user", DEFAULT_USER_NAME + ":" + DEFAULT_PASSWORD)
+        Settings settings = Settings.builder()
+                .put(Security.USER_SETTING.getKey(), DEFAULT_USER_NAME + ":" + DEFAULT_PASSWORD)
                 .put("cluster.name", internalCluster().getClusterName())
-                .put("shield.transport.ssl", true)
+                .put(ShieldNettyTransport.SSL_SETTING.getKey(), true)
                 .build();
         try (TransportClient transportClient = TransportClient.builder().addPlugin(XPackPlugin.class).settings(settings).build()) {
             transportClient.addTransportAddress(new InetSocketTransportAddress(InetAddress.getLoopbackAddress(),
@@ -456,10 +458,10 @@ public class SslMultiPortTests extends ShieldIntegTestCase {
      * will not work
      */
     public void testThatSSLTransportClientWithNoTruststoreCannotConnectToNoSslProfile() throws Exception {
-        Settings settings = settingsBuilder()
-                .put("shield.user", DEFAULT_USER_NAME + ":" + DEFAULT_PASSWORD)
+        Settings settings = Settings.builder()
+                .put(Security.USER_SETTING.getKey(), DEFAULT_USER_NAME + ":" + DEFAULT_PASSWORD)
                 .put("cluster.name", internalCluster().getClusterName())
-                .put("shield.transport.ssl", true)
+                .put(ShieldNettyTransport.SSL_SETTING.getKey(), true)
                 .build();
         try (TransportClient transportClient = TransportClient.builder().addPlugin(XPackPlugin.class).settings(settings).build()) {
             transportClient.addTransportAddress(new InetSocketTransportAddress(InetAddress.getLoopbackAddress(), getProfilePort("no_ssl")));

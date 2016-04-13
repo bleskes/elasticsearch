@@ -23,13 +23,14 @@ import org.elasticsearch.ElasticsearchParseException;
 import org.elasticsearch.common.component.AbstractLifecycleComponent;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.logging.ESLogger;
+import org.elasticsearch.common.settings.Setting;
+import org.elasticsearch.common.settings.Setting.Property;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.settings.SettingsModule;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.common.xcontent.yaml.YamlXContent;
 import org.elasticsearch.env.Environment;
-import org.elasticsearch.shield.Shield;
-import org.elasticsearch.shield.SystemUser;
-import org.elasticsearch.shield.XPackUser;
+import org.elasticsearch.shield.Security;
 import org.elasticsearch.shield.authc.support.RefreshListener;
 import org.elasticsearch.shield.authz.RoleDescriptor;
 import org.elasticsearch.shield.authz.permission.Role;
@@ -54,12 +55,15 @@ import java.util.regex.Pattern;
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.emptySet;
 import static java.util.Collections.unmodifiableMap;
+import static org.elasticsearch.shield.Security.setting;
 
 /**
  *
  */
 public class FileRolesStore extends AbstractLifecycleComponent<RolesStore> implements RolesStore {
 
+    public static final Setting<String> ROLES_FILE_SETTING =
+            Setting.simpleString(setting("authz.store.files.roles"), Property.NodeScope);
     private static final Pattern IN_SEGMENT_LINE = Pattern.compile("^\\s+.+");
     private static final Pattern SKIP_LINE = Pattern.compile("(^#.*|^\\s*)");
 
@@ -108,12 +112,12 @@ public class FileRolesStore extends AbstractLifecycleComponent<RolesStore> imple
     }
 
     public static Path resolveFile(Settings settings, Environment env) {
-        String location = settings.get("shield.authz.store.files.roles");
-        if (location == null) {
+        String location = ROLES_FILE_SETTING.get(settings);
+        if (location.isEmpty()) {
             return XPackPlugin.resolveConfigFile(env, "roles.yml");
         }
 
-        return env.binFile().getParent().resolve(location);
+        return XPackPlugin.resolveConfigFile(env, location);
     }
 
     public static Set<String> parseFileForRoleNames(Path path, ESLogger logger) {
@@ -141,7 +145,7 @@ public class FileRolesStore extends AbstractLifecycleComponent<RolesStore> imple
                 for (String segment : roleSegments) {
                     Role role = parseRole(segment, path, logger, resolvePermission, settings);
                     if (role != null) {
-                        if (SystemUser.ROLE_NAME.equals(role.name()) || XPackUser.ROLE.name().equals(role.name())) {
+                        if (ReservedRolesStore.isReserved(role.name())) {
                             logger.warn("role [{}] is reserved. the relevant role definition in the mapping file will be ignored",
                                     role.name());
                         } else {
@@ -185,10 +189,10 @@ public class FileRolesStore extends AbstractLifecycleComponent<RolesStore> imple
                         // first check if FLS/DLS is enabled on the role...
                         for (RoleDescriptor.IndicesPrivileges privilege : descriptor.getIndicesPrivileges()) {
                             if ((privilege.getQuery() != null || privilege.getFields() != null)
-                                    && Shield.flsDlsEnabled(settings) == false) {
+                                    && Security.flsDlsEnabled(settings) == false) {
                                 logger.error("invalid role definition [{}] in roles file [{}]. document and field level security is not " +
                                         "enabled. set [{}] to [true] in the configuration file. skipping role...", roleName, path
-                                        .toAbsolutePath(), XPackPlugin.featureEnabledSetting(Shield.DLS_FLS_FEATURE));
+                                        .toAbsolutePath(), XPackPlugin.featureEnabledSetting(Security.DLS_FLS_FEATURE));
                                 return null;
                             }
                         }
@@ -266,5 +270,9 @@ public class FileRolesStore extends AbstractLifecycleComponent<RolesStore> imple
                 listener.onRefresh();
             }
         }
+    }
+
+    public static void registerSettings(SettingsModule settingsModule) {
+        settingsModule.registerSetting(ROLES_FILE_SETTING);
     }
 }

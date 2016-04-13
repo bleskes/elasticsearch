@@ -89,7 +89,7 @@ public class HttpReadTimeoutTests extends ESTestCase {
         Environment environment = new Environment(Settings.builder().put("path.home", createTempDir()).build());
 
         HttpClient httpClient = new HttpClient(Settings.builder()
-                .put("watcher.http.default_read_timeout", "3s")
+                .put("xpack.watcher.http.default_read_timeout", "3s")
                 .build()
                 , mock(HttpAuthRegistry.class), environment).start();
 
@@ -128,7 +128,7 @@ public class HttpReadTimeoutTests extends ESTestCase {
         Environment environment = new Environment(Settings.builder().put("path.home", createTempDir()).build());
 
         HttpClient httpClient = new HttpClient(Settings.builder()
-                .put("watcher.http.default_read_timeout", "10s")
+                .put("xpack.watcher.http.default_read_timeout", "10s")
                 .build()
                 , mock(HttpAuthRegistry.class), environment).start();
 

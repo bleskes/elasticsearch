@@ -69,7 +69,7 @@ import static org.mockito.Mockito.when;
 public class TransportFilterTests extends ESIntegTestCase {
     @Override
     protected Settings nodeSettings(int nodeOrdinal) {
-        return Settings.settingsBuilder()
+        return Settings.builder()
                 .put("node.mode", "network")
                 .build();
     }
