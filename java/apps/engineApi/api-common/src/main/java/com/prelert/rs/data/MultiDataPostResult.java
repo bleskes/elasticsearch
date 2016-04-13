@@ -74,11 +74,7 @@ public class MultiDataPostResult
     @Override
     public int hashCode()
     {
-        final int prime = 31;
-        int result = 1;
-        result = prime * result
-                + ((m_Responses == null) ? 0 : m_Responses.hashCode());
-        return result;
+        return Objects.hash(m_Responses);
     }
 
     @Override

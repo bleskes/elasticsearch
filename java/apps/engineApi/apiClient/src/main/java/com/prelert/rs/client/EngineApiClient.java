@@ -446,7 +446,7 @@ public class EngineApiClient implements Closeable
         if (!isNullOrEmpty(resetStart) || !isNullOrEmpty(resetEnd))
         {
             postUrl += String.format("?resetStart=%s&resetEnd=%s",
-                    nullToEmpty(resetStart), nullToEmpty(resetEnd));
+                    Strings.nullToEmpty(resetStart), Strings.nullToEmpty(resetEnd));
         }
         return uploadStream(inputStream, postUrl, compressed, new MultiDataPostResult(), true,
                 content -> m_JsonMapper.readValue(content, new TypeReference<MultiDataPostResult>() {}));
@@ -479,7 +479,6 @@ public class EngineApiClient implements Closeable
                 content -> m_JsonMapper.readValue(content, new TypeReference<MultiDataPostResult>() {}));
     }
 
-
     @FunctionalInterface
     private interface FunctionThatThrowsIoException<T, R>
     {
@@ -492,6 +491,8 @@ public class EngineApiClient implements Closeable
     throws IOException
     {
         LOGGER.debug("Uploading data to " + postUrl);
+
+        m_LastError = null;
 
         // It is possible that the server replies with an error and closes the stream.
         // In that case, there could be a case where a thread that writes into the inputStream
@@ -551,13 +552,15 @@ public class EngineApiClient implements Closeable
 
             LOGGER.error(msg);
 
-            if (convertResponseOnError)
+            if (!content.isEmpty())
             {
-                return convertContentFunction.apply(content);
+                if (convertResponseOnError)
+                {
+                    return convertContentFunction.apply(content);
+                }
+                m_LastError = m_JsonMapper.readValue(content, new TypeReference<ApiError>() {});
             }
 
-            m_LastError = content.isEmpty() ? null : m_JsonMapper.readValue(content,
-                    new TypeReference<ApiError>() {});
             return defaultReturnValue;
         }
         return convertContentFunction.apply(content);
@@ -665,11 +668,8 @@ public class EngineApiClient implements Closeable
                     new TypeReference<ApiError>() {} );
             return false;
         }
-        else
-        {
-            m_LastError = null;
-        }
 
+        m_LastError = null;
         return true;
     }
 
@@ -701,11 +701,8 @@ public class EngineApiClient implements Closeable
             m_LastError = m_JsonMapper.readValue(content, new TypeReference<ApiError>() {});
             return false;
         }
-        else
-        {
-            m_LastError = null;
-        }
 
+        m_LastError = null;
         return true;
     }
 
@@ -874,15 +871,13 @@ public class EngineApiClient implements Closeable
             m_LastError = null;
             return content;
         }
-        else
-        {
-            String msg = String.format(
-                    "Error reading string content. Status code = %d. Returned content: %s",
-                    response.getStatus(), content);
-            LOGGER.error(msg);
-            m_LastError = m_JsonMapper.readValue(content, new TypeReference<ApiError>() {});
-            return "";
-        }
+
+        String msg = String.format(
+                "Error reading string content. Status code = %d. Returned content: %s",
+                response.getStatus(), content);
+        LOGGER.error(msg);
+        m_LastError = m_JsonMapper.readValue(content, new TypeReference<ApiError>() {});
+        return "";
     }
 
     /**
@@ -1031,14 +1026,12 @@ public class EngineApiClient implements Closeable
             m_LastError = null;
             return docs;
         }
-        else
-        {
-            String msg = String.format(request.getMethod() +
-                    " returned status code %d for url %s. Returned content = %s",
-                    response.getStatus(), request.getURI(), content);
-            LOGGER.error(msg);
-            m_LastError = m_JsonMapper.readValue(content, new TypeReference<ApiError>() {} );
-        }
+
+        String msg = String.format(request.getMethod() +
+                " returned status code %d for url %s. Returned content = %s",
+                response.getStatus(), request.getURI(), content);
+        LOGGER.error(msg);
+        m_LastError = m_JsonMapper.readValue(content, new TypeReference<ApiError>() {} );
 
         return null;
     }
@@ -1145,10 +1138,5 @@ public class EngineApiClient implements Closeable
     private static boolean isNullOrEmpty(String string)
     {
         return string == null || string.isEmpty();
-    }
-
-    private static String nullToEmpty(String string)
-    {
-        return string == null ? "" : string;
     }
 }
