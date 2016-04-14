@@ -59,7 +59,7 @@ public class ShieldActionFilterTests extends ESTestCase {
     private AuthorizationService authzService;
     private CryptoService cryptoService;
     private AuditTrail auditTrail;
-    private SecurityLicenseState shieldLicenseState;
+    private SecurityLicenseState securityLicenseState;
     private ShieldActionFilter filter;
 
     @Before
@@ -68,12 +68,12 @@ public class ShieldActionFilterTests extends ESTestCase {
         authzService = mock(AuthorizationService.class);
         cryptoService = mock(CryptoService.class);
         auditTrail = mock(AuditTrail.class);
-        shieldLicenseState = mock(SecurityLicenseState.class);
-        when(shieldLicenseState.securityEnabled()).thenReturn(true);
-        when(shieldLicenseState.statsAndHealthEnabled()).thenReturn(true);
+        securityLicenseState = mock(SecurityLicenseState.class);
+        when(securityLicenseState.authenticationAndAuthorizationEnabled()).thenReturn(true);
+        when(securityLicenseState.statsAndHealthEnabled()).thenReturn(true);
         ThreadPool threadPool = mock(ThreadPool.class);
         when(threadPool.getThreadContext()).thenReturn(new ThreadContext(Settings.EMPTY));
-        filter = new ShieldActionFilter(Settings.EMPTY, authcService, authzService, cryptoService, auditTrail, shieldLicenseState,
+        filter = new ShieldActionFilter(Settings.EMPTY, authcService, authzService, cryptoService, auditTrail, securityLicenseState,
                 new ShieldActionMapper(), new HashSet<>(), threadPool);
     }
 
@@ -140,7 +140,7 @@ public class ShieldActionFilterTests extends ESTestCase {
         ActionListener listener = mock(ActionListener.class);
         ActionFilterChain chain = mock(ActionFilterChain.class);
         Task task = mock(Task.class);
-        when(shieldLicenseState.securityEnabled()).thenReturn(false);
+        when(securityLicenseState.authenticationAndAuthorizationEnabled()).thenReturn(false);
         filter.apply(task, "_action", request, listener, chain);
         verifyZeroInteractions(authcService);
         verifyZeroInteractions(authzService);
