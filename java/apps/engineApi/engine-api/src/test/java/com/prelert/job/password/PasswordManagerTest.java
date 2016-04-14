@@ -53,7 +53,7 @@ public class PasswordManagerTest
     @Test(expected = NoSuchAlgorithmException.class)
     public void testInvalidAlgorithm() throws NoSuchAlgorithmException
     {
-        PasswordManager mgr = new PasswordManager("DAVE", TEST_KEY_BYTES);
+        new PasswordManager("DAVE", TEST_KEY_BYTES);
     }
 
     @Test
@@ -177,7 +177,7 @@ public class PasswordManagerTest
                 strm.write(7);
             }
 
-            PasswordManager mgrFromFile = new PasswordManager("AES/CBC/PKCS5Padding", testFile);
+            new PasswordManager("AES/CBC/PKCS5Padding", testFile);
         }
         finally
         {
@@ -188,8 +188,7 @@ public class PasswordManagerTest
     @Test(expected = FileNotFoundException.class)
     public void testConstructFromFile_GivenDoesNotExist() throws NoSuchAlgorithmException, IOException
     {
-        PasswordManager mgrFromFile = new PasswordManager("AES/CBC/PKCS5Padding",
-                new File("does_not_exist"));
+        new PasswordManager("AES/CBC/PKCS5Padding", new File("does_not_exist"));
     }
 
     private static class SimplePasswordStorage implements PasswordStorage
@@ -203,21 +202,25 @@ public class PasswordManagerTest
             m_EncryptedPassword = encryptedPassword;
         }
 
+        @Override
         public String getPassword()
         {
             return m_Password;
         }
 
+        @Override
         public void setPassword(String password)
         {
             m_Password = password;
         }
 
+        @Override
         public String getEncryptedPassword()
         {
             return m_EncryptedPassword;
         }
 
+        @Override
         public void setEncryptedPassword(String encryptedPassword)
         {
             m_EncryptedPassword = encryptedPassword;

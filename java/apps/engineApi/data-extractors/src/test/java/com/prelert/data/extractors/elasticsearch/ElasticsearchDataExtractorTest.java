@@ -1319,7 +1319,6 @@ public class ElasticsearchDataExtractorTest
     {
         private List<HttpResponse> m_Responses;
         private int m_RequestCount = 0;
-        private int m_AuthRequestCount = 0;
         private List<RequestParams> m_GetRequestParams;
         private List<RequestParams> m_DeleteRequestParams;
 
@@ -1334,10 +1333,6 @@ public class ElasticsearchDataExtractorTest
         public HttpResponse get(String url, String authHeader, String requestBody)
         {
             m_GetRequestParams.add(new RequestParams(url, requestBody));
-            if (authHeader != null)
-            {
-                ++m_AuthRequestCount;
-            }
             return m_Responses.get(m_RequestCount++);
         }
 
@@ -1362,6 +1357,8 @@ public class ElasticsearchDataExtractorTest
         {
             assertEquals(m_Responses.size(), m_GetRequestParams.size());
         }
+
+
     }
 
     private static class RequestParams

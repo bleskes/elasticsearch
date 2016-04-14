@@ -61,6 +61,7 @@ class ElasticsearchDotNotationReverser
      * <code>foo = x</code> goes to <code>{ "foo" : "x" }</code> and
      * <code>foo.bar = y</code> goes to <code>{ "foo" : { "bar" : "y" } }</code>
      */
+    @SuppressWarnings("unchecked")
     public void add(String fieldName, String fieldValue)
     {
         if (fieldName == null || fieldValue == null)
@@ -144,6 +145,7 @@ class ElasticsearchDotNotationReverser
         return mappingsMap;
     }
 
+    @SuppressWarnings("unchecked")
     private void recurseMappingsLevel(Map<String, Object> resultsMap,
             Map<String, Object> mappingsMap)
     {

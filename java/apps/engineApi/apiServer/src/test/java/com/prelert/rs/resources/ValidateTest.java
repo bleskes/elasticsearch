@@ -143,7 +143,7 @@ public class ValidateTest extends ServiceTest
         transformConfig2.setTransform("concat");
         transformConfig2.setInputs(Arrays.asList("two", "three"));
         transformConfig2.setOutputs(Arrays.asList("one"));
-        Response response = m_Validate.validateTransforms(new TransformConfig[] { transformConfig1, transformConfig2 });
+        m_Validate.validateTransforms(new TransformConfig[] { transformConfig1, transformConfig2 });
         m_Validate.validateTransforms(new TransformConfig[] { transformConfig1, transformConfig2 });
     }
 }

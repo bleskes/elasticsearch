@@ -29,8 +29,6 @@ package com.prelert.job.persistence.elasticsearch;
 
 import static org.junit.Assert.assertEquals;
 
-import java.util.Map;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 

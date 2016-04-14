@@ -170,7 +170,7 @@ public class AutoDetectResultsParserTest
         @Override
         public void persistQuantiles(Quantiles quantiles)
         {
-            m_Quantiles.put(quantiles.QUANTILES_ID, quantiles);
+            m_Quantiles.put(Quantiles.QUANTILES_ID, quantiles);
         }
 
         @Override

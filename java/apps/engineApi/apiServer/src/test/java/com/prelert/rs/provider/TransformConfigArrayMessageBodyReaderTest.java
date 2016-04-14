@@ -27,7 +27,7 @@
 
 package com.prelert.rs.provider;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
@@ -104,7 +104,7 @@ public class TransformConfigArrayMessageBodyReaderTest
         expected2.setInputs(Arrays.asList("domain"));
         expected2.setOutputs(Arrays.asList("sub_domain", "highest_registered_domain"));
 
-        assertEquals(new TransformConfig[] { expected1, expected2 }, transformConfigs);
+        assertArrayEquals(new TransformConfig[] { expected1, expected2 }, transformConfigs);
     }
 
 }
