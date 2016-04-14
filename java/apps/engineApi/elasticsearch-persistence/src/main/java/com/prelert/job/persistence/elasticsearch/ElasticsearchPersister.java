@@ -602,7 +602,10 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
         {
             builder.field(ModelSnapshot.LATEST_RECORD_TIME, modelSnapshot.getLatestRecordTimeStamp());
         }
-
+        if (modelSnapshot.getLatestResultTimeStamp() != null)
+        {
+            builder.field(ModelSnapshot.LATEST_RESULT_TIME, modelSnapshot.getLatestResultTimeStamp());
+        }
         return builder.endObject();
     }
 

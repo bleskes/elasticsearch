@@ -29,11 +29,12 @@ package com.prelert.rs.resources;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import javax.ws.rs.Consumes;
-import javax.ws.rs.DefaultValue;
 import javax.ws.rs.DELETE;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
@@ -82,6 +83,7 @@ public class ModelSnapshots extends ResourceWithJobManager
 
     public static final String SORT_QUERY_PARAM = "sort";
     public static final String TIME_QUERY_PARAM = "time";
+    public static final String DELETE_INTERVENING_RESULTS_PARAM = "deleteInterveningResults";
 
     /**
      * Get the model snapshot results (in pages) for the job.  Optionally filtering
@@ -169,6 +171,8 @@ public class ModelSnapshots extends ResourceWithJobManager
      * @param time revert to a snapshot with a timestamp no later than this time
      * @param snapshotId the snapshot ID of the snapshot to revert to
      * @param description the description of the snapshot to revert to
+     * @param deleteInterveningResults should we reset the results back to the time
+     *          of the snapshot?
      * @return
      * @throws JobInUseException
      * @throws UnknownJobException
@@ -180,12 +184,14 @@ public class ModelSnapshots extends ResourceWithJobManager
     public Response revertToSnapshot(@PathParam("jobId") String jobId,
             @DefaultValue("") @QueryParam(TIME_QUERY_PARAM) String time,
             @DefaultValue("") @QueryParam(ModelSnapshot.SNAPSHOT_ID) String snapshotId,
-            @DefaultValue("") @QueryParam(ModelSnapshot.DESCRIPTION) String description)
+            @DefaultValue("") @QueryParam(ModelSnapshot.DESCRIPTION) String description,
+            @DefaultValue("") @QueryParam(DELETE_INTERVENING_RESULTS_PARAM) String deleteInterveningResults)
             throws JobInUseException, UnknownJobException, NoSuchModelSnapshotException
     {
         LOGGER.debug("Received request to revert to time '" + time +
                 "' description '" + description + "' snapshot id '" +
-                snapshotId + "' for job '" +jobId + "'");
+                snapshotId + "' for job '" + jobId + "', deleting intervening " +
+                " results: " + deleteInterveningResults);
 
         if (time.isEmpty() && snapshotId.isEmpty() && description.isEmpty())
         {
@@ -193,12 +199,26 @@ public class ModelSnapshots extends ResourceWithJobManager
                     ErrorCodes.INVALID_REVERT_PARAMS);
         }
 
+        Boolean deleteResults = Boolean.parseBoolean(deleteInterveningResults);
+
         long timeEpochMs = paramToEpochIfValidOrThrow(TIME_QUERY_PARAM, time, LOGGER);
         // Time ranges are open above, so add 1 millisecond to convert the time
         // to the end of a range
         long endEpochMs = (timeEpochMs > 0) ? (timeEpochMs + 1) : 0;
 
-        ModelSnapshot revertedTo = jobManager().revertToSnapshot(jobId, endEpochMs, snapshotId, description);
+        ModelSnapshot revertedTo = jobManager().revertToSnapshot(jobId, endEpochMs,
+                snapshotId, description, (deleteResults != null && deleteResults == true));
+
+        if (deleteResults != null && deleteResults == true)
+        {
+            Date revertedLatestRecordTime = revertedTo.getLatestRecordTimeStamp();
+            Date revertedLatestResultTime = revertedTo.getLatestResultTimeStamp();
+            LOGGER.debug("Removing intervening records: last record: " + revertedLatestRecordTime +
+                    ", last result: " + revertedLatestResultTime);
+
+            jobManager().deleteBucketsAfter(jobId, revertedLatestResultTime);
+            jobManager().resetLatestRecordTime(jobId, revertedLatestRecordTime);
+        }
 
         SingleDocument<ModelSnapshot> doc = new SingleDocument<>();
         doc.setDocument(revertedTo);

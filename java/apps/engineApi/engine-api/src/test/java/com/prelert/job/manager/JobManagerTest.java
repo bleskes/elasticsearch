@@ -32,7 +32,6 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-
 import static org.mockito.AdditionalMatchers.not;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyLong;
@@ -113,6 +112,7 @@ import com.prelert.job.logging.JobLoggerFactory;
 import com.prelert.job.messages.Messages;
 import com.prelert.job.password.PasswordManager;
 import com.prelert.job.persistence.DataStoreException;
+import com.prelert.job.persistence.JobDataDeleterFactory;
 import com.prelert.job.persistence.JobProvider;
 import com.prelert.job.persistence.QueryPage;
 import com.prelert.job.process.autodetect.ProcessManager;
@@ -142,6 +142,7 @@ public class JobManagerTest
     @Mock private JobLoggerFactory m_JobLoggerFactory;
     @Mock private PasswordManager m_PasswordManager;
     @Mock private Auditor m_Auditor;
+    @Mock private JobDataDeleterFactory m_JobDataDeleter;
 
     @Before
     public void setUp()
@@ -1312,8 +1313,9 @@ public class JobManagerTest
 
         QueryPage<ModelSnapshot> modelSnapshotPage = new QueryPage<>(Arrays.asList(modelSnapshot), 1);
         when(m_JobProvider.modelSnapshots("foo", 0, 1, 0, 0, ModelSnapshot.TIMESTAMP, "", "my description")).thenReturn(modelSnapshotPage);
-
-        ModelSnapshot revertedModelSnapshot = jobManager.revertToSnapshot("foo", 0, "", "my description");
+        Logger jobLogger = mock(Logger.class);
+        when(m_JobLoggerFactory.newLogger("foo")).thenReturn(jobLogger);
+        ModelSnapshot revertedModelSnapshot = jobManager.revertToSnapshot("foo", 0, "", "my description", false);
         assertNotNull(revertedModelSnapshot);
         assertTrue(revertedModelSnapshot.getRestorePriority() > 1);
 
@@ -1335,10 +1337,11 @@ public class JobManagerTest
 
         QueryPage<ModelSnapshot> modelSnapshotPage = new QueryPage<>(null, 0);
         when(m_JobProvider.modelSnapshots("foo", 0, 1, 0, 0, ModelSnapshot.TIMESTAMP, "", "my description")).thenReturn(modelSnapshotPage);
-
+        Logger jobLogger = mock(Logger.class);
+        when(m_JobLoggerFactory.newLogger("foo")).thenReturn(jobLogger);
         try
         {
-            jobManager.revertToSnapshot("foo", 0, "", "my description");
+            jobManager.revertToSnapshot("foo", 0, "", "my description", false);
             fail();
         }
         catch (NoSuchModelSnapshotException e)
@@ -1869,7 +1872,7 @@ public class JobManagerTest
     private JobManager createJobManager()
     {
         return new JobManager(m_JobProvider, m_ProcessManager, m_DataExtractorFactory,
-                m_JobLoggerFactory, m_PasswordManager);
+                m_JobLoggerFactory, m_PasswordManager, m_JobDataDeleter);
     }
 
     private static Answer<Object> writeToWriter()

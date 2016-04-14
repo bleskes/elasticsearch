@@ -79,6 +79,9 @@ final class ModelSnapshotParser extends FieldNameParser<ModelSnapshot>
         case ModelSnapshot.LATEST_RECORD_TIME:
             modelSnapshot.setLatestRecordTimeStamp(new Date(parseAsLongOrZero(fieldName)));
             break;
+        case ModelSnapshot.LATEST_RESULT_TIME:
+            modelSnapshot.setLatestResultTimeStamp(new Date(parseAsLongOrZero(fieldName)));
+            break;
         default:
             LOGGER.warn(String.format("Parse error unknown field in ModelSnapshot %s:%s",
                     fieldName, token.asString()));

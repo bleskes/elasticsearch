@@ -76,6 +76,16 @@ public class BucketTest
     }
 
     @Test
+    public void testEquals_GivenSameDates()
+    {
+        Bucket b1 = new Bucket();
+        b1.setTimestamp(new Date(1234567890L));
+        Bucket b2 = new Bucket();
+        b2.setTimestamp(new Date(1234567890L));
+
+    }
+
+    @Test
     public void testEquals_GivenDifferentMaxNormalizedProbability()
     {
         Bucket bucket1 = new Bucket();

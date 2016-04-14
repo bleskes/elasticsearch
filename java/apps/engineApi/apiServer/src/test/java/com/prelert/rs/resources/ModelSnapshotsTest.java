@@ -203,7 +203,7 @@ public class ModelSnapshotsTest extends ServiceTest
         m_ExpectedException.expectMessage("Cannot revert to a model snapshot as no parameters were specified.");
         m_ExpectedException.expect(ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_REVERT_PARAMS));
 
-        m_ModelSnapshots.revertToSnapshot("foo", "", "", "");
+        m_ModelSnapshots.revertToSnapshot("foo", "", "", "", "");
     }
 
     @Test
@@ -214,7 +214,7 @@ public class ModelSnapshotsTest extends ServiceTest
         m_ExpectedException.expectMessage("Query param 'time' with value 'invalid' cannot be parsed as a date or converted to a number (epoch)");
         m_ExpectedException.expect(ErrorCodeMatcher.hasErrorCode(ErrorCodes.UNPARSEABLE_DATE_ARGUMENT));
 
-        m_ModelSnapshots.revertToSnapshot("foo", "invalid", "ok", "fine");
+        m_ModelSnapshots.revertToSnapshot("foo", "invalid", "ok", "fine", "false");
     }
 
     @Test
@@ -223,9 +223,9 @@ public class ModelSnapshotsTest extends ServiceTest
     {
         ModelSnapshot modelSnapshot = new ModelSnapshot();
         modelSnapshot.setSnapshotId("foo");
-        when(jobManager().revertToSnapshot("foo", 1001L, "", "")).thenReturn(modelSnapshot);
+        when(jobManager().revertToSnapshot("foo", 1001L, "", "", false)).thenReturn(modelSnapshot);
 
-        Response response = m_ModelSnapshots.revertToSnapshot("foo", "1", "", "");
+        Response response = m_ModelSnapshots.revertToSnapshot("foo", "1", "", "", "");
 
         assertEquals(200, response.getStatus());
     }
@@ -236,9 +236,9 @@ public class ModelSnapshotsTest extends ServiceTest
     {
         ModelSnapshot modelSnapshot = new ModelSnapshot();
         modelSnapshot.setSnapshotId("foo");
-        when(jobManager().revertToSnapshot("foo", 0L, "123", "")).thenReturn(modelSnapshot);
+        when(jobManager().revertToSnapshot("foo", 0L, "123", "", false)).thenReturn(modelSnapshot);
 
-        Response response = m_ModelSnapshots.revertToSnapshot("foo", "", "123", "");
+        Response response = m_ModelSnapshots.revertToSnapshot("foo", "", "123", "", "");
 
         assertEquals(200, response.getStatus());
     }
@@ -249,9 +249,9 @@ public class ModelSnapshotsTest extends ServiceTest
     {
         ModelSnapshot modelSnapshot = new ModelSnapshot();
         modelSnapshot.setSnapshotId("foo");
-        when(jobManager().revertToSnapshot("foo", 0L, "", "my description")).thenReturn(modelSnapshot);
+        when(jobManager().revertToSnapshot("foo", 0L, "", "my description", false)).thenReturn(modelSnapshot);
 
-        Response response = m_ModelSnapshots.revertToSnapshot("foo", "", "", "my description");
+        Response response = m_ModelSnapshots.revertToSnapshot("foo", "", "", "my description", "");
 
         assertEquals(200, response.getStatus());
     }

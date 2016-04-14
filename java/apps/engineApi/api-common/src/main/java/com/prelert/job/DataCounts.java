@@ -19,6 +19,8 @@
 package com.prelert.job;
 
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -335,6 +337,24 @@ public class DataCounts
     public void setLatestRecordTimeStamp(Date latestRecordTime)
     {
         m_LatestRecordTimeStamp = latestRecordTime;
+    }
+
+    public Map<String, Object> toObjectMap()
+    {
+        Map<String, Object> map = new HashMap<>();
+        map.put(BUCKET_COUNT, m_BucketCount);
+        map.put(PROCESSED_RECORD_COUNT, m_ProcessedRecordCount);
+        map.put(PROCESSED_FIELD_COUNT, m_ProcessedFieldCount);
+        map.put(INPUT_BYTES, m_InputBytes);
+        map.put(INPUT_RECORD_COUNT, getInputRecordCount());
+        map.put(INPUT_FIELD_COUNT, m_InputFieldCount);
+        map.put(INVALID_DATE_COUNT, m_InvalidDateCount);
+        map.put(MISSING_FIELD_COUNT, m_MissingFieldCount);
+        map.put(OUT_OF_ORDER_TIME_COUNT, m_OutOfOrderTimeStampCount);
+        map.put(FAILED_TRANSFORM_COUNT, m_FailedTransformCount);
+        map.put(LATEST_RECORD_TIME, m_LatestRecordTimeStamp);
+        map.put(EXCLUDED_RECORD_COUNT, m_ExcludedRecordCount);
+        return map;
     }
 
     /**

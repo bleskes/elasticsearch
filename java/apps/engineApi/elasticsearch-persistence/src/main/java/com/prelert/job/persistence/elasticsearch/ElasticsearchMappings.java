@@ -891,6 +891,9 @@ public class ElasticsearchMappings
                         .startObject(ModelSnapshot.LATEST_RECORD_TIME)
                             .field(TYPE, DATE)
                         .endObject()
+                        .startObject(ModelSnapshot.LATEST_RESULT_TIME)
+                        .field(TYPE, DATE)
+                    .endObject()
                     .endObject()
                 .endObject()
             .endObject();

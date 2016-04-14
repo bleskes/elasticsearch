@@ -76,8 +76,8 @@ import com.prelert.rs.provider.MultiDataPostResultWriter;
 import com.prelert.rs.provider.NativeProcessRunExceptionMapper;
 import com.prelert.rs.provider.PaginationWriter;
 import com.prelert.rs.provider.SingleDocumentWriter;
-import com.prelert.rs.provider.TransformConfigMessageBodyReader;
 import com.prelert.rs.provider.TransformConfigArrayMessageBodyReader;
+import com.prelert.rs.provider.TransformConfigMessageBodyReader;
 import com.prelert.server.info.ServerInfoFactory;
 import com.prelert.server.info.ServerInfoWriter;
 import com.prelert.settings.PrelertSettings;
@@ -239,7 +239,7 @@ public class PrelertWebApp extends Application
         return new JobManager(jobProvider,
                 createProcessManager(jobProvider, esFactory, jobLoggerFactory),
                 new DataExtractorFactoryImpl(passwordManager), jobLoggerFactory,
-                passwordManager);
+                passwordManager, esFactory.newJobDataDeleterFactory());
     }
 
     private PasswordManager createPasswordManager()

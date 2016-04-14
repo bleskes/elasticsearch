@@ -64,7 +64,8 @@ public class ModelSnapshotParserTest
                      + " \"timestamp\":1234567890000,"
                      + " \"snapshotDocCount\":3,"
                      + " \"modelSizeStats\":{\"modelBytes\":54321},"
-                     + " \"latestRecordTimeStamp\": 1111111111111}";
+                     + " \"latestRecordTimeStamp\": 1111111111111,"
+                     + " \"latestResultTimeStamp\" : 1010101010101}";
         JsonParser parser = createJsonParser(input);
         parser.nextToken();
 
@@ -78,6 +79,7 @@ public class ModelSnapshotParserTest
         assertNotNull(modelSnapshot.getModelSizeStats());
         assertEquals(54321L, modelSnapshot.getModelSizeStats().getModelBytes());
         assertEquals(new Date(1111111111111L), modelSnapshot.getLatestRecordTimeStamp());
+        assertEquals(new Date(1010101010101L), modelSnapshot.getLatestResultTimeStamp());
 
         assertEquals(JsonToken.END_OBJECT, parser.getCurrentToken());
     }

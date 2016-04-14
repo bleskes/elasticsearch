@@ -22,7 +22,6 @@ import com.prelert.job.ModelSnapshot;
 import com.prelert.job.NoSuchModelSnapshotException;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.audit.Auditor;
-import com.prelert.job.persistence.QueryPage;
 import com.prelert.job.quantiles.Quantiles;
 
 public interface JobProvider extends JobDetailsProvider, JobResultsProvider
