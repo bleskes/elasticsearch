@@ -117,26 +117,39 @@ public class ElasticsearchBulkDeleter implements JobDataDeleter
         QueryBuilder query = QueryBuilders.termQuery(ElasticsearchMappings.ES_TIMESTAMP,
                 bucket.getTimestamp().getTime());
 
-        SearchResponse searchResponse = SearchAction.INSTANCE.newRequestBuilder(m_Client)
-                .setIndices(m_JobId.getIndex())
-                .setTypes(type)
-                .setQuery(query)
-                .addSort(SortBuilders.fieldSort(ElasticsearchMappings.ES_DOC))
-                .execute().actionGet();
-
-        for (SearchHit hit : searchResponse.getHits())
+        int chunkSize = 1000;
+        int done = 0;
+        boolean finished = false;
+        while (finished == false)
         {
-            DeleteRequestBuilder deleteRequest = DeleteAction.INSTANCE.newRequestBuilder(m_Client)
-                    .setIndex(m_JobId.getIndex())
-                    .setType(type)
-                    .setId(hit.getId());
-            SearchHitField parentField = hit.field(ElasticsearchMappings.PARENT);
-            if (parentField != null)
+            SearchResponse searchResponse = SearchAction.INSTANCE.newRequestBuilder(m_Client)
+                    .setIndices(m_JobId.getIndex())
+                    .setTypes(type)
+                    .setQuery(query)
+                    .addSort(SortBuilders.fieldSort(ElasticsearchMappings.ES_DOC))
+                    .setSize(chunkSize)
+                    .setFrom(done)
+                    .execute().actionGet();
+
+            for (SearchHit hit : searchResponse.getHits())
             {
-                deleteRequest.setParent(parentField.getValue().toString());
+                ++done;
+                DeleteRequestBuilder deleteRequest = DeleteAction.INSTANCE.newRequestBuilder(m_Client)
+                        .setIndex(m_JobId.getIndex())
+                        .setType(type)
+                        .setId(hit.getId());
+                SearchHitField parentField = hit.field(ElasticsearchMappings.PARENT);
+                if (parentField != null)
+                {
+                    deleteRequest.setParent(parentField.getValue().toString());
+                }
+                m_BulkRequestBuilder.add(deleteRequest);
+                deleteCounter.getAsLong();
             }
-            m_BulkRequestBuilder.add(deleteRequest);
-            deleteCounter.getAsLong();
+            if (searchResponse.getHits().getTotalHits() == done)
+            {
+                finished = true;
+            }
         }
     }
 
