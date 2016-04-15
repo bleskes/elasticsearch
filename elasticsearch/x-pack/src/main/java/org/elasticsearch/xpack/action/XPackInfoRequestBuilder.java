@@ -14,24 +14,22 @@
  * is strictly forbidden unless prior written permission is obtained
  * from Elasticsearch Incorporated.
  */
-package org.elasticsearch.license.plugin.action.delete;
 
-import org.elasticsearch.action.support.master.AcknowledgedRequestBuilder;
+package org.elasticsearch.xpack.action;
+
+import org.elasticsearch.action.ActionRequestBuilder;
 import org.elasticsearch.client.ElasticsearchClient;
 
-public class DeleteLicenseRequestBuilder extends AcknowledgedRequestBuilder<DeleteLicenseRequest, DeleteLicenseResponse,
-        DeleteLicenseRequestBuilder> {
+/**
+ */
+public class XPackInfoRequestBuilder extends ActionRequestBuilder<XPackInfoRequest, XPackInfoResponse, XPackInfoRequestBuilder> {
 
-    public DeleteLicenseRequestBuilder(ElasticsearchClient client) {
-        this(client, DeleteLicenseAction.INSTANCE);
+    public XPackInfoRequestBuilder(ElasticsearchClient client) {
+        this(client, XPackInfoAction.INSTANCE);
     }
 
-    /**
-     * Creates new get licenses request builder
-     *
-     * @param client elasticsearch client
-     */
-    public DeleteLicenseRequestBuilder(ElasticsearchClient client, DeleteLicenseAction action) {
-        super(client, action, new DeleteLicenseRequest());
+    public XPackInfoRequestBuilder(ElasticsearchClient client, XPackInfoAction action) {
+        super(client, action, new XPackInfoRequest());
     }
+
 }

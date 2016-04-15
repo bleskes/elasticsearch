@@ -60,7 +60,6 @@ import org.elasticsearch.watcher.rest.action.RestGetWatchAction;
 import org.elasticsearch.watcher.rest.action.RestHijackOperationAction;
 import org.elasticsearch.watcher.rest.action.RestPutWatchAction;
 import org.elasticsearch.watcher.rest.action.RestWatchServiceAction;
-import org.elasticsearch.watcher.rest.action.RestWatcherInfoAction;
 import org.elasticsearch.watcher.rest.action.RestWatcherStatsAction;
 import org.elasticsearch.watcher.support.WatcherIndexTemplateRegistry.TemplateConfig;
 import org.elasticsearch.watcher.support.clock.ClockModule;
@@ -230,7 +229,6 @@ public class Watcher {
             module.registerRestHandler(RestPutWatchAction.class);
             module.registerRestHandler(RestDeleteWatchAction.class);
             module.registerRestHandler(RestWatcherStatsAction.class);
-            module.registerRestHandler(RestWatcherInfoAction.class);
             module.registerRestHandler(RestGetWatchAction.class);
             module.registerRestHandler(RestWatchServiceAction.class);
             module.registerRestHandler(RestAckWatchAction.class);
