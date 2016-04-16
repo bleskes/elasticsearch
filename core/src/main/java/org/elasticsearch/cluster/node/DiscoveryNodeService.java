@@ -20,7 +20,8 @@
 package org.elasticsearch.cluster.node;
 
 import org.elasticsearch.Version;
-import org.elasticsearch.common.Booleans;
+import org.elasticsearch.common.Base64;
+import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.Randomness;
 import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.component.AbstractComponent;
@@ -31,6 +32,7 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.TransportAddress;
 import org.elasticsearch.node.Node;
 
+import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -55,9 +57,15 @@ public class DiscoveryNodeService extends AbstractComponent {
         this.version = version;
     }
 
-    public static String generateNodeId(Settings settings) {
-        Random random = Randomness.get(settings, NODE_ID_SEED_SETTING);
-        return Strings.randomBase64UUID(random);
+    public static String generateNodeId(Settings settings, @Nullable String address) {
+        if (address == null || NODE_ID_SEED_SETTING.exists(settings)) {
+            // return a randomly generated uuid
+            final Random random = Randomness.get(settings, NODE_ID_SEED_SETTING);
+            return Strings.randomBase64UUID(random);
+        } else {
+            assert address.isEmpty() == false;
+            return Base64.encodeBytes(address.getBytes(Charset.forName("UTF-8")));
+        }
     }
 
     public DiscoveryNodeService addCustomAttributeProvider(CustomAttributesProvider customAttributesProvider) {
@@ -66,7 +74,7 @@ public class DiscoveryNodeService extends AbstractComponent {
     }
 
     public DiscoveryNode buildLocalNode(TransportAddress publishAddress) {
-        final String nodeId = generateNodeId(settings);
+        final String nodeId = generateNodeId(settings, publishAddress.getAddress());
         Map<String, String> attributes = new HashMap<>(Node.NODE_ATTRIBUTES.get(this.settings).getAsMap());
         Set<DiscoveryNode.Role> roles = new HashSet<>();
         if (Node.NODE_INGEST_SETTING.get(settings)) {

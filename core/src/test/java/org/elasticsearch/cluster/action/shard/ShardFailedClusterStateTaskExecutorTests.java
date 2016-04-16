@@ -303,8 +303,8 @@ public class ShardFailedClusterStateTaskExecutorTests extends ESAllocationTestCa
         if (!shards.isEmpty()) {
             return randomSubsetOf(1, shards.toArray(new ShardRouting[0])).get(0);
         } else {
-            return
-                    TestShardRouting.newShardRouting(shardRouting.index(), shardRouting.id(), DiscoveryNodeService.generateNodeId(Settings.EMPTY), randomBoolean(), randomFrom(ShardRoutingState.values()));
+            return TestShardRouting.newShardRouting(shardRouting.index(), shardRouting.id(),
+                DiscoveryNodeService.generateNodeId(Settings.EMPTY, null), randomBoolean(), randomFrom(ShardRoutingState.values()));
         }
     }
 
