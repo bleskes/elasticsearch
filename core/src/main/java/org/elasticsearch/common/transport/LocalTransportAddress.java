@@ -67,7 +67,7 @@ public final class LocalTransportAddress implements TransportAddress {
 
     @Override
     public String getAddress() {
-        return "0.0.0.0"; // see https://en.wikipedia.org/wiki/0.0.0.0
+        return toString();
     }
 
     @Override
