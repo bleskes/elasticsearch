@@ -75,6 +75,6 @@ public class ClusterStatsResolver extends MonitoringIndexNameResolver.Timestampe
     }
 
     static final class Fields {
-        static final String CLUSTER_STATS = new String(TYPE);
+        static final String CLUSTER_STATS = TYPE;
     }
 }
