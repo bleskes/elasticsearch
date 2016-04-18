@@ -132,7 +132,7 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
                     .execute().actionGet();
             bucket.setId(response.getId());
 
-            persistBucketInfluencersStandalone(bucket.getBucketInfluencers(),
+            persistBucketInfluencersStandalone(bucket.getId(), bucket.getBucketInfluencers(),
                     bucket.getTimestamp(), bucket.isInterim());
 
             if (bucket.getInfluencers() != null && bucket.getInfluencers().isEmpty() == false)
@@ -342,7 +342,7 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
         // standalone copies of the nested bucket influencers
         try
         {
-            persistBucketInfluencersStandalone(bucket.getBucketInfluencers(),
+            persistBucketInfluencersStandalone(bucket.getId(), bucket.getBucketInfluencers(),
                     bucket.getTimestamp(), bucket.isInterim());
         }
         catch (IOException e)
@@ -352,7 +352,7 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
         }
     }
 
-    private void persistBucketInfluencersStandalone(List<BucketInfluencer> bucketInfluencers,
+    private void persistBucketInfluencersStandalone(String bucketId, List<BucketInfluencer> bucketInfluencers,
             Date bucketTime, boolean isInterim) throws IOException
     {
         if (bucketInfluencers != null && bucketInfluencers.isEmpty() == false)
@@ -363,10 +363,12 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
             {
                 XContentBuilder content = serialiseBucketInfluencerStandalone(bucketInfluencer,
                         bucketTime, isInterim);
+                // Need consistent IDs to ensure overwriting on renormalisation
+                String id = bucketId + bucketInfluencer.getInfluencerFieldName();
                 LOGGER.trace("ES BULK ACTION: index type " + BucketInfluencer.TYPE +
-                        " to index " + m_JobId.getIndex() + " with auto-generated ID");
+                        " to index " + m_JobId.getIndex() + " with ID " + id);
                 addBucketInfluencersRequest.add(
-                        m_Client.prepareIndex(m_JobId.getIndex(), BucketInfluencer.TYPE)
+                        m_Client.prepareIndex(m_JobId.getIndex(), BucketInfluencer.TYPE, id)
                         .setSource(content));
             }
 
