@@ -191,6 +191,18 @@ public class ElasticsearchMappingsTest
                         "                \"type\": \"boolean\"" +
                         "              }" +
                         "            }" +
+                        "          }," +
+                        "          \"overlappingBuckets\": {" +
+                        "            \"type\": \"boolean\"," +
+                        "            \"index\": \"no\"" +
+                        "          }," +
+                        "          \"resultFinalizationWindow\": {" +
+                        "            \"type\": \"long\"," +
+                        "            \"index\": \"no\"" +
+                        "          }," +
+                        "          \"multiVariateByFields\": {" +
+                        "            \"type\": \"boolean\"," +
+                        "            \"index\": \"no\"" +
                         "          }" +
                         "        }" +
                         "      }," +
