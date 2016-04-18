@@ -26,7 +26,7 @@ import org.elasticsearch.rest.RestFilterChain;
 import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.shield.user.User;
 import org.elasticsearch.shield.authc.AuthenticationService;
-import org.elasticsearch.shield.license.ShieldLicenseState;
+import org.elasticsearch.shield.SecurityLicenseState;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.junit.Before;
@@ -46,7 +46,7 @@ public class ShieldRestFilterTests extends ESTestCase {
     private RestChannel channel;
     private RestFilterChain chain;
     private ShieldRestFilter filter;
-    private ShieldLicenseState licenseState;
+    private SecurityLicenseState licenseState;
 
     @Before
     public void init() throws Exception {
@@ -54,7 +54,7 @@ public class ShieldRestFilterTests extends ESTestCase {
         RestController restController = mock(RestController.class);
         channel = mock(RestChannel.class);
         chain = mock(RestFilterChain.class);
-        licenseState = mock(ShieldLicenseState.class);
+        licenseState = mock(SecurityLicenseState.class);
         when(licenseState.securityEnabled()).thenReturn(true);
         ThreadPool threadPool = mock(ThreadPool.class);
         when(threadPool.getThreadContext()).thenReturn(new ThreadContext(Settings.EMPTY));

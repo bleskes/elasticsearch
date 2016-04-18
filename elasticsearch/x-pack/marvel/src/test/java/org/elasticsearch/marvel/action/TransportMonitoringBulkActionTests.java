@@ -35,7 +35,7 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.DummyTransportAddress;
 import org.elasticsearch.common.util.concurrent.ConcurrentCollections;
 import org.elasticsearch.discovery.DiscoverySettings;
-import org.elasticsearch.marvel.MarvelSettings;
+import org.elasticsearch.marvel.MonitoringSettings;
 import org.elasticsearch.marvel.MonitoredSystem;
 import org.elasticsearch.marvel.agent.exporter.ExportException;
 import org.elasticsearch.marvel.agent.exporter.Exporters;
@@ -269,7 +269,7 @@ public class TransportMonitoringBulkActionTests extends ESTestCase {
 
         public CapturingExporters() {
             super(Settings.EMPTY, Collections.emptyMap(), clusterService,
-                    new ClusterSettings(Settings.EMPTY, Collections.singleton(MarvelSettings.EXPORTERS_SETTINGS)));
+                    new ClusterSettings(Settings.EMPTY, Collections.singleton(MonitoringSettings.EXPORTERS_SETTINGS)));
         }
 
         @Override
@@ -291,7 +291,7 @@ public class TransportMonitoringBulkActionTests extends ESTestCase {
 
         public ConsumingExporters(Consumer<Collection<? extends MonitoringDoc>> consumer) {
             super(Settings.EMPTY, Collections.emptyMap(), clusterService,
-                    new ClusterSettings(Settings.EMPTY, Collections.singleton(MarvelSettings.EXPORTERS_SETTINGS)));
+                    new ClusterSettings(Settings.EMPTY, Collections.singleton(MonitoringSettings.EXPORTERS_SETTINGS)));
             this.consumer = consumer;
         }
 

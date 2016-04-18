@@ -27,7 +27,7 @@ import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.elasticsearch.common.transport.TransportAddress;
 import org.elasticsearch.http.HttpServerTransport;
 import org.elasticsearch.shield.audit.AuditTrail;
-import org.elasticsearch.shield.license.ShieldLicenseState;
+import org.elasticsearch.shield.SecurityLicenseState;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.test.junit.annotations.Network;
 import org.elasticsearch.transport.Transport;
@@ -56,7 +56,7 @@ import static org.mockito.Mockito.when;
  */
 public class IPFilterTests extends ESTestCase {
     private IPFilter ipFilter;
-    private ShieldLicenseState licenseState;
+    private SecurityLicenseState licenseState;
     private AuditTrail auditTrail;
     private Transport transport;
     private HttpServerTransport httpTransport;
@@ -64,7 +64,7 @@ public class IPFilterTests extends ESTestCase {
 
     @Before
     public void init() {
-        licenseState = mock(ShieldLicenseState.class);
+        licenseState = mock(SecurityLicenseState.class);
         when(licenseState.securityEnabled()).thenReturn(true);
         auditTrail = mock(AuditTrail.class);
         clusterSettings = new ClusterSettings(Settings.EMPTY, new HashSet<>(Arrays.asList(

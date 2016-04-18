@@ -15,15 +15,19 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.marvel.license;
+package org.elasticsearch.xpack;
 
-import org.elasticsearch.common.inject.AbstractModule;
+/**
+ *
+ */
+public interface XPackFeatureSet {
 
-public class LicenseModule extends AbstractModule {
+    String name();
 
-    @Override
-    protected void configure() {
-        bind(MarvelLicensee.class).asEagerSingleton();
-    }
+    String description();
+
+    boolean available();
+
+    boolean enabled();
 
 }

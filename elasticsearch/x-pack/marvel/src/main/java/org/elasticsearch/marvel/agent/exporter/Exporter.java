@@ -22,7 +22,7 @@ import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.TimeValue;
-import org.elasticsearch.marvel.MarvelSettings;
+import org.elasticsearch.marvel.MonitoringSettings;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -77,7 +77,7 @@ public abstract class Exporter implements AutoCloseable {
     protected abstract void doClose();
 
     protected String settingFQN(String setting) {
-        return MarvelSettings.EXPORTERS_SETTINGS.getKey() + config.name + "." + setting;
+        return MonitoringSettings.EXPORTERS_SETTINGS.getKey() + config.name + "." + setting;
     }
 
     public static class Config {

@@ -14,7 +14,7 @@
  * is strictly forbidden unless prior written permission is obtained
  * from Elasticsearch Incorporated.
  */
-package org.elasticsearch.shield.license;
+package org.elasticsearch.shield;
 
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.license.core.License.OperationMode;
@@ -28,16 +28,16 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 /**
- * Tests {@link ShieldLicensee}.
+ * Tests {@link SecurityLicensee}.
  * <p>
  * If you change the behavior of these tests, then it means that licensing changes for Security!
  */
 public class ShieldLicenseeTests extends AbstractLicenseeTestCase {
-    private final ShieldLicenseState shieldState = mock(ShieldLicenseState.class);
+    private final SecurityLicenseState shieldState = mock(SecurityLicenseState.class);
     private final LicenseeRegistry registry = mock(LicenseeRegistry.class);
 
     public void testStartsWithoutTribeNode() {
-        ShieldLicensee licensee = new ShieldLicensee(Settings.EMPTY, registry, shieldState);
+        SecurityLicensee licensee = new SecurityLicensee(Settings.EMPTY, registry, shieldState);
 
         // starting the Licensee start trigger it being registered
         licensee.start();
@@ -48,7 +48,7 @@ public class ShieldLicenseeTests extends AbstractLicenseeTestCase {
 
     public void testDoesNotStartWithTribeNode() {
         Settings settings = Settings.builder().put("tribe.fake.cluster.name", "notchecked").build();
-        ShieldLicensee licensee = new ShieldLicensee(settings, registry, shieldState);
+        SecurityLicensee licensee = new SecurityLicensee(settings, registry, shieldState);
 
         // starting the Licensee as a tribe node should not trigger it being registered
         licensee.start();
@@ -59,7 +59,7 @@ public class ShieldLicenseeTests extends AbstractLicenseeTestCase {
     public void testOnChangeModifiesShieldLicenseState() {
         Status status = mock(Status.class);
 
-        ShieldLicensee licensee = new ShieldLicensee(Settings.EMPTY, registry, shieldState);
+        SecurityLicensee licensee = new SecurityLicensee(Settings.EMPTY, registry, shieldState);
 
         licensee.onChange(status);
 
@@ -94,7 +94,7 @@ public class ShieldLicenseeTests extends AbstractLicenseeTestCase {
         assertThat(messages.length, equalTo(2));
     }
 
-    private ShieldLicensee buildLicensee() {
-        return new ShieldLicensee(Settings.EMPTY, registry, shieldState);
+    private SecurityLicensee buildLicensee() {
+        return new SecurityLicensee(Settings.EMPTY, registry, shieldState);
     }
 }

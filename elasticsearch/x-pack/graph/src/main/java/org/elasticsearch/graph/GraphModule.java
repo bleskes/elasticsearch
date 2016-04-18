@@ -15,18 +15,33 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.watcher.license;
+package org.elasticsearch.graph;
 
 import org.elasticsearch.common.inject.AbstractModule;
+import org.elasticsearch.common.inject.util.Providers;
+import org.elasticsearch.xpack.XPackPlugin;
 
 /**
  *
  */
-public class LicenseModule extends AbstractModule {
+public class GraphModule extends AbstractModule {
+
+    private final boolean enabled;
+    private final boolean transportClientNode;
+
+    public GraphModule(boolean enabled, boolean transportClientNode) {
+        this.enabled = enabled;
+        this.transportClientNode = transportClientNode;
+    }
 
     @Override
     protected void configure() {
-        bind(WatcherLicensee.class).asEagerSingleton();
+        XPackPlugin.bindFeatureSet(binder(), GraphFeatureSet.class);
+        if (enabled && transportClientNode == false) {
+            bind(GraphLicensee.class).asEagerSingleton();
+        } else {
+            bind(GraphLicensee.class).toProvider(Providers.of(null));
+        }
     }
 
 }
