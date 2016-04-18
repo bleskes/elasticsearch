@@ -72,7 +72,7 @@ public class ActiveDirectorySessionFactoryTests extends ESTestCase {
     @SuppressWarnings("unchecked")
     public void testAdAuth() throws Exception {
         RealmConfig config = new RealmConfig("ad-test", buildAdSettings(AD_LDAP_URL, AD_DOMAIN, false), globalSettings);
-        ActiveDirectorySessionFactory sessionFactory = new ActiveDirectorySessionFactory(config, clientSSLService);
+        ActiveDirectorySessionFactory sessionFactory = new ActiveDirectorySessionFactory(config, clientSSLService).init();
 
         String userName = "ironman";
         try (LdapSession ldap = sessionFactory.session(userName, SecuredStringTests.build(PASSWORD))) {
@@ -98,7 +98,7 @@ public class ActiveDirectorySessionFactoryTests extends ESTestCase {
                 .put(SessionFactory.TIMEOUT_TCP_READ_SETTING, "1ms")
                 .build();
         RealmConfig config = new RealmConfig("ad-test", settings, globalSettings);
-        ActiveDirectorySessionFactory sessionFactory = new ActiveDirectorySessionFactory(config, clientSSLService);
+        ActiveDirectorySessionFactory sessionFactory = new ActiveDirectorySessionFactory(config, clientSSLService).init();
 
         try (LdapSession ldap = sessionFactory.session("ironman", SecuredStringTests.build(PASSWORD))) {
             // In certain cases we may have a successful bind, but a search should take longer and cause a timeout
@@ -112,7 +112,7 @@ public class ActiveDirectorySessionFactoryTests extends ESTestCase {
 
     public void testAdAuthAvengers() throws Exception {
         RealmConfig config = new RealmConfig("ad-test", buildAdSettings(AD_LDAP_URL, AD_DOMAIN, false), globalSettings);
-        ActiveDirectorySessionFactory sessionFactory = new ActiveDirectorySessionFactory(config, clientSSLService);
+        ActiveDirectorySessionFactory sessionFactory = new ActiveDirectorySessionFactory(config, clientSSLService).init();
 
         String[] users = new String[]{"cap", "hawkeye", "hulk", "ironman", "thor", "blackwidow", };
         for(String user: users) {
@@ -127,7 +127,7 @@ public class ActiveDirectorySessionFactoryTests extends ESTestCase {
         Settings settings = buildAdSettings(AD_LDAP_URL, AD_DOMAIN, "CN=Users,DC=ad,DC=test,DC=elasticsearch,DC=com",
                 LdapSearchScope.ONE_LEVEL, false);
         RealmConfig config = new RealmConfig("ad-test", settings, globalSettings);
-        ActiveDirectorySessionFactory sessionFactory = new ActiveDirectorySessionFactory(config, clientSSLService);
+        ActiveDirectorySessionFactory sessionFactory = new ActiveDirectorySessionFactory(config, clientSSLService).init();
 
         String userName = "hulk";
         try (LdapSession ldap = sessionFactory.session(userName, SecuredStringTests.build(PASSWORD))) {
@@ -149,7 +149,7 @@ public class ActiveDirectorySessionFactoryTests extends ESTestCase {
         Settings settings = buildAdSettings(AD_LDAP_URL, AD_DOMAIN, "CN=Bruce Banner, CN=Users,DC=ad,DC=test,DC=elasticsearch,DC=com",
                 LdapSearchScope.BASE, false);
         RealmConfig config = new RealmConfig("ad-test", settings, globalSettings);
-        ActiveDirectorySessionFactory sessionFactory = new ActiveDirectorySessionFactory(config, clientSSLService);
+        ActiveDirectorySessionFactory sessionFactory = new ActiveDirectorySessionFactory(config, clientSSLService).init();
 
         String userName = "hulk";
         try (LdapSession ldap = sessionFactory.session(userName, SecuredStringTests.build(PASSWORD))) {
@@ -175,7 +175,7 @@ public class ActiveDirectorySessionFactoryTests extends ESTestCase {
                 .put(ActiveDirectorySessionFactory.AD_GROUP_SEARCH_SCOPE_SETTING, LdapSearchScope.BASE)
                 .build();
         RealmConfig config = new RealmConfig("ad-test", settings, globalSettings);
-        ActiveDirectorySessionFactory sessionFactory = new ActiveDirectorySessionFactory(config, clientSSLService);
+        ActiveDirectorySessionFactory sessionFactory = new ActiveDirectorySessionFactory(config, clientSSLService).init();
 
         String userName = "hulk";
         try (LdapSession ldap = sessionFactory.session(userName, SecuredStringTests.build(PASSWORD))) {
@@ -190,7 +190,7 @@ public class ActiveDirectorySessionFactoryTests extends ESTestCase {
         Settings settings = buildAdSettings(AD_LDAP_URL, AD_DOMAIN, "CN=Users,DC=ad,DC=test,DC=elasticsearch,DC=com",
                 LdapSearchScope.ONE_LEVEL, false);
         RealmConfig config = new RealmConfig("ad-test", settings, globalSettings);
-        ActiveDirectorySessionFactory sessionFactory = new ActiveDirectorySessionFactory(config, clientSSLService);
+        ActiveDirectorySessionFactory sessionFactory = new ActiveDirectorySessionFactory(config, clientSSLService).init();
 
         //Login with the UserPrincipalName
         String userDN = "CN=Erik Selvig,CN=Users,DC=ad,DC=test,DC=elasticsearch,DC=com";
@@ -208,7 +208,7 @@ public class ActiveDirectorySessionFactoryTests extends ESTestCase {
         Settings settings = buildAdSettings(AD_LDAP_URL, AD_DOMAIN, "CN=Users,DC=ad,DC=test,DC=elasticsearch,DC=com",
                 LdapSearchScope.ONE_LEVEL, false);
         RealmConfig config = new RealmConfig("ad-test", settings, globalSettings);
-        ActiveDirectorySessionFactory sessionFactory = new ActiveDirectorySessionFactory(config, clientSSLService);
+        ActiveDirectorySessionFactory sessionFactory = new ActiveDirectorySessionFactory(config, clientSSLService).init();
 
         //login with sAMAccountName
         String userDN = "CN=Erik Selvig,CN=Users,DC=ad,DC=test,DC=elasticsearch,DC=com";
@@ -232,7 +232,7 @@ public class ActiveDirectorySessionFactoryTests extends ESTestCase {
                         "(&(objectclass=user)(userPrincipalName={0}@ad.test.elasticsearch.com))")
                 .build();
         RealmConfig config = new RealmConfig("ad-test", settings, globalSettings);
-        ActiveDirectorySessionFactory sessionFactory = new ActiveDirectorySessionFactory(config, clientSSLService);
+        ActiveDirectorySessionFactory sessionFactory = new ActiveDirectorySessionFactory(config, clientSSLService).init();
 
         //Login with the UserPrincipalName
         try (LdapSession ldap = sessionFactory.session("erik.selvig", SecuredStringTests.build(PASSWORD))) {
@@ -251,7 +251,7 @@ public class ActiveDirectorySessionFactoryTests extends ESTestCase {
         String userTemplate = "CN={0},CN=Users,DC=ad,DC=test,DC=elasticsearch,DC=com";
         Settings settings = LdapTestCase.buildLdapSettings(AD_LDAP_URL, userTemplate, groupSearchBase, LdapSearchScope.SUB_TREE);
         RealmConfig config = new RealmConfig("ad-as-ldap-test", settings, globalSettings);
-        LdapSessionFactory sessionFactory = new LdapSessionFactory(config, clientSSLService);
+        LdapSessionFactory sessionFactory = new LdapSessionFactory(config, clientSSLService).init();
 
         String user = "Bruce Banner";
         try (LdapSession ldap = sessionFactory.session(user, SecuredStringTests.build(PASSWORD))) {
@@ -270,7 +270,7 @@ public class ActiveDirectorySessionFactoryTests extends ESTestCase {
         String userTemplate = "CN={0},CN=Users,DC=ad,DC=test,DC=elasticsearch,DC=com";
         Settings settings = LdapTestCase.buildLdapSettings(new String[] { AD_LDAP_URL }, userTemplate, false);
         RealmConfig config = new RealmConfig("ad-as-ldap-test", settings, globalSettings);
-        LdapSessionFactory sessionFactory = new LdapSessionFactory(config, clientSSLService);
+        LdapSessionFactory sessionFactory = new LdapSessionFactory(config, clientSSLService).init();
 
         String user = "Bruce Banner";
         try (LdapSession ldap = sessionFactory.session(user, SecuredStringTests.build(PASSWORD))) {
@@ -286,7 +286,7 @@ public class ActiveDirectorySessionFactoryTests extends ESTestCase {
 
     public void testAdAuthWithHostnameVerification() throws Exception {
         RealmConfig config = new RealmConfig("ad-test", buildAdSettings(AD_LDAP_URL, AD_DOMAIN, true), globalSettings);
-        ActiveDirectorySessionFactory sessionFactory = new ActiveDirectorySessionFactory(config, clientSSLService);
+        ActiveDirectorySessionFactory sessionFactory = new ActiveDirectorySessionFactory(config, clientSSLService).init();
 
         String userName = "ironman";
         try (LdapSession ldap = sessionFactory.session(userName, SecuredStringTests.build(PASSWORD))) {
@@ -304,7 +304,7 @@ public class ActiveDirectorySessionFactoryTests extends ESTestCase {
                 .put(LdapSessionFactory.HOSTNAME_VERIFICATION_SETTING, true)
                 .build();
         RealmConfig config = new RealmConfig("ad-test", settings, globalSettings);
-        LdapSessionFactory sessionFactory = new LdapSessionFactory(config, clientSSLService);
+        LdapSessionFactory sessionFactory = new LdapSessionFactory(config, clientSSLService).init();
 
         String user = "Bruce Banner";
         try (LdapSession ldap = sessionFactory.session(user, SecuredStringTests.build(PASSWORD))) {

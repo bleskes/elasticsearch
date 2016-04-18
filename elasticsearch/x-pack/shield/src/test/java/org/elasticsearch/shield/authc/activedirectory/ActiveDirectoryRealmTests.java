@@ -120,7 +120,7 @@ public class ActiveDirectoryRealmTests extends ESTestCase {
     public void testAuthenticateUserPrincipleName() throws Exception {
         Settings settings = settings();
         RealmConfig config = new RealmConfig("testAuthenticateUserPrincipleName", settings, globalSettings);
-        ActiveDirectorySessionFactory sessionFactory = new ActiveDirectorySessionFactory(config, null);
+        ActiveDirectorySessionFactory sessionFactory = new ActiveDirectorySessionFactory(config, null).init();
         DnRoleMapper roleMapper = new DnRoleMapper(ActiveDirectoryRealm.TYPE, config, resourceWatcherService, null);
         ActiveDirectoryRealm realm = new ActiveDirectoryRealm(config, sessionFactory, roleMapper);
 
@@ -132,7 +132,7 @@ public class ActiveDirectoryRealmTests extends ESTestCase {
     public void testAuthenticateSAMAccountName() throws Exception {
         Settings settings = settings();
         RealmConfig config = new RealmConfig("testAuthenticateSAMAccountName", settings, globalSettings);
-        ActiveDirectorySessionFactory sessionFactory = new ActiveDirectorySessionFactory(config, null);
+        ActiveDirectorySessionFactory sessionFactory = new ActiveDirectorySessionFactory(config, null).init();
         DnRoleMapper roleMapper = new DnRoleMapper(ActiveDirectoryRealm.TYPE, config, resourceWatcherService, null);
         ActiveDirectoryRealm realm = new ActiveDirectoryRealm(config, sessionFactory, roleMapper);
 
@@ -154,7 +154,7 @@ public class ActiveDirectoryRealmTests extends ESTestCase {
     public void testAuthenticateCachesSuccesfulAuthentications() throws Exception {
         Settings settings = settings();
         RealmConfig config = new RealmConfig("testAuthenticateCachesSuccesfulAuthentications", settings, globalSettings);
-        ActiveDirectorySessionFactory sessionFactory = spy(new ActiveDirectorySessionFactory(config, null));
+        ActiveDirectorySessionFactory sessionFactory = spy(new ActiveDirectorySessionFactory(config, null).init());
         DnRoleMapper roleMapper = new DnRoleMapper(ActiveDirectoryRealm.TYPE, config, resourceWatcherService, null);
         ActiveDirectoryRealm realm = new ActiveDirectoryRealm(config, sessionFactory, roleMapper);
 
@@ -170,7 +170,7 @@ public class ActiveDirectoryRealmTests extends ESTestCase {
     public void testAuthenticateCachingCanBeDisabled() throws Exception {
         Settings settings = settings(Settings.builder().put(CachingUsernamePasswordRealm.CACHE_TTL_SETTING, -1).build());
         RealmConfig config = new RealmConfig("testAuthenticateCachingCanBeDisabled", settings, globalSettings);
-        ActiveDirectorySessionFactory sessionFactory = spy(new ActiveDirectorySessionFactory(config, null));
+        ActiveDirectorySessionFactory sessionFactory = spy(new ActiveDirectorySessionFactory(config, null).init());
         DnRoleMapper roleMapper = new DnRoleMapper(ActiveDirectoryRealm.TYPE, config, resourceWatcherService, null);
         ActiveDirectoryRealm realm = new ActiveDirectoryRealm(config, sessionFactory, roleMapper);
 
@@ -186,7 +186,7 @@ public class ActiveDirectoryRealmTests extends ESTestCase {
     public void testAuthenticateCachingClearsCacheOnRoleMapperRefresh() throws Exception {
         Settings settings = settings();
         RealmConfig config = new RealmConfig("testAuthenticateCachingClearsCacheOnRoleMapperRefresh", settings, globalSettings);
-        ActiveDirectorySessionFactory sessionFactory = spy(new ActiveDirectorySessionFactory(config, null));
+        ActiveDirectorySessionFactory sessionFactory = spy(new ActiveDirectorySessionFactory(config, null).init());
         DnRoleMapper roleMapper = new DnRoleMapper(ActiveDirectoryRealm.TYPE, config, resourceWatcherService, null);
         ActiveDirectoryRealm realm = new ActiveDirectoryRealm(config, sessionFactory, roleMapper);
 
@@ -213,7 +213,7 @@ public class ActiveDirectoryRealmTests extends ESTestCase {
                 .put(DnRoleMapper.ROLE_MAPPING_FILE_SETTING, getDataPath("role_mapping.yml"))
                 .build());
         RealmConfig config = new RealmConfig("testRealmMapsGroupsToRoles", settings, globalSettings);
-        ActiveDirectorySessionFactory sessionFactory = new ActiveDirectorySessionFactory(config, null);
+        ActiveDirectorySessionFactory sessionFactory = new ActiveDirectorySessionFactory(config, null).init();
         DnRoleMapper roleMapper = new DnRoleMapper(ActiveDirectoryRealm.TYPE, config, resourceWatcherService, null);
         ActiveDirectoryRealm realm = new ActiveDirectoryRealm(config, sessionFactory, roleMapper);
 
@@ -227,7 +227,7 @@ public class ActiveDirectoryRealmTests extends ESTestCase {
                 .put(DnRoleMapper.ROLE_MAPPING_FILE_SETTING, getDataPath("role_mapping.yml"))
                 .build());
         RealmConfig config = new RealmConfig("testRealmMapsGroupsToRoles", settings, globalSettings);
-        ActiveDirectorySessionFactory sessionFactory = new ActiveDirectorySessionFactory(config, null);
+        ActiveDirectorySessionFactory sessionFactory = new ActiveDirectorySessionFactory(config, null).init();
         DnRoleMapper roleMapper = new DnRoleMapper(ActiveDirectoryRealm.TYPE, config, resourceWatcherService, null);
         ActiveDirectoryRealm realm = new ActiveDirectoryRealm(config, sessionFactory, roleMapper);
 

@@ -79,7 +79,6 @@ import org.elasticsearch.shield.license.ShieldLicenseState;
 import org.elasticsearch.shield.license.ShieldLicensee;
 import org.elasticsearch.shield.rest.ShieldRestModule;
 import org.elasticsearch.shield.rest.action.RestAuthenticateAction;
-import org.elasticsearch.shield.rest.action.RestShieldInfoAction;
 import org.elasticsearch.shield.rest.action.realm.RestClearRealmCacheAction;
 import org.elasticsearch.shield.rest.action.role.RestPutRoleAction;
 import org.elasticsearch.shield.rest.action.role.RestClearRolesCacheAction;
@@ -309,9 +308,6 @@ public class Security {
             }
             return;
         }
-
-        // we want to expose the shield rest action even when the plugin is disabled
-        module.registerRestHandler(RestShieldInfoAction.class);
 
         if (enabled) {
             module.registerTransport(Security.NAME, ShieldNettyTransport.class);

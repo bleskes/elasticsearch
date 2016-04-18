@@ -26,6 +26,7 @@ import org.elasticsearch.graph.Graph;
 import org.elasticsearch.shield.action.ShieldActionModule;
 import org.elasticsearch.test.ESIntegTestCase.ClusterScope;
 import org.elasticsearch.test.ShieldIntegTestCase;
+import org.elasticsearch.xpack.XPackPlugin;
 import org.junit.BeforeClass;
 
 import java.io.IOException;
@@ -119,6 +120,9 @@ public class KnownActionsTests extends ShieldIntegTestCase {
         // loading es core actions
         loadActions(collectSubClasses(Action.class, Action.class), actions);
 
+        // loading all xpack top level actions
+        loadActions(collectSubClasses(Action.class, XPackPlugin.class), actions);
+
         // loading shield actions
         loadActions(collectSubClasses(Action.class, ShieldActionModule.class), actions);
 
@@ -127,8 +131,7 @@ public class KnownActionsTests extends ShieldIntegTestCase {
 
         // also loading all actions from the graph plugin
         loadActions(collectSubClasses(Action.class, Graph.class), actions);
-        
-        
+
         return unmodifiableSet(actions);
     }
 
