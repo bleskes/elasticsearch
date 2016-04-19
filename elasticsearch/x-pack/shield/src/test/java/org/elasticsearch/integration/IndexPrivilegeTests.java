@@ -30,6 +30,7 @@ import java.util.Locale;
 import java.util.Map;
 
 import static java.util.Collections.singletonMap;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 
 //test is just too slow, please fix it to not be sleep-based
@@ -324,11 +325,11 @@ public class IndexPrivilegeTests extends AbstractPrivilegeTestCase {
         switch (action) {
             case "all" :
                 if (userIsAllowed) {
-                    assertUserIsAllowed(user, "manage", index);
                     assertUserIsAllowed(user, "crud", index);
+                    assertUserIsAllowed(user, "manage", index);
                 } else {
-                    assertUserIsDenied(user, "manage", index);
                     assertUserIsDenied(user, "crud", index);
+                    assertUserIsDenied(user, "manage", index);
                 }
                 break;
 
@@ -416,7 +417,11 @@ public class IndexPrivilegeTests extends AbstractPrivilegeTestCase {
                     assertAccessIsAllowed("admin", "GET", "/" + index + "/foo/1");
                     assertAccessIsAllowed(user, "GET", "/" + index + "/foo/1/_explain", "{ \"query\" : { \"match_all\" : {} } }");
                     assertAccessIsAllowed(user, "GET", "/" + index + "/foo/1/_termvector");
-                    assertAccessIsAllowed(user, "GET", "/" + index + "/foo/_percolate", "{ \"doc\" : { \"foo\" : \"bar\" } }");
+                    try {
+                        assertAccessIsAllowed(user, "GET", "/" + index + "/foo/_percolate", "{ \"doc\" : { \"foo\" : \"bar\" } }");
+                    } catch (Throwable e) {
+                        assertThat(e.getMessage(), containsString("field [query] does not exist"));
+                    }
                     assertAccessIsAllowed(user, "GET",
                             "/" + index + "/_suggest", "{ \"sgs\" : { \"text\" : \"foo\", \"term\" : { \"field\" : \"body\" } } }");
                     assertAccessIsAllowed(user, "GET",
@@ -429,7 +434,11 @@ public class IndexPrivilegeTests extends AbstractPrivilegeTestCase {
                     multiPercolate.append("{\"doc\" : {\"message\" : \"some text\"}}\n");
                     multiPercolate.append("{\"percolate\" : {\"index\" : \"" + index + "\", \"type\" : \"foo\", \"id\" : \"1\"}}\n");
                     multiPercolate.append("{}\n");
-                    assertAccessIsAllowed(user, "GET", "/" + index + "/foo/_mpercolate", multiPercolate.toString());
+                    try {
+                        assertAccessIsAllowed(user, "GET", "/" + index + "/foo/_mpercolate", multiPercolate.toString());
+                    } catch (Throwable e) {
+                        assertThat(e.getMessage(), containsString("field [query] does not exist"));
+                    }
 
                     assertUserIsAllowed(user, "search", index);
                 } else {
