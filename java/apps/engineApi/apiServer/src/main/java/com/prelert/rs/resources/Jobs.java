@@ -55,7 +55,7 @@ import com.prelert.job.UnknownJobException;
 import com.prelert.job.config.verification.JobConfigurationException;
 import com.prelert.job.config.verification.JobConfigurationVerifier;
 import com.prelert.job.exceptions.JobInUseException;
-import com.prelert.job.exceptions.TooManyJobsException;
+import com.prelert.job.exceptions.LicenseViolationException;
 import com.prelert.job.logs.JobLogs;
 import com.prelert.job.manager.CannotPauseJobException;
 import com.prelert.job.manager.CannotResumeJobException;
@@ -172,8 +172,9 @@ public class Jobs extends ResourceWithJobManager
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Response createJob(@DefaultValue("false") @QueryParam("overwrite") boolean overwrite,
-            JobConfiguration config) throws UnknownJobException,
-            JobConfigurationException, IOException, TooManyJobsException,
+                                JobConfiguration config)
+    throws UnknownJobException,
+            JobConfigurationException, IOException, LicenseViolationException,
             JobIdAlreadyExistsException, CannotStartSchedulerException,
             DataStoreException, NativeProcessRunException, JobInUseException,
             CannotStopSchedulerException

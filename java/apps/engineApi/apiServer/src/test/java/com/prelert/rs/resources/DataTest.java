@@ -62,6 +62,7 @@ import com.prelert.job.JobDetails;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.exceptions.JobInUseException;
+import com.prelert.job.exceptions.LicenseViolationException;
 import com.prelert.job.exceptions.TooManyJobsException;
 import com.prelert.job.manager.JobManager;
 import com.prelert.job.messages.Messages;
@@ -110,7 +111,8 @@ public class DataTest extends ServiceTest
     @Test
     public void testStreamData_GivenSingleJob() throws UnknownJobException, NativeProcessRunException,
             MissingFieldException, JobInUseException, HighProportionOfBadTimestampsException,
-            OutOfOrderRecordsException, TooManyJobsException, MalformedJsonException, IOException
+            OutOfOrderRecordsException, LicenseViolationException, MalformedJsonException, IOException,
+            TooManyJobsException
     {
         HttpHeaders httpHeaders = mock(HttpHeaders.class);
         InputStream inputStream = mock(InputStream.class);
@@ -137,7 +139,8 @@ public class DataTest extends ServiceTest
     @Test
     public void testStreamData_GivenMultipleJobs() throws UnknownJobException, NativeProcessRunException,
             MissingFieldException, JobInUseException, HighProportionOfBadTimestampsException,
-            OutOfOrderRecordsException, TooManyJobsException, MalformedJsonException, IOException
+            OutOfOrderRecordsException, LicenseViolationException, MalformedJsonException, IOException,
+            TooManyJobsException
     {
         String job1 = "job_1";
         String job2 = "job_2";
@@ -181,7 +184,7 @@ public class DataTest extends ServiceTest
     public void testStreamData_GivenResetStartAndResetEndSpecified() throws UnknownJobException,
             NativeProcessRunException, MissingFieldException, JobInUseException,
             HighProportionOfBadTimestampsException, OutOfOrderRecordsException,
-            TooManyJobsException, MalformedJsonException, IOException
+            LicenseViolationException, MalformedJsonException, IOException, TooManyJobsException
     {
         HttpHeaders httpHeaders = mock(HttpHeaders.class);
         InputStream inputStream = mock(InputStream.class);
@@ -229,7 +232,7 @@ public class DataTest extends ServiceTest
     public void testStreamData_GivenOnlyResetStartSpecified() throws UnknownJobException,
             NativeProcessRunException, MissingFieldException, JobInUseException,
             HighProportionOfBadTimestampsException, OutOfOrderRecordsException,
-            TooManyJobsException, MalformedJsonException, IOException
+            LicenseViolationException, MalformedJsonException, IOException, TooManyJobsException
     {
         HttpHeaders httpHeaders = mock(HttpHeaders.class);
         InputStream inputStream = mock(InputStream.class);
@@ -253,7 +256,7 @@ public class DataTest extends ServiceTest
     public void testStreamData_GivenSameResetStartAndResetEndSpecified() throws UnknownJobException,
             NativeProcessRunException, MissingFieldException, JobInUseException,
             HighProportionOfBadTimestampsException, OutOfOrderRecordsException,
-            TooManyJobsException, MalformedJsonException, IOException
+            LicenseViolationException, MalformedJsonException, IOException, TooManyJobsException
     {
         HttpHeaders httpHeaders = mock(HttpHeaders.class);
         InputStream inputStream = mock(InputStream.class);
@@ -303,7 +306,7 @@ public class DataTest extends ServiceTest
     public void testStreamData_GivenInvalidResetStartSpecified() throws UnknownJobException,
             NativeProcessRunException, MissingFieldException, JobInUseException,
             HighProportionOfBadTimestampsException, OutOfOrderRecordsException,
-            TooManyJobsException, MalformedJsonException, IOException
+            MalformedJsonException, IOException
     {
         HttpHeaders httpHeaders = mock(HttpHeaders.class);
         InputStream inputStream = mock(InputStream.class);
@@ -319,7 +322,7 @@ public class DataTest extends ServiceTest
     public void testStreamData_GivenInvalidResetEndSpecified() throws UnknownJobException,
             NativeProcessRunException, MissingFieldException, JobInUseException,
             HighProportionOfBadTimestampsException, OutOfOrderRecordsException,
-            TooManyJobsException, MalformedJsonException, IOException
+            MalformedJsonException, IOException
     {
         HttpHeaders httpHeaders = mock(HttpHeaders.class);
         InputStream inputStream = mock(InputStream.class);

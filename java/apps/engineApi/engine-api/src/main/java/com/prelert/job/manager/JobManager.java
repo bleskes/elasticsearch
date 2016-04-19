@@ -75,6 +75,7 @@ import com.prelert.job.config.verification.JobConfigurationException;
 import com.prelert.job.data.extraction.DataExtractorFactory;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.exceptions.JobInUseException;
+import com.prelert.job.exceptions.LicenseViolationException;
 import com.prelert.job.exceptions.TooManyJobsException;
 import com.prelert.job.logging.JobLoggerFactory;
 import com.prelert.job.manager.actions.Action;
@@ -292,7 +293,7 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
      * @throws CannotStopSchedulerException Possible only if overwriting
      */
     public JobDetails createJob(JobConfiguration jobConfig, boolean overwrite)
-            throws TooManyJobsException, JobConfigurationException, JobIdAlreadyExistsException,
+            throws LicenseViolationException, JobConfigurationException, JobIdAlreadyExistsException,
             DataStoreException, NativeProcessRunException, JobInUseException,
             CannotStopSchedulerException
     {
@@ -890,7 +891,8 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
     public DataCounts submitDataLoadJob(String jobId, InputStream input, DataLoadParams params)
     throws UnknownJobException, NativeProcessRunException, MissingFieldException,
         JsonParseException, JobInUseException, HighProportionOfBadTimestampsException,
-        OutOfOrderRecordsException, TooManyJobsException, MalformedJsonException
+        OutOfOrderRecordsException, LicenseViolationException, TooManyJobsException,
+        MalformedJsonException
     {
         try (ActionTicket actionTicket = m_ActionGuardian.tryAcquiringAction(jobId, Action.WRITING))
         {
@@ -963,7 +965,8 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
         return new String(output.toByteArray(), StandardCharsets.UTF_8);
     }
 
-    private void checkTooManyJobs(String jobId) throws TooManyJobsException
+    private void checkTooManyJobs(String jobId)
+    throws TooManyJobsException, LicenseViolationException
     {
         if (m_ProcessManager.jobIsRunning(jobId))
         {
@@ -980,13 +983,13 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
             String message = Messages.getMessage(Messages.CPU_LIMIT_JOB, jobId);
 
             LOGGER.info(message);
-            throw new TooManyJobsException(m_MaxAllowedJobs, message,
-                    ErrorCodes.TOO_MANY_JOBS_RUNNING_CONCURRENTLY);
+            throw new TooManyJobsException(m_ProcessManager.numberOfRunningJobs(),
+                            message, ErrorCodes.TOO_MANY_JOBS_RUNNING_CONCURRENTLY);
         }
     }
 
     private void checkDataLoadForTooManyJobsAgainstLicenseLimit(String jobId)
-            throws TooManyJobsException
+            throws LicenseViolationException
     {
         if (m_BackendInfo.isLicenseJobLimitViolated(m_ProcessManager.numberOfRunningJobs()))
         {
@@ -994,8 +997,7 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
                                         jobId, m_BackendInfo.getLicenseJobLimit());
 
             LOGGER.info(message);
-            throw new TooManyJobsException(m_BackendInfo.getLicenseJobLimit(), message,
-                    ErrorCodes.LICENSE_VIOLATION);
+            throw new LicenseViolationException(message, ErrorCodes.LICENSE_VIOLATION);
         }
     }
 

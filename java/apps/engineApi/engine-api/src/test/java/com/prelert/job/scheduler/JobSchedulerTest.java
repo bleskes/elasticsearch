@@ -84,7 +84,7 @@ import com.prelert.job.data.extraction.DataExtractor;
 import com.prelert.job.errorcodes.ErrorCodeMatcher;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.exceptions.JobInUseException;
-import com.prelert.job.exceptions.TooManyJobsException;
+import com.prelert.job.exceptions.LicenseViolationException;
 import com.prelert.job.logging.JobLoggerFactory;
 import com.prelert.job.persistence.JobProvider;
 import com.prelert.job.process.exceptions.MalformedJsonException;
@@ -793,7 +793,7 @@ public class JobSchedulerTest
         public DataCounts submitDataLoadJob(String jobId, InputStream input, DataLoadParams params)
                 throws UnknownJobException, NativeProcessRunException, MissingFieldException,
                 JsonParseException, JobInUseException, HighProportionOfBadTimestampsException,
-                OutOfOrderRecordsException, TooManyJobsException, MalformedJsonException
+                OutOfOrderRecordsException, LicenseViolationException, MalformedJsonException
         {
             assertEquals(JOB_ID, jobId);
             assertFalse(params.isPersisting());

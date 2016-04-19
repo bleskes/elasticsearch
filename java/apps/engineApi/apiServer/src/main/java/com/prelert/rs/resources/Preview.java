@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -42,8 +42,6 @@ import javax.ws.rs.core.Response;
 import org.apache.log4j.Logger;
 
 import com.prelert.job.UnknownJobException;
-import com.prelert.job.exceptions.JobInUseException;
-import com.prelert.job.exceptions.TooManyJobsException;
 import com.prelert.job.process.exceptions.MalformedJsonException;
 import com.prelert.job.process.exceptions.MissingFieldException;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
@@ -71,11 +69,8 @@ public class Preview extends ResourceWithJobManager
      * @throws UnknownJobException
      * @throws NativeProcessRunException
      * @throws MissingFieldException
-     * @throws JobInUseException if the data cannot be written to because
-     * the job is already handling data
      * @throws HighProportionOfBadTimestampsException
      * @throws OutOfOrderRecordsException
-     * @throws TooManyJobsException If the license is violated
      * @throws MalformedJsonException If JSON data is malformed and we cannot recover
      */
     @POST
@@ -86,8 +81,8 @@ public class Preview extends ResourceWithJobManager
     public Response streamData(@Context HttpHeaders headers,
             @PathParam("jobId") String jobId, InputStream input)
     throws IOException, UnknownJobException, NativeProcessRunException,
-            MissingFieldException, JobInUseException, HighProportionOfBadTimestampsException,
-            OutOfOrderRecordsException, TooManyJobsException, MalformedJsonException
+            MissingFieldException, HighProportionOfBadTimestampsException,
+            OutOfOrderRecordsException, MalformedJsonException
     {
         LOGGER.debug("Preview data to job '" + jobId + "'");
 

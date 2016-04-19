@@ -33,6 +33,7 @@ import com.fasterxml.jackson.core.JsonParseException;
 import com.prelert.job.DataCounts;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.exceptions.JobInUseException;
+import com.prelert.job.exceptions.LicenseViolationException;
 import com.prelert.job.exceptions.TooManyJobsException;
 import com.prelert.job.process.exceptions.MalformedJsonException;
 import com.prelert.job.process.exceptions.MissingFieldException;
@@ -65,14 +66,16 @@ public interface DataProcessor
      * it is already handling data
      * @throws HighProportionOfBadTimestampsException
      * @throws OutOfOrderRecordsException
-     * @throws TooManyJobsException If the license is violated
+     * @throws LicenseViolationException If the license is violated
+     * @throws TooManyJobsException If too many jobs for the number of CPU cores
      * @throws MalformedJsonException If JSON data is malformed and we cannot recover
      * @return Count of records, fields, bytes, etc written
      */
     DataCounts submitDataLoadJob(String jobId, InputStream input, DataLoadParams params)
             throws UnknownJobException, NativeProcessRunException, MissingFieldException,
             JsonParseException, JobInUseException, HighProportionOfBadTimestampsException,
-            OutOfOrderRecordsException, TooManyJobsException, MalformedJsonException;
+            OutOfOrderRecordsException, LicenseViolationException, TooManyJobsException,
+            MalformedJsonException;
 
     /**
      * Flush the running job, ensuring that the native process has had the

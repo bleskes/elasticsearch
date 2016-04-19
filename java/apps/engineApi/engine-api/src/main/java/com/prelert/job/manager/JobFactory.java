@@ -40,7 +40,7 @@ import com.prelert.job.JobDetails;
 import com.prelert.job.config.DefaultDetectorDescription;
 import com.prelert.job.config.verification.JobConfigurationException;
 import com.prelert.job.errorcodes.ErrorCodes;
-import com.prelert.job.exceptions.TooManyJobsException;
+import com.prelert.job.exceptions.LicenseViolationException;
 import com.prelert.job.messages.Messages;
 
 /**
@@ -70,43 +70,15 @@ class JobFactory
      * @param jobConfig the job configuration
      * @param numberOfRunningJobs the number of running jobs at the moment of creation
      * @return the created {@Code JobDetails} object
-     * @throws TooManyJobsException
+     * @throws LicenseViolationException
      * @throws JobConfigurationException
      */
     public JobDetails create(JobConfiguration jobConfig, int numberOfRunningJobs)
-            throws TooManyJobsException, JobConfigurationException
+            throws LicenseViolationException, JobConfigurationException
     {
         checkTooManyJobsAgainstLicenseLimit(numberOfRunningJobs);
-
-        // Negative m_MaxDetectorsPerJob means unlimited
-        if (m_BackendInfo.getMaxDetectorsPerJob() >= 0 &&
-            jobConfig.getAnalysisConfig() != null &&
-            jobConfig.getAnalysisConfig().getDetectors().size() > m_BackendInfo.getMaxDetectorsPerJob())
-        {
-            String message = Messages.getMessage(
-                                Messages.LICENSE_LIMIT_DETECTORS,
-                                m_BackendInfo.getMaxDetectorsPerJob(),
-                                jobConfig.getAnalysisConfig().getDetectors().size());
-
-            LOGGER.info(message);
-            throw new JobConfigurationException(message, ErrorCodes.LICENSE_VIOLATION);
-        }
-
-        if (!m_BackendInfo.arePartitionsAllowed() && jobConfig.getAnalysisConfig() != null)
-        {
-            for (com.prelert.job.Detector detector :
-                        jobConfig.getAnalysisConfig().getDetectors())
-            {
-                String partitionFieldName = detector.getPartitionFieldName();
-                if (partitionFieldName != null &&
-                    partitionFieldName.length() > 0)
-                {
-                    String message = Messages.getMessage(Messages.LICENSE_LIMIT_PARTITIONS);
-                    LOGGER.info(message);
-                    throw new JobConfigurationException(message, ErrorCodes.LICENSE_VIOLATION);
-                }
-            }
-        }
+        checkTooManyDetectorsAgainstLicenseLimit(jobConfig);
+        checkPartitionsAllowedAgainstLicense(jobConfig);
 
         String jobId = jobConfig.getId();
         if (jobId == null || jobId.isEmpty())
@@ -119,16 +91,53 @@ class JobFactory
     }
 
     private void checkTooManyJobsAgainstLicenseLimit(int numberOfRunningJobs)
-            throws TooManyJobsException
+            throws LicenseViolationException
     {
         if (m_BackendInfo.isLicenseJobLimitViolated(numberOfRunningJobs))
         {
             String message = Messages.getMessage(Messages.LICENSE_LIMIT_JOBS,
-                    m_BackendInfo.getLicenseJobLimit());
+                    m_BackendInfo.getMaxDetectorsPerJob());
 
             LOGGER.info(message);
-            throw new TooManyJobsException(m_BackendInfo.getLicenseJobLimit(), message,
-                    ErrorCodes.LICENSE_VIOLATION);
+            throw new LicenseViolationException(message, ErrorCodes.LICENSE_VIOLATION);
+        }
+    }
+
+    private void checkTooManyDetectorsAgainstLicenseLimit(JobConfiguration jobConfig)
+    throws LicenseViolationException
+    {
+        // Negative m_MaxDetectorsPerJob means unlimited
+        if (m_BackendInfo.getMaxDetectorsPerJob() >= 0 &&
+            jobConfig.getAnalysisConfig() != null &&
+            jobConfig.getAnalysisConfig().getDetectors().size() > m_BackendInfo.getMaxDetectorsPerJob())
+        {
+            String message = Messages.getMessage(
+                                Messages.LICENSE_LIMIT_DETECTORS,
+                                m_BackendInfo.getMaxDetectorsPerJob(),
+                                jobConfig.getAnalysisConfig().getDetectors().size());
+
+            LOGGER.info(message);
+            throw new LicenseViolationException(message, ErrorCodes.LICENSE_VIOLATION);
+        }
+    }
+
+    private void checkPartitionsAllowedAgainstLicense(JobConfiguration jobConfig)
+    throws LicenseViolationException
+    {
+        if (!m_BackendInfo.arePartitionsAllowed() && jobConfig.getAnalysisConfig() != null)
+        {
+            for (com.prelert.job.Detector detector :
+                        jobConfig.getAnalysisConfig().getDetectors())
+            {
+                String partitionFieldName = detector.getPartitionFieldName();
+                if (partitionFieldName != null &&
+                    partitionFieldName.length() > 0)
+                {
+                    String message = Messages.getMessage(Messages.LICENSE_LIMIT_PARTITIONS);
+                    LOGGER.info(message);
+                    throw new LicenseViolationException(message, ErrorCodes.LICENSE_VIOLATION);
+                }
+            }
         }
     }
 

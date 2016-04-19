@@ -59,17 +59,12 @@ import com.prelert.job.data.DataStreamerThread;
 import com.prelert.job.data.InputStreamDuplicator;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.exceptions.JobInUseException;
-import com.prelert.job.exceptions.TooManyJobsException;
 import com.prelert.job.messages.Messages;
-import com.prelert.job.process.exceptions.MalformedJsonException;
-import com.prelert.job.process.exceptions.MissingFieldException;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
 import com.prelert.job.process.params.DataLoadParams;
 import com.prelert.job.process.params.InterimResultsParams;
 import com.prelert.job.process.params.InterimResultsParams.Builder;
 import com.prelert.job.process.params.TimeRange;
-import com.prelert.job.status.HighProportionOfBadTimestampsException;
-import com.prelert.job.status.OutOfOrderRecordsException;
 import com.prelert.rs.data.Acknowledgement;
 import com.prelert.rs.data.ApiError;
 import com.prelert.rs.data.DataPostResponse;
@@ -112,15 +107,6 @@ public abstract class AbstractDataLoad extends ResourceWithJobManager
      * @param resetEnd Optional parameter to specify end of range for bucket resetting
      * @return
      * @throws IOException
-     * @throws UnknownJobException
-     * @throws NativeProcessRunException
-     * @throws MissingFieldException
-     * @throws JobInUseException if the data cannot be written to because
-     * the job is already handling data
-     * @throws HighProportionOfBadTimestampsException
-     * @throws OutOfOrderRecordsException
-     * @throws TooManyJobsException If the license is violated
-     * @throws MalformedJsonException If JSON data is malformed and we cannot recover
      */
     @POST
     @Path("/{jobId}")

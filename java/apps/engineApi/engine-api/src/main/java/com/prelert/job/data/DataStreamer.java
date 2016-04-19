@@ -46,6 +46,7 @@ import com.prelert.job.JobException;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.exceptions.JobInUseException;
+import com.prelert.job.exceptions.LicenseViolationException;
 import com.prelert.job.exceptions.TooManyJobsException;
 import com.prelert.job.messages.Messages;
 import com.prelert.job.process.exceptions.MalformedJsonException;
@@ -98,13 +99,13 @@ public class DataStreamer
      * the job is already handling data
      * @throws HighProportionOfBadTimestampsException
      * @throws OutOfOrderRecordsException
-     * @throws TooManyJobsException If the license is violated
+     * @throws LicenseViolationException If the license is violated
      * @throws MalformedJsonException If JSON data is malformed and we cannot recover
      */
     public DataCounts streamData(String contentEncoding, String jobId, InputStream input, DataLoadParams params)
             throws IOException, UnknownJobException, NativeProcessRunException,
             MissingFieldException, JobInUseException, HighProportionOfBadTimestampsException,
-            OutOfOrderRecordsException, TooManyJobsException, MalformedJsonException, JobException
+            OutOfOrderRecordsException, LicenseViolationException, MalformedJsonException, JobException
     {
         LOGGER.debug("Handle Post data to job = " + jobId);
 
@@ -194,13 +195,15 @@ public class DataStreamer
      * the job is already handling data
      * @throws HighProportionOfBadTimestampsException
      * @throws OutOfOrderRecordsException
-     * @throws TooManyJobsException If the license is violated
+     * @throws LicenseViolationException If the license is violated
+     * @throws TooManyJobsException If too many jobs for the number of CPU cores
      * @throws MalformedJsonException If JSON data is malformed and we cannot recover
      */
     private DataCounts handleStream(String jobId, InputStream input, DataLoadParams params) throws
             NativeProcessRunException, UnknownJobException, MissingFieldException,
             JsonParseException, JobInUseException, HighProportionOfBadTimestampsException,
-            OutOfOrderRecordsException, TooManyJobsException, MalformedJsonException
+            OutOfOrderRecordsException, LicenseViolationException, TooManyJobsException,
+            MalformedJsonException
     {
         return m_DataProccesor.submitDataLoadJob(jobId, input, params);
     }

@@ -102,6 +102,7 @@ import com.prelert.job.data.extraction.DataExtractorFactory;
 import com.prelert.job.errorcodes.ErrorCodeMatcher;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.exceptions.JobInUseException;
+import com.prelert.job.exceptions.LicenseViolationException;
 import com.prelert.job.exceptions.TooManyJobsException;
 import com.prelert.job.logging.JobLoggerFactory;
 import com.prelert.job.messages.Messages;
@@ -234,7 +235,7 @@ public class JobManagerTest
     @Test
     public void testDeleteJob_GivenScheduledJob()
             throws UnknownJobException, DataStoreException, NativeProcessRunException,
-            JobInUseException, TooManyJobsException, JobConfigurationException,
+            JobInUseException, LicenseViolationException, JobConfigurationException,
             JobIdAlreadyExistsException, CannotStopSchedulerException
     {
         givenProcessInfo(5);
@@ -331,7 +332,8 @@ public class JobManagerTest
     public void testSubmitDataLoadJob_GivenProcessIsRunningAsManyJobsAsLicenseAllows()
             throws JsonParseException, UnknownJobException, NativeProcessRunException,
             MissingFieldException, JobInUseException, HighProportionOfBadTimestampsException,
-            OutOfOrderRecordsException, TooManyJobsException, MalformedJsonException
+            OutOfOrderRecordsException, LicenseViolationException, MalformedJsonException,
+            TooManyJobsException
     {
         when(m_JobProvider.getJobDetails("foo")).thenReturn(
                 Optional.of(new JobDetails("foo", new JobConfiguration())));
@@ -348,7 +350,7 @@ public class JobManagerTest
             jobManager.submitDataLoadJob("foo", mock(InputStream.class), mock(DataLoadParams.class));
             fail();
         }
-        catch (TooManyJobsException e)
+        catch (LicenseViolationException e)
         {
             assertEquals(expectedError, e.getMessage());
             assertEquals(ErrorCodes.LICENSE_VIOLATION, e.getErrorCode());
@@ -361,7 +363,8 @@ public class JobManagerTest
     public void testSubmitDataLoadJob_GivenDefaultFactorAndProcessIsRunningMoreJobsThanMaxAllowed()
             throws JsonParseException, UnknownJobException, NativeProcessRunException,
             MissingFieldException, JobInUseException, HighProportionOfBadTimestampsException,
-            OutOfOrderRecordsException, TooManyJobsException, MalformedJsonException
+            OutOfOrderRecordsException, LicenseViolationException, MalformedJsonException,
+            TooManyJobsException
     {
         when(m_JobProvider.getJobDetails("foo")).thenReturn(
                 Optional.of(new JobDetails("foo", new JobConfiguration())));
@@ -392,7 +395,8 @@ public class JobManagerTest
     public void testSubmitDataLoadJob_GivenSpecifiedFactorAndProcessIsRunningMoreJobsThanMaxAllowed()
             throws JsonParseException, UnknownJobException, NativeProcessRunException,
             MissingFieldException, JobInUseException, HighProportionOfBadTimestampsException,
-            OutOfOrderRecordsException, TooManyJobsException, MalformedJsonException
+            OutOfOrderRecordsException, LicenseViolationException, MalformedJsonException,
+            TooManyJobsException
     {
         System.setProperty("max.jobs.factor", "5.0");
         when(m_JobProvider.getJobDetails("foo")).thenReturn(
@@ -417,7 +421,8 @@ public class JobManagerTest
     public void testSubmitDataLoadJob_GivenInvalidFactorAndProcessIsRunningMoreJobsThanMaxAllowed()
             throws JsonParseException, UnknownJobException, NativeProcessRunException,
             MissingFieldException, JobInUseException, HighProportionOfBadTimestampsException,
-            OutOfOrderRecordsException, TooManyJobsException, MalformedJsonException
+            OutOfOrderRecordsException, LicenseViolationException, MalformedJsonException,
+            TooManyJobsException
     {
         System.setProperty("max.jobs.factor", "invalid");
         when(m_JobProvider.getJobDetails("foo")).thenReturn(
@@ -462,7 +467,8 @@ public class JobManagerTest
     public void testSubmitDataLoadJob_GivenProcessIsRunSuccessfully()
             throws JsonParseException, UnknownJobException, NativeProcessRunException,
             MissingFieldException, JobInUseException, HighProportionOfBadTimestampsException,
-            OutOfOrderRecordsException, TooManyJobsException, MalformedJsonException
+            OutOfOrderRecordsException, LicenseViolationException, MalformedJsonException,
+            TooManyJobsException
     {
         InputStream inputStream = mock(InputStream.class);
         DataLoadParams params = mock(DataLoadParams.class);
@@ -486,7 +492,8 @@ public class JobManagerTest
     public void testSubmitDataLoadJob_GivenProcessIsRunSuccessfullyAndJobShouldIgnoreDowntimeOnceAndPositiveProcessedRecordCount()
             throws JsonParseException, UnknownJobException, NativeProcessRunException,
             MissingFieldException, JobInUseException, HighProportionOfBadTimestampsException,
-            OutOfOrderRecordsException, TooManyJobsException, MalformedJsonException
+            OutOfOrderRecordsException, LicenseViolationException, MalformedJsonException,
+            TooManyJobsException
     {
         InputStream inputStream = mock(InputStream.class);
         DataLoadParams params = mock(DataLoadParams.class);
@@ -514,7 +521,8 @@ public class JobManagerTest
     public void testSubmitDataLoadJob_GivenProcessIsRunSuccessfullyAndJobShouldIgnoreDowntimeAlwaysAndPositiveProcessedRecordCount()
             throws JsonParseException, UnknownJobException, NativeProcessRunException,
             MissingFieldException, JobInUseException, HighProportionOfBadTimestampsException,
-            OutOfOrderRecordsException, TooManyJobsException, MalformedJsonException
+            OutOfOrderRecordsException, LicenseViolationException, MalformedJsonException,
+            TooManyJobsException
     {
         InputStream inputStream = mock(InputStream.class);
         DataLoadParams params = mock(DataLoadParams.class);
@@ -540,7 +548,8 @@ public class JobManagerTest
     public void testSubmitDataLoadJob_GivenProcessIsRunSuccessfullyAndJobShouldIgnoreDowntimeOnceAndZeroProcessedRecordCount()
             throws JsonParseException, UnknownJobException, NativeProcessRunException,
             MissingFieldException, JobInUseException, HighProportionOfBadTimestampsException,
-            OutOfOrderRecordsException, TooManyJobsException, MalformedJsonException
+            OutOfOrderRecordsException, LicenseViolationException, MalformedJsonException,
+            TooManyJobsException
     {
         InputStream inputStream = mock(InputStream.class);
         DataLoadParams params = mock(DataLoadParams.class);
@@ -708,7 +717,7 @@ public class JobManagerTest
             jobManager.createJob(new JobConfiguration(), false);
             fail();
         }
-        catch (TooManyJobsException e)
+        catch (LicenseViolationException e)
         {
             assertEquals(ErrorCodes.LICENSE_VIOLATION, e.getErrorCode());
 
@@ -746,7 +755,7 @@ public class JobManagerTest
             jobManager.createJob(jobConfig, true);
             fail();
         }
-        catch (TooManyJobsException tmje)
+        catch (LicenseViolationException tmje)
         {
             // Usually creating a third job when 2 are allowed and 2 are running
             // would throw a license exception, but in the case of overwriting
@@ -764,8 +773,8 @@ public class JobManagerTest
     @Test
     public void testCreateJob_licensingConstraintMaxDetectors()
     throws UnknownJobException, JobIdAlreadyExistsException,
-            IOException, TooManyJobsException, CannotStartSchedulerException, DataStoreException, NativeProcessRunException,
-            JobInUseException, CannotStopSchedulerException
+            IOException, LicenseViolationException, CannotStartSchedulerException, DataStoreException, NativeProcessRunException,
+            JobInUseException, CannotStopSchedulerException, JobConfigurationException
     {
         givenLicenseConstraints(5, 1, 0);
         when(m_ProcessManager.jobIsRunning(any())).thenReturn(false);
@@ -782,7 +791,7 @@ public class JobManagerTest
             jobManager.createJob(new JobConfiguration(ac), false);
             fail();
         }
-        catch (JobConfigurationException e)
+        catch (LicenseViolationException e)
         {
             assertEquals(ErrorCodes.LICENSE_VIOLATION, e.getErrorCode());
 
@@ -793,9 +802,9 @@ public class JobManagerTest
 
     @Test
     public void testCreateJob_licensingConstraintMaxPartitions() throws UnknownJobException,
-            JobIdAlreadyExistsException, IOException, TooManyJobsException,
+            JobIdAlreadyExistsException, IOException, LicenseViolationException,
             CannotStartSchedulerException, DataStoreException, NativeProcessRunException,
-            JobInUseException, CannotStopSchedulerException
+            JobInUseException, CannotStopSchedulerException, JobConfigurationException
     {
         givenLicenseConstraints(5, -1, 0);
         when(m_ProcessManager.jobIsRunning(any())).thenReturn(false);
@@ -813,7 +822,7 @@ public class JobManagerTest
             jobManager.createJob(new JobConfiguration(ac), false);
             fail();
         }
-        catch (JobConfigurationException e)
+        catch (LicenseViolationException e)
         {
             assertEquals(ErrorCodes.LICENSE_VIOLATION, e.getErrorCode());
 
@@ -825,7 +834,7 @@ public class JobManagerTest
     @Test
     public void testCreateJob_OverwriteExisting()
             throws NoSuchScheduledJobException, UnknownJobException,
-            CannotStartSchedulerException, TooManyJobsException,
+            CannotStartSchedulerException, LicenseViolationException,
             JobConfigurationException, JobIdAlreadyExistsException, IOException,
             NativeProcessRunException, JobInUseException, DataStoreException,
             CannotStopSchedulerException
@@ -856,7 +865,7 @@ public class JobManagerTest
     @Test
     public void testCreateJob_FillsDefaultDetectorDescriptions()
             throws NoSuchScheduledJobException, UnknownJobException,
-            CannotStartSchedulerException, TooManyJobsException,
+            CannotStartSchedulerException, LicenseViolationException,
             JobConfigurationException, JobIdAlreadyExistsException, IOException,
             NativeProcessRunException, JobInUseException, DataStoreException,
             CannotStopSchedulerException
@@ -1009,7 +1018,7 @@ public class JobManagerTest
 
     @Test
     public void testStartJobScheduler_GivenNewlyCreatedJob() throws UnknownJobException,
-            TooManyJobsException, JobConfigurationException, JobIdAlreadyExistsException,
+            LicenseViolationException, JobConfigurationException, JobIdAlreadyExistsException,
             CannotStartSchedulerException, IOException, NoSuchScheduledJobException,
             CannotStopSchedulerException, NativeProcessRunException, JobInUseException,
             DataStoreException
@@ -1056,7 +1065,7 @@ public class JobManagerTest
     @Test
     public void testRestartScheduledJobs_GivenNonScheduledJobAndJobWithStartedScheduler()
             throws NoSuchScheduledJobException, UnknownJobException,
-            CannotStartSchedulerException, TooManyJobsException,
+            CannotStartSchedulerException, LicenseViolationException,
             JobConfigurationException, JobIdAlreadyExistsException, IOException, InterruptedException
     {
         JobDetails nonScheduledJob = new JobDetails("non-scheduled", new JobConfiguration());
@@ -1100,7 +1109,7 @@ public class JobManagerTest
 
     @Test
     public void testRestartScheduledJobs_GivenJobWithStoppedScheduler() throws NoSuchScheduledJobException, UnknownJobException,
-            CannotStartSchedulerException, TooManyJobsException,
+            CannotStartSchedulerException, LicenseViolationException,
             JobConfigurationException, JobIdAlreadyExistsException, IOException, InterruptedException
     {
         JobConfiguration jobConfig = createScheduledJobConfig();

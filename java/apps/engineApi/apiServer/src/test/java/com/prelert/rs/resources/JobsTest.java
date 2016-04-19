@@ -64,7 +64,7 @@ import com.prelert.job.config.verification.JobConfigurationException;
 import com.prelert.job.errorcodes.ErrorCodeMatcher;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.exceptions.JobInUseException;
-import com.prelert.job.exceptions.TooManyJobsException;
+import com.prelert.job.exceptions.LicenseViolationException;
 import com.prelert.job.persistence.DataStoreException;
 import com.prelert.job.persistence.QueryPage;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
@@ -168,7 +168,7 @@ public class JobsTest extends ServiceTest
 
     @Test
     public void testCreateJob_GivenValidConfig() throws UnknownJobException,
-            JobConfigurationException, TooManyJobsException, JobIdAlreadyExistsException,
+            JobConfigurationException, LicenseViolationException, JobIdAlreadyExistsException,
             IOException, CannotStartSchedulerException, DataStoreException,
             NativeProcessRunException, JobInUseException, CannotStopSchedulerException
     {
@@ -185,7 +185,7 @@ public class JobsTest extends ServiceTest
 
     @Test
     public void testCreateJob_GivenInvalidConfig() throws UnknownJobException,
-            JobConfigurationException, TooManyJobsException, JobIdAlreadyExistsException,
+            JobConfigurationException, LicenseViolationException, JobIdAlreadyExistsException,
             IOException, CannotStartSchedulerException, DataStoreException,
             NativeProcessRunException, JobInUseException, CannotStopSchedulerException
     {
@@ -196,7 +196,7 @@ public class JobsTest extends ServiceTest
 
     @Test
     public void testCreateJob_GivenServerError() throws UnknownJobException,
-            JobConfigurationException, TooManyJobsException, JobIdAlreadyExistsException,
+            JobConfigurationException, LicenseViolationException, JobIdAlreadyExistsException,
             IOException, CannotStartSchedulerException, DataStoreException,
             NativeProcessRunException, JobInUseException, CannotStopSchedulerException
     {

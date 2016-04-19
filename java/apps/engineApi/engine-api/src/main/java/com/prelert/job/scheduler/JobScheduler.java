@@ -55,6 +55,7 @@ import com.prelert.job.UnknownJobException;
 import com.prelert.job.audit.Auditor;
 import com.prelert.job.data.extraction.DataExtractor;
 import com.prelert.job.exceptions.JobInUseException;
+import com.prelert.job.exceptions.LicenseViolationException;
 import com.prelert.job.exceptions.TooManyJobsException;
 import com.prelert.job.logging.JobLoggerFactory;
 import com.prelert.job.messages.Messages;
@@ -266,9 +267,9 @@ public class JobScheduler
             return m_DataProcessor.submitDataLoadJob(m_JobId, stream, DATA_LOAD_PARAMS);
         }
         catch (JsonParseException | UnknownJobException | NativeProcessRunException
-                | MissingFieldException | JobInUseException
+                | MissingFieldException | JobInUseException | TooManyJobsException
                 | HighProportionOfBadTimestampsException | OutOfOrderRecordsException
-                | TooManyJobsException | MalformedJsonException e)
+                | LicenseViolationException | MalformedJsonException e)
         {
             m_Logger.error("An error has occurred while submitting data to job '" + m_JobId + "'", e);
             m_ProblemTracker.reportProblem(e.getMessage());
