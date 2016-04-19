@@ -210,6 +210,7 @@ public final class ReservedFieldNames
         ModelSizeStats.TOTAL_PARTITION_FIELD_COUNT,
         ModelSizeStats.BUCKET_ALLOCATION_FAILURES_COUNT,
         ModelSizeStats.MEMORY_STATUS,
+        ModelSizeStats.LOG_TIME,
 
         // ModelSnapshot.DESCRIPTION is not reserved because it is an analyzed string
         ModelSnapshot.RESTORE_PRIORITY,
