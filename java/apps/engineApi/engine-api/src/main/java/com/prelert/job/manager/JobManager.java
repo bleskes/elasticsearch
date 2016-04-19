@@ -758,6 +758,7 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
      * @throws NativeProcessRunException
      * @throws JobInUseException if a data upload is part way through
      */
+    @Override
     public void flushJob(String jobId, InterimResultsParams interimResultsParams)
     throws UnknownJobException, NativeProcessRunException, JobInUseException
     {
@@ -1273,5 +1274,15 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
             m_JobProvider.setJobStatus(jobId, JobStatus.CLOSED);
             audit(jobId).info(Messages.getMessage(Messages.JOB_AUDIT_RESUMED));
         }
+    }
+
+    public int numberOfRunningJobs()
+    {
+        return m_ProcessManager.numberOfRunningJobs();
+    }
+
+    public int numberOfRunningDetectors()
+    {
+        return m_ProcessManager.numberOfRunningDetectors();
     }
 }

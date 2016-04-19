@@ -42,7 +42,6 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
 import javax.ws.rs.core.Application;
@@ -52,6 +51,7 @@ import org.apache.log4j.Logger;
 import com.prelert.job.alert.manager.AlertManager;
 import com.prelert.job.logging.DefaultJobLoggerFactory;
 import com.prelert.job.logging.JobLoggerFactory;
+import com.prelert.job.manager.ActivityAudit;
 import com.prelert.job.manager.JobManager;
 import com.prelert.job.messages.Messages;
 import com.prelert.job.password.PasswordManager;
@@ -148,6 +148,8 @@ public class PrelertWebApp extends Application
 
     private final ShutdownThreadBuilder m_ShutdownThreadBuilder;
 
+    private final ActivityAudit m_ActivityAudit;
+
     public PrelertWebApp()
     {
         m_ResourceClasses = new HashSet<>();
@@ -181,6 +183,12 @@ public class PrelertWebApp extends Application
         Runtime.getRuntime().addShutdownHook(m_ShutdownThreadBuilder.build());
 
         m_JobManager.systemAudit().info(Messages.getMessage(Messages.SYSTEM_AUDIT_STARTED));
+
+        m_ActivityAudit = new ActivityAudit(() -> m_JobManager.systemAudit(),
+                                            () -> m_JobManager.numberOfRunningJobs(),
+                                            () -> m_JobManager.numberOfRunningDetectors());
+        m_ActivityAudit.scheduleNextAudit();
+
     }
 
     private ElasticsearchFactory createPersistenceFactory()
@@ -387,14 +395,12 @@ public class PrelertWebApp extends Application
     {
         // Create with a daemon thread factory
         m_ServerStatsSchedule = Executors.newSingleThreadScheduledExecutor(
-                            new ThreadFactory() {
-                                @Override public Thread newThread(Runnable runnable) {
-                                    Thread thread = Executors.defaultThreadFactory().newThread(runnable);
-                                    thread.setDaemon(true);
-                                    thread.setName("Server-Stats-Writer-Thread");
-                                    return thread;
-                                }
-                            } );
+                        (Runnable r) -> {
+                            Thread thread = Executors.defaultThreadFactory().newThread(r);
+                            thread.setDaemon(true);
+                            thread.setName("Server-Stats-Writer-Thread");
+                            return thread;
+                        });
 
         ServerInfoWriter writer = new ServerInfoWriter(m_ServerInfo, file);
 

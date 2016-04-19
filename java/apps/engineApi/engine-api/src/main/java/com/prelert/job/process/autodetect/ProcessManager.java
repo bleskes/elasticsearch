@@ -269,6 +269,20 @@ public class ProcessManager
     }
 
     /**
+     * Total number of detectors in the running jobs
+     * @return
+     */
+    public int numberOfRunningDetectors()
+    {
+        int sum = 0;
+        for (ProcessAndDataDescription pdd : m_JobIdToProcessMap.values())
+        {
+            sum += pdd.getAnalysisConfig().getDetectors().size();
+        }
+        return sum;
+    }
+
+    /**
      * Return true if the job's autodetect process is running.
      * Is thread safe as uses a concurrent map.
      * @param jobId
