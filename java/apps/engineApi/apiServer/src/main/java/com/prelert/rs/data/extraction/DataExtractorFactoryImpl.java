@@ -39,6 +39,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
 import com.prelert.data.extractors.elasticsearch.ElasticsearchDataExtractor;
+import com.prelert.data.extractors.elasticsearch.ElasticsearchQueryBuilder;
 import com.prelert.job.JobDetails;
 import com.prelert.job.SchedulerConfig;
 import com.prelert.job.SchedulerConfig.DataSource;
@@ -72,14 +73,15 @@ public class DataExtractorFactoryImpl implements DataExtractorFactory
     {
         String timeField = job.getDataDescription().getTimeField();
         SchedulerConfig schedulerConfig = job.getSchedulerConfig();
-        return ElasticsearchDataExtractor.create(schedulerConfig.getBaseUrl(),
-                createBasicAuthHeader(schedulerConfig.getUsername(), schedulerConfig.getEncryptedPassword()),
-                schedulerConfig.getIndexes(), schedulerConfig.getTypes(),
+        ElasticsearchQueryBuilder queryBuilder = new ElasticsearchQueryBuilder(
                 stringifyElasticsearchQuery(schedulerConfig.getQuery()),
                 stringifyElasticsearchAggregations(schedulerConfig.getAggregations(), schedulerConfig.getAggs()),
                 stringifyElasticsearchScriptFields(schedulerConfig.getScriptFields()),
                 Boolean.TRUE.equals(schedulerConfig.getRetrieveWholeSource()) ? null : writeObjectAsJson(job.allFields()),
-                timeField,
+                timeField);
+        return ElasticsearchDataExtractor.create(schedulerConfig.getBaseUrl(),
+                createBasicAuthHeader(schedulerConfig.getUsername(), schedulerConfig.getEncryptedPassword()),
+                schedulerConfig.getIndexes(), schedulerConfig.getTypes(), queryBuilder,
                 schedulerConfig.getScrollSize());
     }
 
