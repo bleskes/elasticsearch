@@ -200,7 +200,7 @@ public class ElasticsearchMappingsTest
                         "            \"type\": \"long\"," +
                         "            \"index\": \"no\"" +
                         "          }," +
-                        "          \"multiVariateByFields\": {" +
+                        "          \"multivariateByFields\": {" +
                         "            \"type\": \"boolean\"," +
                         "            \"index\": \"no\"" +
                         "          }" +

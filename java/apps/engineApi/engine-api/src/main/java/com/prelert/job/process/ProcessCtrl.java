@@ -208,7 +208,7 @@ public class ProcessCtrl
     public static final String LIMIT_CONFIG_ARG = "--limitconfig=";
     public static final String LATENCY_ARG = "--latency=";
     public static final String RESULT_FINALIZATION_WINDOW_ARG = "--resultFinalizationWindow=";
-    public static final String MULTI_VARIATE_BY_FIELDS_ARG = "--multiVariateByFields";
+    public static final String MULTIVARIATE_BY_FIELDS_ARG = "--multivariateByFields";
     public static final String MAX_ANOMALY_RECORDS_ARG;
     public static final String MODEL_DEBUG_CONFIG_ARG = "--modeldebugconfig=";
     public static final String PERIOD_ARG = "--period=";
@@ -621,9 +621,9 @@ public class ProcessCtrl
                 }
                 command.add(RESULT_FINALIZATION_WINDOW_ARG + window);
             }
-            if (Boolean.TRUE.equals(analysisConfig.getMultiVariateByFields()))
+            if (Boolean.TRUE.equals(analysisConfig.getMultivariateByFields()))
             {
-                command.add(MULTI_VARIATE_BY_FIELDS_ARG);
+                command.add(MULTIVARIATE_BY_FIELDS_ARG);
             }
         }
 

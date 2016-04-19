@@ -283,7 +283,7 @@ public class ElasticsearchMappings
                                 .startObject(AnalysisConfig.RESULT_FINALIZATION_WINDOW)
                                     .field(TYPE, LONG).field(INDEX, NO)
                                 .endObject()
-                                .startObject(AnalysisConfig.MULTI_VARIATE_BY_FIELDS)
+                                .startObject(AnalysisConfig.MULTIVARIATE_BY_FIELDS)
                                     .field(TYPE, BOOLEAN).field(INDEX, NO)
                                 .endObject()
                             .endObject()

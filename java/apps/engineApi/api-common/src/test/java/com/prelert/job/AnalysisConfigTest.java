@@ -357,13 +357,13 @@ public class AnalysisConfigTest
     }
 
     @Test
-    public void testEquals_GivenMultiVariateByField()
+    public void testEquals_GivenMultivariateByField()
     {
         AnalysisConfig config1 = new AnalysisConfig();
-        config1.setMultiVariateByFields(true);
+        config1.setMultivariateByFields(true);
 
         AnalysisConfig config2 = new AnalysisConfig();
-        config2.setMultiVariateByFields(false);
+        config2.setMultivariateByFields(false);
 
         assertFalse(config1.equals(config2));
         assertFalse(config2.equals(config1));

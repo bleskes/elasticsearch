@@ -60,7 +60,7 @@ public class AnalysisConfig
     public static final String INFLUENCERS = "influencers";
     public static final String OVERLAPPING_BUCKETS = "overlappingBuckets";
     public static final String RESULT_FINALIZATION_WINDOW = "resultFinalizationWindow";
-    public static final String MULTI_VARIATE_BY_FIELDS = "multiVariateByFields";
+    public static final String MULTIVARIATE_BY_FIELDS = "multivariateByFields";
 
     private static final String PRELERT_CATEGORY_FIELD = "prelertcategory";
     public static final Set<String> AUTO_CREATED_FIELDS = new HashSet<>(
@@ -81,7 +81,7 @@ public class AnalysisConfig
     private List<String> m_Influencers;
     private Boolean m_OverlappingBuckets;
     private Long m_ResultFinalizationWindow;
-    private Boolean m_MultiVariateByFields;
+    private Boolean m_MultivariateByFields;
 
     /**
      * Default constructor
@@ -257,14 +257,14 @@ public class AnalysisConfig
         m_ResultFinalizationWindow = l;
     }
 
-    public Boolean getMultiVariateByFields()
+    public Boolean getMultivariateByFields()
     {
-        return m_MultiVariateByFields;
+        return m_MultivariateByFields;
     }
 
-    public void setMultiVariateByFields(Boolean multiVariateByFields)
+    public void setMultivariateByFields(Boolean multivariateByFields)
     {
-        m_MultiVariateByFields = multiVariateByFields;
+        m_MultivariateByFields = multivariateByFields;
     }
 
     /**
@@ -382,7 +382,7 @@ public class AnalysisConfig
                 Objects.equals(this.m_Influencers, that.m_Influencers) &&
                 Objects.equals(this.m_OverlappingBuckets, that.m_OverlappingBuckets) &&
                 Objects.equals(this.m_ResultFinalizationWindow,  that.m_ResultFinalizationWindow) &&
-                Objects.equals(this.m_MultiVariateByFields, that.m_MultiVariateByFields);
+                Objects.equals(this.m_MultivariateByFields, that.m_MultivariateByFields);
     }
 
     @Override
@@ -390,7 +390,7 @@ public class AnalysisConfig
     {
         return Objects.hash(m_Detectors, m_BucketSpan, m_BatchSpan, m_Latency, m_Period,
                 m_SummaryCountFieldName, m_Influencers, m_OverlappingBuckets, m_ResultFinalizationWindow,
-                m_MultiVariateByFields);
+                m_MultivariateByFields);
     }
 
 }
