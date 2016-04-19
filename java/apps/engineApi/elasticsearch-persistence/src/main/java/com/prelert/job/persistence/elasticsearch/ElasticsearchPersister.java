@@ -625,7 +625,7 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
                 .field(ModelSizeStats.BUCKET_ALLOCATION_FAILURES_COUNT, modelSizeStats.getBucketAllocationFailuresCount())
                 .field(ModelSizeStats.MEMORY_STATUS, modelSizeStats.getMemoryStatus())
                 .field(ModelSizeStats.ES_TIMESTAMP, modelSizeStats.getTimestamp())
-                .field(ModelSizeStats.REPORT_TIME, modelSizeStats.getReportTime());
+                .field(ModelSizeStats.LOG_TIME, modelSizeStats.getLogTime());
     }
 
     /**

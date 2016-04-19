@@ -65,8 +65,8 @@ public class ModelSizeStatsParserTest
         assertEquals(4L, stats.getTotalPartitionFieldCount());
         assertEquals(5L, stats.getBucketAllocationFailuresCount());
         assertEquals(1444333321000L, stats.getTimestamp().getTime());
-        assertTrue(stats.getReportTime().getTime() >= d1.getTime());
-        assertTrue(stats.getReportTime().getTime() <= d2.getTime());
+        assertTrue(stats.getLogTime().getTime() >= d1.getTime());
+        assertTrue(stats.getLogTime().getTime() <= d2.getTime());
         assertEquals("OK", stats.getMemoryStatus());
     }
 
