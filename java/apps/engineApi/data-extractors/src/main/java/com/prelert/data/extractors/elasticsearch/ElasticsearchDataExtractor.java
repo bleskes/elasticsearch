@@ -43,8 +43,6 @@ import java.util.stream.Collectors;
 
 import org.apache.log4j.Logger;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.prelert.job.data.extraction.DataExtractor;
 
 public class ElasticsearchDataExtractor implements DataExtractor
@@ -160,7 +158,7 @@ public class ElasticsearchDataExtractor implements DataExtractor
     private final String m_Search;
     private final String m_Aggregations;
     private final String m_ScriptFields;
-    private final List<String> m_Fields;
+    private final String m_Fields;
     private final String m_TimeField;
     private final int m_ScrollSize;
     private final ScrollState m_ScrollState;
@@ -179,7 +177,7 @@ public class ElasticsearchDataExtractor implements DataExtractor
 
     ElasticsearchDataExtractor(HttpRequester httpRequester, String baseUrl, String authHeader,
             List<String> indices, List<String> types, String search, String aggregations,
-            String scriptFields, List<String> fields, String timeField, int scrollSize)
+            String scriptFields, String fields, String timeField, int scrollSize)
     {
         m_HttpRequester = Objects.requireNonNull(httpRequester);
         m_BaseUrl = Objects.requireNonNull(baseUrl);
@@ -200,7 +198,7 @@ public class ElasticsearchDataExtractor implements DataExtractor
 
     public static ElasticsearchDataExtractor create(String baseUrl, String authHeader,
             List<String> indices, List<String> types, String search, String aggregations,
-            String scriptFields, List<String> fields, String timeField, int scrollSize)
+            String scriptFields, String fields, String timeField, int scrollSize)
     {
         return new ElasticsearchDataExtractor(new HttpRequester(), baseUrl, authHeader, indices, types,
                 search, aggregations, scriptFields, fields, timeField, scrollSize);
@@ -490,16 +488,7 @@ public class ElasticsearchDataExtractor implements DataExtractor
 
     private String createFieldDataFields()
     {
-        try
-        {
-            return String.format(FIELDS_TEMPLATE, createScriptFields(),
-                    new ObjectMapper().writeValueAsString(m_Fields));
-        }
-        catch (JsonProcessingException e)
-        {
-            m_Logger.error("Could not convert field list to JSON: " + m_Fields, e);
-        }
-        return "";
+        return String.format(FIELDS_TEMPLATE, createScriptFields(), m_Fields);
     }
 
     private String createScriptFields()

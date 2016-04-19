@@ -66,7 +66,7 @@ public class ElasticsearchDataExtractorTest
 
     private String m_Aggregations;
     private String m_ScriptFields;
-    private List<String> m_Fields;
+    private String m_Fields;
 
     private ElasticsearchDataExtractor m_Extractor;
 
@@ -448,7 +448,7 @@ public class ElasticsearchDataExtractorTest
     @Test
     public void testDataExtractionWithFields() throws IOException
     {
-        m_Fields = Arrays.asList("id");
+        m_Fields = "[\"id\"]";
 
         String initialResponse = "{"
                 + "\"_scroll_id\":\"c2Nhbjs2OzM0NDg1ODpzRlBLc0FXNlNyNm5JWUc1\","
