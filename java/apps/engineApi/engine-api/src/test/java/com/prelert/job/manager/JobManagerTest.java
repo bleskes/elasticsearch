@@ -1055,9 +1055,7 @@ public class JobManagerTest
 
     @Test
     public void testRestartScheduledJobs_GivenNonScheduledJobAndJobWithStartedScheduler()
-            throws NoSuchScheduledJobException, UnknownJobException,
-            CannotStartSchedulerException, TooManyJobsException,
-            JobConfigurationException, JobIdAlreadyExistsException, IOException, InterruptedException
+            throws JobException, IOException, InterruptedException
     {
         JobDetails nonScheduledJob = new JobDetails("non-scheduled", new JobConfiguration());
 
@@ -1099,9 +1097,7 @@ public class JobManagerTest
     }
 
     @Test
-    public void testRestartScheduledJobs_GivenJobWithStoppedScheduler() throws NoSuchScheduledJobException, UnknownJobException,
-            CannotStartSchedulerException, TooManyJobsException,
-            JobConfigurationException, JobIdAlreadyExistsException, IOException, InterruptedException
+    public void testRestartScheduledJobs_GivenJobWithStoppedScheduler() throws JobException
     {
         JobConfiguration jobConfig = createScheduledJobConfig();
         JobDetails scheduledJob = new JobDetails("scheduled", jobConfig);
@@ -1125,6 +1121,41 @@ public class JobManagerTest
         jobManager.checkJobHasScheduler("scheduled");
 
         jobManager.shutdown();
+
+        // Verify no other calls to factories - means no other job was scheduled
+        Mockito.verifyNoMoreInteractions(m_JobLoggerFactory, m_DataExtractorFactory);
+    }
+
+    @Test
+    public void testRestartScheduledJobs_GivenJobWithStoppingScheduler() throws JobException
+    {
+        JobConfiguration jobConfig = createScheduledJobConfig();
+        JobDetails scheduledJob = new JobDetails("scheduled", jobConfig);
+        DataCounts dataCounts = new DataCounts();
+        dataCounts.setLatestRecordTimeStamp(new Date(0));
+        scheduledJob.setCounts(dataCounts);
+        scheduledJob.setSchedulerStatus(JobSchedulerStatus.STOPPING);
+
+        QueryPage<JobDetails> jobsPage = new QueryPage<>(Arrays.asList(scheduledJob), 1);
+        when(m_JobProvider.getJobs(0, 10000)).thenReturn(jobsPage);
+
+        DataExtractor dataExtractor = mock(DataExtractor.class);
+        when(m_DataExtractorFactory.newExtractor(any(JobDetails.class))).thenReturn(dataExtractor);
+
+        givenProcessInfo(2);
+        JobManager jobManager = createJobManager();
+
+        jobManager.restartScheduledJobs();
+
+        verify(m_DataExtractorFactory).newExtractor(scheduledJob);
+        jobManager.checkJobHasScheduler("scheduled");
+
+        jobManager.shutdown();
+
+        // Verify scheduler status was updated to STOPPED
+        verify(m_JobProvider).updateJob(eq("scheduled"), m_JobUpdateCaptor.capture());
+        Map<String, Object> jobUpdate = m_JobUpdateCaptor.getValue();
+        assertEquals(JobSchedulerStatus.STOPPED, jobUpdate.get(JobDetails.SCHEDULER_STATUS));
 
         // Verify no other calls to factories - means no other job was scheduled
         Mockito.verifyNoMoreInteractions(m_JobLoggerFactory, m_DataExtractorFactory);

@@ -1111,6 +1111,10 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
                 {
                     restartScheduledJob(job, jobScheduler);
                 }
+                else if (job.getSchedulerStatus() == JobSchedulerStatus.STOPPING)
+                {
+                    restoreSchedulerStatusToStopped(job);
+                }
             }
         }
     }
@@ -1138,6 +1142,20 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
         catch (CannotStartSchedulerException e)
         {
             LOGGER.error("Failed to restart scheduler for job: " + job.getId(), e);
+        }
+    }
+
+    private void restoreSchedulerStatusToStopped(JobDetails job)
+    {
+        try
+        {
+            updateJobTopLevelKeyValue(job.getId(), JobDetails.SCHEDULER_STATUS,
+                    JobSchedulerStatus.STOPPED);
+        }
+        catch (UnknownJobException e)
+        {
+            LOGGER.error("An error occurred while restoring scheduler status for job "
+                    + e.getJobId(), e);
         }
     }
 
