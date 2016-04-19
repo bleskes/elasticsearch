@@ -293,7 +293,7 @@ public class FieldLevelSecurityTests extends ShieldIntegTestCase {
         client().prepareIndex("test", "type1", "1").setSource("field1", "value1", "field2", "value2", "field3", "value3")
                 .get();
 
-        Boolean realtime = randomFrom(true, false, null);
+        boolean realtime = randomBoolean();
         // user1 is granted access to field1 only:
         GetResponse response = client()
                 .filterWithHeader(Collections.singletonMap(BASIC_AUTH_HEADER, basicAuthHeaderValue("user1", USERS_PASSWD)))
@@ -389,7 +389,7 @@ public class FieldLevelSecurityTests extends ShieldIntegTestCase {
         );
         client().prepareIndex("test", "type1", "1").setSource("field1", "value1", "field2", "value2", "field3", "value3").get();
 
-        Boolean realtime = randomFrom(true, false, null);
+        boolean realtime = randomBoolean();
         // user1 is granted access to field1 only:
         MultiGetResponse response = client()
                 .filterWithHeader(Collections.singletonMap(BASIC_AUTH_HEADER, basicAuthHeaderValue("user1", USERS_PASSWD)))
@@ -966,7 +966,7 @@ public class FieldLevelSecurityTests extends ShieldIntegTestCase {
                 .setRefresh(true)
                 .get();
 
-        Boolean realtime = randomFrom(true, false, null);
+        boolean realtime = randomBoolean();
         TermVectorsResponse response = client()
                 .filterWithHeader(Collections.singletonMap(BASIC_AUTH_HEADER, basicAuthHeaderValue("user1", USERS_PASSWD)))
                 .prepareTermVectors("test", "type1", "1")
@@ -1050,7 +1050,7 @@ public class FieldLevelSecurityTests extends ShieldIntegTestCase {
                 .setRefresh(true)
                 .get();
 
-        Boolean realtime = randomFrom(true, false, null);
+        boolean realtime = randomBoolean();
         MultiTermVectorsResponse response = client()
                 .filterWithHeader(Collections.singletonMap(BASIC_AUTH_HEADER, basicAuthHeaderValue("user1", USERS_PASSWD)))
                 .prepareMultiTermVectors()
