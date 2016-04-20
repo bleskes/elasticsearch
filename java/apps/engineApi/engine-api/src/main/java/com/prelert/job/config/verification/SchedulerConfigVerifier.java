@@ -30,6 +30,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.List;
 
+import com.prelert.job.ElasticsearchDataSourceCompatibility;
 import com.prelert.job.SchedulerConfig;
 import com.prelert.job.SchedulerConfig.DataSource;
 import com.prelert.job.errorcodes.ErrorCodes;
@@ -104,6 +105,7 @@ public final class SchedulerConfigVerifier
     private static void verifyElasticsearchSchedulerConfig(SchedulerConfig config,
             DataSource dataSource) throws JobConfigurationException
     {
+        checkValidCompatibility(config.getDataSourceCompatibility());
         checkUrl(SchedulerConfig.BASE_URL, config.getBaseUrl());
         checkUserPass(config.getUsername(), config.getPassword(), config.getEncryptedPassword());
         checkFieldIsNotNullOrEmpty(SchedulerConfig.INDEXES, config.getIndexes());
@@ -121,6 +123,20 @@ public final class SchedulerConfigVerifier
         checkFieldIsNotNegative(SchedulerConfig.SCROLL_SIZE, config.getScrollSize());
         checkFieldIsNull(dataSource, SchedulerConfig.FILE_PATH, config.getFilePath());
         checkFieldIsNull(dataSource, SchedulerConfig.TAIL_FILE, config.getTailFile());
+    }
+
+    private static void checkValidCompatibility(String dataSourceCompatibility)
+            throws JobConfigurationException
+    {
+        try
+        {
+            ElasticsearchDataSourceCompatibility.from(dataSourceCompatibility);
+        }
+        catch (IllegalArgumentException e)
+        {
+            throwInvalidOptionValue(SchedulerConfig.DATA_SOURCE_COMPATIBILITY,
+                    dataSourceCompatibility);
+        }
     }
 
     private static void checkUserPass(String username, String password, String encryptedPassword)

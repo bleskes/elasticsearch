@@ -128,6 +128,7 @@ public class SchedulerConfigVerifierTest
     {
         SchedulerConfig conf = new SchedulerConfig();
         conf.setDataSource(DataSource.ELASTICSEARCH);
+        conf.setDataSourceCompatibility("1.7.x");
         conf.setQueryDelay(90L);
         conf.setBaseUrl("http://localhost:9200/");
         conf.setIndexes(Arrays.asList("myindex"));
@@ -144,6 +145,7 @@ public class SchedulerConfigVerifierTest
     {
         SchedulerConfig conf = new SchedulerConfig();
         conf.setDataSource(DataSource.ELASTICSEARCH);
+        conf.setDataSourceCompatibility("2.x.x");
         conf.setQueryDelay(90L);
         conf.setBaseUrl("http://localhost:9200/");
         conf.setIndexes(Arrays.asList("myindex"));
@@ -161,6 +163,7 @@ public class SchedulerConfigVerifierTest
     {
         SchedulerConfig conf = new SchedulerConfig();
         conf.setDataSource(DataSource.ELASTICSEARCH);
+        conf.setDataSourceCompatibility("2.x.x");
         conf.setQueryDelay(90L);
         conf.setBaseUrl("http://localhost:9200/");
         conf.setIndexes(Arrays.asList("myindex"));
@@ -178,6 +181,7 @@ public class SchedulerConfigVerifierTest
     {
         SchedulerConfig conf = new SchedulerConfig();
         conf.setDataSource(DataSource.ELASTICSEARCH);
+        conf.setDataSourceCompatibility("2.x.x");
         conf.setBaseUrl("http://localhost:9200/");
         conf.setIndexes(Arrays.asList("myindex"));
         conf.setTypes(Arrays.asList("mytype"));
@@ -194,6 +198,7 @@ public class SchedulerConfigVerifierTest
     {
         SchedulerConfig conf = new SchedulerConfig();
         conf.setDataSource(DataSource.ELASTICSEARCH);
+        conf.setDataSourceCompatibility("2.x.x");
         conf.setBaseUrl("http://localhost:9200/");
         conf.setIndexes(Arrays.asList("myindex"));
         conf.setTypes(Arrays.asList("mytype"));
@@ -208,10 +213,51 @@ public class SchedulerConfigVerifierTest
     }
 
     @Test
+    public void testCheckValidElasticsearch_NoCompatibility() throws JobConfigurationException, IOException
+    {
+        SchedulerConfig conf = new SchedulerConfig();
+        conf.setDataSource(DataSource.ELASTICSEARCH);
+        conf.setDataSourceCompatibility(null);
+        conf.setBaseUrl("http://localhost:9200/");
+        conf.setIndexes(Arrays.asList("myindex"));
+        conf.setTypes(Arrays.asList("mytype"));
+        ObjectMapper mapper = new ObjectMapper();
+        conf.setQuery(mapper.readValue("{ \"match_all\" : {} }", new TypeReference<Map<String, Object>>(){}));
+
+        m_ExpectedException.expect(JobConfigurationException.class);
+        m_ExpectedException.expect(
+                ErrorCodeMatcher.hasErrorCode(ErrorCodes.SCHEDULER_INVALID_OPTION_VALUE));
+        m_ExpectedException.expectMessage("Invalid dataSourceCompatibility value 'null' in scheduler configuration");
+
+        SchedulerConfigVerifier.verify(conf);
+    }
+
+    @Test
+    public void testCheckValidElasticsearch_InvalidCompatibility() throws JobConfigurationException, IOException
+    {
+        SchedulerConfig conf = new SchedulerConfig();
+        conf.setDataSource(DataSource.ELASTICSEARCH);
+        conf.setDataSourceCompatibility("invalid");
+        conf.setBaseUrl("http://localhost:9200/");
+        conf.setIndexes(Arrays.asList("myindex"));
+        conf.setTypes(Arrays.asList("mytype"));
+        ObjectMapper mapper = new ObjectMapper();
+        conf.setQuery(mapper.readValue("{ \"match_all\" : {} }", new TypeReference<Map<String, Object>>(){}));
+
+        m_ExpectedException.expect(JobConfigurationException.class);
+        m_ExpectedException.expect(
+                ErrorCodeMatcher.hasErrorCode(ErrorCodes.SCHEDULER_INVALID_OPTION_VALUE));
+        m_ExpectedException.expectMessage("Invalid dataSourceCompatibility value 'invalid' in scheduler configuration");
+
+        SchedulerConfigVerifier.verify(conf);
+    }
+
+    @Test
     public void testCheckValidElasticsearch_NoQuery() throws JobConfigurationException
     {
         SchedulerConfig conf = new SchedulerConfig();
         conf.setDataSource(DataSource.ELASTICSEARCH);
+        conf.setDataSourceCompatibility("2.x.x");
         conf.setBaseUrl("http://localhost:9200/");
         conf.setIndexes(Arrays.asList("myindex"));
         conf.setTypes(Arrays.asList("mytype"));
@@ -224,6 +270,7 @@ public class SchedulerConfigVerifierTest
     {
         SchedulerConfig conf = new SchedulerConfig();
         conf.setDataSource(DataSource.ELASTICSEARCH);
+        conf.setDataSourceCompatibility("2.x.x");
         conf.setBaseUrl("http://localhost:9200/");
         conf.setIndexes(Arrays.asList("myindex"));
         conf.setTypes(Arrays.asList("mytype"));
@@ -242,6 +289,7 @@ public class SchedulerConfigVerifierTest
     {
         SchedulerConfig conf = new SchedulerConfig();
         conf.setDataSource(DataSource.ELASTICSEARCH);
+        conf.setDataSourceCompatibility("2.x.x");
         conf.setBaseUrl("http://localhost:9200/");
         conf.setIndexes(Arrays.asList("myindex"));
         conf.setTypes(Arrays.asList("mytype"));
@@ -257,6 +305,7 @@ public class SchedulerConfigVerifierTest
     {
         SchedulerConfig conf = new SchedulerConfig();
         conf.setDataSource(DataSource.ELASTICSEARCH);
+        conf.setDataSourceCompatibility("2.x.x");
         conf.setBaseUrl("http://localhost:9200/");
         conf.setIndexes(Arrays.asList("myindex"));
         conf.setTypes(Arrays.asList("mytype"));
@@ -276,6 +325,7 @@ public class SchedulerConfigVerifierTest
     {
         SchedulerConfig conf = new SchedulerConfig();
         conf.setDataSource(DataSource.ELASTICSEARCH);
+        conf.setDataSourceCompatibility("2.x.x");
         conf.setBaseUrl("http://localhost:9200/");
         conf.setIndexes(null);
         conf.setTypes(new ArrayList<String>(Arrays.asList("mytype")));
@@ -294,6 +344,7 @@ public class SchedulerConfigVerifierTest
     {
         SchedulerConfig conf = new SchedulerConfig();
         conf.setDataSource(DataSource.ELASTICSEARCH);
+        conf.setDataSourceCompatibility("2.x.x");
         conf.setBaseUrl("http://localhost:9200/");
         conf.setIndexes(Collections.emptyList());
         conf.setTypes(Arrays.asList("mytype"));
@@ -316,6 +367,7 @@ public class SchedulerConfigVerifierTest
 
         SchedulerConfig conf = new SchedulerConfig();
         conf.setDataSource(DataSource.ELASTICSEARCH);
+        conf.setDataSourceCompatibility("2.x.x");
         conf.setBaseUrl("http://localhost:9200/");
         conf.setIndexes(indexes);
         conf.setTypes(Arrays.asList("mytype"));
@@ -338,6 +390,7 @@ public class SchedulerConfigVerifierTest
 
         SchedulerConfig conf = new SchedulerConfig();
         conf.setDataSource(DataSource.ELASTICSEARCH);
+        conf.setDataSourceCompatibility("2.x.x");
         conf.setBaseUrl("http://localhost:9200/");
         conf.setIndexes(indexes);
         conf.setTypes(Arrays.asList("mytype"));
@@ -356,6 +409,7 @@ public class SchedulerConfigVerifierTest
     {
         SchedulerConfig conf = new SchedulerConfig();
         conf.setDataSource(DataSource.ELASTICSEARCH);
+        conf.setDataSourceCompatibility("2.x.x");
         conf.setQueryDelay(-10L);
         conf.setBaseUrl("http://localhost:9200/");
         conf.setIndexes(Arrays.asList("myIndex"));
@@ -375,6 +429,7 @@ public class SchedulerConfigVerifierTest
     {
         SchedulerConfig conf = new SchedulerConfig();
         conf.setDataSource(DataSource.ELASTICSEARCH);
+        conf.setDataSourceCompatibility("2.x.x");
         conf.setFrequency(-600L);
         conf.setBaseUrl("http://localhost:9200/");
         conf.setIndexes(Arrays.asList("myIndex"));
@@ -394,6 +449,7 @@ public class SchedulerConfigVerifierTest
     {
         SchedulerConfig conf = new SchedulerConfig();
         conf.setDataSource(DataSource.ELASTICSEARCH);
+        conf.setDataSourceCompatibility("2.x.x");
         conf.setScrollSize(-1000);
         conf.setBaseUrl("http://localhost:9200/");
         conf.setIndexes(Arrays.asList("myIndex"));

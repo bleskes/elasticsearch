@@ -35,101 +35,115 @@ import java.util.Objects;
 
 import org.apache.log4j.Logger;
 
+import com.prelert.job.ElasticsearchDataSourceCompatibility;
+
 public class ElasticsearchQueryBuilder
 {
     /**
-     * The search body contains sorting based on the time field
-     * and a query. The query is composed by a bool query with
-     * two must clauses, the recommended way to perform an AND query.
+     * The search body for Elasticsearch version 1.7.x contains sorting
+     * based on the time field and a query. The query is composed by
+     * a bool query with two must clauses, the recommended way to perform an AND query.
      * There are 6 placeholders:
      * <ol>
-     *   <li> time field
+     *   <li> sort field
      *   <li> user defined query
      *   <li> time field
      *   <li> start time (String in date_time format)
      *   <li> end time (String in date_time format)
-     *   <li> aggregations (may be empty)
+     *   <li> extra (may be empty or contain aggregations, fields, etc.)
      * </ol
      */
-    private static final String SEARCH_BODY_TEMPLATE = "{"
-            + "  \"sort\": ["
-            + "    {\"%s\": {\"order\": \"asc\"}}"
-            + "  ],"
-            + "  \"query\": {"
-            + "    \"filtered\": {"
-            + "      \"filter\": {"
-            + "        \"bool\": {"
-            + "          \"must\": {"
-            + "            %s"
-            + "          },"
-            + "          \"must\": {"
-            + "            \"range\": {"
-            + "              \"%s\": {"
-            + "                \"gte\": \"%s\","
-            + "                \"lt\": \"%s\","
-            + "                \"format\": \"date_time\""
-            + "              }"
-            + "            }"
-            + "          }"
-            + "        }"
-            + "      }"
-            + "    }"
-            + "  }%s"
-            + "}";
-
-    /**
-     * The data summary query returns the earliest and latest data times for a time range.
-     * There are 4 placeholders:
-     * <ol>
-     *   <li> the user query
-     *   <li> time field
-     *   <li> start time (String in date_time format)
-     *   <li> end time (String in date_time format)
-     * </ol
-     */
-    private static final String DATA_SUMMARY_QUERY_TEMPLATE = "{"
-            + "\"sort\":[\"_doc\"],"
-            + "\"query\":{"
-            +   "\"filtered\":{"
-            +     "\"filter\":{"
-            +       "\"bool\":{"
-            +         "\"must\":{%1$s},"
-            +         "\"must\":{"
-            +           "\"range\":{"
-            +             "\"%2$s\":{"
-            +               "\"gte\":\"%3$s\","
-            +               "\"lt\":\"%4$s\","
-            +               "\"format\":\"date_time\""
+    private static final String SEARCH_BODY_TEMPLATE_1_7_X = "{"
+            + "\"sort\": ["
+            +   "{\"%s\": {\"order\": \"asc\"}}"
+            + "],"
+            + "\"query\": {"
+            +   "\"filtered\": {"
+            +     "\"filter\": {"
+            +       "\"bool\": {"
+            +         "\"must\": {%s},"
+            +         "\"must\": {"
+            +           "\"range\": {"
+            +             "\"%s\": {"
+            +               "\"gte\": \"%s\","
+            +               "\"lt\": \"%s\","
+            +               "\"format\": \"date_time\""
             +             "}"
             +           "}"
             +         "}"
             +       "}"
             +     "}"
-            +   "}"
-            + "},"
-            + "\"aggs\":{"
-            +   "\"earliestTime\":{"
-            +     "\"min\":{\"field\":\"%2$s\"}"
-            +   "},"
-            +   "\"latestTime\":{"
-            +     "\"max\":{\"field\":\"%2$s\"}"
-            +   "}"
-            + "}"
+            + "  }"
+            + "}%s"
             + "}";
 
-    private static final String AGGREGATION_TEMPLATE = ",  %s";
-    private static final String SCRIPT_FIELDS_TEMPLATE = ",  %s";
+    /**
+     * The search body for Elasticsearch version 2.x contains sorting
+     * based on the time field and a query. The query is composed by
+     * a bool query with two must clauses, the recommended way to perform an AND query.
+     * There are 6 placeholders:
+     * <ol>
+     *   <li> sort field
+     *   <li> user defined query
+     *   <li> time field
+     *   <li> start time (String in date_time format)
+     *   <li> end time (String in date_time format)
+     *   <li> extra (may be empty or contain aggregations, fields, etc.)
+     * </ol
+     */
+    private static final String SEARCH_BODY_TEMPLATE_2_X = "{"
+            + "\"sort\": ["
+            +   "{\"%s\": {\"order\": \"asc\"}}"
+            + "],"
+            + "\"query\": {"
+            +   "\"bool\": {"
+            +     "\"filter\": ["
+            +       "{%s},"
+            +       "{"
+            +         "\"range\": {"
+            +           "\"%s\": {"
+            +             "\"gte\": \"%s\","
+            +             "\"lt\": \"%s\","
+            +             "\"format\": \"date_time\""
+            +           "}"
+            +         "}"
+            +       "}"
+            +     "]"
+            +   "}"
+            + "}%s"
+            + "}";
+
+    private static final String DATA_SUMMARY_SORT_FIELD = "_doc";
+
+    /**
+     * Aggregations in order to retrieve the earliest and latest record times.
+     * The single placeholder expects the time field.
+     */
+    private static final String DATA_SUMMARY_AGGS_TEMPLATE = ""
+    + "{"
+    +   "\"earliestTime\":{"
+    +     "\"min\":{\"field\":\"%1$s\"}"
+    +   "},"
+    +   "\"latestTime\":{"
+    +     "\"max\":{\"field\":\"%1$s\"}"
+    +   "}"
+    + "}";
+
+    private static final String AGGREGATION_TEMPLATE = ", \"aggs\": %s";
+    private static final String SCRIPT_FIELDS_TEMPLATE = ", \"script_fields\": %s";
     private static final String FIELDS_TEMPLATE = "%s,  \"fields\": %s";
 
+    private final ElasticsearchDataSourceCompatibility m_Compatibility;
     private final String m_Search;
     private final String m_Aggregations;
     private final String m_ScriptFields;
     private final String m_Fields;
     private final String m_TimeField;
 
-    public ElasticsearchQueryBuilder(String search, String aggs, String scriptFields, String fields,
-            String timeField)
+    public ElasticsearchQueryBuilder(ElasticsearchDataSourceCompatibility compatibility,
+            String search, String aggs, String scriptFields, String fields, String timeField)
     {
+        m_Compatibility = Objects.requireNonNull(compatibility);
         m_Search = Objects.requireNonNull(search);
         m_Aggregations = aggs;
         m_ScriptFields = scriptFields;
@@ -139,9 +153,25 @@ public class ElasticsearchQueryBuilder
 
     public String createSearchBody(long start, long end)
     {
-        return String.format(SEARCH_BODY_TEMPLATE, m_TimeField, m_Search, m_TimeField,
-                formatAsDateTime(start), formatAsDateTime(end),
-                createResultsFormatSpec());
+        return createSearchBody(start, end, m_TimeField, m_Aggregations);
+    }
+
+    private String createSearchBody(long start, long end, String sortField, String aggs)
+    {
+        String template = null;
+        switch (m_Compatibility)
+        {
+            case V_1_7_X:
+                template = SEARCH_BODY_TEMPLATE_1_7_X;
+                break;
+            case V_2_X_X:
+                template = SEARCH_BODY_TEMPLATE_2_X;
+                break;
+            default:
+                throw new IllegalStateException();
+        }
+        return String.format(template, sortField, m_Search, m_TimeField, formatAsDateTime(start),
+                formatAsDateTime(end), createResultsFormatSpec(aggs));
     }
 
     private static String formatAsDateTime(long epochMs)
@@ -151,15 +181,15 @@ public class ElasticsearchQueryBuilder
         return dateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX"));
     }
 
-    private String createResultsFormatSpec()
+    private String createResultsFormatSpec(String aggs)
     {
-        return (m_Aggregations != null) ? createAggregations() :
+        return (aggs != null) ? createAggregations(aggs) :
                 ((m_Fields != null) ? createFieldDataFields() : "");
     }
 
-    private String createAggregations()
+    private String createAggregations(String aggs)
     {
-        return String.format(AGGREGATION_TEMPLATE, m_Aggregations);
+        return String.format(AGGREGATION_TEMPLATE, aggs);
     }
 
     private String createFieldDataFields()
@@ -174,8 +204,8 @@ public class ElasticsearchQueryBuilder
 
     public String createDataSummaryQuery(long start, long end)
     {
-        return String.format(DATA_SUMMARY_QUERY_TEMPLATE,
-                m_Search, m_TimeField, formatAsDateTime(start), formatAsDateTime(end));
+        String aggs = String.format(DATA_SUMMARY_AGGS_TEMPLATE, m_TimeField);
+        return createSearchBody(start, end, DATA_SUMMARY_SORT_FIELD, aggs);
     }
 
     public void logQueryInfo(Logger logger)
