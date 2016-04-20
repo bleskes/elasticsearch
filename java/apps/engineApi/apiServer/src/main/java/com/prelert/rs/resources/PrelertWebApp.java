@@ -185,8 +185,7 @@ public class PrelertWebApp extends Application
         m_JobManager.systemAudit().info(Messages.getMessage(Messages.SYSTEM_AUDIT_STARTED));
 
         m_ActivityAudit = new ActivityAudit(() -> m_JobManager.systemAudit(),
-                                            () -> m_JobManager.numberOfRunningJobs(),
-                                            () -> m_JobManager.numberOfRunningDetectors());
+                                            () -> m_JobManager.runningJobs());
         m_ActivityAudit.scheduleNextAudit();
 
     }

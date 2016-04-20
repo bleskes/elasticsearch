@@ -31,7 +31,9 @@ import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -280,6 +282,16 @@ public class ProcessManager
             sum += pdd.getAnalysisConfig().getDetectors().size();
         }
         return sum;
+    }
+
+    public List<String> runningJobs()
+    {
+        List<String> result = new ArrayList<>();
+        for (String key : m_JobIdToProcessMap.keySet())
+        {
+            result.add(key);
+        }
+        return result;
     }
 
     /**

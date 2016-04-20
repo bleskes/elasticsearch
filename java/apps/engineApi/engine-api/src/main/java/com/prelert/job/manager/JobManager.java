@@ -34,6 +34,7 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -107,8 +108,6 @@ import com.prelert.job.status.HighProportionOfBadTimestampsException;
 import com.prelert.job.status.OutOfOrderRecordsException;
 import com.prelert.job.status.none.NoneStatusReporter;
 import com.prelert.job.transform.TransformConfigs;
-import com.prelert.settings.PrelertSettings;
-
 
 /**
  * Allows interactions with jobs. The managed interactions include:
@@ -148,20 +147,10 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
 
     public static final String DEFAULT_RECORD_SORT_FIELD = AnomalyRecord.PROBABILITY;
 
-    private static final String MAX_JOBS_FACTOR_NAME = "max.jobs.factor";
-    private static final double DEFAULT_MAX_JOBS_FACTOR = 6.0;
-
     private static final int LAST_DATA_TIME_CACHE_SIZE = 1000;
     private static final int LAST_DATA_TIME_MIN_UPDATE_INTERVAL_MS = 1000;
 
     private static final int MAX_JOBS_TO_RESTART = 10000;
-
-    /**
-     * constraints in the license key.
-     */
-    public static final String JOBS_LICENSE_CONSTRAINT = "jobs";
-    public static final String DETECTORS_LICENSE_CONSTRAINT = "detectors";
-    public static final String PARTITIONS_LICENSE_CONSTRAINT = "partitions";
 
     private final ActionGuardian m_ActionGuardian;
     private final JobProvider m_JobProvider;
@@ -172,7 +161,6 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
     private final JobAutoCloser m_JobAutoCloser;
 
     private final JobFactory m_JobFactory;
-    private final int m_MaxAllowedJobs;
     private final BackendInfo m_BackendInfo;
 
     /**
@@ -207,8 +195,6 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
         m_JobLoggerFactory = Objects.requireNonNull(jobLoggerFactory);
         m_PasswordManager = Objects.requireNonNull(passwordManager);
         m_JobAutoCloser = new JobAutoCloser(jobId -> closeJob(jobId));
-
-        m_MaxAllowedJobs = calculateMaxJobsAllowed();
 
         m_ScheduledJobs = new ConcurrentHashMap<>();
         m_LastDataTimePerJobCache = CacheBuilder.newBuilder()
@@ -896,8 +882,8 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
     {
         try (ActionTicket actionTicket = m_ActionGuardian.tryAcquiringAction(jobId, Action.WRITING))
         {
-            checkTooManyJobs(jobId);
             JobDetails jobDetails = getJobOrThrowIfUnknown(jobId);
+            checkLicenceViolations(jobId, jobDetails.getAnalysisConfig().getDetectors().size());
             if (jobDetails.getStatus().isAnyOf(JobStatus.PAUSING, JobStatus.PAUSED))
             {
                 return new DataCounts();
@@ -965,20 +951,36 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
         return new String(output.toByteArray(), StandardCharsets.UTF_8);
     }
 
-    private void checkTooManyJobs(String jobId)
+    private void checkLicenceViolations(String jobId, int numDetectors)
     throws TooManyJobsException, LicenseViolationException
     {
         if (m_ProcessManager.jobIsRunning(jobId))
         {
             return;
         }
-        checkTooManyJobsAgainstHardLimit(jobId);
-        checkDataLoadForTooManyJobsAgainstLicenseLimit(jobId);
+        checkNumberOfJobsAgainstLicenseLimit(jobId);
+        checkNumberOfJobsAgainstHardwareLimit(jobId);
+        checkNumberOfRunningDetectorsAgainstLicenseLimit(jobId, numDetectors);
     }
 
-    private void checkTooManyJobsAgainstHardLimit(String jobId) throws TooManyJobsException
+    private void checkNumberOfRunningDetectorsAgainstLicenseLimit(String jobId, int numDetectors)
+    throws LicenseViolationException
     {
-        if (m_ProcessManager.numberOfRunningJobs() >= m_MaxAllowedJobs)
+        if (m_BackendInfo.isLicenseDetectorLimitViolated(
+                                        m_ProcessManager.numberOfRunningDetectors(),
+                                        numDetectors))
+        {
+            String message = Messages.getMessage(Messages.LICENSE_LIMIT_DETECTORS_REACTIVATE,
+                                        jobId, m_BackendInfo.getMaxRunningDetectors());
+
+            LOGGER.info(message);
+            throw new LicenseViolationException(message, ErrorCodes.LICENSE_VIOLATION);
+        }
+    }
+
+    private void checkNumberOfJobsAgainstHardwareLimit(String jobId) throws TooManyJobsException
+    {
+        if (m_BackendInfo.isCpuLimitViolated(m_ProcessManager.numberOfRunningJobs()))
         {
             String message = Messages.getMessage(Messages.CPU_LIMIT_JOB, jobId);
 
@@ -988,7 +990,7 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
         }
     }
 
-    private void checkDataLoadForTooManyJobsAgainstLicenseLimit(String jobId)
+    private void checkNumberOfJobsAgainstLicenseLimit(String jobId)
             throws LicenseViolationException
     {
         if (m_BackendInfo.isLicenseJobLimitViolated(m_ProcessManager.numberOfRunningJobs()))
@@ -1144,14 +1146,6 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
         }
     }
 
-    private static int calculateMaxJobsAllowed()
-    {
-        int cores = Runtime.getRuntime().availableProcessors();
-        double factor = PrelertSettings.getSettingOrDefault(MAX_JOBS_FACTOR_NAME,
-                DEFAULT_MAX_JOBS_FACTOR);
-        return (int) Math.ceil(cores * factor);
-    }
-
     public boolean updateDetectorDescription(String jobId, int detectorIndex, String newDescription)
             throws UnknownJobException
     {
@@ -1278,13 +1272,19 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
         }
     }
 
-    public int numberOfRunningJobs()
+    public List<JobDetails> runningJobs()
     {
-        return m_ProcessManager.numberOfRunningJobs();
-    }
+        List<String> jobIds = m_ProcessManager.runningJobs();
+        List<JobDetails> deets = new ArrayList<>();
+        for (String id : jobIds)
+        {
+            Optional<JobDetails> jd = m_JobProvider.getJobDetails(id);
+            if (jd.isPresent())
+            {
+                deets.add(jd.get());
+            }
+        }
 
-    public int numberOfRunningDetectors()
-    {
-        return m_ProcessManager.numberOfRunningDetectors();
+        return deets;
     }
 }
