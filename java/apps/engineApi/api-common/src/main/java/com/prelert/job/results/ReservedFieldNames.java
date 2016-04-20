@@ -173,7 +173,9 @@ public final class ReservedFieldNames
 
         // JobDetails.DESCRIPTION is not reserved because it is an analyzed string
         // JobDetails.STATUS is not reserved because it is an analyzed string
+        JobDetails.DATA_DESCRIPTION,
         JobDetails.SCHEDULER_STATUS,
+        JobDetails.SCHEDULER_CONFIG,
         JobDetails.CREATE_TIME,
         JobDetails.FINISHED_TIME,
         JobDetails.LAST_DATA_TIME,
