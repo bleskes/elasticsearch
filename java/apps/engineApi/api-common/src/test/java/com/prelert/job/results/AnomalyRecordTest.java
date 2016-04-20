@@ -119,6 +119,17 @@ public class AnomalyRecordTest
     }
 
     @Test
+    public void testEquals_GivenDifferentCorrelatedByFieldValue()
+    {
+        AnomalyRecord record1 = createFullyPopulatedRecord();
+        AnomalyRecord record2 = createFullyPopulatedRecord();
+        record1.setCorrelatedByFieldValue(record1.getCorrelatedByFieldValue() + ".diff");
+
+        assertFalse(record1.equals(record2));
+        assertFalse(record2.equals(record1));
+    }
+
+    @Test
     public void testEquals_GivenDifferentByFieldValue()
     {
         AnomalyRecord record1 = createFullyPopulatedRecord();
@@ -303,6 +314,7 @@ public class AnomalyRecordTest
         record.setAnomalyScore(99.0);
         record.setByFieldName("airline");
         record.setByFieldValue("AAL");
+        record.setCorrelatedByFieldValue("UAL");
         record.setFieldName("responsetime");
         record.setFunction("metric");
         record.setFunctionDescription("Function blah blah");

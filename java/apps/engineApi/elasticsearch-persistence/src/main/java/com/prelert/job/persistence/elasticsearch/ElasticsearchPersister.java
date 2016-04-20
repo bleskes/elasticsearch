@@ -746,6 +746,10 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
         {
             builder.field(AnomalyRecord.BY_FIELD_VALUE, record.getByFieldValue());
         }
+        if (record.getCorrelatedByFieldValue() != null)
+        {
+            builder.field(AnomalyRecord.CORRELATED_BY_FIELD_VALUE, record.getCorrelatedByFieldValue());
+        }
         if (record.getTypical() != null)
         {
             if (record.getTypical().length == 1)
@@ -902,6 +906,10 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
         if (cause.getByFieldValue() != null)
         {
             builder.field(AnomalyCause.BY_FIELD_VALUE, cause.getByFieldValue());
+        }
+        if (cause.getCorrelatedByFieldValue() != null)
+        {
+            builder.field(AnomalyCause.CORRELATED_BY_FIELD_VALUE, cause.getCorrelatedByFieldValue());
         }
         if (cause.getFieldName() != null)
         {

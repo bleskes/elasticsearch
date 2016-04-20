@@ -52,6 +52,7 @@ public class AnomalyRecord
     public static final String PROBABILITY = "probability";
     public static final String BY_FIELD_NAME = "byFieldName";
     public static final String BY_FIELD_VALUE = "byFieldValue";
+    public static final String CORRELATED_BY_FIELD_VALUE = "correlatedByFieldValue";
     public static final String PARTITION_FIELD_NAME = "partitionFieldName";
     public static final String PARTITION_FIELD_VALUE = "partitionFieldValue";
     public static final String FUNCTION = "function";
@@ -86,6 +87,7 @@ public class AnomalyRecord
     private double m_Probability;
     private String m_ByFieldName;
     private String m_ByFieldValue;
+    private String m_CorrelatedByFieldValue;
     private String m_PartitionFieldName;
     private String m_PartitionFieldValue;
     private String m_Function;
@@ -223,6 +225,16 @@ public class AnomalyRecord
     public void setByFieldValue(String value)
     {
         m_ByFieldValue = value.intern();
+    }
+
+    public String getCorrelatedByFieldValue()
+    {
+        return m_CorrelatedByFieldValue;
+    }
+
+    public void setCorrelatedByFieldValue(String value)
+    {
+        m_CorrelatedByFieldValue = value.intern();
     }
 
     public String getPartitionFieldName()
@@ -380,7 +392,7 @@ public class AnomalyRecord
 
         return Objects.hash(m_DetectorIndex, m_Probability, m_AnomalyScore, m_InitialNormalizedProbability,
                 m_NormalizedProbability, Arrays.hashCode(m_Typical), Arrays.hashCode(m_Actual),
-                m_Function, m_FunctionDescription, m_FieldName, m_ByFieldName, m_ByFieldValue,
+                m_Function, m_FunctionDescription, m_FieldName, m_ByFieldName, m_ByFieldValue, m_CorrelatedByFieldValue,
                 m_PartitionFieldName, m_PartitionFieldValue, m_OverFieldName, m_OverFieldValue,
                 m_Timestamp, m_Parent, m_IsInterim, m_Causes, m_Influencers);
     }
@@ -418,6 +430,7 @@ public class AnomalyRecord
                 && Objects.equals(this.m_FieldName, that.m_FieldName)
                 && Objects.equals(this.m_ByFieldName, that.m_ByFieldName)
                 && Objects.equals(this.m_ByFieldValue, that.m_ByFieldValue)
+                && Objects.equals(this.m_CorrelatedByFieldValue, that.m_CorrelatedByFieldValue)
                 && Objects.equals(this.m_PartitionFieldName, that.m_PartitionFieldName)
                 && Objects.equals(this.m_PartitionFieldValue, that.m_PartitionFieldValue)
                 && Objects.equals(this.m_OverFieldName, that.m_OverFieldName)

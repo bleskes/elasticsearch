@@ -65,6 +65,9 @@ final class AnomalyCauseParser extends FieldNameParser<AnomalyCause>
         case AnomalyCause.BY_FIELD_VALUE:
             cause.setByFieldValue(parseAsStringOrNull(fieldName));
             break;
+        case AnomalyCause.CORRELATED_BY_FIELD_VALUE:
+            cause.setCorrelatedByFieldValue(parseAsStringOrNull(fieldName));
+            break;
         case AnomalyCause.PARTITION_FIELD_NAME:
             cause.setPartitionFieldName(parseAsStringOrNull(fieldName));
             break;

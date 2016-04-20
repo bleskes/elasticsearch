@@ -96,6 +96,17 @@ public class AnomalyCauseTest
     }
 
     @Test
+    public void testEquals_GivenAnomalyCausesThatDifferInCorrelatedByFieldValue()
+    {
+        AnomalyCause cause1 = createFullyPopulatedAnomalyCause();
+        AnomalyCause cause2 = createFullyPopulatedAnomalyCause();
+        cause2.setCorrelatedByFieldValue("otherCorrelatedByFieldValue");
+
+        assertFalse(cause1.equals(cause2));
+        assertFalse(cause2.equals(cause1));
+    }
+
+    @Test
     public void testEquals_GivenAnomalyCausesThatDifferInPartitionFieldName()
     {
         AnomalyCause cause1 = createFullyPopulatedAnomalyCause();
@@ -200,6 +211,7 @@ public class AnomalyCauseTest
         cause.setProbability(0.05);
         cause.setByFieldName("byName");
         cause.setByFieldValue("byValue");
+        cause.setCorrelatedByFieldValue("correlatedByValue");
         cause.setPartitionFieldName("partitionName");
         cause.setPartitionFieldValue("partitionValue");
         cause.setFunction("functionName");
