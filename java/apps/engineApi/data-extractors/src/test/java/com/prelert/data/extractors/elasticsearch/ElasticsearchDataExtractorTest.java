@@ -52,6 +52,8 @@ import org.junit.rules.ExpectedException;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import com.prelert.job.ElasticsearchDataSourceCompatibility;
+
 public class ElasticsearchDataExtractorTest
 {
     private static final String BASE_URL = "http://localhost:9200";
@@ -66,7 +68,7 @@ public class ElasticsearchDataExtractorTest
 
     private String m_Aggregations;
     private String m_ScriptFields;
-    private List<String> m_Fields;
+    private String m_Fields;
 
     private ElasticsearchDataExtractor m_Extractor;
 
@@ -190,7 +192,7 @@ public class ElasticsearchDataExtractorTest
                 + "    }"
                 + "  }"
                 + "}";
-        assertEquals(expectedSearchBody, firstRequestParams.requestBody);
+        assertEquals(expectedSearchBody.replaceAll(" ", ""), firstRequestParams.requestBody.replaceAll(" ", ""));
 
         RequestParams secondRequestParams = requester.getGetRequestParams(1);
         assertEquals("http://localhost:9200/_search/scroll?scroll=60m", secondRequestParams.url);
@@ -448,7 +450,7 @@ public class ElasticsearchDataExtractorTest
     @Test
     public void testDataExtractionWithFields() throws IOException
     {
-        m_Fields = Arrays.asList("id");
+        m_Fields = "[\"id\"]";
 
         String initialResponse = "{"
                 + "\"_scroll_id\":\"c2Nhbjs2OzM0NDg1ODpzRlBLc0FXNlNyNm5JWUc1\","
@@ -562,7 +564,7 @@ public class ElasticsearchDataExtractorTest
                 + "  },"
                 + "  \"fields\": [\"id\"]"
                 + "}";
-        assertEquals(expectedSearchBody, firstRequestParams.requestBody);
+        assertEquals(expectedSearchBody.replaceAll(" ", ""), firstRequestParams.requestBody.replaceAll(" ", ""));
 
         RequestParams secondRequestParams = requester.getGetRequestParams(1);
         assertEquals("http://localhost:9200/_search/scroll?scroll=60m", secondRequestParams.url);
@@ -581,7 +583,7 @@ public class ElasticsearchDataExtractorTest
     @Test
     public void testDataExtractionWithAggregations() throws IOException
     {
-        m_Aggregations = "{\"aggs\":{\"my-aggs\": {\"terms\":{\"field\":\"foo\"}}}}";
+        m_Aggregations = "{\"my-aggs\": {\"terms\":{\"field\":\"foo\"}}}";
 
         String initialResponse = "{"
                 + "\"_scroll_id\":\"r2d2bjs2OzM0NDg1ODpzRlBLc0FXNlNyNm5JWUc1\","
@@ -645,9 +647,9 @@ public class ElasticsearchDataExtractorTest
                 + "      }"
                 + "    }"
                 + "  },"
-                + "  {\"aggs\":{\"my-aggs\": {\"terms\":{\"field\":\"foo\"}}}}"
+                + "  \"aggs\":{\"my-aggs\": {\"terms\":{\"field\":\"foo\"}}}"
                 + "}";
-        assertEquals(expectedSearchBody, requestParams.requestBody);
+        assertEquals(expectedSearchBody.replaceAll(" ", ""), requestParams.requestBody.replaceAll(" ", ""));
 
         assertEquals("http://localhost:9200/_search/scroll", requester.getDeleteRequestParams(0).url);
         assertEquals("{\"scroll_id\":[\"r2d2bjs2OzM0NDg1ODpzRlBLc0FXNlNyNm5JWUc1\"]}",
@@ -909,7 +911,7 @@ public class ElasticsearchDataExtractorTest
         RequestParams requestParams = requester.getGetRequestParams(requestCount++);
         assertEquals("http://localhost:9200/dataIndex/dataType/_search?size=1", requestParams.url);
         String expectedDataSummaryBody = "{"
-                + "  \"sort\": [\"_doc\"],"
+                + "  \"sort\": [{\"_doc\":{\"order\":\"asc\"}}],"
                 + "  \"query\": {"
                 + "    \"filtered\": {"
                 + "      \"filter\": {"
@@ -937,7 +939,7 @@ public class ElasticsearchDataExtractorTest
                 + "    }"
                 + "  }"
                 + "}";
-        assertEquals(expectedDataSummaryBody.replace(" ", ""), requestParams.requestBody);
+        assertEquals(expectedDataSummaryBody.replace(" ", ""), requestParams.requestBody.replace(" ", ""));
 
         requestParams = requester.getGetRequestParams(requestCount++);
         assertEquals("http://localhost:9200/dataIndex/_settings", requestParams.url);
@@ -970,7 +972,7 @@ public class ElasticsearchDataExtractorTest
                 + "    }"
                 + "  }"
                 + "}";
-        assertEquals(expectedSearchBody, requestParams.requestBody);
+        assertEquals(expectedSearchBody.replaceAll(" ", ""), requestParams.requestBody.replaceAll(" ", ""));
 
         requestParams = requester.getGetRequestParams(requestCount++);
         assertEquals("http://localhost:9200/_search/scroll?scroll=60m", requestParams.url);
@@ -1007,7 +1009,7 @@ public class ElasticsearchDataExtractorTest
                 + "  }"
                 + "}";
         assertEquals("http://localhost:9200/dataIndex/dataType/_search?scroll=60m&size=1000", requestParams.url);
-        assertEquals(expectedSearchBody, requestParams.requestBody);
+        assertEquals(expectedSearchBody.replaceAll(" ", ""), requestParams.requestBody.replaceAll(" ", ""));
 
         requestParams = requester.getGetRequestParams(requestCount++);
         assertEquals("http://localhost:9200/_search/scroll?scroll=60m", requestParams.url);
@@ -1040,12 +1042,12 @@ public class ElasticsearchDataExtractorTest
                 + "  }"
                 + "}";
         assertEquals("http://localhost:9200/dataIndex/dataType/_search?scroll=60m&size=1000", requestParams.url);
-        assertEquals(expectedSearchBody, requestParams.requestBody);
+        assertEquals(expectedSearchBody.replaceAll(" ", ""), requestParams.requestBody.replaceAll(" ", ""));
 
         requestParams = requester.getGetRequestParams(requestCount++);
         assertEquals("http://localhost:9200/dataIndex/dataType/_search?size=1", requestParams.url);
         expectedDataSummaryBody = "{"
-                + "  \"sort\": [\"_doc\"],"
+                + "  \"sort\": [{\"_doc\":{\"order\":\"asc\"}}],"
                 + "  \"query\": {"
                 + "    \"filtered\": {"
                 + "      \"filter\": {"
@@ -1073,7 +1075,7 @@ public class ElasticsearchDataExtractorTest
                 + "    }"
                 + "  }"
                 + "}";
-        assertEquals(expectedDataSummaryBody.replace(" ", ""), requestParams.requestBody);
+        assertEquals(expectedDataSummaryBody.replace(" ", ""), requestParams.requestBody.replace(" ", ""));
 
         requestParams = requester.getGetRequestParams(requestCount++);
         expectedSearchBody = "{"
@@ -1102,7 +1104,7 @@ public class ElasticsearchDataExtractorTest
                 + "  }"
                 + "}";
         assertEquals("http://localhost:9200/dataIndex/dataType/_search?scroll=60m&size=1000", requestParams.url);
-        assertEquals(expectedSearchBody, requestParams.requestBody);
+        assertEquals(expectedSearchBody.replaceAll(" ", ""), requestParams.requestBody.replaceAll(" ", ""));
 
         requestParams = requester.getGetRequestParams(requestCount++);
         assertEquals("http://localhost:9200/_search/scroll?scroll=60m", requestParams.url);
@@ -1311,8 +1313,11 @@ public class ElasticsearchDataExtractorTest
 
     private void createExtractor(MockHttpRequester httpRequester)
     {
+        ElasticsearchQueryBuilder queryBuilder = new ElasticsearchQueryBuilder(
+                ElasticsearchDataSourceCompatibility.V_1_7_X, SEARCH, m_Aggregations,
+                m_ScriptFields, m_Fields, TIME_FIELD);
         m_Extractor = new ElasticsearchDataExtractor(httpRequester, BASE_URL, null, INDICES, TYPES,
-                SEARCH, m_Aggregations, m_ScriptFields, m_Fields, TIME_FIELD, 1000);
+                queryBuilder, 1000);
     }
 
     private static class MockHttpRequester extends HttpRequester

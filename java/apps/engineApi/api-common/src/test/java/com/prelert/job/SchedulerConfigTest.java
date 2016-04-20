@@ -284,6 +284,17 @@ public class SchedulerConfigTest
     }
 
     @Test
+    public void testEquals_GivenDifferentDataSourceCompatibility()
+    {
+        SchedulerConfig sc1 = createFullyPopulated();
+        SchedulerConfig sc2 = createFullyPopulated();
+        sc2.setDataSourceCompatibility("2.x+");
+
+        assertFalse(sc1.equals(sc2));
+        assertFalse(sc2.equals(sc1));
+    }
+
+    @Test
     public void testEquals_GivenDifferentQueryDelay()
     {
         SchedulerConfig sc1 = createFullyPopulated();
@@ -389,6 +400,7 @@ public class SchedulerConfigTest
         SchedulerConfig sc = new SchedulerConfig();
         sc.setBaseUrl("http://localhost:8080");
         sc.setDataSource(DataSource.ELASTICSEARCH);
+        sc.setDataSourceCompatibility("1.7.x");
         sc.setFrequency(60L);
         sc.setScrollSize(5000);
         sc.setIndexes(Arrays.asList("myIndex"));

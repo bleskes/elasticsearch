@@ -29,10 +29,6 @@ package com.prelert.data.extractors.elasticsearch;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.time.Instant;
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Objects;
@@ -43,95 +39,10 @@ import java.util.stream.Collectors;
 
 import org.apache.log4j.Logger;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.prelert.job.data.extraction.DataExtractor;
 
 public class ElasticsearchDataExtractor implements DataExtractor
 {
-    /**
-     * The search body contains sorting based on the time field
-     * and a query. The query is composed by a bool query with
-     * two must clauses, the recommended way to perform an AND query.
-     * There are 6 placeholders:
-     * <ol>
-     *   <li> time field
-     *   <li> user defined query
-     *   <li> time field
-     *   <li> start time (String in date_time format)
-     *   <li> end time (String in date_time format)
-     *   <li> aggregations (may be empty)
-     * </ol
-     */
-    private static final String SEARCH_BODY_TEMPLATE = "{"
-            + "  \"sort\": ["
-            + "    {\"%s\": {\"order\": \"asc\"}}"
-            + "  ],"
-            + "  \"query\": {"
-            + "    \"filtered\": {"
-            + "      \"filter\": {"
-            + "        \"bool\": {"
-            + "          \"must\": {"
-            + "            %s"
-            + "          },"
-            + "          \"must\": {"
-            + "            \"range\": {"
-            + "              \"%s\": {"
-            + "                \"gte\": \"%s\","
-            + "                \"lt\": \"%s\","
-            + "                \"format\": \"date_time\""
-            + "              }"
-            + "            }"
-            + "          }"
-            + "        }"
-            + "      }"
-            + "    }"
-            + "  }%s"
-            + "}";
-
-    /**
-     * The data summary query returns the earliest and latest data times for a time range.
-     * There are 4 placeholders:
-     * <ol>
-     *   <li> the user query
-     *   <li> time field
-     *   <li> start time (String in date_time format)
-     *   <li> end time (String in date_time format)
-     * </ol
-     */
-    private static final String DATA_SUMMARY_QUERY_TEMPLATE = "{"
-            + "\"sort\":[\"_doc\"],"
-            + "\"query\":{"
-            +   "\"filtered\":{"
-            +     "\"filter\":{"
-            +       "\"bool\":{"
-            +         "\"must\":{%1$s},"
-            +         "\"must\":{"
-            +           "\"range\":{"
-            +             "\"%2$s\":{"
-            +               "\"gte\":\"%3$s\","
-            +               "\"lt\":\"%4$s\","
-            +               "\"format\":\"date_time\""
-            +             "}"
-            +           "}"
-            +         "}"
-            +       "}"
-            +     "}"
-            +   "}"
-            + "},"
-            + "\"aggs\":{"
-            +   "\"earliestTime\":{"
-            +     "\"min\":{\"field\":\"%2$s\"}"
-            +   "},"
-            +   "\"latestTime\":{"
-            +     "\"max\":{\"field\":\"%2$s\"}"
-            +   "}"
-            + "}"
-            + "}";
-
-    private static final String AGGREGATION_TEMPLATE = ",  %s";
-    private static final String SCRIPT_FIELDS_TEMPLATE = ",  %s";
-    private static final String FIELDS_TEMPLATE = "%s,  \"fields\": %s";
     private static final String CLEAR_SCROLL_TEMPLATE = "{\"scroll_id\":[\"%s\"]}";
 
     private static final int OK_STATUS = 200;
@@ -157,12 +68,8 @@ public class ElasticsearchDataExtractor implements DataExtractor
     private final String m_AuthHeader;
     private final List<String> m_Indices;
     private final List<String> m_Types;
-    private final String m_Search;
-    private final String m_Aggregations;
-    private final String m_ScriptFields;
-    private final List<String> m_Fields;
-    private final String m_TimeField;
     private final int m_ScrollSize;
+    private final ElasticsearchQueryBuilder m_QueryBuilder;
     private final ScrollState m_ScrollState;
     private volatile long m_CurrentStartTime;
     private volatile long m_CurrentEndTime;
@@ -178,32 +85,28 @@ public class ElasticsearchDataExtractor implements DataExtractor
     private volatile Logger m_Logger;
 
     ElasticsearchDataExtractor(HttpRequester httpRequester, String baseUrl, String authHeader,
-            List<String> indices, List<String> types, String search, String aggregations,
-            String scriptFields, List<String> fields, String timeField, int scrollSize)
+            List<String> indices, List<String> types, ElasticsearchQueryBuilder queryBuilder,
+            int scrollSize)
     {
         m_HttpRequester = Objects.requireNonNull(httpRequester);
         m_BaseUrl = Objects.requireNonNull(baseUrl);
         m_AuthHeader = authHeader;
         m_Indices = Objects.requireNonNull(indices);
         m_Types = Objects.requireNonNull(types);
-        m_Search = Objects.requireNonNull(search);
-        m_Aggregations = aggregations;
-        m_ScriptFields = scriptFields;
-        m_Fields = fields;
-        m_TimeField = Objects.requireNonNull(timeField);
         m_ScrollSize = scrollSize;
-        m_ScrollState =  m_Aggregations == null ? ScrollState.createDefault()
-                : ScrollState.createAggregated();
+        m_QueryBuilder = Objects.requireNonNull(queryBuilder);
+        m_ScrollState =  queryBuilder.isAggregated() ? ScrollState.createAggregated()
+                : ScrollState.createDefault();
         m_IsFirstSearch = true;
         m_IsCancelled = false;
     }
 
     public static ElasticsearchDataExtractor create(String baseUrl, String authHeader,
-            List<String> indices, List<String> types, String search, String aggregations,
-            String scriptFields, List<String> fields, String timeField, int scrollSize)
+            List<String> indices, List<String> types, ElasticsearchQueryBuilder queryBuilder,
+            int scrollSize)
     {
-        return new ElasticsearchDataExtractor(new HttpRequester(), baseUrl, authHeader, indices, types,
-                search, aggregations, scriptFields, fields, timeField, scrollSize);
+        return new ElasticsearchDataExtractor(new HttpRequester(), baseUrl, authHeader, indices,
+                types, queryBuilder, scrollSize);
     }
 
     @Override
@@ -221,7 +124,7 @@ public class ElasticsearchDataExtractor implements DataExtractor
 
         if (m_IsFirstSearch)
         {
-            logExtractorInfo();
+            m_QueryBuilder.logQueryInfo(m_Logger);;
             m_IsFirstSearch = false;
         }
 
@@ -229,33 +132,12 @@ public class ElasticsearchDataExtractor implements DataExtractor
                 + endEpochMs + ")");
     }
 
-    private void logExtractorInfo()
-    {
-        if (m_Aggregations != null)
-        {
-            m_Logger.debug("Will use the following Elasticsearch aggregations: "
-                    + m_Aggregations);
-        }
-        else
-        {
-            if (m_Fields != null)
-            {
-                m_Logger.debug("Will request only the following field(s) from Elasticsearch: "
-                        + String.join(" ", m_Fields));
-            }
-            else
-            {
-                m_Logger.debug("Will retrieve whole _source document from Elasticsearch");
-            }
-        }
-    }
-
     private void setUpChunkedSearch() throws IOException
     {
         m_Chunk = null;
         String url = buildUrlWithIndicesAndTypes().append(SEARCH_SIZE_ONE_END_POINT).toString();
         String response = requestAndGetStringResponse(url,
-                createDataSummaryQuery(m_CurrentStartTime, m_EndTime));
+                m_QueryBuilder.createDataSummaryQuery(m_CurrentStartTime, m_EndTime));
         long totalHits = matchLong(response, TOTAL_HITS_PATTERN);
         if (totalHits > 0)
         {
@@ -293,12 +175,6 @@ public class ElasticsearchDataExtractor implements DataExtractor
             urlBuilder.append(SLASH);
         }
         return urlBuilder;
-    }
-
-    private String createDataSummaryQuery(long start, long end)
-    {
-        return String.format(DATA_SUMMARY_QUERY_TEMPLATE,
-                m_Search, m_TimeField, formatAsDateTime(start), formatAsDateTime(end));
     }
 
     private long readNumberOfShards(String index) throws IOException
@@ -435,7 +311,7 @@ public class ElasticsearchDataExtractor implements DataExtractor
     {
         advanceTime();
         String url = buildInitScrollUrl();
-        String searchBody = createSearchBody(m_CurrentStartTime, m_CurrentEndTime);
+        String searchBody = m_QueryBuilder.createSearchBody(m_CurrentStartTime, m_CurrentEndTime);
         m_Logger.trace("About to submit body " + searchBody + " to URL " + url);
         HttpResponse response = m_HttpRequester.get(url, m_AuthHeader, searchBody);
         if (response.getResponseCode() != OK_STATUS)
@@ -458,59 +334,15 @@ public class ElasticsearchDataExtractor implements DataExtractor
         StringBuilder urlBuilder = buildUrlWithIndicesAndTypes();
         // With aggregations we don't want any hits returned for the raw data,
         // just the aggregations
-        int size = (m_Aggregations != null) ? 0 : m_ScrollSize;
+        int size = (m_QueryBuilder.isAggregated()) ? 0 : m_ScrollSize;
         urlBuilder.append(String.format(SEARCH_SCROLL_END_POINT, size));
         return urlBuilder.toString();
-    }
-
-    private String createSearchBody(long start, long end)
-    {
-        return String.format(SEARCH_BODY_TEMPLATE, m_TimeField, m_Search, m_TimeField,
-                formatAsDateTime(start), formatAsDateTime(end),
-                createResultsFormatSpec());
-    }
-
-    private String createResultsFormatSpec()
-    {
-        return (m_Aggregations != null) ? createAggregations() :
-                ((m_Fields != null) ? createFieldDataFields() : "");
-    }
-
-    private static String formatAsDateTime(long epochMs)
-    {
-        Instant instant = Instant.ofEpochMilli(epochMs);
-        ZonedDateTime dateTime = ZonedDateTime.ofInstant(instant, ZoneOffset.UTC);
-        return dateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX"));
-    }
-
-    private String createAggregations()
-    {
-        return String.format(AGGREGATION_TEMPLATE, m_Aggregations);
-    }
-
-    private String createFieldDataFields()
-    {
-        try
-        {
-            return String.format(FIELDS_TEMPLATE, createScriptFields(),
-                    new ObjectMapper().writeValueAsString(m_Fields));
-        }
-        catch (JsonProcessingException e)
-        {
-            m_Logger.error("Could not convert field list to JSON: " + m_Fields, e);
-        }
-        return "";
-    }
-
-    private String createScriptFields()
-    {
-        return (m_ScriptFields != null) ? String.format(SCRIPT_FIELDS_TEMPLATE, m_ScriptFields) : "";
     }
 
     private InputStream continueScroll() throws IOException
     {
         // Aggregations never need a continuation
-        if (m_Aggregations == null)
+        if (!m_QueryBuilder.isAggregated())
         {
             StringBuilder urlBuilder = newUrlBuilder();
             urlBuilder.append(CONTINUE_SCROLL_END_POINT);

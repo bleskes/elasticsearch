@@ -86,6 +86,7 @@ public class SchedulerConfig implements PasswordStorage
      * Serialisation names
      */
     public static final String DATA_SOURCE = "dataSource";
+    public static final String DATA_SOURCE_COMPATIBILITY = "dataSourceCompatibility";
     public static final String QUERY_DELAY = "queryDelay";
     public static final String FREQUENCY = "frequency";
     public static final String FILE_PATH = "filePath";
@@ -112,6 +113,7 @@ public class SchedulerConfig implements PasswordStorage
     private static final long DEFAULT_ELASTICSEARCH_QUERY_DELAY = 60L;
 
     private DataSource m_DataSource;
+    private String m_DataSourceCompatibility;
 
     /**
      * The delay in seconds before starting to query a period of time
@@ -170,6 +172,20 @@ public class SchedulerConfig implements PasswordStorage
     public void setDataSource(DataSource dataSource)
     {
         m_DataSource = dataSource;
+    }
+
+    /**
+     * Gets the compatibility for the data source.
+     * @return The data source compatibility.
+     */
+    public String getDataSourceCompatibility()
+    {
+        return m_DataSourceCompatibility;
+    }
+
+    public void setDataSourceCompatibility(String dataSourceCompatibility)
+    {
+        m_DataSourceCompatibility = dataSourceCompatibility;
     }
 
     public Long getQueryDelay()
@@ -539,6 +555,7 @@ public class SchedulerConfig implements PasswordStorage
         SchedulerConfig that = (SchedulerConfig)other;
 
         return Objects.equals(this.m_DataSource, that.m_DataSource) &&
+                Objects.equals(this.m_DataSourceCompatibility, that.m_DataSourceCompatibility) &&
                 Objects.equals(this.m_Frequency, that.m_Frequency) &&
                 Objects.equals(this.m_QueryDelay, that.m_QueryDelay) &&
                 Objects.equals(this.m_FilePath, that.m_FilePath) &&
@@ -559,8 +576,9 @@ public class SchedulerConfig implements PasswordStorage
     @Override
     public int hashCode()
     {
-        return Objects.hash(m_DataSource, m_Frequency, m_QueryDelay, m_FilePath, m_TailFile,
-                m_BaseUrl, m_Username, m_Password, m_EncryptedPassword, m_Indexes, m_Types, m_Query,
-                m_RetrieveWholeSource, m_ScrollSize, getAggregationsOrAggs(), m_ScriptFields);
+        return Objects.hash(m_DataSource, m_DataSourceCompatibility, m_Frequency, m_QueryDelay,
+                m_FilePath, m_TailFile, m_BaseUrl, m_Username, m_Password, m_EncryptedPassword,
+                m_Indexes, m_Types, m_Query, m_RetrieveWholeSource, m_ScrollSize,
+                getAggregationsOrAggs(), m_ScriptFields);
     }
 }

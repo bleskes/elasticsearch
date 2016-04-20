@@ -430,6 +430,10 @@ public class ElasticsearchMappingsTest
                         "            \"type\": \"string\"," +
                         "            \"index\": \"not_analyzed\"" +
                         "          }," +
+                        "          \"dataSourceCompatibility\": {" +
+                        "            \"type\": \"string\"," +
+                        "            \"index\": \"not_analyzed\"" +
+                        "          }," +
                         "          \"queryDelay\": {" +
                         "            \"type\": \"long\"" +
                         "          }," +
