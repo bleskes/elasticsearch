@@ -355,4 +355,17 @@ public class AnalysisConfigTest
         assertFalse(config1.equals(config2));
         assertFalse(config2.equals(config1));
     }
+
+    @Test
+    public void testEquals_GivenMultivariateByField()
+    {
+        AnalysisConfig config1 = new AnalysisConfig();
+        config1.setMultivariateByFields(true);
+
+        AnalysisConfig config2 = new AnalysisConfig();
+        config2.setMultivariateByFields(false);
+
+        assertFalse(config1.equals(config2));
+        assertFalse(config2.equals(config1));
+    }
 }

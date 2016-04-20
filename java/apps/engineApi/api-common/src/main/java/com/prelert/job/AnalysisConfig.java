@@ -60,6 +60,7 @@ public class AnalysisConfig
     public static final String INFLUENCERS = "influencers";
     public static final String OVERLAPPING_BUCKETS = "overlappingBuckets";
     public static final String RESULT_FINALIZATION_WINDOW = "resultFinalizationWindow";
+    public static final String MULTIVARIATE_BY_FIELDS = "multivariateByFields";
 
     private static final String PRELERT_CATEGORY_FIELD = "prelertcategory";
     public static final Set<String> AUTO_CREATED_FIELDS = new HashSet<>(
@@ -80,6 +81,7 @@ public class AnalysisConfig
     private List<String> m_Influencers;
     private Boolean m_OverlappingBuckets;
     private Long m_ResultFinalizationWindow;
+    private Boolean m_MultivariateByFields;
 
     /**
      * Default constructor
@@ -255,6 +257,16 @@ public class AnalysisConfig
         m_ResultFinalizationWindow = l;
     }
 
+    public Boolean getMultivariateByFields()
+    {
+        return m_MultivariateByFields;
+    }
+
+    public void setMultivariateByFields(Boolean multivariateByFields)
+    {
+        m_MultivariateByFields = multivariateByFields;
+    }
+
     /**
      * Return the list of fields required by the analysis.
      * These are the influencer fields, metric field, partition field,
@@ -369,14 +381,16 @@ public class AnalysisConfig
                 Objects.equals(this.m_SummaryCountFieldName, that.m_SummaryCountFieldName) &&
                 Objects.equals(this.m_Influencers, that.m_Influencers) &&
                 Objects.equals(this.m_OverlappingBuckets, that.m_OverlappingBuckets) &&
-                Objects.equals(this.m_ResultFinalizationWindow,  that.m_ResultFinalizationWindow);
+                Objects.equals(this.m_ResultFinalizationWindow,  that.m_ResultFinalizationWindow) &&
+                Objects.equals(this.m_MultivariateByFields, that.m_MultivariateByFields);
     }
 
     @Override
     public int hashCode()
     {
         return Objects.hash(m_Detectors, m_BucketSpan, m_BatchSpan, m_Latency, m_Period,
-                m_SummaryCountFieldName, m_Influencers, m_OverlappingBuckets, m_ResultFinalizationWindow);
+                m_SummaryCountFieldName, m_Influencers, m_OverlappingBuckets, m_ResultFinalizationWindow,
+                m_MultivariateByFields);
     }
 
 }

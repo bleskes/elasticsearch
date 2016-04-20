@@ -83,6 +83,7 @@ public class ProcessCtrlTest
         ac.setPeriod(20L);
         ac.setSummaryCountFieldName("summaryField");
         ac.setOverlappingBuckets(true);
+        ac.setMultivariateByFields(true);
         job.setAnalysisConfig(ac);
 
         DataDescription dd = new DataDescription();
@@ -94,7 +95,7 @@ public class ProcessCtrlTest
 
         List<String> command = ProcessCtrl.buildAutoDetectCommand(job, m_Logger, null);
 
-        assertEquals(15, command.size());
+        assertEquals(16, command.size());
         assertTrue(command.contains(ProcessCtrl.AUTODETECT_PATH));
         assertTrue(command.contains(ProcessCtrl.BATCH_SPAN_ARG + "100"));
         assertTrue(command.contains(ProcessCtrl.BUCKET_SPAN_ARG + "120"));
@@ -102,6 +103,7 @@ public class ProcessCtrlTest
         assertTrue(command.contains(ProcessCtrl.PERIOD_ARG + "20"));
         assertTrue(command.contains(ProcessCtrl.SUMMARY_COUNT_FIELD_ARG + "summaryField"));
         assertTrue(command.contains(ProcessCtrl.RESULT_FINALIZATION_WINDOW_ARG + "2"));
+        assertTrue(command.contains(ProcessCtrl.MULTIVARIATE_BY_FIELDS_ARG));
 
         assertTrue(command.contains(ProcessCtrl.LENGTH_ENCODED_INPUT_ARG));
         assertTrue(command.contains(ProcessCtrl.MAX_ANOMALY_RECORDS_ARG));

@@ -69,6 +69,7 @@ public final class ReservedFieldNames
         AnalysisConfig.INFLUENCERS,
         AnalysisConfig.OVERLAPPING_BUCKETS,
         AnalysisConfig.RESULT_FINALIZATION_WINDOW,
+        AnalysisConfig.MULTIVARIATE_BY_FIELDS,
 
         AnalysisLimits.MODEL_MEMORY_LIMIT,
         AnalysisLimits.CATEGORIZATION_EXAMPLES_LIMIT,
@@ -78,6 +79,7 @@ public final class ReservedFieldNames
         AnomalyCause.OVER_FIELD_VALUE,
         AnomalyCause.BY_FIELD_NAME,
         AnomalyCause.BY_FIELD_VALUE,
+        AnomalyCause.CORRELATED_BY_FIELD_VALUE,
         AnomalyCause.PARTITION_FIELD_NAME,
         AnomalyCause.PARTITION_FIELD_VALUE,
         AnomalyCause.FUNCTION,
@@ -91,6 +93,7 @@ public final class ReservedFieldNames
         AnomalyRecord.PROBABILITY,
         AnomalyRecord.BY_FIELD_NAME,
         AnomalyRecord.BY_FIELD_VALUE,
+        AnomalyRecord.CORRELATED_BY_FIELD_VALUE,
         AnomalyRecord.PARTITION_FIELD_NAME,
         AnomalyRecord.PARTITION_FIELD_VALUE,
         AnomalyRecord.FUNCTION,
@@ -170,7 +173,9 @@ public final class ReservedFieldNames
 
         // JobDetails.DESCRIPTION is not reserved because it is an analyzed string
         // JobDetails.STATUS is not reserved because it is an analyzed string
+        JobDetails.DATA_DESCRIPTION,
         JobDetails.SCHEDULER_STATUS,
+        JobDetails.SCHEDULER_CONFIG,
         JobDetails.CREATE_TIME,
         JobDetails.FINISHED_TIME,
         JobDetails.LAST_DATA_TIME,
@@ -209,6 +214,7 @@ public final class ReservedFieldNames
         ModelSizeStats.TOTAL_PARTITION_FIELD_COUNT,
         ModelSizeStats.BUCKET_ALLOCATION_FAILURES_COUNT,
         ModelSizeStats.MEMORY_STATUS,
+        ModelSizeStats.LOG_TIME,
 
         // ModelSnapshot.DESCRIPTION is not reserved because it is an analyzed string
         ModelSnapshot.RESTORE_PRIORITY,

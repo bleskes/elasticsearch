@@ -78,6 +78,9 @@ final class AnomalyRecordParser extends FieldNameParser<AnomalyRecord>
         case AnomalyRecord.BY_FIELD_VALUE:
             record.setByFieldValue(parseAsStringOrNull(fieldName));
             break;
+        case AnomalyRecord.CORRELATED_BY_FIELD_VALUE:
+            record.setCorrelatedByFieldValue(parseAsStringOrNull(fieldName));
+            break;
         case AnomalyRecord.PARTITION_FIELD_NAME:
             record.setPartitionFieldName(parseAsStringOrNull(fieldName));
             break;

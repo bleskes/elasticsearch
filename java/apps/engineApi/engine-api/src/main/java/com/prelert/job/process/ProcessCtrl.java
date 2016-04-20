@@ -38,7 +38,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.Random;
 
 import org.apache.commons.lang.SystemUtils;
@@ -209,6 +208,7 @@ public class ProcessCtrl
     public static final String LIMIT_CONFIG_ARG = "--limitconfig=";
     public static final String LATENCY_ARG = "--latency=";
     public static final String RESULT_FINALIZATION_WINDOW_ARG = "--resultFinalizationWindow=";
+    public static final String MULTIVARIATE_BY_FIELDS_ARG = "--multivariateByFields";
     public static final String MAX_ANOMALY_RECORDS_ARG;
     public static final String MODEL_DEBUG_CONFIG_ARG = "--modeldebugconfig=";
     public static final String PERIOD_ARG = "--period=";
@@ -603,22 +603,27 @@ public class ProcessCtrl
         String logId = LOG_ID_ARG + job.getId();
         command.add(logId);
 
-        if (job.getAnalysisConfig() != null)
+        AnalysisConfig analysisConfig = job.getAnalysisConfig();
+        if (analysisConfig != null)
         {
-            addIfNotNull(job.getAnalysisConfig().getBucketSpan(), BUCKET_SPAN_ARG, command);
-            addIfNotNull(job.getAnalysisConfig().getBatchSpan(), BATCH_SPAN_ARG, command);
-            addIfNotNull(job.getAnalysisConfig().getLatency(), LATENCY_ARG, command);
-            addIfNotNull(job.getAnalysisConfig().getPeriod(), PERIOD_ARG, command);
-            addIfNotNull(job.getAnalysisConfig().getSummaryCountFieldName(),
+            addIfNotNull(analysisConfig.getBucketSpan(), BUCKET_SPAN_ARG, command);
+            addIfNotNull(analysisConfig.getBatchSpan(), BATCH_SPAN_ARG, command);
+            addIfNotNull(analysisConfig.getLatency(), LATENCY_ARG, command);
+            addIfNotNull(analysisConfig.getPeriod(), PERIOD_ARG, command);
+            addIfNotNull(analysisConfig.getSummaryCountFieldName(),
                     SUMMARY_COUNT_FIELD_ARG, command);
-            if (Objects.equals(job.getAnalysisConfig().getOverlappingBuckets(), true))
+            if (Boolean.TRUE.equals(analysisConfig.getOverlappingBuckets()))
             {
-                Long window = job.getAnalysisConfig().getResultFinalizationWindow();
+                Long window = analysisConfig.getResultFinalizationWindow();
                 if (window == null)
                 {
                     window = AnalysisConfig.DEFAULT_RESULT_FINALIZATION_WINDOW;
                 }
-                command.add(RESULT_FINALIZATION_WINDOW_ARG + window.toString());
+                command.add(RESULT_FINALIZATION_WINDOW_ARG + window);
+            }
+            if (Boolean.TRUE.equals(analysisConfig.getMultivariateByFields()))
+            {
+                command.add(MULTIVARIATE_BY_FIELDS_ARG);
             }
         }
 

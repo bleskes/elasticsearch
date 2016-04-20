@@ -625,7 +625,7 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
                 .field(ModelSizeStats.BUCKET_ALLOCATION_FAILURES_COUNT, modelSizeStats.getBucketAllocationFailuresCount())
                 .field(ModelSizeStats.MEMORY_STATUS, modelSizeStats.getMemoryStatus())
                 .field(ModelSizeStats.ES_TIMESTAMP, modelSizeStats.getTimestamp())
-                .field(ModelSizeStats.REPORT_TIME, modelSizeStats.getReportTime());
+                .field(ModelSizeStats.LOG_TIME, modelSizeStats.getLogTime());
     }
 
     /**
@@ -745,6 +745,10 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
         if (record.getByFieldValue() != null)
         {
             builder.field(AnomalyRecord.BY_FIELD_VALUE, record.getByFieldValue());
+        }
+        if (record.getCorrelatedByFieldValue() != null)
+        {
+            builder.field(AnomalyRecord.CORRELATED_BY_FIELD_VALUE, record.getCorrelatedByFieldValue());
         }
         if (record.getTypical() != null)
         {
@@ -902,6 +906,10 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
         if (cause.getByFieldValue() != null)
         {
             builder.field(AnomalyCause.BY_FIELD_VALUE, cause.getByFieldValue());
+        }
+        if (cause.getCorrelatedByFieldValue() != null)
+        {
+            builder.field(AnomalyCause.CORRELATED_BY_FIELD_VALUE, cause.getCorrelatedByFieldValue());
         }
         if (cause.getFieldName() != null)
         {

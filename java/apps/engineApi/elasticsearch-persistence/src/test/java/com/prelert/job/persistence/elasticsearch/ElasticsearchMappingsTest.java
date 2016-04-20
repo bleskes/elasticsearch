@@ -28,13 +28,171 @@
 package com.prelert.job.persistence.elasticsearch;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
+import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
+import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.junit.Test;
+
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonToken;
+import com.prelert.job.CategorizerState;
+import com.prelert.job.JobDetails;
+import com.prelert.job.ModelSizeStats;
+import com.prelert.job.ModelSnapshot;
+import com.prelert.job.ModelState;
+import com.prelert.job.SchedulerConfig;
+import com.prelert.job.audit.AuditMessage;
+import com.prelert.job.quantiles.Quantiles;
+import com.prelert.job.results.AnomalyRecord;
+import com.prelert.job.results.Bucket;
+import com.prelert.job.results.BucketInfluencer;
+import com.prelert.job.results.CategoryDefinition;
+import com.prelert.job.results.Influencer;
+import com.prelert.job.results.ModelDebugOutput;
+import com.prelert.job.results.ReservedFieldNames;
+import com.prelert.job.usage.Usage;
+
 
 public class ElasticsearchMappingsTest
 {
+    private void parseJson(JsonParser parser, Set<String> expected)
+            throws IOException
+    {
+        try
+        {
+            JsonToken token = parser.nextToken();
+            while (token != null && token != JsonToken.END_OBJECT)
+            {
+                switch (token)
+                {
+                    case START_OBJECT:
+                        parseJson(parser, expected);
+                        break;
+                    case FIELD_NAME:
+                        String fieldName = parser.getCurrentName();
+                        expected.add(fieldName);
+                        break;
+                    default:
+                        break;
+                }
+                token = parser.nextToken();
+            }
+        }
+        catch (JsonParseException e)
+        {
+            fail("Cannot parse JSON: " + e);
+        }
+    }
+
+    @Test
+    public void testReservedFields()
+            throws IOException, ClassNotFoundException, IllegalAccessException,
+            IllegalArgumentException, InvocationTargetException
+    {
+        Set<String> overridden = new HashSet<>();
+
+        // These are not reserved because they're Elasticsearch keywords, not field names
+        overridden.add(ElasticsearchMappings.ALL);
+        overridden.add(ElasticsearchMappings.ANALYZER);
+        overridden.add(ElasticsearchMappings.COPY_TO);
+        overridden.add(ElasticsearchMappings.DYNAMIC);
+        overridden.add(ElasticsearchMappings.ENABLED);
+        overridden.add(ElasticsearchMappings.INCLUDE_IN_ALL);
+        overridden.add(ElasticsearchMappings.INDEX);
+        overridden.add(ElasticsearchMappings.NESTED);
+        overridden.add(ElasticsearchMappings.NO);
+        overridden.add(ElasticsearchMappings.NOT_ANALYZED);
+        overridden.add(ElasticsearchMappings.PARENT);
+        overridden.add(ElasticsearchMappings.PROPERTIES);
+        overridden.add(ElasticsearchMappings.TYPE);
+        overridden.add(ElasticsearchMappings.WHITESPACE);
+
+        // These are not reserved because they're data types, not field names
+        overridden.add(AnomalyRecord.TYPE);
+        overridden.add(AuditMessage.TYPE);
+        overridden.add(Bucket.TYPE);
+        overridden.add(BucketInfluencer.TYPE);
+        overridden.add(CategorizerState.TYPE);
+        overridden.add(CategoryDefinition.TYPE);
+        overridden.add(ElasticsearchJobDataPersister.TYPE);
+        overridden.add(Influencer.TYPE);
+        overridden.add(JobDetails.TYPE);
+        overridden.add(ModelDebugOutput.TYPE);
+        overridden.add(ModelState.TYPE);
+        overridden.add(ModelSnapshot.TYPE);
+        overridden.add(ModelSizeStats.TYPE);
+        overridden.add(Quantiles.TYPE);
+        overridden.add(Usage.TYPE);
+
+        // These are not reserved because they're in the prelertinput-* index, not prelertresults-*
+        overridden.add(ElasticsearchJobDataPersister.FIELDS);
+        overridden.add(ElasticsearchJobDataPersister.BY_FIELDS);
+        overridden.add(ElasticsearchJobDataPersister.OVER_FIELDS);
+        overridden.add(ElasticsearchJobDataPersister.PARTITION_FIELDS);
+
+        // These are not reserved because they're analyzed strings, i.e. the same type as user-specified fields
+        overridden.add(JobDetails.DESCRIPTION);
+        overridden.add(JobDetails.STATUS);
+        overridden.add(ModelSnapshot.DESCRIPTION);
+        overridden.add(SchedulerConfig.USERNAME);
+
+        Set<String> expected = new HashSet<>();
+
+        Class<?> c = Class.forName("com.prelert.job.persistence.elasticsearch.ElasticsearchMappings");
+        Class<?> contentBuilder = Class.forName("org.elasticsearch.common.xcontent.XContentBuilder");
+
+        Method[] allMethods = c.getDeclaredMethods();
+        for (Method m : allMethods)
+        {
+            if (Modifier.isStatic(m.getModifiers()) && m.getReturnType().equals(contentBuilder))
+            {
+                XContentBuilder builder;
+                if (m.getParameterCount() == 0)
+                {
+                    builder = (XContentBuilder) m.invoke(null);
+                }
+                else if (m.getParameterCount() == 1)
+                {
+                    List<Object> args = new ArrayList<>();
+                    args.add(null);
+
+                    builder = (XContentBuilder) m.invoke(null, args);
+                }
+                else
+                {
+                    continue;
+                }
+                BufferedInputStream inputStream = new BufferedInputStream(new ByteArrayInputStream(
+                        builder.string().getBytes(StandardCharsets.UTF_8)));
+
+                JsonParser parser = new JsonFactory().createParser(inputStream);
+                parseJson(parser, expected);
+            }
+        }
+
+        expected.removeAll(overridden);
+        for (String s : expected)
+        {
+            // By comparing like this the failure messages say which string is missing
+            String reserved = ReservedFieldNames.RESERVED_FIELD_NAMES.contains(s) ? s : null;
+            assertEquals(s, reserved);
+        }
+    }
+
     @Test
     public void testJobMapping() throws IOException
     {
@@ -191,6 +349,18 @@ public class ElasticsearchMappingsTest
                         "                \"type\": \"boolean\"" +
                         "              }" +
                         "            }" +
+                        "          }," +
+                        "          \"overlappingBuckets\": {" +
+                        "            \"type\": \"boolean\"," +
+                        "            \"index\": \"no\"" +
+                        "          }," +
+                        "          \"resultFinalizationWindow\": {" +
+                        "            \"type\": \"long\"," +
+                        "            \"index\": \"no\"" +
+                        "          }," +
+                        "          \"multivariateByFields\": {" +
+                        "            \"type\": \"boolean\"," +
+                        "            \"index\": \"no\"" +
                         "          }" +
                         "        }" +
                         "      }," +

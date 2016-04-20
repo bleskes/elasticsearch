@@ -42,6 +42,7 @@ public class AnomalyCause
     public static final String OVER_FIELD_VALUE = "overFieldValue";
     public static final String BY_FIELD_NAME = "byFieldName";
     public static final String BY_FIELD_VALUE = "byFieldValue";
+    public static final String CORRELATED_BY_FIELD_VALUE = "correlatedByFieldValue";
     public static final String PARTITION_FIELD_NAME = "partitionFieldName";
     public static final String PARTITION_FIELD_VALUE = "partitionFieldValue";
     public static final String FUNCTION = "function";
@@ -58,6 +59,7 @@ public class AnomalyCause
     private double m_Probability;
     private String m_ByFieldName;
     private String m_ByFieldValue;
+    private String m_CorrelatedByFieldValue;
     private String m_PartitionFieldName;
     private String m_PartitionFieldValue;
     private String m_Function;
@@ -102,6 +104,16 @@ public class AnomalyCause
     public void setByFieldValue(String value)
     {
         m_ByFieldValue = value.intern();
+    }
+
+    public String getCorrelatedByFieldValue()
+    {
+        return m_CorrelatedByFieldValue;
+    }
+
+    public void setCorrelatedByFieldValue(String value)
+    {
+        m_CorrelatedByFieldValue = value.intern();
     }
 
     public String getPartitionFieldName()
@@ -214,6 +226,7 @@ public class AnomalyCause
                 Arrays.hashCode(m_Typical),
                 m_ByFieldName,
                 m_ByFieldValue,
+                m_CorrelatedByFieldValue,
                 m_FieldName,
                 m_Function,
                 m_FunctionDescription,
@@ -247,6 +260,7 @@ public class AnomalyCause
                 Objects.equals(this.m_FieldName, that.m_FieldName) &&
                 Objects.equals(this.m_ByFieldName, that.m_ByFieldName) &&
                 Objects.equals(this.m_ByFieldValue, that.m_ByFieldValue) &&
+                Objects.equals(this.m_CorrelatedByFieldValue, that.m_CorrelatedByFieldValue) &&
                 Objects.equals(this.m_PartitionFieldName, that.m_PartitionFieldName) &&
                 Objects.equals(this.m_PartitionFieldValue, that.m_PartitionFieldValue) &&
                 Objects.equals(this.m_OverFieldName, that.m_OverFieldName) &&
