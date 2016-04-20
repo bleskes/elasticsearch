@@ -578,6 +578,7 @@ public class JobConfigurationVerifierTest
     {
         SchedulerConfig schedulerConfig = new SchedulerConfig();
         schedulerConfig.setDataSource(DataSource.ELASTICSEARCH);
+        schedulerConfig.setDataSourceCompatibility("2.x.x");
         schedulerConfig.setBaseUrl("http://localhost:9200");
         schedulerConfig.setIndexes(Arrays.asList("myIndex"));
         schedulerConfig.setTypes(Arrays.asList("myType"));

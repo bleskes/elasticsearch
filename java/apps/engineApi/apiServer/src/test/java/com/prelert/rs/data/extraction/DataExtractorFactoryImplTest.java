@@ -73,6 +73,7 @@ public class DataExtractorFactoryImplTest
 
         SchedulerConfig schedulerConfig = new SchedulerConfig();
         schedulerConfig.setDataSource(DataSource.ELASTICSEARCH);
+        schedulerConfig.setDataSourceCompatibility("1.7.x");
         schedulerConfig.setBaseUrl("http://localhost:9200");
         schedulerConfig.setIndexes(Arrays.asList("foo"));
         schedulerConfig.setTypes(Arrays.asList("bar"));
@@ -104,6 +105,7 @@ public class DataExtractorFactoryImplTest
 
         SchedulerConfig schedulerConfig = new SchedulerConfig();
         schedulerConfig.setDataSource(DataSource.ELASTICSEARCH);
+        schedulerConfig.setDataSourceCompatibility("2.x.x");
         schedulerConfig.setBaseUrl("http://localhost:9200");
         schedulerConfig.setIndexes(Arrays.asList("foo"));
         schedulerConfig.setTypes(Arrays.asList("bar"));
@@ -137,6 +139,7 @@ public class DataExtractorFactoryImplTest
 
         SchedulerConfig schedulerConfig = new SchedulerConfig();
         schedulerConfig.setDataSource(DataSource.ELASTICSEARCH);
+        schedulerConfig.setDataSourceCompatibility("1.7.x");
         schedulerConfig.setBaseUrl("http://localhost:9200");
         schedulerConfig.setIndexes(Arrays.asList("foo"));
         schedulerConfig.setTypes(Arrays.asList("bar"));
@@ -170,7 +173,7 @@ public class DataExtractorFactoryImplTest
 
         assertTrue(dataExtractor instanceof ElasticsearchDataExtractor);
         assertEquals("\"match_all\":{}", m_Factory.stringifyElasticsearchQuery(query));
-        assertEquals("\"aggs\":{\"time_level\":{\"histogram\":{\"field\":\"time\",\"interval\":3600000},\"aggs\":{\"value_level\":{\"avg\":{\"field\":\"responsetime\"}}}}}",
+        assertEquals("{\"time_level\":{\"histogram\":{\"field\":\"time\",\"interval\":3600000},\"aggs\":{\"value_level\":{\"avg\":{\"field\":\"responsetime\"}}}}}",
                 m_Factory.stringifyElasticsearchAggregations(null, aggs));
     }
 
@@ -183,6 +186,7 @@ public class DataExtractorFactoryImplTest
 
         SchedulerConfig schedulerConfig = new SchedulerConfig();
         schedulerConfig.setDataSource(DataSource.ELASTICSEARCH);
+        schedulerConfig.setDataSourceCompatibility("1.7.x");
         schedulerConfig.setBaseUrl("http://localhost:9200");
         schedulerConfig.setIndexes(Arrays.asList("foo"));
         schedulerConfig.setTypes(Arrays.asList("bar"));
@@ -209,7 +213,7 @@ public class DataExtractorFactoryImplTest
 
         assertTrue(dataExtractor instanceof ElasticsearchDataExtractor);
         assertEquals("\"match_all\":{}", m_Factory.stringifyElasticsearchQuery(query));
-        assertEquals("\"script_fields\":{\"twiceresponsetime\":{\"script\":{\"lang\":\"expression\",\"inline\":\"doc['responsetime'].value * 2\"}}}",
+        assertEquals("{\"twiceresponsetime\":{\"script\":{\"lang\":\"expression\",\"inline\":\"doc['responsetime'].value * 2\"}}}",
                 m_Factory.stringifyElasticsearchScriptFields(scriptFields));
     }
 

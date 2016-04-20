@@ -39,6 +39,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
 import com.prelert.data.extractors.elasticsearch.ElasticsearchDataExtractor;
+import com.prelert.data.extractors.elasticsearch.ElasticsearchQueryBuilder;
+import com.prelert.job.ElasticsearchDataSourceCompatibility;
 import com.prelert.job.JobDetails;
 import com.prelert.job.SchedulerConfig;
 import com.prelert.job.SchedulerConfig.DataSource;
@@ -72,14 +74,16 @@ public class DataExtractorFactoryImpl implements DataExtractorFactory
     {
         String timeField = job.getDataDescription().getTimeField();
         SchedulerConfig schedulerConfig = job.getSchedulerConfig();
-        return ElasticsearchDataExtractor.create(schedulerConfig.getBaseUrl(),
-                createBasicAuthHeader(schedulerConfig.getUsername(), schedulerConfig.getEncryptedPassword()),
-                schedulerConfig.getIndexes(), schedulerConfig.getTypes(),
+        ElasticsearchQueryBuilder queryBuilder = new ElasticsearchQueryBuilder(
+                ElasticsearchDataSourceCompatibility.from(schedulerConfig.getDataSourceCompatibility()),
                 stringifyElasticsearchQuery(schedulerConfig.getQuery()),
                 stringifyElasticsearchAggregations(schedulerConfig.getAggregations(), schedulerConfig.getAggs()),
                 stringifyElasticsearchScriptFields(schedulerConfig.getScriptFields()),
-                Boolean.TRUE.equals(schedulerConfig.getRetrieveWholeSource()) ? null : job.allFields(),
-                timeField,
+                Boolean.TRUE.equals(schedulerConfig.getRetrieveWholeSource()) ? null : writeObjectAsJson(job.allFields()),
+                timeField);
+        return ElasticsearchDataExtractor.create(schedulerConfig.getBaseUrl(),
+                createBasicAuthHeader(schedulerConfig.getUsername(), schedulerConfig.getEncryptedPassword()),
+                schedulerConfig.getIndexes(), schedulerConfig.getTypes(), queryBuilder,
                 schedulerConfig.getScrollSize());
     }
 
@@ -128,11 +132,11 @@ public class DataExtractorFactoryImpl implements DataExtractorFactory
     {
         if (aggregationsMap != null)
         {
-            return "\"" + SchedulerConfig.AGGREGATIONS + "\":" + writeObjectAsJson(aggregationsMap);
+            return writeObjectAsJson(aggregationsMap);
         }
         if (aggsMap != null)
         {
-            return "\"" + SchedulerConfig.AGGS + "\":" + writeObjectAsJson(aggsMap);
+            return writeObjectAsJson(aggsMap);
         }
         return null;
     }
@@ -142,7 +146,7 @@ public class DataExtractorFactoryImpl implements DataExtractorFactory
     {
         if (scriptFieldsMap != null)
         {
-            return "\"" + SchedulerConfig.SCRIPT_FIELDS + "\":" + writeObjectAsJson(scriptFieldsMap);
+            return writeObjectAsJson(scriptFieldsMap);
         }
         return null;
     }
