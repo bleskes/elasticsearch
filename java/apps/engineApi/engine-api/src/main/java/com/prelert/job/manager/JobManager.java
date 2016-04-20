@@ -1068,9 +1068,17 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
     }
 
     public void startJobScheduler(String jobId, long startMs, OptionalLong endMs)
-            throws CannotStartSchedulerException, NoSuchScheduledJobException, UnknownJobException
+             throws CannotStartSchedulerException, NoSuchScheduledJobException,
+             UnknownJobException, TooManyJobsException, LicenseViolationException
     {
         checkJobHasScheduler(jobId);
+
+        Optional<JobDetails> jobDetails = m_JobProvider.getJobDetails(jobId);
+        if (jobDetails.isPresent() == false)
+        {
+            throw new UnknownJobException(jobId);
+        }
+        checkLicenceViolations(jobId, jobDetails.get().getAnalysisConfig().getDetectors().size());
 
         m_JobProvider.updateSchedulerState(jobId,
                 new SchedulerState(startMs, endMs.isPresent() ? endMs.getAsLong() : null));

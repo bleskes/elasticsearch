@@ -187,7 +187,6 @@ public class PrelertWebApp extends Application
         m_ActivityAudit = new ActivityAudit(() -> m_JobManager.systemAudit(),
                                             () -> m_JobManager.runningJobs());
         m_ActivityAudit.scheduleNextAudit();
-
     }
 
     private ElasticsearchFactory createPersistenceFactory()

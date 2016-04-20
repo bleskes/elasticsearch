@@ -44,6 +44,8 @@ import org.apache.log4j.Logger;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.exceptions.JobInUseException;
+import com.prelert.job.exceptions.LicenseViolationException;
+import com.prelert.job.exceptions.TooManyJobsException;
 import com.prelert.job.manager.NoSuchScheduledJobException;
 import com.prelert.job.messages.Messages;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
@@ -77,6 +79,8 @@ public class Schedulers extends ResourceWithJobManager
      * @throws UnknownJobException
      * @throws NoSuchScheduledJobException
      * @throws CannotStartSchedulerException
+     * @throws LicenseViolationException
+     * @throws TooManyJobsException
      */
     @POST
     @Path("/{jobId}/start")
@@ -84,7 +88,8 @@ public class Schedulers extends ResourceWithJobManager
     public Response startScheduledJob(@PathParam("jobId") String jobId,
             @DefaultValue("") @QueryParam(START_QUERY_PARAM) String start,
             @DefaultValue("") @QueryParam(END_QUERY_PARAM) String end)
-            throws CannotStartSchedulerException, NoSuchScheduledJobException, UnknownJobException
+            throws CannotStartSchedulerException, NoSuchScheduledJobException,
+            UnknownJobException, TooManyJobsException, LicenseViolationException
     {
         LOGGER.debug("Received request to start scheduler for job: " + jobId);
 
