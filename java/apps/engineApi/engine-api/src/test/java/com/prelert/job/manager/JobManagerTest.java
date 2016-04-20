@@ -335,8 +335,11 @@ public class JobManagerTest
             OutOfOrderRecordsException, LicenseViolationException, MalformedJsonException,
             TooManyJobsException
     {
+        AnalysisConfig ac = new AnalysisConfig();
+        ac.setDetectors(Arrays.asList(new Detector()));
+
         when(m_JobProvider.getJobDetails("foo")).thenReturn(
-                Optional.of(new JobDetails("foo", new JobConfiguration())));
+                Optional.of(new JobDetails("foo", new JobConfiguration(ac))));
         givenProcessInfo(2);
         when(m_ProcessManager.jobIsRunning("foo")).thenReturn(false);
         when(m_ProcessManager.numberOfRunningJobs()).thenReturn(2);
@@ -366,9 +369,12 @@ public class JobManagerTest
             OutOfOrderRecordsException, LicenseViolationException, MalformedJsonException,
             TooManyJobsException
     {
+        AnalysisConfig ac = new AnalysisConfig();
+        ac.setDetectors(Arrays.asList(new Detector()));
+
         when(m_JobProvider.getJobDetails("foo")).thenReturn(
-                Optional.of(new JobDetails("foo", new JobConfiguration())));
-        givenProcessInfo(5);
+                Optional.of(new JobDetails("foo", new JobConfiguration(ac))));
+        givenProcessInfo(10001);
         when(m_ProcessManager.jobIsRunning("foo")).thenReturn(false);
         when(m_ProcessManager.numberOfRunningJobs()).thenReturn(10000);
         JobManager jobManager = createJobManager();
@@ -399,9 +405,12 @@ public class JobManagerTest
             TooManyJobsException
     {
         System.setProperty("max.jobs.factor", "5.0");
+
+        AnalysisConfig ac = new AnalysisConfig();
+        ac.setDetectors(Arrays.asList(new Detector()));
         when(m_JobProvider.getJobDetails("foo")).thenReturn(
-                Optional.of(new JobDetails("foo", new JobConfiguration())));
-        givenProcessInfo(5);
+                Optional.of(new JobDetails("foo", new JobConfiguration(ac))));
+        givenProcessInfo(50000);
         when(m_ProcessManager.jobIsRunning("foo")).thenReturn(false);
         when(m_ProcessManager.numberOfRunningJobs()).thenReturn(10000);
         JobManager jobManager = createJobManager();
@@ -425,9 +434,12 @@ public class JobManagerTest
             TooManyJobsException
     {
         System.setProperty("max.jobs.factor", "invalid");
+
+        AnalysisConfig ac = new AnalysisConfig();
+        ac.setDetectors(Arrays.asList(new Detector()));
         when(m_JobProvider.getJobDetails("foo")).thenReturn(
-                Optional.of(new JobDetails("foo", new JobConfiguration())));
-        givenProcessInfo(5);
+                Optional.of(new JobDetails("foo", new JobConfiguration(ac))));
+        givenProcessInfo(50000);
         when(m_ProcessManager.jobIsRunning("foo")).thenReturn(false);
         when(m_ProcessManager.numberOfRunningJobs()).thenReturn(10000);
         JobManager jobManager = createJobManager();
@@ -444,9 +456,39 @@ public class JobManagerTest
     }
 
     @Test
+    public void testSubmitDataLoadJob_GivenMoreDetectorsThanAllowed()
+            throws JsonParseException, UnknownJobException, NativeProcessRunException,
+            MissingFieldException, JobInUseException, HighProportionOfBadTimestampsException,
+            OutOfOrderRecordsException, LicenseViolationException, MalformedJsonException,
+            TooManyJobsException
+    {
+        AnalysisConfig ac = new AnalysisConfig();
+        ac.setDetectors(Arrays.asList(new Detector()));
+        when(m_JobProvider.getJobDetails("foo")).thenReturn(
+                Optional.of(new JobDetails("foo", new JobConfiguration(ac))));
+
+        int maxDetectors = 40;
+        givenProcessInfo(5, maxDetectors);
+        when(m_ProcessManager.jobIsRunning("foo")).thenReturn(false);
+        when(m_ProcessManager.numberOfRunningJobs()).thenReturn(4);
+        when(m_ProcessManager.numberOfRunningDetectors()).thenReturn(40);
+        JobManager jobManager = createJobManager();
+
+        m_ExpectedException.expect(LicenseViolationException.class);
+        m_ExpectedException.expectMessage(
+                Messages.getMessage(Messages.LICENSE_LIMIT_DETECTORS_REACTIVATE, "foo", maxDetectors));
+        m_ExpectedException.expect(
+                ErrorCodeMatcher.hasErrorCode(ErrorCodes.LICENSE_VIOLATION));
+
+        jobManager.submitDataLoadJob("foo", mock(InputStream.class), mock(DataLoadParams.class));
+    }
+
+    @Test
     public void testSubmitDataLoadJob_GivenPausedJob() throws JobException, JsonParseException
     {
-        JobDetails job = new JobDetails("foo", new JobConfiguration());
+        AnalysisConfig ac = new AnalysisConfig();
+        ac.setDetectors(Arrays.asList(new Detector()));
+        JobDetails job = new JobDetails("foo", new JobConfiguration(ac));
         job.setStatus(JobStatus.PAUSED);
 
         InputStream inputStream = mock(InputStream.class);
@@ -472,7 +514,10 @@ public class JobManagerTest
     {
         InputStream inputStream = mock(InputStream.class);
         DataLoadParams params = mock(DataLoadParams.class);
-        JobDetails job = new JobDetails("foo", new JobConfiguration());
+
+        AnalysisConfig ac = new AnalysisConfig();
+        ac.setDetectors(Arrays.asList(new Detector()));
+        JobDetails job = new JobDetails("foo", new JobConfiguration(ac));
         when(m_JobProvider.getJobDetails("foo")).thenReturn(Optional.of(job));
         givenProcessInfo(5);
         when(m_ProcessManager.jobIsRunning("foo")).thenReturn(false);
@@ -497,7 +542,9 @@ public class JobManagerTest
     {
         InputStream inputStream = mock(InputStream.class);
         DataLoadParams params = mock(DataLoadParams.class);
-        JobDetails job = new JobDetails("foo", new JobConfiguration());
+        AnalysisConfig ac = new AnalysisConfig();
+        ac.setDetectors(Arrays.asList(new Detector()));
+        JobDetails job = new JobDetails("foo", new JobConfiguration(ac));
         job.setIgnoreDowntime(IgnoreDowntime.ONCE);
         when(m_JobProvider.getJobDetails("foo")).thenReturn(Optional.of(job));
         givenProcessInfo(5);
@@ -526,7 +573,9 @@ public class JobManagerTest
     {
         InputStream inputStream = mock(InputStream.class);
         DataLoadParams params = mock(DataLoadParams.class);
-        JobDetails job = new JobDetails("foo", new JobConfiguration());
+        AnalysisConfig ac = new AnalysisConfig();
+        ac.setDetectors(Arrays.asList(new Detector()));
+        JobDetails job = new JobDetails("foo", new JobConfiguration(ac));
         job.setIgnoreDowntime(IgnoreDowntime.ALWAYS);
         when(m_JobProvider.getJobDetails("foo")).thenReturn(Optional.of(job));
         givenProcessInfo(5);
@@ -553,7 +602,9 @@ public class JobManagerTest
     {
         InputStream inputStream = mock(InputStream.class);
         DataLoadParams params = mock(DataLoadParams.class);
-        JobDetails job = new JobDetails("foo", new JobConfiguration());
+        AnalysisConfig ac = new AnalysisConfig();
+        ac.setDetectors(Arrays.asList(new Detector()));
+        JobDetails job = new JobDetails("foo", new JobConfiguration(ac));
         job.setIgnoreDowntime(IgnoreDowntime.ONCE);
         when(m_JobProvider.getJobDetails("foo")).thenReturn(Optional.of(job));
         givenProcessInfo(5);
@@ -1642,12 +1693,19 @@ public class JobManagerTest
         when(m_ProcessManager.getInfo()).thenReturn(info);
     }
 
+    private void givenProcessInfo(int maxLicenseJobs, int maxLicenseDetectors)
+    {
+        String info = String.format("{\"jobs\":\"%d\", \"detectors\":\"%d\"}",
+                    maxLicenseJobs, maxLicenseDetectors);
+        when(m_ProcessManager.getInfo()).thenReturn(info);
+    }
+
     private void givenLicenseConstraints(int maxJobs, int maxDetectors, int maxPartitions)
     {
         String info = String.format("{\"%s\":%d, \"%s\":%d, \"%s\":%d}",
-                                 JobManager.JOBS_LICENSE_CONSTRAINT, maxJobs,
-                                 JobManager.DETECTORS_LICENSE_CONSTRAINT, maxDetectors,
-                                 JobManager.PARTITIONS_LICENSE_CONSTRAINT, maxPartitions);
+                                 BackendInfo.JOBS_LICENSE_CONSTRAINT, maxJobs,
+                                 BackendInfo.DETECTORS_LICENSE_CONSTRAINT, maxDetectors,
+                                 BackendInfo.PARTITIONS_LICENSE_CONSTRAINT, maxPartitions);
         when(m_ProcessManager.getInfo()).thenReturn(info);
     }
 

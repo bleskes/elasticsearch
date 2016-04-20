@@ -39,6 +39,7 @@ public final class Messages
 
     public static final String LICENSE_LIMIT_DETECTORS = "license.limit.detectors";
     public static final String LICENSE_LIMIT_JOBS = "license.limit.jobs";
+    public static final String LICENSE_LIMIT_DETECTORS_REACTIVATE = "license.limit.detectors.reactivate";
     public static final String LICENSE_LIMIT_JOBS_REACTIVATE = "license.limit.jobs.reactivate";
     public static final String LICENSE_LIMIT_PARTITIONS = "license.limit.partitions";
 

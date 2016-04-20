@@ -96,7 +96,7 @@ class JobFactory
         if (m_BackendInfo.isLicenseJobLimitViolated(numberOfRunningJobs))
         {
             String message = Messages.getMessage(Messages.LICENSE_LIMIT_JOBS,
-                    m_BackendInfo.getMaxDetectorsPerJob());
+                    m_BackendInfo.getLicenseJobLimit());
 
             LOGGER.info(message);
             throw new LicenseViolationException(message, ErrorCodes.LICENSE_VIOLATION);
@@ -107,13 +107,13 @@ class JobFactory
     throws LicenseViolationException
     {
         // Negative m_MaxDetectorsPerJob means unlimited
-        if (m_BackendInfo.getMaxDetectorsPerJob() >= 0 &&
+        if (m_BackendInfo.getMaxRunningDetectors() >= 0 &&
             jobConfig.getAnalysisConfig() != null &&
-            jobConfig.getAnalysisConfig().getDetectors().size() > m_BackendInfo.getMaxDetectorsPerJob())
+            jobConfig.getAnalysisConfig().getDetectors().size() > m_BackendInfo.getMaxRunningDetectors())
         {
             String message = Messages.getMessage(
                                 Messages.LICENSE_LIMIT_DETECTORS,
-                                m_BackendInfo.getMaxDetectorsPerJob(),
+                                m_BackendInfo.getMaxRunningDetectors(),
                                 jobConfig.getAnalysisConfig().getDetectors().size());
 
             LOGGER.info(message);

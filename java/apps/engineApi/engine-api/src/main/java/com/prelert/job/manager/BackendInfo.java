@@ -35,6 +35,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.prelert.job.persistence.JobDetailsProvider;
+import com.prelert.settings.PrelertSettings;
 
 class BackendInfo
 {
@@ -47,6 +48,9 @@ class BackendInfo
     public static final String DETECTORS_LICENSE_CONSTRAINT = "detectors";
     public static final String PARTITIONS_LICENSE_CONSTRAINT = "partitions";
 
+    private static final String MAX_JOBS_FACTOR_NAME = "max.jobs.factor";
+    private static final double DEFAULT_MAX_JOBS_FACTOR = 6.0;
+
     /**
      * Field name in which to store the API version in the usage info
      */
@@ -57,7 +61,9 @@ class BackendInfo
      * overridden by constraints in the license key.
      */
     private final int m_LicenceJobLimit;
-    private final int m_MaxDetectorsPerJob;
+    private final int m_MaxRunningDetectors;
+
+    private final int m_MaxJobsAllowedCpuLimited;
 
     /**
      * The constraint on whether partition fields are allowed.
@@ -69,8 +75,10 @@ class BackendInfo
     private BackendInfo(int licenseJobLimit, int maxDetectorsPerJob, boolean arePartitionsAllowed)
     {
         m_LicenceJobLimit = licenseJobLimit;
-        m_MaxDetectorsPerJob = maxDetectorsPerJob;
+        m_MaxRunningDetectors = maxDetectorsPerJob;
         m_ArePartitionsAllowed = arePartitionsAllowed;
+
+        m_MaxJobsAllowedCpuLimited = calculateMaxJobsAllowedCpuLimited();
     }
 
     /**
@@ -156,6 +164,14 @@ class BackendInfo
         return null;
     }
 
+    private int calculateMaxJobsAllowedCpuLimited()
+    {
+        int cores = Runtime.getRuntime().availableProcessors();
+        double factor = PrelertSettings.getSettingOrDefault(MAX_JOBS_FACTOR_NAME,
+                DEFAULT_MAX_JOBS_FACTOR);
+        return (int) Math.ceil(cores * factor);
+    }
+
     /**
      * @return The job limit or -1 when unlimited
      */
@@ -165,11 +181,22 @@ class BackendInfo
     }
 
     /**
-     * @return the max number of detectors per job or -1 when unlimited
+     * @return the max number of running detectors for all jobs
      */
-    public int getMaxDetectorsPerJob()
+    public int getMaxRunningDetectors()
     {
-        return m_MaxDetectorsPerJob;
+        return m_MaxRunningDetectors;
+    }
+
+    /**
+     * The maximum number of jobs allowed as function of the number of CPU cores.
+     * This is different to the licence limit, the limit is based on the machine's
+     * hardware
+     * @return
+     */
+    public int getMaxJobsAllowedCpuLimited()
+    {
+        return m_MaxJobsAllowedCpuLimited;
     }
 
     public boolean arePartitionsAllowed()
@@ -177,8 +204,21 @@ class BackendInfo
         return m_ArePartitionsAllowed;
     }
 
+    public boolean isLicenseDetectorLimitViolated(int numberOfRunningDetectors, int newDetectors)
+    {
+        return m_MaxRunningDetectors >= 0 &&
+                    (numberOfRunningDetectors + newDetectors) >= m_MaxRunningDetectors;
+    }
+
     public boolean isLicenseJobLimitViolated(int numberOfRunningJobs)
     {
         return m_LicenceJobLimit >= 0 && numberOfRunningJobs >= m_LicenceJobLimit;
     }
+
+    public boolean isCpuLimitViolated(int numberOfRunningJobs)
+    {
+        return numberOfRunningJobs >= m_MaxJobsAllowedCpuLimited;
+    }
+
+
 }
