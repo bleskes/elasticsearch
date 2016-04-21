@@ -85,7 +85,7 @@ public class MonitoringBulkResponse extends ActionResponse {
         out.writeOptionalWriteable(error);
     }
 
-    public static class Error implements Writeable<Error>, ToXContent {
+    public static class Error implements Writeable, ToXContent {
 
         private final Throwable cause;
         private final RestStatus status;
