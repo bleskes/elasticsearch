@@ -48,6 +48,7 @@ import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataDescription;
 import com.prelert.job.DataDescription.DataFormat;
 import com.prelert.job.Detector;
+import com.prelert.job.ElasticsearchDataSourceCompatibility;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.JobDetails;
 import com.prelert.job.JobSchedulerStatus;
@@ -220,6 +221,7 @@ public class ScheduledJobTest implements AutoCloseable
 
         SchedulerConfig schedulerConfig = new SchedulerConfig();
         schedulerConfig.setDataSource(DataSource.ELASTICSEARCH);
+        schedulerConfig.setDataSourceCompatibility(ElasticsearchDataSourceCompatibility.V_2_X_X.toString());
         schedulerConfig.setBaseUrl(ES_BASE_URL);
         schedulerConfig.setIndexes(Arrays.asList(INDEX_NAME));
         schedulerConfig.setTypes(Arrays.asList(TYPE_NAME));
