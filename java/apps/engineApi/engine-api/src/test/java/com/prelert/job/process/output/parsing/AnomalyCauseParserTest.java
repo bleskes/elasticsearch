@@ -50,9 +50,11 @@ public class AnomalyCauseParserTest
                 + "\"probability\" : 6.04434E-49,"
                 + "\"byFieldName\" : \"status\","
                 + "\"byFieldValue\" : \"Climb\","
+                + "\"correlatedByFieldValue\" : \"Crash\","
                 + "\"partitionFieldName\" : \"aircrafttype\","
                 + "\"partitionFieldValue\" : \"A321\","
-                + "\"function\" : \"mean\","
+                + "\"function\" : \"low_mean\","
+                + "\"functionDescription\" : \"mean\","
                 + "\"typical\" : [ 442.616 ],"
                 + "\"actual\" : [ 10.0 ],"
                 + "\"influencers\" : {"
@@ -73,12 +75,13 @@ public class AnomalyCauseParserTest
         assertEquals(6.04434E-49, cause.getProbability(), 0.0001);
         assertEquals("status", cause.getByFieldName());
         assertEquals("Climb", cause.getByFieldValue());
+        assertEquals("Crash", cause.getCorrelatedByFieldValue());
         assertEquals("aircrafttype", cause.getPartitionFieldName());
         assertEquals("A321", cause.getPartitionFieldValue());
-        assertEquals("mean", cause.getFunction());
+        assertEquals("low_mean", cause.getFunction());
+        assertEquals("mean", cause.getFunctionDescription());
         assertEquals(442.616, cause.getTypical()[0], 0.001);
         assertEquals(10.0, cause.getActual()[0], 0.0001);
-        assertEquals("mean", cause.getFunction());
         assertEquals("callsign", cause.getOverFieldName());
         assertEquals("HVN600", cause.getOverFieldValue());
 
