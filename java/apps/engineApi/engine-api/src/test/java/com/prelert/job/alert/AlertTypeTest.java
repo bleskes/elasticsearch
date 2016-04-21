@@ -27,7 +27,8 @@
 
 package com.prelert.job.alert;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertSame;
 
 import java.util.EnumSet;
 
@@ -36,16 +37,15 @@ import org.junit.Test;
 public class AlertTypeTest
 {
     @Test
-    public void test_toString()
+    public void testToString()
     {
         assertEquals("bucket", AlertType.BUCKET.toString());
         assertEquals("bucketinfluencer", AlertType.BUCKETINFLUENCER.toString());
         assertEquals("influencer", AlertType.INFLUENCER.toString());
     }
 
-
     @Test
-    public void test_fromString()
+    public void testFromString()
     {
         for (AlertType at : EnumSet.allOf(AlertType.class))
         {
@@ -54,4 +54,9 @@ public class AlertTypeTest
         }
     }
 
+    @Test (expected = IllegalArgumentException.class)
+    public void testFromString_GivenInvalid()
+    {
+        AlertType.fromString("invalid");
+    }
 }
