@@ -180,10 +180,6 @@ public class TransformFactory
             {
                 indexArray[i++] = index;
             }
-//            else
-//            {
-//                logger.error("Field '" + field + "' not indexed");
-//            }
         }
     }
 }
