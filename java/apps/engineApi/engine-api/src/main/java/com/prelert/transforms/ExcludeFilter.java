@@ -36,7 +36,7 @@ import com.prelert.job.transform.Condition;
 /**
  * Abstract base class for exclude filters
  */
-abstract public class ExcludeFilter extends Transform
+public abstract class ExcludeFilter extends Transform
 {
     private final Condition m_Condition;
 
