@@ -83,7 +83,8 @@ public class TransformJobTest implements Closeable {
     /**
      * Creates a new http client call {@linkplain #close()} once finished
      */
-    public TransformJobTest(String baseUrl) {
+    public TransformJobTest(String baseUrl)
+    {
         m_WebServiceClient = new EngineApiClient(baseUrl);
     }
 
@@ -113,7 +114,8 @@ public class TransformJobTest implements Closeable {
         m_WebServiceClient.deleteJob(CONCAT_DATE_JOB);
 
         String jobId = m_WebServiceClient.createJob(JOB_CONFIG);
-        if (jobId == null || jobId.isEmpty()) {
+        if (jobId == null || jobId.isEmpty())
+        {
             LOGGER.error(m_WebServiceClient.getLastError().toJson());
             LOGGER.error("No Job Id returned by create job");
             test(jobId != null);
@@ -122,7 +124,8 @@ public class TransformJobTest implements Closeable {
 
         // get job by location, verify
         SingleDocument<JobDetails> doc = m_WebServiceClient.getJob(jobId);
-        if (doc.isExists() == false) {
+        if (doc.isExists() == false)
+        {
             LOGGER.error("No Job at URL " + jobId);
         }
         JobDetails job = doc.getDocument();
@@ -274,7 +277,8 @@ public class TransformJobTest implements Closeable {
      * @throws IOException
      */
     public boolean checkRecordsHaveConcattedField(String baseUrl, String jobId)
-            throws IOException {
+            throws IOException
+    {
         Pagination<AnomalyRecord> records = m_WebServiceClient
                 .prepareGetRecords(jobId).take(50)
                 .sortField(AnomalyRecord.NORMALIZED_PROBABILITY)
@@ -284,7 +288,8 @@ public class TransformJobTest implements Closeable {
 
         // The concatenated fields are something like i-1f501643DiskReadBytes
         Pattern p = Pattern.compile("i-[a-f0-9]{8}[a-zA-Z]*");
-        for (AnomalyRecord r : records.getDocuments()) {
+        for (AnomalyRecord r : records.getDocuments())
+        {
             Matcher matcher = p.matcher(r.getByFieldValue());
             test(matcher.matches());
         }
@@ -298,8 +303,10 @@ public class TransformJobTest implements Closeable {
      * @param condition
      * @throws IllegalStateException
      */
-    public static void test(boolean condition) throws IllegalStateException {
-        if (condition == false) {
+    public static void test(boolean condition) throws IllegalStateException
+    {
+        if (condition == false)
+        {
             throw new IllegalStateException();
         }
     }
@@ -314,7 +321,8 @@ public class TransformJobTest implements Closeable {
         Logger.getRootLogger().addAppender(console);
 
         String baseUrl = API_BASE_URL;
-        if (args.length > 0) {
+        if (args.length > 0)
+        {
             baseUrl = args[0];
         }
 
@@ -340,7 +348,8 @@ public class TransformJobTest implements Closeable {
                 prelertTestDataHome
                 + "/engine_api_integration_test/transforms/split_date_time.json");
 
-        try (TransformJobTest transformTest = new TransformJobTest(baseUrl)) {
+        try (TransformJobTest transformTest = new TransformJobTest(baseUrl))
+        {
             // first with CSV data
             LOGGER.info("Running CSV tests");
             transformTest.createSplitMetricJob(false);

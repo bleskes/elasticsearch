@@ -469,7 +469,8 @@ public class AlertSubscriptionTest
 
             new Thread(new Runnable() {
                 @Override
-                public void run() {
+                public void run()
+                {
                     int n;
                     byte [] buf = new byte[2048];
                     try

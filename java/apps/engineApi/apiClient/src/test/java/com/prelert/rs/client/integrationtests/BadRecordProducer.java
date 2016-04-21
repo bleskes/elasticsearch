@@ -164,7 +164,8 @@ public class BadRecordProducer implements Runnable
             {
                 m_OutputStream.close();
             }
-            catch (IOException e) {
+            catch (IOException e)
+            {
                 LOGGER.error("Error closing pipedoutputstream", e);
             }
         }

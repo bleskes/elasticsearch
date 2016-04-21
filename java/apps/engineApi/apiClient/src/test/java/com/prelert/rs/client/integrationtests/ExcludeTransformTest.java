@@ -203,7 +203,8 @@ public class ExcludeTransformTest implements Closeable
         Logger.getRootLogger().addAppender(console);
 
         String baseUrl = API_BASE_URL;
-        if (args.length > 0) {
+        if (args.length > 0)
+        {
             baseUrl = args[0];
         }
 

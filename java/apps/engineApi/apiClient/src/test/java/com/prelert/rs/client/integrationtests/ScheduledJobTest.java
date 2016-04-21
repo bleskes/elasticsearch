@@ -67,15 +67,12 @@ public class ScheduledJobTest implements AutoCloseable
      */
     private static final String API_BASE_URL = "http://localhost:8080/engine/v2";
 
-    private static final String START_SCHEDULER_URL_TEMPLATE =
-            API_BASE_URL + "/schedulers/" + TEST_JOB_ID + "/start?end=%s";
+    private static final String START_SCHEDULER_URL_SUFFIX =
+            "/schedulers/" + TEST_JOB_ID + "/start?end=%s";
 
     private static final String INDEX_NAME = "test-data-scheduled-job-test";
     private static final String TYPE_NAME = "record";
     private static final String ES_BASE_URL = "http://localhost:9200/";
-    private static final String ES_INDEX_URL = ES_BASE_URL + INDEX_NAME + "/";
-    private static final String ES_RECORD_INDEX_URL = ES_INDEX_URL + TYPE_NAME + "/";
-    private static final String ES_REFRESH_INDEX_URL = ES_INDEX_URL + "_refresh";
 
     private static final String DATA_INDEX_MAPPINGS = "{"
             + "\"mappings\":{"
@@ -95,9 +92,21 @@ public class ScheduledJobTest implements AutoCloseable
     private final HttpClient m_HttpClient;
     private int m_RecordsCount;
 
-    public ScheduledJobTest()
+    private String m_BaseUrl;
+    private String m_EsBaseUrl;
+    private String m_EsIndexUrl;
+    private String m_EsRecordIndexUrl;
+    private String m_EsRefreshIndexUrl;
+
+    public ScheduledJobTest(String baseUrl, String esBaseUrl)
     {
-        m_EngineApiClient = new EngineApiClient(API_BASE_URL);
+        m_BaseUrl = baseUrl;
+        m_EsBaseUrl = esBaseUrl;
+        m_EsIndexUrl = m_EsBaseUrl + INDEX_NAME + "/";
+        m_EsRecordIndexUrl = m_EsIndexUrl + TYPE_NAME + "/";
+        m_EsRefreshIndexUrl = m_EsIndexUrl + "_refresh";
+
+        m_EngineApiClient = new EngineApiClient(m_BaseUrl);
         m_HttpClient = new HttpClient();
         try
         {
@@ -130,10 +139,10 @@ public class ScheduledJobTest implements AutoCloseable
 
     private void deleteIndex()
     {
-        LOGGER.info("Deleting index: " + ES_INDEX_URL);
+        LOGGER.info("Deleting index: " + m_EsIndexUrl);
         try
         {
-            ContentResponse response = m_HttpClient.newRequest(ES_INDEX_URL)
+            ContentResponse response = m_HttpClient.newRequest(m_EsIndexUrl)
                     .method(HttpMethod.DELETE)
                     .send();
             LOGGER.info(response.getContentAsString());
@@ -165,7 +174,7 @@ public class ScheduledJobTest implements AutoCloseable
     {
         try
         {
-            m_HttpClient.POST(ES_INDEX_URL)
+            m_HttpClient.POST(m_EsIndexUrl)
             .content(new StringContentProvider(DATA_INDEX_MAPPINGS))
             .send();
         }
@@ -180,7 +189,7 @@ public class ScheduledJobTest implements AutoCloseable
     {
         try
         {
-            m_HttpClient.POST(ES_RECORD_INDEX_URL)
+            m_HttpClient.POST(m_EsRecordIndexUrl)
                     .content(new StringContentProvider(jsonDoc))
                     .send();
         }
@@ -196,7 +205,7 @@ public class ScheduledJobTest implements AutoCloseable
         LOGGER.info("Refreshing index...");
         try
         {
-            m_HttpClient.POST(ES_REFRESH_INDEX_URL).send();
+            m_HttpClient.POST(m_EsRefreshIndexUrl).send();
         }
         catch (InterruptedException | TimeoutException | ExecutionException e)
         {
@@ -221,8 +230,8 @@ public class ScheduledJobTest implements AutoCloseable
 
         SchedulerConfig schedulerConfig = new SchedulerConfig();
         schedulerConfig.setDataSource(DataSource.ELASTICSEARCH);
-        schedulerConfig.setDataSourceCompatibility(ElasticsearchDataSourceCompatibility.V_2_X_X.toString());
-        schedulerConfig.setBaseUrl(ES_BASE_URL);
+        schedulerConfig.setDataSourceCompatibility(ElasticsearchDataSourceCompatibility.V_2_X_X.getDescription());
+        schedulerConfig.setBaseUrl(m_EsBaseUrl);
         schedulerConfig.setIndexes(Arrays.asList(INDEX_NAME));
         schedulerConfig.setTypes(Arrays.asList(TYPE_NAME));
 
@@ -248,7 +257,7 @@ public class ScheduledJobTest implements AutoCloseable
     {
         LOGGER.info("Starting scheduler");
 
-        String startSchedulerUri = String.format(START_SCHEDULER_URL_TEMPLATE,
+        String startSchedulerUri = String.format(m_BaseUrl + START_SCHEDULER_URL_SUFFIX,
                 ZonedDateTime.now().toEpochSecond());
         try
         {
@@ -319,6 +328,22 @@ public class ScheduledJobTest implements AutoCloseable
 
     public static void main(String[] args) throws IOException
     {
+        String baseUrl = API_BASE_URL;
+        if (args.length > 0)
+        {
+            baseUrl = args[0];
+        }
+
+        String esBaseUrl = ES_BASE_URL;
+        if (args.length > 1)
+        {
+            esBaseUrl = args[1];
+        }
+        if (!esBaseUrl.endsWith("/"))
+        {
+            esBaseUrl += "/";
+        }
+
         // configure log4j
         ConsoleAppender console = new ConsoleAppender();
         console.setLayout(new PatternLayout("%d [%p|%c|%C{1}] %m%n"));
@@ -326,7 +351,7 @@ public class ScheduledJobTest implements AutoCloseable
         console.activateOptions();
         Logger.getRootLogger().addAppender(console);
 
-        try (ScheduledJobTest test = new ScheduledJobTest())
+        try (ScheduledJobTest test = new ScheduledJobTest(baseUrl, esBaseUrl))
         {
             test.runTest();
         }
