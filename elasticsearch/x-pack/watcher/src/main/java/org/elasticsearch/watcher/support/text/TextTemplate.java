@@ -111,8 +111,8 @@ public class TextTemplate implements ToXContent {
             case FILE:
                 builder.field(Field.FILE.getPreferredName(), template);
                 break;
-            default: // INDEXED
-                assert type == ScriptType.INDEXED : "template type [" + type + "] is not supported";
+            default: // STORED
+                assert type == ScriptType.STORED : "template type [" + type + "] is not supported";
                 builder.field(Field.ID.getPreferredName(), template);
         }
         if (this.params != null) {
@@ -157,7 +157,7 @@ public class TextTemplate implements ToXContent {
                             currentFieldName, token);
                 }
             } else if (ParseFieldMatcher.STRICT.match(currentFieldName, Field.ID)) {
-                type = ScriptType.INDEXED;
+                type = ScriptType.STORED;
                 if (token == XContentParser.Token.VALUE_STRING) {
                     template = parser.text();
                 } else {
@@ -254,7 +254,7 @@ public class TextTemplate implements ToXContent {
         public static class Indexed extends Builder<Indexed> {
 
             public Indexed(String id) {
-                super(id, ScriptType.INDEXED);
+                super(id, ScriptType.STORED);
             }
 
             @Override
