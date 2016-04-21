@@ -75,12 +75,7 @@ public class Influence
     @Override
     public int hashCode()
     {
-        final int prime = 31;
-        int result = 1;
-        result = prime * result + ((m_Field == null) ? 0 : m_Field.hashCode());
-        result = prime * result
-                + ((m_FieldValues == null) ? 0 : m_FieldValues.hashCode());
-        return result;
+        return Objects.hash(m_Field, m_FieldValues);
     }
 
     @Override
