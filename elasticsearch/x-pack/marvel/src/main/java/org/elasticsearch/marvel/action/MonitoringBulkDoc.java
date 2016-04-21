@@ -36,12 +36,24 @@ public class MonitoringBulkDoc extends MonitoringDoc {
         super(monitoringId, monitoringVersion);
     }
 
+    /**
+     * Read from a stream.
+     */
     public MonitoringBulkDoc(StreamInput in) throws IOException {
         super(in);
         index = in.readOptionalString();
         type = in.readOptionalString();
         id = in.readOptionalString();
         source = in.readBytesReference();
+    }
+
+    @Override
+    public void writeTo(StreamOutput out) throws IOException {
+        super.writeTo(out);
+        out.writeOptionalString(index);
+        out.writeOptionalString(type);
+        out.writeOptionalString(id);
+        out.writeBytesReference(source);
     }
 
     public String getIndex() {
@@ -74,19 +86,5 @@ public class MonitoringBulkDoc extends MonitoringDoc {
 
     public void setSource(BytesReference source) {
         this.source = source;
-    }
-
-    @Override
-    public void writeTo(StreamOutput out) throws IOException {
-        super.writeTo(out);
-        out.writeOptionalString(index);
-        out.writeOptionalString(type);
-        out.writeOptionalString(id);
-        out.writeBytesReference(source);
-    }
-
-    @Override
-    public MonitoringBulkDoc readFrom(StreamInput in) throws IOException {
-        return new MonitoringBulkDoc(in);
     }
 }
