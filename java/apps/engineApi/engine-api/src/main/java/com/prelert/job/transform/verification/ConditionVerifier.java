@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -35,8 +35,13 @@ import com.prelert.job.transform.Condition;
 import com.prelert.job.transform.Operator;
 import com.prelert.job.transform.TransformConfigurationException;
 
-public class ConditionVerifier
+public final class ConditionVerifier
 {
+    private ConditionVerifier()
+    {
+        // Hide default constructor
+    }
+
     /**
      * Check that the condition has an operator and the operator
      * operand is valid. In the case of numerical operators this means
