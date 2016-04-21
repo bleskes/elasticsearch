@@ -42,16 +42,16 @@ import com.prelert.job.errorcodes.HasErrorCode;
 @JsonInclude(Include.NON_NULL)
 public class ApiError implements HasErrorCode
 {
-    private ErrorCodes m_ErrorCode;
-    private String m_Message;
-    private String m_Cause;
+    private volatile ErrorCodes m_ErrorCode;
+    private volatile String m_Message;
+    private volatile String m_Cause;
 
     /**
      * Default cons for serialisation (Jackson)
      */
     public ApiError()
     {
-
+        // Default constructor
     }
 
     /**
@@ -169,7 +169,6 @@ public class ApiError implements HasErrorCode
     {
         return this.toJson().hashCode();
     }
-
 
     /**
      * Throwable does not implement toString() so as the method is mainly
