@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -35,8 +35,13 @@ import com.prelert.job.transform.TransformConfig;
 import com.prelert.job.transform.TransformConfigurationException;
 import com.prelert.job.transform.TransformType;
 
-public class TransformConfigVerifier
+public final class TransformConfigVerifier
 {
+    private TransformConfigVerifier()
+    {
+        // Hide default constructor
+    }
+
     /**
      * Checks the transform configuration is valid
      * <ol>
@@ -163,21 +168,15 @@ public class TransformConfigVerifier
 
     private static ArgumentVerifier argumentVerifierForType(TransformType type)
     {
-        ArgumentVerifier av;
         switch (type)
         {
-        case REGEX_EXTRACT:
-            av = new RegexExtractVerifier();
-            break;
-        case REGEX_SPLIT:
-            av = new RegexPatternVerifier();
-            break;
-        default:
-            av = (argument, config) -> {};
-            break;
+            case REGEX_EXTRACT:
+                return new RegexExtractVerifier();
+            case REGEX_SPLIT:
+                return new RegexPatternVerifier();
+            default:
+                return (argument, config) -> {};
         }
-
-        return av;
     }
 
 
