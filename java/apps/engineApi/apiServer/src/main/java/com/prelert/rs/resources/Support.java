@@ -59,8 +59,7 @@ public class Support
     /**
      * The name of this endpoint
      */
-    public static final String SUPPORT = "support";
-
+    public static final String ENDPOINT = "support";
 
     /**
      * Run the support bundle script returning the generated files and logs
