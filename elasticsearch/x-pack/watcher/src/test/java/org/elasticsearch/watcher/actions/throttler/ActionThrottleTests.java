@@ -22,7 +22,6 @@ import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.watcher.actions.Action;
 import org.elasticsearch.watcher.actions.ActionWrapper;
 import org.elasticsearch.watcher.actions.email.EmailAction;
-import org.elasticsearch.watcher.actions.email.service.EmailTemplate;
 import org.elasticsearch.watcher.actions.index.IndexAction;
 import org.elasticsearch.watcher.actions.logging.LoggingAction;
 import org.elasticsearch.watcher.actions.webhook.WebhookAction;
@@ -44,6 +43,7 @@ import org.elasticsearch.watcher.trigger.manual.ManualTriggerEvent;
 import org.elasticsearch.watcher.trigger.schedule.IntervalSchedule;
 import org.elasticsearch.watcher.trigger.schedule.ScheduleTrigger;
 import org.elasticsearch.watcher.trigger.schedule.ScheduleTriggerEvent;
+import org.elasticsearch.xpack.notification.email.EmailTemplate;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
