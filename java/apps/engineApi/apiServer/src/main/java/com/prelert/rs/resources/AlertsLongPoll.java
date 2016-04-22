@@ -123,7 +123,8 @@ public class AlertsLongPoll extends ResourceWithJobManager
                                          normalizedProbabilityThreshold, includeInterim);
 
 
-        checkArgumentsValidForAlertType(anomalyScoreThreshold, alertTriggers);
+        boolean isProbabilityOnly = anomalyScoreThreshold == null;
+        checkArgumentsValidForAlertType(isProbabilityOnly, alertTriggers);
 
         AlertManager alertManager = alertManager();
         alertManager.registerRequest(asyncResponse, jobId, m_UriInfo.getBaseUri(),
@@ -161,15 +162,14 @@ public class AlertsLongPoll extends ResourceWithJobManager
     }
 
     /**
-     * normalizedProbabilityThreshold can't be used with influencers
+     * normalizedProbabilityThreshold can only be used by Buckets
      */
-    private void checkArgumentsValidForAlertType(Double anomalyScoreThreshold,
+    private void checkArgumentsValidForAlertType(boolean isProbabilityOnly,
                                                 AlertTrigger [] alertTriggers)
     throws RestApiException
     {
-        if (anomalyScoreThreshold == null)
+        if (isProbabilityOnly)
         {
-            //
             for (AlertTrigger at : alertTriggers)
             {
                 if (at.getAlertType() != AlertType.BUCKET)
