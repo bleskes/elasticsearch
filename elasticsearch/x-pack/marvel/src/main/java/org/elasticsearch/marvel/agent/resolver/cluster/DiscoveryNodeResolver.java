@@ -30,10 +30,6 @@ public class DiscoveryNodeResolver extends MonitoringIndexNameResolver.Data<Disc
 
     public static final String TYPE = "node";
 
-    public DiscoveryNodeResolver(int version) {
-        super(version);
-    }
-
     @Override
     public String type(DiscoveryNodeMonitoringDoc document) {
         return TYPE;
