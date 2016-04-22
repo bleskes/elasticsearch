@@ -410,6 +410,7 @@ public class HttpClientTests extends ESTestCase {
     private MockWebServer startWebServer() throws IOException {
         try {
             MockWebServer mockWebServer = new MockWebServer();
+            mockWebServer.setProtocolNegotiationEnabled(false);
             mockWebServer.start();
             return mockWebServer;
         } catch (BindException be) {

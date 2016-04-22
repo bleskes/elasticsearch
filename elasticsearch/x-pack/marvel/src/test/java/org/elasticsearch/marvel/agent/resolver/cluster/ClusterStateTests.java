@@ -22,7 +22,7 @@ import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.cluster.node.DiscoveryNodes;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.marvel.MarvelSettings;
+import org.elasticsearch.marvel.MonitoringSettings;
 import org.elasticsearch.marvel.agent.collector.cluster.ClusterStateCollector;
 import org.elasticsearch.marvel.agent.resolver.MonitoringIndexNameResolver;
 import org.elasticsearch.marvel.test.MarvelIntegTestCase;
@@ -55,8 +55,8 @@ public class ClusterStateTests extends MarvelIntegTestCase {
     protected Settings nodeSettings(int nodeOrdinal) {
         return Settings.builder()
                 .put(super.nodeSettings(nodeOrdinal))
-                .put(MarvelSettings.INTERVAL.getKey(), "-1")
-                .put(MarvelSettings.COLLECTORS.getKey(), ClusterStateCollector.NAME)
+                .put(MonitoringSettings.INTERVAL.getKey(), "-1")
+                .put(MonitoringSettings.COLLECTORS.getKey(), ClusterStateCollector.NAME)
                 .put("xpack.monitoring.agent.exporters.default_local.type", "local")
                 .put("node.attr.custom", randomInt)
                 .build();
@@ -119,7 +119,7 @@ public class ClusterStateTests extends MarvelIntegTestCase {
     public void testClusterStateNodes() throws Exception {
         final long nbNodes = internalCluster().size();
 
-        MonitoringIndexNameResolver.Timestamped timestampedResolver = new MockTimestampedIndexNameResolver(ES, TEMPLATE_VERSION);
+        MonitoringIndexNameResolver.Timestamped timestampedResolver = new MockTimestampedIndexNameResolver(ES);
         assertNotNull(timestampedResolver);
 
         String timestampedIndex = timestampedResolver.indexPattern();
@@ -134,13 +134,13 @@ public class ClusterStateTests extends MarvelIntegTestCase {
 
         logger.debug("--> checking that every document contains the expected fields");
         String[] filters = {
-                MonitoringIndexNameResolver.Fields.CLUSTER_UUID.underscore().toString(),
-                MonitoringIndexNameResolver.Fields.TIMESTAMP.underscore().toString(),
-                SOURCE_NODE.underscore().toString(),
-                ClusterStateNodeResolver.Fields.STATE_UUID.underscore().toString(),
-                ClusterStateNodeResolver.Fields.NODE.underscore().toString(),
-                ClusterStateNodeResolver.Fields.NODE.underscore().toString() + "."
-                        + ClusterStateNodeResolver.Fields.ID.underscore().toString(),
+                MonitoringIndexNameResolver.Fields.CLUSTER_UUID,
+                MonitoringIndexNameResolver.Fields.TIMESTAMP,
+                SOURCE_NODE,
+                ClusterStateNodeResolver.Fields.STATE_UUID,
+                ClusterStateNodeResolver.Fields.NODE,
+                ClusterStateNodeResolver.Fields.NODE + "."
+                        + ClusterStateNodeResolver.Fields.ID,
         };
 
         for (SearchHit searchHit : response.getHits().getHits()) {
@@ -155,7 +155,7 @@ public class ClusterStateTests extends MarvelIntegTestCase {
         assertThat(client().prepareSearch().setSize(0)
                 .setIndices(timestampedIndex)
                 .setTypes(ClusterStateNodeResolver.TYPE)
-                .setQuery(QueryBuilders.matchQuery(SOURCE_NODE.underscore().toString() + ".attributes.custom", randomInt))
+                .setQuery(QueryBuilders.matchQuery(SOURCE_NODE + ".attributes.custom", randomInt))
                 .get().getHits().getTotalHits(), greaterThan(0L));
 
         logger.debug("--> cluster state nodes successfully collected");
@@ -164,7 +164,7 @@ public class ClusterStateTests extends MarvelIntegTestCase {
     public void testDiscoveryNodes() throws Exception {
         final long nbNodes = internalCluster().size();
 
-        MonitoringIndexNameResolver.Data dataResolver = new MockDataIndexNameResolver(TEMPLATE_VERSION);
+        MonitoringIndexNameResolver.Data dataResolver = new MockDataIndexNameResolver();
         assertNotNull(dataResolver);
 
         String dataIndex = dataResolver.indexPattern();
@@ -179,18 +179,18 @@ public class ClusterStateTests extends MarvelIntegTestCase {
 
         logger.debug("--> checking that every document contains the expected fields");
         String[] filters = {
-                MonitoringIndexNameResolver.Fields.CLUSTER_UUID.underscore().toString(),
-                MonitoringIndexNameResolver.Fields.TIMESTAMP.underscore().toString(),
-                MonitoringIndexNameResolver.Fields.SOURCE_NODE.underscore().toString(),
-                DiscoveryNodeResolver.Fields.NODE.underscore().toString(),
-                DiscoveryNodeResolver.Fields.NODE.underscore().toString() + "."
-                        + DiscoveryNodeResolver.Fields.ID.underscore().toString(),
-                DiscoveryNodeResolver.Fields.NODE.underscore().toString() + "."
-                        + DiscoveryNodeResolver.Fields.NAME.underscore().toString(),
-                DiscoveryNodeResolver.Fields.NODE.underscore().toString() + "."
-                        + DiscoveryNodeResolver.Fields.ATTRIBUTES.underscore().toString(),
-                DiscoveryNodeResolver.Fields.NODE.underscore().toString() + "."
-                        + DiscoveryNodeResolver.Fields.TRANSPORT_ADDRESS.underscore().toString(),
+                MonitoringIndexNameResolver.Fields.CLUSTER_UUID,
+                MonitoringIndexNameResolver.Fields.TIMESTAMP,
+                MonitoringIndexNameResolver.Fields.SOURCE_NODE,
+                DiscoveryNodeResolver.Fields.NODE,
+                DiscoveryNodeResolver.Fields.NODE + "."
+                        + DiscoveryNodeResolver.Fields.ID,
+                DiscoveryNodeResolver.Fields.NODE + "."
+                        + DiscoveryNodeResolver.Fields.NAME,
+                DiscoveryNodeResolver.Fields.NODE + "."
+                        + DiscoveryNodeResolver.Fields.ATTRIBUTES,
+                DiscoveryNodeResolver.Fields.NODE + "."
+                        + DiscoveryNodeResolver.Fields.TRANSPORT_ADDRESS,
         };
 
         for (SearchHit searchHit : response.getHits().getHits()) {

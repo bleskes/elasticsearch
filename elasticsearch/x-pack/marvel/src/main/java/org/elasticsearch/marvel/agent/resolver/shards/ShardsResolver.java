@@ -21,7 +21,6 @@ import org.elasticsearch.cluster.routing.ShardRouting;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.common.xcontent.XContentBuilderString;
 import org.elasticsearch.marvel.MonitoredSystem;
 import org.elasticsearch.marvel.agent.collector.shards.ShardMonitoringDoc;
 import org.elasticsearch.marvel.agent.resolver.MonitoringIndexNameResolver;
@@ -45,8 +44,8 @@ public class ShardsResolver extends MonitoringIndexNameResolver.Timestamped<Shar
             "shard.index",
     };
 
-    public ShardsResolver(MonitoredSystem id, int version, Settings settings) {
-        super(id, version, settings);
+    public ShardsResolver(MonitoredSystem id, Settings settings) {
+        super(id, settings);
     }
 
     @Override
@@ -72,13 +71,13 @@ public class ShardsResolver extends MonitoringIndexNameResolver.Timestamped<Shar
         if (shardRouting != null) {
             // ShardRouting is rendered inside a startObject() / endObject() but without a name,
             // so we must use XContentBuilder.field(String, ToXContent, ToXContent.Params) here
-            builder.field(Fields.SHARD.underscore().toString(), shardRouting, params);
+            builder.field(Fields.SHARD, shardRouting, params);
         }
     }
 
     static final class Fields {
-        static final XContentBuilderString SHARD = new XContentBuilderString("shard");
-        static final XContentBuilderString STATE_UUID = new XContentBuilderString("state_uuid");
+        static final String SHARD = "shard";
+        static final String STATE_UUID = "state_uuid";
     }
 
     /**

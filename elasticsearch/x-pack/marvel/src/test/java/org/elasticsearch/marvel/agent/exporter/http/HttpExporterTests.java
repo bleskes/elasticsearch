@@ -36,7 +36,7 @@ import org.elasticsearch.common.bytes.BytesArray;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.DummyTransportAddress;
 import org.elasticsearch.common.xcontent.XContentHelper;
-import org.elasticsearch.marvel.MarvelSettings;
+import org.elasticsearch.marvel.MonitoringSettings;
 import org.elasticsearch.marvel.MonitoredSystem;
 import org.elasticsearch.marvel.agent.collector.cluster.ClusterStateMonitoringDoc;
 import org.elasticsearch.marvel.agent.collector.indices.IndexRecoveryMonitoringDoc;
@@ -106,7 +106,7 @@ public class HttpExporterTests extends MarvelIntegTestCase {
         enqueueResponse(200, "{\"errors\": false, \"msg\": \"successful bulk request\"}");
 
         Settings.Builder builder = Settings.builder()
-                .put(MarvelSettings.INTERVAL.getKey(), "-1")
+                .put(MonitoringSettings.INTERVAL.getKey(), "-1")
                 .put("xpack.monitoring.agent.exporters._http.type", "http")
                 .put("xpack.monitoring.agent.exporters._http.host", webServer.getHostName() + ":" + webServer.getPort())
                 .put("xpack.monitoring.agent.exporters._http.connection.keep_alive", false)
@@ -144,7 +144,7 @@ public class HttpExporterTests extends MarvelIntegTestCase {
     public void testDynamicHostChange() {
         // disable exporting to be able to use non valid hosts
         Settings.Builder builder = Settings.builder()
-                .put(MarvelSettings.INTERVAL.getKey(), "-1")
+                .put(MonitoringSettings.INTERVAL.getKey(), "-1")
                 .put("xpack.monitoring.agent.exporters._http.type", "http")
                 .put("xpack.monitoring.agent.exporters._http.host", "test0");
 
@@ -168,7 +168,7 @@ public class HttpExporterTests extends MarvelIntegTestCase {
     public void testHostChangeReChecksTemplate() throws Exception {
 
         Settings.Builder builder = Settings.builder()
-                .put(MarvelSettings.INTERVAL.getKey(), "-1")
+                .put(MonitoringSettings.INTERVAL.getKey(), "-1")
                 .put("xpack.monitoring.agent.exporters._http.type", "http")
                 .put("xpack.monitoring.agent.exporters._http.host", webServer.getHostName() + ":" + webServer.getPort())
                 .put("xpack.monitoring.agent.exporters._http.connection.keep_alive", false)
@@ -285,7 +285,7 @@ public class HttpExporterTests extends MarvelIntegTestCase {
 
     public void testUnsupportedClusterVersion() throws Exception {
         Settings.Builder builder = Settings.builder()
-                .put(MarvelSettings.INTERVAL.getKey(), "-1")
+                .put(MonitoringSettings.INTERVAL.getKey(), "-1")
                 .put("xpack.monitoring.agent.exporters._http.type", "http")
                 .put("xpack.monitoring.agent.exporters._http.host", webServer.getHostName() + ":" + webServer.getPort())
                 .put("xpack.monitoring.agent.exporters._http.connection.keep_alive", false);
@@ -313,7 +313,7 @@ public class HttpExporterTests extends MarvelIntegTestCase {
 
     public void testDynamicIndexFormatChange() throws Exception {
         Settings.Builder builder = Settings.builder()
-                .put(MarvelSettings.INTERVAL.getKey(), "-1")
+                .put(MonitoringSettings.INTERVAL.getKey(), "-1")
                 .put("xpack.monitoring.agent.exporters._http.type", "http")
                 .put("xpack.monitoring.agent.exporters._http.host", webServer.getHostName() + ":" + webServer.getPort())
                 .put("xpack.monitoring.agent.exporters._http.connection.keep_alive", false)
@@ -413,7 +413,7 @@ public class HttpExporterTests extends MarvelIntegTestCase {
         final String host = webServer.getHostName() + ":" + webServer.getPort();
 
         Settings.Builder builder = Settings.builder()
-                .put(MarvelSettings.INTERVAL.getKey(), "-1")
+                .put(MonitoringSettings.INTERVAL.getKey(), "-1")
                 .put("xpack.monitoring.agent.exporters._http.type", "http")
                 .put("xpack.monitoring.agent.exporters._http.host", host)
                 .put("xpack.monitoring.agent.exporters._http.connection.keep_alive", false);

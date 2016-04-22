@@ -43,7 +43,7 @@ import org.elasticsearch.index.mapper.MapperService;
 import org.elasticsearch.index.query.ParsedQuery;
 import org.elasticsearch.index.query.QueryShardContext;
 import org.elasticsearch.index.shard.ShardId;
-import org.elasticsearch.shield.license.ShieldLicenseState;
+import org.elasticsearch.shield.SecurityLicenseState;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.test.IndexSettingsModule;
 
@@ -83,7 +83,7 @@ public class ShieldIndexSearcherWrapperIntegrationTests extends ESTestCase {
 
             }
         });
-        ShieldLicenseState licenseState = mock(ShieldLicenseState.class);
+        SecurityLicenseState licenseState = mock(SecurityLicenseState.class);
         when(licenseState.documentAndFieldLevelSecurityEnabled()).thenReturn(true);
         ShieldIndexSearcherWrapper wrapper = new ShieldIndexSearcherWrapper(indexSettings, queryShardContext, mapperService,
                 bitsetFilterCache, threadContext, licenseState) {

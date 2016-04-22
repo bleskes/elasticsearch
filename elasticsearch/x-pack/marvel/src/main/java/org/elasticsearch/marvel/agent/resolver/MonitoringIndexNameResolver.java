@@ -25,7 +25,6 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.settings.SettingsException;
 import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.common.xcontent.XContentBuilderString;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.marvel.MonitoredSystem;
 import org.elasticsearch.marvel.agent.exporter.MarvelTemplateUtils;
@@ -47,12 +46,6 @@ public abstract class MonitoringIndexNameResolver<T extends MonitoringDoc> {
 
     public static final String PREFIX = ".monitoring";
     public static final String DELIMITER = "-";
-
-    private final int version;
-
-    protected MonitoringIndexNameResolver(int version) {
-        this.version = version;
-    }
 
     /**
      * Returns the name of the index in which the monitoring document must be indexed.
@@ -124,10 +117,6 @@ public abstract class MonitoringIndexNameResolver<T extends MonitoringDoc> {
      */
     public abstract String template();
 
-    int getVersion() {
-        return version;
-    }
-
     /**
      * @return the filters used when rendering the document.
      * If null or empty, no filtering is applied.
@@ -140,9 +129,9 @@ public abstract class MonitoringIndexNameResolver<T extends MonitoringDoc> {
     protected abstract void buildXContent(T document, XContentBuilder builder, ToXContent.Params params) throws IOException;
 
     public static final class Fields {
-        public static final XContentBuilderString CLUSTER_UUID = new XContentBuilderString("cluster_uuid");
-        public static final XContentBuilderString TIMESTAMP = new XContentBuilderString("timestamp");
-        public static final XContentBuilderString SOURCE_NODE = new XContentBuilderString("source_node");
+        public static final String CLUSTER_UUID = "cluster_uuid";
+        public static final String TIMESTAMP = "timestamp";
+        public static final String SOURCE_NODE = "source_node";
     }
 
     /**
@@ -155,9 +144,8 @@ public abstract class MonitoringIndexNameResolver<T extends MonitoringDoc> {
 
         private final String index;
 
-        public Data(int version) {
-            super(version);
-            this.index = String.join(DELIMITER, PREFIX, DATA, String.valueOf(version));
+        public Data() {
+            this.index = String.join(DELIMITER, PREFIX, DATA, String.valueOf(MarvelTemplateUtils.TEMPLATE_VERSION));
         }
 
         @Override
@@ -172,12 +160,12 @@ public abstract class MonitoringIndexNameResolver<T extends MonitoringDoc> {
 
         @Override
         public String templateName() {
-            return String.format(Locale.ROOT, "%s-%s-%d", PREFIX, DATA, getVersion());
+            return String.format(Locale.ROOT, "%s-%s-%d", PREFIX, DATA, MarvelTemplateUtils.TEMPLATE_VERSION);
         }
 
         @Override
         public String template() {
-            return MarvelTemplateUtils.loadTemplate(DATA, getVersion());
+            return MarvelTemplateUtils.loadTemplate(DATA);
         }
     }
 
@@ -194,10 +182,9 @@ public abstract class MonitoringIndexNameResolver<T extends MonitoringDoc> {
         private final DateTimeFormatter formatter;
         private final String index;
 
-        public Timestamped(MonitoredSystem system, int version, Settings settings) {
-            super(version);
+        public Timestamped(MonitoredSystem system, Settings settings) {
             this.system = system;
-            this.index = String.join(DELIMITER, PREFIX, system.getSystem(), String.valueOf(getVersion()));
+            this.index = String.join(DELIMITER, PREFIX, system.getSystem(), String.valueOf(MarvelTemplateUtils.TEMPLATE_VERSION));
             String format = INDEX_NAME_TIME_FORMAT_SETTING.get(settings);
             try {
                 this.formatter = DateTimeFormat.forPattern(format).withZoneUTC();
@@ -224,12 +211,12 @@ public abstract class MonitoringIndexNameResolver<T extends MonitoringDoc> {
 
         @Override
         public String templateName() {
-            return String.format(Locale.ROOT, "%s-%s-%d", PREFIX, getId(), getVersion());
+            return String.format(Locale.ROOT, "%s-%s-%d", PREFIX, getId(), MarvelTemplateUtils.TEMPLATE_VERSION);
         }
 
         @Override
         public String template() {
-            return MarvelTemplateUtils.loadTemplate(getId(), getVersion());
+            return MarvelTemplateUtils.loadTemplate(getId());
         }
 
         String getId() {

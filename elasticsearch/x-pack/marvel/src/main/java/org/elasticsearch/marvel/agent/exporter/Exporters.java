@@ -25,7 +25,7 @@ import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.settings.ClusterSettings;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.settings.SettingsException;
-import org.elasticsearch.marvel.MarvelSettings;
+import org.elasticsearch.marvel.MonitoringSettings;
 import org.elasticsearch.marvel.agent.exporter.local.LocalExporter;
 import org.elasticsearch.node.Node;
 
@@ -60,7 +60,7 @@ public class Exporters extends AbstractLifecycleComponent<Exporters> implements 
         this.factories = factories;
         this.clusterService = clusterService;
         this.exporters = new AtomicReference<>(emptyMap());
-        clusterSettings.addSettingsUpdateConsumer(MarvelSettings.EXPORTERS_SETTINGS, this::setExportersSetting);
+        clusterSettings.addSettingsUpdateConsumer(MonitoringSettings.EXPORTERS_SETTINGS, this::setExportersSetting);
     }
 
     private void setExportersSetting(Settings exportersSetting) {
@@ -75,7 +75,7 @@ public class Exporters extends AbstractLifecycleComponent<Exporters> implements 
 
     @Override
     protected void doStart() {
-        exporters.set(initExporters(MarvelSettings.EXPORTERS_SETTINGS.get(settings)));
+        exporters.set(initExporters(MonitoringSettings.EXPORTERS_SETTINGS.get(settings)));
     }
 
     @Override
