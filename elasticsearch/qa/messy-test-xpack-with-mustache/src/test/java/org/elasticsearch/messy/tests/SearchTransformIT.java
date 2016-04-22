@@ -402,8 +402,8 @@ public class SearchTransformIT extends ESIntegTestCase {
                 "\"include_lower\":true,\"include_upper\":true}}}]}}}";
 
         PutStoredScriptRequest indexedScriptRequest = client().admin().cluster().preparePutStoredScript()
-                .setId("mustache")
-                .setScriptLang("test-script")
+                .setId("test-script")
+                .setScriptLang("mustache")
                 .setSource(new BytesArray(templateQuery))
                 .request();
         assertThat(client().admin().cluster().putStoredScript(indexedScriptRequest).actionGet().isAcknowledged(), is(true));
@@ -420,7 +420,7 @@ public class SearchTransformIT extends ESIntegTestCase {
                 .prepareSearch()
                 .setSearchType(ExecutableSearchTransform.DEFAULT_SEARCH_TYPE)
                 .setIndices("test-search-index")
-.setTemplate(template)
+                .setTemplate(template)
                 .request();
 
         SearchTransform.Result result = executeSearchTransform(request, ctx);
