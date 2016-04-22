@@ -286,12 +286,7 @@ public class ProcessManager
 
     public List<String> runningJobs()
     {
-        List<String> result = new ArrayList<>();
-        for (String key : m_JobIdToProcessMap.keySet())
-        {
-            result.add(key);
-        }
-        return result;
+        return new ArrayList<>(m_JobIdToProcessMap.keySet());
     }
 
     /**

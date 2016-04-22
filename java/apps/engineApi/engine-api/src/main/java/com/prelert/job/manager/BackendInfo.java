@@ -207,7 +207,7 @@ class BackendInfo
     public boolean isLicenseDetectorLimitViolated(int numberOfRunningDetectors, int newDetectors)
     {
         return m_MaxRunningDetectors >= 0 &&
-                    (numberOfRunningDetectors + newDetectors) >= m_MaxRunningDetectors;
+                    (numberOfRunningDetectors + newDetectors) > m_MaxRunningDetectors;
     }
 
     public boolean isLicenseJobLimitViolated(int numberOfRunningJobs)

@@ -49,7 +49,7 @@ import org.eclipse.jetty.http.HttpMethod;
  */
 public class SupportBundleTest implements Closeable
 {
-    private static final Logger LOGGER = Logger.getLogger(AlertSubscriptionTest.class);
+    private static final Logger LOGGER = Logger.getLogger(SupportBundleTest.class);
 
     /**
      * The default base Url used in the test

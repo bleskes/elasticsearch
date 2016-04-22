@@ -165,11 +165,14 @@ public class ProcessManagerTest
         m_ProcessManager.processDataLoadJob(m_Job, inputStream, createNoPersistNoResetDataLoadParams());
         assertTrue(m_ProcessManager.jobIsRunning(JOB_ID));
         assertEquals(1, m_ProcessManager.numberOfRunningJobs());
+        assertEquals(1, m_ProcessManager.runningJobs().size());
+        assertTrue(m_ProcessManager.runningJobs().contains(m_Job.getId()));
 
         m_ProcessManager.closeJob(JOB_ID);
 
         assertFalse(m_ProcessManager.jobIsRunning(JOB_ID));
         assertEquals(0, m_ProcessManager.numberOfRunningJobs());
+        assertEquals(0, m_ProcessManager.runningJobs().size());
     }
 
     @Test

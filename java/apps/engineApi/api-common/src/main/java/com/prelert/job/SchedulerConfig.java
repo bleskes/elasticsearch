@@ -161,7 +161,7 @@ public class SchedulerConfig implements PasswordStorage
     }
 
     /**
-     * The data source that the sceduler is to pull data from.
+     * The data source that the scheduler is to pull data from.
      * @return The data source.
      */
     public DataSource getDataSource()
@@ -273,11 +273,13 @@ public class SchedulerConfig implements PasswordStorage
      * replaced with an encrypted password as soon as possible after receipt.
      * @return The password, or <code>null</code> if not set.
      */
+    @Override
     public String getPassword()
     {
         return m_Password;
     }
 
+    @Override
     public void setPassword(String password)
     {
         m_Password = password;
@@ -289,11 +291,13 @@ public class SchedulerConfig implements PasswordStorage
      * the password.
      * @return The password, or <code>null</code> if not set.
      */
+    @Override
     public String getEncryptedPassword()
     {
         return m_EncryptedPassword;
     }
 
+    @Override
     public void setEncryptedPassword(String encryptedPassword)
     {
         m_EncryptedPassword = encryptedPassword;

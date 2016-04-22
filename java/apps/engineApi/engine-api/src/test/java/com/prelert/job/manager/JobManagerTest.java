@@ -48,18 +48,22 @@ import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalLong;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.stream.Collectors;
 
 import org.apache.log4j.Logger;
 import org.junit.After;
@@ -151,6 +155,22 @@ public class JobManagerTest
     {
         System.clearProperty("max.jobs.factor");
     }
+
+    @Test
+    public void testFilter()
+
+    {
+        Set<String> running = new HashSet<String>(Arrays.asList("henry", "dim", "dave"));
+        Set<String> diff = new HashSet<String>(Arrays.asList("dave", "tom")).stream()
+                                    .filter((s) -> !running.contains(s))
+                                    .collect(Collectors.toCollection(HashSet::new));
+
+        assertTrue(diff.size() == 1);
+        assertTrue(diff.contains("tom"));
+    }
+
+
+
 
     @Test
     public void testCloseJob_GivenExistingJob() throws UnknownJobException, DataStoreException,
@@ -342,7 +362,7 @@ public class JobManagerTest
                 Optional.of(new JobDetails("foo", new JobConfiguration(ac))));
         givenProcessInfo(2);
         when(m_ProcessManager.jobIsRunning("foo")).thenReturn(false);
-        when(m_ProcessManager.numberOfRunningJobs()).thenReturn(2);
+        when(m_ProcessManager.runningJobs()).thenReturn(Arrays.asList("bar", "bah"));
         JobManager jobManager = createJobManager();
 
         String expectedError = "Cannot reactivate job with id 'foo' - your license "
@@ -376,7 +396,7 @@ public class JobManagerTest
                 Optional.of(new JobDetails("foo", new JobConfiguration(ac))));
         givenProcessInfo(10001);
         when(m_ProcessManager.jobIsRunning("foo")).thenReturn(false);
-        when(m_ProcessManager.numberOfRunningJobs()).thenReturn(10000);
+        when(m_ProcessManager.runningJobs()).thenReturn(createJobIds(10000));
         JobManager jobManager = createJobManager();
 
         String expectedError = "Cannot start job with id 'foo'. " +
@@ -412,7 +432,7 @@ public class JobManagerTest
                 Optional.of(new JobDetails("foo", new JobConfiguration(ac))));
         givenProcessInfo(50000);
         when(m_ProcessManager.jobIsRunning("foo")).thenReturn(false);
-        when(m_ProcessManager.numberOfRunningJobs()).thenReturn(10000);
+        when(m_ProcessManager.runningJobs()).thenReturn(createJobIds(10000));
         JobManager jobManager = createJobManager();
 
         m_ExpectedException.expect(TooManyJobsException.class);
@@ -441,7 +461,7 @@ public class JobManagerTest
                 Optional.of(new JobDetails("foo", new JobConfiguration(ac))));
         givenProcessInfo(50000);
         when(m_ProcessManager.jobIsRunning("foo")).thenReturn(false);
-        when(m_ProcessManager.numberOfRunningJobs()).thenReturn(10000);
+        when(m_ProcessManager.runningJobs()).thenReturn(createJobIds(10000));
         JobManager jobManager = createJobManager();
 
         m_ExpectedException.expect(TooManyJobsException.class);
@@ -470,7 +490,7 @@ public class JobManagerTest
         int maxDetectors = 40;
         givenProcessInfo(5, maxDetectors);
         when(m_ProcessManager.jobIsRunning("foo")).thenReturn(false);
-        when(m_ProcessManager.numberOfRunningJobs()).thenReturn(4);
+        when(m_ProcessManager.runningJobs()).thenReturn(createJobIds(4));
         when(m_ProcessManager.numberOfRunningDetectors()).thenReturn(40);
         JobManager jobManager = createJobManager();
 
@@ -521,7 +541,7 @@ public class JobManagerTest
         when(m_JobProvider.getJobDetails("foo")).thenReturn(Optional.of(job));
         givenProcessInfo(5);
         when(m_ProcessManager.jobIsRunning("foo")).thenReturn(false);
-        when(m_ProcessManager.numberOfRunningJobs()).thenReturn(0);
+        when(m_ProcessManager.runningJobs()).thenReturn(createJobIds(0));
         when(m_ProcessManager.processDataLoadJob(job, inputStream, params)).thenReturn(new DataCounts());
         JobManager jobManager = createJobManager();
 
@@ -549,7 +569,7 @@ public class JobManagerTest
         when(m_JobProvider.getJobDetails("foo")).thenReturn(Optional.of(job));
         givenProcessInfo(5);
         when(m_ProcessManager.jobIsRunning("foo")).thenReturn(false);
-        when(m_ProcessManager.numberOfRunningJobs()).thenReturn(0);
+        when(m_ProcessManager.runningJobs()).thenReturn(createJobIds(0));
         DataCounts counts = new DataCounts();
         counts.setProcessedRecordCount(1L);
         when(m_ProcessManager.processDataLoadJob(job, inputStream, params)).thenReturn(counts);
@@ -580,7 +600,7 @@ public class JobManagerTest
         when(m_JobProvider.getJobDetails("foo")).thenReturn(Optional.of(job));
         givenProcessInfo(5);
         when(m_ProcessManager.jobIsRunning("foo")).thenReturn(false);
-        when(m_ProcessManager.numberOfRunningJobs()).thenReturn(0);
+        when(m_ProcessManager.runningJobs()).thenReturn(createJobIds(0));
         DataCounts counts = new DataCounts();
         counts.setProcessedRecordCount(1L);
         when(m_ProcessManager.processDataLoadJob(job, inputStream, params)).thenReturn(counts);
@@ -609,7 +629,7 @@ public class JobManagerTest
         when(m_JobProvider.getJobDetails("foo")).thenReturn(Optional.of(job));
         givenProcessInfo(5);
         when(m_ProcessManager.jobIsRunning("foo")).thenReturn(false);
-        when(m_ProcessManager.numberOfRunningJobs()).thenReturn(0);
+        when(m_ProcessManager.runningJobs()).thenReturn(createJobIds(0));
         DataCounts counts = new DataCounts();
         counts.setProcessedRecordCount(0L);
         when(m_ProcessManager.processDataLoadJob(job, inputStream, params)).thenReturn(counts);
@@ -759,13 +779,16 @@ public class JobManagerTest
     {
         givenLicenseConstraints(2, 2, 0);
         when(m_ProcessManager.jobIsRunning(any())).thenReturn(false);
-        when(m_ProcessManager.numberOfRunningJobs()).thenReturn(2);
+        when(m_ProcessManager.runningJobs()).thenReturn(createJobIds(2));
 
         JobManager jobManager = createJobManager();
 
         try
         {
-            jobManager.createJob(new JobConfiguration(), false);
+            AnalysisConfig ac = new AnalysisConfig();
+            List<Detector> detectors = Arrays.asList(new Detector());
+            ac.setDetectors(detectors);
+            jobManager.createJob(new JobConfiguration(ac), false);
             fail();
         }
         catch (LicenseViolationException e)
@@ -785,7 +808,7 @@ public class JobManagerTest
     {
         givenLicenseConstraints(2, 2, 0);
         when(m_ProcessManager.jobIsRunning("not-unique")).thenReturn(true);
-        when(m_ProcessManager.numberOfRunningJobs()).thenReturn(2);
+        when(m_ProcessManager.runningJobs()).thenReturn(createJobIds(2));
         Mockito.doThrow(new NativeProcessRunException("mock", ErrorCodes.NATIVE_PROCESS_ERROR)).when(m_ProcessManager).closeJob("not-unique");
 
         AnalysisConfig analysisConfig = new AnalysisConfig();
@@ -829,7 +852,7 @@ public class JobManagerTest
     {
         givenLicenseConstraints(5, 1, 0);
         when(m_ProcessManager.jobIsRunning(any())).thenReturn(false);
-        when(m_ProcessManager.numberOfRunningJobs()).thenReturn(3);
+        when(m_ProcessManager.runningJobs()).thenReturn(createJobIds(3));
 
         JobManager jobManager = createJobManager();
 
@@ -859,7 +882,7 @@ public class JobManagerTest
     {
         givenLicenseConstraints(5, -1, 0);
         when(m_ProcessManager.jobIsRunning(any())).thenReturn(false);
-        when(m_ProcessManager.numberOfRunningJobs()).thenReturn(3);
+        when(m_ProcessManager.runningJobs()).thenReturn(createJobIds(3));
 
         JobManager jobManager = createJobManager();
 
@@ -1024,7 +1047,7 @@ public class JobManagerTest
         when(m_JobProvider.getJobDetails("foo")).thenReturn(
                 Optional.of(new JobDetails("foo", new JobConfiguration(new AnalysisConfig()))));
 
-        when(m_ProcessManager.numberOfRunningJobs()).thenReturn(3);
+        when(m_ProcessManager.runningJobs()).thenReturn(createJobIds(3));
         when(m_ProcessManager.writeToJob(eq(false), any(CsvRecordWriter.class), any(), any(), any(), any(), any(), any(), any(), any()))
                     .thenAnswer(writeToWriter());
 
@@ -1109,7 +1132,7 @@ public class JobManagerTest
         givenProcessInfo(5, maxDetectors);
 
         when(m_ProcessManager.jobIsRunning("foo")).thenReturn(false);
-        when(m_ProcessManager.numberOfRunningJobs()).thenReturn(2);
+        when(m_ProcessManager.runningJobs()).thenReturn(createJobIds(2));
         when(m_ProcessManager.numberOfRunningDetectors()).thenReturn(10);
 
         JobManager jobManager = createJobManager();
@@ -1776,6 +1799,16 @@ public class JobManagerTest
                                  BackendInfo.DETECTORS_LICENSE_CONSTRAINT, maxDetectors,
                                  BackendInfo.PARTITIONS_LICENSE_CONSTRAINT, maxPartitions);
         when(m_ProcessManager.getInfo()).thenReturn(info);
+    }
+
+    private List<String> createJobIds(int jobCount)
+    {
+        List<String> jobIds = new ArrayList<>();
+        for (int i=0; i<jobCount; i++)
+        {
+            jobIds.add(Integer.toString(i));
+        }
+        return jobIds;
     }
 
     private JobManager createJobManager()

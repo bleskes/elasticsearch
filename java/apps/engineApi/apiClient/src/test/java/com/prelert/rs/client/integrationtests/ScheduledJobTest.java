@@ -234,6 +234,7 @@ public class ScheduledJobTest implements AutoCloseable
         if (jobId == null || jobId.isEmpty())
         {
             LOGGER.error("No Job Id returned by create job");
+            LOGGER.error(m_EngineApiClient.getLastError().toJson());
             test(jobId != null && jobId.isEmpty() == false);
         }
 

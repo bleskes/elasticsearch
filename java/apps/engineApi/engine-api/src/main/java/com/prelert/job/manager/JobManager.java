@@ -37,14 +37,17 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.Properties;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
 
 import javax.ws.rs.core.Feature;
 import javax.ws.rs.core.FeatureContext;
@@ -161,7 +164,8 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
     private final JobAutoCloser m_JobAutoCloser;
 
     private final JobFactory m_JobFactory;
-    private final BackendInfo m_BackendInfo;
+    private final LicenceChecker m_LicenceChecker;
+
 
     /**
      * A map holding schedulers by jobId.
@@ -203,8 +207,10 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
 
         // This requires the process manager and data storage connection in
         // order to work, but failure is considered non-fatal
-        m_BackendInfo = BackendInfo.fromJson(m_ProcessManager.getInfo(), m_JobProvider, apiVersion());
-        m_JobFactory = new JobFactory(m_BackendInfo);
+        m_LicenceChecker = new LicenceChecker(
+                BackendInfo.fromJson(m_ProcessManager.getInfo(), m_JobProvider, apiVersion()));
+
+        m_JobFactory = new JobFactory();
     }
 
     /**
@@ -283,17 +289,7 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
             DataStoreException, NativeProcessRunException, JobInUseException,
             CannotStopSchedulerException
     {
-        int numberOfRunningJobsForLicenseCheck = m_ProcessManager.numberOfRunningJobs();
-        // Don't count the new job ID as a running job for license checking
-        // purposes.  If the user is trying to overwrite a running job, it's
-        // more intuitive to get a "job in use" exception rather than a "license
-        // violation" exception.
-        if (jobConfig.getId() != null && m_ProcessManager.jobIsRunning(jobConfig.getId()))
-        {
-            --numberOfRunningJobsForLicenseCheck;
-        }
-
-        JobDetails jobDetails = m_JobFactory.create(securePasswords(jobConfig), numberOfRunningJobsForLicenseCheck);
+        JobDetails jobDetails = m_JobFactory.create(securePasswords(jobConfig));
         String jobId = jobDetails.getId();
         if (!m_JobProvider.jobIdIsUnique(jobId))
         {
@@ -318,6 +314,11 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
                         "' occurred whilst overwriting it");
             }
         }
+
+        // Check licence now after any duplicate job conditions have been found
+        // throws
+        m_LicenceChecker.checkLicenceViolationsOnCreate(jobDetails.getAnalysisConfig(),
+                                                    runningAndScheduledJobIds().size());
 
         m_JobProvider.createJob(jobDetails);
         audit(jobId).info(Messages.getMessage(Messages.JOB_AUDIT_CREATED));
@@ -883,7 +884,9 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
         try (ActionTicket actionTicket = m_ActionGuardian.tryAcquiringAction(jobId, Action.WRITING))
         {
             JobDetails jobDetails = getJobOrThrowIfUnknown(jobId);
-            checkLicenceViolations(jobId, jobDetails.getAnalysisConfig().getDetectors().size());
+
+
+            checkLicenceViolationsOnReactivate(jobId, jobDetails.getAnalysisConfig().getDetectors().size());
             if (jobDetails.getStatus().isAnyOf(JobStatus.PAUSING, JobStatus.PAUSED))
             {
                 return new DataCounts();
@@ -951,58 +954,83 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
         return new String(output.toByteArray(), StandardCharsets.UTF_8);
     }
 
-    private void checkLicenceViolations(String jobId, int numDetectors)
-    throws TooManyJobsException, LicenseViolationException
+    private void checkLicenceViolationsOnReactivate(String jobId, int numDetectorsInJob)
+    throws LicenseViolationException, TooManyJobsException
     {
         if (m_ProcessManager.jobIsRunning(jobId))
         {
             return;
         }
-        checkNumberOfJobsAgainstLicenseLimit(jobId);
-        checkNumberOfJobsAgainstHardwareLimit(jobId);
-        checkNumberOfRunningDetectorsAgainstLicenseLimit(jobId, numDetectors);
+
+        Set<String> runningAndScheduledJobIds = runningAndScheduledJobIds();
+        int numberOfRunningDetectors = numberOfRunningDetectors(runningAndScheduledJobIds);
+        m_LicenceChecker.checkLicenceViolationsOnReactivate(jobId,
+                                                            runningAndScheduledJobIds.size(),
+                                                            numDetectorsInJob,
+                                                            numberOfRunningDetectors);
     }
 
-    private void checkNumberOfRunningDetectorsAgainstLicenseLimit(String jobId, int numDetectors)
-    throws LicenseViolationException
+
+    /**
+     * The total number of detectors in jobs with a running process
+     * and scheduled jobs in the STARTED state.
+     *
+     * It's possible for scheduled jobs not to have a running process.
+     *
+     * @param runningAndScheduledJobIds Set of IDs of jobs with running processes
+     * @return
+     */
+    private int numberOfRunningDetectors(Set<String> runningAndScheduledJobIds)
     {
-        if (m_BackendInfo.isLicenseDetectorLimitViolated(
-                                        m_ProcessManager.numberOfRunningDetectors(),
-                                        numDetectors))
-        {
-            String message = Messages.getMessage(Messages.LICENSE_LIMIT_DETECTORS_REACTIVATE,
-                                        jobId, m_BackendInfo.getMaxRunningDetectors());
+        Set<String> scheduledJobsWithoutARunningProcess =
+                    scheduledJobsWithoutARunningProcess(runningAndScheduledJobIds);
 
-            LOGGER.info(message);
-            throw new LicenseViolationException(message, ErrorCodes.LICENSE_VIOLATION);
+        // the detectors in the jobs process manager managing
+        int numDetectors = m_ProcessManager.numberOfRunningDetectors();
+
+        // the detectors in scheduled jobs without running processes
+        for (String jobId : scheduledJobsWithoutARunningProcess)
+        {
+            Optional<JobDetails> details = this.getJob(jobId);
+            if (details.isPresent())
+            {
+                numDetectors += details.get().getAnalysisConfig().getDetectors().size();
+            }
         }
+
+        return numDetectors;
     }
 
-    private void checkNumberOfJobsAgainstHardwareLimit(String jobId) throws TooManyJobsException
+    private Set<String> runningAndScheduledJobIds()
     {
-        if (m_BackendInfo.isCpuLimitViolated(m_ProcessManager.numberOfRunningJobs()))
+        Set<String> scheduledAndRunning = new HashSet<String>(m_ProcessManager.runningJobs());
+        for (JobScheduler scheduler : m_ScheduledJobs.values())
         {
-            String message = Messages.getMessage(Messages.CPU_LIMIT_JOB, jobId);
-
-            LOGGER.info(message);
-            throw new TooManyJobsException(m_ProcessManager.numberOfRunningJobs(),
-                            message, ErrorCodes.TOO_MANY_JOBS_RUNNING_CONCURRENTLY);
+            if (scheduler.isStarted())
+            {
+                scheduledAndRunning.add(scheduler.getJobId());
+            }
         }
+
+        return scheduledAndRunning;
     }
 
-    private void checkNumberOfJobsAgainstLicenseLimit(String jobId)
-            throws LicenseViolationException
+    /**
+     * The job Ids of scheduled jobs that are STARTED but don't
+     * have a running process.
+     *
+     * @param runningAndScheduledJobIds Set of STARTED scheduled jobs and
+     * jobs with running processes
+     * @return
+     */
+    private Set<String> scheduledJobsWithoutARunningProcess(Set<String> runningAndScheduledJobIds)
     {
-        if (m_BackendInfo.isLicenseJobLimitViolated(m_ProcessManager.numberOfRunningJobs()))
-        {
-            String message = Messages.getMessage(Messages.LICENSE_LIMIT_JOBS_REACTIVATE,
-                                        jobId, m_BackendInfo.getLicenseJobLimit());
-
-            LOGGER.info(message);
-            throw new LicenseViolationException(message, ErrorCodes.LICENSE_VIOLATION);
-        }
+        return m_ScheduledJobs.values().stream()
+                                    .filter((s) -> s.isStarted())
+                                    .map((s) -> s.getJobId())
+                                    .filter((id) -> !runningAndScheduledJobIds.contains(id))
+                                    .collect(Collectors.toCollection(HashSet::new));
     }
-
 
     private void tryFinishingJob(String jobId) throws JobInUseException
     {
@@ -1078,7 +1106,8 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
         {
             throw new UnknownJobException(jobId);
         }
-        checkLicenceViolations(jobId, jobDetails.get().getAnalysisConfig().getDetectors().size());
+        checkLicenceViolationsOnReactivate(jobId,
+                                jobDetails.get().getAnalysisConfig().getDetectors().size());
 
         m_JobProvider.updateSchedulerState(jobId,
                 new SchedulerState(startMs, endMs.isPresent() ? endMs.getAsLong() : null));

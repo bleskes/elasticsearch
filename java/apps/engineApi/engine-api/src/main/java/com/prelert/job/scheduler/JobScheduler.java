@@ -498,4 +498,14 @@ public class JobScheduler
     {
         return m_Status == JobSchedulerStatus.STOPPED;
     }
+
+    public boolean isStarted()
+    {
+        return m_Status == JobSchedulerStatus.STARTED;
+    }
+
+    public String getJobId()
+    {
+        return m_JobId;
+    }
 }

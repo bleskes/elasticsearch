@@ -59,10 +59,10 @@ public class BackendInfoTest
         assertEquals(bInfo.getMaxRunningDetectors(), 10);
 
         assertTrue(bInfo.isLicenseJobLimitViolated(6));
-        assertTrue(bInfo.isLicenseDetectorLimitViolated(8, 2));
+        assertTrue(bInfo.isLicenseDetectorLimitViolated(8, 3));
 
         assertFalse(bInfo.isLicenseJobLimitViolated(4));
-        assertFalse(bInfo.isLicenseDetectorLimitViolated(7, 2));
+        assertFalse(bInfo.isLicenseDetectorLimitViolated(8, 2));
     }
 
     @Test
@@ -75,6 +75,7 @@ public class BackendInfoTest
 
         assertFalse(bInfo.isLicenseJobLimitViolated(Integer.MAX_VALUE));
         assertFalse(bInfo.isLicenseDetectorLimitViolated(Integer.MAX_VALUE -1, 1));
+        assertTrue(bInfo.arePartitionsAllowed());
     }
 
     @Test
