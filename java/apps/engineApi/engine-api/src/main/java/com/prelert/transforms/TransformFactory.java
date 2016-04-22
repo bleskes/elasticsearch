@@ -120,14 +120,14 @@ public class TransformFactory
             case DOMAIN_SPLIT:
                 return new HighestRegisteredDomain(readIndicies, writeIndicies, logger);
             case CONCAT:
-                if (transformConfig.getArguments().size() > 0)
+                if (transformConfig.getArguments().isEmpty())
                 {
-                    return new Concat(transformConfig.getArguments().get(0),
-                                        readIndicies, writeIndicies, logger);
+                    return new Concat(readIndicies, writeIndicies, logger);
                 }
                 else
                 {
-                    return new Concat(readIndicies, writeIndicies, logger);
+                    return new Concat(transformConfig.getArguments().get(0),
+                            readIndicies, writeIndicies, logger);
                 }
             case REGEX_EXTRACT:
                 return new RegexExtract(transformConfig.getArguments().get(0), readIndicies,
@@ -180,10 +180,6 @@ public class TransformFactory
             {
                 indexArray[i++] = index;
             }
-//            else
-//            {
-//                logger.error("Field '" + field + "' not indexed");
-//            }
         }
     }
 }

@@ -156,7 +156,7 @@ public abstract class AbstractDataLoad extends ResourceWithJobManager
             checkJobIsNotScheduled(id);
         }
 
-        if (idSet.size() == 0)
+        if (idSet.isEmpty())
         {
             return Response.status(Response.Status.BAD_REQUEST).entity(result).build();
         }

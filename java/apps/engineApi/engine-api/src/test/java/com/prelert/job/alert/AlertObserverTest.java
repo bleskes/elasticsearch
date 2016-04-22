@@ -27,7 +27,10 @@
 
 package com.prelert.job.alert;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -52,9 +55,7 @@ public class AlertObserverTest
         public void fire(Bucket bucket, AlertTrigger trigger)
         {
         }
-
     }
-
 
     @Test
     public void testEvaluate_GivenScoreIsEqualToThreshold()

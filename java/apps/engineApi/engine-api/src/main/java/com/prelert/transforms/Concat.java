@@ -38,7 +38,7 @@ import org.apache.log4j.Logger;
  */
 public class Concat extends Transform
 {
-    private final static String EMPTY_STRING = "";
+    private static final String EMPTY_STRING = "";
 
     private final String m_Delimiter;
 

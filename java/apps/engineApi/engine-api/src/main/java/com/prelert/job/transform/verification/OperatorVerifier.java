@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -32,8 +32,13 @@ import com.prelert.job.transform.Operator;
 import com.prelert.job.transform.TransformConfigurationException;
 import com.prelert.job.transform.UnknownOperatorException;
 
-public class OperatorVerifier
+public final class OperatorVerifier
 {
+    private OperatorVerifier()
+    {
+        // Hide default constructor
+    }
+
     /**
      * Checks that the <code>name</code> string is a string
      * value of an Operator enum

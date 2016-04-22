@@ -108,29 +108,34 @@ public abstract class AlertObserver
                     alert.setBucket(bucket);
                     break;
                 case BUCKET:
-                {
-                    List<AnomalyRecord> records = extractRecordsAboveThreshold(
-                                                at.getNormalisedThreshold(), bucket);
-
-                    if (at.triggersAnomalyThreshold(bucket.getAnomalyScore()))
-                    {
-                        bucket.setRecords(records);
-                        bucket.setRecordCount(records.size());
-                        alert.setBucket(bucket);
-                    }
-                    else
-                    {
-                        alert.setRecords(records);
-                    }
-                }
+                    setTriggeredRecordsOnBucketAlert(at, bucket, alert);
+                    break;
             }
         }
 
         return alert;
     }
 
-    private List<AnomalyRecord> extractRecordsAboveThreshold(Double normalisedThreshold,
-                                                            Bucket bucket)
+    private static void setTriggeredRecordsOnBucketAlert(AlertTrigger trigger, Bucket bucket,
+            Alert alert)
+    {
+        List<AnomalyRecord> records = extractRecordsAboveThreshold(
+                                    trigger.getNormalisedThreshold(), bucket);
+
+        if (trigger.triggersAnomalyThreshold(bucket.getAnomalyScore()))
+        {
+            bucket.setRecords(records);
+            bucket.setRecordCount(records.size());
+            alert.setBucket(bucket);
+        }
+        else
+        {
+            alert.setRecords(records);
+        }
+    }
+
+    private static List<AnomalyRecord> extractRecordsAboveThreshold(Double normalisedThreshold,
+            Bucket bucket)
     {
         List<AnomalyRecord> records = new ArrayList<>();
 
@@ -159,7 +164,6 @@ public abstract class AlertObserver
     {
         return m_JobId;
     }
-
 
     /**
      * Fire the alert with the bucket the alert came from

@@ -61,6 +61,8 @@ public class ElasticsearchBulkDeleter implements JobDataDeleter
 {
     private static final Logger LOGGER = Logger.getLogger(ElasticsearchBulkDeleter.class);
 
+    private static int SCROLL_SIZE = 1000;
+
     private final Client m_Client;
     private final ElasticsearchJobId m_JobId;
     private final BulkRequestBuilder m_BulkRequestBuilder;
@@ -117,7 +119,6 @@ public class ElasticsearchBulkDeleter implements JobDataDeleter
         QueryBuilder query = QueryBuilders.termQuery(ElasticsearchMappings.ES_TIMESTAMP,
                 bucket.getTimestamp().getTime());
 
-        int chunkSize = 1000;
         int done = 0;
         boolean finished = false;
         while (finished == false)
@@ -127,7 +128,7 @@ public class ElasticsearchBulkDeleter implements JobDataDeleter
                     .setTypes(type)
                     .setQuery(query)
                     .addSort(SortBuilders.fieldSort(ElasticsearchMappings.ES_DOC))
-                    .setSize(chunkSize)
+                    .setSize(SCROLL_SIZE)
                     .setFrom(done)
                     .execute().actionGet();
 
@@ -235,7 +236,7 @@ public class ElasticsearchBulkDeleter implements JobDataDeleter
                 .setQuery(qb)
                 .addSort(SortBuilders.fieldSort(ElasticsearchMappings.ES_DOC))
                 .setScroll("5m")
-                .setSize(1000)
+                .setSize(SCROLL_SIZE)
                 .get();
 
         String scrollId = searchResponse.getScrollId();
