@@ -50,13 +50,6 @@ public class SoakTest
 	
 	public static final String DEFAULT_CHARSET = "UTF-8";
 	
-	/**
-	 * The default base Url used in the test
-	 */
-	public static final String API_BASE_URL = "http://localhost:8080/engine/v2/";
-	
-		
-	
 	public static void main(String[] args) 
 	throws FileNotFoundException, IOException
 	{		
@@ -70,7 +63,7 @@ public class SoakTest
 		
 		if (args.length == 0)
 		{
-			LOGGER.error("This program has one argument the path to the properties file " 
+			LOGGER.error("This program has one argument: the path to the properties file " 
 					+ "containing the settings");
 			return;
 		}

@@ -124,7 +124,7 @@ public class ElasticsearchDataExtractor implements DataExtractor
 
         if (m_IsFirstSearch)
         {
-            m_QueryBuilder.logQueryInfo(m_Logger);;
+            m_QueryBuilder.logQueryInfo(m_Logger);
             m_IsFirstSearch = false;
         }
 
@@ -334,7 +334,7 @@ public class ElasticsearchDataExtractor implements DataExtractor
         StringBuilder urlBuilder = buildUrlWithIndicesAndTypes();
         // With aggregations we don't want any hits returned for the raw data,
         // just the aggregations
-        int size = (m_QueryBuilder.isAggregated()) ? 0 : m_ScrollSize;
+        int size = m_QueryBuilder.isAggregated() ? 0 : m_ScrollSize;
         urlBuilder.append(String.format(SEARCH_SCROLL_END_POINT, size));
         return urlBuilder.toString();
     }

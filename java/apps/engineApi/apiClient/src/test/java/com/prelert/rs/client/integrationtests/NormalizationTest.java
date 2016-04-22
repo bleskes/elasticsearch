@@ -77,6 +77,7 @@ public class NormalizationTest implements Closeable
      * The default base Url used in the test
      */
     public static final String API_BASE_URL = "http://localhost:8080/engine/v2";
+    public static final String ES_BASE_URL = "http://localhost:9200/";
 
     private final EngineApiClient m_WebServiceClient;
     private final String m_BaseUrl;
@@ -407,10 +408,10 @@ public class NormalizationTest implements Closeable
         return true;
     }
 
-    public boolean verifyNormalizedScoresAreEqualToInitialScores(String jobId) throws IOException
+    public boolean verifyNormalizedScoresAreEqualToInitialScores(String jobId, String esBaseUrl) throws IOException
     {
         try (ElasticsearchDirectClient directClient = new ElasticsearchDirectClient(
-                "http://localhost:9200/" + "prelertresults-" + jobId + "/"))
+                esBaseUrl + "prelertresults-" + jobId + "/"))
         {
             Pagination<Bucket> allBuckets = m_WebServiceClient.prepareGetBuckets(jobId)
                     .take(1500L).expand(true).get();
@@ -487,6 +488,16 @@ public class NormalizationTest implements Closeable
             baseUrl = args[0];
         }
 
+        String esBaseUrl = ES_BASE_URL;
+        if (args.length > 1)
+        {
+            esBaseUrl = args[1];
+        }
+        if (!esBaseUrl.endsWith("/"))
+        {
+            esBaseUrl += "/";
+        }
+
         LOGGER.info("Testing Service at " + baseUrl);
 
         final String prelertTestDataHome = System.getProperty("prelert.test.data.home");
@@ -520,7 +531,7 @@ public class NormalizationTest implements Closeable
             test.m_WebServiceClient.fileUpload(TEST_FAREQUOTE_NO_RENORMALIZATION, fareQuoteData, false);
             test.m_WebServiceClient.closeJob(TEST_FAREQUOTE_NO_RENORMALIZATION);
 
-            test.verifyNormalizedScoresAreEqualToInitialScores(TEST_FAREQUOTE_NO_RENORMALIZATION);
+            test.verifyNormalizedScoresAreEqualToInitialScores(TEST_FAREQUOTE_NO_RENORMALIZATION, esBaseUrl);
 
             //==========================
             // Clean up test jobs
