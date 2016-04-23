@@ -86,8 +86,8 @@ public class Detector
      * Population variance is called varp to match Splunk
      */
     public static final String POPULATION_VARIANCE = "varp";
-    public static final String LOW_POPULATION_VARIANCE = "varp";
-    public static final String HIGH_POPULATION_VARIANCE = "varp";
+    public static final String LOW_POPULATION_VARIANCE = "low_varp";
+    public static final String HIGH_POPULATION_VARIANCE = "high_varp";
     public static final String TIME_OF_DAY = "time_of_day";
     public static final String TIME_OF_WEEK = "time_of_week";
     public static final String LAT_LONG = "lat_long";
@@ -216,18 +216,22 @@ public class Detector
      * The set of functions that must not be used with overlapping buckets
      */
     public static final Set<String> NO_OVERLAPPING_BUCKETS_FUNCTIONS =
-            new HashSet<String>(Arrays.<String>asList(new String [] {
-                    RARE, FREQ_RARE
-            }));
+            new HashSet<>(Arrays.asList(
+                    RARE,
+                    FREQ_RARE
+            ));
 
     /**
      * The set of functions that should not be used with overlapping buckets
      * as they gain no benefit but have overhead
      */
     public static final Set<String> OVERLAPPING_BUCKETS_FUNCTIONS_NOT_NEEDED =
-            new HashSet<String>(Arrays.<String>asList(new String [] {
-                    MIN, MAX, TIME_OF_DAY, TIME_OF_WEEK
-            }));
+            new HashSet<>(Arrays.asList(
+                    MIN,
+                    MAX,
+                    TIME_OF_DAY,
+                    TIME_OF_WEEK
+            ));
 
     /**
      * field names cannot contain any of these characters
