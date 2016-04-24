@@ -155,6 +155,10 @@ class SimpleJsonRecordReader extends AbstractJsonRecordReader
                     record[index] = parseSingleFieldValue(token);
                     gotFields[index] = true;
                 }
+                else
+                {
+                    skipSingleFieldValue(token);
+                }
             }
         }
     }
@@ -189,6 +193,30 @@ class SimpleJsonRecordReader extends AbstractJsonRecordReader
         }
 
         return tokenToString(token);
+    }
+
+    private void skipSingleFieldValue(JsonToken token)
+            throws IOException, MalformedJsonException
+    {
+        // Scalar values don't need any extra skip code
+        if (token == JsonToken.START_ARRAY)
+        {
+            // Consume the whole array but do nothing with it
+            int arrayDepth = 1;
+            do
+            {
+                token = tryNextTokenOrReadToEndOnError();
+                if (token == JsonToken.END_ARRAY)
+                {
+                    --arrayDepth;
+                }
+                else if (token == JsonToken.START_ARRAY)
+                {
+                    ++arrayDepth;
+                }
+            }
+            while (token != null && arrayDepth > 0);
+        }
     }
 
     /**

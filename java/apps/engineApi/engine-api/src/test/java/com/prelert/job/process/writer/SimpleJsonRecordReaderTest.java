@@ -119,11 +119,11 @@ public class SimpleJsonRecordReaderTest
     @Test
     public void testRead_GivenMultiValueArrays() throws JsonParseException, IOException, MalformedJsonException
     {
-        String data = "{\"a\":[10, 11], \"b\":20, \"c\":{\"d\":30, \"e\":[40, 50]}}";
+        String data = "{\"a\":[10, 11], \"b\":20, \"c\":{\"d\":30, \"e\":[40, 50]}, \"f\":[\"a\", \"a\", \"a\", \"a\"], \"g\":20}";
         JsonParser parser = createParser(data);
         Map<String, Integer> fieldMap = new HashMap<>();
         fieldMap.put("a", 0);
-        fieldMap.put("b", 1);
+        fieldMap.put("g", 1);
         fieldMap.put("c.e", 2);
 
         SimpleJsonRecordReader reader = new SimpleJsonRecordReader(parser, fieldMap, "", mock(Logger.class));
@@ -131,7 +131,7 @@ public class SimpleJsonRecordReaderTest
         String record [] = new String[3];
         boolean gotFields [] = new boolean[3];
 
-        assertEquals(4, reader.read(record, gotFields));
+        assertEquals(6, reader.read(record, gotFields));
         assertEquals("10,11", record[0]);
         assertEquals("20", record[1]);
         assertEquals("40,50", record[2]);
