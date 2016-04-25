@@ -1255,7 +1255,7 @@ public class ElasticsearchJobProvider implements JobProvider
             m_Client.prepareUpdate(esJobId.getIndex(), JobDetails.TYPE, esJobId.getId())
                             .setScript(ElasticsearchScripts.newUpdateDetectorDescription(
                                     detectorIndex, newDescription))
-                            .setRetryOnConflict(3).get();
+                            .setRetryOnConflict(UPDATE_JOB_RETRY_COUNT).get();
         }
         catch (IndexNotFoundException e)
         {
