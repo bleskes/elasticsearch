@@ -426,8 +426,7 @@ public class ElasticsearchJobProvider implements JobProvider
             jobs.add(job);
         }
 
-        QueryPage<JobDetails> page = new QueryPage<JobDetails>(jobs, response.getHits().getTotalHits());
-        return page;
+        return new QueryPage<JobDetails>(jobs, response.getHits().getTotalHits());
     }
 
     /**
