@@ -1097,8 +1097,8 @@ public class ElasticsearchJobProvider implements JobProvider
             String sortField, String snapshotId, String description)
     throws UnknownJobException
     {
-        boolean haveId = (snapshotId != null && !snapshotId.isEmpty());
-        boolean haveDescription = (description != null && !description.isEmpty());
+        boolean haveId = snapshotId != null && !snapshotId.isEmpty();
+        boolean haveDescription = description != null && !description.isEmpty();
         ResultsFilterBuilder fb;
         if (haveId || haveDescription)
         {
