@@ -22,5 +22,6 @@ public interface Auditor
 {
     void info(String message);
     void warning(String message);
+    void activity(String message);
     void error(String message);
 }

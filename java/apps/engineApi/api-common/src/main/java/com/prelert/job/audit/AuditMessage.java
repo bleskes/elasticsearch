@@ -96,6 +96,11 @@ public class AuditMessage
         return new AuditMessage(jobId, message, Level.WARNING);
     }
 
+    public static AuditMessage newActivity(String jobId, String message)
+    {
+        return new AuditMessage(jobId, message, Level.ACTIVITY);
+    }
+
     public static AuditMessage newError(String jobId, String message)
     {
         return new AuditMessage(jobId, message, Level.ERROR);

@@ -76,6 +76,16 @@ public class AuditMessageTest
         assertDateBetweenStartAndNow(error.getTimestamp());
     }
 
+    @Test
+    public void testNewActivity()
+    {
+        AuditMessage error = AuditMessage.newActivity("foo", "some error");
+        assertEquals("foo", error.getJobId());
+        assertEquals("some error", error.getMessage());
+        assertEquals(Level.ACTIVITY, error.getLevel());
+        assertDateBetweenStartAndNow(error.getTimestamp());
+    }
+
     private void assertDateBetweenStartAndNow(Date timestamp)
     {
         long timestampMillis = timestamp.getTime();

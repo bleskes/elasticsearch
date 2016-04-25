@@ -21,6 +21,7 @@ package com.prelert.job.audit;
 public enum Level
 {
     INFO,
+    ACTIVITY,
     WARNING,
     ERROR
 }

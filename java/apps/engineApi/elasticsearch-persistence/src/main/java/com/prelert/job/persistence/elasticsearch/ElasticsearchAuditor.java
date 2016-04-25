@@ -62,6 +62,12 @@ public class ElasticsearchAuditor implements Auditor
     }
 
     @Override
+    public void activity(String message)
+    {
+        persistAuditMessage(AuditMessage.newActivity(m_JobId, message));
+    }
+
+    @Override
     public void warning(String message)
     {
         persistAuditMessage(AuditMessage.newWarning(m_JobId, message));

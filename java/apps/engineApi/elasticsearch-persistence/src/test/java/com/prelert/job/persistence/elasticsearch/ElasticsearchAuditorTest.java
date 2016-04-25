@@ -111,6 +111,21 @@ public class ElasticsearchAuditorTest
     }
 
     @Test
+    public void testActivity()
+    {
+        givenClientPersistsSuccessfully();
+        ElasticsearchAuditor auditor = new ElasticsearchAuditor(m_Client, "someIndex", "foobar");
+
+        auditor.activity("Here is my activity");
+
+        assertEquals("someIndex", m_IndexCaptor.getValue());
+        AuditMessage auditMessage = parseAuditMessage();
+        assertEquals("foobar", auditMessage.getJobId());
+        assertEquals("Here is my activity", auditMessage.getMessage());
+        assertEquals(Level.ACTIVITY, auditMessage.getLevel());
+    }
+
+    @Test
     public void testError_GivenNoSuchIndex()
     {
         when(m_Client.prepareIndex("someIndex", "auditMessage"))

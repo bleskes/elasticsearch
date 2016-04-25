@@ -91,12 +91,12 @@ public class ActivityAudit
             }
 
             Auditor auditor = m_AuditorSupplier.get();
-            auditor.info(buildActivityMessage(jobDetails.size(), numDetectors));
+            auditor.activity(buildActivityMessage(jobDetails.size(), numDetectors));
 
             if (jobDetails.isEmpty() == false)
             {
                 String msg = buildUsageMessage(jobDetails);
-                auditor.info(msg);
+                auditor.activity(msg);
             }
         }
         catch (Throwable e)
