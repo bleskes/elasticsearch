@@ -95,17 +95,16 @@ public class ActivityAudit
 
             if (jobDetails.isEmpty() == false)
             {
-                String msg = buildUsageMessage(jobDetails);
-                auditor.info(msg);
+                auditor.info(buildUsageMessage(jobDetails));
             }
         }
-        catch (Throwable e)
+        catch (Exception e)
         {
             LOGGER.error(e);
         }
         finally
         {
-        scheduleNextAudit();
+            scheduleNextAudit();
         }
     }
 
