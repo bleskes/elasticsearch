@@ -23,6 +23,7 @@ import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.prelert.job.quantiles.Quantiles;
 
 
 /**
@@ -55,6 +56,7 @@ public class ModelSnapshot
     private ModelSizeStats m_ModelSizeStats;
     private Date m_LatestRecordTimeStamp;
     private Date m_LatestResultTimeStamp;
+    private Quantiles m_Quantiles;
 
     public Date getTimestamp()
     {
@@ -116,6 +118,16 @@ public class ModelSnapshot
         m_ModelSizeStats = modelSizeStats;
     }
 
+    public Quantiles getQuantiles()
+    {
+        return m_Quantiles;
+    }
+
+    public void setQuantiles(Quantiles q)
+    {
+        m_Quantiles = q;
+    }
+
     public Date getLatestRecordTimeStamp()
     {
         return m_LatestRecordTimeStamp;
@@ -139,7 +151,7 @@ public class ModelSnapshot
     @Override
     public int hashCode()
     {
-        return Objects.hash(m_Timestamp, m_Description, m_RestorePriority, m_SnapshotId,
+        return Objects.hash(m_Timestamp, m_Description, m_RestorePriority, m_SnapshotId, m_Quantiles,
                 m_SnapshotDocCount, m_ModelSizeStats, m_LatestRecordTimeStamp, m_LatestResultTimeStamp);
     }
 
@@ -167,6 +179,7 @@ public class ModelSnapshot
                 && Objects.equals(this.m_SnapshotId, that.m_SnapshotId)
                 && this.m_SnapshotDocCount == that.m_SnapshotDocCount
                 && Objects.equals(this.m_ModelSizeStats, that.m_ModelSizeStats)
+                && Objects.equals(this.m_Quantiles,  that.m_Quantiles)
                 && Objects.equals(this.m_LatestRecordTimeStamp, that.m_LatestRecordTimeStamp)
                 && Objects.equals(this.m_LatestResultTimeStamp, that.m_LatestResultTimeStamp);
     }

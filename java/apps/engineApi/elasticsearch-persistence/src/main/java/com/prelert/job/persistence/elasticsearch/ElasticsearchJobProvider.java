@@ -1192,9 +1192,16 @@ public class ElasticsearchJobProvider implements JobProvider
         ElasticsearchPersister persister = new ElasticsearchPersister(jobId, m_Client);
         persister.persistModelSnapshot(modelSnapshot);
 
-        if (restoreModelSizeStats && modelSnapshot.getModelSizeStats() != null)
+        if (restoreModelSizeStats)
         {
-            persister.persistModelSizeStats(modelSnapshot.getModelSizeStats());
+            if (modelSnapshot.getModelSizeStats() != null)
+            {
+                persister.persistModelSizeStats(modelSnapshot.getModelSizeStats());
+            }
+            if (modelSnapshot.getQuantiles() != null)
+            {
+                persister.persistQuantiles(modelSnapshot.getQuantiles());
+            }
         }
 
         // Commit so that when the REST API call that triggered the update
