@@ -81,8 +81,6 @@ public class ActivityAudit
     {
         try
         {
-            LOGGER.info("Audit report");
-
             List<JobDetails> jobDetails = m_RunningJobsSupplier.get();
             int numDetectors = 0;
             for (JobDetails jd : jobDetails)
