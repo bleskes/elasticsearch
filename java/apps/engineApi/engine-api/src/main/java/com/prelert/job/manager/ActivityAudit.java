@@ -45,6 +45,7 @@ import com.prelert.job.audit.Auditor;
 public class ActivityAudit
 {
     private static final Logger LOGGER = Logger.getLogger(ActivityAudit.class);
+    private static final int MIN_DELAY_MINUTES = 40;
 
     private final Supplier<Auditor> m_AuditorSupplier;
     private final Supplier<List<JobDetails>> m_RunningJobsSupplier;
@@ -73,7 +74,7 @@ public class ActivityAudit
     public void scheduleNextAudit()
     {
         Random rand = new Random();
-        long delay = 40 + rand.nextInt(40);
+        long delay = MIN_DELAY_MINUTES + rand.nextInt(MIN_DELAY_MINUTES);
         m_ScheduledService.schedule(() -> this.report(), delay, TimeUnit.MINUTES);
     }
 
@@ -95,17 +96,16 @@ public class ActivityAudit
 
             if (jobDetails.isEmpty() == false)
             {
-                String msg = buildUsageMessage(jobDetails);
-                auditor.info(msg);
+                auditor.info(buildUsageMessage(jobDetails));
             }
         }
-        catch (Throwable e)
+        catch (Exception e)
         {
             LOGGER.error(e);
         }
         finally
         {
-        scheduleNextAudit();
+            scheduleNextAudit();
         }
     }
 
