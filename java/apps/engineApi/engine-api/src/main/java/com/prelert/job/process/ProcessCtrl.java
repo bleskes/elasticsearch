@@ -651,7 +651,7 @@ public class ProcessCtrl
         }
         else
         {
-            if (restoreSnapshotId != null && !restoreSnapshotId.isEmpty())
+            if (Strings.isNullOrEmpty(restoreSnapshotId) == false)
             {
                 command.add(RESTORE_SNAPSHOT_ID + restoreSnapshotId);
             }
