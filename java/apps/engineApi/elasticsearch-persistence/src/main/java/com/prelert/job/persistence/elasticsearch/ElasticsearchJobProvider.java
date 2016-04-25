@@ -426,8 +426,7 @@ public class ElasticsearchJobProvider implements JobProvider
             jobs.add(job);
         }
 
-        QueryPage<JobDetails> page = new QueryPage<JobDetails>(jobs, response.getHits().getTotalHits());
-        return page;
+        return new QueryPage<JobDetails>(jobs, response.getHits().getTotalHits());
     }
 
     /**
@@ -1098,8 +1097,8 @@ public class ElasticsearchJobProvider implements JobProvider
             String sortField, String snapshotId, String description)
     throws UnknownJobException
     {
-        boolean haveId = (snapshotId != null && !snapshotId.isEmpty());
-        boolean haveDescription = (description != null && !description.isEmpty());
+        boolean haveId = snapshotId != null && !snapshotId.isEmpty();
+        boolean haveDescription = description != null && !description.isEmpty();
         ResultsFilterBuilder fb;
         if (haveId || haveDescription)
         {
@@ -1256,7 +1255,7 @@ public class ElasticsearchJobProvider implements JobProvider
             m_Client.prepareUpdate(esJobId.getIndex(), JobDetails.TYPE, esJobId.getId())
                             .setScript(ElasticsearchScripts.newUpdateDetectorDescription(
                                     detectorIndex, newDescription))
-                            .setRetryOnConflict(3).get();
+                            .setRetryOnConflict(UPDATE_JOB_RETRY_COUNT).get();
         }
         catch (IndexNotFoundException e)
         {

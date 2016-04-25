@@ -43,6 +43,7 @@ import java.util.Random;
 import org.apache.commons.lang.SystemUtils;
 import org.apache.log4j.Logger;
 
+import com.google.common.base.Strings;
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.AnalysisLimits;
 import com.prelert.job.DataDescription;
@@ -633,19 +634,8 @@ public class ProcessCtrl
         // Limit the number of output records
         command.add(MAX_ANOMALY_RECORDS_ARG);
 
-        String timeField = DataDescription.DEFAULT_TIME_FIELD;
-
-        DataDescription dataDescription = job.getDataDescription();
-        if (dataDescription != null)
-        {
-            if (dataDescription.getTimeField() != null &&
-                    dataDescription.getTimeField().isEmpty() == false)
-            {
-                timeField = dataDescription.getTimeField();
-            }
-        }
         // always set the time field
-        String timeFieldArg = TIME_FIELD_ARG + timeField;
+        String timeFieldArg = TIME_FIELD_ARG + getTimeFieldOrDefault(job);
         command.add(timeFieldArg);
 
         int intervalStagger = calculateStaggeringInterval(job.getId());
@@ -661,7 +651,7 @@ public class ProcessCtrl
         }
         else
         {
-            if (restoreSnapshotId != null && !restoreSnapshotId.isEmpty())
+            if (Strings.isNullOrEmpty(restoreSnapshotId) == false)
             {
                 command.add(RESTORE_SNAPSHOT_ID + restoreSnapshotId);
             }
@@ -687,6 +677,14 @@ public class ProcessCtrl
         }
 
         return command;
+    }
+
+    private static String getTimeFieldOrDefault(JobDetails job)
+    {
+        DataDescription dataDescription = job.getDataDescription();
+        boolean useDefault = dataDescription == null
+                || Strings.isNullOrEmpty(dataDescription.getTimeField());
+        return useDefault ? DataDescription.DEFAULT_TIME_FIELD : dataDescription.getTimeField();
     }
 
     private static <T> void addIfNotNull(T object, String argKey, List<String> command)
