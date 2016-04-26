@@ -222,6 +222,7 @@ public final class ReservedFieldNames
         ModelSnapshot.SNAPSHOT_DOC_COUNT,
         ModelSizeStats.TYPE,
         ModelSnapshot.LATEST_RECORD_TIME,
+        ModelSnapshot.LATEST_RESULT_TIME,
 
         Quantiles.QUANTILE_STATE,
 

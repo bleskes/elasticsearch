@@ -67,6 +67,8 @@ public class ModelSnapshotTest
         modelSnapshot1.setSnapshotId("my_id");
         modelSnapshot1.setSnapshotDocCount(7);
         modelSnapshot1.setModelSizeStats(modelSizeStats);
+        modelSnapshot1.setLatestRecordTimeStamp(new Date(12345678901234L));
+        modelSnapshot1.setLatestResultTimeStamp(new Date(14345678901234L));
 
         ModelSnapshot modelSnapshot2 = new ModelSnapshot();
         modelSnapshot2.setTimestamp(now);
@@ -75,6 +77,8 @@ public class ModelSnapshotTest
         modelSnapshot2.setSnapshotId("my_id");
         modelSnapshot2.setSnapshotDocCount(7);
         modelSnapshot2.setModelSizeStats(modelSizeStats);
+        modelSnapshot2.setLatestRecordTimeStamp(new Date(12345678901234L));
+        modelSnapshot2.setLatestResultTimeStamp(new Date(14345678901234L));
 
         assertTrue(modelSnapshot1.equals(modelSnapshot2));
         assertTrue(modelSnapshot2.equals(modelSnapshot1));

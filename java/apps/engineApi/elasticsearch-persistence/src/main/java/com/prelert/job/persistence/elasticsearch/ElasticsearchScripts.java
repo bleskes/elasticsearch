@@ -42,6 +42,7 @@ public final class ElasticsearchScripts
     private static final String UPDATE_BUCKET_COUNT = "update-bucket-count";
     private static final String UPDATE_USAGE = "update-usage";
     private static final String UPDATE_DETECTOR_DESCRIPTION = "update-detector-description";
+    private static final String UPDATE_SCHEDULER_CONFIG = "update-scheduler-config";
 
     // Script parameters
     private static final String COUNT_PARAM = "count";
@@ -50,6 +51,7 @@ public final class ElasticsearchScripts
     private static final String RECORD_COUNT_PARAM = "recordCount";
     private static final String DETECTOR_INDEX_PARAM = "detectorIndex";
     private static final String NEW_DESCRIPTION_PARAM = "newDescription";
+    private static final String NEW_SCHEDULER_CONFIG_PARAM = "newSchedulerConfig";
 
     private ElasticsearchScripts()
     {
@@ -81,6 +83,14 @@ public final class ElasticsearchScripts
         scriptParams.put(DETECTOR_INDEX_PARAM, detectorIndex);
         scriptParams.put(NEW_DESCRIPTION_PARAM, newDescription);
         return new Script(UPDATE_DETECTOR_DESCRIPTION, ScriptService.ScriptType.FILE,
+                ScriptService.DEFAULT_LANG, scriptParams);
+    }
+
+    public static Script newUpdateSchedulerConfig(Map<String, Object> newSchedulerConfig)
+    {
+        Map<String, Object> scriptParams = new HashMap<>();
+        scriptParams.put(NEW_SCHEDULER_CONFIG_PARAM, newSchedulerConfig);
+        return new Script(UPDATE_SCHEDULER_CONFIG, ScriptService.ScriptType.FILE,
                 ScriptService.DEFAULT_LANG, scriptParams);
     }
 }

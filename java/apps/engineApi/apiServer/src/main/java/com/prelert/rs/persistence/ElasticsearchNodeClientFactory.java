@@ -103,6 +103,6 @@ public class ElasticsearchNodeClientFactory extends ElasticsearchFactory
     @Override
     public JobProvider newJobProvider()
     {
-        return new ElasticsearchJobProvider(m_Node, m_Node.client());
+        return new ElasticsearchJobProvider(m_Node, m_Node.client(), numberOfReplicas());
     }
 }

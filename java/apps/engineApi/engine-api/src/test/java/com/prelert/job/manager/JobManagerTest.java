@@ -32,7 +32,6 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-
 import static org.mockito.AdditionalMatchers.not;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyLong;
@@ -48,6 +47,7 @@ import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -112,6 +112,7 @@ import com.prelert.job.logging.JobLoggerFactory;
 import com.prelert.job.messages.Messages;
 import com.prelert.job.password.PasswordManager;
 import com.prelert.job.persistence.DataStoreException;
+import com.prelert.job.persistence.JobDataDeleterFactory;
 import com.prelert.job.persistence.JobProvider;
 import com.prelert.job.persistence.QueryPage;
 import com.prelert.job.process.autodetect.ProcessManager;
@@ -123,6 +124,7 @@ import com.prelert.job.process.params.InterimResultsParams;
 import com.prelert.job.process.writer.CsvRecordWriter;
 import com.prelert.job.scheduler.CannotStartSchedulerException;
 import com.prelert.job.scheduler.CannotStopSchedulerException;
+import com.prelert.job.scheduler.CannotUpdateSchedulerException;
 import com.prelert.job.status.HighProportionOfBadTimestampsException;
 import com.prelert.job.status.OutOfOrderRecordsException;
 
@@ -140,6 +142,7 @@ public class JobManagerTest
     @Mock private JobLoggerFactory m_JobLoggerFactory;
     @Mock private PasswordManager m_PasswordManager;
     @Mock private Auditor m_Auditor;
+    @Mock private JobDataDeleterFactory m_JobDataDeleter;
 
     @Before
     public void setUp()
@@ -1310,8 +1313,9 @@ public class JobManagerTest
 
         QueryPage<ModelSnapshot> modelSnapshotPage = new QueryPage<>(Arrays.asList(modelSnapshot), 1);
         when(m_JobProvider.modelSnapshots("foo", 0, 1, 0, 0, ModelSnapshot.TIMESTAMP, "", "my description")).thenReturn(modelSnapshotPage);
-
-        ModelSnapshot revertedModelSnapshot = jobManager.revertToSnapshot("foo", 0, "", "my description");
+        Logger jobLogger = mock(Logger.class);
+        when(m_JobLoggerFactory.newLogger("foo")).thenReturn(jobLogger);
+        ModelSnapshot revertedModelSnapshot = jobManager.revertToSnapshot("foo", 0, "", "my description", false);
         assertNotNull(revertedModelSnapshot);
         assertTrue(revertedModelSnapshot.getRestorePriority() > 1);
 
@@ -1333,10 +1337,11 @@ public class JobManagerTest
 
         QueryPage<ModelSnapshot> modelSnapshotPage = new QueryPage<>(null, 0);
         when(m_JobProvider.modelSnapshots("foo", 0, 1, 0, 0, ModelSnapshot.TIMESTAMP, "", "my description")).thenReturn(modelSnapshotPage);
-
+        Logger jobLogger = mock(Logger.class);
+        when(m_JobLoggerFactory.newLogger("foo")).thenReturn(jobLogger);
         try
         {
-            jobManager.revertToSnapshot("foo", 0, "", "my description");
+            jobManager.revertToSnapshot("foo", 0, "", "my description", false);
             fail();
         }
         catch (NoSuchModelSnapshotException e)
@@ -1779,6 +1784,59 @@ public class JobManagerTest
         verify(m_JobProvider).setJobStatus("foo", JobStatus.CLOSED);
     }
 
+    @Test
+    public void testUpdateSchedulerConfig_GivenSchedulerIsRunning() throws JobException
+    {
+        givenProcessInfo(2);
+        JobManager jobManager = createJobManager();
+
+        JobConfiguration jobConfig = createScheduledJobConfig();
+        Logger jobLogger = mock(Logger.class);
+        when(m_JobLoggerFactory.newLogger("foo")).thenReturn(jobLogger);
+        DataExtractor dataExtractor = mock(DataExtractor.class);
+        when(m_DataExtractorFactory.newExtractor(any(JobDetails.class))).thenReturn(dataExtractor);
+
+        JobDetails job = jobManager.createJob(jobConfig, false);
+        DataCounts dataCounts = new DataCounts();
+        dataCounts.setLatestRecordTimeStamp(new Date(0));
+        job.setCounts(dataCounts);
+        when(m_JobProvider.getJobDetails("foo")).thenReturn(Optional.of(job));
+        jobManager.startJobScheduler("foo", 0L, OptionalLong.empty());
+
+        SchedulerConfig newSchedulerConfig = new SchedulerConfig();
+
+        m_ExpectedException.expect(CannotUpdateSchedulerException.class);
+        m_ExpectedException.expectMessage("Cannot update scheduler for job 'foo' while its status is STARTED");
+        m_ExpectedException.expect(ErrorCodeMatcher.hasErrorCode(ErrorCodes.CANNOT_UPDATE_JOB_SCHEDULER));
+        jobManager.updateSchedulerConfig("foo", newSchedulerConfig);
+
+        verify(m_JobProvider).updateSchedulerConfig("foo", newSchedulerConfig);
+        jobManager.stopJobScheduler("foo");
+    }
+
+    @Test
+    public void testUpdateSchedulerConfig_GivenValid() throws JobException, GeneralSecurityException
+    {
+        givenProcessInfo(2);
+        JobManager jobManager = createJobManager();
+
+        JobConfiguration jobConfig = createScheduledJobConfig();
+        Logger jobLogger = mock(Logger.class);
+        when(m_JobLoggerFactory.newLogger("foo")).thenReturn(jobLogger);
+        DataExtractor dataExtractor = mock(DataExtractor.class);
+        when(m_DataExtractorFactory.newExtractor(any(JobDetails.class))).thenReturn(dataExtractor);
+
+        jobManager.createJob(jobConfig, false);
+
+        SchedulerConfig newSchedulerConfig = new SchedulerConfig();
+        newSchedulerConfig.setUsername("bar");
+        newSchedulerConfig.setPassword("1234");
+        jobManager.updateSchedulerConfig("foo", newSchedulerConfig);
+
+        verify(m_PasswordManager).secureStorage(newSchedulerConfig);
+        verify(m_JobProvider).updateSchedulerConfig("foo", newSchedulerConfig);
+    }
+
     private void givenProcessInfo(int maxLicenseJobs)
     {
         String info = String.format("{\"jobs\":\"%d\"}", maxLicenseJobs);
@@ -1814,7 +1872,7 @@ public class JobManagerTest
     private JobManager createJobManager()
     {
         return new JobManager(m_JobProvider, m_ProcessManager, m_DataExtractorFactory,
-                m_JobLoggerFactory, m_PasswordManager);
+                m_JobLoggerFactory, m_PasswordManager, m_JobDataDeleter);
     }
 
     private static Answer<Object> writeToWriter()

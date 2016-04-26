@@ -35,6 +35,7 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import com.prelert.job.ModelSizeStats;
 import com.prelert.job.ModelSnapshot;
+import com.prelert.job.quantiles.Quantiles;
 import com.prelert.utils.json.FieldNameParser;
 
 final class ModelSnapshotParser extends FieldNameParser<ModelSnapshot>
@@ -76,8 +77,14 @@ final class ModelSnapshotParser extends FieldNameParser<ModelSnapshot>
         case ModelSizeStats.TYPE:
             modelSnapshot.setModelSizeStats(new ModelSizeStatsParser(m_Parser).parseJson());
             break;
+        case Quantiles.TYPE:
+            modelSnapshot.setQuantiles(new QuantilesParser(m_Parser).parseJson());
+            break;
         case ModelSnapshot.LATEST_RECORD_TIME:
             modelSnapshot.setLatestRecordTimeStamp(new Date(parseAsLongOrZero(fieldName)));
+            break;
+        case ModelSnapshot.LATEST_RESULT_TIME:
+            modelSnapshot.setLatestResultTimeStamp(new Date(parseAsLongOrZero(fieldName)));
             break;
         default:
             LOGGER.warn(String.format("Parse error unknown field in ModelSnapshot %s:%s",

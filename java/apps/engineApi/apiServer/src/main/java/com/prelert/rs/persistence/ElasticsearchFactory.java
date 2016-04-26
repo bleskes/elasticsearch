@@ -29,6 +29,7 @@ package com.prelert.rs.persistence;
 
 import java.util.Objects;
 
+import org.apache.log4j.Logger;
 import org.elasticsearch.client.Client;
 
 import com.prelert.job.persistence.DataPersisterFactory;
@@ -45,13 +46,21 @@ import com.prelert.job.process.normaliser.BlockingQueueRenormaliser;
 import com.prelert.job.process.output.parsing.ResultsReaderFactory;
 import com.prelert.server.info.ServerInfoFactory;
 import com.prelert.server.info.elasticsearch.ElasticsearchServerInfo;
+import com.prelert.settings.PrelertSettings;
 
 /**
  * A factory for the entire family of Elasticsearch-based classes
  */
 public abstract class ElasticsearchFactory
 {
+    private static final Logger LOGGER = Logger.getLogger(ElasticsearchFactory.class);
+
     protected static final String CLUSTER_NAME_KEY = "cluster.name";
+
+    private static final String ES_INDEX_NUMBER_OF_REPLICAS = "es.index.number_of_replicas";
+    private static final Integer DEFAULT_NUMBER_OF_REPLICAS = 0;
+    private static final int MIN_NUMBER_OF_REPLICAS = 0;
+    private static final int MAX_NUMBER_OF_REPLICAS = 10;
 
     private final Client m_Client;
 
@@ -98,5 +107,25 @@ public abstract class ElasticsearchFactory
     protected Client getClient()
     {
         return m_Client;
+    }
+
+    protected int numberOfReplicas()
+    {
+        int numberOfReplicas = PrelertSettings.getSettingOrDefault(ES_INDEX_NUMBER_OF_REPLICAS, DEFAULT_NUMBER_OF_REPLICAS);
+        if (numberOfReplicas < MIN_NUMBER_OF_REPLICAS)
+        {
+            LOGGER.warn(ES_INDEX_NUMBER_OF_REPLICAS + " setting of " + numberOfReplicas
+                    + " from config is too low - it will be increased to "
+                    + MIN_NUMBER_OF_REPLICAS);
+            numberOfReplicas = MIN_NUMBER_OF_REPLICAS;
+        }
+        else if (numberOfReplicas > MAX_NUMBER_OF_REPLICAS)
+        {
+            LOGGER.warn(ES_INDEX_NUMBER_OF_REPLICAS + " setting of " + numberOfReplicas
+                    + " from config is too high - it will be reduced to "
+                    + MAX_NUMBER_OF_REPLICAS);
+            numberOfReplicas = MAX_NUMBER_OF_REPLICAS;
+        }
+        return numberOfReplicas;
     }
 }

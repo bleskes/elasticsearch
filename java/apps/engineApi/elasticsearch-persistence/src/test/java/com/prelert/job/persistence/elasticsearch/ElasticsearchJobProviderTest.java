@@ -216,7 +216,7 @@ public class ElasticsearchJobProviderTest
 
     private ElasticsearchJobProvider createProvider(Client client)
     {
-        return new ElasticsearchJobProvider(m_Node, client);
+        return new ElasticsearchJobProvider(m_Node, client, 0);
     }
 
     private static GetResponse createGetResponse(boolean exists, Map<String, Object> source)

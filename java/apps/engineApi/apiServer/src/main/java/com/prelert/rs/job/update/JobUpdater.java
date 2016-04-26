@@ -44,7 +44,7 @@ import org.apache.log4j.Logger;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
-import com.prelert.job.UnknownJobException;
+import com.prelert.job.JobException;
 import com.prelert.job.config.verification.JobConfigurationException;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.exceptions.JobInUseException;
@@ -67,6 +67,7 @@ public class JobUpdater
     private static final String RENORMALIZATION_WINDOW_DAYS_KEY = "renormalizationWindowDays";
     private static final String MODEL_SNAPSHOT_RETENTION_DAYS_KEY = "modelSnapshotRetentionDays";
     private static final String RESULTS_RETENTION_DAYS_KEY = "resultsRetentionDays";
+    private static final String SCHEDULER_CONFIG_KEY = "schedulerConfig";
 
     private final JobManager m_JobManager;
     private final String m_JobId;
@@ -93,6 +94,7 @@ public class JobUpdater
                 .put(RENORMALIZATION_WINDOW_DAYS_KEY, () -> new RenormalizationWindowDaysUpdater(m_JobManager, m_JobId))
                 .put(MODEL_SNAPSHOT_RETENTION_DAYS_KEY, () -> new ModelSnapshotRetentionDaysUpdater(m_JobManager, m_JobId))
                 .put(RESULTS_RETENTION_DAYS_KEY, () -> new ResultsRetentionDaysUpdater(m_JobManager, m_JobId))
+                .put(SCHEDULER_CONFIG_KEY, () -> new SchedulerConfigUpdater(m_JobManager, m_JobId))
                 .build();
     }
 
@@ -106,13 +108,10 @@ public class JobUpdater
      *
      * @param updateJson the JSON input that contains the requested updates
      * @return a {@code RESPONSE}
-     * @throws JobConfigurationException If some of the updates are invalid
-     * @throws UnknownJobException If the job does not exist
-     * @throws JobInUseException If the job is unavailable for updating
-     * @throws NativeProcessRunException If an error occurs in job process
+     * @throws JobException If the update fails (e.g. the job does not exist, some of the updates
+     * are invalid, the job is unavailable for updating, etc.)
      */
-    public Response update(String updateJson) throws JobConfigurationException, UnknownJobException,
-            JobInUseException, NativeProcessRunException
+    public Response update(String updateJson) throws JobException
     {
         JsonNode node = parse(updateJson);
         if (node.isObject() == false)

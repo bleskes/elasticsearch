@@ -504,6 +504,11 @@ public class JobScheduler
         return m_Status == JobSchedulerStatus.STARTED;
     }
 
+    public JobSchedulerStatus getStatus()
+    {
+        return m_Status;
+    }
+
     public String getJobId()
     {
         return m_JobId;

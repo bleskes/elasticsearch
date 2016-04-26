@@ -51,15 +51,15 @@ import com.prelert.job.AnalysisConfig;
 import com.prelert.job.Detector;
 import com.prelert.job.IgnoreDowntime;
 import com.prelert.job.JobDetails;
+import com.prelert.job.JobException;
 import com.prelert.job.ModelDebugConfig;
-import com.prelert.job.UnknownJobException;
+import com.prelert.job.SchedulerConfig;
+import com.prelert.job.SchedulerConfig.DataSource;
 import com.prelert.job.audit.Auditor;
 import com.prelert.job.config.verification.JobConfigurationException;
 import com.prelert.job.errorcodes.ErrorCodeMatcher;
 import com.prelert.job.errorcodes.ErrorCodes;
-import com.prelert.job.exceptions.JobInUseException;
 import com.prelert.job.manager.JobManager;
-import com.prelert.job.process.exceptions.NativeProcessRunException;
 import com.prelert.rs.provider.JobConfigurationParseException;
 
 public class JobUpdaterTest
@@ -77,8 +77,7 @@ public class JobUpdaterTest
     }
 
     @Test
-    public void testUpdate_GivenEmptyString() throws UnknownJobException,
-            JobConfigurationException, JobInUseException, NativeProcessRunException
+    public void testUpdate_GivenEmptyString() throws JobException
     {
         String update = "";
 
@@ -91,8 +90,7 @@ public class JobUpdaterTest
     }
 
     @Test
-    public void testUpdate_GivenNoObject() throws UnknownJobException,
-            JobConfigurationException, JobInUseException, NativeProcessRunException
+    public void testUpdate_GivenNoObject() throws JobException
     {
         String update = "\"description\":\"foobar\"";
 
@@ -105,8 +103,7 @@ public class JobUpdaterTest
     }
 
     @Test
-    public void testUpdate_GivenInvalidKey() throws UnknownJobException,
-            JobConfigurationException, JobInUseException, NativeProcessRunException
+    public void testUpdate_GivenInvalidKey() throws JobException
     {
         String update = "{\"dimitris\":\"foobar\"}";
 
@@ -119,8 +116,7 @@ public class JobUpdaterTest
     }
 
     @Test
-    public void testUpdate_GivenValidDescriptionUpdate() throws UnknownJobException,
-            JobConfigurationException, JobInUseException, NativeProcessRunException
+    public void testUpdate_GivenValidDescriptionUpdate() throws JobException
     {
         String update = "{\"description\":\"foobar\"}";
 
@@ -133,8 +129,7 @@ public class JobUpdaterTest
     }
 
     @Test
-    public void testUpdate_GivenTwoValidUpdates() throws UnknownJobException,
-            JobConfigurationException, JobInUseException, NativeProcessRunException
+    public void testUpdate_GivenTwoValidUpdates() throws JobException
     {
         String update = "{\"description\":\"foobar\", \"modelDebugConfig\":{\"boundsPercentile\":33.9}}";
 
@@ -148,9 +143,7 @@ public class JobUpdaterTest
     }
 
     @Test
-    public void testUpdate_GivenTwoUpdatesSecondBeingInvalid_ShouldApplyNone()
-            throws UnknownJobException, JobConfigurationException, JobInUseException,
-            NativeProcessRunException
+    public void testUpdate_GivenTwoUpdatesSecondBeingInvalid_ShouldApplyNone() throws JobException
     {
         String update = "{\"description\":\"foobar\", \"modelDebugConfig\":{\"boundsPercentile\":1000.0}}";
 
@@ -168,8 +161,7 @@ public class JobUpdaterTest
     }
 
     @Test
-    public void testUpdate_GivenValidBackgroundPersistIntervalUpdate() throws UnknownJobException,
-            JobConfigurationException, JobInUseException, NativeProcessRunException
+    public void testUpdate_GivenValidBackgroundPersistIntervalUpdate() throws JobException
     {
         String update = "{\"backgroundPersistInterval\": 7200}";
 
@@ -180,8 +172,7 @@ public class JobUpdaterTest
     }
 
     @Test
-    public void testUpdate_GivenValidCustomSettingsUpdate() throws UnknownJobException,
-            JobConfigurationException, JobInUseException, NativeProcessRunException
+    public void testUpdate_GivenValidCustomSettingsUpdate() throws JobException
     {
         String update = "{\"customSettings\": {\"radio\":\"head\"}}";
 
@@ -194,8 +185,7 @@ public class JobUpdaterTest
     }
 
     @Test
-    public void testUpdate_GivenValidIgnoreDowntimeUpdate() throws UnknownJobException,
-            JobConfigurationException, JobInUseException, NativeProcessRunException
+    public void testUpdate_GivenValidIgnoreDowntimeUpdate() throws JobException
     {
         String update = "{\"ignoreDowntime\": \"always\"}";
 
@@ -206,8 +196,7 @@ public class JobUpdaterTest
     }
 
     @Test
-    public void testUpdate_GivenValidRenormalizationWindowDaysUpdate() throws UnknownJobException,
-            JobConfigurationException, JobInUseException, NativeProcessRunException
+    public void testUpdate_GivenValidRenormalizationWindowDaysUpdate() throws JobException
     {
         String update = "{\"renormalizationWindowDays\": 3}";
 
@@ -218,8 +207,7 @@ public class JobUpdaterTest
     }
 
     @Test
-    public void testUpdate_GivenValidModelSnapshotRetentionDaysUpdate() throws UnknownJobException,
-            JobConfigurationException, JobInUseException, NativeProcessRunException
+    public void testUpdate_GivenValidModelSnapshotRetentionDaysUpdate() throws JobException
     {
         String update = "{\"modelSnapshotRetentionDays\": 9}";
 
@@ -230,8 +218,7 @@ public class JobUpdaterTest
     }
 
     @Test
-    public void testUpdate_GivenValidResultsRetentionDaysUpdate() throws UnknownJobException,
-            JobConfigurationException, JobInUseException, NativeProcessRunException
+    public void testUpdate_GivenValidResultsRetentionDaysUpdate() throws JobException
     {
         String update = "{\"resultsRetentionDays\": 3}";
 
@@ -242,8 +229,7 @@ public class JobUpdaterTest
     }
 
     @Test
-    public void testUpdate_GivenValidDetectorDescriptionUpdate() throws JobConfigurationException,
-            UnknownJobException, JobInUseException, NativeProcessRunException
+    public void testUpdate_GivenValidDetectorDescriptionUpdate() throws JobException
     {
         String update = "{\"detectors\": [{\"index\":0,\"description\":\"the A train\"}]}";
 
@@ -260,5 +246,42 @@ public class JobUpdaterTest
         new JobUpdater(m_JobManager, "foo").update(update);
 
         verify(m_JobManager).updateDetectorDescription("foo", 0, "the A train");
+    }
+
+    @Test
+    public void testUpdate_GivenValidSchedulerConfigUpdate() throws JobException
+    {
+        when(m_JobManager.isScheduledJob("foo")).thenReturn(true);
+        JobDetails job = new JobDetails();
+        job.setId("foo");
+        SchedulerConfig schedulerConfig = new SchedulerConfig();
+        schedulerConfig.setDataSource(DataSource.ELASTICSEARCH);
+        job.setSchedulerConfig(schedulerConfig);
+        when(m_JobManager.getJobOrThrowIfUnknown("foo")).thenReturn(job);
+        String update = "{\"schedulerConfig\": {"
+                + "\"dataSource\":\"ELASTICSEARCH\","
+                + "\"dataSourceCompatibility\":\"1.7.x\","
+                + "\"baseUrl\":\"http://localhost:9200\","
+                + "\"indexes\":[\"index1\", \"index2\"],"
+                + "\"types\":[\"type1\", \"type2\"]"
+                + "}}";
+
+        new JobUpdater(m_JobManager, "foo").update(update);
+
+        SchedulerConfig expected = new SchedulerConfig();
+        expected.setDataSource(DataSource.ELASTICSEARCH);
+        expected.setDataSourceCompatibility("1.7.x");
+        expected.setBaseUrl("http://localhost:9200");
+        expected.setIndexes(Arrays.asList("index1", "index2"));
+        expected.setTypes(Arrays.asList("type1", "type2"));
+        Map<String, Object> query = new HashMap<>();
+        Map<String, Object> subQuery = new HashMap<>();
+        query.put("match_all", subQuery);
+        expected.setQuery(query);
+        expected.setQueryDelay(60L);
+        expected.setRetrieveWholeSource(false);
+        expected.setScrollSize(1000);
+
+        verify(m_JobManager).updateSchedulerConfig("foo", expected);
     }
 }

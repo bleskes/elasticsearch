@@ -111,6 +111,9 @@ public final class Messages
     public static final String JOB_CONFIG_UPDATE_RENORMALIZATION_WINDOW_DAYS_INVALID = "job.config.update.renormalization.window.days.invalid";
     public static final String JOB_CONFIG_UPDATE_MODEL_SNAPSHOT_RETENTION_DAYS_INVALID = "job.config.update.model.snapshot.retention.days.invalid";
     public static final String JOB_CONFIG_UPDATE_RESULTS_RETENTION_DAYS_INVALID = "job.config.update.results.retention.days.invalid";
+    public static final String JOB_CONFIG_UPDATE_SCHEDULE_CONFIG_PARSE_ERROR = "job.config.update.scheduler.config.parse.error";
+    public static final String JOB_CONFIG_UPDATE_SCHEDULE_CONFIG_CANNOT_BE_NULL = "job.config.update.scheduler.config.cannot.be.null";
+    public static final String JOB_CONFIG_UPDATE_SCHEDULE_CONFIG_DATA_SOURCE_INVALID = "job.config.update.scheduler.config.data.source.invalid";
 
     public static final String JOB_CONFIG_TRANSFORM_CIRCULAR_DEPENDENCY = "job.config.transform.circular.dependency";
     public static final String JOB_CONFIG_TRANSFORM_CONDITION_INVALID_OPERATOR = "job.config.transform.condition.invalid.operator";
@@ -153,6 +156,7 @@ public final class Messages
 
     public static final String JOB_SCHEDULER_CANNOT_START = "job.scheduler.cannot.start";
     public static final String JOB_SCHEDULER_CANNOT_STOP_IN_CURRENT_STATE = "job.scheduler.cannot.stop.in.current.state";
+    public static final String JOB_SCHEDULER_CANNOT_UPDATE_IN_CURRENT_STATE = "job.scheduler.cannot.update.in.current.state";
     public static final String JOB_SCHEDULER_FAILED_TO_STOP = "job.scheduler.failed.to.stop";
     public static final String JOB_SCHEDULER_NO_SUCH_SCHEDULED_JOB = "job.scheduler.no.such.scheduled.job";
 

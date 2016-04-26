@@ -569,10 +569,24 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
     private XContentBuilder serialiseQuantiles(Quantiles quantiles)
     throws IOException
     {
-        return jsonBuilder().startObject()
+        XContentBuilder builder = jsonBuilder().startObject();
+        serialiseQuantilesContent(quantiles, builder);
+        return builder.endObject();
+    }
+
+    /**
+     * Add the quantiles to an existing JSON builder
+     * @param quantiles
+     * @param builder
+     * @return
+     * @throws IOException
+     */
+    private XContentBuilder serialiseQuantilesContent(Quantiles quantiles, XContentBuilder builder)
+    throws IOException
+    {
+        return builder
                 .field(ElasticsearchMappings.ES_TIMESTAMP, quantiles.getTimestamp())
-                .field(Quantiles.QUANTILE_STATE, quantiles.getQuantileState())
-                .endObject();
+                .field(Quantiles.QUANTILE_STATE, quantiles.getQuantileState());
     }
 
     /**
@@ -598,11 +612,20 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
             serialiseModelSizeStatsContent(modelSnapshot.getModelSizeStats(), builder);
             builder.endObject();
         }
+        if (modelSnapshot.getQuantiles() != null)
+        {
+            builder.startObject(Quantiles.TYPE);
+            serialiseQuantilesContent(modelSnapshot.getQuantiles(), builder);
+            builder.endObject();
+        }
         if (modelSnapshot.getLatestRecordTimeStamp() != null)
         {
             builder.field(ModelSnapshot.LATEST_RECORD_TIME, modelSnapshot.getLatestRecordTimeStamp());
         }
-
+        if (modelSnapshot.getLatestResultTimeStamp() != null)
+        {
+            builder.field(ModelSnapshot.LATEST_RESULT_TIME, modelSnapshot.getLatestResultTimeStamp());
+        }
         return builder.endObject();
     }
 

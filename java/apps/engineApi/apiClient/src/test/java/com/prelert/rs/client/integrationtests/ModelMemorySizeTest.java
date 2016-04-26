@@ -288,7 +288,6 @@ public class ModelMemorySizeTest implements Closeable
                 String fullUrl = url + "/revert?snapshotId=" + ss.getSnapshotId();
                 SingleDocument<ModelSnapshot> restored = m_WebServiceClient.post(fullUrl, new TypeReference<SingleDocument<ModelSnapshot>>() {});
                 test(restored.isExists());
-                //curl -X POST 'http://localhost:8080/engine/v2/modelsnapshots/kpi_measure/revert?snapshotId=1234567890'
                 return;
             }
         }

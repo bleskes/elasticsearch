@@ -101,7 +101,7 @@ public class OldDataRemoverTest
         JobDataDeleter deleter = mock(JobDataDeleter.class);
         when(m_DeleterFactory.newDeleter(JOB_WITH_RETENTION_ID)).thenReturn(deleter);
 
-        m_OldDataRemover.removeOldModelSnapshots();
+        m_OldDataRemover.removeOldData();
 
         verify(m_DeleterFactory).newDeleter(JOB_WITH_RETENTION_ID);
         ArgumentCaptor<ModelSnapshot> modelSnapshotCaptor = ArgumentCaptor.forClass(ModelSnapshot.class);
@@ -113,7 +113,7 @@ public class OldDataRemoverTest
     }
 
     @Test
-    public void testRemoveOldResults()
+    public void testRemoveOldResults() throws UnknownJobException
     {
         JobDetails jobNoRetention = new JobDetails();
         jobNoRetention.setId(JOB_NO_RETENTION_ID);
@@ -147,23 +147,40 @@ public class OldDataRemoverTest
         when(m_JobProvider.newBatchedBucketsIterator(JOB_WITH_RETENTION_ID)).thenReturn(bucketsIterator);
         when(m_JobProvider.newBatchedInfluencersIterator(JOB_WITH_RETENTION_ID)).thenReturn(influencersIterator);
 
+        List<ModelSnapshot> snapshots = new ArrayList<>();
+        QueryPage<ModelSnapshot> queryPage = new QueryPage<ModelSnapshot>(snapshots, 0);
+        when(m_JobProvider.modelSnapshots(JOB_WITH_RETENTION_ID, 0, 1)).thenReturn(queryPage);
+        when(m_JobProvider.modelSnapshots(JOB_NO_RETENTION_ID, 0, 1)).thenReturn(queryPage);
+
+        List<Deque<ModelDebugOutput>> debugBatches = Arrays.asList();
+        MockBatchedResultsIterator<ModelDebugOutput> debugIterator = new MockBatchedResultsIterator<>(0, cutoffEpochMs, debugBatches);
+        when(m_JobProvider.newBatchedModelDebugOutputIterator(JOB_WITH_RETENTION_ID)).thenReturn(debugIterator);
+        when(m_JobProvider.newBatchedModelDebugOutputIterator(JOB_NO_RETENTION_ID)).thenReturn(debugIterator);
+
+        List<Deque<ModelSizeStats>> statsBatches = Arrays.asList();
+        MockBatchedResultsIterator<ModelSizeStats> statsIterator = new MockBatchedResultsIterator<>(0, cutoffEpochMs, statsBatches);
+        when(m_JobProvider.newBatchedModelSizeStatsIterator(JOB_WITH_RETENTION_ID)).thenReturn(statsIterator);
+        when(m_JobProvider.newBatchedModelSizeStatsIterator(JOB_NO_RETENTION_ID)).thenReturn(statsIterator);
+
         JobDataDeleter deleter = mock(JobDataDeleter.class);
         when(m_DeleterFactory.newDeleter(JOB_WITH_RETENTION_ID)).thenReturn(deleter);
+        when(m_DeleterFactory.newDeleter(JOB_NO_RETENTION_ID)).thenReturn(deleter);
 
-        m_OldDataRemover.removeOldResults();
+        m_OldDataRemover.removeOldData();
 
         verify(m_DeleterFactory).newDeleter(JOB_WITH_RETENTION_ID);
+        verify(m_DeleterFactory).newDeleter(JOB_NO_RETENTION_ID);
         ArgumentCaptor<Bucket> bucketCaptor = ArgumentCaptor.forClass(Bucket.class);
         verify(deleter, times(2)).deleteBucket(bucketCaptor.capture());
         assertEquals(Arrays.asList(bucket1, bucket2), bucketCaptor.getAllValues());
         verify(deleter).deleteInfluencer(influencer);
-        verify(deleter).commitAndFreeDiskSpace();
+        verify(deleter, times(2)).commitAndFreeDiskSpace();
 
         Mockito.verifyNoMoreInteractions(m_DeleterFactory, deleter);
     }
 
     @Test
-    public void testRemoveOldModelDebugOutput()
+    public void testRemoveOldModelDebugOutput() throws UnknownJobException
     {
         JobDetails jobNoRetention = new JobDetails();
         jobNoRetention.setId(JOB_NO_RETENTION_ID);
@@ -191,22 +208,45 @@ public class OldDataRemoverTest
 
         when(m_JobProvider.newBatchedModelDebugOutputIterator(JOB_WITH_RETENTION_ID)).thenReturn(debugIterator);
 
+        List<ModelSnapshot> snapshots = new ArrayList<>();
+        QueryPage<ModelSnapshot> queryPage = new QueryPage<ModelSnapshot>(snapshots, 0);
+        when(m_JobProvider.modelSnapshots(JOB_WITH_RETENTION_ID, 0, 1)).thenReturn(queryPage);
+        when(m_JobProvider.modelSnapshots(JOB_NO_RETENTION_ID, 0, 1)).thenReturn(queryPage);
+
+        List<Deque<ModelSizeStats>> statsBatches = Arrays.asList();
+        MockBatchedResultsIterator<ModelSizeStats> statsIterator = new MockBatchedResultsIterator<>(0, cutoffEpochMs, statsBatches);
+        when(m_JobProvider.newBatchedModelSizeStatsIterator(JOB_WITH_RETENTION_ID)).thenReturn(statsIterator);
+        when(m_JobProvider.newBatchedModelSizeStatsIterator(JOB_NO_RETENTION_ID)).thenReturn(statsIterator);
+
+        List<Deque<Bucket>> bucketBatches = Arrays.asList();
+        MockBatchedResultsIterator<Bucket> bucketsIterator = new MockBatchedResultsIterator<>(0, cutoffEpochMs, bucketBatches);
+        when(m_JobProvider.newBatchedBucketsIterator(JOB_WITH_RETENTION_ID)).thenReturn(bucketsIterator);
+        when(m_JobProvider.newBatchedBucketsIterator(JOB_NO_RETENTION_ID)).thenReturn(bucketsIterator);
+
+        List<Deque<Influencer>> influencerBatches = new ArrayList<>();
+        MockBatchedResultsIterator<Influencer> influencersIterator = new MockBatchedResultsIterator<>(0, cutoffEpochMs, influencerBatches);
+        when(m_JobProvider.newBatchedInfluencersIterator(JOB_WITH_RETENTION_ID)).thenReturn(influencersIterator);
+        when(m_JobProvider.newBatchedInfluencersIterator(JOB_NO_RETENTION_ID)).thenReturn(influencersIterator);
+
         JobDataDeleter deleter = mock(JobDataDeleter.class);
         when(m_DeleterFactory.newDeleter(JOB_WITH_RETENTION_ID)).thenReturn(deleter);
+        when(m_DeleterFactory.newDeleter(JOB_NO_RETENTION_ID)).thenReturn(deleter);
 
-        m_OldDataRemover.removeOldModelDebugOutput();
+        m_OldDataRemover.removeOldData();
 
         verify(m_DeleterFactory).newDeleter(JOB_WITH_RETENTION_ID);
+        verify(m_DeleterFactory).newDeleter(JOB_NO_RETENTION_ID);
+
         ArgumentCaptor<ModelDebugOutput>debugCaptor = ArgumentCaptor.forClass(ModelDebugOutput.class);
         verify(deleter, times(2)).deleteModelDebugOutput(debugCaptor.capture());
         assertEquals(Arrays.asList(debug1, debug2), debugCaptor.getAllValues());
-        verify(deleter).commitAndFreeDiskSpace();
+        verify(deleter, times(2)).commitAndFreeDiskSpace();
 
         Mockito.verifyNoMoreInteractions(m_DeleterFactory, deleter);
     }
 
     @Test
-    public void testRemoveOldModelSizeStats()
+    public void testRemoveOldModelSizeStats() throws UnknownJobException
     {
         JobDetails jobNoRetention = new JobDetails();
         jobNoRetention.setId(JOB_NO_RETENTION_ID);
@@ -231,19 +271,40 @@ public class OldDataRemoverTest
         List<Deque<ModelSizeStats>> statsBatches = Arrays.asList(statsBatch1, statsBatch2);
 
         MockBatchedResultsIterator<ModelSizeStats> statsIterator = new MockBatchedResultsIterator<>(0, cutoffEpochMs, statsBatches);
-
         when(m_JobProvider.newBatchedModelSizeStatsIterator(JOB_WITH_RETENTION_ID)).thenReturn(statsIterator);
+
+        List<ModelSnapshot> snapshots = new ArrayList<>();
+        QueryPage<ModelSnapshot> queryPage = new QueryPage<ModelSnapshot>(snapshots, 0);
+        when(m_JobProvider.modelSnapshots(JOB_WITH_RETENTION_ID, 0, 1)).thenReturn(queryPage);
+        when(m_JobProvider.modelSnapshots(JOB_NO_RETENTION_ID, 0, 1)).thenReturn(queryPage);
+
+        List<Deque<Bucket>> bucketBatches = Arrays.asList();
+        MockBatchedResultsIterator<Bucket> bucketsIterator = new MockBatchedResultsIterator<>(0, cutoffEpochMs, bucketBatches);
+        when(m_JobProvider.newBatchedBucketsIterator(JOB_WITH_RETENTION_ID)).thenReturn(bucketsIterator);
+        when(m_JobProvider.newBatchedBucketsIterator(JOB_NO_RETENTION_ID)).thenReturn(bucketsIterator);
+
+        List<Deque<Influencer>> influencerBatches = new ArrayList<>();
+        MockBatchedResultsIterator<Influencer> influencersIterator = new MockBatchedResultsIterator<>(0, cutoffEpochMs, influencerBatches);
+        when(m_JobProvider.newBatchedInfluencersIterator(JOB_WITH_RETENTION_ID)).thenReturn(influencersIterator);
+        when(m_JobProvider.newBatchedInfluencersIterator(JOB_NO_RETENTION_ID)).thenReturn(influencersIterator);
+
+        List<Deque<ModelDebugOutput>> debugBatches = Arrays.asList();
+        MockBatchedResultsIterator<ModelDebugOutput> debugIterator = new MockBatchedResultsIterator<>(0, cutoffEpochMs, debugBatches);
+        when(m_JobProvider.newBatchedModelDebugOutputIterator(JOB_WITH_RETENTION_ID)).thenReturn(debugIterator);
+        when(m_JobProvider.newBatchedModelDebugOutputIterator(JOB_NO_RETENTION_ID)).thenReturn(debugIterator);
 
         JobDataDeleter deleter = mock(JobDataDeleter.class);
         when(m_DeleterFactory.newDeleter(JOB_WITH_RETENTION_ID)).thenReturn(deleter);
+        when(m_DeleterFactory.newDeleter(JOB_NO_RETENTION_ID)).thenReturn(deleter);
 
-        m_OldDataRemover.removeOldModelSizeStats();
+        m_OldDataRemover.removeOldData();
 
         verify(m_DeleterFactory).newDeleter(JOB_WITH_RETENTION_ID);
+        verify(m_DeleterFactory).newDeleter(JOB_NO_RETENTION_ID);
         ArgumentCaptor<ModelSizeStats>statsCaptor = ArgumentCaptor.forClass(ModelSizeStats.class);
         verify(deleter, times(2)).deleteModelSizeStats(statsCaptor.capture());
         assertEquals(Arrays.asList(stats1, stats2), statsCaptor.getAllValues());
-        verify(deleter).commitAndFreeDiskSpace();
+        verify(deleter, times(2)).commitAndFreeDiskSpace();
 
         Mockito.verifyNoMoreInteractions(m_DeleterFactory, deleter);
     }

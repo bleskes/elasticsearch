@@ -28,11 +28,13 @@
 package com.prelert.rs.resources;
 
 import static com.prelert.job.errorcodes.ErrorCodeMatcher.hasErrorCode;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -209,8 +211,7 @@ public class JobsTest extends ServiceTest
     }
 
     @Test
-    public void testUpdate_GivenValidModelDebugConfig() throws UnknownJobException,
-            JobConfigurationException, JobInUseException, NativeProcessRunException
+    public void testUpdate_GivenValidModelDebugConfig() throws JobException
     {
         Response response = m_Jobs.updateJob("foo",
                 "{\"modelDebugConfig\":{\"boundsPercentile\":90.0, \"terms\":\"someTerm\"}}");
@@ -223,8 +224,7 @@ public class JobsTest extends ServiceTest
     }
 
     @Test
-    public void testUpdate_GivenValidModelDebugConfigChangeToFile() throws UnknownJobException,
-            JobConfigurationException, JobInUseException, NativeProcessRunException
+    public void testUpdate_GivenValidModelDebugConfigChangeToFile() throws JobException
     {
         Response response = m_Jobs.updateJob("foo",
                 "{\"modelDebugConfig\":{\"writeTo\":\"File\",\"boundsPercentile\":90.0, \"terms\":\"someTerm\"}}");
@@ -237,8 +237,7 @@ public class JobsTest extends ServiceTest
     }
 
     @Test
-    public void testUpdate_GivenValidModelDebugConfigChangeToDataStore() throws UnknownJobException,
-            JobConfigurationException, JobInUseException, NativeProcessRunException
+    public void testUpdate_GivenValidModelDebugConfigChangeToDataStore() throws JobException
     {
         Response response = m_Jobs.updateJob("foo",
                 "{\"modelDebugConfig\":{\"writeTo\":\"data_store\",\"boundsPercentile\":90.0, \"terms\":\"someTerm\"}}");

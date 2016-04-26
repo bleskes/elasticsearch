@@ -34,8 +34,10 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.time.Duration;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -47,6 +49,7 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import javax.ws.rs.core.Feature;
@@ -70,6 +73,7 @@ import com.prelert.job.JobStatus;
 import com.prelert.job.ModelDebugConfig;
 import com.prelert.job.ModelSnapshot;
 import com.prelert.job.NoSuchModelSnapshotException;
+import com.prelert.job.SchedulerConfig;
 import com.prelert.job.SchedulerState;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.alert.AlertObserver;
@@ -87,7 +91,10 @@ import com.prelert.job.manager.actions.ActionGuardian;
 import com.prelert.job.manager.actions.ActionGuardian.ActionTicket;
 import com.prelert.job.messages.Messages;
 import com.prelert.job.password.PasswordManager;
+import com.prelert.job.persistence.BatchedResultsIterator;
 import com.prelert.job.persistence.DataStoreException;
+import com.prelert.job.persistence.JobDataDeleter;
+import com.prelert.job.persistence.JobDataDeleterFactory;
 import com.prelert.job.persistence.JobProvider;
 import com.prelert.job.persistence.QueryPage;
 import com.prelert.job.persistence.none.NoneJobDataPersister;
@@ -105,6 +112,7 @@ import com.prelert.job.results.CategoryDefinition;
 import com.prelert.job.results.Influencer;
 import com.prelert.job.scheduler.CannotStartSchedulerException;
 import com.prelert.job.scheduler.CannotStopSchedulerException;
+import com.prelert.job.scheduler.CannotUpdateSchedulerException;
 import com.prelert.job.scheduler.DataProcessor;
 import com.prelert.job.scheduler.JobScheduler;
 import com.prelert.job.status.HighProportionOfBadTimestampsException;
@@ -165,7 +173,7 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
 
     private final JobFactory m_JobFactory;
     private final LicenceChecker m_LicenceChecker;
-
+    private final JobDataDeleterFactory m_JobDataDeleterFactory;
 
     /**
      * A map holding schedulers by jobId.
@@ -190,7 +198,7 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
      */
     public JobManager(JobProvider jobProvider, ProcessManager processManager,
             DataExtractorFactory dataExtractorFactory, JobLoggerFactory jobLoggerFactory,
-            PasswordManager passwordManager)
+            PasswordManager passwordManager, JobDataDeleterFactory jobDataDeleterFactory)
     {
         m_ActionGuardian = new ActionGuardian();
         m_JobProvider = Objects.requireNonNull(jobProvider);
@@ -211,6 +219,7 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
                 BackendInfo.fromJson(m_ProcessManager.getInfo(), m_JobProvider, apiVersion()));
 
         m_JobFactory = new JobFactory();
+        m_JobDataDeleterFactory = Objects.requireNonNull(jobDataDeleterFactory);
     }
 
     /**
@@ -336,17 +345,22 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
     {
         if (jobConfig != null && jobConfig.getSchedulerConfig() != null)
         {
-            try
-            {
-                m_PasswordManager.secureStorage(jobConfig.getSchedulerConfig());
-            }
-            catch (GeneralSecurityException e)
-            {
-                throw new JobConfigurationException(Messages.getMessage(Messages.JOB_CONFIG_CANNOT_ENCRYPT_PASSWORD),
-                        ErrorCodes.ENCRYPTION_FAILURE_ERROR, e);
-            }
+            securePassword(jobConfig.getSchedulerConfig());
         }
         return jobConfig;
+    }
+
+    private void securePassword(SchedulerConfig schedulerConfig) throws JobConfigurationException
+    {
+        try
+        {
+            m_PasswordManager.secureStorage(schedulerConfig);
+        }
+        catch (GeneralSecurityException e)
+        {
+            throw new JobConfigurationException(Messages.getMessage(Messages.JOB_CONFIG_CANNOT_ENCRYPT_PASSWORD),
+                    ErrorCodes.ENCRYPTION_FAILURE_ERROR, e);
+        }
     }
 
     private JobScheduler createJobScheduler(JobDetails job)
@@ -464,6 +478,38 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
         return buckets;
     }
 
+    public void resetLatestRecordTime(String jobId, Date latestRecordTime) throws UnknownJobException
+    {
+        m_JobLoggerFactory.newLogger(jobId).info("Resetting latest record time to '" +  latestRecordTime + "'");
+
+        JobDetails jb = m_JobProvider.getJobDetails(jobId).get();
+        jb.setLastDataTime(latestRecordTime);
+        DataCounts counts = jb.getCounts();
+        counts.setLatestRecordTimeStamp(latestRecordTime);
+
+        Map<String, Object> update = new HashMap<>();
+        Map<String, Object> objectMap = counts.toObjectMap();
+        update.put(JobDetails.COUNTS, objectMap);
+        m_JobProvider.updateJob(jobId, update);
+    }
+
+    public void deleteBucketsAfter(String jobId, Date deleteAfter)
+    {
+        m_JobLoggerFactory.newLogger(jobId).info("Deleting buckets after '" + deleteAfter + "'");
+        JobDataDeleter deleter = m_JobDataDeleterFactory.newDeleter(jobId);
+        Date now = new Date();
+        deleteDataAfter(
+                m_JobProvider.newBatchedInfluencersIterator(jobId).timeRange(deleteAfter.getTime() + 1, now.getTime()),
+                influencer -> deleter.deleteInfluencer(influencer)
+        );
+        // Deleting Bucket should also delete AnomalyRecords and BucketInfluencers
+        deleteDataAfter(
+                m_JobProvider.newBatchedBucketsIterator(jobId).timeRange(deleteAfter.getTime() + 1, now.getTime()),
+                bucket -> deleter.deleteBucket(bucket)
+        );
+        deleter.commitAndFreeDiskSpace();
+    }
+
     public QueryPage<ModelSnapshot> modelSnapshots(String jobId, int skip, int take,
             long epochStartMs, long epochEndMs, String sortField, String description)
             throws UnknownJobException
@@ -473,18 +519,18 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
     }
 
     public ModelSnapshot revertToSnapshot(String jobId, long epochEndMs, String snapshotId,
-            String description)
+            String description, boolean dontSkip)
             throws JobInUseException, UnknownJobException, NoSuchModelSnapshotException
     {
         try (ActionTicket actionTicket = m_ActionGuardian.tryAcquiringAction(jobId, Action.REVERTING))
         {
-            LOGGER.debug("Reverting model snapshot for job '" + jobId + "'");
-
             if (m_ProcessManager.jobIsRunning(jobId))
             {
                 throw new JobInUseException(Messages.getMessage(Messages.REST_JOB_NOT_CLOSED_REVERT),
                         ErrorCodes.JOB_NOT_CLOSED);
             }
+            m_JobLoggerFactory.newLogger(jobId).info("Reverting to snapshot '" + snapshotId +
+                    "' for time '" + epochEndMs + "'");
 
             List<ModelSnapshot> revertCandidates = m_JobProvider.modelSnapshots(jobId, 0, 1,
                     0, epochEndMs, ModelSnapshot.TIMESTAMP, snapshotId, description).queryResults();
@@ -503,7 +549,14 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
             // ElasticsearchException if it fails
             m_JobProvider.updateModelSnapshot(jobId, modelSnapshot, true);
 
-            updateIgnoreDowntime(jobId, IgnoreDowntime.ONCE);
+            if (dontSkip)
+            {
+                updateIgnoreDowntime(jobId, IgnoreDowntime.NEVER);
+            }
+            else
+            {
+                updateIgnoreDowntime(jobId, IgnoreDowntime.ONCE);
+            }
             audit(jobId).info(Messages.getMessage(Messages.JOB_AUDIT_REVERTED,
                     modelSnapshot.getDescription()));
             return modelSnapshot;
@@ -550,8 +603,6 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
     {
         try (ActionTicket actionTicket = m_ActionGuardian.tryAcquiringAction(jobId, Action.UPDATING))
         {
-            LOGGER.debug("Deleting model snapshot '" + snapshotId + "' for job '" + jobId + "'");
-
             List<ModelSnapshot> highestPriority = m_JobProvider.modelSnapshots(jobId, 0, 1).queryResults();
             if (highestPriority == null || highestPriority.isEmpty())
             {
@@ -1207,6 +1258,22 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
         return m_JobProvider.updateDetectorDescription(jobId, detectorIndex, newDescription);
     }
 
+    public boolean updateSchedulerConfig(String jobId, SchedulerConfig newSchedulerConfig)
+            throws JobException
+    {
+        try (ActionTicket actionTicket = m_ActionGuardian.tryAcquiringAction(jobId, Action.UPDATING))
+        {
+            checkJobHasScheduler(jobId);
+            JobScheduler scheduler = m_ScheduledJobs.get(jobId);
+            if (!scheduler.isStopped())
+            {
+                throw new CannotUpdateSchedulerException(jobId, scheduler.getStatus());
+            }
+            securePassword(newSchedulerConfig);
+            return m_JobProvider.updateSchedulerConfig(jobId, newSchedulerConfig);
+        }
+    }
+
     @Override
     public void shutdown()
     {
@@ -1341,5 +1408,36 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
         }
 
         return deets;
+    }
+
+    private <T> void deleteDataAfter(BatchedResultsIterator<T> resultsIterator,
+            Consumer<T> deleteFunction)
+    {
+        while (resultsIterator.hasNext())
+        {
+            Deque<T> batch = nextBatch(resultsIterator);
+            if (batch.isEmpty())
+            {
+                return;
+            }
+            for (T result : batch)
+            {
+                deleteFunction.accept(result);
+            }
+        }
+    }
+
+    private <T> Deque<T> nextBatch(BatchedResultsIterator<T> resultsIterator)
+    {
+        try
+        {
+            return resultsIterator.next();
+        }
+        catch (UnknownJobException e)
+        {
+            LOGGER.warn("Failed to retrieve results for job '" + e.getJobId() + "'. "
+                    + "The job appears to have been deleted.");
+            return new ArrayDeque<T>();
+        }
     }
 }

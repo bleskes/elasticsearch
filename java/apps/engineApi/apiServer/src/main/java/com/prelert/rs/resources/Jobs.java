@@ -50,6 +50,7 @@ import org.apache.log4j.Logger;
 
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.JobDetails;
+import com.prelert.job.JobException;
 import com.prelert.job.JobIdAlreadyExistsException;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.config.verification.JobConfigurationException;
@@ -220,8 +221,7 @@ public class Jobs extends ResourceWithJobManager
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     public Response updateJob(@PathParam("jobId") String jobId, String updateJson)
-            throws JobConfigurationException, UnknownJobException, JobInUseException,
-            NativeProcessRunException
+            throws JobException
     {
         return new JobUpdater(jobManager(), jobId).update(updateJson);
     }

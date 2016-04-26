@@ -302,7 +302,7 @@ public class JobDetails
     /**
      * The last time data was uploaded to the job or <code>null</code>
      * if no data has been seen.
-     * @return The data at which the last data was processed
+     * @return The date at which the last data was processed
      */
     public Date getLastDataTime()
     {
@@ -313,7 +313,6 @@ public class JobDetails
     {
         m_LastDataTime = lastTime;
     }
-
 
     /**
      * The job timeout setting in seconds. Jobs are retired if they do not
