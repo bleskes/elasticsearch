@@ -1394,9 +1394,9 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
         }
     }
 
-    public List<JobDetails> runningJobs()
+    public List<JobDetails> runningAndScheduledJobs()
     {
-        List<String> jobIds = m_ProcessManager.runningJobs();
+        Set<String> jobIds = runningAndScheduledJobIds();
         List<JobDetails> deets = new ArrayList<>();
         for (String id : jobIds)
         {

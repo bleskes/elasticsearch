@@ -115,7 +115,7 @@ public class ProcessCtrlTest
         assertTrue(command.contains(ProcessCtrl.PERSIST_INTERVAL_ARG + expectedPersistInterval));
         int expectedMaxQuantileInterval = 21600 + ProcessCtrl.calculateStaggeringInterval(job.getId());
         assertTrue(command.contains(ProcessCtrl.MAX_QUANTILE_INTERVAL_ARG + expectedMaxQuantileInterval));
-        assertTrue(command.contains(ProcessCtrl.PERSIST_URL_BASE_ARG +
+        assertTrue(String.join(", ", command), command.contains(ProcessCtrl.PERSIST_URL_BASE_ARG +
                         "http://localhost:" + ProcessCtrl.ES_HTTP_PORT + "/prelertresults-unit-test-job"));
         assertTrue(command.contains(ProcessCtrl.IGNORE_DOWNTIME_ARG));
     }
