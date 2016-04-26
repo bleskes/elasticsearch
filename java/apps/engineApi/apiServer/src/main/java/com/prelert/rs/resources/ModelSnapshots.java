@@ -185,7 +185,7 @@ public class ModelSnapshots extends ResourceWithJobManager
             @DefaultValue("") @QueryParam(TIME_QUERY_PARAM) String time,
             @DefaultValue("") @QueryParam(ModelSnapshot.SNAPSHOT_ID) String snapshotId,
             @DefaultValue("") @QueryParam(ModelSnapshot.DESCRIPTION) String description,
-            @DefaultValue("") @QueryParam(DELETE_INTERVENING_RESULTS_PARAM) String deleteInterveningResults)
+            @DefaultValue("false") @QueryParam(DELETE_INTERVENING_RESULTS_PARAM) boolean deleteInterveningResults)
             throws JobInUseException, UnknownJobException, NoSuchModelSnapshotException
     {
         LOGGER.debug("Received request to revert to time '" + time +
@@ -198,18 +198,15 @@ public class ModelSnapshots extends ResourceWithJobManager
             throw new InvalidParametersException(Messages.getMessage(Messages.REST_INVALID_REVERT_PARAMS),
                     ErrorCodes.INVALID_REVERT_PARAMS);
         }
-
-        Boolean deleteResults = Boolean.parseBoolean(deleteInterveningResults);
-
         long timeEpochMs = paramToEpochIfValidOrThrow(TIME_QUERY_PARAM, time, LOGGER);
         // Time ranges are open above, so add 1 millisecond to convert the time
         // to the end of a range
         long endEpochMs = (timeEpochMs > 0) ? (timeEpochMs + 1) : 0;
 
         ModelSnapshot revertedTo = jobManager().revertToSnapshot(jobId, endEpochMs,
-                snapshotId, description, (deleteResults != null && deleteResults == true));
+                snapshotId, description, deleteInterveningResults);
 
-        if (deleteResults != null && deleteResults == true)
+        if (deleteInterveningResults == true)
         {
             Date revertedLatestRecordTime = revertedTo.getLatestRecordTimeStamp();
             Date revertedLatestResultTime = revertedTo.getLatestResultTimeStamp();
