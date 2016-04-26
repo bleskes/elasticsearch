@@ -87,8 +87,6 @@ compileTestJava.options.compilerArgs << "-Xlint:-deprecation,-rawtypes,-serial,-
 
 ext.expansions = [
   'project.version': version,
-  // Used in watcher index templates
-  'xpack.watcher.template.version': '1',
 ]
 
 processResources {
