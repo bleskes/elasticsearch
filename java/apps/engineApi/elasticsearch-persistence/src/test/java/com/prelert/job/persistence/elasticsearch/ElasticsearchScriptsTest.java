@@ -29,6 +29,9 @@ package com.prelert.job.persistence.elasticsearch;
 
 import static org.junit.Assert.assertEquals;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.elasticsearch.script.Script;
 import org.junit.Test;
 
@@ -62,5 +65,18 @@ public class ElasticsearchScriptsTest
         assertEquals(2, script.getParams().size());
         assertEquals(2, script.getParams().get("detectorIndex"));
         assertEquals("Almost Blue", script.getParams().get("newDescription"));
+    }
+
+    @Test
+    public void testNewUpdateSchedulerConfig()
+    {
+        Map<String, Object> newSchedulerConfig = new HashMap<>();
+        newSchedulerConfig.put("foo", "bar");
+
+        Script script = ElasticsearchScripts.newUpdateSchedulerConfig(newSchedulerConfig);
+
+        assertEquals("update-scheduler-config", script.getScript());
+        assertEquals(1, script.getParams().size());
+        assertEquals(newSchedulerConfig, script.getParams().get("newSchedulerConfig"));
     }
 }

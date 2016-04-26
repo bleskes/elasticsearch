@@ -70,6 +70,7 @@ import com.prelert.job.JobStatus;
 import com.prelert.job.ModelDebugConfig;
 import com.prelert.job.ModelSnapshot;
 import com.prelert.job.NoSuchModelSnapshotException;
+import com.prelert.job.SchedulerConfig;
 import com.prelert.job.SchedulerState;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.alert.AlertObserver;
@@ -105,6 +106,7 @@ import com.prelert.job.results.CategoryDefinition;
 import com.prelert.job.results.Influencer;
 import com.prelert.job.scheduler.CannotStartSchedulerException;
 import com.prelert.job.scheduler.CannotStopSchedulerException;
+import com.prelert.job.scheduler.CannotUpdateSchedulerException;
 import com.prelert.job.scheduler.DataProcessor;
 import com.prelert.job.scheduler.JobScheduler;
 import com.prelert.job.status.HighProportionOfBadTimestampsException;
@@ -336,17 +338,22 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
     {
         if (jobConfig != null && jobConfig.getSchedulerConfig() != null)
         {
-            try
-            {
-                m_PasswordManager.secureStorage(jobConfig.getSchedulerConfig());
-            }
-            catch (GeneralSecurityException e)
-            {
-                throw new JobConfigurationException(Messages.getMessage(Messages.JOB_CONFIG_CANNOT_ENCRYPT_PASSWORD),
-                        ErrorCodes.ENCRYPTION_FAILURE_ERROR, e);
-            }
+            securePassword(jobConfig.getSchedulerConfig());
         }
         return jobConfig;
+    }
+
+    private void securePassword(SchedulerConfig schedulerConfig) throws JobConfigurationException
+    {
+        try
+        {
+            m_PasswordManager.secureStorage(schedulerConfig);
+        }
+        catch (GeneralSecurityException e)
+        {
+            throw new JobConfigurationException(Messages.getMessage(Messages.JOB_CONFIG_CANNOT_ENCRYPT_PASSWORD),
+                    ErrorCodes.ENCRYPTION_FAILURE_ERROR, e);
+        }
     }
 
     private JobScheduler createJobScheduler(JobDetails job)
@@ -1205,6 +1212,22 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
             throws UnknownJobException
     {
         return m_JobProvider.updateDetectorDescription(jobId, detectorIndex, newDescription);
+    }
+
+    public boolean updateSchedulerConfig(String jobId, SchedulerConfig newSchedulerConfig)
+            throws JobException
+    {
+        try (ActionTicket actionTicket = m_ActionGuardian.tryAcquiringAction(jobId, Action.UPDATING))
+        {
+            checkJobHasScheduler(jobId);
+            JobScheduler scheduler = m_ScheduledJobs.get(jobId);
+            if (!scheduler.isStopped())
+            {
+                throw new CannotUpdateSchedulerException(jobId, scheduler.getStatus());
+            }
+            securePassword(newSchedulerConfig);
+            return m_JobProvider.updateSchedulerConfig(jobId, newSchedulerConfig);
+        }
     }
 
     @Override

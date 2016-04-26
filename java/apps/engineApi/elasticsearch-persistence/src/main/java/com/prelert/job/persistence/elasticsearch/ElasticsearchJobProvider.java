@@ -63,6 +63,7 @@ import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.indices.IndexAlreadyExistsException;
 import org.elasticsearch.node.Node;
+import org.elasticsearch.script.Script;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.sort.FieldSortBuilder;
@@ -70,6 +71,7 @@ import org.elasticsearch.search.sort.SortBuilder;
 import org.elasticsearch.search.sort.SortBuilders;
 import org.elasticsearch.search.sort.SortOrder;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -81,6 +83,7 @@ import com.prelert.job.ModelSizeStats;
 import com.prelert.job.ModelSnapshot;
 import com.prelert.job.ModelState;
 import com.prelert.job.NoSuchModelSnapshotException;
+import com.prelert.job.SchedulerConfig;
 import com.prelert.job.SchedulerState;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.audit.AuditMessage;
@@ -1250,21 +1253,39 @@ public class ElasticsearchJobProvider implements JobProvider
                 + detectorIndex + " by running Groovy script update-detector-description with params newDescription="
                 + newDescription);
 
+        return updateViaScript(jobId, ElasticsearchScripts.newUpdateDetectorDescription(
+                                    detectorIndex, newDescription));
+    }
+
+    private boolean updateViaScript(String jobId, Script script) throws UnknownJobException
+    {
         ElasticsearchJobId esJobId = new ElasticsearchJobId(jobId);
 
         try
         {
             m_Client.prepareUpdate(esJobId.getIndex(), JobDetails.TYPE, esJobId.getId())
-                            .setScript(ElasticsearchScripts.newUpdateDetectorDescription(
-                                    detectorIndex, newDescription))
+                            .setScript(script)
                             .setRetryOnConflict(UPDATE_JOB_RETRY_COUNT).get();
         }
         catch (IndexNotFoundException e)
         {
             throw new UnknownJobException(jobId);
         }
-
         return true;
+    }
+
+    @Override
+    public boolean updateSchedulerConfig(String jobId, SchedulerConfig newSchedulerConfig)
+            throws UnknownJobException
+    {
+        Map<String, Object> asMap = m_ObjectMapper.convertValue(newSchedulerConfig,
+                new TypeReference<Map<String, Object>>() {});
+
+        LOGGER.trace("ES API CALL: update schedulerConfig for job " + jobId
+                + " by running Groovy script update-scheduler-config with params newSchedulerConfig="
+                + asMap);
+
+        return updateViaScript(jobId, ElasticsearchScripts.newUpdateSchedulerConfig(asMap));
     }
 
     @Override

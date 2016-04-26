@@ -518,6 +518,11 @@ public enum ErrorCodes
      */
     CANNOT_DELETE_HIGHEST_PRIORITY(60125),
 
+    /**
+     * A job's scheduler cannot be stopped.
+     */
+    CANNOT_UPDATE_JOB_SCHEDULER(60126),
+
     // Support bundle errors
     /**
      * Error running the support bundle script

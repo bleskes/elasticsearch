@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -25,58 +25,20 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.rs.job.update;
+package com.prelert.job.scheduler;
 
-import java.util.Map;
-import java.util.Objects;
-import java.util.function.Supplier;
-
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.prelert.job.JobException;
-import com.prelert.job.UnknownJobException;
-import com.prelert.job.config.verification.JobConfigurationException;
+import com.prelert.job.JobSchedulerStatus;
 import com.prelert.job.errorcodes.ErrorCodes;
-import com.prelert.job.manager.JobManager;
+import com.prelert.job.messages.Messages;
 
-abstract class AbstractUpdater
+public class CannotUpdateSchedulerException extends JobException
 {
-    protected static final ObjectMapper JSON_MAPPER = new ObjectMapper();
+    private static final long serialVersionUID = -2359537142811349135L;
 
-    private final JobManager m_JobManager;
-    private final String m_JobId;
-
-    AbstractUpdater(JobManager jobManager, String jobId)
+    public CannotUpdateSchedulerException(String jobId, JobSchedulerStatus status)
     {
-        m_JobManager = Objects.requireNonNull(jobManager);
-        m_JobId = Objects.requireNonNull(jobId);
+        super(Messages.getMessage(Messages.JOB_SCHEDULER_CANNOT_UPDATE_IN_CURRENT_STATE, jobId, status),
+                ErrorCodes.CANNOT_UPDATE_JOB_SCHEDULER);
     }
-
-    protected JobManager jobManager()
-    {
-        return m_JobManager;
-    }
-
-    protected String jobId()
-    {
-        return m_JobId;
-    }
-
-    protected final Map<String, Object> convertToMap(JsonNode node,
-            Supplier<String> errorMessageSupplier) throws JobConfigurationException
-    {
-        try
-        {
-            return JSON_MAPPER.convertValue(node, new TypeReference<Map<String, Object>>() {});
-        }
-        catch (IllegalArgumentException e)
-        {
-            throw new JobConfigurationException(errorMessageSupplier.get(),
-                    ErrorCodes.INVALID_VALUE, e);
-        }
-    }
-
-    abstract void prepareUpdate(JsonNode node) throws UnknownJobException, JobConfigurationException;
-    abstract void commit() throws JobException;
 }

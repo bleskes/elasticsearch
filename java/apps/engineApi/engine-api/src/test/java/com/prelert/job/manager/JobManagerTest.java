@@ -48,6 +48,7 @@ import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -123,6 +124,7 @@ import com.prelert.job.process.params.InterimResultsParams;
 import com.prelert.job.process.writer.CsvRecordWriter;
 import com.prelert.job.scheduler.CannotStartSchedulerException;
 import com.prelert.job.scheduler.CannotStopSchedulerException;
+import com.prelert.job.scheduler.CannotUpdateSchedulerException;
 import com.prelert.job.status.HighProportionOfBadTimestampsException;
 import com.prelert.job.status.OutOfOrderRecordsException;
 
@@ -1777,6 +1779,59 @@ public class JobManagerTest
                 exception.getMessage());
 
         verify(m_JobProvider).setJobStatus("foo", JobStatus.CLOSED);
+    }
+
+    @Test
+    public void testUpdateSchedulerConfig_GivenSchedulerIsRunning() throws JobException
+    {
+        givenProcessInfo(2);
+        JobManager jobManager = createJobManager();
+
+        JobConfiguration jobConfig = createScheduledJobConfig();
+        Logger jobLogger = mock(Logger.class);
+        when(m_JobLoggerFactory.newLogger("foo")).thenReturn(jobLogger);
+        DataExtractor dataExtractor = mock(DataExtractor.class);
+        when(m_DataExtractorFactory.newExtractor(any(JobDetails.class))).thenReturn(dataExtractor);
+
+        JobDetails job = jobManager.createJob(jobConfig, false);
+        DataCounts dataCounts = new DataCounts();
+        dataCounts.setLatestRecordTimeStamp(new Date(0));
+        job.setCounts(dataCounts);
+        when(m_JobProvider.getJobDetails("foo")).thenReturn(Optional.of(job));
+        jobManager.startJobScheduler("foo", 0L, OptionalLong.empty());
+
+        SchedulerConfig newSchedulerConfig = new SchedulerConfig();
+
+        m_ExpectedException.expect(CannotUpdateSchedulerException.class);
+        m_ExpectedException.expectMessage("Cannot update scheduler for job 'foo' while its status is STARTED");
+        m_ExpectedException.expect(ErrorCodeMatcher.hasErrorCode(ErrorCodes.CANNOT_UPDATE_JOB_SCHEDULER));
+        jobManager.updateSchedulerConfig("foo", newSchedulerConfig);
+
+        verify(m_JobProvider).updateSchedulerConfig("foo", newSchedulerConfig);
+        jobManager.stopJobScheduler("foo");
+    }
+
+    @Test
+    public void testUpdateSchedulerConfig_GivenValid() throws JobException, GeneralSecurityException
+    {
+        givenProcessInfo(2);
+        JobManager jobManager = createJobManager();
+
+        JobConfiguration jobConfig = createScheduledJobConfig();
+        Logger jobLogger = mock(Logger.class);
+        when(m_JobLoggerFactory.newLogger("foo")).thenReturn(jobLogger);
+        DataExtractor dataExtractor = mock(DataExtractor.class);
+        when(m_DataExtractorFactory.newExtractor(any(JobDetails.class))).thenReturn(dataExtractor);
+
+        jobManager.createJob(jobConfig, false);
+
+        SchedulerConfig newSchedulerConfig = new SchedulerConfig();
+        newSchedulerConfig.setUsername("bar");
+        newSchedulerConfig.setPassword("1234");
+        jobManager.updateSchedulerConfig("foo", newSchedulerConfig);
+
+        verify(m_PasswordManager).secureStorage(newSchedulerConfig);
+        verify(m_JobProvider).updateSchedulerConfig("foo", newSchedulerConfig);
     }
 
     private void givenProcessInfo(int maxLicenseJobs)
