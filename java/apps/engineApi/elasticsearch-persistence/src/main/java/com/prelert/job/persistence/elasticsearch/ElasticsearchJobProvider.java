@@ -130,13 +130,15 @@ public class ElasticsearchJobProvider implements JobProvider
 
     private final Node m_Node;
     private final Client m_Client;
+    private final int m_NumberOfReplicas;
 
     private final ObjectMapper m_ObjectMapper;
 
-    public ElasticsearchJobProvider(Node node, Client client)
+    public ElasticsearchJobProvider(Node node, Client client, int numberOfReplicas)
     {
         m_Node = node;
         m_Client = Objects.requireNonNull(client);
+        m_NumberOfReplicas = numberOfReplicas;
 
         m_ObjectMapper = new ObjectMapper();
         m_ObjectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
@@ -303,10 +305,10 @@ public class ElasticsearchJobProvider implements JobProvider
     private Settings.Builder prelertIndexSettings()
     {
         return Settings.settingsBuilder()
-                // Our indexes are small and one shard, no replicas puts the
+                // Our indexes are small and one shard puts the
                 // least possible burden on Elasticsearch
                 .put(IndexMetaData.SETTING_NUMBER_OF_SHARDS, 1)
-                .put(IndexMetaData.SETTING_NUMBER_OF_REPLICAS, 0)
+                .put(IndexMetaData.SETTING_NUMBER_OF_REPLICAS, m_NumberOfReplicas)
                 // Sacrifice durability for performance: in the event of power
                 // failure we can lose the last 5 seconds of changes, but it's
                 // much faster

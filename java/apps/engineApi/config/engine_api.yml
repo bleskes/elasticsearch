@@ -64,6 +64,11 @@
 # determination or set to a specific number.
 # es.processors: ""
 
+# How many replicas should each Prelert results index have?  This should be set
+# to a number lower than the number of nodes in the Elasticsearch cluster
+# storing the Prelert results.
+# es.index.number_of_replicas: 0
+
 # ------------------------------------------------------------------------------
 # These settings relate to the lifecycle of the Engine API
 #

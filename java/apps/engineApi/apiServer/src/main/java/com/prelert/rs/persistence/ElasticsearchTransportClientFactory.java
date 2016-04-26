@@ -65,6 +65,6 @@ public class ElasticsearchTransportClientFactory extends ElasticsearchFactory
     @Override
     public JobProvider newJobProvider()
     {
-        return new ElasticsearchJobProvider(null, getClient());
+        return new ElasticsearchJobProvider(null, getClient(), numberOfReplicas());
     }
 }
