@@ -17,6 +17,7 @@
 
 package org.elasticsearch.shield.action.realm;
 
+import org.elasticsearch.action.FailedNodeException;
 import org.elasticsearch.action.support.nodes.BaseNodeResponse;
 import org.elasticsearch.action.support.nodes.BaseNodesResponse;
 import org.elasticsearch.cluster.ClusterName;
@@ -37,32 +38,26 @@ public class ClearRealmCacheResponse extends BaseNodesResponse<ClearRealmCacheRe
     public ClearRealmCacheResponse() {
     }
 
-    public ClearRealmCacheResponse(ClusterName clusterName, Node[] nodes) {
-        super(clusterName, nodes);
+    public ClearRealmCacheResponse(ClusterName clusterName, Node[] nodes, FailedNodeException[] failures) {
+        super(clusterName, nodes, failures);
     }
 
     @Override
     public void readFrom(StreamInput in) throws IOException {
         super.readFrom(in);
-        nodes = new Node[in.readVInt()];
-        for (int i = 0; i < nodes.length; i++) {
-            nodes[i] = Node.readNodeResponse(in);
-        }
+        nodes = in.readArray(Node[]::new, Node::readNodeResponse);
     }
 
     @Override
     public void writeTo(StreamOutput out) throws IOException {
         super.writeTo(out);
-        out.writeVInt(nodes.length);
-        for (Node node : nodes) {
-            node.writeTo(out);
-        }
+        out.writeArray(nodes);
     }
 
     @Override
     public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
-        builder.startObject();
-        builder.field("cluster_name", getClusterName().value());
+        super.toInnerXContent(builder, params);
+
         builder.startObject("nodes");
         for (ClearRealmCacheResponse.Node node: getNodes()) {
             builder.startObject(node.getNode().getId());
@@ -70,7 +65,8 @@ public class ClearRealmCacheResponse extends BaseNodesResponse<ClearRealmCacheRe
             builder.endObject();
         }
         builder.endObject();
-        return builder.endObject();
+
+        return builder;
     }
 
     @Override

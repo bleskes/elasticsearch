@@ -18,6 +18,7 @@
 package org.elasticsearch.marvel.agent.resolver.cluster;
 
 import org.elasticsearch.Version;
+import org.elasticsearch.action.FailedNodeException;
 import org.elasticsearch.action.admin.cluster.stats.ClusterStatsNodeResponse;
 import org.elasticsearch.action.admin.cluster.stats.ClusterStatsResponse;
 import org.elasticsearch.cluster.ClusterName;
@@ -58,7 +59,7 @@ public class ClusterInfoResolverTests extends MonitoringIndexNameResolverTestCas
             doc.setLicense(licenseBuilder.build());
             doc.setClusterName(randomAsciiOfLength(5));
             doc.setClusterStats(new ClusterStatsResponse(Math.abs(randomLong()), ClusterName.DEFAULT,
-                    randomAsciiOfLength(5), new ClusterStatsNodeResponse[]{}));
+                    randomAsciiOfLength(5), new ClusterStatsNodeResponse[]{}, new FailedNodeException[0]));
             return doc;
         } catch (Exception e) {
             throw new IllegalStateException("Failed to generated random ClusterInfoMarvelDoc", e);
