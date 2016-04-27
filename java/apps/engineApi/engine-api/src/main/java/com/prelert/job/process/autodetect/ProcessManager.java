@@ -658,8 +658,15 @@ public class ProcessManager
             // exception so it does not suppress any exception thrown in the try block
             tryFinishReporting(statusReporter, jobLogger);
 
+            Throwable cause = e;
+            if (e.getCause() != null)
+            {
+                cause = e.getCause();
+            }
+
             DataUploadException dataUploadException = new DataUploadException(
-                    statusReporter.incrementalStats(), e);
+                    statusReporter.incrementalStats(), cause);
+
             LOGGER.error(dataUploadException.getMessage(), e);
             throw dataUploadException;
         }
