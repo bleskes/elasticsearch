@@ -32,6 +32,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+
 import static org.mockito.AdditionalMatchers.not;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyLong;
@@ -1826,15 +1827,54 @@ public class JobManagerTest
         DataExtractor dataExtractor = mock(DataExtractor.class);
         when(m_DataExtractorFactory.newExtractor(any(JobDetails.class))).thenReturn(dataExtractor);
 
-        jobManager.createJob(jobConfig, false);
+        JobDetails job = jobManager.createJob(jobConfig, false);
+        DataCounts dataCounts = new DataCounts();
+        dataCounts.setLatestRecordTimeStamp(new Date(0));
+        job.setCounts(dataCounts);
+        when(m_JobProvider.getJobDetails("foo")).thenReturn(Optional.of(job));
 
-        SchedulerConfig newSchedulerConfig = new SchedulerConfig();
+        SchedulerConfig newSchedulerConfig = createScheduledJobConfig().getSchedulerConfig();
         newSchedulerConfig.setUsername("bar");
         newSchedulerConfig.setPassword("1234");
+        newSchedulerConfig.fillDefaults();
+        when(m_JobProvider.updateSchedulerConfig("foo", newSchedulerConfig)).thenReturn(true);
+
         jobManager.updateSchedulerConfig("foo", newSchedulerConfig);
 
         verify(m_PasswordManager).secureStorage(newSchedulerConfig);
         verify(m_JobProvider).updateSchedulerConfig("foo", newSchedulerConfig);
+        verify(m_DataExtractorFactory, times(2)).newExtractor(job);
+    }
+
+    @Test
+    public void testUpdateSchedulerConfig_GivenValidButUpdateFails() throws JobException, GeneralSecurityException
+    {
+        givenProcessInfo(2);
+        JobManager jobManager = createJobManager();
+
+        JobConfiguration jobConfig = createScheduledJobConfig();
+        Logger jobLogger = mock(Logger.class);
+        when(m_JobLoggerFactory.newLogger("foo")).thenReturn(jobLogger);
+        DataExtractor dataExtractor = mock(DataExtractor.class);
+        when(m_DataExtractorFactory.newExtractor(any(JobDetails.class))).thenReturn(dataExtractor);
+
+        JobDetails job = jobManager.createJob(jobConfig, false);
+        DataCounts dataCounts = new DataCounts();
+        dataCounts.setLatestRecordTimeStamp(new Date(0));
+        job.setCounts(dataCounts);
+        when(m_JobProvider.getJobDetails("foo")).thenReturn(Optional.of(job));
+
+        SchedulerConfig newSchedulerConfig = createScheduledJobConfig().getSchedulerConfig();
+        newSchedulerConfig.setUsername("bar");
+        newSchedulerConfig.setPassword("1234");
+        newSchedulerConfig.fillDefaults();
+        when(m_JobProvider.updateSchedulerConfig("foo", newSchedulerConfig)).thenReturn(false);
+
+        jobManager.updateSchedulerConfig("foo", newSchedulerConfig);
+
+        verify(m_PasswordManager).secureStorage(newSchedulerConfig);
+        verify(m_JobProvider).updateSchedulerConfig("foo", newSchedulerConfig);
+        verify(m_DataExtractorFactory).newExtractor(job);
     }
 
     private void givenProcessInfo(int maxLicenseJobs)

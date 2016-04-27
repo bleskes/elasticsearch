@@ -1256,7 +1256,16 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
                 throw new CannotUpdateSchedulerException(jobId, scheduler.getStatus());
             }
             securePassword(newSchedulerConfig);
-            return m_JobProvider.updateSchedulerConfig(jobId, newSchedulerConfig);
+            if (m_JobProvider.updateSchedulerConfig(jobId, newSchedulerConfig))
+            {
+                JobDetails job = getJobOrThrowIfUnknown(jobId);
+                // We cannot be sure the update is available at the storage
+                // so we set the new schedulerConfig explicitly.
+                job.setSchedulerConfig(newSchedulerConfig);
+                createJobScheduler(job);
+                return true;
+            }
+            return false;
         }
     }
 
