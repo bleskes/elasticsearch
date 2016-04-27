@@ -94,7 +94,7 @@ public class ActivityAudit
 
             if (jobDetails.isEmpty() == false)
             {
-                auditor.info(buildUsageMessage(jobDetails));
+                auditor.activity(buildUsageMessage(jobDetails));
             }
         }
         catch (Exception e)
