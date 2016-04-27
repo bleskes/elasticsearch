@@ -87,6 +87,7 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
@@ -163,7 +164,7 @@ public class IndexAuditTrail extends AbstractComponent implements AuditTrail, Cl
     private final AtomicReference<State> state = new AtomicReference<>(State.INITIALIZED);
     private final String nodeName;
     private final Provider<InternalClient> clientProvider;
-    private final LinkedBlockingQueue<Message> eventQueue;
+    private final BlockingQueue<Message> eventQueue;
     private final QueueConsumer queueConsumer;
     private final Transport transport;
     private final ThreadPool threadPool;
@@ -193,9 +194,8 @@ public class IndexAuditTrail extends AbstractComponent implements AuditTrail, Cl
         this.clusterService = clusterService;
         this.nodeName = settings.get("name");
         this.queueConsumer = new QueueConsumer(EsExecutors.threadName(settings, "audit-queue-consumer"));
-
         int maxQueueSize = QUEUE_SIZE_SETTING.get(settings);
-        this.eventQueue = new LinkedBlockingQueue<>(maxQueueSize);
+        this.eventQueue = createQueue(maxQueueSize);
 
         // we have to initialize this here since we use rollover in determining if we can start...
         rollover = ROLLOVER_SETTING.get(settings);
@@ -385,7 +385,7 @@ public class IndexAuditTrail extends AbstractComponent implements AuditTrail, Cl
     @Override
     public void authenticationFailed(AuthenticationToken token, String action, TransportMessage message) {
         if (events.contains(AUTHENTICATION_FAILED)) {
-            if (!principalIsAuditor(token.principal())) {
+            if (XPackUser.is(token.principal()) == false) {
                 try {
                     enqueue(message("authentication_failed", action, token, null, indices(message), message), "authentication_failed");
                 } catch (Exception e) {
@@ -398,7 +398,7 @@ public class IndexAuditTrail extends AbstractComponent implements AuditTrail, Cl
     @Override
     public void authenticationFailed(AuthenticationToken token, RestRequest request) {
         if (events.contains(AUTHENTICATION_FAILED)) {
-            if (!principalIsAuditor(token.principal())) {
+            if (XPackUser.is(token.principal()) == false) {
                 try {
                     enqueue(message("authentication_failed", null, token, null, null, request), "authentication_failed");
                 } catch (Exception e) {
@@ -411,7 +411,7 @@ public class IndexAuditTrail extends AbstractComponent implements AuditTrail, Cl
     @Override
     public void authenticationFailed(String realm, AuthenticationToken token, String action, TransportMessage message) {
         if (events.contains(AUTHENTICATION_FAILED)) {
-            if (!principalIsAuditor(token.principal())) {
+            if (XPackUser.is(token.principal()) == false) {
                 try {
                     enqueue(message("authentication_failed", action, token, realm, indices(message), message), "authentication_failed");
                 } catch (Exception e) {
@@ -424,7 +424,7 @@ public class IndexAuditTrail extends AbstractComponent implements AuditTrail, Cl
     @Override
     public void authenticationFailed(String realm, AuthenticationToken token, RestRequest request) {
         if (events.contains(AUTHENTICATION_FAILED)) {
-            if (!principalIsAuditor(token.principal())) {
+            if (XPackUser.is(token.principal()) == false) {
                 try {
                     enqueue(message("authentication_failed", null, token, realm, null, request), "authentication_failed");
                 } catch (Exception e) {
@@ -436,35 +436,31 @@ public class IndexAuditTrail extends AbstractComponent implements AuditTrail, Cl
 
     @Override
     public void accessGranted(User user, String action, TransportMessage message) {
-        if (!principalIsAuditor(user.principal())) {
-            // special treatment for internal system actions - only log if explicitly told to
-            if ((SystemUser.is(user) && SystemPrivilege.INSTANCE.predicate().test(action)) || XPackUser.is(user)) {
-                if (events.contains(SYSTEM_ACCESS_GRANTED)) {
-                    try {
-                        enqueue(message("access_granted", action, user, indices(message), message), "access_granted");
-                    } catch (Exception e) {
-                        logger.warn("failed to index audit event: [access_granted]", e);
-                    }
-                }
-            } else if (events.contains(ACCESS_GRANTED)) {
+        // special treatment for internal system actions - only log if explicitly told to
+        if ((SystemUser.is(user) && SystemPrivilege.INSTANCE.predicate().test(action))) {
+            if (events.contains(SYSTEM_ACCESS_GRANTED)) {
                 try {
                     enqueue(message("access_granted", action, user, indices(message), message), "access_granted");
                 } catch (Exception e) {
                     logger.warn("failed to index audit event: [access_granted]", e);
                 }
             }
+        } else if (events.contains(ACCESS_GRANTED) && XPackUser.is(user) == false) {
+            try {
+                enqueue(message("access_granted", action, user, indices(message), message), "access_granted");
+            } catch (Exception e) {
+                logger.warn("failed to index audit event: [access_granted]", e);
+            }
         }
     }
 
     @Override
     public void accessDenied(User user, String action, TransportMessage message) {
-        if (events.contains(ACCESS_DENIED)) {
-            if (!principalIsAuditor(user.principal())) {
-                try {
-                    enqueue(message("access_denied", action, user, indices(message), message), "access_denied");
-                } catch (Exception e) {
-                    logger.warn("failed to index audit event: [access_denied]", e);
-                }
+        if (events.contains(ACCESS_DENIED) && XPackUser.is(user) == false) {
+            try {
+                enqueue(message("access_denied", action, user, indices(message), message), "access_denied");
+            } catch (Exception e) {
+                logger.warn("failed to index audit event: [access_denied]", e);
             }
         }
     }
@@ -493,13 +489,11 @@ public class IndexAuditTrail extends AbstractComponent implements AuditTrail, Cl
 
     @Override
     public void tamperedRequest(User user, String action, TransportMessage request) {
-        if (events.contains(TAMPERED_REQUEST)) {
-            if (!principalIsAuditor(user.principal())) {
-                try {
-                    enqueue(message("tampered_request", action, user, indices(request), request), "tampered_request");
-                } catch (Exception e) {
-                    logger.warn("failed to index audit event: [tampered_request]", e);
-                }
+        if (events.contains(TAMPERED_REQUEST) && XPackUser.is(user) == false) {
+            try {
+                enqueue(message("tampered_request", action, user, indices(request), request), "tampered_request");
+            } catch (Exception e) {
+                logger.warn("failed to index audit event: [tampered_request]", e);
             }
         }
     }
@@ -546,10 +540,6 @@ public class IndexAuditTrail extends AbstractComponent implements AuditTrail, Cl
                 logger.warn("failed to index audit event: [run_as_denied]", e);
             }
         }
-    }
-
-    private boolean principalIsAuditor(String principal) {
-        return principal.equals(XPackUser.INSTANCE.principal());
     }
 
     private Message message(String type, @Nullable String action, @Nullable User user,
@@ -831,6 +821,10 @@ public class IndexAuditTrail extends AbstractComponent implements AuditTrail, Cl
         }
     }
 
+    BlockingQueue<Message> createQueue(int maxQueueSize) {
+        return new LinkedBlockingQueue<>(maxQueueSize);
+    }
+
     private void initializeBulkProcessor() {
 
         final int bulkSize = BULK_SIZE_SETTING.get(settings);
@@ -912,7 +906,6 @@ public class IndexAuditTrail extends AbstractComponent implements AuditTrail, Cl
 
         QueueConsumer(String name) {
             super(name);
-            setDaemon(true);
         }
 
         @Override
@@ -959,25 +952,25 @@ public class IndexAuditTrail extends AbstractComponent implements AuditTrail, Cl
     }
 
     interface Field {
-        String TIMESTAMP = new String("@timestamp");
-        String NODE_NAME = new String("node_name");
-        String NODE_HOST_NAME = new String("node_host_name");
-        String NODE_HOST_ADDRESS = new String("node_host_address");
-        String LAYER = new String("layer");
-        String TYPE = new String("event_type");
-        String ORIGIN_ADDRESS = new String("origin_address");
-        String ORIGIN_TYPE = new String("origin_type");
-        String PRINCIPAL = new String("principal");
-        String RUN_AS_PRINCIPAL = new String("run_as_principal");
-        String RUN_BY_PRINCIPAL = new String("run_by_principal");
-        String ACTION = new String("action");
-        String INDICES = new String("indices");
-        String REQUEST = new String("request");
-        String REQUEST_BODY = new String("request_body");
-        String URI = new String("uri");
-        String REALM = new String("realm");
-        String TRANSPORT_PROFILE = new String("transport_profile");
-        String RULE = new String("rule");
+        String TIMESTAMP = "@timestamp";
+        String NODE_NAME = "node_name";
+        String NODE_HOST_NAME = "node_host_name";
+        String NODE_HOST_ADDRESS = "node_host_address";
+        String LAYER = "layer";
+        String TYPE = "event_type";
+        String ORIGIN_ADDRESS = "origin_address";
+        String ORIGIN_TYPE = "origin_type";
+        String PRINCIPAL = "principal";
+        String RUN_AS_PRINCIPAL = "run_as_principal";
+        String RUN_BY_PRINCIPAL = "run_by_principal";
+        String ACTION = "action";
+        String INDICES = "indices";
+        String REQUEST = "request";
+        String REQUEST_BODY = "request_body";
+        String URI = "uri";
+        String REALM = "realm";
+        String TRANSPORT_PROFILE = "transport_profile";
+        String RULE = "rule";
     }
 
     public enum State {
