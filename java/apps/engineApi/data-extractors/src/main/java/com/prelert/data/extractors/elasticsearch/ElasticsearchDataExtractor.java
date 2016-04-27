@@ -112,6 +112,7 @@ public class ElasticsearchDataExtractor implements DataExtractor
     @Override
     public void newSearch(long startEpochMs, long endEpochMs, Logger logger) throws IOException
     {
+        m_IsCancelled = false;
         m_ScrollState.reset();
         m_CurrentStartTime = startEpochMs;
         m_CurrentEndTime = startEpochMs;

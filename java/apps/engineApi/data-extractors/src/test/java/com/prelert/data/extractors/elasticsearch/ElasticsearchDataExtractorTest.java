@@ -1297,6 +1297,9 @@ public class ElasticsearchDataExtractorTest
         assertEquals("{\"scroll_id\":[\"c2Nhbjs2OzM0NDg1ODpzRlBLc0FXNlNyNm5JWUc1\"]}",
                 requester.getDeleteRequestParams(0).requestBody);
         assertEquals(1, requester.m_DeleteRequestParams.size());
+
+        m_Extractor.newSearch(1400000000L, 1403600000L, m_Logger);
+        assertTrue(m_Extractor.hasNext());
     }
 
     private static InputStream toStream(String input)
