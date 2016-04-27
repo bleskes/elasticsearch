@@ -52,8 +52,6 @@ public class Bucket
     public static final String INFLUENCERS = "influencers";
     public static final String BUCKET_SPAN = "bucketSpan";
 
-    public static final String ES_TIMESTAMP = "@timestamp";
-
     /**
      * Elasticsearch type
      */

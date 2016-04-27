@@ -42,7 +42,6 @@ public class ModelSizeStats
     public static final String LOG_TIME = "logTime";
     public static final String BUCKET_TIME = "bucketTime";
     public static final String TIMESTAMP = "timestamp";
-    public static final String ES_TIMESTAMP = "@timestamp";
 
     /**
      * Elasticsearch type

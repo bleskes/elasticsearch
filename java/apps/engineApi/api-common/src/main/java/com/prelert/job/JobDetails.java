@@ -29,6 +29,7 @@ import java.util.function.Consumer;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonView;
 import com.prelert.job.transform.TransformConfig;
 
@@ -273,14 +274,34 @@ public class JobDetails
 
     /**
      * The Job creation time.
+     * This name is preferred when serialising to the REST API.
      * @return The date the job was created
      */
+    @JsonView(JsonViews.RestApiView.class)
     public Date getCreateTime()
     {
         return m_CreateTime;
     }
 
     public void setCreateTime(Date time)
+    {
+        m_CreateTime = time;
+    }
+
+    /**
+     * The Job creation time.
+     * This name is preferred when serialising to the data store.
+     * @return The date the job was created
+     */
+    @JsonView(JsonViews.DatastoreView.class)
+    @JsonProperty("@timestamp")
+    public Date getAtTimestamp()
+    {
+        return m_CreateTime;
+    }
+
+    @JsonProperty("@timestamp")
+    public void setAtTimestamp(Date time)
     {
         m_CreateTime = time;
     }

@@ -354,7 +354,7 @@ public class ElasticsearchJobProvider implements JobProvider
             {
                 // Remove the Kibana/Logstash '@timestamp' entry as stored in Elasticsearch,
                 // and replace using the API 'timestamp' key.
-                Object timestamp = modelSizeStatsResponse.getSource().remove(ModelSizeStats.ES_TIMESTAMP);
+                Object timestamp = modelSizeStatsResponse.getSource().remove(ElasticsearchMappings.ES_TIMESTAMP);
                 modelSizeStatsResponse.getSource().put(ModelSizeStats.TIMESTAMP, timestamp);
 
                 ModelSizeStats modelSizeStats = m_ObjectMapper.convertValue(
@@ -421,7 +421,7 @@ public class ElasticsearchJobProvider implements JobProvider
             {
                 // Remove the Kibana/Logstash '@timestamp' entry as stored in Elasticsearch,
                 // and replace using the API 'timestamp' key.
-                Object timestamp = modelSizeStatsResponse.getSource().remove(ModelSizeStats.ES_TIMESTAMP);
+                Object timestamp = modelSizeStatsResponse.getSource().remove(ElasticsearchMappings.ES_TIMESTAMP);
                 modelSizeStatsResponse.getSource().put(ModelSizeStats.TIMESTAMP, timestamp);
 
                 ModelSizeStats modelSizeStats = m_ObjectMapper.convertValue(
@@ -924,7 +924,7 @@ public class ElasticsearchJobProvider implements JobProvider
             Map<String, Object> m  = hit.getSource();
 
             // replace logstash timestamp name with timestamp
-            m.put(Bucket.TIMESTAMP, m.remove(ElasticsearchMappings.ES_TIMESTAMP));
+            m.put(AnomalyRecord.TIMESTAMP, m.remove(ElasticsearchMappings.ES_TIMESTAMP));
 
             AnomalyRecord record = m_ObjectMapper.convertValue(
                     m, AnomalyRecord.class);
@@ -975,7 +975,7 @@ public class ElasticsearchJobProvider implements JobProvider
     {
         LOGGER.trace("ES API CALL: search all of type " + Influencer.TYPE + " from index " + jobId.getIndex()
                 + ((sortField != null) ? " with sort "
-                + (sortDescending ? "descending" : "ascending") + " on field " + sortField : "")
+                + (sortDescending ? "descending" : "ascending") + " on field " + esSortField(sortField) : "")
                 + " with filter after sort skip " + skip + " take " + take);
 
         SearchRequestBuilder searchRequestBuilder = m_Client.prepareSearch(jobId.getIndex())
@@ -1004,7 +1004,7 @@ public class ElasticsearchJobProvider implements JobProvider
             Map<String, Object> m = hit.getSource();
 
             // replace logstash timestamp name with timestamp
-            m.put(Bucket.TIMESTAMP, m.remove(ElasticsearchMappings.ES_TIMESTAMP));
+            m.put(Influencer.TIMESTAMP, m.remove(ElasticsearchMappings.ES_TIMESTAMP));
 
             Influencer influencer = m_ObjectMapper.convertValue(m, Influencer.class);
             influencer.setId(hit.getId());
@@ -1144,7 +1144,7 @@ public class ElasticsearchJobProvider implements JobProvider
         try
         {
             LOGGER.trace("ES API CALL: search all of type " + ModelSnapshot.TYPE +
-                    " from index " + jobId.getIndex() + " sort ascending " + sortField +
+                    " from index " + jobId.getIndex() + " sort ascending " + esSortField(sortField) +
                     " with filter after sort skip " + skip + " take " + take);
             searchResponse = m_Client.prepareSearch(jobId.getIndex())
                                         .setTypes(ModelSnapshot.TYPE)
@@ -1172,7 +1172,7 @@ public class ElasticsearchJobProvider implements JobProvider
             {
                 @SuppressWarnings("unchecked")
                 Map<String, Object> map = (Map<String, Object>)o;
-                Object ts = map.remove(ModelSizeStats.ES_TIMESTAMP);
+                Object ts = map.remove(ElasticsearchMappings.ES_TIMESTAMP);
                 map.put(ModelSizeStats.TIMESTAMP, ts);
             }
 
@@ -1357,6 +1357,9 @@ public class ElasticsearchJobProvider implements JobProvider
 
     private String esSortField(String sortField)
     {
+        // Beware: There's an assumption here that Bucket.TIMESTAMP,
+        // AnomalyRecord.TIMESTAMP, Influencer.TIMESTAMP and
+        // ModelSnapshot.TIMESTAMP are all the same
         return sortField.equals(Bucket.TIMESTAMP) ? ElasticsearchMappings.ES_TIMESTAMP : sortField;
     }
 }

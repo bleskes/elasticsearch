@@ -101,7 +101,7 @@ public class RecordsTest extends ServiceTest
     {
         QueryPage<AnomalyRecord> queryResult = new QueryPage<>(Arrays.asList(new AnomalyRecord()), 1);
 
-        when(jobManager().records(JOB_ID, 0, 100, false, "@timestamp", true, 0, 0))
+        when(jobManager().records(JOB_ID, 0, 100, false, "timestamp", true, 0, 0))
                 .thenReturn(queryResult);
 
         Pagination<AnomalyRecord> results = m_Records.records(JOB_ID, 0, 100, "", "", false,

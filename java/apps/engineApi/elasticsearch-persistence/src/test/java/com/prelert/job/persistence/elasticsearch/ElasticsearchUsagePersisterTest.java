@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -104,8 +104,8 @@ public class ElasticsearchUsagePersisterTest
 
         List<Map> capturedUpserts = upsertsCaptor.getAllValues();
         assertEquals(2, capturedUpserts.size());
-        System.out.println(capturedUpserts.get(0).get(Usage.TIMESTAMP));
-        assertEquals(timestamp, capturedUpserts.get(0).get(Usage.TIMESTAMP).toString());
+        System.out.println(capturedUpserts.get(0).get(ElasticsearchMappings.ES_TIMESTAMP));
+        assertEquals(timestamp, capturedUpserts.get(0).get(ElasticsearchMappings.ES_TIMESTAMP).toString());
         assertEquals(10L, capturedUpserts.get(0).get(Usage.INPUT_BYTES));
         assertEquals(30L, capturedUpserts.get(0).get(Usage.INPUT_FIELD_COUNT));
         assertEquals(1L, capturedUpserts.get(0).get(Usage.INPUT_RECORD_COUNT));

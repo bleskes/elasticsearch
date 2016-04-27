@@ -51,6 +51,11 @@ public final class ReservedFieldNames
     private static final String JOB_ID_NAME = "jobId";
 
     /**
+     * @timestamp isn't in this package, so redefine.
+     */
+    private static final String ES_TIMESTAMP = "@timestamp";
+
+    /**
      * This array should be updated to contain all the field names that appear
      * in any documents we store in our results index.  (The reason it's any
      * documents we store and not just results documents is that Elasticsearch
@@ -120,7 +125,6 @@ public final class ReservedFieldNames
         Bucket.RECORDS,
         Bucket.BUCKET_INFLUENCERS,
         Bucket.INFLUENCERS,
-        Bucket.ES_TIMESTAMP,
         Bucket.INITIAL_ANOMALY_SCORE,
 
         BucketInfluencer.BUCKET_TIME,
@@ -176,7 +180,6 @@ public final class ReservedFieldNames
         JobDetails.DATA_DESCRIPTION,
         JobDetails.SCHEDULER_STATUS,
         JobDetails.SCHEDULER_CONFIG,
-        JobDetails.CREATE_TIME,
         JobDetails.FINISHED_TIME,
         JobDetails.LAST_DATA_TIME,
         JobDetails.COUNTS,
@@ -249,12 +252,12 @@ public final class ReservedFieldNames
         TransformConfig.INPUTS,
         TransformConfig.OUTPUTS,
 
-        Usage.TIMESTAMP,
         Usage.INPUT_BYTES,
         Usage.INPUT_FIELD_COUNT,
         Usage.INPUT_RECORD_COUNT,
 
-        JOB_ID_NAME
+        JOB_ID_NAME,
+        ES_TIMESTAMP
     };
 
     /**
@@ -267,4 +270,3 @@ public final class ReservedFieldNames
     {
     }
 }
-

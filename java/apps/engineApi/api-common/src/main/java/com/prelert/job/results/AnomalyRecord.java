@@ -62,6 +62,7 @@ public class AnomalyRecord
     public static final String IS_INTERIM = "isInterim";
     public static final String INFLUENCERS = "influencers";
     public static final String BUCKET_SPAN = "bucketSpan";
+    public static final String TIMESTAMP = "timestamp";
 
     /**
      * Metric Results (including population metrics)

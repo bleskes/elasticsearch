@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -58,7 +58,7 @@ public class ElasticsearchUsagePersister implements UsagePersister
         m_DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXX");
         m_UpsertMap = new HashMap<>();
 
-        m_UpsertMap.put(Usage.TIMESTAMP, "");
+        m_UpsertMap.put(ElasticsearchMappings.ES_TIMESTAMP, "");
         m_UpsertMap.put(Usage.INPUT_BYTES, null);
     }
 
@@ -68,7 +68,7 @@ public class ElasticsearchUsagePersister implements UsagePersister
         ZonedDateTime nowTruncatedToHour = ZonedDateTime.now().truncatedTo(ChronoUnit.HOURS);
         String formattedNowTruncatedToHour = nowTruncatedToHour.format(m_DateTimeFormatter);
         m_DocId = USAGE_DOC_ID_PREFIX + formattedNowTruncatedToHour;
-        m_UpsertMap.put(Usage.TIMESTAMP, formattedNowTruncatedToHour);
+        m_UpsertMap.put(ElasticsearchMappings.ES_TIMESTAMP, formattedNowTruncatedToHour);
 
         // update global count
         updateDocument(PRELERT_USAGE_INDEX,  m_DocId, bytesRead, fieldsRead, recordsRead);

@@ -557,6 +557,7 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
                 .field(CategoryDefinition.TERMS, category.getTerms())
                 .field(CategoryDefinition.REGEX, category.getRegex())
                 .array(CategoryDefinition.EXAMPLES, examples.toArray(new Object[examples.size()]))
+                .field(ElasticsearchMappings.ES_TIMESTAMP, new Date())
                 .endObject();
     }
 
@@ -647,7 +648,7 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
                 .field(ModelSizeStats.TOTAL_PARTITION_FIELD_COUNT, modelSizeStats.getTotalPartitionFieldCount())
                 .field(ModelSizeStats.BUCKET_ALLOCATION_FAILURES_COUNT, modelSizeStats.getBucketAllocationFailuresCount())
                 .field(ModelSizeStats.MEMORY_STATUS, modelSizeStats.getMemoryStatus())
-                .field(ModelSizeStats.ES_TIMESTAMP, modelSizeStats.getTimestamp())
+                .field(ElasticsearchMappings.ES_TIMESTAMP, modelSizeStats.getTimestamp())
                 .field(ModelSizeStats.LOG_TIME, modelSizeStats.getLogTime());
     }
 

@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -122,13 +122,6 @@ public class Records extends ResourceWithJobManager
         JobManager manager = jobManager();
 
         QueryPage<AnomalyRecord> queryResults;
-
-        // HACK - the API renames @timestamp to timestamp
-        // but it is @timestamp in the database for Kibana
-        if (Bucket.TIMESTAMP.equals(sort))
-        {
-            sort = Bucket.ES_TIMESTAMP;
-        }
 
         if (epochStartMs > 0 || epochEndMs > 0)
         {
