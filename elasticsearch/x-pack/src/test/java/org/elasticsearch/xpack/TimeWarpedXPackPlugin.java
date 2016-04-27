@@ -20,7 +20,7 @@
 package org.elasticsearch.xpack;
 
 import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.watcher.test.TimeWarpedWatcher;
+import org.elasticsearch.xpack.watcher.test.TimeWarpedWatcher;
 
 public class TimeWarpedXPackPlugin extends XPackPlugin {
 
