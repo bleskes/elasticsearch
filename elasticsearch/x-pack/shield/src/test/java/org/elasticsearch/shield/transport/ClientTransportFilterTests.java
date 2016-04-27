@@ -42,6 +42,6 @@ public class ClientTransportFilterTests extends ESTestCase {
     public void testOutbound() throws Exception {
         TransportRequest request = mock(TransportRequest.class);
         filter.outbound("_action", request);
-        verify(authcService).attachUserHeaderIfMissing(SystemUser.INSTANCE);
+        verify(authcService).attachUserIfMissing(SystemUser.INSTANCE);
     }
 }

@@ -17,8 +17,8 @@
 
 package org.elasticsearch.shield.authz.permission;
 
+import org.elasticsearch.shield.authc.Authentication;
 import org.elasticsearch.shield.authz.privilege.ClusterPrivilege;
-import org.elasticsearch.shield.user.User;
 import org.elasticsearch.transport.TransportRequest;
 
 import java.util.List;
@@ -29,13 +29,13 @@ import java.util.function.Predicate;
  */
 public interface ClusterPermission extends Permission {
 
-    boolean check(String action, TransportRequest request, User user);
+    boolean check(String action, TransportRequest request, Authentication authentication);
 
     public static class Core implements ClusterPermission {
 
         public static final Core NONE = new Core(ClusterPrivilege.NONE) {
             @Override
-            public boolean check(String action, TransportRequest request, User user) {
+            public boolean check(String action, TransportRequest request, Authentication authentication) {
                 return false;
             }
 
@@ -58,7 +58,7 @@ public interface ClusterPermission extends Permission {
         }
 
         @Override
-        public boolean check(String action, TransportRequest request, User user) {
+        public boolean check(String action, TransportRequest request, Authentication authentication) {
             return predicate.test(action);
         }
 
@@ -77,7 +77,7 @@ public interface ClusterPermission extends Permission {
         }
 
         @Override
-        public boolean check(String action, TransportRequest request, User user) {
+        public boolean check(String action, TransportRequest request, Authentication authentication) {
             if (globals == null) {
                 return false;
             }
@@ -85,7 +85,7 @@ public interface ClusterPermission extends Permission {
                 if (global == null || global.cluster() == null) {
                     throw new RuntimeException();
                 }
-                if (global.cluster().check(action, request, user)) {
+                if (global.cluster().check(action, request, authentication)) {
                     return true;
                 }
             }
