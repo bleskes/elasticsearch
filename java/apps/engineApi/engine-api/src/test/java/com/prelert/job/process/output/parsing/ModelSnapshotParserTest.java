@@ -40,6 +40,7 @@ import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import com.prelert.job.ModelSnapshot;
+import com.prelert.job.quantiles.Quantiles;
 import com.prelert.utils.json.AutoDetectParseException;
 
 public class ModelSnapshotParserTest
@@ -64,6 +65,7 @@ public class ModelSnapshotParserTest
                      + " \"timestamp\":1234567890000,"
                      + " \"snapshotDocCount\":3,"
                      + " \"modelSizeStats\":{\"modelBytes\":54321},"
+                     + " \"quantiles\": {\"quantileState\": \"yabadabadoo\"},"
                      + " \"latestRecordTimeStamp\": 1111111111111,"
                      + " \"latestResultTimeStamp\" : 1010101010101}";
         JsonParser parser = createJsonParser(input);
@@ -80,6 +82,9 @@ public class ModelSnapshotParserTest
         assertEquals(54321L, modelSnapshot.getModelSizeStats().getModelBytes());
         assertEquals(new Date(1111111111111L), modelSnapshot.getLatestRecordTimeStamp());
         assertEquals(new Date(1010101010101L), modelSnapshot.getLatestResultTimeStamp());
+        Quantiles q = new Quantiles();
+        q.setQuantileState("yabadabadoo");
+        assertEquals(modelSnapshot.getQuantiles(), q);
 
         assertEquals(JsonToken.END_OBJECT, parser.getCurrentToken());
     }

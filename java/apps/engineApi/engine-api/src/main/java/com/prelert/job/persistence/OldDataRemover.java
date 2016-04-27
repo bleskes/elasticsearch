@@ -30,6 +30,7 @@ package com.prelert.job.persistence;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.ArrayDeque;
+import java.util.Date;
 import java.util.Deque;
 import java.util.List;
 import java.util.Objects;
@@ -86,6 +87,19 @@ public class OldDataRemover
             deleter.commitAndFreeDiskSpace();
         }
         LOGGER.info("Removal of expired data is complete");
+    }
+
+    /**
+     * Removes results between the time given and the current time
+     * @param jobId
+     * @param cutoffEpochMs
+     */
+    public void deleteResultsAfter(String jobId, long cutoffEpochMs)
+    {
+        Date now = new Date();
+        JobDataDeleter deleter = m_DataDeleterFactory.newDeleter(jobId);
+        deleteResultsWithinRange(jobId, deleter, cutoffEpochMs, now.getTime());
+        deleter.commitAndFreeDiskSpace();
     }
 
     /**
@@ -216,12 +230,17 @@ public class OldDataRemover
 
     private void deleteResultsBefore(String jobId, JobDataDeleter deleter, long cutoffEpochMs)
     {
+        deleteResultsWithinRange(jobId, deleter, 0, cutoffEpochMs);
+    }
+
+    private void deleteResultsWithinRange(String jobId, JobDataDeleter deleter, long start, long end)
+    {
         deleteBatchedData(
-                m_JobProvider.newBatchedInfluencersIterator(jobId).timeRange(0, cutoffEpochMs),
+                m_JobProvider.newBatchedInfluencersIterator(jobId).timeRange(start, end),
                 influencer -> deleter.deleteInfluencer(influencer)
         );
         deleteBatchedData(
-                m_JobProvider.newBatchedBucketsIterator(jobId).timeRange(0, cutoffEpochMs),
+                m_JobProvider.newBatchedBucketsIterator(jobId).timeRange(start, end),
                 bucket -> deleter.deleteBucket(bucket)
         );
     }

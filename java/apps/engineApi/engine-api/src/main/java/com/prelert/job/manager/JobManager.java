@@ -34,10 +34,8 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.time.Duration;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -49,7 +47,6 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import javax.ws.rs.core.Feature;
@@ -91,11 +88,10 @@ import com.prelert.job.manager.actions.ActionGuardian;
 import com.prelert.job.manager.actions.ActionGuardian.ActionTicket;
 import com.prelert.job.messages.Messages;
 import com.prelert.job.password.PasswordManager;
-import com.prelert.job.persistence.BatchedResultsIterator;
 import com.prelert.job.persistence.DataStoreException;
-import com.prelert.job.persistence.JobDataDeleter;
 import com.prelert.job.persistence.JobDataDeleterFactory;
 import com.prelert.job.persistence.JobProvider;
+import com.prelert.job.persistence.OldDataRemover;
 import com.prelert.job.persistence.QueryPage;
 import com.prelert.job.persistence.none.NoneJobDataPersister;
 import com.prelert.job.process.autodetect.ProcessManager;
@@ -496,18 +492,8 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
     public void deleteBucketsAfter(String jobId, Date deleteAfter)
     {
         m_JobLoggerFactory.newLogger(jobId).info("Deleting buckets after '" + deleteAfter + "'");
-        JobDataDeleter deleter = m_JobDataDeleterFactory.newDeleter(jobId);
-        Date now = new Date();
-        deleteDataAfter(
-                m_JobProvider.newBatchedInfluencersIterator(jobId).timeRange(deleteAfter.getTime() + 1, now.getTime()),
-                influencer -> deleter.deleteInfluencer(influencer)
-        );
-        // Deleting Bucket should also delete AnomalyRecords and BucketInfluencers
-        deleteDataAfter(
-                m_JobProvider.newBatchedBucketsIterator(jobId).timeRange(deleteAfter.getTime() + 1, now.getTime()),
-                bucket -> deleter.deleteBucket(bucket)
-        );
-        deleter.commitAndFreeDiskSpace();
+        OldDataRemover remover = new OldDataRemover(m_JobProvider, m_JobDataDeleterFactory);
+        remover.deleteResultsAfter(jobId, deleteAfter.getTime() + 1);
     }
 
     public QueryPage<ModelSnapshot> modelSnapshots(String jobId, int skip, int take,
@@ -1408,36 +1394,5 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
         }
 
         return deets;
-    }
-
-    private <T> void deleteDataAfter(BatchedResultsIterator<T> resultsIterator,
-            Consumer<T> deleteFunction)
-    {
-        while (resultsIterator.hasNext())
-        {
-            Deque<T> batch = nextBatch(resultsIterator);
-            if (batch.isEmpty())
-            {
-                return;
-            }
-            for (T result : batch)
-            {
-                deleteFunction.accept(result);
-            }
-        }
-    }
-
-    private <T> Deque<T> nextBatch(BatchedResultsIterator<T> resultsIterator)
-    {
-        try
-        {
-            return resultsIterator.next();
-        }
-        catch (UnknownJobException e)
-        {
-            LOGGER.warn("Failed to retrieve results for job '" + e.getJobId() + "'. "
-                    + "The job appears to have been deleted.");
-            return new ArrayDeque<T>();
-        }
     }
 }
