@@ -84,7 +84,7 @@ public class ModelSnapshotParserTest
         assertEquals(new Date(1010101010101L), modelSnapshot.getLatestResultTimeStamp());
         Quantiles q = new Quantiles();
         q.setQuantileState("yabadabadoo");
-        assertEquals(modelSnapshot.getQuantiles(), q);
+        assertEquals(q, modelSnapshot.getQuantiles());
 
         assertEquals(JsonToken.END_OBJECT, parser.getCurrentToken());
     }
