@@ -62,6 +62,7 @@ public class ElasticsearchBulkDeleter implements JobDataDeleter
     private static final Logger LOGGER = Logger.getLogger(ElasticsearchBulkDeleter.class);
 
     private static int SCROLL_SIZE = 1000;
+    private static final String SCROLL_CONTEXT_DURATION = "5m";
 
     private final Client m_Client;
     private final ElasticsearchJobId m_JobId;
@@ -235,7 +236,7 @@ public class ElasticsearchBulkDeleter implements JobDataDeleter
                 .setTypes(Bucket.TYPE, AnomalyRecord.TYPE, Influencer.TYPE, BucketInfluencer.TYPE)
                 .setQuery(qb)
                 .addSort(SortBuilders.fieldSort(ElasticsearchMappings.ES_DOC))
-                .setScroll("5m")
+                .setScroll(SCROLL_CONTEXT_DURATION)
                 .setSize(SCROLL_SIZE)
                 .get();
 
@@ -269,7 +270,7 @@ public class ElasticsearchBulkDeleter implements JobDataDeleter
                         m_Client.prepareDelete(m_JobId.getIndex(), hit.getType(), hit.getId()));
             }
 
-            searchResponse = m_Client.prepareSearchScroll(scrollId).setScroll("5m").get();
+            searchResponse = m_Client.prepareSearchScroll(scrollId).setScroll(SCROLL_CONTEXT_DURATION).get();
         }
     }
 
