@@ -55,10 +55,13 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Strings;
+import com.prelert.job.Detector;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.JobDetails;
+import com.prelert.job.ModelSnapshot;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.results.CategoryDefinition;
+import com.prelert.job.transform.TransformConfig;
 import com.prelert.rs.data.ApiError;
 import com.prelert.rs.data.DataPostResponse;
 import com.prelert.rs.data.MultiDataPostResult;
@@ -244,7 +247,118 @@ public class EngineApiClient implements Closeable
     }
 
     /**
-     * PUTs the description parameter to the job and sets it as
+     * Validate a detector object.
+     * <br>
+     * Internally this function converts <code>detector</code> to a JSON
+     * string
+     *
+     * @param detector the detector to validate
+     * @return FIXME
+     * @throws IOException If HTTP POST fails
+     */
+    public String validateDetector(Detector detector) throws IOException
+    {
+        String payload = m_JsonMapper.writeValueAsString(detector);
+        return validateDetector(payload);
+    }
+
+    /**
+     * Validate a detector string.
+     *
+     * @param detector the detector to validate
+     * @return FIXME
+     * @throws IOException If HTTP POST fails
+     */
+    public String validateDetector(String detector) throws IOException
+    {
+        String url = m_BaseUrl + "/validate/detector";
+        LOGGER.debug("Validate detector " + detector + ", at: " + url);
+
+        Request request = m_HttpClient.POST(url)
+                .header(HttpHeader.CONTENT_TYPE, "application/json")
+                .header(HttpHeader.CONTENT_ENCODING, "UTF-8")
+                .content(new StringContentProvider(detector));
+
+        ContentResponse response = executeRequest(request);
+        return response.getContentAsString();
+    }
+
+    /**
+     * Validate a TransformConfig object.
+     * <br>
+     * Internally this function converts <code>transform</code> to a JSON
+     * string
+     *
+     * @param transform the transform to validate
+     * @return FIXME
+     * @throws IOException If HTTP POST fails
+     */
+    public String validateTransform(TransformConfig transform) throws IOException
+    {
+        String payload = m_JsonMapper.writeValueAsString(transform);
+        return validateTransform(payload);
+    }
+
+    /**
+     * Validate a transform string.
+     *
+     * @param transform the transform to validate
+     * @return FIXME
+     * @throws IOException If HTTP POST fails
+     */
+    public String validateTransform(String transform) throws IOException
+    {
+        String url = m_BaseUrl + "/validate/transform";
+        LOGGER.debug("Validate transform " + transform + ", at: " + url);
+
+        Request request = m_HttpClient.POST(url)
+                .header(HttpHeader.CONTENT_TYPE, "application/json")
+                .header(HttpHeader.CONTENT_ENCODING, "UTF-8")
+                .content(new StringContentProvider(transform));
+
+        ContentResponse response = executeRequest(request);
+        return response.getContentAsString();
+    }
+
+    /**
+     * Validate an array of TransformConfig objects.
+     * <br>
+     * Internally this function converts <code>transforms</code> to a JSON
+     * string
+     *
+     * @param transforms the transforms to validate
+     * @return FIXME
+     * @throws IOException If HTTP POST fails
+     */
+    public String validateTransforms(TransformConfig[] transforms) throws IOException
+    {
+        String payload = m_JsonMapper.writeValueAsString(transforms);
+        return validateTransforms(payload);
+    }
+
+    /**
+     * Validate an array of transforms.
+     *
+     * @param transforms the transforms to validate
+     * @return FIXME
+     * @throws IOException If HTTP POST fails
+     */
+    public String validateTransforms(String transforms) throws IOException
+    {
+        String url = m_BaseUrl + "/validate/transforms";
+        LOGGER.debug("Validate transforms " + transforms + ", at: " + url);
+
+        Request request = m_HttpClient.POST(url)
+                .header(HttpHeader.CONTENT_TYPE, "application/json")
+                .header(HttpHeader.CONTENT_ENCODING, "UTF-8")
+                .content(new StringContentProvider(transforms));
+
+        ContentResponse response = executeRequest(request);
+        return response.getContentAsString();
+    }
+
+    /**
+     * PUTS the description parameter to the job and sets it as
      * the job's new description field
      *
      * @param jobId The job's unique ID
@@ -280,6 +394,111 @@ public class EngineApiClient implements Closeable
                 .content(new StringContentProvider(updateJson));
 
         return executeRequest(request, "updating job");
+    }
+
+    /**
+     * PUTS the description parameter to the job and sets it as
+     * the ModelSnapshot's new description field
+     *
+     * @param jobId The job's unique ID
+     * @param snapshotId The ModelSnapshot's ID
+     * @param description New description field
+     *
+     * @return ModelSnapshot The updated snapshot
+     * @throws IOException If HTTP PUT fails
+     */
+    public ModelSnapshot setModelSnapshotDescription(String jobId, String snapshotId, String description)
+    throws IOException
+    {
+        String url = m_BaseUrl + "/modelsnapshots/" + jobId + "/" + snapshotId + "/description";
+        LOGGER.debug("PUT update ModelSnapshot description: " + url);
+        String json = "{\"description\":\"" + description + "\"}";
+
+        Request request = m_HttpClient.newRequest(url)
+                .method(HttpMethod.PUT)
+                .header(HttpHeader.CONTENT_TYPE, "application/json")
+                .header(HttpHeader.CONTENT_ENCODING, "UTF-8")
+                .content(new StringContentProvider(json));
+
+        ContentResponse response = executeRequest(request);
+        return m_JsonMapper.readValue(response.getContentAsString(), new TypeReference<ModelSnapshot>() {} );
+    }
+
+    /**
+     * Revert to a saved ModelSnapshot
+     *
+     * @param jobId The job's unique ID
+     * @param description The description of the desired ModelSnapshot
+     *
+     * @return ModelSnapshot The reverted snapshot
+     * @throws IOException If HTTP POST fails
+     */
+    public ModelSnapshot revertModelSnapshotByDescription(String jobId, String description)
+    throws IOException
+    {
+        String url = m_BaseUrl + "/modelsnapshots/" + jobId + "/revert?description=" + description;
+        LOGGER.debug("POST revert ModelSnapshot by description: " + url);
+        return revertModelSnapshot(url);
+    }
+
+    /**
+     * Revert to a saved ModelSnapshot
+     *
+     * @param jobId The job's unique ID
+     * @param time The snapshotId of the desired ModelSnapshot
+     *
+     * @return ModelSnapshot The reverted snapshot
+     * @throws IOException If HTTP POST fails
+     */
+    public ModelSnapshot revertModelSnapshotByTime(String jobId, String time)
+    throws IOException
+    {
+        String url = m_BaseUrl + "/modelsnapshots/" + jobId + "/revert?time=" + time;
+        LOGGER.debug("POST revert ModelSnapshot by time: " + url);
+        return revertModelSnapshot(url);
+    }
+
+    private ModelSnapshot revertModelSnapshot(String url) throws JsonParseException, JsonMappingException, IOException
+    {
+        Request request = m_HttpClient.newRequest(url).method(HttpMethod.POST);
+
+        ContentResponse response = executeRequest(request);
+        return m_JsonMapper.readValue(response.getContentAsString(), new TypeReference<ModelSnapshot>() {} );
+    }
+
+    /**
+     * Revert to a saved ModelSnapshot
+     *
+     * @param jobId The job's unique ID
+     * @param snapshotId Reverts to the snapshot of this exact time, or the most recent one prior to this time.
+     *
+     * @return ModelSnapshot The reverted snapshot
+     * @throws IOException If HTTP POST fails
+     */
+    public ModelSnapshot revertModelSnapshotById(String jobId, String snapshotId)
+    throws IOException
+    {
+        String url = m_BaseUrl + "/modelsnapshots/" + jobId + "/revert?snapshotId=" + snapshotId;
+        LOGGER.debug("POST revert ModelSnapshot by snapshotId: " + url);
+        return revertModelSnapshot(url);
+    }
+
+    /**
+     * DELETEs the ModelSnapshot
+     *
+     * @param jobId The job's unique ID
+     * @param snapshotId The snapshot's ID
+     *
+     * @return boolean The success of the request
+     * @throws IOException If HTTP DELETE fails
+     */
+    public boolean deleteModelSnapshot(String jobId, String snapshotId)
+    throws IOException
+    {
+        String url = m_BaseUrl + "/modelsnapshots/" + jobId + "/" + snapshotId;
+        LOGGER.debug("DELETE ModelSnapshot: " + url);
+        return executeRequest(m_HttpClient.newRequest(url).method(HttpMethod.DELETE),
+                "deleting snapshot");
     }
 
     private ContentResponse executeRequest(Request request) throws IOException
@@ -338,6 +557,89 @@ public class EngineApiClient implements Closeable
 
         return executeRequest(m_HttpClient.newRequest(url).method(HttpMethod.DELETE),
                 "deleting job");
+    }
+
+    /**
+     * Pause the analysis of a running job: this job will still accept data
+     * but won't analyze it.
+     *
+     * @param jobId The job's unique ID
+     *
+     * @return True if the job is paused successfully
+     * @throws IOException If HTTP POST fails
+     */
+    public boolean pauseJob(String jobId) throws IOException
+    {
+        String url = m_BaseUrl + "/jobs/" + jobId + "/pause";
+        LOGGER.debug("Pause job: " + url);
+        return executeRequest(m_HttpClient.newRequest(url).method(HttpMethod.POST),
+                "pausing job");
+    }
+
+    /**
+     * Resume a paused job
+     *
+     * @param jobId The job's unique ID
+     *
+     * @return True if the job is resumed successfully
+     * @throws IOException If HTTP POST fails
+     */
+    public boolean resumeJob(String jobId) throws IOException
+    {
+        String url = m_BaseUrl + "/jobs/" + jobId + "/resume";
+        LOGGER.debug("Resume job: " + url);
+        return executeRequest(m_HttpClient.newRequest(url).method(HttpMethod.POST),
+                "resuming job");
+    }
+
+    /**
+     * Start the Elasticsearch Scheduler for a particular job.
+     *
+     * @param jobId The job's unique ID
+     *
+     * @return True if the scheduler is started successfully
+     * @throws IOException If HTTP POST fails
+     */
+    public boolean startScheduler(String jobId) throws IOException
+    {
+        String url = m_BaseUrl + "/schedulers/" + jobId + "/start";
+        LOGGER.debug("Start scheduler: " + url);
+        return executeRequest(m_HttpClient.newRequest(url).method(HttpMethod.POST),
+                "starting scheduler");
+    }
+
+    /**
+     * Start the Elasticsearch Scheduler for a particular job.
+     *
+     * @param jobId The job's unique ID
+     * @param start The time specifying the start (inclusive) of the interval data will be analyzed
+     * @param end The time specifying the end (exclusive) of the interval data will be analyzed
+     *
+     * @return True if the scheduler is started successfully
+     * @throws IOException If HTTP POST fails
+     */
+    public boolean startScheduler(String jobId, String start, String end) throws IOException
+    {
+        String url = String.format("%s/schedulers/%s/start?start=%s&end=%s", m_BaseUrl, jobId, start, end);
+        LOGGER.debug("Start scheduler: " + url);
+        return executeRequest(m_HttpClient.newRequest(url).method(HttpMethod.POST),
+                "starting scheduler");
+    }
+
+    /**
+     * Stop the Elasticsearch Scheduler for a particular job.
+     *
+     * @param jobId The job's unique ID
+     *
+     * @return True if the scheduler is started successfully
+     * @throws IOException If HTTP POST fails
+     */
+    public boolean stopScheduler(String jobId) throws IOException
+    {
+        String url = m_BaseUrl + "/schedulers/" + jobId + "/stop";
+        LOGGER.debug("Stop scheduler: " + url);
+        return executeRequest(m_HttpClient.newRequest(url).method(HttpMethod.POST),
+                "stopping scheduler");
     }
 
     /**
@@ -925,6 +1227,81 @@ public class EngineApiClient implements Closeable
         String url = String.format("%s/logs/%s", m_BaseUrl, jobId);
 
         LOGGER.debug("GET download logs " + url);
+
+        m_LastError = null;
+        InputStreamResponseListener responseListener = new InputStreamResponseListener();
+        Request request = m_HttpClient.newRequest(url).method(HttpMethod.GET);
+        request.send(responseListener);
+        return new ZipInputStream(responseListener.getInputStream());
+    }
+
+    /**
+     * Download the log files for Elasticsearch.
+     *
+     * <b>Important: the caller MUST close the ZipInputStream returned by
+     * this method, otherwise all subsequent client/server communications
+     * will be blocked.</b>
+     *
+     * @return A ZipInputStream for the log files. If an error occurred, the inputstream
+     * may by empty or contain the server response. The caller MUST close this
+     * ZipInputStream when they have finished with it.
+     * @throws IOException If HTTP GET fails
+     */
+    public ZipInputStream downloadElasticsearchLogs() throws IOException
+    {
+        String url = String.format("%s/logs/elasticsearch", m_BaseUrl);
+
+        LOGGER.debug("GET download logs " + url);
+
+        m_LastError = null;
+        InputStreamResponseListener responseListener = new InputStreamResponseListener();
+        Request request = m_HttpClient.newRequest(url).method(HttpMethod.GET);
+        request.send(responseListener);
+        return new ZipInputStream(responseListener.getInputStream());
+    }
+
+    /**
+     * Download the log files for the Engine API.
+     *
+     * <b>Important: the caller MUST close the ZipInputStream returned by
+     * this method, otherwise all subsequent client/server communications
+     * will be blocked.</b>
+     *
+     * @return A ZipInputStream for the log files. If an error occurred, the inputstream
+     * may by empty or contain the server response. The caller MUST close this
+     * ZipInputStream when they have finished with it.
+     * @throws IOException If HTTP GET fails
+     */
+    public ZipInputStream downloadEngineLogs() throws IOException
+    {
+        String url = String.format("%s/logs/engine_api", m_BaseUrl);
+
+        LOGGER.debug("GET download logs " + url);
+
+        m_LastError = null;
+        InputStreamResponseListener responseListener = new InputStreamResponseListener();
+        Request request = m_HttpClient.newRequest(url).method(HttpMethod.GET);
+        request.send(responseListener);
+        return new ZipInputStream(responseListener.getInputStream());
+    }
+
+    /**
+     * Download a support bundle file.
+     *
+     * <b>Important: the caller MUST close the ZipInputStream returned by
+     * this method, otherwise all subsequent client/server communications
+     * will be blocked.</b>
+     *
+     * @return A ZipInputStream for the log files. If an error occurred, the inputstream
+     * may by empty or contain the server response. The caller MUST close this
+     * ZipInputStream when they have finished with it.
+     * @throws IOException If HTTP GET fails
+     */
+    public ZipInputStream downloadSupportBundle() throws IOException
+    {
+        String url = String.format("%s/support", m_BaseUrl);
+
+        LOGGER.debug("GET support bundle " + url);
 
         m_LastError = null;
         InputStreamResponseListener responseListener = new InputStreamResponseListener();

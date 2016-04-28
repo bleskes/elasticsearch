@@ -145,7 +145,7 @@ public class BucketsRequestBuilder extends BaseJobRequestBuilder<Bucket>
      * Filters out buckets that start at or after the given value.
      * Value is expected in seconds from the Epoch.
      *
-     * @param value The end data as seconds from the Epoch
+     * @param value The end date as seconds from the Epoch
      * @return this {@code Builder} object
      */
     public BucketsRequestBuilder end(long value)
