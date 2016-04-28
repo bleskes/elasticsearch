@@ -45,7 +45,6 @@ import com.prelert.job.manager.JobManager;
 import com.prelert.job.persistence.QueryPage;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
 import com.prelert.job.results.AnomalyRecord;
-import com.prelert.job.results.Bucket;
 import com.prelert.rs.data.Pagination;
 import com.prelert.rs.validation.PaginationParamsValidator;
 
