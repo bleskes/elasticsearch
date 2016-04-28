@@ -80,6 +80,13 @@ public final class DetectorVerifier
             detector.setFunction(Detector.METRIC);
         }
 
+        if (Detector.ANALYSIS_FUNCTIONS.contains(detector.getFunction()) == false)
+        {
+            throw new JobConfigurationException(
+                    Messages.getMessage(Messages.JOB_CONFIG_UNKNOWN_FUNCTION, detector.getFunction()),
+                    ErrorCodes.UNKNOWN_FUNCTION);
+        }
+
         if (emptyField && emptyByField && emptyOverField)
         {
             if (!Detector.COUNT_WITHOUT_FIELD_FUNCTIONS.contains(detector.getFunction()))
@@ -88,13 +95,6 @@ public final class DetectorVerifier
                         Messages.getMessage(Messages.JOB_CONFIG_NO_ANALYSIS_FIELD_NOT_COUNT),
                         ErrorCodes.INVALID_FIELD_SELECTION);
             }
-        }
-
-        if (Detector.ANALYSIS_FUNCTIONS.contains(detector.getFunction()) == false)
-        {
-            throw new JobConfigurationException(
-                    Messages.getMessage(Messages.JOB_CONFIG_UNKNOWN_FUNCTION, detector.getFunction()),
-                    ErrorCodes.UNKNOWN_FUNCTION);
         }
 
         if (isSummarised && detector.getFunction().equals(Detector.METRIC))
