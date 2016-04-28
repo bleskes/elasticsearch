@@ -383,16 +383,8 @@ public class EngineApiClient implements Closeable
 
                 LOGGER.error(msg);
 
-                uploadSummary = m_JsonMapper.readValue(content, new TypeReference<MultiDataPostResult>() {});
+                uploadSummary = convertMultiDataPostResponse(content);
 
-                for (DataPostResponse dpr : uploadSummary.getResponses())
-                {
-                    if (dpr.getError() != null)
-                    {
-                        m_LastError = dpr.getError();
-                        break;
-                    }
-                }
                 if (m_LastError == null)
                 {
                     m_LastError = newUnknownError(msg);
@@ -452,7 +444,7 @@ public class EngineApiClient implements Closeable
                     Strings.nullToEmpty(resetStart), Strings.nullToEmpty(resetEnd));
         }
         return uploadStream(inputStream, postUrl, compressed, new MultiDataPostResult(), true,
-                content -> m_JsonMapper.readValue(content, new TypeReference<MultiDataPostResult>() {}));
+                content -> convertMultiDataPostResponse(content));
     }
 
     /**
@@ -472,7 +464,21 @@ public class EngineApiClient implements Closeable
         String postUrl = String.format("%s/data/%s", m_BaseUrl, String.join(",", jobIds));
 
         return uploadStream(inputStream, postUrl, compressed, new MultiDataPostResult(), true,
-                content -> m_JsonMapper.readValue(content, new TypeReference<MultiDataPostResult>() {}));
+                content -> convertMultiDataPostResponse(content));
+    }
+
+    private MultiDataPostResult convertMultiDataPostResponse(String content) throws IOException
+    {
+        MultiDataPostResult uploadSummary = m_JsonMapper.readValue(content, new TypeReference<MultiDataPostResult>() {});
+        for (DataPostResponse dpr : uploadSummary.getResponses())
+        {
+            if (dpr.getError() != null)
+            {
+                m_LastError = dpr.getError();
+                break;
+            }
+        }
+        return uploadSummary;
     }
 
     @FunctionalInterface
@@ -550,11 +556,12 @@ public class EngineApiClient implements Closeable
 
             if (!content.isEmpty())
             {
-                m_LastError = m_JsonMapper.readValue(content, new TypeReference<ApiError>() {});
                 if (convertResponseOnError)
                 {
+                    // In this case convertContentFunction must set m_LastError
                     return convertContentFunction.apply(content);
                 }
+                m_LastError = m_JsonMapper.readValue(content, new TypeReference<ApiError>() {});
             }
             else
             {
