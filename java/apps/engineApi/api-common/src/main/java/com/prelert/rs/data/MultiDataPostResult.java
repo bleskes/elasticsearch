@@ -55,8 +55,7 @@ public class MultiDataPostResult
     }
 
     /**
-     * Return true if any of the uploads errored.
-     * @return
+     * @return true if any of the uploads failed.
      */
     public boolean anErrorOccurred()
     {

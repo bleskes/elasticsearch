@@ -55,9 +55,9 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Strings;
-import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.JobDetails;
+import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.results.CategoryDefinition;
 import com.prelert.rs.data.ApiError;
 import com.prelert.rs.data.DataPostResponse;
@@ -134,7 +134,7 @@ public class EngineApiClient implements Closeable
      * Get details of all the jobs in database
      *
      * @return The {@link Pagination} object containing a list of {@link JobDetails jobs}
-     * @throws IOException
+     * @throws IOException If HTTP GET fails
      */
     public Pagination<JobDetails> getJobs()
     throws IOException
@@ -160,7 +160,7 @@ public class EngineApiClient implements Closeable
      *
      * @return If the job exists a {@link com.prelert.rs.data.SingleDocument SingleDocument}
      * containing the {@link JobDetails job} is returned else the SingleDocument is empty
-     * @throws IOException
+     * @throws IOException If HTTP GET fails
      */
     public SingleDocument<JobDetails> getJob(String jobId)
     throws IOException
@@ -186,7 +186,7 @@ public class EngineApiClient implements Closeable
      *
      * @param jobConfig the job configuration
      * @return The new job's Id or an empty string if there was an error
-     * @throws IOException
+     * @throws IOException If HTTP POST fails
      */
     public String createJob(JobConfiguration jobConfig) throws IOException
     {
@@ -200,9 +200,9 @@ public class EngineApiClient implements Closeable
      *
      * @param createJobPayload The Json configuration for the new job
      * @return The new job's Id or an empty string if there was an error
-     * @throws JsonMappingException
-     * @throws JsonParseException
-     * @throws IOException
+     * @throws JsonMappingException If JSON mapping fails
+     * @throws JsonParseException If JSON parsing fails
+     * @throws IOException If HTTP POST fails
      */
     public String createJob(String createJobPayload) throws JsonParseException,
             JsonMappingException, IOException
@@ -251,7 +251,7 @@ public class EngineApiClient implements Closeable
      * @param description New description field
      *
      * @return True if the job description added successfully
-     * @throws IOException
+     * @throws IOException If HTTP PUT fails
      */
     public boolean setJobDescription(String jobId, String description)
     throws IOException
@@ -266,7 +266,7 @@ public class EngineApiClient implements Closeable
      * @param jobId the id of the job to update
      * @param updateJson the JSON containing the fields to update and their new values
      * @return {@code true} if the update was successful, or {@code false} otherwise
-     * @throws IOException
+     * @throws IOException If HTTP PUT fails
      */
     public boolean updateJob(String jobId, String updateJson) throws IOException
     {
@@ -299,12 +299,12 @@ public class EngineApiClient implements Closeable
      * Executes an HTTP request and checks if the response was OK. If not, it logs the error.
      *
      * @return True if response was OK, otherwise false.
-     * @throws ExecutionException
-     * @throws TimeoutException
-     * @throws InterruptedException
-     * @throws JsonMappingException
-     * @throws JsonParseException
-     * @throws IOException
+     * @throws ExecutionException If execution fails
+     * @throws TimeoutException If HTTP request times out
+     * @throws InterruptedException If request is interrupted
+     * @throws JsonMappingException If JSON mapping fails
+     * @throws JsonParseException If JSON parsing fails
+     * @throws IOException If HTTP GET fails
      */
     private boolean executeRequest(Request request, String activityDescription)
             throws JsonParseException, JsonMappingException, IOException
@@ -329,7 +329,7 @@ public class EngineApiClient implements Closeable
      *
      * @param jobId The Job's unique Id
      * @return If the job existed and was deleted return true else false
-     * @throws IOException
+     * @throws IOException If HTTP DELETE fails
      */
     public boolean deleteJob(String jobId) throws IOException
     {
@@ -349,8 +349,8 @@ public class EngineApiClient implements Closeable
      *
      * @param jobId The Job's unique Id
      * @param inputStream The data to write to the web service
-     * @return
-     * @throws IOException
+     * @return the multiple data upload results in {@linkplain MultiDataPostResult}
+     * @throws IOException If HTTP POST fails
      * @see #streamingUpload(String, InputStream, boolean)
      */
     public MultiDataPostResult chunkedUpload(String jobId, InputStream inputStream)
@@ -409,7 +409,7 @@ public class EngineApiClient implements Closeable
      * @param inputStream The data to write to the web service
      * @param compressed Is the data gzipped compressed?
      * @return the multiple data upload results in {@linkplain MultiDataPostResult}
-     * @throws IOException
+     * @throws IOException If HTTP POST fails
      * @see #chunkedUpload(String, InputStream)
      */
     public MultiDataPostResult streamingUpload(String jobId, InputStream inputStream, boolean compressed)
@@ -430,7 +430,7 @@ public class EngineApiClient implements Closeable
      * @param resetStart The start of the time range to reset buckets for (inclusive)
      * @param resetEnd The end of the time range to reset buckets for (inclusive)
      * @return the multiple data upload results in {@linkplain MultiDataPostResult}
-     * @throws IOException
+     * @throws IOException If HTTP POST fails
      * @see #chunkedUpload(String, InputStream)
      */
     public MultiDataPostResult streamingUpload(String jobId, InputStream inputStream, boolean compressed,
@@ -455,7 +455,7 @@ public class EngineApiClient implements Closeable
      * @param inputStream The data to write to the web service
      * @param compressed Is the data gzipped compressed?
      * @return the multiple data upload results in {@linkplain MultiDataPostResult}
-     * @throws IOException
+     * @throws IOException If HTTP POST fails
      */
     public MultiDataPostResult streamingUpload(List<String> jobIds, InputStream inputStream,
                                             boolean compressed)
@@ -594,7 +594,7 @@ public class EngineApiClient implements Closeable
      * @param dataFile Should match the data configuration format of the job
      * @param compressed Is the data gzipped compressed?
      * @return the multiple data upload results in {@linkplain MultiDataPostResult}
-     * @throws IOException
+     * @throws IOException If HTTP POST fails
      */
     public MultiDataPostResult fileUpload(String jobId, File dataFile, boolean compressed)
     throws IOException
@@ -613,7 +613,7 @@ public class EngineApiClient implements Closeable
      * @param resetStart The start of the time range to reset buckets for (inclusive)
      * @param resetEnd The end of the time range to reset buckets for (inclusive)
      * @return the multiple data upload results in {@linkplain MultiDataPostResult}
-     * @throws IOException
+     * @throws IOException If HTTP POST fails
      */
     public MultiDataPostResult fileUpload(String jobId, File dataFile, boolean compressed,
             String resetStart, String resetEnd) throws IOException
@@ -632,7 +632,7 @@ public class EngineApiClient implements Closeable
      * based on the partial data uploaded for it so far? Interim results will be calculated for
      * all available buckets (most recent bucket plus latency buckets if latency was specified).
      * @return True if successful
-     * @throws IOException
+     * @throws IOException If HTTP POST fails
      */
     public boolean flushJob(String jobId, boolean calcInterim) throws IOException
     {
@@ -651,7 +651,7 @@ public class EngineApiClient implements Closeable
      * @param start The start of the time range to calculate interim results for (inclusive)
      * @param end The end of the time range to calculate interim results for (exclusive)
      * @return True if successful
-     * @throws IOException
+     * @throws IOException If HTTP POST fails
      */
     public boolean flushJob(String jobId, boolean calcInterim, String start, String end)
             throws IOException
@@ -685,7 +685,7 @@ public class EngineApiClient implements Closeable
      *
      * @param jobId The Job's unique Id
      * @return True if successful
-     * @throws IOException
+     * @throws IOException If HTTP POST fails
      */
     public boolean closeJob(String jobId)
     throws IOException
@@ -760,7 +760,8 @@ public class EngineApiClient implements Closeable
      *
      * @return A {@link SingleDocument} object containing the requested {@link CategoryDefinition}
      * object
-     * @throws IOException
+     * @throws JsonMappingException If JSON mapping fails
+     * @throws IOException If HTTP GET fails
      */
     public SingleDocument<CategoryDefinition> getCategoryDefinition(String jobId, String categoryId)
             throws JsonMappingException, IOException
@@ -800,7 +801,7 @@ public class EngineApiClient implements Closeable
      * @param jobId The Job's unique Id
      * @param inputStream The data to write to the web service
      * @return String The preview result
-     * @throws IOException
+     * @throws IOException If HTTP POST fails
      */
     public String previewUpload(String jobId, InputStream inputStream)
     throws IOException
@@ -814,7 +815,7 @@ public class EngineApiClient implements Closeable
      *
      * @param jobId The Job's unique Id
      * @return The last 10 lines of the last log file
-     * @throws IOException
+     * @throws IOException If HTTP GET fails
      */
     public String tailLog(String jobId) throws IOException
     {
@@ -828,7 +829,7 @@ public class EngineApiClient implements Closeable
      * @param jobId The Job's unique Id
      * @param lineCount The number of lines to return
      * @return The last <code>lineCount</code> lines of the log file
-     * @throws IOException
+     * @throws IOException If HTTP GET fails
      */
     public String tailLog(String jobId, int lineCount) throws IOException
     {
@@ -847,7 +848,7 @@ public class EngineApiClient implements Closeable
      * @param logfileName the name of the log file without the '.log' suffix.
      * @param lineCount The number of lines to return
      * @return The last <code>lineCount</code> lines of the log file
-     * @throws IOException
+     * @throws IOException If HTTP GET fails
      */
     public String tailLog(String jobId, String logfileName, int lineCount) throws IOException
     {
@@ -865,7 +866,7 @@ public class EngineApiClient implements Closeable
      * @param url
      * @return If status code == 200 return the HTTP response content
      * else return an empty string.
-     * @throws IOException
+     * @throws IOException If HTTP GET fails
      */
     private String getStringContent(String url) throws IOException
     {
@@ -893,8 +894,8 @@ public class EngineApiClient implements Closeable
      *
      * @param jobId The Job's unique Id
      * @param logfileName the name of the log file without the '.log' suffix.
-     * @return
-     * @throws IOException
+     * @return The log file as a String
+     * @throws IOException If HTTP GET fails
      */
     public String downloadLog(String jobId, String logfileName) throws IOException
     {
@@ -917,7 +918,7 @@ public class EngineApiClient implements Closeable
      * @return A ZipInputStream for the log files. If an error occurred, the inputstream
      * may by empty or contain the server response. The caller MUST close this
      * ZipInputStream when they have finished with it.
-     * @throws IOException
+     * @throws IOException If HTTP GET fails
      */
     public ZipInputStream downloadAllLogs(String jobId) throws IOException
     {
@@ -936,7 +937,7 @@ public class EngineApiClient implements Closeable
      * A generic HTTP GET to any Url. The result is converted from Json to
      * the type referenced in <code>typeRef</code>. A <code>TypeReference</code>
      * has to be used to preserve the generic type information that is usually
-     * lost in due to erasure.
+     * lost due to erasure.
      * <br>
      * If the response code is 200 or 404 try to parse the returned content
      * into an object of the generic parameter type <code>T</code>.
@@ -946,13 +947,14 @@ public class EngineApiClient implements Closeable
      * This method is useful for paging through a set of results via the
      * next or previous page links in a {@link Pagination} object.
      *
-     * @param fullUrl
-     * @param typeRef
+     * @param fullUrl The full URL to GET
+     * @param typeRef The type of the returned document
+     * @param <T> A generic document type
      * @return A new T or <code>null</code>
-     * @throws JsonParseException
-     * @throws JsonMappingException
-     * @throws IOException
-     * @see get(URI, TypeReference)
+     * @throws JsonParseException If JSON parsing fails
+     * @throws JsonMappingException If JSON mapping fails
+     * @throws IOException If HTTP GET fails
+     * @see #get(URI, TypeReference)
      */
     public <T> T get(String fullUrl, TypeReference<T> typeRef)
     throws JsonParseException, JsonMappingException, IOException
@@ -974,13 +976,14 @@ public class EngineApiClient implements Closeable
      * This method is useful for paging through a set of results via the
      * next or previous page links in a {@link Pagination} object.
      *
-     * @param uri
-     * @param typeRef
+     * @param uri The URI to GET
+     * @param typeRef The type of the returned document
+     * @param <T> A generic document type
      * @return A new T or <code>null</code>
-     * @throws JsonParseException
-     * @throws JsonMappingException
-     * @throws IOException
-     * @see get(String, TypeReference)
+     * @throws JsonParseException If JSON parsing fails
+     * @throws JsonMappingException If JSON mapping fails
+     * @throws IOException If HTTP GET fails
+     * @see #get(String, TypeReference)
      */
     public <T> T get(URI uri, TypeReference<T> typeRef)
     throws JsonParseException, JsonMappingException, IOException
@@ -1002,13 +1005,15 @@ public class EngineApiClient implements Closeable
      * This method is useful for paging through a set of results via the
      * next or previous page links in a {@link Pagination} object.
      *
-     * @param url
-     * @param typeRef
+     * @param url The URL to GET
+     * @param typeRef The type of the returned document
+     * @param errorOn404 Treat a 404 status code as an error
+     * @param <T> A generic document type
      * @return A new T or <code>null</code>
-     * @throws JsonParseException
-     * @throws JsonMappingException
-     * @throws IOException
-     * @see get(String, TypeReference)
+     * @throws JsonParseException If JSON parsing fails
+     * @throws JsonMappingException If JSON mapping fails
+     * @throws IOException If HTTP GET fails
+     * @see #get(String, TypeReference)
      */
     public <T> T get(String url, TypeReference<T> typeRef, boolean errorOn404)
     throws JsonParseException, JsonMappingException, IOException
@@ -1054,13 +1059,14 @@ public class EngineApiClient implements Closeable
      * This method is useful for paging through a set of results via the
      * next or previous page links in a {@link Pagination} object.
      *
-     * @param fullUrl
-     * @param typeRef
+     * @param fullUrl The URL to POST
+     * @param typeRef The type of the returned document
+     * @param <T> A generic document type
      * @return A new T or <code>null</code>
-     * @throws JsonParseException
-     * @throws JsonMappingException
-     * @throws IOException
-     * @see get(URI, TypeReference)
+     * @throws JsonParseException If JSON parsing fails
+     * @throws JsonMappingException If JSON mapping fails
+     * @throws IOException If HTTP POST fails
+     * @see #get(URI, TypeReference)
      */
     public <T> T post(String fullUrl, TypeReference<T> typeRef)
     throws JsonParseException, JsonMappingException, IOException
@@ -1082,13 +1088,14 @@ public class EngineApiClient implements Closeable
      * This method is useful for paging through a set of results via the
      * next or previous page links in a {@link Pagination} object.
      *
-     * @param uri
-     * @param typeRef
+     * @param uri The URI to POST
+     * @param typeRef THe type of the returned document
+     * @param <T> A generic document type
      * @return A new T or <code>null</code>
-     * @throws JsonParseException
-     * @throws JsonMappingException
-     * @throws IOException
-     * @see post(String, TypeReference)
+     * @throws JsonParseException If JSON parsing fails
+     * @throws JsonMappingException If JSON mapping fails
+     * @throws IOException If HTTP POST fails
+     * @see #post(String, TypeReference)
      */
     public <T> T post(URI uri, TypeReference<T> typeRef)
     throws JsonParseException, JsonMappingException, IOException
@@ -1110,13 +1117,15 @@ public class EngineApiClient implements Closeable
      * This method is useful for paging through a set of results via the
      * next or previous page links in a {@link Pagination} object.
      *
-     * @param url
-     * @param typeRef
+     * @param url The URL to POST
+     * @param typeRef The type of the returned document
+     * @param errorOn404 Treat a 404 status code as an error
+     * @param <T> A generic document type
      * @return A new T or <code>null</code>
-     * @throws JsonParseException
-     * @throws JsonMappingException
-     * @throws IOException
-     * @see post(String, TypeReference)
+     * @throws JsonParseException If JSON parsing fails
+     * @throws JsonMappingException If JSON mapping fails
+     * @throws IOException If HTTP POST fails
+     * @see #post(String, TypeReference)
      */
     public <T> T post(String url, TypeReference<T> typeRef, boolean errorOn404)
     throws JsonParseException, JsonMappingException, IOException

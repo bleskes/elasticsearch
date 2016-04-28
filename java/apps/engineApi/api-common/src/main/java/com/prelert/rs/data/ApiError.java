@@ -47,7 +47,7 @@ public class ApiError implements HasErrorCode
     private volatile String m_Cause;
 
     /**
-     * Default cons for serialisation (Jackson)
+     * Default cons for serialization (Jackson)
      */
     public ApiError()
     {
@@ -57,7 +57,7 @@ public class ApiError implements HasErrorCode
     /**
      * Create a new ApiError from one of the list of error codes.
      *
-     * @param errorCode
+     * @param errorCode The error code
      * @see ErrorCodes
      */
     public ApiError(ErrorCodes errorCode)

@@ -29,8 +29,8 @@ import com.prelert.job.transform.TransformConfig;
  * does not represent the state of a created job (see {@linkplain JobDetails}
  * for that).
  * <p>
- * If a value has not been set it will be <code>null</code>. Object wrappers
- * are used around integral types &amp; booleans so they can take <code>null</code>
+ * If a value has not been set it will be {@code null}. Object wrappers
+ * are used around integral types &amp; booleans so they can take {@code null}
  * values.
  */
 public class JobConfiguration
@@ -180,7 +180,7 @@ public class JobConfiguration
     /**
      * If not set the input data is assumed to be csv with a '_time' field
      * in epoch format.
-     * @return A DataDescription or <code>null</code>
+     * @return A DataDescription or {@code null}
      * @see DataDescription
      */
     public DataDescription getDataDescription()

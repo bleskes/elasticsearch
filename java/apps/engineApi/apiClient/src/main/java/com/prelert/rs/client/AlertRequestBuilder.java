@@ -24,6 +24,7 @@ import java.util.Map;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.prelert.job.alert.Alert;
+import com.prelert.rs.data.SingleDocument;
 
 /**
  * Build a blocking Long poll alert for the job.
@@ -57,7 +58,7 @@ public class AlertRequestBuilder extends BaseJobRequestBuilder<Alert>
      * Set the timeout period for the request
      *
      * @param seconds Timeout the request after this many seconds.
-     * @return
+     * @return this {@code Builder} object
      */
     public AlertRequestBuilder timeout(long seconds)
     {
@@ -70,7 +71,7 @@ public class AlertRequestBuilder extends BaseJobRequestBuilder<Alert>
      * has an anomalyScore threshold &gt;= <code>threshold</code>
      *
      * @param threshold This must be in the range 0-100
-     * @return
+     * @return this {@code Builder} object
      */
     public AlertRequestBuilder score(double threshold)
     {
@@ -83,7 +84,7 @@ public class AlertRequestBuilder extends BaseJobRequestBuilder<Alert>
      * a bucket's maxNormalizedProbability is &gt;= <code>threshold</code>
      *
      * @param threshold This must be in the range 0-100
-     * @return
+     * @return this {@code Builder} object
      */
     public AlertRequestBuilder probability(double threshold)
     {
@@ -93,7 +94,7 @@ public class AlertRequestBuilder extends BaseJobRequestBuilder<Alert>
 
     /**
      * Alert on interim and full results
-     * @return
+     * @return this {@code Builder} object
      */
     public AlertRequestBuilder includeInterim()
     {
@@ -103,7 +104,7 @@ public class AlertRequestBuilder extends BaseJobRequestBuilder<Alert>
 
     /**
      * Alert on bucket results
-     * @return
+     * @return this {@code Builder} object
      */
     public AlertRequestBuilder alertOnBuckets()
     {
@@ -113,7 +114,7 @@ public class AlertRequestBuilder extends BaseJobRequestBuilder<Alert>
 
     /**
      * Alert on influencer
-     * @return
+     * @return this {@code Builder} object
      */
     public AlertRequestBuilder alertOnInfluencers()
     {
@@ -123,7 +124,7 @@ public class AlertRequestBuilder extends BaseJobRequestBuilder<Alert>
 
     /**
      * Alert on bucket influencer
-     * @return
+     * @return this {@code Builder} object
      */
     public AlertRequestBuilder alertOnBucketInfluencers()
     {
@@ -131,6 +132,12 @@ public class AlertRequestBuilder extends BaseJobRequestBuilder<Alert>
         return this;
     }
 
+    /**
+     * Returns a single document with the alert that was requested
+     *
+     * @return A {@link SingleDocument} object containing the requested {@link Alert} object
+     * @throws IOException If HTTP GET fails
+     */
     public Alert get()
     throws IOException
     {

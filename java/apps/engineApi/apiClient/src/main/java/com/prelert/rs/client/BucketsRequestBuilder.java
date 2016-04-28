@@ -133,7 +133,7 @@ public class BucketsRequestBuilder extends BaseJobRequestBuilder<Bucket>
      *
      * @param value The start date as an ISO 8601 String
      * @return this {@code Builder} object
-     * @throws UnsupportedEncodingException
+     * @throws UnsupportedEncodingException If UTF-8 not supported
      */
     public BucketsRequestBuilder start(String value) throws UnsupportedEncodingException
     {
@@ -161,7 +161,7 @@ public class BucketsRequestBuilder extends BaseJobRequestBuilder<Bucket>
      * @param value The end date as an ISO 8601 String
      *
      * @return this {@code Builder} object
-     * @throws UnsupportedEncodingException
+     * @throws UnsupportedEncodingException If UTF-8 not supported
      */
     public BucketsRequestBuilder end(String value) throws UnsupportedEncodingException
     {

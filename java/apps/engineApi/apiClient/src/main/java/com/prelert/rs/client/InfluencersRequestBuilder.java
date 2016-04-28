@@ -85,7 +85,7 @@ public class InfluencersRequestBuilder extends BaseJobRequestBuilder<Influencer>
      *
      * @param value The start date as an ISO 8601 String
      * @return this {@code InfluencersRequestBuilder} object
-     * @throws UnsupportedEncodingException
+     * @throws UnsupportedEncodingException If UTF-8 not supported
      */
     public InfluencersRequestBuilder start(String value) throws UnsupportedEncodingException
     {
@@ -112,7 +112,7 @@ public class InfluencersRequestBuilder extends BaseJobRequestBuilder<Influencer>
      *
      * @param value The end date as an ISO 8601 String
      * @return this {@code InfluencersRequestBuilder} object
-     * @throws UnsupportedEncodingException
+     * @throws UnsupportedEncodingException If UTF-8 not supported
      */
     public InfluencersRequestBuilder end(String value) throws UnsupportedEncodingException
     {
@@ -159,7 +159,7 @@ public class InfluencersRequestBuilder extends BaseJobRequestBuilder<Influencer>
     /**
      * Include interim influencer results
      *
-     * @param value
+     * @param value Boolean value to include interim results or not
      * @return this {@code InfluencersRequestBuilder} object
      */
     public InfluencersRequestBuilder includeInterim(boolean value)
@@ -173,7 +173,7 @@ public class InfluencersRequestBuilder extends BaseJobRequestBuilder<Influencer>
      *
      * @return A {@link Pagination} object containing the resulted {@link Influencer}
      * objects
-     * @throws IOException
+     * @throws IOException If HTTP GET fails
      */
     public Pagination<Influencer> get() throws IOException
     {

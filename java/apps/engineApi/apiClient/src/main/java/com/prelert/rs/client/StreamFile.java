@@ -55,8 +55,8 @@ public final class StreamFile
      * if the data file is gzip compresseed and <code>--close</code> if you wish
      * to close the job once the upload is complete.
      *
-     * @param args
-     * @throws IOException
+     * @param args The input arguments
+     * @throws IOException If GZIP or HTTP fails
      */
     public static void main(String[] args) throws IOException
     {
