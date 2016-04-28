@@ -46,12 +46,12 @@ public class MultiDataPostResult
 
     public void setResponses(List<DataPostResponse> results)
     {
-        this.m_Responses = results;
+        m_Responses = results;
     }
 
     public void addResult(DataPostResponse result)
     {
-        this.m_Responses.add(result);
+        m_Responses.add(result);
     }
 
     /**

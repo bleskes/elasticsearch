@@ -28,7 +28,6 @@ import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.StringJoiner;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
@@ -56,6 +55,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Strings;
+import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.JobDetails;
 import com.prelert.job.results.CategoryDefinition;
@@ -72,6 +72,11 @@ import com.prelert.rs.data.SingleDocument;
  * Contains methods to create jobs, list jobs, upload data and query results.
  * <br>
  * Implements closeable so it can be used in a try-with-resource statement
+ * <br>
+ * Not reentrant; each object of this class may only be used for one
+ * interaction with the server at any time.  If you need multiple parallel
+ * interactions with the server, you must create multiple instances of this
+ * class.
  */
 public class EngineApiClient implements Closeable
 {
@@ -201,7 +206,6 @@ public class EngineApiClient implements Closeable
      */
     public String createJob(String createJobPayload) throws JsonParseException,
             JsonMappingException, IOException
-
     {
         String url = m_BaseUrl + "/jobs";
         LOGGER.debug("Create job: " + url);
@@ -216,20 +220,17 @@ public class EngineApiClient implements Closeable
 
         if (response.getStatus() == HttpStatus.CREATED_201)
         {
-            Map<String, String> msg = m_JsonMapper.readValue(content,
-                    new TypeReference<Map<String, String>>() {} );
-
             m_LastError = null;
 
+            Map<String, String> msg = m_JsonMapper.readValue(content,
+                    new TypeReference<Map<String, String>>() {} );
             if (msg.containsKey("id"))
             {
                 return msg.get("id");
             }
-            else
-            {
-                LOGGER.error("Job created but no 'id' field in returned content");
-                LOGGER.error("Response Content = " + content);
-            }
+
+            LOGGER.error("Job created but no 'id' field in returned content");
+            LOGGER.error("Response Content = " + content);
         }
         else
         {
@@ -242,9 +243,8 @@ public class EngineApiClient implements Closeable
         return "";
     }
 
-
     /**
-     * PUTS the description parameter to the job and sets it as
+     * PUTs the description parameter to the job and sets it as
      * the job's new description field
      *
      * @param jobId The job's unique ID
@@ -363,6 +363,7 @@ public class EngineApiClient implements Closeable
         int uploadCount = 0;
         MultiDataPostResult uploadSummary = new MultiDataPostResult();
 
+        m_LastError = null;
         while (inputStream.read(buffer) > -1)
         {
             LOGGER.info("Upload " + ++uploadCount);
@@ -384,7 +385,6 @@ public class EngineApiClient implements Closeable
 
                 uploadSummary = m_JsonMapper.readValue(content, new TypeReference<MultiDataPostResult>() {});
 
-                m_LastError = null;
                 for (DataPostResponse dpr : uploadSummary.getResponses())
                 {
                     if (dpr.getError() != null)
@@ -393,10 +393,13 @@ public class EngineApiClient implements Closeable
                         break;
                     }
                 }
+                if (m_LastError == null)
+                {
+                    m_LastError = newUnknownError(msg);
+                }
             }
             else
             {
-                m_LastError = null;
                 uploadSummary = m_JsonMapper.readValue(content, new TypeReference<MultiDataPostResult>() {});
             }
         }
@@ -443,7 +446,7 @@ public class EngineApiClient implements Closeable
     throws IOException
     {
         String postUrl = String.format("%s/data/%s", m_BaseUrl, jobId);
-        if (!isNullOrEmpty(resetStart) || !isNullOrEmpty(resetEnd))
+        if (!Strings.isNullOrEmpty(resetStart) || !Strings.isNullOrEmpty(resetEnd))
         {
             postUrl += String.format("?resetStart=%s&resetEnd=%s",
                     Strings.nullToEmpty(resetStart), Strings.nullToEmpty(resetEnd));
@@ -451,7 +454,6 @@ public class EngineApiClient implements Closeable
         return uploadStream(inputStream, postUrl, compressed, new MultiDataPostResult(), true,
                 content -> m_JsonMapper.readValue(content, new TypeReference<MultiDataPostResult>() {}));
     }
-
 
     /**
      * Read data from <code>inputStream</code> and upload to multiple jobs
@@ -467,13 +469,7 @@ public class EngineApiClient implements Closeable
                                             boolean compressed)
     throws IOException
     {
-        StringJoiner joiner = new StringJoiner(",");
-        for (String id : jobIds)
-        {
-            joiner.add(id);
-        }
-
-        String postUrl = String.format("%s/data/%s", m_BaseUrl, joiner.toString());
+        String postUrl = String.format("%s/data/%s", m_BaseUrl, String.join(",", jobIds));
 
         return uploadStream(inputStream, postUrl, compressed, new MultiDataPostResult(), true,
                 content -> m_JsonMapper.readValue(content, new TypeReference<MultiDataPostResult>() {}));
@@ -554,11 +550,15 @@ public class EngineApiClient implements Closeable
 
             if (!content.isEmpty())
             {
+                m_LastError = m_JsonMapper.readValue(content, new TypeReference<ApiError>() {});
                 if (convertResponseOnError)
                 {
                     return convertContentFunction.apply(content);
                 }
-                m_LastError = m_JsonMapper.readValue(content, new TypeReference<ApiError>() {});
+            }
+            else
+            {
+                m_LastError = newUnknownError(msg);
             }
 
             return defaultReturnValue;
@@ -672,7 +672,6 @@ public class EngineApiClient implements Closeable
         m_LastError = null;
         return true;
     }
-
 
     /**
      * Finish the job after all the data has been uploaded
@@ -900,7 +899,6 @@ public class EngineApiClient implements Closeable
         return getStringContent(url);
     }
 
-
     /**
      * Download all the log files for the given job.
      *
@@ -926,7 +924,6 @@ public class EngineApiClient implements Closeable
         request.send(responseListener);
         return new ZipInputStream(responseListener.getInputStream());
     }
-
 
     /**
      * A generic HTTP GET to any Url. The result is converted from Json to
@@ -1135,8 +1132,10 @@ public class EngineApiClient implements Closeable
         return m_BaseUrl;
     }
 
-    private static boolean isNullOrEmpty(String string)
+    private static ApiError newUnknownError(String msg)
     {
-        return string == null || string.isEmpty();
+        ApiError error = new ApiError(ErrorCodes.UNKNOWN_ERROR);
+        error.setMessage(msg);
+        return error;
     }
 }

@@ -96,6 +96,16 @@ public class BadRecordsTest implements Closeable
 
         MultiDataPostResult result = m_EngineApiClient.streamingUpload(jobId, inputStream, false);
 
+        // Sometimes, due to the way the server cuts the connection when it
+        // receives too much bad data, the exact error from the server can get
+        // lost.  In this case there may be no response, so the anErrorOccurred()
+        // call below can return false.  However, in this case we should still
+        // have set an unknown last error on the client, so the user at least
+        // has some way to find out something.  Therefore, we can tolerate a
+        // small percentage of failures in the anErrorOccurred() assertion below,
+        // but should never tolerate a failure in this assertion.
+        test(m_EngineApiClient.getLastError() != null);
+
         test(result.anErrorOccurred());
         test(result.getResponses().size() == 1);
         ApiError error = result.getResponses().get(0).getError();
@@ -142,6 +152,16 @@ public class BadRecordsTest implements Closeable
 
         MultiDataPostResult result = m_EngineApiClient.streamingUpload(jobId, inputStream, false);
 
+        // Sometimes, due to the way the server cuts the connection when it
+        // receives too much bad data, the exact error from the server can get
+        // lost.  In this case there may be no response, so the anErrorOccurred()
+        // call below can return false.  However, in this case we should still
+        // have set an unknown last error on the client, so the user at least
+        // has some way to find out something.  Therefore, we can tolerate a
+        // small percentage of failures in the anErrorOccurred() assertion below,
+        // but should never tolerate a failure in this assertion.
+        test(m_EngineApiClient.getLastError() != null);
+
         test(result.anErrorOccurred());
         test(result.getResponses().size() == 1);
         ApiError error = result.getResponses().get(0).getError();
@@ -149,7 +169,6 @@ public class BadRecordsTest implements Closeable
         test(error.getErrorCode() == ErrorCodes.TOO_MANY_OUT_OF_ORDER_RECORDS);
 
         test(result.getResponses().get(0).getUploadSummary() == null);
-
 
         m_EngineApiClient.closeJob(jobId);
 
