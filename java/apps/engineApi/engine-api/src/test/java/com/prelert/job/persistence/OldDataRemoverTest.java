@@ -28,13 +28,19 @@
 package com.prelert.job.persistence;
 
 import static org.junit.Assert.assertEquals;
+
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -52,6 +58,7 @@ import com.prelert.job.JobDetails;
 import com.prelert.job.ModelSizeStats;
 import com.prelert.job.ModelSnapshot;
 import com.prelert.job.UnknownJobException;
+import com.prelert.job.audit.Auditor;
 import com.prelert.job.results.Bucket;
 import com.prelert.job.results.Influencer;
 import com.prelert.job.results.ModelDebugOutput;
@@ -63,6 +70,7 @@ public class OldDataRemoverTest
 
     @Mock private JobProvider m_JobProvider;
     @Mock private JobDataDeleterFactory m_DeleterFactory;
+    @Mock private Auditor m_Auditor;
 
     private OldDataRemover m_OldDataRemover;
 
@@ -70,6 +78,7 @@ public class OldDataRemoverTest
     public void setUp()
     {
         MockitoAnnotations.initMocks(this);
+        when(m_JobProvider.audit(anyString())).thenReturn(m_Auditor);
         m_OldDataRemover = new OldDataRemover(m_JobProvider, m_DeleterFactory);
     }
 
@@ -175,8 +184,9 @@ public class OldDataRemoverTest
         assertEquals(Arrays.asList(bucket1, bucket2), bucketCaptor.getAllValues());
         verify(deleter).deleteInfluencer(influencer);
         verify(deleter, times(2)).commitAndFreeDiskSpace();
+        verifyDeletedResultsWereAuditted(JOB_WITH_RETENTION_ID, cutoffEpochMs);
 
-        Mockito.verifyNoMoreInteractions(m_DeleterFactory, deleter);
+        Mockito.verifyNoMoreInteractions(m_DeleterFactory, m_Auditor, deleter);
     }
 
     @Test
@@ -241,8 +251,9 @@ public class OldDataRemoverTest
         verify(deleter, times(2)).deleteModelDebugOutput(debugCaptor.capture());
         assertEquals(Arrays.asList(debug1, debug2), debugCaptor.getAllValues());
         verify(deleter, times(2)).commitAndFreeDiskSpace();
+        verifyDeletedResultsWereAuditted(JOB_WITH_RETENTION_ID, cutoffEpochMs);
 
-        Mockito.verifyNoMoreInteractions(m_DeleterFactory, deleter);
+        Mockito.verifyNoMoreInteractions(m_DeleterFactory, m_Auditor, deleter);
     }
 
     @Test
@@ -305,7 +316,17 @@ public class OldDataRemoverTest
         verify(deleter, times(2)).deleteModelSizeStats(statsCaptor.capture());
         assertEquals(Arrays.asList(stats1, stats2), statsCaptor.getAllValues());
         verify(deleter, times(2)).commitAndFreeDiskSpace();
+        verifyDeletedResultsWereAuditted(JOB_WITH_RETENTION_ID, cutoffEpochMs);
 
-        Mockito.verifyNoMoreInteractions(m_DeleterFactory, deleter);
+        Mockito.verifyNoMoreInteractions(m_DeleterFactory, m_Auditor, deleter);
+    }
+
+    private void verifyDeletedResultsWereAuditted(String jobId, long epochMs)
+    {
+        Instant instant = Instant.ofEpochSecond(epochMs / 1000);
+        ZonedDateTime zonedDateTime = ZonedDateTime.ofInstant(instant, ZoneOffset.systemDefault());
+        String formatted = DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(zonedDateTime);
+        verify(m_JobProvider).audit(jobId);
+        verify(m_Auditor).info("Deleted results prior to " + formatted);
     }
 }

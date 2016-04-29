@@ -27,8 +27,12 @@
 
 package com.prelert.job.persistence;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayDeque;
 import java.util.Date;
 import java.util.Deque;
@@ -41,6 +45,7 @@ import org.apache.log4j.Logger;
 import com.prelert.job.JobDetails;
 import com.prelert.job.ModelSnapshot;
 import com.prelert.job.UnknownJobException;
+import com.prelert.job.messages.Messages;
 
 /**
  * A class that removes results from all the jobs that
@@ -180,6 +185,7 @@ public class OldDataRemover
         LOGGER.info("Removing results of job with ID '" + job.getId()
                     + "' that have a timestamp before: " + cutoffEpochSeconds);
         deleteResultsBefore(job.getId(), deleter, cutoffEpochSeconds * MILLISECONDS_IN_SECOND);
+        auditResultsWereDeleted(job.getId(), cutoffEpochSeconds);
     }
 
     private void deleteModelDebugOutputBefore(String jobId, JobDataDeleter deleter, long cutoffEpochMs)
@@ -274,5 +280,14 @@ public class OldDataRemover
                     + "The job appears to have been deleted.");
             return new ArrayDeque<T>();
         }
+    }
+
+    private void auditResultsWereDeleted(String jobId, long cutoffEpochSeconds)
+    {
+        Instant instant = Instant.ofEpochSecond(cutoffEpochSeconds);
+        ZonedDateTime zonedDateTime = ZonedDateTime.ofInstant(instant, ZoneOffset.systemDefault());
+        String formatted = DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(zonedDateTime);
+        String msg = Messages.getMessage(Messages.JOB_AUDIT_OLD_RESULTS_DELETED, formatted);
+        m_JobProvider.audit(jobId).info(msg);
     }
 }

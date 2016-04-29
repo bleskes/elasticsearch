@@ -52,6 +52,7 @@ public final class Messages
     public static final String JOB_AUDIT_RESUMED = "job.audit.resumed";
     public static final String JOB_AUDIT_UPDATED = "job.audit.updated";
     public static final String JOB_AUDIT_REVERTED = "job.audit.reverted";
+    public static final String JOB_AUDIT_OLD_RESULTS_DELETED = "job.audit.old.results.deleted";
     public static final String JOB_AUDIT_SNAPSHOT_DELETED = "job.audit.snapshot.deleted";
     public static final String JOB_AUDIT_SCHEDULER_STARTED_FROM_TO = "job.audit.scheduler.started.from.to";
     public static final String JOB_AUDIT_SCHEDULER_CONTINUED_REALTIME = "job.audit.scheduler.continued.realtime";
