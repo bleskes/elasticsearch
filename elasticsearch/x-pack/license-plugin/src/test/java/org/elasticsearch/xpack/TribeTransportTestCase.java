@@ -1,20 +1,18 @@
 /*
- * Licensed to Elasticsearch under one or more contributor
- * license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright
- * ownership. Elasticsearch licenses this file to you under
- * the Apache License, Version 2.0 (the "License"); you may
- * not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * ELASTICSEARCH CONFIDENTIAL
+ * __________________
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *  [2014] Elasticsearch Incorporated. All Rights Reserved.
  *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on an
- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- * KIND, either express or implied.  See the License for the
- * specific language governing permissions and limitations
- * under the License.
+ * NOTICE:  All information contained herein is, and remains
+ * the property of Elasticsearch Incorporated and its suppliers,
+ * if any.  The intellectual and technical concepts contained
+ * herein are proprietary to Elasticsearch Incorporated
+ * and its suppliers and may be covered by U.S. and Foreign Patents,
+ * patents in process, and are protected by trade secret or copyright law.
+ * Dissemination of this information or reproduction of this material
+ * is strictly forbidden unless prior written permission is obtained
+ * from Elasticsearch Incorporated.
  */
 
 package org.elasticsearch.xpack;
@@ -25,7 +23,6 @@ import org.elasticsearch.action.admin.cluster.node.info.NodeInfo;
 import org.elasticsearch.action.admin.cluster.node.info.NodesInfoResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.client.Requests;
-import org.elasticsearch.client.transport.NoNodeAvailableException;
 import org.elasticsearch.cluster.health.ClusterHealthStatus;
 import org.elasticsearch.cluster.node.DiscoveryNode;
 import org.elasticsearch.cluster.node.DiscoveryNodes;
@@ -60,7 +57,7 @@ import static org.hamcrest.Matchers.anyOf;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 
-@ClusterScope(scope = Scope.TEST, transportClientRatio = 0, numClientNodes = 0, numDataNodes = 0)
+@ClusterScope(scope = Scope.TEST, transportClientRatio = 0, numClientNodes = 1, numDataNodes = 0)
 public abstract class TribeTransportTestCase extends ESIntegTestCase {
 
     private static final Collection<String> ALL_FEATURES = Arrays.asList(Security.NAME, Monitoring.NAME,
@@ -116,7 +113,7 @@ public abstract class TribeTransportTestCase extends ESIntegTestCase {
         };
         final InternalTestCluster cluster2 = new InternalTestCluster(InternalTestCluster.configuredNodeMode(),
                 randomLong(), createTempDir(), 2, 2,
-                UUIDs.randomBase64UUID(random()), nodeConfigurationSource, 0, false, "tribe_node2",
+                UUIDs.randomBase64UUID(random()), nodeConfigurationSource, 1, false, "tribe_node2",
                 getMockPlugins(), getClientWrapper());
 
         cluster2.beforeTest(random(), 0.0);
@@ -169,18 +166,30 @@ public abstract class TribeTransportTestCase extends ESIntegTestCase {
         });
         logger.info(" --> verify transport actions for tribe node");
         verifyActionOnTribeNode(tribeClient);
-        logger.info(" --> verify transport actions for data and master node");
+        logger.info(" --> verify transport actions for data node");
         verifyActionOnDataNode((randomBoolean() ? internalCluster() : cluster2).dataNodeClient());
-        verifyActionOnDataNode((randomBoolean() ? internalCluster() : cluster2).masterClient());
+        logger.info(" --> verify transport actions for master node");
+        verifyActionOnMasterNode((randomBoolean() ? internalCluster() : cluster2).masterClient());
+        logger.info(" --> verify transport actions for client node");
+        verifyActionOnClientNode((randomBoolean() ? internalCluster() : cluster2).coordOnlyNodeClient());
         try {
             cluster2.wipe(Collections.<String>emptySet());
-        } catch (NoNodeAvailableException ignored) {
         } finally {
             cluster2.afterTest();
         }
         tribeNode.close();
         cluster2.close();
     }
+
+    /**
+     * Verify transport action behaviour on client node
+     */
+    protected abstract void verifyActionOnClientNode(Client client) throws Exception;
+
+    /**
+     * Verify transport action behaviour on master node
+     */
+    protected abstract void verifyActionOnMasterNode(Client masterClient) throws Exception;
 
     /**
      * Verify transport action behaviour on data node
