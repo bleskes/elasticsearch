@@ -81,6 +81,7 @@ public class JobDetails
     public static final String DATA_ENDPOINT_KEY = "data";
     public static final String LOGS_ENDPOINT_KEY = "logs";
     public static final String RECORDS_ENDPOINT_KEY = "records";
+    public static final String MODEL_SNAPSHOTS_ENDPOINT_KEY = "modelSnapshots";
 
     private String m_JobId;
     private String m_Description;

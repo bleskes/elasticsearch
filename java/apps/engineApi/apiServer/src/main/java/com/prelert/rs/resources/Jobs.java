@@ -341,6 +341,12 @@ public class Jobs extends ResourceWithJobManager
                 .build();
         endpoints.put(JobDetails.ALERT_LONG_POLL_ENDPOINT_KEY, longpoll);
 
+        URI modelSnapshots = m_UriInfo.getBaseUriBuilder()
+                .path(ModelSnapshots.ENDPOINT)
+                .path(job.getId())
+                .build();
+        endpoints.put(JobDetails.MODEL_SNAPSHOTS_ENDPOINT_KEY, modelSnapshots);
+
         job.setEndpoints(endpoints);
     }
 }

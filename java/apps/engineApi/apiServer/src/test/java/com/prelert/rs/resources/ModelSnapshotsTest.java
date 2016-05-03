@@ -52,7 +52,9 @@ import com.prelert.job.manager.DescriptionAlreadyUsedException;
 import com.prelert.job.persistence.QueryPage;
 import com.prelert.job.process.exceptions.MalformedJsonException;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
+import com.prelert.job.quantiles.Quantiles;
 import com.prelert.rs.data.Pagination;
+import com.prelert.rs.data.SingleDocument;
 import com.prelert.rs.exception.InvalidParametersException;
 import com.prelert.rs.provider.RestApiException;
 
@@ -92,13 +94,18 @@ public class ModelSnapshotsTest extends ServiceTest
     @Test
     public void testModelSnapshots_GivenOnePage() throws UnknownJobException, NativeProcessRunException, URISyntaxException
     {
-        QueryPage<ModelSnapshot> queryResult = new QueryPage<>(Arrays.asList(new ModelSnapshot()), 1);
+        ModelSnapshot modelSnapshot = new ModelSnapshot();
+        modelSnapshot.setSnapshotId("123");
+        modelSnapshot.setQuantiles(new Quantiles());
+        QueryPage<ModelSnapshot> queryResult = new QueryPage<>(Arrays.asList(modelSnapshot), 1);
 
         when(jobManager().modelSnapshots("foo", 0, 100, 0, 0, "", "")).thenReturn(queryResult);
 
         Pagination<ModelSnapshot> modelSnapshots = m_ModelSnapshots.modelSnapshots("foo", 0, 100, "", "", "", "");
         assertEquals(1, modelSnapshots.getHitCount());
         assertEquals(100, modelSnapshots.getTake());
+        assertEquals("123", modelSnapshots.getDocuments().get(0).getSnapshotId());
+        assertNull(modelSnapshots.getDocuments().get(0).getQuantiles());
     }
 
     @Test
@@ -236,11 +243,15 @@ public class ModelSnapshotsTest extends ServiceTest
     {
         ModelSnapshot modelSnapshot = new ModelSnapshot();
         modelSnapshot.setSnapshotId("foo");
+        modelSnapshot.setQuantiles(new Quantiles());
         when(jobManager().revertToSnapshot("foo", 0L, "123", "", false)).thenReturn(modelSnapshot);
 
         Response response = m_ModelSnapshots.revertToSnapshot("foo", "", "123", "", false);
 
         assertEquals(200, response.getStatus());
+        SingleDocument<ModelSnapshot> entity = (SingleDocument<ModelSnapshot>)response.getEntity();
+        assertEquals("foo", entity.getDocument().getSnapshotId());
+        assertNull(entity.getDocument().getQuantiles());
     }
 
     @Test
@@ -284,11 +295,15 @@ public class ModelSnapshotsTest extends ServiceTest
     {
         ModelSnapshot modelSnapshot = new ModelSnapshot();
         modelSnapshot.setSnapshotId("123");
+        modelSnapshot.setQuantiles(new Quantiles());
         when(jobManager().updateModelSnapshotDescription("foo", "123", "new description")).thenReturn(modelSnapshot);
 
         Response response = m_ModelSnapshots.updateDescription("foo", "123", "{ \"description\" : \"new description\" }");
 
         assertEquals(200, response.getStatus());
+        SingleDocument<ModelSnapshot> entity = (SingleDocument<ModelSnapshot>)response.getEntity();
+        assertEquals("123", entity.getDocument().getSnapshotId());
+        assertNull(entity.getDocument().getQuantiles());
     }
 
     @Test

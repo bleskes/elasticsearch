@@ -132,6 +132,16 @@ public class ModelSnapshots extends ResourceWithJobManager
 
         Pagination<ModelSnapshot> modelSnapshots = paginationFromQueryPage(page, skip, take);
 
+        // The quantiles can be large, and totally dominate the output - it's
+        // clearer to remove them
+        if (modelSnapshots.getDocuments() != null)
+        {
+            for (ModelSnapshot modelSnapshot : modelSnapshots.getDocuments())
+            {
+                modelSnapshot.setQuantiles(null);
+            }
+        }
+
         // paging
         if (modelSnapshots.isAllResults() == false)
         {
@@ -217,6 +227,10 @@ public class ModelSnapshots extends ResourceWithJobManager
             jobManager().resetLatestRecordTime(jobId, revertedLatestRecordTime);
         }
 
+        // The quantiles can be large, and totally dominate the output - it's
+        // clearer to remove them
+        revertedTo.setQuantiles(null);
+
         SingleDocument<ModelSnapshot> doc = new SingleDocument<>();
         doc.setDocument(revertedTo);
         doc.setType(ModelSnapshot.TYPE);
@@ -257,6 +271,10 @@ public class ModelSnapshots extends ResourceWithJobManager
         }
 
         ModelSnapshot updatedDesc = jobManager().updateModelSnapshotDescription(jobId, snapshotId, newDescription);
+
+        // The quantiles can be large, and totally dominate the output - it's
+        // clearer to remove them
+        updatedDesc.setQuantiles(null);
 
         SingleDocument<ModelSnapshot> doc = new SingleDocument<>();
         doc.setDocument(updatedDesc);
