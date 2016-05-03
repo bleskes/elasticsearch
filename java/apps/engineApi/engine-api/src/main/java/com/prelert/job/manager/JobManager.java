@@ -323,7 +323,7 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
         // Check licence now after any duplicate job conditions have been found
         // throws
         m_LicenceChecker.checkLicenceViolationsOnCreate(jobDetails.getAnalysisConfig(),
-                                                    runningAndScheduledJobIds().size());
+                                                    getActiveJobIds().size());
 
         m_JobProvider.createJob(jobDetails);
         audit(jobId).info(Messages.getMessage(Messages.JOB_AUDIT_CREATED));
@@ -999,10 +999,10 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
             return;
         }
 
-        Set<String> runningAndScheduledJobIds = runningAndScheduledJobIds();
-        int numberOfRunningDetectors = numberOfRunningDetectors(runningAndScheduledJobIds);
+        Set<String> activeJobIds = getActiveJobIds();
+        int numberOfRunningDetectors = numberOfRunningDetectors(activeJobIds);
         m_LicenceChecker.checkLicenceViolationsOnReactivate(jobId,
-                                                            runningAndScheduledJobIds.size(),
+                                                            activeJobIds.size(),
                                                             numDetectorsInJob,
                                                             numberOfRunningDetectors);
     }
@@ -1038,18 +1038,21 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
         return numDetectors;
     }
 
-    private Set<String> runningAndScheduledJobIds()
+    /**
+     * Get the job IDs of jobs that are running or have a started scheduler.
+     * @return the job IDs of active jobs
+     */
+    private Set<String> getActiveJobIds()
     {
-        Set<String> scheduledAndRunning = new HashSet<String>(m_ProcessManager.runningJobs());
+        Set<String> activeJobs = new HashSet<String>(m_ProcessManager.runningJobs());
         for (JobScheduler scheduler : m_ScheduledJobs.values())
         {
             if (scheduler.isStarted())
             {
-                scheduledAndRunning.add(scheduler.getJobId());
+                activeJobs.add(scheduler.getJobId());
             }
         }
-
-        return scheduledAndRunning;
+        return activeJobs;
     }
 
     /**
@@ -1389,19 +1392,19 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
         }
     }
 
-    public List<JobDetails> runningAndScheduledJobs()
+    public List<JobDetails> activeJobs()
     {
-        Set<String> jobIds = runningAndScheduledJobIds();
-        List<JobDetails> deets = new ArrayList<>();
+        Set<String> jobIds = getActiveJobIds();
+        List<JobDetails> activeJobs = new ArrayList<>();
         for (String id : jobIds)
         {
             Optional<JobDetails> jd = m_JobProvider.getJobDetails(id);
             if (jd.isPresent())
             {
-                deets.add(jd.get());
+                activeJobs.add(jd.get());
             }
         }
 
-        return deets;
+        return activeJobs;
     }
 }
