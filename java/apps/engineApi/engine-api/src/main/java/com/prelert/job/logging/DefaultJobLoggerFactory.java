@@ -88,14 +88,14 @@ public class DefaultJobLoggerFactory implements JobLoggerFactory
 
             // Get the base logger and use its configured log level.
             // If the logger is not configured it will be created and
-            // inherit the root logger's config this will only happen
-            // if the default log4j.properties has changed
+            // inherit the root logger's config.  This will only happen
+            // if the default log4j.properties has changed.
             Logger basePrelertLogger = Logger.getLogger("com.prelert");
             logger.setLevel(basePrelertLogger.getEffectiveLevel());
 
             if (logger.getAppender(LOG_FILE_APPENDER_NAME) == null)
             {
-                logger.addAppender(createRollingFileAppender(jobId));
+                logger.addAppender(createRollingFileAppender(basePrelertLogger, jobId));
             }
 
             synchronized (REF_COUNT_MAP)
@@ -147,7 +147,7 @@ public class DefaultJobLoggerFactory implements JobLoggerFactory
         }
     }
 
-    private RollingFileAppender createRollingFileAppender(String jobId) throws IOException
+    private RollingFileAppender createRollingFileAppender(Logger basePrelertLogger, String jobId) throws IOException
     {
         Path logFile = FileSystems.getDefault().getPath(m_LogDir, jobId, LOG_FILE_NAME);
         RollingFileAppender fileAppender = new RollingFileAppender(
@@ -157,17 +157,18 @@ public class DefaultJobLoggerFactory implements JobLoggerFactory
         fileAppender.setMaxFileSize(MAX_FILE_SIZE);
         fileAppender.setMaxBackupIndex(MAX_FILES_KEPT);
 
-        // Try to copy the maximum file size and maximum index from the
-        // first rolling file appender of the root logger (there will
-        // be one unless the user has meddled with the default config).
+        // Try to copy the layout, maximum file size and maximum index from
+        // the first rolling file appender of the com.prelert logger (there
+        // will be one unless the user has meddled with the default config).
         // If we fail the defaults set above will remain in force.
         @SuppressWarnings("rawtypes")
-        Enumeration rootAppenders = Logger.getRootLogger().getAllAppenders();
-        while (rootAppenders.hasMoreElements())
+        Enumeration baseAppenders = basePrelertLogger.getAllAppenders();
+        while (baseAppenders.hasMoreElements())
         {
             try
             {
-                RollingFileAppender defaultFileAppender = (RollingFileAppender)rootAppenders.nextElement();
+                RollingFileAppender defaultFileAppender = (RollingFileAppender)baseAppenders.nextElement();
+                fileAppender.setLayout(defaultFileAppender.getLayout());
                 fileAppender.setMaximumFileSize(defaultFileAppender.getMaximumFileSize());
                 fileAppender.setMaxBackupIndex(defaultFileAppender.getMaxBackupIndex());
                 break;
