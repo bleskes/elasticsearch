@@ -128,11 +128,11 @@ public class ProcessCtrl
      */
     public static final String BIN_DIR;
     /**
-     * The full to the autodetect program
+     * The full path to the autodetect program
      */
     public static final String AUTODETECT_PATH;
     /**
-     *  The full to the normalisation program
+     *  The full path to the normalisation program
      */
     public static final String NORMALIZE_PATH;
     /**
