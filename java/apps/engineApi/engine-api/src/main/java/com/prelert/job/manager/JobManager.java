@@ -921,7 +921,7 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
         {
             JobDetails jobDetails = getJobOrThrowIfUnknown(jobId);
 
-            checkLicenceViolationsOnReactivate(jobId, jobDetails.getAnalysisConfig().getDetectors().size());
+            checkLicenceViolationsOnReactivate(jobDetails);
             if (jobDetails.getStatus().isAnyOf(JobStatus.PAUSING, JobStatus.PAUSED))
             {
                 return new DataCounts();
@@ -989,17 +989,18 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
         return new String(output.toByteArray(), StandardCharsets.UTF_8);
     }
 
-    private void checkLicenceViolationsOnReactivate(String jobId, int numDetectorsInJob)
+    private void checkLicenceViolationsOnReactivate(JobDetails job)
     throws LicenseViolationException, TooManyJobsException
     {
-        if (m_ProcessManager.jobIsRunning(jobId))
+        if (m_ProcessManager.jobIsRunning(job.getId()))
         {
             return;
         }
 
         Set<String> activeJobIds = getActiveJobIds();
         int numberOfActiveDetectors = numberOfActiveDetectors(activeJobIds);
-        m_LicenceChecker.checkLicenceViolationsOnReactivate(jobId,
+        int numDetectorsInJob = job.getAnalysisConfig().getDetectors().size();
+        m_LicenceChecker.checkLicenceViolationsOnReactivate(job.getId(),
                                                             activeJobIds.size(),
                                                             numDetectorsInJob,
                                                             numberOfActiveDetectors);
@@ -1117,19 +1118,10 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
              UnknownJobException, TooManyJobsException, LicenseViolationException
     {
         checkJobHasScheduler(jobId);
-
-        Optional<JobDetails> jobDetails = m_JobProvider.getJobDetails(jobId);
-        if (jobDetails.isPresent() == false)
-        {
-            throw new UnknownJobException(jobId);
-        }
-        checkLicenceViolationsOnReactivate(jobId,
-                                jobDetails.get().getAnalysisConfig().getDetectors().size());
-
+        JobDetails job = getJobOrThrowIfUnknown(jobId);
+        checkLicenceViolationsOnReactivate(job);
         m_JobProvider.updateSchedulerState(jobId,
                 new SchedulerState(startMs, endMs.isPresent() ? endMs.getAsLong() : null));
-
-        JobDetails job = getJobOrThrowIfUnknown(jobId);
         LOGGER.info("Starting scheduler for job: " + jobId);
         m_ScheduledJobs.get(jobId).start(job, startMs, endMs);
     }
