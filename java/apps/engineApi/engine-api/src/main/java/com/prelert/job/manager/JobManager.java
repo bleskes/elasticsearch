@@ -992,7 +992,7 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
     private void checkLicenceViolationsOnReactivate(JobDetails job)
     throws LicenseViolationException, TooManyJobsException
     {
-        if (m_ProcessManager.jobIsRunning(job.getId()))
+        if (getActiveJobIds().contains(job.getId()))
         {
             return;
         }
