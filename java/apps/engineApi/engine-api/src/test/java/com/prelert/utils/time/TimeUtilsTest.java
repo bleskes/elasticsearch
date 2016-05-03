@@ -27,53 +27,24 @@
 
 package com.prelert.utils.time;
 
-import java.time.Instant;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
-import java.time.temporal.TemporalAccessor;
+import static org.junit.Assert.assertEquals;
 
-public final class TimeUtils
+import org.junit.Test;
+
+public class TimeUtilsTest
 {
-    /**
-     * A {@code DateTimeFormatter} for ISO 8601. It accepts offsets like:
-     * <ul>
-     * <li> +00:00, + 02:30
-     * <li> +0000, +0230
-     * <li> +00, +02
-     * <li> Z
-     * </ul>
-     */
-    private static final DateTimeFormatter ISO_8601_DATE_PARSER = DateTimeFormatter
-            .ofPattern("yyyy-MM-dd'T'HH:mm:ss[.SSS][XXX][X]");
-
-    private TimeUtils()
+    @Test
+    public void testParseIso8601AsEpochMillis()
     {
-        // Do nothing
-    }
-
-    public static String formatEpochMillisAsIso(long epochMillis)
-    {
-        Instant instant = Instant.ofEpochMilli(epochMillis);
-        ZonedDateTime zonedDateTime = ZonedDateTime.ofInstant(instant, ZoneId.systemDefault());
-        return DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(zonedDateTime);
-    }
-
-    /**
-     * Parses a {@code String} expected to be formatted as an ISO 8601 timestamp.
-     * Supported offsets include:
-     * <ul>
-     * <li> +00:00, + 02:30
-     * <li> +0000, +0230
-     * <li> +00, +02
-     * <li> Z
-     * </ul>
-     * @param timestamp a {@code String} containing an ISO 8601 timestamp
-     * @return the epoch milliseconds
-     */
-    public static long parseIso8601AsEpochMillis(String timestamp)
-    {
-        TemporalAccessor parsed = ISO_8601_DATE_PARSER.parse(timestamp);
-        return Instant.from(parsed).toEpochMilli();
+        assertEquals(1462096800000L, TimeUtils.parseIso8601AsEpochMillis("2016-05-01T10:00:00Z"));
+        assertEquals(1462096800333L, TimeUtils.parseIso8601AsEpochMillis("2016-05-01T10:00:00.333Z"));
+        assertEquals(1462096800334L, TimeUtils.parseIso8601AsEpochMillis("2016-05-01T10:00:00.334+00"));
+        assertEquals(1462096800335L, TimeUtils.parseIso8601AsEpochMillis("2016-05-01T10:00:00.335+0000"));
+        assertEquals(1462096800333L, TimeUtils.parseIso8601AsEpochMillis("2016-05-01T10:00:00.333+00:00"));
+        assertEquals(1462093200333L, TimeUtils.parseIso8601AsEpochMillis("2016-05-01T10:00:00.333+01"));
+        assertEquals(1462093200333L, TimeUtils.parseIso8601AsEpochMillis("2016-05-01T10:00:00.333+0100"));
+        assertEquals(1462093200333L, TimeUtils.parseIso8601AsEpochMillis("2016-05-01T10:00:00.333+01:00"));
+        assertEquals(1462098600333L, TimeUtils.parseIso8601AsEpochMillis("2016-05-01T10:00:00.333-00:30"));
+        assertEquals(1462098600333L, TimeUtils.parseIso8601AsEpochMillis("2016-05-01T10:00:00.333-0030"));
     }
 }

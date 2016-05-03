@@ -28,10 +28,7 @@
 package com.prelert.rs.resources;
 
 import java.net.URI;
-import java.time.Instant;
-import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
-import java.time.temporal.TemporalAccessor;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -56,6 +53,7 @@ import com.prelert.rs.data.SingleDocument;
 import com.prelert.rs.exception.ActionNotAllowedForScheduledJobException;
 import com.prelert.rs.provider.RestApiException;
 import com.prelert.server.info.ServerInfoFactory;
+import com.prelert.utils.time.TimeUtils;
 
 /**
  * Abstract resource class that knows how to access a
@@ -305,8 +303,7 @@ public abstract class ResourceWithJobManager
         // try parsing as a date string
         try
         {
-            TemporalAccessor parsed = DateTimeFormatter.ISO_OFFSET_DATE_TIME.parse(date);
-            return Instant.from(parsed).toEpochMilli();
+            return TimeUtils.parseIso8601AsEpochMillis(date);
         }
         catch (DateTimeParseException pe)
         {

@@ -30,6 +30,7 @@ package com.prelert.rs.resources;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+
 import static org.mockito.Mockito.when;
 
 import java.net.URISyntaxException;
@@ -181,6 +182,29 @@ public class BucketsTest extends ServiceTest
         String nextPageUri = buckets.getNextPage().toString();
         assertEquals(
                 "http://localhost/test/results/foo/buckets?skip=100&take=100&start=2015-01-01T12%3A00%3A00.042Z&end=2015-01-01T13%3A00%3A00.142%2B00%3A00&expand=false&includeInterim=false&anomalyScore=0.0&maxNormalizedProbability=0.0",
+                nextPageUri);
+    }
+
+    @Test
+    public void testBuckets_GivenIsoWithoutColonInOffsetStartAndEpochEndParams() throws UnknownJobException,
+            NativeProcessRunException
+    {
+        QueryPage<Bucket> queryResult = new QueryPage<>(Arrays.asList(new Bucket()), 300);
+
+        when(jobManager().buckets("foo", false, false, 0, 100, 1420113600042L, 1420117200142L, 0.0, 0.0))
+                .thenReturn(queryResult);
+
+        Pagination<Bucket> buckets = m_Buckets.buckets("foo", false, false, 0, 100,
+                "2015-01-01T12:00:00.042+0000", "2015-01-01T15:00:00.142+0200", 0.0, 0.0);
+
+        assertEquals(300l, buckets.getHitCount());
+        assertEquals(100l, buckets.getTake());
+        assertEquals(0l, buckets.getSkip());
+
+        assertNull(buckets.getPreviousPage());
+        String nextPageUri = buckets.getNextPage().toString();
+        assertEquals(
+                "http://localhost/test/results/foo/buckets?skip=100&take=100&start=2015-01-01T12%3A00%3A00.042%2B0000&end=2015-01-01T15%3A00%3A00.142%2B0200&expand=false&includeInterim=false&anomalyScore=0.0&maxNormalizedProbability=0.0",
                 nextPageUri);
     }
 
