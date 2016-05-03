@@ -47,7 +47,6 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
-import java.util.stream.Collectors;
 
 import javax.ws.rs.core.Feature;
 import javax.ws.rs.core.FeatureContext;
@@ -922,7 +921,6 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
         {
             JobDetails jobDetails = getJobOrThrowIfUnknown(jobId);
 
-
             checkLicenceViolationsOnReactivate(jobId, jobDetails.getAnalysisConfig().getDetectors().size());
             if (jobDetails.getStatus().isAnyOf(JobStatus.PAUSING, JobStatus.PAUSED))
             {
@@ -1000,11 +998,11 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
         }
 
         Set<String> activeJobIds = getActiveJobIds();
-        int numberOfRunningDetectors = numberOfRunningDetectors(activeJobIds);
+        int numberOfActiveDetectors = numberOfActiveDetectors(activeJobIds);
         m_LicenceChecker.checkLicenceViolationsOnReactivate(jobId,
                                                             activeJobIds.size(),
                                                             numDetectorsInJob,
-                                                            numberOfRunningDetectors);
+                                                            numberOfActiveDetectors);
     }
 
 
@@ -1014,26 +1012,22 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
      *
      * It's possible for scheduled jobs not to have a running process.
      *
-     * @param runningAndScheduledJobIds Set of IDs of jobs with running processes
+     * @param activeJobIds Set of IDs of active jobs
      * @return
      */
-    private int numberOfRunningDetectors(Set<String> runningAndScheduledJobIds)
+    private int numberOfActiveDetectors(Set<String> activeJobIds)
     {
-        Set<String> scheduledJobsWithoutARunningProcess =
-                    scheduledJobsWithoutARunningProcess(runningAndScheduledJobIds);
-
-        // the detectors in the jobs process manager managing
+        // the detectors of running jobs
         int numDetectors = m_ProcessManager.numberOfRunningDetectors();
 
-        // the detectors in scheduled jobs without running processes
-        for (String jobId : scheduledJobsWithoutARunningProcess)
-        {
-            Optional<JobDetails> details = this.getJob(jobId);
-            if (details.isPresent())
-            {
-                numDetectors += details.get().getAnalysisConfig().getDetectors().size();
-            }
-        }
+        // add detectors of scheduled jobs without a running process
+        Set<String> runningJobs = new HashSet<>(m_ProcessManager.runningJobs());
+        numDetectors += activeJobIds.stream()
+                .filter(jobId -> !runningJobs.contains(jobId))
+                .map(jobId -> getJob(jobId))
+                .filter(optionalJob -> optionalJob.isPresent())
+                .mapToInt(optionalJob -> optionalJob.get().getAnalysisConfig().getDetectors().size())
+                .sum();
 
         return numDetectors;
     }
@@ -1053,23 +1047,6 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
             }
         }
         return activeJobs;
-    }
-
-    /**
-     * The job Ids of scheduled jobs that are STARTED but don't
-     * have a running process.
-     *
-     * @param runningAndScheduledJobIds Set of STARTED scheduled jobs and
-     * jobs with running processes
-     * @return
-     */
-    private Set<String> scheduledJobsWithoutARunningProcess(Set<String> runningAndScheduledJobIds)
-    {
-        return m_ScheduledJobs.values().stream()
-                                    .filter((s) -> s.isStarted())
-                                    .map((s) -> s.getJobId())
-                                    .filter((id) -> !runningAndScheduledJobIds.contains(id))
-                                    .collect(Collectors.toCollection(HashSet::new));
     }
 
     private void tryFinishingJob(String jobId) throws JobInUseException

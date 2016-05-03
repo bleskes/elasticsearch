@@ -1126,11 +1126,8 @@ public class JobManagerTest
     }
 
     @Test
-    public void testStartJobScheduler_MaxDetectorsLicenceViolation() throws UnknownJobException,
-            LicenseViolationException, JobConfigurationException, JobIdAlreadyExistsException,
-            CannotStartSchedulerException, IOException, NoSuchScheduledJobException,
-            CannotStopSchedulerException, NativeProcessRunException, JobInUseException,
-            DataStoreException, TooManyJobsException
+    public void testStartJobScheduler_MaxDetectorsLicenceViolation_GivenAnotherNonScheduledJob()
+            throws JobException
     {
         int maxDetectors = 10;
         givenProcessInfo(5, maxDetectors);
@@ -1157,6 +1154,41 @@ public class JobManagerTest
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.LICENSE_VIOLATION));
 
         jobManager.startJobScheduler("foo", 0, OptionalLong.empty());
+    }
+
+    @Test
+    public void testStartJobScheduler_MaxDetectorsLicenceViolation_GivenStartedScheduledJob()
+            throws JobException
+    {
+        int maxDetectors = 1;
+        givenProcessInfo(2, maxDetectors);
+
+        when(m_ProcessManager.jobIsRunning("foo1")).thenReturn(false);
+        Logger jobLogger = mock(Logger.class);
+        when(m_JobLoggerFactory.newLogger(anyString())).thenReturn(jobLogger);
+        DataExtractor dataExtractor = mock(DataExtractor.class);
+        when(m_DataExtractorFactory.newExtractor(any(JobDetails.class))).thenReturn(dataExtractor);
+
+        JobManager jobManager = createJobManager();
+
+        JobConfiguration jobConfig1 = createScheduledJobConfig();
+        jobConfig1.setId("foo1");
+        JobDetails job1 = jobManager.createJob(jobConfig1, false);
+        when(m_JobProvider.getJobDetails("foo1")).thenReturn(Optional.of(job1));
+        jobManager.startJobScheduler("foo1", 0, OptionalLong.empty());
+
+        JobConfiguration jobConfig2 = createScheduledJobConfig();
+        jobConfig2.setId("foo2");
+        JobDetails job2 = jobManager.createJob(jobConfig2, false);
+        when(m_JobProvider.getJobDetails("foo2")).thenReturn(Optional.of(job2));
+
+        m_ExpectedException.expect(LicenseViolationException.class);
+        m_ExpectedException.expectMessage(
+                Messages.getMessage(Messages.LICENSE_LIMIT_DETECTORS_REACTIVATE, "foo2", maxDetectors));
+        m_ExpectedException.expect(
+                ErrorCodeMatcher.hasErrorCode(ErrorCodes.LICENSE_VIOLATION));
+
+        jobManager.startJobScheduler("foo2", 0, OptionalLong.empty());
     }
 
     @Test
