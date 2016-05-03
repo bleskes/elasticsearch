@@ -41,8 +41,16 @@ public class LicenseTests extends AbstractLicenseeTestCase {
         GraphLicensee graphLicensee = new GraphLicensee(Settings.EMPTY, licenseeRegistry);
         licenseeRegistry.register(graphLicensee);
 
-        assertLicenseBasicOrGoldOrNoneOrExpiredBehaviour(graphLicensee);
+        assertLicenseBasicOrStandardGoldOrNoneOrExpiredBehaviour(graphLicensee);
     }
+    
+    public void testStandardLicenseIsDisabled() throws Exception {
+        licenseeRegistry.setOperationMode(OperationMode.STANDARD);
+        GraphLicensee graphLicensee = new GraphLicensee(Settings.EMPTY, licenseeRegistry);
+        licenseeRegistry.register(graphLicensee);
+
+        assertLicenseBasicOrStandardGoldOrNoneOrExpiredBehaviour(graphLicensee);
+    }    
 
     public void testNoLicenseDoesNotWork() {
         licenseeRegistry.setOperationMode(OperationMode.BASIC);
@@ -50,7 +58,7 @@ public class LicenseTests extends AbstractLicenseeTestCase {
         licenseeRegistry.register(graphLicensee);
         licenseeRegistry.disable();
 
-        assertLicenseBasicOrGoldOrNoneOrExpiredBehaviour(graphLicensee);
+        assertLicenseBasicOrStandardGoldOrNoneOrExpiredBehaviour(graphLicensee);
     }
 
     public void testExpiredPlatinumTrialLicenseIsRestricted() throws Exception {
@@ -59,7 +67,7 @@ public class LicenseTests extends AbstractLicenseeTestCase {
         licenseeRegistry.register(graphLicensee);
         licenseeRegistry.disable();
 
-        assertLicenseBasicOrGoldOrNoneOrExpiredBehaviour(graphLicensee);
+        assertLicenseBasicOrStandardGoldOrNoneOrExpiredBehaviour(graphLicensee);
     }
 
     public void testUpgradingFromBasicLicenseWorks() {
@@ -67,7 +75,7 @@ public class LicenseTests extends AbstractLicenseeTestCase {
         GraphLicensee graphLicensee = new GraphLicensee(Settings.EMPTY, licenseeRegistry);
         licenseeRegistry.register(graphLicensee);
 
-        assertLicenseBasicOrGoldOrNoneOrExpiredBehaviour(graphLicensee);
+        assertLicenseBasicOrStandardGoldOrNoneOrExpiredBehaviour(graphLicensee);
 
         licenseeRegistry.setOperationMode(randomTrialOrPlatinumMode());
         assertLicensePlatinumTrialBehaviour(graphLicensee);
@@ -81,8 +89,30 @@ public class LicenseTests extends AbstractLicenseeTestCase {
         assertLicensePlatinumTrialBehaviour(graphLicensee);
 
         licenseeRegistry.setOperationMode(OperationMode.BASIC);
-        assertLicenseBasicOrGoldOrNoneOrExpiredBehaviour(graphLicensee);
+        assertLicenseBasicOrStandardGoldOrNoneOrExpiredBehaviour(graphLicensee);
     }
+    
+    public void testUpgradingFromStandardLicenseWorks() {
+        licenseeRegistry.setOperationMode(OperationMode.STANDARD);
+        GraphLicensee graphLicensee = new GraphLicensee(Settings.EMPTY, licenseeRegistry);
+        licenseeRegistry.register(graphLicensee);
+
+        assertLicenseBasicOrStandardGoldOrNoneOrExpiredBehaviour(graphLicensee);
+
+        licenseeRegistry.setOperationMode(randomTrialOrPlatinumMode());
+        assertLicensePlatinumTrialBehaviour(graphLicensee);
+    }
+
+    public void testDowngradingToStandardLicenseWorks() {
+        licenseeRegistry.setOperationMode(randomTrialOrPlatinumMode());
+        GraphLicensee graphLicensee = new GraphLicensee(Settings.EMPTY, licenseeRegistry);
+        licenseeRegistry.register(graphLicensee);
+
+        assertLicensePlatinumTrialBehaviour(graphLicensee);
+
+        licenseeRegistry.setOperationMode(OperationMode.STANDARD);
+        assertLicenseBasicOrStandardGoldOrNoneOrExpiredBehaviour(graphLicensee);
+    }    
     
     public void testDowngradingToGoldLicenseWorks() {
         licenseeRegistry.setOperationMode(randomTrialOrPlatinumMode());
@@ -92,7 +122,7 @@ public class LicenseTests extends AbstractLicenseeTestCase {
         assertLicensePlatinumTrialBehaviour(graphLicensee);
 
         licenseeRegistry.setOperationMode(OperationMode.GOLD);
-        assertLicenseBasicOrGoldOrNoneOrExpiredBehaviour(graphLicensee);
+        assertLicenseBasicOrStandardGoldOrNoneOrExpiredBehaviour(graphLicensee);
     }    
 
     public void testUpgradingExpiredLicenseWorks() {
@@ -101,7 +131,7 @@ public class LicenseTests extends AbstractLicenseeTestCase {
         licenseeRegistry.register(graphLicensee);
         licenseeRegistry.disable();
 
-        assertLicenseBasicOrGoldOrNoneOrExpiredBehaviour(graphLicensee);
+        assertLicenseBasicOrStandardGoldOrNoneOrExpiredBehaviour(graphLicensee);
 
         licenseeRegistry.setOperationMode(randomTrialOrPlatinumMode());
         assertLicensePlatinumTrialBehaviour(graphLicensee);
@@ -111,7 +141,7 @@ public class LicenseTests extends AbstractLicenseeTestCase {
         assertThat("Expected graph exploration to be allowed", graphLicensee.isAvailable(), is(true));
     }
 
-    private void assertLicenseBasicOrGoldOrNoneOrExpiredBehaviour(GraphLicensee graphLicensee) {
+    private void assertLicenseBasicOrStandardGoldOrNoneOrExpiredBehaviour(GraphLicensee graphLicensee) {
         assertThat("Expected graph exploration not to be allowed", graphLicensee.isAvailable(), is(false));
     }
 }

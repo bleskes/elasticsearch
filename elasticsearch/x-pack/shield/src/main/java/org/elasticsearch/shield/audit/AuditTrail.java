@@ -30,7 +30,7 @@ import java.net.InetAddress;
  */
 public interface AuditTrail {
 
-    static final AuditTrail NOOP = new AuditTrail() {
+    AuditTrail NOOP = new AuditTrail() {
 
         static final String NAME = "noop";
 
@@ -80,6 +80,10 @@ public interface AuditTrail {
         }
 
         @Override
+        public void tamperedRequest(RestRequest request) {
+        }
+
+        @Override
         public void tamperedRequest(String action, TransportMessage message) {
         }
 
@@ -125,6 +129,8 @@ public interface AuditTrail {
     void accessGranted(User user, String action, TransportMessage message);
 
     void accessDenied(User user, String action, TransportMessage message);
+
+    void tamperedRequest(RestRequest request);
 
     void tamperedRequest(String action, TransportMessage message);
 

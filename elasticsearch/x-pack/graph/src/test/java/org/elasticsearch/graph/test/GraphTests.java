@@ -19,6 +19,7 @@ package org.elasticsearch.graph.test;
 
 import org.apache.lucene.search.BooleanQuery;
 import org.elasticsearch.action.ActionRequestValidationException;
+import org.elasticsearch.action.search.ShardSearchFailure;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.settings.Settings.Builder;
 import org.elasticsearch.common.unit.TimeValue;
@@ -41,7 +42,7 @@ import org.elasticsearch.script.ScriptModule;
 import org.elasticsearch.script.ScriptService.ScriptType;
 import org.elasticsearch.shield.Security;
 import org.elasticsearch.test.ESSingleNodeTestCase;
-import org.elasticsearch.watcher.Watcher;
+import org.elasticsearch.xpack.watcher.Watcher;
 import org.elasticsearch.xpack.XPackPlugin;
 
 import java.util.Collection;
@@ -277,7 +278,10 @@ public class GraphTests extends ESSingleNodeTestCase {
 
         Throwable expectedError = null;
         try {
-            grb.get();
+            GraphExploreResponse response = grb.get();
+            if (response.getShardFailures().length > 0) {
+                throw ((ShardSearchFailure) response.getShardFailures()[0]).getCause();
+            }
         } catch (Throwable rte) {
             expectedError = rte;
 

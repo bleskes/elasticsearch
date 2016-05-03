@@ -64,7 +64,7 @@ public class PkiRealmTests extends ESTestCase {
     }
 
     public void testExtractToken() throws Exception {
-        X509Certificate certificate = readCert(getDataPath("/org/elasticsearch/shield/transport/ssl/certs/simple/testnode.cert"));
+        X509Certificate certificate = readCert(getDataPath("/org/elasticsearch/shield/transport/ssl/certs/simple/testnode.crt"));
         ThreadContext threadContext = new ThreadContext(Settings.EMPTY);
         threadContext.putTransient(PkiRealm.PKI_CERT_HEADER_NAME, new X509Certificate[] { certificate });
         PkiRealm realm = new PkiRealm(new RealmConfig("", Settings.EMPTY, globalSettings), mock(DnRoleMapper.class));
@@ -76,7 +76,7 @@ public class PkiRealmTests extends ESTestCase {
     }
 
     public void testAuthenticateBasedOnCertToken() throws Exception {
-        X509Certificate certificate = readCert(getDataPath("/org/elasticsearch/shield/transport/ssl/certs/simple/testnode.cert"));
+        X509Certificate certificate = readCert(getDataPath("/org/elasticsearch/shield/transport/ssl/certs/simple/testnode.crt"));
         X509AuthenticationToken token = new X509AuthenticationToken(new X509Certificate[] { certificate }, "Elasticsearch Test Node",
                 "CN=Elasticsearch Test Node,");
         DnRoleMapper roleMapper = mock(DnRoleMapper.class);
@@ -91,7 +91,7 @@ public class PkiRealmTests extends ESTestCase {
     }
 
     public void testCustomUsernamePattern() throws Exception {
-        X509Certificate certificate = readCert(getDataPath("/org/elasticsearch/shield/transport/ssl/certs/simple/testnode.cert"));
+        X509Certificate certificate = readCert(getDataPath("/org/elasticsearch/shield/transport/ssl/certs/simple/testnode.crt"));
         DnRoleMapper roleMapper = mock(DnRoleMapper.class);
         PkiRealm realm = new PkiRealm(new RealmConfig("", Settings.builder().put("username_pattern", "OU=(.*?),").build(), globalSettings),
                 roleMapper);
@@ -108,7 +108,7 @@ public class PkiRealmTests extends ESTestCase {
     }
 
     public void testVerificationUsingATruststore() throws Exception {
-        X509Certificate certificate = readCert(getDataPath("/org/elasticsearch/shield/transport/ssl/certs/simple/testnode.cert"));
+        X509Certificate certificate = readCert(getDataPath("/org/elasticsearch/shield/transport/ssl/certs/simple/testnode.crt"));
         DnRoleMapper roleMapper = mock(DnRoleMapper.class);
         Settings settings = Settings.builder()
                 .put("truststore.path", getDataPath("/org/elasticsearch/shield/transport/ssl/certs/simple/testnode.jks"))
@@ -129,7 +129,7 @@ public class PkiRealmTests extends ESTestCase {
     }
 
     public void testVerificationFailsUsingADifferentTruststore() throws Exception {
-        X509Certificate certificate = readCert(getDataPath("/org/elasticsearch/shield/transport/ssl/certs/simple/testnode.cert"));
+        X509Certificate certificate = readCert(getDataPath("/org/elasticsearch/shield/transport/ssl/certs/simple/testnode.crt"));
         DnRoleMapper roleMapper = mock(DnRoleMapper.class);
         Settings settings = Settings.builder()
                 .put("truststore.path", getDataPath("/org/elasticsearch/shield/transport/ssl/certs/simple/testnode-client-profile.jks"))

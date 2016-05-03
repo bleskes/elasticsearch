@@ -323,7 +323,7 @@ public class TransportFilterTests extends ESIntegTestCase {
                 ClientTransportFilter clientTransportFilter) {
             super(settings, transport, threadPool, authcService, authzService, actionMapper, clientTransportFilter,
                     mock(SecurityLicenseState.class));
-            when(licenseState.securityEnabled()).thenReturn(true);
+            when(licenseState.authenticationAndAuthorizationEnabled()).thenReturn(true);
         }
 
         @Override
