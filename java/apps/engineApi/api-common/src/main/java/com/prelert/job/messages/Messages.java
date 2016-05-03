@@ -61,8 +61,9 @@ public final class Messages
     public static final String JOB_AUDIT_SCHEDULER_STOPPED = "job.audit.scheduler.stopped";
     public static final String JOB_AUDIT_SCHEDULER_NO_DATA = "job.audit.scheduler.no.data";
     public static final String JOB_AUDIR_SCHEDULER_DATA_SEEN_AGAIN = "job.audit.scheduler.data.seen.again";
+    public static final String JOB_AUDIT_SCHEDULER_DATA_ANALYSIS_ERROR = "job.audit.scheduler.data.analysis.error";
     public static final String JOB_AUDIT_SCHEDULER_DATA_EXTRACTION_ERROR = "job.audit.scheduler.data.extraction.error";
-    public static final String JOB_AUDIT_SCHEDULER_DATA_EXTRACTION_RECOVERED = "job.audit.scheduler.data.extraction.recovered";
+    public static final String JOB_AUDIT_SCHEDULER_RECOVERED = "job.audit.scheduler.recovered";
 
     public static final String SYSTEM_AUDIT_STARTED = "system.audit.started";
     public static final String SYSTEM_AUDIT_SHUTDOWN = "system.audit.shutdown";

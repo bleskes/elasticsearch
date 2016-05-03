@@ -55,33 +55,42 @@ public class ProblemTrackerTest
     }
 
     @Test
-    public void testReportProblem()
+    public void testReportExtractionProblem()
     {
-        m_ProblemTracker.reportProblem("foo");
+        m_ProblemTracker.reportExtractionProblem("foo");
 
         verify(m_Auditor).error("Scheduler is encountering errors extracting data: foo");
-        assertTrue(m_ProblemTracker.hasDataExtractionProblems());
+        assertTrue(m_ProblemTracker.hasProblems());
+    }
+
+    @Test
+    public void testReportAnalysisProblem()
+    {
+        m_ProblemTracker.reportAnalysisProblem("foo");
+
+        verify(m_Auditor).error("Scheduler is encountering errors submitting data for analysis: foo");
+        assertTrue(m_ProblemTracker.hasProblems());
     }
 
     @Test
     public void testReportProblem_GivenSameProblemTwice()
     {
-        m_ProblemTracker.reportProblem("foo");
-        m_ProblemTracker.reportProblem("foo");
+        m_ProblemTracker.reportExtractionProblem("foo");
+        m_ProblemTracker.reportAnalysisProblem("foo");
 
         verify(m_Auditor, times(1)).error("Scheduler is encountering errors extracting data: foo");
-        assertTrue(m_ProblemTracker.hasDataExtractionProblems());
+        assertTrue(m_ProblemTracker.hasProblems());
     }
 
     @Test
     public void testReportProblem_GivenSameProblemAfterFinishReport()
     {
-        m_ProblemTracker.reportProblem("foo");
+        m_ProblemTracker.reportExtractionProblem("foo");
         m_ProblemTracker.finishReport();
-        m_ProblemTracker.reportProblem("foo");
+        m_ProblemTracker.reportExtractionProblem("foo");
 
         verify(m_Auditor, times(1)).error("Scheduler is encountering errors extracting data: foo");
-        assertTrue(m_ProblemTracker.hasDataExtractionProblems());
+        assertTrue(m_ProblemTracker.hasProblems());
     }
 
     @Test
@@ -147,19 +156,19 @@ public class ProblemTrackerTest
     {
         m_ProblemTracker.finishReport();
 
-        assertFalse(m_ProblemTracker.hasDataExtractionProblems());
+        assertFalse(m_ProblemTracker.hasProblems());
         Mockito.verifyNoMoreInteractions(m_Auditor);
     }
 
     @Test
     public void testFinishReport_GivenRecovery()
     {
-        m_ProblemTracker.reportProblem("bar");
+        m_ProblemTracker.reportExtractionProblem("bar");
         m_ProblemTracker.finishReport();
         m_ProblemTracker.finishReport();
 
         verify(m_Auditor).error("Scheduler is encountering errors extracting data: bar");
-        verify(m_Auditor).info("Scheduler has recovered extracting data");
-        assertFalse(m_ProblemTracker.hasDataExtractionProblems());
+        verify(m_Auditor).info("Scheduler has recovered data extraction and analysis");
+        assertFalse(m_ProblemTracker.hasProblems());
     }
 }

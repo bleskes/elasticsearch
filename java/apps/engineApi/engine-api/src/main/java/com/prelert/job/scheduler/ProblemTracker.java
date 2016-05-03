@@ -51,9 +51,9 @@ class ProblemTracker
 
     private final Supplier<Auditor> m_Auditor;
 
-    private volatile boolean m_HasDataExtractionProblems;
-    private volatile boolean m_HadDataExtractionProblems;
-    private volatile String m_PreviousDataExtractionProblem;
+    private volatile boolean m_HasProblems;
+    private volatile boolean m_HadProblems;
+    private volatile String m_PreviousProblem;
 
     private volatile int m_EmptyDataCount;
 
@@ -63,18 +63,37 @@ class ProblemTracker
     }
 
     /**
+     * Reports as analysis problem if it is different than the last seen problem
+     *
+     * @param problemMessage the problem message
+     */
+    public void reportAnalysisProblem(String problemMessage)
+    {
+        reportProblem(Messages.JOB_AUDIT_SCHEDULER_DATA_ANALYSIS_ERROR, problemMessage);
+    }
+
+    /**
+     * Reports as extraction problem if it is different than the last seen problem
+     *
+     * @param problemMessage the problem message
+     */
+    public void reportExtractionProblem(String problemMessage)
+    {
+        reportProblem(Messages.JOB_AUDIT_SCHEDULER_DATA_EXTRACTION_ERROR, problemMessage);
+    }
+
+    /**
      * Reports the problem if it is different than the last seen problem
      *
      * @param problemMessage the problem message
      */
-    public void reportProblem(String problemMessage)
+    private void reportProblem(String template, String problemMessage)
     {
-        m_HasDataExtractionProblems = true;
-        if (!Objects.equals(m_PreviousDataExtractionProblem, problemMessage))
+        m_HasProblems = true;
+        if (!Objects.equals(m_PreviousProblem, problemMessage))
         {
-            m_PreviousDataExtractionProblem = problemMessage;
-            m_Auditor.get().error(Messages.getMessage(
-                    Messages.JOB_AUDIT_SCHEDULER_DATA_EXTRACTION_ERROR, problemMessage));
+            m_PreviousProblem = problemMessage;
+            m_Auditor.get().error(Messages.getMessage(template, problemMessage));
         }
     }
 
@@ -108,9 +127,9 @@ class ProblemTracker
         return false;
     }
 
-    public boolean hasDataExtractionProblems()
+    public boolean hasProblems()
     {
-        return m_HasDataExtractionProblems;
+        return m_HasProblems;
     }
 
     /**
@@ -118,13 +137,13 @@ class ProblemTracker
      */
     public void finishReport()
     {
-        if (!m_HasDataExtractionProblems && m_HadDataExtractionProblems)
+        if (!m_HasProblems && m_HadProblems)
         {
             m_Auditor.get().info(Messages.getMessage(
-                    Messages.JOB_AUDIT_SCHEDULER_DATA_EXTRACTION_RECOVERED));
+                    Messages.JOB_AUDIT_SCHEDULER_RECOVERED));
         }
 
-        m_HadDataExtractionProblems = m_HasDataExtractionProblems;
-        m_HasDataExtractionProblems = false;
+        m_HadProblems = m_HasProblems;
+        m_HasProblems = false;
     }
 }

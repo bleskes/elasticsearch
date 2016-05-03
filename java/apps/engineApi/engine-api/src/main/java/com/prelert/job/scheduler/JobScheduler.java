@@ -155,7 +155,7 @@ public class JobScheduler
         Date latestRecordTimestamp = null;
         newSearch(start, end);
         while (m_DataExtractor.hasNext() && m_Status == JobSchedulerStatus.STARTED
-                && !m_ProblemTracker.hasDataExtractionProblems())
+                && !m_ProblemTracker.hasProblems())
         {
             Optional<InputStream> extractedData = tryExtractingNextAvailableData();
             if (extractedData.isPresent())
@@ -190,7 +190,7 @@ public class JobScheduler
         }
         catch (IOException e)
         {
-            m_ProblemTracker.reportProblem(e.getMessage());
+            m_ProblemTracker.reportExtractionProblem(e.getMessage());
             m_Logger.error("An error has occurred while starting a new search for ["
                     + start + ", " + end + ")", e);
         }
@@ -209,7 +209,7 @@ public class JobScheduler
         }
         catch (IOException e)
         {
-            m_ProblemTracker.reportProblem(e.getMessage());
+            m_ProblemTracker.reportExtractionProblem(e.getMessage());
             m_Logger.error("An error occurred while extracting data", e);
             return Optional.empty();
         }
@@ -219,7 +219,7 @@ public class JobScheduler
     {
         // Only update last end time when there are no problems in order to retry
         // from the last time when data were successfully processed
-        if (!m_ProblemTracker.hasDataExtractionProblems()
+        if (!m_ProblemTracker.hasProblems()
                 && latestRecordTimestamp != null
                 && isInRealTimeMode())
         {
@@ -272,7 +272,7 @@ public class JobScheduler
                 | LicenseViolationException | MalformedJsonException e)
         {
             m_Logger.error("An error has occurred while submitting data to job '" + m_JobId + "'", e);
-            m_ProblemTracker.reportProblem(e.getMessage());
+            m_ProblemTracker.reportAnalysisProblem(e.getMessage());
         }
         return new DataCounts();
     }
