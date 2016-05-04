@@ -61,7 +61,7 @@ public class ElasticsearchBulkDeleter implements JobDataDeleter
 {
     private static final Logger LOGGER = Logger.getLogger(ElasticsearchBulkDeleter.class);
 
-    private static int SCROLL_SIZE = 1000;
+    private static final int SCROLL_SIZE = 1000;
     private static final String SCROLL_CONTEXT_DURATION = "5m";
 
     private final Client m_Client;
