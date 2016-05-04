@@ -17,6 +17,8 @@
 
 package org.elasticsearch.xpack.watcher.support.xcontent;
 
+import org.elasticsearch.common.Strings;
+
 import java.lang.reflect.Array;
 import java.util.List;
 import java.util.Map;
@@ -34,7 +36,9 @@ public class ObjectPath {
     }
 
     private static Object evalContext(String path, Object ctx) {
-        String[] parts = path.split("\\.");
+        final String[] parts;
+        if (path == null || path.isEmpty()) parts = Strings.EMPTY_ARRAY;
+        else parts = path.split("\\.");
         StringBuilder resolved = new StringBuilder();
         for (String part : parts) {
             if (ctx == null) {
