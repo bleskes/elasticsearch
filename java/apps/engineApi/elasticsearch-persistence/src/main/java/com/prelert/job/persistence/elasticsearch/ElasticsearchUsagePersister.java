@@ -44,6 +44,7 @@ import com.prelert.job.usage.Usage;
 public class ElasticsearchUsagePersister implements UsagePersister
 {
     private static final String USAGE_DOC_ID_PREFIX = "usage-";
+    private static final int RETRY_COUNT = 5;
 
     private final Client m_Client;
     private final Logger m_Logger;
@@ -106,7 +107,7 @@ public class ElasticsearchUsagePersister implements UsagePersister
                     .setScript(ElasticsearchScripts.newUpdateUsage(
                             additionalBytes, additionalFields, additionalRecords))
                     .setUpsert(m_UpsertMap)
-                    .setRetryOnConflict(5).get();
+                    .setRetryOnConflict(RETRY_COUNT).get();
         }
         catch (VersionConflictEngineException e)
         {

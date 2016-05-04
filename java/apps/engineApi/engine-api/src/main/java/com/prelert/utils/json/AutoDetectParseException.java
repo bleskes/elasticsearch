@@ -34,6 +34,8 @@ import java.io.IOException;
  */
 public class AutoDetectParseException extends IOException
 {
+    private static final long serialVersionUID = 332779889832738472L;
+
     public AutoDetectParseException(String message)
     {
         super(message);
@@ -43,7 +45,4 @@ public class AutoDetectParseException extends IOException
     {
         super(cause);
     }
-
-    private static final long serialVersionUID = 332779889832738472L;
-
 }

@@ -83,15 +83,15 @@ public class ControlMsgToProcessWriter
     private final LengthEncodedWriter m_LengthEncodedWriter;
     private final AnalysisConfig m_AnalysisConfig;
 
-    public static ControlMsgToProcessWriter create(OutputStream os, AnalysisConfig analysisConfig)
-    {
-        return new ControlMsgToProcessWriter(new LengthEncodedWriter(os), analysisConfig);
-    }
-
     ControlMsgToProcessWriter(LengthEncodedWriter outputStreamWriter, AnalysisConfig analysisConfig)
     {
         m_LengthEncodedWriter = Objects.requireNonNull(outputStreamWriter);
         m_AnalysisConfig = Objects.requireNonNull(analysisConfig);
+    }
+
+    public static ControlMsgToProcessWriter create(OutputStream os, AnalysisConfig analysisConfig)
+    {
+        return new ControlMsgToProcessWriter(new LengthEncodedWriter(os), analysisConfig);
     }
 
     /**
