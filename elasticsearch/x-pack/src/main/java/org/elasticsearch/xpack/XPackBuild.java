@@ -19,8 +19,6 @@ package org.elasticsearch.xpack;
 
 import org.elasticsearch.common.SuppressForbidden;
 import org.elasticsearch.common.io.PathUtils;
-import org.elasticsearch.common.io.stream.StreamInput;
-import org.elasticsearch.common.io.stream.StreamOutput;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
