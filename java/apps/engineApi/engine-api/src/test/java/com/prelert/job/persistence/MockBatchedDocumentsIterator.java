@@ -33,47 +33,55 @@ import java.util.Deque;
 import java.util.List;
 import java.util.NoSuchElementException;
 
-import com.prelert.job.UnknownJobException;
-
-public class MockBatchedResultsIterator<T> implements BatchedResultsIterator<T>
+public class MockBatchedDocumentsIterator<T> implements BatchedDocumentsIterator<T>
 {
-    private final long m_StartEpochMs;
-    private final long m_EndEpochMs;
+    private final Long m_StartEpochMs;
+    private final Long m_EndEpochMs;
     private final List<Deque<T>> m_Batches;
     private int m_Index;
     private boolean m_WasTimeRangeCalled;
     private String m_InterimFieldName;
 
-    public MockBatchedResultsIterator(long startEpochMs, long endEpochMs, List<Deque<T>> batches)
+    public MockBatchedDocumentsIterator(long startEpochMs, long endEpochMs, List<Deque<T>> batches)
     {
-        m_StartEpochMs = startEpochMs;
-        m_EndEpochMs = endEpochMs;
+        this((Long) startEpochMs, (Long) endEpochMs, batches);
+    }
+
+    public MockBatchedDocumentsIterator(List<Deque<T>> batches)
+    {
+        this(null, null, batches);
+    }
+
+    private MockBatchedDocumentsIterator(Long startEpochMs, Long endEpochMs, List<Deque<T>> batches)
+    {
         m_Batches = batches;
         m_Index = 0;
         m_WasTimeRangeCalled = false;
         m_InterimFieldName = "";
+        m_StartEpochMs = startEpochMs;
+        m_EndEpochMs = endEpochMs;
     }
 
     @Override
-    public BatchedResultsIterator<T> timeRange(long startEpochMs, long endEpochMs)
+    public BatchedDocumentsIterator<T> timeRange(long startEpochMs, long endEpochMs)
     {
-        assertEquals(m_StartEpochMs, startEpochMs);
-        assertEquals(m_EndEpochMs, endEpochMs);
+        assertEquals(m_StartEpochMs.longValue(), startEpochMs);
+        assertEquals(m_EndEpochMs.longValue(), endEpochMs);
         m_WasTimeRangeCalled = true;
         return this;
     }
 
     @Override
-    public BatchedResultsIterator<T> includeInterim(String interimFieldName)
+    public BatchedDocumentsIterator<T> includeInterim(String interimFieldName)
     {
         m_InterimFieldName = interimFieldName;
         return this;
     }
 
     @Override
-    public Deque<T> next() throws UnknownJobException
+    public Deque<T> next()
     {
-        if (!m_WasTimeRangeCalled || !hasNext())
+        if ((m_StartEpochMs != null && !m_WasTimeRangeCalled) || !hasNext())
         {
             throw new NoSuchElementException();
         }

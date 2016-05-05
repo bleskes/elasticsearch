@@ -200,6 +200,10 @@ public final class PrelertSettings
         {
             return s->Double.valueOf(s);
         }
+        else if (clazz.equals(Boolean.class))
+        {
+            return s->Boolean.valueOf(s);
+        }
         return obj -> obj;
     }
 

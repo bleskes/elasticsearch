@@ -27,37 +27,12 @@
 
 package com.prelert.job.persistence.elasticsearch;
 
-import org.elasticsearch.client.Client;
-import org.elasticsearch.search.SearchHit;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.prelert.job.results.Bucket;
-import com.prelert.job.results.Influencer;
-
-class ElasticsearchBatchedInfluencersIterator extends ElasticsearchBatchedDocumentsIterator<Influencer>
+public class CannotMapJobFromJson extends RuntimeException
 {
-    public ElasticsearchBatchedInfluencersIterator(Client client, String jobId,
-            ObjectMapper objectMapper)
-    {
-        super(client, new ElasticsearchJobId(jobId).getIndex(), objectMapper);
-    }
+    private static final long serialVersionUID = 1L;
 
-    @Override
-    protected String getType()
+    public CannotMapJobFromJson(String msg, Throwable cause)
     {
-        return Influencer.TYPE;
-    }
-
-    @Override
-    protected Influencer map(ObjectMapper objectMapper, SearchHit hit)
-    {
-        // Remove the Kibana/Logstash '@timestamp' entry as stored in Elasticsearch,
-        // and replace using the API 'timestamp' key.
-        Object timestamp = hit.getSource().remove(ElasticsearchMappings.ES_TIMESTAMP);
-        hit.getSource().put(Bucket.TIMESTAMP, timestamp);
-
-        Influencer influencer = objectMapper.convertValue(hit.getSource(), Influencer.class);
-        influencer.setId(hit.getId());
-        return influencer;
+        super(msg, cause);
     }
 }

@@ -21,30 +21,28 @@ package com.prelert.job.persistence;
 import java.util.Deque;
 import java.util.NoSuchElementException;
 
-import com.prelert.job.UnknownJobException;
-
 /**
- * An iterator useful to fetch a big number of results of type T
+ * An iterator useful to fetch a big number of documents of type T
  * and iterate through them in batches.
  */
-public interface BatchedResultsIterator<T>
+public interface BatchedDocumentsIterator<T>
 {
     /**
-     * Query results whose timestamp is within the given time range
+     * Query documents whose timestamp is within the given time range
      *
      * @param startEpochMs the start time as epoch milliseconds (inclusive)
      * @param endEpochMs the end time as epoch milliseconds (exclusive)
      * @return the iterator itself
      */
-    BatchedResultsIterator<T> timeRange(long startEpochMs, long endEpochMs);
+    BatchedDocumentsIterator<T> timeRange(long startEpochMs, long endEpochMs);
 
     /**
-     * Include interim results
+     * Include interim documents
      *
      * @param interimFieldName Name of the include interim field
      * @return
      */
-    BatchedResultsIterator<T> includeInterim(String interimFieldName);
+    BatchedDocumentsIterator<T> includeInterim(String interimFieldName);
 
     /**
      * The first time next() is called, the search will be performed and the first
@@ -53,11 +51,10 @@ public interface BatchedResultsIterator<T>
      * Note that in some implementations it is possible that when there are no
      * results at all, the first time this method is called an empty {@code Deque} is returned.
      *
-     * @return a {@code Deque} with the next batch of results
-     * @throws UnknownJobException if the job whose results are queried is unknown
+     * @return a {@code Deque} with the next batch of documents
      * @throws NoSuchElementException if the iteration has no more elements
      */
-    Deque<T> next() throws UnknownJobException;
+    Deque<T> next();
 
     /**
      * Returns {@code true} if the iteration has more elements.
