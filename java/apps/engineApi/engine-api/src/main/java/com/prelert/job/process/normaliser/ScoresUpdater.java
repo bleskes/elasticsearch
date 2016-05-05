@@ -145,8 +145,7 @@ class ScoresUpdater
     {
         BatchedResultsIterator<Bucket> bucketsIterator =
                 m_JobProvider.newBatchedBucketsIterator(m_JobId)
-                .timeRange(calcNormalisationWindowStart(endBucketEpochMs), endBucketEpochMs)
-                .sortByTimestamp();
+                .timeRange(calcNormalisationWindowStart(endBucketEpochMs), endBucketEpochMs);
 
         // Make a list of buckets with their records to be renormalised.
         // This may be shorter than the original list of buckets for two
