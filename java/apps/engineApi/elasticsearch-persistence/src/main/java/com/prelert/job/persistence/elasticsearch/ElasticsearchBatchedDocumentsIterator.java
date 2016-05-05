@@ -52,10 +52,11 @@ abstract class ElasticsearchBatchedDocumentsIterator<T> implements BatchedDocume
     private final Client m_Client;
     private final String m_Index;
     private final ObjectMapper m_ObjectMapper;
-    private String m_ScrollId;
-    private long m_TotalHits;
-    private long m_Count;
     private final ResultsFilterBuilder m_FilterBuilder;
+    private volatile long m_Count;
+    private volatile long m_TotalHits;
+    private volatile String m_ScrollId;
+    private volatile boolean m_IsScrollInitialised;
 
     public ElasticsearchBatchedDocumentsIterator(Client client, String index, ObjectMapper objectMapper)
     {
@@ -65,6 +66,7 @@ abstract class ElasticsearchBatchedDocumentsIterator<T> implements BatchedDocume
         m_TotalHits = 0;
         m_Count = 0;
         m_FilterBuilder = new ResultsFilterBuilder();
+        m_IsScrollInitialised = false;
     }
 
     @Override
@@ -84,7 +86,7 @@ abstract class ElasticsearchBatchedDocumentsIterator<T> implements BatchedDocume
     @Override
     public boolean hasNext()
     {
-        return m_ScrollId == null || m_Count != m_TotalHits;
+        return !m_IsScrollInitialised || m_Count != m_TotalHits;
     }
 
     @Override
@@ -103,6 +105,9 @@ abstract class ElasticsearchBatchedDocumentsIterator<T> implements BatchedDocume
     private SearchResponse initScroll()
     {
         LOGGER.trace("ES API CALL: search all of type " + getType() + " from index " + m_Index);
+
+        m_IsScrollInitialised = true;
+
         SearchResponse searchResponse = m_Client.prepareSearch(m_Index)
                 .setScroll(CONTEXT_ALIVE_DURATION)
                 .setSize(BATCH_SIZE)
@@ -130,7 +135,7 @@ abstract class ElasticsearchBatchedDocumentsIterator<T> implements BatchedDocume
         }
         m_Count += hits.length;
 
-        if (!hasNext())
+        if (!hasNext() && m_ScrollId != null)
         {
             m_Client.prepareClearScroll().setScrollIds(Arrays.asList(m_ScrollId)).get();
         }
