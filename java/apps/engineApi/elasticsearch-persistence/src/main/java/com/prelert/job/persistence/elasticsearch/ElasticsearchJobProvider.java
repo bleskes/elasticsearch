@@ -90,7 +90,7 @@ import com.prelert.job.audit.AuditActivity;
 import com.prelert.job.audit.AuditMessage;
 import com.prelert.job.audit.Auditor;
 import com.prelert.job.errorcodes.ErrorCodes;
-import com.prelert.job.persistence.BatchedResultsIterator;
+import com.prelert.job.persistence.BatchedDocumentsIterator;
 import com.prelert.job.persistence.DataStoreException;
 import com.prelert.job.persistence.JobProvider;
 import com.prelert.job.persistence.QueryPage;
@@ -722,7 +722,7 @@ public class ElasticsearchJobProvider implements JobProvider
     }
 
     @Override
-    public BatchedResultsIterator<Bucket> newBatchedBucketsIterator(String jobId)
+    public BatchedDocumentsIterator<Bucket> newBatchedBucketsIterator(String jobId)
     {
         return new ElasticsearchBatchedBucketsIterator(m_Client, jobId, m_ObjectMapper);
     }
@@ -1015,25 +1015,25 @@ public class ElasticsearchJobProvider implements JobProvider
     }
 
     @Override
-    public BatchedResultsIterator<Influencer> newBatchedInfluencersIterator(String jobId)
+    public BatchedDocumentsIterator<Influencer> newBatchedInfluencersIterator(String jobId)
     {
         return new ElasticsearchBatchedInfluencersIterator(m_Client, jobId, m_ObjectMapper);
     }
 
     @Override
-    public BatchedResultsIterator<ModelSnapshot> newBatchedModelSnapshotIterator(String jobId)
+    public BatchedDocumentsIterator<ModelSnapshot> newBatchedModelSnapshotIterator(String jobId)
     {
         return new ElasticsearchBatchedModelSnapshotIterator(m_Client, jobId, m_ObjectMapper);
     }
 
     @Override
-    public BatchedResultsIterator<ModelDebugOutput> newBatchedModelDebugOutputIterator(String jobId)
+    public BatchedDocumentsIterator<ModelDebugOutput> newBatchedModelDebugOutputIterator(String jobId)
     {
         return new ElasticsearchBatchedModelDebugOutputIterator(m_Client, jobId, m_ObjectMapper);
     }
 
     @Override
-    public BatchedResultsIterator<ModelSizeStats> newBatchedModelSizeStatsIterator(String jobId)
+    public BatchedDocumentsIterator<ModelSizeStats> newBatchedModelSizeStatsIterator(String jobId)
     {
         return new ElasticsearchBatchedModelSizeStatsIterator(m_Client, jobId, m_ObjectMapper);
     }

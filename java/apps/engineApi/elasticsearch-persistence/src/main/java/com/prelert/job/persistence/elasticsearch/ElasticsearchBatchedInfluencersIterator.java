@@ -34,7 +34,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.prelert.job.results.Bucket;
 import com.prelert.job.results.Influencer;
 
-class ElasticsearchBatchedInfluencersIterator extends ElasticsearchBatchedResultsIterator<Influencer>
+class ElasticsearchBatchedInfluencersIterator extends ElasticsearchBatchedDocumentsIterator<Influencer>
 {
     public ElasticsearchBatchedInfluencersIterator(Client client, String jobId,
             ObjectMapper objectMapper)

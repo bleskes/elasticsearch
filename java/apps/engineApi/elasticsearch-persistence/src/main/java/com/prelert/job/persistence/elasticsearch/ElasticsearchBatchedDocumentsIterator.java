@@ -42,11 +42,11 @@ import org.elasticsearch.search.sort.SortBuilders;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.prelert.job.UnknownJobException;
-import com.prelert.job.persistence.BatchedResultsIterator;
+import com.prelert.job.persistence.BatchedDocumentsIterator;
 
-abstract class ElasticsearchBatchedResultsIterator<T> implements BatchedResultsIterator<T>
+abstract class ElasticsearchBatchedDocumentsIterator<T> implements BatchedDocumentsIterator<T>
 {
-    private static final Logger LOGGER = Logger.getLogger(ElasticsearchBatchedResultsIterator.class);
+    private static final Logger LOGGER = Logger.getLogger(ElasticsearchBatchedDocumentsIterator.class);
 
     private static final String CONTEXT_ALIVE_DURATION = "5m";
     private static final int BATCH_SIZE = 10000;
@@ -59,7 +59,7 @@ abstract class ElasticsearchBatchedResultsIterator<T> implements BatchedResultsI
     private long m_Count;
     private final ResultsFilterBuilder m_FilterBuilder;
 
-    public ElasticsearchBatchedResultsIterator(Client client, String jobId, ObjectMapper objectMapper)
+    public ElasticsearchBatchedDocumentsIterator(Client client, String jobId, ObjectMapper objectMapper)
     {
         m_Client = Objects.requireNonNull(client);
         m_JobId = new ElasticsearchJobId(jobId);
@@ -70,14 +70,14 @@ abstract class ElasticsearchBatchedResultsIterator<T> implements BatchedResultsI
     }
 
     @Override
-    public BatchedResultsIterator<T> timeRange(long startEpochMs, long endEpochMs)
+    public BatchedDocumentsIterator<T> timeRange(long startEpochMs, long endEpochMs)
     {
         m_FilterBuilder.timeRange(ElasticsearchMappings.ES_TIMESTAMP, startEpochMs, endEpochMs);
         return this;
     }
 
     @Override
-    public BatchedResultsIterator<T> includeInterim(String interimFieldName)
+    public BatchedDocumentsIterator<T> includeInterim(String interimFieldName)
     {
         m_FilterBuilder.interim(interimFieldName, true);
         return this;

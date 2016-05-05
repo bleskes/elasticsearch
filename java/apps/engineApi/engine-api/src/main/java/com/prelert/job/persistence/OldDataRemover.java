@@ -251,7 +251,7 @@ public class OldDataRemover
         );
     }
 
-    private <T> void deleteBatchedData(BatchedResultsIterator<T> resultsIterator,
+    private <T> void deleteBatchedData(BatchedDocumentsIterator<T> resultsIterator,
             Consumer<T> deleteFunction)
     {
         while (resultsIterator.hasNext())
@@ -268,7 +268,7 @@ public class OldDataRemover
         }
     }
 
-    private <T> Deque<T> nextBatch(BatchedResultsIterator<T> resultsIterator)
+    private <T> Deque<T> nextBatch(BatchedDocumentsIterator<T> resultsIterator)
     {
         try
         {

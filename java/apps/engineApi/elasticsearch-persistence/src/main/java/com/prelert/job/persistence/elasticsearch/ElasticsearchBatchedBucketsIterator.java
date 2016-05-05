@@ -33,7 +33,7 @@ import org.elasticsearch.search.SearchHit;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.prelert.job.results.Bucket;
 
-class ElasticsearchBatchedBucketsIterator extends ElasticsearchBatchedResultsIterator<Bucket>
+class ElasticsearchBatchedBucketsIterator extends ElasticsearchBatchedDocumentsIterator<Bucket>
 {
     public ElasticsearchBatchedBucketsIterator(Client client, String jobId,
             ObjectMapper objectMapper)

@@ -33,7 +33,7 @@ import org.elasticsearch.search.SearchHit;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.prelert.job.ModelSizeStats;
 
-public class ElasticsearchBatchedModelSizeStatsIterator extends ElasticsearchBatchedResultsIterator<ModelSizeStats>
+public class ElasticsearchBatchedModelSizeStatsIterator extends ElasticsearchBatchedDocumentsIterator<ModelSizeStats>
 {
     public ElasticsearchBatchedModelSizeStatsIterator(Client client, String jobId,
             ObjectMapper objectMapper)

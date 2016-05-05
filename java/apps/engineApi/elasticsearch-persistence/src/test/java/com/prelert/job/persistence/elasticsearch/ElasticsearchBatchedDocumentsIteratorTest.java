@@ -59,7 +59,7 @@ import org.mockito.MockitoAnnotations;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.prelert.job.UnknownJobException;
 
-public class ElasticsearchBatchedResultsIteratorTest
+public class ElasticsearchBatchedDocumentsIteratorTest
 {
     private static final String JOB_ID = "foo";
     private static final String INDEX_NAME = "prelertresults-foo";
@@ -248,7 +248,7 @@ public class ElasticsearchBatchedResultsIteratorTest
         }
     }
 
-    private static class TestIterator extends ElasticsearchBatchedResultsIterator<String>
+    private static class TestIterator extends ElasticsearchBatchedDocumentsIterator<String>
     {
         public TestIterator(Client client, String jobId, ObjectMapper objectMapper)
         {

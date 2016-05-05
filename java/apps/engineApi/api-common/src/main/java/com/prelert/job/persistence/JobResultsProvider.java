@@ -99,13 +99,13 @@ public interface JobResultsProvider extends Shutdownable
             boolean includeInterim) throws UnknownJobException;
 
     /**
-     * Returns a {@link BatchedResultsIterator} that allows querying
+     * Returns a {@link BatchedDocumentsIterator} that allows querying
      * and iterating over a large number of buckets of the given job
      *
      * @param jobId the id of the job for which buckets are requested
-     * @return a bucket {@link BatchedResultsIterator}
+     * @return a bucket {@link BatchedDocumentsIterator}
      */
-    BatchedResultsIterator<Bucket> newBatchedBucketsIterator(String jobId);
+    BatchedDocumentsIterator<Bucket> newBatchedBucketsIterator(String jobId);
 
     /**
      * Expand a bucket to include the associated records.
@@ -269,38 +269,38 @@ public interface JobResultsProvider extends Shutdownable
     Optional<Influencer> influencer(String jobId, String influencerId);
 
     /**
-     * Returns a {@link BatchedResultsIterator} that allows querying
+     * Returns a {@link BatchedDocumentsIterator} that allows querying
      * and iterating over a large number of influencers of the given job
      *
      * @param jobId the id of the job for which influencers are requested
-     * @return an influencer {@link BatchedResultsIterator}
+     * @return an influencer {@link BatchedDocumentsIterator}
      */
-    BatchedResultsIterator<Influencer> newBatchedInfluencersIterator(String jobId);
+    BatchedDocumentsIterator<Influencer> newBatchedInfluencersIterator(String jobId);
 
     /**
-     * Returns a {@link BatchedResultsIterator} that allows querying
+     * Returns a {@link BatchedDocumentsIterator} that allows querying
      * and iterating over a number of model snapshots of the given job
      *
      * @param jobId the id of the job for which model snapshots are requested
-     * @return a model snapshot {@link BatchedResultsIterator}
+     * @return a model snapshot {@link BatchedDocumentsIterator}
      */
-    BatchedResultsIterator<ModelSnapshot> newBatchedModelSnapshotIterator(String jobId);
+    BatchedDocumentsIterator<ModelSnapshot> newBatchedModelSnapshotIterator(String jobId);
 
     /**
-     * Returns a {@link BatchedResultsIterator} that allows querying
+     * Returns a {@link BatchedDocumentsIterator} that allows querying
      * and iterating over a number of ModelDebugOutputs of the given job
      *
      * @param jobId the id of the job for which model snapshots are requested
-     * @return a model snapshot {@link BatchedResultsIterator}
+     * @return a model snapshot {@link BatchedDocumentsIterator}
      */
-    BatchedResultsIterator<ModelDebugOutput> newBatchedModelDebugOutputIterator(String jobId);
+    BatchedDocumentsIterator<ModelDebugOutput> newBatchedModelDebugOutputIterator(String jobId);
 
     /**
-     * Returns a {@link BatchedResultsIterator} that allows querying
+     * Returns a {@link BatchedDocumentsIterator} that allows querying
      * and iterating over a number of ModelSizeStats of the given job
      *
      * @param jobId the id of the job for which model snapshots are requested
-     * @return a model snapshot {@link BatchedResultsIterator}
+     * @return a model snapshot {@link BatchedDocumentsIterator}
      */
-    BatchedResultsIterator<ModelSizeStats> newBatchedModelSizeStatsIterator(String jobId);
+    BatchedDocumentsIterator<ModelSizeStats> newBatchedModelSizeStatsIterator(String jobId);
 }

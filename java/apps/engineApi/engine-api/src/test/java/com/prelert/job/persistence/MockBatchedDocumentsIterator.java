@@ -35,7 +35,7 @@ import java.util.NoSuchElementException;
 
 import com.prelert.job.UnknownJobException;
 
-public class MockBatchedResultsIterator<T> implements BatchedResultsIterator<T>
+public class MockBatchedDocumentsIterator<T> implements BatchedDocumentsIterator<T>
 {
     private final long m_StartEpochMs;
     private final long m_EndEpochMs;
@@ -44,7 +44,7 @@ public class MockBatchedResultsIterator<T> implements BatchedResultsIterator<T>
     private boolean m_WasTimeRangeCalled;
     private String m_InterimFieldName;
 
-    public MockBatchedResultsIterator(long startEpochMs, long endEpochMs, List<Deque<T>> batches)
+    public MockBatchedDocumentsIterator(long startEpochMs, long endEpochMs, List<Deque<T>> batches)
     {
         m_StartEpochMs = startEpochMs;
         m_EndEpochMs = endEpochMs;
@@ -55,7 +55,7 @@ public class MockBatchedResultsIterator<T> implements BatchedResultsIterator<T>
     }
 
     @Override
-    public BatchedResultsIterator<T> timeRange(long startEpochMs, long endEpochMs)
+    public BatchedDocumentsIterator<T> timeRange(long startEpochMs, long endEpochMs)
     {
         assertEquals(m_StartEpochMs, startEpochMs);
         assertEquals(m_EndEpochMs, endEpochMs);
@@ -64,7 +64,7 @@ public class MockBatchedResultsIterator<T> implements BatchedResultsIterator<T>
     }
 
     @Override
-    public BatchedResultsIterator<T> includeInterim(String interimFieldName)
+    public BatchedDocumentsIterator<T> includeInterim(String interimFieldName)
     {
         m_InterimFieldName = interimFieldName;
         return this;
