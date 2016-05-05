@@ -47,6 +47,13 @@ public interface BatchedResultsIterator<T>
     BatchedResultsIterator<T> includeInterim(String interimFieldName);
 
     /**
+     * Add a timestamp sort term for the results
+     *
+     * @return
+     */
+    BatchedResultsIterator<T> sortByTimestamp();
+
+    /**
      * The first time next() is called, the search will be performed and the first
      * batch will be returned. Any subsequent call will return the following batches.
      * <p>

@@ -71,6 +71,12 @@ public class MockBatchedResultsIterator<T> implements BatchedResultsIterator<T>
     }
 
     @Override
+    public BatchedResultsIterator<T> sortByTimestamp()
+    {
+        return this;
+    }
+
+    @Override
     public Deque<T> next() throws UnknownJobException
     {
         if (!m_WasTimeRangeCalled || !hasNext())

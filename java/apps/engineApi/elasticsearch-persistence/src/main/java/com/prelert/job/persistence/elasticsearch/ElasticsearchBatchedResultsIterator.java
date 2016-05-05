@@ -58,6 +58,7 @@ abstract class ElasticsearchBatchedResultsIterator<T> implements BatchedResultsI
     private long m_TotalHits;
     private long m_Count;
     private final ResultsFilterBuilder m_FilterBuilder;
+    private String m_SortField;
 
     public ElasticsearchBatchedResultsIterator(Client client, String jobId, ObjectMapper objectMapper)
     {
@@ -84,6 +85,13 @@ abstract class ElasticsearchBatchedResultsIterator<T> implements BatchedResultsI
     }
 
     @Override
+    public BatchedResultsIterator<T> sortByTimestamp()
+    {
+        m_SortField = ElasticsearchMappings.ES_TIMESTAMP;
+        return this;
+    }
+
+    @Override
     public boolean hasNext()
     {
         return m_ScrollId == null || m_Count != m_TotalHits;
@@ -103,7 +111,8 @@ abstract class ElasticsearchBatchedResultsIterator<T> implements BatchedResultsI
 
     private SearchResponse initScroll() throws UnknownJobException
     {
-        LOGGER.trace("ES API CALL: search all of type " + getType() + " from index " + m_JobId.getIndex());
+        LOGGER.trace("ES API CALL: search all of type " + getType() + " from index " + m_JobId.getIndex() +
+                (m_SortField == null ? "" : " with sort " + m_SortField));
         SearchResponse searchResponse = null;
         try
         {
@@ -112,7 +121,7 @@ abstract class ElasticsearchBatchedResultsIterator<T> implements BatchedResultsI
                     .setSize(BATCH_SIZE)
                     .setTypes(getType())
                     .setQuery(m_FilterBuilder.build())
-                    .addSort(SortBuilders.fieldSort(ElasticsearchMappings.ES_DOC))
+                    .addSort(SortBuilders.fieldSort(m_SortField == null ? ElasticsearchMappings.ES_DOC : m_SortField))
                     .get();
             m_TotalHits = searchResponse.getHits().getTotalHits();
             m_ScrollId = searchResponse.getScrollId();
