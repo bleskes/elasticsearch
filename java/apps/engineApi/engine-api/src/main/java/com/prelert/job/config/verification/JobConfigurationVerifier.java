@@ -29,6 +29,8 @@ package com.prelert.job.config.verification;
 import java.util.Set;
 import java.util.regex.Pattern;
 
+import org.elasticsearch.common.Strings;
+
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataDescription;
 import com.prelert.job.DataDescription.DataFormat;
@@ -206,35 +208,24 @@ public final class JobConfigurationVerifier
     {
         Set<String> usedFields = new TransformConfigs(config.getTransforms()).inputFieldNames();
         usedFields.addAll(config.getAnalysisConfig().analysisFields());
-        boolean isSummarised = config.getAnalysisConfig().getSummaryCountFieldName() != null &&
-                                config.getAnalysisConfig().getSummaryCountFieldName().isEmpty() == false;
+        String summaryCountFieldName = config.getAnalysisConfig().getSummaryCountFieldName();
+        boolean isSummarised = !Strings.isNullOrEmpty(summaryCountFieldName);
         if (isSummarised)
         {
-            usedFields.remove(config.getAnalysisConfig().getSummaryCountFieldName());
+            usedFields.remove(summaryCountFieldName);
         }
 
-        String timeField = DataDescription.DEFAULT_TIME_FIELD;
-        if (config.getDataDescription() != null)
-        {
-            timeField = config.getDataDescription().getTimeField();
-        }
+        String timeField = config.getDataDescription() == null ? DataDescription.DEFAULT_TIME_FIELD
+                : config.getDataDescription().getTimeField();
         usedFields.add(timeField);
 
         for (TransformConfig tc : config.getTransforms())
         {
             // if the type has no default outputs it doesn't need an output
-            boolean usesAnOutput = tc.type().defaultOutputNames().isEmpty();
-            for (String outputName : tc.getOutputs())
-            {
-                if (usedFields.contains(outputName))
-                {
-                    usesAnOutput = true;
-                    break;
-                }
-            }
+            boolean usesAnOutput = tc.type().defaultOutputNames().isEmpty()
+                    || tc.getOutputs().stream().anyMatch(outputName -> usedFields.contains(outputName));
 
-            if (isSummarised && tc.getOutputs().contains(
-                    config.getAnalysisConfig().getSummaryCountFieldName()))
+            if (isSummarised && tc.getOutputs().contains(summaryCountFieldName))
             {
                 String msg = Messages.getMessage(
                         Messages.JOB_CONFIG_TRANSFORM_DUPLICATED_OUTPUT_NAME,

@@ -40,7 +40,6 @@ import org.apache.log4j.Logger;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.action.admin.indices.flush.FlushRequest;
 import org.elasticsearch.action.admin.indices.refresh.RefreshRequest;
-import org.elasticsearch.action.bulk.BulkItemResponse;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.index.IndexResponse;
@@ -154,11 +153,8 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
                 BulkResponse addInfluencersResponse = addInfluencersRequest.execute().actionGet();
                 if (addInfluencersResponse.hasFailures())
                 {
-                    LOGGER.error("Bulk index of Influencers has errors");
-                    for (BulkItemResponse item : addInfluencersResponse.getItems())
-                    {
-                        LOGGER.error(item.getFailureMessage());
-                    }
+                    LOGGER.error("Bulk index of Influencers has errors: "
+                            + addInfluencersResponse.buildFailureMessage());
                 }
             }
 
@@ -181,11 +177,8 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
                 BulkResponse addRecordsResponse = addRecordsRequest.execute().actionGet();
                 if (addRecordsResponse.hasFailures())
                 {
-                    LOGGER.error("Bulk index of AnomalyRecord has errors");
-                    for (BulkItemResponse item : addRecordsResponse.getItems())
-                    {
-                        LOGGER.error(item.getFailureMessage());
-                    }
+                    LOGGER.error("Bulk index of AnomalyRecord has errors: "
+                            + addRecordsResponse.buildFailureMessage());
                 }
             }
         }
@@ -376,11 +369,8 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
             BulkResponse addBucketInfluencersResponse = addBucketInfluencersRequest.execute().actionGet();
             if (addBucketInfluencersResponse.hasFailures())
             {
-                LOGGER.error("Bulk index of Bucket Influencers has errors");
-                for (BulkItemResponse item : addBucketInfluencersResponse.getItems())
-                {
-                    LOGGER.error(item.getFailureMessage());
-                }
+                LOGGER.error("Bulk index of Bucket Influencers has errors: "
+                        + addBucketInfluencersResponse.buildFailureMessage());
             }
         }
     }
@@ -417,11 +407,7 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
                 BulkResponse bulkResponse = bulkRequest.execute().actionGet();
                 if (bulkResponse.hasFailures())
                 {
-                    LOGGER.error("BulkResponse has errors");
-                    for (BulkItemResponse item : bulkResponse.getItems())
-                    {
-                        LOGGER.error(item.getFailureMessage());
-                    }
+                    LOGGER.error("BulkResponse has errors: " + bulkResponse.buildFailureMessage());
                 }
             }
         }

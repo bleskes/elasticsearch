@@ -196,13 +196,50 @@ public class JobLogs
     throws UnknownJobException
     {
         StringBuilder builder = new StringBuilder();
-        try
+        try (RandomAccessFile logFile = createRandomAccessFile(jobId, file))
         {
-            RandomAccessFile logFile = new RandomAccessFile(file, "r");
-            try
+            // go to where we think the last N lines will start
+            long seek = Math.max(logFile.length() - (nLines * expectedLineSize), 0);
+            logFile.seek(seek);
+
+            // the first line is probably a partial line so discard it
+            // unless we are at the beginning of the file
+            if (seek > 0)
             {
-                // go to where we think the last N lines will start
-                long seek = Math.max(logFile.length() - (nLines * expectedLineSize), 0);
+                logFile.readLine();
+            }
+            long lastReadLoopStartPos = logFile.getFilePointer();
+            String line = logFile.readLine();
+
+            int lineCount = 0;
+            Deque<String> circularBuffer = new ArrayDeque<>(nLines);
+
+            while (line != null)
+            {
+                if (lineCount >= nLines)
+                {
+                    circularBuffer.poll();
+                }
+                circularBuffer.add(line);
+
+                line = logFile.readLine();
+                lineCount++;
+            }
+
+            // If we don't have enough lines go back for more
+            while (lineCount < nLines)
+            {
+                if (seek <= 0)
+                {
+                    // we cannot go back past the beginning of the file
+                    break;
+                }
+
+                int missingLines = nLines - lineCount;
+                Deque<String> supplementQueue = new ArrayDeque<>(missingLines);
+
+                // seek further back into the file
+                seek = Math.max(seek - (missingLines * expectedLineSize), 0);
                 logFile.seek(seek);
 
                 // the first line is probably a partial line so discard it
@@ -211,108 +248,66 @@ public class JobLogs
                 {
                     logFile.readLine();
                 }
-                long lastReadLoopStartPos = logFile.getFilePointer();
-                String line = logFile.readLine();
+                long thisLoopStartPos = logFile.getFilePointer();
+                line = logFile.readLine();
 
-
-                int lineCount = 0;
-                Deque<String> circularBuffer = new ArrayDeque<>(nLines);
-
+                // don't read past where we read from last time
                 while (line != null)
                 {
+                    // Are we up to the point we started reading from last time?
+                    long pos = logFile.getFilePointer();
+                    if (pos > lastReadLoopStartPos)
+                    {
+                        break;
+                    }
+
                     if (lineCount >= nLines)
                     {
-                        circularBuffer.poll();
+                        supplementQueue.poll();
                     }
-                    circularBuffer.add(line);
+                    supplementQueue.add(line);
 
                     line = logFile.readLine();
                     lineCount++;
                 }
 
-                // If we don't have enough lines go back for more
-                while (lineCount < nLines)
+                String last = supplementQueue.pollLast();
+                while(last != null)
                 {
-                    if (seek <= 0)
-                    {
-                        // we cannot go back past the beginning of the file
-                        break;
-                    }
-
-                    int missingLines = nLines - lineCount;
-                    Deque<String> supplementQueue = new ArrayDeque<>(missingLines);
-
-                    // seek further back into the file
-                    seek = Math.max(seek - (missingLines * expectedLineSize), 0);
-                    logFile.seek(seek);
-
-                    // the first line is probably a partial line so discard it
-                    // unless we are at the beginning of the file
-                    if (seek > 0)
-                    {
-                        logFile.readLine();
-                    }
-                    long thisLoopStartPos = logFile.getFilePointer();
-                    line = logFile.readLine();
-
-                    // don't read past where we read from last time
-                    while (line != null)
-                    {
-                        // Are we up to the point we started reading from last time?
-                        long pos = logFile.getFilePointer();
-                        if (pos > lastReadLoopStartPos)
-                        {
-                            break;
-                        }
-
-                        if (lineCount >= nLines)
-                        {
-                            supplementQueue.poll();
-                        }
-                        supplementQueue.add(line);
-
-                        line = logFile.readLine();
-                        lineCount++;
-                    }
-
-                    String last = supplementQueue.pollLast();
-                    while(last != null)
-                    {
-                        circularBuffer.offerFirst(last);
-                        last = supplementQueue.pollLast();
-                    }
-
-                    lastReadLoopStartPos = thisLoopStartPos;
+                    circularBuffer.offerFirst(last);
+                    last = supplementQueue.pollLast();
                 }
 
-                for (String ln : circularBuffer)
-                {
-                    builder.append(ln).append('\n');
-                }
+                lastReadLoopStartPos = thisLoopStartPos;
+            }
 
-                return builder.toString();
-            }
-            catch (IOException ioe)
+            for (String ln : circularBuffer)
             {
-                LOGGER.error("Error tailing log file", ioe);
+                builder.append(ln).append('\n');
             }
-            finally
-            {
-                logFile.close();
-            }
+
+            return builder.toString();
+        }
+        catch (IOException ioe)
+        {
+            LOGGER.error("Error tailing log file", ioe);
+        }
+
+        return builder.toString();
+    }
+
+    private RandomAccessFile createRandomAccessFile(String jobId, File file) throws UnknownJobException
+    {
+        try
+        {
+            return new RandomAccessFile(file, "r");
         }
         catch (FileNotFoundException e)
         {
             String msg = Messages.getMessage(Messages.LOGFILE_MISSING, file);
-            LOGGER.warn(msg);
+            LOGGER.warn(msg, e);
             throw new UnknownJobException(jobId, msg, ErrorCodes.MISSING_LOG_FILE);
         }
-        catch (IOException e)
-        {
-            LOGGER.error("Error closing log file", e);
-        }
-
-        return builder.toString();
     }
 
     /**

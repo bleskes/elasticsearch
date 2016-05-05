@@ -62,12 +62,8 @@ class HttpGetRequester<T>
 
         SingleDocument<T> doc = m_Client.get(fullUrl, typeRef);
 
-        // else return empty doc
-        if (doc == null)
-        {
-            doc = new SingleDocument<>();
-        }
-        return doc;
+        // If no doc was returned return an empty one
+        return doc == null ? new SingleDocument<>() : doc;
     }
 
     protected T get(String fullUrl, TypeReference<T> typeRef)

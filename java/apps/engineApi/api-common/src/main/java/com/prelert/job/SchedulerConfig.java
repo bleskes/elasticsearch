@@ -484,12 +484,9 @@ public class SchedulerConfig implements PasswordStorage
             {
                 scanSubLevel((Map<String, Object>)value, depth + 1, orderedFields);
             }
-            else if (value instanceof String)
+            else if (value instanceof String && FIELD.equals(entry.getKey()))
             {
-                if (FIELD.equals(entry.getKey()))
-                {
-                    orderedFields.put(depth, (String)value);
-                }
+                orderedFields.put(depth, (String)value);
             }
         }
     }
