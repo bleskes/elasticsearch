@@ -385,7 +385,6 @@ public class ElasticsearchJobProvider implements JobProvider
     @Override
     public QueryPage<JobDetails> getJobs(int skip, int take)
     {
-        QueryBuilder fb = QueryBuilders.matchAllQuery();
         SortBuilder sb = new FieldSortBuilder(ElasticsearchPersister.JOB_ID_NAME)
                                 .unmappedType("string")
                                 .order(SortOrder.ASC);
@@ -395,7 +394,6 @@ public class ElasticsearchJobProvider implements JobProvider
                 + ElasticsearchPersister.JOB_ID_NAME + " skip " + skip + " take " + take);
         SearchResponse response = m_Client.prepareSearch(ElasticsearchJobId.INDEX_PREFIX + "*")
                 .setTypes(JobDetails.TYPE)
-                .setPostFilter(fb)
                 .setFrom(skip).setSize(take)
                 .addSort(sb)
                 .get();
