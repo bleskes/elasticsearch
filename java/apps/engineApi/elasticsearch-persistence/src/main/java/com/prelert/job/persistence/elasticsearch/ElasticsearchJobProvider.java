@@ -125,7 +125,14 @@ public class ElasticsearchJobProvider implements JobProvider
     private static final String SETTING_DEFAULT_ANALYZER_TYPE = "index.analysis.analyzer.default.type";
     private static final String KEYWORD = "keyword";
 
-    private static final List<String> SECONDARY_SORT = new ArrayList<>();
+    private static final List<String> SECONDARY_SORT = Arrays.asList(new String[] {
+                    AnomalyRecord.ANOMALY_SCORE,
+                    AnomalyRecord.OVER_FIELD_VALUE,
+                    AnomalyRecord.PARTITION_FIELD_VALUE,
+                    AnomalyRecord.BY_FIELD_VALUE,
+                    AnomalyRecord.FIELD_NAME,
+                    AnomalyRecord.FUNCTION}
+                );
 
     private static final int UPDATE_JOB_RETRY_COUNT = 3;
     private static final int RECORDS_TAKE_PARAM = 500;
@@ -766,16 +773,7 @@ public class ElasticsearchJobProvider implements JobProvider
                         .order(descending ? SortOrder.DESC : SortOrder.ASC);
         }
 
-        List<String> secondarySort = Arrays.asList(new String[] {
-            AnomalyRecord.ANOMALY_SCORE,
-            AnomalyRecord.OVER_FIELD_VALUE,
-            AnomalyRecord.PARTITION_FIELD_VALUE,
-            AnomalyRecord.BY_FIELD_VALUE,
-            AnomalyRecord.FIELD_NAME,
-            AnomalyRecord.FUNCTION}
-        );
-
-        return records(new ElasticsearchJobId(jobId), skip, take, recordFilter, sb, secondarySort,
+        return records(new ElasticsearchJobId(jobId), skip, take, recordFilter, sb, SECONDARY_SORT,
                 descending);
     }
 
@@ -891,12 +889,6 @@ public class ElasticsearchJobProvider implements JobProvider
                 .addSort(sb == null ? SortBuilders.fieldSort(ElasticsearchMappings.ES_DOC) : sb)
                 .addField(ElasticsearchMappings.PARENT)   // include the parent id
                 .setFetchSource(true);  // the field option turns off source so request it explicitly
-
-
-        if (sb != null)
-        {
-            searchBuilder.addSort(sb);
-        }
 
         for (String sortField : secondarySort)
         {
