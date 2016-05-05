@@ -1361,6 +1361,21 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
         }
     }
 
+    public List<JobDetails> allJobs()
+    {
+        QueryPage<JobDetails> page = getJobs(0, MAX_JOBS_TO_RESTART);
+        List<JobDetails> allJobs = page.queryResults();
+        // TODO - this isn't foolproof if there are more than 10000 jobs, as new
+        // jobs created while the loop is in progress or job deletions might
+        // cause duplicates - it's good enough for now though
+        while (allJobs.size() < page.hitCount())
+        {
+            page = getJobs(allJobs.size(), MAX_JOBS_TO_RESTART);
+            allJobs.addAll(page.queryResults());
+        }
+        return allJobs;
+    }
+
     public List<JobDetails> activeJobs()
     {
         Set<String> jobIds = getActiveJobIds();

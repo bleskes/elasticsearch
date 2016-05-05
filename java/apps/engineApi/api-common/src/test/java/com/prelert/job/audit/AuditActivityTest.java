@@ -27,7 +27,7 @@ import java.util.Date;
 import org.junit.Before;
 import org.junit.Test;
 
-public class AuditMessageTest
+public class AuditActivityTest
 {
     private long m_StartMillis;
 
@@ -40,40 +40,23 @@ public class AuditMessageTest
     @Test
     public void testDefaultConstructor()
     {
-        AuditMessage auditMessage = new AuditMessage();
-        assertNull(auditMessage.getMessage());
-        assertNull(auditMessage.getLevel());
-        assertNull(auditMessage.getTimestamp());
+        AuditActivity activity = new AuditActivity();
+        assertEquals(0, activity.getTotalJobs());
+        assertEquals(0, activity.getTotalDetectors());
+        assertEquals(0, activity.getRunningJobs());
+        assertEquals(0, activity.getRunningDetectors());
+        assertNull(activity.getTimestamp());
     }
 
     @Test
-    public void testNewInfo()
+    public void testNewActivity()
     {
-        AuditMessage info = AuditMessage.newInfo("foo", "some info");
-        assertEquals("foo", info.getJobId());
-        assertEquals("some info", info.getMessage());
-        assertEquals(Level.INFO, info.getLevel());
-        assertDateBetweenStartAndNow(info.getTimestamp());
-    }
-
-    @Test
-    public void testNewWarning()
-    {
-        AuditMessage warning = AuditMessage.newWarning("bar", "some warning");
-        assertEquals("bar", warning.getJobId());
-        assertEquals("some warning", warning.getMessage());
-        assertEquals(Level.WARNING, warning.getLevel());
-        assertDateBetweenStartAndNow(warning.getTimestamp());
-    }
-
-    @Test
-    public void testNewError()
-    {
-        AuditMessage error = AuditMessage.newError("foo", "some error");
-        assertEquals("foo", error.getJobId());
-        assertEquals("some error", error.getMessage());
-        assertEquals(Level.ERROR, error.getLevel());
-        assertDateBetweenStartAndNow(error.getTimestamp());
+        AuditActivity activity = AuditActivity.newActivity(10, 100, 5, 50);
+        assertEquals(10, activity.getTotalJobs());
+        assertEquals(100, activity.getTotalDetectors());
+        assertEquals(5, activity.getRunningJobs());
+        assertEquals(50, activity.getRunningDetectors());
+        assertDateBetweenStartAndNow(activity.getTimestamp());
     }
 
     private void assertDateBetweenStartAndNow(Date timestamp)

@@ -55,6 +55,7 @@ import com.prelert.job.ModelSizeStats;
 import com.prelert.job.ModelSnapshot;
 import com.prelert.job.ModelState;
 import com.prelert.job.SchedulerConfig;
+import com.prelert.job.audit.AuditActivity;
 import com.prelert.job.audit.AuditMessage;
 import com.prelert.job.quantiles.Quantiles;
 import com.prelert.job.results.AnomalyRecord;
@@ -123,6 +124,7 @@ public class ElasticsearchMappingsTest
 
         // These are not reserved because they're data types, not field names
         overridden.add(AnomalyRecord.TYPE);
+        overridden.add(AuditActivity.TYPE);
         overridden.add(AuditMessage.TYPE);
         overridden.add(Bucket.TYPE);
         overridden.add(BucketInfluencer.TYPE);

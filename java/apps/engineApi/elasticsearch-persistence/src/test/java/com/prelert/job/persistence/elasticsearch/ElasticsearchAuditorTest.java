@@ -49,6 +49,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.prelert.job.audit.AuditActivity;
 import com.prelert.job.audit.AuditMessage;
 import com.prelert.job.audit.Level;
 
@@ -111,18 +112,34 @@ public class ElasticsearchAuditorTest
     }
 
     @Test
-    public void testActivity()
+    public void testActivity_GivenString()
     {
         givenClientPersistsSuccessfully();
-        ElasticsearchAuditor auditor = new ElasticsearchAuditor(m_Client, "someIndex", "foobar");
+        ElasticsearchAuditor auditor = new ElasticsearchAuditor(m_Client, "someIndex", "");
 
         auditor.activity("Here is my activity");
 
         assertEquals("someIndex", m_IndexCaptor.getValue());
         AuditMessage auditMessage = parseAuditMessage();
-        assertEquals("foobar", auditMessage.getJobId());
+        assertEquals("", auditMessage.getJobId());
         assertEquals("Here is my activity", auditMessage.getMessage());
         assertEquals(Level.ACTIVITY, auditMessage.getLevel());
+    }
+
+    @Test
+    public void testActivity_GivenNumbers()
+    {
+        givenClientPersistsSuccessfully();
+        ElasticsearchAuditor auditor = new ElasticsearchAuditor(m_Client, "someIndex", "");
+
+        auditor.activity(10, 100, 5, 50);
+
+        assertEquals("someIndex", m_IndexCaptor.getValue());
+        AuditActivity auditActivity = parseAuditActivity();
+        assertEquals(10, auditActivity.getTotalJobs());
+        assertEquals(100, auditActivity.getTotalDetectors());
+        assertEquals(5, auditActivity.getRunningJobs());
+        assertEquals(50, auditActivity.getRunningDetectors());
     }
 
     @Test
@@ -143,6 +160,8 @@ public class ElasticsearchAuditorTest
         when(indexRequestBuilder.execute()).thenReturn(m_IndexResponse);
         when(m_Client.prepareIndex(m_IndexCaptor.capture(), eq("auditMessage")))
                 .thenReturn(indexRequestBuilder);
+        when(m_Client.prepareIndex(m_IndexCaptor.capture(), eq("auditActivity")))
+                .thenReturn(indexRequestBuilder);
     }
 
     private AuditMessage parseAuditMessage()
@@ -156,6 +175,20 @@ public class ElasticsearchAuditorTest
         catch (IOException e)
         {
             return new AuditMessage();
+        }
+    }
+
+    private AuditActivity parseAuditActivity()
+    {
+        try
+        {
+            String json = m_JsonCaptor.getValue().string();
+            json = json.replace("@timestamp", "timestamp");
+            return new ObjectMapper().readValue(json, AuditActivity.class);
+        }
+        catch (IOException e)
+        {
+            return new AuditActivity();
         }
     }
 }

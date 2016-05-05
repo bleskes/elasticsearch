@@ -37,6 +37,7 @@ import org.elasticsearch.client.Client;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.index.IndexNotFoundException;
 
+import com.prelert.job.audit.AuditActivity;
 import com.prelert.job.audit.AuditMessage;
 import com.prelert.job.audit.Auditor;
 
@@ -62,12 +63,6 @@ public class ElasticsearchAuditor implements Auditor
     }
 
     @Override
-    public void activity(String message)
-    {
-        persistAuditMessage(AuditMessage.newActivity(m_JobId, message));
-    }
-
-    @Override
     public void warning(String message)
     {
         persistAuditMessage(AuditMessage.newWarning(m_JobId, message));
@@ -79,27 +74,64 @@ public class ElasticsearchAuditor implements Auditor
         persistAuditMessage(AuditMessage.newError(m_JobId, message));
     }
 
+    @Override
+    public void activity(String message)
+    {
+        persistAuditMessage(AuditMessage.newActivity(m_JobId, message));
+    }
+
+    @Override
+    public void activity(int totalJobs, int totalDetectors, int runningJobs, int runningDetectors)
+    {
+        persistAuditActivity(AuditActivity.newActivity(totalJobs, totalDetectors, runningJobs, runningDetectors));
+    }
+
     private void persistAuditMessage(AuditMessage message)
     {
         try
         {
             m_Client.prepareIndex(m_Index, AuditMessage.TYPE)
-                    .setSource(serialise(message))
+                    .setSource(serialiseMessage(message))
                     .execute().actionGet();
         }
         catch (IOException | IndexNotFoundException e)
         {
             LOGGER.error("Error writing auditMessage", e);
-            return;
         }
     }
 
-    private XContentBuilder serialise(AuditMessage message) throws IOException
+    private void persistAuditActivity(AuditActivity activity)
+    {
+        try
+        {
+            m_Client.prepareIndex(m_Index, AuditActivity.TYPE)
+                    .setSource(serialiseActivity(activity))
+                    .execute().actionGet();
+        }
+        catch (IOException | IndexNotFoundException e)
+        {
+            LOGGER.error("Error writing auditActivity", e);
+        }
+    }
+
+    private XContentBuilder serialiseMessage(AuditMessage message) throws IOException
     {
         return jsonBuilder().startObject()
                 .field(ElasticsearchMappings.ES_TIMESTAMP, message.getTimestamp())
                 .field(AuditMessage.JOB_ID, message.getJobId())
                 .field(AuditMessage.LEVEL, message.getLevel())
-                .field(AuditMessage.MESSAGE, message.getMessage());
+                .field(AuditMessage.MESSAGE, message.getMessage())
+                .endObject();
+    }
+
+    private XContentBuilder serialiseActivity(AuditActivity activity) throws IOException
+    {
+        return jsonBuilder().startObject()
+                .field(ElasticsearchMappings.ES_TIMESTAMP, activity.getTimestamp())
+                .field(AuditActivity.TOTAL_JOBS, activity.getTotalJobs())
+                .field(AuditActivity.TOTAL_DETECTORS, activity.getTotalDetectors())
+                .field(AuditActivity.RUNNING_JOBS, activity.getRunningJobs())
+                .field(AuditActivity.RUNNING_DETECTORS, activity.getRunningDetectors())
+                .endObject();
     }
 }

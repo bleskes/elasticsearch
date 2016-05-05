@@ -47,6 +47,7 @@ import com.prelert.job.ModelSizeStats;
 import com.prelert.job.ModelSnapshot;
 import com.prelert.job.ModelState;
 import com.prelert.job.SchedulerConfig;
+import com.prelert.job.audit.AuditActivity;
 import com.prelert.job.audit.AuditMessage;
 import com.prelert.job.quantiles.Quantiles;
 import com.prelert.job.results.AnomalyCause;
@@ -1177,6 +1178,20 @@ public class ElasticsearchMappings
         return jsonBuilder()
                 .startObject()
                     .startObject(AuditMessage.TYPE)
+                        .startObject(PROPERTIES)
+                            .startObject(ES_TIMESTAMP)
+                                .field(TYPE, DATE)
+                            .endObject()
+                        .endObject()
+                    .endObject()
+                .endObject();
+    }
+
+    public static XContentBuilder auditActivityMapping() throws IOException
+    {
+        return jsonBuilder()
+                .startObject()
+                    .startObject(AuditActivity.TYPE)
                         .startObject(PROPERTIES)
                             .startObject(ES_TIMESTAMP)
                                 .field(TYPE, DATE)

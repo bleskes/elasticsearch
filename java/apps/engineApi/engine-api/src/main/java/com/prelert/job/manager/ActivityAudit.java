@@ -48,14 +48,17 @@ public class ActivityAudit
     private static final int MIN_DELAY_MINUTES = 40;
 
     private final Supplier<Auditor> m_AuditorSupplier;
+    private final Supplier<List<JobDetails>> m_AllJobsSupplier;
     private final Supplier<List<JobDetails>> m_RunningJobsSupplier;
 
     private final ScheduledExecutorService m_ScheduledService;
 
     public ActivityAudit(Supplier<Auditor> auditorSupplier,
+                      Supplier<List<JobDetails>> allJobsSupplier,
                       Supplier<List<JobDetails>> runningJobsSupplier)
     {
         m_AuditorSupplier = auditorSupplier;
+        m_AllJobsSupplier = allJobsSupplier;
         m_RunningJobsSupplier = runningJobsSupplier;
 
         // creates daemon threads
@@ -82,19 +85,26 @@ public class ActivityAudit
     {
         try
         {
-            List<JobDetails> jobDetails = m_RunningJobsSupplier.get();
-            int numDetectors = 0;
-            for (JobDetails jd : jobDetails)
+            List<JobDetails> allJobs = m_AllJobsSupplier.get();
+            int totalDetectors = 0;
+            for (JobDetails jd : allJobs)
             {
-                numDetectors += jd.getAnalysisConfig().getDetectors().size();
+                totalDetectors += jd.getAnalysisConfig().getDetectors().size();
+            }
+
+            List<JobDetails> runningJobs = m_RunningJobsSupplier.get();
+            int runningDetectors = 0;
+            for (JobDetails jd : runningJobs)
+            {
+                runningDetectors += jd.getAnalysisConfig().getDetectors().size();
             }
 
             Auditor auditor = m_AuditorSupplier.get();
-            auditor.activity(buildActivityMessage(jobDetails.size(), numDetectors));
+            auditor.activity(allJobs.size(), totalDetectors, runningJobs.size(), runningDetectors);
 
-            if (jobDetails.isEmpty() == false)
+            if (runningJobs.isEmpty() == false)
             {
-                auditor.activity(buildUsageMessage(jobDetails));
+                auditor.activity(buildUsageMessage(runningJobs));
             }
         }
         catch (Exception e)
@@ -105,11 +115,6 @@ public class ActivityAudit
         {
             scheduleNextAudit();
         }
-    }
-
-    private String buildActivityMessage(Integer numJobs, Integer numDetectors)
-    {
-        return "Activity: " + numJobs + " jobs and a total of " + numDetectors + " detectors";
     }
 
     private String buildUsageMessage(List<JobDetails> jobDetails)
