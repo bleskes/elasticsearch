@@ -33,8 +33,6 @@ import java.util.Deque;
 import java.util.List;
 import java.util.NoSuchElementException;
 
-import com.prelert.job.UnknownJobException;
-
 public class MockBatchedDocumentsIterator<T> implements BatchedDocumentsIterator<T>
 {
     private final long m_StartEpochMs;
@@ -71,7 +69,7 @@ public class MockBatchedDocumentsIterator<T> implements BatchedDocumentsIterator
     }
 
     @Override
-    public Deque<T> next() throws UnknownJobException
+    public Deque<T> next()
     {
         if (!m_WasTimeRangeCalled || !hasNext())
         {

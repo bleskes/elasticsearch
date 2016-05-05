@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -46,7 +46,6 @@ import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.SearchScrollRequestBuilder;
 import org.elasticsearch.client.Client;
-import org.elasticsearch.index.IndexNotFoundException;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
@@ -89,13 +88,6 @@ public class ElasticsearchBatchedDocumentsIteratorTest
         assertTrue(m_TestIterator.next().isEmpty());
         assertFalse(m_TestIterator.hasNext());
         assertTrue(m_WasScrollCleared);
-    }
-
-    @Test (expected = UnknownJobException.class)
-    public void testQueryAgainstUnknownJob() throws UnknownJobException
-    {
-        when(m_Client.prepareSearch(INDEX_NAME)).thenThrow(new IndexNotFoundException(INDEX_NAME));
-        m_TestIterator.next();
     }
 
     @Test (expected = NoSuchElementException.class)

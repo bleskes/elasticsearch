@@ -36,12 +36,10 @@ import java.util.Objects;
 import org.apache.log4j.Logger;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
-import org.elasticsearch.index.IndexNotFoundException;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.sort.SortBuilders;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.prelert.job.UnknownJobException;
 import com.prelert.job.persistence.BatchedDocumentsIterator;
 
 abstract class ElasticsearchBatchedDocumentsIterator<T> implements BatchedDocumentsIterator<T>
@@ -90,7 +88,7 @@ abstract class ElasticsearchBatchedDocumentsIterator<T> implements BatchedDocume
     }
 
     @Override
-    public Deque<T> next() throws UnknownJobException
+    public Deque<T> next()
     {
         if (!hasNext())
         {
@@ -101,26 +99,18 @@ abstract class ElasticsearchBatchedDocumentsIterator<T> implements BatchedDocume
         return mapHits(searchResponse);
     }
 
-    private SearchResponse initScroll() throws UnknownJobException
+    private SearchResponse initScroll()
     {
         LOGGER.trace("ES API CALL: search all of type " + getType() + " from index " + m_JobId.getIndex());
-        SearchResponse searchResponse = null;
-        try
-        {
-            searchResponse = m_Client.prepareSearch(m_JobId.getIndex())
-                    .setScroll(CONTEXT_ALIVE_DURATION)
-                    .setSize(BATCH_SIZE)
-                    .setTypes(getType())
-                    .setQuery(m_FilterBuilder.build())
-                    .addSort(SortBuilders.fieldSort(ElasticsearchMappings.ES_DOC))
-                    .get();
-            m_TotalHits = searchResponse.getHits().getTotalHits();
-            m_ScrollId = searchResponse.getScrollId();
-        }
-        catch (IndexNotFoundException e)
-        {
-            throw new UnknownJobException(m_JobId.getId());
-        }
+        SearchResponse searchResponse = m_Client.prepareSearch(m_JobId.getIndex())
+                .setScroll(CONTEXT_ALIVE_DURATION)
+                .setSize(BATCH_SIZE)
+                .setTypes(getType())
+                .setQuery(m_FilterBuilder.build())
+                .addSort(SortBuilders.fieldSort(ElasticsearchMappings.ES_DOC))
+                .get();
+        m_TotalHits = searchResponse.getHits().getTotalHits();
+        m_ScrollId = searchResponse.getScrollId();
         return searchResponse;
     }
 

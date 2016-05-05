@@ -21,8 +21,6 @@ package com.prelert.job.persistence;
 import java.util.Deque;
 import java.util.NoSuchElementException;
 
-import com.prelert.job.UnknownJobException;
-
 /**
  * An iterator useful to fetch a big number of documents of type T
  * and iterate through them in batches.
@@ -54,10 +52,9 @@ public interface BatchedDocumentsIterator<T>
      * results at all, the first time this method is called an empty {@code Deque} is returned.
      *
      * @return a {@code Deque} with the next batch of documents
-     * @throws UnknownJobException if the job whose documents are queried is unknown
      * @throws NoSuchElementException if the iteration has no more elements
      */
-    Deque<T> next() throws UnknownJobException;
+    Deque<T> next();
 
     /**
      * Returns {@code true} if the iteration has more elements.
