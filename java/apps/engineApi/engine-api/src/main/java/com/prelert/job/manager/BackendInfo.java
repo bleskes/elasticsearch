@@ -72,10 +72,10 @@ class BackendInfo
      */
     private final boolean m_ArePartitionsAllowed;
 
-    private BackendInfo(int licenseJobLimit, int maxDetectorsPerJob, boolean arePartitionsAllowed)
+    private BackendInfo(int licenseJobLimit, int licenseDetectorLimit, boolean arePartitionsAllowed)
     {
         m_LicenceJobLimit = licenseJobLimit;
-        m_MaxRunningDetectors = maxDetectorsPerJob;
+        m_MaxRunningDetectors = licenseDetectorLimit;
         m_ArePartitionsAllowed = arePartitionsAllowed;
 
         m_MaxJobsAllowedCpuLimited = calculateMaxJobsAllowedCpuLimited();
@@ -93,7 +93,7 @@ class BackendInfo
     public static BackendInfo fromJson(String json, JobDetailsProvider jobProvider, String apiVersion)
     {
         int licenseJobLimit = -1;
-        int maxDetectorsPerJob = -1;
+        int licenseDetectorLimit = -1;
         boolean arePartitionsAllowed = true;
 
         // Try to parse the string returned from the C++ process and extract
@@ -101,7 +101,7 @@ class BackendInfo
         ObjectNode doc = parseJson(json);
         if (doc == null)
         {
-            return new BackendInfo(licenseJobLimit, maxDetectorsPerJob, arePartitionsAllowed);
+            return new BackendInfo(licenseJobLimit, licenseDetectorLimit, arePartitionsAllowed);
         }
 
         // Negative numbers indicate no constraint, i.e. unlimited maximums
@@ -111,13 +111,14 @@ class BackendInfo
             licenseJobLimit = constraint.asInt(-1);
         }
         LOGGER.info("License job limit = " + licenseJobLimit);
+
         constraint = doc.get(DETECTORS_LICENSE_CONSTRAINT);
         if (constraint != null)
         {
-            maxDetectorsPerJob = constraint.asInt(-1);
+            licenseDetectorLimit = constraint.asInt(-1);
         }
+        LOGGER.info("License detector limit = " + licenseDetectorLimit);
 
-        LOGGER.info("Max detectors per job = " + maxDetectorsPerJob);
         constraint = doc.get(PARTITIONS_LICENSE_CONSTRAINT);
         if (constraint != null)
         {
@@ -136,15 +137,14 @@ class BackendInfo
         try
         {
             jobProvider.savePrelertInfo(doc.toString());
+            LOGGER.debug("Persisted Prelert info: " + doc.toString());
         }
         catch (Exception e)
         {
             LOGGER.warn("Error persisting Prelert info", e);
         }
 
-        LOGGER.info("Persisted Prelert info: " + doc.toString());
-
-        return new BackendInfo(licenseJobLimit, maxDetectorsPerJob, arePartitionsAllowed);
+        return new BackendInfo(licenseJobLimit, licenseDetectorLimit, arePartitionsAllowed);
     }
 
     private static ObjectNode parseJson(String input)
