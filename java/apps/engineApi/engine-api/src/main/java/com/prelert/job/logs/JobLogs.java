@@ -85,9 +85,11 @@ public class JobLogs
     /**
      * Read the entire contents of the file and return
      * as a string. The file should be UTF-8 encoded.
-     * If <code>filename</code> does not end with {@value #LOG_FILE_EXTENSION}
-     * then {@value #LOG_FILE_EXTENSION} is appended to it, this means
-     * only files ending in {@value #LOG_FILE_EXTENSION} can be read.
+     *
+     * The {@value #LOG_FILE_EXTENSION} file extension is optional.
+     * If the file <code>filename</code> does not exist then
+     * {@value #LOG_FILE_EXTENSION} is appended to it and checked
+     * for existence otherwise an exception is thrown
      *
      * @param jobId
      * @param filename
@@ -96,21 +98,14 @@ public class JobLogs
      */
     public String file(String jobId, String filename) throws UnknownJobException
     {
-        if (filename.endsWith(LOG_FILE_EXTENSION) == false)
-        {
-            filename = filename + LOG_FILE_EXTENSION;
-        }
-
-        Path filePath = FileSystems.getDefault().getPath(ProcessCtrl.LOG_DIR,
-                jobId, filename);
-
+        Path logFilePath = fullJobLogFilePath(ProcessCtrl.LOG_DIR, jobId, filename);
         try
         {
-            return file(filePath);
+            return readFileToString(logFilePath);
         }
         catch (IOException e)
         {
-            String msg = Messages.getMessage(Messages.LOGFILE_MISSING, filePath);
+            String msg = Messages.getMessage(Messages.LOGFILE_MISSING, logFilePath);
             LOGGER.warn(msg);
             throw new UnknownJobException(jobId, msg, ErrorCodes.MISSING_LOG_FILE);
         }
@@ -125,10 +120,44 @@ public class JobLogs
      * @return
      * @throws IOException
      */
-    public String file(Path filePath) throws IOException
+    String readFileToString(Path filePath) throws IOException
     {
         byte[] encoded = Files.readAllBytes(filePath);
         return new String(encoded, StandardCharsets.UTF_8);
+    }
+
+
+    /**
+     * Returns the full path to the file in the log file directory.
+     * If the file does not exist a exception is thrown.
+     *
+     * First checks for a file with the {@value #LOG_FILE_EXTENSION}
+     * extension then without the extension as the {@value #LOG_FILE_EXTENSION}
+     * is optional
+     *
+     * @param baseDir
+     * @param jobId
+     * @param filename
+     * @return
+     * @throws UnknownJobException
+     */
+    Path fullJobLogFilePath(String baseDir, String jobId, String filename) throws UnknownJobException
+    {
+        for (String fileExtension : new String [] {LOG_FILE_EXTENSION, ""})
+        {
+            Path filePath = FileSystems.getDefault().getPath(baseDir, jobId,
+                                filename + fileExtension);
+            File f = filePath.toFile();
+            if (f.exists() && !f.isDirectory())
+            {
+                return filePath;
+            }
+        }
+
+        File file = new File(new File(baseDir, jobId), filename);
+        String msg = Messages.getMessage(Messages.LOGFILE_MISSING, file);
+        LOGGER.warn(msg);
+        throw new UnknownJobException(jobId, msg, ErrorCodes.MISSING_LOG_FILE);
     }
 
 
@@ -161,14 +190,9 @@ public class JobLogs
     public String tail(String jobId, String filename, int nLines)
     throws UnknownJobException
     {
-        if (filename.endsWith(LOG_FILE_EXTENSION) == false)
-        {
-            filename = filename + LOG_FILE_EXTENSION;
-        }
+        Path logFilePath = fullJobLogFilePath(ProcessCtrl.LOG_DIR, jobId, filename);
 
-        File file = new File(new File(ProcessCtrl.LOG_DIR, jobId), filename);
-
-        return tail(file, jobId, nLines, EXPECTED_LINE_LENGTH);
+        return tail(logFilePath.toFile(), jobId, nLines, EXPECTED_LINE_LENGTH);
     }
 
 

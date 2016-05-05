@@ -1574,21 +1574,24 @@ public class JobsTest implements Closeable
             while (entry != null);
         }
 
-        /*
+        // Ask for a file without the .log extension
+        file = m_WebServiceClient.downloadLog("engine_api", "server.json");
+        logLines = file.split("\n");
+        test(logLines.length > 0);
+
         // check errors by ask for a file that doesn't exist
-        file = m_WebServiceClient.downloadLog(baseUrl, jobId, "not_a_file");
+        file = m_WebServiceClient.downloadLog(jobId, "not_a_file");
         test(file.isEmpty());
         ApiError error = m_WebServiceClient.getLastError();
         test(error != null);
-        test(error.getErrorCode() == ErrorCode.MISSING_LOG_FILE);
+        test(error.getErrorCode() == ErrorCodes.MISSING_LOG_FILE);
 
         // get a file in a job that doesn't exist
-        file = m_WebServiceClient.downloadLog(baseUrl, "not_a_job", "not_a_file");
+        file = m_WebServiceClient.downloadLog("not_a_job", "not_a_file");
         test(file.isEmpty());
         error = m_WebServiceClient.getLastError();
         test(error != null);
-        test(error.getErrorCode() == ErrorCode.MISSING_LOG_FILE);
-        */
+        test(error.getErrorCode() == ErrorCodes.MISSING_LOG_FILE);
     }
 
 
