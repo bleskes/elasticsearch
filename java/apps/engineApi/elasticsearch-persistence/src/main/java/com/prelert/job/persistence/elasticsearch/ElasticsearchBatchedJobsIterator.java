@@ -31,33 +31,35 @@ import org.elasticsearch.client.Client;
 import org.elasticsearch.search.SearchHit;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.prelert.job.results.Bucket;
-import com.prelert.job.results.Influencer;
+import com.prelert.job.JobDetails;
 
-class ElasticsearchBatchedInfluencersIterator extends ElasticsearchBatchedDocumentsIterator<Influencer>
+class ElasticsearchBatchedJobsIterator extends ElasticsearchBatchedDocumentsIterator<JobDetails>
 {
-    public ElasticsearchBatchedInfluencersIterator(Client client, String jobId,
+    private final ElasticsearchJobDetailsMapper m_JobMapper;
+
+    public ElasticsearchBatchedJobsIterator(Client client, String index,
             ObjectMapper objectMapper)
     {
-        super(client, new ElasticsearchJobId(jobId).getIndex(), objectMapper);
+        super(client, index, objectMapper);
+        m_JobMapper = new ElasticsearchJobDetailsMapper(client, objectMapper);
     }
 
     @Override
     protected String getType()
     {
-        return Influencer.TYPE;
+        return JobDetails.TYPE;
     }
 
     @Override
-    protected Influencer map(ObjectMapper objectMapper, SearchHit hit)
+    protected JobDetails map(ObjectMapper objectMapper, SearchHit hit)
     {
-        // Remove the Kibana/Logstash '@timestamp' entry as stored in Elasticsearch,
-        // and replace using the API 'timestamp' key.
-        Object timestamp = hit.getSource().remove(ElasticsearchMappings.ES_TIMESTAMP);
-        hit.getSource().put(Bucket.TIMESTAMP, timestamp);
-
-        Influencer influencer = objectMapper.convertValue(hit.getSource(), Influencer.class);
-        influencer.setId(hit.getId());
-        return influencer;
+        try
+        {
+            return m_JobMapper.map(hit.getSource());
+        }
+        catch (CannotMapJobFromJson e)
+        {
+            return null;
+        }
     }
 }

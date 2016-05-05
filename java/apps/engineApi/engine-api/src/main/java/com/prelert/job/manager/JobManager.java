@@ -87,6 +87,7 @@ import com.prelert.job.manager.actions.ActionGuardian;
 import com.prelert.job.manager.actions.ActionGuardian.ActionTicket;
 import com.prelert.job.messages.Messages;
 import com.prelert.job.password.PasswordManager;
+import com.prelert.job.persistence.BatchedDocumentsIterator;
 import com.prelert.job.persistence.DataStoreException;
 import com.prelert.job.persistence.JobDataDeleterFactory;
 import com.prelert.job.persistence.JobProvider;
@@ -159,7 +160,6 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
 
     private static final String SCHEDULER_AUTORESTART_SETTING = "scheduler.autorestart";
     private static final boolean DEFAULT_SCHEDULER_AUTORESTART = true;
-    private static final int MAX_JOBS_TO_RESTART = 10000;
 
     private final ActionGuardian m_ActionGuardian;
     private final JobProvider m_JobProvider;
@@ -1167,18 +1167,22 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
         Boolean isAutoRestart = PrelertSettings.getSettingOrDefault(
                 SCHEDULER_AUTORESTART_SETTING, DEFAULT_SCHEDULER_AUTORESTART);
 
-        for (JobDetails job : getJobs(0, MAX_JOBS_TO_RESTART).queryResults())
+        BatchedDocumentsIterator<JobDetails> jobsIterator = m_JobProvider.newBatchedJobsIterator();
+        while (jobsIterator.hasNext())
         {
-            if (job.getSchedulerConfig() != null)
+            for (JobDetails job : jobsIterator.next())
             {
-                JobScheduler jobScheduler = createJobScheduler(job);
-                if (isAutoRestart && job.getSchedulerStatus() == JobSchedulerStatus.STARTED)
+                if (job.getSchedulerConfig() != null)
                 {
-                    restartScheduledJob(job, jobScheduler);
-                }
-                else if (!isAutoRestart || job.getSchedulerStatus() == JobSchedulerStatus.STOPPING)
-                {
-                    restoreSchedulerStatusToStopped(job);
+                    JobScheduler jobScheduler = createJobScheduler(job);
+                    if (isAutoRestart && job.getSchedulerStatus() == JobSchedulerStatus.STARTED)
+                    {
+                        restartScheduledJob(job, jobScheduler);
+                    }
+                    else if (!isAutoRestart || job.getSchedulerStatus() == JobSchedulerStatus.STOPPING)
+                    {
+                        restoreSchedulerStatusToStopped(job);
+                    }
                 }
             }
         }
@@ -1289,20 +1293,24 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
     public void setIgnoreDowntimeToAllJobs()
     {
         LOGGER.info("Setting ignoreDowntime to all jobs");
-        for (JobDetails job : getJobs(0, MAX_JOBS_TO_RESTART).queryResults())
+        BatchedDocumentsIterator<JobDetails> jobsIterator = m_JobProvider.newBatchedJobsIterator();
+        while (jobsIterator.hasNext())
         {
-            // Only set if job has seen data
-            DataCounts counts = job.getCounts();
-            if (job.getIgnoreDowntime() == null
-                    && counts != null && counts.getProcessedRecordCount() > 0)
+            for (JobDetails job : jobsIterator.next())
             {
-                try
+                // Only set if job has seen data
+                DataCounts counts = job.getCounts();
+                boolean hasSeenData = counts != null && counts.getProcessedRecordCount() > 0;
+                if (job.getIgnoreDowntime() == null && hasSeenData)
                 {
-                    updateIgnoreDowntime(job.getId(), IgnoreDowntime.ONCE);
-                }
-                catch (UnknownJobException e)
-                {
-                    LOGGER.error("Could not set ignoreDowntime on job " + e.getJobId(), e);
+                    try
+                    {
+                        updateIgnoreDowntime(job.getId(), IgnoreDowntime.ONCE);
+                    }
+                    catch (UnknownJobException e)
+                    {
+                        LOGGER.error("Could not set ignoreDowntime on job " + e.getJobId(), e);
+                    }
                 }
             }
         }
@@ -1375,22 +1383,18 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
         }
     }
 
-    public List<JobDetails> allJobs()
+    public List<JobDetails> getAllJobs()
     {
-        QueryPage<JobDetails> page = getJobs(0, MAX_JOBS_TO_RESTART);
-        List<JobDetails> allJobs = page.queryResults();
-        // TODO - this isn't foolproof if there are more than 10000 jobs, as new
-        // jobs created while the loop is in progress or job deletions might
-        // cause duplicates - it's good enough for now though
-        while (allJobs.size() < page.hitCount())
+        BatchedDocumentsIterator<JobDetails> jobsIterator = m_JobProvider.newBatchedJobsIterator();
+        List<JobDetails> allJobs = new ArrayList<>();
+        while (jobsIterator.hasNext())
         {
-            page = getJobs(allJobs.size(), MAX_JOBS_TO_RESTART);
-            allJobs.addAll(page.queryResults());
+            allJobs.addAll(jobsIterator.next());
         }
         return allJobs;
     }
 
-    public List<JobDetails> activeJobs()
+    public List<JobDetails> getActiveJobs()
     {
         Set<String> jobIds = getActiveJobIds();
         List<JobDetails> activeJobs = new ArrayList<>();

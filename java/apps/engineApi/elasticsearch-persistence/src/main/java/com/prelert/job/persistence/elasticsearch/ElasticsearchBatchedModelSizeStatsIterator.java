@@ -38,7 +38,7 @@ public class ElasticsearchBatchedModelSizeStatsIterator extends ElasticsearchBat
     public ElasticsearchBatchedModelSizeStatsIterator(Client client, String jobId,
             ObjectMapper objectMapper)
     {
-        super(client, jobId, objectMapper);
+        super(client, new ElasticsearchJobId(jobId).getIndex(), objectMapper);
     }
 
     @Override

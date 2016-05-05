@@ -49,9 +49,11 @@ import static org.mockito.Mockito.when;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.GeneralSecurityException;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -112,9 +114,11 @@ import com.prelert.job.exceptions.TooManyJobsException;
 import com.prelert.job.logging.JobLoggerFactory;
 import com.prelert.job.messages.Messages;
 import com.prelert.job.password.PasswordManager;
+import com.prelert.job.persistence.BatchedDocumentsIterator;
 import com.prelert.job.persistence.DataStoreException;
 import com.prelert.job.persistence.JobDataDeleterFactory;
 import com.prelert.job.persistence.JobProvider;
+import com.prelert.job.persistence.MockBatchedDocumentsIterator;
 import com.prelert.job.persistence.QueryPage;
 import com.prelert.job.process.autodetect.ProcessManager;
 import com.prelert.job.process.exceptions.MalformedJsonException;
@@ -1224,9 +1228,9 @@ public class JobManagerTest
         schedulerState.setStartTimeMillis(0L);
         schedulerState.setEndTimeMillis(null);
 
-        QueryPage<JobDetails> jobsPage = new QueryPage<>(
-                Arrays.asList(nonScheduledJob, scheduledJob), 2);
-        when(m_JobProvider.getJobs(0, 10000)).thenReturn(jobsPage);
+        BatchedDocumentsIterator<JobDetails> jobIterator = newBatchedJobsIterator(
+                Arrays.asList(nonScheduledJob, scheduledJob));
+        when(m_JobProvider.newBatchedJobsIterator()).thenReturn(jobIterator);
         when(m_JobProvider.getSchedulerState("scheduled")).thenReturn(Optional.of(schedulerState));
 
         Logger jobLogger = mock(Logger.class);
@@ -1269,9 +1273,9 @@ public class JobManagerTest
         schedulerState.setStartTimeMillis(0L);
         schedulerState.setEndTimeMillis(null);
 
-        QueryPage<JobDetails> jobsPage = new QueryPage<>(
-                Arrays.asList(scheduledJob), 1);
-        when(m_JobProvider.getJobs(0, 10000)).thenReturn(jobsPage);
+        BatchedDocumentsIterator<JobDetails> jobIterator = newBatchedJobsIterator(
+                Arrays.asList(scheduledJob));
+        when(m_JobProvider.newBatchedJobsIterator()).thenReturn(jobIterator);
         when(m_JobProvider.getSchedulerState("scheduled")).thenReturn(Optional.of(schedulerState));
 
         Logger jobLogger = mock(Logger.class);
@@ -1313,8 +1317,9 @@ public class JobManagerTest
         scheduledJob.setCounts(dataCounts);
         scheduledJob.setSchedulerStatus(JobSchedulerStatus.STOPPED);
 
-        QueryPage<JobDetails> jobsPage = new QueryPage<>(Arrays.asList(scheduledJob), 1);
-        when(m_JobProvider.getJobs(0, 10000)).thenReturn(jobsPage);
+        BatchedDocumentsIterator<JobDetails> jobIterator = newBatchedJobsIterator(
+                Arrays.asList(scheduledJob));
+        when(m_JobProvider.newBatchedJobsIterator()).thenReturn(jobIterator);
 
         DataExtractor dataExtractor = mock(DataExtractor.class);
         when(m_DataExtractorFactory.newExtractor(any(JobDetails.class))).thenReturn(dataExtractor);
@@ -1343,8 +1348,9 @@ public class JobManagerTest
         scheduledJob.setCounts(dataCounts);
         scheduledJob.setSchedulerStatus(JobSchedulerStatus.STOPPING);
 
-        QueryPage<JobDetails> jobsPage = new QueryPage<>(Arrays.asList(scheduledJob), 1);
-        when(m_JobProvider.getJobs(0, 10000)).thenReturn(jobsPage);
+        BatchedDocumentsIterator<JobDetails> jobIterator = newBatchedJobsIterator(
+                Arrays.asList(scheduledJob));
+        when(m_JobProvider.newBatchedJobsIterator()).thenReturn(jobIterator);
 
         DataExtractor dataExtractor = mock(DataExtractor.class);
         when(m_DataExtractorFactory.newExtractor(any(JobDetails.class))).thenReturn(dataExtractor);
@@ -1627,10 +1633,10 @@ public class JobManagerTest
         when(m_JobProvider.updateJob(eq("jobThatIsUnknown"), anyMapOf(String.class, Object.class)))
                 .thenThrow(new UnknownJobException("jobThatIsUnknown"));
 
-        List<JobDetails> jobs = Arrays.asList(jobThatHasSeenData, jobWithIgnoreDowntimeSet,
-                jobThatHasNotSeenData, jobWithNullCounts, jobThatIsUnknown);
-        QueryPage<JobDetails> jobsPage = new QueryPage<>(jobs, jobs.size());
-        when(m_JobProvider.getJobs(0, 10000)).thenReturn(jobsPage);
+        BatchedDocumentsIterator<JobDetails> jobIterator = newBatchedJobsIterator(
+                Arrays.asList(jobThatHasSeenData, jobWithIgnoreDowntimeSet, jobThatHasNotSeenData,
+                        jobWithNullCounts, jobThatIsUnknown));
+        when(m_JobProvider.newBatchedJobsIterator()).thenReturn(jobIterator);
 
         givenProcessInfo(2);
         JobManager jobManager = createJobManager();
@@ -2068,5 +2074,26 @@ public class JobManagerTest
             }
             return null;
         }
+    }
+
+    private static MockBatchedDocumentsIterator<JobDetails> newBatchedJobsIterator(List<JobDetails> jobs)
+    {
+        Deque<JobDetails> batch1 = new ArrayDeque<>();
+        Deque<JobDetails> batch2 = new ArrayDeque<>();
+        for (int i = 0; i < jobs.size(); i++)
+        {
+            if (i == 0)
+            {
+                batch1.add(jobs.get(i));
+            }
+            else
+            {
+                batch2.add(jobs.get(i));
+            }
+        }
+        List<Deque<JobDetails>> batches = new ArrayList<>();
+        batches.add(batch1);
+        batches.add(batch2);
+        return new MockBatchedDocumentsIterator<>(batches);
     }
 }

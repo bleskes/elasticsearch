@@ -60,7 +60,6 @@ import com.prelert.job.UnknownJobException;
 
 public class ElasticsearchBatchedDocumentsIteratorTest
 {
-    private static final String JOB_ID = "foo";
     private static final String INDEX_NAME = "prelertresults-foo";
     private static final String SCROLL_ID = "someScrollId";
 
@@ -75,7 +74,7 @@ public class ElasticsearchBatchedDocumentsIteratorTest
     {
         MockitoAnnotations.initMocks(this);
         m_WasScrollCleared = false;
-        m_TestIterator = new TestIterator(m_Client, JOB_ID, m_ObjectMapper);
+        m_TestIterator = new TestIterator(m_Client, INDEX_NAME, m_ObjectMapper);
         givenClearScrollRequest();
     }
 

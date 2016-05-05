@@ -38,7 +38,7 @@ class ElasticsearchBatchedBucketsIterator extends ElasticsearchBatchedDocumentsI
     public ElasticsearchBatchedBucketsIterator(Client client, String jobId,
             ObjectMapper objectMapper)
     {
-        super(client, jobId, objectMapper);
+        super(client, new ElasticsearchJobId(jobId).getIndex(), objectMapper);
     }
 
     @Override

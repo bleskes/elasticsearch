@@ -50,17 +50,17 @@ abstract class ElasticsearchBatchedDocumentsIterator<T> implements BatchedDocume
     private static final int BATCH_SIZE = 10000;
 
     private final Client m_Client;
-    private final ElasticsearchJobId m_JobId;
+    private final String m_Index;
     private final ObjectMapper m_ObjectMapper;
     private String m_ScrollId;
     private long m_TotalHits;
     private long m_Count;
     private final ResultsFilterBuilder m_FilterBuilder;
 
-    public ElasticsearchBatchedDocumentsIterator(Client client, String jobId, ObjectMapper objectMapper)
+    public ElasticsearchBatchedDocumentsIterator(Client client, String index, ObjectMapper objectMapper)
     {
         m_Client = Objects.requireNonNull(client);
-        m_JobId = new ElasticsearchJobId(jobId);
+        m_Index = Objects.requireNonNull(index);
         m_ObjectMapper = Objects.requireNonNull(objectMapper);
         m_TotalHits = 0;
         m_Count = 0;
@@ -96,13 +96,14 @@ abstract class ElasticsearchBatchedDocumentsIterator<T> implements BatchedDocume
         }
         SearchResponse searchResponse = (m_ScrollId == null) ? initScroll() :
                 m_Client.prepareSearchScroll(m_ScrollId).setScroll(CONTEXT_ALIVE_DURATION).get();
+        m_ScrollId = searchResponse.getScrollId();
         return mapHits(searchResponse);
     }
 
     private SearchResponse initScroll()
     {
-        LOGGER.trace("ES API CALL: search all of type " + getType() + " from index " + m_JobId.getIndex());
-        SearchResponse searchResponse = m_Client.prepareSearch(m_JobId.getIndex())
+        LOGGER.trace("ES API CALL: search all of type " + getType() + " from index " + m_Index);
+        SearchResponse searchResponse = m_Client.prepareSearch(m_Index)
                 .setScroll(CONTEXT_ALIVE_DURATION)
                 .setSize(BATCH_SIZE)
                 .setTypes(getType())
@@ -118,11 +119,16 @@ abstract class ElasticsearchBatchedDocumentsIterator<T> implements BatchedDocume
     {
         Deque<T> results = new ArrayDeque<>();
 
-        for (SearchHit hit : searchResponse.getHits().getHits())
+        SearchHit[] hits = searchResponse.getHits().getHits();
+        for (SearchHit hit : hits)
         {
-            results.add(map(m_ObjectMapper, hit));
+            T mapped = map(m_ObjectMapper, hit);
+            if (mapped != null)
+            {
+                results.add(mapped);
+            }
         }
-        m_Count += results.size();
+        m_Count += hits.length;
 
         if (!hasNext())
         {
@@ -132,5 +138,13 @@ abstract class ElasticsearchBatchedDocumentsIterator<T> implements BatchedDocume
     }
 
     protected abstract String getType();
+
+    /**
+     * Maps the search hit to the document type
+     *
+     * @param objectMapper the object mapper
+     * @param hit the search hit
+     * @return The mapped document or {@code null} if the mapping failed
+     */
     protected abstract T map(ObjectMapper objectMapper, SearchHit hit);
 }

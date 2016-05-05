@@ -394,6 +394,13 @@ public class ElasticsearchJobProvider implements JobProvider
         return new QueryPage<JobDetails>(jobs, response.getHits().getTotalHits());
     }
 
+    @Override
+    public BatchedDocumentsIterator<JobDetails> newBatchedJobsIterator()
+    {
+        return new ElasticsearchBatchedJobsIterator(m_Client, ElasticsearchJobId.INDEX_PREFIX + "*",
+                m_ObjectMapper);
+    }
+
     /**
      * Create the Elasticsearch index and the mappings
      * @throws

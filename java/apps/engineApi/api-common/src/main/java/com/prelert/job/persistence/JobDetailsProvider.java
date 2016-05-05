@@ -80,6 +80,14 @@ public interface JobDetailsProvider extends Shutdownable
     QueryPage<JobDetails> getJobs(int skip, int take);
 
     /**
+     * Returns a {@link BatchedDocumentsIterator} that allows querying
+     * and iterating over all jobs
+     *
+     * @return a job {@link BatchedDocumentsIterator}
+     */
+    BatchedDocumentsIterator<JobDetails> newBatchedJobsIterator();
+
+    /**
      * Save the details of the new job to the datastore.
      * Throws <code>JobIdAlreadyExistsException</code> if a job with the
      * same Id already exists.
