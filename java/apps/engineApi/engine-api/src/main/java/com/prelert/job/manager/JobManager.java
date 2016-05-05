@@ -1054,17 +1054,28 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
      * Get the job IDs of jobs that are running or have a started scheduler.
      * @return the job IDs of active jobs
      */
-    private Set<String> getActiveJobIds()
+    public Set<String> getActiveJobIds()
     {
         Set<String> activeJobs = new HashSet<String>(m_ProcessManager.runningJobs());
+        activeJobs.addAll(getStartedScheduledJobs());
+        return activeJobs;
+    }
+
+    /**
+     * Get the jobs that have a started scheduler
+     * @return
+     */
+    public List<String> getStartedScheduledJobs()
+    {
+        List<String> startedScheduledJobs = new ArrayList<>();
         for (JobScheduler scheduler : m_ScheduledJobs.values())
         {
             if (scheduler.isStarted())
             {
-                activeJobs.add(scheduler.getJobId());
+                startedScheduledJobs.add(scheduler.getJobId());
             }
         }
-        return activeJobs;
+        return startedScheduledJobs;
     }
 
     private void tryFinishingJob(String jobId) throws JobInUseException
