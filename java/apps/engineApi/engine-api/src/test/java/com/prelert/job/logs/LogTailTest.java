@@ -179,7 +179,7 @@ public class LogTailTest
 
 
 		JobLogs jobLogs = new JobLogs();
-		String allLines = jobLogs.file(tmpLogFile.toPath());
+		String allLines = jobLogs.readFileToString(tmpLogFile.toPath());
 		String [] lines = allLines.split("\n");
 		assertEquals(lines.length, LOG_CONTENTS.length);
 		verifyLinesEqual(LOG_CONTENTS.length - lines.length, lines.length, lines);
