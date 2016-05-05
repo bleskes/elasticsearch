@@ -125,14 +125,14 @@ public class ElasticsearchJobProvider implements JobProvider
     private static final String SETTING_DEFAULT_ANALYZER_TYPE = "index.analysis.analyzer.default.type";
     private static final String KEYWORD = "keyword";
 
-    private static final List<String> SECONDARY_SORT = Arrays.asList(new String[] {
-                    AnomalyRecord.ANOMALY_SCORE,
-                    AnomalyRecord.OVER_FIELD_VALUE,
-                    AnomalyRecord.PARTITION_FIELD_VALUE,
-                    AnomalyRecord.BY_FIELD_VALUE,
-                    AnomalyRecord.FIELD_NAME,
-                    AnomalyRecord.FUNCTION}
-                );
+    private static final List<String> SECONDARY_SORT = Arrays.asList(
+            AnomalyRecord.ANOMALY_SCORE,
+            AnomalyRecord.OVER_FIELD_VALUE,
+            AnomalyRecord.PARTITION_FIELD_VALUE,
+            AnomalyRecord.BY_FIELD_VALUE,
+            AnomalyRecord.FIELD_NAME,
+            AnomalyRecord.FUNCTION
+        );
 
     private static final int UPDATE_JOB_RETRY_COUNT = 3;
     private static final int RECORDS_TAKE_PARAM = 500;
@@ -894,7 +894,6 @@ public class ElasticsearchJobProvider implements JobProvider
         {
             searchBuilder.addSort(esSortField(sortField), descending ? SortOrder.DESC : SortOrder.ASC);
         }
-
 
         SearchResponse searchResponse;
         try
