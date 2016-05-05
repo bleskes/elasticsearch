@@ -249,6 +249,7 @@ public class ModelSnapshotsTest extends ServiceTest
         Response response = m_ModelSnapshots.revertToSnapshot("foo", "", "123", "", false);
 
         assertEquals(200, response.getStatus());
+        @SuppressWarnings("unchecked")
         SingleDocument<ModelSnapshot> entity = (SingleDocument<ModelSnapshot>)response.getEntity();
         assertEquals("foo", entity.getDocument().getSnapshotId());
         assertNull(entity.getDocument().getQuantiles());
@@ -301,6 +302,7 @@ public class ModelSnapshotsTest extends ServiceTest
         Response response = m_ModelSnapshots.updateDescription("foo", "123", "{ \"description\" : \"new description\" }");
 
         assertEquals(200, response.getStatus());
+        @SuppressWarnings("unchecked")
         SingleDocument<ModelSnapshot> entity = (SingleDocument<ModelSnapshot>)response.getEntity();
         assertEquals("123", entity.getDocument().getSnapshotId());
         assertNull(entity.getDocument().getQuantiles());
