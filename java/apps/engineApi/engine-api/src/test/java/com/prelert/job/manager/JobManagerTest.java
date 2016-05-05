@@ -1207,7 +1207,7 @@ public class JobManagerTest
     }
 
     @Test
-    public void testRestartScheduledJobs_GivenNonScheduledJobAndJobWithStartedScheduler()
+    public void testSetupScheduledJobs_GivenNonScheduledJobAndJobWithStartedScheduler()
             throws NoSuchScheduledJobException, UnknownJobException,
             CannotStartSchedulerException, LicenseViolationException,
             JobConfigurationException, JobIdAlreadyExistsException, IOException, InterruptedException
@@ -1237,7 +1237,7 @@ public class JobManagerTest
         givenProcessInfo(2);
         JobManager jobManager = createJobManager();
 
-        jobManager.restartScheduledJobs();
+        jobManager.setupScheduledJobs();
 
         Thread.sleep(200);
 
@@ -1252,7 +1252,7 @@ public class JobManagerTest
     }
 
     @Test
-    public void testRestartScheduledJobs_GivenJobWithStoppedScheduler() throws NoSuchScheduledJobException, UnknownJobException,
+    public void testSetupScheduledJobs_GivenJobWithStoppedScheduler() throws NoSuchScheduledJobException, UnknownJobException,
             CannotStartSchedulerException, LicenseViolationException,
             JobConfigurationException, JobIdAlreadyExistsException, IOException, InterruptedException
     {
@@ -1272,7 +1272,7 @@ public class JobManagerTest
         givenProcessInfo(2);
         JobManager jobManager = createJobManager();
 
-        jobManager.restartScheduledJobs();
+        jobManager.setupScheduledJobs();
 
         verify(m_DataExtractorFactory).newExtractor(scheduledJob);
         jobManager.checkJobHasScheduler("scheduled");
@@ -1284,7 +1284,7 @@ public class JobManagerTest
     }
 
     @Test
-    public void testRestartScheduledJobs_GivenJobWithStoppingScheduler() throws JobException
+    public void testSetupScheduledJobs_GivenJobWithStoppingScheduler() throws JobException
     {
         JobConfiguration jobConfig = createScheduledJobConfig();
         JobDetails scheduledJob = new JobDetails("scheduled", jobConfig);
@@ -1302,7 +1302,7 @@ public class JobManagerTest
         givenProcessInfo(2);
         JobManager jobManager = createJobManager();
 
-        jobManager.restartScheduledJobs();
+        jobManager.setupScheduledJobs();
 
         verify(m_DataExtractorFactory).newExtractor(scheduledJob);
         jobManager.checkJobHasScheduler("scheduled");

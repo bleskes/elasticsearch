@@ -287,7 +287,7 @@ public class PrelertWebApp extends Application
         {
             m_JobManager.setIgnoreDowntimeToAllJobs();
         }
-        m_JobManager.restartScheduledJobs();
+        m_JobManager.setupScheduledJobs();
     }
 
     private void addEndPoints()

@@ -1149,7 +1149,15 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
         return m_ScheduledJobs.containsKey(jobId);
     }
 
-    public void restartScheduledJobs()
+    /**
+     * Creates a {@code JobScheduler} for each scheduled job and restores the state
+     * of the scheduler.
+     * <ul>
+     * <li>Schedulers in state STARTED will be restarted.
+     * <li>Schedulers in state STOPPING will be set to STOPPED.
+     * </ul>
+     */
+    public void setupScheduledJobs()
     {
         Preconditions.checkState(m_ScheduledJobs.isEmpty());
 
