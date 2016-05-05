@@ -340,37 +340,16 @@ public class ElasticsearchJobProvider implements JobProvider
         {
             LOGGER.trace("ES API CALL: get ID " + elasticJobId.getId() +
                     " type " + JobDetails.TYPE + " from index " + elasticJobId.getIndex());
-            GetResponse response = m_Client.prepareGet(elasticJobId.getIndex(), JobDetails.TYPE, elasticJobId.getId()).get();
+            GetResponse response = m_Client.prepareGet(elasticJobId.getIndex(), JobDetails.TYPE,
+                    elasticJobId.getId()).get();
             if (!response.isExists())
             {
                 String msg = "No details for job with id " + elasticJobId.getId();
                 LOGGER.warn(msg);
                 return Optional.empty();
             }
-            JobDetails details = m_ObjectMapper.convertValue(response.getSource(), JobDetails.class);
-
-            // Pull out the modelSizeStats document, and add this to the JobDetails
-            LOGGER.trace("ES API CALL: get ID " + ModelSizeStats.TYPE +
-                    " type " + ModelSizeStats.TYPE + " from index " + elasticJobId.getIndex());
-            GetResponse modelSizeStatsResponse = m_Client.prepareGet(
-                    elasticJobId.getIndex(), ModelSizeStats.TYPE, ModelSizeStats.TYPE).get();
-            if (!modelSizeStatsResponse.isExists())
-            {
-                String msg = "No model size stats for job with id " + elasticJobId.getId();
-                LOGGER.warn(msg);
-            }
-            else
-            {
-                // Remove the Kibana/Logstash '@timestamp' entry as stored in Elasticsearch,
-                // and replace using the API 'timestamp' key.
-                Object timestamp = modelSizeStatsResponse.getSource().remove(ElasticsearchMappings.ES_TIMESTAMP);
-                modelSizeStatsResponse.getSource().put(ModelSizeStats.TIMESTAMP, timestamp);
-
-                ModelSizeStats modelSizeStats = m_ObjectMapper.convertValue(
-                    modelSizeStatsResponse.getSource(), ModelSizeStats.class);
-                details.setModelSizeStats(modelSizeStats);
-            }
-
+            ElasticsearchJobDetailsMapper jobMapper = new ElasticsearchJobDetailsMapper(m_Client, m_ObjectMapper);
+            JobDetails details = jobMapper.map(response.getSource());
             return Optional.of(details);
         }
         catch (IndexNotFoundException e)
@@ -398,44 +377,18 @@ public class ElasticsearchJobProvider implements JobProvider
                 .addSort(sb)
                 .get();
 
+        ElasticsearchJobDetailsMapper jobMapper = new ElasticsearchJobDetailsMapper(m_Client, m_ObjectMapper);
         List<JobDetails> jobs = new ArrayList<>();
         for (SearchHit hit : response.getHits().getHits())
         {
-            JobDetails job;
             try
             {
-                job = m_ObjectMapper.convertValue(hit.getSource(), JobDetails.class);
+                jobs.add(jobMapper.map(hit.getSource()));
             }
-            catch (IllegalArgumentException e)
+            catch (CannotMapJobFromJson e)
             {
-                LOGGER.error("Cannot parse job from JSON", e);
                 continue;
             }
-            ElasticsearchJobId elasticJobId = new ElasticsearchJobId(job.getId());
-
-            // Pull out the modelSizeStats document, and add this to the JobDetails
-            LOGGER.trace("ES API CALL: get ID " + ModelSizeStats.TYPE +
-                    " type " + ModelSizeStats.TYPE + " from index " + elasticJobId.getIndex());
-            GetResponse modelSizeStatsResponse = m_Client.prepareGet(
-                    elasticJobId.getIndex(), ModelSizeStats.TYPE, ModelSizeStats.TYPE).get();
-
-            if (!modelSizeStatsResponse.isExists())
-            {
-                String msg = "No memory usage details for job with id " + job.getId();
-                LOGGER.warn(msg);
-            }
-            else
-            {
-                // Remove the Kibana/Logstash '@timestamp' entry as stored in Elasticsearch,
-                // and replace using the API 'timestamp' key.
-                Object timestamp = modelSizeStatsResponse.getSource().remove(ElasticsearchMappings.ES_TIMESTAMP);
-                modelSizeStatsResponse.getSource().put(ModelSizeStats.TIMESTAMP, timestamp);
-
-                ModelSizeStats modelSizeStats = m_ObjectMapper.convertValue(
-                    modelSizeStatsResponse.getSource(), ModelSizeStats.class);
-                job.setModelSizeStats(modelSizeStats);
-            }
-            jobs.add(job);
         }
 
         return new QueryPage<JobDetails>(jobs, response.getHits().getTotalHits());
