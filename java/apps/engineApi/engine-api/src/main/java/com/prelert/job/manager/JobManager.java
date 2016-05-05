@@ -114,6 +114,7 @@ import com.prelert.job.status.HighProportionOfBadTimestampsException;
 import com.prelert.job.status.OutOfOrderRecordsException;
 import com.prelert.job.status.none.NoneStatusReporter;
 import com.prelert.job.transform.TransformConfigs;
+import com.prelert.settings.PrelertSettings;
 
 /**
  * Allows interactions with jobs. The managed interactions include:
@@ -156,6 +157,8 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
     private static final int LAST_DATA_TIME_CACHE_SIZE = 1000;
     private static final int LAST_DATA_TIME_MIN_UPDATE_INTERVAL_MS = 1000;
 
+    private static final String SCHEDULER_AUTORESTART_SETTING = "scheduler.autorestart";
+    private static final boolean DEFAULT_SCHEDULER_AUTORESTART = true;
     private static final int MAX_JOBS_TO_RESTART = 10000;
 
     private final ActionGuardian m_ActionGuardian;
@@ -1153,24 +1156,27 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
      * Creates a {@code JobScheduler} for each scheduled job and restores the state
      * of the scheduler.
      * <ul>
-     * <li>Schedulers in state STARTED will be restarted.
+     * <li>If autorestart is enabled, schedulers in state STARTED will be restarted.
+     * <li>If autorestart is disabled, all schedulers will be set to STOPPED.
      * <li>Schedulers in state STOPPING will be set to STOPPED.
      * </ul>
      */
     public void setupScheduledJobs()
     {
         Preconditions.checkState(m_ScheduledJobs.isEmpty());
+        Boolean isAutoRestart = PrelertSettings.getSettingOrDefault(
+                SCHEDULER_AUTORESTART_SETTING, DEFAULT_SCHEDULER_AUTORESTART);
 
         for (JobDetails job : getJobs(0, MAX_JOBS_TO_RESTART).queryResults())
         {
             if (job.getSchedulerConfig() != null)
             {
                 JobScheduler jobScheduler = createJobScheduler(job);
-                if (job.getSchedulerStatus() == JobSchedulerStatus.STARTED)
+                if (isAutoRestart && job.getSchedulerStatus() == JobSchedulerStatus.STARTED)
                 {
                     restartScheduledJob(job, jobScheduler);
                 }
-                else if (job.getSchedulerStatus() == JobSchedulerStatus.STOPPING)
+                else if (!isAutoRestart || job.getSchedulerStatus() == JobSchedulerStatus.STOPPING)
                 {
                     restoreSchedulerStatusToStopped(job);
                 }

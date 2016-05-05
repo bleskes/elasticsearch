@@ -1252,6 +1252,56 @@ public class JobManagerTest
     }
 
     @Test
+    public void testSetupScheduledJobs_GivenJobWithStartedSchedulerAndAutorestartIsDisabled()
+            throws NoSuchScheduledJobException, UnknownJobException,
+            CannotStartSchedulerException, LicenseViolationException,
+            JobConfigurationException, JobIdAlreadyExistsException, IOException, InterruptedException
+    {
+        System.setProperty("scheduler.autorestart", "false");
+
+        JobConfiguration jobConfig = createScheduledJobConfig();
+        JobDetails scheduledJob = new JobDetails("scheduled", jobConfig);
+        DataCounts dataCounts = new DataCounts();
+        dataCounts.setLatestRecordTimeStamp(new Date(0));
+        scheduledJob.setCounts(dataCounts);
+        scheduledJob.setSchedulerStatus(JobSchedulerStatus.STARTED);
+        SchedulerState schedulerState = new SchedulerState();
+        schedulerState.setStartTimeMillis(0L);
+        schedulerState.setEndTimeMillis(null);
+
+        QueryPage<JobDetails> jobsPage = new QueryPage<>(
+                Arrays.asList(scheduledJob), 1);
+        when(m_JobProvider.getJobs(0, 10000)).thenReturn(jobsPage);
+        when(m_JobProvider.getSchedulerState("scheduled")).thenReturn(Optional.of(schedulerState));
+
+        Logger jobLogger = mock(Logger.class);
+        when(m_JobLoggerFactory.newLogger("scheduled")).thenReturn(jobLogger);
+        DataExtractor dataExtractor = mock(DataExtractor.class);
+        when(m_DataExtractorFactory.newExtractor(any(JobDetails.class))).thenReturn(dataExtractor);
+
+        givenProcessInfo(2);
+        JobManager jobManager = createJobManager();
+
+        jobManager.setupScheduledJobs();
+
+        Thread.sleep(200);
+
+        jobManager.shutdown();
+
+        verify(m_DataExtractorFactory).newExtractor(scheduledJob);
+
+        // Verify scheduler status was updated to STOPPED
+        verify(m_JobProvider).updateJob(eq("scheduled"), m_JobUpdateCaptor.capture());
+        Map<String, Object> jobUpdate = m_JobUpdateCaptor.getValue();
+        assertEquals(JobSchedulerStatus.STOPPED, jobUpdate.get(JobDetails.SCHEDULER_STATUS));
+
+        // Verify no other calls to factories - means no job was scheduled
+        Mockito.verifyNoMoreInteractions(m_JobLoggerFactory, m_DataExtractorFactory);
+
+        System.clearProperty("scheduler.autorestart");
+    }
+
+    @Test
     public void testSetupScheduledJobs_GivenJobWithStoppedScheduler() throws NoSuchScheduledJobException, UnknownJobException,
             CannotStartSchedulerException, LicenseViolationException,
             JobConfigurationException, JobIdAlreadyExistsException, IOException, InterruptedException
