@@ -107,7 +107,7 @@ public class DataStreamer
             MissingFieldException, JobInUseException, HighProportionOfBadTimestampsException,
             OutOfOrderRecordsException, LicenseViolationException, MalformedJsonException, JobException
     {
-        LOGGER.debug("Handle Post data to job = " + jobId);
+        LOGGER.trace("Handle Post data to job = " + jobId);
 
         input = tryDecompressingInputStream(contentEncoding, jobId, input);
         if (m_ShouldPersistDataToDisk)
@@ -118,7 +118,7 @@ public class DataStreamer
         // set the bucket count to null so it doesn't appear in the output
         stats.setBucketCount(null);
 
-        LOGGER.debug("File uploaded to job " + jobId);
+        LOGGER.debug("Data uploaded to job " + jobId);
 
         return stats;
     }
@@ -128,14 +128,14 @@ public class DataStreamer
     {
         if ("gzip".equals(contentEncoding))
         {
-            LOGGER.info("Decompressing post data in job = " + jobId);
+            LOGGER.debug("Decompressing post data in job = " + jobId);
             try
             {
                 return new GZIPInputStream(input);
             }
             catch (ZipException ze)
             {
-                LOGGER.debug("Failed to decompress data file", ze);
+                LOGGER.error("Failed to decompress data file", ze);
                 throw new JobException(Messages.getMessage(Messages.REST_GZIP_ERROR),
                         ErrorCodes.UNCOMPRESSED_DATA);
             }
