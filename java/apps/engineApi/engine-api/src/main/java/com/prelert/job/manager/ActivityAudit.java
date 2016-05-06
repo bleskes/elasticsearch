@@ -81,7 +81,7 @@ public class ActivityAudit
         m_ScheduledService.schedule(() -> this.report(), delay, TimeUnit.MINUTES);
     }
 
-    private void report()
+    void report()
     {
         try
         {
