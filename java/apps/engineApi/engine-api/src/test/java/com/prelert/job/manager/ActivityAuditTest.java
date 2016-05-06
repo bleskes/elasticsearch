@@ -125,7 +125,8 @@ public class ActivityAuditTest
         verify(m_Auditor).activity(2, 19, 1, 4);
         verify(m_Auditor).activity("jobId=job2id numDetectors=4 status=PAUSED scheduledStatus=STARTED "
                 + "processedRecords=42 inputBytes=9999 modelMemory=33333333 "
-                + "createTime=Fri Feb 13 23:31:30 GMT 2009 lastDataTime=Thu Aug 23 00:41:42 BST 2012\n");
+                + "createTime=Fri Feb 13 23:31:30 GMT 2009 lastDataTime=Thu Aug 23 00:41:42 BST 2012"
+                + System.lineSeparator());
     }
 
 }
