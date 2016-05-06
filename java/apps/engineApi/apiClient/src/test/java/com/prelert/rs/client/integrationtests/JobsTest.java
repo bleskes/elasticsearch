@@ -27,10 +27,14 @@
 
 package com.prelert.rs.client.integrationtests;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.Closeable;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
@@ -41,6 +45,7 @@ import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -58,11 +63,13 @@ import com.prelert.job.Detector;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.JobDetails;
 import com.prelert.job.JobStatus;
+import com.prelert.job.ModelSnapshot;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.results.AnomalyRecord;
 import com.prelert.job.results.Bucket;
 import com.prelert.job.transform.TransformConfig;
 import com.prelert.rs.client.EngineApiClient;
+import com.prelert.rs.client.ModelSnapshotsRequestBuilder;
 import com.prelert.rs.data.ApiError;
 import com.prelert.rs.data.MultiDataPostResult;
 import com.prelert.rs.data.Pagination;
@@ -1741,6 +1748,131 @@ public class JobsTest implements Closeable
     }
 
 
+    public void testModelSnapshots(File jsonData) throws IOException, InterruptedException
+    {
+        // create a new job
+        // upload data in chunks
+        // check there are model snapshots
+        // go back to a snapshot
+        // reupload data
+
+        Detector d = new Detector();
+        d.setFunction("metric");
+        d.setFieldName("responsetime");
+        d.setByFieldName("airline");
+        AnalysisConfig ac = new AnalysisConfig();
+        ac.setBucketSpan(3600L);
+        ac.setOverlappingBuckets(false);
+        ac.setDetectors(Arrays.asList(d));
+
+        DataDescription dd = new DataDescription();
+        dd.setFormat(DataFormat.JSON);
+        dd.setTimeField("timestamp");
+
+        JobConfiguration jobConfig = new JobConfiguration(ac);
+        jobConfig.setDataDescription(dd);
+        jobConfig.setDescription("Flight Centre JSON");
+        jobConfig.setId("flightcentre-snapshots");
+
+        String jobId = m_WebServiceClient.createJob(jobConfig);
+        if (jobId == null)
+        {
+            LOGGER.error("No Job Id returned by create job");
+            test(false);
+        }
+        // The sleeps are because snapshots have second granularity
+        Long chunk = 35182L;
+        uploadLines(jsonData, jobId, 0L, chunk);
+        m_WebServiceClient.closeJob(jobId);
+        Thread.sleep(1000);
+        uploadLines(jsonData, jobId, chunk, chunk * 2);
+        m_WebServiceClient.closeJob(jobId);
+        Thread.sleep(1000);
+        uploadLines(jsonData, jobId, chunk * 2, chunk * 3);
+        m_WebServiceClient.closeJob(jobId);
+        Thread.sleep(1000);
+        uploadLines(jsonData, jobId, chunk * 3, chunk * 4);
+        m_WebServiceClient.closeJob(jobId);
+        Thread.sleep(1000);
+        uploadLines(jsonData, jobId, chunk * 4, chunk * 5);
+        m_WebServiceClient.closeJob(jobId);
+
+        // Get the model snapshots
+        ModelSnapshotsRequestBuilder builder = m_WebServiceClient.prepareGetModelSnapshots(jobId)
+                    .sortField("latestRecordTimeStamp")
+                    .descending(false);
+
+        List<ModelSnapshot> snapshots = builder.get().getDocuments();
+        LOGGER.info("Found snapshots: " + snapshots.size());
+        test(snapshots.size() == 5);
+
+        String snapshotId = snapshots.get(0).getSnapshotId();
+        SingleDocument<ModelSnapshot> updated = m_WebServiceClient.setModelSnapshotDescription(jobId,  snapshotId, "a test description for the snapshot");
+
+        Date snapshotTime = snapshots.get(0).getTimestamp();
+        test(updated.isExists());
+        String description = updated.getDocument().getDescription();
+        LOGGER.info("description: " + description);
+        test(description.equals("a test description for the snapshot"));
+
+        // Get the records
+        Pagination<AnomalyRecord> records = m_WebServiceClient.prepareGetRecords(jobId).get();
+        List<AnomalyRecord> initialRecords = records.getDocuments();
+        long initialRecordNum = records.getHitCount();
+
+        LOGGER.info("Reverting to snapshot with latest record time " + snapshots.get(0).getLatestRecordTimeStamp().getTime());
+        SingleDocument<ModelSnapshot> snapshotById = m_WebServiceClient.revertModelSnapshotById(jobId, snapshotId, true);
+
+        test(m_WebServiceClient.deleteModelSnapshot(jobId, snapshots.get(1).getSnapshotId()));
+        test(m_WebServiceClient.deleteModelSnapshot(jobId, snapshots.get(2).getSnapshotId()));
+        test(m_WebServiceClient.deleteModelSnapshot(jobId, snapshots.get(3).getSnapshotId()));
+        // Sleep here as Elasticsearch needs time to get its act together
+        Thread.sleep(1000);
+        long hits = m_WebServiceClient.prepareGetModelSnapshots(jobId).get().getHitCount();
+        test(2L == hits);
+
+        uploadLines(jsonData, jobId, chunk, chunk * 5);
+        m_WebServiceClient.closeJob(jobId);
+        records = m_WebServiceClient.prepareGetRecords(jobId).get();
+        List<AnomalyRecord> afterRecords = records.getDocuments();
+        long afterRecordNum = records.getHitCount();
+        test(afterRecordNum == initialRecordNum);
+        test(afterRecords.size() == initialRecords.size());
+
+        SingleDocument<ModelSnapshot> snapshotByDescription = m_WebServiceClient.revertModelSnapshotByDescription(jobId, description, true);
+        SingleDocument<ModelSnapshot> snapshotByTime = m_WebServiceClient.revertModelSnapshotByTime(jobId, Long.toString(snapshotTime.getTime()), true);
+
+        test(Objects.equals(snapshotById.getDocument().getSnapshotId(), snapshotByDescription.getDocument().getSnapshotId()));
+        test(Objects.equals(snapshotById.getDocument().getSnapshotId(), snapshotByTime.getDocument().getSnapshotId()));
+    }
+
+    private void uploadLines(File file, String jobId, Long startLine, Long endLine) throws IOException
+    {
+        StringBuffer sb = new StringBuffer();
+        Long numLines = 0L;
+        try (BufferedReader br = new BufferedReader(new FileReader(file)))
+        {
+            String line;
+            while ((line = br.readLine()) != null && numLines < endLine)
+            {
+                if (numLines >= startLine)
+                {
+                    sb.append(line);
+                    sb.append("\n");
+                }
+                numLines++;
+            }
+        }
+        catch (IOException ex)
+        {
+            LOGGER.error(ex.getMessage());
+            test(false);
+        }
+        LOGGER.info("About to upload bytes: " + sb.length());
+        BufferedInputStream is = new BufferedInputStream(new ByteArrayInputStream(sb.toString().getBytes(StandardCharsets.UTF_8)));
+        m_WebServiceClient.streamingUpload(jobId, is, false);
+    }
+
     /**
      * Throws an exception if <code>condition</code> is false.
      *
@@ -1818,7 +1950,9 @@ public class JobsTest implements Closeable
             // are hanging around from a previous run
             test.m_WebServiceClient.deleteJob("flightcentre-csv");
             test.m_WebServiceClient.deleteJob("flightcentre-epoch-ms");
+            test.m_WebServiceClient.deleteJob("flightcentre-snapshots");
 
+            test.testModelSnapshots(flightCentreJsonData);
 
             //=================
             // CSV & Gzip test
@@ -1920,6 +2054,10 @@ public class JobsTest implements Closeable
             start = new Date(1359406800000L);
             end = new Date(1359662400000L);
             test.testBucketDateFilters(doubleUploadTest, start, end);
+
+            //===================
+            // modelSnapshot tests
+
 
             //==========================
             // Clean up test jobs
