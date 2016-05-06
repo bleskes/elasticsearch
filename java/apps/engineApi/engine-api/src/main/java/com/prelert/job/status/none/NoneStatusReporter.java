@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -30,6 +30,8 @@ package com.prelert.job.status.none;
 import org.apache.log4j.Logger;
 
 import com.prelert.job.persistence.none.NoneJobDataCountsPersister;
+import com.prelert.job.status.HighProportionOfBadTimestampsException;
+import com.prelert.job.status.OutOfOrderRecordsException;
 import com.prelert.job.status.StatusReporter;
 import com.prelert.job.usage.none.NoneUsageReporter;
 
@@ -40,5 +42,21 @@ public class NoneStatusReporter extends StatusReporter
     public NoneStatusReporter(String jobId)
     {
         super(jobId, new NoneUsageReporter(), new NoneJobDataCountsPersister(), LOGGER);
+    }
+
+    /**
+     * Overrides the base class to ignore problems with bad dates, out of order
+     * data, etc.
+     *
+     * @param totalRecords
+     * @throws HighProportionOfBadTimestampsException
+     * @throws OutOfOrderRecordsException
+     */
+    @Override
+    protected void checkStatus(long totalRecords)
+    throws HighProportionOfBadTimestampsException, OutOfOrderRecordsException
+    {
+        // Don't throw exceptions for these conditions as we're supposed to be
+        // not reporting any status
     }
 }
