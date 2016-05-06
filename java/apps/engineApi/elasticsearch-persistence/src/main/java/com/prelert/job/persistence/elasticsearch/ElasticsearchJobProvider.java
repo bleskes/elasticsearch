@@ -59,6 +59,7 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.index.IndexNotFoundException;
 import org.elasticsearch.index.engine.VersionConflictEngineException;
+import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.indices.IndexAlreadyExistsException;
@@ -1048,30 +1049,23 @@ public class ElasticsearchJobProvider implements JobProvider
     }
 
     @Override
-    public QueryPage<ModelSnapshot> modelSnapshots(String jobId,
-            int skip, int take, long startEpochMs, long endEpochMs,
-            String sortField, String snapshotId, String description)
-    throws UnknownJobException
+    public QueryPage<ModelSnapshot> modelSnapshots(String jobId, int skip, int take,
+            long startEpochMs, long endEpochMs, String sortField, String snapshotId,
+            String description) throws UnknownJobException
     {
         boolean haveId = snapshotId != null && !snapshotId.isEmpty();
         boolean haveDescription = description != null && !description.isEmpty();
         ResultsFilterBuilder fb;
         if (haveId || haveDescription)
         {
-            QueryBuilder query;
-            if (haveId && haveDescription)
+            BoolQueryBuilder query = QueryBuilders.boolQuery();
+            if (haveId)
             {
-                query = QueryBuilders.boolQuery()
-                        .must(QueryBuilders.termQuery(ModelSnapshot.SNAPSHOT_ID, snapshotId))
-                        .must(QueryBuilders.termQuery(ModelSnapshot.DESCRIPTION, description));
+                query.must(QueryBuilders.termQuery(ModelSnapshot.SNAPSHOT_ID, snapshotId));
             }
-            else if (haveId)
+            if (haveDescription)
             {
-                query = QueryBuilders.termQuery(ModelSnapshot.SNAPSHOT_ID, snapshotId);
-            }
-            else
-            {
-                query = QueryBuilders.termQuery(ModelSnapshot.DESCRIPTION, description);
+                query.must(QueryBuilders.termQuery(ModelSnapshot.DESCRIPTION, description));
             }
 
             fb = new ResultsFilterBuilder(query);
