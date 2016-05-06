@@ -53,8 +53,6 @@ public class ProcessCtrlTest
     @Before
     public void setUp()
     {
-        System.setProperty(ProcessCtrl.MAX_ANOMALY_RECORDS_PROPERTY, "333");
-
         MockitoAnnotations.initMocks(this);
     }
 
@@ -159,12 +157,6 @@ public class ProcessCtrlTest
         List<String> command = ProcessCtrl.buildAutoDetectCommand(job, m_Logger, null);
 
         assertFalse(command.contains("--ignoreDowntime"));
-    }
-
-    @Test
-    public void test_MaxAnomalyDetectorProperty()
-    {
-        assertTrue(ProcessCtrl.MAX_ANOMALY_RECORDS_ARG.endsWith("333"));
     }
 
     @Test
