@@ -1041,17 +1041,16 @@ public class ElasticsearchJobProvider implements JobProvider
     }
 
     @Override
-    public QueryPage<ModelSnapshot> modelSnapshots(String jobId,
-            int skip, int take)
+    public QueryPage<ModelSnapshot> modelSnapshots(String jobId, int skip, int take)
     throws UnknownJobException
     {
-        return modelSnapshots(jobId, skip, take, 0, 0, null, null, null);
+        return modelSnapshots(jobId, skip, take, 0, 0, null, true, null, null);
     }
 
     @Override
     public QueryPage<ModelSnapshot> modelSnapshots(String jobId, int skip, int take,
-            long startEpochMs, long endEpochMs, String sortField, String snapshotId,
-            String description) throws UnknownJobException
+            long startEpochMs, long endEpochMs, String sortField, boolean sortDescending,
+            String snapshotId, String description) throws UnknownJobException
     {
         boolean haveId = snapshotId != null && !snapshotId.isEmpty();
         boolean haveDescription = description != null && !description.isEmpty();
@@ -1077,13 +1076,15 @@ public class ElasticsearchJobProvider implements JobProvider
 
         return modelSnapshots(new ElasticsearchJobId(jobId), skip, take,
                 (sortField == null || sortField.isEmpty()) ? ModelSnapshot.RESTORE_PRIORITY : sortField,
-                fb.timeRange(ElasticsearchMappings.ES_TIMESTAMP, startEpochMs, endEpochMs).build());
+                sortDescending, fb.timeRange(
+                        ElasticsearchMappings.ES_TIMESTAMP, startEpochMs, endEpochMs).build());
     }
 
-    private QueryPage<ModelSnapshot> modelSnapshots(ElasticsearchJobId jobId,
-            int skip, int take, String sortField, QueryBuilder fb) throws UnknownJobException
+    private QueryPage<ModelSnapshot> modelSnapshots(ElasticsearchJobId jobId, int skip, int take,
+            String sortField, boolean sortDescending, QueryBuilder fb) throws UnknownJobException
     {
-        SortBuilder sb = new FieldSortBuilder(esSortField(sortField)).order(SortOrder.DESC);
+        SortBuilder sb = new FieldSortBuilder(esSortField(sortField))
+                .order(sortDescending ? SortOrder.DESC : SortOrder.ASC);
 
         SearchResponse searchResponse;
         try
@@ -1159,7 +1160,7 @@ public class ElasticsearchJobProvider implements JobProvider
             throws UnknownJobException, NoSuchModelSnapshotException
     {
         List<ModelSnapshot> deleteCandidates = modelSnapshots(jobId, 0, 1,
-                    0, 0, null, snapshotId, null).queryResults();
+                    0, 0, null, true, snapshotId, null).queryResults();
         if (deleteCandidates == null || deleteCandidates.isEmpty())
         {
             throw new NoSuchModelSnapshotException(jobId);

@@ -29,6 +29,7 @@ package com.prelert.rs.resources;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+
 import static org.mockito.Mockito.when;
 
 import java.net.URISyntaxException;
@@ -78,7 +79,7 @@ public class ModelSnapshotsTest extends ServiceTest
         m_ExpectedException.expectMessage("Parameter 'skip' cannot be < 0");
         m_ExpectedException.expect(ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_SKIP_PARAM));
 
-        m_ModelSnapshots.modelSnapshots("foo", -1, 100, "", "", "", "");
+        m_ModelSnapshots.modelSnapshots("foo", -1, 100, "", "", "", true, "");
     }
 
     @Test
@@ -88,7 +89,7 @@ public class ModelSnapshotsTest extends ServiceTest
         m_ExpectedException.expectMessage("Parameter 'take' cannot be < 0");
         m_ExpectedException.expect(ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_TAKE_PARAM));
 
-        m_ModelSnapshots.modelSnapshots("foo", 0, -1, "", "", "", "");
+        m_ModelSnapshots.modelSnapshots("foo", 0, -1, "", "", "", true, "");
     }
 
     @Test
@@ -99,9 +100,9 @@ public class ModelSnapshotsTest extends ServiceTest
         modelSnapshot.setQuantiles(new Quantiles());
         QueryPage<ModelSnapshot> queryResult = new QueryPage<>(Arrays.asList(modelSnapshot), 1);
 
-        when(jobManager().modelSnapshots("foo", 0, 100, 0, 0, "", "")).thenReturn(queryResult);
+        when(jobManager().modelSnapshots("foo", 0, 100, 0, 0, "", true, "")).thenReturn(queryResult);
 
-        Pagination<ModelSnapshot> modelSnapshots = m_ModelSnapshots.modelSnapshots("foo", 0, 100, "", "", "", "");
+        Pagination<ModelSnapshot> modelSnapshots = m_ModelSnapshots.modelSnapshots("foo", 0, 100, "", "", "", true, "");
         assertEquals(1, modelSnapshots.getHitCount());
         assertEquals(100, modelSnapshots.getTake());
         assertEquals("123", modelSnapshots.getDocuments().get(0).getSnapshotId());
@@ -113,9 +114,9 @@ public class ModelSnapshotsTest extends ServiceTest
     {
         QueryPage<ModelSnapshot> queryResult = new QueryPage<>(Arrays.asList(new ModelSnapshot()), 300);
 
-        when(jobManager().modelSnapshots("foo", 0, 100, 0, 0, "", "")).thenReturn(queryResult);
+        when(jobManager().modelSnapshots("foo", 0, 100, 0, 0, "", true, "")).thenReturn(queryResult);
 
-        Pagination<ModelSnapshot> modelSnapshots = m_ModelSnapshots.modelSnapshots("foo", 0, 100, "", "", "", "");
+        Pagination<ModelSnapshot> modelSnapshots = m_ModelSnapshots.modelSnapshots("foo", 0, 100, "", "", "", true, "");
         assertEquals(300, modelSnapshots.getHitCount());
         assertEquals(100, modelSnapshots.getTake());
 
@@ -131,9 +132,9 @@ public class ModelSnapshotsTest extends ServiceTest
     {
         QueryPage<ModelSnapshot> queryResult = new QueryPage<>(Arrays.asList(new ModelSnapshot()), 300);
 
-        when(jobManager().modelSnapshots("foo", 0, 100, 1000, 2000, "", "")).thenReturn(queryResult);
+        when(jobManager().modelSnapshots("foo", 0, 100, 1000, 2000, "", true, "")).thenReturn(queryResult);
 
-        Pagination<ModelSnapshot> modelSnapshots = m_ModelSnapshots.modelSnapshots("foo", 0, 100, "1", "2", "", "");
+        Pagination<ModelSnapshot> modelSnapshots = m_ModelSnapshots.modelSnapshots("foo", 0, 100, "1", "2", "", true, "");
 
         assertEquals(300l, modelSnapshots.getHitCount());
         assertEquals(100l, modelSnapshots.getTake());
@@ -151,11 +152,11 @@ public class ModelSnapshotsTest extends ServiceTest
     {
         QueryPage<ModelSnapshot> queryResult = new QueryPage<>(Arrays.asList(new ModelSnapshot()), 300);
 
-        when(jobManager().modelSnapshots("foo", 0, 100, 1420113600000L, 1420117200000L, "", ""))
+        when(jobManager().modelSnapshots("foo", 0, 100, 1420113600000L, 1420117200000L, "", true, ""))
                 .thenReturn(queryResult);
 
         Pagination<ModelSnapshot> modelSnapshots = m_ModelSnapshots.modelSnapshots("foo", 0, 100,
-                "2015-01-01T12:00:00Z", "2015-01-01T13:00:00Z", "", "");
+                "2015-01-01T12:00:00Z", "2015-01-01T13:00:00Z", "", true, "");
 
         assertEquals(300l, modelSnapshots.getHitCount());
         assertEquals(100l, modelSnapshots.getTake());
@@ -174,11 +175,11 @@ public class ModelSnapshotsTest extends ServiceTest
     {
         QueryPage<ModelSnapshot> queryResult = new QueryPage<>(Arrays.asList(new ModelSnapshot()), 300);
 
-        when(jobManager().modelSnapshots("foo", 0, 100, 1420113600042L, 1420117200142L, "", ""))
+        when(jobManager().modelSnapshots("foo", 0, 100, 1420113600042L, 1420117200142L, "", true, ""))
                 .thenReturn(queryResult);
 
         Pagination<ModelSnapshot> modelSnapshots = m_ModelSnapshots.modelSnapshots("foo", 0, 100,
-                "2015-01-01T12:00:00.042Z", "2015-01-01T13:00:00.142+00:00", "", "");
+                "2015-01-01T12:00:00.042Z", "2015-01-01T13:00:00.142+00:00", "", true, "");
 
         assertEquals(300l, modelSnapshots.getHitCount());
         assertEquals(100l, modelSnapshots.getTake());
@@ -199,7 +200,7 @@ public class ModelSnapshotsTest extends ServiceTest
         m_ExpectedException.expectMessage("Query param 'start' with value 'invalid' cannot be parsed as a date or converted to a number (epoch)");
         m_ExpectedException.expect(ErrorCodeMatcher.hasErrorCode(ErrorCodes.UNPARSEABLE_DATE_ARGUMENT));
 
-        m_ModelSnapshots.modelSnapshots("foo", 0, 100, "invalid", "also invalid", "", "");
+        m_ModelSnapshots.modelSnapshots("foo", 0, 100, "invalid", "also invalid", "", true, "");
     }
 
     @Test

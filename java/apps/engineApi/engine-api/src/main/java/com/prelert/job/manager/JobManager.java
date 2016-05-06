@@ -499,11 +499,11 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
     }
 
     public QueryPage<ModelSnapshot> modelSnapshots(String jobId, int skip, int take,
-            long epochStartMs, long epochEndMs, String sortField, String description)
+            long epochStartMs, long epochEndMs, String sortField, boolean sortDescending, String description)
             throws UnknownJobException
     {
         return m_JobProvider.modelSnapshots(jobId, skip, take, epochStartMs, epochEndMs,
-                sortField, null, description);
+                sortField, sortDescending, null, description);
     }
 
     public ModelSnapshot revertToSnapshot(String jobId, long epochEndMs, String snapshotId,
@@ -521,7 +521,7 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
                     "' for time '" + epochEndMs + "'");
 
             List<ModelSnapshot> revertCandidates = m_JobProvider.modelSnapshots(jobId, 0, 1,
-                    0, epochEndMs, ModelSnapshot.TIMESTAMP, snapshotId, description).queryResults();
+                    0, epochEndMs, ModelSnapshot.TIMESTAMP, true, snapshotId, description).queryResults();
 
             if (revertCandidates == null || revertCandidates.isEmpty())
             {
@@ -559,7 +559,7 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
         try (ActionTicket actionTicket = m_ActionGuardian.tryAcquiringAction(jobId, Action.UPDATING))
         {
             List<ModelSnapshot> changeCandidates = m_JobProvider.modelSnapshots(jobId, 0, 1,
-                    0, 0, null, snapshotId, null).queryResults();
+                    0, 0, null, true, snapshotId, null).queryResults();
 
             if (changeCandidates == null || changeCandidates.isEmpty())
             {
@@ -567,7 +567,7 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
             }
 
             List<ModelSnapshot> clashCandidates = m_JobProvider.modelSnapshots(jobId, 0, 1,
-                    0, 0, null, null, newDescription).queryResults();
+                    0, 0, null, true, null, newDescription).queryResults();
 
             if (clashCandidates != null && !clashCandidates.isEmpty())
             {

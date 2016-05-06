@@ -82,6 +82,7 @@ public class ModelSnapshots extends ResourceWithJobManager
     public static final String ENDPOINT = "modelsnapshots";
 
     public static final String SORT_QUERY_PARAM = "sort";
+    public static final String DESCENDING_ORDER = "desc";
     public static final String TIME_QUERY_PARAM = "time";
     public static final String DELETE_INTERVENING_RESULTS_PARAM = "deleteInterveningResults";
 
@@ -111,13 +112,14 @@ public class ModelSnapshots extends ResourceWithJobManager
             @DefaultValue("") @QueryParam(START_QUERY_PARAM) String start,
             @DefaultValue("") @QueryParam(END_QUERY_PARAM) String end,
             @DefaultValue("") @QueryParam(SORT_QUERY_PARAM) String sortField,
+            @DefaultValue("true") @QueryParam(DESCENDING_ORDER) boolean descending,
             @DefaultValue("") @QueryParam(ModelSnapshot.DESCRIPTION) String description)
     throws UnknownJobException
     {
         LOGGER.debug(String.format("Get model snapshots for job %s. skip = %d, take = %d"
-                + " start = '%s', end='%s', sort=%s, description filter=%s",
+                + " start = '%s', end='%s', sort=%s descending=%b, description filter=%s",
                 jobId, skip, take, start, end,
-                sortField, description));
+                sortField, descending, description));
 
         new PaginationParamsValidator(skip, take).validate();
 
@@ -128,7 +130,7 @@ public class ModelSnapshots extends ResourceWithJobManager
         QueryPage<ModelSnapshot> page;
 
         page = manager.modelSnapshots(jobId, skip, take, epochStart, epochEnd,
-                sortField, description);
+                sortField, descending, description);
 
         Pagination<ModelSnapshot> modelSnapshots = paginationFromQueryPage(page, skip, take);
 

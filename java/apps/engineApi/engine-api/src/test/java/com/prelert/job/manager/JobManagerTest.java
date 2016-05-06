@@ -1401,7 +1401,7 @@ public class JobManagerTest
         modelSnapshot.setRestorePriority(1);
 
         QueryPage<ModelSnapshot> modelSnapshotPage = new QueryPage<>(Arrays.asList(modelSnapshot), 1);
-        when(m_JobProvider.modelSnapshots("foo", 0, 1, 0, 0, ModelSnapshot.TIMESTAMP, "", "my description")).thenReturn(modelSnapshotPage);
+        when(m_JobProvider.modelSnapshots("foo", 0, 1, 0, 0, ModelSnapshot.TIMESTAMP, true, "", "my description")).thenReturn(modelSnapshotPage);
         Logger jobLogger = mock(Logger.class);
         when(m_JobLoggerFactory.newLogger("foo")).thenReturn(jobLogger);
         ModelSnapshot revertedModelSnapshot = jobManager.revertToSnapshot("foo", 0, "", "my description", false);
@@ -1425,7 +1425,7 @@ public class JobManagerTest
         modelSnapshot.setRestorePriority(1);
 
         QueryPage<ModelSnapshot> modelSnapshotPage = new QueryPage<>(null, 0);
-        when(m_JobProvider.modelSnapshots("foo", 0, 1, 0, 0, ModelSnapshot.TIMESTAMP, "", "my description")).thenReturn(modelSnapshotPage);
+        when(m_JobProvider.modelSnapshots("foo", 0, 1, 0, 0, ModelSnapshot.TIMESTAMP, true, "", "my description")).thenReturn(modelSnapshotPage);
         Logger jobLogger = mock(Logger.class);
         when(m_JobLoggerFactory.newLogger("foo")).thenReturn(jobLogger);
         try
@@ -1532,8 +1532,8 @@ public class JobManagerTest
 
         QueryPage<ModelSnapshot> oldModelSnapshotPage = new QueryPage<>(Arrays.asList(oldModelSnapshot), 1);
         QueryPage<ModelSnapshot> clashingModelSnapshotPage = new QueryPage<>(null, 0);
-        when(m_JobProvider.modelSnapshots("foo", 0, 1, 0, 0, null, "123", null)).thenReturn(oldModelSnapshotPage);
-        when(m_JobProvider.modelSnapshots("foo", 0, 1, 0, 0, null, null, "new description")).thenReturn(clashingModelSnapshotPage);
+        when(m_JobProvider.modelSnapshots("foo", 0, 1, 0, 0, null, true, "123", null)).thenReturn(oldModelSnapshotPage);
+        when(m_JobProvider.modelSnapshots("foo", 0, 1, 0, 0, null, true, null, "new description")).thenReturn(clashingModelSnapshotPage);
 
         ModelSnapshot updatedModelSnapshot = jobManager.updateModelSnapshotDescription("foo", "123", "new description");
         assertNotNull(updatedModelSnapshot);
@@ -1548,7 +1548,7 @@ public class JobManagerTest
         JobManager jobManager = createJobManager();
 
         QueryPage<ModelSnapshot> oldModelSnapshotPage = new QueryPage<>(null, 0);
-        when(m_JobProvider.modelSnapshots("foo", 0, 1, 0, 0, null, "123", null)).thenReturn(oldModelSnapshotPage);
+        when(m_JobProvider.modelSnapshots("foo", 0, 1, 0, 0, null, true, "123", null)).thenReturn(oldModelSnapshotPage);
 
         m_ExpectedException.expect(NoSuchModelSnapshotException.class);
         m_ExpectedException.expectMessage("No matching model snapshot exists for job 'foo'");
@@ -1571,8 +1571,8 @@ public class JobManagerTest
 
         QueryPage<ModelSnapshot> oldModelSnapshotPage = new QueryPage<>(Arrays.asList(oldModelSnapshot), 1);
         QueryPage<ModelSnapshot> clashingModelSnapshotPage = new QueryPage<>(Arrays.asList(clashingModelSnapshot), 1);
-        when(m_JobProvider.modelSnapshots("foo", 0, 1, 0, 0, null, "123", null)).thenReturn(oldModelSnapshotPage);
-        when(m_JobProvider.modelSnapshots("foo", 0, 1, 0, 0, null, null, "new description")).thenReturn(clashingModelSnapshotPage);
+        when(m_JobProvider.modelSnapshots("foo", 0, 1, 0, 0, null, true, "123", null)).thenReturn(oldModelSnapshotPage);
+        when(m_JobProvider.modelSnapshots("foo", 0, 1, 0, 0, null, true, null, "new description")).thenReturn(clashingModelSnapshotPage);
 
         m_ExpectedException.expect(DescriptionAlreadyUsedException.class);
         m_ExpectedException.expectMessage("Model snapshot description 'new description' has already been used for job 'foo'");
