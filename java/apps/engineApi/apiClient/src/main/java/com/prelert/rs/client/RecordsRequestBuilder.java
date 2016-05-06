@@ -125,7 +125,7 @@ public class RecordsRequestBuilder extends BaseJobRequestBuilder<AnomalyRecord>
      */
     public RecordsRequestBuilder start(String value) throws UnsupportedEncodingException
     {
-        m_Params.put(START_QUERY_PARAM, URLEncoder.encode(value, "UTF-8"));
+        m_Params.put(START_QUERY_PARAM, URLEncoder.encode(value, UTF8));
         return this;
     }
 
@@ -152,7 +152,7 @@ public class RecordsRequestBuilder extends BaseJobRequestBuilder<AnomalyRecord>
      */
     public RecordsRequestBuilder end(String value) throws UnsupportedEncodingException
     {
-        m_Params.put(END_QUERY_PARAM, URLEncoder.encode(value, "UTF-8"));
+        m_Params.put(END_QUERY_PARAM, URLEncoder.encode(value, UTF8));
         return this;
     }
 
