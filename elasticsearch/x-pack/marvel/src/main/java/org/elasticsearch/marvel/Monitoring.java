@@ -54,11 +54,13 @@ public class Monitoring {
     private final Settings settings;
     private final boolean enabled;
     private final boolean transportClientMode;
+    private final boolean tribeNode;
 
     public Monitoring(Settings settings) {
         this.settings = settings;
         this.enabled = MonitoringSettings.ENABLED.get(settings);
         this.transportClientMode = XPackPlugin.transportClientMode(settings);
+        this.tribeNode = XPackPlugin.isTribeNode(settings);
     }
 
     boolean isEnabled() {
@@ -72,7 +74,7 @@ public class Monitoring {
     public Collection<Module> nodeModules() {
         List<Module> modules = new ArrayList<>();
         modules.add(new MonitoringModule(enabled, transportClientMode));
-        if (enabled && transportClientMode == false) {
+        if (enabled && transportClientMode == false && tribeNode == false) {
             modules.add(new CollectorModule());
             modules.add(new ExporterModule(settings));
             modules.add(new MonitoringClientModule());
@@ -81,7 +83,7 @@ public class Monitoring {
     }
 
     public Collection<Class<? extends LifecycleComponent>> nodeServices() {
-        if (enabled == false || transportClientMode) {
+        if (enabled == false || transportClientMode || tribeNode) {
             return Collections.emptyList();
         }
         return Arrays.<Class<? extends LifecycleComponent>>asList(MonitoringLicensee.class,
@@ -94,19 +96,19 @@ public class Monitoring {
     }
 
     public void onModule(ActionModule module) {
-        if (enabled) {
+        if (enabled && tribeNode == false) {
             module.registerAction(MonitoringBulkAction.INSTANCE, TransportMonitoringBulkAction.class);
         }
     }
 
     public void onModule(NetworkModule module) {
-        if (enabled && transportClientMode == false) {
+        if (enabled && transportClientMode == false && tribeNode == false) {
             module.registerRestHandler(RestMonitoringBulkAction.class);
         }
     }
 
     public void onModule(LazyInitializationModule module) {
-        if (enabled) {
+        if (enabled && tribeNode == false) {
             module.registerLazyInitializable(MonitoringClientProxy.class);
         }
     }
