@@ -110,6 +110,19 @@ public final class PrelertSettings
      */
     public static final String ENGINE_CONFIG_FILE = "engine_api.yml";
 
+    /**
+     * Mappers for String values to be converted into the key {@code clazz}
+     * Supports:
+     * <ul>
+     * <li>Integer
+     * <li>Long
+     * <li>Float
+     * <li>Double
+     * <li>Boolean
+     * </ul>
+     */
+    private static final Map<Class<?>, Function<String, Object>> MAPPERS;
+
     private static volatile boolean ms_LoadedFile;
     private static Map<Object, Object> ms_FileSettings;
 
@@ -120,6 +133,13 @@ public final class PrelertSettings
         ENVIRONMENT_SETTINGS = new HashMap<>();
         ENVIRONMENT_SETTINGS.put(PRELERT_HOME_PROPERTY, PRELERT_HOME_ENV);
         ENVIRONMENT_SETTINGS.put(PRELERT_LOGS_PROPERTY, PRELERT_LOGS_ENV);
+
+        MAPPERS = new HashMap<>();
+        MAPPERS.put(Integer.class, s -> Integer.valueOf(s));
+        MAPPERS.put(Long.class, s -> Long.valueOf(s));
+        MAPPERS.put(Float.class, s -> Float.valueOf(s));
+        MAPPERS.put(Double.class, s -> Double.valueOf(s));
+        MAPPERS.put(Boolean.class, s -> Boolean.valueOf(s));
     }
 
     private PrelertSettings()
@@ -154,7 +174,7 @@ public final class PrelertSettings
         @SuppressWarnings("unchecked")
         Class<T> resultType = (Class<T>) defaultValue.getClass();
 
-        Object setting = getSetting(settingName, createMapperForClass(resultType));
+        Object setting = getSetting(settingName, MAPPERS.getOrDefault(resultType, s -> s));
         if (setting != null && resultType.isInstance(setting))
         {
             return resultType.cast(setting);
@@ -166,45 +186,6 @@ public final class PrelertSettings
                     + defaultValue + " is going to be used instead.");
         }
         return defaultValue;
-    }
-
-    /**
-     * Picks an appropriate mapper for String values to be converted into the target {@code clazz}
-     * Supports:
-     * <ul>
-     * <li>Integer
-     * <li>Long
-     * <li>Float
-     * <li>Double
-     * </ul>
-     *
-     * @param clazz The target class
-     * @return A mapper that converts a String into the target {@code clazz} if possible or an
-     * identity otherwise
-     */
-    private static Function<String, Object> createMapperForClass(Class<?> clazz)
-    {
-        if (clazz.equals(Integer.class))
-        {
-            return s -> Integer.valueOf(s);
-        }
-        else if (clazz.equals(Long.class))
-        {
-            return s-> Long.valueOf(s);
-        }
-        else if (clazz.equals(Float.class))
-        {
-            return s-> Float.valueOf(s);
-        }
-        else if (clazz.equals(Double.class))
-        {
-            return s->Double.valueOf(s);
-        }
-        else if (clazz.equals(Boolean.class))
-        {
-            return s->Boolean.valueOf(s);
-        }
-        return obj -> obj;
     }
 
     /**
