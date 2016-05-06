@@ -243,7 +243,7 @@ public class Jobs extends ResourceWithJobManager
     @Produces(MediaType.APPLICATION_JSON)
     public Response deleteJob(@PathParam("jobId") String jobId) throws UnknownJobException,
             NativeProcessRunException, JobInUseException, DataStoreException,
-            CannotStopSchedulerException
+            CannotStopSchedulerException, JobException
     {
         LOGGER.debug("Delete job '" + jobId + "'");
 

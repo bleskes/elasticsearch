@@ -48,7 +48,7 @@ import static org.junit.Assert.*;
 
 import org.junit.Test;
 
-import com.prelert.job.UnknownJobException;
+import com.prelert.job.JobException;
 
 
 /**
@@ -82,7 +82,7 @@ public class ZipLogsTest
 
 	@Test
 	public void testZip()
-	throws IOException, UnknownJobException
+	throws IOException, JobException
 	{
 	    // Create the log files in a temp directory
 	    Path tempDir = Files.createTempDirectory(null);

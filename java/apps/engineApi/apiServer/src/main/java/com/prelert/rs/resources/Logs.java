@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -41,8 +41,10 @@ import javax.ws.rs.core.Response;
 
 import org.apache.log4j.Logger;
 
-import com.prelert.job.UnknownJobException;
+import com.prelert.job.JobException;
+import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.logs.JobLogs;
+import com.prelert.job.messages.Messages;
 
 
 /**
@@ -74,14 +76,15 @@ public class Logs extends ResourceWithJobManager
      *
      * @param jobId
      * @return
-     * @throws UnknownJobException
+     * @throws JobException
      */
     @GET
     @Path("/{jobId}/")
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
     public Response jobLogFiles(@PathParam("jobId") String jobId)
-    throws UnknownJobException
+    throws JobException
     {
+        checkValidFilePath(jobId);
         return zipJobLogFiles(jobId);
     }
 
@@ -92,14 +95,15 @@ public class Logs extends ResourceWithJobManager
      *
      * @param jobId
      * @return
-     * @throws UnknownJobException
+     * @throws JobException
      */
     @GET
     @Path("/{jobId}/zip")
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
     public Response zipLogFiles(@PathParam("jobId") String jobId)
-    throws UnknownJobException
+    throws JobException
     {
+        checkValidFilePath(jobId);
         return zipJobLogFiles(jobId);
     }
 
@@ -107,10 +111,10 @@ public class Logs extends ResourceWithJobManager
      * Return a response with a file attachment of the zipped log files.
      * @param jobId
      * @return
-     * @throws UnknownJobException
+     * @throws JobException
      */
     private Response zipJobLogFiles(String jobId)
-    throws UnknownJobException
+    throws JobException
     {
         LOGGER.debug("Get zipped logs for job '" + jobId + "'");
 
@@ -130,17 +134,18 @@ public class Logs extends ResourceWithJobManager
      * @param jobId
      * @param lines Number of lines to tail
      * @return
-     * @throws UnknownJobException
+     * @throws JobException
      */
     @GET
     @Path("/{jobId}/tail")
     @Produces(MediaType.TEXT_PLAIN)
     public String tailDefaultLogFile(@PathParam("jobId") String jobId,
             @DefaultValue("10") @QueryParam("lines") int lines)
-    throws UnknownJobException
+    throws JobException
     {
         LOGGER.debug("Tail default log for job '" + jobId + "'");
 
+        checkValidFilePath(jobId);
         JobLogs logs = new JobLogs();
         return logs.tail(jobId, lines);
     }
@@ -151,7 +156,7 @@ public class Logs extends ResourceWithJobManager
      * @param jobId
      * @param lines Number of lines to tail
      * @return
-     * @throws UnknownJobException
+     * @throws JobException
      * @throws IOException
      */
     @GET
@@ -159,11 +164,12 @@ public class Logs extends ResourceWithJobManager
     @Produces(MediaType.TEXT_PLAIN)
     public String getLogFile(@PathParam("jobId") String jobId,
             @PathParam("filename") String filename)
-    throws UnknownJobException
+    throws JobException
     {
-        LOGGER.debug(String.format("Get the log file %s for job %s",
-                filename, jobId));
+        LOGGER.debug(String.format("Get the log file %s for job %s", filename, jobId));
 
+        checkValidFilePath(jobId);
+        checkValidFilePath(filename);
         JobLogs logs = new JobLogs();
         return logs.file(jobId, filename);
     }
@@ -175,7 +181,7 @@ public class Logs extends ResourceWithJobManager
      * @param jobId
      * @param lines Number of lines to tail
      * @return
-     * @throws UnknownJobException
+     * @throws JobException
      */
     @GET
     @Path("/{jobId}/{filename}/tail")
@@ -183,14 +189,33 @@ public class Logs extends ResourceWithJobManager
     public String tailLogFile(@PathParam("jobId") String jobId,
             @PathParam("filename") String filename,
             @DefaultValue("10") @QueryParam("lines") int lines)
-    throws UnknownJobException
+    throws JobException
     {
         lines = Math.min(lines, MAX_TAIL_LINES);
         LOGGER.debug(String.format("Tail %d lines from log file %s for job %s",
                         lines, filename, jobId));
 
+        checkValidFilePath(jobId);
+        checkValidFilePath(filename);
         JobLogs logs = new JobLogs();
         return logs.tail(jobId, filename, lines);
+    }
+
+
+    /**
+     * Path to log files cannot contain '/' or '\' which could
+     * potentially be used to escape the logs directory
+     */
+    private void checkValidFilePath(String path)
+    throws JobException
+    {
+        if (path.contains("\\") || path.contains("/"))
+        {
+            String msg = Messages.getMessage(Messages.LOGFILE_INVALID_CHARS_IN_PATH, path);
+            LOGGER.warn(msg);
+            throw new JobException(msg, ErrorCodes.INVALID_LOG_FILE_PATH);
+        }
+
     }
 
 }

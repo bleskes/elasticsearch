@@ -30,23 +30,25 @@ import junit.framework.Assert;
 
 import org.junit.Test;
 
-public class DeleteLogsTest 
+import com.prelert.job.JobException;
+
+public class DeleteLogsTest
 {
 	/**
-	 * Tests that the if the don't delete log files system property is 
+	 * Tests that the if the don't delete log files system property is
 	 * set then the logs aren't deleted.
 	 */
 	@Test
-	public void dontDeleteTest()
+	public void dontDeleteTest() throws JobException
 	{
 		System.setProperty(JobLogs.DONT_DELETE_LOGS_PROP, "true");
 		JobLogs jobLogs = new JobLogs();
 		Assert.assertTrue(jobLogs.deleteLogs("somedir", "somejob"));
-		
+
 		System.setProperty(JobLogs.DONT_DELETE_LOGS_PROP, "1");
 		jobLogs = new JobLogs();
 		Assert.assertTrue(jobLogs.deleteLogs("somedir", "somejob"));
-		
+
 		System.clearProperty(JobLogs.DONT_DELETE_LOGS_PROP);
 		jobLogs = new JobLogs();
 		Assert.assertFalse(jobLogs.deleteLogs("somedir", "somejob"));

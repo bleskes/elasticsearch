@@ -43,8 +43,11 @@ public final class Messages
     public static final String LICENSE_LIMIT_JOBS_REACTIVATE = "license.limit.jobs.reactivate";
     public static final String LICENSE_LIMIT_PARTITIONS = "license.limit.partitions";
 
+    public static final String LOGFILE_INVALID_CHARS_IN_PATH = "logfile.invalid.chars.path";
+    public static final String LOGFILE_INVALID_PATH = "logfile.invalid.path";
     public static final String LOGFILE_MISSING = "logfile.missing";
     public static final String LOGFILE_MISSING_DIRECTORY = "logfile.missing.directory";
+
 
     public static final String JOB_AUDIT_CREATED = "job.audit.created";
     public static final String JOB_AUDIT_DELETED = "job.audit.deleted";

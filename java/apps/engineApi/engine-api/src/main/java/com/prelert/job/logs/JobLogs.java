@@ -44,6 +44,7 @@ import java.util.zip.ZipOutputStream;
 
 import org.apache.log4j.Logger;
 
+import com.prelert.job.JobException;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.messages.Messages;
@@ -94,9 +95,9 @@ public class JobLogs
      * @param jobId
      * @param filename
      * @return
-     * @throws UnknownJobException
+     * @throws JobException
      */
-    public String file(String jobId, String filename) throws UnknownJobException
+    public String file(String jobId, String filename) throws JobException
     {
         Path logFilePath = fullJobLogFilePath(ProcessCtrl.LOG_DIR, jobId, filename);
         try
@@ -139,14 +140,14 @@ public class JobLogs
      * @param jobId
      * @param filename
      * @return
-     * @throws UnknownJobException
+     * @throws JobException
      */
-    Path fullJobLogFilePath(String baseDir, String jobId, String filename) throws UnknownJobException
+    Path fullJobLogFilePath(String baseDir, String jobId, String filename) throws JobException
     {
         for (String fileExtension : new String [] {LOG_FILE_EXTENSION, ""})
         {
-            Path filePath = FileSystems.getDefault().getPath(baseDir, jobId,
-                                filename + fileExtension);
+            Path filePath = sanitizePath(FileSystems.getDefault().getPath(baseDir, jobId,
+                                            filename + fileExtension), baseDir);
             File f = filePath.toFile();
             if (f.exists() && !f.isDirectory())
             {
@@ -158,6 +159,33 @@ public class JobLogs
         String msg = Messages.getMessage(Messages.LOGFILE_MISSING, file);
         LOGGER.warn(msg);
         throw new UnknownJobException(jobId, msg, ErrorCodes.MISSING_LOG_FILE);
+    }
+
+    /**
+     * Normalize a file path resolving .. and . directories
+     * and check the resulting path is below the {@linkplain ProcessCtrl#LOG_DIR}
+     * directory.
+     *
+     * Throws an exception if the path is outside the logs directory
+     * e.g. logs/../lic/license resolves to lic/license and would throw
+     *
+     * @param filePath
+     * @param rootDir
+     * @return
+     * @throws JobException
+     */
+    public Path sanitizePath(Path filePath, String rootDir) throws JobException
+    {
+        Path normalizedPath = filePath.normalize();
+        Path rootPath = FileSystems.getDefault().getPath(rootDir).normalize();
+        if (normalizedPath.startsWith(rootPath) == false)
+        {
+            String msg = Messages.getMessage(Messages.LOGFILE_INVALID_PATH, filePath);
+            LOGGER.warn(msg);
+            throw new JobException(msg, ErrorCodes.INVALID_LOG_FILE_PATH);
+        }
+
+        return normalizedPath;
     }
 
 
@@ -172,7 +200,7 @@ public class JobLogs
      * @see {@link #tail(File, String, int, int)}
      */
     public String tail(String jobId, int nLines)
-    throws UnknownJobException
+    throws UnknownJobException, JobException
     {
         return tail(jobId, DEFAULT_LOG_FILE, nLines);
     }
@@ -188,7 +216,7 @@ public class JobLogs
      * @see {@link #tail(File, String, int, int)}
      */
     public String tail(String jobId, String filename, int nLines)
-    throws UnknownJobException
+    throws UnknownJobException, JobException
     {
         Path logFilePath = fullJobLogFilePath(ProcessCtrl.LOG_DIR, jobId, filename);
 
@@ -216,7 +244,7 @@ public class JobLogs
      * @return
      * @throws UnknownJobException If jobId is not recognised
      */
-    public String tail(File file, String jobId, int nLines, int expectedLineSize)
+    String tail(File file, String jobId, int nLines, int expectedLineSize)
     throws UnknownJobException
     {
         StringBuilder builder = new StringBuilder();
@@ -344,10 +372,13 @@ public class JobLogs
      * @see {@linkplain #zippedLogFiles(File, String)}
      */
     public byte[] zippedLogFiles(String jobId)
-    throws UnknownJobException
+    throws JobException
     {
-        File logDir = new File(ProcessCtrl.LOG_DIR, jobId);
-        return zippedLogFiles(logDir, jobId);
+        Path filePath = sanitizePath(
+                            FileSystems.getDefault().getPath(ProcessCtrl.LOG_DIR, jobId),
+                            jobId);
+
+        return zippedLogFiles(filePath.toFile(), jobId);
     }
 
 
@@ -355,13 +386,16 @@ public class JobLogs
      * Zips the contents of <code>logDirectory</code> and
      * return as a byte array.
      *
+     * Does not check that logDirectory is a sub directory of ProcessCtrl.LOG_DIR
+     *
+     *
      * @param logDirectory The directory containing the log files
-     * @param root The zip file contents will be in a directory with this name
+     * @param zipRoot The zip file contents will be in a directory with this name
      * @return
-     * @throws UnknownJobException
+     * @throws JobException
      */
-    public byte[] zippedLogFiles(File logDirectory, String root)
-    throws UnknownJobException
+    public byte[] zippedLogFiles(File logDirectory, String zipRoot)
+    throws JobException
     {
         File[] listOfFiles = logDirectory.listFiles();
 
@@ -369,7 +403,7 @@ public class JobLogs
         {
             String msg = Messages.getMessage(Messages.LOGFILE_MISSING_DIRECTORY, logDirectory);
             LOGGER.error(msg);
-            throw new UnknownJobException(root, msg, ErrorCodes.CANNOT_OPEN_DIRECTORY);
+            throw new UnknownJobException(zipRoot, msg, ErrorCodes.CANNOT_OPEN_DIRECTORY);
         }
 
         ByteArrayOutputStream byteos = new ByteArrayOutputStream();
@@ -378,10 +412,10 @@ public class JobLogs
             byte [] buffer = new byte[65536];
 
             // add a directory
-            zos.putNextEntry(new ZipEntry(root + "/"));
+            zos.putNextEntry(new ZipEntry(zipRoot + "/"));
 
 
-            addFiles(root, listOfFiles, zos, buffer);
+            addFiles(zipRoot, listOfFiles, zos, buffer);
 
             zos.finish();
 
@@ -439,8 +473,9 @@ public class JobLogs
      *
      * @param jobId
      * @return true if success.
+     * @throws JobException If the file path is invalid i.e. jobId = ../../etc
      */
-    public boolean deleteLogs(String jobId)
+    public boolean deleteLogs(String jobId) throws JobException
     {
         return deleteLogs(ProcessCtrl.LOG_DIR, jobId);
     }
@@ -451,16 +486,18 @@ public class JobLogs
      * @param logDir The base directory of the log files
      * @param jobId
      * @return
+     * @throws JobException If the file path is invalid i.e. jobId = ../../etc
      */
-    public boolean deleteLogs(String logDir, String jobId)
+    public boolean deleteLogs(String logDir, String jobId) throws JobException
     {
         if (m_DontDelete)
         {
             return true;
         }
 
+        Path logPath = sanitizePath(FileSystems.getDefault().getPath(logDir, jobId), logDir);
+
         LOGGER.info(String.format("Deleting log files %s/%s", logDir, jobId));
-        Path logPath = FileSystems.getDefault().getPath(logDir, jobId);
 
         try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(logPath))
         {

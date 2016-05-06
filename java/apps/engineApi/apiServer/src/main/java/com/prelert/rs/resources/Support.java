@@ -41,6 +41,7 @@ import javax.ws.rs.core.Response;
 
 import org.apache.log4j.Logger;
 
+import com.prelert.job.JobException;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.logs.JobLogs;
@@ -68,7 +69,7 @@ public class Support
     @GET
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
     public Response supportBundle()
-    throws UnknownJobException
+    throws JobException
     {
         LOGGER.info("Support Bundle request");
 
@@ -113,7 +114,7 @@ public class Support
         }
     }
 
-    private byte[] zippedLogFiles() throws UnknownJobException
+    private byte[] zippedLogFiles() throws JobException
     {
         JobLogs logs = new JobLogs();
         return logs.zippedLogFiles(new File(ProcessCtrl.LOG_DIR), "prelert_support_bundle" );

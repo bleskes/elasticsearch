@@ -30,17 +30,21 @@ import static org.junit.Assert.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
 import org.junit.Test;
 
+import com.prelert.job.JobException;
 import com.prelert.job.UnknownJobException;
+import com.prelert.job.errorcodes.ErrorCodes;
+import com.prelert.job.messages.Messages;
 
 public class JobLogsTest {
 
     @Test
-    public void testFullJobLogFilePath() throws IOException, UnknownJobException
+    public void testFullJobLogFilePath() throws IOException, JobException
     {
         Path tempDir = Files.createTempDirectory(null);
 
@@ -85,6 +89,101 @@ public class JobLogsTest {
         // clean up
         logFileWithLogExtension.delete();
         logFileWithOutExtension.delete();
+    }
+
+    @Test
+    public void testOperationsNotAllowedWithInvalidPath()
+            throws UnknownJobException, JobException, IOException
+    {
+        Path pathOutsideLogsDir = FileSystems.getDefault().getPath("..", "..", "..", "etc");
+
+
+        // tail
+        try
+        {
+            JobLogs jobLogs = new JobLogs();
+            jobLogs.tail(pathOutsideLogsDir.toString(), 20);
+            fail();
+        }
+        catch (JobException e)
+        {
+            assertEquals(ErrorCodes.INVALID_LOG_FILE_PATH, e.getErrorCode());
+        }
+
+        // full file
+        try
+        {
+            JobLogs jobLogs = new JobLogs();
+            jobLogs.file("engine_api", pathOutsideLogsDir.toString());
+            fail();
+        }
+        catch (JobException e)
+        {
+            assertEquals(ErrorCodes.INVALID_LOG_FILE_PATH, e.getErrorCode());
+        }
+
+        // zip
+        try
+        {
+            JobLogs jobLogs = new JobLogs();
+            jobLogs.zippedLogFiles(pathOutsideLogsDir.toString());
+            fail();
+        }
+        catch (JobException e)
+        {
+            assertEquals(ErrorCodes.INVALID_LOG_FILE_PATH, e.getErrorCode());
+        }
+
+        // delete
+        try
+        {
+            JobLogs jobLogs = new JobLogs();
+            jobLogs.deleteLogs(pathOutsideLogsDir.toString());
+            fail();
+        }
+        catch (JobException e)
+        {
+            assertEquals(ErrorCodes.INVALID_LOG_FILE_PATH, e.getErrorCode());
+        }
+
+    }
+
+    @Test
+    public void testSanitizePath_GivenInvalid()
+    {
+        Path filePath = FileSystems.getDefault().getPath("/opt", "prelert", "../../etc");
+        try
+        {
+            Path rootDir = FileSystems.getDefault().getPath("/opt", "prelert");
+            new JobLogs().sanitizePath(filePath, rootDir.toString());
+            fail();
+        }
+        catch (JobException e)
+        {
+            assertEquals(ErrorCodes.INVALID_LOG_FILE_PATH, e.getErrorCode());
+            assertEquals(
+                    Messages.getMessage(Messages.LOGFILE_INVALID_PATH, filePath),
+                    e.getMessage());
+        }
+    }
+
+    @Test
+    public void testSanitizePath() throws JobException
+    {
+        Path filePath = FileSystems.getDefault().getPath("/opt", "prelert", "logs", "logfile.log");
+        Path rootDir = FileSystems.getDefault().getPath("/opt", "prelert", "logs");
+        Path normalized = new JobLogs().sanitizePath(filePath, rootDir.toString());
+        assertEquals(filePath, normalized);
+
+        Path filePathStartingDot = FileSystems.getDefault().getPath("./logs", "farequote", "logfile.log");
+        normalized = new JobLogs().sanitizePath(filePathStartingDot, "./logs");
+        assertEquals(filePathStartingDot.normalize(), normalized);
+
+        Path filePathWithDotDot = FileSystems.getDefault().getPath("/opt", "prelert", "logs", "../logs/logfile.log");
+        rootDir = FileSystems.getDefault().getPath("/opt", "prelert", "logs");
+        normalized = new JobLogs().sanitizePath(filePathWithDotDot, rootDir.toString());
+
+        assertEquals(filePath, normalized);
     }
 
 }
