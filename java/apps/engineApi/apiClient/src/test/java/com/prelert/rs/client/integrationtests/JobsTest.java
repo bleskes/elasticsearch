@@ -61,6 +61,7 @@ import com.prelert.job.JobStatus;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.results.AnomalyRecord;
 import com.prelert.job.results.Bucket;
+import com.prelert.job.transform.TransformConfig;
 import com.prelert.rs.client.EngineApiClient;
 import com.prelert.rs.data.ApiError;
 import com.prelert.rs.data.MultiDataPostResult;
@@ -1631,6 +1632,114 @@ public class JobsTest implements Closeable
         }
     }
 
+    public void testValidateEndpoints() throws IOException
+    {
+        // Test detector validation endpoint
+        {
+            Detector d = new Detector();
+            d.setDetectorDescription("metric(responsetime) by airline");
+            d.setFunction("metric");
+            d.setFieldName("responsetime");
+            d.setByFieldName("airline");
+            AnalysisConfig ac = new AnalysisConfig();
+            ac.setBucketSpan(3600L);
+            ac.setOverlappingBuckets(false);
+            ac.setDetectors(Arrays.asList(d));
+
+            DataDescription dd = new DataDescription();
+            dd.setFieldDelimiter(',');
+            dd.setTimeField("_time");
+            test(m_WebServiceClient.validateDetector(d));
+        }
+        {
+            String d = "{ \"a load of unpalatable\": \"rubbish\" }";
+            test(!m_WebServiceClient.validateDetector(d));
+            test(m_WebServiceClient.getLastError() != null);
+        }
+
+        // Test transform validation endpoint
+        {
+            TransformConfig t = new TransformConfig();
+            test(!m_WebServiceClient.validateTransform(t));
+            test(m_WebServiceClient.getLastError() != null);
+            t.setInputs(Arrays.asList("buffy", "duffy"));
+            t.setOutputs(Arrays.asList("humpty"));
+            test(!m_WebServiceClient.validateTransform(t));
+            t.setTransform("concat");
+            test(m_WebServiceClient.validateTransform(t));
+            test(m_WebServiceClient.getLastError() == null);
+            t.setOutputs(Arrays.asList("humpty", "dumpty"));
+            test(!m_WebServiceClient.validateTransform(t));
+
+            String s = "{\"transform\":\"split\"," +
+                        "\"arguments\":\":\"," +
+                        "\"inputs\":\"host_port\"," +
+                        "\"outputs\":[\"host\",\"port\"] }";
+            test(m_WebServiceClient.validateTransform(s));
+            test(m_WebServiceClient.getLastError() == null);
+            s = "{\"transform\":\"split\"," +
+                    "\"arguments\":\":\"," +
+                    "\"inputs\":[\"host_port\", \"ghost_port\"]," +
+                    "\"outputs\":[\"host\",\"port\"] }";
+            test(!m_WebServiceClient.validateTransform(s));
+            test(m_WebServiceClient.getLastError() != null);
+        }
+
+        // Test transforms validation endpoint
+        {
+            TransformConfig[] ts = new TransformConfig[2];
+            TransformConfig t = new TransformConfig();
+            ts[0] = t;
+            ts[1] = t;
+            test(!m_WebServiceClient.validateTransforms(ts));
+            test(m_WebServiceClient.getLastError() != null);
+            t.setInputs(Arrays.asList("buffy", "duffy"));
+            t.setOutputs(Arrays.asList("humpty"));
+            t.setTransform("concat");
+            ts[0] = t;
+            TransformConfig u = new TransformConfig();
+            u.setInputs(Arrays.asList("sarah", "michelle"));
+            u.setOutputs(Arrays.asList("gellar"));
+            u.setTransform("concat");
+            ts[1] = u;
+            test(m_WebServiceClient.validateTransforms(ts));
+            test(m_WebServiceClient.getLastError() == null);
+
+            String s = "[" +
+                            "{" +
+                              "\"transform\":\"concat\"," +
+                              "\"inputs\":[\"date\", \"time\"]," +
+                              "\"outputs\":\"datetime\"" +
+                            "}," +
+                            "{" +
+                              "\"transform\":\"split\"," +
+                              "\"arguments\":\":\"," +
+                              "\"inputs\":\"host_port\"," +
+                              "\"outputs\":[\"host\",\"port\"]" +
+                            "}" +
+                          "]";
+
+            test(m_WebServiceClient.validateTransforms(s));
+            test(m_WebServiceClient.getLastError() == null);
+            s = "[" +
+                    "{" +
+                      "\"transform\":\"concat\"," +
+                      "\"inputs\":[\"date\", \"time\"]," +
+                      "\"outputs\":\"datetime\"" +
+                    "}," +
+                    "{" +
+                      "\"transform\":\"split\"," +
+                      "\"arguments\":\":\"," +
+                      "\"inputs\":\"host_port\"," +
+                      "\"outputs\":[\"host\", \"host\"]" +
+                    "}" +
+                  "]";
+
+            test(!m_WebServiceClient.validateTransforms(s));
+            test(m_WebServiceClient.getLastError() != null);
+        }
+    }
+
 
     /**
      * Throws an exception if <code>condition</code> is false.
@@ -1683,8 +1792,10 @@ public class JobsTest implements Closeable
 
         try (JobsTest test = new JobsTest(baseUrl))
         {
+
             // Self-complete tests first
             test.testUpdateDetectorDescription();
+            test.testValidateEndpoints();
 
             // Then the rest
 

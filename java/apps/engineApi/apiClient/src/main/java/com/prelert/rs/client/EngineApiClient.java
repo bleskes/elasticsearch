@@ -255,10 +255,10 @@ public class EngineApiClient implements Closeable
      * string
      *
      * @param detector the detector to validate
-     * @return FIXME
+     * @return boolean successful validation
      * @throws IOException If HTTP POST fails
      */
-    public String validateDetector(Detector detector) throws IOException
+    public boolean validateDetector(Detector detector) throws IOException
     {
         String payload = m_JsonMapper.writeValueAsString(detector);
         return validateDetector(payload);
@@ -268,10 +268,10 @@ public class EngineApiClient implements Closeable
      * Validate a detector string.
      *
      * @param detector the detector to validate
-     * @return FIXME
+     * @return boolean successful validation
      * @throws IOException If HTTP POST fails
      */
-    public String validateDetector(String detector) throws IOException
+    public boolean validateDetector(String detector) throws IOException
     {
         String url = m_BaseUrl + "/validate/detector";
         LOGGER.debug("Validate detector " + detector + ", at: " + url);
@@ -282,7 +282,22 @@ public class EngineApiClient implements Closeable
                 .content(new StringContentProvider(detector));
 
         ContentResponse response = executeRequest(request);
-        return response.getContentAsString();
+        String content = response.getContentAsString();
+
+        if (response.getStatus() != HttpStatus.OK_200)
+        {
+            String msg = String.format(
+                    "Error validating detector, status code = %d. Returned content: %s",
+                    response.getStatus(), content);
+
+            LOGGER.error(msg);
+            m_LastError = m_JsonMapper.readValue(content,
+                    new TypeReference<ApiError>() {} );
+            return false;
+        }
+
+        m_LastError = null;
+        return true;
     }
 
     /**
@@ -292,10 +307,10 @@ public class EngineApiClient implements Closeable
      * string
      *
      * @param transform the transform to validate
-     * @return FIXME
+     * @return boolean successful validation
      * @throws IOException If HTTP POST fails
      */
-    public String validateTransform(TransformConfig transform) throws IOException
+    public boolean validateTransform(TransformConfig transform) throws IOException
     {
         String payload = m_JsonMapper.writeValueAsString(transform);
         return validateTransform(payload);
@@ -305,10 +320,10 @@ public class EngineApiClient implements Closeable
      * Validate a transform string.
      *
      * @param transform the transform to validate
-     * @return FIXME
+     * @return boolean successful validation
      * @throws IOException If HTTP POST fails
      */
-    public String validateTransform(String transform) throws IOException
+    public boolean validateTransform(String transform) throws IOException
     {
         String url = m_BaseUrl + "/validate/transform";
         LOGGER.debug("Validate transform " + transform + ", at: " + url);
@@ -319,7 +334,22 @@ public class EngineApiClient implements Closeable
                 .content(new StringContentProvider(transform));
 
         ContentResponse response = executeRequest(request);
-        return response.getContentAsString();
+        String content = response.getContentAsString();
+
+        if (response.getStatus() != HttpStatus.OK_200)
+        {
+            String msg = String.format(
+                    "Error validating transform, status code = %d. Returned content: %s",
+                    response.getStatus(), content);
+
+            LOGGER.error(msg);
+            m_LastError = m_JsonMapper.readValue(content,
+                    new TypeReference<ApiError>() {} );
+            return false;
+        }
+
+        m_LastError = null;
+        return true;
     }
 
     /**
@@ -329,10 +359,10 @@ public class EngineApiClient implements Closeable
      * string
      *
      * @param transforms the transforms to validate
-     * @return FIXME
+     * @return boolean successful validation
      * @throws IOException If HTTP POST fails
      */
-    public String validateTransforms(TransformConfig[] transforms) throws IOException
+    public boolean validateTransforms(TransformConfig[] transforms) throws IOException
     {
         String payload = m_JsonMapper.writeValueAsString(transforms);
         return validateTransforms(payload);
@@ -342,10 +372,10 @@ public class EngineApiClient implements Closeable
      * Validate an array of transforms.
      *
      * @param transforms the transforms to validate
-     * @return FIXME
+     * @return boolean successful validation
      * @throws IOException If HTTP POST fails
      */
-    public String validateTransforms(String transforms) throws IOException
+    public boolean validateTransforms(String transforms) throws IOException
     {
         String url = m_BaseUrl + "/validate/transforms";
         LOGGER.debug("Validate transforms " + transforms + ", at: " + url);
@@ -356,7 +386,22 @@ public class EngineApiClient implements Closeable
                 .content(new StringContentProvider(transforms));
 
         ContentResponse response = executeRequest(request);
-        return response.getContentAsString();
+        String content = response.getContentAsString();
+
+        if (response.getStatus() != HttpStatus.OK_200)
+        {
+            String msg = String.format(
+                    "Error validating transforms, status code = %d. Returned content: %s",
+                    response.getStatus(), content);
+
+            LOGGER.error(msg);
+            m_LastError = m_JsonMapper.readValue(content,
+                    new TypeReference<ApiError>() {} );
+            return false;
+        }
+
+        m_LastError = null;
+        return true;
     }
 
     /**
