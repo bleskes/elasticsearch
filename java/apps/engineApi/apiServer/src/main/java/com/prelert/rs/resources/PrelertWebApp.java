@@ -185,8 +185,8 @@ public class PrelertWebApp extends Application
         m_JobManager.systemAudit().info(Messages.getMessage(Messages.SYSTEM_AUDIT_STARTED));
 
         m_ActivityAudit = new ActivityAudit(() -> m_JobManager.systemAudit(),
-                                            () -> m_JobManager.allJobs(),
-                                            () -> m_JobManager.activeJobs());
+                                            () -> m_JobManager.getAllJobs(),
+                                            () -> m_JobManager.getActiveJobs());
         m_ActivityAudit.scheduleNextAudit();
     }
 
@@ -287,7 +287,7 @@ public class PrelertWebApp extends Application
         {
             m_JobManager.setIgnoreDowntimeToAllJobs();
         }
-        m_JobManager.restartScheduledJobs();
+        m_JobManager.setupScheduledJobs();
     }
 
     private void addEndPoints()

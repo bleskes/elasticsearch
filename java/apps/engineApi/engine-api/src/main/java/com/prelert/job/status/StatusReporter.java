@@ -443,7 +443,7 @@ public class StatusReporter
      * @throws OutOfOrderRecordsException
      *
      */
-    private void checkStatus(long totalRecords)
+    protected void checkStatus(long totalRecords)
     throws HighProportionOfBadTimestampsException, OutOfOrderRecordsException
     {
         long percentBadDate = (getDateParseErrorsCount() * 100) / totalRecords;

@@ -87,6 +87,7 @@ import com.prelert.job.manager.actions.ActionGuardian;
 import com.prelert.job.manager.actions.ActionGuardian.ActionTicket;
 import com.prelert.job.messages.Messages;
 import com.prelert.job.password.PasswordManager;
+import com.prelert.job.persistence.BatchedDocumentsIterator;
 import com.prelert.job.persistence.DataStoreException;
 import com.prelert.job.persistence.JobDataDeleterFactory;
 import com.prelert.job.persistence.JobProvider;
@@ -114,6 +115,7 @@ import com.prelert.job.status.HighProportionOfBadTimestampsException;
 import com.prelert.job.status.OutOfOrderRecordsException;
 import com.prelert.job.status.none.NoneStatusReporter;
 import com.prelert.job.transform.TransformConfigs;
+import com.prelert.settings.PrelertSettings;
 
 /**
  * Allows interactions with jobs. The managed interactions include:
@@ -156,7 +158,8 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
     private static final int LAST_DATA_TIME_CACHE_SIZE = 1000;
     private static final int LAST_DATA_TIME_MIN_UPDATE_INTERVAL_MS = 1000;
 
-    private static final int MAX_JOBS_TO_RESTART = 10000;
+    private static final String SCHEDULER_AUTORESTART_SETTING = "scheduler.autorestart";
+    private static final boolean DEFAULT_SCHEDULER_AUTORESTART = true;
 
     private final ActionGuardian m_ActionGuardian;
     private final JobProvider m_JobProvider;
@@ -496,11 +499,11 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
     }
 
     public QueryPage<ModelSnapshot> modelSnapshots(String jobId, int skip, int take,
-            long epochStartMs, long epochEndMs, String sortField, String description)
+            long epochStartMs, long epochEndMs, String sortField, boolean sortDescending, String description)
             throws UnknownJobException
     {
         return m_JobProvider.modelSnapshots(jobId, skip, take, epochStartMs, epochEndMs,
-                sortField, null, description);
+                sortField, sortDescending, null, description);
     }
 
     public ModelSnapshot revertToSnapshot(String jobId, long epochEndMs, String snapshotId,
@@ -518,7 +521,7 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
                     "' for time '" + epochEndMs + "'");
 
             List<ModelSnapshot> revertCandidates = m_JobProvider.modelSnapshots(jobId, 0, 1,
-                    0, epochEndMs, ModelSnapshot.TIMESTAMP, snapshotId, description).queryResults();
+                    0, epochEndMs, ModelSnapshot.TIMESTAMP, true, snapshotId, description).queryResults();
 
             if (revertCandidates == null || revertCandidates.isEmpty())
             {
@@ -556,7 +559,7 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
         try (ActionTicket actionTicket = m_ActionGuardian.tryAcquiringAction(jobId, Action.UPDATING))
         {
             List<ModelSnapshot> changeCandidates = m_JobProvider.modelSnapshots(jobId, 0, 1,
-                    0, 0, null, snapshotId, null).queryResults();
+                    0, 0, null, true, snapshotId, null).queryResults();
 
             if (changeCandidates == null || changeCandidates.isEmpty())
             {
@@ -564,7 +567,7 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
             }
 
             List<ModelSnapshot> clashCandidates = m_JobProvider.modelSnapshots(jobId, 0, 1,
-                    0, 0, null, null, newDescription).queryResults();
+                    0, 0, null, true, null, newDescription).queryResults();
 
             if (clashCandidates != null && !clashCandidates.isEmpty())
             {
@@ -1149,22 +1152,37 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
         return m_ScheduledJobs.containsKey(jobId);
     }
 
-    public void restartScheduledJobs()
+    /**
+     * Creates a {@code JobScheduler} for each scheduled job and restores the state
+     * of the scheduler.
+     * <ul>
+     * <li>If autorestart is enabled, schedulers in state STARTED will be restarted.
+     * <li>If autorestart is disabled, all schedulers will be set to STOPPED.
+     * <li>Schedulers in state STOPPING will be set to STOPPED.
+     * </ul>
+     */
+    public void setupScheduledJobs()
     {
         Preconditions.checkState(m_ScheduledJobs.isEmpty());
+        Boolean isAutoRestart = PrelertSettings.getSettingOrDefault(
+                SCHEDULER_AUTORESTART_SETTING, DEFAULT_SCHEDULER_AUTORESTART);
 
-        for (JobDetails job : getJobs(0, MAX_JOBS_TO_RESTART).queryResults())
+        BatchedDocumentsIterator<JobDetails> jobsIterator = m_JobProvider.newBatchedJobsIterator();
+        while (jobsIterator.hasNext())
         {
-            if (job.getSchedulerConfig() != null)
+            for (JobDetails job : jobsIterator.next())
             {
-                JobScheduler jobScheduler = createJobScheduler(job);
-                if (job.getSchedulerStatus() == JobSchedulerStatus.STARTED)
+                if (job.getSchedulerConfig() != null)
                 {
-                    restartScheduledJob(job, jobScheduler);
-                }
-                else if (job.getSchedulerStatus() == JobSchedulerStatus.STOPPING)
-                {
-                    restoreSchedulerStatusToStopped(job);
+                    JobScheduler jobScheduler = createJobScheduler(job);
+                    if (isAutoRestart && job.getSchedulerStatus() == JobSchedulerStatus.STARTED)
+                    {
+                        restartScheduledJob(job, jobScheduler);
+                    }
+                    else if (!isAutoRestart || job.getSchedulerStatus() == JobSchedulerStatus.STOPPING)
+                    {
+                        restoreSchedulerStatusToStopped(job);
+                    }
                 }
             }
         }
@@ -1275,20 +1293,24 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
     public void setIgnoreDowntimeToAllJobs()
     {
         LOGGER.info("Setting ignoreDowntime to all jobs");
-        for (JobDetails job : getJobs(0, MAX_JOBS_TO_RESTART).queryResults())
+        BatchedDocumentsIterator<JobDetails> jobsIterator = m_JobProvider.newBatchedJobsIterator();
+        while (jobsIterator.hasNext())
         {
-            // Only set if job has seen data
-            DataCounts counts = job.getCounts();
-            if (job.getIgnoreDowntime() == null
-                    && counts != null && counts.getProcessedRecordCount() > 0)
+            for (JobDetails job : jobsIterator.next())
             {
-                try
+                // Only set if job has seen data
+                DataCounts counts = job.getCounts();
+                boolean hasSeenData = counts != null && counts.getProcessedRecordCount() > 0;
+                if (job.getIgnoreDowntime() == null && hasSeenData)
                 {
-                    updateIgnoreDowntime(job.getId(), IgnoreDowntime.ONCE);
-                }
-                catch (UnknownJobException e)
-                {
-                    LOGGER.error("Could not set ignoreDowntime on job " + e.getJobId(), e);
+                    try
+                    {
+                        updateIgnoreDowntime(job.getId(), IgnoreDowntime.ONCE);
+                    }
+                    catch (UnknownJobException e)
+                    {
+                        LOGGER.error("Could not set ignoreDowntime on job " + e.getJobId(), e);
+                    }
                 }
             }
         }
@@ -1361,22 +1383,18 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
         }
     }
 
-    public List<JobDetails> allJobs()
+    public List<JobDetails> getAllJobs()
     {
-        QueryPage<JobDetails> page = getJobs(0, MAX_JOBS_TO_RESTART);
-        List<JobDetails> allJobs = page.queryResults();
-        // TODO - this isn't foolproof if there are more than 10000 jobs, as new
-        // jobs created while the loop is in progress or job deletions might
-        // cause duplicates - it's good enough for now though
-        while (allJobs.size() < page.hitCount())
+        BatchedDocumentsIterator<JobDetails> jobsIterator = m_JobProvider.newBatchedJobsIterator();
+        List<JobDetails> allJobs = new ArrayList<>();
+        while (jobsIterator.hasNext())
         {
-            page = getJobs(allJobs.size(), MAX_JOBS_TO_RESTART);
-            allJobs.addAll(page.queryResults());
+            allJobs.addAll(jobsIterator.next());
         }
         return allJobs;
     }
 
-    public List<JobDetails> activeJobs()
+    public List<JobDetails> getActiveJobs()
     {
         Set<String> jobIds = getActiveJobIds();
         List<JobDetails> activeJobs = new ArrayList<>();

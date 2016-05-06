@@ -33,12 +33,12 @@ import org.elasticsearch.search.SearchHit;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.prelert.job.ModelSnapshot;
 
-class ElasticsearchBatchedModelSnapshotIterator extends ElasticsearchBatchedResultsIterator<ModelSnapshot>
+class ElasticsearchBatchedModelSnapshotIterator extends ElasticsearchBatchedDocumentsIterator<ModelSnapshot>
 {
     public ElasticsearchBatchedModelSnapshotIterator(Client client, String jobId,
             ObjectMapper objectMapper)
     {
-        super(client, jobId, objectMapper);
+        super(client, new ElasticsearchJobId(jobId).getIndex(), objectMapper);
     }
 
     @Override

@@ -19,44 +19,20 @@
  * may be reproduced, adapted or transmitted in any form or *
  * by any means, electronic, mechanical, photocopying,      *
  * recording or otherwise.                                  *
- *
  *                                                          *
  *----------------------------------------------------------*
  *                                                          *
  *                                                          *
  ************************************************************/
-package com.prelert.job.status.none;
 
-import org.apache.log4j.Logger;
+package com.prelert.job.persistence.elasticsearch;
 
-import com.prelert.job.persistence.none.NoneJobDataCountsPersister;
-import com.prelert.job.status.HighProportionOfBadTimestampsException;
-import com.prelert.job.status.OutOfOrderRecordsException;
-import com.prelert.job.status.StatusReporter;
-import com.prelert.job.usage.none.NoneUsageReporter;
-
-public class NoneStatusReporter extends StatusReporter
+public class CannotMapJobFromJson extends RuntimeException
 {
-    private static final Logger LOGGER = Logger.getLogger(NoneStatusReporter.class);
+    private static final long serialVersionUID = 1L;
 
-    public NoneStatusReporter(String jobId)
+    public CannotMapJobFromJson(String msg, Throwable cause)
     {
-        super(jobId, new NoneUsageReporter(), new NoneJobDataCountsPersister(), LOGGER);
-    }
-
-    /**
-     * Overrides the base class to ignore problems with bad dates, out of order
-     * data, etc.
-     *
-     * @param totalRecords
-     * @throws HighProportionOfBadTimestampsException
-     * @throws OutOfOrderRecordsException
-     */
-    @Override
-    protected void checkStatus(long totalRecords)
-    throws HighProportionOfBadTimestampsException, OutOfOrderRecordsException
-    {
-        // Don't throw exceptions for these conditions as we're supposed to be
-        // not reporting any status
+        super(msg, cause);
     }
 }

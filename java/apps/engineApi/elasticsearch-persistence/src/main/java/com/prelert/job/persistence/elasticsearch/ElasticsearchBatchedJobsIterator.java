@@ -19,44 +19,47 @@
  * may be reproduced, adapted or transmitted in any form or *
  * by any means, electronic, mechanical, photocopying,      *
  * recording or otherwise.                                  *
- *
  *                                                          *
  *----------------------------------------------------------*
  *                                                          *
  *                                                          *
  ************************************************************/
-package com.prelert.job.status.none;
 
-import org.apache.log4j.Logger;
+package com.prelert.job.persistence.elasticsearch;
 
-import com.prelert.job.persistence.none.NoneJobDataCountsPersister;
-import com.prelert.job.status.HighProportionOfBadTimestampsException;
-import com.prelert.job.status.OutOfOrderRecordsException;
-import com.prelert.job.status.StatusReporter;
-import com.prelert.job.usage.none.NoneUsageReporter;
+import org.elasticsearch.client.Client;
+import org.elasticsearch.search.SearchHit;
 
-public class NoneStatusReporter extends StatusReporter
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.prelert.job.JobDetails;
+
+class ElasticsearchBatchedJobsIterator extends ElasticsearchBatchedDocumentsIterator<JobDetails>
 {
-    private static final Logger LOGGER = Logger.getLogger(NoneStatusReporter.class);
+    private final ElasticsearchJobDetailsMapper m_JobMapper;
 
-    public NoneStatusReporter(String jobId)
+    public ElasticsearchBatchedJobsIterator(Client client, String index,
+            ObjectMapper objectMapper)
     {
-        super(jobId, new NoneUsageReporter(), new NoneJobDataCountsPersister(), LOGGER);
+        super(client, index, objectMapper);
+        m_JobMapper = new ElasticsearchJobDetailsMapper(client, objectMapper);
     }
 
-    /**
-     * Overrides the base class to ignore problems with bad dates, out of order
-     * data, etc.
-     *
-     * @param totalRecords
-     * @throws HighProportionOfBadTimestampsException
-     * @throws OutOfOrderRecordsException
-     */
     @Override
-    protected void checkStatus(long totalRecords)
-    throws HighProportionOfBadTimestampsException, OutOfOrderRecordsException
+    protected String getType()
     {
-        // Don't throw exceptions for these conditions as we're supposed to be
-        // not reporting any status
+        return JobDetails.TYPE;
+    }
+
+    @Override
+    protected JobDetails map(ObjectMapper objectMapper, SearchHit hit)
+    {
+        try
+        {
+            return m_JobMapper.map(hit.getSource());
+        }
+        catch (CannotMapJobFromJson e)
+        {
+            return null;
+        }
     }
 }

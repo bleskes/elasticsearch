@@ -40,8 +40,7 @@ public interface JobProvider extends JobDetailsProvider, JobResultsProvider
      * @param take number of snapshots to retrieve
      * @return page of model snapshots
      */
-    public QueryPage<ModelSnapshot> modelSnapshots(String jobId,
-            int skip, int take)
+    public QueryPage<ModelSnapshot> modelSnapshots(String jobId, int skip, int take)
     throws UnknownJobException;
 
     /**
@@ -53,13 +52,14 @@ public interface JobProvider extends JobDetailsProvider, JobResultsProvider
      * @param startEpochMs earliest time to include (inclusive)
      * @param endEpochMs latest time to include (exclusive)
      * @param sortField optional sort field name (may be null)
+     * @param sortDescending Sort in descending order
      * @param snapshotId optional snapshot ID to match (null for all)
      * @param description optional description to match (null for all)
      * @return page of model snapshots
      */
-    public QueryPage<ModelSnapshot> modelSnapshots(String jobId,
-            int skip, int take, long startEpochMs, long endEpochMs,
-            String sortField, String snapshotId, String description)
+    public QueryPage<ModelSnapshot> modelSnapshots(String jobId, int skip, int take,
+            long startEpochMs, long endEpochMs, String sortField, boolean sortDescending,
+            String snapshotId, String description)
     throws UnknownJobException;
 
     /**

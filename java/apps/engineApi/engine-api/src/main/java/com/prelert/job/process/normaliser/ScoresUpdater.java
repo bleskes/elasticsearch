@@ -38,7 +38,7 @@ import org.apache.log4j.Logger;
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.JobDetails;
 import com.prelert.job.UnknownJobException;
-import com.prelert.job.persistence.BatchedResultsIterator;
+import com.prelert.job.persistence.BatchedDocumentsIterator;
 import com.prelert.job.persistence.JobProvider;
 import com.prelert.job.persistence.JobRenormaliser;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
@@ -143,7 +143,7 @@ class ScoresUpdater
     private void updateBuckets(Normaliser normaliser, String quantilesState, long endBucketEpochMs,
             int[] counts, Logger logger) throws UnknownJobException, NativeProcessRunException
     {
-        BatchedResultsIterator<Bucket> bucketsIterator =
+        BatchedDocumentsIterator<Bucket> bucketsIterator =
                 m_JobProvider.newBatchedBucketsIterator(m_JobId)
                 .timeRange(calcNormalisationWindowStart(endBucketEpochMs), endBucketEpochMs);
 
@@ -301,7 +301,7 @@ class ScoresUpdater
     private void updateInfluencers(Normaliser normaliser, String quantilesState, long endBucketEpochMs,
             int[] counts, Logger logger) throws UnknownJobException, NativeProcessRunException
     {
-        BatchedResultsIterator<Influencer> influencersIterator = m_JobProvider
+        BatchedDocumentsIterator<Influencer> influencersIterator = m_JobProvider
                 .newBatchedInfluencersIterator(m_JobId)
                 .timeRange(calcNormalisationWindowStart(endBucketEpochMs), endBucketEpochMs);
         while (influencersIterator.hasNext())

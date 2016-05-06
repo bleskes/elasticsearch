@@ -59,6 +59,7 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.index.IndexNotFoundException;
 import org.elasticsearch.index.engine.VersionConflictEngineException;
+import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.indices.IndexAlreadyExistsException;
@@ -90,7 +91,7 @@ import com.prelert.job.audit.AuditActivity;
 import com.prelert.job.audit.AuditMessage;
 import com.prelert.job.audit.Auditor;
 import com.prelert.job.errorcodes.ErrorCodes;
-import com.prelert.job.persistence.BatchedResultsIterator;
+import com.prelert.job.persistence.BatchedDocumentsIterator;
 import com.prelert.job.persistence.DataStoreException;
 import com.prelert.job.persistence.JobProvider;
 import com.prelert.job.persistence.QueryPage;
@@ -340,37 +341,16 @@ public class ElasticsearchJobProvider implements JobProvider
         {
             LOGGER.trace("ES API CALL: get ID " + elasticJobId.getId() +
                     " type " + JobDetails.TYPE + " from index " + elasticJobId.getIndex());
-            GetResponse response = m_Client.prepareGet(elasticJobId.getIndex(), JobDetails.TYPE, elasticJobId.getId()).get();
+            GetResponse response = m_Client.prepareGet(elasticJobId.getIndex(), JobDetails.TYPE,
+                    elasticJobId.getId()).get();
             if (!response.isExists())
             {
                 String msg = "No details for job with id " + elasticJobId.getId();
                 LOGGER.warn(msg);
                 return Optional.empty();
             }
-            JobDetails details = m_ObjectMapper.convertValue(response.getSource(), JobDetails.class);
-
-            // Pull out the modelSizeStats document, and add this to the JobDetails
-            LOGGER.trace("ES API CALL: get ID " + ModelSizeStats.TYPE +
-                    " type " + ModelSizeStats.TYPE + " from index " + elasticJobId.getIndex());
-            GetResponse modelSizeStatsResponse = m_Client.prepareGet(
-                    elasticJobId.getIndex(), ModelSizeStats.TYPE, ModelSizeStats.TYPE).get();
-            if (!modelSizeStatsResponse.isExists())
-            {
-                String msg = "No model size stats for job with id " + elasticJobId.getId();
-                LOGGER.warn(msg);
-            }
-            else
-            {
-                // Remove the Kibana/Logstash '@timestamp' entry as stored in Elasticsearch,
-                // and replace using the API 'timestamp' key.
-                Object timestamp = modelSizeStatsResponse.getSource().remove(ElasticsearchMappings.ES_TIMESTAMP);
-                modelSizeStatsResponse.getSource().put(ModelSizeStats.TIMESTAMP, timestamp);
-
-                ModelSizeStats modelSizeStats = m_ObjectMapper.convertValue(
-                    modelSizeStatsResponse.getSource(), ModelSizeStats.class);
-                details.setModelSizeStats(modelSizeStats);
-            }
-
+            ElasticsearchJobDetailsMapper jobMapper = new ElasticsearchJobDetailsMapper(m_Client, m_ObjectMapper);
+            JobDetails details = jobMapper.map(response.getSource());
             return Optional.of(details);
         }
         catch (IndexNotFoundException e)
@@ -385,7 +365,6 @@ public class ElasticsearchJobProvider implements JobProvider
     @Override
     public QueryPage<JobDetails> getJobs(int skip, int take)
     {
-        QueryBuilder fb = QueryBuilders.matchAllQuery();
         SortBuilder sb = new FieldSortBuilder(ElasticsearchPersister.JOB_ID_NAME)
                                 .unmappedType("string")
                                 .order(SortOrder.ASC);
@@ -395,52 +374,32 @@ public class ElasticsearchJobProvider implements JobProvider
                 + ElasticsearchPersister.JOB_ID_NAME + " skip " + skip + " take " + take);
         SearchResponse response = m_Client.prepareSearch(ElasticsearchJobId.INDEX_PREFIX + "*")
                 .setTypes(JobDetails.TYPE)
-                .setPostFilter(fb)
                 .setFrom(skip).setSize(take)
                 .addSort(sb)
                 .get();
 
+        ElasticsearchJobDetailsMapper jobMapper = new ElasticsearchJobDetailsMapper(m_Client, m_ObjectMapper);
         List<JobDetails> jobs = new ArrayList<>();
         for (SearchHit hit : response.getHits().getHits())
         {
-            JobDetails job;
             try
             {
-                job = m_ObjectMapper.convertValue(hit.getSource(), JobDetails.class);
+                jobs.add(jobMapper.map(hit.getSource()));
             }
-            catch (IllegalArgumentException e)
+            catch (CannotMapJobFromJson e)
             {
-                LOGGER.error("Cannot parse job from JSON", e);
                 continue;
             }
-            ElasticsearchJobId elasticJobId = new ElasticsearchJobId(job.getId());
-
-            // Pull out the modelSizeStats document, and add this to the JobDetails
-            LOGGER.trace("ES API CALL: get ID " + ModelSizeStats.TYPE +
-                    " type " + ModelSizeStats.TYPE + " from index " + elasticJobId.getIndex());
-            GetResponse modelSizeStatsResponse = m_Client.prepareGet(
-                    elasticJobId.getIndex(), ModelSizeStats.TYPE, ModelSizeStats.TYPE).get();
-
-            if (!modelSizeStatsResponse.isExists())
-            {
-                String msg = "No memory usage details for job with id " + job.getId();
-                LOGGER.warn(msg);
-            }
-            else
-            {
-                // Remove the Kibana/Logstash '@timestamp' entry as stored in Elasticsearch,
-                // and replace using the API 'timestamp' key.
-                Object timestamp = modelSizeStatsResponse.getSource().remove(ElasticsearchMappings.ES_TIMESTAMP);
-                modelSizeStatsResponse.getSource().put(ModelSizeStats.TIMESTAMP, timestamp);
-
-                ModelSizeStats modelSizeStats = m_ObjectMapper.convertValue(
-                    modelSizeStatsResponse.getSource(), ModelSizeStats.class);
-                job.setModelSizeStats(modelSizeStats);
-            }
-            jobs.add(job);
         }
 
         return new QueryPage<JobDetails>(jobs, response.getHits().getTotalHits());
+    }
+
+    @Override
+    public BatchedDocumentsIterator<JobDetails> newBatchedJobsIterator()
+    {
+        return new ElasticsearchBatchedJobsIterator(m_Client, ElasticsearchJobId.INDEX_PREFIX + "*",
+                m_ObjectMapper);
     }
 
     /**
@@ -722,7 +681,7 @@ public class ElasticsearchJobProvider implements JobProvider
     }
 
     @Override
-    public BatchedResultsIterator<Bucket> newBatchedBucketsIterator(String jobId)
+    public BatchedDocumentsIterator<Bucket> newBatchedBucketsIterator(String jobId)
     {
         return new ElasticsearchBatchedBucketsIterator(m_Client, jobId, m_ObjectMapper);
     }
@@ -1015,25 +974,25 @@ public class ElasticsearchJobProvider implements JobProvider
     }
 
     @Override
-    public BatchedResultsIterator<Influencer> newBatchedInfluencersIterator(String jobId)
+    public BatchedDocumentsIterator<Influencer> newBatchedInfluencersIterator(String jobId)
     {
         return new ElasticsearchBatchedInfluencersIterator(m_Client, jobId, m_ObjectMapper);
     }
 
     @Override
-    public BatchedResultsIterator<ModelSnapshot> newBatchedModelSnapshotIterator(String jobId)
+    public BatchedDocumentsIterator<ModelSnapshot> newBatchedModelSnapshotIterator(String jobId)
     {
         return new ElasticsearchBatchedModelSnapshotIterator(m_Client, jobId, m_ObjectMapper);
     }
 
     @Override
-    public BatchedResultsIterator<ModelDebugOutput> newBatchedModelDebugOutputIterator(String jobId)
+    public BatchedDocumentsIterator<ModelDebugOutput> newBatchedModelDebugOutputIterator(String jobId)
     {
         return new ElasticsearchBatchedModelDebugOutputIterator(m_Client, jobId, m_ObjectMapper);
     }
 
     @Override
-    public BatchedResultsIterator<ModelSizeStats> newBatchedModelSizeStatsIterator(String jobId)
+    public BatchedDocumentsIterator<ModelSizeStats> newBatchedModelSizeStatsIterator(String jobId)
     {
         return new ElasticsearchBatchedModelSizeStatsIterator(m_Client, jobId, m_ObjectMapper);
     }
@@ -1082,38 +1041,30 @@ public class ElasticsearchJobProvider implements JobProvider
     }
 
     @Override
-    public QueryPage<ModelSnapshot> modelSnapshots(String jobId,
-            int skip, int take)
+    public QueryPage<ModelSnapshot> modelSnapshots(String jobId, int skip, int take)
     throws UnknownJobException
     {
-        return modelSnapshots(jobId, skip, take, 0, 0, null, null, null);
+        return modelSnapshots(jobId, skip, take, 0, 0, null, true, null, null);
     }
 
     @Override
-    public QueryPage<ModelSnapshot> modelSnapshots(String jobId,
-            int skip, int take, long startEpochMs, long endEpochMs,
-            String sortField, String snapshotId, String description)
-    throws UnknownJobException
+    public QueryPage<ModelSnapshot> modelSnapshots(String jobId, int skip, int take,
+            long startEpochMs, long endEpochMs, String sortField, boolean sortDescending,
+            String snapshotId, String description) throws UnknownJobException
     {
         boolean haveId = snapshotId != null && !snapshotId.isEmpty();
         boolean haveDescription = description != null && !description.isEmpty();
         ResultsFilterBuilder fb;
         if (haveId || haveDescription)
         {
-            QueryBuilder query;
-            if (haveId && haveDescription)
+            BoolQueryBuilder query = QueryBuilders.boolQuery();
+            if (haveId)
             {
-                query = QueryBuilders.boolQuery()
-                        .must(QueryBuilders.termQuery(ModelSnapshot.SNAPSHOT_ID, snapshotId))
-                        .must(QueryBuilders.termQuery(ModelSnapshot.DESCRIPTION, description));
+                query.must(QueryBuilders.termQuery(ModelSnapshot.SNAPSHOT_ID, snapshotId));
             }
-            else if (haveId)
+            if (haveDescription)
             {
-                query = QueryBuilders.termQuery(ModelSnapshot.SNAPSHOT_ID, snapshotId);
-            }
-            else
-            {
-                query = QueryBuilders.termQuery(ModelSnapshot.DESCRIPTION, description);
+                query.must(QueryBuilders.termQuery(ModelSnapshot.DESCRIPTION, description));
             }
 
             fb = new ResultsFilterBuilder(query);
@@ -1125,13 +1076,15 @@ public class ElasticsearchJobProvider implements JobProvider
 
         return modelSnapshots(new ElasticsearchJobId(jobId), skip, take,
                 (sortField == null || sortField.isEmpty()) ? ModelSnapshot.RESTORE_PRIORITY : sortField,
-                fb.timeRange(ElasticsearchMappings.ES_TIMESTAMP, startEpochMs, endEpochMs).build());
+                sortDescending, fb.timeRange(
+                        ElasticsearchMappings.ES_TIMESTAMP, startEpochMs, endEpochMs).build());
     }
 
-    private QueryPage<ModelSnapshot> modelSnapshots(ElasticsearchJobId jobId,
-            int skip, int take, String sortField, QueryBuilder fb) throws UnknownJobException
+    private QueryPage<ModelSnapshot> modelSnapshots(ElasticsearchJobId jobId, int skip, int take,
+            String sortField, boolean sortDescending, QueryBuilder fb) throws UnknownJobException
     {
-        SortBuilder sb = new FieldSortBuilder(esSortField(sortField)).order(SortOrder.DESC);
+        SortBuilder sb = new FieldSortBuilder(esSortField(sortField))
+                .order(sortDescending ? SortOrder.DESC : SortOrder.ASC);
 
         SearchResponse searchResponse;
         try
@@ -1207,7 +1160,7 @@ public class ElasticsearchJobProvider implements JobProvider
             throws UnknownJobException, NoSuchModelSnapshotException
     {
         List<ModelSnapshot> deleteCandidates = modelSnapshots(jobId, 0, 1,
-                    0, 0, null, snapshotId, null).queryResults();
+                    0, 0, null, true, snapshotId, null).queryResults();
         if (deleteCandidates == null || deleteCandidates.isEmpty())
         {
             throw new NoSuchModelSnapshotException(jobId);

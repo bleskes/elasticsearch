@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -46,7 +46,6 @@ import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.SearchScrollRequestBuilder;
 import org.elasticsearch.client.Client;
-import org.elasticsearch.index.IndexNotFoundException;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
@@ -59,9 +58,8 @@ import org.mockito.MockitoAnnotations;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.prelert.job.UnknownJobException;
 
-public class ElasticsearchBatchedResultsIteratorTest
+public class ElasticsearchBatchedDocumentsIteratorTest
 {
-    private static final String JOB_ID = "foo";
     private static final String INDEX_NAME = "prelertresults-foo";
     private static final String SCROLL_ID = "someScrollId";
 
@@ -76,7 +74,7 @@ public class ElasticsearchBatchedResultsIteratorTest
     {
         MockitoAnnotations.initMocks(this);
         m_WasScrollCleared = false;
-        m_TestIterator = new TestIterator(m_Client, JOB_ID, m_ObjectMapper);
+        m_TestIterator = new TestIterator(m_Client, INDEX_NAME, m_ObjectMapper);
         givenClearScrollRequest();
     }
 
@@ -89,13 +87,6 @@ public class ElasticsearchBatchedResultsIteratorTest
         assertTrue(m_TestIterator.next().isEmpty());
         assertFalse(m_TestIterator.hasNext());
         assertTrue(m_WasScrollCleared);
-    }
-
-    @Test (expected = UnknownJobException.class)
-    public void testQueryAgainstUnknownJob() throws UnknownJobException
-    {
-        when(m_Client.prepareSearch(INDEX_NAME)).thenThrow(new IndexNotFoundException(INDEX_NAME));
-        m_TestIterator.next();
     }
 
     @Test (expected = NoSuchElementException.class)
@@ -248,7 +239,7 @@ public class ElasticsearchBatchedResultsIteratorTest
         }
     }
 
-    private static class TestIterator extends ElasticsearchBatchedResultsIterator<String>
+    private static class TestIterator extends ElasticsearchBatchedDocumentsIterator<String>
     {
         public TestIterator(Client client, String jobId, ObjectMapper objectMapper)
         {

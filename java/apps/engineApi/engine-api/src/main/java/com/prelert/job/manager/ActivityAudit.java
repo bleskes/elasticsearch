@@ -49,17 +49,17 @@ public class ActivityAudit
 
     private final Supplier<Auditor> m_AuditorSupplier;
     private final Supplier<List<JobDetails>> m_AllJobsSupplier;
-    private final Supplier<List<JobDetails>> m_RunningJobsSupplier;
+    private final Supplier<List<JobDetails>> m_ActiveJobsSupplier;
 
     private final ScheduledExecutorService m_ScheduledService;
 
     public ActivityAudit(Supplier<Auditor> auditorSupplier,
                       Supplier<List<JobDetails>> allJobsSupplier,
-                      Supplier<List<JobDetails>> runningJobsSupplier)
+                      Supplier<List<JobDetails>> activeJobsSupplier)
     {
         m_AuditorSupplier = auditorSupplier;
         m_AllJobsSupplier = allJobsSupplier;
-        m_RunningJobsSupplier = runningJobsSupplier;
+        m_ActiveJobsSupplier = activeJobsSupplier;
 
         // creates daemon threads
         m_ScheduledService = Executors.newSingleThreadScheduledExecutor(
@@ -81,30 +81,24 @@ public class ActivityAudit
         m_ScheduledService.schedule(() -> this.report(), delay, TimeUnit.MINUTES);
     }
 
-    private void report()
+    void report()
     {
         try
         {
             List<JobDetails> allJobs = m_AllJobsSupplier.get();
-            int totalDetectors = 0;
-            for (JobDetails jd : allJobs)
-            {
-                totalDetectors += jd.getAnalysisConfig().getDetectors().size();
-            }
+            int totalDetectors = allJobs.stream()
+                    .mapToInt(job -> job.getAnalysisConfig().getDetectors().size()).sum();
 
-            List<JobDetails> runningJobs = m_RunningJobsSupplier.get();
-            int runningDetectors = 0;
-            for (JobDetails jd : runningJobs)
-            {
-                runningDetectors += jd.getAnalysisConfig().getDetectors().size();
-            }
+            List<JobDetails> activeJobs = m_ActiveJobsSupplier.get();
+            int activeDetectors = activeJobs.stream()
+                    .mapToInt(job -> job.getAnalysisConfig().getDetectors().size()).sum();
 
             Auditor auditor = m_AuditorSupplier.get();
-            auditor.activity(allJobs.size(), totalDetectors, runningJobs.size(), runningDetectors);
+            auditor.activity(allJobs.size(), totalDetectors, activeJobs.size(), activeDetectors);
 
-            if (runningJobs.isEmpty() == false)
+            if (activeJobs.isEmpty() == false)
             {
-                auditor.activity(buildUsageMessage(runningJobs));
+                auditor.activity(buildUsageMessage(activeJobs));
             }
         }
         catch (Exception e)

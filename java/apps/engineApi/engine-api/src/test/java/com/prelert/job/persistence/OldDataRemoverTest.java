@@ -102,7 +102,7 @@ public class OldDataRemoverTest
         modelSnapshotBatch.add(modelSnapshot1);
         modelSnapshotBatch.add(modelSnapshot2);
         List<Deque<ModelSnapshot>> modelSnapshotBatches = Arrays.asList(modelSnapshotBatch);
-        MockBatchedResultsIterator<ModelSnapshot> modelSnapshotIterator = new MockBatchedResultsIterator<>(0, cutoffEpochMs, modelSnapshotBatches);
+        MockBatchedDocumentsIterator<ModelSnapshot> modelSnapshotIterator = new MockBatchedDocumentsIterator<>(0, cutoffEpochMs, modelSnapshotBatches);
 
         when(m_JobProvider.newBatchedModelSnapshotIterator(JOB_WITH_RETENTION_ID)).thenReturn(modelSnapshotIterator);
         when(m_JobProvider.modelSnapshots(JOB_WITH_RETENTION_ID, 0, 1)).thenReturn(new QueryPage<ModelSnapshot>(Arrays.asList(modelSnapshot3), 1));
@@ -144,14 +144,14 @@ public class OldDataRemoverTest
         bucketBatch1.add(bucket1);
         bucketBatch2.add(bucket2);
         List<Deque<Bucket>> bucketBatches = Arrays.asList(bucketBatch1, bucketBatch2);
-        MockBatchedResultsIterator<Bucket> bucketsIterator = new MockBatchedResultsIterator<>(0, cutoffEpochMs, bucketBatches);
+        MockBatchedDocumentsIterator<Bucket> bucketsIterator = new MockBatchedDocumentsIterator<>(0, cutoffEpochMs, bucketBatches);
 
         Influencer influencer = new Influencer();
         Deque<Influencer> influencerBatch = new ArrayDeque<>();
         influencerBatch.add(influencer);
         List<Deque<Influencer>> influencerBatches = new ArrayList<>();
         influencerBatches.add(influencerBatch);
-        MockBatchedResultsIterator<Influencer> influencersIterator = new MockBatchedResultsIterator<>(0, cutoffEpochMs, influencerBatches);
+        MockBatchedDocumentsIterator<Influencer> influencersIterator = new MockBatchedDocumentsIterator<>(0, cutoffEpochMs, influencerBatches);
 
         when(m_JobProvider.newBatchedBucketsIterator(JOB_WITH_RETENTION_ID)).thenReturn(bucketsIterator);
         when(m_JobProvider.newBatchedInfluencersIterator(JOB_WITH_RETENTION_ID)).thenReturn(influencersIterator);
@@ -162,12 +162,12 @@ public class OldDataRemoverTest
         when(m_JobProvider.modelSnapshots(JOB_NO_RETENTION_ID, 0, 1)).thenReturn(queryPage);
 
         List<Deque<ModelDebugOutput>> debugBatches = Arrays.asList();
-        MockBatchedResultsIterator<ModelDebugOutput> debugIterator = new MockBatchedResultsIterator<>(0, cutoffEpochMs, debugBatches);
+        MockBatchedDocumentsIterator<ModelDebugOutput> debugIterator = new MockBatchedDocumentsIterator<>(0, cutoffEpochMs, debugBatches);
         when(m_JobProvider.newBatchedModelDebugOutputIterator(JOB_WITH_RETENTION_ID)).thenReturn(debugIterator);
         when(m_JobProvider.newBatchedModelDebugOutputIterator(JOB_NO_RETENTION_ID)).thenReturn(debugIterator);
 
         List<Deque<ModelSizeStats>> statsBatches = Arrays.asList();
-        MockBatchedResultsIterator<ModelSizeStats> statsIterator = new MockBatchedResultsIterator<>(0, cutoffEpochMs, statsBatches);
+        MockBatchedDocumentsIterator<ModelSizeStats> statsIterator = new MockBatchedDocumentsIterator<>(0, cutoffEpochMs, statsBatches);
         when(m_JobProvider.newBatchedModelSizeStatsIterator(JOB_WITH_RETENTION_ID)).thenReturn(statsIterator);
         when(m_JobProvider.newBatchedModelSizeStatsIterator(JOB_NO_RETENTION_ID)).thenReturn(statsIterator);
 
@@ -214,7 +214,7 @@ public class OldDataRemoverTest
         debugBatch2.addLast(debug2);
         List<Deque<ModelDebugOutput>> debugBatches = Arrays.asList(debugBatch1, debugBatch2);
 
-        MockBatchedResultsIterator<ModelDebugOutput> debugIterator = new MockBatchedResultsIterator<>(0, cutoffEpochMs, debugBatches);
+        MockBatchedDocumentsIterator<ModelDebugOutput> debugIterator = new MockBatchedDocumentsIterator<>(0, cutoffEpochMs, debugBatches);
 
         when(m_JobProvider.newBatchedModelDebugOutputIterator(JOB_WITH_RETENTION_ID)).thenReturn(debugIterator);
 
@@ -224,17 +224,17 @@ public class OldDataRemoverTest
         when(m_JobProvider.modelSnapshots(JOB_NO_RETENTION_ID, 0, 1)).thenReturn(queryPage);
 
         List<Deque<ModelSizeStats>> statsBatches = Arrays.asList();
-        MockBatchedResultsIterator<ModelSizeStats> statsIterator = new MockBatchedResultsIterator<>(0, cutoffEpochMs, statsBatches);
+        MockBatchedDocumentsIterator<ModelSizeStats> statsIterator = new MockBatchedDocumentsIterator<>(0, cutoffEpochMs, statsBatches);
         when(m_JobProvider.newBatchedModelSizeStatsIterator(JOB_WITH_RETENTION_ID)).thenReturn(statsIterator);
         when(m_JobProvider.newBatchedModelSizeStatsIterator(JOB_NO_RETENTION_ID)).thenReturn(statsIterator);
 
         List<Deque<Bucket>> bucketBatches = Arrays.asList();
-        MockBatchedResultsIterator<Bucket> bucketsIterator = new MockBatchedResultsIterator<>(0, cutoffEpochMs, bucketBatches);
+        MockBatchedDocumentsIterator<Bucket> bucketsIterator = new MockBatchedDocumentsIterator<>(0, cutoffEpochMs, bucketBatches);
         when(m_JobProvider.newBatchedBucketsIterator(JOB_WITH_RETENTION_ID)).thenReturn(bucketsIterator);
         when(m_JobProvider.newBatchedBucketsIterator(JOB_NO_RETENTION_ID)).thenReturn(bucketsIterator);
 
         List<Deque<Influencer>> influencerBatches = new ArrayList<>();
-        MockBatchedResultsIterator<Influencer> influencersIterator = new MockBatchedResultsIterator<>(0, cutoffEpochMs, influencerBatches);
+        MockBatchedDocumentsIterator<Influencer> influencersIterator = new MockBatchedDocumentsIterator<>(0, cutoffEpochMs, influencerBatches);
         when(m_JobProvider.newBatchedInfluencersIterator(JOB_WITH_RETENTION_ID)).thenReturn(influencersIterator);
         when(m_JobProvider.newBatchedInfluencersIterator(JOB_NO_RETENTION_ID)).thenReturn(influencersIterator);
 
@@ -281,7 +281,7 @@ public class OldDataRemoverTest
         statsBatch2.add(stats2);
         List<Deque<ModelSizeStats>> statsBatches = Arrays.asList(statsBatch1, statsBatch2);
 
-        MockBatchedResultsIterator<ModelSizeStats> statsIterator = new MockBatchedResultsIterator<>(0, cutoffEpochMs, statsBatches);
+        MockBatchedDocumentsIterator<ModelSizeStats> statsIterator = new MockBatchedDocumentsIterator<>(0, cutoffEpochMs, statsBatches);
         when(m_JobProvider.newBatchedModelSizeStatsIterator(JOB_WITH_RETENTION_ID)).thenReturn(statsIterator);
 
         List<ModelSnapshot> snapshots = new ArrayList<>();
@@ -290,17 +290,17 @@ public class OldDataRemoverTest
         when(m_JobProvider.modelSnapshots(JOB_NO_RETENTION_ID, 0, 1)).thenReturn(queryPage);
 
         List<Deque<Bucket>> bucketBatches = Arrays.asList();
-        MockBatchedResultsIterator<Bucket> bucketsIterator = new MockBatchedResultsIterator<>(0, cutoffEpochMs, bucketBatches);
+        MockBatchedDocumentsIterator<Bucket> bucketsIterator = new MockBatchedDocumentsIterator<>(0, cutoffEpochMs, bucketBatches);
         when(m_JobProvider.newBatchedBucketsIterator(JOB_WITH_RETENTION_ID)).thenReturn(bucketsIterator);
         when(m_JobProvider.newBatchedBucketsIterator(JOB_NO_RETENTION_ID)).thenReturn(bucketsIterator);
 
         List<Deque<Influencer>> influencerBatches = new ArrayList<>();
-        MockBatchedResultsIterator<Influencer> influencersIterator = new MockBatchedResultsIterator<>(0, cutoffEpochMs, influencerBatches);
+        MockBatchedDocumentsIterator<Influencer> influencersIterator = new MockBatchedDocumentsIterator<>(0, cutoffEpochMs, influencerBatches);
         when(m_JobProvider.newBatchedInfluencersIterator(JOB_WITH_RETENTION_ID)).thenReturn(influencersIterator);
         when(m_JobProvider.newBatchedInfluencersIterator(JOB_NO_RETENTION_ID)).thenReturn(influencersIterator);
 
         List<Deque<ModelDebugOutput>> debugBatches = Arrays.asList();
-        MockBatchedResultsIterator<ModelDebugOutput> debugIterator = new MockBatchedResultsIterator<>(0, cutoffEpochMs, debugBatches);
+        MockBatchedDocumentsIterator<ModelDebugOutput> debugIterator = new MockBatchedDocumentsIterator<>(0, cutoffEpochMs, debugBatches);
         when(m_JobProvider.newBatchedModelDebugOutputIterator(JOB_WITH_RETENTION_ID)).thenReturn(debugIterator);
         when(m_JobProvider.newBatchedModelDebugOutputIterator(JOB_NO_RETENTION_ID)).thenReturn(debugIterator);
 

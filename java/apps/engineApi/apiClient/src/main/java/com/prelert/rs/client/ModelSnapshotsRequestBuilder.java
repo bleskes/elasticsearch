@@ -22,22 +22,23 @@ package com.prelert.rs.client;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.prelert.job.ModelSnapshot;
-import com.prelert.rs.data.SingleDocument;
+import com.prelert.rs.data.Pagination;
 
-public class ModelSnapshotRequestBuilder extends BaseJobRequestBuilder<ModelSnapshot> {
+public class ModelSnapshotsRequestBuilder extends BaseJobRequestBuilder<ModelSnapshot>
+{
     public static final String ENDPOINT = "/modelsnapshots/";
 
     private Map<String, String> m_Params;
 
-    public ModelSnapshotRequestBuilder(EngineApiClient client, String jobId)
+    public ModelSnapshotsRequestBuilder(EngineApiClient client, String jobId)
     {
         super(client, jobId);
-        m_Params = new HashMap<>();
+        m_Params = new LinkedHashMap<>();
     }
 
     /**
@@ -46,7 +47,7 @@ public class ModelSnapshotRequestBuilder extends BaseJobRequestBuilder<ModelSnap
      * @param value The number of snapshots to skip
      * @return this {@code Builder} object
      */
-    public ModelSnapshotRequestBuilder skip(long value)
+    public ModelSnapshotsRequestBuilder skip(long value)
     {
         m_Params.put(SKIP_QUERY_PARAM, Long.toString(value));
         return this;
@@ -58,7 +59,7 @@ public class ModelSnapshotRequestBuilder extends BaseJobRequestBuilder<ModelSnap
      * @param value The number of snapshots to request
      * @return this {@code Builder} object
      */
-    public ModelSnapshotRequestBuilder take(long value)
+    public ModelSnapshotsRequestBuilder take(long value)
     {
         m_Params.put(TAKE_QUERY_PARAM, Long.toString(value));
         return this;
@@ -71,7 +72,7 @@ public class ModelSnapshotRequestBuilder extends BaseJobRequestBuilder<ModelSnap
      * @param value The start date as seconds from the Epoch
      * @return this {@code Builder} object
      */
-    public ModelSnapshotRequestBuilder start(long value)
+    public ModelSnapshotsRequestBuilder start(long value)
     {
         m_Params.put(START_QUERY_PARAM, Long.toString(value));
         return this;
@@ -85,9 +86,9 @@ public class ModelSnapshotRequestBuilder extends BaseJobRequestBuilder<ModelSnap
      * @return this {@code Builder} object
      * @throws UnsupportedEncodingException If UTF-8 not supported
      */
-    public ModelSnapshotRequestBuilder start(String value) throws UnsupportedEncodingException
+    public ModelSnapshotsRequestBuilder start(String value) throws UnsupportedEncodingException
     {
-        m_Params.put(START_QUERY_PARAM, URLEncoder.encode(value, "UTF-8"));
+        m_Params.put(START_QUERY_PARAM, URLEncoder.encode(value, UTF8));
         return this;
     }
 
@@ -98,7 +99,7 @@ public class ModelSnapshotRequestBuilder extends BaseJobRequestBuilder<ModelSnap
      * @param value The end date as seconds from the Epoch
      * @return this {@code Builder} object
      */
-    public ModelSnapshotRequestBuilder end(long value)
+    public ModelSnapshotsRequestBuilder end(long value)
     {
         m_Params.put(END_QUERY_PARAM, Long.toString(value));
         return this;
@@ -113,9 +114,9 @@ public class ModelSnapshotRequestBuilder extends BaseJobRequestBuilder<ModelSnap
      * @return this {@code Builder} object
      * @throws UnsupportedEncodingException If UTF-8 not supported
      */
-    public ModelSnapshotRequestBuilder end(String value) throws UnsupportedEncodingException
+    public ModelSnapshotsRequestBuilder end(String value) throws UnsupportedEncodingException
     {
-        m_Params.put(END_QUERY_PARAM, URLEncoder.encode(value, "UTF-8"));
+        m_Params.put(END_QUERY_PARAM, URLEncoder.encode(value, UTF8));
         return this;
     }
 
@@ -125,7 +126,7 @@ public class ModelSnapshotRequestBuilder extends BaseJobRequestBuilder<ModelSnap
      * @param description The description to filter on
      * @return this {@code Builder} object
      */
-    public ModelSnapshotRequestBuilder description(String description)
+    public ModelSnapshotsRequestBuilder description(String description)
     {
         m_Params.put(ModelSnapshot.DESCRIPTION, description);
         return this;
@@ -137,7 +138,7 @@ public class ModelSnapshotRequestBuilder extends BaseJobRequestBuilder<ModelSnap
      * @param field The field to sort by
      * @return this {@code Builder} object
      */
-    public ModelSnapshotRequestBuilder sortField(String field)
+    public ModelSnapshotsRequestBuilder sortField(String field)
     {
         m_Params.put(SORT_QUERY_PARAM, field);
         return this;
@@ -149,26 +150,26 @@ public class ModelSnapshotRequestBuilder extends BaseJobRequestBuilder<ModelSnap
      * @param descending Should the sorting order be descending or not
      * @return this {@code Builder} object
      */
-    public ModelSnapshotRequestBuilder descending(boolean descending)
+    public ModelSnapshotsRequestBuilder descending(boolean descending)
     {
         m_Params.put(DESCENDING_ORDER, Boolean.toString(descending));
         return this;
     }
 
     /**
-     * Returns a single document with the snapshot that was requested
+     * Returns the page with the snapshot that was requested
      *
-     * @return A {@link SingleDocument} object containing the requested {@link ModelSnapshot} object
+     * @return A {@link Pagination} object containing the requested {@link ModelSnapshot} objects
      * @throws IOException If HTTP GET fails
      */
-    public ModelSnapshot get()
+    public Pagination<ModelSnapshot> get()
     throws IOException
     {
         StringBuilder url = new StringBuilder();
         url.append(baseUrl()).append(ENDPOINT).append(jobId());
         appendParams(m_Params, url);
-
-        return createHttpGetRequester().get(url.toString(), new TypeReference<ModelSnapshot>() {});
+        return createHttpGetRequester().getPage(url.toString(),
+                new TypeReference<Pagination<ModelSnapshot>>() {});
     }
 
 }

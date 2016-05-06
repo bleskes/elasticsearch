@@ -49,9 +49,11 @@ import static org.mockito.Mockito.when;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.GeneralSecurityException;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -112,9 +114,11 @@ import com.prelert.job.exceptions.TooManyJobsException;
 import com.prelert.job.logging.JobLoggerFactory;
 import com.prelert.job.messages.Messages;
 import com.prelert.job.password.PasswordManager;
+import com.prelert.job.persistence.BatchedDocumentsIterator;
 import com.prelert.job.persistence.DataStoreException;
 import com.prelert.job.persistence.JobDataDeleterFactory;
 import com.prelert.job.persistence.JobProvider;
+import com.prelert.job.persistence.MockBatchedDocumentsIterator;
 import com.prelert.job.persistence.QueryPage;
 import com.prelert.job.process.autodetect.ProcessManager;
 import com.prelert.job.process.exceptions.MalformedJsonException;
@@ -1207,7 +1211,7 @@ public class JobManagerTest
     }
 
     @Test
-    public void testRestartScheduledJobs_GivenNonScheduledJobAndJobWithStartedScheduler()
+    public void testSetupScheduledJobs_GivenNonScheduledJobAndJobWithStartedScheduler()
             throws NoSuchScheduledJobException, UnknownJobException,
             CannotStartSchedulerException, LicenseViolationException,
             JobConfigurationException, JobIdAlreadyExistsException, IOException, InterruptedException
@@ -1224,9 +1228,9 @@ public class JobManagerTest
         schedulerState.setStartTimeMillis(0L);
         schedulerState.setEndTimeMillis(null);
 
-        QueryPage<JobDetails> jobsPage = new QueryPage<>(
-                Arrays.asList(nonScheduledJob, scheduledJob), 2);
-        when(m_JobProvider.getJobs(0, 10000)).thenReturn(jobsPage);
+        BatchedDocumentsIterator<JobDetails> jobIterator = newBatchedJobsIterator(
+                Arrays.asList(nonScheduledJob, scheduledJob));
+        when(m_JobProvider.newBatchedJobsIterator()).thenReturn(jobIterator);
         when(m_JobProvider.getSchedulerState("scheduled")).thenReturn(Optional.of(schedulerState));
 
         Logger jobLogger = mock(Logger.class);
@@ -1237,7 +1241,7 @@ public class JobManagerTest
         givenProcessInfo(2);
         JobManager jobManager = createJobManager();
 
-        jobManager.restartScheduledJobs();
+        jobManager.setupScheduledJobs();
 
         Thread.sleep(200);
 
@@ -1252,7 +1256,57 @@ public class JobManagerTest
     }
 
     @Test
-    public void testRestartScheduledJobs_GivenJobWithStoppedScheduler() throws NoSuchScheduledJobException, UnknownJobException,
+    public void testSetupScheduledJobs_GivenJobWithStartedSchedulerAndAutorestartIsDisabled()
+            throws NoSuchScheduledJobException, UnknownJobException,
+            CannotStartSchedulerException, LicenseViolationException,
+            JobConfigurationException, JobIdAlreadyExistsException, IOException, InterruptedException
+    {
+        System.setProperty("scheduler.autorestart", "false");
+
+        JobConfiguration jobConfig = createScheduledJobConfig();
+        JobDetails scheduledJob = new JobDetails("scheduled", jobConfig);
+        DataCounts dataCounts = new DataCounts();
+        dataCounts.setLatestRecordTimeStamp(new Date(0));
+        scheduledJob.setCounts(dataCounts);
+        scheduledJob.setSchedulerStatus(JobSchedulerStatus.STARTED);
+        SchedulerState schedulerState = new SchedulerState();
+        schedulerState.setStartTimeMillis(0L);
+        schedulerState.setEndTimeMillis(null);
+
+        BatchedDocumentsIterator<JobDetails> jobIterator = newBatchedJobsIterator(
+                Arrays.asList(scheduledJob));
+        when(m_JobProvider.newBatchedJobsIterator()).thenReturn(jobIterator);
+        when(m_JobProvider.getSchedulerState("scheduled")).thenReturn(Optional.of(schedulerState));
+
+        Logger jobLogger = mock(Logger.class);
+        when(m_JobLoggerFactory.newLogger("scheduled")).thenReturn(jobLogger);
+        DataExtractor dataExtractor = mock(DataExtractor.class);
+        when(m_DataExtractorFactory.newExtractor(any(JobDetails.class))).thenReturn(dataExtractor);
+
+        givenProcessInfo(2);
+        JobManager jobManager = createJobManager();
+
+        jobManager.setupScheduledJobs();
+
+        Thread.sleep(200);
+
+        jobManager.shutdown();
+
+        verify(m_DataExtractorFactory).newExtractor(scheduledJob);
+
+        // Verify scheduler status was updated to STOPPED
+        verify(m_JobProvider).updateJob(eq("scheduled"), m_JobUpdateCaptor.capture());
+        Map<String, Object> jobUpdate = m_JobUpdateCaptor.getValue();
+        assertEquals(JobSchedulerStatus.STOPPED, jobUpdate.get(JobDetails.SCHEDULER_STATUS));
+
+        // Verify no other calls to factories - means no job was scheduled
+        Mockito.verifyNoMoreInteractions(m_JobLoggerFactory, m_DataExtractorFactory);
+
+        System.clearProperty("scheduler.autorestart");
+    }
+
+    @Test
+    public void testSetupScheduledJobs_GivenJobWithStoppedScheduler() throws NoSuchScheduledJobException, UnknownJobException,
             CannotStartSchedulerException, LicenseViolationException,
             JobConfigurationException, JobIdAlreadyExistsException, IOException, InterruptedException
     {
@@ -1263,8 +1317,9 @@ public class JobManagerTest
         scheduledJob.setCounts(dataCounts);
         scheduledJob.setSchedulerStatus(JobSchedulerStatus.STOPPED);
 
-        QueryPage<JobDetails> jobsPage = new QueryPage<>(Arrays.asList(scheduledJob), 1);
-        when(m_JobProvider.getJobs(0, 10000)).thenReturn(jobsPage);
+        BatchedDocumentsIterator<JobDetails> jobIterator = newBatchedJobsIterator(
+                Arrays.asList(scheduledJob));
+        when(m_JobProvider.newBatchedJobsIterator()).thenReturn(jobIterator);
 
         DataExtractor dataExtractor = mock(DataExtractor.class);
         when(m_DataExtractorFactory.newExtractor(any(JobDetails.class))).thenReturn(dataExtractor);
@@ -1272,7 +1327,7 @@ public class JobManagerTest
         givenProcessInfo(2);
         JobManager jobManager = createJobManager();
 
-        jobManager.restartScheduledJobs();
+        jobManager.setupScheduledJobs();
 
         verify(m_DataExtractorFactory).newExtractor(scheduledJob);
         jobManager.checkJobHasScheduler("scheduled");
@@ -1284,7 +1339,7 @@ public class JobManagerTest
     }
 
     @Test
-    public void testRestartScheduledJobs_GivenJobWithStoppingScheduler() throws JobException
+    public void testSetupScheduledJobs_GivenJobWithStoppingScheduler() throws JobException
     {
         JobConfiguration jobConfig = createScheduledJobConfig();
         JobDetails scheduledJob = new JobDetails("scheduled", jobConfig);
@@ -1293,8 +1348,9 @@ public class JobManagerTest
         scheduledJob.setCounts(dataCounts);
         scheduledJob.setSchedulerStatus(JobSchedulerStatus.STOPPING);
 
-        QueryPage<JobDetails> jobsPage = new QueryPage<>(Arrays.asList(scheduledJob), 1);
-        when(m_JobProvider.getJobs(0, 10000)).thenReturn(jobsPage);
+        BatchedDocumentsIterator<JobDetails> jobIterator = newBatchedJobsIterator(
+                Arrays.asList(scheduledJob));
+        when(m_JobProvider.newBatchedJobsIterator()).thenReturn(jobIterator);
 
         DataExtractor dataExtractor = mock(DataExtractor.class);
         when(m_DataExtractorFactory.newExtractor(any(JobDetails.class))).thenReturn(dataExtractor);
@@ -1302,7 +1358,7 @@ public class JobManagerTest
         givenProcessInfo(2);
         JobManager jobManager = createJobManager();
 
-        jobManager.restartScheduledJobs();
+        jobManager.setupScheduledJobs();
 
         verify(m_DataExtractorFactory).newExtractor(scheduledJob);
         jobManager.checkJobHasScheduler("scheduled");
@@ -1345,7 +1401,7 @@ public class JobManagerTest
         modelSnapshot.setRestorePriority(1);
 
         QueryPage<ModelSnapshot> modelSnapshotPage = new QueryPage<>(Arrays.asList(modelSnapshot), 1);
-        when(m_JobProvider.modelSnapshots("foo", 0, 1, 0, 0, ModelSnapshot.TIMESTAMP, "", "my description")).thenReturn(modelSnapshotPage);
+        when(m_JobProvider.modelSnapshots("foo", 0, 1, 0, 0, ModelSnapshot.TIMESTAMP, true, "", "my description")).thenReturn(modelSnapshotPage);
         Logger jobLogger = mock(Logger.class);
         when(m_JobLoggerFactory.newLogger("foo")).thenReturn(jobLogger);
         ModelSnapshot revertedModelSnapshot = jobManager.revertToSnapshot("foo", 0, "", "my description", false);
@@ -1369,7 +1425,7 @@ public class JobManagerTest
         modelSnapshot.setRestorePriority(1);
 
         QueryPage<ModelSnapshot> modelSnapshotPage = new QueryPage<>(null, 0);
-        when(m_JobProvider.modelSnapshots("foo", 0, 1, 0, 0, ModelSnapshot.TIMESTAMP, "", "my description")).thenReturn(modelSnapshotPage);
+        when(m_JobProvider.modelSnapshots("foo", 0, 1, 0, 0, ModelSnapshot.TIMESTAMP, true, "", "my description")).thenReturn(modelSnapshotPage);
         Logger jobLogger = mock(Logger.class);
         when(m_JobLoggerFactory.newLogger("foo")).thenReturn(jobLogger);
         try
@@ -1476,8 +1532,8 @@ public class JobManagerTest
 
         QueryPage<ModelSnapshot> oldModelSnapshotPage = new QueryPage<>(Arrays.asList(oldModelSnapshot), 1);
         QueryPage<ModelSnapshot> clashingModelSnapshotPage = new QueryPage<>(null, 0);
-        when(m_JobProvider.modelSnapshots("foo", 0, 1, 0, 0, null, "123", null)).thenReturn(oldModelSnapshotPage);
-        when(m_JobProvider.modelSnapshots("foo", 0, 1, 0, 0, null, null, "new description")).thenReturn(clashingModelSnapshotPage);
+        when(m_JobProvider.modelSnapshots("foo", 0, 1, 0, 0, null, true, "123", null)).thenReturn(oldModelSnapshotPage);
+        when(m_JobProvider.modelSnapshots("foo", 0, 1, 0, 0, null, true, null, "new description")).thenReturn(clashingModelSnapshotPage);
 
         ModelSnapshot updatedModelSnapshot = jobManager.updateModelSnapshotDescription("foo", "123", "new description");
         assertNotNull(updatedModelSnapshot);
@@ -1492,7 +1548,7 @@ public class JobManagerTest
         JobManager jobManager = createJobManager();
 
         QueryPage<ModelSnapshot> oldModelSnapshotPage = new QueryPage<>(null, 0);
-        when(m_JobProvider.modelSnapshots("foo", 0, 1, 0, 0, null, "123", null)).thenReturn(oldModelSnapshotPage);
+        when(m_JobProvider.modelSnapshots("foo", 0, 1, 0, 0, null, true, "123", null)).thenReturn(oldModelSnapshotPage);
 
         m_ExpectedException.expect(NoSuchModelSnapshotException.class);
         m_ExpectedException.expectMessage("No matching model snapshot exists for job 'foo'");
@@ -1515,8 +1571,8 @@ public class JobManagerTest
 
         QueryPage<ModelSnapshot> oldModelSnapshotPage = new QueryPage<>(Arrays.asList(oldModelSnapshot), 1);
         QueryPage<ModelSnapshot> clashingModelSnapshotPage = new QueryPage<>(Arrays.asList(clashingModelSnapshot), 1);
-        when(m_JobProvider.modelSnapshots("foo", 0, 1, 0, 0, null, "123", null)).thenReturn(oldModelSnapshotPage);
-        when(m_JobProvider.modelSnapshots("foo", 0, 1, 0, 0, null, null, "new description")).thenReturn(clashingModelSnapshotPage);
+        when(m_JobProvider.modelSnapshots("foo", 0, 1, 0, 0, null, true, "123", null)).thenReturn(oldModelSnapshotPage);
+        when(m_JobProvider.modelSnapshots("foo", 0, 1, 0, 0, null, true, null, "new description")).thenReturn(clashingModelSnapshotPage);
 
         m_ExpectedException.expect(DescriptionAlreadyUsedException.class);
         m_ExpectedException.expectMessage("Model snapshot description 'new description' has already been used for job 'foo'");
@@ -1577,10 +1633,10 @@ public class JobManagerTest
         when(m_JobProvider.updateJob(eq("jobThatIsUnknown"), anyMapOf(String.class, Object.class)))
                 .thenThrow(new UnknownJobException("jobThatIsUnknown"));
 
-        List<JobDetails> jobs = Arrays.asList(jobThatHasSeenData, jobWithIgnoreDowntimeSet,
-                jobThatHasNotSeenData, jobWithNullCounts, jobThatIsUnknown);
-        QueryPage<JobDetails> jobsPage = new QueryPage<>(jobs, jobs.size());
-        when(m_JobProvider.getJobs(0, 10000)).thenReturn(jobsPage);
+        BatchedDocumentsIterator<JobDetails> jobIterator = newBatchedJobsIterator(
+                Arrays.asList(jobThatHasSeenData, jobWithIgnoreDowntimeSet, jobThatHasNotSeenData,
+                        jobWithNullCounts, jobThatIsUnknown));
+        when(m_JobProvider.newBatchedJobsIterator()).thenReturn(jobIterator);
 
         givenProcessInfo(2);
         JobManager jobManager = createJobManager();
@@ -2018,5 +2074,26 @@ public class JobManagerTest
             }
             return null;
         }
+    }
+
+    private static MockBatchedDocumentsIterator<JobDetails> newBatchedJobsIterator(List<JobDetails> jobs)
+    {
+        Deque<JobDetails> batch1 = new ArrayDeque<>();
+        Deque<JobDetails> batch2 = new ArrayDeque<>();
+        for (int i = 0; i < jobs.size(); i++)
+        {
+            if (i == 0)
+            {
+                batch1.add(jobs.get(i));
+            }
+            else
+            {
+                batch2.add(jobs.get(i));
+            }
+        }
+        List<Deque<JobDetails>> batches = new ArrayList<>();
+        batches.add(batch1);
+        batches.add(batch2);
+        return new MockBatchedDocumentsIterator<>(batches);
     }
 }

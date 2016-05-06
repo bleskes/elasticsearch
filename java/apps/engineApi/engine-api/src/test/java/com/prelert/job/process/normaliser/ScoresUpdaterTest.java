@@ -54,10 +54,10 @@ import org.mockito.MockitoAnnotations;
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.JobDetails;
 import com.prelert.job.UnknownJobException;
-import com.prelert.job.persistence.BatchedResultsIterator;
+import com.prelert.job.persistence.BatchedDocumentsIterator;
 import com.prelert.job.persistence.JobProvider;
 import com.prelert.job.persistence.JobRenormaliser;
-import com.prelert.job.persistence.MockBatchedResultsIterator;
+import com.prelert.job.persistence.MockBatchedDocumentsIterator;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
 import com.prelert.job.results.AnomalyRecord;
 import com.prelert.job.results.Bucket;
@@ -494,7 +494,7 @@ public class ScoresUpdaterTest
 
     private void givenBuckets(long startTime, long endTime, List<Deque<Bucket>> batches)
     {
-        BatchedResultsIterator<Bucket> iterator = new MockBatchedResultsIterator<Bucket>(startTime,
+        BatchedDocumentsIterator<Bucket> iterator = new MockBatchedDocumentsIterator<Bucket>(startTime,
                 endTime, batches);
         when(m_JobProvider.newBatchedBucketsIterator(JOB_ID)).thenReturn(iterator);
     }
@@ -509,7 +509,7 @@ public class ScoresUpdaterTest
     {
         List<Deque<Influencer>> batches = new ArrayList<>();
         batches.add(new ArrayDeque<>(influencers));
-        BatchedResultsIterator<Influencer> iterator = new MockBatchedResultsIterator<Influencer>(
+        BatchedDocumentsIterator<Influencer> iterator = new MockBatchedDocumentsIterator<Influencer>(
                 startTime, endTime, batches);
         when(m_JobProvider.newBatchedInfluencersIterator(JOB_ID)).thenReturn(iterator);
     }

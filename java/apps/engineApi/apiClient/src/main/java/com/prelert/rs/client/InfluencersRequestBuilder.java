@@ -89,7 +89,7 @@ public class InfluencersRequestBuilder extends BaseJobRequestBuilder<Influencer>
      */
     public InfluencersRequestBuilder start(String value) throws UnsupportedEncodingException
     {
-        m_Params.put(START_QUERY_PARAM, URLEncoder.encode(value, "UTF-8"));
+        m_Params.put(START_QUERY_PARAM, URLEncoder.encode(value, UTF8));
         return this;
     }
 
@@ -116,7 +116,7 @@ public class InfluencersRequestBuilder extends BaseJobRequestBuilder<Influencer>
      */
     public InfluencersRequestBuilder end(String value) throws UnsupportedEncodingException
     {
-        m_Params.put(END_QUERY_PARAM, URLEncoder.encode(value, "UTF-8"));
+        m_Params.put(END_QUERY_PARAM, URLEncoder.encode(value, UTF8));
         return this;
     }
 

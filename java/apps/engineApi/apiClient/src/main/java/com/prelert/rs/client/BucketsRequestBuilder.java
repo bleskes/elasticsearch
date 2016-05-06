@@ -137,7 +137,7 @@ public class BucketsRequestBuilder extends BaseJobRequestBuilder<Bucket>
      */
     public BucketsRequestBuilder start(String value) throws UnsupportedEncodingException
     {
-        m_Params.put(START_QUERY_PARAM, URLEncoder.encode(value, "UTF-8"));
+        m_Params.put(START_QUERY_PARAM, URLEncoder.encode(value, UTF8));
         return this;
     }
 
@@ -165,7 +165,7 @@ public class BucketsRequestBuilder extends BaseJobRequestBuilder<Bucket>
      */
     public BucketsRequestBuilder end(String value) throws UnsupportedEncodingException
     {
-        m_Params.put(END_QUERY_PARAM, URLEncoder.encode(value, "UTF-8"));
+        m_Params.put(END_QUERY_PARAM, URLEncoder.encode(value, UTF8));
         return this;
     }
 

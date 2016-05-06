@@ -33,7 +33,6 @@ import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayDeque;
 import java.util.Date;
 import java.util.Deque;
 import java.util.List;
@@ -251,12 +250,12 @@ public class OldDataRemover
         );
     }
 
-    private <T> void deleteBatchedData(BatchedResultsIterator<T> resultsIterator,
+    private <T> void deleteBatchedData(BatchedDocumentsIterator<T> resultsIterator,
             Consumer<T> deleteFunction)
     {
         while (resultsIterator.hasNext())
         {
-            Deque<T> batch = nextBatch(resultsIterator);
+            Deque<T> batch = resultsIterator.next();
             if (batch.isEmpty())
             {
                 return;
@@ -265,20 +264,6 @@ public class OldDataRemover
             {
                 deleteFunction.accept(result);
             }
-        }
-    }
-
-    private <T> Deque<T> nextBatch(BatchedResultsIterator<T> resultsIterator)
-    {
-        try
-        {
-            return resultsIterator.next();
-        }
-        catch (UnknownJobException e)
-        {
-            LOGGER.warn("Failed to retrieve results for job '" + e.getJobId() + "'. "
-                    + "The job appears to have been deleted.");
-            return new ArrayDeque<T>();
         }
     }
 
