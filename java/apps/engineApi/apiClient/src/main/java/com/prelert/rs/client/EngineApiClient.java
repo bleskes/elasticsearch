@@ -1145,6 +1145,19 @@ public class EngineApiClient implements Closeable
     }
 
     /**
+     * Returns a {@link ModelSnapshotsRequestBuilder} for the given job through which
+     * the request can be configured and executed
+     *
+     * @param jobId The jobId for which snapshots are requested
+     *
+     * @return A {@link ModelSnapshotsRequestBuilder}
+     */
+    public ModelSnapshotsRequestBuilder prepareGetModelSnapshots(String jobId)
+    {
+        return new ModelSnapshotsRequestBuilder(this, jobId);
+    }
+
+    /**
      * Stream data from <code>inputStream</code> to the preview service.
      *
      * @param jobId The Job's unique Id

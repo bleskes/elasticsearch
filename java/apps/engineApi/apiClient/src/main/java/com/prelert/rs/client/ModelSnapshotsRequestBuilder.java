@@ -27,9 +27,10 @@ import java.util.Map;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.prelert.job.ModelSnapshot;
-import com.prelert.rs.data.SingleDocument;
+import com.prelert.rs.data.Pagination;
 
-public class ModelSnapshotsRequestBuilder extends BaseJobRequestBuilder<ModelSnapshot> {
+public class ModelSnapshotsRequestBuilder extends BaseJobRequestBuilder<ModelSnapshot>
+{
     public static final String ENDPOINT = "/modelsnapshots/";
 
     private Map<String, String> m_Params;
@@ -87,7 +88,7 @@ public class ModelSnapshotsRequestBuilder extends BaseJobRequestBuilder<ModelSna
      */
     public ModelSnapshotsRequestBuilder start(String value) throws UnsupportedEncodingException
     {
-        m_Params.put(START_QUERY_PARAM, URLEncoder.encode(value, "UTF-8"));
+        m_Params.put(START_QUERY_PARAM, URLEncoder.encode(value, UTF8));
         return this;
     }
 
@@ -115,7 +116,7 @@ public class ModelSnapshotsRequestBuilder extends BaseJobRequestBuilder<ModelSna
      */
     public ModelSnapshotsRequestBuilder end(String value) throws UnsupportedEncodingException
     {
-        m_Params.put(END_QUERY_PARAM, URLEncoder.encode(value, "UTF-8"));
+        m_Params.put(END_QUERY_PARAM, URLEncoder.encode(value, UTF8));
         return this;
     }
 
@@ -156,19 +157,19 @@ public class ModelSnapshotsRequestBuilder extends BaseJobRequestBuilder<ModelSna
     }
 
     /**
-     * Returns a single document with the snapshot that was requested
+     * Returns the page with the snapshot that was requested
      *
-     * @return A {@link SingleDocument} object containing the requested {@link ModelSnapshot} object
+     * @return A {@link Pagination} object containing the requested {@link ModelSnapshot} objects
      * @throws IOException If HTTP GET fails
      */
-    public ModelSnapshot get()
+    public Pagination<ModelSnapshot> get()
     throws IOException
     {
         StringBuilder url = new StringBuilder();
         url.append(baseUrl()).append(ENDPOINT).append(jobId());
         appendParams(m_Params, url);
-
-        return createHttpGetRequester().get(url.toString(), new TypeReference<ModelSnapshot>() {});
+        return createHttpGetRequester().getPage(url.toString(),
+                new TypeReference<Pagination<ModelSnapshot>>() {});
     }
 
 }

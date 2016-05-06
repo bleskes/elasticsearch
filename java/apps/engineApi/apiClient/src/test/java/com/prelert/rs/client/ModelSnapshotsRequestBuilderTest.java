@@ -47,21 +47,21 @@ public class ModelSnapshotsRequestBuilderTest
     public void testGet_GivenNoOptionalParameters() throws IOException
     {
         new ModelSnapshotsRequestBuilder(m_Client, "foo").get();
-        verify(m_Client).get(eq(BASE_URL + "/modelsnapshots/foo"), any(), eq(true));
+        verify(m_Client).get(eq(BASE_URL + "/modelsnapshots/foo"), any());
     }
 
     @Test
     public void testGet_GivenSkipAndTake() throws IOException
     {
         new ModelSnapshotsRequestBuilder(m_Client, "foo").skip(42L).take(420L).get();
-        verify(m_Client).get(eq(BASE_URL + "/modelsnapshots/foo?skip=42&take=420"), any(), eq(true));
+        verify(m_Client).get(eq(BASE_URL + "/modelsnapshots/foo?skip=42&take=420"), any());
     }
 
     @Test
     public void testGet_GivenEpochStartAndEnd() throws IOException
     {
         new ModelSnapshotsRequestBuilder(m_Client, "foo").start(4200L).end(8400L).get();
-        verify(m_Client).get(eq(BASE_URL + "/modelsnapshots/foo?start=4200&end=8400"), any(), eq(true));
+        verify(m_Client).get(eq(BASE_URL + "/modelsnapshots/foo?start=4200&end=8400"), any());
     }
 
     @Test
@@ -71,21 +71,20 @@ public class ModelSnapshotsRequestBuilderTest
                 .start("2016-01-01T00:00:00Z").end("2016-02-01T00:00:00Z").get();
         verify(m_Client).get(
                 eq(BASE_URL + "/modelsnapshots/foo?start=2016-01-01T00%3A00%3A00Z&end=2016-02-01T00%3A00%3A00Z"),
-                any(), eq(true));
+                any());
     }
 
     @Test
     public void testGet_GivenSortAndOrder() throws IOException
     {
         new ModelSnapshotsRequestBuilder(m_Client, "foo").sortField("timestamp").descending(false).get();
-        verify(m_Client).get(eq(BASE_URL + "/modelsnapshots/foo?sort=timestamp&desc=false"), any(),
-                eq(true));
+        verify(m_Client).get(eq(BASE_URL + "/modelsnapshots/foo?sort=timestamp&desc=false"), any());
     }
 
     @Test
     public void testGet_GivenDescription() throws IOException
     {
         new ModelSnapshotsRequestBuilder(m_Client, "foo").description("foo").get();
-        verify(m_Client).get(eq(BASE_URL + "/modelsnapshots/foo?description=foo"), any(), eq(true));
+        verify(m_Client).get(eq(BASE_URL + "/modelsnapshots/foo?description=foo"), any());
     }
 }
