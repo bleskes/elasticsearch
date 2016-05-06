@@ -87,6 +87,8 @@ public class EngineApiClient implements Closeable
     private static final int MAX_BUFFER_SIZE = 4096 * 1024;
     private static final int MIN_BUFFER_GROWTH = 1024;
     private static final double BUFFER_GROWTH_FACTOR = 0.1;
+    private static final String UTF8 = "UTF-8";
+    private static final String APPLICATION_JSON = "application/json";
 
     private final String m_BaseUrl;
     private final ObjectMapper m_JsonMapper;
@@ -214,8 +216,8 @@ public class EngineApiClient implements Closeable
         LOGGER.debug("Create job: " + url);
 
         Request request = m_HttpClient.POST(url)
-                .header(HttpHeader.CONTENT_TYPE, "application/json")
-                .header(HttpHeader.CONTENT_ENCODING, "UTF-8")
+                .header(HttpHeader.CONTENT_TYPE, APPLICATION_JSON)
+                .header(HttpHeader.CONTENT_ENCODING, UTF8)
                 .content(new StringContentProvider(createJobPayload));
 
         ContentResponse response = executeRequest(request);
@@ -275,8 +277,8 @@ public class EngineApiClient implements Closeable
         LOGGER.debug("Validate detector " + detector + ", at: " + url);
 
         Request request = m_HttpClient.POST(url)
-                .header(HttpHeader.CONTENT_TYPE, "application/json")
-                .header(HttpHeader.CONTENT_ENCODING, "UTF-8")
+                .header(HttpHeader.CONTENT_TYPE, APPLICATION_JSON)
+                .header(HttpHeader.CONTENT_ENCODING, UTF8)
                 .content(new StringContentProvider(detector));
 
         ContentResponse response = executeRequest(request);
@@ -312,8 +314,8 @@ public class EngineApiClient implements Closeable
         LOGGER.debug("Validate transform " + transform + ", at: " + url);
 
         Request request = m_HttpClient.POST(url)
-                .header(HttpHeader.CONTENT_TYPE, "application/json")
-                .header(HttpHeader.CONTENT_ENCODING, "UTF-8")
+                .header(HttpHeader.CONTENT_TYPE, APPLICATION_JSON)
+                .header(HttpHeader.CONTENT_ENCODING, UTF8)
                 .content(new StringContentProvider(transform));
 
         ContentResponse response = executeRequest(request);
@@ -349,8 +351,8 @@ public class EngineApiClient implements Closeable
         LOGGER.debug("Validate transforms " + transforms + ", at: " + url);
 
         Request request = m_HttpClient.POST(url)
-                .header(HttpHeader.CONTENT_TYPE, "application/json")
-                .header(HttpHeader.CONTENT_ENCODING, "UTF-8")
+                .header(HttpHeader.CONTENT_TYPE, APPLICATION_JSON)
+                .header(HttpHeader.CONTENT_ENCODING, UTF8)
                 .content(new StringContentProvider(transforms));
 
         ContentResponse response = executeRequest(request);
@@ -389,8 +391,8 @@ public class EngineApiClient implements Closeable
 
         Request request = m_HttpClient.newRequest(url)
                 .method(HttpMethod.PUT)
-                .header(HttpHeader.CONTENT_TYPE, "application/json")
-                .header(HttpHeader.CONTENT_ENCODING, "UTF-8")
+                .header(HttpHeader.CONTENT_TYPE, APPLICATION_JSON)
+                .header(HttpHeader.CONTENT_ENCODING, UTF8)
                 .content(new StringContentProvider(updateJson));
 
         return executeRequest(request, "updating job");
@@ -416,8 +418,8 @@ public class EngineApiClient implements Closeable
 
         Request request = m_HttpClient.newRequest(url)
                 .method(HttpMethod.PUT)
-                .header(HttpHeader.CONTENT_TYPE, "application/json")
-                .header(HttpHeader.CONTENT_ENCODING, "UTF-8")
+                .header(HttpHeader.CONTENT_TYPE, APPLICATION_JSON)
+                .header(HttpHeader.CONTENT_ENCODING, UTF8)
                 .content(new StringContentProvider(json));
 
         ContentResponse response = executeRequest(request);
