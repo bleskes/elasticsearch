@@ -31,6 +31,15 @@
 # max.percent.outoforder.errors: 25
 
 # ------------------------------------------------------------------------------
+# These settings relate to the behavior of the Engine API upon restarting
+
+# Restart scheduled jobs that were not finished or stopped
+# scheduler.autorestart: true
+
+# Set ignoreDowntime to ONCE to all jobs that have no explicit setting
+# ignore.downtime.on.startup: true
+
+# ------------------------------------------------------------------------------
 # These settings relate to the Elasticsearch that we're storing our results in
 
 # Should we use the Elasticsearch Node Client (es-node) or Transport Client
@@ -68,10 +77,4 @@
 # to a number lower than the number of nodes in the Elasticsearch cluster
 # storing the Prelert results.
 # es.index.number_of_replicas: 0
-
-# ------------------------------------------------------------------------------
-# These settings relate to the lifecycle of the Engine API
-#
-# Should downtime (i.e. gap in data) be ignored after restarting the Engine API?
-# ignore.downtime.on.startup: true
 
