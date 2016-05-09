@@ -74,7 +74,7 @@ public class RenormalizationWindowDaysUpdaterTest
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_VALUE));
 
-        new RenormalizationWindowDaysUpdater(m_JobManager, "foo").prepareUpdate(node);
+        createUpdater("foo").prepareUpdate(node);
     }
 
 
@@ -90,7 +90,7 @@ public class RenormalizationWindowDaysUpdaterTest
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_VALUE));
 
-        new RenormalizationWindowDaysUpdater(m_JobManager, "foo").prepareUpdate(node);
+        createUpdater("foo").prepareUpdate(node);
     }
 
     @Test
@@ -99,9 +99,9 @@ public class RenormalizationWindowDaysUpdaterTest
     {
         JsonNode node = LongNode.valueOf(5);
 
-        new RenormalizationWindowDaysUpdater(m_JobManager, "foo").prepareUpdate(node);
+        createUpdater("bar").prepareUpdate(node);
 
-        verify(m_JobManager, never()).setRenormalizationWindowDays("foo", 5L);
+        verify(m_JobManager, never()).setRenormalizationWindowDays("bar", 5L);
     }
 
     @Test
@@ -110,7 +110,7 @@ public class RenormalizationWindowDaysUpdaterTest
     {
         JsonNode node = LongNode.valueOf(5);
 
-        RenormalizationWindowDaysUpdater updater = new RenormalizationWindowDaysUpdater(m_JobManager, "foo");
+        RenormalizationWindowDaysUpdater updater = createUpdater("foo");
         updater.prepareUpdate(node);
         updater.commit();
 
@@ -123,10 +123,15 @@ public class RenormalizationWindowDaysUpdaterTest
     {
         JsonNode node = NullNode.getInstance();
 
-        RenormalizationWindowDaysUpdater updater = new RenormalizationWindowDaysUpdater(m_JobManager, "foo");
+        RenormalizationWindowDaysUpdater updater = createUpdater("foo");
         updater.prepareUpdate(node);
         updater.commit();
 
         verify(m_JobManager).setRenormalizationWindowDays("foo", null);
+    }
+
+    private RenormalizationWindowDaysUpdater createUpdater(String jobId)
+    {
+        return new RenormalizationWindowDaysUpdater(m_JobManager, jobId, "renormalizationWindowDays");
     }
 }

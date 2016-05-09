@@ -44,9 +44,9 @@ class SchedulerConfigUpdater extends AbstractUpdater
 {
     private SchedulerConfig m_NewSchedulerConfig;
 
-    public SchedulerConfigUpdater(JobManager jobManager, String jobId)
+    public SchedulerConfigUpdater(JobManager jobManager, String jobId, String updateKey)
     {
-        super(jobManager, jobId);
+        super(jobManager, jobId, updateKey);
     }
 
     @Override

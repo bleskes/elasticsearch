@@ -69,7 +69,7 @@ public class IgnoreDowntimeUpdaterTest
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_VALUE));
 
-        new IgnoreDowntimeUpdater(m_JobManager, "foo").prepareUpdate(node);
+        createUpdater("foo").prepareUpdate(node);
     }
 
     @Test
@@ -83,7 +83,7 @@ public class IgnoreDowntimeUpdaterTest
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_VALUE));
 
-        new IgnoreDowntimeUpdater(m_JobManager, "foo").prepareUpdate(node);
+        createUpdater("foo").prepareUpdate(node);
     }
 
     @Test
@@ -91,10 +91,15 @@ public class IgnoreDowntimeUpdaterTest
     {
         TextNode node = TextNode.valueOf("once");
 
-        IgnoreDowntimeUpdater updater = new IgnoreDowntimeUpdater(m_JobManager, "foo");
+        IgnoreDowntimeUpdater updater =         createUpdater("foo");
         updater.prepareUpdate(node);
         updater.commit();
 
         verify(m_JobManager).updateIgnoreDowntime("foo", IgnoreDowntime.ONCE);
+    }
+
+    private IgnoreDowntimeUpdater createUpdater(String jobId)
+    {
+        return new IgnoreDowntimeUpdater(m_JobManager, jobId, "ignoreDowntime");
     }
 }

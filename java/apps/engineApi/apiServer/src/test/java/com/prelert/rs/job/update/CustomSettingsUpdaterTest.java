@@ -73,7 +73,7 @@ public class CustomSettingsUpdaterTest
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_VALUE));
 
-        new CustomSettingsUpdater(m_JobManager, "foo").prepareUpdate(node);
+        createUpdater("foo").prepareUpdate(node);
     }
 
     @Test
@@ -81,7 +81,7 @@ public class CustomSettingsUpdaterTest
     {
         JsonNode node = new ObjectMapper().readTree("{\"a\":1}");
 
-        new CustomSettingsUpdater(m_JobManager, "foo").prepareUpdate(node);
+        createUpdater("foo").prepareUpdate(node);
 
         Map<String, Object> expected = new HashMap<>();
         expected.put("a", 1);
@@ -93,12 +93,17 @@ public class CustomSettingsUpdaterTest
     {
         JsonNode node = new ObjectMapper().readTree("{\"a\":1}");
 
-        CustomSettingsUpdater updater = new CustomSettingsUpdater(m_JobManager, "foo");
+        CustomSettingsUpdater updater = createUpdater("foo");
         updater.prepareUpdate(node);
         updater.commit();
 
         Map<String, Object> expected = new HashMap<>();
         expected.put("a", 1);
         verify(m_JobManager).updateCustomSettings("foo", expected);
+    }
+
+    private CustomSettingsUpdater createUpdater(String jobId)
+    {
+        return new CustomSettingsUpdater(m_JobManager, jobId, "customSettings");
     }
 }

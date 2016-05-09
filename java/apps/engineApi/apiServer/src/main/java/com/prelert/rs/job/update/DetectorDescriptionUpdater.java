@@ -53,9 +53,9 @@ class DetectorDescriptionUpdater extends AbstractUpdater
 
     private List<UpdateParams> m_Updates;
 
-    public DetectorDescriptionUpdater(JobManager jobManager, String jobId)
+    public DetectorDescriptionUpdater(JobManager jobManager, String jobId, String updateKey)
     {
-        super(jobManager, jobId);
+        super(jobManager, jobId, updateKey);
         m_Updates = new ArrayList<>();
     }
 

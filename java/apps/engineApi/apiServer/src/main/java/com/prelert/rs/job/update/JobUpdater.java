@@ -58,6 +58,7 @@ public class JobUpdater
 {
     private static final Logger LOGGER = Logger.getLogger(JobUpdater.class);
 
+    private static final String ANALYSIS_LIMITS_KEY = "analysisLimits";
     private static final String BACKGROUND_PERSIST_INTERVAL_KEY = "backgroundPersistInterval";
     private static final String CUSTOM_SETTINGS = "customSettings";
     private static final String DETECTOR_KEY = "detectors";
@@ -85,16 +86,17 @@ public class JobUpdater
     private Map<String, Supplier<AbstractUpdater>> createUpdaterPerKeyMap()
     {
         return ImmutableMap.<String, Supplier<AbstractUpdater>>builder()
-                .put(BACKGROUND_PERSIST_INTERVAL_KEY, () -> new BackgroundPersistIntervalUpdater(m_JobManager, m_JobId))
-                .put(CUSTOM_SETTINGS, () -> new CustomSettingsUpdater(m_JobManager, m_JobId))
-                .put(DETECTOR_KEY, () -> new DetectorDescriptionUpdater(m_JobManager, m_JobId))
-                .put(JOB_DESCRIPTION_KEY, () -> new JobDescriptionUpdater(m_JobManager, m_JobId))
-                .put(IGNORE_DOWNTIME_KEY, () -> new IgnoreDowntimeUpdater(m_JobManager, m_JobId))
-                .put(MODEL_DEBUG_CONFIG_KEY, () -> new ModelDebugConfigUpdater(m_JobManager, m_JobId, m_ConfigWriter))
-                .put(RENORMALIZATION_WINDOW_DAYS_KEY, () -> new RenormalizationWindowDaysUpdater(m_JobManager, m_JobId))
-                .put(MODEL_SNAPSHOT_RETENTION_DAYS_KEY, () -> new ModelSnapshotRetentionDaysUpdater(m_JobManager, m_JobId))
-                .put(RESULTS_RETENTION_DAYS_KEY, () -> new ResultsRetentionDaysUpdater(m_JobManager, m_JobId))
-                .put(SCHEDULER_CONFIG_KEY, () -> new SchedulerConfigUpdater(m_JobManager, m_JobId))
+                .put(ANALYSIS_LIMITS_KEY, () -> new AnalysisLimitsUpdater(m_JobManager, m_JobId, ANALYSIS_LIMITS_KEY))
+                .put(BACKGROUND_PERSIST_INTERVAL_KEY, () -> new BackgroundPersistIntervalUpdater(m_JobManager, m_JobId, BACKGROUND_PERSIST_INTERVAL_KEY))
+                .put(CUSTOM_SETTINGS, () -> new CustomSettingsUpdater(m_JobManager, m_JobId, CUSTOM_SETTINGS))
+                .put(DETECTOR_KEY, () -> new DetectorDescriptionUpdater(m_JobManager, m_JobId, DETECTOR_KEY))
+                .put(JOB_DESCRIPTION_KEY, () -> new JobDescriptionUpdater(m_JobManager, m_JobId, JOB_DESCRIPTION_KEY))
+                .put(IGNORE_DOWNTIME_KEY, () -> new IgnoreDowntimeUpdater(m_JobManager, m_JobId, IGNORE_DOWNTIME_KEY))
+                .put(MODEL_DEBUG_CONFIG_KEY, () -> new ModelDebugConfigUpdater(m_JobManager, m_JobId, MODEL_DEBUG_CONFIG_KEY, m_ConfigWriter))
+                .put(RENORMALIZATION_WINDOW_DAYS_KEY, () -> new RenormalizationWindowDaysUpdater(m_JobManager, m_JobId, RENORMALIZATION_WINDOW_DAYS_KEY))
+                .put(MODEL_SNAPSHOT_RETENTION_DAYS_KEY, () -> new ModelSnapshotRetentionDaysUpdater(m_JobManager, m_JobId, MODEL_SNAPSHOT_RETENTION_DAYS_KEY))
+                .put(RESULTS_RETENTION_DAYS_KEY, () -> new ResultsRetentionDaysUpdater(m_JobManager, m_JobId, RESULTS_RETENTION_DAYS_KEY))
+                .put(SCHEDULER_CONFIG_KEY, () -> new SchedulerConfigUpdater(m_JobManager, m_JobId, SCHEDULER_CONFIG_KEY))
                 .build();
     }
 

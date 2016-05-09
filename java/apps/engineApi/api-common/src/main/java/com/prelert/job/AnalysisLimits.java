@@ -18,6 +18,8 @@
 
 package com.prelert.job;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -135,5 +137,16 @@ public class AnalysisLimits
     public int hashCode()
     {
         return Objects.hash(m_ModelMemoryLimit, m_CategorizationExamplesLimit);
+    }
+
+    public Map<String, Object> toMap()
+    {
+        Map<String, Object> map = new HashMap<>();
+        map.put(MODEL_MEMORY_LIMIT, m_ModelMemoryLimit);
+        if (m_CategorizationExamplesLimit != null)
+        {
+            map.put(CATEGORIZATION_EXAMPLES_LIMIT, m_CategorizationExamplesLimit);
+        }
+        return map;
     }
 }

@@ -39,9 +39,9 @@ abstract class AbstractLongUpdater extends AbstractUpdater
     private Long m_NewValue;
     private long m_MinVal;
 
-    public AbstractLongUpdater(JobManager jobManager, String jobId, long minVal)
+    public AbstractLongUpdater(JobManager jobManager, String jobId, String updateKey, long minVal)
     {
-        super(jobManager, jobId);
+        super(jobManager, jobId, updateKey);
         m_MinVal = minVal;
     }
 

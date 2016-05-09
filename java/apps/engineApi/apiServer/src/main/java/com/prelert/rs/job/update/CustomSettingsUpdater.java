@@ -39,9 +39,9 @@ class CustomSettingsUpdater extends AbstractUpdater
 {
     private Map<String, Object> m_NewCustomSettings;
 
-    public CustomSettingsUpdater(JobManager jobManager, String jobId)
+    public CustomSettingsUpdater(JobManager jobManager, String jobId, String updateKey)
     {
-        super(jobManager, jobId);
+        super(jobManager, jobId, updateKey);
     }
 
     @Override

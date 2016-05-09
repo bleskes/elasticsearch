@@ -42,9 +42,9 @@ class IgnoreDowntimeUpdater extends AbstractUpdater
 {
     private IgnoreDowntime m_NewIgnoreDowntime;
 
-    public IgnoreDowntimeUpdater(JobManager jobManager, String jobId)
+    public IgnoreDowntimeUpdater(JobManager jobManager, String jobId, String updateKey)
     {
-        super(jobManager, jobId);
+        super(jobManager, jobId, updateKey);
     }
 
     @Override

@@ -99,6 +99,10 @@ public final class Messages
     public static final String JOB_CONFIG_OVERLAPPING_BUCKETS_INCOMPATIBLE_FUNCTION = "job.config.overlapping.buckets.incompatible.function";
     public static final String JOB_CONFIG_OVERFIELD_NEEDS_ANOTHER = "job.config.overField.needs.another";
 
+
+    public static final String JOB_CONFIG_UPDATE_ANALYSIS_LIMITS_PARSE_ERROR = "job.config.update.analysis.limits.parse.error";
+    public static final String JOB_CONFIG_UPDATE_ANALYSIS_LIMITS_CANNOT_BE_NULL = "job.config.update.analysis.limits.cannot.be.null";
+    public static final String JOB_CONFIG_UPDATE_ANALYSIS_LIMITS_MODEL_MEMORY_LIMIT_CANNOT_BE_DECREASED = "job.config.update.analysis.limits.model.memory.limit.cannot.be.decreased";
     public static final String JOB_CONFIG_UPDATE_CUSTOM_SETTINGS_INVALID = "job.config.update.custom.settings.invalid";
     public static final String JOB_CONFIG_UPDATE_DESCRIPTION_INVALID = "job.config.update.description.invalid";
     public static final String JOB_CONFIG_UPDATE_DETECTOR_DESCRIPTION_INVALID = "job.config.update.detector.description.invalid";
@@ -109,6 +113,7 @@ public final class Messages
     public static final String JOB_CONFIG_UPDATE_DETECTOR_DESCRIPTION_FAILED = "job.config.update.detector.description.failed";
     public static final String JOB_CONFIG_UPDATE_INVALID_KEY = "job.config.update.invalid.key";
     public static final String JOB_CONFIG_UPDATE_IGNORE_DOWNTIME_PARSE_ERROR = "job.config.update.ignore.downtime.parse.error";
+    public static final String JOB_CONFIG_UPDATE_JOB_IS_NOT_CLOSED = "job.config.update.job.is.not.closed";
     public static final String JOB_CONFIG_UPDATE_MODEL_DEBUG_CONFIG_PARSE_ERROR = "job.config.update.model.debug.config.parse.error";
     public static final String JOB_CONFIG_UPDATE_NO_OBJECT = "job.config.update.no.object";
     public static final String JOB_CONFIG_UPDATE_PARSE_ERROR = "job.config.update.parse.error";

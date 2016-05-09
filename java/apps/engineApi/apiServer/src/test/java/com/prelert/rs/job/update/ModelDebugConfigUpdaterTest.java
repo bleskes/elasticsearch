@@ -78,7 +78,7 @@ public class ModelDebugConfigUpdaterTest
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_VALUE));
 
-        new ModelDebugConfigUpdater(m_JobManager, "foo", m_ConfigWriter).prepareUpdate(node);
+        createUpdater("foo").prepareUpdate(node);
     }
 
     @Test
@@ -92,7 +92,7 @@ public class ModelDebugConfigUpdaterTest
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_VALUE));
 
-        new ModelDebugConfigUpdater(m_JobManager, "foo", m_ConfigWriter).prepareUpdate(node);
+        createUpdater("foo").prepareUpdate(node);
     }
 
     @Test
@@ -101,7 +101,7 @@ public class ModelDebugConfigUpdaterTest
         String update = "{\"boundsPercentile\":67.3, \"terms\":\"a,b\"}";
         JsonNode node = new ObjectMapper().readTree(update);
 
-        new ModelDebugConfigUpdater(m_JobManager, "foo", m_ConfigWriter).prepareUpdate(node);
+        createUpdater("foo").prepareUpdate(node);
 
         verify(m_JobManager, never()).setModelDebugConfig("foo", new ModelDebugConfig(null, 67.3, "a,b"));
     }
@@ -112,7 +112,7 @@ public class ModelDebugConfigUpdaterTest
         String update = "{\"boundsPercentile\":67.3, \"terms\":\"a,b\"}";
         JsonNode node = new ObjectMapper().readTree(update);
 
-        ModelDebugConfigUpdater updater = new ModelDebugConfigUpdater(m_JobManager, "foo", m_ConfigWriter);
+        ModelDebugConfigUpdater updater = createUpdater("foo");
         updater.prepareUpdate(node);
         updater.commit();
 
@@ -126,12 +126,17 @@ public class ModelDebugConfigUpdaterTest
     {
         JsonNode node = NullNode.getInstance();
 
-        ModelDebugConfigUpdater updater = new ModelDebugConfigUpdater(m_JobManager, "foo", m_ConfigWriter);
+        ModelDebugConfigUpdater updater = createUpdater("foo");
         updater.prepareUpdate(node);
         updater.commit();
 
         verify(m_JobManager).setModelDebugConfig("foo", null);
         String expectedConfig = "[modelDebugConfig]\nboundspercentile = -1.0\nterms = \n";
         assertEquals(expectedConfig, m_ConfigWriter.toString());
+    }
+
+    private ModelDebugConfigUpdater createUpdater(String jobId)
+    {
+        return new ModelDebugConfigUpdater(m_JobManager, jobId, "modelDebugConfig", m_ConfigWriter);
     }
 }

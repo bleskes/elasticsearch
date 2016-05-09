@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -30,6 +30,8 @@ package com.prelert.job;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+
+import java.util.Map;
 
 import org.junit.Test;
 
@@ -103,5 +105,30 @@ public class AnalysisLimitsTest
         AnalysisLimits analysisLimits2 = new AnalysisLimits(5555, 3L);
 
         assertEquals(analysisLimits1.hashCode(), analysisLimits2.hashCode());
+    }
+
+    @Test
+    public void testToMap_GivenDefault()
+    {
+        AnalysisLimits defaultLimits = new AnalysisLimits();
+
+        Map<String, Object> map = defaultLimits.toMap();
+
+        assertEquals(1, map.size());
+        assertEquals(0L, map.get(AnalysisLimits.MODEL_MEMORY_LIMIT));
+    }
+
+    @Test
+    public void testToMap_GivenFullyPopulated()
+    {
+        AnalysisLimits limits = new AnalysisLimits();
+        limits.setCategorizationExamplesLimit(5L);
+        limits.setModelMemoryLimit(1000L);
+
+        Map<String, Object> map = limits.toMap();
+
+        assertEquals(2, map.size());
+        assertEquals(1000L, map.get(AnalysisLimits.MODEL_MEMORY_LIMIT));
+        assertEquals(5L, map.get(AnalysisLimits.CATEGORIZATION_EXAMPLES_LIMIT));
     }
 }

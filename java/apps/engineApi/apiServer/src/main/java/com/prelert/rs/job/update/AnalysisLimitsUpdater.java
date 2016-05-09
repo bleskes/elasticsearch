@@ -27,72 +27,81 @@
 
 package com.prelert.rs.job.update;
 
-import java.io.IOException;
-import java.io.StringWriter;
-
 import com.fasterxml.jackson.databind.JsonNode;
-import com.prelert.job.ModelDebugConfig;
+import com.prelert.job.AnalysisLimits;
+import com.prelert.job.JobDetails;
+import com.prelert.job.JobException;
 import com.prelert.job.UnknownJobException;
+import com.prelert.job.config.verification.AnalysisLimitsVerifier;
 import com.prelert.job.config.verification.JobConfigurationException;
-import com.prelert.job.config.verification.ModelDebugConfigVerifier;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.manager.JobManager;
 import com.prelert.job.messages.Messages;
-import com.prelert.job.process.writer.ModelDebugConfigWriter;
 import com.prelert.rs.provider.JobConfigurationParseException;
 
-class ModelDebugConfigUpdater extends AbstractUpdater
+class AnalysisLimitsUpdater extends AbstractUpdater
 {
-    private final StringWriter m_ConfigWriter;
-    private ModelDebugConfig m_NewConfig;
+    private AnalysisLimits m_NewLimits;
 
-    public ModelDebugConfigUpdater(JobManager jobManager, String jobId, String updateKey,
-            StringWriter configWriter)
+    public AnalysisLimitsUpdater(JobManager jobManager, String jobId, String updateKey)
     {
         super(jobManager, jobId, updateKey);
-        m_ConfigWriter = configWriter;
     }
 
     @Override
     void prepareUpdate(JsonNode node) throws UnknownJobException, JobConfigurationException
     {
+        JobDetails job = jobManager().getJobOrThrowIfUnknown(jobId());
+        checkJobIsClosed(job);
+        m_NewLimits = parseAnalysisLimits(node);
+        checkNotNull();
+        AnalysisLimitsVerifier.verify(m_NewLimits);
+        checkModelMemoryLimitIsNotDecreased(job);
+    }
+
+    private AnalysisLimits parseAnalysisLimits(JsonNode node) throws JobConfigurationException
+    {
         try
         {
-            m_NewConfig = JSON_MAPPER.convertValue(node, ModelDebugConfig.class);
-            if (m_NewConfig != null)
-            {
-                ModelDebugConfigVerifier.verify(m_NewConfig);
-            }
+            return JSON_MAPPER.convertValue(node, AnalysisLimits.class);
         }
         catch (IllegalArgumentException e)
         {
             throw new JobConfigurationParseException(
-                    Messages.getMessage(Messages.JOB_CONFIG_UPDATE_MODEL_DEBUG_CONFIG_PARSE_ERROR),
-                    e.getCause(), ErrorCodes.INVALID_VALUE);
+                    Messages.getMessage(Messages.JOB_CONFIG_UPDATE_ANALYSIS_LIMITS_PARSE_ERROR),
+                    e, ErrorCodes.INVALID_VALUE);
+        }
+    }
+
+    private void checkNotNull() throws JobConfigurationException
+    {
+        if (m_NewLimits == null)
+        {
+            throw new JobConfigurationException(
+                    Messages.getMessage(Messages.JOB_CONFIG_UPDATE_ANALYSIS_LIMITS_CANNOT_BE_NULL),
+                    ErrorCodes.INVALID_VALUE);
+        }
+    }
+
+    private void checkModelMemoryLimitIsNotDecreased(JobDetails job)
+            throws UnknownJobException, JobConfigurationException
+    {
+        AnalysisLimits analysisLimits = job.getAnalysisLimits();
+        long oldMemoryLimit = analysisLimits.getModelMemoryLimit();
+        long newMemoryLimit = m_NewLimits.getModelMemoryLimit();
+        if (newMemoryLimit < oldMemoryLimit)
+        {
+            throw new JobConfigurationException(
+                    Messages.getMessage(Messages.JOB_CONFIG_UPDATE_ANALYSIS_LIMITS_MODEL_MEMORY_LIMIT_CANNOT_BE_DECREASED,
+                            oldMemoryLimit, newMemoryLimit),
+                    ErrorCodes.INVALID_VALUE);
         }
     }
 
     @Override
-    void commit() throws JobConfigurationException, UnknownJobException
+    void commit() throws JobException
     {
-        jobManager().setModelDebugConfig(jobId(), m_NewConfig);
-        write(m_NewConfig);
+        jobManager().setAnalysisLimits(jobId(), m_NewLimits);
     }
 
-    private void write(ModelDebugConfig modelDebugConfig) throws JobConfigurationException
-    {
-        m_ConfigWriter.write("[modelDebugConfig]\n");
-        if (modelDebugConfig == null)
-        {
-            modelDebugConfig = new ModelDebugConfig(null, -1.0, null);
-        }
-        try
-        {
-            new ModelDebugConfigWriter(modelDebugConfig, m_ConfigWriter).write();
-        }
-        catch (IOException e)
-        {
-            throw new JobConfigurationException("Failed to write", null, e);
-        }
-    }
 }

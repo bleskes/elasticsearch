@@ -38,9 +38,9 @@ class JobDescriptionUpdater extends AbstractUpdater
 {
     private String m_NewDescription;
 
-    public JobDescriptionUpdater(JobManager jobManager, String jobId)
+    public JobDescriptionUpdater(JobManager jobManager, String jobId, String updateKey)
     {
-        super(jobManager, jobId);
+        super(jobManager, jobId, updateKey);
     }
 
     @Override

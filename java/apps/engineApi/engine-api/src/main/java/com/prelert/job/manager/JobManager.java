@@ -58,6 +58,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.prelert.app.Shutdownable;
+import com.prelert.job.AnalysisLimits;
 import com.prelert.job.DataCounts;
 import com.prelert.job.IgnoreDowntime;
 import com.prelert.job.JobConfiguration;
@@ -717,6 +718,19 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
             throws UnknownJobException
     {
         updateJobTopLevelKeyValue(jobId, JobDetails.IGNORE_DOWNTIME, ignoreDowntime);
+    }
+
+    /**
+     * Updates a job with new {@code AnalysisLimits}.
+     * @param jobId the job id
+     * @param newLimits the new limits
+     * @throws UnknownJobException if the job if unknown
+     */
+    public void setAnalysisLimits(String jobId, AnalysisLimits newLimits) throws UnknownJobException
+    {
+        Map<String, Object> update = new HashMap<>();
+        update.put(JobDetails.ANALYSIS_LIMITS, newLimits.toMap());
+        m_JobProvider.updateJob(jobId, update);
     }
 
     /**

@@ -74,7 +74,7 @@ public class BackgroundPersistIntervalUpdaterTest
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_VALUE));
 
-        new BackgroundPersistIntervalUpdater(m_JobManager, "foo").prepareUpdate(node);
+        createUpdater("foo").prepareUpdate(node);
     }
 
     @Test
@@ -89,7 +89,7 @@ public class BackgroundPersistIntervalUpdaterTest
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_VALUE));
 
-        new BackgroundPersistIntervalUpdater(m_JobManager, "foo").prepareUpdate(node);
+        createUpdater("foo").prepareUpdate(node);
     }
 
     @Test
@@ -98,7 +98,7 @@ public class BackgroundPersistIntervalUpdaterTest
     {
         JsonNode node = LongNode.valueOf(7200);
 
-        new BackgroundPersistIntervalUpdater(m_JobManager, "foo").prepareUpdate(node);
+        createUpdater("foo").prepareUpdate(node);
 
         verify(m_JobManager, never()).setBackgroundPersistInterval("foo", 7200L);
     }
@@ -109,8 +109,7 @@ public class BackgroundPersistIntervalUpdaterTest
     {
         JsonNode node = LongNode.valueOf(7200);
 
-        BackgroundPersistIntervalUpdater updater = new BackgroundPersistIntervalUpdater(
-                m_JobManager, "foo");
+        BackgroundPersistIntervalUpdater updater = createUpdater("foo");
         updater.prepareUpdate(node);
         updater.commit();
 
@@ -123,11 +122,15 @@ public class BackgroundPersistIntervalUpdaterTest
     {
         JsonNode node = NullNode.getInstance();
 
-        BackgroundPersistIntervalUpdater updater = new BackgroundPersistIntervalUpdater(
-                m_JobManager, "foo");
+        BackgroundPersistIntervalUpdater updater = createUpdater("foo");
         updater.prepareUpdate(node);
         updater.commit();
 
         verify(m_JobManager).setBackgroundPersistInterval("foo", null);
+    }
+
+    private BackgroundPersistIntervalUpdater createUpdater(String jobId)
+    {
+        return new BackgroundPersistIntervalUpdater(m_JobManager, jobId, "backgroundPersistInterval");
     }
 }

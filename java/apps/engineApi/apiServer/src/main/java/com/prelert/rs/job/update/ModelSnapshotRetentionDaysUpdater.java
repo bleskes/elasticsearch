@@ -33,9 +33,9 @@ import com.prelert.job.messages.Messages;
 
 class ModelSnapshotRetentionDaysUpdater extends AbstractLongUpdater
 {
-    public ModelSnapshotRetentionDaysUpdater(JobManager jobManager, String jobId)
+    public ModelSnapshotRetentionDaysUpdater(JobManager jobManager, String jobId, String updateKey)
     {
-        super(jobManager, jobId, 0);
+        super(jobManager, jobId, updateKey, 0);
     }
 
     @Override

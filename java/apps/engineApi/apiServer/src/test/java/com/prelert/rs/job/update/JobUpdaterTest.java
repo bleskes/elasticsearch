@@ -48,10 +48,12 @@ import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
 import com.prelert.job.AnalysisConfig;
+import com.prelert.job.AnalysisLimits;
 import com.prelert.job.Detector;
 import com.prelert.job.IgnoreDowntime;
 import com.prelert.job.JobDetails;
 import com.prelert.job.JobException;
+import com.prelert.job.JobStatus;
 import com.prelert.job.ModelDebugConfig;
 import com.prelert.job.SchedulerConfig;
 import com.prelert.job.SchedulerConfig.DataSource;
@@ -283,5 +285,30 @@ public class JobUpdaterTest
         expected.setScrollSize(1000);
 
         verify(m_JobManager).updateSchedulerConfig("foo", expected);
+    }
+
+    @Test
+    public void testUpdate_GivenValidAnalysisLimitsUpdate() throws JobException
+    {
+        AnalysisLimits analysisLimits = new AnalysisLimits();
+        analysisLimits.setModelMemoryLimit(100L);
+        analysisLimits.setCategorizationExamplesLimit(4L);
+        JobDetails job = new JobDetails();
+        job.setId("foo");
+        job.setStatus(JobStatus.CLOSED);
+        job.setAnalysisLimits(analysisLimits);
+        when(m_JobManager.getJobOrThrowIfUnknown("foo")).thenReturn(job);
+
+        String update = "{\"analysisLimits\": {"
+                + "\"modelMemoryLimit\":1000,"
+                + "\"categorizationExamplesLimit\":10"
+                + "}}";
+
+        new JobUpdater(m_JobManager, "foo").update(update);
+
+        AnalysisLimits newLimits = new AnalysisLimits();
+        newLimits.setModelMemoryLimit(1000L);
+        newLimits.setCategorizationExamplesLimit(10L);
+        verify(m_JobManager).setAnalysisLimits("foo", newLimits);
     }
 }

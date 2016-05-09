@@ -86,6 +86,7 @@ import org.mockito.stubbing.Stubber;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.prelert.job.AnalysisConfig;
+import com.prelert.job.AnalysisLimits;
 import com.prelert.job.DataCounts;
 import com.prelert.job.Detector;
 import com.prelert.job.IgnoreDowntime;
@@ -176,9 +177,6 @@ public class JobManagerTest
         assertTrue(diff.size() == 1);
         assertTrue(diff.contains("tom"));
     }
-
-
-
 
     @Test
     public void testCloseJob_GivenExistingJob() throws UnknownJobException, DataStoreException,
@@ -1963,6 +1961,27 @@ public class JobManagerTest
         verify(m_PasswordManager).secureStorage(newSchedulerConfig);
         verify(m_JobProvider).updateSchedulerConfig("foo", newSchedulerConfig);
         verify(m_DataExtractorFactory).newExtractor(job);
+    }
+
+    @Test
+    public void testSetAnalysisLimits() throws UnknownJobException
+    {
+        givenProcessInfo(2);
+        JobManager jobManager = createJobManager();
+
+        AnalysisLimits newLimits = new AnalysisLimits();
+        newLimits.setModelMemoryLimit(1L);
+        newLimits.setCategorizationExamplesLimit(2L);
+
+        jobManager.setAnalysisLimits("foo", newLimits);
+
+        verify(m_JobProvider).updateJob(eq("foo"), m_JobUpdateCaptor.capture());
+        @SuppressWarnings("unchecked")
+        Map<String, Object> capturedLimits = (Map<String, Object>) m_JobUpdateCaptor.getValue()
+                .get(JobDetails.ANALYSIS_LIMITS);
+        assertNotNull(capturedLimits);
+        assertEquals(1L, capturedLimits.get(AnalysisLimits.MODEL_MEMORY_LIMIT));
+        assertEquals(2L, capturedLimits.get(AnalysisLimits.CATEGORIZATION_EXAMPLES_LIMIT));
     }
 
     private void givenProcessInfo(int maxLicenseJobs)

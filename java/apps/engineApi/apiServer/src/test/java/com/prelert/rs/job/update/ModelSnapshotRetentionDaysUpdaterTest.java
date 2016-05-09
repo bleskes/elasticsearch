@@ -74,7 +74,7 @@ public class ModelSnapshotRetentionDaysUpdaterTest
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_VALUE));
 
-        new ModelSnapshotRetentionDaysUpdater(m_JobManager, "foo").prepareUpdate(node);
+        createUpdater("foo").prepareUpdate(node);
     }
 
     @Test
@@ -89,7 +89,7 @@ public class ModelSnapshotRetentionDaysUpdaterTest
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_VALUE));
 
-        new ModelSnapshotRetentionDaysUpdater(m_JobManager, "foo").prepareUpdate(node);
+        createUpdater("foo").prepareUpdate(node);
     }
 
     @Test
@@ -98,7 +98,7 @@ public class ModelSnapshotRetentionDaysUpdaterTest
     {
         JsonNode node = LongNode.valueOf(7);
 
-        new ModelSnapshotRetentionDaysUpdater(m_JobManager, "foo").prepareUpdate(node);
+        createUpdater("foo").prepareUpdate(node);
 
         verify(m_JobManager, never()).setModelSnapshotRetentionDays("foo", 7L);
     }
@@ -109,7 +109,7 @@ public class ModelSnapshotRetentionDaysUpdaterTest
     {
         JsonNode node = LongNode.valueOf(5);
 
-        ModelSnapshotRetentionDaysUpdater updater = new ModelSnapshotRetentionDaysUpdater(m_JobManager, "foo");
+        ModelSnapshotRetentionDaysUpdater updater = createUpdater("foo");
         updater.prepareUpdate(node);
         updater.commit();
 
@@ -122,10 +122,15 @@ public class ModelSnapshotRetentionDaysUpdaterTest
     {
         JsonNode node = NullNode.getInstance();
 
-        ModelSnapshotRetentionDaysUpdater updater = new ModelSnapshotRetentionDaysUpdater(m_JobManager, "foo");
+        ModelSnapshotRetentionDaysUpdater updater = createUpdater("foo");
         updater.prepareUpdate(node);
         updater.commit();
 
         verify(m_JobManager).setModelSnapshotRetentionDays("foo", null);
+    }
+
+    private ModelSnapshotRetentionDaysUpdater createUpdater(String jobId)
+    {
+        return new ModelSnapshotRetentionDaysUpdater(m_JobManager, jobId, "modelSnapshotRetentionDays");
     }
 }

@@ -34,9 +34,9 @@ import com.prelert.job.messages.Messages;
 
 class BackgroundPersistIntervalUpdater extends AbstractLongUpdater
 {
-    public BackgroundPersistIntervalUpdater(JobManager jobManager, String jobId)
+    public BackgroundPersistIntervalUpdater(JobManager jobManager, String jobId, String updateKey)
     {
-        super(jobManager, jobId, JobConfigurationVerifier.MIN_BACKGROUND_PERSIST_INTERVAL);
+        super(jobManager, jobId, updateKey, JobConfigurationVerifier.MIN_BACKGROUND_PERSIST_INTERVAL);
     }
 
     @Override

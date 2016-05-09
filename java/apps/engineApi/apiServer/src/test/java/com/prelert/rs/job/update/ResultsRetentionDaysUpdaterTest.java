@@ -74,7 +74,7 @@ public class ResultsRetentionDaysUpdaterTest
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_VALUE));
 
-        new ResultsRetentionDaysUpdater(m_JobManager, "foo").prepareUpdate(node);
+        createUpdater("foo").prepareUpdate(node);
     }
 
     @Test
@@ -89,7 +89,7 @@ public class ResultsRetentionDaysUpdaterTest
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_VALUE));
 
-        new ResultsRetentionDaysUpdater(m_JobManager, "foo").prepareUpdate(node);
+        createUpdater("foo").prepareUpdate(node);
     }
 
     @Test
@@ -98,7 +98,7 @@ public class ResultsRetentionDaysUpdaterTest
     {
         JsonNode node = LongNode.valueOf(5);
 
-        new ResultsRetentionDaysUpdater(m_JobManager, "foo").prepareUpdate(node);
+        createUpdater("foo").prepareUpdate(node);
 
         verify(m_JobManager, never()).setResultsRetentionDays("foo", 5L);
     }
@@ -109,7 +109,7 @@ public class ResultsRetentionDaysUpdaterTest
     {
         JsonNode node = LongNode.valueOf(5);
 
-        ResultsRetentionDaysUpdater updater = new ResultsRetentionDaysUpdater(m_JobManager, "foo");
+        ResultsRetentionDaysUpdater updater = createUpdater("foo");
         updater.prepareUpdate(node);
         updater.commit();
 
@@ -122,10 +122,15 @@ public class ResultsRetentionDaysUpdaterTest
     {
         JsonNode node = NullNode.getInstance();
 
-        ResultsRetentionDaysUpdater updater = new ResultsRetentionDaysUpdater(m_JobManager, "foo");
+        ResultsRetentionDaysUpdater updater = createUpdater("foo");
         updater.prepareUpdate(node);
         updater.commit();
 
         verify(m_JobManager).setResultsRetentionDays("foo", null);
+    }
+
+    private ResultsRetentionDaysUpdater createUpdater(String jobId)
+    {
+        return new ResultsRetentionDaysUpdater(m_JobManager, jobId, "resultsRetentionDays");
     }
 }

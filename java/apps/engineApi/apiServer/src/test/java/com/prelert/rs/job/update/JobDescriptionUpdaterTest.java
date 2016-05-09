@@ -72,7 +72,7 @@ public class JobDescriptionUpdaterTest
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_VALUE));
 
-        new JobDescriptionUpdater(m_JobManager, "foo").prepareUpdate(node);
+        createUpdater("foo").prepareUpdate(node);
     }
 
     @Test
@@ -81,7 +81,7 @@ public class JobDescriptionUpdaterTest
     {
         JsonNode node = TextNode.valueOf("blah blah...");
 
-        new JobDescriptionUpdater(m_JobManager, "foo").prepareUpdate(node);
+        createUpdater("foo").prepareUpdate(node);
 
         verify(m_JobManager, never()).setDescription("foo", "blah blah...");
     }
@@ -92,10 +92,15 @@ public class JobDescriptionUpdaterTest
     {
         JsonNode node = TextNode.valueOf("blah blah...");
 
-        JobDescriptionUpdater updater = new JobDescriptionUpdater(m_JobManager, "foo");
+        JobDescriptionUpdater updater = createUpdater("foo");
         updater.prepareUpdate(node);
         updater.commit();
 
         verify(m_JobManager).setDescription("foo", "blah blah...");
+    }
+
+    private JobDescriptionUpdater createUpdater(String jobId)
+    {
+        return new JobDescriptionUpdater(m_JobManager, jobId, "description");
     }
 }

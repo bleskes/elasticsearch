@@ -33,9 +33,9 @@ import com.prelert.job.messages.Messages;
 
 class RenormalizationWindowDaysUpdater extends AbstractLongUpdater
 {
-    public RenormalizationWindowDaysUpdater(JobManager jobManager, String jobId)
+    public RenormalizationWindowDaysUpdater(JobManager jobManager, String jobId, String updateKey)
     {
-        super(jobManager, jobId, 0);
+        super(jobManager, jobId, updateKey, 0);
     }
 
     @Override
