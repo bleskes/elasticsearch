@@ -35,6 +35,7 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.nullValue;
+import static org.hamcrest.Matchers.sameInstance;
 
 public class MonitoringBulkRequestTests extends ESTestCase {
 
@@ -134,8 +135,10 @@ public class MonitoringBulkRequestTests extends ESTestCase {
 
             String defaultMonitoringId = randomBoolean() ? randomAsciiOfLength(2) : null;
             String defaultMonitoringVersion = randomBoolean() ? randomAsciiOfLength(3) : null;
-            String defaultIndex = randomBoolean() ? randomAsciiOfLength(5) : null;
+            String defaultIndex = randomFrom("_data", null);
             String defaultType = randomBoolean() ? randomAsciiOfLength(4) : null;
+
+            MonitoringIndex index = MonitoringIndex.from(defaultIndex);
 
             MonitoringBulkRequest request = new MonitoringBulkRequest();
             request.add(content.bytes(), defaultMonitoringId, defaultMonitoringVersion, defaultIndex, defaultType);
@@ -144,7 +147,7 @@ public class MonitoringBulkRequestTests extends ESTestCase {
             for (MonitoringBulkDoc doc : request.getDocs()) {
                 assertThat(doc.getMonitoringId(), equalTo(defaultMonitoringId));
                 assertThat(doc.getMonitoringVersion(), equalTo(defaultMonitoringVersion));
-                assertThat(doc.getIndex(), equalTo(defaultIndex));
+                assertThat(doc.getIndex(), sameInstance(index));
                 assertThat(doc.getType(), equalTo(defaultType));
             }
         }
@@ -159,7 +162,7 @@ public class MonitoringBulkRequestTests extends ESTestCase {
             doc.setType(randomFrom("type1", "type2", "type3"));
             doc.setSource(SOURCE);
             if (randomBoolean()) {
-                doc.setIndex("index");
+                doc.setIndex(MonitoringIndex.DATA);
             }
             if (randomBoolean()) {
                 doc.setId(randomAsciiOfLength(3));
