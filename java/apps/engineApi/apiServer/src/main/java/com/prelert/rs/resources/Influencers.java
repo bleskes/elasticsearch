@@ -78,7 +78,11 @@ public class Influencers extends ResourceWithJobManager
                 boolean includeInterim)
     throws UnknownJobException
     {
-        LOGGER.debug("Get influencers for job '" + jobId + "'");
+        LOGGER.debug(String.format("Get influencers for job %s. skip = %d, take = %d"
+                + " start = '%s', end='%s', sort='%s' descending=%b"
+                + ", anomaly score filter=%f, %s interim results",
+                jobId, skip, take, start, end, sort, descending,
+                anomalyScoreFilter, includeInterim ? "including" : "excluding"));
 
         new PaginationParamsValidator(skip, take).validate();
 

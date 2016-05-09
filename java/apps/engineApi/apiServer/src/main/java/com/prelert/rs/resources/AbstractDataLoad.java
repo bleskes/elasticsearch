@@ -349,8 +349,11 @@ public abstract class AbstractDataLoad extends ResourceWithJobManager
             @DefaultValue("") @QueryParam(ADVANCE_TIME_PARAM) String advanceTime)
     throws UnknownJobException, NativeProcessRunException, JobInUseException
     {
-        LOGGER.debug("Post to flush data upload for job " + jobId +
-                     " with " + CALC_INTERIM_PARAM + '=' + calcInterim);
+        LOGGER.debug(String.format(
+                "Post to flush data upload for job " + jobId
+                        + " with calcInterim=%b, start=%s, end=%s, advanceTime=%s",
+                calcInterim, start, end, advanceTime));
+
         checkJobIsNotScheduled(jobId);
         checkValidFlushArgumentsCombination(calcInterim, start, end);
         TimeRange timeRange = createTimeRange(START_QUERY_PARAM, start, END_QUERY_PARAM, end);
