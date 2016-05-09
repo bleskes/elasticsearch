@@ -7,7 +7,7 @@ admin:
     - names: '*'
       privileges: [ all ]
 
-__es_system_role:
+_system:
   cluster:
     - all
   indices:
