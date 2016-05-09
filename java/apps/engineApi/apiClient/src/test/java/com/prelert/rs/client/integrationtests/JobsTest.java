@@ -1600,6 +1600,153 @@ public class JobsTest implements Closeable
         error = m_WebServiceClient.getLastError();
         test(error != null);
         test(error.getErrorCode() == ErrorCodes.MISSING_LOG_FILE);
+
+        // Get the support bundle
+        boolean gotJobAutodetectLog = false;
+        boolean gotJobEngineLog = false;
+        boolean gotJobNormalizeLog = false;
+        boolean gotESInfo = false;
+        boolean gotESPrelert = false;
+        boolean gotEngineAlertsLongpoll = false;
+        boolean gotEngineBasic = false;
+        boolean gotEngineLog = false;
+        boolean gotEngineApiInfo = false;
+        boolean gotServerJson = false;
+
+        try (ZipInputStream zip = m_WebServiceClient.downloadSupportBundle())
+        {
+            String prefix = "prelert_support_bundle" + File.separator;
+            String es = "elasticsearch";
+            String engine = "engine_api";
+            ZipEntry entry = zip.getNextEntry();
+            test(entry != null);
+            do
+            {
+                if (entry.getName().equals(prefix + jobId + File.separator + "autodetect_api.log"))
+                {
+                    gotJobAutodetectLog = true;
+                }
+                else if (entry.getName().equals(prefix + jobId + File.separator + "engine_api.log"))
+                {
+                    gotJobEngineLog = true;
+                }
+                else if (entry.getName().equals(prefix + jobId + File.separator + "normalize_api.log"))
+                {
+                    gotJobNormalizeLog = true;
+                }
+                else if (entry.getName().equals(prefix + es + File.separator + "elasticsearch_info.log"))
+                {
+                    gotESInfo = true;
+                }
+                else if (entry.getName().equals(prefix + es + File.separator + "prelert.log"))
+                {
+                    gotESPrelert = true;
+                }
+                else if (entry.getName().equals(prefix + engine + File.separator + "alerts_longpoll.log"))
+                {
+                    gotEngineAlertsLongpoll = true;
+                }
+                else if (entry.getName().equals(prefix + engine + File.separator + "basic_info.log"))
+                {
+                    gotEngineBasic = true;
+                }
+                else if (entry.getName().equals(prefix + engine + File.separator + "engine_api.log"))
+                {
+                    gotEngineLog = true;
+                }
+                else if (entry.getName().equals(prefix + engine + File.separator + "engine_api_info.log"))
+                {
+                    gotEngineApiInfo = true;
+                }
+                else if (entry.getName().equals(prefix + engine + File.separator + "server.json"))
+                {
+                    gotServerJson = true;
+                }
+                entry = zip.getNextEntry();
+            }
+            while (entry != null);
+        }
+        test(gotJobAutodetectLog);
+        test(gotJobEngineLog);
+        test(gotJobNormalizeLog);
+        test(gotESInfo);
+        test(gotESPrelert);
+        test(gotEngineAlertsLongpoll);
+        test(gotEngineBasic);
+        test(gotEngineLog);
+        test(gotEngineApiInfo);
+        test(gotServerJson);
+
+        // Get the engine logs
+        gotEngineAlertsLongpoll = false;
+        gotEngineBasic = false;
+        gotEngineLog = false;
+        gotEngineApiInfo = false;
+        gotServerJson = false;
+
+        try (ZipInputStream zip = m_WebServiceClient.downloadEngineLogs())
+        {
+            String engine = "engine_api";
+            ZipEntry entry = zip.getNextEntry();
+            test(entry != null);
+            do
+            {
+                if (entry.getName().equals(engine + File.separator + "alerts_longpoll.log"))
+                {
+                    gotEngineAlertsLongpoll = true;
+                }
+                else if (entry.getName().equals(engine + File.separator + "basic_info.log"))
+                {
+                    gotEngineBasic = true;
+                }
+                else if (entry.getName().equals(engine + File.separator + "engine_api.log"))
+                {
+                    gotEngineLog = true;
+                }
+                else if (entry.getName().equals(engine + File.separator + "engine_api_info.log"))
+                {
+                    gotEngineApiInfo = true;
+                }
+                else if (entry.getName().equals(engine + File.separator + "server.json"))
+                {
+                    gotServerJson = true;
+                }
+                entry = zip.getNextEntry();
+            }
+            while (entry != null);
+        }
+        test(gotEngineAlertsLongpoll);
+        test(gotEngineBasic);
+        test(gotEngineLog);
+        test(gotEngineApiInfo);
+        test(gotServerJson);
+
+        // Get the Elasticsearch logs
+        gotESInfo = false;
+        gotESPrelert = false;
+
+        try (ZipInputStream zip = m_WebServiceClient.downloadElasticsearchLogs())
+        {
+            String es = "elasticsearch";
+            ZipEntry entry = zip.getNextEntry();
+            test(entry != null);
+            do
+            {
+                if (entry.getName().equals(es + File.separator + "elasticsearch_info.log"))
+                {
+                    gotESInfo = true;
+                }
+                else if (entry.getName().equals(es + File.separator + "prelert.log"))
+                {
+                    gotESPrelert = true;
+                }
+                entry = zip.getNextEntry();
+            }
+            while (entry != null);
+        }
+        test(gotESInfo);
+        test(gotESPrelert);
+
     }
 
 
