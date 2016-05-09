@@ -327,13 +327,13 @@ public abstract class AbstractDataLoad extends ResourceWithJobManager
      * @param calcInterim Should interim results be calculated based on the data
      * up to the point of the flush?
      * @param advanceTime Should time be advanced
-     * @param start If {@code calcInterim} is {@code true}, then interim results are calculated
-     * only for non-final buckets that are from {@code start} time onwards. If {@code advanceTime}
-     * is {@code true}, then {@code start} is not expected to be specified and interim results
-     * will be calculated for all non-final buckets after the point where time was advanced.
-     * @param end If {@code calcInterim} is {@code true}, then interim results are calculated
-     * only for non-final buckets that before {@code end}. If {@code advanceTime} is {@code true},
-     * then time is advanced to {@code end}.
+     * @param start A non empty value is only accepted if {@code calcInterim} is {@code true}.
+     * Interim results will be calculated only for non-final buckets that are from {@code start}
+     * time onwards. If {@code end} is empty, then interim results will only be calculated for the
+     * bucket specified by {@code start}.
+     * @param end A non empty value is only accepted if {@code calcInterim} is {@code true} and
+     * {@code start} is not empty. Specifies the end time up until which interim results will be
+     * calculated.
      * @return
      * @throws UnknownJobException
      * @throws NativeProcessRunException
