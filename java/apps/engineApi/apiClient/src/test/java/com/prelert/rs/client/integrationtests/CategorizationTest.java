@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -75,7 +75,7 @@ public class CategorizationTest implements Closeable
             "highestAnomalyRecordProbabilityThreshold";
 
     private static final long BUCKET_SPAN = 3600;
-    private static final int EXPECTED_CATEGORIES = 49;
+    private static final int EXPECTED_CATEGORIES = 48;
     private static final int DEFAULT_EXAMPLES_BY_CATEGORY_LIMIT = 4;
 
     private static final String COUNT_DEFAULT_EXAMPLES_LIMIT_ID =
@@ -327,7 +327,7 @@ public class CategorizationTest implements Closeable
         expectedResultsForCount.put(HIGHEST_ANOMALY_BUCKET_ID, "1428678000");
         expectedResultsForCount.put(HIGHEST_ANOMALY_SCORE_THRESHOLD, 91.0);
         expectedResultsForCount.put(HIGHEST_RECORD_PROBABILITY_THRESHOLD, 99.0);
-        expectedResultsForCount.put(HIGHEST_ANOMALY_CATEGORY_ID, "43");
+        expectedResultsForCount.put(HIGHEST_ANOMALY_CATEGORY_ID, "42");
 
         try (CategorizationTest test = new CategorizationTest(prelertTestDataHome, baseUrl,
                 COUNT_DEFAULT_EXAMPLES_LIMIT_ID, "count", expectedResultsForCount))
