@@ -391,7 +391,7 @@ public enum ErrorCodes
     MISSING_LOG_FILE(50102),
 
     /**
-     * The name of the log file path contains "\\" or "/"
+     * The name of the log file contains "\\" or "/"
      * or it is not a subdirectory of the logs directory
      */
     INVALID_LOG_FILE_PATH(50103),

@@ -376,7 +376,7 @@ public class JobLogs
     {
         Path filePath = sanitizePath(
                             FileSystems.getDefault().getPath(ProcessCtrl.LOG_DIR, jobId),
-                            jobId);
+                            ProcessCtrl.LOG_DIR);
 
         return zippedLogFiles(filePath.toFile(), jobId);
     }

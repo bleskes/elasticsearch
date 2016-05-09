@@ -24,9 +24,7 @@
  *                                                          *
  *                                                          *
  ************************************************************/
-
 package com.prelert.rs.resources;
-
 
 import java.io.IOException;
 
