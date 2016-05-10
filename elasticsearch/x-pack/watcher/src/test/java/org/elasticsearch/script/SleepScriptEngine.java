@@ -19,6 +19,7 @@ package org.elasticsearch.script;
 
 import org.elasticsearch.common.Nullable;
 import org.elasticsearch.plugins.Plugin;
+import org.elasticsearch.script.ScriptMode;
 import org.elasticsearch.search.lookup.SearchLookup;
 
 import java.io.IOException;
@@ -51,7 +52,7 @@ public class SleepScriptEngine implements ScriptEngineService {
         }
 
         public void onModule(ScriptModule module) {
-            module.addScriptEngine(new ScriptEngineRegistry.ScriptEngineRegistration(SleepScriptEngine.class, SleepScriptEngine.TYPES));
+            module.addScriptEngine(new ScriptEngineRegistry.ScriptEngineRegistration(SleepScriptEngine.class, SleepScriptEngine.TYPES, ScriptMode.ON));
         }
 
     }
