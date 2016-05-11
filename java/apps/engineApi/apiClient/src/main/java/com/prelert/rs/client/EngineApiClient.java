@@ -173,8 +173,7 @@ public class EngineApiClient implements Closeable
     public SingleDocument<JobDetails> getJob(String jobId)
     throws IOException
     {
-        jobId = encode(jobId);
-        String url = m_BaseUrl + "/jobs/" + jobId;
+        String url = m_BaseUrl + "/jobs/" + encode(jobId);
         LOGGER.debug("GET job: " + url);
 
         SingleDocument<JobDetails> doc = get(url,
@@ -435,8 +434,7 @@ public class EngineApiClient implements Closeable
      */
     public boolean updateJob(String jobId, String updateJson) throws IOException
     {
-        jobId = encode(jobId);
-        String url = m_BaseUrl + "/jobs/" + jobId + "/update";
+        String url = m_BaseUrl + "/jobs/" + encode(jobId) + "/update";
         LOGGER.debug("PUT update job: " + url);
 
         Request request = m_HttpClient.newRequest(url)
@@ -462,9 +460,7 @@ public class EngineApiClient implements Closeable
     public SingleDocument<ModelSnapshot> setModelSnapshotDescription(String jobId, String snapshotId, String description)
     throws IOException
     {
-        jobId = encode(jobId);
-        snapshotId = encode(snapshotId);
-        String url = m_BaseUrl + "/modelsnapshots/" + jobId + "/" + snapshotId + "/description";
+        String url = m_BaseUrl + "/modelsnapshots/" + encode(jobId) + "/" + encode(snapshotId) + "/description";
         LOGGER.debug("PUT update ModelSnapshot description: " + url);
         String json = "{\"description\":\"" + description + "\"}";
 
@@ -499,9 +495,7 @@ public class EngineApiClient implements Closeable
             String description, boolean deleteInterveningResults)
     throws IOException
     {
-        jobId = encode(jobId);
-        description = encode(description);
-        String url = m_BaseUrl + "/modelsnapshots/" + jobId + "/revert?description=" + description
+        String url = m_BaseUrl + "/modelsnapshots/" + encode(jobId) + "/revert?description=" + encode(description)
                 + "&deleteInterveningResults=" + (deleteInterveningResults ? "true" : "false");
 
         LOGGER.debug("POST revert ModelSnapshot by description: " + url);
@@ -522,9 +516,7 @@ public class EngineApiClient implements Closeable
             String time, boolean deleteInterveningResults)
     throws IOException
     {
-        jobId = encode(jobId);
-        time = encode(time);
-        String url = m_BaseUrl + "/modelsnapshots/" + jobId + "/revert?time=" + time
+        String url = m_BaseUrl + "/modelsnapshots/" + encode(jobId) + "/revert?time=" + encode(time)
                 + "&deleteInterveningResults=" + (deleteInterveningResults ? "true" : "false");
         LOGGER.debug("POST revert ModelSnapshot by time: " + url);
         return revertModelSnapshot(url);
@@ -544,9 +536,7 @@ public class EngineApiClient implements Closeable
             String snapshotId, boolean deleteInterveningResults)
     throws IOException
     {
-        jobId = encode(jobId);
-        snapshotId = encode(snapshotId);
-        String url = m_BaseUrl + "/modelsnapshots/" + jobId + "/revert?snapshotId=" + snapshotId
+        String url = m_BaseUrl + "/modelsnapshots/" + encode(jobId) + "/revert?snapshotId=" + encode(snapshotId)
                 + "&deleteInterveningResults=" + (deleteInterveningResults ? "true" : "false");
         LOGGER.debug("POST revert ModelSnapshot by snapshotId: " + url);
         return revertModelSnapshot(url);
@@ -572,9 +562,7 @@ public class EngineApiClient implements Closeable
     public boolean deleteModelSnapshot(String jobId, String snapshotId)
     throws IOException
     {
-        jobId = encode(jobId);
-        snapshotId = encode(snapshotId);
-        String url = m_BaseUrl + "/modelsnapshots/" + jobId + "/" + snapshotId;
+        String url = m_BaseUrl + "/modelsnapshots/" + encode(jobId) + "/" + encode(snapshotId);
         LOGGER.debug("DELETE ModelSnapshot: " + url);
         return executeRequest(m_HttpClient.newRequest(url).method(HttpMethod.DELETE),
                 "deleting snapshot");
@@ -631,8 +619,7 @@ public class EngineApiClient implements Closeable
      */
     public boolean deleteJob(String jobId) throws IOException
     {
-        jobId = encode(jobId);
-        String url = m_BaseUrl + "/jobs/" + jobId;
+        String url = m_BaseUrl + "/jobs/" + encode(jobId);
         LOGGER.debug("DELETE job: " + url);
 
         return executeRequest(m_HttpClient.newRequest(url).method(HttpMethod.DELETE),
@@ -650,8 +637,7 @@ public class EngineApiClient implements Closeable
      */
     public boolean pauseJob(String jobId) throws IOException
     {
-        jobId = encode(jobId);
-        String url = m_BaseUrl + "/jobs/" + jobId + "/pause";
+        String url = m_BaseUrl + "/jobs/" + encode(jobId) + "/pause";
         LOGGER.debug("Pause job: " + url);
         return executeRequest(m_HttpClient.newRequest(url).method(HttpMethod.POST),
                 "pausing job");
@@ -667,8 +653,7 @@ public class EngineApiClient implements Closeable
      */
     public boolean resumeJob(String jobId) throws IOException
     {
-        jobId = encode(jobId);
-        String url = m_BaseUrl + "/jobs/" + jobId + "/resume";
+        String url = m_BaseUrl + "/jobs/" + encode(jobId) + "/resume";
         LOGGER.debug("Resume job: " + url);
         return executeRequest(m_HttpClient.newRequest(url).method(HttpMethod.POST),
                 "resuming job");
@@ -684,8 +669,7 @@ public class EngineApiClient implements Closeable
      */
     public boolean startScheduler(String jobId) throws IOException
     {
-        jobId = encode(jobId);
-        String url = m_BaseUrl + "/schedulers/" + jobId + "/start";
+        String url = m_BaseUrl + "/schedulers/" + encode(jobId) + "/start";
         LOGGER.debug("Start scheduler: " + url);
         return executeRequest(m_HttpClient.newRequest(url).method(HttpMethod.POST),
                 "starting scheduler");
@@ -703,10 +687,8 @@ public class EngineApiClient implements Closeable
      */
     public boolean startScheduler(String jobId, String start, String end) throws IOException
     {
-        jobId = encode(jobId);
-        end = encode(end);
-        start = encode(start);
-        String url = String.format("%s/schedulers/%s/start?start=%s&end=%s", m_BaseUrl, jobId, start, end);
+        String url = String.format("%s/schedulers/%s/start?start=%s&end=%s", m_BaseUrl,
+                encode(jobId), encode(start), encode(end));
         LOGGER.debug("Start scheduler: " + url);
         return executeRequest(m_HttpClient.newRequest(url).method(HttpMethod.POST),
                 "starting scheduler");
@@ -722,8 +704,7 @@ public class EngineApiClient implements Closeable
      */
     public boolean stopScheduler(String jobId) throws IOException
     {
-        jobId = encode(jobId);
-        String url = m_BaseUrl + "/schedulers/" + jobId + "/stop";
+        String url = m_BaseUrl + "/schedulers/" + encode(jobId) + "/stop";
         LOGGER.debug("Stop scheduler: " + url);
         return executeRequest(m_HttpClient.newRequest(url).method(HttpMethod.POST),
                 "stopping scheduler");
@@ -745,8 +726,7 @@ public class EngineApiClient implements Closeable
     public MultiDataPostResult chunkedUpload(String jobId, InputStream inputStream)
             throws IOException
     {
-        jobId = encode(jobId);
-        String postUrl = m_BaseUrl + "/data/" + jobId;
+        String postUrl = m_BaseUrl + "/data/" + encode(jobId);
         LOGGER.debug("Uploading chunked data to " + postUrl);
 
         byte [] buffer = new byte[MAX_BUFFER_SIZE];
@@ -827,8 +807,7 @@ public class EngineApiClient implements Closeable
             String resetStart, String resetEnd)
     throws IOException
     {
-        jobId = encode(jobId);
-        String postUrl = String.format("%s/data/%s", m_BaseUrl, jobId);
+        String postUrl = String.format("%s/data/%s", m_BaseUrl, encode(jobId));
         if (!Strings.isNullOrEmpty(resetStart) || !Strings.isNullOrEmpty(resetEnd))
         {
             postUrl += String.format("?resetStart=%s&resetEnd=%s",
@@ -1123,9 +1102,8 @@ public class EngineApiClient implements Closeable
     public boolean closeJob(String jobId)
     throws IOException
     {
-        jobId = encode(jobId);
         // Send finish message
-        String closeUrl = m_BaseUrl + "/data/" + jobId + "/close";
+        String closeUrl = m_BaseUrl + "/data/" + encode(jobId) + "/close";
         LOGGER.debug("Closing job " + closeUrl);
 
         ContentResponse response = executeRequest(m_HttpClient.POST(closeUrl));
@@ -1253,8 +1231,7 @@ public class EngineApiClient implements Closeable
     public String previewUpload(String jobId, InputStream inputStream)
     throws IOException
     {
-        jobId = encode(jobId);
-        String postUrl = String.format("%s/preview/%s", m_BaseUrl, jobId);
+        String postUrl = String.format("%s/preview/%s", m_BaseUrl, encode(jobId));
         return uploadStream(inputStream, postUrl, false, "", false, content -> content);
     }
 
@@ -1281,9 +1258,8 @@ public class EngineApiClient implements Closeable
      */
     public String tailLog(String jobId, int lineCount) throws IOException
     {
-        jobId = encode(jobId);
         String url = String.format("%s/logs/%s/tail?lines=%d",
-                m_BaseUrl, jobId, lineCount);
+                m_BaseUrl, encode(jobId), lineCount);
 
         LOGGER.debug("GET tail log " + url);
 
@@ -1301,9 +1277,8 @@ public class EngineApiClient implements Closeable
      */
     public String tailLog(String jobId, String logfileName, int lineCount) throws IOException
     {
-        jobId = encode(jobId);
         String url = String.format("%s/logs/%s/%s/tail?lines=%d",
-                m_BaseUrl, jobId, logfileName, lineCount);
+                m_BaseUrl, encode(jobId), logfileName, lineCount);
 
         LOGGER.debug("GET tail log " + url);
 
@@ -1349,10 +1324,8 @@ public class EngineApiClient implements Closeable
      */
     public String downloadLog(String jobId, String logfileName) throws IOException
     {
-        jobId = encode(jobId);
-        logfileName = encode(logfileName);
         String url = String.format("%s/logs/%s/%s",
-                m_BaseUrl, jobId, logfileName);
+                m_BaseUrl, encode(jobId), encode(logfileName));
 
         LOGGER.debug("GET log file " + url);
 
@@ -1374,8 +1347,7 @@ public class EngineApiClient implements Closeable
      */
     public ZipInputStream downloadAllLogs(String jobId) throws IOException
     {
-        jobId = encode(jobId);
-        String url = String.format("%s/logs/%s", m_BaseUrl, jobId);
+        String url = String.format("%s/logs/%s", m_BaseUrl, encode(jobId));
 
         LOGGER.debug("GET download logs " + url);
 
