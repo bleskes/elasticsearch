@@ -28,6 +28,7 @@ import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.ByteBuffer;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
@@ -1026,7 +1027,24 @@ public class EngineApiClient implements Closeable
      */
     public boolean flushJob(String jobId, boolean calcInterim) throws IOException
     {
-        return flushJob(jobId, calcInterim, "", "");
+        return flushJob(jobId, calcInterim, null, "", "");
+    }
+
+    /**
+     * Flush the job, ensuring that no previously uploaded data is waiting in
+     * buffers.
+     *
+     * @param jobId The Job's unique Id
+     * @param calcInterim Should interim results for the selected buckets be calculated
+     * based on the partial data uploaded for it so far? Interim results will be calculated for
+     * all available buckets (most recent bucket plus latency buckets if latency was specified).
+     * @param advanceTime Finalize up to this time, and any ignore subsequent input with an earlier time
+     * @return True if successful
+     * @throws IOException If HTTP POST fails
+     */
+    public boolean flushJob(String jobId, boolean calcInterim, Date advanceTime) throws IOException
+    {
+        return flushJob(jobId, calcInterim, advanceTime, "", "");
     }
 
     /**
@@ -1046,12 +1064,34 @@ public class EngineApiClient implements Closeable
     public boolean flushJob(String jobId, boolean calcInterim, String start, String end)
             throws IOException
     {
-        jobId = encode(jobId);
-        start = encode(start);
-        end = encode(end);
+        return flushJob(jobId, calcInterim, null, start, end);
+    }
+
+    /**
+     * Flush the job, ensuring that no previously uploaded data is waiting in
+     * buffers.
+     *
+     * @param jobId The Job's unique Id
+     * @param calcInterim Should interim results for the selected buckets be calculated
+     * based on the partial data uploaded for it so far? If both {@code start} and {@code end} are
+     * empty, the default behaviour of calculating interim results for all available buckets
+     * (most recent bucket plus latency buckets if latency was specified) will be assumed.
+     * @param advanceTime Finalize up to this time, and any ignore subsequent input with an earlier time
+     * @param start The start of the time range to calculate interim results for (inclusive)
+     * @param end The end of the time range to calculate interim results for (exclusive)
+     * @return True if successful
+     * @throws IOException If HTTP POST fails
+     */
+    public boolean flushJob(String jobId, boolean calcInterim, Date advanceTime, String start, String end)
+            throws IOException
+    {
         // Send flush message
         String flushUrl = String.format(m_BaseUrl + "/data/%s/flush?calcInterim=%s&start=%s&end=%s",
-                jobId, calcInterim ? "true" : "false", start, end);
+                encode(jobId), calcInterim ? "true" : "false", encode(start), encode(end));
+        if (advanceTime != null)
+        {
+            flushUrl += "&advanceTime=" + advanceTime.getTime();
+        }
         LOGGER.debug("Flushing job " + flushUrl);
 
         ContentResponse response = executeRequest(m_HttpClient.POST(flushUrl));
