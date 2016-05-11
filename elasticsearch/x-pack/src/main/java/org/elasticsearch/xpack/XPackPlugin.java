@@ -39,7 +39,9 @@ import org.elasticsearch.script.ScriptModule;
 import org.elasticsearch.shield.Security;
 import org.elasticsearch.shield.authc.AuthenticationModule;
 import org.elasticsearch.xpack.action.TransportXPackInfoAction;
+import org.elasticsearch.xpack.action.TransportXPackUsageAction;
 import org.elasticsearch.xpack.action.XPackInfoAction;
+import org.elasticsearch.xpack.action.XPackUsageAction;
 import org.elasticsearch.xpack.common.http.HttpClientModule;
 import org.elasticsearch.xpack.common.init.LazyInitializationModule;
 import org.elasticsearch.xpack.common.init.LazyInitializationService;
@@ -49,6 +51,7 @@ import org.elasticsearch.xpack.extensions.XPackExtensionsService;
 import org.elasticsearch.xpack.notification.Notification;
 import org.elasticsearch.xpack.rest.action.RestXPackInfoAction;
 import org.elasticsearch.xpack.common.text.TextTemplateModule;
+import org.elasticsearch.xpack.rest.action.RestXPackUsageAction;
 import org.elasticsearch.xpack.watcher.Watcher;
 
 import java.nio.file.Path;
@@ -206,6 +209,7 @@ public class XPackPlugin extends Plugin {
     public void onModule(NetworkModule module) {
         if (!transportClientMode) {
             module.registerRestHandler(RestXPackInfoAction.class);
+            module.registerRestHandler(RestXPackUsageAction.class);
         }
         licensing.onModule(module);
         monitoring.onModule(module);
@@ -217,6 +221,7 @@ public class XPackPlugin extends Plugin {
     public void onModule(ActionModule module) {
         if (!transportClientMode) {
             module.registerAction(XPackInfoAction.INSTANCE, TransportXPackInfoAction.class);
+            module.registerAction(XPackUsageAction.INSTANCE, TransportXPackUsageAction.class);
         }
         licensing.onModule(module);
         monitoring.onModule(module);
