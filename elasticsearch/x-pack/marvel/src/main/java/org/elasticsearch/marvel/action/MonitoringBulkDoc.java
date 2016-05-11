@@ -26,14 +26,23 @@ import java.io.IOException;
 
 public class MonitoringBulkDoc extends MonitoringDoc {
 
-    private String index;
+    private MonitoringIndex index = MonitoringIndex.TIMESTAMPED;
     private String type;
     private String id;
-
     private BytesReference source;
 
     public MonitoringBulkDoc(String monitoringId, String monitoringVersion) {
         super(monitoringId, monitoringVersion);
+    }
+
+    public MonitoringBulkDoc(String monitoringId, String monitoringVersion,
+                             MonitoringIndex index, String type, String id,
+                             BytesReference source) {
+        super(monitoringId, monitoringVersion);
+        this.index = index;
+        this.type = type;
+        this.id = id;
+        this.source = source;
     }
 
     /**
@@ -41,7 +50,7 @@ public class MonitoringBulkDoc extends MonitoringDoc {
      */
     public MonitoringBulkDoc(StreamInput in) throws IOException {
         super(in);
-        index = in.readOptionalString();
+        index = MonitoringIndex.readFrom(in);
         type = in.readOptionalString();
         id = in.readOptionalString();
         source = in.readBytesReference();
@@ -50,17 +59,17 @@ public class MonitoringBulkDoc extends MonitoringDoc {
     @Override
     public void writeTo(StreamOutput out) throws IOException {
         super.writeTo(out);
-        out.writeOptionalString(index);
+        index.writeTo(out);
         out.writeOptionalString(type);
         out.writeOptionalString(id);
         out.writeBytesReference(source);
     }
 
-    public String getIndex() {
+    public MonitoringIndex getIndex() {
         return index;
     }
 
-    public void setIndex(String index) {
+    public void setIndex(MonitoringIndex index) {
         this.index = index;
     }
 
@@ -87,4 +96,5 @@ public class MonitoringBulkDoc extends MonitoringDoc {
     public void setSource(BytesReference source) {
         this.source = source;
     }
+
 }
