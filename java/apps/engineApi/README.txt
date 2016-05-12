@@ -14,7 +14,7 @@ data and querying results.
 
 Full documentation is available on the Prelert website:
 
-http://www.prelert.com/docs/engine_api/2.0/
+http://www.prelert.com/docs/engine_api/2.1/
 
 
 Getting Started
@@ -68,7 +68,7 @@ over HTTP.
 Before we start, please download the example CSV file from
 http://s3.amazonaws.com/prelert_demo/farequote.csv. Time series data are
 preferred to be ordered by date. (In case data cannot be sent in time order, see
-http://www.prelert.com/docs/engine_api/2.0/concepts/outofsequence.html.) The raw
+http://www.prelert.com/docs/engine_api/2.1/concepts/outofsequence.html.) The raw
 CSV data looks like this:
 
 time,airline,responsetime,sourcetype
@@ -346,7 +346,7 @@ Further information
 
 To view the full documentation, please visit:
 
-http://www.prelert.com/docs/engine_api/2.0/
+http://www.prelert.com/docs/engine_api/2.1/
 
 Code examples are also available from:
 
