@@ -156,14 +156,35 @@ public class AnalysisLimitsUpdaterTest
         verify(m_JobManager).setAnalysisLimits("foo", newLimits);
     }
 
-    private void givenJob(String jobId, JobStatus jobStatus, long memoryLimit) throws UnknownJobException
+    @Test
+    public void testPrepareUpdateAndCommit_GivenValidAndExistingLimitsIsNull()
+            throws JobException, IOException
     {
-        AnalysisLimits analysisLimits = new AnalysisLimits();
-        analysisLimits.setModelMemoryLimit(memoryLimit);
+        givenJob("foo", JobStatus.CLOSED, null);
+        String update = "{\"modelMemoryLimit\":43, \"categorizationExamplesLimit\": 5}";
+        JsonNode node = new ObjectMapper().readTree(update);
+
+        AnalysisLimitsUpdater updater = createUpdater("foo");
+        updater.prepareUpdate(node);
+        updater.commit();
+
+        AnalysisLimits newLimits = new AnalysisLimits();
+        newLimits.setModelMemoryLimit(43);
+        newLimits.setCategorizationExamplesLimit(5L);
+        verify(m_JobManager).setAnalysisLimits("foo", newLimits);
+    }
+
+    private void givenJob(String jobId, JobStatus jobStatus, Long memoryLimit) throws UnknownJobException
+    {
         JobDetails job = new JobDetails();
         job.setId(jobId);
         job.setStatus(jobStatus);
-        job.setAnalysisLimits(analysisLimits);
+        if (memoryLimit != null)
+        {
+            AnalysisLimits analysisLimits = new AnalysisLimits();
+            analysisLimits.setModelMemoryLimit(memoryLimit);
+            job.setAnalysisLimits(analysisLimits);
+        }
         when(m_JobManager.getJobOrThrowIfUnknown(jobId)).thenReturn(job);
     }
 
