@@ -87,6 +87,10 @@ class AnalysisLimitsUpdater extends AbstractUpdater
             throws UnknownJobException, JobConfigurationException
     {
         AnalysisLimits analysisLimits = job.getAnalysisLimits();
+        if (analysisLimits == null)
+        {
+            return;
+        }
         long oldMemoryLimit = analysisLimits.getModelMemoryLimit();
         long newMemoryLimit = m_NewLimits.getModelMemoryLimit();
         if (newMemoryLimit < oldMemoryLimit)
