@@ -60,9 +60,9 @@ import com.prelert.job.exceptions.LicenseViolationException;
 import com.prelert.job.logs.JobLogs;
 import com.prelert.job.manager.CannotPauseJobException;
 import com.prelert.job.manager.CannotResumeJobException;
-import com.prelert.job.manager.JobManager;
 import com.prelert.job.persistence.DataStoreException;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
+import com.prelert.job.reader.JobDataReader;
 import com.prelert.job.scheduler.CannotStartSchedulerException;
 import com.prelert.job.scheduler.CannotStopSchedulerException;
 import com.prelert.rs.data.Acknowledgement;
@@ -110,15 +110,15 @@ public class Jobs extends ResourceWithJobManager
     @Produces(MediaType.APPLICATION_JSON)
     public Pagination<JobDetails> jobs(
             @DefaultValue("0") @QueryParam("skip") int skip,
-            @DefaultValue(JobManager.DEFAULT_PAGE_SIZE_STR) @QueryParam("take") int take)
+            @DefaultValue(DEFAULT_PAGE_SIZE_STR) @QueryParam("take") int take)
     {
         LOGGER.debug(String.format("Get all jobs, skip=%d, take=%d", skip, take));
 
         new PaginationParamsValidator(skip, take).validate();
 
-        JobManager manager = jobManager();
+        JobDataReader reader = jobReader();
         Pagination<JobDetails> results = this.paginationFromQueryPage(
-                                                        manager.getJobs(skip, take), skip, take);
+                                                        reader.getJobs(skip, take), skip, take);
 
         setPagingUrls(ENDPOINT, results);
 
@@ -140,10 +140,10 @@ public class Jobs extends ResourceWithJobManager
     {
         LOGGER.debug("Get job '" + jobId + "'");
 
-        JobManager manager = jobManager();
+        JobDataReader reader = jobReader();
         SingleDocument<JobDetails> job;
 
-        Optional<JobDetails> result = manager.getJob(jobId);
+        Optional<JobDetails> result = reader.getJob(jobId);
         if (result.isPresent())
         {
             job = singleDocFromOptional(result, JobDetails.TYPE);

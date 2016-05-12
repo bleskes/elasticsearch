@@ -60,6 +60,7 @@ import com.prelert.job.persistence.OldDataRemover;
 import com.prelert.job.process.ProcessCtrl;
 import com.prelert.job.process.autodetect.ProcessFactory;
 import com.prelert.job.process.autodetect.ProcessManager;
+import com.prelert.job.reader.JobDataReader;
 import com.prelert.rs.data.extraction.DataExtractorFactoryImpl;
 import com.prelert.rs.persistence.ElasticsearchFactory;
 import com.prelert.rs.persistence.ElasticsearchNodeClientFactory;
@@ -143,6 +144,8 @@ public class PrelertWebApp extends Application
     private JobManager m_JobManager;
     private AlertManager m_AlertManager;
     private ServerInfoFactory m_ServerInfo;
+    private JobDataReader m_JobDataReader;
+
 
     private ScheduledExecutorService m_ServerStatsSchedule;
     private TaskScheduler m_OldDataRemoverSchedule;
@@ -167,6 +170,7 @@ public class PrelertWebApp extends Application
                 new DefaultJobLoggerFactory(ProcessCtrl.LOG_DIR));
         m_AlertManager = new AlertManager(jobProvider, m_JobManager);
         m_ServerInfo = esFactory.newServerInfoFactory();
+        m_JobDataReader = new JobDataReader(jobProvider);
 
         writeServerInfoDailyStartingNow();
         scheduleOldDataRemovalAtMidnight(jobProvider, esFactory);
@@ -176,6 +180,7 @@ public class PrelertWebApp extends Application
         m_Singletons.add(m_JobManager);
         m_Singletons.add(m_AlertManager);
         m_Singletons.add(m_ServerInfo);
+        m_Singletons.add(m_JobDataReader);
 
         m_ShutdownThreadBuilder.addTask(m_JobManager);
         // The job provider must be the last shutdown task, as earlier shutdown

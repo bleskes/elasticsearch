@@ -744,17 +744,6 @@ public class JobManagerTest
     }
 
     @Test
-    public void testGetJob() throws UnknownJobException
-    {
-        givenLicenseConstraints(2, 2, 0);
-        JobManager jobManager = createJobManager();
-        when(m_JobProvider.getJobDetails("foo")).thenReturn(Optional.of(new JobDetails()));
-
-        Optional<JobDetails> doc = jobManager.getJob("foo");
-        assertTrue(doc.isPresent());
-    }
-
-    @Test
     public void testGetJobOrThrowIfUnknown_GivenUnknownJob() throws UnknownJobException
     {
         givenLicenseConstraints(2, 2, 0);

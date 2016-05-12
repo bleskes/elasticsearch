@@ -48,6 +48,7 @@ import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.manager.JobManager;
 import com.prelert.job.messages.Messages;
 import com.prelert.job.persistence.QueryPage;
+import com.prelert.job.reader.JobDataReader;
 import com.prelert.rs.data.Pagination;
 import com.prelert.rs.data.SingleDocument;
 import com.prelert.rs.exception.ActionNotAllowedForScheduledJobException;
@@ -76,12 +77,27 @@ public abstract class ResourceWithJobManager
     private static final String NOW = "now";
 
     /**
+     * The default number of documents returned in queries as a string.
+     */
+    public static final String DEFAULT_PAGE_SIZE_STR = "100";
+
+    /**
+     * The default number of documents returned in queries.
+     */
+    public static final int DEFAULT_PAGE_SIZE;
+    static
+    {
+        DEFAULT_PAGE_SIZE = Integer.parseInt(DEFAULT_PAGE_SIZE_STR);
+    }
+
+    /**
      * Application context injected by the framework
      */
     @Context
     private Application m_RestApplication;
 
     private JobManager m_JobManager;
+    private JobDataReader m_JobReader;
     private AlertManager m_AlertManager;
     private ServerInfoFactory m_ServerInfo;
 
@@ -157,6 +173,15 @@ public abstract class ResourceWithJobManager
             m_ServerInfo = getSingleton(ServerInfoFactory.class);
         }
         return m_ServerInfo;
+    }
+
+    protected JobDataReader jobReader()
+    {
+        if (m_JobReader == null)
+        {
+            m_JobReader = getSingleton(JobDataReader.class);
+        }
+        return m_JobReader;
     }
 
     /**

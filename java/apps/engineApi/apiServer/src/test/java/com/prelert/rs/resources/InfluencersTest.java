@@ -90,7 +90,7 @@ public class InfluencersTest extends ServiceTest
         Influencer inf3 = new Influencer();
         QueryPage<Influencer> page = new QueryPage<>(Arrays.asList(inf1, inf2, inf3), 3);
 
-        when(jobManager().influencers(JOB_ID, 0, 100, 0, 0, null, false, 0.0, true)).thenReturn(page);
+        when(jobReader().influencers(JOB_ID, 0, 100, 0, 0, null, false, 0.0, true)).thenReturn(page);
 
         Pagination<Influencer> results = m_Influencers.influencers(JOB_ID, 0, 100, "", "", null,
                 false, 0.0, true);

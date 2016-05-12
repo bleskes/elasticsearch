@@ -57,10 +57,10 @@ import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.exceptions.JobInUseException;
 import com.prelert.job.manager.CannotDeleteSnapshotException;
 import com.prelert.job.manager.DescriptionAlreadyUsedException;
-import com.prelert.job.manager.JobManager;
 import com.prelert.job.messages.Messages;
 import com.prelert.job.persistence.QueryPage;
 import com.prelert.job.process.exceptions.MalformedJsonException;
+import com.prelert.job.reader.JobDataReader;
 import com.prelert.rs.data.Acknowledgement;
 import com.prelert.rs.data.Pagination;
 import com.prelert.rs.data.SingleDocument;
@@ -108,7 +108,7 @@ public class ModelSnapshots extends ResourceWithJobManager
     public Pagination<ModelSnapshot> modelSnapshots(
             @PathParam("jobId") String jobId,
             @DefaultValue("0") @QueryParam("skip") int skip,
-            @DefaultValue(JobManager.DEFAULT_PAGE_SIZE_STR) @QueryParam("take") int take,
+            @DefaultValue(DEFAULT_PAGE_SIZE_STR) @QueryParam("take") int take,
             @DefaultValue("") @QueryParam(START_QUERY_PARAM) String start,
             @DefaultValue("") @QueryParam(END_QUERY_PARAM) String end,
             @DefaultValue("") @QueryParam(SORT_QUERY_PARAM) String sortField,
@@ -126,10 +126,10 @@ public class ModelSnapshots extends ResourceWithJobManager
         long epochStart = paramToEpochIfValidOrThrow(START_QUERY_PARAM, start, LOGGER);
         long epochEnd = paramToEpochIfValidOrThrow(END_QUERY_PARAM, end, LOGGER);
 
-        JobManager manager = jobManager();
+        JobDataReader jobReader = jobReader();
         QueryPage<ModelSnapshot> page;
 
-        page = manager.modelSnapshots(jobId, skip, take, epochStart, epochEnd,
+        page = jobReader.modelSnapshots(jobId, skip, take, epochStart, epochEnd,
                 sortField, descending, description);
 
         Pagination<ModelSnapshot> modelSnapshots = paginationFromQueryPage(page, skip, take);

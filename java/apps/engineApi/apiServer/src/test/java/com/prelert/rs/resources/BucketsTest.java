@@ -93,7 +93,7 @@ public class BucketsTest extends ServiceTest
     {
         QueryPage<Bucket> queryResult = new QueryPage<>(Arrays.asList(new Bucket()), 1);
 
-        when(jobManager().buckets("foo", false, false, 0, 100, 0.0, 0.0)).thenReturn(queryResult);
+        when(jobReader().buckets("foo", false, false, 0, 100, 0.0, 0.0)).thenReturn(queryResult);
 
         Pagination<Bucket> results = m_Buckets.buckets("foo", false, false, 0, 100, "", "", 0.0, 0.0);
         assertEquals(1, results.getHitCount());
@@ -105,7 +105,7 @@ public class BucketsTest extends ServiceTest
     {
         QueryPage<Bucket> queryResult = new QueryPage<>(Arrays.asList(new Bucket()), 300);
 
-        when(jobManager().buckets("foo", false, false, 0, 100, 0.0, 0.0)).thenReturn(queryResult);
+        when(jobReader().buckets("foo", false, false, 0, 100, 0.0, 0.0)).thenReturn(queryResult);
 
         Pagination<Bucket> results = m_Buckets.buckets("foo", false, false, 0, 100, "", "", 0.0, 0.0);
         assertEquals(300, results.getHitCount());
@@ -124,7 +124,7 @@ public class BucketsTest extends ServiceTest
     {
         QueryPage<Bucket> queryResult = new QueryPage<>(Arrays.asList(new Bucket()), 300);
 
-        when(jobManager().buckets("foo", false, false, 0, 100, 1000, 2000, 0.0, 0.0)).thenReturn(queryResult);
+        when(jobReader().buckets("foo", false, false, 0, 100, 1000, 2000, 0.0, 0.0)).thenReturn(queryResult);
 
         Pagination<Bucket> buckets = m_Buckets.buckets("foo", false, false, 0, 100, "1", "2", 0.0, 0.0);
 
@@ -145,7 +145,7 @@ public class BucketsTest extends ServiceTest
     {
         QueryPage<Bucket> queryResult = new QueryPage<>(Arrays.asList(new Bucket()), 300);
 
-        when(jobManager().buckets("foo", false, false, 0, 100, 1420113600000L, 1420117200000L, 0.0, 0.0))
+        when(jobReader().buckets("foo", false, false, 0, 100, 1420113600000L, 1420117200000L, 0.0, 0.0))
                 .thenReturn(queryResult);
 
         Pagination<Bucket> buckets = m_Buckets.buckets("foo", false, false, 0, 100,
@@ -168,7 +168,7 @@ public class BucketsTest extends ServiceTest
     {
         QueryPage<Bucket> queryResult = new QueryPage<>(Arrays.asList(new Bucket()), 300);
 
-        when(jobManager().buckets("foo", false, false, 0, 100, 1420113600042L, 1420117200142L, 0.0, 0.0))
+        when(jobReader().buckets("foo", false, false, 0, 100, 1420113600042L, 1420117200142L, 0.0, 0.0))
                 .thenReturn(queryResult);
 
         Pagination<Bucket> buckets = m_Buckets.buckets("foo", false, false, 0, 100,
@@ -191,7 +191,7 @@ public class BucketsTest extends ServiceTest
     {
         QueryPage<Bucket> queryResult = new QueryPage<>(Arrays.asList(new Bucket()), 300);
 
-        when(jobManager().buckets("foo", false, false, 0, 100, 1420113600042L, 1420117200142L, 0.0, 0.0))
+        when(jobReader().buckets("foo", false, false, 0, 100, 1420113600042L, 1420117200142L, 0.0, 0.0))
                 .thenReturn(queryResult);
 
         Pagination<Bucket> buckets = m_Buckets.buckets("foo", false, false, 0, 100,
@@ -224,7 +224,7 @@ public class BucketsTest extends ServiceTest
     {
         Optional<Bucket> queryResult = Optional.of(new Bucket());
 
-        when(jobManager().bucket("bar", 42000L, false, true)).thenReturn(queryResult);
+        when(jobReader().bucket("bar", 42000L, false, true)).thenReturn(queryResult);
 
         Response response = m_Buckets.bucket("bar", "42", false, true);
 
@@ -241,7 +241,7 @@ public class BucketsTest extends ServiceTest
     {
         Optional<Bucket> queryResult = Optional.empty();
 
-        when(jobManager().bucket("bar", 42000L, false, true)).thenReturn(queryResult);
+        when(jobReader().bucket("bar", 42000L, false, true)).thenReturn(queryResult);
 
         Response response = m_Buckets.bucket("bar", "42", false, true);
         @SuppressWarnings("unchecked")

@@ -42,7 +42,6 @@ import javax.ws.rs.core.Response;
 import org.apache.log4j.Logger;
 
 import com.prelert.job.UnknownJobException;
-import com.prelert.job.manager.JobManager;
 import com.prelert.job.persistence.QueryPage;
 import com.prelert.job.results.CategoryDefinition;
 import com.prelert.rs.data.Pagination;
@@ -79,7 +78,7 @@ public class CategoryDefinitions extends ResourceWithJobManager
     public Pagination<CategoryDefinition> categoryDefinitions(
             @PathParam("jobId") String jobId,
             @DefaultValue("0") @QueryParam("skip") int skip,
-            @DefaultValue(JobManager.DEFAULT_PAGE_SIZE_STR) @QueryParam("take") int take)
+            @DefaultValue(DEFAULT_PAGE_SIZE_STR) @QueryParam("take") int take)
     throws UnknownJobException
     {
         LOGGER.debug(String.format("Get category definitions for job %s. take = %d", jobId, take));
@@ -87,7 +86,7 @@ public class CategoryDefinitions extends ResourceWithJobManager
         new PaginationParamsValidator(skip, take).validate();
 
         QueryPage<CategoryDefinition> queryResults =
-                jobManager().categoryDefinitions(jobId, skip, take);
+                jobReader().categoryDefinitions(jobId, skip, take);
 
         Pagination<CategoryDefinition> categoryDefinitions =
                     paginationFromQueryPage(queryResults, skip, take);
@@ -127,7 +126,7 @@ public class CategoryDefinitions extends ResourceWithJobManager
     {
         LOGGER.debug(String.format("Get category definition for job %s with id %s.", jobId, categoryId));
 
-        Optional<CategoryDefinition> category = jobManager().categoryDefinition(jobId, categoryId);
+        Optional<CategoryDefinition> category = jobReader().categoryDefinition(jobId, categoryId);
 
         if (category.isPresent())
         {

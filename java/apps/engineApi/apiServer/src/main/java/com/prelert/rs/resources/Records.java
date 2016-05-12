@@ -41,9 +41,9 @@ import javax.ws.rs.core.MediaType;
 import org.apache.log4j.Logger;
 
 import com.prelert.job.UnknownJobException;
-import com.prelert.job.manager.JobManager;
 import com.prelert.job.persistence.QueryPage;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
+import com.prelert.job.reader.JobDataReader;
 import com.prelert.job.results.AnomalyRecord;
 import com.prelert.rs.data.Pagination;
 import com.prelert.rs.validation.PaginationParamsValidator;
@@ -96,7 +96,7 @@ public class Records extends ResourceWithJobManager
     public Pagination<AnomalyRecord> records(
             @PathParam("jobId") String jobId,
             @DefaultValue("0") @QueryParam("skip") int skip,
-            @DefaultValue(JobManager.DEFAULT_PAGE_SIZE_STR) @QueryParam("take") int take,
+            @DefaultValue(DEFAULT_PAGE_SIZE_STR) @QueryParam("take") int take,
             @DefaultValue("") @QueryParam(START_QUERY_PARAM) String start,
             @DefaultValue("") @QueryParam(END_QUERY_PARAM) String end,
             @DefaultValue("false") @QueryParam(INCLUDE_INTERIM_QUERY_PARAM) boolean includeInterim,
@@ -118,18 +118,18 @@ public class Records extends ResourceWithJobManager
         long epochStartMs = paramToEpochIfValidOrThrow(START_QUERY_PARAM, start, LOGGER);
         long epochEndMs = paramToEpochIfValidOrThrow(END_QUERY_PARAM, end, LOGGER);
 
-        JobManager manager = jobManager();
+        JobDataReader jobReader = jobReader();
 
         QueryPage<AnomalyRecord> queryResults;
 
         if (epochStartMs > 0 || epochEndMs > 0)
         {
-            queryResults = manager.records(jobId, skip, take, epochStartMs, epochEndMs, includeInterim, sort,
+            queryResults = jobReader.records(jobId, skip, take, epochStartMs, epochEndMs, includeInterim, sort,
                     descending, anomalyScoreFilter, normalizedProbabilityFilter);
         }
         else
         {
-            queryResults = manager.records(jobId, skip, take, includeInterim, sort, descending,
+            queryResults = jobReader.records(jobId, skip, take, includeInterim, sort, descending,
                     anomalyScoreFilter, normalizedProbabilityFilter);
         }
 
