@@ -102,7 +102,7 @@ public class TimestampedResolverTests extends MonitoringIndexNameResolverTestCas
 
             @Override
             protected void buildXContent(MonitoringDoc document, XContentBuilder builder, ToXContent.Params params) throws IOException {
-                return;
+                // noop
             }
         };
     }

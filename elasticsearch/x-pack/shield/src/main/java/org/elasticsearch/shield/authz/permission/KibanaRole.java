@@ -17,6 +17,7 @@
 
 package org.elasticsearch.shield.authz.permission;
 
+import org.elasticsearch.marvel.action.MonitoringBulkAction;
 import org.elasticsearch.shield.authz.RoleDescriptor;
 import org.elasticsearch.shield.authz.privilege.ClusterPrivilege;
 import org.elasticsearch.shield.authz.privilege.Privilege.Name;
@@ -26,9 +27,9 @@ import org.elasticsearch.shield.authz.privilege.Privilege.Name;
  */
 public class KibanaRole extends Role {
 
-    private static final String[] CLUSTER_PRIVILEGES = new String[] { "monitor" };
+    private static final String[] CLUSTER_PRIVILEGES = new String[] { "monitor", MonitoringBulkAction.NAME};
     private static final RoleDescriptor.IndicesPrivileges[] INDICES_PRIVILEGES = new RoleDescriptor.IndicesPrivileges[] {
-            RoleDescriptor.IndicesPrivileges.builder().indices(".kibana" ).privileges("all").build() };
+            RoleDescriptor.IndicesPrivileges.builder().indices(".kibana").privileges("all").build() };
 
     public static final String NAME = "kibana";
     public static final RoleDescriptor DESCRIPTOR = new RoleDescriptor(NAME, CLUSTER_PRIVILEGES, INDICES_PRIVILEGES, null);
@@ -36,8 +37,8 @@ public class KibanaRole extends Role {
 
     private KibanaRole() {
         super(DESCRIPTOR.getName(),
-                new ClusterPermission.Core(ClusterPrivilege.get(new Name(DESCRIPTOR.getClusterPrivileges()))),
-                new IndicesPermission.Core(Role.Builder.convertFromIndicesPrivileges(DESCRIPTOR.getIndicesPrivileges())),
-                RunAsPermission.Core.NONE);
+              new ClusterPermission.Core(ClusterPrivilege.get(new Name(DESCRIPTOR.getClusterPrivileges()))),
+              new IndicesPermission.Core(Role.Builder.convertFromIndicesPrivileges(DESCRIPTOR.getIndicesPrivileges())),
+              RunAsPermission.Core.NONE);
     }
 }
