@@ -122,7 +122,7 @@ public class JobsTest extends ServiceTest
         job3.setId("job_3");
         QueryPage<JobDetails> results = new QueryPage<>(Arrays.asList(job1, job2, job3), 3);
 
-        when(jobManager().getJobs(0, 10)).thenReturn(results);
+        when(jobReader().getJobs(0, 10)).thenReturn(results);
 
         Pagination<JobDetails> jobs = m_Jobs.jobs(0, 10);
 
@@ -140,7 +140,7 @@ public class JobsTest extends ServiceTest
         job.setId("foo");
         Optional<JobDetails> result = Optional.of(job);
 
-        when(jobManager().getJob("foo")).thenReturn(result);
+        when(jobReader().getJob("foo")).thenReturn(result);
 
         Response response = m_Jobs.job("foo");
 
@@ -155,7 +155,7 @@ public class JobsTest extends ServiceTest
     @Test
     public void testJob_GivenUnknownJob() throws UnknownJobException
     {
-        when(jobManager().getJob("foo")).thenReturn(Optional.empty());
+        when(jobReader().getJob("foo")).thenReturn(Optional.empty());
 
         Response response = m_Jobs.job("foo");
         assertEquals(404, response.getStatus());

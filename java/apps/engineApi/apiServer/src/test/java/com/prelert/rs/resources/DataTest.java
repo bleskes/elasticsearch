@@ -45,6 +45,7 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
@@ -105,7 +106,7 @@ public class DataTest extends ServiceTest
         JobDetails jobDetails = new JobDetails();
         jobDetails.setAnalysisConfig(m_AnalysisConfig);
 
-        when(jobManager().getJobOrThrowIfUnknown(JOB_ID)).thenReturn(jobDetails);
+        when(jobReader().getJob(JOB_ID)).thenReturn(Optional.<JobDetails>of(jobDetails));
     }
 
     @Test

@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -99,7 +99,7 @@ public class CategoryDefinitionsTest extends ServiceTest
 
         QueryPage<CategoryDefinition> page = new QueryPage<>(Arrays.asList(category1, category2, category3), 3);
 
-        when(jobManager().categoryDefinitions(JOB_ID, 0, 100)).thenReturn(page);
+        when(jobReader().categoryDefinitions(JOB_ID, 0, 100)).thenReturn(page);
 
         Pagination<CategoryDefinition> result =
                                     m_CategoryDefinitions.categoryDefinitions(JOB_ID, 0, 100);
@@ -115,7 +115,7 @@ public class CategoryDefinitionsTest extends ServiceTest
         category.setCategoryId(7);
         Optional<CategoryDefinition> result = Optional.of(category);
 
-        when(jobManager().categoryDefinition(JOB_ID, "7")).thenReturn(result);
+        when(jobReader().categoryDefinition(JOB_ID, "7")).thenReturn(result);
 
         Response response = m_CategoryDefinitions.categoryDefinition(JOB_ID, "7");
 
@@ -131,7 +131,7 @@ public class CategoryDefinitionsTest extends ServiceTest
     {
         Optional<CategoryDefinition> result = Optional.empty();
 
-        when(jobManager().categoryDefinition(JOB_ID, "7")).thenReturn(result);
+        when(jobReader().categoryDefinition(JOB_ID, "7")).thenReturn(result);
 
         Response response = m_CategoryDefinitions.categoryDefinition(JOB_ID, "7");
         @SuppressWarnings("unchecked")

@@ -93,7 +93,6 @@ import com.prelert.job.persistence.DataStoreException;
 import com.prelert.job.persistence.JobDataDeleterFactory;
 import com.prelert.job.persistence.JobProvider;
 import com.prelert.job.persistence.OldDataRemover;
-import com.prelert.job.persistence.QueryPage;
 import com.prelert.job.persistence.none.NoneJobDataPersister;
 import com.prelert.job.process.autodetect.ProcessManager;
 import com.prelert.job.process.exceptions.ClosedJobException;
@@ -104,9 +103,6 @@ import com.prelert.job.process.params.DataLoadParams;
 import com.prelert.job.process.params.InterimResultsParams;
 import com.prelert.job.process.writer.CsvRecordWriter;
 import com.prelert.job.results.AnomalyRecord;
-import com.prelert.job.results.Bucket;
-import com.prelert.job.results.CategoryDefinition;
-import com.prelert.job.results.Influencer;
 import com.prelert.job.scheduler.CannotStartSchedulerException;
 import com.prelert.job.scheduler.CannotStopSchedulerException;
 import com.prelert.job.scheduler.CannotUpdateSchedulerException;
@@ -139,20 +135,6 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
      * Field name in which to store the API version in the usage info
      */
     public static final String APP_VER_FIELDNAME = "appVer";
-
-    /**
-     * The default number of documents returned in queries as a string.
-     */
-    public static final String DEFAULT_PAGE_SIZE_STR = "100";
-
-    /**
-     * The default number of documents returned in queries.
-     */
-    public static final int DEFAULT_PAGE_SIZE;
-    static
-    {
-        DEFAULT_PAGE_SIZE = Integer.parseInt(DEFAULT_PAGE_SIZE_STR);
-    }
 
     public static final String DEFAULT_RECORD_SORT_FIELD = AnomalyRecord.PROBABILITY;
 
@@ -231,18 +213,6 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
     }
 
     /**
-     * Get the details of the specific job wrapped in a <code>Optional</code>
-     *
-     * @param jobId
-     * @return An {@code Optional} containing the {@code JobDetails} if a job with the given
-     * {@code jobId} exists, or an empty {@code Optional} otherwise
-     */
-    public Optional<JobDetails> getJob(String jobId)
-    {
-        return m_JobProvider.getJobDetails(jobId);
-    }
-
-    /**
      * Returns the non-null {@code JobDetails} object for the given {@code jobId}
      * or throws {@link UnknownJobException}
      *
@@ -258,22 +228,6 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
             throw new UnknownJobException(jobId);
         }
         return job.get();
-    }
-
-    /**
-     * Get details of all Jobs.
-     *
-     * @param skip Skip the first N Jobs. This parameter is for paging
-     * results if not required set to 0.
-     * @param take Take only this number of Jobs
-     * @return A pagination object with hitCount set to the total number
-     * of jobs not the only the number returned here as determined by the
-     * <code>take</code>
-     * parameter.
-     */
-    public QueryPage<JobDetails> getJobs(int skip, int take)
-    {
-        return m_JobProvider.getJobs(skip, take);
     }
 
     /**
@@ -382,101 +336,6 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
                 : Duration.ofSeconds(frequency);
     }
 
-    /**
-     * Get a single result bucket
-     *
-     * @param jobId
-     * @param timestampMillis
-     * @param expand Include anomaly records. If false the bucket's records
-     *  are set to <code>null</code> so they aren't serialised
-     * @param includeInterim Include interim results
-     * @return
-     * @throws NativeProcessRunException
-     * @throws UnknownJobException
-     */
-    public Optional<Bucket> bucket(String jobId, long timestampMillis, boolean expand, boolean includeInterim)
-            throws NativeProcessRunException, UnknownJobException
-    {
-        Optional<Bucket> result = m_JobProvider.bucket(jobId, timestampMillis, expand, includeInterim);
-
-        if (result.isPresent() && !expand)
-        {
-            result.get().setRecords(null);
-        }
-
-        return result;
-    }
-
-
-    /**
-     * Get result buckets
-     *
-     * @param jobId
-     * @param expand Include anomaly records. If false the bucket's records
-     *  are set to <code>null</code> so they aren't serialised
-     * @param includeInterim Include interim results
-     * @param skip
-     * @param take
-     * @param anomalyScoreThreshold
-     * @param normalizedProbabilityThreshold
-     * @return
-     * @throws UnknownJobException
-     */
-    public QueryPage<Bucket> buckets(String jobId,
-            boolean expand, boolean includeInterim, int skip, int take,
-            double anomalyScoreThreshold, double normalizedProbabilityThreshold)
-    throws UnknownJobException
-    {
-        QueryPage<Bucket> buckets = m_JobProvider.buckets(jobId, expand,
-                includeInterim, skip, take, anomalyScoreThreshold, normalizedProbabilityThreshold);
-
-        if (!expand)
-        {
-            for (Bucket bucket : buckets.queryResults())
-            {
-                bucket.setRecords(null);
-            }
-        }
-
-        return buckets;
-    }
-
-
-    /**
-     * Get result buckets between 2 dates
-     * @param jobId
-     * @param expand Include anomaly records. If false the bucket's records
-     *  are set to <code>null</code> so they aren't serialised
-     * @param includeInterim Include interim results
-     * @param skip
-     * @param take
-     * @param startEpochMs Return buckets starting at this time
-     * @param endBucketMs Include buckets up to this time
-     * @param anomalyScoreThreshold
-     * @param normalizedProbabilityThreshold
-     * @return
-     * @throws UnknownJobException
-     */
-    public QueryPage<Bucket> buckets(String jobId,
-            boolean expand, boolean includeInterim, int skip, int take, long startEpochMs, long endBucketMs,
-            double anomalyScoreThreshold, double normalizedProbabilityThreshold)
-    throws UnknownJobException
-    {
-        QueryPage<Bucket> buckets =  m_JobProvider.buckets(jobId, expand,
-                includeInterim, skip, take, startEpochMs, endBucketMs,
-                anomalyScoreThreshold, normalizedProbabilityThreshold);
-
-        if (!expand)
-        {
-            for (Bucket bucket : buckets.queryResults())
-            {
-                bucket.setRecords(null);
-            }
-        }
-
-        return buckets;
-    }
-
     public void resetLatestRecordTime(String jobId, Date latestRecordTime) throws UnknownJobException
     {
         m_JobLoggerFactory.newLogger(jobId).info("Resetting latest record time to '" +  latestRecordTime + "'");
@@ -497,14 +356,6 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
         m_JobLoggerFactory.newLogger(jobId).info("Deleting buckets after '" + deleteAfter + "'");
         OldDataRemover remover = new OldDataRemover(m_JobProvider, m_JobDataDeleterFactory);
         remover.deleteResultsAfter(jobId, deleteAfter.getTime() + 1);
-    }
-
-    public QueryPage<ModelSnapshot> modelSnapshots(String jobId, int skip, int take,
-            long epochStartMs, long epochEndMs, String sortField, boolean sortDescending, String description)
-            throws UnknownJobException
-    {
-        return m_JobProvider.modelSnapshots(jobId, skip, take, epochStartMs, epochEndMs,
-                sortField, sortDescending, null, description);
     }
 
     public ModelSnapshot revertToSnapshot(String jobId, long epochEndMs, String snapshotId,
@@ -610,94 +461,6 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
                     deletedSnapshot.getDescription()));
             return deletedSnapshot;
         }
-    }
-
-    public QueryPage<CategoryDefinition> categoryDefinitions(String jobId, int skip, int take)
-            throws UnknownJobException
-    {
-        return m_JobProvider.categoryDefinitions(jobId, skip, take);
-    }
-
-    public Optional<CategoryDefinition> categoryDefinition(String jobId, String categoryId)
-            throws UnknownJobException
-    {
-        return m_JobProvider.categoryDefinition(jobId, categoryId);
-    }
-
-    public QueryPage<Influencer> influencers(String jobId, int skip, int take, long epochStartMs,
-            long epochEndMs, String sortField, boolean sortDescending, double anomalyScoreFilter,
-            boolean includeInterim)
-            throws UnknownJobException
-    {
-        return m_JobProvider.influencers(jobId, skip, take, epochStartMs, epochEndMs, sortField,
-                sortDescending, anomalyScoreFilter, includeInterim);
-    }
-
-    public Optional<Influencer> influencer(String jobId, String influencerId)
-            throws UnknownJobException
-    {
-        return m_JobProvider.influencer(jobId, influencerId);
-    }
-
-    /**
-     * Get a page of anomaly records from all buckets.
-     *
-     * @param jobId
-     * @param skip Skip the first N records. This parameter is for paging
-     * results if not required set to 0.
-     * @param take Take only this number of records
-     * @param includeInterim Include interim results
-     * @param sortField The field to sort by
-     * @param sortDescending
-     * @param anomalyScoreThreshold Return only buckets with an anomalyScore >=
-     * this value
-     * @param normalizedProbabilityThreshold Return only buckets with a maxNormalizedProbability >=
-     * this value
-     *
-     * @return
-     * @throws NativeProcessRunException
-     * @throws UnknownJobException
-     */
-    public QueryPage<AnomalyRecord> records(String jobId,
-            int skip, int take, boolean includeInterim, String sortField, boolean sortDescending,
-            double anomalyScoreThreshold, double normalizedProbabilityThreshold)
-    throws NativeProcessRunException, UnknownJobException
-    {
-        return m_JobProvider.records(jobId, skip, take, includeInterim, sortField, sortDescending,
-                                            anomalyScoreThreshold, normalizedProbabilityThreshold);
-    }
-
-
-    /**
-     * Get a page of anomaly records from the buckets between
-     * epochStart and epochEnd.
-     *
-     * @param jobId
-     * @param skip
-     * @param take
-     * @param epochStartMs
-     * @param epochEndMs
-     * @param includeInterim Include interim results
-     * @param sortField
-     * @param sortDescending
-     * @param anomalyScoreThreshold Return only buckets with an anomalyScore >=
-     * this value
-     * @param normalizedProbabilityThreshold Return only buckets with a maxNormalizedProbability >=
-     * this value
-     *
-     * @return
-     * @throws NativeProcessRunException
-     * @throws UnknownJobException
-     */
-    public QueryPage<AnomalyRecord> records(String jobId,
-            int skip, int take, long epochStartMs, long epochEndMs,
-            boolean includeInterim, String sortField, boolean sortDescending,
-            double anomalyScoreThreshold, double normalizedProbabilityThreshold)
-    throws NativeProcessRunException, UnknownJobException
-    {
-        return m_JobProvider.records(jobId, skip, take,
-                            epochStartMs, epochEndMs, includeInterim, sortField, sortDescending,
-                            anomalyScoreThreshold, normalizedProbabilityThreshold);
     }
 
     public void updateCustomSettings(String jobId, Map<String, Object> customSettings)
@@ -1042,7 +805,7 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
         Set<String> runningJobs = new HashSet<>(m_ProcessManager.runningJobs());
         numDetectors += activeJobIds.stream()
                 .filter(jobId -> !runningJobs.contains(jobId))
-                .map(jobId -> getJob(jobId))
+                .map(jobId -> m_JobProvider.getJobDetails(jobId))
                 .filter(optionalJob -> optionalJob.isPresent())
                 .mapToInt(optionalJob -> optionalJob.get().getAnalysisConfig().getDetectors().size())
                 .sum();

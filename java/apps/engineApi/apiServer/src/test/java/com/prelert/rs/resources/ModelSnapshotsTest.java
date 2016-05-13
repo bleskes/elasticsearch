@@ -100,7 +100,7 @@ public class ModelSnapshotsTest extends ServiceTest
         modelSnapshot.setQuantiles(new Quantiles());
         QueryPage<ModelSnapshot> queryResult = new QueryPage<>(Arrays.asList(modelSnapshot), 1);
 
-        when(jobManager().modelSnapshots("foo", 0, 100, 0, 0, "", true, "")).thenReturn(queryResult);
+        when(jobReader().modelSnapshots("foo", 0, 100, 0, 0, "", true, "")).thenReturn(queryResult);
 
         Pagination<ModelSnapshot> modelSnapshots = m_ModelSnapshots.modelSnapshots("foo", 0, 100, "", "", "", true, "");
         assertEquals(1, modelSnapshots.getHitCount());
@@ -114,7 +114,7 @@ public class ModelSnapshotsTest extends ServiceTest
     {
         QueryPage<ModelSnapshot> queryResult = new QueryPage<>(Arrays.asList(new ModelSnapshot()), 300);
 
-        when(jobManager().modelSnapshots("foo", 0, 100, 0, 0, "", true, "")).thenReturn(queryResult);
+        when(jobReader().modelSnapshots("foo", 0, 100, 0, 0, "", true, "")).thenReturn(queryResult);
 
         Pagination<ModelSnapshot> modelSnapshots = m_ModelSnapshots.modelSnapshots("foo", 0, 100, "", "", "", true, "");
         assertEquals(300, modelSnapshots.getHitCount());
@@ -132,7 +132,7 @@ public class ModelSnapshotsTest extends ServiceTest
     {
         QueryPage<ModelSnapshot> queryResult = new QueryPage<>(Arrays.asList(new ModelSnapshot()), 300);
 
-        when(jobManager().modelSnapshots("foo", 0, 100, 1000, 2000, "", true, "")).thenReturn(queryResult);
+        when(jobReader().modelSnapshots("foo", 0, 100, 1000, 2000, "", true, "")).thenReturn(queryResult);
 
         Pagination<ModelSnapshot> modelSnapshots = m_ModelSnapshots.modelSnapshots("foo", 0, 100, "1", "2", "", true, "");
 
@@ -152,7 +152,7 @@ public class ModelSnapshotsTest extends ServiceTest
     {
         QueryPage<ModelSnapshot> queryResult = new QueryPage<>(Arrays.asList(new ModelSnapshot()), 300);
 
-        when(jobManager().modelSnapshots("foo", 0, 100, 1420113600000L, 1420117200000L, "", true, ""))
+        when(jobReader().modelSnapshots("foo", 0, 100, 1420113600000L, 1420117200000L, "", true, ""))
                 .thenReturn(queryResult);
 
         Pagination<ModelSnapshot> modelSnapshots = m_ModelSnapshots.modelSnapshots("foo", 0, 100,
@@ -175,7 +175,7 @@ public class ModelSnapshotsTest extends ServiceTest
     {
         QueryPage<ModelSnapshot> queryResult = new QueryPage<>(Arrays.asList(new ModelSnapshot()), 300);
 
-        when(jobManager().modelSnapshots("foo", 0, 100, 1420113600042L, 1420117200142L, "", true, ""))
+        when(jobReader().modelSnapshots("foo", 0, 100, 1420113600042L, 1420117200142L, "", true, ""))
                 .thenReturn(queryResult);
 
         Pagination<ModelSnapshot> modelSnapshots = m_ModelSnapshots.modelSnapshots("foo", 0, 100,

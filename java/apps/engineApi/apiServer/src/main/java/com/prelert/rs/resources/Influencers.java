@@ -37,8 +37,8 @@ import javax.ws.rs.core.MediaType;
 import org.apache.log4j.Logger;
 
 import com.prelert.job.UnknownJobException;
-import com.prelert.job.manager.JobManager;
 import com.prelert.job.persistence.QueryPage;
+import com.prelert.job.reader.JobDataReader;
 import com.prelert.job.results.Influencer;
 import com.prelert.rs.data.Pagination;
 import com.prelert.rs.validation.PaginationParamsValidator;
@@ -68,7 +68,7 @@ public class Influencers extends ResourceWithJobManager
     public Pagination<Influencer> influencers(
             @PathParam("jobId") String jobId,
             @DefaultValue("0") @QueryParam("skip") int skip,
-            @DefaultValue(JobManager.DEFAULT_PAGE_SIZE_STR) @QueryParam("take") int take,
+            @DefaultValue(DEFAULT_PAGE_SIZE_STR) @QueryParam("take") int take,
             @DefaultValue("") @QueryParam(START_QUERY_PARAM) String start,
             @DefaultValue("") @QueryParam(END_QUERY_PARAM) String end,
             @DefaultValue(Influencer.ANOMALY_SCORE) @QueryParam(SORT_QUERY_PARAM) String sort,
@@ -89,9 +89,9 @@ public class Influencers extends ResourceWithJobManager
         long epochStartMs = paramToEpochIfValidOrThrow(START_QUERY_PARAM, start, LOGGER);
         long epochEndMs = paramToEpochIfValidOrThrow(END_QUERY_PARAM, end, LOGGER);
 
-        JobManager manager = jobManager();
+        JobDataReader jobReader = jobReader();
 
-        QueryPage<Influencer> page = manager.influencers(jobId, skip, take, epochStartMs,
+        QueryPage<Influencer> page = jobReader.influencers(jobId, skip, take, epochStartMs,
                 epochEndMs, sort, descending, anomalyScoreFilter, includeInterim);
         Pagination<Influencer> results = paginationFromQueryPage(page, skip, take);
 

@@ -33,6 +33,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import javax.ws.rs.Consumes;
@@ -303,8 +304,13 @@ public abstract class AbstractDataLoad extends ResourceWithJobManager
 
     private void checkBucketResettingIsSupported(String jobId) throws UnknownJobException
     {
-        JobDetails job = jobManager().getJobOrThrowIfUnknown(jobId);
-        AnalysisConfig config = job.getAnalysisConfig();
+        Optional<JobDetails> job = jobReader().getJob(jobId);
+        if (!job.isPresent())
+        {
+            throw new UnknownJobException(jobId);
+        }
+
+        AnalysisConfig config = job.get().getAnalysisConfig();
         checkLatencyIsNonZero(config.getLatency());
     }
 

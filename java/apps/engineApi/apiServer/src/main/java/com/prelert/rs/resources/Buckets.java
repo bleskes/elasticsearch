@@ -43,9 +43,9 @@ import javax.ws.rs.core.Response;
 import org.apache.log4j.Logger;
 
 import com.prelert.job.UnknownJobException;
-import com.prelert.job.manager.JobManager;
 import com.prelert.job.persistence.QueryPage;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
+import com.prelert.job.reader.JobDataReader;
 import com.prelert.job.results.Bucket;
 import com.prelert.rs.data.Pagination;
 import com.prelert.rs.data.SingleDocument;
@@ -97,7 +97,7 @@ public class Buckets extends ResourceWithJobManager
             @DefaultValue("false") @QueryParam(EXPAND_QUERY_PARAM) boolean expand,
             @DefaultValue("false") @QueryParam(INCLUDE_INTERIM_QUERY_PARAM) boolean includeInterim,
             @DefaultValue("0") @QueryParam("skip") int skip,
-            @DefaultValue(JobManager.DEFAULT_PAGE_SIZE_STR) @QueryParam("take") int take,
+            @DefaultValue(DEFAULT_PAGE_SIZE_STR) @QueryParam("take") int take,
             @DefaultValue("") @QueryParam(START_QUERY_PARAM) String start,
             @DefaultValue("") @QueryParam(END_QUERY_PARAM) String end,
             @DefaultValue("0.0") @QueryParam(Bucket.ANOMALY_SCORE) double anomalySoreFilter,
@@ -115,17 +115,17 @@ public class Buckets extends ResourceWithJobManager
         long epochStart = paramToEpochIfValidOrThrow(START_QUERY_PARAM, start, LOGGER);
         long epochEnd = paramToEpochIfValidOrThrow(END_QUERY_PARAM, end, LOGGER);
 
-        JobManager manager = jobManager();
+        JobDataReader jobReader = jobReader();
         QueryPage<Bucket> page;
 
         if (epochStart > 0 || epochEnd > 0)
         {
-            page = manager.buckets(jobId, expand, includeInterim, skip, take, epochStart, epochEnd,
+            page = jobReader.buckets(jobId, expand, includeInterim, skip, take, epochStart, epochEnd,
                     anomalySoreFilter, normalizedProbabilityFilter);
         }
         else
         {
-            page = manager.buckets(jobId, expand, includeInterim, skip, take,
+            page = jobReader.buckets(jobId, expand, includeInterim, skip, take,
                     anomalySoreFilter, normalizedProbabilityFilter);
         }
 
@@ -190,9 +190,9 @@ public class Buckets extends ResourceWithJobManager
                 expand ? "expanded " : "", timestamp, jobId,
                 includeInterim ? "including" : "excluding"));
 
-        JobManager manager = jobManager();
+        JobDataReader jobReader = jobReader();
         long timestampMillis = paramToEpochIfValidOrThrow(TIMESTAMP_PARAM, timestamp, LOGGER);
-        Optional<Bucket> b = manager.bucket(jobId, timestampMillis, expand, includeInterim);
+        Optional<Bucket> b = jobReader.bucket(jobId, timestampMillis, expand, includeInterim);
         SingleDocument<Bucket> bucket = singleDocFromOptional(b, Bucket.TYPE);
 
         if (bucket.isExists())

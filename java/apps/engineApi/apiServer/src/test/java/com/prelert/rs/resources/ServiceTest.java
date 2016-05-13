@@ -46,6 +46,7 @@ import org.mockito.stubbing.Answer;
 import com.prelert.job.alert.manager.AlertManager;
 import com.prelert.job.audit.Auditor;
 import com.prelert.job.manager.JobManager;
+import com.prelert.job.reader.JobDataReader;
 
 /**
  * Test base class for testing the REST end-points.
@@ -55,6 +56,7 @@ public class ServiceTest
     protected static final URI BASE_URI = new JerseyUriBuilder().uri("http://localhost/test").build();
 
     private final JobManager m_JobManager;
+    private final JobDataReader m_JobReader;
     private final Auditor m_Auditor;
     private final AlertManager m_AlertManager;
     private final UriInfo m_UriInfo;
@@ -62,6 +64,7 @@ public class ServiceTest
     protected ServiceTest()
     {
         m_JobManager = mock(JobManager.class);
+        m_JobReader = mock(JobDataReader.class);
         m_Auditor = mock(Auditor.class);
         when(m_JobManager.audit(anyString())).thenReturn(m_Auditor);
         m_AlertManager = mock(AlertManager.class);
@@ -83,6 +86,8 @@ public class ServiceTest
         Set<Object> singletons = new HashSet<>();
         singletons.add(m_JobManager);
         singletons.add(m_AlertManager);
+        singletons.add(m_JobReader);
+
         Application application = mock(Application.class);
         when(application.getSingletons()).thenReturn(singletons);
         service.setApplication(application);
@@ -92,6 +97,11 @@ public class ServiceTest
     protected JobManager jobManager()
     {
         return m_JobManager;
+    }
+
+    protected JobDataReader jobReader()
+    {
+        return m_JobReader;
     }
 
     protected Auditor auditor()
