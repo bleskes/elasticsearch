@@ -34,8 +34,6 @@ public class SleepScriptEngine implements ScriptEngineService {
 
     public static final String NAME = "sleep";
 
-    public static final List<String> TYPES = Collections.singletonList(NAME);
-
     public static class TestPlugin extends Plugin {
 
         public TestPlugin() {
@@ -64,8 +62,8 @@ public class SleepScriptEngine implements ScriptEngineService {
     }
 
     @Override
-    public List<String> getExtensions() {
-        return TYPES;
+    public String getExtension() {
+        return NAME;
     }
 
     @Override
