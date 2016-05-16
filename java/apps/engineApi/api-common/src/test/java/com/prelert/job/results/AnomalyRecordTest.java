@@ -27,14 +27,18 @@
 
 package com.prelert.job.results;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 
 import org.junit.Test;
+
+import com.prelert.job.persistence.serialisation.TestJsonStorageSerialiser;
 
 public class AnomalyRecordTest
 {
@@ -307,10 +311,54 @@ public class AnomalyRecordTest
         assertFalse(record2.equals(record1));
     }
 
+    @Test
+    public void testSerialise() throws IOException
+    {
+        AnomalyRecord record = createFullyPopulatedRecord();
+        TestJsonStorageSerialiser serialiser = new TestJsonStorageSerialiser();
+
+        serialiser.startObject();
+        record.serialise(serialiser);
+        serialiser.endObject();
+
+        String expected = "{"
+                + "\"actual\":42.0,"
+                + "\"bucketSpan\":3600,"
+                + "\"overFieldValue\":\"SKG\","
+                + "\"airport.reversed\":\"SKG\","
+                + "\"fieldName\":\"responsetime\","
+                + "\"partitionFieldValue\":\"earth\","
+                + "\"airline.reversed\":\"AAL\","
+                + "\"initialNormalizedProbability\":90.2,"
+                + "\"probability\":4.2E-4,"
+                + "\"byFieldValue\":\"AAL\","
+                + "\"overFieldName\":\"airport\","
+                + "\"planet.reversed\":\"earth\","
+                + "\"partitionFieldName\":\"planet\","
+                + "\"anomalyScore\":99.0,"
+                + "\"@timestamp\":0,"
+                + "\"normalizedProbability\":86.4,"
+                + "\"byFieldName\":\"airline\","
+                + "\"correlatedByFieldValue\":\"UAL\","
+                + "\"function\":\"metric\","
+                + "\"typical\":0.5,"
+                + "\"influencers\":["
+                +   "{"
+                +     "\"influencerFieldName\":\"airline\","
+                +     "\"influencerFieldValues\":[\"AAL\"]"
+                +   "}"
+                + "],"
+                + "\"functionDescription\":\"Function blah blah\","
+                + "\"detectorIndex\":0"
+                + "}";
+        assertEquals(expected, serialiser.toJson());
+    }
+
     private static AnomalyRecord createFullyPopulatedRecord()
     {
         AnomalyRecord record = new AnomalyRecord();
         record.setActual(new double[] { 42.0 });
+        record.setBucketSpan(3600);
         record.setAnomalyScore(99.0);
         record.setByFieldName("airline");
         record.setByFieldValue("AAL");
@@ -318,7 +366,10 @@ public class AnomalyRecordTest
         record.setFieldName("responsetime");
         record.setFunction("metric");
         record.setFunctionDescription("Function blah blah");
-        record.setInfluencers(Arrays.asList(new Influence()));
+        Influence influence = new Influence();
+        influence.setInfluencerFieldName("airline");
+        influence.setInfluencerFieldValues(Arrays.asList("AAL"));
+        record.setInfluencers(Arrays.asList(influence));
         record.setInterim(false);
         record.setNormalizedProbability(86.4);
         record.setInitialNormalizedProbability(90.2);

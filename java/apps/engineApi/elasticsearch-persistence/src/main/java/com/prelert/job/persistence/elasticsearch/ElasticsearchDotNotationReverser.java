@@ -31,7 +31,7 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.regex.Pattern;
 
-import com.prelert.job.persistence.DotNotationReverser;
+import com.prelert.job.persistence.serialisation.DotNotationReverser;
 import com.prelert.job.results.ReservedFieldNames;
 
 /**

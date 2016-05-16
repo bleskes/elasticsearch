@@ -19,6 +19,7 @@
 package com.prelert.job.results;
 
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -28,6 +29,8 @@ import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.prelert.job.persistence.serialisation.StorageSerialisable;
+import com.prelert.job.persistence.serialisation.StorageSerialiser;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
@@ -35,7 +38,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  */
 @JsonIgnoreProperties({"epoch", "normalisable", "id"})
 @JsonInclude(Include.NON_NULL)
-public class Bucket
+public class Bucket implements StorageSerialisable
 {
     /*
      * Field Names
@@ -317,5 +320,27 @@ public class Bucket
             return false;
         }
         return m_AnomalyScore > 0.0 || m_RecordCount > 0;
+    }
+
+    @Override
+    public void serialise(StorageSerialiser serialiser) throws IOException
+    {
+        serialiser.addTimestamp(m_Timestamp)
+                  .add(ANOMALY_SCORE, m_AnomalyScore)
+                  .add(INITIAL_ANOMALY_SCORE, m_InitialAnomalyScore)
+                  .add(MAX_NORMALIZED_PROBABILITY, m_MaxNormalizedProbability)
+                  .add(RECORD_COUNT, m_RecordCount)
+                  .add(EVENT_COUNT, m_EventCount)
+                  .add(BUCKET_SPAN, m_BucketSpan);
+
+        if (m_IsInterim)
+        {
+            serialiser.add(IS_INTERIM, m_IsInterim);
+        }
+
+        if (m_BucketInfluencers != null)
+        {
+            serialiser.add(BUCKET_INFLUENCERS, m_BucketInfluencers);
+        }
     }
 }

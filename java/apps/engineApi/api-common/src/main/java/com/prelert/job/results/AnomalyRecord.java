@@ -18,10 +18,12 @@
 
 package com.prelert.job.results;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
@@ -29,6 +31,9 @@ import com.fasterxml.jackson.annotation.JsonFormat.Feature;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.prelert.job.persistence.serialisation.DotNotationReverser;
+import com.prelert.job.persistence.serialisation.StorageSerialisable;
+import com.prelert.job.persistence.serialisation.StorageSerialiser;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
@@ -38,7 +43,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  */
 @JsonInclude(Include.NON_NULL)
 @JsonIgnoreProperties({"id", "parent"})
-public class AnomalyRecord
+public class AnomalyRecord implements StorageSerialisable
 {
     /**
      * Serialisation fields
@@ -456,5 +461,128 @@ public class AnomalyRecord
     public void raiseBigNormalisedUpdateFlag()
     {
         m_HadBigNormalisedUpdate = true;
+    }
+
+    @Override
+    public void serialise(StorageSerialiser serialiser) throws IOException
+    {
+        serialiser.addTimestamp(m_Timestamp)
+                .add(DETECTOR_INDEX, m_DetectorIndex)
+                .add(PROBABILITY, m_Probability)
+                .add(ANOMALY_SCORE, m_AnomalyScore)
+                .add(NORMALIZED_PROBABILITY, m_NormalizedProbability)
+                .add(INITIAL_NORMALIZED_PROBABILITY, m_InitialNormalizedProbability)
+                .add(BUCKET_SPAN, m_BucketSpan);
+
+        DotNotationReverser reverser = serialiser.newDotNotationReverser();
+        List<String> topLevelExcludes = new ArrayList<>();
+
+        if (m_ByFieldName != null)
+        {
+            serialiser.add(BY_FIELD_NAME, m_ByFieldName);
+            if (m_ByFieldValue != null)
+            {
+                reverser.add(m_ByFieldName, m_ByFieldValue);
+                topLevelExcludes.add(m_ByFieldName);
+            }
+        }
+        if (m_ByFieldValue != null)
+        {
+            serialiser.add(BY_FIELD_VALUE, m_ByFieldValue);
+        }
+        if (m_CorrelatedByFieldValue != null)
+        {
+            serialiser.add(CORRELATED_BY_FIELD_VALUE, m_CorrelatedByFieldValue);
+        }
+        if (m_Typical != null)
+        {
+            if (m_Typical.length == 1)
+            {
+                serialiser.add(TYPICAL, m_Typical[0]);
+            }
+            else
+            {
+                serialiser.add(TYPICAL, m_Typical);
+            }
+        }
+        if (m_Actual != null)
+        {
+            if (m_Actual.length == 1)
+            {
+                serialiser.add(ACTUAL, m_Actual[0]);
+            }
+            else
+            {
+                serialiser.add(ACTUAL, m_Actual);
+            }
+        }
+        if (m_IsInterim)
+        {
+            serialiser.add(IS_INTERIM, m_IsInterim);
+        }
+        if (m_FieldName != null)
+        {
+            serialiser.add(FIELD_NAME, m_FieldName);
+        }
+        if (m_Function != null)
+        {
+            serialiser.add(FUNCTION, m_Function);
+        }
+        if (m_FunctionDescription != null)
+        {
+            serialiser.add(FUNCTION_DESCRIPTION, m_FunctionDescription);
+        }
+        if (m_PartitionFieldName != null)
+        {
+            serialiser.add(PARTITION_FIELD_NAME, m_PartitionFieldName);
+            if (m_PartitionFieldValue != null)
+            {
+                reverser.add(m_PartitionFieldName, m_PartitionFieldValue);
+                topLevelExcludes.add(m_PartitionFieldName);
+            }
+        }
+        if (m_PartitionFieldValue != null)
+        {
+            serialiser.add(PARTITION_FIELD_VALUE, m_PartitionFieldValue);
+        }
+        if (m_OverFieldName != null)
+        {
+            serialiser.add(AnomalyRecord.OVER_FIELD_NAME, m_OverFieldName);
+            if (m_OverFieldValue != null)
+            {
+                reverser.add(m_OverFieldName, m_OverFieldValue);
+                topLevelExcludes.add(m_OverFieldName);
+            }
+        }
+        if (m_OverFieldValue != null)
+        {
+            serialiser.add(OVER_FIELD_VALUE, m_OverFieldValue);
+        }
+        if (m_Causes != null)
+        {
+            serialiser.add(CAUSES, m_Causes);
+        }
+        if (m_Influencers != null && m_Influencers.isEmpty() == false)
+        {
+            // First add the influencers array
+            serialiser.add(INFLUENCERS, m_Influencers);
+
+            // Then, where possible without creating duplicates, add top level
+            // raw data fields
+            for (Influence influence: m_Influencers)
+            {
+                if (influence.getInfluencerFieldName() != null &&
+                    !influence.getInfluencerFieldValues().isEmpty() &&
+                    !topLevelExcludes.contains(influence.getInfluencerFieldName()))
+                {
+                    reverser.add(influence.getInfluencerFieldName(), influence.getInfluencerFieldValues().get(0));
+                }
+            }
+        }
+
+        for (Map.Entry<String, Object> entry : reverser.getResultsMap().entrySet())
+        {
+            serialiser.add(entry.getKey(), entry.getValue());
+        }
     }
 }

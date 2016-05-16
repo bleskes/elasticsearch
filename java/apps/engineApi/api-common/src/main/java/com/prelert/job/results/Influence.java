@@ -17,14 +17,18 @@
  ***************************************************************************/
 package com.prelert.job.results;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+import com.prelert.job.persistence.serialisation.StorageSerialisable;
+import com.prelert.job.persistence.serialisation.StorageSerialiser;
+
 /**
  * Influence field name and list of influence field values/score pairs
  */
-public class Influence
+public class Influence implements StorageSerialisable
 {
     /**
      * Note all publicly exposed field names are "influencer" not "influence"
@@ -100,5 +104,11 @@ public class Influence
 
         return Objects.equals(m_Field, other.m_Field) &&
                 Objects.equals(m_FieldValues, other.m_FieldValues);
+    }
+
+    @Override
+    public void serialise(StorageSerialiser serialiser) throws IOException
+    {
+        serialiser.add(INFLUENCER_FIELD_NAME, m_Field).add(INFLUENCER_FIELD_VALUES, m_FieldValues);
     }
 }

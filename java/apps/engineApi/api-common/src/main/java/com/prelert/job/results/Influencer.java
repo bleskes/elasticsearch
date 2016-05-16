@@ -17,15 +17,20 @@
  ***************************************************************************/
 package com.prelert.job.results;
 
+import java.io.IOException;
 import java.util.Date;
+import java.util.Map;
 import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.prelert.job.persistence.serialisation.DotNotationReverser;
+import com.prelert.job.persistence.serialisation.StorageSerialisable;
+import com.prelert.job.persistence.serialisation.StorageSerialiser;
 
 @JsonIgnoreProperties(value={"initialAnomalyScore"}, allowSetters=true)
-public class Influencer
+public class Influencer implements StorageSerialisable
 {
     /**
      * Elasticsearch type
@@ -215,5 +220,26 @@ public class Influencer
                 (m_IsInterim == other.m_IsInterim);
     }
 
+    @Override
+    public void serialise(StorageSerialiser serialiser) throws IOException
+    {
+        serialiser.addTimestamp(m_Timestamp)
+                  .add(PROBABILITY, m_Probability)
+                  .add(INFLUENCER_FIELD_NAME, m_InfluenceField)
+                  .add(INFLUENCER_FIELD_VALUE, m_InfluenceValue)
+                  .add(INITIAL_ANOMALY_SCORE, m_InitialAnomalyScore)
+                  .add(ANOMALY_SCORE, m_AnomalyScore);
 
+        if (m_IsInterim)
+        {
+            serialiser.add(Bucket.IS_INTERIM, true);
+        }
+
+        DotNotationReverser reverser = serialiser.newDotNotationReverser();
+        reverser.add(m_InfluenceField, m_InfluenceValue);
+        for (Map.Entry<String, Object> entry : reverser.getResultsMap().entrySet())
+        {
+            serialiser.add(entry.getKey(), entry.getValue());
+        }
+    }
 }

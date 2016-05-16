@@ -16,28 +16,11 @@
  *                                                                          *
  ***************************************************************************/
 
-package com.prelert.job.persistence;
+package com.prelert.job.persistence.serialisation;
 
-import java.util.Map;
+import java.io.IOException;
 
-/**
- * Interprets field names containing dots as nested JSON structures.
- */
-public interface DotNotationReverser
+public interface StorageSerialisable
 {
-    /**
-     * Given a field name and value, convert it to a map representation of the
-     * (potentially nested) JSON structure.
-     */
-    void add(String fieldName, String fieldValue);
-
-    /**
-     * Return the map representation of the field-value keys that have been added
-     */
-    public Map<String, Object> getResultsMap();
-
-    /**
-     * Return the mappings (or schema) of the field-value keys that have been added
-     */
-    Map<String, Object> getMappingsMap();
+    void serialise(StorageSerialiser serialiser) throws IOException;
 }

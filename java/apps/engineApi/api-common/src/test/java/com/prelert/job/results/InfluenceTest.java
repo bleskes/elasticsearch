@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -26,11 +26,14 @@
  ************************************************************/
 package com.prelert.job.results;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
+import java.io.IOException;
 import java.util.Arrays;
 
 import org.junit.Test;
+
+import com.prelert.job.persistence.serialisation.TestJsonStorageSerialiser;
 
 public class InfluenceTest
 {
@@ -60,5 +63,23 @@ public class InfluenceTest
         inf2.setInfluencerFieldValues(Arrays.asList("a", "b"));
 
         assertEquals(inf1.hashCode(), inf2.hashCode());
+    }
+
+    @Test
+    public void testSerialise() throws IOException
+    {
+        Influence influence = new Influence("foo");
+        influence.setInfluencerFieldValues(Arrays.asList("a", "b"));
+
+        TestJsonStorageSerialiser serialiser = new TestJsonStorageSerialiser();
+        serialiser.startObject();
+        influence.serialise(serialiser);
+        serialiser.endObject();
+
+        String expected = "{"
+                + "\"influencerFieldName\":\"foo\","
+                + "\"influencerFieldValues\":[\"a\",\"b\"]"
+                + "}";
+        assertEquals(expected, serialiser.toJson());
     }
 }

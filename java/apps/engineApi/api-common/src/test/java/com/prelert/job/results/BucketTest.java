@@ -31,11 +31,14 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 
 import org.junit.Test;
+
+import com.prelert.job.persistence.serialisation.TestJsonStorageSerialiser;
 
 public class BucketTest
 {
@@ -306,5 +309,96 @@ public class BucketTest
         bucket.setRecordCount(1);
 
         assertTrue(bucket.isNormalisable());
+    }
+
+    @Test
+    public void testSerialise_GivenBucketWithInfluencers() throws IOException
+    {
+        BucketInfluencer bucketInfluencer1 = new BucketInfluencer();
+        bucketInfluencer1.setAnomalyScore(88.3);
+        bucketInfluencer1.setInfluencerFieldName("foo");
+        bucketInfluencer1.setInitialAnomalyScore(90.1);
+        bucketInfluencer1.setProbability(0.003);
+        bucketInfluencer1.setRawAnomalyScore(0.68);
+        BucketInfluencer bucketInfluencer2 = new BucketInfluencer();
+        bucketInfluencer2.setAnomalyScore(78.3);
+        bucketInfluencer2.setInfluencerFieldName("bar");
+        bucketInfluencer2.setInitialAnomalyScore(80.1);
+        bucketInfluencer2.setProbability(0.04);
+        bucketInfluencer2.setRawAnomalyScore(0.58);
+
+        Bucket bucket = new Bucket();
+        bucket.setAnomalyScore(88.3);
+        bucket.setBucketSpan(600L);
+        bucket.setRecordCount(142);
+        bucket.setMaxNormalizedProbability(90.1);
+        bucket.setEventCount(103);
+        bucket.setBucketInfluencers(Arrays.asList(bucketInfluencer1, bucketInfluencer2));
+        bucket.setInitialAnomalyScore(93.1);
+        bucket.setTimestamp(new Date(1455753600000L));
+        TestJsonStorageSerialiser serialiser = new TestJsonStorageSerialiser();
+
+        serialiser.startObject();
+        bucket.serialise(serialiser);
+        serialiser.endObject();
+
+        String expected = "{"
+                + "\"anomalyScore\":88.3,"
+                + "\"bucketSpan\":600,"
+                + "\"@timestamp\":1455753600000,"
+                + "\"recordCount\":142,"
+                + "\"maxNormalizedProbability\":90.1,"
+                + "\"eventCount\":103,"
+                + "\"bucketInfluencers\":["
+                +   "{"
+                +      "\"influencerFieldName\":\"foo\","
+                +      "\"anomalyScore\":88.3,"
+                +      "\"probability\":0.003,"
+                +      "\"rawAnomalyScore\":0.68,"
+                +      "\"initialAnomalyScore\":90.1"
+                +   "},"
+                +   "{"
+                +      "\"influencerFieldName\":\"bar\","
+                +      "\"anomalyScore\":78.3,"
+                +      "\"probability\":0.04,"
+                +      "\"rawAnomalyScore\":0.58,"
+                +      "\"initialAnomalyScore\":80.1"
+                +   "}"
+                + "],"
+                + "\"initialAnomalyScore\":93.1"
+                + "}";
+        assertEquals(expected, serialiser.toJson());
+    }
+
+    @Test
+    public void testSerialise_GivenInterimBucketWithoutInfluencers() throws IOException
+    {
+        Bucket bucket = new Bucket();
+        bucket.setAnomalyScore(88.3);
+        bucket.setBucketSpan(600L);
+        bucket.setRecordCount(142);
+        bucket.setMaxNormalizedProbability(90.1);
+        bucket.setEventCount(103);
+        bucket.setBucketInfluencers(null);
+        bucket.setInitialAnomalyScore(93.1);
+        bucket.setTimestamp(new Date(1455753600000L));
+        bucket.setInterim(true);
+        TestJsonStorageSerialiser serialiser = new TestJsonStorageSerialiser();
+
+        serialiser.startObject();
+        bucket.serialise(serialiser);
+        serialiser.endObject();
+
+        String expected = "{"
+                + "\"isInterim\":true,"
+                + "\"anomalyScore\":88.3,"
+                + "\"bucketSpan\":600,"
+                + "\"@timestamp\":1455753600000,"
+                + "\"recordCount\":142,"
+                + "\"maxNormalizedProbability\":90.1,"
+                + "\"eventCount\":103,"
+                + "\"initialAnomalyScore\":93.1"
+                + "}";
+        assertEquals(expected, serialiser.toJson());
     }
 }

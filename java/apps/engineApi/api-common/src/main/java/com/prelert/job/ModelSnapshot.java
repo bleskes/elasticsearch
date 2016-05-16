@@ -18,11 +18,14 @@
 
 package com.prelert.job;
 
+import java.io.IOException;
 import java.util.Date;
 import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.prelert.job.persistence.serialisation.StorageSerialisable;
+import com.prelert.job.persistence.serialisation.StorageSerialiser;
 import com.prelert.job.quantiles.Quantiles;
 
 
@@ -30,7 +33,7 @@ import com.prelert.job.quantiles.Quantiles;
  * ModelSnapshot Result POJO
  */
 @JsonInclude(Include.NON_NULL)
-public class ModelSnapshot
+public class ModelSnapshot implements StorageSerialisable
 {
     /**
      * Field Names
@@ -182,5 +185,36 @@ public class ModelSnapshot
                 && Objects.equals(this.m_Quantiles,  that.m_Quantiles)
                 && Objects.equals(this.m_LatestRecordTimeStamp, that.m_LatestRecordTimeStamp)
                 && Objects.equals(this.m_LatestResultTimeStamp, that.m_LatestResultTimeStamp);
+    }
+
+    @Override
+    public void serialise(StorageSerialiser serialiser) throws IOException
+    {
+        serialiser.addTimestamp(m_Timestamp)
+                  .add(DESCRIPTION, m_Description)
+                  .add(RESTORE_PRIORITY, m_RestorePriority)
+                  .add(SNAPSHOT_ID, m_SnapshotId)
+                  .add(SNAPSHOT_DOC_COUNT, m_SnapshotDocCount);
+
+        if (m_ModelSizeStats != null)
+        {
+            serialiser.startObject(ModelSizeStats.TYPE);
+            m_ModelSizeStats.serialise(serialiser);
+            serialiser.endObject();
+        }
+        if (m_Quantiles != null)
+        {
+            serialiser.startObject(Quantiles.TYPE);
+            m_Quantiles.serialise(serialiser);
+            serialiser.endObject();
+        }
+        if (m_LatestRecordTimeStamp != null)
+        {
+            serialiser.add(LATEST_RECORD_TIME, m_LatestRecordTimeStamp);
+        }
+        if (m_LatestResultTimeStamp != null)
+        {
+            serialiser.add(LATEST_RESULT_TIME, m_LatestResultTimeStamp);
+        }
     }
 }
