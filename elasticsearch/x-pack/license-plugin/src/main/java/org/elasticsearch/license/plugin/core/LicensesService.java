@@ -160,7 +160,7 @@ public class LicensesService extends AbstractLifecycleComponent<LicensesService>
     }
 
     private void populateExpirationCallbacks() {
-        expirationCallbacks.add(new ExpirationCallback.Pre(days(7), days(30), days(1)) {
+        expirationCallbacks.add(new ExpirationCallback.Pre(days(7), days(25), days(1)) {
                                     @Override
                                     public void on(License license) {
                                         String general = LoggerMessageFormat.format(null, "\n" +
@@ -185,9 +185,9 @@ public class LicensesService extends AbstractLifecycleComponent<LicensesService>
                                                     }
                                                 }
                                             }
-                                            logger.error("{}", builder);
+                                            logger.warn("{}", builder);
                                         } else {
-                                            logger.error("{}", general);
+                                            logger.warn("{}", general);
                                         }
                                     }
                                 }
@@ -217,9 +217,9 @@ public class LicensesService extends AbstractLifecycleComponent<LicensesService>
                                                     }
                                                 }
                                             }
-                                            logger.error("{}", builder.toString());
+                                            logger.warn("{}", builder.toString());
                                         } else {
-                                            logger.error("{}", general);
+                                            logger.warn("{}", general);
                                         }
                                     }
                                 }
@@ -249,9 +249,9 @@ public class LicensesService extends AbstractLifecycleComponent<LicensesService>
                                                     }
                                                 }
                                             }
-                                            logger.error("{}", builder.toString());
+                                            logger.warn("{}", builder.toString());
                                         } else {
-                                            logger.error("{}", general);
+                                            logger.warn("{}", general);
                                         }
                                     }
                                 }
