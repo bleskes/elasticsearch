@@ -28,6 +28,9 @@ package com.prelert.job.reader;
 
 import java.util.Optional;
 
+import javax.ws.rs.core.Feature;
+import javax.ws.rs.core.FeatureContext;
+
 import com.prelert.job.JobDetails;
 import com.prelert.job.ModelSnapshot;
 import com.prelert.job.UnknownJobException;
@@ -43,7 +46,7 @@ import com.prelert.job.results.Influencer;
  * Class for reading Job details, results, model snapshots, etc
  * from the datastore
  */
-public class JobDataReader
+public class JobDataReader implements Feature
 {
     JobProvider m_JobProvider;
 
@@ -323,6 +326,12 @@ public class JobDataReader
     {
         return m_JobProvider.modelSnapshots(jobId, skip, take, epochStartMs, epochEndMs,
                 sortField, sortDescending, null, description);
+    }
+
+    @Override
+    public boolean configure(FeatureContext context)
+    {
+        return false;
     }
 
 }
