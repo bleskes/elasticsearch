@@ -311,9 +311,9 @@ The same data can be processed in JSON format. Download the example data from
 http://s3.amazonaws.com/prelert_demo/farequote.json. The format of the file is
 as follows:
 
-{"airline": "AAL", "responsetime": "132.2046", "sourcetype": "farequote", "timestamp": "1447804800"}
-{"airline": "JZA", "responsetime": "990.4628", "sourcetype": "farequote", "timestamp": "1447804800"}
-{"airline": "JBU", "responsetime": "877.5927", "sourcetype": "farequote", "timestamp": "1447804800"}
+{"airline": "AAL", "responsetime": "132.2046", "sourcetype": "farequote", "time": "1447804800"}
+{"airline": "JZA", "responsetime": "990.4628", "sourcetype": "farequote", "time": "1447804800"}
+{"airline": "JBU", "responsetime": "877.5927", "sourcetype": "farequote", "time": "1447804800"}
 ...
 
 The same steps as above can be followed, except that the dataDescription would
@@ -328,7 +328,7 @@ curl -X POST -H 'Content-Type: application/json' 'http://localhost:8080/engine/v
     },
     "dataDescription" : {
         "format":"json",
-        "timeField":"timestamp"
+        "timeField":"time"
     }
 }'
 
