@@ -18,29 +18,35 @@
 
 package com.prelert.rs.client;
 
+import java.io.BufferedReader;
 import java.io.Closeable;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 import java.util.zip.ZipInputStream;
 
 import org.apache.log4j.Logger;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.api.ContentResponse;
 import org.eclipse.jetty.client.api.Request;
+import org.eclipse.jetty.client.api.Response;
 import org.eclipse.jetty.client.api.Result;
 import org.eclipse.jetty.client.util.BufferingResponseListener;
 import org.eclipse.jetty.client.util.BytesContentProvider;
@@ -1295,8 +1301,25 @@ public class EngineApiClient implements Closeable
      */
     private String getStringContent(String url) throws IOException
     {
-        ContentResponse response = executeRequest(m_HttpClient.newRequest(url).method(HttpMethod.GET));
-        String content = response.getContentAsString();
+        InputStreamResponseListener responseListener = new InputStreamResponseListener();
+        m_HttpClient.newRequest(url).method(HttpMethod.GET).send(responseListener);
+
+        Response response = null;
+        try
+        {
+            response = responseListener.get(2, TimeUnit.MINUTES);
+        }
+        catch (InterruptedException | TimeoutException | ExecutionException e)
+        {
+            LOGGER.error("GET request timed out or failed", e);
+            return "";
+        }
+
+        String content = "";
+        try (BufferedReader buffer = new BufferedReader(
+                new InputStreamReader(responseListener.getInputStream(), StandardCharsets.UTF_8))) {
+            content = buffer.lines().collect(Collectors.joining(System.lineSeparator()));
+        }
 
         if (response.getStatus() == HttpStatus.OK_200)
         {
@@ -1348,9 +1371,12 @@ public class EngineApiClient implements Closeable
     public ZipInputStream downloadAllLogs(String jobId) throws IOException
     {
         String url = String.format("%s/logs/%s", m_BaseUrl, encode(jobId));
-
         LOGGER.debug("GET download logs " + url);
+        return getAsZipInputStream(url);
+    }
 
+    private ZipInputStream getAsZipInputStream(String url)
+    {
         m_LastError = null;
         InputStreamResponseListener responseListener = new InputStreamResponseListener();
         Request request = m_HttpClient.newRequest(url).method(HttpMethod.GET);
@@ -1373,14 +1399,8 @@ public class EngineApiClient implements Closeable
     public ZipInputStream downloadElasticsearchLogs() throws IOException
     {
         String url = String.format("%s/logs/elasticsearch", m_BaseUrl);
-
         LOGGER.debug("GET download logs " + url);
-
-        m_LastError = null;
-        InputStreamResponseListener responseListener = new InputStreamResponseListener();
-        Request request = m_HttpClient.newRequest(url).method(HttpMethod.GET);
-        request.send(responseListener);
-        return new ZipInputStream(responseListener.getInputStream());
+        return getAsZipInputStream(url);
     }
 
     /**
@@ -1398,14 +1418,8 @@ public class EngineApiClient implements Closeable
     public ZipInputStream downloadEngineLogs() throws IOException
     {
         String url = String.format("%s/logs/engine_api", m_BaseUrl);
-
         LOGGER.debug("GET download logs " + url);
-
-        m_LastError = null;
-        InputStreamResponseListener responseListener = new InputStreamResponseListener();
-        Request request = m_HttpClient.newRequest(url).method(HttpMethod.GET);
-        request.send(responseListener);
-        return new ZipInputStream(responseListener.getInputStream());
+        return getAsZipInputStream(url);
     }
 
     /**
@@ -1423,14 +1437,8 @@ public class EngineApiClient implements Closeable
     public ZipInputStream downloadSupportBundle() throws IOException
     {
         String url = String.format("%s/support", m_BaseUrl);
-
         LOGGER.debug("GET support bundle " + url);
-
-        m_LastError = null;
-        InputStreamResponseListener responseListener = new InputStreamResponseListener();
-        Request request = m_HttpClient.newRequest(url).method(HttpMethod.GET);
-        request.send(responseListener);
-        return new ZipInputStream(responseListener.getInputStream());
+        return getAsZipInputStream(url);
     }
 
     /**
