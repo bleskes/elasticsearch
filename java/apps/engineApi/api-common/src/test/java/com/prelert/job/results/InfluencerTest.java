@@ -110,6 +110,35 @@ public class InfluencerTest
                 + "\"initialAnomalyScore\":2.0"
                 + "}";
         assertEquals(expected, serialiser.toJson());
+    }
 
+    @Test
+    public void testSerialise_GivenInterim() throws IOException
+    {
+        Influencer inf = new Influencer();
+        inf.setTimestamp(new Date(123));
+        inf.setInfluencerFieldName("a");
+        inf.setInfluencerFieldValue("f");
+        inf.setProbability(0.1);
+        inf.setInitialAnomalyScore(2.0);
+        inf.setAnomalyScore(55.0);
+        inf.setInterim(true);
+
+        TestJsonStorageSerialiser serialiser = new TestJsonStorageSerialiser();
+        serialiser.startObject();
+        inf.serialise(serialiser);
+        serialiser.endObject();
+
+        String expected = "{"
+                + "\"influencerFieldName\":\"a\","
+                + "\"isInterim\":true,"
+                + "\"anomalyScore\":55.0,"
+                + "\"@timestamp\":123,"
+                + "\"a.reversed\":\"f\","
+                + "\"probability\":0.1,"
+                + "\"influencerFieldValue\":\"f\","
+                + "\"initialAnomalyScore\":2.0"
+                + "}";
+        assertEquals(expected, serialiser.toJson());
     }
 }

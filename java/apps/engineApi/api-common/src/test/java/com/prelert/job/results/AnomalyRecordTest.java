@@ -354,6 +354,30 @@ public class AnomalyRecordTest
         assertEquals(expected, serialiser.toJson());
     }
 
+    @Test
+    public void testSerialise_GivenDefaultInterimRecord() throws IOException
+    {
+        AnomalyRecord record = new AnomalyRecord();
+        record.setInterim(true);
+        TestJsonStorageSerialiser serialiser = new TestJsonStorageSerialiser();
+
+        serialiser.startObject();
+        record.serialise(serialiser);
+        serialiser.endObject();
+
+        String expected = "{"
+                + "\"isInterim\":true,"
+                + "\"anomalyScore\":0.0,"
+                + "\"bucketSpan\":0,"
+                + "\"@timestamp\":null,"
+                + "\"normalizedProbability\":0.0,"
+                + "\"initialNormalizedProbability\":0.0,"
+                + "\"probability\":0.0,"
+                + "\"detectorIndex\":0"
+                + "}";
+        assertEquals(expected, serialiser.toJson());
+    }
+
     private static AnomalyRecord createFullyPopulatedRecord()
     {
         AnomalyRecord record = new AnomalyRecord();
