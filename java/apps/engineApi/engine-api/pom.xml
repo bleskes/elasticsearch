@@ -73,13 +73,14 @@
       <artifactId>elasticsearch</artifactId>
     </dependency>
 
-    <!-- ZooKeeper Curator-->
+    <!-- ZooKeeper Curator -->
     <dependency>
       <groupId>org.apache.curator</groupId>
       <artifactId>curator-recipes</artifactId>
       <version>2.10.0</version>
+      <!-- Resolve dependency convergence error with elasticsearch.
+           If this changes review the copy-dependencies excludeArtifactIds below -->
       <exclusions>
-        <!-- resolve dependency convergence error with elasticsearch -->
         <exclusion>
           <groupId>io.netty</groupId>
           <artifactId>netty</artifactId>
@@ -123,6 +124,8 @@
               <!-- Don't copy test jars (JUnit) or provided -->
               <includeScope>runtime</includeScope>
               <excludeScope>provided</excludeScope>
+              <!-- Don't copy slf4j -->
+              <excludeArtifactIds>slf4j-api</excludeArtifactIds>
             </configuration>
           </execution>
 
