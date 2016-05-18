@@ -31,9 +31,12 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import java.io.IOException;
 import java.util.Date;
 
 import org.junit.Test;
+
+import com.prelert.job.persistence.serialisation.TestJsonStorageSerialiser;
 
 public class ModelSnapshotTest
 {
@@ -83,5 +86,55 @@ public class ModelSnapshotTest
         assertTrue(modelSnapshot1.equals(modelSnapshot2));
         assertTrue(modelSnapshot2.equals(modelSnapshot1));
         assertEquals(modelSnapshot1.hashCode(), modelSnapshot2.hashCode());
+    }
+
+    @Test
+    public void testSerialise() throws IOException
+    {
+        ModelSizeStats modelSizeStats = new ModelSizeStats();
+        modelSizeStats.setTimestamp(new Date(9123L));
+        modelSizeStats.setModelBytes(1000L);
+        modelSizeStats.setBucketAllocationFailuresCount(1L);
+        modelSizeStats.setMemoryStatus("SOFT_LIMIT");
+        modelSizeStats.setTotalByFieldCount(3L);
+        modelSizeStats.setTotalOverFieldCount(4L);
+        modelSizeStats.setTotalPartitionFieldCount(5L);
+        modelSizeStats.setLogTime(new Date(42L));
+
+        ModelSnapshot modelSnapshot = new ModelSnapshot();
+        modelSnapshot.setTimestamp(new Date(12345L));
+        modelSnapshot.setDescription("a snapshot");
+        modelSnapshot.setRestorePriority(1234L);
+        modelSnapshot.setSnapshotId("my_id");
+        modelSnapshot.setSnapshotDocCount(7);
+        modelSnapshot.setModelSizeStats(modelSizeStats);
+        modelSnapshot.setLatestRecordTimeStamp(new Date(12345678901234L));
+        modelSnapshot.setLatestResultTimeStamp(new Date(14345678901234L));
+
+        TestJsonStorageSerialiser serialiser = new TestJsonStorageSerialiser();
+        serialiser.startObject();
+        modelSnapshot.serialise(serialiser);
+        serialiser.endObject();
+
+        String expected = "{"
+                + "\"latestRecordTimeStamp\":12345678901234,"
+                + "\"latestResultTimeStamp\":14345678901234,"
+                + "\"@timestamp\":12345,"
+                + "\"restorePriority\":1234,"
+                + "\"snapshotId\":\"my_id\","
+                + "\"description\":\"a snapshot\","
+                + "\"snapshotDocCount\":7,"
+                + "\"modelSizeStats\":{"
+                +   "\"modelBytes\":1000,"
+                +   "\"totalByFieldCount\":3,"
+                +   "\"totalPartitionFieldCount\":5,"
+                +   "\"bucketAllocationFailuresCount\":1,"
+                +   "\"totalOverFieldCount\":4,"
+                +   "\"@timestamp\":9123,"
+                +   "\"memoryStatus\":\"SOFT_LIMIT\","
+                +   "\"logTime\":42"
+                + "}"
+                + "}";
+        assertEquals(expected, serialiser.toJson());
     }
 }

@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -31,9 +31,11 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import java.io.IOException;
+
 import org.junit.Test;
 
-import com.prelert.job.results.CategoryDefinition;
+import com.prelert.job.persistence.serialisation.TestJsonStorageSerialiser;
 
 public class CategoryDefinitionTest
 {
@@ -166,5 +168,29 @@ public class CategoryDefinitionTest
         category2.addExample("foo");
 
         assertEquals(category1.hashCode(), category2.hashCode());
+    }
+
+    @Test
+    public void testSerialise() throws IOException
+    {
+        CategoryDefinition category = new CategoryDefinition();
+        category.setCategoryId(42);
+        category.setTerms("foo bar");
+        category.setRegex(".*?foo.*?bar.*");
+        category.addExample("bar");
+        category.addExample("foobar");
+
+        TestJsonStorageSerialiser serialiser = new TestJsonStorageSerialiser();
+        serialiser.startObject();
+        category.serialise(serialiser);
+        serialiser.endObject();
+
+        String expected = "{"
+                + "\"regex\":\".*?foo.*?bar.*\","
+                + "\"examples\":[\"bar\",\"foobar\"],"
+                + "\"terms\":\"foo bar\","
+                + "\"categoryId\":42"
+                + "}";
+        assertEquals(expected, serialiser.toJson());
     }
 }

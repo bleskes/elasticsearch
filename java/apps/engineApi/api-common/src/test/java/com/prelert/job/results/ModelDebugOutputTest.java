@@ -31,7 +31,12 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import java.io.IOException;
+import java.util.Date;
+
 import org.junit.Test;
+
+import com.prelert.job.persistence.serialisation.TestJsonStorageSerialiser;
 
 public class ModelDebugOutputTest
 {
@@ -75,5 +80,37 @@ public class ModelDebugOutputTest
         assertTrue(modelDebugOutput1.equals(modelDebugOutput2));
         assertTrue(modelDebugOutput2.equals(modelDebugOutput1));
         assertEquals(modelDebugOutput1.hashCode(), modelDebugOutput2.hashCode());
+    }
+
+    @Test
+    public void testSerialise() throws IOException
+    {
+        ModelDebugOutput modelDebugOutput = new ModelDebugOutput();
+        modelDebugOutput.setTimestamp(new Date(42L));
+        modelDebugOutput.setPartitionFieldName("part");
+        modelDebugOutput.setPartitionFieldValue("val");
+        modelDebugOutput.setDebugFeature("sum");
+        modelDebugOutput.setDebugLower(7.9);
+        modelDebugOutput.setDebugUpper(34.5);
+        modelDebugOutput.setDebugMean(12.7);
+        modelDebugOutput.setActual(100.0);
+
+        TestJsonStorageSerialiser serialiser = new TestJsonStorageSerialiser();
+        serialiser.startObject();
+        modelDebugOutput.serialise(serialiser);
+        serialiser.endObject();
+
+        String expected = "{"
+                + "\"actual\":100.0,"
+                + "\"@timestamp\":42,"
+                + "\"debugMean\":12.7,"
+                + "\"partitionFieldValue\":\"val\","
+                + "\"debugFeature\":\"sum\","
+                + "\"part.reversed\":\"val\","
+                + "\"debugLower\":7.9,"
+                + "\"debugUpper\":34.5,"
+                + "\"partitionFieldName\":\"part\""
+                + "}";
+        assertEquals(expected, serialiser.toJson());
     }
 }

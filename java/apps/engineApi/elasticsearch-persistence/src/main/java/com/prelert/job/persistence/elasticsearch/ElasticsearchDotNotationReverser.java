@@ -27,17 +27,18 @@
 
 package com.prelert.job.persistence.elasticsearch;
 
-import java.util.TreeMap;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.regex.Pattern;
 
+import com.prelert.job.persistence.serialisation.DotNotationReverser;
 import com.prelert.job.results.ReservedFieldNames;
 
 /**
  * Interprets field names containing dots as nested JSON structures.
  * This matches what Elasticsearch does.
  */
-class ElasticsearchDotNotationReverser
+class ElasticsearchDotNotationReverser implements DotNotationReverser
 {
     private static final char DOT = '.';
     private static final Pattern DOT_PATTERN = Pattern.compile("\\.");
@@ -61,6 +62,7 @@ class ElasticsearchDotNotationReverser
      * <code>foo = x</code> goes to <code>{ "foo" : "x" }</code> and
      * <code>foo.bar = y</code> goes to <code>{ "foo" : { "bar" : "y" } }</code>
      */
+    @Override
     @SuppressWarnings("unchecked")
     public void add(String fieldName, String fieldValue)
     {
@@ -129,6 +131,7 @@ class ElasticsearchDotNotationReverser
         }
     }
 
+    @Override
     public Map<String, Object> getResultsMap()
     {
         return m_ResultsMap;
@@ -138,6 +141,7 @@ class ElasticsearchDotNotationReverser
      * Mappings for a given hierarchical structure are more complex than the
      * basic results.
      */
+    @Override
     public Map<String, Object> getMappingsMap()
     {
         Map<String, Object> mappingsMap = new TreeMap<>();

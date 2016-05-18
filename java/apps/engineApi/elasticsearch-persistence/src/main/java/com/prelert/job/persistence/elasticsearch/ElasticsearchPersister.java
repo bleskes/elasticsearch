@@ -30,10 +30,8 @@ package com.prelert.job.persistence.elasticsearch;
 import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 import java.util.function.Supplier;
 
 import org.apache.log4j.Logger;
@@ -51,13 +49,12 @@ import com.prelert.job.ModelSizeStats;
 import com.prelert.job.ModelSnapshot;
 import com.prelert.job.persistence.JobRenormaliser;
 import com.prelert.job.persistence.JobResultsPersister;
+import com.prelert.job.persistence.serialisation.StorageSerialisable;
 import com.prelert.job.quantiles.Quantiles;
-import com.prelert.job.results.AnomalyCause;
 import com.prelert.job.results.AnomalyRecord;
 import com.prelert.job.results.Bucket;
 import com.prelert.job.results.BucketInfluencer;
 import com.prelert.job.results.CategoryDefinition;
-import com.prelert.job.results.Influence;
 import com.prelert.job.results.Influencer;
 import com.prelert.job.results.ModelDebugOutput;
 
@@ -122,7 +119,7 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
 
         try
         {
-            XContentBuilder content = serialiseBucket(bucket);
+            XContentBuilder content = serialiseWithJobId(bucket);
 
             LOGGER.trace("ES API CALL: index type " + Bucket.TYPE +
                     " to index " + m_JobId.getIndex() + " at epoch " + bucket.getEpoch());
@@ -141,7 +138,8 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
                 for (Influencer influencer : bucket.getInfluencers())
                 {
                     influencer.setTimestamp(bucket.getTimestamp());
-                    content = serialiseInfluencer(influencer, bucket.isInterim());
+                    influencer.setInterim(bucket.isInterim());
+                    content = serialiseWithJobId(influencer);
                     LOGGER.trace("ES BULK ACTION: index type " + Influencer.TYPE +
                             " to index " + m_JobId.getIndex() + " with auto-generated ID");
                     addInfluencersRequest.add(
@@ -163,7 +161,8 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
                 BulkRequestBuilder addRecordsRequest = m_Client.prepareBulk();
                 for (AnomalyRecord record : bucket.getRecords())
                 {
-                    content = serialiseRecord(record, bucket.getTimestamp());
+                    record.setTimestamp(bucket.getTimestamp());
+                    content = serialiseWithJobId(record);
 
                     LOGGER.trace("ES BULK ACTION: index type " + AnomalyRecord.TYPE +
                             " to index " + m_JobId.getIndex() + " with auto-generated ID, for bucket "
@@ -210,7 +209,7 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
     public void persistQuantiles(Quantiles quantiles)
     {
         Persistable persistable = new Persistable(quantiles, () -> Quantiles.TYPE,
-                () -> Quantiles.QUANTILES_ID, () -> serialiseQuantiles(quantiles));
+                () -> Quantiles.QUANTILES_ID, () -> serialiseWithJobId(quantiles));
         if (persistable.persist())
         {
             // Refresh the index when persisting quantiles so that previously
@@ -231,7 +230,7 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
     public void persistModelSnapshot(ModelSnapshot modelSnapshot)
     {
         Persistable persistable = new Persistable(modelSnapshot, () -> ModelSnapshot.TYPE,
-                () -> modelSnapshot.getSnapshotId(), () -> serialiseModelSnapshot(modelSnapshot));
+                () -> modelSnapshot.getSnapshotId(), () -> serialiseWithJobId(modelSnapshot));
         persistable.persist();
     }
 
@@ -245,14 +244,14 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
         LOGGER.trace("Persisting model size stats, for size " + modelSizeStats.getModelBytes());
         Persistable persistable = new Persistable(modelSizeStats, () -> ModelSizeStats.TYPE,
                 () -> modelSizeStats.getModelSizeStatsId(),
-                () -> serialiseModelSizeStats(modelSizeStats));
+                () -> serialiseWithJobId(modelSizeStats));
         persistable.persist();
 
         modelSizeStats.setModelSizeStatsId(null);
 
         persistable = new Persistable(modelSizeStats, () -> ModelSizeStats.TYPE,
                 () -> modelSizeStats.getModelSizeStatsId(),
-                () -> serialiseModelSizeStats(modelSizeStats));
+                () -> serialiseWithJobId(modelSizeStats));
         persistable.persist();
 
         // Don't commit as we expect masses of these updates and they're only
@@ -267,7 +266,7 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
     public void persistModelDebugOutput(ModelDebugOutput modelDebugOutput)
     {
         Persistable persistable = new Persistable(modelDebugOutput, () -> ModelDebugOutput.TYPE,
-                () -> null, () -> serialiseModelDebugOutput(modelDebugOutput));
+                () -> null, () -> serialiseWithJobId(modelDebugOutput));
         persistable.persist();
 
         // Don't commit as we expect masses of these updates and they're not
@@ -278,7 +277,7 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
     public void persistInfluencer(Influencer influencer)
     {
         Persistable persistable = new Persistable(influencer, () -> Influencer.TYPE,
-                () -> influencer.getId(), () -> serialiseInfluencer(influencer, false));
+                () -> influencer.getId(), () -> serialiseWithJobId(influencer));
         persistable.persist();
 
         // Don't commit as we expect masses of these updates and they're not
@@ -323,7 +322,7 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
             LOGGER.trace("ES API CALL: index type " + Bucket.TYPE +
                     " to index " + m_JobId.getIndex() + " with ID " + bucket.getId());
             m_Client.prepareIndex(m_JobId.getIndex(), Bucket.TYPE, bucket.getId())
-                    .setSource(serialiseBucket(bucket)).execute().actionGet();
+                    .setSource(serialiseWithJobId(bucket)).execute().actionGet();
         }
         catch (IOException e)
         {
@@ -393,7 +392,7 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
 
                 bulkRequest.add(
                         m_Client.prepareIndex(m_JobId.getIndex(), AnomalyRecord.TYPE, recordId)
-                                .setSource(serialiseRecord(record, record.getTimestamp()))
+                                .setSource(serialiseWithJobId(record))
                                  // Need to specify the parent ID when updating a child
                                 .setParent(bucketId));
 
@@ -494,567 +493,45 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
         }
     }
 
-    /**
-     * Return the bucket as serialisable content
-     * @param bucket
-     * @return
-     * @throws IOException
-     */
-    private XContentBuilder serialiseBucket(Bucket bucket)
-    throws IOException
+    private XContentBuilder serialiseWithJobId(StorageSerialisable obj) throws IOException
     {
-        XContentBuilder builder = jsonBuilder().startObject()
-                .field(JOB_ID_NAME, m_JobId.getId())
-                .field(ElasticsearchMappings.ES_TIMESTAMP, bucket.getTimestamp())
-                .field(Bucket.ANOMALY_SCORE, bucket.getAnomalyScore())
-                .field(Bucket.INITIAL_ANOMALY_SCORE, bucket.getInitialAnomalyScore())
-                .field(Bucket.MAX_NORMALIZED_PROBABILITY, bucket.getMaxNormalizedProbability())
-                .field(Bucket.RECORD_COUNT, bucket.getRecordCount())
-                .field(Bucket.EVENT_COUNT, bucket.getEventCount())
-                .field(Bucket.BUCKET_SPAN, bucket.getBucketSpan());
-
-        if (bucket.isInterim())
-        {
-            builder.field(Bucket.IS_INTERIM, bucket.isInterim());
-        }
-
-        if (bucket.getBucketInfluencers() != null)
-        {
-            builder.startArray(Bucket.BUCKET_INFLUENCERS);
-            for (BucketInfluencer bucketInfluencer : bucket.getBucketInfluencers())
-            {
-                serialiseBucketInfluencerNested(bucketInfluencer, builder);
-            }
-            builder.endArray();
-        }
-
-        builder.endObject();
-
+        XContentBuilder builder = jsonBuilder();
+        new ElasticsearchStorageSerialiser(builder)
+                .startObject()
+                .add(JOB_ID_NAME, m_JobId.getId())
+                .serialise(obj)
+                .endObject();
         return builder;
     }
 
-    private XContentBuilder serialiseCategoryDefinition(CategoryDefinition category)
+    private XContentBuilder serialiseCategoryDefinition(CategoryDefinition categoryDefinition)
             throws IOException
     {
-        List<String> examples = category.getExamples();
-        return jsonBuilder().startObject()
-                .field(JOB_ID_NAME, m_JobId.getId())
-                .field(CategoryDefinition.CATEGORY_ID, category.getCategoryId())
-                .field(CategoryDefinition.TERMS, category.getTerms())
-                .field(CategoryDefinition.REGEX, category.getRegex())
-                .array(CategoryDefinition.EXAMPLES, examples.toArray(new Object[examples.size()]))
-                .field(ElasticsearchMappings.ES_TIMESTAMP, new Date())
+        XContentBuilder builder = jsonBuilder();
+        new ElasticsearchStorageSerialiser(builder)
+                .startObject()
+                .add(JOB_ID_NAME, m_JobId.getId())
+                .addTimestamp(new Date())
+                .serialise(categoryDefinition)
                 .endObject();
-    }
-
-    /**
-     * Return the quantiles as serialisable content
-     * @param quantiles
-     * @return
-     * @throws IOException
-     */
-    private XContentBuilder serialiseQuantiles(Quantiles quantiles)
-    throws IOException
-    {
-        XContentBuilder builder = jsonBuilder().startObject();
-        serialiseQuantilesContent(quantiles, builder);
-        return builder.endObject();
-    }
-
-    /**
-     * Add the quantiles to an existing JSON builder
-     * @param quantiles
-     * @param builder
-     * @return
-     * @throws IOException
-     */
-    private XContentBuilder serialiseQuantilesContent(Quantiles quantiles, XContentBuilder builder)
-    throws IOException
-    {
-        return builder
-                .field(ElasticsearchMappings.ES_TIMESTAMP, quantiles.getTimestamp())
-                .field(Quantiles.QUANTILE_STATE, quantiles.getQuantileState());
-    }
-
-    /**
-     * Return the model snapshot description as serialisable content
-     * @param modelSnapshot
-     * @return
-     * @throws IOException
-     */
-    private XContentBuilder serialiseModelSnapshot(ModelSnapshot modelSnapshot)
-    throws IOException
-    {
-        XContentBuilder builder = jsonBuilder().startObject()
-                .field(JOB_ID_NAME, m_JobId.getId())
-                .field(ElasticsearchMappings.ES_TIMESTAMP, modelSnapshot.getTimestamp())
-                .field(ModelSnapshot.DESCRIPTION, modelSnapshot.getDescription())
-                .field(ModelSnapshot.RESTORE_PRIORITY, modelSnapshot.getRestorePriority())
-                .field(ModelSnapshot.SNAPSHOT_ID, modelSnapshot.getSnapshotId())
-                .field(ModelSnapshot.SNAPSHOT_DOC_COUNT, modelSnapshot.getSnapshotDocCount());
-
-        if (modelSnapshot.getModelSizeStats() != null)
-        {
-            builder.startObject(ModelSizeStats.TYPE);
-            serialiseModelSizeStatsContent(modelSnapshot.getModelSizeStats(), builder);
-            builder.endObject();
-        }
-        if (modelSnapshot.getQuantiles() != null)
-        {
-            builder.startObject(Quantiles.TYPE);
-            serialiseQuantilesContent(modelSnapshot.getQuantiles(), builder);
-            builder.endObject();
-        }
-        if (modelSnapshot.getLatestRecordTimeStamp() != null)
-        {
-            builder.field(ModelSnapshot.LATEST_RECORD_TIME, modelSnapshot.getLatestRecordTimeStamp());
-        }
-        if (modelSnapshot.getLatestResultTimeStamp() != null)
-        {
-            builder.field(ModelSnapshot.LATEST_RESULT_TIME, modelSnapshot.getLatestResultTimeStamp());
-        }
-        return builder.endObject();
-    }
-
-    /**
-     * Add the modelSizeStats serialisable content to an existing JSON builder
-     * @param modelSizeStats
-     * @param builder
-     * @return
-     * @throws IOException
-     */
-    private XContentBuilder serialiseModelSizeStatsContent(ModelSizeStats modelSizeStats, XContentBuilder builder)
-    throws IOException
-    {
-        return builder
-                .field(JOB_ID_NAME, m_JobId.getId())
-                .field(ModelSizeStats.MODEL_BYTES, modelSizeStats.getModelBytes())
-                .field(ModelSizeStats.TOTAL_BY_FIELD_COUNT, modelSizeStats.getTotalByFieldCount())
-                .field(ModelSizeStats.TOTAL_OVER_FIELD_COUNT, modelSizeStats.getTotalOverFieldCount())
-                .field(ModelSizeStats.TOTAL_PARTITION_FIELD_COUNT, modelSizeStats.getTotalPartitionFieldCount())
-                .field(ModelSizeStats.BUCKET_ALLOCATION_FAILURES_COUNT, modelSizeStats.getBucketAllocationFailuresCount())
-                .field(ModelSizeStats.MEMORY_STATUS, modelSizeStats.getMemoryStatus())
-                .field(ElasticsearchMappings.ES_TIMESTAMP, modelSizeStats.getTimestamp())
-                .field(ModelSizeStats.LOG_TIME, modelSizeStats.getLogTime());
-    }
-
-    /**
-     * Return the modelSizeStats as serialisable content
-     * @param modelSizeStats
-     * @return
-     * @throws IOException
-     */
-    private XContentBuilder serialiseModelSizeStats(ModelSizeStats modelSizeStats)
-    throws IOException
-    {
-        XContentBuilder builder = jsonBuilder().startObject();
-        serialiseModelSizeStatsContent(modelSizeStats, builder);
-        return builder.endObject();
-    }
-
-    /**
-     * Return the modelDebugOutput as serialisable content
-     * @param modelDebugOutput
-     * @return
-     * @throws IOException
-     */
-    private XContentBuilder serialiseModelDebugOutput(ModelDebugOutput modelDebugOutput)
-    throws IOException
-    {
-        XContentBuilder builder = jsonBuilder().startObject()
-                .field(JOB_ID_NAME, m_JobId.getId())
-                .field(ElasticsearchMappings.ES_TIMESTAMP, modelDebugOutput.getTimestamp())
-                .field(ModelDebugOutput.DEBUG_FEATURE, modelDebugOutput.getDebugFeature())
-                .field(ModelDebugOutput.DEBUG_LOWER, modelDebugOutput.getDebugLower())
-                .field(ModelDebugOutput.DEBUG_UPPER, modelDebugOutput.getDebugUpper())
-                .field(ModelDebugOutput.DEBUG_MEAN, modelDebugOutput.getDebugMean())
-                .field(ModelDebugOutput.ACTUAL, modelDebugOutput.getActual());
-
-        ElasticsearchDotNotationReverser reverser = new ElasticsearchDotNotationReverser();
-
-        if (modelDebugOutput.getByFieldName() != null)
-        {
-            builder.field(ModelDebugOutput.BY_FIELD_NAME, modelDebugOutput.getByFieldName());
-            if (modelDebugOutput.getByFieldValue() != null)
-            {
-                reverser.add(modelDebugOutput.getByFieldName(), modelDebugOutput.getByFieldValue());
-            }
-        }
-        if (modelDebugOutput.getByFieldValue() != null)
-        {
-            builder.field(ModelDebugOutput.BY_FIELD_VALUE, modelDebugOutput.getByFieldValue());
-        }
-        if (modelDebugOutput.getOverFieldName() != null)
-        {
-            builder.field(ModelDebugOutput.OVER_FIELD_NAME, modelDebugOutput.getOverFieldName());
-            if (modelDebugOutput.getOverFieldValue() != null)
-            {
-                reverser.add(modelDebugOutput.getOverFieldName(), modelDebugOutput.getOverFieldValue());
-            }
-        }
-        if (modelDebugOutput.getOverFieldValue() != null)
-        {
-            builder.field(ModelDebugOutput.OVER_FIELD_VALUE, modelDebugOutput.getOverFieldValue());
-        }
-        if (modelDebugOutput.getPartitionFieldName() != null)
-        {
-            builder.field(ModelDebugOutput.PARTITION_FIELD_NAME, modelDebugOutput.getPartitionFieldName());
-            if (modelDebugOutput.getPartitionFieldValue() != null)
-            {
-                reverser.add(modelDebugOutput.getPartitionFieldName(), modelDebugOutput.getPartitionFieldValue());
-            }
-        }
-        if (modelDebugOutput.getPartitionFieldValue() != null)
-        {
-            builder.field(ModelDebugOutput.PARTITION_FIELD_VALUE, modelDebugOutput.getPartitionFieldValue());
-        }
-
-        for (Map.Entry<String, Object> entry : reverser.getResultsMap().entrySet())
-        {
-            builder.field(entry.getKey(), entry.getValue());
-        }
-
-        builder.endObject();
-
         return builder;
-    }
-
-    /**
-     * Return the anomaly record as serialisable content
-     *
-     * @param record Record to serialise
-     * @param bucketTime The timestamp of the anomaly record parent bucket
-     * @return
-     * @throws IOException
-     */
-    private XContentBuilder serialiseRecord(AnomalyRecord record, Date bucketTime)
-    throws IOException
-    {
-        XContentBuilder builder = jsonBuilder().startObject()
-                .field(JOB_ID_NAME, m_JobId.getId())
-                .field(AnomalyRecord.DETECTOR_INDEX, record.getDetectorIndex())
-                .field(AnomalyRecord.PROBABILITY, record.getProbability())
-                .field(AnomalyRecord.ANOMALY_SCORE, record.getAnomalyScore())
-                .field(AnomalyRecord.NORMALIZED_PROBABILITY, record.getNormalizedProbability())
-                .field(AnomalyRecord.INITIAL_NORMALIZED_PROBABILITY, record.getInitialNormalizedProbability())
-                .field(ElasticsearchMappings.ES_TIMESTAMP, bucketTime)
-                .field(AnomalyRecord.BUCKET_SPAN, record.getBucketSpan());
-
-        ElasticsearchDotNotationReverser reverser = new ElasticsearchDotNotationReverser();
-        List<String> topLevelExcludes = new ArrayList<>();
-
-        if (record.getByFieldName() != null)
-        {
-            builder.field(AnomalyRecord.BY_FIELD_NAME, record.getByFieldName());
-            if (record.getByFieldValue() != null)
-            {
-                reverser.add(record.getByFieldName(), record.getByFieldValue());
-                topLevelExcludes.add(record.getByFieldName());
-            }
-        }
-        if (record.getByFieldValue() != null)
-        {
-            builder.field(AnomalyRecord.BY_FIELD_VALUE, record.getByFieldValue());
-        }
-        if (record.getCorrelatedByFieldValue() != null)
-        {
-            builder.field(AnomalyRecord.CORRELATED_BY_FIELD_VALUE, record.getCorrelatedByFieldValue());
-        }
-        if (record.getTypical() != null)
-        {
-            if (record.getTypical().length == 1)
-            {
-                builder.field(AnomalyRecord.TYPICAL, record.getTypical()[0]);
-            }
-            else
-            {
-                builder.field(AnomalyRecord.TYPICAL, record.getTypical());
-            }
-        }
-        if (record.getActual() != null)
-        {
-            if (record.getTypical().length == 1)
-            {
-                builder.field(AnomalyRecord.ACTUAL, record.getActual()[0]);
-            }
-            else
-            {
-                builder.field(AnomalyRecord.ACTUAL, record.getActual());
-            }
-        }
-        if (record.isInterim())
-        {
-            builder.field(AnomalyRecord.IS_INTERIM, record.isInterim());
-        }
-        if (record.getFieldName() != null)
-        {
-            builder.field(AnomalyRecord.FIELD_NAME, record.getFieldName());
-        }
-        if (record.getFunction() != null)
-        {
-            builder.field(AnomalyRecord.FUNCTION, record.getFunction());
-        }
-        if (record.getFunctionDescription() != null)
-        {
-            builder.field(AnomalyRecord.FUNCTION_DESCRIPTION, record.getFunctionDescription());
-        }
-        if (record.getPartitionFieldName() != null)
-        {
-            builder.field(AnomalyRecord.PARTITION_FIELD_NAME, record.getPartitionFieldName());
-            if (record.getPartitionFieldValue() != null)
-            {
-                reverser.add(record.getPartitionFieldName(), record.getPartitionFieldValue());
-                topLevelExcludes.add(record.getPartitionFieldName());
-            }
-        }
-        if (record.getPartitionFieldValue() != null)
-        {
-            builder.field(AnomalyRecord.PARTITION_FIELD_VALUE, record.getPartitionFieldValue());
-        }
-        if (record.getOverFieldName() != null)
-        {
-            builder.field(AnomalyRecord.OVER_FIELD_NAME, record.getOverFieldName());
-            if (record.getOverFieldValue() != null)
-            {
-                reverser.add(record.getOverFieldName(), record.getOverFieldValue());
-                topLevelExcludes.add(record.getOverFieldName());
-            }
-        }
-        if (record.getOverFieldValue() != null)
-        {
-            builder.field(AnomalyRecord.OVER_FIELD_VALUE, record.getOverFieldValue());
-        }
-        if (record.getCauses() != null)
-        {
-            builder.startArray(AnomalyRecord.CAUSES);
-            for (AnomalyCause cause : record.getCauses())
-            {
-                serialiseCause(cause, builder);
-            }
-            builder.endArray();
-        }
-        if (record.getInfluencers() != null && record.getInfluencers().isEmpty() == false)
-        {
-            // First add the influencers array
-
-            builder.startArray(AnomalyRecord.INFLUENCERS);
-            for (Influence influence: record.getInfluencers())
-            {
-                serialiseInfluence(influence, builder);
-            }
-            builder.endArray();
-
-            // Then, where possible without creating duplicates, add top level
-            // raw data fields
-            for (Influence influence: record.getInfluencers())
-            {
-                if (influence.getInfluencerFieldName() != null &&
-                    !influence.getInfluencerFieldValues().isEmpty() &&
-                    !topLevelExcludes.contains(influence.getInfluencerFieldName()))
-                {
-                    reverser.add(influence.getInfluencerFieldName(), influence.getInfluencerFieldValues().get(0));
-                }
-            }
-        }
-
-        for (Map.Entry<String, Object> entry : reverser.getResultsMap().entrySet())
-        {
-            builder.field(entry.getKey(), entry.getValue());
-        }
-
-        builder.endObject();
-
-        return builder;
-    }
-
-    /**
-     * Augment the anomaly record serialisable content with a cause
-     *
-     * @param cause Cause to serialise
-     * @param builder JSON builder to be augmented
-     * @throws IOException
-     */
-    private void serialiseCause(AnomalyCause cause, XContentBuilder builder)
-    throws IOException
-    {
-        builder.startObject()
-                .field(AnomalyCause.PROBABILITY, cause.getProbability());
-
-        if (cause.getTypical() != null)
-        {
-            if (cause.getTypical().length == 1)
-            {
-                builder.field(AnomalyCause.TYPICAL, cause.getTypical()[0]);
-            }
-            else
-            {
-                builder.field(AnomalyCause.TYPICAL, cause.getTypical());
-            }
-        }
-        if (cause.getActual() != null)
-        {
-            if (cause.getActual().length == 1)
-            {
-                builder.field(AnomalyCause.ACTUAL, cause.getActual()[0]);
-            }
-            else
-            {
-                builder.field(AnomalyCause.ACTUAL, cause.getActual());
-            }
-        }
-
-        ElasticsearchDotNotationReverser reverser = new ElasticsearchDotNotationReverser();
-
-        if (cause.getByFieldName() != null)
-        {
-            builder.field(AnomalyCause.BY_FIELD_NAME, cause.getByFieldName());
-            if (cause.getByFieldValue() != null)
-            {
-                reverser.add(cause.getByFieldName(), cause.getByFieldValue());
-            }
-        }
-        if (cause.getByFieldValue() != null)
-        {
-            builder.field(AnomalyCause.BY_FIELD_VALUE, cause.getByFieldValue());
-        }
-        if (cause.getCorrelatedByFieldValue() != null)
-        {
-            builder.field(AnomalyCause.CORRELATED_BY_FIELD_VALUE, cause.getCorrelatedByFieldValue());
-        }
-        if (cause.getFieldName() != null)
-        {
-            builder.field(AnomalyCause.FIELD_NAME, cause.getFieldName());
-        }
-        if (cause.getFunction() != null)
-        {
-            builder.field(AnomalyCause.FUNCTION, cause.getFunction());
-        }
-        if (cause.getFunctionDescription() != null)
-        {
-            builder.field(AnomalyCause.FUNCTION_DESCRIPTION, cause.getFunctionDescription());
-        }
-        if (cause.getPartitionFieldName() != null)
-        {
-            builder.field(AnomalyCause.PARTITION_FIELD_NAME, cause.getPartitionFieldName());
-            if (cause.getPartitionFieldValue() != null)
-            {
-                reverser.add(cause.getPartitionFieldName(), cause.getPartitionFieldValue());
-            }
-        }
-        if (cause.getPartitionFieldValue() != null)
-        {
-            builder.field(AnomalyCause.PARTITION_FIELD_VALUE, cause.getPartitionFieldValue());
-        }
-        if (cause.getOverFieldName() != null)
-        {
-            builder.field(AnomalyCause.OVER_FIELD_NAME, cause.getOverFieldName());
-            if (cause.getOverFieldValue() != null)
-            {
-                reverser.add(cause.getOverFieldName(), cause.getOverFieldValue());
-            }
-        }
-        if (cause.getOverFieldValue() != null)
-        {
-            builder.field(AnomalyCause.OVER_FIELD_VALUE, cause.getOverFieldValue());
-        }
-
-        for (Map.Entry<String, Object> entry : reverser.getResultsMap().entrySet())
-        {
-            builder.field(entry.getKey(), entry.getValue());
-        }
-
-        builder.endObject();
-    }
-
-
-    /**
-     * Add the influence object to the content builder.
-     *
-     * @param influence Influence to serialise
-     * @param builder JSON builder to be augmented
-     * @throws IOException
-     */
-    private void serialiseInfluence(Influence influence, XContentBuilder builder)
-    throws IOException
-    {
-        builder.startObject().field(Influence.INFLUENCER_FIELD_NAME, influence.getInfluencerFieldName());
-
-        builder.startArray(Influence.INFLUENCER_FIELD_VALUES);
-        for (String value : influence.getInfluencerFieldValues())
-        {
-            builder.value(value);
-        }
-        builder.endArray();
-
-        builder.endObject();
     }
 
     private XContentBuilder serialiseBucketInfluencerStandalone(BucketInfluencer bucketInfluencer,
             Date bucketTime, boolean isInterim) throws IOException
     {
-        XContentBuilder builder = jsonBuilder().startObject()
-                .field(JOB_ID_NAME, m_JobId.getId())
-                .field(ElasticsearchMappings.ES_TIMESTAMP, bucketTime)
-                .field(BucketInfluencer.PROBABILITY, bucketInfluencer.getProbability())
-                .field(BucketInfluencer.INFLUENCER_FIELD_NAME, bucketInfluencer.getInfluencerFieldName())
-                .field(BucketInfluencer.INITIAL_ANOMALY_SCORE, bucketInfluencer.getInitialAnomalyScore())
-                .field(BucketInfluencer.ANOMALY_SCORE, bucketInfluencer.getAnomalyScore())
-                .field(BucketInfluencer.RAW_ANOMALY_SCORE, bucketInfluencer.getRawAnomalyScore());
+        XContentBuilder builder = jsonBuilder();
+        new ElasticsearchStorageSerialiser(builder)
+                .startObject()
+                .add(JOB_ID_NAME, m_JobId.getId())
+                .addTimestamp(bucketTime)
+                .serialise(bucketInfluencer);
 
         if (isInterim)
         {
             builder.field(Bucket.IS_INTERIM, true);
         }
 
-        builder.endObject();
-
-        return builder;
-    }
-
-    private void serialiseBucketInfluencerNested(BucketInfluencer bucketInfluencer,
-            XContentBuilder bucketBuilder) throws IOException
-    {
-        bucketBuilder.startObject()
-                .field(BucketInfluencer.PROBABILITY, bucketInfluencer.getProbability())
-                .field(BucketInfluencer.INFLUENCER_FIELD_NAME, bucketInfluencer.getInfluencerFieldName())
-                .field(BucketInfluencer.INITIAL_ANOMALY_SCORE, bucketInfluencer.getInitialAnomalyScore())
-                .field(BucketInfluencer.ANOMALY_SCORE, bucketInfluencer.getAnomalyScore())
-                .field(BucketInfluencer.RAW_ANOMALY_SCORE, bucketInfluencer.getRawAnomalyScore())
-                .endObject();
-    }
-
-    /**
-     * Return the bucket as serialisable content
-     * @param bucket
-     * @return
-     * @throws IOException
-     */
-    private XContentBuilder serialiseInfluencer(Influencer influencer, boolean isInterim)
-    throws IOException
-    {
-        XContentBuilder builder = jsonBuilder().startObject()
-                .field(JOB_ID_NAME, m_JobId.getId())
-                .field(ElasticsearchMappings.ES_TIMESTAMP, influencer.getTimestamp())
-                .field(Influencer.PROBABILITY, influencer.getProbability())
-                .field(Influencer.INFLUENCER_FIELD_NAME, influencer.getInfluencerFieldName())
-                .field(Influencer.INFLUENCER_FIELD_VALUE, influencer.getInfluencerFieldValue())
-                .field(Influencer.INITIAL_ANOMALY_SCORE, influencer.getInitialAnomalyScore())
-                .field(Influencer.ANOMALY_SCORE, influencer.getAnomalyScore());
-
-        if (isInterim)
-        {
-            builder.field(Bucket.IS_INTERIM, true);
-        }
-
-        ElasticsearchDotNotationReverser reverser = new ElasticsearchDotNotationReverser();
-        reverser.add(influencer.getInfluencerFieldName(), influencer.getInfluencerFieldValue());
-        for (Map.Entry<String, Object> entry : reverser.getResultsMap().entrySet())
-        {
-            builder.field(entry.getKey(), entry.getValue());
-        }
-
-        builder.endObject();
-
-        return builder;
+        return builder.endObject();
     }
 }

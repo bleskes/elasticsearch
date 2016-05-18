@@ -31,7 +31,11 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import java.io.IOException;
+
 import org.junit.Test;
+
+import com.prelert.job.persistence.serialisation.TestJsonStorageSerialiser;
 
 public class AnomalyCauseTest
 {
@@ -203,6 +207,70 @@ public class AnomalyCauseTest
 
         assertFalse(cause1.equals(cause2));
         assertFalse(cause2.equals(cause1));
+    }
+
+    @Test
+    public void testSerialise_GivenSingleActualAndTypical() throws IOException
+    {
+        AnomalyCause cause = createFullyPopulatedAnomalyCause();
+        TestJsonStorageSerialiser serialiser = new TestJsonStorageSerialiser();
+
+        serialiser.startObject();
+        cause.serialise(serialiser);
+        serialiser.endObject();
+
+        String expected = "{"
+                + "\"actual\":100.0,"
+                + "\"overFieldValue\":\"overValue\","
+                + "\"fieldName\":\"fieldName\","
+                + "\"partitionFieldValue\":\"partitionValue\","
+                + "\"overName.reversed\":\"overValue\","
+                + "\"probability\":0.05,"
+                + "\"byFieldValue\":\"byValue\","
+                + "\"overFieldName\":\"overName\","
+                + "\"partitionFieldName\":\"partitionName\","
+                + "\"partitionName.reversed\":\"partitionValue\","
+                + "\"byFieldName\":\"byName\","
+                + "\"correlatedByFieldValue\":\"correlatedByValue\","
+                + "\"function\":\"functionName\","
+                + "\"typical\":42.0,"
+                + "\"functionDescription\":\"functionDesc\","
+                + "\"byName.reversed\":\"byValue\""
+                + "}";
+        assertEquals(expected, serialiser.toJson());
+    }
+
+    @Test
+    public void testSerialise_GivenMultipleActualAndTypical() throws IOException
+    {
+        AnomalyCause cause = createFullyPopulatedAnomalyCause();
+        cause.setActual(new double[] {1.0, 2.0});
+        cause.setTypical(new double[] {3.0, 4.0});
+        TestJsonStorageSerialiser serialiser = new TestJsonStorageSerialiser();
+
+        serialiser.startObject();
+        cause.serialise(serialiser);
+        serialiser.endObject();
+
+        String expected = "{"
+                + "\"actual\":[1.0,2.0],"
+                + "\"overFieldValue\":\"overValue\","
+                + "\"fieldName\":\"fieldName\","
+                + "\"partitionFieldValue\":\"partitionValue\","
+                + "\"overName.reversed\":\"overValue\","
+                + "\"probability\":0.05,"
+                + "\"byFieldValue\":\"byValue\","
+                + "\"overFieldName\":\"overName\","
+                + "\"partitionFieldName\":\"partitionName\","
+                + "\"partitionName.reversed\":\"partitionValue\","
+                + "\"byFieldName\":\"byName\","
+                + "\"correlatedByFieldValue\":\"correlatedByValue\","
+                + "\"function\":\"functionName\","
+                + "\"typical\":[3.0,4.0],"
+                + "\"functionDescription\":\"functionDesc\","
+                + "\"byName.reversed\":\"byValue\""
+                + "}";
+        assertEquals(expected, serialiser.toJson());
     }
 
     private static AnomalyCause createFullyPopulatedAnomalyCause()

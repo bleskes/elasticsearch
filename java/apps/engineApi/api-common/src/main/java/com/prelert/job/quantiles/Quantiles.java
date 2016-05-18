@@ -18,18 +18,21 @@
 
 package com.prelert.job.quantiles;
 
+import java.io.IOException;
 import java.util.Date;
 import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.google.common.base.Strings;
+import com.prelert.job.persistence.serialisation.StorageSerialisable;
+import com.prelert.job.persistence.serialisation.StorageSerialiser;
 
 /**
  * Quantiles Result POJO
  */
 @JsonInclude(Include.NON_NULL)
-public class Quantiles
+public class Quantiles implements StorageSerialisable
 {
     public static final String QUANTILES_ID = "hierarchical";
 
@@ -92,6 +95,12 @@ public class Quantiles
         Quantiles that = (Quantiles) other;
 
         return Objects.equals(this.m_QuantileState, that.m_QuantileState);
+    }
+
+    @Override
+    public void serialise(StorageSerialiser serialiser) throws IOException
+    {
+        serialiser.addTimestamp(m_Timestamp).add(QUANTILE_STATE, m_QuantileState);
     }
 }
 

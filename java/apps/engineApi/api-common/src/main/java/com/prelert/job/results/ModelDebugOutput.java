@@ -18,12 +18,16 @@
 
 package com.prelert.job.results;
 
+import java.io.IOException;
 import java.util.Date;
 import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.prelert.job.persistence.serialisation.DotNotationReverser;
+import com.prelert.job.persistence.serialisation.StorageSerialisable;
+import com.prelert.job.persistence.serialisation.StorageSerialiser;
 
 /**
  * Model Debug POJO.
@@ -33,7 +37,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
  */
 @JsonIgnoreProperties({"id"})
 @JsonInclude(Include.NON_NULL)
-public class ModelDebugOutput
+public class ModelDebugOutput implements StorageSerialisable
 {
     public static final String TYPE = "modelDebugOutput";
     public static final String TIMESTAMP = "timestamp";
@@ -227,5 +231,57 @@ public class ModelDebugOutput
         return Objects.hash(m_Timestamp, m_PartitionFieldName, m_PartitionFieldValue,
                 m_OverFieldName, m_OverFieldValue, m_ByFieldName, m_ByFieldValue,
                 m_DebugFeature, m_DebugLower, m_DebugUpper, m_DebugMean, m_Actual);
+    }
+
+    @Override
+    public void serialise(StorageSerialiser serialiser) throws IOException
+    {
+        serialiser.addTimestamp(m_Timestamp)
+                  .add(DEBUG_FEATURE, m_DebugFeature)
+                  .add(DEBUG_LOWER, m_DebugLower)
+                  .add(DEBUG_UPPER, m_DebugUpper)
+                  .add(DEBUG_MEAN, m_DebugMean)
+                  .add(ACTUAL, m_Actual);
+
+        DotNotationReverser reverser = serialiser.newDotNotationReverser();
+
+        if (m_ByFieldName != null)
+        {
+            serialiser.add(BY_FIELD_NAME, m_ByFieldName);
+            if (m_ByFieldValue != null)
+            {
+                reverser.add(m_ByFieldName, m_ByFieldValue);
+            }
+        }
+        if (m_ByFieldValue != null)
+        {
+            serialiser.add(BY_FIELD_VALUE, m_ByFieldValue);
+        }
+        if (m_OverFieldName != null)
+        {
+            serialiser.add(OVER_FIELD_NAME, m_OverFieldName);
+            if (m_OverFieldValue != null)
+            {
+                reverser.add(m_OverFieldName, m_OverFieldValue);
+            }
+        }
+        if (m_OverFieldValue != null)
+        {
+            serialiser.add(OVER_FIELD_VALUE, m_OverFieldValue);
+        }
+        if (m_PartitionFieldName != null)
+        {
+            serialiser.add(PARTITION_FIELD_NAME, m_PartitionFieldName);
+            if (m_PartitionFieldValue != null)
+            {
+                reverser.add(m_PartitionFieldName, m_PartitionFieldValue);
+            }
+        }
+        if (m_PartitionFieldValue != null)
+        {
+            serialiser.add(PARTITION_FIELD_VALUE, m_PartitionFieldValue);
+        }
+
+        serialiser.addReverserResults(reverser);
     }
 }
