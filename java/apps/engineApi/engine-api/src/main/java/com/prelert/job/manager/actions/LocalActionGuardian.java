@@ -24,43 +24,40 @@
  *                                                          *
  *                                                          *
  ************************************************************/
-
 package com.prelert.job.manager.actions;
 
-import java.util.Optional;
+import java.util.HashMap;
+import java.util.Map;
 
+import org.apache.log4j.Logger;
+
+import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.exceptions.JobInUseException;
 
-/**
- * Guards and manages permissions for performing actions on jobs.
- *
- * Guardians can be chained together by passing another to he
- * constructor. Locks are only granted when all locks are acquired.
- *
- * Implementing classes must acquire and release the next guardian
- */
-public abstract class ActionGuardian
+public class LocalActionGuardian extends ActionGuardian
 {
-    protected final Optional<ActionGuardian> m_NextGuardian;
+    private static final Logger LOGGER = Logger.getLogger(LocalActionGuardian.class);
 
-    public ActionGuardian()
+    private final Map<String, Action> m_ActionsByJob = new HashMap<>();
+
+
+    public LocalActionGuardian()
     {
-        m_NextGuardian = Optional.empty();
     }
 
-    public ActionGuardian(ActionGuardian guardian)
+    public LocalActionGuardian(ActionGuardian guardian)
     {
-        m_NextGuardian = Optional.of(guardian);
+        super(guardian);
     }
 
-    /**
-     * Get the action the job is currently processing
-     * or {@linkplain Action#NONE} if the job is not active
-     *
-     * @param jobId
-     * @return
-     */
-    public abstract Action currentAction(String jobId);
+    @Override
+    public Action currentAction(String jobId)
+    {
+        synchronized (this)
+        {
+            return m_ActionsByJob.getOrDefault(jobId, Action.NONE);
+        }
+    }
 
     /**
      * Returns an {@code ActionTicket} if requested action is available for the given job.
@@ -69,36 +66,45 @@ public abstract class ActionGuardian
      * @return the {@code ActionTicket} granting permission to execute the action
      * @throws JobInUseException If the job is in use by another action
      */
-    public abstract ActionTicket tryAcquiringAction(String jobId, Action action) throws JobInUseException;
-
-    /**
-     * Releases the action for the given job
-     * @param jobId the job id
-     */
-    public abstract void releaseAction(String jobId);
-
-    /**
-     * A token signifying that its owner has permission to execute an action for a job.
-     * Designed to be used with try-with-resources to ensure the action is released.
-     */
-    public class ActionTicket implements AutoCloseable
+    @Override
+    public ActionTicket tryAcquiringAction(String jobId, Action action) throws JobInUseException
     {
-        private final String m_JobId;
-
-        private ActionTicket(String jobId)
+        synchronized (this)
         {
-            m_JobId = jobId;
-        }
+            Action currentAction = m_ActionsByJob.getOrDefault(jobId, Action.NONE);
+            if (currentAction == Action.NONE)
+            {
+                m_ActionsByJob.put(jobId, action);
 
-        @Override
-        public void close()
-        {
-            ActionGuardian.this.releaseAction(m_JobId);
+                if (m_NextGuardian.isPresent())
+                {
+                    m_NextGuardian.get().tryAcquiringAction(jobId, action);
+                }
+
+                return newActionTicket(jobId);
+            }
+            else
+            {
+                String msg = action.getErrorString(jobId, currentAction);
+                LOGGER.warn(msg);
+                throw new JobInUseException(msg, ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR);
+            }
         }
     }
 
-    protected ActionTicket newActionTicket(String jobId)
+
+    @Override
+    public void releaseAction(String jobId)
     {
-        return new ActionTicket(jobId);
+        synchronized (this)
+        {
+            m_ActionsByJob.remove(jobId);
+
+            if (m_NextGuardian.isPresent())
+            {
+                m_NextGuardian.get().releaseAction(jobId);
+            }
+        }
     }
+
 }

@@ -53,6 +53,9 @@ import com.prelert.job.logging.DefaultJobLoggerFactory;
 import com.prelert.job.logging.JobLoggerFactory;
 import com.prelert.job.manager.ActivityAudit;
 import com.prelert.job.manager.JobManager;
+import com.prelert.job.manager.actions.ActionGuardian;
+import com.prelert.job.manager.actions.LocalActionGuardian;
+import com.prelert.job.manager.actions.zookeeper.ZooKeeperActionGuardian;
 import com.prelert.job.messages.Messages;
 import com.prelert.job.password.PasswordManager;
 import com.prelert.job.persistence.JobProvider;
@@ -112,6 +115,9 @@ public class PrelertWebApp extends Application
     private static final String ENCRYPTION_TRANSFORMATION = "AES/CBC/PKCS5Padding";
     // The size of this array may need to be changed if the transformation on the line above is changed
     private static final byte[] DEV_KEY_BYTES = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 };
+
+    public static final String ZOOKEEPER_HOST_PROP = "zookeeper.host";
+    public static final String ZOOKEEPER_PORT_PROP = "zookeeper.port";
 
     /**
      * This property specifies the client that should be used to connect
@@ -242,11 +248,21 @@ public class PrelertWebApp extends Application
     private JobManager createJobManager(JobProvider jobProvider, ElasticsearchFactory esFactory,
             JobLoggerFactory jobLoggerFactory)
     {
+        ActionGuardian guardian = new LocalActionGuardian();
+
+        if (PrelertSettings.isSet(ZOOKEEPER_HOST_PROP))
+        {
+            String host = PrelertSettings.getSettingOrDefault(ZOOKEEPER_HOST_PROP, "localhost");
+            int port = PrelertSettings.getSettingOrDefault(ZOOKEEPER_PORT_PROP, 2181);
+            guardian = new ZooKeeperActionGuardian(host, port, guardian);
+        }
+
         PasswordManager passwordManager = createPasswordManager();
         return new JobManager(jobProvider,
                 createProcessManager(jobProvider, esFactory, jobLoggerFactory),
                 new DataExtractorFactoryImpl(passwordManager), jobLoggerFactory,
-                passwordManager, esFactory.newJobDataDeleterFactory());
+                passwordManager, esFactory.newJobDataDeleterFactory(),
+                guardian);
     }
 
     private PasswordManager createPasswordManager()

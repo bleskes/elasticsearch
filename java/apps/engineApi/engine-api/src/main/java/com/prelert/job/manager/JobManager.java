@@ -179,9 +179,10 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
      */
     public JobManager(JobProvider jobProvider, ProcessManager processManager,
             DataExtractorFactory dataExtractorFactory, JobLoggerFactory jobLoggerFactory,
-            PasswordManager passwordManager, JobDataDeleterFactory jobDataDeleterFactory)
+            PasswordManager passwordManager, JobDataDeleterFactory jobDataDeleterFactory,
+            ActionGuardian actionGuardian)
     {
-        m_ActionGuardian = new ActionGuardian();
+        m_ActionGuardian = actionGuardian;
         m_JobProvider = Objects.requireNonNull(jobProvider);
         m_ProcessManager = Objects.requireNonNull(processManager);
         m_DataExtractorFactory = Objects.requireNonNull(dataExtractorFactory);
