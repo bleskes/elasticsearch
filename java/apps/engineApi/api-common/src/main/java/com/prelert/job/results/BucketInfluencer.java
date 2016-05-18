@@ -17,16 +17,19 @@
  ***************************************************************************/
 package com.prelert.job.results;
 
+import java.io.IOException;
 import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.prelert.job.persistence.serialisation.StorageSerialisable;
+import com.prelert.job.persistence.serialisation.StorageSerialiser;
 
 
 @JsonInclude(Include.NON_NULL)
 @JsonIgnoreProperties(value={"rawAnomalyScore","initialAnomalyScore"}, allowSetters=true)
-public class BucketInfluencer
+public class BucketInfluencer implements StorageSerialisable
 {
     /**
      * Elasticsearch type
@@ -139,5 +142,15 @@ public class BucketInfluencer
                 Double.compare(m_AnomalyScore, other.m_AnomalyScore) == 0 &&
                 Double.compare(m_RawAnomalyScore, other.m_RawAnomalyScore) == 0 &&
                 Double.compare(m_Probability, other.m_Probability) == 0;
+    }
+
+    @Override
+    public void serialise(StorageSerialiser serialiser) throws IOException
+    {
+        serialiser.add(PROBABILITY, m_Probability)
+                  .add(INFLUENCER_FIELD_NAME, m_InfluenceField)
+                  .add(INITIAL_ANOMALY_SCORE, m_InitialAnomalyScore)
+                  .add(ANOMALY_SCORE, m_AnomalyScore)
+                  .add(RAW_ANOMALY_SCORE, m_RawAnomalyScore);
     }
 }

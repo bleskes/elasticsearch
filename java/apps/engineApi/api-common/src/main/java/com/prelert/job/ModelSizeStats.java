@@ -17,17 +17,20 @@
  ***************************************************************************/
 package com.prelert.job;
 
+import java.io.IOException;
 import java.util.Date;
 import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.prelert.job.persistence.serialisation.StorageSerialisable;
+import com.prelert.job.persistence.serialisation.StorageSerialiser;
 
 /**
  * Provide access to the C++ model memory usage numbers
  * for the Java process.
  */
 @JsonIgnoreProperties({"modelSizeStatsId"})
-public class ModelSizeStats
+public class ModelSizeStats implements StorageSerialisable
 {
     /**
      * Field Names
@@ -209,5 +212,18 @@ public class ModelSizeStats
                 && Objects.equals(this.m_MemoryStatus, that.m_MemoryStatus)
                 && Objects.equals(this.m_Timestamp, that.m_Timestamp)
                 && Objects.equals(this.m_LogTime, that.m_LogTime);
+    }
+
+    @Override
+    public void serialise(StorageSerialiser serialiser) throws IOException
+    {
+        serialiser.addTimestamp(m_Timestamp)
+                  .add(MODEL_BYTES, m_ModelBytes)
+                  .add(TOTAL_BY_FIELD_COUNT, m_TotalByFieldCount)
+                  .add(TOTAL_OVER_FIELD_COUNT, m_TotalOverFieldCount)
+                  .add(TOTAL_PARTITION_FIELD_COUNT, m_TotalPartitionFieldCount)
+                  .add(BUCKET_ALLOCATION_FAILURES_COUNT, m_BucketAllocationFailuresCount)
+                  .add(MEMORY_STATUS, m_MemoryStatus)
+                  .add(LOG_TIME, m_LogTime);
     }
 }

@@ -31,7 +31,12 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import java.io.IOException;
+import java.util.Date;
+
 import org.junit.Test;
+
+import com.prelert.job.persistence.serialisation.TestJsonStorageSerialiser;
 
 public class QuantilesTest
 {
@@ -85,5 +90,24 @@ public class QuantilesTest
         quantiles2.setQuantileState("foo");
 
         assertEquals(quantiles1.hashCode(), quantiles2.hashCode());
+    }
+
+    @Test
+    public void testSerialise() throws IOException
+    {
+        Quantiles quantiles = new Quantiles();
+        quantiles.setTimestamp(new Date(1234L));
+        quantiles.setQuantileState("foo");
+
+        TestJsonStorageSerialiser serialiser = new TestJsonStorageSerialiser();
+        serialiser.startObject();
+        quantiles.serialise(serialiser);
+        serialiser.endObject();
+
+        String expected = "{"
+                + "\"@timestamp\":1234,"
+                + "\"quantileState\":\"foo\""
+                + "}";
+        assertEquals(expected, serialiser.toJson());
     }
 }

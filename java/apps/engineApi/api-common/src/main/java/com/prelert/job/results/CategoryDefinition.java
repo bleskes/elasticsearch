@@ -18,6 +18,7 @@
 
 package com.prelert.job.results;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -27,9 +28,11 @@ import java.util.TreeSet;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.prelert.job.persistence.serialisation.StorageSerialisable;
+import com.prelert.job.persistence.serialisation.StorageSerialiser;
 
 @JsonInclude(Include.NON_NULL)
-public class CategoryDefinition
+public class CategoryDefinition implements StorageSerialisable
 {
     public static final String TYPE = "categoryDefinition";
     public static final String CATEGORY_ID = "categoryId";
@@ -110,5 +113,14 @@ public class CategoryDefinition
     public int hashCode()
     {
         return Objects.hash(m_Id, m_Terms, m_Regex, m_Examples);
+    }
+
+    @Override
+    public void serialise(StorageSerialiser serialiser) throws IOException
+    {
+        serialiser.add(CATEGORY_ID, m_Id)
+                  .add(TERMS, m_Terms)
+                  .add(REGEX, m_Regex)
+                  .add(EXAMPLES, m_Examples.toArray(new String[m_Examples.size()]));
     }
 }

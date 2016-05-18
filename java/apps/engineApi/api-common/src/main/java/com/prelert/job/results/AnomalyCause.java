@@ -18,6 +18,7 @@
 
 package com.prelert.job.results;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -26,13 +27,16 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonFormat.Feature;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.prelert.job.persistence.serialisation.DotNotationReverser;
+import com.prelert.job.persistence.serialisation.StorageSerialisable;
+import com.prelert.job.persistence.serialisation.StorageSerialiser;
 
 /**
  * Anomaly Cause POJO.
  * Used as a nested level inside population anomaly records.
  */
 @JsonInclude(Include.NON_NULL)
-public class AnomalyCause
+public class AnomalyCause implements StorageSerialisable
 {
     /**
      * Result fields
@@ -268,4 +272,89 @@ public class AnomalyCause
                 Objects.equals(this.m_Influencers, that.m_Influencers);
     }
 
+    @Override
+    public void serialise(StorageSerialiser serialiser) throws IOException
+    {
+        serialiser.add(PROBABILITY, m_Probability);
+
+        if (m_Typical != null)
+        {
+            if (m_Typical.length == 1)
+            {
+                serialiser.add(AnomalyCause.TYPICAL, m_Typical[0]);
+            }
+            else
+            {
+                serialiser.add(AnomalyCause.TYPICAL, m_Typical);
+            }
+        }
+        if (m_Actual != null)
+        {
+            if (m_Actual.length == 1)
+            {
+                serialiser.add(ACTUAL, m_Actual[0]);
+            }
+            else
+            {
+                serialiser.add(ACTUAL, m_Actual);
+            }
+        }
+
+        DotNotationReverser reverser = serialiser.newDotNotationReverser();
+
+        if (m_ByFieldName != null)
+        {
+            serialiser.add(AnomalyCause.BY_FIELD_NAME, m_ByFieldName);
+            if (m_ByFieldValue != null)
+            {
+                reverser.add(m_ByFieldName, m_ByFieldValue);
+            }
+        }
+        if (m_ByFieldValue != null)
+        {
+            serialiser.add(AnomalyCause.BY_FIELD_VALUE, m_ByFieldValue);
+        }
+        if (m_CorrelatedByFieldValue != null)
+        {
+            serialiser.add(AnomalyCause.CORRELATED_BY_FIELD_VALUE, m_CorrelatedByFieldValue);
+        }
+        if (m_FieldName != null)
+        {
+            serialiser.add(AnomalyCause.FIELD_NAME, m_FieldName);
+        }
+        if (m_Function != null)
+        {
+            serialiser.add(AnomalyCause.FUNCTION, m_Function);
+        }
+        if (m_FunctionDescription != null)
+        {
+            serialiser.add(AnomalyCause.FUNCTION_DESCRIPTION, m_FunctionDescription);
+        }
+        if (m_PartitionFieldName != null)
+        {
+            serialiser.add(AnomalyCause.PARTITION_FIELD_NAME, m_PartitionFieldName);
+            if (m_PartitionFieldValue != null)
+            {
+                reverser.add(m_PartitionFieldName, m_PartitionFieldValue);
+            }
+        }
+        if (m_PartitionFieldValue != null)
+        {
+            serialiser.add(AnomalyCause.PARTITION_FIELD_VALUE, m_PartitionFieldValue);
+        }
+        if (m_OverFieldName != null)
+        {
+            serialiser.add(AnomalyCause.OVER_FIELD_NAME, m_OverFieldName);
+            if (m_OverFieldValue != null)
+            {
+                reverser.add(m_OverFieldName, m_OverFieldValue);
+            }
+        }
+        if (m_OverFieldValue != null)
+        {
+            serialiser.add(AnomalyCause.OVER_FIELD_VALUE, m_OverFieldValue);
+        }
+
+        serialiser.addReverserResults(reverser);
+    }
 }

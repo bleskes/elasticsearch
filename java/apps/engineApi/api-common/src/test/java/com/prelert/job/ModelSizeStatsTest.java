@@ -29,7 +29,12 @@ package com.prelert.job;
 
 import static org.junit.Assert.assertEquals;
 
+import java.io.IOException;
+import java.util.Date;
+
 import org.junit.Test;
+
+import com.prelert.job.persistence.serialisation.TestJsonStorageSerialiser;
 
 public class ModelSizeStatsTest
 {
@@ -84,5 +89,36 @@ public class ModelSizeStatsTest
         stats.setMemoryStatus("SOFT_LIMIT");
 
         assertEquals("SOFT_LIMIT", stats.getMemoryStatus());
+    }
+
+    @Test
+    public void testSerialise() throws IOException
+    {
+        ModelSizeStats stats = new ModelSizeStats();
+        stats.setTimestamp(new Date(1234L));
+        stats.setModelBytes(101L);
+        stats.setTotalByFieldCount(201L);
+        stats.setTotalOverFieldCount(301L);
+        stats.setTotalPartitionFieldCount(401L);
+        stats.setBucketAllocationFailuresCount(501L);
+        stats.setMemoryStatus("OK");
+        stats.setLogTime(new Date(6789L));
+
+        TestJsonStorageSerialiser serialiser = new TestJsonStorageSerialiser();
+        serialiser.startObject();
+        stats.serialise(serialiser);
+        serialiser.endObject();
+
+        String expected = "{"
+                + "\"modelBytes\":101,"
+                + "\"totalByFieldCount\":201,"
+                + "\"totalPartitionFieldCount\":401,"
+                + "\"bucketAllocationFailuresCount\":501,"
+                + "\"totalOverFieldCount\":301,"
+                + "\"@timestamp\":1234,"
+                + "\"memoryStatus\":\"OK\","
+                + "\"logTime\":6789"
+                + "}";
+        assertEquals(expected, serialiser.toJson());
     }
 }

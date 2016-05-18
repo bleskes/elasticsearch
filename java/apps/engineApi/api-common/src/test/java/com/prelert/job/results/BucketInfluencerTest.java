@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -31,7 +31,11 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import java.io.IOException;
+
 import org.junit.Test;
+
+import com.prelert.job.persistence.serialisation.TestJsonStorageSerialiser;
 
 public class BucketInfluencerTest
 {
@@ -132,5 +136,30 @@ public class BucketInfluencerTest
 
         assertFalse(bucketInfluencer1.equals(bucketInfluencer2));
         assertFalse(bucketInfluencer2.equals(bucketInfluencer1));
+    }
+
+    @Test
+    public void testSerialise() throws IOException
+    {
+        BucketInfluencer bucketInfluencer = new BucketInfluencer();
+        bucketInfluencer.setAnomalyScore(33.0);
+        bucketInfluencer.setInfluencerFieldName("foo");
+        bucketInfluencer.setInitialAnomalyScore(50.0);
+        bucketInfluencer.setProbability(0.01);
+        bucketInfluencer.setRawAnomalyScore(3.3);
+
+        TestJsonStorageSerialiser serialiser = new TestJsonStorageSerialiser();
+        serialiser.startObject();
+        bucketInfluencer.serialise(serialiser);
+        serialiser.endObject();
+
+        String expected = "{"
+                + "\"influencerFieldName\":\"foo\","
+                + "\"anomalyScore\":33.0,"
+                + "\"probability\":0.01,"
+                + "\"rawAnomalyScore\":3.3,"
+                + "\"initialAnomalyScore\":50.0"
+                + "}";
+        assertEquals(expected, serialiser.toJson());
     }
 }
