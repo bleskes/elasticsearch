@@ -73,6 +73,14 @@
       <artifactId>elasticsearch</artifactId>
     </dependency>
 
+    <!-- ZooKeeper uses slf4j. Including the projects version here stops the
+         copy-dependencies plugin from installing the earlier version used
+         by ZooKeeper. -->
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-log4j12</artifactId>
+    </dependency>
+
     <!-- ZooKeeper Curator -->
     <dependency>
       <groupId>org.apache.curator</groupId>
@@ -91,7 +99,6 @@
         </exclusion>
       </exclusions>
     </dependency>
-
     <dependency>
       <groupId>org.apache.curator</groupId>
       <artifactId>curator-test</artifactId>
@@ -124,8 +131,6 @@
               <!-- Don't copy test jars (JUnit) or provided -->
               <includeScope>runtime</includeScope>
               <excludeScope>provided</excludeScope>
-              <!-- Don't copy slf4j -->
-              <excludeArtifactIds>slf4j-api</excludeArtifactIds>
             </configuration>
           </execution>
 
