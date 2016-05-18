@@ -21,7 +21,6 @@ package com.prelert.job.results;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
@@ -356,9 +355,6 @@ public class AnomalyCause implements StorageSerialisable
             serialiser.add(AnomalyCause.OVER_FIELD_VALUE, m_OverFieldValue);
         }
 
-        for (Map.Entry<String, Object> entry : reverser.getResultsMap().entrySet())
-        {
-            serialiser.add(entry.getKey(), entry.getValue());
-        }
+        serialiser.addReverserResults(reverser);
     }
 }

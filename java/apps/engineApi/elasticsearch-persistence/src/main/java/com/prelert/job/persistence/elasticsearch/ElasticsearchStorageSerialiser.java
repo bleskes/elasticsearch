@@ -181,4 +181,14 @@ class ElasticsearchStorageSerialiser implements StorageSerialiser
         return new ElasticsearchDotNotationReverser();
     }
 
+    @Override
+    public StorageSerialiser addReverserResults(DotNotationReverser reverser) throws IOException
+    {
+        for (Map.Entry<String, Object> entry : reverser.getResultsMap().entrySet())
+        {
+            add(entry.getKey(), entry.getValue());
+        }
+        return this;
+    }
+
 }

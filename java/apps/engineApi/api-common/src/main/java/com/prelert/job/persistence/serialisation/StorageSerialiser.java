@@ -44,4 +44,5 @@ public interface StorageSerialiser
 
     StorageSerialiser serialise(StorageSerialisable value) throws IOException;
     DotNotationReverser newDotNotationReverser();
+    StorageSerialiser addReverserResults(DotNotationReverser reverser) throws IOException;
 }

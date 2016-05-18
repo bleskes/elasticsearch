@@ -23,7 +23,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
@@ -31,10 +30,10 @@ import com.fasterxml.jackson.annotation.JsonFormat.Feature;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.prelert.job.persistence.serialisation.DotNotationReverser;
 import com.prelert.job.persistence.serialisation.StorageSerialisable;
 import com.prelert.job.persistence.serialisation.StorageSerialiser;
-import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
  * Anomaly Record POJO.
@@ -580,9 +579,6 @@ public class AnomalyRecord implements StorageSerialisable
             }
         }
 
-        for (Map.Entry<String, Object> entry : reverser.getResultsMap().entrySet())
-        {
-            serialiser.add(entry.getKey(), entry.getValue());
-        }
+        serialiser.addReverserResults(reverser);
     }
 }

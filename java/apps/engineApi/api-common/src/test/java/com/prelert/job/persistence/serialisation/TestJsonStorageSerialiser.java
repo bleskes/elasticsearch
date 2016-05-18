@@ -42,9 +42,6 @@ import java.util.Objects;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
-import com.prelert.job.persistence.serialisation.DotNotationReverser;
-import com.prelert.job.persistence.serialisation.StorageSerialisable;
-import com.prelert.job.persistence.serialisation.StorageSerialiser;
 
 /**
  * An implementation of StorageSerialiser to facilitate
@@ -306,5 +303,15 @@ public class TestJsonStorageSerialiser implements StorageSerialiser
         {
             throw new UnsupportedOperationException();
         }
+    }
+
+    @Override
+    public StorageSerialiser addReverserResults(DotNotationReverser reverser) throws IOException
+    {
+        for (Map.Entry<String, Object> entry : reverser.getResultsMap().entrySet())
+        {
+            add(entry.getKey(), entry.getValue());
+        }
+        return this;
     }
 }

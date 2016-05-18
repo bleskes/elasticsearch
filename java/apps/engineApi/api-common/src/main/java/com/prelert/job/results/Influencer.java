@@ -19,7 +19,6 @@ package com.prelert.job.results;
 
 import java.io.IOException;
 import java.util.Date;
-import java.util.Map;
 import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -237,9 +236,6 @@ public class Influencer implements StorageSerialisable
 
         DotNotationReverser reverser = serialiser.newDotNotationReverser();
         reverser.add(m_InfluenceField, m_InfluenceValue);
-        for (Map.Entry<String, Object> entry : reverser.getResultsMap().entrySet())
-        {
-            serialiser.add(entry.getKey(), entry.getValue());
-        }
+        serialiser.addReverserResults(reverser);
     }
 }
