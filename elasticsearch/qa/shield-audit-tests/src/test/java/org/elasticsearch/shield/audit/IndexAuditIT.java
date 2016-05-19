@@ -18,10 +18,13 @@
 package org.elasticsearch.shield.audit;
 
 import com.carrotsearch.hppc.cursors.ObjectCursor;
+import org.apache.http.message.BasicHeader;
 import org.elasticsearch.action.admin.indices.template.delete.DeleteIndexTemplateResponse;
 import org.elasticsearch.action.admin.indices.template.get.GetIndexTemplatesResponse;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.cluster.ClusterState;
+import org.elasticsearch.client.ElasticsearchResponse;
+import org.elasticsearch.client.RestClient;
 import org.elasticsearch.cluster.metadata.IndexTemplateMetaData;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.index.query.QueryBuilders;
@@ -31,7 +34,6 @@ import org.elasticsearch.shield.audit.index.IndexAuditTrail;
 import org.elasticsearch.shield.authc.support.SecuredString;
 import org.elasticsearch.shield.authc.support.UsernamePasswordToken;
 import org.elasticsearch.test.ESIntegTestCase;
-import org.elasticsearch.test.rest.client.http.HttpResponse;
 import org.elasticsearch.xpack.XPackPlugin;
 
 import java.util.Collection;
@@ -48,10 +50,12 @@ public class IndexAuditIT extends ESIntegTestCase {
     private static final String PASS = "changeme";
 
     public void testShieldIndexAuditTrailWorking() throws Exception {
-        HttpResponse response = httpClient().path("/")
-                .addHeader("Authorization", UsernamePasswordToken.basicAuthHeaderValue(USER, new SecuredString(PASS.toCharArray())))
-                .execute();
-        assertThat(response.getStatusCode(), is(200));
+        try (RestClient restClient = restClient()) {
+            ElasticsearchResponse response = restClient.performRequest("GET", "/_cluster/health", Collections.emptyMap(), null,
+                    new BasicHeader(UsernamePasswordToken.BASIC_AUTH_HEADER,
+                            UsernamePasswordToken.basicAuthHeaderValue(USER, new SecuredString(PASS.toCharArray()))));
+            assertThat(response.getStatusLine().getStatusCode(), is(200));
+        }
 
         final AtomicReference<ClusterState> lastClusterState = new AtomicReference<>();
         final AtomicBoolean indexExists = new AtomicBoolean(false);
