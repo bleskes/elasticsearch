@@ -64,6 +64,7 @@ public class AnomalyCauseTest
 
         assertTrue(cause1.equals(cause2));
         assertTrue(cause2.equals(cause1));
+        assertEquals(cause1.hashCode(), cause2.hashCode());
     }
 
     @Test

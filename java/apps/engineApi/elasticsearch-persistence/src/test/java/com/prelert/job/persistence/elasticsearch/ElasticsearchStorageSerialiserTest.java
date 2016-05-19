@@ -30,6 +30,9 @@ package com.prelert.job.persistence.elasticsearch;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Date;
@@ -41,6 +44,7 @@ import org.elasticsearch.common.xcontent.XContentFactory;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.prelert.job.persistence.serialisation.DotNotationReverser;
 import com.prelert.job.persistence.serialisation.StorageSerialisable;
 
 public class ElasticsearchStorageSerialiserTest
@@ -115,6 +119,24 @@ public class ElasticsearchStorageSerialiserTest
     public void testNewDotNotationReverser()
     {
         assertTrue(m_Serialiser.newDotNotationReverser() instanceof ElasticsearchDotNotationReverser);
+    }
+
+    @Test
+    public void testAddReverserResults() throws IOException
+    {
+        Map<String, Object> results = new HashMap<>();
+        results.put("a", "a_value");
+        results.put("b", "b_value");
+
+        DotNotationReverser reverser = mock(DotNotationReverser.class);
+        when(reverser.getResultsMap()).thenReturn(results);
+
+        m_Serialiser.startObject();
+        m_Serialiser.addReverserResults(reverser);
+        m_Serialiser.endObject();
+
+        String expected = "{\"a\":\"a_value\",\"b\":\"b_value\"}";
+        assertEquals(expected, m_Builder.string());
     }
 
     private static StorageSerialisable createSingleKeyValueSerialisable(String key, String value)

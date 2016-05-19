@@ -57,25 +57,142 @@ public class ModelDebugOutputTest
     }
 
     @Test
+    public void testEquals_GivenDifferentTimestamp()
+    {
+        ModelDebugOutput modelDebugOutput1 = createFullyPopulated();
+        ModelDebugOutput modelDebugOutput2 = createFullyPopulated();
+        modelDebugOutput2.setTimestamp(new Date(0L));
+
+        assertFalse(modelDebugOutput1.equals(modelDebugOutput2));
+        assertFalse(modelDebugOutput2.equals(modelDebugOutput1));
+    }
+
+    @Test
+    public void testEquals_GivenDifferentPartitionFieldName()
+    {
+        ModelDebugOutput modelDebugOutput1 = createFullyPopulated();
+        ModelDebugOutput modelDebugOutput2 = createFullyPopulated();
+        modelDebugOutput2.setPartitionFieldName("another");
+
+        assertFalse(modelDebugOutput1.equals(modelDebugOutput2));
+        assertFalse(modelDebugOutput2.equals(modelDebugOutput1));
+    }
+
+    @Test
+    public void testEquals_GivenDifferentPartitionFieldValue()
+    {
+        ModelDebugOutput modelDebugOutput1 = createFullyPopulated();
+        ModelDebugOutput modelDebugOutput2 = createFullyPopulated();
+        modelDebugOutput2.setPartitionFieldValue("another");
+
+        assertFalse(modelDebugOutput1.equals(modelDebugOutput2));
+        assertFalse(modelDebugOutput2.equals(modelDebugOutput1));
+    }
+
+    @Test
+    public void testEquals_GivenDifferentByFieldName()
+    {
+        ModelDebugOutput modelDebugOutput1 = createFullyPopulated();
+        ModelDebugOutput modelDebugOutput2 = createFullyPopulated();
+        modelDebugOutput2.setByFieldName("another");
+
+        assertFalse(modelDebugOutput1.equals(modelDebugOutput2));
+        assertFalse(modelDebugOutput2.equals(modelDebugOutput1));
+    }
+
+    @Test
+    public void testEquals_GivenDifferentByFieldValue()
+    {
+        ModelDebugOutput modelDebugOutput1 = createFullyPopulated();
+        ModelDebugOutput modelDebugOutput2 = createFullyPopulated();
+        modelDebugOutput2.setByFieldValue("another");
+
+        assertFalse(modelDebugOutput1.equals(modelDebugOutput2));
+        assertFalse(modelDebugOutput2.equals(modelDebugOutput1));
+    }
+
+    @Test
+    public void testEquals_GivenDifferentOverFieldName()
+    {
+        ModelDebugOutput modelDebugOutput1 = createFullyPopulated();
+        ModelDebugOutput modelDebugOutput2 = createFullyPopulated();
+        modelDebugOutput2.setOverFieldName("another");
+
+        assertFalse(modelDebugOutput1.equals(modelDebugOutput2));
+        assertFalse(modelDebugOutput2.equals(modelDebugOutput1));
+    }
+
+    @Test
+    public void testEquals_GivenDifferentOverFieldValue()
+    {
+        ModelDebugOutput modelDebugOutput1 = createFullyPopulated();
+        ModelDebugOutput modelDebugOutput2 = createFullyPopulated();
+        modelDebugOutput2.setOverFieldValue("another");
+
+        assertFalse(modelDebugOutput1.equals(modelDebugOutput2));
+        assertFalse(modelDebugOutput2.equals(modelDebugOutput1));
+    }
+
+    @Test
+    public void testEquals_GivenDifferentDebugFeature()
+    {
+        ModelDebugOutput modelDebugOutput1 = createFullyPopulated();
+        ModelDebugOutput modelDebugOutput2 = createFullyPopulated();
+        modelDebugOutput2.setDebugFeature("another");
+
+        assertFalse(modelDebugOutput1.equals(modelDebugOutput2));
+        assertFalse(modelDebugOutput2.equals(modelDebugOutput1));
+    }
+
+    @Test
+    public void testEquals_GivenDifferentDebugLower()
+    {
+        ModelDebugOutput modelDebugOutput1 = createFullyPopulated();
+        ModelDebugOutput modelDebugOutput2 = createFullyPopulated();
+        modelDebugOutput2.setDebugLower(-1.0);
+
+        assertFalse(modelDebugOutput1.equals(modelDebugOutput2));
+        assertFalse(modelDebugOutput2.equals(modelDebugOutput1));
+    }
+
+    @Test
+    public void testEquals_GivenDifferentDebugUpper()
+    {
+        ModelDebugOutput modelDebugOutput1 = createFullyPopulated();
+        ModelDebugOutput modelDebugOutput2 = createFullyPopulated();
+        modelDebugOutput2.setDebugUpper(-1.0);
+
+        assertFalse(modelDebugOutput1.equals(modelDebugOutput2));
+        assertFalse(modelDebugOutput2.equals(modelDebugOutput1));
+    }
+
+    @Test
+    public void testEquals_GivenDifferentDebugMean()
+    {
+        ModelDebugOutput modelDebugOutput1 = createFullyPopulated();
+        ModelDebugOutput modelDebugOutput2 = createFullyPopulated();
+        modelDebugOutput2.setDebugMean(-1.0);
+
+        assertFalse(modelDebugOutput1.equals(modelDebugOutput2));
+        assertFalse(modelDebugOutput2.equals(modelDebugOutput1));
+    }
+
+    @Test
+    public void testEquals_GivenDifferentActual()
+    {
+        ModelDebugOutput modelDebugOutput1 = createFullyPopulated();
+        ModelDebugOutput modelDebugOutput2 = createFullyPopulated();
+        modelDebugOutput2.setActual(-1.0);
+
+        assertFalse(modelDebugOutput1.equals(modelDebugOutput2));
+        assertFalse(modelDebugOutput2.equals(modelDebugOutput1));
+    }
+
+    @Test
     public void testEquals_GivenEqualModelDebugOutputs()
     {
-        ModelDebugOutput modelDebugOutput1 = new ModelDebugOutput();
-        modelDebugOutput1.setPartitionFieldName("part");
-        modelDebugOutput1.setPartitionFieldValue("val");
-        modelDebugOutput1.setDebugFeature("sum");
-        modelDebugOutput1.setDebugLower(7.9);
-        modelDebugOutput1.setDebugUpper(34.5);
-        modelDebugOutput1.setDebugMean(12.7);
-        modelDebugOutput1.setActual(100.0);
-
-        ModelDebugOutput modelDebugOutput2 = new ModelDebugOutput();
-        modelDebugOutput2.setPartitionFieldName("part");
-        modelDebugOutput2.setPartitionFieldValue("val");
-        modelDebugOutput2.setDebugFeature("sum");
-        modelDebugOutput2.setDebugLower(7.9);
-        modelDebugOutput2.setDebugUpper(34.5);
-        modelDebugOutput2.setDebugMean(12.7);
-        modelDebugOutput2.setActual(100.0);
+        ModelDebugOutput modelDebugOutput1 = createFullyPopulated();
+        ModelDebugOutput modelDebugOutput2 = createFullyPopulated();
 
         assertTrue(modelDebugOutput1.equals(modelDebugOutput2));
         assertTrue(modelDebugOutput2.equals(modelDebugOutput1));
@@ -85,15 +202,7 @@ public class ModelDebugOutputTest
     @Test
     public void testSerialise() throws IOException
     {
-        ModelDebugOutput modelDebugOutput = new ModelDebugOutput();
-        modelDebugOutput.setTimestamp(new Date(42L));
-        modelDebugOutput.setPartitionFieldName("part");
-        modelDebugOutput.setPartitionFieldValue("val");
-        modelDebugOutput.setDebugFeature("sum");
-        modelDebugOutput.setDebugLower(7.9);
-        modelDebugOutput.setDebugUpper(34.5);
-        modelDebugOutput.setDebugMean(12.7);
-        modelDebugOutput.setActual(100.0);
+        ModelDebugOutput modelDebugOutput = createFullyPopulated();
 
         TestJsonStorageSerialiser serialiser = new TestJsonStorageSerialiser();
         serialiser.startObject();
@@ -102,15 +211,34 @@ public class ModelDebugOutputTest
 
         String expected = "{"
                 + "\"actual\":100.0,"
-                + "\"@timestamp\":42,"
+                + "\"@timestamp\":12345678,"
                 + "\"debugMean\":12.7,"
-                + "\"partitionFieldValue\":\"val\","
+                + "\"partitionFieldValue\":\"part_val\","
+                + "\"by.reversed\":\"by_val\","
                 + "\"debugFeature\":\"sum\","
-                + "\"part.reversed\":\"val\","
+                + "\"part.reversed\":\"part_val\","
+                + "\"byFieldName\":\"by\","
+                + "\"byFieldValue\":\"by_val\","
                 + "\"debugLower\":7.9,"
                 + "\"debugUpper\":34.5,"
                 + "\"partitionFieldName\":\"part\""
                 + "}";
         assertEquals(expected, serialiser.toJson());
+    }
+
+    private ModelDebugOutput createFullyPopulated()
+    {
+        ModelDebugOutput modelDebugOutput = new ModelDebugOutput();
+        modelDebugOutput.setByFieldName("by");
+        modelDebugOutput.setByFieldValue("by_val");
+        modelDebugOutput.setPartitionFieldName("part");
+        modelDebugOutput.setPartitionFieldValue("part_val");
+        modelDebugOutput.setDebugFeature("sum");
+        modelDebugOutput.setDebugLower(7.9);
+        modelDebugOutput.setDebugUpper(34.5);
+        modelDebugOutput.setDebugMean(12.7);
+        modelDebugOutput.setActual(100.0);
+        modelDebugOutput.setTimestamp(new Date(12345678L));
+        return modelDebugOutput;
     }
 }

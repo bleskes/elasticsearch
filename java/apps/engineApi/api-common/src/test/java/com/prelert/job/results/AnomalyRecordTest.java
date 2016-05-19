@@ -87,6 +87,7 @@ public class AnomalyRecordTest
 
         assertTrue(record1.equals(record2));
         assertTrue(record2.equals(record1));
+        assertEquals(record1.hashCode(), record2.hashCode());
     }
 
     @Test
@@ -373,6 +374,32 @@ public class AnomalyRecordTest
                 + "\"normalizedProbability\":0.0,"
                 + "\"initialNormalizedProbability\":0.0,"
                 + "\"probability\":0.0,"
+                + "\"detectorIndex\":0"
+                + "}";
+        assertEquals(expected, serialiser.toJson());
+    }
+
+    @Test
+    public void testSerialise_GivenMultipleActualAndTypical() throws IOException
+    {
+        AnomalyRecord record = new AnomalyRecord();
+        record.setActual(new double[] {1.0, 2.0});
+        record.setTypical(new double[] {3.0, 4.0});
+        TestJsonStorageSerialiser serialiser = new TestJsonStorageSerialiser();
+
+        serialiser.startObject();
+        record.serialise(serialiser);
+        serialiser.endObject();
+
+        String expected = "{"
+                + "\"actual\":[1.0,2.0],"
+                + "\"anomalyScore\":0.0,"
+                + "\"bucketSpan\":0,"
+                + "\"@timestamp\":null,"
+                + "\"normalizedProbability\":0.0,"
+                + "\"initialNormalizedProbability\":0.0,"
+                + "\"probability\":0.0,"
+                + "\"typical\":[3.0,4.0],"
                 + "\"detectorIndex\":0"
                 + "}";
         assertEquals(expected, serialiser.toJson());
