@@ -76,7 +76,7 @@ public class WatcherService extends AbstractComponent {
     public void start(ClusterState clusterState) throws Exception {
         if (state.compareAndSet(WatcherState.STOPPED, WatcherState.STARTING)) {
             try {
-                logger.info("starting watch service...");
+                logger.debug("starting watch service...");
                 watcherIndexTemplateRegistry.addTemplatesIfMissing();
                 watchLockService.start();
 
@@ -86,7 +86,7 @@ public class WatcherService extends AbstractComponent {
 
                 triggerService.start(watchStore.activeWatches());
                 state.set(WatcherState.STARTED);
-                logger.info("watch service has started");
+                logger.debug("watch service has started");
             } catch (Exception e) {
                 state.set(WatcherState.STOPPED);
                 throw e;
@@ -102,7 +102,7 @@ public class WatcherService extends AbstractComponent {
 
     public void stop() {
         if (state.compareAndSet(WatcherState.STARTED, WatcherState.STOPPING)) {
-            logger.info("stopping watch service...");
+            logger.debug("stopping watch service...");
             triggerService.stop();
             executionService.stop();
             try {
@@ -112,7 +112,7 @@ public class WatcherService extends AbstractComponent {
             }
             watchStore.stop();
             state.set(WatcherState.STOPPED);
-            logger.info("watch service has stopped");
+            logger.debug("watch service has stopped");
         } else {
             logger.debug("not stopping watcher, because its state is [{}] while [{}] is expected", state, WatcherState.STARTED);
         }
