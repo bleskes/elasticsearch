@@ -27,7 +27,6 @@
 
 package com.prelert.rs.client.integrationtests;
 
-import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -36,11 +35,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-import org.apache.log4j.ConsoleAppender;
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
-import org.apache.log4j.PatternLayout;
-
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataDescription;
 import com.prelert.job.DataDescription.DataFormat;
@@ -48,7 +42,6 @@ import com.prelert.job.Detector;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.results.AnomalyRecord;
 import com.prelert.job.results.Bucket;
-import com.prelert.rs.client.EngineApiClient;
 import com.prelert.rs.data.Pagination;
 
 
@@ -64,38 +57,58 @@ import com.prelert.rs.data.Pagination;
  * </ol>
  *
  */
-public class NormalizationTest implements Closeable
+public class NormalizationTest extends BaseIntegrationTest
 {
-    private static final Logger LOGGER = Logger.getLogger(NormalizationTest.class);
-
     static final long FAREQUOTE_NUM_BUCKETS = 1439;
 
     static final String TEST_FAREQUOTE = "farequote-norm-test";
     static final String TEST_FAREQUOTE_NO_RENORMALIZATION = "farequote-no-renormalization-test";
 
-    /**
-     * The default base Url used in the test
-     */
-    public static final String API_BASE_URL = "http://localhost:8080/engine/v2";
     public static final String ES_BASE_URL = "http://localhost:9200/";
 
-    private final EngineApiClient m_WebServiceClient;
-    private final String m_BaseUrl;
 
+    private String m_EsBaseUrl;
 
     /**
      * Creates a new http client call {@linkplain #close()} once finished
      */
-    public NormalizationTest(String baseUrl)
+    public NormalizationTest(String baseUrl, String esBaseUrl)
     {
-        m_WebServiceClient = new EngineApiClient(baseUrl);
-        m_BaseUrl = baseUrl;
+        super(baseUrl, true);
+        m_EsBaseUrl = esBaseUrl;
     }
 
     @Override
-    public void close() throws IOException
+    protected void runTest() throws IOException
     {
-        m_WebServiceClient.close();
+        List<String> jobUrls = new ArrayList<>();
+        File fareQuoteData = new File(m_TestDataHome + "/engine_api_integration_test/farequote.csv");
+
+        // Always delete the test job first in case it is hanging around
+        // from a previous run
+
+        // Farequote test
+        m_EngineApiClient.deleteJob(TEST_FAREQUOTE);
+        jobUrls.add(TEST_FAREQUOTE);
+        createFarequoteJob();
+        m_EngineApiClient.fileUpload(TEST_FAREQUOTE, fareQuoteData, false);
+        m_EngineApiClient.closeJob(TEST_FAREQUOTE);
+
+        verifyFarequoteNormalisedBuckets(TEST_FAREQUOTE);
+        verifyFarequoteNormalisedRecords(TEST_FAREQUOTE);
+
+        // Farequote no renormalization test
+        jobUrls.add(TEST_FAREQUOTE_NO_RENORMALIZATION);
+        m_EngineApiClient.deleteJob(TEST_FAREQUOTE_NO_RENORMALIZATION);
+        createFarequoteNoRenormalizationJob();
+        m_EngineApiClient.fileUpload(TEST_FAREQUOTE_NO_RENORMALIZATION, fareQuoteData, false);
+        m_EngineApiClient.closeJob(TEST_FAREQUOTE_NO_RENORMALIZATION);
+
+        verifyNormalizedScoresAreEqualToInitialScores(TEST_FAREQUOTE_NO_RENORMALIZATION, m_EsBaseUrl);
+
+        //==========================
+        // Clean up test jobs
+        deleteJobs(jobUrls);
     }
 
     public String createFarequoteJob() throws IOException
@@ -133,7 +146,7 @@ public class NormalizationTest implements Closeable
         config.setDataDescription(dd);
         config.setRenormalizationWindowDays(renormalizationWindowDays);
 
-        test(jobId.equals(m_WebServiceClient.createJob(config)));
+        test(jobId.equals(m_EngineApiClient.createJob(config)));
         return jobId;
     }
 
@@ -156,7 +169,7 @@ public class NormalizationTest implements Closeable
     public boolean verifyFarequoteNormalisedBuckets(String jobId)
     throws IOException
     {
-        Pagination<Bucket> allBuckets = m_WebServiceClient.prepareGetBuckets(jobId).take(1500).get();
+        Pagination<Bucket> allBuckets = m_EngineApiClient.prepareGetBuckets(jobId).take(1500).get();
         test(allBuckets.getDocumentCount() == FAREQUOTE_NUM_BUCKETS);
         test(allBuckets.getHitCount() == FAREQUOTE_NUM_BUCKETS);
 
@@ -169,7 +182,7 @@ public class NormalizationTest implements Closeable
         long skip = 0, take = 100;
         while (skip < FAREQUOTE_NUM_BUCKETS)
         {
-            Pagination<Bucket> buckets = m_WebServiceClient.prepareGetBuckets(jobId).skip(skip)
+            Pagination<Bucket> buckets = m_EngineApiClient.prepareGetBuckets(jobId).skip(skip)
                     .take(take).get();
             pagedBuckets.addAll(buckets.getDocuments());
 
@@ -196,7 +209,7 @@ public class NormalizationTest implements Closeable
         skip = 0; take = 140;
         while (skip < allBuckets.getHitCount())
         {
-            Pagination<Bucket> buckets = m_WebServiceClient.prepareGetBuckets(jobId)
+            Pagination<Bucket> buckets = m_EngineApiClient.prepareGetBuckets(jobId)
                     .skip(skip).take(take)
                     .start(allBuckets.getDocuments().get(0).getEpoch())
                     .end(allBuckets.getDocuments().get((int)allBuckets.getHitCount()-1).getEpoch() +1)
@@ -227,7 +240,7 @@ public class NormalizationTest implements Closeable
 
         for (int i=0; i<startDateFormats.length; ++i)
         {
-            Pagination<Bucket> byDate = m_WebServiceClient.prepareGetBuckets(jobId)
+            Pagination<Bucket> byDate = m_EngineApiClient.prepareGetBuckets(jobId)
                     .take(1000)
                     .start(startDateFormats[i])
                     .end(endDateFormats[i]).get();
@@ -279,7 +292,7 @@ public class NormalizationTest implements Closeable
         double bucket772Score = pagedBuckets.get(771).getAnomalyScore();
         test(bucket771Score + bucket772Score >= 155.0);
 
-        Pagination<Bucket> allBucketsExpanded = m_WebServiceClient.prepareGetBuckets(jobId)
+        Pagination<Bucket> allBucketsExpanded = m_EngineApiClient.prepareGetBuckets(jobId)
                 .expand(true).take(1500).get();
 
         /*
@@ -314,7 +327,7 @@ public class NormalizationTest implements Closeable
     public boolean verifyFarequoteNormalisedRecords(String jobId)
     throws IOException
     {
-        Pagination<AnomalyRecord> allRecords = m_WebServiceClient.prepareGetRecords(jobId)
+        Pagination<AnomalyRecord> allRecords = m_EngineApiClient.prepareGetRecords(jobId)
                 .take(3000).get();
 
         /*
@@ -324,14 +337,14 @@ public class NormalizationTest implements Closeable
         List<AnomalyRecord> pagedRecords = new ArrayList<>();
         long skip = 0, take = 1000;
 
-        Pagination<AnomalyRecord> page = m_WebServiceClient.prepareGetRecords(jobId).skip(skip)
+        Pagination<AnomalyRecord> page = m_EngineApiClient.prepareGetRecords(jobId).skip(skip)
                 .take(take).get();
         skip += take;
         pagedRecords.addAll(page.getDocuments());
 
         while (skip < page.getHitCount())
         {
-            page = m_WebServiceClient.prepareGetRecords(jobId).skip(skip).take(take).get();
+            page = m_EngineApiClient.prepareGetRecords(jobId).skip(skip).take(take).get();
             skip += take;
             pagedRecords.addAll(page.getDocuments());
         }
@@ -350,7 +363,7 @@ public class NormalizationTest implements Closeable
          */
 
         // need start and end dates first
-        Pagination<Bucket> allBuckets = m_WebServiceClient.prepareGetBuckets(jobId).expand(true)
+        Pagination<Bucket> allBuckets = m_EngineApiClient.prepareGetBuckets(jobId).expand(true)
                 .take(3000).get();
         long startDate = allBuckets.getDocuments().get(0).getEpoch();
         long endDate = allBuckets.getDocuments().get(allBuckets.getDocumentCount()-1).getEpoch() + 1;
@@ -359,14 +372,14 @@ public class NormalizationTest implements Closeable
         skip = 0; take = 200;
 
 
-        page = m_WebServiceClient.prepareGetRecords(jobId).skip(skip).take(take).start(startDate)
+        page = m_EngineApiClient.prepareGetRecords(jobId).skip(skip).take(take).start(startDate)
                 .end(endDate).get();
         skip += take;
         pagedRecords.addAll(page.getDocuments());
 
         while (skip < page.getHitCount())
         {
-            page = m_WebServiceClient.prepareGetRecords(jobId).skip(skip).take(take)
+            page = m_EngineApiClient.prepareGetRecords(jobId).skip(skip).take(take)
                     .start(startDate).end(endDate).get();
 
             skip += take;
@@ -413,7 +426,7 @@ public class NormalizationTest implements Closeable
         try (ElasticsearchDirectClient directClient = new ElasticsearchDirectClient(
                 esBaseUrl + "prelertresults-" + jobId + "/"))
         {
-            Pagination<Bucket> allBuckets = m_WebServiceClient.prepareGetBuckets(jobId)
+            Pagination<Bucket> allBuckets = m_EngineApiClient.prepareGetBuckets(jobId)
                     .take(1500L).expand(true).get();
             for (Bucket bucket : allBuckets.getDocuments())
             {
@@ -425,46 +438,8 @@ public class NormalizationTest implements Closeable
         }
     }
 
-    /**
-     * Delete all the jobs in the list of job ids
-     *
-     * @param jobIds The list of ids of the jobs to delete
-     * @throws IOException
-     * @throws InterruptedException
-     */
-    public void deleteJobs(List<String> jobIds)
-    throws IOException, InterruptedException
-    {
-        for (String jobId : jobIds)
-        {
-            LOGGER.debug("Deleting job " + jobId);
 
-            boolean success = m_WebServiceClient.deleteJob(jobId);
-            if (success == false)
-            {
-                LOGGER.error("Error deleting job " + m_BaseUrl + "/" + jobId);
-            }
-        }
-    }
-
-
-    /**
-     * Throws an IllegalStateException if <code>condition</code> is false.
-     *
-     * @param condition
-     * @throws IllegalStateException
-     */
-    public static void test(boolean condition)
-    throws IllegalStateException
-    {
-        if (condition == false)
-        {
-            throw new IllegalStateException();
-        }
-    }
-
-
-    /**
+   /**
      * The program takes one argument which is the base Url of the RESTful API.
      * If no arguments are given then {@value #API_BASE_URL} is used.
      *
@@ -475,13 +450,6 @@ public class NormalizationTest implements Closeable
     public static void main(String[] args)
     throws IOException, InterruptedException
     {
-        // configure log4j
-        ConsoleAppender console = new ConsoleAppender();
-        console.setLayout(new PatternLayout("%d [%p|%c|%C{1}] %m%n"));
-        console.setThreshold(Level.INFO);
-        console.activateOptions();
-        Logger.getRootLogger().addAppender(console);
-
         String baseUrl = API_BASE_URL;
         if (args.length > 0)
         {
@@ -498,46 +466,11 @@ public class NormalizationTest implements Closeable
             esBaseUrl += "/";
         }
 
-        LOGGER.info("Testing Service at " + baseUrl);
-
-        final String prelertTestDataHome = System.getProperty("prelert.test.data.home");
-        if (prelertTestDataHome == null)
+        try (NormalizationTest test = new NormalizationTest(baseUrl, esBaseUrl))
         {
-            throw new IllegalStateException("Error property prelert.test.data.home is not set");
+            test.runTest();
+            test.m_Logger.info("All tests passed Ok");
         }
 
-        List<String> jobUrls = new ArrayList<>();
-        try (NormalizationTest test = new NormalizationTest(baseUrl))
-        {
-            File fareQuoteData = new File(prelertTestDataHome + "/engine_api_integration_test/farequote.csv");
-
-            // Always delete the test job first in case it is hanging around
-            // from a previous run
-
-            // Farequote test
-            test.m_WebServiceClient.deleteJob(TEST_FAREQUOTE);
-            jobUrls.add(TEST_FAREQUOTE);
-            test.createFarequoteJob();
-            test.m_WebServiceClient.fileUpload(TEST_FAREQUOTE, fareQuoteData, false);
-            test.m_WebServiceClient.closeJob(TEST_FAREQUOTE);
-
-            test.verifyFarequoteNormalisedBuckets(TEST_FAREQUOTE);
-            test.verifyFarequoteNormalisedRecords(TEST_FAREQUOTE);
-
-            // Farequote no renormalization test
-            jobUrls.add(TEST_FAREQUOTE_NO_RENORMALIZATION);
-            test.m_WebServiceClient.deleteJob(TEST_FAREQUOTE_NO_RENORMALIZATION);
-            test.createFarequoteNoRenormalizationJob();
-            test.m_WebServiceClient.fileUpload(TEST_FAREQUOTE_NO_RENORMALIZATION, fareQuoteData, false);
-            test.m_WebServiceClient.closeJob(TEST_FAREQUOTE_NO_RENORMALIZATION);
-
-            test.verifyNormalizedScoresAreEqualToInitialScores(TEST_FAREQUOTE_NO_RENORMALIZATION, esBaseUrl);
-
-            //==========================
-            // Clean up test jobs
-            test.deleteJobs(jobUrls);
-        }
-
-        LOGGER.info("All tests passed Ok");
     }
 }

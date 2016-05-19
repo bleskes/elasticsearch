@@ -35,10 +35,6 @@ import java.util.Arrays;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
-import org.apache.log4j.ConsoleAppender;
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
-import org.apache.log4j.PatternLayout;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.api.ContentResponse;
 import org.eclipse.jetty.client.util.StringContentProvider;
@@ -56,16 +52,9 @@ import com.prelert.job.SchedulerConfig;
 import com.prelert.job.SchedulerConfig.DataSource;
 import com.prelert.rs.client.EngineApiClient;
 
-public class ScheduledJobTest implements AutoCloseable
+public class ScheduledJobTest extends BaseIntegrationTest
 {
-    private static final Logger LOGGER = Logger.getLogger(ScheduledJobTest.class);
-
     private static final String TEST_JOB_ID = "scheduled-job-test";
-
-    /**
-     * The default base Url used in the test
-     */
-    private static final String API_BASE_URL = "http://localhost:8080/engine/v2";
 
     private static final String START_SCHEDULER_URL_SUFFIX =
             "/schedulers/" + TEST_JOB_ID + "/start?end=%s";
@@ -88,7 +77,6 @@ public class ScheduledJobTest implements AutoCloseable
             + "\"timestamp\": %s"
             + "}";
 
-    private final EngineApiClient m_EngineApiClient;
     private final HttpClient m_HttpClient;
     private int m_RecordsCount;
 
@@ -100,7 +88,8 @@ public class ScheduledJobTest implements AutoCloseable
 
     public ScheduledJobTest(String baseUrl, String esBaseUrl)
     {
-        m_BaseUrl = baseUrl;
+        super(baseUrl);
+
         m_EsBaseUrl = esBaseUrl;
         m_EsIndexUrl = m_EsBaseUrl + INDEX_NAME + "/";
         m_EsRecordIndexUrl = m_EsIndexUrl + TYPE_NAME + "/";
@@ -114,11 +103,12 @@ public class ScheduledJobTest implements AutoCloseable
         }
         catch (Exception e)
         {
-            LOGGER.error("Failed to start HTTP client", e);
+            m_Logger.error("Failed to start HTTP client", e);
             throw new RuntimeException(e);
         }
     }
 
+    @Override
     public void runTest() throws IOException
     {
         deleteIndex();
@@ -139,23 +129,23 @@ public class ScheduledJobTest implements AutoCloseable
 
     private void deleteIndex()
     {
-        LOGGER.info("Deleting index: " + m_EsIndexUrl);
+        m_Logger.info("Deleting index: " + m_EsIndexUrl);
         try
         {
             ContentResponse response = m_HttpClient.newRequest(m_EsIndexUrl)
                     .method(HttpMethod.DELETE)
                     .send();
-            LOGGER.info(response.getContentAsString());
+            m_Logger.info(response.getContentAsString());
         }
         catch (InterruptedException | TimeoutException | ExecutionException e)
         {
-            LOGGER.error("Error uploading data to Elasticsearch", e);
+            m_Logger.error("Error uploading data to Elasticsearch", e);
         }
     }
 
     private void generateDataInElasticsearch()
     {
-        LOGGER.info("Generating data...");
+        m_Logger.info("Generating data...");
         createDataIndex();
         ZonedDateTime now = ZonedDateTime.now(ZoneOffset.UTC);
         ZonedDateTime currentTime = now.minus(30, ChronoUnit.DAYS);
@@ -167,7 +157,7 @@ public class ScheduledJobTest implements AutoCloseable
             currentTime = currentTime.plus(1, ChronoUnit.MINUTES);
         }
         refreshIndex();
-        LOGGER.info("Completed data generation");
+        m_Logger.info("Completed data generation");
     }
 
     private void createDataIndex()
@@ -180,7 +170,7 @@ public class ScheduledJobTest implements AutoCloseable
         }
         catch (InterruptedException | TimeoutException | ExecutionException e)
         {
-            LOGGER.error("Error uploading data to Elasticsearch", e);
+            m_Logger.error("Error uploading data to Elasticsearch", e);
             throw new RuntimeException(e);
         }
     }
@@ -195,21 +185,21 @@ public class ScheduledJobTest implements AutoCloseable
         }
         catch (InterruptedException | TimeoutException | ExecutionException e)
         {
-            LOGGER.error("Error uploading data to Elasticsearch", e);
+            m_Logger.error("Error uploading data to Elasticsearch", e);
             throw new RuntimeException(e);
         }
     }
 
     private void refreshIndex()
     {
-        LOGGER.info("Refreshing index...");
+        m_Logger.info("Refreshing index...");
         try
         {
             m_HttpClient.POST(m_EsRefreshIndexUrl).send();
         }
         catch (InterruptedException | TimeoutException | ExecutionException e)
         {
-            LOGGER.error("Error refreshing index", e);
+            m_Logger.error("Error refreshing index", e);
             throw new RuntimeException(e);
         }
     }
@@ -244,19 +234,19 @@ public class ScheduledJobTest implements AutoCloseable
         String jobId = m_EngineApiClient.createJob(config);
         if (jobId == null || jobId.isEmpty())
         {
-            LOGGER.error("No Job Id returned by create job");
-            LOGGER.error(m_EngineApiClient.getLastError().toJson());
+            m_Logger.error("No Job Id returned by create job");
+            m_Logger.error(m_EngineApiClient.getLastError().toJson());
             test(jobId != null && jobId.isEmpty() == false);
         }
 
-        LOGGER.info("Created job: " + TEST_JOB_ID);
+        m_Logger.info("Created job: " + TEST_JOB_ID);
 
         return jobId;
     }
 
     private void startScheduler()
     {
-        LOGGER.info("Starting scheduler");
+        m_Logger.info("Starting scheduler");
 
         String startSchedulerUri = String.format(m_BaseUrl + START_SCHEDULER_URL_SUFFIX,
                 ZonedDateTime.now().toEpochSecond());
@@ -266,14 +256,14 @@ public class ScheduledJobTest implements AutoCloseable
         }
         catch (InterruptedException | TimeoutException | ExecutionException e)
         {
-            LOGGER.error("Error while starting scheduler", e);
+            m_Logger.error("Error while starting scheduler", e);
             throw new RuntimeException(e);
         }
     }
 
     private void waitUntilSchedulerStatusIs(JobSchedulerStatus status) throws IOException
     {
-        LOGGER.info("Waiting for scheduler to stop");
+        m_Logger.info("Waiting for scheduler to stop");
 
         int count = 0;
         JobDetails job = m_EngineApiClient.getJob(TEST_JOB_ID).getDocument();
@@ -281,7 +271,7 @@ public class ScheduledJobTest implements AutoCloseable
         {
             if (count > 60)
             {
-                LOGGER.error("Waiting for scheduler to finish timed out after " + count + " seconds");
+                m_Logger.error("Waiting for scheduler to finish timed out after " + count + " seconds");
                 test(false);
             }
             count++;
@@ -295,35 +285,21 @@ public class ScheduledJobTest implements AutoCloseable
             }
             job = m_EngineApiClient.getJob(TEST_JOB_ID).getDocument();
         }
-        LOGGER.info("Scheduler has stopped");
+        m_Logger.info("Scheduler has stopped");
     }
 
     @Override
     public void close() throws IOException
     {
+        super.close();
+
         try
         {
             m_HttpClient.stop();
         }
         catch (Exception e)
         {
-            LOGGER.error("Failed to stop HTTP client", e);
-        }
-        m_EngineApiClient.close();
-    }
-
-    /**
-     * Throws an IllegalStateException if <code>condition</code> is false.
-     *
-     * @param condition
-     * @throws IllegalStateException
-     */
-    public static void test(boolean condition)
-    throws IllegalStateException
-    {
-        if (condition == false)
-        {
-            throw new IllegalStateException();
+            m_Logger.error("Failed to stop HTTP client", e);
         }
     }
 
@@ -345,18 +321,11 @@ public class ScheduledJobTest implements AutoCloseable
             esBaseUrl += "/";
         }
 
-        // configure log4j
-        ConsoleAppender console = new ConsoleAppender();
-        console.setLayout(new PatternLayout("%d [%p|%c|%C{1}] %m%n"));
-        console.setThreshold(Level.INFO);
-        console.activateOptions();
-        Logger.getRootLogger().addAppender(console);
-
         try (ScheduledJobTest test = new ScheduledJobTest(baseUrl, esBaseUrl))
         {
             test.runTest();
+            test.m_Logger.info("All tests passed Ok");
         }
 
-        LOGGER.info("All tests passed Ok");
     }
 }

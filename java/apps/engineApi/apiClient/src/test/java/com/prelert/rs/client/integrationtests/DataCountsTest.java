@@ -26,17 +26,11 @@
  ************************************************************/
 package com.prelert.rs.client.integrationtests;
 
-import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-
-import org.apache.log4j.ConsoleAppender;
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
-import org.apache.log4j.PatternLayout;
 
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataCounts;
@@ -45,7 +39,6 @@ import com.prelert.job.DataDescription.DataFormat;
 import com.prelert.job.Detector;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.JobDetails;
-import com.prelert.rs.client.EngineApiClient;
 import com.prelert.rs.data.ApiError;
 import com.prelert.rs.data.MultiDataPostResult;
 import com.prelert.rs.data.SingleDocument;
@@ -56,15 +49,8 @@ import com.prelert.rs.data.SingleDocument;
  * returned by the data upload and the counts object inside
  * the {@linkplain JobDetails} instance.
  */
-public class DataCountsTest implements Closeable
+public class DataCountsTest extends BaseIntegrationTest
 {
-	private static final Logger LOGGER = Logger.getLogger(DataCountsTest.class);
-
-	/**
-	 * The default base Url used in the test
-	 */
-	public static final String API_BASE_URL = "http://localhost:8080/engine/v2";
-
 	static final long FLIGHTCENTRE_NUM_BUCKETS = 296;
 	static final long FLIGHTCENTRE_NUM_RECORDS = 175910;
 	static final long FLIGHTCENTRE_NUM_FIELDS = FLIGHTCENTRE_NUM_RECORDS * 3;
@@ -73,21 +59,48 @@ public class DataCountsTest implements Closeable
 
 	static final long FLIGHTCENTRE_INPUT_BYTES_JSON = 17510020;
 
-
-	private EngineApiClient m_WebServiceClient;
-
 	public DataCountsTest(String baseUrl)
 	{
-		m_WebServiceClient = new EngineApiClient(baseUrl);
+	    super(baseUrl, true);
 	}
 
 	@Override
-	public void close() throws IOException
+	protected void runTest() throws IOException
 	{
-		m_WebServiceClient.close();
+
+        File flightCentreDataCsv = new File(m_TestDataHome +
+                "/engine_api_integration_test/flightcentre.csv");
+        File flightCenterDataCsvGzip = new File(m_TestDataHome +
+                "/engine_api_integration_test/flightcentre.csv.gz");
+        File flightCentreDataJson = new File(m_TestDataHome +
+                "/engine_api_integration_test/flightcentre.json");
+
+        List<String> jobs = new ArrayList<>();
+
+        boolean isJson = false;
+        boolean isCompressed = false;
+        boolean compareBuckets = true;
+        String jobId;
+
+        jobId = runFarequoteJob(flightCentreDataCsv, isJson, isCompressed);
+        DataCounts counts = jobDataCounts(jobId);
+        validateFlightCentreCounts(counts, isJson, isCompressed, compareBuckets);
+
+        isCompressed = true;
+        jobId = runFarequoteJob(flightCenterDataCsvGzip, isJson, isCompressed);
+        counts = jobDataCounts(jobId);
+        validateFlightCentreCounts(counts, isJson, isCompressed, compareBuckets);
+
+        isJson = true;
+        isCompressed = false;
+        jobId = runFarequoteJob(flightCentreDataJson, isJson, isCompressed);
+        counts = jobDataCounts(jobId);
+        validateFlightCentreCounts(counts, isJson, isCompressed, compareBuckets);
+
+        jobs.add(jobId);
+
+        deleteJobs(jobs);
 	}
-
-
 
 	private String runFarequoteJob(File dataFile, boolean isJson, boolean compressed)
 	throws IOException
@@ -121,15 +134,15 @@ public class DataCountsTest implements Closeable
 		config.setDescription("Farequote usage test");
 		config.setDataDescription(dd);
 
-		String jobId = m_WebServiceClient.createJob(config);
+		String jobId = m_EngineApiClient.createJob(config);
 		if (jobId == null || jobId.isEmpty())
 		{
-			LOGGER.error("No Job Id returned by create job");
-			LOGGER.info(m_WebServiceClient.getLastError().toJson());
+			m_Logger.error("No Job Id returned by create job");
+			m_Logger.info(m_EngineApiClient.getLastError().toJson());
 			test(jobId != null && jobId.isEmpty() == false);
 		}
 
-		MultiDataPostResult result = m_WebServiceClient.fileUpload(jobId, dataFile, compressed);
+		MultiDataPostResult result = m_EngineApiClient.fileUpload(jobId, dataFile, compressed);
 
         test(result.anErrorOccurred() == false);
         test(result.getResponses().size() == 1);
@@ -138,14 +151,14 @@ public class DataCountsTest implements Closeable
 
 		if (result.getResponses().get(0).getUploadSummary().getInputRecordCount() == 0)
 		{
-			LOGGER.error(error.toJson());
+			m_Logger.error(error.toJson());
 			test(false);
 		}
 
 		validateFlightCentreCounts(result.getResponses().get(0).getUploadSummary(),
 		                        isJson, compressed, false);
 
-		m_WebServiceClient.closeJob(jobId);
+		m_EngineApiClient.closeJob(jobId);
 
 
 		return jobId;
@@ -153,7 +166,7 @@ public class DataCountsTest implements Closeable
 
 	private DataCounts jobDataCounts(String jobId) throws IOException
 	{
-	    SingleDocument<JobDetails> job =  m_WebServiceClient.getJob(jobId);
+	    SingleDocument<JobDetails> job =  m_EngineApiClient.getJob(jobId);
 	    test(job.isExists());
 
 	    return job.getDocument().getCounts();
@@ -197,85 +210,22 @@ public class DataCountsTest implements Closeable
 		test(counts.getOutOfOrderTimeStampCount() == 0);
 	}
 
-	/**
-	 * Throws an IllegalStateException if <code>condition</code> is false.
-	 *
-	 * @param condition
-	 * @throws IllegalStateException
-	 */
-	public static void test(boolean condition)
-	throws IllegalStateException
-	{
-		if (condition == false)
-		{
-			throw new IllegalStateException();
-		}
-	}
-
 	public static void main(String[] args)
 	throws IOException, InterruptedException
 	{
-		// configure log4j
-		ConsoleAppender console = new ConsoleAppender();
-		console.setLayout(new PatternLayout("%d [%p|%c|%C{1}] %m%n"));
-		console.setThreshold(Level.INFO);
-		console.activateOptions();
-		Logger.getRootLogger().addAppender(console);
-
 		String baseUrl = API_BASE_URL;
 		if (args.length > 0)
 		{
 			baseUrl = args[0];
 		}
 
-		LOGGER.info("Testing Service at " + baseUrl);
-
-		final String prelertTestDataHome = System.getProperty("prelert.test.data.home");
-		if (prelertTestDataHome == null)
-		{
-            throw new IllegalStateException("Error property prelert.test.data.home is not set");
-		}
-
-		File flightCentreDataCsv = new File(prelertTestDataHome +
-				"/engine_api_integration_test/flightcentre.csv");
-		File flightCenterDataCsvGzip = new File(prelertTestDataHome +
-				"/engine_api_integration_test/flightcentre.csv.gz");
-		File flightCentreDataJson = new File(prelertTestDataHome +
-				"/engine_api_integration_test/flightcentre.json");
-
 		try (DataCountsTest test = new DataCountsTest(baseUrl))
 		{
-			List<String> jobs = new ArrayList<>();
+		    test.runTest();
 
-			boolean isJson = false;
-			boolean isCompressed = false;
-			boolean compareBuckets = true;
-			String jobId;
-
-			jobId = test.runFarequoteJob(flightCentreDataCsv, isJson, isCompressed);
-			DataCounts counts = test.jobDataCounts(jobId);
-			test.validateFlightCentreCounts(counts, isJson, isCompressed, compareBuckets);
-
-			isCompressed = true;
-			jobId = test.runFarequoteJob(flightCenterDataCsvGzip, isJson, isCompressed);
-			counts = test.jobDataCounts(jobId);
-			test.validateFlightCentreCounts(counts, isJson, isCompressed, compareBuckets);
-
-			isJson = true;
-			isCompressed = false;
-			jobId = test.runFarequoteJob(flightCentreDataJson, isJson, isCompressed);
-			counts = test.jobDataCounts(jobId);
-			test.validateFlightCentreCounts(counts, isJson, isCompressed, compareBuckets);
-
-			jobs.add(jobId);
-
-			for (String id : jobs)
-			{
-				test.m_WebServiceClient.deleteJob(id);
-			}
+			test.m_Logger.info("All tests passed Ok");
 		}
 
-		LOGGER.info("All tests passed Ok");
 	}
 }
 

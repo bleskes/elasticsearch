@@ -27,18 +27,12 @@
 
 package com.prelert.rs.client.integrationtests;
 
-import java.io.Closeable;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-
-import org.apache.log4j.ConsoleAppender;
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
-import org.apache.log4j.PatternLayout;
 
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataCounts;
@@ -50,7 +44,6 @@ import com.prelert.job.JobDetails;
 import com.prelert.job.transform.Condition;
 import com.prelert.job.transform.Operator;
 import com.prelert.job.transform.TransformConfig;
-import com.prelert.rs.client.EngineApiClient;
 import com.prelert.rs.data.ApiError;
 import com.prelert.rs.data.MultiDataPostResult;
 import com.prelert.rs.data.SingleDocument;
@@ -60,29 +53,32 @@ import com.prelert.rs.data.SingleDocument;
  * Two excludes are used this test simply verifies the expected
  * number of records were processed and the expected number filtered.
  */
-public class ExcludeTransformTest implements Closeable
+public class ExcludeTransformTest extends BaseIntegrationTest
 {
-    private static final Logger LOGGER = Logger.getLogger(ExcludeTransformTest.class);
-
     private static final String JOB_ID = "exclude-test-job";
-
-    /**
-     * The default base Url used in the test
-     */
-    public static final String API_BASE_URL = "http://localhost:8080/engine/v2";
-
-    private EngineApiClient m_WebServiceClient;
-
 
     public ExcludeTransformTest(String baseUrl)
     {
-        m_WebServiceClient = new EngineApiClient(baseUrl);
+        super(baseUrl);
     }
 
+    @Override
+    protected void runTest() throws IOException
+    {
+        m_Logger.info("Running Exclude transform test");
+
+
+        File dnsDataFile = new File(
+                m_TestDataHome + "/engine_api_integration_test/transforms/dns_sample.csv");
+
+        createJob();
+        uploadDataAndVerify(dnsDataFile);
+        closeJobAndVerify();
+    }
 
     private void createJob() throws IOException
     {
-        m_WebServiceClient.deleteJob(JOB_ID);
+        m_EngineApiClient.deleteJob(JOB_ID);
 
 
         AnalysisConfig ac = new AnalysisConfig();
@@ -132,14 +128,14 @@ public class ExcludeTransformTest implements Closeable
         config.setDataDescription(dd);
         config.setTransforms(transforms);
 
-        m_WebServiceClient.createJob(config);
+        m_EngineApiClient.createJob(config);
     }
 
     public void uploadDataAndVerify(File dataFile)
             throws IOException
     {
         FileInputStream stream = new FileInputStream(dataFile);
-        MultiDataPostResult result = m_WebServiceClient.streamingUpload(JOB_ID, stream, false);
+        MultiDataPostResult result = m_EngineApiClient.streamingUpload(JOB_ID, stream, false);
 
         test(result.anErrorOccurred() == false);
         test(result.getResponses().size() == 1);
@@ -151,10 +147,10 @@ public class ExcludeTransformTest implements Closeable
 
     public void closeJobAndVerify() throws IOException
     {
-        m_WebServiceClient.closeJob(JOB_ID);
+        m_EngineApiClient.closeJob(JOB_ID);
 
         // check that the usage counts have been written to the job details
-        SingleDocument<JobDetails> job = m_WebServiceClient.getJob(JOB_ID);
+        SingleDocument<JobDetails> job = m_EngineApiClient.getJob(JOB_ID);
         test(job.isExists());
 
         verifyCounts(job.getDocument().getCounts());
@@ -173,61 +169,18 @@ public class ExcludeTransformTest implements Closeable
         test(counts.getOutOfOrderTimeStampCount() == 0);
     }
 
-    /**
-     * Throws an exception if <code>condition</code> is false.
-     *
-     * @param condition
-     * @throws IllegalStateException
-     */
-    public static void test(boolean condition) throws IllegalStateException
-    {
-        if (condition == false)
-        {
-            throw new IllegalStateException();
-        }
-    }
-
-    @Override
-    public void close() throws IOException
-    {
-        m_WebServiceClient.close();
-    }
 
     public static void main(String[] args) throws IOException
     {
-        // configure log4j
-        ConsoleAppender console = new ConsoleAppender();
-        console.setLayout(new PatternLayout("%d [%p|%c|%C{1}] %m%n"));
-        console.setThreshold(Level.INFO);
-        console.activateOptions();
-        Logger.getRootLogger().addAppender(console);
-
         String baseUrl = API_BASE_URL;
         if (args.length > 0)
         {
             baseUrl = args[0];
         }
 
-        LOGGER.info("Testing Service at " + baseUrl);
-
-        final String prelertTestDataHome = System.getProperty("prelert.test.data.home");
-        if (prelertTestDataHome == null)
-        {
-            throw new IllegalStateException("Error property prelert.test.data.home is not set");
-        }
-
-        File dnsDataFile = new File(
-                prelertTestDataHome + "/engine_api_integration_test/transforms/dns_sample.csv");
-
         try (ExcludeTransformTest transformTest = new ExcludeTransformTest(baseUrl))
         {
-            LOGGER.info("Running Exclude transform test");
-
-            transformTest.createJob();
-            transformTest.uploadDataAndVerify(dnsDataFile);
-            transformTest.closeJobAndVerify();
-
-            LOGGER.info("All tests passed Ok");
+            transformTest.m_Logger.info("All tests passed Ok");
         }
     }
 }

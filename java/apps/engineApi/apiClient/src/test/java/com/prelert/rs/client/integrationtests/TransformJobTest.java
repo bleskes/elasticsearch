@@ -27,18 +27,12 @@
 
 package com.prelert.rs.client.integrationtests;
 
-import java.io.Closeable;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import org.apache.log4j.ConsoleAppender;
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
-import org.apache.log4j.PatternLayout;
 
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataDescription;
@@ -66,10 +60,8 @@ import com.prelert.rs.data.SingleDocument;
  * This isn't really a test of the concat transform but a test that transforms
  * work - concat is the simplest to test.
  */
-public class TransformJobTest implements Closeable {
-    private static final Logger LOGGER = Logger
-            .getLogger(TransformJobTest.class);
-
+public class TransformJobTest extends BaseIntegrationTest
+{
     private static final String CONCAT_METRIC_JOB = "concat-metricname-test";
     private static final String CONCAT_DATE_JOB = "concat-date-test";
 
@@ -85,12 +77,47 @@ public class TransformJobTest implements Closeable {
      */
     public TransformJobTest(String baseUrl)
     {
-        m_WebServiceClient = new EngineApiClient(baseUrl);
+        super(baseUrl, true);
     }
 
     @Override
-    public void close() throws IOException {
-        m_WebServiceClient.close();
+    public void runTest() throws IOException
+    {
+        File splitMetricDataFileCsv = new File(
+                m_TestDataHome
+                + "/engine_api_integration_test/transforms/aws_instance_metric_spit.csv");
+        File splitDateTimeDataFileCsv = new File(m_TestDataHome
+                + "/engine_api_integration_test/transforms/split_date_time.csv");
+
+        File splitMetricDataFileJson = new File(
+                m_TestDataHome
+                + "/engine_api_integration_test/transforms/aws_instance_metric_spit.json");
+        File splitDateTimeDataFileJson = new File(
+                m_TestDataHome
+                + "/engine_api_integration_test/transforms/split_date_time.json");
+
+
+        // first with CSV data
+        m_Logger.info("Running CSV tests");
+        createSplitMetricJob(false);
+        uploadData(CONCAT_METRIC_JOB, splitMetricDataFileCsv, false);
+        closeJobThrow(CONCAT_METRIC_JOB);
+        checkRecordsHaveConcattedField(m_BaseUrl, CONCAT_METRIC_JOB);
+
+        createDateConcatJob(false);
+        uploadData(CONCAT_DATE_JOB, splitDateTimeDataFileCsv, false);
+        closeJobThrow(CONCAT_DATE_JOB);
+
+        // now with JSON
+        m_Logger.info("Running JSON tests");
+        createSplitMetricJob(true);
+        uploadData(CONCAT_METRIC_JOB, splitMetricDataFileJson, false);
+        closeJobThrow(CONCAT_METRIC_JOB);
+        checkRecordsHaveConcattedField(m_BaseUrl, CONCAT_METRIC_JOB);
+
+        createDateConcatJob(true);
+        uploadData(CONCAT_DATE_JOB, splitDateTimeDataFileJson, false);
+        closeJobThrow(CONCAT_DATE_JOB);
     }
 
     public void createDateConcatJob(boolean useJson) throws IOException
@@ -116,8 +143,8 @@ public class TransformJobTest implements Closeable {
         String jobId = m_WebServiceClient.createJob(JOB_CONFIG);
         if (jobId == null || jobId.isEmpty())
         {
-            LOGGER.error(m_WebServiceClient.getLastError().toJson());
-            LOGGER.error("No Job Id returned by create job");
+            m_Logger.error(m_WebServiceClient.getLastError().toJson());
+            m_Logger.error("No Job Id returned by create job");
             test(jobId != null);
         }
         test(jobId.equals(CONCAT_DATE_JOB));
@@ -126,7 +153,7 @@ public class TransformJobTest implements Closeable {
         SingleDocument<JobDetails> doc = m_WebServiceClient.getJob(jobId);
         if (doc.isExists() == false)
         {
-            LOGGER.error("No Job at URL " + jobId);
+            m_Logger.error("No Job at URL " + jobId);
         }
         JobDetails job = doc.getDocument();
 
@@ -163,8 +190,8 @@ public class TransformJobTest implements Closeable {
         String jobId = m_WebServiceClient.createJob(TRANSFORM_JOB_CONFIG);
         if (jobId == null || jobId.isEmpty())
         {
-            LOGGER.error(m_WebServiceClient.getLastError().toJson());
-            LOGGER.error("No Job Id returned by create job");
+            m_Logger.error(m_WebServiceClient.getLastError().toJson());
+            m_Logger.error("No Job Id returned by create job");
             test(jobId != null);
         }
         test(jobId.equals(CONCAT_METRIC_JOB));
@@ -173,7 +200,7 @@ public class TransformJobTest implements Closeable {
         SingleDocument<JobDetails> doc = m_WebServiceClient.getJob(jobId);
         if (doc.isExists() == false)
         {
-            LOGGER.error("No Job at URL " + jobId);
+            m_Logger.error("No Job at URL " + jobId);
         }
         JobDetails job = doc.getDocument();
 
@@ -248,24 +275,6 @@ public class TransformJobTest implements Closeable {
         test(job.getDocument().getStatus() == JobStatus.RUNNING);
     }
 
-    /**
-     * Finish the job (as all data has been uploaded).
-     *
-     * @param jobId
-     *            The Job's Id
-     * @return
-     * @throws IOException
-     */
-    public boolean closeJob(String jobId) throws IOException {
-        boolean closed = m_WebServiceClient.closeJob(jobId);
-        test(closed);
-
-        SingleDocument<JobDetails> job = m_WebServiceClient.getJob(jobId);
-        test(job.isExists());
-        test(job.getDocument().getStatus() == JobStatus.CLOSED);
-
-        return closed;
-    }
 
     /**
      * Assuming some anomaly records are generated make sure the by field value
@@ -297,89 +306,22 @@ public class TransformJobTest implements Closeable {
         return true;
     }
 
-    /**
-     * Throws an exception if <code>condition</code> is false.
-     *
-     * @param condition
-     * @throws IllegalStateException
-     */
-    public static void test(boolean condition) throws IllegalStateException
-    {
-        if (condition == false)
-        {
-            throw new IllegalStateException();
-        }
-    }
 
     public static void main(String[] args) throws IOException
     {
-        // configure log4j
-        ConsoleAppender console = new ConsoleAppender();
-        console.setLayout(new PatternLayout("%d [%p|%c|%C{1}] %m%n"));
-        console.setThreshold(Level.INFO);
-        console.activateOptions();
-        Logger.getRootLogger().addAppender(console);
-
         String baseUrl = API_BASE_URL;
         if (args.length > 0)
         {
             baseUrl = args[0];
         }
 
-        LOGGER.info("Testing Service at " + baseUrl);
-
-        final String prelertTestDataHome = System
-                .getProperty("prelert.test.data.home");
-        if (prelertTestDataHome == null)
-        {
-            throw new IllegalStateException("Error property prelert.test.data.home is not set");
-        }
-
-        File splitMetricDataFileCsv = new File(
-                prelertTestDataHome
-                + "/engine_api_integration_test/transforms/aws_instance_metric_spit.csv");
-        File splitDateTimeDataFileCsv = new File(prelertTestDataHome
-                + "/engine_api_integration_test/transforms/split_date_time.csv");
-
-        File splitMetricDataFileJson = new File(
-                prelertTestDataHome
-                + "/engine_api_integration_test/transforms/aws_instance_metric_spit.json");
-        File splitDateTimeDataFileJson = new File(
-                prelertTestDataHome
-                + "/engine_api_integration_test/transforms/split_date_time.json");
-
         try (TransformJobTest transformTest = new TransformJobTest(baseUrl))
         {
-            // first with CSV data
-            LOGGER.info("Running CSV tests");
-            transformTest.createSplitMetricJob(false);
-            transformTest.uploadData(CONCAT_METRIC_JOB, splitMetricDataFileCsv,
-                    false);
-            transformTest.closeJob(CONCAT_METRIC_JOB);
-            transformTest.checkRecordsHaveConcattedField(baseUrl,
-                    CONCAT_METRIC_JOB);
+            transformTest.runTest();
 
-            transformTest.createDateConcatJob(false);
-            transformTest.uploadData(CONCAT_DATE_JOB, splitDateTimeDataFileCsv,
-                    false);
-            transformTest.closeJob(CONCAT_DATE_JOB);
-
-            // now with JSON
-            LOGGER.info("Running JSON tests");
-            transformTest.createSplitMetricJob(true);
-            transformTest.uploadData(CONCAT_METRIC_JOB, splitMetricDataFileJson,
-                    false);
-            transformTest.closeJob(CONCAT_METRIC_JOB);
-            transformTest.checkRecordsHaveConcattedField(baseUrl,
-                    CONCAT_METRIC_JOB);
-
-            transformTest.createDateConcatJob(true);
-            transformTest.uploadData(CONCAT_DATE_JOB, splitDateTimeDataFileJson,
-                    false);
-            transformTest.closeJob(CONCAT_DATE_JOB);
+            transformTest.m_Logger.info("All tests passed Ok");
         }
 
-        LOGGER.info("All tests passed Ok");
     }
 
 }

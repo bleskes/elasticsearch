@@ -27,7 +27,6 @@
 
 package com.prelert.rs.client.integrationtests;
 
-import java.io.Closeable;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -35,18 +34,12 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.Arrays;
 
-import org.apache.log4j.ConsoleAppender;
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
-import org.apache.log4j.PatternLayout;
-
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataDescription;
 import com.prelert.job.DataDescription.DataFormat;
 import com.prelert.job.Detector;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.transform.TransformConfig;
-import com.prelert.rs.client.EngineApiClient;
 
 
 /**
@@ -63,53 +56,42 @@ import com.prelert.rs.client.EngineApiClient;
  * </li>
  * </ol>
  */
-public class PreviewIntegrationTest implements Closeable
+public class PreviewIntegrationTest extends BaseIntegrationTest
 {
     private static final String PREVIEW_WITH_SINGLE_LINE_FORMAT_JOB_ID =
             "preview-with-single-line-format-test";
 
-    private static final Logger LOGGER = Logger.getLogger(PreviewIntegrationTest.class);
-
     private static final long BUCKET_SPAN = 3600;
 
-    /**
-     * The default base Url used in the test
-     */
-    public static final String API_BASE_URL = "http://localhost:8080/engine/v2";
-
-    private final EngineApiClient m_WebServiceClient;
-    private final String m_TestDataHome;
-    private final String m_BaseUrl;
     private final String m_JobId;
 
     /**
      * Creates a new http client call {@linkplain #close()} once finished
      */
-    public PreviewIntegrationTest(String testDataHome, String baseUrl, String jobId)
+    public PreviewIntegrationTest(String baseUrl, String jobId)
     {
-        m_WebServiceClient = new EngineApiClient(baseUrl);
-        m_TestDataHome = testDataHome;
-        m_BaseUrl = baseUrl;
+        super(baseUrl, true);
         m_JobId = jobId;
     }
 
     @Override
     public void close() throws IOException
     {
-        m_WebServiceClient.close();
+        m_EngineApiClient.close();
     }
 
-    public void execute() throws IOException
+    @Override
+    public void runTest() throws IOException
     {
         // Always delete the test job first in case it is hanging around
         // from a previous run
-        deleteJob();
+        deleteJob(m_JobId);
 
         createSingleLineWithTransformsJob();
 
         File data = new File(m_TestDataHome +
                 "/engine_api_integration_test/preview/input.log");
-        String preview = m_WebServiceClient.previewUpload(m_JobId, new FileInputStream(
+        String preview = m_EngineApiClient.previewUpload(m_JobId, new FileInputStream(
                 data));
         File previewResult = new File(m_TestDataHome
                 + "/engine_api_integration_test/preview/previewResult.txt");
@@ -118,7 +100,7 @@ public class PreviewIntegrationTest implements Closeable
 
         test(preview.equals(expectedPreview));
 
-        deleteJob();
+        deleteJob(m_JobId);
     }
 
     private String createSingleLineWithTransformsJob() throws IOException
@@ -148,41 +130,15 @@ public class PreviewIntegrationTest implements Closeable
         config.setDataDescription(dd);
         config.setTransforms(Arrays.asList(transform));
 
-        String jobId = m_WebServiceClient.createJob(config);
+        String jobId = m_EngineApiClient.createJob(config);
         if (jobId == null || jobId.isEmpty())
         {
-            LOGGER.error("No Job Id returned by create job");
+            m_Logger.error("No Job Id returned by create job");
             test(jobId != null && jobId.isEmpty() == false);
         }
         test(m_JobId.equals(jobId));
 
         return jobId;
-    }
-
-    private void deleteJob() throws IOException
-    {
-        LOGGER.debug("Deleting job " + m_JobId);
-
-        boolean success = m_WebServiceClient.deleteJob(m_JobId);
-        if (success == false)
-        {
-            LOGGER.error("Error deleting job " + m_BaseUrl + "/" + m_JobId);
-        }
-    }
-
-    /**
-     * Throws an IllegalStateException if <code>condition</code> is false.
-     *
-     * @param condition
-     * @throws IllegalStateException
-     */
-    public static void test(boolean condition)
-    throws IllegalStateException
-    {
-        if (condition == false)
-        {
-            throw new IllegalStateException();
-        }
     }
 
 
@@ -197,33 +153,18 @@ public class PreviewIntegrationTest implements Closeable
     public static void main(String[] args)
     throws IOException, InterruptedException
     {
-        // configure log4j
-        ConsoleAppender console = new ConsoleAppender();
-        console.setLayout(new PatternLayout("%d [%p|%c|%C{1}] %m%n"));
-        console.setThreshold(Level.INFO);
-        console.activateOptions();
-        Logger.getRootLogger().addAppender(console);
-
         String baseUrl = API_BASE_URL;
         if (args.length > 0)
         {
             baseUrl = args[0];
         }
 
-        LOGGER.info("Testing Service at " + baseUrl);
-
-        final String prelertTestDataHome = System.getProperty("prelert.test.data.home");
-        if (prelertTestDataHome == null)
-        {
-            throw new IllegalStateException("Error property prelert.test.data.home is not set");
-        }
-
-        try (PreviewIntegrationTest test = new PreviewIntegrationTest(prelertTestDataHome, baseUrl,
+        try (PreviewIntegrationTest test = new PreviewIntegrationTest(baseUrl,
                 PREVIEW_WITH_SINGLE_LINE_FORMAT_JOB_ID))
         {
-            test.execute();
+            test.runTest();
+            test.m_Logger.info("All tests passed Ok");
         }
 
-        LOGGER.info("All tests passed Ok");
     }
 }

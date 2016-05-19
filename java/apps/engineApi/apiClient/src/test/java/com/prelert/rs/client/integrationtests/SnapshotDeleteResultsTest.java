@@ -30,7 +30,6 @@ package com.prelert.rs.client.integrationtests;
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
-import java.io.Closeable;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
@@ -38,11 +37,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
-
-import org.apache.log4j.ConsoleAppender;
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
-import org.apache.log4j.PatternLayout;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -55,39 +49,79 @@ import com.prelert.job.JobConfiguration;
 import com.prelert.job.ModelSnapshot;
 import com.prelert.job.results.AnomalyRecord;
 import com.prelert.job.results.Bucket;
-import com.prelert.rs.client.EngineApiClient;
 import com.prelert.rs.data.Pagination;
 import com.prelert.rs.data.SingleDocument;
 
-public class SnapshotDeleteResultsTest implements Closeable
+public class SnapshotDeleteResultsTest extends BaseIntegrationTest
 {
-    private static final Logger LOGGER = Logger.getLogger(SnapshotDeleteResultsTest.class);
-
     private static final long BUCKET_SPAN = 3600;
 
     static final String TEST_JOB_ID = "snapshotdeleteresults";
 
-    /**
-     * The default base Url used in the test
-     */
-    public static final String API_BASE_URL = "http://localhost:8080/engine/v2";
-
-    private final EngineApiClient m_WebServiceClient;
-    private final String m_BaseUrl;
-
-    /**
-     * Creates a new http client call {@linkplain #close()} once finished
-     */
     public SnapshotDeleteResultsTest(String baseUrl)
     {
-        m_WebServiceClient = new EngineApiClient(baseUrl);
-        m_BaseUrl = baseUrl;
+        super(baseUrl, true);
     }
 
     @Override
-    public void close() throws IOException
+    protected void runTest() throws IOException
     {
-        m_WebServiceClient.close();
+        m_Logger.info("Testing Service at " + m_BaseUrl + " for job " + TEST_JOB_ID);
+
+        // Always delete the test job first in case it is hanging around
+        // from a previous run
+        m_EngineApiClient.deleteJob(TEST_JOB_ID);
+
+        File farequote = new File(m_TestDataHome +
+                "/engine_api_integration_test/farequote.csv");
+
+        // Farequote test
+        createFarequoteJob();
+
+        // Play straight through, and get results
+        playFile(farequote);
+
+        // Get records
+        List<AnomalyRecord> allRecords = getRecords().getDocuments();
+        List<Bucket> allBuckets = getBuckets().getDocuments();
+
+        // Delete
+        m_EngineApiClient.deleteJob(TEST_JOB_ID);
+
+        // Create again
+        createFarequoteJob();
+
+        // Play in chunks with resetting
+        playChunks(farequote);
+
+        List<AnomalyRecord> snapshotRecords = getRecords().getDocuments();
+        List<Bucket> snapshotBuckets = getBuckets().getDocuments();
+
+        // Compare results
+        m_Logger.info("Before buckets: " + allBuckets.size() + ", after: " + snapshotBuckets.size());
+
+        test(allBuckets.size() == snapshotBuckets.size());
+        for (int i = 0; i < allBuckets.size(); i++)
+        {
+            Bucket a = allBuckets.get(i);
+            Bucket b = snapshotBuckets.get(i);
+            test(a.getEpoch() == b.getEpoch());
+            test(a.getEventCount() == b.getEventCount());
+            test(a.getBucketSpan() == b.getBucketSpan());
+            test(a.isInterim() == b.isInterim());
+            testDoubles(a.getAnomalyScore(), b.getAnomalyScore());
+            testDoubles(a.getMaxNormalizedProbability(), b.getMaxNormalizedProbability());
+        }
+
+        m_Logger.info("Before records: " + allRecords.size() + ", after: " + snapshotRecords.size());
+        test(allRecords.size() == snapshotRecords.size());
+
+        // Make sure that the main anomaly in this farequote data has the same score
+        m_Logger.info("Before score: " + allRecords.get(0).getAnomalyScore());
+        m_Logger.info("After score: " + snapshotRecords.get(0).getAnomalyScore());
+        testDoubles(allRecords.get(0).getAnomalyScore(), snapshotRecords.get(0).getAnomalyScore());
+
+        test(m_EngineApiClient.closeJob(TEST_JOB_ID) == true);
     }
 
     public String createFarequoteJob() throws IOException
@@ -114,10 +148,10 @@ public class SnapshotDeleteResultsTest implements Closeable
         config.setId(TEST_JOB_ID);
         config.setDataDescription(dd);
 
-        String jobId = m_WebServiceClient.createJob(config);
+        String jobId = m_EngineApiClient.createJob(config);
         if (jobId == null || jobId.isEmpty())
         {
-            LOGGER.error("No Job Id returned by create job");
+            m_Logger.error("No Job Id returned by create job");
             test(jobId != null && jobId.isEmpty() == false);
         }
         test(jobId.equals(TEST_JOB_ID));
@@ -127,18 +161,18 @@ public class SnapshotDeleteResultsTest implements Closeable
 
     public void playFile(File file) throws IOException
     {
-        m_WebServiceClient.fileUpload(TEST_JOB_ID, file, false);
-        m_WebServiceClient.closeJob(TEST_JOB_ID);
+        m_EngineApiClient.fileUpload(TEST_JOB_ID, file, false);
+        m_EngineApiClient.closeJob(TEST_JOB_ID);
     }
 
     public Pagination<AnomalyRecord> getRecords() throws IOException
     {
-        return m_WebServiceClient.prepareGetRecords(TEST_JOB_ID).take(3000).get();
+        return m_EngineApiClient.prepareGetRecords(TEST_JOB_ID).take(3000).get();
     }
 
     public Pagination<Bucket> getBuckets() throws IOException
     {
-        return m_WebServiceClient.prepareGetBuckets(TEST_JOB_ID).take(3000).get();
+        return m_EngineApiClient.prepareGetBuckets(TEST_JOB_ID).take(3000).get();
     }
 
     public void playChunks(File file) throws IOException
@@ -157,7 +191,7 @@ public class SnapshotDeleteResultsTest implements Closeable
         }
         catch (IOException ex)
         {
-            LOGGER.error(ex.getMessage());
+            m_Logger.error(ex.getMessage());
             test(false);
         }
 
@@ -165,41 +199,41 @@ public class SnapshotDeleteResultsTest implements Closeable
         test(!header.isEmpty());
 
         uploadLines(file, null, 0L, 10000L);
-        test(m_WebServiceClient.closeJob(TEST_JOB_ID));
+        test(m_EngineApiClient.closeJob(TEST_JOB_ID));
         uploadLines(file, header, 10000L, 40000L);
-        test(m_WebServiceClient.closeJob(TEST_JOB_ID));
+        test(m_EngineApiClient.closeJob(TEST_JOB_ID));
         uploadLines(file, header, 40000L, 60000L);
-        test(m_WebServiceClient.closeJob(TEST_JOB_ID));
+        test(m_EngineApiClient.closeJob(TEST_JOB_ID));
         uploadLines(file, header, 60000L, 86276L);
-        test(m_WebServiceClient.closeJob(TEST_JOB_ID));
+        test(m_EngineApiClient.closeJob(TEST_JOB_ID));
 
         restoreTo(1359631720000L);
 
         uploadLines(file, header, 60000L, 86276L);
-        test(m_WebServiceClient.closeJob(TEST_JOB_ID));
+        test(m_EngineApiClient.closeJob(TEST_JOB_ID));
 
         restoreTo(1359533646000L);
         uploadLines(file, header, 40000L, 50000L);
-        test(m_WebServiceClient.closeJob(TEST_JOB_ID));
+        test(m_EngineApiClient.closeJob(TEST_JOB_ID));
 
         restoreTo(1359380393000L);
         uploadLines(file, header, 10000L, 86276L);
-        test(m_WebServiceClient.closeJob(TEST_JOB_ID));
+        test(m_EngineApiClient.closeJob(TEST_JOB_ID));
     }
 
     private void restoreTo(Long lastRecordTime) throws JsonParseException, JsonMappingException, IOException
     {
         String url = m_BaseUrl + "/modelsnapshots/" + TEST_JOB_ID;
-        Pagination<ModelSnapshot> pagedSnapshots = m_WebServiceClient.get(url, new TypeReference<Pagination<ModelSnapshot>>() {}, true);
+        Pagination<ModelSnapshot> pagedSnapshots = m_EngineApiClient.get(url, new TypeReference<Pagination<ModelSnapshot>>() {}, true);
         List<ModelSnapshot> snapshots = pagedSnapshots.getDocuments();
-        LOGGER.info("Asking for snapshot at time " + lastRecordTime);
+        m_Logger.info("Asking for snapshot at time " + lastRecordTime);
 
         for (ModelSnapshot ss : snapshots)
         {
             if (ss.getLatestRecordTimeStamp().getTime() == lastRecordTime)
             {
                 String fullUrl = url + "/revert?deleteInterveningResults=true&snapshotId=" + ss.getSnapshotId();
-                SingleDocument<ModelSnapshot> restored = m_WebServiceClient.post(fullUrl, new TypeReference<SingleDocument<ModelSnapshot>>() {});
+                SingleDocument<ModelSnapshot> restored = m_EngineApiClient.post(fullUrl, new TypeReference<SingleDocument<ModelSnapshot>>() {});
                 test(restored.isExists());
                 return;
             }
@@ -226,7 +260,7 @@ public class SnapshotDeleteResultsTest implements Closeable
                 {
                     if (firstRecord)
                     {
-                        LOGGER.debug("UploadLines, starting with " + line);
+                        m_Logger.debug("UploadLines, starting with " + line);
                         firstRecord = false;
                     }
                     sb.append(line);
@@ -237,57 +271,20 @@ public class SnapshotDeleteResultsTest implements Closeable
         }
         catch (IOException ex)
         {
-            LOGGER.error(ex.getMessage());
+            m_Logger.error(ex.getMessage());
             test(false);
         }
-        LOGGER.info("About to upload bytes: " + sb.length());
+        m_Logger.info("About to upload bytes: " + sb.length());
         BufferedInputStream is = new BufferedInputStream(new ByteArrayInputStream(sb.toString().getBytes(StandardCharsets.UTF_8)));
-        m_WebServiceClient.streamingUpload(TEST_JOB_ID, is, false);
+        m_EngineApiClient.streamingUpload(TEST_JOB_ID, is, false);
     }
 
-    /**
-     * Delete all the jobs in the list of job ids
-     *
-     * @param jobIds The list of ids of the jobs to delete
-     * @throws IOException
-     * @throws InterruptedException
-     */
-    public void deleteJobs(List<String> jobIds)
-    throws IOException, InterruptedException
-    {
-        for (String jobId : jobIds)
-        {
-            LOGGER.debug("Deleting job " + jobId);
-
-            boolean success = m_WebServiceClient.deleteJob(jobId);
-            if (success == false)
-            {
-                LOGGER.error("Error deleting job " + m_BaseUrl + "/" + jobId);
-            }
-        }
-    }
-
-    /**
-     * Throws an IllegalStateException if <code>condition</code> is false.
-     *
-     * @param condition
-     * @throws IllegalStateException
-     */
-    public static void test(boolean condition)
-    throws IllegalStateException
-    {
-        if (condition == false)
-        {
-            throw new IllegalStateException();
-        }
-    }
-
-    public static void testDoubles(double a, double b)
+    public void testDoubles(double a, double b)
     throws IllegalStateException
     {
         if (Math.abs(a - b) / Math.max(0.000000001, Math.min(a, b)) > 0.05)
         {
-            LOGGER.info("Doubles not equal: " + a + " , " + b);
+            m_Logger.info("Doubles not equal: " + a + " , " + b);
             throw new IllegalStateException();
         }
     }
@@ -304,85 +301,18 @@ public class SnapshotDeleteResultsTest implements Closeable
     public static void main(String[] args)
     throws IOException, InterruptedException, ExecutionException
     {
-        // configure log4j
-        ConsoleAppender console = new ConsoleAppender();
-        console.setLayout(new PatternLayout("%d [%p|%c|%C{1}] %m%n"));
-        console.setThreshold(Level.INFO);
-        console.activateOptions();
-        Logger.getRootLogger().addAppender(console);
-
         String baseUrl = API_BASE_URL;
         if (args.length > 0)
         {
             baseUrl = args[0];
         }
 
-        LOGGER.info("Testing Service at " + baseUrl + " for job " + TEST_JOB_ID);
-
-        final String prelertTestDataHome = System.getProperty("prelert.test.data.home");
-        if (prelertTestDataHome == null)
-        {
-            throw new IllegalStateException("Error property prelert.test.data.home is not set");
-        }
 
         try (SnapshotDeleteResultsTest test = new SnapshotDeleteResultsTest(baseUrl))
         {
-            // Always delete the test job first in case it is hanging around
-            // from a previous run
-            test.m_WebServiceClient.deleteJob(TEST_JOB_ID);
-
-            File farequote = new File(prelertTestDataHome +
-                    "/engine_api_integration_test/farequote.csv");
-
-            // Farequote test
-            test.createFarequoteJob();
-
-            // Play straight through, and get results
-            test.playFile(farequote);
-
-            // Get records
-            List<AnomalyRecord> allRecords = test.getRecords().getDocuments();
-            List<Bucket> allBuckets = test.getBuckets().getDocuments();
-
-            // Delete
-            test.m_WebServiceClient.deleteJob(TEST_JOB_ID);
-
-            // Create again
-            test.createFarequoteJob();
-
-            // Play in chunks with resetting
-            test.playChunks(farequote);
-
-            List<AnomalyRecord> snapshotRecords = test.getRecords().getDocuments();
-            List<Bucket> snapshotBuckets = test.getBuckets().getDocuments();
-
-            // Compare results
-            LOGGER.info("Before buckets: " + allBuckets.size() + ", after: " + snapshotBuckets.size());
-
-            SnapshotDeleteResultsTest.test(allBuckets.size() == snapshotBuckets.size());
-            for (int i = 0; i < allBuckets.size(); i++)
-            {
-                Bucket a = allBuckets.get(i);
-                Bucket b = snapshotBuckets.get(i);
-                test(a.getEpoch() == b.getEpoch());
-                test(a.getEventCount() == b.getEventCount());
-                test(a.getBucketSpan() == b.getBucketSpan());
-                test(a.isInterim() == b.isInterim());
-                testDoubles(a.getAnomalyScore(), b.getAnomalyScore());
-                testDoubles(a.getMaxNormalizedProbability(), b.getMaxNormalizedProbability());
-            }
-
-            LOGGER.info("Before records: " + allRecords.size() + ", after: " + snapshotRecords.size());
-            SnapshotDeleteResultsTest.test(allRecords.size() == snapshotRecords.size());
-
-            // Make sure that the main anomaly in this farequote data has the same score
-            LOGGER.info("Before score: " + allRecords.get(0).getAnomalyScore());
-            LOGGER.info("After score: " + snapshotRecords.get(0).getAnomalyScore());
-            testDoubles(allRecords.get(0).getAnomalyScore(), snapshotRecords.get(0).getAnomalyScore());
-
-            test(test.m_WebServiceClient.closeJob(TEST_JOB_ID) == true);
+            test.runTest();
+            test.m_Logger.info("All tests passed Ok");
         }
 
-        LOGGER.info("All tests passed Ok");
     }
 }

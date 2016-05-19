@@ -26,17 +26,12 @@
  ************************************************************/
 package com.prelert.rs.client.integrationtests;
 
-import java.io.Closeable;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
-import org.apache.log4j.ConsoleAppender;
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
-import org.apache.log4j.PatternLayout;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.client.util.InputStreamResponseListener;
@@ -47,19 +42,14 @@ import org.eclipse.jetty.http.HttpMethod;
  * Download the support bundle from the API and check it contains
  * certain files and those files are not empty.
  */
-public class SupportBundleTest implements Closeable
+public class SupportBundleTest extends BaseIntegrationTest
 {
-    private static final Logger LOGGER = Logger.getLogger(SupportBundleTest.class);
-
-    /**
-     * The default base Url used in the test
-     */
-    public static final String API_BASE_URL = "http://localhost:8080/engine/v2";
-
     private final HttpClient m_HttpClient;
 
-    private SupportBundleTest()
+    private SupportBundleTest(String baseUrl)
     {
+        super(baseUrl);
+
         m_HttpClient = new HttpClient();
         try
         {
@@ -67,8 +57,14 @@ public class SupportBundleTest implements Closeable
         }
         catch (Exception e)
         {
-            LOGGER.fatal("Failed to start the HTTP client", e);
+            m_Logger.fatal("Failed to start the HTTP client", e);
         }
+    }
+
+    @Override
+    protected void runTest() throws IOException
+    {
+
     }
 
     /**
@@ -77,6 +73,8 @@ public class SupportBundleTest implements Closeable
     @Override
     public void close() throws IOException
     {
+        super.close();
+
         try
         {
             m_HttpClient.stop();
@@ -91,7 +89,7 @@ public class SupportBundleTest implements Closeable
     {
         String url = String.format("%s/support", baseUrl);
 
-        LOGGER.info("GET support bundle: " + url);
+        m_Logger.info("GET support bundle: " + url);
 
         InputStreamResponseListener responseListener = new InputStreamResponseListener();
         Request request = m_HttpClient.newRequest(url).method(HttpMethod.GET);
@@ -139,11 +137,11 @@ public class SupportBundleTest implements Closeable
                 if (ns.m_Name.contains(file))
                 {
                     found = true;
-                    LOGGER.info(ns.m_Name + " : " + ns.m_Size);
+                    m_Logger.info(ns.m_Name + " : " + ns.m_Size);
 
                     if (ns.m_Size <= 0)
                     {
-                        LOGGER.error(file + " is empty");
+                        m_Logger.error(file + " is empty");
                         test(false);
                     }
                 }
@@ -151,55 +149,29 @@ public class SupportBundleTest implements Closeable
 
             if (found == false)
             {
-                LOGGER.error(file + " missing from the support download");
+                m_Logger.error(file + " missing from the support download");
                 test(found);
             }
         }
     }
 
-    /**
-     * Throws an exception if <code>condition</code> is false.
-     *
-     * @param condition
-     * @throws IllegalStateException
-     */
-    public static void test(boolean condition)
-    throws IllegalStateException
-    {
-        if (condition == false)
-        {
-            throw new IllegalStateException();
-        }
-    }
-
-    private static void configureLogging()
-    {
-        // configure log4j
-        ConsoleAppender console = new ConsoleAppender();
-        console.setLayout(new PatternLayout("%d [%p|%c|%C{1}] %m%n"));
-        console.setThreshold(Level.INFO);
-        console.activateOptions();
-        Logger.getRootLogger().addAppender(console);
-    }
 
     public static void main(String[] args) throws IOException
     {
-        configureLogging();
-
         String baseUrl = API_BASE_URL;
         if (args.length > 0)
         {
             baseUrl = args[0];
         }
 
-        SupportBundleTest test = new SupportBundleTest();
+        SupportBundleTest test = new SupportBundleTest(baseUrl);
         try (ZipInputStream zip = test.downloadSupportBundle(baseUrl))
         {
             test.checkZipContents(zip);
         }
         test.close();
 
-        LOGGER.info("Download support bundle test passed");
+        test.m_Logger.info("Download support bundle test passed");
     }
 
 }

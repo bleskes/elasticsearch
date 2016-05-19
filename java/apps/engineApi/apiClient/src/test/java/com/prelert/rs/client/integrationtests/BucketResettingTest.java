@@ -29,18 +29,11 @@ package com.prelert.rs.client.integrationtests;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
-import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-
-import org.apache.log4j.ConsoleAppender;
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
-import org.apache.log4j.PatternLayout;
 
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataDescription;
@@ -49,7 +42,6 @@ import com.prelert.job.Detector;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.results.AnomalyRecord;
 import com.prelert.job.results.Bucket;
-import com.prelert.rs.client.EngineApiClient;
 import com.prelert.rs.data.ApiError;
 import com.prelert.rs.data.MultiDataPostResult;
 import com.prelert.rs.data.Pagination;
@@ -67,38 +59,42 @@ import com.prelert.rs.data.Pagination;
  * </ol>
  *
  */
-public class BucketResettingTest implements Closeable
+public class BucketResettingTest extends BaseIntegrationTest
 {
-    private static final Logger LOGGER = Logger.getLogger(BucketResettingTest.class);
-
     private static final long BUCKET_SPAN = 3600;
     private static final int LATENCY_BUCKETS = 2;
     static final String TEST_JOB_ID = "farequote-bucket-resetting-test";
 
     /**
-     * The default base Url used in the test
-     */
-    public static final String API_BASE_URL = "http://localhost:8080/engine/v2";
-
-    private final EngineApiClient m_WebServiceClient;
-    private final String m_TestDataHome;
-    private final String m_BaseUrl;
-
-    /**
      * Creates a new http client call {@linkplain #close()} once finished
      */
-    public BucketResettingTest(String prelertTestDataHome, String baseUrl)
+    public BucketResettingTest(String baseUrl)
     {
-        m_WebServiceClient = new EngineApiClient(baseUrl);
-        m_TestDataHome = prelertTestDataHome;
-        m_BaseUrl = baseUrl;
+        super(baseUrl, true);
     }
 
     @Override
-    public void close() throws IOException
+    protected void runTest() throws IOException
     {
-        m_WebServiceClient.close();
+        // Always delete the test job first in case it is hanging around
+        // from a previous run
+        m_EngineApiClient.deleteJob(TEST_JOB_ID);
+
+        File fareQuotePartData = new File(m_TestDataHome +
+                "/engine_api_integration_test/bucket_resetting/farequote-start.csv");
+
+        createFarequoteJob();
+        m_EngineApiClient.fileUpload(TEST_JOB_ID, fareQuotePartData, false);
+
+        verifyBucketResetting();
+
+        //==========================
+        // Clean up test jobs
+        test(m_EngineApiClient.closeJob(TEST_JOB_ID));
+        deleteJob(TEST_JOB_ID);
+        m_Logger.info("All tests passed Ok");
     }
+
 
     public String createFarequoteJob() throws IOException
     {
@@ -123,10 +119,10 @@ public class BucketResettingTest implements Closeable
         config.setId(TEST_JOB_ID);
         config.setDataDescription(dd);
 
-        String jobId = m_WebServiceClient.createJob(config);
+        String jobId = m_EngineApiClient.createJob(config);
         if (jobId == null || jobId.isEmpty())
         {
-            LOGGER.error("No Job Id returned by create job");
+            m_Logger.error("No Job Id returned by create job");
             test(jobId != null && jobId.isEmpty() == false);
         }
         test(TEST_JOB_ID.equals(jobId));
@@ -135,18 +131,18 @@ public class BucketResettingTest implements Closeable
     }
 
 
-    public void verifyBucketResetting() throws IOException, InterruptedException
+    public void verifyBucketResetting() throws IOException
     {
         // Introduce anomaly in most recent bucket @ 2014-06-27 12:00:00Z
         File anomalousData = new File(m_TestDataHome
                 + "/engine_api_integration_test/bucket_resetting/jbu-high-count.txt");
-        m_WebServiceClient.fileUpload(TEST_JOB_ID, anomalousData, false);
-        m_WebServiceClient.flushJob(TEST_JOB_ID, true);
+        m_EngineApiClient.fileUpload(TEST_JOB_ID, anomalousData, false);
+        m_EngineApiClient.flushJob(TEST_JOB_ID, true);
 
         String start = "2014-06-27T12:00:00Z";
         String end = "2014-06-27T13:00:00Z";
 
-        Pagination<Bucket> buckets = m_WebServiceClient.prepareGetBuckets(TEST_JOB_ID)
+        Pagination<Bucket> buckets = m_EngineApiClient.prepareGetBuckets(TEST_JOB_ID)
                 .includeInterim(true).start(start).end(end).get();
         test(buckets.getHitCount() == 1);
         Bucket bucket = buckets.getDocuments().get(0);
@@ -158,10 +154,10 @@ public class BucketResettingTest implements Closeable
         // Reset bucket and fill with normal data
         File normalData = new File(m_TestDataHome
                 + "/engine_api_integration_test/bucket_resetting/non-jbu-hour.txt");
-        m_WebServiceClient.fileUpload(TEST_JOB_ID, normalData, false, start, end);
-        m_WebServiceClient.flushJob(TEST_JOB_ID, true);
+        m_EngineApiClient.fileUpload(TEST_JOB_ID, normalData, false, start, end);
+        m_EngineApiClient.flushJob(TEST_JOB_ID, true);
 
-        buckets = m_WebServiceClient.prepareGetBuckets(TEST_JOB_ID)
+        buckets = m_EngineApiClient.prepareGetBuckets(TEST_JOB_ID)
                 .includeInterim(true).start(start).end(end).get();
         test(buckets.getHitCount() == 1);
         bucket = buckets.getDocuments().get(0);
@@ -176,7 +172,7 @@ public class BucketResettingTest implements Closeable
         // Finally delete first two available buckets and leave them empty
         start = "2014-06-27T10:00:00Z";
         end = "2014-06-27T12:00:00Z";
-        buckets = m_WebServiceClient.prepareGetBuckets(TEST_JOB_ID)
+        buckets = m_EngineApiClient.prepareGetBuckets(TEST_JOB_ID)
                 .includeInterim(true).start(start).end(end).get();
         test(buckets.getHitCount() == 2);
         test(buckets.getDocuments().get(0).getEventCount() > 0);
@@ -186,7 +182,7 @@ public class BucketResettingTest implements Closeable
         input += "2014-06-27 12:00:00Z,AAL,42.0,farequote\n";
         BufferedInputStream inputStream = new BufferedInputStream(new ByteArrayInputStream(
                 input.getBytes(StandardCharsets.UTF_8)));
-        MultiDataPostResult result = m_WebServiceClient.streamingUpload(TEST_JOB_ID,
+        MultiDataPostResult result = m_EngineApiClient.streamingUpload(TEST_JOB_ID,
                 inputStream, false, start, end);
 
         test(result.anErrorOccurred() == false);
@@ -195,9 +191,9 @@ public class BucketResettingTest implements Closeable
         test(error == null);
         test(result.getResponses().get(0).getUploadSummary().getProcessedRecordCount() == 1);
 
-        m_WebServiceClient.flushJob(TEST_JOB_ID, true);
+        m_EngineApiClient.flushJob(TEST_JOB_ID, true);
 
-        buckets = m_WebServiceClient.prepareGetBuckets(TEST_JOB_ID)
+        buckets = m_EngineApiClient.prepareGetBuckets(TEST_JOB_ID)
                 .includeInterim(true).start(start).end(end).get();
         test(buckets.getHitCount() == 2);
         test(buckets.getDocuments().get(0).getEventCount() == 0);
@@ -206,7 +202,7 @@ public class BucketResettingTest implements Closeable
 
     private List<AnomalyRecord> getInterimResultsOnly(String start, String end) throws IOException
     {
-        Pagination<AnomalyRecord> page = m_WebServiceClient.prepareGetRecords(TEST_JOB_ID)
+        Pagination<AnomalyRecord> page = m_EngineApiClient.prepareGetRecords(TEST_JOB_ID)
                 .start(start).end(end).includeInterim(true).get();
         List<AnomalyRecord> records = page.getDocuments();
         for (AnomalyRecord record : records)
@@ -214,43 +210,6 @@ public class BucketResettingTest implements Closeable
             test(record.isInterim());
         }
         return records;
-    }
-
-    /**
-     * Delete all the jobs in the list of job ids
-     *
-     * @param jobIds The list of ids of the jobs to delete
-     * @throws IOException
-     * @throws InterruptedException
-     */
-    public void deleteJobs(List<String> jobIds)
-    throws IOException, InterruptedException
-    {
-        for (String jobId : jobIds)
-        {
-            LOGGER.debug("Deleting job " + jobId);
-
-            boolean success = m_WebServiceClient.deleteJob(jobId);
-            if (success == false)
-            {
-                LOGGER.error("Error deleting job " + m_BaseUrl + "/" + jobId);
-            }
-        }
-    }
-
-    /**
-     * Throws an IllegalStateException if <code>condition</code> is false.
-     *
-     * @param condition
-     * @throws IllegalStateException
-     */
-    public static void test(boolean condition)
-    throws IllegalStateException
-    {
-        if (condition == false)
-        {
-            throw new IllegalStateException();
-        }
     }
 
 
@@ -265,51 +224,16 @@ public class BucketResettingTest implements Closeable
     public static void main(String[] args)
     throws IOException, InterruptedException
     {
-        // configure log4j
-        ConsoleAppender console = new ConsoleAppender();
-        console.setLayout(new PatternLayout("%d [%p|%c|%C{1}] %m%n"));
-        console.setThreshold(Level.INFO);
-        console.activateOptions();
-        Logger.getRootLogger().addAppender(console);
-
         String baseUrl = API_BASE_URL;
         if (args.length > 0)
         {
             baseUrl = args[0];
         }
 
-        LOGGER.info("Testing Service at " + baseUrl);
-
-        final String prelertTestDataHome = System.getProperty("prelert.test.data.home");
-        if (prelertTestDataHome == null)
+        try (BucketResettingTest test = new BucketResettingTest(baseUrl))
         {
-            throw new IllegalStateException("Error property prelert.test.data.home is not set");
+            test.runTest();
         }
 
-        String farequoteJob = TEST_JOB_ID;
-
-        List<String> jobUrls = new ArrayList<>();
-        try (BucketResettingTest test = new BucketResettingTest(prelertTestDataHome, baseUrl))
-        {
-            // Always delete the test job first in case it is hanging around
-            // from a previous run
-            test.m_WebServiceClient.deleteJob(farequoteJob);
-            jobUrls.add(farequoteJob);
-
-            File fareQuotePartData = new File(prelertTestDataHome +
-                    "/engine_api_integration_test/bucket_resetting/farequote-start.csv");
-
-            test.createFarequoteJob();
-            test.m_WebServiceClient.fileUpload(farequoteJob, fareQuotePartData, false);
-
-            test.verifyBucketResetting();
-
-            //==========================
-            // Clean up test jobs
-            BucketResettingTest.test(test.m_WebServiceClient.closeJob(farequoteJob) == true);
-            test.deleteJobs(jobUrls);
-        }
-
-        LOGGER.info("All tests passed Ok");
     }
 }

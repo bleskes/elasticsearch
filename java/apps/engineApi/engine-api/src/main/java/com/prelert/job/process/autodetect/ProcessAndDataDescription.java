@@ -30,6 +30,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.time.ZonedDateTime;
 import java.util.List;
 
 import org.apache.log4j.Logger;
@@ -64,6 +65,8 @@ public class ProcessAndDataDescription
     private final SchedulerConfig m_SchedulerConfig;
     private final TransformConfigs m_Transforms;
     private final List<File> m_FilesToDelete;
+
+    private final ZonedDateTime m_StartTime;
 
     /**
      * Object for grouping the native process, its data description
@@ -110,6 +113,8 @@ public class ProcessAndDataDescription
         m_OutputParserThread.start();
 
         m_FilesToDelete = filesToDelete;
+
+        m_StartTime = ZonedDateTime.now();
     }
 
     public Process getProcess()
@@ -184,6 +189,15 @@ public class ProcessAndDataDescription
         return m_OutputParser;
     }
 
+    /**
+     * The time the process started.
+     * Up time is the difference between this and now
+     * @return
+     */
+    public ZonedDateTime getProcessStartTime()
+    {
+        return m_StartTime;
+    }
 
     public void deleteAssociatedFiles()
     {

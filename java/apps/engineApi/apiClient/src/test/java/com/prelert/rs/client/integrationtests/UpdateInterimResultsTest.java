@@ -28,7 +28,6 @@
 package com.prelert.rs.client.integrationtests;
 
 import java.io.ByteArrayInputStream;
-import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
@@ -37,18 +36,12 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
-import org.apache.log4j.ConsoleAppender;
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
-import org.apache.log4j.PatternLayout;
-
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataDescription;
 import com.prelert.job.DataDescription.DataFormat;
 import com.prelert.job.Detector;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.results.Bucket;
-import com.prelert.rs.client.EngineApiClient;
 import com.prelert.rs.data.Pagination;
 import com.prelert.rs.data.SingleDocument;
 
@@ -56,34 +49,32 @@ import com.prelert.rs.data.SingleDocument;
 /**
  * Tests that interim results get updated correctly
  */
-public class UpdateInterimResultsTest implements Closeable
+public class UpdateInterimResultsTest extends BaseIntegrationTest
 {
-    private static final Logger LOGGER = Logger.getLogger(UpdateInterimResultsTest.class);
-
     private static final long BUCKET_SPAN = 1000;
 
     private static final int LATENCY_BUCKETS = 0;
 
     static final String TEST_JOB_ID = "update-interim-test";
 
-    /**
-     * The default base URL used in the test
-     */
-    public static final String API_BASE_URL = "http://localhost:8080/engine/v2";
-
-    private final EngineApiClient m_WebServiceClient;
-    private final String m_BaseUrl;
-
     public UpdateInterimResultsTest(String baseUrl)
     {
-        m_WebServiceClient = new EngineApiClient(baseUrl);
-        m_BaseUrl = baseUrl;
+        super(baseUrl);
     }
 
     @Override
-    public void close() throws IOException
+    protected void runTest() throws IOException
     {
-        m_WebServiceClient.close();
+        // Always delete the test job first in case it is hanging around
+        // from a previous run
+        m_EngineApiClient.deleteJob(TEST_JOB_ID);
+
+        createTestJob();
+        runTestBody();
+
+        // Clean up test jobs
+        test(m_EngineApiClient.closeJob(TEST_JOB_ID) == true);
+        test(deleteJob(TEST_JOB_ID));
     }
 
     public String createTestJob() throws IOException
@@ -108,38 +99,15 @@ public class UpdateInterimResultsTest implements Closeable
         config.setId(TEST_JOB_ID);
         config.setDataDescription(dd);
 
-        String jobId = m_WebServiceClient.createJob(config);
+        String jobId = m_EngineApiClient.createJob(config);
         if (jobId == null || jobId.isEmpty())
         {
-            LOGGER.error("No Job Id returned by create job");
+            m_Logger.error("No Job Id returned by create job");
             test(jobId != null && jobId.isEmpty() == false);
         }
         test(jobId.equals(TEST_JOB_ID));
 
         return jobId;
-    }
-
-
-    /**
-     * Delete all the jobs in the list of job ids
-     *
-     * @param jobIds The list of ids of the jobs to delete
-     * @throws IOException
-     * @throws InterruptedException
-     */
-    public void deleteJobs(List<String> jobIds)
-    throws IOException, InterruptedException
-    {
-        for (String jobId : jobIds)
-        {
-            LOGGER.debug("Deleting job " + jobId);
-
-            boolean success = m_WebServiceClient.deleteJob(jobId);
-            if (success == false)
-            {
-                LOGGER.error("Error deleting job " + m_BaseUrl + "/" + jobId);
-            }
-        }
     }
 
     public void runTestBody() throws IllegalStateException, IOException
@@ -158,7 +126,7 @@ public class UpdateInterimResultsTest implements Closeable
         playData(dataChunk3);
         flushJob();
         List<Bucket> firstInterimBuckets = interimBuckets();
-        LOGGER.debug("Got " + firstInterimBuckets.size() + " interim buckets");
+        m_Logger.debug("Got " + firstInterimBuckets.size() + " interim buckets");
         test(firstInterimBuckets.get(0).getEpoch() == 1400043000l);
         test(firstInterimBuckets.get(1).getEpoch() == 1400044000l);
         test(firstInterimBuckets.get(1).getRecordCount() == 1);
@@ -169,7 +137,7 @@ public class UpdateInterimResultsTest implements Closeable
         flushJob();
 
         List<Bucket> secondInterimBuckets = interimBuckets();
-        LOGGER.debug("Got " + secondInterimBuckets.size() + " interim buckets");
+        m_Logger.debug("Got " + secondInterimBuckets.size() + " interim buckets");
         test(secondInterimBuckets.get(0).getEpoch() == 1400043000l);
         test(secondInterimBuckets.get(1).getEpoch() == 1400044000l);
         test(secondInterimBuckets.get(1).getRecordCount() == 1);
@@ -181,10 +149,10 @@ public class UpdateInterimResultsTest implements Closeable
         verifyNoInterimResults();
 
         // Verify interim results have been replaced with finalized results
-        SingleDocument<Bucket> bucket = m_WebServiceClient.prepareGetBucket(TEST_JOB_ID, "1400043500").
+        SingleDocument<Bucket> bucket = m_EngineApiClient.prepareGetBucket(TEST_JOB_ID, "1400043500").
                             expand(true).includeInterim(false).get();
         test(bucket.isExists());
-        LOGGER.debug("RecordCount: " + bucket.getDocument().getRecordCount());
+        m_Logger.debug("RecordCount: " + bucket.getDocument().getRecordCount());
         test(bucket.getDocument().getRecordCount() == 1);
         test(bucket.getDocument().getRecords().get(0).getActual()[0] == 14.0);
     }
@@ -192,30 +160,30 @@ public class UpdateInterimResultsTest implements Closeable
     private void playData(String data) throws IOException
     {
         InputStream stream = new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
-        m_WebServiceClient.streamingUpload(TEST_JOB_ID, stream, false);
+        m_EngineApiClient.streamingUpload(TEST_JOB_ID, stream, false);
     }
 
     private void closeJob() throws IllegalStateException, IOException
     {
-        test(m_WebServiceClient.closeJob(TEST_JOB_ID) == true);
+        test(m_EngineApiClient.closeJob(TEST_JOB_ID) == true);
     }
 
     private void flushJob() throws IllegalStateException, IOException
     {
-        test(m_WebServiceClient.flushJob(TEST_JOB_ID, true) == true);
+        test(m_EngineApiClient.flushJob(TEST_JOB_ID, true) == true);
     }
 
     private void verifyNoInterimResults() throws IOException
     {
-        Pagination<Bucket> bucketsWithInterim = m_WebServiceClient.prepareGetBuckets(TEST_JOB_ID)
+        Pagination<Bucket> bucketsWithInterim = m_EngineApiClient.prepareGetBuckets(TEST_JOB_ID)
                 .includeInterim(true).take(1500).get();
 
-        Pagination<Bucket> bucketsWithoutInterim = m_WebServiceClient.prepareGetBuckets(TEST_JOB_ID)
+        Pagination<Bucket> bucketsWithoutInterim = m_EngineApiClient.prepareGetBuckets(TEST_JOB_ID)
                 .includeInterim(false).take(1500).get();
 
-        LOGGER.debug("Doc count with: " + bucketsWithInterim.getDocumentCount() + ", hits: " +
+        m_Logger.debug("Doc count with: " + bucketsWithInterim.getDocumentCount() + ", hits: " +
                 bucketsWithInterim.getHitCount());
-        LOGGER.debug("Doc count without: " + bucketsWithoutInterim.getDocumentCount() + ", hits: " +
+        m_Logger.debug("Doc count without: " + bucketsWithoutInterim.getDocumentCount() + ", hits: " +
                 bucketsWithoutInterim.getHitCount());
 
         test(bucketsWithInterim.getDocumentCount() == bucketsWithoutInterim.getDocumentCount());
@@ -230,7 +198,7 @@ public class UpdateInterimResultsTest implements Closeable
         boolean cont = true;
         while (cont)
         {
-            Pagination<Bucket> buckets = m_WebServiceClient.prepareGetBuckets(TEST_JOB_ID)
+            Pagination<Bucket> buckets = m_EngineApiClient.prepareGetBuckets(TEST_JOB_ID)
                     .expand(true).includeInterim(true).skip(skip).take(take).get();
             for (Bucket bucket : buckets.getDocuments())
             {
@@ -250,22 +218,6 @@ public class UpdateInterimResultsTest implements Closeable
     }
 
     /**
-     * Throws an IllegalStateException if <code>condition</code> is false.
-     *
-     * @param condition
-     * @throws IllegalStateException
-     */
-    public static void test(boolean condition)
-    throws IllegalStateException
-    {
-        if (condition == false)
-        {
-            throw new IllegalStateException();
-        }
-    }
-
-
-    /**
      * The program takes one argument which is the base Url of the RESTful API.
      * If no arguments are given then {@value #API_BASE_URL} is used.
      *
@@ -277,38 +229,20 @@ public class UpdateInterimResultsTest implements Closeable
     public static void main(String[] args)
     throws IOException, InterruptedException, ExecutionException
     {
-        // configure log4j
-        ConsoleAppender console = new ConsoleAppender();
-        console.setLayout(new PatternLayout("%d [%p|%c|%C{1}] %m%n"));
-        console.setThreshold(Level.INFO);
-        console.activateOptions();
-        Logger.getRootLogger().addAppender(console);
-
         String baseUrl = API_BASE_URL;
         if (args.length > 0)
         {
             baseUrl = args[0];
         }
 
-        LOGGER.info("Testing the service at " + baseUrl);
 
-        List<String> jobUrls = new ArrayList<>();
         try (UpdateInterimResultsTest test = new UpdateInterimResultsTest(baseUrl))
         {
-            // Always delete the test job first in case it is hanging around
-            // from a previous run
-            test.m_WebServiceClient.deleteJob(TEST_JOB_ID);
-            jobUrls.add(TEST_JOB_ID);
+            test.runTest();
 
-            test.createTestJob();
-            test.runTestBody();
-
-            // Clean up test jobs
-            UpdateInterimResultsTest.test(test.m_WebServiceClient.closeJob(TEST_JOB_ID) == true);
-            //test.deleteJobs(jobUrls);
+            test.m_Logger.info("All tests passed Ok");
         }
 
-        LOGGER.info("All tests passed Ok");
     }
 
     private static final String dataChunk1 =
@@ -446,4 +380,5 @@ public class UpdateInterimResultsTest implements Closeable
                     + "1400058000,2\n"
                     + "1400058500,1\n"
                     + "1400059000,2\n";
+
 }
