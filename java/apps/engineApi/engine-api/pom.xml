@@ -72,19 +72,19 @@
       <groupId>org.elasticsearch</groupId>
       <artifactId>elasticsearch</artifactId>
     </dependency>
-    
+
     <!-- ZooKeeper -->
     <dependency>
       <groupId>org.apache.zookeeper</groupId>
-      <artifactId>zookeeper</artifactId>
-      <version>3.4.8</version>
-    </dependency>    
+      <artifactId>zookeeper</artifactId>
+      <version>3.4.8</version>
+      </dependency>
     <dependency>
       <groupId>org.apache.curator</groupId>
-      <artifactId>curator-recipes</artifactId>
-      <version>2.10.0</version>
-    </dependency>  
-    
+      <artifactId>curator-recipes</artifactId>
+      <version>2.10.0</version>
+    </dependency>
+
     <dependency>
       <groupId>org.apache.curator</groupId>
       <artifactId>curator-test</artifactId>
