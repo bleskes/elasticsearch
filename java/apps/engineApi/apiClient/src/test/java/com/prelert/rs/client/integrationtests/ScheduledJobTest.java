@@ -50,7 +50,6 @@ import com.prelert.job.JobDetails;
 import com.prelert.job.JobSchedulerStatus;
 import com.prelert.job.SchedulerConfig;
 import com.prelert.job.SchedulerConfig.DataSource;
-import com.prelert.rs.client.EngineApiClient;
 
 public class ScheduledJobTest extends BaseIntegrationTest
 {
@@ -80,7 +79,6 @@ public class ScheduledJobTest extends BaseIntegrationTest
     private final HttpClient m_HttpClient;
     private int m_RecordsCount;
 
-    private String m_BaseUrl;
     private String m_EsBaseUrl;
     private String m_EsIndexUrl;
     private String m_EsRecordIndexUrl;
@@ -95,7 +93,6 @@ public class ScheduledJobTest extends BaseIntegrationTest
         m_EsRecordIndexUrl = m_EsIndexUrl + TYPE_NAME + "/";
         m_EsRefreshIndexUrl = m_EsIndexUrl + "_refresh";
 
-        m_EngineApiClient = new EngineApiClient(m_BaseUrl);
         m_HttpClient = new HttpClient();
         try
         {

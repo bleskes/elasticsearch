@@ -64,7 +64,10 @@ public class SupportBundleTest extends BaseIntegrationTest
     @Override
     protected void runTest() throws IOException
     {
-
+        try (ZipInputStream zip = downloadSupportBundle(m_BaseUrl))
+        {
+            checkZipContents(zip);
+        }
     }
 
     /**
@@ -164,14 +167,12 @@ public class SupportBundleTest extends BaseIntegrationTest
             baseUrl = args[0];
         }
 
-        SupportBundleTest test = new SupportBundleTest(baseUrl);
-        try (ZipInputStream zip = test.downloadSupportBundle(baseUrl))
+        try (SupportBundleTest test = new SupportBundleTest(baseUrl))
         {
-            test.checkZipContents(zip);
+            test.runTest();
+            test.m_Logger.info("Download support bundle test passed");
         }
-        test.close();
 
-        test.m_Logger.info("Download support bundle test passed");
     }
 
 }
