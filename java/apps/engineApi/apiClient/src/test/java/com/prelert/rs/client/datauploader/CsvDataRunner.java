@@ -246,6 +246,13 @@ public class CsvDataRunner implements Runnable
                         break;
                     }
 
+
+                    synchronized (CsvDataRunner.this)
+                    {
+                        CsvDataRunner.this.notify();
+                    }
+
+
                     long sleepTime = (iterStartMs + (m_PointIntervalSecs * 1000)) - iterEndMs;
                     LOGGER.info(String.format("Sleeping for %d ms", sleepTime));
                     if (sleepTime > 0)
@@ -259,12 +266,6 @@ public class CsvDataRunner implements Runnable
                             LOGGER.info("Producer interrupted while sleeping");
                             break;
                         }
-                    }
-
-
-                    synchronized (CsvDataRunner.this)
-                    {
-                        CsvDataRunner.this.notify();
                     }
                 }
             }
@@ -316,6 +317,10 @@ public class CsvDataRunner implements Runnable
                 LOGGER.error("Error writing csv row", e);
             }
         }
+    }
 
+    public String getJobId()
+    {
+        return m_JobId;
     }
 }
