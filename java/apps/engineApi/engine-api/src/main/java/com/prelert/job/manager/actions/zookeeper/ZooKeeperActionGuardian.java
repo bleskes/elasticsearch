@@ -26,14 +26,17 @@
  ************************************************************/
 package com.prelert.job.manager.actions.zookeeper;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.exceptions.JobInUseException;
 import com.prelert.job.manager.actions.Action;
 import com.prelert.job.manager.actions.ActionGuardian;
 
+import java.net.Inet4Address;
+import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.curator.framework.CuratorFramework;
@@ -42,24 +45,47 @@ import org.apache.curator.framework.recipes.locks.InterProcessMutex;
 import org.apache.curator.retry.ExponentialBackoffRetry;
 import org.apache.log4j.Logger;
 
+/**
+ * Distributed lock for restricting actions on jobs in a network
+ * of engine API nodes.
+ */
 public class ZooKeeperActionGuardian extends ActionGuardian
 {
     private static final Logger LOGGER = Logger.getLogger(ZooKeeperActionGuardian.class);
 
-    public static final String LOCK_PATH_PREFIX = "/engineApi/jobs/";
+    public static final String LOCK_PATH_PREFIX = "/prelert/engineApi/jobs/";
+    private static final String HOST_ACTION_SEPARATOR = "-";
+    private static final int ACQUIRE_LOCK_TIMEOUT = 100;
+
 
     private final CuratorFramework m_Client;
-    private final Map<String, InterProcessMutex> m_LocksByJob = new HashMap<>();
+    private final Map<String, InterProcessMutex> m_LocksByJob = new ConcurrentHashMap<>();
+    private String m_Hostname;
 
     public ZooKeeperActionGuardian(String host, int port)
     {
         m_Client = initCuratorFrameworkClient(host, port);
+        getAndSetHostName();
     }
 
     public ZooKeeperActionGuardian(String host, int port, ActionGuardian nextGuardian)
     {
         super(nextGuardian);
         m_Client = initCuratorFrameworkClient(host, port);
+        getAndSetHostName();
+    }
+
+    private void getAndSetHostName()
+    {
+        try
+        {
+            m_Hostname = Inet4Address.getLocalHost().getHostName();
+        }
+        catch (UnknownHostException e)
+        {
+            m_Hostname = "localhost";
+            LOGGER.error("Cannot resolve hostname", e);
+        }
     }
 
     private CuratorFramework initCuratorFrameworkClient(String host, int port)
@@ -91,20 +117,11 @@ public class ZooKeeperActionGuardian extends ActionGuardian
                     LOGGER.error("Error releasing lock for job " + jobId, e);
                 }
             }
-
         }
         else
         {
-            try {
-                return getActionOfLockedJob(jobId);
-            } catch (Exception e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            }
+            return getHostActionOfLockedJob(jobId).m_Action;
         }
-
-        return Action.NONE;
-
     }
 
     /**
@@ -123,39 +140,25 @@ public class ZooKeeperActionGuardian extends ActionGuardian
         InterProcessMutex lock = m_LocksByJob.get(jobId);
         if (lock != null)
         {
-            try
+            HostnameAction hostAction = getHostActionOfLockedJob(jobId);
+            if (hostAction.m_Action == action)
             {
-                Action currentAction = getActionOfLockedJob(jobId);
-                if (currentAction == action)
-                {
-                    return newActionTicket(jobId);
-                }
-                else
-                {
-                    String msg = action.getErrorString(jobId, currentAction);
-                    LOGGER.warn(msg);
-                    throw new JobInUseException(msg, ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR);
-                }
+                return newActionTicket(jobId);
             }
-            catch (Exception e)
+            else
             {
-                LOGGER.error("Error reading current action for job " + jobId, e);
+                String msg = action.getErrorString(jobId, hostAction.m_Action, hostAction.m_Hostname);
+                LOGGER.warn(msg);
+                throw new JobInUseException(msg, ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR);
             }
         }
 
         lock = new InterProcessMutex(m_Client, lockPath(jobId));
         if (tryAcquiringLockNonBlocking(lock))
         {
-            try {
-                setActionOfLockedJob(jobId, action);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+            setHostActionOfLockedJob(jobId, m_Hostname, action);
 
-            synchronized (this)
-            {
-                m_LocksByJob.put(jobId, lock);
-            }
+            m_LocksByJob.put(jobId, lock);
 
             if (m_NextGuardian.isPresent())
             {
@@ -165,15 +168,9 @@ public class ZooKeeperActionGuardian extends ActionGuardian
         }
         else
         {
-            Action currentAction;
-            try {
-                currentAction = getActionOfLockedJob(jobId);
-            } catch (Exception e) {
-                currentAction = Action.NONE;
-                e.printStackTrace();
-            }
+            HostnameAction hostAction =  getHostActionOfLockedJob(jobId);
 
-            String msg = action.getErrorString(jobId, currentAction);
+            String msg = action.getErrorString(jobId, hostAction.m_Action, hostAction.m_Hostname);
             LOGGER.warn(msg);
             throw new JobInUseException(msg, ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR);
         }
@@ -184,42 +181,38 @@ public class ZooKeeperActionGuardian extends ActionGuardian
     @Override
     public void releaseAction(String jobId)
     {
-        synchronized (this)
+        InterProcessMutex lock = m_LocksByJob.remove(jobId);
+        if (lock == null)
         {
-            InterProcessMutex lock = m_LocksByJob.remove(jobId);
-            if (lock == null)
-            {
-                throw new IllegalStateException("Job " + jobId +
-                            " is not locked by this ZooKeeperActionGuardian");
-            }
-
-            try
-            {
-                // clear data
-                m_Client.setData().forPath(lockPath(jobId));
-
-                lock.release();
-            }
-            catch (Exception e)
-            {
-                LOGGER.error("Error releasing lock for job " + jobId, e);
-            }
-
-            if (m_NextGuardian.isPresent())
-            {
-                m_NextGuardian.get().releaseAction(jobId);
-            }
+            throw new IllegalStateException("Job " + jobId +
+                    " is not locked by this ZooKeeperActionGuardian");
         }
 
+        try
+        {
+            // clear data
+            m_Client.setData().forPath(lockPath(jobId));
+
+            lock.release();
+        }
+        catch (Exception e)
+        {
+            LOGGER.error("Error releasing lock for job " + jobId, e);
+        }
+
+        if (m_NextGuardian.isPresent())
+        {
+            m_NextGuardian.get().releaseAction(jobId);
+        }
     }
 
     private boolean tryAcquiringLockNonBlocking(InterProcessMutex lock)
     {
         try
         {
-            if (lock.acquire(100, TimeUnit.MILLISECONDS))
+            if (lock.acquire(ACQUIRE_LOCK_TIMEOUT, TimeUnit.MILLISECONDS))
             {
-                    return true;
+                return true;
             }
         }
         catch (Exception e)
@@ -231,22 +224,86 @@ public class ZooKeeperActionGuardian extends ActionGuardian
     }
 
 
-    private Action getActionOfLockedJob(String jobId) throws Exception
+    private HostnameAction getHostActionOfLockedJob(String jobId)
     {
-        String data = new String(m_Client.getData().forPath(lockPath(jobId)),
-                                 StandardCharsets.UTF_8);
-        return Action.valueOf(data);
+        try
+        {
+            String data = new String(m_Client.getData().forPath(lockPath(jobId)),
+                                     StandardCharsets.UTF_8);
+            return lockDataToHostAction(data);
+        }
+        catch (Exception e)
+        {
+            LOGGER.error("Error reading lock data" , e);
+            return new HostnameAction("", Action.NONE);
+        }
     }
 
-    private void setActionOfLockedJob(String jobId, Action action) throws Exception
+    private void setHostActionOfLockedJob(String jobId, String hostname, Action action)
     {
-        String data = action.toString();
-        m_Client.setData().forPath(lockPath(jobId), data.getBytes(StandardCharsets.UTF_8));
+        String data = hostActionToData(hostname, action);
+        try
+        {
+            m_Client.setData().forPath(lockPath(jobId), data.getBytes(StandardCharsets.UTF_8));
+        }
+        catch (Exception e)
+        {
+            LOGGER.error("Error setting host action for lock", e);
+        }
     }
+
+    @VisibleForTesting
+    HostnameAction lockDataToHostAction(String data)
+    {
+        int lastIndex = data.lastIndexOf(HOST_ACTION_SEPARATOR);
+
+        // error if separator not found or if not followed by anything
+        if (lastIndex < 0 || (lastIndex + 1 >= data.length()))
+        {
+            LOGGER.error("Invalid lock data cannot be parsed: " + data);
+            return new HostnameAction(data, Action.NONE);
+        }
+
+        Action action;
+        String host = data.substring(0, lastIndex);
+        try
+        {
+            action = Action.valueOf(data.substring(lastIndex +1));
+        }
+        catch (IllegalArgumentException e)
+        {
+            LOGGER.error("Cannot parse action from lock data", e);
+            action = Action.NONE;
+            host = data;
+        }
+
+        HostnameAction ha = new HostnameAction(host, action);
+        return ha;
+    }
+
+    @VisibleForTesting
+    String hostActionToData(String hostname, Action action)
+    {
+        return hostname + HOST_ACTION_SEPARATOR + action.toString();
+    }
+
+
 
     private String lockPath(String jobId)
     {
         return LOCK_PATH_PREFIX + jobId;
     }
 
+    @VisibleForTesting
+    class HostnameAction
+    {
+        final String m_Hostname;
+        final Action m_Action;
+
+        HostnameAction(String hostname, Action action)
+        {
+            m_Hostname = hostname;
+            m_Action = action;
+        }
+    }
 }

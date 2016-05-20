@@ -48,5 +48,10 @@ public class JobInUseException extends JobException
     {
         super(message, errorCode);
     }
+
+    public JobInUseException(String message, ErrorCodes errorCode, Throwable cause)
+    {
+        super(message, errorCode, cause);
+    }
 }
 

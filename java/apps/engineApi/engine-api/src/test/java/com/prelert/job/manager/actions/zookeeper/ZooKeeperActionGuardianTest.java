@@ -30,13 +30,19 @@ package com.prelert.job.manager.actions.zookeeper;
 import static org.junit.Assert.*;
 
 import java.io.IOException;
+import java.net.Inet4Address;
+import java.net.UnknownHostException;
 
 import org.apache.curator.test.TestingServer;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.mockito.Mockito;
 
+import com.prelert.job.errorcodes.ErrorCodeMatcher;
+import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.exceptions.JobInUseException;
 import com.prelert.job.manager.actions.Action;
 import com.prelert.job.manager.actions.ActionGuardian;
@@ -47,6 +53,9 @@ public class ZooKeeperActionGuardianTest
     static final int PORT = 2182;
 
     private static TestingServer s_Server;
+
+    @Rule
+    public ExpectedException m_ExpectedException = ExpectedException.none();
 
     @BeforeClass
     public static void zooKeeperSetup() throws Exception
@@ -91,9 +100,16 @@ public class ZooKeeperActionGuardianTest
         }
     }
 
-    @Test(expected=JobInUseException.class)
-    public void testTryAcquireThrows_whenJobIsLocked() throws JobInUseException
+    @Test
+    public void testTryAcquireThrows_whenJobIsLocked() throws JobInUseException, UnknownHostException
     {
+        m_ExpectedException.expect(JobInUseException.class);
+        m_ExpectedException.expectMessage(
+                                    Action.CLOSING.getErrorString("foo", Action.UPDATING,
+                                    Inet4Address.getLocalHost().getHostName()));
+        m_ExpectedException.expect(
+                ErrorCodeMatcher.hasErrorCode(ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR));
+
         ZooKeeperActionGuardian actionGuardian = new ZooKeeperActionGuardian("localhost", PORT);
         try (ActionTicket ticket = actionGuardian.tryAcquiringAction("foo", Action.UPDATING))
         {
@@ -102,9 +118,17 @@ public class ZooKeeperActionGuardianTest
         }
     }
 
-    @Test(expected=JobInUseException.class)
-    public void testTryAcquireThrows_whenJobIsLockedByTheSameGuardian() throws JobInUseException
+    @Test
+    public void testTryAcquireThrows_whenRequestingADifferentActionFromTheSameGuardian()
+    throws JobInUseException, UnknownHostException
     {
+        m_ExpectedException.expect(JobInUseException.class);
+        m_ExpectedException.expectMessage(
+                                    Action.CLOSING.getErrorString("jeff", Action.UPDATING,
+                                    Inet4Address.getLocalHost().getHostName()));
+        m_ExpectedException.expect(
+                ErrorCodeMatcher.hasErrorCode(ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR));
+
         ZooKeeperActionGuardian actionGuardian = new ZooKeeperActionGuardian("localhost", PORT);
         try (ActionTicket ticket = actionGuardian.tryAcquiringAction("jeff", Action.UPDATING))
         {
@@ -112,7 +136,7 @@ public class ZooKeeperActionGuardianTest
         }
     }
 
-    @Test()
+    @Test
     public void testTryAcquireReturnsTicketWhenRequestedActionIsSameAsCurrent()
     throws JobInUseException
     {
@@ -133,7 +157,6 @@ public class ZooKeeperActionGuardianTest
 
         try (ActionTicket ticket = actionGuardian.tryAcquiringAction("foo", Action.CLOSING))
         {
-
         }
 
         Mockito.verify(nextGuardian).tryAcquiringAction("foo", Action.CLOSING);
@@ -149,5 +172,49 @@ public class ZooKeeperActionGuardianTest
         actionGuardian.releaseAction("foo");
 
         Mockito.verify(nextGuardian).releaseAction("foo");
+    }
+
+    @Test
+    public void testLockDataToHostnameAction()
+    {
+        ZooKeeperActionGuardian guardian = new ZooKeeperActionGuardian("localhost", PORT);
+
+        String data = "macbook-CLOSING";
+        ZooKeeperActionGuardian.HostnameAction ha = guardian.lockDataToHostAction(data);
+        assertEquals("macbook", ha.m_Hostname);
+        assertEquals(Action.CLOSING, ha.m_Action);
+
+        data = "funny-host.name-FLUSHING";
+        ha = guardian.lockDataToHostAction(data);
+        assertEquals("funny-host.name", ha.m_Hostname);
+        assertEquals(Action.FLUSHING, ha.m_Action);
+    }
+
+    @Test
+    public void testLockDataToHostnameAction_returnsActionNoneIfBadData()
+    {
+        ZooKeeperActionGuardian guardian = new ZooKeeperActionGuardian("localhost", PORT);
+
+        String data = "funny-host.name";
+        ZooKeeperActionGuardian.HostnameAction ha = guardian.lockDataToHostAction(data);
+        assertEquals("funny-host.name", ha.m_Hostname);
+        assertEquals(Action.NONE, ha.m_Action);
+
+        data = "funny-host.name-";
+        ha = guardian.lockDataToHostAction(data);
+        assertEquals("funny-host.name-", ha.m_Hostname);
+        assertEquals(Action.NONE, ha.m_Action);
+    }
+
+    @Test
+    public void testHostnameActionToLockData()
+    {
+        ZooKeeperActionGuardian guardian = new ZooKeeperActionGuardian("localhost", PORT);
+
+        String data = guardian.hostActionToData("macbook", Action.DELETING);
+        assertEquals("macbook-DELETING", data);
+
+        data = guardian.hostActionToData("funny-host.name", Action.DELETING);
+        assertEquals("funny-host.name-DELETING", data);
     }
 }

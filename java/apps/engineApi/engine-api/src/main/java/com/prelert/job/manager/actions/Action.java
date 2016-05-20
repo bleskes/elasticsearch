@@ -38,7 +38,7 @@ public enum Action {
     REVERTING(Messages.JOB_DATA_CONCURRENT_USE_REVERT, Messages.PROCESS_ACTION_REVERTING_JOB),
     UPDATING(Messages.JOB_DATA_CONCURRENT_USE_UPDATE, Messages.PROCESS_ACTION_UPDATING_JOB),
     WRITING(Messages.JOB_DATA_CONCURRENT_USE_UPLOAD, Messages.PROCESS_ACTION_WRITING_JOB),
-    NONE("", "");
+    NONE("", Messages.PROCESS_ACTION_UNKNOWN);
 
     private final String m_MessageKey;
     private final String m_VerbKey;
@@ -51,6 +51,16 @@ public enum Action {
 
     public String getErrorString(String jobId, Action actionInUse)
     {
-        return Messages.getMessage(m_MessageKey, jobId, Messages.getMessage(actionInUse.m_VerbKey));
+        return Messages.getMessage(m_MessageKey, jobId, Messages.getMessage(actionInUse.m_VerbKey), "");
+    }
+
+    public String getErrorString(String jobId, Action actionInUse, String host)
+    {
+        // host needs a single white space appended to be formatted properly.
+        // Review if the message string changes
+        return Messages.getMessage(m_MessageKey,
+                                jobId,
+                                Messages.getMessage(actionInUse.m_VerbKey),
+                                Messages.getMessage(Messages.ON_HOST, host + " "));
     }
 }

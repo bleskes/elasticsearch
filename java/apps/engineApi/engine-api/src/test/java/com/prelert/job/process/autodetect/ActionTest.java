@@ -76,4 +76,25 @@ public class ActionTest
         assertEquals("Cannot write to job foo while another connection is flushing the job",
                 Action.WRITING.getErrorString("foo", Action.FLUSHING));
     }
+
+    @Test
+    public void testGetErrorStringWithHost_GivenVariousActions()
+    {
+        assertEquals("Cannot close job foo while another connection on host marple is flushing the job",
+                Action.CLOSING.getErrorString("foo", Action.FLUSHING, "marple"));
+        assertEquals("Cannot delete job foo while another connection on host marple is flushing the job",
+                Action.DELETING.getErrorString("foo", Action.FLUSHING, "marple"));
+        assertEquals("Cannot flush job bar while another connection on host marple is flushing the job",
+                Action.FLUSHING.getErrorString("bar", Action.FLUSHING, "marple"));
+        assertEquals("Cannot pause job foo while another connection on host marple is flushing the job",
+                Action.PAUSING.getErrorString("foo", Action.FLUSHING, "marple"));
+        assertEquals("Cannot resume job foo while another connection on host marple is flushing the job",
+                Action.RESUMING.getErrorString("foo", Action.FLUSHING, "marple"));
+        assertEquals("Cannot revert model snapshot for job foo while another connection on host marple is flushing the job",
+                Action.REVERTING.getErrorString("foo", Action.FLUSHING, "marple"));
+        assertEquals("Cannot update job foo while another connection on host marple is flushing the job",
+                Action.UPDATING.getErrorString("foo", Action.FLUSHING, "marple"));
+        assertEquals("Cannot write to job foo while another connection on host marple is flushing the job",
+                Action.WRITING.getErrorString("foo", Action.FLUSHING, "marple"));
+    }
 }

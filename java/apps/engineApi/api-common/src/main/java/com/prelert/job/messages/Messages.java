@@ -182,6 +182,8 @@ public final class Messages
     public static final String JSON_TRANSFORM_CONFIG_MAPPING = "json.transform.config.mapping.error";
     public static final String JSON_TRANSFORM_CONFIG_PARSE = "json.transform.config.parse.error";
 
+    public static final String ON_HOST = "on.host";
+
     public static final String REST_ACTION_NOT_ALLOWED_FOR_SCHEDULED_JOB = "rest.action.not.allowed.for.scheduled.job";
 
     public static final String REST_INVALID_DATETIME_PARAMS = "rest.invalid.datetime.params";
@@ -215,6 +217,7 @@ public final class Messages
     public static final String PROCESS_ACTION_REVERTING_JOB = "process.action.reverting.job";
     public static final String PROCESS_ACTION_UPDATING_JOB = "process.action.updating.job";
     public static final String PROCESS_ACTION_WRITING_JOB = "process.action.writing.job";
+    public static final String PROCESS_ACTION_UNKNOWN = "process.action.unknown";
 
     public static final String SUPPORT_BUNDLE_SCRIPT_ERROR = "support.bundle.script.error";
 
