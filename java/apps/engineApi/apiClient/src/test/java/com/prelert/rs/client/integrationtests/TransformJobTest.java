@@ -42,7 +42,6 @@ import com.prelert.job.JobDetails;
 import com.prelert.job.JobStatus;
 import com.prelert.job.results.AnomalyRecord;
 import com.prelert.job.transform.TransformConfig;
-import com.prelert.rs.client.EngineApiClient;
 import com.prelert.rs.data.ApiError;
 import com.prelert.rs.data.MultiDataPostResult;
 import com.prelert.rs.data.Pagination;
@@ -69,8 +68,6 @@ public class TransformJobTest extends BaseIntegrationTest
      * The default base Url used in the test
      */
     public static final String API_BASE_URL = "http://localhost:8080/engine/v2";
-
-    private EngineApiClient m_WebServiceClient;
 
     /**
      * Creates a new http client call {@linkplain #close()} once finished
@@ -138,19 +135,19 @@ public class TransformJobTest extends BaseIntegrationTest
         }
 
 
-        m_WebServiceClient.deleteJob(CONCAT_DATE_JOB);
+        m_EngineApiClient.deleteJob(CONCAT_DATE_JOB);
 
-        String jobId = m_WebServiceClient.createJob(JOB_CONFIG);
+        String jobId = m_EngineApiClient.createJob(JOB_CONFIG);
         if (jobId == null || jobId.isEmpty())
         {
-            m_Logger.error(m_WebServiceClient.getLastError().toJson());
+            m_Logger.error(m_EngineApiClient.getLastError().toJson());
             m_Logger.error("No Job Id returned by create job");
             test(jobId != null);
         }
         test(jobId.equals(CONCAT_DATE_JOB));
 
         // get job by location, verify
-        SingleDocument<JobDetails> doc = m_WebServiceClient.getJob(jobId);
+        SingleDocument<JobDetails> doc = m_EngineApiClient.getJob(jobId);
         if (doc.isExists() == false)
         {
             m_Logger.error("No Job at URL " + jobId);
@@ -185,19 +182,19 @@ public class TransformJobTest extends BaseIntegrationTest
 
 
 
-        m_WebServiceClient.deleteJob(CONCAT_METRIC_JOB);
+        m_EngineApiClient.deleteJob(CONCAT_METRIC_JOB);
 
-        String jobId = m_WebServiceClient.createJob(TRANSFORM_JOB_CONFIG);
+        String jobId = m_EngineApiClient.createJob(TRANSFORM_JOB_CONFIG);
         if (jobId == null || jobId.isEmpty())
         {
-            m_Logger.error(m_WebServiceClient.getLastError().toJson());
+            m_Logger.error(m_EngineApiClient.getLastError().toJson());
             m_Logger.error("No Job Id returned by create job");
             test(jobId != null);
         }
         test(jobId.equals(CONCAT_METRIC_JOB));
 
         // get job by location, verify
-        SingleDocument<JobDetails> doc = m_WebServiceClient.getJob(jobId);
+        SingleDocument<JobDetails> doc = m_EngineApiClient.getJob(jobId);
         if (doc.isExists() == false)
         {
             m_Logger.error("No Job at URL " + jobId);
@@ -256,7 +253,7 @@ public class TransformJobTest extends BaseIntegrationTest
     public void uploadData(String jobId, File dataFile, boolean compressed)
             throws IOException {
         FileInputStream stream = new FileInputStream(dataFile);
-        MultiDataPostResult result = m_WebServiceClient.streamingUpload(jobId,
+        MultiDataPostResult result = m_EngineApiClient.streamingUpload(jobId,
                 stream, compressed);
 
         test(result.anErrorOccurred() == false);
@@ -270,7 +267,7 @@ public class TransformJobTest extends BaseIntegrationTest
         test(result.getResponses().get(0).getUploadSummary()
                 .getExcludedRecordCount() == 0);
 
-        SingleDocument<JobDetails> job = m_WebServiceClient.getJob(jobId);
+        SingleDocument<JobDetails> job = m_EngineApiClient.getJob(jobId);
         test(job.isExists());
         test(job.getDocument().getStatus() == JobStatus.RUNNING);
     }
@@ -288,7 +285,7 @@ public class TransformJobTest extends BaseIntegrationTest
     public boolean checkRecordsHaveConcattedField(String baseUrl, String jobId)
             throws IOException
     {
-        Pagination<AnomalyRecord> records = m_WebServiceClient
+        Pagination<AnomalyRecord> records = m_EngineApiClient
                 .prepareGetRecords(jobId).take(50)
                 .sortField(AnomalyRecord.NORMALIZED_PROBABILITY)
                 .descending(true).get();
