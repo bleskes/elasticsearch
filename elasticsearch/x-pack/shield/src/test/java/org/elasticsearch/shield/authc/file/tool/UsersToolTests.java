@@ -99,6 +99,7 @@ public class UsersToolTests extends CommandTestCase {
     public static void closeJimfs() throws IOException {
         if (jimfs != null) {
             jimfs.close();
+            jimfs = null;
         }
     }
 
