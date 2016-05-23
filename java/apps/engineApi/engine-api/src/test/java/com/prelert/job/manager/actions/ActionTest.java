@@ -25,9 +25,9 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.job.process.autodetect;
+package com.prelert.job.manager.actions;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 import org.junit.Test;
 
@@ -96,5 +96,24 @@ public class ActionTest
                 Action.UPDATING.getBusyActionError("foo", Action.FLUSHING, "marple"));
         assertEquals("Cannot write to job foo while another connection on host marple is flushing the job",
                 Action.WRITING.getBusyActionError("foo", Action.FLUSHING, "marple"));
+    }
+
+    @Test
+    public void testIsValidTransition()
+    {
+        for (Action currentAction : Action.values())
+        {
+            for (Action nextAction : Action.values())
+            {
+                if (currentAction == Action.NONE)
+                {
+                    assertTrue(currentAction.isValidTransition(nextAction));
+                }
+                else
+                {
+                    assertFalse(currentAction.isValidTransition(nextAction));
+                }
+            }
+        }
     }
 }

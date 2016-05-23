@@ -169,6 +169,8 @@ public final class Messages
     public static final String JOB_SCHEDULER_CANNOT_UPDATE_IN_CURRENT_STATE = "job.scheduler.cannot.update.in.current.state";
     public static final String JOB_SCHEDULER_FAILED_TO_STOP = "job.scheduler.failed.to.stop";
     public static final String JOB_SCHEDULER_NO_SUCH_SCHEDULED_JOB = "job.scheduler.no.such.scheduled.job";
+    public static final String JOB_SCHEDULER_STATUS_STARTED = "job.scheduler.status.started";
+    public static final String JOB_SCHEDULER_STATUS_STOPPED = "job.scheduler.status.stopped";
 
     public static final String JOB_MISSING_QUANTILES = "job.missing.quantiles";
     public static final String JOB_UNKNOWN_ID = "job.unknown.id";

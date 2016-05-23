@@ -34,12 +34,15 @@ import com.prelert.job.exceptions.JobInUseException;
 /**
  * Guards and manages permissions for performing actions on jobs.
  *
+ * The {@linkplain ActionTicket} returned by {@linkplain #tryAcquiringAction(String, Enum)}
+ * must be closed and should be used only in a try-with-resource block.
+ *
  * Guardians can be chained together by passing another to he
  * constructor. Locks are only granted when all locks are acquired.
  *
- * Implementing classes must acquire and release the next guardian
+ * Implementing classes must acquire and release the next guardian.
  */
-public abstract class ActionGuardian< T extends Enum<T> & ActionErrorMessage>
+public abstract class ActionGuardian< T extends Enum<T> & ActionState<T>>
 {
     protected final Optional<ActionGuardian<T>> m_NextGuardian;
 

@@ -27,20 +27,16 @@
 
 package com.prelert.job.manager.actions;
 
-import com.prelert.job.messages.Messages;
-
 /**
  * Error reporting functions for actions
  */
-public interface ActionErrorMessage
+public interface ActionState<T>
 {
     /**
      * Description of the actions activity
      * @return
      */
     String getActionVerb();
-
-    String getMessageKey();
 
     /**
      * create error message saying that the action cannot be
@@ -51,11 +47,7 @@ public interface ActionErrorMessage
      * @param actionInUse The Action currently in progress
      * @return
      */
-    default String getBusyActionError(String jobId, ActionErrorMessage actionInUse)
-    {
-        return Messages.getMessage(actionInUse.getMessageKey(), jobId,
-                            Messages.getMessage(actionInUse.getActionVerb()), "");
-    }
+    String getBusyActionError(String jobId, ActionState<T> actionInUse);
 
     /**
      * create error message saying that the action cannot be
@@ -67,14 +59,14 @@ public interface ActionErrorMessage
      * @param host The host the action is currently running on
      * @return
      */
-    default String getBusyActionError(String jobId, ActionErrorMessage actionInUse, String host)
-    {
-        // host needs a single white space appended to be formatted properly.
-        // Review if the message string changes
-        return Messages.getMessage(actionInUse.getMessageKey(),
-                                jobId,
-                                Messages.getMessage(actionInUse.getActionVerb()),
-                                Messages.getMessage(Messages.ON_HOST, host + " "));
-    }
+    String getBusyActionError(String jobId, ActionState<T> actionInUse, String host);
 
+
+    /**
+     * Return true if allowed to transition from the current state to next
+     *
+     * @param next
+     * @return
+     */
+    boolean isValidTransition(T next);
 }

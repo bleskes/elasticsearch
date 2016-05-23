@@ -34,7 +34,14 @@ import org.apache.log4j.Logger;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.exceptions.JobInUseException;
 
-public class LocalActionGuardian<T extends Enum<T> & ActionErrorMessage>
+/**
+ * Prevents concurrent actions on a job based on the contents of a local
+ * map. If a job currently partaking in an action {@linkplain #tryAcquiringAction(String, Enum)}
+ * will throw otherwise an ActionTicket is returned
+ *
+ * @param <T>
+ */
+public class LocalActionGuardian<T extends Enum<T> & ActionState<T>>
                             extends ActionGuardian<T>
 {
     private static final Logger LOGGER = Logger.getLogger(LocalActionGuardian.class);
@@ -73,7 +80,8 @@ public class LocalActionGuardian<T extends Enum<T> & ActionErrorMessage>
         synchronized (this)
         {
             T currentAction = m_ActionsByJob.getOrDefault(jobId, m_NoneAction);
-            if (currentAction == m_NoneAction)
+
+            if (currentAction.isValidTransition(action))
             {
                 m_ActionsByJob.put(jobId, action);
 

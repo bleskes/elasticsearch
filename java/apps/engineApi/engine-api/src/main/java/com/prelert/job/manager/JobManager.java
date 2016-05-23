@@ -85,7 +85,7 @@ import com.prelert.job.exceptions.TooManyJobsException;
 import com.prelert.job.logging.JobLoggerFactory;
 import com.prelert.job.manager.actions.Action;
 import com.prelert.job.manager.actions.ActionGuardian;
-import com.prelert.job.manager.actions.ActionGuardian.ActionTicket;
+import com.prelert.job.manager.actions.ScheduledAction;
 import com.prelert.job.messages.Messages;
 import com.prelert.job.password.PasswordManager;
 import com.prelert.job.persistence.BatchedDocumentsIterator;
@@ -144,7 +144,8 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
     private static final String SCHEDULER_AUTORESTART_SETTING = "scheduler.autorestart";
     private static final boolean DEFAULT_SCHEDULER_AUTORESTART = true;
 
-    private final ActionGuardian m_ActionGuardian;
+    private final ActionGuardian<Action> m_ProcessActionGuardian;
+    private final ActionGuardian<ScheduledAction> m_SchedulerActionGuardian;
     private final JobProvider m_JobProvider;
     private final ProcessManager m_ProcessManager;
     private final DataExtractorFactory m_DataExtractorFactory;
@@ -180,15 +181,17 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
     public JobManager(JobProvider jobProvider, ProcessManager processManager,
             DataExtractorFactory dataExtractorFactory, JobLoggerFactory jobLoggerFactory,
             PasswordManager passwordManager, JobDataDeleterFactory jobDataDeleterFactory,
-            ActionGuardian actionGuardian)
+            ActionGuardian<Action> processActionGuardian,
+            ActionGuardian<ScheduledAction> schedulerActionGuardian)
     {
-        m_ActionGuardian = actionGuardian;
         m_JobProvider = Objects.requireNonNull(jobProvider);
         m_ProcessManager = Objects.requireNonNull(processManager);
         m_DataExtractorFactory = Objects.requireNonNull(dataExtractorFactory);
         m_JobLoggerFactory = Objects.requireNonNull(jobLoggerFactory);
         m_PasswordManager = Objects.requireNonNull(passwordManager);
         m_JobAutoCloser = new JobAutoCloser(jobId -> closeJob(jobId));
+        m_ProcessActionGuardian = Objects.requireNonNull(processActionGuardian);
+        m_SchedulerActionGuardian = Objects.requireNonNull(schedulerActionGuardian);
 
         m_ScheduledJobs = new ConcurrentHashMap<>();
         m_LastDataTimePerJobCache = CacheBuilder.newBuilder()
@@ -363,7 +366,8 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
             String description, boolean dontSkip)
             throws JobInUseException, UnknownJobException, NoSuchModelSnapshotException
     {
-        try (ActionTicket actionTicket = m_ActionGuardian.tryAcquiringAction(jobId, Action.REVERTING))
+        try (ActionGuardian<Action>.ActionTicket actionTicket =
+                            m_ProcessActionGuardian.tryAcquiringAction(jobId, Action.REVERTING))
         {
             if (m_ProcessManager.jobIsRunning(jobId))
             {
@@ -409,7 +413,8 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
             throws JobInUseException, UnknownJobException, NoSuchModelSnapshotException,
             DescriptionAlreadyUsedException
     {
-        try (ActionTicket actionTicket = m_ActionGuardian.tryAcquiringAction(jobId, Action.UPDATING))
+        try (ActionGuardian<Action>.ActionTicket actionTicket =
+                        m_ProcessActionGuardian.tryAcquiringAction(jobId, Action.UPDATING))
         {
             List<ModelSnapshot> changeCandidates = m_JobProvider.modelSnapshots(jobId, 0, 1,
                     0, 0, null, true, snapshotId, null).queryResults();
@@ -442,7 +447,8 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
             throws JobInUseException, UnknownJobException, NoSuchModelSnapshotException,
             CannotDeleteSnapshotException
     {
-        try (ActionTicket actionTicket = m_ActionGuardian.tryAcquiringAction(jobId, Action.UPDATING))
+        try (ActionGuardian<Action>.ActionTicket actionTicket =
+                            m_ProcessActionGuardian.tryAcquiringAction(jobId, Action.UPDATING))
         {
             List<ModelSnapshot> highestPriority = m_JobProvider.modelSnapshots(jobId, 0, 1).queryResults();
             if (highestPriority == null || highestPriority.isEmpty())
@@ -567,7 +573,8 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
     public void flushJob(String jobId, InterimResultsParams interimResultsParams)
     throws UnknownJobException, NativeProcessRunException, JobInUseException
     {
-        try (ActionTicket actionTicket = m_ActionGuardian.tryAcquiringAction(jobId, Action.FLUSHING))
+        try (ActionGuardian<Action>.ActionTicket actionTicket =
+                m_ProcessActionGuardian.tryAcquiringAction(jobId, Action.FLUSHING))
         {
             LOGGER.debug("Flush job " + jobId);
 
@@ -583,7 +590,8 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
     public void closeJob(String jobId) throws UnknownJobException, NativeProcessRunException,
             JobInUseException
     {
-        try (ActionTicket actionTicket = m_ActionGuardian.tryAcquiringAction(jobId, Action.CLOSING))
+        try (ActionGuardian<Action>.ActionTicket actionTicket =
+                            m_ProcessActionGuardian.tryAcquiringAction(jobId, Action.CLOSING))
         {
             LOGGER.debug("Finish job " + jobId);
 
@@ -599,7 +607,8 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
     public void writeUpdateConfigMessage(String jobId, String config) throws JobInUseException,
             NativeProcessRunException
     {
-        try (ActionTicket actionTicket = m_ActionGuardian.tryAcquiringAction(jobId, Action.UPDATING))
+        try (ActionGuardian<Action>.ActionTicket actionTicket =
+                            m_ProcessActionGuardian.tryAcquiringAction(jobId, Action.UPDATING))
         {
             m_ProcessManager.writeUpdateConfigMessage(jobId, config);
         }
@@ -672,7 +681,8 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
             m_ScheduledJobs.remove(jobId);
         }
 
-        try (ActionTicket actionTicket = m_ActionGuardian.tryAcquiringAction(jobId, Action.DELETING))
+        try (ActionGuardian<Action>.ActionTicket actionTicket =
+                        m_ProcessActionGuardian.tryAcquiringAction(jobId, Action.DELETING))
         {
             if (m_ProcessManager.jobIsRunning(jobId))
             {
@@ -698,7 +708,8 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
         OutOfOrderRecordsException, LicenseViolationException, TooManyJobsException,
         MalformedJsonException
     {
-        try (ActionTicket actionTicket = m_ActionGuardian.tryAcquiringAction(jobId, Action.WRITING))
+        try (ActionGuardian<Action>.ActionTicket actionTicket =
+                            m_ProcessActionGuardian.tryAcquiringAction(jobId, Action.WRITING))
         {
             JobDetails jobDetails = getJobOrThrowIfUnknown(jobId);
 
@@ -907,15 +918,20 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
 
     public void startJobScheduler(String jobId, long startMs, OptionalLong endMs)
              throws CannotStartSchedulerException, NoSuchScheduledJobException,
-             UnknownJobException, TooManyJobsException, LicenseViolationException
+             UnknownJobException, TooManyJobsException, LicenseViolationException, JobInUseException
     {
         checkJobHasScheduler(jobId);
+
         JobDetails job = getJobOrThrowIfUnknown(jobId);
         checkLicenceViolationsOnReactivate(job);
+
+        ActionGuardian<ScheduledAction>.ActionTicket actionTicket =
+                    m_SchedulerActionGuardian.tryAcquiringAction(jobId, ScheduledAction.START);
+
         m_JobProvider.updateSchedulerState(jobId,
                 new SchedulerState(startMs, endMs.isPresent() ? endMs.getAsLong() : null));
         LOGGER.info("Starting scheduler for job: " + jobId);
-        m_ScheduledJobs.get(jobId).start(job, startMs, endMs);
+        m_ScheduledJobs.get(jobId).start(job, startMs, endMs, actionTicket);
     }
 
     public void stopJobScheduler(String jobId)
@@ -923,6 +939,9 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
             NativeProcessRunException, JobInUseException
     {
         checkJobHasScheduler(jobId);
+
+        m_SchedulerActionGuardian.tryAcquiringAction(jobId, ScheduledAction.STOP);
+
         LOGGER.info("Stopping scheduler for job: " + jobId);
         m_ScheduledJobs.get(jobId).stopManual();
         closeJob(jobId);
@@ -977,6 +996,13 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
         }
     }
 
+    /**
+     * Restarts the scheduler and suppresses any errors
+     * e.g. if the scheduler can't start because it's running elsewhere
+     *
+     * @param job
+     * @param scheduler
+     */
     private void restartScheduledJob(JobDetails job, JobScheduler scheduler)
     {
         Optional<SchedulerState> optionalSchedulerState = m_JobProvider.getSchedulerState(job.getId());
@@ -994,10 +1020,14 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
 
         try
         {
+            ActionGuardian<ScheduledAction>.ActionTicket actionTicket =
+                    m_SchedulerActionGuardian.tryAcquiringAction(job.getId(),
+                                                                ScheduledAction.START);
+
             LOGGER.info("Starting scheduler for job: " + job.getId());
-            scheduler.start(job, startTimeMs, endTimeMs);
+            scheduler.start(job, startTimeMs, endTimeMs, actionTicket);
         }
-        catch (CannotStartSchedulerException e)
+        catch (CannotStartSchedulerException | JobInUseException e)
         {
             LOGGER.error("Failed to restart scheduler for job: " + job.getId(), e);
         }
@@ -1026,7 +1056,8 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
     public boolean updateSchedulerConfig(String jobId, SchedulerConfig newSchedulerConfig)
             throws JobException
     {
-        try (ActionTicket actionTicket = m_ActionGuardian.tryAcquiringAction(jobId, Action.UPDATING))
+        try (ActionGuardian<Action>.ActionTicket actionTicket =
+                                m_ProcessActionGuardian.tryAcquiringAction(jobId, Action.UPDATING))
         {
             checkJobHasScheduler(jobId);
             JobScheduler scheduler = m_ScheduledJobs.get(jobId);
@@ -1123,7 +1154,8 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
         Preconditions.checkState(!isScheduledJob(jobId));
         LOGGER.info("Pausing job " + jobId);
 
-        try (ActionTicket actionTicket = m_ActionGuardian.tryAcquiringAction(jobId, Action.PAUSING))
+        try (ActionGuardian<Action>.ActionTicket actionTicket =
+                            m_ProcessActionGuardian.tryAcquiringAction(jobId, Action.PAUSING))
         {
             JobDetails job = getJobOrThrowIfUnknown(jobId);
             if (!job.getStatus().isAnyOf(JobStatus.RUNNING, JobStatus.CLOSED))
@@ -1159,7 +1191,8 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
         Preconditions.checkState(!isScheduledJob(jobId));
         LOGGER.info("Resuming job " + jobId);
 
-        try (ActionTicket actionTicket = m_ActionGuardian.tryAcquiringAction(jobId, Action.RESUMING))
+        try (ActionGuardian<Action>.ActionTicket actionTicket =
+                                   m_ProcessActionGuardian.tryAcquiringAction(jobId, Action.RESUMING))
         {
             JobDetails job = getJobOrThrowIfUnknown(jobId);
             if (job.getStatus() != JobStatus.PAUSED)

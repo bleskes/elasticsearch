@@ -113,7 +113,9 @@ import com.prelert.job.exceptions.JobInUseException;
 import com.prelert.job.exceptions.LicenseViolationException;
 import com.prelert.job.exceptions.TooManyJobsException;
 import com.prelert.job.logging.JobLoggerFactory;
+import com.prelert.job.manager.actions.Action;
 import com.prelert.job.manager.actions.LocalActionGuardian;
+import com.prelert.job.manager.actions.ScheduledAction;
 import com.prelert.job.messages.Messages;
 import com.prelert.job.password.PasswordManager;
 import com.prelert.job.persistence.BatchedDocumentsIterator;
@@ -2009,7 +2011,9 @@ public class JobManagerTest
     private JobManager createJobManager()
     {
         return new JobManager(m_JobProvider, m_ProcessManager, m_DataExtractorFactory,
-                m_JobLoggerFactory, m_PasswordManager, m_JobDataDeleter, new LocalActionGuardian());
+                m_JobLoggerFactory, m_PasswordManager, m_JobDataDeleter,
+                new LocalActionGuardian<Action>(Action.NONE),
+                new LocalActionGuardian<ScheduledAction>(ScheduledAction.STOP));
     }
 
     private static Answer<Object> writeToWriter()

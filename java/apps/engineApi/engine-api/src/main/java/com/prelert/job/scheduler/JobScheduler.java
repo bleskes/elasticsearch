@@ -58,6 +58,8 @@ import com.prelert.job.exceptions.JobInUseException;
 import com.prelert.job.exceptions.LicenseViolationException;
 import com.prelert.job.exceptions.TooManyJobsException;
 import com.prelert.job.logging.JobLoggerFactory;
+import com.prelert.job.manager.actions.ActionGuardian;
+import com.prelert.job.manager.actions.ScheduledAction;
 import com.prelert.job.messages.Messages;
 import com.prelert.job.persistence.JobProvider;
 import com.prelert.job.process.exceptions.MalformedJsonException;
@@ -100,6 +102,7 @@ public class JobScheduler
     private volatile JobSchedulerStatus m_Status;
     private volatile boolean m_IsLookbackOnly;
     private final ProblemTracker m_ProblemTracker;
+    private volatile Optional<ActionGuardian<ScheduledAction>.ActionTicket> m_ActionTicket;
 
     /**
      * Constructor
@@ -127,6 +130,7 @@ public class JobScheduler
         m_JobLoggerFactory = Objects.requireNonNull(jobLoggerFactory);
         m_Status = JobSchedulerStatus.STOPPED;
         m_ProblemTracker = new ProblemTracker(() -> m_JobProvider.audit(m_JobId));
+        m_ActionTicket = Optional.empty();
     }
 
     private Runnable createNextTask()
@@ -286,13 +290,16 @@ public class JobScheduler
         };
     }
 
-    public synchronized void start(JobDetails job, long startMs, OptionalLong endMs)
+    public synchronized void start(JobDetails job, long startMs, OptionalLong endMs,
+                                ActionGuardian<ScheduledAction>.ActionTicket actionTicket)
             throws CannotStartSchedulerException
     {
         if (m_Status != JobSchedulerStatus.STOPPED)
         {
             throw new CannotStartSchedulerException(m_JobId, m_Status);
         }
+
+        m_ActionTicket = Optional.of(actionTicket);
 
         m_Logger = m_JobLoggerFactory.newLogger(m_JobId);
         updateStatus(JobSchedulerStatus.STARTED);
@@ -373,6 +380,8 @@ public class JobScheduler
     {
         synchronized (this)
         {
+            releaseActionTicket();
+
             if (m_Status != JobSchedulerStatus.STARTED)
             {
                 // Stop has already been called
@@ -435,6 +444,8 @@ public class JobScheduler
     {
         synchronized (this)
         {
+            releaseActionTicket();
+
             if (m_Status != JobSchedulerStatus.STARTED)
             {
                 String msg = Messages.getMessage(Messages.JOB_SCHEDULER_CANNOT_STOP_IN_CURRENT_STATE,
@@ -456,6 +467,8 @@ public class JobScheduler
     {
         synchronized (this)
         {
+            releaseActionTicket();
+
             if (m_Status != JobSchedulerStatus.STARTED)
             {
                 return;
@@ -471,6 +484,10 @@ public class JobScheduler
         if (awaitLookbackTermination() == false || stopRealtimeScheduler() == false)
         {
             m_Logger.error("Unable to stop the scheduler.");
+        }
+        else
+        {
+
         }
     }
 
@@ -491,6 +508,15 @@ public class JobScheduler
     {
         return m_RealTimeScheduler == null
                 || m_RealTimeScheduler.stop(STOP_TIMEOUT_MINUTES, TimeUnit.MINUTES);
+    }
+
+    private void releaseActionTicket()
+    {
+        if (m_ActionTicket.isPresent())
+        {
+            m_ActionTicket.get().close();
+            m_ActionTicket = Optional.empty();
+        }
     }
 
     public boolean isStopped()

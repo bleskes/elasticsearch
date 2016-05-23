@@ -24,33 +24,42 @@
  *                                                          *
  *                                                          *
  ************************************************************/
-
 package com.prelert.job.manager.actions;
 
 import com.prelert.job.messages.Messages;
 
 /**
- * Job actions
+ * Actions relating to the scheduler
  */
-public enum Action implements ActionState<Action>
+public enum ScheduledAction implements ActionState<ScheduledAction>
 {
-    NONE("", Messages.PROCESS_ACTION_UNKNOWN),
-    CLOSING(Messages.JOB_DATA_CONCURRENT_USE_CLOSE, Messages.PROCESS_ACTION_CLOSING_JOB),
-    DELETING(Messages.JOB_DATA_CONCURRENT_USE_DELETE, Messages.PROCESS_ACTION_DELETING_JOB),
-    FLUSHING(Messages.JOB_DATA_CONCURRENT_USE_FLUSH, Messages.PROCESS_ACTION_FLUSHING_JOB),
-    PAUSING(Messages.JOB_DATA_CONCURRENT_USE_PAUSE, Messages.PROCESS_ACTION_PAUSING_JOB),
-    RESUMING(Messages.JOB_DATA_CONCURRENT_USE_RESUME, Messages.PROCESS_ACTION_RESUMING_JOB),
-    REVERTING(Messages.JOB_DATA_CONCURRENT_USE_REVERT, Messages.PROCESS_ACTION_REVERTING_JOB),
-    UPDATING(Messages.JOB_DATA_CONCURRENT_USE_UPDATE, Messages.PROCESS_ACTION_UPDATING_JOB),
-    WRITING(Messages.JOB_DATA_CONCURRENT_USE_UPLOAD, Messages.PROCESS_ACTION_WRITING_JOB);
+    START(Messages.JOB_SCHEDULER_CANNOT_START, Messages.JOB_SCHEDULER_STATUS_STARTED),
+    STOP(Messages.JOB_SCHEDULER_CANNOT_STOP_IN_CURRENT_STATE, Messages.JOB_SCHEDULER_STATUS_STOPPED);
 
     private final String m_MessageKey;
     private final String m_VerbKey;
 
-    private Action(String messageKey, String verbKey)
+    private ScheduledAction(String messageKey, String verbKey)
     {
         m_MessageKey = messageKey;
         m_VerbKey = verbKey;
+    }
+
+    /**
+     * Return true if allowed to transition from this state to next
+     *
+     * @param action
+     * @return
+     */
+    @Override
+    public boolean isValidTransition(ScheduledAction next)
+    {
+        // START -> START
+        // START -> STOP
+        // STOP -> START
+        // STOP -> STOP
+        // all ok
+        return true;
     }
 
     @Override
@@ -65,30 +74,19 @@ public enum Action implements ActionState<Action>
     }
 
     @Override
-    public String getBusyActionError(String jobId, ActionState<Action> actionInUse)
+    public String getBusyActionError(String jobId, ActionState<ScheduledAction> actionInUse)
     {
         return Messages.getMessage(getMessageKey(), jobId,
                             Messages.getMessage(actionInUse.getActionVerb()), "");
     }
 
     @Override
-    public String getBusyActionError(String jobId, ActionState<Action> actionInUse, String host)
+    public String getBusyActionError(String jobId, ActionState<ScheduledAction> actionInUse,
+                                    String host)
     {
-        // host needs a single white space appended to be formatted properly.
-        // Review if the message string changes
         return Messages.getMessage(getMessageKey(),
                                 jobId,
                                 Messages.getMessage(actionInUse.getActionVerb()),
-                                Messages.getMessage(Messages.ON_HOST, host + " "));
+                                Messages.getMessage(Messages.ON_HOST, host));
     }
-
-    /**
-     * If this state is NONE then any next state is valid
-     */
-    @Override
-    public boolean isValidTransition(Action b)
-    {
-        return this == NONE;
-    }
-
 }

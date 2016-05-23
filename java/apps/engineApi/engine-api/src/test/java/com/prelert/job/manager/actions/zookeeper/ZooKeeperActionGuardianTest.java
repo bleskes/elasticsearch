@@ -156,13 +156,21 @@ public class ZooKeeperActionGuardianTest
     }
 
     @Test
-    public void testTryAcquireReturnsTicketWhenRequestedActionIsSameAsCurrent()
-    throws JobInUseException
+    public void testTryAcquireThrowsWhenRequestedActionIsSameAsCurrent()
+    throws JobInUseException, UnknownHostException
     {
+        m_ExpectedException.expect(JobInUseException.class);
+        m_ExpectedException.expectMessage(
+                                    Action.DELETING.getBusyActionError("jeff", Action.DELETING,
+                                    Inet4Address.getLocalHost().getHostName()));
+        m_ExpectedException.expect(
+                ErrorCodeMatcher.hasErrorCode(ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR));
+
         try (ZooKeeperActionGuardian<Action> actionGuardian =
                 new ZooKeeperActionGuardian<>(Action.NONE, "localhost", PORT))
         {
-            try (ZooKeeperActionGuardian<Action>.ActionTicket ticket = actionGuardian.tryAcquiringAction("jeff", Action.DELETING))
+            try (ZooKeeperActionGuardian<Action>.ActionTicket ticket =
+                    actionGuardian.tryAcquiringAction("jeff", Action.DELETING))
             {
                 actionGuardian.tryAcquiringAction("jeff", Action.DELETING);
             }

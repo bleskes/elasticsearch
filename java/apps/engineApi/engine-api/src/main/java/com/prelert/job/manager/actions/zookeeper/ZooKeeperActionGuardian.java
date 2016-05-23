@@ -29,7 +29,7 @@ package com.prelert.job.manager.actions.zookeeper;
 import com.google.common.annotations.VisibleForTesting;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.exceptions.JobInUseException;
-import com.prelert.job.manager.actions.ActionErrorMessage;
+import com.prelert.job.manager.actions.ActionState;
 import com.prelert.job.manager.actions.ActionGuardian;
 
 import java.net.Inet4Address;
@@ -48,8 +48,12 @@ import org.apache.log4j.Logger;
 /**
  * Distributed lock for restricting actions on jobs in a network
  * of engine API nodes.
+ *
+ * If another node has the lock {@linkplain #tryAcquiringAction(String, Enum)}
+ * will throw. If this node has the lock {@linkplain #tryAcquiringAction(String, Enum)}
+ * may throw depending on the result of {@linkplain T#isValidTransition(T)}
  */
-public class ZooKeeperActionGuardian<T extends Enum<T> & ActionErrorMessage>
+public class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
                     extends ActionGuardian<T> implements AutoCloseable
 {
     private static final Logger LOGGER = Logger.getLogger(ZooKeeperActionGuardian.class);
@@ -134,7 +138,7 @@ public class ZooKeeperActionGuardian<T extends Enum<T> & ActionErrorMessage>
     }
 
     /**
-     * The interprocess mutex is re-entrant so not an error
+     * The interprocess mutex is reentrant so not an error
      * if we already hold the lock
      *
      * @param jobId
@@ -150,7 +154,7 @@ public class ZooKeeperActionGuardian<T extends Enum<T> & ActionErrorMessage>
         if (lock != null)
         {
             HostnameAction hostAction = getHostActionOfLockedJob(jobId);
-            if (hostAction.m_Action == action)
+            if (hostAction.m_Action.isValidTransition(action))
             {
                 return newActionTicket(jobId);
             }
@@ -295,8 +299,6 @@ public class ZooKeeperActionGuardian<T extends Enum<T> & ActionErrorMessage>
     {
         return hostname + HOST_ACTION_SEPARATOR + action.toString();
     }
-
-
 
     private String lockPath(String jobId)
     {

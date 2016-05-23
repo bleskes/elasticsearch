@@ -53,8 +53,10 @@ import com.prelert.job.logging.DefaultJobLoggerFactory;
 import com.prelert.job.logging.JobLoggerFactory;
 import com.prelert.job.manager.ActivityAudit;
 import com.prelert.job.manager.JobManager;
+import com.prelert.job.manager.actions.Action;
 import com.prelert.job.manager.actions.ActionGuardian;
 import com.prelert.job.manager.actions.LocalActionGuardian;
+import com.prelert.job.manager.actions.ScheduledAction;
 import com.prelert.job.manager.actions.zookeeper.ZooKeeperActionGuardian;
 import com.prelert.job.messages.Messages;
 import com.prelert.job.password.PasswordManager;
@@ -248,13 +250,19 @@ public class PrelertWebApp extends Application
     private JobManager createJobManager(JobProvider jobProvider, ElasticsearchFactory esFactory,
             JobLoggerFactory jobLoggerFactory)
     {
-        ActionGuardian guardian = new LocalActionGuardian();
+        ActionGuardian<Action> processActionGuardian = new LocalActionGuardian<>(Action.NONE);
+        ActionGuardian<ScheduledAction> schedulerActionGuardian =
+                            new LocalActionGuardian<>(ScheduledAction.STOP);
 
         if (PrelertSettings.isSet(ZOOKEEPER_HOST_PROP))
         {
             String host = PrelertSettings.getSettingOrDefault(ZOOKEEPER_HOST_PROP, "localhost");
             int port = PrelertSettings.getSettingOrDefault(ZOOKEEPER_PORT_PROP, 2181);
-            guardian = new ZooKeeperActionGuardian(host, port, guardian);
+
+            processActionGuardian = new LocalActionGuardian<>(Action.NONE,
+                       new ZooKeeperActionGuardian<>(Action.NONE, host, port));
+            schedulerActionGuardian = new LocalActionGuardian<>(ScheduledAction.STOP,
+                    new ZooKeeperActionGuardian<>(ScheduledAction.STOP, host, port));
         }
 
         PasswordManager passwordManager = createPasswordManager();
@@ -262,7 +270,7 @@ public class PrelertWebApp extends Application
                 createProcessManager(jobProvider, esFactory, jobLoggerFactory),
                 new DataExtractorFactoryImpl(passwordManager), jobLoggerFactory,
                 passwordManager, esFactory.newJobDataDeleterFactory(),
-                guardian);
+                processActionGuardian, schedulerActionGuardian);
     }
 
     private PasswordManager createPasswordManager()
