@@ -36,65 +36,65 @@ import com.prelert.job.manager.actions.Action;
 public class ActionTest
 {
     @Test
-    public void testGetErrorString_GivenVariousActionsInUse()
+    public void testgetBusyActionError_GivenVariousActionsInUse()
     {
         assertEquals("Cannot close job foo while another connection is closing the job",
-                Action.CLOSING.getErrorString("foo", Action.CLOSING));
+                Action.CLOSING.getBusyActionError("foo", Action.CLOSING));
         assertEquals("Cannot close job foo while another connection is deleting the job",
-                Action.CLOSING.getErrorString("foo", Action.DELETING));
+                Action.CLOSING.getBusyActionError("foo", Action.DELETING));
         assertEquals("Cannot close job bar while another connection is flushing the job",
-                Action.CLOSING.getErrorString("bar", Action.FLUSHING));
+                Action.CLOSING.getBusyActionError("bar", Action.FLUSHING));
         assertEquals("Cannot close job bar while another connection is pausing the job",
-                Action.CLOSING.getErrorString("bar", Action.PAUSING));
+                Action.CLOSING.getBusyActionError("bar", Action.PAUSING));
         assertEquals("Cannot close job bar while another connection is resuming the job",
-                Action.CLOSING.getErrorString("bar", Action.RESUMING));
+                Action.CLOSING.getBusyActionError("bar", Action.RESUMING));
         assertEquals("Cannot close job bar while another connection is reverting the model snapshot for the job",
-                Action.CLOSING.getErrorString("bar", Action.REVERTING));
+                Action.CLOSING.getBusyActionError("bar", Action.REVERTING));
         assertEquals("Cannot close job foo while another connection is updating the job",
-                Action.CLOSING.getErrorString("foo", Action.UPDATING));
+                Action.CLOSING.getBusyActionError("foo", Action.UPDATING));
         assertEquals("Cannot close job foo while another connection is writing to the job",
-                Action.CLOSING.getErrorString("foo", Action.WRITING));
+                Action.CLOSING.getBusyActionError("foo", Action.WRITING));
     }
 
     @Test
-    public void testGetErrorString_GivenVariousActions()
+    public void testgetBusyActionError_GivenVariousActions()
     {
         assertEquals("Cannot close job foo while another connection is flushing the job",
-                Action.CLOSING.getErrorString("foo", Action.FLUSHING));
+                Action.CLOSING.getBusyActionError("foo", Action.FLUSHING));
         assertEquals("Cannot delete job foo while another connection is flushing the job",
-                Action.DELETING.getErrorString("foo", Action.FLUSHING));
+                Action.DELETING.getBusyActionError("foo", Action.FLUSHING));
         assertEquals("Cannot flush job bar while another connection is flushing the job",
-                Action.FLUSHING.getErrorString("bar", Action.FLUSHING));
+                Action.FLUSHING.getBusyActionError("bar", Action.FLUSHING));
         assertEquals("Cannot pause job foo while another connection is flushing the job",
-                Action.PAUSING.getErrorString("foo", Action.FLUSHING));
+                Action.PAUSING.getBusyActionError("foo", Action.FLUSHING));
         assertEquals("Cannot resume job foo while another connection is flushing the job",
-                Action.RESUMING.getErrorString("foo", Action.FLUSHING));
+                Action.RESUMING.getBusyActionError("foo", Action.FLUSHING));
         assertEquals("Cannot revert model snapshot for job foo while another connection is flushing the job",
-                Action.REVERTING.getErrorString("foo", Action.FLUSHING));
+                Action.REVERTING.getBusyActionError("foo", Action.FLUSHING));
         assertEquals("Cannot update job foo while another connection is flushing the job",
-                Action.UPDATING.getErrorString("foo", Action.FLUSHING));
+                Action.UPDATING.getBusyActionError("foo", Action.FLUSHING));
         assertEquals("Cannot write to job foo while another connection is flushing the job",
-                Action.WRITING.getErrorString("foo", Action.FLUSHING));
+                Action.WRITING.getBusyActionError("foo", Action.FLUSHING));
     }
 
     @Test
-    public void testGetErrorStringWithHost_GivenVariousActions()
+    public void testgetBusyActionErrorWithHost_GivenVariousActions()
     {
         assertEquals("Cannot close job foo while another connection on host marple is flushing the job",
-                Action.CLOSING.getErrorString("foo", Action.FLUSHING, "marple"));
+                Action.CLOSING.getBusyActionError("foo", Action.FLUSHING, "marple"));
         assertEquals("Cannot delete job foo while another connection on host marple is flushing the job",
-                Action.DELETING.getErrorString("foo", Action.FLUSHING, "marple"));
+                Action.DELETING.getBusyActionError("foo", Action.FLUSHING, "marple"));
         assertEquals("Cannot flush job bar while another connection on host marple is flushing the job",
-                Action.FLUSHING.getErrorString("bar", Action.FLUSHING, "marple"));
+                Action.FLUSHING.getBusyActionError("bar", Action.FLUSHING, "marple"));
         assertEquals("Cannot pause job foo while another connection on host marple is flushing the job",
-                Action.PAUSING.getErrorString("foo", Action.FLUSHING, "marple"));
+                Action.PAUSING.getBusyActionError("foo", Action.FLUSHING, "marple"));
         assertEquals("Cannot resume job foo while another connection on host marple is flushing the job",
-                Action.RESUMING.getErrorString("foo", Action.FLUSHING, "marple"));
+                Action.RESUMING.getBusyActionError("foo", Action.FLUSHING, "marple"));
         assertEquals("Cannot revert model snapshot for job foo while another connection on host marple is flushing the job",
-                Action.REVERTING.getErrorString("foo", Action.FLUSHING, "marple"));
+                Action.REVERTING.getBusyActionError("foo", Action.FLUSHING, "marple"));
         assertEquals("Cannot update job foo while another connection on host marple is flushing the job",
-                Action.UPDATING.getErrorString("foo", Action.FLUSHING, "marple"));
+                Action.UPDATING.getBusyActionError("foo", Action.FLUSHING, "marple"));
         assertEquals("Cannot write to job foo while another connection on host marple is flushing the job",
-                Action.WRITING.getErrorString("foo", Action.FLUSHING, "marple"));
+                Action.WRITING.getBusyActionError("foo", Action.FLUSHING, "marple"));
     }
 }

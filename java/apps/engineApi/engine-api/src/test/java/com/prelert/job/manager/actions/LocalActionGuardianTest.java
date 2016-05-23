@@ -35,15 +35,14 @@ import org.mockito.Mockito;
 
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.exceptions.JobInUseException;
-import com.prelert.job.manager.actions.ActionGuardian.ActionTicket;
 
 public class LocalActionGuardianTest
 {
     @Test
     public void testTryAcquiringAction_GivenAvailable() throws JobInUseException
     {
-        ActionGuardian actionGuardian = new LocalActionGuardian();
-        try (ActionTicket actionTicket = actionGuardian.tryAcquiringAction("foo", Action.WRITING))
+        ActionGuardian<Action> actionGuardian = new LocalActionGuardian<>(Action.NONE);
+        try (ActionGuardian<Action>.ActionTicket actionTicket = actionGuardian.tryAcquiringAction("foo", Action.WRITING))
         {
             assertEquals(Action.WRITING, actionGuardian.currentAction("foo"));
             assertEquals(Action.NONE, actionGuardian.currentAction("unknown"));
@@ -54,10 +53,10 @@ public class LocalActionGuardianTest
     @Test
     public void testTryAcquiringAction_GivenJobIsInUse() throws JobInUseException
     {
-        ActionGuardian actionGuardian = new LocalActionGuardian();
-        try (ActionTicket deleting = actionGuardian.tryAcquiringAction("foo", Action.DELETING))
+        ActionGuardian<Action> actionGuardian = new LocalActionGuardian<>(Action.NONE);
+        try (ActionGuardian<Action>.ActionTicket deleting = actionGuardian.tryAcquiringAction("foo", Action.DELETING))
         {
-            try (ActionTicket writing = actionGuardian.tryAcquiringAction("foo", Action.WRITING))
+            try (ActionGuardian<Action>.ActionTicket writing = actionGuardian.tryAcquiringAction("foo", Action.WRITING))
             {
                 fail();
             }
@@ -74,9 +73,10 @@ public class LocalActionGuardianTest
     @Test
     public void testTryAcquiringAction_acquiresNextLock() throws JobInUseException
     {
-        ActionGuardian nextGuardian = Mockito.mock(ActionGuardian.class);
+        @SuppressWarnings("unchecked")
+        ActionGuardian<Action> nextGuardian = Mockito.mock(ActionGuardian.class);
 
-        ActionGuardian actionGuardian = new LocalActionGuardian(nextGuardian);
+        ActionGuardian<Action> actionGuardian = new LocalActionGuardian<>(Action.NONE, nextGuardian);
         actionGuardian.tryAcquiringAction("foo", Action.CLOSING);
 
         Mockito.verify(nextGuardian).tryAcquiringAction("foo", Action.CLOSING);
@@ -85,12 +85,12 @@ public class LocalActionGuardianTest
     @Test
     public void testTryAcquiringAction_releasesNextLock() throws JobInUseException
     {
-        ActionGuardian nextGuardian = Mockito.mock(ActionGuardian.class);
+        @SuppressWarnings("unchecked")
+        ActionGuardian<Action> nextGuardian = Mockito.mock(ActionGuardian.class);
 
-        ActionGuardian actionGuardian = new LocalActionGuardian(nextGuardian);
+        ActionGuardian<Action> actionGuardian = new LocalActionGuardian<>(Action.NONE, nextGuardian);
         actionGuardian.releaseAction("foo");
 
         Mockito.verify(nextGuardian).releaseAction("foo");
     }
-
 }

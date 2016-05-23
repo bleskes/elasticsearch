@@ -29,7 +29,7 @@ package com.prelert.job.manager.actions.zookeeper;
 import com.google.common.annotations.VisibleForTesting;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.exceptions.JobInUseException;
-import com.prelert.job.manager.actions.Action;
+import com.prelert.job.manager.actions.ActionErrorMessage;
 import com.prelert.job.manager.actions.ActionGuardian;
 
 import java.net.Inet4Address;
@@ -49,30 +49,39 @@ import org.apache.log4j.Logger;
  * Distributed lock for restricting actions on jobs in a network
  * of engine API nodes.
  */
-public class ZooKeeperActionGuardian extends ActionGuardian
+public class ZooKeeperActionGuardian<T extends Enum<T> & ActionErrorMessage>
+                    extends ActionGuardian<T> implements AutoCloseable
 {
     private static final Logger LOGGER = Logger.getLogger(ZooKeeperActionGuardian.class);
 
     public static final String LOCK_PATH_PREFIX = "/prelert/engineApi/jobs/";
     private static final String HOST_ACTION_SEPARATOR = "-";
-    private static final int ACQUIRE_LOCK_TIMEOUT = 100;
+    private static final int ACQUIRE_LOCK_TIMEOUT = 0;
 
 
     private final CuratorFramework m_Client;
     private final Map<String, InterProcessMutex> m_LocksByJob = new ConcurrentHashMap<>();
     private String m_Hostname;
 
-    public ZooKeeperActionGuardian(String host, int port)
+    public ZooKeeperActionGuardian(T defaultAction, String host, int port)
     {
+        super(defaultAction);
+
         m_Client = initCuratorFrameworkClient(host, port);
         getAndSetHostName();
     }
 
-    public ZooKeeperActionGuardian(String host, int port, ActionGuardian nextGuardian)
+    public ZooKeeperActionGuardian(T defaultAction, String host, int port, ActionGuardian<T> nextGuardian)
     {
-        super(nextGuardian);
+        super(defaultAction, nextGuardian);
         m_Client = initCuratorFrameworkClient(host, port);
         getAndSetHostName();
+    }
+
+    @Override
+    public void close()
+    {
+        m_Client.close();
     }
 
     private void getAndSetHostName()
@@ -97,14 +106,14 @@ public class ZooKeeperActionGuardian extends ActionGuardian
     }
 
     @Override
-    public Action currentAction(String jobId)
+    public T currentAction(String jobId)
     {
         InterProcessMutex lock = new InterProcessMutex(m_Client, lockPath(jobId));
         if (tryAcquiringLockNonBlocking(lock))
         {
             try
             {
-                return Action.NONE;
+                return m_NoneAction;
             }
             finally
             {
@@ -134,7 +143,7 @@ public class ZooKeeperActionGuardian extends ActionGuardian
      * @throws JobInUseException
      */
     @Override
-    public ActionTicket tryAcquiringAction(String jobId, Action action)
+    public ActionTicket tryAcquiringAction(String jobId, T action)
     throws JobInUseException
     {
         InterProcessMutex lock = m_LocksByJob.get(jobId);
@@ -147,7 +156,7 @@ public class ZooKeeperActionGuardian extends ActionGuardian
             }
             else
             {
-                String msg = action.getErrorString(jobId, hostAction.m_Action, hostAction.m_Hostname);
+                String msg = action.getBusyActionError(jobId, hostAction.m_Action, hostAction.m_Hostname);
                 LOGGER.warn(msg);
                 throw new JobInUseException(msg, ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR);
             }
@@ -170,7 +179,7 @@ public class ZooKeeperActionGuardian extends ActionGuardian
         {
             HostnameAction hostAction =  getHostActionOfLockedJob(jobId);
 
-            String msg = action.getErrorString(jobId, hostAction.m_Action, hostAction.m_Hostname);
+            String msg = action.getBusyActionError(jobId, hostAction.m_Action, hostAction.m_Hostname);
             LOGGER.warn(msg);
             throw new JobInUseException(msg, ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR);
         }
@@ -235,11 +244,11 @@ public class ZooKeeperActionGuardian extends ActionGuardian
         catch (Exception e)
         {
             LOGGER.error("Error reading lock data" , e);
-            return new HostnameAction("", Action.NONE);
+            return new HostnameAction("", m_NoneAction);
         }
     }
 
-    private void setHostActionOfLockedJob(String jobId, String hostname, Action action)
+    private void setHostActionOfLockedJob(String jobId, String hostname, T action)
     {
         String data = hostActionToData(hostname, action);
         try
@@ -261,19 +270,19 @@ public class ZooKeeperActionGuardian extends ActionGuardian
         if (lastIndex < 0 || (lastIndex + 1 >= data.length()))
         {
             LOGGER.error("Invalid lock data cannot be parsed: " + data);
-            return new HostnameAction(data, Action.NONE);
+            return new HostnameAction(data, m_NoneAction);
         }
 
-        Action action;
+        T action = m_NoneAction;
         String host = data.substring(0, lastIndex);
         try
         {
-            action = Action.valueOf(data.substring(lastIndex +1));
+            Class<T> type = m_NoneAction.getDeclaringClass();
+            action = Enum.<T>valueOf(type, data.substring(lastIndex +1));
         }
         catch (IllegalArgumentException e)
         {
             LOGGER.error("Cannot parse action from lock data", e);
-            action = Action.NONE;
             host = data;
         }
 
@@ -282,7 +291,7 @@ public class ZooKeeperActionGuardian extends ActionGuardian
     }
 
     @VisibleForTesting
-    String hostActionToData(String hostname, Action action)
+    String hostActionToData(String hostname, T action)
     {
         return hostname + HOST_ACTION_SEPARATOR + action.toString();
     }
@@ -298,9 +307,9 @@ public class ZooKeeperActionGuardian extends ActionGuardian
     class HostnameAction
     {
         final String m_Hostname;
-        final Action m_Action;
+        final T m_Action;
 
-        HostnameAction(String hostname, Action action)
+        HostnameAction(String hostname, T action)
         {
             m_Hostname = hostname;
             m_Action = action;

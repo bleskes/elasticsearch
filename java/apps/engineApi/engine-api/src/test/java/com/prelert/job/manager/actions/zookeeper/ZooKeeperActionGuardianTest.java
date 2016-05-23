@@ -46,7 +46,6 @@ import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.exceptions.JobInUseException;
 import com.prelert.job.manager.actions.Action;
 import com.prelert.job.manager.actions.ActionGuardian;
-import com.prelert.job.manager.actions.ActionGuardian.ActionTicket;
 
 public class ZooKeeperActionGuardianTest
 {
@@ -72,31 +71,42 @@ public class ZooKeeperActionGuardianTest
     @Test
     public void testCurrentAction_isNoneForNewJob()
     {
-        ZooKeeperActionGuardian actionGuardian = new ZooKeeperActionGuardian("localhost", PORT);
+        try (ZooKeeperActionGuardian<Action> actionGuardian =
+                    new ZooKeeperActionGuardian<>(Action.NONE, "localhost", PORT))
+        {
 
-        assertEquals(Action.NONE, actionGuardian.currentAction("some-new-job"));
+            assertEquals(Action.NONE, actionGuardian.currentAction("some-new-job"));
+        }
     }
 
     @Test
     public void testTryAcquiringAction()
     throws JobInUseException
     {
-        ZooKeeperActionGuardian actionGuardian = new ZooKeeperActionGuardian("localhost", PORT);
-        ActionTicket ticket = actionGuardian.tryAcquiringAction("foo", Action.UPDATING);
-        ticket.close();
+        try (ZooKeeperActionGuardian<Action> actionGuardian =
+                new ZooKeeperActionGuardian<>(Action.NONE, "localhost", PORT))
+        {
+            ZooKeeperActionGuardian<Action>.ActionTicket ticket = actionGuardian.tryAcquiringAction("foo", Action.UPDATING);
+            ticket.close();
+        }
     }
 
     @Test
     public void testCurrentAction_whenLockHasBeenAcquired()
     throws JobInUseException
     {
-        ZooKeeperActionGuardian actionGuardian = new ZooKeeperActionGuardian("localhost", PORT);
-        try (ActionTicket ticket = actionGuardian.tryAcquiringAction("foo", Action.UPDATING))
+        try (ZooKeeperActionGuardian<Action> actionGuardian =
+                new ZooKeeperActionGuardian<>(Action.NONE, "localhost", PORT))
         {
-            ZooKeeperActionGuardian actionGuardian2 = new ZooKeeperActionGuardian("localhost", PORT);
-            Action currentAction = actionGuardian2.currentAction("foo");
+            try (ZooKeeperActionGuardian<Action>.ActionTicket ticket = actionGuardian.tryAcquiringAction("foo", Action.UPDATING))
+            {
+                ZooKeeperActionGuardian<Action> actionGuardian2 =
+                        new ZooKeeperActionGuardian<>(Action.NONE, "localhost", PORT);
+                Action currentAction = actionGuardian2.currentAction("foo");
+                actionGuardian2.close();
 
-            assertEquals(Action.UPDATING, currentAction);
+                assertEquals(Action.UPDATING, currentAction);
+            }
         }
     }
 
@@ -105,16 +115,22 @@ public class ZooKeeperActionGuardianTest
     {
         m_ExpectedException.expect(JobInUseException.class);
         m_ExpectedException.expectMessage(
-                                    Action.CLOSING.getErrorString("foo", Action.UPDATING,
+                                    Action.CLOSING.getBusyActionError("foo", Action.UPDATING,
                                     Inet4Address.getLocalHost().getHostName()));
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR));
 
-        ZooKeeperActionGuardian actionGuardian = new ZooKeeperActionGuardian("localhost", PORT);
-        try (ActionTicket ticket = actionGuardian.tryAcquiringAction("foo", Action.UPDATING))
+        try (ZooKeeperActionGuardian<Action> actionGuardian =
+                new ZooKeeperActionGuardian<>(Action.NONE, "localhost", PORT))
         {
-            ZooKeeperActionGuardian actionGuardian2 = new ZooKeeperActionGuardian("localhost", PORT);
-            actionGuardian2.tryAcquiringAction("foo", Action.CLOSING);
+            try (ZooKeeperActionGuardian<Action>.ActionTicket ticket = actionGuardian.tryAcquiringAction("foo", Action.UPDATING))
+            {
+                try (ZooKeeperActionGuardian<Action> actionGuardian2 =
+                        new ZooKeeperActionGuardian<>(Action.NONE, "localhost", PORT))
+                {
+                    actionGuardian2.tryAcquiringAction("foo", Action.CLOSING);
+                }
+            }
         }
     }
 
@@ -124,15 +140,18 @@ public class ZooKeeperActionGuardianTest
     {
         m_ExpectedException.expect(JobInUseException.class);
         m_ExpectedException.expectMessage(
-                                    Action.CLOSING.getErrorString("jeff", Action.UPDATING,
+                                    Action.CLOSING.getBusyActionError("jeff", Action.UPDATING,
                                     Inet4Address.getLocalHost().getHostName()));
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR));
 
-        ZooKeeperActionGuardian actionGuardian = new ZooKeeperActionGuardian("localhost", PORT);
-        try (ActionTicket ticket = actionGuardian.tryAcquiringAction("jeff", Action.UPDATING))
+        try (ZooKeeperActionGuardian<Action> actionGuardian =
+                new ZooKeeperActionGuardian<>(Action.NONE, "localhost", PORT))
         {
-            actionGuardian.tryAcquiringAction("jeff", Action.CLOSING);
+            try (ZooKeeperActionGuardian<Action>.ActionTicket ticket = actionGuardian.tryAcquiringAction("jeff", Action.UPDATING))
+            {
+                actionGuardian.tryAcquiringAction("jeff", Action.CLOSING);
+            }
         }
     }
 
@@ -140,10 +159,13 @@ public class ZooKeeperActionGuardianTest
     public void testTryAcquireReturnsTicketWhenRequestedActionIsSameAsCurrent()
     throws JobInUseException
     {
-        ZooKeeperActionGuardian actionGuardian = new ZooKeeperActionGuardian("localhost", PORT);
-        try (ActionTicket ticket = actionGuardian.tryAcquiringAction("jeff", Action.DELETING))
+        try (ZooKeeperActionGuardian<Action> actionGuardian =
+                new ZooKeeperActionGuardian<>(Action.NONE, "localhost", PORT))
         {
-            actionGuardian.tryAcquiringAction("jeff", Action.DELETING);
+            try (ZooKeeperActionGuardian<Action>.ActionTicket ticket = actionGuardian.tryAcquiringAction("jeff", Action.DELETING))
+            {
+                actionGuardian.tryAcquiringAction("jeff", Action.DELETING);
+            }
         }
     }
 
@@ -151,70 +173,78 @@ public class ZooKeeperActionGuardianTest
     @Test
     public void testTryAcquiringAction_acquiresNextLockInChain() throws JobInUseException
     {
-        ActionGuardian nextGuardian = Mockito.mock(ActionGuardian.class);
+        @SuppressWarnings("unchecked")
+        ActionGuardian<Action> nextGuardian = Mockito.mock(ActionGuardian.class);
 
-        ActionGuardian actionGuardian = new ZooKeeperActionGuardian("localhost", PORT, nextGuardian);
-
-        try (ActionTicket ticket = actionGuardian.tryAcquiringAction("foo", Action.CLOSING))
+        try (ZooKeeperActionGuardian<Action> actionGuardian = new ZooKeeperActionGuardian<>(Action.NONE, "localhost", PORT, nextGuardian))
         {
-        }
+            try (ZooKeeperActionGuardian<Action>.ActionTicket ticket = actionGuardian.tryAcquiringAction("foo", Action.CLOSING))
+            {
+            }
 
-        Mockito.verify(nextGuardian).tryAcquiringAction("foo", Action.CLOSING);
+            Mockito.verify(nextGuardian).tryAcquiringAction("foo", Action.CLOSING);
+        }
     }
 
     @Test
     public void testTryAcquiringAction_releasesNextLockInChain() throws JobInUseException
     {
-        ActionGuardian nextGuardian = Mockito.mock(ActionGuardian.class);
+        @SuppressWarnings("unchecked")
+        ActionGuardian<Action> nextGuardian = Mockito.mock(ActionGuardian.class);
 
-        ActionGuardian actionGuardian = new ZooKeeperActionGuardian("localhost", PORT, nextGuardian);
-        actionGuardian.tryAcquiringAction("foo", Action.DELETING);
-        actionGuardian.releaseAction("foo");
+        try (ZooKeeperActionGuardian<Action> actionGuardian = new ZooKeeperActionGuardian<>(Action.NONE, "localhost", PORT, nextGuardian))
+        {
+            actionGuardian.tryAcquiringAction("foo", Action.DELETING);
+            actionGuardian.releaseAction("foo");
+            Mockito.verify(nextGuardian).releaseAction("foo");
+        }
 
-        Mockito.verify(nextGuardian).releaseAction("foo");
     }
 
     @Test
     public void testLockDataToHostnameAction()
     {
-        ZooKeeperActionGuardian guardian = new ZooKeeperActionGuardian("localhost", PORT);
+        try (ZooKeeperActionGuardian<Action> guardian = new ZooKeeperActionGuardian<>(Action.NONE, "localhost", PORT))
+        {
+            String data = "macbook-CLOSING";
+            ZooKeeperActionGuardian<Action>.HostnameAction ha = guardian.lockDataToHostAction(data);
+            assertEquals("macbook", ha.m_Hostname);
+            assertEquals(Action.CLOSING, ha.m_Action);
 
-        String data = "macbook-CLOSING";
-        ZooKeeperActionGuardian.HostnameAction ha = guardian.lockDataToHostAction(data);
-        assertEquals("macbook", ha.m_Hostname);
-        assertEquals(Action.CLOSING, ha.m_Action);
-
-        data = "funny-host.name-FLUSHING";
-        ha = guardian.lockDataToHostAction(data);
-        assertEquals("funny-host.name", ha.m_Hostname);
-        assertEquals(Action.FLUSHING, ha.m_Action);
+            data = "funny-host.name-FLUSHING";
+            ha = guardian.lockDataToHostAction(data);
+            assertEquals("funny-host.name", ha.m_Hostname);
+            assertEquals(Action.FLUSHING, ha.m_Action);
+        }
     }
 
     @Test
     public void testLockDataToHostnameAction_returnsActionNoneIfBadData()
     {
-        ZooKeeperActionGuardian guardian = new ZooKeeperActionGuardian("localhost", PORT);
+        try (ZooKeeperActionGuardian<Action> guardian = new ZooKeeperActionGuardian<>(Action.NONE, "localhost", PORT))
+        {
+            String data = "funny-host.name";
+            ZooKeeperActionGuardian<Action>.HostnameAction ha = guardian.lockDataToHostAction(data);
+            assertEquals("funny-host.name", ha.m_Hostname);
+            assertEquals(Action.NONE, ha.m_Action);
 
-        String data = "funny-host.name";
-        ZooKeeperActionGuardian.HostnameAction ha = guardian.lockDataToHostAction(data);
-        assertEquals("funny-host.name", ha.m_Hostname);
-        assertEquals(Action.NONE, ha.m_Action);
-
-        data = "funny-host.name-";
-        ha = guardian.lockDataToHostAction(data);
-        assertEquals("funny-host.name-", ha.m_Hostname);
-        assertEquals(Action.NONE, ha.m_Action);
+            data = "funny-host.name-";
+            ha = guardian.lockDataToHostAction(data);
+            assertEquals("funny-host.name-", ha.m_Hostname);
+            assertEquals(Action.NONE, ha.m_Action);
+        }
     }
 
     @Test
     public void testHostnameActionToLockData()
     {
-        ZooKeeperActionGuardian guardian = new ZooKeeperActionGuardian("localhost", PORT);
+        try (ZooKeeperActionGuardian<Action> guardian = new ZooKeeperActionGuardian<>(Action.NONE, "localhost", PORT))
+        {
+            String data = guardian.hostActionToData("macbook", Action.DELETING);
+            assertEquals("macbook-DELETING", data);
 
-        String data = guardian.hostActionToData("macbook", Action.DELETING);
-        assertEquals("macbook-DELETING", data);
-
-        data = guardian.hostActionToData("funny-host.name", Action.DELETING);
-        assertEquals("funny-host.name-DELETING", data);
+            data = guardian.hostActionToData("funny-host.name", Action.DELETING);
+            assertEquals("funny-host.name-DELETING", data);
+        }
     }
 }

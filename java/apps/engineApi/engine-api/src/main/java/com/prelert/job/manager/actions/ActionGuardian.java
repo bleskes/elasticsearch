@@ -39,17 +39,37 @@ import com.prelert.job.exceptions.JobInUseException;
  *
  * Implementing classes must acquire and release the next guardian
  */
-public abstract class ActionGuardian
+public abstract class ActionGuardian< T extends Enum<T> & ActionErrorMessage>
 {
-    protected final Optional<ActionGuardian> m_NextGuardian;
+    protected final Optional<ActionGuardian<T>> m_NextGuardian;
 
-    public ActionGuardian()
+    protected final T m_NoneAction;
+
+    /**
+     * noneAction is the enum value representing the state where
+     * no action is taking place.
+     * e.g. @
+     *
+     * @param noneAction
+     */
+    public ActionGuardian(T noneAction)
     {
+        m_NoneAction = noneAction;
         m_NextGuardian = Optional.empty();
     }
 
-    public ActionGuardian(ActionGuardian guardian)
+    /**
+     * noneAction is the enum value representing the state where
+     * no action is taking place.
+     * guardian is the next guard to check if this guard succeeds in
+     * acquiring an action.
+     *
+     * @param noneAction
+     * @param guardian
+     */
+    public ActionGuardian(T noneAction, ActionGuardian<T> guardian)
     {
+        m_NoneAction = noneAction;
         m_NextGuardian = Optional.of(guardian);
     }
 
@@ -60,7 +80,7 @@ public abstract class ActionGuardian
      * @param jobId
      * @return
      */
-    public abstract Action currentAction(String jobId);
+    public abstract T currentAction(String jobId);
 
     /**
      * Returns an {@code ActionTicket} if requested action is available for the given job.
@@ -69,7 +89,7 @@ public abstract class ActionGuardian
      * @return the {@code ActionTicket} granting permission to execute the action
      * @throws JobInUseException If the job is in use by another action
      */
-    public abstract ActionTicket tryAcquiringAction(String jobId, Action action) throws JobInUseException;
+    public abstract ActionTicket tryAcquiringAction(String jobId, T action) throws JobInUseException;
 
     /**
      * Releases the action for the given job

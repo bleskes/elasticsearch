@@ -30,38 +30,51 @@ package com.prelert.job.manager.actions;
 import com.prelert.job.messages.Messages;
 
 /**
- * Job actions
+ * Error reporting functions for actions
  */
-public enum Action implements ActionErrorMessage
+public interface ActionErrorMessage
 {
-    NONE("", Messages.PROCESS_ACTION_UNKNOWN),
-    CLOSING(Messages.JOB_DATA_CONCURRENT_USE_CLOSE, Messages.PROCESS_ACTION_CLOSING_JOB),
-    DELETING(Messages.JOB_DATA_CONCURRENT_USE_DELETE, Messages.PROCESS_ACTION_DELETING_JOB),
-    FLUSHING(Messages.JOB_DATA_CONCURRENT_USE_FLUSH, Messages.PROCESS_ACTION_FLUSHING_JOB),
-    PAUSING(Messages.JOB_DATA_CONCURRENT_USE_PAUSE, Messages.PROCESS_ACTION_PAUSING_JOB),
-    RESUMING(Messages.JOB_DATA_CONCURRENT_USE_RESUME, Messages.PROCESS_ACTION_RESUMING_JOB),
-    REVERTING(Messages.JOB_DATA_CONCURRENT_USE_REVERT, Messages.PROCESS_ACTION_REVERTING_JOB),
-    UPDATING(Messages.JOB_DATA_CONCURRENT_USE_UPDATE, Messages.PROCESS_ACTION_UPDATING_JOB),
-    WRITING(Messages.JOB_DATA_CONCURRENT_USE_UPLOAD, Messages.PROCESS_ACTION_WRITING_JOB);
+    /**
+     * Description of the actions activity
+     * @return
+     */
+    String getActionVerb();
 
-    private final String m_MessageKey;
-    private final String m_VerbKey;
+    String getMessageKey();
 
-    private Action(String messageKey, String verbKey)
+    /**
+     * create error message saying that the action cannot be
+     * started because another action <code>otherActionVerb</code>
+     * is already running
+     *
+     * @param jobId
+     * @param actionInUse The Action currently in progress
+     * @return
+     */
+    default String getBusyActionError(String jobId, ActionErrorMessage actionInUse)
     {
-        m_MessageKey = messageKey;
-        m_VerbKey = verbKey;
+        return Messages.getMessage(actionInUse.getMessageKey(), jobId,
+                            Messages.getMessage(actionInUse.getActionVerb()), "");
     }
 
-    @Override
-    public String getActionVerb()
+    /**
+     * create error message saying that the action cannot be
+     * started because another action <code>otherActionVerb</code>
+     * is already running on another machine (<code>host</code>)
+     *
+     * @param jobId
+     * @param actionInUse The Action currently in progress
+     * @param host The host the action is currently running on
+     * @return
+     */
+    default String getBusyActionError(String jobId, ActionErrorMessage actionInUse, String host)
     {
-        return m_VerbKey;
+        // host needs a single white space appended to be formatted properly.
+        // Review if the message string changes
+        return Messages.getMessage(actionInUse.getMessageKey(),
+                                jobId,
+                                Messages.getMessage(actionInUse.getActionVerb()),
+                                Messages.getMessage(Messages.ON_HOST, host + " "));
     }
 
-    @Override
-    public String getMessageKey()
-    {
-        return m_MessageKey;
-    }
 }

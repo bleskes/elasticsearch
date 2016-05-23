@@ -34,28 +34,29 @@ import org.apache.log4j.Logger;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.exceptions.JobInUseException;
 
-public class LocalActionGuardian extends ActionGuardian
+public class LocalActionGuardian<T extends Enum<T> & ActionErrorMessage>
+                            extends ActionGuardian<T>
 {
     private static final Logger LOGGER = Logger.getLogger(LocalActionGuardian.class);
 
-    private final Map<String, Action> m_ActionsByJob = new HashMap<>();
+    private final Map<String, T> m_ActionsByJob = new HashMap<>();
 
-
-    public LocalActionGuardian()
+    public LocalActionGuardian(T defaultAction)
     {
+        super(defaultAction);
     }
 
-    public LocalActionGuardian(ActionGuardian guardian)
+    public LocalActionGuardian(T defaultAction, ActionGuardian<T> guardian)
     {
-        super(guardian);
+        super(defaultAction, guardian);
     }
 
     @Override
-    public Action currentAction(String jobId)
+    public T currentAction(String jobId)
     {
         synchronized (this)
         {
-            return m_ActionsByJob.getOrDefault(jobId, Action.NONE);
+            return m_ActionsByJob.getOrDefault(jobId, m_NoneAction);
         }
     }
 
@@ -67,12 +68,12 @@ public class LocalActionGuardian extends ActionGuardian
      * @throws JobInUseException If the job is in use by another action
      */
     @Override
-    public ActionTicket tryAcquiringAction(String jobId, Action action) throws JobInUseException
+    public ActionTicket tryAcquiringAction(String jobId, T action) throws JobInUseException
     {
         synchronized (this)
         {
-            Action currentAction = m_ActionsByJob.getOrDefault(jobId, Action.NONE);
-            if (currentAction == Action.NONE)
+            T currentAction = m_ActionsByJob.getOrDefault(jobId, m_NoneAction);
+            if (currentAction == m_NoneAction)
             {
                 m_ActionsByJob.put(jobId, action);
 
@@ -85,7 +86,7 @@ public class LocalActionGuardian extends ActionGuardian
             }
             else
             {
-                String msg = action.getErrorString(jobId, currentAction);
+                String msg = action.getBusyActionError(jobId, currentAction);
                 LOGGER.warn(msg);
                 throw new JobInUseException(msg, ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR);
             }
