@@ -97,8 +97,9 @@ public abstract class ActionGuardian< T extends Enum<T> & ActionState<T>>
     /**
      * Releases the action for the given job
      * @param jobId the job id
+     * @param nextState Put the guardian into this state after releasing the action
      */
-    public abstract void releaseAction(String jobId);
+    public abstract void releaseAction(String jobId, T nextState);
 
     /**
      * A token signifying that its owner has permission to execute an action for a job.
@@ -107,21 +108,23 @@ public abstract class ActionGuardian< T extends Enum<T> & ActionState<T>>
     public class ActionTicket implements AutoCloseable
     {
         private final String m_JobId;
+        private final T m_NextState;
 
-        private ActionTicket(String jobId)
+        private ActionTicket(String jobId, T nextState)
         {
             m_JobId = jobId;
+            m_NextState = nextState;
         }
 
         @Override
         public void close()
         {
-            ActionGuardian.this.releaseAction(m_JobId);
+            ActionGuardian.this.releaseAction(m_JobId, m_NextState);
         }
     }
 
-    protected ActionTicket newActionTicket(String jobId)
+    protected ActionTicket newActionTicket(String jobId, T nextState)
     {
-        return new ActionTicket(jobId);
+        return new ActionTicket(jobId, nextState);
     }
 }

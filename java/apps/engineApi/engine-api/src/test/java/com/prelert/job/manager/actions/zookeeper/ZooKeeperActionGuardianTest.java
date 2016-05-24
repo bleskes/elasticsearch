@@ -203,8 +203,8 @@ public class ZooKeeperActionGuardianTest
         try (ZooKeeperActionGuardian<Action> actionGuardian = new ZooKeeperActionGuardian<>(Action.NONE, "localhost", PORT, nextGuardian))
         {
             actionGuardian.tryAcquiringAction("foo", Action.DELETING);
-            actionGuardian.releaseAction("foo");
-            Mockito.verify(nextGuardian).releaseAction("foo");
+            actionGuardian.releaseAction("foo", Action.DELETING);
+            Mockito.verify(nextGuardian).releaseAction("foo", Action.DELETING);
         }
 
     }
@@ -253,6 +253,67 @@ public class ZooKeeperActionGuardianTest
 
             data = guardian.hostActionToData("funny-host.name", Action.DELETING);
             assertEquals("funny-host.name-DELETING", data);
+        }
+    }
+
+    @Test(expected=JobInUseException.class)
+    public void reentrantLockTest() throws JobInUseException
+    {
+        try (ZooKeeperActionGuardian<Action> actionGuardian =
+                new ZooKeeperActionGuardian<>(Action.CLOSED, "localhost", PORT))
+        {
+            ZooKeeperActionGuardian<Action>.ActionTicket ticket = actionGuardian.tryAcquiringAction("foo", Action.UPDATING);
+            ZooKeeperActionGuardian<Action>.ActionTicket ticket2 = actionGuardian.tryAcquiringAction("foo", Action.UPDATING);
+            ticket.close();
+            ticket2.close();
+        }
+    }
+
+    @Test
+    public void testReleasingLockTransitionsToNextState() throws JobInUseException
+    {
+        try (ZooKeeperActionGuardian<Action> actionGuardian =
+                new ZooKeeperActionGuardian<>(Action.CLOSED, "localhost", PORT))
+        {
+            try (ActionGuardian<Action>.ActionTicket ticket =
+                    actionGuardian.tryAcquiringAction("foo", Action.CLOSING))
+            {
+            }
+            assertEquals(Action.CLOSED, actionGuardian.currentAction("foo"));
+
+            try (ActionGuardian<Action>.ActionTicket ticket =
+                    actionGuardian.tryAcquiringAction("foo", Action.WRITING))
+            {
+            }
+            assertEquals(Action.SLEEPING, actionGuardian.currentAction("foo"));
+
+            try (ActionGuardian<Action>.ActionTicket ticket =
+                    actionGuardian.tryAcquiringAction("foo", Action.UPDATING))
+            {
+            }
+            assertEquals(Action.SLEEPING, actionGuardian.currentAction("foo"));
+        }
+    }
+
+    @Test
+    public void testReleaseAcquiresNewLockWhenNextStateIsSleeping() throws JobInUseException
+    {
+        try (ZooKeeperActionGuardian<Action> actionGuardian =
+                new ZooKeeperActionGuardian<>(Action.CLOSED, "localhost", PORT))
+        {
+            try (ActionGuardian<Action>.ActionTicket ticket =
+                    actionGuardian.tryAcquiringAction("foo", Action.WRITING))
+            {
+            }
+            assertEquals(Action.SLEEPING, actionGuardian.currentAction("foo"));
+
+            m_ExpectedException.expect(JobInUseException.class);
+
+            try (ZooKeeperActionGuardian<Action> actionGuardian2 =
+                    new ZooKeeperActionGuardian<>(Action.CLOSED, "localhost", PORT))
+            {
+                actionGuardian2.tryAcquiringAction("foo", Action.WRITING);
+            }
         }
     }
 }

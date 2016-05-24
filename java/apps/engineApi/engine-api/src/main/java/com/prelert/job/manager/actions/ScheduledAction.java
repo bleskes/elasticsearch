@@ -62,6 +62,16 @@ public enum ScheduledAction implements ActionState<ScheduledAction>
         return true;
     }
 
+    /**
+     * If START the next state is START.
+     * If STOP the next state is STOP.
+     */
+    @Override
+    public ScheduledAction nextState(ScheduledAction unused)
+    {
+        return this;
+    }
+
     @Override
     public String getActionVerb()
     {
@@ -88,5 +98,15 @@ public enum ScheduledAction implements ActionState<ScheduledAction>
                                 jobId,
                                 Messages.getMessage(actionInUse.getActionVerb()),
                                 Messages.getMessage(Messages.ON_HOST, host));
+    }
+
+
+    /**
+     * Hold the lock if started
+     */
+    @Override
+    public boolean holdDistributedLock()
+    {
+        return this == START;
     }
 }

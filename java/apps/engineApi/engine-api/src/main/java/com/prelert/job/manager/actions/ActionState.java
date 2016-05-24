@@ -28,7 +28,7 @@
 package com.prelert.job.manager.actions;
 
 /**
- * Error reporting functions for actions
+ *  Functions for actions
  */
 public interface ActionState<T>
 {
@@ -69,4 +69,18 @@ public interface ActionState<T>
      * @return
      */
     boolean isValidTransition(T next);
+
+    /**
+     * The next state to transition to once this state is finished
+     *
+     * @param previousState If extra context is needed for deciding the next state
+     * @return
+     */
+    T nextState(T previousState);
+
+    /**
+     * Should the action hold the lock in a distributed system
+     * @return
+     */
+    boolean holdDistributedLock();
 }

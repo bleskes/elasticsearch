@@ -90,7 +90,8 @@ public class LocalActionGuardian<T extends Enum<T> & ActionState<T>>
                     m_NextGuardian.get().tryAcquiringAction(jobId, action);
                 }
 
-                return newActionTicket(jobId);
+
+                return newActionTicket(jobId, action.nextState(currentAction));
             }
             else
             {
@@ -103,15 +104,15 @@ public class LocalActionGuardian<T extends Enum<T> & ActionState<T>>
 
 
     @Override
-    public void releaseAction(String jobId)
+    public void releaseAction(String jobId, T nextState)
     {
         synchronized (this)
         {
-            m_ActionsByJob.remove(jobId);
+            m_ActionsByJob.put(jobId, nextState);
 
             if (m_NextGuardian.isPresent())
             {
-                m_NextGuardian.get().releaseAction(jobId);
+                m_NextGuardian.get().releaseAction(jobId, nextState);
             }
         }
     }

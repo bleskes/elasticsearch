@@ -99,21 +99,68 @@ public class ActionTest
     }
 
     @Test
-    public void testIsValidTransition()
+    public void testIsValidTransition_WhenClosedOrNone()
+    {
+        Action currentAction = Action.NONE;
+        for (Action nextAction : Action.values())
+        {
+            assertTrue(currentAction.isValidTransition(nextAction));
+        }
+
+        currentAction = Action.CLOSED;
+        for (Action nextAction : Action.values())
+        {
+            assertTrue(currentAction.isValidTransition(nextAction));
+        }
+    }
+
+    @Test
+    public void testIsValidTransition_FalseWhenNotClosedOrSleeping()
     {
         for (Action currentAction : Action.values())
         {
+            if (currentAction == Action.NONE || currentAction == Action.CLOSED
+                                || currentAction == Action.SLEEPING)
+            {
+                continue;
+            }
+
             for (Action nextAction : Action.values())
             {
-                if (currentAction == Action.NONE)
-                {
-                    assertTrue(currentAction.isValidTransition(nextAction));
-                }
-                else
-                {
-                    assertFalse(currentAction.isValidTransition(nextAction));
-                }
+                assertFalse(currentAction.isValidTransition(nextAction));
             }
         }
+    }
+
+    @Test
+    public void testIsValidTransition_ValidStatesFromSleeping()
+    {
+        assertTrue(Action.SLEEPING.isValidTransition(Action.UPDATING));
+        assertTrue(Action.SLEEPING.isValidTransition(Action.FLUSHING));
+        assertTrue(Action.SLEEPING.isValidTransition(Action.CLOSING));
+        assertTrue(Action.SLEEPING.isValidTransition(Action.DELETING));
+        assertTrue(Action.SLEEPING.isValidTransition(Action.WRITING));
+        assertTrue(Action.SLEEPING.isValidTransition(Action.PAUSING));
+
+        assertFalse(Action.SLEEPING.isValidTransition(Action.RESUMING));
+        assertFalse(Action.SLEEPING.isValidTransition(Action.REVERTING));
+        assertFalse(Action.SLEEPING.isValidTransition(Action.CLOSED));
+    }
+
+    @Test
+    public void testNextState()
+    {
+        assertEquals(Action.NONE, Action.NONE.nextState(Action.NONE));
+        assertEquals(Action.CLOSED, Action.CLOSED.nextState(Action.NONE));
+        assertEquals(Action.CLOSED, Action.CLOSING.nextState(Action.SLEEPING));
+        assertEquals(Action.CLOSED, Action.DELETING.nextState(Action.SLEEPING));
+        assertEquals(Action.CLOSED, Action.PAUSING.nextState(Action.SLEEPING));
+        assertEquals(Action.CLOSED, Action.RESUMING.nextState(Action.CLOSED));
+        assertEquals(Action.CLOSED, Action.REVERTING.nextState(Action.CLOSED));
+        assertEquals(Action.SLEEPING, Action.SLEEPING.nextState(Action.WRITING));
+        assertEquals(Action.SLEEPING, Action.FLUSHING.nextState(Action.SLEEPING));
+        assertEquals(Action.SLEEPING, Action.UPDATING.nextState(Action.SLEEPING));
+        assertEquals(Action.CLOSED, Action.UPDATING.nextState(Action.CLOSED));
+        assertEquals(Action.SLEEPING, Action.WRITING.nextState(Action.SLEEPING));
     }
 }

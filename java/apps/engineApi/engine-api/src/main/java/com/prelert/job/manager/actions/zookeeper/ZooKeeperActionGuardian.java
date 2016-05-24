@@ -151,12 +151,13 @@ public class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
     throws JobInUseException
     {
         InterProcessMutex lock = m_LocksByJob.get(jobId);
+        HostnameAction hostAction = getHostActionOfLockedJob(jobId);
+
         if (lock != null)
         {
-            HostnameAction hostAction = getHostActionOfLockedJob(jobId);
             if (hostAction.m_Action.isValidTransition(action))
             {
-                return newActionTicket(jobId);
+                return newActionTicket(jobId, action.nextState(hostAction.m_Action));
             }
             else
             {
@@ -177,12 +178,10 @@ public class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
             {
                 m_NextGuardian.get().tryAcquiringAction(jobId, action);
             }
-            return newActionTicket(jobId);
+            return newActionTicket(jobId, action.nextState(hostAction.m_Action));
         }
         else
         {
-            HostnameAction hostAction =  getHostActionOfLockedJob(jobId);
-
             String msg = action.getBusyActionError(jobId, hostAction.m_Action, hostAction.m_Hostname);
             LOGGER.warn(msg);
             throw new JobInUseException(msg, ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR);
@@ -192,21 +191,28 @@ public class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
     }
 
     @Override
-    public void releaseAction(String jobId)
+    public void releaseAction(String jobId, T nextState)
     {
-        InterProcessMutex lock = m_LocksByJob.remove(jobId);
-        if (lock == null)
-        {
-            throw new IllegalStateException("Job " + jobId +
-                    " is not locked by this ZooKeeperActionGuardian");
-        }
-
         try
         {
-            // clear data
-            m_Client.setData().forPath(lockPath(jobId));
+            if (nextState.holdDistributedLock())
+            {
+                setHostActionOfLockedJob(jobId, m_Hostname, nextState);
+            }
+            else
+            {
+                // release the lock
+                InterProcessMutex lock = m_LocksByJob.remove(jobId);
+                if (lock == null)
+                {
+                    throw new IllegalStateException("Job " + jobId +
+                            " is not locked by this ZooKeeperActionGuardian");
+                }
 
-            lock.release();
+                // clear data
+                m_Client.setData().forPath(lockPath(jobId));
+                lock.release();
+            }
         }
         catch (Exception e)
         {
@@ -215,7 +221,7 @@ public class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
 
         if (m_NextGuardian.isPresent())
         {
-            m_NextGuardian.get().releaseAction(jobId);
+            m_NextGuardian.get().releaseAction(jobId, nextState);
         }
     }
 

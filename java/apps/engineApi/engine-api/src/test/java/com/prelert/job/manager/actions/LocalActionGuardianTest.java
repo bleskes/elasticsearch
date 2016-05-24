@@ -47,7 +47,7 @@ public class LocalActionGuardianTest
             assertEquals(Action.WRITING, actionGuardian.currentAction("foo"));
             assertEquals(Action.NONE, actionGuardian.currentAction("unknown"));
         }
-        assertEquals(Action.NONE, actionGuardian.currentAction("foo"));
+        assertEquals(Action.SLEEPING, actionGuardian.currentAction("foo"));
     }
 
     @Test
@@ -67,7 +67,7 @@ public class LocalActionGuardianTest
             }
             assertEquals(Action.DELETING, actionGuardian.currentAction("foo"));
         }
-        assertEquals(Action.NONE, actionGuardian.currentAction("foo"));
+        assertEquals(Action.CLOSED, actionGuardian.currentAction("foo"));
     }
 
     @Test
@@ -89,8 +89,26 @@ public class LocalActionGuardianTest
         ActionGuardian<Action> nextGuardian = Mockito.mock(ActionGuardian.class);
 
         ActionGuardian<Action> actionGuardian = new LocalActionGuardian<>(Action.NONE, nextGuardian);
-        actionGuardian.releaseAction("foo");
+        actionGuardian.releaseAction("foo", Action.CLOSED);
 
-        Mockito.verify(nextGuardian).releaseAction("foo");
+        Mockito.verify(nextGuardian).releaseAction("foo", Action.CLOSED);
+    }
+
+    @Test
+    public void testReleasingLockTransitionsToNextState() throws JobInUseException
+    {
+        ActionGuardian<Action> actionGuardian = new LocalActionGuardian<>(Action.NONE);
+
+        try (ActionGuardian<Action>.ActionTicket ticket =
+                    actionGuardian.tryAcquiringAction("foo", Action.CLOSING))
+        {
+        }
+        assertEquals(Action.CLOSED, actionGuardian.currentAction("foo"));
+
+        try (ActionGuardian<Action>.ActionTicket ticket =
+                actionGuardian.tryAcquiringAction("foo", Action.WRITING))
+        {
+        }
+        assertEquals(Action.SLEEPING, actionGuardian.currentAction("foo"));
     }
 }
