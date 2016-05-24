@@ -16,7 +16,6 @@
  */
 package org.elasticsearch.license.core;
 
-import org.elasticsearch.common.Base64;
 import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
@@ -29,6 +28,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.Signature;
 import java.security.SignatureException;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.Collections;
 
 /**
@@ -46,7 +46,7 @@ public class LicenseVerifier {
         byte[] signedContent = null;
         byte[] signatureHash = null;
         try {
-            byte[] signatureBytes = Base64.decode(license.signature());
+            byte[] signatureBytes = Base64.getDecoder().decode(license.signature());
             ByteBuffer byteBuffer = ByteBuffer.wrap(signatureBytes);
             int version = byteBuffer.getInt();
             int magicLen = byteBuffer.getInt();
@@ -64,7 +64,7 @@ public class LicenseVerifier {
             rsa.initVerify(CryptUtils.readEncryptedPublicKey(encryptedPublicKeyData));
             rsa.update(contentBuilder.bytes().toBytes());
             return rsa.verify(signedContent)
-                    && Arrays.equals(Base64.encodeBytesToBytes(encryptedPublicKeyData), signatureHash);
+                    && Arrays.equals(Base64.getEncoder().encode(encryptedPublicKeyData), signatureHash);
         } catch (IOException | NoSuchAlgorithmException | SignatureException | InvalidKeyException e) {
             throw new IllegalStateException(e);
         } finally {
