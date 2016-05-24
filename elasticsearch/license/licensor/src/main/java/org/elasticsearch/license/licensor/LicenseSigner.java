@@ -16,7 +16,6 @@
  */
 package org.elasticsearch.license.licensor;
 
-import org.elasticsearch.common.Base64;
 import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
@@ -33,6 +32,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.Signature;
 import java.security.SignatureException;
+import java.util.Base64;
 import java.util.Collections;
 
 /**
@@ -74,7 +74,7 @@ public class LicenseSigner {
         final byte[] magic = new byte[MAGIC_LENGTH];
         SecureRandom random = new SecureRandom();
         random.nextBytes(magic);
-        final byte[] hash = Base64.encodeBytesToBytes(Files.readAllBytes(publicKeyPath));
+        final byte[] hash = Base64.getEncoder().encode(Files.readAllBytes(publicKeyPath));
         assert hash != null;
         byte[] bytes = new byte[4 + 4 + MAGIC_LENGTH + 4 + hash.length + 4 + signedContent.length];
         ByteBuffer byteBuffer = ByteBuffer.wrap(bytes);
@@ -87,7 +87,7 @@ public class LicenseSigner {
                 .put(signedContent);
 
         return License.builder()
-                .fromLicenseSpec(licenseSpec, Base64.encodeBytes(bytes))
+                .fromLicenseSpec(licenseSpec, Base64.getEncoder().encodeToString(bytes))
                 .build();
     }
 }

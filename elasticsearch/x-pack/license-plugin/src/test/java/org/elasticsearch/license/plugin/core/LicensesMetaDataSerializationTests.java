@@ -20,7 +20,6 @@ import org.elasticsearch.Version;
 import org.elasticsearch.cluster.metadata.MetaData;
 import org.elasticsearch.cluster.metadata.RepositoriesMetaData;
 import org.elasticsearch.cluster.metadata.RepositoryMetaData;
-import org.elasticsearch.common.Base64;
 import org.elasticsearch.common.io.stream.ByteBufferStreamInput;
 import org.elasticsearch.common.io.stream.BytesStreamOutput;
 import org.elasticsearch.common.settings.Settings;
@@ -37,6 +36,7 @@ import org.elasticsearch.license.plugin.TestUtils;
 import org.elasticsearch.test.ESTestCase;
 
 import java.nio.ByteBuffer;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.UUID;
 
@@ -124,7 +124,7 @@ public class LicensesMetaDataSerializationTests extends ESTestCase {
         builder.startArray("trial_licenses");
         XContentBuilder contentBuilder = XContentFactory.contentBuilder(XContentType.JSON);
         trialLicense.toXContent(contentBuilder, new ToXContent.MapParams(Collections.singletonMap(License.LICENSE_SPEC_VIEW_MODE, "true")));
-        builder.value(Base64.encodeBytes(encrypt(contentBuilder.bytes().toBytes())));
+        builder.value(Base64.getEncoder().encodeToString(encrypt(contentBuilder.bytes().toBytes())));
         builder.endArray();
         builder.startArray("signed_licenses");
         builder.endArray();
@@ -154,7 +154,7 @@ public class LicensesMetaDataSerializationTests extends ESTestCase {
         builder.startArray("trial_licenses");
         contentBuilder = XContentFactory.contentBuilder(XContentType.JSON);
         trialLicense.toXContent(contentBuilder, new ToXContent.MapParams(Collections.singletonMap(License.LICENSE_SPEC_VIEW_MODE, "true")));
-        builder.value(Base64.encodeBytes(encrypt(contentBuilder.bytes().toBytes())));
+        builder.value(Base64.getEncoder().encodeToString(encrypt(contentBuilder.bytes().toBytes())));
         builder.endArray();
         builder.startArray("signed_licenses");
         signedLicense.toXContent(builder, ToXContent.EMPTY_PARAMS);
@@ -173,7 +173,7 @@ public class LicensesMetaDataSerializationTests extends ESTestCase {
         builder.startArray("trial_licenses");
         contentBuilder = XContentFactory.contentBuilder(XContentType.JSON);
         trialLicense.toXContent(contentBuilder, new ToXContent.MapParams(Collections.singletonMap(License.LICENSE_SPEC_VIEW_MODE, "true")));
-        builder.value(Base64.encodeBytes(encrypt(contentBuilder.bytes().toBytes())));
+        builder.value(Base64.getEncoder().encodeToString(encrypt(contentBuilder.bytes().toBytes())));
         builder.endArray();
         builder.startArray("signed_licenses");
         signedLicense.toXContent(builder, ToXContent.EMPTY_PARAMS);
@@ -201,7 +201,7 @@ public class LicensesMetaDataSerializationTests extends ESTestCase {
         output.writeVInt(1);
         XContentBuilder contentBuilder = XContentFactory.contentBuilder(XContentType.JSON);
         trialLicense.toXContent(contentBuilder, new ToXContent.MapParams(Collections.singletonMap(License.LICENSE_SPEC_VIEW_MODE, "true")));
-        output.writeString(Base64.encodeBytes(encrypt(contentBuilder.bytes().toBytes())));
+        output.writeString(Base64.getEncoder().encodeToString(encrypt(contentBuilder.bytes().toBytes())));
         byte[] bytes = output.bytes().toBytes();
         ByteBufferStreamInput input = new ByteBufferStreamInput(ByteBuffer.wrap(bytes));
 
