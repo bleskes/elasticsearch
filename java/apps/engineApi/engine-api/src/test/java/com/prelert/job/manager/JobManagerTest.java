@@ -2012,7 +2012,7 @@ public class JobManagerTest
     {
         return new JobManager(m_JobProvider, m_ProcessManager, m_DataExtractorFactory,
                 m_JobLoggerFactory, m_PasswordManager, m_JobDataDeleter,
-                new LocalActionGuardian<Action>(Action.NONE),
+                new LocalActionGuardian<Action>(Action.CLOSED),
                 new LocalActionGuardian<ScheduledAction>(ScheduledAction.STOP));
     }
 

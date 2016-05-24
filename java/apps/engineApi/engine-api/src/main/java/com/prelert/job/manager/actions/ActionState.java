@@ -83,4 +83,7 @@ public interface ActionState<T>
      * @return
      */
     boolean holdDistributedLock();
+
+
+    T startingState();
 }

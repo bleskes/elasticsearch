@@ -211,7 +211,7 @@ public final class Messages
     public static final String REST_ALERT_CANT_USE_PROB = "rest.alert.cant.use.prob";
     public static final String REST_ALERT_INVALID_TYPE = "rest.alert.invalid.type";
 
-    public static final String PROCESS_ACTION_ALIVE_JOB = "process.action.alive.job";
+    public static final String PROCESS_ACTION_SLEEPING_JOB = "process.action.sleeping.job";
     public static final String PROCESS_ACTION_CLOSED_JOB = "process.action.closed.job";
     public static final String PROCESS_ACTION_CLOSING_JOB = "process.action.closing.job";
     public static final String PROCESS_ACTION_DELETING_JOB = "process.action.deleting.job";
@@ -221,7 +221,6 @@ public final class Messages
     public static final String PROCESS_ACTION_REVERTING_JOB = "process.action.reverting.job";
     public static final String PROCESS_ACTION_UPDATING_JOB = "process.action.updating.job";
     public static final String PROCESS_ACTION_WRITING_JOB = "process.action.writing.job";
-    public static final String PROCESS_ACTION_UNKNOWN = "process.action.unknown";
 
     public static final String SUPPORT_BUNDLE_SCRIPT_ERROR = "support.bundle.script.error";
 

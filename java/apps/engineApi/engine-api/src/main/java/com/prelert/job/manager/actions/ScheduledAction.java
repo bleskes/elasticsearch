@@ -109,4 +109,10 @@ public enum ScheduledAction implements ActionState<ScheduledAction>
     {
         return this == START;
     }
+
+    @Override
+    public ScheduledAction startingState()
+    {
+        return STOP;
+    }
 }

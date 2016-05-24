@@ -35,6 +35,7 @@ import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ResourceBundle;
+import java.util.Set;
 
 import org.junit.Test;
 
@@ -62,6 +63,19 @@ public class MessagesTest {
         }
 
         assertTrue(bundle.keySet().size() > 0);
+
+        // Make debugging easier- print any keys not defined in Messages
+        Set<String> keys = bundle.keySet();
+        for (Field field : publicStrings)
+        {
+            String key = (String)field.get(new String());
+            keys.remove(key);
+        }
+        for (String key : keys)
+        {
+            System.out.println(key);
+        }
+
         assertEquals(bundle.keySet().size(), publicStrings.size());
 
         for (Field field : publicStrings)

@@ -69,13 +69,13 @@ public class ZooKeeperActionGuardianTest
     }
 
     @Test
-    public void testCurrentAction_isNoneForNewJob()
+    public void testCurrentAction_isCLOSEDForNewJob()
     {
         try (ZooKeeperActionGuardian<Action> actionGuardian =
-                    new ZooKeeperActionGuardian<>(Action.NONE, "localhost", PORT))
+                    new ZooKeeperActionGuardian<>(Action.CLOSED, "localhost", PORT))
         {
 
-            assertEquals(Action.NONE, actionGuardian.currentAction("some-new-job"));
+            assertEquals(Action.CLOSED, actionGuardian.currentAction("some-new-job"));
         }
     }
 
@@ -84,7 +84,7 @@ public class ZooKeeperActionGuardianTest
     throws JobInUseException
     {
         try (ZooKeeperActionGuardian<Action> actionGuardian =
-                new ZooKeeperActionGuardian<>(Action.NONE, "localhost", PORT))
+                new ZooKeeperActionGuardian<>(Action.CLOSED, "localhost", PORT))
         {
             ZooKeeperActionGuardian<Action>.ActionTicket ticket = actionGuardian.tryAcquiringAction("foo", Action.UPDATING);
             ticket.close();
@@ -96,12 +96,12 @@ public class ZooKeeperActionGuardianTest
     throws JobInUseException
     {
         try (ZooKeeperActionGuardian<Action> actionGuardian =
-                new ZooKeeperActionGuardian<>(Action.NONE, "localhost", PORT))
+                new ZooKeeperActionGuardian<>(Action.CLOSED, "localhost", PORT))
         {
             try (ZooKeeperActionGuardian<Action>.ActionTicket ticket = actionGuardian.tryAcquiringAction("foo", Action.UPDATING))
             {
                 ZooKeeperActionGuardian<Action> actionGuardian2 =
-                        new ZooKeeperActionGuardian<>(Action.NONE, "localhost", PORT);
+                        new ZooKeeperActionGuardian<>(Action.CLOSED, "localhost", PORT);
                 Action currentAction = actionGuardian2.currentAction("foo");
                 actionGuardian2.close();
 
@@ -121,12 +121,12 @@ public class ZooKeeperActionGuardianTest
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR));
 
         try (ZooKeeperActionGuardian<Action> actionGuardian =
-                new ZooKeeperActionGuardian<>(Action.NONE, "localhost", PORT))
+                new ZooKeeperActionGuardian<>(Action.CLOSED, "localhost", PORT))
         {
             try (ZooKeeperActionGuardian<Action>.ActionTicket ticket = actionGuardian.tryAcquiringAction("foo", Action.UPDATING))
             {
                 try (ZooKeeperActionGuardian<Action> actionGuardian2 =
-                        new ZooKeeperActionGuardian<>(Action.NONE, "localhost", PORT))
+                        new ZooKeeperActionGuardian<>(Action.CLOSED, "localhost", PORT))
                 {
                     actionGuardian2.tryAcquiringAction("foo", Action.CLOSING);
                 }
@@ -146,7 +146,7 @@ public class ZooKeeperActionGuardianTest
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR));
 
         try (ZooKeeperActionGuardian<Action> actionGuardian =
-                new ZooKeeperActionGuardian<>(Action.NONE, "localhost", PORT))
+                new ZooKeeperActionGuardian<>(Action.CLOSED, "localhost", PORT))
         {
             try (ZooKeeperActionGuardian<Action>.ActionTicket ticket = actionGuardian.tryAcquiringAction("jeff", Action.UPDATING))
             {
@@ -167,7 +167,7 @@ public class ZooKeeperActionGuardianTest
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR));
 
         try (ZooKeeperActionGuardian<Action> actionGuardian =
-                new ZooKeeperActionGuardian<>(Action.NONE, "localhost", PORT))
+                new ZooKeeperActionGuardian<>(Action.CLOSED, "localhost", PORT))
         {
             try (ZooKeeperActionGuardian<Action>.ActionTicket ticket =
                     actionGuardian.tryAcquiringAction("jeff", Action.DELETING))
@@ -184,7 +184,7 @@ public class ZooKeeperActionGuardianTest
         @SuppressWarnings("unchecked")
         ActionGuardian<Action> nextGuardian = Mockito.mock(ActionGuardian.class);
 
-        try (ZooKeeperActionGuardian<Action> actionGuardian = new ZooKeeperActionGuardian<>(Action.NONE, "localhost", PORT, nextGuardian))
+        try (ZooKeeperActionGuardian<Action> actionGuardian = new ZooKeeperActionGuardian<>(Action.CLOSED, "localhost", PORT, nextGuardian))
         {
             try (ZooKeeperActionGuardian<Action>.ActionTicket ticket = actionGuardian.tryAcquiringAction("foo", Action.CLOSING))
             {
@@ -200,7 +200,7 @@ public class ZooKeeperActionGuardianTest
         @SuppressWarnings("unchecked")
         ActionGuardian<Action> nextGuardian = Mockito.mock(ActionGuardian.class);
 
-        try (ZooKeeperActionGuardian<Action> actionGuardian = new ZooKeeperActionGuardian<>(Action.NONE, "localhost", PORT, nextGuardian))
+        try (ZooKeeperActionGuardian<Action> actionGuardian = new ZooKeeperActionGuardian<>(Action.CLOSED, "localhost", PORT, nextGuardian))
         {
             actionGuardian.tryAcquiringAction("foo", Action.DELETING);
             actionGuardian.releaseAction("foo", Action.DELETING);
@@ -212,7 +212,7 @@ public class ZooKeeperActionGuardianTest
     @Test
     public void testLockDataToHostnameAction()
     {
-        try (ZooKeeperActionGuardian<Action> guardian = new ZooKeeperActionGuardian<>(Action.NONE, "localhost", PORT))
+        try (ZooKeeperActionGuardian<Action> guardian = new ZooKeeperActionGuardian<>(Action.CLOSED, "localhost", PORT))
         {
             String data = "macbook-CLOSING";
             ZooKeeperActionGuardian<Action>.HostnameAction ha = guardian.lockDataToHostAction(data);
@@ -227,26 +227,26 @@ public class ZooKeeperActionGuardianTest
     }
 
     @Test
-    public void testLockDataToHostnameAction_returnsActionNoneIfBadData()
+    public void testLockDataToHostnameAction_returnsActionCLOSEDIfBadData()
     {
-        try (ZooKeeperActionGuardian<Action> guardian = new ZooKeeperActionGuardian<>(Action.NONE, "localhost", PORT))
+        try (ZooKeeperActionGuardian<Action> guardian = new ZooKeeperActionGuardian<>(Action.CLOSED, "localhost", PORT))
         {
             String data = "funny-host.name";
             ZooKeeperActionGuardian<Action>.HostnameAction ha = guardian.lockDataToHostAction(data);
             assertEquals("funny-host.name", ha.m_Hostname);
-            assertEquals(Action.NONE, ha.m_Action);
+            assertEquals(Action.CLOSED, ha.m_Action);
 
             data = "funny-host.name-";
             ha = guardian.lockDataToHostAction(data);
             assertEquals("funny-host.name-", ha.m_Hostname);
-            assertEquals(Action.NONE, ha.m_Action);
+            assertEquals(Action.CLOSED, ha.m_Action);
         }
     }
 
     @Test
     public void testHostnameActionToLockData()
     {
-        try (ZooKeeperActionGuardian<Action> guardian = new ZooKeeperActionGuardian<>(Action.NONE, "localhost", PORT))
+        try (ZooKeeperActionGuardian<Action> guardian = new ZooKeeperActionGuardian<>(Action.CLOSED, "localhost", PORT))
         {
             String data = guardian.hostActionToData("macbook", Action.DELETING);
             assertEquals("macbook-DELETING", data);

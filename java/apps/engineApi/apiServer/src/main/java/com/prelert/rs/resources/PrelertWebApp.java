@@ -250,7 +250,7 @@ public class PrelertWebApp extends Application
     private JobManager createJobManager(JobProvider jobProvider, ElasticsearchFactory esFactory,
             JobLoggerFactory jobLoggerFactory)
     {
-        ActionGuardian<Action> processActionGuardian = new LocalActionGuardian<>(Action.NONE);
+        ActionGuardian<Action> processActionGuardian = new LocalActionGuardian<>(Action.CLOSED);
         ActionGuardian<ScheduledAction> schedulerActionGuardian =
                             new LocalActionGuardian<>(ScheduledAction.STOP);
 
@@ -259,8 +259,8 @@ public class PrelertWebApp extends Application
             String host = PrelertSettings.getSettingOrDefault(ZOOKEEPER_HOST_PROP, "localhost");
             int port = PrelertSettings.getSettingOrDefault(ZOOKEEPER_PORT_PROP, 2181);
 
-            processActionGuardian = new LocalActionGuardian<>(Action.NONE,
-                       new ZooKeeperActionGuardian<>(Action.NONE, host, port));
+            processActionGuardian = new LocalActionGuardian<>(Action.CLOSED,
+                       new ZooKeeperActionGuardian<>(Action.CLOSED, host, port));
             schedulerActionGuardian = new LocalActionGuardian<>(ScheduledAction.STOP,
                     new ZooKeeperActionGuardian<>(ScheduledAction.STOP, host, port));
         }

@@ -37,9 +37,8 @@ import com.prelert.job.messages.Messages;
  */
 public enum Action implements ActionState<Action>
 {
-    NONE("", Messages.PROCESS_ACTION_UNKNOWN),
     CLOSED("", Messages.PROCESS_ACTION_CLOSED_JOB),
-    SLEEPING("", Messages.PROCESS_ACTION_ALIVE_JOB, true),
+    SLEEPING("", Messages.PROCESS_ACTION_SLEEPING_JOB, true),
     CLOSING(Messages.JOB_DATA_CONCURRENT_USE_CLOSE, Messages.PROCESS_ACTION_CLOSING_JOB),
     DELETING(Messages.JOB_DATA_CONCURRENT_USE_DELETE, Messages.PROCESS_ACTION_DELETING_JOB),
     FLUSHING(Messages.JOB_DATA_CONCURRENT_USE_FLUSH, Messages.PROCESS_ACTION_FLUSHING_JOB),
@@ -118,7 +117,7 @@ public enum Action implements ActionState<Action>
     @Override
     public boolean isValidTransition(Action next)
     {
-        if (this == NONE || this == CLOSED)
+        if (/*this == NONE ||*/ this == CLOSED)
         {
             return true;
         }
@@ -143,10 +142,10 @@ public enum Action implements ActionState<Action>
         {
             return SLEEPING;
         }
-        else if (this == NONE)
-        {
-            return NONE;
-        }
+//        else if (this == NONE)
+//        {
+//            return NONE;
+//        }
 
         return CLOSED;
     }
@@ -159,6 +158,12 @@ public enum Action implements ActionState<Action>
     public boolean holdDistributedLock()
     {
         return m_KeepDistributedLock;
+    }
+
+    @Override
+    public Action startingState()
+    {
+        return CLOSED;
     }
 
 }

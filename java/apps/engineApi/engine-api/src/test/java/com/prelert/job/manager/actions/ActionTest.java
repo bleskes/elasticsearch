@@ -99,15 +99,9 @@ public class ActionTest
     }
 
     @Test
-    public void testIsValidTransition_WhenClosedOrNone()
+    public void testIsValidTransition_WhenClosed()
     {
-        Action currentAction = Action.NONE;
-        for (Action nextAction : Action.values())
-        {
-            assertTrue(currentAction.isValidTransition(nextAction));
-        }
-
-        currentAction = Action.CLOSED;
+        Action currentAction = Action.CLOSED;
         for (Action nextAction : Action.values())
         {
             assertTrue(currentAction.isValidTransition(nextAction));
@@ -119,8 +113,7 @@ public class ActionTest
     {
         for (Action currentAction : Action.values())
         {
-            if (currentAction == Action.NONE || currentAction == Action.CLOSED
-                                || currentAction == Action.SLEEPING)
+            if (currentAction == Action.CLOSED || currentAction == Action.SLEEPING)
             {
                 continue;
             }
@@ -150,8 +143,7 @@ public class ActionTest
     @Test
     public void testNextState()
     {
-        assertEquals(Action.NONE, Action.NONE.nextState(Action.NONE));
-        assertEquals(Action.CLOSED, Action.CLOSED.nextState(Action.NONE));
+        assertEquals(Action.CLOSED, Action.CLOSED.nextState(Action.CLOSED));
         assertEquals(Action.CLOSED, Action.CLOSING.nextState(Action.SLEEPING));
         assertEquals(Action.CLOSED, Action.DELETING.nextState(Action.SLEEPING));
         assertEquals(Action.CLOSED, Action.PAUSING.nextState(Action.SLEEPING));
