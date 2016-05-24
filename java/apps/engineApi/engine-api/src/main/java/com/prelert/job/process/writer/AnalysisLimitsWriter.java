@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -41,9 +41,10 @@ public class AnalysisLimitsWriter
     /*
      * The configuration fields used in limits.conf
      */
+    private static final String MEMORY_STANZA_STR = "[memory]";
+    private static final String RESULTS_STANZA_STR = "[results]";
     private static final String MODEL_MEMORY_LIMIT_CONFIG_STR = "modelmemorylimit";
-    private static final String CATEGORIZATION_EXAMPLES_LIMIT_CONFIG_STR =
-            "categorizationexampleslimit";
+    private static final String MAX_EXAMPLES_LIMIT_CONFIG_STR = "maxexamples";
 
     private final AnalysisLimits m_Limits;
     private final OutputStreamWriter m_Writer;
@@ -56,16 +57,17 @@ public class AnalysisLimitsWriter
 
     public void write() throws IOException
     {
-        StringBuilder contents = new StringBuilder("[memory]").append(NEW_LINE);
+        StringBuilder contents = new StringBuilder(MEMORY_STANZA_STR).append(NEW_LINE);
         if (m_Limits.getModelMemoryLimit() != 0)
         {
             contents.append(MODEL_MEMORY_LIMIT_CONFIG_STR + EQUALS)
                     .append(m_Limits.getModelMemoryLimit()).append(NEW_LINE);
         }
 
+        contents.append(RESULTS_STANZA_STR).append(NEW_LINE);
         if (m_Limits.getCategorizationExamplesLimit() != null)
         {
-            contents.append(CATEGORIZATION_EXAMPLES_LIMIT_CONFIG_STR + EQUALS)
+            contents.append(MAX_EXAMPLES_LIMIT_CONFIG_STR + EQUALS)
                     .append(m_Limits.getCategorizationExamplesLimit())
                     .append(NEW_LINE);
         }

@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -65,7 +65,7 @@ public class AnalysisLimitsWriterTest
 
         analysisLimitsWriter.write();
 
-        verify(m_Writer).write("[memory]\n");
+        verify(m_Writer).write("[memory]\n[results]\n");
     }
 
     @Test
@@ -77,7 +77,7 @@ public class AnalysisLimitsWriterTest
 
         analysisLimitsWriter.write();
 
-        verify(m_Writer).write("[memory]\nmodelmemorylimit = 10\n");
+        verify(m_Writer).write("[memory]\nmodelmemorylimit = 10\n[results]\n");
     }
 
     @Test
@@ -89,7 +89,7 @@ public class AnalysisLimitsWriterTest
 
         analysisLimitsWriter.write();
 
-        verify(m_Writer).write("[memory]\ncategorizationexampleslimit = 5\n");
+        verify(m_Writer).write("[memory]\n[results]\nmaxexamples = 5\n");
     }
 
     @Test
@@ -101,6 +101,6 @@ public class AnalysisLimitsWriterTest
         analysisLimitsWriter.write();
 
         verify(m_Writer).write(
-                "[memory]\nmodelmemorylimit = 1024\ncategorizationexampleslimit = 3\n");
+                "[memory]\nmodelmemorylimit = 1024\n[results]\nmaxexamples = 3\n");
     }
 }
