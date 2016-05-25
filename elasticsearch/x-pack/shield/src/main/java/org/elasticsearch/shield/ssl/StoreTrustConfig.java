@@ -70,6 +70,9 @@ class StoreTrustConfig extends TrustConfig {
 
     @Override
     List<Path> filesToMonitor(@Nullable Environment environment) {
+        if (trustStorePath == null) {
+            return Collections.emptyList();
+        }
         return Collections.singletonList(CertUtils.resolvePath(trustStorePath, environment));
     }
 

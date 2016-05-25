@@ -37,11 +37,6 @@ public class IPHostnameVerificationTests extends ShieldIntegTestCase {
     }
 
     @Override
-    protected boolean autoSSLEnabled() {
-        return false;
-    }
-
-    @Override
     protected Settings nodeSettings(int nodeOrdinal) {
         Settings settings = super.nodeSettings(nodeOrdinal);
         Settings.Builder builder = Settings.builder();
