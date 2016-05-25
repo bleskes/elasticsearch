@@ -32,7 +32,11 @@ import static org.junit.Assert.*;
 import java.io.IOException;
 import java.net.Inet4Address;
 import java.net.UnknownHostException;
+import java.util.List;
 
+import org.apache.curator.framework.CuratorFramework;
+import org.apache.curator.framework.CuratorFrameworkFactory;
+import org.apache.curator.retry.ExponentialBackoffRetry;
 import org.apache.curator.test.TestingServer;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -49,7 +53,11 @@ import com.prelert.job.manager.actions.ActionGuardian;
 
 public class ZooKeeperActionGuardianTest
 {
-    static final int PORT = 2182;
+    private static final String  HOST = "localhost";
+    private static final int PORT = 2182;
+//    private static final String  HOST = "qa3";
+//    private static final int PORT = 2181;
+
 
     private static TestingServer s_Server;
 
@@ -72,7 +80,7 @@ public class ZooKeeperActionGuardianTest
     public void testCurrentAction_isCLOSEDForNewJob()
     {
         try (ZooKeeperActionGuardian<Action> actionGuardian =
-                    new ZooKeeperActionGuardian<>(Action.CLOSED, "localhost", PORT))
+                    new ZooKeeperActionGuardian<>(Action.CLOSED, HOST, PORT))
         {
 
             assertEquals(Action.CLOSED, actionGuardian.currentAction("some-new-job"));
@@ -84,7 +92,7 @@ public class ZooKeeperActionGuardianTest
     throws JobInUseException
     {
         try (ZooKeeperActionGuardian<Action> actionGuardian =
-                new ZooKeeperActionGuardian<>(Action.CLOSED, "localhost", PORT))
+                new ZooKeeperActionGuardian<>(Action.CLOSED, HOST, PORT))
         {
             ZooKeeperActionGuardian<Action>.ActionTicket ticket = actionGuardian.tryAcquiringAction("foo", Action.UPDATING);
             ticket.close();
@@ -96,12 +104,12 @@ public class ZooKeeperActionGuardianTest
     throws JobInUseException
     {
         try (ZooKeeperActionGuardian<Action> actionGuardian =
-                new ZooKeeperActionGuardian<>(Action.CLOSED, "localhost", PORT))
+                new ZooKeeperActionGuardian<>(Action.CLOSED, HOST, PORT))
         {
             try (ZooKeeperActionGuardian<Action>.ActionTicket ticket = actionGuardian.tryAcquiringAction("foo", Action.UPDATING))
             {
                 ZooKeeperActionGuardian<Action> actionGuardian2 =
-                        new ZooKeeperActionGuardian<>(Action.CLOSED, "localhost", PORT);
+                        new ZooKeeperActionGuardian<>(Action.CLOSED, HOST, PORT);
                 Action currentAction = actionGuardian2.currentAction("foo");
                 actionGuardian2.close();
 
@@ -121,12 +129,12 @@ public class ZooKeeperActionGuardianTest
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR));
 
         try (ZooKeeperActionGuardian<Action> actionGuardian =
-                new ZooKeeperActionGuardian<>(Action.CLOSED, "localhost", PORT))
+                new ZooKeeperActionGuardian<>(Action.CLOSED, HOST, PORT))
         {
             try (ZooKeeperActionGuardian<Action>.ActionTicket ticket = actionGuardian.tryAcquiringAction("foo", Action.UPDATING))
             {
                 try (ZooKeeperActionGuardian<Action> actionGuardian2 =
-                        new ZooKeeperActionGuardian<>(Action.CLOSED, "localhost", PORT))
+                        new ZooKeeperActionGuardian<>(Action.CLOSED, HOST, PORT))
                 {
                     actionGuardian2.tryAcquiringAction("foo", Action.CLOSING);
                 }
@@ -146,7 +154,7 @@ public class ZooKeeperActionGuardianTest
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR));
 
         try (ZooKeeperActionGuardian<Action> actionGuardian =
-                new ZooKeeperActionGuardian<>(Action.CLOSED, "localhost", PORT))
+                new ZooKeeperActionGuardian<>(Action.CLOSED, HOST, PORT))
         {
             try (ZooKeeperActionGuardian<Action>.ActionTicket ticket = actionGuardian.tryAcquiringAction("jeff", Action.UPDATING))
             {
@@ -167,7 +175,7 @@ public class ZooKeeperActionGuardianTest
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR));
 
         try (ZooKeeperActionGuardian<Action> actionGuardian =
-                new ZooKeeperActionGuardian<>(Action.CLOSED, "localhost", PORT))
+                new ZooKeeperActionGuardian<>(Action.CLOSED, HOST, PORT))
         {
             try (ZooKeeperActionGuardian<Action>.ActionTicket ticket =
                     actionGuardian.tryAcquiringAction("jeff", Action.DELETING))
@@ -184,7 +192,7 @@ public class ZooKeeperActionGuardianTest
         @SuppressWarnings("unchecked")
         ActionGuardian<Action> nextGuardian = Mockito.mock(ActionGuardian.class);
 
-        try (ZooKeeperActionGuardian<Action> actionGuardian = new ZooKeeperActionGuardian<>(Action.CLOSED, "localhost", PORT, nextGuardian))
+        try (ZooKeeperActionGuardian<Action> actionGuardian = new ZooKeeperActionGuardian<>(Action.CLOSED, HOST, PORT, nextGuardian))
         {
             try (ZooKeeperActionGuardian<Action>.ActionTicket ticket = actionGuardian.tryAcquiringAction("foo", Action.CLOSING))
             {
@@ -200,7 +208,7 @@ public class ZooKeeperActionGuardianTest
         @SuppressWarnings("unchecked")
         ActionGuardian<Action> nextGuardian = Mockito.mock(ActionGuardian.class);
 
-        try (ZooKeeperActionGuardian<Action> actionGuardian = new ZooKeeperActionGuardian<>(Action.CLOSED, "localhost", PORT, nextGuardian))
+        try (ZooKeeperActionGuardian<Action> actionGuardian = new ZooKeeperActionGuardian<>(Action.CLOSED, HOST, PORT, nextGuardian))
         {
             actionGuardian.tryAcquiringAction("foo", Action.DELETING);
             actionGuardian.releaseAction("foo", Action.DELETING);
@@ -212,7 +220,7 @@ public class ZooKeeperActionGuardianTest
     @Test
     public void testLockDataToHostnameAction()
     {
-        try (ZooKeeperActionGuardian<Action> guardian = new ZooKeeperActionGuardian<>(Action.CLOSED, "localhost", PORT))
+        try (ZooKeeperActionGuardian<Action> guardian = new ZooKeeperActionGuardian<>(Action.CLOSED, HOST, PORT))
         {
             String data = "macbook-CLOSING";
             ZooKeeperActionGuardian<Action>.HostnameAction ha = guardian.lockDataToHostAction(data);
@@ -229,7 +237,7 @@ public class ZooKeeperActionGuardianTest
     @Test
     public void testLockDataToHostnameAction_returnsActionCLOSEDIfBadData()
     {
-        try (ZooKeeperActionGuardian<Action> guardian = new ZooKeeperActionGuardian<>(Action.CLOSED, "localhost", PORT))
+        try (ZooKeeperActionGuardian<Action> guardian = new ZooKeeperActionGuardian<>(Action.CLOSED, HOST, PORT))
         {
             String data = "funny-host.name";
             ZooKeeperActionGuardian<Action>.HostnameAction ha = guardian.lockDataToHostAction(data);
@@ -246,7 +254,7 @@ public class ZooKeeperActionGuardianTest
     @Test
     public void testHostnameActionToLockData()
     {
-        try (ZooKeeperActionGuardian<Action> guardian = new ZooKeeperActionGuardian<>(Action.CLOSED, "localhost", PORT))
+        try (ZooKeeperActionGuardian<Action> guardian = new ZooKeeperActionGuardian<>(Action.CLOSED, HOST, PORT))
         {
             String data = guardian.hostActionToData("macbook", Action.DELETING);
             assertEquals("macbook-DELETING", data);
@@ -260,7 +268,7 @@ public class ZooKeeperActionGuardianTest
     public void reentrantLockTest() throws JobInUseException
     {
         try (ZooKeeperActionGuardian<Action> actionGuardian =
-                new ZooKeeperActionGuardian<>(Action.CLOSED, "localhost", PORT))
+                new ZooKeeperActionGuardian<>(Action.CLOSED, HOST, PORT))
         {
             ZooKeeperActionGuardian<Action>.ActionTicket ticket = actionGuardian.tryAcquiringAction("foo", Action.UPDATING);
             ZooKeeperActionGuardian<Action>.ActionTicket ticket2 = actionGuardian.tryAcquiringAction("foo", Action.UPDATING);
@@ -273,7 +281,7 @@ public class ZooKeeperActionGuardianTest
     public void testReleasingLockTransitionsToNextState() throws JobInUseException
     {
         try (ZooKeeperActionGuardian<Action> actionGuardian =
-                new ZooKeeperActionGuardian<>(Action.CLOSED, "localhost", PORT))
+                new ZooKeeperActionGuardian<>(Action.CLOSED, HOST, PORT))
         {
             try (ActionGuardian<Action>.ActionTicket ticket =
                     actionGuardian.tryAcquiringAction("foo", Action.CLOSING))
@@ -299,7 +307,7 @@ public class ZooKeeperActionGuardianTest
     public void testReleaseAcquiresNewLockWhenNextStateIsSleeping() throws JobInUseException
     {
         try (ZooKeeperActionGuardian<Action> actionGuardian =
-                new ZooKeeperActionGuardian<>(Action.CLOSED, "localhost", PORT))
+                new ZooKeeperActionGuardian<>(Action.CLOSED, HOST, PORT))
         {
             try (ActionGuardian<Action>.ActionTicket ticket =
                     actionGuardian.tryAcquiringAction("foo", Action.WRITING))
@@ -310,9 +318,37 @@ public class ZooKeeperActionGuardianTest
             m_ExpectedException.expect(JobInUseException.class);
 
             try (ZooKeeperActionGuardian<Action> actionGuardian2 =
-                    new ZooKeeperActionGuardian<>(Action.CLOSED, "localhost", PORT))
+                    new ZooKeeperActionGuardian<>(Action.CLOSED, HOST, PORT))
             {
                 actionGuardian2.tryAcquiringAction("foo", Action.WRITING);
+            }
+        }
+    }
+
+    @Test
+    public void testReleaseDeletesNode() throws Exception
+    {
+        final String JOB_ID = "foo";
+
+        try (ZooKeeperActionGuardian<Action> actionGuardian =
+                new ZooKeeperActionGuardian<>(Action.CLOSED, HOST, PORT))
+        {
+            try (ActionGuardian<Action>.ActionTicket ticket =
+                    actionGuardian.tryAcquiringAction(JOB_ID, Action.CLOSING))
+            {
+            }
+            assertEquals(Action.CLOSED, actionGuardian.currentAction(JOB_ID));
+
+            try (CuratorFramework client = CuratorFrameworkFactory.newClient(HOST + ":" + Integer.toString(PORT),
+                    new ExponentialBackoffRetry(1000, 3)))
+            {
+                client.start();
+
+                List<String> children = client.getChildren().forPath(
+                        ZooKeeperActionGuardian.LOCK_PATH_PREFIX.substring(0, ZooKeeperActionGuardian.LOCK_PATH_PREFIX.length() -1));
+
+                // assert no child nodes with the name JOB_ID
+                assertEquals(0, children.stream().filter(s -> s.equals(JOB_ID)).count());
             }
         }
     }
