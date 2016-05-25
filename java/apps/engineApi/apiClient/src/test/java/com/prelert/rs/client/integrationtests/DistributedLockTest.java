@@ -31,11 +31,13 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.rs.client.EngineApiClient;
+import com.prelert.rs.client.datauploader.ConcurrentActionClient;
 import com.prelert.rs.client.datauploader.CsvDataRunner;
 import com.prelert.rs.data.ApiError;
 import com.prelert.rs.data.MultiDataPostResult;
@@ -44,7 +46,7 @@ import com.prelert.rs.data.MultiDataPostResult;
 /**
  * Test the distributed lock.
  * main takes a list of URLs to the engine API nodes e.g.
- *  http://localhost:8080 http://marple:8080/engineApi/v2 http://aws:8080/engineApi/v2
+ *  http://localhost:8080/engine/v2 http://marple:8080/engineApi/v2 http://aws:8080/engineApi/v2
  * There must be at least 2 URLs provided
  *
  * The test creates a job on the first node and starts uploading data to it.
@@ -76,13 +78,37 @@ public class DistributedLockTest extends BaseIntegrationTest
         // create job on the first node and start uploading data
         CsvDataRunner dataUploader = startDataUploader(m_EngineApiUrls[0]);
 
+        String [] otherHostUrls = new String [m_EngineApiUrls.length -1];
+        System.arraycopy(m_EngineApiUrls, 1, otherHostUrls, 0, m_EngineApiUrls.length -1);
+
+        doConcurrentActionOnDifferentNodeTest(dataUploader.getJobId(), otherHostUrls);
+
+        // stop uploader and join threads - this doesn't close the job
+        dataUploader.cancel();
+        try
+        {
+            m_DataUploaderThread.join();
+        }
+        catch (InterruptedException e)
+        {
+            m_Logger.error("Interupted joining test thread", e);
+        }
+
+        // job should be sleeping now
+        testSleepingProcessOnOneNodeBlocksActionsOnOtherNodes(dataUploader.getJobId(), otherHostUrls);
+
+        m_EngineApiClient.deleteJob(dataUploader.getJobId());
+    }
+
+    private void doConcurrentActionOnDifferentNodeTest(String jobId, String [] hostUrls)
+    {
         ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(m_EngineApiUrls.length -1);
         try
         {
             // test operations not allowed on other nodes
-            for (int i=1; i<m_EngineApiUrls.length; i++)
+            for (int i=0; i<hostUrls.length; i++)
             {
-                executor.execute(new ConcurrentClientTest(m_EngineApiUrls[i], dataUploader.getJobId()));
+                executor.execute(new ConcurrentActionClient(hostUrls[i], jobId, Optional.of(m_CountDownLatch)));
             }
 
             // wait for test clients to finish
@@ -94,17 +120,6 @@ public class DistributedLockTest extends BaseIntegrationTest
             {
                 m_Logger.error(e1);
             }
-
-            // stop uploader and join threads
-            dataUploader.cancel();
-            try
-            {
-                m_DataUploaderThread.join();
-            }
-            catch (InterruptedException e)
-            {
-                m_Logger.error("Interupted joining test thread", e);
-            }
         }
         finally
         {
@@ -112,104 +127,34 @@ public class DistributedLockTest extends BaseIntegrationTest
         }
     }
 
-    private class ConcurrentClientTest implements Runnable
+    private void testSleepingProcessOnOneNodeBlocksActionsOnOtherNodes(String jobId, String [] hostUrls)
+            throws IOException
     {
-        private String url;
-        private String jobId;
-
-        private ConcurrentClientTest(String url, String jobId)
-        {
-            this.url = url;
-            this.jobId = jobId;
-        }
-
-        @Override
-        public void run()
+        for (String url : hostUrls)
         {
             try (EngineApiClient client = new EngineApiClient(url))
             {
-                // 1. Cannot close a job when another process is writing to it
-                boolean closed = client.closeJob(jobId);
-                if (closed)
-                {
-                    throw new IllegalStateException("Error closed job while writing to it");
-                }
-
-                ApiError apiError = client.getLastError();
-
-                if (apiError.getErrorCode() != ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR)
-                {
-                    throw new IllegalStateException("Closing Job: Error code should be job in use error");
-                }
-
-
-                // 2. Cannot flush a job when another process is writing to it
-                boolean flushed = client.flushJob(jobId, false);
-                if (flushed)
-                {
-                    throw new IllegalStateException("Error flushed job while writing to it");
-                }
-
-                apiError = client.getLastError();
-
-                if (apiError.getErrorCode() != ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR)
-                {
-                    throw new IllegalStateException("Flushing Job: Error code should be job in use error");
-                }
-
-
-                // 3. Cannot write to the job when another process is writing to it
                 String data = CsvDataRunner.HEADER + "\n1000,metric,100\n";
                 InputStream is = new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
                 MultiDataPostResult result = client.streamingUpload(jobId, is, false);
 
-                if (!result.anErrorOccurred())
-                {
-                    throw new IllegalStateException("Writing data: An error should have occurred");
-                }
-                if (result.getResponses().size() != 1)
-                {
-                    throw new IllegalStateException("Writing data: Should have a single response");
-                }
 
-                apiError = result.getResponses().get(0).getError();
-                if (apiError.getErrorCode() != ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR)
-                {
-                    throw new IllegalStateException("Writing data: Error code should be job in use error");
-                }
+                test(result.anErrorOccurred(), "Writing data: An error should have occurred");
+                test(result.getResponses().size() == 1, "Writing data: Should have a single response");
 
-                if (result.getResponses().get(0).getUploadSummary() != null)
-                {
-                    throw new IllegalStateException("Error wrote to job in use");
-                }
+                ApiError apiError = result.getResponses().get(0).getError();
+                test(apiError.getErrorCode() == ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR,
+                                        "Writing data: Error code should be job in use error");
 
-                // 4. Cannot delete a job when another process is writing to it
-                boolean deleted = client.deleteJob(jobId);
-                if (deleted)
-                {
-                    throw new IllegalStateException("Error deleted job while writing to it");
-                }
-
+                String updateJson = "{\"modelDebugConfig\":{\"boundsPercentile\":90.0, \"terms\":\"someTerm\"}}";
+                test(client.updateJob(jobId, updateJson) == false);
                 apiError = client.getLastError();
-
-                if (apiError.getErrorCode() != ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR)
-                {
-                    throw new IllegalStateException("Deleting Job: Error code should be job in use error");
-                }
-            }
-            catch (IOException e)
-            {
-                DistributedLockTest.this.m_Logger.error("Exception in concurrent client test "
-                        + url, e);
-            }
-            finally
-            {
-                DistributedLockTest.this.m_CountDownLatch.countDown();
+                test(apiError != null);
+                test(apiError.getErrorCode() == ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR,
+                        "Updating job: Error code should be job in use error");
             }
         }
-
     }
-
 
     /**
      * Does not return the data runner until it has started uploading
@@ -243,8 +188,6 @@ public class DistributedLockTest extends BaseIntegrationTest
         return jobRunner;
     }
 
-
-
     public static void main(String[] args) throws IOException
     {
         // expect at least 2 hosts
@@ -264,5 +207,4 @@ public class DistributedLockTest extends BaseIntegrationTest
             test.m_Logger.info("Distributed Lock test passed");
         }
     }
-
 }

@@ -169,7 +169,8 @@ public class CsvDataRunner implements Runnable
         try
         {
             m_ApiClient.close();
-        } catch (IOException e)
+        }
+        catch (IOException e)
         {
             LOGGER.error("Failed to close client", e);
         }
@@ -269,6 +270,14 @@ public class CsvDataRunner implements Runnable
                     }
                 }
             }
+            catch (IOException e)
+            {
+                LOGGER.error("Error writing csv row", e);
+                synchronized (CsvDataRunner.this)
+                {
+                    CsvDataRunner.this.notify();
+                }
+            }
             finally
             {
                 try
@@ -300,22 +309,16 @@ public class CsvDataRunner implements Runnable
          * Generate a random value for the time series using ThreadLocalRandom
          * @param timeSeriesId
          * @param epoch
+         * @throws IOException
          */
-        private void writeTimeSeriesRow(long timeSeriesId, long epoch)
+        private void writeTimeSeriesRow(long timeSeriesId, long epoch) throws IOException
         {
             String timeSeries = "metric" + timeSeriesId;
             int value = ThreadLocalRandom.current().nextInt(512);
 
             String row = String.format("%d,%s,%d", epoch, timeSeries, value);
-            try
-            {
-                m_OutputStream.write(row.getBytes(StandardCharsets.UTF_8));
-                m_OutputStream.write(10); // newline char
-            }
-            catch (IOException e)
-            {
-                LOGGER.error("Error writing csv row", e);
-            }
+            m_OutputStream.write(row.getBytes(StandardCharsets.UTF_8));
+            m_OutputStream.write(10); // newline char
         }
     }
 
