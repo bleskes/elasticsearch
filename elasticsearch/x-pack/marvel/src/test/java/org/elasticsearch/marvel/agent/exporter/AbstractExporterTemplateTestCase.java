@@ -197,6 +197,7 @@ public abstract class AbstractExporterTemplateTestCase extends MarvelIntegTestCa
                                             .endObject()
                                         .endObject()
                                     .endObject()
-                                .endObject().bytes();
+                                .endObject()
+                            .endObject().bytes();
     }
 }
