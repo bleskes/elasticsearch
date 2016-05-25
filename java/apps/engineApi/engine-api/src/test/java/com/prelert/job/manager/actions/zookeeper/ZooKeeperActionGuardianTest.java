@@ -50,6 +50,7 @@ import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.exceptions.JobInUseException;
 import com.prelert.job.manager.actions.Action;
 import com.prelert.job.manager.actions.ActionGuardian;
+import com.prelert.job.manager.actions.ScheduledAction;
 
 public class ZooKeeperActionGuardianTest
 {
@@ -350,6 +351,32 @@ public class ZooKeeperActionGuardianTest
                 // assert no child nodes with the name JOB_ID
                 assertEquals(0, children.stream().filter(s -> s.equals(JOB_ID)).count());
             }
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    public void testActionIsnotSetIfNextGuardianFails() throws JobInUseException
+    {
+        ActionGuardian<ScheduledAction> next = Mockito.mock(ActionGuardian.class);
+
+        try (ZooKeeperActionGuardian<ScheduledAction> actionGuardian =
+                new ZooKeeperActionGuardian<>(ScheduledAction.STOP, HOST, PORT, next))
+        {
+
+            Mockito.when(next.tryAcquiringAction("foo", ScheduledAction.START))
+                                .thenThrow(JobInUseException.class);
+
+            try
+            {
+                actionGuardian.tryAcquiringAction("foo", ScheduledAction.START);
+                fail("Expected JobInUseException to be thrown");
+            }
+            catch (JobInUseException e)
+            {
+            }
+
+            assertEquals(ScheduledAction.STOP, actionGuardian.currentAction("foo"));
         }
     }
 }

@@ -111,4 +111,28 @@ public class LocalActionGuardianTest
         }
         assertEquals(Action.SLEEPING, actionGuardian.currentAction("foo"));
     }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    public void testActionIsnotSetIfNextGuardianFails() throws JobInUseException
+    {
+        ActionGuardian<ScheduledAction> next = Mockito.mock(ActionGuardian.class);
+        ActionGuardian<ScheduledAction> actionGuardian =
+                            new LocalActionGuardian<>(ScheduledAction.STOP, next);
+
+        Mockito.when(next.tryAcquiringAction("foo", ScheduledAction.START))
+                        .thenThrow(JobInUseException.class);
+
+        try
+        {
+            actionGuardian.tryAcquiringAction("foo", ScheduledAction.START);
+
+            fail("Expected JobInUseException to be thrown");
+        }
+        catch (JobInUseException e)
+        {
+
+        }
+        assertEquals(ScheduledAction.STOP, actionGuardian.currentAction("foo"));
+    }
 }

@@ -83,13 +83,12 @@ public class LocalActionGuardian<T extends Enum<T> & ActionState<T>>
 
             if (currentAction.isValidTransition(action))
             {
-                m_ActionsByJob.put(jobId, action);
-
                 if (m_NextGuardian.isPresent())
                 {
                     m_NextGuardian.get().tryAcquiringAction(jobId, action);
                 }
 
+                m_ActionsByJob.put(jobId, action);
 
                 return newActionTicket(jobId, action.nextState(currentAction));
             }

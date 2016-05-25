@@ -163,14 +163,14 @@ public class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
 
         if (tryAcquiringLockNonBlocking(lock))
         {
-            setHostActionOfLockedJob(jobId, m_Hostname, action);
-
-            m_LocksByJob.put(jobId, lock);
-
             if (m_NextGuardian.isPresent())
             {
                 m_NextGuardian.get().tryAcquiringAction(jobId, action);
             }
+
+            setHostActionOfLockedJob(jobId, m_Hostname, action);
+            m_LocksByJob.put(jobId, lock);
+
             return newActionTicket(jobId, action.nextState(m_NoneAction));
         }
         else
