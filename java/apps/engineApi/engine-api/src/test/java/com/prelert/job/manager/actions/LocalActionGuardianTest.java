@@ -131,7 +131,6 @@ public class LocalActionGuardianTest
         }
         catch (JobInUseException e)
         {
-
         }
         assertEquals(ScheduledAction.STOP, actionGuardian.currentAction("foo"));
     }

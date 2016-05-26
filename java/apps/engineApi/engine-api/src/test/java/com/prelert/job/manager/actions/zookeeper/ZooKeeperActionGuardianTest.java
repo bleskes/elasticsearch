@@ -56,6 +56,10 @@ public class ZooKeeperActionGuardianTest
 {
     private static final String  HOST = "localhost";
     private static final int PORT = 2182;
+
+    // running against an existing ZooKeeper is much faster than
+    // using the testing server but some tests will fail if it's
+    // not a clean setup
 //    private static final String  HOST = "qa3";
 //    private static final int PORT = 2181;
 
@@ -354,8 +358,63 @@ public class ZooKeeperActionGuardianTest
         }
     }
 
-    @SuppressWarnings("unchecked")
     @Test
+    public void testReleaseDoesnotDeleteNodeIfAnotherLockIsHeldForJob() throws Exception
+    {
+        final String JOB_ID = "foo";
+
+        try (CuratorFramework client = CuratorFrameworkFactory.newClient(HOST + ":" + Integer.toString(PORT),
+                new ExponentialBackoffRetry(1000, 3)))
+        {
+            client.start();
+
+            // set a lock for a scheduled action
+            try (ZooKeeperActionGuardian<ScheduledAction> scheduledJobActionGuardian =
+                    new ZooKeeperActionGuardian<>(ScheduledAction.STOP, HOST, PORT))
+            {
+
+                try (ActionGuardian<ScheduledAction>.ActionTicket schedulerTicket =
+                        scheduledJobActionGuardian.tryAcquiringAction(JOB_ID, ScheduledAction.START))
+                {
+                    // set a lock for the job action
+                    try (ZooKeeperActionGuardian<Action> actionGuardian =
+                            new ZooKeeperActionGuardian<>(Action.CLOSED, HOST, PORT))
+                    {
+                        try (ActionGuardian<Action>.ActionTicket ticket =
+                                actionGuardian.tryAcquiringAction(JOB_ID, Action.CLOSING))
+                        {
+                        }
+                        assertEquals(Action.CLOSED, actionGuardian.currentAction(JOB_ID));
+
+
+                        List<String> children = client.getChildren().forPath(
+                                ZooKeeperActionGuardian.LOCK_PATH_PREFIX.substring(0, ZooKeeperActionGuardian.LOCK_PATH_PREFIX.length() -1));
+
+                        // assert the job node hasn't been deleted while the scheduler still
+                        // has a lock
+                        assertTrue(children.contains(JOB_ID));
+                    }
+                }
+
+                // stopping should release the scheduler lock
+                try (ActionGuardian<ScheduledAction>.ActionTicket schedulerTicket =
+                        scheduledJobActionGuardian.tryAcquiringAction(JOB_ID, ScheduledAction.STOP))
+                {
+                }
+
+
+                // now the scheduler lock is released the job node should have been deleted
+                List<String> children = client.getChildren().forPath(
+                        ZooKeeperActionGuardian.LOCK_PATH_PREFIX.substring(0, ZooKeeperActionGuardian.LOCK_PATH_PREFIX.length() -1));
+
+                // assert no child nodes with the name JOB_ID
+                assertEquals(0, children.stream().filter(s -> s.equals(JOB_ID)).count());
+            }
+        }
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
     public void testActionIsnotSetIfNextGuardianFails() throws JobInUseException
     {
         ActionGuardian<ScheduledAction> next = Mockito.mock(ActionGuardian.class);
@@ -364,12 +423,12 @@ public class ZooKeeperActionGuardianTest
                 new ZooKeeperActionGuardian<>(ScheduledAction.STOP, HOST, PORT, next))
         {
 
-            Mockito.when(next.tryAcquiringAction("foo", ScheduledAction.START))
+            Mockito.when(next.tryAcquiringAction("foo5", ScheduledAction.START))
                                 .thenThrow(JobInUseException.class);
 
             try
             {
-                actionGuardian.tryAcquiringAction("foo", ScheduledAction.START);
+                actionGuardian.tryAcquiringAction("foo5", ScheduledAction.START);
                 fail("Expected JobInUseException to be thrown");
             }
             catch (JobInUseException e)

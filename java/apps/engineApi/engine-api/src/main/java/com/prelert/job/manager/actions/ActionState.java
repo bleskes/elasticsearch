@@ -86,4 +86,6 @@ public interface ActionState<T>
 
 
     T startingState();
+
+    String typename();
 }

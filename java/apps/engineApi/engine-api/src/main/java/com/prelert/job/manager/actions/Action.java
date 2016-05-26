@@ -166,4 +166,9 @@ public enum Action implements ActionState<Action>
         return CLOSED;
     }
 
+    @Override
+    public String typename()
+    {
+        return Action.class.getSimpleName();
+    }
 }

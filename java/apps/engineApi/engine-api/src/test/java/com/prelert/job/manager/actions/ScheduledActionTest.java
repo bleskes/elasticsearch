@@ -34,6 +34,12 @@ import org.junit.Test;
 public class ScheduledActionTest
 {
     @Test
+    public void testTypename()
+    {
+        assertEquals("ScheduledAction", ScheduledAction.STOP.typename());
+    }
+
+    @Test
     public void testgetBusyActionError_GivenVariousActionsInUse()
     {
         assertEquals("Cannot start scheduler for job 'foo' while its status is started on host marple",

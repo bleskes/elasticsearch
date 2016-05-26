@@ -131,6 +131,8 @@ public class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
     }
 
     /**
+     * The returned ActionTicket MUST be closed in a try-with-resource block
+     *
      * The interprocess mutex is reentrant so not an error
      * if we already hold the lock
      *
@@ -235,6 +237,11 @@ public class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
             m_Client.setData().forPath(lockPath(jobId));
             m_Client.delete().deletingChildrenIfNeeded().forPath(lockPath(jobId));
 
+            // if no other locks for the job delete the job node
+            if (m_Client.getChildren().forPath(jobPath(jobId)).isEmpty())
+            {
+                m_Client.delete().forPath(jobPath(jobId));
+            }
         }
         catch (Exception e)
         {
@@ -306,6 +313,11 @@ public class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
     }
 
     private String lockPath(String jobId)
+    {
+        return LOCK_PATH_PREFIX + jobId + "/" + m_NoneAction.typename();
+    }
+
+    private String jobPath(String jobId)
     {
         return LOCK_PATH_PREFIX + jobId;
     }

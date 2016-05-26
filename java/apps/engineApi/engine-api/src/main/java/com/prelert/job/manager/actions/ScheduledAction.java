@@ -63,13 +63,13 @@ public enum ScheduledAction implements ActionState<ScheduledAction>
     }
 
     /**
-     * If START the next state is START.
+     * If START the next state is STOP.
      * If STOP the next state is STOP.
      */
     @Override
     public ScheduledAction nextState(ScheduledAction unused)
     {
-        return this;
+        return STOP;
     }
 
     @Override
@@ -102,7 +102,7 @@ public enum ScheduledAction implements ActionState<ScheduledAction>
 
 
     /**
-     * Hold the lock if started
+     * Hold the lock if started only
      */
     @Override
     public boolean holdDistributedLock()
@@ -114,5 +114,11 @@ public enum ScheduledAction implements ActionState<ScheduledAction>
     public ScheduledAction startingState()
     {
         return STOP;
+    }
+
+    @Override
+    public String typename()
+    {
+        return ScheduledAction.class.getSimpleName();
     }
 }

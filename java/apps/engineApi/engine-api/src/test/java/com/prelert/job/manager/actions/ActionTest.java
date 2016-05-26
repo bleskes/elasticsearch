@@ -36,6 +36,12 @@ import com.prelert.job.manager.actions.Action;
 public class ActionTest
 {
     @Test
+    public void testTypename()
+    {
+        assertEquals("Action", Action.CLOSED.typename());
+    }
+
+    @Test
     public void testgetBusyActionError_GivenVariousActionsInUse()
     {
         assertEquals("Cannot close job foo while another connection is closing the job",
