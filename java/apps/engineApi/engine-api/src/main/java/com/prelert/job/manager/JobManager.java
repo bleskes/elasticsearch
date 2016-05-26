@@ -671,15 +671,26 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
 
         // Try to stop scheduler before getting the Action to delete to avoid a jobInUseException
         // in case the scheduler is in the middle of submitting data
-        if (m_ScheduledJobs.containsKey(jobId))
+        if (isScheduledJob(jobId))
         {
-            JobScheduler jobScheduler = m_ScheduledJobs.get(jobId);
-            if (!jobScheduler.isStopped())
+            if (m_ScheduledJobs.containsKey(jobId))
             {
-                jobScheduler.stopManual();
+                JobScheduler jobScheduler = m_ScheduledJobs.get(jobId);
+                if (!jobScheduler.isStopped())
+                {
+                    jobScheduler.stopManual();
+                }
+                m_ScheduledJobs.remove(jobId);
             }
-            m_ScheduledJobs.remove(jobId);
+            else if (m_SchedulerActionGuardian.currentAction(jobId) == ScheduledAction.START)
+            {
+                throw new CannotStopSchedulerException("running remotely");
+            }
+
         }
+
+
+
 
         try (ActionGuardian<Action>.ActionTicket actionTicket =
                         m_ProcessActionGuardian.tryAcquiringAction(jobId, Action.DELETING))
@@ -931,6 +942,7 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
         m_JobProvider.updateSchedulerState(jobId,
                 new SchedulerState(startMs, endMs.isPresent() ? endMs.getAsLong() : null));
         LOGGER.info("Starting scheduler for job: " + jobId);
+
         m_ScheduledJobs.get(jobId).start(job, startMs, endMs, actionTicket);
     }
 
@@ -940,11 +952,17 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
     {
         checkJobHasScheduler(jobId);
 
-        m_SchedulerActionGuardian.tryAcquiringAction(jobId, ScheduledAction.STOP);
-
         LOGGER.info("Stopping scheduler for job: " + jobId);
-        m_ScheduledJobs.get(jobId).stopManual();
-        closeJob(jobId);
+
+        if (m_ScheduledJobs.containsKey(jobId))
+        {
+            m_ScheduledJobs.get(jobId).stopManual();
+            closeJob(jobId);
+        }
+        else if (m_SchedulerActionGuardian.currentAction(jobId) == ScheduledAction.START)
+        {
+            throw new CannotStopSchedulerException("running remotely");
+        }
     }
 
     void checkJobHasScheduler(String jobId) throws NoSuchScheduledJobException
@@ -955,9 +973,22 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
         }
     }
 
+    /**
+     * True if the job has a scheduler configuration
+     *
+     * @param jobId
+     * @return
+     */
     public boolean isScheduledJob(String jobId)
     {
-        return m_ScheduledJobs.containsKey(jobId);
+        Optional<JobDetails> job = m_JobProvider.getJobDetails(jobId);
+        return job.isPresent() && job.get().getSchedulerConfig() != null;
+
+        // Not necessarily correct in a distributed system
+        // if a new scheduled jo b has been created on a different
+        // node
+//        return m_ScheduledJobs.containsKey(jobId)
+//                || m_SchedulerActionGuardian.currentAction(jobId) == ScheduledAction.START;
     }
 
     /**
@@ -1061,10 +1092,17 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
         {
             checkJobHasScheduler(jobId);
             JobScheduler scheduler = m_ScheduledJobs.get(jobId);
-            if (!scheduler.isStopped())
+            if (scheduler != null && !scheduler.isStopped())
             {
                 throw new CannotUpdateSchedulerException(jobId, scheduler.getStatus());
             }
+
+            if (m_SchedulerActionGuardian.currentAction(jobId) == ScheduledAction.START)
+            {
+                // TODO
+                throw new CannotUpdateSchedulerException(jobId, scheduler.getStatus());
+            }
+
             securePassword(newSchedulerConfig);
             if (m_JobProvider.updateSchedulerConfig(jobId, newSchedulerConfig))
             {

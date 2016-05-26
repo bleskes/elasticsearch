@@ -63,6 +63,8 @@ public abstract class BaseScheduledJobTest extends BaseIntegrationTest
     private static final String START_SCHEDULER_URL_SUFFIX =
             "/schedulers/" + TEST_JOB_ID + "/start";
 
+    private static final String STOP_SCHEDULER_URI_SUFFIX = "/schedulers/" + TEST_JOB_ID + "/stop";
+
     private static final String BULK_INDEX_ACTION =
             "{ \"index\" : { \"_index\" : \"%s\", \"_type\" : \"%s\"} }\n";
 
@@ -293,6 +295,26 @@ public abstract class BaseScheduledJobTest extends BaseIntegrationTest
         {
             m_Logger.error("Error while starting scheduler", e);
             throw new RuntimeException(e);
+        }
+    }
+
+    protected boolean stopScheduler()
+    {
+        m_Logger.info("Stopping scheduler");
+
+        String stopSchedulerUri =
+                String.format(m_BaseUrl + STOP_SCHEDULER_URI_SUFFIX);
+
+        try
+        {
+            ContentResponse response = m_HttpClient.POST(stopSchedulerUri).send();
+            m_Logger.info("Stop scheduler response : " + response);
+            return response.getStatus() == 200;
+        }
+        catch (InterruptedException | TimeoutException | ExecutionException e)
+        {
+            m_Logger.error("Error while stopping scheduler", e);
+            return false;
         }
     }
 

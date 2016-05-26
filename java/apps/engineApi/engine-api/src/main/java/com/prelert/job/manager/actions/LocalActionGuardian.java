@@ -68,6 +68,8 @@ public class LocalActionGuardian<T extends Enum<T> & ActionState<T>>
     }
 
     /**
+     * The returned ActionTicket MUST be closed in a try-with-resource block
+     *
      * Returns an {@code ActionTicket} if requested action is available for the given job.
      * @param jobId the job id
      * @param action the requested action

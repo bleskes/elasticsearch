@@ -87,6 +87,7 @@ public class DistributedLockTest extends BaseIntegrationTest
         dataUploader.cancel();
         try
         {
+            m_Logger.info("Waiting on upload thread to finish");
             m_DataUploaderThread.join();
         }
         catch (InterruptedException e)

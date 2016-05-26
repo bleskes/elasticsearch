@@ -86,6 +86,8 @@ public abstract class ActionGuardian< T extends Enum<T> & ActionState<T>>
     public abstract T currentAction(String jobId);
 
     /**
+     * The returned ActionTicket MUST be closed in a try-with-resource block
+     *
      * Returns an {@code ActionTicket} if requested action is available for the given job.
      * @param jobId the job id
      * @param action the requested action

@@ -258,6 +258,7 @@ public class PrelertWebApp extends Application
         {
             String host = PrelertSettings.getSettingOrDefault(ZOOKEEPER_HOST_PROP, "localhost");
             int port = PrelertSettings.getSettingOrDefault(ZOOKEEPER_PORT_PROP, 2181);
+            LOGGER.info("Using ZooKeeper server on " + host + ":" + port);
 
             processActionGuardian = new LocalActionGuardian<>(Action.CLOSED,
                        new ZooKeeperActionGuardian<>(Action.CLOSED, host, port));
