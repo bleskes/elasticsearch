@@ -438,4 +438,36 @@ public class ZooKeeperActionGuardianTest
             assertEquals(ScheduledAction.STOP, actionGuardian.currentAction("foo"));
         }
     }
+
+    @Test
+    public void testCanReleaseLockFromDifferentThread() throws JobInUseException, InterruptedException
+    {
+        try (ZooKeeperActionGuardian<Action> actionGuardian =
+                new ZooKeeperActionGuardian<>(Action.CLOSED, HOST, PORT))
+        {
+            ActionGuardian<Action>.ActionTicket ticket =
+                    actionGuardian.tryAcquiringAction("foo", Action.CLOSING);
+
+
+            Thread th = new Thread(() -> ticket.close());
+            th.start();
+            th.join();
+
+            assertEquals(Action.CLOSED, actionGuardian.currentAction("foo"));
+        }
+    }
+
+    @Test
+    public void testCurrentAction() throws JobInUseException, InterruptedException
+    {
+        try (ZooKeeperActionGuardian<Action> actionGuardian =
+                new ZooKeeperActionGuardian<>(Action.CLOSED, HOST, PORT))
+        {
+            try (ActionGuardian<Action>.ActionTicket ticket =
+                    actionGuardian.tryAcquiringAction("foo", Action.CLOSING))
+            {
+                assertEquals(Action.CLOSING, actionGuardian.currentAction("foo"));
+            }
+        }
+    }
 }

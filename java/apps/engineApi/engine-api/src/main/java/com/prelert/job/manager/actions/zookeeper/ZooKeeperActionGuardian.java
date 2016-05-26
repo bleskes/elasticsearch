@@ -41,7 +41,8 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
-import org.apache.curator.framework.recipes.locks.InterProcessMutex;
+import org.apache.curator.framework.recipes.locks.InterProcessSemaphoreV2;
+import org.apache.curator.framework.recipes.locks.Lease;
 import org.apache.curator.retry.ExponentialBackoffRetry;
 import org.apache.log4j.Logger;
 
@@ -64,7 +65,7 @@ public class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
 
 
     private final CuratorFramework m_Client;
-    private final Map<String, InterProcessMutex> m_LocksByJob = new ConcurrentHashMap<>();
+    private final Map<String, Lease> m_LeaseByJob = new ConcurrentHashMap<>();
     private String m_Hostname;
 
     public ZooKeeperActionGuardian(T defaultAction, String host, int port)
@@ -112,8 +113,9 @@ public class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
     @Override
     public T currentAction(String jobId)
     {
-        InterProcessMutex lock = new InterProcessMutex(m_Client, lockPath(jobId));
-        if (tryAcquiringLockNonBlocking(lock))
+        InterProcessSemaphoreV2 lock = new InterProcessSemaphoreV2(m_Client, lockPath(jobId), 1);
+        Lease lease = tryAcquiringLockNonBlocking(lock);
+        if (lease != null)
         {
             try
             {
@@ -121,7 +123,7 @@ public class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
             }
             finally
             {
-                releaseLockAndDeleteNode(lock, jobId);
+                releaseLeaseAndDeleteNode(lease, jobId);
             }
         }
         else
@@ -145,8 +147,8 @@ public class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
     public ActionTicket tryAcquiringAction(String jobId, T action)
     throws JobInUseException
     {
-        InterProcessMutex lock = m_LocksByJob.get(jobId);
-        if (lock != null)
+        Lease lease = m_LeaseByJob.get(jobId);
+        if (lease != null)
         {
             HostnameAction hostAction = getHostActionOfLockedJob(jobId);
             if (hostAction.m_Action.isValidTransition(action))
@@ -161,9 +163,10 @@ public class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
             }
         }
 
-        lock = new InterProcessMutex(m_Client, lockPath(jobId));
+        InterProcessSemaphoreV2 lock = new InterProcessSemaphoreV2(m_Client, lockPath(jobId), 1);
+        lease = tryAcquiringLockNonBlocking(lock);
 
-        if (tryAcquiringLockNonBlocking(lock))
+        if (lease != null)
         {
             if (m_NextGuardian.isPresent())
             {
@@ -171,7 +174,7 @@ public class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
             }
 
             setHostActionOfLockedJob(jobId, m_Hostname, action);
-            m_LocksByJob.put(jobId, lock);
+            m_LeaseByJob.put(jobId, lease);
 
             return newActionTicket(jobId, action.nextState(m_NoneAction));
         }
@@ -194,14 +197,14 @@ public class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
         else
         {
             // release the lock
-            InterProcessMutex lock = m_LocksByJob.remove(jobId);
-            if (lock == null)
+            Lease lease = m_LeaseByJob.remove(jobId);
+            if (lease == null)
             {
                 throw new IllegalStateException("Job " + jobId +
                         " is not locked by this ZooKeeperActionGuardian");
             }
 
-            releaseLockAndDeleteNode(lock, jobId);
+            releaseLeaseAndDeleteNode(lease, jobId);
         }
 
         if (m_NextGuardian.isPresent())
@@ -210,28 +213,30 @@ public class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
         }
     }
 
-    private boolean tryAcquiringLockNonBlocking(InterProcessMutex lock)
+    /**
+     * returned lease is null if lease wasn't acquired
+     * @param lock
+     * @return
+     */
+    private Lease tryAcquiringLockNonBlocking(InterProcessSemaphoreV2 lock)
     {
         try
         {
-            if (lock.acquire(ACQUIRE_LOCK_TIMEOUT, TimeUnit.MILLISECONDS))
-            {
-                return true;
-            }
+            return lock.acquire(ACQUIRE_LOCK_TIMEOUT, TimeUnit.MILLISECONDS);
         }
         catch (Exception e)
         {
             LOGGER.error("Exception acquiring lock", e);
         }
 
-        return false;
+        return null;
     }
 
-    private void releaseLockAndDeleteNode(InterProcessMutex lock, String jobId)
+    private void releaseLeaseAndDeleteNode(Lease lease, String jobId)
     {
         try
         {
-            lock.release();
+            lease.close();
 
             // clear data and delete job node
             m_Client.setData().forPath(lockPath(jobId));
