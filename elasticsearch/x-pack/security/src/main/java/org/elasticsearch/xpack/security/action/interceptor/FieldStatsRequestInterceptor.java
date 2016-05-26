@@ -20,6 +20,7 @@ package org.elasticsearch.xpack.security.action.interceptor;
 import org.elasticsearch.action.fieldstats.FieldStatsRequest;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.license.XPackLicenseState;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportRequest;
 
@@ -28,8 +29,8 @@ import org.elasticsearch.transport.TransportRequest;
  */
 public class FieldStatsRequestInterceptor extends FieldAndDocumentLevelSecurityRequestInterceptor<FieldStatsRequest> {
     @Inject
-    public FieldStatsRequestInterceptor(Settings settings, ThreadPool threadPool) {
-        super(settings, threadPool.getThreadContext());
+    public FieldStatsRequestInterceptor(Settings settings, ThreadPool threadPool, XPackLicenseState licenseState) {
+        super(settings, threadPool.getThreadContext(), licenseState);
     }
 
     @Override

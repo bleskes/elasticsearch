@@ -62,7 +62,7 @@ public class DnRoleMapper {
     private final String realmType;
     private final Path file;
     private final boolean useUnmappedGroupsAsRoles;
-    protected volatile Map<DN, Set<String>> dnRoles;
+    private volatile Map<DN, Set<String>> dnRoles;
 
     private CopyOnWriteArrayList<RefreshListener> listeners;
 
@@ -146,9 +146,8 @@ public class DnRoleMapper {
 
             }
 
-            if (dnToRoles.isEmpty()) {
-                logger.warn("no mappings found in role mappings file [{}] for realm [{}/{}]", path.toAbsolutePath(), realmType, realmName);
-            }
+            logger.debug("[{}] role mappings found in file [{}] for realm [{}/{}]", dnToRoles.size(), path.toAbsolutePath(), realmType,
+                    realmName);
             return unmodifiableMap(dnToRoles);
         } catch (IOException e) {
             throw new ElasticsearchException("could not read realm [" + realmType + "/" + realmName + "] role mappings file [" +
