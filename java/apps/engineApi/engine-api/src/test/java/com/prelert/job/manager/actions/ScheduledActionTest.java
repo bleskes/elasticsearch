@@ -61,8 +61,8 @@ public class ScheduledActionTest
     @Test
     public void testNextState()
     {
-        assertEquals(ScheduledAction.START, ScheduledAction.START.nextState(ScheduledAction.STOP));
-        assertEquals(ScheduledAction.START, ScheduledAction.START.nextState(ScheduledAction.START));
+        assertEquals(ScheduledAction.STOP, ScheduledAction.START.nextState(ScheduledAction.STOP));
+        assertEquals(ScheduledAction.STOP, ScheduledAction.START.nextState(ScheduledAction.START));
         assertEquals(ScheduledAction.STOP, ScheduledAction.STOP.nextState(ScheduledAction.START));
         assertEquals(ScheduledAction.STOP, ScheduledAction.STOP.nextState(ScheduledAction.STOP));
     }
