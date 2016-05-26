@@ -24,7 +24,7 @@ import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.common.xcontent.json.JsonXContent;
 import org.elasticsearch.script.CompiledScript;
 import org.elasticsearch.script.ExecutableScript;
-import org.elasticsearch.script.ScriptException;
+import org.elasticsearch.script.GeneralScriptException;
 import org.elasticsearch.script.ScriptService.ScriptType;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.threadpool.ThreadPool;
@@ -207,7 +207,7 @@ public class ScriptTransformTests extends ESTestCase {
         try {
             transformFactory.createExecutable(scriptTransform);
             fail("expected a transform validation exception trying to create an executable with a bad or missing script");
-        } catch (ScriptException e) {
+        } catch (GeneralScriptException e) {
             // I don't think this is what this test intended to check!
             assertThat(e.getMessage(), containsString("script_lang not supported [groovy]"));
         }
@@ -230,7 +230,7 @@ public class ScriptTransformTests extends ESTestCase {
         try {
             transformFactory.createExecutable(scriptCondition);
             fail("expected a transform validation exception trying to create an executable with an invalid language");
-        } catch (ScriptException e) {
+        } catch (GeneralScriptException e) {
             assertThat(e.getMessage(), containsString("script_lang not supported [not_a_valid_lang]"));
         }
     }
