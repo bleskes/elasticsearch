@@ -72,19 +72,39 @@ public class DistributedScheduledJobTest extends BaseScheduledJobTest
     private void testCannotStartSchedulerOnOtherHosts(String [] otherHostUrls)
     throws IOException
     {
+        String schedulerConfigUpdate = "{\"schedulerConfig\" : {"
+      + "\"query\" : {\"match_all\" : { }},"
+      + "\"types\" : [ \"record\" ],"
+      + "\"queryDelay\" : 60,"
+      + "\"dataSource\" : \"ELASTICSEARCH\","
+      + "\"dataSourceCompatibility\" : \"2.x.x\","
+      + "\"retrieveWholeSource\" : false,"
+      + "\"baseUrl\" : \"http://localhost:9200/\","
+      + "\"indexes\" : [ \"test-data-scheduled-job-test\" ],"
+      + "\"scrollSize\" : 500}}";
+
         for (String host : otherHostUrls)
         {
             try (EngineApiClient client = new EngineApiClient(host))
             {
                 boolean started = client.startScheduler(TEST_JOB_ID);
                 test(started == false);
-
                 ApiError error = client.getLastError();
                 test(error.getErrorCode() == ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR);
 
-                boolean stopped = client.startScheduler(TEST_JOB_ID);
+                boolean stopped = client.stopScheduler(TEST_JOB_ID);
                 test(stopped == false);
+                error = client.getLastError();
+                test(error.getErrorCode() == ErrorCodes.CANNOT_STOP_JOB_SCHEDULER);
 
+                boolean deleted = client.deleteJob(TEST_JOB_ID);
+                test(deleted == false);
+                error = client.getLastError();
+                test(error.getErrorCode() == ErrorCodes.CANNOT_STOP_JOB_SCHEDULER);
+
+                // update sched conf
+                boolean updated = client.updateJob(TEST_JOB_ID, schedulerConfigUpdate);
+                test(updated == false);
                 error = client.getLastError();
                 test(error.getErrorCode() == ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR);
             }

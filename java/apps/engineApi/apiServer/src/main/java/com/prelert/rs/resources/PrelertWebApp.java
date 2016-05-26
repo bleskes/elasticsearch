@@ -56,6 +56,7 @@ import com.prelert.job.manager.JobManager;
 import com.prelert.job.manager.actions.Action;
 import com.prelert.job.manager.actions.ActionGuardian;
 import com.prelert.job.manager.actions.LocalActionGuardian;
+import com.prelert.job.manager.actions.NoneActionGuardian;
 import com.prelert.job.manager.actions.ScheduledAction;
 import com.prelert.job.manager.actions.zookeeper.ZooKeeperActionGuardian;
 import com.prelert.job.messages.Messages;
@@ -251,8 +252,10 @@ public class PrelertWebApp extends Application
             JobLoggerFactory jobLoggerFactory)
     {
         ActionGuardian<Action> processActionGuardian = new LocalActionGuardian<>(Action.CLOSED);
+        // we don't need an ActionGuardian for scheduled jobs if
+        // not in a distributed environment
         ActionGuardian<ScheduledAction> schedulerActionGuardian =
-                            new LocalActionGuardian<>(ScheduledAction.STOP);
+                            new NoneActionGuardian<>(ScheduledAction.STOP);
 
         if (PrelertSettings.isSet(ZOOKEEPER_HOST_PROP))
         {
@@ -262,8 +265,8 @@ public class PrelertWebApp extends Application
 
             processActionGuardian = new LocalActionGuardian<>(Action.CLOSED,
                        new ZooKeeperActionGuardian<>(Action.CLOSED, host, port));
-            schedulerActionGuardian = new LocalActionGuardian<>(ScheduledAction.STOP,
-                    new ZooKeeperActionGuardian<>(ScheduledAction.STOP, host, port));
+            schedulerActionGuardian =
+                       new ZooKeeperActionGuardian<>(ScheduledAction.STOP, host, port);
         }
 
         PasswordManager passwordManager = createPasswordManager();

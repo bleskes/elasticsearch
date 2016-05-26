@@ -684,9 +684,11 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
             }
             else if (m_SchedulerActionGuardian.currentAction(jobId) == ScheduledAction.START)
             {
-                throw new CannotStopSchedulerException("running remotely");
+                String msg = Messages.getMessage(Messages.JOB_SCHEDULER_CANNOT_STOP_IN_CURRENT_STATE,
+                        jobId, ScheduledAction.START);
+                LOGGER.info(msg);
+                throw new CannotStopSchedulerException(msg);
             }
-
         }
 
 
@@ -961,7 +963,10 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
         }
         else if (m_SchedulerActionGuardian.currentAction(jobId) == ScheduledAction.START)
         {
-            throw new CannotStopSchedulerException("running remotely");
+            String msg = Messages.getMessage(Messages.JOB_SCHEDULER_CANNOT_STOP_IN_CURRENT_STATE,
+                    jobId, ScheduledAction.START);
+            LOGGER.info(msg);
+            throw new CannotStopSchedulerException(msg);
         }
     }
 
@@ -1099,7 +1104,6 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
 
             if (m_SchedulerActionGuardian.currentAction(jobId) == ScheduledAction.START)
             {
-                // TODO
                 throw new CannotUpdateSchedulerException(jobId, scheduler.getStatus());
             }
 
