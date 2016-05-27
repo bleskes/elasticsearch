@@ -43,8 +43,13 @@ import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.framework.recipes.locks.InterProcessSemaphoreV2;
 import org.apache.curator.framework.recipes.locks.Lease;
+import org.apache.curator.framework.state.ConnectionState;
+import org.apache.curator.framework.state.ConnectionStateListener;
 import org.apache.curator.retry.ExponentialBackoffRetry;
 import org.apache.log4j.Logger;
+import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.KeeperException.NodeExistsException;
+import org.apache.zookeeper.ZooDefs.Ids;
 
 /**
  * Distributed lock for restricting actions on jobs in a network
@@ -59,12 +64,16 @@ public class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
 {
     private static final Logger LOGGER = Logger.getLogger(ZooKeeperActionGuardian.class);
 
-    public static final String LOCK_PATH_PREFIX = "/prelert/engineApi/jobs/";
+    private static final String BASE_DIR = "/prelert";
+    private static final String ENGINE_API_DIR = "/engineApi";
+    public static final String LOCK_PATH_PREFIX = BASE_DIR + ENGINE_API_DIR + "/jobs/";
+    public static final String NODES_PATH = BASE_DIR + ENGINE_API_DIR + "/nodes";
+
     private static final String HOST_ACTION_SEPARATOR = "-";
     private static final int ACQUIRE_LOCK_TIMEOUT = 0;
 
 
-    private final CuratorFramework m_Client;
+    private CuratorFramework m_Client;
     private final Map<String, Lease> m_LeaseByJob = new ConcurrentHashMap<>();
     private String m_Hostname;
 
@@ -72,15 +81,14 @@ public class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
     {
         super(defaultAction);
 
-        m_Client = initCuratorFrameworkClient(host, port);
-        getAndSetHostName();
+        initCuratorFrameworkClient(host, port);
     }
 
     public ZooKeeperActionGuardian(T defaultAction, String host, int port, ActionGuardian<T> nextGuardian)
     {
         super(defaultAction, nextGuardian);
-        m_Client = initCuratorFrameworkClient(host, port);
-        getAndSetHostName();
+
+        initCuratorFrameworkClient(host, port);
     }
 
     @Override
@@ -102,12 +110,39 @@ public class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
         }
     }
 
-    private CuratorFramework initCuratorFrameworkClient(String host, int port)
+    private void initCuratorFrameworkClient(String host, int port)
     {
-        CuratorFramework client = CuratorFrameworkFactory.newClient(host + ":" + Integer.toString(port),
+        getAndSetHostName();
+
+        m_Client = CuratorFrameworkFactory.newClient(host + ":" + Integer.toString(port),
                                         new ExponentialBackoffRetry(1000, 3));
-        client.start();
-        return client;
+
+        m_Client.start();
+        try
+        {
+            m_Client.blockUntilConnected(30, TimeUnit.SECONDS);
+        }
+        catch (InterruptedException e)
+        {
+            LOGGER.error("ZooKeeper block until connection interrrupted");
+        }
+
+        createBasePath(m_Client);
+        registerSelf(m_Client);
+
+        // if the connection is lost then reconnected then
+        // recreate the ephemeral hostname node
+        m_Client.getConnectionStateListenable().addListener(new ConnectionStateListener()
+        {
+            @Override
+            public void stateChanged(CuratorFramework client, ConnectionState newState)
+            {
+                if (newState == ConnectionState.RECONNECTED)
+                {
+                    registerSelf(client);
+                }
+            }
+        });
     }
 
     @Override
@@ -115,6 +150,7 @@ public class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
     {
         InterProcessSemaphoreV2 lock = new InterProcessSemaphoreV2(m_Client, lockPath(jobId), 1);
         Lease lease = tryAcquiringLockNonBlocking(lock);
+
         if (lease != null)
         {
             try
@@ -128,6 +164,7 @@ public class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
         }
         else
         {
+
             return getHostActionOfLockedJob(jobId).m_Action;
         }
     }
@@ -337,6 +374,40 @@ public class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
         {
             m_Hostname = hostname;
             m_Action = action;
+        }
+    }
+
+    private void createBasePath(CuratorFramework client)
+    {
+        for (String path : new String [] {BASE_DIR, BASE_DIR + ENGINE_API_DIR, NODES_PATH})
+        {
+            try
+            {
+                client.create().withMode(CreateMode.PERSISTENT).forPath(path);
+            }
+            catch (NodeExistsException e)
+            {
+            }
+            catch (Exception e)
+            {
+                LOGGER.warn("Error registering node with hostname '" + m_Hostname + "' in ZooKeeper", e);
+            }
+        }
+    }
+
+    private void registerSelf(CuratorFramework client)
+    {
+        try
+        {
+            client.create().withMode(CreateMode.EPHEMERAL)
+                    .withACL(Ids.READ_ACL_UNSAFE).forPath(NODES_PATH + "/" + m_Hostname);
+        }
+        catch (NodeExistsException e)
+        {
+        }
+        catch (Exception e)
+        {
+            LOGGER.warn("Error registering node with hostname '" + m_Hostname + "' in ZooKeeper", e);
         }
     }
 }

@@ -54,14 +54,14 @@ import com.prelert.job.manager.actions.ScheduledAction;
 
 public class ZooKeeperActionGuardianIT
 {
-    private static final String  HOST = "localhost";
-    private static final int PORT = 2182;
+//    private static final String  HOST = "localhost";
+//    private static final int PORT = 2182;
 
     // running against an existing ZooKeeper is much faster than
     // using the testing server but some tests will fail if it's
     // not a clean setup
-//    private static final String  HOST = "qa3";
-//    private static final int PORT = 2181;
+    private static final String  HOST = "qa3";
+    private static final int PORT = 2181;
 
 
     private static TestingServer s_Server;
@@ -79,6 +79,42 @@ public class ZooKeeperActionGuardianIT
     public static void zooKeeperTakeDown() throws IOException
     {
         s_Server.close();
+    }
+
+    @Test
+    public void testRegistersSelfAsEphemeralNode() throws Exception
+    {
+        try (ZooKeeperActionGuardian<Action> actionGuardian =
+                new ZooKeeperActionGuardian<>(Action.CLOSED, HOST, PORT))
+        {
+            // while the action guardian is connected the hostname node should exist
+            try (CuratorFramework client = CuratorFrameworkFactory.newClient(HOST + ":" + Integer.toString(PORT),
+                    new ExponentialBackoffRetry(1000, 3)))
+            {
+                client.start();
+
+                List<String> children = client.getChildren().forPath(
+                        ZooKeeperActionGuardian.NODES_PATH);
+
+                //
+                String hostname = Inet4Address.getLocalHost().getHostName();
+                assertTrue(children.contains(hostname));
+            }
+        }
+
+        // now the ephemeral hostname node is gone
+        try (CuratorFramework client = CuratorFrameworkFactory.newClient(HOST + ":" + Integer.toString(PORT),
+                new ExponentialBackoffRetry(1000, 3)))
+        {
+            client.start();
+
+            List<String> children = client.getChildren().forPath(
+                    ZooKeeperActionGuardian.NODES_PATH);
+
+            //
+            String hostname = Inet4Address.getLocalHost().getHostName();
+            assertFalse(children.contains(hostname));
+        }
     }
 
     @Test
