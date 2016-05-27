@@ -37,6 +37,8 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
@@ -65,8 +67,12 @@ public class EngineStatusWriterTest
     {
         EngineStatus status = new EngineStatus();
         status.setAverageCpuLoad(5.0);
-        status.setActiveJobs(Arrays.asList("Job_1"));
+        status.setStartedScheduledJobs(Arrays.asList("Job_1"));
 
+        Map<String, EngineStatus.MemoryStats> memoryStats = new HashMap<>();
+        memoryStats.put("Job_1", new EngineStatus.MemoryStats());
+        memoryStats.put("Job_2", new EngineStatus.MemoryStats(1l, "OK"));
+        status.setActiveJobs(memoryStats);
         EngineStatusWriter writer = new EngineStatusWriter();
 
 
@@ -83,8 +89,10 @@ public class EngineStatusWriterTest
         EngineStatus out = jsonMapper.readValue(content, new TypeReference<EngineStatus>() {} );
 
         assertEquals(5.0, out.getAverageCpuLoad(), 0.00001);
-        assertEquals(1,  out.getActiveJobCount());
-        assertEquals(1,  out.getActiveJobs().size());
-        assertEquals("Job_1", out.getActiveJobs().get(0));
+        assertEquals(2,  out.getActiveJobCount());
+        assertEquals(2,  out.getActiveJobs().size());
+        assertNotNull(out.getActiveJobs().get("Job_1"));
+        assertEquals("OK", out.getActiveJobs().get("Job_2").getMemoryStatus());
+        assertEquals(new Long(1), out.getActiveJobs().get("Job_2").getModelBytes());
     }
 }

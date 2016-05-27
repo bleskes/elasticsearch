@@ -35,7 +35,6 @@ public class ModelSizeStats implements StorageSerialisable
     /**
      * Field Names
      */
-    public static final String MODEL_SIZE_STATS_ID = "modelSizeStatsId";
     public static final String MODEL_BYTES = "modelBytes";
     public static final String TOTAL_BY_FIELD_COUNT = "totalByFieldCount";
     public static final String TOTAL_OVER_FIELD_COUNT = "totalOverFieldCount";

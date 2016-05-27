@@ -29,7 +29,9 @@ package com.prelert.rs.resources;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.OperatingSystemMXBean;
-import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -38,6 +40,7 @@ import javax.ws.rs.core.MediaType;
 
 import org.apache.log4j.Logger;
 
+import com.prelert.job.ModelSizeStats;
 import com.prelert.rs.data.EngineStatus;
 
 
@@ -62,12 +65,28 @@ public class Status extends ResourceWithJobManager
         OperatingSystemMXBean osBean = ManagementFactory.getOperatingSystemMXBean();
 
         EngineStatus status = new EngineStatus();
-        status.setActiveJobs(new ArrayList<String>(jobManager().getActiveJobIds()));
         status.setStartedScheduledJobs(jobManager().getStartedScheduledJobs());
 
         status.setAverageCpuLoad(osBean.getSystemLoadAverage());
         status.setHeapMemoryUsage(
                         ManagementFactory.getMemoryMXBean().getHeapMemoryUsage().getUsed());
+
+        Map<String, EngineStatus.MemoryStats> memoryStats = new HashMap<>();
+        for (String jobId : jobManager().getActiveJobIds())
+        {
+            Optional<ModelSizeStats> stats = jobReader().modelSizeStats(jobId);
+            if (stats.isPresent())
+            {
+                memoryStats.put(jobId, new EngineStatus.MemoryStats(stats.get().getModelBytes(),
+                                                    stats.get().getMemoryStatus()));
+            }
+            else
+            {
+                memoryStats.put(jobId, new EngineStatus.MemoryStats());
+            }
+        }
+
+        status.setActiveJobs(memoryStats);
 
         return status;
     }

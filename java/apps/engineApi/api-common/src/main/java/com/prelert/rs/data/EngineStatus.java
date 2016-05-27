@@ -28,7 +28,9 @@
 package com.prelert.rs.data;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -47,23 +49,61 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 @JsonInclude(Include.NON_NULL)
 public class EngineStatus
 {
-    List<String> m_ActiveJobs;
+    Map<String, MemoryStats> m_ActiveJobs;
     List<String> m_StartedScheduledJobs;
     Double m_CpuLoad;
     Long m_HeapMemUsage;
+    List<MemoryStats> m_MemoryStats;
+
+    @JsonInclude(Include.NON_NULL)
+    static public class MemoryStats
+    {
+        private Long m_ModelBytes;
+        private String m_MemoryStatus;
+
+        public MemoryStats()
+        {
+        }
+
+        public MemoryStats(Long bytes, String status)
+        {
+            m_ModelBytes = bytes;
+            m_MemoryStatus = status;
+        }
+
+        public Long getModelBytes()
+        {
+            return m_ModelBytes;
+        }
+
+        public void setModelBytes(Long bytes)
+        {
+            m_ModelBytes = bytes;
+        }
+
+        public String getMemoryStatus()
+        {
+            return m_MemoryStatus;
+        }
+
+        public void setMemoryStatus(String status)
+        {
+            m_MemoryStatus = status;
+        }
+    }
 
     public EngineStatus()
     {
-        m_ActiveJobs = Collections.emptyList();
+        m_ActiveJobs = new HashMap<>();
         m_StartedScheduledJobs = Collections.emptyList();
     }
 
-    public List<String> getActiveJobs()
+    public Map<String, MemoryStats> getActiveJobs()
     {
         return m_ActiveJobs;
     }
 
-    public void setActiveJobs(List<String> activeJobs)
+    public void setActiveJobs(Map<String, MemoryStats> activeJobs)
     {
         m_ActiveJobs = activeJobs;
     }
@@ -122,5 +162,4 @@ public class EngineStatus
     {
         m_HeapMemUsage = used;
     }
-
 }
