@@ -26,6 +26,7 @@ import java.util.Arrays;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.env.Environment;
 import org.elasticsearch.test.ESTestCase;
+import org.elasticsearch.xpack.XPackPlugin;
 import org.junit.Before;
 
 import static org.hamcrest.Matchers.equalTo;
@@ -41,12 +42,14 @@ public class CryptoServiceTests extends ESTestCase {
 
     @Before
     public void init() throws Exception {
-        keyFile = createTempDir().resolve("system_key");
+        Path home = createTempDir();
+        Path xpackConf = home.resolve("config").resolve(XPackPlugin.NAME);
+        Files.createDirectories(xpackConf);
+        keyFile = xpackConf.resolve("system_key");
         Files.write(keyFile, CryptoService.generateKey());
         settings = Settings.builder()
-                .put(CryptoService.FILE_SETTING.getKey(), keyFile.toAbsolutePath())
                 .put("resource.reload.interval.high", "2s")
-                .put("path.home", createTempDir())
+                .put("path.home", home)
                 .build();
         env = new Environment(settings);
     }
@@ -155,6 +158,7 @@ public class CryptoServiceTests extends ESTestCase {
     }
 
     public void testEncryptionAndDecryptionCharsWithoutKey() throws Exception {
+        Files.delete(keyFile);
         CryptoService service = new CryptoService(Settings.EMPTY, env);
                 assertThat(service.isEncryptionEnabled(), is(false));
         final char[] chars = randomAsciiOfLengthBetween(0, 1000).toCharArray();
@@ -170,6 +174,7 @@ public class CryptoServiceTests extends ESTestCase {
     }
 
     public void testEncryptionEnabledWithoutKey() throws Exception {
+        Files.delete(keyFile);
         CryptoService service = new CryptoService(Settings.EMPTY, env);
                 assertThat(service.isEncryptionEnabled(), is(false));
     }

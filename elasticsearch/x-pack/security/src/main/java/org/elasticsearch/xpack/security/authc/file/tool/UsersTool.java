@@ -29,7 +29,6 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.util.set.Sets;
 import org.elasticsearch.env.Environment;
 import org.elasticsearch.node.internal.InternalSettingsPreparer;
-import org.elasticsearch.xpack.security.authc.Realms;
 import org.elasticsearch.xpack.security.authc.file.FileUserPasswdStore;
 import org.elasticsearch.xpack.security.authc.file.FileUserRolesStore;
 import org.elasticsearch.xpack.security.authc.support.Hasher;
@@ -107,9 +106,8 @@ public class UsersTool extends MultiCommand {
             Environment env = InternalSettingsPreparer.prepareEnvironment(Settings.EMPTY, terminal, settings);
             String[] roles = parseRoles(terminal, env, rolesOption.value(options));
 
-            Settings fileSettings = Realms.fileRealmSettings(env.settings());
-            Path passwordFile = FileUserPasswdStore.resolveFile(fileSettings, env);
-            Path rolesFile = FileUserRolesStore.resolveFile(fileSettings, env);
+            Path passwordFile = FileUserPasswdStore.resolveFile(env);
+            Path rolesFile = FileUserRolesStore.resolveFile(env);
             FileAttributesChecker attributesChecker = new FileAttributesChecker(passwordFile, rolesFile);
 
             Map<String, char[]> users = new HashMap<>(FileUserPasswdStore.parseFile(passwordFile, null));
@@ -154,9 +152,8 @@ public class UsersTool extends MultiCommand {
         protected void execute(Terminal terminal, OptionSet options, Map<String, String> settings) throws Exception {
             String username = parseUsername(arguments.values(options));
             Environment env = InternalSettingsPreparer.prepareEnvironment(Settings.EMPTY, terminal, settings);
-            Settings fileSettings = Realms.fileRealmSettings(env.settings());
-            Path passwordFile = FileUserPasswdStore.resolveFile(fileSettings, env);
-            Path rolesFile = FileUserRolesStore.resolveFile(fileSettings, env);
+            Path passwordFile = FileUserPasswdStore.resolveFile(env);
+            Path rolesFile = FileUserRolesStore.resolveFile(env);
             FileAttributesChecker attributesChecker = new FileAttributesChecker(passwordFile, rolesFile);
 
             Map<String, char[]> users = new HashMap<>(FileUserPasswdStore.parseFile(passwordFile, null));
@@ -212,8 +209,7 @@ public class UsersTool extends MultiCommand {
             char[] password = parsePassword(terminal, passwordOption.value(options));
 
             Environment env = InternalSettingsPreparer.prepareEnvironment(Settings.EMPTY, terminal, settings);
-            Settings fileSettings = Realms.fileRealmSettings(env.settings());
-            Path file = FileUserPasswdStore.resolveFile(fileSettings, env);
+            Path file = FileUserPasswdStore.resolveFile(env);
             FileAttributesChecker attributesChecker = new FileAttributesChecker(file);
             Map<String, char[]> users = new HashMap<>(FileUserPasswdStore.parseFile(file, null));
             if (users.containsKey(username) == false) {
@@ -266,9 +262,8 @@ public class UsersTool extends MultiCommand {
                 return;
             }
 
-            Settings fileSettings = Realms.fileRealmSettings(env.settings());
-            Path usersFile = FileUserPasswdStore.resolveFile(fileSettings, env);
-            Path rolesFile = FileUserRolesStore.resolveFile(fileSettings, env);
+            Path usersFile = FileUserPasswdStore.resolveFile(env);
+            Path rolesFile = FileUserRolesStore.resolveFile(env);
             FileAttributesChecker attributesChecker = new FileAttributesChecker(usersFile, rolesFile);
 
             Map<String, char[]> usersMap = FileUserPasswdStore.parseFile(usersFile, null);
@@ -325,14 +320,13 @@ public class UsersTool extends MultiCommand {
 
     // pkg private for tests
     static void listUsersAndRoles(Terminal terminal, Environment env, String username) throws Exception {
-        Settings fileSettings = Realms.fileRealmSettings(env.settings());
-        Path userRolesFilePath = FileUserRolesStore.resolveFile(fileSettings, env);
+        Path userRolesFilePath = FileUserRolesStore.resolveFile(env);
         Map<String, String[]> userRoles = FileUserRolesStore.parseFile(userRolesFilePath, null);
 
-        Path userFilePath = FileUserPasswdStore.resolveFile(fileSettings, env);
+        Path userFilePath = FileUserPasswdStore.resolveFile(env);
         Set<String> users = FileUserPasswdStore.parseFile(userFilePath, null).keySet();
 
-        Path rolesFilePath = FileRolesStore.resolveFile(env.settings(), env);
+        Path rolesFilePath = FileRolesStore.resolveFile(env);
         Set<String> knownRoles = Sets.union(FileRolesStore.parseFileForRoleNames(rolesFilePath, null), ReservedRolesStore.names());
 
         if (username != null) {
@@ -348,7 +342,7 @@ public class UsersTool extends MultiCommand {
                     "-" : s).collect(Collectors.joining(","))));
                 if (!unknownRoles.isEmpty()) {
                     // at least one role is marked... so printing the legend
-                    Path rolesFile = FileRolesStore.resolveFile(fileSettings, env).toAbsolutePath();
+                    Path rolesFile = FileRolesStore.resolveFile(env).toAbsolutePath();
                     terminal.println("");
                     terminal.println(" [*]   Role is not in the [" + rolesFile.toAbsolutePath() + "] file. If the role has been created "
                             + "using the API, please disregard this message.");
@@ -382,7 +376,7 @@ public class UsersTool extends MultiCommand {
 
             if (unknownRolesFound) {
                 // at least one role is marked... so printing the legend
-                Path rolesFile = FileRolesStore.resolveFile(fileSettings, env).toAbsolutePath();
+                Path rolesFile = FileRolesStore.resolveFile(env).toAbsolutePath();
                 terminal.println("");
                 terminal.println(" [*]   Role is not in the [" + rolesFile.toAbsolutePath() + "] file. If the role has been created "
                         + "using the API, please disregard this message.");
@@ -443,8 +437,8 @@ public class UsersTool extends MultiCommand {
         return password;
     }
 
-    private static void verifyRoles(Terminal terminal, Settings settings, Environment env, String[] roles) {
-        Path rolesFile = FileRolesStore.resolveFile(settings, env);
+    private static void verifyRoles(Terminal terminal, Environment env, String[] roles) {
+        Path rolesFile = FileRolesStore.resolveFile(env);
         assert Files.exists(rolesFile);
         Set<String> knownRoles = Sets.union(FileRolesStore.parseFileForRoleNames(rolesFile, null), ReservedRolesStore.names());
         Set<String> unknownRoles = Sets.difference(Sets.newHashSet(roles), knownRoles);
@@ -470,8 +464,7 @@ public class UsersTool extends MultiCommand {
             }
         }
 
-        Settings fileSettings = Realms.fileRealmSettings(env.settings());
-        verifyRoles(terminal, fileSettings, env, roles);
+        verifyRoles(terminal, env, roles);
 
         return roles;
     }
