@@ -52,7 +52,7 @@ import com.prelert.job.manager.actions.Action;
 import com.prelert.job.manager.actions.ActionGuardian;
 import com.prelert.job.manager.actions.ScheduledAction;
 
-public class ZooKeeperActionGuardianTest
+public class ZooKeeperActionGuardianIT
 {
     private static final String  HOST = "localhost";
     private static final int PORT = 2182;
