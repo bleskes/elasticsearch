@@ -1187,6 +1187,44 @@ public class ElasticsearchJobProvider implements JobProvider
     }
 
     @Override
+    public Optional<ModelSizeStats> modelSizeStats(String jobId)
+    {
+        ElasticsearchJobId elasticJobId = new ElasticsearchJobId(jobId);
+
+        try
+        {
+            LOGGER.trace("ES API CALL: get ID " + ModelSizeStats.TYPE +
+                    " type " + ModelSizeStats.TYPE + " from index " + elasticJobId.getIndex());
+
+            GetResponse modelSizeStatsResponse = m_Client.prepareGet(
+                    elasticJobId.getIndex(), ModelSizeStats.TYPE, ModelSizeStats.TYPE).get();
+
+            if (!modelSizeStatsResponse.isExists())
+            {
+                String msg = "No memory usage details for job with id " + elasticJobId.getId();
+                LOGGER.warn(msg);
+                return Optional.empty();
+            }
+            else
+            {
+                // Remove the Kibana/Logstash '@timestamp' entry as stored in Elasticsearch,
+                // and replace using the API 'timestamp' key.
+                Object timestamp = modelSizeStatsResponse.getSource().remove(ElasticsearchMappings.ES_TIMESTAMP);
+                modelSizeStatsResponse.getSource().put(ModelSizeStats.TIMESTAMP, timestamp);
+
+                ModelSizeStats modelSizeStats = m_ObjectMapper.convertValue(
+                        modelSizeStatsResponse.getSource(), ModelSizeStats.class);
+                return Optional.of(modelSizeStats);
+            }
+        }
+        catch (IndexNotFoundException e)
+        {
+            LOGGER.warn("Missing index " + elasticJobId.getIndex(), e);
+            return Optional.empty();
+        }
+    }
+
+    @Override
     public void refreshIndex(String jobId)
     {
         String indexName = new ElasticsearchJobId(jobId).getIndex();
