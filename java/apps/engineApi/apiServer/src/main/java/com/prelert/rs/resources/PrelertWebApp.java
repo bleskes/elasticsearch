@@ -266,6 +266,15 @@ public class PrelertWebApp extends Application
         return ElasticsearchNodeClientFactory.create(esHost, networkPublishHost, clusterName, portRange, numProcessors);
     }
 
+    /**
+     * Creates job manager
+     * Creates ZooKeeper client if necessary and ands client shutdown task
+     *
+     * @param jobProvider
+     * @param esFactory
+     * @param jobLoggerFactory
+     * @return
+     */
     private JobManager createJobManager(JobProvider jobProvider, ElasticsearchFactory esFactory,
             JobLoggerFactory jobLoggerFactory)
     {
@@ -287,6 +296,8 @@ public class PrelertWebApp extends Application
                     new ZooKeeperActionGuardian<>(ScheduledAction.STOP, host, port);
             schedulerActionGuardian = zkGuard;
             m_EngineHosts = zkGuard;
+
+            m_ShutdownThreadBuilder.addTask(() -> zkGuard.close());
         }
 
         PasswordManager passwordManager = createPasswordManager();

@@ -406,6 +406,25 @@ public class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
         }
     }
 
+    /**
+     * Delete the ephemeral node with this hostname
+     */
+    private void deregisterSelf()
+    {
+        try
+        {
+            m_Client.delete().deletingChildrenIfNeeded().forPath(NODES_PATH + "/" + m_Hostname);
+        }
+        catch (NodeExistsException e)
+        {
+        }
+        catch (Exception e)
+        {
+            LOGGER.warn("Error de-registering node with hostname '" + m_Hostname + "' in ZooKeeper", e);
+        }
+    }
+
+
     @Override
     public List<String> engineApiHosts()
     {
