@@ -41,7 +41,9 @@ import javax.ws.rs.core.MediaType;
 import org.apache.log4j.Logger;
 
 import com.prelert.job.ModelSizeStats;
+import com.prelert.job.process.ProcessCtrl;
 import com.prelert.rs.data.EngineStatus;
+import com.prelert.settings.PrelertSettings;
 
 
 
@@ -87,7 +89,25 @@ public class Status extends ResourceWithJobManager
         }
 
         status.setActiveJobs(memoryStats);
+        status.setDbConnection(datastoreConnection());
+        status.setEngineHosts(engineHosts().engineApiHosts());
 
         return status;
+    }
+
+    private Map<String, String> datastoreConnection()
+    {
+        Map<String, String> params = new HashMap<>();
+        params.put(ProcessCtrl.ES_HOST_PROP,
+                PrelertSettings.getSettingOrDefault(ProcessCtrl.ES_HOST_PROP,
+                                            ProcessCtrl.DEFAULT_ES_HOST));
+        params.put(PrelertWebApp.ES_CLUSTER_NAME_PROP,
+                PrelertSettings.getSettingOrDefault(PrelertWebApp.ES_CLUSTER_NAME_PROP,
+                                            PrelertWebApp.DEFAULT_CLUSTER_NAME));
+        params.put(PrelertWebApp.ES_TRANSPORT_PORT_RANGE,
+                PrelertSettings.getSettingOrDefault(PrelertWebApp.ES_TRANSPORT_PORT_RANGE,
+                                            PrelertWebApp.DEFAULT_ES_TRANSPORT_PORT_RANGE));
+
+        return params;
     }
 }

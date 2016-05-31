@@ -43,6 +43,7 @@ import javax.ws.rs.core.UriInfo;
 import org.apache.log4j.Logger;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.prelert.distributed.EngineApiHosts;
 import com.prelert.job.alert.manager.AlertManager;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.manager.JobManager;
@@ -100,6 +101,7 @@ public abstract class ResourceWithJobManager
     private JobDataReader m_JobReader;
     private AlertManager m_AlertManager;
     private ServerInfoFactory m_ServerInfo;
+    private EngineApiHosts m_EngineHosts;
 
     /**
      *
@@ -182,6 +184,15 @@ public abstract class ResourceWithJobManager
             m_JobReader = getSingleton(JobDataReader.class);
         }
         return m_JobReader;
+    }
+
+    protected EngineApiHosts engineHosts()
+    {
+        if (m_EngineHosts == null)
+        {
+            m_EngineHosts = getSingleton(EngineApiHosts.class);
+        }
+        return m_EngineHosts;
     }
 
     /**

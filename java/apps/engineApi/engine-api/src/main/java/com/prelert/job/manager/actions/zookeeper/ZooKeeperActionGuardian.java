@@ -27,6 +27,7 @@
 package com.prelert.job.manager.actions.zookeeper;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.prelert.distributed.EngineApiHosts;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.exceptions.JobInUseException;
 import com.prelert.job.manager.actions.ActionState;
@@ -35,6 +36,8 @@ import com.prelert.job.manager.actions.ActionGuardian;
 import java.net.Inet4Address;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
@@ -44,7 +47,6 @@ import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.framework.recipes.locks.InterProcessSemaphoreV2;
 import org.apache.curator.framework.recipes.locks.Lease;
 import org.apache.curator.framework.state.ConnectionState;
-import org.apache.curator.framework.state.ConnectionStateListener;
 import org.apache.curator.retry.ExponentialBackoffRetry;
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.CreateMode;
@@ -60,7 +62,7 @@ import org.apache.zookeeper.ZooDefs.Ids;
  * may throw depending on the result of {@linkplain T#isValidTransition(T)}
  */
 public class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
-                    extends ActionGuardian<T> implements AutoCloseable
+                    extends ActionGuardian<T> implements AutoCloseable, EngineApiHosts
 {
     private static final Logger LOGGER = Logger.getLogger(ZooKeeperActionGuardian.class);
 
@@ -132,17 +134,10 @@ public class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
 
         // if the connection is lost then reconnected then
         // recreate the ephemeral hostname node
-        m_Client.getConnectionStateListenable().addListener(new ConnectionStateListener()
-        {
-            @Override
-            public void stateChanged(CuratorFramework client, ConnectionState newState)
-            {
-                if (newState == ConnectionState.RECONNECTED)
-                {
-                    registerSelf(client);
-                }
-            }
-        });
+        m_Client.getConnectionStateListenable().addListener(
+                (client, newState) ->
+                    {if (newState == ConnectionState.RECONNECTED) { registerSelf(client); }}
+       );
     }
 
     @Override
@@ -408,6 +403,20 @@ public class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
         catch (Exception e)
         {
             LOGGER.warn("Error registering node with hostname '" + m_Hostname + "' in ZooKeeper", e);
+        }
+    }
+
+    @Override
+    public List<String> engineApiHosts()
+    {
+        try
+        {
+            return m_Client.getChildren().forPath(NODES_PATH);
+        }
+        catch (Exception e)
+        {
+            LOGGER.error("Error reading Engine API nodes", e);
+            return Collections.emptyList();
         }
     }
 }

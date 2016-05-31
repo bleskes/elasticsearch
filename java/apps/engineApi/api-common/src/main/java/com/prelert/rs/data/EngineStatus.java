@@ -54,6 +54,8 @@ public class EngineStatus
     Double m_CpuLoad;
     Long m_HeapMemUsage;
     List<MemoryStats> m_MemoryStats;
+    Map<String, String> m_DbConnection;
+    List<String> m_EngineHosts;
 
     @JsonInclude(Include.NON_NULL)
     static public class MemoryStats
@@ -162,4 +164,34 @@ public class EngineStatus
     {
         m_HeapMemUsage = used;
     }
+
+    /**
+     * List of participating Engine API hosts
+     * @return
+     */
+    public List<String> getEngineHosts()
+    {
+        return m_EngineHosts;
+    }
+
+    public void setEngineHosts(List<String> hosts)
+    {
+        m_EngineHosts = hosts;
+    }
+
+    /**
+     * Database connection parameters
+     * @return
+     */
+    public Map<String, String> getDbConnection()
+    {
+        return m_DbConnection;
+    }
+
+    public void setDbConnection(Map<String, String> params)
+    {
+        m_DbConnection = params;
+    }
 }
+
+

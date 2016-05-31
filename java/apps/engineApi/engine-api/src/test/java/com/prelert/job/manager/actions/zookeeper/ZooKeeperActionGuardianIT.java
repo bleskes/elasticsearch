@@ -54,6 +54,8 @@ import com.prelert.job.manager.actions.ScheduledAction;
 
 public class ZooKeeperActionGuardianIT
 {
+    private static TestingServer s_Server;
+
 //    private static final String  HOST = "localhost";
 //    private static final int PORT = 2182;
 
@@ -63,8 +65,6 @@ public class ZooKeeperActionGuardianIT
     private static final String  HOST = "qa3";
     private static final int PORT = 2181;
 
-
-    private static TestingServer s_Server;
 
     @Rule
     public ExpectedException m_ExpectedException = ExpectedException.none();
@@ -114,6 +114,17 @@ public class ZooKeeperActionGuardianIT
             //
             String hostname = Inet4Address.getLocalHost().getHostName();
             assertFalse(children.contains(hostname));
+        }
+    }
+
+    @Test
+    public void testEngineApiHosts() throws UnknownHostException
+    {
+        try (ZooKeeperActionGuardian<Action> actionGuardian =
+                new ZooKeeperActionGuardian<>(Action.CLOSED, HOST, PORT))
+        {
+            List<String> hosts = actionGuardian.engineApiHosts();
+            assertTrue(hosts.contains(Inet4Address.getLocalHost().getHostName()));
         }
     }
 
