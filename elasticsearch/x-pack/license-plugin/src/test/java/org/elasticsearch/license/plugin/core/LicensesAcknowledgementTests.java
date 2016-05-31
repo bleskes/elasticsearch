@@ -23,6 +23,7 @@ import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.license.core.License;
 import org.elasticsearch.license.plugin.TestUtils;
 import org.elasticsearch.license.plugin.action.put.PutLicenseRequest;
+import org.elasticsearch.license.plugin.action.put.PutLicenseResponse;
 import org.elasticsearch.test.ESSingleNodeTestCase;
 
 import java.util.Collections;
@@ -140,7 +141,7 @@ public class LicensesAcknowledgementTests extends ESSingleNodeTestCase {
         licensesService.stop();
     }
 
-    private static class AssertingLicensesUpdateResponse implements ActionListener<LicensesService.LicensesUpdateResponse> {
+    private static class AssertingLicensesUpdateResponse implements ActionListener<PutLicenseResponse> {
         private final boolean expectedAcknowledgement;
         private final LicensesStatus expectedStatus;
         private final Map<String, String[]> expectedAckMessages;
@@ -155,7 +156,7 @@ public class LicensesAcknowledgementTests extends ESSingleNodeTestCase {
         }
 
         @Override
-        public void onResponse(LicensesService.LicensesUpdateResponse licensesUpdateResponse) {
+        public void onResponse(PutLicenseResponse licensesUpdateResponse) {
             assertThat(licensesUpdateResponse.isAcknowledged(), equalTo(expectedAcknowledgement));
             assertThat(licensesUpdateResponse.status(), equalTo(expectedStatus));
             assertThat(licensesUpdateResponse.acknowledgeMessages().size(), equalTo(expectedAckMessages.size()));

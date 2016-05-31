@@ -31,8 +31,6 @@ import org.elasticsearch.license.plugin.core.LicensesService;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportService;
 
-import static org.elasticsearch.license.plugin.core.LicensesService.LicensesUpdateResponse;
-
 public class TransportPutLicenseAction extends TransportMasterNodeAction<PutLicenseRequest, PutLicenseResponse> {
 
     private final LicensesService licensesService;
@@ -64,18 +62,7 @@ public class TransportPutLicenseAction extends TransportMasterNodeAction<PutLice
     @Override
     protected void masterOperation(final PutLicenseRequest request, ClusterState state, final ActionListener<PutLicenseResponse>
             listener) throws ElasticsearchException {
-        licensesService.registerLicense(request, new ActionListener<LicensesUpdateResponse>() {
-            @Override
-            public void onResponse(LicensesUpdateResponse licensesUpdateResponse) {
-                listener.onResponse(new PutLicenseResponse(licensesUpdateResponse.isAcknowledged(), licensesUpdateResponse.status(),
-                        licensesUpdateResponse.acknowledgementHeader(), licensesUpdateResponse.acknowledgeMessages()));
-            }
-
-            @Override
-            public void onFailure(Throwable e) {
-                listener.onFailure(e);
-            }
-        });
+        licensesService.registerLicense(request, listener);
     }
 
 }
