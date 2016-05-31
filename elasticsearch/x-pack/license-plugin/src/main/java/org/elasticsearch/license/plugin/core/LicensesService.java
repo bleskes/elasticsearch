@@ -53,6 +53,7 @@ import org.elasticsearch.transport.TransportRequest;
 import org.elasticsearch.transport.TransportRequestHandler;
 import org.elasticsearch.transport.TransportResponse;
 import org.elasticsearch.transport.TransportService;
+import org.elasticsearch.xpack.support.clock.Clock;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -121,6 +122,8 @@ public class LicensesService extends AbstractLifecycleComponent<LicensesService>
      */
     private final AtomicReference<License> currentLicense = new AtomicReference<>();
 
+    private final Clock clock;
+
     /**
      * Callbacks to notify relative to license expiry
      */
@@ -147,7 +150,7 @@ public class LicensesService extends AbstractLifecycleComponent<LicensesService>
             "please read the following messages and update the license again, this time with the \"acknowledge=true\" parameter:";
 
     @Inject
-    public LicensesService(Settings settings, ClusterService clusterService, ThreadPool threadPool, TransportService transportService) {
+    public LicensesService(Settings settings, ClusterService clusterService, ThreadPool threadPool, TransportService transportService, Clock clock) {
         super(settings);
         this.clusterService = clusterService;
         this.threadPool = threadPool;
@@ -157,6 +160,7 @@ public class LicensesService extends AbstractLifecycleComponent<LicensesService>
                     ThreadPool.Names.SAME, new RegisterTrialLicenseRequestHandler());
         }
         populateExpirationCallbacks();
+        this.clock = clock;
     }
 
     private void populateExpirationCallbacks() {
@@ -264,7 +268,7 @@ public class LicensesService extends AbstractLifecycleComponent<LicensesService>
      */
     public void registerLicense(final PutLicenseRequest request, final ActionListener<PutLicenseResponse> listener) {
         final License newLicense = request.license();
-        final long now = System.currentTimeMillis();
+        final long now = clock.millis();
         if (!verifyLicense(newLicense) || newLicense.issueDate() > now) {
             listener.onResponse(new PutLicenseResponse(true, LicensesStatus.INVALID));
         } else if (newLicense.expiryDate() < now) {
@@ -393,7 +397,7 @@ public class LicensesService extends AbstractLifecycleComponent<LicensesService>
                 MetaData.Builder mdBuilder = MetaData.builder(currentState.metaData());
                 // do not generate a trial license if any license is present
                 if (currentLicensesMetaData == null) {
-                    long issueDate = System.currentTimeMillis();
+                    long issueDate = clock.millis();
                     License.Builder specBuilder = License.builder()
                             .uid(UUID.randomUUID().toString())
                             .issuedTo(clusterService.state().getClusterName().value())
@@ -503,7 +507,7 @@ public class LicensesService extends AbstractLifecycleComponent<LicensesService>
         // in this case, it is a no-op
         if (license != null) {
             logger.debug("notifying [{}] listeners", registeredLicensees.size());
-            long now = System.currentTimeMillis();
+            long now = clock.millis();
             if (license.issueDate() > now) {
                 logger.warn("license [{}] - invalid", license.uid());
                 return;
@@ -598,7 +602,7 @@ public class LicensesService extends AbstractLifecycleComponent<LicensesService>
             LicensesMetaData currentLicensesMetaData = clusterService.state().metaData().custom(LicensesMetaData.TYPE);
             License license = getLicense(currentLicensesMetaData);
             if (license != null) {
-                long now = System.currentTimeMillis();
+                long now = clock.millis();
                 if (expirationCallback.matches(license.expiryDate(), now)) {
                     expirationCallback.on(license);
                     if (expirationCallback.frequency() != null) {
