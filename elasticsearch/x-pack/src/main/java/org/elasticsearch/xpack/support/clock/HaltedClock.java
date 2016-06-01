@@ -15,20 +15,22 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.xpack.watcher.support.clock;
+package org.elasticsearch.xpack.support.clock;
 
 import org.elasticsearch.common.unit.TimeValue;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
-import java.util.concurrent.TimeUnit;
-
 /**
  *
  */
-public class ClockMock implements Clock {
+public class HaltedClock implements Clock {
 
-    private DateTime now = DateTime.now(DateTimeZone.UTC);
+    private final DateTime now;
+
+    public HaltedClock(DateTime now) {
+        this.now = now.toDateTime(DateTimeZone.UTC);
+    }
 
     @Override
     public long millis() {
@@ -37,12 +39,12 @@ public class ClockMock implements Clock {
 
     @Override
     public long nanos() {
-        return TimeUnit.MILLISECONDS.toNanos(now.getMillis());
+        return millis() * 1000000;
     }
 
     @Override
     public DateTime nowUTC() {
-        return now(DateTimeZone.UTC);
+        return now;
     }
 
     @Override
@@ -52,27 +54,6 @@ public class ClockMock implements Clock {
 
     @Override
     public TimeValue timeElapsedSince(DateTime time) {
-        return TimeValue.timeValueMillis(now.getMillis() - time.getMillis());
-    }
-
-    public ClockMock setTime(DateTime now) {
-        this.now = now;
-        return this;
-    }
-
-    public ClockMock fastForward(TimeValue timeValue) {
-        return setTime(now.plusMillis((int) timeValue.millis()));
-    }
-
-    public ClockMock fastForwardSeconds(int seconds) {
-        return fastForward(TimeValue.timeValueSeconds(seconds));
-    }
-
-    public ClockMock rewind(TimeValue timeValue) {
-        return setTime(now.minusMillis((int) timeValue.millis()));
-    }
-
-    public ClockMock rewindSeconds(int seconds) {
-        return rewind(TimeValue.timeValueSeconds(seconds));
+        return TimeValue.timeValueMillis(millis() - time.getMillis());
     }
 }
