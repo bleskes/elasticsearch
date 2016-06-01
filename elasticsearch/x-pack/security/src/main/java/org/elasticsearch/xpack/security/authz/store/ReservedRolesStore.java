@@ -31,6 +31,8 @@ import org.elasticsearch.xpack.security.user.SystemUser;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -65,6 +67,11 @@ public class ReservedRolesStore implements RolesStore {
             default:
                 return null;
         }
+    }
+
+    @Override
+    public Map<String, Object> usageStats() {
+        return Collections.emptyMap();
     }
 
     public RoleDescriptor roleDescriptor(String role) {
