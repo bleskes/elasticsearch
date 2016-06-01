@@ -31,7 +31,7 @@ import org.elasticsearch.test.ESIntegTestCase;
 import org.elasticsearch.xpack.watcher.actions.Action;
 import org.elasticsearch.xpack.watcher.actions.Action.Result.Status;
 import org.elasticsearch.xpack.watcher.execution.WatchExecutionContext;
-import org.elasticsearch.xpack.watcher.support.WatcherDateTimeUtils;
+import org.elasticsearch.xpack.support.DateTimeUtils;
 import org.elasticsearch.xpack.watcher.support.init.proxy.WatcherClientProxy;
 import org.elasticsearch.xpack.watcher.support.xcontent.XContentSource;
 import org.elasticsearch.xpack.watcher.test.WatcherTestUtils;
@@ -116,7 +116,7 @@ public class IndexActionTests extends ESIntegTestCase {
         if (customTimestampField) {
             assertThat(hit.getSource().size(), is(2));
             assertThat(hit.getSource(), hasEntry("foo", (Object) "bar"));
-            assertThat(hit.getSource(), hasEntry(timestampField, (Object) WatcherDateTimeUtils.formatDate(executionTime)));
+            assertThat(hit.getSource(), hasEntry(timestampField, (Object) DateTimeUtils.formatDate(executionTime)));
         } else {
             assertThat(hit.getSource().size(), is(1));
             assertThat(hit.getSource(), hasEntry("foo", (Object) "bar"));
@@ -180,7 +180,7 @@ public class IndexActionTests extends ESIntegTestCase {
         if (customTimestampField) {
             assertThat(hit.getSource().size(), is(2));
             assertThat(hit.getSource(), hasEntry("foo", (Object) "bar"));
-            assertThat(hit.getSource(), hasEntry(timestampField, (Object) WatcherDateTimeUtils.formatDate(executionTime)));
+            assertThat(hit.getSource(), hasEntry(timestampField, (Object) DateTimeUtils.formatDate(executionTime)));
         } else {
             assertThat(hit.getSource().size(), is(1));
             assertThat(hit.getSource(), hasEntry("foo", (Object) "bar"));
@@ -189,7 +189,7 @@ public class IndexActionTests extends ESIntegTestCase {
         if (customTimestampField) {
             assertThat(hit.getSource().size(), is(2));
             assertThat(hit.getSource(), hasEntry("foo", (Object) "bar1"));
-            assertThat(hit.getSource(), hasEntry(timestampField, (Object) WatcherDateTimeUtils.formatDate(executionTime)));
+            assertThat(hit.getSource(), hasEntry(timestampField, (Object) DateTimeUtils.formatDate(executionTime)));
         } else {
             assertThat(hit.getSource().size(), is(1));
             assertThat(hit.getSource(), hasEntry("foo", (Object) "bar1"));
