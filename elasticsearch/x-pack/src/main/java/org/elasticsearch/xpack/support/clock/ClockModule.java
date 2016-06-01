@@ -15,7 +15,7 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.xpack.watcher.support.clock;
+package org.elasticsearch.xpack.support.clock;
 
 import org.elasticsearch.common.inject.AbstractModule;
 

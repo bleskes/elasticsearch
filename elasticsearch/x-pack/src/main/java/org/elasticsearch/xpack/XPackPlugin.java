@@ -55,6 +55,7 @@ import org.elasticsearch.xpack.rest.action.RestXPackInfoAction;
 import org.elasticsearch.xpack.common.text.TextTemplateModule;
 import org.elasticsearch.xpack.rest.action.RestXPackUsageAction;
 import org.elasticsearch.xpack.watcher.Watcher;
+import org.elasticsearch.xpack.support.clock.ClockModule;
 
 import java.nio.file.Path;
 import java.security.AccessController;
@@ -149,6 +150,7 @@ public class XPackPlugin extends Plugin {
     public Collection<Module> nodeModules() {
         ArrayList<Module> modules = new ArrayList<>();
         modules.add(new LazyInitializationModule());
+        modules.add(new ClockModule());
         modules.addAll(notification.nodeModules());
         modules.addAll(licensing.nodeModules());
         modules.addAll(security.nodeModules());
