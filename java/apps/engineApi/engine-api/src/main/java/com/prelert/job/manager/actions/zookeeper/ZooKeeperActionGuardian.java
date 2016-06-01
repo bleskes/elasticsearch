@@ -124,6 +124,7 @@ public class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
     @Override
     public void close()
     {
+        deregisterSelf();
         m_Client.close();
     }
 
@@ -515,6 +516,24 @@ public class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
         catch (Exception e)
         {
             LOGGER.warn("Error registering node with hostname '" + m_Hostname + "' in ZooKeeper", e);
+        }
+    }
+
+    /**
+     * Delete the ephemeral node with this hostname
+     */
+    private void deregisterSelf()
+    {
+        try
+        {
+            m_Client.delete().deletingChildrenIfNeeded().forPath(NODES_PATH + "/" + m_Hostname);
+        }
+        catch (NodeExistsException e)
+        {
+        }
+        catch (Exception e)
+        {
+            LOGGER.warn("Error de-registering node with hostname '" + m_Hostname + "' in ZooKeeper", e);
         }
     }
 
