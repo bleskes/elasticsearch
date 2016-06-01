@@ -44,6 +44,8 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
+import org.apache.curator.framework.recipes.locks.InterProcessMutex;
+import org.apache.curator.framework.recipes.locks.InterProcessReadWriteLock;
 import org.apache.curator.framework.recipes.locks.InterProcessSemaphoreV2;
 import org.apache.curator.framework.recipes.locks.Lease;
 import org.apache.curator.framework.state.ConnectionState;
@@ -60,6 +62,32 @@ import org.apache.zookeeper.ZooDefs.Ids;
  * If another node has the lock {@linkplain #tryAcquiringAction(String, Enum)}
  * will throw. If this node has the lock {@linkplain #tryAcquiringAction(String, Enum)}
  * may throw depending on the result of {@linkplain T#isValidTransition(T)}
+ *
+ * Internally the locking procedure is a little more complicated as we not
+ * only want to hold the action lock but write a description of the action so
+ * that other nodes know what kind of action is holding the lock.
+ * Writing the action description and acquiring the lock cannot be done in a
+ * single operation so 2 locks are required. The action lock MUST only be
+ * acquired or released when the description lock is held in this way all
+ * clients will see a consistent view of the action's description.
+ *
+ * <em>A</em> Is the Action lock held continuously while the action is taking place
+ * <em>D</em> Is the Description lock held only while update the actions description
+ *
+ *                      A-------------------A
+ *                     /                     \
+ *                  D----D                 D----D
+ *      ___________/       \______________/      \_______ Client 1
+ *
+ *                            try-acquire A here fails
+ *                             |
+ *                      xxxx D----D
+ *      _______________/            \____________________ Client 2
+ *
+ *
+ * Note the Action lock is a Semaphore as it may be released by a different
+ * thread. The Description lock is a read-write lock, multiple readers can
+ * read as long as the write lock isn't acquired
  */
 public class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
                     extends ActionGuardian<T> implements AutoCloseable, EngineApiHosts
@@ -72,7 +100,7 @@ public class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
     public static final String NODES_PATH = BASE_DIR + ENGINE_API_DIR + "/nodes";
 
     private static final String HOST_ACTION_SEPARATOR = "-";
-    private static final int ACQUIRE_LOCK_TIMEOUT = 0;
+    private static final int ACQUIRE_ACTION_LOCK_TIMEOUT = 0;
 
 
     private CuratorFramework m_Client;
@@ -143,32 +171,29 @@ public class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
     @Override
     public T currentAction(String jobId)
     {
-        InterProcessSemaphoreV2 lock = new InterProcessSemaphoreV2(m_Client, lockPath(jobId), 1);
-        Lease lease = tryAcquiringLockNonBlocking(lock);
+        InterProcessReadWriteLock readWriteLock = new InterProcessReadWriteLock(m_Client,
+                                                    descriptionLockPath(jobId));
 
-        if (lease != null)
+        InterProcessMutex readLock = readWriteLock.readLock();
+
+        // blocks if the write lock is held
+        if (acquireLock(readLock, jobId))
         {
             try
             {
-                return m_NoneAction;
+                return getHostActionOfLockedJob(jobId).m_Action;
             }
             finally
             {
-                releaseLeaseAndDeleteNode(lease, jobId);
+                releaseLock(readLock, jobId);
             }
         }
-        else
-        {
 
-            return getHostActionOfLockedJob(jobId).m_Action;
-        }
+        return m_NoneAction;
     }
 
     /**
      * The returned ActionTicket MUST be closed in a try-with-resource block
-     *
-     * The interprocess mutex is reentrant so not an error
-     * if we already hold the lock
      *
      * @param jobId
      * @param action
@@ -179,69 +204,53 @@ public class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
     public ActionTicket tryAcquiringAction(String jobId, T action)
     throws JobInUseException
     {
-        Lease lease = m_LeaseByJob.get(jobId);
-        if (lease != null)
+        InterProcessReadWriteLock readWriteLock = new InterProcessReadWriteLock(m_Client,
+                                                            descriptionLockPath(jobId));
+
+        InterProcessMutex writeLock = readWriteLock.writeLock();
+        if (acquireLock(writeLock, jobId))
         {
-            HostnameAction hostAction = getHostActionOfLockedJob(jobId);
-            if (hostAction.m_Action.isValidTransition(action))
+            try
             {
-                return newActionTicket(jobId, action.nextState(hostAction.m_Action));
+                HostnameAction currentState = getHostActionOfLockedJob(jobId);
+
+                // if this already holds the lease return a new ticket
+                // if a valid state transition
+                Lease lease = m_LeaseByJob.get(jobId);
+                if (lease != null)
+                {
+                    return trySettingAction(lease, jobId, currentState, action);
+                }
+                else
+                {
+                    InterProcessSemaphoreV2 lock = new InterProcessSemaphoreV2(m_Client, lockPath(jobId), 1);
+                    lease = tryAcquiringLockNonBlocking(lock);
+
+                    if (lease != null)
+                    {
+                        ActionTicket ticket = trySettingAction(lease, jobId, currentState, action);
+                        m_LeaseByJob.put(jobId, lease);
+
+                        return ticket;
+                    }
+                    else
+                    {
+                        String msg = action.getBusyActionError(jobId, currentState.m_Action,
+                                                                currentState.m_Hostname);
+                        LOGGER.warn(msg);
+                        throw new JobInUseException(msg, ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR);
+                    }
+                }
             }
-            else
+            finally
             {
-                String msg = action.getBusyActionError(jobId, hostAction.m_Action, hostAction.m_Hostname);
-                LOGGER.warn(msg);
-                throw new JobInUseException(msg, ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR);
+                releaseLock(writeLock, jobId);
             }
-        }
-
-        InterProcessSemaphoreV2 lock = new InterProcessSemaphoreV2(m_Client, lockPath(jobId), 1);
-        lease = tryAcquiringLockNonBlocking(lock);
-
-        if (lease != null)
-        {
-            if (m_NextGuardian.isPresent())
-            {
-                m_NextGuardian.get().tryAcquiringAction(jobId, action);
-            }
-
-            setHostActionOfLockedJob(jobId, m_Hostname, action);
-            m_LeaseByJob.put(jobId, lease);
-
-            return newActionTicket(jobId, action.nextState(m_NoneAction));
         }
         else
         {
-            HostnameAction hostAction = getHostActionOfLockedJob(jobId);
-            String msg = action.getBusyActionError(jobId, hostAction.m_Action, hostAction.m_Hostname);
-            LOGGER.warn(msg);
-            throw new JobInUseException(msg, ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR);
-        }
-    }
-
-    @Override
-    public void releaseAction(String jobId, T nextState)
-    {
-        if (nextState.holdDistributedLock())
-        {
-            setHostActionOfLockedJob(jobId, m_Hostname, nextState);
-        }
-        else
-        {
-            // release the lock
-            Lease lease = m_LeaseByJob.remove(jobId);
-            if (lease == null)
-            {
-                throw new IllegalStateException("Job " + jobId +
-                        " is not locked by this ZooKeeperActionGuardian");
-            }
-
-            releaseLeaseAndDeleteNode(lease, jobId);
-        }
-
-        if (m_NextGuardian.isPresent())
-        {
-            m_NextGuardian.get().releaseAction(jobId, nextState);
+            LOGGER.error("Failed to acquire readwrite lock for job " + jobId);
+            return newActionTicket("", m_NoneAction);
         }
     }
 
@@ -254,7 +263,7 @@ public class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
     {
         try
         {
-            return lock.acquire(ACQUIRE_LOCK_TIMEOUT, TimeUnit.MILLISECONDS);
+            return lock.acquire(ACQUIRE_ACTION_LOCK_TIMEOUT, TimeUnit.MILLISECONDS);
         }
         catch (Exception e)
         {
@@ -262,6 +271,70 @@ public class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
         }
 
         return null;
+    }
+
+    private ActionTicket trySettingAction(Lease lease, String jobId,
+                                            HostnameAction currentState, T action)
+    throws JobInUseException
+    {
+        if (currentState.m_Action.isValidTransition(action))
+        {
+            if (m_NextGuardian.isPresent())
+            {
+                m_NextGuardian.get().tryAcquiringAction(jobId, action);
+            }
+
+            setHostActionOfLockedJob(jobId, m_Hostname, action);
+            return newActionTicket(jobId, action.nextState(currentState.m_Action));
+        }
+        else
+        {
+            String msg = action.getBusyActionError(jobId, currentState.m_Action,
+                    currentState.m_Hostname);
+            LOGGER.warn(msg);
+            throw new JobInUseException(msg, ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR);
+        }
+    }
+
+    @Override
+    public void releaseAction(String jobId, T nextState)
+    {
+        InterProcessReadWriteLock readWriteLock = new InterProcessReadWriteLock(m_Client,
+                                descriptionLockPath(jobId));
+
+        InterProcessMutex writeLock = readWriteLock.writeLock();
+        if (acquireLock(writeLock, jobId))
+        {
+            try
+            {
+                if (m_NextGuardian.isPresent())
+                {
+                    m_NextGuardian.get().releaseAction(jobId, nextState);
+                }
+
+                if (nextState.holdDistributedLock())
+                {
+                    setHostActionOfLockedJob(jobId, m_Hostname, nextState);
+                }
+                else
+                {
+                    // release the lock
+                    Lease lease = m_LeaseByJob.remove(jobId);
+                    if (lease == null)
+                    {
+                        throw new IllegalStateException("Job " + jobId +
+                                " is not locked by this ZooKeeperActionGuardian");
+                    }
+
+                    releaseLeaseAndDeleteNode(lease, jobId);
+                }
+            }
+            finally
+            {
+                releaseLock(writeLock, jobId);
+            }
+        }
+
     }
 
     private void releaseLeaseAndDeleteNode(Lease lease, String jobId)
@@ -284,6 +357,36 @@ public class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
         {
             LOGGER.error("Error releasing lock for job " + jobId, e);
         }
+    }
+
+    private boolean acquireLock(InterProcessMutex lock, String jobId)
+    {
+        try
+        {
+            lock.acquire();
+            return true;
+        }
+        catch (Exception e)
+        {
+            LOGGER.error("Error acquiring lock for job " + jobId, e);
+        }
+
+        return false;
+    }
+
+    private boolean releaseLock(InterProcessMutex lock, String jobId)
+    {
+        try
+        {
+            lock.release();
+            return true;
+        }
+        catch (Exception e)
+        {
+            LOGGER.error("Error releasing lock for job " + jobId, e);
+        }
+
+        return false;
     }
 
     private HostnameAction getHostActionOfLockedJob(String jobId)
@@ -349,14 +452,19 @@ public class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
         return hostname + HOST_ACTION_SEPARATOR + action.toString();
     }
 
+    private String jobPath(String jobId)
+    {
+        return LOCK_PATH_PREFIX + jobId;
+    }
+
     private String lockPath(String jobId)
     {
         return LOCK_PATH_PREFIX + jobId + "/" + m_NoneAction.typename();
     }
 
-    private String jobPath(String jobId)
+    private String descriptionLockPath(String jobId)
     {
-        return LOCK_PATH_PREFIX + jobId;
+        return LOCK_PATH_PREFIX + jobId + "/" + m_NoneAction.typename() + "/description";
     }
 
     @VisibleForTesting
@@ -390,6 +498,10 @@ public class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
         }
     }
 
+    /**
+     * Write hostname to an ephemeral node
+     * @param client
+     */
     private void registerSelf(CuratorFramework client)
     {
         try
@@ -405,25 +517,6 @@ public class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
             LOGGER.warn("Error registering node with hostname '" + m_Hostname + "' in ZooKeeper", e);
         }
     }
-
-    /**
-     * Delete the ephemeral node with this hostname
-     */
-    private void deregisterSelf()
-    {
-        try
-        {
-            m_Client.delete().deletingChildrenIfNeeded().forPath(NODES_PATH + "/" + m_Hostname);
-        }
-        catch (NodeExistsException e)
-        {
-        }
-        catch (Exception e)
-        {
-            LOGGER.warn("Error de-registering node with hostname '" + m_Hostname + "' in ZooKeeper", e);
-        }
-    }
-
 
     @Override
     public List<String> engineApiHosts()

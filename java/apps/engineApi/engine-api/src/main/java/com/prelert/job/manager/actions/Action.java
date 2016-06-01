@@ -117,7 +117,7 @@ public enum Action implements ActionState<Action>
     @Override
     public boolean isValidTransition(Action next)
     {
-        if (/*this == NONE ||*/ this == CLOSED)
+        if (this == CLOSED)
         {
             return true;
         }
@@ -142,10 +142,6 @@ public enum Action implements ActionState<Action>
         {
             return SLEEPING;
         }
-//        else if (this == NONE)
-//        {
-//            return NONE;
-//        }
 
         return CLOSED;
     }
