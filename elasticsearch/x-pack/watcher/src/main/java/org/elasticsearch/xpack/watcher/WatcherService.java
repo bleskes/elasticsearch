@@ -30,7 +30,7 @@ import org.elasticsearch.index.engine.VersionConflictEngineException;
 import org.elasticsearch.xpack.watcher.execution.ExecutionService;
 import org.elasticsearch.xpack.watcher.support.WatcherIndexTemplateRegistry;
 import org.elasticsearch.xpack.support.clock.Clock;
-import org.elasticsearch.xpack.watcher.trigger.TriggerService;
+import org.elasticsearch.xpack.trigger.TriggerService;
 import org.elasticsearch.xpack.watcher.watch.Watch;
 import org.elasticsearch.xpack.watcher.watch.WatchLockService;
 import org.elasticsearch.xpack.watcher.watch.WatchStatus;
@@ -42,9 +42,9 @@ import org.joda.time.PeriodType;
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static org.elasticsearch.xpack.watcher.support.Exceptions.illegalArgument;
-import static org.elasticsearch.xpack.watcher.support.Exceptions.illegalState;
-import static org.elasticsearch.xpack.watcher.support.Exceptions.ioException;
+import static org.elasticsearch.xpack.support.Exceptions.illegalArgument;
+import static org.elasticsearch.xpack.support.Exceptions.illegalState;
+import static org.elasticsearch.xpack.support.Exceptions.ioException;
 
 
 public class WatcherService extends AbstractComponent {
