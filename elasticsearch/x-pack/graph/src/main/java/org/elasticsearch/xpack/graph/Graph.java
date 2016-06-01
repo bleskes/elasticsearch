@@ -15,7 +15,7 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.graph;
+package org.elasticsearch.xpack.graph;
 
 import org.elasticsearch.action.ActionModule;
 import org.elasticsearch.common.component.LifecycleComponent;
@@ -24,11 +24,11 @@ import org.elasticsearch.common.network.NetworkModule;
 import org.elasticsearch.common.settings.Setting;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.settings.SettingsModule;
-import org.elasticsearch.graph.action.GraphExploreAction;
-import org.elasticsearch.graph.action.TransportGraphExploreAction;
-import org.elasticsearch.graph.rest.action.RestGraphAction;
 import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.xpack.XPackPlugin;
+import org.elasticsearch.xpack.graph.action.GraphExploreAction;
+import org.elasticsearch.xpack.graph.action.TransportGraphExploreAction;
+import org.elasticsearch.xpack.graph.rest.action.RestGraphAction;
 
 import java.util.Collection;
 import java.util.Collections;

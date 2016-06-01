@@ -15,7 +15,16 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.graph.rest.action;
+package org.elasticsearch.xpack.graph.rest.action;
+
+import static org.elasticsearch.rest.RestRequest.Method.GET;
+import static org.elasticsearch.rest.RestRequest.Method.POST;
+import static org.elasticsearch.xpack.graph.action.GraphExploreAction.INSTANCE;
+
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
 
 import org.elasticsearch.ElasticsearchParseException;
 import org.elasticsearch.action.support.IndicesOptions;
@@ -28,11 +37,6 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentParser;
-import org.elasticsearch.graph.action.GraphExploreRequest;
-import org.elasticsearch.graph.action.GraphExploreRequest.TermBoost;
-import org.elasticsearch.graph.action.GraphExploreResponse;
-import org.elasticsearch.graph.action.Hop;
-import org.elasticsearch.graph.action.VertexRequest;
 import org.elasticsearch.index.query.QueryParseContext;
 import org.elasticsearch.indices.query.IndicesQueriesRegistry;
 import org.elasticsearch.rest.BaseRestHandler;
@@ -41,15 +45,12 @@ import org.elasticsearch.rest.RestController;
 import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.rest.action.support.RestActions;
 import org.elasticsearch.rest.action.support.RestToXContentListener;
+import org.elasticsearch.xpack.graph.action.GraphExploreRequest;
+import org.elasticsearch.xpack.graph.action.GraphExploreResponse;
+import org.elasticsearch.xpack.graph.action.Hop;
+import org.elasticsearch.xpack.graph.action.VertexRequest;
+import org.elasticsearch.xpack.graph.action.GraphExploreRequest.TermBoost;
 
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-
-import static org.elasticsearch.graph.action.GraphExploreAction.INSTANCE;
-import static org.elasticsearch.rest.RestRequest.Method.GET;
-import static org.elasticsearch.rest.RestRequest.Method.POST;
 
 /**
  * @see GraphExploreRequest

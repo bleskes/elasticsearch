@@ -15,11 +15,13 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.graph;
+package org.elasticsearch.xpack.graph;
 
 import org.elasticsearch.common.io.stream.NamedWriteableRegistry;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.test.ESTestCase;
+import org.elasticsearch.xpack.graph.GraphFeatureSet;
+import org.elasticsearch.xpack.graph.GraphLicensee;
 import org.junit.Before;
 
 import static org.hamcrest.core.Is.is;

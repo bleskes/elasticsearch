@@ -15,7 +15,7 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.graph;
+package org.elasticsearch.xpack.graph;
 
 import org.elasticsearch.common.inject.AbstractModule;
 import org.elasticsearch.common.inject.util.Providers;

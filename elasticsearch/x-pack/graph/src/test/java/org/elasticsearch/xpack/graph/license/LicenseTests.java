@@ -15,12 +15,12 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.graph.license;
+package org.elasticsearch.xpack.graph.license;
 
 import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.graph.GraphLicensee;
 import org.elasticsearch.license.core.License.OperationMode;
 import org.elasticsearch.license.plugin.core.AbstractLicenseeTestCase;
+import org.elasticsearch.xpack.graph.GraphLicensee;
 
 import static org.hamcrest.Matchers.is;
 
