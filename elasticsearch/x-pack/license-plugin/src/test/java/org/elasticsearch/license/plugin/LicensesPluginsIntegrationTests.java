@@ -81,8 +81,8 @@ public class LicensesPluginsIntegrationTests extends AbstractLicensesIntegration
 
         logger.info(" --> trial license generated");
         // managerService should report feature to be enabled on all data nodes
-        assertLicenseeState(ID_1, LicenseState.ENABLED);
-        assertLicenseeState(ID_2, LicenseState.ENABLED);
+        assertLicenseeState(LicenseState.ENABLED);
+        assertLicenseeState(LicenseState.ENABLED);
         // consumer plugin service should return enabled on all data nodes
         assertEagerConsumerPluginNotification(LicenseState.ENABLED, 1);
         assertLazyConsumerPluginNotification(LicenseState.ENABLED, 1);
@@ -91,10 +91,10 @@ public class LicensesPluginsIntegrationTests extends AbstractLicensesIntegration
         // consumer plugin should notify onDisabled on all data nodes (expired trial license)
         assertEagerConsumerPluginNotification(LicenseState.GRACE_PERIOD, trialLicenseDurationInSec * 2);
         assertLazyConsumerPluginNotification(LicenseState.GRACE_PERIOD, trialLicenseDurationInSec * 2);
-        assertLicenseeState(ID_1, LicenseState.GRACE_PERIOD);
-        assertLicenseeState(ID_2, LicenseState.GRACE_PERIOD);
-        assertLicenseeState(ID_1, LicenseState.DISABLED);
-        assertLicenseeState(ID_2, LicenseState.DISABLED);
+        assertLicenseeState(LicenseState.GRACE_PERIOD);
+        assertLicenseeState(LicenseState.GRACE_PERIOD);
+        assertLicenseeState(LicenseState.DISABLED);
+        assertLicenseeState(LicenseState.DISABLED);
 
         logger.info(" --> put signed license");
         putLicense(TimeValue.timeValueSeconds(signedLicenseDuration));
@@ -103,20 +103,20 @@ public class LicensesPluginsIntegrationTests extends AbstractLicensesIntegration
         // consumer plugin should notify onEnabled on all data nodes (signed license)
         assertEagerConsumerPluginNotification(LicenseState.ENABLED, 1);
         assertLazyConsumerPluginNotification(LicenseState.ENABLED, 1);
-        assertLicenseeState(ID_1, LicenseState.ENABLED);
-        assertLicenseeState(ID_2, LicenseState.ENABLED);
+        assertLicenseeState(LicenseState.ENABLED);
+        assertLicenseeState(LicenseState.ENABLED);
 
         logger.info(" --> check signed license expiry notification");
         // consumer plugin should notify onDisabled on all data nodes (expired signed license)
         assertEagerConsumerPluginNotification(LicenseState.GRACE_PERIOD, signedLicenseDuration * 2);
         assertLazyConsumerPluginNotification(LicenseState.GRACE_PERIOD, signedLicenseDuration * 2);
-        assertLicenseeState(ID_1, LicenseState.GRACE_PERIOD);
-        assertLicenseeState(ID_2, LicenseState.GRACE_PERIOD);
+        assertLicenseeState(LicenseState.GRACE_PERIOD);
+        assertLicenseeState(LicenseState.GRACE_PERIOD);
 
         assertEagerConsumerPluginNotification(LicenseState.DISABLED, 10 * 2);
         assertLazyConsumerPluginNotification(LicenseState.DISABLED, 10 * 2);
-        assertLicenseeState(ID_1, LicenseState.DISABLED);
-        assertLicenseeState(ID_2, LicenseState.DISABLED);
+        assertLicenseeState(LicenseState.DISABLED);
+        assertLicenseeState(LicenseState.DISABLED);
     }
 
     public void testRandomFeatureLicensesActions() throws Exception {
@@ -127,19 +127,19 @@ public class LicensesPluginsIntegrationTests extends AbstractLicensesIntegration
         logger.info(" --> check license enabled notification");
         assertEagerConsumerPluginNotification(LicenseState.ENABLED, 1);
         assertLazyConsumerPluginNotification(LicenseState.ENABLED, 1);
-        assertLicenseeState(ID_1, LicenseState.ENABLED);
-        assertLicenseeState(ID_2, LicenseState.ENABLED);
+        assertLicenseeState(LicenseState.ENABLED);
+        assertLicenseeState(LicenseState.ENABLED);
 
         logger.info(" --> check license expiry notification");
         // consumer plugin should notify onDisabled on all data nodes (expired signed license)
         assertEagerConsumerPluginNotification(LicenseState.GRACE_PERIOD, 10 * 2);
         assertLazyConsumerPluginNotification(LicenseState.GRACE_PERIOD, 10 * 2);
-        assertLicenseeState(ID_1, LicenseState.GRACE_PERIOD);
-        assertLicenseeState(ID_2, LicenseState.GRACE_PERIOD);
+        assertLicenseeState(LicenseState.GRACE_PERIOD);
+        assertLicenseeState(LicenseState.GRACE_PERIOD);
         assertEagerConsumerPluginNotification(LicenseState.DISABLED, 10 * 2);
         assertLazyConsumerPluginNotification(LicenseState.DISABLED, 10 * 2);
-        assertLicenseeState(ID_1, LicenseState.DISABLED);
-        assertLicenseeState(ID_2, LicenseState.DISABLED);
+        assertLicenseeState(LicenseState.DISABLED);
+        assertLicenseeState(LicenseState.DISABLED);
     }
 
     private void startNodesWithConsumerPlugins(int nNodes, int trialLicenseDuration) {
