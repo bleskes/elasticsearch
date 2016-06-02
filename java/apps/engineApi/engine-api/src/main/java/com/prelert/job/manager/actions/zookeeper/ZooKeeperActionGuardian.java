@@ -42,6 +42,9 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
+import javax.ws.rs.core.Feature;
+import javax.ws.rs.core.FeatureContext;
+
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.framework.recipes.locks.InterProcessMutex;
@@ -90,7 +93,7 @@ import org.apache.zookeeper.ZooDefs.Ids;
  * read as long as the write lock isn't acquired
  */
 public class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
-                    extends ActionGuardian<T> implements AutoCloseable, EngineApiHosts
+                    extends ActionGuardian<T> implements AutoCloseable, EngineApiHosts, Feature
 {
     private static final Logger LOGGER = Logger.getLogger(ZooKeeperActionGuardian.class);
 
@@ -549,5 +552,11 @@ public class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
             LOGGER.error("Error reading Engine API nodes", e);
             return Collections.emptyList();
         }
+    }
+
+    @Override
+    public boolean configure(FeatureContext context)
+    {
+        return false;
     }
 }
