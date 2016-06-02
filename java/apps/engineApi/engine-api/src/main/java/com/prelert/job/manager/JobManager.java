@@ -851,6 +851,17 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
     }
 
     /**
+     * Return the number of seconds the job has been running for
+     * or 0 if not running.
+     * @param jobId
+     * @return
+     */
+    public long jobUptime(String jobId)
+    {
+        return m_ProcessManager.jobUptimeSeconds(jobId);
+    }
+
+    /**
      * Get the jobs that have a started scheduler
      * @return
      */

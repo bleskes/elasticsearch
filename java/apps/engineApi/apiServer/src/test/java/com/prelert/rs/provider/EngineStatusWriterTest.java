@@ -69,9 +69,9 @@ public class EngineStatusWriterTest
         status.setAverageCpuLoad(5.0);
         status.setStartedScheduledJobs(Arrays.asList("Job_1"));
 
-        Map<String, EngineStatus.MemoryStats> memoryStats = new HashMap<>();
-        memoryStats.put("Job_1", new EngineStatus.MemoryStats());
-        memoryStats.put("Job_2", new EngineStatus.MemoryStats(1l, "OK"));
+        Map<String, EngineStatus.JobStats> memoryStats = new HashMap<>();
+        memoryStats.put("Job_1", new EngineStatus.JobStats());
+        memoryStats.put("Job_2", new EngineStatus.JobStats(1l, "OK", 10l));
         status.setActiveJobs(memoryStats);
         EngineStatusWriter writer = new EngineStatusWriter();
 
@@ -94,5 +94,6 @@ public class EngineStatusWriterTest
         assertNotNull(out.getActiveJobs().get("Job_1"));
         assertEquals("OK", out.getActiveJobs().get("Job_2").getMemoryStatus());
         assertEquals(new Long(1), out.getActiveJobs().get("Job_2").getModelBytes());
+        assertEquals(new Long(10), out.getActiveJobs().get("Job_2").getUptimeSeconds());
     }
 }

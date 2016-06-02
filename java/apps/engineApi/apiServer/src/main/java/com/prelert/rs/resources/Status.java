@@ -73,18 +73,21 @@ public class Status extends ResourceWithJobManager
         status.setHeapMemoryUsage(
                         ManagementFactory.getMemoryMXBean().getHeapMemoryUsage().getUsed());
 
-        Map<String, EngineStatus.MemoryStats> memoryStats = new HashMap<>();
+        Map<String, EngineStatus.JobStats> memoryStats = new HashMap<>();
         for (String jobId : jobManager().getActiveJobIds())
         {
             Optional<ModelSizeStats> stats = jobReader().modelSizeStats(jobId);
             if (stats.isPresent())
             {
-                memoryStats.put(jobId, new EngineStatus.MemoryStats(stats.get().getModelBytes(),
-                                                    stats.get().getMemoryStatus()));
+                memoryStats.put(jobId, new EngineStatus.JobStats(
+                                                    stats.get().getModelBytes(),
+                                                    stats.get().getMemoryStatus(),
+                                                    jobManager().jobUptime(jobId)
+                                                    ));
             }
             else
             {
-                memoryStats.put(jobId, new EngineStatus.MemoryStats());
+                memoryStats.put(jobId, new EngineStatus.JobStats());
             }
         }
 

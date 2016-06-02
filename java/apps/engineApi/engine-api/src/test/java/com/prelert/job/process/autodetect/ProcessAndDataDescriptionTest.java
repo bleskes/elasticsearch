@@ -27,6 +27,7 @@
 
 package com.prelert.job.process.autodetect;
 
+import static org.junit.Assert.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -67,6 +68,23 @@ public class ProcessAndDataDescriptionTest
         verify(logger).debug("Deleted file file1");
         verify(file2).delete();
         verify(logger).warn("Failed to delete file file2");
+    }
+
+    @Test
+    public void testGetUptime() throws InterruptedException
+    {
+        Logger logger = mock(Logger.class);
+        File file1 = createFile("file1", true);
+        File file2 = createFile("file2", false);
+        List<File> filesToDelete = Arrays.asList(file1, file2);
+
+        ProcessAndDataDescription processAndDataDescription = createProcess(filesToDelete, logger);
+
+        Thread.sleep(1100);
+
+        long uptime = processAndDataDescription.upTimeSeconds();
+        assertTrue(uptime > 0);
+        assertTrue(uptime <= 2);
     }
 
     private static File createFile(String filePath, boolean deletesSuccessfully)

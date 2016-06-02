@@ -49,28 +49,30 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 @JsonInclude(Include.NON_NULL)
 public class EngineStatus
 {
-    Map<String, MemoryStats> m_ActiveJobs;
+    Map<String, JobStats> m_ActiveJobs;
     List<String> m_StartedScheduledJobs;
     Double m_CpuLoad;
     Long m_HeapMemUsage;
-    List<MemoryStats> m_MemoryStats;
+    List<JobStats> m_MemoryStats;
     Map<String, String> m_DbConnection;
     List<String> m_EngineHosts;
 
     @JsonInclude(Include.NON_NULL)
-    static public class MemoryStats
+    static public class JobStats
     {
         private Long m_ModelBytes;
         private String m_MemoryStatus;
+        private Long m_UptimeSeconds;
 
-        public MemoryStats()
+        public JobStats()
         {
         }
 
-        public MemoryStats(Long bytes, String status)
+        public JobStats(Long bytes, String status, Long uptime)
         {
             m_ModelBytes = bytes;
             m_MemoryStatus = status;
+            m_UptimeSeconds = uptime;
         }
 
         public Long getModelBytes()
@@ -92,6 +94,16 @@ public class EngineStatus
         {
             m_MemoryStatus = status;
         }
+
+        public Long getUptimeSeconds()
+        {
+            return m_UptimeSeconds;
+        }
+
+        public void setUptimeSeconds(long uptime)
+        {
+            m_UptimeSeconds = uptime;
+        }
     }
 
     public EngineStatus()
@@ -100,12 +112,12 @@ public class EngineStatus
         m_StartedScheduledJobs = Collections.emptyList();
     }
 
-    public Map<String, MemoryStats> getActiveJobs()
+    public Map<String, JobStats> getActiveJobs()
     {
         return m_ActiveJobs;
     }
 
-    public void setActiveJobs(Map<String, MemoryStats> activeJobs)
+    public void setActiveJobs(Map<String, JobStats> activeJobs)
     {
         m_ActiveJobs = activeJobs;
     }

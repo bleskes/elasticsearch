@@ -785,6 +785,24 @@ public class ProcessManager
         return false;
     }
 
+    /**
+     * Return the number of seconds the job has been running for
+     * or 0 if not running.
+     * @param jobId
+     * @return
+     */
+    public long jobUptimeSeconds(String jobId)
+    {
+        if (m_JobIdToProcessMap.containsKey(jobId))
+        {
+            return m_JobIdToProcessMap.get(jobId).upTimeSeconds();
+        }
+        else
+        {
+            return 0;
+        }
+    }
+
     public void deletePersistedData(String jobId)
     {
         m_DataPersisterFactory.newDataPersister(jobId).deleteData();
