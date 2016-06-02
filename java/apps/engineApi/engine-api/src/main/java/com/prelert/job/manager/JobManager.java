@@ -945,6 +945,10 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
                 new SchedulerState(startMs, endMs.isPresent() ? endMs.getAsLong() : null));
         LOGGER.info("Starting scheduler for job: " + jobId);
 
+        if (!m_ScheduledJobs.containsKey(jobId))
+        {
+            createJobScheduler(job);
+        }
         m_ScheduledJobs.get(jobId).start(job, startMs, endMs, actionTicket);
     }
 
@@ -988,12 +992,6 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
     {
         Optional<JobDetails> job = m_JobProvider.getJobDetails(jobId);
         return job.isPresent() && job.get().getSchedulerConfig() != null;
-
-        // Not necessarily correct in a distributed system
-        // if a new scheduled jo b has been created on a different
-        // node
-//        return m_ScheduledJobs.containsKey(jobId)
-//                || m_SchedulerActionGuardian.currentAction(jobId) == ScheduledAction.START;
     }
 
     /**
