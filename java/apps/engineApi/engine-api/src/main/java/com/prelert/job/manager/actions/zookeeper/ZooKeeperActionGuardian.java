@@ -110,18 +110,33 @@ public class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
     private final Map<String, Lease> m_LeaseByJob = new ConcurrentHashMap<>();
     private String m_Hostname;
 
-    public ZooKeeperActionGuardian(T defaultAction, String host, int port)
+    /**
+     * Connection string is a comma separated list of host:port without whitespace
+     * e.g. "server1:2181,server2:2181"
+     *
+     * @param defaultAction
+     * @param connectionString
+     */
+    public ZooKeeperActionGuardian(T defaultAction, String connectionString)
     {
         super(defaultAction);
 
-        initCuratorFrameworkClient(host, port);
+        initCuratorFrameworkClient(connectionString);
     }
 
-    public ZooKeeperActionGuardian(T defaultAction, String host, int port, ActionGuardian<T> nextGuardian)
+    /**
+     * Connection string is a comma separated list of host:port without whitespace
+     * e.g. "server1:2181,server2:2181"
+     *
+     * @param defaultAction
+     * @param connectionString
+     * @param nextGuardian
+     */
+    public ZooKeeperActionGuardian(T defaultAction, String connectionString, ActionGuardian<T> nextGuardian)
     {
         super(defaultAction, nextGuardian);
 
-        initCuratorFrameworkClient(host, port);
+        initCuratorFrameworkClient(connectionString);
     }
 
     @Override
@@ -144,11 +159,11 @@ public class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
         }
     }
 
-    private void initCuratorFrameworkClient(String host, int port)
+    private void initCuratorFrameworkClient(String connectionString)
     {
         getAndSetHostName();
 
-        m_Client = CuratorFrameworkFactory.newClient(host + ":" + Integer.toString(port),
+        m_Client = CuratorFrameworkFactory.newClient(connectionString,
                                         new ExponentialBackoffRetry(1000, 3));
 
         m_Client.start();

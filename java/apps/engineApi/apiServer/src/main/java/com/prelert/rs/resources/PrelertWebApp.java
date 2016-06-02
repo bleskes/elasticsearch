@@ -124,8 +124,7 @@ public class PrelertWebApp extends Application
     // The size of this array may need to be changed if the transformation on the line above is changed
     private static final byte[] DEV_KEY_BYTES = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 };
 
-    public static final String ZOOKEEPER_HOST_PROP = "zookeeper.host";
-    public static final String ZOOKEEPER_PORT_PROP = "zookeeper.port";
+    public static final String ZOOKEEPER_CONNECTION_PROP = "zookeeper.connection";
 
     /**
      * This property specifies the client that should be used to connect
@@ -284,16 +283,16 @@ public class PrelertWebApp extends Application
         ActionGuardian<ScheduledAction> schedulerActionGuardian =
                             new NoneActionGuardian<>(ScheduledAction.STOP);
 
-        if (PrelertSettings.isSet(ZOOKEEPER_HOST_PROP))
+        if (PrelertSettings.isSet(ZOOKEEPER_CONNECTION_PROP))
         {
-            String host = PrelertSettings.getSettingOrDefault(ZOOKEEPER_HOST_PROP, "localhost");
-            int port = PrelertSettings.getSettingOrDefault(ZOOKEEPER_PORT_PROP, 2181);
-            LOGGER.info("Using ZooKeeper server on " + host + ":" + port);
+            String connectionString = PrelertSettings.getSettingOrDefault(ZOOKEEPER_CONNECTION_PROP, "");
+
+            LOGGER.info("Using ZooKeeper server on " + connectionString);
 
             processActionGuardian = new LocalActionGuardian<>(Action.CLOSED,
-                       new ZooKeeperActionGuardian<>(Action.CLOSED, host, port));
+                       new ZooKeeperActionGuardian<>(Action.CLOSED, connectionString));
             ZooKeeperActionGuardian<ScheduledAction> zkGuard =
-                    new ZooKeeperActionGuardian<>(ScheduledAction.STOP, host, port);
+                    new ZooKeeperActionGuardian<>(ScheduledAction.STOP, connectionString);
             schedulerActionGuardian = zkGuard;
             m_EngineHosts = zkGuard;
 
