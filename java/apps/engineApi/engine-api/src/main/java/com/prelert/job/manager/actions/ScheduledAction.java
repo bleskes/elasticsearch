@@ -87,7 +87,7 @@ public enum ScheduledAction implements ActionState<ScheduledAction>
     public String getBusyActionError(String jobId, ActionState<ScheduledAction> actionInUse)
     {
         return Messages.getMessage(getMessageKey(), jobId,
-                            Messages.getMessage(actionInUse.getActionVerb()), "");
+                            Messages.getMessage(actionInUse.getActionVerb()));
     }
 
     @Override
@@ -96,8 +96,8 @@ public enum ScheduledAction implements ActionState<ScheduledAction>
     {
         return Messages.getMessage(getMessageKey(),
                                 jobId,
-                                Messages.getMessage(actionInUse.getActionVerb()),
-                                Messages.getMessage(Messages.ON_HOST, host));
+                                Messages.getMessage(actionInUse.getActionVerb()) + " "
+                                + Messages.getMessage(Messages.ON_HOST, host));
     }
 
 

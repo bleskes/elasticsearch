@@ -684,14 +684,15 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
             }
             else if (m_SchedulerActionGuardian.currentAction(jobId) == ScheduledAction.START)
             {
-                String msg = Messages.getMessage(Messages.JOB_SCHEDULER_CANNOT_STOP_IN_CURRENT_STATE,
-                        jobId, ScheduledAction.START);
-                LOGGER.info(msg);
-                throw new CannotStopSchedulerException(msg);
+                try (ActionGuardian<ScheduledAction>.ActionTicket ticket =
+                            m_SchedulerActionGuardian.tryAcquiringAction(jobId,ScheduledAction.STOP))
+                {
+                    // we expect the tryAcquire to throw
+                    throw new IllegalStateException("Inconsistent state. Shouldn't be able to stop "
+                                        + "scheduler running on different node");
+                }
             }
         }
-
-
 
 
         try (ActionGuardian<Action>.ActionTicket actionTicket =
@@ -967,10 +968,13 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
         }
         else if (m_SchedulerActionGuardian.currentAction(jobId) == ScheduledAction.START)
         {
-            String msg = Messages.getMessage(Messages.JOB_SCHEDULER_CANNOT_STOP_IN_CURRENT_STATE,
-                    jobId, ScheduledAction.START);
-            LOGGER.info(msg);
-            throw new CannotStopSchedulerException(msg);
+            try (ActionGuardian<ScheduledAction>.ActionTicket ticket =
+                    m_SchedulerActionGuardian.tryAcquiringAction(jobId,ScheduledAction.STOP))
+            {
+                // we expect the tryAcquire to throw
+                throw new IllegalStateException("Inconsistent state. Shouldn't be able to stop "
+                        + "scheduler running on different node");
+            }
         }
     }
 
@@ -1102,7 +1106,14 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
 
             if (m_SchedulerActionGuardian.currentAction(jobId) == ScheduledAction.START)
             {
-                throw new CannotUpdateSchedulerException(jobId, scheduler.getStatus());
+                try (ActionGuardian<ScheduledAction>.ActionTicket ticket =
+                        m_SchedulerActionGuardian.tryAcquiringAction(jobId,ScheduledAction.STOP))
+
+                {
+                    // we expect the tryAcquire to throw
+                    throw new IllegalStateException("Inconsistent state. Shouldn't be able to stop "
+                            + "scheduler running on different node");
+                }
             }
 
             securePassword(newSchedulerConfig);
