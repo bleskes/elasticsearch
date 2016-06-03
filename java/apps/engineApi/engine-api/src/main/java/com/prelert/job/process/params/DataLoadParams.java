@@ -33,11 +33,18 @@ public class DataLoadParams
 {
     private final boolean m_IsPersisting;
     private final TimeRange m_ResetTimeRange;
+    private final boolean m_IgnoreDowntime;
 
     public DataLoadParams(boolean isPersisting, TimeRange resetTimeRange)
     {
+        this(isPersisting, resetTimeRange, false);
+    }
+
+    public DataLoadParams(boolean isPersisting, TimeRange resetTimeRange, boolean ignoreDowntime)
+    {
         m_IsPersisting = isPersisting;
         m_ResetTimeRange = Objects.requireNonNull(resetTimeRange);
+        m_IgnoreDowntime = ignoreDowntime;
     }
 
     public boolean isPersisting()
@@ -58,6 +65,11 @@ public class DataLoadParams
     public String getEnd()
     {
         return m_ResetTimeRange.getEnd();
+    }
+
+    public boolean isIgnoreDowntime()
+    {
+        return m_IgnoreDowntime;
     }
 }
 

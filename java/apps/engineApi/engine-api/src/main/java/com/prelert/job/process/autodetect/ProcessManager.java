@@ -158,7 +158,7 @@ public class ProcessManager
         {
             // create the new process and restore its state
             // if it has been saved
-            process = m_ProcessFactory.createProcess(job);
+            process = m_ProcessFactory.createProcess(job, params.isIgnoreDowntime());
             m_JobIdToProcessMap.put(job.getId(), process);
         }
 

@@ -115,7 +115,7 @@ public class ProcessManagerTest
     {
         MockProcessBuilder mockProcessBuilder = new MockProcessBuilder();
         ProcessAndDataDescription process = mockProcessBuilder.stillRunning(true).build();
-        when(m_ProcessFactory.createProcess(m_Job)).thenReturn(process);
+        when(m_ProcessFactory.createProcess(m_Job, false)).thenReturn(process);
 
         InputStream inputStream = createInputStream("time");
         m_ProcessManager.processDataLoadJob(m_Job, inputStream, createNoPersistNoResetDataLoadParams());
@@ -140,7 +140,7 @@ public class ProcessManagerTest
     {
         MockProcessBuilder mockProcessBuilder = new MockProcessBuilder();
         ProcessAndDataDescription process = mockProcessBuilder.stillRunning(true).build();
-        when(m_ProcessFactory.createProcess(m_Job)).thenReturn(process);
+        when(m_ProcessFactory.createProcess(m_Job, false)).thenReturn(process);
 
         InputStream inputStream = createInputStream("");
         m_ProcessManager.processDataLoadJob(m_Job, inputStream, createNoPersistNoResetDataLoadParams());
@@ -159,7 +159,7 @@ public class ProcessManagerTest
     {
         MockProcessBuilder mockProcessBuilder = new MockProcessBuilder();
         ProcessAndDataDescription process = mockProcessBuilder.stillRunning(true).build();
-        when(m_ProcessFactory.createProcess(m_Job)).thenReturn(process);
+        when(m_ProcessFactory.createProcess(m_Job, false)).thenReturn(process);
 
         InputStream inputStream = createInputStream("");
         m_ProcessManager.processDataLoadJob(m_Job, inputStream, createNoPersistNoResetDataLoadParams());
@@ -183,7 +183,7 @@ public class ProcessManagerTest
     {
         MockProcessBuilder mockProcessBuilder = new MockProcessBuilder();
         ProcessAndDataDescription process = mockProcessBuilder.stillRunning(false).build();
-        when(m_ProcessFactory.createProcess(m_Job)).thenReturn(process);
+        when(m_ProcessFactory.createProcess(m_Job, false)).thenReturn(process);
 
         m_ProcessManager.closeJob(JOB_ID);
 
@@ -205,7 +205,7 @@ public class ProcessManagerTest
     {
         MockProcessBuilder mockProcessBuilder = new MockProcessBuilder();
         ProcessAndDataDescription process = mockProcessBuilder.stillRunning(true).build();
-        when(m_ProcessFactory.createProcess(m_Job)).thenReturn(process);
+        when(m_ProcessFactory.createProcess(m_Job, false)).thenReturn(process);
 
         InputStream inputStream = createInputStream("");
         m_ProcessManager.processDataLoadJob(m_Job, inputStream, createNoPersistNoResetDataLoadParams());
@@ -224,7 +224,7 @@ public class ProcessManagerTest
     {
         MockProcessBuilder mockProcessBuilder = new MockProcessBuilder();
         ProcessAndDataDescription process = mockProcessBuilder.stillRunning(true).build();
-        when(m_ProcessFactory.createProcess(m_Job)).thenReturn(process);
+        when(m_ProcessFactory.createProcess(m_Job, false)).thenReturn(process);
         InputStream inputStream = createInputStream("");
         m_ProcessManager.processDataLoadJob(m_Job, inputStream, createNoPersistNoResetDataLoadParams());
 
@@ -249,7 +249,7 @@ public class ProcessManagerTest
     {
         MockProcessBuilder mockProcessBuilder = new MockProcessBuilder();
         ProcessAndDataDescription process = mockProcessBuilder.stillRunning(true).build();
-        when(m_ProcessFactory.createProcess(m_Job)).thenReturn(process);
+        when(m_ProcessFactory.createProcess(m_Job, false)).thenReturn(process);
         InputStream inputStream = createInputStream("");
         m_ProcessManager.processDataLoadJob(m_Job, inputStream,
                 createNoPersistNoResetDataLoadParams());

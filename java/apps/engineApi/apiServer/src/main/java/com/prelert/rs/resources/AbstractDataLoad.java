@@ -94,6 +94,9 @@ public abstract class AbstractDataLoad extends ResourceWithJobManager
     /** Parameter to specify end time of buckets to be reset */
     static final String RESET_END_PARAM = "resetEnd";
 
+    /** Ignore downtime if the job is restarting */
+    static final String IGNORE_DOWNTIME_PARAM = "ignoreDowntime";
+
     private static final int MILLISECONDS_IN_SECOND = 1000;
 
     private static final String JOB_SEPARATOR = ",";
@@ -117,7 +120,8 @@ public abstract class AbstractDataLoad extends ResourceWithJobManager
     public Response streamData(@Context HttpHeaders headers,
             @PathParam("jobId") String jobId, InputStream input,
             @DefaultValue("") @QueryParam(RESET_START_PARAM) String resetStart,
-            @DefaultValue("") @QueryParam(RESET_END_PARAM) String resetEnd)
+            @DefaultValue("") @QueryParam(RESET_END_PARAM) String resetEnd,
+            @DefaultValue("false") @QueryParam(IGNORE_DOWNTIME_PARAM) boolean ignoreDowntime)
     throws IOException
     {
         LOGGER.debug("Post data to job(s) " + jobId);
@@ -125,7 +129,7 @@ public abstract class AbstractDataLoad extends ResourceWithJobManager
         String [] jobIds = jobId.split(JOB_SEPARATOR);
         MultiDataPostResult result = new MultiDataPostResult();
 
-        DataLoadParams params = createDataLoadParams(resetStart, resetEnd);
+        DataLoadParams params = createDataLoadParams(resetStart, resetEnd, ignoreDowntime);
         String contentEncoding = headers.getHeaderString(HttpHeaders.CONTENT_ENCODING);
 
         // Validate request parameters
@@ -256,7 +260,7 @@ public abstract class AbstractDataLoad extends ResourceWithJobManager
         return status;
     }
 
-    DataLoadParams createDataLoadParams(String resetStart, String resetEnd)
+    DataLoadParams createDataLoadParams(String resetStart, String resetEnd, boolean ignoreDowntime)
     {
         if (!isValidTimeRange(resetStart, resetEnd))
         {
@@ -265,7 +269,7 @@ public abstract class AbstractDataLoad extends ResourceWithJobManager
             throw new InvalidParametersException(msg, ErrorCodes.INVALID_BUCKET_RESET_RANGE_PARAMS);
         }
         TimeRange timeRange = createTimeRange(RESET_START_PARAM, resetStart, RESET_END_PARAM, resetEnd);
-        return new DataLoadParams(shouldPersist(), timeRange);
+        return new DataLoadParams(shouldPersist(), timeRange, ignoreDowntime);
     }
 
     private boolean isValidTimeRange(String start, String end)

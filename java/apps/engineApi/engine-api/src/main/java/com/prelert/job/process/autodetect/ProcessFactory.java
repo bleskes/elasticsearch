@@ -78,11 +78,12 @@ public class ProcessFactory
      * its state.
      *
      * @param job
+     * @param ignoreDowntime
      * @return
      * @throws NativeProcessRunException If an error is encountered creating
      * the native process
      */
-    public ProcessAndDataDescription createProcess(JobDetails job)
+    public ProcessAndDataDescription createProcess(JobDetails job, boolean ignoreDowntime)
             throws UnknownJobException, NativeProcessRunException
     {
         String jobId = job.getId();
@@ -98,7 +99,7 @@ public class ProcessFactory
             // if state is null or empty it will be ignored
             // else it is used to restore the quantiles
             nativeProcess = ProcessCtrl.buildAutoDetect(job, quantiles, logger,
-                    filesToDelete, modelSnapshot);
+                    filesToDelete, modelSnapshot, ignoreDowntime);
         }
         catch (IOException e)
         {
