@@ -31,6 +31,7 @@ import static org.mockito.Mockito.mock;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
@@ -42,6 +43,8 @@ import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.prelert.job.process.exceptions.MalformedJsonException;
+import com.prelert.job.status.CountingInputStream;
+import com.prelert.job.status.StatusReporter;
 
 public class SimpleJsonRecordReaderTest
 {
@@ -246,10 +249,35 @@ public class SimpleJsonRecordReaderTest
         assertEquals(-1, reader.read(record, gotFields));
     }
 
+    @Test
+    public void testRead_givenControlCharacterInData() throws JsonParseException, IOException,
+    MalformedJsonException
+    {
+        char controlChar = '\u0002';
+
+        String data = "{\"a\":10, \"" + controlChar + "\" : 5, \"b\":20, \"c\":30}"
+                + "\n{\"b\":21, \"a\":11, \"c\":31}"
+                + "\n{\"c\":32, \"b\":22, \"a\":12}\n";
+
+        JsonParser parser = createParser(data);
+        Map<String, Integer> fieldMap = createFieldMap();
+
+        SimpleJsonRecordReader reader = new SimpleJsonRecordReader(parser, fieldMap, "",
+                                            Logger.getLogger(this.getClass()));
+
+        String record [] = new String[3];
+        boolean gotFields [] = new boolean[3];
+
+        reader.read(record, gotFields);
+        assertEquals(3, reader.read(record, gotFields));
+        assertEquals(3, reader.read(record, gotFields));
+    }
+
     private JsonParser createParser(String input) throws JsonParseException, IOException
     {
         ByteArrayInputStream inputStream = new ByteArrayInputStream(input.getBytes(StandardCharsets.UTF_8));
-        return new JsonFactory().createParser(inputStream);
+        InputStream inputStream2 = new CountingInputStream(inputStream, mock(StatusReporter.class));
+        return new JsonFactory().createParser(inputStream2);
     }
 
     private Map<String, Integer> createFieldMap()
