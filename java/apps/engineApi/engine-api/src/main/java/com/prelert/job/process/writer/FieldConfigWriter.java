@@ -48,8 +48,9 @@ public class FieldConfigWriter
     private static final String INFLUENCER_PREFIX = "influencer.";
 
     private static final String CATEGORIZATION_FIELD_OPTION = " categorizationfield=";
+
     // Note: for the Engine API summarycountfield is currently passed as a
-    // command line option to prelert_autodetect_input rather than in the field
+    // command line option to prelert_autodetect_api rather than in the field
     // config file
 
     private static final char NEW_LINE = '\n';
