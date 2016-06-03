@@ -137,6 +137,7 @@ public final class ReservedFieldNames
         CategoryDefinition.CATEGORY_ID,
         CategoryDefinition.TERMS,
         CategoryDefinition.REGEX,
+        CategoryDefinition.MAX_MATCHING_LENGTH,
         CategoryDefinition.EXAMPLES,
 
         DataCounts.BUCKET_COUNT,

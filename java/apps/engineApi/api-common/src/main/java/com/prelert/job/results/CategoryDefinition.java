@@ -38,11 +38,13 @@ public class CategoryDefinition implements StorageSerialisable
     public static final String CATEGORY_ID = "categoryId";
     public static final String TERMS = "terms";
     public static final String REGEX = "regex";
+    public static final String MAX_MATCHING_LENGTH = "maxMatchingLength";
     public static final String EXAMPLES = "examples";
 
     private long m_Id = 0L;
     private String m_Terms = "";
     private String m_Regex = "";
+    private long m_MaxMatchingLength = 0L;
     private final Set<String> m_Examples = new TreeSet<>();
 
     public long getCategoryId()
@@ -73,6 +75,16 @@ public class CategoryDefinition implements StorageSerialisable
     public void setRegex(String regex)
     {
         m_Regex = regex;
+    }
+
+    public long getMaxMatchingLength()
+    {
+        return m_MaxMatchingLength;
+    }
+
+    public void setMaxMatchingLength(long maxMatchingLength)
+    {
+        m_MaxMatchingLength = maxMatchingLength;
     }
 
     public List<String> getExamples()
@@ -106,13 +118,14 @@ public class CategoryDefinition implements StorageSerialisable
         return Objects.equals(this.m_Id, that.m_Id)
                 && Objects.equals(this.m_Terms, that.m_Terms)
                 && Objects.equals(this.m_Regex, that.m_Regex)
+                && Objects.equals(this.m_MaxMatchingLength, that.m_MaxMatchingLength)
                 && Objects.equals(this.m_Examples, that.m_Examples);
     }
 
     @Override
     public int hashCode()
     {
-        return Objects.hash(m_Id, m_Terms, m_Regex, m_Examples);
+        return Objects.hash(m_Id, m_Terms, m_Regex, m_MaxMatchingLength, m_Examples);
     }
 
     @Override
@@ -121,6 +134,7 @@ public class CategoryDefinition implements StorageSerialisable
         serialiser.add(CATEGORY_ID, m_Id)
                   .add(TERMS, m_Terms)
                   .add(REGEX, m_Regex)
+                  .add(MAX_MATCHING_LENGTH, m_MaxMatchingLength)
                   .add(EXAMPLES, m_Examples.toArray(new String[m_Examples.size()]));
     }
 }

@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -66,6 +66,9 @@ final class CategoryDefinitionParser extends FieldNameParser<CategoryDefinition>
             break;
         case CategoryDefinition.REGEX:
             category.setRegex(parseAsStringOrNull(fieldName));
+            break;
+        case CategoryDefinition.MAX_MATCHING_LENGTH:
+            category.setMaxMatchingLength(parseAsLongOrZero(fieldName));
             break;
         case CategoryDefinition.EXAMPLES:
             category.setExamples(parseExamples(fieldName));

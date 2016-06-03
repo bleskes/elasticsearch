@@ -32,7 +32,9 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Level;
@@ -70,12 +72,14 @@ public class CategorizationTest implements Closeable
 
     private static final String HIGHEST_ANOMALY_BUCKET_ID = "highestAnomalyBucketId";
     private static final String HIGHEST_ANOMALY_CATEGORY_ID = "highestAnomalyCategoryId";
+    private static final String HIGHEST_ANOMALY_CATEGORY_MAX_LENGTH = "highestAnomalyCategoryMaxLength";
     private static final String HIGHEST_ANOMALY_SCORE_THRESHOLD = "highestAnomalyScoreThreshold";
     private static final String HIGHEST_RECORD_PROBABILITY_THRESHOLD =
             "highestAnomalyRecordProbabilityThreshold";
 
     private static final long BUCKET_SPAN = 3600;
     private static final int EXPECTED_CATEGORIES = 48;
+    private static final int EXPECTED_UNIQUE_MAX_MATCHING_LENGTHS = 40;
     private static final int DEFAULT_EXAMPLES_BY_CATEGORY_LIMIT = 4;
 
     private static final String COUNT_DEFAULT_EXAMPLES_LIMIT_ID =
@@ -207,6 +211,7 @@ public class CategorizationTest implements Closeable
 
         long categoryId = 1;
         int maxExamplesSize = 0;
+        Set<Long> uniqueMaxLengths = new HashSet<>();
         for (CategoryDefinition def : categoryDefinitions.getDocuments())
         {
             SingleDocument<CategoryDefinition> doc = m_WebServiceClient.getCategoryDefinition(
@@ -215,6 +220,8 @@ public class CategorizationTest implements Closeable
             test(categoryDefinition.getCategoryId() == categoryId);
             test(categoryDefinition.getTerms().isEmpty() == false);
             test(categoryDefinition.getRegex().isEmpty() == false);
+            test(categoryDefinition.getMaxMatchingLength() > 0);
+            uniqueMaxLengths.add(categoryDefinition.getMaxMatchingLength());
             if (m_ExamplesByCategoryLimit == null || m_ExamplesByCategoryLimit > 0)
             {
                 int examplesSize = def.getExamples().size();
@@ -223,6 +230,7 @@ public class CategorizationTest implements Closeable
             }
             ++categoryId;
         }
+        test(uniqueMaxLengths.size() == EXPECTED_UNIQUE_MAX_MATCHING_LENGTHS);
         test(maxExamplesSize == getExamplesByCategoryLimit());
     }
 
@@ -246,8 +254,11 @@ public class CategorizationTest implements Closeable
         test(highestRecord != null);
         if (m_ExpectedResults.containsKey(HIGHEST_ANOMALY_CATEGORY_ID))
         {
-            test(highestRecord.getByFieldValue().equals(
-                    m_ExpectedResults.get(HIGHEST_ANOMALY_CATEGORY_ID)));
+            String categoryId = (String) m_ExpectedResults.get(HIGHEST_ANOMALY_CATEGORY_ID);
+            test(highestRecord.getByFieldValue().equals(categoryId));
+            CategoryDefinition categoryDefinition = m_WebServiceClient
+                    .getCategoryDefinition(m_JobId, categoryId).getDocument();
+            test(categoryDefinition.getMaxMatchingLength() == (int) m_ExpectedResults.get(HIGHEST_ANOMALY_CATEGORY_MAX_LENGTH));
         }
     }
 
@@ -326,6 +337,7 @@ public class CategorizationTest implements Closeable
         Map<String, Object> expectedResultsForCount = new HashMap<>();
         expectedResultsForCount.put(HIGHEST_ANOMALY_BUCKET_ID, "1428678000");
         expectedResultsForCount.put(HIGHEST_ANOMALY_SCORE_THRESHOLD, 91.0);
+        expectedResultsForCount.put(HIGHEST_ANOMALY_CATEGORY_MAX_LENGTH, 40);
         expectedResultsForCount.put(HIGHEST_RECORD_PROBABILITY_THRESHOLD, 75.0);
         expectedResultsForCount.put(HIGHEST_ANOMALY_CATEGORY_ID, "13");
 

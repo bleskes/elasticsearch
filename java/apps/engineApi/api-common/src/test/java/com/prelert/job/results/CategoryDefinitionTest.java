@@ -58,38 +58,20 @@ public class CategoryDefinitionTest
     @Test
     public void testEquals_GivenEqualCategoryDefinitions()
     {
-        CategoryDefinition category1 = new CategoryDefinition();
-        category1.setCategoryId(42);
-        category1.setTerms("foo bar");
-        category1.setRegex(".*?foo.*?bar.*");
-        category1.addExample("foo");
-        category1.addExample("bar");
-        CategoryDefinition category2 = new CategoryDefinition();
-        category2.setCategoryId(42);
-        category2.setTerms("foo bar");
-        category2.setRegex(".*?foo.*?bar.*");
-        category2.addExample("bar");
-        category2.addExample("foo");
+        CategoryDefinition category1 = createFullyPopulatedCategoryDefinition();
+        CategoryDefinition category2 = createFullyPopulatedCategoryDefinition();
 
         assertTrue(category1.equals(category2));
         assertTrue(category2.equals(category1));
+        assertEquals(category1.hashCode(), category2.hashCode());
     }
 
     @Test
     public void testEquals_GivenCategoryDefinitionsWithDifferentIds()
     {
-        CategoryDefinition category1 = new CategoryDefinition();
-        category1.setCategoryId(42);
-        category1.setTerms("foo bar");
-        category1.setRegex(".*?foo.*?bar.*");
-        category1.addExample("foo");
-        category1.addExample("bar");
-        CategoryDefinition category2 = new CategoryDefinition();
-        category2.setCategoryId(1);
-        category2.setTerms("foo bar");
-        category2.setRegex(".*?foo.*?bar.*");
-        category2.addExample("bar");
-        category2.addExample("foo");
+        CategoryDefinition category1 = createFullyPopulatedCategoryDefinition();
+        CategoryDefinition category2 = createFullyPopulatedCategoryDefinition();
+        category2.setCategoryId(category1.getCategoryId() + 1);
 
         assertFalse(category1.equals(category2));
         assertFalse(category2.equals(category1));
@@ -98,18 +80,9 @@ public class CategoryDefinitionTest
     @Test
     public void testEquals_GivenCategoryDefinitionsWithDifferentTerms()
     {
-        CategoryDefinition category1 = new CategoryDefinition();
-        category1.setCategoryId(42);
-        category1.setTerms("foo bar");
-        category1.setRegex(".*?foo.*?bar.*");
-        category1.addExample("foo");
-        category1.addExample("bar");
-        CategoryDefinition category2 = new CategoryDefinition();
-        category2.setCategoryId(42);
-        category2.setTerms("foo");
-        category2.setRegex(".*?foo.*?bar.*");
-        category2.addExample("bar");
-        category2.addExample("foo");
+        CategoryDefinition category1 = createFullyPopulatedCategoryDefinition();
+        CategoryDefinition category2 = createFullyPopulatedCategoryDefinition();
+        category2.setTerms(category1.getTerms() + " additional");
 
         assertFalse(category1.equals(category2));
         assertFalse(category2.equals(category1));
@@ -118,18 +91,20 @@ public class CategoryDefinitionTest
     @Test
     public void testEquals_GivenCategoryDefinitionsWithDifferentRegex()
     {
-        CategoryDefinition category1 = new CategoryDefinition();
-        category1.setCategoryId(42);
-        category1.setTerms("foo bar");
-        category1.setRegex(".*?foo.*?bar.*");
-        category1.addExample("foo");
-        category1.addExample("bar");
-        CategoryDefinition category2 = new CategoryDefinition();
-        category2.setCategoryId(42);
-        category2.setTerms("foo bar");
-        category2.setRegex(".*?foo.*");
-        category2.addExample("bar");
-        category2.addExample("foo");
+        CategoryDefinition category1 = createFullyPopulatedCategoryDefinition();
+        CategoryDefinition category2 = createFullyPopulatedCategoryDefinition();
+        category2.setRegex(category1.getRegex() + ".*additional.*");
+
+        assertFalse(category1.equals(category2));
+        assertFalse(category2.equals(category1));
+    }
+
+    @Test
+    public void testEquals_GivenCategoryDefinitionsWithDifferentMaxMatchingLength()
+    {
+        CategoryDefinition category1 = createFullyPopulatedCategoryDefinition();
+        CategoryDefinition category2 = createFullyPopulatedCategoryDefinition();
+        category2.setMaxMatchingLength(category1.getMaxMatchingLength() + 1);
 
         assertFalse(category1.equals(category2));
         assertFalse(category2.equals(category1));
@@ -138,47 +113,18 @@ public class CategoryDefinitionTest
     @Test
     public void testEquals_GivenCategoryDefinitionsWithDifferentExamples()
     {
-        CategoryDefinition category1 = new CategoryDefinition();
-        category1.setCategoryId(42);
-        category1.setTerms("foo bar");
-        category1.setRegex(".*?foo.*?bar.*");
-        category1.addExample("foo");
-        category1.addExample("bar");
-        CategoryDefinition category2 = new CategoryDefinition();
-        category2.setCategoryId(42);
-        category2.setTerms("foo bar");
-        category2.setRegex(".*?foo.*?bar.*");
-        category2.addExample("bar");
-        category2.addExample("foobar");
+        CategoryDefinition category1 = createFullyPopulatedCategoryDefinition();
+        CategoryDefinition category2 = createFullyPopulatedCategoryDefinition();
+        category2.addExample("additional");
 
         assertFalse(category1.equals(category2));
         assertFalse(category2.equals(category1));
     }
 
     @Test
-    public void testHashCode_GivenEqualCategoryDefinitions()
-    {
-        CategoryDefinition category1 = new CategoryDefinition();
-        category1.setCategoryId(42);
-        category1.addExample("foo");
-        category1.addExample("bar");
-        CategoryDefinition category2 = new CategoryDefinition();
-        category2.setCategoryId(42);
-        category2.addExample("bar");
-        category2.addExample("foo");
-
-        assertEquals(category1.hashCode(), category2.hashCode());
-    }
-
-    @Test
     public void testSerialise() throws IOException
     {
-        CategoryDefinition category = new CategoryDefinition();
-        category.setCategoryId(42);
-        category.setTerms("foo bar");
-        category.setRegex(".*?foo.*?bar.*");
-        category.addExample("bar");
-        category.addExample("foobar");
+        CategoryDefinition category = createFullyPopulatedCategoryDefinition();
 
         TestJsonStorageSerialiser serialiser = new TestJsonStorageSerialiser();
         serialiser.startObject();
@@ -187,10 +133,23 @@ public class CategoryDefinitionTest
 
         String expected = "{"
                 + "\"regex\":\".*?foo.*?bar.*\","
-                + "\"examples\":[\"bar\",\"foobar\"],"
+                + "\"examples\":[\"bar\",\"foo\"],"
                 + "\"terms\":\"foo bar\","
+                + "\"maxMatchingLength\":120,"
                 + "\"categoryId\":42"
                 + "}";
         assertEquals(expected, serialiser.toJson());
+    }
+
+    private static CategoryDefinition createFullyPopulatedCategoryDefinition()
+    {
+        CategoryDefinition category = new CategoryDefinition();
+        category.setCategoryId(42);
+        category.setTerms("foo bar");
+        category.setRegex(".*?foo.*?bar.*");
+        category.setMaxMatchingLength(120L);
+        category.addExample("foo");
+        category.addExample("bar");
+        return category;
     }
 }

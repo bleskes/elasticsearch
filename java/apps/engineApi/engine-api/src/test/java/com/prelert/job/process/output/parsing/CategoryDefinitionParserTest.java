@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -60,6 +60,7 @@ public class CategoryDefinitionParserTest
         String input = "{\"categoryDefinition\": 1,"
                      + " \"terms\":\"foo bar\","
                      + " \"regex\":\".*?foo.*?bar.*\","
+                     + " \"maxMatchingLength\":350,"
                      + " \"examples\": [\"foo\", \"bar\"]}";
         JsonParser parser = createJsonParser(input);
         parser.nextToken();
@@ -69,6 +70,7 @@ public class CategoryDefinitionParserTest
         assertEquals(1, category.getCategoryId());
         assertEquals("foo bar", category.getTerms());
         assertEquals(".*?foo.*?bar.*", category.getRegex());
+        assertEquals(350L, category.getMaxMatchingLength());
         assertEquals(Arrays.asList("bar", "foo"), category.getExamples());
 
         assertEquals(JsonToken.END_OBJECT, parser.getCurrentToken());
