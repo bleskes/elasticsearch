@@ -172,7 +172,6 @@ public class JobSchedulerTest
         m_JobScheduler.start(new JobDetails(), 1400000000000L, OptionalLong.of(1400000001000L));
         waitUntilSchedulerStoppedIsAudited();
         assertEquals(JobSchedulerStatus.STOPPED, m_CurrentStatus);
-        assertFalse(dataExtractor.m_IsCancelled);
         assertTrue(dataProcessor.isJobClosed());
 
         assertEquals(1, dataProcessor.getNumberOfStreams());
@@ -331,7 +330,6 @@ public class JobSchedulerTest
         assertTrue(dataProcessor.awaitForCountDownLatch());
         m_JobScheduler.stopManual();
         assertEquals(JobSchedulerStatus.STOPPED, m_CurrentStatus);
-        assertTrue(dataExtractor.m_IsCancelled);
 
         assertEquals(numberOfSearches, dataProcessor.getNumberOfStreams());
         List<InterimResultsParams> flushParams = dataProcessor.getFlushParams();
@@ -557,7 +555,6 @@ public class JobSchedulerTest
         boolean lookbackFinished = m_CurrentStatus != JobSchedulerStatus.STARTED;
         m_JobScheduler.stopAuto();
 
-        assertTrue(dataExtractor.m_IsCancelled);
         if (lookbackFinished)
         {
             assertEquals(JobSchedulerStatus.STOPPED, m_CurrentStatus);
@@ -588,7 +585,6 @@ public class JobSchedulerTest
         assertTrue(dataProcessor.awaitForCountDownLatch());
 
         m_JobScheduler.stopAuto();
-        assertTrue(dataExtractor.m_IsCancelled);
         assertFalse(dataProcessor.isJobClosed());
         assertEquals(JobSchedulerStatus.STARTED, m_CurrentStatus);
     }
@@ -667,12 +663,10 @@ public class JobSchedulerTest
         private int m_StreamCount = -1;
         private final List<Long> m_Starts = new ArrayList<>();
         private final List<Long> m_Ends = new ArrayList<>();
-        private volatile boolean m_IsCancelled;
 
         public MockDataExtractor(List<Integer> batchesPerSearch)
         {
             m_BatchesPerSearch = batchesPerSearch;
-            m_IsCancelled = false;
         }
 
         @Override
@@ -714,12 +708,6 @@ public class JobSchedulerTest
         public long getEnd(int searchCount)
         {
             return m_Ends.get(searchCount);
-        }
-
-        @Override
-        public void cancel()
-        {
-            m_IsCancelled = true;
         }
     }
 
