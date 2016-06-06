@@ -91,7 +91,7 @@ public class ProcessCtrlTest
 
         job.setIgnoreDowntime(IgnoreDowntime.ONCE);
 
-        List<String> command = ProcessCtrl.buildAutoDetectCommand(job, m_Logger, null);
+        List<String> command = ProcessCtrl.buildAutoDetectCommand(job, m_Logger, null, false);
 
         assertEquals(16, command.size());
         assertTrue(command.contains(ProcessCtrl.AUTODETECT_PATH));
@@ -124,7 +124,7 @@ public class ProcessCtrlTest
         JobDetails job = new JobDetails();
         job.setId("unit-test-job");
 
-        List<String> command = ProcessCtrl.buildAutoDetectCommand(job, m_Logger, null);
+        List<String> command = ProcessCtrl.buildAutoDetectCommand(job, m_Logger, null, false);
 
         assertTrue(command.contains(ProcessCtrl.TIME_FIELD_ARG + "time"));
     }
@@ -139,12 +139,12 @@ public class ProcessCtrlTest
 
         int expectedPersistInterval = 10800 + ProcessCtrl.calculateStaggeringInterval(job.getId());
 
-        List<String> command = ProcessCtrl.buildAutoDetectCommand(job, m_Logger, null);
+        List<String> command = ProcessCtrl.buildAutoDetectCommand(job, m_Logger, null, false);
         assertFalse(command.contains(ProcessCtrl.PERSIST_INTERVAL_ARG + expectedPersistInterval));
 
         System.getProperties().remove(ProcessCtrl.DONT_PERSIST_MODEL_STATE);
 
-        command = ProcessCtrl.buildAutoDetectCommand(job, m_Logger, null);
+        command = ProcessCtrl.buildAutoDetectCommand(job, m_Logger, null, false);
         assertTrue(command.contains(ProcessCtrl.PERSIST_INTERVAL_ARG + expectedPersistInterval));
     }
 
@@ -154,9 +154,20 @@ public class ProcessCtrlTest
         JobDetails job = new JobDetails();
         job.setId("foo");
 
-        List<String> command = ProcessCtrl.buildAutoDetectCommand(job, m_Logger, null);
+        List<String> command = ProcessCtrl.buildAutoDetectCommand(job, m_Logger, null, false);
 
         assertFalse(command.contains("--ignoreDowntime"));
+    }
+
+    @Test
+    public void testBuildAutoDetectCommand_GivenIgnoreDowntimeParam()
+    {
+        JobDetails job = new JobDetails();
+        job.setId("foo");
+
+        List<String> command = ProcessCtrl.buildAutoDetectCommand(job, m_Logger, null, true);
+
+        assertTrue(command.contains("--ignoreDowntime"));
     }
 
     @Test

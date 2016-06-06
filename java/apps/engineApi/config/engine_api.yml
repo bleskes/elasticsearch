@@ -78,3 +78,7 @@
 # storing the Prelert results.
 # es.index.number_of_replicas: 0
 
+# ------------------------------------------------------------------------------
+# ZooKeeper server settings.
+# zookeeper.host: localhost
+# zookeeper.port: 2181

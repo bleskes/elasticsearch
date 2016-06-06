@@ -86,6 +86,8 @@ import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.exceptions.JobInUseException;
 import com.prelert.job.exceptions.LicenseViolationException;
 import com.prelert.job.logging.JobLoggerFactory;
+import com.prelert.job.manager.actions.ActionGuardian;
+import com.prelert.job.manager.actions.ScheduledAction;
 import com.prelert.job.persistence.JobProvider;
 import com.prelert.job.process.exceptions.MalformedJsonException;
 import com.prelert.job.process.exceptions.MissingFieldException;
@@ -106,6 +108,8 @@ public class JobSchedulerTest
     @Mock private JobLoggerFactory m_JobLoggerFactory;
     @Mock private Logger m_JobLogger;
     @Mock private Auditor m_Auditor;
+    @Mock private ActionGuardian<ScheduledAction>.ActionTicket m_ActionTicket;
+
 
     private volatile JobSchedulerStatus m_CurrentStatus;
 
@@ -136,11 +140,14 @@ public class JobSchedulerTest
         m_JobScheduler = createJobScheduler(dataExtractor, dataProcessor);
 
         m_JobScheduler.start(new JobDetails("foo", new JobConfiguration()), 1000L,
-                OptionalLong.of(500));
+                OptionalLong.of(500), m_ActionTicket);
+
 
         waitUntilSchedulerStoppedIsAudited();
+
         verify(dataProcessor).closeJob("foo");
         verify(m_Auditor).info("Scheduler stopped");
+        verify(m_ActionTicket, times(1)).close();
         Mockito.verifyNoMoreInteractions(dataExtractor, dataProcessor, m_Auditor);
     }
 
@@ -152,11 +159,14 @@ public class JobSchedulerTest
         m_JobScheduler = createJobScheduler(dataExtractor, dataProcessor);
 
         m_JobScheduler.start(new JobDetails("foo", new JobConfiguration()), 1000L,
-                OptionalLong.of(1000));
+                OptionalLong.of(1000), m_ActionTicket);
+
 
         waitUntilSchedulerStoppedIsAudited();
+
         verify(dataProcessor).closeJob("foo");
         verify(m_Auditor).info("Scheduler stopped");
+        verify(m_ActionTicket, times(1)).close();
         Mockito.verifyNoMoreInteractions(dataExtractor, dataProcessor, m_Auditor);
     }
 
@@ -169,7 +179,8 @@ public class JobSchedulerTest
                 newCounts(42, 1400000001000L)));
         m_JobScheduler = createJobScheduler(dataExtractor, dataProcessor);
 
-        m_JobScheduler.start(new JobDetails(), 1400000000000L, OptionalLong.of(1400000001000L));
+        m_JobScheduler.start(new JobDetails(), 1400000000000L, OptionalLong.of(1400000001000L),
+                            m_ActionTicket);
         waitUntilSchedulerStoppedIsAudited();
         assertEquals(JobSchedulerStatus.STOPPED, m_CurrentStatus);
         assertTrue(dataProcessor.isJobClosed());
@@ -201,7 +212,8 @@ public class JobSchedulerTest
                 newCounts(55, 1400000000900L)));
         m_JobScheduler = createJobScheduler(dataExtractor, dataProcessor);
 
-        m_JobScheduler.start(new JobDetails(), 1400000000000L, OptionalLong.of(1400000001000L));
+        m_JobScheduler.start(new JobDetails(), 1400000000000L, OptionalLong.of(1400000001000L),
+                            m_ActionTicket);
         waitUntilSchedulerStoppedIsAudited();
         assertEquals(JobSchedulerStatus.STOPPED, m_CurrentStatus);
         assertTrue(dataProcessor.isJobClosed());
@@ -228,7 +240,8 @@ public class JobSchedulerTest
                 newCounts(42, 1400000001000L)));
         m_JobScheduler = createJobScheduler(dataExtractor, dataProcessor);
 
-        m_JobScheduler.start(new JobDetails(), 1400000000000L, OptionalLong.of(1400000000000L));
+        m_JobScheduler.start(new JobDetails(), 1400000000000L,
+                OptionalLong.of(1400000000000L), m_ActionTicket);
         waitUntilSchedulerStoppedIsAudited();
         assertEquals(JobSchedulerStatus.STOPPED, m_CurrentStatus);
         assertTrue(dataProcessor.isJobClosed());
@@ -257,7 +270,7 @@ public class JobSchedulerTest
 
         long schedulerStartedTimeMs = System.currentTimeMillis();
 
-        m_JobScheduler.start(new JobDetails(), 1400000000000L, OptionalLong.empty());
+        m_JobScheduler.start(new JobDetails(), 1400000000000L, OptionalLong.empty(), m_ActionTicket);
         assertEquals(JobSchedulerStatus.STARTED, m_CurrentStatus);
         assertTrue(dataProcessor.awaitForCountDownLatch());
         m_JobScheduler.stopManual();
@@ -325,7 +338,7 @@ public class JobSchedulerTest
                 new CountDownLatch(numberOfSearches));
         m_JobScheduler = createJobScheduler(dataExtractor, dataProcessor);
 
-        m_JobScheduler.start(new JobDetails(), 1400000000000L, OptionalLong.empty());
+        m_JobScheduler.start(new JobDetails(), 1400000000000L, OptionalLong.empty(), m_ActionTicket);
         assertEquals(JobSchedulerStatus.STARTED, m_CurrentStatus);
         assertTrue(dataProcessor.awaitForCountDownLatch());
         m_JobScheduler.stopManual();
@@ -362,7 +375,7 @@ public class JobSchedulerTest
                 new CountDownLatch(numberOfSearches));
         m_JobScheduler = createJobScheduler(dataExtractor, dataProcessor);
 
-        m_JobScheduler.start(new JobDetails(), 1400000000000L, OptionalLong.empty());
+        m_JobScheduler.start(new JobDetails(), 1400000000000L, OptionalLong.empty(), m_ActionTicket);
         assertEquals(JobSchedulerStatus.STARTED, m_CurrentStatus);
         assertTrue(dataProcessor.awaitForCountDownLatch());
         m_JobScheduler.stopManual();
@@ -394,7 +407,8 @@ public class JobSchedulerTest
         dataProcessor.setShouldThrow(true);
         m_JobScheduler = createJobScheduler(dataExtractor, dataProcessor);
 
-        m_JobScheduler.start(new JobDetails(), 1400000000000L, OptionalLong.of(1400000001000L));
+        m_JobScheduler.start(new JobDetails(), 1400000000000L,
+                    OptionalLong.of(1400000001000L), m_ActionTicket);
         waitUntilSchedulerStoppedIsAudited();
         assertEquals(JobSchedulerStatus.STOPPED, m_CurrentStatus);
         assertTrue(dataProcessor.isJobClosed());
@@ -405,7 +419,8 @@ public class JobSchedulerTest
         assertEquals(0, dataProcessor.getFlushParams().size());
 
         // Repeat to test that scheduler did not advance time
-        m_JobScheduler.start(new JobDetails(), 1400000000000L, OptionalLong.of(1400000001000L));
+        m_JobScheduler.start(new JobDetails(), 1400000000000L,
+                            OptionalLong.of(1400000001000L), m_ActionTicket);
         waitUntilSchedulerStoppedIsAudited();
 
         assertEquals(0, dataProcessor.getNumberOfStreams());
@@ -424,7 +439,8 @@ public class JobSchedulerTest
         MockDataProcessor dataProcessor = new MockDataProcessor(Collections.emptyList());
         m_JobScheduler = createJobScheduler(dataExtractor, dataProcessor);
 
-        m_JobScheduler.start(new JobDetails(), 1400000000000L, OptionalLong.of(1400000001000L));
+        m_JobScheduler.start(new JobDetails(), 1400000000000L,
+                        OptionalLong.of(1400000001000L), m_ActionTicket);
         waitUntilSchedulerStoppedIsAudited();
         assertEquals(JobSchedulerStatus.STOPPED, m_CurrentStatus);
         assertTrue(dataProcessor.isJobClosed());
@@ -447,7 +463,7 @@ public class JobSchedulerTest
                 newCounts(67, 1450000000000L)));
         m_JobScheduler = createJobScheduler(dataExtractor, dataProcessor);
 
-        m_JobScheduler.start(job, 1450000000000L, OptionalLong.of(1460000000000L));
+        m_JobScheduler.start(job, 1450000000000L, OptionalLong.of(1460000000000L), m_ActionTicket);
         waitUntilSchedulerStoppedIsAudited();
         assertEquals(JobSchedulerStatus.STOPPED, m_CurrentStatus);
         assertTrue(dataProcessor.isJobClosed());
@@ -476,7 +492,7 @@ public class JobSchedulerTest
                 newCounts(67, 1455000000000L)));
         m_JobScheduler = createJobScheduler(dataExtractor, dataProcessor);
 
-        m_JobScheduler.start(job, 1455000000000L, OptionalLong.of(1460000000000L));
+        m_JobScheduler.start(job, 1455000000000L, OptionalLong.of(1460000000000L), m_ActionTicket);
         waitUntilSchedulerStoppedIsAudited();
         assertEquals(JobSchedulerStatus.STOPPED, m_CurrentStatus);
         assertTrue(dataProcessor.isJobClosed());
@@ -509,9 +525,9 @@ public class JobSchedulerTest
         JobDetails job = new JobDetails();
         m_JobScheduler = createJobScheduler(dataExtractor, dataProcessor);
 
-        m_JobScheduler.start(job, 1400000000000L, OptionalLong.empty());
+        m_JobScheduler.start(job, 1400000000000L, OptionalLong.empty(), m_ActionTicket);
         assertEquals(JobSchedulerStatus.STARTED, m_CurrentStatus);
-        m_JobScheduler.start(job, 1400000000000L, OptionalLong.empty());
+        m_JobScheduler.start(job, 1400000000000L, OptionalLong.empty(), m_ActionTicket);
     }
 
     @Test
@@ -532,7 +548,7 @@ public class JobSchedulerTest
         JobDetails job = new JobDetails();
         m_JobScheduler = createJobScheduler(dataExtractor, dataProcessor);
 
-        m_JobScheduler.start(job, 1400000000000L, OptionalLong.empty());
+        m_JobScheduler.start(job, 1400000000000L, OptionalLong.empty(), m_ActionTicket);
         m_JobScheduler.stopManual();
         assertEquals(JobSchedulerStatus.STOPPED, m_CurrentStatus);
         m_JobScheduler.stopManual();
@@ -546,7 +562,8 @@ public class JobSchedulerTest
         MockDataProcessor dataProcessor = new MockDataProcessor(Arrays.asList(
                 newCounts(67, 1500000000000L)));
         m_JobScheduler = createJobScheduler(dataExtractor, dataProcessor);
-        m_JobScheduler.start(new JobDetails(), 1400000000000L, OptionalLong.of(1500000000000L));
+        m_JobScheduler.start(new JobDetails(), 1400000000000L,
+                            OptionalLong.of(1500000000000L), m_ActionTicket);
 
         while (m_CurrentStatus == null)
         {
@@ -554,6 +571,8 @@ public class JobSchedulerTest
 
         boolean lookbackFinished = m_CurrentStatus != JobSchedulerStatus.STARTED;
         m_JobScheduler.stopAuto();
+
+        verify(m_ActionTicket, times(1)).close();
 
         if (lookbackFinished)
         {
@@ -578,7 +597,8 @@ public class JobSchedulerTest
                 new CountDownLatch(2));
         m_JobScheduler = createJobScheduler(dataExtractor, dataProcessor);
 
-        m_JobScheduler.start(new JobDetails(), 1400000000000L, OptionalLong.empty());
+        m_JobScheduler.start(new JobDetails(), 1400000000000L,
+                            OptionalLong.empty(), m_ActionTicket);
         assertEquals(JobSchedulerStatus.STARTED, m_CurrentStatus);
 
         // Wait enough time for real-time tasks to begin in case stop did not work
@@ -587,6 +607,8 @@ public class JobSchedulerTest
         m_JobScheduler.stopAuto();
         assertFalse(dataProcessor.isJobClosed());
         assertEquals(JobSchedulerStatus.STARTED, m_CurrentStatus);
+
+        verify(m_ActionTicket, times(1)).close();
     }
 
     private void recordSchedulerStatus() throws UnknownJobException

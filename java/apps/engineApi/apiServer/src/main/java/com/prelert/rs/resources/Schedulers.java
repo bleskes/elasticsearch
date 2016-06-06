@@ -89,7 +89,8 @@ public class Schedulers extends ResourceWithJobManager
             @DefaultValue("") @QueryParam(START_QUERY_PARAM) String start,
             @DefaultValue("") @QueryParam(END_QUERY_PARAM) String end)
             throws CannotStartSchedulerException, NoSuchScheduledJobException,
-            UnknownJobException, TooManyJobsException, LicenseViolationException
+            UnknownJobException, TooManyJobsException, LicenseViolationException,
+            JobInUseException
     {
         LOGGER.debug("Received request to start scheduler for job: " + jobId);
 

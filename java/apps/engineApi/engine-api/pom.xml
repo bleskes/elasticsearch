@@ -72,12 +72,61 @@
       <groupId>org.elasticsearch</groupId>
       <artifactId>elasticsearch</artifactId>
     </dependency>
+
+    <!-- ZooKeeper uses slf4j. Including the projects version here stops the
+         copy-dependencies plugin from installing the earlier version used
+         by ZooKeeper. -->
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-log4j12</artifactId>
+    </dependency>
+
+    <!-- ZooKeeper Curator -->
+    <dependency>
+      <groupId>org.apache.curator</groupId>
+      <artifactId>curator-recipes</artifactId>
+      <version>2.10.0</version>
+      <!-- Resolve dependency convergence error with elasticsearch.
+           If this changes review the copy-dependencies excludeArtifactIds below -->
+      <exclusions>
+        <exclusion>
+          <groupId>io.netty</groupId>
+          <artifactId>netty</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.slf4j</groupId>
+          <artifactId>slf4j-api</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.curator</groupId>
+      <artifactId>curator-test</artifactId>
+      <version>2.10.0</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
 
   <build>
 
     <plugins>
+      <!-- Integration test -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-failsafe-plugin</artifactId>
+        <executions>
+          <execution>
+            <goals>
+              <goal>integration-test</goal>
+              <goal>verify</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+
+
       <!-- install dependencies -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>

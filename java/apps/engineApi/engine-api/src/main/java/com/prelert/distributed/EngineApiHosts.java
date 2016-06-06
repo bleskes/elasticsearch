@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -24,34 +24,17 @@
  *                                                          *
  *                                                          *
  ************************************************************/
-package com.prelert.job.exceptions;
 
-import com.prelert.job.JobException;
-import com.prelert.job.errorcodes.ErrorCodes;
+package com.prelert.distributed;
 
-/**
- * This exception is thrown is an operation is attempted on a job
- * that can't be executed as the job is already being used.
- */
-public class JobInUseException extends JobException
+import java.util.List;
+
+public interface EngineApiHosts
 {
-    private static final long serialVersionUID = -2759814168552580059L;
-
     /**
-     * Create a new JobInUseException.
-     *
-     * @param message Details of error explaining the context
-     * @param The error code
-     * @see ErrorCodes
+     * Get the list of Engine API hosts participating
+     * in this cluster
+     * @return
      */
-    public JobInUseException(String message, ErrorCodes errorCode)
-    {
-        super(message, errorCode);
-    }
-
-    public JobInUseException(String message, ErrorCodes errorCode, Throwable cause)
-    {
-        super(message, errorCode, cause);
-    }
+    List<String> engineApiHosts();
 }
-

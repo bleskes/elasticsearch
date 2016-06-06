@@ -18,6 +18,9 @@
 
 package com.prelert.job.persistence;
 
+import java.util.Optional;
+
+import com.prelert.job.ModelSizeStats;
 import com.prelert.job.ModelSnapshot;
 import com.prelert.job.NoSuchModelSnapshotException;
 import com.prelert.job.UnknownJobException;
@@ -85,6 +88,15 @@ public interface JobProvider extends JobDetailsProvider, JobResultsProvider
      */
     public ModelSnapshot deleteModelSnapshot(String jobId, String snapshotId)
             throws UnknownJobException, NoSuchModelSnapshotException;
+
+
+    /**
+     * Get the job's model size stats.
+     *
+     * @param jobId
+     * @return
+     */
+    public Optional<ModelSizeStats> modelSizeStats(String jobId);
 
     /**
      * Refresh the datastore index so that all recent changes are

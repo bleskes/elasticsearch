@@ -113,6 +113,9 @@ import com.prelert.job.exceptions.JobInUseException;
 import com.prelert.job.exceptions.LicenseViolationException;
 import com.prelert.job.exceptions.TooManyJobsException;
 import com.prelert.job.logging.JobLoggerFactory;
+import com.prelert.job.manager.actions.Action;
+import com.prelert.job.manager.actions.LocalActionGuardian;
+import com.prelert.job.manager.actions.ScheduledAction;
 import com.prelert.job.messages.Messages;
 import com.prelert.job.password.PasswordManager;
 import com.prelert.job.persistence.BatchedDocumentsIterator;
@@ -233,6 +236,7 @@ public class JobManagerTest
         JobManager jobManager = createJobManager();
         when(m_ProcessManager.jobIsRunning("foo")).thenReturn(false);
         when(m_JobProvider.deleteJob("foo")).thenReturn(true);
+        when(m_JobProvider.getJobDetails("foo")).thenReturn(Optional.empty());
 
         jobManager.deleteJob("foo");
 
@@ -250,6 +254,7 @@ public class JobManagerTest
         givenProcessInfo(5);
         JobManager jobManager = createJobManager();
         when(m_ProcessManager.jobIsRunning("foo")).thenReturn(true);
+        when(m_JobProvider.getJobDetails("foo")).thenReturn(Optional.empty());
 
         jobManager.deleteJob("foo");
 
@@ -273,6 +278,7 @@ public class JobManagerTest
         DataExtractor dataExtractor = mock(DataExtractor.class);
         when(m_DataExtractorFactory.newExtractor(any(JobDetails.class))).thenReturn(dataExtractor);
         when(m_ProcessManager.jobIsRunning("foo")).thenReturn(true);
+        when(m_JobProvider.getJobDetails("foo")).thenReturn(Optional.of(new JobDetails()));
 
         jobManager.createJob(jobConfig, false);
 
@@ -289,6 +295,9 @@ public class JobManagerTest
     {
         givenProcessInfo(5);
         JobManager jobManager = createJobManager();
+
+        when(m_JobProvider.getJobDetails("foo")).thenReturn(Optional.of(new JobDetails()));
+
         doAnswerSleep(200).when(m_JobProvider).deleteJob("foo");
 
         ExecutorService executor = Executors.newFixedThreadPool(2);
@@ -819,6 +828,8 @@ public class JobManagerTest
 
         JobManager jobManager = createJobManager();
 
+        when(m_JobProvider.getJobDetails("not-unique")).thenReturn(Optional.of(new JobDetails()));
+
         try
         {
             jobManager.createJob(jobConfig, true);
@@ -922,6 +933,8 @@ public class JobManagerTest
         JobConfiguration jobConfig = new JobConfiguration();
         jobConfig.setId("not-unique");
         jobConfig.setAnalysisConfig(analysisConfig);
+
+        when(m_JobProvider.getJobDetails("not-unique")).thenReturn(Optional.of(new JobDetails()));
 
         jobManager.createJob(jobConfig, true);
 
@@ -1082,6 +1095,9 @@ public class JobManagerTest
         m_ExpectedException.expectMessage("There is no job 'foo' with a scheduler configured");
         m_ExpectedException.expect(ErrorCodeMatcher.hasErrorCode(ErrorCodes.NO_SUCH_SCHEDULED_JOB));
 
+        JobDetails jd = new JobDetails();
+        when(m_JobProvider.getJobDetails("foo")).thenReturn(Optional.of(jd));
+
         jobManager.startJobScheduler("foo", 0, OptionalLong.empty());
     }
 
@@ -1193,6 +1209,9 @@ public class JobManagerTest
         m_ExpectedException.expect(NoSuchScheduledJobException.class);
         m_ExpectedException.expectMessage("There is no job 'foo' with a scheduler configured");
         m_ExpectedException.expect(ErrorCodeMatcher.hasErrorCode(ErrorCodes.NO_SUCH_SCHEDULED_JOB));
+
+        JobDetails jd = new JobDetails();
+        when(m_JobProvider.getJobDetails("foo")).thenReturn(Optional.of(jd));
 
         jobManager.stopJobScheduler("foo");
     }
@@ -1311,6 +1330,10 @@ public class JobManagerTest
         DataExtractor dataExtractor = mock(DataExtractor.class);
         when(m_DataExtractorFactory.newExtractor(any(JobDetails.class))).thenReturn(dataExtractor);
 
+        JobDetails jd = new JobDetails();
+        jd.setSchedulerConfig(new SchedulerConfig());
+        when(m_JobProvider.getJobDetails("scheduled")).thenReturn(Optional.of(jd));
+
         givenProcessInfo(2);
         JobManager jobManager = createJobManager();
 
@@ -1341,6 +1364,11 @@ public class JobManagerTest
 
         DataExtractor dataExtractor = mock(DataExtractor.class);
         when(m_DataExtractorFactory.newExtractor(any(JobDetails.class))).thenReturn(dataExtractor);
+
+        JobDetails jd = new JobDetails();
+        jd.setSchedulerConfig(new SchedulerConfig());
+        when(m_JobProvider.getJobDetails("scheduled")).thenReturn(Optional.of(jd));
+
 
         givenProcessInfo(2);
         JobManager jobManager = createJobManager();
@@ -1643,7 +1671,7 @@ public class JobManagerTest
         assertEquals(IgnoreDowntime.ONCE, m_JobUpdateCaptor.getValue().get(JobDetails.IGNORE_DOWNTIME));
     }
 
-    @Test (expected = IllegalStateException.class)
+    @Test (expected =IllegalStateException.class)
     public void testPauseJob_GivenScheduledJob() throws JobException
     {
         givenProcessInfo(2);
@@ -1654,6 +1682,10 @@ public class JobManagerTest
         when(m_JobLoggerFactory.newLogger("foo")).thenReturn(jobLogger);
         DataExtractor dataExtractor = mock(DataExtractor.class);
         when(m_DataExtractorFactory.newExtractor(any(JobDetails.class))).thenReturn(dataExtractor);
+
+        JobDetails jd = new JobDetails();
+        jd.setSchedulerConfig(new SchedulerConfig());
+        when(m_JobProvider.getJobDetails("foo")).thenReturn(Optional.of(jd));
 
         jobManager.createJob(jobConfig, false);
 
@@ -1787,6 +1819,10 @@ public class JobManagerTest
         when(m_JobLoggerFactory.newLogger("foo")).thenReturn(jobLogger);
         DataExtractor dataExtractor = mock(DataExtractor.class);
         when(m_DataExtractorFactory.newExtractor(any(JobDetails.class))).thenReturn(dataExtractor);
+
+        JobDetails jd = new JobDetails();
+        jd.setSchedulerConfig(new SchedulerConfig());
+        when(m_JobProvider.getJobDetails("foo")).thenReturn(Optional.of(jd));
 
         jobManager.createJob(jobConfig, false);
 
@@ -2008,7 +2044,9 @@ public class JobManagerTest
     private JobManager createJobManager()
     {
         return new JobManager(m_JobProvider, m_ProcessManager, m_DataExtractorFactory,
-                m_JobLoggerFactory, m_PasswordManager, m_JobDataDeleter);
+                m_JobLoggerFactory, m_PasswordManager, m_JobDataDeleter,
+                new LocalActionGuardian<Action>(Action.CLOSED),
+                new LocalActionGuardian<ScheduledAction>(ScheduledAction.STOP));
     }
 
     private static Answer<Object> writeToWriter()

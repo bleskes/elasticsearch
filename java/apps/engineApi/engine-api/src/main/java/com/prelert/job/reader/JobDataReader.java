@@ -32,6 +32,7 @@ import javax.ws.rs.core.Feature;
 import javax.ws.rs.core.FeatureContext;
 
 import com.prelert.job.JobDetails;
+import com.prelert.job.ModelSizeStats;
 import com.prelert.job.ModelSnapshot;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.persistence.JobProvider;
@@ -326,6 +327,12 @@ public class JobDataReader implements Feature
     {
         return m_JobProvider.modelSnapshots(jobId, skip, take, epochStartMs, epochEndMs,
                 sortField, sortDescending, null, description);
+    }
+
+
+    public Optional<ModelSizeStats> modelSizeStats(String jobId)
+    {
+        return m_JobProvider.modelSizeStats(jobId);
     }
 
     @Override

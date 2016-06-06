@@ -28,7 +28,9 @@
 package com.prelert.rs.data;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -47,23 +49,75 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 @JsonInclude(Include.NON_NULL)
 public class EngineStatus
 {
-    List<String> m_ActiveJobs;
+    Map<String, JobStats> m_ActiveJobs;
     List<String> m_StartedScheduledJobs;
     Double m_CpuLoad;
     Long m_HeapMemUsage;
+    List<JobStats> m_MemoryStats;
+    Map<String, String> m_DbConnection;
+    List<String> m_EngineHosts;
+
+    @JsonInclude(Include.NON_NULL)
+    static public class JobStats
+    {
+        private Long m_ModelBytes;
+        private String m_MemoryStatus;
+        private Long m_UptimeSeconds;
+
+        public JobStats()
+        {
+        }
+
+        public JobStats(Long bytes, String status, Long uptime)
+        {
+            m_ModelBytes = bytes;
+            m_MemoryStatus = status;
+            m_UptimeSeconds = uptime;
+        }
+
+        public Long getModelBytes()
+        {
+            return m_ModelBytes;
+        }
+
+        public void setModelBytes(Long bytes)
+        {
+            m_ModelBytes = bytes;
+        }
+
+        public String getMemoryStatus()
+        {
+            return m_MemoryStatus;
+        }
+
+        public void setMemoryStatus(String status)
+        {
+            m_MemoryStatus = status;
+        }
+
+        public Long getUptimeSeconds()
+        {
+            return m_UptimeSeconds;
+        }
+
+        public void setUptimeSeconds(long uptime)
+        {
+            m_UptimeSeconds = uptime;
+        }
+    }
 
     public EngineStatus()
     {
-        m_ActiveJobs = Collections.emptyList();
+        m_ActiveJobs = new HashMap<>();
         m_StartedScheduledJobs = Collections.emptyList();
     }
 
-    public List<String> getActiveJobs()
+    public Map<String, JobStats> getActiveJobs()
     {
         return m_ActiveJobs;
     }
 
-    public void setActiveJobs(List<String> activeJobs)
+    public void setActiveJobs(Map<String, JobStats> activeJobs)
     {
         m_ActiveJobs = activeJobs;
     }
@@ -123,4 +177,33 @@ public class EngineStatus
         m_HeapMemUsage = used;
     }
 
+    /**
+     * List of participating Engine API hosts
+     * @return
+     */
+    public List<String> getEngineHosts()
+    {
+        return m_EngineHosts;
+    }
+
+    public void setEngineHosts(List<String> hosts)
+    {
+        m_EngineHosts = hosts;
+    }
+
+    /**
+     * Database connection parameters
+     * @return
+     */
+    public Map<String, String> getDbConnection()
+    {
+        return m_DbConnection;
+    }
+
+    public void setDbConnection(Map<String, String> params)
+    {
+        m_DbConnection = params;
+    }
 }
+
+

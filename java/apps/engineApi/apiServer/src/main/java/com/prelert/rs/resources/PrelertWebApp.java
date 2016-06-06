@@ -29,6 +29,8 @@ package com.prelert.rs.resources;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.Inet4Address;
+import java.net.UnknownHostException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -38,6 +40,8 @@ import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.Executors;
@@ -48,11 +52,18 @@ import javax.ws.rs.core.Application;
 
 import org.apache.log4j.Logger;
 
+import com.prelert.distributed.EngineApiHosts;
 import com.prelert.job.alert.manager.AlertManager;
 import com.prelert.job.logging.DefaultJobLoggerFactory;
 import com.prelert.job.logging.JobLoggerFactory;
 import com.prelert.job.manager.ActivityAudit;
 import com.prelert.job.manager.JobManager;
+import com.prelert.job.manager.actions.Action;
+import com.prelert.job.manager.actions.ActionGuardian;
+import com.prelert.job.manager.actions.LocalActionGuardian;
+import com.prelert.job.manager.actions.NoneActionGuardian;
+import com.prelert.job.manager.actions.ScheduledAction;
+import com.prelert.job.manager.actions.zookeeper.ZooKeeperActionGuardian;
 import com.prelert.job.messages.Messages;
 import com.prelert.job.password.PasswordManager;
 import com.prelert.job.persistence.JobProvider;
@@ -98,7 +109,7 @@ public class PrelertWebApp extends Application
     public static final String DEFAULT_CLUSTER_NAME = "prelert";
 
     public static final String ES_TRANSPORT_PORT_RANGE = "es.transport.tcp.port";
-    private static final String DEFAULT_ES_TRANSPORT_PORT_RANGE = "9300-9400";
+    public static final String DEFAULT_ES_TRANSPORT_PORT_RANGE = "9300-9400";
 
     public static final String ES_NETWORK_PUBLISH_HOST_PROP = "es.network.publish_host";
     private static final String DEFAULT_NETWORK_PUBLISH_HOST = "127.0.0.1";
@@ -112,6 +123,8 @@ public class PrelertWebApp extends Application
     private static final String ENCRYPTION_TRANSFORMATION = "AES/CBC/PKCS5Padding";
     // The size of this array may need to be changed if the transformation on the line above is changed
     private static final byte[] DEV_KEY_BYTES = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 };
+
+    public static final String ZOOKEEPER_CONNECTION_PROP = "zookeeper.connection";
 
     /**
      * This property specifies the client that should be used to connect
@@ -145,6 +158,7 @@ public class PrelertWebApp extends Application
     private AlertManager m_AlertManager;
     private ServerInfoFactory m_ServerInfo;
     private JobDataReader m_JobDataReader;
+    private EngineApiHosts m_EngineHosts;
 
 
     private ScheduledExecutorService m_ServerStatsSchedule;
@@ -166,6 +180,17 @@ public class PrelertWebApp extends Application
         ElasticsearchFactory esFactory = createPersistenceFactory();
         JobProvider jobProvider = esFactory.newJobProvider();
 
+        m_EngineHosts = () -> {try
+                        {
+                            return Arrays.asList(Inet4Address.getLocalHost().getHostName());
+                        }
+                        catch (UnknownHostException e)
+                        {
+                            LOGGER.error("Cannot determine local hostname", e);
+                            return Collections.emptyList();
+                        }
+        };
+
         m_JobManager = createJobManager(jobProvider, esFactory,
                 new DefaultJobLoggerFactory(ProcessCtrl.LOG_DIR));
         m_AlertManager = new AlertManager(jobProvider, m_JobManager);
@@ -181,6 +206,7 @@ public class PrelertWebApp extends Application
         m_Singletons.add(m_AlertManager);
         m_Singletons.add(m_ServerInfo);
         m_Singletons.add(m_JobDataReader);
+        m_Singletons.add(m_EngineHosts);
 
         m_ShutdownThreadBuilder.addTask(m_JobManager);
         // The job provider must be the last shutdown task, as earlier shutdown
@@ -239,14 +265,46 @@ public class PrelertWebApp extends Application
         return ElasticsearchNodeClientFactory.create(esHost, networkPublishHost, clusterName, portRange, numProcessors);
     }
 
+    /**
+     * Creates job manager
+     * Creates ZooKeeper client if necessary and ands client shutdown task
+     *
+     * @param jobProvider
+     * @param esFactory
+     * @param jobLoggerFactory
+     * @return
+     */
     private JobManager createJobManager(JobProvider jobProvider, ElasticsearchFactory esFactory,
             JobLoggerFactory jobLoggerFactory)
     {
+        ActionGuardian<Action> processActionGuardian = new LocalActionGuardian<>(Action.CLOSED);
+        // we don't need an ActionGuardian for scheduled jobs if
+        // not in a distributed environment
+        ActionGuardian<ScheduledAction> schedulerActionGuardian =
+                            new NoneActionGuardian<>(ScheduledAction.STOP);
+
+        if (PrelertSettings.isSet(ZOOKEEPER_CONNECTION_PROP))
+        {
+            String connectionString = PrelertSettings.getSettingOrDefault(ZOOKEEPER_CONNECTION_PROP, "");
+
+            LOGGER.info("Using ZooKeeper server on " + connectionString);
+
+            processActionGuardian = new LocalActionGuardian<>(Action.CLOSED,
+                       new ZooKeeperActionGuardian<>(Action.CLOSED, connectionString));
+            ZooKeeperActionGuardian<ScheduledAction> zkGuard =
+                    new ZooKeeperActionGuardian<>(ScheduledAction.STOP, connectionString);
+            schedulerActionGuardian = zkGuard;
+            m_EngineHosts = zkGuard;
+
+            m_ShutdownThreadBuilder.addTask(() -> zkGuard.close());
+        }
+
         PasswordManager passwordManager = createPasswordManager();
         return new JobManager(jobProvider,
                 createProcessManager(jobProvider, esFactory, jobLoggerFactory),
                 new DataExtractorFactoryImpl(passwordManager), jobLoggerFactory,
-                passwordManager, esFactory.newJobDataDeleterFactory());
+                passwordManager, esFactory.newJobDataDeleterFactory(),
+                processActionGuardian, schedulerActionGuardian);
     }
 
     private PasswordManager createPasswordManager()

@@ -27,46 +27,44 @@
 
 package com.prelert.job.manager.actions;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 import org.junit.Test;
 
-import com.prelert.job.errorcodes.ErrorCodes;
-import com.prelert.job.exceptions.JobInUseException;
-import com.prelert.job.manager.actions.ActionGuardian.ActionTicket;
-
-public class ActionGuardianTest
+public class ScheduledActionTest
 {
     @Test
-    public void testTryAcquiringAction_GivenAvailable() throws JobInUseException
+    public void testTypename()
     {
-        ActionGuardian actionGuardian = new ActionGuardian();
-        try (ActionTicket actionTicket = actionGuardian.tryAcquiringAction("foo", Action.WRITING))
-        {
-            assertEquals(Action.WRITING, actionGuardian.getAction("foo"));
-            assertEquals(Action.NONE, actionGuardian.getAction("unknown"));
-        }
-        assertEquals(Action.NONE, actionGuardian.getAction("foo"));
+        assertEquals("ScheduledAction", ScheduledAction.STOP.typename());
     }
 
     @Test
-    public void testTryAcquiringAction_GivenJobIsInUse() throws JobInUseException
+    public void testgetBusyActionError_GivenVariousActionsInUse()
     {
-        ActionGuardian actionGuardian = new ActionGuardian();
-        try (ActionTicket deleting = actionGuardian.tryAcquiringAction("foo", Action.DELETING))
-        {
-            try (ActionTicket writing = actionGuardian.tryAcquiringAction("foo", Action.WRITING))
-            {
-                fail();
-            }
-            catch (JobInUseException e)
-            {
-                assertEquals("Cannot write to job foo while another connection is deleting the job", e.getMessage());
-                assertEquals(ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR, e.getErrorCode());
-            }
-            assertEquals(Action.DELETING, actionGuardian.getAction("foo"));
-        }
-        assertEquals(Action.NONE, actionGuardian.getAction("foo"));
+        assertEquals("Cannot start scheduler for job 'foo' while its status is started on host marple",
+                ScheduledAction.START.getBusyActionError("foo", ScheduledAction.START, "marple"));
+
+        String g = ScheduledAction.STOP.getBusyActionError("foo", ScheduledAction.START, "marple");
+        assertEquals("Cannot stop scheduler for job 'foo' while its status is started on host marple", g);
     }
+
+    @Test
+    public void testIsValidTransition()
+    {
+        assertTrue(ScheduledAction.START.isValidTransition(ScheduledAction.STOP));
+        assertTrue(ScheduledAction.START.isValidTransition(ScheduledAction.START));
+        assertTrue(ScheduledAction.STOP.isValidTransition(ScheduledAction.START));
+        assertTrue(ScheduledAction.STOP.isValidTransition(ScheduledAction.STOP));
+    }
+
+    @Test
+    public void testNextState()
+    {
+        assertEquals(ScheduledAction.STOP, ScheduledAction.START.nextState(ScheduledAction.STOP));
+        assertEquals(ScheduledAction.STOP, ScheduledAction.START.nextState(ScheduledAction.START));
+        assertEquals(ScheduledAction.STOP, ScheduledAction.STOP.nextState(ScheduledAction.START));
+        assertEquals(ScheduledAction.STOP, ScheduledAction.STOP.nextState(ScheduledAction.STOP));
+    }
+
 }

@@ -158,7 +158,7 @@ public class ProcessManager
         {
             // create the new process and restore its state
             // if it has been saved
-            process = m_ProcessFactory.createProcess(job);
+            process = m_ProcessFactory.createProcess(job, params.isIgnoreDowntime());
             m_JobIdToProcessMap.put(job.getId(), process);
         }
 
@@ -783,6 +783,24 @@ public class ProcessManager
         }
 
         return false;
+    }
+
+    /**
+     * Return the number of seconds the job has been running for
+     * or 0 if not running.
+     * @param jobId
+     * @return
+     */
+    public long jobUptimeSeconds(String jobId)
+    {
+        if (m_JobIdToProcessMap.containsKey(jobId))
+        {
+            return m_JobIdToProcessMap.get(jobId).upTimeSeconds();
+        }
+        else
+        {
+            return 0;
+        }
     }
 
     public void deletePersistedData(String jobId)

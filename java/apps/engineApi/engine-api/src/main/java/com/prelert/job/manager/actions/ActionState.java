@@ -25,60 +25,67 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.rs.client.integrationtests;
+package com.prelert.job.manager.actions;
 
-import java.io.IOException;
-import java.time.ZonedDateTime;
-
-import com.prelert.job.JobDetails;
-import com.prelert.job.JobSchedulerStatus;
-
-public class ScheduledJobTest extends BaseScheduledJobTest
+/**
+ *  Functions for actions
+ */
+public interface ActionState<T>
 {
-    public ScheduledJobTest(String baseUrl, String esBaseUrl)
-    {
-        super(baseUrl, esBaseUrl);
-    }
+    /**
+     * Description of the actions activity
+     * @return
+     */
+    String getActionVerb();
 
-    @Override
-    public void runTest() throws IOException
-    {
-        cleanUp();
+    /**
+     * create error message saying that the action cannot be
+     * started because another action <code>otherActionVerb</code>
+     * is already running
+     *
+     * @param jobId
+     * @param actionInUse The Action currently in progress
+     * @return
+     */
+    String getBusyActionError(String jobId, ActionState<T> actionInUse);
 
-        generateDataInElasticsearch(RECOMMENDED_BULK_UPLOAD_SIZE);
-        createScheduledJob();
-        startScheduler(ZonedDateTime.now().toEpochSecond());
-        waitUntilSchedulerStatusIs(JobSchedulerStatus.STOPPED);
+    /**
+     * create error message saying that the action cannot be
+     * started because another action <code>otherActionVerb</code>
+     * is already running on another machine (<code>host</code>)
+     *
+     * @param jobId
+     * @param actionInUse The Action currently in progress
+     * @param host The host the action is currently running on
+     * @return
+     */
+    String getBusyActionError(String jobId, ActionState<T> actionInUse, String host);
 
-        JobDetails job = m_EngineApiClient.getJob(TEST_JOB_ID).getDocument();
-        test(job.getCounts().getInputRecordCount() == getRecordsCount());
-        test(job.getCounts().getProcessedRecordCount() == getRecordsCount());
 
-        cleanUp();
-    }
+    /**
+     * Return true if allowed to transition from the current state to next
+     *
+     * @param next
+     * @return
+     */
+    boolean isValidTransition(T next);
 
-    public static void main(String[] args) throws IOException
-    {
-        String baseUrl = API_BASE_URL;
-        if (args.length > 0)
-        {
-            baseUrl = args[0];
-        }
+    /**
+     * The next state to transition to once this state is finished
+     *
+     * @param previousState If extra context is needed for deciding the next state
+     * @return
+     */
+    T nextState(T previousState);
 
-        String esBaseUrl = ES_BASE_URL;
-        if (args.length > 1)
-        {
-            esBaseUrl = args[1];
-        }
-        if (!esBaseUrl.endsWith("/"))
-        {
-            esBaseUrl += "/";
-        }
+    /**
+     * Should the action hold the lock in a distributed system
+     * @return
+     */
+    boolean holdDistributedLock();
 
-        try (ScheduledJobTest test = new ScheduledJobTest(baseUrl, esBaseUrl))
-        {
-            test.runTest();
-            test.m_Logger.info("All tests passed Ok");
-        }
-    }
+
+    T startingState();
+
+    String typename();
 }

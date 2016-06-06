@@ -519,18 +519,21 @@ public class ProcessCtrl
      * deleted when the process completes
      * @param modelSnapshot The model snapshot to restore on startup, or null if
      * no model snapshot is to be restored
+     * @param ignoreDowntime If true set the ignore downtime flag overriding the
+     * setting in the job configuration
      *
      * @return A Java Process object
      * @throws IOException
      */
     public static Process buildAutoDetect(JobDetails job, Quantiles quantiles, Logger logger,
-            List<File> filesToDelete, ModelSnapshot modelSnapshot)
+            List<File> filesToDelete, ModelSnapshot modelSnapshot, boolean ignoreDowntime)
     throws IOException
     {
         logger.info("PRELERT_HOME is set to " + PRELERT_HOME);
 
         String restoreSnapshotId = (modelSnapshot == null) ? null : modelSnapshot.getSnapshotId();
-        List<String> command = ProcessCtrl.buildAutoDetectCommand(job, logger, restoreSnapshotId);
+        List<String> command = ProcessCtrl.buildAutoDetectCommand(job, logger,
+                                                restoreSnapshotId, ignoreDowntime);
 
         if (job.getAnalysisLimits() != null)
         {
@@ -595,7 +598,7 @@ public class ProcessCtrl
     }
 
     static List<String> buildAutoDetectCommand(JobDetails job, Logger logger,
-            String restoreSnapshotId)
+            String restoreSnapshotId, boolean ignoreDowntime)
     {
         List<String> command = new ArrayList<>();
         command.add(AUTODETECT_PATH);
@@ -670,8 +673,11 @@ public class ProcessCtrl
         int maxQuantileInterval = BASE_MAX_QUANTILE_INTERVAL + intervalStagger;
         command.add(MAX_QUANTILE_INTERVAL_ARG + maxQuantileInterval);
 
-        if (job.getIgnoreDowntime() == IgnoreDowntime.ONCE
-                || job.getIgnoreDowntime() == IgnoreDowntime.ALWAYS)
+        ignoreDowntime = ignoreDowntime
+                || job.getIgnoreDowntime() == IgnoreDowntime.ONCE
+                || job.getIgnoreDowntime() == IgnoreDowntime.ALWAYS;
+
+        if (ignoreDowntime)
         {
             command.add(IGNORE_DOWNTIME_ARG);
         }

@@ -169,6 +169,8 @@ public final class Messages
     public static final String JOB_SCHEDULER_CANNOT_UPDATE_IN_CURRENT_STATE = "job.scheduler.cannot.update.in.current.state";
     public static final String JOB_SCHEDULER_FAILED_TO_STOP = "job.scheduler.failed.to.stop";
     public static final String JOB_SCHEDULER_NO_SUCH_SCHEDULED_JOB = "job.scheduler.no.such.scheduled.job";
+    public static final String JOB_SCHEDULER_STATUS_STARTED = "job.scheduler.status.started";
+    public static final String JOB_SCHEDULER_STATUS_STOPPED = "job.scheduler.status.stopped";
 
     public static final String JOB_MISSING_QUANTILES = "job.missing.quantiles";
     public static final String JOB_UNKNOWN_ID = "job.unknown.id";
@@ -181,6 +183,8 @@ public final class Messages
 
     public static final String JSON_TRANSFORM_CONFIG_MAPPING = "json.transform.config.mapping.error";
     public static final String JSON_TRANSFORM_CONFIG_PARSE = "json.transform.config.parse.error";
+
+    public static final String ON_HOST = "on.host";
 
     public static final String REST_ACTION_NOT_ALLOWED_FOR_SCHEDULED_JOB = "rest.action.not.allowed.for.scheduled.job";
 
@@ -207,6 +211,8 @@ public final class Messages
     public static final String REST_ALERT_CANT_USE_PROB = "rest.alert.cant.use.prob";
     public static final String REST_ALERT_INVALID_TYPE = "rest.alert.invalid.type";
 
+    public static final String PROCESS_ACTION_SLEEPING_JOB = "process.action.sleeping.job";
+    public static final String PROCESS_ACTION_CLOSED_JOB = "process.action.closed.job";
     public static final String PROCESS_ACTION_CLOSING_JOB = "process.action.closing.job";
     public static final String PROCESS_ACTION_DELETING_JOB = "process.action.deleting.job";
     public static final String PROCESS_ACTION_FLUSHING_JOB = "process.action.flushing.job";

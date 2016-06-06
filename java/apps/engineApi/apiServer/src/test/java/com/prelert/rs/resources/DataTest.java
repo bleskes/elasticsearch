@@ -120,7 +120,7 @@ public class DataTest extends ServiceTest
         when(jobManager().submitDataLoadJob(eq(JOB_ID), eq(inputStream), any(DataLoadParams.class)))
                 .thenReturn(new DataCounts());
 
-        Response response = m_Data.streamData(httpHeaders, JOB_ID, inputStream, "", "");
+        Response response = m_Data.streamData(httpHeaders, JOB_ID, inputStream, "", "", false);
 
         ArgumentCaptor<DataLoadParams> paramsCaptor = ArgumentCaptor.forClass(DataLoadParams.class);
         verify(jobManager()).submitDataLoadJob(eq(JOB_ID), eq(inputStream), paramsCaptor.capture());
@@ -153,7 +153,7 @@ public class DataTest extends ServiceTest
         String input = "";
         InputStream inputStream = new ByteArrayInputStream(input.getBytes(StandardCharsets.UTF_8));
 
-        Response response = m_Data.streamData(httpHeaders, "job_1,job_2", inputStream, "", "");
+        Response response = m_Data.streamData(httpHeaders, "job_1,job_2", inputStream, "", "", false);
 
         // Job 1
         ArgumentCaptor<DataLoadParams> paramsCaptor = ArgumentCaptor.forClass(DataLoadParams.class);
@@ -161,6 +161,7 @@ public class DataTest extends ServiceTest
         DataLoadParams params = paramsCaptor.getValue();
         assertFalse(params.isPersisting());
         assertFalse(params.isResettingBuckets());
+        assertFalse(params.isIgnoreDowntime());
         assertEquals("", params.getStart());
         assertEquals("", params.getEnd());
 
@@ -194,7 +195,7 @@ public class DataTest extends ServiceTest
         givenLatency(3600L);
         givenDetectorsWithFunctions("count");
 
-        m_Data.streamData(httpHeaders, JOB_ID, inputStream, "1428591600", "1428592200");
+        m_Data.streamData(httpHeaders, JOB_ID, inputStream, "1428591600", "1428592200", false);
 
         ArgumentCaptor<DataLoadParams> paramsCaptor = ArgumentCaptor.forClass(DataLoadParams.class);
         verify(jobManager()).submitDataLoadJob(eq(JOB_ID), eq(inputStream), paramsCaptor.capture());
@@ -242,13 +243,14 @@ public class DataTest extends ServiceTest
         givenLatency(3600L);
         givenDetectorsWithFunctions("count");
 
-        m_Data.streamData(httpHeaders, JOB_ID, inputStream, "1428591600", "");
+        m_Data.streamData(httpHeaders, JOB_ID, inputStream, "1428591600", "", true);
 
         ArgumentCaptor<DataLoadParams> paramsCaptor = ArgumentCaptor.forClass(DataLoadParams.class);
         verify(jobManager()).submitDataLoadJob(eq(JOB_ID), eq(inputStream), paramsCaptor.capture());
         DataLoadParams params = paramsCaptor.getValue();
         assertFalse(params.isPersisting());
         assertTrue(params.isResettingBuckets());
+        assertTrue(params.isIgnoreDowntime());
         assertEquals("1428591600", params.getStart());
         assertEquals("1428591601", params.getEnd());
     }
@@ -266,7 +268,7 @@ public class DataTest extends ServiceTest
         givenLatency(3600L);
         givenDetectorsWithFunctions("mean");
 
-        m_Data.streamData(httpHeaders, JOB_ID, inputStream, "1428591600", "1428591600");
+        m_Data.streamData(httpHeaders, JOB_ID, inputStream, "1428591600", "1428591600", false);
 
         ArgumentCaptor<DataLoadParams> paramsCaptor = ArgumentCaptor.forClass(DataLoadParams.class);
         verify(jobManager()).submitDataLoadJob(eq(JOB_ID), eq(inputStream), paramsCaptor.capture());
@@ -300,7 +302,7 @@ public class DataTest extends ServiceTest
         m_ExpectedException.expectMessage(msg);
         m_ExpectedException.expect(hasErrorCode(ErrorCodes.INVALID_BUCKET_RESET_RANGE_PARAMS));
 
-        m_Data.createDataLoadParams("", "1428591599");
+        m_Data.createDataLoadParams("", "1428591599", false);
     }
 
     @Test
@@ -316,7 +318,7 @@ public class DataTest extends ServiceTest
                 + " be parsed as a date or converted to a number (epoch)");
         m_ExpectedException.expect(hasErrorCode(ErrorCodes.UNPARSEABLE_DATE_ARGUMENT));
 
-        m_Data.streamData(httpHeaders, JOB_ID, inputStream, "not a date", "1428591599");
+        m_Data.streamData(httpHeaders, JOB_ID, inputStream, "not a date", "1428591599", false);
     }
 
     @Test
@@ -332,7 +334,7 @@ public class DataTest extends ServiceTest
                 + " be parsed as a date or converted to a number (epoch)");
         m_ExpectedException.expect(hasErrorCode(ErrorCodes.UNPARSEABLE_DATE_ARGUMENT));
 
-        m_Data.streamData(httpHeaders, JOB_ID, inputStream, "1428591599", "not a date");
+        m_Data.streamData(httpHeaders, JOB_ID, inputStream, "1428591599", "not a date", false);
     }
 
     @Test
@@ -557,7 +559,7 @@ public class DataTest extends ServiceTest
         m_ExpectedException.expectMessage("This action is not allowed for a scheduled job");
         m_ExpectedException.expect(hasErrorCode(ErrorCodes.ACTION_NOT_ALLOWED_FOR_SCHEDULED_JOB));
 
-        m_Data.streamData(httpHeaders, JOB_ID, inputStream, "", "");
+        m_Data.streamData(httpHeaders, JOB_ID, inputStream, "", "", false);
     }
 
     @Test

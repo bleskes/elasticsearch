@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -24,34 +24,45 @@
  *                                                          *
  *                                                          *
  ************************************************************/
-package com.prelert.job.exceptions;
+package com.prelert.job.manager.actions;
 
-import com.prelert.job.JobException;
-import com.prelert.job.errorcodes.ErrorCodes;
+import com.prelert.job.exceptions.JobInUseException;
 
 /**
- * This exception is thrown is an operation is attempted on a job
- * that can't be executed as the job is already being used.
+ * ActionGuardian that does nothing.
+ * {@linkplain #currentAction(String)} is always the default.
+ * {@linkplain #releaseAction(String, T)} does nothing
+ * @param <T>
  */
-public class JobInUseException extends JobException
+public class NoneActionGuardian<T extends Enum<T> & ActionState<T>> extends ActionGuardian<T>
 {
-    private static final long serialVersionUID = -2759814168552580059L;
+    public NoneActionGuardian(T noneAction)
+    {
+        super(noneAction);
+    }
 
     /**
-     * Create a new JobInUseException.
-     *
-     * @param message Details of error explaining the context
-     * @param The error code
-     * @see ErrorCodes
+     * Always returns the default
      */
-    public JobInUseException(String message, ErrorCodes errorCode)
+    @Override
+    public T currentAction(String jobId)
     {
-        super(message, errorCode);
+        return m_NoneAction;
     }
 
-    public JobInUseException(String message, ErrorCodes errorCode, Throwable cause)
+    @Override
+    public ActionTicket tryAcquiringAction(String jobId, T action)
+    throws JobInUseException
     {
-        super(message, errorCode, cause);
+        return newActionTicket(jobId, action.nextState(m_NoneAction));
     }
+
+    /**
+     * Dummy method does nothing
+     */
+    @Override
+    public void releaseAction(String jobId, T nextState)
+    {
+    }
+
 }
-

@@ -52,7 +52,7 @@ install:
 	cd $(ENGINEAPI_BUILD_DIR) && mvn $(MAVEN_ARGS) $(MAVEN_PROPS) -DskipTests=true install
 
 test:
-	cd $(ENGINEAPI_BUILD_DIR) && mvn $(MAVEN_ARGS) $(MAVEN_PROPS) $(SONAR_INIT_STEP) test $(SONAR_MAIN_STEP)
+	cd $(ENGINEAPI_BUILD_DIR) && mvn $(MAVEN_ARGS) $(MAVEN_PROPS) $(SONAR_INIT_STEP) verify $(SONAR_MAIN_STEP)
 
 clean:
 	cd $(ENGINEAPI_BUILD_DIR) && mvn $(MAVEN_ARGS) $(MAVEN_PROPS) clean

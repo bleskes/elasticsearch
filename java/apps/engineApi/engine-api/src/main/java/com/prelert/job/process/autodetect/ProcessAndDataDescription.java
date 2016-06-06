@@ -30,6 +30,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.List;
 
@@ -197,6 +198,11 @@ public class ProcessAndDataDescription
     public ZonedDateTime getProcessStartTime()
     {
         return m_StartTime;
+    }
+
+    public long upTimeSeconds()
+    {
+        return Duration.between(m_StartTime, ZonedDateTime.now()).getSeconds();
     }
 
     public void deleteAssociatedFiles()
