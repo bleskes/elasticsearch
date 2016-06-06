@@ -19,6 +19,8 @@ package org.elasticsearch.shield.action.user;
 
 import org.elasticsearch.action.ActionRequest;
 import org.elasticsearch.action.ActionRequestValidationException;
+import org.elasticsearch.action.support.WriteRequest;
+import org.elasticsearch.action.support.WriteRequest.RefreshPolicy;
 import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.bytes.BytesArray;
 import org.elasticsearch.common.bytes.BytesReference;
@@ -34,7 +36,7 @@ import static org.elasticsearch.action.ValidateActions.addValidationError;
 /**
  * Request object to put a native user.
  */
-public class PutUserRequest extends ActionRequest<PutUserRequest> implements UserRequest {
+public class PutUserRequest extends ActionRequest<PutUserRequest> implements UserRequest, WriteRequest<PutUserRequest> {
 
     private String username;
     private String[] roles;
@@ -42,7 +44,7 @@ public class PutUserRequest extends ActionRequest<PutUserRequest> implements Use
     private String email;
     private Map<String, Object> metadata;
     private char[] passwordHash;
-    private boolean refresh = true;
+    private RefreshPolicy refreshPolicy = RefreshPolicy.IMMEDIATE;
 
     public PutUserRequest() {
     }
@@ -84,8 +86,19 @@ public class PutUserRequest extends ActionRequest<PutUserRequest> implements Use
         this.passwordHash = passwordHash;
     }
 
-    public void refresh(boolean refresh) {
-        this.refresh = refresh;
+    /**
+     * Should this request trigger a refresh ({@linkplain RefreshPolicy#IMMEDIATE}, the default), wait for a refresh (
+     * {@linkplain RefreshPolicy#WAIT_UNTIL}), or proceed ignore refreshes entirely ({@linkplain RefreshPolicy#NONE}).
+     */
+    @Override
+    public RefreshPolicy getRefreshPolicy() {
+        return refreshPolicy;
+    }
+
+    @Override
+    public PutUserRequest setRefreshPolicy(RefreshPolicy refreshPolicy) {
+        this.refreshPolicy = refreshPolicy;
+        return this;
     }
 
     public String username() {
@@ -113,10 +126,6 @@ public class PutUserRequest extends ActionRequest<PutUserRequest> implements Use
         return passwordHash;
     }
 
-    public boolean refresh() {
-        return refresh;
-    }
-
     @Override
     public String[] usernames() {
         return new String[] { username };
@@ -136,7 +145,7 @@ public class PutUserRequest extends ActionRequest<PutUserRequest> implements Use
         fullName = in.readOptionalString();
         email = in.readOptionalString();
         metadata = in.readBoolean() ? in.readMap() : null;
-        refresh = in.readBoolean();
+        refreshPolicy = RefreshPolicy.readFrom(in);
     }
 
     @Override
@@ -159,6 +168,6 @@ public class PutUserRequest extends ActionRequest<PutUserRequest> implements Use
             out.writeBoolean(true);
             out.writeMap(metadata);
         }
-        out.writeBoolean(refresh);
+        refreshPolicy.writeTo(out);
     }
 }

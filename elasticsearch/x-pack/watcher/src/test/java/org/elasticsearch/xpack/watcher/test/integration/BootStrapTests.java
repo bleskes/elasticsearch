@@ -45,6 +45,7 @@ import org.joda.time.DateTimeZone;
 
 import java.util.concurrent.TimeUnit;
 
+import static org.elasticsearch.action.support.WriteRequest.RefreshPolicy.IMMEDIATE;
 import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 import static org.elasticsearch.index.query.QueryBuilders.termQuery;
 import static org.elasticsearch.search.builder.SearchSourceBuilder.searchSource;
@@ -153,7 +154,7 @@ public class BootStrapTests extends AbstractWatcherIntegrationTestCase {
                         .endObject()
                         .endObject())
                 .setConsistencyLevel(WriteConsistencyLevel.ALL)
-                .setRefresh(true)
+                .setRefreshPolicy(IMMEDIATE)
                 .get();
 
         // unknown condition:
@@ -171,7 +172,7 @@ public class BootStrapTests extends AbstractWatcherIntegrationTestCase {
                         .endObject()
                         .endObject())
                 .setConsistencyLevel(WriteConsistencyLevel.ALL)
-                .setRefresh(true)
+                .setRefreshPolicy(IMMEDIATE)
                 .get();
 
         // unknown trigger:
@@ -189,7 +190,7 @@ public class BootStrapTests extends AbstractWatcherIntegrationTestCase {
                         .endObject()
                         .endObject())
                 .setConsistencyLevel(WriteConsistencyLevel.ALL)
-                .setRefresh(true)
+                .setRefreshPolicy(IMMEDIATE)
                 .get();
 
         stopWatcher();
@@ -213,7 +214,7 @@ public class BootStrapTests extends AbstractWatcherIntegrationTestCase {
                         .endObject()
                         .endObject())
                 .setConsistencyLevel(WriteConsistencyLevel.ALL)
-                .setRefresh(true)
+                .setRefreshPolicy(IMMEDIATE)
                 .get();
 
         stopWatcher();

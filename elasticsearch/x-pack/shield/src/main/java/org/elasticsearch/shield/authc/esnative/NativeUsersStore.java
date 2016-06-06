@@ -21,6 +21,7 @@ import com.carrotsearch.hppc.ObjectHashSet;
 import com.carrotsearch.hppc.ObjectLongHashMap;
 import com.carrotsearch.hppc.ObjectLongMap;
 import com.carrotsearch.hppc.cursors.ObjectCursor;
+
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.ExceptionsHelper;
 import org.elasticsearch.action.ActionListener;
@@ -62,9 +63,6 @@ import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.shield.InternalClient;
 import org.elasticsearch.shield.ShieldTemplateService;
-import org.elasticsearch.shield.user.SystemUser;
-import org.elasticsearch.shield.user.User;
-import org.elasticsearch.shield.user.User.Fields;
 import org.elasticsearch.shield.action.realm.ClearRealmCacheRequest;
 import org.elasticsearch.shield.action.realm.ClearRealmCacheResponse;
 import org.elasticsearch.shield.action.user.ChangePasswordRequest;
@@ -74,6 +72,9 @@ import org.elasticsearch.shield.authc.support.Hasher;
 import org.elasticsearch.shield.authc.support.SecuredString;
 import org.elasticsearch.shield.client.SecurityClient;
 import org.elasticsearch.shield.support.SelfReschedulingRunnable;
+import org.elasticsearch.shield.user.SystemUser;
+import org.elasticsearch.shield.user.User;
+import org.elasticsearch.shield.user.User.Fields;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.threadpool.ThreadPool.Names;
 
@@ -337,7 +338,7 @@ public class NativeUsersStore extends AbstractComponent implements ClusterStateL
 
         client.prepareUpdate(ShieldTemplateService.SECURITY_INDEX_NAME, docType, username)
                 .setDoc(Fields.PASSWORD.getPreferredName(), String.valueOf(request.passwordHash()))
-                .setRefresh(request.refresh())
+                .setRefreshPolicy(request.getRefreshPolicy())
                 .execute(new ActionListener<UpdateResponse>() {
                     @Override
                     public void onResponse(UpdateResponse updateResponse) {
@@ -358,7 +359,7 @@ public class NativeUsersStore extends AbstractComponent implements ClusterStateL
                         }
 
                         if (docType.equals(RESERVED_USER_DOC_TYPE)) {
-                            createReservedUser(username, request.passwordHash(), request.refresh(), listener);
+                            createReservedUser(username, request.passwordHash(), request.getRefreshPolicy(), listener);
                         } else {
                             logger.debug("failed to change password for user [{}]", cause, request.username());
                             ValidationException validationException = new ValidationException();
@@ -369,10 +370,10 @@ public class NativeUsersStore extends AbstractComponent implements ClusterStateL
                 });
     }
 
-    private void createReservedUser(String username, char[] passwordHash, boolean refresh, ActionListener<Void> listener) {
+    private void createReservedUser(String username, char[] passwordHash, RefreshPolicy refresh, ActionListener<Void> listener) {
         client.prepareIndex(ShieldTemplateService.SECURITY_INDEX_NAME, RESERVED_USER_DOC_TYPE, username)
                 .setSource(Fields.PASSWORD.getPreferredName(), String.valueOf(passwordHash))
-                .setRefresh(refresh)
+                .setRefreshPolicy(refresh)
                 .execute(new ActionListener<IndexResponse>() {
                     @Override
                     public void onResponse(IndexResponse indexResponse) {
@@ -413,7 +414,7 @@ public class NativeUsersStore extends AbstractComponent implements ClusterStateL
                         User.Fields.FULL_NAME.getPreferredName(), putUserRequest.fullName(),
                         User.Fields.EMAIL.getPreferredName(), putUserRequest.email(),
                         User.Fields.METADATA.getPreferredName(), putUserRequest.metadata())
-                .setRefresh(putUserRequest.refresh())
+                .setRefreshPolicy(putUserRequest.getRefreshPolicy())
                 .execute(new ActionListener<UpdateResponse>() {
                     @Override
                     public void onResponse(UpdateResponse updateResponse) {
@@ -453,7 +454,7 @@ public class NativeUsersStore extends AbstractComponent implements ClusterStateL
                         User.Fields.FULL_NAME.getPreferredName(), putUserRequest.fullName(),
                         User.Fields.EMAIL.getPreferredName(), putUserRequest.email(),
                         User.Fields.METADATA.getPreferredName(), putUserRequest.metadata())
-                .setRefresh(putUserRequest.refresh())
+                .setRefreshPolicy(putUserRequest.getRefreshPolicy())
                 .execute(new ActionListener<IndexResponse>() {
                     @Override
                     public void onResponse(IndexResponse indexResponse) {
