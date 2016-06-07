@@ -38,6 +38,7 @@ import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.retry.ExponentialBackoffRetry;
 import org.apache.curator.test.TestingServer;
+import org.apache.zookeeper.data.Stat;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Rule;
@@ -57,12 +58,12 @@ public class ZooKeeperActionGuardianIT
     private static TestingServer s_Server;
 
     private static final int PORT = 2182;
-    private static final String CONNECTION_STRING = "localhost:" + PORT;
+//    private static final String CONNECTION_STRING = "localhost:" + PORT;
 
     // running against an existing ZooKeeper is much faster than
     // using the testing server but some tests will fail if it's
     // not a clean setup
-//    private static final String CONNECTION_STRING = "qa3:2181";
+    private static final String CONNECTION_STRING = "qa3:2181";
 
 
     @Rule
@@ -194,7 +195,8 @@ public class ZooKeeperActionGuardianIT
         try (ZooKeeperActionGuardian<Action> actionGuardian =
                 new ZooKeeperActionGuardian<>(Action.CLOSED, CONNECTION_STRING))
         {
-            try (ZooKeeperActionGuardian<Action>.ActionTicket ticket = actionGuardian.tryAcquiringAction("foo", Action.UPDATING))
+            try (ZooKeeperActionGuardian<Action>.ActionTicket ticket =
+                            actionGuardian.tryAcquiringAction("foo", Action.UPDATING))
             {
                 try (ZooKeeperActionGuardian<Action> actionGuardian2 =
                         new ZooKeeperActionGuardian<>(Action.CLOSED, CONNECTION_STRING))
@@ -563,4 +565,32 @@ public class ZooKeeperActionGuardianIT
             }
         }
     }
+
+    @Test
+    public void testEphemeralDescriptionNodeIsRemovedAfterClosingClient() throws Exception
+    {
+        String path = ZooKeeperActionGuardian.LOCK_PATH_PREFIX + "foo/Action/description";
+
+        // now the ephemeral description node should be gone
+        try (CuratorFramework client = CuratorFrameworkFactory.newClient(CONNECTION_STRING,
+                new ExponentialBackoffRetry(1000, 3)))
+        {
+            client.start();
+
+            try (ZooKeeperActionGuardian<Action> actionGuardian =
+                    new ZooKeeperActionGuardian<>(Action.CLOSED, CONNECTION_STRING))
+            {
+                try (ActionGuardian<Action>.ActionTicket ticket =
+                        actionGuardian.tryAcquiringAction("foo", Action.UPDATING))
+                {
+                    Stat stat = client.checkExists().forPath(path);
+                    assertNotNull(stat);
+                }
+            }
+
+            Stat stat = client.checkExists().forPath(path);
+            assertNull(stat);
+        }
+    }
+
 }

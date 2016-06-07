@@ -56,6 +56,7 @@ import org.apache.curator.framework.state.ConnectionState;
 import org.apache.curator.retry.ExponentialBackoffRetry;
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.KeeperException.NoNodeException;
 import org.apache.zookeeper.KeeperException.NodeExistsException;
 import org.apache.zookeeper.ZooDefs.Ids;
 
@@ -69,14 +70,14 @@ import org.apache.zookeeper.ZooDefs.Ids;
  *
  * Internally the locking procedure is a little more complicated as we not
  * only want to hold the action lock but write a description of the action so
- * that other nodes know what kind of action is holding the lock.
+ * that other nodes know what kind of action and who is holding the lock.
  * Writing the action description and acquiring the lock cannot be done in a
  * single operation so 2 locks are required. The action lock MUST only be
  * acquired or released when the description lock is held in this way all
  * clients will see a consistent view of the action's description.
  *
  * <em>A</em> Is the Action lock held continuously while the action is taking place
- * <em>D</em> Is the Description lock held only while update the actions description
+ * <em>D</em> Is the Description lock held only while updating the actions description
  *
  *                      A-------------------A
  *                     /                     \
@@ -191,13 +192,13 @@ public class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
     @Override
     public T currentAction(String jobId)
     {
-        InterProcessReadWriteLock readWriteLock = new InterProcessReadWriteLock(m_Client,
+        InterProcessReadWriteLock descriptionReadWriteLock = new InterProcessReadWriteLock(m_Client,
                                                     descriptionLockPath(jobId));
 
-        InterProcessMutex readLock = readWriteLock.readLock();
+        InterProcessMutex descriptionReadLock = descriptionReadWriteLock.readLock();
 
         // blocks if the write lock is held
-        if (acquireLock(readLock, jobId))
+        if (acquireLock(descriptionReadLock, jobId))
         {
             try
             {
@@ -205,7 +206,7 @@ public class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
             }
             finally
             {
-                releaseLock(readLock, jobId);
+                releaseDescriptionLock(descriptionReadLock, jobId);
             }
         }
 
@@ -243,7 +244,8 @@ public class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
                 }
                 else
                 {
-                    InterProcessSemaphoreV2 actionLock = new InterProcessSemaphoreV2(m_Client, lockPath(jobId), 1);
+                    InterProcessSemaphoreV2 actionLock = new InterProcessSemaphoreV2(m_Client,
+                                                                            actionLockPath(jobId), 1);
                     lease = tryAcquiringLockNonBlocking(actionLock);
 
                     if (lease != null)
@@ -279,7 +281,7 @@ public class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
             }
             finally
             {
-                releaseLock(descriptionWriteLock, jobId);
+                releaseDescriptionLock(descriptionWriteLock, jobId);
             }
         }
         else
@@ -344,11 +346,11 @@ public class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
     @Override
     public void releaseAction(String jobId, T nextState)
     {
-        InterProcessReadWriteLock readWriteLock = new InterProcessReadWriteLock(m_Client,
+        InterProcessReadWriteLock descriptionReadWriteLock = new InterProcessReadWriteLock(m_Client,
                                 descriptionLockPath(jobId));
 
-        InterProcessMutex writeLock = readWriteLock.writeLock();
-        if (acquireLock(writeLock, jobId))
+        InterProcessMutex descriptionWriteLock = descriptionReadWriteLock.writeLock();
+        if (acquireLock(descriptionWriteLock, jobId))
         {
             try
             {
@@ -371,31 +373,28 @@ public class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
                                 " is not locked by this ZooKeeperActionGuardian");
                     }
 
-                    releaseLeaseAndDeleteNode(lease, jobId);
+                    deleteHostActionDataForJob(jobId);
+                    releaseActionLeaseAndDeleteNode(lease, jobId);
                 }
             }
             finally
             {
-                releaseLock(writeLock, jobId);
+                releaseDescriptionLock(descriptionWriteLock, jobId);
             }
         }
 
     }
 
-    private void releaseLeaseAndDeleteNode(Lease lease, String jobId)
+    private void releaseActionLeaseAndDeleteNode(Lease actionLease, String jobId)
     {
         try
         {
-            lease.close();
+            actionLease.close();
 
-            // clear data and delete job node
-            m_Client.setData().forPath(lockPath(jobId));
-            m_Client.delete().deletingChildrenIfNeeded().forPath(lockPath(jobId));
-
-            // if no other locks for the job delete the job node
-            if (m_Client.getChildren().forPath(jobPath(jobId)).isEmpty())
+            // if no other locks for the job delete the job action node
+            if (m_Client.getChildren().forPath(actionLockPath(jobId)).isEmpty())
             {
-                m_Client.delete().forPath(jobPath(jobId));
+                m_Client.delete().forPath(actionLockPath(jobId));
             }
         }
         catch (Exception e)
@@ -419,7 +418,7 @@ public class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
         return false;
     }
 
-    private boolean releaseLock(InterProcessMutex lock, String jobId)
+    private boolean releaseDescriptionLock(InterProcessMutex lock, String jobId)
     {
         try
         {
@@ -438,9 +437,14 @@ public class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
     {
         try
         {
-            String data = new String(m_Client.getData().forPath(descriptionLockPath(jobId)),
+            String data = new String(m_Client.getData().forPath(
+                        descriptionPath(jobId)),
                                      StandardCharsets.UTF_8);
             return lockDataToHostAction(data);
+        }
+        catch (NoNodeException e)
+        {
+            return new HostnameAction("", m_NoneAction);
         }
         catch (Exception e)
         {
@@ -451,15 +455,37 @@ public class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
 
     private void setHostActionOfLockedJob(String jobId, String hostname, T action)
     {
-        String data = hostActionToData(hostname, action);
+        byte[] data = hostActionToData(hostname, action).getBytes(StandardCharsets.UTF_8);
         try
         {
-            m_Client.setData().forPath(descriptionLockPath(jobId),
-                            data.getBytes(StandardCharsets.UTF_8));
+            String path = descriptionPath(jobId);
+
+            try
+            {
+                m_Client.create().creatingParentsIfNeeded()
+                        .withMode(CreateMode.EPHEMERAL)
+                        .withACL(Ids.OPEN_ACL_UNSAFE).forPath(path, data);
+            }
+            catch (NodeExistsException e)
+            {
+                m_Client.setData().forPath(path, data);
+            }
         }
         catch (Exception e)
         {
             LOGGER.error("Error setting host action for lock", e);
+        }
+    }
+
+    private void deleteHostActionDataForJob(String jobId)
+    {
+        try
+        {
+            m_Client.setData().forPath(descriptionPath(jobId));
+        }
+        catch (Exception e)
+        {
+            LOGGER.error("Error clearing host action for job " + jobId, e);
         }
     }
 
@@ -488,8 +514,7 @@ public class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
             host = data;
         }
 
-        HostnameAction ha = new HostnameAction(host, action);
-        return ha;
+        return new HostnameAction(host, action);
     }
 
     @VisibleForTesting
@@ -498,24 +523,19 @@ public class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
         return hostname + HOST_ACTION_SEPARATOR + action.toString();
     }
 
-    private String jobPath(String jobId)
-    {
-        return LOCK_PATH_PREFIX + jobId;
-    }
-
-    private String lockPath(String jobId)
+    private String actionLockPath(String jobId)
     {
         return LOCK_PATH_PREFIX + jobId + "/" + m_NoneAction.typename();
     }
 
     private String descriptionLockPath(String jobId)
     {
-        return LOCK_PATH_PREFIX + jobId + "/" + m_NoneAction.typename() + "/description";
+        return LOCK_PATH_PREFIX + jobId + "/" + m_NoneAction.typename() + "/description--lock" ;
     }
 
     private String descriptionPath(String jobId)
     {
-        return LOCK_PATH_PREFIX + jobId + "/" + m_NoneAction.typename() + "/hostaction";
+        return LOCK_PATH_PREFIX + jobId + "/" + m_NoneAction.typename() + "/description";
     }
 
     @VisibleForTesting
@@ -577,9 +597,6 @@ public class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
         try
         {
             m_Client.delete().deletingChildrenIfNeeded().forPath(NODES_PATH + "/" + m_Hostname);
-        }
-        catch (NodeExistsException e)
-        {
         }
         catch (Exception e)
         {
