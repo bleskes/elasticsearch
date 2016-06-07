@@ -33,6 +33,7 @@ import com.prelert.job.exceptions.JobInUseException;
 import com.prelert.job.manager.actions.ActionState;
 import com.prelert.job.manager.actions.ActionGuardian;
 
+import java.io.IOException;
 import java.net.Inet4Address;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
@@ -223,11 +224,11 @@ public class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
     public ActionTicket tryAcquiringAction(String jobId, T action)
     throws JobInUseException
     {
-        InterProcessReadWriteLock readWriteLock = new InterProcessReadWriteLock(m_Client,
+        InterProcessReadWriteLock descriptionReadWriteLock= new InterProcessReadWriteLock(m_Client,
                                                             descriptionLockPath(jobId));
 
-        InterProcessMutex writeLock = readWriteLock.writeLock();
-        if (acquireLock(writeLock, jobId))
+        InterProcessMutex descriptionWriteLock = descriptionReadWriteLock.writeLock();
+        if (acquireLock(descriptionWriteLock, jobId))
         {
             try
             {
@@ -242,15 +243,30 @@ public class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
                 }
                 else
                 {
-                    InterProcessSemaphoreV2 lock = new InterProcessSemaphoreV2(m_Client, lockPath(jobId), 1);
-                    lease = tryAcquiringLockNonBlocking(lock);
+                    InterProcessSemaphoreV2 actionLock = new InterProcessSemaphoreV2(m_Client, lockPath(jobId), 1);
+                    lease = tryAcquiringLockNonBlocking(actionLock);
 
                     if (lease != null)
                     {
-                        ActionTicket ticket = trySettingAction(lease, jobId, currentState, action);
-                        m_LeaseByJob.put(jobId, lease);
-
-                        return ticket;
+                        try
+                        {
+                            ActionTicket ticket = trySettingAction(lease, jobId, currentState, action);
+                            m_LeaseByJob.put(jobId, lease);
+                            return ticket;
+                        }
+                        catch (JobInUseException e)
+                        {
+                            try
+                            {
+                                lease.close();
+                            }
+                            catch (IOException e1)
+                            {
+                                LOGGER.error("Error releasing lease after failing to change "
+                                                + "action for job " + jobId, e);
+                            }
+                            throw e;
+                        }
                     }
                     else
                     {
@@ -263,7 +279,7 @@ public class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
             }
             finally
             {
-                releaseLock(writeLock, jobId);
+                releaseLock(descriptionWriteLock, jobId);
             }
         }
         else
@@ -292,6 +308,16 @@ public class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
         return null;
     }
 
+    /**
+     * If the action can't be set then release the lease
+     *
+     * @param lease
+     * @param jobId
+     * @param currentState
+     * @param action
+     * @return
+     * @throws JobInUseException
+     */
     private ActionTicket trySettingAction(Lease lease, String jobId,
                                             HostnameAction currentState, T action)
     throws JobInUseException
@@ -374,7 +400,7 @@ public class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
         }
         catch (Exception e)
         {
-            LOGGER.error("Error releasing lock for job " + jobId, e);
+            LOGGER.error("Error releasing lease for job " + jobId, e);
         }
     }
 
@@ -412,7 +438,7 @@ public class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
     {
         try
         {
-            String data = new String(m_Client.getData().forPath(lockPath(jobId)),
+            String data = new String(m_Client.getData().forPath(descriptionLockPath(jobId)),
                                      StandardCharsets.UTF_8);
             return lockDataToHostAction(data);
         }
@@ -428,7 +454,8 @@ public class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
         String data = hostActionToData(hostname, action);
         try
         {
-            m_Client.setData().forPath(lockPath(jobId), data.getBytes(StandardCharsets.UTF_8));
+            m_Client.setData().forPath(descriptionLockPath(jobId),
+                            data.getBytes(StandardCharsets.UTF_8));
         }
         catch (Exception e)
         {
@@ -484,6 +511,11 @@ public class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
     private String descriptionLockPath(String jobId)
     {
         return LOCK_PATH_PREFIX + jobId + "/" + m_NoneAction.typename() + "/description";
+    }
+
+    private String descriptionPath(String jobId)
+    {
+        return LOCK_PATH_PREFIX + jobId + "/" + m_NoneAction.typename() + "/hostaction";
     }
 
     @VisibleForTesting

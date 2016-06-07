@@ -84,7 +84,7 @@ public class ZooKeeperActionGuardianIT
     public void testConnectionString_withMultipleServers()
     {
         try (ZooKeeperActionGuardian<Action> actionGuardian =
-                new ZooKeeperActionGuardian<>(Action.CLOSED, "qa3:2181,localhost:2181"))
+                new ZooKeeperActionGuardian<>(Action.CLOSED, "qa3:2181," + CONNECTION_STRING))
         {
         }
     }
@@ -250,6 +250,37 @@ public class ZooKeeperActionGuardianIT
 
 
     @Test
+    @SuppressWarnings("unchecked")
+    public void testTryAcquireThrowsReleasesLease_WhenNextClientThrowsJobInUse()
+    throws JobInUseException, UnknownHostException
+    {
+        ActionGuardian<Action> next = Mockito.mock(ActionGuardian.class);
+        Mockito.when(next.tryAcquiringAction("foo4", Action.UPDATING))
+                                .thenThrow(JobInUseException.class);
+
+
+        try (ZooKeeperActionGuardian<Action> actionGuardian =
+                new ZooKeeperActionGuardian<>(Action.CLOSED, CONNECTION_STRING, next))
+        {
+            try
+            {
+                actionGuardian.tryAcquiringAction("foo4", Action.UPDATING);
+                fail("Expected next guardian to throw");
+            }
+            catch (JobInUseException e)
+            {
+            }
+
+            // if the lease wasn't released we can't acquire here
+            try (ZooKeeperActionGuardian<Action>.ActionTicket ticket =
+                        actionGuardian.tryAcquiringAction("foo4", Action.CLOSING))
+            {
+            }
+        }
+    }
+
+
+    @Test
     public void testTryAcquiringAction_acquiresNextLockInChain() throws JobInUseException
     {
         @SuppressWarnings("unchecked")
@@ -389,6 +420,8 @@ public class ZooKeeperActionGuardianIT
             }
         }
     }
+
+
 /***
     @Test
     public void testReleaseDeletesNode() throws Exception
