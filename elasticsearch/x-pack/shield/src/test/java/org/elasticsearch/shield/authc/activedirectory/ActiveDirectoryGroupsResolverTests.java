@@ -18,7 +18,6 @@
 package org.elasticsearch.shield.authc.activedirectory;
 
 import com.unboundid.ldap.sdk.Filter;
-import org.apache.lucene.util.LuceneTestCase;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.shield.authc.ldap.GroupsResolverTestCase;
@@ -35,7 +34,6 @@ import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.is;
 
 @Network
-@LuceneTestCase.AwaitsFix(bugUrl = "https://github.com/elastic/x-plugins/issues/2440")
 public class ActiveDirectoryGroupsResolverTests extends GroupsResolverTestCase {
 
     public static final String BRUCE_BANNER_DN = "cn=Bruce Banner,CN=Users,DC=ad,DC=test,DC=elasticsearch,DC=com";
