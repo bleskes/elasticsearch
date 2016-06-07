@@ -80,5 +80,5 @@
 
 # ------------------------------------------------------------------------------
 # ZooKeeper server settings.
-# zookeeper.host: localhost
-# zookeeper.port: 2181
+# Coma separated list of host:port with no whitespace inbetween
+# zookeeper.connection: zk1:2181,zk2:2181
