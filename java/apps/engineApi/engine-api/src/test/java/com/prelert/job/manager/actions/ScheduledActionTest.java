@@ -27,7 +27,9 @@
 
 package com.prelert.job.manager.actions;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
@@ -40,7 +42,17 @@ public class ScheduledActionTest
     }
 
     @Test
-    public void testgetBusyActionError_GivenVariousActionsInUse()
+    public void testGetBusyActionError_GivenVariousActionsInUse()
+    {
+        assertEquals("Cannot start scheduler for job 'foo' while its status is started",
+                ScheduledAction.START.getBusyActionError("foo", ScheduledAction.START));
+
+        String g = ScheduledAction.STOP.getBusyActionError("foo", ScheduledAction.START);
+        assertEquals("Cannot stop scheduler for job 'foo' while its status is started", g);
+    }
+
+    @Test
+    public void testGetBusyActionError_GivenHostAndVariousActionsInUse()
     {
         assertEquals("Cannot start scheduler for job 'foo' while its status is started on host marple",
                 ScheduledAction.START.getBusyActionError("foo", ScheduledAction.START, "marple"));
@@ -67,4 +79,17 @@ public class ScheduledActionTest
         assertEquals(ScheduledAction.STOP, ScheduledAction.STOP.nextState(ScheduledAction.STOP));
     }
 
+    @Test
+    public void testHoldDistributedLock()
+    {
+        assertTrue(ScheduledAction.START.holdDistributedLock());
+        assertFalse(ScheduledAction.STOP.holdDistributedLock());
+    }
+
+    @Test
+    public void testStartingState()
+    {
+        assertEquals(ScheduledAction.STOP, ScheduledAction.START.startingState());
+        assertEquals(ScheduledAction.STOP, ScheduledAction.STOP.startingState());
+    }
 }

@@ -63,6 +63,7 @@ public class NoneActionGuardian<T extends Enum<T> & ActionState<T>> extends Acti
     @Override
     public void releaseAction(String jobId, T nextState)
     {
+        // Do nothing
     }
 
 }

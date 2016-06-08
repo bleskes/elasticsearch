@@ -34,8 +34,8 @@ import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
  * Engine API status.
@@ -49,16 +49,15 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 @JsonInclude(Include.NON_NULL)
 public class EngineStatus
 {
-    Map<String, JobStats> m_ActiveJobs;
-    List<String> m_StartedScheduledJobs;
-    Double m_CpuLoad;
-    Long m_HeapMemUsage;
-    List<JobStats> m_MemoryStats;
-    Map<String, String> m_DbConnection;
-    List<String> m_EngineHosts;
+    private Map<String, JobStats> m_ActiveJobs;
+    private List<String> m_StartedScheduledJobs;
+    private Double m_CpuLoad;
+    private Long m_HeapMemUsage;
+    private Map<String, String> m_DbConnection;
+    private List<String> m_EngineHosts;
 
     @JsonInclude(Include.NON_NULL)
-    static public class JobStats
+    public static class JobStats
     {
         private Long m_ModelBytes;
         private String m_MemoryStatus;
@@ -66,6 +65,7 @@ public class EngineStatus
 
         public JobStats()
         {
+            // Default constructor
         }
 
         public JobStats(Long bytes, String status, Long uptime)
