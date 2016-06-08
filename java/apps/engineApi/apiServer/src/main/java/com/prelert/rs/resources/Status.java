@@ -82,7 +82,8 @@ public class Status extends ResourceWithJobManager
                 memoryStats.put(jobId, new EngineStatus.JobStats(
                                                     stats.get().getModelBytes(),
                                                     stats.get().getMemoryStatus(),
-                                                    jobManager().jobUptime(jobId)
+                                                    jobManager().jobUptime(jobId),
+                                                    jobManager().jobBucketLatency(jobId)
                                                     ));
             }
             else

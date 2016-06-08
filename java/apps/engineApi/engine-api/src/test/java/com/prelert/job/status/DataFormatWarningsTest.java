@@ -168,7 +168,7 @@ public class DataFormatWarningsTest
 
             DummyUsageReporter usageReporter = new DummyUsageReporter("test-job", usagePersister, LOGGER);
             StatusReporter statusReporter = new StatusReporter("test-job", usageReporter,
-                    countsPersister, LOGGER);
+                    countsPersister, LOGGER, 1);
             JobDataPersister dp = new NoneJobDataPersister();
 
             Assert.assertEquals(MAX_PERCENT_DATE_PARSE_ERRORS,
@@ -299,7 +299,7 @@ public class DataFormatWarningsTest
 
             DummyUsageReporter usageReporter = new DummyUsageReporter("test-job", usagePersister, LOGGER);
             StatusReporter statusReporter = new StatusReporter("test-job", usageReporter,
-                    countsPersister, LOGGER);
+                    countsPersister, LOGGER, 1);
             JobDataPersister dp = new NoneJobDataPersister();
 
             Assert.assertEquals(MAX_PERCENT_DATE_PARSE_ERRORS,
@@ -417,7 +417,7 @@ public class DataFormatWarningsTest
 
             DummyUsageReporter usageReporter = new DummyUsageReporter("test-job", usagePersister, LOGGER);
             StatusReporter statusReporter = new StatusReporter("test-job", usageReporter,
-                    countsPersister, LOGGER);
+                    countsPersister, LOGGER, 1);
             JobDataPersister dp = new NoneJobDataPersister();
 
             Assert.assertEquals(MAX_PERCENT_DATE_PARSE_ERRORS,
@@ -535,7 +535,7 @@ public class DataFormatWarningsTest
 
             DummyUsageReporter usageReporter = new DummyUsageReporter("test-job", usagePersister, LOGGER);
             StatusReporter statusReporter = new StatusReporter("test-job", usageReporter,
-                    countsPersister, LOGGER);
+                    countsPersister, LOGGER, 1);
             JobDataPersister dp = new NoneJobDataPersister();
 
             Assert.assertEquals(MAX_PERCENT_DATE_PARSE_ERRORS,

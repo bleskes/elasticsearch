@@ -19,44 +19,82 @@
  * may be reproduced, adapted or transmitted in any form or *
  * by any means, electronic, mechanical, photocopying,      *
  * recording or otherwise.                                  *
- *
  *                                                          *
  *----------------------------------------------------------*
  *                                                          *
  *                                                          *
  ************************************************************/
-package com.prelert.job.status.none;
 
-import org.apache.log4j.Logger;
+package com.prelert.job.status;
 
-import com.prelert.job.persistence.none.NoneJobDataCountsPersister;
-import com.prelert.job.status.HighProportionOfBadTimestampsException;
-import com.prelert.job.status.OutOfOrderRecordsException;
-import com.prelert.job.status.StatusReporter;
-import com.prelert.job.usage.none.NoneUsageReporter;
+import com.google.common.annotations.VisibleForTesting;
 
-public class NoneStatusReporter extends StatusReporter
+class ProcessingLatency
 {
-    private static final Logger LOGGER = Logger.getLogger(NoneStatusReporter.class);
+    private final long m_BucketSpan;
 
-    public NoneStatusReporter(String jobId)
+    // Circular buffer
+    private final long [] m_SampleBuffer;
+    private int m_SampleCount;
+    private int m_CurrentIndex;
+
+    public ProcessingLatency(long bucketSpan)
     {
-        super(jobId, new NoneUsageReporter(), new NoneJobDataCountsPersister(), LOGGER, 1);
+        this(bucketSpan, 10);
     }
 
-    /**
-     * Overrides the base class to ignore problems with bad dates, out of order
-     * data, etc.
-     *
-     * @param totalRecords
-     * @throws HighProportionOfBadTimestampsException
-     * @throws OutOfOrderRecordsException
-     */
-    @Override
-    protected void checkStatus(long totalRecords)
-    throws HighProportionOfBadTimestampsException, OutOfOrderRecordsException
+    public ProcessingLatency(long bucketSpan, int numberSamples)
     {
-        // Don't throw exceptions for these conditions as we're supposed to be
-        // not reporting any status
+        m_BucketSpan = bucketSpan;
+        m_SampleBuffer = new long[numberSamples];
+    }
+
+    @VisibleForTesting
+    long [] getSamples()
+    {
+        return m_SampleBuffer;
+    }
+
+    public void addMeasure(long lastDataTime, long lastBucketTime)
+    {
+        long numBucketsBetween = (lastDataTime - lastBucketTime) / m_BucketSpan;
+        addSample(numBucketsBetween);
+    }
+
+    void addSample(long sample)
+    {
+        if (m_SampleCount < m_SampleBuffer.length)
+        {
+            m_SampleCount++;
+        }
+
+        m_SampleBuffer[m_CurrentIndex] = sample;
+        m_CurrentIndex = ++m_CurrentIndex % m_SampleBuffer.length;
+    }
+
+    int getCurrentIndex()
+    {
+        return m_CurrentIndex;
+    }
+
+    int getSampleCount()
+    {
+        return m_SampleCount;
+    }
+
+    public double latency()
+    {
+        if (m_SampleCount == 0)
+        {
+            return 0;
+        }
+
+        int sum = 0;
+        for (int i=0; i<m_SampleCount; i++)
+        {
+            sum += m_SampleBuffer[i];
+        }
+
+        return sum / (double)m_SampleCount;
     }
 }

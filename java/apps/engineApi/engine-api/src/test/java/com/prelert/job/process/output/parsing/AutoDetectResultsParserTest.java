@@ -637,4 +637,34 @@ public class AutoDetectResultsParserTest
 
         assertTrue(alertListener.isFired());
     }
+
+
+    @Test
+    public void testParse_UpdatesBucketStartTimeConsumer()
+            throws JsonParseException, IOException, AutoDetectParseException
+    {
+        class BucketCount
+        {
+            long m_Count = 0;
+            public void newBucketTime(long epoch)
+            {
+                m_Count++;
+            }
+
+        }
+        final BucketCount bucketCount = new BucketCount();
+
+        AutoDetectResultsParser parser = new AutoDetectResultsParser(
+                                            (l) -> {bucketCount.newBucketTime(l);});
+
+
+        InputStream inputStream = new ByteArrayInputStream(
+                                METRIC_OUTPUT_SAMPLE.getBytes(StandardCharsets.UTF_8));
+        Logger logger = mock(Logger.class);
+        ResultsPersister persister = new ResultsPersister();
+        Renormaliser renormaliser = mock(Renormaliser.class);
+        parser.parseResults(inputStream, persister, renormaliser, logger);
+
+        assertEquals(2, bucketCount.m_Count);
+    }
 }

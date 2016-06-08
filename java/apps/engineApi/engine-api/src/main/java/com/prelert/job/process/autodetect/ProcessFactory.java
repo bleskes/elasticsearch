@@ -62,6 +62,8 @@ public class ProcessFactory
     private final UsagePersisterFactory m_UsagePersisterFactory;
     private final JobLoggerFactory m_JobLoggerFactory;
 
+
+
     public ProcessFactory(JobProvider jobProvider, ResultsReaderFactory resultsReaderFactory,
             JobDataCountsPersisterFactory dataCountsPersisterFactory,
             UsagePersisterFactory usagePersisterFactory, JobLoggerFactory jobLoggerFactory)
@@ -111,17 +113,21 @@ public class ProcessFactory
         }
 
 
+        StatusReporter sr = new StatusReporter(jobId, job.getCounts(),
+                new UsageReporter(jobId,
+                                  m_UsagePersisterFactory.getInstance(logger),
+                                  logger),
+                 m_DataCountsPersisterFactory.getInstance(logger),
+                 logger, job.getAnalysisConfig().getBucketSpan());
+
         ProcessAndDataDescription procAndDD = new ProcessAndDataDescription(
                 nativeProcess, jobId,
                 job.getDataDescription(), job.getAnalysisConfig(),
                 job.getSchedulerConfig(), new TransformConfigs(job.getTransforms()), logger,
-                new StatusReporter(jobId, job.getCounts(),
-                        new UsageReporter(jobId,
-                                          m_UsagePersisterFactory.getInstance(logger),
-                                          logger),
-                         m_DataCountsPersisterFactory.getInstance(logger),
-                         logger),
-                m_ResultsReaderFactory.newResultsParser(jobId, nativeProcess.getInputStream(), logger),
+                sr,
+                m_ResultsReaderFactory.newResultsParser(jobId,
+                                        nativeProcess.getInputStream(), logger,
+                                        l -> sr.setLastestBucketTime(l)),
                 filesToDelete
                 );
 

@@ -803,6 +803,24 @@ public class ProcessManager
         }
     }
 
+    /**
+     * Return the jobs processing latency in terms of buckets
+     *
+     * @param jobId
+     * @return 0 if unknown
+     */
+    public double jobBucketLatency(String jobId)
+    {
+        if (m_JobIdToProcessMap.containsKey(jobId))
+        {
+            return m_JobIdToProcessMap.get(jobId).getBucketLatency();
+        }
+        else
+        {
+            return 0;
+        }
+    }
+
     public void deletePersistedData(String jobId)
     {
         m_DataPersisterFactory.newDataPersister(jobId).deleteData();

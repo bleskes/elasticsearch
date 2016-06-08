@@ -89,7 +89,7 @@ public class StatusReporterTest
     {
         MockitoAnnotations.initMocks(this);
         m_StatusReporter = new StatusReporter(JOB_ID, m_UsageReporter, m_JobDataCountsPersister,
-                m_Logger);
+                                            m_Logger, 1);
     }
 
     @Test
@@ -124,7 +124,7 @@ public class StatusReporterTest
         counts.setExcludedRecordCount(7);
 
         m_StatusReporter = new StatusReporter(JOB_ID, counts, m_UsageReporter,
-                m_JobDataCountsPersister, m_Logger);
+                m_JobDataCountsPersister, m_Logger, 1);
         DataCounts stats = m_StatusReporter.incrementalStats();
         assertNotNull(stats);
         testAllFieldsEqualZero(stats);

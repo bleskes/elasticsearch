@@ -29,6 +29,7 @@ package com.prelert.job.process.output.parsing;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.function.Consumer;
 
 import org.apache.log4j.Logger;
 
@@ -53,11 +54,11 @@ public class ResultsReader implements Runnable
     private final JobResultsPersister m_ResultsPersister;
 
     public ResultsReader(Renormaliser renormaliser, JobResultsPersister persister,
-            InputStream stream, Logger logger)
+            InputStream stream, Logger logger, Consumer<Long> newBucketDateConsumer)
     {
         m_Stream = stream;
         m_Logger = logger;
-        m_Parser = new AutoDetectResultsParser();
+        m_Parser = new AutoDetectResultsParser(newBucketDateConsumer);
         m_Renormaliser = renormaliser;
         m_ResultsPersister = persister;
     }
@@ -78,7 +79,7 @@ public class ResultsReader implements Runnable
             try
             {
                 // read anything left in the stream before
-                // closing the stream otherwise it the proccess
+                // closing the stream otherwise if the process
                 // tries to write more after the close it gets
                 // a SIGPIPE
                 byte [] buff = new byte [512];

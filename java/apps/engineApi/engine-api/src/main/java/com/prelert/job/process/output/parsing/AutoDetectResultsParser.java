@@ -34,6 +34,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Consumer;
 
 import org.apache.log4j.Logger;
 
@@ -64,6 +65,24 @@ public class AutoDetectResultsParser
     private final Set<String> m_AcknowledgedFlushes = new HashSet<>();
     private volatile boolean m_ParsingStarted;
     private volatile boolean m_ParsingInProgress;
+    private Consumer<Long> m_NewBucketDateConsumer;
+
+    public AutoDetectResultsParser()
+    {
+        m_NewBucketDateConsumer = (l) -> {};
+    }
+
+    /**
+     * Consumer that should be called with the bucket
+     * start time whenever a new bucket is parsed.
+     * The long value passed to the consumer is the epoch time (seconds)
+     *
+     * @param newBucketDateConsumer
+     */
+    public AutoDetectResultsParser(Consumer<Long> newBucketDateConsumer)
+    {
+        m_NewBucketDateConsumer = newBucketDateConsumer;
+    }
 
     public void addObserver(AlertObserver obs)
     {
@@ -233,6 +252,7 @@ public class AutoDetectResultsParser
                         Bucket bucket = new BucketParser(parser).parseJsonAfterStartObject();
                         persister.persistBucket(bucket);
                         persister.incrementBucketCount(1);
+                        m_NewBucketDateConsumer.accept(bucket.getEpoch());
                         notifyObservers(bucket);
 
                         logger.trace("Bucket number " + ++bucketCount + " parsed from output");
@@ -324,8 +344,6 @@ public class AutoDetectResultsParser
 
     private void notifyObservers(Bucket bucket)
     {
-
-
         List<ObserverTriggerPair> observersToFire = new ArrayList<>();
 
         // one-time alerts so remove them from the list before firing

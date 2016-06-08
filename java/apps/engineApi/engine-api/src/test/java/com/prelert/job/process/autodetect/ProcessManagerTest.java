@@ -287,7 +287,7 @@ public class ProcessManagerTest
         TransformConfigs tc = new TransformConfigs(Collections.emptyList());
 
         StatusReporter statusReporter = new StatusReporter(JOB_ID, mock(UsageReporter.class),
-                                            mock(JobDataCountsPersister.class), mock(Logger.class));
+                                            mock(JobDataCountsPersister.class), mock(Logger.class), 1);
 
         String data = "time,value\n1452095662,1\n1452098662,2\n1452098662,3";
         ByteArrayInputStream input = new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));

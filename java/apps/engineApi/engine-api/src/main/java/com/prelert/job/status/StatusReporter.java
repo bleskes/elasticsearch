@@ -65,6 +65,7 @@ public class StatusReporter
     public static final String ACCEPTABLE_PERCENTAGE_OUT_OF_ORDER_ERRORS_PROP =
             "max.percent.outoforder.errors";
 
+
     private DataCounts m_TotalRecordStats;
     private DataCounts m_IncrementalRecordStats;
 
@@ -84,8 +85,12 @@ public class StatusReporter
     private final Logger m_Logger;
     private final JobDataCountsPersister m_DataCountsPersister;
 
+    private ProcessingLatency m_BucketLatency;
+    private volatile long m_LastestBucketTime = -1;
+
     public StatusReporter(String jobId, UsageReporter usageReporter,
-                        JobDataCountsPersister dataCountsPersister, Logger logger)
+                        JobDataCountsPersister dataCountsPersister, Logger logger,
+                        long bucketSpan)
     {
         m_JobId = jobId;
         m_UsageReporter = usageReporter;
@@ -94,6 +99,8 @@ public class StatusReporter
 
         m_TotalRecordStats = new DataCounts();
         m_IncrementalRecordStats = new DataCounts();
+
+        m_BucketLatency = new ProcessingLatency(bucketSpan);
 
         m_AcceptablePercentDateParseErrors = PrelertSettings.getSettingOrDefault(
                 ACCEPTABLE_PERCENTAGE_DATE_PARSE_ERRORS_PROP,
@@ -104,9 +111,10 @@ public class StatusReporter
     }
 
     public StatusReporter(String jobId, DataCounts counts,
-            UsageReporter usageReporter, JobDataCountsPersister dataCountsPersister, Logger logger)
+            UsageReporter usageReporter, JobDataCountsPersister dataCountsPersister, Logger logger,
+            long bucketSpan)
     {
-        this(jobId, usageReporter, dataCountsPersister, logger);
+        this(jobId, usageReporter, dataCountsPersister, logger, bucketSpan);
 
         m_TotalRecordStats = new DataCounts(counts);
     }
@@ -144,6 +152,18 @@ public class StatusReporter
         if (isReportingBoundary(totalRecords))
         {
             logStatus(totalRecords);
+
+            // only record latency if we have seen a bucket result
+            if (m_LastestBucketTime > 0)
+            {
+                // value of m_LastestBucketTime can change between these two
+                // lines but no need to synchronise
+                m_BucketLatency.addMeasure(latestRecordTimeMs / 1000, m_LastestBucketTime);
+            }
+
+            double latency = m_BucketLatency.latency();
+            m_Logger.info("Bucket latency = " + latency);
+
             m_DataCountsPersister.persistDataCounts(m_JobId, runningTotalStats());
             try
             {
@@ -358,12 +378,6 @@ public class StatusReporter
      */
     private void logStatus(long totalRecords)
     {
-        if (m_Logger == null)
-        {
-            // This can happen in unit tests
-            return;
-        }
-
         if (++m_LogCount % m_LogEvery != 0)
         {
             return;
@@ -477,5 +491,15 @@ public class StatusReporter
     {
         m_TotalRecordStats.calcProcessedFieldCount(getAnalysedFieldsPerRecord());
         return m_TotalRecordStats;
+    }
+
+    public void setLastestBucketTime(long bucketTime)
+    {
+        m_LastestBucketTime = bucketTime;
+    }
+
+    public double getBucketLatency()
+    {
+        return m_BucketLatency.latency();
     }
 }

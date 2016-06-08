@@ -27,6 +27,7 @@
 package com.prelert.job.process.output.parsing;
 
 import java.io.InputStream;
+import java.util.function.Consumer;
 
 import org.apache.log4j.Logger;
 
@@ -51,9 +52,10 @@ public class ResultsReaderFactory
     }
 
     public ResultsReader newResultsParser(String jobId, InputStream autoDetectOutputStream,
-            Logger logger)
+            Logger logger, Consumer<Long> newBucketDateConsumer)
     {
         return new ResultsReader(m_RenormaliserFactory.create(jobId),
-                m_PersisterFactory.jobResultsPersister(jobId), autoDetectOutputStream, logger);
+                m_PersisterFactory.jobResultsPersister(jobId), autoDetectOutputStream, logger,
+                                        newBucketDateConsumer);
     }
 }

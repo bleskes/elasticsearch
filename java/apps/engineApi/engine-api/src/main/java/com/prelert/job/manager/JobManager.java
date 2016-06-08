@@ -862,6 +862,17 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
     }
 
     /**
+     * Return the jobs processing latency in terms of buckets
+     *
+     * @param jobId
+     * @return 0 if unknown
+     */
+    public double jobBucketLatency(String jobId)
+    {
+        return m_ProcessManager.jobBucketLatency(jobId);
+    }
+
+    /**
      * Get the jobs that have a started scheduler
      * @return
      */

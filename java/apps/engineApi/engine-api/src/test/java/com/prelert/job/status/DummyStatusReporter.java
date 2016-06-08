@@ -40,13 +40,13 @@ public class DummyStatusReporter extends StatusReporter
 	boolean m_StatusReported = false;
 	public DummyStatusReporter(UsageReporter usageReporter)
 	{
-		super("DummyJobId", usageReporter, new NoneJobDataCountsPersister(), null);
+		super("DummyJobId", usageReporter, new NoneJobDataCountsPersister(), null, 1);
 	}
 
 	public DummyStatusReporter(DataCounts counts,
                             UsageReporter usageReporter)
 	{
-	    super("DummyJobId", counts, usageReporter, new NoneJobDataCountsPersister(), null);
+	    super("DummyJobId", counts, usageReporter, new NoneJobDataCountsPersister(), null, 1);
 	}
 
 

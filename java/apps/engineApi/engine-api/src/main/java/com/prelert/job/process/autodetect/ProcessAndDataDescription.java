@@ -205,6 +205,11 @@ public class ProcessAndDataDescription
         return Duration.between(m_StartTime, ZonedDateTime.now()).getSeconds();
     }
 
+    public double getBucketLatency()
+    {
+        return m_StatusReporter.getBucketLatency();
+    }
+
     public void deleteAssociatedFiles()
     {
         if (m_FilesToDelete == null)
