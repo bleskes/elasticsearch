@@ -598,6 +598,10 @@ public class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
         {
             m_Client.delete().deletingChildrenIfNeeded().forPath(NODES_PATH + "/" + m_Hostname);
         }
+        catch (NoNodeException nne)
+        {
+            LOGGER.warn("Unexpected state: Hostname node already deleted");
+        }
         catch (Exception e)
         {
             LOGGER.warn("Error de-registering node with hostname '" + m_Hostname + "' in ZooKeeper", e);
