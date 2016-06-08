@@ -58,12 +58,12 @@ public class ZooKeeperActionGuardianIT
     private static TestingServer s_Server;
 
     private static final int PORT = 2182;
-//    private static final String CONNECTION_STRING = "localhost:" + PORT;
+    private static final String CONNECTION_STRING = "localhost:" + PORT;
 
     // running against an existing ZooKeeper is much faster than
     // using the testing server but some tests will fail if it's
     // not a clean setup
-    private static final String CONNECTION_STRING = "qa3:2181";
+//    private static final String CONNECTION_STRING = "qa3:2181";
 
 
     @Rule
@@ -82,11 +82,14 @@ public class ZooKeeperActionGuardianIT
     }
 
     @Test
-    public void testConnectionString_withMultipleServers()
+    public void testConnectionString_withMultipleServers() throws IOException, Exception
     {
-        try (ZooKeeperActionGuardian<Action> actionGuardian =
-                new ZooKeeperActionGuardian<>(Action.CLOSED, "qa3:2181," + CONNECTION_STRING))
+        try (TestingServer server2 = new TestingServer(2183))
         {
+            try (ZooKeeperActionGuardian<Action> actionGuardian =
+                    new ZooKeeperActionGuardian<>(Action.CLOSED, "localhost:2183," + CONNECTION_STRING))
+            {
+            }
         }
     }
 
