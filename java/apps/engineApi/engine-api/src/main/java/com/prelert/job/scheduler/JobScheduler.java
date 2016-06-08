@@ -444,8 +444,6 @@ public class JobScheduler
     {
         synchronized (this)
         {
-            releaseActionTicket();
-
             if (m_Status != JobSchedulerStatus.STARTED)
             {
                 String msg = Messages.getMessage(Messages.JOB_SCHEDULER_CANNOT_STOP_IN_CURRENT_STATE,
@@ -456,6 +454,7 @@ public class JobScheduler
         }
         awaitTermination();
         updateFinalStatusAndCloseLogger(JobSchedulerStatus.STOPPED);
+        releaseActionTicket();
     }
 
     /**
@@ -467,8 +466,6 @@ public class JobScheduler
     {
         synchronized (this)
         {
-            releaseActionTicket();
-
             if (m_Status != JobSchedulerStatus.STARTED)
             {
                 return;
@@ -477,6 +474,7 @@ public class JobScheduler
         }
         awaitTermination();
         updateFinalStatusAndCloseLogger(JobSchedulerStatus.STARTED);
+        releaseActionTicket();
     }
 
     private void awaitTermination()
@@ -484,10 +482,6 @@ public class JobScheduler
         if (awaitLookbackTermination() == false || stopRealtimeScheduler() == false)
         {
             m_Logger.error("Unable to stop the scheduler.");
-        }
-        else
-        {
-
         }
     }
 

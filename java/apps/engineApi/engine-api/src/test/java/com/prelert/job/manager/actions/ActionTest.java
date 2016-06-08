@@ -27,11 +27,11 @@
 
 package com.prelert.job.manager.actions;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
-
-import com.prelert.job.manager.actions.Action;
 
 public class ActionTest
 {
@@ -160,5 +160,37 @@ public class ActionTest
         assertEquals(Action.SLEEPING, Action.UPDATING.nextState(Action.SLEEPING));
         assertEquals(Action.CLOSED, Action.UPDATING.nextState(Action.CLOSED));
         assertEquals(Action.SLEEPING, Action.WRITING.nextState(Action.SLEEPING));
+    }
+
+    @Test
+    public void testHoldDistributedLock()
+    {
+        assertFalse(Action.CLOSED.holdDistributedLock());
+        assertFalse(Action.CLOSING.holdDistributedLock());
+        assertFalse(Action.DELETING.holdDistributedLock());
+        assertFalse(Action.PAUSING.holdDistributedLock());
+        assertFalse(Action.RESUMING.holdDistributedLock());
+        assertFalse(Action.REVERTING.holdDistributedLock());
+        assertTrue(Action.SLEEPING.holdDistributedLock());
+        assertFalse(Action.FLUSHING.holdDistributedLock());
+        assertFalse(Action.UPDATING.holdDistributedLock());
+        assertFalse(Action.UPDATING.holdDistributedLock());
+        assertFalse(Action.WRITING.holdDistributedLock());
+    }
+
+    @Test
+    public void testStartingState()
+    {
+        assertEquals(Action.CLOSED, Action.CLOSED.startingState());
+        assertEquals(Action.CLOSED, Action.CLOSING.startingState());
+        assertEquals(Action.CLOSED, Action.DELETING.startingState());
+        assertEquals(Action.CLOSED, Action.PAUSING.startingState());
+        assertEquals(Action.CLOSED, Action.RESUMING.startingState());
+        assertEquals(Action.CLOSED, Action.REVERTING.startingState());
+        assertEquals(Action.CLOSED, Action.SLEEPING.startingState());
+        assertEquals(Action.CLOSED, Action.FLUSHING.startingState());
+        assertEquals(Action.CLOSED, Action.UPDATING.startingState());
+        assertEquals(Action.CLOSED, Action.UPDATING.startingState());
+        assertEquals(Action.CLOSED, Action.WRITING.startingState());
     }
 }
