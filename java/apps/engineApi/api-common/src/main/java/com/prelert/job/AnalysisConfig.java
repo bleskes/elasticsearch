@@ -54,6 +54,7 @@ public class AnalysisConfig
     public static final String BUCKET_SPAN = "bucketSpan";
     public static final String BATCH_SPAN = "batchSpan";
     public static final String CATEGORIZATION_FIELD_NAME = "categorizationFieldName";
+    public static final String CATEGORIZATION_FILTERS = "categorizationFilters";
     public static final String LATENCY = "latency";
     public static final String PERIOD = "period";
     public static final String SUMMARY_COUNT_FIELD_NAME = "summaryCountFieldName";
@@ -77,6 +78,7 @@ public class AnalysisConfig
     private Long m_BucketSpan;
     private Long m_BatchSpan;
     private String m_CategorizationFieldName;
+    private List<String> m_CategorizationFilters;
     private Long m_Latency = 0L;
     private Long m_Period;
     private String m_SummaryCountFieldName;
@@ -93,6 +95,7 @@ public class AnalysisConfig
     {
         m_Detectors = new ArrayList<>();
         m_Influencers = new ArrayList<>();
+        m_CategorizationFilters = new ArrayList<>();
     }
 
     /**
@@ -138,6 +141,16 @@ public class AnalysisConfig
     public void setCategorizationFieldName(String categorizationFieldName)
     {
         m_CategorizationFieldName = categorizationFieldName;
+    }
+
+    public List<String> getCategorizationFilters()
+    {
+        return m_CategorizationFilters;
+    }
+
+    public void setCategorizationFilters(List<String> filters)
+    {
+        m_CategorizationFilters = filters;
     }
 
     /**
@@ -385,6 +398,7 @@ public class AnalysisConfig
         return Objects.equals(this.m_BucketSpan, that.m_BucketSpan) &&
                 Objects.equals(this.m_BatchSpan, that.m_BatchSpan) &&
                 Objects.equals(this.m_CategorizationFieldName, that.m_CategorizationFieldName) &&
+                Objects.equals(this.m_CategorizationFilters, that.m_CategorizationFilters) &&
                 Objects.equals(this.m_Latency, that.m_Latency) &&
                 Objects.equals(this.m_Period, that.m_Period) &&
                 Objects.equals(this.m_SummaryCountFieldName, that.m_SummaryCountFieldName) &&
@@ -397,8 +411,9 @@ public class AnalysisConfig
     @Override
     public int hashCode()
     {
-        return Objects.hash(m_Detectors, m_BucketSpan, m_BatchSpan, m_Latency, m_Period,
-                m_SummaryCountFieldName, m_Influencers, m_OverlappingBuckets, m_ResultFinalizationWindow,
+        return Objects.hash(m_Detectors, m_BucketSpan, m_BatchSpan, m_CategorizationFieldName,
+                m_CategorizationFilters, m_Latency, m_Period, m_SummaryCountFieldName,
+                m_Influencers, m_OverlappingBuckets, m_ResultFinalizationWindow,
                 m_MultivariateByFields);
     }
 

@@ -40,8 +40,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import junit.framework.Assert;
-
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Logger;
 import org.ini4j.Config;
@@ -51,6 +49,8 @@ import org.junit.Test;
 
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.Detector;
+
+import junit.framework.Assert;
 
 public class FieldConfigWriterTest
 {
@@ -173,6 +173,33 @@ public class FieldConfigWriterTest
                 "influencer.0 = sun\n" +
                 "influencer.1 = moon\n" +
                 "influencer.2 = earth\n");
+        verifyNoMoreInteractions(writer);
+    }
+
+    @Test
+    public void testWrite_GivenConfigHasCategorizationFieldAndFiltersAndInfluencer() throws IOException
+    {
+        Detector d = new Detector();
+        d.setFieldName("Integer_Value");
+        d.setByFieldName("ts_hash");
+
+        AnalysisConfig config = new AnalysisConfig();
+        config.setDetectors(Arrays.asList(d));
+        config.setInfluencers(Arrays.asList("sun"));
+        config.setCategorizationFieldName("myCategory");
+        config.setCategorizationFilters(Arrays.asList("foo", " ", "abc,def"));
+
+        OutputStreamWriter writer = mock(OutputStreamWriter.class);
+        Logger logger = mock(Logger.class);
+        FieldConfigWriter fieldConfigWriter = new FieldConfigWriter(config, writer, logger);
+
+        fieldConfigWriter.write();
+
+        verify(writer).write("detector.0.clause = Integer_Value by ts_hash categorizationfield=myCategory\n" +
+                "categorizationfilter.0 = foo\n" +
+                "categorizationfilter.1 = \" \"\n" +
+                "categorizationfilter.2 = \"abc,def\"\n" +
+                "influencer.0 = sun\n");
         verifyNoMoreInteractions(writer);
     }
 }

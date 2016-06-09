@@ -40,6 +40,7 @@ import org.junit.rules.ExpectedException;
 
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.Detector;
+import com.prelert.job.errorcodes.ErrorCodeMatcher;
 import com.prelert.job.errorcodes.ErrorCodes;
 
 import junit.framework.Assert;
@@ -220,16 +221,18 @@ public class AnalysisConfigVerifierTest
     @Test
     public void testVerify_GivenValidConfig() throws JobConfigurationException
     {
-        AnalysisConfig analysisConfig = new AnalysisConfig();
-        analysisConfig.setBucketSpan(3600L);
-        analysisConfig.setBatchSpan(0L);
-        analysisConfig.setLatency(0L);
-        analysisConfig.setPeriod(0L);
-        List<Detector> detectors = new ArrayList<>();
-        Detector detector = new Detector();
-        detector.setFieldName("count");
-        detectors.add(detector);
-        analysisConfig.setDetectors(detectors);
+        AnalysisConfig analysisConfig = createValidConfig();
+
+        assertTrue(AnalysisConfigVerifier.verify(analysisConfig));
+    }
+
+    @Test
+    public void testVerify_GivenValidConfigWithCategorizationFieldNameAndCategorizationFilters()
+            throws JobConfigurationException
+    {
+        AnalysisConfig analysisConfig = createValidConfig();
+        analysisConfig.setCategorizationFieldName("myCategory");
+        analysisConfig.setCategorizationFilters(Arrays.asList("foo", "bar"));
 
         assertTrue(AnalysisConfigVerifier.verify(analysisConfig));
     }
@@ -360,11 +363,76 @@ public class AnalysisConfigVerifierTest
     }
 
     @Test
-    public void testHashCode_GivenEqual()
+    public void testVerify_GivenCategorizationFiltersButNoCategorizationFieldName()
+            throws JobConfigurationException
     {
-        AnalysisConfig analysisConfig1 = new AnalysisConfig();
-        AnalysisConfig analysisConfig2 = new AnalysisConfig();
+        m_ExpectedException.expect(JobConfigurationException.class);
+        m_ExpectedException.expect(
+                ErrorCodeMatcher.hasErrorCode(ErrorCodes.CATEGORIZATION_FILTERS_REQUIRE_CATEGORIZATION_FIELD_NAME));
+        m_ExpectedException.expectMessage("categorizationFilters require setting categorizationFieldName");
 
-        assertEquals(analysisConfig1.hashCode(), analysisConfig2.hashCode());
+        AnalysisConfig config = createValidConfig();
+        config.setCategorizationFilters(Arrays.asList("foo"));
+
+        AnalysisConfigVerifier.verify(config);
+    }
+
+    @Test
+    public void testVerify_GivenDuplicateCategorizationFilters() throws JobConfigurationException
+    {
+        m_ExpectedException.expect(JobConfigurationException.class);
+        m_ExpectedException.expect(
+                ErrorCodeMatcher.hasErrorCode(ErrorCodes.CATEGORIZATION_FILTERS_CONTAIN_DUPLICATES));
+        m_ExpectedException.expectMessage("categorizationFilters contain duplicates");
+
+        AnalysisConfig config = createValidConfig();
+        config.setCategorizationFieldName("myCategory");
+        config.setCategorizationFilters(Arrays.asList("foo", "bar", "foo"));
+
+        AnalysisConfigVerifier.verify(config);
+    }
+
+    @Test
+    public void testVerify_GivenEmptyCategorizationFilter() throws JobConfigurationException
+    {
+        m_ExpectedException.expect(JobConfigurationException.class);
+        m_ExpectedException.expect(ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_VALUE));
+        m_ExpectedException.expectMessage("categorizationFilters are not allowed to contain empty strings");
+
+        AnalysisConfig config = createValidConfig();
+        config.setCategorizationFieldName("myCategory");
+        config.setCategorizationFilters(Arrays.asList("foo", ""));
+
+        AnalysisConfigVerifier.verify(config);
+    }
+
+    @Test
+    public void testVerify_GivenCategorizationFiltersContainInvalidRegex() throws JobConfigurationException
+    {
+        m_ExpectedException.expect(JobConfigurationException.class);
+        m_ExpectedException.expect(ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_VALUE));
+        m_ExpectedException.expectMessage(
+                "categorizationFilters contains invalid regular expression '('");
+
+        AnalysisConfig config = createValidConfig();
+        config.setCategorizationFieldName("myCategory");
+        config.setCategorizationFilters(Arrays.asList("foo", "("));
+
+        AnalysisConfigVerifier.verify(config);
+    }
+
+    private static AnalysisConfig createValidConfig()
+    {
+        AnalysisConfig analysisConfig = new AnalysisConfig();
+        analysisConfig.setBucketSpan(3600L);
+        analysisConfig.setBatchSpan(0L);
+        analysisConfig.setLatency(0L);
+        analysisConfig.setPeriod(0L);
+        List<Detector> detectors = new ArrayList<>();
+        Detector detector = new Detector();
+        detector.setFieldName("count");
+        detectors.add(detector);
+        analysisConfig.setDetectors(detectors);
+        return analysisConfig;
     }
 }

@@ -157,6 +157,17 @@ public enum ErrorCodes
     INVALID_EXCLUDEFREQUENT_SETTING(10119),
 
     /**
+     * Categorization filters are specified despite
+     * no categorization field name is set.
+     */
+    CATEGORIZATION_FILTERS_REQUIRE_CATEGORIZATION_FIELD_NAME(10120),
+
+    /**
+     * Duplicate categorization filters are not allowed.
+     */
+    CATEGORIZATION_FILTERS_CONTAIN_DUPLICATES(10121),
+
+    /**
      * The transform name isn't recognised
      */
     UNKNOWN_TRANSFORM(10201),

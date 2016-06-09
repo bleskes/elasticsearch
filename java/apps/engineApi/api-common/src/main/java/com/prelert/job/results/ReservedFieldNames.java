@@ -70,6 +70,7 @@ public final class ReservedFieldNames
         AnalysisConfig.PERIOD,
         AnalysisConfig.SUMMARY_COUNT_FIELD_NAME,
         AnalysisConfig.CATEGORIZATION_FIELD_NAME,
+        AnalysisConfig.CATEGORIZATION_FILTERS,
         AnalysisConfig.DETECTORS,
         AnalysisConfig.INFLUENCERS,
         AnalysisConfig.OVERLAPPING_BUCKETS,
