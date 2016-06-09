@@ -368,4 +368,13 @@ public class AnalysisConfigTest
         assertFalse(config1.equals(config2));
         assertFalse(config2.equals(config1));
     }
+
+    @Test
+    public void testBucketSpanOrDefault()
+    {
+        AnalysisConfig config1 = new AnalysisConfig();
+        assertEquals(AnalysisConfig.DEFAULT_BUCKET_SPAN, config1.getBucketSpanOrDefault());
+        config1.setBucketSpan(100l);
+        assertEquals(100l, config1.getBucketSpanOrDefault());
+    }
 }

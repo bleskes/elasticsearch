@@ -118,7 +118,7 @@ public class ProcessFactory
                                   m_UsagePersisterFactory.getInstance(logger),
                                   logger),
                  m_DataCountsPersisterFactory.getInstance(logger),
-                 logger, job.getAnalysisConfig().getBucketSpan());
+                 logger, job.getAnalysisConfig().getBucketSpanOrDefault());
 
         ProcessAndDataDescription procAndDD = new ProcessAndDataDescription(
                 nativeProcess, jobId,

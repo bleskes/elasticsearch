@@ -27,6 +27,7 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.function.Function;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
@@ -61,6 +62,8 @@ public class AnalysisConfig
     public static final String OVERLAPPING_BUCKETS = "overlappingBuckets";
     public static final String RESULT_FINALIZATION_WINDOW = "resultFinalizationWindow";
     public static final String MULTIVARIATE_BY_FIELDS = "multivariateByFields";
+
+    public static final long DEFAULT_BUCKET_SPAN = 300;
 
     private static final String PRELERT_CATEGORY_FIELD = "prelertcategory";
     public static final Set<String> AUTO_CREATED_FIELDS = new HashSet<>(
@@ -105,6 +108,12 @@ public class AnalysisConfig
     public void setBucketSpan(Long span)
     {
         m_BucketSpan = span;
+    }
+
+    @JsonIgnore
+    public long getBucketSpanOrDefault()
+    {
+        return m_BucketSpan == null ? DEFAULT_BUCKET_SPAN : m_BucketSpan;
     }
 
     /**
