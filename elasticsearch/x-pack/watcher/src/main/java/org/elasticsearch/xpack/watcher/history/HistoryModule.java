@@ -33,7 +33,4 @@ public class HistoryModule extends AbstractModule {
         bind(HistoryStore.class).asEagerSingleton();
     }
 
-    public static Settings additionalSettings(Settings nodeSettings) {
-        return InternalWatchExecutor.additionalSettings(nodeSettings);
-    }
 }
