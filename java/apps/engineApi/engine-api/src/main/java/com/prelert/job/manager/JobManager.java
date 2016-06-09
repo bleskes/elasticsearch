@@ -1089,7 +1089,8 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
         }
         catch (CannotStartSchedulerException | JobInUseException e)
         {
-            LOGGER.error("Failed to restart scheduler for job: " + job.getId(), e);
+            LOGGER.error("Failed to restart scheduler for job: " + job.getId()
+                            + ". " + e.getMessage());
         }
     }
 
