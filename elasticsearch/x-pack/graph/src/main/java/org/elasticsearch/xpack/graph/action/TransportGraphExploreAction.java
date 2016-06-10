@@ -15,7 +15,7 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.graph.action;
+package org.elasticsearch.xpack.graph.action;
 
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.util.PriorityQueue;
@@ -33,10 +33,6 @@ import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.util.CollectionUtils;
-import org.elasticsearch.graph.action.Connection.ConnectionId;
-import org.elasticsearch.graph.action.GraphExploreRequest.TermBoost;
-import org.elasticsearch.graph.action.Vertex.VertexId;
-import org.elasticsearch.graph.GraphLicensee;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.license.plugin.core.LicenseUtils;
@@ -53,6 +49,10 @@ import org.elasticsearch.search.aggregations.bucket.terms.support.IncludeExclude
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportService;
+import org.elasticsearch.xpack.graph.GraphLicensee;
+import org.elasticsearch.xpack.graph.action.Connection.ConnectionId;
+import org.elasticsearch.xpack.graph.action.GraphExploreRequest.TermBoost;
+import org.elasticsearch.xpack.graph.action.Vertex.VertexId;
 
 import java.util.ArrayList;
 import java.util.HashMap;

@@ -29,6 +29,7 @@ import org.elasticsearch.common.settings.SettingsModule;
 import org.elasticsearch.indices.breaker.CircuitBreakerModule;
 import org.elasticsearch.shield.audit.logfile.LoggingAuditTrail;
 import org.elasticsearch.test.ESTestCase;
+import org.elasticsearch.threadpool.TestThreadPool;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.threadpool.ThreadPoolModule;
 import org.elasticsearch.transport.Transport;
@@ -67,7 +68,7 @@ public class AuditTrailModuleTests extends ESTestCase {
                 .put(AuditTrailModule.ENABLED_SETTING.getKey(), true)
                 .put("client.type", "node")
                 .build();
-        ThreadPool pool = new ThreadPool("testLogFile");
+        ThreadPool pool = new TestThreadPool("testLogFile");
         try {
             SettingsModule settingsModule = new SettingsModule(settings);
             settingsModule.registerSetting(AuditTrailModule.ENABLED_SETTING);

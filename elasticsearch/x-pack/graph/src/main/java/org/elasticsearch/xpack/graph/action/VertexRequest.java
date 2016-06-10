@@ -15,11 +15,11 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.graph.action;
+package org.elasticsearch.xpack.graph.action;
 
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
-import org.elasticsearch.graph.action.GraphExploreRequest.TermBoost;
+import org.elasticsearch.xpack.graph.action.GraphExploreRequest.TermBoost;
 
 import java.io.IOException;
 import java.util.HashMap;

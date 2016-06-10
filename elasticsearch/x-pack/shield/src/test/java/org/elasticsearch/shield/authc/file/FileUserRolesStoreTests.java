@@ -27,6 +27,7 @@ import org.elasticsearch.shield.audit.logfile.CapturingLogger;
 import org.elasticsearch.shield.authc.RealmConfig;
 import org.elasticsearch.shield.authc.support.RefreshListener;
 import org.elasticsearch.test.ESTestCase;
+import org.elasticsearch.threadpool.TestThreadPool;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.watcher.ResourceWatcherService;
 import org.elasticsearch.xpack.XPackPlugin;
@@ -75,7 +76,7 @@ public class FileUserRolesStoreTests extends ESTestCase {
                 .put("path.home", createTempDir())
                 .build();
         env = new Environment(settings);
-        threadPool = new ThreadPool("test");
+        threadPool = new TestThreadPool("test");
     }
 
     @After
@@ -236,7 +237,7 @@ public class FileUserRolesStoreTests extends ESTestCase {
     public void testParseFileEmptyRolesDoesNotCauseNPE() throws Exception {
         ThreadPool threadPool = null;
         try {
-            threadPool = new ThreadPool("test");
+            threadPool = new TestThreadPool("test");
             Path usersRoles = writeUsersRoles("role1:admin");
 
             Settings settings = Settings.builder()

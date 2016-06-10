@@ -56,6 +56,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import static org.elasticsearch.action.support.WriteRequest.RefreshPolicy.IMMEDIATE;
 import static org.elasticsearch.shield.authc.support.UsernamePasswordToken.basicAuthHeaderValue;
 import static org.hamcrest.Matchers.arrayContaining;
 import static org.hamcrest.Matchers.containsString;
@@ -217,7 +218,7 @@ public class NativeRealmIntegTests extends NativeRealmIntegTestCase {
         createIndex("idx");
         ensureGreen("idx");
         // Index a document with the default test user
-        client().prepareIndex("idx", "doc", "1").setSource("body", "foo").setRefresh(true).get();
+        client().prepareIndex("idx", "doc", "1").setSource("body", "foo").setRefreshPolicy(IMMEDIATE).get();
 
         String token = basicAuthHeaderValue("joe", new SecuredString("s3krit".toCharArray()));
         SearchResponse searchResp = client().filterWithHeader(Collections.singletonMap("Authorization", token)).prepareSearch("idx").get();
@@ -239,7 +240,7 @@ public class NativeRealmIntegTests extends NativeRealmIntegTestCase {
         createIndex("idx");
         ensureGreen("idx");
         // Index a document with the default test user
-        client().prepareIndex("idx", "doc", "1").setSource("body", "foo").setRefresh(true).get();
+        client().prepareIndex("idx", "doc", "1").setSource("body", "foo").setRefreshPolicy(IMMEDIATE).get();
         String token = basicAuthHeaderValue("joe", new SecuredString("s3krit".toCharArray()));
         SearchResponse searchResp = client().filterWithHeader(Collections.singletonMap("Authorization", token)).prepareSearch("idx").get();
 
@@ -274,7 +275,7 @@ public class NativeRealmIntegTests extends NativeRealmIntegTestCase {
         createIndex("idx");
         ensureGreen("idx");
         // Index a document with the default test user
-        client().prepareIndex("idx", "doc", "1").setSource("body", "foo").setRefresh(true).get();
+        client().prepareIndex("idx", "doc", "1").setSource("body", "foo").setRefreshPolicy(IMMEDIATE).get();
         String token = basicAuthHeaderValue("joe", new SecuredString("s3krit".toCharArray()));
         SearchResponse searchResp = client().filterWithHeader(Collections.singletonMap("Authorization", token)).prepareSearch("idx").get();
 
