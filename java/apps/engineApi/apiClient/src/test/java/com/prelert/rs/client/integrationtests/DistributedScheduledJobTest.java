@@ -95,12 +95,12 @@ public class DistributedScheduledJobTest extends BaseScheduledJobTest
                 boolean stopped = client.stopScheduler(TEST_JOB_ID);
                 test(stopped == false);
                 error = client.getLastError();
-                test(error.getErrorCode() == ErrorCodes.CANNOT_STOP_JOB_SCHEDULER);
+                test(error.getErrorCode() == ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR);
 
                 boolean deleted = client.deleteJob(TEST_JOB_ID);
                 test(deleted == false);
                 error = client.getLastError();
-                test(error.getErrorCode() == ErrorCodes.CANNOT_STOP_JOB_SCHEDULER);
+                test(error.getErrorCode() == ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR);
 
                 // update sched conf
                 boolean updated = client.updateJob(TEST_JOB_ID, schedulerConfigUpdate);
