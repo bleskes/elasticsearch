@@ -26,6 +26,7 @@
  ************************************************************/
 package com.prelert.job.manager.actions;
 
+import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.messages.Messages;
 
 /**
@@ -38,6 +39,11 @@ public enum ScheduledAction implements ActionState<ScheduledAction>
 
     private final String m_MessageKey;
     private final String m_VerbKey;
+
+    public static ScheduledAction startingState()
+    {
+        return STOP;
+    }
 
     private ScheduledAction(String messageKey, String verbKey)
     {
@@ -111,14 +117,21 @@ public enum ScheduledAction implements ActionState<ScheduledAction>
     }
 
     @Override
-    public ScheduledAction startingState()
-    {
-        return STOP;
-    }
-
-    @Override
     public String typename()
     {
         return ScheduledAction.class.getSimpleName();
+    }
+
+    @Override
+    public ErrorCodes getErrorCode()
+    {
+        if (this == ScheduledAction.START)
+        {
+            return ErrorCodes.CANNOT_START_JOB_SCHEDULER;
+        }
+        else
+        {
+            return ErrorCodes.CANNOT_STOP_JOB_SCHEDULER;
+        }
     }
 }

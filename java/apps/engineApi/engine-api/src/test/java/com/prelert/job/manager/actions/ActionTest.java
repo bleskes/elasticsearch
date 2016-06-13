@@ -33,6 +33,8 @@ import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
+import com.prelert.job.errorcodes.ErrorCodes;
+
 public class ActionTest
 {
     @Test
@@ -181,16 +183,22 @@ public class ActionTest
     @Test
     public void testStartingState()
     {
-        assertEquals(Action.CLOSED, Action.CLOSED.startingState());
-        assertEquals(Action.CLOSED, Action.CLOSING.startingState());
-        assertEquals(Action.CLOSED, Action.DELETING.startingState());
-        assertEquals(Action.CLOSED, Action.PAUSING.startingState());
-        assertEquals(Action.CLOSED, Action.RESUMING.startingState());
-        assertEquals(Action.CLOSED, Action.REVERTING.startingState());
-        assertEquals(Action.CLOSED, Action.SLEEPING.startingState());
-        assertEquals(Action.CLOSED, Action.FLUSHING.startingState());
-        assertEquals(Action.CLOSED, Action.UPDATING.startingState());
-        assertEquals(Action.CLOSED, Action.UPDATING.startingState());
-        assertEquals(Action.CLOSED, Action.WRITING.startingState());
+        assertEquals(Action.CLOSED, Action.startingState());
+    }
+
+    @Test
+    public void testErrorCode()
+    {
+        assertEquals(ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR, Action.CLOSED.getErrorCode());
+        assertEquals(ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR, Action.CLOSING.getErrorCode());
+        assertEquals(ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR, Action.DELETING.getErrorCode());
+        assertEquals(ErrorCodes.CANNOT_PAUSE_JOB, Action.PAUSING.getErrorCode());
+        assertEquals(ErrorCodes.CANNOT_RESUME_JOB, Action.RESUMING.getErrorCode());
+        assertEquals(ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR, Action.REVERTING.getErrorCode());
+        assertEquals(ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR, Action.SLEEPING.getErrorCode());
+        assertEquals(ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR, Action.FLUSHING.getErrorCode());
+        assertEquals(ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR, Action.UPDATING.getErrorCode());
+        assertEquals(ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR, Action.UPDATING.getErrorCode());
+        assertEquals(ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR, Action.WRITING.getErrorCode());
     }
 }

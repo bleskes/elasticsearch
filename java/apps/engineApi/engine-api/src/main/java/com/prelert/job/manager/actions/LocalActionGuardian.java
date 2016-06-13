@@ -31,7 +31,6 @@ import java.util.Map;
 
 import org.apache.log4j.Logger;
 
-import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.exceptions.JobInUseException;
 
 /**
@@ -98,7 +97,7 @@ public class LocalActionGuardian<T extends Enum<T> & ActionState<T>>
             {
                 String msg = action.getBusyActionError(jobId, currentAction);
                 LOGGER.warn(msg);
-                throw new JobInUseException(msg, ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR);
+                throw new JobInUseException(msg, action.getErrorCode());
             }
         }
     }

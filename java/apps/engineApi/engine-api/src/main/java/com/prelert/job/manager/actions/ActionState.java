@@ -27,6 +27,8 @@
 
 package com.prelert.job.manager.actions;
 
+import com.prelert.job.errorcodes.ErrorCodes;
+
 /**
  *  Functions for actions
  */
@@ -84,8 +86,15 @@ public interface ActionState<T>
      */
     boolean holdDistributedLock();
 
-
-    T startingState();
-
+    /**
+     * Description of the {@code T} type
+     * @return
+     */
     String typename();
+
+    /**
+     * The error code associated with the failure to perform the action
+     * @return
+     */
+    ErrorCodes getErrorCode();
 }

@@ -63,7 +63,7 @@ public class ZooKeeperActionGuardianIT
     // running against an existing ZooKeeper is much faster than
     // using the testing server but some tests will fail if it's
     // not a clean setup
-//    private static final String CONNECTION_STRING = "qa3:2181";
+//    private static final String CONNECTION_STRING = "demo1:2181";
 
 
     @Rule
@@ -87,7 +87,8 @@ public class ZooKeeperActionGuardianIT
         try (TestingServer server2 = new TestingServer(2183))
         {
             try (ZooKeeperActionGuardian<Action> actionGuardian =
-                    new ZooKeeperActionGuardian<>(Action.CLOSED, "localhost:2183," + CONNECTION_STRING))
+                    new ZooKeeperActionGuardian<>(Action.startingState(),
+                                "localhost:2183," + CONNECTION_STRING))
             {
             }
         }
@@ -133,7 +134,7 @@ public class ZooKeeperActionGuardianIT
     public void testEngineApiHosts() throws UnknownHostException
     {
         try (ZooKeeperActionGuardian<Action> actionGuardian =
-                new ZooKeeperActionGuardian<>(Action.CLOSED, CONNECTION_STRING))
+                new ZooKeeperActionGuardian<>(Action.startingState(), CONNECTION_STRING))
         {
             List<String> hosts = actionGuardian.engineApiHosts();
             assertTrue(hosts.contains(Inet4Address.getLocalHost().getHostName()));
@@ -209,6 +210,33 @@ public class ZooKeeperActionGuardianIT
             }
         }
     }
+
+    @Test
+    public void testTryAcquireThrows_resumingWhenJobIsUpdating()
+            throws JobInUseException, UnknownHostException
+    {
+        m_ExpectedException.expect(JobInUseException.class);
+        m_ExpectedException.expectMessage(
+                                    Action.RESUMING.getBusyActionError("foo", Action.UPDATING,
+                                    Inet4Address.getLocalHost().getHostName()));
+        m_ExpectedException.expect(
+                ErrorCodeMatcher.hasErrorCode(ErrorCodes.CANNOT_RESUME_JOB));
+
+        try (ZooKeeperActionGuardian<Action> actionGuardian =
+                new ZooKeeperActionGuardian<>(Action.CLOSED, CONNECTION_STRING))
+        {
+            try (ZooKeeperActionGuardian<Action>.ActionTicket ticket =
+                            actionGuardian.tryAcquiringAction("foo", Action.UPDATING))
+            {
+                try (ZooKeeperActionGuardian<Action> actionGuardian2 =
+                        new ZooKeeperActionGuardian<>(Action.CLOSED, CONNECTION_STRING))
+                {
+                    actionGuardian2.tryAcquiringAction("foo", Action.RESUMING);
+                }
+            }
+        }
+    }
+
 
     @Test
     public void testTryAcquireThrows_whenRequestingADifferentActionFromTheSameGuardian()
@@ -518,7 +546,7 @@ public class ZooKeeperActionGuardianIT
         ActionGuardian<ScheduledAction> next = Mockito.mock(ActionGuardian.class);
 
         try (ZooKeeperActionGuardian<ScheduledAction> actionGuardian =
-                new ZooKeeperActionGuardian<>(ScheduledAction.STOP, CONNECTION_STRING, next))
+                new ZooKeeperActionGuardian<>(ScheduledAction.startingState(), CONNECTION_STRING, next))
         {
 
             Mockito.when(next.tryAcquiringAction("foo5", ScheduledAction.START))

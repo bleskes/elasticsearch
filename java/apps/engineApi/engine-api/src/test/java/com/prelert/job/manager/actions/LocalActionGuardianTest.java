@@ -41,7 +41,7 @@ public class LocalActionGuardianTest
     @Test
     public void testTryAcquiringAction_GivenAvailable() throws JobInUseException
     {
-        ActionGuardian<Action> actionGuardian = new LocalActionGuardian<>(Action.CLOSED);
+        ActionGuardian<Action> actionGuardian = new LocalActionGuardian<>(Action.startingState());
         try (ActionGuardian<Action>.ActionTicket actionTicket = actionGuardian.tryAcquiringAction("foo", Action.WRITING))
         {
             assertEquals(Action.WRITING, actionGuardian.currentAction("foo"));
@@ -118,7 +118,7 @@ public class LocalActionGuardianTest
     {
         ActionGuardian<ScheduledAction> next = Mockito.mock(ActionGuardian.class);
         ActionGuardian<ScheduledAction> actionGuardian =
-                            new LocalActionGuardian<>(ScheduledAction.STOP, next);
+                            new LocalActionGuardian<>(ScheduledAction.startingState(), next);
 
         Mockito.when(next.tryAcquiringAction("foo", ScheduledAction.START))
                         .thenThrow(JobInUseException.class);

@@ -277,7 +277,8 @@ public class PrelertWebApp extends Application
     private JobManager createJobManager(JobProvider jobProvider, ElasticsearchFactory esFactory,
             JobLoggerFactory jobLoggerFactory)
     {
-        ActionGuardian<Action> processActionGuardian = new LocalActionGuardian<>(Action.CLOSED);
+        ActionGuardian<Action> processActionGuardian =
+                    new LocalActionGuardian<>(Action.startingState());
         // we don't need an ActionGuardian for scheduled jobs if
         // not in a distributed environment
         ActionGuardian<ScheduledAction> schedulerActionGuardian =
@@ -289,10 +290,10 @@ public class PrelertWebApp extends Application
 
             LOGGER.info("Using ZooKeeper server on " + connectionString);
 
-            processActionGuardian = new LocalActionGuardian<>(Action.CLOSED,
-                       new ZooKeeperActionGuardian<>(Action.CLOSED, connectionString));
+            processActionGuardian = new LocalActionGuardian<>(Action.startingState(),
+                       new ZooKeeperActionGuardian<>(Action.startingState(), connectionString));
             ZooKeeperActionGuardian<ScheduledAction> zkGuard =
-                    new ZooKeeperActionGuardian<>(ScheduledAction.STOP, connectionString);
+                    new ZooKeeperActionGuardian<>(ScheduledAction.startingState(), connectionString);
             schedulerActionGuardian = zkGuard;
             m_EngineHosts = zkGuard;
 

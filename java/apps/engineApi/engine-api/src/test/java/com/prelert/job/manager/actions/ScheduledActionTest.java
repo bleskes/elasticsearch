@@ -33,6 +33,8 @@ import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
+import com.prelert.job.errorcodes.ErrorCodes;
+
 public class ScheduledActionTest
 {
     @Test
@@ -89,7 +91,13 @@ public class ScheduledActionTest
     @Test
     public void testStartingState()
     {
-        assertEquals(ScheduledAction.STOP, ScheduledAction.START.startingState());
-        assertEquals(ScheduledAction.STOP, ScheduledAction.STOP.startingState());
+        assertEquals(ScheduledAction.STOP, ScheduledAction.startingState());
+    }
+
+    @Test
+    public void testErrorCode()
+    {
+        assertEquals(ErrorCodes.CANNOT_START_JOB_SCHEDULER, ScheduledAction.START.getErrorCode());
+        assertEquals(ErrorCodes.CANNOT_STOP_JOB_SCHEDULER, ScheduledAction.STOP.getErrorCode());
     }
 }

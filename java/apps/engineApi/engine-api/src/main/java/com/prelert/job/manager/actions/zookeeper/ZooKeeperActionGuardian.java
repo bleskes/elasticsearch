@@ -28,7 +28,6 @@ package com.prelert.job.manager.actions.zookeeper;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.prelert.distributed.EngineApiHosts;
-import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.exceptions.JobInUseException;
 import com.prelert.job.manager.actions.ActionState;
 import com.prelert.job.manager.actions.ActionGuardian;
@@ -275,7 +274,7 @@ public class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
                         String msg = action.getBusyActionError(jobId, currentState.m_Action,
                                                                 currentState.m_Hostname);
                         LOGGER.warn(msg);
-                        throw new JobInUseException(msg, ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR);
+                        throw new JobInUseException(msg, action.getErrorCode());
                     }
                 }
             }
@@ -339,7 +338,7 @@ public class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
             String msg = action.getBusyActionError(jobId, currentState.m_Action,
                     currentState.m_Hostname);
             LOGGER.warn(msg);
-            throw new JobInUseException(msg, ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR);
+            throw new JobInUseException(msg, action.getErrorCode());
         }
     }
 

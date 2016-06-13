@@ -30,6 +30,7 @@ package com.prelert.job.manager.actions;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.messages.Messages;
 
 /**
@@ -38,12 +39,12 @@ import com.prelert.job.messages.Messages;
 public enum Action implements ActionState<Action>
 {
     CLOSED("", Messages.PROCESS_ACTION_CLOSED_JOB),
-    SLEEPING("", Messages.PROCESS_ACTION_SLEEPING_JOB, true),
+    SLEEPING("", Messages.PROCESS_ACTION_SLEEPING_JOB, ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR, true),
     CLOSING(Messages.JOB_DATA_CONCURRENT_USE_CLOSE, Messages.PROCESS_ACTION_CLOSING_JOB),
     DELETING(Messages.JOB_DATA_CONCURRENT_USE_DELETE, Messages.PROCESS_ACTION_DELETING_JOB),
     FLUSHING(Messages.JOB_DATA_CONCURRENT_USE_FLUSH, Messages.PROCESS_ACTION_FLUSHING_JOB),
-    PAUSING(Messages.JOB_DATA_CONCURRENT_USE_PAUSE, Messages.PROCESS_ACTION_PAUSING_JOB),
-    RESUMING(Messages.JOB_DATA_CONCURRENT_USE_RESUME, Messages.PROCESS_ACTION_RESUMING_JOB),
+    PAUSING(Messages.JOB_DATA_CONCURRENT_USE_PAUSE, Messages.PROCESS_ACTION_PAUSING_JOB, ErrorCodes.CANNOT_PAUSE_JOB),
+    RESUMING(Messages.JOB_DATA_CONCURRENT_USE_RESUME, Messages.PROCESS_ACTION_RESUMING_JOB, ErrorCodes.CANNOT_RESUME_JOB),
     REVERTING(Messages.JOB_DATA_CONCURRENT_USE_REVERT, Messages.PROCESS_ACTION_REVERTING_JOB),
     UPDATING(Messages.JOB_DATA_CONCURRENT_USE_UPDATE, Messages.PROCESS_ACTION_UPDATING_JOB),
     WRITING(Messages.JOB_DATA_CONCURRENT_USE_UPLOAD, Messages.PROCESS_ACTION_WRITING_JOB);
@@ -51,6 +52,7 @@ public enum Action implements ActionState<Action>
     private final String m_MessageKey;
     private final String m_VerbKey;
     private final boolean m_KeepDistributedLock;
+    private final ErrorCodes m_ErrorCode;
 
     /**
      * The set of valid transitions from SLEEPING
@@ -67,16 +69,32 @@ public enum Action implements ActionState<Action>
         VALID_WHEN_SLEEPING.add(PAUSING);
     }
 
-    private Action(String messageKey, String verbKey)
+    /**
+     * The initial action state
+     * @return
+     */
+    public static Action startingState()
     {
-        this(messageKey, verbKey, false);
+        return CLOSED;
     }
 
-    private Action(String messageKey, String verbKey, boolean keepDistributedLock)
+    private Action(String messageKey, String verbKey)
+    {
+        this(messageKey, verbKey, ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR, false);
+    }
+
+    private Action(String messageKey, String verbKey, ErrorCodes errorCode)
+    {
+        this(messageKey, verbKey, errorCode, false);
+    }
+
+    private Action(String messageKey, String verbKey, ErrorCodes errorCode,
+                boolean keepDistributedLock)
     {
         m_MessageKey = messageKey;
         m_VerbKey = verbKey;
         m_KeepDistributedLock = keepDistributedLock;
+        m_ErrorCode = errorCode;
     }
 
     @Override
@@ -106,6 +124,12 @@ public enum Action implements ActionState<Action>
                                 jobId,
                                 Messages.getMessage(actionInUse.getActionVerb()),
                                 Messages.getMessage(Messages.ON_HOST, host + " "));
+    }
+
+    @Override
+    public ErrorCodes getErrorCode()
+    {
+        return m_ErrorCode;
     }
 
     /**
@@ -154,12 +178,6 @@ public enum Action implements ActionState<Action>
     public boolean holdDistributedLock()
     {
         return m_KeepDistributedLock;
-    }
-
-    @Override
-    public Action startingState()
-    {
-        return CLOSED;
     }
 
     @Override
