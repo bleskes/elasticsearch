@@ -90,17 +90,17 @@ public class DistributedScheduledJobTest extends BaseScheduledJobTest
                 boolean started = client.startScheduler(TEST_JOB_ID);
                 test(started == false);
                 ApiError error = client.getLastError();
-                test(error.getErrorCode() == ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR);
+                test(error.getErrorCode() == ErrorCodes.CANNOT_START_JOB_SCHEDULER);
 
                 boolean stopped = client.stopScheduler(TEST_JOB_ID);
                 test(stopped == false);
                 error = client.getLastError();
-                test(error.getErrorCode() == ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR);
+                test(error.getErrorCode() == ErrorCodes.CANNOT_STOP_JOB_SCHEDULER);
 
                 boolean deleted = client.deleteJob(TEST_JOB_ID);
                 test(deleted == false);
                 error = client.getLastError();
-                test(error.getErrorCode() == ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR);
+                test(error.getErrorCode() == ErrorCodes.CANNOT_STOP_JOB_SCHEDULER);
 
                 // update sched conf
                 boolean updated = client.updateJob(TEST_JOB_ID, schedulerConfigUpdate);
@@ -111,14 +111,13 @@ public class DistributedScheduledJobTest extends BaseScheduledJobTest
         }
     }
 
-
     public static void main(String[] args) throws IOException
     {
         if (args.length < 3)
         {
             String message = "DistributedScheduledJobTest requires at least 3 arguments.\n"
                         + "The first is the Elasticsearch URL followed by a list of Engine API URLs\n."
-                        + "e.g. http://localhost:9200/ http://marple:8080/engineApi/v2 http://aws:8080/engineApi/v2";
+                        + "e.g. http://localhost:9200/ http://marple:8080/engine/v2 http://aws:8080/engine/v2";
 
             System.out.println(message);
             throw new IllegalArgumentException(message);
