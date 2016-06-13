@@ -31,9 +31,14 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.rs.client.EngineApiClient;
@@ -81,18 +86,27 @@ public class DistributedLockTest extends BaseIntegrationTest
         String [] otherHostUrls = new String [m_EngineApiUrls.length -1];
         System.arraycopy(m_EngineApiUrls, 1, otherHostUrls, 0, m_EngineApiUrls.length -1);
 
-        doConcurrentActionOnDifferentNodeTest(dataUploader.getJobId(), otherHostUrls);
-
-        // stop uploader and join threads - this doesn't close the job
-        dataUploader.cancel();
         try
         {
-            m_Logger.info("Waiting on upload thread to finish");
-            m_DataUploaderThread.join();
+            doConcurrentActionOnDifferentNodeTest(dataUploader.getJobId(), otherHostUrls);
         }
-        catch (InterruptedException e)
+        catch (InterruptedException | ExecutionException e1)
         {
-            m_Logger.error("Interupted joining test thread", e);
+            throw new IllegalStateException(e1);
+        }
+        finally
+        {
+            // stop uploader and join threads - this doesn't close the job
+            dataUploader.cancel();
+            try
+            {
+                m_Logger.info("Waiting on upload thread to finish");
+                m_DataUploaderThread.join();
+            }
+            catch (InterruptedException e)
+            {
+                m_Logger.error("Interupted joining test thread", e);
+            }
         }
 
         // job should be sleeping now
@@ -102,14 +116,23 @@ public class DistributedLockTest extends BaseIntegrationTest
     }
 
     private void doConcurrentActionOnDifferentNodeTest(String jobId, String [] hostUrls)
+            throws InterruptedException, ExecutionException
     {
         ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(m_EngineApiUrls.length -1);
         try
         {
+            // Need to get the futures to execute and call get() on it
+            // so exceptions from the executor are propagated
+            List<ScheduledFuture<?>> futures = new ArrayList<ScheduledFuture<?>>();
+
             // test operations not allowed on other nodes
             for (int i=0; i<hostUrls.length; i++)
             {
-                executor.execute(new ConcurrentActionClient(hostUrls[i], jobId, Optional.of(m_CountDownLatch)));
+                ScheduledFuture<?> future = executor.schedule(
+                        new ConcurrentActionClient(hostUrls[i], jobId, Optional.of(m_CountDownLatch)),
+                                0, TimeUnit.SECONDS);
+
+                futures.add(future);
             }
 
             // wait for test clients to finish
@@ -120,6 +143,12 @@ public class DistributedLockTest extends BaseIntegrationTest
             catch (InterruptedException e1)
             {
                 m_Logger.error(e1);
+            }
+
+            // get() throws if there was an exception
+            for (ScheduledFuture<?> f : futures)
+            {
+                f.get();
             }
         }
         finally

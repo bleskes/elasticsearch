@@ -50,6 +50,8 @@ import com.prelert.rs.data.MultiDataPostResult;
  * <li>Flush</li>
  * <li>Write</li>
  * <li>Delete</li>
+ * <li>Pause</li>
+ * <li>Resume</li>
  * </ol>
  *
  *
@@ -88,7 +90,7 @@ public class ConcurrentActionClient implements Runnable
             boolean closed = client.closeJob(m_JobId);
             if (closed)
             {
-                throw new IllegalStateException("Error closed job while writing to it");
+                throw new IllegalStateException("Error: closed job while writing to it");
             }
 
             ApiError apiError = client.getLastError();
@@ -103,7 +105,7 @@ public class ConcurrentActionClient implements Runnable
             boolean flushed = client.flushJob(m_JobId, false);
             if (flushed)
             {
-                throw new IllegalStateException("Error flushed job while writing to it");
+                throw new IllegalStateException("Error: flushed job while writing to it");
             }
 
             apiError = client.getLastError();
@@ -136,14 +138,14 @@ public class ConcurrentActionClient implements Runnable
 
             if (result.getResponses().get(0).getUploadSummary() != null)
             {
-                throw new IllegalStateException("Error wrote to job in use");
+                throw new IllegalStateException("Error: wrote to job in use");
             }
 
             // 4. Cannot delete a job when another process is writing to it
             boolean deleted = client.deleteJob(m_JobId);
             if (deleted)
             {
-                throw new IllegalStateException("Error deleted job while writing to it");
+                throw new IllegalStateException("Error: deleted job while writing to it");
             }
 
             apiError = client.getLastError();
@@ -152,6 +154,36 @@ public class ConcurrentActionClient implements Runnable
             {
                 throw new IllegalStateException("Deleting Job: Error code should be job in use error");
             }
+
+
+            // 5. Cannot pause a job when another process is writing to it
+            boolean paused = client.pauseJob(m_JobId);
+            if (paused)
+            {
+                throw new IllegalStateException("Error: paused job while writing to it");
+            }
+
+            apiError = client.getLastError();
+
+            if (apiError.getErrorCode() != ErrorCodes.CANNOT_PAUSE_JOB)
+            {
+                throw new IllegalStateException("Pausing Job: Error code should be job in use error");
+            }
+
+            // 6. Cannot resume a job when another process is writing to it
+            boolean resumed = client.resumeJob(m_JobId);
+            if (resumed)
+            {
+                throw new IllegalStateException("Error: resumed job while writing to it");
+            }
+
+            apiError = client.getLastError();
+
+            if (apiError.getErrorCode() != ErrorCodes.CANNOT_RESUME_JOB)
+            {
+                throw new IllegalStateException("Resuming Job: Error code should be job in use error");
+            }
+
         }
         catch (IOException e)
         {
