@@ -31,6 +31,7 @@ import static com.prelert.job.process.writer.WriterConstants.EQUALS;
 
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.util.List;
 import java.util.Objects;
 
 import org.apache.log4j.Logger;
@@ -46,8 +47,8 @@ public class FieldConfigWriter
     private static final String DETECTOR_PREFIX = "detector.";
     private static final String DETECTOR_CLAUSE_SUFFIX = ".clause";
     private static final String INFLUENCER_PREFIX = "influencer.";
-
     private static final String CATEGORIZATION_FIELD_OPTION = " categorizationfield=";
+    private static final String CATEGORIZATION_FILTER_PREFIX = "categorizationfilter.";
 
     // Note: for the Engine API summarycountfield is currently passed as a
     // command line option to prelert_autodetect_api rather than in the field
@@ -92,21 +93,27 @@ public class FieldConfigWriter
             contents.append(NEW_LINE);
         }
 
-        if (!m_Config.getInfluencers().isEmpty())
-        {
-            counter = 0;
-            for (String influencer : m_Config.getInfluencers())
-            {
-                // Influencer fields are entire settings rather than part of a
-                // clause, so don't need quoting
-                contents.append(INFLUENCER_PREFIX).append(counter++)
-                        .append(EQUALS).append(influencer).append(NEW_LINE);
-            }
-        }
+        writeAsEnumeratedSettings(CATEGORIZATION_FILTER_PREFIX, m_Config.getCategorizationFilters(),
+                contents, true);
+
+        // As values are written as entire settings rather than part of a
+        // clause no quoting is needed
+        writeAsEnumeratedSettings(INFLUENCER_PREFIX, m_Config.getInfluencers(), contents, false);
 
         m_Logger.debug("FieldConfig:\n" + contents.toString());
 
         m_Writer.write(contents.toString());
+    }
+
+    private static void writeAsEnumeratedSettings(String settingName, List<String> values,
+            StringBuilder buffer, boolean quote)
+    {
+        int counter = 0;
+        for (String value : values)
+        {
+            buffer.append(settingName).append(counter++).append(EQUALS)
+                  .append(quote ? quoteField(value) : value).append(NEW_LINE);
+        }
     }
 
     private static String quoteField(String field)

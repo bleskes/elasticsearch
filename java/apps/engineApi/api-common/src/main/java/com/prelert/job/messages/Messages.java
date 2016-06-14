@@ -75,9 +75,13 @@ public final class Messages
     public static final String JOB_CANNOT_RESUME = "job.cannot.resume";
 
     public static final String JOB_CONFIG_INVALID_EXCLUDEFREQUENT_SETTING = "job.config.invalid.excludefrequent.setting";
-    public static final String JOB_CONFIG_CANNOT_ENCRYPT_PASSWORD = "job.config.cannot.encrypt.password";
     public static final String JOB_CONFIG_BYFIELD_INCOMPATIBLE_FUNCTION = "job.config.byField.incompatible.function";
     public static final String JOB_CONFIG_BYFIELD_NEEDS_ANOTHER = "job.config.byField.needs.another";
+    public static final String JOB_CONFIG_CANNOT_ENCRYPT_PASSWORD = "job.config.cannot.encrypt.password";
+    public static final String JOB_CONFIG_CATEGORIZATION_FILTERS_REQUIRE_CATEGORIZATION_FIELD_NAME = "job.config.categorization.filters.require.categorization.field.name";
+    public static final String JOB_CONFIG_CATEGORIZATION_FILTERS_CONTAINS_DUPLICATES = "job.config.categorization.filters.contains.duplicates";
+    public static final String JOB_CONFIG_CATEGORIZATION_FILTERS_CONTAINS_EMPTY = "job.config.categorization.filter.contains.empty";
+    public static final String JOB_CONFIG_CATEGORIZATION_FILTERS_CONTAINS_INVALID_REGEX = "job.config.categorization.filter.contains.invalid.regex";
     public static final String JOB_CONFIG_DATAFORMAT_REQUIRES_TRANSFORM = "job.config.dataformat.requires.transform";
     public static final String JOB_CONFIG_FIELDNAME_INCOMPATIBLE_FUNCTION = "job.config.fieldname.incompatible.function";
     public static final String JOB_CONFIG_FUNCTION_REQUIRES_BYFIELD = "job.config.function.requires.byfield";

@@ -36,9 +36,9 @@ import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
-import junit.framework.Assert;
-
 import org.junit.Test;
+
+import junit.framework.Assert;
 
 public class AnalysisConfigTest
 {
@@ -219,29 +219,8 @@ public class AnalysisConfigTest
     @Test
     public void testEquals_GivenEqualConfig()
     {
-        AnalysisConfig config1 = new AnalysisConfig();
-        config1.setBatchSpan(86400L);
-        config1.setBucketSpan(3600L);
-        config1.setCategorizationFieldName("cat");
-        Detector detector1 = new Detector();
-        detector1.setFunction("count");
-        config1.setDetectors(Arrays.asList(detector1));
-        config1.setInfluencers(Arrays.asList("myInfluencer"));
-        config1.setLatency(3600L);
-        config1.setPeriod(100L);
-        config1.setSummaryCountFieldName("sumCount");
-
-        AnalysisConfig config2 = new AnalysisConfig();
-        config2.setBatchSpan(86400L);
-        config2.setBucketSpan(3600L);
-        config2.setCategorizationFieldName("cat");
-        Detector detector2 = new Detector();
-        detector2.setFunction("count");
-        config2.setDetectors(Arrays.asList(detector2));
-        config2.setInfluencers(Arrays.asList("myInfluencer"));
-        config2.setLatency(3600L);
-        config2.setPeriod(100L);
-        config2.setSummaryCountFieldName("sumCount");
+        AnalysisConfig config1 = createFullyPopulatedConfig();
+        AnalysisConfig config2 = createFullyPopulatedConfig();
 
         assertTrue(config1.equals(config2));
         assertTrue(config2.equals(config1));
@@ -370,11 +349,39 @@ public class AnalysisConfigTest
     }
 
     @Test
+    public void testEquals_GivenDifferentCategorizationFilters()
+    {
+        AnalysisConfig config1 = createFullyPopulatedConfig();
+        AnalysisConfig config2 = createFullyPopulatedConfig();
+        config2.setCategorizationFilters(Arrays.asList("foo", "bar"));
+
+        assertFalse(config1.equals(config2));
+        assertFalse(config2.equals(config1));
+    }
+
+    @Test
     public void testBucketSpanOrDefault()
     {
         AnalysisConfig config1 = new AnalysisConfig();
         assertEquals(AnalysisConfig.DEFAULT_BUCKET_SPAN, config1.getBucketSpanOrDefault());
         config1.setBucketSpan(100l);
         assertEquals(100l, config1.getBucketSpanOrDefault());
+    }
+
+    private static AnalysisConfig createFullyPopulatedConfig()
+    {
+        AnalysisConfig config = new AnalysisConfig();
+        config.setBatchSpan(86400L);
+        config.setBucketSpan(3600L);
+        config.setCategorizationFieldName("cat");
+        config.setCategorizationFilters(Arrays.asList("foo"));
+        Detector detector1 = new Detector();
+        detector1.setFunction("count");
+        config.setDetectors(Arrays.asList(detector1));
+        config.setInfluencers(Arrays.asList("myInfluencer"));
+        config.setLatency(3600L);
+        config.setPeriod(100L);
+        config.setSummaryCountFieldName("sumCount");
+        return config;
     }
 }

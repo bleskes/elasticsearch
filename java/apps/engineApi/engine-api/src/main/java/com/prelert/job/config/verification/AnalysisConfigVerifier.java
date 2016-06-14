@@ -28,6 +28,8 @@ package com.prelert.job.config.verification;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.Detector;
@@ -59,6 +61,7 @@ public final class AnalysisConfigVerifier
         DetectorVerifier.verifyFieldName(config.getSummaryCountFieldName());
         DetectorVerifier.verifyFieldName(config.getCategorizationFieldName());
         verifyDetectors(config);
+        verifyCategorizationFilters(config);
 
         return true;
     }
@@ -146,6 +149,85 @@ public final class AnalysisConfigVerifier
                                             illegalFunctions.toString()),
                         ErrorCodes.INVALID_FUNCTION);
             }
+        }
+    }
+
+    private static void verifyCategorizationFilters(AnalysisConfig config)
+            throws JobConfigurationException
+    {
+        List<String> filters = config.getCategorizationFilters();
+        if (filters.isEmpty())
+        {
+            return;
+        }
+
+        verifyCategorizationFieldNameSetIfFiltersAreSet(config);
+        verifyCategorizationFiltersAreDistinct(filters);
+        verifyCategorizationFiltersContainNoneEmpty(filters);
+        verifyCategorizationFiltersAreValidRegex(filters);
+    }
+
+    private static void verifyCategorizationFieldNameSetIfFiltersAreSet(AnalysisConfig config)
+            throws JobConfigurationException
+    {
+        if (config.getCategorizationFieldName() == null)
+        {
+            throw new JobConfigurationException(
+                    Messages.getMessage(
+                            Messages.JOB_CONFIG_CATEGORIZATION_FILTERS_REQUIRE_CATEGORIZATION_FIELD_NAME),
+                    ErrorCodes.CATEGORIZATION_FILTERS_REQUIRE_CATEGORIZATION_FIELD_NAME);
+        }
+    }
+
+    private static void verifyCategorizationFiltersAreDistinct(List<String> filters)
+            throws JobConfigurationException
+    {
+        if (filters.stream().distinct().count() != filters.size())
+        {
+            throw new JobConfigurationException(
+                    Messages.getMessage(
+                            Messages.JOB_CONFIG_CATEGORIZATION_FILTERS_CONTAINS_DUPLICATES),
+                    ErrorCodes.CATEGORIZATION_FILTERS_CONTAIN_DUPLICATES);
+        }
+    }
+
+    private static void verifyCategorizationFiltersContainNoneEmpty(List<String> filters)
+            throws JobConfigurationException
+    {
+        if (filters.stream().anyMatch(f -> f.isEmpty()))
+        {
+            throw new JobConfigurationException(
+                    Messages.getMessage(
+                            Messages.JOB_CONFIG_CATEGORIZATION_FILTERS_CONTAINS_EMPTY),
+                    ErrorCodes.INVALID_VALUE);
+        }
+    }
+
+    private static void verifyCategorizationFiltersAreValidRegex(List<String> filters)
+            throws JobConfigurationException
+    {
+        for (String filter : filters)
+        {
+            if (!isValidRegex(filter))
+            {
+                throw new JobConfigurationException(
+                        Messages.getMessage(
+                                Messages.JOB_CONFIG_CATEGORIZATION_FILTERS_CONTAINS_INVALID_REGEX, filter),
+                        ErrorCodes.INVALID_VALUE);
+            }
+        }
+    }
+
+    private static boolean isValidRegex(String exp)
+    {
+        try
+        {
+            Pattern.compile(exp);
+            return true;
+        }
+        catch (PatternSyntaxException e)
+        {
+            return false;
         }
     }
 }

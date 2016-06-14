@@ -321,6 +321,10 @@ public class ElasticsearchMappingsTest
                         "            \"type\": \"string\"," +
                         "            \"index\": \"not_analyzed\"" +
                         "          }," +
+                        "          \"categorizationFilters\": {" +
+                        "            \"type\": \"string\"," +
+                        "            \"index\": \"not_analyzed\"" +
+                        "          }," +
                         "          \"detectors\": {" +
                         "            \"properties\": {" +
                         "              \"detectorDescription\": {" +
