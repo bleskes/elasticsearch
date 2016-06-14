@@ -1226,17 +1226,18 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
             UnknownJobException, CannotPauseJobException
     {
         Preconditions.checkState(!isScheduledJob(jobId));
+
         LOGGER.info("Pausing job " + jobId);
+
+        JobDetails job = getJobOrThrowIfUnknown(jobId);
+        if (!job.getStatus().isAnyOf(JobStatus.RUNNING, JobStatus.CLOSED))
+        {
+            throw new CannotPauseJobException(jobId, job.getStatus());
+        }
 
         try (ActionGuardian<Action>.ActionTicket actionTicket =
                             m_ProcessActionGuardian.tryAcquiringAction(jobId, Action.PAUSING))
         {
-            JobDetails job = getJobOrThrowIfUnknown(jobId);
-            if (!job.getStatus().isAnyOf(JobStatus.RUNNING, JobStatus.CLOSED))
-            {
-                throw new CannotPauseJobException(jobId, job.getStatus());
-            }
-
             if (m_ProcessManager.jobIsRunning(jobId))
             {
                 m_JobAutoCloser.stopTimeout(jobId);
@@ -1265,14 +1266,15 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
         Preconditions.checkState(!isScheduledJob(jobId));
         LOGGER.info("Resuming job " + jobId);
 
+        JobDetails job = getJobOrThrowIfUnknown(jobId);
+        if (job.getStatus() != JobStatus.PAUSED)
+        {
+            throw new CannotResumeJobException(jobId, job.getStatus());
+        }
+
         try (ActionGuardian<Action>.ActionTicket actionTicket =
                                    m_ProcessActionGuardian.tryAcquiringAction(jobId, Action.RESUMING))
         {
-            JobDetails job = getJobOrThrowIfUnknown(jobId);
-            if (job.getStatus() != JobStatus.PAUSED)
-            {
-                throw new CannotResumeJobException(jobId, job.getStatus());
-            }
 
             m_JobProvider.setJobStatus(jobId, JobStatus.CLOSED);
             audit(jobId).info(Messages.getMessage(Messages.JOB_AUDIT_RESUMED));
