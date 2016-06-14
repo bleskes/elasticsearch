@@ -101,6 +101,8 @@ public class Jobs extends ResourceWithJobManager
      */
     private static final String RESULTS = "results";
 
+    private static final String JOB_ID_TEMPLATE = "{\"id\":\"%s\"}\n";
+
     /**
      * Get all job details.
      *
@@ -211,7 +213,7 @@ public class Jobs extends ResourceWithJobManager
         setEndPointLinks(job);
 
         LOGGER.debug("Returning new job details location " + job.getLocation());
-        String ent = String.format("{\"id\":\"%s\"}\n", job.getId());
+        String ent = String.format(JOB_ID_TEMPLATE, job.getId());
 
         return Response.created(job.getLocation()).entity(ent).build();
     }
