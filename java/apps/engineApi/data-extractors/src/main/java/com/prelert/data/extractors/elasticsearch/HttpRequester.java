@@ -68,42 +68,6 @@ class HttpRequester
     private static final int CONNECT_TIMEOUT_MILLIS = 30000;
     private static final int READ_TIMEOUT_MILLIS = 600000;
 
-    /**
-     * Hostname verifier that ignores hostname discrepancies.
-     */
-    private static final class NoOpHostnameVerifier implements HostnameVerifier
-    {
-        public boolean verify(String hostname, SSLSession session)
-        {
-            return true;
-        }
-    }
-
-    /**
-     * Certificate trust manager that ignores certificate issues.
-     */
-    private static final class NoOpTrustManager implements X509TrustManager
-    {
-        private static final X509Certificate[] EMPTY_CERTIFICATE_ARRAY = new X509Certificate[0];
-
-        public void checkClientTrusted(X509Certificate[] chain, String authType)
-                throws CertificateException
-        {
-            // Ignore certificate problems
-        }
-
-        public void checkServerTrusted(X509Certificate[] chain, String authType)
-                throws CertificateException
-        {
-            // Ignore certificate problems
-        }
-
-        public X509Certificate[] getAcceptedIssuers()
-        {
-            return EMPTY_CERTIFICATE_ARRAY;
-        }
-    }
-
     static
     {
         SSLSocketFactory trustingSocketFactory = null;
@@ -178,5 +142,41 @@ class HttpRequester
         dataOutputStream.writeBytes(requestBody);
         dataOutputStream.flush();
         dataOutputStream.close();
+    }
+
+    /**
+     * Hostname verifier that ignores hostname discrepancies.
+     */
+    private static final class NoOpHostnameVerifier implements HostnameVerifier
+    {
+        public boolean verify(String hostname, SSLSession session)
+        {
+            return true;
+        }
+    }
+
+    /**
+     * Certificate trust manager that ignores certificate issues.
+     */
+    private static final class NoOpTrustManager implements X509TrustManager
+    {
+        private static final X509Certificate[] EMPTY_CERTIFICATE_ARRAY = new X509Certificate[0];
+
+        public void checkClientTrusted(X509Certificate[] chain, String authType)
+                throws CertificateException
+        {
+            // Ignore certificate problems
+        }
+
+        public void checkServerTrusted(X509Certificate[] chain, String authType)
+                throws CertificateException
+        {
+            // Ignore certificate problems
+        }
+
+        public X509Certificate[] getAcceptedIssuers()
+        {
+            return EMPTY_CERTIFICATE_ARRAY;
+        }
     }
 }
