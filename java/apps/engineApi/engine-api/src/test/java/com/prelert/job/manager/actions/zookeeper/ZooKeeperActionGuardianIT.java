@@ -39,10 +39,12 @@ import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.retry.ExponentialBackoffRetry;
 import org.apache.curator.test.TestingServer;
 import org.apache.zookeeper.data.Stat;
+import org.hamcrest.Description;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.internal.matchers.TypeSafeMatcher;
 import org.junit.rules.ExpectedException;
 import org.mockito.Mockito;
 
@@ -185,7 +187,6 @@ public class ZooKeeperActionGuardianIT
         }
     }
 
-
     @Test
     public void testTryAcquireThrows_whenJobIsLocked() throws JobInUseException, UnknownHostException
     {
@@ -195,6 +196,7 @@ public class ZooKeeperActionGuardianIT
                                     Inet4Address.getLocalHost().getHostName()));
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR));
+        m_ExpectedException.expect(new HostnameMatcher(Inet4Address.getLocalHost().getHostName()));
 
         try (ZooKeeperActionGuardian<Action> actionGuardian =
                 new ZooKeeperActionGuardian<>(Action.CLOSED, CONNECTION_STRING))
@@ -221,6 +223,7 @@ public class ZooKeeperActionGuardianIT
                                     Inet4Address.getLocalHost().getHostName()));
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.CANNOT_RESUME_JOB));
+        m_ExpectedException.expect(new HostnameMatcher(Inet4Address.getLocalHost().getHostName()));
 
         try (ZooKeeperActionGuardian<Action> actionGuardian =
                 new ZooKeeperActionGuardian<>(Action.CLOSED, CONNECTION_STRING))
@@ -248,6 +251,7 @@ public class ZooKeeperActionGuardianIT
                                     Inet4Address.getLocalHost().getHostName()));
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR));
+        m_ExpectedException.expect(new HostnameMatcher(Inet4Address.getLocalHost().getHostName()));
 
         try (ZooKeeperActionGuardian<Action> actionGuardian =
                 new ZooKeeperActionGuardian<>(Action.CLOSED, CONNECTION_STRING))
@@ -269,6 +273,7 @@ public class ZooKeeperActionGuardianIT
                                     Inet4Address.getLocalHost().getHostName()));
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR));
+        m_ExpectedException.expect(new HostnameMatcher(Inet4Address.getLocalHost().getHostName()));
 
         try (ZooKeeperActionGuardian<Action> actionGuardian =
                 new ZooKeeperActionGuardian<>(Action.CLOSED, CONNECTION_STRING))
@@ -621,6 +626,32 @@ public class ZooKeeperActionGuardianIT
 
             Stat stat = client.checkExists().forPath(path);
             assertNull(stat);
+        }
+    }
+
+
+    public class HostnameMatcher extends TypeSafeMatcher<JobInUseException>
+    {
+        private String m_ExpectedHostname;
+        private String m_ActualHostname;
+
+        private HostnameMatcher(String expectedHostname)
+        {
+            m_ExpectedHostname = expectedHostname;
+        }
+
+        @Override
+        public void describeTo(Description description)
+        {
+            description.appendValue(m_ActualHostname)
+                    .appendText(" was found instead of ")
+                    .appendValue(m_ExpectedHostname);
+        }
+
+        @Override
+        public boolean matchesSafely(JobInUseException e)
+        {
+            return m_ExpectedHostname.equals(e.getHost());
         }
     }
 

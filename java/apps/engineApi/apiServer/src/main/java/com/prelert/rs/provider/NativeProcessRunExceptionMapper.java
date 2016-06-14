@@ -36,6 +36,9 @@ import com.prelert.rs.data.ApiError;
 
 /**
  * Exception -> Response mapper for {@linkplain NativeProcessRunException}.
+ *
+ * Different to the JobExceptionMapper as it returns a
+ * 500 Internal Server Error HTTP status code
  */
 public class NativeProcessRunExceptionMapper implements ExceptionMapper<NativeProcessRunException>
 {

@@ -44,7 +44,7 @@ public class ApiErrorTest
     }
 
     @Test
-    public void testToJson_GivenFullyPopulatedApiError()
+    public void testToJson_GivenMessageAndCause()
     {
         ApiError apiError = new ApiError();
         apiError.setErrorCode(ErrorCodes.DATA_ERROR);
@@ -56,6 +56,25 @@ public class ApiErrorTest
                 .append("  \"message\" : \"Some message\",\n")
                 .append("  \"errorCode\" : 30001,\n")
                 .append("  \"cause\" : \"java.lang.RuntimeException: Cause message\"\n")
+                .append("}\n");
+
+        assertEquals(expected.toString(), apiError.toJson());
+    }
+
+    @Test
+    public void testToJson_GivenMessageCauseAndHost()
+    {
+        ApiError apiError = new ApiError(ErrorCodes.DATA_ERROR);
+        apiError.setMessage("Some message");
+        apiError.setCause(new RuntimeException("Cause message").toString());
+        apiError.setHost("cray-1");
+
+        StringBuilder expected = new StringBuilder();
+        expected.append("{\n")
+                .append("  \"message\" : \"Some message\",\n")
+                .append("  \"errorCode\" : 30001,\n")
+                .append("  \"cause\" : \"java.lang.RuntimeException: Cause message\",\n")
+                .append("  \"hostname\" : \"cray-1\"\n")
                 .append("}\n");
 
         assertEquals(expected.toString(), apiError.toJson());

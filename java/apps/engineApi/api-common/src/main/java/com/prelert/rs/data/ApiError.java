@@ -45,6 +45,7 @@ public class ApiError implements HasErrorCode
     private ErrorCodes m_ErrorCode;
     private String m_Message;
     private String m_Cause;
+    private String m_Host;
 
     /**
      * Default cons for serialization (Jackson)
@@ -123,6 +124,21 @@ public class ApiError implements HasErrorCode
     }
 
     /**
+     * If the error has an associated host i.e. in a distributed
+     * environment
+     * @return
+     */
+    public String getHost()
+    {
+        return m_Host;
+    }
+
+    public void setHost(String hostname)
+    {
+        m_Host = hostname;
+    }
+
+    /**
      * JSON representation of this object.
      * If cause is null then it is not written and
      * if errorCode <= 0 then it is not written.
@@ -155,8 +171,20 @@ public class ApiError implements HasErrorCode
             {
                 builder.append(',');
             }
+
+            needComma = true;
             char [] cause = encoder.quoteAsString(m_Cause.toString());
             builder.append("\n  \"cause\" : \"").append(cause).append('"');
+        }
+
+        if (m_Host != null)
+        {
+            if (needComma)
+            {
+                builder.append(',');
+            }
+            char [] host = encoder.quoteAsString(m_Host.toString());
+            builder.append("\n  \"hostname\" : \"").append(host).append('"');
         }
 
         builder.append("\n}\n");

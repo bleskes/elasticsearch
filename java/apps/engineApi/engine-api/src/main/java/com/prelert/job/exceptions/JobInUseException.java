@@ -37,6 +37,8 @@ public class JobInUseException extends JobException
 {
     private static final long serialVersionUID = -2759814168552580059L;
 
+    private String m_Host;
+
     /**
      * Create a new JobInUseException.
      *
@@ -49,9 +51,31 @@ public class JobInUseException extends JobException
         super(message, errorCode);
     }
 
+    /**
+     *
+     * @param message Details of error explaining the context
+     * @param The error code
+     * @param hostname The host the job is running on
+     */
+    public JobInUseException(String message, ErrorCodes errorCode, String hostname)
+    {
+        super(message, errorCode);
+        m_Host = hostname;
+    }
+
     public JobInUseException(String message, ErrorCodes errorCode, Throwable cause)
     {
         super(message, errorCode, cause);
+    }
+
+    public String getHost()
+    {
+        return m_Host;
+    }
+
+    public void setHost(String host)
+    {
+        this.m_Host = host;
     }
 }
 

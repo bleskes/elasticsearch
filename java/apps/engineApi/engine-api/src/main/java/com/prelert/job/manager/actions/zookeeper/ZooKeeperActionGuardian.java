@@ -274,7 +274,8 @@ public class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
                         String msg = action.getBusyActionError(jobId, currentState.m_Action,
                                                                 currentState.m_Hostname);
                         LOGGER.warn(msg);
-                        throw new JobInUseException(msg, action.getErrorCode());
+                        throw new JobInUseException(msg, action.getErrorCode(),
+                                                currentState.m_Hostname);
                     }
                 }
             }
@@ -338,7 +339,7 @@ public class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
             String msg = action.getBusyActionError(jobId, currentState.m_Action,
                     currentState.m_Hostname);
             LOGGER.warn(msg);
-            throw new JobInUseException(msg, action.getErrorCode());
+            throw new JobInUseException(msg, action.getErrorCode(), currentState.m_Hostname);
         }
     }
 

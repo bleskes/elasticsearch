@@ -28,6 +28,7 @@ package com.prelert.rs.provider;
 
 import com.prelert.job.JobException;
 import com.prelert.job.UnknownJobException;
+import com.prelert.job.exceptions.JobInUseException;
 import com.prelert.rs.data.ApiError;
 
 public final class MapperUtils
@@ -55,6 +56,27 @@ public final class MapperUtils
             error.setCause(jobException.getCause().toString());
         }
         error.setMessage(jobException.getMessage());
+
+        if (jobException instanceof JobInUseException)
+        {
+            error.setHost(((JobInUseException)jobException).getHost());
+        }
+        return error;
+    }
+
+    /**
+     * Static method to create an {@link ApiError} from a {@linkplain JobInUseException}<br>
+     *
+     * As {@linkplain #apiErrorFromJobException(JobException)} but sets
+     * the host field of the job in use exception
+     *
+     * @param e
+     * @return
+     */
+    public static ApiError apiErrorFromJobException(JobInUseException jobInUseException)
+    {
+        ApiError error = apiErrorFromJobException((JobException)jobInUseException);
+        error.setHost(jobInUseException.getHost());
         return error;
     }
 }

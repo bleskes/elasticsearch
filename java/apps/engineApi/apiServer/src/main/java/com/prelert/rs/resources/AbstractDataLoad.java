@@ -140,7 +140,7 @@ public abstract class AbstractDataLoad extends ResourceWithJobManager
                 checkBucketResettingIsSupported(jobId);
             }
         }
-        catch (JobException e)
+        catch (UnknownJobException e)
         {
             for (String job : jobIds)
             {

@@ -164,6 +164,7 @@ public class DistributedLockTest extends BaseIntegrationTest
         {
             try (EngineApiClient client = new EngineApiClient(url))
             {
+                // test writing
                 String data = CsvDataRunner.HEADER + "\n1000,metric,100\n";
                 InputStream is = new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
                 MultiDataPostResult result = client.streamingUpload(jobId, is, false);
@@ -176,12 +177,29 @@ public class DistributedLockTest extends BaseIntegrationTest
                 test(apiError.getErrorCode() == ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR,
                                         "Writing data: Error code should be job in use error");
 
+                // test updating
                 String updateJson = "{\"modelDebugConfig\":{\"boundsPercentile\":90.0, \"terms\":\"someTerm\"}}";
                 test(client.updateJob(jobId, updateJson) == false);
                 apiError = client.getLastError();
                 test(apiError != null);
                 test(apiError.getErrorCode() == ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR,
                         "Updating job: Error code should be job in use error");
+
+
+                // and test resuming
+                boolean resumed = client.resumeJob(jobId);
+                if (resumed)
+                {
+                    throw new IllegalStateException("Error: resumed job while it was sleeping on another node");
+                }
+
+                apiError = client.getLastError();
+
+                if (apiError.getErrorCode() != ErrorCodes.CANNOT_RESUME_JOB)
+                {
+                    throw new IllegalStateException("Resuming Job: Error code should be job in use error");
+                }
+
             }
         }
     }

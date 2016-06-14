@@ -33,10 +33,11 @@ import org.junit.Test;
 import com.prelert.job.JobException;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.errorcodes.ErrorCodes;
+import com.prelert.job.exceptions.JobInUseException;
 import com.prelert.rs.data.ApiError;
 
-public class MapperUtilsTest {
-
+public class MapperUtilsTest
+{
     @Test
     public void testApiErrorFromJobException()
     {
@@ -51,6 +52,49 @@ public class MapperUtilsTest {
         assertEquals(ErrorCodes.BUCKET_RESET_NOT_SUPPORTED, error.getErrorCode());
         assertEquals("error message", error.getMessage());
         assertEquals(causeString, error.getCause());
+        assertNull(error.getHost());
+    }
+
+    @Test
+    public void testApiErrorFromJobInUseException()
+    {
+        // static binding means the correct overloaded method is called
+        // when the reference is a JobInUseException
+        JobInUseException e = new JobInUseException("error message",
+                            ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR, "cray-1");
+
+        ApiError error = MapperUtils.apiErrorFromJobException(e);
+        assertEquals(ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR, error.getErrorCode());
+        assertEquals("error message", error.getMessage());
+        assertEquals("cray-1", error.getHost());
+        assertNull(error.getCause());
+    }
+
+    public void testApiErrorFromJobInUseException_viaJobExceptionReference()
+    {
+        // static binding means MapperUtils.apiErrorFromJobException(JobException)
+        // is called not the overload when the reference is a JobException
+        JobException e = new JobInUseException("error message",
+                            ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR, "cray-1");
+
+        ApiError error = MapperUtils.apiErrorFromJobException(e);
+        assertEquals(ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR, error.getErrorCode());
+        assertEquals("error message", error.getMessage());
+        assertEquals("cray-1", error.getHost());
+        assertNull(error.getCause());
+    }
+
+    @Test
+    public void testApiErrorFromJobInUseException_withNullHostname()
+    {
+        JobInUseException e = new JobInUseException("error message",
+                            ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR);
+
+        ApiError error = MapperUtils.apiErrorFromJobException(e);
+        assertEquals(ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR, error.getErrorCode());
+        assertEquals("error message", error.getMessage());
+        assertNull(error.getHost());
+        assertNull(error.getCause());
     }
 
 }
