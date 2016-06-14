@@ -60,7 +60,6 @@ public class HttpRequester
     private static final String GET = "GET";
     private static final String DELETE = "DELETE";
     private static final String AUTH_HEADER = "Authorization";
-    private static final int OK_STATUS = 200;
 
     private static final SSLSocketFactory TRUSTING_SOCKET_FACTORY;
     private static final HostnameVerifier TRUSTING_HOSTNAME_VERIFIER;
@@ -139,7 +138,7 @@ public class HttpRequester
             connection.setDoOutput(true);
             writeRequestBody(requestBody, connection);
         }
-        if (connection.getResponseCode() != OK_STATUS)
+        if (connection.getResponseCode() != HttpResponse.OK_STATUS)
         {
             return new HttpResponse(connection.getErrorStream(), connection.getResponseCode());
         }

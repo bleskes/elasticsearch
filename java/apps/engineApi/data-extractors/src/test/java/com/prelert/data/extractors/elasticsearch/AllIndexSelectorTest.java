@@ -27,48 +27,37 @@
 
 package com.prelert.data.extractors.elasticsearch;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
-import java.util.stream.Collectors;
+import static org.junit.Assert.assertEquals;
 
-class HttpResponse
+import java.util.Arrays;
+import java.util.List;
+
+import org.apache.log4j.Logger;
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+
+public class AllIndexSelectorTest
 {
-    public static final int OK_STATUS = 200;
+    @Mock private Logger m_Logger;
 
-    private static final String NEW_LINE = "\n";
-
-    private final InputStream m_Stream;
-    private final int m_ResponseCode;
-
-    public HttpResponse(InputStream responseStream, int responseCode)
+    @Before
+    public void setUp()
     {
-        m_Stream = responseStream;
-        m_ResponseCode = responseCode;
+        MockitoAnnotations.initMocks(this);
     }
 
-    public int getResponseCode()
-    {
-        return m_ResponseCode;
-    }
 
-    public InputStream getStream()
+    @Test
+    public void testSelectByTime()
     {
-        return m_Stream;
-    }
-
-    public String getResponseAsString() throws IOException
-    {
-        return getStreamAsString(m_Stream);
-    }
-
-    public static String getStreamAsString(InputStream stream) throws IOException
-    {
-        try (BufferedReader buffer = new BufferedReader(
-                new InputStreamReader(stream, StandardCharsets.UTF_8))) {
-            return buffer.lines().collect(Collectors.joining(NEW_LINE));
-        }
+        List<String> indices = Arrays.asList("foo", "bar-*");
+        AllIndexSelector indexSelector = new AllIndexSelector(indices);
+        assertEquals(indices, indexSelector.selectByTime(0L, 100L, m_Logger));
+        assertEquals(indices, indexSelector.selectByTime(1000000L, 13413414134L, m_Logger));
+        indexSelector.clearCache();
+        assertEquals(indices, indexSelector.selectByTime(0L, 100L, m_Logger));
+        assertEquals(indices, indexSelector.selectByTime(1000000L, 13413414134L, m_Logger));
     }
 }

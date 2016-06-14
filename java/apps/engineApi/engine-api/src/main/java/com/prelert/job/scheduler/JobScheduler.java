@@ -390,7 +390,7 @@ public class JobScheduler
             updateStatus(JobSchedulerStatus.STOPPING);
         }
         closeJob();
-        updateFinalStatusAndCloseLogger(JobSchedulerStatus.STOPPED);
+        updateFinalStatusAndCleanUp(JobSchedulerStatus.STOPPED);
     }
 
     private void closeJob()
@@ -405,11 +405,12 @@ public class JobScheduler
         }
     }
 
-    private void updateFinalStatusAndCloseLogger(JobSchedulerStatus finalStatus)
+    private void updateFinalStatusAndCleanUp(JobSchedulerStatus finalStatus)
     {
         synchronized (this)
         {
             updateStatus(finalStatus);
+            m_DataExtractor.clear();
             m_JobLoggerFactory.close(m_JobId, m_Logger);
             m_Logger = null;
             if (finalStatus == JobSchedulerStatus.STOPPED)
@@ -453,7 +454,7 @@ public class JobScheduler
             updateStatus(JobSchedulerStatus.STOPPING);
         }
         awaitTermination();
-        updateFinalStatusAndCloseLogger(JobSchedulerStatus.STOPPED);
+        updateFinalStatusAndCleanUp(JobSchedulerStatus.STOPPED);
         releaseActionTicket();
     }
 
@@ -473,7 +474,7 @@ public class JobScheduler
             updateStatus(JobSchedulerStatus.STOPPING);
         }
         awaitTermination();
-        updateFinalStatusAndCloseLogger(JobSchedulerStatus.STARTED);
+        updateFinalStatusAndCleanUp(JobSchedulerStatus.STARTED);
         releaseActionTicket();
     }
 
