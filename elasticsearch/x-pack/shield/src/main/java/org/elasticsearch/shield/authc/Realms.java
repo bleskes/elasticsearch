@@ -18,6 +18,7 @@
 package org.elasticsearch.shield.authc;
 
 import org.elasticsearch.ElasticsearchException;
+import org.elasticsearch.common.collect.Iterators;
 import org.elasticsearch.common.component.AbstractLifecycleComponent;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.settings.Setting;
@@ -113,6 +114,10 @@ public class Realms extends AbstractLifecycleComponent<Realms> implements Iterab
 
     @Override
     public Iterator<Realm> iterator() {
+        if (shieldLicenseState.authenticationAndAuthorizationEnabled() == false) {
+            return Collections.emptyIterator();
+        }
+
         EnabledRealmType enabledRealmType = shieldLicenseState.enabledRealmType();
         switch (enabledRealmType) {
             case ALL:

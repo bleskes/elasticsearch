@@ -27,6 +27,7 @@ import org.elasticsearch.shield.ssl.SSLConfiguration.Custom;
 import org.elasticsearch.shield.ssl.SSLConfiguration.Global;
 import org.elasticsearch.shield.ssl.TrustConfig.Reloadable.Listener;
 import org.elasticsearch.test.ESTestCase;
+import org.elasticsearch.threadpool.TestThreadPool;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.watcher.ResourceWatcherService;
 
@@ -333,7 +334,7 @@ public class SSLConfigurationTests extends ESTestCase {
         AtomicReference<Exception> exceptionRef = new AtomicReference<>();
         Listener listener = createRefreshListener(latch, exceptionRef);
 
-        ThreadPool threadPool = new ThreadPool("reload");
+        ThreadPool threadPool = new TestThreadPool("reload");
         try {
             ResourceWatcherService resourceWatcherService =
                     new ResourceWatcherService(Settings.builder().put("resource.reload.interval.high", "1s").build(), threadPool).start();
@@ -396,7 +397,7 @@ public class SSLConfigurationTests extends ESTestCase {
         AtomicReference<Exception> exceptionRef = new AtomicReference<>();
         Listener listener = createRefreshListener(latch, exceptionRef);
 
-        ThreadPool threadPool = new ThreadPool("reload pem");
+        ThreadPool threadPool = new TestThreadPool("reload pem");
         try {
             ResourceWatcherService resourceWatcherService =
                     new ResourceWatcherService(Settings.builder().put("resource.reload.interval.high", "1s").build(), threadPool).start();
@@ -472,7 +473,7 @@ public class SSLConfigurationTests extends ESTestCase {
         AtomicReference<Exception> exceptionRef = new AtomicReference<>();
         Listener listener = createRefreshListener(latch, exceptionRef);
 
-        ThreadPool threadPool = new ThreadPool("reload");
+        ThreadPool threadPool = new TestThreadPool("reload");
         try {
             ResourceWatcherService resourceWatcherService =
                     new ResourceWatcherService(Settings.builder().put("resource.reload.interval.high", "1s").build(), threadPool).start();
@@ -518,7 +519,7 @@ public class SSLConfigurationTests extends ESTestCase {
         AtomicReference<Exception> exceptionRef = new AtomicReference<>();
         Listener listener = createRefreshListener(latch, exceptionRef);
 
-        ThreadPool threadPool = new ThreadPool("reload");
+        ThreadPool threadPool = new TestThreadPool("reload");
         try {
             ResourceWatcherService resourceWatcherService =
                     new ResourceWatcherService(Settings.builder().put("resource.reload.interval.high", "1s").build(), threadPool).start();
@@ -566,7 +567,7 @@ public class SSLConfigurationTests extends ESTestCase {
         AtomicReference<Exception> exceptionRef = new AtomicReference<>();
         Listener listener = createRefreshListener(latch, exceptionRef);
 
-        ThreadPool threadPool = new ThreadPool("reload");
+        ThreadPool threadPool = new TestThreadPool("reload");
         try {
             ResourceWatcherService resourceWatcherService =
                     new ResourceWatcherService(Settings.builder().put("resource.reload.interval.high", "1s").build(), threadPool).start();
@@ -615,7 +616,7 @@ public class SSLConfigurationTests extends ESTestCase {
         AtomicReference<Exception> exceptionRef = new AtomicReference<>();
         Listener listener = createRefreshListener(latch, exceptionRef);
 
-        ThreadPool threadPool = new ThreadPool("reload pem");
+        ThreadPool threadPool = new TestThreadPool("reload pem");
         try {
             ResourceWatcherService resourceWatcherService =
                     new ResourceWatcherService(Settings.builder().put("resource.reload.interval.high", "1s").build(), threadPool).start();
@@ -666,7 +667,7 @@ public class SSLConfigurationTests extends ESTestCase {
         AtomicReference<Exception> exceptionRef = new AtomicReference<>();
         Listener listener = createRefreshListener(latch, exceptionRef);
 
-        ThreadPool threadPool = new ThreadPool("reload");
+        ThreadPool threadPool = new TestThreadPool("reload");
         try {
             ResourceWatcherService resourceWatcherService =
                     new ResourceWatcherService(Settings.builder().put("resource.reload.interval.high", "1s").build(), threadPool).start();
@@ -705,7 +706,7 @@ public class SSLConfigurationTests extends ESTestCase {
         AtomicReference<Exception> exceptionRef = new AtomicReference<>();
         Listener listener = createRefreshListener(latch, exceptionRef);
 
-        ThreadPool threadPool = new ThreadPool("reload");
+        ThreadPool threadPool = new TestThreadPool("reload");
         try {
             ResourceWatcherService resourceWatcherService =
                     new ResourceWatcherService(Settings.builder().put("resource.reload.interval.high", "1s").build(), threadPool).start();
