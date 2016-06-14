@@ -40,6 +40,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
 import com.prelert.data.extractors.elasticsearch.ElasticsearchDataExtractor;
 import com.prelert.data.extractors.elasticsearch.ElasticsearchQueryBuilder;
+import com.prelert.data.extractors.elasticsearch.HttpRequester;
 import com.prelert.job.ElasticsearchDataSourceCompatibility;
 import com.prelert.job.JobDetails;
 import com.prelert.job.SchedulerConfig;
@@ -81,8 +82,9 @@ public class DataExtractorFactoryImpl implements DataExtractorFactory
                 stringifyElasticsearchScriptFields(schedulerConfig.getScriptFields()),
                 Boolean.TRUE.equals(schedulerConfig.getRetrieveWholeSource()) ? null : writeObjectAsJson(job.allFields()),
                 timeField);
-        return ElasticsearchDataExtractor.create(schedulerConfig.getBaseUrl(),
-                createBasicAuthHeader(schedulerConfig.getUsername(), schedulerConfig.getEncryptedPassword()),
+        HttpRequester httpRequester = new HttpRequester(createBasicAuthHeader(
+                schedulerConfig.getUsername(), schedulerConfig.getEncryptedPassword()));
+        return new ElasticsearchDataExtractor(httpRequester, schedulerConfig.getBaseUrl(),
                 schedulerConfig.getIndexes(), schedulerConfig.getTypes(), queryBuilder,
                 schedulerConfig.getScrollSize());
     }

@@ -1252,7 +1252,7 @@ public class ElasticsearchDataExtractorTest
         ElasticsearchQueryBuilder queryBuilder = new ElasticsearchQueryBuilder(
                 ElasticsearchDataSourceCompatibility.V_1_7_X, SEARCH, m_Aggregations,
                 m_ScriptFields, m_Fields, TIME_FIELD);
-        m_Extractor = new ElasticsearchDataExtractor(httpRequester, BASE_URL, null, INDICES, TYPES,
+        m_Extractor = new ElasticsearchDataExtractor(httpRequester, BASE_URL, INDICES, TYPES,
                 queryBuilder, 1000);
     }
 
@@ -1271,14 +1271,14 @@ public class ElasticsearchDataExtractorTest
         }
 
         @Override
-        public HttpResponse get(String url, String authHeader, String requestBody)
+        public HttpResponse get(String url, String requestBody)
         {
             m_GetRequestParams.add(new RequestParams(url, requestBody));
             return m_Responses.get(m_RequestCount++);
         }
 
         @Override
-        public HttpResponse delete(String url, String authHeader, String requestBody)
+        public HttpResponse delete(String url, String requestBody)
         {
             m_DeleteRequestParams.add(new RequestParams(url, requestBody));
             return null;

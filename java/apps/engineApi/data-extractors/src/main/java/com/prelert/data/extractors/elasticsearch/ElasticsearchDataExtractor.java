@@ -65,7 +65,6 @@ public class ElasticsearchDataExtractor implements DataExtractor
 
     private final HttpRequester m_HttpRequester;
     private final String m_BaseUrl;
-    private final String m_AuthHeader;
     private final List<String> m_Indices;
     private final List<String> m_Types;
     private final int m_ScrollSize;
@@ -83,13 +82,12 @@ public class ElasticsearchDataExtractor implements DataExtractor
 
     private volatile Logger m_Logger;
 
-    ElasticsearchDataExtractor(HttpRequester httpRequester, String baseUrl, String authHeader,
+    public ElasticsearchDataExtractor(HttpRequester httpRequester, String baseUrl,
             List<String> indices, List<String> types, ElasticsearchQueryBuilder queryBuilder,
             int scrollSize)
     {
         m_HttpRequester = Objects.requireNonNull(httpRequester);
         m_BaseUrl = Objects.requireNonNull(baseUrl);
-        m_AuthHeader = authHeader;
         m_Indices = Objects.requireNonNull(indices);
         m_Types = Objects.requireNonNull(types);
         m_ScrollSize = scrollSize;
@@ -97,14 +95,6 @@ public class ElasticsearchDataExtractor implements DataExtractor
         m_ScrollState =  queryBuilder.isAggregated() ? ScrollState.createAggregated()
                 : ScrollState.createDefault();
         m_IsFirstSearch = true;
-    }
-
-    public static ElasticsearchDataExtractor create(String baseUrl, String authHeader,
-            List<String> indices, List<String> types, ElasticsearchQueryBuilder queryBuilder,
-            int scrollSize)
-    {
-        return new ElasticsearchDataExtractor(new HttpRequester(), baseUrl, authHeader, indices,
-                types, queryBuilder, scrollSize);
     }
 
     @Override
@@ -185,7 +175,7 @@ public class ElasticsearchDataExtractor implements DataExtractor
 
     private String requestAndGetStringResponse(String url, String body) throws IOException
     {
-        HttpResponse response = m_HttpRequester.get(url, m_AuthHeader, body);
+        HttpResponse response = m_HttpRequester.get(url, body);
         if (response.getResponseCode() != OK_STATUS)
         {
             throw new IOException("Request '" + url + "' failed with status code: "
@@ -290,7 +280,7 @@ public class ElasticsearchDataExtractor implements DataExtractor
         urlBuilder.append(CLEAR_SCROLL_END_POINT);
         try
         {
-            m_HttpRequester.delete(urlBuilder.toString(), m_AuthHeader,
+            m_HttpRequester.delete(urlBuilder.toString(),
                     String.format(CLEAR_SCROLL_TEMPLATE, m_ScrollState.getScrollId()));
         }
         catch (IOException e)
@@ -311,7 +301,7 @@ public class ElasticsearchDataExtractor implements DataExtractor
         String url = buildInitScrollUrl();
         String searchBody = m_QueryBuilder.createSearchBody(m_CurrentStartTime, m_CurrentEndTime);
         m_Logger.trace("About to submit body " + searchBody + " to URL " + url);
-        HttpResponse response = m_HttpRequester.get(url, m_AuthHeader, searchBody);
+        HttpResponse response = m_HttpRequester.get(url, searchBody);
         if (response.getResponseCode() != OK_STATUS)
         {
             throw new IOException("Request '" + url + "' failed with status code: "
@@ -344,7 +334,7 @@ public class ElasticsearchDataExtractor implements DataExtractor
         {
             StringBuilder urlBuilder = newUrlBuilder();
             urlBuilder.append(CONTINUE_SCROLL_END_POINT);
-            HttpResponse response = m_HttpRequester.get(urlBuilder.toString(), m_AuthHeader,
+            HttpResponse response = m_HttpRequester.get(urlBuilder.toString(),
                     m_ScrollState.getScrollId());
             if (response.getResponseCode() == OK_STATUS)
             {

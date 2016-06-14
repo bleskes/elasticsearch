@@ -52,7 +52,7 @@ import org.apache.log4j.Logger;
  * HTTP or HTTPS is deduced from the supplied URL.
  * Invalid certificates are tolerated for HTTPS access, similar to "curl -k".
  */
-class HttpRequester
+public class HttpRequester
 {
     private static final Logger LOGGER = Logger.getLogger(HttpRequester.class);
 
@@ -86,18 +86,29 @@ class HttpRequester
         TRUSTING_HOSTNAME_VERIFIER = new NoOpHostnameVerifier();
     }
 
-    public HttpResponse get(String url, String authHeader, String requestBody) throws IOException
+    private final String m_AuthHeader;
+
+    public HttpRequester()
     {
-        return request(url, authHeader, requestBody, GET);
+        this(null);
     }
 
-    public HttpResponse delete(String url, String authHeader, String requestBody) throws IOException
+    public HttpRequester(String authHeader)
     {
-        return request(url, authHeader, requestBody, DELETE);
+        m_AuthHeader = authHeader;
     }
 
-    private HttpResponse request(String url, String authHeader, String requestBody, String method)
-            throws IOException
+    public HttpResponse get(String url, String requestBody) throws IOException
+    {
+        return request(url, requestBody, GET);
+    }
+
+    public HttpResponse delete(String url, String requestBody) throws IOException
+    {
+        return request(url, requestBody, DELETE);
+    }
+
+    private HttpResponse request(String url, String requestBody, String method) throws IOException
     {
         URL urlObject = new URL(url);
         HttpURLConnection connection = (HttpURLConnection) urlObject.openConnection();
@@ -119,9 +130,9 @@ class HttpRequester
             httpsConnection.setHostnameVerifier(TRUSTING_HOSTNAME_VERIFIER);
         }
         connection.setRequestMethod(method);
-        if (authHeader != null)
+        if (m_AuthHeader != null)
         {
-            connection.setRequestProperty(AUTH_HEADER, authHeader);
+            connection.setRequestProperty(AUTH_HEADER, m_AuthHeader);
         }
         if (requestBody != null)
         {
