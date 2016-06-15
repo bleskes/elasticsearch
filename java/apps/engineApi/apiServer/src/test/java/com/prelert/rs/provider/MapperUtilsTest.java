@@ -52,7 +52,7 @@ public class MapperUtilsTest
         assertEquals(ErrorCodes.BUCKET_RESET_NOT_SUPPORTED, error.getErrorCode());
         assertEquals("error message", error.getMessage());
         assertEquals(causeString, error.getCause());
-        assertNull(error.getHost());
+        assertNull(error.getHostname());
     }
 
     @Test
@@ -66,7 +66,7 @@ public class MapperUtilsTest
         ApiError error = MapperUtils.apiErrorFromJobException(e);
         assertEquals(ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR, error.getErrorCode());
         assertEquals("error message", error.getMessage());
-        assertEquals("cray-1", error.getHost());
+        assertEquals("cray-1", error.getHostname());
         assertNull(error.getCause());
     }
 
@@ -80,7 +80,7 @@ public class MapperUtilsTest
         ApiError error = MapperUtils.apiErrorFromJobException(e);
         assertEquals(ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR, error.getErrorCode());
         assertEquals("error message", error.getMessage());
-        assertEquals("cray-1", error.getHost());
+        assertEquals("cray-1", error.getHostname());
         assertNull(error.getCause());
     }
 
@@ -93,7 +93,7 @@ public class MapperUtilsTest
         ApiError error = MapperUtils.apiErrorFromJobException(e);
         assertEquals(ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR, error.getErrorCode());
         assertEquals("error message", error.getMessage());
-        assertNull(error.getHost());
+        assertNull(error.getHostname());
         assertNull(error.getCause());
     }
 

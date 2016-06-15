@@ -45,7 +45,7 @@ public class ApiError implements HasErrorCode
     private ErrorCodes m_ErrorCode;
     private String m_Message;
     private String m_Cause;
-    private String m_Host;
+    private String m_Hostname;
 
     /**
      * Default cons for serialization (Jackson)
@@ -128,14 +128,14 @@ public class ApiError implements HasErrorCode
      * environment
      * @return
      */
-    public String getHost()
+    public String getHostname()
     {
-        return m_Host;
+        return m_Hostname;
     }
 
-    public void setHost(String hostname)
+    public void setHostname(String hostname)
     {
-        m_Host = hostname;
+        m_Hostname = hostname;
     }
 
     /**
@@ -177,13 +177,13 @@ public class ApiError implements HasErrorCode
             builder.append("\n  \"cause\" : \"").append(cause).append('"');
         }
 
-        if (m_Host != null)
+        if (m_Hostname != null)
         {
             if (needComma)
             {
                 builder.append(',');
             }
-            char [] host = encoder.quoteAsString(m_Host.toString());
+            char [] host = encoder.quoteAsString(m_Hostname.toString());
             builder.append("\n  \"hostname\" : \"").append(host).append('"');
         }
 

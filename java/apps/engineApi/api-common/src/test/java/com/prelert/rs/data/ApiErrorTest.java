@@ -67,7 +67,7 @@ public class ApiErrorTest
         ApiError apiError = new ApiError(ErrorCodes.DATA_ERROR);
         apiError.setMessage("Some message");
         apiError.setCause(new RuntimeException("Cause message").toString());
-        apiError.setHost("cray-1");
+        apiError.setHostname("cray-1");
 
         StringBuilder expected = new StringBuilder();
         expected.append("{\n")

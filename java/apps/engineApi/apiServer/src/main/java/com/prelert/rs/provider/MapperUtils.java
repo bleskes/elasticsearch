@@ -59,7 +59,7 @@ public final class MapperUtils
 
         if (jobException instanceof JobInUseException)
         {
-            error.setHost(((JobInUseException)jobException).getHost());
+            error.setHostname(((JobInUseException)jobException).getHost());
         }
         return error;
     }
@@ -76,7 +76,7 @@ public final class MapperUtils
     public static ApiError apiErrorFromJobException(JobInUseException jobInUseException)
     {
         ApiError error = apiErrorFromJobException((JobException)jobInUseException);
-        error.setHost(jobInUseException.getHost());
+        error.setHostname(jobInUseException.getHost());
         return error;
     }
 }
