@@ -91,7 +91,7 @@ public class MarvelPluginTests extends MarvelIntegTestCase {
             for (PluginInfo plugin : nodeInfo.getPlugins().getPluginInfos()) {
                 assertNotNull(plugin);
 
-                if (XPackPlugin.NAME.equals(plugin.getName())) {
+                if (XPackPlugin.class.getName().equals(plugin.getName())) {
                     found = true;
                     break;
                 }
