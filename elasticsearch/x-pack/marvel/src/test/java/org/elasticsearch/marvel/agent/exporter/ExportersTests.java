@@ -235,7 +235,8 @@ public class ExportersTests extends ESTestCase {
 
         DiscoveryNodes nodes = mock(DiscoveryNodes.class);
         when(nodes.isLocalNodeElectedMaster()).thenReturn(true);
-        when(clusterService.state()).thenReturn(ClusterState.builder(ClusterName.DEFAULT).nodes(nodes).build());
+        when(clusterService.state()).thenReturn(ClusterState.builder(ClusterName.CLUSTER_NAME_SETTING.getDefault(Settings.EMPTY))
+                .nodes(nodes).build());
 
         ExportBulk bulk = exporters.openBulk();
         assertThat(bulk, notNullValue());
@@ -259,7 +260,8 @@ public class ExportersTests extends ESTestCase {
 
         DiscoveryNodes nodes = mock(DiscoveryNodes.class);
         when(nodes.isLocalNodeElectedMaster()).thenReturn(false);
-        when(clusterService.state()).thenReturn(ClusterState.builder(ClusterName.DEFAULT).nodes(nodes).build());
+        when(clusterService.state()).thenReturn(ClusterState.builder(ClusterName.CLUSTER_NAME_SETTING.getDefault(Settings.EMPTY))
+                .nodes(nodes).build());
 
         ExportBulk bulk = exporters.openBulk();
         assertThat(bulk, notNullValue());
