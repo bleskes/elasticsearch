@@ -40,11 +40,6 @@ public class EagerLicenseRegistrationConsumerPlugin extends TestConsumerPluginBa
     }
 
     @Override
-    protected String pluginName() {
-        return NAME;
-    }
-
-    @Override
     public String id() {
         return EagerLicenseRegistrationPluginService.ID;
     }
