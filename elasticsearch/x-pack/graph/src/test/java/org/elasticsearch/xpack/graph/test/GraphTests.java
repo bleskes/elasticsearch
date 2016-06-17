@@ -27,6 +27,7 @@ import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.query.ScriptQueryBuilder;
 import org.elasticsearch.marvel.Monitoring;
 import org.elasticsearch.plugins.Plugin;
+import org.elasticsearch.plugins.ScriptPlugin;
 import org.elasticsearch.script.AbstractSearchScript;
 import org.elasticsearch.script.ExecutableScript;
 import org.elasticsearch.script.NativeScriptFactory;
@@ -46,6 +47,8 @@ import org.elasticsearch.xpack.graph.action.Vertex;
 import org.elasticsearch.xpack.graph.action.VertexRequest;
 
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 import static org.elasticsearch.cluster.metadata.IndexMetaData.SETTING_NUMBER_OF_REPLICAS;
@@ -358,19 +361,10 @@ public class GraphTests extends ESSingleNodeTestCase {
         assertThat(why, strongVertex.getWeight(), greaterThan(weakVertex.getWeight()));
     }
 
-    public static class ScriptedTimeoutPlugin extends Plugin {
+    public static class ScriptedTimeoutPlugin extends Plugin implements ScriptPlugin {
         @Override
-        public String name() {
-            return "test-scripted-graph-timeout";
-        }
-
-        @Override
-        public String description() {
-            return "Test for scripted timeouts on graph searches";
-        }
-
-        public void onModule(ScriptModule module) {
-            module.registerScript(NativeTestScriptedTimeout.TEST_NATIVE_SCRIPT_TIMEOUT, NativeTestScriptedTimeout.Factory.class);
+        public List<NativeScriptFactory> getNativeScripts() {
+            return Collections.singletonList(new NativeTestScriptedTimeout.Factory());
         }
     }
 
@@ -388,6 +382,11 @@ public class GraphTests extends ESSingleNodeTestCase {
             @Override
             public boolean needsScores() {
                 return false;
+            }
+
+            @Override
+            public String getName() {
+                return TEST_NATIVE_SCRIPT_TIMEOUT;
             }
         }
 

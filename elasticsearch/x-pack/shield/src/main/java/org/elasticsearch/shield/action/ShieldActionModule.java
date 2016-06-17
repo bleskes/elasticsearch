@@ -21,6 +21,7 @@ import org.elasticsearch.common.inject.multibindings.Multibinder;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.shield.action.filter.ShieldActionFilter;
 import org.elasticsearch.shield.action.interceptor.BulkRequestInterceptor;
+import org.elasticsearch.shield.action.interceptor.FieldStatsRequestInterceptor;
 import org.elasticsearch.shield.action.interceptor.RealtimeRequestInterceptor;
 import org.elasticsearch.shield.action.interceptor.RequestInterceptor;
 import org.elasticsearch.shield.action.interceptor.SearchRequestInterceptor;
@@ -46,5 +47,6 @@ public class ShieldActionModule extends AbstractShieldModule.Node {
         multibinder.addBinding().to(SearchRequestInterceptor.class);
         multibinder.addBinding().to(UpdateRequestInterceptor.class);
         multibinder.addBinding().to(BulkRequestInterceptor.class);
+        multibinder.addBinding().to(FieldStatsRequestInterceptor.class);
     }
 }
