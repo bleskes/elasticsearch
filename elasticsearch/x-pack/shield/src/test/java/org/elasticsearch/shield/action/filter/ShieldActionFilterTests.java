@@ -24,7 +24,10 @@ import org.elasticsearch.action.search.SearchScrollRequest;
 import org.elasticsearch.action.support.ActionFilterChain;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.util.concurrent.ThreadContext;
+import org.elasticsearch.shield.SecurityContext;
 import org.elasticsearch.shield.action.ShieldActionMapper;
+import org.elasticsearch.shield.authc.Authentication;
+import org.elasticsearch.shield.authc.Authentication.RealmRef;
 import org.elasticsearch.shield.user.SystemUser;
 import org.elasticsearch.shield.user.User;
 import org.elasticsearch.shield.audit.AuditTrail;
@@ -74,7 +77,7 @@ public class ShieldActionFilterTests extends ESTestCase {
         ThreadPool threadPool = mock(ThreadPool.class);
         when(threadPool.getThreadContext()).thenReturn(new ThreadContext(Settings.EMPTY));
         filter = new ShieldActionFilter(Settings.EMPTY, authcService, authzService, cryptoService, auditTrail, securityLicenseState,
-                new ShieldActionMapper(), new HashSet<>(), threadPool);
+                new ShieldActionMapper(), new HashSet<>(), threadPool, mock(SecurityContext.class));
     }
 
     public void testApply() throws Exception {
@@ -83,10 +86,11 @@ public class ShieldActionFilterTests extends ESTestCase {
         ActionFilterChain chain = mock(ActionFilterChain.class);
         Task task = mock(Task.class);
         User user = new User("username", "r1", "r2");
-        when(authcService.authenticate("_action", request, SystemUser.INSTANCE)).thenReturn(user);
+        Authentication authentication = new Authentication(user, new RealmRef("test", "test", "foo"), null);
+        when(authcService.authenticate("_action", request, SystemUser.INSTANCE)).thenReturn(authentication);
         doReturn(request).when(spy(filter)).unsign(user, "_action", request);
         filter.apply(task, "_action", request, listener, chain);
-        verify(authzService).authorize(user, "_action", request);
+        verify(authzService).authorize(authentication, "_action", request);
         verify(chain).proceed(eq(task), eq("_action"), eq(request), isA(ShieldActionFilter.SigningListener.class));
     }
 
@@ -97,8 +101,9 @@ public class ShieldActionFilterTests extends ESTestCase {
         RuntimeException exception = new RuntimeException("process-error");
         Task task = mock(Task.class);
         User user = new User("username", "r1", "r2");
-        when(authcService.authenticate("_action", request, SystemUser.INSTANCE)).thenReturn(user);
-        doThrow(exception).when(authzService).authorize(user, "_action", request);
+        Authentication authentication = new Authentication(user, new RealmRef("test", "test", "foo"), null);
+        when(authcService.authenticate("_action", request, SystemUser.INSTANCE)).thenReturn(authentication);
+        doThrow(exception).when(authzService).authorize(authentication, "_action", request);
         filter.apply(task, "_action", request, listener, chain);
         verify(listener).onFailure(exception);
         verifyNoMoreInteractions(chain);
@@ -110,12 +115,13 @@ public class ShieldActionFilterTests extends ESTestCase {
         ActionFilterChain chain = mock(ActionFilterChain.class);
         User user = mock(User.class);
         Task task = mock(Task.class);
-        when(authcService.authenticate("_action", request, SystemUser.INSTANCE)).thenReturn(user);
+        Authentication authentication = new Authentication(user, new RealmRef("test", "test", "foo"), null);
+        when(authcService.authenticate("_action", request, SystemUser.INSTANCE)).thenReturn(authentication);
         when(cryptoService.signed("signed_scroll_id")).thenReturn(true);
         when(cryptoService.unsignAndVerify("signed_scroll_id")).thenReturn("scroll_id");
         filter.apply(task, "_action", request, listener, chain);
         assertThat(request.scrollId(), equalTo("scroll_id"));
-        verify(authzService).authorize(user, "_action", request);
+        verify(authzService).authorize(authentication, "_action", request);
         verify(chain).proceed(eq(task), eq("_action"), eq(request), isA(ShieldActionFilter.SigningListener.class));
     }
 
@@ -126,7 +132,8 @@ public class ShieldActionFilterTests extends ESTestCase {
         IllegalArgumentException sigException = new IllegalArgumentException("bad bad boy");
         User user = mock(User.class);
         Task task = mock(Task.class);
-        when(authcService.authenticate("_action", request, SystemUser.INSTANCE)).thenReturn(user);
+        Authentication authentication = new Authentication(user, new RealmRef("test", "test", "foo"), null);
+        when(authcService.authenticate("_action", request, SystemUser.INSTANCE)).thenReturn(authentication);
         when(cryptoService.signed("scroll_id")).thenReturn(true);
         doThrow(sigException).when(cryptoService).unsignAndVerify("scroll_id");
         filter.apply(task, "_action", request, listener, chain);

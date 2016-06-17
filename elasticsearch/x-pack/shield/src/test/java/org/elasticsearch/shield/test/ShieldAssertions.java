@@ -33,6 +33,6 @@ public class ShieldAssertions {
         assertThat(e.status(), is(RestStatus.UNAUTHORIZED));
         assertThat(e.getHeaderKeys(), hasSize(1));
         assertThat(e.getHeader("WWW-Authenticate"), notNullValue());
-        assertThat(e.getHeader("WWW-Authenticate"), contains("Basic realm=\"" + Security.NAME + "\""));
+        assertThat(e.getHeader("WWW-Authenticate"), contains("Basic realm=\"" + Security.NAME + "\" charset=\"UTF-8\""));
     }
 }
