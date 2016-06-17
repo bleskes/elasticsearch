@@ -61,7 +61,7 @@ public class TimeThrottleIntegrationTests extends AbstractWatcherIntegrationTest
     }
 
     @Override
-    protected boolean enableShield() {
+    protected boolean enableSecurity() {
         return false;
     }
 

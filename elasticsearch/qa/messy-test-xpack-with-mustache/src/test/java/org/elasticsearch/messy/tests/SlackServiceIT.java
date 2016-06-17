@@ -59,7 +59,7 @@ public class SlackServiceIT extends AbstractWatcherIntegrationTestCase {
     }
 
     @Override
-    protected boolean enableShield() {
+    protected boolean enableSecurity() {
         return false;
     }
 
