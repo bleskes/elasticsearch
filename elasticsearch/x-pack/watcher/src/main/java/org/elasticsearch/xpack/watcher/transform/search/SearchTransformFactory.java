@@ -29,6 +29,7 @@ import org.elasticsearch.index.query.QueryParseContext;
 import org.elasticsearch.indices.query.IndicesQueriesRegistry;
 import org.elasticsearch.search.aggregations.AggregatorParsers;
 import org.elasticsearch.search.suggest.Suggesters;
+import org.elasticsearch.xpack.security.InternalClient;
 import org.elasticsearch.xpack.watcher.support.init.proxy.WatcherClientProxy;
 import org.elasticsearch.xpack.watcher.transform.TransformFactory;
 
@@ -45,6 +46,10 @@ public class SearchTransformFactory extends TransformFactory<SearchTransform, Se
     private final ParseFieldMatcher parseFieldMatcher;
 
     @Inject
+    public SearchTransformFactory(Settings settings, InternalClient client, IndicesQueriesRegistry queryRegistry,
+                                  AggregatorParsers aggParsers, Suggesters suggesters) {
+        this(settings, new WatcherClientProxy(settings, client), queryRegistry, aggParsers, suggesters);
+    }
     public SearchTransformFactory(Settings settings, WatcherClientProxy client, IndicesQueriesRegistry queryRegistry,
                                   AggregatorParsers aggParsers, Suggesters suggesters) {
         super(Loggers.getLogger(ExecutableSearchTransform.class, settings));
