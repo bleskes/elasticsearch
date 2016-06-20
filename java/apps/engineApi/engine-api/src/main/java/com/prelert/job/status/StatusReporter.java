@@ -28,6 +28,7 @@ package com.prelert.job.status;
 
 import java.math.RoundingMode;
 import java.util.Date;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.log4j.Logger;
 
@@ -86,7 +87,7 @@ public class StatusReporter
     private final JobDataCountsPersister m_DataCountsPersister;
 
     private ProcessingLatency m_BucketLatency;
-    private volatile long m_LastestBucketTime = -1;
+    private final AtomicLong m_LastRecordTimeEpochMs;
 
     public StatusReporter(String jobId, UsageReporter usageReporter,
                         JobDataCountsPersister dataCountsPersister, Logger logger,
@@ -101,6 +102,7 @@ public class StatusReporter
         m_IncrementalRecordStats = new DataCounts();
 
         m_BucketLatency = new ProcessingLatency(bucketSpan);
+        m_LastRecordTimeEpochMs = new AtomicLong();
 
         m_AcceptablePercentDateParseErrors = PrelertSettings.getSettingOrDefault(
                 ACCEPTABLE_PERCENTAGE_DATE_PARSE_ERRORS_PROP,
@@ -137,6 +139,10 @@ public class StatusReporter
     {
         m_UsageReporter.addFieldsRecordsRead(inputFieldCount);
 
+        // Only a single thread updates this value so there isn't a
+        // race condidtion using lazySet. Changes are visible to get()
+        m_LastRecordTimeEpochMs.lazySet(latestRecordTimeMs);
+
         Date latestDate = new Date(latestRecordTimeMs);
 
         m_TotalRecordStats.incrementInputFieldCount(inputFieldCount);
@@ -152,17 +158,6 @@ public class StatusReporter
         if (isReportingBoundary(totalRecords))
         {
             logStatus(totalRecords);
-
-            // only record latency if we have seen a bucket result
-            if (m_LastestBucketTime > 0)
-            {
-                // value of m_LastestBucketTime can change between these two
-                // lines but no need to synchronise
-                m_BucketLatency.addMeasure(latestRecordTimeMs / 1000, m_LastestBucketTime);
-            }
-
-            double latency = m_BucketLatency.latency();
-            m_Logger.info("Bucket latency = " + latency);
 
             m_DataCountsPersister.persistDataCounts(m_JobId, runningTotalStats());
             try
@@ -493,9 +488,17 @@ public class StatusReporter
         return m_TotalRecordStats;
     }
 
-    public void setLastestBucketTime(long bucketTime)
+    /**
+     * Set the newest bucket result time. Used for calculating latency
+     *
+     * @param bucketTimeEpochSeconds Epoch time stamp of the latest
+     * bucket there has been results for
+     */
+    public void setLastestBucketTime(long bucketTimeEpochSeconds)
     {
-        m_LastestBucketTime = bucketTime;
+        m_BucketLatency.addMeasure(m_LastRecordTimeEpochMs.get() / 1000, bucketTimeEpochSeconds);
+
+        m_Logger.debug("Bucket latency = " + m_BucketLatency.latency());
     }
 
     public double getBucketLatency()

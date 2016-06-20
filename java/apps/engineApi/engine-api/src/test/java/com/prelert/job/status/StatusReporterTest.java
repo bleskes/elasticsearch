@@ -27,9 +27,7 @@
 
 package com.prelert.job.status;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-
+import static org.junit.Assert.*;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
@@ -42,6 +40,7 @@ import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Date;
+import java.util.concurrent.CountDownLatch;
 
 import org.apache.log4j.Logger;
 import org.junit.AfterClass;
@@ -89,7 +88,7 @@ public class StatusReporterTest
     {
         MockitoAnnotations.initMocks(this);
         m_StatusReporter = new StatusReporter(JOB_ID, m_UsageReporter, m_JobDataCountsPersister,
-                                            m_Logger, 1);
+                                            m_Logger, 10l);
     }
 
     @Test
@@ -326,6 +325,30 @@ public class StatusReporterTest
         Mockito.verify(m_JobDataCountsPersister, Mockito.times(1)).persistDataCounts(eq("SR"), eq(dc));
 
         assertEquals(dc, m_StatusReporter.incrementalStats());
+    }
+
+    @Test
+    public void testBucketLatency()
+            throws HighProportionOfBadTimestampsException, OutOfOrderRecordsException, InterruptedException
+    {
+        CountDownLatch latch = new CountDownLatch(1);
+
+        new Thread(() -> {
+            for (int i=0; i<99; i++)
+            {
+                try {
+                    m_StatusReporter.reportRecordWritten(2, i * 1000);
+                } catch (Exception e) {
+                    fail();
+                }
+            }
+            m_StatusReporter.setLastestBucketTime(0);
+            latch.countDown();
+
+            }).start();
+
+        latch.await();
+        assertEquals(9.0,  m_StatusReporter.getBucketLatency(), 0.00001);
     }
 
     private void testAllFieldsEqualZero(DataCounts stats)

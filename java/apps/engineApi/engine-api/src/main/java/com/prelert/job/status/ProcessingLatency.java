@@ -29,6 +29,12 @@ package com.prelert.job.status;
 
 import com.google.common.annotations.VisibleForTesting;
 
+/**
+ * Calculates the whole number of buckets between the last bucket
+ * result and the latest data record. This is the bucket latency.
+ * The latency is averaged over a number of samples.
+ * Thread safe
+ */
 class ProcessingLatency
 {
     private final long m_BucketSpan;
@@ -43,25 +49,34 @@ class ProcessingLatency
         this(bucketSpan, 10);
     }
 
+    /**
+     *
+     * @param bucketSpan
+     * @param numberSamples Number of samples to average over
+     */
     public ProcessingLatency(long bucketSpan, int numberSamples)
     {
         m_BucketSpan = bucketSpan;
         m_SampleBuffer = new long[numberSamples];
     }
 
+    /**
+     * Returns the actual buffer so not thread-safe
+     * @return
+     */
     @VisibleForTesting
     long [] getSamples()
     {
         return m_SampleBuffer;
     }
 
-    public void addMeasure(long lastDataTime, long lastBucketTime)
+    public void addMeasure(long lastRecordTime, long lastBucketTime)
     {
-        long numBucketsBetween = (lastDataTime - lastBucketTime) / m_BucketSpan;
+        long numBucketsBetween = (lastRecordTime - lastBucketTime) / m_BucketSpan;
         addSample(numBucketsBetween);
     }
 
-    void addSample(long sample)
+    synchronized void addSample(long sample)
     {
         if (m_SampleCount < m_SampleBuffer.length)
         {
@@ -82,7 +97,12 @@ class ProcessingLatency
         return m_SampleCount;
     }
 
-    public double latency()
+    /**
+     * The average latency over the last N samples.
+     *
+     * @return 0 if no samples have been set else the bucket latency
+     */
+    synchronized public double latency()
     {
         if (m_SampleCount == 0)
         {
