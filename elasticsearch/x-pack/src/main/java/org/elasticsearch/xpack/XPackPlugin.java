@@ -28,7 +28,6 @@ import org.elasticsearch.common.inject.multibindings.Multibinder;
 import org.elasticsearch.common.network.NetworkModule;
 import org.elasticsearch.common.settings.Setting;
 import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.common.settings.SettingsModule;
 import org.elasticsearch.env.Environment;
 import org.elasticsearch.index.IndexModule;
 import org.elasticsearch.license.plugin.Licensing;
@@ -37,7 +36,6 @@ import org.elasticsearch.marvel.MonitoringSettings;
 import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.plugins.ScriptPlugin;
 import org.elasticsearch.script.ScriptContext;
-import org.elasticsearch.script.ScriptModule;
 import org.elasticsearch.xpack.security.Security;
 import org.elasticsearch.xpack.security.authc.AuthenticationModule;
 import org.elasticsearch.threadpool.ExecutorBuilder;
@@ -47,8 +45,6 @@ import org.elasticsearch.xpack.action.XPackInfoAction;
 import org.elasticsearch.xpack.action.XPackUsageAction;
 import org.elasticsearch.xpack.common.ScriptServiceProxy;
 import org.elasticsearch.xpack.common.http.HttpClientModule;
-import org.elasticsearch.xpack.common.init.LazyInitializationModule;
-import org.elasticsearch.xpack.common.init.LazyInitializationService;
 import org.elasticsearch.xpack.common.secret.SecretModule;
 import org.elasticsearch.xpack.extensions.XPackExtension;
 import org.elasticsearch.xpack.extensions.XPackExtensionsService;
@@ -147,7 +143,6 @@ public class XPackPlugin extends Plugin implements ScriptPlugin {
     @Override
     public Collection<Module> nodeModules() {
         ArrayList<Module> modules = new ArrayList<>();
-        modules.add(new LazyInitializationModule());
         modules.add(new ClockModule());
         modules.addAll(notification.nodeModules());
         modules.addAll(licensing.nodeModules());
@@ -167,10 +162,6 @@ public class XPackPlugin extends Plugin implements ScriptPlugin {
     @Override
     public Collection<Class<? extends LifecycleComponent>> nodeServices() {
         ArrayList<Class<? extends LifecycleComponent>> services = new ArrayList<>();
-        // the initialization service must be first in the list
-        // as other services may depend on one of the initialized
-        // constructs
-        services.add(LazyInitializationService.class);
         services.addAll(notification.nodeServices());
         services.addAll(licensing.nodeServices());
         services.addAll(security.nodeServices());
@@ -262,11 +253,6 @@ public class XPackPlugin extends Plugin implements ScriptPlugin {
     public void onIndexModule(IndexModule module) {
         security.onIndexModule(module);
         graph.onIndexModule(module);
-    }
-
-    public void onModule(LazyInitializationModule module) {
-        monitoring.onModule(module);
-        watcher.onModule(module);
     }
 
     public static void bindFeatureSet(Binder binder, Class<? extends XPackFeatureSet> featureSet) {
