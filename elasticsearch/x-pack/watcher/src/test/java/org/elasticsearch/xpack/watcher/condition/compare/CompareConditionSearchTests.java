@@ -46,7 +46,7 @@ import static org.mockito.Mockito.when;
 public class CompareConditionSearchTests extends AbstractWatcherIntegrationTestCase {
 
     @Override
-    protected boolean enableShield() {
+    protected boolean enableSecurity() {
         return true;
     }
 

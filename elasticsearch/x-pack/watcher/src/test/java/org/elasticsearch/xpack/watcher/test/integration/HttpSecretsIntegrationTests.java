@@ -96,7 +96,7 @@ public class HttpSecretsIntegrationTests extends AbstractWatcherIntegrationTestC
     @Override
     protected Settings nodeSettings(int nodeOrdinal) {
         if (encryptSensitiveData == null) {
-            encryptSensitiveData = shieldEnabled() && randomBoolean();
+            encryptSensitiveData = securityEnabled() && randomBoolean();
         }
         if (encryptSensitiveData) {
             return Settings.builder()
@@ -119,7 +119,7 @@ public class HttpSecretsIntegrationTests extends AbstractWatcherIntegrationTestC
                         .addAction("_logging", loggingAction("executed")))
                         .get();
 
-        // verifying the basic auth password is stored encrypted in the index when shield
+        // verifying the basic auth password is stored encrypted in the index when security
         // is enabled, and when it's not enabled, it's stored in plain text
         GetResponse response = client().prepareGet(WatchStore.INDEX, WatchStore.DOC_TYPE, "_id").get();
         assertThat(response, notNullValue());
@@ -127,7 +127,7 @@ public class HttpSecretsIntegrationTests extends AbstractWatcherIntegrationTestC
         Map<String, Object> source = response.getSource();
         Object value = XContentMapValues.extractValue("input.http.request.auth.basic.password", source);
         assertThat(value, notNullValue());
-        if (shieldEnabled() && encryptSensitiveData) {
+        if (securityEnabled() && encryptSensitiveData) {
             assertThat(value, not(is((Object) PASSWORD)));
             SecretService secretService = getInstanceFromMaster(SecretService.class);
             assertThat(secretService, instanceOf(SecretService.Secure.class));
@@ -135,7 +135,7 @@ public class HttpSecretsIntegrationTests extends AbstractWatcherIntegrationTestC
         } else {
             assertThat(value, is((Object) PASSWORD));
             SecretService secretService = getInstanceFromMaster(SecretService.class);
-            if (shieldEnabled()) {
+            if (securityEnabled()) {
                 assertThat(secretService, instanceOf(SecretService.Secure.class));
             } else {
                 assertThat(secretService, instanceOf(SecretService.Insecure.class));
@@ -190,7 +190,7 @@ public class HttpSecretsIntegrationTests extends AbstractWatcherIntegrationTestC
                                 .auth(new BasicAuth(USERNAME, PASSWORD.toCharArray())))))
                         .get();
 
-        // verifying the basic auth password is stored encrypted in the index when shield
+        // verifying the basic auth password is stored encrypted in the index when security
         // is enabled, when it's not enabled, the the passowrd should be stored in plain text
         GetResponse response = client().prepareGet(WatchStore.INDEX, WatchStore.DOC_TYPE, "_id").get();
         assertThat(response, notNullValue());
@@ -199,7 +199,7 @@ public class HttpSecretsIntegrationTests extends AbstractWatcherIntegrationTestC
         Object value = XContentMapValues.extractValue("actions._webhook.webhook.auth.basic.password", source);
         assertThat(value, notNullValue());
 
-        if (shieldEnabled() && encryptSensitiveData) {
+        if (securityEnabled() && encryptSensitiveData) {
             assertThat(value, not(is((Object) PASSWORD)));
             SecretService secretService = getInstanceFromMaster(SecretService.class);
             assertThat(secretService, instanceOf(SecretService.Secure.class));
@@ -207,7 +207,7 @@ public class HttpSecretsIntegrationTests extends AbstractWatcherIntegrationTestC
         } else {
             assertThat(value, is((Object) PASSWORD));
             SecretService secretService = getInstanceFromMaster(SecretService.class);
-            if (shieldEnabled()) {
+            if (securityEnabled()) {
                 assertThat(secretService, instanceOf(SecretService.Secure.class));
             } else {
                 assertThat(secretService, instanceOf(SecretService.Insecure.class));

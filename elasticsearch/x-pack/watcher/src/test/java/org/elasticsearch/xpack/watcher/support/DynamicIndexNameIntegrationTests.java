@@ -50,7 +50,7 @@ public class DynamicIndexNameIntegrationTests extends AbstractWatcherIntegration
     }
 
     @Override
-    protected boolean enableShield() {
+    protected boolean enableSecurity() {
         return false; // reduce noise
     }
 

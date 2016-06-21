@@ -82,9 +82,8 @@ public class ChainInputTests extends ESTestCase {
         factories.put("simple", new SimpleInputFactory(Settings.EMPTY));
 
         // hackedy hack...
-        InputRegistry inputRegistry = new InputRegistry(factories);
-        ChainInputFactory chainInputFactory = new ChainInputFactory(Settings.EMPTY);
-        chainInputFactory.init(inputRegistry);
+        InputRegistry inputRegistry = new InputRegistry(Settings.EMPTY, factories);
+        ChainInputFactory chainInputFactory = new ChainInputFactory(Settings.EMPTY, inputRegistry);
         factories.put("chain", chainInputFactory);
 
         XContentBuilder builder = jsonBuilder().startObject().startArray("inputs")
@@ -135,9 +134,8 @@ public class ChainInputTests extends ESTestCase {
         Map<String, InputFactory> factories = new HashMap<>();
         factories.put("simple", new SimpleInputFactory(Settings.EMPTY));
 
-        InputRegistry inputRegistry = new InputRegistry(factories);
-        ChainInputFactory chainInputFactory = new ChainInputFactory(Settings.EMPTY);
-        chainInputFactory.init(inputRegistry);
+        InputRegistry inputRegistry = new InputRegistry(Settings.EMPTY, factories);
+        ChainInputFactory chainInputFactory = new ChainInputFactory(Settings.EMPTY, inputRegistry);
         factories.put("chain", chainInputFactory);
 
         XContentParser parser = XContentFactory.xContent(builder.bytes()).createParser(builder.bytes());
