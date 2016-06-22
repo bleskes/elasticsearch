@@ -29,8 +29,6 @@ package com.prelert.rs.resources;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.Inet4Address;
-import java.net.UnknownHostException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -40,8 +38,6 @@ import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.Executors;
@@ -52,7 +48,9 @@ import javax.ws.rs.core.Application;
 
 import org.apache.log4j.Logger;
 
+import com.prelert.distributed.DistributedEngineApiHosts;
 import com.prelert.distributed.EngineApiHosts;
+import com.prelert.distributed.LocalEngineApiHosts;
 import com.prelert.job.alert.manager.AlertManager;
 import com.prelert.job.logging.DefaultJobLoggerFactory;
 import com.prelert.job.logging.JobLoggerFactory;
@@ -158,7 +156,7 @@ public class PrelertWebApp extends Application
     private AlertManager m_AlertManager;
     private ServerInfoFactory m_ServerInfo;
     private JobDataReader m_JobDataReader;
-    private EngineApiHosts m_EngineHosts;
+    private EngineApiHosts m_EngineJobsHosts;
 
 
     private ScheduledExecutorService m_ServerStatsSchedule;
@@ -180,16 +178,6 @@ public class PrelertWebApp extends Application
         ElasticsearchFactory esFactory = createPersistenceFactory();
         JobProvider jobProvider = esFactory.newJobProvider();
 
-        m_EngineHosts = () -> {try
-                        {
-                            return Arrays.asList(Inet4Address.getLocalHost().getHostName());
-                        }
-                        catch (UnknownHostException e)
-                        {
-                            LOGGER.error("Cannot determine local hostname", e);
-                            return Collections.emptyList();
-                        }
-        };
 
         m_JobManager = createJobManager(jobProvider, esFactory,
                 new DefaultJobLoggerFactory(ProcessCtrl.LOG_DIR));
@@ -206,7 +194,7 @@ public class PrelertWebApp extends Application
         m_Singletons.add(m_AlertManager);
         m_Singletons.add(m_ServerInfo);
         m_Singletons.add(m_JobDataReader);
-        m_Singletons.add(m_EngineHosts);
+        m_Singletons.add(m_EngineJobsHosts);
 
         m_ShutdownThreadBuilder.addTask(m_JobManager);
         // The job provider must be the last shutdown task, as earlier shutdown
@@ -284,28 +272,39 @@ public class PrelertWebApp extends Application
         ActionGuardian<ScheduledAction> schedulerActionGuardian =
                             new NoneActionGuardian<>(ScheduledAction.STOP);
 
-        if (PrelertSettings.isSet(ZOOKEEPER_CONNECTION_PROP))
+        boolean useZooKeeper = PrelertSettings.isSet(ZOOKEEPER_CONNECTION_PROP);
+        if (useZooKeeper)
         {
             String connectionString = PrelertSettings.getSettingOrDefault(ZOOKEEPER_CONNECTION_PROP, "");
 
             LOGGER.info("Using ZooKeeper server on " + connectionString);
 
-            processActionGuardian = new LocalActionGuardian<>(Action.startingState(),
-                       new ZooKeeperActionGuardian<>(Action.startingState(), connectionString));
-            ZooKeeperActionGuardian<ScheduledAction> zkGuard =
-                    new ZooKeeperActionGuardian<>(ScheduledAction.startingState(), connectionString);
-            schedulerActionGuardian = zkGuard;
-            m_EngineHosts = zkGuard;
+            ZooKeeperActionGuardian<Action> zKActionGuardian =
+                        new ZooKeeperActionGuardian<>(Action.startingState(), connectionString);
+            processActionGuardian.setNextGuardian(zKActionGuardian);
 
-            m_ShutdownThreadBuilder.addTask(() -> zkGuard.close());
+            ZooKeeperActionGuardian<ScheduledAction> zkSchedulerGuardian =
+                    new ZooKeeperActionGuardian<>(ScheduledAction.startingState(), connectionString);
+            schedulerActionGuardian = zkSchedulerGuardian;
+
+            m_EngineJobsHosts = new DistributedEngineApiHosts(zKActionGuardian, zkSchedulerGuardian);
+
+            m_ShutdownThreadBuilder.addTask(() -> zkSchedulerGuardian.close());
         }
 
         PasswordManager passwordManager = createPasswordManager();
-        return new JobManager(jobProvider,
+        JobManager manager = new JobManager(jobProvider,
                 createProcessManager(jobProvider, esFactory, jobLoggerFactory),
                 new DataExtractorFactoryImpl(passwordManager), jobLoggerFactory,
                 passwordManager, esFactory.newJobDataDeleterFactory(),
                 processActionGuardian, schedulerActionGuardian);
+
+        if (!useZooKeeper)
+        {
+            m_EngineJobsHosts = new LocalEngineApiHosts(manager);
+        }
+
+        return manager;
     }
 
     private PasswordManager createPasswordManager()

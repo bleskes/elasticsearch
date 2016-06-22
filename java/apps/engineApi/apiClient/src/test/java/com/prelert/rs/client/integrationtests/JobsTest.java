@@ -597,7 +597,7 @@ public class JobsTest implements Closeable
      * Slowly upload the contents of <code>dataFile</code> 1024 bytes at a
      * time to the server. Starts a background thread to write the data
      * and sleeps between each 1024B upload.
-     * </br>
+     * <br>
      * This is to show that a slow streaming server works the
      * same as a faster local server.
      *

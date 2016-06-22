@@ -24,43 +24,55 @@
  *                                                          *
  *                                                          *
  ************************************************************/
-
 package com.prelert.distributed;
 
 import java.util.List;
 import java.util.Map;
 
-public interface EngineApiHosts
+import javax.ws.rs.core.Feature;
+import javax.ws.rs.core.FeatureContext;
+
+import com.prelert.job.manager.actions.Action;
+import com.prelert.job.manager.actions.ScheduledAction;
+import com.prelert.job.manager.actions.zookeeper.ZooKeeperActionGuardian;
+
+/**
+ * For distributed systems, get information about the other
+ * nodes in the system and the location of running jobs
+ */
+public class DistributedEngineApiHosts implements EngineApiHosts, Feature
 {
-    /**
-     * Get the list of Engine API hosts participating
-     * in this cluster
-     * @return
-     */
-    List<String> engineApiHosts();
+    private ZooKeeperActionGuardian<Action> m_ZkActionGuard;
+    private ZooKeeperActionGuardian<ScheduledAction> m_ZkSchedulerGuard;
 
-    /**
-     * Map of the job ID to Engine API host it is running on.
-     * Only active jobs are present in the result map
-     * @return active job -> host
-     */
-    Map<String, String> hostByActiveJob();
-
-    /**
-     * Map of the scheduled job ID to Engine API host it is running on.
-     * Only scheduled jobs are present in the result map
-     * @return scheduled job -> host
-     */
-    Map<String, String> hostByScheduledJob();
-
-    /**
-     * Job ID to Engine host map for ALL jobs scheduled and active
-     * @return
-     */
-    default Map<String, String> hostByJob()
+    public DistributedEngineApiHosts(ZooKeeperActionGuardian<Action> actionGuard,
+                                    ZooKeeperActionGuardian<ScheduledAction> schedulerGuard)
     {
-        Map<String, String> result = hostByActiveJob();
-        result.putAll(hostByScheduledJob());
-        return result;
+        m_ZkActionGuard = actionGuard;
+        m_ZkSchedulerGuard = schedulerGuard;
+    }
+
+    @Override
+    public List<String> engineApiHosts()
+    {
+        return m_ZkActionGuard.engineApiHosts();
+    }
+
+    @Override
+    public Map<String, String> hostByActiveJob()
+    {
+        return m_ZkActionGuard.hostByJob();
+    }
+
+    @Override
+    public Map<String, String> hostByScheduledJob()
+    {
+        return m_ZkSchedulerGuard.hostByJob();
+    }
+
+    @Override
+    public boolean configure(FeatureContext context)
+    {
+        return false;
     }
 }

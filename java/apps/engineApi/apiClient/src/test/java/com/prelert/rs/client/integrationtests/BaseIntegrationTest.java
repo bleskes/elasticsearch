@@ -38,11 +38,17 @@ import org.apache.log4j.PatternLayout;
 import com.prelert.job.JobDetails;
 import com.prelert.job.JobStatus;
 import com.prelert.rs.client.EngineApiClient;
+import com.prelert.rs.client.datauploader.CsvDataRunner;
 import com.prelert.rs.data.SingleDocument;
 
 /**
- * Base Integration test class containing the common funtions.
- * Sets up the logger and the web service client
+ * Base Integration test class containing the common functions for
+ * closing and deleting jobs and sets up the logger and web service client.
+ * <br>
+ * Implementing classes must implement {@linkplain #runTest()}
+ * <br>
+ * Use the {@linkplain #startDataUploader(String)} method to create a job
+ * and start uploading data to it in a background thread
  */
 public abstract class BaseIntegrationTest implements AutoCloseable
 {
@@ -55,6 +61,8 @@ public abstract class BaseIntegrationTest implements AutoCloseable
     protected Logger m_Logger;
     protected String m_BaseUrl;
     protected EngineApiClient m_EngineApiClient;
+
+    protected Thread m_DataUploaderThread;
 
     protected abstract void runTest() throws IOException;
 
@@ -115,6 +123,14 @@ public abstract class BaseIntegrationTest implements AutoCloseable
         if (condition == false)
         {
             throw new IllegalStateException();
+        }
+    }
+
+    public void test(Object expected, Object actual)
+    {
+        if (!expected.equals(actual))
+        {
+            throw new IllegalStateException(String.format("Expected %s, got %s", expected, actual));
         }
     }
 
@@ -215,6 +231,63 @@ public abstract class BaseIntegrationTest implements AutoCloseable
             {
                 m_Logger.error("Error deleting job " + m_BaseUrl + "/" + jobId);
             }
+        }
+    }
+
+    public Logger getLogger()
+    {
+        return m_Logger;
+    }
+
+    /**
+     * Does not return the data runner until it has started uploading
+     *
+     * @param url
+     * @return
+     * @throws IOException
+     */
+    protected CsvDataRunner startDataUploader(String url) throws IOException
+    {
+        CsvDataRunner jobRunner = new CsvDataRunner(url);
+        jobRunner.createJob();
+
+        m_DataUploaderThread = new Thread(jobRunner);
+        m_DataUploaderThread.start();
+
+
+        // wait for the runner thread to start the upload
+        synchronized (jobRunner)
+        {
+            try
+            {
+                jobRunner.wait();
+            }
+            catch (InterruptedException e1)
+            {
+                m_Logger.error(e1);
+            }
+        }
+
+        return jobRunner;
+    }
+
+    /**
+     * Stop the uploader and wait for the thread to join.
+     *
+     * @param dataUploader
+     */
+    protected void stopDataUploatedAndJoinThread(CsvDataRunner dataUploader)
+    {
+        // stop uploader and join threads - this doesn't close the job
+        dataUploader.cancel();
+        try
+        {
+            m_Logger.info("Waiting on upload thread to finish");
+            m_DataUploaderThread.join();
+        }
+        catch (InterruptedException e)
+        {
+            m_Logger.error("Interupted joining test thread", e);
         }
     }
 }

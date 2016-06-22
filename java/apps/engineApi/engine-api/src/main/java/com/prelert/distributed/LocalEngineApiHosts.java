@@ -27,40 +27,78 @@
 
 package com.prelert.distributed;
 
+import java.net.Inet4Address;
+import java.net.UnknownHostException;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public interface EngineApiHosts
+import org.apache.log4j.Logger;
+
+import com.prelert.job.manager.JobManager;
+
+/**
+ * In non-distributed systems there is only one host - the local machine
+ * and all jobs run on this host.
+ */
+public class LocalEngineApiHosts implements EngineApiHosts
 {
-    /**
-     * Get the list of Engine API hosts participating
-     * in this cluster
-     * @return
-     */
-    List<String> engineApiHosts();
+    private static final Logger LOGGER = Logger.getLogger(LocalEngineApiHosts.class);
 
-    /**
-     * Map of the job ID to Engine API host it is running on.
-     * Only active jobs are present in the result map
-     * @return active job -> host
-     */
-    Map<String, String> hostByActiveJob();
+    private JobManager m_JobManager;
+    private String m_Host;
 
-    /**
-     * Map of the scheduled job ID to Engine API host it is running on.
-     * Only scheduled jobs are present in the result map
-     * @return scheduled job -> host
-     */
-    Map<String, String> hostByScheduledJob();
-
-    /**
-     * Job ID to Engine host map for ALL jobs scheduled and active
-     * @return
-     */
-    default Map<String, String> hostByJob()
+    public LocalEngineApiHosts(JobManager jobManager)
     {
-        Map<String, String> result = hostByActiveJob();
-        result.putAll(hostByScheduledJob());
+        m_JobManager = jobManager;
+        m_Host = localHostname();
+    }
+
+    private String localHostname()
+    {
+        try
+        {
+            return Inet4Address.getLocalHost().getHostName();
+        }
+        catch (UnknownHostException e)
+        {
+            LOGGER.error("Cannot determine local hostname", e);
+            return "localhost";
+        }
+    }
+
+    @Override
+    public List<String> engineApiHosts()
+    {
+        return Arrays.asList(m_Host);
+    }
+
+    @Override
+    public Map<String, String> hostByActiveJob()
+    {
+        Map<String, String> result = new HashMap<>();
+
+        List<String> activeJobs = m_JobManager.getActiveJobIds();
+        for (String jobId : activeJobs)
+        {
+            result.put(jobId, m_Host);
+        }
+
+        return result;
+    }
+
+    @Override
+    public Map<String, String> hostByScheduledJob()
+    {
+        Map<String, String> result = new HashMap<>();
+
+        List<String> scheduledJobs = m_JobManager.getStartedScheduledJobs();
+        for (String jobId : scheduledJobs)
+        {
+            result.put(jobId, m_Host);
+        }
+
         return result;
     }
 }

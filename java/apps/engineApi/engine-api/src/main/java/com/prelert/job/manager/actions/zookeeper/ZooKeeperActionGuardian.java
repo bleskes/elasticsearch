@@ -27,7 +27,6 @@
 package com.prelert.job.manager.actions.zookeeper;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.prelert.distributed.EngineApiHosts;
 import com.prelert.job.exceptions.JobInUseException;
 import com.prelert.job.manager.actions.ActionState;
 import com.prelert.job.manager.actions.ActionGuardian;
@@ -37,13 +36,11 @@ import java.net.Inet4Address;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
-
-import javax.ws.rs.core.Feature;
-import javax.ws.rs.core.FeatureContext;
 
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
@@ -94,13 +91,13 @@ import org.apache.zookeeper.ZooDefs.Ids;
  * read as long as the write lock isn't acquired
  */
 public class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
-                    extends ActionGuardian<T> implements AutoCloseable, EngineApiHosts, Feature
+                    extends ActionGuardian<T> implements AutoCloseable
 {
     private static final Logger LOGGER = Logger.getLogger(ZooKeeperActionGuardian.class);
 
     private static final String BASE_DIR = "/prelert";
     private static final String ENGINE_API_DIR = "/engineApi";
-    public static final String LOCK_PATH_PREFIX = BASE_DIR + ENGINE_API_DIR + "/jobs/";
+    public static final String JOBS_PATH = BASE_DIR + ENGINE_API_DIR + "/jobs";
     public static final String NODES_PATH = BASE_DIR + ENGINE_API_DIR + "/nodes";
 
     private static final String HOST_ACTION_SEPARATOR = "-";
@@ -191,8 +188,13 @@ public class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
     @Override
     public T currentAction(String jobId)
     {
+        return currentState(jobId).m_Action;
+    }
+
+    private HostnameAction currentState(String jobId)
+    {
         InterProcessReadWriteLock descriptionReadWriteLock = new InterProcessReadWriteLock(m_Client,
-                                                    descriptionLockPath(jobId));
+                descriptionLockPath(jobId));
 
         InterProcessMutex descriptionReadLock = descriptionReadWriteLock.readLock();
 
@@ -201,7 +203,7 @@ public class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
         {
             try
             {
-                return getHostActionOfLockedJob(jobId).m_Action;
+                return getHostActionOfLockedJob(jobId);
             }
             finally
             {
@@ -209,7 +211,7 @@ public class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
             }
         }
 
-        return m_NoneAction;
+        return new HostnameAction("", m_NoneAction);
     }
 
     /**
@@ -525,17 +527,17 @@ public class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
 
     private String actionLockPath(String jobId)
     {
-        return LOCK_PATH_PREFIX + jobId + "/" + m_NoneAction.typename();
+        return JOBS_PATH + "/" + jobId + "/" + m_NoneAction.typename();
     }
 
     private String descriptionLockPath(String jobId)
     {
-        return LOCK_PATH_PREFIX + jobId + "/" + m_NoneAction.typename() + "/description--lock" ;
+        return JOBS_PATH + "/" + jobId + "/" + m_NoneAction.typename() + "/description--lock" ;
     }
 
     private String descriptionPath(String jobId)
     {
-        return LOCK_PATH_PREFIX + jobId + "/" + m_NoneAction.typename() + "/description";
+        return JOBS_PATH + "/" + jobId + "/" + m_NoneAction.typename() + "/description";
     }
 
     @VisibleForTesting
@@ -608,7 +610,6 @@ public class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
         }
     }
 
-    @Override
     public List<String> engineApiHosts()
     {
         try
@@ -622,9 +623,33 @@ public class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
         }
     }
 
-    @Override
-    public boolean configure(FeatureContext context)
+    private List<String> jobs()
     {
-        return false;
+        try
+        {
+            return m_Client.getChildren().forPath(JOBS_PATH);
+        }
+        catch (Exception e)
+        {
+            LOGGER.error("Error reading Engine API nodes", e);
+            return Collections.emptyList();
+        }
+    }
+
+    public Map<String, String> hostByJob()
+    {
+        Map<String, String> hostsByJobs = new HashMap<>();
+
+        List<String> jobs = jobs();
+        for (String jobId : jobs)
+        {
+            HostnameAction ha = currentState(jobId);
+            if (ha.m_Action != m_NoneAction)
+            {
+                hostsByJobs.put(jobId, ha.m_Hostname);
+            }
+        }
+
+        return hostsByJobs;
     }
 }

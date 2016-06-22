@@ -32,7 +32,9 @@ import static org.junit.Assert.*;
 import java.io.IOException;
 import java.net.Inet4Address;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
@@ -605,7 +607,7 @@ public class ZooKeeperActionGuardianIT
     @Test
     public void testEphemeralDescriptionNodeIsRemovedAfterClosingClient() throws Exception
     {
-        String path = ZooKeeperActionGuardian.LOCK_PATH_PREFIX + "foo/Action/description";
+        String path = ZooKeeperActionGuardian.JOBS_PATH + "/foo/Action/description";
 
         // now the ephemeral description node should be gone
         try (CuratorFramework client = CuratorFrameworkFactory.newClient(CONNECTION_STRING,
@@ -626,6 +628,50 @@ public class ZooKeeperActionGuardianIT
 
             Stat stat = client.checkExists().forPath(path);
             assertNull(stat);
+        }
+    }
+
+    @Test
+    public void testHostByJob() throws Exception
+    {
+        List<AutoCloseable> toClose = new ArrayList<>();
+        try
+        {
+
+            ZooKeeperActionGuardian<Action> fooActionGuardian =
+                    new ZooKeeperActionGuardian<>(Action.CLOSED, CONNECTION_STRING);
+            toClose.add(fooActionGuardian);
+
+            ZooKeeperActionGuardian<Action>.ActionTicket fooTicket =
+                    fooActionGuardian.tryAcquiringAction("foo", Action.WRITING);
+            toClose.add(0, fooTicket);
+
+
+            ZooKeeperActionGuardian<Action> barActionGuardian =
+                    new ZooKeeperActionGuardian<>(Action.CLOSED, CONNECTION_STRING);
+            toClose.add(barActionGuardian);
+
+
+            ZooKeeperActionGuardian<Action>.ActionTicket barTicket =
+                    barActionGuardian.tryAcquiringAction("bar", Action.WRITING);
+            toClose.add(1, barTicket);
+
+            Map<String, String> hostByJob = barActionGuardian.hostByJob();
+            assertEquals(2, hostByJob.size());
+            assertTrue(hostByJob.containsKey("foo"));
+            assertTrue(hostByJob.containsKey("bar"));
+
+
+            String hostname = Inet4Address.getLocalHost().getHostName();
+            assertEquals(hostname, hostByJob.get("foo"));
+            assertEquals(hostname, hostByJob.get("bar"));
+        }
+        finally
+        {
+            for (AutoCloseable closable : toClose)
+            {
+                closable.close();
+            }
         }
     }
 

@@ -25,15 +25,23 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.rs.client.integrationtests;
+package com.prelert.rs.client.integrationtests.distributed;
 
 import java.io.IOException;
 
 import com.prelert.job.JobSchedulerStatus;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.rs.client.EngineApiClient;
+import com.prelert.rs.client.integrationtests.BaseScheduledJobTest;
 import com.prelert.rs.data.ApiError;
 
+/**
+ * Tests that a scheduled job cannot be stopped from another node
+ * in a distributed system.
+ * <br>
+ * Populates Elasticsearch with data, starts the scheduled job then
+ * checks various actions cannot be performed.
+ */
 public class DistributedScheduledJobTest extends BaseScheduledJobTest
 {
     private String [] m_EngineApiUrls;

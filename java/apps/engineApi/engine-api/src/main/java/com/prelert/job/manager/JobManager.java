@@ -795,6 +795,14 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
         return new String(output.toByteArray(), StandardCharsets.UTF_8);
     }
 
+    /**
+     * Active and scheduled jobs count towards the number of running
+     * jobs and detectors
+     *
+     * @param job
+     * @throws LicenseViolationException
+     * @throws TooManyJobsException
+     */
     private void checkLicenceViolationsOnReactivate(JobDetails job)
     throws LicenseViolationException, TooManyJobsException
     {
@@ -803,11 +811,13 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
             return;
         }
 
-        Set<String> activeJobIds = getActiveJobIds();
-        int numberOfActiveDetectors = numberOfActiveDetectors(activeJobIds);
+        Set<String> jobIds = new HashSet<>(getActiveJobIds());
+        jobIds.addAll(getStartedScheduledJobs());
+
+        int numberOfActiveDetectors = numberOfActiveDetectors(jobIds);
         int numDetectorsInJob = job.getAnalysisConfig().getDetectors().size();
         m_LicenceChecker.checkLicenceViolationsOnReactivate(job.getId(),
-                                                            activeJobIds.size(),
+                                                            jobIds.size(),
                                                             numDetectorsInJob,
                                                             numberOfActiveDetectors);
     }
@@ -840,14 +850,29 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
     }
 
     /**
-     * Get the job IDs of jobs that are running or have a started scheduler.
+     * Get the job IDs of jobs that are active i.e. have a running process
      * @return the job IDs of active jobs
      */
-    public Set<String> getActiveJobIds()
+    public List<String> getActiveJobIds()
     {
-        Set<String> activeJobs = new HashSet<String>(m_ProcessManager.runningJobs());
-        activeJobs.addAll(getStartedScheduledJobs());
-        return activeJobs;
+        return m_ProcessManager.runningJobs();
+    }
+
+    /**
+     * Get the jobs that have a started scheduler
+     * @return
+     */
+    public List<String> getStartedScheduledJobs()
+    {
+        List<String> startedScheduledJobs = new ArrayList<>();
+        for (JobScheduler scheduler : m_ScheduledJobs.values())
+        {
+            if (scheduler.isStarted())
+            {
+                startedScheduledJobs.add(scheduler.getJobId());
+            }
+        }
+        return startedScheduledJobs;
     }
 
     /**
@@ -870,23 +895,6 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
     public double jobBucketLatency(String jobId)
     {
         return m_ProcessManager.jobBucketLatency(jobId);
-    }
-
-    /**
-     * Get the jobs that have a started scheduler
-     * @return
-     */
-    public List<String> getStartedScheduledJobs()
-    {
-        List<String> startedScheduledJobs = new ArrayList<>();
-        for (JobScheduler scheduler : m_ScheduledJobs.values())
-        {
-            if (scheduler.isStarted())
-            {
-                startedScheduledJobs.add(scheduler.getJobId());
-            }
-        }
-        return startedScheduledJobs;
     }
 
     private void tryFinishingJob(String jobId) throws JobInUseException
@@ -1294,7 +1302,7 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
 
     public List<JobDetails> getActiveJobs()
     {
-        Set<String> jobIds = getActiveJobIds();
+        List<String> jobIds = getActiveJobIds();
         List<JobDetails> activeJobs = new ArrayList<>();
         for (String id : jobIds)
         {

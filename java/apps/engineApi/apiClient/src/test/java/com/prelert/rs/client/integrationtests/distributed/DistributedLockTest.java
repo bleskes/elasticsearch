@@ -25,7 +25,7 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.rs.client.integrationtests;
+package com.prelert.rs.client.integrationtests.distributed;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -44,6 +44,7 @@ import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.rs.client.EngineApiClient;
 import com.prelert.rs.client.datauploader.ConcurrentActionClient;
 import com.prelert.rs.client.datauploader.CsvDataRunner;
+import com.prelert.rs.client.integrationtests.BaseIntegrationTest;
 import com.prelert.rs.data.ApiError;
 import com.prelert.rs.data.MultiDataPostResult;
 
@@ -64,8 +65,6 @@ import com.prelert.rs.data.MultiDataPostResult;
 public class DistributedLockTest extends BaseIntegrationTest
 {
     private String [] m_EngineApiUrls;
-
-    private Thread m_DataUploaderThread;
 
     private CountDownLatch m_CountDownLatch;
 
@@ -96,17 +95,7 @@ public class DistributedLockTest extends BaseIntegrationTest
         }
         finally
         {
-            // stop uploader and join threads - this doesn't close the job
-            dataUploader.cancel();
-            try
-            {
-                m_Logger.info("Waiting on upload thread to finish");
-                m_DataUploaderThread.join();
-            }
-            catch (InterruptedException e)
-            {
-                m_Logger.error("Interupted joining test thread", e);
-            }
+            stopDataUploatedAndJoinThread(dataUploader);
         }
 
         // job should be sleeping now
@@ -202,38 +191,6 @@ public class DistributedLockTest extends BaseIntegrationTest
 
             }
         }
-    }
-
-    /**
-     * Does not return the data runner until it has started uploading
-     *
-     * @param url
-     * @return
-     * @throws IOException
-     */
-    private CsvDataRunner startDataUploader(String url) throws IOException
-    {
-        CsvDataRunner jobRunner = new CsvDataRunner(url);
-        jobRunner.createJob();
-
-        m_DataUploaderThread = new Thread(jobRunner);
-        m_DataUploaderThread.start();
-
-
-        // wait for the runner thread to start the upload
-        synchronized (jobRunner)
-        {
-            try
-            {
-                jobRunner.wait();
-            }
-            catch (InterruptedException e1)
-            {
-                m_Logger.error(e1);
-            }
-        }
-
-        return jobRunner;
     }
 
     public static void main(String[] args) throws IOException

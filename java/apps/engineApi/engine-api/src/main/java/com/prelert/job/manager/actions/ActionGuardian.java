@@ -44,7 +44,7 @@ import com.prelert.job.exceptions.JobInUseException;
  */
 public abstract class ActionGuardian< T extends Enum<T> & ActionState<T>>
 {
-    protected final Optional<ActionGuardian<T>> m_NextGuardian;
+    protected Optional<ActionGuardian<T>> m_NextGuardian;
 
     protected final T m_NoneAction;
 
@@ -73,6 +73,15 @@ public abstract class ActionGuardian< T extends Enum<T> & ActionState<T>>
     public ActionGuardian(T noneAction, ActionGuardian<T> guardian)
     {
         m_NoneAction = noneAction;
+        m_NextGuardian = Optional.of(guardian);
+    }
+
+    /**
+     * Set the next guardian in the chain
+     * @param guardian
+     */
+    public void setNextGuardian(ActionGuardian<T> guardian)
+    {
         m_NextGuardian = Optional.of(guardian);
     }
 

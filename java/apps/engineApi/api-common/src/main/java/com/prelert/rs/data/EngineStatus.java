@@ -55,6 +55,7 @@ public class EngineStatus
     private Long m_HeapMemUsage;
     private Map<String, String> m_DbConnection;
     private List<String> m_EngineHosts;
+    private Map<String, String> m_HostByJob;
 
     @JsonInclude(Include.NON_NULL)
     public static class JobStats
@@ -201,6 +202,20 @@ public class EngineStatus
     public void setEngineHosts(List<String> hosts)
     {
         m_EngineHosts = hosts;
+    }
+
+    /**
+     * Map of Job ID to the host it is running on
+     * @return
+     */
+    public Map<String, String> getHostByJob()
+    {
+        return m_HostByJob;
+    }
+
+    public void setHostByJob(Map<String, String> hostByJob)
+    {
+        this.m_HostByJob = hostByJob;
     }
 
     /**

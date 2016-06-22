@@ -73,6 +73,7 @@ import com.prelert.job.results.CategoryDefinition;
 import com.prelert.job.transform.TransformConfig;
 import com.prelert.rs.data.ApiError;
 import com.prelert.rs.data.DataPostResponse;
+import com.prelert.rs.data.EngineStatus;
 import com.prelert.rs.data.MultiDataPostResult;
 import com.prelert.rs.data.Pagination;
 import com.prelert.rs.data.SingleDocument;
@@ -714,6 +715,23 @@ public class EngineApiClient implements Closeable
         LOGGER.debug("Stop scheduler: " + url);
         return executeRequest(m_HttpClient.newRequest(url).method(HttpMethod.POST),
                 "stopping scheduler");
+    }
+
+    /**
+     * Get the Engine's status document.
+     *
+     * @return
+     * @throws IOException
+     */
+    public EngineStatus status() throws IOException
+    {
+        String url = m_BaseUrl + "/status";
+        LOGGER.info("GET status: " + url);
+
+        Request request = m_HttpClient.newRequest(url).method(HttpMethod.GET);
+
+        ContentResponse response = executeRequest(request);
+        return m_JsonMapper.readValue(response.getContentAsString(), new TypeReference<EngineStatus>() {} );
     }
 
     /**

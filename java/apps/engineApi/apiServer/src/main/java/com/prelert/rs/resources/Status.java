@@ -95,6 +95,7 @@ public class Status extends ResourceWithJobManager
         status.setActiveJobs(memoryStats);
         status.setDbConnection(datastoreConnection());
         status.setEngineHosts(engineHosts().engineApiHosts());
+        status.setHostByJob(engineHosts().hostByJob());
 
         return status;
     }
