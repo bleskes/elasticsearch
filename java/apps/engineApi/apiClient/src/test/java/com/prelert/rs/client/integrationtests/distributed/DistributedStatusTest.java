@@ -74,8 +74,7 @@ public class DistributedStatusTest extends BaseIntegrationTest
     private void testEngineStatus(String [] engineUrls, String jobId, String jobHost)
     throws IOException
     {
-        String url = "http://localhost:8080/engine/v2";
-//        for (String url : engineUrls)
+        for (String url : engineUrls)
         {
             try (EngineApiClient client = new EngineApiClient(url))
             {
