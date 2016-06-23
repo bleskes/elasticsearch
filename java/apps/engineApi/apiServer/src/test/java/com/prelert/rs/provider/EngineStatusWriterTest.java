@@ -71,7 +71,7 @@ public class EngineStatusWriterTest
 
         Map<String, EngineStatus.JobStats> memoryStats = new HashMap<>();
         memoryStats.put("Job_1", new EngineStatus.JobStats());
-        memoryStats.put("Job_2", new EngineStatus.JobStats(1l, "OK", 10l, 1.2));
+        memoryStats.put("Job_2", new EngineStatus.JobStats(1l, "OK", 10l));
         status.setActiveJobs(memoryStats);
         EngineStatusWriter writer = new EngineStatusWriter();
 
@@ -95,6 +95,5 @@ public class EngineStatusWriterTest
         assertEquals("OK", out.getActiveJobs().get("Job_2").getMemoryStatus());
         assertEquals(new Long(1), out.getActiveJobs().get("Job_2").getModelBytes());
         assertEquals(new Long(10), out.getActiveJobs().get("Job_2").getUptimeSeconds());
-        assertEquals(new Double(1.2), out.getActiveJobs().get("Job_2").getBucketLatency());
     }
 }

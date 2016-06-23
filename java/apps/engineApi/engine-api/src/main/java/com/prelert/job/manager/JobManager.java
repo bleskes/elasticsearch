@@ -886,17 +886,6 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
         return m_ProcessManager.jobUptimeSeconds(jobId);
     }
 
-    /**
-     * Return the jobs processing latency in terms of buckets
-     *
-     * @param jobId
-     * @return 0 if unknown
-     */
-    public double jobBucketLatency(String jobId)
-    {
-        return m_ProcessManager.jobBucketLatency(jobId);
-    }
-
     private void tryFinishingJob(String jobId) throws JobInUseException
     {
         try

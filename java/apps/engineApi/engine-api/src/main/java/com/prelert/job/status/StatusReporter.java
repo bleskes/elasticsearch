@@ -86,7 +86,6 @@ public class StatusReporter
     private final Logger m_Logger;
     private final JobDataCountsPersister m_DataCountsPersister;
 
-    private ProcessingLatency m_BucketLatency;
     private final AtomicLong m_LastRecordTimeEpochMs;
 
     public StatusReporter(String jobId, UsageReporter usageReporter,
@@ -101,7 +100,6 @@ public class StatusReporter
         m_TotalRecordStats = new DataCounts();
         m_IncrementalRecordStats = new DataCounts();
 
-        m_BucketLatency = new ProcessingLatency(bucketSpan);
         m_LastRecordTimeEpochMs = new AtomicLong();
 
         m_AcceptablePercentDateParseErrors = PrelertSettings.getSettingOrDefault(
@@ -486,23 +484,5 @@ public class StatusReporter
     {
         m_TotalRecordStats.calcProcessedFieldCount(getAnalysedFieldsPerRecord());
         return m_TotalRecordStats;
-    }
-
-    /**
-     * Set the newest bucket result time. Used for calculating latency
-     *
-     * @param bucketTimeEpochSeconds Epoch time stamp of the latest
-     * bucket there has been results for
-     */
-    public void setLastestBucketTime(long bucketTimeEpochSeconds)
-    {
-        m_BucketLatency.addMeasure(m_LastRecordTimeEpochMs.get() / 1000, bucketTimeEpochSeconds);
-
-        m_Logger.debug("Bucket latency = " + m_BucketLatency.latency());
-    }
-
-    public double getBucketLatency()
-    {
-        return m_BucketLatency.latency();
     }
 }

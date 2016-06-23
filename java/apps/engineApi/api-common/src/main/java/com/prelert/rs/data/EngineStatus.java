@@ -63,19 +63,17 @@ public class EngineStatus
         private Long m_ModelBytes;
         private String m_MemoryStatus;
         private Long m_UptimeSeconds;
-        private Double m_Latency;
 
         public JobStats()
         {
             // Default constructor
         }
 
-        public JobStats(Long bytes, String status, Long uptime, Double latency)
+        public JobStats(Long bytes, String status, Long uptime)
         {
             m_ModelBytes = bytes;
             m_MemoryStatus = status;
             m_UptimeSeconds = uptime;
-            m_Latency = latency;
         }
 
         public Long getModelBytes()
@@ -106,16 +104,6 @@ public class EngineStatus
         public void setUptimeSeconds(long uptime)
         {
             m_UptimeSeconds = uptime;
-        }
-
-        public Double getBucketLatency()
-        {
-            return m_Latency;
-        }
-
-        public void setBucketLatency(Double latency)
-        {
-            m_Latency = latency;
         }
     }
 

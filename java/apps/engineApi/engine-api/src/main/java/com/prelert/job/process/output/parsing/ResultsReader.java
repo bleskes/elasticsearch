@@ -29,7 +29,6 @@ package com.prelert.job.process.output.parsing;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.function.Consumer;
 
 import org.apache.log4j.Logger;
 
@@ -54,11 +53,11 @@ public class ResultsReader implements Runnable
     private final JobResultsPersister m_ResultsPersister;
 
     public ResultsReader(Renormaliser renormaliser, JobResultsPersister persister,
-            InputStream stream, Logger logger, Consumer<Long> newBucketDateConsumer)
+            InputStream stream, Logger logger)
     {
         m_Stream = stream;
         m_Logger = logger;
-        m_Parser = new AutoDetectResultsParser(newBucketDateConsumer);
+        m_Parser = new AutoDetectResultsParser();
         m_Renormaliser = renormaliser;
         m_ResultsPersister = persister;
     }

@@ -126,8 +126,7 @@ public class ProcessFactory
                 job.getSchedulerConfig(), new TransformConfigs(job.getTransforms()), logger,
                 sr,
                 m_ResultsReaderFactory.newResultsParser(jobId,
-                                        nativeProcess.getInputStream(), logger,
-                                        l -> sr.setLastestBucketTime(l)),
+                                        nativeProcess.getInputStream(), logger),
                 filesToDelete
                 );
 
