@@ -31,7 +31,6 @@ import org.junit.After;
 import org.junit.BeforeClass;
 
 import static org.hamcrest.Matchers.instanceOf;
-import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 
 /**
