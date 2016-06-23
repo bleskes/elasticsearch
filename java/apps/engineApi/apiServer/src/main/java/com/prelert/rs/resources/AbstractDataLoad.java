@@ -124,7 +124,7 @@ public abstract class AbstractDataLoad extends ResourceWithJobManager
             @DefaultValue("false") @QueryParam(IGNORE_DOWNTIME_PARAM) boolean ignoreDowntime)
     throws IOException
     {
-        LOGGER.debug("Post data to job(s) " + jobId);
+        LOGGER.debug("Post data to job(s) " + jobId + ", " + IGNORE_DOWNTIME_PARAM + "=" + ignoreDowntime);
 
         String [] jobIds = jobId.split(JOB_SEPARATOR);
         MultiDataPostResult result = new MultiDataPostResult();

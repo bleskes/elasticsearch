@@ -39,6 +39,8 @@ import com.prelert.job.manager.actions.zookeeper.ZooKeeperActionGuardian;
 /**
  * For distributed systems, get information about the other
  * nodes in the system and the location of running jobs
+ *
+ * Implements Feature to stop jetty logging an error at startup
  */
 public class DistributedEngineApiHosts implements EngineApiHosts, Feature
 {

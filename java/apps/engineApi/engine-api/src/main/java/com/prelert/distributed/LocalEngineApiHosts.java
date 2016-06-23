@@ -34,6 +34,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.ws.rs.core.Feature;
+import javax.ws.rs.core.FeatureContext;
+
 import org.apache.log4j.Logger;
 
 import com.prelert.job.manager.JobManager;
@@ -41,8 +44,10 @@ import com.prelert.job.manager.JobManager;
 /**
  * In non-distributed systems there is only one host - the local machine
  * and all jobs run on this host.
+ *
+ * Implements Feature to stop jetty logging an error at startup
  */
-public class LocalEngineApiHosts implements EngineApiHosts
+public class LocalEngineApiHosts implements EngineApiHosts, Feature
 {
     private static final Logger LOGGER = Logger.getLogger(LocalEngineApiHosts.class);
 
@@ -100,5 +105,11 @@ public class LocalEngineApiHosts implements EngineApiHosts
         }
 
         return result;
+    }
+
+    @Override
+    public boolean configure(FeatureContext context)
+    {
+        return false;
     }
 }
