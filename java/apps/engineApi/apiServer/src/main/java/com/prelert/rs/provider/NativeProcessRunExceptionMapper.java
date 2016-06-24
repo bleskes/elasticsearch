@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -47,7 +47,10 @@ public class NativeProcessRunExceptionMapper implements ExceptionMapper<NativePr
     public Response toResponse(NativeProcessRunException e)
     {
         ApiError error = new ApiError(e.getErrorCode());
-        error.setCause(e.getCause().toString());
+        if (e.getCause() != null)
+        {
+            error.setCause(e.getCause().toString());
+        }
         error.setMessage(e.getMessage());
 
         return Response.serverError()
