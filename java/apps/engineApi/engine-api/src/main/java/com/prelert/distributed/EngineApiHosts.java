@@ -41,10 +41,10 @@ public interface EngineApiHosts
 
     /**
      * Map of the job ID to Engine API host it is running on.
-     * Only active jobs are present in the result map
-     * @return active job -> host
+     * Only running jobs are present in the result map
+     * @return job -> host
      */
-    Map<String, String> hostByActiveJob();
+    Map<String, String> hostByRunningJob();
 
     /**
      * Map of the scheduled job ID to Engine API host it is running on.
@@ -54,12 +54,12 @@ public interface EngineApiHosts
     Map<String, String> hostByScheduledJob();
 
     /**
-     * Job ID to Engine host map for ALL jobs scheduled and active
+     * Job ID to Engine host map for ALL jobs scheduled and running
      * @return
      */
     default Map<String, String> hostByJob()
     {
-        Map<String, String> result = hostByActiveJob();
+        Map<String, String> result = hostByRunningJob();
         result.putAll(hostByScheduledJob());
         return result;
     }

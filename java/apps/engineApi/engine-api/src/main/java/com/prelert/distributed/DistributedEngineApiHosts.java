@@ -61,7 +61,7 @@ public class DistributedEngineApiHosts implements EngineApiHosts, Feature
     }
 
     @Override
-    public Map<String, String> hostByActiveJob()
+    public Map<String, String> hostByRunningJob()
     {
         return m_ZkActionGuard.hostByJob();
     }

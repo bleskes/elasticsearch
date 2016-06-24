@@ -80,11 +80,11 @@ public class LocalEngineApiHosts implements EngineApiHosts, Feature
     }
 
     @Override
-    public Map<String, String> hostByActiveJob()
+    public Map<String, String> hostByRunningJob()
     {
         Map<String, String> result = new HashMap<>();
 
-        List<String> activeJobs = m_JobManager.getActiveJobIds();
+        List<String> activeJobs = m_JobManager.getRunningJobIds();
         for (String jobId : activeJobs)
         {
             result.put(jobId, m_Host);

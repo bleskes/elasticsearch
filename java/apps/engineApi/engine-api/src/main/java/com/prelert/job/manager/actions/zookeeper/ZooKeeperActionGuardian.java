@@ -179,10 +179,23 @@ public class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
 
         // if the connection is lost then reconnected then
         // recreate the ephemeral hostname node
-        m_Client.getConnectionStateListenable().addListener(
-                (client, newState) ->
-                    {if (newState == ConnectionState.RECONNECTED) { registerSelf(client); }}
-       );
+        m_Client.getConnectionStateListenable().addListener(this::stateChanged);
+    }
+
+    private void stateChanged(CuratorFramework client, ConnectionState newState)
+    {
+        switch (newState) {
+        case RECONNECTED:
+            registerSelf(client);
+            break;
+        case LOST:
+            // all held lock are lost
+            m_LeaseByJob.clear();
+            break;
+        default:
+            break;
+        }
+
     }
 
     @Override
@@ -367,16 +380,14 @@ public class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
                 }
                 else
                 {
+                    deleteHostActionDataForJob(jobId);
+
                     // release the lock
                     Lease lease = m_LeaseByJob.remove(jobId);
-                    if (lease == null)
+                    if (lease != null)
                     {
-                        throw new IllegalStateException("Job " + jobId +
-                                " is not locked by this ZooKeeperActionGuardian");
+                        releaseActionLeaseAndDeleteNode(lease, jobId);
                     }
-
-                    deleteHostActionDataForJob(jobId);
-                    releaseActionLeaseAndDeleteNode(lease, jobId);
                 }
             }
             finally

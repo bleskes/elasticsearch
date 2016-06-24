@@ -28,7 +28,6 @@
 package com.prelert.rs.resources;
 
 import java.lang.management.ManagementFactory;
-import java.lang.management.OperatingSystemMXBean;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -64,17 +63,17 @@ public class Status extends ResourceWithJobManager
     {
         LOGGER.debug("Get Engine Status");
 
-        OperatingSystemMXBean osBean = ManagementFactory.getOperatingSystemMXBean();
-
         EngineStatus status = new EngineStatus();
-        status.setStartedScheduledJobs(jobManager().getStartedScheduledJobs());
 
-        status.setAverageCpuLoad(osBean.getSystemLoadAverage());
-        status.setHeapMemoryUsage(
+        status.setAverageCpuLoad(
+                ManagementFactory.getOperatingSystemMXBean().getSystemLoadAverage());
+        status.setJvmHeapMemoryUsage(
                         ManagementFactory.getMemoryMXBean().getHeapMemoryUsage().getUsed());
 
+        status.setStartedScheduledJobs(jobManager().getStartedScheduledJobs());
+
         Map<String, EngineStatus.JobStats> memoryStats = new HashMap<>();
-        for (String jobId : jobManager().getActiveJobIds())
+        for (String jobId : jobManager().getRunningJobIds())
         {
             Optional<ModelSizeStats> stats = jobReader().modelSizeStats(jobId);
             if (stats.isPresent())
@@ -91,8 +90,8 @@ public class Status extends ResourceWithJobManager
             }
         }
 
-        status.setActiveJobs(memoryStats);
-        status.setDbConnection(datastoreConnection());
+        status.setRunningJobs(memoryStats);
+        status.setDataStoreConnection(datastoreConnection());
         status.setEngineHosts(engineHosts().engineApiHosts());
         status.setHostByJob(engineHosts().hostByJob());
 

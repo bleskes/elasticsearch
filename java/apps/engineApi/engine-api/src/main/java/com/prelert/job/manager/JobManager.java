@@ -284,7 +284,7 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
         // Check licence now after any duplicate job conditions have been found
         // throws
         m_LicenceChecker.checkLicenceViolationsOnCreate(jobDetails.getAnalysisConfig(),
-                                                    getActiveJobIds().size());
+                                                    getRunningJobIds().size());
 
         m_JobProvider.createJob(jobDetails);
         audit(jobId).info(Messages.getMessage(Messages.JOB_AUDIT_CREATED));
@@ -796,8 +796,8 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
     }
 
     /**
-     * Active and scheduled jobs count towards the number of running
-     * jobs and detectors
+     * Running and scheduled jobs both count towards the total
+     * number of jobs and detectors
      *
      * @param job
      * @throws LicenseViolationException
@@ -806,12 +806,12 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
     private void checkLicenceViolationsOnReactivate(JobDetails job)
     throws LicenseViolationException, TooManyJobsException
     {
-        if (getActiveJobIds().contains(job.getId()))
+        if (getRunningJobIds().contains(job.getId()))
         {
             return;
         }
 
-        Set<String> jobIds = new HashSet<>(getActiveJobIds());
+        Set<String> jobIds = new HashSet<>(getRunningJobIds());
         jobIds.addAll(getStartedScheduledJobs());
 
         int numberOfActiveDetectors = numberOfActiveDetectors(jobIds);
@@ -850,10 +850,10 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
     }
 
     /**
-     * Get the job IDs of jobs that are active i.e. have a running process
+     * Get the job IDs of jobs that are running i.e. have a running process
      * @return the job IDs of active jobs
      */
-    public List<String> getActiveJobIds()
+    public List<String> getRunningJobIds()
     {
         return m_ProcessManager.runningJobs();
     }
@@ -1291,7 +1291,7 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
 
     public List<JobDetails> getActiveJobs()
     {
-        List<String> jobIds = getActiveJobIds();
+        List<String> jobIds = getRunningJobIds();
         List<JobDetails> activeJobs = new ArrayList<>();
         for (String id : jobIds)
         {

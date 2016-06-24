@@ -105,7 +105,7 @@ public class ProcessManager
      * by this function
      * <ol>
      * <li>This is the first data sent to the job to create a new process</li>
-     * <li>The process has already been created and is still active</li>
+     * <li>The process has already been created and is still alive</li>
      * <li>The process was created and has expired with its internal state
      * saved to the database. Create a new process and restore the persisted
      * state</li>
@@ -260,8 +260,8 @@ public class ProcessManager
     }
 
     /**
-     * Get the number of running active job.
-     * A job is considered to be running if it has an active
+     * Get the number of running jobs.
+     * A job is considered to be running if it has an alive
      * native autodetect process running.
      * @return Count of running jobs
      */

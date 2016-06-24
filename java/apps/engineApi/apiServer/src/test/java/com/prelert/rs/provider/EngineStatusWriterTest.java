@@ -72,7 +72,7 @@ public class EngineStatusWriterTest
         Map<String, EngineStatus.JobStats> memoryStats = new HashMap<>();
         memoryStats.put("Job_1", new EngineStatus.JobStats());
         memoryStats.put("Job_2", new EngineStatus.JobStats(1l, "OK", 10l));
-        status.setActiveJobs(memoryStats);
+        status.setRunningJobs(memoryStats);
         EngineStatusWriter writer = new EngineStatusWriter();
 
 
@@ -89,11 +89,10 @@ public class EngineStatusWriterTest
         EngineStatus out = jsonMapper.readValue(content, new TypeReference<EngineStatus>() {} );
 
         assertEquals(5.0, out.getAverageCpuLoad(), 0.00001);
-        assertEquals(2,  out.getActiveJobCount());
-        assertEquals(2,  out.getActiveJobs().size());
-        assertNotNull(out.getActiveJobs().get("Job_1"));
-        assertEquals("OK", out.getActiveJobs().get("Job_2").getMemoryStatus());
-        assertEquals(new Long(1), out.getActiveJobs().get("Job_2").getModelBytes());
-        assertEquals(new Long(10), out.getActiveJobs().get("Job_2").getUptimeSeconds());
+        assertEquals(2,  out.getRunningJobs().size());
+        assertNotNull(out.getRunningJobs().get("Job_1"));
+        assertEquals("OK", out.getRunningJobs().get("Job_2").getMemoryStatus());
+        assertEquals(new Long(1), out.getRunningJobs().get("Job_2").getModelBytes());
+        assertEquals(new Long(10), out.getRunningJobs().get("Job_2").getUptimeSeconds());
     }
 }

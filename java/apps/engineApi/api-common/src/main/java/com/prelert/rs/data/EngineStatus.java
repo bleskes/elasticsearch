@@ -35,25 +35,23 @@ import java.util.Map;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
  * Engine API status.
  * <ul>
- * <li>Number of Active jobs (scheduled and running)</li>
- * <li>List of Active job IDs (scheduled and running)</li>
  * <li>Average CPU load</li>
+ * <li>JVM Heap Memory Usage</li>
  * </ul>
  *
  */
 @JsonInclude(Include.NON_NULL)
 public class EngineStatus
 {
-    private Map<String, JobStats> m_ActiveJobs;
-    private List<String> m_StartedScheduledJobs;
     private Double m_CpuLoad;
     private Long m_HeapMemUsage;
-    private Map<String, String> m_DbConnection;
+    private Map<String, JobStats> m_RunningJobs;
+    private List<String> m_StartedScheduledJobs;
+    private Map<String, String> m_DataStoreConnection;
     private List<String> m_EngineHosts;
     private Map<String, String> m_HostByJob;
 
@@ -109,18 +107,18 @@ public class EngineStatus
 
     public EngineStatus()
     {
-        m_ActiveJobs = new HashMap<>();
+        m_RunningJobs = new HashMap<>();
         m_StartedScheduledJobs = Collections.emptyList();
     }
 
-    public Map<String, JobStats> getActiveJobs()
+    public Map<String, JobStats> getRunningJobs()
     {
-        return m_ActiveJobs;
+        return m_RunningJobs;
     }
 
-    public void setActiveJobs(Map<String, JobStats> activeJobs)
+    public void setRunningJobs(Map<String, JobStats> activeJobs)
     {
-        m_ActiveJobs = activeJobs;
+        m_RunningJobs = activeJobs;
     }
 
     public List<String> getStartedScheduledJobs()
@@ -131,12 +129,6 @@ public class EngineStatus
     public void setStartedScheduledJobs(List<String> startedScheduledJobs)
     {
         m_StartedScheduledJobs = startedScheduledJobs;
-    }
-
-    @JsonProperty
-    public int getActiveJobCount()
-    {
-        return m_ActiveJobs.size();
     }
 
     /**
@@ -168,12 +160,12 @@ public class EngineStatus
      * Heap memory in use (bytes)
      * @return
      */
-    public Long getHeapMemoryUsage()
+    public Long getJvmHeapMemoryUsage()
     {
         return m_HeapMemUsage;
     }
 
-    public void setHeapMemoryUsage(long used)
+    public void setJvmHeapMemoryUsage(long used)
     {
         m_HeapMemUsage = used;
     }
@@ -207,17 +199,17 @@ public class EngineStatus
     }
 
     /**
-     * Database connection parameters
+     * Datastore connection parameters
      * @return
      */
-    public Map<String, String> getDbConnection()
+    public Map<String, String> getDataStoreConnection()
     {
-        return m_DbConnection;
+        return m_DataStoreConnection;
     }
 
-    public void setDbConnection(Map<String, String> params)
+    public void setDataStoreConnection(Map<String, String> params)
     {
-        m_DbConnection = params;
+        m_DataStoreConnection = params;
     }
 }
 

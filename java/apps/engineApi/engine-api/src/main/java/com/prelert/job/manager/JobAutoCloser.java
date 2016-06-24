@@ -179,7 +179,7 @@ class JobAutoCloser implements Shutdownable
         // Stop new being scheduled
         m_ScheduledExecutor.shutdownNow();
 
-        LOGGER.info(String.format("Closing %d active jobs", m_JobIdToTimeoutFuture.size()));
+        LOGGER.info(String.format("Closing %d running jobs", m_JobIdToTimeoutFuture.size()));
 
         for (String jobId : m_JobIdToTimeoutFuture.keySet())
         {
