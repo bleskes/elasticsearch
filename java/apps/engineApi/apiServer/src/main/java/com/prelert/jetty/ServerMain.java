@@ -28,6 +28,7 @@ package com.prelert.jetty;
 
 
 import java.io.File;
+import java.net.BindException;
 import java.util.EnumSet;
 
 import javax.servlet.DispatcherType;
@@ -135,7 +136,24 @@ public class ServerMain
 
         // We start the server before adding the API handler so that the static
         // content is available immediately
-        ms_Server.start();
+        try
+        {
+            ms_Server.start();
+        }
+        catch (BindException e)
+        {
+            LOGGER.error("Error binding to port " + jettyPort, e);
+            ms_Server.stop();
+            System.exit(1);
+        }
+
+        if (ms_Server.isFailed())
+        {
+            LOGGER.error("Failed to start server");
+            ms_Server.stop();
+            System.exit(2);
+        }
+
         LOGGER.info("Engine API now serving static content");
 
         // This serves the Engine API
