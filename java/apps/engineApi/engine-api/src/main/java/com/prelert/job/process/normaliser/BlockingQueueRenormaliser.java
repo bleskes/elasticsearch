@@ -249,6 +249,7 @@ public class BlockingQueueRenormaliser implements Renormaliser
                 boolean keepGoing = true;
                 while (keepGoing)
                 {
+                    QuantileInfo earliestInfo = null;
                     QuantileInfo latestInfo = null;
 
                     // take() will block if the queue is empty
@@ -264,6 +265,10 @@ public class BlockingQueueRenormaliser implements Renormaliser
                                 lastLogger.info("Normaliser thread received end instruction");
                                 break;
                             case RENORMALISATION:
+                                if (earliestInfo == null)
+                                {
+                                    earliestInfo = info;
+                                }
                                 if (latestInfo != null)
                                 {
                                     lastLogger.info("Quantiles update superseded before processing");
@@ -280,6 +285,8 @@ public class BlockingQueueRenormaliser implements Renormaliser
                     if (latestInfo != null)
                     {
                         m_ScoresUpdater.update(latestInfo.m_State, latestInfo.m_EndBucketEpochMs,
+                                // The Math.abs() shouldn't be necessary - just being defensive
+                                Math.abs(latestInfo.m_EndBucketEpochMs - earliestInfo.m_EndBucketEpochMs),
                                 latestInfo.m_Logger);
                     }
 

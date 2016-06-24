@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -114,17 +114,19 @@ class ScoresUpdater
      * and all contained records
      * @param quantilesState
      * @param endBucketEpochMs
+     * @param windowExtensionMs
      * @param logger
      */
-    public void update(String quantilesState, long endBucketEpochMs, Logger logger)
+    public void update(String quantilesState, long endBucketEpochMs, long windowExtensionMs,
+            Logger logger)
     {
         updateJobDetails();
         Normaliser normaliser = m_NormaliserFactory.create(m_JobId, logger);
         int[] counts = { 0, 0 };
         try
         {
-            updateBuckets(normaliser, quantilesState, endBucketEpochMs, counts, logger);
-            updateInfluencers(normaliser, quantilesState, endBucketEpochMs, counts, logger);
+            updateBuckets(normaliser, quantilesState, endBucketEpochMs, windowExtensionMs, counts, logger);
+            updateInfluencers(normaliser, quantilesState, endBucketEpochMs, windowExtensionMs, counts, logger);
         }
         catch (UnknownJobException uje)
         {
@@ -141,11 +143,11 @@ class ScoresUpdater
     }
 
     private void updateBuckets(Normaliser normaliser, String quantilesState, long endBucketEpochMs,
-            int[] counts, Logger logger) throws UnknownJobException, NativeProcessRunException
+            long windowExtensionMs, int[] counts, Logger logger) throws UnknownJobException, NativeProcessRunException
     {
         BatchedDocumentsIterator<Bucket> bucketsIterator =
                 m_JobProvider.newBatchedBucketsIterator(m_JobId)
-                .timeRange(calcNormalisationWindowStart(endBucketEpochMs), endBucketEpochMs);
+                .timeRange(calcNormalisationWindowStart(endBucketEpochMs, windowExtensionMs), endBucketEpochMs);
 
         // Make a list of buckets with their records to be renormalised.
         // This may be shorter than the original list of buckets for two
@@ -200,9 +202,9 @@ class ScoresUpdater
         }
     }
 
-    private long calcNormalisationWindowStart(long endEpochMs)
+    private long calcNormalisationWindowStart(long endEpochMs, long windowExtensionMs)
     {
-        return Math.max(0, endEpochMs - m_NormalisationWindow);
+        return Math.max(0, endEpochMs - m_NormalisationWindow - windowExtensionMs);
     }
 
     private void normaliseBuckets(Normaliser normaliser, List<Bucket> buckets,
@@ -299,11 +301,11 @@ class ScoresUpdater
     }
 
     private void updateInfluencers(Normaliser normaliser, String quantilesState, long endBucketEpochMs,
-            int[] counts, Logger logger) throws UnknownJobException, NativeProcessRunException
+            long windowExtensionMs, int[] counts, Logger logger) throws UnknownJobException, NativeProcessRunException
     {
         BatchedDocumentsIterator<Influencer> influencersIterator = m_JobProvider
                 .newBatchedInfluencersIterator(m_JobId)
-                .timeRange(calcNormalisationWindowStart(endBucketEpochMs), endBucketEpochMs);
+                .timeRange(calcNormalisationWindowStart(endBucketEpochMs, windowExtensionMs), endBucketEpochMs);
         while (influencersIterator.hasNext())
         {
             Deque<Influencer> influencers = influencersIterator.next();

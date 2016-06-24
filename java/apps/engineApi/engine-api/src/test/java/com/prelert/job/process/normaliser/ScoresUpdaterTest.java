@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -130,7 +130,7 @@ public class ScoresUpdaterTest
         buckets.add(bucket);
         givenProviderReturnsBuckets(DEFAULT_START_TIME, DEFAULT_END_TIME, buckets);
 
-        m_ScoresUpdater.update(QUANTILES_STATE, 3600, m_Logger);
+        m_ScoresUpdater.update(QUANTILES_STATE, 3600, 0, m_Logger);
 
         verifyNormaliserWasInvoked(0);
         verifyBucketWasNotUpdated(bucket);
@@ -149,7 +149,7 @@ public class ScoresUpdaterTest
         buckets.add(bucket);
         givenProviderReturnsBuckets(DEFAULT_START_TIME, DEFAULT_END_TIME, buckets);
 
-        m_ScoresUpdater.update(QUANTILES_STATE, 3600, m_Logger);
+        m_ScoresUpdater.update(QUANTILES_STATE, 3600, 0, m_Logger);
 
         verifyNormaliserWasInvoked(0);
         verifyBucketWasNotUpdated(bucket);
@@ -168,7 +168,7 @@ public class ScoresUpdaterTest
         buckets.add(bucket);
         givenProviderReturnsBuckets(DEFAULT_START_TIME, DEFAULT_END_TIME, buckets);
 
-        m_ScoresUpdater.update(QUANTILES_STATE, 3600, m_Logger);
+        m_ScoresUpdater.update(QUANTILES_STATE, 3600, 0, m_Logger);
 
         verifyNormaliserWasInvoked(1);
         verifyBucketWasNotUpdated(bucket);
@@ -195,7 +195,7 @@ public class ScoresUpdaterTest
         buckets.add(bucket);
         givenProviderReturnsBuckets(DEFAULT_START_TIME, DEFAULT_END_TIME, buckets);
 
-        m_ScoresUpdater.update(QUANTILES_STATE, 3600, m_Logger);
+        m_ScoresUpdater.update(QUANTILES_STATE, 3600, 0, m_Logger);
 
         verifyNormaliserWasInvoked(1);
         verifyBucketWasNotUpdated(bucket);
@@ -217,7 +217,7 @@ public class ScoresUpdaterTest
         buckets.add(bucket);
         givenProviderReturnsBuckets(DEFAULT_START_TIME, DEFAULT_END_TIME, buckets);
 
-        m_ScoresUpdater.update(QUANTILES_STATE, 3600, m_Logger);
+        m_ScoresUpdater.update(QUANTILES_STATE, 3600, 0, m_Logger);
 
         verifyNormaliserWasInvoked(1);
         verifyBucketWasUpdated(bucket);
@@ -247,7 +247,7 @@ public class ScoresUpdaterTest
         buckets.add(bucket);
         givenProviderReturnsBuckets(DEFAULT_START_TIME, DEFAULT_END_TIME, buckets);
 
-        m_ScoresUpdater.update(QUANTILES_STATE, 3600, m_Logger);
+        m_ScoresUpdater.update(QUANTILES_STATE, 3600, 0, m_Logger);
 
         verifyNormaliserWasInvoked(1);
         verifyBucketWasNotUpdated(bucket);
@@ -277,7 +277,7 @@ public class ScoresUpdaterTest
         buckets.add(bucket);
         givenProviderReturnsBuckets(DEFAULT_START_TIME, DEFAULT_END_TIME, buckets);
 
-        m_ScoresUpdater.update(QUANTILES_STATE, 3600, m_Logger);
+        m_ScoresUpdater.update(QUANTILES_STATE, 3600, 0, m_Logger);
 
         verifyNormaliserWasInvoked(1);
         verifyBucketWasUpdated(bucket);
@@ -311,7 +311,7 @@ public class ScoresUpdaterTest
 
         givenProviderReturnsBuckets(DEFAULT_START_TIME, DEFAULT_END_TIME, batch1, batch2);
 
-        m_ScoresUpdater.update(QUANTILES_STATE, 3600, m_Logger);
+        m_ScoresUpdater.update(QUANTILES_STATE, 3600, 0, m_Logger);
 
         verifyNormaliserWasInvoked(1);
 
@@ -350,7 +350,7 @@ public class ScoresUpdaterTest
         batch.add(bucket2);
         givenProviderReturnsBuckets(DEFAULT_START_TIME, DEFAULT_END_TIME, batch);
 
-        m_ScoresUpdater.update(QUANTILES_STATE, 3600, m_Logger);
+        m_ScoresUpdater.update(QUANTILES_STATE, 3600, 0, m_Logger);
 
         verifyNormaliserWasInvoked(2);
 
@@ -371,7 +371,7 @@ public class ScoresUpdaterTest
         influencers.add(influencer);
         givenProviderReturnsInfluencers(DEFAULT_START_TIME, DEFAULT_END_TIME, influencers);
 
-        m_ScoresUpdater.update(QUANTILES_STATE, 3600, m_Logger);
+        m_ScoresUpdater.update(QUANTILES_STATE, 3600, 0, m_Logger);
 
         verifyNormaliserWasInvoked(1);
         verifyInfluencerWasUpdated(influencer);
@@ -393,7 +393,7 @@ public class ScoresUpdaterTest
         givenProviderReturnsBuckets(3600000, 2595600000L, buckets);
         givenProviderReturnsNoInfluencers(3600000, 2595600000L);
 
-        m_ScoresUpdater.update(QUANTILES_STATE, 2595600000L, m_Logger);
+        m_ScoresUpdater.update(QUANTILES_STATE, 2595600000L, 0, m_Logger);
 
         verifyNormaliserWasInvoked(1);
         verifyBucketWasUpdated(bucket);
@@ -419,7 +419,7 @@ public class ScoresUpdaterTest
         givenProviderReturnsBuckets(3600000, 8643600000L, buckets);
         givenProviderReturnsNoInfluencers(3600000, 8643600000L);
 
-        m_ScoresUpdater.update(QUANTILES_STATE, 8643600000L, m_Logger);
+        m_ScoresUpdater.update(QUANTILES_STATE, 8643600000L, 0, m_Logger);
 
         verifyNormaliserWasInvoked(1);
         verifyBucketWasUpdated(bucket);
@@ -445,7 +445,33 @@ public class ScoresUpdaterTest
         givenProviderReturnsBuckets(3600000, 90000000L, buckets);
         givenProviderReturnsNoInfluencers(3600000, 90000000L);
 
-        m_ScoresUpdater.update(QUANTILES_STATE, 90000000L, m_Logger);
+        m_ScoresUpdater.update(QUANTILES_STATE, 90000000L, 0, m_Logger);
+
+        verifyNormaliserWasInvoked(1);
+        verifyBucketWasUpdated(bucket);
+        verifyBucketRecordsWereNotUpdated(bucket.getId());
+    }
+
+    @Test
+    public void testManualRenormalizationWindow_GivenExtension()
+            throws UnknownJobException, NativeProcessRunException
+    {
+        // 1 day
+        m_Job.setRenormalizationWindowDays(1L);
+
+        Bucket bucket = generateBucket();
+        bucket.setTimestamp(new Date(0));
+        bucket.setAnomalyScore(42.0);
+        bucket.addBucketInfluencer(createTimeBucketInfluencer(0.04, 42.0));
+        bucket.setMaxNormalizedProbability(50.0);
+        bucket.raiseBigNormalisedUpdateFlag();
+
+        Deque<Bucket> buckets = new ArrayDeque<>();
+        buckets.add(bucket);
+        givenProviderReturnsBuckets(2700000, 90000000L, buckets);
+        givenProviderReturnsNoInfluencers(2700000, 90000000L);
+
+        m_ScoresUpdater.update(QUANTILES_STATE, 90000000L, 900000, m_Logger);
 
         verifyNormaliserWasInvoked(1);
         verifyBucketWasUpdated(bucket);
