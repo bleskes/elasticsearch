@@ -28,7 +28,7 @@ import org.elasticsearch.xpack.security.authz.InternalAuthorizationService;
 import org.elasticsearch.xpack.security.user.AnonymousUser;
 import org.elasticsearch.test.SecurityIntegTestCase;
 import org.elasticsearch.test.SecuritySettingsSource;
-import org.elasticsearch.test.rest.json.JsonPath;
+import org.elasticsearch.test.rest.ObjectPath;
 import org.junit.BeforeClass;
 
 import java.util.Collections;
@@ -68,10 +68,10 @@ public class RestAuthenticateActionTests extends SecurityIntegTestCase {
                 new BasicHeader("Authorization", basicAuthHeaderValue(SecuritySettingsSource.DEFAULT_USER_NAME,
                         new SecuredString(SecuritySettingsSource.DEFAULT_PASSWORD.toCharArray()))))) {
             assertThat(response.getStatusLine().getStatusCode(), is(200));
-            JsonPath jsonPath = new JsonPath(EntityUtils.toString(response.getEntity()));
-            assertThat(jsonPath.evaluate("username").toString(), equalTo(SecuritySettingsSource.DEFAULT_USER_NAME));
+            ObjectPath objectPath = ObjectPath.createFromXContent(EntityUtils.toString(response.getEntity()));
+            assertThat(objectPath.evaluate("username").toString(), equalTo(SecuritySettingsSource.DEFAULT_USER_NAME));
             @SuppressWarnings("unchecked")
-            List<String> roles = (List<String>) jsonPath.evaluate("roles");
+            List<String> roles = (List<String>) objectPath.evaluate("roles");
             assertThat(roles.size(), is(1));
             assertThat(roles, contains(SecuritySettingsSource.DEFAULT_ROLE));
         }
@@ -82,10 +82,10 @@ public class RestAuthenticateActionTests extends SecurityIntegTestCase {
                 Collections.emptyMap(), null)) {
             if (anonymousEnabled) {
                 assertThat(response.getStatusLine().getStatusCode(), is(200));
-                JsonPath jsonPath = new JsonPath(EntityUtils.toString(response.getEntity()));
-                assertThat(jsonPath.evaluate("username").toString(), equalTo("anon"));
+                ObjectPath objectPath = ObjectPath.createFromXContent(EntityUtils.toString(response.getEntity()));
+                assertThat(objectPath.evaluate("username").toString(), equalTo("anon"));
                 @SuppressWarnings("unchecked")
-                List<String> roles = (List<String>) jsonPath.evaluate("roles");
+                List<String> roles = (List<String>) objectPath.evaluate("roles");
                 assertThat(roles.size(), is(2));
                 assertThat(roles, contains(SecuritySettingsSource.DEFAULT_ROLE, "foo"));
             } else {
