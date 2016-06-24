@@ -183,10 +183,23 @@ public class ServerMain
         // Add the context handler to the collection already being served by the
         // running server
         handlerCollection.addHandler(contextHandler);
+
         // Handlers added after server start have to be explicitly started.  For
         // some reason we used to get away without doing this in Jetty 9.1, but
         // it's essential in Jetty 9.3.
-        contextHandler.start();
+        try
+        {
+            // Stop the server if an exception here
+            contextHandler.start();
+        }
+        catch (Throwable e)
+        {
+            LOGGER.error("Failed to start web application", e);
+            ms_Server.stop();
+            ms_Server.join();
+            System.exit(3);
+        }
+
         LOGGER.info("Engine API now serving REST endpoints");
 
         // Block until the server stops (otherwise the whole JVM would shut down
