@@ -72,13 +72,13 @@ public class Status extends ResourceWithJobManager
 
         status.setStartedScheduledJobs(jobManager().getStartedScheduledJobs());
 
-        Map<String, EngineStatus.JobStats> memoryStats = new HashMap<>();
+        Map<String, EngineStatus.JobStats> jobStats = new HashMap<>();
         for (String jobId : jobManager().getRunningJobIds())
         {
             Optional<ModelSizeStats> stats = jobReader().modelSizeStats(jobId);
             if (stats.isPresent())
             {
-                memoryStats.put(jobId, new EngineStatus.JobStats(
+                jobStats.put(jobId, new EngineStatus.JobStats(
                                                     stats.get().getModelBytes(),
                                                     stats.get().getMemoryStatus(),
                                                     jobManager().jobUptime(jobId)
@@ -86,11 +86,11 @@ public class Status extends ResourceWithJobManager
             }
             else
             {
-                memoryStats.put(jobId, new EngineStatus.JobStats());
+                jobStats.put(jobId, new EngineStatus.JobStats());
             }
         }
 
-        status.setRunningJobs(memoryStats);
+        status.setRunningJobs(jobStats);
         status.setDataStoreConnection(datastoreConnection());
         status.setEngineHosts(engineHosts().engineApiHosts());
         status.setHostByJob(engineHosts().hostByJob());

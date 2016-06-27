@@ -28,12 +28,15 @@
 package com.prelert.rs.client.integrationtests.distributed;
 
 import java.io.IOException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import com.prelert.job.JobSchedulerStatus;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.rs.client.EngineApiClient;
 import com.prelert.rs.client.integrationtests.BaseScheduledJobTest;
 import com.prelert.rs.data.ApiError;
+import com.prelert.rs.data.EngineStatus;
 
 /**
  * Tests that a scheduled job cannot be stopped from another node
@@ -68,6 +71,12 @@ public class DistributedScheduledJobTest extends BaseScheduledJobTest
             createScheduledJob();
             startScheduler();
             testCannotStartSchedulerOnOtherHosts(otherHostUrls);
+
+            // start job on the first node, extract host name from url
+            Pattern p = Pattern.compile("http://([a-zA-Z0-9\\.-]*):.*");
+            Matcher m = p.matcher(m_BaseUrl);
+            test(m.matches());
+            testJobHostIsInStatus(TEST_JOB_ID, m.group(1));
         }
         finally
         {
@@ -115,6 +124,19 @@ public class DistributedScheduledJobTest extends BaseScheduledJobTest
                 test(updated == false);
                 error = client.getLastError();
                 test(error.getErrorCode() == ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR);
+            }
+        }
+    }
+
+    private void testJobHostIsInStatus(String jobId, String jobHost) throws IOException
+    {
+        for (String url : m_EngineApiUrls)
+        {
+            try (EngineApiClient client = new EngineApiClient(url))
+            {
+                EngineStatus status = client.status();
+                test(status.getEngineHosts().size() > 1);
+                test(jobHost, status.getHostByJob().get(jobId));
             }
         }
     }
