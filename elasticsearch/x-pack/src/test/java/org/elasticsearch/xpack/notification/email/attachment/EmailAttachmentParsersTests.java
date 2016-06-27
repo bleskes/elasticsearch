@@ -105,7 +105,8 @@ public class EmailAttachmentParsersTests extends ESTestCase {
         attachments.add(new DataAttachment("my-name.json", org.elasticsearch.xpack.notification.email.DataAttachment.JSON));
 
         HttpRequestTemplate requestTemplate = HttpRequestTemplate.builder("localhost", 80).scheme(Scheme.HTTP).path("/").build();
-        HttpRequestAttachment httpRequestAttachment = new HttpRequestAttachment("other-id", requestTemplate, null);
+        boolean inline = randomBoolean();
+        HttpRequestAttachment httpRequestAttachment = new HttpRequestAttachment("other-id", requestTemplate, inline, null);
 
         attachments.add(httpRequestAttachment);
         EmailAttachments emailAttachments = new EmailAttachments(attachments);
@@ -117,6 +118,9 @@ public class EmailAttachmentParsersTests extends ESTestCase {
         assertThat(builder.string(), containsString("other-id"));
         assertThat(builder.string(), containsString("localhost"));
         assertThat(builder.string(), containsString("/"));
+        if (inline) {
+            assertThat(builder.string(), containsString("inline"));
+        }
     }
 
     public void testThatTwoAttachmentsWithTheSameIdThrowError() throws Exception {
@@ -173,7 +177,7 @@ public class EmailAttachmentParsersTests extends ESTestCase {
 
         @Override
         public Attachment toAttachment(WatchExecutionContext ctx, Payload payload, TestEmailAttachment attachment) {
-            return new Attachment.Bytes(attachment.id(), attachment.getValue().getBytes(Charsets.UTF_8), "personalContentType");
+            return new Attachment.Bytes(attachment.id(), attachment.getValue().getBytes(Charsets.UTF_8), "personalContentType", false);
         }
     }
 
@@ -203,6 +207,11 @@ public class EmailAttachmentParsersTests extends ESTestCase {
         @Override
         public String id() {
             return id;
+        }
+
+        @Override
+        public boolean inline() {
+            return false;
         }
 
         @Override
