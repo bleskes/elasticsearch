@@ -35,26 +35,15 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import org.apache.log4j.Logger;
 
+import com.google.common.base.Preconditions;
 import com.prelert.job.data.extraction.DataExtractor;
 
 public class ElasticsearchDataExtractor implements DataExtractor
 {
     private static final String CLEAR_SCROLL_TEMPLATE = "{\"scroll_id\":[\"%s\"]}";
-
-    private static final int OK_STATUS = 200;
-    private static final String SLASH = "/";
-    private static final String COMMA = ",";
-    private static final int SCROLL_CONTEXT_MINUTES = 60;
-    private static final String INDEX_SETTINGS_END_POINT = "%s/_settings";
-    private static final String SEARCH_SIZE_ONE_END_POINT = "_search?size=1";
-    private static final String SEARCH_SCROLL_END_POINT = "_search?scroll=" + SCROLL_CONTEXT_MINUTES + "m&size=%d";
-    private static final String CONTINUE_SCROLL_END_POINT = "_search/scroll?scroll=" + SCROLL_CONTEXT_MINUTES + "m";
-    private static final String CLEAR_SCROLL_END_POINT = "_search/scroll";
-
     private static final Pattern TOTAL_HITS_PATTERN = Pattern.compile("\"hits\":\\{.*?\"total\":(.*?),");
     private static final Pattern EARLIEST_TIME_PATTERN = Pattern.compile("\"earliestTime\":\\{.*?\"value\":(.*?),");
     private static final Pattern LATEST_TIME_PATTERN = Pattern.compile("\"latestTime\":\\{.*?\"value\":(.*?),");
@@ -64,12 +53,10 @@ public class ElasticsearchDataExtractor implements DataExtractor
     private static final long MIN_CHUNK_SIZE_MS = 10000L;
 
     private final HttpRequester m_HttpRequester;
-    private final String m_BaseUrl;
-    private final String m_AuthHeader;
-    private final List<String> m_Indices;
-    private final List<String> m_Types;
-    private final int m_ScrollSize;
+    private final ElasticsearchUrlBuilder m_UrlBuilder;
     private final ElasticsearchQueryBuilder m_QueryBuilder;
+    private final IndexSelector m_IndexSelector;
+    private final int m_ScrollSize;
     private final ScrollState m_ScrollState;
     private volatile long m_CurrentStartTime;
     private volatile long m_CurrentEndTime;
@@ -83,15 +70,12 @@ public class ElasticsearchDataExtractor implements DataExtractor
 
     private volatile Logger m_Logger;
 
-    ElasticsearchDataExtractor(HttpRequester httpRequester, String baseUrl, String authHeader,
-            List<String> indices, List<String> types, ElasticsearchQueryBuilder queryBuilder,
-            int scrollSize)
+    public ElasticsearchDataExtractor(HttpRequester httpRequester, ElasticsearchUrlBuilder urlBuilder,
+            ElasticsearchQueryBuilder queryBuilder, IndexSelector indexSelector, int scrollSize)
     {
         m_HttpRequester = Objects.requireNonNull(httpRequester);
-        m_BaseUrl = Objects.requireNonNull(baseUrl);
-        m_AuthHeader = authHeader;
-        m_Indices = Objects.requireNonNull(indices);
-        m_Types = Objects.requireNonNull(types);
+        m_UrlBuilder = Objects.requireNonNull(urlBuilder);
+        m_IndexSelector = Objects.requireNonNull(indexSelector);
         m_ScrollSize = scrollSize;
         m_QueryBuilder = Objects.requireNonNull(queryBuilder);
         m_ScrollState =  queryBuilder.isAggregated() ? ScrollState.createAggregated()
@@ -99,18 +83,11 @@ public class ElasticsearchDataExtractor implements DataExtractor
         m_IsFirstSearch = true;
     }
 
-    public static ElasticsearchDataExtractor create(String baseUrl, String authHeader,
-            List<String> indices, List<String> types, ElasticsearchQueryBuilder queryBuilder,
-            int scrollSize)
-    {
-        return new ElasticsearchDataExtractor(new HttpRequester(), baseUrl, authHeader, indices,
-                types, queryBuilder, scrollSize);
-    }
-
     @Override
     public void newSearch(long startEpochMs, long endEpochMs, Logger logger) throws IOException
     {
         m_ScrollState.reset();
+        m_IndexSelector.clearCache();
         m_CurrentStartTime = startEpochMs;
         m_CurrentEndTime = startEpochMs;
         m_EndTime = endEpochMs;
@@ -126,14 +103,21 @@ public class ElasticsearchDataExtractor implements DataExtractor
             m_IsFirstSearch = false;
         }
 
-        m_Logger.info("Requesting data from '" + m_BaseUrl + "' within [" + startEpochMs + ", "
-                + endEpochMs + ")");
+        m_Logger.info("Requesting data from '" + m_UrlBuilder.getBaseUrl()
+                + "' within [" + startEpochMs + ", " + endEpochMs + ")");
     }
 
     private void setUpChunkedSearch() throws IOException
     {
+        m_CurrentEndTime = m_EndTime;
         m_Chunk = null;
-        String url = buildUrlWithIndicesAndTypes().append(SEARCH_SIZE_ONE_END_POINT).toString();
+        List<String> indices = m_IndexSelector.selectByTime(m_CurrentStartTime, m_EndTime, m_Logger);
+        if (indices.isEmpty())
+        {
+            return;
+        }
+
+        String url = m_UrlBuilder.buildSearchSizeOneUrl(indices);
         String response = requestAndGetStringResponse(url,
                 m_QueryBuilder.createDataSummaryQuery(m_CurrentStartTime, m_EndTime));
         long totalHits = matchLong(response, TOTAL_HITS_PATTERN);
@@ -152,41 +136,12 @@ public class ElasticsearchDataExtractor implements DataExtractor
                         (shards * m_ScrollSize * dataTimeSpread) / totalHits);
             }
         }
-        else
-        {
-            m_CurrentEndTime = m_EndTime;
-        }
-    }
-
-    private StringBuilder buildUrlWithIndicesAndTypes()
-    {
-        return newUrlBuilder()
-                .append(m_Indices.stream().collect(Collectors.joining(COMMA))).append(SLASH)
-                .append(m_Types.stream().collect(Collectors.joining(COMMA))).append(SLASH);
-    }
-
-    private StringBuilder newUrlBuilder()
-    {
-        StringBuilder urlBuilder = new StringBuilder(m_BaseUrl);
-        if (!m_BaseUrl.endsWith(SLASH))
-        {
-            urlBuilder.append(SLASH);
-        }
-        return urlBuilder;
-    }
-
-    private long readNumberOfShards(String index) throws IOException
-    {
-        String response = requestAndGetStringResponse(
-                newUrlBuilder().append(String.format(INDEX_SETTINGS_END_POINT, index)).toString(),
-                null);
-        return matchLong(response, NUMBER_OF_SHARDS_PATTERN);
     }
 
     private String requestAndGetStringResponse(String url, String body) throws IOException
     {
-        HttpResponse response = m_HttpRequester.get(url, m_AuthHeader, body);
-        if (response.getResponseCode() != OK_STATUS)
+        HttpResponse response = m_HttpRequester.get(url, body);
+        if (response.getResponseCode() != HttpResponse.OK_STATUS)
         {
             throw new IOException("Request '" + url + "' failed with status code: "
                     + response.getResponseCode() + ". Response was:\n" + response.getResponseAsString());
@@ -233,6 +188,19 @@ public class ElasticsearchDataExtractor implements DataExtractor
         return matcher.group(1);
     }
 
+    private long readNumberOfShards(String index) throws IOException
+    {
+        String url = m_UrlBuilder.buildIndexSettingsUrl(index);
+        String response = requestAndGetStringResponse(url, null);
+        return matchLong(response, NUMBER_OF_SHARDS_PATTERN);
+    }
+
+    public void clear()
+    {
+        m_ScrollState.reset();
+        m_IndexSelector.clearCache();
+    }
+
     @Override
     public Optional<InputStream> next() throws IOException
     {
@@ -246,7 +214,8 @@ public class ElasticsearchDataExtractor implements DataExtractor
         }
         catch (IOException e)
         {
-            m_Logger.error("An error occurred during requesting data from: " + m_BaseUrl, e);
+            m_Logger.error("An error occurred during requesting data from: "
+                    + m_UrlBuilder.getBaseUrl(), e);
             m_ScrollState.forceComplete();
             throw e;
         }
@@ -286,11 +255,10 @@ public class ElasticsearchDataExtractor implements DataExtractor
             return;
         }
 
-        StringBuilder urlBuilder = newUrlBuilder();
-        urlBuilder.append(CLEAR_SCROLL_END_POINT);
+        String url = m_UrlBuilder.buildClearScrollUrl();
         try
         {
-            m_HttpRequester.delete(urlBuilder.toString(), m_AuthHeader,
+            m_HttpRequester.delete(url,
                     String.format(CLEAR_SCROLL_TEMPLATE, m_ScrollState.getScrollId()));
         }
         catch (IOException e)
@@ -308,11 +276,18 @@ public class ElasticsearchDataExtractor implements DataExtractor
     private InputStream initScroll() throws IOException
     {
         advanceTime();
-        String url = buildInitScrollUrl();
+        List<String> indices = m_IndexSelector.selectByTime(m_CurrentStartTime, m_CurrentEndTime,
+                m_Logger);
+        if (indices.isEmpty())
+        {
+            // No indices contain data for the current time range, thus abort the search
+            return null;
+        }
+        String url = buildInitScrollUrl(indices);
         String searchBody = m_QueryBuilder.createSearchBody(m_CurrentStartTime, m_CurrentEndTime);
         m_Logger.trace("About to submit body " + searchBody + " to URL " + url);
-        HttpResponse response = m_HttpRequester.get(url, m_AuthHeader, searchBody);
-        if (response.getResponseCode() != OK_STATUS)
+        HttpResponse response = m_HttpRequester.get(url, searchBody);
+        if (response.getResponseCode() != HttpResponse.OK_STATUS)
         {
             throw new IOException("Request '" + url + "' failed with status code: "
                     + response.getResponseCode() + ". Response was:\n" + response.getResponseAsString());
@@ -327,14 +302,13 @@ public class ElasticsearchDataExtractor implements DataExtractor
                 : Math.min(m_CurrentStartTime + m_Chunk, m_EndTime);
     }
 
-    private String buildInitScrollUrl()
+    private String buildInitScrollUrl(List<String> indices) throws IOException
     {
-        StringBuilder urlBuilder = buildUrlWithIndicesAndTypes();
+        Preconditions.checkArgument(!indices.isEmpty());
         // With aggregations we don't want any hits returned for the raw data,
         // just the aggregations
         int size = m_QueryBuilder.isAggregated() ? 0 : m_ScrollSize;
-        urlBuilder.append(String.format(SEARCH_SCROLL_END_POINT, size));
-        return urlBuilder.toString();
+        return m_UrlBuilder.buildInitScrollUrl(indices, size);
     }
 
     private InputStream continueScroll() throws IOException
@@ -342,15 +316,13 @@ public class ElasticsearchDataExtractor implements DataExtractor
         // Aggregations never need a continuation
         if (!m_QueryBuilder.isAggregated())
         {
-            StringBuilder urlBuilder = newUrlBuilder();
-            urlBuilder.append(CONTINUE_SCROLL_END_POINT);
-            HttpResponse response = m_HttpRequester.get(urlBuilder.toString(), m_AuthHeader,
-                    m_ScrollState.getScrollId());
-            if (response.getResponseCode() == OK_STATUS)
+            String url = m_UrlBuilder.buildContinueScrollUrl();
+            HttpResponse response = m_HttpRequester.get(url, m_ScrollState.getScrollId());
+            if (response.getResponseCode() == HttpResponse.OK_STATUS)
             {
                 return response.getStream();
             }
-            throw new IOException("Request '"  + urlBuilder.toString() + "' with scroll id '"
+            throw new IOException("Request '"  + url + "' with scroll id '"
                     + m_ScrollState.getScrollId() + "' failed with status code: "
                     + response.getResponseCode() + ". Response was:\n"
                     + response.getResponseAsString());

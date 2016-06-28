@@ -27,48 +27,29 @@
 
 package com.prelert.data.extractors.elasticsearch;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
-import java.util.stream.Collectors;
+import java.util.List;
+import java.util.Objects;
 
-class HttpResponse
+import org.apache.log4j.Logger;
+
+public class AllIndexSelector implements IndexSelector
 {
-    public static final int OK_STATUS = 200;
+    private final List<String> m_AllIndices;
 
-    private static final String NEW_LINE = "\n";
-
-    private final InputStream m_Stream;
-    private final int m_ResponseCode;
-
-    public HttpResponse(InputStream responseStream, int responseCode)
+    public AllIndexSelector(List<String> allIndices)
     {
-        m_Stream = responseStream;
-        m_ResponseCode = responseCode;
+        m_AllIndices = Objects.requireNonNull(allIndices);
     }
 
-    public int getResponseCode()
+    @Override
+    public List<String> selectByTime(long startMs, long endMs, Logger logger)
     {
-        return m_ResponseCode;
+        return m_AllIndices;
     }
 
-    public InputStream getStream()
+    @Override
+    public void clearCache()
     {
-        return m_Stream;
-    }
-
-    public String getResponseAsString() throws IOException
-    {
-        return getStreamAsString(m_Stream);
-    }
-
-    public static String getStreamAsString(InputStream stream) throws IOException
-    {
-        try (BufferedReader buffer = new BufferedReader(
-                new InputStreamReader(stream, StandardCharsets.UTF_8))) {
-            return buffer.lines().collect(Collectors.joining(NEW_LINE));
-        }
+        // Do nothing
     }
 }

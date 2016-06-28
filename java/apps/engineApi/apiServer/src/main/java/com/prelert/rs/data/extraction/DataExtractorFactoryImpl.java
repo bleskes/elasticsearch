@@ -30,6 +30,7 @@ package com.prelert.rs.data.extraction;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.util.Base64;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -38,8 +39,13 @@ import org.apache.log4j.Logger;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
+import com.prelert.data.extractors.elasticsearch.AllIndexSelector;
 import com.prelert.data.extractors.elasticsearch.ElasticsearchDataExtractor;
 import com.prelert.data.extractors.elasticsearch.ElasticsearchQueryBuilder;
+import com.prelert.data.extractors.elasticsearch.ElasticsearchUrlBuilder;
+import com.prelert.data.extractors.elasticsearch.FieldStatsCachedIndexSelector;
+import com.prelert.data.extractors.elasticsearch.HttpRequester;
+import com.prelert.data.extractors.elasticsearch.IndexSelector;
 import com.prelert.job.ElasticsearchDataSourceCompatibility;
 import com.prelert.job.JobDetails;
 import com.prelert.job.SchedulerConfig;
@@ -74,17 +80,23 @@ public class DataExtractorFactoryImpl implements DataExtractorFactory
     {
         String timeField = job.getDataDescription().getTimeField();
         SchedulerConfig schedulerConfig = job.getSchedulerConfig();
+        ElasticsearchDataSourceCompatibility compatibility = ElasticsearchDataSourceCompatibility
+                .from(schedulerConfig.getDataSourceCompatibility());
         ElasticsearchQueryBuilder queryBuilder = new ElasticsearchQueryBuilder(
-                ElasticsearchDataSourceCompatibility.from(schedulerConfig.getDataSourceCompatibility()),
+                compatibility,
                 stringifyElasticsearchQuery(schedulerConfig.getQuery()),
                 stringifyElasticsearchAggregations(schedulerConfig.getAggregations(), schedulerConfig.getAggs()),
                 stringifyElasticsearchScriptFields(schedulerConfig.getScriptFields()),
                 Boolean.TRUE.equals(schedulerConfig.getRetrieveWholeSource()) ? null : writeObjectAsJson(job.allFields()),
                 timeField);
-        return ElasticsearchDataExtractor.create(schedulerConfig.getBaseUrl(),
-                createBasicAuthHeader(schedulerConfig.getUsername(), schedulerConfig.getEncryptedPassword()),
-                schedulerConfig.getIndexes(), schedulerConfig.getTypes(), queryBuilder,
-                schedulerConfig.getScrollSize());
+        HttpRequester httpRequester = new HttpRequester(createBasicAuthHeader(
+                schedulerConfig.getUsername(), schedulerConfig.getEncryptedPassword()));
+        ElasticsearchUrlBuilder urlBuilder = ElasticsearchUrlBuilder
+                .create(schedulerConfig.getBaseUrl(), schedulerConfig.getTypes());
+        IndexSelector indexSelector = createIndexSelector(compatibility, httpRequester,
+                urlBuilder, timeField, schedulerConfig.getIndexes());
+        return new ElasticsearchDataExtractor(httpRequester, urlBuilder, queryBuilder,
+                indexSelector, schedulerConfig.getScrollSize());
     }
 
     @VisibleForTesting
@@ -164,4 +176,18 @@ public class DataExtractorFactoryImpl implements DataExtractorFactory
         }
     }
 
+    private static IndexSelector createIndexSelector(
+            ElasticsearchDataSourceCompatibility compatibility, HttpRequester httpRequester,
+            ElasticsearchUrlBuilder urlBuilder, String timeField, List<String> allIndices)
+    {
+        switch (compatibility)
+        {
+            case V_1_7_X:
+                return new AllIndexSelector(allIndices);
+            case V_2_X_X:
+                return new FieldStatsCachedIndexSelector(httpRequester, urlBuilder, timeField, allIndices);
+            default:
+                throw new AssertionError();
+        }
+    }
 }
