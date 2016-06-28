@@ -189,7 +189,7 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
         m_DataExtractorFactory = Objects.requireNonNull(dataExtractorFactory);
         m_JobLoggerFactory = Objects.requireNonNull(jobLoggerFactory);
         m_PasswordManager = Objects.requireNonNull(passwordManager);
-        m_JobAutoCloser = new JobAutoCloser(jobId -> closeJob(jobId));
+        m_JobAutoCloser = new JobAutoCloser(jobId -> closeJob(jobId), jobId -> m_JobProvider.isConnected(jobId));
         m_ProcessActionGuardian = Objects.requireNonNull(processActionGuardian);
         m_SchedulerActionGuardian = Objects.requireNonNull(schedulerActionGuardian);
 

@@ -56,6 +56,7 @@ import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.cluster.metadata.IndexMetaData;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.index.IndexNotFoundException;
 import org.elasticsearch.index.engine.VersionConflictEngineException;
@@ -173,6 +174,30 @@ public class ElasticsearchJobProvider implements JobProvider
                 + "' now ready to use");
 
         createUsageMeteringIndex();
+    }
+
+    /*
+     * True if the Job index is healthy
+     *
+     * (non-Javadoc)
+     * @see com.prelert.job.persistence.JobProvider#isConnected(java.lang.String)
+     */
+    @Override
+    public boolean isConnected(String jobId)
+    {
+        ElasticsearchJobId elasticJobId = new ElasticsearchJobId(jobId);
+        try
+        {
+            m_Client.admin().cluster()
+                            .prepareHealth(elasticJobId.getIndex())
+                            .get(TimeValue.timeValueSeconds(2));
+            return true;
+        }
+        catch (Exception e) // nodenotavailable, estimeout
+        {
+            LOGGER.info(e);
+            return false;
+        }
     }
 
     /**

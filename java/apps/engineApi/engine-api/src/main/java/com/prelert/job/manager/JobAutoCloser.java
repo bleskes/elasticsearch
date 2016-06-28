@@ -28,6 +28,7 @@
 package com.prelert.job.manager;
 
 import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -38,6 +39,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Function;
 
 import org.apache.log4j.Logger;
 
@@ -51,9 +53,16 @@ import com.prelert.job.process.exceptions.NativeProcessRunException;
  * When a job is started to run it is expected to be added to the {@code JobAutoCloser}.
  * Jobs will automatically be closed either after their timeout expires or upon shutdown.
  * Jobs with zero or negative timeout will only be closed upon shutdown.
+ *
+ * An optional can close function can be passed to the constructor in which
+ * case when a job times out it is only closed if can close returns true.
+ * If can close returns false the timeout is rescheduled. This is to catch the
+ * situation where the datastore is down so the job model state wouldn't be
+ * persisted if the job tries to close.
  */
 class JobAutoCloser implements Shutdownable
 {
+    @FunctionalInterface
     interface JobCloser
     {
         void closeJob(String jobId) throws UnknownJobException, JobInUseException,
@@ -63,21 +72,37 @@ class JobAutoCloser implements Shutdownable
     private static final Logger LOGGER = Logger.getLogger(JobAutoCloser.class);
     private static final int WAIT_SECONDS_BEFORE_RETRY_CLOSING = 10;
     private static final int MILLIS_IN_SECOND = 1000;
+    private static final long CANNOT_CLOSE_RETRY_TIME = 300;
+    private static final NullScheduledFuture NULL_FUTURE = new NullScheduledFuture();
 
     private final JobCloser m_JobCloser;
     private final ScheduledExecutorService m_ScheduledExecutor;
     private final ConcurrentMap<String, ScheduledFuture<?>> m_JobIdToTimeoutFuture;
 
+    private final Function<String, Boolean> m_CanClose;
+
     private final long m_WaitBeforeRetryMillis;
 
     public JobAutoCloser(JobCloser jobCloser)
     {
-        this(jobCloser, WAIT_SECONDS_BEFORE_RETRY_CLOSING * MILLIS_IN_SECOND);
+        this(jobCloser, (s) -> true, WAIT_SECONDS_BEFORE_RETRY_CLOSING * MILLIS_IN_SECOND);
     }
 
-    JobAutoCloser(JobCloser jobCloser, long waitBeforeRetryMillis)
+    /**
+     *
+     * @param jobCloser Closes the job
+     * @param okToClose Takes the job Id as parameter and returns true if
+     * it's Ok to close the job.
+     */
+    public JobAutoCloser(JobCloser jobCloser, Function<String, Boolean> okToClose)
+    {
+        this(jobCloser, okToClose, WAIT_SECONDS_BEFORE_RETRY_CLOSING * MILLIS_IN_SECOND);
+    }
+
+    JobAutoCloser(JobCloser jobCloser, Function<String, Boolean> okToClose, long waitBeforeRetryMillis)
     {
         m_JobCloser = Objects.requireNonNull(jobCloser);
+        m_CanClose = Objects.requireNonNull(okToClose);
         m_ScheduledExecutor = Executors.newScheduledThreadPool(1);
         m_JobIdToTimeoutFuture = new ConcurrentHashMap<String, ScheduledFuture<?>>();
         m_WaitBeforeRetryMillis = waitBeforeRetryMillis;
@@ -97,7 +122,7 @@ class JobAutoCloser implements Shutdownable
     {
         if (timeout.isZero() || timeout.isNegative())
         {
-            m_JobIdToTimeoutFuture.put(jobId, new NullScheduledFuture());
+            m_JobIdToTimeoutFuture.put(jobId, NULL_FUTURE);
         }
         else
         {
@@ -139,8 +164,17 @@ class JobAutoCloser implements Shutdownable
         @Override
         public void run()
         {
-            LOGGER.info("Timeout expired stopping process for job:" + m_JobId);
-            tryClosingJob(m_JobId);
+            if (m_CanClose.apply(m_JobId))
+            {
+                LOGGER.info("Timeout expired stopping process for job:" + m_JobId);
+                tryClosingJob(m_JobId);
+            }
+            else
+            {
+                LOGGER.info("Timeout expired, denied request to close job: " + m_JobId +
+                        " Retry in " + CANNOT_CLOSE_RETRY_TIME + " seconds");
+                startTimeout(m_JobId, Duration.of(CANNOT_CLOSE_RETRY_TIME, ChronoUnit.SECONDS));
+            }
         }
     }
 

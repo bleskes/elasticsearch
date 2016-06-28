@@ -99,6 +99,15 @@ public class ZooKeeperActionGuardianIT
         }
     }
 
+    @Test(expected=ConnectException.class)
+    public void testConnectionThrows_whenCantConnect() throws IOException, Exception
+    {
+        try (ZooKeeperActionGuardian<Action> actionGuardian =
+                new ZooKeeperActionGuardian<>(Action.startingState(), "localhost:2184"))
+        {
+        }
+    }
+
     @Test
     public void testRegistersSelfAsEphemeralNode() throws Exception
     {

@@ -38,6 +38,7 @@ import static org.mockito.Mockito.verify;
 import java.time.Duration;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -132,7 +133,7 @@ public class JobAutoCloserTest
             }
         }).when(m_JobCloser).closeJob("foo");
 
-        JobAutoCloser autoCloser = new JobAutoCloser(m_JobCloser, 100);
+        JobAutoCloser autoCloser = new JobAutoCloser(m_JobCloser, (s) -> true, 100);
 
         long start = System.currentTimeMillis();
         autoCloser.startTimeout("foo", Duration.ofMillis(100));
@@ -199,7 +200,7 @@ public class JobAutoCloserTest
             }
         }).when(m_JobCloser).closeJob("foo");
 
-        JobAutoCloser autoCloser = new JobAutoCloser(m_JobCloser, 100);
+        JobAutoCloser autoCloser = new JobAutoCloser(m_JobCloser, (s) -> true, 100);
         autoCloser.startTimeout("foo", Duration.ofSeconds(1));
         autoCloser.startTimeout("bar", Duration.ofSeconds(5));
 
@@ -215,7 +216,7 @@ public class JobAutoCloserTest
     {
         doThrow(new UnknownJobException("foo")).when(m_JobCloser).closeJob("foo");
 
-        JobAutoCloser autoCloser = new JobAutoCloser(m_JobCloser, 100);
+        JobAutoCloser autoCloser = new JobAutoCloser(m_JobCloser, s -> true, 100);
         autoCloser.startTimeout("foo", Duration.ofSeconds(1));
 
         autoCloser.shutdown();
@@ -229,11 +230,65 @@ public class JobAutoCloserTest
     {
         doThrow(new NativeProcessRunException("some error")).when(m_JobCloser).closeJob("foo");
 
-        JobAutoCloser autoCloser = new JobAutoCloser(m_JobCloser, 100);
+        JobAutoCloser autoCloser = new JobAutoCloser(m_JobCloser, s-> true, 100);
         autoCloser.startTimeout("foo", Duration.ofSeconds(1));
 
         autoCloser.shutdown();
 
         verify(m_JobCloser).closeJob("foo");
+    }
+
+    @Test
+    public void test_CanCloseReturnsTrue()
+    throws UnknownJobException, JobInUseException, NativeProcessRunException, InterruptedException
+    {
+        CountDownLatch latch = new CountDownLatch(1);
+        doAnswer(new Answer<Void>() {
+            @Override
+            public Void answer(InvocationOnMock invocation) throws Throwable
+            {
+                latch.countDown();
+                return null;
+            }
+        }).when(m_JobCloser).closeJob("foo");
+
+        @SuppressWarnings("unchecked")
+        Function<String, Boolean> canClose = Mockito.mock(Function.class);
+        Mockito.when(canClose.apply(Mockito.anyString())).thenReturn(true);
+
+
+        JobAutoCloser autoCloser = new JobAutoCloser(m_JobCloser, canClose);
+
+        autoCloser.startTimeout("foo", Duration.ofMillis(100));
+        latch.await();
+
+        verify(canClose).apply("foo");
+        verify(m_JobCloser).closeJob("foo");
+    }
+
+    @Test
+    public void test_CanCloseReturnsFalse()
+    throws UnknownJobException, JobInUseException, NativeProcessRunException, InterruptedException
+    {
+        CountDownLatch latch = new CountDownLatch(1);
+
+        @SuppressWarnings("unchecked")
+        Function<String, Boolean> canClose = Mockito.mock(Function.class);
+        doAnswer(new Answer<Boolean>() {
+            @Override
+            public Boolean answer(InvocationOnMock invocation) throws Throwable
+            {
+                latch.countDown();
+                return false;
+            }
+        }).when(canClose).apply("foo");
+
+        JobAutoCloser autoCloser = new JobAutoCloser(m_JobCloser, canClose);
+
+        autoCloser.startTimeout("foo", Duration.ofMillis(100));
+        latch.await();
+
+        verify(canClose).apply("foo");
+        verify(m_JobCloser, never()).closeJob("foo");
     }
 }

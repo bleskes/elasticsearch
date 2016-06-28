@@ -30,6 +30,13 @@ import com.prelert.job.quantiles.Quantiles;
 public interface JobProvider extends JobDetailsProvider, JobResultsProvider
 {
     /**
+     * Return true if the data store is accessible for the given job Id
+     * @param jobId
+     * @return
+     */
+    boolean isConnected(String jobId);
+
+    /**
      * Get the persisted quantiles state for the job
      */
     public Quantiles getQuantiles(String jobId)
