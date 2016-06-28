@@ -35,6 +35,7 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.BoundTransportAddress;
 import org.elasticsearch.common.transport.DummyTransportAddress;
 import org.elasticsearch.common.transport.TransportAddress;
+import org.elasticsearch.common.unit.ByteSizeValue;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.http.HttpInfo;
 import org.elasticsearch.index.Index;
@@ -43,7 +44,7 @@ import org.elasticsearch.index.fielddata.FieldDataStats;
 import org.elasticsearch.index.shard.ShardId;
 import org.elasticsearch.index.shard.ShardPath;
 import org.elasticsearch.indices.NodeIndicesStats;
-import org.elasticsearch.ingest.core.IngestInfo;
+import org.elasticsearch.ingest.IngestInfo;
 import org.elasticsearch.marvel.agent.collector.cluster.ClusterStatsMonitoringDoc;
 import org.elasticsearch.marvel.agent.exporter.MarvelTemplateUtils;
 import org.elasticsearch.marvel.agent.resolver.MonitoringIndexNameResolverTestCase;
@@ -109,8 +110,8 @@ public class ClusterStatsResolverTests extends MonitoringIndexNameResolverTestCa
                         emptyMap(), emptySet(), Version.CURRENT),
                         ClusterHealthStatus.GREEN, randomNodeInfo(), randomNodeStats(), randomShardStats())
         );
-        return new ClusterStatsResponse(Math.abs(randomLong()), ClusterName.DEFAULT, UUID.randomUUID().toString(),
-                                        responses, Collections.emptyList());
+        return new ClusterStatsResponse(Math.abs(randomLong()), ClusterName.CLUSTER_NAME_SETTING.getDefault(Settings.EMPTY),
+                UUID.randomUUID().toString(), responses, Collections.emptyList());
     }
 
     /**
@@ -124,7 +125,7 @@ public class ClusterStatsResolverTests extends MonitoringIndexNameResolverTestCa
                 Settings.EMPTY, DummyOsInfo.INSTANCE, new ProcessInfo(randomInt(), randomBoolean()), JvmInfo.jvmInfo(),
                 new ThreadPoolInfo(Collections.singletonList(new ThreadPool.Info("test_threadpool", ThreadPool.ThreadPoolType.FIXED, 5))),
                 new TransportInfo(transportAddress, Collections.emptyMap()), new HttpInfo(transportAddress, randomLong()),
-                new PluginsAndModules(), new IngestInfo(Collections.emptyList()));
+                new PluginsAndModules(), new IngestInfo(Collections.emptyList()), new ByteSizeValue(randomIntBetween(1, 1024)));
 
     }
 

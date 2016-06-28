@@ -36,7 +36,7 @@ import org.elasticsearch.xpack.watcher.history.HistoryStore;
 import org.elasticsearch.xpack.watcher.history.WatchRecord;
 import org.elasticsearch.xpack.watcher.test.AbstractWatcherIntegrationTestCase;
 import org.elasticsearch.xpack.watcher.transport.actions.stats.WatcherStatsResponse;
-import org.elasticsearch.xpack.trigger.schedule.ScheduleTriggerEvent;
+import org.elasticsearch.xpack.watcher.trigger.schedule.ScheduleTriggerEvent;
 import org.elasticsearch.xpack.watcher.watch.Watch;
 import org.elasticsearch.xpack.watcher.watch.WatchStore;
 import org.hamcrest.Matchers;
@@ -45,6 +45,7 @@ import org.joda.time.DateTimeZone;
 
 import java.util.concurrent.TimeUnit;
 
+import static org.elasticsearch.action.support.WriteRequest.RefreshPolicy.IMMEDIATE;
 import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 import static org.elasticsearch.index.query.QueryBuilders.termQuery;
 import static org.elasticsearch.search.builder.SearchSourceBuilder.searchSource;
@@ -55,8 +56,8 @@ import static org.elasticsearch.xpack.watcher.condition.ConditionBuilders.always
 import static org.elasticsearch.xpack.watcher.condition.ConditionBuilders.compareCondition;
 import static org.elasticsearch.xpack.watcher.input.InputBuilders.searchInput;
 import static org.elasticsearch.xpack.watcher.test.WatcherTestUtils.newInputSearchRequest;
-import static org.elasticsearch.xpack.trigger.TriggerBuilders.schedule;
-import static org.elasticsearch.xpack.trigger.schedule.Schedules.cron;
+import static org.elasticsearch.xpack.watcher.trigger.TriggerBuilders.schedule;
+import static org.elasticsearch.xpack.watcher.trigger.schedule.Schedules.cron;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.core.IsEqual.equalTo;
 import static org.joda.time.DateTimeZone.UTC;
@@ -153,7 +154,7 @@ public class BootStrapTests extends AbstractWatcherIntegrationTestCase {
                         .endObject()
                         .endObject())
                 .setConsistencyLevel(WriteConsistencyLevel.ALL)
-                .setRefresh(true)
+                .setRefreshPolicy(IMMEDIATE)
                 .get();
 
         // unknown condition:
@@ -171,7 +172,7 @@ public class BootStrapTests extends AbstractWatcherIntegrationTestCase {
                         .endObject()
                         .endObject())
                 .setConsistencyLevel(WriteConsistencyLevel.ALL)
-                .setRefresh(true)
+                .setRefreshPolicy(IMMEDIATE)
                 .get();
 
         // unknown trigger:
@@ -189,7 +190,7 @@ public class BootStrapTests extends AbstractWatcherIntegrationTestCase {
                         .endObject()
                         .endObject())
                 .setConsistencyLevel(WriteConsistencyLevel.ALL)
-                .setRefresh(true)
+                .setRefreshPolicy(IMMEDIATE)
                 .get();
 
         stopWatcher();
@@ -213,7 +214,7 @@ public class BootStrapTests extends AbstractWatcherIntegrationTestCase {
                         .endObject()
                         .endObject())
                 .setConsistencyLevel(WriteConsistencyLevel.ALL)
-                .setRefresh(true)
+                .setRefreshPolicy(IMMEDIATE)
                 .get();
 
         stopWatcher();

@@ -18,12 +18,13 @@
 package org.elasticsearch.script;
 
 import org.elasticsearch.common.Nullable;
+import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.plugins.Plugin;
+import org.elasticsearch.plugins.ScriptPlugin;
 import org.elasticsearch.search.lookup.SearchLookup;
 
 import java.io.IOException;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -33,26 +34,11 @@ public class SleepScriptEngine implements ScriptEngineService {
 
     public static final String NAME = "sleep";
 
-    public static class TestPlugin extends Plugin {
-
-        public TestPlugin() {
-        }
-
+    public static class TestPlugin extends Plugin implements ScriptPlugin {
         @Override
-        public String name() {
-            return NAME;
+        public ScriptEngineService getScriptEngineService(Settings settings) {
+            return new SleepScriptEngine();
         }
-
-        @Override
-        public String description() {
-            return "Mock script engine for integration tests";
-        }
-
-        public void onModule(ScriptModule module) {
-            module.addScriptEngine(new ScriptEngineRegistry.ScriptEngineRegistration(SleepScriptEngine.class,
-                            SleepScriptEngine.NAME, true));
-        }
-
     }
 
     @Override
@@ -91,10 +77,6 @@ public class SleepScriptEngine implements ScriptEngineService {
     }
 
     @Override
-    public void scriptRemoved(@Nullable CompiledScript script) {
-    }
-
-    @Override
     public void close() throws IOException {
     }
 
@@ -104,4 +86,8 @@ public class SleepScriptEngine implements ScriptEngineService {
                 .params(Collections.singletonMap("millis", millis)).build();
     }
 
+    @Override
+    public boolean isInlineScriptEnabled() {
+        return true;
+    }
 }

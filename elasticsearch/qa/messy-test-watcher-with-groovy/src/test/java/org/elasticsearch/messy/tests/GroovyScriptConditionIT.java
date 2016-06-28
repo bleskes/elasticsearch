@@ -23,6 +23,7 @@ import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.script.groovy.GroovyPlugin;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.aggregations.bucket.histogram.Histogram;
+import org.elasticsearch.threadpool.TestThreadPool;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.xpack.watcher.condition.script.ExecutableScriptCondition;
 import org.elasticsearch.xpack.watcher.condition.script.ScriptCondition;
@@ -52,7 +53,7 @@ public class GroovyScriptConditionIT extends AbstractWatcherIntegrationTestCase 
     }
 
     @Override
-    protected boolean enableShield() {
+    protected boolean enableSecurity() {
         return false;
     }
 
@@ -61,7 +62,7 @@ public class GroovyScriptConditionIT extends AbstractWatcherIntegrationTestCase 
 
     @BeforeClass
     public static void startThreadPool() {
-        THREAD_POOL = new ThreadPool(GroovyScriptConditionIT.class.getSimpleName());
+        THREAD_POOL = new TestThreadPool(GroovyScriptConditionIT.class.getSimpleName());
     }
 
     @Before
@@ -77,13 +78,10 @@ public class GroovyScriptConditionIT extends AbstractWatcherIntegrationTestCase 
     }
 
     public void testGroovyClosureWithAggregations() throws Exception {
-        client().admin().indices().prepareCreate(".monitoring")
-                .addMapping("cluster_stats", "_timestamp", "enabled=true")
-                .get();
-
         for (int seconds = 0; seconds < 60; seconds += 5) {
-            client().prepareIndex(".monitoring", "cluster_stats").setTimestamp("2005-01-01T00:00:" +
-                    String.format(Locale.ROOT, "%02d", seconds)).setSource("status", randomFrom("green", "yellow")).get();
+            String timestamp = "2005-01-01T00:00:" + String.format(Locale.ROOT, "%02d", seconds);
+            client().prepareIndex(".monitoring", "cluster_stats")
+                    .setSource("status", randomFrom("green", "yellow"), "@timestamp", timestamp).get();
         }
 
         refresh();
@@ -91,7 +89,7 @@ public class GroovyScriptConditionIT extends AbstractWatcherIntegrationTestCase 
         SearchRequestBuilder builder = client().prepareSearch(".monitoring")
                 .addAggregation(
                         AggregationBuilders
-                                .dateHistogram("minutes").field("_timestamp").interval(TimeUnit.MILLISECONDS.convert(5, TimeUnit.SECONDS))
+                                .dateHistogram("minutes").field("@timestamp").interval(TimeUnit.MILLISECONDS.convert(5, TimeUnit.SECONDS))
                                 .order(Histogram.Order.COUNT_DESC)
                                 .subAggregation(AggregationBuilders.terms("status").field("status.keyword").size(3)));
         SearchResponse unmetResponse = builder.get();
@@ -112,8 +110,8 @@ public class GroovyScriptConditionIT extends AbstractWatcherIntegrationTestCase 
         assertFalse(condition.execute(unmetContext).met());
 
         for (int seconds = 0; seconds < 60; seconds += 5) {
-            client().prepareIndex(".monitoring", "cluster_stats").setTimestamp("2005-01-01T00:01:" +
-                    String.format(Locale.ROOT, "%02d", seconds)).setSource("status", randomFrom("red")).get();
+            String timestamp = "2005-01-01T00:01:" + String.format(Locale.ROOT, "%02d", seconds);
+            client().prepareIndex(".monitoring", "cluster_stats").setSource("status", randomFrom("red"), "@timestamp", timestamp).get();
         }
 
         refresh();

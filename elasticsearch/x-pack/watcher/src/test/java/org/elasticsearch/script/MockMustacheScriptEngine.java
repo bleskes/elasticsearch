@@ -17,10 +17,9 @@
 
 package org.elasticsearch.script;
 
+import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.xpack.common.text.DefaultTextTemplateEngine;
 
-import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -33,16 +32,10 @@ public class MockMustacheScriptEngine extends MockScriptEngine {
     public static final String NAME = "mustache";
 
     public static class TestPlugin extends MockScriptEngine.TestPlugin {
-
         @Override
-        public String name() {
-            return NAME;
+        public ScriptEngineService getScriptEngineService(Settings settings) {
+            return new MockMustacheScriptEngine();
         }
-
-        public void onModule(ScriptModule module) {
-            module.addScriptEngine(new ScriptEngineRegistry.ScriptEngineRegistration(MockMustacheScriptEngine.class, NAME, true));
-        }
-
     }
 
     @Override
@@ -62,5 +55,10 @@ public class MockMustacheScriptEngine extends MockScriptEngine {
         }
 
         return super.compile(name, script, params);
+    }
+
+    @Override
+    public boolean isInlineScriptEnabled() {
+        return true;
     }
 }

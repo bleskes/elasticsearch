@@ -66,8 +66,14 @@ public class DataAttachment implements EmailAttachmentParser.EmailAttachment {
         return Objects.hash(id, dataAttachment);
     }
 
+    @Override
     public String id() {
         return id;
+    }
+
+    @Override
+    public boolean inline() {
+        return false;
     }
 
     public static Builder builder(String id) {

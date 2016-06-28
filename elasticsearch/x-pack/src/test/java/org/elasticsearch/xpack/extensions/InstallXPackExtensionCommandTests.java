@@ -107,7 +107,7 @@ public class InstallXPackExtensionCommandTests extends ESTestCase {
         return terminal;
     }
 
-    void assertExtension(String name, Path original, Environment env) throws IOException {
+    void assertExtension(String name, Environment env) throws IOException {
         Path got = env.pluginsFile().resolve("x-pack").resolve("extensions").resolve(name);
         assertTrue("dir " + name + " exists", Files.exists(got));
         assertTrue("jar was copied", Files.exists(got.resolve("extension.jar")));
@@ -128,7 +128,7 @@ public class InstallXPackExtensionCommandTests extends ESTestCase {
         Path extDir = createTempDir();
         String extZip = createExtension("fake", extDir);
         installExtension(extZip, home);
-        assertExtension("fake", extDir, env);
+        assertExtension("fake", env);
     }
 
     public void testSpaceInUrl() throws Exception {
@@ -139,7 +139,7 @@ public class InstallXPackExtensionCommandTests extends ESTestCase {
             Files.copy(in, extZipWithSpaces, StandardCopyOption.REPLACE_EXISTING);
         }
         installExtension(extZipWithSpaces.toUri().toURL().toString(), home);
-        assertExtension("fake", extDir, env);
+        assertExtension("fake", env);
     }
 
     public void testMalformedUrlNotMaven() throws Exception {
@@ -167,8 +167,8 @@ public class InstallXPackExtensionCommandTests extends ESTestCase {
         Path extDir2 = createTempDir();
         String extZip2 = createExtension("fake2", extDir2);
         installExtension(extZip2, home);
-        assertExtension("fake1", extDir1, env);
-        assertExtension("fake2", extDir2, env);
+        assertExtension("fake1", env);
+        assertExtension("fake2", env);
     }
 
     public void testExistingExtension() throws Exception {

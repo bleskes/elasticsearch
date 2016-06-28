@@ -18,6 +18,7 @@
 package org.elasticsearch.xpack.watcher.actions.index;
 
 import org.elasticsearch.ElasticsearchParseException;
+import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.TimeValue;
@@ -28,10 +29,11 @@ import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.aggregations.bucket.terms.Terms;
 import org.elasticsearch.search.sort.SortOrder;
 import org.elasticsearch.test.ESIntegTestCase;
+import org.elasticsearch.xpack.common.init.proxy.ClientProxy;
 import org.elasticsearch.xpack.watcher.actions.Action;
 import org.elasticsearch.xpack.watcher.actions.Action.Result.Status;
 import org.elasticsearch.xpack.watcher.execution.WatchExecutionContext;
-import org.elasticsearch.xpack.support.DateTimeUtils;
+import org.elasticsearch.xpack.watcher.support.WatcherDateTimeUtils;
 import org.elasticsearch.xpack.watcher.support.init.proxy.WatcherClientProxy;
 import org.elasticsearch.xpack.watcher.support.xcontent.XContentSource;
 import org.elasticsearch.xpack.watcher.test.WatcherTestUtils;
@@ -75,14 +77,8 @@ public class IndexActionTests extends ESIntegTestCase {
     }
 
     public void testIndexActionExecuteSingleDoc() throws Exception {
-        String timestampField = randomFrom(null, "_timestamp", "@timestamp");
-        boolean customTimestampField = "@timestamp".equals(timestampField);
-
-        if (timestampField == null || "_timestamp".equals(timestampField)) {
-            assertThat(prepareCreate("test-index")
-                    .addMapping("test-type", "{ \"test-type\" : { \"_timestamp\" : { \"enabled\" : \"true\" }}}")
-                    .get().isAcknowledged(), is(true));
-        }
+        String timestampField = randomFrom(null, "@timestamp");
+        boolean customTimestampField = timestampField != null;
 
         IndexAction action = new IndexAction("test-index", "test-type", timestampField, null, null);
         ExecutableIndexAction executable = new ExecutableIndexAction(action, logger, WatcherClientProxy.of(client()), null);
@@ -103,12 +99,15 @@ public class IndexActionTests extends ESIntegTestCase {
 
         refresh(); //Manually refresh to make sure data is available
 
-        SearchResponse searchResponse = client().prepareSearch("test-index")
+        SearchRequestBuilder searchRequestbuilder = client().prepareSearch("test-index")
                 .setTypes("test-type")
-                .setSource(searchSource()
-                        .query(matchAllQuery())
-                        .aggregation(terms("timestamps").field(customTimestampField ? timestampField : "_timestamp")))
-                .get();
+                .setSource(searchSource().query(matchAllQuery()));
+
+        if (customTimestampField) {
+            searchRequestbuilder.addAggregation(terms("timestamps").field(timestampField));
+        }
+
+        SearchResponse searchResponse = searchRequestbuilder.get();
 
         assertThat(searchResponse.getHits().totalHits(), equalTo(1L));
         SearchHit hit = searchResponse.getHits().getAt(0);
@@ -116,29 +115,25 @@ public class IndexActionTests extends ESIntegTestCase {
         if (customTimestampField) {
             assertThat(hit.getSource().size(), is(2));
             assertThat(hit.getSource(), hasEntry("foo", (Object) "bar"));
-            assertThat(hit.getSource(), hasEntry(timestampField, (Object) DateTimeUtils.formatDate(executionTime)));
+            assertThat(hit.getSource(), hasEntry(timestampField, (Object) WatcherDateTimeUtils.formatDate(executionTime)));
+
+            Terms terms = searchResponse.getAggregations().get("timestamps");
+            assertThat(terms, notNullValue());
+            assertThat(terms.getBuckets(), hasSize(1));
+            assertThat(terms.getBuckets().get(0).getKeyAsNumber().longValue(), is(executionTime.getMillis()));
+            assertThat(terms.getBuckets().get(0).getDocCount(), is(1L));
         } else {
             assertThat(hit.getSource().size(), is(1));
             assertThat(hit.getSource(), hasEntry("foo", (Object) "bar"));
         }
-        Terms terms = searchResponse.getAggregations().get("timestamps");
-        assertThat(terms, notNullValue());
-        assertThat(terms.getBuckets(), hasSize(1));
-        assertThat(terms.getBuckets().get(0).getKeyAsNumber().longValue(), is(executionTime.getMillis()));
-        assertThat(terms.getBuckets().get(0).getDocCount(), is(1L));
     }
 
     public void testIndexActionExecuteMultiDoc() throws Exception {
-        String timestampField = randomFrom(null, "_timestamp", "@timestamp");
+        String timestampField = randomFrom(null, "@timestamp");
         boolean customTimestampField = "@timestamp".equals(timestampField);
 
-        if (timestampField == null || "_timestamp".equals(timestampField)) {
-            assertAcked(prepareCreate("test-index")
-                    .addMapping("test-type", "_timestamp", "enabled=true", "foo", "type=keyword"));
-        } else {
-            assertAcked(prepareCreate("test-index")
-                    .addMapping("test-type", "foo", "type=keyword"));
-        }
+        assertAcked(prepareCreate("test-index")
+                .addMapping("test-type", "foo", "type=keyword"));
 
         Object list = randomFrom(
                 new Map[] { singletonMap("foo", "bar"), singletonMap("foo", "bar1") },
@@ -171,8 +166,7 @@ public class IndexActionTests extends ESIntegTestCase {
         SearchResponse searchResponse = client().prepareSearch("test-index")
                 .setTypes("test-type")
                 .setSource(searchSource().sort("foo", SortOrder.ASC)
-                        .query(matchAllQuery())
-                        .aggregation(terms("timestamps").field(customTimestampField ? timestampField : "_timestamp")))
+                        .query(matchAllQuery()))
                 .get();
 
         assertThat(searchResponse.getHits().totalHits(), equalTo(2L));
@@ -180,7 +174,7 @@ public class IndexActionTests extends ESIntegTestCase {
         if (customTimestampField) {
             assertThat(hit.getSource().size(), is(2));
             assertThat(hit.getSource(), hasEntry("foo", (Object) "bar"));
-            assertThat(hit.getSource(), hasEntry(timestampField, (Object) DateTimeUtils.formatDate(executionTime)));
+            assertThat(hit.getSource(), hasEntry(timestampField, (Object) WatcherDateTimeUtils.formatDate(executionTime)));
         } else {
             assertThat(hit.getSource().size(), is(1));
             assertThat(hit.getSource(), hasEntry("foo", (Object) "bar"));
@@ -189,7 +183,7 @@ public class IndexActionTests extends ESIntegTestCase {
         if (customTimestampField) {
             assertThat(hit.getSource().size(), is(2));
             assertThat(hit.getSource(), hasEntry("foo", (Object) "bar1"));
-            assertThat(hit.getSource(), hasEntry(timestampField, (Object) DateTimeUtils.formatDate(executionTime)));
+            assertThat(hit.getSource(), hasEntry(timestampField, (Object) WatcherDateTimeUtils.formatDate(executionTime)));
         } else {
             assertThat(hit.getSource().size(), is(1));
             assertThat(hit.getSource(), hasEntry("foo", (Object) "bar1"));
@@ -211,7 +205,7 @@ public class IndexActionTests extends ESIntegTestCase {
         }
         builder.endObject();
 
-        IndexActionFactory actionParser = new IndexActionFactory(Settings.EMPTY, WatcherClientProxy.of(client()));
+        IndexActionFactory actionParser = new IndexActionFactory(Settings.EMPTY, ClientProxy.fromClient(client()));
         XContentParser parser = JsonXContent.jsonXContent.createParser(builder.bytes());
         parser.nextToken();
 
@@ -239,7 +233,7 @@ public class IndexActionTests extends ESIntegTestCase {
             }
         }
         builder.endObject();
-        IndexActionFactory actionParser = new IndexActionFactory(Settings.EMPTY, WatcherClientProxy.of(client()));
+        IndexActionFactory actionParser = new IndexActionFactory(Settings.EMPTY,ClientProxy.fromClient(client()));
         XContentParser parser = JsonXContent.jsonXContent.createParser(builder.bytes());
         parser.nextToken();
         try {

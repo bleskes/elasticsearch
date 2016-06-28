@@ -17,7 +17,8 @@
 
 package org.elasticsearch.marvel.license;
 
-import org.elasticsearch.action.ActionModule;
+import org.elasticsearch.action.ActionRequest;
+import org.elasticsearch.action.ActionResponse;
 import org.elasticsearch.common.component.AbstractComponent;
 import org.elasticsearch.common.component.LifecycleComponent;
 import org.elasticsearch.common.inject.AbstractModule;
@@ -34,6 +35,7 @@ import org.elasticsearch.license.plugin.core.LicensesManagerService;
 import org.elasticsearch.marvel.MonitoringLicensee;
 import org.elasticsearch.marvel.test.MarvelIntegTestCase;
 import org.elasticsearch.plugins.Plugin;
+import org.elasticsearch.plugins.ActionPlugin.ActionHandler;
 import org.elasticsearch.test.ESIntegTestCase.ClusterScope;
 import org.elasticsearch.xpack.XPackPlugin;
 
@@ -43,6 +45,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+import static java.util.Collections.emptyList;
 import static org.elasticsearch.test.ESIntegTestCase.Scope.SUITE;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
@@ -109,7 +112,8 @@ public class LicenseIntegrationTests extends MarvelIntegTestCase {
         }
 
         @Override
-        public void onModule(ActionModule module) {
+        public List<ActionHandler<? extends ActionRequest<?>, ? extends ActionResponse>> getActions() {
+            return emptyList();
         }
 
         @Override

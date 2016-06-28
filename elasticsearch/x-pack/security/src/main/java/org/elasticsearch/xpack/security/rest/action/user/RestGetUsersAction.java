@@ -1,0 +1,75 @@
+/*
+ * ELASTICSEARCH CONFIDENTIAL
+ * __________________
+ *
+ *  [2014] Elasticsearch Incorporated. All Rights Reserved.
+ *
+ * NOTICE:  All information contained herein is, and remains
+ * the property of Elasticsearch Incorporated and its suppliers,
+ * if any.  The intellectual and technical concepts contained
+ * herein are proprietary to Elasticsearch Incorporated
+ * and its suppliers and may be covered by U.S. and Foreign Patents,
+ * patents in process, and are protected by trade secret or copyright law.
+ * Dissemination of this information or reproduction of this material
+ * is strictly forbidden unless prior written permission is obtained
+ * from Elasticsearch Incorporated.
+ */
+
+package org.elasticsearch.xpack.security.rest.action.user;
+
+import org.elasticsearch.client.Client;
+import org.elasticsearch.common.Strings;
+import org.elasticsearch.common.inject.Inject;
+import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.xcontent.ToXContent;
+import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.rest.BaseRestHandler;
+import org.elasticsearch.rest.BytesRestResponse;
+import org.elasticsearch.rest.RestChannel;
+import org.elasticsearch.rest.RestController;
+import org.elasticsearch.rest.RestRequest;
+import org.elasticsearch.rest.RestResponse;
+import org.elasticsearch.rest.RestStatus;
+import org.elasticsearch.rest.action.support.RestBuilderListener;
+import org.elasticsearch.xpack.security.user.User;
+import org.elasticsearch.xpack.security.action.user.GetUsersResponse;
+import org.elasticsearch.xpack.security.client.SecurityClient;
+
+/**
+ * Rest action to retrieve a user from the security index
+ */
+public class RestGetUsersAction extends BaseRestHandler {
+
+    @Inject
+    public RestGetUsersAction(Settings settings, RestController controller, Client client) {
+        super(settings, client);
+        controller.registerHandler(RestRequest.Method.GET, "/_xpack/security/user/", this);
+        controller.registerHandler(RestRequest.Method.GET, "/_xpack/security/user/{username}", this);
+    }
+
+    @Override
+    protected void handleRequest(RestRequest request, final RestChannel channel, Client client) throws Exception {
+        String[] usernames = request.paramAsStringArray("username", Strings.EMPTY_ARRAY);
+
+        new SecurityClient(client).prepareGetUsers(usernames).execute(new RestBuilderListener<GetUsersResponse>(channel) {
+            @Override
+            public RestResponse buildResponse(GetUsersResponse response, XContentBuilder builder) throws Exception {
+                builder.startObject();
+                for (User user : response.users()) {
+                    builder.field(user.principal(), user);
+                }
+                builder.endObject();
+
+                // if the user asked for specific users, but none of them were found
+                // we'll return an empty result and 404 status code
+                if (usernames.length != 0 && response.users().length == 0) {
+                    return new BytesRestResponse(RestStatus.NOT_FOUND, builder);
+                }
+
+                // either the user asked for all users, or at least one of the users
+                // was found
+                return new BytesRestResponse(RestStatus.OK, builder);
+            }
+        });
+    }
+}
