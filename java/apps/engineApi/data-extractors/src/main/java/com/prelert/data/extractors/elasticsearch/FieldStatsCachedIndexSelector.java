@@ -28,6 +28,7 @@
 package com.prelert.data.extractors.elasticsearch;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
@@ -37,7 +38,6 @@ import org.apache.log4j.Logger;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.Range;
 
 /**
@@ -127,7 +127,12 @@ public class FieldStatsCachedIndexSelector implements IndexSelector
     @Override
     public List<String> selectByTime(long startMs, long endMs, Logger logger)
     {
-        Preconditions.checkArgument(endMs >= startMs);
+        if (endMs <= startMs)
+        {
+            logger.error("selectByTime expects the end time to be strictly greater than the start "
+                    + "time; actual call was: startMs = " + startMs + ", endMs = " + endMs);
+            return Collections.emptyList();
+        }
 
         if (m_HasFieldStatsFailed)
         {
