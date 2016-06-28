@@ -191,6 +191,7 @@ public class JobSchedulerTest
         assertEquals("0-0", dataProcessor.getStream(0));
         assertEquals(1400000000000L, dataExtractor.getStart(0));
         assertEquals(1400000001000L, dataExtractor.getEnd(0));
+        assertFalse(dataExtractor.m_IsCancelled);
         assertEquals(1, dataExtractor.m_NCleared);
 
         List<InterimResultsParams> flushParams = dataProcessor.getFlushParams();
@@ -220,6 +221,7 @@ public class JobSchedulerTest
         waitUntilSchedulerStoppedIsAudited();
         assertEquals(JobSchedulerStatus.STOPPED, m_CurrentStatus);
         assertTrue(dataProcessor.isJobClosed());
+        assertFalse(dataExtractor.m_IsCancelled);
         assertEquals(1, dataExtractor.m_NCleared);
 
         assertEquals(3, dataProcessor.getNumberOfStreams());
@@ -249,6 +251,7 @@ public class JobSchedulerTest
         waitUntilSchedulerStoppedIsAudited();
         assertEquals(JobSchedulerStatus.STOPPED, m_CurrentStatus);
         assertTrue(dataProcessor.isJobClosed());
+        assertFalse(dataExtractor.m_IsCancelled);
         assertEquals(1, dataExtractor.m_NCleared);
 
         assertEquals(0, dataProcessor.getNumberOfStreams());
@@ -280,6 +283,7 @@ public class JobSchedulerTest
         assertTrue(dataProcessor.awaitForCountDownLatch());
         m_JobScheduler.stopManual();
         assertEquals(JobSchedulerStatus.STOPPED, m_CurrentStatus);
+        assertTrue(dataExtractor.m_IsCancelled);
         assertEquals(1, dataExtractor.m_NCleared);
 
         assertEquals(numberOfSearches, dataProcessor.getNumberOfStreams());
@@ -349,6 +353,7 @@ public class JobSchedulerTest
         assertTrue(dataProcessor.awaitForCountDownLatch());
         m_JobScheduler.stopManual();
         assertEquals(JobSchedulerStatus.STOPPED, m_CurrentStatus);
+        assertTrue(dataExtractor.m_IsCancelled);
         assertEquals(1, dataExtractor.m_NCleared);
 
         assertEquals(numberOfSearches, dataProcessor.getNumberOfStreams());
@@ -387,6 +392,7 @@ public class JobSchedulerTest
         assertTrue(dataProcessor.awaitForCountDownLatch());
         m_JobScheduler.stopManual();
         assertEquals(JobSchedulerStatus.STOPPED, m_CurrentStatus);
+        assertTrue(dataExtractor.m_IsCancelled);
         assertEquals(1, dataExtractor.m_NCleared);
 
         assertEquals(numberOfSearches, dataProcessor.getNumberOfStreams());
@@ -698,6 +704,7 @@ public class JobSchedulerTest
         private final List<Long> m_Starts = new ArrayList<>();
         private final List<Long> m_Ends = new ArrayList<>();
         private volatile int m_NCleared;
+        private volatile boolean m_IsCancelled;
 
         public MockDataExtractor(List<Integer> batchesPerSearch)
         {
@@ -734,6 +741,7 @@ public class JobSchedulerTest
             m_StreamCount = -1;
             m_Starts.add(start);
             m_Ends.add(end);
+            m_IsCancelled = false;
         }
 
         public long getStart(int searchCount)
@@ -750,6 +758,12 @@ public class JobSchedulerTest
         public void clear()
         {
             m_NCleared++;
+        }
+
+        @Override
+        public void cancel()
+        {
+            m_IsCancelled = true;
         }
     }
 

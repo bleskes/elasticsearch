@@ -62,6 +62,7 @@ public class ElasticsearchDataExtractor implements DataExtractor
     private volatile long m_CurrentEndTime;
     private volatile long m_EndTime;
     private volatile boolean m_IsFirstSearch;
+    private volatile boolean m_IsCancelled;
 
     /**
      * The interval of each scroll search. Will be null when search is not chunked.
@@ -91,6 +92,7 @@ public class ElasticsearchDataExtractor implements DataExtractor
         m_CurrentStartTime = startEpochMs;
         m_CurrentEndTime = startEpochMs;
         m_EndTime = endEpochMs;
+        m_IsCancelled = false;
         m_Logger = logger;
         if (endEpochMs - startEpochMs > CHUNK_THRESHOLD_MS)
         {
@@ -235,7 +237,7 @@ public class ElasticsearchDataExtractor implements DataExtractor
                 // If it was a new scroll it means it returned 0 hits. If we are doing
                 // a chunked search, we reconfigure the search in order to jump to the next
                 // time interval where there are data.
-                if (isNewScroll && m_Chunk != null)
+                if (isNewScroll && !m_IsCancelled && m_Chunk != null)
                 {
                     setUpChunkedSearch();
                 }
@@ -270,7 +272,7 @@ public class ElasticsearchDataExtractor implements DataExtractor
     @Override
     public boolean hasNext()
     {
-        return !m_ScrollState.isComplete() || m_CurrentEndTime < m_EndTime;
+        return !m_ScrollState.isComplete() || (!m_IsCancelled && m_CurrentEndTime < m_EndTime);
     }
 
     private InputStream initScroll() throws IOException
@@ -328,5 +330,11 @@ public class ElasticsearchDataExtractor implements DataExtractor
                     + response.getResponseAsString());
         }
         return null;
+    }
+
+    @Override
+    public void cancel()
+    {
+        m_IsCancelled = true;
     }
 }

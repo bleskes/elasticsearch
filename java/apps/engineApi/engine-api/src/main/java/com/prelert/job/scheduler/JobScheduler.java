@@ -158,8 +158,7 @@ public class JobScheduler
         Long previousLastEndTimeMs = m_LastEndTimeMs;
         Date latestRecordTimestamp = null;
         newSearch(start, end);
-        while (m_DataExtractor.hasNext() && m_Status == JobSchedulerStatus.STARTED
-                && !m_ProblemTracker.hasProblems())
+        while (m_DataExtractor.hasNext() && !m_ProblemTracker.hasProblems())
         {
             Optional<InputStream> extractedData = tryExtractingNextAvailableData();
             if (extractedData.isPresent())
@@ -221,10 +220,15 @@ public class JobScheduler
 
     private void updateLastEndTime(Date latestRecordTimestamp, long searchEndTimeMs)
     {
-        // Only update last end time when there are no problems in order to retry
-        // from the last time when data were successfully processed
-        if (!m_ProblemTracker.hasProblems()
-                && latestRecordTimestamp != null
+        // Only update last end time when:
+        //   1. We have seen data, i.e. there is a non null latestRecordTimestamp
+        //   2. The scheduler is still running
+        //   3. There are no problems
+        //   4. We are in real-time mode
+        // in order to retry from the last time when data were successfully processed
+        if (latestRecordTimestamp != null
+                && m_Status == JobSchedulerStatus.STARTED
+                && !m_ProblemTracker.hasProblems()
                 && isInRealTimeMode())
         {
             m_LastEndTimeMs = Math.min(searchEndTimeMs, alignToBucketEnd(latestRecordTimestamp));
@@ -453,7 +457,7 @@ public class JobScheduler
             }
             updateStatus(JobSchedulerStatus.STOPPING);
         }
-        awaitTermination();
+        cancelAndAwaitTermination();
         updateFinalStatusAndCleanUp(JobSchedulerStatus.STOPPED);
         releaseActionTicket();
     }
@@ -473,13 +477,14 @@ public class JobScheduler
             }
             updateStatus(JobSchedulerStatus.STOPPING);
         }
-        awaitTermination();
+        cancelAndAwaitTermination();
         updateFinalStatusAndCleanUp(JobSchedulerStatus.STARTED);
         releaseActionTicket();
     }
 
-    private void awaitTermination()
+    private void cancelAndAwaitTermination()
     {
+        m_DataExtractor.cancel();
         if (awaitLookbackTermination() == false || stopRealtimeScheduler() == false)
         {
             m_Logger.error("Unable to stop the scheduler.");
