@@ -192,7 +192,7 @@ public class ServerMain
             // Stop the server if an exception here
             contextHandler.start();
         }
-        catch (Throwable e)
+        catch (Exception e)
         {
             LOGGER.error("Failed to start web application", e);
             ms_Server.stop();

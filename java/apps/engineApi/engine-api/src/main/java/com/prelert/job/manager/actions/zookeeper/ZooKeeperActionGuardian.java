@@ -32,6 +32,7 @@ import com.prelert.job.manager.actions.ActionState;
 import com.prelert.job.manager.actions.ActionGuardian;
 
 import java.io.IOException;
+import java.net.ConnectException;
 import java.net.Inet4Address;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
@@ -89,8 +90,10 @@ import org.apache.zookeeper.ZooDefs.Ids;
  * Note the Action lock is a Semaphore as it may be released by a different
  * thread. The Description lock is a read-write lock, multiple readers can
  * read as long as the write lock isn't acquired
+ *
+ * Class is final as the constructor could throw
  */
-public class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
+public final class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
                     extends ActionGuardian<T> implements AutoCloseable
 {
     private static final Logger LOGGER = Logger.getLogger(ZooKeeperActionGuardian.class);
@@ -114,8 +117,10 @@ public class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
      *
      * @param defaultAction
      * @param connectionString
+     * @throws ConnectException
      */
     public ZooKeeperActionGuardian(T defaultAction, String connectionString)
+    throws ConnectException
     {
         super(defaultAction);
 
@@ -129,8 +134,11 @@ public class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
      * @param defaultAction
      * @param connectionString
      * @param nextGuardian
+     * @throws ConnectException
      */
-    public ZooKeeperActionGuardian(T defaultAction, String connectionString, ActionGuardian<T> nextGuardian)
+    public ZooKeeperActionGuardian(T defaultAction, String connectionString,
+                                    ActionGuardian<T> nextGuardian)
+    throws ConnectException
     {
         super(defaultAction, nextGuardian);
 
@@ -157,7 +165,7 @@ public class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
         }
     }
 
-    private void initCuratorFrameworkClient(String connectionString)
+    private void initCuratorFrameworkClient(String connectionString) throws ConnectException
     {
         getAndSetHostName();
 
@@ -167,18 +175,24 @@ public class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
         m_Client.start();
         try
         {
-            m_Client.blockUntilConnected(30, TimeUnit.SECONDS);
+            m_Client.blockUntilConnected(3, TimeUnit.SECONDS);
         }
         catch (InterruptedException e)
         {
             LOGGER.error("ZooKeeper block until connection interrrupted");
         }
 
+        if (!m_Client.getZookeeperClient().isConnected())
+        {
+            m_Client.close();
+            throw new ConnectException("Cannot connect to ZooKeeper server '" +
+                                            connectionString + "'");
+        }
+
         createBasePath(m_Client);
         registerSelf(m_Client);
 
-        // if the connection is lost then reconnected then
-        // recreate the ephemeral hostname node
+        // connection state change listener
         m_Client.getConnectionStateListenable().addListener(this::stateChanged);
     }
 
@@ -191,6 +205,9 @@ public class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
         case LOST:
             // all held lock are lost
             m_LeaseByJob.clear();
+            break;
+        case SUSPENDED:
+            // TODO invalidate locks??
             break;
         default:
             break;

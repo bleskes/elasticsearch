@@ -164,7 +164,6 @@ public class ProcessManager
 
         DataCounts stats = new DataCounts();
 
-        // the guard must be released after it is acquired
         try
         {
             // check the process is running, throws if not
@@ -378,11 +377,6 @@ public class ProcessManager
      * Stop the running process.
      * Closing the stream into the native process causes the process
      * to terminate its IO loop and stop.<br>
-     * The return value is based on the status of the native process
-     * ProcessStatus.IN_USE is returned if the process is currently processing
-     * data in which case this function should be tried again after a wait period
-     * else the process is stopped successfully and ProcessStatus.COMPLETED is
-     * returned.
      *
      * @param jobId
      * @throws NativeProcessRunException If the process has already terminated

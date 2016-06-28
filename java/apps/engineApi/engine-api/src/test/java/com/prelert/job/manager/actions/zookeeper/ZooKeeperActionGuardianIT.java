@@ -30,6 +30,7 @@ package com.prelert.job.manager.actions.zookeeper;
 import static org.junit.Assert.*;
 
 import java.io.IOException;
+import java.net.ConnectException;
 import java.net.Inet4Address;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -135,7 +136,7 @@ public class ZooKeeperActionGuardianIT
     }
 
     @Test
-    public void testEngineApiHosts() throws UnknownHostException
+    public void testEngineApiHosts() throws UnknownHostException, ConnectException
     {
         try (ZooKeeperActionGuardian<Action> actionGuardian =
                 new ZooKeeperActionGuardian<>(Action.startingState(), CONNECTION_STRING))
@@ -146,7 +147,7 @@ public class ZooKeeperActionGuardianIT
     }
 
     @Test
-    public void testCurrentAction_isCLOSEDForNewJob()
+    public void testCurrentAction_isCLOSEDForNewJob() throws ConnectException
     {
         try (ZooKeeperActionGuardian<Action> actionGuardian =
                     new ZooKeeperActionGuardian<>(Action.CLOSED, CONNECTION_STRING))
@@ -157,7 +158,7 @@ public class ZooKeeperActionGuardianIT
 
     @Test
     public void testTryAcquiringAction()
-    throws JobInUseException
+    throws JobInUseException, ConnectException
     {
         try (ZooKeeperActionGuardian<Action> actionGuardian =
                 new ZooKeeperActionGuardian<>(Action.CLOSED, CONNECTION_STRING))
@@ -171,7 +172,7 @@ public class ZooKeeperActionGuardianIT
 
     @Test
     public void testCurrentAction_whenLockHasBeenAcquired()
-    throws JobInUseException
+    throws JobInUseException, ConnectException
     {
         try (ZooKeeperActionGuardian<Action> actionGuardian =
                 new ZooKeeperActionGuardian<>(Action.CLOSED, CONNECTION_STRING))
@@ -190,7 +191,8 @@ public class ZooKeeperActionGuardianIT
     }
 
     @Test
-    public void testTryAcquireThrows_whenJobIsLocked() throws JobInUseException, UnknownHostException
+    public void testTryAcquireThrows_whenJobIsLocked()
+            throws JobInUseException, UnknownHostException, ConnectException
     {
         m_ExpectedException.expect(JobInUseException.class);
         m_ExpectedException.expectMessage(
@@ -217,7 +219,7 @@ public class ZooKeeperActionGuardianIT
 
     @Test
     public void testTryAcquireThrows_resumingWhenJobIsUpdating()
-            throws JobInUseException, UnknownHostException
+            throws JobInUseException, UnknownHostException, ConnectException
     {
         m_ExpectedException.expect(JobInUseException.class);
         m_ExpectedException.expectMessage(
@@ -245,7 +247,7 @@ public class ZooKeeperActionGuardianIT
 
     @Test
     public void testTryAcquireThrows_whenRequestingADifferentActionFromTheSameGuardian()
-    throws JobInUseException, UnknownHostException
+    throws JobInUseException, UnknownHostException, ConnectException
     {
         m_ExpectedException.expect(JobInUseException.class);
         m_ExpectedException.expectMessage(
@@ -267,7 +269,7 @@ public class ZooKeeperActionGuardianIT
 
     @Test
     public void testTryAcquireThrowsWhenRequestedActionIsSameAsCurrent()
-    throws JobInUseException, UnknownHostException
+    throws JobInUseException, UnknownHostException, ConnectException
     {
         m_ExpectedException.expect(JobInUseException.class);
         m_ExpectedException.expectMessage(
@@ -292,7 +294,7 @@ public class ZooKeeperActionGuardianIT
     @Test
     @SuppressWarnings("unchecked")
     public void testTryAcquireThrowsReleasesLease_WhenNextClientThrowsJobInUse()
-    throws JobInUseException, UnknownHostException
+    throws JobInUseException, UnknownHostException, ConnectException
     {
         ActionGuardian<Action> next = Mockito.mock(ActionGuardian.class);
         Mockito.when(next.tryAcquiringAction("foo4", Action.UPDATING))
@@ -321,14 +323,17 @@ public class ZooKeeperActionGuardianIT
 
 
     @Test
-    public void testTryAcquiringAction_acquiresNextLockInChain() throws JobInUseException
+    public void testTryAcquiringAction_acquiresNextLockInChain()
+            throws JobInUseException, ConnectException
     {
         @SuppressWarnings("unchecked")
         ActionGuardian<Action> nextGuardian = Mockito.mock(ActionGuardian.class);
 
-        try (ZooKeeperActionGuardian<Action> actionGuardian = new ZooKeeperActionGuardian<>(Action.CLOSED, CONNECTION_STRING, nextGuardian))
+        try (ZooKeeperActionGuardian<Action> actionGuardian =
+                new ZooKeeperActionGuardian<>(Action.CLOSED, CONNECTION_STRING, nextGuardian))
         {
-            try (ZooKeeperActionGuardian<Action>.ActionTicket ticket = actionGuardian.tryAcquiringAction("foo", Action.CLOSING))
+            try (ZooKeeperActionGuardian<Action>.ActionTicket ticket =
+                    actionGuardian.tryAcquiringAction("foo", Action.CLOSING))
             {
             }
 
@@ -337,12 +342,14 @@ public class ZooKeeperActionGuardianIT
     }
 
     @Test
-    public void testTryAcquiringAction_releasesNextLockInChain() throws JobInUseException
+    public void testTryAcquiringAction_releasesNextLockInChain()
+            throws JobInUseException, ConnectException
     {
         @SuppressWarnings("unchecked")
         ActionGuardian<Action> nextGuardian = Mockito.mock(ActionGuardian.class);
 
-        try (ZooKeeperActionGuardian<Action> actionGuardian = new ZooKeeperActionGuardian<>(Action.CLOSED, CONNECTION_STRING, nextGuardian))
+        try (ZooKeeperActionGuardian<Action> actionGuardian =
+                new ZooKeeperActionGuardian<>(Action.CLOSED, CONNECTION_STRING, nextGuardian))
         {
             actionGuardian.tryAcquiringAction("foo", Action.DELETING);
             actionGuardian.releaseAction("foo", Action.DELETING);
@@ -352,9 +359,10 @@ public class ZooKeeperActionGuardianIT
     }
 
     @Test
-    public void testLockDataToHostnameAction()
+    public void testLockDataToHostnameAction() throws ConnectException
     {
-        try (ZooKeeperActionGuardian<Action> guardian = new ZooKeeperActionGuardian<>(Action.CLOSED, CONNECTION_STRING))
+        try (ZooKeeperActionGuardian<Action> guardian =
+                new ZooKeeperActionGuardian<>(Action.CLOSED, CONNECTION_STRING))
         {
             String data = "macbook-CLOSING";
             ZooKeeperActionGuardian<Action>.HostnameAction ha = guardian.lockDataToHostAction(data);
@@ -370,8 +378,10 @@ public class ZooKeeperActionGuardianIT
 
     @Test
     public void testLockDataToHostnameAction_returnsActionCLOSEDIfBadData()
+    throws ConnectException
     {
-        try (ZooKeeperActionGuardian<Action> guardian = new ZooKeeperActionGuardian<>(Action.CLOSED, CONNECTION_STRING))
+        try (ZooKeeperActionGuardian<Action> guardian =
+                new ZooKeeperActionGuardian<>(Action.CLOSED, CONNECTION_STRING))
         {
             String data = "funny-host.name";
             ZooKeeperActionGuardian<Action>.HostnameAction ha = guardian.lockDataToHostAction(data);
@@ -386,9 +396,10 @@ public class ZooKeeperActionGuardianIT
     }
 
     @Test
-    public void testHostnameActionToLockData()
+    public void testHostnameActionToLockData() throws ConnectException
     {
-        try (ZooKeeperActionGuardian<Action> guardian = new ZooKeeperActionGuardian<>(Action.CLOSED, CONNECTION_STRING))
+        try (ZooKeeperActionGuardian<Action> guardian =
+                new ZooKeeperActionGuardian<>(Action.CLOSED, CONNECTION_STRING))
         {
             String data = guardian.hostActionToData("macbook", Action.DELETING);
             assertEquals("macbook-DELETING", data);
@@ -399,7 +410,7 @@ public class ZooKeeperActionGuardianIT
     }
 
     @Test(expected=JobInUseException.class)
-    public void reentrantLockTest() throws JobInUseException
+    public void reentrantLockTest() throws JobInUseException, ConnectException
     {
         try (ZooKeeperActionGuardian<Action> actionGuardian =
                 new ZooKeeperActionGuardian<>(Action.CLOSED, CONNECTION_STRING))
@@ -407,14 +418,15 @@ public class ZooKeeperActionGuardianIT
             try (ZooKeeperActionGuardian<Action>.ActionTicket ticket =
                     actionGuardian.tryAcquiringAction("foo", Action.UPDATING))
             {
-                ZooKeeperActionGuardian<Action>.ActionTicket ticket2 = actionGuardian.tryAcquiringAction("foo", Action.UPDATING);
+                ZooKeeperActionGuardian<Action>.ActionTicket ticket2 =
+                        actionGuardian.tryAcquiringAction("foo", Action.UPDATING);
                 ticket2.close();
             }
         }
     }
 
     @Test
-    public void testReleasingLockTransitionsToNextState() throws JobInUseException
+    public void testReleasingLockTransitionsToNextState() throws JobInUseException, ConnectException
     {
         try (ZooKeeperActionGuardian<Action> actionGuardian =
                 new ZooKeeperActionGuardian<>(Action.CLOSED, CONNECTION_STRING))
@@ -440,7 +452,8 @@ public class ZooKeeperActionGuardianIT
     }
 
     @Test
-    public void testReleaseAcquiresNewLockWhenNextStateIsSleeping() throws JobInUseException
+    public void testReleaseAcquiresNewLockWhenNextStateIsSleeping()
+            throws JobInUseException, ConnectException
     {
         try (ZooKeeperActionGuardian<Action> actionGuardian =
                 new ZooKeeperActionGuardian<>(Action.CLOSED, CONNECTION_STRING))
@@ -460,9 +473,7 @@ public class ZooKeeperActionGuardianIT
             }
         }
     }
-
-
-/***
+/**
     @Test
     public void testReleaseDeletesNode() throws Exception
     {
@@ -490,7 +501,7 @@ public class ZooKeeperActionGuardianIT
             }
         }
     }
-
+/**
     @Test
     public void testReleaseDoesnotDeleteNodeIfAnotherLockIsHeldForJob() throws Exception
     {
@@ -548,7 +559,7 @@ public class ZooKeeperActionGuardianIT
 **/
     @Test
     @SuppressWarnings("unchecked")
-    public void testActionIsnotSetIfNextGuardianFails() throws JobInUseException
+    public void testActionIsnotSetIfNextGuardianFails() throws JobInUseException, ConnectException
     {
         ActionGuardian<ScheduledAction> next = Mockito.mock(ActionGuardian.class);
 
@@ -573,7 +584,8 @@ public class ZooKeeperActionGuardianIT
     }
 
     @Test
-    public void testCanReleaseLockFromDifferentThread() throws JobInUseException, InterruptedException
+    public void testCanReleaseLockFromDifferentThread()
+            throws JobInUseException, InterruptedException, ConnectException
     {
         try (ZooKeeperActionGuardian<Action> actionGuardian =
                 new ZooKeeperActionGuardian<>(Action.CLOSED, CONNECTION_STRING))
@@ -591,7 +603,7 @@ public class ZooKeeperActionGuardianIT
     }
 
     @Test
-    public void testCurrentAction() throws JobInUseException, InterruptedException
+    public void testCurrentAction() throws JobInUseException, InterruptedException, ConnectException
     {
         try (ZooKeeperActionGuardian<Action> actionGuardian =
                 new ZooKeeperActionGuardian<>(Action.CLOSED, CONNECTION_STRING))

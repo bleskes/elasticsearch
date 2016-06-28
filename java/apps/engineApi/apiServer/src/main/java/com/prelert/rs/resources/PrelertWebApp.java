@@ -29,6 +29,7 @@ package com.prelert.rs.resources;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.ConnectException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -99,7 +100,7 @@ import com.prelert.utils.scheduler.TaskScheduler;
  * resource classes
  */
 
-public class PrelertWebApp extends Application
+public final class PrelertWebApp extends Application
 {
     private static final Logger LOGGER = Logger.getLogger(PrelertWebApp.class);
 
@@ -166,21 +167,29 @@ public class PrelertWebApp extends Application
 
     private final ActivityAudit m_ActivityAudit;
 
-    public PrelertWebApp()
+    public PrelertWebApp() throws ConnectException
     {
         m_ResourceClasses = new HashSet<>();
         addEndPoints();
         addMessageReaders();
         addMessageWriters();
         addExceptionMappers();
+
         m_ShutdownThreadBuilder = new ShutdownThreadBuilder();
 
         ElasticsearchFactory esFactory = createPersistenceFactory();
         JobProvider jobProvider = esFactory.newJobProvider();
 
-
+        try
+        {
         m_JobManager = createJobManager(jobProvider, esFactory,
                 new DefaultJobLoggerFactory(ProcessCtrl.LOG_DIR));
+        }
+        catch (ConnectException e)
+        {
+            esFactory.close();
+            throw e;
+        }
         m_AlertManager = new AlertManager(jobProvider, m_JobManager);
         m_ServerInfo = esFactory.newServerInfoFactory();
         m_JobDataReader = new JobDataReader(jobProvider);
@@ -264,6 +273,7 @@ public class PrelertWebApp extends Application
      */
     private JobManager createJobManager(JobProvider jobProvider, ElasticsearchFactory esFactory,
             JobLoggerFactory jobLoggerFactory)
+        throws ConnectException
     {
         ActionGuardian<Action> processActionGuardian =
                     new LocalActionGuardian<>(Action.startingState());

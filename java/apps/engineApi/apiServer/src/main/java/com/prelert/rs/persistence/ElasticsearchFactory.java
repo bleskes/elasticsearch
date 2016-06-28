@@ -51,7 +51,7 @@ import com.prelert.settings.PrelertSettings;
 /**
  * A factory for the entire family of Elasticsearch-based classes
  */
-public abstract class ElasticsearchFactory
+public abstract class ElasticsearchFactory implements AutoCloseable
 {
     private static final Logger LOGGER = Logger.getLogger(ElasticsearchFactory.class);
 
@@ -127,5 +127,14 @@ public abstract class ElasticsearchFactory
             numberOfReplicas = MAX_NUMBER_OF_REPLICAS;
         }
         return numberOfReplicas;
+    }
+
+    /**
+     * Closes the Elasticsearch client
+     */
+    @Override
+    public void close()
+    {
+        m_Client.close();
     }
 }
