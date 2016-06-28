@@ -511,7 +511,7 @@ public final class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
     {
         try
         {
-            m_Client.setData().forPath(descriptionPath(jobId));
+            m_Client.setData().forPath(descriptionPath(jobId), new byte [0] );
         }
         catch (Exception e)
         {
@@ -563,7 +563,8 @@ public final class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
         return JOBS_PATH + "/" + jobId + "/" + m_NoneAction.typename() + "/description--lock" ;
     }
 
-    private String descriptionPath(String jobId)
+    @VisibleForTesting
+    String descriptionPath(String jobId)
     {
         return JOBS_PATH + "/" + jobId + "/" + m_NoneAction.typename() + "/description";
     }

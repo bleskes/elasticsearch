@@ -473,11 +473,11 @@ public class ZooKeeperActionGuardianIT
             }
         }
     }
-/**
+
     @Test
-    public void testReleaseDeletesNode() throws Exception
+    public void testReleaseDeletesActionData() throws Exception
     {
-        final String JOB_ID = "foo";
+        final String JOB_ID = "foo4";
 
         try (ZooKeeperActionGuardian<Action> actionGuardian =
                 new ZooKeeperActionGuardian<>(Action.CLOSED, CONNECTION_STRING))
@@ -488,75 +488,19 @@ public class ZooKeeperActionGuardianIT
             }
             assertEquals(Action.CLOSED, actionGuardian.currentAction(JOB_ID));
 
-            try (CuratorFramework client = CuratorFrameworkFactory.newClient(HOST + ":" + Integer.toString(PORT),
+            try (CuratorFramework client = CuratorFrameworkFactory.newClient(CONNECTION_STRING,
                     new ExponentialBackoffRetry(1000, 3)))
             {
                 client.start();
 
-                List<String> children = client.getChildren().forPath(
-                        ZooKeeperActionGuardian.LOCK_PATH_PREFIX.substring(0, ZooKeeperActionGuardian.LOCK_PATH_PREFIX.length() -1));
+                byte [] data= client.getData().
+                            forPath(actionGuardian.descriptionPath(JOB_ID));
 
-                // assert no child nodes with the name JOB_ID
-                assertEquals(0, children.stream().filter(s -> s.equals(JOB_ID)).count());
+                assertEquals(0, data.length);
             }
         }
     }
-/**
-    @Test
-    public void testReleaseDoesnotDeleteNodeIfAnotherLockIsHeldForJob() throws Exception
-    {
-        final String JOB_ID = "foo";
 
-        try (CuratorFramework client = CuratorFrameworkFactory.newClient(HOST + ":" + Integer.toString(PORT),
-                new ExponentialBackoffRetry(1000, 3)))
-        {
-            client.start();
-
-            // set a lock for a scheduled action
-            try (ZooKeeperActionGuardian<ScheduledAction> scheduledJobActionGuardian =
-                    new ZooKeeperActionGuardian<>(ScheduledAction.STOP, CONNECTION_STRING))
-            {
-
-                try (ActionGuardian<ScheduledAction>.ActionTicket schedulerTicket =
-                        scheduledJobActionGuardian.tryAcquiringAction(JOB_ID, ScheduledAction.START))
-                {
-                    // set a lock for the job action
-                    try (ZooKeeperActionGuardian<Action> actionGuardian =
-                            new ZooKeeperActionGuardian<>(Action.CLOSED, CONNECTION_STRING))
-                    {
-                        try (ActionGuardian<Action>.ActionTicket ticket =
-                                actionGuardian.tryAcquiringAction(JOB_ID, Action.CLOSING))
-                        {
-                        }
-                        assertEquals(Action.CLOSED, actionGuardian.currentAction(JOB_ID));
-
-
-                        List<String> children = client.getChildren().forPath(
-                                ZooKeeperActionGuardian.LOCK_PATH_PREFIX.substring(0, ZooKeeperActionGuardian.LOCK_PATH_PREFIX.length() -1));
-
-                        // assert the job node hasn't been deleted while the scheduler still
-                        // has a lock
-                        assertTrue(children.contains(JOB_ID));
-                    }
-                }
-
-                // stopping should release the scheduler lock
-                try (ActionGuardian<ScheduledAction>.ActionTicket schedulerTicket =
-                        scheduledJobActionGuardian.tryAcquiringAction(JOB_ID, ScheduledAction.STOP))
-                {
-                }
-
-
-                // now the scheduler lock is released the job node should have been deleted
-                List<String> children = client.getChildren().forPath(
-                        ZooKeeperActionGuardian.LOCK_PATH_PREFIX.substring(0, ZooKeeperActionGuardian.LOCK_PATH_PREFIX.length() -1));
-
-                // assert no child nodes with the name JOB_ID
-                assertEquals(0, children.stream().filter(s -> s.equals(JOB_ID)).count());
-            }
-        }
-    }
-**/
     @Test
     @SuppressWarnings("unchecked")
     public void testActionIsnotSetIfNextGuardianFails() throws JobInUseException, ConnectException
