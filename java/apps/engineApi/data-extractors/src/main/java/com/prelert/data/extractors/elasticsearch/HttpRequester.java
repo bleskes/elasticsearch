@@ -52,7 +52,7 @@ import org.apache.log4j.Logger;
  * HTTP or HTTPS is deduced from the supplied URL.
  * Invalid certificates are tolerated for HTTPS access, similar to "curl -k".
  */
-class HttpRequester
+public class HttpRequester
 {
     private static final Logger LOGGER = Logger.getLogger(HttpRequester.class);
 
@@ -60,13 +60,99 @@ class HttpRequester
     private static final String GET = "GET";
     private static final String DELETE = "DELETE";
     private static final String AUTH_HEADER = "Authorization";
-    private static final int OK_STATUS = 200;
 
     private static final SSLSocketFactory TRUSTING_SOCKET_FACTORY;
     private static final HostnameVerifier TRUSTING_HOSTNAME_VERIFIER;
 
     private static final int CONNECT_TIMEOUT_MILLIS = 30000;
     private static final int READ_TIMEOUT_MILLIS = 600000;
+
+    static
+    {
+        SSLSocketFactory trustingSocketFactory = null;
+        try
+        {
+            SSLContext sslContext = SSLContext.getInstance(TLS);
+            sslContext.init(null, new TrustManager[]{ new NoOpTrustManager() }, null);
+            trustingSocketFactory = sslContext.getSocketFactory();
+        }
+        catch (KeyManagementException | NoSuchAlgorithmException e)
+        {
+            LOGGER.warn("Unable to set up trusting socket factory", e);
+        }
+
+        TRUSTING_SOCKET_FACTORY = trustingSocketFactory;
+        TRUSTING_HOSTNAME_VERIFIER = new NoOpHostnameVerifier();
+    }
+
+    private final String m_AuthHeader;
+
+    public HttpRequester()
+    {
+        this(null);
+    }
+
+    public HttpRequester(String authHeader)
+    {
+        m_AuthHeader = authHeader;
+    }
+
+    public HttpResponse get(String url, String requestBody) throws IOException
+    {
+        return request(url, requestBody, GET);
+    }
+
+    public HttpResponse delete(String url, String requestBody) throws IOException
+    {
+        return request(url, requestBody, DELETE);
+    }
+
+    private HttpResponse request(String url, String requestBody, String method) throws IOException
+    {
+        URL urlObject = new URL(url);
+        HttpURLConnection connection = (HttpURLConnection) urlObject.openConnection();
+        connection.setConnectTimeout(CONNECT_TIMEOUT_MILLIS);
+        connection.setReadTimeout(READ_TIMEOUT_MILLIS);
+
+        // TODO: we could add a config option to allow users who want to
+        // rigorously enforce valid certificates to do so
+        if (connection instanceof HttpsURLConnection)
+        {
+            // This is the equivalent of "curl -k", i.e. tolerate connecting to
+            // an Elasticsearch with a self-signed certificate or a certificate
+            // that doesn't match its hostname.
+            HttpsURLConnection httpsConnection = (HttpsURLConnection)connection;
+            if (TRUSTING_SOCKET_FACTORY != null)
+            {
+                httpsConnection.setSSLSocketFactory(TRUSTING_SOCKET_FACTORY);
+            }
+            httpsConnection.setHostnameVerifier(TRUSTING_HOSTNAME_VERIFIER);
+        }
+        connection.setRequestMethod(method);
+        if (m_AuthHeader != null)
+        {
+            connection.setRequestProperty(AUTH_HEADER, m_AuthHeader);
+        }
+        if (requestBody != null)
+        {
+            connection.setDoOutput(true);
+            writeRequestBody(requestBody, connection);
+        }
+        if (connection.getResponseCode() != HttpResponse.OK_STATUS)
+        {
+            return new HttpResponse(connection.getErrorStream(), connection.getResponseCode());
+        }
+        return new HttpResponse(connection.getInputStream(), connection.getResponseCode());
+    }
+
+    private static void writeRequestBody(String requestBody, HttpURLConnection connection)
+            throws IOException
+    {
+        DataOutputStream dataOutputStream = new DataOutputStream(connection.getOutputStream());
+        dataOutputStream.writeBytes(requestBody);
+        dataOutputStream.flush();
+        dataOutputStream.close();
+    }
 
     /**
      * Hostname verifier that ignores hostname discrepancies.
@@ -102,81 +188,5 @@ class HttpRequester
         {
             return EMPTY_CERTIFICATE_ARRAY;
         }
-    }
-
-    static
-    {
-        SSLSocketFactory trustingSocketFactory = null;
-        try
-        {
-            SSLContext sslContext = SSLContext.getInstance(TLS);
-            sslContext.init(null, new TrustManager[]{ new NoOpTrustManager() }, null);
-            trustingSocketFactory = sslContext.getSocketFactory();
-        }
-        catch (KeyManagementException | NoSuchAlgorithmException e)
-        {
-            LOGGER.warn("Unable to set up trusting socket factory", e);
-        }
-
-        TRUSTING_SOCKET_FACTORY = trustingSocketFactory;
-        TRUSTING_HOSTNAME_VERIFIER = new NoOpHostnameVerifier();
-    }
-
-    public HttpResponse get(String url, String authHeader, String requestBody) throws IOException
-    {
-        return request(url, authHeader, requestBody, GET);
-    }
-
-    public HttpResponse delete(String url, String authHeader, String requestBody) throws IOException
-    {
-        return request(url, authHeader, requestBody, DELETE);
-    }
-
-    private HttpResponse request(String url, String authHeader, String requestBody, String method)
-            throws IOException
-    {
-        URL urlObject = new URL(url);
-        HttpURLConnection connection = (HttpURLConnection) urlObject.openConnection();
-        connection.setConnectTimeout(CONNECT_TIMEOUT_MILLIS);
-        connection.setReadTimeout(READ_TIMEOUT_MILLIS);
-
-        // TODO: we could add a config option to allow users who want to
-        // rigorously enforce valid certificates to do so
-        if (connection instanceof HttpsURLConnection)
-        {
-            // This is the equivalent of "curl -k", i.e. tolerate connecting to
-            // an Elasticsearch with a self-signed certificate or a certificate
-            // that doesn't match its hostname.
-            HttpsURLConnection httpsConnection = (HttpsURLConnection)connection;
-            if (TRUSTING_SOCKET_FACTORY != null)
-            {
-                httpsConnection.setSSLSocketFactory(TRUSTING_SOCKET_FACTORY);
-            }
-            httpsConnection.setHostnameVerifier(TRUSTING_HOSTNAME_VERIFIER);
-        }
-        connection.setRequestMethod(method);
-        if (authHeader != null)
-        {
-            connection.setRequestProperty(AUTH_HEADER, authHeader);
-        }
-        if (requestBody != null)
-        {
-            connection.setDoOutput(true);
-            writeRequestBody(requestBody, connection);
-        }
-        if (connection.getResponseCode() != OK_STATUS)
-        {
-            return new HttpResponse(connection.getErrorStream(), connection.getResponseCode());
-        }
-        return new HttpResponse(connection.getInputStream(), connection.getResponseCode());
-    }
-
-    private static void writeRequestBody(String requestBody, HttpURLConnection connection)
-            throws IOException
-    {
-        DataOutputStream dataOutputStream = new DataOutputStream(connection.getOutputStream());
-        dataOutputStream.writeBytes(requestBody);
-        dataOutputStream.flush();
-        dataOutputStream.close();
     }
 }

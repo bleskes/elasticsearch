@@ -27,48 +27,32 @@
 
 package com.prelert.data.extractors.elasticsearch;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
-import java.util.stream.Collectors;
+import java.util.List;
 
-class HttpResponse
+import org.apache.log4j.Logger;
+
+public interface IndexSelector
 {
-    public static final int OK_STATUS = 200;
+    /**
+     * <p>Selects the indices that contain data in the
+     * given time range [{@code startMs}, {@code endMs}).
+     * If {@code startMs} == {@code endMs}, indices that contain
+     * {@code startMs} will be selected.
+     *
+     * <p>Implementations may use a cache so that subsequent calls to this
+     * method on intervals that are sub-intervals of a previous one
+     * may be handled more efficiently
+     *
+     * @param startMs the interval start as epoch millis (inclusive)
+     * @param endMs the interval end as epoch millis (exclusive)
+     * @param logger the job logger
+     * @return a list that contains the index names for indices that
+     * contain data in the given time range.
+     */
+    List<String> selectByTime(long startMs, long endMs, Logger logger);
 
-    private static final String NEW_LINE = "\n";
-
-    private final InputStream m_Stream;
-    private final int m_ResponseCode;
-
-    public HttpResponse(InputStream responseStream, int responseCode)
-    {
-        m_Stream = responseStream;
-        m_ResponseCode = responseCode;
-    }
-
-    public int getResponseCode()
-    {
-        return m_ResponseCode;
-    }
-
-    public InputStream getStream()
-    {
-        return m_Stream;
-    }
-
-    public String getResponseAsString() throws IOException
-    {
-        return getStreamAsString(m_Stream);
-    }
-
-    public static String getStreamAsString(InputStream stream) throws IOException
-    {
-        try (BufferedReader buffer = new BufferedReader(
-                new InputStreamReader(stream, StandardCharsets.UTF_8))) {
-            return buffer.lines().collect(Collectors.joining(NEW_LINE));
-        }
-    }
+    /**
+     * Clears any cached information.
+     */
+    void clearCache();
 }

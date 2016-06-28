@@ -36,6 +36,11 @@ public interface DataExtractor
     void newSearch(long start, long end, Logger logger) throws IOException;
 
     /**
+     * Cleans up after a search.
+     */
+    void clear();
+
+    /**
      * @return {@code true} if the search has not finished yet, or {@code false} otherwise
      */
     boolean hasNext();
