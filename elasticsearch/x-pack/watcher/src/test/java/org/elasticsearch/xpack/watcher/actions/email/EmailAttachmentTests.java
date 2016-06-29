@@ -219,7 +219,4 @@ public class EmailAttachmentTests extends AbstractWatcherIntegrationTestCase {
             fail("waited too long for email to be received");
         }
     }
-
-
-
 }
