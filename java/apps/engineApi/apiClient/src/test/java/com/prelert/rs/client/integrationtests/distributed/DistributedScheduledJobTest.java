@@ -69,24 +69,40 @@ public class DistributedScheduledJobTest extends BaseScheduledJobTest
         try
         {
             createScheduledJob();
-            startScheduler();
-            testCannotStartSchedulerOnOtherHosts(otherHostUrls);
+            try
+            {
+                Pattern p = Pattern.compile("http://([a-zA-Z0-9\\.-]*):.*");
+                Matcher m = p.matcher(m_BaseUrl);
+                test(m.matches());
+                String hostname = m.group(1);
 
-            // start job on the first node, extract host name from url
-            Pattern p = Pattern.compile("http://([a-zA-Z0-9\\.-]*):.*");
-            Matcher m = p.matcher(m_BaseUrl);
-            test(m.matches());
-            testJobHostIsInStatus(TEST_JOB_ID, m.group(1));
+                startScheduler(m_EngineApiClient);
+                testCannotChangeSchedulerOnOtherHosts(hostname, otherHostUrls);
+
+                // extract scheduled job host name from url
+
+                testJobHostIsInStatus(TEST_JOB_ID, hostname);
+            }
+            finally
+            {
+                stopScheduler(m_EngineApiClient);
+                waitUntilSchedulerStatusIs(m_EngineApiClient, JobSchedulerStatus.STOPPED);
+            }
+
+            // start scheduler on another node and run the same tests
+            // use the 2nd URL to host the job this time
+            otherHostUrls[0] = m_EngineApiUrls[0];
+            System.arraycopy(m_EngineApiUrls, 2, otherHostUrls, 1, m_EngineApiUrls.length -2);
+            testStartStoppedSchedulerOnAnotherNode(m_EngineApiUrls[1], otherHostUrls);
+
         }
         finally
         {
-            stopScheduler();
-            waitUntilSchedulerStatusIs(JobSchedulerStatus.STOPPED);
             cleanUp();
         }
     }
 
-    private void testCannotStartSchedulerOnOtherHosts(String [] otherHostUrls)
+    private void testCannotChangeSchedulerOnOtherHosts(String jobHost, String [] otherHostUrls)
     throws IOException
     {
         String schedulerConfigUpdate = "{\"schedulerConfig\" : {"
@@ -108,23 +124,51 @@ public class DistributedScheduledJobTest extends BaseScheduledJobTest
                 test(started == false);
                 ApiError error = client.getLastError();
                 test(error.getErrorCode() == ErrorCodes.CANNOT_START_JOB_SCHEDULER);
+                test(jobHost, error.getHostname());
 
                 boolean stopped = client.stopScheduler(TEST_JOB_ID);
                 test(stopped == false);
                 error = client.getLastError();
                 test(error.getErrorCode() == ErrorCodes.CANNOT_STOP_JOB_SCHEDULER);
+                test(jobHost, error.getHostname());
 
                 boolean deleted = client.deleteJob(TEST_JOB_ID);
                 test(deleted == false);
                 error = client.getLastError();
-                test(error.getErrorCode() == ErrorCodes.CANNOT_STOP_JOB_SCHEDULER);
+                test(error.getErrorCode(), ErrorCodes.CANNOT_DELETE_JOB_SCHEDULER);
+                test(jobHost, error.getHostname());
 
-                // update sched conf
                 boolean updated = client.updateJob(TEST_JOB_ID, schedulerConfigUpdate);
                 test(updated == false);
                 error = client.getLastError();
-                test(error.getErrorCode() == ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR);
+                test(error.getErrorCode() == ErrorCodes.CANNOT_UPDATE_JOB_SCHEDULER);
+                test(jobHost, error.getHostname());
             }
+        }
+    }
+
+
+    private void testStartStoppedSchedulerOnAnotherNode(String jobHostUrl,
+                                                String [] otherHostUrls) throws IOException
+    {
+        Pattern p = Pattern.compile("http://([a-zA-Z0-9\\.-]*):.*");
+        Matcher m = p.matcher(jobHostUrl);
+        test(m.matches());
+        String hostname = m.group(1);
+
+
+        EngineApiClient jobHostClient = new EngineApiClient(jobHostUrl);
+        try
+        {
+            test(startScheduler(jobHostClient), "Failed to re-start scheduler on another node");
+
+            testCannotChangeSchedulerOnOtherHosts(hostname, otherHostUrls);
+        }
+        finally
+        {
+            stopScheduler(jobHostClient);
+            waitUntilSchedulerStatusIs(jobHostClient, JobSchedulerStatus.STOPPED);
+            jobHostClient.close();
         }
     }
 

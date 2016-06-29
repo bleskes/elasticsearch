@@ -50,20 +50,13 @@ import com.prelert.job.JobSchedulerStatus;
 import com.prelert.job.SchedulerConfig;
 import com.prelert.job.DataDescription.DataFormat;
 import com.prelert.job.SchedulerConfig.DataSource;
+import com.prelert.rs.client.EngineApiClient;
 
 public abstract class BaseScheduledJobTest extends BaseIntegrationTest
 {
     public static final int RECOMMENDED_BULK_UPLOAD_SIZE = 5000;
 
     protected static final String TEST_JOB_ID = "scheduled-job-test";
-
-    private static final String START_SCHEDULER_WITH_END_URL_SUFFIX =
-            "/schedulers/" + TEST_JOB_ID + "/start?end=%s";
-
-    private static final String START_SCHEDULER_URL_SUFFIX =
-            "/schedulers/" + TEST_JOB_ID + "/start";
-
-    private static final String STOP_SCHEDULER_URI_SUFFIX = "/schedulers/" + TEST_JOB_ID + "/stop";
 
     private static final String BULK_INDEX_ACTION =
             "{ \"index\" : { \"_index\" : \"%s\", \"_type\" : \"%s\"} }\n";
@@ -263,67 +256,35 @@ public abstract class BaseScheduledJobTest extends BaseIntegrationTest
         return jobId;
     }
 
-    protected void startScheduler()
+    protected boolean startScheduler(EngineApiClient client) throws IOException
     {
         m_Logger.info("Starting scheduler");
 
-        String startSchedulerUri = m_BaseUrl + START_SCHEDULER_URL_SUFFIX;
-
-        try
-        {
-            m_HttpClient.POST(startSchedulerUri).send();
-        }
-        catch (InterruptedException | TimeoutException | ExecutionException e)
-        {
-            m_Logger.error("Error while starting scheduler", e);
-            throw new RuntimeException(e);
-        }
+        return client.startScheduler(TEST_JOB_ID);
     }
 
-    protected void startScheduler(long endTimeEpochSeconds)
+    protected boolean startScheduler(EngineApiClient client, long endTimeEpochSeconds) throws IOException
     {
         m_Logger.info("Starting scheduler end=" + endTimeEpochSeconds);
 
-        String startSchedulerUri =
-                String.format(m_BaseUrl + START_SCHEDULER_WITH_END_URL_SUFFIX, endTimeEpochSeconds);
-
-        try
-        {
-            m_HttpClient.POST(startSchedulerUri).send();
-        }
-        catch (InterruptedException | TimeoutException | ExecutionException e)
-        {
-            m_Logger.error("Error while starting scheduler", e);
-            throw new RuntimeException(e);
-        }
+        return client.startScheduler(TEST_JOB_ID, "", Long.toString(endTimeEpochSeconds));
     }
 
-    protected boolean stopScheduler()
+    protected boolean stopScheduler(EngineApiClient client) throws IOException
     {
         m_Logger.info("Stopping scheduler");
 
-        String stopSchedulerUri =
-                String.format(m_BaseUrl + STOP_SCHEDULER_URI_SUFFIX);
-
-        try
-        {
-            ContentResponse response = m_HttpClient.POST(stopSchedulerUri).send();
-            m_Logger.info("Stop scheduler response : " + response);
-            return response.getStatus() == 200;
-        }
-        catch (InterruptedException | TimeoutException | ExecutionException e)
-        {
-            m_Logger.error("Error while stopping scheduler", e);
-            return false;
-        }
+        return client.stopScheduler(TEST_JOB_ID);
     }
 
-    protected void waitUntilSchedulerStatusIs(JobSchedulerStatus status) throws IOException
+    protected void waitUntilSchedulerStatusIs(EngineApiClient client, JobSchedulerStatus status)
+            throws IOException
     {
         m_Logger.info("Waiting for scheduler status to be " + status);
 
         int count = 0;
-        JobDetails job = m_EngineApiClient.getJob(TEST_JOB_ID).getDocument();
+        JobDetails job = client.getJob(TEST_JOB_ID).getDocument();
+        test(job != null, "Get job returned null, probably already deleted");
         while (job.getSchedulerStatus() != status)
         {
             if (count > 60)

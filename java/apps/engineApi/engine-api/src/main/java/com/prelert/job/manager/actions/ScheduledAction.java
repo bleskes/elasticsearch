@@ -35,7 +35,9 @@ import com.prelert.job.messages.Messages;
 public enum ScheduledAction implements ActionState<ScheduledAction>
 {
     START(Messages.JOB_SCHEDULER_CANNOT_START, Messages.JOB_SCHEDULER_STATUS_STARTED),
-    STOP(Messages.JOB_SCHEDULER_CANNOT_STOP_IN_CURRENT_STATE, Messages.JOB_SCHEDULER_STATUS_STOPPED);
+    STOP(Messages.JOB_SCHEDULER_CANNOT_STOP_IN_CURRENT_STATE, Messages.JOB_SCHEDULER_STATUS_STOPPED),
+    DELETE(Messages.JOB_SCHEDULER_CANNOT_DELETE_IN_CURRENT_STATE, Messages.JOB_SCHEDULER_STATUS_DELETING),
+    UPDATE(Messages.JOB_SCHEDULER_CANNOT_UPDATE_IN_CURRENT_STATE, Messages.JOB_SCHEDULER_STATUS_UPDATING);
 
     private final String m_MessageKey;
     private final String m_VerbKey;
@@ -52,7 +54,8 @@ public enum ScheduledAction implements ActionState<ScheduledAction>
     }
 
     /**
-     * Return true if allowed to transition from this state to next
+     * Return true if allowed to transition from this state to next.
+     * Only allowed to transistion from STOP to any other state.
      *
      * @param action
      * @return
@@ -60,17 +63,15 @@ public enum ScheduledAction implements ActionState<ScheduledAction>
     @Override
     public boolean isValidTransition(ScheduledAction next)
     {
-        // START -> START
-        // START -> STOP
-        // STOP -> START
-        // STOP -> STOP
-        // all ok
-        return true;
+        // If stopped any transition is valid
+        return this == STOP;
     }
 
     /**
      * If START the next state is STOP.
+     * If UPDATE the next state is STOP.
      * If STOP the next state is STOP.
+     * If DELETE the next state is STOP.
      */
     @Override
     public ScheduledAction nextState(ScheduledAction unused)
@@ -125,13 +126,19 @@ public enum ScheduledAction implements ActionState<ScheduledAction>
     @Override
     public ErrorCodes getErrorCode()
     {
-        if (this == ScheduledAction.START)
+        switch (this)
         {
+        case START:
             return ErrorCodes.CANNOT_START_JOB_SCHEDULER;
-        }
-        else
-        {
+        case STOP:
             return ErrorCodes.CANNOT_STOP_JOB_SCHEDULER;
+        case UPDATE:
+            return ErrorCodes.CANNOT_UPDATE_JOB_SCHEDULER;
+        case DELETE:
+            return ErrorCodes.CANNOT_DELETE_JOB_SCHEDULER;
+        default:
+            // not needed only here to keep the compiler happy
+            return ErrorCodes.CANNOT_START_JOB_SCHEDULER;
         }
     }
 }

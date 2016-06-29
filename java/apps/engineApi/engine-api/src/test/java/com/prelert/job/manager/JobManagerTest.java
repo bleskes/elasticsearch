@@ -133,7 +133,6 @@ import com.prelert.job.process.params.InterimResultsParams;
 import com.prelert.job.process.writer.CsvRecordWriter;
 import com.prelert.job.scheduler.CannotStartSchedulerException;
 import com.prelert.job.scheduler.CannotStopSchedulerException;
-import com.prelert.job.scheduler.CannotUpdateSchedulerException;
 import com.prelert.job.status.HighProportionOfBadTimestampsException;
 import com.prelert.job.status.OutOfOrderRecordsException;
 
@@ -1917,8 +1916,8 @@ public class JobManagerTest
 
         SchedulerConfig newSchedulerConfig = new SchedulerConfig();
 
-        m_ExpectedException.expect(CannotUpdateSchedulerException.class);
-        m_ExpectedException.expectMessage("Cannot update scheduler for job 'foo' while its status is STARTED");
+        m_ExpectedException.expect(JobInUseException.class);
+        m_ExpectedException.expectMessage("Cannot update scheduler for job 'foo' while its status is started");
         m_ExpectedException.expect(ErrorCodeMatcher.hasErrorCode(ErrorCodes.CANNOT_UPDATE_JOB_SCHEDULER));
         jobManager.updateSchedulerConfig("foo", newSchedulerConfig);
 

@@ -536,9 +536,14 @@ public enum ErrorCodes
     CANNOT_DELETE_HIGHEST_PRIORITY(60125),
 
     /**
-     * A job's scheduler cannot be stopped.
+     * A job's scheduler cannot be updated.
      */
     CANNOT_UPDATE_JOB_SCHEDULER(60126),
+
+    /**
+     * A job's scheduler cannot be deleted.
+     */
+    CANNOT_DELETE_JOB_SCHEDULER(60127),
 
     // Support bundle errors
     /**

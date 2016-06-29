@@ -47,8 +47,8 @@ public class ScheduledJobTest extends BaseScheduledJobTest
 
         generateDataInElasticsearch(RECOMMENDED_BULK_UPLOAD_SIZE);
         createScheduledJob();
-        startScheduler(ZonedDateTime.now().toEpochSecond());
-        waitUntilSchedulerStatusIs(JobSchedulerStatus.STOPPED);
+        startScheduler(m_EngineApiClient, ZonedDateTime.now().toEpochSecond());
+        waitUntilSchedulerStatusIs(m_EngineApiClient, JobSchedulerStatus.STOPPED);
 
         JobDetails job = m_EngineApiClient.getJob(TEST_JOB_ID).getDocument();
         test(job.getCounts().getInputRecordCount() == getRecordsCount());

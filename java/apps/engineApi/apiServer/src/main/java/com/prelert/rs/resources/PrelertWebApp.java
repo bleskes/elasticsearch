@@ -60,7 +60,6 @@ import com.prelert.job.manager.JobManager;
 import com.prelert.job.manager.actions.Action;
 import com.prelert.job.manager.actions.ActionGuardian;
 import com.prelert.job.manager.actions.LocalActionGuardian;
-import com.prelert.job.manager.actions.NoneActionGuardian;
 import com.prelert.job.manager.actions.ScheduledAction;
 import com.prelert.job.manager.actions.zookeeper.ZooKeeperActionGuardian;
 import com.prelert.job.messages.Messages;
@@ -277,10 +276,8 @@ public final class PrelertWebApp extends Application
     {
         ActionGuardian<Action> processActionGuardian =
                     new LocalActionGuardian<>(Action.startingState());
-        // we don't need an ActionGuardian for scheduled jobs if
-        // not in a distributed environment
         ActionGuardian<ScheduledAction> schedulerActionGuardian =
-                            new NoneActionGuardian<>(ScheduledAction.STOP);
+                            new LocalActionGuardian<>(ScheduledAction.STOP);
 
         boolean useZooKeeper = PrelertSettings.isSet(ZOOKEEPER_CONNECTION_PROP);
         if (useZooKeeper)
@@ -295,7 +292,7 @@ public final class PrelertWebApp extends Application
 
             ZooKeeperActionGuardian<ScheduledAction> zkSchedulerGuardian =
                     new ZooKeeperActionGuardian<>(ScheduledAction.startingState(), connectionString);
-            schedulerActionGuardian = zkSchedulerGuardian;
+            schedulerActionGuardian.setNextGuardian(zkSchedulerGuardian);
 
             m_EngineJobsHosts = new DistributedEngineApiHosts(zKActionGuardian, zkSchedulerGuardian);
 

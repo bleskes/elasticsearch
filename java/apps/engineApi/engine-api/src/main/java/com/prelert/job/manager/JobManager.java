@@ -105,7 +105,6 @@ import com.prelert.job.process.writer.CsvRecordWriter;
 import com.prelert.job.results.AnomalyRecord;
 import com.prelert.job.scheduler.CannotStartSchedulerException;
 import com.prelert.job.scheduler.CannotStopSchedulerException;
-import com.prelert.job.scheduler.CannotUpdateSchedulerException;
 import com.prelert.job.scheduler.DataProcessor;
 import com.prelert.job.scheduler.JobScheduler;
 import com.prelert.job.status.HighProportionOfBadTimestampsException;
@@ -673,30 +672,33 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
         // in case the scheduler is in the middle of submitting data
         if (isScheduledJob(jobId))
         {
-            if (m_ScheduledJobs.containsKey(jobId))
+            try (ActionGuardian<ScheduledAction>.ActionTicket ticket =
+                    m_SchedulerActionGuardian.tryAcquiringAction(jobId,ScheduledAction.DELETE))
             {
-                JobScheduler jobScheduler = m_ScheduledJobs.get(jobId);
-                if (!jobScheduler.isStopped())
+                if (m_ScheduledJobs.containsKey(jobId))
                 {
-                    jobScheduler.stopManual();
+                    JobScheduler jobScheduler = m_ScheduledJobs.get(jobId);
+                    if (!jobScheduler.isStopped())
+                    {
+                        jobScheduler.stopManual();
+                    }
+                    m_ScheduledJobs.remove(jobId);
                 }
-                m_ScheduledJobs.remove(jobId);
-            }
-            else if (m_SchedulerActionGuardian.currentAction(jobId) == ScheduledAction.START)
-            {
-                try (ActionGuardian<ScheduledAction>.ActionTicket ticket =
-                            m_SchedulerActionGuardian.tryAcquiringAction(jobId,ScheduledAction.STOP))
-                {
-                    // we expect the tryAcquire to throw
-                    throw new IllegalStateException("Inconsistent state. Shouldn't be able to stop "
-                                        + "scheduler running on different node");
-                }
+
+                return deleteProcess(jobId);
             }
         }
+        else
+        {
+            return deleteProcess(jobId);
+        }
+    }
 
-
+    private boolean deleteProcess(String jobId)
+            throws JobInUseException, NativeProcessRunException, UnknownJobException, DataStoreException
+    {
         try (ActionGuardian<Action>.ActionTicket actionTicket =
-                        m_ProcessActionGuardian.tryAcquiringAction(jobId, Action.DELETING))
+                m_ProcessActionGuardian.tryAcquiringAction(jobId, Action.DELETING))
         {
             if (m_ProcessManager.jobIsRunning(jobId))
             {
@@ -980,19 +982,14 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
 
         LOGGER.info("Stopping scheduler for job: " + jobId);
 
-        if (m_ScheduledJobs.containsKey(jobId))
+        try (ActionGuardian<ScheduledAction>.ActionTicket ticket =
+                m_SchedulerActionGuardian.tryAcquiringAction(jobId,ScheduledAction.STOP))
         {
-            m_ScheduledJobs.get(jobId).stopManual();
-            closeJob(jobId);
-        }
-        else if (m_SchedulerActionGuardian.currentAction(jobId) == ScheduledAction.START)
-        {
-            try (ActionGuardian<ScheduledAction>.ActionTicket ticket =
-                    m_SchedulerActionGuardian.tryAcquiringAction(jobId,ScheduledAction.STOP))
+            if (m_ScheduledJobs.containsKey(jobId))
             {
-                // we expect the tryAcquire to throw
-                throw new IllegalStateException("Inconsistent state. Shouldn't be able to stop "
-                        + "scheduler running on different node");
+                m_ScheduledJobs.get(jobId).stopManual();
+                closeJob(jobId);
+                m_ScheduledJobs.remove(jobId);
             }
         }
     }
@@ -1114,39 +1111,27 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
     public boolean updateSchedulerConfig(String jobId, SchedulerConfig newSchedulerConfig)
             throws JobException
     {
-        try (ActionGuardian<Action>.ActionTicket actionTicket =
-                                m_ProcessActionGuardian.tryAcquiringAction(jobId, Action.UPDATING))
+        checkJobHasScheduler(jobId);
+
+        try (ActionGuardian<ScheduledAction>.ActionTicket ticket =
+                m_SchedulerActionGuardian.tryAcquiringAction(jobId, ScheduledAction.UPDATE))
+
         {
-            checkJobHasScheduler(jobId);
-            JobScheduler scheduler = m_ScheduledJobs.get(jobId);
-            if (scheduler != null && !scheduler.isStopped())
+            try (ActionGuardian<Action>.ActionTicket actionTicket =
+                                m_ProcessActionGuardian.tryAcquiringAction(jobId, Action.UPDATING))
             {
-                throw new CannotUpdateSchedulerException(jobId, scheduler.getStatus());
-            }
-
-            if (m_SchedulerActionGuardian.currentAction(jobId) == ScheduledAction.START)
-            {
-                try (ActionGuardian<ScheduledAction>.ActionTicket ticket =
-                        m_SchedulerActionGuardian.tryAcquiringAction(jobId,ScheduledAction.STOP))
-
+                securePassword(newSchedulerConfig);
+                if (m_JobProvider.updateSchedulerConfig(jobId, newSchedulerConfig))
                 {
-                    // we expect the tryAcquire to throw
-                    throw new IllegalStateException("Inconsistent state. Shouldn't be able to stop "
-                            + "scheduler running on different node");
+                    JobDetails job = getJobOrThrowIfUnknown(jobId);
+                    // We cannot be sure the update is available at the storage
+                    // so we set the new schedulerConfig explicitly.
+                    job.setSchedulerConfig(newSchedulerConfig);
+                    createJobScheduler(job);
+                    return true;
                 }
+                return false;
             }
-
-            securePassword(newSchedulerConfig);
-            if (m_JobProvider.updateSchedulerConfig(jobId, newSchedulerConfig))
-            {
-                JobDetails job = getJobOrThrowIfUnknown(jobId);
-                // We cannot be sure the update is available at the storage
-                // so we set the new schedulerConfig explicitly.
-                job.setSchedulerConfig(newSchedulerConfig);
-                createJobScheduler(job);
-                return true;
-            }
-            return false;
         }
     }
 

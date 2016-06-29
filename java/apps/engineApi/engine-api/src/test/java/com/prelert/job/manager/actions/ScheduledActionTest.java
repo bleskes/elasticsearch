@@ -59,17 +59,30 @@ public class ScheduledActionTest
         assertEquals("Cannot start scheduler for job 'foo' while its status is started on host marple",
                 ScheduledAction.START.getBusyActionError("foo", ScheduledAction.START, "marple"));
 
-        String g = ScheduledAction.STOP.getBusyActionError("foo", ScheduledAction.START, "marple");
-        assertEquals("Cannot stop scheduler for job 'foo' while its status is started on host marple", g);
+        String msg = ScheduledAction.STOP.getBusyActionError("foo", ScheduledAction.START, "marple");
+        assertEquals("Cannot stop scheduler for job 'foo' while its status is started on host marple", msg);
+
+        msg = ScheduledAction.UPDATE.getBusyActionError("foo", ScheduledAction.START, "marple");
+        assertEquals("Cannot update scheduler for job 'foo' while its status is started on host marple", msg);
+
+        msg = ScheduledAction.DELETE.getBusyActionError("foo", ScheduledAction.START, "marple");
+        assertEquals("Cannot delete scheduler for job 'foo' while its status is started on host marple", msg);
     }
 
     @Test
     public void testIsValidTransition()
     {
-        assertTrue(ScheduledAction.START.isValidTransition(ScheduledAction.STOP));
-        assertTrue(ScheduledAction.START.isValidTransition(ScheduledAction.START));
         assertTrue(ScheduledAction.STOP.isValidTransition(ScheduledAction.START));
+        assertTrue(ScheduledAction.STOP.isValidTransition(ScheduledAction.UPDATE));
         assertTrue(ScheduledAction.STOP.isValidTransition(ScheduledAction.STOP));
+        assertTrue(ScheduledAction.STOP.isValidTransition(ScheduledAction.DELETE));
+
+        assertFalse(ScheduledAction.START.isValidTransition(ScheduledAction.STOP));
+        assertFalse(ScheduledAction.START.isValidTransition(ScheduledAction.START));
+        assertFalse(ScheduledAction.START.isValidTransition(ScheduledAction.UPDATE));
+        assertFalse(ScheduledAction.DELETE.isValidTransition(ScheduledAction.STOP));
+        assertFalse(ScheduledAction.UPDATE.isValidTransition(ScheduledAction.START));
+        assertFalse(ScheduledAction.UPDATE.isValidTransition(ScheduledAction.UPDATE));
     }
 
     @Test
@@ -79,6 +92,10 @@ public class ScheduledActionTest
         assertEquals(ScheduledAction.STOP, ScheduledAction.START.nextState(ScheduledAction.START));
         assertEquals(ScheduledAction.STOP, ScheduledAction.STOP.nextState(ScheduledAction.START));
         assertEquals(ScheduledAction.STOP, ScheduledAction.STOP.nextState(ScheduledAction.STOP));
+        assertEquals(ScheduledAction.STOP, ScheduledAction.UPDATE.nextState(ScheduledAction.STOP));
+        assertEquals(ScheduledAction.STOP, ScheduledAction.UPDATE.nextState(ScheduledAction.DELETE));
+        assertEquals(ScheduledAction.STOP, ScheduledAction.DELETE.nextState(ScheduledAction.STOP));
+        assertEquals(ScheduledAction.STOP, ScheduledAction.DELETE.nextState(ScheduledAction.START));
     }
 
     @Test
@@ -86,6 +103,8 @@ public class ScheduledActionTest
     {
         assertTrue(ScheduledAction.START.holdDistributedLock());
         assertFalse(ScheduledAction.STOP.holdDistributedLock());
+        assertFalse(ScheduledAction.UPDATE.holdDistributedLock());
+        assertFalse(ScheduledAction.DELETE.holdDistributedLock());
     }
 
     @Test
@@ -99,5 +118,7 @@ public class ScheduledActionTest
     {
         assertEquals(ErrorCodes.CANNOT_START_JOB_SCHEDULER, ScheduledAction.START.getErrorCode());
         assertEquals(ErrorCodes.CANNOT_STOP_JOB_SCHEDULER, ScheduledAction.STOP.getErrorCode());
+        assertEquals(ErrorCodes.CANNOT_UPDATE_JOB_SCHEDULER, ScheduledAction.UPDATE.getErrorCode());
+        assertEquals(ErrorCodes.CANNOT_DELETE_JOB_SCHEDULER, ScheduledAction.DELETE.getErrorCode());
     }
 }
