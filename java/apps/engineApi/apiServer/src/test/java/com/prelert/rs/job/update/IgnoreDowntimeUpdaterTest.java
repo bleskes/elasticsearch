@@ -39,7 +39,8 @@ import org.mockito.MockitoAnnotations;
 import com.fasterxml.jackson.databind.node.IntNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import com.prelert.job.IgnoreDowntime;
-import com.prelert.job.UnknownJobException;
+import com.prelert.job.JobDetails;
+import com.prelert.job.JobException;
 import com.prelert.job.config.verification.JobConfigurationException;
 import com.prelert.job.errorcodes.ErrorCodeMatcher;
 import com.prelert.job.errorcodes.ErrorCodes;
@@ -87,11 +88,11 @@ public class IgnoreDowntimeUpdaterTest
     }
 
     @Test
-    public void testCommit_GivenValidValue() throws JobConfigurationException, UnknownJobException
+    public void testCommit_GivenValidValue() throws JobException
     {
         TextNode node = TextNode.valueOf("once");
 
-        IgnoreDowntimeUpdater updater =         createUpdater("foo");
+        IgnoreDowntimeUpdater updater = createUpdater("foo");
         updater.prepareUpdate(node);
         updater.commit();
 
@@ -100,6 +101,8 @@ public class IgnoreDowntimeUpdaterTest
 
     private IgnoreDowntimeUpdater createUpdater(String jobId)
     {
-        return new IgnoreDowntimeUpdater(m_JobManager, jobId, "ignoreDowntime");
+        JobDetails job = new JobDetails();
+        job.setId(jobId);
+        return new IgnoreDowntimeUpdater(m_JobManager, job, "ignoreDowntime");
     }
 }

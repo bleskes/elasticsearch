@@ -28,6 +28,7 @@
 package com.prelert.rs.job.update;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.prelert.job.JobDetails;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.config.verification.JobConfigurationException;
 import com.prelert.job.errorcodes.ErrorCodes;
@@ -38,9 +39,9 @@ class JobDescriptionUpdater extends AbstractUpdater
 {
     private String m_NewDescription;
 
-    public JobDescriptionUpdater(JobManager jobManager, String jobId, String updateKey)
+    public JobDescriptionUpdater(JobManager jobManager, JobDetails job, String updateKey)
     {
-        super(jobManager, jobId, updateKey);
+        super(jobManager, job, updateKey);
     }
 
     @Override

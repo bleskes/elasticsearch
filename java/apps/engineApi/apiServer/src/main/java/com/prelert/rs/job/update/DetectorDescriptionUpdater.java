@@ -53,16 +53,16 @@ class DetectorDescriptionUpdater extends AbstractUpdater
 
     private List<UpdateParams> m_Updates;
 
-    public DetectorDescriptionUpdater(JobManager jobManager, String jobId, String updateKey)
+    public DetectorDescriptionUpdater(JobManager jobManager, JobDetails job, String updateKey)
     {
-        super(jobManager, jobId, updateKey);
+        super(jobManager, job, updateKey);
         m_Updates = new ArrayList<>();
     }
 
     @Override
-    void prepareUpdate(JsonNode node) throws UnknownJobException, JobConfigurationException
+    void prepareUpdate(JsonNode node) throws JobConfigurationException
     {
-        JobDetails job = jobManager().getJobOrThrowIfUnknown(jobId());
+        JobDetails job = job();
         parseParams(node);
         int detectorsCount = job.getAnalysisConfig().getDetectors().size();
         for (UpdateParams update : m_Updates)

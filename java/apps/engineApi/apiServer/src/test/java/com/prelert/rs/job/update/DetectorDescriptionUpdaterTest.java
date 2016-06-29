@@ -82,7 +82,7 @@ public class DetectorDescriptionUpdaterTest
 
         JsonNode node = new ObjectMapper().readTree("{\"index\":0,\"description\":\"haha\"}");
 
-        createUpdater(JOB_ID).prepareUpdate(node);
+        createUpdater().prepareUpdate(node);
     }
 
     @Test
@@ -95,7 +95,7 @@ public class DetectorDescriptionUpdaterTest
 
         JsonNode node = new ObjectMapper().readTree("[1,2,3]");
 
-        createUpdater(JOB_ID).prepareUpdate(node);
+        createUpdater().prepareUpdate(node);
     }
 
     @Test
@@ -108,7 +108,7 @@ public class DetectorDescriptionUpdaterTest
 
         JsonNode node = new ObjectMapper().readTree("[{\"index\":1}]");
 
-        createUpdater(JOB_ID).prepareUpdate(node);
+        createUpdater().prepareUpdate(node);
     }
 
     @Test
@@ -121,7 +121,7 @@ public class DetectorDescriptionUpdaterTest
 
         JsonNode node = new ObjectMapper().readTree("[{\"name\":\"bar\"}]");
 
-        createUpdater(JOB_ID).prepareUpdate(node);
+        createUpdater().prepareUpdate(node);
     }
 
     @Test
@@ -134,7 +134,7 @@ public class DetectorDescriptionUpdaterTest
 
         JsonNode node = new ObjectMapper().readTree("[{}]");
 
-        createUpdater(JOB_ID).prepareUpdate(node);
+        createUpdater().prepareUpdate(node);
     }
 
     @Test
@@ -147,7 +147,7 @@ public class DetectorDescriptionUpdaterTest
 
         JsonNode node = new ObjectMapper().readTree("[{\"index\":\"a string\", \"description\":\"bar\"}]");
 
-        createUpdater(JOB_ID).prepareUpdate(node);
+        createUpdater().prepareUpdate(node);
     }
 
     @Test
@@ -160,7 +160,7 @@ public class DetectorDescriptionUpdaterTest
 
         JsonNode node = new ObjectMapper().readTree("[{\"index\":0, \"description\":1}]");
 
-        createUpdater(JOB_ID).prepareUpdate(node);
+        createUpdater().prepareUpdate(node);
     }
 
     @Test
@@ -174,7 +174,7 @@ public class DetectorDescriptionUpdaterTest
 
         JsonNode node = new ObjectMapper().readTree("[{\"index\":-1, \"description\":\"bar\"}]");
 
-        createUpdater(JOB_ID).prepareUpdate(node);
+        createUpdater().prepareUpdate(node);
     }
 
     @Test
@@ -188,7 +188,7 @@ public class DetectorDescriptionUpdaterTest
 
         JsonNode node = new ObjectMapper().readTree("[{\"index\":3, \"description\":\"bar\"}]");
 
-        createUpdater(JOB_ID).prepareUpdate(node);
+        createUpdater().prepareUpdate(node);
     }
 
     @Test
@@ -202,7 +202,7 @@ public class DetectorDescriptionUpdaterTest
 
         JsonNode node = new ObjectMapper().readTree("[{\"index\":4, \"description\":\"bar\"}]");
 
-        createUpdater(JOB_ID).prepareUpdate(node);
+        createUpdater().prepareUpdate(node);
     }
 
     @Test
@@ -217,7 +217,7 @@ public class DetectorDescriptionUpdaterTest
                 "[{\"index\":1, \"description\":\"Ipanema\"}, {\"index\":4, \"description\":\"A Train\"}]");
         givenJobHasNDetectors(3);
 
-        createUpdater(JOB_ID).prepareUpdate(node);
+        createUpdater().prepareUpdate(node);
     }
 
     @Test
@@ -227,7 +227,7 @@ public class DetectorDescriptionUpdaterTest
         givenJobHasNDetectors(3);
         givenUpdateSucceeds(1, "Ipanema");
 
-        DetectorDescriptionUpdater updater = createUpdater(JOB_ID);
+        DetectorDescriptionUpdater updater = createUpdater();
         updater.prepareUpdate(node);
 
         verify(m_JobManager, never()).updateDetectorDescription(JOB_ID, 1, "Ipanema");
@@ -245,7 +245,7 @@ public class DetectorDescriptionUpdaterTest
 
         JsonNode node = new ObjectMapper().readTree("[{\"index\":0, \"description\":\"bar\"}]");
 
-        DetectorDescriptionUpdater updater = createUpdater(JOB_ID);
+        DetectorDescriptionUpdater updater = createUpdater();
         updater.prepareUpdate(node);
         updater.commit();
     }
@@ -257,7 +257,7 @@ public class DetectorDescriptionUpdaterTest
         givenJobHasNDetectors(3);
         givenUpdateSucceeds(1, "Ipanema");
 
-        DetectorDescriptionUpdater updater = createUpdater(JOB_ID);
+        DetectorDescriptionUpdater updater = createUpdater();
         updater.prepareUpdate(node);
         updater.commit();
 
@@ -274,7 +274,7 @@ public class DetectorDescriptionUpdaterTest
         m_Job.getAnalysisConfig().getDetectors().get(1).setByFieldName("airline");
         givenUpdateSucceeds(1, "mean(responsetime) by airline");
 
-        DetectorDescriptionUpdater updater = createUpdater(JOB_ID);
+        DetectorDescriptionUpdater updater = createUpdater();
         updater.prepareUpdate(node);
         updater.commit();
 
@@ -290,7 +290,7 @@ public class DetectorDescriptionUpdaterTest
         givenUpdateSucceeds(1, "Ipanema");
         givenUpdateSucceeds(0, "A Train");
 
-        DetectorDescriptionUpdater updater = createUpdater(JOB_ID);
+        DetectorDescriptionUpdater updater = createUpdater();
         updater.prepareUpdate(node);
         updater.commit();
 
@@ -298,9 +298,9 @@ public class DetectorDescriptionUpdaterTest
         verify(m_JobManager).updateDetectorDescription(JOB_ID, 0, "A Train");
     }
 
-    private DetectorDescriptionUpdater createUpdater(String jobId)
+    private DetectorDescriptionUpdater createUpdater()
     {
-        return new DetectorDescriptionUpdater(m_JobManager, jobId, "detectors");
+        return new DetectorDescriptionUpdater(m_JobManager, m_Job, "detectors");
     }
 
     private void givenJobHasNDetectors(int n)

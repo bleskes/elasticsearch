@@ -37,7 +37,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.prelert.job.JobDetails;
 import com.prelert.job.JobException;
 import com.prelert.job.JobStatus;
-import com.prelert.job.UnknownJobException;
 import com.prelert.job.config.verification.JobConfigurationException;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.manager.JobManager;
@@ -48,13 +47,13 @@ abstract class AbstractUpdater
     protected static final ObjectMapper JSON_MAPPER = new ObjectMapper();
 
     private final JobManager m_JobManager;
-    private final String m_JobId;
+    private final JobDetails m_Job;
     private final String m_UpdateKey;
 
-    AbstractUpdater(JobManager jobManager, String jobId, String updateKey)
+    AbstractUpdater(JobManager jobManager, JobDetails job, String updateKey)
     {
         m_JobManager = Objects.requireNonNull(jobManager);
-        m_JobId = Objects.requireNonNull(jobId);
+        m_Job = Objects.requireNonNull(job);
         m_UpdateKey = Objects.requireNonNull(updateKey);
     }
 
@@ -63,9 +62,14 @@ abstract class AbstractUpdater
         return m_JobManager;
     }
 
+    protected JobDetails job()
+    {
+        return m_Job;
+    }
+
     protected String jobId()
     {
-        return m_JobId;
+        return m_Job.getId();
     }
 
     protected String updateKey()
@@ -98,6 +102,6 @@ abstract class AbstractUpdater
         }
     }
 
-    abstract void prepareUpdate(JsonNode node) throws UnknownJobException, JobConfigurationException;
+    abstract void prepareUpdate(JsonNode node) throws JobConfigurationException;
     abstract void commit() throws JobException;
 }

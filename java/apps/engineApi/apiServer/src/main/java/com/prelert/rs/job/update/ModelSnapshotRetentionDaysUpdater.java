@@ -27,15 +27,16 @@
 
 package com.prelert.rs.job.update;
 
+import com.prelert.job.JobDetails;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.manager.JobManager;
 import com.prelert.job.messages.Messages;
 
 class ModelSnapshotRetentionDaysUpdater extends AbstractLongUpdater
 {
-    public ModelSnapshotRetentionDaysUpdater(JobManager jobManager, String jobId, String updateKey)
+    public ModelSnapshotRetentionDaysUpdater(JobManager jobManager, JobDetails job, String updateKey)
     {
-        super(jobManager, jobId, updateKey, 0);
+        super(jobManager, job, updateKey, 0);
     }
 
     @Override
