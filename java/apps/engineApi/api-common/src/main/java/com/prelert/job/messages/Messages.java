@@ -158,6 +158,7 @@ public final class Messages
     public static final String JOB_CONFIG_SCHEDULER_ELASTICSEARCH_REQUIRES_DATAFORMAT_ELASTICSEARCH = "job.config.scheduler.elasticsearch.requires.dataformat.elasticsearch";
     public static final String JOB_CONFIG_SCHEDULER_INCOMPLETE_CREDENTIALS = "job.config.scheduler.incomplete.credentials";
     public static final String JOB_CONFIG_SCHEDULER_MULTIPLE_PASSWORDS = "job.config.scheduler.multiple.passwords";
+    public static final String JOB_CONFIG_SCHEDULER_MULTIPLE_AGGREGATIONS = "job.config.scheduler.multiple.aggregations";
 
     public static final String JOB_DATA_CONCURRENT_USE_CLOSE = "job.data.concurrent.use.close";
     public static final String JOB_DATA_CONCURRENT_USE_DELETE = "job.data.concurrent.use.delete";

@@ -110,11 +110,7 @@ public final class SchedulerConfigVerifier
         checkUserPass(config.getUsername(), config.getPassword(), config.getEncryptedPassword());
         checkFieldIsNotNullOrEmpty(SchedulerConfig.INDEXES, config.getIndexes());
         checkFieldIsNotNullOrEmpty(SchedulerConfig.TYPES, config.getTypes());
-        if (config.getAggregations() != null)
-        {
-            // Not allowed both aggs and aggregations
-            checkFieldIsNull(dataSource, SchedulerConfig.AGGS, config.getAggs());
-        }
+        checkNoMultipleAggregations(config);
         if (Boolean.TRUE.equals(config.getRetrieveWholeSource()))
         {
             // Not allowed script_fields when retrieveWholeSource is true
@@ -164,6 +160,16 @@ public final class SchedulerConfigVerifier
         {
             String msg = Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_MULTIPLE_PASSWORDS);
             throw new JobConfigurationException(msg, ErrorCodes.SCHEDULER_MULTIPLE_PASSWORDS);
+        }
+    }
+
+    private static void checkNoMultipleAggregations(SchedulerConfig config)
+            throws JobConfigurationException
+    {
+        if (config.getAggregations() != null && config.getAggs() != null)
+        {
+            String msg = Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_MULTIPLE_AGGREGATIONS);
+            throw new JobConfigurationException(msg, ErrorCodes.SCHEDULER_MULTIPLE_AGGREGATIONS);
         }
     }
 

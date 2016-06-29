@@ -298,6 +298,11 @@ public enum ErrorCodes
      */
     SCHEDULER_MULTIPLE_PASSWORDS(10309),
 
+    /**
+     * Both plain aggregations and aggs were provided.
+     */
+    SCHEDULER_MULTIPLE_AGGREGATIONS(10310),
+
     // Data store errors
     /**
      * A generic exception from the data store
