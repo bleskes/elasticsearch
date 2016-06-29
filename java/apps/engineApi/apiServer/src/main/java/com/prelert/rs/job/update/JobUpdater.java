@@ -91,7 +91,7 @@ public class JobUpdater
      * If there are invalid updates, none of the updates is applied.
      *
      * @param updateJson the JSON input that contains the requested updates
-     * @return a {@code RESPONSE}
+     * @return a {@code Response}
      * @throws JobException If the update fails (e.g. the job does not exist, some of the updates
      * are invalid, the job is unavailable for updating, etc.)
      */
@@ -100,10 +100,10 @@ public class JobUpdater
         JobDetails job = m_JobManager.getJobOrThrowIfUnknown(m_JobId);
 
         JsonNode node = parse(updateJson);
-        if (node.isObject() == false)
+        if (!node.isObject() || node.size() == 0)
         {
             throw new JobConfigurationException(
-                    Messages.getMessage(Messages.JOB_CONFIG_UPDATE_NO_OBJECT),
+                    Messages.getMessage(Messages.JOB_CONFIG_UPDATE_REQUIRES_NON_EMPTY_OBJECT),
                     ErrorCodes.JOB_CONFIG_PARSE_ERROR);
         }
 

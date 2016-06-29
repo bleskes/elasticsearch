@@ -109,12 +109,25 @@ public class JobUpdaterTest
     }
 
     @Test
+    public void testUpdate_GivenEmptyObject() throws JobException
+    {
+        String update = "{}";
+
+        m_ExpectedException.expect(JobConfigurationException.class);
+        m_ExpectedException.expectMessage("Update requires JSON that contains a non-empty object");
+        m_ExpectedException.expect(
+                ErrorCodeMatcher.hasErrorCode(ErrorCodes.JOB_CONFIG_PARSE_ERROR));
+
+        new JobUpdater(m_JobManager, "foo").update(update);
+    }
+
+    @Test
     public void testUpdate_GivenNoObject() throws JobException
     {
         String update = "\"description\":\"foobar\"";
 
         m_ExpectedException.expect(JobConfigurationException.class);
-        m_ExpectedException.expectMessage("Update requires JSON that contains an object");
+        m_ExpectedException.expectMessage("Update requires JSON that contains a non-empty object");
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.JOB_CONFIG_PARSE_ERROR));
 
