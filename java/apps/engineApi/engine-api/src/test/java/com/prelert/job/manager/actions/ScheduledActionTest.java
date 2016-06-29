@@ -72,12 +72,12 @@ public class ScheduledActionTest
     @Test
     public void testIsValidTransition()
     {
+        assertTrue(ScheduledAction.START.isValidTransition(ScheduledAction.STOP));
         assertTrue(ScheduledAction.STOP.isValidTransition(ScheduledAction.START));
         assertTrue(ScheduledAction.STOP.isValidTransition(ScheduledAction.UPDATE));
         assertTrue(ScheduledAction.STOP.isValidTransition(ScheduledAction.STOP));
         assertTrue(ScheduledAction.STOP.isValidTransition(ScheduledAction.DELETE));
 
-        assertFalse(ScheduledAction.START.isValidTransition(ScheduledAction.STOP));
         assertFalse(ScheduledAction.START.isValidTransition(ScheduledAction.START));
         assertFalse(ScheduledAction.START.isValidTransition(ScheduledAction.UPDATE));
         assertFalse(ScheduledAction.DELETE.isValidTransition(ScheduledAction.STOP));

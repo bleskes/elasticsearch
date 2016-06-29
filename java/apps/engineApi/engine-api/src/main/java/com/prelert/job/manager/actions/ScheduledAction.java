@@ -64,7 +64,7 @@ public enum ScheduledAction implements ActionState<ScheduledAction>
     public boolean isValidTransition(ScheduledAction next)
     {
         // If stopped any transition is valid
-        return this == STOP;
+        return this == START && next == STOP || this == STOP;
     }
 
     /**

@@ -983,7 +983,7 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
         LOGGER.info("Stopping scheduler for job: " + jobId);
 
         try (ActionGuardian<ScheduledAction>.ActionTicket ticket =
-                m_SchedulerActionGuardian.tryAcquiringAction(jobId,ScheduledAction.STOP))
+                m_SchedulerActionGuardian.tryAcquiringAction(jobId, ScheduledAction.STOP))
         {
             if (m_ScheduledJobs.containsKey(jobId))
             {
