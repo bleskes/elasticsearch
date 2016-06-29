@@ -82,28 +82,22 @@ public class LocalEngineApiHosts implements EngineApiHosts, Feature
     @Override
     public Map<String, String> hostByRunningJob()
     {
-        Map<String, String> result = new HashMap<>();
-
-        List<String> activeJobs = m_JobManager.getRunningJobIds();
-        for (String jobId : activeJobs)
-        {
-            result.put(jobId, m_Host);
-        }
-
-        return result;
+        return mapToHost(m_JobManager.getRunningJobIds());
     }
 
     @Override
     public Map<String, String> hostByScheduledJob()
     {
-        Map<String, String> result = new HashMap<>();
+        return mapToHost(m_JobManager.getStartedScheduledJobs());
+    }
 
-        List<String> scheduledJobs = m_JobManager.getStartedScheduledJobs();
-        for (String jobId : scheduledJobs)
+    private Map<String, String> mapToHost(List<String> jobs)
+    {
+        Map<String, String> result = new HashMap<>();
+        for (String jobId : jobs)
         {
             result.put(jobId, m_Host);
         }
-
         return result;
     }
 

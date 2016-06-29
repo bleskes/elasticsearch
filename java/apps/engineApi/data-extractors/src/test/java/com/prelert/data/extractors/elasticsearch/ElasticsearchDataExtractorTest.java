@@ -1246,6 +1246,165 @@ public class ElasticsearchDataExtractorTest
         m_Extractor.newSearch(1400000000000L, 1407200000000L, m_Logger);
     }
 
+    @Test
+    public void testCancel_GivenChunked() throws IOException
+    {
+        String dataSummaryResponse = "{"
+                + "\"took\":17,"
+                + "\"timed_out\":false,"
+                + "\"_shards\":{"
+                + "  \"total\":1,"
+                + "  \"successful\":1,"
+                + "  \"failed\":0"
+                + "},"
+                + "\"hits\":{"
+                + "  \"total\":10000,"
+                + "  \"max_score\":null,"
+                + "  \"hits\":["
+                + "    \"_index\":\"dataIndex\","
+                + "    \"_type\":\"dataType\","
+                + "    \"_id\":\"1403481600\","
+                + "    \"_score\":null,"
+                + "    \"_source\":{"
+                + "      \"id\":\"1403481600\""
+                + "    }"
+                + "  ]"
+                + "},"
+                + "\"aggregations\":{"
+                +   "\"earliestTime\":{"
+                +     "\"value\":1400000001000,"
+                +     "\"value_as_string\":\"2014-05-13T16:53:21Z\""
+                +   "},"
+                +   "\"latestTime\":{"
+                +     "\"value\":1400007201000,"
+                +     "\"value_as_string\":\"2014-05-13T17:16:01Z\""
+                +   "}"
+                + "}"
+                + "}";
+
+        String indexResponse = "{"
+                + "\"dataIndex\":{"
+                + "  \"settings\":{"
+                + "    \"index\":{"
+                + "      \"creation_date\":0,"
+                + "      \"number_of_shards\":\"5\","
+                + "      \"number_of_replicas\":\"1\""
+                + "    }"
+                + "  }"
+                + "}";
+
+        String initialResponse1 = "{"
+                + "\"_scroll_id\":\"scrollId_1\","
+                + "\"took\":17,"
+                + "\"timed_out\":false,"
+                + "\"_shards\":{"
+                + "  \"total\":1,"
+                + "  \"successful\":1,"
+                + "  \"failed\":0"
+                + "},"
+                + "\"hits\":{"
+                + "  \"total\":10000,"
+                + "  \"max_score\":null,"
+                + "  \"hits\":["
+                + "    \"_index\":\"dataIndex\","
+                + "    \"_type\":\"dataType\","
+                + "    \"_id\":\"1403481600\","
+                + "    \"_score\":null,"
+                + "    \"_source\":{"
+                + "      \"id\":\"1403481600\""
+                + "    }"
+                + "  ]"
+                + "}"
+                + "}";
+
+        String continueResponse1 = "{"
+                + "\"_scroll_id\":\"scrollId_2\","
+                + "\"took\":8,"
+                + "\"timed_out\":false,"
+                + "\"_shards\":{"
+                + "  \"total\":1,"
+                + "  \"successful\":1,"
+                + "  \"failed\":0"
+                + "},"
+                + "\"hits\":{"
+                + "  \"total\":10000,"
+                + "  \"max_score\":null,"
+                + "  \"hits\":["
+                + "    \"_index\":\"dataIndex\","
+                + "    \"_type\":\"dataType\","
+                + "    \"_id\":\"1403782200\","
+                + "    \"_score\":null,"
+                + "    \"_source\":{"
+                + "      \"id\":\"1403782200\""
+                + "    }"
+                + "  ]"
+                + "}"
+                + "}";
+
+        String endResponse1 = "{"
+                + "\"_scroll_id\":\"scrollId_3\","
+                + "\"took\":8,"
+                + "\"timed_out\":false,"
+                + "\"_shards\":{"
+                + "  \"total\":1,"
+                + "  \"successful\":1,"
+                + "  \"failed\":0"
+                + "},"
+                + "\"hits\":{"
+                + "  \"total\":10000,"
+                + "  \"max_score\":null,"
+                + "  \"hits\":[]"
+                + "}"
+                + "}";
+
+        String initialResponse2 = "{"
+                + "\"_scroll_id\":\"scrollId_4\","
+                + "\"hits\":{"
+                + "  \"total\":10000,"
+                + "  \"hits\":["
+                + "    \"_index\":\"dataIndex\""
+                + "  ]"
+                + "}"
+                + "}";
+
+        String endResponse2 = "{"
+                + "\"_scroll_id\":\"scrollId_5\","
+                + "\"hits\":[]"
+                + "}";
+
+        List<HttpResponse> responses = Arrays.asList(
+                new HttpResponse(toStream(dataSummaryResponse), 200),
+                new HttpResponse(toStream(indexResponse), 200),
+                new HttpResponse(toStream(initialResponse1), 200),
+                new HttpResponse(toStream(continueResponse1), 200),
+                new HttpResponse(toStream(endResponse1), 200),
+                new HttpResponse(toStream(initialResponse2), 200),
+                new HttpResponse(toStream(endResponse2), 200));
+
+        MockHttpRequester requester = new MockHttpRequester(responses);
+                createExtractor(requester);
+
+        m_Extractor.newSearch(1400000000000L, 1407200000000L, m_Logger);
+
+        m_Extractor.cancel();
+
+        assertTrue(m_Extractor.hasNext());
+        assertEquals(initialResponse1, streamToString(m_Extractor.next().get()));
+        assertTrue(m_Extractor.hasNext());
+        assertEquals(continueResponse1, streamToString(m_Extractor.next().get()));
+        assertTrue(m_Extractor.hasNext());
+        assertFalse(m_Extractor.next().isPresent());
+        assertFalse(m_Extractor.hasNext());
+
+        assertEquals("http://localhost:9200/_search/scroll", requester.getDeleteRequestParams(0).url);
+        assertEquals("{\"scroll_id\":[\"scrollId_3\"]}",
+                requester.getDeleteRequestParams(0).requestBody);
+        assertEquals(1, requester.m_DeleteRequestParams.size());
+
+        m_Extractor.newSearch(1407200000000L, 1407203600000L, m_Logger);
+        assertTrue(m_Extractor.hasNext());
+    }
+
     private static InputStream toStream(String input)
     {
         return new ByteArrayInputStream(input.getBytes(StandardCharsets.UTF_8));

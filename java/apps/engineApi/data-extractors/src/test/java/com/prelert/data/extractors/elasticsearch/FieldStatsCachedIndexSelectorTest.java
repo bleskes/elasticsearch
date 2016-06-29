@@ -47,9 +47,7 @@ import java.util.Set;
 import org.apache.log4j.Logger;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
@@ -59,8 +57,6 @@ public class FieldStatsCachedIndexSelectorTest
 {
     private static final ElasticsearchUrlBuilder URL_BUILDER = ElasticsearchUrlBuilder
             .create("http://myes:9200", Collections.emptyList());
-
-    @Rule public ExpectedException m_ExpectedException = ExpectedException.none();
 
     @Mock private HttpRequester m_HttpRequester;
     @Mock private Logger m_Logger;
@@ -82,10 +78,25 @@ public class FieldStatsCachedIndexSelectorTest
     @Test
     public void testSelectByTime_GivenEndTimeEarlierThanStartTime()
     {
-        m_ExpectedException.expect(IllegalArgumentException.class);
         IndexSelector indexSelector = new FieldStatsCachedIndexSelector(m_HttpRequester,
                 URL_BUILDER, "@timestamp", Arrays.asList("*"));
-        indexSelector.selectByTime(100L, 50L, m_Logger);
+
+        assertEquals(Collections.emptyList(), indexSelector.selectByTime(100L, 50L, m_Logger));
+
+        verify(m_Logger).error("selectByTime expects the end time to be strictly greater than the "
+                + "start time; actual call was: startMs = 100, endMs = 50");
+    }
+
+    @Test
+    public void testSelectByTime_GivenEndTimeSameAsStartTime()
+    {
+        IndexSelector indexSelector = new FieldStatsCachedIndexSelector(m_HttpRequester,
+                URL_BUILDER, "@timestamp", Arrays.asList("*"));
+
+        assertEquals(Collections.emptyList(), indexSelector.selectByTime(100L, 100L, m_Logger));
+
+        verify(m_Logger).error("selectByTime expects the end time to be strictly greater than the "
+                + "start time; actual call was: startMs = 100, endMs = 100");
     }
 
     @Test
@@ -158,27 +169,21 @@ public class FieldStatsCachedIndexSelectorTest
         assertEquals("http://myes:9200/index_*/_field_stats?level=indices", m_UrlCaptor.getValue());
         assertEquals(expectedRequestBody, m_RequestBodyCaptor.getValue());
 
-        assertEquals(Collections.emptyList(), indexSelector.selectByTime(0L, 0L, m_Logger));
         assertEquals(Collections.emptyList(), indexSelector.selectByTime(0L, 1L, m_Logger));
         assertEquals(Arrays.asList("index_1"), indexSelector.selectByTime(0L, 2L, m_Logger));
         assertEquals(Arrays.asList("index_1"), indexSelector.selectByTime(0L, 3L, m_Logger));
         assertEquals(Arrays.asList("index_1", "index_2"), indexSelector.selectByTime(0L, 4L, m_Logger));
         assertEquals(Arrays.asList("index_1", "index_2"), indexSelector.selectByTime(0L, 5L, m_Logger));
-        assertEquals(Collections.emptyList(), indexSelector.selectByTime(1L, 1L, m_Logger));
         assertEquals(Arrays.asList("index_1"), indexSelector.selectByTime(1L, 2L, m_Logger));
         assertEquals(Arrays.asList("index_1"), indexSelector.selectByTime(1L, 3L, m_Logger));
         assertEquals(Arrays.asList("index_1", "index_2"), indexSelector.selectByTime(1L, 4L, m_Logger));
         assertEquals(Arrays.asList("index_1", "index_2"), indexSelector.selectByTime(1L, 5L, m_Logger));
-        assertEquals(Collections.emptyList(), indexSelector.selectByTime(2L, 2L, m_Logger));
         assertEquals(Arrays.asList("index_1"), indexSelector.selectByTime(2L, 3L, m_Logger));
         assertEquals(Arrays.asList("index_1", "index_2"), indexSelector.selectByTime(2L, 4L, m_Logger));
         assertEquals(Arrays.asList("index_1", "index_2"), indexSelector.selectByTime(2L, 5L, m_Logger));
-        assertEquals(Collections.emptyList(), indexSelector.selectByTime(3L, 3L, m_Logger));
         assertEquals(Arrays.asList("index_2"), indexSelector.selectByTime(3L, 4L, m_Logger));
         assertEquals(Arrays.asList("index_2"), indexSelector.selectByTime(3L, 5L, m_Logger));
-        assertEquals(Collections.emptyList(), indexSelector.selectByTime(4L, 4L, m_Logger));
         assertEquals(Arrays.asList("index_2"), indexSelector.selectByTime(4L, 5L, m_Logger));
-        assertEquals(Collections.emptyList(), indexSelector.selectByTime(5L, 5L, m_Logger));
     }
 
     @Test
