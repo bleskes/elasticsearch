@@ -39,11 +39,11 @@ import org.junit.rules.ExpectedException;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.DoubleNode;
 import com.fasterxml.jackson.databind.node.TextNode;
-import com.prelert.job.UnknownJobException;
+import com.prelert.job.JobDetails;
+import com.prelert.job.JobException;
 import com.prelert.job.config.verification.JobConfigurationException;
 import com.prelert.job.errorcodes.ErrorCodeMatcher;
 import com.prelert.job.errorcodes.ErrorCodes;
@@ -62,8 +62,7 @@ public class JobDescriptionUpdaterTest
     }
 
     @Test
-    public void testPrepareUpdate_GivenNonText() throws UnknownJobException,
-            JobConfigurationException, JsonProcessingException, IOException
+    public void testPrepareUpdate_GivenNonText() throws JobException, IOException
     {
         JsonNode node = DoubleNode.valueOf(42.0);
 
@@ -76,8 +75,7 @@ public class JobDescriptionUpdaterTest
     }
 
     @Test
-    public void testPrepareUpdate_GivenText() throws UnknownJobException,
-            JobConfigurationException, JsonProcessingException, IOException
+    public void testPrepareUpdate_GivenText() throws JobException, IOException
     {
         JsonNode node = TextNode.valueOf("blah blah...");
 
@@ -87,8 +85,7 @@ public class JobDescriptionUpdaterTest
     }
 
     @Test
-    public void testCommit_GivenText() throws UnknownJobException,
-            JobConfigurationException, JsonProcessingException, IOException
+    public void testCommit_GivenText() throws JobException, IOException
     {
         JsonNode node = TextNode.valueOf("blah blah...");
 
@@ -101,6 +98,8 @@ public class JobDescriptionUpdaterTest
 
     private JobDescriptionUpdater createUpdater(String jobId)
     {
-        return new JobDescriptionUpdater(m_JobManager, jobId, "description");
+        JobDetails job = new JobDetails();
+        job.setId(jobId);
+        return new JobDescriptionUpdater(m_JobManager, job, "description");
     }
 }

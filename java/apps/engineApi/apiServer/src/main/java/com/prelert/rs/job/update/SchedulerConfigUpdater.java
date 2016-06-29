@@ -32,7 +32,6 @@ import com.prelert.job.JobDetails;
 import com.prelert.job.JobException;
 import com.prelert.job.SchedulerConfig;
 import com.prelert.job.SchedulerConfig.DataSource;
-import com.prelert.job.UnknownJobException;
 import com.prelert.job.config.verification.JobConfigurationException;
 import com.prelert.job.config.verification.SchedulerConfigVerifier;
 import com.prelert.job.errorcodes.ErrorCodes;
@@ -44,13 +43,13 @@ class SchedulerConfigUpdater extends AbstractUpdater
 {
     private SchedulerConfig m_NewSchedulerConfig;
 
-    public SchedulerConfigUpdater(JobManager jobManager, String jobId, String updateKey)
+    public SchedulerConfigUpdater(JobManager jobManager, JobDetails job, String updateKey)
     {
-        super(jobManager, jobId, updateKey);
+        super(jobManager, job, updateKey);
     }
 
     @Override
-    void prepareUpdate(JsonNode node) throws UnknownJobException, JobConfigurationException
+    void prepareUpdate(JsonNode node) throws JobConfigurationException
     {
         checkJobIsScheduled();
         m_NewSchedulerConfig = parseSchedulerConfig(node);
@@ -94,9 +93,9 @@ class SchedulerConfigUpdater extends AbstractUpdater
         }
     }
 
-    private void checkDataSourceHasNotChanged() throws UnknownJobException, JobConfigurationException
+    private void checkDataSourceHasNotChanged() throws JobConfigurationException
     {
-        JobDetails job = jobManager().getJobOrThrowIfUnknown(jobId());
+        JobDetails job = job();
         SchedulerConfig currentSchedulerConfig = job.getSchedulerConfig();
         DataSource currentDataSource = currentSchedulerConfig.getDataSource();
         DataSource newDataSource = m_NewSchedulerConfig.getDataSource();

@@ -213,6 +213,7 @@ public class JobsTest extends ServiceTest
     @Test
     public void testUpdate_GivenValidModelDebugConfig() throws JobException
     {
+        givenJob("foo");
         Response response = m_Jobs.updateJob("foo",
                 "{\"modelDebugConfig\":{\"boundsPercentile\":90.0, \"terms\":\"someTerm\"}}");
         assertEquals(200, response.getStatus());
@@ -226,6 +227,7 @@ public class JobsTest extends ServiceTest
     @Test
     public void testUpdate_GivenValidModelDebugConfigChangeToFile() throws JobException
     {
+        givenJob("foo");
         Response response = m_Jobs.updateJob("foo",
                 "{\"modelDebugConfig\":{\"writeTo\":\"File\",\"boundsPercentile\":90.0, \"terms\":\"someTerm\"}}");
         assertEquals(200, response.getStatus());
@@ -239,6 +241,7 @@ public class JobsTest extends ServiceTest
     @Test
     public void testUpdate_GivenValidModelDebugConfigChangeToDataStore() throws JobException
     {
+        givenJob("foo");
         Response response = m_Jobs.updateJob("foo",
                 "{\"modelDebugConfig\":{\"writeTo\":\"data_store\",\"boundsPercentile\":90.0, \"terms\":\"someTerm\"}}");
         assertEquals(200, response.getStatus());
@@ -335,5 +338,12 @@ public class JobsTest extends ServiceTest
         config.setAnalysisConfig(analysisConfig);
         config.setDataDescription(dataDescription);
         return config;
+    }
+
+    private void givenJob(String jobId) throws UnknownJobException
+    {
+        JobDetails job = new JobDetails();
+        job.setId(jobId);
+        when(jobManager().getJobOrThrowIfUnknown(jobId)).thenReturn(job);
     }
 }

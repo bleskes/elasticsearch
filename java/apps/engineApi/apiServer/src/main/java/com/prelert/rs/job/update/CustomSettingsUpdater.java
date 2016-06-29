@@ -30,6 +30,7 @@ package com.prelert.rs.job.update;
 import java.util.Map;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.prelert.job.JobDetails;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.config.verification.JobConfigurationException;
 import com.prelert.job.manager.JobManager;
@@ -39,9 +40,9 @@ class CustomSettingsUpdater extends AbstractUpdater
 {
     private Map<String, Object> m_NewCustomSettings;
 
-    public CustomSettingsUpdater(JobManager jobManager, String jobId, String updateKey)
+    public CustomSettingsUpdater(JobManager jobManager, JobDetails job, String updateKey)
     {
-        super(jobManager, jobId, updateKey);
+        super(jobManager, job, updateKey);
     }
 
     @Override

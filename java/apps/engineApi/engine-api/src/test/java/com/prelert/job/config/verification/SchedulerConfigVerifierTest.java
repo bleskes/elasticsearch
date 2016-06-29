@@ -32,6 +32,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -459,6 +460,31 @@ public class SchedulerConfigVerifierTest
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.SCHEDULER_INVALID_OPTION_VALUE));
         m_ExpectedException.expectMessage("Invalid scrollSize value");
+
+        SchedulerConfigVerifier.verify(conf);
+    }
+
+    @Test
+    public void testCheckValidElasticsearch_GivenBothAggregationsAndAggsAreSet()
+            throws JobConfigurationException
+    {
+        SchedulerConfig conf = new SchedulerConfig();
+        conf.setDataSource(DataSource.ELASTICSEARCH);
+        conf.setDataSourceCompatibility("2.x.x");
+        conf.setScrollSize(1000);
+        conf.setBaseUrl("http://localhost:9200/");
+        conf.setIndexes(Arrays.asList("myIndex"));
+        conf.setTypes(Arrays.asList("mytype"));
+
+        Map<String, Object> aggs = new HashMap<>();
+        conf.setAggregations(aggs);
+        conf.setAggs(aggs);
+
+        m_ExpectedException.expect(JobConfigurationException.class);
+        m_ExpectedException.expect(
+                ErrorCodeMatcher.hasErrorCode(ErrorCodes.SCHEDULER_MULTIPLE_AGGREGATIONS));
+        m_ExpectedException.expectMessage(
+                "Both aggregations and aggs were specified - please just specify one");
 
         SchedulerConfigVerifier.verify(conf);
     }

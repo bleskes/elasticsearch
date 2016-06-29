@@ -45,6 +45,7 @@ import org.mockito.MockitoAnnotations;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.NullNode;
+import com.prelert.job.JobDetails;
 import com.prelert.job.JobException;
 import com.prelert.job.ModelDebugConfig;
 import com.prelert.job.config.verification.JobConfigurationException;
@@ -137,6 +138,8 @@ public class ModelDebugConfigUpdaterTest
 
     private ModelDebugConfigUpdater createUpdater(String jobId)
     {
-        return new ModelDebugConfigUpdater(m_JobManager, jobId, "modelDebugConfig", m_ConfigWriter);
+        JobDetails job = new JobDetails();
+        job.setId(jobId);
+        return new ModelDebugConfigUpdater(m_JobManager, job, "modelDebugConfig", m_ConfigWriter);
     }
 }

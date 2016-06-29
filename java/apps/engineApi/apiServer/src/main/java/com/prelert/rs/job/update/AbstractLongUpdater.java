@@ -28,7 +28,7 @@
 package com.prelert.rs.job.update;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.prelert.job.UnknownJobException;
+import com.prelert.job.JobDetails;
 import com.prelert.job.config.verification.JobConfigurationException;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.manager.JobManager;
@@ -39,14 +39,14 @@ abstract class AbstractLongUpdater extends AbstractUpdater
     private Long m_NewValue;
     private long m_MinVal;
 
-    public AbstractLongUpdater(JobManager jobManager, String jobId, String updateKey, long minVal)
+    public AbstractLongUpdater(JobManager jobManager, JobDetails job, String updateKey, long minVal)
     {
-        super(jobManager, jobId, updateKey);
+        super(jobManager, job, updateKey);
         m_MinVal = minVal;
     }
 
     @Override
-    void prepareUpdate(JsonNode node) throws UnknownJobException, JobConfigurationException
+    void prepareUpdate(JsonNode node) throws JobConfigurationException
     {
         if (node.isIntegralNumber() || node.isNull())
         {

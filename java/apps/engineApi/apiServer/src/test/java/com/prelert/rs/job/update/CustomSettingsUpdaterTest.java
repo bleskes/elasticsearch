@@ -44,6 +44,7 @@ import org.mockito.MockitoAnnotations;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.DoubleNode;
+import com.prelert.job.JobDetails;
 import com.prelert.job.JobException;
 import com.prelert.job.config.verification.JobConfigurationException;
 import com.prelert.job.errorcodes.ErrorCodeMatcher;
@@ -104,6 +105,8 @@ public class CustomSettingsUpdaterTest
 
     private CustomSettingsUpdater createUpdater(String jobId)
     {
-        return new CustomSettingsUpdater(m_JobManager, jobId, "customSettings");
+        JobDetails job = new JobDetails();
+        job.setId(jobId);
+        return new CustomSettingsUpdater(m_JobManager, job, "customSettings");
     }
 }

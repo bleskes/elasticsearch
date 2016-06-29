@@ -44,6 +44,7 @@ import org.apache.log4j.Logger;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
+import com.prelert.job.JobDetails;
 import com.prelert.job.JobException;
 import com.prelert.job.config.verification.JobConfigurationException;
 import com.prelert.job.errorcodes.ErrorCodes;
@@ -72,32 +73,13 @@ public class JobUpdater
 
     private final JobManager m_JobManager;
     private final String m_JobId;
-    private final Map<String, Supplier<AbstractUpdater>> m_UpdaterPerKey;
     private final StringWriter m_ConfigWriter;
 
     public JobUpdater(JobManager jobManager, String jobId)
     {
         m_JobManager = Objects.requireNonNull(jobManager);
         m_JobId = Objects.requireNonNull(jobId);
-        m_UpdaterPerKey = createUpdaterPerKeyMap();
         m_ConfigWriter = new StringWriter();
-    }
-
-    private Map<String, Supplier<AbstractUpdater>> createUpdaterPerKeyMap()
-    {
-        return ImmutableMap.<String, Supplier<AbstractUpdater>>builder()
-                .put(ANALYSIS_LIMITS_KEY, () -> new AnalysisLimitsUpdater(m_JobManager, m_JobId, ANALYSIS_LIMITS_KEY))
-                .put(BACKGROUND_PERSIST_INTERVAL_KEY, () -> new BackgroundPersistIntervalUpdater(m_JobManager, m_JobId, BACKGROUND_PERSIST_INTERVAL_KEY))
-                .put(CUSTOM_SETTINGS, () -> new CustomSettingsUpdater(m_JobManager, m_JobId, CUSTOM_SETTINGS))
-                .put(DETECTOR_KEY, () -> new DetectorDescriptionUpdater(m_JobManager, m_JobId, DETECTOR_KEY))
-                .put(JOB_DESCRIPTION_KEY, () -> new JobDescriptionUpdater(m_JobManager, m_JobId, JOB_DESCRIPTION_KEY))
-                .put(IGNORE_DOWNTIME_KEY, () -> new IgnoreDowntimeUpdater(m_JobManager, m_JobId, IGNORE_DOWNTIME_KEY))
-                .put(MODEL_DEBUG_CONFIG_KEY, () -> new ModelDebugConfigUpdater(m_JobManager, m_JobId, MODEL_DEBUG_CONFIG_KEY, m_ConfigWriter))
-                .put(RENORMALIZATION_WINDOW_DAYS_KEY, () -> new RenormalizationWindowDaysUpdater(m_JobManager, m_JobId, RENORMALIZATION_WINDOW_DAYS_KEY))
-                .put(MODEL_SNAPSHOT_RETENTION_DAYS_KEY, () -> new ModelSnapshotRetentionDaysUpdater(m_JobManager, m_JobId, MODEL_SNAPSHOT_RETENTION_DAYS_KEY))
-                .put(RESULTS_RETENTION_DAYS_KEY, () -> new ResultsRetentionDaysUpdater(m_JobManager, m_JobId, RESULTS_RETENTION_DAYS_KEY))
-                .put(SCHEDULER_CONFIG_KEY, () -> new SchedulerConfigUpdater(m_JobManager, m_JobId, SCHEDULER_CONFIG_KEY))
-                .build();
     }
 
     /**
@@ -109,20 +91,23 @@ public class JobUpdater
      * If there are invalid updates, none of the updates is applied.
      *
      * @param updateJson the JSON input that contains the requested updates
-     * @return a {@code RESPONSE}
+     * @return a {@code Response}
      * @throws JobException If the update fails (e.g. the job does not exist, some of the updates
      * are invalid, the job is unavailable for updating, etc.)
      */
     public Response update(String updateJson) throws JobException
     {
+        JobDetails job = m_JobManager.getJobOrThrowIfUnknown(m_JobId);
+
         JsonNode node = parse(updateJson);
-        if (node.isObject() == false)
+        if (!node.isObject() || node.size() == 0)
         {
             throw new JobConfigurationException(
-                    Messages.getMessage(Messages.JOB_CONFIG_UPDATE_NO_OBJECT),
+                    Messages.getMessage(Messages.JOB_CONFIG_UPDATE_REQUIRES_NON_EMPTY_OBJECT),
                     ErrorCodes.JOB_CONFIG_PARSE_ERROR);
         }
 
+        Map<String, Supplier<AbstractUpdater>> updaterPerKey = createUpdaterPerKeyMap(job);
         List<AbstractUpdater> updaters = new ArrayList<>();
         List<String> keysToUpdate = new ArrayList<>();
         Iterator<Entry<String, JsonNode>> fieldsIterator = node.fields();
@@ -130,7 +115,7 @@ public class JobUpdater
         {
             Entry<String, JsonNode> keyValue = fieldsIterator.next();
             LOGGER.debug("Updating job config for key: " + keyValue.getKey());
-            AbstractUpdater updater = createKeyValueUpdater(keyValue.getKey());
+            AbstractUpdater updater = createKeyValueUpdater(updaterPerKey, keyValue.getKey());
             keysToUpdate.add(keyValue.getKey());
             updaters.add(updater);
             updater.prepareUpdate(keyValue.getValue());
@@ -161,15 +146,34 @@ public class JobUpdater
         }
     }
 
-    private AbstractUpdater createKeyValueUpdater(String key) throws JobConfigurationException
+    private Map<String, Supplier<AbstractUpdater>> createUpdaterPerKeyMap(JobDetails job)
     {
-        if (m_UpdaterPerKey.containsKey(key) == false)
+        return ImmutableMap.<String, Supplier<AbstractUpdater>>builder()
+                .put(ANALYSIS_LIMITS_KEY, () -> new AnalysisLimitsUpdater(m_JobManager, job, ANALYSIS_LIMITS_KEY))
+                .put(BACKGROUND_PERSIST_INTERVAL_KEY, () -> new BackgroundPersistIntervalUpdater(m_JobManager, job, BACKGROUND_PERSIST_INTERVAL_KEY))
+                .put(CUSTOM_SETTINGS, () -> new CustomSettingsUpdater(m_JobManager, job, CUSTOM_SETTINGS))
+                .put(DETECTOR_KEY, () -> new DetectorDescriptionUpdater(m_JobManager, job, DETECTOR_KEY))
+                .put(JOB_DESCRIPTION_KEY, () -> new JobDescriptionUpdater(m_JobManager, job, JOB_DESCRIPTION_KEY))
+                .put(IGNORE_DOWNTIME_KEY, () -> new IgnoreDowntimeUpdater(m_JobManager, job, IGNORE_DOWNTIME_KEY))
+                .put(MODEL_DEBUG_CONFIG_KEY, () -> new ModelDebugConfigUpdater(m_JobManager, job, MODEL_DEBUG_CONFIG_KEY, m_ConfigWriter))
+                .put(RENORMALIZATION_WINDOW_DAYS_KEY, () -> new RenormalizationWindowDaysUpdater(m_JobManager, job, RENORMALIZATION_WINDOW_DAYS_KEY))
+                .put(MODEL_SNAPSHOT_RETENTION_DAYS_KEY, () -> new ModelSnapshotRetentionDaysUpdater(m_JobManager, job, MODEL_SNAPSHOT_RETENTION_DAYS_KEY))
+                .put(RESULTS_RETENTION_DAYS_KEY, () -> new ResultsRetentionDaysUpdater(m_JobManager, job, RESULTS_RETENTION_DAYS_KEY))
+                .put(SCHEDULER_CONFIG_KEY, () -> new SchedulerConfigUpdater(m_JobManager, job, SCHEDULER_CONFIG_KEY))
+                .build();
+    }
+
+    private static AbstractUpdater createKeyValueUpdater(
+            Map<String, Supplier<AbstractUpdater>> updaterPerKey, String key)
+                    throws JobConfigurationException
+    {
+        if (updaterPerKey.containsKey(key) == false)
         {
             throw new JobConfigurationException(
                     Messages.getMessage(Messages.JOB_CONFIG_UPDATE_INVALID_KEY, key),
                     ErrorCodes.INVALID_UPDATE_KEY);
         }
-        return m_UpdaterPerKey.get(key).get();
+        return updaterPerKey.get(key).get();
     }
 
     private void writeUpdateConfigMessage() throws JobInUseException, NativeProcessRunException

@@ -119,7 +119,7 @@ public final class Messages
     public static final String JOB_CONFIG_UPDATE_IGNORE_DOWNTIME_PARSE_ERROR = "job.config.update.ignore.downtime.parse.error";
     public static final String JOB_CONFIG_UPDATE_JOB_IS_NOT_CLOSED = "job.config.update.job.is.not.closed";
     public static final String JOB_CONFIG_UPDATE_MODEL_DEBUG_CONFIG_PARSE_ERROR = "job.config.update.model.debug.config.parse.error";
-    public static final String JOB_CONFIG_UPDATE_NO_OBJECT = "job.config.update.no.object";
+    public static final String JOB_CONFIG_UPDATE_REQUIRES_NON_EMPTY_OBJECT = "job.config.update.requires.non.empty.object";
     public static final String JOB_CONFIG_UPDATE_PARSE_ERROR = "job.config.update.parse.error";
     public static final String JOB_CONFIG_UPDATE_BACKGROUND_PERSIST_INTERVAL_INVALID = "job.config.update.background.persist.interval.invalid";
     public static final String JOB_CONFIG_UPDATE_RENORMALIZATION_WINDOW_DAYS_INVALID = "job.config.update.renormalization.window.days.invalid";
@@ -158,6 +158,7 @@ public final class Messages
     public static final String JOB_CONFIG_SCHEDULER_ELASTICSEARCH_REQUIRES_DATAFORMAT_ELASTICSEARCH = "job.config.scheduler.elasticsearch.requires.dataformat.elasticsearch";
     public static final String JOB_CONFIG_SCHEDULER_INCOMPLETE_CREDENTIALS = "job.config.scheduler.incomplete.credentials";
     public static final String JOB_CONFIG_SCHEDULER_MULTIPLE_PASSWORDS = "job.config.scheduler.multiple.passwords";
+    public static final String JOB_CONFIG_SCHEDULER_MULTIPLE_AGGREGATIONS = "job.config.scheduler.multiple.aggregations";
 
     public static final String JOB_DATA_CONCURRENT_USE_CLOSE = "job.data.concurrent.use.close";
     public static final String JOB_DATA_CONCURRENT_USE_DELETE = "job.data.concurrent.use.delete";

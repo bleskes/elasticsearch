@@ -39,12 +39,12 @@ import org.junit.rules.ExpectedException;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.LongNode;
 import com.fasterxml.jackson.databind.node.NullNode;
 import com.fasterxml.jackson.databind.node.TextNode;
-import com.prelert.job.UnknownJobException;
+import com.prelert.job.JobDetails;
+import com.prelert.job.JobException;
 import com.prelert.job.config.verification.JobConfigurationException;
 import com.prelert.job.errorcodes.ErrorCodeMatcher;
 import com.prelert.job.errorcodes.ErrorCodes;
@@ -63,8 +63,7 @@ public class BackgroundPersistIntervalUpdaterTest
     }
 
     @Test
-    public void testPrepareUpdate_GivenText() throws UnknownJobException,
-            JobConfigurationException, JsonProcessingException, IOException
+    public void testPrepareUpdate_GivenText() throws JobConfigurationException, IOException
     {
         JsonNode node = TextNode.valueOf("5");
 
@@ -78,8 +77,8 @@ public class BackgroundPersistIntervalUpdaterTest
     }
 
     @Test
-    public void testPrepareUpdate_GivenNegativeInteger() throws UnknownJobException,
-            JobConfigurationException, JsonProcessingException, IOException
+    public void testPrepareUpdate_GivenNegativeInteger()
+            throws JobConfigurationException, IOException
     {
         JsonNode node = LongNode.valueOf(-3);
 
@@ -93,8 +92,7 @@ public class BackgroundPersistIntervalUpdaterTest
     }
 
     @Test
-    public void testPrepareUpdate_GivenInteger() throws UnknownJobException,
-            JobConfigurationException, JsonProcessingException, IOException
+    public void testPrepareUpdate_GivenInteger() throws JobException, IOException
     {
         JsonNode node = LongNode.valueOf(7200);
 
@@ -104,8 +102,7 @@ public class BackgroundPersistIntervalUpdaterTest
     }
 
     @Test
-    public void testCommit_GivenInteger() throws UnknownJobException,
-            JobConfigurationException, JsonProcessingException, IOException
+    public void testCommit_GivenInteger() throws JobException, IOException
     {
         JsonNode node = LongNode.valueOf(7200);
 
@@ -117,8 +114,7 @@ public class BackgroundPersistIntervalUpdaterTest
     }
 
     @Test
-    public void testCommit_GivenNull() throws UnknownJobException,
-            JobConfigurationException, JsonProcessingException, IOException
+    public void testCommit_GivenNull() throws JobException, IOException
     {
         JsonNode node = NullNode.getInstance();
 
@@ -131,6 +127,8 @@ public class BackgroundPersistIntervalUpdaterTest
 
     private BackgroundPersistIntervalUpdater createUpdater(String jobId)
     {
-        return new BackgroundPersistIntervalUpdater(m_JobManager, jobId, "backgroundPersistInterval");
+        JobDetails job = new JobDetails();
+        job.setId(jobId);
+        return new BackgroundPersistIntervalUpdater(m_JobManager, job, "backgroundPersistInterval");
     }
 }
