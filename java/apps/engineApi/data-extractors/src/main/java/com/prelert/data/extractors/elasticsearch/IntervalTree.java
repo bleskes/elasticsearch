@@ -50,6 +50,9 @@ import com.google.common.collect.Range;
  */
 public class IntervalTree<K extends Comparable<K>, V>
 {
+    private static final boolean RED = false;
+    private static final boolean BLACK = true;
+
     private Node m_Root;
 
     /**
@@ -328,9 +331,6 @@ public class IntervalTree<K extends Comparable<K>, V>
     {
         return node == null ? 0 : Math.max(height(node.left), height(node.right)) + 1;
     }
-
-    private static final boolean RED = false;
-    private static final boolean BLACK = true;
 
     private class Node
     {
