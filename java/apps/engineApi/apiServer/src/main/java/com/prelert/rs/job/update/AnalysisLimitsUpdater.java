@@ -31,7 +31,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.prelert.job.AnalysisLimits;
 import com.prelert.job.JobDetails;
 import com.prelert.job.JobException;
-import com.prelert.job.UnknownJobException;
 import com.prelert.job.config.verification.AnalysisLimitsVerifier;
 import com.prelert.job.config.verification.JobConfigurationException;
 import com.prelert.job.errorcodes.ErrorCodes;
@@ -43,15 +42,15 @@ class AnalysisLimitsUpdater extends AbstractUpdater
 {
     private AnalysisLimits m_NewLimits;
 
-    public AnalysisLimitsUpdater(JobManager jobManager, String jobId, String updateKey)
+    public AnalysisLimitsUpdater(JobManager jobManager, JobDetails job, String updateKey)
     {
-        super(jobManager, jobId, updateKey);
+        super(jobManager, job, updateKey);
     }
 
     @Override
-    void prepareUpdate(JsonNode node) throws UnknownJobException, JobConfigurationException
+    void prepareUpdate(JsonNode node) throws JobConfigurationException
     {
-        JobDetails job = jobManager().getJobOrThrowIfUnknown(jobId());
+        JobDetails job = job();
         checkJobIsClosed(job);
         m_NewLimits = parseAnalysisLimits(node);
         checkNotNull();
@@ -84,7 +83,7 @@ class AnalysisLimitsUpdater extends AbstractUpdater
     }
 
     private void checkModelMemoryLimitIsNotDecreased(JobDetails job)
-            throws UnknownJobException, JobConfigurationException
+            throws JobConfigurationException
     {
         AnalysisLimits analysisLimits = job.getAnalysisLimits();
         if (analysisLimits == null)

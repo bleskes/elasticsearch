@@ -57,6 +57,7 @@ import com.prelert.job.JobStatus;
 import com.prelert.job.ModelDebugConfig;
 import com.prelert.job.SchedulerConfig;
 import com.prelert.job.SchedulerConfig.DataSource;
+import com.prelert.job.UnknownJobException;
 import com.prelert.job.audit.Auditor;
 import com.prelert.job.config.verification.JobConfigurationException;
 import com.prelert.job.errorcodes.ErrorCodeMatcher;
@@ -66,16 +67,32 @@ import com.prelert.rs.provider.JobConfigurationParseException;
 
 public class JobUpdaterTest
 {
+    private static final String JOB_ID = "foo";
+
     @Rule public ExpectedException m_ExpectedException = ExpectedException.none();
 
     @Mock private JobManager m_JobManager;
     @Mock private Auditor m_Auditor;
+    private JobDetails m_Job;
 
     @Before
-    public void setUp()
+    public void setUp() throws UnknownJobException
     {
         MockitoAnnotations.initMocks(this);
+        m_Job = new JobDetails();
+        m_Job.setId(JOB_ID);
         when(m_JobManager.audit(anyString())).thenReturn(m_Auditor);
+        when(m_JobManager.getJobOrThrowIfUnknown(JOB_ID)).thenReturn(m_Job);
+    }
+
+    @Test
+    public void testUpdate_GivenUnknownJob() throws JobException
+    {
+        when(m_JobManager.getJobOrThrowIfUnknown("bar")).thenThrow(new UnknownJobException("bar"));
+
+        m_ExpectedException.expect(UnknownJobException.class);
+
+        new JobUpdater(m_JobManager, "bar").update("");
     }
 
     @Test
@@ -159,6 +176,7 @@ public class JobUpdaterTest
             assertEquals("Invalid modelDebugConfig: boundsPercentile must be in the range [0, 100]", e.getMessage());
         }
 
+        verify(m_JobManager).getJobOrThrowIfUnknown(JOB_ID);
         Mockito.verifyNoMoreInteractions(m_JobManager);
     }
 
@@ -235,15 +253,11 @@ public class JobUpdaterTest
     {
         String update = "{\"detectors\": [{\"index\":0,\"description\":\"the A train\"}]}";
 
-        JobDetails job = new JobDetails();
-        job.setId("foo");
         AnalysisConfig analysisConfig = new AnalysisConfig();
         analysisConfig.setDetectors(Arrays.asList(new Detector()));
-        job.setAnalysisConfig(analysisConfig);
+        m_Job.setAnalysisConfig(analysisConfig);
 
         when(m_JobManager.updateDetectorDescription("foo", 0, "the A train")).thenReturn(true);
-
-        when(m_JobManager.getJobOrThrowIfUnknown("foo")).thenReturn(job);
 
         new JobUpdater(m_JobManager, "foo").update(update);
 
@@ -254,12 +268,9 @@ public class JobUpdaterTest
     public void testUpdate_GivenValidSchedulerConfigUpdate() throws JobException
     {
         when(m_JobManager.isScheduledJob("foo")).thenReturn(true);
-        JobDetails job = new JobDetails();
-        job.setId("foo");
         SchedulerConfig schedulerConfig = new SchedulerConfig();
         schedulerConfig.setDataSource(DataSource.ELASTICSEARCH);
-        job.setSchedulerConfig(schedulerConfig);
-        when(m_JobManager.getJobOrThrowIfUnknown("foo")).thenReturn(job);
+        m_Job.setSchedulerConfig(schedulerConfig);
         String update = "{\"schedulerConfig\": {"
                 + "\"dataSource\":\"ELASTICSEARCH\","
                 + "\"dataSourceCompatibility\":\"1.7.x\","
@@ -293,11 +304,8 @@ public class JobUpdaterTest
         AnalysisLimits analysisLimits = new AnalysisLimits();
         analysisLimits.setModelMemoryLimit(100L);
         analysisLimits.setCategorizationExamplesLimit(4L);
-        JobDetails job = new JobDetails();
-        job.setId("foo");
-        job.setStatus(JobStatus.CLOSED);
-        job.setAnalysisLimits(analysisLimits);
-        when(m_JobManager.getJobOrThrowIfUnknown("foo")).thenReturn(job);
+        m_Job.setStatus(JobStatus.CLOSED);
+        m_Job.setAnalysisLimits(analysisLimits);
 
         String update = "{\"analysisLimits\": {"
                 + "\"modelMemoryLimit\":1000,"

@@ -39,12 +39,12 @@ import org.junit.rules.ExpectedException;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.LongNode;
 import com.fasterxml.jackson.databind.node.NullNode;
 import com.fasterxml.jackson.databind.node.TextNode;
-import com.prelert.job.UnknownJobException;
+import com.prelert.job.JobDetails;
+import com.prelert.job.JobException;
 import com.prelert.job.config.verification.JobConfigurationException;
 import com.prelert.job.errorcodes.ErrorCodeMatcher;
 import com.prelert.job.errorcodes.ErrorCodes;
@@ -63,8 +63,7 @@ public class ResultsRetentionDaysUpdaterTest
     }
 
     @Test
-    public void testPrepareUpdate_GivenText() throws UnknownJobException,
-            JobConfigurationException, JsonProcessingException, IOException
+    public void testPrepareUpdate_GivenText() throws JobException, IOException
     {
         JsonNode node = TextNode.valueOf("5");
 
@@ -78,8 +77,7 @@ public class ResultsRetentionDaysUpdaterTest
     }
 
     @Test
-    public void testPrepareUpdate_GivenNegativeInteger() throws UnknownJobException,
-            JobConfigurationException, JsonProcessingException, IOException
+    public void testPrepareUpdate_GivenNegativeInteger() throws JobException, IOException
     {
         JsonNode node = LongNode.valueOf(-3);
 
@@ -93,8 +91,7 @@ public class ResultsRetentionDaysUpdaterTest
     }
 
     @Test
-    public void testPrepareUpdate_GivenInteger() throws UnknownJobException,
-            JobConfigurationException, JsonProcessingException, IOException
+    public void testPrepareUpdate_GivenInteger() throws JobException, IOException
     {
         JsonNode node = LongNode.valueOf(5);
 
@@ -104,8 +101,7 @@ public class ResultsRetentionDaysUpdaterTest
     }
 
     @Test
-    public void testCommit_GivenInteger() throws UnknownJobException,
-            JobConfigurationException, JsonProcessingException, IOException
+    public void testCommit_GivenInteger() throws JobException, IOException
     {
         JsonNode node = LongNode.valueOf(5);
 
@@ -117,8 +113,7 @@ public class ResultsRetentionDaysUpdaterTest
     }
 
     @Test
-    public void testCommit_GivenNull() throws UnknownJobException,
-            JobConfigurationException, JsonProcessingException, IOException
+    public void testCommit_GivenNull() throws JobException, IOException
     {
         JsonNode node = NullNode.getInstance();
 
@@ -131,6 +126,8 @@ public class ResultsRetentionDaysUpdaterTest
 
     private ResultsRetentionDaysUpdater createUpdater(String jobId)
     {
-        return new ResultsRetentionDaysUpdater(m_JobManager, jobId, "resultsRetentionDays");
+        JobDetails job = new JobDetails();
+        job.setId(jobId);
+        return new ResultsRetentionDaysUpdater(m_JobManager, job, "resultsRetentionDays");
     }
 }

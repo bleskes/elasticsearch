@@ -31,6 +31,7 @@ import java.util.Arrays;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.prelert.job.IgnoreDowntime;
+import com.prelert.job.JobDetails;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.config.verification.JobConfigurationException;
 import com.prelert.job.errorcodes.ErrorCodes;
@@ -42,9 +43,9 @@ class IgnoreDowntimeUpdater extends AbstractUpdater
 {
     private IgnoreDowntime m_NewIgnoreDowntime;
 
-    public IgnoreDowntimeUpdater(JobManager jobManager, String jobId, String updateKey)
+    public IgnoreDowntimeUpdater(JobManager jobManager, JobDetails job, String updateKey)
     {
-        super(jobManager, jobId, updateKey);
+        super(jobManager, job, updateKey);
     }
 
     @Override

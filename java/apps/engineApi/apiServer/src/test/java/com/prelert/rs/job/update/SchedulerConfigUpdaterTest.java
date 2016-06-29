@@ -48,7 +48,6 @@ import com.prelert.job.JobDetails;
 import com.prelert.job.JobException;
 import com.prelert.job.SchedulerConfig;
 import com.prelert.job.SchedulerConfig.DataSource;
-import com.prelert.job.UnknownJobException;
 import com.prelert.job.config.verification.JobConfigurationException;
 import com.prelert.job.errorcodes.ErrorCodeMatcher;
 import com.prelert.job.errorcodes.ErrorCodes;
@@ -60,6 +59,7 @@ public class SchedulerConfigUpdaterTest
     @Rule public ExpectedException m_ExpectedException = ExpectedException.none();
 
     @Mock private JobManager m_JobManager;
+    private JobDetails m_Job;
 
     @Before
     public void setUp()
@@ -70,6 +70,7 @@ public class SchedulerConfigUpdaterTest
     @Test
     public void testPrepareUpdate_GivenJobIsNotScheduled() throws JobException, IOException
     {
+        givenJob("foo");
         when(m_JobManager.isScheduledJob("foo")).thenReturn(false);
         String update = "{}";
         JsonNode node = new ObjectMapper().readTree(update);
@@ -79,12 +80,13 @@ public class SchedulerConfigUpdaterTest
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.NO_SUCH_SCHEDULED_JOB));
 
-        createUpdater("foo").prepareUpdate(node);
+        createUpdater().prepareUpdate(node);
     }
 
     @Test
     public void testPrepareUpdate_GivenNull() throws JobException, IOException
     {
+        givenJob("foo");
         when(m_JobManager.isScheduledJob("foo")).thenReturn(true);
         String update = "null";
         JsonNode node = new ObjectMapper().readTree(update);
@@ -94,12 +96,13 @@ public class SchedulerConfigUpdaterTest
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_VALUE));
 
-        createUpdater("foo").prepareUpdate(node);
+        createUpdater().prepareUpdate(node);
     }
 
     @Test
     public void testPrepareUpdate_GivenInvalidJson() throws JobException, IOException
     {
+        givenJob("foo");
         when(m_JobManager.isScheduledJob("foo")).thenReturn(true);
         String update = "{\"dataSour!!ce\":\"whatever\"}";
         JsonNode node = new ObjectMapper().readTree(update);
@@ -109,7 +112,7 @@ public class SchedulerConfigUpdaterTest
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_VALUE));
 
-        createUpdater("foo").prepareUpdate(node);
+        createUpdater().prepareUpdate(node);
     }
 
     @Test
@@ -118,7 +121,7 @@ public class SchedulerConfigUpdaterTest
         when(m_JobManager.isScheduledJob("foo")).thenReturn(true);
         SchedulerConfig existingSchedulerConfig = new SchedulerConfig();
         existingSchedulerConfig.setDataSource(DataSource.ELASTICSEARCH);
-        givenExistingSchedulerConfig("foo", existingSchedulerConfig);
+        givenJobWithSchedulerConfig("foo", existingSchedulerConfig);
 
         String update = "{\"dataSource\":\"FILE\"}";
         JsonNode node = new ObjectMapper().readTree(update);
@@ -129,7 +132,7 @@ public class SchedulerConfigUpdaterTest
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_VALUE));
 
-        createUpdater("foo").prepareUpdate(node);
+        createUpdater().prepareUpdate(node);
     }
 
     @Test
@@ -138,7 +141,7 @@ public class SchedulerConfigUpdaterTest
         when(m_JobManager.isScheduledJob("foo")).thenReturn(true);
         SchedulerConfig existingSchedulerConfig = new SchedulerConfig();
         existingSchedulerConfig.setDataSource(DataSource.ELASTICSEARCH);
-        givenExistingSchedulerConfig("foo", existingSchedulerConfig);
+        givenJobWithSchedulerConfig("foo", existingSchedulerConfig);
         String update = "{\"dataSource\":\"ELASTICSEARCH\", \"dataSourceCompatibility\":\"invalid\"}";
         JsonNode node = new ObjectMapper().readTree(update);
 
@@ -147,7 +150,7 @@ public class SchedulerConfigUpdaterTest
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.SCHEDULER_INVALID_OPTION_VALUE));
 
-        createUpdater("foo").prepareUpdate(node);
+        createUpdater().prepareUpdate(node);
     }
 
     @Test
@@ -156,7 +159,7 @@ public class SchedulerConfigUpdaterTest
         when(m_JobManager.isScheduledJob("foo")).thenReturn(true);
         SchedulerConfig existingSchedulerConfig = new SchedulerConfig();
         existingSchedulerConfig.setDataSource(DataSource.ELASTICSEARCH);
-        givenExistingSchedulerConfig("foo", existingSchedulerConfig);
+        givenJobWithSchedulerConfig("foo", existingSchedulerConfig);
         String update = "{"
                 + "\"dataSource\":\"ELASTICSEARCH\","
                 + "\"dataSourceCompatibility\":\"2.x.x\","
@@ -168,7 +171,7 @@ public class SchedulerConfigUpdaterTest
                 + "}";
         JsonNode node = new ObjectMapper().readTree(update);
 
-        SchedulerConfigUpdater updater = createUpdater("foo");
+        SchedulerConfigUpdater updater = createUpdater();
         updater.prepareUpdate(node);
         updater.commit();
 
@@ -190,17 +193,20 @@ public class SchedulerConfigUpdaterTest
         verify(m_JobManager).updateSchedulerConfig("foo", expected);
     }
 
-    private SchedulerConfigUpdater createUpdater(String jobId)
+    private SchedulerConfigUpdater createUpdater()
     {
-        return new SchedulerConfigUpdater(m_JobManager, jobId, "schedulerConfig");
+        return new SchedulerConfigUpdater(m_JobManager, m_Job, "schedulerConfig");
     }
 
-    private void givenExistingSchedulerConfig(String jobId, SchedulerConfig schedulerConfig)
-            throws UnknownJobException
+    private void givenJob(String jobId)
     {
-        JobDetails job = new JobDetails();
-        job.setId(jobId);
-        job.setSchedulerConfig(schedulerConfig);
-        when(m_JobManager.getJobOrThrowIfUnknown(jobId)).thenReturn(job);
+        givenJobWithSchedulerConfig(jobId, null);
+    }
+
+    private void givenJobWithSchedulerConfig(String jobId, SchedulerConfig schedulerConfig)
+    {
+        m_Job = new JobDetails();
+        m_Job.setId(jobId);
+        m_Job.setSchedulerConfig(schedulerConfig);
     }
 }

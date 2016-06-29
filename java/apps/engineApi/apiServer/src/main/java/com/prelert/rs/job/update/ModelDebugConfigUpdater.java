@@ -31,6 +31,7 @@ import java.io.IOException;
 import java.io.StringWriter;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.prelert.job.JobDetails;
 import com.prelert.job.ModelDebugConfig;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.config.verification.JobConfigurationException;
@@ -46,15 +47,15 @@ class ModelDebugConfigUpdater extends AbstractUpdater
     private final StringWriter m_ConfigWriter;
     private ModelDebugConfig m_NewConfig;
 
-    public ModelDebugConfigUpdater(JobManager jobManager, String jobId, String updateKey,
+    public ModelDebugConfigUpdater(JobManager jobManager, JobDetails job, String updateKey,
             StringWriter configWriter)
     {
-        super(jobManager, jobId, updateKey);
+        super(jobManager, job, updateKey);
         m_ConfigWriter = configWriter;
     }
 
     @Override
-    void prepareUpdate(JsonNode node) throws UnknownJobException, JobConfigurationException
+    void prepareUpdate(JsonNode node) throws JobConfigurationException
     {
         try
         {
