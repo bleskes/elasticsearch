@@ -23,6 +23,7 @@ import javax.net.ssl.HttpsURLConnection;
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
 import joptsimple.OptionSpec;
+import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.ExceptionsHelper;
 import org.elasticsearch.cli.MultiCommand;
 import org.elasticsearch.cli.SettingCommand;
@@ -265,9 +266,7 @@ public class ESNativeRealmMigrateTool extends MultiCommand {
             try {
                 existingUsers = getUsersThatExist(terminal, settings, env, options);
             } catch (Exception e) {
-                terminal.println("failed to get users that already exist, skipping user import");
-                terminal.println(ExceptionsHelper.stackTrace(e));
-                return;
+                throw new ElasticsearchException("failed to get users that already exist, skipping user import", e);
             }
             if (usersToMigrate.length == 0) {
                 usersToMigrate = userToHashedPW.keySet().toArray(new String[userToHashedPW.size()]);
@@ -288,8 +287,7 @@ public class ESNativeRealmMigrateTool extends MultiCommand {
                             this.url.value(options) + "/_xpack/security/user/" + user, options, reqBody);
                     terminal.println(resp);
                 } catch (Exception e) {
-                    terminal.println("failed to migrate user [" + user + "] with body: " + reqBody);
-                    terminal.println(ExceptionsHelper.stackTrace(e));
+                    throw new ElasticsearchException("failed to migrate user [" + user + "] with body: " + reqBody, e);
                 }
             }
         }
@@ -377,9 +375,7 @@ public class ESNativeRealmMigrateTool extends MultiCommand {
             try {
                 existingRoles = getRolesThatExist(terminal, settings, env, options);
             } catch (Exception e) {
-                terminal.println("failed to get roles that already exist, skipping role import");
-                terminal.println(ExceptionsHelper.stackTrace(e));
-                return;
+                thow new ElasticsearchException("failed to get roles that already exist, skipping role import", e);
             }
             if (rolesToMigrate.length == 0) {
                 rolesToMigrate = roles.keySet().toArray(new String[roles.size()]);
@@ -400,8 +396,7 @@ public class ESNativeRealmMigrateTool extends MultiCommand {
                             this.url.value(options) + "/_xpack/security/role/" + roleName, options, reqBody);
                     terminal.println(resp);
                 } catch (Exception e) {
-                    terminal.println("failed to migrate role [" + roleName + "] with body: " + reqBody);
-                    terminal.println(ExceptionsHelper.stackTrace(e));
+                    throw new ElasticsearchException("failed to migrate role [" + roleName + "] with body: " + reqBody, e);
                 }
             }
         }
