@@ -513,11 +513,14 @@ public class InfluencersTest implements Closeable
                 .expand(true)
                 .get();
 
+        boolean atLeastOneBucketWithTwoBucketInfluencers = false;
         for (Bucket bucket : topBuckets.getDocuments())
         {
             double anomalyScore = bucket.getAnomalyScore();
             double maxBucketInfluencerAnomalyScore = 0.0;
-            test(bucket.getBucketInfluencers().size() == 2);
+            test(bucket.getBucketInfluencers().size() >= 1);
+            test(bucket.getBucketInfluencers().size() <= 2);
+            atLeastOneBucketWithTwoBucketInfluencers |= bucket.getBucketInfluencers().size() == 2;
             Set<String> bucketInfluencers = new HashSet<>();
             for (BucketInfluencer bucketInfluencer : bucket.getBucketInfluencers())
             {
@@ -526,16 +529,23 @@ public class InfluencersTest implements Closeable
                 bucketInfluencers.add(bucketInfluencer.getInfluencerFieldName());
             }
             test(bucketInfluencers.contains("bucketTime"));
-            test(bucketInfluencers.contains("clientip"));
+            if (bucketInfluencers.size() > 1)
+            {
+                test(bucketInfluencers.contains("clientip"));
+            }
             test(anomalyScore == maxBucketInfluencerAnomalyScore);
             test(bucket.getRecords().size() > 0);
             for (AnomalyRecord record : bucket.getRecords())
             {
                 List<Influence> influencers = record.getInfluencers();
-                test(influencers.size() == 1);
-                test(influencers.get(0).getInfluencerFieldName().equals("clientip"));
+                if (influencers != null)
+                {
+                    test(influencers.size() == 1);
+                    test(influencers.get(0).getInfluencerFieldName().equals("clientip"));
+                }
             }
         }
+        test(atLeastOneBucketWithTwoBucketInfluencers);
     }
 
     private void createJob(JobConfiguration jobConfig) throws IOException
