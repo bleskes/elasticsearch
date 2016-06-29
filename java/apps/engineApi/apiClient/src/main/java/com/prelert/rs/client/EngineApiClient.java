@@ -686,7 +686,9 @@ public class EngineApiClient implements Closeable
      * Start the Elasticsearch Scheduler for a particular job.
      *
      * @param jobId The job's unique ID
-     * @param start The time specifying the start (inclusive) of the interval data will be analyzed
+     * @param start The time specifying the start (inclusive) of the interval data will be analyzed.
+     * Set to 'now' to start the scheduler from now or an empty string to start from the last
+     * processed record timestamp
      * @param end The time specifying the end (exclusive) of the interval data will be analyzed
      *
      * @return True if the scheduler is started successfully
