@@ -210,7 +210,7 @@ public final class ReservedFieldNames
         ModelDebugOutput.DEBUG_FEATURE,
         ModelDebugOutput.DEBUG_LOWER,
         ModelDebugOutput.DEBUG_UPPER,
-        ModelDebugOutput.DEBUG_MEAN,
+        ModelDebugOutput.DEBUG_MEDIAN,
         ModelDebugOutput.ACTUAL,
 
         ModelSizeStats.MODEL_BYTES,

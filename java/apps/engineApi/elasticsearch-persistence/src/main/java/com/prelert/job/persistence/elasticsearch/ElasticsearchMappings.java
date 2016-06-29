@@ -1092,7 +1092,7 @@ public class ElasticsearchMappings
                         .startObject(ModelDebugOutput.DEBUG_UPPER)
                             .field(TYPE, DOUBLE).field(INCLUDE_IN_ALL, false)
                         .endObject()
-                        .startObject(ModelDebugOutput.DEBUG_MEAN)
+                        .startObject(ModelDebugOutput.DEBUG_MEDIAN)
                             .field(TYPE, DOUBLE).field(INCLUDE_IN_ALL, false)
                         .endObject()
                         .startObject(ModelDebugOutput.ACTUAL)

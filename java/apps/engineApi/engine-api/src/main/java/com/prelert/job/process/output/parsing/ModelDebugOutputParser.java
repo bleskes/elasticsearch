@@ -88,8 +88,8 @@ final class ModelDebugOutputParser extends FieldNameParser<ModelDebugOutput>
         case ModelDebugOutput.DEBUG_UPPER:
             modelDebugOutput.setDebugUpper(parseAsDoubleOrZero(fieldName));
             break;
-        case ModelDebugOutput.DEBUG_MEAN:
-            modelDebugOutput.setDebugMean(parseAsDoubleOrZero(fieldName));
+        case ModelDebugOutput.DEBUG_MEDIAN:
+            modelDebugOutput.setDebugMedian(parseAsDoubleOrZero(fieldName));
             break;
         case ModelDebugOutput.ACTUAL:
             modelDebugOutput.setActual(parseAsDoubleOrZero(fieldName));

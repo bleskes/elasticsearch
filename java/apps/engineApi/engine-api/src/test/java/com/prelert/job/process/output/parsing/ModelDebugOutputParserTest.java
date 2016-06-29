@@ -65,7 +65,7 @@ public class ModelDebugOutputParserTest
                      + " \"byFieldValue\":\"bv\","
                      + " \"timestamp\":1234567890000,"
                      + " \"debugLower\":12.7,"
-                     + " \"debugMean\":17.9,"
+                     + " \"debugMedian\":17.9,"
                      + " \"debugUpper\":24.2,"
                      + " \"actual\": 100.0}";
         JsonParser parser = createJsonParser(input);
@@ -82,7 +82,7 @@ public class ModelDebugOutputParserTest
         assertEquals("bv", modelDebugOutput.getByFieldValue());
         assertEquals("sum", modelDebugOutput.getDebugFeature());
         assertEquals(12.7, modelDebugOutput.getDebugLower(), 1e-10);
-        assertEquals(17.9, modelDebugOutput.getDebugMean(), 1e-10);
+        assertEquals(17.9, modelDebugOutput.getDebugMedian(), 1e-10);
         assertEquals(24.2, modelDebugOutput.getDebugUpper(), 1e-10);
         assertEquals(100.0, modelDebugOutput.getActual(), 1e-10);
 

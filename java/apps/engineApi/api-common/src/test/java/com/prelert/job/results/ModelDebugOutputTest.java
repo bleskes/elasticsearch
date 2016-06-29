@@ -171,7 +171,7 @@ public class ModelDebugOutputTest
     {
         ModelDebugOutput modelDebugOutput1 = createFullyPopulated();
         ModelDebugOutput modelDebugOutput2 = createFullyPopulated();
-        modelDebugOutput2.setDebugMean(-1.0);
+        modelDebugOutput2.setDebugMedian(-1.0);
 
         assertFalse(modelDebugOutput1.equals(modelDebugOutput2));
         assertFalse(modelDebugOutput2.equals(modelDebugOutput1));
@@ -212,7 +212,6 @@ public class ModelDebugOutputTest
         String expected = "{"
                 + "\"actual\":100.0,"
                 + "\"@timestamp\":12345678,"
-                + "\"debugMean\":12.7,"
                 + "\"partitionFieldValue\":\"part_val\","
                 + "\"by.reversed\":\"by_val\","
                 + "\"debugFeature\":\"sum\","
@@ -220,6 +219,7 @@ public class ModelDebugOutputTest
                 + "\"byFieldName\":\"by\","
                 + "\"byFieldValue\":\"by_val\","
                 + "\"debugLower\":7.9,"
+                + "\"debugMedian\":12.7,"
                 + "\"debugUpper\":34.5,"
                 + "\"partitionFieldName\":\"part\""
                 + "}";
@@ -236,7 +236,7 @@ public class ModelDebugOutputTest
         modelDebugOutput.setDebugFeature("sum");
         modelDebugOutput.setDebugLower(7.9);
         modelDebugOutput.setDebugUpper(34.5);
-        modelDebugOutput.setDebugMean(12.7);
+        modelDebugOutput.setDebugMedian(12.7);
         modelDebugOutput.setActual(100.0);
         modelDebugOutput.setTimestamp(new Date(12345678L));
         return modelDebugOutput;
