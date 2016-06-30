@@ -22,7 +22,6 @@ import org.elasticsearch.cluster.metadata.MetaData;
 import org.elasticsearch.common.component.LifecycleComponent;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.inject.Module;
-import org.elasticsearch.common.network.NetworkModule;
 import org.elasticsearch.common.settings.Setting;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.license.plugin.action.delete.DeleteLicenseAction;
@@ -37,6 +36,7 @@ import org.elasticsearch.license.plugin.rest.RestDeleteLicenseAction;
 import org.elasticsearch.license.plugin.rest.RestGetLicenseAction;
 import org.elasticsearch.license.plugin.rest.RestPutLicenseAction;
 import org.elasticsearch.plugins.ActionPlugin;
+import org.elasticsearch.rest.RestHandler;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -64,14 +64,6 @@ public class Licensing implements ActionPlugin {
         isTribeNode = isTribeNode(settings);
     }
 
-    public void onModule(NetworkModule module) {
-        if (isTransportClient == false && isTribeNode == false) {
-            module.registerRestHandler(RestPutLicenseAction.class);
-            module.registerRestHandler(RestGetLicenseAction.class);
-            module.registerRestHandler(RestDeleteLicenseAction.class);
-        }
-    }
-
     @Override
     public List<ActionHandler<? extends ActionRequest<?>, ? extends ActionResponse>> getActions() {
         if (isTribeNode) {
@@ -80,6 +72,16 @@ public class Licensing implements ActionPlugin {
         return Arrays.asList(new ActionHandler<>(PutLicenseAction.INSTANCE, TransportPutLicenseAction.class),
                 new ActionHandler<>(GetLicenseAction.INSTANCE, TransportGetLicenseAction.class),
                 new ActionHandler<>(DeleteLicenseAction.INSTANCE, TransportDeleteLicenseAction.class));
+    }
+
+    @Override
+    public List<Class<? extends RestHandler>> getRestHandlers() {
+        if (isTribeNode) {
+            return emptyList();
+        }
+        return Arrays.asList(RestPutLicenseAction.class,
+                RestGetLicenseAction.class,
+                RestDeleteLicenseAction.class);
     }
 
     public Collection<Class<? extends LifecycleComponent>> nodeServices() {
