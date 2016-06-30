@@ -17,7 +17,7 @@
 
 package org.elasticsearch.http.netty;
 
-import org.elasticsearch.common.netty.OpenChannelsHandler;
+import org.elasticsearch.transport.netty.OpenChannelsHandler;
 
 import static org.mockito.Mockito.mock;
 
