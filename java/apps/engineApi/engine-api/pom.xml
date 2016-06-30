@@ -65,12 +65,9 @@
       <artifactId>snakeyaml</artifactId>
       <version>1.15</version>
     </dependency>
-    <!-- For Elasticsearch 2.1 the geohash functions are in here - this changes
-         to the lucene-spatial package in later versions of Elasticsearch, so
-         this dependency needs changing when we upgrade -->
     <dependency>
-      <groupId>org.elasticsearch</groupId>
-      <artifactId>elasticsearch</artifactId>
+      <groupId>org.apache.lucene</groupId>
+      <artifactId>lucene-spatial</artifactId>
     </dependency>
 
     <!-- ZooKeeper uses slf4j. Including the projects version here stops the

@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -31,12 +31,12 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import static org.mockito.Mockito.verify;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-
-import junit.framework.Assert;
 
 import org.apache.log4j.Logger;
 import org.junit.After;
@@ -78,7 +78,7 @@ public class FieldNameParserTest
 
         try {
             new TestFieldNameParser(parser, m_Logger).parseJson();
-            Assert.fail();
+            fail();
         }
         catch (AutoDetectParseException e)
         {

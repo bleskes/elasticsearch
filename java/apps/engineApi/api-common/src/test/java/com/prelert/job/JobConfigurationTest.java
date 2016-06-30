@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -29,15 +29,14 @@ package com.prelert.job;
 
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import java.util.Arrays;
 import java.util.List;
 
 import org.junit.Test;
-
-import junit.framework.Assert;
-
 
 public class JobConfigurationTest
 {
@@ -62,17 +61,17 @@ public class JobConfigurationTest
         ac.setDetectors(Arrays.asList(new Detector[] {d1, d2}));
 
         List<String> analysisFields = ac.analysisFields();
-        Assert.assertTrue(analysisFields.size() == 5);
+        assertTrue(analysisFields.size() == 5);
 
-        Assert.assertTrue(analysisFields.contains("agg"));
-        Assert.assertTrue(analysisFields.contains("field"));
-        Assert.assertTrue(analysisFields.contains("by"));
-        Assert.assertTrue(analysisFields.contains("field2"));
-        Assert.assertTrue(analysisFields.contains("over"));
+        assertTrue(analysisFields.contains("agg"));
+        assertTrue(analysisFields.contains("field"));
+        assertTrue(analysisFields.contains("by"));
+        assertTrue(analysisFields.contains("field2"));
+        assertTrue(analysisFields.contains("over"));
 
-        Assert.assertFalse(analysisFields.contains("max"));
-        Assert.assertFalse(analysisFields.contains(""));
-        Assert.assertFalse(analysisFields.contains(null));
+        assertFalse(analysisFields.contains("max"));
+        assertFalse(analysisFields.contains(""));
+        assertFalse(analysisFields.contains(null));
 
         Detector d3 = new Detector();
         d3.setFunction("count");
@@ -83,19 +82,19 @@ public class JobConfigurationTest
         ac.setDetectors(Arrays.asList(new Detector[] {d1, d2, d3}));
 
         analysisFields = ac.analysisFields();
-        Assert.assertTrue(analysisFields.size() == 6);
+        assertTrue(analysisFields.size() == 6);
 
-        Assert.assertTrue(analysisFields.contains("partition"));
-        Assert.assertTrue(analysisFields.contains("field"));
-        Assert.assertTrue(analysisFields.contains("by"));
-        Assert.assertTrue(analysisFields.contains("by2"));
-        Assert.assertTrue(analysisFields.contains("field2"));
-        Assert.assertTrue(analysisFields.contains("over"));
+        assertTrue(analysisFields.contains("partition"));
+        assertTrue(analysisFields.contains("field"));
+        assertTrue(analysisFields.contains("by"));
+        assertTrue(analysisFields.contains("by2"));
+        assertTrue(analysisFields.contains("field2"));
+        assertTrue(analysisFields.contains("over"));
 
-        Assert.assertFalse(analysisFields.contains("count"));
-        Assert.assertFalse(analysisFields.contains("max"));
-        Assert.assertFalse(analysisFields.contains(""));
-        Assert.assertFalse(analysisFields.contains(null));
+        assertFalse(analysisFields.contains("count"));
+        assertFalse(analysisFields.contains("max"));
+        assertFalse(analysisFields.contains(""));
+        assertFalse(analysisFields.contains(null));
     }
 
     @Test

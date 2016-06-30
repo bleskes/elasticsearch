@@ -28,6 +28,7 @@ package com.prelert.job;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
@@ -38,7 +39,6 @@ import java.util.TreeSet;
 
 import org.junit.Test;
 
-import junit.framework.Assert;
 
 public class AnalysisConfigTest
 {
@@ -58,39 +58,39 @@ public class AnalysisConfigTest
         Set<String> analysisFields = new TreeSet<String>(Arrays.asList(new String [] {
                 "responsetime", "airline", "sourcetype"}));
 
-        Assert.assertEquals(termFields.size(), ac.termFields().size());
-        Assert.assertEquals(analysisFields.size(), ac.analysisFields().size());
+        assertEquals(termFields.size(), ac.termFields().size());
+        assertEquals(analysisFields.size(), ac.analysisFields().size());
 
         for (String s : ac.termFields())
         {
-            Assert.assertTrue(termFields.contains(s));
+            assertTrue(termFields.contains(s));
         }
 
         for (String s : termFields)
         {
-            Assert.assertTrue(ac.termFields().contains(s));
+            assertTrue(ac.termFields().contains(s));
         }
 
         for (String s : ac.analysisFields())
         {
-            Assert.assertTrue(analysisFields.contains(s));
+            assertTrue(analysisFields.contains(s));
         }
 
         for (String s : analysisFields)
         {
-            Assert.assertTrue(ac.analysisFields().contains(s));
+            assertTrue(ac.analysisFields().contains(s));
         }
 
-        Assert.assertEquals(1, ac.fields().size());
-        Assert.assertTrue(ac.fields().contains("responsetime"));
+        assertEquals(1, ac.fields().size());
+        assertTrue(ac.fields().contains("responsetime"));
 
-        Assert.assertEquals(1, ac.byFields().size());
-        Assert.assertTrue(ac.byFields().contains("airline"));
+        assertEquals(1, ac.byFields().size());
+        assertTrue(ac.byFields().contains("airline"));
 
-        Assert.assertEquals(1, ac.partitionFields().size());
-        Assert.assertTrue(ac.partitionFields().contains("sourcetype"));
+        assertEquals(1, ac.partitionFields().size());
+        assertTrue(ac.partitionFields().contains("sourcetype"));
 
-        Assert.assertNull(ac.getSummaryCountFieldName());
+        assertNull(ac.getSummaryCountFieldName());
 
         // Single detector, pre-summarised
         analysisFields.add("summaryCount");
@@ -98,15 +98,15 @@ public class AnalysisConfigTest
 
         for (String s : ac.analysisFields())
         {
-            Assert.assertTrue(analysisFields.contains(s));
+            assertTrue(analysisFields.contains(s));
         }
 
         for (String s : analysisFields)
         {
-            Assert.assertTrue(ac.analysisFields().contains(s));
+            assertTrue(ac.analysisFields().contains(s));
         }
 
-        Assert.assertEquals("summaryCount", ac.getSummaryCountFieldName());
+        assertEquals("summaryCount", ac.getSummaryCountFieldName());
 
         // Multiple detectors, not pre-summarised
         List<Detector> detectors = new ArrayList<>();
@@ -140,45 +140,45 @@ public class AnalysisConfigTest
                 "metric1", "metric2", "by_one", "by_two", "over_field",
                 "partition_one", "partition_two", "Influencer_Field"}));
 
-        Assert.assertEquals(termFields.size(), ac.termFields().size());
-        Assert.assertEquals(analysisFields.size(), ac.analysisFields().size());
+        assertEquals(termFields.size(), ac.termFields().size());
+        assertEquals(analysisFields.size(), ac.analysisFields().size());
 
         for (String s : ac.termFields())
         {
-            Assert.assertTrue(termFields.contains(s));
+            assertTrue(termFields.contains(s));
         }
 
         for (String s : termFields)
         {
-            Assert.assertTrue(ac.termFields().contains(s));
+            assertTrue(ac.termFields().contains(s));
         }
 
         for (String s : ac.analysisFields())
         {
-            Assert.assertTrue(analysisFields.contains(s));
+            assertTrue(analysisFields.contains(s));
         }
 
         for (String s : analysisFields)
         {
-            Assert.assertTrue(ac.analysisFields().contains(s));
+            assertTrue(ac.analysisFields().contains(s));
         }
 
-        Assert.assertEquals(2, ac.fields().size());
-        Assert.assertTrue(ac.fields().contains("metric1"));
-        Assert.assertTrue(ac.fields().contains("metric2"));
+        assertEquals(2, ac.fields().size());
+        assertTrue(ac.fields().contains("metric1"));
+        assertTrue(ac.fields().contains("metric2"));
 
-        Assert.assertEquals(2, ac.byFields().size());
-        Assert.assertTrue(ac.byFields().contains("by_one"));
-        Assert.assertTrue(ac.byFields().contains("by_two"));
+        assertEquals(2, ac.byFields().size());
+        assertTrue(ac.byFields().contains("by_one"));
+        assertTrue(ac.byFields().contains("by_two"));
 
-        Assert.assertEquals(1, ac.overFields().size());
-        Assert.assertTrue(ac.overFields().contains("over_field"));
+        assertEquals(1, ac.overFields().size());
+        assertTrue(ac.overFields().contains("over_field"));
 
-        Assert.assertEquals(2, ac.partitionFields().size());
-        Assert.assertTrue(ac.partitionFields().contains("partition_one"));
-        Assert.assertTrue(ac.partitionFields().contains("partition_two"));
+        assertEquals(2, ac.partitionFields().size());
+        assertTrue(ac.partitionFields().contains("partition_one"));
+        assertTrue(ac.partitionFields().contains("partition_two"));
 
-        Assert.assertNull(ac.getSummaryCountFieldName());
+        assertNull(ac.getSummaryCountFieldName());
 
         // Multiple detectors, pre-summarised
         analysisFields.add("summaryCount");
@@ -186,15 +186,15 @@ public class AnalysisConfigTest
 
         for (String s : ac.analysisFields())
         {
-            Assert.assertTrue(analysisFields.contains(s));
+            assertTrue(analysisFields.contains(s));
         }
 
         for (String s : analysisFields)
         {
-            Assert.assertTrue(ac.analysisFields().contains(s));
+            assertTrue(ac.analysisFields().contains(s));
         }
 
-        Assert.assertEquals("summaryCount", ac.getSummaryCountFieldName());
+        assertEquals("summaryCount", ac.getSummaryCountFieldName());
     }
 
     @Test

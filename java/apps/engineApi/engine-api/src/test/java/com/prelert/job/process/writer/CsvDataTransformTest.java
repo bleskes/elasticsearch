@@ -27,7 +27,10 @@
 
 package com.prelert.job.process.writer;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+
 import static org.mockito.Mockito.mock;
 
 import java.io.ByteArrayInputStream;
@@ -38,8 +41,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Set;
 import java.util.TreeSet;
-
-import junit.framework.Assert;
 
 import org.apache.log4j.Logger;
 import org.junit.Test;
@@ -99,7 +100,7 @@ public class CsvDataTransformTest
 
         for (String s : ac.analysisFields())
         {
-            Assert.assertTrue(analysisFields.contains(s));
+            assertTrue(analysisFields.contains(s));
         }
 
         ProcessManager pm = createProcessManager();
@@ -118,27 +119,27 @@ public class CsvDataTransformTest
 
         ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
 
-        Assert.assertEquals(usageReporter.getTotalBytesRead(),
+        assertEquals(usageReporter.getTotalBytesRead(),
                 data.getBytes(StandardCharsets.UTF_8).length - 2);
-        Assert.assertEquals(8 * 3, usageReporter.getTotalFieldsRead());
-        Assert.assertEquals(8, usageReporter.getTotalRecordsRead());
+        assertEquals(8 * 3, usageReporter.getTotalFieldsRead());
+        assertEquals(8, usageReporter.getTotalRecordsRead());
 
 
-        Assert.assertEquals(dataPersister.getRecordCount(), 8);
+        assertEquals(dataPersister.getRecordCount(), 8);
 
-        Assert.assertEquals(usageReporter.getTotalBytesRead(), statusReporter.getBytesRead());
-        Assert.assertEquals(8 * 3, usageReporter.getTotalFieldsRead());
-        Assert.assertEquals(8, usageReporter.getTotalRecordsRead());
+        assertEquals(usageReporter.getTotalBytesRead(), statusReporter.getBytesRead());
+        assertEquals(8 * 3, usageReporter.getTotalFieldsRead());
+        assertEquals(8, usageReporter.getTotalRecordsRead());
 
-        Assert.assertEquals(usageReporter.getTotalFieldsRead(), statusReporter.getInputFieldCount() );
-        Assert.assertEquals(usageReporter.getTotalRecordsRead(), statusReporter.getInputRecordCount() );
-        Assert.assertEquals(8 * 3, statusReporter.getProcessedFieldCount() );
-        Assert.assertEquals(8, statusReporter.getProcessedRecordCount() );
-        Assert.assertEquals(0, statusReporter.getMissingFieldErrorCount());
-        Assert.assertEquals(0, statusReporter.getDateParseErrorsCount());
-        Assert.assertEquals(0, statusReporter.getOutOfOrderRecordCount());
+        assertEquals(usageReporter.getTotalFieldsRead(), statusReporter.getInputFieldCount() );
+        assertEquals(usageReporter.getTotalRecordsRead(), statusReporter.getInputRecordCount() );
+        assertEquals(8 * 3, statusReporter.getProcessedFieldCount() );
+        assertEquals(8, statusReporter.getProcessedRecordCount() );
+        assertEquals(0, statusReporter.getMissingFieldErrorCount());
+        assertEquals(0, statusReporter.getDateParseErrorsCount());
+        assertEquals(0, statusReporter.getOutOfOrderRecordCount());
 
-        Assert.assertEquals(statusReporter.runningTotalStats(), statusReporter.incrementalStats());
+        assertEquals(statusReporter.runningTotalStats(), statusReporter.incrementalStats());
 
         String [] lines = data.split("\\n");
 
@@ -148,12 +149,12 @@ public class CsvDataTransformTest
             int numFields = bb.getInt();
             String [] fields = line.split(",");
             // The + 1 is for the control field
-            Assert.assertEquals(fields.length + 1, numFields);
+            assertEquals(fields.length + 1, numFields);
 
             for (int i = 0; i < numFields - 1; i++)
             {
                 int recordSize = bb.getInt();
-                Assert.assertEquals(fields[fieldMap[i]].length(), recordSize);
+                assertEquals(fields[fieldMap[i]].length(), recordSize);
                 byte [] charBuff = new byte[recordSize];
                 for (int j=0; j<recordSize; j++)
                 {
@@ -161,12 +162,12 @@ public class CsvDataTransformTest
                 }
 
                 String value = new String(charBuff, StandardCharsets.UTF_8);
-                Assert.assertEquals(fields[fieldMap[i]], value);
+                assertEquals(fields[fieldMap[i]], value);
 
             }
             // Control field
             int recordSize = bb.getInt();
-            Assert.assertEquals(isHeader ? 1 : 0, recordSize);
+            assertEquals(isHeader ? 1 : 0, recordSize);
             if (isHeader)
             {
                 bb.get();
@@ -217,7 +218,7 @@ public class CsvDataTransformTest
 
         for (String s : ac.analysisFields())
         {
-            Assert.assertTrue(analysisFields.contains(s));
+            assertTrue(analysisFields.contains(s));
         }
 
         DataDescription dd = new DataDescription();
@@ -237,25 +238,25 @@ public class CsvDataTransformTest
 
         pm.writeToJob(dd, ac, null, new TransformConfigs(Arrays.<TransformConfig>asList()), bis, bos, statusReporter, dp, LOGGER);
 
-        Assert.assertEquals(usageReporter.getTotalBytesRead(),
+        assertEquals(usageReporter.getTotalBytesRead(),
                 data.getBytes(StandardCharsets.UTF_8).length - 2);
-        Assert.assertEquals(4 * 3, usageReporter.getTotalFieldsRead());
-        Assert.assertEquals(4, usageReporter.getTotalRecordsRead());
+        assertEquals(4 * 3, usageReporter.getTotalFieldsRead());
+        assertEquals(4, usageReporter.getTotalRecordsRead());
 
-        Assert.assertEquals(dp.getRecordCount(), 4);
+        assertEquals(dp.getRecordCount(), 4);
 
-        Assert.assertEquals(usageReporter.getTotalBytesRead(), statusReporter.getBytesRead());
-        Assert.assertEquals(4 * 3, statusReporter.getInputFieldCount() );
-        Assert.assertEquals(4, statusReporter.getInputRecordCount() );
-        Assert.assertEquals(4 * 3, statusReporter.getProcessedFieldCount() );
-        Assert.assertEquals(4, statusReporter.getProcessedRecordCount() );
-        Assert.assertEquals(0, statusReporter.getMissingFieldErrorCount());
-        Assert.assertEquals(0, statusReporter.getDateParseErrorsCount());
-        Assert.assertEquals(0, statusReporter.getOutOfOrderRecordCount());
+        assertEquals(usageReporter.getTotalBytesRead(), statusReporter.getBytesRead());
+        assertEquals(4 * 3, statusReporter.getInputFieldCount() );
+        assertEquals(4, statusReporter.getInputRecordCount() );
+        assertEquals(4 * 3, statusReporter.getProcessedFieldCount() );
+        assertEquals(4, statusReporter.getProcessedRecordCount() );
+        assertEquals(0, statusReporter.getMissingFieldErrorCount());
+        assertEquals(0, statusReporter.getDateParseErrorsCount());
+        assertEquals(0, statusReporter.getOutOfOrderRecordCount());
 
-        Assert.assertEquals(dp.getRecordCount(), 4);
+        assertEquals(dp.getRecordCount(), 4);
 
-        Assert.assertEquals(statusReporter.runningTotalStats(), statusReporter.incrementalStats());
+        assertEquals(statusReporter.runningTotalStats(), statusReporter.incrementalStats());
 
         ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
 
@@ -265,11 +266,11 @@ public class CsvDataTransformTest
             String [] fields = lines[l];
             int numFields = bb.getInt();
             // The + 1 is for the control field
-            Assert.assertEquals(fields.length + 1, numFields);
+            assertEquals(fields.length + 1, numFields);
             for (int i = 0; i < numFields - 1; i++)
             {
                 int recordSize = bb.getInt();
-                Assert.assertEquals(fields[fieldMap[i]].length(), recordSize);
+                assertEquals(fields[fieldMap[i]].length(), recordSize);
                 byte [] charBuff = new byte[recordSize];
                 for (int j=0; j<recordSize; j++)
                 {
@@ -277,12 +278,12 @@ public class CsvDataTransformTest
                 }
 
                 String value = new String(charBuff, StandardCharsets.UTF_8);
-                Assert.assertEquals(fields[fieldMap[i]], value);
+                assertEquals(fields[fieldMap[i]], value);
 
             }
             // Control field
             int recordSize = bb.getInt();
-            Assert.assertEquals(isHeader ? 1 : 0, recordSize);
+            assertEquals(isHeader ? 1 : 0, recordSize);
             if (isHeader)
             {
                 bb.get();
@@ -331,7 +332,7 @@ public class CsvDataTransformTest
 
         for (String s : ac.analysisFields())
         {
-            Assert.assertTrue(analysisFields.contains(s));
+            assertTrue(analysisFields.contains(s));
         }
 
         DataDescription dd = new DataDescription();
@@ -354,23 +355,23 @@ public class CsvDataTransformTest
         pm.writeToJob(dd, ac, null, new TransformConfigs(Arrays.<TransformConfig>asList()), bis, bos, statusReporter, dp, LOGGER);
         ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
 
-        Assert.assertEquals(dp.getRecordCount(), 8);
+        assertEquals(dp.getRecordCount(), 8);
 
-        Assert.assertEquals(usageReporter.getTotalBytesRead(),
+        assertEquals(usageReporter.getTotalBytesRead(),
                 data.getBytes(StandardCharsets.UTF_8).length - 2);
-        Assert.assertEquals(8 * 3, usageReporter.getTotalFieldsRead());
-        Assert.assertEquals(8, usageReporter.getTotalRecordsRead());
+        assertEquals(8 * 3, usageReporter.getTotalFieldsRead());
+        assertEquals(8, usageReporter.getTotalRecordsRead());
 
-        Assert.assertEquals(usageReporter.getTotalBytesRead(), statusReporter.getBytesRead());
-        Assert.assertEquals(usageReporter.getTotalFieldsRead(), statusReporter.getInputFieldCount() );
-        Assert.assertEquals(usageReporter.getTotalRecordsRead(), statusReporter.getInputRecordCount() );
-        Assert.assertEquals(8 * 3, statusReporter.getProcessedFieldCount() );
-        Assert.assertEquals(8, statusReporter.getProcessedRecordCount() );
-        Assert.assertEquals(0, statusReporter.getMissingFieldErrorCount());
-        Assert.assertEquals(0, statusReporter.getDateParseErrorsCount());
-        Assert.assertEquals(0, statusReporter.getOutOfOrderRecordCount());
+        assertEquals(usageReporter.getTotalBytesRead(), statusReporter.getBytesRead());
+        assertEquals(usageReporter.getTotalFieldsRead(), statusReporter.getInputFieldCount() );
+        assertEquals(usageReporter.getTotalRecordsRead(), statusReporter.getInputRecordCount() );
+        assertEquals(8 * 3, statusReporter.getProcessedFieldCount() );
+        assertEquals(8, statusReporter.getProcessedRecordCount() );
+        assertEquals(0, statusReporter.getMissingFieldErrorCount());
+        assertEquals(0, statusReporter.getDateParseErrorsCount());
+        assertEquals(0, statusReporter.getOutOfOrderRecordCount());
 
-        Assert.assertEquals(statusReporter.runningTotalStats(), statusReporter.incrementalStats());
+        assertEquals(statusReporter.runningTotalStats(), statusReporter.incrementalStats());
 
         String [] lines = data.split("\\n");
 
@@ -380,7 +381,7 @@ public class CsvDataTransformTest
             String [] fields = lines[currentLine].split(",");
             int numFields = bb.getInt();
             // The + 1 is for the control field
-            Assert.assertEquals(fields.length + 1, numFields);
+            assertEquals(fields.length + 1, numFields);
 
             final int DATE_FIELD = 0;
             for (int i = 0; i < numFields - 1; i++)
@@ -389,7 +390,7 @@ public class CsvDataTransformTest
 
                 if (isHeader == false && i == DATE_FIELD)
                 {
-                    Assert.assertEquals(epochTimes[currentLine].length(), recordSize);
+                    assertEquals(epochTimes[currentLine].length(), recordSize);
 
                     byte [] charBuff = new byte[recordSize];
                     for (int j=0; j<recordSize; j++)
@@ -398,11 +399,11 @@ public class CsvDataTransformTest
                     }
 
                     String value = new String(charBuff, StandardCharsets.UTF_8);
-                    Assert.assertEquals(epochTimes[currentLine], value);
+                    assertEquals(epochTimes[currentLine], value);
                 }
                 else
                 {
-                    Assert.assertEquals(fields[fieldMap[i]].length(), recordSize);
+                    assertEquals(fields[fieldMap[i]].length(), recordSize);
 
                     byte [] charBuff = new byte[recordSize];
                     for (int j=0; j<recordSize; j++)
@@ -411,12 +412,12 @@ public class CsvDataTransformTest
                     }
 
                     String value = new String(charBuff, StandardCharsets.UTF_8);
-                    Assert.assertEquals(fields[fieldMap[i]], value);
+                    assertEquals(fields[fieldMap[i]], value);
                 }
             }
             // Control field
             int recordSize = bb.getInt();
-            Assert.assertEquals(isHeader ? 1 : 0, recordSize);
+            assertEquals(isHeader ? 1 : 0, recordSize);
             if (isHeader)
             {
                 bb.get();
@@ -463,7 +464,7 @@ public class CsvDataTransformTest
 
         for (String s : ac.analysisFields())
         {
-            Assert.assertTrue(analysisFields.contains(s));
+            assertTrue(analysisFields.contains(s));
         }
 
         ProcessManager pm = createProcessManager();
@@ -479,26 +480,26 @@ public class CsvDataTransformTest
         pm.writeToJob(dd, ac, null, new TransformConfigs(Arrays.<TransformConfig>asList()), bis, bos, statusReporter, dp, LOGGER);
         ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
 
-        Assert.assertEquals(usageReporter.getTotalBytesRead(),
+        assertEquals(usageReporter.getTotalBytesRead(),
                 data.getBytes(StandardCharsets.UTF_8).length - 2);
 
-        Assert.assertEquals(usageReporter.getTotalBytesRead(), statusReporter.getBytesRead());
-        Assert.assertEquals(8 * 5, usageReporter.getTotalFieldsRead());
-        Assert.assertEquals(8, usageReporter.getTotalRecordsRead());
+        assertEquals(usageReporter.getTotalBytesRead(), statusReporter.getBytesRead());
+        assertEquals(8 * 5, usageReporter.getTotalFieldsRead());
+        assertEquals(8, usageReporter.getTotalRecordsRead());
 
-        Assert.assertEquals(usageReporter.getTotalBytesRead(),
+        assertEquals(usageReporter.getTotalBytesRead(),
                 statusReporter.getBytesRead());
-        Assert.assertEquals(usageReporter.getTotalFieldsRead(), statusReporter.getInputFieldCount() );
-        Assert.assertEquals(usageReporter.getTotalRecordsRead(), statusReporter.getInputRecordCount() );
-        Assert.assertEquals(8 * 3, statusReporter.getProcessedFieldCount() );
-        Assert.assertEquals(8, statusReporter.getProcessedRecordCount() );
-        Assert.assertEquals(0, statusReporter.getMissingFieldErrorCount());
-        Assert.assertEquals(0, statusReporter.getDateParseErrorsCount());
-        Assert.assertEquals(0, statusReporter.getOutOfOrderRecordCount());
+        assertEquals(usageReporter.getTotalFieldsRead(), statusReporter.getInputFieldCount() );
+        assertEquals(usageReporter.getTotalRecordsRead(), statusReporter.getInputRecordCount() );
+        assertEquals(8 * 3, statusReporter.getProcessedFieldCount() );
+        assertEquals(8, statusReporter.getProcessedRecordCount() );
+        assertEquals(0, statusReporter.getMissingFieldErrorCount());
+        assertEquals(0, statusReporter.getDateParseErrorsCount());
+        assertEquals(0, statusReporter.getOutOfOrderRecordCount());
 
-        Assert.assertEquals(statusReporter.runningTotalStats(), statusReporter.incrementalStats());
+        assertEquals(statusReporter.runningTotalStats(), statusReporter.incrementalStats());
 
-        Assert.assertEquals(dp.getRecordCount(), 8);
+        assertEquals(dp.getRecordCount(), 8);
 
         String [] lines = data.split("\\n");
 
@@ -507,12 +508,12 @@ public class CsvDataTransformTest
         {
             int numFields = bb.getInt();
             String [] fields = line.split(",");
-            Assert.assertEquals(analysisFields.size() + 2, numFields);
+            assertEquals(analysisFields.size() + 2, numFields);
 
             for (int i = 0; i < numFields - 1; i++)
             {
                 int recordSize = bb.getInt();
-                Assert.assertEquals(fields[fieldMap[i]].length(), recordSize);
+                assertEquals(fields[fieldMap[i]].length(), recordSize);
                 byte [] charBuff = new byte[recordSize];
                 for (int j=0; j<recordSize; j++)
                 {
@@ -520,11 +521,11 @@ public class CsvDataTransformTest
                  }
 
                 String value = new String(charBuff, StandardCharsets.UTF_8);
-                Assert.assertEquals(fields[fieldMap[i]], value);
+                assertEquals(fields[fieldMap[i]], value);
             }
             // Control field
             int recordSize = bb.getInt();
-            Assert.assertEquals(isHeader ? 1 : 0, recordSize);
+            assertEquals(isHeader ? 1 : 0, recordSize);
             if (isHeader)
             {
                 bb.get();
@@ -577,13 +578,13 @@ public class CsvDataTransformTest
         try
         {
             pm.writeToJob(dd, ac, null, new TransformConfigs(Arrays.<TransformConfig>asList()),
-            					bis, bos, statusReporter, dp, LOGGER);
+                    bis, bos, statusReporter, dp, LOGGER);
             fail(); // should throw
         }
         catch (MissingFieldException e)
         {
-            Assert.assertEquals(e.getMissingFieldName(), "time");
-            Assert.assertEquals(statusReporter.getBytesRead(),
+            assertEquals(e.getMissingFieldName(), "time");
+            assertEquals(statusReporter.getBytesRead(),
                     usageReporter.getBytesReadSinceLastReport());
         }
 
@@ -602,25 +603,25 @@ public class CsvDataTransformTest
         try
         {
             pm.writeToJob(dd, ac, null, new TransformConfigs(Arrays.<TransformConfig>asList()), bis, bos, statusReporter, dp, LOGGER);
-            Assert.assertTrue(false); // should throw
+            assertTrue(false); // should throw
         }
         catch (MissingFieldException e)
         {
-            Assert.assertEquals(e.getMissingFieldName(), "timestamp");
+            assertEquals(e.getMissingFieldName(), "timestamp");
 
-            Assert.assertEquals(usageReporter.getBytesReadSinceLastReport(), statusReporter.getBytesRead());
-            Assert.assertEquals(0, usageReporter.getTotalFieldsRead());
-            Assert.assertEquals(0, usageReporter.getTotalRecordsRead());
+            assertEquals(usageReporter.getBytesReadSinceLastReport(), statusReporter.getBytesRead());
+            assertEquals(0, usageReporter.getTotalFieldsRead());
+            assertEquals(0, usageReporter.getTotalRecordsRead());
 
-            Assert.assertEquals(0, statusReporter.getInputFieldCount() );
-            Assert.assertEquals(0, statusReporter.getInputRecordCount() );
-            Assert.assertEquals(0, statusReporter.getProcessedFieldCount() );
-            Assert.assertEquals(0, statusReporter.getProcessedRecordCount() );
-            Assert.assertEquals(0, statusReporter.getMissingFieldErrorCount());
-            Assert.assertEquals(0, statusReporter.getDateParseErrorsCount());
-            Assert.assertEquals(0, statusReporter.getOutOfOrderRecordCount());
+            assertEquals(0, statusReporter.getInputFieldCount() );
+            assertEquals(0, statusReporter.getInputRecordCount() );
+            assertEquals(0, statusReporter.getProcessedFieldCount() );
+            assertEquals(0, statusReporter.getProcessedRecordCount() );
+            assertEquals(0, statusReporter.getMissingFieldErrorCount());
+            assertEquals(0, statusReporter.getDateParseErrorsCount());
+            assertEquals(0, statusReporter.getOutOfOrderRecordCount());
 
-            Assert.assertEquals(statusReporter.runningTotalStats(), statusReporter.incrementalStats());
+            assertEquals(statusReporter.runningTotalStats(), statusReporter.incrementalStats());
         }
     }
 
@@ -669,25 +670,25 @@ public class CsvDataTransformTest
         try
         {
             pm.writeToJob(dd, ac, null, new TransformConfigs(Arrays.<TransformConfig>asList()), bis, bos, statusReporter, dp, LOGGER);
-            Assert.assertTrue(false); // should throw
+            assertTrue(false); // should throw
         }
         catch (MissingFieldException e)
         {
-            Assert.assertEquals(e.getMissingFieldName(), "missing_field");
+            assertEquals(e.getMissingFieldName(), "missing_field");
 
-            Assert.assertEquals(usageReporter.getBytesReadSinceLastReport(), statusReporter.getBytesRead());
-            Assert.assertEquals(0, usageReporter.getTotalFieldsRead());
-            Assert.assertEquals(0, usageReporter.getTotalRecordsRead());
+            assertEquals(usageReporter.getBytesReadSinceLastReport(), statusReporter.getBytesRead());
+            assertEquals(0, usageReporter.getTotalFieldsRead());
+            assertEquals(0, usageReporter.getTotalRecordsRead());
 
-            Assert.assertEquals(0, statusReporter.getInputFieldCount() );
-            Assert.assertEquals(0, statusReporter.getInputRecordCount() );
-            Assert.assertEquals(0, statusReporter.getProcessedFieldCount() );
-            Assert.assertEquals(0, statusReporter.getProcessedRecordCount() );
-            Assert.assertEquals(0, statusReporter.getMissingFieldErrorCount());
-            Assert.assertEquals(0, statusReporter.getDateParseErrorsCount());
-            Assert.assertEquals(0, statusReporter.getOutOfOrderRecordCount());
+            assertEquals(0, statusReporter.getInputFieldCount() );
+            assertEquals(0, statusReporter.getInputRecordCount() );
+            assertEquals(0, statusReporter.getProcessedFieldCount() );
+            assertEquals(0, statusReporter.getProcessedRecordCount() );
+            assertEquals(0, statusReporter.getMissingFieldErrorCount());
+            assertEquals(0, statusReporter.getDateParseErrorsCount());
+            assertEquals(0, statusReporter.getOutOfOrderRecordCount());
 
-            Assert.assertEquals(statusReporter.runningTotalStats(), statusReporter.incrementalStats());
+            assertEquals(statusReporter.runningTotalStats(), statusReporter.incrementalStats());
         }
 
         // Do the same again but with a time format configured
@@ -704,12 +705,12 @@ public class CsvDataTransformTest
         try
         {
             pm.writeToJob(dd, ac, null, new TransformConfigs(Arrays.<TransformConfig>asList()), bis, bos, statusReporter, dp, LOGGER);
-            Assert.assertTrue(false); // should throw
+            assertTrue(false); // should throw
         }
         catch (MissingFieldException e)
         {
-            Assert.assertEquals(e.getMissingFieldName(), "missing_field");
-            Assert.assertEquals(usageReporter.getBytesReadSinceLastReport(),
+            assertEquals(e.getMissingFieldName(), "missing_field");
+            assertEquals(usageReporter.getBytesReadSinceLastReport(),
                     statusReporter.getBytesRead());
         }
     }
@@ -792,7 +793,7 @@ public class CsvDataTransformTest
 
             for (String s : ac.analysisFields())
             {
-                Assert.assertTrue(analysisFields.contains(s));
+                assertTrue(analysisFields.contains(s));
             }
 
             ProcessManager pm = createProcessManager();
@@ -807,24 +808,24 @@ public class CsvDataTransformTest
 
             pm.writeToJob(dd, ac, null, new TransformConfigs(Arrays.<TransformConfig>asList()), bis, bos, statusReporter, dp, LOGGER);
 
-            Assert.assertEquals(usageReporter.getTotalBytesRead(),
+            assertEquals(usageReporter.getTotalBytesRead(),
                     data.getBytes(StandardCharsets.UTF_8).length - 2);
-            Assert.assertEquals(6, usageReporter.getTotalRecordsRead() );
-            Assert.assertEquals(6 * 5, usageReporter.getTotalFieldsRead() );
+            assertEquals(6, usageReporter.getTotalRecordsRead() );
+            assertEquals(6 * 5, usageReporter.getTotalFieldsRead() );
 
-            Assert.assertEquals(usageReporter.getTotalBytesRead(), statusReporter.getBytesRead());
-            Assert.assertEquals(usageReporter.getTotalRecordsRead(), statusReporter.getInputRecordCount() );
-            Assert.assertEquals(usageReporter.getTotalFieldsRead(), statusReporter.getInputFieldCount() );
-            Assert.assertEquals(6, statusReporter.getProcessedRecordCount() );
-            Assert.assertEquals(6 * 3 -3, statusReporter.getProcessedFieldCount() );
-            Assert.assertEquals(3, statusReporter.getMissingFieldErrorCount());
-            Assert.assertEquals(0, statusReporter.getDateParseErrorsCount());
-            Assert.assertEquals(0, statusReporter.getOutOfOrderRecordCount());
+            assertEquals(usageReporter.getTotalBytesRead(), statusReporter.getBytesRead());
+            assertEquals(usageReporter.getTotalRecordsRead(), statusReporter.getInputRecordCount() );
+            assertEquals(usageReporter.getTotalFieldsRead(), statusReporter.getInputFieldCount() );
+            assertEquals(6, statusReporter.getProcessedRecordCount() );
+            assertEquals(6 * 3 -3, statusReporter.getProcessedFieldCount() );
+            assertEquals(3, statusReporter.getMissingFieldErrorCount());
+            assertEquals(0, statusReporter.getDateParseErrorsCount());
+            assertEquals(0, statusReporter.getOutOfOrderRecordCount());
 
-            Assert.assertEquals(statusReporter.runningTotalStats(), statusReporter.incrementalStats());
+            assertEquals(statusReporter.runningTotalStats(), statusReporter.incrementalStats());
 
 
-            Assert.assertEquals(dp.getRecordCount(), 6);
+            assertEquals(dp.getRecordCount(), 6);
 
             ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
 
@@ -832,7 +833,7 @@ public class CsvDataTransformTest
             for (String [] fields : lines)
             {
                 int numFields = bb.getInt();
-                Assert.assertEquals(analysisFields.size() + 2, numFields);
+                assertEquals(analysisFields.size() + 2, numFields);
 
                 for (int i = 0; i < numFields - 1; i++)
                 {
@@ -846,12 +847,12 @@ public class CsvDataTransformTest
 
                     String value = new String(charBuff, StandardCharsets.UTF_8);
 
-                    Assert.assertEquals(fields[fieldMap[i]].length(), recordSize);
-                    Assert.assertEquals(fields[fieldMap[i]], value);
+                    assertEquals(fields[fieldMap[i]].length(), recordSize);
+                    assertEquals(fields[fieldMap[i]], value);
                 }
                 // Control field
                 int recordSize = bb.getInt();
-                Assert.assertEquals(isHeader ? 1 : 0, recordSize);
+                assertEquals(isHeader ? 1 : 0, recordSize);
                 if (isHeader)
                 {
                     bb.get();
@@ -937,24 +938,24 @@ public class CsvDataTransformTest
             pm.writeToJob(dd, ac, null, new TransformConfigs(Arrays.<TransformConfig>asList()), bis, bos, statusReporter, dp, LOGGER);
             ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
 
-            Assert.assertEquals(usageReporter.getTotalBytesRead(), statusReporter.getBytesRead());
-            Assert.assertEquals(8 * 5, usageReporter.getTotalFieldsRead());
-            Assert.assertEquals(8, usageReporter.getTotalRecordsRead());
+            assertEquals(usageReporter.getTotalBytesRead(), statusReporter.getBytesRead());
+            assertEquals(8 * 5, usageReporter.getTotalFieldsRead());
+            assertEquals(8, usageReporter.getTotalRecordsRead());
 
-            Assert.assertEquals(usageReporter.getTotalRecordsRead(), statusReporter.getInputRecordCount() );
-            Assert.assertEquals(usageReporter.getTotalFieldsRead(), statusReporter.getInputFieldCount() );
-            Assert.assertEquals(8, statusReporter.getProcessedRecordCount() );
-            Assert.assertEquals(8 * 2, statusReporter.getProcessedFieldCount() );
-            Assert.assertEquals(0, statusReporter.getMissingFieldErrorCount());
-            Assert.assertEquals(0, statusReporter.getDateParseErrorsCount());
-            Assert.assertEquals(0, statusReporter.getOutOfOrderRecordCount());
+            assertEquals(usageReporter.getTotalRecordsRead(), statusReporter.getInputRecordCount() );
+            assertEquals(usageReporter.getTotalFieldsRead(), statusReporter.getInputFieldCount() );
+            assertEquals(8, statusReporter.getProcessedRecordCount() );
+            assertEquals(8 * 2, statusReporter.getProcessedFieldCount() );
+            assertEquals(0, statusReporter.getMissingFieldErrorCount());
+            assertEquals(0, statusReporter.getDateParseErrorsCount());
+            assertEquals(0, statusReporter.getOutOfOrderRecordCount());
 
-            Assert.assertEquals(usageReporter.getTotalBytesRead(),
+            assertEquals(usageReporter.getTotalBytesRead(),
                     data.getBytes(StandardCharsets.UTF_8).length - 2);
-            Assert.assertEquals(usageReporter.getTotalBytesRead(),
+            assertEquals(usageReporter.getTotalBytesRead(),
                     statusReporter.getBytesRead());
 
-            Assert.assertEquals(dp.getRecordCount(), 8);
+            assertEquals(dp.getRecordCount(), 8);
 
             String [] lines = data.split("\\n");
 
@@ -964,7 +965,7 @@ public class CsvDataTransformTest
             {
                 int numFields = bb.getInt();
                 String [] fields = line.split(",");
-                Assert.assertEquals(analysisFields.size() + 2, numFields);
+                assertEquals(analysisFields.size() + 2, numFields);
 
                 for (int i = 0; i < numFields - 1; i++)
                 {
@@ -980,18 +981,18 @@ public class CsvDataTransformTest
 
                     if (i == TIME_FIELD)
                     {
-                        Assert.assertEquals(epochTimes[lineCount].length(), recordSize);
-                        Assert.assertEquals(epochTimes[lineCount], value);
+                        assertEquals(epochTimes[lineCount].length(), recordSize);
+                        assertEquals(epochTimes[lineCount], value);
                     }
                     else
                     {
-                        Assert.assertEquals(fields[fieldMap[i]].length(), recordSize);
-                        Assert.assertEquals(fields[fieldMap[i]], value);
+                        assertEquals(fields[fieldMap[i]].length(), recordSize);
+                        assertEquals(fields[fieldMap[i]], value);
                     }
                 }
                 // Control field
                 int recordSize = bb.getInt();
-                Assert.assertEquals((lineCount == 0) ? 1 : 0, recordSize);
+                assertEquals((lineCount == 0) ? 1 : 0, recordSize);
                 if (lineCount == 0)
                 {
                     bb.get();

@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -26,7 +26,9 @@
 
 package com.prelert.job.logs;
 
-import junit.framework.Assert;
+
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
@@ -34,23 +36,23 @@ import com.prelert.job.JobException;
 
 public class DeleteLogsTest
 {
-	/**
-	 * Tests that the if the don't delete log files system property is
-	 * set then the logs aren't deleted.
-	 */
-	@Test
-	public void dontDeleteTest() throws JobException
-	{
-		System.setProperty(JobLogs.DONT_DELETE_LOGS_PROP, "true");
-		JobLogs jobLogs = new JobLogs();
-		Assert.assertTrue(jobLogs.deleteLogs("somedir", "somejob"));
+    /**
+     * Tests that the if the don't delete log files system property is
+     * set then the logs aren't deleted.
+     */
+    @Test
+    public void dontDeleteTest() throws JobException
+    {
+        System.setProperty(JobLogs.DONT_DELETE_LOGS_PROP, "true");
+        JobLogs jobLogs = new JobLogs();
+        assertTrue(jobLogs.deleteLogs("somedir", "somejob"));
 
-		System.setProperty(JobLogs.DONT_DELETE_LOGS_PROP, "1");
-		jobLogs = new JobLogs();
-		Assert.assertTrue(jobLogs.deleteLogs("somedir", "somejob"));
+        System.setProperty(JobLogs.DONT_DELETE_LOGS_PROP, "1");
+        jobLogs = new JobLogs();
+        assertTrue(jobLogs.deleteLogs("somedir", "somejob"));
 
-		System.clearProperty(JobLogs.DONT_DELETE_LOGS_PROP);
-		jobLogs = new JobLogs();
-		Assert.assertFalse(jobLogs.deleteLogs("somedir", "somejob"));
-	}
+        System.clearProperty(JobLogs.DONT_DELETE_LOGS_PROP);
+        jobLogs = new JobLogs();
+        assertFalse(jobLogs.deleteLogs("somedir", "somejob"));
+    }
 }

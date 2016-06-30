@@ -27,7 +27,6 @@
 package com.prelert.job.config.verification;
 
 import static org.junit.Assert.assertTrue;
-import junit.framework.Assert;
 
 import org.junit.Rule;
 import org.junit.Test;
@@ -121,7 +120,7 @@ public class DataDescriptionVerifierTest
         {
             DataDescriptionVerifier.verify(dd);
             // shouldn't get here
-            Assert.assertTrue("Invalid format should throw", false);
+            assertTrue("Invalid format should throw", false);
         }
         catch (JobConfigurationException e)
         {
@@ -130,6 +129,6 @@ public class DataDescriptionVerifierTest
         String goodFormat = "yyyy.MM.dd G 'at' HH:mm:ss z";
         dd.setTimeFormat(goodFormat);
 
-        Assert.assertTrue("Good time format", DataDescriptionVerifier.verify(dd));
+        assertTrue("Good time format", DataDescriptionVerifier.verify(dd));
     }
 }

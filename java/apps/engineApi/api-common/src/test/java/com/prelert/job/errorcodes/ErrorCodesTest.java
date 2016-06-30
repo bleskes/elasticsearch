@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -27,35 +27,33 @@
 
 package com.prelert.job.errorcodes;
 
+import static org.junit.Assert.assertEquals;
+
 import java.util.HashSet;
 import java.util.Set;
 
-import junit.framework.Assert;
-
 import org.junit.Test;
-
-import com.prelert.job.errorcodes.ErrorCodes;
 
 /**
  * This test ensures that all the error values in {@linkplain ErrorCodes}
  * are unique so no 2 conditions can return the same error code.
- * This tests is designed to catch copy/paste errors.  
+ * This tests is designed to catch copy/paste errors.
  */
-public class ErrorCodesTest 
+public class ErrorCodesTest
 {
 	@Test
-	public void errorCodesUnique() 
+	public void errorCodesUnique()
 	throws IllegalArgumentException, IllegalAccessException
 	{
 		ErrorCodes[] values = ErrorCodes.class.getEnumConstants();
-		
+
 		Set<Long> errorValueSet = new HashSet<>();
 
-		for (ErrorCodes value : values) 
+		for (ErrorCodes value : values)
 		{
 			errorValueSet.add(value.getValue());
 		}
-				
-		Assert.assertEquals(values.length, errorValueSet.size());
+
+		assertEquals(values.length, errorValueSet.size());
 	}
 }

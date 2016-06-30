@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -27,9 +27,9 @@
 
 package com.prelert.job.transform;
 
-import java.io.IOException;
+import static org.junit.Assert.assertEquals;
 
-import junit.framework.Assert;
+import java.io.IOException;
 
 import org.junit.Test;
 
@@ -37,60 +37,58 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
-import com.prelert.job.transform.TransformConfig;
 
 public class TransformSerialisationTest
 {
-	@Test
-	public void testDeserialise_singleFieldAsArray() throws JsonProcessingException, IOException
-	{
-		ObjectMapper mapper = new ObjectMapper();
-		ObjectReader reader = mapper.readerFor(TransformConfig.class)
-							.with(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY);
+    @Test
+    public void testDeserialise_singleFieldAsArray() throws JsonProcessingException, IOException
+    {
+        ObjectMapper mapper = new ObjectMapper();
+        ObjectReader reader = mapper.readerFor(TransformConfig.class)
+                            .with(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY);
 
-		String json = "{\"inputs\":\"dns\", \"transform\":\"highest_registered_domain\"}";
-		TransformConfig tr = reader.readValue(json);
+        String json = "{\"inputs\":\"dns\", \"transform\":\"highest_registered_domain\"}";
+        TransformConfig tr = reader.readValue(json);
 
-		Assert.assertEquals(1,  tr.getInputs().size());
-		Assert.assertEquals("dns", tr.getInputs().get(0));
-		Assert.assertEquals("highest_registered_domain", tr.getTransform());
-		Assert.assertEquals(0, tr.getOutputs().size());
+        assertEquals(1,  tr.getInputs().size());
+        assertEquals("dns", tr.getInputs().get(0));
+        assertEquals("highest_registered_domain", tr.getTransform());
+        assertEquals(0, tr.getOutputs().size());
 
 
-		json = "{\"inputs\":\"dns\", \"transform\":\"highest_registered_domain\", \"outputs\":\"catted\"}";
-		tr = reader.readValue(json);
+        json = "{\"inputs\":\"dns\", \"transform\":\"highest_registered_domain\", \"outputs\":\"catted\"}";
+        tr = reader.readValue(json);
 
-		Assert.assertEquals(1,  tr.getInputs().size());
-		Assert.assertEquals("dns", tr.getInputs().get(0));
-		Assert.assertEquals("highest_registered_domain", tr.getTransform());
-		Assert.assertEquals(1, tr.getOutputs().size());
-		Assert.assertEquals("catted", tr.getOutputs().get(0));
-	}
+        assertEquals(1,  tr.getInputs().size());
+        assertEquals("dns", tr.getInputs().get(0));
+        assertEquals("highest_registered_domain", tr.getTransform());
+        assertEquals(1, tr.getOutputs().size());
+        assertEquals("catted", tr.getOutputs().get(0));
+    }
 
-	@Test
-	public void testDeserialise_fieldsArray() throws JsonProcessingException, IOException
-	{
-		ObjectMapper mapper = new ObjectMapper();
-		ObjectReader reader = mapper.readerFor(TransformConfig.class)
-							.with(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY);
+    @Test
+    public void testDeserialise_fieldsArray() throws JsonProcessingException, IOException
+    {
+        ObjectMapper mapper = new ObjectMapper();
+        ObjectReader reader = mapper.readerFor(TransformConfig.class)
+                            .with(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY);
 
-		String json = "{\"inputs\":[\"dns\"], \"transform\":\"highest_registered_domain\"}";
-		TransformConfig tr = reader.readValue(json);
+        String json = "{\"inputs\":[\"dns\"], \"transform\":\"highest_registered_domain\"}";
+        TransformConfig tr = reader.readValue(json);
 
-		Assert.assertEquals(1,  tr.getInputs().size());
-		Assert.assertEquals("dns", tr.getInputs().get(0));
-		Assert.assertEquals("highest_registered_domain", tr.getTransform());
+        assertEquals(1,  tr.getInputs().size());
+        assertEquals("dns", tr.getInputs().get(0));
+        assertEquals("highest_registered_domain", tr.getTransform());
 
-		json = "{\"inputs\":[\"a\", \"b\", \"c\"], \"transform\":\"concat\", \"outputs\":[\"catted\"]}";
-		tr = reader.readValue(json);
+        json = "{\"inputs\":[\"a\", \"b\", \"c\"], \"transform\":\"concat\", \"outputs\":[\"catted\"]}";
+        tr = reader.readValue(json);
 
-		Assert.assertEquals(3,  tr.getInputs().size());
-		Assert.assertEquals("a", tr.getInputs().get(0));
-		Assert.assertEquals("b", tr.getInputs().get(1));
-		Assert.assertEquals("c", tr.getInputs().get(2));
-		Assert.assertEquals("concat", tr.getTransform());
-		Assert.assertEquals(1, tr.getOutputs().size());
-		Assert.assertEquals("catted", tr.getOutputs().get(0));
-	}
-
+        assertEquals(3,  tr.getInputs().size());
+        assertEquals("a", tr.getInputs().get(0));
+        assertEquals("b", tr.getInputs().get(1));
+        assertEquals("c", tr.getInputs().get(2));
+        assertEquals("concat", tr.getTransform());
+        assertEquals(1, tr.getOutputs().size());
+        assertEquals("catted", tr.getOutputs().get(0));
+    }
 }

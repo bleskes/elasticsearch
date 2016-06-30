@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -26,14 +26,14 @@
  ************************************************************/
 package com.prelert.job.process.writer;
 
+import static org.junit.Assert.assertEquals;
+
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
-
-import junit.framework.Assert;
 
 import org.junit.Test;
 import org.supercsv.io.CsvListReader;
@@ -43,17 +43,17 @@ import com.prelert.job.DataDescription;
 
 public class CsvParserTest {
 
-	/**
-	 * Test parsing CSV with the NUL character code point (\0 or \u0000)
-	 * @throws IOException
-	 */
-	@Test
-	public void test() throws IOException
-	{
-		String data = "1422936876.262044869, 1422936876.262044869, 90, 2, 10.132.0.1, 0, 224.0.0.5, 0, 1, 1, 268435460, null, null, null, null, null, null, null, null, null, null, null\n"
-				+ "1422943772.875342698, 1422943772.875342698, 90, 2, 10.132.0.1, 0, 224.0.0.5, 0, 1, 1, 268435460,,,,,\0,\u0000,,,,,\u0000\n"
-		        + "\0";
-		InputStream inputStream = new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
+    /**
+     * Test parsing CSV with the NUL character code point (\0 or \u0000)
+     * @throws IOException
+     */
+    @Test
+    public void test() throws IOException
+    {
+        String data = "1422936876.262044869, 1422936876.262044869, 90, 2, 10.132.0.1, 0, 224.0.0.5, 0, 1, 1, 268435460, null, null, null, null, null, null, null, null, null, null, null\n"
+                + "1422943772.875342698, 1422943772.875342698, 90, 2, 10.132.0.1, 0, 224.0.0.5, 0, 1, 1, 268435460,,,,,\0,\u0000,,,,,\u0000\n"
+                + "\0";
+        InputStream inputStream = new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
 
         CsvPreference csvPref = new CsvPreference.Builder(
                 DataDescription.DEFAULT_QUOTE_CHAR,
@@ -65,16 +65,14 @@ public class CsvParserTest {
                 csvPref))
         {
             String[] header = csvReader.getHeader(true);
-            Assert.assertEquals(22, header.length);
+            assertEquals(22, header.length);
 
             List<String> line = csvReader.read();
-         	Assert.assertEquals(22, line.size());
+             assertEquals(22, line.size());
 
             // last line is \0
             line = csvReader.read();
-            Assert.assertEquals(1, line.size());
-
+            assertEquals(1, line.size());
         }
-	}
-
+    }
 }
