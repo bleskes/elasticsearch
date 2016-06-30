@@ -233,7 +233,7 @@ public class ESNativeRealmMigrateTool extends MultiCommand {
                         parser.skipChildren();
                     }
                 } else {
-                    throw new Exception("failed to retrieve users, expecting an object but got: " + token);
+                    throw new ElasticsearchException("failed to retrieve users, expecting an object but got: " + token);
                 }
             }
             terminal.println("found existing users: " + existingUsers);
@@ -308,7 +308,7 @@ public class ESNativeRealmMigrateTool extends MultiCommand {
                         parser.skipChildren();
                     }
                 } else {
-                    throw new Exception("failed to retrieve roles, expecting an object but got: " + token);
+                    throw new ElasticsearchException("failed to retrieve roles, expecting an object but got: " + token);
                 }
             }
             terminal.println("found existing roles: " + existingRoles);
