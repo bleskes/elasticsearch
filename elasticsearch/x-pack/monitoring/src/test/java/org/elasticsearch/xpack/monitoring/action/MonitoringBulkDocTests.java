@@ -48,7 +48,7 @@ public class MonitoringBulkDocTests extends ESTestCase {
             output.setVersion(outputVersion);
             doc.writeTo(output);
 
-            StreamInput streamInput = StreamInput.wrap(output.bytes());
+            StreamInput streamInput = output.bytes().streamInput();
             streamInput.setVersion(randomVersion(random()));
             MonitoringBulkDoc doc2 = new MonitoringBulkDoc(streamInput);
 
