@@ -29,6 +29,8 @@ package com.prelert.rs.client.integrationtests;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Level;
@@ -239,6 +241,21 @@ public abstract class BaseIntegrationTest implements AutoCloseable
         return m_Logger;
     }
 
+
+    /**
+     * Extract the hostname from the URL i.e. the bit after http:// and before ':'
+     * @param url
+     * @return
+     */
+    public String hostnameFromUrl(String url)
+    {
+        Pattern p = Pattern.compile("http://([a-zA-Z0-9\\.-]*):.*");
+        Matcher m = p.matcher(url);
+        test(m.matches());
+        return m.group(1);
+    }
+
+
     /**
      * Does not return the data runner until it has started uploading
      *
@@ -250,6 +267,38 @@ public abstract class BaseIntegrationTest implements AutoCloseable
     {
         CsvDataRunner jobRunner = new CsvDataRunner(url);
         jobRunner.createJob();
+
+        m_DataUploaderThread = new Thread(jobRunner);
+        m_DataUploaderThread.start();
+
+
+        // wait for the runner thread to start the upload
+        synchronized (jobRunner)
+        {
+            try
+            {
+                jobRunner.wait();
+            }
+            catch (InterruptedException e1)
+            {
+                m_Logger.error(e1);
+            }
+        }
+
+        return jobRunner;
+    }
+
+    /**
+     * As {@linkplain #startDataUploader(String)} but writes to
+     * the specific job which must exist first
+     * @param url
+     * @param jobId
+     * @return
+     * @throws IOException
+     */
+    protected CsvDataRunner startDataUploader(String url, String jobId) throws IOException
+    {
+        CsvDataRunner jobRunner = new CsvDataRunner(url, jobId);
 
         m_DataUploaderThread = new Thread(jobRunner);
         m_DataUploaderThread.start();

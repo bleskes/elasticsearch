@@ -65,6 +65,7 @@ public class ConcurrentActionClient implements Runnable
     private String m_Url;
     private String m_JobId;
     private Optional<CountDownLatch> m_CountDownLatch;
+    private String m_ExpectedHostname;
 
 
     /**
@@ -76,9 +77,24 @@ public class ConcurrentActionClient implements Runnable
      */
     public ConcurrentActionClient(String url, String jobId, Optional<CountDownLatch> latch)
     {
+        this(url, jobId, latch, null);
+    }
+
+    /**
+     *
+     * @param url Host url to test
+     * @param jobId This job should be processing data elsewhere
+     * @param latch Optional latch for synchronisation. run() counts down the
+     * @param expectedHostname Check the {@linkplain ApiError}s have this
+     * value in its host field.
+     */
+    public ConcurrentActionClient(String url, String jobId, Optional<CountDownLatch> latch,
+                                String expectedHostname)
+    {
         m_Url = url;
         m_JobId = jobId;
         m_CountDownLatch = latch;
+        m_ExpectedHostname = expectedHostname;
     }
 
     @Override
@@ -99,7 +115,7 @@ public class ConcurrentActionClient implements Runnable
             {
                 throw new IllegalStateException("Closing Job: Error code should be job in use error");
             }
-
+            checkExpectedHost(apiError);
 
             // 2. Cannot flush a job when another process is writing to it
             boolean flushed = client.flushJob(m_JobId, false);
@@ -109,11 +125,11 @@ public class ConcurrentActionClient implements Runnable
             }
 
             apiError = client.getLastError();
-
             if (apiError.getErrorCode() != ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR)
             {
                 throw new IllegalStateException("Flushing Job: Error code should be job in use error");
             }
+            checkExpectedHost(apiError);
 
 
             // 3. Cannot write to the job when another process is writing to it
@@ -135,6 +151,7 @@ public class ConcurrentActionClient implements Runnable
             {
                 throw new IllegalStateException("Writing data: Error code should be job in use error");
             }
+            checkExpectedHost(apiError);
 
             if (result.getResponses().get(0).getUploadSummary() != null)
             {
@@ -149,12 +166,11 @@ public class ConcurrentActionClient implements Runnable
             }
 
             apiError = client.getLastError();
-
             if (apiError.getErrorCode() != ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR)
             {
                 throw new IllegalStateException("Deleting Job: Error code should be job in use error");
             }
-
+            checkExpectedHost(apiError);
 
             // 5. Cannot pause a job when another process is writing to it
             boolean paused = client.pauseJob(m_JobId);
@@ -164,11 +180,11 @@ public class ConcurrentActionClient implements Runnable
             }
 
             apiError = client.getLastError();
-
             if (apiError.getErrorCode() != ErrorCodes.CANNOT_PAUSE_JOB)
             {
                 throw new IllegalStateException("Pausing Job: Error code should be job in use error");
             }
+            checkExpectedHost(apiError);
 
             // 6. Cannot resume a job when another process is writing to it
             boolean resumed = client.resumeJob(m_JobId);
@@ -178,11 +194,11 @@ public class ConcurrentActionClient implements Runnable
             }
 
             apiError = client.getLastError();
-
             if (apiError.getErrorCode() != ErrorCodes.CANNOT_RESUME_JOB)
             {
                 throw new IllegalStateException("Resuming Job: Error code should be job in use error");
             }
+//            checkExpectedHost(apiError);
 
         }
         catch (IOException e)
@@ -194,6 +210,18 @@ public class ConcurrentActionClient implements Runnable
             if (m_CountDownLatch.isPresent())
             {
                 m_CountDownLatch.get().countDown();
+            }
+        }
+    }
+
+    private void checkExpectedHost(ApiError error)
+    {
+        if (m_ExpectedHostname != null)
+        {
+            if (!m_ExpectedHostname.equals(error.getHostname()))
+            {
+                throw new IllegalStateException(
+                        String.format("Expected host %s got %s", m_ExpectedHostname, error.getHostname()));
             }
         }
     }

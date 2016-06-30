@@ -58,9 +58,10 @@ import com.prelert.rs.data.MultiDataPostResult;
  * The test creates a job on the first node and starts uploading data to it.
  * For each of the other nodes some operation such as delete is tried on the
  * first job, the test asserts that the operation fails while the first node
- * is processing data for the job.
- * This is all done concurrently in multiple threads
+ * is processing data for the job. This is all done concurrently in multiple threads<br>
  *
+ * Next the job is closed and moved to another host and the same tests are
+ * run again.
  */
 public class DistributedLockTest extends BaseIntegrationTest
 {
@@ -81,13 +82,15 @@ public class DistributedLockTest extends BaseIntegrationTest
     {
         // create job on the first node and start uploading data
         CsvDataRunner dataUploader = startDataUploader(m_EngineApiUrls[0]);
+        String jobId = dataUploader.getJobId();
 
         String [] otherHostUrls = new String [m_EngineApiUrls.length -1];
         System.arraycopy(m_EngineApiUrls, 1, otherHostUrls, 0, m_EngineApiUrls.length -1);
 
         try
         {
-            doConcurrentActionOnDifferentNodeTest(dataUploader.getJobId(), otherHostUrls);
+            String expectedHostname = hostnameFromUrl(m_EngineApiUrls[0]);
+            doConcurrentActionOnDifferentNodeTest(jobId, otherHostUrls, expectedHostname);
         }
         catch (InterruptedException | ExecutionException e1)
         {
@@ -99,15 +102,41 @@ public class DistributedLockTest extends BaseIntegrationTest
         }
 
         // job should be sleeping now
-        testSleepingProcessOnOneNodeBlocksActionsOnOtherNodes(dataUploader.getJobId(), otherHostUrls);
+        testSleepingProcessOnOneNodeBlocksActionsOnOtherNodes(jobId, otherHostUrls);
 
-        m_EngineApiClient.deleteJob(dataUploader.getJobId());
+        m_EngineApiClient.closeJob(jobId);
+
+        // restart job on another node and run the same tests
+        String jobHostUrl = m_EngineApiUrls[1];
+        otherHostUrls[0] = m_EngineApiUrls[0];
+        if (m_EngineApiUrls.length > 2)
+        {
+            System.arraycopy(m_EngineApiUrls, 2, otherHostUrls, 2, m_EngineApiUrls.length -2);
+        }
+        dataUploader = startDataUploader(jobHostUrl, jobId);
+
+        try
+        {
+            String expectedHostname = hostnameFromUrl(jobHostUrl);
+            doConcurrentActionOnDifferentNodeTest(jobId, otherHostUrls, expectedHostname);
+        }
+        catch (InterruptedException | ExecutionException e1)
+        {
+            throw new IllegalStateException(e1);
+        }
+        finally
+        {
+            stopDataUploaderAndJoinThread(dataUploader);
+        }
+
+        m_EngineApiClient.deleteJob(jobId);
     }
 
-    private void doConcurrentActionOnDifferentNodeTest(String jobId, String [] hostUrls)
+    private void doConcurrentActionOnDifferentNodeTest(String jobId, String [] hostUrls,
+                                            String expectedJobhost)
             throws InterruptedException, ExecutionException
     {
-        ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(m_EngineApiUrls.length -1);
+        ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(hostUrls.length -1);
         try
         {
             // Need to get the futures to execute and call get() on it
@@ -118,7 +147,8 @@ public class DistributedLockTest extends BaseIntegrationTest
             for (int i=0; i<hostUrls.length; i++)
             {
                 ScheduledFuture<?> future = executor.schedule(
-                        new ConcurrentActionClient(hostUrls[i], jobId, Optional.of(m_CountDownLatch)),
+                        new ConcurrentActionClient(hostUrls[i], jobId,
+                                            Optional.of(m_CountDownLatch), expectedJobhost),
                                 0, TimeUnit.SECONDS);
 
                 futures.add(future);

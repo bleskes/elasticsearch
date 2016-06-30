@@ -88,7 +88,13 @@ public class CsvDataRunner implements Runnable
     public CsvDataRunner(String baseUrl)
     {
         this(baseUrl, DEFAULT_NUMBER_TIME_SERIES, DEFAULT_NUMBER_ITERATIONS,
-                DEFAULT_TIME_SERIES_POINT_INTERVAL_SECS, DEFAULT_BUCKETSPAN_SECS);
+                DEFAULT_TIME_SERIES_POINT_INTERVAL_SECS, DEFAULT_BUCKETSPAN_SECS, null);
+    }
+
+    public CsvDataRunner(String baseUrl, String jobId)
+    {
+        this(baseUrl, DEFAULT_NUMBER_TIME_SERIES, DEFAULT_NUMBER_ITERATIONS,
+                DEFAULT_TIME_SERIES_POINT_INTERVAL_SECS, DEFAULT_BUCKETSPAN_SECS, jobId);
     }
 
     /**
@@ -100,15 +106,17 @@ public class CsvDataRunner implements Runnable
      * @param pointIntervalSecs The time between writing each new data point
      * for each time series.
      * @param bucketSpanSecs The job bucketSpan
+     * @param jobId Set if you want to use an existing job. Don't call createJob
+     * if using an existing job
      */
     public CsvDataRunner(String baseUrl, long numberTimeSeries, long numIterations,
-            long pointIntervalSecs, long bucketSpanSecs)
+            long pointIntervalSecs, long bucketSpanSecs, String jobId)
     {
         m_NumTimeSeries = numberTimeSeries;
         m_NumIterations = numIterations;
         m_PointIntervalSecs = pointIntervalSecs;
         m_BucketSpan = bucketSpanSecs;
-
+        m_JobId = jobId;
         m_ApiClient = new EngineApiClient(baseUrl);
 
         m_Stop = false;

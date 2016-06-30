@@ -28,8 +28,6 @@
 package com.prelert.rs.client.integrationtests.distributed;
 
 import java.io.IOException;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import com.prelert.job.JobSchedulerStatus;
 import com.prelert.job.errorcodes.ErrorCodes;
@@ -71,10 +69,7 @@ public class DistributedScheduledJobTest extends BaseScheduledJobTest
             createScheduledJob();
             try
             {
-                Pattern p = Pattern.compile("http://([a-zA-Z0-9\\.-]*):.*");
-                Matcher m = p.matcher(m_BaseUrl);
-                test(m.matches());
-                String hostname = m.group(1);
+                String hostname = hostnameFromUrl(m_BaseUrl);
 
                 startScheduler(m_EngineApiClient);
                 testCannotChangeSchedulerOnOtherHosts(hostname, otherHostUrls);
@@ -92,7 +87,10 @@ public class DistributedScheduledJobTest extends BaseScheduledJobTest
             // start scheduler on another node and run the same tests
             // use the 2nd URL to host the job this time
             otherHostUrls[0] = m_EngineApiUrls[0];
-            System.arraycopy(m_EngineApiUrls, 2, otherHostUrls, 1, m_EngineApiUrls.length -2);
+            if (m_EngineApiUrls.length > 2)
+            {
+                System.arraycopy(m_EngineApiUrls, 2, otherHostUrls, 1, m_EngineApiUrls.length -2);
+            }
             testStartStoppedSchedulerOnAnotherNode(m_EngineApiUrls[1], otherHostUrls);
 
         }
@@ -151,11 +149,7 @@ public class DistributedScheduledJobTest extends BaseScheduledJobTest
     private void testStartStoppedSchedulerOnAnotherNode(String jobHostUrl,
                                                 String [] otherHostUrls) throws IOException
     {
-        Pattern p = Pattern.compile("http://([a-zA-Z0-9\\.-]*):.*");
-        Matcher m = p.matcher(jobHostUrl);
-        test(m.matches());
-        String hostname = m.group(1);
-
+        String hostname = hostnameFromUrl(jobHostUrl);
 
         EngineApiClient jobHostClient = new EngineApiClient(jobHostUrl);
         try
