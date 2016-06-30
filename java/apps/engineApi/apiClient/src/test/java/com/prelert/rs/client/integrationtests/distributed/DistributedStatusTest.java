@@ -64,7 +64,7 @@ public class DistributedStatusTest extends BaseIntegrationTest
         }
         finally
         {
-            stopDataUploatedAndJoinThread(dataUploader);
+            stopDataUploaderAndJoinThread(dataUploader);
             m_EngineApiClient.closeJob(dataUploader.getJobId());
         }
 

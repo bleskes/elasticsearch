@@ -55,7 +55,7 @@ public enum ScheduledAction implements ActionState<ScheduledAction>
 
     /**
      * Return true if allowed to transition from this state to next.
-     * Only allowed to transistion from STOP to any other state.
+     * Only allowed to transition from STOP to any other state.
      *
      * @param action
      * @return

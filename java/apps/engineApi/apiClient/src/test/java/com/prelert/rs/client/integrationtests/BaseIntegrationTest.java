@@ -276,7 +276,7 @@ public abstract class BaseIntegrationTest implements AutoCloseable
      *
      * @param dataUploader
      */
-    protected void stopDataUploatedAndJoinThread(CsvDataRunner dataUploader)
+    protected void stopDataUploaderAndJoinThread(CsvDataRunner dataUploader)
     {
         // stop uploader and join threads - this doesn't close the job
         dataUploader.cancel();

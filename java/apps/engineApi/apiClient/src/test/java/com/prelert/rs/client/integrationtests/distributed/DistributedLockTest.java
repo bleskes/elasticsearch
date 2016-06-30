@@ -95,7 +95,7 @@ public class DistributedLockTest extends BaseIntegrationTest
         }
         finally
         {
-            stopDataUploatedAndJoinThread(dataUploader);
+            stopDataUploaderAndJoinThread(dataUploader);
         }
 
         // job should be sleeping now

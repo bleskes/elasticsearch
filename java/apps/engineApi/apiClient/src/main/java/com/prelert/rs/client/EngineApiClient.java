@@ -912,8 +912,8 @@ public class EngineApiClient implements Closeable
             @Override
             public void onComplete(Result result)
             {
-                statusHolder.getAndSet(result.getResponse().getStatus());
                 waitUntilRequestCompletesLatch.countDown();
+                statusHolder.set(result.getResponse().getStatus());
             }
         };
         request.send(responseListener);

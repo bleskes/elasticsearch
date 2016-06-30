@@ -80,7 +80,7 @@ public class ScheduledActionTest
 
         assertFalse(ScheduledAction.START.isValidTransition(ScheduledAction.START));
         assertFalse(ScheduledAction.START.isValidTransition(ScheduledAction.UPDATE));
-        assertFalse(ScheduledAction.DELETE.isValidTransition(ScheduledAction.STOP));
+        assertFalse(ScheduledAction.DELETE.isValidTransition(ScheduledAction.START));
         assertFalse(ScheduledAction.UPDATE.isValidTransition(ScheduledAction.START));
         assertFalse(ScheduledAction.UPDATE.isValidTransition(ScheduledAction.UPDATE));
     }
