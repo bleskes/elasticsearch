@@ -53,7 +53,7 @@ import java.util.concurrent.locks.ReentrantLock;
  * @see #stopCollection()
  * @see #startCollection()
  */
-public class AgentService extends AbstractLifecycleComponent<AgentService> {
+public class AgentService extends AbstractLifecycleComponent {
 
     private volatile ExportingWorker exportingWorker;
 

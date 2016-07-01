@@ -339,7 +339,8 @@ public class SSLConfigurationTests extends ESTestCase {
         ThreadPool threadPool = new TestThreadPool("reload");
         try {
             ResourceWatcherService resourceWatcherService =
-                    new ResourceWatcherService(Settings.builder().put("resource.reload.interval.high", "1s").build(), threadPool).start();
+                    new ResourceWatcherService(Settings.builder().put("resource.reload.interval.high", "1s").build(), threadPool);
+            resourceWatcherService.start();
             KeyManager[] keyManagers = keyConfig.keyManagers(env, resourceWatcherService, listener);
             assertThat(keyManagers.length, is(1));
             assertThat(keyManagers[0], instanceOf(X509ExtendedKeyManager.class));
@@ -402,7 +403,8 @@ public class SSLConfigurationTests extends ESTestCase {
         ThreadPool threadPool = new TestThreadPool("reload pem");
         try {
             ResourceWatcherService resourceWatcherService =
-                    new ResourceWatcherService(Settings.builder().put("resource.reload.interval.high", "1s").build(), threadPool).start();
+                    new ResourceWatcherService(Settings.builder().put("resource.reload.interval.high", "1s").build(), threadPool);
+            resourceWatcherService.start();
             KeyManager[] keyManagers = keyConfig.keyManagers(env, resourceWatcherService, listener);
             assertThat(keyManagers.length, is(1));
             assertThat(keyManagers[0], instanceOf(X509ExtendedKeyManager.class));
@@ -478,7 +480,8 @@ public class SSLConfigurationTests extends ESTestCase {
         ThreadPool threadPool = new TestThreadPool("reload");
         try {
             ResourceWatcherService resourceWatcherService =
-                    new ResourceWatcherService(Settings.builder().put("resource.reload.interval.high", "1s").build(), threadPool).start();
+                    new ResourceWatcherService(Settings.builder().put("resource.reload.interval.high", "1s").build(), threadPool);
+            resourceWatcherService.start();
             TrustManager[] trustManagers = trustConfig.trustManagers(env, resourceWatcherService, listener);
             assertThat(trustManagers.length, is(1));
             assertThat(trustManagers[0], instanceOf(X509ExtendedTrustManager.class));
@@ -524,7 +527,8 @@ public class SSLConfigurationTests extends ESTestCase {
         ThreadPool threadPool = new TestThreadPool("reload");
         try {
             ResourceWatcherService resourceWatcherService =
-                    new ResourceWatcherService(Settings.builder().put("resource.reload.interval.high", "1s").build(), threadPool).start();
+                    new ResourceWatcherService(Settings.builder().put("resource.reload.interval.high", "1s").build(), threadPool);
+            resourceWatcherService.start();
             TrustManager[] trustManagers = trustConfig.trustManagers(env, resourceWatcherService, listener);
             assertThat(trustManagers.length, is(1));
             assertThat(trustManagers[0], instanceOf(X509ExtendedTrustManager.class));
@@ -572,7 +576,8 @@ public class SSLConfigurationTests extends ESTestCase {
         ThreadPool threadPool = new TestThreadPool("reload");
         try {
             ResourceWatcherService resourceWatcherService =
-                    new ResourceWatcherService(Settings.builder().put("resource.reload.interval.high", "1s").build(), threadPool).start();
+                    new ResourceWatcherService(Settings.builder().put("resource.reload.interval.high", "1s").build(), threadPool);
+            resourceWatcherService.start();
             KeyManager[] keyManagers = keyConfig.keyManagers(env, resourceWatcherService, listener);
             X509ExtendedKeyManager keyManager = (X509ExtendedKeyManager) keyManagers[0];
             String[] aliases = keyManager.getServerAliases("RSA", null);
@@ -621,7 +626,8 @@ public class SSLConfigurationTests extends ESTestCase {
         ThreadPool threadPool = new TestThreadPool("reload pem");
         try {
             ResourceWatcherService resourceWatcherService =
-                    new ResourceWatcherService(Settings.builder().put("resource.reload.interval.high", "1s").build(), threadPool).start();
+                    new ResourceWatcherService(Settings.builder().put("resource.reload.interval.high", "1s").build(), threadPool);
+            resourceWatcherService.start();
             KeyManager[] keyManagers = keyConfig.keyManagers(env, resourceWatcherService, listener);
             assertThat(keyManagers.length, is(1));
             assertThat(keyManagers[0], instanceOf(X509ExtendedKeyManager.class));
@@ -672,7 +678,8 @@ public class SSLConfigurationTests extends ESTestCase {
         ThreadPool threadPool = new TestThreadPool("reload");
         try {
             ResourceWatcherService resourceWatcherService =
-                    new ResourceWatcherService(Settings.builder().put("resource.reload.interval.high", "1s").build(), threadPool).start();
+                    new ResourceWatcherService(Settings.builder().put("resource.reload.interval.high", "1s").build(), threadPool);
+            resourceWatcherService.start();
             TrustManager[] trustManagers = trustConfig.trustManagers(env, resourceWatcherService, listener);
             assertThat(trustManagers.length, is(1));
             assertThat(trustManagers[0], instanceOf(X509ExtendedTrustManager.class));
@@ -711,7 +718,8 @@ public class SSLConfigurationTests extends ESTestCase {
         ThreadPool threadPool = new TestThreadPool("reload");
         try {
             ResourceWatcherService resourceWatcherService =
-                    new ResourceWatcherService(Settings.builder().put("resource.reload.interval.high", "1s").build(), threadPool).start();
+                    new ResourceWatcherService(Settings.builder().put("resource.reload.interval.high", "1s").build(), threadPool);
+            resourceWatcherService.start();
             TrustManager[] trustManagers = trustConfig.trustManagers(env, resourceWatcherService, listener);
             assertThat(trustManagers.length, is(1));
             assertThat(trustManagers[0], instanceOf(X509ExtendedTrustManager.class));

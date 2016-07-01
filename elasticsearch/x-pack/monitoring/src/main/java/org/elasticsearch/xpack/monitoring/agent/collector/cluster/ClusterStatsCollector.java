@@ -48,7 +48,7 @@ import java.util.List;
  * document; the cluster stats are also indexed in the timestamped index in a
  * "cluster_stats" document.
  */
-public class ClusterStatsCollector extends AbstractCollector<ClusterStatsCollector> {
+public class ClusterStatsCollector extends AbstractCollector {
 
     public static final String NAME = "cluster-stats-collector";
 
