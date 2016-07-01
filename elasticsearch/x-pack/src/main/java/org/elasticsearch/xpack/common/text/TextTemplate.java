@@ -39,9 +39,9 @@ import java.util.Map;
 public class TextTemplate implements ToXContent {
 
     private final String template;
-    private final @Nullable XContentType contentType;
-    private final @Nullable ScriptType type;
-    private final @Nullable Map<String, Object> params;
+    @Nullable private final XContentType contentType;
+    @Nullable private final ScriptType type;
+    @Nullable private final Map<String, Object> params;
 
     public TextTemplate(String template) {
         this(template, null, null, null);
@@ -202,7 +202,7 @@ public class TextTemplate implements ToXContent {
         return new Builder.DefaultType(text);
     }
 
-    public static abstract class Builder<B extends Builder> {
+    public abstract static class Builder<B extends Builder> {
 
         protected final ScriptType type;
         protected final String template;
