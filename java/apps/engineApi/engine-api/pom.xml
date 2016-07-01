@@ -69,6 +69,9 @@
       <groupId>org.apache.lucene</groupId>
       <artifactId>lucene-spatial</artifactId>
     </dependency>
+
+    <!-- We need to depend on netty in order for ZooKeeper to use the same netty
+         version as elasticsearch -->
     <dependency>
       <groupId>io.netty</groupId>
       <artifactId>netty</artifactId>
