@@ -481,7 +481,7 @@ public class WatchTests extends ESTestCase {
         for (ActionWrapper action : actions) {
             switch (action.action().type()) {
                 case EmailAction.TYPE:
-                    parsers.put(EmailAction.TYPE, new EmailActionFactory(settings, emailService, templateEngine, htmlSanitizer,
+                    parsers.put(EmailAction.TYPE, new EmailActionFactory(settings, emailService, templateEngine,
                             new EmailAttachmentsParser(Collections.emptyMap())));
                     break;
                 case IndexAction.TYPE:
