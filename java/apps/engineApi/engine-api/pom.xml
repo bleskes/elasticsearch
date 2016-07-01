@@ -69,6 +69,10 @@
       <groupId>org.apache.lucene</groupId>
       <artifactId>lucene-spatial</artifactId>
     </dependency>
+    <dependency>
+      <groupId>io.netty</groupId>
+      <artifactId>netty</artifactId>
+    </dependency>
 
     <!-- ZooKeeper uses slf4j. Including the projects version here stops the
          copy-dependencies plugin from installing the earlier version used
