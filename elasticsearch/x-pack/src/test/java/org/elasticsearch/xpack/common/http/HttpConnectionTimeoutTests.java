@@ -41,7 +41,8 @@ public class HttpConnectionTimeoutTests extends ESTestCase {
     @Network
     public void testDefaultTimeout() throws Exception {
         Environment environment = new Environment(Settings.builder().put("path.home", createTempDir()).build());
-        HttpClient httpClient = new HttpClient(Settings.EMPTY, mock(HttpAuthRegistry.class), environment).start();
+        HttpClient httpClient = new HttpClient(Settings.EMPTY, mock(HttpAuthRegistry.class), environment);
+        httpClient.start();
 
         HttpRequest request = HttpRequest.builder(UNROUTABLE_IP, 12345)
                 .method(HttpMethod.POST)
@@ -66,9 +67,9 @@ public class HttpConnectionTimeoutTests extends ESTestCase {
     public void testDefaultTimeoutCustom() throws Exception {
         Environment environment = new Environment(Settings.builder().put("path.home", createTempDir()).build());
         HttpClient httpClient = new HttpClient(Settings.builder()
-                .put("xpack.http.default_connection_timeout", "5s")
-                .build()
-                , mock(HttpAuthRegistry.class), environment).start();
+                .put("xpack.http.default_connection_timeout", "5s").build()
+                , mock(HttpAuthRegistry.class), environment);
+        httpClient.start();
 
         HttpRequest request = HttpRequest.builder(UNROUTABLE_IP, 12345)
                 .method(HttpMethod.POST)
@@ -93,9 +94,9 @@ public class HttpConnectionTimeoutTests extends ESTestCase {
     public void testTimeoutCustomPerRequest() throws Exception {
         Environment environment = new Environment(Settings.builder().put("path.home", createTempDir()).build());
         HttpClient httpClient = new HttpClient(Settings.builder()
-                .put("xpack.http.default_connection_timeout", "10s")
-                .build()
-                , mock(HttpAuthRegistry.class), environment).start();
+                .put("xpack.http.default_connection_timeout", "10s").build()
+                , mock(HttpAuthRegistry.class), environment);
+        httpClient.start();
 
         HttpRequest request = HttpRequest.builder(UNROUTABLE_IP, 12345)
                 .connectionTimeout(TimeValue.timeValueSeconds(5))

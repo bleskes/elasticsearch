@@ -344,7 +344,7 @@ public class InternalAuthenticationServiceTests extends ESTestCase {
 
         BytesStreamOutput output = new BytesStreamOutput();
         threadContext1.writeTo(output);
-        StreamInput input = StreamInput.wrap(output.bytes());
+        StreamInput input = output.bytes().streamInput();
         threadContext1 = new ThreadContext(Settings.EMPTY);
         threadContext1.readHeaders(input);
 
@@ -391,7 +391,7 @@ public class InternalAuthenticationServiceTests extends ESTestCase {
 
         BytesStreamOutput output = new BytesStreamOutput();
         threadContext1.writeTo(output);
-        StreamInput input = StreamInput.wrap(output.bytes());
+        StreamInput input = output.bytes().streamInput();
         threadContext1 = new ThreadContext(Settings.EMPTY);
         threadContext1.readHeaders(input);
 

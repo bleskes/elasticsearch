@@ -43,7 +43,7 @@ public class UserTests extends ESTestCase {
         BytesStreamOutput output = new BytesStreamOutput();
 
         User.writeTo(user, output);
-        User readFrom = User.readFrom(ByteBufferStreamInput.wrap(output.bytes()));
+        User readFrom = User.readFrom(output.bytes().streamInput());
 
         assertThat(readFrom, not(sameInstance(user)));
         assertThat(readFrom.principal(), is(user.principal()));
@@ -59,7 +59,7 @@ public class UserTests extends ESTestCase {
         BytesStreamOutput output = new BytesStreamOutput();
 
         User.writeTo(user, output);
-        User readFrom = User.readFrom(ByteBufferStreamInput.wrap(output.bytes()));
+        User readFrom = User.readFrom(output.bytes().streamInput());
 
         assertThat(readFrom, not(sameInstance(user)));
         assertThat(readFrom.principal(), is(user.principal()));
@@ -75,7 +75,7 @@ public class UserTests extends ESTestCase {
         BytesStreamOutput output = new BytesStreamOutput();
 
         User.writeTo(SystemUser.INSTANCE, output);
-        User readFrom = User.readFrom(ByteBufferStreamInput.wrap(output.bytes()));
+        User readFrom = User.readFrom(output.bytes().streamInput());
 
         assertThat(readFrom, is(sameInstance(SystemUser.INSTANCE)));
         assertThat(readFrom.runAs(), is(nullValue()));
@@ -85,7 +85,7 @@ public class UserTests extends ESTestCase {
         BytesStreamOutput output = new BytesStreamOutput();
 
         User.writeTo(XPackUser.INSTANCE, output);
-        User readFrom = User.readFrom(ByteBufferStreamInput.wrap(output.bytes()));
+        User readFrom = User.readFrom(output.bytes().streamInput());
 
         assertThat(readFrom, is(sameInstance(XPackUser.INSTANCE)));
         assertThat(readFrom.runAs(), is(nullValue()));
@@ -96,7 +96,7 @@ public class UserTests extends ESTestCase {
         output.writeBoolean(true);
         output.writeString(randomAsciiOfLengthBetween(4, 30));
         try {
-            User.readFrom(ByteBufferStreamInput.wrap(output.bytes()));
+            User.readFrom(output.bytes().streamInput());
             fail("system user had wrong name");
         } catch (IllegalStateException e) {
             // expected
@@ -126,13 +126,13 @@ public class UserTests extends ESTestCase {
     public void testReservedUserSerialization() throws Exception {
         BytesStreamOutput output = new BytesStreamOutput();
         User.writeTo(ElasticUser.INSTANCE, output);
-        User readFrom = User.readFrom(ByteBufferStreamInput.wrap(output.bytes()));
+        User readFrom = User.readFrom(output.bytes().streamInput());
 
         assertThat(readFrom, is(sameInstance(ElasticUser.INSTANCE)));
 
         output = new BytesStreamOutput();
         User.writeTo(KibanaUser.INSTANCE, output);
-        readFrom = User.readFrom(ByteBufferStreamInput.wrap(output.bytes()));
+        readFrom = User.readFrom(output.bytes().streamInput());
 
         assertThat(readFrom, is(sameInstance(KibanaUser.INSTANCE)));
     }

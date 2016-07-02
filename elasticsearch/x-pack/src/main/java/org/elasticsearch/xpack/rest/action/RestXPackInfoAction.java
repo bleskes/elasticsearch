@@ -17,7 +17,8 @@
 
 package org.elasticsearch.xpack.rest.action;
 
-import org.elasticsearch.client.Client;
+import java.util.EnumSet;
+
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentBuilder;
@@ -32,8 +33,6 @@ import org.elasticsearch.xpack.action.XPackInfoRequest;
 import org.elasticsearch.xpack.action.XPackInfoResponse;
 import org.elasticsearch.xpack.rest.XPackRestHandler;
 
-import java.util.EnumSet;
-
 import static org.elasticsearch.rest.RestRequest.Method.GET;
 import static org.elasticsearch.rest.RestRequest.Method.HEAD;
 import static org.elasticsearch.rest.RestStatus.OK;
@@ -41,14 +40,14 @@ import static org.elasticsearch.rest.RestStatus.OK;
 public class RestXPackInfoAction extends XPackRestHandler {
 
     @Inject
-    public RestXPackInfoAction(Settings settings, RestController controller, Client client) {
-        super(settings, client);
+    public RestXPackInfoAction(Settings settings, RestController controller) {
+        super(settings);
         controller.registerHandler(HEAD, URI_BASE, this);
         controller.registerHandler(GET, URI_BASE, this);
     }
 
     @Override
-    protected void handleRequest(RestRequest request, RestChannel restChannel, XPackClient client) throws Exception {
+    public void handleRequest(RestRequest request, RestChannel restChannel, XPackClient client) throws Exception {
 
         // we piggyback verbosity on "human" output
         boolean verbose = request.paramAsBoolean("human", true);

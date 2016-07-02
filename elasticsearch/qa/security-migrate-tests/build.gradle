@@ -1,0 +1,49 @@
+/*
+ * ELASTICSEARCH CONFIDENTIAL
+ * __________________
+ *
+ *  [2014] Elasticsearch Incorporated. All Rights Reserved.
+ *
+ * NOTICE:  All information contained herein is, and remains
+ * the property of Elasticsearch Incorporated and its suppliers,
+ * if any.  The intellectual and technical concepts contained
+ * herein are proprietary to Elasticsearch Incorporated
+ * and its suppliers and may be covered by U.S. and Foreign Patents,
+ * patents in process, and are protected by trade secret or copyright law.
+ * Dissemination of this information or reproduction of this material
+ * is strictly forbidden unless prior written permission is obtained
+ * from Elasticsearch Incorporated.
+ */
+
+apply plugin: 'elasticsearch.rest-test'
+
+dependencies {
+  testCompile project(path: ':x-plugins:elasticsearch:x-pack', configuration: 'runtime')
+}
+
+integTest {
+  cluster {
+    setting 'script.inline', 'true'
+    plugin 'x-pack', project(':x-plugins:elasticsearch:x-pack')
+    extraConfigFile 'x-pack/roles.yml', 'roles.yml'
+    [
+      test_admin: 'superuser',
+      transport_user: 'superuser',
+      existing: 'superuser',
+      bob: 'actual_role'
+    ].each { String user, String role ->
+      setupCommand 'setupUser#' + user,
+                   'bin/x-pack/users', 'useradd', user, '-p', 'changeme', '-r', role
+    }
+    waitCondition = { node, ant ->
+      File tmpFile = new File(node.cwd, 'wait.success')
+      ant.get(src: "http://${node.httpUri()}",
+              dest: tmpFile.toString(),
+              username: 'test_admin',
+              password: 'changeme',
+              ignoreerrors: true,
+              retries: 10)
+      return tmpFile.exists()
+    }
+  }
+}

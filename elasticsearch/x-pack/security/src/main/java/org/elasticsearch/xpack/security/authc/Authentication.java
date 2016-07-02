@@ -18,6 +18,7 @@
 package org.elasticsearch.xpack.security.authc;
 
 import org.elasticsearch.Version;
+import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.io.stream.BytesStreamOutput;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
@@ -144,7 +145,7 @@ public class Authentication {
         BytesStreamOutput output = new BytesStreamOutput();
         Version.writeVersion(Version.CURRENT, output);
         writeTo(output);
-        return Base64.getEncoder().encodeToString(output.bytes().toBytes());
+        return Base64.getEncoder().encodeToString(BytesReference.toBytes(output.bytes()));
     }
 
     void writeTo(StreamOutput out) throws IOException {
