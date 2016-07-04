@@ -65,11 +65,6 @@ public class TransformJobTest extends BaseIntegrationTest
     private static final String CONCAT_DATE_JOB = "concat-date-test";
 
     /**
-     * The default base Url used in the test
-     */
-    public static final String API_BASE_URL = "http://localhost:8080/engine/v2";
-
-    /**
      * Creates a new http client call {@linkplain #close()} once finished
      */
     public TransformJobTest(String baseUrl)

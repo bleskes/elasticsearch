@@ -56,8 +56,6 @@ import com.prelert.job.transform.Operator;
 import com.prelert.job.transform.TransformConfig;
 import com.prelert.job.transform.TransformType;
 
-import junit.framework.Assert;
-
 public class JobConfigurationVerifierTest
 {
     @Rule
@@ -140,22 +138,22 @@ public class JobConfigurationVerifierTest
         try
         {
             JobConfigurationVerifier.verify(jc);
-            Assert.assertTrue(false); // shouldn't get here
+            assertTrue(false); // shouldn't get here
         }
         catch (JobConfigurationException e)
         {
-            Assert.assertTrue(e.getErrorCode() == ErrorCodes.INCOMPLETE_CONFIGURATION);
+            assertTrue(e.getErrorCode() == ErrorCodes.INCOMPLETE_CONFIGURATION);
         }
 
         jc.setId("bad id with spaces");
         try
         {
             JobConfigurationVerifier.verify(jc);
-            Assert.assertTrue(false); // shouldn't get here
+            assertTrue(false); // shouldn't get here
         }
         catch (JobConfigurationException e)
         {
-            Assert.assertTrue(e.getErrorCode() == ErrorCodes.PROHIBITIED_CHARACTER_IN_JOB_ID);
+            assertTrue(e.getErrorCode() == ErrorCodes.PROHIBITIED_CHARACTER_IN_JOB_ID);
         }
 
 
@@ -163,22 +161,22 @@ public class JobConfigurationVerifierTest
         try
         {
             JobConfigurationVerifier.verify(jc);
-            Assert.assertTrue(false); // shouldn't get here
+            assertTrue(false); // shouldn't get here
         }
         catch (JobConfigurationException e)
         {
-            Assert.assertTrue(e.getErrorCode() == ErrorCodes.PROHIBITIED_CHARACTER_IN_JOB_ID);
+            assertTrue(e.getErrorCode() == ErrorCodes.PROHIBITIED_CHARACTER_IN_JOB_ID);
         }
 
         jc.setId("a very  very very very very very very very very very very very very very very very very very very very long id");
         try
         {
             JobConfigurationVerifier.verify(jc);
-            Assert.assertTrue(false); // shouldn't get here
+            assertTrue(false); // shouldn't get here
         }
         catch (JobConfigurationException e)
         {
-            Assert.assertTrue(e.getErrorCode() == ErrorCodes.JOB_ID_TOO_LONG);
+            assertTrue(e.getErrorCode() == ErrorCodes.JOB_ID_TOO_LONG);
         }
 
 
@@ -187,11 +185,11 @@ public class JobConfigurationVerifierTest
         try
         {
             JobConfigurationVerifier.verify(jc);
-            Assert.assertTrue(false); // shouldn't get here
+            assertTrue(false); // shouldn't get here
         }
         catch (JobConfigurationException e)
         {
-            Assert.assertTrue(e.getErrorCode() == ErrorCodes.INCOMPLETE_CONFIGURATION);
+            assertTrue(e.getErrorCode() == ErrorCodes.INCOMPLETE_CONFIGURATION);
         }
 
 
@@ -213,7 +211,7 @@ public class JobConfigurationVerifierTest
         }
         catch (JobConfigurationException e)
         {
-            Assert.assertTrue(false); // shouldn't get here
+            assertTrue(false); // shouldn't get here
         }
 
         jc.setAnalysisLimits(new AnalysisLimits(1000, 4L));
@@ -226,11 +224,11 @@ public class JobConfigurationVerifierTest
         try
         {
             JobConfigurationVerifier.verify(jc);
-            Assert.assertTrue(false); // shouldn't get here
+            assertTrue(false); // shouldn't get here
         }
         catch (JobConfigurationException e)
         {
-            Assert.assertEquals(ErrorCodes.INVALID_DATE_FORMAT, e.getErrorCode());
+            assertEquals(ErrorCodes.INVALID_DATE_FORMAT, e.getErrorCode());
         }
 
 
@@ -241,11 +239,11 @@ public class JobConfigurationVerifierTest
         try
         {
             JobConfigurationVerifier.verify(jc);
-            Assert.assertTrue(false); // shouldn't get here
+            assertTrue(false); // shouldn't get here
         }
         catch (JobConfigurationException e)
         {
-            Assert.assertEquals(ErrorCodes.INVALID_VALUE, e.getErrorCode());
+            assertEquals(ErrorCodes.INVALID_VALUE, e.getErrorCode());
         }
 
         jc.setTimeout(300L);

@@ -43,8 +43,6 @@ import com.prelert.job.Detector;
 import com.prelert.job.errorcodes.ErrorCodeMatcher;
 import com.prelert.job.errorcodes.ErrorCodes;
 
-import junit.framework.Assert;
-
 /**
  * Tests the configured fields in the analysis are correct
  * {@linkplain AnalysisConfig#analysisFields()}
@@ -71,7 +69,7 @@ public class AnalysisConfigVerifierTest
         try
         {
             AnalysisConfigVerifier.verify(ac);
-            Assert.assertTrue(false); // shouldn't get here
+            assertTrue(false); // shouldn't get here
         }
         catch (JobConfigurationException e)
         {
@@ -86,7 +84,7 @@ public class AnalysisConfigVerifierTest
         try
         {
             AnalysisConfigVerifier.verify(ac);
-            Assert.assertTrue(false); // shouldn't get here
+            assertTrue(false); // shouldn't get here
         }
         catch (JobConfigurationException e)
         {
@@ -109,7 +107,7 @@ public class AnalysisConfigVerifierTest
         try
         {
             AnalysisConfigVerifier.verify(ac);
-            Assert.assertTrue(false); // shouldn't get here
+            assertTrue(false); // shouldn't get here
         }
         catch (JobConfigurationException e)
         {
@@ -120,7 +118,7 @@ public class AnalysisConfigVerifierTest
         try
         {
             AnalysisConfigVerifier.verify(ac);
-            Assert.assertTrue(false); // shouldn't get here
+            assertTrue(false); // shouldn't get here
         }
         catch (JobConfigurationException e)
         {
@@ -132,7 +130,7 @@ public class AnalysisConfigVerifierTest
         try
         {
             AnalysisConfigVerifier.verify(ac);
-            Assert.assertTrue(false); // shouldn't get here
+            assertTrue(false); // shouldn't get here
         }
         catch (JobConfigurationException e)
         {
@@ -144,7 +142,7 @@ public class AnalysisConfigVerifierTest
         try
         {
             AnalysisConfigVerifier.verify(ac);
-            Assert.assertTrue(false); // shouldn't get here
+            assertTrue(false); // shouldn't get here
         }
         catch (JobConfigurationException e)
         {
@@ -156,7 +154,7 @@ public class AnalysisConfigVerifierTest
         try
         {
             AnalysisConfigVerifier.verify(ac);
-            Assert.assertTrue(false); // shouldn't get here
+            assertTrue(false); // shouldn't get here
         }
         catch (JobConfigurationException e)
         {
@@ -337,7 +335,7 @@ public class AnalysisConfigVerifierTest
         try
         {
             AnalysisConfigVerifier.verify(analysisConfig);
-            Assert.assertTrue(false); // shouldn't get here
+            assertTrue(false); // shouldn't get here
         }
         catch (JobConfigurationException e)
         {

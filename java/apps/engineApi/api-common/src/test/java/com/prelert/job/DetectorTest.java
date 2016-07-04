@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -28,8 +28,8 @@
 package com.prelert.job;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import junit.framework.Assert;
 
 import org.junit.Test;
 
@@ -68,7 +68,7 @@ public class DetectorTest
         Detector detector2 = createDetector();
         detector2.setDetectorDescription("bar");
 
-        Assert.assertFalse(detector1.equals(detector2));
+        assertFalse(detector1.equals(detector2));
     }
 
     @Test
@@ -80,7 +80,7 @@ public class DetectorTest
         assertEquals(detector1, detector2);
 
         detector2.setByFieldName("aa");
-        Assert.assertFalse(detector1.equals(detector2));
+        assertFalse(detector1.equals(detector2));
     }
 
     private Detector createDetector()

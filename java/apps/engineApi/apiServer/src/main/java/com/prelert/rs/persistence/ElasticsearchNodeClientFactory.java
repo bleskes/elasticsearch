@@ -59,7 +59,8 @@ public class ElasticsearchNodeClientFactory extends ElasticsearchFactory
         // Tell Elasticsearch to log via our log4j root logger
         ESLoggerFactory.setDefaultFactory(new Log4jESLoggerFactory());
         Node node = NodeBuilder.nodeBuilder()
-                .settings(buildSettings(elasticSearchHost, networkPublishHost, portRange, numProcessors)).client(true)
+                .settings(buildSettings(elasticSearchHost, networkPublishHost, portRange, numProcessors))
+                .client(true)
                 .clusterName(elasticSearchClusterName).node();
         return new ElasticsearchNodeClientFactory(node);
     }

@@ -198,7 +198,7 @@ public class Jobs extends ResourceWithJobManager
             catch (JobConfigurationException e)
             {
                 // log error and rethrow
-                LOGGER.error("Bad job configuration ", e);
+                LOGGER.error("Bad job configuration: " + e.getMessage());
                 throw e;
             }
 

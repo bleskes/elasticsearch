@@ -136,16 +136,7 @@ public class ElasticsearchBulkDeleter implements JobDataDeleter
             for (SearchHit hit : searchResponse.getHits())
             {
                 ++done;
-                DeleteRequestBuilder deleteRequest = DeleteAction.INSTANCE.newRequestBuilder(m_Client)
-                        .setIndex(m_JobId.getIndex())
-                        .setType(type)
-                        .setId(hit.getId());
-                SearchHitField parentField = hit.field(ElasticsearchMappings.PARENT);
-                if (parentField != null)
-                {
-                    deleteRequest.setParent(parentField.getValue().toString());
-                }
-                m_BulkRequestBuilder.add(deleteRequest);
+                addDeleteRequest(hit);
                 deleteCounter.getAsLong();
             }
             if (searchResponse.getHits().getTotalHits() == done)
@@ -153,6 +144,20 @@ public class ElasticsearchBulkDeleter implements JobDataDeleter
                 finished = true;
             }
         }
+    }
+
+    private void addDeleteRequest(SearchHit hit)
+    {
+        DeleteRequestBuilder deleteRequest = DeleteAction.INSTANCE.newRequestBuilder(m_Client)
+                .setIndex(m_JobId.getIndex())
+                .setType(hit.getType())
+                .setId(hit.getId());
+        SearchHitField parentField = hit.field(ElasticsearchMappings.PARENT);
+        if (parentField != null)
+        {
+            deleteRequest.setParent(parentField.getValue().toString());
+        }
+        m_BulkRequestBuilder.add(deleteRequest);
     }
 
     public void deleteBucketInfluencers(Bucket bucket)
@@ -266,8 +271,7 @@ public class ElasticsearchBulkDeleter implements JobDataDeleter
                     ++m_DeletedInfluencerCount;
                 }
                 ++totalDeletedCount;
-                m_BulkRequestBuilder.add(
-                        m_Client.prepareDelete(m_JobId.getIndex(), hit.getType(), hit.getId()));
+                addDeleteRequest(hit);
             }
 
             searchResponse = m_Client.prepareSearchScroll(scrollId).setScroll(SCROLL_CONTEXT_DURATION).get();

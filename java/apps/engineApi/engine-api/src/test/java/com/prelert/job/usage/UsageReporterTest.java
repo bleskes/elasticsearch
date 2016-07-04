@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -27,7 +27,9 @@
 
 package com.prelert.job.usage;
 
-import junit.framework.Assert;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import org.apache.log4j.Logger;
 import org.junit.Test;
@@ -37,64 +39,64 @@ import com.prelert.job.persistence.UsagePersister;
 
 public class UsageReporterTest
 {
-	@Test
-	public void testUpdatePeriod()
-	{
-		// set the update interval to 1 secs
-		System.setProperty(UsageReporter.UPDATE_INTERVAL_PROP, "1");
+    @Test
+    public void testUpdatePeriod()
+    {
+        // set the update interval to 1 secs
+        System.setProperty(UsageReporter.UPDATE_INTERVAL_PROP, "1");
 
-		Logger logger = Logger.getLogger(UsageReporterTest.class);
-		UsagePersister persister = Mockito.mock(UsagePersister.class);
-		UsageReporter usage = new UsageReporter("job1", persister, logger);
+        Logger logger = Logger.getLogger(UsageReporterTest.class);
+        UsagePersister persister = Mockito.mock(UsagePersister.class);
+        UsageReporter usage = new UsageReporter("job1", persister, logger);
 
-		usage.addBytesRead(10);
-		usage.addFieldsRecordsRead(5);
+        usage.addBytesRead(10);
+        usage.addFieldsRecordsRead(5);
 
-		Assert.assertEquals(10, usage.getBytesReadSinceLastReport());
-		Assert.assertEquals(5, usage.getFieldsReadSinceLastReport());
-		Assert.assertEquals(1, usage.getRecordsReadSinceLastReport());
+        assertEquals(10, usage.getBytesReadSinceLastReport());
+        assertEquals(5, usage.getFieldsReadSinceLastReport());
+        assertEquals(1, usage.getRecordsReadSinceLastReport());
 
-		try
-		{
-			Thread.sleep(1500);
-		}
-		catch (InterruptedException e)
-		{
-			Assert.assertTrue(false);
-		}
+        try
+        {
+            Thread.sleep(1500);
+        }
+        catch (InterruptedException e)
+        {
+            assertTrue(false);
+        }
 
-		usage.addBytesRead(50);
-		Mockito.verify(persister, Mockito.times(1)).persistUsage("job1", 60l, 5l, 1l);
+        usage.addBytesRead(50);
+        Mockito.verify(persister, Mockito.times(1)).persistUsage("job1", 60l, 5l, 1l);
 
-		Assert.assertEquals(0, usage.getBytesReadSinceLastReport());
-		Assert.assertEquals(0, usage.getFieldsReadSinceLastReport());
-		Assert.assertEquals(0, usage.getRecordsReadSinceLastReport());
-
-
-		// Write another
-		usage.addBytesRead(20);
-		usage.addFieldsRecordsRead(10);
-
-		Assert.assertEquals(20, usage.getBytesReadSinceLastReport());
-		Assert.assertEquals(10, usage.getFieldsReadSinceLastReport());
-		Assert.assertEquals(1, usage.getRecordsReadSinceLastReport());
+        assertEquals(0, usage.getBytesReadSinceLastReport());
+        assertEquals(0, usage.getFieldsReadSinceLastReport());
+        assertEquals(0, usage.getRecordsReadSinceLastReport());
 
 
-		try
-		{
-			Thread.sleep(1500);
-		}
-		catch (InterruptedException e)
-		{
-			Assert.assertTrue(false);
-		}
+        // Write another
+        usage.addBytesRead(20);
+        usage.addFieldsRecordsRead(10);
 
-		usage.addBytesRead(10);
-		Mockito.verify(persister, Mockito.times(1)).persistUsage("job1", 30l, 10l, 1l);
+        assertEquals(20, usage.getBytesReadSinceLastReport());
+        assertEquals(10, usage.getFieldsReadSinceLastReport());
+        assertEquals(1, usage.getRecordsReadSinceLastReport());
 
-		Assert.assertEquals(0, usage.getBytesReadSinceLastReport());
-		Assert.assertEquals(0, usage.getFieldsReadSinceLastReport());
-		Assert.assertEquals(0, usage.getRecordsReadSinceLastReport());
 
-	}
+        try
+        {
+            Thread.sleep(1500);
+        }
+        catch (InterruptedException e)
+        {
+            assertTrue(false);
+        }
+
+        usage.addBytesRead(10);
+        Mockito.verify(persister, Mockito.times(1)).persistUsage("job1", 30l, 10l, 1l);
+
+        assertEquals(0, usage.getBytesReadSinceLastReport());
+        assertEquals(0, usage.getFieldsReadSinceLastReport());
+        assertEquals(0, usage.getRecordsReadSinceLastReport());
+
+    }
 }

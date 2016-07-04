@@ -28,6 +28,9 @@
 
 package com.prelert.job.status;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
 import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
@@ -42,8 +45,6 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
-
-import junit.framework.Assert;
 
 import org.apache.log4j.Logger;
 import org.junit.Test;
@@ -171,9 +172,9 @@ public class DataFormatWarningsTest
                     countsPersister, LOGGER, 1);
             JobDataPersister dp = new NoneJobDataPersister();
 
-            Assert.assertEquals(MAX_PERCENT_DATE_PARSE_ERRORS,
+            assertEquals(MAX_PERCENT_DATE_PARSE_ERRORS,
                     statusReporter.getAcceptablePercentDateParseErrors());
-            Assert.assertEquals(MAX_PERCENT_OUT_OF_ORDER_ERRORS,
+            assertEquals(MAX_PERCENT_OUT_OF_ORDER_ERRORS,
                     statusReporter.getAcceptablePercentOutOfOrderErrors());
 
             try
@@ -181,7 +182,7 @@ public class DataFormatWarningsTest
                 pm.writeToJob(dd, ac, null, new TransformConfigs(Arrays.<TransformConfig>asList()), bis,
                         new NullOutputStream(),
                         statusReporter, dp, LOGGER);
-                Assert.assertTrue(false); // should throw
+                assertTrue(false); // should throw
             }
             catch (HighProportionOfBadTimestampsException e)
             {
@@ -190,18 +191,18 @@ public class DataFormatWarningsTest
                 Mockito.verify(countsPersister).persistDataCounts(Mockito.anyString(), Mockito.any());
                 Mockito.verify(usagePersister, times(1)).persistUsage(anyString(), anyLong(), anyLong(), anyLong());
 
-                Assert.assertEquals(statusReporter.getBytesRead(),
+                assertEquals(statusReporter.getBytesRead(),
                         usageReporter.getTotalBytesRead());
-                Assert.assertEquals(statusReporter.getInputFieldCount(),
+                assertEquals(statusReporter.getInputFieldCount(),
                         usageReporter.getTotalFieldsRead());
-                Assert.assertEquals(statusReporter.getInputRecordCount(),
+                assertEquals(statusReporter.getInputRecordCount(),
                         usageReporter.getTotalRecordsRead());
 
-                Assert.assertEquals(0, usageReporter.getBytesReadSinceLastReport());
-                Assert.assertEquals(0, usageReporter.getFieldsReadSinceLastReport());
-                Assert.assertEquals(0, usageReporter.getRecordsReadSinceLastReport());
+                assertEquals(0, usageReporter.getBytesReadSinceLastReport());
+                assertEquals(0, usageReporter.getFieldsReadSinceLastReport());
+                assertEquals(0, usageReporter.getRecordsReadSinceLastReport());
 
-                Assert.assertTrue(percentBad >= MAX_PERCENT_DATE_PARSE_ERRORS);
+                assertTrue(percentBad >= MAX_PERCENT_DATE_PARSE_ERRORS);
             }
         }
     }
@@ -302,16 +303,16 @@ public class DataFormatWarningsTest
                     countsPersister, LOGGER, 1);
             JobDataPersister dp = new NoneJobDataPersister();
 
-            Assert.assertEquals(MAX_PERCENT_DATE_PARSE_ERRORS,
+            assertEquals(MAX_PERCENT_DATE_PARSE_ERRORS,
                     statusReporter.getAcceptablePercentDateParseErrors());
-            Assert.assertEquals(MAX_PERCENT_OUT_OF_ORDER_ERRORS,
+            assertEquals(MAX_PERCENT_OUT_OF_ORDER_ERRORS,
                     statusReporter.getAcceptablePercentOutOfOrderErrors());
 
             try
             {
                 pm.writeToJob(dd, ac, null, new TransformConfigs(Arrays.<TransformConfig>asList()), bis, new NullOutputStream(),
                         statusReporter, dp, LOGGER);
-                Assert.assertTrue(false); // should throw
+                assertTrue(false); // should throw
             }
             catch (HighProportionOfBadTimestampsException e)
             {
@@ -320,18 +321,18 @@ public class DataFormatWarningsTest
                 Mockito.verify(countsPersister).persistDataCounts(Mockito.any(), Mockito.any());
                 Mockito.verify(usagePersister, times(1)).persistUsage(anyString(), anyLong(), anyLong(), anyLong());
 
-                Assert.assertEquals(statusReporter.getBytesRead(),
+                assertEquals(statusReporter.getBytesRead(),
                         usageReporter.getTotalBytesRead());
-                Assert.assertEquals(statusReporter.getInputFieldCount(),
+                assertEquals(statusReporter.getInputFieldCount(),
                         usageReporter.getTotalFieldsRead());
-                Assert.assertEquals(statusReporter.getInputRecordCount(),
+                assertEquals(statusReporter.getInputRecordCount(),
                         usageReporter.getTotalRecordsRead());
 
-                Assert.assertEquals(0, usageReporter.getBytesReadSinceLastReport());
-                Assert.assertEquals(0, usageReporter.getFieldsReadSinceLastReport());
-                Assert.assertEquals(0, usageReporter.getRecordsReadSinceLastReport());
+                assertEquals(0, usageReporter.getBytesReadSinceLastReport());
+                assertEquals(0, usageReporter.getFieldsReadSinceLastReport());
+                assertEquals(0, usageReporter.getRecordsReadSinceLastReport());
 
-                Assert.assertTrue(percentBad >= MAX_PERCENT_DATE_PARSE_ERRORS);
+                assertTrue(percentBad >= MAX_PERCENT_DATE_PARSE_ERRORS);
             }
         }
     }
@@ -420,16 +421,16 @@ public class DataFormatWarningsTest
                     countsPersister, LOGGER, 1);
             JobDataPersister dp = new NoneJobDataPersister();
 
-            Assert.assertEquals(MAX_PERCENT_DATE_PARSE_ERRORS,
+            assertEquals(MAX_PERCENT_DATE_PARSE_ERRORS,
                     statusReporter.getAcceptablePercentDateParseErrors());
-            Assert.assertEquals(MAX_PERCENT_OUT_OF_ORDER_ERRORS,
+            assertEquals(MAX_PERCENT_OUT_OF_ORDER_ERRORS,
                     statusReporter.getAcceptablePercentOutOfOrderErrors());
 
             try
             {
                 pm.writeToJob(dd, ac, null, new TransformConfigs(Arrays.<TransformConfig>asList()), bis, new NullOutputStream(),
                         statusReporter, dp, LOGGER);
-                Assert.assertTrue(false); // should throw
+                assertTrue(false); // should throw
             }
             catch (OutOfOrderRecordsException e)
             {
@@ -438,18 +439,18 @@ public class DataFormatWarningsTest
                 Mockito.verify(countsPersister).persistDataCounts(Mockito.anyString(), Mockito.any());
                 Mockito.verify(usagePersister, times(1)).persistUsage(anyString(), anyLong(), anyLong(), anyLong());
 
-                Assert.assertEquals(statusReporter.getBytesRead(),
+                assertEquals(statusReporter.getBytesRead(),
                         usageReporter.getTotalBytesRead());
-                Assert.assertEquals(statusReporter.getInputFieldCount(),
+                assertEquals(statusReporter.getInputFieldCount(),
                         usageReporter.getTotalFieldsRead());
-                Assert.assertEquals(statusReporter.getInputRecordCount(),
+                assertEquals(statusReporter.getInputRecordCount(),
                         usageReporter.getTotalRecordsRead());
 
-                Assert.assertEquals(0, usageReporter.getBytesReadSinceLastReport());
-                Assert.assertEquals(0, usageReporter.getFieldsReadSinceLastReport());
-                Assert.assertEquals(0, usageReporter.getRecordsReadSinceLastReport());
+                assertEquals(0, usageReporter.getBytesReadSinceLastReport());
+                assertEquals(0, usageReporter.getFieldsReadSinceLastReport());
+                assertEquals(0, usageReporter.getRecordsReadSinceLastReport());
 
-                Assert.assertTrue(percentBad >= MAX_PERCENT_OUT_OF_ORDER_ERRORS);
+                assertTrue(percentBad >= MAX_PERCENT_OUT_OF_ORDER_ERRORS);
             }
         }
     }
@@ -538,16 +539,16 @@ public class DataFormatWarningsTest
                     countsPersister, LOGGER, 1);
             JobDataPersister dp = new NoneJobDataPersister();
 
-            Assert.assertEquals(MAX_PERCENT_DATE_PARSE_ERRORS,
+            assertEquals(MAX_PERCENT_DATE_PARSE_ERRORS,
                     statusReporter.getAcceptablePercentDateParseErrors());
-            Assert.assertEquals(MAX_PERCENT_OUT_OF_ORDER_ERRORS,
+            assertEquals(MAX_PERCENT_OUT_OF_ORDER_ERRORS,
                     statusReporter.getAcceptablePercentOutOfOrderErrors());
 
             try
             {
                 pm.writeToJob(dd, ac, null, new TransformConfigs(Arrays.<TransformConfig>asList()), bis, new NullOutputStream(),
                         statusReporter, dp, LOGGER);
-                Assert.assertTrue(false); // should throw
+                assertTrue(false); // should throw
             }
             catch (OutOfOrderRecordsException e)
             {
@@ -556,18 +557,18 @@ public class DataFormatWarningsTest
                 Mockito.verify(countsPersister).persistDataCounts(Mockito.anyString(), Mockito.any());
                 Mockito.verify(usagePersister, times(1)).persistUsage(anyString(), anyLong(), anyLong(), anyLong());
 
-                Assert.assertEquals(statusReporter.getBytesRead(),
+                assertEquals(statusReporter.getBytesRead(),
                         usageReporter.getTotalBytesRead());
-                Assert.assertEquals(statusReporter.getInputFieldCount(),
+                assertEquals(statusReporter.getInputFieldCount(),
                         usageReporter.getTotalFieldsRead());
-                Assert.assertEquals(statusReporter.getInputRecordCount(),
+                assertEquals(statusReporter.getInputRecordCount(),
                         usageReporter.getTotalRecordsRead());
 
-                Assert.assertEquals(0, usageReporter.getBytesReadSinceLastReport());
-                Assert.assertEquals(0, usageReporter.getFieldsReadSinceLastReport());
-                Assert.assertEquals(0, usageReporter.getRecordsReadSinceLastReport());
+                assertEquals(0, usageReporter.getBytesReadSinceLastReport());
+                assertEquals(0, usageReporter.getFieldsReadSinceLastReport());
+                assertEquals(0, usageReporter.getRecordsReadSinceLastReport());
 
-                Assert.assertTrue(percentBad >= MAX_PERCENT_OUT_OF_ORDER_ERRORS);
+                assertTrue(percentBad >= MAX_PERCENT_OUT_OF_ORDER_ERRORS);
             }
         }
     }

@@ -29,8 +29,7 @@ package com.prelert.job.config.verification;
 import java.util.Set;
 import java.util.regex.Pattern;
 
-import org.elasticsearch.common.Strings;
-
+import com.google.common.base.Strings;
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataDescription;
 import com.prelert.job.DataDescription.DataFormat;

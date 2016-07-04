@@ -27,7 +27,13 @@
 
 package com.prelert.job.manager.actions.zookeeper;
 
-import static org.junit.Assert.*;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.IOException;
 import java.net.ConnectException;
@@ -45,11 +51,11 @@ import org.apache.curator.retry.ExponentialBackoffRetry;
 import org.apache.curator.test.TestingServer;
 import org.apache.zookeeper.data.Stat;
 import org.hamcrest.Description;
+import org.hamcrest.TypeSafeMatcher;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.internal.matchers.TypeSafeMatcher;
 import org.junit.rules.ExpectedException;
 import org.mockito.Mockito;
 
@@ -377,12 +383,12 @@ public class ZooKeeperActionGuardianIT
         {
             String data = "macbook-CLOSING";
             ZooKeeperActionGuardian<Action>.HostnameAction ha = guardian.lockDataToHostAction(data);
-            assertEquals("macbook", ha.m_Hostname);
+            assertEquals("macbook", ha.m_Host);
             assertEquals(Action.CLOSING, ha.m_Action);
 
             data = "funny-host.name-FLUSHING";
             ha = guardian.lockDataToHostAction(data);
-            assertEquals("funny-host.name", ha.m_Hostname);
+            assertEquals("funny-host.name", ha.m_Host);
             assertEquals(Action.FLUSHING, ha.m_Action);
         }
     }
@@ -396,12 +402,12 @@ public class ZooKeeperActionGuardianIT
         {
             String data = "funny-host.name";
             ZooKeeperActionGuardian<Action>.HostnameAction ha = guardian.lockDataToHostAction(data);
-            assertEquals("funny-host.name", ha.m_Hostname);
+            assertEquals("funny-host.name", ha.m_Host);
             assertEquals(Action.CLOSED, ha.m_Action);
 
             data = "funny-host.name-";
             ha = guardian.lockDataToHostAction(data);
-            assertEquals("funny-host.name-", ha.m_Hostname);
+            assertEquals("funny-host.name-", ha.m_Host);
             assertEquals(Action.CLOSED, ha.m_Action);
         }
     }

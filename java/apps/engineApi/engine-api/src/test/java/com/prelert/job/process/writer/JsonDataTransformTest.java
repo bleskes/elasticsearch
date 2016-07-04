@@ -27,6 +27,9 @@
 
 package com.prelert.job.process.writer;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
 import static org.mockito.Mockito.mock;
 
 import java.io.ByteArrayInputStream;
@@ -37,8 +40,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Set;
 import java.util.TreeSet;
-
-import junit.framework.Assert;
 
 import org.apache.log4j.Logger;
 import org.junit.Test;
@@ -124,32 +125,32 @@ public class JsonDataTransformTest
                  dataPersister, LOGGER);
         ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
 
-        Assert.assertEquals(usageReporter.getTotalBytesRead(),
+        assertEquals(usageReporter.getTotalBytesRead(),
                 data.getBytes(StandardCharsets.UTF_8).length - 1);
-        Assert.assertEquals(8, usageReporter.getTotalRecordsRead() );
-        Assert.assertEquals(8 * 4, usageReporter.getTotalFieldsRead() );
+        assertEquals(8, usageReporter.getTotalRecordsRead() );
+        assertEquals(8 * 4, usageReporter.getTotalFieldsRead() );
 
-        Assert.assertEquals(8, statusReporter.getInputRecordCount() );
-        Assert.assertEquals(8 * 4, statusReporter.getInputFieldCount() );
-        Assert.assertEquals(8, statusReporter.getProcessedRecordCount() );
-        Assert.assertEquals(8 * 3, statusReporter.getProcessedFieldCount() );
-        Assert.assertEquals(0, statusReporter.getMissingFieldErrorCount());
-        Assert.assertEquals(0, statusReporter.getDateParseErrorsCount());
-        Assert.assertEquals(0, statusReporter.getOutOfOrderRecordCount());
+        assertEquals(8, statusReporter.getInputRecordCount() );
+        assertEquals(8 * 4, statusReporter.getInputFieldCount() );
+        assertEquals(8, statusReporter.getProcessedRecordCount() );
+        assertEquals(8 * 3, statusReporter.getProcessedFieldCount() );
+        assertEquals(0, statusReporter.getMissingFieldErrorCount());
+        assertEquals(0, statusReporter.getDateParseErrorsCount());
+        assertEquals(0, statusReporter.getOutOfOrderRecordCount());
 
-        Assert.assertEquals(statusReporter.runningTotalStats(), statusReporter.incrementalStats());
+        assertEquals(statusReporter.runningTotalStats(), statusReporter.incrementalStats());
 
 
-        Assert.assertEquals(dataPersister.getRecordCount(), 8);
+        assertEquals(dataPersister.getRecordCount(), 8);
 
         // check header
         int numFields = bb.getInt();
-        Assert.assertEquals(header.length, numFields);
+        assertEquals(header.length, numFields);
 
         for (int i=0; i<numFields; i++)
         {
             int recordSize = bb.getInt();
-            Assert.assertEquals(header[fieldMap[i]].length(), recordSize);
+            assertEquals(header[fieldMap[i]].length(), recordSize);
             byte [] charBuff = new byte[recordSize];
             for (int j=0; j<recordSize; j++)
             {
@@ -157,7 +158,7 @@ public class JsonDataTransformTest
             }
 
             String value = new String(charBuff, StandardCharsets.UTF_8);
-            Assert.assertEquals(header[fieldMap[i]], value);
+            assertEquals(header[fieldMap[i]], value);
         }
 
 
@@ -165,7 +166,7 @@ public class JsonDataTransformTest
         for (String [] fields : records)
         {
             numFields = bb.getInt();
-            Assert.assertEquals(fields.length, numFields);
+            assertEquals(fields.length, numFields);
 
             for (int i=0; i<numFields; i++)
             {
@@ -178,8 +179,8 @@ public class JsonDataTransformTest
 
                 String value = new String(charBuff, StandardCharsets.UTF_8);
 
-                Assert.assertEquals(fields[fieldMap[i]].length(), recordSize);
-                Assert.assertEquals(fields[fieldMap[i]], value);
+                assertEquals(fields[fieldMap[i]].length(), recordSize);
+                assertEquals(fields[fieldMap[i]], value);
             }
         }
     }
@@ -237,7 +238,7 @@ public class JsonDataTransformTest
 
         for (String s : ac.analysisFields())
         {
-            Assert.assertTrue(analysisFields.contains(s));
+            assertTrue(analysisFields.contains(s));
         }
 
         ProcessManager pm = createProcessManager();
@@ -253,32 +254,32 @@ public class JsonDataTransformTest
         pm.writeToJob(dd, ac, null, new TransformConfigs(Arrays.<TransformConfig>asList()), bis, bos, statusReporter, dp, LOGGER);
         ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
 
-        Assert.assertEquals(usageReporter.getTotalBytesRead(), statusReporter.getBytesRead());
-        Assert.assertEquals(8, statusReporter.getInputRecordCount() );
-        Assert.assertEquals(8 * 3, statusReporter.getInputFieldCount() );
-        Assert.assertEquals(8, statusReporter.getProcessedRecordCount() );
-        Assert.assertEquals(8 * 3, statusReporter.getProcessedFieldCount() );
-        Assert.assertEquals(0, statusReporter.getMissingFieldErrorCount());
-        Assert.assertEquals(0, statusReporter.getDateParseErrorsCount());
-        Assert.assertEquals(0, statusReporter.getOutOfOrderRecordCount());
+        assertEquals(usageReporter.getTotalBytesRead(), statusReporter.getBytesRead());
+        assertEquals(8, statusReporter.getInputRecordCount() );
+        assertEquals(8 * 3, statusReporter.getInputFieldCount() );
+        assertEquals(8, statusReporter.getProcessedRecordCount() );
+        assertEquals(8 * 3, statusReporter.getProcessedFieldCount() );
+        assertEquals(0, statusReporter.getMissingFieldErrorCount());
+        assertEquals(0, statusReporter.getDateParseErrorsCount());
+        assertEquals(0, statusReporter.getOutOfOrderRecordCount());
 
-        Assert.assertEquals(statusReporter.runningTotalStats(), statusReporter.incrementalStats());
+        assertEquals(statusReporter.runningTotalStats(), statusReporter.incrementalStats());
 
-        Assert.assertEquals(usageReporter.getTotalBytesRead(),
+        assertEquals(usageReporter.getTotalBytesRead(),
                 data.getBytes(StandardCharsets.UTF_8).length - 1);
-        Assert.assertEquals(usageReporter.getTotalBytesRead(),
+        assertEquals(usageReporter.getTotalBytesRead(),
                 statusReporter.getBytesRead());
 
-        Assert.assertEquals(dp.getRecordCount(), 8);
+        assertEquals(dp.getRecordCount(), 8);
 
         // check header
         int numFields = bb.getInt();
-        Assert.assertEquals(header.length, numFields);
+        assertEquals(header.length, numFields);
 
         for (int i=0; i<numFields; i++)
         {
             int recordSize = bb.getInt();
-            Assert.assertEquals(header[fieldMap[i]].length(), recordSize);
+            assertEquals(header[fieldMap[i]].length(), recordSize);
             byte [] charBuff = new byte[recordSize];
             for (int j=0; j<recordSize; j++)
             {
@@ -286,7 +287,7 @@ public class JsonDataTransformTest
             }
 
             String value = new String(charBuff, StandardCharsets.UTF_8);
-            Assert.assertEquals(header[fieldMap[i]], value);
+            assertEquals(header[fieldMap[i]], value);
         }
 
 
@@ -294,12 +295,12 @@ public class JsonDataTransformTest
         for (String [] fields : records)
         {
             numFields = bb.getInt();
-            Assert.assertEquals(fields.length, numFields);
+            assertEquals(fields.length, numFields);
 
             for (int i=0; i<numFields; i++)
             {
                 int recordSize = bb.getInt();
-                Assert.assertEquals(fields[fieldMap[i]].length(), recordSize);
+                assertEquals(fields[fieldMap[i]].length(), recordSize);
                 byte [] charBuff = new byte[recordSize];
                 for (int j=0; j<recordSize; j++)
                 {
@@ -307,7 +308,7 @@ public class JsonDataTransformTest
                  }
 
                 String value = new String(charBuff, StandardCharsets.UTF_8);
-                Assert.assertEquals(fields[fieldMap[i]], value);
+                assertEquals(fields[fieldMap[i]], value);
             }
         }
     }
@@ -367,7 +368,7 @@ public class JsonDataTransformTest
 
         for (String s : ac.analysisFields())
         {
-            Assert.assertTrue(analysisFields.contains(s));
+            assertTrue(analysisFields.contains(s));
         }
 
         ProcessManager pm = createProcessManager();
@@ -383,37 +384,37 @@ public class JsonDataTransformTest
         pm.writeToJob(dd, ac, null, new TransformConfigs(Arrays.<TransformConfig>asList()), bis, bos, statusReporter, dp, LOGGER);
         ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
 
-        Assert.assertEquals(usageReporter.getTotalBytesRead(),
+        assertEquals(usageReporter.getTotalBytesRead(),
                 data.getBytes(StandardCharsets.UTF_8).length - 1);
-        Assert.assertEquals(8, usageReporter.getTotalRecordsRead() );
-        Assert.assertEquals(8 * 5, usageReporter.getTotalFieldsRead() );
+        assertEquals(8, usageReporter.getTotalRecordsRead() );
+        assertEquals(8 * 5, usageReporter.getTotalFieldsRead() );
 
 
-        Assert.assertEquals(8, statusReporter.getInputRecordCount() );
-        Assert.assertEquals(8 * 5, statusReporter.getInputFieldCount() );
-        Assert.assertEquals(8, statusReporter.getProcessedRecordCount() );
-        Assert.assertEquals(8 * 3, statusReporter.getProcessedFieldCount() );
-        Assert.assertEquals(0, statusReporter.getMissingFieldErrorCount());
-        Assert.assertEquals(0, statusReporter.getDateParseErrorsCount());
-        Assert.assertEquals(0, statusReporter.getOutOfOrderRecordCount());
+        assertEquals(8, statusReporter.getInputRecordCount() );
+        assertEquals(8 * 5, statusReporter.getInputFieldCount() );
+        assertEquals(8, statusReporter.getProcessedRecordCount() );
+        assertEquals(8 * 3, statusReporter.getProcessedFieldCount() );
+        assertEquals(0, statusReporter.getMissingFieldErrorCount());
+        assertEquals(0, statusReporter.getDateParseErrorsCount());
+        assertEquals(0, statusReporter.getOutOfOrderRecordCount());
 
-        Assert.assertEquals(statusReporter.runningTotalStats(), statusReporter.incrementalStats());
+        assertEquals(statusReporter.runningTotalStats(), statusReporter.incrementalStats());
 
-        Assert.assertEquals(usageReporter.getTotalBytesRead(),
+        assertEquals(usageReporter.getTotalBytesRead(),
                 data.getBytes(StandardCharsets.UTF_8).length - 1);
-        Assert.assertEquals(usageReporter.getTotalBytesRead(),
+        assertEquals(usageReporter.getTotalBytesRead(),
                 statusReporter.getBytesRead());
 
-        Assert.assertEquals(dp.getRecordCount(), 8);
+        assertEquals(dp.getRecordCount(), 8);
 
         // check header
         int numFields = bb.getInt();
-        Assert.assertEquals(header.length, numFields);
+        assertEquals(header.length, numFields);
 
         for (int i=0; i<numFields; i++)
         {
             int recordSize = bb.getInt();
-            Assert.assertEquals(header[fieldMap[i]].length(), recordSize);
+            assertEquals(header[fieldMap[i]].length(), recordSize);
             byte [] charBuff = new byte[recordSize];
             for (int j=0; j<recordSize; j++)
             {
@@ -421,7 +422,7 @@ public class JsonDataTransformTest
             }
 
             String value = new String(charBuff, StandardCharsets.UTF_8);
-            Assert.assertEquals(header[fieldMap[i]], value);
+            assertEquals(header[fieldMap[i]], value);
         }
 
 
@@ -429,12 +430,12 @@ public class JsonDataTransformTest
         for (String [] fields : records)
         {
             numFields = bb.getInt();
-            Assert.assertEquals(fields.length, numFields);
+            assertEquals(fields.length, numFields);
 
             for (int i=0; i<numFields; i++)
             {
                 int recordSize = bb.getInt();
-                Assert.assertEquals(fields[fieldMap[i]].length(), recordSize);
+                assertEquals(fields[fieldMap[i]].length(), recordSize);
                 byte [] charBuff = new byte[recordSize];
                 for (int j=0; j<recordSize; j++)
                 {
@@ -442,7 +443,7 @@ public class JsonDataTransformTest
                  }
 
                 String value = new String(charBuff, StandardCharsets.UTF_8);
-                Assert.assertEquals(fields[fieldMap[i]], value);
+                assertEquals(fields[fieldMap[i]], value);
             }
         }
     }
@@ -498,7 +499,7 @@ public class JsonDataTransformTest
 
         for (String s : ac.analysisFields())
         {
-            Assert.assertTrue(analysisFields.contains(s));
+            assertTrue(analysisFields.contains(s));
         }
 
 
@@ -515,33 +516,33 @@ public class JsonDataTransformTest
         pm.writeToJob(dd, ac, null, new TransformConfigs(Arrays.<TransformConfig>asList()), bis, bos, statusReporter, dp, LOGGER);
         ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
 
-        Assert.assertEquals(usageReporter.getTotalBytesRead(),
+        assertEquals(usageReporter.getTotalBytesRead(),
                 data.getBytes(StandardCharsets.UTF_8).length - 1);
 
-        Assert.assertEquals(usageReporter.getTotalBytesRead(),
+        assertEquals(usageReporter.getTotalBytesRead(),
                 data.getBytes(StandardCharsets.UTF_8).length - 1);
-        Assert.assertEquals(8, usageReporter.getTotalRecordsRead() );
-        Assert.assertEquals(8 * 4, usageReporter.getTotalFieldsRead() );
+        assertEquals(8, usageReporter.getTotalRecordsRead() );
+        assertEquals(8 * 4, usageReporter.getTotalFieldsRead() );
 
-        Assert.assertEquals(8, statusReporter.getInputRecordCount() );
-        Assert.assertEquals(8 * 4, statusReporter.getInputFieldCount() );
-        Assert.assertEquals(8, statusReporter.getProcessedRecordCount() );
-        Assert.assertEquals(8 * 3, statusReporter.getProcessedFieldCount() );
-        Assert.assertEquals(0, statusReporter.getMissingFieldErrorCount());
-        Assert.assertEquals(0, statusReporter.getDateParseErrorsCount());
-        Assert.assertEquals(0, statusReporter.getOutOfOrderRecordCount());
+        assertEquals(8, statusReporter.getInputRecordCount() );
+        assertEquals(8 * 4, statusReporter.getInputFieldCount() );
+        assertEquals(8, statusReporter.getProcessedRecordCount() );
+        assertEquals(8 * 3, statusReporter.getProcessedFieldCount() );
+        assertEquals(0, statusReporter.getMissingFieldErrorCount());
+        assertEquals(0, statusReporter.getDateParseErrorsCount());
+        assertEquals(0, statusReporter.getOutOfOrderRecordCount());
 
 
-        Assert.assertEquals(dp.getRecordCount(), 8);
+        assertEquals(dp.getRecordCount(), 8);
 
         // check header
         int numFields = bb.getInt();
-        Assert.assertEquals(header.length, numFields);
+        assertEquals(header.length, numFields);
 
         for (int i=0; i<numFields; i++)
         {
             int recordSize = bb.getInt();
-            Assert.assertEquals(header[fieldMap[i]].length(), recordSize);
+            assertEquals(header[fieldMap[i]].length(), recordSize);
             byte [] charBuff = new byte[recordSize];
             for (int j=0; j<recordSize; j++)
             {
@@ -549,7 +550,7 @@ public class JsonDataTransformTest
             }
 
             String value = new String(charBuff, StandardCharsets.UTF_8);
-            Assert.assertEquals(header[fieldMap[i]], value);
+            assertEquals(header[fieldMap[i]], value);
         }
 
 
@@ -557,12 +558,12 @@ public class JsonDataTransformTest
         for (String [] fields : records)
         {
             numFields = bb.getInt();
-            Assert.assertEquals(fields.length, numFields);
+            assertEquals(fields.length, numFields);
 
             for (int i=0; i<numFields; i++)
             {
                 int recordSize = bb.getInt();
-                Assert.assertEquals(fields[fieldMap[i]].length(), recordSize);
+                assertEquals(fields[fieldMap[i]].length(), recordSize);
                 byte [] charBuff = new byte[recordSize];
                 for (int j=0; j<recordSize; j++)
                 {
@@ -570,7 +571,7 @@ public class JsonDataTransformTest
                  }
 
                 String value = new String(charBuff, StandardCharsets.UTF_8);
-                Assert.assertEquals(fields[fieldMap[i]], value);
+                assertEquals(fields[fieldMap[i]], value);
             }
         }
     }
@@ -658,7 +659,7 @@ public class JsonDataTransformTest
 
         for (String s : ac.analysisFields())
         {
-            Assert.assertTrue(analysisFields.contains(s));
+            assertTrue(analysisFields.contains(s));
         }
 
         DataDescription [] dds = new DataDescription [] {dateFormatDD, epochFormatDD,
@@ -682,32 +683,32 @@ public class JsonDataTransformTest
             pm.writeToJob(dd, ac, null, new TransformConfigs(Arrays.<TransformConfig>asList()), bis, bos, statusReporter, dp, LOGGER);
             ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
 
-            Assert.assertEquals(usageReporter.getTotalBytesRead(),
+            assertEquals(usageReporter.getTotalBytesRead(),
                     data.getBytes(StandardCharsets.UTF_8).length - 1);
 
-            Assert.assertEquals(usageReporter.getTotalBytesRead(),
+            assertEquals(usageReporter.getTotalBytesRead(),
                     data.getBytes(StandardCharsets.UTF_8).length - 1);
-            Assert.assertEquals(8, usageReporter.getTotalRecordsRead() );
-            Assert.assertEquals(7 + 7 + 7, usageReporter.getTotalFieldsRead() );
+            assertEquals(8, usageReporter.getTotalRecordsRead() );
+            assertEquals(7 + 7 + 7, usageReporter.getTotalFieldsRead() );
 
-            Assert.assertEquals(8, statusReporter.getInputRecordCount() );
-            Assert.assertEquals(7 + 7 + 7, statusReporter.getInputFieldCount() );
-            Assert.assertEquals(8, statusReporter.getProcessedRecordCount() );
-            Assert.assertEquals(8 * 3 -3, statusReporter.getProcessedFieldCount() );
-            Assert.assertEquals(3, statusReporter.getMissingFieldErrorCount());
-            Assert.assertEquals(0, statusReporter.getDateParseErrorsCount());
-            Assert.assertEquals(0, statusReporter.getOutOfOrderRecordCount());
+            assertEquals(8, statusReporter.getInputRecordCount() );
+            assertEquals(7 + 7 + 7, statusReporter.getInputFieldCount() );
+            assertEquals(8, statusReporter.getProcessedRecordCount() );
+            assertEquals(8 * 3 -3, statusReporter.getProcessedFieldCount() );
+            assertEquals(3, statusReporter.getMissingFieldErrorCount());
+            assertEquals(0, statusReporter.getDateParseErrorsCount());
+            assertEquals(0, statusReporter.getOutOfOrderRecordCount());
 
 
-            Assert.assertEquals(dp.getRecordCount(), 8);
+            assertEquals(dp.getRecordCount(), 8);
 
             // check header
             int numFields = bb.getInt();
-            Assert.assertEquals(header.length, numFields);
+            assertEquals(header.length, numFields);
             for (int i=0; i<numFields; i++)
             {
                 int recordSize = bb.getInt();
-                Assert.assertEquals(header[fieldMap[i]].length(), recordSize);
+                assertEquals(header[fieldMap[i]].length(), recordSize);
                 byte [] charBuff = new byte[recordSize];
                 for (int j=0; j<recordSize; j++)
                 {
@@ -715,7 +716,7 @@ public class JsonDataTransformTest
                 }
 
                 String value = new String(charBuff, StandardCharsets.UTF_8);
-                Assert.assertEquals(header[fieldMap[i]], value);
+                assertEquals(header[fieldMap[i]], value);
             }
 
 
@@ -723,12 +724,12 @@ public class JsonDataTransformTest
             for (String [] fields : records)
             {
                 numFields = bb.getInt();
-                Assert.assertEquals(fields.length, numFields);
+                assertEquals(fields.length, numFields);
 
                 for (int i=0; i<numFields; i++)
                 {
                     int recordSize = bb.getInt();
-                    Assert.assertEquals(fields[fieldMap[i]].length(), recordSize);
+                    assertEquals(fields[fieldMap[i]].length(), recordSize);
                     byte [] charBuff = new byte[recordSize];
                     for (int j=0; j<recordSize; j++)
                     {
@@ -737,7 +738,7 @@ public class JsonDataTransformTest
 
                     String value = new String(charBuff, StandardCharsets.UTF_8);
 
-                    Assert.assertEquals(fields[fieldMap[i]], value);
+                    assertEquals(fields[fieldMap[i]], value);
                 }
             }
         }
@@ -796,7 +797,7 @@ public class JsonDataTransformTest
 
         for (String s : ac.analysisFields())
         {
-            Assert.assertTrue(analysisFields.contains(s));
+            assertTrue(analysisFields.contains(s));
         }
 
 
@@ -826,33 +827,33 @@ public class JsonDataTransformTest
             pm.writeToJob(dd, ac, null, new TransformConfigs(Arrays.<TransformConfig>asList()), bis, bos, statusReporter, dp, LOGGER);
             ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
 
-            Assert.assertEquals(usageReporter.getTotalBytesRead(),
+            assertEquals(usageReporter.getTotalBytesRead(),
                     data.getBytes(StandardCharsets.UTF_8).length - 1);
 
-            Assert.assertEquals(usageReporter.getTotalBytesRead(),
+            assertEquals(usageReporter.getTotalBytesRead(),
                     data.getBytes(StandardCharsets.UTF_8).length - 1);
-            Assert.assertEquals(4, usageReporter.getTotalRecordsRead() );
-            Assert.assertEquals(14 , usageReporter.getTotalFieldsRead() );
+            assertEquals(4, usageReporter.getTotalRecordsRead() );
+            assertEquals(14 , usageReporter.getTotalFieldsRead() );
 
-            Assert.assertEquals(4, statusReporter.getInputRecordCount() );
-            Assert.assertEquals(14, statusReporter.getInputFieldCount() );
-            Assert.assertEquals(4, statusReporter.getProcessedRecordCount() );
-            Assert.assertEquals(4 * 3 - 1, statusReporter.getProcessedFieldCount() );
-            Assert.assertEquals(1, statusReporter.getMissingFieldErrorCount());
-            Assert.assertEquals(0, statusReporter.getDateParseErrorsCount());
-            Assert.assertEquals(0, statusReporter.getOutOfOrderRecordCount());
+            assertEquals(4, statusReporter.getInputRecordCount() );
+            assertEquals(14, statusReporter.getInputFieldCount() );
+            assertEquals(4, statusReporter.getProcessedRecordCount() );
+            assertEquals(4 * 3 - 1, statusReporter.getProcessedFieldCount() );
+            assertEquals(1, statusReporter.getMissingFieldErrorCount());
+            assertEquals(0, statusReporter.getDateParseErrorsCount());
+            assertEquals(0, statusReporter.getOutOfOrderRecordCount());
 
 
-            Assert.assertEquals(dp.getRecordCount(), 4);
+            assertEquals(dp.getRecordCount(), 4);
 
             // check header
             int numFields = bb.getInt();
-            Assert.assertEquals(header.length, numFields);
+            assertEquals(header.length, numFields);
 
             for (int i=0; i<numFields; i++)
             {
                 int recordSize = bb.getInt();
-                Assert.assertEquals(header[fieldMap[i]].length(), recordSize);
+                assertEquals(header[fieldMap[i]].length(), recordSize);
                 byte [] charBuff = new byte[recordSize];
                 for (int j=0; j<recordSize; j++)
                 {
@@ -860,19 +861,19 @@ public class JsonDataTransformTest
                 }
 
                 String value = new String(charBuff, StandardCharsets.UTF_8);
-                Assert.assertEquals(header[fieldMap[i]], value);
+                assertEquals(header[fieldMap[i]], value);
             }
 
             // check records
             for (String [] fields : records)
             {
                 numFields = bb.getInt();
-                Assert.assertEquals(fields.length, numFields);
+                assertEquals(fields.length, numFields);
 
                 for (int i=0; i<numFields; i++)
                 {
                     int recordSize = bb.getInt();
-                    Assert.assertEquals(fields[fieldMap[i]].length(), recordSize);
+                    assertEquals(fields[fieldMap[i]].length(), recordSize);
                     byte [] charBuff = new byte[recordSize];
                     for (int j=0; j<recordSize; j++)
                     {
@@ -880,7 +881,7 @@ public class JsonDataTransformTest
                     }
 
                     String value = new String(charBuff, StandardCharsets.UTF_8);
-                    Assert.assertEquals(fields[fieldMap[i]], value);
+                    assertEquals(fields[fieldMap[i]], value);
                 }
             }
         }
@@ -936,7 +937,7 @@ public class JsonDataTransformTest
 
         for (String s : ac.analysisFields())
         {
-            Assert.assertTrue(analysisFields.contains(s));
+            assertTrue(analysisFields.contains(s));
         }
 
         ProcessManager pm = createProcessManager();
@@ -952,33 +953,33 @@ public class JsonDataTransformTest
         pm.writeToJob(dd, ac, null, new TransformConfigs(Arrays.<TransformConfig>asList()), bis, bos, statusReporter, dp, LOGGER);
         ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
 
-        Assert.assertEquals(usageReporter.getTotalBytesRead(),
+        assertEquals(usageReporter.getTotalBytesRead(),
                 data.getBytes(StandardCharsets.UTF_8).length - 1);
-        Assert.assertEquals(usageReporter.getTotalBytesRead(), statusReporter.getBytesRead());
-        Assert.assertEquals(4, usageReporter.getTotalRecordsRead() );
-        Assert.assertEquals(14 , usageReporter.getTotalFieldsRead() );
+        assertEquals(usageReporter.getTotalBytesRead(), statusReporter.getBytesRead());
+        assertEquals(4, usageReporter.getTotalRecordsRead() );
+        assertEquals(14 , usageReporter.getTotalFieldsRead() );
 
-        Assert.assertEquals(4, statusReporter.getInputRecordCount() );
-        Assert.assertEquals(14, statusReporter.getInputFieldCount() );
-        Assert.assertEquals(4, statusReporter.getProcessedRecordCount() );
-        Assert.assertEquals(14, statusReporter.getProcessedFieldCount() );
-        Assert.assertEquals(2, statusReporter.getMissingFieldErrorCount());
-        Assert.assertEquals(0, statusReporter.getDateParseErrorsCount());
-        Assert.assertEquals(0, statusReporter.getOutOfOrderRecordCount());
+        assertEquals(4, statusReporter.getInputRecordCount() );
+        assertEquals(14, statusReporter.getInputFieldCount() );
+        assertEquals(4, statusReporter.getProcessedRecordCount() );
+        assertEquals(14, statusReporter.getProcessedFieldCount() );
+        assertEquals(2, statusReporter.getMissingFieldErrorCount());
+        assertEquals(0, statusReporter.getDateParseErrorsCount());
+        assertEquals(0, statusReporter.getOutOfOrderRecordCount());
 
-        Assert.assertEquals(statusReporter.runningTotalStats(), statusReporter.incrementalStats());
+        assertEquals(statusReporter.runningTotalStats(), statusReporter.incrementalStats());
 
-        Assert.assertEquals(dp.getRecordCount(), 4);
+        assertEquals(dp.getRecordCount(), 4);
 
         // check header
         int numFields = bb.getInt();
-        Assert.assertEquals(header.length, numFields);
+        assertEquals(header.length, numFields);
 
 
         for (int i=0; i<numFields; i++)
         {
             int recordSize = bb.getInt();
-            Assert.assertEquals(header[fieldMap[i]].length(), recordSize);
+            assertEquals(header[fieldMap[i]].length(), recordSize);
             byte [] charBuff = new byte[recordSize];
             for (int j=0; j<recordSize; j++)
             {
@@ -986,19 +987,19 @@ public class JsonDataTransformTest
             }
 
             String value = new String(charBuff, StandardCharsets.UTF_8);
-            Assert.assertEquals(header[fieldMap[i]], value);
+            assertEquals(header[fieldMap[i]], value);
         }
 
         // check records
         for (String [] fields : records)
         {
             numFields = bb.getInt();
-            Assert.assertEquals(fields.length, numFields);
+            assertEquals(fields.length, numFields);
 
             for (int i=0; i<numFields; i++)
             {
                 int recordSize = bb.getInt();
-                Assert.assertEquals(fields[fieldMap[i]].length(), recordSize);
+                assertEquals(fields[fieldMap[i]].length(), recordSize);
                 byte [] charBuff = new byte[recordSize];
                 for (int j=0; j<recordSize; j++)
                 {
@@ -1006,7 +1007,7 @@ public class JsonDataTransformTest
                 }
 
                 String value = new String(charBuff, StandardCharsets.UTF_8);
-                Assert.assertEquals(fields[fieldMap[i]], value);
+                assertEquals(fields[fieldMap[i]], value);
             }
         }
     }
@@ -1064,7 +1065,7 @@ public class JsonDataTransformTest
 
         for (String s : ac.analysisFields())
         {
-            Assert.assertTrue(analysisFields.contains(s));
+            assertTrue(analysisFields.contains(s));
         }
 
         int loop = 0;
@@ -1097,30 +1098,30 @@ public class JsonDataTransformTest
             pm.writeToJob(dd, ac, null, new TransformConfigs(Arrays.<TransformConfig>asList()), bis, bos, statusReporter, dp, LOGGER);
             ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
 
-            Assert.assertEquals(usageReporter.getTotalBytesRead(),
+            assertEquals(usageReporter.getTotalBytesRead(),
                     data.getBytes(StandardCharsets.UTF_8).length - 1);
-            Assert.assertEquals(4, usageReporter.getTotalRecordsRead() );
-            Assert.assertEquals(14 , usageReporter.getTotalFieldsRead() );
+            assertEquals(4, usageReporter.getTotalRecordsRead() );
+            assertEquals(14 , usageReporter.getTotalFieldsRead() );
 
-            Assert.assertEquals(usageReporter.getTotalBytesRead(), statusReporter.getBytesRead());
-            Assert.assertEquals(4, statusReporter.getInputRecordCount() );
-            Assert.assertEquals(14, statusReporter.getInputFieldCount() );
-            Assert.assertEquals(4, statusReporter.getProcessedRecordCount() );
-            Assert.assertEquals(4 * 3 - 1, statusReporter.getProcessedFieldCount() );
-            Assert.assertEquals(1, statusReporter.getMissingFieldErrorCount());
-            Assert.assertEquals(0, statusReporter.getDateParseErrorsCount());
-            Assert.assertEquals(0, statusReporter.getOutOfOrderRecordCount());
+            assertEquals(usageReporter.getTotalBytesRead(), statusReporter.getBytesRead());
+            assertEquals(4, statusReporter.getInputRecordCount() );
+            assertEquals(14, statusReporter.getInputFieldCount() );
+            assertEquals(4, statusReporter.getProcessedRecordCount() );
+            assertEquals(4 * 3 - 1, statusReporter.getProcessedFieldCount() );
+            assertEquals(1, statusReporter.getMissingFieldErrorCount());
+            assertEquals(0, statusReporter.getDateParseErrorsCount());
+            assertEquals(0, statusReporter.getOutOfOrderRecordCount());
 
-            Assert.assertEquals(dp.getRecordCount(), 4);
+            assertEquals(dp.getRecordCount(), 4);
 
             // check header
             int numFields = bb.getInt();
-            Assert.assertEquals(header.length, numFields);
+            assertEquals(header.length, numFields);
 
             for (int i=0; i<numFields; i++)
             {
                 int recordSize = bb.getInt();
-                Assert.assertEquals(header[fieldMap[i]].length(), recordSize);
+                assertEquals(header[fieldMap[i]].length(), recordSize);
                 byte [] charBuff = new byte[recordSize];
                 for (int j=0; j<recordSize; j++)
                 {
@@ -1128,14 +1129,14 @@ public class JsonDataTransformTest
                 }
 
                 String value = new String(charBuff, StandardCharsets.UTF_8);
-                Assert.assertEquals(header[fieldMap[i]], value);
+                assertEquals(header[fieldMap[i]], value);
             }
 
             // check records
             for (String [] fields : records)
             {
                 numFields = bb.getInt();
-                Assert.assertEquals(fields.length, numFields);
+                assertEquals(fields.length, numFields);
 
                 for (int i=0; i<numFields; i++)
                 {
@@ -1147,8 +1148,8 @@ public class JsonDataTransformTest
                     }
 
                     String value = new String(charBuff, StandardCharsets.UTF_8);
-                    Assert.assertEquals(fields[fieldMap[i]].length(), recordSize);
-                    Assert.assertEquals(fields[fieldMap[i]], value);
+                    assertEquals(fields[fieldMap[i]].length(), recordSize);
+                    assertEquals(fields[fieldMap[i]], value);
                 }
             }
         }

@@ -26,11 +26,6 @@
  ************************************************************/
 package com.prelert.job.manager.actions.zookeeper;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.prelert.job.exceptions.JobInUseException;
-import com.prelert.job.manager.actions.ActionState;
-import com.prelert.job.manager.actions.ActionGuardian;
-
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.Inet4Address;
@@ -57,6 +52,11 @@ import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException.NoNodeException;
 import org.apache.zookeeper.KeeperException.NodeExistsException;
 import org.apache.zookeeper.ZooDefs.Ids;
+
+import com.google.common.annotations.VisibleForTesting;
+import com.prelert.job.exceptions.JobInUseException;
+import com.prelert.job.manager.actions.ActionGuardian;
+import com.prelert.job.manager.actions.ActionState;
 
 /**
  * Distributed lock for restricting actions on jobs in a network
@@ -335,10 +335,10 @@ public final class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
                     else
                     {
                         String msg = action.getBusyActionError(jobId, currentState.m_Action,
-                                                                currentState.m_Hostname);
+                                                                currentState.m_Host);
                         LOGGER.warn(msg);
                         throw new JobInUseException(msg, action.getErrorCode(),
-                                                currentState.m_Hostname);
+                                                currentState.m_Host);
                     }
                 }
             }
@@ -402,9 +402,9 @@ public final class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
         else
         {
             String msg = action.getBusyActionError(jobId, currentState.m_Action,
-                    currentState.m_Hostname);
+                    currentState.m_Host);
             LOGGER.warn(msg);
-            throw new JobInUseException(msg, action.getErrorCode(), currentState.m_Hostname);
+            throw new JobInUseException(msg, action.getErrorCode(), currentState.m_Host);
         }
     }
 
@@ -655,12 +655,12 @@ public final class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
     @VisibleForTesting
     class HostnameAction
     {
-        final String m_Hostname;
+        final String m_Host;
         final T m_Action;
 
         HostnameAction(String hostname, T action)
         {
-            m_Hostname = hostname;
+            m_Host = hostname;
             m_Action = action;
         }
     }
@@ -758,7 +758,7 @@ public final class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
             HostnameAction ha = currentState(jobId);
             if (ha.m_Action != m_NoneAction)
             {
-                hostsByJobs.put(jobId, ha.m_Hostname);
+                hostsByJobs.put(jobId, ha.m_Host);
             }
         }
 

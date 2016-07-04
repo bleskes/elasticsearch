@@ -28,10 +28,7 @@
 package com.prelert.job.errorcodes;
 
 import org.hamcrest.Description;
-import org.junit.internal.matchers.TypeSafeMatcher;
-
-import com.prelert.job.errorcodes.ErrorCodes;
-import com.prelert.job.errorcodes.HasErrorCode;
+import org.hamcrest.TypeSafeMatcher;
 
 public class ErrorCodeMatcher extends TypeSafeMatcher<HasErrorCode> {
 

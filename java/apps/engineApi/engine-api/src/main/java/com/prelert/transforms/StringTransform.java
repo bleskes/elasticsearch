@@ -27,14 +27,9 @@
 
 package com.prelert.transforms;
 
-// These are in elasticsearch-2.1.2.jar even though the "org.apache.lucene" bit
-// suggests otherwise.  For later versions of Elasticsearch, the required imports
-// change to org.apache.lucene.spatial.util.GeoEncodingUtils.mortonUnhashLat
-// org.apache.lucene.spatial.util.GeoEncodingUtils.mortonUnhashLon and
-// org.apache.lucene.spatial.util.GeoHashUtils.mortonEncode.
-import static org.apache.lucene.util.XGeoHashUtils.mortonEncode;
-import static org.apache.lucene.util.XGeoUtils.mortonUnhashLat;
-import static org.apache.lucene.util.XGeoUtils.mortonUnhashLon;
+import static org.apache.lucene.spatial.util.GeoEncodingUtils.mortonUnhashLat;
+import static org.apache.lucene.spatial.util.GeoEncodingUtils.mortonUnhashLon;
+import static org.apache.lucene.spatial.util.GeoHashUtils.mortonEncode;
 
 import java.util.List;
 import java.util.function.Function;

@@ -27,6 +27,8 @@
 
 package com.prelert.job.process.writer;
 
+import static org.junit.Assert.assertEquals;
+
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -50,7 +52,6 @@ import org.junit.Test;
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.Detector;
 
-import junit.framework.Assert;
 
 public class FieldConfigWriterTest
 {
@@ -113,18 +114,18 @@ public class FieldConfigWriterTest
 
         Section section = fieldConfig.get(iniConfig.getGlobalSectionName());
 
-        Assert.assertEquals(detectors.size(), section.size());
+        assertEquals(detectors.size(), section.size());
 
         String value = fieldConfig.get(iniConfig.getGlobalSectionName(), "detector.0.clause");
-        Assert.assertEquals("Integer_Value by ts_hash", value);
+        assertEquals("Integer_Value by ts_hash", value);
         value = fieldConfig.get(iniConfig.getGlobalSectionName(), "detector.1.clause");
-        Assert.assertEquals("count by ipaddress", value);
+        assertEquals("count by ipaddress", value);
         value = fieldConfig.get(iniConfig.getGlobalSectionName(), "detector.2.clause");
-        Assert.assertEquals("max(Integer_Value) over ts_hash", value);
+        assertEquals("max(Integer_Value) over ts_hash", value);
         value = fieldConfig.get(iniConfig.getGlobalSectionName(), "detector.3.clause");
-        Assert.assertEquals("rare by ipaddress partitionfield=host", value);
+        assertEquals("rare by ipaddress partitionfield=host", value);
         value = fieldConfig.get(iniConfig.getGlobalSectionName(), "detector.4.clause");
-        Assert.assertEquals("rare by \"weird field\"", value);
+        assertEquals("rare by \"weird field\"", value);
         value = fieldConfig.get(iniConfig.getGlobalSectionName(), "detector.5.clause");
         // Ini4j meddles with escape characters itself, so the assertion below
         // fails even though the raw file is fine.  The file is never read by
