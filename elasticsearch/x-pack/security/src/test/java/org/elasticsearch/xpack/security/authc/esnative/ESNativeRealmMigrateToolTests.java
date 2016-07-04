@@ -15,15 +15,13 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.shield.authc.esusers.tool;
+package org.elasticsearch.xpack.security.authc.esnative;
 
 import org.elasticsearch.cli.Command;
 import org.elasticsearch.cli.CommandTestCase;
 import org.elasticsearch.common.Strings;
 import org.elasticsearch.xpack.security.authc.esnative.ESNativeRealmMigrateTool;
 import org.elasticsearch.xpack.security.authz.RoleDescriptor;
-import org.junit.Test;
-
 import static org.hamcrest.Matchers.equalTo;
 
 /**
