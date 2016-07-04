@@ -36,6 +36,7 @@ import java.net.ConnectException;
 import java.net.Inet4Address;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -96,6 +97,12 @@ import org.apache.zookeeper.ZooDefs.Ids;
 public final class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
                     extends ActionGuardian<T> implements AutoCloseable
 {
+    @FunctionalInterface
+    public interface ConnectionChangeListener
+    {
+        void stateChange(ConnectionState state);
+    }
+
     private static final Logger LOGGER = Logger.getLogger(ZooKeeperActionGuardian.class);
 
     private static final String BASE_DIR = "/prelert";
@@ -110,6 +117,11 @@ public final class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
     private CuratorFramework m_Client;
     private final Map<String, Lease> m_LeaseByJob = new ConcurrentHashMap<>();
     private String m_Hostname;
+
+    private final Map<String, T> m_HeldLocks = new HashMap<>();
+    private final Map<String, T> m_InvalidatedLocks = new HashMap<>();
+
+    private List<ConnectionChangeListener> m_ConnectionListeners = new ArrayList<>();
 
     /**
      * Connection string is a comma separated list of host:port without whitespace
@@ -175,7 +187,7 @@ public final class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
         m_Client.start();
         try
         {
-            m_Client.blockUntilConnected(3, TimeUnit.SECONDS);
+            m_Client.blockUntilConnected(6, TimeUnit.SECONDS);
         }
         catch (InterruptedException e)
         {
@@ -196,26 +208,40 @@ public final class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
         m_Client.getConnectionStateListenable().addListener(this::stateChanged);
     }
 
+    public void addListener(ConnectionChangeListener listener)
+    {
+        m_ConnectionListeners.add(listener);
+    }
+
     private void stateChanged(CuratorFramework client, ConnectionState newState)
     {
         switch (newState) {
         case RECONNECTED:
             registerSelf(client);
+            reacquireInvalidatedLocks();
             break;
         case LOST:
             // all held lock are lost
-            m_LeaseByJob.clear();
+            invalidateLocks();
             break;
         case SUSPENDED:
-            // TODO invalidate locks??
+            // Don't invalidate locks here because the locks still exist
+            // in ZK and if we drop the lease they can't be re-acquired
             break;
         default:
             break;
         }
 
+        m_ConnectionListeners.forEach(l -> l.stateChange(newState));
     }
 
-    @Override
+    /**
+     * Get the action the job is currently processing
+     * or NoneAction if the job is not active
+     *
+     * @param jobId
+     * @return
+     */
     public T currentAction(String jobId)
     {
         return currentState(jobId).m_Action;
@@ -223,6 +249,11 @@ public final class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
 
     private HostnameAction currentState(String jobId)
     {
+        if (m_Client.getZookeeperClient().isConnected() == false)
+        {
+            return new HostnameAction("", m_NoneAction);
+        }
+
         InterProcessReadWriteLock descriptionReadWriteLock = new InterProcessReadWriteLock(m_Client,
                 descriptionLockPath(jobId));
 
@@ -364,6 +395,8 @@ public final class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
             }
 
             setHostActionOfLockedJob(jobId, m_Hostname, action);
+
+            addHeldLock(jobId, action);
             return newActionTicket(jobId, action.nextState(currentState.m_Action));
         }
         else
@@ -394,6 +427,7 @@ public final class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
                 if (nextState.holdDistributedLock())
                 {
                     setHostActionOfLockedJob(jobId, m_Hostname, nextState);
+                    addHeldLock(jobId, nextState);
                 }
                 else
                 {
@@ -405,6 +439,8 @@ public final class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
                     {
                         releaseActionLeaseAndDeleteNode(lease, jobId);
                     }
+
+                    removeHeldLock(jobId);
                 }
             }
             finally
@@ -412,7 +448,54 @@ public final class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
                 releaseDescriptionLock(descriptionWriteLock, jobId);
             }
         }
+    }
 
+    private void invalidateLocks()
+    {
+        synchronized (this)
+        {
+            m_InvalidatedLocks.putAll(m_HeldLocks);
+            m_HeldLocks.clear();
+            m_LeaseByJob.clear();
+        }
+    }
+
+    private void reacquireInvalidatedLocks()
+    {
+        synchronized (this)
+        {
+            for (Map.Entry<String, T> entry : m_InvalidatedLocks.entrySet())
+            {
+                try
+                {
+                    tryAcquiringAction(entry.getKey(), entry.getValue());
+                }
+                catch (JobInUseException e)
+                {
+                    LOGGER.error("Failed to re-acquire lock for job " + entry.getKey());
+                }
+            }
+
+            m_InvalidatedLocks.clear();
+        }
+    }
+
+    private void addHeldLock(String jobId, T action)
+    {
+        synchronized (this)
+        {
+            m_HeldLocks.put(jobId, action);
+            m_InvalidatedLocks.remove(jobId);
+        }
+    }
+
+    private void removeHeldLock(String jobId)
+    {
+        synchronized (this)
+        {
+            m_HeldLocks.remove(jobId);
+            m_InvalidatedLocks.remove(jobId);
+        }
     }
 
     private void releaseActionLeaseAndDeleteNode(Lease actionLease, String jobId)

@@ -57,7 +57,13 @@ public class LocalActionGuardian<T extends Enum<T> & ActionState<T>>
         super(defaultAction, guardian);
     }
 
-    @Override
+    /**
+     * Get the action the job is currently processing
+     * or NoneAction if the job is not active
+     *
+     * @param jobId
+     * @return
+     */
     public T currentAction(String jobId)
     {
         synchronized (this)

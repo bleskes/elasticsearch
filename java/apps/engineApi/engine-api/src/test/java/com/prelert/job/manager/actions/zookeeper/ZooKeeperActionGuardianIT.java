@@ -36,9 +36,11 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
 
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
+import org.apache.curator.framework.state.ConnectionState;
 import org.apache.curator.retry.ExponentialBackoffRetry;
 import org.apache.curator.test.TestingServer;
 import org.apache.zookeeper.data.Stat;
@@ -636,6 +638,66 @@ public class ZooKeeperActionGuardianIT
             for (AutoCloseable closable : toClose)
             {
                 closable.close();
+            }
+        }
+    }
+
+
+    @Test
+    public void testSuspendedState() throws Exception
+    {
+        class TestListener implements ZooKeeperActionGuardian.ConnectionChangeListener
+        {
+            CountDownLatch reconnectMonitor = new CountDownLatch(1);
+
+            ZooKeeperActionGuardian<Action> actionGuardian;
+
+            public TestListener(ZooKeeperActionGuardian<Action> actionGuardian)
+            {
+                this.actionGuardian = actionGuardian;
+            }
+
+            @Override
+            public void stateChange(ConnectionState state)
+            {
+                switch (state) {
+                case RECONNECTED:
+                    assertEquals(Action.UPDATING, actionGuardian.currentAction("foo"));
+                    reconnectMonitor.countDown();
+                break;
+                case LOST:
+                    assertEquals(Action.CLOSED, actionGuardian.currentAction("foo"));
+                break;
+                case SUSPENDED:
+                break;
+                default:
+                    break;
+                }
+            }
+        }
+
+
+
+        int testPort = 2188;
+        try (TestingServer server2 = new TestingServer(testPort))
+        {
+            try (ZooKeeperActionGuardian<Action> actionGuardian =
+                    new ZooKeeperActionGuardian<>(Action.CLOSED, "localhost:" + testPort))
+            {
+                TestListener listener = new TestListener(actionGuardian);
+
+                try (ActionGuardian<Action>.ActionTicket ticket =
+                        actionGuardian.tryAcquiringAction("foo", Action.UPDATING))
+                {
+                    actionGuardian.addListener(listener);
+                    server2.restart();
+
+                    listener.reconnectMonitor.await();
+
+                    // should have reacquired
+                    assertEquals(Action.UPDATING, actionGuardian.currentAction("foo"));
+                }
+
             }
         }
     }

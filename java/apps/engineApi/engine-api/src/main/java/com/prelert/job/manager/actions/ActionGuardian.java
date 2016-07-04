@@ -86,15 +86,6 @@ public abstract class ActionGuardian< T extends Enum<T> & ActionState<T>>
     }
 
     /**
-     * Get the action the job is currently processing
-     * or {@linkplain Action#NONE} if the job is not active
-     *
-     * @param jobId
-     * @return
-     */
-    public abstract T currentAction(String jobId);
-
-    /**
      * The returned ActionTicket MUST be closed in a try-with-resource block
      *
      * Returns an {@code ActionTicket} if requested action is available for the given job.
