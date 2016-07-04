@@ -31,6 +31,7 @@ import org.apache.commons.lang.SystemUtils;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.prelert.utils.HostnameFinder;
 
 /**
  * Static server resource information.

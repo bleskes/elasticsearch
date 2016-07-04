@@ -38,7 +38,6 @@ public class JobFactoryTest {
     public void testGenerateJobId()
     {
         JobFactory factory = new JobFactory();
-        System.out.println(factory.generateJobId());
         assertTrue(factory.generateJobId().length() < JobConfigurationVerifier.MAX_JOB_ID_LENGTH);
     }
 

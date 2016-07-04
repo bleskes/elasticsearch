@@ -39,6 +39,7 @@ import com.prelert.job.JobDetails;
 import com.prelert.job.config.DefaultDetectorDescription;
 import com.prelert.job.config.verification.JobConfigurationException;
 import com.prelert.job.config.verification.JobConfigurationVerifier;
+import com.prelert.utils.HostnameFinder;
 
 /**
  * A factory that creates new jobs.
@@ -58,25 +59,17 @@ class JobFactory
 
     private String hostname()
     {
-        try
-        {
-            String host = Inet4Address.getLocalHost().getHostName();
+        String host = HostnameFinder.findHostname();
 
-            // trim hostname so it won't be longer than the max job ID
-            // minus the count and datetime string
-            int maxLen = JobConfigurationVerifier.MAX_JOB_ID_LENGTH - 20;
-            if (host.length() > maxLen)
-            {
-                host = host.substring(0, maxLen);
-            }
-
-            return host;
-        }
-        catch (UnknownHostException e)
+        // trim hostname so it won't be longer than the max job ID
+        // minus the count and datetime string
+        int maxLen = JobConfigurationVerifier.MAX_JOB_ID_LENGTH - 20;
+        if (host.length() > maxLen)
         {
-            return "";
+            host = host.substring(0, maxLen);
         }
 
+        return host;
     }
 
     /**
