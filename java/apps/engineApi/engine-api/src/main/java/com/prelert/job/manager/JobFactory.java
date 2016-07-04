@@ -27,6 +27,8 @@
 
 package com.prelert.job.manager;
 
+import java.net.Inet4Address;
+import java.net.UnknownHostException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.concurrent.atomic.AtomicLong;
@@ -36,12 +38,14 @@ import com.prelert.job.JobConfiguration;
 import com.prelert.job.JobDetails;
 import com.prelert.job.config.DefaultDetectorDescription;
 import com.prelert.job.config.verification.JobConfigurationException;
+import com.prelert.job.config.verification.JobConfigurationVerifier;
 
 /**
  * A factory that creates new jobs.
  */
 class JobFactory
 {
+    private final String m_Hostname;
     private final AtomicLong m_IdSequence;
     private final DateTimeFormatter m_JobIdDateFormat;
 
@@ -49,6 +53,30 @@ class JobFactory
     {
         m_IdSequence = new AtomicLong();
         m_JobIdDateFormat = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
+        m_Hostname = hostname();
+    }
+
+    private String hostname()
+    {
+        try
+        {
+            String host = Inet4Address.getLocalHost().getHostName();
+
+            // trim hostname so it won't be longer than the max job ID
+            // minus the count and datetime string
+            int maxLen = JobConfigurationVerifier.MAX_JOB_ID_LENGTH - 20;
+            if (host.length() > maxLen)
+            {
+                host = host.substring(0, maxLen);
+            }
+
+            return host;
+        }
+        catch (UnknownHostException e)
+        {
+            return "";
+        }
+
     }
 
     /**
@@ -76,17 +104,18 @@ class JobFactory
     }
 
     /**
-     * The job id is a concatenation of the date in 'yyyyMMddHHmmss' format
-     * and a sequence number that is a minimum of 5 digits wide left padded
-     * with zeros.<br>
+     * The job id is a concatenation of the date in 'yyyyMMddHHmmss' format,
+     * the hostname and a sequence number that is a minimum of 5 digits wide
+     * left padded with zeros.<br>
      * e.g. the first Id created 23rd November 2013 at 11am
-     *     '20131125110000-00001'
+     *     '20131125110000-serverA-00001'
      *
      * @return The new unique job Id
      */
-    private String generateJobId()
+    String generateJobId()
     {
-        return String.format("%s-%05d", m_JobIdDateFormat.format(LocalDateTime.now()),
+        return String.format("%s-%s%05d", m_JobIdDateFormat.format(LocalDateTime.now()),
+                        m_Hostname.isEmpty() ? "" : m_Hostname + "-",
                         m_IdSequence.incrementAndGet());
     }
 

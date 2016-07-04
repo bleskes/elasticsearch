@@ -48,7 +48,7 @@ public final class JobConfigurationVerifier
 {
     public static final long MIN_BACKGROUND_PERSIST_INTERVAL = 3600;
 
-    private static final int MAX_JOB_ID_LENGTH = 64;
+    public static final int MAX_JOB_ID_LENGTH = 64;
 
     /**
      * Valid jobId characters. Note that '.' is allowed but not documented.
