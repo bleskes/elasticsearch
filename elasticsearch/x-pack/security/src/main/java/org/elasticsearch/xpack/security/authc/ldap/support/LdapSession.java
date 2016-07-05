@@ -77,7 +77,7 @@ public class LdapSession implements Closeable {
         return groupsResolver.resolve(ldap, userDn, timeout, logger);
     }
 
-    public static interface GroupsResolver {
+    public interface GroupsResolver {
 
         List<String> resolve(LDAPInterface ldapConnection, String userDn, TimeValue timeout, ESLogger logger);
 

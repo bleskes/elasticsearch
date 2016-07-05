@@ -90,7 +90,7 @@ public class TransportGetUsersAction extends HandledTransportAction<GetUsersRequ
                 }
 
                 @Override
-                public void onFailure(Throwable e) {
+                public void onFailure(Exception e) {
                     logger.error("failed to retrieve user [{}]", e, username);
                     listener.onFailure(e);
                 }
@@ -106,7 +106,7 @@ public class TransportGetUsersAction extends HandledTransportAction<GetUsersRequ
                 }
 
                 @Override
-                public void onFailure(Throwable e) {
+                public void onFailure(Exception e) {
                     logger.error("failed to retrieve user [{}]", e,
                             Strings.arrayToDelimitedString(request.usernames(), ","));
                     listener.onFailure(e);

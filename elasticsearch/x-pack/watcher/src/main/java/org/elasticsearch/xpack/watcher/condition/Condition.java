@@ -17,7 +17,6 @@
 
 package org.elasticsearch.xpack.watcher.condition;
 
-import org.elasticsearch.ExceptionsHelper;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
@@ -48,13 +47,6 @@ public interface Condition extends ToXContent {
             this.type = type;
             this.met = met;
             this.reason = null;
-        }
-
-        protected Result(String type, Exception e) {
-            this.status = Status.FAILURE;
-            this.type = type;
-            this.met = false;
-            this.reason = ExceptionsHelper.detailedMessage(e);
         }
 
         public String type() {

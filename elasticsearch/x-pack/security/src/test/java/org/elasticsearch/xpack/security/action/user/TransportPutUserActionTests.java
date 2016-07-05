@@ -79,7 +79,7 @@ public class TransportPutUserActionTests extends ESTestCase {
             }
 
             @Override
-            public void onFailure(Throwable e) {
+            public void onFailure(Exception e) {
                 throwableRef.set(e);
             }
         });
@@ -107,7 +107,7 @@ public class TransportPutUserActionTests extends ESTestCase {
             }
 
             @Override
-            public void onFailure(Throwable e) {
+            public void onFailure(Exception e) {
                 throwableRef.set(e);
             }
         });
@@ -136,7 +136,7 @@ public class TransportPutUserActionTests extends ESTestCase {
             }
 
             @Override
-            public void onFailure(Throwable e) {
+            public void onFailure(Exception e) {
                 throwableRef.set(e);
             }
         });
@@ -179,7 +179,7 @@ public class TransportPutUserActionTests extends ESTestCase {
             }
 
             @Override
-            public void onFailure(Throwable e) {
+            public void onFailure(Exception e) {
                 throwableRef.set(e);
             }
         });
@@ -191,7 +191,7 @@ public class TransportPutUserActionTests extends ESTestCase {
     }
 
     public void testException() {
-        final Throwable t = randomFrom(new ElasticsearchSecurityException(""), new IllegalStateException(), new ValidationException());
+        final Exception e = randomFrom(new ElasticsearchSecurityException(""), new IllegalStateException(), new ValidationException());
         final User user = new User("joe");
         NativeUsersStore usersStore = mock(NativeUsersStore.class);
         TransportPutUserAction action = new TransportPutUserAction(Settings.EMPTY, mock(ThreadPool.class),
@@ -204,7 +204,7 @@ public class TransportPutUserActionTests extends ESTestCase {
                 Object[] args = invocation.getArguments();
                 assert args.length == 2;
                 ActionListener<Boolean> listener = (ActionListener<Boolean>) args[1];
-                listener.onFailure(t);
+                listener.onFailure(e);
                 return null;
             }
         }).when(usersStore).putUser(eq(request), any(ActionListener.class));
@@ -218,14 +218,14 @@ public class TransportPutUserActionTests extends ESTestCase {
             }
 
             @Override
-            public void onFailure(Throwable e) {
+            public void onFailure(Exception e) {
                 throwableRef.set(e);
             }
         });
 
         assertThat(responseRef.get(), is(nullValue()));
         assertThat(throwableRef.get(), is(notNullValue()));
-        assertThat(throwableRef.get(), sameInstance(t));
+        assertThat(throwableRef.get(), sameInstance(e));
         verify(usersStore, times(1)).putUser(eq(request), any(ActionListener.class));
     }
 }

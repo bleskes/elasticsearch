@@ -17,6 +17,7 @@
 
 package org.elasticsearch.xpack.monitoring.agent.exporter.http;
 
+import org.apache.lucene.util.BytesRef;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.ExceptionsHelper;
 import org.elasticsearch.SpecialPermission;
@@ -70,9 +71,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
-/**
- *
- */
 public class HttpExporter extends Exporter {
 
     public static final String TYPE = "http";
@@ -228,7 +226,8 @@ public class HttpExporter extends Exporter {
                 out.write(CONTENT_TYPE.xContent().streamSeparator());
 
                 // Render the monitoring document
-                out.write(resolver.source(doc, CONTENT_TYPE).toBytes());
+                BytesRef bytesRef = resolver.source(doc, CONTENT_TYPE).toBytesRef();
+                out.write(bytesRef.bytes, bytesRef.offset, bytesRef.length);
 
                 // Adds final bulk separator
                 out.write(CONTENT_TYPE.xContent().streamSeparator());
@@ -545,7 +544,7 @@ public class HttpExporter extends Exporter {
         }
     }
 
-    static private void validateHosts(String[] hosts) {
+    private static void validateHosts(String[] hosts) {
         for (String host : hosts) {
             try {
                 HttpExporterUtils.parseHostWithPath(host, "");
@@ -674,9 +673,9 @@ public class HttpExporter extends Exporter {
                     }
                 } catch (InterruptedException e) {
                     // ignore, if closed, good....
-                } catch (Throwable t) {
+                } catch (Exception e) {
                     logger.debug("error in keep alive thread, shutting down (will be restarted after a successful connection has been " +
-                            "made) {}", ExceptionsHelper.detailedMessage(t));
+                            "made) {}", ExceptionsHelper.detailedMessage(e));
                     return;
                 }
             }
@@ -730,8 +729,9 @@ public class HttpExporter extends Exporter {
                         for (MonitoringDoc monitoringDoc : docs) {
                             try {
                                 render(monitoringDoc, buffer);
+                                BytesRef bytesRef = buffer.bytes().toBytesRef();
                                 // write the result to the connection
-                                out.write(buffer.bytes().toBytes());
+                                out.write(bytesRef.bytes, bytesRef.offset, bytesRef.length);
                             } finally {
                                 buffer.reset();
                             }

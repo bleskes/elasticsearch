@@ -38,7 +38,7 @@ import java.util.concurrent.ScheduledFuture;
 /**
  * {@code CleanerService} takes care of deleting old monitoring indices.
  */
-public class CleanerService extends AbstractLifecycleComponent<CleanerService> {
+public class CleanerService extends AbstractLifecycleComponent {
 
     private final MonitoringLicensee licensee;
     private final ThreadPool threadPool;
@@ -191,8 +191,8 @@ public class CleanerService extends AbstractLifecycleComponent<CleanerService> {
             for (Listener listener : listeners) {
                 try {
                     listener.onCleanUpIndices(retention);
-                } catch (Throwable t) {
-                    logger.error("listener failed to clean indices", t);
+                } catch (Exception e) {
+                    logger.error("listener failed to clean indices", e);
                 }
             }
 
@@ -221,8 +221,8 @@ public class CleanerService extends AbstractLifecycleComponent<CleanerService> {
         }
 
         @Override
-        public void onFailure(Throwable t) {
-            logger.error("failed to clean indices", t);
+        public void onFailure(Exception e) {
+            logger.error("failed to clean indices", e);
         }
 
         /**

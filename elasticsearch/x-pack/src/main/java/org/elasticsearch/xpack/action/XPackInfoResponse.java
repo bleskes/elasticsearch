@@ -41,9 +41,9 @@ import java.util.stream.Collectors;
  */
 public class XPackInfoResponse extends ActionResponse {
 
-    private @Nullable BuildInfo buildInfo;
-    private @Nullable LicenseInfo licenseInfo;
-    private @Nullable FeatureSetsInfo featureSetsInfo;
+    @Nullable private BuildInfo buildInfo;
+    @Nullable private LicenseInfo licenseInfo;
+    @Nullable private FeatureSetsInfo featureSetsInfo;
 
     public XPackInfoResponse() {}
 
@@ -233,7 +233,7 @@ public class XPackInfoResponse extends ActionResponse {
         public static class FeatureSet implements ToXContent, Writeable {
 
             private final String name;
-            private final @Nullable String description;
+            @Nullable private final String description;
             private final boolean available;
             private final boolean enabled;
 
