@@ -89,7 +89,7 @@ public class TransportGetRolesAction extends HandledTransportAction<GetRolesRequ
                 }
 
                 @Override
-                public void onFailure(Throwable t) {
+                public void onFailure(Exception t) {
                     logger.error("failed to retrieve role [{}]", t, rolename);
                     listener.onFailure(t);
                 }
@@ -107,7 +107,7 @@ public class TransportGetRolesAction extends HandledTransportAction<GetRolesRequ
                 }
 
                 @Override
-                public void onFailure(Throwable t) {
+                public void onFailure(Exception t) {
                     logger.error("failed to retrieve role [{}]", t,
                             Strings.arrayToDelimitedString(request.names(), ","));
                     listener.onFailure(t);

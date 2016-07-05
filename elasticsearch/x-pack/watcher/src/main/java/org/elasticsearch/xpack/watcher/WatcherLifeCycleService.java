@@ -178,7 +178,7 @@ public class WatcherLifeCycleService extends AbstractComponent implements Cluste
             }
 
             @Override
-            public void onFailure(Throwable throwable) {
+            public void onFailure(Exception throwable) {
                 logger.warn("updating manually stopped isn't acked", throwable);
                 latch.countDown();
             }
@@ -211,7 +211,7 @@ public class WatcherLifeCycleService extends AbstractComponent implements Cluste
             }
 
             @Override
-            public void onFailure(String source, Throwable throwable) {
+            public void onFailure(String source, Exception throwable) {
                 latch.countDown();
                 logger.warn("couldn't update watcher metadata [{}]", throwable, source);
             }
