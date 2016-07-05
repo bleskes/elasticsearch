@@ -33,11 +33,7 @@ public class ExpirationCallbackTests extends ESTestCase {
         TimeValue min = TimeValue.timeValueSeconds(postExpirySeconds - randomIntBetween(1, 3));
         TimeValue max = TimeValue.timeValueSeconds(postExpirySeconds + randomIntBetween(1, 10));
 
-        final ExpirationCallback.Post post = new ExpirationCallback.Post(min, max, timeValueMillis(10)) {
-            @Override
-            public void on(License license) {
-            }
-        };
+        final ExpirationCallback.Post post = new NoopPostExpirationCallback(min, max, timeValueMillis(10));
         long now = System.currentTimeMillis();
         assertThat(post.matches(now - postExpiryDuration.millis(), now), equalTo(true));
         assertThat(post.matches(now + postExpiryDuration.getMillis(), now), equalTo(false));
@@ -48,11 +44,7 @@ public class ExpirationCallbackTests extends ESTestCase {
         TimeValue postExpiryDuration = TimeValue.timeValueSeconds(postExpirySeconds);
         TimeValue min = TimeValue.timeValueSeconds(postExpirySeconds - randomIntBetween(1, 3));
 
-        final ExpirationCallback.Post post = new ExpirationCallback.Post(min, null, timeValueMillis(10)) {
-            @Override
-            public void on(License license) {
-            }
-        };
+        final ExpirationCallback.Post post = new NoopPostExpirationCallback(min, null, timeValueMillis(10));
         long now = System.currentTimeMillis();
         assertThat(post.matches(now - postExpiryDuration.millis(), now), equalTo(true));
     }
@@ -62,11 +54,7 @@ public class ExpirationCallbackTests extends ESTestCase {
         TimeValue expiryDuration = TimeValue.timeValueSeconds(expirySeconds);
         TimeValue max = TimeValue.timeValueSeconds(expirySeconds + randomIntBetween(1, 10));
 
-        final ExpirationCallback.Pre pre = new ExpirationCallback.Pre(null, max, timeValueMillis(10)) {
-            @Override
-            public void on(License license) {
-            }
-        };
+        final ExpirationCallback.Pre pre = new NoopPreExpirationCallback(null, max, timeValueMillis(10));
         long now = System.currentTimeMillis();
         assertThat(pre.matches(expiryDuration.millis() + now, now), equalTo(true));
     }
@@ -76,12 +64,7 @@ public class ExpirationCallbackTests extends ESTestCase {
         TimeValue expiryDuration = TimeValue.timeValueSeconds(expirySeconds);
         TimeValue min = TimeValue.timeValueSeconds(expirySeconds - randomIntBetween(0, 3));
         TimeValue max = TimeValue.timeValueSeconds(expirySeconds + randomIntBetween(1, 10));
-
-        final ExpirationCallback.Pre pre = new ExpirationCallback.Pre(min, max, timeValueMillis(10)) {
-            @Override
-            public void on(License license) {
-            }
-        };
+        final ExpirationCallback.Pre pre = new NoopPreExpirationCallback(min, max, timeValueMillis(10));
         long now = System.currentTimeMillis();
         assertThat(pre.matches(expiryDuration.millis() + now, now), equalTo(true));
         assertThat(pre.matches(now - expiryDuration.getMillis(), now), equalTo(false));
@@ -92,11 +75,7 @@ public class ExpirationCallbackTests extends ESTestCase {
         TimeValue expiryDuration = TimeValue.timeValueSeconds(expirySeconds);
         TimeValue min = TimeValue.timeValueSeconds(expirySeconds - randomIntBetween(0, 3));
         TimeValue max = TimeValue.timeValueSeconds(expirySeconds + randomIntBetween(1, 10));
-        final ExpirationCallback.Pre pre = new ExpirationCallback.Pre(min, max, timeValueMillis(10)) {
-            @Override
-            public void on(License license) {
-            }
-        };
+        final ExpirationCallback.Pre pre = new NoopPreExpirationCallback(min, max, timeValueMillis(10));
         long expiryDate = System.currentTimeMillis() + expiryDuration.getMillis();
         final SchedulerEngine.Schedule schedule = pre.schedule(expiryDate);
         final long now = expiryDate - max.millis() + randomIntBetween(1, ((int) min.getMillis()));
@@ -109,11 +88,7 @@ public class ExpirationCallbackTests extends ESTestCase {
         TimeValue expiryDuration = TimeValue.timeValueSeconds(expirySeconds);
         TimeValue min = TimeValue.timeValueSeconds(expirySeconds - randomIntBetween(0, 3));
         TimeValue max = TimeValue.timeValueSeconds(expirySeconds + randomIntBetween(1, 10));
-        final ExpirationCallback.Pre pre = new ExpirationCallback.Pre(min, max, timeValueMillis(10)) {
-            @Override
-            public void on(License license) {
-            }
-        };
+        final ExpirationCallback.Pre pre = new NoopPreExpirationCallback(min, max, timeValueMillis(10));
         long expiryDate = System.currentTimeMillis() + expiryDuration.getMillis();
         final SchedulerEngine.Schedule schedule = pre.schedule(expiryDate);
         int delta = randomIntBetween(1, 1000);
@@ -127,11 +102,7 @@ public class ExpirationCallbackTests extends ESTestCase {
         TimeValue expiryDuration = TimeValue.timeValueSeconds(expirySeconds);
         TimeValue min = TimeValue.timeValueSeconds(expirySeconds - randomIntBetween(0, 3));
         TimeValue max = TimeValue.timeValueSeconds(expirySeconds + randomIntBetween(1, 10));
-        final ExpirationCallback.Post post = new ExpirationCallback.Post(min, max, timeValueMillis(10)) {
-            @Override
-            public void on(License license) {
-            }
-        };
+        final ExpirationCallback.Post post = new NoopPostExpirationCallback(min, max, timeValueMillis(10));
         long expiryDate = System.currentTimeMillis() + expiryDuration.getMillis();
         final SchedulerEngine.Schedule schedule = post.schedule(expiryDate);
         final long now = expiryDate + min.millis() + randomIntBetween(1, ((int) (max.getMillis() - min.getMillis())));
@@ -144,11 +115,7 @@ public class ExpirationCallbackTests extends ESTestCase {
         TimeValue expiryDuration = TimeValue.timeValueSeconds(expirySeconds);
         TimeValue min = TimeValue.timeValueSeconds(expirySeconds - randomIntBetween(0, 3));
         TimeValue max = TimeValue.timeValueSeconds(expirySeconds + randomIntBetween(1, 10));
-        final ExpirationCallback.Post post = new ExpirationCallback.Post(min, max, timeValueMillis(10)) {
-            @Override
-            public void on(License license) {
-            }
-        };
+        final ExpirationCallback.Post post = new NoopPostExpirationCallback(min, max, timeValueMillis(10));
         long expiryDate = System.currentTimeMillis() + expiryDuration.getMillis();
         final SchedulerEngine.Schedule schedule = post.schedule(expiryDate);
         int delta = randomIntBetween(1, 1000);
@@ -156,5 +123,25 @@ public class ExpirationCallbackTests extends ESTestCase {
         assertThat(schedule.nextScheduledTimeAfter(expiryDate, expiryDate), equalTo(expiryDate + min.getMillis()));
         assertThat(schedule.nextScheduledTimeAfter(now, now), equalTo(expiryDate + min.getMillis()));
         assertThat(schedule.nextScheduledTimeAfter(1, now), equalTo(-1L));
+    }
+
+    private static class NoopPostExpirationCallback extends ExpirationCallback.Post {
+
+        public NoopPostExpirationCallback(TimeValue min, TimeValue max, TimeValue frequency) {
+            super(min, max, frequency);
+        }
+
+        @Override
+        public void on(License license) {}
+    }
+
+    private static class NoopPreExpirationCallback extends ExpirationCallback.Pre {
+
+        public NoopPreExpirationCallback(TimeValue min, TimeValue max, TimeValue frequency) {
+            super(min, max, frequency);
+        }
+
+        @Override
+        public void on(License license) {}
     }
 }
