@@ -46,8 +46,8 @@ public class SecurityClientTransportService extends TransportService {
         try {
             clientFilter.outbound(action, request);
             super.sendRequest(node, action, request, options, handler);
-        } catch (Throwable t) {
-            handler.handleException(new TransportException("failed sending request", t));
+        } catch (Exception e) {
+            handler.handleException(new TransportException("failed sending request", e));
         }
     }
 

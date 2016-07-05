@@ -144,7 +144,7 @@ public class V1AccountTests extends ESTestCase {
                         .toString())
                 .build();
 
-        logger.info("expected (r1): {}", jsonBuilder().value(req1).bytes().toUtf8());
+        logger.info("expected (r1): {}", jsonBuilder().value(req1).bytes().utf8ToString());
 
         HttpResponse res1 = mock(HttpResponse.class);
         when(res1.status()).thenReturn(200);
@@ -167,7 +167,7 @@ public class V1AccountTests extends ESTestCase {
                         .toString())
                 .build();
 
-        logger.info("expected (r2): {}", jsonBuilder().value(req2).bytes().toUtf8());
+        logger.info("expected (r2): {}", jsonBuilder().value(req2).bytes().utf8ToString());
 
         HttpResponse res2 = mock(HttpResponse.class);
         when(res2.status()).thenReturn(200);

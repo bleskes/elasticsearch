@@ -30,7 +30,7 @@ public abstract class ExpirationCallback {
 
     public enum Orientation {PRE, POST}
 
-    public static abstract class Pre extends ExpirationCallback {
+    public abstract static class Pre extends ExpirationCallback {
 
         /**
          * Callback schedule prior to license expiry
@@ -60,7 +60,7 @@ public abstract class ExpirationCallback {
         }
     }
 
-    public static abstract class Post extends ExpirationCallback {
+    public abstract static class Post extends ExpirationCallback {
 
         /**
          * Callback schedule after license expiry

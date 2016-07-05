@@ -77,7 +77,7 @@ public class IndexActionTests extends ESIntegTestCase {
     }
 
     public void testIndexActionExecuteSingleDoc() throws Exception {
-        String timestampField = randomFrom(null, "@timestamp");
+        String timestampField = randomFrom("@timestamp", null);
         boolean customTimestampField = timestampField != null;
 
         IndexAction action = new IndexAction("test-index", "test-type", timestampField, null, null);
@@ -129,7 +129,7 @@ public class IndexActionTests extends ESIntegTestCase {
     }
 
     public void testIndexActionExecuteMultiDoc() throws Exception {
-        String timestampField = randomFrom(null, "@timestamp");
+        String timestampField = randomFrom("@timestamp", null);
         boolean customTimestampField = "@timestamp".equals(timestampField);
 
         assertAcked(prepareCreate("test-index")

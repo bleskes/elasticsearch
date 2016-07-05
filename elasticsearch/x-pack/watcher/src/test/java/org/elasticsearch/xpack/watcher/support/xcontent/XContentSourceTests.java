@@ -27,7 +27,6 @@ import org.elasticsearch.test.ESTestCase;
 import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 import static org.elasticsearch.common.xcontent.XContentFactory.smileBuilder;
 import static org.elasticsearch.common.xcontent.XContentFactory.yamlBuilder;
-import static org.hamcrest.Matchers.is;
 
 /**
  *
@@ -46,6 +45,6 @@ public class XContentSourceTests extends ESTestCase {
         XContentSource source = new XContentSource(bytes, builder.contentType());
         XContentBuilder builder2 = XContentFactory.contentBuilder(builder.contentType());
         BytesReference bytes2 = source.toXContent(builder2, ToXContent.EMPTY_PARAMS).bytes();
-        assertThat(bytes.array(), is(bytes2.array()));
+        assertEquals(bytes.toBytesRef(), bytes2.toBytesRef());
     }
 }

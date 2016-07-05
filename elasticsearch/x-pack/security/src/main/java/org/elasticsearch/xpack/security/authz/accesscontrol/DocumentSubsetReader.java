@@ -43,7 +43,7 @@ public final class DocumentSubsetReader extends FilterLeafReader {
         return new DocumentSubsetDirectoryReader(in, bitsetFilterCache, roleQuery);
     }
 
-    final static class DocumentSubsetDirectoryReader extends FilterDirectoryReader {
+    static final class DocumentSubsetDirectoryReader extends FilterDirectoryReader {
 
         private final Query roleQuery;
         private final BitsetFilterCache bitsetFilterCache;

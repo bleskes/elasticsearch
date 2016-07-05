@@ -23,7 +23,7 @@ import org.apache.lucene.util.IOUtils;
 import org.elasticsearch.cli.Command;
 import org.elasticsearch.cli.CommandTestCase;
 import org.elasticsearch.cli.ExitCodes;
-import org.elasticsearch.cli.UserError;
+import org.elasticsearch.cli.UserException;
 import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.io.PathUtilsForTesting;
 import org.elasticsearch.common.settings.Settings;
@@ -186,7 +186,7 @@ public class UsersToolTests extends CommandTestCase {
     }
 
     public void testParseInvalidUsername() throws Exception {
-        UserError e = expectThrows(UserError.class, () -> {
+        UserException e = expectThrows(UserException.class, () -> {
             UsersTool.parseUsername(Collections.singletonList("$34dkl"));
         });
         assertEquals(ExitCodes.DATA_ERROR, e.exitCode);
@@ -194,7 +194,7 @@ public class UsersToolTests extends CommandTestCase {
     }
 
     public void testParseUsernameMissing() throws Exception {
-        UserError e = expectThrows(UserError.class, () -> {
+        UserException e = expectThrows(UserException.class, () -> {
            UsersTool.parseUsername(Collections.emptyList());
         });
         assertEquals(ExitCodes.USAGE, e.exitCode);
@@ -202,7 +202,7 @@ public class UsersToolTests extends CommandTestCase {
     }
 
     public void testParseUsernameExtraArgs() throws Exception {
-        UserError e = expectThrows(UserError.class, () -> {
+        UserException e = expectThrows(UserException.class, () -> {
             UsersTool.parseUsername(Arrays.asList("username", "extra"));
         });
         assertEquals(ExitCodes.USAGE, e.exitCode);
@@ -210,7 +210,7 @@ public class UsersToolTests extends CommandTestCase {
     }
 
     public void testParseInvalidPasswordOption() throws Exception {
-        UserError e = expectThrows(UserError.class, () -> {
+        UserException e = expectThrows(UserException.class, () -> {
             UsersTool.parsePassword(terminal, "123");
         });
         assertEquals(ExitCodes.DATA_ERROR, e.exitCode);
@@ -219,7 +219,7 @@ public class UsersToolTests extends CommandTestCase {
 
     public void testParseInvalidPasswordInput() throws Exception {
         terminal.addSecretInput("123");
-        UserError e = expectThrows(UserError.class, () -> {
+        UserException e = expectThrows(UserException.class, () -> {
             UsersTool.parsePassword(terminal, null);
         });
         assertEquals(ExitCodes.DATA_ERROR, e.exitCode);
@@ -229,7 +229,7 @@ public class UsersToolTests extends CommandTestCase {
     public void testParseMismatchPasswordInput() throws Exception {
         terminal.addSecretInput("password1");
         terminal.addSecretInput("password2");
-        UserError e = expectThrows(UserError.class, () -> {
+        UserException e = expectThrows(UserException.class, () -> {
             UsersTool.parsePassword(terminal, null);
         });
         assertEquals(ExitCodes.DATA_ERROR, e.exitCode);
@@ -251,7 +251,7 @@ public class UsersToolTests extends CommandTestCase {
     }
 
     public void testParseInvalidRole() throws Exception {
-        UserError e = expectThrows(UserError.class, () -> {
+        UserException e = expectThrows(UserException.class, () -> {
             UsersTool.parseRoles(terminal, new Environment(settings), "$345");
         });
         assertEquals(ExitCodes.DATA_ERROR, e.exitCode);
@@ -278,7 +278,7 @@ public class UsersToolTests extends CommandTestCase {
     }
 
     public void testUseraddUserExists() throws Exception {
-        UserError e = expectThrows(UserError.class, () -> {
+        UserException e = expectThrows(UserException.class, () -> {
             execute("useradd", pathHomeParameter, fileTypeParameter, "existing_user", "-p", "changeme");
         });
         assertEquals(ExitCodes.CODE_ERROR, e.exitCode);
@@ -294,7 +294,7 @@ public class UsersToolTests extends CommandTestCase {
     }
 
     public void testUserdelUnknownUser() throws Exception {
-        UserError e = expectThrows(UserError.class, () -> {
+        UserException e = expectThrows(UserException.class, () -> {
             execute("userdel", pathHomeParameter, fileTypeParameter, "unknown");
         });
         assertEquals(ExitCodes.NO_USER, e.exitCode);
@@ -307,7 +307,7 @@ public class UsersToolTests extends CommandTestCase {
     }
 
     public void testPasswdUnknownUser() throws Exception {
-        UserError e = expectThrows(UserError.class, () -> {
+        UserException e = expectThrows(UserException.class, () -> {
             execute("passwd", pathHomeParameter, fileTypeParameter, "unknown", "-p", "changeme");
         });
         assertEquals(ExitCodes.NO_USER, e.exitCode);
@@ -329,7 +329,7 @@ public class UsersToolTests extends CommandTestCase {
     }
 
     public void testRolesUnknownUser() throws Exception {
-        UserError e = expectThrows(UserError.class, () -> {
+        UserException e = expectThrows(UserException.class, () -> {
             execute("roles", pathHomeParameter, fileTypeParameter, "unknown");
         });
         assertEquals(ExitCodes.NO_USER, e.exitCode);
@@ -366,7 +366,7 @@ public class UsersToolTests extends CommandTestCase {
     }
 
     public void testListUnknownUser() throws Exception {
-        UserError e = expectThrows(UserError.class, () -> {
+        UserException e = expectThrows(UserException.class, () -> {
             execute("list", pathHomeParameter, fileTypeParameter, "unknown");
         });
         assertEquals(ExitCodes.NO_USER, e.exitCode);
