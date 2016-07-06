@@ -28,10 +28,14 @@
 package com.prelert.master.superjob;
 
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyInt;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.junit.Assert.*;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
@@ -45,9 +49,9 @@ public class JobRouterTest
     @Test
     public void testRouteToAll() throws IOException
     {
-        OutputStream streamA = mock(OutputStream.class);
-        OutputStream streamB = mock(OutputStream.class);
-        OutputStream streamC = mock(OutputStream.class);
+        ByteArrayOutputStream streamA = new ByteArrayOutputStream();
+        ByteArrayOutputStream streamB = new ByteArrayOutputStream();
+        ByteArrayOutputStream streamC = new ByteArrayOutputStream();
 
         List<OutputStream> streams = new ArrayList<>();
         streams.add(streamA);
@@ -59,10 +63,13 @@ public class JobRouterTest
         String msg = "Hello Jobs";
         router.routeToAll(msg);
 
+        router.close();
+
         byte [] output = msg.getBytes(StandardCharsets.UTF_8);
-        verify(streamA, times(1)).write(output);
-        verify(streamB, times(1)).write(output);
-        verify(streamC, times(1)).write(output);
+
+        assertArrayEquals(output, streamA.toByteArray());
+        assertArrayEquals(output, streamB.toByteArray());
+        assertArrayEquals(output, streamC.toByteArray());
     }
 
 
@@ -81,14 +88,64 @@ public class JobRouterTest
         JobRouter router = new JobRouter(streams);
 
         String msg = "Hello Jobs";
-        byte [] output = msg.getBytes(StandardCharsets.UTF_8);
 
         // these strings will result in the values 0, 1 and 2 at least once
         for (String partition : new String [] {"table", "tat", "coat", "elephant", "aras"})
             router.routeToJob(partition, msg);
 
-        verify(streamA, atLeastOnce()).write(output);
-        verify(streamB, atLeastOnce()).write(output);
-        verify(streamC, atLeastOnce()).write(output);
+        router.flush();
+        router.close();
+
+        verify(streamA, atLeastOnce()).write(any(byte[].class), eq(0), anyInt());
+        verify(streamB, atLeastOnce()).write(any(byte[].class), eq(0), anyInt());
+        verify(streamC, atLeastOnce()).write(any(byte[].class), eq(0), anyInt());
+    }
+
+
+    @Test
+    public void test_multipleWritesToAll() throws IOException
+    {
+        ByteArrayOutputStream streamA = new ByteArrayOutputStream();
+        ByteArrayOutputStream streamB = new ByteArrayOutputStream();
+
+        List<OutputStream> streams = new ArrayList<>();
+        streams.add(streamA);
+        streams.add(streamB);
+
+        JobRouter router = new JobRouter(streams, 8);
+
+        router.routeToAll("Hello");
+        router.routeToAll(" World");
+        router.routeToAll(" Again");
+
+
+        router.close();
+
+        byte [] output = "Hello World Again".getBytes(StandardCharsets.UTF_8);
+
+        assertArrayEquals(output, streamA.toByteArray());
+        assertArrayEquals(output, streamB.toByteArray());
+    }
+
+    @Test
+    public void test_multipleWrites() throws IOException
+    {
+        ByteArrayOutputStream streamA = new ByteArrayOutputStream();
+
+        List<OutputStream> streams = new ArrayList<>();
+        streams.add(streamA);
+
+        JobRouter router = new JobRouter(streams, 8);
+
+        router.routeToAll("Hello");
+        router.routeToJob("GGG", " World");
+        router.routeToJob("GGG", " Again");
+
+
+        router.close();
+
+        byte [] output = "Hello World Again".getBytes(StandardCharsets.UTF_8);
+
+        assertArrayEquals(output, streamA.toByteArray());
     }
 }
