@@ -34,9 +34,11 @@ import java.util.EnumSet;
 import javax.servlet.DispatcherType;
 
 import org.apache.log4j.Logger;
+import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.NCSARequestLog;
 import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.handler.HandlerCollection;
 import org.eclipse.jetty.server.handler.ResourceHandler;
 import org.eclipse.jetty.servlet.FilterHolder;
@@ -115,7 +117,14 @@ public class ServerMain
         // load the resources here so they are cached
         Messages.load();
 
-        ms_Server = new Server(jettyPort);
+        ms_Server = new Server();
+
+        ServerConnector http = new ServerConnector(ms_Server);
+        http.setPort(jettyPort);
+        http.setIdleTimeout(300000); // 300 seconds
+
+        ms_Server.setConnectors(new Connector [] {http});
+
 
         // Set up an access log for Jetty
         NCSARequestLog requestLogger = new NCSARequestLog(PrelertWebApp.getServerLogPath().toString() + "/jetty_access.log.yyyy_mm_dd");
