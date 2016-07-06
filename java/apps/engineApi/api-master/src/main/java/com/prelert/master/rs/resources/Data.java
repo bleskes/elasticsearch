@@ -138,11 +138,12 @@ public class Data
                     LOGGER.warn("Error closing forked output stream", e);
                 }
             }
+
+            streamers.forEach(s -> s.waitForUploadsToComplete());
             streamers.forEach(s -> s.close());
         }
 
         return Response.ok().build();
-
     }
 
     @Path("/{jobId}/close")

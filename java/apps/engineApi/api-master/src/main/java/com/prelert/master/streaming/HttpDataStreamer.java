@@ -31,13 +31,16 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.util.Collection;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
 import org.apache.log4j.Logger;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.api.ContentResponse;
-import org.eclipse.jetty.client.api.Response;
 import org.eclipse.jetty.client.api.Result;
 import org.eclipse.jetty.client.util.BufferingResponseListener;
 import org.eclipse.jetty.client.util.OutputStreamContentProvider;
@@ -50,6 +53,7 @@ public class HttpDataStreamer implements AutoCloseable
     private static final Logger LOGGER = Logger.getLogger(HttpDataStreamer.class);
     private final String m_BaseUrl;
     private final HttpClient m_HttpClient;
+    private final ConcurrentMap<String, CountDownLatch> m_UploadLatches;
 
     public HttpDataStreamer(String baseUrl)
     {
@@ -63,10 +67,17 @@ public class HttpDataStreamer implements AutoCloseable
         {
             LOGGER.fatal("Failed to start the HTTP client", e);
         }
+
+        m_UploadLatches = new ConcurrentHashMap<>();
     }
 
     public OutputStream openStream(String jobId)
     {
+        if (m_UploadLatches.containsKey(jobId))
+        {
+            throw new IllegalStateException("An upload to job '" + jobId + "' is already in progress");
+        }
+
         String postUrl = String.format("%s/data/%s", m_BaseUrl, encode(jobId));
 
         OutputStreamContentProvider content = new OutputStreamContentProvider();
@@ -79,11 +90,16 @@ public class HttpDataStreamer implements AutoCloseable
             @Override
             public void onComplete(Result result)
             {
+                CountDownLatch latch = m_UploadLatches.remove(jobId);
+                latch.countDown();
+
                 LOGGER.info("content complete for job " + jobId);
                 LOGGER.info(result.getResponse());
                 LOGGER.info("Content=" + this.getContentAsString());
             }
         };
+
+        m_UploadLatches.put(jobId, new CountDownLatch(1));
 
         m_HttpClient.POST(postUrl)
             .content(content)
@@ -91,6 +107,25 @@ public class HttpDataStreamer implements AutoCloseable
             .send(responseListener);
 
         return output;
+    }
+
+    public void waitForUploadsToComplete()
+    {
+        Collection<CountDownLatch> latches = m_UploadLatches.values();
+        if (!latches.isEmpty())
+        {
+            for (CountDownLatch latch : latches)
+            {
+                try
+                {
+                    latch.await();
+                }
+                catch (InterruptedException e)
+                {
+                    LOGGER.warn("Interrupted waiting for upload latch");
+                }
+            }
+        }
     }
 
     public boolean closeJob(String jobId)
