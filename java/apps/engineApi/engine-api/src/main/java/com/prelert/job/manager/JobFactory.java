@@ -36,15 +36,12 @@ import com.prelert.job.JobConfiguration;
 import com.prelert.job.JobDetails;
 import com.prelert.job.config.DefaultDetectorDescription;
 import com.prelert.job.config.verification.JobConfigurationException;
-import com.prelert.job.config.verification.JobConfigurationVerifier;
-import com.prelert.utils.HostnameFinder;
 
 /**
  * A factory that creates new jobs.
  */
 class JobFactory
 {
-    private final String m_Hostname;
     private final AtomicLong m_IdSequence;
     private final DateTimeFormatter m_JobIdDateFormat;
 
@@ -52,22 +49,6 @@ class JobFactory
     {
         m_IdSequence = new AtomicLong();
         m_JobIdDateFormat = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
-        m_Hostname = hostname();
-    }
-
-    private String hostname()
-    {
-        String host = HostnameFinder.findHostname();
-
-        // trim hostname so it won't be longer than the max job ID
-        // minus the count and datetime string
-        int maxLen = JobConfigurationVerifier.MAX_JOB_ID_LENGTH - 20;
-        if (host.length() > maxLen)
-        {
-            host = host.substring(0, maxLen);
-        }
-
-        return host;
     }
 
     /**
@@ -105,8 +86,7 @@ class JobFactory
      */
     String generateJobId()
     {
-        return String.format("%s-%s%05d", m_JobIdDateFormat.format(LocalDateTime.now()),
-                        m_Hostname.isEmpty() ? "" : m_Hostname + "-",
+        return String.format("%s-%05d", m_JobIdDateFormat.format(LocalDateTime.now()),
                         m_IdSequence.incrementAndGet());
     }
 
