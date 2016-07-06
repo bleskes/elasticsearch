@@ -34,7 +34,6 @@ import java.nio.charset.Charset;
 
 import org.apache.log4j.Logger;
 
-
 /**
  * Helper class to find the current hostname.
  * Based on the observation that getting the hostname from the
