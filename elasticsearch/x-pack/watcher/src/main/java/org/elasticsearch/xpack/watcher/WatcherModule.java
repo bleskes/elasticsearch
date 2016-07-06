@@ -22,7 +22,6 @@ import org.elasticsearch.common.inject.AbstractModule;
 import org.elasticsearch.common.inject.util.Providers;
 import org.elasticsearch.xpack.XPackPlugin;
 import org.elasticsearch.xpack.watcher.support.WatcherIndexTemplateRegistry;
-import org.elasticsearch.xpack.watcher.support.validation.WatcherSettingsValidation;
 
 
 public class WatcherModule extends AbstractModule {
@@ -46,7 +45,6 @@ public class WatcherModule extends AbstractModule {
 
         bind(WatcherLicensee.class).asEagerSingleton();
         bind(WatcherLifeCycleService.class).asEagerSingleton();
-        bind(WatcherSettingsValidation.class).asEagerSingleton();
         bind(WatcherIndexTemplateRegistry.class).asEagerSingleton();
     }
 }
