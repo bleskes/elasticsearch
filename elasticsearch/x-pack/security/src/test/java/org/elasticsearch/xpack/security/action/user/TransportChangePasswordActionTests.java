@@ -80,7 +80,7 @@ public class TransportChangePasswordActionTests extends ESTestCase {
             }
 
             @Override
-            public void onFailure(Throwable e) {
+            public void onFailure(Exception e) {
                 throwableRef.set(e);
             }
         });
@@ -109,7 +109,7 @@ public class TransportChangePasswordActionTests extends ESTestCase {
             }
 
             @Override
-            public void onFailure(Throwable e) {
+            public void onFailure(Exception e) {
                 throwableRef.set(e);
             }
         });
@@ -147,7 +147,7 @@ public class TransportChangePasswordActionTests extends ESTestCase {
             }
 
             @Override
-            public void onFailure(Throwable e) {
+            public void onFailure(Exception e) {
                 throwableRef.set(e);
             }
         });
@@ -164,13 +164,13 @@ public class TransportChangePasswordActionTests extends ESTestCase {
         ChangePasswordRequest request = new ChangePasswordRequest();
         request.username(user.principal());
         request.passwordHash(Hasher.BCRYPT.hash(new SecuredString("changeme".toCharArray())));
-        final Throwable t = randomFrom(new ElasticsearchSecurityException(""), new IllegalStateException(), new RuntimeException());
+        final Exception e = randomFrom(new ElasticsearchSecurityException(""), new IllegalStateException(), new RuntimeException());
         doAnswer(new Answer() {
             public Void answer(InvocationOnMock invocation) {
                 Object[] args = invocation.getArguments();
                 assert args.length == 2;
                 ActionListener<Void> listener = (ActionListener<Void>) args[1];
-                listener.onFailure(t);
+                listener.onFailure(e);
                 return null;
             }
         }).when(usersStore).changePassword(eq(request), any(ActionListener.class));
@@ -186,14 +186,14 @@ public class TransportChangePasswordActionTests extends ESTestCase {
             }
 
             @Override
-            public void onFailure(Throwable e) {
+            public void onFailure(Exception e) {
                 throwableRef.set(e);
             }
         });
 
         assertThat(responseRef.get(), is(nullValue()));
         assertThat(throwableRef.get(), is(notNullValue()));
-        assertThat(throwableRef.get(), sameInstance(t));
+        assertThat(throwableRef.get(), sameInstance(e));
         verify(usersStore, times(1)).changePassword(eq(request), any(ActionListener.class));
     }
 }

@@ -40,9 +40,6 @@ import java.util.Arrays;
 
 import static org.elasticsearch.common.io.FileSystemUtils.isAccessibleDirectory;
 
-/**
- *
- */
 public class XPackExtensionsService {
     private final Settings settings;
 
@@ -198,7 +195,7 @@ public class XPackExtensionsService {
                             "Settings instance");
                 }
             }
-        } catch (Throwable e) {
+        } catch (Exception e) {
             throw new ElasticsearchException("Failed to load extension class [" + extClass.getName() + "]", e);
         }
     }

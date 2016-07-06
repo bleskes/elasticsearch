@@ -137,7 +137,7 @@ public interface IndicesPermission extends Permission, Iterable<IndicesPermissio
                     if (group.check(action, indexOrAlias)) {
                         granted = true;
                         for (String index : concreteIndices) {
-                            if (group.getFields() != null) {
+                            if (group.hasFields()) {
                                 Set<String> roleFields = rolesFieldsByIndex.get(index);
                                 if (roleFields == null) {
                                     roleFields = new HashSet<>();
@@ -145,7 +145,7 @@ public interface IndicesPermission extends Permission, Iterable<IndicesPermissio
                                 }
                                 roleFields.addAll(group.getFields());
                             }
-                            if (group.getQuery() != null) {
+                            if (group.hasQuery()) {
                                 Set<BytesReference> roleQueries = roleQueriesByIndex.get(index);
                                 if (roleQueries == null) {
                                     roleQueries = new HashSet<>();
@@ -341,6 +341,14 @@ public interface IndicesPermission extends Permission, Iterable<IndicesPermissio
         public boolean check(String action, String index) {
             assert index != null;
             return actionMatcher.test(action) && indexNameMatcher.test(index);
+        }
+
+        public boolean hasFields() {
+            return fields != null;
+        }
+
+        public boolean hasQuery() {
+            return query != null;
         }
     }
 }

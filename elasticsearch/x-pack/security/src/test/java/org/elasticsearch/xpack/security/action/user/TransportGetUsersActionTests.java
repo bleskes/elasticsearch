@@ -96,7 +96,7 @@ public class TransportGetUsersActionTests extends ESTestCase {
             }
 
             @Override
-            public void onFailure(Throwable e) {
+            public void onFailure(Exception e) {
                 throwableRef.set(e);
             }
         });
@@ -128,7 +128,7 @@ public class TransportGetUsersActionTests extends ESTestCase {
             }
 
             @Override
-            public void onFailure(Throwable e) {
+            public void onFailure(Exception e) {
                 throwableRef.set(e);
             }
         });
@@ -159,7 +159,7 @@ public class TransportGetUsersActionTests extends ESTestCase {
             }
 
             @Override
-            public void onFailure(Throwable e) {
+            public void onFailure(Exception e) {
                 throwableRef.set(e);
             }
         });
@@ -197,7 +197,7 @@ public class TransportGetUsersActionTests extends ESTestCase {
             }
 
             @Override
-            public void onFailure(Throwable e) {
+            public void onFailure(Exception e) {
                 throwableRef.set(e);
             }
         });
@@ -254,7 +254,7 @@ public class TransportGetUsersActionTests extends ESTestCase {
             }
 
             @Override
-            public void onFailure(Throwable e) {
+            public void onFailure(Exception e) {
                 throwableRef.set(e);
             }
         });
@@ -273,7 +273,7 @@ public class TransportGetUsersActionTests extends ESTestCase {
     }
 
     public void testException() {
-        final Throwable t = randomFrom(new ElasticsearchSecurityException(""), new IllegalStateException(), new ValidationException());
+        final Exception e = randomFrom(new ElasticsearchSecurityException(""), new IllegalStateException(), new ValidationException());
         final List<User> storeUsers =
                 randomFrom(Collections.singletonList(new User("joe")), Arrays.asList(new User("jane"), new User("fred")), randomUsers());
         final String[] storeUsernames = storeUsers.stream().map(User::principal).collect(Collectors.toList()).toArray(Strings.EMPTY_ARRAY);
@@ -289,7 +289,7 @@ public class TransportGetUsersActionTests extends ESTestCase {
                     Object[] args = invocation.getArguments();
                     assert args.length == 2;
                     ActionListener<List<User>> listener = (ActionListener<List<User>>) args[1];
-                    listener.onFailure(t);
+                    listener.onFailure(e);
                     return null;
                 }
             }).when(usersStore).getUsers(aryEq(storeUsernames), any(ActionListener.class));
@@ -300,7 +300,7 @@ public class TransportGetUsersActionTests extends ESTestCase {
                     Object[] args = invocation.getArguments();
                     assert args.length == 2;
                     ActionListener<User> listener = (ActionListener<User>) args[1];
-                    listener.onFailure(t);
+                    listener.onFailure(e);
                     return null;
                 }
             }).when(usersStore).getUser(eq(storeUsernames[0]), any(ActionListener.class));
@@ -315,13 +315,13 @@ public class TransportGetUsersActionTests extends ESTestCase {
             }
 
             @Override
-            public void onFailure(Throwable e) {
+            public void onFailure(Exception e) {
                 throwableRef.set(e);
             }
         });
 
         assertThat(throwableRef.get(), is(notNullValue()));
-        assertThat(throwableRef.get(), is(sameInstance(t)));
+        assertThat(throwableRef.get(), is(sameInstance(e)));
         assertThat(responseRef.get(), is(nullValue()));
         if (request.usernames().length == 1) {
             verify(usersStore, times(1)).getUser(eq(request.usernames()[0]), any(ActionListener.class));

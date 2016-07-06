@@ -150,11 +150,6 @@ public class CompareCondition implements Condition {
             this.resolveValues = resolveValues;
         }
 
-        Result(@Nullable Map<String, Object> resolvedValues, Exception e) {
-            super(TYPE, e);
-            this.resolveValues = resolvedValues;
-        }
-
         public Map<String, Object> getResolveValues() {
             return resolveValues;
         }

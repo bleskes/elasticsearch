@@ -202,7 +202,7 @@ public abstract class WatchExecutionContext {
     public WatchRecord abortBeforeExecution(ExecutionState state, String message) {
         assert !phase.sealed();
         phase = ExecutionPhase.ABORTED;
-        return new WatchRecord(id, triggerEvent, state, message);
+        return new WatchRecord.MessageWatchRecord(id, triggerEvent, state, message);
     }
 
     public WatchRecord abortFailedExecution(String message) {
@@ -210,7 +210,15 @@ public abstract class WatchExecutionContext {
         phase = ExecutionPhase.ABORTED;
         long executionFinishMs = System.currentTimeMillis();
         WatchExecutionResult result = new WatchExecutionResult(this, executionFinishMs - startTimestamp);
-        return new WatchRecord(this, result, message);
+        return new WatchRecord.MessageWatchRecord(this, result, message);
+    }
+
+    public WatchRecord abortFailedExecution(Exception e) {
+        assert !phase.sealed();
+        phase = ExecutionPhase.ABORTED;
+        long executionFinishMs = System.currentTimeMillis();
+        WatchExecutionResult result = new WatchExecutionResult(this, executionFinishMs - startTimestamp);
+        return new WatchRecord.ExceptionWatchRecord(this, result, e);
     }
 
     public WatchRecord finish() {
@@ -218,7 +226,7 @@ public abstract class WatchExecutionContext {
         phase = ExecutionPhase.FINISHED;
         long executionFinishMs = System.currentTimeMillis();
         WatchExecutionResult result = new WatchExecutionResult(this, executionFinishMs - startTimestamp);
-        return new WatchRecord(this, result);
+        return new WatchRecord.MessageWatchRecord(this, result);
     }
 
     public WatchExecutionSnapshot createSnapshot(Thread executionThread) {
