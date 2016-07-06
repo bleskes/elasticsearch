@@ -62,18 +62,13 @@ public class Data
     private static final Logger LOGGER = Logger.getLogger(Data.class);
 
 
-    /** Parameter to specify start time of buckets to be reset */
-    static final String RESET_START_PARAM = "resetStart";
-
-    /** Parameter to specify end time of buckets to be reset */
-    static final String RESET_END_PARAM = "resetEnd";
+    static final String PARTITION_PARAM = "partition";
 
     /** Ignore downtime if the job is restarting */
     static final String IGNORE_DOWNTIME_PARAM = "ignoreDowntime";
 
 
     private String [] m_EngineUrls;
-    private String m_PartitionField;
     private int m_JobsPerNode;
 
     public Data()
@@ -99,12 +94,18 @@ public class Data
     @Produces(MediaType.APPLICATION_JSON)
     public Response streamData(@Context HttpHeaders headers,
             @PathParam("jobId") String jobId, InputStream input,
-            @DefaultValue("") @QueryParam(RESET_START_PARAM) String resetStart,
-            @DefaultValue("") @QueryParam(RESET_END_PARAM) String resetEnd,
-            @DefaultValue("false") @QueryParam(IGNORE_DOWNTIME_PARAM) boolean ignoreDowntime)
+            @DefaultValue("false") @QueryParam(IGNORE_DOWNTIME_PARAM) boolean ignoreDowntime,
+            @DefaultValue("") @QueryParam(PARTITION_PARAM) String partition)
     throws IOException
     {
         LOGGER.debug("Post data to job " + jobId);
+
+        if (partition.isEmpty())
+        {
+            String message = "partition param must be set";
+            LOGGER.warn(message);
+            return Response.status(Response.Status.BAD_REQUEST).entity(message).build();
+        }
 
         List<HttpDataStreamer> streamers = createStreamers();
         List<OutputStream> outputStreams = new ArrayList<>();
@@ -121,7 +122,7 @@ public class Data
             }
 
             JobRouter router = new JobRouter(outputStreams);
-            DataForker forker = new DataForker(m_PartitionField, router);
+            DataForker forker = new DataForker(partition, router);
             forker.forkData(input);
         }
         finally
@@ -204,7 +205,6 @@ public class Data
         m_EngineUrls = commaSeparatedUrls.split(",");
 
         m_JobsPerNode = PrelertSettings.getSettingOrDefault("jobs.per.node", 2);
-        m_PartitionField = PrelertSettings.getSettingOrDefault("partition.field", "");
     }
 
     private String subJobId(String jobId, int index)
