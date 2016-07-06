@@ -89,8 +89,8 @@ public abstract class AbstractIndicesCleanerTestCase extends MonitoringIntegTest
 
         // Won't be deleted
         createIndex(MonitoringSettings.LEGACY_DATA_INDEX_NAME, now().minusYears(1));
-        createDataIndex(now().minusDays(10), 0);
-        createDataIndex(now().minusDays(10), 1);
+        createDataIndex(now().minusDays(10), "0");
+        createDataIndex(now().minusDays(10), "1");
         assertIndicesCount(4);
 
         CleanerService.Listener listener = getListener();
@@ -120,9 +120,9 @@ public abstract class AbstractIndicesCleanerTestCase extends MonitoringIntegTest
         createTimestampedIndex(now().minusDays(10));
 
         // Won't be deleted
-        createTimestampedIndex(now().minusDays(10), 0);
-        createTimestampedIndex(now().minusDays(10), 1);
-        createTimestampedIndex(now().minusDays(10), Integer.MAX_VALUE);
+        createTimestampedIndex(now().minusDays(10), "0");
+        createTimestampedIndex(now().minusDays(10), "1");
+        createTimestampedIndex(now().minusDays(10), String.valueOf(Integer.MAX_VALUE));
         assertIndicesCount(4);
 
         CleanerService.Listener listener = getListener();
@@ -210,7 +210,7 @@ public abstract class AbstractIndicesCleanerTestCase extends MonitoringIntegTest
     /**
      * Creates a monitoring data index in a given version.
      */
-    protected void createDataIndex(DateTime creationDate, int version) {
+    protected void createDataIndex(DateTime creationDate, String version) {
         createIndex(new MockDataIndexNameResolver(version).index(randomMonitoringDoc()), creationDate);
     }
 
@@ -224,7 +224,7 @@ public abstract class AbstractIndicesCleanerTestCase extends MonitoringIntegTest
     /**
      * Creates a monitoring timestamped index using a given template version.
      */
-    protected void createTimestampedIndex(DateTime creationDate, int version) {
+    protected void createTimestampedIndex(DateTime creationDate, String version) {
         MonitoringDoc monitoringDoc = randomMonitoringDoc();
         monitoringDoc.setTimestamp(creationDate.getMillis());
 
