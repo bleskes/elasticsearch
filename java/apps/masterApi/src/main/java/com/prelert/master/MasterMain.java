@@ -107,7 +107,7 @@ public class MasterMain
 
         // Set up an access log for Jetty
         String logdir = PrelertSettings.getSettingOrDefault(PrelertSettings.PRELERT_LOGS_PROPERTY, "");
-        NCSARequestLog requestLogger = new NCSARequestLog(logdir + "/master-api/jetty_access.log.yyyy_mm_dd");
+        NCSARequestLog requestLogger = new NCSARequestLog(logdir + "/master_api/jetty_access.log.yyyy_mm_dd");
         requestLogger.setExtended(true);
         requestLogger.setLogLatency(true);
         ms_Server.setRequestLog(requestLogger);
