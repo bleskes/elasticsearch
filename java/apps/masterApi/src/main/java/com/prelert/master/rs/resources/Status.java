@@ -27,56 +27,31 @@
 
 package com.prelert.master.rs.resources;
 
-import java.util.HashSet;
-import java.util.Set;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 
-import javax.ws.rs.core.Application;
+import org.apache.log4j.Logger;
 
-import com.prelert.rs.provider.AcknowledgementWriter;
-import com.prelert.rs.provider.DataUploadExceptionMapper;
-import com.prelert.rs.provider.JobConfigurationMessageBodyReader;
-import com.prelert.rs.provider.JobExceptionMapper;
-
-public class MasterApiWebApp extends Application
+@Path("/status")
+public class Status
 {
-    private Set<Class<?>> m_ResourceClasses;
+    private static final Logger LOGGER = Logger.getLogger(Status.class);
 
-    public MasterApiWebApp()
+    /**
+     * The name of the endpoint
+     */
+    public static final String ENDPOINT = "status";
+
+
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response status()
     {
-        m_ResourceClasses = new HashSet<>();
-        addEndPoints();
-        addMessageReaders();
-        addExceptionMappers();
-        addMessageWriters();
-    }
+        LOGGER.debug("Get Engine Status");
 
-    private void addEndPoints()
-    {
-        m_ResourceClasses.add(Jobs.class);
-        m_ResourceClasses.add(Data.class);
-        m_ResourceClasses.add(Status.class);
-    }
-
-    private void addMessageReaders()
-    {
-        m_ResourceClasses.add(JobConfigurationMessageBodyReader.class);
-    }
-
-    private void addExceptionMappers()
-    {
-        m_ResourceClasses.add(JobExceptionMapper.class);
-        m_ResourceClasses.add(DataUploadExceptionMapper.class);
-    }
-
-    private void addMessageWriters()
-    {
-        m_ResourceClasses.add(AcknowledgementWriter.class);
-    }
-
-
-    @Override
-    public Set<Class<?>> getClasses()
-    {
-        return m_ResourceClasses;
+        return Response.ok().entity("Ok").build();
     }
 }

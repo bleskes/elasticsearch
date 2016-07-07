@@ -40,6 +40,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.zip.ZipInputStream;
 
@@ -899,8 +900,10 @@ public class EngineApiClient implements Closeable
         // and we offer the inputStream in a deferred manner.
 
         CountDownLatch waitUntilRequestCompletesLatch = new CountDownLatch(1);
-        AtomicInteger statusHolder = new AtomicInteger();
         AtomicBoolean complete = new AtomicBoolean();
+        AtomicInteger statusHolder = new AtomicInteger(-1);
+        AtomicReference<String> content = new AtomicReference<>("");
+
         DeferredContentProvider contentProvider = new DeferredContentProvider();
         Request request = m_HttpClient.POST(postUrl)
                 .header(HttpHeader.CONTENT_TYPE, "application/octet-stream")
@@ -953,7 +956,7 @@ public class EngineApiClient implements Closeable
             return defaultReturnValue;
         }
 
-        String content = Strings.nullToEmpty(responseListener.getContentAsString());
+//        String content = Strings.nullToEmpty(responseListener.getContentAsString());
 
         if (statusHolder.get() != HttpStatus.ACCEPTED_202)
         {
@@ -963,14 +966,14 @@ public class EngineApiClient implements Closeable
 
             LOGGER.error(msg);
 
-            if (!content.isEmpty())
+            if (!content.get().isEmpty())
             {
                 if (convertResponseOnError)
                 {
                     // In this case convertContentFunction must set m_LastError
-                    return convertContentFunction.apply(content);
+                    return convertContentFunction.apply(content.get());
                 }
-                m_LastError = m_JsonMapper.readValue(content, new TypeReference<ApiError>() {});
+                m_LastError = m_JsonMapper.readValue(content.get(), new TypeReference<ApiError>() {});
             }
             else
             {
@@ -979,7 +982,7 @@ public class EngineApiClient implements Closeable
 
             return defaultReturnValue;
         }
-        return convertContentFunction.apply(content);
+        return convertContentFunction.apply(content.get());
     }
 
     private static int chooseBufferSize(int bytesRead, int currentBufferSize)
