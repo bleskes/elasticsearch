@@ -17,7 +17,6 @@
 
 package org.elasticsearch.xpack.watcher.rest.action;
 
-import org.elasticsearch.client.node.NodeClient;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentBuilder;
@@ -45,8 +44,12 @@ public class RestPutWatchAction extends WatcherRestHandler {
     @Inject
     public RestPutWatchAction(Settings settings, RestController controller) {
         super(settings);
-        controller.registerHandler(POST, URI_BASE + "/watch/{id}", this);
-        controller.registerHandler(PUT, URI_BASE + "/watch/{id}", this);
+
+        // @deprecated Remove deprecations in 6.0
+        controller.registerWithDeprecatedHandler(POST, URI_BASE + "/watch/{id}", this,
+                                                 POST, "/_watcher/watch/{id}", deprecationLogger);
+        controller.registerWithDeprecatedHandler(PUT, URI_BASE + "/watch/{id}", this,
+                                                 PUT, "/_watcher/watch/{id}", deprecationLogger);
     }
 
     @Override
