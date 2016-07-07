@@ -348,7 +348,8 @@ public class LicensesService extends AbstractLifecycleComponent implements Clust
         if (registeredLicensees.size() > 0) {
             return registeredLicensees.get(0).currentLicenseState;
         } else {
-            return getLicenseState(getLicense(), clock.millis());
+            final License license = getLicense(clusterService.state().metaData().custom(LicensesMetaData.TYPE));
+            return getLicenseState(license, clock.millis());
         }
     }
 
@@ -492,6 +493,9 @@ public class LicensesService extends AbstractLifecycleComponent implements Clust
     }
 
     static LicenseState getLicenseState(final License license, long time) {
+        if (license == null) {
+            return LicenseState.DISABLED;
+        }
         if (license.issueDate() > time) {
             return LicenseState.DISABLED;
         }
