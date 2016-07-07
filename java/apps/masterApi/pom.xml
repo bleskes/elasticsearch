@@ -102,7 +102,7 @@
               <goal>copy-resources</goal>
             </goals>
             <configuration>
-              <outputDirectory>${env.PRELERT_HOME}/config</outputDirectory>
+              <outputDirectory>${env.BUILD_STAGING_DIR}/config</outputDirectory>
               <resources>
                 <resource>
                   <directory>${basedir}/config</directory>
@@ -119,7 +119,7 @@
               <goal>copy-resources</goal>
             </goals>
             <configuration>
-              <outputDirectory>${env.PRELERT_HOME}</outputDirectory>
+              <outputDirectory>${env.BUILD_STAGING_DIR}</outputDirectory>
               <resources>
                 <resource>
                   <directory>${basedir}</directory>
@@ -137,7 +137,7 @@
               <goal>copy-resources</goal>
             </goals>
             <configuration>
-              <outputDirectory>${env.PRELERT_HOME}/bin</outputDirectory>
+              <outputDirectory>${env.BUILD_STAGING_DIR}/bin</outputDirectory>
               <resources>
                 <resource>
                   <directory>${basedir}/bin</directory>
@@ -176,7 +176,7 @@
               <goal>copy-dependencies</goal>
             </goals>
             <configuration>
-              <outputDirectory>${env.PRELERT_HOME}/cots/libjar</outputDirectory>
+              <outputDirectory>${env.BUILD_STAGING_DIR}/cots/libjar</outputDirectory>
               <overWriteReleases>true</overWriteReleases>
               <overWriteSnapshots>true</overWriteSnapshots>
               <overWriteIfNewer>true</overWriteIfNewer>
@@ -199,7 +199,7 @@
                   <artifactId>${project.artifactId}</artifactId>
                   <version>${project.version}</version>
                   <type>${project.packaging}</type>
-                  <outputDirectory>${env.PRELERT_HOME}/libjar</outputDirectory>
+                  <outputDirectory>${env.BUILD_STAGING_DIR}/libjar</outputDirectory>
                 </artifactItem>
               </artifactItems>
               <stripVersion>true</stripVersion>
