@@ -149,8 +149,8 @@ public abstract class MonitoringIndexNameResolver<T extends MonitoringDoc> {
         }
 
         // Used in tests
-        protected Data(Integer version) {
-            this.index = String.join(DELIMITER, PREFIX, DATA, String.valueOf(version));
+        protected Data(String version) {
+            this.index = String.join(DELIMITER, PREFIX, DATA, version);
         }
 
         @Override
@@ -165,7 +165,7 @@ public abstract class MonitoringIndexNameResolver<T extends MonitoringDoc> {
 
         @Override
         public String templateName() {
-            return String.format(Locale.ROOT, "%s-%s-%d", PREFIX, DATA, MonitoringTemplateUtils.TEMPLATE_VERSION);
+            return String.format(Locale.ROOT, "%s-%s-%s", PREFIX, DATA, MonitoringTemplateUtils.TEMPLATE_VERSION);
         }
 
         @Override
@@ -192,9 +192,9 @@ public abstract class MonitoringIndexNameResolver<T extends MonitoringDoc> {
         }
 
         // Used in tests
-        protected Timestamped(MonitoredSystem system, Settings settings, Integer version) {
+        protected Timestamped(MonitoredSystem system, Settings settings, String version) {
             this.system = system;
-            this.index = String.join(DELIMITER, PREFIX, system.getSystem(), String.valueOf(version));
+            this.index = String.join(DELIMITER, PREFIX, system.getSystem(), version);
             String format = INDEX_NAME_TIME_FORMAT_SETTING.get(settings);
             try {
                 this.formatter = DateTimeFormat.forPattern(format).withZoneUTC();
@@ -221,7 +221,7 @@ public abstract class MonitoringIndexNameResolver<T extends MonitoringDoc> {
 
         @Override
         public String templateName() {
-            return String.format(Locale.ROOT, "%s-%s-%d", PREFIX, getId(), MonitoringTemplateUtils.TEMPLATE_VERSION);
+            return String.format(Locale.ROOT, "%s-%s-%s", PREFIX, getId(), MonitoringTemplateUtils.TEMPLATE_VERSION);
         }
 
         @Override

@@ -22,16 +22,20 @@ import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.common.component.AbstractComponent;
 import org.elasticsearch.common.inject.Inject;
+import org.elasticsearch.common.metrics.MeanMetric;
+import org.elasticsearch.common.settings.Setting;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.util.concurrent.EsRejectedExecutionException;
 import org.elasticsearch.xpack.support.clock.Clock;
+import org.elasticsearch.xpack.watcher.Watcher;
+import org.elasticsearch.xpack.watcher.WatcherFeatureSet;
+import org.elasticsearch.xpack.common.stats.Counters;
 import org.elasticsearch.xpack.watcher.actions.ActionWrapper;
 import org.elasticsearch.xpack.watcher.condition.Condition;
 import org.elasticsearch.xpack.watcher.history.HistoryStore;
 import org.elasticsearch.xpack.watcher.history.WatchRecord;
 import org.elasticsearch.xpack.watcher.input.Input;
-import org.elasticsearch.xpack.watcher.support.validation.WatcherSettingsValidation;
 import org.elasticsearch.xpack.watcher.transform.Transform;
 import org.elasticsearch.xpack.watcher.trigger.TriggerEvent;
 import org.elasticsearch.xpack.watcher.watch.Watch;
@@ -45,17 +49,20 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-/**
- */
 public class ExecutionService extends AbstractComponent {
 
-    private static final TimeValue DEFAULT_MAX_STOP_TIMEOUT = new TimeValue(30, TimeUnit.SECONDS);
-    private static final String DEFAULT_MAX_STOP_TIMEOUT_SETTING = "xpack.watcher.stop.timeout";
+    public static final Setting<TimeValue> DEFAULT_THROTTLE_PERIOD_SETTING =
+        Setting.positiveTimeSetting("xpack.watcher.execution.default_throttle_period",
+                                    TimeValue.timeValueSeconds(5), Setting.Property.NodeScope);
+
+    private final MeanMetric totalExecutionsTime = new MeanMetric();
+    private final Map<String, MeanMetric> actionByTypeExecutionTime = new HashMap<>();
 
     private final HistoryStore historyStore;
     private final TriggeredWatchStore triggeredWatchStore;
@@ -71,8 +78,7 @@ public class ExecutionService extends AbstractComponent {
 
     @Inject
     public ExecutionService(Settings settings, HistoryStore historyStore, TriggeredWatchStore triggeredWatchStore, WatchExecutor executor,
-                            WatchStore watchStore, WatchLockService watchLockService, Clock clock,
-                            WatcherSettingsValidation settingsValidation) {
+                            WatchStore watchStore, WatchLockService watchLockService, Clock clock) {
         super(settings);
         this.historyStore = historyStore;
         this.triggeredWatchStore = triggeredWatchStore;
@@ -80,11 +86,8 @@ public class ExecutionService extends AbstractComponent {
         this.watchStore = watchStore;
         this.watchLockService = watchLockService;
         this.clock = clock;
-        this.defaultThrottlePeriod = settings.getAsTime("xpack.watcher.execution.default_throttle_period", TimeValue.timeValueSeconds(5));
-        maxStopTimeout = settings.getAsTime(DEFAULT_MAX_STOP_TIMEOUT_SETTING, DEFAULT_MAX_STOP_TIMEOUT);
-        if (ExecutionService.this.defaultThrottlePeriod.millis() < 0) {
-            settingsValidation.addError("xpack.watcher.execution.default_throttle_period", "time value cannot be negative");
-        }
+        this.defaultThrottlePeriod = DEFAULT_THROTTLE_PERIOD_SETTING.get(settings);
+        this.maxStopTimeout = Watcher.MAX_STOP_TIMEOUT_SETTING.get(settings);
     }
 
     public void start(ClusterState state) throws Exception {
@@ -397,12 +400,19 @@ public class ExecutionService extends AbstractComponent {
             // actions
             ctx.beforeActions();
             for (ActionWrapper action : watch.actions()) {
+                long now = System.currentTimeMillis();
                 ActionWrapper.Result actionResult = action.execute(ctx);
+                long executionTime = System.currentTimeMillis() - now;
+                String type = action.action().type();
+                actionByTypeExecutionTime.putIfAbsent(type, new MeanMetric());
+                actionByTypeExecutionTime.get(type).inc(executionTime);
                 ctx.onActionResult(actionResult);
             }
         }
 
-        return ctx.finish();
+        WatchRecord record = ctx.finish();
+        totalExecutionsTime.inc(record.result().executionDurationMs());
+        return record;
     }
 
     void executeTriggeredWatches(Collection<TriggeredWatch> triggeredWatches) throws Exception {
@@ -425,6 +435,19 @@ public class ExecutionService extends AbstractComponent {
             }
         }
         logger.debug("executed [{}] watches from the watch history", counter);
+    }
+
+    public Map<String, Object> usageStats() {
+        Counters counters = new Counters();
+        counters.inc("execution.actions._all.total", totalExecutionsTime.count());
+        counters.inc("execution.actions._all.total_time_in_ms", totalExecutionsTime.sum());
+
+        for (Map.Entry<String, MeanMetric> entry : actionByTypeExecutionTime.entrySet()) {
+            counters.inc("execution.actions." + entry.getKey() + ".total", entry.getValue().count());
+            counters.inc("execution.actions." + entry.getKey() + ".total_time_in_ms", entry.getValue().sum());
+        }
+
+        return counters.toMap();
     }
 
     private static final class StartupExecutionContext extends TriggeredExecutionContext {

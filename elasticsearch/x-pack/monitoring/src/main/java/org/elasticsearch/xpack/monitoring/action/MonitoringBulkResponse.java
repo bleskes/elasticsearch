@@ -101,7 +101,7 @@ public class MonitoringBulkResponse extends ActionResponse {
 
         @Override
         public void writeTo(StreamOutput out) throws IOException {
-            out.writeThrowable(getCause());
+            out.writeException(getCause());
         }
 
         /**
