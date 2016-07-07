@@ -26,7 +26,6 @@
     <module>apiClient</module>
     <module>apiServer</module>
     <module>elasticsearch-persistence</module>
-    <module>api-master</module>
   </modules>
 
 
@@ -229,12 +228,6 @@
         <artifactId>prelert-engine-api-client</artifactId>
         <version>2.1.1</version>
       </dependency>
-      <dependency>
-        <groupId>com.prelert</groupId>
-        <artifactId>engine-api-master</artifactId>
-        <version>2.1.1</version>
-      </dependency>
-
     </dependencies>
   </dependencyManagement>
 

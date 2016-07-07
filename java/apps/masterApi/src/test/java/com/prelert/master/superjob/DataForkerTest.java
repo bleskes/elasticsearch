@@ -62,7 +62,7 @@ public class DataForkerTest
 
         forker.forkData(stream);
 
-        verify(router, times(1)).routeToAll(HEADER);
+        verify(router, times(1)).routeToAll(HEADER + '\n');
     }
 
     @Test

@@ -6,12 +6,8 @@
 
   -->
 
-  <parent>
-    <groupId>com.prelert</groupId>
-    <artifactId>engineAPI</artifactId>
-    <version>2.1.1</version>
-  </parent>
-
+  <groupId>com.prelert.master</groupId>
+  <version>2.1.1</version>
   <artifactId>engine-api-master</artifactId>
   <packaging>jar</packaging>
 
@@ -42,36 +38,118 @@
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-log4j12</artifactId>
+      <version>1.7.14</version>
+    </dependency>
+    <dependency>
+      <groupId>log4j</groupId>
+      <artifactId>log4j</artifactId>
+      <version>1.2.17</version>
     </dependency>
 
     <!-- prelert jars -->
     <dependency>
       <groupId>com.prelert</groupId>
       <artifactId>prelert-engine-api-common</artifactId>
-      <scope>provided</scope>
+      <version>2.1.1</version>
+      <!-- <scope>provided</scope> -->
     </dependency>
     <dependency>
       <groupId>com.prelert</groupId>
       <artifactId>engine-api-server</artifactId>
-      <scope>provided</scope>
+      <version>2.1.1</version>
+      <!-- <scope>provided</scope> -->
     </dependency>
     <dependency>
       <groupId>com.prelert</groupId>
       <artifactId>engine-api</artifactId>
-      <scope>provided</scope>
+      <version>2.1.1</version>
+      <!-- <scope>provided</scope> -->
+    </dependency>
+    <dependency>
+      <groupId>com.prelert.client</groupId>
+      <artifactId>prelert-engine-api-client</artifactId>
+      <version>2.1.1</version>
+      <!-- <scope>provided</scope> -->
     </dependency>
 
-      <dependency>
-        <groupId>com.prelert.client</groupId>
-        <artifactId>prelert-engine-api-client</artifactId>
-        <scope>provided</scope>
-      </dependency>
-
+    <!-- Test only -->
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>4.11</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-all</artifactId>
+      <version>1.10.19</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
 
   <build>
     <plugins>
+      <!-- Copy resources from ./config/ to the build area -->
+      <plugin>
+        <artifactId>maven-resources-plugin</artifactId>
+        <version>2.6</version>
+        <executions>
+          <execution>
+            <id>copy-resources-config</id>
+            <phase>install</phase>
+            <goals>
+              <goal>copy-resources</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>${env.PRELERT_HOME}/config</outputDirectory>
+              <resources>
+                <resource>
+                  <directory>${basedir}/config</directory>
+                  <filtering>true</filtering>
+                </resource>
+              </resources>
+            </configuration>
+          </execution>
+
+          <execution>
+            <id>copy-resources-readme</id>
+            <phase>install</phase>
+            <goals>
+              <goal>copy-resources</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>${env.PRELERT_HOME}</outputDirectory>
+              <resources>
+                <resource>
+                  <directory>${basedir}</directory>
+                  <include>README.txt</include>
+                  <filtering>false</filtering>
+                </resource>
+              </resources>
+            </configuration>
+          </execution>
+
+          <execution>
+            <id>copy-resources-bin</id>
+            <phase>install</phase>
+            <goals>
+              <goal>copy-resources</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>${env.PRELERT_HOME}/bin</outputDirectory>
+              <resources>
+                <resource>
+                  <directory>${basedir}/bin</directory>
+                  <filtering>true</filtering>
+                </resource>
+              </resources>
+            </configuration>
+          </execution>
+
+        </executions>
+      </plugin>
+
 
     <!-- compiler -->
     <plugin>

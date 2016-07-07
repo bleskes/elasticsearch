@@ -29,12 +29,14 @@ package com.prelert.master.streaming;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import org.junit.Test;
 
 public class HttpDataStreamerTest
 {
-    @Test
+//    @Test
     public void test() throws IOException
     {
         try (HttpDataStreamer streamer = new HttpDataStreamer("http://localhost:7888"))
@@ -56,4 +58,39 @@ public class HttpDataStreamerTest
         }
     }
 
+//    @Test
+    public void testWaitForLatch() throws IOException
+    {
+        try (HttpDataStreamer streamer = new HttpDataStreamer("http://localhost:7888"))
+        {
+            OutputStream out1 = streamer.openStream("Blah");
+            OutputStream out2 = streamer.openStream("gah");
+
+            ExecutorService e = Executors.newFixedThreadPool(2);
+            e.execute(() -> writeData(out1));
+            e.execute(() -> writeData(out2));
+
+            streamer.waitForUploadsToComplete();
+
+            out1.close();
+            out2.close();
+
+            streamer.waitForUploadsToComplete();
+        }
+    }
+
+    private void writeData(OutputStream out)
+    {
+        try
+        {
+            for (int i=0; i<100; i++)
+            {
+                out.write("gah2014-06-23 00:00:00Z,AAL,132.2046,farequote\n".getBytes());
+            }
+        }
+        catch (IOException e)
+        {
+
+        }
+    }
 }
