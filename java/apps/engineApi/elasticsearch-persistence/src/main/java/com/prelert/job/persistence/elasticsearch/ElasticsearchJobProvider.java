@@ -44,6 +44,7 @@ import java.util.stream.Collectors;
 
 import org.apache.log4j.Logger;
 import org.elasticsearch.ElasticsearchException;
+import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexResponse;
 import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsRequest;
@@ -54,6 +55,7 @@ import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
+import org.elasticsearch.cluster.health.ClusterHealthStatus;
 import org.elasticsearch.cluster.metadata.IndexMetaData;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.TimeValue;
@@ -168,7 +170,19 @@ public class ElasticsearchJobProvider implements JobProvider
         // can get weird effects like indexes being reported as not existing
         // when they do.  See EL16-182 in Jira.
         LOGGER.trace("ES API CALL: wait for yellow status on whole cluster");
-        m_Client.admin().cluster().prepareHealth().setWaitForYellowStatus().execute().actionGet();
+        ClusterHealthResponse response =  m_Client.admin().cluster()
+                                                .prepareHealth()
+                                                .setWaitForYellowStatus()
+                                                .execute().actionGet();
+
+        // The wait call above can time out.
+        // Throw an error if in cluster health is red
+        if (response.getStatus() == ClusterHealthStatus.RED)
+        {
+            String msg = "Waited for the Elasticsearch status to be YELLOW but is RED after wait timeout";
+            LOGGER.error(msg);
+            throw new IllegalStateException(msg);
+        }
 
         LOGGER.info("Elasticsearch cluster '" + m_Client.settings().get("cluster.name")
                 + "' now ready to use");
