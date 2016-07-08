@@ -69,7 +69,7 @@ import static org.hamcrest.Matchers.notNullValue;
 
 /**
  */
-public class BasicWatcherTests extends AbstractWatcherIntegrationTestCase {
+public class    BasicWatcherTests extends AbstractWatcherIntegrationTestCase {
 
     @Override
     protected boolean timeWarped() {
