@@ -27,8 +27,6 @@
 
 package com.prelert.distributed;
 
-import java.net.Inet4Address;
-import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -37,9 +35,8 @@ import java.util.Map;
 import javax.ws.rs.core.Feature;
 import javax.ws.rs.core.FeatureContext;
 
-import org.apache.log4j.Logger;
-
 import com.prelert.job.manager.JobManager;
+import com.prelert.utils.HostnameFinder;
 
 /**
  * In non-distributed systems there is only one host - the local machine
@@ -49,8 +46,6 @@ import com.prelert.job.manager.JobManager;
  */
 public class LocalEngineApiHosts implements EngineApiHosts, Feature
 {
-    private static final Logger LOGGER = Logger.getLogger(LocalEngineApiHosts.class);
-
     private JobManager m_JobManager;
     private String m_Host;
 
@@ -62,15 +57,7 @@ public class LocalEngineApiHosts implements EngineApiHosts, Feature
 
     private String localHostname()
     {
-        try
-        {
-            return Inet4Address.getLocalHost().getHostName();
-        }
-        catch (UnknownHostException e)
-        {
-            LOGGER.error("Cannot determine local hostname", e);
-            return "localhost";
-        }
+        return HostnameFinder.findHostname();
     }
 
     @Override
