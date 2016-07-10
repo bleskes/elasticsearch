@@ -108,7 +108,7 @@ public class SecurityFeatureSetTests extends ESTestCase {
     public void testSystemKeyUsageEnabledByCryptoService() {
         final boolean enabled = randomBoolean();
 
-        when(cryptoService.encryptionEnabled()).thenReturn(enabled);
+        when(cryptoService.isEncryptionEnabled()).thenReturn(enabled);
 
         assertThat(SecurityFeatureSet.systemKeyUsage(cryptoService), is(enabled));
     }
@@ -155,7 +155,7 @@ public class SecurityFeatureSetTests extends ESTestCase {
             when(rolesStore.usageStats()).thenReturn(Collections.emptyMap());
         }
         final boolean useSystemKey = randomBoolean();
-        when(cryptoService.encryptionEnabled()).thenReturn(useSystemKey);
+        when(cryptoService.isEncryptionEnabled()).thenReturn(useSystemKey);
 
         List<Realm> realmsList= new ArrayList<>();
 
