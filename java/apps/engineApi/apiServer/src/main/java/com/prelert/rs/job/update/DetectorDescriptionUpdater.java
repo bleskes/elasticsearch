@@ -144,7 +144,7 @@ class DetectorDescriptionUpdater extends AbstractUpdater
                     jobId(), update.detectorIndex, update.detectorDescription) == false)
             {
                 throw new JobConfigurationException(
-                        Messages.getMessage(Messages.JOB_CONFIG_UPDATE_DETECTOR_DESCRIPTION_FAILED),
+                        Messages.getMessage(Messages.JOB_CONFIG_UPDATE_FAILED),
                         ErrorCodes.UNKNOWN_ERROR);
             }
         }

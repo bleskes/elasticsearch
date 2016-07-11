@@ -19,6 +19,7 @@
 package com.prelert.job.persistence;
 
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -138,6 +139,18 @@ public interface JobDetailsProvider extends Shutdownable
      * @throws UnknownJobException
      */
     boolean setJobFinishedTimeAndStatus(String jobId, Date time, JobStatus status)
+            throws UnknownJobException;
+
+    /**
+     * Updates the categorization filters of job with id {@code jobId} to
+     * {@code categorizationFilters}.
+     *
+     * @param jobId the job id
+     * @param categorizationFilters the new categorization filters
+     * @return {@code true} if update was successful
+     * @throws UnknownJobException If there is no job with id <code>jobId</code>
+     */
+    boolean updateCategorizationFilters(String jobId, List<String> categorizationFilters)
             throws UnknownJobException;
 
     /**

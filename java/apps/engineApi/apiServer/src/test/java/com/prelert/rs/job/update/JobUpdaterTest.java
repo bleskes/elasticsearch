@@ -262,6 +262,26 @@ public class JobUpdaterTest
     }
 
     @Test
+    public void testUpdate_GivenValidCategorizationFiltersUpdate() throws JobException
+    {
+        String update = "{\"categorizationFilters\": [\"SQL.*\"]}";
+
+        AnalysisConfig analysisConfig = new AnalysisConfig();
+        Detector detector = new Detector();
+        detector.setFunction("count");
+        detector.setByFieldName("prelertCategory");
+        analysisConfig.setDetectors(Arrays.asList(detector));
+        analysisConfig.setCategorizationFieldName("myCategory");
+        m_Job.setAnalysisConfig(analysisConfig);
+
+        when(m_JobManager.updateCategorizationFilters("foo", Arrays.asList("SQL.*"))).thenReturn(true);
+
+        new JobUpdater(m_JobManager, "foo").update(update);
+
+        verify(m_JobManager).updateCategorizationFilters("foo", Arrays.asList("SQL.*"));
+    }
+
+    @Test
     public void testUpdate_GivenValidDetectorDescriptionUpdate() throws JobException
     {
         String update = "{\"detectors\": [{\"index\":0,\"description\":\"the A train\"}]}";

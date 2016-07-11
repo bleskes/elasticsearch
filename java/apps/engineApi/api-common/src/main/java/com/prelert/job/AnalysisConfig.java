@@ -95,7 +95,6 @@ public class AnalysisConfig
     {
         m_Detectors = new ArrayList<>();
         m_Influencers = new ArrayList<>();
-        m_CategorizationFilters = new ArrayList<>();
     }
 
     /**

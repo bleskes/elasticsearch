@@ -28,6 +28,7 @@
 package com.prelert.job.persistence.elasticsearch;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.elasticsearch.script.Script;
@@ -41,6 +42,7 @@ public final class ElasticsearchScripts
     // Script names
     private static final String UPDATE_BUCKET_COUNT = "update-bucket-count";
     private static final String UPDATE_USAGE = "update-usage";
+    private static final String UPDATE_CATEGORIZATION_FILTERS = "update-categorization-filters";
     private static final String UPDATE_DETECTOR_DESCRIPTION = "update-detector-description";
     private static final String UPDATE_SCHEDULER_CONFIG = "update-scheduler-config";
 
@@ -49,6 +51,7 @@ public final class ElasticsearchScripts
     private static final String BYTES_PARAM = "bytes";
     private static final String FIELD_COUNT_PARAM = "fieldCount";
     private static final String RECORD_COUNT_PARAM = "recordCount";
+    private static final String NEW_CATEGORIZATION_FILTERS_PARAM = "newFilters";
     private static final String DETECTOR_INDEX_PARAM = "detectorIndex";
     private static final String NEW_DESCRIPTION_PARAM = "newDescription";
     private static final String NEW_SCHEDULER_CONFIG_PARAM = "newSchedulerConfig";
@@ -74,6 +77,14 @@ public final class ElasticsearchScripts
         scriptParams.put(FIELD_COUNT_PARAM, additionalFields);
         scriptParams.put(RECORD_COUNT_PARAM, additionalRecords);
         return new Script(UPDATE_USAGE, ScriptService.ScriptType.FILE,
+                ScriptService.DEFAULT_LANG, scriptParams);
+    }
+
+    public static Script newUpdateCategorizationFilters(List<String> newFilters)
+    {
+        Map<String, Object> scriptParams = new HashMap<>();
+        scriptParams.put(NEW_CATEGORIZATION_FILTERS_PARAM, newFilters);
+        return new Script(UPDATE_CATEGORIZATION_FILTERS, ScriptService.ScriptType.FILE,
                 ScriptService.DEFAULT_LANG, scriptParams);
     }
 

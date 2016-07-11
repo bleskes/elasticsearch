@@ -1276,6 +1276,18 @@ public class ElasticsearchJobProvider implements JobProvider
     }
 
     @Override
+    public boolean updateCategorizationFilters(String jobId, List<String> categorizationFilters)
+            throws UnknownJobException
+    {
+        LOGGER.trace("ES API CALL: update categorization filters for job " + jobId
+                +  " by running Groovy script update-categorization-filters with params newFilters="
+                + categorizationFilters);
+
+        return updateViaScript(jobId, ElasticsearchScripts.newUpdateCategorizationFilters(
+                categorizationFilters));
+    }
+
+    @Override
     public boolean updateDetectorDescription(String jobId, int detectorIndex, String newDescription)
             throws UnknownJobException
     {

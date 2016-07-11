@@ -1457,6 +1457,54 @@ public class JobsTest implements Closeable
     }
 
     /**
+     * Test updating the categorizationFilters
+     *
+     * @param jobId The job id
+     * @throws IOException
+     */
+    public void testUpdateCategorizationFilters() throws IOException
+    {
+        String jobId = "update-categorization-filters-job";
+        m_WebServiceClient.deleteJob(jobId);
+
+        String jobConfig = "{"
+                + "\"id\":\"" + jobId + "\","
+                + "\"analysisConfig\":{"
+                + "  \"bucketSpan\":300,"
+                + "  \"overlappingBuckets\":false,"
+                + "  \"categorizationFieldName\": \"myCategory\","
+                + "  \"categorizationFilters\": [\"a\", \"b\"],"
+                + "  \"detectors\":["
+                + "    {\"function\":\"count\", \"byFieldName\":\"prelertcategory\"}"
+                + "  ]"
+                + "}"
+                + "}";
+
+        m_WebServiceClient.createJob(jobConfig);
+        JobDetails job = m_WebServiceClient.getJob(jobId).getDocument();
+        List<String> filters = job.getAnalysisConfig().getCategorizationFilters();
+        test(filters.equals(Arrays.asList("a", "b")));
+
+        m_WebServiceClient.updateJob(jobId, "{\"categorizationFilters\":[\"c\",\"d\"]}");
+
+        job = m_WebServiceClient.getJob(jobId).getDocument();
+        filters = job.getAnalysisConfig().getCategorizationFilters();
+        test(filters.equals(Arrays.asList("c", "d")));
+
+        // Not an array
+        m_WebServiceClient.updateJob(jobId, "{\"categorizationFilters\":\"c\"}");
+        test("Invalid update value for categorizationFilters: value must be an array of strings; actual was: \"c\"".
+                equals(m_WebServiceClient.getLastError().getMessage()));
+
+        // Invalid regex
+        m_WebServiceClient.updateJob(jobId, "{\"categorizationFilters\":[\"[\"]}");
+        test("categorizationFilters contains invalid regular expression '['".equals(
+                m_WebServiceClient.getLastError().getMessage()));
+
+        m_WebServiceClient.deleteJob(jobId);
+    }
+
+    /**
      * Test updating the detectorDescription
      *
      * @param jobId The job id
@@ -2073,6 +2121,7 @@ public class JobsTest implements Closeable
         {
 
             // Self-complete tests first
+            test.testUpdateCategorizationFilters();
             test.testUpdateDetectorDescription();
             test.testValidateEndpoints();
 

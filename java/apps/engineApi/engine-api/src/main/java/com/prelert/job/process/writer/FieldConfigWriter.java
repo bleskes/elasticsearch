@@ -108,6 +108,11 @@ public class FieldConfigWriter
     private static void writeAsEnumeratedSettings(String settingName, List<String> values,
             StringBuilder buffer, boolean quote)
     {
+        if (values == null)
+        {
+            return;
+        }
+
         int counter = 0;
         for (String value : values)
         {

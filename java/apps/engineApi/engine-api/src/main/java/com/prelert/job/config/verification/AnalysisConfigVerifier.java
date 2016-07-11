@@ -156,7 +156,7 @@ public final class AnalysisConfigVerifier
             throws JobConfigurationException
     {
         List<String> filters = config.getCategorizationFilters();
-        if (filters.isEmpty())
+        if (filters == null || filters.isEmpty())
         {
             return;
         }

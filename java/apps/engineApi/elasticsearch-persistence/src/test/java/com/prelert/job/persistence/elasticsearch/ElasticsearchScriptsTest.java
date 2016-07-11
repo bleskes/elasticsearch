@@ -29,7 +29,9 @@ package com.prelert.job.persistence.elasticsearch;
 
 import static org.junit.Assert.assertEquals;
 
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.elasticsearch.script.Script;
@@ -55,6 +57,18 @@ public class ElasticsearchScriptsTest
         assertEquals(1L, script.getParams().get("bytes"));
         assertEquals(2L, script.getParams().get("fieldCount"));
         assertEquals(3L, script.getParams().get("recordCount"));
+    }
+
+    @Test
+    public void testNewUpdateCategorizationFilters()
+    {
+        List<String> newFilters = Arrays.asList("foo", "bar");
+
+        Script script = ElasticsearchScripts.newUpdateCategorizationFilters(newFilters);
+
+        assertEquals("update-categorization-filters", script.getScript());
+        assertEquals(1, script.getParams().size());
+        assertEquals(newFilters, script.getParams().get("newFilters"));
     }
 
     @Test

@@ -1102,6 +1102,12 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
         }
     }
 
+    public boolean updateCategorizationFilters(String jobId, List<String> categorizationFilters)
+        throws UnknownJobException
+    {
+        return m_JobProvider.updateCategorizationFilters(jobId, categorizationFilters);
+    }
+
     public boolean updateDetectorDescription(String jobId, int detectorIndex, String newDescription)
             throws UnknownJobException
     {

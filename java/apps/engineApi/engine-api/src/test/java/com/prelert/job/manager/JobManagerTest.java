@@ -1596,6 +1596,17 @@ public class JobManagerTest
     }
 
     @Test
+    public void testUpdateCategorizationFilters() throws UnknownJobException
+    {
+        givenProcessInfo(2);
+        JobManager jobManager = createJobManager();
+
+        jobManager.updateCategorizationFilters("foo", Arrays.asList("a", "b"));
+
+        verify(m_JobProvider).updateCategorizationFilters("foo", Arrays.asList("a", "b"));
+    }
+
+    @Test
     public void testUpdateDetectorDescription() throws UnknownJobException
     {
         givenProcessInfo(2);
