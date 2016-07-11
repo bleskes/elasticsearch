@@ -19,7 +19,6 @@ package org.elasticsearch.xpack.notification.email;
 
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.test.ESTestCase;
-import org.elasticsearch.xpack.common.secret.SecretService;
 
 import javax.mail.BodyPart;
 import javax.mail.Part;
@@ -50,7 +49,7 @@ public class ProfileTests extends ESTestCase {
                 .put("account.foo.smtp.host", "_host")
                 .build();
 
-        Accounts accounts = new Accounts(settings, SecretService.Insecure.INSTANCE, logger);
+        Accounts accounts = new Accounts(settings, null, logger);
         Session session = accounts.account("foo").getConfig().createSession();
         MimeMessage mimeMessage = Profile.STANDARD.toMimeMessage(email, session);
 
