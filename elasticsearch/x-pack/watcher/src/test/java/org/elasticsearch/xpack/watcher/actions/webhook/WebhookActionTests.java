@@ -40,7 +40,6 @@ import org.elasticsearch.xpack.common.http.HttpResponse;
 import org.elasticsearch.xpack.common.http.auth.HttpAuthRegistry;
 import org.elasticsearch.xpack.common.http.auth.basic.BasicAuthFactory;
 import org.elasticsearch.xpack.watcher.support.init.proxy.WatcherClientProxy;
-import org.elasticsearch.xpack.common.secret.SecretService;
 import org.elasticsearch.xpack.common.text.TextTemplate;
 import org.elasticsearch.xpack.common.text.TextTemplateEngine;
 import org.elasticsearch.xpack.watcher.support.search.WatcherSearchTemplateService;
@@ -99,10 +98,9 @@ public class WebhookActionTests extends ESTestCase {
     @Before
     public void init() throws Exception {
         templateEngine = new MockTextTemplateEngine();
-        SecretService secretService = mock(SecretService.class);
         testBody = TextTemplate.inline(TEST_BODY_STRING).build();
         testPath = TextTemplate.inline(TEST_PATH_STRING).build();
-        authRegistry = new HttpAuthRegistry(singletonMap("basic", new BasicAuthFactory(secretService)));
+        authRegistry = new HttpAuthRegistry(singletonMap("basic", new BasicAuthFactory(null)));
     }
 
     public void testExecute() throws Exception {
