@@ -281,7 +281,7 @@ public class HierarchicalNormalizationTest implements Closeable
 
         test(record2.getNormalizedProbability() > 82.0);
         LOGGER.info("record2.getAnomalyScore() = " + record2.getAnomalyScore());
-        test(record2.getAnomalyScore() > 5.0 && record2.getAnomalyScore() < 5.5);
+        test(record2.getAnomalyScore() > 1.5 && record2.getAnomalyScore() < 5.5);
         test(record2.getByFieldName().equals("region"));
         test(record2.getByFieldValue().equals("US"));
         test(record2.getFunction().equals("min"));
