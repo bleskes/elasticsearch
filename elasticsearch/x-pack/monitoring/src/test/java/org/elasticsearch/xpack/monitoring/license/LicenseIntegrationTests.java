@@ -38,6 +38,7 @@ import org.elasticsearch.xpack.XPackPlugin;
 import org.elasticsearch.xpack.monitoring.MonitoringLicensee;
 import org.elasticsearch.xpack.monitoring.test.MonitoringIntegTestCase;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -173,7 +174,7 @@ public class LicenseIntegrationTests extends MonitoringIntegTestCase {
     }
 
     public static class InternalXPackPlugin extends XPackPlugin {
-        public InternalXPackPlugin(Settings settings) {
+        public InternalXPackPlugin(Settings settings) throws IOException {
             super(settings);
             licensing = new MockLicensing();
         }

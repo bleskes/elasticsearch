@@ -29,7 +29,7 @@ import org.elasticsearch.node.Node;
 import org.elasticsearch.xpack.security.authc.file.FileRealm;
 import org.elasticsearch.xpack.security.Security;
 import org.elasticsearch.xpack.security.authz.store.FileRolesStore;
-import org.elasticsearch.xpack.security.crypto.InternalCryptoService;
+import org.elasticsearch.xpack.security.crypto.CryptoService;
 import org.elasticsearch.xpack.security.transport.netty.SecurityNettyTransport;
 import org.elasticsearch.test.SecurityIntegTestCase;
 import org.elasticsearch.transport.Transport;
@@ -94,7 +94,7 @@ public class ServerTransportFilterIntegrationTests extends SecurityIntegTestCase
 
     public void testThatConnectionToServerTypeConnectionWorks() throws IOException {
         Settings dataNodeSettings = internalCluster().getDataNodeInstance(Settings.class);
-        String systemKeyFile = InternalCryptoService.FILE_SETTING.get(dataNodeSettings);
+        String systemKeyFile = CryptoService.FILE_SETTING.get(dataNodeSettings);
 
         Transport transport = internalCluster().getDataNodeInstance(Transport.class);
         TransportAddress transportAddress = transport.boundAddress().publishAddress();
@@ -114,7 +114,7 @@ public class ServerTransportFilterIntegrationTests extends SecurityIntegTestCase
                 .put("xpack.security.audit.enabled", false)
                 .put("path.home", createTempDir())
                 .put(NetworkModule.HTTP_ENABLED.getKey(), false)
-                .put(InternalCryptoService.FILE_SETTING.getKey(), systemKeyFile)
+                .put(CryptoService.FILE_SETTING.getKey(), systemKeyFile)
                 .build();
         try (Node node = new MockNode(nodeSettings, Collections.singletonList(XPackPlugin.class))) {
             node.start();
@@ -124,7 +124,7 @@ public class ServerTransportFilterIntegrationTests extends SecurityIntegTestCase
 
     public void testThatConnectionToClientTypeConnectionIsRejected() throws IOException {
         Settings dataNodeSettings = internalCluster().getDataNodeInstance(Settings.class);
-        String systemKeyFile = InternalCryptoService.FILE_SETTING.get(dataNodeSettings);
+        String systemKeyFile = CryptoService.FILE_SETTING.get(dataNodeSettings);
 
         Path folder = createFolder(createTempDir(), getClass().getSimpleName() + "-" + randomAsciiOfLength(10));
 
@@ -144,7 +144,7 @@ public class ServerTransportFilterIntegrationTests extends SecurityIntegTestCase
                 .put(SecurityNettyTransport.SSL_SETTING.getKey(), sslTransportEnabled())
                 .put("xpack.security.audit.enabled", false)
                 .put(NetworkModule.HTTP_ENABLED.getKey(), false)
-                .put(InternalCryptoService.FILE_SETTING.getKey(), systemKeyFile)
+                .put(CryptoService.FILE_SETTING.getKey(), systemKeyFile)
                 .put("discovery.initial_state_timeout", "2s")
                 .put("path.home", createTempDir())
                 .put(Node.NODE_MASTER_SETTING.getKey(), false)

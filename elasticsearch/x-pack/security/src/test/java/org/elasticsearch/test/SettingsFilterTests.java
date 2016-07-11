@@ -27,6 +27,7 @@ import org.elasticsearch.xpack.security.ssl.SSLConfiguration;
 import org.elasticsearch.xpack.XPackPlugin;
 import org.hamcrest.Matcher;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -40,7 +41,7 @@ public class SettingsFilterTests extends ESTestCase {
     private Settings.Builder configuredSettingsBuilder = Settings.builder();
     private Map<String, Matcher> settingsMatcherMap = new HashMap<>();
 
-    public void testFiltering() {
+    public void testFiltering() throws IOException {
         configureUnfilteredSetting("xpack.security.authc.realms.file.type", "file");
 
         // ldap realm filtering

@@ -46,6 +46,7 @@ import org.elasticsearch.xpack.monitoring.MonitoringSettings;
 import org.elasticsearch.xpack.monitoring.test.MonitoringIntegTestCase;
 import org.junit.Before;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -232,7 +233,7 @@ public abstract class AbstractCollectorTestCase extends MonitoringIntegTestCase 
 
     public static class InternalXPackPlugin extends XPackPlugin {
 
-        public InternalXPackPlugin(Settings settings) {
+        public InternalXPackPlugin(Settings settings) throws IOException {
             super(settings);
             licensing = new InternalLicensing();
         }
