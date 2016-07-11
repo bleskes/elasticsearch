@@ -31,6 +31,7 @@ import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.common.regex.Regex;
 import org.elasticsearch.common.settings.Setting;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.util.concurrent.EsExecutors;
 import org.elasticsearch.plugins.ActionPlugin;
 import org.elasticsearch.rest.RestHandler;
@@ -41,6 +42,7 @@ import org.elasticsearch.xpack.watcher.actions.WatcherActionModule;
 import org.elasticsearch.xpack.watcher.client.WatcherClientModule;
 import org.elasticsearch.xpack.watcher.condition.ConditionModule;
 import org.elasticsearch.xpack.watcher.execution.ExecutionModule;
+import org.elasticsearch.xpack.watcher.execution.ExecutionService;
 import org.elasticsearch.xpack.watcher.execution.InternalWatchExecutor;
 import org.elasticsearch.xpack.watcher.history.HistoryModule;
 import org.elasticsearch.xpack.watcher.history.HistoryStore;
@@ -56,7 +58,6 @@ import org.elasticsearch.xpack.watcher.rest.action.RestWatchServiceAction;
 import org.elasticsearch.xpack.watcher.rest.action.RestWatcherStatsAction;
 import org.elasticsearch.xpack.watcher.support.WatcherIndexTemplateRegistry;
 import org.elasticsearch.xpack.watcher.support.WatcherIndexTemplateRegistry.TemplateConfig;
-import org.elasticsearch.xpack.watcher.support.validation.WatcherSettingsValidation;
 import org.elasticsearch.xpack.watcher.transform.TransformModule;
 import org.elasticsearch.xpack.watcher.transport.actions.ack.AckWatchAction;
 import org.elasticsearch.xpack.watcher.transport.actions.ack.TransportAckWatchAction;
@@ -99,6 +100,8 @@ public class Watcher implements ActionPlugin {
             new Setting<>("index.xpack.watcher.template.version", "", Function.identity(), Setting.Property.IndexScope);
     public static final Setting<Boolean> ENCRYPT_SENSITIVE_DATA_SETTING =
             Setting.boolSetting("xpack.watcher.encrypt_sensitive_data", false, Setting.Property.NodeScope);
+    public static final Setting<TimeValue> MAX_STOP_TIMEOUT_SETTING =
+        Setting.timeSetting("xpack.watcher.stop.timeout", TimeValue.timeValueSeconds(30), Setting.Property.NodeScope);
 
     private static final ESLogger logger = Loggers.getLogger(XPackPlugin.class);
 
@@ -139,9 +142,7 @@ public class Watcher implements ActionPlugin {
         if (enabled == false|| transportClient) {
             return Collections.emptyList();
         }
-        return Arrays.<Class<? extends LifecycleComponent>>asList(
-            WatcherLicensee.class,
-            WatcherSettingsValidation.class);
+        return Collections.singletonList(WatcherLicensee.class);
     }
 
     public Settings additionalSettings() {
@@ -156,6 +157,8 @@ public class Watcher implements ActionPlugin {
         }
         settings.add(INDEX_WATCHER_VERSION_SETTING);
         settings.add(INDEX_WATCHER_TEMPLATE_VERSION_SETTING);
+        settings.add(MAX_STOP_TIMEOUT_SETTING);
+        settings.add(ExecutionService.DEFAULT_THROTTLE_PERIOD_SETTING);
         settings.add(Setting.intSetting("xpack.watcher.execution.scroll.size", 0, Setting.Property.NodeScope));
         settings.add(Setting.intSetting("xpack.watcher.watch.scroll.size", 0, Setting.Property.NodeScope));
         settings.add(Setting.boolSetting(XPackPlugin.featureEnabledSetting(Watcher.NAME), true, Setting.Property.NodeScope));
@@ -164,7 +167,6 @@ public class Watcher implements ActionPlugin {
         settings.add(Setting.simpleString("xpack.watcher.internal.ops.search.default_timeout", Setting.Property.NodeScope));
         settings.add(Setting.simpleString("xpack.watcher.internal.ops.bulk.default_timeout", Setting.Property.NodeScope));
         settings.add(Setting.simpleString("xpack.watcher.internal.ops.index.default_timeout", Setting.Property.NodeScope));
-        settings.add(Setting.simpleString("xpack.watcher.execution.default_throttle_period", Setting.Property.NodeScope));
         settings.add(Setting.simpleString("xpack.watcher.actions.index.default_timeout", Setting.Property.NodeScope));
         settings.add(Setting.simpleString("xpack.watcher.index.rest.direct_access", Setting.Property.NodeScope));
         settings.add(Setting.simpleString("xpack.watcher.trigger.schedule.engine", Setting.Property.NodeScope));

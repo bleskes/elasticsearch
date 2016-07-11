@@ -17,10 +17,11 @@
 
 package org.elasticsearch.xpack.common.http.auth.basic;
 
+import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.xpack.common.http.auth.HttpAuthFactory;
-import org.elasticsearch.xpack.common.secret.SecretService;
+import org.elasticsearch.xpack.security.crypto.CryptoService;
 
 import java.io.IOException;
 
@@ -29,11 +30,11 @@ import java.io.IOException;
  */
 public class BasicAuthFactory extends HttpAuthFactory<BasicAuth, ApplicableBasicAuth> {
 
-    private final SecretService secretService;
+    private final CryptoService cryptoService;
 
     @Inject
-    public BasicAuthFactory(SecretService secretService) {
-        this.secretService = secretService;
+    public BasicAuthFactory(@Nullable CryptoService cryptoService) {
+        this.cryptoService = cryptoService;
     }
 
     public String type() {
@@ -46,6 +47,6 @@ public class BasicAuthFactory extends HttpAuthFactory<BasicAuth, ApplicableBasic
 
     @Override
     public ApplicableBasicAuth createApplicable(BasicAuth auth) {
-        return new ApplicableBasicAuth(auth, secretService);
+        return new ApplicableBasicAuth(auth, cryptoService);
     }
 }

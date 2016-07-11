@@ -108,7 +108,7 @@ public class FieldDataCacheWithFieldSubsetReaderTests extends ESTestCase {
         assertThat(atomic.getOrdinalsValues().getValueCount(), equalTo(numDocs));
         assertThat(indexFieldDataCache.topLevelBuilds, equalTo(1));
 
-        DirectoryReader ir = FieldSubsetReader.wrap(this.ir, Collections.<String>emptySet());
+        DirectoryReader ir = FieldSubsetReader.wrap(this.ir, Collections.<String>emptySet(), false);
         global = sortedSetDVOrdinalsIndexFieldData.loadGlobal(ir);
         atomic = global.load(ir.leaves().get(0));
         assertThat(atomic.getOrdinalsValues().getValueCount(), equalTo(0L));
@@ -121,7 +121,7 @@ public class FieldDataCacheWithFieldSubsetReaderTests extends ESTestCase {
             assertThat(atomic.getOrdinalsValues().getValueCount(), greaterThanOrEqualTo(1L));
         }
 
-        DirectoryReader ir = FieldSubsetReader.wrap(this.ir, Collections.<String>emptySet());
+        DirectoryReader ir = FieldSubsetReader.wrap(this.ir, Collections.<String>emptySet(), false);
         for (LeafReaderContext context : ir.leaves()) {
             AtomicOrdinalsFieldData atomic = sortedSetDVOrdinalsIndexFieldData.load(context);
             assertThat(atomic.getOrdinalsValues().getValueCount(), equalTo(0L));
@@ -137,7 +137,7 @@ public class FieldDataCacheWithFieldSubsetReaderTests extends ESTestCase {
         assertThat(atomic.getOrdinalsValues().getValueCount(), equalTo(numDocs));
         assertThat(indexFieldDataCache.topLevelBuilds, equalTo(1));
 
-        DirectoryReader ir = FieldSubsetReader.wrap(this.ir, Collections.<String>emptySet());
+        DirectoryReader ir = FieldSubsetReader.wrap(this.ir, Collections.<String>emptySet(), false);
         global = pagedBytesIndexFieldData.loadGlobal(ir);
         atomic = global.load(ir.leaves().get(0));
         assertThat(atomic.getOrdinalsValues().getValueCount(), equalTo(0L));
@@ -152,7 +152,7 @@ public class FieldDataCacheWithFieldSubsetReaderTests extends ESTestCase {
         }
         assertThat(indexFieldDataCache.leafLevelBuilds, equalTo(ir.leaves().size()));
 
-        DirectoryReader ir = FieldSubsetReader.wrap(this.ir, Collections.<String>emptySet());
+        DirectoryReader ir = FieldSubsetReader.wrap(this.ir, Collections.<String>emptySet(), false);
         for (LeafReaderContext context : ir.leaves()) {
             AtomicOrdinalsFieldData atomic = pagedBytesIndexFieldData.load(context);
             assertThat(atomic.getOrdinalsValues().getValueCount(), equalTo(0L));

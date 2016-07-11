@@ -28,6 +28,7 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.elasticsearch.common.transport.TransportAddress;
 import org.elasticsearch.plugins.Plugin;
+import org.elasticsearch.transport.MockTcpTransportPlugin;
 import org.elasticsearch.xpack.security.InternalClient;
 import org.elasticsearch.xpack.security.Security;
 import org.elasticsearch.xpack.security.authc.support.SecuredString;
@@ -189,11 +190,8 @@ public abstract class SecurityIntegTestCase extends ESIntegTestCase {
     }
 
     @Override
-    protected Collection<Class<? extends Plugin>> getMockPlugins() {
-        Set<Class<? extends Plugin>> plugins = new HashSet<>(super.getMockPlugins());
-        plugins.remove(MockTransportService.TestPlugin.class); // security has its own transport service
-        plugins.remove(AssertingLocalTransport.TestPlugin.class); // security has its own transport
-        return plugins;
+    protected boolean addMockTransportService() {
+        return false; // security has its own transport service
     }
 
     @Override
@@ -365,10 +363,6 @@ public abstract class SecurityIntegTestCase extends ESIntegTestCase {
 
     protected InternalClient internalClient() {
         return internalCluster().getInstance(InternalClient.class);
-    }
-
-    protected InternalClient internalClient(String node) {
-        return internalCluster().getInstance(InternalClient.class, node);
     }
 
     protected SecurityClient securityClient() {
