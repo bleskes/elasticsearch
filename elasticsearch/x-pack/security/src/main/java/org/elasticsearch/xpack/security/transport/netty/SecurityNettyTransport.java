@@ -43,6 +43,7 @@ import org.jboss.netty.handler.ssl.SslHandler;
 
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLParameters;
+import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.List;
 
@@ -123,7 +124,7 @@ public class SecurityNettyTransport extends NettyTransport {
     }
 
     @Override
-    protected void onException(Channel channel, Exception e) {
+    protected void onException(Channel channel, Exception e) throws IOException {
         if (isNotSslRecordException(e)) {
             if (logger.isTraceEnabled()) {
                 logger.trace("received plaintext traffic on a encrypted channel, closing connection {}", e, channel);
