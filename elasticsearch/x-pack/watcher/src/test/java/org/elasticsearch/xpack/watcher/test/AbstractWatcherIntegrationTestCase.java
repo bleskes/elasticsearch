@@ -51,6 +51,7 @@ import org.elasticsearch.test.TestCluster;
 import org.elasticsearch.test.store.MockFSIndexStore;
 import org.elasticsearch.test.transport.AssertingLocalTransport;
 import org.elasticsearch.test.transport.MockTransportService;
+import org.elasticsearch.xpack.support.clock.Clock;
 import org.elasticsearch.xpack.watcher.WatcherLifeCycleService;
 import org.elasticsearch.xpack.watcher.WatcherService;
 import org.elasticsearch.xpack.watcher.WatcherState;
@@ -282,7 +283,7 @@ public abstract class AbstractWatcherIntegrationTestCase extends ESIntegTestCase
 
     private void setupTimeWarp() throws Exception {
         if (timeWarped()) {
-            timeWarp = new TimeWarp(getInstanceFromMaster(ScheduleTriggerEngineMock.class), getInstanceFromMaster(ClockMock.class));
+            timeWarp = new TimeWarp(getInstanceFromMaster(ScheduleTriggerEngineMock.class), (ClockMock)getInstanceFromMaster(Clock.class));
         }
     }
 
