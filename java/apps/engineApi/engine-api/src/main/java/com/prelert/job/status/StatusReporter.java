@@ -66,9 +66,13 @@ public class StatusReporter
     public static final String ACCEPTABLE_PERCENTAGE_OUT_OF_ORDER_ERRORS_PROP =
             "max.percent.outoforder.errors";
 
+    private final String m_JobId;
+    private final UsageReporter m_UsageReporter;
+    private final JobDataCountsPersister m_DataCountsPersister;
+    private final Logger m_Logger;
 
-    private DataCounts m_TotalRecordStats;
-    private DataCounts m_IncrementalRecordStats;
+    private final DataCounts m_TotalRecordStats;
+    private volatile DataCounts m_IncrementalRecordStats;
 
     private long m_AnalyzedFieldsPerRecord = 1;
 
@@ -80,43 +84,42 @@ public class StatusReporter
     private final int m_AcceptablePercentDateParseErrors;
     private final int m_AcceptablePercentOutOfOrderErrors;
 
-    private final UsageReporter m_UsageReporter;
-
-    private final String m_JobId;
-    private final Logger m_Logger;
-    private final JobDataCountsPersister m_DataCountsPersister;
-
     private final AtomicLong m_LastRecordTimeEpochMs;
 
     public StatusReporter(String jobId, UsageReporter usageReporter,
                         JobDataCountsPersister dataCountsPersister, Logger logger,
                         long bucketSpan)
     {
-        m_JobId = jobId;
-        m_UsageReporter = usageReporter;
-        m_DataCountsPersister = dataCountsPersister;
-        m_Logger = logger;
-
-        m_TotalRecordStats = new DataCounts();
-        m_IncrementalRecordStats = new DataCounts();
-
-        m_LastRecordTimeEpochMs = new AtomicLong();
-
-        m_AcceptablePercentDateParseErrors = PrelertSettings.getSettingOrDefault(
-                ACCEPTABLE_PERCENTAGE_DATE_PARSE_ERRORS_PROP,
-                ACCEPTABLE_PERCENTAGE_DATE_PARSE_ERRORS);
-        m_AcceptablePercentOutOfOrderErrors = PrelertSettings.getSettingOrDefault(
-                ACCEPTABLE_PERCENTAGE_OUT_OF_ORDER_ERRORS_PROP,
-                ACCEPTABLE_PERCENTAGE_OUT_OF_ORDER_ERRORS);
+        this(jobId, usageReporter, dataCountsPersister, logger, new DataCounts(), bucketSpan);
     }
 
     public StatusReporter(String jobId, DataCounts counts,
             UsageReporter usageReporter, JobDataCountsPersister dataCountsPersister, Logger logger,
             long bucketSpan)
     {
-        this(jobId, usageReporter, dataCountsPersister, logger, bucketSpan);
+        this(jobId, usageReporter, dataCountsPersister, logger, new DataCounts(counts), bucketSpan);
+    }
 
-        m_TotalRecordStats = new DataCounts(counts);
+    private StatusReporter(String jobId, UsageReporter usageReporter,
+            JobDataCountsPersister dataCountsPersister, Logger logger, DataCounts totalCounts,
+            long bucketSpan)
+    {
+        m_JobId = jobId;
+        m_UsageReporter = usageReporter;
+        m_DataCountsPersister = dataCountsPersister;
+        m_Logger = logger;
+
+        m_TotalRecordStats = totalCounts;
+        m_IncrementalRecordStats = new DataCounts();
+
+        m_LastRecordTimeEpochMs = new AtomicLong();
+
+        m_AcceptablePercentDateParseErrors = PrelertSettings.getSettingOrDefault(
+            ACCEPTABLE_PERCENTAGE_DATE_PARSE_ERRORS_PROP,
+            ACCEPTABLE_PERCENTAGE_DATE_PARSE_ERRORS);
+        m_AcceptablePercentOutOfOrderErrors = PrelertSettings.getSettingOrDefault(
+            ACCEPTABLE_PERCENTAGE_OUT_OF_ORDER_ERRORS_PROP,
+            ACCEPTABLE_PERCENTAGE_OUT_OF_ORDER_ERRORS);
     }
 
     /**

@@ -112,7 +112,6 @@ public class ProcessFactory
                     ErrorCodes.NATIVE_PROCESS_START_ERROR, e);
         }
 
-
         StatusReporter sr = new StatusReporter(jobId, job.getCounts(),
                 new UsageReporter(jobId,
                                   m_UsagePersisterFactory.getInstance(logger),
