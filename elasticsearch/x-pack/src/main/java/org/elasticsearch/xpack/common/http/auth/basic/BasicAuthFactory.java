@@ -32,7 +32,6 @@ public class BasicAuthFactory extends HttpAuthFactory<BasicAuth, ApplicableBasic
 
     private final CryptoService cryptoService;
 
-    @Inject
     public BasicAuthFactory(@Nullable CryptoService cryptoService) {
         this.cryptoService = cryptoService;
     }
