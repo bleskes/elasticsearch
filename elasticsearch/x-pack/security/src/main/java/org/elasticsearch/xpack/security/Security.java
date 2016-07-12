@@ -145,6 +145,10 @@ public class Security implements ActionPlugin {
         }
     }
 
+    public CryptoService getCryptoService() {
+        return cryptoService;
+    }
+
     public Collection<Module> nodeModules() {
         List<Module> modules = new ArrayList<>();
 
