@@ -128,14 +128,14 @@ public class JobRouterTest
     }
 
     @Test
-    public void test_multipleWrites() throws IOException
+    public void test_multipleWrites_withSmallBuffer() throws IOException
     {
         ByteArrayOutputStream streamA = new ByteArrayOutputStream();
 
         List<OutputStream> streams = new ArrayList<>();
         streams.add(streamA);
 
-        JobRouter router = new JobRouter(streams, 8);
+        JobRouter router = new JobRouter(streams, 6);
 
         router.routeToAll("Hello");
         router.routeToJob("GGG", " World");

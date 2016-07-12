@@ -32,6 +32,11 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DefaultValue;
@@ -155,24 +160,16 @@ public class Data
         LOGGER.debug("Post to close data upload for job " + jobId);
 
         List<HttpDataStreamer> streamers = createStreamers();
-        int subJobIndex = 1;
+
+        List<Callable<Boolean>> tasks = new ArrayList<>();
+        for (int i=0; i<streamers.size(); i++)
+        {
+            tasks.add(new StreamCloser(streamers.get(i), i * m_JobsPerNode +1, jobId));
+        }
+
         try
         {
-            for (HttpDataStreamer streamer : streamers)
-            {
-                for (int i=0; i<m_JobsPerNode; i++)
-                {
-                    String subJobId = subJobId(jobId, subJobIndex++);
-                    try
-                    {
-                        streamer.closeJob(subJobId);
-                    }
-                    catch (IOException e)
-                    {
-                        LOGGER.warn("Error closing job", e);
-                    }
-                }
-            }
+            executeCallables(tasks);
         }
         finally
         {
@@ -183,6 +180,7 @@ public class Data
         LOGGER.debug("Process finished successfully, Job Id = '" + jobId + "'");
         return Response.ok().entity(new Acknowledgement()).build();
     }
+
 
 
     private List<HttpDataStreamer> createStreamers()
@@ -211,5 +209,65 @@ public class Data
     private String subJobId(String jobId, int index)
     {
         return String.format("%s-%03d", jobId, index);
+    }
+
+    private void  executeCallables(List<Callable<Boolean>> tasks)
+    {
+        ExecutorService service = Executors.newFixedThreadPool(6);
+        try
+        {
+            List<Future<Boolean>> futures = service.invokeAll(tasks);
+            for (Future<Boolean> future : futures)
+            {
+                try
+                {
+                    future.get();
+                }
+                catch (ExecutionException e)
+                {
+                    LOGGER.error("Error getting future", e);
+                }
+            }
+        }
+        catch (InterruptedException e)
+        {
+            LOGGER.info("interrupted executing task", e);
+        }
+
+    }
+
+    private class StreamCloser implements Callable<Boolean>
+    {
+        final HttpDataStreamer m_Streamer;
+        int m_SubJobIndex;
+        final String m_JobId;
+
+        StreamCloser(HttpDataStreamer streamer, int subJobStartIndex, String jobId)
+        {
+            m_Streamer = streamer;
+            m_SubJobIndex = subJobStartIndex;
+            m_JobId = jobId;
+        }
+
+        @Override
+        public Boolean call()
+        {
+            boolean all = true;
+            for (int i=0; i<m_JobsPerNode; i++)
+            {
+                String subJobId = subJobId(m_JobId, m_SubJobIndex++);
+                try
+                {
+                    all = m_Streamer.closeJob(subJobId) && all;
+                }
+                catch (IOException e)
+                {
+                    LOGGER.warn("Error closing job", e);
+                }
+            }
+
+            return all;
+        }
+
     }
 }
