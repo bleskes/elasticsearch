@@ -41,6 +41,11 @@ import com.prelert.job.persistence.elasticsearch.ElasticsearchJobProvider;
 
 public class ElasticsearchTransportClientFactory extends ElasticsearchFactory
 {
+    private ElasticsearchTransportClientFactory(Client client)
+    {
+        super(client);
+    }
+
     public static ElasticsearchFactory create(String hostPortPairsList, String elasticSearchClusterName)
     {
         // Tell Elasticsearch to log via our log4j root logger
@@ -55,11 +60,6 @@ public class ElasticsearchTransportClientFactory extends ElasticsearchFactory
                     new InetSocketTransportAddress(hostAndPort.getHost(), hostAndPort.getPort()));
         }
         return new ElasticsearchTransportClientFactory(client);
-    }
-
-    private ElasticsearchTransportClientFactory(Client client)
-    {
-        super(client);
     }
 
     @Override
