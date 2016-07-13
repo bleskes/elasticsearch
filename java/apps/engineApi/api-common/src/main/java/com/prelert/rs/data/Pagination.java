@@ -56,6 +56,7 @@ public class Pagination<T>
 
     public Pagination()
     {
+        // Default constructor
     }
 
     /**

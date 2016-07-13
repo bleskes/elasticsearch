@@ -58,6 +58,7 @@ public class BucketInfluencer implements StorageSerialisable
 
     public BucketInfluencer()
     {
+        // Default constructor
     }
 
     public double getProbability()

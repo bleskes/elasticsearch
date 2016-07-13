@@ -126,7 +126,7 @@ class BackendInfo
             // See https://anomaly.atlassian.net/wiki/display/EN/Electronic+license+keys
             // and bug 1034 in Bugzilla for the reason behind this
             // seemingly weird condition.
-            arePartitionsAllowed = (val < 0);
+            arePartitionsAllowed = val < 0;
         }
         LOGGER.info("Are partitions allowed = " + arePartitionsAllowed);
 

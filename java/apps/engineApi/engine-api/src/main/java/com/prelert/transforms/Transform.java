@@ -50,7 +50,9 @@ public abstract class Transform
      * FAIL means the transform failed but it's ok to continue processing
      * EXCLUDE means the no further processing should take place and the record discarded
      */
-    public enum TransformResult {OK, FAIL, EXCLUDE};
+    public enum TransformResult {
+        OK, FAIL, EXCLUDE
+    }
 
     public static class TransformIndex
     {

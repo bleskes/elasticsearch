@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -57,6 +57,14 @@ public class DateTimeFormatterTimestampConverter implements TimestampConverter
     private final boolean m_HasTimeZone;
     private final ZoneId m_SystemDefaultZoneId;
 
+    private DateTimeFormatterTimestampConverter(DateTimeFormatter dateTimeFormatter,
+            boolean hasTimeZone)
+    {
+        m_Formatter = dateTimeFormatter;
+        m_HasTimeZone = hasTimeZone;
+        m_SystemDefaultZoneId = ZoneOffset.systemDefault();
+    }
+
     /**
      * Creates a formatter according to the given pattern
      * @param pattern the pattern to be used by the formatter, not null.
@@ -92,14 +100,6 @@ public class DateTimeFormatterTimestampConverter implements TimestampConverter
         {
             throw new IllegalArgumentException("Timestamp cannot be derived from pattern: " + pattern);
         }
-    }
-
-    private DateTimeFormatterTimestampConverter(DateTimeFormatter dateTimeFormatter,
-            boolean hasTimeZone)
-    {
-        m_Formatter = dateTimeFormatter;
-        m_HasTimeZone = hasTimeZone;
-        m_SystemDefaultZoneId = ZoneOffset.systemDefault();
     }
 
     @Override

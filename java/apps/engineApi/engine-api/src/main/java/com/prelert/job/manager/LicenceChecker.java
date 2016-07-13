@@ -47,7 +47,9 @@ class LicenceChecker
 {
     // Licence checking is done when the job is either
     // created or reactivated by having data sent to it
-    private enum JobState {CREATE, REACTIVATE};
+    private enum JobState {
+        CREATE, REACTIVATE
+    }
 
     private static final Logger LOGGER = Logger.getLogger(LicenceChecker.class);
     private final BackendInfo m_BackendInfo;

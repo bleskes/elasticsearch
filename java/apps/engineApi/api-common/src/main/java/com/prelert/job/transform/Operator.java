@@ -96,7 +96,6 @@ public enum Operator
         return false;
     }
 
-
     public boolean expectsANumericArgument()
     {
         return true;
@@ -118,5 +117,4 @@ public enum Operator
 
         throw new UnknownOperatorException(name);
     }
-
- };
+}

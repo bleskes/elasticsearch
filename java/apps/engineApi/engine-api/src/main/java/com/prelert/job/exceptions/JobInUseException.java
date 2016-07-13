@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2014     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -30,14 +30,14 @@ import com.prelert.job.JobException;
 import com.prelert.job.errorcodes.ErrorCodes;
 
 /**
- * This exception is thrown is an operation is attempted on a job
+ * This exception is thrown if an operation is attempted on a job
  * that can't be executed as the job is already being used.
  */
 public class JobInUseException extends JobException
 {
     private static final long serialVersionUID = -2759814168552580059L;
 
-    private String m_Host;
+    private final String m_Host;
 
     /**
      * Create a new JobInUseException.
@@ -48,7 +48,7 @@ public class JobInUseException extends JobException
      */
     public JobInUseException(String message, ErrorCodes errorCode)
     {
-        super(message, errorCode);
+        this(message, errorCode, null, null);
     }
 
     /**
@@ -59,23 +59,23 @@ public class JobInUseException extends JobException
      */
     public JobInUseException(String message, ErrorCodes errorCode, String hostname)
     {
-        super(message, errorCode);
-        m_Host = hostname;
+        this(message, errorCode, hostname, null);
     }
 
     public JobInUseException(String message, ErrorCodes errorCode, Throwable cause)
     {
+        this(message, errorCode, null, cause);
+    }
+
+    public JobInUseException(String message, ErrorCodes errorCode, String hostname, Throwable cause)
+    {
         super(message, errorCode, cause);
+        m_Host = hostname;
     }
 
     public String getHost()
     {
         return m_Host;
-    }
-
-    public void setHost(String host)
-    {
-        this.m_Host = host;
     }
 }
 

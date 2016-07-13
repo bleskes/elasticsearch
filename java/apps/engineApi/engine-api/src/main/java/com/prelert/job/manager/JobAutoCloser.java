@@ -85,7 +85,7 @@ class JobAutoCloser implements Shutdownable
 
     public JobAutoCloser(JobCloser jobCloser)
     {
-        this(jobCloser, (s) -> true, WAIT_SECONDS_BEFORE_RETRY_CLOSING * MILLIS_IN_SECOND);
+        this(jobCloser, s -> true, WAIT_SECONDS_BEFORE_RETRY_CLOSING * MILLIS_IN_SECOND);
     }
 
     /**

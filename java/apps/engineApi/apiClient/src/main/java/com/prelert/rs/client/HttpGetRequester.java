@@ -70,9 +70,6 @@ class HttpGetRequester<T>
     throws IOException
     {
         LOGGER.debug("GET " + fullUrl);
-
-        T doc = m_Client.get(fullUrl, typeRef, true);
-
-        return doc;
+        return m_Client.get(fullUrl, typeRef, true);
     }
 }
