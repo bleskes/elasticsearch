@@ -129,9 +129,11 @@ public class Data
             JobRouter router = new JobRouter(outputStreams);
             DataForker forker = new DataForker(partition, router);
             forker.forkData(input);
+            router.flush();
         }
         finally
         {
+
             for (OutputStream out : outputStreams)
             {
                 try
