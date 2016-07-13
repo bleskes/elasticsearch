@@ -138,25 +138,22 @@ public final class SchedulerConfigVerifier
     private static void checkUserPass(String username, String password, String encryptedPassword)
             throws JobConfigurationException
     {
-        if (username == null && password == null && encryptedPassword == null)
+        boolean isNoPasswordSet = password == null && encryptedPassword == null;
+        boolean isMultiplePasswordSet = password != null && encryptedPassword != null;
+
+        if (username == null && isNoPasswordSet)
         {
             // It's acceptable to have no credentials
             return;
         }
 
-        if (username == null)
+        if (username == null || isNoPasswordSet)
         {
             String msg = Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_INCOMPLETE_CREDENTIALS);
             throw new JobConfigurationException(msg, ErrorCodes.SCHEDULER_INCOMPLETE_CREDENTIALS);
         }
 
-        if (password == null && encryptedPassword == null)
-        {
-            String msg = Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_INCOMPLETE_CREDENTIALS);
-            throw new JobConfigurationException(msg, ErrorCodes.SCHEDULER_INCOMPLETE_CREDENTIALS);
-        }
-
-        if (password != null && encryptedPassword != null)
+        if (isMultiplePasswordSet)
         {
             String msg = Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_MULTIPLE_PASSWORDS);
             throw new JobConfigurationException(msg, ErrorCodes.SCHEDULER_MULTIPLE_PASSWORDS);
