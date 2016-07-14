@@ -53,7 +53,7 @@ public class LicensesAcknowledgementTests extends AbstractLicenseServiceTestCase
         licensesService.registerLicense(putLicenseRequest, new AssertingLicensesUpdateResponse(false, LicensesStatus.VALID,
                 Collections.singletonMap(id, acknowledgeMessages)));
         assertThat(licensee.acknowledgementRequested.size(), equalTo(1));
-        assertThat(licensee.acknowledgementRequested.get(0).v2(), equalTo(signedLicense));
+        assertThat(licensee.acknowledgementRequested.get(0).v2(), equalTo(signedLicense.operationMode()));
         assertThat(licensesService.getLicense(), not(signedLicense));
 
         // try installing a signed license with acknowledgement
@@ -64,8 +64,7 @@ public class LicensesAcknowledgementTests extends AbstractLicenseServiceTestCase
                 Collections.<String, String[]>emptyMap()));
         verify(clusterService, times(1)).submitStateUpdateTask(any(String.class), any(ClusterStateUpdateTask.class));
         assertThat(licensee.acknowledgementRequested.size(), equalTo(1));
-        assertThat(licensee.acknowledgementRequested.get(0).v2(), equalTo(signedLicense));
-        licensesService.stop();
+        assertThat(licensee.acknowledgementRequested.get(0).v2(), equalTo(signedLicense.operationMode()));
     }
 
     public void testAcknowledgementMultipleLicensee() throws Exception {
@@ -90,9 +89,9 @@ public class LicensesAcknowledgementTests extends AbstractLicenseServiceTestCase
                 expectedMessages));
         verify(clusterService, times(0)).submitStateUpdateTask(any(String.class), any(ClusterStateUpdateTask.class));
         assertThat(licensee2.acknowledgementRequested.size(), equalTo(1));
-        assertThat(licensee2.acknowledgementRequested.get(0).v2(), equalTo(signedLicense));
+        assertThat(licensee2.acknowledgementRequested.get(0).v2(), equalTo(signedLicense.operationMode()));
         assertThat(licensee1.acknowledgementRequested.size(), equalTo(1));
-        assertThat(licensee1.acknowledgementRequested.get(0).v2(), equalTo(signedLicense));
+        assertThat(licensee1.acknowledgementRequested.get(0).v2(), equalTo(signedLicense.operationMode()));
         assertThat(licensesService.getLicense(), not(signedLicense));
 
         // try installing a signed license with acknowledgement
@@ -103,7 +102,6 @@ public class LicensesAcknowledgementTests extends AbstractLicenseServiceTestCase
         licensesService.registerLicense(putLicenseRequest, new AssertingLicensesUpdateResponse(true, LicensesStatus.VALID,
                 Collections.<String, String[]>emptyMap()));
         verify(clusterService, times(1)).submitStateUpdateTask(any(String.class), any(ClusterStateUpdateTask.class));
-        licensesService.stop();
     }
 
     private static class AssertingLicensesUpdateResponse implements ActionListener<PutLicenseResponse> {

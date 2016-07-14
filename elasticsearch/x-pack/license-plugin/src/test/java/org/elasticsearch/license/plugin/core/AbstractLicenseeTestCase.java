@@ -50,17 +50,8 @@ public abstract class AbstractLicenseeTestCase extends ESTestCase {
      * @param licensee The licensee to test
      */
     public static void assertEmptyAck(OperationMode fromMode, OperationMode toMode, Licensee licensee) {
-        License fromLicense = mock(License.class);
-        when(fromLicense.operationMode()).thenReturn(fromMode);
-        License toLicense = mock(License.class);
-        when(toLicense.operationMode()).thenReturn(toMode);
-
-        if (randomBoolean()) {
-            fromLicense = null;
-        }
-
         // test it
-        String[] messages = licensee.acknowledgmentMessages(fromLicense, toLicense);
+        String[] messages = licensee.acknowledgmentMessages(fromMode, toMode);
 
         assertThat(fromToMessage(fromMode, toMode), messages.length, equalTo(0));
     }
@@ -88,12 +79,7 @@ public abstract class AbstractLicenseeTestCase extends ESTestCase {
      * @param licensee The licensee to test
      */
     public static String[] ackLicenseChange(OperationMode fromMode, OperationMode toMode, Licensee licensee) {
-        License fromLicense = mock(License.class);
-        when(fromLicense.operationMode()).thenReturn(fromMode);
-        License toLicense = mock(License.class);
-        when(toLicense.operationMode()).thenReturn(toMode);
-
-        return licensee.acknowledgmentMessages(fromLicense, toLicense);
+        return licensee.acknowledgmentMessages(fromMode, toMode);
     }
 
     /**
