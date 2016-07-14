@@ -25,6 +25,7 @@ import org.elasticsearch.action.ActionResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.client.FilterClient;
 import org.elasticsearch.client.transport.TransportClient;
+import org.elasticsearch.cluster.node.DiscoveryNode;
 import org.elasticsearch.cluster.service.ClusterService;
 import org.elasticsearch.common.inject.util.Providers;
 import org.elasticsearch.common.settings.Settings;
@@ -61,7 +62,7 @@ public class IndexAuditTrailMutedTests extends ESTestCase {
     private InternalClient client;
     private TransportClient transportClient;
     private ThreadPool threadPool;
-    private Transport transport;
+    private ClusterService clusterService;
     private IndexAuditTrail auditTrail;
 
     private AtomicBoolean messageEnqueued;
@@ -69,9 +70,10 @@ public class IndexAuditTrailMutedTests extends ESTestCase {
 
     @Before
     public void setup() {
-        transport = mock(Transport.class);
-        when(transport.boundAddress()).thenReturn(new BoundTransportAddress(new TransportAddress[] { LocalTransportAddress.buildUnique() },
-                        LocalTransportAddress.buildUnique()));
+        DiscoveryNode localNode = mock(DiscoveryNode.class);
+        when(localNode.getHostAddress()).thenReturn(LocalTransportAddress.buildUnique().toString());
+        clusterService = mock(ClusterService.class);
+        when(clusterService.localNode()).thenReturn(localNode);
 
         threadPool = new TestThreadPool("index audit trail tests");
         transportClient = TransportClient.builder().settings(Settings.builder().put("transport.type", "local")).build();
@@ -269,7 +271,7 @@ public class IndexAuditTrailMutedTests extends ESTestCase {
 
     IndexAuditTrail createAuditTrail(String[] excludes) {
         Settings settings = IndexAuditTrailTests.levelSettings(null, excludes);
-        auditTrail = new IndexAuditTrail(settings, transport, Providers.of(client), threadPool, mock(ClusterService.class)) {
+        auditTrail = new IndexAuditTrail(settings, Providers.of(client), threadPool, clusterService) {
             @Override
             void putTemplate(Settings settings) {
                 // make this a no-op so we don't have to stub out unnecessary client activities
