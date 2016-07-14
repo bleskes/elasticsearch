@@ -27,6 +27,7 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.elasticsearch.common.transport.TransportAddress;
 import org.elasticsearch.node.internal.InternalSettingsPreparer;
+import org.elasticsearch.test.ESIntegTestCase;
 import org.elasticsearch.xpack.security.Security;
 import org.elasticsearch.xpack.XPackPlugin;
 import org.junit.After;
@@ -57,6 +58,7 @@ import static org.hamcrest.Matchers.notNullValue;
  * your test.
  */
 @LuceneTestCase.SuppressSysoutChecks(bugUrl = "we log a lot on purpose")
+@ESIntegTestCase.SuppressLocalMode
 public abstract class MigrateToolTestCase extends LuceneTestCase {
 
     /**
@@ -89,7 +91,6 @@ public abstract class MigrateToolTestCase extends LuceneTestCase {
                 .put("client.transport.ignore_cluster_name", true)
                 .put("path.home", tempDir)
                 .put(Security.USER_SETTING.getKey(), "transport_user:changeme")
-                .put("node.mode", "network") // we require network here!
                 .build();
 
         TransportClient.Builder transportClientBuilder = TransportClient.builder()
