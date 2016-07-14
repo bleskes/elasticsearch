@@ -67,8 +67,7 @@ public class AuditTrailModule extends AbstractSecurityModule.Node {
         bind(AuditTrailService.class).asEagerSingleton();
         bind(AuditTrail.class).to(AuditTrailService.class);
         Multibinder<AuditTrail> binder = Multibinder.newSetBinder(binder(), AuditTrail.class);
-        Set<String> uniqueOutputs = Sets.newHashSet(outputs);
-        for (String output : uniqueOutputs) {
+        for (String output : outputs) {
             switch (output) {
                 case LoggingAuditTrail.NAME:
                     binder.addBinding().to(LoggingAuditTrail.class);
@@ -79,7 +78,7 @@ public class AuditTrailModule extends AbstractSecurityModule.Node {
                     bind(IndexAuditTrail.class).asEagerSingleton();
                     break;
                 default:
-                    throw new ElasticsearchException("unknown audit trail output [" + output + "]");
+                    throw new IllegalArgumentException("unknown audit trail output [" + output + "]");
             }
         }
     }

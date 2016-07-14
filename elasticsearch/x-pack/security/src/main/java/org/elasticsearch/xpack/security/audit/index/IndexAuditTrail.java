@@ -31,6 +31,7 @@ import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.cluster.ClusterChangedEvent;
+import org.elasticsearch.cluster.node.DiscoveryNode;
 import org.elasticsearch.cluster.service.ClusterService;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.ClusterStateListener;
@@ -165,7 +166,6 @@ public class IndexAuditTrail extends AbstractComponent implements AuditTrail, Cl
     private final Provider<InternalClient> clientProvider;
     private final BlockingQueue<Message> eventQueue;
     private final QueueConsumer queueConsumer;
-    private final Transport transport;
     private final ThreadPool threadPool;
     private final Lock putMappingLock = new ReentrantLock();
     private final ClusterService clusterService;
@@ -184,11 +184,10 @@ public class IndexAuditTrail extends AbstractComponent implements AuditTrail, Cl
     }
 
     @Inject
-    public IndexAuditTrail(Settings settings, Transport transport,
-                           Provider<InternalClient> clientProvider, ThreadPool threadPool, ClusterService clusterService) {
+    public IndexAuditTrail(Settings settings, Provider<InternalClient> clientProvider, ThreadPool threadPool,
+                           ClusterService clusterService) {
         super(settings);
         this.clientProvider = clientProvider;
-        this.transport = transport;
         this.threadPool = threadPool;
         this.clusterService = clusterService;
         this.nodeName = settings.get("name");
@@ -289,8 +288,8 @@ public class IndexAuditTrail extends AbstractComponent implements AuditTrail, Cl
      */
     public void start(boolean master) {
         if (state.compareAndSet(State.INITIALIZED, State.STARTING)) {
-            this.nodeHostName = transport.boundAddress().publishAddress().getHost();
-            this.nodeHostAddress = transport.boundAddress().publishAddress().getAddress();
+            this.nodeHostName = clusterService.localNode().getHostName();
+            this.nodeHostAddress = clusterService.localNode().getHostAddress();
 
             if (client == null) {
                 initializeClient();
@@ -557,7 +556,7 @@ public class IndexAuditTrail extends AbstractComponent implements AuditTrail, Cl
 
         Message msg = new Message().start();
         common("transport", type, msg.builder);
-        originAttributes(message, msg.builder, transport, threadPool.getThreadContext());
+        originAttributes(message, msg.builder, clusterService.localNode(), threadPool.getThreadContext());
 
         if (action != null) {
             msg.builder.field(Field.ACTION, action);
@@ -589,7 +588,7 @@ public class IndexAuditTrail extends AbstractComponent implements AuditTrail, Cl
 
         Message msg = new Message().start();
         common("transport", type, msg.builder);
-        originAttributes(message, msg.builder, transport, threadPool.getThreadContext());
+        originAttributes(message, msg.builder, clusterService.localNode(), threadPool.getThreadContext());
 
         if (action != null) {
             msg.builder.field(Field.ACTION, action);
@@ -684,8 +683,8 @@ public class IndexAuditTrail extends AbstractComponent implements AuditTrail, Cl
         return builder;
     }
 
-    private static XContentBuilder originAttributes(TransportMessage message, XContentBuilder builder, Transport transport, ThreadContext
-            threadContext) throws IOException {
+    private static XContentBuilder originAttributes(TransportMessage message, XContentBuilder builder,
+                                                    DiscoveryNode localNode, ThreadContext threadContext) throws IOException {
 
         // first checking if the message originated in a rest call
         InetSocketAddress restAddress = RemoteHostHeader.restRemoteAddress(threadContext);
@@ -710,7 +709,7 @@ public class IndexAuditTrail extends AbstractComponent implements AuditTrail, Cl
 
         // the call was originated locally on this node
         builder.field(Field.ORIGIN_TYPE, "local_node");
-        builder.field(Field.ORIGIN_ADDRESS, transport.boundAddress().publishAddress().getAddress());
+        builder.field(Field.ORIGIN_ADDRESS, localNode.getHostAddress());
         return builder;
     }
 
