@@ -115,8 +115,8 @@ public abstract class AbstractLdapRealm extends CachingUsernamePasswordRealm {
 
     public abstract static class Factory<R extends AbstractLdapRealm> extends UsernamePasswordRealm.Factory<R> {
 
-        public Factory(String type, RestController restController) {
-            super(type, restController, false);
+        public Factory(String type) {
+            super(type, false);
         }
 
         /**
