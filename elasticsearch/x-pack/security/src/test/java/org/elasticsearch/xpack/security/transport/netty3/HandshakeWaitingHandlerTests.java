@@ -15,7 +15,7 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.xpack.security.transport.netty;
+package org.elasticsearch.xpack.security.transport.netty3;
 
 import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.common.settings.Settings;

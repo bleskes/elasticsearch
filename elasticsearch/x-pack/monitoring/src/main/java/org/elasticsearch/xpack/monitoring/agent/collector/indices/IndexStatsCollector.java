@@ -80,6 +80,8 @@ public class IndexStatsCollector extends AbstractCollector {
                     .setSegments(true)
                     .setStore(true)
                     .setRefresh(true)
+                    .setQueryCache(true)
+                    .setRequestCache(true)
                     .get(monitoringSettings.indexStatsTimeout());
 
             long timestamp = System.currentTimeMillis();

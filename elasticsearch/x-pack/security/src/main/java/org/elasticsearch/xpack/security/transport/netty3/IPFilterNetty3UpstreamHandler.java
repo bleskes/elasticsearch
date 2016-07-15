@@ -15,7 +15,7 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.xpack.security.transport.netty;
+package org.elasticsearch.xpack.security.transport.netty3;
 
 import org.elasticsearch.xpack.security.transport.filter.IPFilter;
 import org.jboss.netty.channel.ChannelEvent;
@@ -29,12 +29,12 @@ import java.net.InetSocketAddress;
  *
  */
 @ChannelHandler.Sharable
-public class IPFilterNettyUpstreamHandler extends IpFilteringHandlerImpl {
+public class IPFilterNetty3UpstreamHandler extends IpFilteringHandlerImpl {
 
     private final IPFilter filter;
     private final String profile;
 
-    public IPFilterNettyUpstreamHandler(IPFilter filter, String profile) {
+    public IPFilterNetty3UpstreamHandler(IPFilter filter, String profile) {
         this.filter = filter;
         this.profile = profile;
     }
