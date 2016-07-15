@@ -25,6 +25,8 @@ import org.elasticsearch.xpack.extensions.XPackExtension;
 
 import java.security.AccessController;
 import java.security.PrivilegedAction;
+import java.util.Arrays;
+import java.util.Collection;
 
 public class ExampleRealmExtension extends XPackExtension {
     @Override
@@ -45,5 +47,10 @@ public class ExampleRealmExtension extends XPackExtension {
             System.getSecurityManager().checkPrintJobAccess();
             return null;
         });
+    }
+
+    @Override
+    public Collection<String> getRestHeaders() {
+        return Arrays.asList(CustomRealm.USER_HEADER, CustomRealm.PW_HEADER);
     }
 }
