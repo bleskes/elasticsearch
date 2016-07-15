@@ -14,21 +14,15 @@
  * is strictly forbidden unless prior written permission is obtained
  * from Elasticsearch Incorporated.
  */
+package org.elasticsearch.xpack;
 
-package org.elasticsearch.http.netty;
+import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.transport.Netty3Plugin;
 
-import org.elasticsearch.transport.netty.OpenChannelsHandler;
-
-import static org.mockito.Mockito.mock;
-
-/** Allows setting a mock into NettyHttpServerTransport */
-public class NettyHttpMockUtil {
-    
-    /**
-     * We don't really need to start Netty for these tests, but we can't create a pipeline
-     * with a null handler. So we set it to a mock for tests.
-     */
-    public static void setOpenChannelsHandlerToMock(NettyHttpServerTransport transport) throws Exception {
-        transport.serverOpenChannels = mock(OpenChannelsHandler.class);
+public final class MockNetty3Plugin extends Netty3Plugin {
+    // se Netty3Plugin.... this runs without the permission from the netty3 module so it will fail since reindex can't set the property
+    // to make it still work we disable that check for pseudo integ tests
+    public MockNetty3Plugin(Settings settings) {
+        super(Settings.builder().put(settings).put("netty.assert.buglevel", false).build());
     }
 }
