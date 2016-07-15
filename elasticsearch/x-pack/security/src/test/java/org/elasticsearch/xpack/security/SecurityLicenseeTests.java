@@ -20,7 +20,6 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.license.core.License.OperationMode;
 import org.elasticsearch.license.plugin.core.AbstractLicenseeTestCase;
 import org.elasticsearch.license.plugin.core.Licensee.Status;
-import org.elasticsearch.license.plugin.core.LicenseeRegistry;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.mockito.Mockito.mock;
@@ -34,39 +33,18 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
  */
 public class SecurityLicenseeTests extends AbstractLicenseeTestCase {
     private final SecurityLicenseState securityLicenseState = mock(SecurityLicenseState.class);
-    private final LicenseeRegistry registry = mock(LicenseeRegistry.class);
-
-    public void testStartsWithoutTribeNode() {
-        SecurityLicensee licensee = new SecurityLicensee(Settings.EMPTY, registry, securityLicenseState);
-
-        // starting the Licensee start trigger it being registered
-        licensee.start();
-
-        verify(registry).register(licensee);
-        verifyNoMoreInteractions(registry, securityLicenseState);
-    }
-
-    public void testDoesNotStartWithTribeNode() {
-        Settings settings = Settings.builder().put("tribe.fake.cluster.name", "notchecked").build();
-        SecurityLicensee licensee = new SecurityLicensee(settings, registry, securityLicenseState);
-
-        // starting the Licensee as a tribe node should not trigger it being registered
-        licensee.start();
-
-        verifyNoMoreInteractions(registry, securityLicenseState);
-    }
 
     public void testOnChangeModifiesSecurityLicenseState() {
         Status status = mock(Status.class);
 
-        SecurityLicensee licensee = new SecurityLicensee(Settings.EMPTY, registry, securityLicenseState);
+        SecurityLicensee licensee = new SecurityLicensee(Settings.EMPTY, securityLicenseState);
 
         licensee.onChange(status);
 
         assertSame(status, licensee.getStatus());
 
         verify(securityLicenseState).updateStatus(status);
-        verifyNoMoreInteractions(registry, securityLicenseState);
+        verifyNoMoreInteractions(securityLicenseState);
     }
 
     public void testAcknowledgementMessagesFromBasicToAnyNotGoldOrStandardIsNoOp() {
@@ -108,6 +86,6 @@ public class SecurityLicenseeTests extends AbstractLicenseeTestCase {
     }
 
     private SecurityLicensee buildLicensee() {
-        return new SecurityLicensee(Settings.EMPTY, registry, securityLicenseState);
+        return new SecurityLicensee(Settings.EMPTY, securityLicenseState);
     }
 }
