@@ -53,7 +53,7 @@ public abstract class GroupsResolverTestCase extends ESTestCase {
         Settings settings = builder.build();
         Environment env = new Environment(settings);
         ClientSSLService clientSSLService = new ClientSSLService(settings, new Global(settings));
-        clientSSLService.setEnvironment(env);
+        clientSSLService.setEnvAndResourceWatcher(env, null);
 
         LDAPURL ldapurl = new LDAPURL(ldapUrl());
         LDAPConnectionOptions options = new LDAPConnectionOptions();
