@@ -260,8 +260,13 @@ public class ElasticsearchDataExtractor implements DataExtractor
         String url = m_UrlBuilder.buildClearScrollUrl();
         try
         {
-            m_HttpRequester.delete(url,
+            HttpResponse response = m_HttpRequester.delete(url,
                     String.format(CLEAR_SCROLL_TEMPLATE, m_ScrollState.getScrollId()));
+
+            // This is necessary to ensure the response stream has been consumed entirely.
+            // Failing to do this can cause a lot of issues with Elasticsearch when
+            // scheduled jobs are running concurrently.
+            response.getResponseAsString();
         }
         catch (IOException e)
         {

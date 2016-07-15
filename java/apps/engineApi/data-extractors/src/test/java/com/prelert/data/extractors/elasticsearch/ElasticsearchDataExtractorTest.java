@@ -65,6 +65,7 @@ public class ElasticsearchDataExtractorTest
     private static final List<String> TYPES = Arrays.asList("dataType");
     private static final String SEARCH = "\"match_all\":{}";
     private static final String TIME_FIELD = "time";
+    private static final String CLEAR_SCROLL_RESPONSE = "{}";
 
     @Rule public ExpectedException m_ExpectedException = ExpectedException.none();
 
@@ -175,6 +176,7 @@ public class ElasticsearchDataExtractorTest
         assertFalse(m_Extractor.hasNext());
 
         requester.assertEqualRequestsToResponses();
+        requester.assertResponsesHaveBeenConsumed();
 
         RequestParams firstRequestParams = requester.getGetRequestParams(0);
         assertEquals("http://localhost:9200/index_1/dataType/_search?scroll=60m&size=1000", firstRequestParams.url);
@@ -546,6 +548,7 @@ public class ElasticsearchDataExtractorTest
         assertFalse(m_Extractor.hasNext());
 
         requester.assertEqualRequestsToResponses();
+        requester.assertResponsesHaveBeenConsumed();
 
         RequestParams firstRequestParams = requester.getGetRequestParams(0);
         assertEquals("http://localhost:9200/index_1/dataType/_search?scroll=60m&size=1000", firstRequestParams.url);
@@ -630,6 +633,7 @@ public class ElasticsearchDataExtractorTest
         assertFalse(m_Extractor.hasNext());
 
         requester.assertEqualRequestsToResponses();
+        requester.assertResponsesHaveBeenConsumed();
 
         assertEquals(1, requester.m_GetRequestParams.size());
         RequestParams requestParams = requester.getGetRequestParams(0);
@@ -702,6 +706,7 @@ public class ElasticsearchDataExtractorTest
         assertFalse(m_Extractor.hasNext());
 
         requester.assertEqualRequestsToResponses();
+        requester.assertResponsesHaveBeenConsumed();
 
         assertEquals(1, requester.m_GetRequestParams.size());
         RequestParams requestParams = requester.getGetRequestParams(0);
@@ -917,6 +922,7 @@ public class ElasticsearchDataExtractorTest
         assertFalse(m_Extractor.hasNext());
 
         requester.assertEqualRequestsToResponses();
+        requester.assertResponsesHaveBeenConsumed();
 
         int requestCount = 0;
         RequestParams requestParams = requester.getGetRequestParams(requestCount++);
@@ -1429,14 +1435,16 @@ public class ElasticsearchDataExtractorTest
 
     private static class MockHttpRequester extends HttpRequester
     {
-        private List<HttpResponse> m_Responses;
+        private List<HttpResponse> m_GetResponses;
+        private List<HttpResponse> m_DeleteResponses;
         private int m_RequestCount = 0;
         private List<RequestParams> m_GetRequestParams;
         private List<RequestParams> m_DeleteRequestParams;
 
         public MockHttpRequester(List<HttpResponse> responses)
         {
-            m_Responses = responses;
+            m_GetResponses = responses;
+            m_DeleteResponses = new ArrayList<>();
             m_GetRequestParams = new ArrayList<>(responses.size());
             m_DeleteRequestParams = new ArrayList<>();
         }
@@ -1445,14 +1453,16 @@ public class ElasticsearchDataExtractorTest
         public HttpResponse get(String url, String requestBody)
         {
             m_GetRequestParams.add(new RequestParams(url, requestBody));
-            return m_Responses.get(m_RequestCount++);
+            return m_GetResponses.get(m_RequestCount++);
         }
 
         @Override
         public HttpResponse delete(String url, String requestBody)
         {
             m_DeleteRequestParams.add(new RequestParams(url, requestBody));
-            return null;
+            HttpResponse response = new HttpResponse(toStream(CLEAR_SCROLL_RESPONSE), 200);
+            m_DeleteResponses.add(response);
+            return response;
         }
 
         public RequestParams getGetRequestParams(int callCount)
@@ -1467,7 +1477,19 @@ public class ElasticsearchDataExtractorTest
 
         public void assertEqualRequestsToResponses()
         {
-            assertEquals(m_Responses.size(), m_GetRequestParams.size());
+            assertEquals(m_GetResponses.size(), m_GetRequestParams.size());
+        }
+
+        public void assertResponsesHaveBeenConsumed() throws IOException
+        {
+            for (HttpResponse response : m_GetResponses)
+            {
+                assertEquals(0, response.getStream().available());
+            }
+            for (HttpResponse response : m_DeleteResponses)
+            {
+                assertEquals(0, response.getStream().available());
+            }
         }
     }
 
