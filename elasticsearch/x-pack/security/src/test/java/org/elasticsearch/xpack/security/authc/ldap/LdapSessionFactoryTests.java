@@ -18,8 +18,8 @@
 package org.elasticsearch.xpack.security.authc.ldap;
 
 import com.unboundid.ldap.listener.InMemoryDirectoryServer;
+import com.unboundid.ldap.sdk.LDAPException;
 import com.unboundid.ldap.sdk.LDAPURL;
-import org.elasticsearch.ElasticsearchSecurityException;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.xpack.security.authc.RealmConfig;
 import org.elasticsearch.xpack.security.authc.ldap.support.LdapSearchScope;
@@ -31,9 +31,9 @@ import org.elasticsearch.xpack.security.authc.support.SecuredStringTests;
 import org.elasticsearch.test.junit.annotations.Network;
 import org.junit.Before;
 
-import java.io.IOException;
 import java.util.List;
 
+import static org.hamcrest.Matchers.anyOf;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.instanceOf;
@@ -61,7 +61,7 @@ public class LdapSessionFactoryTests extends LdapTestCase {
                 .build();
 
         RealmConfig config = new RealmConfig("ldap_realm", settings, globalSettings);
-        LdapSessionFactory sessionFactory = new LdapSessionFactory(config, null).init();
+        LdapSessionFactory sessionFactory = new LdapSessionFactory(config, null);
         String user = "Horatio Hornblower";
         SecuredString userPass = SecuredStringTests.build("pass");
 
@@ -69,15 +69,15 @@ public class LdapSessionFactoryTests extends LdapTestCase {
         try (LdapSession session = sessionFactory.session(user, userPass)) {
             fail("expected connection timeout error here");
         } catch (Exception e) {
-            assertThat(e, instanceOf(ElasticsearchSecurityException.class));
-            assertThat(e.getCause().getMessage(), containsString("A client-side timeout was encountered while waiting "));
+            assertThat(e, instanceOf(LDAPException.class));
+            assertThat(e.getMessage(), containsString("A client-side timeout was encountered while waiting "));
         } finally {
             ldapServer.setProcessingDelayMillis(0L);
         }
     }
 
     @Network
-    @AwaitsFix(bugUrl = "https://github.com/elastic/elasticsearch-shield/issues/767")
+    @AwaitsFix(bugUrl = "https://github.com/elastic/x-plugins/issues/2849")
     public void testConnectTimeout() {
         // Local sockets connect too fast...
         String ldapUrl = "ldap://54.200.235.244:389";
@@ -90,19 +90,17 @@ public class LdapSessionFactoryTests extends LdapTestCase {
                 .build();
 
         RealmConfig config = new RealmConfig("ldap_realm", settings, globalSettings);
-        LdapSessionFactory sessionFactory = new LdapSessionFactory(config, null).init();
+        LdapSessionFactory sessionFactory = new LdapSessionFactory(config, null);
         String user = "Horatio Hornblower";
         SecuredString userPass = SecuredStringTests.build("pass");
 
         long start = System.currentTimeMillis();
-        try (LdapSession session = sessionFactory.session(user, userPass)) {
-            fail("expected connection timeout error here");
-        } catch (Exception e) {
-            long time = System.currentTimeMillis() - start;
-            assertThat(time, lessThan(10000L));
-            assertThat(e, instanceOf(IOException.class));
-            assertThat(e.getCause().getCause().getMessage(), containsString("within the configured timeout of"));
-        }
+        LDAPException expected = expectThrows(LDAPException.class, () -> sessionFactory.session(user, userPass));
+        long time = System.currentTimeMillis() - start;
+        assertThat(time, lessThan(10000L));
+        assertThat(expected, instanceOf(LDAPException.class));
+        assertThat(expected.getCause().getMessage(),
+                anyOf(containsString("within the configured timeout of"), containsString("connect timed out")));
     }
 
     public void testBindWithTemplates() throws Exception {
@@ -115,7 +113,7 @@ public class LdapSessionFactoryTests extends LdapTestCase {
         RealmConfig config = new RealmConfig("ldap_realm", buildLdapSettings(ldapUrls(), userTemplates, groupSearchBase,
                 LdapSearchScope.SUB_TREE), globalSettings);
 
-        LdapSessionFactory sessionFactory = new LdapSessionFactory(config, null).init();
+        LdapSessionFactory sessionFactory = new LdapSessionFactory(config, null);
 
         String user = "Horatio Hornblower";
         SecuredString userPass = SecuredStringTests.build("pass");
@@ -136,15 +134,14 @@ public class LdapSessionFactoryTests extends LdapTestCase {
         RealmConfig config = new RealmConfig("ldap_realm", buildLdapSettings(ldapUrls(), userTemplates, groupSearchBase,
                 LdapSearchScope.SUB_TREE), globalSettings);
 
-        LdapSessionFactory ldapFac = new LdapSessionFactory(config, null).init();
+        LdapSessionFactory ldapFac = new LdapSessionFactory(config, null);
 
         String user = "Horatio Hornblower";
         SecuredString userPass = SecuredStringTests.build("pass");
-        try (LdapSession ldapConnection = ldapFac.session(user, userPass)) {
-            fail("Expected ElasticsearchSecurityException");
-        } catch (ElasticsearchSecurityException e) {
-            assertThat(e.getMessage(), is("failed LDAP authentication"));
-        }
+        LDAPException expected = expectThrows(LDAPException.class, () -> ldapFac.session(user, userPass));
+        assertThat(expected.getMessage(), containsString("Unable to bind as user"));
+        Throwable[] suppressed = expected.getSuppressed();
+        assertThat(suppressed.length, is(2));
     }
 
     public void testGroupLookupSubtree() throws Exception {
@@ -153,7 +150,7 @@ public class LdapSessionFactoryTests extends LdapTestCase {
         RealmConfig config = new RealmConfig("ldap_realm", buildLdapSettings(ldapUrls(), userTemplate, groupSearchBase,
                 LdapSearchScope.SUB_TREE), globalSettings);
 
-        LdapSessionFactory ldapFac = new LdapSessionFactory(config, null).init();
+        LdapSessionFactory ldapFac = new LdapSessionFactory(config, null);
 
         String user = "Horatio Hornblower";
         SecuredString userPass = SecuredStringTests.build("pass");
@@ -170,7 +167,7 @@ public class LdapSessionFactoryTests extends LdapTestCase {
         RealmConfig config = new RealmConfig("ldap_realm", buildLdapSettings(ldapUrls(), userTemplate, groupSearchBase,
                 LdapSearchScope.ONE_LEVEL), globalSettings);
 
-        LdapSessionFactory ldapFac = new LdapSessionFactory(config, null).init();
+        LdapSessionFactory ldapFac = new LdapSessionFactory(config, null);
 
         String user = "Horatio Hornblower";
         try (LdapSession ldap = ldapFac.session(user, SecuredStringTests.build("pass"))) {
@@ -185,7 +182,7 @@ public class LdapSessionFactoryTests extends LdapTestCase {
         RealmConfig config = new RealmConfig("ldap_realm", buildLdapSettings(ldapUrls(), userTemplate, groupSearchBase,
                 LdapSearchScope.BASE), globalSettings);
 
-        LdapSessionFactory ldapFac = new LdapSessionFactory(config, null).init();
+        LdapSessionFactory ldapFac = new LdapSessionFactory(config, null);
 
         String user = "Horatio Hornblower";
         SecuredString userPass = SecuredStringTests.build("pass");
