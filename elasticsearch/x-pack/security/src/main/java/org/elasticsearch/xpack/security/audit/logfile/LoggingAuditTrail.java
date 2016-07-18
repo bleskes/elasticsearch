@@ -80,7 +80,6 @@ public class LoggingAuditTrail extends AbstractComponent implements AuditTrail {
         return NAME;
     }
 
-    @Inject
     public LoggingAuditTrail(Settings settings, ClusterService clusterService, ThreadPool threadPool) {
         this(settings, clusterService, Loggers.getLogger(LoggingAuditTrail.class), threadPool.getThreadContext());
     }
