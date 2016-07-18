@@ -57,6 +57,7 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.OptionalLong;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -699,10 +700,10 @@ public class JobSchedulerTest
     private static class MockDataExtractor implements DataExtractor
     {
         private final List<Integer> m_BatchesPerSearch;
-        private int m_SearchCount = -1;
-        private int m_StreamCount = -1;
-        private final List<Long> m_Starts = new ArrayList<>();
-        private final List<Long> m_Ends = new ArrayList<>();
+        private final List<Long> m_Starts = new CopyOnWriteArrayList<>();
+        private final List<Long> m_Ends = new CopyOnWriteArrayList<>();
+        private volatile int m_SearchCount = -1;
+        private volatile int m_StreamCount = -1;
         private volatile int m_NCleared;
         private volatile boolean m_IsCancelled;
 
