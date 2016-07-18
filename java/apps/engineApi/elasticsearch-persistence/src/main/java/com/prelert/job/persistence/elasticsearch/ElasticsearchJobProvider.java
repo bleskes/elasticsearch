@@ -81,6 +81,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.prelert.job.CategorizerState;
 import com.prelert.job.JobDetails;
+import com.prelert.job.JobException;
 import com.prelert.job.JobStatus;
 import com.prelert.job.JsonViews;
 import com.prelert.job.ModelSizeStats;
@@ -94,6 +95,7 @@ import com.prelert.job.audit.AuditActivity;
 import com.prelert.job.audit.AuditMessage;
 import com.prelert.job.audit.Auditor;
 import com.prelert.job.errorcodes.ErrorCodes;
+import com.prelert.job.messages.Messages;
 import com.prelert.job.persistence.BatchedDocumentsIterator;
 import com.prelert.job.persistence.DataStoreException;
 import com.prelert.job.persistence.JobProvider;
@@ -102,6 +104,7 @@ import com.prelert.job.quantiles.Quantiles;
 import com.prelert.job.results.AnomalyRecord;
 import com.prelert.job.results.Bucket;
 import com.prelert.job.results.BucketInfluencer;
+import com.prelert.job.results.BucketProcessingTime;
 import com.prelert.job.results.CategoryDefinition;
 import com.prelert.job.results.Influencer;
 import com.prelert.job.results.ModelDebugOutput;
@@ -465,6 +468,7 @@ public class ElasticsearchJobProvider implements JobProvider
             XContentBuilder modelSizeStatsMapping = ElasticsearchMappings.modelSizeStatsMapping();
             XContentBuilder influencerMapping = ElasticsearchMappings.influencerMapping(influencers);
             XContentBuilder modelDebugMapping = ElasticsearchMappings.modelDebugOutputMapping(termFields);
+            XContentBuilder processingTimeMapping = ElasticsearchMappings.processingTimeMapping();
 
             ElasticsearchJobId elasticJobId = new ElasticsearchJobId(job.getId());
 
@@ -485,6 +489,7 @@ public class ElasticsearchJobProvider implements JobProvider
                     .addMapping(ModelSizeStats.TYPE, modelSizeStatsMapping)
                     .addMapping(Influencer.TYPE, influencerMapping)
                     .addMapping(ModelDebugOutput.TYPE, modelDebugMapping)
+                    .addMapping(BucketProcessingTime.TYPE, processingTimeMapping)
                     .get();
             LOGGER.trace("ES API CALL: wait for yellow status " + elasticJobId.getId());
             m_Client.admin().cluster().prepareHealth(elasticJobId.getIndex())

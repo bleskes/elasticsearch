@@ -154,6 +154,7 @@ public class AutoDetectResultsParserTest
         final List<ModelDebugOutput> m_ModelDebugOutput = new ArrayList<>();
         final SortedMap<String, ModelSnapshot> m_ModelSnapshots = new TreeMap<>();
         int m_BucketCount;
+        long m_ProcessingTimeMs;
 
         @Override
         public void persistBucket(Bucket bucket)
@@ -223,6 +224,12 @@ public class AutoDetectResultsParserTest
         @Override
         public void deleteInterimResults()
         {
+        }
+
+        @Override
+        public void updateAverageBucketProcessingTime(long timeMs)
+        {
+            m_ProcessingTimeMs = timeMs;
         }
     }
 

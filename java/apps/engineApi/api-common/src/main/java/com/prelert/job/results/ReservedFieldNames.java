@@ -136,6 +136,8 @@ public final class ReservedFieldNames
         BucketInfluencer.RAW_ANOMALY_SCORE,
         BucketInfluencer.PROBABILITY,
 
+        BucketProcessingTime.AVERAGE_PROCESSING_TIME_MS,
+
         CategoryDefinition.CATEGORY_ID,
         CategoryDefinition.TERMS,
         CategoryDefinition.REGEX,

@@ -108,6 +108,7 @@ public class JobDetails
     private Long m_ModelSnapshotRetentionDays;
     private Long m_ResultsRetentionDays;
     private Map<String, Object> m_CustomSettings;
+    private Double m_averageBucketProcessingTimeMs;
 
     /* The endpoints should not be persisted in the storage */
     private URI m_Location;
@@ -534,6 +535,16 @@ public class JobDetails
     public void setCustomSettings(Map<String, Object> customSettings)
     {
         m_CustomSettings = customSettings;
+    }
+
+    public Double getAverageBucketProcessingTimeMs()
+    {
+        return m_averageBucketProcessingTimeMs;
+    }
+
+    public void setAverageBucketProcessingTimeMs(Double value)
+    {
+        m_averageBucketProcessingTimeMs = value;
     }
 
     /**

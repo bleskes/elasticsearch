@@ -61,6 +61,7 @@ import com.prelert.job.quantiles.Quantiles;
 import com.prelert.job.results.AnomalyRecord;
 import com.prelert.job.results.Bucket;
 import com.prelert.job.results.BucketInfluencer;
+import com.prelert.job.results.BucketProcessingTime;
 import com.prelert.job.results.CategoryDefinition;
 import com.prelert.job.results.Influencer;
 import com.prelert.job.results.ModelDebugOutput;
@@ -127,6 +128,7 @@ public class ElasticsearchMappingsTest
         overridden.add(AuditActivity.TYPE);
         overridden.add(AuditMessage.TYPE);
         overridden.add(Bucket.TYPE);
+        overridden.add(BucketProcessingTime.TYPE);
         overridden.add(BucketInfluencer.TYPE);
         overridden.add(CategorizerState.TYPE);
         overridden.add(CategoryDefinition.TYPE);

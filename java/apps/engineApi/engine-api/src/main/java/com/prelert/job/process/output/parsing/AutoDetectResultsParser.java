@@ -233,6 +233,7 @@ public class AutoDetectResultsParser
                         Bucket bucket = new BucketParser(parser).parseJsonAfterStartObject();
                         persister.persistBucket(bucket);
                         persister.incrementBucketCount(1);
+                        persister.updateAverageBucketProcessingTime(bucket.getProcessingTimeMs());
                         notifyObservers(bucket);
 
                         logger.trace("Bucket number " + ++bucketCount + " parsed from output");
