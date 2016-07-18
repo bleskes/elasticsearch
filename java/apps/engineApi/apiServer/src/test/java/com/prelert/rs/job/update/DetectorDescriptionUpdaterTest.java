@@ -315,7 +315,8 @@ public class DetectorDescriptionUpdaterTest
         m_Job.setAnalysisConfig(analysisConfig);
     }
 
-    private void givenUpdateSucceeds(int detectorIndex, String newName) throws UnknownJobException
+    private void givenUpdateSucceeds(int detectorIndex, String newName)
+            throws UnknownJobException, JobException
     {
         when(m_JobManager.updateDetectorDescription(JOB_ID, detectorIndex, newName)).thenReturn(true);
     }

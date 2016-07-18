@@ -1277,7 +1277,7 @@ public class ElasticsearchJobProvider implements JobProvider
 
     @Override
     public boolean updateCategorizationFilters(String jobId, List<String> categorizationFilters)
-            throws UnknownJobException
+            throws UnknownJobException, JobException
     {
         LOGGER.trace("ES API CALL: update categorization filters for job " + jobId
                 +  " by running Groovy script update-categorization-filters with params newFilters="
@@ -1289,7 +1289,7 @@ public class ElasticsearchJobProvider implements JobProvider
 
     @Override
     public boolean updateDetectorDescription(String jobId, int detectorIndex, String newDescription)
-            throws UnknownJobException
+            throws UnknownJobException, JobException
     {
         LOGGER.trace("ES API CALL: update detector description for job " + jobId + ", detector at index "
                 + detectorIndex + " by running Groovy script update-detector-description with params newDescription="
@@ -1299,7 +1299,8 @@ public class ElasticsearchJobProvider implements JobProvider
                                     detectorIndex, newDescription));
     }
 
-    private boolean updateViaScript(String jobId, Script script) throws UnknownJobException
+    private boolean updateViaScript(String jobId, Script script)
+            throws UnknownJobException, JobException
     {
         ElasticsearchJobId esJobId = new ElasticsearchJobId(jobId);
 
@@ -1313,12 +1314,19 @@ public class ElasticsearchJobProvider implements JobProvider
         {
             throw new UnknownJobException(jobId);
         }
+        catch (IllegalArgumentException e)
+        {
+            String msg = Messages.getMessage(Messages.DATASTORE_ERROR_EXECUTING_SCRIPT, script);
+            LOGGER.warn(msg);
+            Throwable th = (e.getCause() == null) ? e : e.getCause();
+            throw new JobException(msg, ErrorCodes.DATA_STORE_ERROR, th);
+        }
         return true;
     }
 
     @Override
     public boolean updateSchedulerConfig(String jobId, SchedulerConfig newSchedulerConfig)
-            throws UnknownJobException
+            throws UnknownJobException, JobException
     {
         Map<String, Object> asMap = m_ObjectMapper.convertValue(newSchedulerConfig,
                 new TypeReference<Map<String, Object>>() {});

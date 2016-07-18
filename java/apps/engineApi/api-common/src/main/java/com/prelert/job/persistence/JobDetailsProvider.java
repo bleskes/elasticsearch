@@ -25,6 +25,7 @@ import java.util.Optional;
 
 import com.prelert.app.Shutdownable;
 import com.prelert.job.JobDetails;
+import com.prelert.job.JobException;
 import com.prelert.job.JobIdAlreadyExistsException;
 import com.prelert.job.JobStatus;
 import com.prelert.job.SchedulerConfig;
@@ -149,9 +150,10 @@ public interface JobDetailsProvider extends Shutdownable
      * @param categorizationFilters the new categorization filters
      * @return {@code true} if update was successful
      * @throws UnknownJobException If there is no job with id <code>jobId</code>
+     * @throws JobException If there was a problem updating the filter
      */
     boolean updateCategorizationFilters(String jobId, List<String> categorizationFilters)
-            throws UnknownJobException;
+            throws UnknownJobException, JobException;
 
     /**
      * Sets the description of detector at {@code detectorIndex} of job
@@ -161,9 +163,10 @@ public interface JobDetailsProvider extends Shutdownable
      * @param newDescription the new description
      * @return {@code true} if update was successful
      * @throws UnknownJobException If there is no job with id <code>jobId</code>
+     * @throws JobException If there was a problem updating the detetor
      */
     boolean updateDetectorDescription(String jobId, int detectorIndex, String newDescription)
-            throws UnknownJobException;
+            throws UnknownJobException, JobException;
 
     /**
      * Updates the scheduler config of job with id {@code jobId} to the given {@code newSchedulerConfig}
@@ -172,9 +175,10 @@ public interface JobDetailsProvider extends Shutdownable
      * @param newSchedulerConfig the new scheduler config
      * @return {@code true} if update was successful
      * @throws UnknownJobException If there is no job with id <code>jobId</code>
+     * @throws JobException If there was a problem updating the scheduler state
      */
     boolean updateSchedulerConfig(String jobId, SchedulerConfig newSchedulerConfig)
-            throws UnknownJobException;
+            throws UnknownJobException, JobException;
 
     /**
      * Updates the scheduler state for the given job
