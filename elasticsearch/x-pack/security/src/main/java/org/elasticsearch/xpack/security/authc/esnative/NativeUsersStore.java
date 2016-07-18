@@ -135,7 +135,6 @@ public class NativeUsersStore extends AbstractComponent implements ClusterStateL
 
     private volatile boolean securityIndexExists = false;
 
-    @Inject
     public NativeUsersStore(Settings settings, InternalClient client, ThreadPool threadPool) {
         super(settings);
         this.client = client;
