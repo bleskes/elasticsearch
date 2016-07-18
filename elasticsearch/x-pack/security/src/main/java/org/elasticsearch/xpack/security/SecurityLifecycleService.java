@@ -23,10 +23,8 @@ import org.elasticsearch.cluster.ClusterStateListener;
 import org.elasticsearch.common.component.AbstractComponent;
 import org.elasticsearch.common.component.LifecycleListener;
 import org.elasticsearch.common.inject.Inject;
-import org.elasticsearch.common.inject.Provider;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.util.concurrent.AbstractRunnable;
-import org.elasticsearch.xpack.security.audit.AuditTrailModule;
 import org.elasticsearch.xpack.security.audit.index.IndexAuditTrail;
 import org.elasticsearch.xpack.security.authc.esnative.NativeUsersStore;
 import org.elasticsearch.xpack.security.authz.store.NativeRolesStore;
@@ -123,7 +121,7 @@ public class SecurityLifecycleService extends AbstractComponent implements Clust
         }
 
         try {
-            if (AuditTrailModule.indexAuditLoggingEnabled(settings) &&
+            if (Security.indexAuditLoggingEnabled(settings) &&
                     indexAuditTrail.state() == IndexAuditTrail.State.INITIALIZED) {
                 if (indexAuditTrail.canStart(event, master)) {
                     threadPool.generic().execute(new AbstractRunnable() {
