@@ -34,6 +34,7 @@ import org.elasticsearch.common.util.Callback;
 import org.elasticsearch.common.xcontent.XContentHelper;
 import org.elasticsearch.common.xcontent.support.XContentMapValues;
 import org.elasticsearch.index.query.QueryBuilder;
+import org.elasticsearch.script.ScriptService;
 import org.elasticsearch.xpack.monitoring.Monitoring;
 import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.script.MockMustacheScriptEngine;
@@ -63,7 +64,6 @@ import org.elasticsearch.xpack.watcher.WatcherLicensee;
 import org.elasticsearch.xpack.watcher.support.WatcherIndexTemplateRegistry;
 import org.elasticsearch.xpack.support.clock.ClockMock;
 import org.elasticsearch.xpack.common.http.HttpClient;
-import org.elasticsearch.xpack.common.ScriptServiceProxy;
 import org.elasticsearch.xpack.watcher.support.xcontent.XContentSource;
 import org.elasticsearch.xpack.watcher.trigger.ScheduleTriggerEngineMock;
 import org.elasticsearch.xpack.watcher.trigger.TriggerService;
@@ -368,8 +368,8 @@ public abstract class AbstractWatcherIntegrationTestCase extends ESIntegTestCase
         return randomBoolean() ? new XPackClient(client).watcher() : new WatcherClient(client);
     }
 
-    protected ScriptServiceProxy scriptService() {
-        return internalCluster().getInstance(ScriptServiceProxy.class);
+    protected ScriptService scriptService() {
+        return internalCluster().getInstance(ScriptService.class);
     }
 
     protected HttpClient watcherHttpClient() {

@@ -24,6 +24,8 @@ import org.elasticsearch.common.ParseFieldMatcher;
 import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentParser;
+import org.elasticsearch.script.Script;
+import org.elasticsearch.script.ScriptContext;
 import org.elasticsearch.script.ScriptService.ScriptType;
 import org.elasticsearch.script.ScriptSettings;
 
@@ -34,20 +36,22 @@ import java.util.Map;
 /**
  *
  */
-public class Script implements ToXContent {
+public class WatcherScript implements ToXContent {
 
     public static final String DEFAULT_LANG = ScriptSettings.DEFAULT_LANG;
+    public static final ScriptContext.Plugin CTX_PLUGIN = new ScriptContext.Plugin("xpack", "watch");
+    public static final ScriptContext CTX = new WatcherScriptContext();
 
     private final String script;
     @Nullable private final ScriptType type;
     @Nullable private final String lang;
     @Nullable private final Map<String, Object> params;
 
-    Script(String script) {
+    WatcherScript(String script) {
         this(script, null, null, null);
     }
 
-    Script(String script, @Nullable ScriptType type, @Nullable String lang, @Nullable Map<String, Object> params) {
+    WatcherScript(String script, @Nullable ScriptType type, @Nullable String lang, @Nullable Map<String, Object> params) {
         this.script = script;
         this.type = type;
         this.lang = lang;
@@ -70,12 +74,16 @@ public class Script implements ToXContent {
         return params != null ? params : Collections.emptyMap();
     }
 
+    public Script toScript() {
+        return new Script(script(), type(), lang(), params());
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        Script script1 = (Script) o;
+        WatcherScript script1 = (WatcherScript) o;
 
         if (!script.equals(script1.script)) return false;
         if (type != script1.type) return false;
@@ -118,10 +126,10 @@ public class Script implements ToXContent {
         return builder.endObject();
     }
 
-    public static Script parse(XContentParser parser) throws IOException {
+    public static WatcherScript parse(XContentParser parser) throws IOException {
         XContentParser.Token token = parser.currentToken();
         if (token == XContentParser.Token.VALUE_STRING) {
-            return new Script(parser.text());
+            return new WatcherScript(parser.text());
         }
         if (token != XContentParser.Token.START_OBJECT) {
             throw new ElasticsearchParseException("expected a string value or an object, but found [{}] instead", token);
@@ -182,7 +190,7 @@ public class Script implements ToXContent {
                     Field.INLINE.getPreferredName(), Field.FILE.getPreferredName(), Field.ID.getPreferredName());
         }
         assert type != null : "if script is not null, type should definitely not be null";
-        return new Script(script, type, lang, params);
+        return new WatcherScript(script, type, lang, params);
     }
 
     public static Builder.Inline inline(String script) {
@@ -223,7 +231,7 @@ public class Script implements ToXContent {
             return (B) this;
         }
 
-        public abstract Script build();
+        public abstract WatcherScript build();
 
         public static class Inline extends Builder<Inline> {
 
@@ -232,8 +240,8 @@ public class Script implements ToXContent {
             }
 
             @Override
-            public Script build() {
-                return new Script(script, type, lang, params);
+            public WatcherScript build() {
+                return new WatcherScript(script, type, lang, params);
             }
         }
 
@@ -244,8 +252,8 @@ public class Script implements ToXContent {
             }
 
             @Override
-            public Script build() {
-                return new Script(script, type, lang, params);
+            public WatcherScript build() {
+                return new WatcherScript(script, type, lang, params);
             }
         }
 
@@ -256,8 +264,8 @@ public class Script implements ToXContent {
             }
 
             @Override
-            public Script build() {
-                return new Script(script, type, lang, params);
+            public WatcherScript build() {
+                return new WatcherScript(script, type, lang, params);
             }
         }
 
@@ -268,8 +276,8 @@ public class Script implements ToXContent {
             }
 
             @Override
-            public Script build() {
-                return new Script(script, type, lang, params);
+            public WatcherScript build() {
+                return new WatcherScript(script, type, lang, params);
             }
         }
     }
@@ -283,4 +291,10 @@ public class Script implements ToXContent {
     }
 
 
+    private static class WatcherScriptContext implements ScriptContext {
+        @Override
+        public String getKey() {
+            return CTX_PLUGIN.getKey();
+        }
+    }
 }
