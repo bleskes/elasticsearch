@@ -57,7 +57,6 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.OptionalLong;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -700,12 +699,12 @@ public class JobSchedulerTest
     private static class MockDataExtractor implements DataExtractor
     {
         private final List<Integer> m_BatchesPerSearch;
-        private final List<Long> m_Starts = new CopyOnWriteArrayList<>();
-        private final List<Long> m_Ends = new CopyOnWriteArrayList<>();
-        private volatile int m_SearchCount = -1;
-        private volatile int m_StreamCount = -1;
-        private volatile int m_NCleared;
-        private volatile boolean m_IsCancelled;
+        private final List<Long> m_Starts = new ArrayList<>();
+        private final List<Long> m_Ends = new ArrayList<>();
+        private int m_SearchCount = -1;
+        private int m_StreamCount = -1;
+        private int m_NCleared;
+        private boolean m_IsCancelled;
 
         public MockDataExtractor(List<Integer> batchesPerSearch)
         {
@@ -714,13 +713,13 @@ public class JobSchedulerTest
         }
 
         @Override
-        public boolean hasNext()
+        public synchronized boolean hasNext()
         {
             return m_StreamCount < m_BatchesPerSearch.get(m_SearchCount) - 1;
         }
 
         @Override
-        public Optional<InputStream> next()
+        public synchronized Optional<InputStream> next()
         {
             if (!hasNext())
             {
@@ -732,7 +731,7 @@ public class JobSchedulerTest
         }
 
         @Override
-        public void newSearch(long start, long end, Logger logger)
+        public synchronized void newSearch(long start, long end, Logger logger)
         {
             if (m_SearchCount == m_BatchesPerSearch.size() - 1)
             {
@@ -745,24 +744,24 @@ public class JobSchedulerTest
             m_IsCancelled = false;
         }
 
-        public long getStart(int searchCount)
+        public synchronized long getStart(int searchCount)
         {
             return m_Starts.get(searchCount);
         }
 
-        public long getEnd(int searchCount)
+        public synchronized long getEnd(int searchCount)
         {
             return m_Ends.get(searchCount);
         }
 
         @Override
-        public void clear()
+        public synchronized void clear()
         {
             m_NCleared++;
         }
 
         @Override
-        public void cancel()
+        public synchronized void cancel()
         {
             m_IsCancelled = true;
         }
@@ -796,7 +795,7 @@ public class JobSchedulerTest
          *
          * @return {@code true} if latch was counted down to 0 or {@code false} if it timed out
          */
-        public boolean awaitForCountDownLatch()
+        private boolean awaitForCountDownLatch()
         {
             try
             {
@@ -809,33 +808,33 @@ public class JobSchedulerTest
             return true;
         }
 
-        public void setShouldThrow(boolean value)
+        private void setShouldThrow(boolean value)
         {
             m_ShouldThrow = value;
         }
 
-        public String getStream(int index)
+        private String getStream(int index)
         {
             return m_Streams.get(index);
         }
 
-        public int getNumberOfStreams()
+        private int getNumberOfStreams()
         {
             return m_Streams.size();
         }
 
-        public List<InterimResultsParams> getFlushParams()
+        private List<InterimResultsParams> getFlushParams()
         {
             return m_FlushParams;
         }
 
-        public boolean isJobClosed()
+        private boolean isJobClosed()
         {
             return m_IsJobClosed;
         }
 
         @Override
-        public DataCounts submitDataLoadJob(String jobId, InputStream input, DataLoadParams params)
+        public synchronized DataCounts submitDataLoadJob(String jobId, InputStream input, DataLoadParams params)
                 throws UnknownJobException, NativeProcessRunException, MissingFieldException,
                 JsonParseException, JobInUseException, HighProportionOfBadTimestampsException,
                 OutOfOrderRecordsException, LicenseViolationException, MalformedJsonException
@@ -860,7 +859,7 @@ public class JobSchedulerTest
         }
 
         @Override
-        public void flushJob(String jobId, InterimResultsParams params)
+        public synchronized void flushJob(String jobId, InterimResultsParams params)
                 throws UnknownJobException, NativeProcessRunException, JobInUseException
         {
             if (jobId.equals(JOB_ID))
@@ -870,7 +869,7 @@ public class JobSchedulerTest
         }
 
         @Override
-        public void closeJob(String jobId) throws UnknownJobException, NativeProcessRunException,
+        public synchronized void closeJob(String jobId) throws UnknownJobException, NativeProcessRunException,
                 JobInUseException
         {
             m_IsJobClosed = jobId.equals(JOB_ID);
