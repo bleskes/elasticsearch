@@ -26,6 +26,8 @@ import org.elasticsearch.test.SecuritySettingsSource;
 import org.elasticsearch.xpack.security.authc.support.SecuredString;
 import org.elasticsearch.xpack.security.authc.support.UsernamePasswordToken;
 
+import java.io.IOException;
+
 import static org.elasticsearch.rest.RestStatus.OK;
 import static org.elasticsearch.rest.RestStatus.UNAUTHORIZED;
 import static org.elasticsearch.xpack.security.authc.support.UsernamePasswordToken.basicAuthHeaderValue;
@@ -41,7 +43,7 @@ public class SecurityPluginTests extends SecurityIntegTestCase {
                 .build();
     }
 
-    public void testThatPluginIsLoaded() throws Exception {
+    public void testThatPluginIsLoaded() throws IOException {
         try {
             logger.info("executing unauthorized request to /_xpack info");
             getRestClient().performRequest("GET", "/_xpack");
