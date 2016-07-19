@@ -33,7 +33,6 @@ public class HttpAuthRegistry {
 
     private final Map<String, HttpAuthFactory> factories;
 
-    @Inject
     public HttpAuthRegistry(Map<String, HttpAuthFactory> factories) {
         this.factories = factories;
     }

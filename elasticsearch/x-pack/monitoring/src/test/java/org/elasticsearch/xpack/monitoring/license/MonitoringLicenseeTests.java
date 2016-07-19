@@ -21,7 +21,6 @@ import org.elasticsearch.license.core.License.OperationMode;
 import org.elasticsearch.license.plugin.core.AbstractLicenseeTestCase;
 import org.elasticsearch.license.plugin.core.LicenseState;
 import org.elasticsearch.license.plugin.core.Licensee.Status;
-import org.elasticsearch.license.plugin.core.LicenseeRegistry;
 import org.elasticsearch.xpack.monitoring.MonitoringLicensee;
 
 import java.util.function.Predicate;
@@ -29,7 +28,6 @@ import java.util.function.Predicate;
 import static org.hamcrest.Matchers.equalTo;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 /**
@@ -38,8 +36,7 @@ import static org.mockito.Mockito.when;
  * If you change the behavior of these tests, then it means that licensing changes for Monitoring!
  */
 public class MonitoringLicenseeTests extends AbstractLicenseeTestCase {
-    private final LicenseeRegistry registry = mock(LicenseeRegistry.class);
-    private final MonitoringLicensee licensee = new MonitoringLicensee(Settings.EMPTY, registry);
+    private final MonitoringLicensee licensee = new MonitoringLicensee(Settings.EMPTY);
 
     public void testAcknowledgementMessagesToAnyFromFreeIsNoOp() {
         assertEmptyAck(OperationMode.BASIC, randomMode(), licensee);
@@ -104,7 +101,6 @@ public class MonitoringLicenseeTests extends AbstractLicenseeTestCase {
         assertThat(predicate.test(licensee), equalTo(expected));
 
         verify(status).getLicenseState();
-        verifyNoMoreInteractions(registry);
     }
 
     /**
@@ -123,6 +119,5 @@ public class MonitoringLicenseeTests extends AbstractLicenseeTestCase {
         assertThat(predicate.test(licensee), equalTo(expected));
 
         verify(status).getMode();
-        verifyNoMoreInteractions(registry);
     }
 }

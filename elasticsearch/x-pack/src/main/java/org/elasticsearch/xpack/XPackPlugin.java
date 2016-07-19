@@ -24,7 +24,12 @@ import java.security.PrivilegedAction;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.elasticsearch.SpecialPermission;
 import org.elasticsearch.action.ActionRequest;
@@ -32,6 +37,7 @@ import org.elasticsearch.action.ActionResponse;
 import org.elasticsearch.action.support.ActionFilter;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.client.transport.TransportClient;
+import org.elasticsearch.cluster.service.ClusterService;
 import org.elasticsearch.common.component.LifecycleComponent;
 import org.elasticsearch.common.inject.Binder;
 import org.elasticsearch.common.inject.Module;
@@ -41,19 +47,27 @@ import org.elasticsearch.common.settings.Setting;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.env.Environment;
 import org.elasticsearch.index.IndexModule;
+import org.elasticsearch.ingest.Processor;
 import org.elasticsearch.license.plugin.Licensing;
 import org.elasticsearch.plugins.ActionPlugin;
+import org.elasticsearch.plugins.IngestPlugin;
 import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.plugins.ScriptPlugin;
 import org.elasticsearch.rest.RestHandler;
 import org.elasticsearch.script.ScriptContext;
 import org.elasticsearch.threadpool.ExecutorBuilder;
+import org.elasticsearch.threadpool.ThreadPool;
+import org.elasticsearch.watcher.ResourceWatcherService;
 import org.elasticsearch.xpack.action.TransportXPackInfoAction;
 import org.elasticsearch.xpack.action.TransportXPackUsageAction;
 import org.elasticsearch.xpack.action.XPackInfoAction;
 import org.elasticsearch.xpack.action.XPackUsageAction;
-import org.elasticsearch.xpack.common.ScriptServiceProxy;
-import org.elasticsearch.xpack.common.http.HttpClientModule;
+import org.elasticsearch.xpack.common.http.HttpClient;
+import org.elasticsearch.xpack.common.http.HttpRequestTemplate;
+import org.elasticsearch.xpack.common.http.auth.HttpAuthFactory;
+import org.elasticsearch.xpack.common.http.auth.HttpAuthRegistry;
+import org.elasticsearch.xpack.common.http.auth.basic.BasicAuth;
+import org.elasticsearch.xpack.common.http.auth.basic.BasicAuthFactory;
 import org.elasticsearch.xpack.common.text.TextTemplateModule;
 import org.elasticsearch.xpack.extensions.XPackExtension;
 import org.elasticsearch.xpack.extensions.XPackExtensionsService;
@@ -65,13 +79,17 @@ import org.elasticsearch.xpack.notification.email.Account;
 import org.elasticsearch.xpack.notification.email.support.BodyPartSource;
 import org.elasticsearch.xpack.rest.action.RestXPackInfoAction;
 import org.elasticsearch.xpack.rest.action.RestXPackUsageAction;
+import org.elasticsearch.xpack.security.InternalClient;
 import org.elasticsearch.xpack.security.Security;
 import org.elasticsearch.xpack.security.authc.AuthenticationModule;
+import org.elasticsearch.xpack.security.authc.InternalAuthenticationService;
+import org.elasticsearch.xpack.security.authc.support.UsernamePasswordToken;
 import org.elasticsearch.xpack.support.clock.Clock;
 import org.elasticsearch.xpack.support.clock.SystemClock;
 import org.elasticsearch.xpack.watcher.Watcher;
+import org.elasticsearch.xpack.watcher.support.WatcherScript;
 
-public class XPackPlugin extends Plugin implements ScriptPlugin, ActionPlugin {
+public class XPackPlugin extends Plugin implements ScriptPlugin, ActionPlugin, IngestPlugin {
 
     public static final String NAME = "x-pack";
 
@@ -112,6 +130,7 @@ public class XPackPlugin extends Plugin implements ScriptPlugin, ActionPlugin {
     }
 
     protected final Settings settings;
+    private final Environment env;
     protected boolean transportClientMode;
     protected final XPackExtensionsService extensionsService;
 
@@ -125,7 +144,7 @@ public class XPackPlugin extends Plugin implements ScriptPlugin, ActionPlugin {
     public XPackPlugin(Settings settings) throws IOException {
         this.settings = settings;
         this.transportClientMode = transportClientMode(settings);
-        final Environment env = transportClientMode ? null : new Environment(settings);
+        this.env = transportClientMode ? null : new Environment(settings);
 
         this.licensing = new Licensing(settings);
         this.security = new Security(settings, env);
@@ -156,15 +175,15 @@ public class XPackPlugin extends Plugin implements ScriptPlugin, ActionPlugin {
         ArrayList<Module> modules = new ArrayList<>();
         modules.add(b -> b.bind(Clock.class).toInstance(getClock()));
         modules.addAll(notification.nodeModules());
-        modules.addAll(licensing.nodeModules());
         modules.addAll(security.nodeModules());
         modules.addAll(watcher.nodeModules());
         modules.addAll(monitoring.nodeModules());
         modules.addAll(graph.createGuiceModules());
 
         if (transportClientMode == false) {
-            modules.add(new HttpClientModule());
             modules.add(new TextTemplateModule());
+            // Note: this only exists so LicensesService subclasses can be bound in mock tests
+            modules.addAll(licensing.nodeModules());
         }
         return modules;
     }
@@ -173,12 +192,32 @@ public class XPackPlugin extends Plugin implements ScriptPlugin, ActionPlugin {
     public Collection<Class<? extends LifecycleComponent>> getGuiceServiceClasses() {
         ArrayList<Class<? extends LifecycleComponent>> services = new ArrayList<>();
         services.addAll(notification.nodeServices());
-        services.addAll(licensing.nodeServices());
         services.addAll(security.nodeServices());
-        services.addAll(watcher.nodeServices());
         services.addAll(monitoring.nodeServices());
-        services.addAll(graph.getGuiceServiceClasses());
         return services;
+    }
+
+    @Override
+    public Collection<Object> createComponents(Client client, ClusterService clusterService, ThreadPool threadPool,
+                                               ResourceWatcherService resourceWatcherService) {
+        List<Object> components = new ArrayList<>();
+        final InternalClient internalClient = new InternalClient(settings, threadPool, client, security.getCryptoService());
+        components.add(internalClient);
+
+        components.addAll(licensing.createComponents(clusterService, getClock(), env, resourceWatcherService,
+                                                     security.getSecurityLicenseState()));
+        components.addAll(security.createComponents(internalClient, threadPool, clusterService, resourceWatcherService,
+                                                    extensionsService.getExtensions()));
+
+        // watcher http stuff
+        Map<String, HttpAuthFactory> httpAuthFactories = new HashMap<>();
+        httpAuthFactories.put(BasicAuth.TYPE, new BasicAuthFactory(security.getCryptoService()));
+        // TODO: add more auth types, or remove this indirection
+        HttpAuthRegistry httpAuthRegistry = new HttpAuthRegistry(httpAuthFactories);
+        components.add(new HttpRequestTemplate.Parser(httpAuthRegistry));
+        components.add(new HttpClient(settings, httpAuthRegistry, env));
+
+        return components;
     }
 
     @Override
@@ -186,13 +225,27 @@ public class XPackPlugin extends Plugin implements ScriptPlugin, ActionPlugin {
         Settings.Builder builder = Settings.builder();
         builder.put(security.additionalSettings());
         builder.put(watcher.additionalSettings());
-        builder.put(graph.additionalSettings());
         return builder.build();
     }
 
     @Override
+    public Collection<String> getRestHeaders() {
+        if (transportClientMode) {
+            return Collections.emptyList();
+        }
+        Set<String> headers = new HashSet<>();
+        headers.add(UsernamePasswordToken.BASIC_AUTH_HEADER);
+        if (InternalAuthenticationService.RUN_AS_ENABLED.get(settings)) {
+            headers.add(InternalAuthenticationService.RUN_AS_USER_HEADER);
+        }
+        headers.addAll(extensionsService.getExtensions().stream()
+            .flatMap(e -> e.getRestHeaders().stream()).collect(Collectors.toList()));
+        return headers;
+    }
+
+    @Override
     public ScriptContext.Plugin getCustomScriptContexts() {
-        return ScriptServiceProxy.INSTANCE;
+        return WatcherScript.CTX_PLUGIN;
     }
 
     @Override
@@ -221,7 +274,6 @@ public class XPackPlugin extends Plugin implements ScriptPlugin, ActionPlugin {
         filters.addAll(notification.getSettingsFilter());
         filters.addAll(security.getSettingsFilter());
         filters.addAll(MonitoringSettings.getSettingsFilter());
-        filters.addAll(graph.getSettingsFilter());
         return filters;
     }
 
@@ -254,7 +306,6 @@ public class XPackPlugin extends Plugin implements ScriptPlugin, ActionPlugin {
         filters.addAll(monitoring.getActionFilters());
         filters.addAll(security.getActionFilters());
         filters.addAll(watcher.getActionFilters());
-        filters.addAll(graph.getActionFilters());
         return filters;
     }
 
@@ -271,6 +322,11 @@ public class XPackPlugin extends Plugin implements ScriptPlugin, ActionPlugin {
         return handlers;
     }
 
+    @Override
+    public Map<String, Processor.Factory> getProcessors(Processor.Parameters parameters) {
+        return security.getProcessors(parameters);
+    }
+
     public void onModule(AuthenticationModule module) {
         if (extensionsService != null) {
             extensionsService.onModule(module);
@@ -279,7 +335,6 @@ public class XPackPlugin extends Plugin implements ScriptPlugin, ActionPlugin {
 
     public void onIndexModule(IndexModule module) {
         security.onIndexModule(module);
-        graph.onIndexModule(module);
     }
 
     public static void bindFeatureSet(Binder binder, Class<? extends XPackFeatureSet> featureSet) {

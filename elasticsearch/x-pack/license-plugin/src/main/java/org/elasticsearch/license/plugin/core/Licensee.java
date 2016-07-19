@@ -17,10 +17,10 @@
 
 package org.elasticsearch.license.plugin.core;
 
-import org.elasticsearch.license.core.License;
 import org.elasticsearch.license.core.License.OperationMode;
 
 import java.util.Locale;
+import java.util.Objects;
 
 public interface Licensee {
 
@@ -38,11 +38,10 @@ public interface Licensee {
 
     /**
      * Messages to be returned when
-     * installing <code>newLicense</code>
-     * when <code>currentLicense</code> is
-     * active
+     * changing from current operation mode
+     * to new operation mode
      */
-    String[] acknowledgmentMessages(License currentLicense, License newLicense);
+    String[] acknowledgmentMessages(OperationMode currentMode, OperationMode newMode);
 
     /**
      * Notifies when a new license is activated
@@ -95,6 +94,20 @@ public interface Licensee {
          */
         public LicenseState getLicenseState() {
             return licenseState;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            Status status = (Status) o;
+            return Objects.equals(mode, status.mode) && Objects.equals(licenseState, status.licenseState);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(mode, licenseState);
         }
 
         @Override

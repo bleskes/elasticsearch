@@ -21,8 +21,6 @@ import java.io.IOException;
 
 import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.env.Environment;
-import org.elasticsearch.xpack.security.audit.AuditTrailModule;
 import org.elasticsearch.xpack.security.audit.index.IndexAuditTrail;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.XPackPlugin;
@@ -171,14 +169,14 @@ public class SecuritySettingsTests extends ESTestCase {
 
         Security.validateAutoCreateIndex(Settings.builder()
                         .put("action.auto_create_index", ".security")
-                        .put(AuditTrailModule.ENABLED_SETTING.getKey(), true)
+                        .put(Security.AUDIT_ENABLED_SETTING.getKey(), true)
                         .build());
 
         try {
             Security.validateAutoCreateIndex(Settings.builder()
                     .put("action.auto_create_index", ".security")
-                    .put(AuditTrailModule.ENABLED_SETTING.getKey(), true)
-                    .put(AuditTrailModule.OUTPUTS_SETTING.getKey(), randomFrom("index", "logfile,index"))
+                    .put(Security.AUDIT_ENABLED_SETTING.getKey(), true)
+                    .put(Security.AUDIT_OUTPUTS_SETTING.getKey(), randomFrom("index", "logfile,index"))
                     .build());
             fail("IllegalArgumentException expected");
         } catch (IllegalArgumentException e) {
@@ -188,8 +186,8 @@ public class SecuritySettingsTests extends ESTestCase {
 
         Security.validateAutoCreateIndex(Settings.builder()
                 .put("action.auto_create_index", ".security_audit_log*,.security")
-                .put(AuditTrailModule.ENABLED_SETTING.getKey(), true)
-                .put(AuditTrailModule.OUTPUTS_SETTING.getKey(), randomFrom("index", "logfile,index"))
+                .put(Security.AUDIT_ENABLED_SETTING.getKey(), true)
+                .put(Security.AUDIT_OUTPUTS_SETTING.getKey(), randomFrom("index", "logfile,index"))
                 .build());
     }
 }

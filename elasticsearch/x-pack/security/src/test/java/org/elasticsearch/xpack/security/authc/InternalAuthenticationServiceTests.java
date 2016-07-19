@@ -85,7 +85,6 @@ public class InternalAuthenticationServiceTests extends ESTestCase {
     CryptoService cryptoService;
     ThreadPool threadPool;
     ThreadContext threadContext;
-    RestController controller;
 
     @Before
     public void init() throws Exception {
@@ -121,11 +120,10 @@ public class InternalAuthenticationServiceTests extends ESTestCase {
         auditTrail = mock(AuditTrail.class);
         threadPool = mock(ThreadPool.class);
         threadContext = new ThreadContext(Settings.EMPTY);
-        controller = mock(RestController.class);
         when(threadPool.getThreadContext()).thenReturn(threadContext);
         when(cryptoService.sign(any(String.class))).thenReturn("_signed_auth");
         service = new InternalAuthenticationService(settings, realms, auditTrail, cryptoService,
-                new DefaultAuthenticationFailureHandler(), threadPool, controller);
+                new DefaultAuthenticationFailureHandler(), threadPool);
     }
 
     @After
@@ -324,7 +322,7 @@ public class InternalAuthenticationServiceTests extends ESTestCase {
         ThreadContext threadContext1 = new ThreadContext(Settings.EMPTY);
         when(threadPool.getThreadContext()).thenReturn(threadContext1);
         service = new InternalAuthenticationService(Settings.EMPTY, realms, auditTrail, cryptoService,
-                new DefaultAuthenticationFailureHandler(), threadPool, controller);
+                new DefaultAuthenticationFailureHandler(), threadPool);
 
         threadContext1.putTransient(Authentication.AUTHENTICATION_KEY, threadContext.getTransient(Authentication.AUTHENTICATION_KEY));
         threadContext1.putHeader(Authentication.AUTHENTICATION_KEY, threadContext.getHeader(Authentication.AUTHENTICATION_KEY));
@@ -338,7 +336,7 @@ public class InternalAuthenticationServiceTests extends ESTestCase {
         threadContext1 = new ThreadContext(Settings.EMPTY);
         when(threadPool.getThreadContext()).thenReturn(threadContext1);
         service = new InternalAuthenticationService(Settings.EMPTY, realms, auditTrail, cryptoService,
-                new DefaultAuthenticationFailureHandler(), threadPool, controller);
+                new DefaultAuthenticationFailureHandler(), threadPool);
         threadContext1.putHeader(Authentication.AUTHENTICATION_KEY, threadContext.getHeader(Authentication.AUTHENTICATION_KEY));
         when(cryptoService.unsignAndVerify("_signed_auth")).thenReturn(authentication.encode());
 
@@ -350,7 +348,7 @@ public class InternalAuthenticationServiceTests extends ESTestCase {
 
         when(threadPool.getThreadContext()).thenReturn(threadContext1);
         service = new InternalAuthenticationService(Settings.EMPTY, realms, auditTrail, cryptoService,
-                new DefaultAuthenticationFailureHandler(), threadPool, controller);
+                new DefaultAuthenticationFailureHandler(), threadPool);
         Authentication result = service.authenticate("_action", new InternalMessage(), SystemUser.INSTANCE);
         assertThat(result, notNullValue());
         assertThat(result.getUser(), equalTo(user1));
@@ -360,7 +358,7 @@ public class InternalAuthenticationServiceTests extends ESTestCase {
     public void testAuthenticateTransportContextAndHeaderNoSigning() throws Exception {
         Settings settings = Settings.builder().put(InternalAuthenticationService.SIGN_USER_HEADER.getKey(), false).build();
         service = new InternalAuthenticationService(settings, realms, auditTrail, cryptoService,
-                new DefaultAuthenticationFailureHandler(), threadPool, controller);
+                new DefaultAuthenticationFailureHandler(), threadPool);
 
         User user1 = new User("username", "r1", "r2");
         when(firstRealm.supports(token)).thenReturn(true);
@@ -377,7 +375,7 @@ public class InternalAuthenticationServiceTests extends ESTestCase {
         ThreadContext threadContext1 = new ThreadContext(Settings.EMPTY);
         when(threadPool.getThreadContext()).thenReturn(threadContext1);
         service = new InternalAuthenticationService(Settings.EMPTY, realms, auditTrail, cryptoService,
-                new DefaultAuthenticationFailureHandler(), threadPool, controller);
+                new DefaultAuthenticationFailureHandler(), threadPool);
         threadContext1.putTransient(Authentication.AUTHENTICATION_KEY, threadContext.getTransient(Authentication.AUTHENTICATION_KEY));
         threadContext1.putHeader(Authentication.AUTHENTICATION_KEY, threadContext.getHeader(Authentication.AUTHENTICATION_KEY));
         Authentication ctxAuth = service.authenticate("_action", message1, SystemUser.INSTANCE);
@@ -397,7 +395,7 @@ public class InternalAuthenticationServiceTests extends ESTestCase {
 
         when(threadPool.getThreadContext()).thenReturn(threadContext1);
         service = new InternalAuthenticationService(settings, realms, auditTrail, cryptoService,
-                new DefaultAuthenticationFailureHandler(), threadPool, controller);
+                new DefaultAuthenticationFailureHandler(), threadPool);
         Authentication result = service.authenticate("_action", new InternalMessage(), SystemUser.INSTANCE);
         assertThat(result, notNullValue());
         assertThat(result.getUser(), equalTo(user1));
@@ -460,7 +458,7 @@ public class InternalAuthenticationServiceTests extends ESTestCase {
         Settings settings = builder.build();
         AnonymousUser.initialize(settings);
         service = new InternalAuthenticationService(settings, realms, auditTrail, cryptoService, new DefaultAuthenticationFailureHandler(),
-                threadPool, controller);
+                threadPool);
         RestRequest request = new FakeRestRequest();
 
         Authentication result = service.authenticate(request);
@@ -476,7 +474,7 @@ public class InternalAuthenticationServiceTests extends ESTestCase {
                 .build();
         AnonymousUser.initialize(settings);
         service = new InternalAuthenticationService(settings, realms, auditTrail, cryptoService,
-                new DefaultAuthenticationFailureHandler(), threadPool, controller);
+                new DefaultAuthenticationFailureHandler(), threadPool);
         InternalMessage message = new InternalMessage();
 
         Authentication result = service.authenticate("_action", message, null);
@@ -491,7 +489,7 @@ public class InternalAuthenticationServiceTests extends ESTestCase {
                 .build();
         AnonymousUser.initialize(settings);
         service = new InternalAuthenticationService(settings, realms, auditTrail, cryptoService,
-                new DefaultAuthenticationFailureHandler(), threadPool, controller);
+                new DefaultAuthenticationFailureHandler(), threadPool);
 
         InternalMessage message = new InternalMessage();
 

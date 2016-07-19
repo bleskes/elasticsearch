@@ -26,9 +26,8 @@ import org.elasticsearch.common.logging.ESLoggerFactory;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.elasticsearch.common.transport.TransportAddress;
-import org.elasticsearch.node.internal.InternalSettingsPreparer;
-import org.elasticsearch.xpack.security.Security;
-import org.elasticsearch.xpack.XPackPlugin;
+import org.elasticsearch.test.ESIntegTestCase;
+import org.elasticsearch.xpack.XPackTransportClient;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -37,10 +36,8 @@ import org.junit.BeforeClass;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.file.Path;
-import java.util.Locale;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static com.carrotsearch.randomizedtesting.RandomizedTest.randomAsciiOfLength;
 import static org.hamcrest.Matchers.notNullValue;
 
 /**
@@ -57,6 +54,7 @@ import static org.hamcrest.Matchers.notNullValue;
  * your test.
  */
 @LuceneTestCase.SuppressSysoutChecks(bugUrl = "we log a lot on purpose")
+@ESIntegTestCase.SuppressLocalMode
 public abstract class MigrateToolTestCase extends LuceneTestCase {
 
     /**
@@ -89,13 +87,9 @@ public abstract class MigrateToolTestCase extends LuceneTestCase {
                 .put("client.transport.ignore_cluster_name", true)
                 .put("path.home", tempDir)
                 .put(Security.USER_SETTING.getKey(), "transport_user:changeme")
-                .put("node.mode", "network") // we require network here!
                 .build();
 
-        TransportClient.Builder transportClientBuilder = TransportClient.builder()
-                .addPlugin(XPackPlugin.class)
-                .settings(clientSettings);
-        TransportClient client = transportClientBuilder.build().addTransportAddresses(transportAddresses);
+        TransportClient client = new XPackTransportClient(clientSettings).addTransportAddresses(transportAddresses);
 
         logger.info("--> Elasticsearch Java TransportClient started");
 
