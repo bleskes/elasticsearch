@@ -39,11 +39,7 @@ public class SecurityModule extends AbstractSecurityModule {
         XPackPlugin.bindFeatureSet(binder(), SecurityFeatureSet.class);
 
         if (securityEnabled) {
-            bind(SecurityContext.Secure.class).asEagerSingleton();
-            bind(SecurityContext.class).to(SecurityContext.Secure.class);
             bind(SecurityLifecycleService.class).asEagerSingleton();
-        } else {
-            bind(SecurityContext.class).toInstance(SecurityContext.Insecure.INSTANCE);
         }
     }
 
