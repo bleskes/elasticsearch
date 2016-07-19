@@ -307,22 +307,14 @@ public class JobScheduler
 
         m_Logger = m_JobLoggerFactory.newLogger(m_JobId);
         updateStatus(JobSchedulerStatus.STARTED);
-        resetLookbackExecutor();
+        m_LookbackExecutor = Executors.newSingleThreadExecutor();
         initLastEndTime(job);
         m_LookbackStartTimeMs = (m_LastEndTimeMs != null && m_LastEndTimeMs > startMs) ?
                 m_LastEndTimeMs : startMs;
         long lookbackEnd =  endMs.orElse(System.currentTimeMillis() - m_QueryDelayMs);
         m_IsLookbackOnly = endMs.isPresent();
         m_LookbackExecutor.execute(createLookbackAndStartRealTimeTask(m_LookbackStartTimeMs, lookbackEnd));
-    }
-
-    private void resetLookbackExecutor()
-    {
-        if (m_LookbackExecutor != null && !m_LookbackExecutor.isTerminated())
-        {
-            awaitLookbackTermination();
-        }
-        m_LookbackExecutor = Executors.newSingleThreadExecutor();
+        m_LookbackExecutor.shutdown();
     }
 
     private void updateStatus(JobSchedulerStatus status)
@@ -501,7 +493,6 @@ public class JobScheduler
 
     private boolean awaitLookbackTermination()
     {
-        m_LookbackExecutor.shutdown();
         try
         {
             return m_LookbackExecutor.awaitTermination(STOP_TIMEOUT_MINUTES, TimeUnit.MINUTES);
