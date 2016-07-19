@@ -17,7 +17,12 @@
 
 package org.elasticsearch.xpack.security.authz.store;
 
-import org.elasticsearch.common.inject.Inject;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Set;
+
 import org.elasticsearch.common.util.set.Sets;
 import org.elasticsearch.xpack.security.SecurityContext;
 import org.elasticsearch.xpack.security.authz.RoleDescriptor;
@@ -29,12 +34,6 @@ import org.elasticsearch.xpack.security.authz.permission.TransportClientRole;
 import org.elasticsearch.xpack.security.user.KibanaUser;
 import org.elasticsearch.xpack.security.user.SystemUser;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
-import java.util.Set;
-
 /**
  *
  */
@@ -42,7 +41,6 @@ public class ReservedRolesStore implements RolesStore {
 
     private final SecurityContext securityContext;
 
-    @Inject
     public ReservedRolesStore(SecurityContext securityContext) {
         this.securityContext = securityContext;
     }
