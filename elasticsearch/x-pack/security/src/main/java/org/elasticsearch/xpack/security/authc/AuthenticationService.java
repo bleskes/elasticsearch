@@ -70,6 +70,4 @@ public interface AuthenticationService {
      * @param user      The user to be attached if the header is missing
      */
     void attachUserIfMissing(User user) throws IOException, IllegalArgumentException;
-
-    Authentication getCurrentAuthentication();
 }
