@@ -62,6 +62,7 @@ import com.prelert.job.manager.actions.ActionGuardian;
 import com.prelert.job.manager.actions.ScheduledAction;
 import com.prelert.job.messages.Messages;
 import com.prelert.job.persistence.JobProvider;
+import com.prelert.job.process.exceptions.DataUploadException;
 import com.prelert.job.process.exceptions.MalformedJsonException;
 import com.prelert.job.process.exceptions.MissingFieldException;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
@@ -277,7 +278,7 @@ public class JobScheduler
         catch (JsonParseException | UnknownJobException | NativeProcessRunException
                 | MissingFieldException | JobInUseException | TooManyJobsException
                 | HighProportionOfBadTimestampsException | OutOfOrderRecordsException
-                | LicenseViolationException | MalformedJsonException e)
+                | LicenseViolationException | MalformedJsonException | DataUploadException e)
         {
             m_Logger.error("An error has occurred while submitting data to job '" + m_JobId + "'", e);
             m_ProblemTracker.reportAnalysisProblem(e.getMessage());
