@@ -46,7 +46,7 @@ public class AuthenticationModule extends AbstractSecurityModule.Node {
         } else {
             bind(AuthenticationFailureHandler.class).to(authcFailureHandler).asEagerSingleton();
         }
-        bind(AuthenticationService.class).to(InternalAuthenticationService.class).asEagerSingleton();
+        bind(AuthenticationService.class).asEagerSingleton();
     }
 
     /**
