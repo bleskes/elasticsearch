@@ -29,6 +29,7 @@ import org.elasticsearch.common.util.concurrent.ThreadContext;
 import org.elasticsearch.rest.RestController;
 import org.elasticsearch.node.Node;
 import org.elasticsearch.rest.RestRequest;
+import org.elasticsearch.xpack.security.audit.AuditTrailService;
 import org.elasticsearch.xpack.security.authc.Authentication.RealmRef;
 import org.elasticsearch.xpack.security.user.AnonymousUser;
 import org.elasticsearch.xpack.security.user.User;
@@ -65,7 +66,7 @@ public class InternalAuthenticationService extends AbstractComponent implements 
     private final boolean runAsEnabled;
 
     @Inject
-    public InternalAuthenticationService(Settings settings, Realms realms, AuditTrail auditTrail, CryptoService cryptoService,
+    public InternalAuthenticationService(Settings settings, Realms realms, AuditTrailService auditTrail, CryptoService cryptoService,
                                          AuthenticationFailureHandler failureHandler, ThreadPool threadPool) {
         super(settings);
         this.nodeName = Node.NODE_NAME_SETTING.get(settings);
