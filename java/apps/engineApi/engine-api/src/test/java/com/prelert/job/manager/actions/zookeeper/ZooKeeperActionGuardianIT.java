@@ -528,19 +528,19 @@ public class ZooKeeperActionGuardianIT
                 new ZooKeeperActionGuardian<>(ScheduledAction.startingState(), CONNECTION_STRING, next))
         {
 
-            Mockito.when(next.tryAcquiringAction("foo5", ScheduledAction.START))
+            Mockito.when(next.tryAcquiringAction("foo5", ScheduledAction.STARTED))
                                 .thenThrow(JobInUseException.class);
 
             try
             {
-                actionGuardian.tryAcquiringAction("foo5", ScheduledAction.START);
+                actionGuardian.tryAcquiringAction("foo5", ScheduledAction.STARTED);
                 fail("Expected JobInUseException to be thrown");
             }
             catch (JobInUseException e)
             {
             }
 
-            assertEquals(ScheduledAction.STOP, actionGuardian.currentAction("foo"));
+            assertEquals(ScheduledAction.STOPPED, actionGuardian.currentAction("foo"));
         }
     }
 

@@ -120,18 +120,18 @@ public class LocalActionGuardianTest
         LocalActionGuardian<ScheduledAction> actionGuardian =
                             new LocalActionGuardian<>(ScheduledAction.startingState(), next);
 
-        Mockito.when(next.tryAcquiringAction("foo", ScheduledAction.START))
+        Mockito.when(next.tryAcquiringAction("foo", ScheduledAction.STARTED))
                         .thenThrow(JobInUseException.class);
 
         try
         {
-            actionGuardian.tryAcquiringAction("foo", ScheduledAction.START);
+            actionGuardian.tryAcquiringAction("foo", ScheduledAction.STARTED);
 
             fail("Expected JobInUseException to be thrown");
         }
         catch (JobInUseException e)
         {
         }
-        assertEquals(ScheduledAction.STOP, actionGuardian.currentAction("foo"));
+        assertEquals(ScheduledAction.STOPPED, actionGuardian.currentAction("foo"));
     }
 }

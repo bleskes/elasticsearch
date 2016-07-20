@@ -277,7 +277,7 @@ public final class PrelertWebApp extends Application
         ActionGuardian<Action> processActionGuardian =
                     new LocalActionGuardian<>(Action.startingState());
         ActionGuardian<ScheduledAction> schedulerActionGuardian =
-                            new LocalActionGuardian<>(ScheduledAction.STOP);
+                            new LocalActionGuardian<>(ScheduledAction.STOPPED);
 
         boolean useZooKeeper = PrelertSettings.isSet(ZOOKEEPER_CONNECTION_PROP);
         if (useZooKeeper)

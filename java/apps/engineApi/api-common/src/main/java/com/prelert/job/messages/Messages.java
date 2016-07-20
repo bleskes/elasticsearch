@@ -177,6 +177,7 @@ public final class Messages
     public static final String JOB_SCHEDULER_FAILED_TO_STOP = "job.scheduler.failed.to.stop";
     public static final String JOB_SCHEDULER_NO_SUCH_SCHEDULED_JOB = "job.scheduler.no.such.scheduled.job";
     public static final String JOB_SCHEDULER_STATUS_STARTED = "job.scheduler.status.started";
+    public static final String JOB_SCHEDULER_STATUS_STOPPING = "job.scheduler.status.stopping";
     public static final String JOB_SCHEDULER_STATUS_STOPPED = "job.scheduler.status.stopped";
     public static final String JOB_SCHEDULER_STATUS_UPDATING = "job.scheduler.status.updating";
     public static final String JOB_SCHEDULER_STATUS_DELETING = "job.scheduler.status.deleting";

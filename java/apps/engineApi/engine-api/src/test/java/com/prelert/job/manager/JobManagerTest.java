@@ -991,8 +991,6 @@ public class JobManagerTest
 
         Logger jobLogger = mock(Logger.class);
         when(m_JobLoggerFactory.newLogger("foo")).thenReturn(jobLogger);
-        DataExtractor dataExtractor = mock(DataExtractor.class);
-        when(m_DataExtractorFactory.newExtractor(any(JobDetails.class))).thenReturn(dataExtractor);
         when(m_ProcessManager.jobIsRunning("foo")).thenReturn(true);
 
         JobDetails scheduledJob = jobManager.createJob(jobConfig, false);
@@ -1147,8 +1145,6 @@ public class JobManagerTest
 
         Logger jobLogger = mock(Logger.class);
         when(m_JobLoggerFactory.newLogger("foo")).thenReturn(jobLogger);
-        DataExtractor dataExtractor = mock(DataExtractor.class);
-        when(m_DataExtractorFactory.newExtractor(any(JobDetails.class))).thenReturn(dataExtractor);
 
         JobDetails job = jobManager.createJob(jobConfig, false);
         when(m_JobProvider.getJobDetails("foo")).thenReturn(Optional.of(job));
@@ -1285,14 +1281,13 @@ public class JobManagerTest
 
         Logger jobLogger = mock(Logger.class);
         when(m_JobLoggerFactory.newLogger("scheduled")).thenReturn(jobLogger);
-        DataExtractor dataExtractor = mock(DataExtractor.class);
-        when(m_DataExtractorFactory.newExtractor(any(JobDetails.class))).thenReturn(dataExtractor);
 
         givenProcessInfo(2);
         JobManager jobManager = createJobManager();
 
         jobManager.setupScheduledJobs();
 
+        // Give time for schedulers to start
         Thread.sleep(200);
 
         jobManager.shutdown();
@@ -1323,9 +1318,6 @@ public class JobManagerTest
         BatchedDocumentsIterator<JobDetails> jobIterator = newBatchedJobsIterator(
                 Arrays.asList(scheduledJob));
         when(m_JobProvider.newBatchedJobsIterator()).thenReturn(jobIterator);
-
-        DataExtractor dataExtractor = mock(DataExtractor.class);
-        when(m_DataExtractorFactory.newExtractor(any(JobDetails.class))).thenReturn(dataExtractor);
 
         JobDetails jd = new JobDetails();
         jd.setSchedulerConfig(new SchedulerConfig());
@@ -1358,13 +1350,9 @@ public class JobManagerTest
                 Arrays.asList(scheduledJob));
         when(m_JobProvider.newBatchedJobsIterator()).thenReturn(jobIterator);
 
-        DataExtractor dataExtractor = mock(DataExtractor.class);
-        when(m_DataExtractorFactory.newExtractor(any(JobDetails.class))).thenReturn(dataExtractor);
-
         JobDetails jd = new JobDetails();
         jd.setSchedulerConfig(new SchedulerConfig());
         when(m_JobProvider.getJobDetails("scheduled")).thenReturn(Optional.of(jd));
-
 
         givenProcessInfo(2);
         JobManager jobManager = createJobManager();
@@ -1686,8 +1674,6 @@ public class JobManagerTest
         JobConfiguration jobConfig = createScheduledJobConfig();
         Logger jobLogger = mock(Logger.class);
         when(m_JobLoggerFactory.newLogger("foo")).thenReturn(jobLogger);
-        DataExtractor dataExtractor = mock(DataExtractor.class);
-        when(m_DataExtractorFactory.newExtractor(any(JobDetails.class))).thenReturn(dataExtractor);
 
         JobDetails jd = new JobDetails();
         jd.setSchedulerConfig(new SchedulerConfig());
@@ -1941,8 +1927,6 @@ public class JobManagerTest
         JobConfiguration jobConfig = createScheduledJobConfig();
         Logger jobLogger = mock(Logger.class);
         when(m_JobLoggerFactory.newLogger("foo")).thenReturn(jobLogger);
-        DataExtractor dataExtractor = mock(DataExtractor.class);
-        when(m_DataExtractorFactory.newExtractor(any(JobDetails.class))).thenReturn(dataExtractor);
 
         JobDetails job = jobManager.createJob(jobConfig, false);
         DataCounts dataCounts = new DataCounts();
@@ -1960,7 +1944,6 @@ public class JobManagerTest
 
         verify(m_PasswordManager).secureStorage(newSchedulerConfig);
         verify(m_JobProvider).updateSchedulerConfig("foo", newSchedulerConfig);
-        verify(m_DataExtractorFactory).newExtractor(job);
     }
 
     @Test
@@ -1972,8 +1955,6 @@ public class JobManagerTest
         JobConfiguration jobConfig = createScheduledJobConfig();
         Logger jobLogger = mock(Logger.class);
         when(m_JobLoggerFactory.newLogger("foo")).thenReturn(jobLogger);
-        DataExtractor dataExtractor = mock(DataExtractor.class);
-        when(m_DataExtractorFactory.newExtractor(any(JobDetails.class))).thenReturn(dataExtractor);
 
         JobDetails job = jobManager.createJob(jobConfig, false);
         DataCounts dataCounts = new DataCounts();
@@ -1991,7 +1972,6 @@ public class JobManagerTest
 
         verify(m_PasswordManager).secureStorage(newSchedulerConfig);
         verify(m_JobProvider).updateSchedulerConfig("foo", newSchedulerConfig);
-        verify(m_DataExtractorFactory).newExtractor(job);
     }
 
     @Test
@@ -2052,7 +2032,7 @@ public class JobManagerTest
         return new JobManager(m_JobProvider, m_ProcessManager, m_DataExtractorFactory,
                 m_JobLoggerFactory, m_PasswordManager, m_JobDataDeleter,
                 new LocalActionGuardian<Action>(Action.CLOSED),
-                new LocalActionGuardian<ScheduledAction>(ScheduledAction.STOP));
+                new LocalActionGuardian<ScheduledAction>(ScheduledAction.STOPPED));
     }
 
     private static Answer<Object> writeToWriter()

@@ -34,8 +34,9 @@ import com.prelert.job.messages.Messages;
  */
 public enum ScheduledAction implements ActionState<ScheduledAction>
 {
-    START(Messages.JOB_SCHEDULER_CANNOT_START, Messages.JOB_SCHEDULER_STATUS_STARTED),
-    STOP(Messages.JOB_SCHEDULER_CANNOT_STOP_IN_CURRENT_STATE, Messages.JOB_SCHEDULER_STATUS_STOPPED),
+    STARTED(Messages.JOB_SCHEDULER_CANNOT_START, Messages.JOB_SCHEDULER_STATUS_STARTED),
+    STOPPING(Messages.JOB_SCHEDULER_CANNOT_STOP_IN_CURRENT_STATE, Messages.JOB_SCHEDULER_STATUS_STOPPING),
+    STOPPED(Messages.JOB_SCHEDULER_CANNOT_STOP_IN_CURRENT_STATE, Messages.JOB_SCHEDULER_STATUS_STOPPED),
     DELETE(Messages.JOB_SCHEDULER_CANNOT_DELETE_IN_CURRENT_STATE, Messages.JOB_SCHEDULER_STATUS_DELETING),
     UPDATE(Messages.JOB_SCHEDULER_CANNOT_UPDATE_IN_CURRENT_STATE, Messages.JOB_SCHEDULER_STATUS_UPDATING);
 
@@ -44,7 +45,7 @@ public enum ScheduledAction implements ActionState<ScheduledAction>
 
     public static ScheduledAction startingState()
     {
-        return STOP;
+        return STOPPED;
     }
 
     private ScheduledAction(String messageKey, String verbKey)
@@ -53,30 +54,30 @@ public enum ScheduledAction implements ActionState<ScheduledAction>
         m_VerbKey = verbKey;
     }
 
-    /**
-     * Return true if allowed to transition from this state to next.
-     * Only allowed to transition from STOP to any other state.
-     *
-     * @param action
-     * @return
-     */
     @Override
     public boolean isValidTransition(ScheduledAction next)
     {
-        // If stopped any transition is valid
-        return this == START && next == STOP || this == STOP;
+        switch (next)
+        {
+            case STARTED:
+                return this == STOPPED;
+            case UPDATE:
+                return this == STOPPED;
+            case STOPPING:
+                return this == STARTED;
+            case STOPPED:
+                return this == STOPPING || this == UPDATE || this == DELETE;
+            case DELETE:
+                return this == STARTED || this == STOPPED;
+            default:
+                return false;
+        }
     }
 
-    /**
-     * If START the next state is STOP.
-     * If UPDATE the next state is STOP.
-     * If STOP the next state is STOP.
-     * If DELETE the next state is STOP.
-     */
     @Override
-    public ScheduledAction nextState(ScheduledAction unused)
+    public ScheduledAction nextState(ScheduledAction previousState)
     {
-        return STOP;
+        return STOPPED;
     }
 
     @Override
@@ -109,12 +110,12 @@ public enum ScheduledAction implements ActionState<ScheduledAction>
 
 
     /**
-     * Hold the lock if started only
+     * Hold the lock if started or stopping
      */
     @Override
     public boolean holdDistributedLock()
     {
-        return this == START;
+        return this == STARTED || this == STOPPING;
     }
 
     @Override
@@ -128,9 +129,9 @@ public enum ScheduledAction implements ActionState<ScheduledAction>
     {
         switch (this)
         {
-        case START:
+        case STARTED:
             return ErrorCodes.CANNOT_START_JOB_SCHEDULER;
-        case STOP:
+        case STOPPED:
             return ErrorCodes.CANNOT_STOP_JOB_SCHEDULER;
         case UPDATE:
             return ErrorCodes.CANNOT_UPDATE_JOB_SCHEDULER;

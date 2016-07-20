@@ -288,12 +288,6 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
 
         m_JobProvider.createJob(jobDetails);
         audit(jobId).info(Messages.getMessage(Messages.JOB_AUDIT_CREATED));
-
-        if (jobDetails.getSchedulerConfig() != null)
-        {
-            createJobScheduler(jobDetails);
-        }
-
         return jobDetails;
     }
 
@@ -962,11 +956,7 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
         checkLicenceViolationsOnReactivate(job);
 
         ActionGuardian<ScheduledAction>.ActionTicket actionTicket =
-                    m_SchedulerActionGuardian.tryAcquiringAction(jobId, ScheduledAction.START);
-
-        m_JobProvider.updateSchedulerState(jobId,
-                new SchedulerState(startMs, endMs.isPresent() ? endMs.getAsLong() : null));
-        LOGGER.info("Starting scheduler for job: " + jobId);
+                m_SchedulerActionGuardian.tryAcquiringAction(jobId, ScheduledAction.STARTED);
 
         // Map should contain no scheduler object when the scheduler can start
         if (m_ScheduledJobs.containsKey(jobId))
@@ -974,18 +964,21 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
             throw new CannotStartSchedulerException(jobId, job.getSchedulerStatus());
         }
 
+        LOGGER.info("Starting scheduler for job: " + jobId);
+        m_JobProvider.updateSchedulerState(jobId,
+                new SchedulerState(startMs, endMs.isPresent() ? endMs.getAsLong() : null));
         createJobScheduler(job);
         m_ScheduledJobs.get(jobId).start(job, startMs, endMs, stopSchedulerCallback(actionTicket));
     }
 
-    private StopCallback stopSchedulerCallback(ActionGuardian<ScheduledAction>.ActionTicket startTicket)
+    private StopCallback stopSchedulerCallback(ActionGuardian<ScheduledAction>.ActionTicket actionTicket)
     {
         return jobId -> {
-            startTicket.close();
             try
             {
                 closeJob(jobId);
                 m_ScheduledJobs.remove(jobId);
+                actionTicket.close();
             }
             catch (JobException e)
             {
@@ -1004,7 +997,7 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
         LOGGER.info("Stopping scheduler for job: " + jobId);
 
         try (ActionGuardian<ScheduledAction>.ActionTicket ticket =
-                m_SchedulerActionGuardian.tryAcquiringAction(jobId, ScheduledAction.STOP))
+                m_SchedulerActionGuardian.tryAcquiringAction(jobId, ScheduledAction.STOPPING))
         {
             if (m_ScheduledJobs.containsKey(jobId))
             {
@@ -1094,8 +1087,7 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
         try
         {
             ActionGuardian<ScheduledAction>.ActionTicket actionTicket =
-                    m_SchedulerActionGuardian.tryAcquiringAction(job.getId(),
-                                                                ScheduledAction.START);
+                    m_SchedulerActionGuardian.tryAcquiringAction(job.getId(), ScheduledAction.STARTED);
 
             LOGGER.info("Starting scheduler for job: " + job.getId());
             scheduler.start(job, startTimeMs, endTimeMs, stopSchedulerCallback(actionTicket));
