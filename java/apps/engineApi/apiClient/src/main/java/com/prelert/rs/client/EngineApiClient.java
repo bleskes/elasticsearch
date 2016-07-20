@@ -38,6 +38,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.zip.ZipInputStream;
@@ -899,6 +900,7 @@ public class EngineApiClient implements Closeable
 
         CountDownLatch waitUntilRequestCompletesLatch = new CountDownLatch(1);
         AtomicInteger statusHolder = new AtomicInteger();
+        AtomicBoolean complete = new AtomicBoolean();
         DeferredContentProvider contentProvider = new DeferredContentProvider();
         Request request = m_HttpClient.POST(postUrl)
                 .header(HttpHeader.CONTENT_TYPE, "application/octet-stream")
@@ -912,8 +914,19 @@ public class EngineApiClient implements Closeable
             @Override
             public void onComplete(Result result)
             {
-                waitUntilRequestCompletesLatch.countDown();
-                statusHolder.set(result.getResponse().getStatus());
+                // It may be possible the upload thread tries a
+                // 2nd upload after the stream is terminated overwriting
+                // the first valid response. Take the first ignoring
+                // later responses
+                if (!complete.get())
+                {
+                    waitUntilRequestCompletesLatch.countDown();
+                    statusHolder.set(result.getResponse().getStatus());
+                    complete.set(true);
+                }
+                else {
+                    LOGGER.warn("Unexpected 2nd response");
+                }
             }
         };
         request.send(responseListener);
