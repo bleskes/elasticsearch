@@ -58,8 +58,6 @@ import com.prelert.job.exceptions.JobInUseException;
 import com.prelert.job.exceptions.LicenseViolationException;
 import com.prelert.job.exceptions.TooManyJobsException;
 import com.prelert.job.logging.JobLoggerFactory;
-import com.prelert.job.manager.actions.ActionGuardian;
-import com.prelert.job.manager.actions.ScheduledAction;
 import com.prelert.job.messages.Messages;
 import com.prelert.job.persistence.JobProvider;
 import com.prelert.job.process.exceptions.DataUploadException;
@@ -75,6 +73,9 @@ import com.prelert.job.status.OutOfOrderRecordsException;
 import com.prelert.utils.scheduler.TaskScheduler;
 import com.prelert.utils.time.TimeUtils;
 
+/**
+ * A scheduler that manages a job configured to pull data from a source.
+ */
 public class JobScheduler
 {
     private static final int MILLIS_IN_SECOND = 1000;
@@ -103,7 +104,7 @@ public class JobScheduler
     private volatile JobSchedulerStatus m_Status;
     private volatile boolean m_IsLookbackOnly;
     private final ProblemTracker m_ProblemTracker;
-    private volatile Optional<ActionGuardian<ScheduledAction>.ActionTicket> m_ActionTicket;
+    private StopCallback m_StopCallback;
 
     /**
      * Constructor
@@ -131,7 +132,6 @@ public class JobScheduler
         m_JobLoggerFactory = Objects.requireNonNull(jobLoggerFactory);
         m_Status = JobSchedulerStatus.STOPPED;
         m_ProblemTracker = new ProblemTracker(() -> m_JobProvider.audit(m_JobId));
-        m_ActionTicket = Optional.empty();
     }
 
     private Runnable createNextTask()
@@ -296,15 +296,14 @@ public class JobScheduler
     }
 
     public synchronized void start(JobDetails job, long startMs, OptionalLong endMs,
-                                ActionGuardian<ScheduledAction>.ActionTicket actionTicket)
-            throws CannotStartSchedulerException
+            StopCallback stopCallback) throws CannotStartSchedulerException
     {
         if (m_Status != JobSchedulerStatus.STOPPED)
         {
             throw new CannotStartSchedulerException(m_JobId, m_Status);
         }
 
-        m_ActionTicket = Optional.of(actionTicket);
+        m_StopCallback = stopCallback;
 
         m_Logger = m_JobLoggerFactory.newLogger(m_JobId);
         updateStatus(JobSchedulerStatus.STARTED);
@@ -385,8 +384,6 @@ public class JobScheduler
     {
         synchronized (this)
         {
-            releaseActionTicket();
-
             if (m_Status != JobSchedulerStatus.STARTED)
             {
                 // Stop has already been called
@@ -394,8 +391,37 @@ public class JobScheduler
             }
             updateStatus(JobSchedulerStatus.STOPPING);
         }
-        closeJob();
-        updateFinalStatusAndCleanUp(JobSchedulerStatus.STOPPED);
+        updateFinalStatusAndCleanUpNoThrow(JobSchedulerStatus.STOPPED);
+    }
+
+    private void updateFinalStatusAndCleanUpNoThrow(JobSchedulerStatus finalStatus)
+    {
+        try
+        {
+            updateFinalStatusAndCleanUp(finalStatus);
+        }
+        catch (CannotStopSchedulerException e)
+        {
+            m_Logger.error(e);
+            audit().error(e.getMessage());
+        }
+    }
+
+    private void updateFinalStatusAndCleanUp(JobSchedulerStatus finalStatus)
+            throws CannotStopSchedulerException
+    {
+        synchronized (this)
+        {
+            m_StopCallback.call(m_JobId);
+            updateStatus(finalStatus);
+            m_DataExtractor.clear();
+            m_JobLoggerFactory.close(m_JobId, m_Logger);
+            m_Logger = null;
+            if (finalStatus == JobSchedulerStatus.STOPPED)
+            {
+                audit().info(Messages.getMessage(Messages.JOB_AUDIT_SCHEDULER_STOPPED));
+            }
+        }
     }
 
     private void closeJob()
@@ -407,21 +433,6 @@ public class JobScheduler
         catch (UnknownJobException | NativeProcessRunException | JobInUseException e)
         {
             m_Logger.error("An error has occurred while closing the job", e);
-        }
-    }
-
-    private void updateFinalStatusAndCleanUp(JobSchedulerStatus finalStatus)
-    {
-        synchronized (this)
-        {
-            updateStatus(finalStatus);
-            m_DataExtractor.clear();
-            m_JobLoggerFactory.close(m_JobId, m_Logger);
-            m_Logger = null;
-            if (finalStatus == JobSchedulerStatus.STOPPED)
-            {
-                audit().info(Messages.getMessage(Messages.JOB_AUDIT_SCHEDULER_STOPPED));
-            }
         }
     }
 
@@ -460,7 +471,6 @@ public class JobScheduler
         }
         cancelAndAwaitTermination();
         updateFinalStatusAndCleanUp(JobSchedulerStatus.STOPPED);
-        releaseActionTicket();
     }
 
     /**
@@ -479,8 +489,7 @@ public class JobScheduler
             updateStatus(JobSchedulerStatus.STOPPING);
         }
         cancelAndAwaitTermination();
-        updateFinalStatusAndCleanUp(JobSchedulerStatus.STARTED);
-        releaseActionTicket();
+        updateFinalStatusAndCleanUpNoThrow(JobSchedulerStatus.STARTED);
     }
 
     private void cancelAndAwaitTermination()
@@ -509,15 +518,6 @@ public class JobScheduler
     {
         return m_RealTimeScheduler == null
                 || m_RealTimeScheduler.stop(STOP_TIMEOUT_MINUTES, TimeUnit.MINUTES);
-    }
-
-    private void releaseActionTicket()
-    {
-        if (m_ActionTicket.isPresent())
-        {
-            m_ActionTicket.get().close();
-            m_ActionTicket = Optional.empty();
-        }
     }
 
     public boolean isStopped()

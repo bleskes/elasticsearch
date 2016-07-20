@@ -1297,8 +1297,6 @@ public class JobManagerTest
 
         jobManager.shutdown();
 
-        verify(m_DataExtractorFactory).newExtractor(scheduledJob);
-
         // Verify scheduler status was updated to STOPPED
         verify(m_JobProvider).updateJob(eq("scheduled"), m_JobUpdateCaptor.capture());
         Map<String, Object> jobUpdate = m_JobUpdateCaptor.getValue();
@@ -1338,7 +1336,6 @@ public class JobManagerTest
 
         jobManager.setupScheduledJobs();
 
-        verify(m_DataExtractorFactory).newExtractor(scheduledJob);
         jobManager.checkJobHasScheduler("scheduled");
 
         jobManager.shutdown();
@@ -1374,7 +1371,6 @@ public class JobManagerTest
 
         jobManager.setupScheduledJobs();
 
-        verify(m_DataExtractorFactory).newExtractor(scheduledJob);
         jobManager.checkJobHasScheduler("scheduled");
 
         jobManager.shutdown();
@@ -1964,7 +1960,7 @@ public class JobManagerTest
 
         verify(m_PasswordManager).secureStorage(newSchedulerConfig);
         verify(m_JobProvider).updateSchedulerConfig("foo", newSchedulerConfig);
-        verify(m_DataExtractorFactory, times(2)).newExtractor(job);
+        verify(m_DataExtractorFactory).newExtractor(job);
     }
 
     @Test

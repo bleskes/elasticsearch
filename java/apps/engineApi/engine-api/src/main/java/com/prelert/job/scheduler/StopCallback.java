@@ -27,20 +27,11 @@
 
 package com.prelert.job.scheduler;
 
-import com.prelert.job.JobException;
-import com.prelert.job.errorcodes.ErrorCodes;
-
-public class CannotStopSchedulerException extends JobException
+/**
+ * A callback allowing for tidying up to be done when the scheduler
+ * has stopped.
+ */
+public interface StopCallback
 {
-    private static final long serialVersionUID = -2359537142811349135L;
-
-    public CannotStopSchedulerException(String msg)
-    {
-        super(msg, ErrorCodes.CANNOT_STOP_JOB_SCHEDULER);
-    }
-
-    public CannotStopSchedulerException(String msg, Throwable cause)
-    {
-        super(msg, ErrorCodes.CANNOT_STOP_JOB_SCHEDULER, cause);
-    }
+    void call(String jobId) throws CannotStopSchedulerException;
 }

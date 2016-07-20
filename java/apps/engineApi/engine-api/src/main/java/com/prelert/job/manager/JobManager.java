@@ -107,6 +107,7 @@ import com.prelert.job.scheduler.CannotStartSchedulerException;
 import com.prelert.job.scheduler.CannotStopSchedulerException;
 import com.prelert.job.scheduler.DataProcessor;
 import com.prelert.job.scheduler.JobScheduler;
+import com.prelert.job.scheduler.StopCallback;
 import com.prelert.job.status.HighProportionOfBadTimestampsException;
 import com.prelert.job.status.OutOfOrderRecordsException;
 import com.prelert.job.status.none.NoneStatusReporter;
@@ -157,7 +158,7 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
     private final JobDataDeleterFactory m_JobDataDeleterFactory;
 
     /**
-     * A map holding schedulers by jobId.
+     * A map holding schedulers that are started by jobId.
      * The map is concurrent to ensure correct visibility as it is expected
      * to be accessed by multiple threads.
      */
@@ -967,11 +968,31 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
                 new SchedulerState(startMs, endMs.isPresent() ? endMs.getAsLong() : null));
         LOGGER.info("Starting scheduler for job: " + jobId);
 
-        if (!m_ScheduledJobs.containsKey(jobId))
+        // Map should contain no scheduler object when the scheduler can start
+        if (m_ScheduledJobs.containsKey(jobId))
         {
-            createJobScheduler(job);
+            throw new CannotStartSchedulerException(jobId, job.getSchedulerStatus());
         }
-        m_ScheduledJobs.get(jobId).start(job, startMs, endMs, actionTicket);
+
+        createJobScheduler(job);
+        m_ScheduledJobs.get(jobId).start(job, startMs, endMs, stopSchedulerCallback(actionTicket));
+    }
+
+    private StopCallback stopSchedulerCallback(ActionGuardian<ScheduledAction>.ActionTicket startTicket)
+    {
+        return jobId -> {
+            startTicket.close();
+            try
+            {
+                closeJob(jobId);
+                m_ScheduledJobs.remove(jobId);
+            }
+            catch (JobException e)
+            {
+                throw new CannotStopSchedulerException(
+                        Messages.getMessage(Messages.JOB_SCHEDULER_FAILED_TO_STOP), e);
+            }
+        };
     }
 
     public void stopJobScheduler(String jobId)
@@ -987,9 +1008,8 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
         {
             if (m_ScheduledJobs.containsKey(jobId))
             {
-                m_ScheduledJobs.get(jobId).stopManual();
-                closeJob(jobId);
-                m_ScheduledJobs.remove(jobId);
+                JobScheduler scheduler = m_ScheduledJobs.get(jobId);
+                scheduler.stopManual();
             }
         }
     }
@@ -1036,10 +1056,9 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
             {
                 if (job.getSchedulerConfig() != null)
                 {
-                    JobScheduler jobScheduler = createJobScheduler(job);
                     if (isAutoRestart && job.getSchedulerStatus() == JobSchedulerStatus.STARTED)
                     {
-                        restartScheduledJob(job, jobScheduler);
+                        restartScheduledJob(job);
                     }
                     else if (!isAutoRestart || job.getSchedulerStatus() == JobSchedulerStatus.STOPPING)
                     {
@@ -1055,10 +1074,10 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
      * e.g. if the scheduler can't start because it's running elsewhere
      *
      * @param job
-     * @param scheduler
      */
-    private void restartScheduledJob(JobDetails job, JobScheduler scheduler)
+    private void restartScheduledJob(JobDetails job)
     {
+        JobScheduler scheduler = createJobScheduler(job);
         Optional<SchedulerState> optionalSchedulerState = m_JobProvider.getSchedulerState(job.getId());
         if (!optionalSchedulerState.isPresent())
         {
@@ -1079,7 +1098,7 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
                                                                 ScheduledAction.START);
 
             LOGGER.info("Starting scheduler for job: " + job.getId());
-            scheduler.start(job, startTimeMs, endTimeMs, actionTicket);
+            scheduler.start(job, startTimeMs, endTimeMs, stopSchedulerCallback(actionTicket));
         }
         catch (CannotStartSchedulerException | JobInUseException e)
         {
@@ -1127,16 +1146,7 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
                                 m_ProcessActionGuardian.tryAcquiringAction(jobId, Action.UPDATING))
             {
                 securePassword(newSchedulerConfig);
-                if (m_JobProvider.updateSchedulerConfig(jobId, newSchedulerConfig))
-                {
-                    JobDetails job = getJobOrThrowIfUnknown(jobId);
-                    // We cannot be sure the update is available at the storage
-                    // so we set the new schedulerConfig explicitly.
-                    job.setSchedulerConfig(newSchedulerConfig);
-                    createJobScheduler(job);
-                    return true;
-                }
-                return false;
+                return m_JobProvider.updateSchedulerConfig(jobId, newSchedulerConfig);
             }
         }
     }
@@ -1292,7 +1302,6 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
                 activeJobs.add(jd.get());
             }
         }
-
         return activeJobs;
     }
 }
