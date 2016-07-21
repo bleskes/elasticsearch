@@ -59,7 +59,10 @@ public class ScheduledActionTest
         assertEquals("Cannot start scheduler for job 'foo' while its status is started on host marple",
                 ScheduledAction.STARTED.getBusyActionError("foo", ScheduledAction.STARTED, "marple"));
 
-        String msg = ScheduledAction.STOPPED.getBusyActionError("foo", ScheduledAction.STARTED, "marple");
+        String msg = ScheduledAction.STOPPING.getBusyActionError("foo", ScheduledAction.STOPPING, "marple");
+        assertEquals("Cannot stop scheduler for job 'foo' while its status is stopping on host marple", msg);
+
+        msg = ScheduledAction.STOPPED.getBusyActionError("foo", ScheduledAction.STARTED, "marple");
         assertEquals("Cannot stop scheduler for job 'foo' while its status is started on host marple", msg);
 
         msg = ScheduledAction.UPDATE.getBusyActionError("foo", ScheduledAction.STARTED, "marple");
@@ -122,6 +125,7 @@ public class ScheduledActionTest
     public void testHoldDistributedLock()
     {
         assertTrue(ScheduledAction.STARTED.holdDistributedLock());
+        assertTrue(ScheduledAction.STOPPING.holdDistributedLock());
         assertFalse(ScheduledAction.STOPPED.holdDistributedLock());
         assertFalse(ScheduledAction.UPDATE.holdDistributedLock());
         assertFalse(ScheduledAction.DELETE.holdDistributedLock());
@@ -137,6 +141,7 @@ public class ScheduledActionTest
     public void testErrorCode()
     {
         assertEquals(ErrorCodes.CANNOT_START_JOB_SCHEDULER, ScheduledAction.STARTED.getErrorCode());
+        assertEquals(ErrorCodes.CANNOT_STOP_JOB_SCHEDULER, ScheduledAction.STOPPING.getErrorCode());
         assertEquals(ErrorCodes.CANNOT_STOP_JOB_SCHEDULER, ScheduledAction.STOPPED.getErrorCode());
         assertEquals(ErrorCodes.CANNOT_UPDATE_JOB_SCHEDULER, ScheduledAction.UPDATE.getErrorCode());
         assertEquals(ErrorCodes.CANNOT_DELETE_JOB_SCHEDULER, ScheduledAction.DELETE.getErrorCode());
