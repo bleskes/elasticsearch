@@ -466,7 +466,7 @@ public class ProcessManager
                 process.getLogger().error(msg);
 
                 // Read any error output from the process
-                StringBuilder sb = new StringBuilder();
+                StringBuilder sb = new StringBuilder(msg).append("\n");
                 readProcessErrorOutput(process, sb);
                 process.getLogger().error(sb);
 

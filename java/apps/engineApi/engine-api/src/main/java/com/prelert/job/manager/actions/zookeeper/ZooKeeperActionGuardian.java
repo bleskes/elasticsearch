@@ -28,8 +28,6 @@ package com.prelert.job.manager.actions.zookeeper;
 
 import java.io.IOException;
 import java.net.ConnectException;
-import java.net.Inet4Address;
-import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -51,12 +49,14 @@ import org.apache.log4j.Logger;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException.NoNodeException;
 import org.apache.zookeeper.KeeperException.NodeExistsException;
+import org.apache.zookeeper.KeeperException.UnimplementedException;
 import org.apache.zookeeper.ZooDefs.Ids;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.prelert.job.exceptions.JobInUseException;
 import com.prelert.job.manager.actions.ActionGuardian;
 import com.prelert.job.manager.actions.ActionState;
+import com.prelert.utils.HostnameFinder;
 
 /**
  * Distributed lock for restricting actions on jobs in a network
@@ -164,22 +164,9 @@ public final class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
         m_Client.close();
     }
 
-    private void getAndSetHostName()
-    {
-        try
-        {
-            m_Hostname = Inet4Address.getLocalHost().getHostName();
-        }
-        catch (UnknownHostException e)
-        {
-            m_Hostname = "localhost";
-            LOGGER.error("Cannot resolve hostname", e);
-        }
-    }
-
     private void initCuratorFrameworkClient(String connectionString) throws ConnectException
     {
-        getAndSetHostName();
+        m_Hostname = HostnameFinder.findHostname().toLowerCase();
 
         m_Client = CuratorFrameworkFactory.newClient(connectionString,
                                         new ExponentialBackoffRetry(1000, 3));
@@ -201,7 +188,7 @@ public final class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
                                             connectionString + "'");
         }
 
-        createBasePath(m_Client);
+        createBasePaths(m_Client);
         registerSelf(m_Client);
 
         // connection state change listener
@@ -572,17 +559,19 @@ public final class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
         try
         {
             String path = descriptionPath(jobId);
-
             try
             {
-                m_Client.create().creatingParentsIfNeeded()
-                        .withMode(CreateMode.EPHEMERAL)
-                        .withACL(Ids.OPEN_ACL_UNSAFE).forPath(path, data);
+                m_Client.create()
+                        .creatingParentContainersIfNeeded()
+                        .withMode(CreateMode.CONTAINER)
+                        .withACL(Ids.OPEN_ACL_UNSAFE).forPath(path);
             }
-            catch (NodeExistsException e)
+            catch (NodeExistsException ignore)
             {
-                m_Client.setData().forPath(path, data);
             }
+
+            m_Client.setData().forPath(path, data);
+
         }
         catch (Exception e)
         {
@@ -594,7 +583,7 @@ public final class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
     {
         try
         {
-            m_Client.setData().forPath(descriptionPath(jobId), new byte [0] );
+            m_Client.delete().forPath(descriptionPath(jobId));
         }
         catch (Exception e)
         {
@@ -665,9 +654,9 @@ public final class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
         }
     }
 
-    private void createBasePath(CuratorFramework client)
+    private void createBasePaths(CuratorFramework client) throws ConnectException
     {
-        for (String path : new String [] {BASE_DIR, BASE_DIR + ENGINE_API_DIR, NODES_PATH})
+        for (String path : new String [] {BASE_DIR, BASE_DIR + ENGINE_API_DIR, NODES_PATH, JOBS_PATH})
         {
             try
             {
@@ -675,6 +664,13 @@ public final class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
             }
             catch (NodeExistsException e)
             {
+            }
+            catch (UnimplementedException e)
+            {
+                // this probably means we are trying to connect to a
+                // 3.4 server with the 3.5 client. Throw a connection
+                // exception and stop work
+                throw new ConnectException(e.getMessage());
             }
             catch (Exception e)
             {

@@ -113,6 +113,7 @@ import com.prelert.job.status.OutOfOrderRecordsException;
 import com.prelert.job.status.none.NoneStatusReporter;
 import com.prelert.job.transform.TransformConfigs;
 import com.prelert.settings.PrelertSettings;
+import com.prelert.utils.HostnameFinder;
 
 /**
  * Allows interactions with jobs. The managed interactions include:
@@ -182,7 +183,8 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
             DataExtractorFactory dataExtractorFactory, JobLoggerFactory jobLoggerFactory,
             PasswordManager passwordManager, JobDataDeleterFactory jobDataDeleterFactory,
             ActionGuardian<Action> processActionGuardian,
-            ActionGuardian<ScheduledAction> schedulerActionGuardian)
+            ActionGuardian<ScheduledAction> schedulerActionGuardian,
+            boolean isDistributed)
     {
         m_JobProvider = Objects.requireNonNull(jobProvider);
         m_ProcessManager = Objects.requireNonNull(processManager);
@@ -203,7 +205,15 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
         m_LicenceChecker = new LicenceChecker(
                 BackendInfo.fromJson(m_ProcessManager.getInfo(), m_JobProvider, apiVersion()));
 
-        m_JobFactory = new JobFactory();
+        if (isDistributed)
+        {
+            // use the hostname in job Ids
+            m_JobFactory = new JobFactory(HostnameFinder.findHostname());
+        }
+        else
+        {
+            m_JobFactory = new JobFactory();
+        }
         m_JobDataDeleterFactory = Objects.requireNonNull(jobDataDeleterFactory);
     }
 
