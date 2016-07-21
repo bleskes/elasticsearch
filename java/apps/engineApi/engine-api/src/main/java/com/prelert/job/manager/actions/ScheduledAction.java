@@ -131,6 +131,8 @@ public enum ScheduledAction implements ActionState<ScheduledAction>
         {
         case STARTED:
             return ErrorCodes.CANNOT_START_JOB_SCHEDULER;
+        case STOPPING:
+            return ErrorCodes.CANNOT_STOP_JOB_SCHEDULER;
         case STOPPED:
             return ErrorCodes.CANNOT_STOP_JOB_SCHEDULER;
         case UPDATE:
