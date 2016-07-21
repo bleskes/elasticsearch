@@ -758,6 +758,7 @@ public class JobsTest implements Closeable
             for (Bucket b: buckets.getDocuments())
             {
                 eventCount += b.getEventCount();
+                test(b.getProcessingTimeMs() > 0);
             }
 
             // time in seconds

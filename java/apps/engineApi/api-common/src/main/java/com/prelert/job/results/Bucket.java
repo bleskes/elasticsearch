@@ -54,6 +54,7 @@ public class Bucket implements StorageSerialisable
     public static final String BUCKET_INFLUENCERS = "bucketInfluencers";
     public static final String INFLUENCERS = "influencers";
     public static final String BUCKET_SPAN = "bucketSpan";
+    public static final String PROCESSING_TIME_MS = "processingTimeMs";
 
     /**
      * Elasticsearch type
@@ -75,6 +76,7 @@ public class Bucket implements StorageSerialisable
     private boolean m_HadBigNormalisedUpdate;
     private List<BucketInfluencer> m_BucketInfluencers;
     private List<Influencer> m_Influencers;
+    private long m_ProcessingTimeMs;
 
     public Bucket()
     {
@@ -209,6 +211,16 @@ public class Bucket implements StorageSerialisable
         m_IsInterim = isInterim;
     }
 
+    public long getProcessingTimeMs()
+    {
+        return m_ProcessingTimeMs;
+    }
+
+    public void setProcessingTimeMs(long timeMs)
+    {
+        m_ProcessingTimeMs = timeMs;
+    }
+
     public List<Influencer> getInfluencers()
     {
         return m_Influencers;
@@ -331,7 +343,8 @@ public class Bucket implements StorageSerialisable
                   .add(MAX_NORMALIZED_PROBABILITY, m_MaxNormalizedProbability)
                   .add(RECORD_COUNT, m_RecordCount)
                   .add(EVENT_COUNT, m_EventCount)
-                  .add(BUCKET_SPAN, m_BucketSpan);
+                  .add(BUCKET_SPAN, m_BucketSpan)
+                  .add(PROCESSING_TIME_MS, m_ProcessingTimeMs);
 
         if (m_IsInterim)
         {

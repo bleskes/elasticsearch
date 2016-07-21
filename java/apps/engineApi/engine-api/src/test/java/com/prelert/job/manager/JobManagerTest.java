@@ -1580,7 +1580,7 @@ public class JobManagerTest
     }
 
     @Test
-    public void testUpdateCategorizationFilters() throws UnknownJobException
+    public void testUpdateCategorizationFilters() throws UnknownJobException, JobException
     {
         givenProcessInfo(2);
         JobManager jobManager = createJobManager();
@@ -1591,7 +1591,7 @@ public class JobManagerTest
     }
 
     @Test
-    public void testUpdateDetectorDescription() throws UnknownJobException
+    public void testUpdateDetectorDescription() throws UnknownJobException, JobException
     {
         givenProcessInfo(2);
         JobManager jobManager = createJobManager();

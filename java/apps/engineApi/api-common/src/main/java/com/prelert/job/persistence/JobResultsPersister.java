@@ -81,6 +81,12 @@ public interface JobResultsPersister
     void incrementBucketCount(long count);
 
     /**
+     * Update the last bucket's processing time
+     * @param timeMs
+     */
+    void updateAverageBucketProcessingTime(long timeMs);
+
+    /**
      * Delete any existing interim results
      */
     void deleteInterimResults();

@@ -40,6 +40,7 @@ import org.elasticsearch.script.ScriptService;
 public final class ElasticsearchScripts
 {
     // Script names
+    private static final String UPDATE_AVERAGE_PROCESSING_TIME = "update-average-processing-time";
     private static final String UPDATE_BUCKET_COUNT = "update-bucket-count";
     private static final String UPDATE_USAGE = "update-usage";
     private static final String UPDATE_CATEGORIZATION_FILTERS = "update-categorization-filters";
@@ -55,6 +56,7 @@ public final class ElasticsearchScripts
     private static final String DETECTOR_INDEX_PARAM = "detectorIndex";
     private static final String NEW_DESCRIPTION_PARAM = "newDescription";
     private static final String NEW_SCHEDULER_CONFIG_PARAM = "newSchedulerConfig";
+    private static final String PROCESSING_TIME_PARAM = "timeMs";
 
     private ElasticsearchScripts()
     {
@@ -104,4 +106,14 @@ public final class ElasticsearchScripts
         return new Script(UPDATE_SCHEDULER_CONFIG, ScriptService.ScriptType.FILE,
                 ScriptService.DEFAULT_LANG, scriptParams);
     }
+
+    public static Script updateProcessingTime(Long processingTimeMs)
+    {
+        Map<String, Object> scriptParams = new HashMap<>();
+        scriptParams.put(PROCESSING_TIME_PARAM, processingTimeMs);
+        return new Script(UPDATE_AVERAGE_PROCESSING_TIME, ScriptService.ScriptType.FILE,
+                ScriptService.DEFAULT_LANG, scriptParams);
+    }
+
+
 }

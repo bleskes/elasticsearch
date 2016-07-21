@@ -50,6 +50,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.prelert.job.JobDetails;
 import com.prelert.job.JsonViews;
 import com.prelert.job.ModelSizeStats;
+import com.prelert.job.results.BucketProcessingTime;
 
 public class ElasticsearchJobDetailsMapperTest
 {
@@ -100,12 +101,25 @@ public class ElasticsearchJobDetailsMapperTest
         Object timestamp = modelSizeStatsSource.remove(ModelSizeStats.TIMESTAMP);
         modelSizeStatsSource.put(ElasticsearchMappings.ES_TIMESTAMP, timestamp);
 
-        GetResponse getResponse = mock(GetResponse.class);
-        when(getResponse.isExists()).thenReturn(true);
-        when(getResponse.getSource()).thenReturn(modelSizeStatsSource);
-        GetRequestBuilder getRequestBuilder = mock(GetRequestBuilder.class);
-        when(getRequestBuilder.get()).thenReturn(getResponse);
-        when(m_Client.prepareGet("prelertresults-foo", ModelSizeStats.TYPE, ModelSizeStats.TYPE)).thenReturn(getRequestBuilder);
+        GetResponse getModelSizeResponse = mock(GetResponse.class);
+        when(getModelSizeResponse.isExists()).thenReturn(true);
+        when(getModelSizeResponse.getSource()).thenReturn(modelSizeStatsSource);
+        GetRequestBuilder getModelSizeRequestBuilder = mock(GetRequestBuilder.class);
+        when(getModelSizeRequestBuilder.get()).thenReturn(getModelSizeResponse);
+        when(m_Client.prepareGet("prelertresults-foo", ModelSizeStats.TYPE, ModelSizeStats.TYPE)).thenReturn(getModelSizeRequestBuilder);
+
+
+        Map<String, Object> procTimeSource = new HashMap<>();
+        procTimeSource.put(BucketProcessingTime.AVERAGE_PROCESSING_TIME_MS, 20.2);
+
+        GetResponse getProcTimeResponse = mock(GetResponse.class);
+        when(getProcTimeResponse.isExists()).thenReturn(true);
+        when(getProcTimeResponse.getSource()).thenReturn(procTimeSource);
+        GetRequestBuilder getProcTimeRequestBuilder = mock(GetRequestBuilder.class);
+        when(getProcTimeRequestBuilder.get()).thenReturn(getProcTimeResponse);
+        when(m_Client.prepareGet("prelertresults-foo", BucketProcessingTime.TYPE, BucketProcessingTime.TYPE))
+                        .thenReturn(getProcTimeRequestBuilder);
+
 
         ElasticsearchJobDetailsMapper mapper = new ElasticsearchJobDetailsMapper(m_Client, m_ObjectMapper);
 
@@ -114,6 +128,8 @@ public class ElasticsearchJobDetailsMapperTest
         assertEquals("foo", mappedJob.getId());
         assertEquals(42L, mappedJob.getModelSizeStats().getModelBytes());
         assertEquals(now, mappedJob.getModelSizeStats().getTimestamp());
+
+        assertEquals(20.2, mappedJob.getAverageBucketProcessingTimeMs(), 0.0001);
     }
 
     @Test
@@ -131,11 +147,20 @@ public class ElasticsearchJobDetailsMapperTest
         when(getRequestBuilder.get()).thenReturn(getResponse);
         when(m_Client.prepareGet("prelertresults-foo", ModelSizeStats.TYPE, ModelSizeStats.TYPE)).thenReturn(getRequestBuilder);
 
+
+        GetResponse getProcTimeResponse = mock(GetResponse.class);
+        when(getProcTimeResponse.isExists()).thenReturn(false);
+        GetRequestBuilder getProcTimeRequestBuilder = mock(GetRequestBuilder.class);
+        when(getProcTimeRequestBuilder.get()).thenReturn(getProcTimeResponse);
+        when(m_Client.prepareGet("prelertresults-foo", BucketProcessingTime.TYPE, BucketProcessingTime.TYPE))
+                        .thenReturn(getProcTimeRequestBuilder);
+
         ElasticsearchJobDetailsMapper mapper = new ElasticsearchJobDetailsMapper(m_Client, m_ObjectMapper);
 
         JobDetails mappedJob = mapper.map(source);
 
         assertEquals("foo", mappedJob.getId());
         assertNull(mappedJob.getModelSizeStats());
+        assertNull(mappedJob.getAverageBucketProcessingTimeMs());
     }
 }

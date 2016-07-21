@@ -34,6 +34,7 @@ import java.util.List;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.JobDetails;
+import com.prelert.job.JobException;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.config.verification.AnalysisConfigVerifier;
 import com.prelert.job.config.verification.JobConfigurationException;
@@ -98,7 +99,7 @@ class CategorizationFiltersUpdater extends AbstractUpdater
     }
 
     @Override
-    void commit() throws UnknownJobException, JobConfigurationException
+    void commit() throws UnknownJobException, JobConfigurationException, JobException
     {
         if (jobManager().updateCategorizationFilters(jobId(), m_NewCategorizationFilters) == false)
         {

@@ -81,6 +81,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.prelert.job.CategorizerState;
 import com.prelert.job.JobDetails;
+import com.prelert.job.JobException;
 import com.prelert.job.JobStatus;
 import com.prelert.job.JsonViews;
 import com.prelert.job.ModelSizeStats;
@@ -94,6 +95,7 @@ import com.prelert.job.audit.AuditActivity;
 import com.prelert.job.audit.AuditMessage;
 import com.prelert.job.audit.Auditor;
 import com.prelert.job.errorcodes.ErrorCodes;
+import com.prelert.job.messages.Messages;
 import com.prelert.job.persistence.BatchedDocumentsIterator;
 import com.prelert.job.persistence.DataStoreException;
 import com.prelert.job.persistence.JobProvider;
@@ -102,6 +104,7 @@ import com.prelert.job.quantiles.Quantiles;
 import com.prelert.job.results.AnomalyRecord;
 import com.prelert.job.results.Bucket;
 import com.prelert.job.results.BucketInfluencer;
+import com.prelert.job.results.BucketProcessingTime;
 import com.prelert.job.results.CategoryDefinition;
 import com.prelert.job.results.Influencer;
 import com.prelert.job.results.ModelDebugOutput;
@@ -465,6 +468,7 @@ public class ElasticsearchJobProvider implements JobProvider
             XContentBuilder modelSizeStatsMapping = ElasticsearchMappings.modelSizeStatsMapping();
             XContentBuilder influencerMapping = ElasticsearchMappings.influencerMapping(influencers);
             XContentBuilder modelDebugMapping = ElasticsearchMappings.modelDebugOutputMapping(termFields);
+            XContentBuilder processingTimeMapping = ElasticsearchMappings.processingTimeMapping();
 
             ElasticsearchJobId elasticJobId = new ElasticsearchJobId(job.getId());
 
@@ -485,6 +489,7 @@ public class ElasticsearchJobProvider implements JobProvider
                     .addMapping(ModelSizeStats.TYPE, modelSizeStatsMapping)
                     .addMapping(Influencer.TYPE, influencerMapping)
                     .addMapping(ModelDebugOutput.TYPE, modelDebugMapping)
+                    .addMapping(BucketProcessingTime.TYPE, processingTimeMapping)
                     .get();
             LOGGER.trace("ES API CALL: wait for yellow status " + elasticJobId.getId());
             m_Client.admin().cluster().prepareHealth(elasticJobId.getIndex())
@@ -1277,7 +1282,7 @@ public class ElasticsearchJobProvider implements JobProvider
 
     @Override
     public boolean updateCategorizationFilters(String jobId, List<String> categorizationFilters)
-            throws UnknownJobException
+            throws UnknownJobException, JobException
     {
         LOGGER.trace("ES API CALL: update categorization filters for job " + jobId
                 +  " by running Groovy script update-categorization-filters with params newFilters="
@@ -1289,7 +1294,7 @@ public class ElasticsearchJobProvider implements JobProvider
 
     @Override
     public boolean updateDetectorDescription(String jobId, int detectorIndex, String newDescription)
-            throws UnknownJobException
+            throws UnknownJobException, JobException
     {
         LOGGER.trace("ES API CALL: update detector description for job " + jobId + ", detector at index "
                 + detectorIndex + " by running Groovy script update-detector-description with params newDescription="
@@ -1299,7 +1304,8 @@ public class ElasticsearchJobProvider implements JobProvider
                                     detectorIndex, newDescription));
     }
 
-    private boolean updateViaScript(String jobId, Script script) throws UnknownJobException
+    private boolean updateViaScript(String jobId, Script script)
+            throws UnknownJobException, JobException
     {
         ElasticsearchJobId esJobId = new ElasticsearchJobId(jobId);
 
@@ -1313,12 +1319,19 @@ public class ElasticsearchJobProvider implements JobProvider
         {
             throw new UnknownJobException(jobId);
         }
+        catch (IllegalArgumentException e)
+        {
+            String msg = Messages.getMessage(Messages.DATASTORE_ERROR_EXECUTING_SCRIPT, script);
+            LOGGER.warn(msg);
+            Throwable th = (e.getCause() == null) ? e : e.getCause();
+            throw new JobException(msg, ErrorCodes.DATA_STORE_ERROR, th);
+        }
         return true;
     }
 
     @Override
     public boolean updateSchedulerConfig(String jobId, SchedulerConfig newSchedulerConfig)
-            throws UnknownJobException
+            throws UnknownJobException, JobException
     {
         Map<String, Object> asMap = m_ObjectMapper.convertValue(newSchedulerConfig,
                 new TypeReference<Map<String, Object>>() {});

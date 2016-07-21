@@ -54,6 +54,7 @@ import com.prelert.job.results.AnomalyCause;
 import com.prelert.job.results.AnomalyRecord;
 import com.prelert.job.results.Bucket;
 import com.prelert.job.results.BucketInfluencer;
+import com.prelert.job.results.BucketProcessingTime;
 import com.prelert.job.results.CategoryDefinition;
 import com.prelert.job.results.Influence;
 import com.prelert.job.results.Influencer;
@@ -473,6 +474,9 @@ public class ElasticsearchMappings
                             .field(TYPE, LONG)
                         .endObject()
                         .startObject(Bucket.BUCKET_SPAN)
+                            .field(TYPE, LONG)
+                        .endObject()
+                        .startObject(Bucket.PROCESSING_TIME_MS)
                             .field(TYPE, LONG)
                         .endObject()
                         .startObject(Bucket.BUCKET_INFLUENCERS)
@@ -1201,6 +1205,27 @@ public class ElasticsearchMappings
                         .startObject(PROPERTIES)
                             .startObject(ES_TIMESTAMP)
                                 .field(TYPE, DATE)
+                            .endObject()
+                        .endObject()
+                    .endObject()
+                .endObject();
+    }
+
+    public static XContentBuilder processingTimeMapping() throws IOException
+    {
+        return jsonBuilder()
+                .startObject()
+                    .startObject(BucketProcessingTime.TYPE)
+                        .startObject(ALL)
+                            .field(ENABLED, false)
+                            // analyzer must be specified even though _all is disabled
+                            // because all types in the same index must have the same
+                            // analyzer for a given field
+                            .field(ANALYZER, WHITESPACE)
+                        .endObject()
+                        .startObject(PROPERTIES)
+                            .startObject(BucketProcessingTime.AVERAGE_PROCESSING_TIME_MS)
+                                .field(TYPE, DOUBLE)
                             .endObject()
                         .endObject()
                     .endObject()

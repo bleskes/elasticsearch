@@ -93,6 +93,9 @@ final class BucketParser extends FieldNameParser<Bucket>
         case Bucket.BUCKET_SPAN:
             bucket.setBucketSpan(parseAsLongOrZero(fieldName));
             break;
+        case Bucket.PROCESSING_TIME_MS:
+            bucket.setProcessingTimeMs(parseAsLongOrZero(fieldName));
+            break;
         default:
             LOGGER.warn(String.format("Parse error: unknown field in Bucket %s:%s",
                     fieldName, token.asString()));

@@ -336,6 +336,7 @@ public class BucketTest
         bucket.setBucketInfluencers(Arrays.asList(bucketInfluencer1, bucketInfluencer2));
         bucket.setInitialAnomalyScore(93.1);
         bucket.setTimestamp(new Date(1455753600000L));
+        bucket.setProcessingTimeMs(20l);
         TestJsonStorageSerialiser serialiser = new TestJsonStorageSerialiser();
 
         serialiser.startObject();
@@ -346,6 +347,7 @@ public class BucketTest
                 + "\"anomalyScore\":88.3,"
                 + "\"bucketSpan\":600,"
                 + "\"@timestamp\":1455753600000,"
+                + "\"processingTimeMs\":20,"
                 + "\"recordCount\":142,"
                 + "\"maxNormalizedProbability\":90.1,"
                 + "\"eventCount\":103,"
@@ -383,6 +385,7 @@ public class BucketTest
         bucket.setInitialAnomalyScore(93.1);
         bucket.setTimestamp(new Date(1455753600000L));
         bucket.setInterim(true);
+        bucket.setProcessingTimeMs(20l);
         TestJsonStorageSerialiser serialiser = new TestJsonStorageSerialiser();
 
         serialiser.startObject();
@@ -394,11 +397,13 @@ public class BucketTest
                 + "\"anomalyScore\":88.3,"
                 + "\"bucketSpan\":600,"
                 + "\"@timestamp\":1455753600000,"
+                + "\"processingTimeMs\":20,"
                 + "\"recordCount\":142,"
                 + "\"maxNormalizedProbability\":90.1,"
                 + "\"eventCount\":103,"
                 + "\"initialAnomalyScore\":93.1"
                 + "}";
+
         assertEquals(expected, serialiser.toJson());
     }
 }

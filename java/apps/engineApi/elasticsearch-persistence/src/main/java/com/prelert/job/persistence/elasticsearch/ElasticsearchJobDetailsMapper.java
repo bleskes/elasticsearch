@@ -37,6 +37,7 @@ import org.elasticsearch.client.Client;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.prelert.job.JobDetails;
 import com.prelert.job.ModelSizeStats;
+import com.prelert.job.results.BucketProcessingTime;
 
 class ElasticsearchJobDetailsMapper
 {
@@ -72,6 +73,14 @@ class ElasticsearchJobDetailsMapper
         }
         ElasticsearchJobId elasticJobId = new ElasticsearchJobId(job.getId());
 
+        addModelSizeStats(job, elasticJobId);
+        addBucketProcessingTime(job, elasticJobId);
+
+        return job;
+    }
+
+    private void addModelSizeStats(JobDetails job, ElasticsearchJobId elasticJobId)
+    {
         // Pull out the modelSizeStats document, and add this to the JobDetails
         LOGGER.trace("ES API CALL: get ID " + ModelSizeStats.TYPE +
                 " type " + ModelSizeStats.TYPE + " from index " + elasticJobId.getIndex());
@@ -94,6 +103,30 @@ class ElasticsearchJobDetailsMapper
                 modelSizeStatsResponse.getSource(), ModelSizeStats.class);
             job.setModelSizeStats(modelSizeStats);
         }
-        return job;
+    }
+
+    private void addBucketProcessingTime(JobDetails job, ElasticsearchJobId elasticJobId)
+    {
+        // Pull out the modelSizeStats document, and add this to the JobDetails
+        LOGGER.trace("ES API CALL: get ID " + BucketProcessingTime.TYPE +
+                " type " + BucketProcessingTime.AVERAGE_PROCESSING_TIME_MS + " from index " + elasticJobId.getIndex());
+        GetResponse procTimeResponse = m_Client.prepareGet(
+                elasticJobId.getIndex(), BucketProcessingTime.TYPE,
+                BucketProcessingTime.AVERAGE_PROCESSING_TIME_MS).get();
+
+        if (!procTimeResponse.isExists())
+        {
+            String msg = "No average bucket processing time details for job with id " + job.getId();
+            LOGGER.warn(msg);
+        }
+        else
+        {
+            Object averageTime = procTimeResponse.getSource()
+                                    .get(BucketProcessingTime.AVERAGE_PROCESSING_TIME_MS);
+            if (averageTime instanceof Double)
+            {
+                job.setAverageBucketProcessingTimeMs((Double)averageTime);
+            }
+        }
     }
 }

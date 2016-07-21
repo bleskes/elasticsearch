@@ -36,6 +36,7 @@ public final class Messages
 
     public static final String DATASTORE_ERROR_DELETING = "datastore.error.deleting";
     public static final String DATASTORE_ERROR_DELETING_MISSING_INDEX = "datastore.error.deleting.missing.index";
+    public static final String DATASTORE_ERROR_EXECUTING_SCRIPT = "datastore.error.executing.script";
 
     public static final String LICENSE_LIMIT_DETECTORS = "license.limit.detectors";
     public static final String LICENSE_LIMIT_JOBS = "license.limit.jobs";
