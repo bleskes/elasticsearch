@@ -166,7 +166,7 @@ public final class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
 
     private void initCuratorFrameworkClient(String connectionString) throws ConnectException
     {
-        m_Hostname = HostnameFinder.findHostname().toLowerCase();
+        m_Hostname = HostnameFinder.findHostname();
 
         m_Client = CuratorFrameworkFactory.newClient(connectionString,
                                         new ExponentialBackoffRetry(1000, 3));

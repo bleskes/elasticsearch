@@ -121,13 +121,13 @@ public class DistributedScheduledJobTest extends BaseScheduledJobTest
                 boolean started = client.startScheduler(TEST_JOB_ID);
                 test(started == false);
                 ApiError error = client.getLastError();
-                test(error.getErrorCode() == ErrorCodes.CANNOT_START_JOB_SCHEDULER);
+                test(error.getErrorCode(), ErrorCodes.CANNOT_START_JOB_SCHEDULER);
                 test(jobHost, error.getHostname());
 
                 boolean stopped = client.stopScheduler(TEST_JOB_ID);
                 test(stopped == false);
                 error = client.getLastError();
-                test(error.getErrorCode() == ErrorCodes.CANNOT_STOP_JOB_SCHEDULER);
+                test(error.getErrorCode(), ErrorCodes.CANNOT_STOP_JOB_SCHEDULER);
                 test(jobHost, error.getHostname());
 
                 boolean deleted = client.deleteJob(TEST_JOB_ID);
@@ -139,7 +139,7 @@ public class DistributedScheduledJobTest extends BaseScheduledJobTest
                 boolean updated = client.updateJob(TEST_JOB_ID, schedulerConfigUpdate);
                 test(updated == false);
                 error = client.getLastError();
-                test(error.getErrorCode() == ErrorCodes.CANNOT_UPDATE_JOB_SCHEDULER);
+                test(error.getErrorCode(), ErrorCodes.CANNOT_UPDATE_JOB_SCHEDULER);
                 test(jobHost, error.getHostname());
             }
         }
