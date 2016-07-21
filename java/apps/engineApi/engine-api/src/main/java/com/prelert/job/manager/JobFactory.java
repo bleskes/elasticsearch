@@ -36,17 +36,27 @@ import com.prelert.job.JobConfiguration;
 import com.prelert.job.JobDetails;
 import com.prelert.job.config.DefaultDetectorDescription;
 import com.prelert.job.config.verification.JobConfigurationException;
+import com.prelert.job.config.verification.JobConfigurationVerifier;
 
 /**
  * A factory that creates new jobs.
+ * If the hostname constructor is used the hostname is converted to
+ * lowercase to make it compatible with Elasticsearch index names
  */
 class JobFactory
 {
     private final AtomicLong m_IdSequence;
     private final DateTimeFormatter m_JobIdDateFormat;
+    private final String m_Hostname;
 
     public JobFactory()
     {
+        this(null);
+    }
+
+    public JobFactory(String hostname)
+    {
+        m_Hostname = hostname == null ? null : hostname.toLowerCase();
         m_IdSequence = new AtomicLong();
         m_JobIdDateFormat = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
     }
@@ -76,9 +86,14 @@ class JobFactory
     }
 
     /**
-     * The job id is a concatenation of the date in 'yyyyMMddHHmmss' format,
-     * the hostname and a sequence number that is a minimum of 5 digits wide
-     * left padded with zeros.<br>
+     * If hostname is null the job Id is a concatenation of the date in
+     * 'yyyyMMddHHmmss' format and a sequence number that is a minimum of
+     * 5 digits wide left padded with zeros<br>
+     * If hostname is not null the Id is the concatenation of the date in
+     * 'yyyyMMddHHmmss' format the hostname and a sequence number that is a
+     * minimum of 5 digits wide left padded with zeros. If hostname is long
+     * and it is truncated so the job Id does not exceed the maximum length<br>
+     *
      * e.g. the first Id created 23rd November 2013 at 11am
      *     '20131125110000-serverA-00001'
      *
@@ -86,8 +101,18 @@ class JobFactory
      */
     String generateJobId()
     {
-        return String.format("%s-%05d", m_JobIdDateFormat.format(LocalDateTime.now()),
-                        m_IdSequence.incrementAndGet());
+        String dateStr = m_JobIdDateFormat.format(LocalDateTime.now());
+        if (m_Hostname != null) {
+            int hostnameMaxLen =JobConfigurationVerifier.MAX_JOB_ID_LENGTH - dateStr.length() - 7;
+
+            return String.format("%s-%s-%05d", dateStr,
+                                m_Hostname.substring(0, Math.min(m_Hostname.length(), hostnameMaxLen)),
+                                m_IdSequence.incrementAndGet());
+        }
+        else
+        {
+            return String.format("%s-%05d", dateStr, m_IdSequence.incrementAndGet());
+        }
     }
 
     private void fillDefaults(JobDetails jobDetails)

@@ -28,8 +28,6 @@ package com.prelert.job.manager.actions.zookeeper;
 
 import java.io.IOException;
 import java.net.ConnectException;
-import java.net.Inet4Address;
-import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -58,6 +56,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.prelert.job.exceptions.JobInUseException;
 import com.prelert.job.manager.actions.ActionGuardian;
 import com.prelert.job.manager.actions.ActionState;
+import com.prelert.utils.HostnameFinder;
 
 /**
  * Distributed lock for restricting actions on jobs in a network
@@ -165,22 +164,9 @@ public final class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
         m_Client.close();
     }
 
-    private void getAndSetHostName()
-    {
-        try
-        {
-            m_Hostname = Inet4Address.getLocalHost().getHostName();
-        }
-        catch (UnknownHostException e)
-        {
-            m_Hostname = "localhost";
-            LOGGER.error("Cannot resolve hostname", e);
-        }
-    }
-
     private void initCuratorFrameworkClient(String connectionString) throws ConnectException
     {
-        getAndSetHostName();
+        m_Hostname = HostnameFinder.findHostname().toLowerCase();
 
         m_Client = CuratorFrameworkFactory.newClient(connectionString,
                                         new ExponentialBackoffRetry(1000, 3));

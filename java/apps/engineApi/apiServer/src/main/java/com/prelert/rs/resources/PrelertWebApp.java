@@ -304,7 +304,7 @@ public final class PrelertWebApp extends Application
                 createProcessManager(jobProvider, esFactory, jobLoggerFactory),
                 new DataExtractorFactoryImpl(passwordManager), jobLoggerFactory,
                 passwordManager, esFactory.newJobDataDeleterFactory(),
-                processActionGuardian, schedulerActionGuardian);
+                processActionGuardian, schedulerActionGuardian, useZooKeeper);
 
         if (!useZooKeeper)
         {

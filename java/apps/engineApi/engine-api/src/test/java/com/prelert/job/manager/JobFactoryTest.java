@@ -28,6 +28,8 @@ package com.prelert.job.manager;
 
 import static org.junit.Assert.*;
 
+import java.util.regex.Pattern;
+
 import org.junit.Test;
 
 import com.prelert.job.config.verification.JobConfigurationVerifier;
@@ -35,10 +37,39 @@ import com.prelert.job.config.verification.JobConfigurationVerifier;
 public class JobFactoryTest {
 
     @Test
-    public void testGenerateJobId()
+    public void testGenerateJobId_doesnotIncludeHost()
+    {
+        Pattern pattern = Pattern.compile("[0-9]{14}-[0-9]{5}");
+
+        JobFactory factory = new JobFactory();
+        String id = factory.generateJobId();
+
+        assertTrue(pattern.matcher(id).matches());
+    }
+
+    @Test
+    public void testGenerateJobId_IncludesHost()
+    {
+        Pattern pattern = Pattern.compile("[0-9]{14}-server-1-[0-9]{5}");
+
+        JobFactory factory = new JobFactory("server-1");
+        String id = factory.generateJobId();
+
+        assertTrue(pattern.matcher(id).matches());
+    }
+
+    @Test
+    public void testGenerateJobId_isShorterThanMaxHJobLength()
     {
         JobFactory factory = new JobFactory();
         assertTrue(factory.generateJobId().length() < JobConfigurationVerifier.MAX_JOB_ID_LENGTH);
+    }
+
+    @Test
+    public void testGenerateJobId_isShorterThanMaxHJobLength_withLongHostname()
+    {
+        JobFactory factory = new JobFactory("averyverylongstringthatcouldbeahostnameorfullyqualifieddomainname");
+        assertEquals(JobConfigurationVerifier.MAX_JOB_ID_LENGTH, factory.generateJobId().length());
     }
 
 }
