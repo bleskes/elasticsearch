@@ -117,7 +117,8 @@ public class ElasticsearchJobDetailsMapperTest
         when(getProcTimeResponse.getSource()).thenReturn(procTimeSource);
         GetRequestBuilder getProcTimeRequestBuilder = mock(GetRequestBuilder.class);
         when(getProcTimeRequestBuilder.get()).thenReturn(getProcTimeResponse);
-        when(m_Client.prepareGet("prelertresults-foo", BucketProcessingTime.TYPE, BucketProcessingTime.TYPE))
+        when(m_Client.prepareGet("prelertresults-foo", BucketProcessingTime.TYPE,
+                                BucketProcessingTime.AVERAGE_PROCESSING_TIME_MS))
                         .thenReturn(getProcTimeRequestBuilder);
 
 
@@ -128,7 +129,6 @@ public class ElasticsearchJobDetailsMapperTest
         assertEquals("foo", mappedJob.getId());
         assertEquals(42L, mappedJob.getModelSizeStats().getModelBytes());
         assertEquals(now, mappedJob.getModelSizeStats().getTimestamp());
-
         assertEquals(20.2, mappedJob.getAverageBucketProcessingTimeMs(), 0.0001);
     }
 
@@ -152,7 +152,8 @@ public class ElasticsearchJobDetailsMapperTest
         when(getProcTimeResponse.isExists()).thenReturn(false);
         GetRequestBuilder getProcTimeRequestBuilder = mock(GetRequestBuilder.class);
         when(getProcTimeRequestBuilder.get()).thenReturn(getProcTimeResponse);
-        when(m_Client.prepareGet("prelertresults-foo", BucketProcessingTime.TYPE, BucketProcessingTime.TYPE))
+        when(m_Client.prepareGet("prelertresults-foo", BucketProcessingTime.TYPE,
+                                    BucketProcessingTime.AVERAGE_PROCESSING_TIME_MS))
                         .thenReturn(getProcTimeRequestBuilder);
 
         ElasticsearchJobDetailsMapper mapper = new ElasticsearchJobDetailsMapper(m_Client, m_ObjectMapper);
