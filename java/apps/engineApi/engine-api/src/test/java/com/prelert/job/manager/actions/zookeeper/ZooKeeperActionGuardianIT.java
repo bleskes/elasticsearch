@@ -510,10 +510,8 @@ public class ZooKeeperActionGuardianIT
             {
                 client.start();
 
-                byte [] data= client.getData().
-                            forPath(actionGuardian.descriptionPath(JOB_ID));
-
-                assertEquals(0, data.length);
+                Stat nodeStat = client.checkExists().forPath(actionGuardian.descriptionPath(JOB_ID));
+                assertNull(nodeStat);
             }
         }
     }

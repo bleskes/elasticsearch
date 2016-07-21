@@ -201,7 +201,7 @@ public final class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
                                             connectionString + "'");
         }
 
-        createBasePath(m_Client);
+        createBasePaths(m_Client);
         registerSelf(m_Client);
 
         // connection state change listener
@@ -572,17 +572,19 @@ public final class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
         try
         {
             String path = descriptionPath(jobId);
-
             try
             {
-                m_Client.create().creatingParentsIfNeeded()
-                        .withMode(CreateMode.EPHEMERAL)
-                        .withACL(Ids.OPEN_ACL_UNSAFE).forPath(path, data);
+                m_Client.create()
+                        .creatingParentContainersIfNeeded()
+                        .withMode(CreateMode.CONTAINER)
+                        .withACL(Ids.OPEN_ACL_UNSAFE).forPath(path);
             }
-            catch (NodeExistsException e)
+            catch (NodeExistsException ignore)
             {
-                m_Client.setData().forPath(path, data);
             }
+
+            m_Client.setData().forPath(path, data);
+
         }
         catch (Exception e)
         {
@@ -594,7 +596,7 @@ public final class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
     {
         try
         {
-            m_Client.setData().forPath(descriptionPath(jobId), new byte [0] );
+            m_Client.delete().forPath(descriptionPath(jobId));
         }
         catch (Exception e)
         {
@@ -665,9 +667,9 @@ public final class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
         }
     }
 
-    private void createBasePath(CuratorFramework client)
+    private void createBasePaths(CuratorFramework client)
     {
-        for (String path : new String [] {BASE_DIR, BASE_DIR + ENGINE_API_DIR, NODES_PATH})
+        for (String path : new String [] {BASE_DIR, BASE_DIR + ENGINE_API_DIR, NODES_PATH, JOBS_PATH})
         {
             try
             {
