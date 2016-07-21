@@ -51,6 +51,7 @@ import org.apache.log4j.Logger;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException.NoNodeException;
 import org.apache.zookeeper.KeeperException.NodeExistsException;
+import org.apache.zookeeper.KeeperException.UnimplementedException;
 import org.apache.zookeeper.ZooDefs.Ids;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -667,7 +668,7 @@ public final class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
         }
     }
 
-    private void createBasePaths(CuratorFramework client)
+    private void createBasePaths(CuratorFramework client) throws ConnectException
     {
         for (String path : new String [] {BASE_DIR, BASE_DIR + ENGINE_API_DIR, NODES_PATH, JOBS_PATH})
         {
@@ -677,6 +678,13 @@ public final class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
             }
             catch (NodeExistsException e)
             {
+            }
+            catch (UnimplementedException e)
+            {
+                // this probably means we are trying to connect to a
+                // 3.4 server with the 3.5 client. Throw a connection
+                // exception and stop work
+                throw new ConnectException(e.getMessage());
             }
             catch (Exception e)
             {
