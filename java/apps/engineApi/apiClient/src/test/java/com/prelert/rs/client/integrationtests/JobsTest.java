@@ -755,11 +755,15 @@ public class JobsTest implements Closeable
             test(buckets.getDocumentCount() <= take);
             validateBuckets(buckets.getDocuments(), bucketSpan, lastBucketTime, false);
 
+            int totalProcessingTime = 0;
             for (Bucket b: buckets.getDocuments())
             {
                 eventCount += b.getEventCount();
-                test(b.getProcessingTimeMs() > 0);
+                totalProcessingTime += b.getProcessingTimeMs();
             }
+            // a single bucket may be reported as processing in 0ms
+            // so assert the total time is > 0
+            test(totalProcessingTime > 0);
 
             // time in seconds
             lastBucketTime = buckets.getDocuments().get(
