@@ -46,9 +46,9 @@ import org.elasticsearch.common.util.concurrent.ThreadContext;
 import org.elasticsearch.env.Environment;
 import org.elasticsearch.license.core.License.OperationMode;
 import org.elasticsearch.license.plugin.Licensing;
+import org.elasticsearch.license.plugin.core.LicenseService;
 import org.elasticsearch.license.plugin.core.LicenseState;
 import org.elasticsearch.license.plugin.core.Licensee;
-import org.elasticsearch.license.plugin.core.LicensesService;
 import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.rest.RestHandler;
 import org.elasticsearch.rest.RestStatus;
@@ -249,7 +249,7 @@ public class LicensingTests extends SecurityIntegTestCase {
     }
 
     public static void disableLicensing(OperationMode operationMode) {
-        for (TestLicensesService service : internalCluster().getInstances(TestLicensesService.class)) {
+        for (TestLicenseService service : internalCluster().getInstances(TestLicenseService.class)) {
             service.disable(operationMode);
         }
     }
@@ -259,7 +259,7 @@ public class LicensingTests extends SecurityIntegTestCase {
     }
 
     public static void enableLicensing(OperationMode operationMode) {
-        for (TestLicensesService service : internalCluster().getInstances(TestLicensesService.class)) {
+        for (TestLicenseService service : internalCluster().getInstances(TestLicenseService.class)) {
             service.enable(operationMode);
         }
     }
@@ -268,7 +268,7 @@ public class LicensingTests extends SecurityIntegTestCase {
 
         @Override
         public Collection<Module> nodeModules() {
-            return Collections.singletonList(b -> b.bind(LicensesService.class).to(TestLicensesService.class));
+            return Collections.singletonList(b -> b.bind(LicenseService.class).to(TestLicenseService.class));
         }
 
         @Override
@@ -279,7 +279,7 @@ public class LicensingTests extends SecurityIntegTestCase {
             WatcherLicensee watcherLicensee = new WatcherLicensee(settings);
             MonitoringLicensee monitoringLicensee = new MonitoringLicensee(settings);
             GraphLicensee graphLicensee = new GraphLicensee(settings);
-            TestLicensesService licensesService = new TestLicensesService(settings, environment, resourceWatcherService,
+            TestLicenseService licensesService = new TestLicenseService(settings, environment, resourceWatcherService,
                     Arrays.asList(securityLicensee, watcherLicensee, monitoringLicensee, graphLicensee));
             return Arrays.asList(securityLicensee, licensesService, watcherLicensee, monitoringLicensee,
                     graphLicensee, securityLicenseState);
@@ -308,12 +308,12 @@ public class LicensingTests extends SecurityIntegTestCase {
         }
     }
 
-    public static class TestLicensesService extends LicensesService {
+    public static class TestLicenseService extends LicenseService {
 
         private final List<Licensee> licensees;
 
-        public TestLicensesService(Settings settings, Environment env, ResourceWatcherService resourceWatcherService,
-                                   List<Licensee> licensees) {
+        public TestLicenseService(Settings settings, Environment env, ResourceWatcherService resourceWatcherService,
+                                  List<Licensee> licensees) {
             super(settings, null, null, env, resourceWatcherService, Collections.emptyList());
             this.licensees = licensees;
             enable(OperationMode.BASIC);
