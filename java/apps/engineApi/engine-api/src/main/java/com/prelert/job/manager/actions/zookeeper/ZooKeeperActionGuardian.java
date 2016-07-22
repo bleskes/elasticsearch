@@ -586,6 +586,9 @@ public final class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
         {
             m_Client.delete().forPath(descriptionPath(jobId));
         }
+        catch (NoNodeException ignore)
+        {
+        }
         catch (Exception e)
         {
             LOGGER.error("Error clearing host action for job " + jobId, e);

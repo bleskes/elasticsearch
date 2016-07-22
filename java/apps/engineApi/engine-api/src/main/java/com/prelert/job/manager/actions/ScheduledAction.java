@@ -64,7 +64,7 @@ public enum ScheduledAction implements ActionState<ScheduledAction>
             case UPDATE:
                 return this == STOPPED;
             case STOPPING:
-                return this == STARTED;
+                return this == STARTED || this == STOPPED;
             case STOPPED:
                 return this == STOPPING || this == UPDATE || this == DELETE;
             case DELETE:
