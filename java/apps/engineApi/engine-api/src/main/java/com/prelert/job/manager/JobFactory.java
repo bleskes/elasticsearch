@@ -31,6 +31,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.concurrent.atomic.AtomicLong;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.prelert.job.Detector;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.JobDetails;
@@ -45,6 +46,11 @@ import com.prelert.job.config.verification.JobConfigurationVerifier;
  */
 class JobFactory
 {
+    private static final int MIN_SEQUENCE_LENGTH = 5;
+    private static final String HOSTNAME_ID_TEMPLATE = "%s-%s-%05d";
+    private static final String NO_HOSTNAME_ID_TEMPLATE = "%s-%05d";
+    private static final int HOSTNAME_ID_SEPARATORS_LENGTH = 2;
+
     private final AtomicLong m_IdSequence;
     private final DateTimeFormatter m_JobIdDateFormat;
     private final String m_Hostname;
@@ -99,19 +105,22 @@ class JobFactory
      *
      * @return The new unique job Id
      */
+    @VisibleForTesting
     String generateJobId()
     {
         String dateStr = m_JobIdDateFormat.format(LocalDateTime.now());
+        long sequence = m_IdSequence.incrementAndGet();
         if (m_Hostname != null) {
-            int hostnameMaxLen =JobConfigurationVerifier.MAX_JOB_ID_LENGTH - dateStr.length() - 7;
-
-            return String.format("%s-%s-%05d", dateStr,
-                                m_Hostname.substring(0, Math.min(m_Hostname.length(), hostnameMaxLen)),
-                                m_IdSequence.incrementAndGet());
+            int formattedSequenceLen = Math.max(String.valueOf(sequence).length(), MIN_SEQUENCE_LENGTH);
+            int hostnameMaxLen = JobConfigurationVerifier.MAX_JOB_ID_LENGTH - dateStr.length()
+                    - formattedSequenceLen - HOSTNAME_ID_SEPARATORS_LENGTH;
+            String trimmedHostName = m_Hostname.substring(0,
+                    Math.min(m_Hostname.length(), hostnameMaxLen));
+            return String.format(HOSTNAME_ID_TEMPLATE, dateStr, trimmedHostName, sequence);
         }
         else
         {
-            return String.format("%s-%05d", dateStr, m_IdSequence.incrementAndGet());
+            return String.format(NO_HOSTNAME_ID_TEMPLATE, dateStr, sequence);
         }
     }
 

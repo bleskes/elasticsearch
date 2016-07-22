@@ -26,7 +26,8 @@
  ************************************************************/
 package com.prelert.job.manager;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.util.regex.Pattern;
 
@@ -69,7 +70,21 @@ public class JobFactoryTest {
     public void testGenerateJobId_isShorterThanMaxHJobLength_withLongHostname()
     {
         JobFactory factory = new JobFactory("averyverylongstringthatcouldbeahostnameorfullyqualifieddomainname");
-        assertEquals(JobConfigurationVerifier.MAX_JOB_ID_LENGTH, factory.generateJobId().length());
+        String id = factory.generateJobId();
+        assertEquals(JobConfigurationVerifier.MAX_JOB_ID_LENGTH, id.length());
+        assertTrue(id.endsWith("-00001"));
     }
 
+    @Test
+    public void testGenerateJobId_isShorterThanMaxHJobLength_withLongHostname_andSixDigitSequence()
+    {
+        JobFactory factory = new JobFactory("averyverylongstringthatcouldbeahostnameorfullyqualifieddomainname");
+        String id = null;
+        for (int i = 0; i < 100000; i++)
+        {
+            id = factory.generateJobId();
+        }
+        assertTrue(id.endsWith("-100000"));
+        assertEquals(JobConfigurationVerifier.MAX_JOB_ID_LENGTH, id.length());
+    }
 }
