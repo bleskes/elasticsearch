@@ -31,14 +31,24 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.log4j.Logger;
+import org.elasticsearch.client.Client;
+import org.elasticsearch.index.IndexNotFoundException;
 import org.elasticsearch.script.Script;
 import org.elasticsearch.script.ScriptService;
+
+import com.prelert.job.JobException;
+import com.prelert.job.UnknownJobException;
+import com.prelert.job.errorcodes.ErrorCodes;
+import com.prelert.job.messages.Messages;
 
 /**
  * Create methods for the custom scripts that are run on Elasticsearch
  */
 public final class ElasticsearchScripts
 {
+    private static final Logger LOGGER = Logger.getLogger(ElasticsearchScripts.class);
+
     // Script names
     private static final String UPDATE_AVERAGE_PROCESSING_TIME = "update-average-processing-time";
     private static final String UPDATE_BUCKET_COUNT = "update-bucket-count";
@@ -57,6 +67,8 @@ public final class ElasticsearchScripts
     private static final String NEW_DESCRIPTION_PARAM = "newDescription";
     private static final String NEW_SCHEDULER_CONFIG_PARAM = "newSchedulerConfig";
     private static final String PROCESSING_TIME_PARAM = "timeMs";
+
+    public static final int UPDATE_JOB_RETRY_COUNT = 3;
 
     private ElasticsearchScripts()
     {
@@ -115,5 +127,57 @@ public final class ElasticsearchScripts
                 ScriptService.DEFAULT_LANG, scriptParams);
     }
 
+
+    public static boolean updateViaScript(Client client, String index, String type,
+                                        String docId, Script script)
+    throws UnknownJobException, JobException
+    {
+        try
+        {
+            client.prepareUpdate(index, type, docId)
+                            .setScript(script)
+                            .setRetryOnConflict(UPDATE_JOB_RETRY_COUNT).get();
+        }
+        catch (IndexNotFoundException e)
+        {
+            throw new UnknownJobException(index);
+        }
+        catch (IllegalArgumentException e)
+        {
+            handleIllegalArgumentException(e, script);
+        }
+        return true;
+    }
+
+    public static boolean upsertViaScript(Client client, String index, String type,
+                                        String docId, Script script, Map<String, Object> upsertMap)
+    throws UnknownJobException, JobException
+    {
+        try
+        {
+            client.prepareUpdate(index, type, docId)
+                               .setScript(script)
+                               .setUpsert(upsertMap)
+                               .setRetryOnConflict(UPDATE_JOB_RETRY_COUNT).get();
+        }
+        catch (IndexNotFoundException e)
+        {
+            throw new UnknownJobException(index);
+        }
+        catch (IllegalArgumentException e)
+        {
+            handleIllegalArgumentException(e, script);
+        }
+        return true;
+    }
+
+    private static void handleIllegalArgumentException(IllegalArgumentException e, Script script)
+    throws JobException
+    {
+        String msg = Messages.getMessage(Messages.DATASTORE_ERROR_EXECUTING_SCRIPT, script);
+        LOGGER.warn(msg);
+        Throwable th = (e.getCause() == null) ? e : e.getCause();
+        throw new JobException(msg, ErrorCodes.DATA_STORE_ERROR, th);
+    }
 
 }

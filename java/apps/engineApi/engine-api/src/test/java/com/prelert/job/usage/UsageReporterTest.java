@@ -35,12 +35,14 @@ import org.apache.log4j.Logger;
 import org.junit.Test;
 import org.mockito.Mockito;
 
+import com.prelert.job.JobException;
+import com.prelert.job.UnknownJobException;
 import com.prelert.job.persistence.UsagePersister;
 
 public class UsageReporterTest
 {
     @Test
-    public void testUpdatePeriod()
+    public void testUpdatePeriod() throws UnknownJobException, JobException
     {
         // set the update interval to 1 secs
         System.setProperty(UsageReporter.UPDATE_INTERVAL_PROP, "1");

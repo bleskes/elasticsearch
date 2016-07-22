@@ -67,7 +67,6 @@ import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.indices.IndexAlreadyExistsException;
 import org.elasticsearch.node.Node;
-import org.elasticsearch.script.Script;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.sort.FieldSortBuilder;
@@ -95,7 +94,6 @@ import com.prelert.job.audit.AuditActivity;
 import com.prelert.job.audit.AuditMessage;
 import com.prelert.job.audit.Auditor;
 import com.prelert.job.errorcodes.ErrorCodes;
-import com.prelert.job.messages.Messages;
 import com.prelert.job.persistence.BatchedDocumentsIterator;
 import com.prelert.job.persistence.DataStoreException;
 import com.prelert.job.persistence.JobProvider;
@@ -1288,8 +1286,10 @@ public class ElasticsearchJobProvider implements JobProvider
                 +  " by running Groovy script update-categorization-filters with params newFilters="
                 + categorizationFilters);
 
-        return updateViaScript(jobId, ElasticsearchScripts.newUpdateCategorizationFilters(
-                categorizationFilters));
+        return ElasticsearchScripts.updateViaScript(m_Client,
+                                    new ElasticsearchJobId(jobId).getIndex(),
+                                    JobDetails.TYPE, jobId,
+                        ElasticsearchScripts.newUpdateCategorizationFilters(categorizationFilters));
     }
 
     @Override
@@ -1300,32 +1300,11 @@ public class ElasticsearchJobProvider implements JobProvider
                 + detectorIndex + " by running Groovy script update-detector-description with params newDescription="
                 + newDescription);
 
-        return updateViaScript(jobId, ElasticsearchScripts.newUpdateDetectorDescription(
-                                    detectorIndex, newDescription));
-    }
-
-    private boolean updateViaScript(String jobId, Script script) throws JobException
-    {
-        ElasticsearchJobId esJobId = new ElasticsearchJobId(jobId);
-
-        try
-        {
-            m_Client.prepareUpdate(esJobId.getIndex(), JobDetails.TYPE, esJobId.getId())
-                            .setScript(script)
-                            .setRetryOnConflict(UPDATE_JOB_RETRY_COUNT).get();
-        }
-        catch (IndexNotFoundException e)
-        {
-            throw new UnknownJobException(jobId);
-        }
-        catch (IllegalArgumentException e)
-        {
-            String msg = Messages.getMessage(Messages.DATASTORE_ERROR_EXECUTING_SCRIPT, script);
-            LOGGER.warn(msg);
-            Throwable th = (e.getCause() == null) ? e : e.getCause();
-            throw new JobException(msg, ErrorCodes.DATA_STORE_ERROR, th);
-        }
-        return true;
+        return ElasticsearchScripts.updateViaScript(m_Client,
+                                new ElasticsearchJobId(jobId).getIndex(),
+                                JobDetails.TYPE, jobId,
+                                ElasticsearchScripts.newUpdateDetectorDescription(
+                                        detectorIndex, newDescription));
     }
 
     @Override
@@ -1339,7 +1318,10 @@ public class ElasticsearchJobProvider implements JobProvider
                 + " by running Groovy script update-scheduler-config with params newSchedulerConfig="
                 + asMap);
 
-        return updateViaScript(jobId, ElasticsearchScripts.newUpdateSchedulerConfig(asMap));
+        return ElasticsearchScripts.updateViaScript(m_Client,
+                            new ElasticsearchJobId(jobId).getIndex(),
+                            JobDetails.TYPE, jobId,
+                            ElasticsearchScripts.newUpdateSchedulerConfig(asMap));
     }
 
     @Override

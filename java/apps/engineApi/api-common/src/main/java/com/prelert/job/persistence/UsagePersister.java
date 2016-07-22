@@ -17,6 +17,9 @@
  ***************************************************************************/
 package com.prelert.job.persistence;
 
+import com.prelert.job.JobException;
+import com.prelert.job.UnknownJobException;
+
 /**
  * Interface for classes that persist usage information
  */
@@ -29,6 +32,9 @@ public interface UsagePersister
      * @param bytesRead
      * @param fieldsRead
      * @param recordsRead
+     * @throws JobException IF there was an error persisting
+     * @throws UnknownJobException The job cannot be found in the data store
      */
-    public void persistUsage(String jobId, long bytesRead, long fieldsRead, long recordsRead);
+    public void persistUsage(String jobId, long bytesRead, long fieldsRead, long recordsRead)
+            throws UnknownJobException, JobException;
 }

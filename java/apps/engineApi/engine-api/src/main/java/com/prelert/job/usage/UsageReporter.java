@@ -29,6 +29,8 @@ package com.prelert.job.usage;
 
 import org.apache.log4j.Logger;
 
+import com.prelert.job.JobException;
+import com.prelert.job.UnknownJobException;
 import com.prelert.job.persistence.UsagePersister;
 import com.prelert.settings.PrelertSettings;
 
@@ -134,6 +136,8 @@ public class UsageReporter
      * See {@linkplain #reportUsage()}
      *
      * @param epochMs The time now - saved as the last update time
+     * @throws JobException
+     * @throws UnknownJobException
      */
     private void reportUsage(long epochMs)
     {
@@ -141,8 +145,15 @@ public class UsageReporter
                 m_BytesReadSinceLastReport >> 10, m_FieldsReadSinceLastReport,
                 m_RecordsReadSinceLastReport, m_JobId));
 
-        m_Persister.persistUsage(m_JobId, m_BytesReadSinceLastReport,
-                                    m_FieldsReadSinceLastReport, m_RecordsReadSinceLastReport);
+        try
+        {
+            m_Persister.persistUsage(m_JobId, m_BytesReadSinceLastReport,
+                    m_FieldsReadSinceLastReport, m_RecordsReadSinceLastReport);
+        }
+        catch (JobException e)
+        {
+            m_Logger.error("Error persisting usage for job " + m_JobId, e);
+        }
 
         m_LastUpdateTimeMs = epochMs;
 

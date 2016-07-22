@@ -40,6 +40,7 @@ import org.apache.log4j.Logger;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
+import com.prelert.job.JobException;
 import com.prelert.job.ModelSizeStats;
 import com.prelert.job.ModelSnapshot;
 import com.prelert.job.alert.AlertObserver;
@@ -232,8 +233,7 @@ public class AutoDetectResultsParser
                         }
                         Bucket bucket = new BucketParser(parser).parseJsonAfterStartObject();
                         persister.persistBucket(bucket);
-                        persister.incrementBucketCount(1);
-                        persister.updateAverageBucketProcessingTime(bucket.getProcessingTimeMs());
+                        tryUpdatingBucket(persister, bucket, logger);
                         notifyObservers(bucket);
 
                         logger.trace("Bucket number " + ++bucketCount + " parsed from output");
@@ -310,6 +310,18 @@ public class AutoDetectResultsParser
         persister.commitWrites();
     }
 
+    private void tryUpdatingBucket(JobResultsPersister persister, Bucket bucket, Logger logger)
+    {
+        try
+        {
+            persister.incrementBucketCount(1);
+            persister.updateAverageBucketProcessingTime(bucket.getProcessingTimeMs());
+        }
+        catch (JobException e)
+        {
+            logger.error("Error updating bucket stats", e);
+        }
+    }
 
     private final class ObserverTriggerPair
     {

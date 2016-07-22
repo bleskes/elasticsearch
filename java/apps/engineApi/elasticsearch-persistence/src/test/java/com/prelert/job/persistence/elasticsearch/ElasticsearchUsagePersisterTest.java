@@ -51,13 +51,15 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
+import com.prelert.job.JobException;
+import com.prelert.job.UnknownJobException;
 import com.prelert.job.usage.Usage;
 
 public class ElasticsearchUsagePersisterTest
 {
     @SuppressWarnings("rawtypes")
     @Test
-    public void testPersistUsageCounts() throws ParseException
+    public void testPersistUsageCounts() throws ParseException, UnknownJobException, JobException
     {
         Client client = mock(Client.class);
         Logger logger = mock(Logger.class);
@@ -79,7 +81,7 @@ public class ElasticsearchUsagePersisterTest
                 idCaptor.capture());
         verify(updateRequestBuilder, times(2)).setScript(updateScriptCaptor.capture());
         verify(updateRequestBuilder, times(2)).setUpsert(upsertsCaptor.capture());
-        verify(updateRequestBuilder, times(2)).setRetryOnConflict(5);
+        verify(updateRequestBuilder, times(2)).setRetryOnConflict(ElasticsearchScripts.UPDATE_JOB_RETRY_COUNT);
         verify(updateRequestBuilder, times(2)).get();
 
         assertEquals(Arrays.asList("prelert-usage", "prelertresults-job1"), indexCaptor.getAllValues());

@@ -38,13 +38,14 @@ import org.apache.log4j.Logger;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.index.engine.VersionConflictEngineException;
 
+import com.prelert.job.JobException;
+import com.prelert.job.UnknownJobException;
 import com.prelert.job.persistence.UsagePersister;
 import com.prelert.job.usage.Usage;
 
 public class ElasticsearchUsagePersister implements UsagePersister
 {
     private static final String USAGE_DOC_ID_PREFIX = "usage-";
-    private static final int RETRY_COUNT = 5;
 
     private final Client m_Client;
     private final Logger m_Logger;
@@ -65,6 +66,7 @@ public class ElasticsearchUsagePersister implements UsagePersister
 
     @Override
     public void persistUsage(String jobId, long bytesRead, long fieldsRead, long recordsRead)
+            throws UnknownJobException, JobException
     {
         ZonedDateTime nowTruncatedToHour = ZonedDateTime.now().truncatedTo(ChronoUnit.HOURS);
         String formattedNowTruncatedToHour = nowTruncatedToHour.format(m_DateTimeFormatter);
@@ -88,9 +90,11 @@ public class ElasticsearchUsagePersister implements UsagePersister
      * @param additionalBytes Add this value to the running total
      * @param additionalFields Add this value to the running total
      * @param additionalRecords Add this value to the running total
+     * @throws JobException
+     * @throws UnknownJobException
      */
     private void updateDocument(String index, String id,
-            long additionalBytes, long additionalFields, long additionalRecords)
+            long additionalBytes, long additionalFields, long additionalRecords) throws UnknownJobException, JobException
     {
         m_UpsertMap.put(Usage.INPUT_BYTES, new Long(additionalBytes));
         m_UpsertMap.put(Usage.INPUT_FIELD_COUNT, new Long(additionalFields));
@@ -103,16 +107,21 @@ public class ElasticsearchUsagePersister implements UsagePersister
 
         try
         {
-            m_Client.prepareUpdate(index, Usage.TYPE, id)
-                    .setScript(ElasticsearchScripts.newUpdateUsage(
-                            additionalBytes, additionalFields, additionalRecords))
-                    .setUpsert(m_UpsertMap)
-                    .setRetryOnConflict(RETRY_COUNT).get();
+            ElasticsearchScripts.upsertViaScript(m_Client, index, Usage.TYPE, id,
+                        ElasticsearchScripts.newUpdateUsage(additionalBytes, additionalFields,
+                                additionalRecords),
+                        m_UpsertMap);
         }
         catch (VersionConflictEngineException e)
         {
             m_Logger.error("Failed to update the Usage document " + id +
                             " in index " + index, e);
+        }
+        catch (JobException e)
+        {
+            // log and rethrow
+            m_Logger.error(e);
+            throw e;
         }
     }
 }

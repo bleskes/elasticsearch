@@ -48,8 +48,10 @@ import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.index.engine.VersionConflictEngineException;
 
 import com.prelert.job.JobDetails;
+import com.prelert.job.JobException;
 import com.prelert.job.ModelSizeStats;
 import com.prelert.job.ModelSnapshot;
+import com.prelert.job.UnknownJobException;
 import com.prelert.job.persistence.JobRenormaliser;
 import com.prelert.job.persistence.JobResultsPersister;
 import com.prelert.job.persistence.serialisation.StorageSerialisable;
@@ -290,18 +292,22 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
 
     @Override
     public void incrementBucketCount(long count)
+            throws UnknownJobException, JobException
     {
         LOGGER.trace("ES API CALL: update ID " + m_JobId.getId() + " type " + JobDetails.TYPE +
                 " in index " + m_JobId.getIndex() +
                 " by running Groovy script update-bucket-count with params count=" + count);
 
-        m_Client.prepareUpdate(m_JobId.getIndex(), JobDetails.TYPE, m_JobId.getId())
-                        .setScript(ElasticsearchScripts.newUpdateBucketCount(count))
-                        .setRetryOnConflict(3).get();
+
+        ElasticsearchScripts.updateViaScript(m_Client,
+                m_JobId.getIndex(),
+                JobDetails.TYPE,  m_JobId.getId(),
+                ElasticsearchScripts.newUpdateBucketCount(count));
     }
 
     @Override
     public void updateAverageBucketProcessingTime(long timeMs)
+            throws UnknownJobException, JobException
     {
         LOGGER.trace("ES API CALL: update ID " + m_JobId.getId() + " type " + BucketProcessingTime.TYPE +
                 " in index " + m_JobId.getIndex() + " update last bucket processing time");
@@ -312,16 +318,16 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
 
         try
         {
-            m_Client.prepareUpdate(m_JobId.getIndex(), BucketProcessingTime.TYPE,
-                                BucketProcessingTime.AVERAGE_PROCESSING_TIME_MS)
-                    .setScript(ElasticsearchScripts.updateProcessingTime(timeMs))
-                    .setUpsert(upsertMap)
-                    .setRetryOnConflict(3).get();
+            ElasticsearchScripts.upsertViaScript(m_Client,
+                                    m_JobId.getIndex(),
+                                    BucketProcessingTime.TYPE,  BucketProcessingTime.AVERAGE_PROCESSING_TIME_MS,
+                                    ElasticsearchScripts.updateProcessingTime(timeMs),
+                                    upsertMap);
         }
         catch (VersionConflictEngineException e)
         {
             LOGGER.error("Failed to update the bucket processing time document " +
-                            BucketProcessingTime.AVERAGE_PROCESSING_TIME_MS + " in index " + m_JobId.getIndex(), e);
+                    BucketProcessingTime.AVERAGE_PROCESSING_TIME_MS + " in index " + m_JobId.getIndex(), e);
         }
     }
 

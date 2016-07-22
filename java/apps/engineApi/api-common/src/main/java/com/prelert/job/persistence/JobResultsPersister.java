@@ -18,8 +18,10 @@
 
 package com.prelert.job.persistence;
 
+import com.prelert.job.JobException;
 import com.prelert.job.ModelSizeStats;
 import com.prelert.job.ModelSnapshot;
+import com.prelert.job.UnknownJobException;
 import com.prelert.job.quantiles.Quantiles;
 import com.prelert.job.results.Bucket;
 import com.prelert.job.results.CategoryDefinition;
@@ -77,14 +79,18 @@ public interface JobResultsPersister
     /**
      * Increment the jobs bucket result count by <code>count</code>
      * @param count
+     * @throws JobException If there was an error updating
+     * @throws UnknownJobException
      */
-    void incrementBucketCount(long count);
+    void incrementBucketCount(long count) throws UnknownJobException, JobException;
 
     /**
      * Update the last bucket's processing time
      * @param timeMs
+     * @throws JobException If there was an error updating
+     * @throws UnknownJobException
      */
-    void updateAverageBucketProcessingTime(long timeMs);
+    void updateAverageBucketProcessingTime(long timeMs) throws UnknownJobException, JobException;
 
     /**
      * Delete any existing interim results
