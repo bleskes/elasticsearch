@@ -313,7 +313,7 @@ public class JobSchedulerTest
             }
 
             assertTrue(flushParams.get(i).shouldAdvanceTime());
-            assertEquals(Math.min(calcAlignedBucketEnd(latestRecordTimes[i]), searchEnd),
+            assertEquals("i=" + i, Math.min(calcAlignedBucketEnd(latestRecordTimes[i]), searchEnd),
                                     flushParams.get(i).getAdvanceTime() * 1000);
         }
 
