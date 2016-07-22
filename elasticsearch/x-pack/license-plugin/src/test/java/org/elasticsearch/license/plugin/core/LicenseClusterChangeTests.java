@@ -65,7 +65,7 @@ public class LicenseClusterChangeTests extends AbstractLicenseServiceTestCase {
         ClusterState newState = ClusterState.builder(new ClusterName("a")).metaData(metaData).build();
         licenseService.clusterChanged(new ClusterChangedEvent("simulated", newState, oldState));
         assertThat(licensee.statuses.size(), equalTo(1));
-        assertTrue(licensee.statuses.get(0).getLicenseState() == LicenseState.ENABLED);
+        assertTrue(licensee.statuses.get(0).isActive());
     }
 
     public void testNoNotificationOnExistingLicense() throws Exception {

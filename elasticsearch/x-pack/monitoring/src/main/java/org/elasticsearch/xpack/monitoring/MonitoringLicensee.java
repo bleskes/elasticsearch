@@ -22,7 +22,6 @@ import org.elasticsearch.common.logging.LoggerMessageFormat;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.license.core.License.OperationMode;
 import org.elasticsearch.license.plugin.core.AbstractLicenseeComponent;
-import org.elasticsearch.license.plugin.core.LicenseState;
 
 /**
  * {@code MonitoringLicensee} determines whether certain features of Monitoring are enabled or disabled.
@@ -85,7 +84,7 @@ public class MonitoringLicensee extends AbstractLicenseeComponent {
      * @return true
      */
     public boolean isAvailable() {
-        return status.getLicenseState() != LicenseState.DISABLED;
+        return status.isActive();
     }
 
     /**
@@ -99,7 +98,7 @@ public class MonitoringLicensee extends AbstractLicenseeComponent {
      * @return {@code true} as long as the license is valid. Otherwise {@code false}.
      */
     public boolean collectionEnabled() {
-        return status.getLicenseState() != LicenseState.DISABLED;
+        return status.isActive();
     }
 
     /**
@@ -110,7 +109,7 @@ public class MonitoringLicensee extends AbstractLicenseeComponent {
      * @return {@code true} as long as the license is valid. Otherwise {@code false}.
      */
     public boolean cleaningEnabled() {
-        return status.getLicenseState() != LicenseState.DISABLED;
+        return status.isActive();
     }
 
     /**
