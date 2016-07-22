@@ -282,7 +282,6 @@ public class JobSchedulerTest
         assertEquals(numberOfSearches, flushParams.size());
 
         long lookbackEnd = dataExtractor.getEnd(0);
-        long firstRealTimeEnd = dataExtractor.getEnd(1);
         for (int i = 0; i < numberOfSearches; i++)
         {
             assertEquals(i + "-0", dataProcessor.getStream(i));
@@ -304,7 +303,7 @@ public class JobSchedulerTest
             {
                 // Assert first real-time search
                 assertEquals(lookbackLatestRecordTime + 1, searchStart);
-                assertTrue(firstRealTimeEnd > lookbackLatestRecordTime + 1);
+                assertTrue(searchEnd > lookbackLatestRecordTime + 1);
             }
             else
             {
@@ -667,12 +666,9 @@ public class JobSchedulerTest
 
     private long calcAlignedBucketEnd(long timeMs)
     {
-        long result = (timeMs / BUCKET_SPAN.toMillis()) * BUCKET_SPAN.toMillis();
-        if (result != timeMs)
-        {
-            result += BUCKET_SPAN.toMillis();
-        }
-        return result;
+        long bucketSpanMillis = BUCKET_SPAN.toMillis();
+        long result = (timeMs / bucketSpanMillis) * bucketSpanMillis;
+        return result == timeMs ? result : result + bucketSpanMillis;
     }
 
     private static class MockDataExtractor implements DataExtractor
@@ -787,27 +783,27 @@ public class JobSchedulerTest
             return true;
         }
 
-        private void setShouldThrow(boolean value)
+        private synchronized void setShouldThrow(boolean value)
         {
             m_ShouldThrow = value;
         }
 
-        private String getStream(int index)
+        private synchronized String getStream(int index)
         {
             return m_Streams.get(index);
         }
 
-        private int getNumberOfStreams()
+        private synchronized int getNumberOfStreams()
         {
             return m_Streams.size();
         }
 
-        private List<InterimResultsParams> getFlushParams()
+        private synchronized List<InterimResultsParams> getFlushParams()
         {
             return m_FlushParams;
         }
 
-        private boolean isJobClosed()
+        private synchronized boolean isJobClosed()
         {
             return m_IsJobClosed;
         }
