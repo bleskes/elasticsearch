@@ -26,6 +26,8 @@ import org.elasticsearch.test.ESIntegTestCase.Scope;
 import org.elasticsearch.test.InternalTestCluster;
 import org.elasticsearch.test.SecurityIntegTestCase;
 import org.elasticsearch.test.SecuritySettingsSource;
+import org.elasticsearch.xpack.security.audit.AuditTrail;
+import org.elasticsearch.xpack.security.audit.AuditTrailService;
 import org.junit.After;
 import org.junit.Before;
 
@@ -34,6 +36,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -149,10 +152,13 @@ public class RemoteIndexAuditTrailStartingTests extends SecurityIntegTestCase {
     }
 
     public void testThatRemoteAuditInstancesAreStarted() throws Exception {
-        Iterable<IndexAuditTrail> auditTrails = remoteCluster.getInstances(IndexAuditTrail.class);
-        for (final IndexAuditTrail auditTrail : auditTrails) {
-            awaitBusy(() -> auditTrail.state() == IndexAuditTrail.State.STARTED, 2L, TimeUnit.SECONDS);
-            assertThat(auditTrail.state(), is(IndexAuditTrail.State.STARTED));
-        }
+        AuditTrailService auditTrailService = remoteCluster.getInstance(AuditTrailService.class);
+        Optional<AuditTrail> auditTrail = auditTrailService.getAuditTrails().stream()
+            .filter(t -> t.name().equals(IndexAuditTrail.NAME)).findFirst();
+        assertTrue(auditTrail.isPresent());
+        IndexAuditTrail indexAuditTrail = (IndexAuditTrail)auditTrail.get();
+
+        awaitBusy(() -> indexAuditTrail.state() == IndexAuditTrail.State.STARTED, 2L, TimeUnit.SECONDS);
+        assertThat(indexAuditTrail.state(), is(IndexAuditTrail.State.STARTED));
     }
 }

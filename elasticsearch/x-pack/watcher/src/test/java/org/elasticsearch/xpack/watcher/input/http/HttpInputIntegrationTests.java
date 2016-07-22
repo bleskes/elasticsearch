@@ -161,7 +161,7 @@ public class HttpInputIntegrationTests extends AbstractWatcherIntegrationTestCas
 
         // Check that the input result payload has been filtered
         refresh();
-        SearchResponse searchResponse = client().prepareSearch(HistoryStore.INDEX_PREFIX + "*")
+        SearchResponse searchResponse = client().prepareSearch(HistoryStore.INDEX_PREFIX_WITH_TEMPLATE + "*")
                 .setIndicesOptions(IndicesOptions.lenientExpandOpen())
                 .setQuery(matchQuery("watch_id", "_name1"))
                 .setSize(1)

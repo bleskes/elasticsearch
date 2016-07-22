@@ -19,7 +19,7 @@ package org.elasticsearch.example;
 
 import org.elasticsearch.example.realm.CustomAuthenticationFailureHandler;
 import org.elasticsearch.example.realm.CustomRealm;
-import org.elasticsearch.xpack.security.authc.AuthenticationModule;
+import org.elasticsearch.xpack.security.authc.AuthenticationFailureHandler;
 import org.elasticsearch.xpack.extensions.XPackExtension;
 import org.elasticsearch.xpack.security.authc.Realm;
 
@@ -50,13 +50,14 @@ public class ExampleRealmExtension extends XPackExtension {
         return "a very basic implementation of a custom realm to validate it works";
     }
 
-    public void onModule(AuthenticationModule authenticationModule) {
-        authenticationModule.setAuthenticationFailureHandler(CustomAuthenticationFailureHandler.class);
-    }
-
     @Override
     public Map<String, Realm.Factory> getRealms() {
         return Collections.singletonMap(CustomRealm.TYPE, CustomRealm::new);
+    }
+
+    @Override
+    public AuthenticationFailureHandler getAuthenticationFailureHandler() {
+        return new CustomAuthenticationFailureHandler();
     }
 
     @Override
