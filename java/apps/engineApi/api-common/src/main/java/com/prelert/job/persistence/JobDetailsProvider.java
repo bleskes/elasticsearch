@@ -153,7 +153,7 @@ public interface JobDetailsProvider extends Shutdownable
      * @throws JobException If there was a problem updating the filter
      */
     boolean updateCategorizationFilters(String jobId, List<String> categorizationFilters)
-            throws UnknownJobException, JobException;
+            throws JobException;
 
     /**
      * Sets the description of detector at {@code detectorIndex} of job
@@ -166,7 +166,7 @@ public interface JobDetailsProvider extends Shutdownable
      * @throws JobException If there was a problem updating the detetor
      */
     boolean updateDetectorDescription(String jobId, int detectorIndex, String newDescription)
-            throws UnknownJobException, JobException;
+            throws JobException;
 
     /**
      * Updates the scheduler config of job with id {@code jobId} to the given {@code newSchedulerConfig}
@@ -178,7 +178,7 @@ public interface JobDetailsProvider extends Shutdownable
      * @throws JobException If there was a problem updating the scheduler state
      */
     boolean updateSchedulerConfig(String jobId, SchedulerConfig newSchedulerConfig)
-            throws UnknownJobException, JobException;
+            throws JobException;
 
     /**
      * Updates the scheduler state for the given job

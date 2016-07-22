@@ -566,8 +566,9 @@ public final class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
                         .withMode(CreateMode.CONTAINER)
                         .withACL(Ids.OPEN_ACL_UNSAFE).forPath(path);
             }
-            catch (NodeExistsException ignore)
+            catch (NodeExistsException e)
             {
+                // Ignore
             }
 
             m_Client.setData().forPath(path, data);
@@ -664,6 +665,7 @@ public final class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
             }
             catch (NodeExistsException e)
             {
+                // Ignore
             }
             catch (UnimplementedException e)
             {

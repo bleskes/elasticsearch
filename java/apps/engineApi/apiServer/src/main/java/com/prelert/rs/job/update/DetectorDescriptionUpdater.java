@@ -38,7 +38,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.collect.Sets;
 import com.prelert.job.JobDetails;
 import com.prelert.job.JobException;
-import com.prelert.job.UnknownJobException;
 import com.prelert.job.config.DefaultDetectorDescription;
 import com.prelert.job.config.verification.JobConfigurationException;
 import com.prelert.job.errorcodes.ErrorCodes;
@@ -137,7 +136,7 @@ class DetectorDescriptionUpdater extends AbstractUpdater
     }
 
     @Override
-    void commit() throws UnknownJobException, JobConfigurationException, JobException
+    void commit() throws JobException
     {
         for (UpdateParams update : m_Updates)
         {
