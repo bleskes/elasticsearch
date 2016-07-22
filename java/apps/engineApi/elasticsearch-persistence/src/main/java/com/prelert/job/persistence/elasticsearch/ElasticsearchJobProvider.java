@@ -1282,7 +1282,7 @@ public class ElasticsearchJobProvider implements JobProvider
 
     @Override
     public boolean updateCategorizationFilters(String jobId, List<String> categorizationFilters)
-            throws UnknownJobException, JobException
+            throws JobException
     {
         LOGGER.trace("ES API CALL: update categorization filters for job " + jobId
                 +  " by running Groovy script update-categorization-filters with params newFilters="
@@ -1294,7 +1294,7 @@ public class ElasticsearchJobProvider implements JobProvider
 
     @Override
     public boolean updateDetectorDescription(String jobId, int detectorIndex, String newDescription)
-            throws UnknownJobException, JobException
+            throws JobException
     {
         LOGGER.trace("ES API CALL: update detector description for job " + jobId + ", detector at index "
                 + detectorIndex + " by running Groovy script update-detector-description with params newDescription="
@@ -1304,8 +1304,7 @@ public class ElasticsearchJobProvider implements JobProvider
                                     detectorIndex, newDescription));
     }
 
-    private boolean updateViaScript(String jobId, Script script)
-            throws UnknownJobException, JobException
+    private boolean updateViaScript(String jobId, Script script) throws JobException
     {
         ElasticsearchJobId esJobId = new ElasticsearchJobId(jobId);
 
@@ -1331,7 +1330,7 @@ public class ElasticsearchJobProvider implements JobProvider
 
     @Override
     public boolean updateSchedulerConfig(String jobId, SchedulerConfig newSchedulerConfig)
-            throws UnknownJobException, JobException
+            throws JobException
     {
         Map<String, Object> asMap = m_ObjectMapper.convertValue(newSchedulerConfig,
                 new TypeReference<Map<String, Object>>() {});
