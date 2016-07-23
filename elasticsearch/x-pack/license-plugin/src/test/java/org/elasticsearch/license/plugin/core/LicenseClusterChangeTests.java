@@ -28,7 +28,6 @@ import org.elasticsearch.cluster.node.DiscoveryNodes;
 import org.elasticsearch.common.transport.LocalTransportAddress;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.license.core.License;
-import org.elasticsearch.license.plugin.TestUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.mockito.ArgumentCaptor;
@@ -43,12 +42,12 @@ import static org.mockito.Mockito.when;
 
 public class LicenseClusterChangeTests extends AbstractLicenseServiceTestCase {
 
-    private TestUtils.AssertingLicensee licensee;
+    private TestUtils.AssertingLicenseState licenseState;
 
     @Before
     public void setup() {
-        licensee = new TestUtils.AssertingLicensee("LicenseClusterChangeTests", logger);
-        setInitialState(null, licensee);
+        licenseState = new TestUtils.AssertingLicenseState();
+        setInitialState(null, licenseState);
         licenseService.start();
     }
 
@@ -64,8 +63,8 @@ public class LicenseClusterChangeTests extends AbstractLicenseServiceTestCase {
         MetaData metaData = MetaData.builder().putCustom(LicensesMetaData.TYPE, new LicensesMetaData(license)).build();
         ClusterState newState = ClusterState.builder(new ClusterName("a")).metaData(metaData).build();
         licenseService.clusterChanged(new ClusterChangedEvent("simulated", newState, oldState));
-        assertThat(licensee.statuses.size(), equalTo(1));
-        assertTrue(licensee.statuses.get(0).isActive());
+        assertThat(licenseState.activeUpdates.size(), equalTo(1));
+        assertTrue(licenseState.activeUpdates.get(0));
     }
 
     public void testNoNotificationOnExistingLicense() throws Exception {
@@ -74,7 +73,7 @@ public class LicenseClusterChangeTests extends AbstractLicenseServiceTestCase {
         ClusterState newState = ClusterState.builder(new ClusterName("a")).metaData(metaData).build();
         ClusterState oldState = ClusterState.builder(newState).build();
         licenseService.clusterChanged(new ClusterChangedEvent("simulated", newState, oldState));
-        assertThat(licensee.statuses.size(), equalTo(0));
+        assertThat(licenseState.activeUpdates.size(), equalTo(0));
     }
 
     public void testTrialLicenseGeneration() throws Exception {

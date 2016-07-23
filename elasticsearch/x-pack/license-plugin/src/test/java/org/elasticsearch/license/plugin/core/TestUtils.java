@@ -1,20 +1,22 @@
 /*
- * ELASTICSEARCH CONFIDENTIAL
- * __________________
+ * Licensed to Elasticsearch under one or more contributor
+ * license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright
+ * ownership. Elasticsearch licenses this file to you under
+ * the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *  [2014] Elasticsearch Incorporated. All Rights Reserved.
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
- * NOTICE:  All information contained herein is, and remains
- * the property of Elasticsearch Incorporated and its suppliers,
- * if any.  The intellectual and technical concepts contained
- * herein are proprietary to Elasticsearch Incorporated
- * and its suppliers and may be covered by U.S. and Foreign Patents,
- * patents in process, and are protected by trade secret or copyright law.
- * Dissemination of this information or reproduction of this material
- * is strictly forbidden unless prior written permission is obtained
- * from Elasticsearch Incorporated.
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
  */
-package org.elasticsearch.license.plugin;
+package org.elasticsearch.license.plugin.core;
 
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.common.collect.Tuple;
@@ -32,12 +34,10 @@ import org.elasticsearch.license.core.License;
 import org.elasticsearch.license.licensor.LicenseSigner;
 import org.elasticsearch.license.plugin.action.put.PutLicenseRequest;
 import org.elasticsearch.license.plugin.action.put.PutLicenseResponse;
-import org.elasticsearch.license.plugin.core.LicenseService;
-import org.elasticsearch.license.plugin.core.Licensee;
-import org.elasticsearch.license.plugin.core.LicensesStatus;
 import org.junit.Assert;
 
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.Callable;
@@ -182,44 +182,14 @@ public class TestUtils {
         assertThat(status.get(), equalTo(expectedStatus));
     }
 
-    public static class AssertingLicensee implements Licensee {
-        public final ESLogger logger;
-        public final String id;
-        public final List<Licensee.Status> statuses = new CopyOnWriteArrayList<>();
-        public final AtomicInteger expirationMessagesCalled = new AtomicInteger(0);
-        public final List<Tuple<License.OperationMode, License.OperationMode>> acknowledgementRequested = new CopyOnWriteArrayList<>();
-
-        private String[] acknowledgmentMessages = new String[0];
-
-        public AssertingLicensee(String id, ESLogger logger) {
-            this.logger = logger;
-            this.id = id;
-        }
-
-        public void setAcknowledgementMessages(String[] acknowledgementMessages) {
-            this.acknowledgmentMessages = acknowledgementMessages;
-        }
-        @Override
-        public String id() {
-            return id;
-        }
+    public static class AssertingLicenseState extends XPackLicenseState {
+        public final List<License.OperationMode> modeUpdates = new ArrayList<>();
+        public final List<Boolean> activeUpdates = new ArrayList<>();
 
         @Override
-        public String[] expirationMessages() {
-            expirationMessagesCalled.incrementAndGet();
-            return new String[0];
-        }
-
-        @Override
-        public String[] acknowledgmentMessages(License.OperationMode currentMode, License.OperationMode newMode) {
-            acknowledgementRequested.add(new Tuple<>(currentMode, newMode));
-            return acknowledgmentMessages;
-        }
-
-        @Override
-        public void onChange(Status status) {
-            assertNotNull(status);
-            statuses.add(status);
+        void update(License.OperationMode mode, boolean active) {
+            modeUpdates.add(mode);
+            activeUpdates.add(active);
         }
     }
 }

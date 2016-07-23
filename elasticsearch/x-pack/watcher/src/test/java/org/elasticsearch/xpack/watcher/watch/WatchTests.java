@@ -17,6 +17,14 @@
 
 package org.elasticsearch.xpack.watcher.watch;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.elasticsearch.ElasticsearchParseException;
 import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.logging.ESLogger;
@@ -28,6 +36,7 @@ import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.index.query.MatchAllQueryBuilder;
 import org.elasticsearch.index.query.QueryParser;
 import org.elasticsearch.indices.query.IndicesQueriesRegistry;
+import org.elasticsearch.license.plugin.core.XPackLicenseState;
 import org.elasticsearch.script.ScriptService;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.common.http.HttpClient;
@@ -47,7 +56,6 @@ import org.elasticsearch.xpack.notification.email.attachment.EmailAttachmentsPar
 import org.elasticsearch.xpack.support.clock.Clock;
 import org.elasticsearch.xpack.support.clock.ClockMock;
 import org.elasticsearch.xpack.support.clock.SystemClock;
-import org.elasticsearch.xpack.watcher.WatcherLicensee;
 import org.elasticsearch.xpack.watcher.actions.ActionFactory;
 import org.elasticsearch.xpack.watcher.actions.ActionRegistry;
 import org.elasticsearch.xpack.watcher.actions.ActionStatus;
@@ -129,14 +137,6 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.Before;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import static java.util.Collections.singleton;
 import static java.util.Collections.singletonMap;
 import static java.util.Collections.unmodifiableMap;
@@ -160,7 +160,7 @@ public class WatchTests extends ESTestCase {
     private TextTemplateEngine templateEngine;
     private HtmlSanitizer htmlSanitizer;
     private HttpAuthRegistry authRegistry;
-    private WatcherLicensee watcherLicensee;
+    private XPackLicenseState licenseState;
     private ESLogger logger;
     private Settings settings = Settings.EMPTY;
     private WatcherSearchTemplateService searchTemplateService;
@@ -173,7 +173,7 @@ public class WatchTests extends ESTestCase {
         emailService = mock(EmailService.class);
         templateEngine = mock(TextTemplateEngine.class);
         htmlSanitizer = mock(HtmlSanitizer.class);
-        watcherLicensee = mock(WatcherLicensee.class);
+        licenseState = mock(XPackLicenseState.class);
         authRegistry = new HttpAuthRegistry(singletonMap("basic", new BasicAuthFactory(null)));
         logger = Loggers.getLogger(WatchTests.class);
         searchTemplateService = mock(WatcherSearchTemplateService.class);
@@ -488,12 +488,12 @@ public class WatchTests extends ESTestCase {
                     break;
             }
         }
-        return new ActionRegistry(unmodifiableMap(parsers), transformRegistry, SystemClock.INSTANCE, watcherLicensee);
+        return new ActionRegistry(unmodifiableMap(parsers), transformRegistry, SystemClock.INSTANCE, licenseState);
     }
 
     private ActionThrottler randomThrottler() {
         return new ActionThrottler(SystemClock.INSTANCE, randomBoolean() ? null : TimeValue.timeValueMinutes(randomIntBetween(3, 5)),
-                watcherLicensee);
+                licenseState);
     }
 
     static class ParseOnlyScheduleTriggerEngine extends ScheduleTriggerEngine {

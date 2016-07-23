@@ -41,8 +41,6 @@ public class MonitoringModule extends AbstractModule {
             bind(MonitoringSettings.class).asEagerSingleton();
             bind(AgentService.class).asEagerSingleton();
             bind(CleanerService.class).asEagerSingleton();
-        } else if (transportClientMode) {
-            bind(MonitoringLicensee.class).toProvider(Providers.of(null));
         }
     }
 }
