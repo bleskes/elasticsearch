@@ -124,4 +124,20 @@ public class RecordsTest extends ServiceTest
         assertEquals(1, results.getHitCount());
         assertEquals(100, results.getTake());
     }
+
+    @Test
+    public void testRecords_GivenManyPages() throws UnknownJobException,
+            NativeProcessRunException
+    {
+        QueryPage<AnomalyRecord> queryResult = new QueryPage<>(Arrays.asList(new AnomalyRecord()), 3);
+
+        when(jobReader().records(JOB_ID, 0, 10, false, "normalizedProbability", true, 1000, 2000))
+                .thenReturn(queryResult);
+
+        Pagination<AnomalyRecord> results = m_Records.records(JOB_ID, 0, 10, "", "", false,
+                "normalizedProbability", true, 1000, 2000);
+        assertEquals(3, results.getHitCount());
+        assertEquals(10, results.getTake());
+    }
+
 }
