@@ -56,7 +56,6 @@ import com.prelert.job.DataDescription;
 import com.prelert.job.DataDescription.DataFormat;
 import com.prelert.job.Detector;
 import com.prelert.job.JobException;
-import com.prelert.job.UnknownJobException;
 import com.prelert.job.logging.JobLoggerFactory;
 import com.prelert.job.persistence.JobDataCountsPersister;
 import com.prelert.job.persistence.JobDataPersister;
@@ -87,11 +86,10 @@ public class DataFormatWarningsTest
      * Test writing csv data with unparseble dates throws a
      * HighProportionOfBadTimestampsException
      * @throws JobException
-     * @throws UnknownJobException
      */
     @Test
-    public void highProportionOfBadTimestampsCsvTest() throws JsonParseException,
-            IOException, UnknownJobException, JobException
+    public void highProportionOfBadTimestampsCsvTest()
+            throws JsonParseException, IOException, JobException
     {
         final String HEADER = "time,responsetime,sourcetype,airline\n";
         final String RECORD_TEMPLATE = "\"%s\",0.35,Farequote,AAL\n";
@@ -218,11 +216,10 @@ public class DataFormatWarningsTest
      * Test writing JSON data with unparseble dates throws a
      * HighProportionOfBadTimestampsException
      * @throws JobException
-     * @throws UnknownJobException
      */
     @Test
     public void highProportionOfBadTimestampsJsonTest() throws JsonParseException,
-            IOException, UnknownJobException, JobException
+            IOException, JobException
     {
         final String RECORD_TEMPLATE = "{\"time\":\"%s\","
                 + "\"responsetime\":0.35,"
@@ -345,10 +342,9 @@ public class DataFormatWarningsTest
     /**
      * Test writing CSV with out of order records should throw an exception
      * @throws JobException
-     * @throws UnknownJobException
      */
     @Test
-    public void OutOfOrderRecondsCsvTest() throws JsonParseException, IOException, UnknownJobException, JobException
+    public void OutOfOrderRecondsCsvTest() throws JsonParseException, IOException, JobException
     {
         final String HEADER = "time,responsetime,sourcetype,airline\n";
         final String RECORD_TEMPLATE = "\"%s\",0.35,Farequote,AAL\n";
@@ -464,10 +460,9 @@ public class DataFormatWarningsTest
     /**
      * Test writing JSON with out of order records should throw an exception
      * @throws JobException
-     * @throws UnknownJobException
      */
     @Test
-    public void outOfOrderRecordsJsonTest() throws JsonParseException, IOException, UnknownJobException, JobException
+    public void outOfOrderRecordsJsonTest() throws JsonParseException, IOException, JobException
     {
         final String RECORD_TEMPLATE = "{\"time\":\"%s\","
                 + "\"responsetime\":0.35,"

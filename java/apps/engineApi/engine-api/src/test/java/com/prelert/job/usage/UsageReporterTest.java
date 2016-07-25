@@ -36,13 +36,12 @@ import org.junit.Test;
 import org.mockito.Mockito;
 
 import com.prelert.job.JobException;
-import com.prelert.job.UnknownJobException;
 import com.prelert.job.persistence.UsagePersister;
 
 public class UsageReporterTest
 {
     @Test
-    public void testUpdatePeriod() throws UnknownJobException, JobException
+    public void testUpdatePeriod() throws JobException
     {
         // set the update interval to 1 secs
         System.setProperty(UsageReporter.UPDATE_INTERVAL_PROP, "1");

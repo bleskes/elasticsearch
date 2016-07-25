@@ -66,7 +66,7 @@ public class ElasticsearchUsagePersister implements UsagePersister
 
     @Override
     public void persistUsage(String jobId, long bytesRead, long fieldsRead, long recordsRead)
-            throws UnknownJobException, JobException
+            throws JobException
     {
         ZonedDateTime nowTruncatedToHour = ZonedDateTime.now().truncatedTo(ChronoUnit.HOURS);
         String formattedNowTruncatedToHour = nowTruncatedToHour.format(m_DateTimeFormatter);
@@ -90,11 +90,11 @@ public class ElasticsearchUsagePersister implements UsagePersister
      * @param additionalBytes Add this value to the running total
      * @param additionalFields Add this value to the running total
      * @param additionalRecords Add this value to the running total
-     * @throws JobException
      * @throws UnknownJobException
+     * @throws JobException
      */
     private void updateDocument(String index, String id,
-            long additionalBytes, long additionalFields, long additionalRecords) throws UnknownJobException, JobException
+            long additionalBytes, long additionalFields, long additionalRecords) throws JobException
     {
         m_UpsertMap.put(Usage.INPUT_BYTES, new Long(additionalBytes));
         m_UpsertMap.put(Usage.INPUT_FIELD_COUNT, new Long(additionalFields));
@@ -108,9 +108,9 @@ public class ElasticsearchUsagePersister implements UsagePersister
         try
         {
             ElasticsearchScripts.upsertViaScript(m_Client, index, Usage.TYPE, id,
-                        ElasticsearchScripts.newUpdateUsage(additionalBytes, additionalFields,
-                                additionalRecords),
-                        m_UpsertMap);
+                    ElasticsearchScripts.newUpdateUsage(additionalBytes, additionalFields,
+                            additionalRecords),
+                    m_UpsertMap);
         }
         catch (VersionConflictEngineException e)
         {

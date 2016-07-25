@@ -127,10 +127,20 @@ public final class ElasticsearchScripts
                 ScriptService.DEFAULT_LANG, scriptParams);
     }
 
-
-    public static boolean updateViaScript(Client client, String index, String type,
-                                        String docId, Script script)
-    throws UnknownJobException, JobException
+    /**
+     * Updates the specified document via executing a script
+     *
+     * @param client the Elasticsearch client
+     * @param index the index
+     * @param type the document type
+     * @param docId the document id
+     * @param script the script the performs the update
+     * @return {@code} true if successful, {@false) otherwise
+     * @throws UnknownJobException if no job does not exist
+     * @throws JobException if the update fails (e.g. the script does not exist)
+     */
+    public static boolean updateViaScript(Client client, String index, String type, String docId,
+            Script script) throws JobException
     {
         try
         {
@@ -149,9 +159,21 @@ public final class ElasticsearchScripts
         return true;
     }
 
-    public static boolean upsertViaScript(Client client, String index, String type,
-                                        String docId, Script script, Map<String, Object> upsertMap)
-    throws UnknownJobException, JobException
+    /**
+     * Upserts the specified document via executing a script
+     *
+     * @param client the Elasticsearch client
+     * @param index the index
+     * @param type the document type
+     * @param docId the document id
+     * @param script the script the performs the update
+     * @param upsertMap the doc source of the update request to be used when the document does not exists
+     * @return {@code} true if successful, {@false) otherwise
+     * @throws UnknownJobException if no job does not exist
+     * @throws JobException if the update fails (e.g. the script does not exist)
+     */
+    public static boolean upsertViaScript(Client client, String index, String type, String docId,
+            Script script, Map<String, Object> upsertMap) throws JobException
     {
         try
         {

@@ -32,9 +32,9 @@ public interface UsagePersister
      * @param bytesRead
      * @param fieldsRead
      * @param recordsRead
-     * @throws JobException IF there was an error persisting
      * @throws UnknownJobException The job cannot be found in the data store
+     * @throws JobException IF there was an error persisting
      */
     public void persistUsage(String jobId, long bytesRead, long fieldsRead, long recordsRead)
-            throws UnknownJobException, JobException;
+            throws JobException;
 }

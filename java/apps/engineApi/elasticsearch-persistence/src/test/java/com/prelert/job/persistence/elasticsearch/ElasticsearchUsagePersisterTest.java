@@ -29,6 +29,7 @@ package com.prelert.job.persistence.elasticsearch;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
@@ -52,14 +53,13 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
 import com.prelert.job.JobException;
-import com.prelert.job.UnknownJobException;
 import com.prelert.job.usage.Usage;
 
 public class ElasticsearchUsagePersisterTest
 {
     @SuppressWarnings("rawtypes")
     @Test
-    public void testPersistUsageCounts() throws ParseException, UnknownJobException, JobException
+    public void testPersistUsageCounts() throws ParseException, JobException
     {
         Client client = mock(Client.class);
         Logger logger = mock(Logger.class);
