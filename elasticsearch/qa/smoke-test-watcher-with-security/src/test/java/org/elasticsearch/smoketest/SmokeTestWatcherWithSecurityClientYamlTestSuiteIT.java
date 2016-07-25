@@ -22,30 +22,47 @@ import com.carrotsearch.randomizedtesting.annotations.ParametersFactory;
 
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.util.concurrent.ThreadContext;
-import org.elasticsearch.test.rest.ESClientYamlSuiteTestCase;
-import org.elasticsearch.test.rest.RestTestCandidate;
-import org.elasticsearch.test.rest.parser.RestTestParseException;
+import org.elasticsearch.test.rest.yaml.ClientYamlTestCandidate;
+import org.elasticsearch.test.rest.yaml.ESClientYamlSuiteTestCase;
+import org.elasticsearch.test.rest.yaml.parser.ClientYamlTestParseException;
 import org.elasticsearch.xpack.security.authc.support.SecuredString;
+import org.junit.After;
+import org.junit.Before;
 
 import java.io.IOException;
 
+import static java.util.Collections.emptyList;
+import static java.util.Collections.emptyMap;
 import static org.elasticsearch.xpack.security.authc.support.UsernamePasswordToken.basicAuthHeaderValue;
-import static org.hamcrest.Matchers.containsString;
 
-public class MonitoringWithSecurityInsufficientRoleIT extends ESClientYamlSuiteTestCase {
 
-    public MonitoringWithSecurityInsufficientRoleIT(@Name("yaml") RestTestCandidate testCandidate) {
+public class SmokeTestWatcherWithSecurityClientYamlTestSuiteIT extends ESClientYamlSuiteTestCase {
+
+    private static final String TEST_ADMIN_USERNAME = "test_admin";
+    private static final String TEST_ADMIN_PASSWORD = "changeme";
+
+    public SmokeTestWatcherWithSecurityClientYamlTestSuiteIT(@Name("yaml") ClientYamlTestCandidate testCandidate) {
         super(testCandidate);
     }
 
     @ParametersFactory
-    public static Iterable<Object[]> parameters() throws IOException, RestTestParseException {
+    public static Iterable<Object[]> parameters() throws IOException, ClientYamlTestParseException {
         return ESClientYamlSuiteTestCase.createParameters(0, 1);
+    }
+
+    @Before
+    public void startWatcher() throws Exception {
+        getAdminExecutionContext().callApi("xpack.watcher.start", emptyMap(), emptyList(), emptyMap());
+    }
+
+    @After
+    public void stopWatcher() throws Exception {
+        getAdminExecutionContext().callApi("xpack.watcher.stop", emptyMap(), emptyList(), emptyMap());
     }
 
     @Override
     protected Settings restClientSettings() {
-        String token = basicAuthHeaderValue("not_monitoring_system", new SecuredString("changeme".toCharArray()));
+        String token = basicAuthHeaderValue("watcher_manager", new SecuredString("changeme".toCharArray()));
         return Settings.builder()
                 .put(ThreadContext.PREFIX + ".Authorization", token)
                 .build();
@@ -53,22 +70,10 @@ public class MonitoringWithSecurityInsufficientRoleIT extends ESClientYamlSuiteT
 
     @Override
     protected Settings restAdminSettings() {
-        String token = basicAuthHeaderValue("test_admin", new SecuredString("changeme".toCharArray()));
+        String token = basicAuthHeaderValue(TEST_ADMIN_USERNAME, new SecuredString(TEST_ADMIN_PASSWORD.toCharArray()));
         return Settings.builder()
-                .put(ThreadContext.PREFIX + ".Authorization", token)
-                .build();
+            .put(ThreadContext.PREFIX + ".Authorization", token)
+            .build();
     }
-
-    @Override
-    public void test() throws IOException {
-        try {
-            super.test();
-            fail("should have failed because of missing role");
-        } catch(AssertionError ae) {
-            assertThat(ae.getMessage(), containsString("action [cluster:admin/xpack/monitoring/bulk]"));
-            assertThat(ae.getMessage(), containsString("returned [403 Forbidden]"));
-            assertThat(ae.getMessage(), containsString("is unauthorized for user [not_monitoring_system]"));
-        }
-    }
-
 }
+
