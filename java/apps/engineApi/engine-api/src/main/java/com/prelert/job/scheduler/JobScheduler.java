@@ -223,12 +223,10 @@ public class JobScheduler
     {
         // Only update last end time when:
         //   1. We have seen data, i.e. there is a non null latestRecordTimestamp
-        //   2. The scheduler is still running
-        //   3. There are no problems
-        //   4. We are in real-time mode
+        //   2. There are no problems
+        //   3. We are in real-time mode
         // in order to retry from the last time when data were successfully processed
         if (latestRecordTimestamp != null
-                && m_Status == JobSchedulerStatus.STARTED
                 && !m_ProblemTracker.hasProblems()
                 && isInRealTimeMode())
         {
