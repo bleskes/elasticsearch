@@ -21,7 +21,6 @@ import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.license.core.License.OperationMode;
 import org.elasticsearch.license.plugin.core.AbstractLicenseeComponent;
-import org.elasticsearch.license.plugin.core.LicenseState;
 
 public class GraphLicensee extends AbstractLicenseeComponent {
 
@@ -72,6 +71,6 @@ public class GraphLicensee extends AbstractLicenseeComponent {
 
         boolean licensed = operationMode == OperationMode.TRIAL || operationMode == OperationMode.PLATINUM;
 
-        return licensed && localStatus.getLicenseState() != LicenseState.DISABLED;
+        return licensed && localStatus.isActive();
     }
 }

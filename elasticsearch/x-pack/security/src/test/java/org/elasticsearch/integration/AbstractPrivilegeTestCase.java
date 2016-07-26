@@ -19,12 +19,12 @@ package org.elasticsearch.integration;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.StatusLine;
+import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.util.EntityUtils;
 import org.elasticsearch.client.Response;
 import org.elasticsearch.client.ResponseException;
-import org.elasticsearch.client.RestClient;
 import org.elasticsearch.test.SecurityIntegTestCase;
 import org.elasticsearch.xpack.security.authc.support.Hasher;
 import org.elasticsearch.xpack.security.authc.support.SecuredString;
@@ -48,14 +48,13 @@ public abstract class AbstractPrivilegeTestCase extends SecurityIntegTestCase {
 
     protected void assertAccessIsAllowed(String user, String method, String uri, String body,
                                          Map<String, String> params) throws IOException {
-        try (Response response = getRestClient().performRequest(method, uri, params, entityOrNull(body),
+        Response response = getRestClient().performRequest(method, uri, params, entityOrNull(body),
                 new BasicHeader(UsernamePasswordToken.BASIC_AUTH_HEADER,
-                        UsernamePasswordToken.basicAuthHeaderValue(user, new SecuredString("passwd".toCharArray()))))) {
-            StatusLine statusLine = response.getStatusLine();
-            String message = String.format(Locale.ROOT, "%s %s: Expected no error got %s %s with body %s", method, uri,
-                    statusLine.getStatusCode(), statusLine.getReasonPhrase(), EntityUtils.toString(response.getEntity()));
-            assertThat(message, statusLine.getStatusCode(), is(not(greaterThanOrEqualTo(400))));
-        }
+                        UsernamePasswordToken.basicAuthHeaderValue(user, new SecuredString("passwd".toCharArray()))));
+        StatusLine statusLine = response.getStatusLine();
+        String message = String.format(Locale.ROOT, "%s %s: Expected no error got %s %s with body %s", method, uri,
+                statusLine.getStatusCode(), statusLine.getReasonPhrase(), EntityUtils.toString(response.getEntity()));
+        assertThat(message, statusLine.getStatusCode(), is(not(greaterThanOrEqualTo(400))));
     }
 
     protected void assertAccessIsAllowed(String user, String method, String uri, String body) throws IOException {
@@ -84,7 +83,7 @@ public abstract class AbstractPrivilegeTestCase extends SecurityIntegTestCase {
         } catch(ResponseException e) {
             StatusLine statusLine = e.getResponse().getStatusLine();
             String message = String.format(Locale.ROOT, "%s %s body %s: Expected 403, got %s %s with body %s", method, uri, body,
-                    statusLine.getStatusCode(), statusLine.getReasonPhrase(), e.getResponseBody());
+                    statusLine.getStatusCode(), statusLine.getReasonPhrase(), EntityUtils.toString(e.getResponse().getEntity()));
             assertThat(message, statusLine.getStatusCode(), is(403));
         }
     }
@@ -92,7 +91,7 @@ public abstract class AbstractPrivilegeTestCase extends SecurityIntegTestCase {
     private static HttpEntity entityOrNull(String body) {
         HttpEntity entity = null;
         if (body != null) {
-            entity = new StringEntity(body, RestClient.JSON_CONTENT_TYPE);
+            entity = new StringEntity(body, ContentType.APPLICATION_JSON);
         }
         return entity;
     }

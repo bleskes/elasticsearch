@@ -107,7 +107,7 @@ public class TimeThrottleIntegrationTests extends AbstractWatcherIntegrationTest
             actionsCount = docCount("actions", "action", matchAllQuery());
             assertThat(actionsCount, is(2L));
 
-            long throttledCount = docCount(HistoryStore.INDEX_PREFIX + "*", null,
+            long throttledCount = docCount(HistoryStore.INDEX_PREFIX_WITH_TEMPLATE + "*", null,
                     matchQuery(WatchRecord.Field.STATE.getPreferredName(), ExecutionState.THROTTLED.id()));
             assertThat(throttledCount, is(1L));
 
@@ -131,7 +131,7 @@ public class TimeThrottleIntegrationTests extends AbstractWatcherIntegrationTest
                     long actionsCount = docCount("actions", "action", matchAllQuery());
                     assertThat(actionsCount, is(1L));
 
-                    long throttledCount = docCount(HistoryStore.INDEX_PREFIX + "*", null,
+                    long throttledCount = docCount(HistoryStore.INDEX_PREFIX_WITH_TEMPLATE + "*", null,
                             matchQuery(WatchRecord.Field.STATE.getPreferredName(), ExecutionState.THROTTLED.id()));
                     assertThat(throttledCount, greaterThanOrEqualTo(1L));
                 }
@@ -180,7 +180,7 @@ public class TimeThrottleIntegrationTests extends AbstractWatcherIntegrationTest
             actionsCount = docCount("actions", "action", matchAllQuery());
             assertThat(actionsCount, is(2L));
 
-            long throttledCount = docCount(HistoryStore.INDEX_PREFIX + "*", null,
+            long throttledCount = docCount(HistoryStore.INDEX_PREFIX_WITH_TEMPLATE + "*", null,
                     matchQuery(WatchRecord.Field.STATE.getPreferredName(), ExecutionState.THROTTLED.id()));
             assertThat(throttledCount, is(1L));
         }

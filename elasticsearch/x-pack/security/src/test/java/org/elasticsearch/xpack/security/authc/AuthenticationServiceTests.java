@@ -17,6 +17,10 @@
 
 package org.elasticsearch.xpack.security.authc;
 
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collections;
+
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.ElasticsearchSecurityException;
 import org.elasticsearch.common.io.stream.BytesStreamOutput;
@@ -24,33 +28,28 @@ import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.util.concurrent.ThreadContext;
 import org.elasticsearch.env.Environment;
-import org.elasticsearch.rest.RestController;
 import org.elasticsearch.rest.RestRequest;
-import org.elasticsearch.xpack.security.authc.Authentication.RealmRef;
-import org.elasticsearch.xpack.security.authc.InternalAuthenticationService.Authenticator;
-import org.elasticsearch.xpack.security.SecurityLicenseState.EnabledRealmType;
-import org.elasticsearch.xpack.security.user.AnonymousUser;
-import org.elasticsearch.xpack.security.user.SystemUser;
-import org.elasticsearch.xpack.security.user.User;
-import org.elasticsearch.xpack.security.audit.AuditTrail;
-import org.elasticsearch.xpack.security.authc.esnative.ReservedRealm;
-import org.elasticsearch.xpack.security.authc.support.SecuredString;
-import org.elasticsearch.xpack.security.authc.support.UsernamePasswordToken;
-import org.elasticsearch.xpack.security.crypto.CryptoService;
-import org.elasticsearch.xpack.security.SecurityLicenseState;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.test.rest.FakeRestRequest;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportMessage;
+import org.elasticsearch.xpack.security.SecurityLicenseState;
+import org.elasticsearch.xpack.security.SecurityLicenseState.EnabledRealmType;
+import org.elasticsearch.xpack.security.audit.AuditTrailService;
+import org.elasticsearch.xpack.security.authc.Authentication.RealmRef;
+import org.elasticsearch.xpack.security.authc.AuthenticationService.Authenticator;
+import org.elasticsearch.xpack.security.authc.esnative.ReservedRealm;
+import org.elasticsearch.xpack.security.authc.support.SecuredString;
+import org.elasticsearch.xpack.security.authc.support.UsernamePasswordToken;
+import org.elasticsearch.xpack.security.crypto.CryptoService;
+import org.elasticsearch.xpack.security.user.AnonymousUser;
+import org.elasticsearch.xpack.security.user.SystemUser;
+import org.elasticsearch.xpack.security.user.User;
 import org.junit.After;
 import org.junit.Before;
 
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collections;
-
-import static org.elasticsearch.xpack.security.support.Exceptions.authenticationError;
 import static org.elasticsearch.test.SecurityTestsUtils.assertAuthenticationException;
+import static org.elasticsearch.xpack.security.support.Exceptions.authenticationError;
 import static org.hamcrest.Matchers.arrayContaining;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
@@ -72,15 +71,15 @@ import static org.mockito.Mockito.when;
 /**
  *
  */
-public class InternalAuthenticationServiceTests extends ESTestCase {
+public class AuthenticationServiceTests extends ESTestCase {
 
-    InternalAuthenticationService service;
+    AuthenticationService service;
     TransportMessage message;
     RestRequest restRequest;
     Realms realms;
     Realm firstRealm;
     Realm secondRealm;
-    AuditTrail auditTrail;
+    AuditTrailService auditTrail;
     AuthenticationToken token;
     CryptoService cryptoService;
     ThreadPool threadPool;
@@ -117,12 +116,12 @@ public class InternalAuthenticationServiceTests extends ESTestCase {
         realms.start();
         cryptoService = mock(CryptoService.class);
 
-        auditTrail = mock(AuditTrail.class);
+        auditTrail = mock(AuditTrailService.class);
         threadPool = mock(ThreadPool.class);
         threadContext = new ThreadContext(Settings.EMPTY);
         when(threadPool.getThreadContext()).thenReturn(threadContext);
         when(cryptoService.sign(any(String.class))).thenReturn("_signed_auth");
-        service = new InternalAuthenticationService(settings, realms, auditTrail, cryptoService,
+        service = new AuthenticationService(settings, realms, auditTrail, cryptoService,
                 new DefaultAuthenticationFailureHandler(), threadPool);
     }
 
@@ -321,7 +320,7 @@ public class InternalAuthenticationServiceTests extends ESTestCase {
         InternalMessage message1 = new InternalMessage();
         ThreadContext threadContext1 = new ThreadContext(Settings.EMPTY);
         when(threadPool.getThreadContext()).thenReturn(threadContext1);
-        service = new InternalAuthenticationService(Settings.EMPTY, realms, auditTrail, cryptoService,
+        service = new AuthenticationService(Settings.EMPTY, realms, auditTrail, cryptoService,
                 new DefaultAuthenticationFailureHandler(), threadPool);
 
         threadContext1.putTransient(Authentication.AUTHENTICATION_KEY, threadContext.getTransient(Authentication.AUTHENTICATION_KEY));
@@ -335,7 +334,7 @@ public class InternalAuthenticationServiceTests extends ESTestCase {
         // checking authentication from the user header
         threadContext1 = new ThreadContext(Settings.EMPTY);
         when(threadPool.getThreadContext()).thenReturn(threadContext1);
-        service = new InternalAuthenticationService(Settings.EMPTY, realms, auditTrail, cryptoService,
+        service = new AuthenticationService(Settings.EMPTY, realms, auditTrail, cryptoService,
                 new DefaultAuthenticationFailureHandler(), threadPool);
         threadContext1.putHeader(Authentication.AUTHENTICATION_KEY, threadContext.getHeader(Authentication.AUTHENTICATION_KEY));
         when(cryptoService.unsignAndVerify("_signed_auth")).thenReturn(authentication.encode());
@@ -347,7 +346,7 @@ public class InternalAuthenticationServiceTests extends ESTestCase {
         threadContext1.readHeaders(input);
 
         when(threadPool.getThreadContext()).thenReturn(threadContext1);
-        service = new InternalAuthenticationService(Settings.EMPTY, realms, auditTrail, cryptoService,
+        service = new AuthenticationService(Settings.EMPTY, realms, auditTrail, cryptoService,
                 new DefaultAuthenticationFailureHandler(), threadPool);
         Authentication result = service.authenticate("_action", new InternalMessage(), SystemUser.INSTANCE);
         assertThat(result, notNullValue());
@@ -356,8 +355,8 @@ public class InternalAuthenticationServiceTests extends ESTestCase {
     }
 
     public void testAuthenticateTransportContextAndHeaderNoSigning() throws Exception {
-        Settings settings = Settings.builder().put(InternalAuthenticationService.SIGN_USER_HEADER.getKey(), false).build();
-        service = new InternalAuthenticationService(settings, realms, auditTrail, cryptoService,
+        Settings settings = Settings.builder().put(AuthenticationService.SIGN_USER_HEADER.getKey(), false).build();
+        service = new AuthenticationService(settings, realms, auditTrail, cryptoService,
                 new DefaultAuthenticationFailureHandler(), threadPool);
 
         User user1 = new User("username", "r1", "r2");
@@ -374,7 +373,7 @@ public class InternalAuthenticationServiceTests extends ESTestCase {
         InternalMessage message1 = new InternalMessage();
         ThreadContext threadContext1 = new ThreadContext(Settings.EMPTY);
         when(threadPool.getThreadContext()).thenReturn(threadContext1);
-        service = new InternalAuthenticationService(Settings.EMPTY, realms, auditTrail, cryptoService,
+        service = new AuthenticationService(Settings.EMPTY, realms, auditTrail, cryptoService,
                 new DefaultAuthenticationFailureHandler(), threadPool);
         threadContext1.putTransient(Authentication.AUTHENTICATION_KEY, threadContext.getTransient(Authentication.AUTHENTICATION_KEY));
         threadContext1.putHeader(Authentication.AUTHENTICATION_KEY, threadContext.getHeader(Authentication.AUTHENTICATION_KEY));
@@ -394,7 +393,7 @@ public class InternalAuthenticationServiceTests extends ESTestCase {
         threadContext1.readHeaders(input);
 
         when(threadPool.getThreadContext()).thenReturn(threadContext1);
-        service = new InternalAuthenticationService(settings, realms, auditTrail, cryptoService,
+        service = new AuthenticationService(settings, realms, auditTrail, cryptoService,
                 new DefaultAuthenticationFailureHandler(), threadPool);
         Authentication result = service.authenticate("_action", new InternalMessage(), SystemUser.INSTANCE);
         assertThat(result, notNullValue());
@@ -457,7 +456,7 @@ public class InternalAuthenticationServiceTests extends ESTestCase {
         }
         Settings settings = builder.build();
         AnonymousUser.initialize(settings);
-        service = new InternalAuthenticationService(settings, realms, auditTrail, cryptoService, new DefaultAuthenticationFailureHandler(),
+        service = new AuthenticationService(settings, realms, auditTrail, cryptoService, new DefaultAuthenticationFailureHandler(),
                 threadPool);
         RestRequest request = new FakeRestRequest();
 
@@ -473,7 +472,7 @@ public class InternalAuthenticationServiceTests extends ESTestCase {
                 .putArray(AnonymousUser.ROLES_SETTING.getKey(), "r1", "r2", "r3")
                 .build();
         AnonymousUser.initialize(settings);
-        service = new InternalAuthenticationService(settings, realms, auditTrail, cryptoService,
+        service = new AuthenticationService(settings, realms, auditTrail, cryptoService,
                 new DefaultAuthenticationFailureHandler(), threadPool);
         InternalMessage message = new InternalMessage();
 
@@ -488,7 +487,7 @@ public class InternalAuthenticationServiceTests extends ESTestCase {
                 .putArray(AnonymousUser.ROLES_SETTING.getKey(), "r1", "r2", "r3")
                 .build();
         AnonymousUser.initialize(settings);
-        service = new InternalAuthenticationService(settings, realms, auditTrail, cryptoService,
+        service = new AuthenticationService(settings, realms, auditTrail, cryptoService,
                 new DefaultAuthenticationFailureHandler(), threadPool);
 
         InternalMessage message = new InternalMessage();
@@ -577,7 +576,7 @@ public class InternalAuthenticationServiceTests extends ESTestCase {
 
     public void testRealmLookupThrowingException() throws Exception {
         AuthenticationToken token = mock(AuthenticationToken.class);
-        threadContext.putHeader(InternalAuthenticationService.RUN_AS_USER_HEADER, "run_as");
+        threadContext.putHeader(AuthenticationService.RUN_AS_USER_HEADER, "run_as");
         when(secondRealm.token(threadContext)).thenReturn(token);
         when(secondRealm.supports(token)).thenReturn(true);
         when(secondRealm.authenticate(token)).thenReturn(new User("lookup user", new String[]{"user"}));
@@ -595,7 +594,7 @@ public class InternalAuthenticationServiceTests extends ESTestCase {
 
     public void testRealmLookupThrowingExceptionRest() throws Exception {
         AuthenticationToken token = mock(AuthenticationToken.class);
-        threadContext.putHeader(InternalAuthenticationService.RUN_AS_USER_HEADER, "run_as");
+        threadContext.putHeader(AuthenticationService.RUN_AS_USER_HEADER, "run_as");
         when(secondRealm.token(threadContext)).thenReturn(token);
         when(secondRealm.supports(token)).thenReturn(true);
         when(secondRealm.authenticate(token)).thenReturn(new User("lookup user", new String[]{"user"}));
@@ -613,7 +612,7 @@ public class InternalAuthenticationServiceTests extends ESTestCase {
 
     public void testRunAsLookupSameRealm() throws Exception {
         AuthenticationToken token = mock(AuthenticationToken.class);
-        threadContext.putHeader(InternalAuthenticationService.RUN_AS_USER_HEADER, "run_as");
+        threadContext.putHeader(AuthenticationService.RUN_AS_USER_HEADER, "run_as");
         when(secondRealm.token(threadContext)).thenReturn(token);
         when(secondRealm.supports(token)).thenReturn(true);
         when(secondRealm.authenticate(token)).thenReturn(new User("lookup user", new String[]{"user"}));
@@ -640,7 +639,7 @@ public class InternalAuthenticationServiceTests extends ESTestCase {
 
     public void testRunAsLookupDifferentRealm() throws Exception {
         AuthenticationToken token = mock(AuthenticationToken.class);
-        threadContext.putHeader(InternalAuthenticationService.RUN_AS_USER_HEADER, "run_as");
+        threadContext.putHeader(AuthenticationService.RUN_AS_USER_HEADER, "run_as");
         when(secondRealm.token(threadContext)).thenReturn(token);
         when(secondRealm.supports(token)).thenReturn(true);
         when(secondRealm.authenticate(token)).thenReturn(new User("lookup user", new String[]{"user"}));
@@ -669,7 +668,7 @@ public class InternalAuthenticationServiceTests extends ESTestCase {
     public void testRunAsWithEmptyRunAsUsernameRest() throws Exception {
         AuthenticationToken token = mock(AuthenticationToken.class);
         User user = new User("lookup user", new String[]{"user"});
-        threadContext.putHeader(InternalAuthenticationService.RUN_AS_USER_HEADER, "");
+        threadContext.putHeader(AuthenticationService.RUN_AS_USER_HEADER, "");
         when(secondRealm.token(threadContext)).thenReturn(token);
         when(secondRealm.supports(token)).thenReturn(true);
         when(secondRealm.authenticate(token)).thenReturn(user);
@@ -687,7 +686,7 @@ public class InternalAuthenticationServiceTests extends ESTestCase {
     public void testRunAsWithEmptyRunAsUsername() throws Exception {
         AuthenticationToken token = mock(AuthenticationToken.class);
         User user = new User("lookup user", new String[]{"user"});
-        threadContext.putHeader(InternalAuthenticationService.RUN_AS_USER_HEADER, "");
+        threadContext.putHeader(AuthenticationService.RUN_AS_USER_HEADER, "");
         when(secondRealm.token(threadContext)).thenReturn(token);
         when(secondRealm.supports(token)).thenReturn(true);
         when(secondRealm.authenticate(token)).thenReturn(user);

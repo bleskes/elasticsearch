@@ -26,10 +26,8 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.env.Environment;
 import org.elasticsearch.license.core.License;
 import org.elasticsearch.license.plugin.Licensing;
-import org.elasticsearch.license.plugin.core.AbstractLicenseeComponent;
-import org.elasticsearch.license.plugin.core.LicenseState;
+import org.elasticsearch.license.plugin.core.LicenseService;
 import org.elasticsearch.license.plugin.core.Licensee;
-import org.elasticsearch.license.plugin.core.LicensesService;
 import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.rest.RestHandler;
 import org.elasticsearch.test.ESIntegTestCase.ClusterScope;
@@ -43,7 +41,6 @@ import org.elasticsearch.xpack.support.clock.Clock;
 import org.elasticsearch.xpack.watcher.WatcherLicensee;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -53,7 +50,6 @@ import static java.util.Collections.emptyList;
 import static org.elasticsearch.test.ESIntegTestCase.Scope.SUITE;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.isOneOf;
 
 @ClusterScope(scope = SUITE, transportClientRatio = 0, numClientNodes = 0)
 public class LicenseIntegrationTests extends MonitoringIntegTestCase {
@@ -70,15 +66,15 @@ public class LicenseIntegrationTests extends MonitoringIntegTestCase {
     }
 
     public void testEnableDisableLicense() {
-        assertThat(getLicensee().getStatus().getLicenseState(), isOneOf(LicenseState.ENABLED, LicenseState.GRACE_PERIOD));
+        assertTrue(getLicensee().getStatus().isActive());
         assertThat(getLicensee().collectionEnabled(), is(true));
         disableLicensing();
 
-        assertThat(getLicensee().getStatus().getLicenseState(), equalTo(LicenseState.DISABLED));
+        assertThat(getLicensee().getStatus().isActive(), equalTo(false));
         assertThat(getLicensee().collectionEnabled(), is(false));
         enableLicensing();
 
-        assertThat(getLicensee().getStatus().getLicenseState(), isOneOf(LicenseState.ENABLED, LicenseState.GRACE_PERIOD));
+        assertTrue(getLicensee().getStatus().isActive());
         assertThat(getLicensee().collectionEnabled(), is(true));
     }
 
@@ -108,7 +104,7 @@ public class LicenseIntegrationTests extends MonitoringIntegTestCase {
 
         @Override
         public Collection<Module> nodeModules() {
-            return Collections.singletonList(b -> b.bind(LicensesService.class).to(MockLicenseService.class));
+            return Collections.singletonList(b -> b.bind(LicenseService.class).to(MockLicenseService.class));
         }
 
         @Override
@@ -118,9 +114,9 @@ public class LicenseIntegrationTests extends MonitoringIntegTestCase {
             WatcherLicensee watcherLicensee = new WatcherLicensee(settings);
             MonitoringLicensee monitoringLicensee = new MonitoringLicensee(settings);
             GraphLicensee graphLicensee = new GraphLicensee(settings);
-            LicensesService licensesService = new MockLicenseService(settings, environment, resourceWatcherService,
+            LicenseService licenseService = new MockLicenseService(settings, environment, resourceWatcherService,
                     Arrays.asList(watcherLicensee, monitoringLicensee, graphLicensee));
-            return Arrays.asList(licensesService, watcherLicensee, monitoringLicensee, graphLicensee);
+            return Arrays.asList(licenseService, watcherLicensee, monitoringLicensee, graphLicensee);
         }
 
         @Override
@@ -134,7 +130,7 @@ public class LicenseIntegrationTests extends MonitoringIntegTestCase {
         }
     }
 
-    public static class MockLicenseService extends LicensesService {
+    public static class MockLicenseService extends LicenseService {
 
         private final List<Licensee> licensees;
 
@@ -148,19 +144,18 @@ public class LicenseIntegrationTests extends MonitoringIntegTestCase {
 
         public void enable() {
             for (Licensee licensee : licensees) {
-                licensee.onChange(new Licensee.Status(License.OperationMode.BASIC,
-                        randomBoolean() ? LicenseState.ENABLED : LicenseState.GRACE_PERIOD));
+                licensee.onChange(new Licensee.Status(License.OperationMode.BASIC, true));
             }
         }
 
         public void disable() {
             for (Licensee licensee : licensees) {
-                licensee.onChange(new Licensee.Status(License.OperationMode.BASIC, LicenseState.DISABLED));
+                licensee.onChange(new Licensee.Status(License.OperationMode.BASIC, false));
             }
         }
 
         @Override
-        public Licensee.Status licenseeStatus() {
+        public Licensee.Status licenseeStatus(License license) {
             return null;
         }
 

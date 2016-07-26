@@ -24,7 +24,6 @@ import org.elasticsearch.common.io.FileSystemUtils;
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.xpack.security.authc.AuthenticationModule;
 
 import java.io.IOException;
 import java.net.URL;
@@ -84,12 +83,6 @@ public class XPackExtensionsService {
             }
         }
         extensions = Collections.unmodifiableList(extensionsLoaded);
-    }
-
-    public void onModule(AuthenticationModule module) {
-        for (Tuple<XPackExtensionInfo, XPackExtension> tuple : extensions) {
-            tuple.v2().onModule(module);
-        }
     }
 
     public List<XPackExtension> getExtensions() {
