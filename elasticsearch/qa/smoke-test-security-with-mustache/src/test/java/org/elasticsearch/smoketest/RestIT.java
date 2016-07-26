@@ -1,8 +1,8 @@
 /*
  * ELASTICSEARCH CONFIDENTIAL
- * __________________
+ *  __________________
  *
- *  [2014] Elasticsearch Incorporated. All Rights Reserved.
+ * [2014] Elasticsearch Incorporated. All Rights Reserved.
  *
  * NOTICE:  All information contained herein is, and remains
  * the property of Elasticsearch Incorporated and its suppliers,
@@ -31,9 +31,11 @@ import java.io.IOException;
 
 import static org.elasticsearch.xpack.security.authc.support.UsernamePasswordToken.basicAuthHeaderValue;
 
-public class MonitoringWithSecurityIT extends ESClientYamlSuiteTestCase {
+public class RestIT extends ESClientYamlSuiteTestCase {
 
-    public MonitoringWithSecurityIT(@Name("yaml") RestTestCandidate testCandidate) {
+    private static final String BASIC_AUTH_VALUE = basicAuthHeaderValue("test_admin", new SecuredString("changeme".toCharArray()));
+
+    public RestIT(@Name("yaml") RestTestCandidate testCandidate) {
         super(testCandidate);
     }
 
@@ -44,17 +46,8 @@ public class MonitoringWithSecurityIT extends ESClientYamlSuiteTestCase {
 
     @Override
     protected Settings restClientSettings() {
-        String token = basicAuthHeaderValue("monitoring_system", new SecuredString("changeme".toCharArray()));
         return Settings.builder()
-                .put(ThreadContext.PREFIX + ".Authorization", token)
-                .build();
-    }
-
-    @Override
-    protected Settings restAdminSettings() {
-        String token = basicAuthHeaderValue("test_admin", new SecuredString("changeme".toCharArray()));
-        return Settings.builder()
-                .put(ThreadContext.PREFIX + ".Authorization", token)
+                .put(ThreadContext.PREFIX + ".Authorization", BASIC_AUTH_VALUE)
                 .build();
     }
 }
