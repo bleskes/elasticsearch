@@ -19,6 +19,7 @@ package org.elasticsearch.xpack.action;
 
 import org.elasticsearch.action.Action;
 import org.elasticsearch.client.ElasticsearchClient;
+import org.elasticsearch.license.XPackInfoResponse;
 
 /**
  *
