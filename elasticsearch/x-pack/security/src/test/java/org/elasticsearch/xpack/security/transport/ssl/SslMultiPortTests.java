@@ -23,10 +23,10 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.elasticsearch.common.transport.TransportAddress;
 import org.elasticsearch.xpack.security.Security;
-import org.elasticsearch.xpack.security.transport.netty.SecurityNettyTransport;
+import org.elasticsearch.xpack.security.transport.netty3.SecurityNetty3Transport;
 import org.elasticsearch.test.SecurityIntegTestCase;
 import org.elasticsearch.transport.Transport;
-import org.elasticsearch.xpack.XPackPlugin;
+import org.elasticsearch.xpack.XPackTransportClient;
 import org.junit.BeforeClass;
 
 import java.net.InetAddress;
@@ -116,9 +116,7 @@ public class SslMultiPortTests extends SecurityIntegTestCase {
                 .put("cluster.name", internalCluster().getClusterName())
                 .put(additionalSettings)
                 .build();
-        return TransportClient.builder().settings(settings)
-                .addPlugin(XPackPlugin.class)
-                .build();
+        return new XPackTransportClient(settings);
     }
 
     /**
@@ -248,10 +246,10 @@ public class SslMultiPortTests extends SecurityIntegTestCase {
     public void testThatTransportClientCanConnectToNoSslProfile() throws Exception {
         Settings settings = Settings.builder()
                 .put(Security.USER_SETTING.getKey(), DEFAULT_USER_NAME + ":" + DEFAULT_PASSWORD)
-                .put(SecurityNettyTransport.SSL_SETTING.getKey(), false)
+                .put(SecurityNetty3Transport.SSL_SETTING.getKey(), false)
                 .put("cluster.name", internalCluster().getClusterName())
                 .build();
-        try (TransportClient transportClient = TransportClient.builder().settings(settings).addPlugin(XPackPlugin.class).build()) {
+        try (TransportClient transportClient = new XPackTransportClient(settings)) {
             transportClient.addTransportAddress(new InetSocketTransportAddress(InetAddress.getLoopbackAddress(), getProfilePort("no_ssl")));
             assertGreenClusterState(transportClient);
         }
@@ -266,7 +264,7 @@ public class SslMultiPortTests extends SecurityIntegTestCase {
                 .put(Security.USER_SETTING.getKey(), DEFAULT_USER_NAME + ":" + DEFAULT_PASSWORD)
                 .put("cluster.name", internalCluster().getClusterName())
                 .build();
-        try (TransportClient transportClient = TransportClient.builder().addPlugin(XPackPlugin.class).settings(settings).build()) {
+        try (TransportClient transportClient = new XPackTransportClient(settings)) {
             transportClient.addTransportAddress(randomFrom(internalCluster().getInstance(Transport.class).boundAddress().boundAddresses()));
             assertGreenClusterState(transportClient);
             fail("Expected NoNodeAvailableException");
@@ -284,7 +282,7 @@ public class SslMultiPortTests extends SecurityIntegTestCase {
                 .put(Security.USER_SETTING.getKey(), DEFAULT_USER_NAME + ":" + DEFAULT_PASSWORD)
                 .put("cluster.name", internalCluster().getClusterName())
                 .build();
-        try (TransportClient transportClient = TransportClient.builder().addPlugin(XPackPlugin.class).settings(settings).build()) {
+        try (TransportClient transportClient = new XPackTransportClient(settings)) {
             transportClient.addTransportAddress(new InetSocketTransportAddress(InetAddress.getLoopbackAddress(), getProfilePort("client")));
             assertGreenClusterState(transportClient);
             fail("Expected NoNodeAvailableException");
@@ -302,7 +300,7 @@ public class SslMultiPortTests extends SecurityIntegTestCase {
                 .put(Security.USER_SETTING.getKey(), DEFAULT_USER_NAME + ":" + DEFAULT_PASSWORD)
                 .put("cluster.name", internalCluster().getClusterName())
                 .build();
-        try (TransportClient transportClient = TransportClient.builder().addPlugin(XPackPlugin.class).settings(settings).build()) {
+        try (TransportClient transportClient = new XPackTransportClient(settings)) {
             transportClient.addTransportAddress(new InetSocketTransportAddress(InetAddress.getLoopbackAddress(),
                     getProfilePort("no_client_auth")));
             assertGreenClusterState(transportClient);
@@ -321,12 +319,12 @@ public class SslMultiPortTests extends SecurityIntegTestCase {
         Settings settings = Settings.builder()
                 .put(Security.USER_SETTING.getKey(), DEFAULT_USER_NAME + ":" + DEFAULT_PASSWORD)
                 .put("cluster.name", internalCluster().getClusterName())
-                .put(SecurityNettyTransport.SSL_SETTING.getKey(), true)
+                .put(SecurityNetty3Transport.SSL_SETTING.getKey(), true)
                 .put("xpack.security.ssl.truststore.path",
                         getDataPath("/org/elasticsearch/xpack/security/transport/ssl/certs/simple/truststore-testnode-only.jks"))
                 .put("xpack.security.ssl.truststore.password", "truststore-testnode-only")
                 .build();
-        try (TransportClient transportClient = TransportClient.builder().settings(settings).addPlugin(XPackPlugin.class).build()) {
+        try (TransportClient transportClient = new XPackTransportClient(settings)) {
             transportClient.addTransportAddress(new InetSocketTransportAddress(InetAddress.getLoopbackAddress(),
                     getProfilePort("no_client_auth")));
             assertGreenClusterState(transportClient);
@@ -343,12 +341,12 @@ public class SslMultiPortTests extends SecurityIntegTestCase {
         Settings settings = Settings.builder()
                 .put(Security.USER_SETTING.getKey(), DEFAULT_USER_NAME + ":" + DEFAULT_PASSWORD)
                 .put("cluster.name", internalCluster().getClusterName())
-                .put(SecurityNettyTransport.SSL_SETTING.getKey(), true)
+                .put(SecurityNetty3Transport.SSL_SETTING.getKey(), true)
                 .put("xpack.security.ssl.truststore.path",
                         getDataPath("/org/elasticsearch/xpack/security/transport/ssl/certs/simple/truststore-testnode-only.jks"))
                 .put("xpack.security.ssl.truststore.password", "truststore-testnode-only")
                 .build();
-        try (TransportClient transportClient = TransportClient.builder().addPlugin(XPackPlugin.class).settings(settings).build()) {
+        try (TransportClient transportClient = new XPackTransportClient(settings)) {
             transportClient.addTransportAddress(new InetSocketTransportAddress(InetAddress.getLoopbackAddress(), getProfilePort("client")));
             assertGreenClusterState(transportClient);
             fail("Expected NoNodeAvailableException");
@@ -367,12 +365,12 @@ public class SslMultiPortTests extends SecurityIntegTestCase {
         Settings settings = Settings.builder()
                 .put(Security.USER_SETTING.getKey(), DEFAULT_USER_NAME + ":" + DEFAULT_PASSWORD)
                 .put("cluster.name", internalCluster().getClusterName())
-                .put(SecurityNettyTransport.SSL_SETTING.getKey(), true)
+                .put(SecurityNetty3Transport.SSL_SETTING.getKey(), true)
                 .put("xpack.security.ssl.truststore.path",
                         getDataPath("/org/elasticsearch/xpack/security/transport/ssl/certs/simple/truststore-testnode-only.jks"))
                 .put("xpack.security.ssl.truststore.password", "truststore-testnode-only")
                 .build();
-        try (TransportClient transportClient = TransportClient.builder().addPlugin(XPackPlugin.class).settings(settings).build()) {
+        try (TransportClient transportClient = new XPackTransportClient(settings)) {
             transportClient.addTransportAddress(randomFrom(internalCluster().getInstance(Transport.class).boundAddress().boundAddresses()));
                     assertGreenClusterState(transportClient);
             fail("Expected NoNodeAvailableException");
@@ -390,12 +388,12 @@ public class SslMultiPortTests extends SecurityIntegTestCase {
         Settings settings = Settings.builder()
                 .put(Security.USER_SETTING.getKey(), DEFAULT_USER_NAME + ":" + DEFAULT_PASSWORD)
                 .put("cluster.name", internalCluster().getClusterName())
-                .put(SecurityNettyTransport.SSL_SETTING.getKey(), true)
+                .put(SecurityNetty3Transport.SSL_SETTING.getKey(), true)
                 .put("xpack.security.ssl.truststore.path",
                         getDataPath("/org/elasticsearch/xpack/security/transport/ssl/certs/simple/truststore-testnode-only.jks"))
                 .put("xpack.security.ssl.truststore.password", "truststore-testnode-only")
                 .build();
-        try (TransportClient transportClient = TransportClient.builder().addPlugin(XPackPlugin.class).settings(settings).build()) {
+        try (TransportClient transportClient = new XPackTransportClient(settings)) {
             transportClient.addTransportAddress(new InetSocketTransportAddress(InetAddress.getLoopbackAddress(), getProfilePort("no_ssl")));
             assertGreenClusterState(transportClient);
             fail("Expected NoNodeAvailableException");
@@ -413,9 +411,9 @@ public class SslMultiPortTests extends SecurityIntegTestCase {
         Settings settings = Settings.builder()
                 .put(Security.USER_SETTING.getKey(), DEFAULT_USER_NAME + ":" + DEFAULT_PASSWORD)
                 .put("cluster.name", internalCluster().getClusterName())
-                .put(SecurityNettyTransport.SSL_SETTING.getKey(), true)
+                .put(SecurityNetty3Transport.SSL_SETTING.getKey(), true)
                 .build();
-        try (TransportClient transportClient = TransportClient.builder().addPlugin(XPackPlugin.class).settings(settings).build()) {
+        try (TransportClient transportClient = new XPackTransportClient(settings)) {
             transportClient.addTransportAddress(randomFrom(internalCluster().getInstance(Transport.class).boundAddress().boundAddresses()));
             assertGreenClusterState(transportClient);
             fail("Expected NoNodeAvailableException");
@@ -433,9 +431,9 @@ public class SslMultiPortTests extends SecurityIntegTestCase {
         Settings settings = Settings.builder()
                 .put(Security.USER_SETTING.getKey(), DEFAULT_USER_NAME + ":" + DEFAULT_PASSWORD)
                 .put("cluster.name", internalCluster().getClusterName())
-                .put(SecurityNettyTransport.SSL_SETTING.getKey(), true)
+                .put(SecurityNetty3Transport.SSL_SETTING.getKey(), true)
                 .build();
-        try (TransportClient transportClient = TransportClient.builder().addPlugin(XPackPlugin.class).settings(settings).build()) {
+        try (TransportClient transportClient = new XPackTransportClient(settings)) {
             transportClient.addTransportAddress(new InetSocketTransportAddress(InetAddress.getLoopbackAddress(), getProfilePort("client")));
             assertGreenClusterState(transportClient);
             fail("Expected NoNodeAvailableException");
@@ -453,9 +451,9 @@ public class SslMultiPortTests extends SecurityIntegTestCase {
         Settings settings = Settings.builder()
                 .put(Security.USER_SETTING.getKey(), DEFAULT_USER_NAME + ":" + DEFAULT_PASSWORD)
                 .put("cluster.name", internalCluster().getClusterName())
-                .put(SecurityNettyTransport.SSL_SETTING.getKey(), true)
+                .put(SecurityNetty3Transport.SSL_SETTING.getKey(), true)
                 .build();
-        try (TransportClient transportClient = TransportClient.builder().addPlugin(XPackPlugin.class).settings(settings).build()) {
+        try (TransportClient transportClient = new XPackTransportClient(settings)) {
             transportClient.addTransportAddress(new InetSocketTransportAddress(InetAddress.getLoopbackAddress(),
                     getProfilePort("no_client_auth")));
             assertGreenClusterState(transportClient);
@@ -474,9 +472,9 @@ public class SslMultiPortTests extends SecurityIntegTestCase {
         Settings settings = Settings.builder()
                 .put(Security.USER_SETTING.getKey(), DEFAULT_USER_NAME + ":" + DEFAULT_PASSWORD)
                 .put("cluster.name", internalCluster().getClusterName())
-                .put(SecurityNettyTransport.SSL_SETTING.getKey(), true)
+                .put(SecurityNetty3Transport.SSL_SETTING.getKey(), true)
                 .build();
-        try (TransportClient transportClient = TransportClient.builder().addPlugin(XPackPlugin.class).settings(settings).build()) {
+        try (TransportClient transportClient = new XPackTransportClient(settings)) {
             transportClient.addTransportAddress(new InetSocketTransportAddress(InetAddress.getLoopbackAddress(), getProfilePort("no_ssl")));
             assertGreenClusterState(transportClient);
             fail("Expected NoNodeAvailableException");

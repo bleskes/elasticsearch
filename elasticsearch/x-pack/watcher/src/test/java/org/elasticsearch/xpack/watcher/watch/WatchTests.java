@@ -17,6 +17,14 @@
 
 package org.elasticsearch.xpack.watcher.watch;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.elasticsearch.ElasticsearchParseException;
 import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.logging.ESLogger;
@@ -28,8 +36,9 @@ import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.index.query.MatchAllQueryBuilder;
 import org.elasticsearch.index.query.QueryParser;
 import org.elasticsearch.indices.query.IndicesQueriesRegistry;
+import org.elasticsearch.license.XPackLicenseState;
+import org.elasticsearch.script.ScriptService;
 import org.elasticsearch.test.ESTestCase;
-import org.elasticsearch.xpack.common.ScriptServiceProxy;
 import org.elasticsearch.xpack.common.http.HttpClient;
 import org.elasticsearch.xpack.common.http.HttpMethod;
 import org.elasticsearch.xpack.common.http.HttpRequestTemplate;
@@ -47,7 +56,6 @@ import org.elasticsearch.xpack.notification.email.attachment.EmailAttachmentsPar
 import org.elasticsearch.xpack.support.clock.Clock;
 import org.elasticsearch.xpack.support.clock.ClockMock;
 import org.elasticsearch.xpack.support.clock.SystemClock;
-import org.elasticsearch.xpack.watcher.WatcherLicensee;
 import org.elasticsearch.xpack.watcher.actions.ActionFactory;
 import org.elasticsearch.xpack.watcher.actions.ActionRegistry;
 import org.elasticsearch.xpack.watcher.actions.ActionStatus;
@@ -90,7 +98,7 @@ import org.elasticsearch.xpack.watcher.input.search.SearchInputFactory;
 import org.elasticsearch.xpack.watcher.input.simple.ExecutableSimpleInput;
 import org.elasticsearch.xpack.watcher.input.simple.SimpleInput;
 import org.elasticsearch.xpack.watcher.input.simple.SimpleInputFactory;
-import org.elasticsearch.xpack.watcher.support.Script;
+import org.elasticsearch.xpack.watcher.support.WatcherScript;
 import org.elasticsearch.xpack.watcher.support.init.proxy.WatcherClientProxy;
 import org.elasticsearch.xpack.watcher.support.search.WatcherSearchTemplateRequest;
 import org.elasticsearch.xpack.watcher.support.search.WatcherSearchTemplateService;
@@ -129,14 +137,6 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.Before;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import static java.util.Collections.singleton;
 import static java.util.Collections.singletonMap;
 import static java.util.Collections.unmodifiableMap;
@@ -153,27 +153,27 @@ import static org.joda.time.DateTimeZone.UTC;
 import static org.mockito.Mockito.mock;
 
 public class WatchTests extends ESTestCase {
-    private ScriptServiceProxy scriptService;
+    private ScriptService scriptService;
     private WatcherClientProxy client;
     private HttpClient httpClient;
     private EmailService emailService;
     private TextTemplateEngine templateEngine;
     private HtmlSanitizer htmlSanitizer;
     private HttpAuthRegistry authRegistry;
-    private WatcherLicensee watcherLicensee;
+    private XPackLicenseState licenseState;
     private ESLogger logger;
     private Settings settings = Settings.EMPTY;
     private WatcherSearchTemplateService searchTemplateService;
 
     @Before
     public void init() throws Exception {
-        scriptService = mock(ScriptServiceProxy.class);
+        scriptService = mock(ScriptService.class);
         client = mock(WatcherClientProxy.class);
         httpClient = mock(HttpClient.class);
         emailService = mock(EmailService.class);
         templateEngine = mock(TextTemplateEngine.class);
         htmlSanitizer = mock(HtmlSanitizer.class);
-        watcherLicensee = mock(WatcherLicensee.class);
+        licenseState = mock(XPackLicenseState.class);
         authRegistry = new HttpAuthRegistry(singletonMap("basic", new BasicAuthFactory(null)));
         logger = Loggers.getLogger(WatchTests.class);
         searchTemplateService = mock(WatcherSearchTemplateService.class);
@@ -362,7 +362,7 @@ public class WatchTests extends ESTestCase {
             case SearchInput.TYPE:
                 IndicesQueriesRegistry queryRegistry = new IndicesQueriesRegistry();
                 QueryParser<MatchAllQueryBuilder> queryParser = MatchAllQueryBuilder::fromXContent;
-                queryRegistry.register(queryParser, MatchAllQueryBuilder.QUERY_NAME_FIELD);
+                queryRegistry.register(queryParser, MatchAllQueryBuilder.NAME);
                 parsers.put(SearchInput.TYPE, new SearchInputFactory(settings, client, queryRegistry, null, null, scriptService));
                 return new InputRegistry(Settings.EMPTY, parsers);
             default:
@@ -375,7 +375,7 @@ public class WatchTests extends ESTestCase {
         String type = randomFrom(ScriptCondition.TYPE, AlwaysCondition.TYPE, CompareCondition.TYPE, ArrayCompareCondition.TYPE);
         switch (type) {
             case ScriptCondition.TYPE:
-                return new ExecutableScriptCondition(new ScriptCondition(Script.inline("_script").build()), logger, scriptService);
+                return new ExecutableScriptCondition(new ScriptCondition(WatcherScript.inline("_script").build()), logger, scriptService);
             case CompareCondition.TYPE:
                 return new ExecutableCompareCondition(new CompareCondition("_path", randomFrom(Op.values()), randomFrom(5, "3")), logger,
                         SystemClock.INSTANCE);
@@ -412,7 +412,7 @@ public class WatchTests extends ESTestCase {
         DateTimeZone timeZone = randomBoolean() ? DateTimeZone.UTC : null;
         switch (type) {
             case ScriptTransform.TYPE:
-                return new ExecutableScriptTransform(new ScriptTransform(Script.inline("_script").build()), logger, scriptService);
+                return new ExecutableScriptTransform(new ScriptTransform(WatcherScript.inline("_script").build()), logger, scriptService);
             case SearchTransform.TYPE:
                 SearchTransform transform = new SearchTransform(
                         new WatcherSearchTemplateRequest(matchAllRequest(DEFAULT_INDICES_OPTIONS), null), timeout, timeZone);
@@ -420,21 +420,22 @@ public class WatchTests extends ESTestCase {
             default: // chain
                 SearchTransform searchTransform = new SearchTransform(
                         new WatcherSearchTemplateRequest(matchAllRequest(DEFAULT_INDICES_OPTIONS), null), timeout, timeZone);
-                ScriptTransform scriptTransform = new ScriptTransform(Script.inline("_script").build());
+                ScriptTransform scriptTransform = new ScriptTransform(WatcherScript.inline("_script").build());
 
                 ChainTransform chainTransform = new ChainTransform(Arrays.asList(searchTransform, scriptTransform));
                 return new ExecutableChainTransform(chainTransform, logger, Arrays.<ExecutableTransform>asList(
                         new ExecutableSearchTransform(new SearchTransform(
                                 new WatcherSearchTemplateRequest(matchAllRequest(DEFAULT_INDICES_OPTIONS), null), timeout, timeZone),
                                 logger, client, searchTemplateService, null),
-                        new ExecutableScriptTransform(new ScriptTransform(Script.inline("_script").build()), logger, scriptService)));
+                        new ExecutableScriptTransform(new ScriptTransform(WatcherScript.inline("_script").build()),
+                            logger, scriptService)));
         }
     }
 
     private TransformRegistry transformRegistry() {
         IndicesQueriesRegistry queryRegistry = new IndicesQueriesRegistry();
         QueryParser<MatchAllQueryBuilder> queryParser = MatchAllQueryBuilder::fromXContent;
-        queryRegistry.register(queryParser, MatchAllQueryBuilder.QUERY_NAME_FIELD);
+        queryRegistry.register(queryParser, MatchAllQueryBuilder.NAME);
         Map<String, TransformFactory> factories = new HashMap<>();
         factories.put(ScriptTransform.TYPE, new ScriptTransformFactory(settings, scriptService));
         factories.put(SearchTransform.TYPE, new SearchTransformFactory(settings, client, queryRegistry, null, null, scriptService));
@@ -487,12 +488,12 @@ public class WatchTests extends ESTestCase {
                     break;
             }
         }
-        return new ActionRegistry(unmodifiableMap(parsers), transformRegistry, SystemClock.INSTANCE, watcherLicensee);
+        return new ActionRegistry(unmodifiableMap(parsers), transformRegistry, SystemClock.INSTANCE, licenseState);
     }
 
     private ActionThrottler randomThrottler() {
         return new ActionThrottler(SystemClock.INSTANCE, randomBoolean() ? null : TimeValue.timeValueMinutes(randomIntBetween(3, 5)),
-                watcherLicensee);
+                licenseState);
     }
 
     static class ParseOnlyScheduleTriggerEngine extends ScheduleTriggerEngine {

@@ -1,20 +1,18 @@
 /*
- * Licensed to Elasticsearch under one or more contributor
- * license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright
- * ownership. Elasticsearch licenses this file to you under
- * the Apache License, Version 2.0 (the "License"); you may
- * not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * ELASTICSEARCH CONFIDENTIAL
+ *  __________________
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ * [2014] Elasticsearch Incorporated. All Rights Reserved.
  *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on an
- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- * KIND, either express or implied.  See the License for the
- * specific language governing permissions and limitations
- * under the License.
+ * NOTICE:  All information contained herein is, and remains
+ * the property of Elasticsearch Incorporated and its suppliers,
+ * if any.  The intellectual and technical concepts contained
+ * herein are proprietary to Elasticsearch Incorporated
+ * and its suppliers and may be covered by U.S. and Foreign Patents,
+ * patents in process, and are protected by trade secret or copyright law.
+ * Dissemination of this information or reproduction of this material
+ * is strictly forbidden unless prior written permission is obtained
+ * from Elasticsearch Incorporated.
  */
 
 package org.elasticsearch.xpack.watcher.support.search;
@@ -34,7 +32,7 @@ import org.elasticsearch.index.query.QueryParseContext;
 import org.elasticsearch.search.aggregations.AggregatorParsers;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.suggest.Suggesters;
-import org.elasticsearch.xpack.watcher.support.Script;
+import org.elasticsearch.xpack.watcher.support.WatcherScript;
 import org.elasticsearch.xpack.watcher.support.SearchRequestEquivalence;
 
 import java.io.IOException;
@@ -50,9 +48,9 @@ import java.util.Objects;
 public class WatcherSearchTemplateRequest implements ToXContent {
 
     private final SearchRequest request;
-    @Nullable private final Script template;
+    @Nullable private final WatcherScript template;
 
-    public WatcherSearchTemplateRequest(SearchRequest searchRequest, @Nullable Script template) {
+    public WatcherSearchTemplateRequest(SearchRequest searchRequest, @Nullable WatcherScript template) {
         this.request = Objects.requireNonNull(searchRequest);
         this.template = template;
     }
@@ -65,7 +63,7 @@ public class WatcherSearchTemplateRequest implements ToXContent {
         return request;
     }
 
-    public Script getTemplate() {
+    public WatcherScript getTemplate() {
         return template;
     }
 
@@ -119,7 +117,7 @@ public class WatcherSearchTemplateRequest implements ToXContent {
             throws IOException {
         IndicesOptions indicesOptions = DEFAULT_INDICES_OPTIONS;
         SearchRequest searchRequest = new SearchRequest();
-        Script template = null;
+        WatcherScript template = null;
 
         XContentParser.Token token;
         String currentFieldName = null;
@@ -204,7 +202,7 @@ public class WatcherSearchTemplateRequest implements ToXContent {
                     indicesOptions = IndicesOptions.fromOptions(ignoreUnavailable, allowNoIndices, expandOpen, expandClosed,
                             DEFAULT_INDICES_OPTIONS);
                 } else if (ParseFieldMatcher.STRICT.match(currentFieldName, TEMPLATE_FIELD)) {
-                    template = Script.parse(parser);
+                    template = WatcherScript.parse(parser);
                 } else {
                     throw new ElasticsearchParseException("could not read search request. unexpected object field [" +
                             currentFieldName + "]");

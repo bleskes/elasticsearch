@@ -20,16 +20,17 @@ package org.elasticsearch.xpack.security;
 import org.elasticsearch.common.collect.MapBuilder;
 import org.elasticsearch.common.io.stream.NamedWriteableRegistry;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.license.XPackLicenseState;
+import org.elasticsearch.test.ESTestCase;
+import org.elasticsearch.xpack.XPackFeatureSet;
 import org.elasticsearch.xpack.security.audit.AuditTrailService;
 import org.elasticsearch.xpack.security.authc.Realm;
 import org.elasticsearch.xpack.security.authc.Realms;
-import org.elasticsearch.test.ESTestCase;
-import org.elasticsearch.xpack.XPackFeatureSet;
-import org.elasticsearch.xpack.security.authz.store.RolesStore;
+import org.elasticsearch.xpack.security.authz.store.CompositeRolesStore;
 import org.elasticsearch.xpack.security.crypto.CryptoService;
 import org.elasticsearch.xpack.security.transport.filter.IPFilter;
-import org.elasticsearch.xpack.security.transport.netty.SecurityNettyHttpServerTransport;
-import org.elasticsearch.xpack.security.transport.netty.SecurityNettyTransport;
+import org.elasticsearch.xpack.security.transport.netty3.SecurityNetty3HttpServerTransport;
+import org.elasticsearch.xpack.security.transport.netty3.SecurityNetty3Transport;
 import org.elasticsearch.xpack.watcher.support.xcontent.XContentSource;
 import org.junit.Before;
 
@@ -49,28 +50,25 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-/**
- *
- */
 public class SecurityFeatureSetTests extends ESTestCase {
 
     private Settings settings;
-    private SecurityLicenseState licenseState;
+    private XPackLicenseState licenseState;
     private Realms realms;
     private NamedWriteableRegistry namedWriteableRegistry;
     private IPFilter ipFilter;
-    private RolesStore rolesStore;
+    private CompositeRolesStore rolesStore;
     private AuditTrailService auditTrail;
     private CryptoService cryptoService;
 
     @Before
     public void init() throws Exception {
         settings = Settings.builder().put("path.home", createTempDir()).build();
-        licenseState = mock(SecurityLicenseState.class);
+        licenseState = mock(XPackLicenseState.class);
         realms = mock(Realms.class);
         namedWriteableRegistry = mock(NamedWriteableRegistry.class);
         ipFilter = mock(IPFilter.class);
-        rolesStore = mock(RolesStore.class);
+        rolesStore = mock(CompositeRolesStore.class);
         auditTrail = mock(AuditTrailService.class);
         cryptoService = mock(CryptoService.class);
     }
@@ -84,7 +82,7 @@ public class SecurityFeatureSetTests extends ESTestCase {
         SecurityFeatureSet featureSet = new SecurityFeatureSet(settings, licenseState, realms, namedWriteableRegistry, rolesStore,
                 ipFilter, auditTrail, cryptoService);
         boolean available = randomBoolean();
-        when(licenseState.authenticationAndAuthorizationEnabled()).thenReturn(available);
+        when(licenseState.isAuthAllowed()).thenReturn(available);
         assertThat(featureSet.available(), is(available));
     }
 
@@ -120,7 +118,7 @@ public class SecurityFeatureSetTests extends ESTestCase {
     public void testUsage() throws Exception {
 
         boolean authcAuthzAvailable = randomBoolean();
-        when(licenseState.authenticationAndAuthorizationEnabled()).thenReturn(authcAuthzAvailable);
+        when(licenseState.isAuthAllowed()).thenReturn(authcAuthzAvailable);
 
         Settings.Builder settings = Settings.builder().put(this.settings);
 
@@ -128,9 +126,9 @@ public class SecurityFeatureSetTests extends ESTestCase {
         settings.put("xpack.security.enabled", enabled);
 
         final boolean httpSSLEnabled = randomBoolean();
-        settings.put(SecurityNettyHttpServerTransport.SSL_SETTING.getKey(), httpSSLEnabled);
+        settings.put(SecurityNetty3HttpServerTransport.SSL_SETTING.getKey(), httpSSLEnabled);
         final boolean transportSSLEnabled = randomBoolean();
-        settings.put(SecurityNettyTransport.SSL_SETTING.getKey(), transportSSLEnabled);
+        settings.put(SecurityNetty3Transport.SSL_SETTING.getKey(), transportSSLEnabled);
         final boolean auditingEnabled = randomBoolean();
         final String[] auditOutputs = randomFrom(new String[] {"logfile"}, new String[] {"index"}, new String[] {"logfile", "index"});
         when(auditTrail.usageStats())

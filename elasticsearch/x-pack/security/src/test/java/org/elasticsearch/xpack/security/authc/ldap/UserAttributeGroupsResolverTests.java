@@ -38,7 +38,7 @@ public class UserAttributeGroupsResolverTests extends GroupsResolverTestCase {
     public void testResolve() throws Exception {
         //falling back on the 'memberOf' attribute
         UserAttributeGroupsResolver resolver = new UserAttributeGroupsResolver(Settings.EMPTY);
-        List<String> groups = resolver.resolve(ldapConnection, BRUCE_BANNER_DN, TimeValue.timeValueSeconds(20), NoOpLogger.INSTANCE);
+        List<String> groups = resolver.resolve(ldapConnection, BRUCE_BANNER_DN, TimeValue.timeValueSeconds(20), NoOpLogger.INSTANCE, null);
         assertThat(groups, containsInAnyOrder(
                 containsString("Avengers"),
                 containsString("SHIELD"),
@@ -51,7 +51,7 @@ public class UserAttributeGroupsResolverTests extends GroupsResolverTestCase {
                 .put("user_group_attribute", "seeAlso")
                 .build();
         UserAttributeGroupsResolver resolver = new UserAttributeGroupsResolver(settings);
-        List<String> groups = resolver.resolve(ldapConnection, BRUCE_BANNER_DN, TimeValue.timeValueSeconds(20), NoOpLogger.INSTANCE);
+        List<String> groups = resolver.resolve(ldapConnection, BRUCE_BANNER_DN, TimeValue.timeValueSeconds(20), NoOpLogger.INSTANCE, null);
         assertThat(groups, hasItems(containsString("Avengers")));  //seeAlso only has Avengers
     }
 
@@ -60,7 +60,7 @@ public class UserAttributeGroupsResolverTests extends GroupsResolverTestCase {
                 .put("user_group_attribute", "doesntExist")
                 .build();
         UserAttributeGroupsResolver resolver = new UserAttributeGroupsResolver(settings);
-        List<String> groups = resolver.resolve(ldapConnection, BRUCE_BANNER_DN, TimeValue.timeValueSeconds(20), NoOpLogger.INSTANCE);
+        List<String> groups = resolver.resolve(ldapConnection, BRUCE_BANNER_DN, TimeValue.timeValueSeconds(20), NoOpLogger.INSTANCE, null);
         assertThat(groups, empty());
     }
 
