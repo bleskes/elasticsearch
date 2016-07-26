@@ -1,0 +1,95 @@
+/*
+ * ELASTICSEARCH CONFIDENTIAL
+ *  __________________
+ *
+ * [2014] Elasticsearch Incorporated. All Rights Reserved.
+ *
+ * NOTICE:  All information contained herein is, and remains
+ * the property of Elasticsearch Incorporated and its suppliers,
+ * if any.  The intellectual and technical concepts contained
+ * herein are proprietary to Elasticsearch Incorporated
+ * and its suppliers and may be covered by U.S. and Foreign Patents,
+ * patents in process, and are protected by trade secret or copyright law.
+ * Dissemination of this information or reproduction of this material
+ * is strictly forbidden unless prior written permission is obtained
+ * from Elasticsearch Incorporated.
+ */
+package org.elasticsearch.license;
+
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+
+import org.elasticsearch.action.ActionRequest;
+import org.elasticsearch.action.ActionResponse;
+import org.elasticsearch.cluster.metadata.MetaData;
+import org.elasticsearch.cluster.service.ClusterService;
+import org.elasticsearch.common.inject.Module;
+import org.elasticsearch.common.settings.Setting;
+import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.env.Environment;
+import org.elasticsearch.plugins.ActionPlugin;
+import org.elasticsearch.rest.RestHandler;
+import org.elasticsearch.watcher.ResourceWatcherService;
+import org.elasticsearch.xpack.support.clock.Clock;
+
+import static java.util.Collections.emptyList;
+import static org.elasticsearch.xpack.XPackPlugin.isTribeNode;
+import static org.elasticsearch.xpack.XPackPlugin.transportClientMode;
+
+
+public class Licensing implements ActionPlugin {
+
+    public static final String NAME = "license";
+    protected final Settings settings;
+    protected final boolean isTransportClient;
+    private final boolean isTribeNode;
+
+    static {
+        MetaData.registerPrototype(LicensesMetaData.TYPE, LicensesMetaData.PROTO);
+    }
+
+    public Licensing(Settings settings) {
+        this.settings = settings;
+        isTransportClient = transportClientMode(settings);
+        isTribeNode = isTribeNode(settings);
+    }
+
+    public Collection<Module> nodeModules() {
+        return Collections.emptyList();
+    }
+
+    @Override
+    public List<ActionHandler<? extends ActionRequest<?>, ? extends ActionResponse>> getActions() {
+        if (isTribeNode) {
+            return emptyList();
+        }
+        return Arrays.asList(new ActionHandler<>(PutLicenseAction.INSTANCE, TransportPutLicenseAction.class),
+                new ActionHandler<>(GetLicenseAction.INSTANCE, TransportGetLicenseAction.class),
+                new ActionHandler<>(DeleteLicenseAction.INSTANCE, TransportDeleteLicenseAction.class));
+    }
+
+    @Override
+    public List<Class<? extends RestHandler>> getRestHandlers() {
+        if (isTribeNode) {
+            return emptyList();
+        }
+        return Arrays.asList(RestPutLicenseAction.class,
+                RestGetLicenseAction.class,
+                RestDeleteLicenseAction.class);
+    }
+
+    public Collection<Object> createComponents(ClusterService clusterService, Clock clock, Environment environment,
+                                               ResourceWatcherService resourceWatcherService,
+                                               XPackLicenseState licenseState) {
+        LicenseService licenseService = new LicenseService(settings, clusterService, clock,
+                environment, resourceWatcherService, licenseState);
+        return Arrays.asList(licenseService, licenseState);
+    }
+
+    public List<Setting<?>> getSettings() {
+        // TODO convert this wildcard to a real setting
+        return Collections.singletonList(Setting.groupSetting("license.", Setting.Property.NodeScope));
+    }
+}
