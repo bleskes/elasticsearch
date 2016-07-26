@@ -134,7 +134,7 @@ public class MonitoringSettings extends AbstractComponent {
      * Settings/Options per configured exporter
      */
     public static final Setting<Settings> EXPORTERS_SETTINGS =
-            groupSetting(collectionKey("exporters."), Property.Dynamic, Property.NodeScope);
+            groupSetting(key("exporters."), Property.Dynamic, Property.NodeScope);
 
     public static List<Setting<?>> getSettings() {
         return Arrays.asList(INDICES,
@@ -152,7 +152,7 @@ public class MonitoringSettings extends AbstractComponent {
     }
 
     public static List<String> getSettingsFilter() {
-        return Arrays.asList("xpack.monitoring.collection.exporters.*.auth.*", "xpack.monitoring.collection.exporters.*.ssl.*");
+        return Arrays.asList(key("exporters.*.auth.*"), key("exporters.*.ssl.*"));
     }
 
 
