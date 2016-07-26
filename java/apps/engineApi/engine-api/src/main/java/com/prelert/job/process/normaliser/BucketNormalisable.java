@@ -60,7 +60,13 @@ class BucketNormalisable implements Normalisable
     }
 
     @Override
-    public String getPartitonFieldName()
+    public String getPartitionFieldName()
+    {
+        return null;
+    }
+
+    @Override
+    public String getPartitionFieldValue()
     {
         return null;
     }

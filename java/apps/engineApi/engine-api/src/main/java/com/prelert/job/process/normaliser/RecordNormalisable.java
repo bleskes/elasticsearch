@@ -47,9 +47,15 @@ class RecordNormalisable extends AbstractLeafNormalisable
     }
 
     @Override
-    public String getPartitonFieldName()
+    public String getPartitionFieldName()
     {
         return m_Record.getPartitionFieldName();
+    }
+
+    @Override
+    public String getPartitionFieldValue()
+    {
+        return m_Record.getPartitionFieldValue();
     }
 
     @Override

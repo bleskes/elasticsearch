@@ -57,6 +57,7 @@ public class Normaliser
     /** Field names of expected input in C++ normalisation process */
     private  static final String NORMALIZATION_LEVEL = "level";
     private static final String PARTITION_FIELD_NAME = "partitionFieldName";
+    private static final String PARTITION_FIELD_VALUE = "partitionFieldValue";
     private static final String PER_PERSON_FIELD_NAME = "personFieldName";
     private static final String FUNCTION_NAME = "functionName";
     private static final String VALUE_FIELD_NAME = "valueFieldName";
@@ -98,7 +99,8 @@ public class Normaliser
         try
         {
             writer.writeRecord(new String[] { NORMALIZATION_LEVEL, PARTITION_FIELD_NAME,
-                    PER_PERSON_FIELD_NAME, FUNCTION_NAME, VALUE_FIELD_NAME, PROBABILITY });
+                                    PARTITION_FIELD_VALUE,PER_PERSON_FIELD_NAME, FUNCTION_NAME,
+                                    VALUE_FIELD_NAME, PROBABILITY });
 
             for (Normalisable result: results)
             {
@@ -141,7 +143,8 @@ public class Normaliser
         {
             writer.writeRecord(new String[] {
                     normalisable.getLevel().asString(),
-                    Strings.nullToEmpty(normalisable.getPartitonFieldName()),
+                    Strings.nullToEmpty(normalisable.getPartitionFieldName()),
+                    Strings.nullToEmpty(normalisable.getPartitionFieldValue()),
                     Strings.nullToEmpty(normalisable.getPersonFieldName()),
                     Strings.nullToEmpty(normalisable.getFunctionName()),
                     Strings.nullToEmpty(normalisable.getValueFieldName()),
