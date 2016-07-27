@@ -49,6 +49,8 @@ import com.prelert.job.ModelState;
 import com.prelert.job.SchedulerConfig;
 import com.prelert.job.audit.AuditActivity;
 import com.prelert.job.audit.AuditMessage;
+import com.prelert.job.detectionrules.DetectionRule;
+import com.prelert.job.detectionrules.RuleCondition;
 import com.prelert.job.quantiles.Quantiles;
 import com.prelert.job.results.AnomalyCause;
 import com.prelert.job.results.AnomalyRecord;
@@ -279,6 +281,40 @@ public class ElasticsearchMappings
                                         .endObject()
                                         .startObject(Detector.USE_NULL)
                                             .field(TYPE, BOOLEAN)
+                                        .endObject()
+                                        .startObject(Detector.DETECTOR_RULES)
+                                            .field(TYPE, OBJECT)
+                                            .startObject(PROPERTIES)
+                                                .startObject(DetectionRule.RULE_ACTION)
+                                                    .field(TYPE, STRING).field(INDEX, NOT_ANALYZED)
+                                                    .endObject()
+                                                .startObject(DetectionRule.TARGET_FIELD)
+                                                    .field(TYPE, STRING).field(INDEX, NOT_ANALYZED)
+                                                .endObject()
+                                                .startObject(DetectionRule.TARGET_VALUE)
+                                                    .field(TYPE, STRING).field(INDEX, NOT_ANALYZED)
+                                                .endObject()
+                                                .startObject(DetectionRule.CONDITIONS_CONNECTIVE)
+                                                    .field(TYPE, STRING).field(INDEX, NOT_ANALYZED)
+                                                .endObject()
+                                                .startObject(DetectionRule.RULE_CONDITIONS)
+                                                    .field(TYPE, OBJECT)
+                                                    .startObject(PROPERTIES)
+                                                        .startObject(RuleCondition.CONDITION_TYPE)
+                                                            .field(TYPE, STRING).field(INDEX, NOT_ANALYZED)
+                                                        .endObject()
+                                                        .startObject(RuleCondition.FIELD_NAME)
+                                                            .field(TYPE, STRING).field(INDEX, NOT_ANALYZED)
+                                                        .endObject()
+                                                        .startObject(RuleCondition.FIELD_VALUE)
+                                                            .field(TYPE, STRING).field(INDEX, NOT_ANALYZED)
+                                                        .endObject()
+                                                        .startObject(RuleCondition.VALUE_LIST)
+                                                            .field(TYPE, STRING).field(INDEX, NOT_ANALYZED)
+                                                        .endObject()
+                                                    .endObject()
+                                                .endObject()
+                                            .endObject()
                                         .endObject()
                                     .endObject()
                                 .endObject()

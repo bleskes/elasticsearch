@@ -355,6 +355,48 @@ public class ElasticsearchMappingsTest
                         "              }," +
                         "              \"useNull\": {" +
                         "                \"type\": \"boolean\"" +
+                        "              }," +
+                        "              \"detectorRules\": {" +
+                        "                \"type\": \"object\"," +
+                        "                \"properties\": {" +
+                        "                  \"ruleAction\": {" +
+                        "                    \"type\":\"string\"," +
+                        "                    \"index\":\"not_analyzed\"" +
+                        "                  }," +
+                        "                  \"targetField\": {" +
+                        "                    \"type\":\"string\"," +
+                        "                    \"index\":\"not_analyzed\"" +
+                        "                  }," +
+                        "                  \"targetValue\": {" +
+                        "                    \"type\":\"string\"," +
+                        "                    \"index\":\"not_analyzed\"" +
+                        "                  }," +
+                        "                  \"conditionsConnective\": {" +
+                        "                    \"type\":\"string\"," +
+                        "                    \"index\":\"not_analyzed\"" +
+                        "                  }," +
+                        "                  \"ruleConditions\": {" +
+                        "                    \"type\":\"object\"," +
+                        "                    \"properties\": {" +
+                        "                      \"conditionType\": {" +
+                        "                        \"type\":\"string\"," +
+                        "                        \"index\":\"not_analyzed\"" +
+                        "                      }," +
+                        "                      \"fieldName\": {" +
+                        "                        \"type\":\"string\"," +
+                        "                        \"index\":\"not_analyzed\"" +
+                        "                      }," +
+                        "                      \"fieldValue\": {" +
+                        "                        \"type\":\"string\"," +
+                        "                        \"index\":\"not_analyzed\"" +
+                        "                      }," +
+                        "                      \"valueList\": {" +
+                        "                        \"type\":\"string\"," +
+                        "                        \"index\":\"not_analyzed\"" +
+                        "                      }" +
+                        "                    }" +
+                        "                  }" +
+                        "                }" +
                         "              }" +
                         "            }" +
                         "          }," +
