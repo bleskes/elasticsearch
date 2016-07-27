@@ -15,7 +15,7 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.messy.tests;
+package org.elasticsearch.xpack.watcher.test.integration;
 
 import org.apache.lucene.util.LuceneTestCase.BadApple;
 import org.elasticsearch.ExceptionsHelper;
@@ -30,9 +30,6 @@ import org.elasticsearch.discovery.zen.elect.ElectMasterService;
 import org.elasticsearch.discovery.zen.ping.ZenPing;
 import org.elasticsearch.discovery.zen.ping.ZenPingService;
 import org.elasticsearch.discovery.zen.ping.unicast.UnicastZenPing;
-import org.elasticsearch.plugins.Plugin;
-import org.elasticsearch.script.MockMustacheScriptEngine;
-import org.elasticsearch.script.mustache.MustachePlugin;
 import org.elasticsearch.test.ESIntegTestCase.ClusterScope;
 import org.elasticsearch.test.ESIntegTestCase.SuppressLocalMode;
 import org.elasticsearch.test.discovery.ClusterDiscoveryConfiguration;
@@ -48,10 +45,6 @@ import org.elasticsearch.xpack.watcher.test.WatcherTestUtils;
 import org.elasticsearch.xpack.watcher.transport.actions.delete.DeleteWatchResponse;
 import org.elasticsearch.xpack.watcher.transport.actions.stats.WatcherStatsResponse;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import static org.elasticsearch.index.query.QueryBuilders.termQuery;
@@ -98,23 +91,6 @@ public class NoMasterNodeIT extends AbstractWatcherIntegrationTestCase {
                 .put(ElectMasterService.DISCOVERY_ZEN_MINIMUM_MASTER_NODES_SETTING.getKey(), 2)
                 .put("discovery.type", "zen")
                 .build();
-    }
-
-    @Override
-    protected Collection<Class<? extends Plugin>> nodePlugins() {
-        Collection<Class<? extends Plugin>> types = new ArrayList<>();
-        types.addAll(super.nodePlugins());
-        // TODO remove dependency on mustache
-        types.add(MustachePlugin.class);
-        return types;
-    }
-
-    @Override
-    protected Collection<Class<? extends Plugin>> getMockPlugins() {
-        Set<Class<? extends Plugin>> plugins = new HashSet<>(super.getMockPlugins());
-        // remove the mock because we use mustache here...
-        plugins.remove(MockMustacheScriptEngine.TestPlugin.class);
-        return plugins;
     }
 
     public void testSimpleFailure() throws Exception {
@@ -190,7 +166,7 @@ public class NoMasterNodeIT extends AbstractWatcherIntegrationTestCase {
                 .trigger(schedule(interval("5s")))
                 .input(simpleInput("key", "value"))
                 .condition(alwaysCondition())
-                .addAction("_id", loggingAction("[{{ctx.watch_id}}] executed!"));
+                .addAction("_id", loggingAction("executed!"));
 
         watcherClient().preparePutWatch("_watch_id")
                 .setSource(watchSource)
