@@ -32,8 +32,8 @@ import java.util.List;
 import java.util.function.BiFunction;
 
 import com.google.common.collect.Range;
-import com.prelert.job.transform.Condition;
-import com.prelert.job.transform.Operator;
+import com.prelert.job.condition.Condition;
+import com.prelert.job.condition.Operator;
 import com.prelert.job.transform.TransformConfig;
 import com.prelert.job.transform.TransformType;
 import com.prelert.transforms.Transform.TransformIndex;

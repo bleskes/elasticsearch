@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -31,11 +31,10 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
+import com.prelert.job.config.verification.JobConfigurationException;
 import com.prelert.job.errorcodes.ErrorCodeMatcher;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.transform.TransformConfig;
-import com.prelert.job.transform.TransformConfigurationException;
-import com.prelert.job.transform.verification.RegexPatternVerifier;
 
 public class RegexPatternVerifierTest
 {
@@ -43,15 +42,15 @@ public class RegexPatternVerifierTest
     public ExpectedException m_ExpectedException = ExpectedException.none();
 
     @Test
-    public void testVerify_GivenValidRegex() throws TransformConfigurationException
+    public void testVerify_GivenValidRegex() throws JobConfigurationException
     {
         new RegexPatternVerifier().verify("[a-z]+", new TransformConfig());
     }
 
     @Test
-    public void testVerify_GivenInvalidRegex() throws TransformConfigurationException
+    public void testVerify_GivenInvalidRegex() throws JobConfigurationException
     {
-        m_ExpectedException.expect(TransformConfigurationException.class);
+        m_ExpectedException.expect(JobConfigurationException.class);
         m_ExpectedException.expectMessage("Transform 'split' has invalid argument '[+'");
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.TRANSFORM_INVALID_ARGUMENT));

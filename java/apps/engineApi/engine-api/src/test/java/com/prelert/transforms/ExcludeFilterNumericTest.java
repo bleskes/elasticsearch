@@ -36,8 +36,8 @@ import java.util.List;
 import org.apache.log4j.Logger;
 import org.junit.Test;
 
-import com.prelert.job.transform.Condition;
-import com.prelert.job.transform.Operator;
+import com.prelert.job.condition.Condition;
+import com.prelert.job.condition.Operator;
 import com.prelert.transforms.Transform.TransformIndex;
 import com.prelert.transforms.Transform.TransformResult;
 

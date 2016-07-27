@@ -27,12 +27,12 @@
 
 package com.prelert.job.transform.verification;
 
+import com.prelert.job.config.verification.JobConfigurationException;
 import com.prelert.job.transform.TransformConfig;
-import com.prelert.job.transform.TransformConfigurationException;
 
 
 @FunctionalInterface
 public interface ArgumentVerifier
 {
-    void verify(String argument, TransformConfig tc) throws TransformConfigurationException;
+    void verify(String argument, TransformConfig tc) throws JobConfigurationException;
 }

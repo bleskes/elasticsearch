@@ -30,7 +30,7 @@ import java.util.List;
 
 import org.apache.log4j.Logger;
 
-import com.prelert.job.transform.Condition;
+import com.prelert.job.condition.Condition;
 
 
 /**
