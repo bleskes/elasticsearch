@@ -79,6 +79,7 @@ public class Normaliser
      * and normalises the given results.
      *
      * @param bucketSpan If <code>null</code> the default is used
+     * @param perPartitionNormalization
      * @param results Will be updated with the normalised results
      * @param quantilesState The state to be used to seed the system change
      * normaliser
@@ -86,10 +87,12 @@ public class Normaliser
      * @throws NativeProcessRunException
      * @throws UnknownJobException
      */
-    public void normalise(Integer bucketSpan, List<Normalisable> results, String quantilesState)
+    public void normalise(Integer bucketSpan, boolean perPartitionNormalization,
+                            List<Normalisable> results, String quantilesState)
             throws NativeProcessRunException, UnknownJobException
     {
-        NormaliserProcess process = createNormaliserProcess(quantilesState, bucketSpan);
+        NormaliserProcess process = createNormaliserProcess(quantilesState, bucketSpan,
+                                                        perPartitionNormalization);
         NormalisedResultsParser resultsParser = process.createNormalisedResultsParser(m_Logger);
         Thread parserThread = new Thread(resultsParser, m_JobId + "-Normalizer-Parser");
         parserThread.start();
@@ -245,15 +248,18 @@ public class Normaliser
      *
      * @param quantilesState
      * @param bucketSpan If <code>null</code> the default is used
+     * @param perPartitionNormalization
      * @return
      * @throws NativeProcessRunException
      */
-    private NormaliserProcess createNormaliserProcess(String quantilesState, Integer bucketSpan)
+    private NormaliserProcess createNormaliserProcess(String quantilesState, Integer bucketSpan,
+                                                    boolean perPartitionNormalization)
     throws NativeProcessRunException
     {
         try
         {
-            return m_ProcessFactory.create(m_JobId, quantilesState, bucketSpan, m_Logger);
+            return m_ProcessFactory.create(m_JobId, quantilesState, bucketSpan,
+                                            perPartitionNormalization, m_Logger);
         }
         catch (IOException e)
         {

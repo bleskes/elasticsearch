@@ -85,11 +85,11 @@ public class NormaliserTest
     public void testNormalise_GivenExceptionUponCreatingNormaliserProcess() throws IOException,
             NativeProcessRunException, UnknownJobException
     {
-        doThrow(new IOException()).when(m_ProcessFactory).create(JOB_ID, "", 10, m_Logger);
+        doThrow(new IOException()).when(m_ProcessFactory).create(JOB_ID, "", 10, false, m_Logger);
 
         m_ExpectedException.expect(NativeProcessRunException.class);
         m_ExpectedException.expectMessage("Failed to start normalisation process for job foo");
-        m_Normaliser.normalise(10, new ArrayList<>(), "");
+        m_Normaliser.normalise(10, false, new ArrayList<>(), "");
     }
 
     @Test
@@ -140,11 +140,11 @@ public class NormaliserTest
         when(m_Process.createNormalisedResultsParser(m_Logger)).thenReturn(
                 new NormalisedResultsParser(inputStream, m_Logger));
 
-        when(m_ProcessFactory.create(JOB_ID, "quantilesState", 10, m_Logger)).thenReturn(m_Process);
+        when(m_ProcessFactory.create(JOB_ID, "quantilesState", 10, false, m_Logger)).thenReturn(m_Process);
 
         List<Bucket> buckets = Arrays.asList(bucket1, bucket2, bucket3);
 
-        m_Normaliser.normalise(10, transformToNormalisable(buckets), "quantilesState");
+        m_Normaliser.normalise(10, false, transformToNormalisable(buckets), "quantilesState");
 
         InOrder inOrder = Mockito.inOrder(m_Process, writer);
         inOrder.verify(writer).writeRecord(
@@ -219,11 +219,11 @@ public class NormaliserTest
         when(m_Process.createNormalisedResultsParser(m_Logger)).thenReturn(
                 new NormalisedResultsParser(inputStream, m_Logger));
 
-        when(m_ProcessFactory.create(JOB_ID, "quantilesState", 10, m_Logger)).thenReturn(m_Process);
+        when(m_ProcessFactory.create(JOB_ID, "quantilesState", 10, true, m_Logger)).thenReturn(m_Process);
 
         List<Bucket> buckets = Arrays.asList(bucket1);
 
-        m_Normaliser.normalise(10, transformToNormalisable(buckets), "quantilesState");
+        m_Normaliser.normalise(10, true, transformToNormalisable(buckets), "quantilesState");
 
         InOrder inOrder = Mockito.inOrder(m_Process, writer);
         inOrder.verify(writer).writeRecord(
@@ -251,7 +251,7 @@ public class NormaliserTest
     {
         LengthEncodedWriter writer = mock(LengthEncodedWriter.class);
         when(m_Process.createProcessWriter()).thenReturn(writer);
-        when(m_ProcessFactory.create(JOB_ID, "quantilesState", 10, m_Logger)).thenReturn(m_Process);
+        when(m_ProcessFactory.create(JOB_ID, "quantilesState", 10, true, m_Logger)).thenReturn(m_Process);
 
         Bucket bucket1 = new Bucket();
         bucket1.setAnomalyScore(30.0);
@@ -284,7 +284,7 @@ public class NormaliserTest
         Normaliser normaliser = new Normaliser(JOB_ID, m_ProcessFactory, m_Logger);
         List<Bucket> buckets = Arrays.asList(bucket1, bucket2);
 
-        normaliser.normalise(10, transformToNormalisable(buckets), "quantilesState");
+        normaliser.normalise(10, true, transformToNormalisable(buckets), "quantilesState");
 
         assertFalse(bucket1.hadBigNormalisedUpdate());
         assertEquals(30.0, bucket1.getAnomalyScore(), ERROR);
@@ -315,7 +315,7 @@ public class NormaliserTest
     {
         LengthEncodedWriter writer = mock(LengthEncodedWriter.class);
         when(m_Process.createProcessWriter()).thenReturn(writer);
-        when(m_ProcessFactory.create(JOB_ID, "quantilesState", 10, m_Logger)).thenReturn(m_Process);
+        when(m_ProcessFactory.create(JOB_ID, "quantilesState", 10, true, m_Logger)).thenReturn(m_Process);
 
         Bucket bucket1 = new Bucket();
         bucket1.setAnomalyScore(30.0);
@@ -337,7 +337,7 @@ public class NormaliserTest
 
         Normaliser normaliser = new Normaliser(JOB_ID, m_ProcessFactory, m_Logger);
 
-        normaliser.normalise(10, transformToNormalisable(buckets), "quantilesState");
+        normaliser.normalise(10, true, transformToNormalisable(buckets), "quantilesState");
 
         assertEquals(0.2, bucket1.getMaxNormalizedProbability(), ERROR);
         assertTrue(bucket1.hadBigNormalisedUpdate());

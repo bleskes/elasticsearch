@@ -484,7 +484,7 @@ public class ScoresUpdaterTest
         int bucketSpan = m_Job.getAnalysisConfig() == null ? 0
                 : m_Job.getAnalysisConfig().getBucketSpan().intValue();
         verify(m_Normaliser, times(times)).normalise(
-                eq(bucketSpan), anyListOf(Normalisable.class),
+                eq(bucketSpan), eq(false), anyListOf(Normalisable.class),
                 eq(QUANTILES_STATE));
     }
 
