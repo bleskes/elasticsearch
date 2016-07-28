@@ -33,10 +33,10 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 import com.prelert.job.JobConfiguration;
+import com.prelert.job.condition.UnknownOperatorException;
 import com.prelert.job.config.verification.JobConfigurationException;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.messages.Messages;
-import com.prelert.job.transform.UnknownOperatorException;
 
 /**
  * JobConfiguration entity provider.
@@ -88,7 +88,7 @@ public class JobConfigurationMessageBodyReader extends AbstractMessageBodyReader
                 UnknownOperatorException uoe = (UnknownOperatorException) cause;
 
                 return new JobConfigurationParseException(Messages.getMessage(
-                        Messages.JOB_CONFIG_TRANSFORM_CONDITION_UNKNOWN_OPERATOR, uoe.getName()),
+                        Messages.JOB_CONFIG_CONDITION_UNKNOWN_OPERATOR, uoe.getName()),
                         uoe, ErrorCodes.UNKNOWN_OPERATOR);
             }
         }

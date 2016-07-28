@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -43,12 +43,12 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
 import com.google.common.collect.Range;
+import com.prelert.job.condition.Condition;
+import com.prelert.job.condition.Operator;
+import com.prelert.job.config.verification.JobConfigurationException;
 import com.prelert.job.errorcodes.ErrorCodeMatcher;
 import com.prelert.job.errorcodes.ErrorCodes;
-import com.prelert.job.transform.Condition;
-import com.prelert.job.transform.Operator;
 import com.prelert.job.transform.TransformConfig;
-import com.prelert.job.transform.TransformConfigurationException;
 import com.prelert.job.transform.TransformType;
 import com.prelert.transforms.TransformTestUtils;
 
@@ -58,7 +58,7 @@ public class TransformConfigVerifierTest
     public ExpectedException m_ExpectedException = ExpectedException.none();
 
     @Test
-    public void testVerify_GivenValidTransform() throws TransformConfigurationException
+    public void testVerify_GivenValidTransform() throws JobConfigurationException
     {
         Set<TransformType> types = EnumSet.allOf(TransformType.class);
 
@@ -71,7 +71,7 @@ public class TransformConfigVerifierTest
     }
 
     @Test
-    public void testVerify_GivenConcat() throws TransformConfigurationException
+    public void testVerify_GivenConcat() throws JobConfigurationException
     {
         List<String> inputs = new ArrayList<>();
 
@@ -115,9 +115,9 @@ public class TransformConfigVerifierTest
             try
             {
                 TransformConfigVerifier.verify(tr);
-                fail("Transform with the wrong input count should throw an TransformConfigurationException");
+                fail("Transform with the wrong input count should throw a JobConfigurationException");
             }
-            catch (TransformConfigurationException e)
+            catch (JobConfigurationException e)
             {
                 assertEquals(ErrorCodes.TRANSFORM_INVALID_INPUT_COUNT, e.getErrorCode());
             }
@@ -146,9 +146,9 @@ public class TransformConfigVerifierTest
             try
             {
                 TransformConfigVerifier.verify(tr);
-                fail("Transform with the wrong args count should throw an TransformConfigurationException");
+                fail("Transform with the wrong args count should throw a JobConfigurationException");
             }
-            catch (TransformConfigurationException e)
+            catch (JobConfigurationException e)
             {
                 assertEquals(ErrorCodes.TRANSFORM_INVALID_ARGUMENT_COUNT, e.getErrorCode());
             }
@@ -186,9 +186,9 @@ public class TransformConfigVerifierTest
             try
             {
                 TransformConfigVerifier.verify(tr);
-                fail("Transform with the wrong output count should throw an TransformConfigurationException");
+                fail("Transform with the wrong output count should throw a JobConfigurationException");
             }
-            catch (TransformConfigurationException e)
+            catch (JobConfigurationException e)
             {
                 assertEquals(ErrorCodes.TRANSFORM_INVALID_OUTPUT_COUNT, e.getErrorCode());
             }
@@ -208,18 +208,17 @@ public class TransformConfigVerifierTest
             try
             {
                 TransformConfigVerifier.verify(tr);
-                fail("Transform with zero inputs should throw an TransformConfigurationException");
+                fail("Transform with zero inputs should throw a JobConfigurationException");
             }
-            catch (TransformConfigurationException e)
+            catch (JobConfigurationException e)
             {
                 assertEquals(ErrorCodes.TRANSFORM_INVALID_INPUT_COUNT, e.getErrorCode());
             }
-
         }
     }
 
     @Test
-    public void testVerify_TypeHasCondition() throws TransformConfigurationException
+    public void testVerify_TypeHasCondition() throws JobConfigurationException
     {
         TransformConfig tr = new TransformConfig();
         tr.setTransform(TransformType.EXCLUDE.prettyName());
@@ -228,10 +227,9 @@ public class TransformConfigVerifierTest
         try
         {
             TransformConfigVerifier.verify(tr);
-            fail("exclude filter without condition " +
-                    "should throw an TransformConfigurationException");
+            fail("exclude filter without condition should throw a JobConfigurationException");
         }
-        catch (TransformConfigurationException e)
+        catch (JobConfigurationException e)
         {
             assertEquals(ErrorCodes.TRANSFORM_REQUIRES_CONDITION, e.getErrorCode());
         }
@@ -244,15 +242,12 @@ public class TransformConfigVerifierTest
         try
         {
             TransformConfigVerifier.verify(tr);
-            fail("exclude with bad arguments " +
-                    "should throw an TransformConfigurationException");
+            fail("exclude with bad arguments should throw a JobConfigurationException");
         }
-        catch (TransformConfigurationException e)
+        catch (JobConfigurationException e)
         {
             assertEquals(ErrorCodes.TRANSFORM_INVALID_ARGUMENT_COUNT, e.getErrorCode());
         }
-
-
 
         Condition cond = tr.getCondition();
         assertNotNull(cond);
@@ -261,7 +256,7 @@ public class TransformConfigVerifierTest
     }
 
     @Test
-    public void testVerify() throws TransformConfigurationException
+    public void testVerify() throws JobConfigurationException
     {
         TransformConfig conf = new TransformConfig();
         conf.setTransform(TransformType.CONCAT.prettyName());
@@ -281,9 +276,9 @@ public class TransformConfigVerifierTest
     }
 
     @Test
-    public void testVerify_GivenNullInputs() throws TransformConfigurationException
+    public void testVerify_GivenNullInputs() throws JobConfigurationException
     {
-        m_ExpectedException.expect(TransformConfigurationException.class);
+        m_ExpectedException.expect(JobConfigurationException.class);
         m_ExpectedException.expectMessage("Transform type concat expected [2‥+∞) input(s), got 0");
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.TRANSFORM_INVALID_INPUT_COUNT));
@@ -296,9 +291,9 @@ public class TransformConfigVerifierTest
     }
 
     @Test
-    public void testVerify_GivenEmptyInputs() throws TransformConfigurationException
+    public void testVerify_GivenEmptyInputs() throws JobConfigurationException
     {
-        m_ExpectedException.expect(TransformConfigurationException.class);
+        m_ExpectedException.expect(JobConfigurationException.class);
         m_ExpectedException.expectMessage("Transform type concat expected [2‥+∞) input(s), got 0");
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.TRANSFORM_INVALID_INPUT_COUNT));
@@ -311,9 +306,9 @@ public class TransformConfigVerifierTest
     }
 
     @Test
-    public void testVerify_GivenInputsContainEmptyStrings() throws TransformConfigurationException
+    public void testVerify_GivenInputsContainEmptyStrings() throws JobConfigurationException
     {
-        m_ExpectedException.expect(TransformConfigurationException.class);
+        m_ExpectedException.expect(JobConfigurationException.class);
         m_ExpectedException.expectMessage("Transform type concat contains empty input");
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.TRANSFORM_INPUTS_CANNOT_BE_EMPTY_STRINGS));
@@ -326,9 +321,9 @@ public class TransformConfigVerifierTest
     }
 
     @Test
-    public void testVerify_GivenInputsContainWhitespaceOnlyStrings() throws TransformConfigurationException
+    public void testVerify_GivenInputsContainWhitespaceOnlyStrings() throws JobConfigurationException
     {
-        m_ExpectedException.expect(TransformConfigurationException.class);
+        m_ExpectedException.expect(JobConfigurationException.class);
         m_ExpectedException.expectMessage("Transform type concat contains empty input");
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.TRANSFORM_INPUTS_CANNOT_BE_EMPTY_STRINGS));
@@ -341,9 +336,9 @@ public class TransformConfigVerifierTest
     }
 
     @Test
-    public void testVerify_GivenInputsDoesNotMatchArrity() throws TransformConfigurationException
+    public void testVerify_GivenInputsDoesNotMatchArrity() throws JobConfigurationException
     {
-        m_ExpectedException.expect(TransformConfigurationException.class);
+        m_ExpectedException.expect(JobConfigurationException.class);
         m_ExpectedException.expectMessage("Transform type domain_split expected 1 input(s), got 2");
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.TRANSFORM_INVALID_INPUT_COUNT));
@@ -355,7 +350,7 @@ public class TransformConfigVerifierTest
     }
 
     @Test
-    public void testVerify_GivenNoOptionalArguments() throws TransformConfigurationException
+    public void testVerify_GivenNoOptionalArguments() throws JobConfigurationException
     {
         TransformConfig conf = new TransformConfig();
         conf.setTransform(TransformType.CONCAT.prettyName());
@@ -366,7 +361,7 @@ public class TransformConfigVerifierTest
 
     @Test
     public void testVerify_GivenOneOptionalArgumentWhenOneIsSupported()
-            throws TransformConfigurationException
+            throws JobConfigurationException
     {
         TransformConfig conf = new TransformConfig();
         conf.setTransform(TransformType.CONCAT.prettyName());
@@ -378,9 +373,9 @@ public class TransformConfigVerifierTest
 
     @Test
     public void testVerify_GivenTwoOptionalArgumentsWhenOneIsSupported()
-            throws TransformConfigurationException
+            throws JobConfigurationException
     {
-        m_ExpectedException.expect(TransformConfigurationException.class);
+        m_ExpectedException.expect(JobConfigurationException.class);
         m_ExpectedException.expectMessage(
                 "Transform type concat expected [0‥1] argument(s), got 2");
         m_ExpectedException.expect(
@@ -395,7 +390,7 @@ public class TransformConfigVerifierTest
     }
 
     @Test
-    public void testVerify_GivenNullOutputs() throws TransformConfigurationException
+    public void testVerify_GivenNullOutputs() throws JobConfigurationException
     {
         TransformConfig conf = new TransformConfig();
         conf.setTransform(TransformType.LOWERCASE.prettyName());
@@ -407,7 +402,7 @@ public class TransformConfigVerifierTest
     }
 
     @Test
-    public void testVerify_GivenEmptyOutputs() throws TransformConfigurationException
+    public void testVerify_GivenEmptyOutputs() throws JobConfigurationException
     {
         TransformConfig conf = new TransformConfig();
         conf.setTransform(TransformType.LOWERCASE.prettyName());
@@ -419,9 +414,9 @@ public class TransformConfigVerifierTest
     }
 
     @Test
-    public void testVerify_GivenOutputsContainEmptyStrings() throws TransformConfigurationException
+    public void testVerify_GivenOutputsContainEmptyStrings() throws JobConfigurationException
     {
-        m_ExpectedException.expect(TransformConfigurationException.class);
+        m_ExpectedException.expect(JobConfigurationException.class);
         m_ExpectedException.expectMessage("Transform type concat contains empty output");
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.TRANSFORM_OUTPUTS_CANNOT_BE_EMPTY_STRINGS));
@@ -435,9 +430,9 @@ public class TransformConfigVerifierTest
     }
 
     @Test
-    public void testVerify_GivenOutputsContainWhitespaceOnlyStrings() throws TransformConfigurationException
+    public void testVerify_GivenOutputsContainWhitespaceOnlyStrings() throws JobConfigurationException
     {
-        m_ExpectedException.expect(TransformConfigurationException.class);
+        m_ExpectedException.expect(JobConfigurationException.class);
         m_ExpectedException.expectMessage("Transform type concat contains empty output");
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.TRANSFORM_OUTPUTS_CANNOT_BE_EMPTY_STRINGS));
@@ -451,9 +446,9 @@ public class TransformConfigVerifierTest
     }
 
     @Test
-    public void testVerify_GivenTwoOutputsWhenOneIsExpected() throws TransformConfigurationException
+    public void testVerify_GivenTwoOutputsWhenOneIsExpected() throws JobConfigurationException
     {
-        m_ExpectedException.expect(TransformConfigurationException.class);
+        m_ExpectedException.expect(JobConfigurationException.class);
         m_ExpectedException.expectMessage("Transform type lowercase expected 1 output(s), got 2");
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.TRANSFORM_INVALID_OUTPUT_COUNT));

@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -24,43 +24,41 @@
  *                                                          *
  *                                                          *
  ************************************************************/
-package com.prelert.job.transform;
+package com.prelert.job.condition.verification;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
+import com.prelert.job.condition.Operator;
+import com.prelert.job.condition.UnknownOperatorException;
+import com.prelert.job.config.verification.JobConfigurationException;
+import com.prelert.job.errorcodes.ErrorCodes;
+import com.prelert.job.messages.Messages;
 
-import org.junit.Test;
-
-import com.prelert.job.transform.Condition;
-import com.prelert.job.transform.Operator;
-
-public class ConditionTest
+public final class OperatorVerifier
 {
-    @Test
-    public void testSetValues()
+    private OperatorVerifier()
     {
-        // When the args can't be parsed the
-        // default is the < operator and 0.
-        Condition cond = new Condition();
-        assertEquals(Operator.NONE, cond.getOperator());
-        assertEquals(null, cond.getValue());
-
-        cond = new Condition(Operator.EQ, "astring");
-        assertEquals(Operator.EQ, cond.getOperator());
-        assertEquals("astring", cond.getValue());
+        // Hide default constructor
     }
 
-    @Test
-    public void testHashCodeAndEquals()
+    /**
+     * Checks that the <code>name</code> string is a string
+     * value of an Operator enum
+     * @param name
+     * @return
+     * @throws JobConfigurationException
+     */
+    public static boolean verify(String name) throws JobConfigurationException
     {
-        Condition cond1 = new Condition(Operator.MATCH, "regex");
-        Condition cond2 = new Condition(Operator.MATCH, "regex");
+        try
+        {
+            Operator.fromString(name);
+        }
+        catch (UnknownOperatorException e)
+        {
+            throw new JobConfigurationException(
+                Messages.getMessage(Messages.JOB_CONFIG_CONDITION_UNKNOWN_OPERATOR, name),
+                ErrorCodes.UNKNOWN_OPERATOR);
+        }
 
-        assertEquals(cond1, cond2);
-        assertEquals(cond1.hashCode(), cond2.hashCode());
-
-        cond2.setOperator(Operator.EQ);
-        assertFalse(cond1.equals(cond2));
-        assertFalse(cond1.hashCode() == cond2.hashCode());
+        return true;
     }
 }

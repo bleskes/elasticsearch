@@ -15,7 +15,7 @@
  * limitations under the License.                                           *
  *                                                                          *
  ***************************************************************************/
-package com.prelert.job.transform;
+package com.prelert.job.condition;
 
 import java.util.EnumSet;
 import java.util.Set;

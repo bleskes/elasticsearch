@@ -15,29 +15,37 @@
  * limitations under the License.                                           *
  *                                                                          *
  ***************************************************************************/
-package com.prelert.job.transform;
 
-public class UnknownOperatorException extends Exception
-{
-    private static final long serialVersionUID = 4691115581549035110L;
+package com.prelert.job.alert;
 
-    private final String m_Name;
+import static org.junit.Assert.assertEquals;
 
-    /**
-     *
-     * @param operatorName The unrecognised operator name
-     */
-    public UnknownOperatorException(String operatorName)
+import org.junit.Test;
+
+public class AlertTypeTest {
+
+    @Test
+    public void testAlertTypes()
     {
-        m_Name = operatorName;
+        assertEquals("bucket", AlertType.BUCKET.toString());
+        assertEquals("bucketinfluencer", AlertType.BUCKETINFLUENCER.toString());
+        assertEquals("influencer", AlertType.INFLUENCER.toString());
+
+        assertEquals(AlertType.BUCKET, AlertType.fromString("bucket"));
+        assertEquals(AlertType.BUCKETINFLUENCER, AlertType.fromString("bucketinfluencer"));
+        assertEquals(AlertType.INFLUENCER, AlertType.fromString("influencer"));
+
+        boolean exception = false;
+        try
+        {
+            AlertType.fromString("Non-Existent alert type here");
+            assert(false);
+        }
+        catch (IllegalArgumentException ex)
+        {
+            exception = true;
+        }
+        assert(exception);
     }
 
-    /**
-     * Get the unknown operator name
-     * @return
-     */
-    public String getName()
-    {
-        return m_Name;
-    }
 }

@@ -38,6 +38,9 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
+import com.prelert.job.condition.Condition;
+import com.prelert.job.condition.Operator;
+
 public class TransformConfigTest
 {
     @Rule

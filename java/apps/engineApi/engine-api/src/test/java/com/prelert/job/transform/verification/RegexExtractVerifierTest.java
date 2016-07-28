@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -34,11 +34,10 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
+import com.prelert.job.config.verification.JobConfigurationException;
 import com.prelert.job.errorcodes.ErrorCodeMatcher;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.transform.TransformConfig;
-import com.prelert.job.transform.TransformConfigurationException;
-import com.prelert.job.transform.verification.RegexExtractVerifier;
 
 public class RegexExtractVerifierTest
 {
@@ -57,15 +56,15 @@ public class RegexExtractVerifierTest
     }
 
     @Test
-    public void testVerify_GivenValidRegex() throws TransformConfigurationException
+    public void testVerify_GivenValidRegex() throws JobConfigurationException
     {
         new RegexExtractVerifier().verify("Foo ([0-9]+)", m_TransformConfig);
     }
 
     @Test
-    public void testVerify_GivenInvalidRegex() throws TransformConfigurationException
+    public void testVerify_GivenInvalidRegex() throws JobConfigurationException
     {
-        m_ExpectedException.expect(TransformConfigurationException.class);
+        m_ExpectedException.expect(JobConfigurationException.class);
         m_ExpectedException.expectMessage("Transform 'extract' has invalid argument '[+'");
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.TRANSFORM_INVALID_ARGUMENT));
@@ -74,9 +73,9 @@ public class RegexExtractVerifierTest
     }
 
     @Test
-    public void testVerify_GivenTwoOutputsButOneGroup() throws TransformConfigurationException
+    public void testVerify_GivenTwoOutputsButOneGroup() throws JobConfigurationException
     {
-        m_ExpectedException.expect(TransformConfigurationException.class);
+        m_ExpectedException.expect(JobConfigurationException.class);
         m_ExpectedException.expectMessage("Transform 'extract' expects 2 output(s) but regex 'Foo ([0-9]+)' captures 1 group(s)");
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.TRANSFORM_INVALID_ARGUMENT));
@@ -87,9 +86,9 @@ public class RegexExtractVerifierTest
     }
 
     @Test
-    public void testVerify_GivenOneOutputButTwoGroups() throws TransformConfigurationException
+    public void testVerify_GivenOneOutputButTwoGroups() throws JobConfigurationException
     {
-        m_ExpectedException.expect(TransformConfigurationException.class);
+        m_ExpectedException.expect(JobConfigurationException.class);
         m_ExpectedException.expectMessage(
                 "Transform 'extract' expects 1 output(s) but regex 'Foo ([0-9]+) ([0-9]+)' captures 2 group(s)");
         m_ExpectedException.expect(
@@ -101,7 +100,7 @@ public class RegexExtractVerifierTest
     }
 
     @Test
-    public void testVerify_GivenTwoOutputsAndTwoGroups() throws TransformConfigurationException
+    public void testVerify_GivenTwoOutputsAndTwoGroups() throws JobConfigurationException
     {
         m_TransformConfig.setOutputs(Arrays.asList("o1", "o2"));
 
