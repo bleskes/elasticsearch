@@ -4,10 +4,6 @@
 
   <!--
     Main Maven build file for the Engine REST API.
-    Calls 3 sub-modules
-      Engine API - The REST API
-      Client - REST API test client written in Java
-      Server - The API server and dependencies
     -->
 
   <groupId>com.prelert</groupId>
@@ -227,7 +223,11 @@
         <artifactId>elasticsearch-persistence</artifactId>
         <version>2.1.1</version>
       </dependency>
-
+      <dependency>
+        <groupId>com.prelert.client</groupId>
+        <artifactId>prelert-engine-api-client</artifactId>
+        <version>2.1.1</version>
+      </dependency>
     </dependencies>
   </dependencyManagement>
 
