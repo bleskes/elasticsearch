@@ -20,13 +20,13 @@ package org.elasticsearch.xpack.security.authc;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.util.concurrent.ThreadContext;
 import org.elasticsearch.env.Environment;
-import org.elasticsearch.xpack.security.SecurityLicenseState.EnabledRealmType;
 import org.elasticsearch.xpack.security.user.User;
 import org.elasticsearch.xpack.security.authc.esnative.ReservedRealm;
 import org.elasticsearch.xpack.security.authc.esnative.NativeRealm;
 import org.elasticsearch.xpack.security.authc.file.FileRealm;
 import org.elasticsearch.xpack.security.authc.ldap.LdapRealm;
-import org.elasticsearch.xpack.security.SecurityLicenseState;
+import org.elasticsearch.license.XPackLicenseState;
+import org.elasticsearch.license.XPackLicenseState.AllowedRealmType;
 import org.elasticsearch.test.ESTestCase;
 import org.junit.Before;
 
@@ -47,7 +47,7 @@ import static org.mockito.Mockito.when;
 
 public class RealmsTests extends ESTestCase {
     private Map<String, Realm.Factory> factories;
-    private SecurityLicenseState securityLicenseState;
+    private XPackLicenseState licenseState;
     private ReservedRealm reservedRealm;
 
     @Before
@@ -59,10 +59,10 @@ public class RealmsTests extends ESTestCase {
             String name = "type_" + i;
             factories.put(name, config -> new DummyRealm(name, config));
         }
-        securityLicenseState = mock(SecurityLicenseState.class);
+        licenseState = mock(XPackLicenseState.class);
         reservedRealm = mock(ReservedRealm.class);
-        when(securityLicenseState.authenticationAndAuthorizationEnabled()).thenReturn(true);
-        when(securityLicenseState.enabledRealmType()).thenReturn(EnabledRealmType.ALL);
+        when(licenseState.isAuthAllowed()).thenReturn(true);
+        when(licenseState.allowedRealmType()).thenReturn(AllowedRealmType.ALL);
     }
 
     public void testWithSettings() throws Exception {
@@ -81,7 +81,7 @@ public class RealmsTests extends ESTestCase {
         }
         Settings settings = builder.build();
         Environment env = new Environment(settings);
-        Realms realms = new Realms(settings, env, factories, securityLicenseState, reservedRealm);
+        Realms realms = new Realms(settings, env, factories, licenseState, reservedRealm);
         realms.start();
 
         Iterator<Realm> iterator = realms.iterator();
@@ -110,7 +110,7 @@ public class RealmsTests extends ESTestCase {
                 .build();
         Environment env = new Environment(settings);
         try {
-            new Realms(settings, env, factories, securityLicenseState, reservedRealm).start();
+            new Realms(settings, env, factories, licenseState, reservedRealm).start();
             fail("Expected IllegalArgumentException");
         } catch (IllegalArgumentException e) {
             assertThat(e.getMessage(), containsString("multiple [file] realms are configured"));
@@ -119,7 +119,7 @@ public class RealmsTests extends ESTestCase {
 
     public void testWithEmptySettings() throws Exception {
         Realms realms = new Realms(Settings.EMPTY, new Environment(Settings.builder().put("path.home", createTempDir()).build()),
-                factories, securityLicenseState, reservedRealm);
+                factories, licenseState, reservedRealm);
         realms.start();
         Iterator<Realm> iter = realms.iterator();
         assertThat(iter.hasNext(), is(true));
@@ -152,7 +152,7 @@ public class RealmsTests extends ESTestCase {
         }
         Settings settings = builder.build();
         Environment env = new Environment(settings);
-        Realms realms = new Realms(settings, env, factories, securityLicenseState, reservedRealm);
+        Realms realms = new Realms(settings, env, factories, licenseState, reservedRealm);
         realms.start();
 
         // this is the iterator when licensed
@@ -170,7 +170,7 @@ public class RealmsTests extends ESTestCase {
             i++;
         }
 
-        when(securityLicenseState.enabledRealmType()).thenReturn(EnabledRealmType.DEFAULT);
+        when(licenseState.allowedRealmType()).thenReturn(AllowedRealmType.DEFAULT);
 
         iter = realms.iterator();
         assertThat(iter.hasNext(), is(true));
@@ -186,7 +186,7 @@ public class RealmsTests extends ESTestCase {
         assertThat(realm.name(), equalTo("default_" + NativeRealm.TYPE));
         assertThat(iter.hasNext(), is(false));
 
-        when(securityLicenseState.enabledRealmType()).thenReturn(EnabledRealmType.NATIVE);
+        when(licenseState.allowedRealmType()).thenReturn(AllowedRealmType.NATIVE);
 
         iter = realms.iterator();
         assertThat(iter.hasNext(), is(true));
@@ -214,7 +214,7 @@ public class RealmsTests extends ESTestCase {
                 .put("xpack.security.authc.realms.custom.order", "1");
         Settings settings = builder.build();
         Environment env = new Environment(settings);
-        Realms realms = new Realms(settings, env, factories, securityLicenseState, reservedRealm);
+        Realms realms = new Realms(settings, env, factories, licenseState, reservedRealm);
         realms.start();
         Iterator<Realm> iter = realms.iterator();
         assertThat(iter.hasNext(), is(true));
@@ -231,7 +231,7 @@ public class RealmsTests extends ESTestCase {
         }
         assertThat(types, contains("ldap", "type_0"));
 
-        when(securityLicenseState.enabledRealmType()).thenReturn(EnabledRealmType.DEFAULT);
+        when(licenseState.allowedRealmType()).thenReturn(AllowedRealmType.DEFAULT);
         iter = realms.iterator();
         assertThat(iter.hasNext(), is(true));
         realm = iter.next();
@@ -244,7 +244,7 @@ public class RealmsTests extends ESTestCase {
         }
         assertThat(i, is(1));
 
-        when(securityLicenseState.enabledRealmType()).thenReturn(EnabledRealmType.NATIVE);
+        when(licenseState.allowedRealmType()).thenReturn(AllowedRealmType.NATIVE);
         iter = realms.iterator();
         assertThat(iter.hasNext(), is(true));
         realm = iter.next();
@@ -271,7 +271,7 @@ public class RealmsTests extends ESTestCase {
                 .put("xpack.security.authc.realms.native.order", "1");
         Settings settings = builder.build();
         Environment env = new Environment(settings);
-        Realms realms = new Realms(settings, env, factories, securityLicenseState, reservedRealm);
+        Realms realms = new Realms(settings, env, factories, licenseState, reservedRealm);
         realms.start();
         Iterator<Realm> iter = realms.iterator();
         assertThat(iter.hasNext(), is(true));
@@ -285,7 +285,7 @@ public class RealmsTests extends ESTestCase {
         assertThat(realm.type(), is(type));
         assertThat(iter.hasNext(), is(false));
 
-        when(securityLicenseState.enabledRealmType()).thenReturn(EnabledRealmType.NATIVE);
+        when(licenseState.allowedRealmType()).thenReturn(AllowedRealmType.NATIVE);
         iter = realms.iterator();
         assertThat(iter.hasNext(), is(true));
         realm = iter.next();
@@ -317,7 +317,7 @@ public class RealmsTests extends ESTestCase {
         }
         Settings settings = builder.build();
         Environment env = new Environment(settings);
-        Realms realms = new Realms(settings, env, factories, securityLicenseState, reservedRealm);
+        Realms realms = new Realms(settings, env, factories, licenseState, reservedRealm);
         realms.start();
         Iterator<Realm> iterator = realms.iterator();
         Realm realm = iterator.next();
@@ -355,12 +355,12 @@ public class RealmsTests extends ESTestCase {
                 .put("xpack.security.authc.realms.realm_1.order", 0)
                 .build();
         Environment env = new Environment(settings);
-        Realms realms = new Realms(settings, env, factories, securityLicenseState, reservedRealm);
+        Realms realms = new Realms(settings, env, factories, licenseState, reservedRealm);
         realms.start();
 
         assertThat(realms.iterator().hasNext(), is(true));
 
-        when(securityLicenseState.authenticationAndAuthorizationEnabled()).thenReturn(false);
+        when(licenseState.isAuthAllowed()).thenReturn(false);
         assertThat(realms.iterator().hasNext(), is(false));
     }
 

@@ -123,9 +123,8 @@ public class HttpExporter extends Exporter {
     final ConnectionKeepAliveWorker keepAliveWorker;
     Thread keepAliveThread;
 
-    public HttpExporter(Exporter.Config config, Environment env) {
-
-        super(TYPE, config);
+    public HttpExporter(Config config, Environment env) {
+        super(config);
         this.env = env;
 
         hosts = config.settings().getAsArray(HOST_SETTING, Strings.EMPTY_ARRAY);
@@ -549,7 +548,7 @@ public class HttpExporter extends Exporter {
             try {
                 HttpExporterUtils.parseHostWithPath(host, "");
             } catch (URISyntaxException | MalformedURLException e) {
-                throw new SettingsException("[xpack.monitoring.collection.exporters] invalid host: [" + host + "]." +
+                throw new SettingsException("[xpack.monitoring.exporters] invalid host: [" + host + "]." +
                         " error: [" + e.getMessage() + "]");
             }
         }
@@ -764,22 +763,6 @@ public class HttpExporter extends Exporter {
                     connection = null;
                 }
             }
-        }
-    }
-
-    public static class Factory extends Exporter.Factory<HttpExporter> {
-
-        private final Environment env;
-
-        @Inject
-        public Factory(Environment env) {
-            super(TYPE, false);
-            this.env = env;
-        }
-
-        @Override
-        public HttpExporter create(Config config) {
-            return new HttpExporter(config, env);
         }
     }
 }

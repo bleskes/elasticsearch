@@ -25,6 +25,7 @@ import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Writeable;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.license.XPackLicenseState;
 import org.elasticsearch.xpack.security.audit.AuditTrailService;
 import org.elasticsearch.xpack.security.authc.Realm;
 import org.elasticsearch.xpack.security.authc.Realms;
@@ -52,7 +53,7 @@ public class SecurityFeatureSet implements XPackFeatureSet {
 
     private final Settings settings;
     private final boolean enabled;
-    private final SecurityLicenseState licenseState;
+    private final XPackLicenseState licenseState;
     @Nullable
     private final Realms realms;
     @Nullable
@@ -65,7 +66,7 @@ public class SecurityFeatureSet implements XPackFeatureSet {
     private final CryptoService cryptoService;
 
     @Inject
-    public SecurityFeatureSet(Settings settings, @Nullable SecurityLicenseState licenseState, @Nullable Realms realms,
+    public SecurityFeatureSet(Settings settings, @Nullable XPackLicenseState licenseState, @Nullable Realms realms,
                               NamedWriteableRegistry namedWriteableRegistry, @Nullable CompositeRolesStore rolesStore,
                               @Nullable IPFilter ipFilter, @Nullable AuditTrailService auditTrailService,
                               @Nullable CryptoService cryptoService) {
@@ -92,7 +93,7 @@ public class SecurityFeatureSet implements XPackFeatureSet {
 
     @Override
     public boolean available() {
-        return licenseState != null && licenseState.authenticationAndAuthorizationEnabled();
+        return licenseState != null && licenseState.isAuthAllowed();
     }
 
     @Override
