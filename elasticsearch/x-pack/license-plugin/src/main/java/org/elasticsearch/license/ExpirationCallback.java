@@ -19,7 +19,6 @@ package org.elasticsearch.license;
 
 import org.elasticsearch.common.logging.LoggerMessageFormat;
 import org.elasticsearch.common.unit.TimeValue;
-import org.elasticsearch.license.core.License;
 import org.elasticsearch.xpack.scheduler.SchedulerEngine;
 
 import java.util.UUID;

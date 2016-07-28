@@ -18,7 +18,6 @@
 package org.elasticsearch.license;
 
 import org.elasticsearch.common.unit.TimeValue;
-import org.elasticsearch.license.core.License;
 import org.elasticsearch.test.ESTestCase;
 
 import static org.elasticsearch.common.unit.TimeValue.timeValueMillis;
