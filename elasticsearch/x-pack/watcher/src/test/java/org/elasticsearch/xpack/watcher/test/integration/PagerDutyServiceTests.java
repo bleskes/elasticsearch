@@ -45,7 +45,7 @@ import static org.hamcrest.Matchers.lessThan;
 import static org.hamcrest.Matchers.notNullValue;
 
 @Network
-public class PagerDutyServiceIT extends AbstractWatcherIntegrationTestCase {
+public class PagerDutyServiceTests extends AbstractWatcherIntegrationTestCase {
 
     @Override
     protected boolean timeWarped() {
