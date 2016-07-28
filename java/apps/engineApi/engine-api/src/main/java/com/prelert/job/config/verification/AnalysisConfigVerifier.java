@@ -50,6 +50,7 @@ public final class AnalysisConfigVerifier
      * <li>Check there is at least one detector configured</li>
      * <li>Check all the detectors are configured correctly</li>
      * <li>Check that OVERLAPPING_BUCKETS is set appropriately</li>
+     * <li>Check that MULTIPLE_BUCKETSPANS are set appropriately</li>
      * </ol>
      */
     public static boolean verify(AnalysisConfig config) throws JobConfigurationException
@@ -62,6 +63,7 @@ public final class AnalysisConfigVerifier
         DetectorVerifier.verifyFieldName(config.getCategorizationFieldName());
         verifyDetectors(config);
         verifyCategorizationFilters(config);
+        verifyMultipleBucketSpans(config);
 
         return true;
     }
@@ -214,6 +216,35 @@ public final class AnalysisConfigVerifier
                         Messages.getMessage(
                                 Messages.JOB_CONFIG_CATEGORIZATION_FILTERS_CONTAINS_INVALID_REGEX, filter),
                         ErrorCodes.INVALID_VALUE);
+            }
+        }
+    }
+
+    private static void verifyMultipleBucketSpans(AnalysisConfig config)
+            throws JobConfigurationException
+    {
+        List<Long> multipleBucketSpans = config.getMultipleBucketSpans();
+        if (multipleBucketSpans == null)
+        {
+            return;
+        }
+
+        Long bucketSpan = config.getBucketSpan();
+        if (bucketSpan == null)
+        {
+            throw new JobConfigurationException(
+                    Messages.getMessage(
+                            Messages.JOB_CONFIG_MULTIPLE_BUCKETSPANS_REQUIRE_BUCKETSPAN),
+                    ErrorCodes.INCOMPLETE_CONFIGURATION);
+        }
+        for (Long span : multipleBucketSpans)
+        {
+            if (span % bucketSpan != 0L)
+            {
+                throw new JobConfigurationException(
+                        Messages.getMessage(
+                                Messages.JOB_CONFIG_MULTIPLE_BUCKETSPANS_MUST_BE_MULTIPLE, span, bucketSpan),
+                        ErrorCodes.MULTIPLE_BUCKETSPANS_NOT_MULTIPLE);
             }
         }
     }

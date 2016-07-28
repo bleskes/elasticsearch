@@ -108,6 +108,8 @@ public final class Messages
     public static final String JOB_CONFIG_OVERFIELD_INCOMPATIBLE_FUNCTION = "job.config.overField.incompatible.function";
     public static final String JOB_CONFIG_OVERLAPPING_BUCKETS_INCOMPATIBLE_FUNCTION = "job.config.overlapping.buckets.incompatible.function";
     public static final String JOB_CONFIG_OVERFIELD_NEEDS_ANOTHER = "job.config.overField.needs.another";
+    public static final String JOB_CONFIG_MULTIPLE_BUCKETSPANS_REQUIRE_BUCKETSPAN = "job.config.multiple.bucketspans.require.bucketspan";
+    public static final String JOB_CONFIG_MULTIPLE_BUCKETSPANS_MUST_BE_MULTIPLE = "job.config.multiple.bucketspans.must.be.multiple";
 
 
     public static final String JOB_CONFIG_UPDATE_ANALYSIS_LIMITS_PARSE_ERROR = "job.config.update.analysis.limits.parse.error";
