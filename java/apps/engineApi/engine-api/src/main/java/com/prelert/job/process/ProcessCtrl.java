@@ -40,6 +40,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.SystemUtils;
 import org.apache.log4j.Logger;
 
@@ -199,6 +200,7 @@ public class ProcessCtrl
     public static final String LENGTH_ENCODED_INPUT_ARG = "--lengthEncodedInput";
     public static final String MODEL_CONFIG_ARG = "--modelconfig=";
     public static final String QUANTILES_STATE_PATH_ARG = "--quantilesState=";
+    public static final String MULTIPLE_BUCKET_SPANS_ARG = "--multipleBucketspans=";
 
     /*
      * Arguments used by prelert_autodetect_api
@@ -616,6 +618,8 @@ public class ProcessCtrl
             addIfNotNull(analysisConfig.getPeriod(), PERIOD_ARG, command);
             addIfNotNull(analysisConfig.getSummaryCountFieldName(),
                     SUMMARY_COUNT_FIELD_ARG, command);
+            addIfNotNull(analysisConfig.getMultipleBucketSpans(),
+                    MULTIPLE_BUCKET_SPANS_ARG, command);
             if (Boolean.TRUE.equals(analysisConfig.getOverlappingBuckets()))
             {
                 Long window = analysisConfig.getResultFinalizationWindow();
@@ -691,6 +695,15 @@ public class ProcessCtrl
         boolean useDefault = dataDescription == null
                 || Strings.isNullOrEmpty(dataDescription.getTimeField());
         return useDefault ? DataDescription.DEFAULT_TIME_FIELD : dataDescription.getTimeField();
+    }
+
+    private static <T> void addIfNotNull(List<T> list, String argKey, List<String> command)
+    {
+        if (list != null)
+        {
+            String param = argKey + StringUtils.join(list, ",");
+            command.add(param);
+        }
     }
 
     private static <T> void addIfNotNull(T object, String argKey, List<String> command)
