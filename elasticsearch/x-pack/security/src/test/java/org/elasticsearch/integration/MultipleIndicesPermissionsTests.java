@@ -18,6 +18,7 @@
 package org.elasticsearch.integration;
 
 import org.elasticsearch.ElasticsearchSecurityException;
+import org.elasticsearch.action.DocWriteResponse;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.search.MultiSearchResponse;
 import org.elasticsearch.action.search.SearchResponse;
@@ -87,14 +88,14 @@ public class MultipleIndicesPermissionsTests extends SecurityIntegTestCase {
                 .startObject()
                 .field("name", "value")
                 .endObject());
-        assertThat(indexResponse.isCreated(), is(true));
+        assertEquals(DocWriteResponse.Operation.CREATE, indexResponse.getOperation());
 
 
         indexResponse = index("test1", "type", jsonBuilder()
                 .startObject()
                 .field("name", "value1")
                 .endObject());
-        assertThat(indexResponse.isCreated(), is(true));
+        assertEquals(DocWriteResponse.Operation.CREATE, indexResponse.getOperation());
 
         refresh();
 
@@ -162,13 +163,13 @@ public class MultipleIndicesPermissionsTests extends SecurityIntegTestCase {
                 .startObject()
                 .field("name", "value_a")
                 .endObject());
-        assertThat(indexResponse.isCreated(), is(true));
+        assertEquals(DocWriteResponse.Operation.CREATE, indexResponse.getOperation());
 
         indexResponse = index("b", "type", jsonBuilder()
                 .startObject()
                 .field("name", "value_b")
                 .endObject());
-        assertThat(indexResponse.isCreated(), is(true));
+        assertEquals(DocWriteResponse.Operation.CREATE, indexResponse.getOperation());
 
         refresh();
 
