@@ -36,9 +36,10 @@ import com.prelert.job.process.ProcessCtrl;
 public class NormaliserProcessFactory
 {
     public NormaliserProcess create(String jobId, String quantilesState, Integer bucketSpan,
-            Logger logger) throws IOException
+            boolean perPartitionNormalization, Logger logger) throws IOException
     {
-        Process proc = ProcessCtrl.buildNormaliser(jobId, quantilesState, bucketSpan, logger);
+        Process proc = ProcessCtrl.buildNormaliser(jobId, quantilesState, bucketSpan,
+                                                perPartitionNormalization, logger);
         return new NormaliserProcess(proc);
     }
 }

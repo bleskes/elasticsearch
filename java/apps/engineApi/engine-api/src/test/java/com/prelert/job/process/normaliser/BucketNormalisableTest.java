@@ -89,7 +89,13 @@ public class BucketNormalisableTest
     @Test
     public void testGetPartitionFieldName()
     {
-        assertNull(new BucketNormalisable(m_Bucket).getPartitonFieldName());
+        assertNull(new BucketNormalisable(m_Bucket).getPartitionFieldName());
+    }
+
+    @Test
+    public void testGetPartitionFieldValue()
+    {
+        assertNull(new BucketNormalisable(m_Bucket).getPartitionFieldValue());
     }
 
     @Test
