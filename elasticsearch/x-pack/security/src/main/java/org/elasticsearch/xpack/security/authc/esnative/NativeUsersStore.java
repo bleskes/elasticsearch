@@ -338,7 +338,7 @@ public class NativeUsersStore extends AbstractComponent implements ClusterStateL
                 .execute(new ActionListener<UpdateResponse>() {
                     @Override
                     public void onResponse(UpdateResponse updateResponse) {
-                        assert updateResponse.getOperation() == DocWriteResponse.Operation.INDEX;
+                        assert updateResponse.getResult() == DocWriteResponse.Result.UPDATED;
                         clearRealmCache(request.username(), listener, null);
                     }
 
@@ -414,7 +414,7 @@ public class NativeUsersStore extends AbstractComponent implements ClusterStateL
                 .execute(new ActionListener<UpdateResponse>() {
                     @Override
                     public void onResponse(UpdateResponse updateResponse) {
-                        assert updateResponse.getOperation() == DocWriteResponse.Operation.INDEX;
+                        assert updateResponse.getResult() == DocWriteResponse.Result.UPDATED;
                         clearRealmCache(putUserRequest.username(), listener, false);
                     }
 
@@ -455,7 +455,7 @@ public class NativeUsersStore extends AbstractComponent implements ClusterStateL
                     @Override
                     public void onResponse(IndexResponse indexResponse) {
                         // if the document was just created, then we don't need to clear cache
-                        boolean created = indexResponse.getOperation() == DocWriteResponse.Operation.CREATE;
+                        boolean created = indexResponse.getResult() == DocWriteResponse.Result.CREATED;
                         if (created) {
                             listener.onResponse(true);
                             return;
@@ -486,7 +486,7 @@ public class NativeUsersStore extends AbstractComponent implements ClusterStateL
                 @Override
                 public void onResponse(DeleteResponse deleteResponse) {
                     clearRealmCache(deleteUserRequest.username(), listener,
-                            deleteResponse.getOperation() == DocWriteResponse.Operation.DELETE);
+                            deleteResponse.getResult() == DocWriteResponse.Result.DELETED);
                 }
 
                 @Override

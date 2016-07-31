@@ -82,7 +82,7 @@ public class DateMathExpressionIntegTests extends SecurityIntegTestCase {
         IndexResponse response = client.prepareIndex(expression, "type").setSource("foo", "bar")
                 .setRefreshPolicy(refeshOnOperation ? IMMEDIATE : NONE).get();
 
-        assertEquals(DocWriteResponse.Operation.CREATE, response.getOperation());
+        assertEquals(DocWriteResponse.Result.CREATED, response.getResult());
         assertThat(response.getIndex(), containsString(expectedIndexName));
 
         if (refeshOnOperation == false) {
@@ -102,7 +102,7 @@ public class DateMathExpressionIntegTests extends SecurityIntegTestCase {
                 .setDoc("new", "field")
                 .setRefreshPolicy(refeshOnOperation ? IMMEDIATE : NONE)
                 .get();
-        assertEquals(DocWriteResponse.Operation.INDEX, updateResponse.getOperation());
+        assertEquals(DocWriteResponse.Result.UPDATED, updateResponse.getResult());
 
         if (refeshOnOperation == false) {
             client.admin().indices().prepareRefresh(expression).get();

@@ -182,7 +182,7 @@ public class WatcherServiceTests extends ESTestCase {
 
         WatchStore.WatchDelete expectedWatchDelete = mock(WatchStore.WatchDelete.class);
         DeleteResponse deleteResponse = mock(DeleteResponse.class);
-        when(deleteResponse.getOperation()).thenReturn(DocWriteResponse.Operation.DELETE);
+        when(deleteResponse.getResult()).thenReturn(DocWriteResponse.Result.DELETED);
         when(expectedWatchDelete.deleteResponse()).thenReturn(deleteResponse);
         when(watchStore.delete("_id", force)).thenReturn(expectedWatchDelete);
         WatchStore.WatchDelete watchDelete = watcherService.deleteWatch("_id", timeout, force);
@@ -211,7 +211,7 @@ public class WatcherServiceTests extends ESTestCase {
 
         WatchStore.WatchDelete expectedWatchDelete = mock(WatchStore.WatchDelete.class);
         DeleteResponse deleteResponse = mock(DeleteResponse.class);
-        when(deleteResponse.getOperation()).thenReturn(DocWriteResponse.Operation.DELETE);
+        when(deleteResponse.getResult()).thenReturn(DocWriteResponse.Result.DELETED);
         when(expectedWatchDelete.deleteResponse()).thenReturn(deleteResponse);
         when(watchStore.delete("_id", true)).thenReturn(expectedWatchDelete);
         WatchStore.WatchDelete watchDelete = watcherService.deleteWatch("_id", timeout, true);
@@ -228,7 +228,7 @@ public class WatcherServiceTests extends ESTestCase {
 
         WatchStore.WatchDelete expectedWatchDelete = mock(WatchStore.WatchDelete.class);
         DeleteResponse deleteResponse = mock(DeleteResponse.class);
-        when(deleteResponse.getOperation()).thenReturn(DocWriteResponse.Operation.NOOP);
+        when(deleteResponse.getResult()).thenReturn(DocWriteResponse.Result.NOOP);
         when(expectedWatchDelete.deleteResponse()).thenReturn(deleteResponse);
         when(watchStore.delete("_id", force)).thenReturn(expectedWatchDelete);
         WatchStore.WatchDelete watchDelete = watcherService.deleteWatch("_id", timeout, force);
