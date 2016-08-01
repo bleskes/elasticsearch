@@ -76,6 +76,21 @@ public class FieldConfigWriter
     {
         StringBuilder contents = new StringBuilder();
 
+        writeDetectors(contents);
+        writeAsEnumeratedSettings(CATEGORIZATION_FILTER_PREFIX, m_Config.getCategorizationFilters(),
+                contents, true);
+
+        // As values are written as entire settings rather than part of a
+        // clause no quoting is needed
+        writeAsEnumeratedSettings(INFLUENCER_PREFIX, m_Config.getInfluencers(), contents, false);
+
+        m_Logger.debug("FieldConfig:\n" + contents.toString());
+
+        m_Writer.write(contents.toString());
+    }
+
+    private void writeDetectors(StringBuilder contents)
+    {
         int counter = 0;
         for (Detector detector : m_Config.getDetectors())
         {
@@ -92,17 +107,6 @@ public class FieldConfigWriter
 
             contents.append(NEW_LINE);
         }
-
-        writeAsEnumeratedSettings(CATEGORIZATION_FILTER_PREFIX, m_Config.getCategorizationFilters(),
-                contents, true);
-
-        // As values are written as entire settings rather than part of a
-        // clause no quoting is needed
-        writeAsEnumeratedSettings(INFLUENCER_PREFIX, m_Config.getInfluencers(), contents, false);
-
-        m_Logger.debug("FieldConfig:\n" + contents.toString());
-
-        m_Writer.write(contents.toString());
     }
 
     private static void writeAsEnumeratedSettings(String settingName, List<String> values,
