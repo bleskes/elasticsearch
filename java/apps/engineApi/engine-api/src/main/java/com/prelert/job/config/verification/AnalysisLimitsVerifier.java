@@ -28,6 +28,7 @@ package com.prelert.job.config.verification;
 
 import com.prelert.job.AnalysisLimits;
 import com.prelert.job.errorcodes.ErrorCodes;
+import com.prelert.job.exceptions.JobConfigurationException;
 import com.prelert.job.messages.Messages;
 
 public final class AnalysisLimitsVerifier

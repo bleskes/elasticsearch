@@ -30,8 +30,8 @@ package com.prelert.job.transform.verification;
 import java.util.List;
 import java.util.regex.Pattern;
 
-import com.prelert.job.config.verification.JobConfigurationException;
 import com.prelert.job.errorcodes.ErrorCodes;
+import com.prelert.job.exceptions.JobConfigurationException;
 import com.prelert.job.messages.Messages;
 import com.prelert.job.transform.TransformConfig;
 

@@ -46,9 +46,9 @@ import com.fasterxml.jackson.databind.node.TextNode;
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.Detector;
 import com.prelert.job.JobDetails;
-import com.prelert.job.config.verification.JobConfigurationException;
 import com.prelert.job.errorcodes.ErrorCodeMatcher;
 import com.prelert.job.errorcodes.ErrorCodes;
+import com.prelert.job.exceptions.JobConfigurationException;
 import com.prelert.job.manager.JobManager;
 
 public class CategorizationFiltersUpdaterTest

@@ -32,7 +32,7 @@ import java.util.Map;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.prelert.job.JobDetails;
 import com.prelert.job.UnknownJobException;
-import com.prelert.job.config.verification.JobConfigurationException;
+import com.prelert.job.exceptions.JobConfigurationException;
 import com.prelert.job.manager.JobManager;
 import com.prelert.job.messages.Messages;
 

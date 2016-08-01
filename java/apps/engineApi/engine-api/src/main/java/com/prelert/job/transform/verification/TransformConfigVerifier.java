@@ -30,8 +30,8 @@ import java.util.List;
 
 import com.google.common.collect.Range;
 import com.prelert.job.condition.verification.ConditionVerifier;
-import com.prelert.job.config.verification.JobConfigurationException;
 import com.prelert.job.errorcodes.ErrorCodes;
+import com.prelert.job.exceptions.JobConfigurationException;
 import com.prelert.job.messages.Messages;
 import com.prelert.job.transform.TransformConfig;
 import com.prelert.job.transform.TransformType;

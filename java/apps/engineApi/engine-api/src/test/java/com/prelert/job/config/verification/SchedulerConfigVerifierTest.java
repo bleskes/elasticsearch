@@ -46,6 +46,7 @@ import com.prelert.job.SchedulerConfig;
 import com.prelert.job.SchedulerConfig.DataSource;
 import com.prelert.job.errorcodes.ErrorCodeMatcher;
 import com.prelert.job.errorcodes.ErrorCodes;
+import com.prelert.job.exceptions.JobConfigurationException;
 
 
 public class SchedulerConfigVerifierTest

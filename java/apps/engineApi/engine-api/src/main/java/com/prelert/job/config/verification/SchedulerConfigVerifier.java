@@ -34,6 +34,7 @@ import com.prelert.job.ElasticsearchDataSourceCompatibility;
 import com.prelert.job.SchedulerConfig;
 import com.prelert.job.SchedulerConfig.DataSource;
 import com.prelert.job.errorcodes.ErrorCodes;
+import com.prelert.job.exceptions.JobConfigurationException;
 import com.prelert.job.messages.Messages;
 
 public final class SchedulerConfigVerifier

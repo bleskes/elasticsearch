@@ -40,7 +40,7 @@ import org.apache.log4j.Logger;
 
 import com.prelert.job.Detector;
 import com.prelert.job.config.verification.DetectorVerifier;
-import com.prelert.job.config.verification.JobConfigurationException;
+import com.prelert.job.exceptions.JobConfigurationException;
 import com.prelert.job.transform.TransformConfig;
 import com.prelert.job.transform.verification.TransformConfigVerifier;
 import com.prelert.job.transform.verification.TransformConfigsVerifier;

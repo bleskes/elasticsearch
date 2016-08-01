@@ -42,6 +42,7 @@ import com.prelert.job.AnalysisConfig;
 import com.prelert.job.Detector;
 import com.prelert.job.errorcodes.ErrorCodeMatcher;
 import com.prelert.job.errorcodes.ErrorCodes;
+import com.prelert.job.exceptions.JobConfigurationException;
 
 /**
  * Tests the configured fields in the analysis are correct

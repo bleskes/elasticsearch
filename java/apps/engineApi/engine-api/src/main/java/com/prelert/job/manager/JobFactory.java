@@ -36,8 +36,8 @@ import com.prelert.job.Detector;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.JobDetails;
 import com.prelert.job.config.DefaultDetectorDescription;
-import com.prelert.job.config.verification.JobConfigurationException;
 import com.prelert.job.config.verification.JobConfigurationVerifier;
+import com.prelert.job.exceptions.JobConfigurationException;
 
 /**
  * A factory that creates new jobs.

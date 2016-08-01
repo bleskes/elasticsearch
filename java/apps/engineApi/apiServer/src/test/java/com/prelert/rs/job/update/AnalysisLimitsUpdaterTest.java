@@ -44,9 +44,9 @@ import com.prelert.job.AnalysisLimits;
 import com.prelert.job.JobDetails;
 import com.prelert.job.JobException;
 import com.prelert.job.JobStatus;
-import com.prelert.job.config.verification.JobConfigurationException;
 import com.prelert.job.errorcodes.ErrorCodeMatcher;
 import com.prelert.job.errorcodes.ErrorCodes;
+import com.prelert.job.exceptions.JobConfigurationException;
 import com.prelert.job.manager.JobManager;
 import com.prelert.rs.provider.JobConfigurationParseException;
 

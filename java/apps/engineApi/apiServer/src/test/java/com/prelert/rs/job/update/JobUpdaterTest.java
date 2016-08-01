@@ -59,9 +59,9 @@ import com.prelert.job.SchedulerConfig;
 import com.prelert.job.SchedulerConfig.DataSource;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.audit.Auditor;
-import com.prelert.job.config.verification.JobConfigurationException;
 import com.prelert.job.errorcodes.ErrorCodeMatcher;
 import com.prelert.job.errorcodes.ErrorCodes;
+import com.prelert.job.exceptions.JobConfigurationException;
 import com.prelert.job.manager.JobManager;
 import com.prelert.rs.provider.JobConfigurationParseException;
 

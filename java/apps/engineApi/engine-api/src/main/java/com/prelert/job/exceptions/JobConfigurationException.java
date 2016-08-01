@@ -1,4 +1,3 @@
-
 /************************************************************
  *                                                          *
  * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
@@ -26,7 +25,7 @@
  *                                                          *
  ************************************************************/
 
-package com.prelert.job.config.verification;
+package com.prelert.job.exceptions;
 
 import com.prelert.job.JobException;
 import com.prelert.job.errorcodes.ErrorCodes;

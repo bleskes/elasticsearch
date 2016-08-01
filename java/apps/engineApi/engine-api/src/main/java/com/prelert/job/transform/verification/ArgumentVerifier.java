@@ -27,7 +27,7 @@
 
 package com.prelert.job.transform.verification;
 
-import com.prelert.job.config.verification.JobConfigurationException;
+import com.prelert.job.exceptions.JobConfigurationException;
 import com.prelert.job.transform.TransformConfig;
 
 

@@ -31,7 +31,7 @@ import static org.junit.Assert.assertTrue;
 import org.junit.Test;
 
 import com.prelert.job.condition.Operator;
-import com.prelert.job.config.verification.JobConfigurationException;
+import com.prelert.job.exceptions.JobConfigurationException;
 
 public class OperatorVerifierTest
 {

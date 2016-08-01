@@ -36,8 +36,8 @@ import com.prelert.job.AnalysisConfig;
 import com.prelert.job.JobDetails;
 import com.prelert.job.JobException;
 import com.prelert.job.config.verification.AnalysisConfigVerifier;
-import com.prelert.job.config.verification.JobConfigurationException;
 import com.prelert.job.errorcodes.ErrorCodes;
+import com.prelert.job.exceptions.JobConfigurationException;
 import com.prelert.job.manager.JobManager;
 import com.prelert.job.messages.Messages;
 

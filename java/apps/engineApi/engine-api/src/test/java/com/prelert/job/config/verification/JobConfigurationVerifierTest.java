@@ -53,6 +53,7 @@ import com.prelert.job.condition.Condition;
 import com.prelert.job.condition.Operator;
 import com.prelert.job.errorcodes.ErrorCodeMatcher;
 import com.prelert.job.errorcodes.ErrorCodes;
+import com.prelert.job.exceptions.JobConfigurationException;
 import com.prelert.job.transform.TransformConfig;
 import com.prelert.job.transform.TransformType;
 
