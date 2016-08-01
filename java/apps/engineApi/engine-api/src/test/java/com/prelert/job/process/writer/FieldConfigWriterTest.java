@@ -28,6 +28,7 @@
 package com.prelert.job.process.writer;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -48,9 +49,17 @@ import org.ini4j.Config;
 import org.ini4j.Ini;
 import org.ini4j.Profile.Section;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.Detector;
+import com.prelert.job.condition.Condition;
+import com.prelert.job.condition.Operator;
+import com.prelert.job.detectionrules.DetectionRule;
+import com.prelert.job.detectionrules.RuleCondition;
+import com.prelert.job.detectionrules.RuleConditionType;
 
 
 public class FieldConfigWriterTest
@@ -202,5 +211,46 @@ public class FieldConfigWriterTest
                 "categorizationfilter.2 = \"abc,def\"\n" +
                 "influencer.0 = sun\n");
         verifyNoMoreInteractions(writer);
+    }
+
+    @Test
+    public void testWrite_GivenDetectorWithRules() throws IOException
+    {
+        Detector detector = new Detector();
+        detector.setFunction("mean");
+        detector.setFieldName("metricValue");
+        detector.setByFieldName("metricName");
+        detector.setPartitionFieldName("instance");
+        RuleCondition ruleCondition = new RuleCondition();
+        ruleCondition.setConditionType(RuleConditionType.NUMERICAL_ACTUAL);
+        ruleCondition.setFieldName("metricName");
+        ruleCondition.setCondition(new Condition(Operator.LT, "5"));
+        DetectionRule rule = new DetectionRule();
+        rule.setTargetField("instance");
+        rule.setRuleConditions(Arrays.asList(ruleCondition));
+        detector.setDetectorRules(Arrays.asList(rule));
+
+        AnalysisConfig config = new AnalysisConfig();
+        config.setDetectors(Arrays.asList(detector));
+
+        OutputStreamWriter writer = mock(OutputStreamWriter.class);
+        Logger logger = mock(Logger.class);
+        FieldConfigWriter fieldConfigWriter = new FieldConfigWriter(config, writer, logger);
+
+        fieldConfigWriter.write();
+
+        ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
+        verify(writer).write(captor.capture());
+        String actual = captor.getValue();
+        String expectedFirstLine = "detector.0.clause = mean(metricValue) by metricName partitionfield=instance\n";
+        assertTrue(actual.startsWith(expectedFirstLine));
+        String secondLine = actual.substring(expectedFirstLine.length());
+        String expectedSecondLineStart = "detector.0.rules = ";
+        assertTrue(secondLine.startsWith(expectedSecondLineStart));
+        String rulesJson = secondLine.substring(expectedSecondLineStart.length());
+        List<DetectionRule> writtenRules = new ObjectMapper().readValue(rulesJson,
+                new TypeReference<List<DetectionRule>>() {});
+        assertEquals(1, writtenRules.size());
+        assertEquals(rule, writtenRules.get(0));
     }
 }

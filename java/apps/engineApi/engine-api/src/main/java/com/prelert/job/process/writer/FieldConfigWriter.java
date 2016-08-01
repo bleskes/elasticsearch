@@ -36,16 +36,19 @@ import java.util.Objects;
 
 import org.apache.log4j.Logger;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Strings;
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.Detector;
 import com.prelert.job.config.DefaultDetectorDescription;
+import com.prelert.job.detectionrules.DetectionRule;
 import com.prelert.utils.PrelertStrings;
 
 public class FieldConfigWriter
 {
     private static final String DETECTOR_PREFIX = "detector.";
     private static final String DETECTOR_CLAUSE_SUFFIX = ".clause";
+    private static final String DETECTOR_RULES_SUFFIX = ".rules";
     private static final String INFLUENCER_PREFIX = "influencer.";
     private static final String CATEGORIZATION_FIELD_OPTION = " categorizationfield=";
     private static final String CATEGORIZATION_FILTER_PREFIX = "categorizationfilter.";
@@ -89,12 +92,14 @@ public class FieldConfigWriter
         m_Writer.write(contents.toString());
     }
 
-    private void writeDetectors(StringBuilder contents)
+    private void writeDetectors(StringBuilder contents) throws IOException
     {
         int counter = 0;
         for (Detector detector : m_Config.getDetectors())
         {
-            writeDetectorClause(counter++, detector, contents);
+            int detectorId = counter++;
+            writeDetectorClause(detectorId, detector, contents);
+            writeDetectorRules(detectorId, detector, contents);
         }
     }
 
@@ -110,6 +115,25 @@ public class FieldConfigWriter
             contents.append(CATEGORIZATION_FIELD_OPTION)
                     .append(quoteField(m_Config.getCategorizationFieldName()));
         }
+
+        contents.append(NEW_LINE);
+    }
+
+    private void writeDetectorRules(int detectorId, Detector detector, StringBuilder contents)
+            throws IOException
+    {
+        List<DetectionRule> rules = detector.getDetectorRules();
+        if (rules == null || rules.isEmpty())
+        {
+            return;
+        }
+
+        contents.append(DETECTOR_PREFIX).append(detectorId)
+                .append(DETECTOR_RULES_SUFFIX).append(EQUALS);
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        String rulesAsJson = objectMapper.writeValueAsString(detector.getDetectorRules());
+        contents.append(rulesAsJson);
 
         contents.append(NEW_LINE);
     }
