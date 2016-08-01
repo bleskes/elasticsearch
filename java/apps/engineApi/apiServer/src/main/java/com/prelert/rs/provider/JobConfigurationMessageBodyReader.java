@@ -89,7 +89,7 @@ public class JobConfigurationMessageBodyReader extends AbstractMessageBodyReader
 
                 return new JobConfigurationParseException(Messages.getMessage(
                         Messages.JOB_CONFIG_CONDITION_UNKNOWN_OPERATOR, uoe.getName()),
-                        uoe, ErrorCodes.UNKNOWN_OPERATOR);
+                        uoe, ErrorCodes.CONDITION_UNKNOWN_OPERATOR);
             }
         }
 

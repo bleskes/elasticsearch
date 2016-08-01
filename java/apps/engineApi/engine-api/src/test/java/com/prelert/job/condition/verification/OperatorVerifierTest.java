@@ -28,13 +28,20 @@ package com.prelert.job.condition.verification;
 
 import static org.junit.Assert.assertTrue;
 
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import com.prelert.job.condition.Operator;
+import com.prelert.job.errorcodes.ErrorCodeMatcher;
+import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.exceptions.JobConfigurationException;
 
 public class OperatorVerifierTest
 {
+    @Rule
+    public ExpectedException m_ExpectedException = ExpectedException.none();
+
     @Test
     public void testVerify() throws JobConfigurationException
     {
@@ -42,9 +49,15 @@ public class OperatorVerifierTest
         assertTrue(OperatorVerifier.verify("matCh"));
     }
 
-    @Test(expected=JobConfigurationException.class)
+    @Test
     public void testVerify_unknownOp() throws JobConfigurationException
     {
+        m_ExpectedException.expect(JobConfigurationException.class);
+        m_ExpectedException.expectMessage(
+                "Unknown condition operator 'bad_op'");
+        m_ExpectedException.expect(
+                ErrorCodeMatcher.hasErrorCode(ErrorCodes.CONDITION_UNKNOWN_OPERATOR));
+
         OperatorVerifier.verify("bad_op");
     }
 }
