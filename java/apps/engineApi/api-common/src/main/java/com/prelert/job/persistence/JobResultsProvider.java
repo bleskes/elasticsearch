@@ -58,7 +58,7 @@ public interface JobResultsProvider extends Shutdownable
      * Get the result buckets for the job id starting with bucket id =
      * <code>startBucket</code> up to <code>endBucket</code>. One of either
      * <code>startBucket</code> or <code>endBucket</code> should be non-zero else
-     * it is more efficient to use {@linkplain #buckets(String, boolean, int, int)}
+     * it is more efficient to use {@linkplain #buckets(String, boolean, int, int, double, double)}
      *
      * @param jobId
      * @param expand Include anomaly records
@@ -86,7 +86,17 @@ public interface JobResultsProvider extends Shutdownable
 
 
     /**
-     * Get the bucket by Id from the job.
+     * Search for buckets with the parameters in the {@link BucketsQueryBuilder}
+     * @param jobId
+     * @param query
+     * @return QueryPage of Buckets
+     * @throws UnknownJobException If the job id is no recognised
+     */
+    QueryPage<Bucket> buckets(String jobId, BucketsQueryBuilder.BucketsQuery query)
+            throws UnknownJobException;
+
+    /**
+     * Get the bucket at time <code>timestampMillis</code> from the job.
      *
      * @param jobId
      * @param timestampMillis Bucket timestamp as epoch milliseconds
@@ -219,6 +229,16 @@ public interface JobResultsProvider extends Shutdownable
             double anomalyScoreThreshold, double normalizedProbabilityThreshold)
             throws UnknownJobException;
 
+    /**
+     * Search for anomaly records with the parameters in the
+     * {@link RecordsQueryBuilder.com.prelert.job.persistence.RecordsQueryBuilder.RecordsQuery}
+     * @param jobId
+     * @param query
+     * @return QueryPage of AnomalyRecords
+     * @throws UnknownJobException If the job id is no recognised
+     */
+    QueryPage<AnomalyRecord> records(String jobId, RecordsQueryBuilder.RecordsQuery query)
+        throws UnknownJobException;
 
     /**
      * Return a page of influencers for the given job.

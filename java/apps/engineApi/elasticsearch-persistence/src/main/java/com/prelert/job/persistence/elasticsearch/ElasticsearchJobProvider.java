@@ -42,6 +42,7 @@ import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
+import com.prelert.job.persistence.*;
 import org.apache.log4j.Logger;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
@@ -94,10 +95,6 @@ import com.prelert.job.audit.AuditActivity;
 import com.prelert.job.audit.AuditMessage;
 import com.prelert.job.audit.Auditor;
 import com.prelert.job.errorcodes.ErrorCodes;
-import com.prelert.job.persistence.BatchedDocumentsIterator;
-import com.prelert.job.persistence.DataStoreException;
-import com.prelert.job.persistence.JobProvider;
-import com.prelert.job.persistence.QueryPage;
 import com.prelert.job.quantiles.Quantiles;
 import com.prelert.job.results.AnomalyRecord;
 import com.prelert.job.results.Bucket;
@@ -622,6 +619,21 @@ public class ElasticsearchJobProvider implements JobProvider
         return buckets(new ElasticsearchJobId(jobId), expand, includeInterim, skip, take, fb);
     }
 
+    @Override
+    public QueryPage<Bucket> buckets(String jobId, BucketsQueryBuilder.BucketsQuery query)
+    throws UnknownJobException
+    {
+        QueryBuilder fb = new ResultsFilterBuilder()
+                .timeRange(ElasticsearchMappings.ES_TIMESTAMP, query.getEpochStart(), query.getEpochEnd())
+                .score(Bucket.ANOMALY_SCORE, query.getAnomalyScoreFilter())
+                .score(Bucket.MAX_NORMALIZED_PROBABILITY, query.getNormalizedProbability())
+                .interim(Bucket.IS_INTERIM, query.isIncludeInterim())
+                .build();
+
+        return buckets(new ElasticsearchJobId(jobId), query.isExpand(), query.isIncludeInterim(),
+                    query.getSkip(), query.getTake(), fb);
+    }
+
     private QueryPage<Bucket> buckets(ElasticsearchJobId jobId, boolean expand, boolean includeInterim,
             int skip, int take, QueryBuilder fb) throws UnknownJobException
     {
@@ -859,6 +871,21 @@ public class ElasticsearchJobProvider implements JobProvider
                 .build();
         return records(new ElasticsearchJobId(jobId), skip, take, fb, sortField, descending);
     }
+
+    public QueryPage<AnomalyRecord> records(String jobId, RecordsQueryBuilder.RecordsQuery query)
+            throws UnknownJobException
+    {
+        QueryBuilder fb = new ResultsFilterBuilder()
+                .timeRange(ElasticsearchMappings.ES_TIMESTAMP, query.getEpochStart(), query.getEpochEnd())
+                .score(AnomalyRecord.ANOMALY_SCORE, query.getAnomalyScoreThreshold())
+                .score(AnomalyRecord.NORMALIZED_PROBABILITY, query.getNormalizedProbabilityThreshold())
+                .interim(AnomalyRecord.IS_INTERIM, query.isIncludeInterim())
+                .build();
+
+        return records(new ElasticsearchJobId(jobId), query.getSkip(), query.getTake(), fb,
+                            query.getSortField(), query.isSortDescending());
+    }
+
 
     private QueryPage<AnomalyRecord> records(ElasticsearchJobId jobId,
             int skip, int take, QueryBuilder recordFilter,
