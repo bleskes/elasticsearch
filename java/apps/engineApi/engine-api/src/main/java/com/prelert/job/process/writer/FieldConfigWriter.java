@@ -94,19 +94,24 @@ public class FieldConfigWriter
         int counter = 0;
         for (Detector detector : m_Config.getDetectors())
         {
-            contents.append(DETECTOR_PREFIX).append(counter++)
-                    .append(DETECTOR_CLAUSE_SUFFIX).append(EQUALS);
-
-            DefaultDetectorDescription.appendOn(detector, contents);
-
-            if (Strings.isNullOrEmpty(m_Config.getCategorizationFieldName()) == false)
-            {
-                contents.append(CATEGORIZATION_FIELD_OPTION)
-                        .append(quoteField(m_Config.getCategorizationFieldName()));
-            }
-
-            contents.append(NEW_LINE);
+            writeDetectorClause(counter++, detector, contents);
         }
+    }
+
+    private void writeDetectorClause(int detectorId, Detector detector, StringBuilder contents)
+    {
+        contents.append(DETECTOR_PREFIX).append(detectorId)
+                .append(DETECTOR_CLAUSE_SUFFIX).append(EQUALS);
+
+        DefaultDetectorDescription.appendOn(detector, contents);
+
+        if (Strings.isNullOrEmpty(m_Config.getCategorizationFieldName()) == false)
+        {
+            contents.append(CATEGORIZATION_FIELD_OPTION)
+                    .append(quoteField(m_Config.getCategorizationFieldName()));
+        }
+
+        contents.append(NEW_LINE);
     }
 
     private static void writeAsEnumeratedSettings(String settingName, List<String> values,
