@@ -22,9 +22,9 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.util.EntityUtils;
+import org.elasticsearch.action.DocWriteResponse;
 import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.get.GetResponse;
-import org.elasticsearch.action.update.UpdateResponse;
 import org.elasticsearch.client.Response;
 import org.elasticsearch.common.network.NetworkModule;
 import org.elasticsearch.common.settings.Settings;
@@ -40,7 +40,6 @@ import java.util.Collections;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.is;
 
 public class BulkUpdateTests extends SecurityIntegTestCase {
 
@@ -54,7 +53,8 @@ public class BulkUpdateTests extends SecurityIntegTestCase {
     }
 
     public void testThatBulkUpdateDoesNotLoseFields() {
-        assertThat(client().prepareIndex("index1", "type").setSource("{\"test\": \"test\"}").setId("1").get().isCreated(), is(true));
+        assertEquals(DocWriteResponse.Result.CREATED,
+                client().prepareIndex("index1", "type").setSource("{\"test\": \"test\"}").setId("1").get().getResult());
         GetResponse getResponse = internalCluster().transportClient().prepareGet("index1", "type", "1").setFields("test").get();
         assertThat(getResponse.getField("test").getValue(), equalTo("test"));
 
@@ -63,9 +63,8 @@ public class BulkUpdateTests extends SecurityIntegTestCase {
         }
 
         // update with a new field
-        boolean created = internalCluster().transportClient().prepareUpdate("index1", "type", "1").setDoc("{\"not test\": \"not test\"}")
-                .get().isCreated();
-        assertThat(created, is(false));
+        assertEquals(DocWriteResponse.Result.UPDATED, internalCluster().transportClient().prepareUpdate("index1", "type", "1")
+                .setDoc("{\"not test\": \"not test\"}").get().getResult());
         getResponse = internalCluster().transportClient().prepareGet("index1", "type", "1").setFields("test", "not test").get();
         assertThat(getResponse.getField("test").getValue(), equalTo("test"));
         assertThat(getResponse.getField("not test").getValue(), equalTo("not test"));
@@ -77,7 +76,7 @@ public class BulkUpdateTests extends SecurityIntegTestCase {
         // do it in a bulk
         BulkResponse response = internalCluster().transportClient().prepareBulk().add(client().prepareUpdate("index1", "type", "1")
                 .setDoc("{\"bulk updated\": \"bulk updated\"}")).get();
-        assertThat(((UpdateResponse)response.getItems()[0].getResponse()).isCreated(), is(false));
+        assertEquals(DocWriteResponse.Result.UPDATED, response.getItems()[0].getResponse().getResult());
         getResponse = internalCluster().transportClient().prepareGet("index1", "type", "1").
                 setFields("test", "not test", "bulk updated").get();
         assertThat(getResponse.getField("test").getValue(), equalTo("test"));

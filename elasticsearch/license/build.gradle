@@ -1,8 +1,0 @@
-
-subprojects {
-  project.afterEvaluate {
-    project.forbiddenPatterns {
-      exclude '**/*.key'
-    }
-  }
-}
