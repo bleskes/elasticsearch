@@ -923,9 +923,10 @@ public class EngineApiClient implements Closeable
                 // later responses
                 if (!complete.get())
                 {
-                    waitUntilRequestCompletesLatch.countDown();
                     statusHolder.set(result.getResponse().getStatus());
                     complete.set(true);
+                    content.set(Strings.nullToEmpty(this.getContentAsString()));
+                    waitUntilRequestCompletesLatch.countDown();
                 }
                 else {
                     LOGGER.warn("Unexpected 2nd response");
@@ -955,8 +956,6 @@ public class EngineApiClient implements Closeable
             LOGGER.error(e);
             return defaultReturnValue;
         }
-
-        content.set(Strings.nullToEmpty(responseListener.getContentAsString()));
 
         if (statusHolder.get() != HttpStatus.ACCEPTED_202)
         {
