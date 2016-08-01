@@ -956,7 +956,7 @@ public class EngineApiClient implements Closeable
             return defaultReturnValue;
         }
 
-//        String content = Strings.nullToEmpty(responseListener.getContentAsString());
+        content.set(Strings.nullToEmpty(responseListener.getContentAsString()));
 
         if (statusHolder.get() != HttpStatus.ACCEPTED_202)
         {
