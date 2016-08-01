@@ -56,7 +56,7 @@ public final class OperatorVerifier
         {
             throw new JobConfigurationException(
                 Messages.getMessage(Messages.JOB_CONFIG_CONDITION_UNKNOWN_OPERATOR, name),
-                ErrorCodes.UNKNOWN_OPERATOR);
+                ErrorCodes.CONDITION_UNKNOWN_OPERATOR);
         }
 
         return true;

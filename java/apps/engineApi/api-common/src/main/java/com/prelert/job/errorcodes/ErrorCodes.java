@@ -168,6 +168,16 @@ public enum ErrorCodes
     CATEGORIZATION_FILTERS_CONTAIN_DUPLICATES(10121),
 
     /**
+     * Condition operator is not recognised
+     */
+    CONDITION_UNKNOWN_OPERATOR(10122),
+
+    /**
+     * Invalid condition argument
+     */
+    CONDITION_INVALID_ARGUMENT(10123),
+
+    /**
      * The transform name isn't recognised
      */
     UNKNOWN_TRANSFORM(10201),
@@ -210,14 +220,9 @@ public enum ErrorCodes
     TRANSFORM_REQUIRES_CONDITION(10208),
 
     /**
-     * Condition operator is not recognised
+     * Error codes 10209 (UNKNOWN_OPERATOR) and 10210 (CONDITION_INVALID_ARGUMENT)
+     * have been deprecated since version 2.1.0.
      */
-    UNKNOWN_OPERATOR(10209),
-
-    /**
-     * Invalid condition argument
-     */
-    CONDITION_INVALID_ARGUMENT(10210),
 
     /**
      * Some transforms such as Regex require an argument when
