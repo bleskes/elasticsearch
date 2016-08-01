@@ -49,10 +49,10 @@ import com.prelert.job.Detector;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.SchedulerConfig;
 import com.prelert.job.SchedulerConfig.DataSource;
+import com.prelert.job.condition.Condition;
+import com.prelert.job.condition.Operator;
 import com.prelert.job.errorcodes.ErrorCodeMatcher;
 import com.prelert.job.errorcodes.ErrorCodes;
-import com.prelert.job.transform.Condition;
-import com.prelert.job.transform.Operator;
 import com.prelert.job.transform.TransformConfig;
 import com.prelert.job.transform.TransformType;
 

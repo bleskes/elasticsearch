@@ -303,6 +303,12 @@ public enum ErrorCodes
      */
     SCHEDULER_MULTIPLE_AGGREGATIONS(10310),
 
+    /**
+     * Multiple bucketspans must be exact multiples of
+     * the shortest bucketspan.
+     */
+    MULTIPLE_BUCKETSPANS_NOT_MULTIPLE(10311),
+
     // Data store errors
     /**
      * A generic exception from the data store

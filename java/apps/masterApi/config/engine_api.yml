@@ -1,0 +1,18 @@
+
+# ------------------------------------------------------------------------------
+# These settings relate to web server that serves Prelert's REST API
+
+# TCP port to use
+# jetty.port: 8080
+
+# Directory for static (non-REST API) content
+# jetty.home: cots/jetty
+
+# ------------------------------------------------------------------------------
+# Distributed Engines config
+
+# Comma separated list of Engine URLs
+engine.urls: http://localhost:8080/engine/v2/,http://localhost:9080/engine/v2
+
+# The number of jobs to run per node
+jobs.per.node: 2

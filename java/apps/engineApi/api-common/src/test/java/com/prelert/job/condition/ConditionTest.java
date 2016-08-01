@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -24,38 +24,40 @@
  *                                                          *
  *                                                          *
  ************************************************************/
+package com.prelert.job.condition;
 
-package com.prelert.job.transform;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 
-import com.prelert.job.errorcodes.ErrorCodes;
-import com.prelert.job.errorcodes.HasErrorCode;
+import org.junit.Test;
 
-/**
- * Represents the invalid configuration of a transform.
- */
-public class TransformConfigurationException extends Exception implements HasErrorCode
+public class ConditionTest
 {
-    private static final long serialVersionUID = -8930949236695246267L;
-
-    private final ErrorCodes m_ErrorCode;
-
-    /**
-     * Create a new TransformConfigurationException.
-     *
-     * @param message Details of error explaining the context
-     * @param errorCode See {@linkplain com.prelert.job.errorcodes.ErrorCodes}
-     */
-    public TransformConfigurationException(String message, ErrorCodes errorCode)
+    @Test
+    public void testSetValues()
     {
-        super(message);
-        m_ErrorCode = errorCode;
+        // When the args can't be parsed the
+        // default is the < operator and 0.
+        Condition cond = new Condition();
+        assertEquals(Operator.NONE, cond.getOperator());
+        assertEquals(null, cond.getValue());
+
+        cond = new Condition(Operator.EQ, "astring");
+        assertEquals(Operator.EQ, cond.getOperator());
+        assertEquals("astring", cond.getValue());
     }
 
-    @Override
-    public ErrorCodes getErrorCode()
+    @Test
+    public void testHashCodeAndEquals()
     {
-        return m_ErrorCode;
+        Condition cond1 = new Condition(Operator.MATCH, "regex");
+        Condition cond2 = new Condition(Operator.MATCH, "regex");
+
+        assertEquals(cond1, cond2);
+        assertEquals(cond1.hashCode(), cond2.hashCode());
+
+        cond2.setOperator(Operator.EQ);
+        assertFalse(cond1.equals(cond2));
+        assertFalse(cond1.hashCode() == cond2.hashCode());
     }
-
-
 }

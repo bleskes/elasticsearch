@@ -361,6 +361,52 @@ public class AnalysisConfigVerifierTest
     }
 
     @Test
+    public void testMultipleBucketsConfig()
+            throws JobConfigurationException
+    {
+        AnalysisConfig ac = new AnalysisConfig();
+        ac.setMultipleBucketSpans(Arrays.asList(10L, 15L, 20L, 25L, 30L, 35L));
+        List<Detector> detectors = new ArrayList<>();
+        Detector detector = new Detector();
+        detector.setFunction("count");
+        detectors.add(detector);
+        ac.setDetectors(detectors);
+        try
+        {
+            AnalysisConfigVerifier.verify(ac);
+            assertTrue(false);
+        }
+        catch (JobConfigurationException e)
+        {
+            assertEquals(ErrorCodes.INCOMPLETE_CONFIGURATION, e.getErrorCode());
+        }
+
+        ac.setBucketSpan(4L);
+        try
+        {
+            AnalysisConfigVerifier.verify(ac);
+            assertTrue(false);
+        }
+        catch (JobConfigurationException e)
+        {
+            assertEquals(ErrorCodes.MULTIPLE_BUCKETSPANS_NOT_MULTIPLE, e.getErrorCode());
+            String rex = String.format(".*'%d'.*'%d'.*", 10, 4);
+            assertTrue(e.getMessage().matches(rex));
+        }
+
+        ac.setBucketSpan(5L);
+        assertTrue(AnalysisConfigVerifier.verify(ac));
+
+        AnalysisConfig ac2 = new AnalysisConfig();
+        ac2.setBucketSpan(5L);
+        ac2.setDetectors(detectors);
+        ac2.setMultipleBucketSpans(Arrays.asList(10L, 15L, 20L, 25L, 30L));
+        assertFalse(ac.equals(ac2));
+        ac2.setMultipleBucketSpans(Arrays.asList(10L, 15L, 20L, 25L, 30L, 35L));
+        assertEquals(ac, ac2);
+    }
+
+    @Test
     public void testVerify_GivenCategorizationFiltersButNoCategorizationFieldName()
             throws JobConfigurationException
     {

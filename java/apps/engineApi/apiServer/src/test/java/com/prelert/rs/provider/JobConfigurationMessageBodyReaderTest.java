@@ -54,8 +54,8 @@ import com.prelert.job.DataDescription;
 import com.prelert.job.Detector;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.JobDetails;
-import com.prelert.job.transform.Condition;
-import com.prelert.job.transform.Operator;
+import com.prelert.job.condition.Condition;
+import com.prelert.job.condition.Operator;
 import com.prelert.job.transform.TransformConfig;
 
 public class JobConfigurationMessageBodyReaderTest

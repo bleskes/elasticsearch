@@ -40,6 +40,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.SystemUtils;
 import org.apache.log4j.Logger;
 
@@ -199,6 +200,8 @@ public class ProcessCtrl
     public static final String LENGTH_ENCODED_INPUT_ARG = "--lengthEncodedInput";
     public static final String MODEL_CONFIG_ARG = "--modelconfig=";
     public static final String QUANTILES_STATE_PATH_ARG = "--quantilesState=";
+    public static final String MULTIPLE_BUCKET_SPANS_ARG = "--multipleBucketspans=";
+    public static final String PER_PARTITION_NORMALIZATION = "--perPartitionNormalization";
 
     /*
      * Arguments used by prelert_autodetect_api
@@ -616,6 +619,8 @@ public class ProcessCtrl
             addIfNotNull(analysisConfig.getPeriod(), PERIOD_ARG, command);
             addIfNotNull(analysisConfig.getSummaryCountFieldName(),
                     SUMMARY_COUNT_FIELD_ARG, command);
+            addIfNotNull(analysisConfig.getMultipleBucketSpans(),
+                    MULTIPLE_BUCKET_SPANS_ARG, command);
             if (Boolean.TRUE.equals(analysisConfig.getOverlappingBuckets()))
             {
                 Long window = analysisConfig.getResultFinalizationWindow();
@@ -628,6 +633,11 @@ public class ProcessCtrl
             if (Boolean.TRUE.equals(analysisConfig.getMultivariateByFields()))
             {
                 command.add(MULTIVARIATE_BY_FIELDS_ARG);
+            }
+
+            if (analysisConfig.getUsePerPartitionNormalization())
+            {
+                command.add(PER_PARTITION_NORMALIZATION);
             }
         }
 
@@ -693,6 +703,15 @@ public class ProcessCtrl
         return useDefault ? DataDescription.DEFAULT_TIME_FIELD : dataDescription.getTimeField();
     }
 
+    private static <T> void addIfNotNull(List<T> list, String argKey, List<String> command)
+    {
+        if (list != null)
+        {
+            String param = argKey + StringUtils.join(list, ",");
+            command.add(param);
+        }
+    }
+
     private static <T> void addIfNotNull(T object, String argKey, List<String> command)
     {
         if (object != null)
@@ -748,17 +767,19 @@ public class ProcessCtrl
      * @param jobId
      * @param quantilesState Set to <code>null</code> to be ignored
      * @param bucketSpan If <code>null</code> then use the program default
+     * @param perPartitionNormalization
      * @param logger
      * @return
      * @throws IOException
      */
     public static Process buildNormaliser(String jobId, String quantilesState,
-            Integer bucketSpan, Logger logger)
+            Integer bucketSpan, boolean perPartitionNormalization, Logger logger)
     throws IOException
     {
         logger.info("PRELERT_HOME is set to " + PRELERT_HOME);
 
-        List<String> command = ProcessCtrl.buildNormaliserCommand(jobId, bucketSpan);
+        List<String> command = ProcessCtrl.buildNormaliserCommand(jobId, bucketSpan,
+                                                                    perPartitionNormalization);
 
         if (quantilesState != null)
         {
@@ -784,7 +805,8 @@ public class ProcessCtrl
 
     }
 
-    static List<String> buildNormaliserCommand(String jobId, Integer bucketSpan)
+    static List<String> buildNormaliserCommand(String jobId, Integer bucketSpan,
+                                                boolean perPartitionNormalization)
     throws IOException
     {
         List<String> command = new ArrayList<>();
@@ -792,6 +814,11 @@ public class ProcessCtrl
         addIfNotNull(bucketSpan, BUCKET_SPAN_ARG, command);
         command.add(LOG_ID_ARG + jobId);
         command.add(LENGTH_ENCODED_INPUT_ARG);
+        if (perPartitionNormalization)
+        {
+            command.add(PER_PARTITION_NORMALIZATION);
+        }
+
         return command;
     }
 

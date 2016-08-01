@@ -48,7 +48,13 @@ class BucketInfluencerNormalisable extends AbstractLeafNormalisable
     }
 
     @Override
-    public String getPartitonFieldName()
+    public String getPartitionFieldName()
+    {
+        return null;
+    }
+
+    @Override
+    public String getPartitionFieldValue()
     {
         return null;
     }

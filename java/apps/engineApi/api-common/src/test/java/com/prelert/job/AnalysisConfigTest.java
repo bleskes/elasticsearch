@@ -195,6 +195,13 @@ public class AnalysisConfigTest
         }
 
         assertEquals("summaryCount", ac.getSummaryCountFieldName());
+
+        ac = new AnalysisConfig();
+        ac.setBucketSpan(1000L);
+        ac.setMultipleBucketSpans(Arrays.asList(5000L, 10000L, 24000L));
+        assertTrue(ac.getMultipleBucketSpans().contains(5000L));
+        assertTrue(ac.getMultipleBucketSpans().contains(10000L));
+        assertTrue(ac.getMultipleBucketSpans().contains(24000L));
     }
 
     @Test

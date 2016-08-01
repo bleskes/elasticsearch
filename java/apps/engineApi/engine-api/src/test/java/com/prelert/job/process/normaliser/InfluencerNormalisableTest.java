@@ -68,7 +68,13 @@ public class InfluencerNormalisableTest
     @Test
     public void testGetPartitionFieldName()
     {
-        assertNull(new InfluencerNormalisable(m_Influencer).getPartitonFieldName());
+        assertNull(new InfluencerNormalisable(m_Influencer).getPartitionFieldName());
+    }
+
+    @Test
+    public void testGetPartitionFieldValue()
+    {
+        assertNull(new InfluencerNormalisable(m_Influencer).getPartitionFieldValue());
     }
 
     @Test

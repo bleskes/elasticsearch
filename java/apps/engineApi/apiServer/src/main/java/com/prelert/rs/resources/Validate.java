@@ -42,9 +42,8 @@ import com.prelert.job.Detector;
 import com.prelert.job.config.verification.DetectorVerifier;
 import com.prelert.job.config.verification.JobConfigurationException;
 import com.prelert.job.transform.TransformConfig;
-import com.prelert.job.transform.TransformConfigurationException;
-import com.prelert.job.transform.verification.TransformConfigsVerifier;
 import com.prelert.job.transform.verification.TransformConfigVerifier;
+import com.prelert.job.transform.verification.TransformConfigsVerifier;
 import com.prelert.rs.data.Acknowledgement;
 
 
@@ -94,14 +93,7 @@ public class Validate extends ResourceWithJobManager
     public Response validateTransform(TransformConfig transform) throws JobConfigurationException
     {
         LOGGER.trace("Received request to validate transform");
-        try
-        {
-            TransformConfigVerifier.verify(transform);
-        }
-        catch (TransformConfigurationException e)
-        {
-            throw new JobConfigurationException(e.getMessage(), e.getErrorCode());
-        }
+        TransformConfigVerifier.verify(transform);
         return Response.ok(new Acknowledgement()).build();
     }
 
@@ -119,14 +111,7 @@ public class Validate extends ResourceWithJobManager
     public Response validateTransforms(TransformConfig[] transforms) throws JobConfigurationException
     {
         LOGGER.trace("Received request to validate transforms");
-        try
-        {
-            TransformConfigsVerifier.verify(Arrays.asList(transforms));
-        }
-        catch (TransformConfigurationException e)
-        {
-            throw new JobConfigurationException(e.getMessage(), e.getErrorCode());
-        }
+        TransformConfigsVerifier.verify(Arrays.asList(transforms));
         return Response.ok(new Acknowledgement()).build();
     }
 }

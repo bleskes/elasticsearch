@@ -29,10 +29,11 @@ package com.prelert.job.transform.verification;
 import java.util.List;
 
 import com.google.common.collect.Range;
+import com.prelert.job.condition.verification.ConditionVerifier;
+import com.prelert.job.config.verification.JobConfigurationException;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.messages.Messages;
 import com.prelert.job.transform.TransformConfig;
-import com.prelert.job.transform.TransformConfigurationException;
 import com.prelert.job.transform.TransformType;
 
 public final class TransformConfigVerifier
@@ -56,9 +57,9 @@ public final class TransformConfigVerifier
      *
      * @param tc
      * @return
-     * @throws TransformConfigurationException
+     * @throws JobConfigurationException
      */
-    public static boolean verify(TransformConfig tc) throws TransformConfigurationException
+    public static boolean verify(TransformConfig tc) throws JobConfigurationException
     {
         TransformType type;
         try
@@ -67,7 +68,7 @@ public final class TransformConfigVerifier
         }
         catch (IllegalArgumentException e)
         {
-            throw new TransformConfigurationException(
+            throw new JobConfigurationException(
                     Messages.getMessage(Messages.JOB_CONFIG_TRANSFORM_UNKNOWN_TYPE, tc.getTransform()),
                     ErrorCodes.UNKNOWN_TRANSFORM);
         }
@@ -81,13 +82,13 @@ public final class TransformConfigVerifier
     }
 
     private static void checkCondition(TransformConfig tc, TransformType type)
-    throws TransformConfigurationException
+    throws JobConfigurationException
     {
         if (type.hasCondition())
         {
             if (tc.getCondition() == null)
             {
-                throw new TransformConfigurationException(
+                throw new JobConfigurationException(
                         Messages.getMessage(Messages.JOB_CONFIG_TRANSFORM_CONDITION_REQUIRED,
                                 type.prettyName()),
                         ErrorCodes.TRANSFORM_REQUIRES_CONDITION);
@@ -98,7 +99,7 @@ public final class TransformConfigVerifier
     }
 
     private static void checkInputs(TransformConfig tc, TransformType type)
-    throws TransformConfigurationException
+    throws JobConfigurationException
     {
         List<String> inputs = tc.getInputs();
         checkValidInputCount(tc, type, inputs);
@@ -106,25 +107,25 @@ public final class TransformConfigVerifier
     }
 
     private static void checkValidInputCount(TransformConfig tc, TransformType type, List<String> inputs)
-            throws TransformConfigurationException
+            throws JobConfigurationException
     {
         int inputsSize = (inputs == null) ? 0 : inputs.size();
         if (!type.arityRange().contains(inputsSize))
         {
             String msg = Messages.getMessage(Messages.JOB_CONFIG_TRANSFORM_INVALID_INPUT_COUNT,
                     tc.getTransform(), rangeAsString(type.arityRange()), inputsSize);
-            throw new TransformConfigurationException(msg, ErrorCodes.TRANSFORM_INVALID_INPUT_COUNT);
+            throw new JobConfigurationException(msg, ErrorCodes.TRANSFORM_INVALID_INPUT_COUNT);
         }
     }
 
     private static void checkInputsAreNonEmptyStrings(TransformConfig tc, List<String> inputs)
-            throws TransformConfigurationException
+            throws JobConfigurationException
     {
         if (containsEmptyString(inputs))
         {
             String msg = Messages.getMessage(
                     Messages.JOB_CONFIG_TRANSFORM_INPUTS_CONTAIN_EMPTY_STRING, tc.getTransform());
-            throw new TransformConfigurationException(msg,
+            throw new JobConfigurationException(msg,
                     ErrorCodes.TRANSFORM_INPUTS_CANNOT_BE_EMPTY_STRINGS);
         }
     }
@@ -134,13 +135,13 @@ public final class TransformConfigVerifier
         return strings.stream().anyMatch(s -> s.trim().isEmpty());
     }
 
-    private static void checkArguments(TransformConfig tc, TransformType type) throws TransformConfigurationException
+    private static void checkArguments(TransformConfig tc, TransformType type) throws JobConfigurationException
     {
         checkArgumentsCountValid(tc, type);
         checkArgumentsValid(tc, type);
     }
 
-    private static void checkArgumentsCountValid(TransformConfig tc, TransformType type) throws TransformConfigurationException
+    private static void checkArgumentsCountValid(TransformConfig tc, TransformType type) throws JobConfigurationException
     {
         List<String> arguments = tc.getArguments();
         int argumentsSize = (arguments == null) ? 0 : arguments.size();
@@ -148,11 +149,11 @@ public final class TransformConfigVerifier
         {
             String msg = Messages.getMessage(Messages.JOB_CONFIG_TRANSFORM_INVALID_ARGUMENT_COUNT,
                     tc.getTransform(), rangeAsString(type.argumentsRange()), argumentsSize);
-            throw new TransformConfigurationException(msg, ErrorCodes.TRANSFORM_INVALID_ARGUMENT_COUNT);
+            throw new JobConfigurationException(msg, ErrorCodes.TRANSFORM_INVALID_ARGUMENT_COUNT);
         }
     }
 
-    private static void checkArgumentsValid(TransformConfig tc, TransformType type) throws TransformConfigurationException
+    private static void checkArgumentsValid(TransformConfig tc, TransformType type) throws JobConfigurationException
     {
 
         if (tc.getArguments() != null)
@@ -181,7 +182,7 @@ public final class TransformConfigVerifier
 
 
     private static void checkOutputs(TransformConfig tc, TransformType type)
-    throws TransformConfigurationException
+    throws JobConfigurationException
     {
         List<String> outputs = tc.getOutputs();
         checkValidOutputCount(tc, type, outputs);
@@ -190,25 +191,25 @@ public final class TransformConfigVerifier
 
     private static void checkValidOutputCount(TransformConfig tc, TransformType type,
                                             List<String> outputs)
-    throws TransformConfigurationException
+    throws JobConfigurationException
     {
         int outputsSize = (outputs == null) ? 0 : outputs.size();
         if (!type.outputsRange().contains(outputsSize))
         {
             String msg = Messages.getMessage(Messages.JOB_CONFIG_TRANSFORM_INVALID_OUTPUT_COUNT,
                     tc.getTransform(), rangeAsString(type.outputsRange()), outputsSize);
-            throw new TransformConfigurationException(msg, ErrorCodes.TRANSFORM_INVALID_OUTPUT_COUNT);
+            throw new JobConfigurationException(msg, ErrorCodes.TRANSFORM_INVALID_OUTPUT_COUNT);
         }
     }
 
     private static void checkOutputsAreNonEmptyStrings(TransformConfig tc, List<String> outputs)
-            throws TransformConfigurationException
+            throws JobConfigurationException
     {
         if (containsEmptyString(outputs))
         {
             String msg = Messages.getMessage(
                     Messages.JOB_CONFIG_TRANSFORM_OUTPUTS_CONTAIN_EMPTY_STRING, tc.getTransform());
-            throw new TransformConfigurationException(msg,
+            throw new JobConfigurationException(msg,
                     ErrorCodes.TRANSFORM_OUTPUTS_CANNOT_BE_EMPTY_STRINGS);
         }
     }

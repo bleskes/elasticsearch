@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -24,43 +24,59 @@
  *                                                          *
  *                                                          *
  ************************************************************/
-package com.prelert.job.transform;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
+package com.prelert.master.rs.resources;
 
-import org.junit.Test;
+import java.util.HashSet;
+import java.util.Set;
 
-import com.prelert.job.transform.Condition;
-import com.prelert.job.transform.Operator;
+import javax.ws.rs.core.Application;
 
-public class ConditionTest
+import com.prelert.rs.provider.AcknowledgementWriter;
+import com.prelert.rs.provider.DataUploadExceptionMapper;
+import com.prelert.rs.provider.JobConfigurationMessageBodyReader;
+import com.prelert.rs.provider.JobExceptionMapper;
+
+public class MasterApiWebApp extends Application
 {
-    @Test
-    public void testSetValues()
-    {
-        // When the args can't be parsed the
-        // default is the < operator and 0.
-        Condition cond = new Condition();
-        assertEquals(Operator.NONE, cond.getOperator());
-        assertEquals(null, cond.getValue());
+    private Set<Class<?>> m_ResourceClasses;
 
-        cond = new Condition(Operator.EQ, "astring");
-        assertEquals(Operator.EQ, cond.getOperator());
-        assertEquals("astring", cond.getValue());
+    public MasterApiWebApp()
+    {
+        m_ResourceClasses = new HashSet<>();
+        addEndPoints();
+        addMessageReaders();
+        addExceptionMappers();
+        addMessageWriters();
     }
 
-    @Test
-    public void testHashCodeAndEquals()
+    private void addEndPoints()
     {
-        Condition cond1 = new Condition(Operator.MATCH, "regex");
-        Condition cond2 = new Condition(Operator.MATCH, "regex");
+        m_ResourceClasses.add(Jobs.class);
+        m_ResourceClasses.add(Data.class);
+        m_ResourceClasses.add(Status.class);
+    }
 
-        assertEquals(cond1, cond2);
-        assertEquals(cond1.hashCode(), cond2.hashCode());
+    private void addMessageReaders()
+    {
+        m_ResourceClasses.add(JobConfigurationMessageBodyReader.class);
+    }
 
-        cond2.setOperator(Operator.EQ);
-        assertFalse(cond1.equals(cond2));
-        assertFalse(cond1.hashCode() == cond2.hashCode());
+    private void addExceptionMappers()
+    {
+        m_ResourceClasses.add(JobExceptionMapper.class);
+        m_ResourceClasses.add(DataUploadExceptionMapper.class);
+    }
+
+    private void addMessageWriters()
+    {
+        m_ResourceClasses.add(AcknowledgementWriter.class);
+    }
+
+
+    @Override
+    public Set<Class<?>> getClasses()
+    {
+        return m_ResourceClasses;
     }
 }

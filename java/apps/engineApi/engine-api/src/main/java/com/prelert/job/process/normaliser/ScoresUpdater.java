@@ -71,6 +71,7 @@ class ScoresUpdater
     private final NormaliserFactory m_NormaliserFactory;
     private int m_BucketSpan;
     private long m_NormalisationWindow;
+    private boolean m_PerPartitionNormalization;
 
     public ScoresUpdater(String jobId, JobProvider jobProvider, JobRenormaliser jobRenormaliser,
             NormaliserFactory normaliserFactory)
@@ -86,6 +87,7 @@ class ScoresUpdater
         JobDetails jobDetails = m_JobProvider.getJobDetails(m_JobId).get();
         m_BucketSpan = getBucketSpanOrDefault(jobDetails.getAnalysisConfig());
         m_NormalisationWindow = getNormalisationWindowOrDefault(jobDetails);
+        m_PerPartitionNormalization = getPerPartitionNormalizationOrDefault(jobDetails.getAnalysisConfig());
     }
 
     private static int getBucketSpanOrDefault(AnalysisConfig analysisConfig)
@@ -107,6 +109,11 @@ class ScoresUpdater
         }
         return Math.max(DEFAULT_RENORMALISATION_WINDOW_MS,
                 DEFAULT_BUCKETS_IN_RENORMALISATION_WINDOW * m_BucketSpan * MILLISECONDS_IN_SECOND);
+    }
+
+    private static boolean getPerPartitionNormalizationOrDefault(AnalysisConfig analysisConfig)
+    {
+        return (analysisConfig != null) ? analysisConfig.getUsePerPartitionNormalization() : false;
     }
 
     /**
@@ -217,7 +224,7 @@ class ScoresUpdater
 
         List<Normalisable> asNormalisables = buckets.stream()
                 .map(bucket -> new BucketNormalisable(bucket)).collect(Collectors.toList());
-        normaliser.normalise(m_BucketSpan, asNormalisables, quantilesState);
+        normaliser.normalise(m_BucketSpan, m_PerPartitionNormalization, asNormalisables, quantilesState);
 
         for (Bucket bucket : buckets)
         {
@@ -318,7 +325,7 @@ class ScoresUpdater
             logger.debug("Will renormalize a batch of " + influencers.size() + " influencers");
             List<Normalisable> asNormalisables = influencers.stream()
                     .map(bucket -> new InfluencerNormalisable(bucket)).collect(Collectors.toList());
-            normaliser.normalise(m_BucketSpan, asNormalisables, quantilesState);
+            normaliser.normalise(m_BucketSpan, m_PerPartitionNormalization, asNormalisables, quantilesState);
 
             for (Influencer influencer : influencers)
             {

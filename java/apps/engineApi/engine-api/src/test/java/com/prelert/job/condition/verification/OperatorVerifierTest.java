@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -24,41 +24,27 @@
  *                                                          *
  *                                                          *
  ************************************************************/
-package com.prelert.job.transform.verification;
+package com.prelert.job.condition.verification;
 
-import com.prelert.job.errorcodes.ErrorCodes;
-import com.prelert.job.messages.Messages;
-import com.prelert.job.transform.Operator;
-import com.prelert.job.transform.TransformConfigurationException;
-import com.prelert.job.transform.UnknownOperatorException;
+import static org.junit.Assert.assertTrue;
 
-public final class OperatorVerifier
+import org.junit.Test;
+
+import com.prelert.job.condition.Operator;
+import com.prelert.job.config.verification.JobConfigurationException;
+
+public class OperatorVerifierTest
 {
-    private OperatorVerifier()
+    @Test
+    public void testVerify() throws JobConfigurationException
     {
-        // Hide default constructor
+        assertTrue(OperatorVerifier.verify(Operator.EQ.name()));
+        assertTrue(OperatorVerifier.verify("matCh"));
     }
 
-    /**
-     * Checks that the <code>name</code> string is a string
-     * value of an Operator enum
-     * @param name
-     * @return
-     * @throws TransformConfigurationException
-     */
-    public static boolean verify(String name) throws TransformConfigurationException
+    @Test(expected=JobConfigurationException.class)
+    public void testVerify_unknownOp() throws JobConfigurationException
     {
-        try
-        {
-            Operator.fromString(name);
-        }
-        catch (UnknownOperatorException e)
-        {
-            throw new TransformConfigurationException(
-                Messages.getMessage(Messages.JOB_CONFIG_TRANSFORM_CONDITION_UNKNOWN_OPERATOR, name),
-                ErrorCodes.UNKNOWN_OPERATOR);
-        }
-
-        return true;
+        OperatorVerifier.verify("bad_op");
     }
 }

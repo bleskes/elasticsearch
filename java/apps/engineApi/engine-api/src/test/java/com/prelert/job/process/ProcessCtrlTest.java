@@ -82,6 +82,7 @@ public class ProcessCtrlTest
         ac.setSummaryCountFieldName("summaryField");
         ac.setOverlappingBuckets(true);
         ac.setMultivariateByFields(true);
+        ac.setUsePerPartitionNormalization(true);
         job.setAnalysisConfig(ac);
 
         DataDescription dd = new DataDescription();
@@ -93,7 +94,7 @@ public class ProcessCtrlTest
 
         List<String> command = ProcessCtrl.buildAutoDetectCommand(job, m_Logger, null, false);
 
-        assertEquals(16, command.size());
+        assertEquals(17, command.size());
         assertTrue(command.contains(ProcessCtrl.AUTODETECT_PATH));
         assertTrue(command.contains(ProcessCtrl.BATCH_SPAN_ARG + "100"));
         assertTrue(command.contains(ProcessCtrl.BUCKET_SPAN_ARG + "120"));
@@ -108,6 +109,8 @@ public class ProcessCtrlTest
 
         assertTrue(command.contains(ProcessCtrl.TIME_FIELD_ARG + "tf"));
         assertTrue(command.contains(ProcessCtrl.LOG_ID_ARG + "unit-test-job"));
+
+        assertTrue(command.contains(ProcessCtrl.PER_PARTITION_NORMALIZATION));
 
         int expectedPersistInterval = 10800 + ProcessCtrl.calculateStaggeringInterval(job.getId());
         assertTrue(command.contains(ProcessCtrl.PERSIST_INTERVAL_ARG + expectedPersistInterval));
@@ -175,13 +178,14 @@ public class ProcessCtrlTest
     {
         String jobId = "unit-test-job";
 
-        List<String> command = ProcessCtrl.buildNormaliserCommand(jobId, 300);
+        List<String> command = ProcessCtrl.buildNormaliserCommand(jobId, 300, true);
 
-        assertEquals(4, command.size());
+        assertEquals(5, command.size());
         assertTrue(command.contains(ProcessCtrl.NORMALIZE_PATH));
         assertTrue(command.contains(ProcessCtrl.BUCKET_SPAN_ARG + "300"));
         assertTrue(command.contains(ProcessCtrl.LOG_ID_ARG + jobId));
         assertTrue(command.contains(ProcessCtrl.LENGTH_ENCODED_INPUT_ARG));
+        assertTrue(command.contains(ProcessCtrl.PER_PARTITION_NORMALIZATION));
     }
 
     @Test

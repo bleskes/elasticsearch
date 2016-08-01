@@ -24,7 +24,7 @@
  *                                                          *
  *                                                          *
  ************************************************************/
-package com.prelert.job.transform.verification;
+package com.prelert.job.condition.verification;
 
 import static org.junit.Assert.assertTrue;
 
@@ -32,19 +32,18 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
+import com.prelert.job.condition.Condition;
+import com.prelert.job.condition.Operator;
+import com.prelert.job.config.verification.JobConfigurationException;
 import com.prelert.job.errorcodes.ErrorCodeMatcher;
 import com.prelert.job.errorcodes.ErrorCodes;
-import com.prelert.job.transform.Condition;
-import com.prelert.job.transform.Operator;
-import com.prelert.job.transform.TransformConfigurationException;
 
 public class ConditionVerifierTest
 {
     @Rule public ExpectedException m_ExpectedException = ExpectedException.none();
 
     @Test
-    public void testVerifyArgsNumericArgs()
-    throws TransformConfigurationException
+    public void testVerifyArgsNumericArgs() throws JobConfigurationException
     {
         Condition c = new Condition(Operator.LTE, "100");
         assertTrue(ConditionVerifier.verify(c));
@@ -53,9 +52,9 @@ public class ConditionVerifierTest
     }
 
     @Test
-    public void testVerify_GivenUnsetOperator() throws TransformConfigurationException
+    public void testVerify_GivenUnsetOperator() throws JobConfigurationException
     {
-        m_ExpectedException.expect(TransformConfigurationException.class);
+        m_ExpectedException.expect(JobConfigurationException.class);
         m_ExpectedException.expectMessage("Invalid operator for condition");
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.CONDITION_INVALID_ARGUMENT));
@@ -64,9 +63,9 @@ public class ConditionVerifierTest
     }
 
     @Test
-    public void testVerify_GivenOperatorIsNone() throws TransformConfigurationException
+    public void testVerify_GivenOperatorIsNone() throws JobConfigurationException
     {
-        m_ExpectedException.expect(TransformConfigurationException.class);
+        m_ExpectedException.expect(JobConfigurationException.class);
         m_ExpectedException.expectMessage("Invalid operator for condition");
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.CONDITION_INVALID_ARGUMENT));
@@ -78,9 +77,9 @@ public class ConditionVerifierTest
     }
 
     @Test
-    public void testVerify_GivenEmptyValue() throws TransformConfigurationException
+    public void testVerify_GivenEmptyValue() throws JobConfigurationException
     {
-        m_ExpectedException.expect(TransformConfigurationException.class);
+        m_ExpectedException.expect(JobConfigurationException.class);
         m_ExpectedException.expectMessage(
                 "Invalid condition value: cannot parse a double from string ''");
         m_ExpectedException.expect(
@@ -94,9 +93,9 @@ public class ConditionVerifierTest
     }
 
     @Test
-    public void testVerify_GivenInvalidRegex() throws TransformConfigurationException
+    public void testVerify_GivenInvalidRegex() throws JobConfigurationException
     {
-        m_ExpectedException.expect(TransformConfigurationException.class);
+        m_ExpectedException.expect(JobConfigurationException.class);
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.CONDITION_INVALID_ARGUMENT));
 
@@ -108,9 +107,9 @@ public class ConditionVerifierTest
     }
 
     @Test
-    public void testVerify_GivenNullRegex() throws TransformConfigurationException
+    public void testVerify_GivenNullRegex() throws JobConfigurationException
     {
-        m_ExpectedException.expect(TransformConfigurationException.class);
+        m_ExpectedException.expect(JobConfigurationException.class);
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.CONDITION_INVALID_ARGUMENT));
 

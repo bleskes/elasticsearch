@@ -15,15 +15,12 @@
  * limitations under the License.                                           *
  *                                                                          *
  ***************************************************************************/
-package com.prelert.job.transform;
+package com.prelert.job.condition;
 
 import java.util.Objects;
 
 /**
- * The Transform condition class.
- * Some transforms should only be applied if a condition
- * is met. One example is exclude a record if a value is
- * greater than some numeric constant.
+ * A class that describes a condition.
  * The {@linkplain Operator} enum defines the available
  * comparisons a condition can use.
  */

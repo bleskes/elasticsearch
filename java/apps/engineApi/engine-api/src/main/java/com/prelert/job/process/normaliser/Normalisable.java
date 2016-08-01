@@ -43,7 +43,8 @@ interface Normalisable
     boolean isContainerOnly();
 
     Level getLevel();
-    String getPartitonFieldName();
+    String getPartitionFieldName();
+    String getPartitionFieldValue();
     String getPersonFieldName();
     String getFunctionName();
     String getValueFieldName();

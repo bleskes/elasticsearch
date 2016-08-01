@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -30,16 +30,15 @@ package com.prelert.job.transform.verification;
 import java.util.List;
 import java.util.regex.Pattern;
 
+import com.prelert.job.config.verification.JobConfigurationException;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.messages.Messages;
 import com.prelert.job.transform.TransformConfig;
-import com.prelert.job.transform.TransformConfigurationException;
 
 public class RegexExtractVerifier implements ArgumentVerifier
 {
     @Override
-    public void verify(String arg, TransformConfig tc)
-            throws TransformConfigurationException
+    public void verify(String arg, TransformConfig tc) throws JobConfigurationException
     {
         new RegexPatternVerifier().verify(arg, tc);
 
@@ -51,7 +50,7 @@ public class RegexExtractVerifier implements ArgumentVerifier
         {
             String msg = Messages.getMessage(Messages.JOB_CONFIG_TRANSFORM_EXTRACT_GROUPS_SHOULD_MATCH_OUTPUT_COUNT,
                     tc.getTransform(), outputCount, arg, groupCount);
-            throw new TransformConfigurationException(msg, ErrorCodes.TRANSFORM_INVALID_ARGUMENT);
+            throw new JobConfigurationException(msg, ErrorCodes.TRANSFORM_INVALID_ARGUMENT);
         }
     }
 }

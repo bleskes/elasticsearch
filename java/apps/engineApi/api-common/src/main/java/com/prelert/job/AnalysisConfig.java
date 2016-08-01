@@ -63,6 +63,7 @@ public class AnalysisConfig
     public static final String OVERLAPPING_BUCKETS = "overlappingBuckets";
     public static final String RESULT_FINALIZATION_WINDOW = "resultFinalizationWindow";
     public static final String MULTIVARIATE_BY_FIELDS = "multivariateByFields";
+    public static final String MULTIPLE_BUCKET_SPANS = "multipleBucketSpans";
 
     public static final long DEFAULT_BUCKET_SPAN = 300;
 
@@ -87,6 +88,8 @@ public class AnalysisConfig
     private Boolean m_OverlappingBuckets;
     private Long m_ResultFinalizationWindow;
     private Boolean m_MultivariateByFields;
+    private List<Long> m_MultipleBucketSpans;
+    private boolean m_UsePerPartitionNormalization;
 
     /**
      * Default constructor
@@ -95,6 +98,7 @@ public class AnalysisConfig
     {
         m_Detectors = new ArrayList<>();
         m_Influencers = new ArrayList<>();
+        m_UsePerPartitionNormalization = false;
     }
 
     /**
@@ -288,6 +292,26 @@ public class AnalysisConfig
         m_MultivariateByFields = multivariateByFields;
     }
 
+    public List<Long> getMultipleBucketSpans()
+    {
+        return m_MultipleBucketSpans;
+    }
+
+    public void setMultipleBucketSpans(List<Long> l)
+    {
+        m_MultipleBucketSpans = l;
+    }
+
+    public boolean getUsePerPartitionNormalization()
+    {
+        return m_UsePerPartitionNormalization;
+    }
+
+    public void setUsePerPartitionNormalization(boolean usePerPartitionNormalization)
+    {
+        m_UsePerPartitionNormalization = usePerPartitionNormalization;
+    }
+
     /**
      * Return the list of fields required by the analysis.
      * These are the influencer fields, metric field, partition field,
@@ -313,7 +337,7 @@ public class AnalysisConfig
         // remove empty strings
         analysisFields.remove("");
 
-        return new ArrayList<String>(analysisFields);
+        return new ArrayList<>(analysisFields);
     }
 
     private static void addIfNotNull(Set<String> fields, String field)
@@ -342,7 +366,7 @@ public class AnalysisConfig
         // remove empty strings
         fields.remove("");
 
-        return new ArrayList<String>(fields);
+        return new ArrayList<>(fields);
     }
 
     public List<String> byFields()
@@ -404,7 +428,9 @@ public class AnalysisConfig
                 Objects.equals(this.m_Influencers, that.m_Influencers) &&
                 Objects.equals(this.m_OverlappingBuckets, that.m_OverlappingBuckets) &&
                 Objects.equals(this.m_ResultFinalizationWindow,  that.m_ResultFinalizationWindow) &&
-                Objects.equals(this.m_MultivariateByFields, that.m_MultivariateByFields);
+                Objects.equals(this.m_MultivariateByFields, that.m_MultivariateByFields) &&
+                Objects.equals(this.m_MultipleBucketSpans,  that.m_MultipleBucketSpans) &&
+                Objects.equals(this.m_UsePerPartitionNormalization, that.m_UsePerPartitionNormalization);
     }
 
     @Override
@@ -413,7 +439,7 @@ public class AnalysisConfig
         return Objects.hash(m_Detectors, m_BucketSpan, m_BatchSpan, m_CategorizationFieldName,
                 m_CategorizationFilters, m_Latency, m_Period, m_SummaryCountFieldName,
                 m_Influencers, m_OverlappingBuckets, m_ResultFinalizationWindow,
-                m_MultivariateByFields);
+                m_MultivariateByFields, m_MultipleBucketSpans, m_UsePerPartitionNormalization);
     }
 
 }

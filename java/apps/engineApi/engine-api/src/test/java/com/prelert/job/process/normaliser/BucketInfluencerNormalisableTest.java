@@ -72,7 +72,7 @@ public class BucketInfluencerNormalisableTest
     @Test
     public void testGetPartitionFieldName()
     {
-        assertNull(new BucketInfluencerNormalisable(m_Influencer).getPartitonFieldName());
+        assertNull(new BucketInfluencerNormalisable(m_Influencer).getPartitionFieldName());
     }
 
     @Test

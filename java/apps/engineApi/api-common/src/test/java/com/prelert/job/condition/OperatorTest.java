@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -24,16 +24,15 @@
  *                                                          *
  *                                                          *
  ************************************************************/
-package com.prelert.job.transform;
+package com.prelert.job.condition;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import java.util.regex.Pattern;
 
 import org.junit.Test;
-
-import com.prelert.job.transform.Operator;
-import com.prelert.job.transform.UnknownOperatorException;
 
 public class OperatorTest
 {

@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -24,28 +24,34 @@
  *                                                          *
  *                                                          *
  ************************************************************/
-package com.prelert.job.transform.verification;
 
-import static org.junit.Assert.assertTrue;
+package com.prelert.master.rs.resources;
 
-import org.junit.Test;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 
-import com.prelert.job.transform.Operator;
-import com.prelert.job.transform.TransformConfigurationException;
+import org.apache.log4j.Logger;
 
-public class OperatorVerifierTest
+@Path("/status")
+public class Status
 {
-    @Test
-    public void testVerify() throws TransformConfigurationException
-    {
-        assertTrue(OperatorVerifier.verify(Operator.EQ.name()));
-        assertTrue(OperatorVerifier.verify("matCh"));
-    }
+    private static final Logger LOGGER = Logger.getLogger(Status.class);
 
-    @Test(expected=TransformConfigurationException.class)
-    public void testVerify_unknownOp() throws TransformConfigurationException
-    {
-        assertTrue(OperatorVerifier.verify("bad_op"));
-    }
+    /**
+     * The name of the endpoint
+     */
+    public static final String ENDPOINT = "status";
 
+
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response status()
+    {
+        LOGGER.debug("Get Engine Status");
+
+        return Response.ok().entity("Ok").build();
+    }
 }
