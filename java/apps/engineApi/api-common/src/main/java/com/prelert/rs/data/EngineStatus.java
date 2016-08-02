@@ -31,6 +31,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -102,6 +103,15 @@ public class EngineStatus
         public void setUptimeSeconds(long uptime)
         {
             m_UptimeSeconds = uptime;
+        }
+
+        @Override
+        public boolean equals(Object other)
+        {
+            JobStats that = (JobStats)other;
+            return Objects.equals(this.m_MemoryStatus, that.m_MemoryStatus) &&
+                    Objects.equals(this.m_ModelBytes, that.m_ModelBytes) &&
+                    Objects.equals(this.m_UptimeSeconds, that.m_UptimeSeconds);
         }
     }
 
@@ -211,6 +221,17 @@ public class EngineStatus
     {
         m_DataStoreConnection = params;
     }
+
+    @Override
+    public boolean equals(Object other)
+    {
+        EngineStatus that = (EngineStatus)other;
+        return Objects.equals(this.m_CpuLoad, that.m_CpuLoad) &&
+                Objects.equals(this.m_HeapMemUsage, that.m_HeapMemUsage) &&
+                Objects.equals(this.m_RunningJobs, that.m_RunningJobs) &&
+                Objects.equals(this.m_StartedScheduledJobs, that.m_StartedScheduledJobs) &&
+                Objects.equals(this.m_DataStoreConnection, that.m_DataStoreConnection) &&
+                Objects.equals(this.m_EngineHosts, that.m_EngineHosts) &&
+                Objects.equals(this.m_HostByJob, that.m_HostByJob);
+    }
 }
-
-
