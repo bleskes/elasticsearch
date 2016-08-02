@@ -225,7 +225,6 @@ public class DataCountsTest extends BaseIntegrationTest
 
 			test.m_Logger.info("All tests passed Ok");
 		}
-
 	}
 }
 

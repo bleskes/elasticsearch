@@ -97,7 +97,7 @@ public abstract class BaseIntegrationTest implements AutoCloseable
         // configure log4j
         ConsoleAppender console = new ConsoleAppender();
         console.setLayout(new PatternLayout("%d [%p|%c|%C{1}] %m%n"));
-        console.setThreshold(Level.INFO);
+        console.setThreshold(Level.DEBUG);
         console.activateOptions();
         Logger.getRootLogger().addAppender(console);
     }
