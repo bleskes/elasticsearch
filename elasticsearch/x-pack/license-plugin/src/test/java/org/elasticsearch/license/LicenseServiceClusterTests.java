@@ -24,6 +24,7 @@ import org.elasticsearch.env.Environment;
 import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.test.ESIntegTestCase.ClusterScope;
 import org.elasticsearch.xpack.MockNetty3Plugin;
+import org.elasticsearch.xpack.MockNetty4Plugin;
 import org.elasticsearch.xpack.XPackPlugin;
 
 import java.nio.charset.StandardCharsets;
@@ -60,7 +61,7 @@ public class LicenseServiceClusterTests extends AbstractLicensesIntegrationTestC
 
     @Override
     protected Collection<Class<? extends Plugin>> nodePlugins() {
-        return Arrays.asList(XPackPlugin.class, MockNetty3Plugin.class);
+        return Arrays.asList(XPackPlugin.class, MockNetty3Plugin.class, MockNetty4Plugin.class);
     }
 
     @Override
