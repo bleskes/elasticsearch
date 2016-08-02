@@ -108,10 +108,25 @@ public class EngineStatus
         @Override
         public boolean equals(Object other)
         {
+            if (this == other)
+            {
+                return true;
+            }
+
+            if (other instanceof JobStats == false)
+            {
+                return false;
+            }
             JobStats that = (JobStats)other;
             return Objects.equals(this.m_MemoryStatus, that.m_MemoryStatus) &&
                     Objects.equals(this.m_ModelBytes, that.m_ModelBytes) &&
                     Objects.equals(this.m_UptimeSeconds, that.m_UptimeSeconds);
+        }
+
+        @Override
+        public int hashCode()
+        {
+            return Objects.hash(m_MemoryStatus, m_ModelBytes, m_UptimeSeconds);
         }
     }
 
@@ -225,6 +240,16 @@ public class EngineStatus
     @Override
     public boolean equals(Object other)
     {
+        if (this == other)
+        {
+            return true;
+        }
+
+        if (other instanceof EngineStatus == false)
+        {
+            return false;
+        }
+
         EngineStatus that = (EngineStatus)other;
         return Objects.equals(this.m_CpuLoad, that.m_CpuLoad) &&
                 Objects.equals(this.m_HeapMemUsage, that.m_HeapMemUsage) &&
@@ -233,5 +258,12 @@ public class EngineStatus
                 Objects.equals(this.m_DataStoreConnection, that.m_DataStoreConnection) &&
                 Objects.equals(this.m_EngineHosts, that.m_EngineHosts) &&
                 Objects.equals(this.m_HostByJob, that.m_HostByJob);
+    }
+
+    @Override
+    public int hashCode()
+    {
+        return Objects.hash(m_CpuLoad, m_HeapMemUsage, m_RunningJobs, m_StartedScheduledJobs,
+                m_DataStoreConnection, m_EngineHosts, m_HostByJob);
     }
 }
