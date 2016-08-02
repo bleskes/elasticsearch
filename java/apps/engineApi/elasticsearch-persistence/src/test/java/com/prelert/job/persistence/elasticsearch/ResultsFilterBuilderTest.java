@@ -175,6 +175,18 @@ public class ResultsFilterBuilderTest
     }
 
     @Test
+    public void testBuild_TermQuery()
+    {
+        QueryBuilder expected = QueryBuilders.termQuery("fruit", "banana");
+
+        QueryBuilder fb = new ResultsFilterBuilder()
+                .term("fruit", "banana")
+                .build();
+
+        assertEquals(expected.toString(), fb.toString());
+    }
+
+    @Test
     public void testBuild_GivenCombination()
     {
         QueryBuilder originalFilter = QueryBuilders.existsQuery("someField");
@@ -190,18 +202,21 @@ public class ResultsFilterBuilderTest
                 .build();
         QueryBuilder interimFilter = QueryBuilders.boolQuery().mustNot(QueryBuilders.termQuery(
                 "isInterim", Boolean.TRUE.toString()));
+        QueryBuilder termFilter = QueryBuilders.termQuery("airline", "AAL");
         QueryBuilder expected = QueryBuilders.boolQuery()
                 .must(originalFilter)
                 .must(timeFilter)
                 .must(score1Filter)
                 .must(score2Filter)
-                .must(interimFilter);
+                .must(interimFilter)
+                .must(termFilter);
 
         QueryBuilder fb = new ResultsFilterBuilder(originalFilter)
                 .timeRange(ElasticsearchMappings.ES_TIMESTAMP, 1000, 2000)
                 .score("score1", 50.0)
                 .score("score2", 80.0)
                 .interim("isInterim", false)
+                .term("airline", "AAL")
                 .build();
 
         assertEquals(expected.toString(), fb.toString());

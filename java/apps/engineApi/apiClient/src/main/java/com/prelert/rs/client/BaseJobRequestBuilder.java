@@ -33,6 +33,7 @@ class BaseJobRequestBuilder<T>
     public static final String TAKE_QUERY_PARAM = "take";
     public static final String INCLUDE_INTERIM_QUERY_PARAM = "includeInterim";
     public static final String EXPAND_QUERY_PARAM = "expand";
+    public static final String PARTITION_FIELD_VALUE = "partitionFieldValue";
     protected static final String UTF8 = "UTF-8";
 
 

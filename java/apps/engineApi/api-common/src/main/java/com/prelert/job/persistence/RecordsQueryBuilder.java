@@ -88,13 +88,13 @@ public final class RecordsQueryBuilder
         return this;
     }
 
-    public RecordsQueryBuilder anomalyScoreFilter(Double anomalyScoreFilter)
+    public RecordsQueryBuilder anomalyScoreFilter(double anomalyScoreFilter)
     {
         m_RecordsQuery.m_AnomalyScoreFilter = anomalyScoreFilter;
         return this;
     }
 
-    public RecordsQueryBuilder normalizedProbability(Double normalizedProbability)
+    public RecordsQueryBuilder normalizedProbability(double normalizedProbability)
     {
         m_RecordsQuery.m_NormalizedProbability = normalizedProbability;
         return this;

@@ -36,6 +36,8 @@ import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.query.RangeQueryBuilder;
 import org.elasticsearch.index.query.TermQueryBuilder;
 
+import com.google.common.base.Strings;
+
 
 /**
  * This builder facilitates the creation of a {@link QueryBuilder} with common
@@ -104,6 +106,18 @@ class ResultsFilterBuilder
                 Boolean.TRUE.toString());
         QueryBuilder notInterimFilter = QueryBuilders.boolQuery().mustNot(interimFilter);
         addFilter(notInterimFilter);
+        return this;
+    }
+
+    public ResultsFilterBuilder term(String fieldName, String fieldValue)
+    {
+        if (Strings.isNullOrEmpty(fieldName) || Strings.isNullOrEmpty(fieldValue))
+        {
+            return this;
+        }
+
+        TermQueryBuilder termQueryBuilder = QueryBuilders.termQuery(fieldName, fieldValue);
+        addFilter(termQueryBuilder);
         return this;
     }
 

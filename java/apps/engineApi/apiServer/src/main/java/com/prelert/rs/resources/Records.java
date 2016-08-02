@@ -42,6 +42,7 @@ import org.apache.log4j.Logger;
 
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.persistence.QueryPage;
+import com.prelert.job.persistence.RecordsQueryBuilder;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
 import com.prelert.job.reader.JobDataReader;
 import com.prelert.job.results.AnomalyRecord;
@@ -103,15 +104,17 @@ public class Records extends ResourceWithJobManager
             @DefaultValue(AnomalyRecord.NORMALIZED_PROBABILITY) @QueryParam(SORT_QUERY_PARAM) String sort,
             @DefaultValue("true") @QueryParam(DESCENDING_ORDER) boolean descending,
             @DefaultValue("0.0") @QueryParam(AnomalyRecord.ANOMALY_SCORE) double anomalyScoreFilter,
-            @DefaultValue("0.0") @QueryParam(AnomalyRecord.NORMALIZED_PROBABILITY) double normalizedProbabilityFilter)
+            @DefaultValue("0.0") @QueryParam(AnomalyRecord.NORMALIZED_PROBABILITY) double normalizedProbabilityFilter,
+            @DefaultValue("") @QueryParam(AnomalyRecord.PARTITION_FIELD_VALUE) String partitionFieldValue)
     throws NativeProcessRunException, UnknownJobException
     {
         LOGGER.debug(String.format("Get records for job %s. skip = %d, take = %d"
                 + " start = '%s', end='%s', sort='%s' descending=%b"
-                + ", anomaly score filter=%f, unsual score filter= %f, %s interim results",
+                + ", anomaly score filter=%f, unsual score filter= %f, %s interim results"
+                + ", partitionFieldValue='%s'",
                 jobId, skip, take, start, end, sort, descending,
                 normalizedProbabilityFilter, anomalyScoreFilter,
-                includeInterim ? "including" : "excluding"));
+                includeInterim ? "including" : "excluding", partitionFieldValue));
 
         new PaginationParamsValidator(skip, take).validate();
 
@@ -120,18 +123,18 @@ public class Records extends ResourceWithJobManager
 
         JobDataReader jobReader = jobReader();
 
-        QueryPage<AnomalyRecord> queryResults;
+        RecordsQueryBuilder queryBuilder = new RecordsQueryBuilder()
+                .skip(skip).take(take)
+                .epochStart(epochStartMs).epochEnd(epochEndMs)
+                .includeInterim(includeInterim)
+                .sortField(sort).sortDescending(descending)
+                .anomalyScoreFilter(anomalyScoreFilter)
+                .normalizedProbability(normalizedProbabilityFilter)
+                .partitionFieldValue(partitionFieldValue);
 
-        if (epochStartMs > 0 || epochEndMs > 0)
-        {
-            queryResults = jobReader.records(jobId, skip, take, epochStartMs, epochEndMs, includeInterim, sort,
-                    descending, anomalyScoreFilter, normalizedProbabilityFilter);
-        }
-        else
-        {
-            queryResults = jobReader.records(jobId, skip, take, includeInterim, sort, descending,
-                    anomalyScoreFilter, normalizedProbabilityFilter);
-        }
+        QueryPage<AnomalyRecord> queryResults = jobReader.records(jobId,
+                                                queryBuilder.build());
+
 
         Pagination<AnomalyRecord> records = paginationFromQueryPage(queryResults, skip, take);
 

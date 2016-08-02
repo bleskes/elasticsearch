@@ -29,6 +29,8 @@ package com.prelert.rs.resources;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.eq;
 
 import java.util.Arrays;
 
@@ -41,6 +43,7 @@ import com.prelert.job.UnknownJobException;
 import com.prelert.job.errorcodes.ErrorCodeMatcher;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.persistence.QueryPage;
+import com.prelert.job.persistence.RecordsQueryBuilder;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
 import com.prelert.job.results.AnomalyRecord;
 import com.prelert.rs.data.Pagination;
@@ -68,7 +71,7 @@ public class RecordsTest extends ServiceTest
         m_ExpectedException.expectMessage("Parameter 'skip' cannot be < 0");
         m_ExpectedException.expect(ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_SKIP_PARAM));
 
-        m_Records.records(JOB_ID, -1, 100, "", "", false, "", false, 0, 0);
+        m_Records.records(JOB_ID, -1, 100, "", "", false, "", false, 0, 0, "");
     }
 
     @Test
@@ -78,7 +81,7 @@ public class RecordsTest extends ServiceTest
         m_ExpectedException.expectMessage("Parameter 'take' cannot be < 0");
         m_ExpectedException.expect(ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_TAKE_PARAM));
 
-        m_Records.records(JOB_ID, 0, -1, "", "", false, "", false, 0, 0);
+        m_Records.records(JOB_ID, 0, -1, "", "", false, "", false, 0, 0, "");
     }
 
     @Test
@@ -86,11 +89,11 @@ public class RecordsTest extends ServiceTest
     {
         QueryPage<AnomalyRecord> queryResult = new QueryPage<>(Arrays.asList(new AnomalyRecord()), 1);
 
-        when(jobReader().records(JOB_ID, 0, 100, false, "normalizedProbability", true, 0, 0))
+        when(jobReader().records(eq(JOB_ID), any(RecordsQueryBuilder.RecordsQuery.class)))
                 .thenReturn(queryResult);
 
         Pagination<AnomalyRecord> results = m_Records.records(JOB_ID, 0, 100, "", "", false,
-                "normalizedProbability", true, 0, 0);
+                "normalizedProbability", true, 0, 0, "");
         assertEquals(1, results.getHitCount());
         assertEquals(100, results.getTake());
     }
@@ -101,11 +104,11 @@ public class RecordsTest extends ServiceTest
     {
         QueryPage<AnomalyRecord> queryResult = new QueryPage<>(Arrays.asList(new AnomalyRecord()), 1);
 
-        when(jobReader().records(JOB_ID, 0, 100, false, "timestamp", true, 0, 0))
+        when(jobReader().records(eq(JOB_ID), any(RecordsQueryBuilder.RecordsQuery.class)))
                 .thenReturn(queryResult);
 
         Pagination<AnomalyRecord> results = m_Records.records(JOB_ID, 0, 100, "", "", false,
-                "timestamp", true, 0, 0);
+                "timestamp", true, 0, 0, "");
         assertEquals(1, results.getHitCount());
         assertEquals(100, results.getTake());
     }
@@ -116,11 +119,11 @@ public class RecordsTest extends ServiceTest
     {
         QueryPage<AnomalyRecord> queryResult = new QueryPage<>(Arrays.asList(new AnomalyRecord()), 1);
 
-        when(jobReader().records(JOB_ID, 0, 100, 3600000L, 7200000L, false, "normalizedProbability", true, 0, 0))
+        when(jobReader().records(eq(JOB_ID), any(RecordsQueryBuilder.RecordsQuery.class)))
                 .thenReturn(queryResult);
 
         Pagination<AnomalyRecord> results = m_Records.records(JOB_ID, 0, 100, "3600", "7200", false,
-                "normalizedProbability", true, 0, 0);
+                "normalizedProbability", true, 0, 0, "");
         assertEquals(1, results.getHitCount());
         assertEquals(100, results.getTake());
     }
@@ -131,11 +134,11 @@ public class RecordsTest extends ServiceTest
     {
         QueryPage<AnomalyRecord> queryResult = new QueryPage<>(Arrays.asList(new AnomalyRecord()), 3);
 
-        when(jobReader().records(JOB_ID, 0, 10, false, "normalizedProbability", true, 1000, 2000))
+        when(jobReader().records(eq(JOB_ID), any(RecordsQueryBuilder.RecordsQuery.class)))
                 .thenReturn(queryResult);
 
         Pagination<AnomalyRecord> results = m_Records.records(JOB_ID, 0, 10, "", "", false,
-                "normalizedProbability", true, 1000, 2000);
+                "normalizedProbability", true, 1000, 2000, "");
         assertEquals(3, results.getHitCount());
         assertEquals(10, results.getTake());
     }

@@ -429,7 +429,7 @@ public class ElasticsearchJobProvider implements JobProvider
             }
         }
 
-        return new QueryPage<JobDetails>(jobs, response.getHits().getTotalHits());
+        return new QueryPage<>(jobs, response.getHits().getTotalHits());
     }
 
     @Override
@@ -872,6 +872,7 @@ public class ElasticsearchJobProvider implements JobProvider
         return records(new ElasticsearchJobId(jobId), skip, take, fb, sortField, descending);
     }
 
+    @Override
     public QueryPage<AnomalyRecord> records(String jobId, RecordsQueryBuilder.RecordsQuery query)
             throws UnknownJobException
     {
@@ -880,6 +881,7 @@ public class ElasticsearchJobProvider implements JobProvider
                 .score(AnomalyRecord.ANOMALY_SCORE, query.getAnomalyScoreThreshold())
                 .score(AnomalyRecord.NORMALIZED_PROBABILITY, query.getNormalizedProbabilityThreshold())
                 .interim(AnomalyRecord.IS_INTERIM, query.isIncludeInterim())
+                .term(AnomalyRecord.PARTITION_FIELD_VALUE, query.getPartitionFieldValue())
                 .build();
 
         return records(new ElasticsearchJobId(jobId), query.getSkip(), query.getTake(), fb,

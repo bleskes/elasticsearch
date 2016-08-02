@@ -180,6 +180,12 @@ public class RecordsRequestBuilder extends BaseJobRequestBuilder<AnomalyRecord>
         return this;
     }
 
+    public RecordsRequestBuilder partitionFieldValue(String partitionFieldValue)
+    {
+        m_Params.put(PARTITION_FIELD_VALUE, partitionFieldValue);
+        return this;
+    }
+
     /**
      * Returns the page with the records that were requested
      *

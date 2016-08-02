@@ -37,6 +37,7 @@ import com.prelert.job.ModelSnapshot;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.persistence.JobProvider;
 import com.prelert.job.persistence.QueryPage;
+import com.prelert.job.persistence.RecordsQueryBuilder;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
 import com.prelert.job.results.AnomalyRecord;
 import com.prelert.job.results.Bucket;
@@ -239,6 +240,24 @@ public class JobDataReader implements Feature
                             epochStartMs, epochEndMs, includeInterim, sortField, sortDescending,
                             anomalyScoreThreshold, normalizedProbabilityThreshold);
     }
+
+
+    /**
+     * Get a page of anomaly records based on the query
+     *
+     * @param jobId
+     * @param query Record query parameters
+     * @return
+     * @throws NativeProcessRunException
+     * @throws UnknownJobException
+     */
+    public QueryPage<AnomalyRecord> records(String jobId,
+                                        RecordsQueryBuilder.RecordsQuery query)
+    throws NativeProcessRunException, UnknownJobException
+    {
+        return m_JobProvider.records(jobId, query);
+    }
+
 
     /**
      * Get a page of category definition results
