@@ -132,6 +132,7 @@ import org.elasticsearch.xpack.security.transport.SecurityTransportModule;
 import org.elasticsearch.xpack.security.transport.filter.IPFilter;
 import org.elasticsearch.xpack.security.transport.netty3.SecurityNetty3HttpServerTransport;
 import org.elasticsearch.xpack.security.transport.netty3.SecurityNetty3Transport;
+import org.elasticsearch.xpack.security.transport.netty4.SecurityNetty4Transport;
 import org.elasticsearch.xpack.security.user.AnonymousUser;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -357,7 +358,7 @@ public class Security implements ActionPlugin, IngestPlugin {
     // pkg private for testing
     static Settings additionalSettings(Settings settings) {
         Settings.Builder settingsBuilder = Settings.builder();
-        settingsBuilder.put(NetworkModule.TRANSPORT_TYPE_KEY, Security.NAME);
+        settingsBuilder.put(NetworkModule.TRANSPORT_TYPE_KEY, Security.NAME + "4");
         settingsBuilder.put(NetworkModule.TRANSPORT_SERVICE_TYPE_KEY, Security.NAME);
         settingsBuilder.put(NetworkModule.HTTP_TYPE_SETTING.getKey(), Security.NAME);
         SecurityNetty3HttpServerTransport.overrideSettings(settingsBuilder, settings);
@@ -513,6 +514,7 @@ public class Security implements ActionPlugin, IngestPlugin {
         if (transportClientMode) {
             if (enabled) {
                 module.registerTransport(Security.NAME, SecurityNetty3Transport.class);
+                module.registerTransport(Security.NAME + "4", SecurityNetty4Transport.class);
                 module.registerTransportService(Security.NAME, SecurityClientTransportService.class);
             }
             return;
@@ -520,6 +522,7 @@ public class Security implements ActionPlugin, IngestPlugin {
 
         if (enabled) {
             module.registerTransport(Security.NAME, SecurityNetty3Transport.class);
+            module.registerTransport(Security.NAME + "4", SecurityNetty4Transport.class);
             module.registerTransportService(Security.NAME, SecurityServerTransportService.class);
             module.registerHttpTransport(Security.NAME, SecurityNetty3HttpServerTransport.class);
         }
