@@ -64,9 +64,8 @@ public class SecurityFeatureSet implements XPackFeatureSet {
 
     @Inject
     public SecurityFeatureSet(Settings settings, @Nullable XPackLicenseState licenseState, @Nullable Realms realms,
-                              NamedWriteableRegistry namedWriteableRegistry, @Nullable CompositeRolesStore rolesStore,
-                              @Nullable IPFilter ipFilter, @Nullable AuditTrailService auditTrailService,
-                              @Nullable CryptoService cryptoService) {
+                              @Nullable CompositeRolesStore rolesStore, @Nullable IPFilter ipFilter,
+                              @Nullable AuditTrailService auditTrailService, @Nullable CryptoService cryptoService) {
         this.enabled = Security.enabled(settings);
         this.licenseState = licenseState;
         this.realms = realms;
@@ -75,7 +74,6 @@ public class SecurityFeatureSet implements XPackFeatureSet {
         this.ipFilter = ipFilter;
         this.auditTrailService = auditTrailService;
         this.cryptoService = cryptoService;
-        namedWriteableRegistry.register(Usage.class, Usage.writeableName(Security.NAME), Usage::new);
     }
 
     @Override
@@ -151,7 +149,7 @@ public class SecurityFeatureSet implements XPackFeatureSet {
         return Collections.singletonMap("enabled", cryptoService != null && cryptoService.isEncryptionEnabled());
     }
 
-    static class Usage extends XPackFeatureSet.Usage {
+    public static class Usage extends XPackFeatureSet.Usage {
 
         private static final String REALMS_XFIELD = "realms";
         private static final String ROLES_XFIELD = "roles";
