@@ -285,6 +285,8 @@ public abstract class AbstractWatcherIntegrationTestCase extends ESIntegTestCase
         return Settings.builder()
                 .put("client.transport.sniff", false)
                 .put(Security.USER_SETTING.getKey(), "admin:changeme")
+                .put(NetworkModule.TRANSPORT_TYPE_KEY, useSecurity3 ? Security.NAME3 : Security.NAME4)
+                .put(NetworkModule.HTTP_TYPE_KEY, useSecurity3 ? Security.NAME3 : Security.NAME4)
                 .build();
     }
 
@@ -719,6 +721,11 @@ public abstract class AbstractWatcherIntegrationTestCase extends ESIntegTestCase
                 if (useSecurity3) {
                     builder.put(NetworkModule.TRANSPORT_TYPE_KEY, Security.NAME3);
                     builder.put(NetworkModule.HTTP_TYPE_KEY, Security.NAME3);
+                } else {
+                    // security should always use one of its transports so if it is enabled explicitly declare one otherwise a local
+                    // transport could be used
+                    builder.put(NetworkModule.TRANSPORT_TYPE_KEY, Security.NAME4);
+                    builder.put(NetworkModule.HTTP_TYPE_KEY, Security.NAME4);
                 }
                 return builder.build();
             } catch (IOException ex) {
