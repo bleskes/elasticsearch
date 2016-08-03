@@ -31,7 +31,6 @@ public class EmailAttachmentsParser {
 
     private Map<String, EmailAttachmentParser> parsers;
 
-    @Inject
     public EmailAttachmentsParser(Map<String, EmailAttachmentParser> parsers) {
         this.parsers = Collections.unmodifiableMap(parsers);
     }

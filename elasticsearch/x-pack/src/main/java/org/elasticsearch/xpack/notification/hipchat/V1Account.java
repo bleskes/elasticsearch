@@ -22,6 +22,7 @@ import org.elasticsearch.ExceptionsHelper;
 import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.xpack.common.text.TextTemplateEngine;
 import org.elasticsearch.xpack.watcher.actions.hipchat.HipChatAction;
 import org.elasticsearch.xpack.notification.hipchat.HipChatMessage.Color;
 import org.elasticsearch.xpack.notification.hipchat.HipChatMessage.Format;
@@ -30,7 +31,6 @@ import org.elasticsearch.xpack.common.http.HttpMethod;
 import org.elasticsearch.xpack.common.http.HttpRequest;
 import org.elasticsearch.xpack.common.http.HttpResponse;
 import org.elasticsearch.xpack.common.http.Scheme;
-import org.elasticsearch.xpack.common.text.TextTemplateEngine;
 
 import java.util.ArrayList;
 import java.util.List;
