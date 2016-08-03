@@ -1,20 +1,18 @@
 /*
- * Licensed to Elasticsearch under one or more contributor
- * license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright
- * ownership. Elasticsearch licenses this file to you under
- * the Apache License, Version 2.0 (the "License"); you may
- * not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * ELASTICSEARCH CONFIDENTIAL
+ *  __________________
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ * [2014] Elasticsearch Incorporated. All Rights Reserved.
  *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on an
- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- * KIND, either express or implied.  See the License for the
- * specific language governing permissions and limitations
- * under the License.
+ * NOTICE:  All information contained herein is, and remains
+ * the property of Elasticsearch Incorporated and its suppliers,
+ * if any.  The intellectual and technical concepts contained
+ * herein are proprietary to Elasticsearch Incorporated
+ * and its suppliers and may be covered by U.S. and Foreign Patents,
+ * patents in process, and are protected by trade secret or copyright law.
+ * Dissemination of this information or reproduction of this material
+ * is strictly forbidden unless prior written permission is obtained
+ * from Elasticsearch Incorporated.
  */
 
 package org.elasticsearch.xpack.security;
@@ -26,19 +24,21 @@ import java.util.Collections;
 import java.util.Map;
 
 import org.elasticsearch.cluster.service.ClusterService;
+import org.elasticsearch.common.network.NetworkModule;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.env.Environment;
+import org.elasticsearch.license.XPackLicenseState;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.xpack.extensions.XPackExtension;
 import org.elasticsearch.xpack.security.audit.AuditTrailService;
 import org.elasticsearch.xpack.security.audit.index.IndexAuditTrail;
 import org.elasticsearch.xpack.security.audit.logfile.LoggingAuditTrail;
-import org.elasticsearch.xpack.security.authc.AuthenticationService;
 import org.elasticsearch.xpack.security.authc.Realm;
 import org.elasticsearch.xpack.security.authc.Realms;
 import org.elasticsearch.xpack.security.authc.file.FileRealm;
 
+import static org.hamcrest.Matchers.containsString;
 import static org.mockito.Mockito.mock;
 
 public class SecurityTests extends ESTestCase {
@@ -66,7 +66,7 @@ public class SecurityTests extends ESTestCase {
         Settings settings = Settings.builder().put(testSettings)
             .put("path.home", createTempDir()).build();
         Environment env = new Environment(settings);
-        Security security = new Security(settings, env);
+        Security security = new Security(settings, env, new XPackLicenseState());
         ThreadPool threadPool = mock(ThreadPool.class);
         ClusterService clusterService = mock(ClusterService.class);
         return security.createComponents(null, threadPool, clusterService, null, Arrays.asList(extensions));
@@ -139,5 +139,50 @@ public class SecurityTests extends ESTestCase {
             .put(Security.AUDIT_OUTPUTS_SETTING.getKey(), "foo").build();
         IllegalArgumentException e = expectThrows(IllegalArgumentException.class, () -> createComponents(settings));
         assertEquals("Unknown audit trail output [foo]", e.getMessage());
+    }
+
+    public void testTransportTypeSetting() throws Exception {
+        Settings defaultSettings = Security.additionalSettings(Settings.EMPTY);
+        assertEquals(Security.NAME4, NetworkModule.TRANSPORT_TYPE_SETTING.get(defaultSettings));
+        assertEquals(Security.NAME4, NetworkModule.HTTP_TYPE_SETTING.get(defaultSettings));
+
+        // set transport back to security3
+        Settings transport3 = Security.additionalSettings(Settings.builder().put(NetworkModule.TRANSPORT_TYPE_KEY, Security.NAME3).build());
+        assertFalse(NetworkModule.TRANSPORT_TYPE_SETTING.exists(transport3));
+        assertEquals(Security.NAME4, NetworkModule.HTTP_TYPE_SETTING.get(transport3));
+
+        // set http back to security3
+        Settings http3 = Security.additionalSettings(Settings.builder().put(NetworkModule.HTTP_TYPE_KEY, Security.NAME3).build());
+        assertEquals(Security.NAME4, NetworkModule.TRANSPORT_TYPE_SETTING.get(http3));
+        assertFalse(NetworkModule.HTTP_TYPE_SETTING.exists(http3));
+
+        // set both to security3
+        Settings both3 = Security.additionalSettings(Settings.builder()
+                .put(NetworkModule.TRANSPORT_TYPE_KEY, Security.NAME3)
+                .put(NetworkModule.HTTP_TYPE_KEY, Security.NAME3)
+                .build());
+        assertFalse(NetworkModule.TRANSPORT_TYPE_SETTING.exists(both3));
+        assertFalse(NetworkModule.HTTP_TYPE_SETTING.exists(both3));
+
+        // set both to 4
+        Settings both4 = Security.additionalSettings(Settings.builder()
+                .put(NetworkModule.TRANSPORT_TYPE_KEY, Security.NAME4)
+                .put(NetworkModule.HTTP_TYPE_KEY, Security.NAME4)
+                .build());
+        assertFalse(NetworkModule.TRANSPORT_TYPE_SETTING.exists(both4));
+        assertFalse(NetworkModule.HTTP_TYPE_SETTING.exists(both4));
+
+        final String badType = randomFrom("netty3", "netty4", "other", "security1");
+        IllegalArgumentException badTransport = expectThrows(IllegalArgumentException.class,
+                () -> Security.additionalSettings(Settings.builder().put(NetworkModule.TRANSPORT_TYPE_KEY, badType).build()));
+        assertThat(badTransport.getMessage(), containsString(Security.NAME3));
+        assertThat(badTransport.getMessage(), containsString(Security.NAME4));
+        assertThat(badTransport.getMessage(), containsString(NetworkModule.TRANSPORT_TYPE_KEY));
+
+        IllegalArgumentException badHttp = expectThrows(IllegalArgumentException.class,
+                () -> Security.additionalSettings(Settings.builder().put(NetworkModule.HTTP_TYPE_KEY, badType).build()));
+        assertThat(badHttp.getMessage(), containsString(Security.NAME3));
+        assertThat(badHttp.getMessage(), containsString(Security.NAME4));
+        assertThat(badHttp.getMessage(), containsString(NetworkModule.HTTP_TYPE_KEY));
     }
 }
