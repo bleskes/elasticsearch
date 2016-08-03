@@ -60,19 +60,30 @@ public class SecurityNetty4TransportTests extends ESTestCase {
         clientSSLService = new ClientSSLService(settings, env, globalSSLConfiguration);
     }
 
+    private SecurityNetty4Transport createTransport(boolean sslEnabled) {
+        return createTransport(sslEnabled, Settings.EMPTY);
+    }
+
+    private SecurityNetty4Transport createTransport(boolean sslEnabled, Settings additionalSettings) {
+        final Settings settings =
+                Settings.builder()
+                        .put(SecurityNetty4Transport.SSL_SETTING.getKey(), sslEnabled)
+                        .put(additionalSettings)
+                        .build();
+        return new SecurityNetty4Transport(
+                settings,
+                mock(ThreadPool.class),
+                mock(NetworkService.class),
+                mock(BigArrays.class),
+                mock(NamedWriteableRegistry.class),
+                mock(CircuitBreakerService.class),
+                null,
+                serverSSLService,
+                clientSSLService);
+    }
+
     public void testThatSSLCanBeDisabledByProfile() throws Exception {
-        Settings settings = Settings.builder().put(SecurityNetty4Transport.SSL_SETTING.getKey(), true).build();
-        SecurityNetty4Transport transport =
-                new SecurityNetty4Transport(
-                        settings,
-                        mock(ThreadPool.class),
-                        mock(NetworkService.class),
-                        mock(BigArrays.class),
-                        mock(NamedWriteableRegistry.class),
-                        mock(CircuitBreakerService.class),
-                        null,
-                        serverSSLService,
-                        clientSSLService);
+        SecurityNetty4Transport transport = createTransport(true);
         Netty4MockUtil.setOpenChannelsHandlerToMock(transport);
         ChannelHandler handler = transport.getServerChannelInitializer("client",
                 Settings.builder().put("xpack.security.ssl", false).build());
@@ -81,18 +92,7 @@ public class SecurityNetty4TransportTests extends ESTestCase {
     }
 
     public void testThatSSLCanBeEnabledByProfile() throws Exception {
-        Settings settings = Settings.builder().put(SecurityNetty4Transport.SSL_SETTING.getKey(), false).build();
-        SecurityNetty4Transport transport =
-                new SecurityNetty4Transport(
-                        settings,
-                        mock(ThreadPool.class),
-                        mock(NetworkService.class),
-                        mock(BigArrays.class),
-                        mock(NamedWriteableRegistry.class),
-                        mock(CircuitBreakerService.class),
-                        null,
-                        serverSSLService,
-                        clientSSLService);
+        SecurityNetty4Transport transport = createTransport(false);
         Netty4MockUtil.setOpenChannelsHandlerToMock(transport);
         ChannelHandler handler = transport.getServerChannelInitializer("client",
                 Settings.builder().put("xpack.security.ssl", true).build());
@@ -101,18 +101,7 @@ public class SecurityNetty4TransportTests extends ESTestCase {
     }
 
     public void testThatProfileTakesDefaultSSLSetting() throws Exception {
-        Settings settings = Settings.builder().put(SecurityNetty4Transport.SSL_SETTING.getKey(), true).build();
-        SecurityNetty4Transport transport =
-                new SecurityNetty4Transport(
-                        settings,
-                        mock(ThreadPool.class),
-                        mock(NetworkService.class),
-                        mock(BigArrays.class),
-                        mock(NamedWriteableRegistry.class),
-                        mock(CircuitBreakerService.class),
-                        null,
-                        serverSSLService,
-                        clientSSLService);
+        SecurityNetty4Transport transport = createTransport(true);
         Netty4MockUtil.setOpenChannelsHandlerToMock(transport);
         ChannelHandler handler = transport.getServerChannelInitializer("client", Settings.EMPTY);
         final EmbeddedChannel ch = new EmbeddedChannel(handler);
@@ -120,18 +109,7 @@ public class SecurityNetty4TransportTests extends ESTestCase {
     }
 
     public void testDefaultClientAuth() throws Exception {
-        Settings settings = Settings.builder().put(SecurityNetty4Transport.SSL_SETTING.getKey(), true).build();
-        SecurityNetty4Transport transport =
-                new SecurityNetty4Transport(
-                        settings,
-                        mock(ThreadPool.class),
-                        mock(NetworkService.class),
-                        mock(BigArrays.class),
-                        mock(NamedWriteableRegistry.class),
-                        mock(CircuitBreakerService.class),
-                        null,
-                        serverSSLService,
-                        clientSSLService);
+        SecurityNetty4Transport transport = createTransport(true);
         Netty4MockUtil.setOpenChannelsHandlerToMock(transport);
         ChannelHandler handler = transport.getServerChannelInitializer("client", Settings.EMPTY);
         final EmbeddedChannel ch = new EmbeddedChannel(handler);
@@ -141,20 +119,8 @@ public class SecurityNetty4TransportTests extends ESTestCase {
 
     public void testRequiredClientAuth() throws Exception {
         String value = randomFrom(SSLClientAuth.REQUIRED.name(), SSLClientAuth.REQUIRED.name().toLowerCase(Locale.ROOT), "true");
-        Settings settings = Settings.builder()
-                .put(SecurityNetty4Transport.SSL_SETTING.getKey(), true)
-                .put(SecurityNetty4Transport.CLIENT_AUTH_SETTING.getKey(), value).build();
         SecurityNetty4Transport transport =
-                new SecurityNetty4Transport(
-                        settings,
-                        mock(ThreadPool.class),
-                        mock(NetworkService.class),
-                        mock(BigArrays.class),
-                        mock(NamedWriteableRegistry.class),
-                        mock(CircuitBreakerService.class),
-                        null,
-                        serverSSLService,
-                        clientSSLService);
+                createTransport(true, Settings.builder().put(SecurityNetty4Transport.CLIENT_AUTH_SETTING.getKey(), value).build());
         Netty4MockUtil.setOpenChannelsHandlerToMock(transport);
         ChannelHandler handler = transport.getServerChannelInitializer("client", Settings.EMPTY);
         final EmbeddedChannel ch = new EmbeddedChannel(handler);
@@ -164,20 +130,8 @@ public class SecurityNetty4TransportTests extends ESTestCase {
 
     public void testNoClientAuth() throws Exception {
         String value = randomFrom(SSLClientAuth.NO.name(), "false", "FALSE", SSLClientAuth.NO.name().toLowerCase(Locale.ROOT));
-        Settings settings = Settings.builder()
-                .put(SecurityNetty4Transport.SSL_SETTING.getKey(), true)
-                .put(SecurityNetty4Transport.CLIENT_AUTH_SETTING.getKey(), value).build();
         SecurityNetty4Transport transport =
-                new SecurityNetty4Transport(
-                        settings,
-                        mock(ThreadPool.class),
-                        mock(NetworkService.class),
-                        mock(BigArrays.class),
-                        mock(NamedWriteableRegistry.class),
-                        mock(CircuitBreakerService.class),
-                        null,
-                        serverSSLService,
-                        clientSSLService);
+                createTransport(true, Settings.builder().put(SecurityNetty4Transport.CLIENT_AUTH_SETTING.getKey(), value).build());
         Netty4MockUtil.setOpenChannelsHandlerToMock(transport);
         ChannelHandler handler = transport.getServerChannelInitializer("client", Settings.EMPTY);
         final EmbeddedChannel ch = new EmbeddedChannel(handler);
@@ -187,20 +141,8 @@ public class SecurityNetty4TransportTests extends ESTestCase {
 
     public void testOptionalClientAuth() throws Exception {
         String value = randomFrom(SSLClientAuth.OPTIONAL.name(), SSLClientAuth.OPTIONAL.name().toLowerCase(Locale.ROOT));
-        Settings settings = Settings.builder()
-                .put(SecurityNetty4Transport.SSL_SETTING.getKey(), true)
-                .put(SecurityNetty4Transport.CLIENT_AUTH_SETTING.getKey(), value).build();
         SecurityNetty4Transport transport =
-                new SecurityNetty4Transport(
-                        settings,
-                        mock(ThreadPool.class),
-                        mock(NetworkService.class),
-                        mock(BigArrays.class),
-                        mock(NamedWriteableRegistry.class),
-                        mock(CircuitBreakerService.class),
-                        null,
-                        serverSSLService,
-                        clientSSLService);
+                createTransport(true, Settings.builder().put(SecurityNetty4Transport.CLIENT_AUTH_SETTING.getKey(), value).build());
         Netty4MockUtil.setOpenChannelsHandlerToMock(transport);
         ChannelHandler handler = transport.getServerChannelInitializer("client", Settings.EMPTY);
         final EmbeddedChannel ch = new EmbeddedChannel(handler);
@@ -210,18 +152,7 @@ public class SecurityNetty4TransportTests extends ESTestCase {
 
     public void testProfileRequiredClientAuth() throws Exception {
         String value = randomFrom(SSLClientAuth.REQUIRED.name(), SSLClientAuth.REQUIRED.name().toLowerCase(Locale.ROOT), "true", "TRUE");
-        Settings settings = Settings.builder().put(SecurityNetty4Transport.SSL_SETTING.getKey(), true).build();
-        SecurityNetty4Transport transport =
-                new SecurityNetty4Transport(
-                        settings,
-                        mock(ThreadPool.class),
-                        mock(NetworkService.class),
-                        mock(BigArrays.class),
-                        mock(NamedWriteableRegistry.class),
-                        mock(CircuitBreakerService.class),
-                        null,
-                        serverSSLService,
-                        clientSSLService);
+        SecurityNetty4Transport transport = createTransport(true);
         Netty4MockUtil.setOpenChannelsHandlerToMock(transport);
         ChannelHandler handler = transport.getServerChannelInitializer("client",
                 Settings.builder().put(SecurityNetty4Transport.PROFILE_CLIENT_AUTH_SETTING, value).build());
@@ -232,18 +163,7 @@ public class SecurityNetty4TransportTests extends ESTestCase {
 
     public void testProfileNoClientAuth() throws Exception {
         String value = randomFrom(SSLClientAuth.NO.name(), "false", "FALSE", SSLClientAuth.NO.name().toLowerCase(Locale.ROOT));
-        Settings settings = Settings.builder().put(SecurityNetty4Transport.SSL_SETTING.getKey(), true).build();
-        SecurityNetty4Transport transport =
-                new SecurityNetty4Transport(
-                        settings,
-                        mock(ThreadPool.class),
-                        mock(NetworkService.class),
-                        mock(BigArrays.class),
-                        mock(NamedWriteableRegistry.class),
-                        mock(CircuitBreakerService.class),
-                        null,
-                        serverSSLService,
-                        clientSSLService);
+        SecurityNetty4Transport transport = createTransport(true);
         Netty4MockUtil.setOpenChannelsHandlerToMock(transport);
         ChannelHandler handler = transport.getServerChannelInitializer("client",
                 Settings.builder().put(SecurityNetty4Transport.PROFILE_CLIENT_AUTH_SETTING.getKey(), value).build());
@@ -254,18 +174,7 @@ public class SecurityNetty4TransportTests extends ESTestCase {
 
     public void testProfileOptionalClientAuth() throws Exception {
         String value = randomFrom(SSLClientAuth.OPTIONAL.name(), SSLClientAuth.OPTIONAL.name().toLowerCase(Locale.ROOT));
-        Settings settings = Settings.builder().put(SecurityNetty4Transport.SSL_SETTING.getKey(), true).build();
-        SecurityNetty4Transport transport =
-                new SecurityNetty4Transport(
-                        settings,
-                        mock(ThreadPool.class),
-                        mock(NetworkService.class),
-                        mock(BigArrays.class),
-                        mock(NamedWriteableRegistry.class),
-                        mock(CircuitBreakerService.class),
-                        null,
-                        serverSSLService,
-                        clientSSLService);
+        SecurityNetty4Transport transport = createTransport(true);
         Netty4MockUtil.setOpenChannelsHandlerToMock(transport);
         final ChannelHandler handler = transport.getServerChannelInitializer("client",
                 Settings.builder().put(SecurityNetty4Transport.PROFILE_CLIENT_AUTH_SETTING.getKey(), value).build());
