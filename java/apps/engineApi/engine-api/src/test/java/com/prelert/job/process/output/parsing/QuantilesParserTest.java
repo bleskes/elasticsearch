@@ -45,12 +45,18 @@ public class QuantilesParserTest
     public void testParseJson() throws IOException
     {
         String input = "{\"timestamp\": 1,"
-                     + " \"quantileState\": \"quantile-state\"}";
+                     + " \"quantileState\": \"quantile-state\","
+                     + " \"bigChangePartitions\" : [\"north\", \"east\"]"
+                     + "}";
         JsonParser parser = createJsonParser(input);
         parser.nextToken();
 
         Quantiles quantile = new QuantilesParser(parser).parseJson();
         assertEquals("quantile-state", quantile.getQuantileState());
+        assertEquals(2, quantile.getBigChangePartitionValues().size());
+        assertEquals("north", quantile.getBigChangePartitionValues().get(0));
+        assertEquals("east", quantile.getBigChangePartitionValues().get(1));
+
         assertEquals(new Date(1000l), quantile.getTimestamp());
 
         assertEquals(JsonToken.END_OBJECT, parser.getCurrentToken());

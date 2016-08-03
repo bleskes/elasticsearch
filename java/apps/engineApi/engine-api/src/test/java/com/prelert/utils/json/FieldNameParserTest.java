@@ -27,16 +27,12 @@
 
 package com.prelert.utils.json;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
+import static org.junit.Assert.*;
 import static org.mockito.Mockito.verify;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.util.List;
 
 import org.apache.log4j.Logger;
 import org.junit.After;
@@ -255,6 +251,25 @@ public class FieldNameParserTest
         verify(m_Logger).error("Start object parsed in TestData");
     }
 
+    @Test
+    public void testParseStringArray() throws JsonParseException,
+            IOException, AutoDetectParseException
+    {
+        String input = "{\"testStringArray\" : [\"boat\", \"yacht\", \"ship\"]}";
+        JsonParser parser = createJsonParser(input);
+        parser.nextToken();
+
+        TestData data = new TestFieldNameParser(parser, m_Logger).parseJson();
+
+        assertNotNull(data.getStringArray());
+        assertEquals(3, data.getStringArray().size());
+        assertEquals("boat", data.getStringArray().get(0));
+        assertEquals("yacht", data.getStringArray().get(1));
+        assertEquals("ship", data.getStringArray().get(2));
+
+        assertEquals(JsonToken.END_OBJECT, parser.getCurrentToken());
+    }
+
     private static final JsonParser createJsonParser(String input) throws JsonParseException,
             IOException
     {
@@ -269,6 +284,7 @@ public class FieldNameParserTest
         private double m_Double;
         private Boolean m_Boolean;
         private String m_String;
+        private List<String> m_StringArray;
 
         public int getInt()
         {
@@ -319,6 +335,16 @@ public class FieldNameParserTest
         {
             this.m_String = value;
         }
+
+        public List<String> getStringArray()
+        {
+            return m_StringArray;
+        }
+
+        public void setStringArray(List<String> value)
+        {
+            this.m_StringArray = value;
+        }
     }
 
     private static class TestFieldNameParser extends FieldNameParser<TestData>
@@ -356,6 +382,9 @@ public class FieldNameParserTest
                     break;
                 case "testString":
                     data.setString(parseAsStringOrNull(fieldName));
+                    break;
+                case "testStringArray":
+                    data.setStringArray(parseStringArray(fieldName));
                     break;
                 default:
                     m_Logger.error("Invalid fieldName: " + fieldName);

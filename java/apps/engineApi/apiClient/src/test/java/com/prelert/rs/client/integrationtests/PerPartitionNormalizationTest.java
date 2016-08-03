@@ -81,6 +81,7 @@ public class PerPartitionNormalizationTest extends BaseIntegrationTest
         {
             test("airline", record.getPartitionFieldName());
             test(partitionFieldValue, record.getPartitionFieldValue());
+            test(record.getNormalizedProbability() < 80);
         }
     }
 

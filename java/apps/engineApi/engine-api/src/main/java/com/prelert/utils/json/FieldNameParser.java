@@ -247,4 +247,12 @@ public abstract class FieldNameParser<T>
         parseArray(fieldName, () -> parseAsDoubleOrZero(fieldName), list);
         return list.stream().mapToDouble(d -> d).toArray();
     }
+
+    protected List<String> parseStringArray(String fieldName)
+    throws IOException
+    {
+        List<String> parsedArray = new ArrayList<>();
+        parseArray(fieldName, () -> parseAsStringOrNull(fieldName), parsedArray);
+        return parsedArray;
+    }
 }
