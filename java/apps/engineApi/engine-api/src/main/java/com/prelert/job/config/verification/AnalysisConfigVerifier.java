@@ -240,7 +240,7 @@ public final class AnalysisConfigVerifier
         }
         for (Long span : multipleBucketSpans)
         {
-            if (span % bucketSpan != 0L)
+            if ((span % bucketSpan != 0L) || (span <= bucketSpan))
             {
                 throw new JobConfigurationException(
                         Messages.getMessage(

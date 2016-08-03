@@ -405,6 +405,36 @@ public class AnalysisConfigVerifierTest
         assertFalse(ac.equals(ac2));
         ac2.setMultipleBucketSpans(Arrays.asList(10L, 15L, 20L, 25L, 30L, 35L));
         assertEquals(ac, ac2);
+
+        ac.setBucketSpan(222L);
+        ac.setMultipleBucketSpans(Arrays.asList());
+        assertTrue(AnalysisConfigVerifier.verify(ac));
+
+        ac.setMultipleBucketSpans(Arrays.asList(222L));
+        try
+        {
+            AnalysisConfigVerifier.verify(ac);
+            assertTrue(false);
+        }
+        catch (JobConfigurationException e)
+        {
+            assertEquals(ErrorCodes.MULTIPLE_BUCKETSPANS_NOT_MULTIPLE, e.getErrorCode());
+            String rex = String.format(".*'%d'.*'%d'.*", 222, 222);
+            assertTrue(e.getMessage().matches(rex));
+        }
+
+        ac.setMultipleBucketSpans(Arrays.asList(-444L, -888L));
+        try
+        {
+            AnalysisConfigVerifier.verify(ac);
+            assertTrue(false);
+        }
+        catch (JobConfigurationException e)
+        {
+            assertEquals(ErrorCodes.MULTIPLE_BUCKETSPANS_NOT_MULTIPLE, e.getErrorCode());
+            String rex = String.format(".*'%d'.*'%d'.*", -444, 222);
+            assertTrue(e.getMessage().matches(rex));
+        }
     }
 
     @Test

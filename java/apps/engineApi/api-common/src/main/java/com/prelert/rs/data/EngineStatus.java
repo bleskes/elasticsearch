@@ -31,6 +31,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -102,6 +103,30 @@ public class EngineStatus
         public void setUptimeSeconds(long uptime)
         {
             m_UptimeSeconds = uptime;
+        }
+
+        @Override
+        public boolean equals(Object other)
+        {
+            if (this == other)
+            {
+                return true;
+            }
+
+            if (other instanceof JobStats == false)
+            {
+                return false;
+            }
+            JobStats that = (JobStats)other;
+            return Objects.equals(this.m_MemoryStatus, that.m_MemoryStatus) &&
+                    Objects.equals(this.m_ModelBytes, that.m_ModelBytes) &&
+                    Objects.equals(this.m_UptimeSeconds, that.m_UptimeSeconds);
+        }
+
+        @Override
+        public int hashCode()
+        {
+            return Objects.hash(m_MemoryStatus, m_ModelBytes, m_UptimeSeconds);
         }
     }
 
@@ -211,6 +236,34 @@ public class EngineStatus
     {
         m_DataStoreConnection = params;
     }
+
+    @Override
+    public boolean equals(Object other)
+    {
+        if (this == other)
+        {
+            return true;
+        }
+
+        if (other instanceof EngineStatus == false)
+        {
+            return false;
+        }
+
+        EngineStatus that = (EngineStatus)other;
+        return Objects.equals(this.m_CpuLoad, that.m_CpuLoad) &&
+                Objects.equals(this.m_HeapMemUsage, that.m_HeapMemUsage) &&
+                Objects.equals(this.m_RunningJobs, that.m_RunningJobs) &&
+                Objects.equals(this.m_StartedScheduledJobs, that.m_StartedScheduledJobs) &&
+                Objects.equals(this.m_DataStoreConnection, that.m_DataStoreConnection) &&
+                Objects.equals(this.m_EngineHosts, that.m_EngineHosts) &&
+                Objects.equals(this.m_HostByJob, that.m_HostByJob);
+    }
+
+    @Override
+    public int hashCode()
+    {
+        return Objects.hash(m_CpuLoad, m_HeapMemUsage, m_RunningJobs, m_StartedScheduledJobs,
+                m_DataStoreConnection, m_EngineHosts, m_HostByJob);
+    }
 }
-
-
