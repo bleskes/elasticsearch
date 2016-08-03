@@ -44,30 +44,30 @@ import com.prelert.server.info.ServerInfoFactory;
 @Path("")
 public class ApiBase extends ResourceWithJobManager
 {
-	private static final Logger LOGGER = Logger.getLogger(ApiBase.class);
+    private static final Logger LOGGER = Logger.getLogger(ApiBase.class);
 
-	private static final String VERSION_HTML =
-			"<!DOCTYPE html>\n"
-			+ "<html>\n"
-			+ "<head><title>Prelert Engine</title></head>\n"
-			+ "<body>\n"
-			+ "<h1>Prelert Engine API %s</h1>\n"
-			+ "<h2>Analytics Version:</h2>\n"
-			+ "<p>%s</p>\n"
-			+ "<div>%s</div>"
-			+ "</body>\n"
-			+ "</html>";
+    private static final String VERSION_HTML =
+            "<!DOCTYPE html>\n"
+            + "<html>\n"
+            + "<head><title>Prelert Engine</title></head>\n"
+            + "<body>\n"
+            + "<h1>Prelert Engine API %s</h1>\n"
+            + "<h2>Analytics Version:</h2>\n"
+            + "<p>%s</p>\n"
+            + "<div>%s</div>"
+            + "</body>\n"
+            + "</html>";
 
 
-	private static final String SERVER_INFO_TABLE =
-	         "<table>"
-                + "<tr><td>Hostname</td><td>%s</td></tr>"
-	            + "<tr><td>OS Name</td><td>%s</td></tr>"
-	            + "<tr><td>OS Version</td><td>%s</td></tr>"
-	            + "<tr><td>Total Memory Size MB</td><td>%d</td></tr>"
-	            + "<tr><td>Total Disk MB</td><td>%d</td></tr>"
-	            + "<tr><td>Available Disk MB</td><td>%d</td></tr>"
-	        + "</table>";
+    private static final String SERVER_INFO_TABLE =
+            "<table>"
+            + "<tr><td>Hostname</td><td>%s</td></tr>"
+            + "<tr><td>OS Name</td><td>%s</td></tr>"
+            + "<tr><td>OS Version</td><td>%s</td></tr>"
+            + "<tr><td>Total Memory Size MB</td><td>%d</td></tr>"
+            + "<tr><td>Total Disk MB</td><td>%d</td></tr>"
+            + "<tr><td>Available Disk MB</td><td>%d</td></tr>"
+            + "</table>";
 
 
 
@@ -75,24 +75,24 @@ public class ApiBase extends ResourceWithJobManager
     @Produces(MediaType.TEXT_HTML)
     public String version()
     {
-    	LOGGER.debug("Get API Base document");
+        LOGGER.debug("Get API Base document");
 
-    	JobManager manager = jobManager();
-    	String apiVersion = manager.apiVersion();
-    	String analyticsVersion = manager.getAnalyticsVersion();
-    	analyticsVersion = analyticsVersion.replace("\n", "<br>");
+        JobManager manager = jobManager();
+        String apiVersion = manager.apiVersion();
+        String analyticsVersion = manager.getAnalyticsVersion();
+        analyticsVersion = analyticsVersion.replace("\n", "<br>");
 
-    	ServerInfoFactory serverInfoFactory = serverInfo();
+        ServerInfoFactory serverInfoFactory = serverInfo();
 
-    	ServerInfo serverInfo = serverInfoFactory.serverInfo();
-    	String serverTable = String.format(SERVER_INFO_TABLE,
-    	                                    serverInfo.getHostname(),
-    	                                    serverInfo.getOsName(),
-    	                                    serverInfo.getOsVersion(),
-    	                                    serverInfo.getTotalMemoryMb(),
-    	                                    serverInfo.getTotalDiskMb(),
-    	                                    serverInfo.getAvailableDiskMb());
+        ServerInfo serverInfo = serverInfoFactory.serverInfo();
+        String serverTable = String.format(SERVER_INFO_TABLE,
+                                            serverInfo.getHostname(),
+                                            serverInfo.getOsName(),
+                                            serverInfo.getOsVersion(),
+                                            serverInfo.getTotalMemoryMb(),
+                                            serverInfo.getTotalDiskMb(),
+                                            serverInfo.getAvailableDiskMb());
 
-    	return String.format(VERSION_HTML, apiVersion, analyticsVersion, serverTable);
+        return String.format(VERSION_HTML, apiVersion, analyticsVersion, serverTable);
     }
 }
