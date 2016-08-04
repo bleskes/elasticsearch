@@ -65,9 +65,6 @@ final class QuantilesParser extends FieldNameParser<Quantiles>
         case Quantiles.QUANTILE_STATE:
             quantiles.setQuantileState(parseAsStringOrNull(fieldName));
             break;
-        case Quantiles.BIG_CHANGE_PARTITIONS:
-            quantiles.setBigChangePartitionValues(parseStringArray(fieldName));
-            break;
         default:
             LOGGER.warn(String.format("Parse error unknown field in Quantiles %s:%s",
                     fieldName, token.asString()));

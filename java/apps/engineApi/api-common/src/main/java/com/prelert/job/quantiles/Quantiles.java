@@ -20,7 +20,6 @@ package com.prelert.job.quantiles;
 
 import java.io.IOException;
 import java.util.Date;
-import java.util.List;
 import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -42,7 +41,6 @@ public class Quantiles implements StorageSerialisable
      */
     public static final String TIMESTAMP = "timestamp";
     public static final String QUANTILE_STATE = "quantileState";
-    public static final String BIG_CHANGE_PARTITIONS = "bigChangePartitions";
 
     /**
      * Elasticsearch type
@@ -51,7 +49,6 @@ public class Quantiles implements StorageSerialisable
 
     private Date m_Timestamp;
     private String m_QuantileState;
-    private List<String> m_BigChangePartitions;
 
     public Date getTimestamp()
     {
@@ -71,16 +68,6 @@ public class Quantiles implements StorageSerialisable
     public void setQuantileState(String quantileState)
     {
         m_QuantileState = quantileState;
-    }
-
-    public List<String> getBigChangePartitionValues()
-    {
-        return m_BigChangePartitions;
-    }
-
-    public void setBigChangePartitionValues(List<String> partitionValues)
-    {
-        m_BigChangePartitions = partitionValues;
     }
 
     @Override
@@ -113,7 +100,6 @@ public class Quantiles implements StorageSerialisable
     @Override
     public void serialise(StorageSerialiser serialiser) throws IOException
     {
-        // don't store the list of big change partitions
         serialiser.addTimestamp(m_Timestamp).add(QUANTILE_STATE, m_QuantileState);
     }
 }

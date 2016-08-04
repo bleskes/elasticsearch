@@ -274,7 +274,7 @@ class ScoresUpdater
 
     private void updateRecordsThatHaveBigChange(Bucket bucket, int[] counts, Logger logger)
     {
-        List<AnomalyRecord> toUpdate = new ArrayList<AnomalyRecord>();
+        List<AnomalyRecord> toUpdate = new ArrayList<>();
 
         for (AnomalyRecord record : bucket.getRecords())
         {

@@ -32,7 +32,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Date;
 
 import org.junit.Test;
@@ -99,8 +98,6 @@ public class QuantilesTest
         Quantiles quantiles = new Quantiles();
         quantiles.setTimestamp(new Date(1234L));
         quantiles.setQuantileState("foo");
-        // big change partitions aren't serialised
-        quantiles.setBigChangePartitionValues(Arrays.asList("A", "B", "C"));
 
         TestJsonStorageSerialiser serialiser = new TestJsonStorageSerialiser();
         serialiser.startObject();
