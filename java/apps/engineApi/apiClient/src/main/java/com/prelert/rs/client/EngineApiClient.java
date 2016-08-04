@@ -724,8 +724,8 @@ public class EngineApiClient implements Closeable
     /**
      * Get the Engine's status document.
      *
-     * @return
-     * @throws IOException
+     * @return The EngineStatus document
+     * @throws IOException If HTTP GET fails
      */
     public EngineStatus status() throws IOException
     {
