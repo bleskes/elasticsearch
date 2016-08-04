@@ -20,9 +20,8 @@ package org.elasticsearch.xpack.security.transport.netty3;
 import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.env.Environment;
-import org.elasticsearch.xpack.security.ssl.SSLConfiguration.Global;
-import org.elasticsearch.xpack.security.ssl.ServerSSLService;
 import org.elasticsearch.test.ESTestCase;
+import org.elasticsearch.xpack.security.ssl.SSLService;
 import org.jboss.netty.bootstrap.ClientBootstrap;
 import org.jboss.netty.bootstrap.ServerBootstrap;
 import org.jboss.netty.buffer.ChannelBuffer;
@@ -42,7 +41,6 @@ import org.jboss.netty.handler.ssl.SslHandler;
 import org.junit.After;
 import org.junit.Before;
 
-import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLException;
 import java.io.PrintWriter;
@@ -72,7 +70,7 @@ public class Netty3HandshakeWaitingHandlerTests extends ESTestCase {
 
     private ServerBootstrap serverBootstrap;
     private ClientBootstrap clientBootstrap;
-    private SSLContext sslContext;
+    private SSLService sslService;
 
     private final AtomicReference<Throwable> failureCause = new AtomicReference<>();
     private ExecutorService threadPoolExecutor;
@@ -88,9 +86,7 @@ public class Netty3HandshakeWaitingHandlerTests extends ESTestCase {
                 .put("xpack.security.ssl.keystore.password", "testnode")
                 .build();
         Environment env = new Environment(Settings.builder().put("path.home", createTempDir()).build());
-        ServerSSLService sslService = new ServerSSLService(settings, env, new Global(settings));
-
-        sslContext = sslService.sslContext();
+        sslService = new SSLService(settings, env);
 
         startBootstrap();
 
@@ -116,7 +112,7 @@ public class Netty3HandshakeWaitingHandlerTests extends ESTestCase {
         clientBootstrap.setPipelineFactory(new ChannelPipelineFactory() {
             @Override
             public ChannelPipeline getPipeline() throws Exception {
-                final SSLEngine engine = sslContext.createSSLEngine();
+                final SSLEngine engine = sslService.createSSLEngine(Settings.EMPTY);
                 engine.setUseClientMode(true);
                 return Channels.pipeline(
                         new SslHandler(engine));
@@ -153,7 +149,7 @@ public class Netty3HandshakeWaitingHandlerTests extends ESTestCase {
 
             @Override
             public ChannelPipeline getPipeline() throws Exception {
-                final SSLEngine engine = sslContext.createSSLEngine();
+                final SSLEngine engine = sslService.createSSLEngine(Settings.EMPTY);
                 engine.setUseClientMode(true);
                 return Channels.pipeline(
                         new SslHandler(engine),
@@ -224,7 +220,7 @@ public class Netty3HandshakeWaitingHandlerTests extends ESTestCase {
         return new ChannelPipelineFactory() {
             @Override
             public ChannelPipeline getPipeline() throws Exception {
-                final SSLEngine sslEngine = sslContext.createSSLEngine();
+                final SSLEngine sslEngine = sslService.createSSLEngine(Settings.EMPTY);
                 sslEngine.setUseClientMode(false);
                 return Channels.pipeline(new SslHandler(sslEngine),
                     new SimpleChannelHandler() {
