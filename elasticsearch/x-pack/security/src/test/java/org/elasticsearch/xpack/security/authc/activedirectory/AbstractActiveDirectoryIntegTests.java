@@ -55,7 +55,7 @@ public class AbstractActiveDirectoryIntegTests extends ESTestCase {
         }
         globalSettings = builder.build();
         Environment environment = new Environment(globalSettings);
-        clientSSLService = new ClientSSLService(globalSettings, environment, new Global(globalSettings), null);
+        clientSSLService = new ClientSSLService(globalSettings, environment, new Global(globalSettings));
     }
 
     Settings buildAdSettings(String ldapUrl, String adDomainName, String userSearchDN, LdapSearchScope scope,

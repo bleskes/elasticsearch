@@ -19,6 +19,7 @@ package org.elasticsearch.xpack.security.transport.filter;
 
 
 import org.apache.lucene.util.SetOnce;
+import org.elasticsearch.common.collect.MapBuilder;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.logging.Loggers;
@@ -81,6 +82,10 @@ public class IPFilter {
     public static final Setting<List<String>> HTTP_FILTER_DENY_SETTING = Setting.listSetting(setting("http.filter.deny"),
             HTTP_FILTER_DENY_FALLBACK, Function.identity(), Property.Dynamic, Property.NodeScope);
 
+    public static final Map<String, Object> DISABLED_USAGE_STATS = new MapBuilder<String, Object>()
+            .put("http", false)
+            .put("transport", false)
+            .immutableMap();
 
     public static final SecurityIpFilterRule DEFAULT_PROFILE_ACCEPT_ALL = new SecurityIpFilterRule(true, "default:accept_all") {
         @Override
@@ -144,8 +149,11 @@ public class IPFilter {
 
     public Map<String, Object> usageStats() {
         Map<String, Object> map = new HashMap<>(2);
-        map.put("http", Collections.singletonMap("enabled", isHttpFilterEnabled));
-        map.put("transport", Collections.singletonMap("enabled", isIpFilterEnabled));
+        final boolean httpFilterEnabled = isHttpFilterEnabled && (httpAllowFilter.isEmpty() == false || httpDenyFilter.isEmpty() == false);
+        final boolean transportFilterEnabled = isIpFilterEnabled &&
+                (transportAllowFilter.isEmpty() == false || transportDenyFilter.isEmpty() == false);
+        map.put("http", httpFilterEnabled);
+        map.put("transport", transportFilterEnabled);
         return map;
     }
 

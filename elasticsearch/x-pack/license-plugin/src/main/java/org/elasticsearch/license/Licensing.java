@@ -56,10 +56,6 @@ public class Licensing implements ActionPlugin {
         isTribeNode = isTribeNode(settings);
     }
 
-    public Collection<Module> nodeModules() {
-        return Collections.emptyList();
-    }
-
     @Override
     public List<ActionHandler<? extends ActionRequest<?>, ? extends ActionResponse>> getActions() {
         if (isTribeNode) {
@@ -78,14 +74,6 @@ public class Licensing implements ActionPlugin {
         return Arrays.asList(RestPutLicenseAction.class,
                 RestGetLicenseAction.class,
                 RestDeleteLicenseAction.class);
-    }
-
-    public Collection<Object> createComponents(ClusterService clusterService, Clock clock, Environment environment,
-                                               ResourceWatcherService resourceWatcherService,
-                                               XPackLicenseState licenseState) {
-        LicenseService licenseService = new LicenseService(settings, clusterService, clock,
-                environment, resourceWatcherService, licenseState);
-        return Arrays.asList(licenseService, licenseState);
     }
 
     public List<Setting<?>> getSettings() {

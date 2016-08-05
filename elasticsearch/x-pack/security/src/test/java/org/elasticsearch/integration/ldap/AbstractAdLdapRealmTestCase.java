@@ -18,6 +18,7 @@
 package org.elasticsearch.integration.ldap;
 
 import org.elasticsearch.ElasticsearchSecurityException;
+import org.elasticsearch.action.DocWriteResponse;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.client.Client;
@@ -144,7 +145,8 @@ public abstract  class AbstractAdLdapRealmTestCase extends SecurityIntegTestCase
                         .endObject())
                 .execute().actionGet();
 
-        assertThat("user " + user + " should have write access to index " + index, indexResponse.isCreated(), is(true));
+        assertEquals("user " + user + " should have write access to index " + index,
+                DocWriteResponse.Result.CREATED, indexResponse.getResult());
 
         refresh();
 

@@ -73,7 +73,7 @@ public interface XPackFeatureSet {
 
         @Override
         public String getWriteableName() {
-            return writeableName(name);
+            return name;
         }
 
         @Override
@@ -92,10 +92,6 @@ public interface XPackFeatureSet {
         protected void innerXContent(XContentBuilder builder, Params params) throws IOException {
             builder.field(AVAILABLE_XFIELD, available);
             builder.field(ENABLED_XFIELD, enabled);
-        }
-
-        public static String writeableName(String featureName) {
-            return "xpack.usage." + featureName;
         }
     }
 
