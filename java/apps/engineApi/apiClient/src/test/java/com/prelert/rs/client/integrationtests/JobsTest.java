@@ -895,6 +895,11 @@ public class JobsTest implements Closeable
         }
 
         test(eventCount == expectedTotalEvents);
+
+
+        SingleDocument<JobDetails> job = m_WebServiceClient.getJob(jobId);
+        test(job.getDocument().getAverageBucketProcessingTimeMs() != null);
+        test(job.getDocument().getAverageBucketProcessingTimeMs() > 0);
     }
 
 
