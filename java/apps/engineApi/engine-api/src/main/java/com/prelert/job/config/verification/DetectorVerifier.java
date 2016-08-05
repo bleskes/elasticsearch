@@ -26,9 +26,7 @@
  ************************************************************/
 package com.prelert.job.config.verification;
 
-import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import com.prelert.job.Detector;
 import com.prelert.job.detectionrules.DetectionRule;
@@ -264,7 +262,7 @@ public final class DetectorVerifier
     private static void verifyRulesReferToValidFields(Detector detector)
             throws JobConfigurationException
     {
-        List<String> analysisFields = extractAnalysisFields(detector);
+        List<String> analysisFields = detector.extractAnalysisFields();
         for (DetectionRule rule : detector.getDetectorRules())
         {
             String targetField = rule.getTargetField();
@@ -287,12 +285,5 @@ public final class DetectorVerifier
                 }
             }
         }
-    }
-
-    private static List<String> extractAnalysisFields(Detector detector)
-    {
-        List<String> analysisFields = Arrays.asList(detector.getByFieldName(),
-                detector.getOverFieldName(), detector.getPartitionFieldName());
-        return analysisFields.stream().filter(item -> item != null).collect(Collectors.toList());
     }
 }

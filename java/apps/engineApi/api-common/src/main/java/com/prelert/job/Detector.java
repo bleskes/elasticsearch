@@ -386,6 +386,17 @@ public class Detector
         m_DetectorRules = detectorRules;
     }
 
+    /**
+     * Returns a list with the byFieldName, overFieldName and partitionFieldName that are not null
+     * @return a list with the byFieldName, overFieldName and partitionFieldName that are not null
+     */
+    public List<String> extractAnalysisFields()
+    {
+        List<String> analysisFields = Arrays.asList(getByFieldName(),
+                getOverFieldName(), getPartitionFieldName());
+        return analysisFields.stream().filter(item -> item != null).collect(Collectors.toList());
+    }
+
     @Override
     public boolean equals(Object other)
     {
