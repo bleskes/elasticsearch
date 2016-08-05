@@ -33,6 +33,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
+import com.prelert.job.Detector;
 import com.prelert.job.detectionrules.DetectionRule;
 import com.prelert.job.detectionrules.RuleCondition;
 import com.prelert.job.detectionrules.RuleConditionType;
@@ -57,7 +58,7 @@ public class DetectionRuleVerifierTest
         m_ExpectedException.expectMessage(
                 "Invalid detector rule: missing targetField where targetValue 'foo' is specified");
 
-        DetectionRuleVerifier.verify(rule);
+        DetectionRuleVerifier.verify(rule, new Detector());
     }
 
     @Test
@@ -71,7 +72,7 @@ public class DetectionRuleVerifierTest
         m_ExpectedException.expectMessage(
                 "Invalid detector rule: at least one ruleCondition is required");
 
-        DetectionRuleVerifier.verify(rule);
+        DetectionRuleVerifier.verify(rule, new Detector());
     }
 
     @Test
@@ -86,7 +87,7 @@ public class DetectionRuleVerifierTest
         m_ExpectedException.expectMessage(
                 "Invalid detector rule: at least one ruleCondition is required");
 
-        DetectionRuleVerifier.verify(rule);
+        DetectionRuleVerifier.verify(rule, new Detector());
     }
 
     @Test
@@ -100,7 +101,7 @@ public class DetectionRuleVerifierTest
 
         m_ExpectedException.expect(JobConfigurationException.class);
 
-        DetectionRuleVerifier.verify(rule);
+        DetectionRuleVerifier.verify(rule, new Detector());
     }
 
     @Test
@@ -112,6 +113,6 @@ public class DetectionRuleVerifierTest
         DetectionRule rule = new DetectionRule();
         rule.setRuleConditions(Arrays.asList(ruleCondition));
 
-        DetectionRuleVerifier.verify(rule);
+        DetectionRuleVerifier.verify(rule, new Detector());
     }
 }

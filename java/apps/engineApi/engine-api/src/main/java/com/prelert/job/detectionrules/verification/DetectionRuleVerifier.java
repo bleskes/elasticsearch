@@ -29,6 +29,7 @@ package com.prelert.job.detectionrules.verification;
 
 import java.util.List;
 
+import com.prelert.job.Detector;
 import com.prelert.job.detectionrules.DetectionRule;
 import com.prelert.job.detectionrules.RuleCondition;
 import com.prelert.job.errorcodes.ErrorCodes;
@@ -37,11 +38,38 @@ import com.prelert.job.messages.Messages;
 
 public class DetectionRuleVerifier
 {
-    public static void verify(DetectionRule rule) throws JobConfigurationException
+    public static void verify(DetectionRule rule, Detector detector)
+            throws JobConfigurationException
     {
+        verifyRulesReferToValidFields(rule, detector);
         checkTargetNameIsSetWhenTargetFieldIsSet(rule);
         checkAtLeastOneRuleCondition(rule);
         verifyRuleConditions(rule);
+    }
+
+    private static void verifyRulesReferToValidFields(DetectionRule rule, Detector detector)
+            throws JobConfigurationException
+    {
+        List<String> analysisFields = detector.extractAnalysisFields();
+        String targetField = rule.getTargetField();
+        if (targetField != null && !analysisFields.contains(targetField))
+        {
+            String msg = Messages.getMessage(
+                    Messages.JOB_CONFIG_DETECTION_RULE_INVALID_TARGET_FIELD,
+                    analysisFields, targetField);
+            throw new JobConfigurationException(msg, ErrorCodes.DETECTOR_RULE_INVALID_TARGET_FIELD);
+        }
+        for (RuleCondition condition : rule.getRuleConditions())
+        {
+            String fieldName = condition.getFieldName();
+            if (fieldName != null && !analysisFields.contains(fieldName))
+            {
+                String msg = Messages.getMessage(
+                        Messages.JOB_CONFIG_DETECTION_RULE_CONDITION_INVALID_FIELD_NAME,
+                        analysisFields, fieldName);
+                throw new JobConfigurationException(msg, ErrorCodes.DETECTOR_RULE_CONDITION_INVALID_FIELD_NAME);
+            }
+        }
     }
 
     private static void checkTargetNameIsSetWhenTargetFieldIsSet(DetectionRule rule)

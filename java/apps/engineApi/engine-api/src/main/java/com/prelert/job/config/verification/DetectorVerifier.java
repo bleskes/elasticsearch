@@ -26,11 +26,8 @@
  ************************************************************/
 package com.prelert.job.config.verification;
 
-import java.util.List;
-
 import com.prelert.job.Detector;
 import com.prelert.job.detectionrules.DetectionRule;
-import com.prelert.job.detectionrules.RuleCondition;
 import com.prelert.job.detectionrules.verification.DetectionRuleVerifier;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.exceptions.JobConfigurationException;
@@ -247,42 +244,11 @@ public final class DetectorVerifier
 
     private static void verifyDetectorRules(Detector detector) throws JobConfigurationException
     {
-        if (detector.getDetectorRules() == null)
+        if (detector.getDetectorRules() != null)
         {
-            return;
-        }
-
-        verifyRulesReferToValidFields(detector);
-        for (DetectionRule rule : detector.getDetectorRules())
-        {
-            DetectionRuleVerifier.verify(rule);
-        }
-    }
-
-    private static void verifyRulesReferToValidFields(Detector detector)
-            throws JobConfigurationException
-    {
-        List<String> analysisFields = detector.extractAnalysisFields();
-        for (DetectionRule rule : detector.getDetectorRules())
-        {
-            String targetField = rule.getTargetField();
-            if (targetField != null && !analysisFields.contains(targetField))
+            for (DetectionRule rule : detector.getDetectorRules())
             {
-                String msg = Messages.getMessage(
-                        Messages.JOB_CONFIG_DETECTION_RULE_INVALID_TARGET_FIELD,
-                        analysisFields, targetField);
-                throw new JobConfigurationException(msg, ErrorCodes.DETECTOR_RULE_INVALID_TARGET_FIELD);
-            }
-            for (RuleCondition condition : rule.getRuleConditions())
-            {
-                String fieldName = condition.getFieldName();
-                if (fieldName != null && !analysisFields.contains(fieldName))
-                {
-                    String msg = Messages.getMessage(
-                            Messages.JOB_CONFIG_DETECTION_RULE_CONDITION_INVALID_FIELD_NAME,
-                            analysisFields, fieldName);
-                    throw new JobConfigurationException(msg, ErrorCodes.DETECTOR_RULE_CONDITION_INVALID_FIELD_NAME);
-                }
+                DetectionRuleVerifier.verify(rule, detector);
             }
         }
     }
