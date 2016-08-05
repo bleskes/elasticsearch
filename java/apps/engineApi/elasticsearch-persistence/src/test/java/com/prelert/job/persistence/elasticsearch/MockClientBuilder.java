@@ -50,6 +50,8 @@ import org.elasticsearch.action.get.GetRequestBuilder;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.index.IndexRequestBuilder;
 import org.elasticsearch.action.index.IndexResponse;
+import org.elasticsearch.action.search.SearchRequestBuilder;
+import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.AdminClient;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.client.ClusterAdminClient;
@@ -59,6 +61,7 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.index.IndexNotFoundException;
+import org.elasticsearch.search.sort.SortBuilder;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 
@@ -189,6 +192,18 @@ public class MockClientBuilder
         return this;
     }
 
+    public MockClientBuilder prepareSearch(String index, String type, int skip, int take, SearchResponse response)
+    {
+        SearchRequestBuilder searchRequestBuilder = mock(SearchRequestBuilder.class);
+        when(searchRequestBuilder.get()).thenReturn(response);
+        when(searchRequestBuilder.setTypes(eq(type))).thenReturn(searchRequestBuilder);
+        when(searchRequestBuilder.setFrom(eq(skip))).thenReturn(searchRequestBuilder);
+        when(searchRequestBuilder.setSize(eq(take))).thenReturn(searchRequestBuilder);
+        when(searchRequestBuilder.addSort(any(SortBuilder.class))).thenReturn(searchRequestBuilder);
+        when(m_Client.prepareSearch(index)).thenReturn(searchRequestBuilder);
+        return this;
+    }
+
     @SuppressWarnings("unchecked")
     public MockClientBuilder prepareIndex(String index, String source)
     {
@@ -197,6 +212,21 @@ public class MockClientBuilder
 
         when(m_Client.prepareIndex(eq(index), any(), any())).thenReturn(builder);
         when(builder.setSource(eq(source))).thenReturn(builder);
+        when(builder.setRefresh(eq(true))).thenReturn(builder);
+        when(builder.execute()).thenReturn(actionFuture);
+        when(actionFuture.actionGet()).thenReturn(mock(IndexResponse.class));
+        return this;
+    }
+
+    @SuppressWarnings("unchecked")
+    public MockClientBuilder prepareIndex(String index, ArgumentCaptor<String> getSource)
+    {
+        IndexRequestBuilder builder = mock(IndexRequestBuilder.class);
+        ListenableActionFuture<IndexResponse> actionFuture = mock(ListenableActionFuture.class);
+
+        when(m_Client.prepareIndex(eq(index), any(), any())).thenReturn(builder);
+        when(builder.setSource(getSource.capture())).thenReturn(builder);
+        when(builder.setRefresh(eq(true))).thenReturn(builder);
         when(builder.execute()).thenReturn(actionFuture);
         when(actionFuture.actionGet()).thenReturn(mock(IndexResponse.class));
         return this;

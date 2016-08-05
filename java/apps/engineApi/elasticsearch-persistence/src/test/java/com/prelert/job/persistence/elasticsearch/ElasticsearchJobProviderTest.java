@@ -35,29 +35,38 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 
 import org.elasticsearch.action.get.GetResponse;
+import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.node.Node;
+import org.elasticsearch.search.SearchHit;
+import org.elasticsearch.search.SearchHits;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import com.prelert.job.AnalysisLimits;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.JobDetails;
+import com.prelert.job.JobStatus;
 import com.prelert.job.ModelSizeStats;
 import com.prelert.job.SchedulerState;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.errorcodes.ErrorCodeMatcher;
 import com.prelert.job.errorcodes.ErrorCodes;
+import com.prelert.job.persistence.QueryPage;
 import com.prelert.job.quantiles.Quantiles;
 import com.prelert.job.results.BucketProcessingTime;
 
@@ -397,6 +406,90 @@ public class ElasticsearchJobProviderTest
         assertEquals(details.get().allFields(), expected.allFields());
     }
 
+    @Test
+    public void testGetJobs() throws InterruptedException, ExecutionException
+    {
+        List<Map<String, Object>> source = new ArrayList<>();
+
+        Map<String, Object> map = new HashMap<>();
+        map.put("jobId",  "job1");
+        map.put("description", "This is a job description");
+        source.add(map);
+
+        Map<String, Object> map2 = new HashMap<>();
+        map2.put("jobId",  "job2");
+        map2.put("description", "This is a job description 2");
+        source.add(map2);
+
+        Map<String, Object> map3 = new HashMap<>();
+        map3.put("jobId",  "job3");
+        map3.put("description", "This is a job description 3");
+        source.add(map3);
+
+        Map<String, Object> map4 = new HashMap<>();
+        map4.put("jobId",  "job4");
+        map4.put("description", "This is a job description 4");
+        source.add(map4);
+
+        SearchResponse response = createSearchResponse(true, source);
+        GetResponse response2 = createGetResponse(false, null);
+        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME)
+                .addClusterStatusYellowResponse()
+                .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true)
+                .prepareSearch("prelertresults-*",  JobDetails.TYPE,  0,  10, response)
+                .prepareGet("prelertresults-job1", ModelSizeStats.TYPE, "modelSizeStats", response2)
+                .prepareGet("prelertresults-job1", BucketProcessingTime.TYPE, BucketProcessingTime.AVERAGE_PROCESSING_TIME_MS, response2)
+                .prepareGet("prelertresults-job2", ModelSizeStats.TYPE, "modelSizeStats", response2)
+                .prepareGet("prelertresults-job2", BucketProcessingTime.TYPE, BucketProcessingTime.AVERAGE_PROCESSING_TIME_MS, response2)
+                .prepareGet("prelertresults-job3", ModelSizeStats.TYPE, "modelSizeStats", response2)
+                .prepareGet("prelertresults-job3", BucketProcessingTime.TYPE, BucketProcessingTime.AVERAGE_PROCESSING_TIME_MS, response2)
+                .prepareGet("prelertresults-job4", ModelSizeStats.TYPE, "modelSizeStats", response2)
+                .prepareGet("prelertresults-job4", BucketProcessingTime.TYPE, BucketProcessingTime.AVERAGE_PROCESSING_TIME_MS, response2);
+
+        Client client = clientBuilder.build();
+        ElasticsearchJobProvider provider = createProvider(client);
+        int skip = 0;
+        int take = 10;
+        QueryPage<JobDetails> page = provider.getJobs(skip, take);
+        assertEquals(source.size(), page.hitCount());
+        List<JobDetails> jobs = page.queryResults();
+        for (int i = 0; i < source.size(); i++)
+        {
+            assertEquals(source.get(i).get("jobId"), jobs.get(i).getId());
+            assertEquals(source.get(i).get("description"), jobs.get(i).getDescription());
+        }
+    }
+
+    @Test
+    public void testCreateJob() throws InterruptedException, ExecutionException
+    {
+        JobDetails job = new JobDetails();
+        job.setJobId("marscapone");
+        job.setDescription("This is a very cheesy job");
+        job.setStatus(JobStatus.FAILED);
+        AnalysisLimits limits = new AnalysisLimits();
+        limits.setModelMemoryLimit(9878695309134L);
+        job.setAnalysisLimits(limits);
+
+        ArgumentCaptor<String> getSource = ArgumentCaptor.forClass(String.class);
+
+        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME)
+                .addClusterStatusYellowResponse()
+                .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true)
+                .addClusterStatusYellowResponse("prelertresults-"+ job.getJobId())
+                .prepareCreate("prelertresults-" + job.getJobId())
+                .prepareIndex("prelertresults-" + job.getJobId(), getSource);
+
+        Client client = clientBuilder.build();
+        ElasticsearchJobProvider provider = createProvider(client);
+        assertTrue(provider.createJob(job));
+        String result = getSource.getValue();
+        assertTrue(result.matches(".*This is a very cheesy job.*"));
+        assertTrue(result.matches(".*marscapone.*"));
+        assertTrue(result.matches(".*9878695309134.*"));
+        assertTrue(result.matches(".*FAILED.*"));
+    }
+
     private ElasticsearchJobProvider createProvider(Client client)
     {
         return new ElasticsearchJobProvider(m_Node, client, 0);
@@ -408,5 +501,23 @@ public class ElasticsearchJobProviderTest
         when(getResponse.isExists()).thenReturn(exists);
         when(getResponse.getSource()).thenReturn(source);
         return getResponse;
+    }
+
+    private static SearchResponse createSearchResponse(boolean exists, List<Map<String, Object>> source)
+    {
+        SearchResponse response = mock(SearchResponse.class);
+        SearchHits hits = mock(SearchHits.class);
+        List<SearchHit> list = new ArrayList<>();
+
+        for (Map<String, Object> map : source)
+        {
+            SearchHit hit = mock(SearchHit.class);
+            when(hit.getSource()).thenReturn(map);
+            list.add(hit);
+        }
+        when(response.getHits()).thenReturn(hits);
+        when(hits.getHits()).thenReturn(list.toArray(new SearchHit[0]));
+        when(hits.getTotalHits()).thenReturn((long) source.size());
+        return response;
     }
 }
