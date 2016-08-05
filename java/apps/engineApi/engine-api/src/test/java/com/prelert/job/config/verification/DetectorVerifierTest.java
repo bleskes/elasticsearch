@@ -593,6 +593,7 @@ public class DetectorVerifierTest
         RuleCondition ruleCondition = new RuleCondition();
         ruleCondition.setConditionType(RuleConditionType.NUMERICAL_ACTUAL);
         ruleCondition.setFieldName("metricName");
+        ruleCondition.setFieldValue("CPU");
         ruleCondition.setCondition(new Condition(Operator.LT, "invalid"));
         DetectionRule rule = new DetectionRule();
         rule.setTargetField("instance");
@@ -619,6 +620,7 @@ public class DetectorVerifierTest
         RuleCondition ruleCondition = new RuleCondition();
         ruleCondition.setConditionType(RuleConditionType.NUMERICAL_ACTUAL);
         ruleCondition.setFieldName("metricName");
+        ruleCondition.setFieldValue("CPU");
         ruleCondition.setCondition(new Condition(Operator.LT, "5"));
         DetectionRule rule = new DetectionRule();
         rule.setTargetField("instance");

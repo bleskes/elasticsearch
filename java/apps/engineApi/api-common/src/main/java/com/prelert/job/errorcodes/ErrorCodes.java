@@ -346,6 +346,20 @@ public enum ErrorCodes
      */
     DETECTOR_RULE_INVALID_TARGET_FIELD(10406),
 
+    /**
+     * A detector rule that requires condition fields
+     * has one or more conditions without fieldName/fieldValue
+     * specified.
+     */
+    DETECTOR_RULE_REQUIRES_CONDITION_FIELDS(10407),
+
+    /**
+     * A detector rule with targetField requires that the
+     * fieldName, when present in conditions, is of lower
+     * level according to partition > over > by.
+     */
+    DETECTOR_RULE_HIERARCHY_VIOLATION(10408),
+
     // Data store errors
     /**
      * A generic exception from the data store

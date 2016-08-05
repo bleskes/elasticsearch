@@ -67,6 +67,12 @@ public class RuleConditionVerifier
                     Messages.JOB_CONFIG_DETECTION_RULE_CONDITION_CATEGORICAL_CONDITION_NOT_SUPPORTED);
             throw new JobConfigurationException(msg, ErrorCodes.DETECTOR_RULE_CONDITION_INVALID_OPTION);
         }
+        if (ruleCondition.getFieldValue() != null)
+        {
+            String msg = Messages.getMessage(
+                    Messages.JOB_CONFIG_DETECTION_RULE_CONDITION_CATEGORICAL_FIELD_VALUE_NOT_SUPPORTED);
+            throw new JobConfigurationException(msg, ErrorCodes.DETECTOR_RULE_CONDITION_INVALID_OPTION);
+        }
         if (ruleCondition.getValueList() == null)
         {
             String msg = Messages.getMessage(
@@ -87,6 +93,11 @@ public class RuleConditionVerifier
         {
             String msg = Messages.getMessage(
                     Messages.JOB_CONFIG_DETECTION_RULE_CONDITION_NUMERICAL_REQUIRES_CONDITION);
+            throw new JobConfigurationException(msg, ErrorCodes.DETECTOR_RULE_CONDITION_MISSING_FIELD);
+        }
+        if (ruleCondition.getFieldName() != null && ruleCondition.getFieldValue() == null)
+        {
+            String msg = Messages.getMessage(Messages.JOB_CONFIG_DETECTION_RULE_CONDITION_NUMERICAL_WITH_FIELD_NAME_REQUIRES_FIELD_VALUE);
             throw new JobConfigurationException(msg, ErrorCodes.DETECTOR_RULE_CONDITION_MISSING_FIELD);
         }
         ConditionVerifier.verify(ruleCondition.getCondition());

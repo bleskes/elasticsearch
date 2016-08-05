@@ -59,6 +59,23 @@ public class RuleConditionVerifierTest
     }
 
     @Test
+    public void testVerify_GivenCategoricalWithFieldValue() throws JobConfigurationException
+    {
+        RuleCondition ruleCondition = new RuleCondition();
+        ruleCondition.setFieldName("metric");
+        ruleCondition.setFieldValue("CPU");
+        ruleCondition.setConditionType(RuleConditionType.CATEGORICAL);
+
+        m_ExpectedException.expect(JobConfigurationException.class);
+        m_ExpectedException.expect(
+                ErrorCodeMatcher.hasErrorCode(ErrorCodes.DETECTOR_RULE_CONDITION_INVALID_OPTION));
+        m_ExpectedException.expectMessage(
+                "Invalid detector rule: a categorical ruleCondition does not support fieldValue");
+
+        RuleConditionVerifier.verify(ruleCondition);
+    }
+
+    @Test
     public void testVerify_GivenCategoricalWithoutValueList() throws JobConfigurationException
     {
         RuleCondition ruleCondition = new RuleCondition();
@@ -102,6 +119,23 @@ public class RuleConditionVerifierTest
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.DETECTOR_RULE_CONDITION_MISSING_FIELD));
         m_ExpectedException.expectMessage(
                 "Invalid detector rule: a numerical ruleCondition requires that condition is specified");
+
+        RuleConditionVerifier.verify(ruleCondition);
+    }
+
+    @Test
+    public void testVerify_GivenNumericalActualWithFieldNameButNoFieldValue() throws JobConfigurationException
+    {
+        RuleCondition ruleCondition = new RuleCondition();
+        ruleCondition.setFieldName("metric");
+        ruleCondition.setConditionType(RuleConditionType.NUMERICAL_ACTUAL);
+        ruleCondition.setCondition(new Condition(Operator.LT, "5"));
+
+        m_ExpectedException.expect(JobConfigurationException.class);
+        m_ExpectedException.expect(
+                ErrorCodeMatcher.hasErrorCode(ErrorCodes.DETECTOR_RULE_CONDITION_MISSING_FIELD));
+        m_ExpectedException.expectMessage(
+                "Invalid detector rule: a numerical ruleCondition with fieldName requires that fieldValue is specified");
 
         RuleConditionVerifier.verify(ruleCondition);
     }
@@ -193,9 +227,9 @@ public class RuleConditionVerifierTest
     public void testVerify_GivenFieldValueWithoutFieldName() throws JobConfigurationException
     {
         RuleCondition ruleCondition = new RuleCondition();
-        ruleCondition.setConditionType(RuleConditionType.CATEGORICAL);
-        ruleCondition.setValueList("myList");
+        ruleCondition.setConditionType(RuleConditionType.NUMERICAL_ACTUAL);
         ruleCondition.setFieldValue("foo");
+        ruleCondition.setCondition(new Condition(Operator.LT, "5"));
 
         m_ExpectedException.expect(JobConfigurationException.class);
         m_ExpectedException.expect(
@@ -213,7 +247,6 @@ public class RuleConditionVerifierTest
         ruleCondition.setConditionType(RuleConditionType.CATEGORICAL);
         ruleCondition.setValueList("myList");
         ruleCondition.setFieldName("metric");
-        ruleCondition.setFieldValue("cpu");
 
         RuleConditionVerifier.verify(ruleCondition);
     }
