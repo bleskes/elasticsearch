@@ -22,6 +22,7 @@ import java.nio.file.Path;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -43,6 +44,7 @@ import org.elasticsearch.common.inject.Binder;
 import org.elasticsearch.common.inject.Module;
 import org.elasticsearch.common.inject.multibindings.Multibinder;
 import org.elasticsearch.common.inject.util.Providers;
+import org.elasticsearch.common.io.stream.NamedWriteableRegistry;
 import org.elasticsearch.common.network.NetworkModule;
 import org.elasticsearch.common.settings.Setting;
 import org.elasticsearch.common.settings.Settings;
@@ -58,6 +60,7 @@ import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.plugins.ScriptPlugin;
 import org.elasticsearch.rest.RestHandler;
 import org.elasticsearch.script.ScriptContext;
+import org.elasticsearch.script.ScriptService;
 import org.elasticsearch.threadpool.ExecutorBuilder;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.watcher.ResourceWatcherService;
@@ -75,7 +78,9 @@ import org.elasticsearch.xpack.common.text.TextTemplateModule;
 import org.elasticsearch.xpack.extensions.XPackExtension;
 import org.elasticsearch.xpack.extensions.XPackExtensionsService;
 import org.elasticsearch.xpack.graph.Graph;
+import org.elasticsearch.xpack.graph.GraphFeatureSet;
 import org.elasticsearch.xpack.monitoring.Monitoring;
+import org.elasticsearch.xpack.monitoring.MonitoringFeatureSet;
 import org.elasticsearch.xpack.monitoring.MonitoringSettings;
 import org.elasticsearch.xpack.notification.Notification;
 import org.elasticsearch.xpack.notification.email.Account;
@@ -84,11 +89,13 @@ import org.elasticsearch.xpack.rest.action.RestXPackInfoAction;
 import org.elasticsearch.xpack.rest.action.RestXPackUsageAction;
 import org.elasticsearch.xpack.security.InternalClient;
 import org.elasticsearch.xpack.security.Security;
+import org.elasticsearch.xpack.security.SecurityFeatureSet;
 import org.elasticsearch.xpack.security.authc.AuthenticationService;
 import org.elasticsearch.xpack.security.authc.support.UsernamePasswordToken;
 import org.elasticsearch.xpack.support.clock.Clock;
 import org.elasticsearch.xpack.support.clock.SystemClock;
 import org.elasticsearch.xpack.watcher.Watcher;
+import org.elasticsearch.xpack.watcher.WatcherFeatureSet;
 import org.elasticsearch.xpack.watcher.support.WatcherScript;
 
 public class XPackPlugin extends Plugin implements ScriptPlugin, ActionPlugin, IngestPlugin {
@@ -193,15 +200,8 @@ public class XPackPlugin extends Plugin implements ScriptPlugin, ActionPlugin, I
     }
 
     @Override
-    public Collection<Class<? extends LifecycleComponent>> getGuiceServiceClasses() {
-        ArrayList<Class<? extends LifecycleComponent>> services = new ArrayList<>();
-        services.addAll(notification.nodeServices());
-        return services;
-    }
-
-    @Override
     public Collection<Object> createComponents(Client client, ClusterService clusterService, ThreadPool threadPool,
-                                               ResourceWatcherService resourceWatcherService) {
+                                               ResourceWatcherService resourceWatcherService, ScriptService scriptService) {
         List<Object> components = new ArrayList<>();
         final InternalClient internalClient = new InternalClient(settings, threadPool, client, security.getCryptoService());
         components.add(internalClient);
@@ -331,6 +331,16 @@ public class XPackPlugin extends Plugin implements ScriptPlugin, ActionPlugin, I
     @Override
     public Map<String, Processor.Factory> getProcessors(Processor.Parameters parameters) {
         return security.getProcessors(parameters);
+    }
+
+    @Override
+    public List<NamedWriteableRegistry.Entry> getNamedWriteables() {
+        return Arrays.asList(
+            new NamedWriteableRegistry.Entry(XPackFeatureSet.Usage.class, Security.NAME, SecurityFeatureSet.Usage::new),
+            new NamedWriteableRegistry.Entry(XPackFeatureSet.Usage.class, Watcher.NAME, WatcherFeatureSet.Usage::new),
+            new NamedWriteableRegistry.Entry(XPackFeatureSet.Usage.class, Monitoring.NAME, MonitoringFeatureSet.Usage::new),
+            new NamedWriteableRegistry.Entry(XPackFeatureSet.Usage.class, Graph.NAME, GraphFeatureSet.Usage::new)
+        );
     }
 
     public void onIndexModule(IndexModule module) {

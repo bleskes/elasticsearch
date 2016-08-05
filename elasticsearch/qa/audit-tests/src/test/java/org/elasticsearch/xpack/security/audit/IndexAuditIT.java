@@ -25,6 +25,7 @@ import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Response;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.metadata.IndexTemplateMetaData;
+import org.elasticsearch.common.network.NetworkModule;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.plugins.Plugin;
@@ -125,6 +126,7 @@ public class IndexAuditIT extends ESIntegTestCase {
     protected Settings externalClusterClientSettings() {
         return Settings.builder()
                 .put(Security.USER_SETTING.getKey(), USER + ":" + PASS)
+                .put(NetworkModule.TRANSPORT_TYPE_KEY, randomFrom("security3", "security4"))
                 .build();
     }
 
