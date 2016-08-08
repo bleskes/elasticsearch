@@ -39,7 +39,6 @@ public class EmailService extends AbstractComponent {
 
     private volatile Accounts accounts;
 
-    @Inject
     public EmailService(Settings settings, @Nullable CryptoService cryptoService, ClusterSettings clusterSettings) {
         super(settings);
         this.cryptoService = cryptoService;
