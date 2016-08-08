@@ -350,10 +350,7 @@ public class Security implements ActionPlugin, IngestPlugin {
 
     public Settings additionalSettings() {
         if (enabled == false) {
-            return Settings.builder()
-                    .put(NetworkModule.HTTP_TYPE_KEY, "netty4")
-                    .put(NetworkModule.TRANSPORT_TYPE_KEY, "netty4")
-                    .build();
+            return Settings.EMPTY;
         }
 
         return additionalSettings(settings);
