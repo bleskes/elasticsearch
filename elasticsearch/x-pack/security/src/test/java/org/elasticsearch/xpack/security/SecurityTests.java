@@ -30,6 +30,7 @@ import org.elasticsearch.env.Environment;
 import org.elasticsearch.license.XPackLicenseState;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.threadpool.ThreadPool;
+import org.elasticsearch.xpack.XPackSettings;
 import org.elasticsearch.xpack.extensions.XPackExtension;
 import org.elasticsearch.xpack.security.audit.AuditTrailService;
 import org.elasticsearch.xpack.security.audit.index.IndexAuditTrail;
@@ -96,7 +97,7 @@ public class SecurityTests extends ESTestCase {
 
 
     public void testAuditEnabled() throws Exception {
-        Settings settings = Settings.builder().put(Security.AUDIT_ENABLED_SETTING.getKey(), true).build();
+        Settings settings = Settings.builder().put(XPackSettings.AUDIT_ENABLED.getKey(), true).build();
         Collection<Object> components = createComponents(settings);
         AuditTrailService service = findComponent(AuditTrailService.class, components);
         assertNotNull(service);
@@ -112,7 +113,7 @@ public class SecurityTests extends ESTestCase {
 
     public void testIndexAuditTrail() throws Exception {
         Settings settings = Settings.builder()
-            .put(Security.AUDIT_ENABLED_SETTING.getKey(), true)
+            .put(XPackSettings.AUDIT_ENABLED.getKey(), true)
             .put(Security.AUDIT_OUTPUTS_SETTING.getKey(), "index").build();
         Collection<Object> components = createComponents(settings);
         AuditTrailService service = findComponent(AuditTrailService.class, components);
@@ -123,7 +124,7 @@ public class SecurityTests extends ESTestCase {
 
     public void testIndexAndLoggingAuditTrail() throws Exception {
         Settings settings = Settings.builder()
-            .put(Security.AUDIT_ENABLED_SETTING.getKey(), true)
+            .put(XPackSettings.AUDIT_ENABLED.getKey(), true)
             .put(Security.AUDIT_OUTPUTS_SETTING.getKey(), "index,logfile").build();
         Collection<Object> components = createComponents(settings);
         AuditTrailService service = findComponent(AuditTrailService.class, components);
@@ -135,7 +136,7 @@ public class SecurityTests extends ESTestCase {
 
     public void testUnknownOutput() throws Exception {
         Settings settings = Settings.builder()
-            .put(Security.AUDIT_ENABLED_SETTING.getKey(), true)
+            .put(XPackSettings.AUDIT_ENABLED.getKey(), true)
             .put(Security.AUDIT_OUTPUTS_SETTING.getKey(), "foo").build();
         IllegalArgumentException e = expectThrows(IllegalArgumentException.class, () -> createComponents(settings));
         assertEquals("Unknown audit trail output [foo]", e.getMessage());

@@ -29,6 +29,7 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.license.XPackLicenseState;
 import org.elasticsearch.xpack.XPackFeatureSet;
+import org.elasticsearch.xpack.XPackSettings;
 import org.elasticsearch.xpack.monitoring.agent.exporter.Exporter;
 import org.elasticsearch.xpack.monitoring.agent.exporter.Exporters;
 
@@ -43,7 +44,7 @@ public class MonitoringFeatureSet implements XPackFeatureSet {
 
     @Inject
     public MonitoringFeatureSet(Settings settings, @Nullable XPackLicenseState licenseState, @Nullable Exporters exporters) {
-        this.enabled = MonitoringSettings.ENABLED.get(settings);
+        this.enabled = XPackSettings.MONITORING_ENABLED.get(settings);
         this.licenseState = licenseState;
         this.exporters = exporters;
     }
