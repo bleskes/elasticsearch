@@ -1,0 +1,149 @@
+/*
+ * Licensed to Elasticsearch under one or more contributor
+ * license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright
+ * ownership. Elasticsearch licenses this file to you under
+ * the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+package org.elasticsearch.xpack.monitoring.agent.exporter.http;
+
+import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.settings.SettingsException;
+import org.elasticsearch.env.Environment;
+import org.elasticsearch.test.ESTestCase;
+import org.elasticsearch.xpack.monitoring.agent.exporter.Exporter;
+
+import static org.hamcrest.Matchers.equalTo;
+import static org.mockito.Mockito.mock;
+
+/**
+ * Tests for {@link HttpExporter}.
+ */
+public class HttpExporterSimpleTests extends ESTestCase {
+
+    private final Environment environment = mock(Environment.class);
+
+    public void testExporterWithBlacklistedHeaders() {
+        final String blacklistedHeader = randomFrom(HttpExporter.BLACKLISTED_HEADERS);
+        final String expected = "[" + blacklistedHeader + "] cannot be overwritten via [xpack.monitoring.exporters._http.headers]";
+        final Settings.Builder builder = Settings.builder()
+                .put("xpack.monitoring.exporters._http.type", HttpExporter.TYPE)
+                .put("xpack.monitoring.exporters._http.host", "http://localhost:9200")
+                .put("xpack.monitoring.exporters._http.headers.abc", "xyz")
+                .put("xpack.monitoring.exporters._http.headers." + blacklistedHeader, "value should not matter");
+
+        if (randomBoolean()) {
+            builder.put("xpack.monitoring.exporters._http.headers.xyz", "abc");
+        }
+
+        final Exporter.Config config = createConfig("_http", builder.build());
+
+        final SettingsException exception = expectThrows(SettingsException.class, () -> {
+            new HttpExporter(config, environment);
+        });
+
+        assertThat(exception.getMessage(), equalTo(expected));
+    }
+
+    public void testExporterWithEmptyHeaders() {
+        final String name = randomFrom("abc", "ABC", "X-Flag");
+        final String expected = "headers must have values, missing for setting [xpack.monitoring.exporters._http.headers." + name + "]";
+        final Settings.Builder builder = Settings.builder()
+                .put("xpack.monitoring.exporters._http.type", HttpExporter.TYPE)
+                .put("xpack.monitoring.exporters._http.host", "localhost:9200")
+                .put("xpack.monitoring.exporters._http.headers." + name, "");
+
+        if (randomBoolean()) {
+            builder.put("xpack.monitoring.exporters._http.headers.xyz", "abc");
+        }
+
+        final Exporter.Config config = createConfig("_http", builder.build());
+
+        final SettingsException exception = expectThrows(SettingsException.class, () -> {
+            new HttpExporter(config, environment);
+        });
+
+        assertThat(exception.getMessage(), equalTo(expected));
+    }
+
+    public void testExporterWithMissingHost() {
+        // forgot host!
+        final Settings.Builder builder = Settings.builder()
+                .put("xpack.monitoring.exporters._http.type", HttpExporter.TYPE);
+
+        if (randomBoolean()) {
+            builder.put("xpack.monitoring.exporters._http.host", "");
+        } else if (randomBoolean()) {
+            builder.putArray("xpack.monitoring.exporters._http.host");
+        } else if (randomBoolean()) {
+            builder.putNull("xpack.monitoring.exporters._http.host");
+        }
+
+        final Exporter.Config config = createConfig("_http", builder.build());
+
+        final SettingsException exception = expectThrows(SettingsException.class, () -> {
+            new HttpExporter(config, environment);
+        });
+
+        assertThat(exception.getMessage(), equalTo("missing required setting [xpack.monitoring.exporters._http.host]"));
+    }
+
+    public void testExporterWithInvalidHost() {
+        final String invalidHost = randomFrom("://localhost:9200", "gopher!://xyz.my.com");
+
+        final Settings.Builder builder = Settings.builder()
+                .put("xpack.monitoring.exporters._http.type", HttpExporter.TYPE);
+
+        // sometimes add a valid URL with it
+        if (randomBoolean()) {
+            if (randomBoolean()) {
+                builder.putArray("xpack.monitoring.exporters._http.host", "localhost:9200", invalidHost);
+            } else {
+                builder.putArray("xpack.monitoring.exporters._http.host", invalidHost, "localhost:9200");
+            }
+        } else {
+            builder.put("xpack.monitoring.exporters._http.host", invalidHost);
+        }
+
+        final Exporter.Config config = createConfig("_http", builder.build());
+
+        final SettingsException exception = expectThrows(SettingsException.class, () -> {
+            new HttpExporter(config, environment);
+        });
+
+        assertThat(exception.getMessage(), equalTo("[xpack.monitoring.exporters._http.host] invalid host: [" + invalidHost + "]"));
+    }
+
+    public void testExporterWithHostOnly() {
+        final Settings.Builder builder = Settings.builder()
+                .put("xpack.monitoring.exporters._http.type", "http")
+                .put("xpack.monitoring.exporters._http.host", "http://localhost:9200");
+
+        final Exporter.Config config = createConfig("_http", builder.build());
+
+        new HttpExporter(config, environment);
+    }
+
+    /**
+     * Create the {@link Exporter.Config} with the given name, and select those settings from {@code settings}.
+     *
+     * @param name The name of the exporter.
+     * @param settings The settings to select the exporter's settings from
+     * @return Never {@code null}.
+     */
+    private static Exporter.Config createConfig(String name, Settings settings) {
+        return new Exporter.Config(name, HttpExporter.TYPE, Settings.EMPTY, settings.getAsSettings("xpack.monitoring.exporters." + name));
+    }
+
+}
