@@ -78,6 +78,7 @@ public interface XPackFeatureSet {
 
         @Override
         public void writeTo(StreamOutput out) throws IOException {
+            out.writeString(name);
             out.writeBoolean(available);
             out.writeBoolean(enabled);
         }
