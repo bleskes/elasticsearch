@@ -226,7 +226,7 @@ public class FieldConfigWriterTest
         ruleCondition.setFieldName("metricName");
         ruleCondition.setCondition(new Condition(Operator.LT, "5"));
         DetectionRule rule = new DetectionRule();
-        rule.setTargetField("instance");
+        rule.setTargetFieldName("instance");
         rule.setRuleConditions(Arrays.asList(ruleCondition));
         detector.setDetectorRules(Arrays.asList(rule));
 

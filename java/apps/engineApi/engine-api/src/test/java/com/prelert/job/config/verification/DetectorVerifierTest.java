@@ -557,7 +557,8 @@ public class DetectorVerifierTest
     }
 
     @Test
-    public void testVerify_GivenInvalidDetectionRuleTargetField() throws JobConfigurationException
+    public void testVerify_GivenInvalidDetectionRuleTargetFieldName()
+            throws JobConfigurationException
     {
         Detector detector = new Detector();
         detector.setFunction("mean");
@@ -569,15 +570,15 @@ public class DetectorVerifierTest
         ruleCondition.setFieldName("metricName");
         ruleCondition.setCondition(new Condition(Operator.LT, "5"));
         DetectionRule rule = new DetectionRule();
-        rule.setTargetField("instancE");
+        rule.setTargetFieldName("instancE");
         rule.setRuleConditions(Arrays.asList(ruleCondition));
         detector.setDetectorRules(Arrays.asList(rule));
 
         m_ExpectedException.expect(JobConfigurationException.class);
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.DETECTOR_RULE_INVALID_TARGET_FIELD));
-        m_ExpectedException.expectMessage(
-                "Invalid detector rule: targetField has to be one of [metricName, instance]; actual was 'instancE'");
+        m_ExpectedException.expectMessage("Invalid detector rule: targetFieldName has to be one of "
+                + "[metricName, instance]; actual was 'instancE'");
 
         DetectorVerifier.verify(detector, false);
     }
@@ -596,7 +597,7 @@ public class DetectorVerifierTest
         ruleCondition.setFieldValue("CPU");
         ruleCondition.setCondition(new Condition(Operator.LT, "invalid"));
         DetectionRule rule = new DetectionRule();
-        rule.setTargetField("instance");
+        rule.setTargetFieldName("instance");
         rule.setRuleConditions(Arrays.asList(ruleCondition));
         detector.setDetectorRules(Arrays.asList(rule));
 
@@ -623,7 +624,7 @@ public class DetectorVerifierTest
         ruleCondition.setFieldValue("CPU");
         ruleCondition.setCondition(new Condition(Operator.LT, "5"));
         DetectionRule rule = new DetectionRule();
-        rule.setTargetField("instance");
+        rule.setTargetFieldName("instance");
         rule.setRuleConditions(Arrays.asList(ruleCondition));
         detector.setDetectorRules(Arrays.asList(rule));
 

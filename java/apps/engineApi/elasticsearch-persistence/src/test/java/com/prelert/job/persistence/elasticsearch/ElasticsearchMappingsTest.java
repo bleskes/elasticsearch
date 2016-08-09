@@ -363,11 +363,11 @@ public class ElasticsearchMappingsTest
                         "                    \"type\":\"string\"," +
                         "                    \"index\":\"not_analyzed\"" +
                         "                  }," +
-                        "                  \"targetField\": {" +
+                        "                  \"targetFieldName\": {" +
                         "                    \"type\":\"string\"," +
                         "                    \"index\":\"not_analyzed\"" +
                         "                  }," +
-                        "                  \"targetValue\": {" +
+                        "                  \"targetFieldValue\": {" +
                         "                    \"type\":\"string\"," +
                         "                    \"index\":\"not_analyzed\"" +
                         "                  }," +

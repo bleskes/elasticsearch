@@ -166,8 +166,8 @@ public final class ReservedFieldNames
         DataDescription.QUOTE_CHARACTER,
 
         DetectionRule.RULE_ACTION,
-        DetectionRule.TARGET_FIELD,
-        DetectionRule.TARGET_VALUE,
+        DetectionRule.TARGET_FIELD_NAME,
+        DetectionRule.TARGET_FIELD_VALUE,
         DetectionRule.CONDITIONS_CONNECTIVE,
         DetectionRule.RULE_CONDITIONS,
 

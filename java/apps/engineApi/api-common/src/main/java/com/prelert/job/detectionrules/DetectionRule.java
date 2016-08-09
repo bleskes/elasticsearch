@@ -29,14 +29,14 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 public class DetectionRule
 {
     public static final String RULE_ACTION = "ruleAction";
-    public static final String TARGET_FIELD = "targetField";
-    public static final String TARGET_VALUE = "targetValue";
+    public static final String TARGET_FIELD_NAME = "targetFieldName";
+    public static final String TARGET_FIELD_VALUE = "targetFieldValue";
     public static final String CONDITIONS_CONNECTIVE = "conditionsConnective";
     public static final String RULE_CONDITIONS = "ruleConditions";
 
     private RuleAction m_RuleAction;
-    private String m_TargetField;
-    private String m_TargetValue;
+    private String m_TargetFieldName;
+    private String m_TargetFieldValue;
     private Connective m_ConditionsConnective;
     private List<RuleCondition> m_RuleConditions;
 
@@ -57,24 +57,24 @@ public class DetectionRule
         return m_RuleAction;
     }
 
-    public void setTargetField(String targetField)
+    public void setTargetFieldName(String targetFieldName)
     {
-        m_TargetField = targetField;
+        m_TargetFieldName = targetFieldName;
     }
 
-    public String getTargetField()
+    public String getTargetFieldName()
     {
-        return m_TargetField;
+        return m_TargetFieldName;
     }
 
-    public void setTargetValue(String targetValue)
+    public void setTargetFieldValue(String targetFieldValue)
     {
-        m_TargetValue = targetValue;
+        m_TargetFieldValue = targetFieldValue;
     }
 
-    public String getTargetValue()
+    public String getTargetFieldValue()
     {
-        return m_TargetValue;
+        return m_TargetFieldValue;
     }
 
     public void setConditionsConnective(Connective conditionsConnective)
@@ -112,8 +112,8 @@ public class DetectionRule
 
         DetectionRule other = (DetectionRule) obj;
         return Objects.equals(m_RuleAction, other.m_RuleAction)
-                && Objects.equals(m_TargetField, other.m_TargetField)
-                && Objects.equals(m_TargetValue, other.m_TargetValue)
+                && Objects.equals(m_TargetFieldName, other.m_TargetFieldName)
+                && Objects.equals(m_TargetFieldValue, other.m_TargetFieldValue)
                 && Objects.equals(m_ConditionsConnective, other.m_ConditionsConnective)
                 && Objects.equals(m_RuleConditions, other.m_RuleConditions);
     }
@@ -121,7 +121,7 @@ public class DetectionRule
     @Override
     public int hashCode()
     {
-        return Objects.hash(m_RuleAction, m_TargetField, m_TargetValue,
+        return Objects.hash(m_RuleAction, m_TargetFieldName, m_TargetFieldValue,
                 m_ConditionsConnective, m_RuleConditions);
     }
 }

@@ -37,8 +37,8 @@ public class DetectionRuleTest
         assertEquals(RuleAction.FILTER_RESULTS, rule.getRuleAction());
         assertEquals(Connective.OR, rule.getConditionsConnective());
         assertEquals(Collections.emptyList(), rule.getRuleConditions());
-        assertNull(rule.getTargetField());
-        assertNull(rule.getTargetValue());
+        assertNull(rule.getTargetFieldName());
+        assertNull(rule.getTargetFieldValue());
     }
 
     @Test
@@ -65,21 +65,21 @@ public class DetectionRuleTest
     }
 
     @Test
-    public void testEqualsGivenDifferentTargetField()
+    public void testEqualsGivenDifferentTargetFieldName()
     {
         DetectionRule rule1 = createFullyPopulated();
         DetectionRule rule2 = createFullyPopulated();
-        rule2.setTargetField(rule2.getTargetField() + "2");
+        rule2.setTargetFieldName(rule2.getTargetFieldName() + "2");
         assertFalse(rule1.equals(rule2));
         assertFalse(rule2.equals(rule1));
     }
 
     @Test
-    public void testEqualsGivenDifferentTargetValue()
+    public void testEqualsGivenDifferentTargetFieldValue()
     {
         DetectionRule rule1 = createFullyPopulated();
         DetectionRule rule2 = createFullyPopulated();
-        rule2.setTargetValue(rule2.getTargetValue() + "2");
+        rule2.setTargetFieldValue(rule2.getTargetFieldValue() + "2");
         assertFalse(rule1.equals(rule2));
         assertFalse(rule2.equals(rule1));
     }
@@ -118,8 +118,8 @@ public class DetectionRuleTest
     {
         DetectionRule rule = new DetectionRule();
         rule.setRuleAction(RuleAction.FILTER_RESULTS);
-        rule.setTargetField("targetField");
-        rule.setTargetValue("targetValue");
+        rule.setTargetFieldName("targetField");
+        rule.setTargetFieldValue("targetValue");
         rule.setConditionsConnective(Connective.AND);
         rule.setRuleConditions(Arrays.asList(new RuleCondition()));
         return rule;

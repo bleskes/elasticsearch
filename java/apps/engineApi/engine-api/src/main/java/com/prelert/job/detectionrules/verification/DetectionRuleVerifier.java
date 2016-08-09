@@ -43,7 +43,7 @@ public class DetectionRuleVerifier
             throws JobConfigurationException
     {
         checkScoping(rule, detector);
-        checkTargetNameIsSetWhenTargetFieldIsSet(rule);
+        checkTargetFieldNameIsSetWhenTargetFieldValueIsSet(rule);
         checkAtLeastOneRuleCondition(rule);
         verifyRuleConditions(rule);
         return true;
@@ -53,25 +53,25 @@ public class DetectionRuleVerifier
             throws JobConfigurationException
     {
         List<String> analysisFields = detector.extractAnalysisFields();
-        String targetField = rule.getTargetField();
-        checkTargetFieldIsAnalysisField(analysisFields, targetField);
+        String targetFieldName = rule.getTargetFieldName();
+        checkTargetFieldNameIsAnalysisField(analysisFields, targetFieldName);
         for (RuleCondition condition : rule.getRuleConditions())
         {
             String fieldName = condition.getFieldName();
             checkFieldNameIsAnalysisField(analysisFields, fieldName);
-            checkFieldNameIsSetWhenRequired(analysisFields, targetField, fieldName);
-            checkHierarchy(detector, targetField, fieldName);
+            checkFieldNameIsSetWhenRequired(analysisFields, targetFieldName, fieldName);
+            checkHierarchy(detector, targetFieldName, fieldName);
         }
     }
 
-    private static void checkTargetFieldIsAnalysisField(List<String> analysisFields,
-            String targetField) throws JobConfigurationException
+    private static void checkTargetFieldNameIsAnalysisField(List<String> analysisFields,
+            String targetFieldName) throws JobConfigurationException
     {
-        if (targetField != null && !analysisFields.contains(targetField))
+        if (targetFieldName != null && !analysisFields.contains(targetFieldName))
         {
             String msg = Messages.getMessage(
-                    Messages.JOB_CONFIG_DETECTION_RULE_INVALID_TARGET_FIELD,
-                    analysisFields, targetField);
+                    Messages.JOB_CONFIG_DETECTION_RULE_INVALID_TARGET_FIELD_NAME,
+                    analysisFields, targetFieldName);
             throw new JobConfigurationException(msg, ErrorCodes.DETECTOR_RULE_INVALID_TARGET_FIELD);
         }
     }
@@ -89,43 +89,43 @@ public class DetectionRuleVerifier
     }
 
     private static void checkFieldNameIsSetWhenRequired(List<String> analysisFields,
-            String targetField, String fieldName) throws JobConfigurationException
+            String targetFieldName, String fieldName) throws JobConfigurationException
     {
-        if (targetField != null && analysisFields.size() > 1 && fieldName == null)
+        if (targetFieldName != null && analysisFields.size() > 1 && fieldName == null)
         {
             String msg = Messages.getMessage(Messages.JOB_CONFIG_DETECTION_RULE_REQUIRES_CONDITION_FIELDS);
             throw new JobConfigurationException(msg, ErrorCodes.DETECTOR_RULE_REQUIRES_ONE_OR_MORE_CONDITIONS);
         }
     }
 
-    private static void checkHierarchy(Detector detector, String targetField, String fieldName)
+    private static void checkHierarchy(Detector detector, String targetFieldName, String fieldName)
             throws JobConfigurationException
     {
-        if (targetField != null && fieldName != null
-                && !isTargetFieldHigherScopeThanFieldName(detector, targetField, fieldName))
+        if (targetFieldName != null && fieldName != null
+                && !isTargetFieldHigherScopeThanFieldName(detector, targetFieldName, fieldName))
         {
             String msg = Messages.getMessage(Messages.JOB_CONFIG_DETECTION_RULE_HIERARCHY_VIOLATION,
-                    fieldName, targetField);
+                    fieldName, targetFieldName);
             throw new JobConfigurationException(msg, ErrorCodes.DETECTOR_RULE_HIERARCHY_VIOLATION);
         }
     }
 
     private static boolean isTargetFieldHigherScopeThanFieldName(Detector detector,
-            String targetField, String fieldName)
+            String targetFieldName, String fieldName)
     {
-        ScopingLevel targetFieldLevel = ScopingLevel.from(detector, targetField);
+        ScopingLevel targetFieldLevel = ScopingLevel.from(detector, targetFieldName);
         ScopingLevel fieldNameLevel = ScopingLevel.from(detector, fieldName);
         return targetFieldLevel.isHigherThan(fieldNameLevel);
     }
 
-    private static void checkTargetNameIsSetWhenTargetFieldIsSet(DetectionRule rule)
+    private static void checkTargetFieldNameIsSetWhenTargetFieldValueIsSet(DetectionRule rule)
             throws JobConfigurationException
     {
-        if (rule.getTargetValue() != null && rule.getTargetField() == null)
+        if (rule.getTargetFieldValue() != null && rule.getTargetFieldName() == null)
         {
             String msg = Messages.getMessage(
-                    Messages.JOB_CONFIG_DETECTION_RULE_MISSING_TARGET_FIELD,
-                    rule.getTargetValue());
+                    Messages.JOB_CONFIG_DETECTION_RULE_MISSING_TARGET_FIELD_NAME,
+                    rule.getTargetFieldValue());
             throw new JobConfigurationException(msg, ErrorCodes.DETECTOR_RULE_MISSING_FIELD);
         }
     }
@@ -155,9 +155,9 @@ public class DetectionRuleVerifier
             RuleCondition condition) throws JobConfigurationException
     {
         if (condition.getConditionType() == RuleConditionType.CATEGORICAL
-                && rule.getTargetField() != null)
+                && rule.getTargetFieldName() != null)
         {
-            String msg = Messages.getMessage(Messages.JOB_CONFIG_DETECTION_RULE_CONDITION_CATEGORICAL_TARGET_FIELD_NOT_SUPPORTED);
+            String msg = Messages.getMessage(Messages.JOB_CONFIG_DETECTION_RULE_CONDITION_CATEGORICAL_TARGET_FIELD_NAME_NOT_SUPPORTED);
             throw new JobConfigurationException(msg, ErrorCodes.DETECTOR_RULE_CONDITION_INVALID_OPTION);
         }
     }
