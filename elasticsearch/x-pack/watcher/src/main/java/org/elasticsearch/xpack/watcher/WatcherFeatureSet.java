@@ -29,6 +29,8 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.license.XPackLicenseState;
 import org.elasticsearch.xpack.XPackFeatureSet;
+import org.elasticsearch.xpack.XPackPlugin;
+import org.elasticsearch.xpack.XPackSettings;
 
 /**
  *
@@ -42,13 +44,13 @@ public class WatcherFeatureSet implements XPackFeatureSet {
     @Inject
     public WatcherFeatureSet(Settings settings, @Nullable XPackLicenseState licenseState, @Nullable WatcherService watcherService) {
         this.watcherService = watcherService;
-        this.enabled = Watcher.enabled(settings);
+        this.enabled = XPackSettings.WATCHER_ENABLED.get(settings);
         this.licenseState = licenseState;
     }
 
     @Override
     public String name() {
-        return Watcher.NAME;
+        return XPackPlugin.WATCHER;
     }
 
     @Override
@@ -81,7 +83,7 @@ public class WatcherFeatureSet implements XPackFeatureSet {
         }
 
         public Usage(boolean available, boolean enabled, Map<String, Object> stats) {
-            super(Watcher.NAME, available, enabled);
+            super(XPackPlugin.WATCHER, available, enabled);
             this.stats = stats;
         }
 

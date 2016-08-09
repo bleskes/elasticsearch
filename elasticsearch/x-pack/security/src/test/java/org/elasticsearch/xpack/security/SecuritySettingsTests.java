@@ -21,9 +21,10 @@ import java.io.IOException;
 
 import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.xpack.security.audit.index.IndexAuditTrail;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.XPackPlugin;
+import org.elasticsearch.xpack.XPackSettings;
+import org.elasticsearch.xpack.security.audit.index.IndexAuditTrail;
 
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -35,8 +36,8 @@ import static org.hamcrest.Matchers.not;
 
 public class SecuritySettingsTests extends ESTestCase {
 
-    private static final String TRIBE_T1_SECURITY_ENABLED = "tribe.t1." + Security.enabledSetting();
-    private static final String TRIBE_T2_SECURITY_ENABLED = "tribe.t2." + Security.enabledSetting();
+    private static final String TRIBE_T1_SECURITY_ENABLED = "tribe.t1." + XPackSettings.SECURITY_ENABLED.getKey();
+    private static final String TRIBE_T2_SECURITY_ENABLED = "tribe.t2." + XPackSettings.SECURITY_ENABLED.getKey();
 
     public void testSecurityIsMandatoryOnTribes() throws IOException {
         Settings settings = Settings.builder().put("tribe.t1.cluster.name", "non_existing")
@@ -169,13 +170,13 @@ public class SecuritySettingsTests extends ESTestCase {
 
         Security.validateAutoCreateIndex(Settings.builder()
                         .put("action.auto_create_index", ".security")
-                        .put(Security.AUDIT_ENABLED_SETTING.getKey(), true)
+                        .put(XPackSettings.AUDIT_ENABLED.getKey(), true)
                         .build());
 
         try {
             Security.validateAutoCreateIndex(Settings.builder()
                     .put("action.auto_create_index", ".security")
-                    .put(Security.AUDIT_ENABLED_SETTING.getKey(), true)
+                    .put(XPackSettings.AUDIT_ENABLED.getKey(), true)
                     .put(Security.AUDIT_OUTPUTS_SETTING.getKey(), randomFrom("index", "logfile,index"))
                     .build());
             fail("IllegalArgumentException expected");
@@ -186,7 +187,7 @@ public class SecuritySettingsTests extends ESTestCase {
 
         Security.validateAutoCreateIndex(Settings.builder()
                 .put("action.auto_create_index", ".security_audit_log*,.security")
-                .put(Security.AUDIT_ENABLED_SETTING.getKey(), true)
+                .put(XPackSettings.AUDIT_ENABLED.getKey(), true)
                 .put(Security.AUDIT_OUTPUTS_SETTING.getKey(), randomFrom("index", "logfile,index"))
                 .build());
     }

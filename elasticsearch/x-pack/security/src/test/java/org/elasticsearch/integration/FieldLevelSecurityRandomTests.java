@@ -22,11 +22,10 @@ import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.sort.SortOrder;
-import org.elasticsearch.xpack.security.Security;
+import org.elasticsearch.xpack.XPackSettings;
 import org.elasticsearch.xpack.security.authc.support.Hasher;
 import org.elasticsearch.xpack.security.authc.support.SecuredString;
 import org.elasticsearch.test.SecurityIntegTestCase;
-import org.elasticsearch.xpack.XPackPlugin;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -133,7 +132,7 @@ public class FieldLevelSecurityRandomTests extends SecurityIntegTestCase {
     public Settings nodeSettings(int nodeOrdinal) {
         return Settings.builder()
                 .put(super.nodeSettings(nodeOrdinal))
-                .put(XPackPlugin.featureEnabledSetting(Security.DLS_FLS_FEATURE), true)
+                .put(XPackSettings.DLS_FLS_ENABLED.getKey(), true)
                 .build();
     }
 
