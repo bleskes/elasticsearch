@@ -132,7 +132,8 @@ public class HttpExporter extends Exporter {
     /**
      * Headers supplied by the user to send (likely to a proxy for routing).
      */
-    private final @Nullable Map<String, String[]> headers;
+    @Nullable
+    private final Map<String, String[]> headers;
 
     volatile boolean checkedAndUploadedIndexTemplate = false;
     volatile boolean supportedClusterVersion = false;
