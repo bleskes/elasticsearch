@@ -314,6 +314,52 @@ public enum ErrorCodes
      */
     MULTIPLE_BUCKETSPANS_NOT_MULTIPLE(10311),
 
+    // Detector rule errors
+    /**
+     * A detector rule condition has a field set that is not supported
+     * for its type.
+     */
+    DETECTOR_RULE_CONDITION_INVALID_OPTION(10401),
+
+    /**
+     * A detector rule condition is missing a required field.
+     */
+    DETECTOR_RULE_CONDITION_MISSING_FIELD(10402),
+
+    /**
+     * A detector rule condition has an invalid field name.
+     */
+    DETECTOR_RULE_CONDITION_INVALID_FIELD_NAME(10403),
+
+    /**
+     * A detector rule is missing a required field.
+     */
+    DETECTOR_RULE_MISSING_FIELD(10404),
+
+    /**
+     * A detector rule requires at least one rule condition.
+     */
+    DETECTOR_RULE_REQUIRES_ONE_OR_MORE_CONDITIONS(10405),
+
+    /**
+     * A detector rule has an invalid target field.
+     */
+    DETECTOR_RULE_INVALID_TARGET_FIELD(10406),
+
+    /**
+     * A detector rule that requires condition fields
+     * has one or more conditions without fieldName/fieldValue
+     * specified.
+     */
+    DETECTOR_RULE_REQUIRES_CONDITION_FIELDS(10407),
+
+    /**
+     * A detector rule with targetField requires that the
+     * fieldName, when present in conditions, is of lower
+     * level according to partition > over > by.
+     */
+    DETECTOR_RULE_HIERARCHY_VIOLATION(10408),
+
     // Data store errors
     /**
      * A generic exception from the data store

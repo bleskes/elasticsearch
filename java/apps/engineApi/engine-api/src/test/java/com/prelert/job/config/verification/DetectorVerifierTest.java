@@ -28,13 +28,23 @@ package com.prelert.job.config.verification;
 
 import static org.junit.Assert.assertTrue;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
 import org.junit.Assert;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import com.prelert.job.Detector;
+import com.prelert.job.condition.Condition;
+import com.prelert.job.condition.Operator;
+import com.prelert.job.detectionrules.DetectionRule;
+import com.prelert.job.detectionrules.RuleCondition;
+import com.prelert.job.detectionrules.RuleConditionType;
+import com.prelert.job.errorcodes.ErrorCodeMatcher;
+import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.exceptions.JobConfigurationException;
 
 
@@ -65,6 +75,9 @@ import com.prelert.job.exceptions.JobConfigurationException;
  */
 public class DetectorVerifierTest
 {
+    @Rule
+    public ExpectedException m_ExpectedException = ExpectedException.none();
+
     /**
      * Test the good/bad detector configurations
      * @throws JobConfigurationException
@@ -517,5 +530,104 @@ public class DetectorVerifierTest
         assertTrue(DetectorVerifier.verifyExcludeFrequent("0"));
         assertTrue(DetectorVerifier.verifyExcludeFrequent("1"));
         assertTrue(DetectorVerifier.verifyExcludeFrequent("-1"));
+    }
+
+    @Test
+    public void testVerify_GivenInvalidDetectionRuleConditionFieldName() throws JobConfigurationException
+    {
+        Detector detector = new Detector();
+        detector.setFunction("mean");
+        detector.setFieldName("metricVale");
+        detector.setByFieldName("metricName");
+        RuleCondition ruleCondition = new RuleCondition();
+        ruleCondition.setConditionType(RuleConditionType.NUMERICAL_ACTUAL);
+        ruleCondition.setFieldName("metricValue");
+        ruleCondition.setCondition(new Condition(Operator.LT, "5"));
+        DetectionRule rule = new DetectionRule();
+        rule.setRuleConditions(Arrays.asList(ruleCondition));
+        detector.setDetectorRules(Arrays.asList(rule));
+
+        m_ExpectedException.expect(JobConfigurationException.class);
+        m_ExpectedException.expect(
+                ErrorCodeMatcher.hasErrorCode(ErrorCodes.DETECTOR_RULE_CONDITION_INVALID_FIELD_NAME));
+        m_ExpectedException.expectMessage(
+                "Invalid detector rule: fieldName has to be one of [metricName]; actual was 'metricValue'");
+
+        DetectorVerifier.verify(detector, false);
+    }
+
+    @Test
+    public void testVerify_GivenInvalidDetectionRuleTargetFieldName()
+            throws JobConfigurationException
+    {
+        Detector detector = new Detector();
+        detector.setFunction("mean");
+        detector.setFieldName("metricVale");
+        detector.setByFieldName("metricName");
+        detector.setPartitionFieldName("instance");
+        RuleCondition ruleCondition = new RuleCondition();
+        ruleCondition.setConditionType(RuleConditionType.NUMERICAL_ACTUAL);
+        ruleCondition.setFieldName("metricName");
+        ruleCondition.setCondition(new Condition(Operator.LT, "5"));
+        DetectionRule rule = new DetectionRule();
+        rule.setTargetFieldName("instancE");
+        rule.setRuleConditions(Arrays.asList(ruleCondition));
+        detector.setDetectorRules(Arrays.asList(rule));
+
+        m_ExpectedException.expect(JobConfigurationException.class);
+        m_ExpectedException.expect(
+                ErrorCodeMatcher.hasErrorCode(ErrorCodes.DETECTOR_RULE_INVALID_TARGET_FIELD));
+        m_ExpectedException.expectMessage("Invalid detector rule: targetFieldName has to be one of "
+                + "[metricName, instance]; actual was 'instancE'");
+
+        DetectorVerifier.verify(detector, false);
+    }
+
+    @Test
+    public void testVerify_GivenDetectionRuleWithInvalidCondition() throws JobConfigurationException
+    {
+        Detector detector = new Detector();
+        detector.setFunction("mean");
+        detector.setFieldName("metricVale");
+        detector.setByFieldName("metricName");
+        detector.setPartitionFieldName("instance");
+        RuleCondition ruleCondition = new RuleCondition();
+        ruleCondition.setConditionType(RuleConditionType.NUMERICAL_ACTUAL);
+        ruleCondition.setFieldName("metricName");
+        ruleCondition.setFieldValue("CPU");
+        ruleCondition.setCondition(new Condition(Operator.LT, "invalid"));
+        DetectionRule rule = new DetectionRule();
+        rule.setTargetFieldName("instance");
+        rule.setRuleConditions(Arrays.asList(ruleCondition));
+        detector.setDetectorRules(Arrays.asList(rule));
+
+        m_ExpectedException.expect(JobConfigurationException.class);
+        m_ExpectedException.expect(
+                ErrorCodeMatcher.hasErrorCode(ErrorCodes.CONDITION_INVALID_ARGUMENT));
+        m_ExpectedException.expectMessage(
+                "Invalid condition value: cannot parse a double from string 'invalid'");
+
+        DetectorVerifier.verify(detector, false);
+    }
+
+    @Test
+    public void testVerify_GivenValidDetectionRule() throws JobConfigurationException
+    {
+        Detector detector = new Detector();
+        detector.setFunction("mean");
+        detector.setFieldName("metricVale");
+        detector.setByFieldName("metricName");
+        detector.setPartitionFieldName("instance");
+        RuleCondition ruleCondition = new RuleCondition();
+        ruleCondition.setConditionType(RuleConditionType.NUMERICAL_ACTUAL);
+        ruleCondition.setFieldName("metricName");
+        ruleCondition.setFieldValue("CPU");
+        ruleCondition.setCondition(new Condition(Operator.LT, "5"));
+        DetectionRule rule = new DetectionRule();
+        rule.setTargetFieldName("instance");
+        rule.setRuleConditions(Arrays.asList(ruleCondition));
+        detector.setDetectorRules(Arrays.asList(rule));
+
+        DetectorVerifier.verify(detector, false);
     }
 }
