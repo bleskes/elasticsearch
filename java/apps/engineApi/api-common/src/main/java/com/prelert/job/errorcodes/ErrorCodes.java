@@ -184,6 +184,12 @@ public enum ErrorCodes
     PER_PARTITION_NORMALIZATION_REQUIRES_PARTITION_FIELD(10124),
 
     /**
+     * If the job is configured with Per-Partition Normalization
+     * influencers cannot be used
+     */
+    PER_PARTITION_NORMALIZATION_CANNOT_USE_INFLUENCERS(10125),
+
+    /**
      * The transform name isn't recognised
      */
     UNKNOWN_TRANSFORM(10201),

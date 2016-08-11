@@ -53,6 +53,8 @@ public final class AnalysisConfigVerifier
      * <li>Check all the detectors are configured correctly</li>
      * <li>Check that OVERLAPPING_BUCKETS is set appropriately</li>
      * <li>Check that MULTIPLE_BUCKETSPANS are set appropriately</li>
+     * <li>If Per Partition normalization is configured at least one detector
+     * must have a partition field and no influences can be used</li>
      * </ol>
      */
     public static boolean verify(AnalysisConfig config) throws JobConfigurationException
@@ -70,6 +72,7 @@ public final class AnalysisConfigVerifier
         if (config.getUsePerPartitionNormalization())
         {
             checkDetectorsHavePartitionFields(config.getDetectors());
+            checkNoInfluencersAreSet(config);
         }
 
         return true;
@@ -270,6 +273,19 @@ public final class AnalysisConfigVerifier
         throw new JobConfigurationException(
                 Messages.getMessage(Messages.JOB_CONFIG_PER_PARTITION_NORMALIZATION_REQUIRES_PARTITION_FIELD),
                 ErrorCodes.PER_PARTITION_NORMALIZATION_REQUIRES_PARTITION_FIELD);
+    }
+
+    private static boolean checkNoInfluencersAreSet(AnalysisConfig config)
+            throws JobConfigurationException
+    {
+        if (!config.getInfluencers().isEmpty())
+        {
+            throw new JobConfigurationException(
+                    Messages.getMessage(Messages.JOB_CONFIG_PER_PARTITION_NORMALIZATION_CANNOT_USE_INFLUENCERS),
+                    ErrorCodes.PER_PARTITION_NORMALIZATION_CANNOT_USE_INFLUENCERS);
+        }
+
+        return true;
     }
 
     private static boolean isValidRegex(String exp)
