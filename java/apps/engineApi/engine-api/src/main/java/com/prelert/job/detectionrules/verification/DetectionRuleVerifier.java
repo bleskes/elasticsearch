@@ -98,7 +98,8 @@ public final class DetectionRuleVerifier
     {
         if (targetFieldName != null && analysisFields.size() > 1 && fieldName == null)
         {
-            String msg = Messages.getMessage(Messages.JOB_CONFIG_DETECTION_RULE_REQUIRES_CONDITION_FIELDS);
+            String msg = Messages.getMessage(
+                    Messages.JOB_CONFIG_DETECTION_RULE_REQUIRES_CONDITION_FIELDS, targetFieldName);
             throw new JobConfigurationException(msg, ErrorCodes.DETECTOR_RULE_REQUIRES_ONE_OR_MORE_CONDITIONS);
         }
     }

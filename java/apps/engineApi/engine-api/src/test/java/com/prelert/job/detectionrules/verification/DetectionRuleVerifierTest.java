@@ -222,7 +222,7 @@ public class DetectionRuleVerifierTest
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.DETECTOR_RULE_REQUIRES_ONE_OR_MORE_CONDITIONS));
         m_ExpectedException.expectMessage(
-                "Invalid detector rule: fieldName/fieldValue pairs are missing from one or more conditions");
+                "Invalid detector rule: fieldName/fieldValue pairs are missing from all conditions where targetFieldName is 'instance'");
 
         DetectionRuleVerifier.verify(rule, detector);
     }
