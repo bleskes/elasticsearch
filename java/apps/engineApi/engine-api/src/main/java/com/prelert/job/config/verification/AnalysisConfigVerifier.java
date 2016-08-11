@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
+import com.google.common.base.Strings;
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.Detector;
 import com.prelert.job.errorcodes.ErrorCodes;
@@ -65,6 +66,11 @@ public final class AnalysisConfigVerifier
         verifyDetectors(config);
         verifyCategorizationFilters(config);
         verifyMultipleBucketSpans(config);
+
+        if (config.getUsePerPartitionNormalization())
+        {
+            checkDetectorsHavePartitionFields(config.getDetectors());
+        }
 
         return true;
     }
@@ -248,6 +254,22 @@ public final class AnalysisConfigVerifier
                         ErrorCodes.MULTIPLE_BUCKETSPANS_NOT_MULTIPLE);
             }
         }
+    }
+
+    private static boolean checkDetectorsHavePartitionFields(List<Detector> detectors)
+            throws JobConfigurationException
+    {
+        for (Detector detector : detectors)
+        {
+            if (!Strings.isNullOrEmpty(detector.getPartitionFieldName()))
+            {
+                return true;
+            }
+        }
+
+        throw new JobConfigurationException(
+                Messages.getMessage(Messages.JOB_CONFIG_PER_PARTITION_NORMALIZATION_REQUIRES_PARTITION_FIELD),
+                ErrorCodes.PER_PARTITION_NORMALIZATION_REQUIRES_PARTITION_FIELD);
     }
 
     private static boolean isValidRegex(String exp)
