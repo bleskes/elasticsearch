@@ -51,8 +51,59 @@ public class DetectionRuleVerifierTest
     public ExpectedException m_ExpectedException = ExpectedException.none();
 
     @Test
+    public void testVerify_GivenDetectorFunctionIsNull() throws JobConfigurationException
+    {
+        DetectionRule rule = new DetectionRule();
+        rule.setTargetFieldValue("foo");
+
+        m_ExpectedException.expect(JobConfigurationException.class);
+        m_ExpectedException.expect(
+                ErrorCodeMatcher.hasErrorCode(ErrorCodes.DETECTOR_RULES_NOT_SUPPORTED_BY_FUNCTION));
+        m_ExpectedException.expectMessage(
+                "Invalid detector rule: function metric does not support rules");
+
+        DetectionRuleVerifier.verify(rule, new Detector());
+    }
+
+    @Test
+    public void testVerify_GivenDetectorFunctionIsMetric() throws JobConfigurationException
+    {
+        Detector detector = new Detector();
+        detector.setFunction(Detector.METRIC);
+        DetectionRule rule = new DetectionRule();
+        rule.setTargetFieldValue("foo");
+
+        m_ExpectedException.expect(JobConfigurationException.class);
+        m_ExpectedException.expect(
+                ErrorCodeMatcher.hasErrorCode(ErrorCodes.DETECTOR_RULES_NOT_SUPPORTED_BY_FUNCTION));
+        m_ExpectedException.expectMessage(
+                "Invalid detector rule: function metric does not support rules");
+
+        DetectionRuleVerifier.verify(rule, detector);
+    }
+
+    @Test
+    public void testVerify_GivenDetectorFunctionIsLatLong() throws JobConfigurationException
+    {
+        Detector detector = new Detector();
+        detector.setFunction(Detector.LAT_LONG);
+        DetectionRule rule = new DetectionRule();
+        rule.setTargetFieldValue("foo");
+
+        m_ExpectedException.expect(JobConfigurationException.class);
+        m_ExpectedException.expect(
+                ErrorCodeMatcher.hasErrorCode(ErrorCodes.DETECTOR_RULES_NOT_SUPPORTED_BY_FUNCTION));
+        m_ExpectedException.expectMessage(
+                "Invalid detector rule: function lat_long does not support rules");
+
+        DetectionRuleVerifier.verify(rule, detector);
+    }
+
+    @Test
     public void testVerify_GivenTargetFieldValueWithoutTargetField() throws JobConfigurationException
     {
+        Detector detector = new Detector();
+        detector.setFunction(Detector.HIGH_DC);
         DetectionRule rule = new DetectionRule();
         rule.setTargetFieldValue("foo");
 
@@ -62,12 +113,14 @@ public class DetectionRuleVerifierTest
         m_ExpectedException.expectMessage(
                 "Invalid detector rule: missing targetFieldName where targetFieldValue 'foo' is set");
 
-        DetectionRuleVerifier.verify(rule, new Detector());
+        DetectionRuleVerifier.verify(rule, detector);
     }
 
     @Test
     public void testVerify_GivenNullConditions() throws JobConfigurationException
     {
+        Detector detector = new Detector();
+        detector.setFunction(Detector.COUNT);
         DetectionRule rule = new DetectionRule();
 
         m_ExpectedException.expect(JobConfigurationException.class);
@@ -76,12 +129,14 @@ public class DetectionRuleVerifierTest
         m_ExpectedException.expectMessage(
                 "Invalid detector rule: at least one ruleCondition is required");
 
-        DetectionRuleVerifier.verify(rule, new Detector());
+        DetectionRuleVerifier.verify(rule, detector);
     }
 
     @Test
     public void testVerify_GivenEmptyConditions() throws JobConfigurationException
     {
+        Detector detector = new Detector();
+        detector.setFunction(Detector.COUNT);
         DetectionRule rule = new DetectionRule();
         rule.setRuleConditions(Collections.emptyList());
 
@@ -91,7 +146,7 @@ public class DetectionRuleVerifierTest
         m_ExpectedException.expectMessage(
                 "Invalid detector rule: at least one ruleCondition is required");
 
-        DetectionRuleVerifier.verify(rule, new Detector());
+        DetectionRuleVerifier.verify(rule, detector);
     }
 
     @Test
@@ -195,9 +250,9 @@ public class DetectionRuleVerifierTest
 
         m_ExpectedException.expect(JobConfigurationException.class);
         m_ExpectedException.expect(
-                ErrorCodeMatcher.hasErrorCode(ErrorCodes.DETECTOR_RULE_HIERARCHY_VIOLATION));
+                ErrorCodeMatcher.hasErrorCode(ErrorCodes.DETECTOR_RULE_CONDITION_INVALID_FIELD_NAME));
         m_ExpectedException.expectMessage(
-                "Invalid detector rule: fieldName 'metricName' has to be of lower scope than targetFieldName 'metricName' (partition > over > by)");
+                "Invalid detector rule: fieldName has to be one of [null]; actual was 'metricName'");
 
         DetectionRuleVerifier.verify(rule, detector);
     }
@@ -220,9 +275,63 @@ public class DetectionRuleVerifierTest
 
         m_ExpectedException.expect(JobConfigurationException.class);
         m_ExpectedException.expect(
-                ErrorCodeMatcher.hasErrorCode(ErrorCodes.DETECTOR_RULE_REQUIRES_ONE_OR_MORE_CONDITIONS));
+                ErrorCodeMatcher.hasErrorCode(ErrorCodes.DETECTOR_RULE_CONDITION_INVALID_FIELD_NAME));
         m_ExpectedException.expectMessage(
-                "Invalid detector rule: fieldName/fieldValue pairs are missing from all conditions where targetFieldName is 'instance'");
+                "Invalid detector rule: fieldName has to be one of [metricName]; actual was 'null'");
+
+        DetectionRuleVerifier.verify(rule, detector);
+    }
+
+    @Test
+    public void testVerify_GivenFieldNameIsPartitionFieldInDetectorWithPartitionAndBy()
+            throws JobConfigurationException
+    {
+        Detector detector = new Detector();
+        detector.setFunction("mean");
+        detector.setFieldName("metricValue");
+        detector.setByFieldName("metricName");
+        detector.setPartitionFieldName("instance");
+        RuleCondition ruleCondition = new RuleCondition();
+        ruleCondition.setFieldName("instance");
+        ruleCondition.setFieldValue("instance_1");
+        ruleCondition.setConditionType(RuleConditionType.NUMERICAL_ACTUAL);
+        ruleCondition.setCondition(new Condition(Operator.LT, "5"));
+        DetectionRule rule = new DetectionRule();
+        rule.setRuleConditions(Arrays.asList(ruleCondition));
+        detector.setDetectorRules(Arrays.asList(rule));
+
+        m_ExpectedException.expect(JobConfigurationException.class);
+        m_ExpectedException.expect(
+                ErrorCodeMatcher.hasErrorCode(ErrorCodes.DETECTOR_RULE_CONDITION_INVALID_FIELD_NAME));
+        m_ExpectedException.expectMessage(
+                "Invalid detector rule: fieldName has to be one of [metricName]; actual was 'instance'");
+
+        DetectionRuleVerifier.verify(rule, detector);
+    }
+
+    @Test
+    public void testVerify_GivenFieldNameIsOverFieldInDetectorWithOverAndBy()
+            throws JobConfigurationException
+    {
+        Detector detector = new Detector();
+        detector.setFunction("mean");
+        detector.setFieldName("metricValue");
+        detector.setByFieldName("metricName");
+        detector.setOverFieldName("instance");
+        RuleCondition ruleCondition = new RuleCondition();
+        ruleCondition.setFieldName("instance");
+        ruleCondition.setFieldValue("instance_1");
+        ruleCondition.setConditionType(RuleConditionType.NUMERICAL_ACTUAL);
+        ruleCondition.setCondition(new Condition(Operator.LT, "5"));
+        DetectionRule rule = new DetectionRule();
+        rule.setRuleConditions(Arrays.asList(ruleCondition));
+        detector.setDetectorRules(Arrays.asList(rule));
+
+        m_ExpectedException.expect(JobConfigurationException.class);
+        m_ExpectedException.expect(
+                ErrorCodeMatcher.hasErrorCode(ErrorCodes.DETECTOR_RULE_CONDITION_INVALID_FIELD_NAME));
+        m_ExpectedException.expectMessage(
+                "Invalid detector rule: fieldName has to be one of [metricName]; actual was 'instance'");
 
         DetectionRuleVerifier.verify(rule, detector);
     }
@@ -258,13 +367,15 @@ public class DetectionRuleVerifierTest
     public void testVerify_GivenValidRuleWithNoTargetFieldAndCategoricalCondition()
             throws JobConfigurationException
     {
+        Detector detector = new Detector();
+        detector.setFunction(Detector.COUNT);
         RuleCondition ruleCondition = new RuleCondition();
         ruleCondition.setConditionType(RuleConditionType.CATEGORICAL);
         ruleCondition.setValueList("myList");
         DetectionRule rule = new DetectionRule();
         rule.setRuleConditions(Arrays.asList(ruleCondition));
 
-        assertTrue(DetectionRuleVerifier.verify(rule, new Detector()));
+        assertTrue(DetectionRuleVerifier.verify(rule, detector));
     }
 
     @Test
@@ -283,6 +394,26 @@ public class DetectionRuleVerifierTest
         ruleCondition.setCondition(new Condition(Operator.LT, "5"));
         DetectionRule rule = new DetectionRule();
         rule.setTargetFieldName("instance");
+        rule.setRuleConditions(Arrays.asList(ruleCondition));
+        detector.setDetectorRules(Arrays.asList(rule));
+
+        assertTrue(DetectionRuleVerifier.verify(rule, detector));
+    }
+
+    @Test
+    public void testVerify_GivenValidRuleWhereFieldNameFieldIsOverAndDetectorWithOver()
+            throws JobConfigurationException
+    {
+        Detector detector = new Detector();
+        detector.setFunction("mean");
+        detector.setFieldName("metricValue");
+        detector.setOverFieldName("metricName");
+        RuleCondition ruleCondition = new RuleCondition();
+        ruleCondition.setFieldName("metricName");
+        ruleCondition.setFieldValue("CPU");
+        ruleCondition.setConditionType(RuleConditionType.NUMERICAL_ACTUAL);
+        ruleCondition.setCondition(new Condition(Operator.LT, "5"));
+        DetectionRule rule = new DetectionRule();
         rule.setRuleConditions(Arrays.asList(ruleCondition));
         detector.setDetectorRules(Arrays.asList(rule));
 

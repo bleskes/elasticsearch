@@ -98,9 +98,8 @@ public final class Messages
     public static final String JOB_CONFIG_DETECTION_RULE_CONDITION_NUMERICAL_WITH_FIELD_NAME_REQUIRES_FIELD_VALUE = "job.config.detectionrule.condition.numerical.with.fieldname.requires.fieldvalue";
     public static final String JOB_CONFIG_DETECTION_RULE_INVALID_TARGET_FIELD_NAME = "job.config.detectionrule.invalid.targetfieldname";
     public static final String JOB_CONFIG_DETECTION_RULE_MISSING_TARGET_FIELD_NAME = "job.config.detectionrule.missing.targetfieldname";
+    public static final String JOB_CONFIG_DETECTION_RULE_NOT_SUPPORTED_BY_FUNCTION = "job.config.detectionrule.not.supported.by.function";
     public static final String JOB_CONFIG_DETECTION_RULE_REQUIRES_AT_LEAST_ONE_CONDITION = "job.config.detectionrule.requires.at.least.one.condition";
-    public static final String JOB_CONFIG_DETECTION_RULE_REQUIRES_CONDITION_FIELDS = "job.config.detectionrule.requires.condition.fields";
-    public static final String JOB_CONFIG_DETECTION_RULE_HIERARCHY_VIOLATION = "job.config.detectionrule.hierarchy.violation";
     public static final String JOB_CONFIG_FIELDNAME_INCOMPATIBLE_FUNCTION = "job.config.fieldname.incompatible.function";
     public static final String JOB_CONFIG_FUNCTION_REQUIRES_BYFIELD = "job.config.function.requires.byfield";
     public static final String JOB_CONFIG_FUNCTION_REQUIRES_FIELDNAME = "job.config.function.requires.fieldname";

@@ -27,8 +27,12 @@
 
 package com.prelert.job.detectionrules.verification;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
+import com.google.common.collect.Sets;
 import com.prelert.job.Detector;
 import com.prelert.job.detectionrules.DetectionRule;
 import com.prelert.job.detectionrules.RuleCondition;
@@ -39,6 +43,16 @@ import com.prelert.job.messages.Messages;
 
 public final class DetectionRuleVerifier
 {
+    /**
+     * Functions that do not support rules:
+     * <ul>
+     *   <li> lat_long - because it is a multivariate feature
+     *   <li> metric - because having the same conditions on min,max,mean is error-prone
+     * </ul>
+     */
+    private static final Set<String> FUNCTIONS_WITHOUT_RULE_SUPPORT = Sets.newHashSet(
+            Detector.LAT_LONG, Detector.METRIC);
+
     private DetectionRuleVerifier()
     {
         // Hide default constructor
@@ -47,6 +61,7 @@ public final class DetectionRuleVerifier
     public static boolean verify(DetectionRule rule, Detector detector)
             throws JobConfigurationException
     {
+        checkFunctionSupportsRules(detector);
         checkScoping(rule, detector);
         checkTargetFieldNameIsSetWhenTargetFieldValueIsSet(rule);
         checkAtLeastOneRuleCondition(rule);
@@ -54,22 +69,80 @@ public final class DetectionRuleVerifier
         return true;
     }
 
-    private static void checkScoping(DetectionRule rule, Detector detector)
+    private static void checkFunctionSupportsRules(Detector detector)
             throws JobConfigurationException
     {
-        List<String> analysisFields = detector.extractAnalysisFields();
-        String targetFieldName = rule.getTargetFieldName();
-        checkTargetFieldNameIsAnalysisField(analysisFields, targetFieldName);
-        for (RuleCondition condition : rule.getRuleConditions())
+        // When function is null it defaults to metric
+        String function = detector.getFunction() == null ? Detector.METRIC : detector.getFunction();
+
+        if (FUNCTIONS_WITHOUT_RULE_SUPPORT.contains(function))
         {
-            String fieldName = condition.getFieldName();
-            checkFieldNameIsAnalysisField(analysisFields, fieldName);
-            checkFieldNameIsSetWhenRequired(analysisFields, targetFieldName, fieldName);
-            checkHierarchy(detector, targetFieldName, fieldName);
+            String msg = Messages.getMessage(
+                    Messages.JOB_CONFIG_DETECTION_RULE_NOT_SUPPORTED_BY_FUNCTION, function);
+            throw new JobConfigurationException(msg, ErrorCodes.DETECTOR_RULES_NOT_SUPPORTED_BY_FUNCTION);
         }
     }
 
-    private static void checkTargetFieldNameIsAnalysisField(List<String> analysisFields,
+    private static void checkScoping(DetectionRule rule, Detector detector)
+            throws JobConfigurationException
+    {
+        String targetFieldName = rule.getTargetFieldName();
+        checkTargetFieldNameIsValid(detector.extractAnalysisFields(), targetFieldName);
+        List<String> validFieldNameOptions = getValidFieldNameOptions(rule, detector);
+        for (RuleCondition condition : rule.getRuleConditions())
+        {
+            checkFieldNameIsValid(validFieldNameOptions, condition.getFieldName());
+        }
+    }
+
+    private static List<String> getValidFieldNameOptions(DetectionRule rule, Detector detector)
+    {
+        List<String> result = new ArrayList<>();
+        if (detector.getOverFieldName() != null)
+        {
+            result.add(detector.getByFieldName() == null ?
+                    detector.getOverFieldName() : detector.getByFieldName());
+        }
+        else if (detector.getByFieldName() != null)
+        {
+            result.add(detector.getByFieldName());
+        }
+
+        if (rule.getTargetFieldName() != null)
+        {
+            ScopingLevel targetLevel = ScopingLevel.from(detector, rule.getTargetFieldName());
+            result = result.stream()
+                    .filter(field -> targetLevel.isHigherThan(ScopingLevel.from(detector, field)))
+                    .collect(Collectors.toList());
+        }
+
+        if (isEmptyFieldNameAllowed(detector, rule))
+        {
+            result.add(null);
+        }
+        return result;
+    }
+
+    private static void checkFieldNameIsValid(List<String> validOptions, String fieldName)
+            throws JobConfigurationException
+    {
+        if (!validOptions.contains(fieldName))
+        {
+            String msg = Messages.getMessage(
+                    Messages.JOB_CONFIG_DETECTION_RULE_CONDITION_INVALID_FIELD_NAME, validOptions,
+                    fieldName);
+            throw new JobConfigurationException(msg, ErrorCodes.DETECTOR_RULE_CONDITION_INVALID_FIELD_NAME);
+        }
+    }
+
+    private static boolean isEmptyFieldNameAllowed(Detector detector, DetectionRule rule)
+    {
+        List<String> analysisFields = detector.extractAnalysisFields();
+        return analysisFields.isEmpty()
+                || (rule.getTargetFieldName() != null && analysisFields.size() == 1);
+    }
+
+    private static void checkTargetFieldNameIsValid(List<String> analysisFields,
             String targetFieldName) throws JobConfigurationException
     {
         if (targetFieldName != null && !analysisFields.contains(targetFieldName))
@@ -79,49 +152,6 @@ public final class DetectionRuleVerifier
                     analysisFields, targetFieldName);
             throw new JobConfigurationException(msg, ErrorCodes.DETECTOR_RULE_INVALID_TARGET_FIELD);
         }
-    }
-
-    private static void checkFieldNameIsAnalysisField(List<String> analysisFields, String fieldName)
-            throws JobConfigurationException
-    {
-        if (fieldName != null && !analysisFields.contains(fieldName))
-        {
-            String msg = Messages.getMessage(
-                    Messages.JOB_CONFIG_DETECTION_RULE_CONDITION_INVALID_FIELD_NAME,
-                    analysisFields, fieldName);
-            throw new JobConfigurationException(msg, ErrorCodes.DETECTOR_RULE_CONDITION_INVALID_FIELD_NAME);
-        }
-    }
-
-    private static void checkFieldNameIsSetWhenRequired(List<String> analysisFields,
-            String targetFieldName, String fieldName) throws JobConfigurationException
-    {
-        if (targetFieldName != null && analysisFields.size() > 1 && fieldName == null)
-        {
-            String msg = Messages.getMessage(
-                    Messages.JOB_CONFIG_DETECTION_RULE_REQUIRES_CONDITION_FIELDS, targetFieldName);
-            throw new JobConfigurationException(msg, ErrorCodes.DETECTOR_RULE_REQUIRES_ONE_OR_MORE_CONDITIONS);
-        }
-    }
-
-    private static void checkHierarchy(Detector detector, String targetFieldName, String fieldName)
-            throws JobConfigurationException
-    {
-        if (targetFieldName != null && fieldName != null
-                && !isTargetFieldHigherScopeThanFieldName(detector, targetFieldName, fieldName))
-        {
-            String msg = Messages.getMessage(Messages.JOB_CONFIG_DETECTION_RULE_HIERARCHY_VIOLATION,
-                    fieldName, targetFieldName);
-            throw new JobConfigurationException(msg, ErrorCodes.DETECTOR_RULE_HIERARCHY_VIOLATION);
-        }
-    }
-
-    private static boolean isTargetFieldHigherScopeThanFieldName(Detector detector,
-            String targetFieldName, String fieldName)
-    {
-        ScopingLevel targetFieldLevel = ScopingLevel.from(detector, targetFieldName);
-        ScopingLevel fieldNameLevel = ScopingLevel.from(detector, fieldName);
-        return targetFieldLevel.isHigherThan(fieldNameLevel);
     }
 
     private static void checkTargetFieldNameIsSetWhenTargetFieldValueIsSet(DetectionRule rule)
