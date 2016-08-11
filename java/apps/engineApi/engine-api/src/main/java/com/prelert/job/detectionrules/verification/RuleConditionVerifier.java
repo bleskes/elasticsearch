@@ -64,48 +64,66 @@ public final class RuleConditionVerifier
         }
     }
 
-    private static void verifyCategorical(RuleCondition ruleCondition) throws JobConfigurationException
+    private static void verifyCategorical(RuleCondition ruleCondition)
+            throws JobConfigurationException
     {
-        if (ruleCondition.getCondition() != null)
+        checkCategoricalHasNoField(RuleCondition.CONDITION, ruleCondition.getCondition());
+        checkCategoricalHasNoField(RuleCondition.FIELD_VALUE, ruleCondition.getFieldValue());
+        checkCategoricalHasField(RuleCondition.VALUE_LIST, ruleCondition.getValueList());
+    }
+
+    private static void checkCategoricalHasNoField(String fieldName, Object fieldValue)
+            throws JobConfigurationException
+    {
+        if (fieldValue != null)
         {
-            String msg = Messages.getMessage(
-                    Messages.JOB_CONFIG_DETECTION_RULE_CONDITION_CATEGORICAL_CONDITION_NOT_SUPPORTED);
+            String msg = Messages.getMessage(Messages.JOB_CONFIG_DETECTION_RULE_CONDITION_CATEGORICAL_INVALID_OPTION, fieldName);
             throw new JobConfigurationException(msg, ErrorCodes.DETECTOR_RULE_CONDITION_INVALID_OPTION);
         }
-        if (ruleCondition.getFieldValue() != null)
+    }
+
+    private static void checkCategoricalHasField(String fieldName, Object fieldValue) throws JobConfigurationException
+    {
+        if (fieldValue == null)
         {
-            String msg = Messages.getMessage(
-                    Messages.JOB_CONFIG_DETECTION_RULE_CONDITION_CATEGORICAL_FIELD_VALUE_NOT_SUPPORTED);
-            throw new JobConfigurationException(msg, ErrorCodes.DETECTOR_RULE_CONDITION_INVALID_OPTION);
-        }
-        if (ruleCondition.getValueList() == null)
-        {
-            String msg = Messages.getMessage(
-                    Messages.JOB_CONFIG_DETECTION_RULE_CONDITION_CATEGORICAL_REQUIRES_VALUE_LIST);
+            String msg = Messages.getMessage(Messages.JOB_CONFIG_DETECTION_RULE_CONDITION_CATEGORICAL_MISSING_OPTION, fieldName);
             throw new JobConfigurationException(msg, ErrorCodes.DETECTOR_RULE_CONDITION_MISSING_FIELD);
         }
     }
 
     private static void verifyNumerical(RuleCondition ruleCondition) throws JobConfigurationException
     {
-        if (ruleCondition.getValueList() != null)
-        {
-            String msg = Messages.getMessage(
-                    Messages.JOB_CONFIG_DETECTION_RULE_CONDITION_NUMERICAL_VALUE_LIST_NOT_SUPPORTED);
-            throw new JobConfigurationException(msg, ErrorCodes.DETECTOR_RULE_CONDITION_INVALID_OPTION);
-        }
-        if (ruleCondition.getCondition() == null)
-        {
-            String msg = Messages.getMessage(
-                    Messages.JOB_CONFIG_DETECTION_RULE_CONDITION_NUMERICAL_REQUIRES_CONDITION);
-            throw new JobConfigurationException(msg, ErrorCodes.DETECTOR_RULE_CONDITION_MISSING_FIELD);
-        }
+        checkNumericalHasNoField(RuleCondition.VALUE_LIST, ruleCondition.getValueList());
+        checkNumericalHasField(RuleCondition.CONDITION, ruleCondition.getCondition());
         if (ruleCondition.getFieldName() != null && ruleCondition.getFieldValue() == null)
         {
-            String msg = Messages.getMessage(Messages.JOB_CONFIG_DETECTION_RULE_CONDITION_NUMERICAL_WITH_FIELD_NAME_REQUIRES_FIELD_VALUE);
+            String msg = Messages.getMessage(
+                    Messages.JOB_CONFIG_DETECTION_RULE_CONDITION_NUMERICAL_WITH_FIELD_NAME_REQUIRES_FIELD_VALUE);
             throw new JobConfigurationException(msg, ErrorCodes.DETECTOR_RULE_CONDITION_MISSING_FIELD);
         }
         ConditionVerifier.verify(ruleCondition.getCondition());
+    }
+
+    private static void checkNumericalHasNoField(String fieldName, Object fieldValue)
+            throws JobConfigurationException
+    {
+        if (fieldValue != null)
+        {
+            String msg = Messages.getMessage(Messages.JOB_CONFIG_DETECTION_RULE_CONDITION_NUMERICAL_INVALID_OPTION, fieldName);
+            throw new JobConfigurationException(msg, ErrorCodes.DETECTOR_RULE_CONDITION_INVALID_OPTION);
+        }
+    }
+
+    private static void checkNumericalHasField(String fieldName, Object fieldValue)
+            throws JobConfigurationException
+    {
+        if (fieldValue == null)
+        {
+            String msg = Messages.getMessage(
+                    Messages.JOB_CONFIG_DETECTION_RULE_CONDITION_NUMERICAL_MISSING_OPTION,
+                    fieldName);
+            throw new JobConfigurationException(msg, ErrorCodes.DETECTOR_RULE_CONDITION_MISSING_FIELD);
+        }
     }
 
     private static void verifyFieldValueRequiresFieldName(RuleCondition ruleCondition)

@@ -86,7 +86,7 @@ public class RuleConditionVerifierTest
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.DETECTOR_RULE_CONDITION_MISSING_FIELD));
         m_ExpectedException.expectMessage(
-                "Invalid detector rule: a categorical ruleCondition requires that valueList is specified");
+                "Invalid detector rule: a categorical ruleCondition requires valueList to be set");
 
         RuleConditionVerifier.verify(ruleCondition);
     }
@@ -118,7 +118,7 @@ public class RuleConditionVerifierTest
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.DETECTOR_RULE_CONDITION_MISSING_FIELD));
         m_ExpectedException.expectMessage(
-                "Invalid detector rule: a numerical ruleCondition requires that condition is specified");
+                "Invalid detector rule: a numerical ruleCondition requires condition to be set");
 
         RuleConditionVerifier.verify(ruleCondition);
     }
@@ -135,7 +135,7 @@ public class RuleConditionVerifierTest
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.DETECTOR_RULE_CONDITION_MISSING_FIELD));
         m_ExpectedException.expectMessage(
-                "Invalid detector rule: a numerical ruleCondition with fieldName requires that fieldValue is specified");
+                "Invalid detector rule: a numerical ruleCondition with fieldName requires that fieldValue is set");
 
         RuleConditionVerifier.verify(ruleCondition);
     }
@@ -167,7 +167,7 @@ public class RuleConditionVerifierTest
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.DETECTOR_RULE_CONDITION_MISSING_FIELD));
         m_ExpectedException.expectMessage(
-                "Invalid detector rule: a numerical ruleCondition requires that condition is specified");
+                "Invalid detector rule: a numerical ruleCondition requires condition to be set");
 
         RuleConditionVerifier.verify(ruleCondition);
     }
@@ -199,7 +199,7 @@ public class RuleConditionVerifierTest
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.DETECTOR_RULE_CONDITION_MISSING_FIELD));
         m_ExpectedException.expectMessage(
-                "Invalid detector rule: a numerical ruleCondition requires that condition is specified");
+                "Invalid detector rule: a numerical ruleCondition requires condition to be set");
 
         RuleConditionVerifier.verify(ruleCondition);
     }
@@ -235,7 +235,7 @@ public class RuleConditionVerifierTest
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.DETECTOR_RULE_CONDITION_MISSING_FIELD));
         m_ExpectedException.expectMessage(
-                "Invalid detector rule: missing fieldName in ruleCondition where fieldValue 'foo' is specified");
+                "Invalid detector rule: missing fieldName in ruleCondition where fieldValue 'foo' is set");
 
         RuleConditionVerifier.verify(ruleCondition);
     }

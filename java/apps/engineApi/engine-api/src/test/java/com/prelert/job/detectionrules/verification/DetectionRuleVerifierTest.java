@@ -60,7 +60,7 @@ public class DetectionRuleVerifierTest
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.DETECTOR_RULE_MISSING_FIELD));
         m_ExpectedException.expectMessage(
-                "Invalid detector rule: missing targetFieldName where targetFieldValue 'foo' is specified");
+                "Invalid detector rule: missing targetFieldName where targetFieldValue 'foo' is set");
 
         DetectionRuleVerifier.verify(rule, new Detector());
     }
