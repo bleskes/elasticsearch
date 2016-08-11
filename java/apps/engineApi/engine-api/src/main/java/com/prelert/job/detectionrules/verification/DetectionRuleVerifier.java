@@ -37,8 +37,13 @@ import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.exceptions.JobConfigurationException;
 import com.prelert.job.messages.Messages;
 
-public class DetectionRuleVerifier
+public final class DetectionRuleVerifier
 {
+    private DetectionRuleVerifier()
+    {
+        // Hide default constructor
+    }
+
     public static boolean verify(DetectionRule rule, Detector detector)
             throws JobConfigurationException
     {

@@ -33,8 +33,13 @@ import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.exceptions.JobConfigurationException;
 import com.prelert.job.messages.Messages;
 
-public class RuleConditionVerifier
+public final class RuleConditionVerifier
 {
+    private RuleConditionVerifier()
+    {
+        // Hide default constructor
+    }
+
     public static boolean verify(RuleCondition ruleCondition) throws JobConfigurationException
     {
         verifyFieldsBoundToType(ruleCondition);
