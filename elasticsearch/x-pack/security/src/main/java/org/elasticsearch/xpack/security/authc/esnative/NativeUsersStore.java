@@ -25,6 +25,7 @@ import com.carrotsearch.hppc.cursors.ObjectCursor;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.ExceptionsHelper;
 import org.elasticsearch.action.ActionListener;
+import org.elasticsearch.action.DocWriteResponse;
 import org.elasticsearch.action.LatchedActionListener;
 import org.elasticsearch.action.delete.DeleteRequest;
 import org.elasticsearch.action.delete.DeleteResponse;
@@ -88,6 +89,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.elasticsearch.xpack.security.Security.setting;
+import static org.elasticsearch.xpack.security.SecurityTemplateService.securityIndexMappingAndTemplateUpToDate;
 
 /**
  * ESNativeUsersStore is a {@code UserStore} that, instead of reading from a
@@ -337,7 +339,7 @@ public class NativeUsersStore extends AbstractComponent implements ClusterStateL
                 .execute(new ActionListener<UpdateResponse>() {
                     @Override
                     public void onResponse(UpdateResponse updateResponse) {
-                        assert updateResponse.isCreated() == false;
+                        assert updateResponse.getResult() == DocWriteResponse.Result.UPDATED;
                         clearRealmCache(request.username(), listener, null);
                     }
 
@@ -413,7 +415,7 @@ public class NativeUsersStore extends AbstractComponent implements ClusterStateL
                 .execute(new ActionListener<UpdateResponse>() {
                     @Override
                     public void onResponse(UpdateResponse updateResponse) {
-                        assert updateResponse.isCreated() == false;
+                        assert updateResponse.getResult() == DocWriteResponse.Result.UPDATED;
                         clearRealmCache(putUserRequest.username(), listener, false);
                     }
 
@@ -454,12 +456,13 @@ public class NativeUsersStore extends AbstractComponent implements ClusterStateL
                     @Override
                     public void onResponse(IndexResponse indexResponse) {
                         // if the document was just created, then we don't need to clear cache
-                        if (indexResponse.isCreated()) {
-                            listener.onResponse(indexResponse.isCreated());
+                        boolean created = indexResponse.getResult() == DocWriteResponse.Result.CREATED;
+                        if (created) {
+                            listener.onResponse(true);
                             return;
                         }
 
-                        clearRealmCache(putUserRequest.username(), listener, indexResponse.isCreated());
+                        clearRealmCache(putUserRequest.username(), listener, created);
                     }
 
                     @Override
@@ -483,7 +486,8 @@ public class NativeUsersStore extends AbstractComponent implements ClusterStateL
             client.delete(request, new ActionListener<DeleteResponse>() {
                 @Override
                 public void onResponse(DeleteResponse deleteResponse) {
-                    clearRealmCache(deleteUserRequest.username(), listener, deleteResponse.isFound());
+                    clearRealmCache(deleteUserRequest.username(), listener,
+                            deleteResponse.getResult() == DocWriteResponse.Result.DELETED);
                 }
 
                 @Override
@@ -510,9 +514,7 @@ public class NativeUsersStore extends AbstractComponent implements ClusterStateL
             return false;
         }
 
-        if (clusterState.metaData().templates().get(SecurityTemplateService.SECURITY_TEMPLATE_NAME) == null) {
-            logger.debug("native users template [{}] does not exist, so service cannot start",
-                    SecurityTemplateService.SECURITY_TEMPLATE_NAME);
+        if (securityIndexMappingAndTemplateUpToDate(clusterState, logger) == false) {
             return false;
         }
 

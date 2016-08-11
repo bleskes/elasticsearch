@@ -20,6 +20,7 @@ package org.elasticsearch.xpack.watcher.actions.index;
 import org.elasticsearch.ElasticsearchParseException;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.client.Client;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentBuilder;
@@ -30,6 +31,7 @@ import org.elasticsearch.search.aggregations.bucket.terms.Terms;
 import org.elasticsearch.search.sort.SortOrder;
 import org.elasticsearch.test.ESIntegTestCase;
 import org.elasticsearch.xpack.common.init.proxy.ClientProxy;
+import org.elasticsearch.xpack.security.InternalClient;
 import org.elasticsearch.xpack.watcher.actions.Action;
 import org.elasticsearch.xpack.watcher.actions.Action.Result.Status;
 import org.elasticsearch.xpack.watcher.execution.WatchExecutionContext;
@@ -204,8 +206,10 @@ public class IndexActionTests extends ESIntegTestCase {
             builder.field(IndexAction.Field.TIMEOUT.getPreferredName(), writeTimeout);
         }
         builder.endObject();
+        Client client = client();
+        InternalClient internalClient = new InternalClient(client.settings(), client.threadPool(), client, null);
 
-        IndexActionFactory actionParser = new IndexActionFactory(Settings.EMPTY, ClientProxy.fromClient(client()));
+        IndexActionFactory actionParser = new IndexActionFactory(Settings.EMPTY, internalClient);
         XContentParser parser = JsonXContent.jsonXContent.createParser(builder.bytes());
         parser.nextToken();
 
@@ -233,7 +237,10 @@ public class IndexActionTests extends ESIntegTestCase {
             }
         }
         builder.endObject();
-        IndexActionFactory actionParser = new IndexActionFactory(Settings.EMPTY,ClientProxy.fromClient(client()));
+        Client client = client();
+        InternalClient internalClient = new InternalClient(client.settings(), client.threadPool(), client, null);
+
+        IndexActionFactory actionParser = new IndexActionFactory(Settings.EMPTY, internalClient);
         XContentParser parser = JsonXContent.jsonXContent.createParser(builder.bytes());
         parser.nextToken();
         try {

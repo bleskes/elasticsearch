@@ -25,10 +25,7 @@ public class NodeStatsMonitoringDoc extends MonitoringDoc {
     private String nodeId;
     private boolean nodeMaster;
     private NodeStats nodeStats;
-
     private boolean mlockall;
-    private Double diskThresholdWaterMarkHigh;
-    private boolean diskThresholdDeciderEnabled;
 
     public NodeStatsMonitoringDoc(String monitoringId, String monitoringVersion) {
         super(monitoringId, monitoringVersion);
@@ -50,14 +47,6 @@ public class NodeStatsMonitoringDoc extends MonitoringDoc {
         this.mlockall = mlockall;
     }
 
-    public void setDiskThresholdWaterMarkHigh(Double diskThresholdWaterMarkHigh) {
-        this.diskThresholdWaterMarkHigh = diskThresholdWaterMarkHigh;
-    }
-
-    public void setDiskThresholdDeciderEnabled(boolean diskThresholdDeciderEnabled) {
-        this.diskThresholdDeciderEnabled = diskThresholdDeciderEnabled;
-    }
-
     public String getNodeId() {
         return nodeId;
     }
@@ -72,14 +61,6 @@ public class NodeStatsMonitoringDoc extends MonitoringDoc {
 
     public boolean isMlockall() {
         return mlockall;
-    }
-
-    public Double getDiskThresholdWaterMarkHigh() {
-        return diskThresholdWaterMarkHigh;
-    }
-
-    public boolean isDiskThresholdDeciderEnabled() {
-        return diskThresholdDeciderEnabled;
     }
 }
 

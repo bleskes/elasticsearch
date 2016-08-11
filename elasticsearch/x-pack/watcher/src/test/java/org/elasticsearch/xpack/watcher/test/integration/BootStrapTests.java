@@ -18,9 +18,9 @@
 
 package org.elasticsearch.xpack.watcher.test.integration;
 
-import org.elasticsearch.action.WriteConsistencyLevel;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.action.support.ActiveShardCount;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.test.junit.annotations.TestLogging;
@@ -153,7 +153,7 @@ public class BootStrapTests extends AbstractWatcherIntegrationTestCase {
                         .startObject("none").endObject()
                         .endObject()
                         .endObject())
-                .setConsistencyLevel(WriteConsistencyLevel.ALL)
+                .setWaitForActiveShards(ActiveShardCount.ALL)
                 .setRefreshPolicy(IMMEDIATE)
                 .get();
 
@@ -171,7 +171,7 @@ public class BootStrapTests extends AbstractWatcherIntegrationTestCase {
                         .startObject("none").endObject()
                         .endObject()
                         .endObject())
-                .setConsistencyLevel(WriteConsistencyLevel.ALL)
+                .setWaitForActiveShards(ActiveShardCount.ALL)
                 .setRefreshPolicy(IMMEDIATE)
                 .get();
 
@@ -189,7 +189,7 @@ public class BootStrapTests extends AbstractWatcherIntegrationTestCase {
                             .startObject("none").endObject()
                         .endObject()
                         .endObject())
-                .setConsistencyLevel(WriteConsistencyLevel.ALL)
+                .setWaitForActiveShards(ActiveShardCount.ALL)
                 .setRefreshPolicy(IMMEDIATE)
                 .get();
 
@@ -213,7 +213,7 @@ public class BootStrapTests extends AbstractWatcherIntegrationTestCase {
                             .field(event.type(), event)
                         .endObject()
                         .endObject())
-                .setConsistencyLevel(WriteConsistencyLevel.ALL)
+                .setWaitForActiveShards(ActiveShardCount.ALL)
                 .setRefreshPolicy(IMMEDIATE)
                 .get();
 
@@ -239,7 +239,7 @@ public class BootStrapTests extends AbstractWatcherIntegrationTestCase {
                                     .condition(compareCondition("ctx.payload.hits.total", CompareCondition.Op.EQ, 1L))
                                     .buildAsBytes(XContentType.JSON)
                     )
-                    .setConsistencyLevel(WriteConsistencyLevel.ALL)
+                    .setWaitForActiveShards(ActiveShardCount.ALL)
                     .get();
         }
 
@@ -282,7 +282,7 @@ public class BootStrapTests extends AbstractWatcherIntegrationTestCase {
             TriggeredWatch triggeredWatch = new TriggeredWatch(wid, event);
             client().prepareIndex(TriggeredWatchStore.INDEX_NAME, TriggeredWatchStore.DOC_TYPE, triggeredWatch.id().value())
                     .setSource(jsonBuilder().value(triggeredWatch))
-                    .setConsistencyLevel(WriteConsistencyLevel.ALL)
+                    .setWaitForActiveShards(ActiveShardCount.ALL)
                     .get();
         }
 
@@ -333,7 +333,7 @@ public class BootStrapTests extends AbstractWatcherIntegrationTestCase {
             TriggeredWatch triggeredWatch = new TriggeredWatch(wid, event);
             client().prepareIndex(TriggeredWatchStore.INDEX_NAME, TriggeredWatchStore.DOC_TYPE, triggeredWatch.id().value())
                     .setSource(jsonBuilder().value(triggeredWatch))
-                    .setConsistencyLevel(WriteConsistencyLevel.ALL)
+                    .setWaitForActiveShards(ActiveShardCount.ALL)
                     .get();
         }
 

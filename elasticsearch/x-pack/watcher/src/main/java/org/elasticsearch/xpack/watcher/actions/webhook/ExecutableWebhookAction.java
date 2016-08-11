@@ -19,6 +19,7 @@
 package org.elasticsearch.xpack.watcher.actions.webhook;
 
 import org.elasticsearch.common.logging.ESLogger;
+import org.elasticsearch.xpack.common.text.TextTemplateEngine;
 import org.elasticsearch.xpack.watcher.actions.Action;
 import org.elasticsearch.xpack.watcher.actions.ExecutableAction;
 import org.elasticsearch.xpack.watcher.execution.WatchExecutionContext;
@@ -26,7 +27,6 @@ import org.elasticsearch.xpack.watcher.support.Variables;
 import org.elasticsearch.xpack.common.http.HttpClient;
 import org.elasticsearch.xpack.common.http.HttpRequest;
 import org.elasticsearch.xpack.common.http.HttpResponse;
-import org.elasticsearch.xpack.common.text.TextTemplateEngine;
 import org.elasticsearch.xpack.watcher.watch.Payload;
 
 import java.util.Map;
