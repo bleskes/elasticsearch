@@ -27,6 +27,9 @@
 
 package com.prelert.job.detectionrules.verification;
 
+import java.util.EnumSet;
+
+import com.prelert.job.condition.Operator;
 import com.prelert.job.condition.verification.ConditionVerifier;
 import com.prelert.job.detectionrules.RuleCondition;
 import com.prelert.job.errorcodes.ErrorCodes;
@@ -35,6 +38,9 @@ import com.prelert.job.messages.Messages;
 
 public final class RuleConditionVerifier
 {
+    private static EnumSet<Operator> VALID_CONDITION_OPERATORS = EnumSet.of(Operator.LT,
+            Operator.LTE, Operator.GT, Operator.GTE);
+
     private RuleConditionVerifier()
     {
         // Hide default constructor
@@ -101,6 +107,7 @@ public final class RuleConditionVerifier
                     Messages.JOB_CONFIG_DETECTION_RULE_CONDITION_NUMERICAL_WITH_FIELD_NAME_REQUIRES_FIELD_VALUE);
             throw new JobConfigurationException(msg, ErrorCodes.DETECTOR_RULE_CONDITION_MISSING_FIELD);
         }
+        checkNumericalConditionOparatorsAreValid(ruleCondition);
         ConditionVerifier.verify(ruleCondition.getCondition());
     }
 
@@ -135,6 +142,18 @@ public final class RuleConditionVerifier
                     Messages.JOB_CONFIG_DETECTION_RULE_CONDITION_MISSING_FIELD_NAME,
                     ruleCondition.getFieldValue());
             throw new JobConfigurationException(msg, ErrorCodes.DETECTOR_RULE_CONDITION_MISSING_FIELD);
+        }
+    }
+
+    private static void checkNumericalConditionOparatorsAreValid(RuleCondition ruleCondition)
+            throws JobConfigurationException
+    {
+        Operator operator = ruleCondition.getCondition().getOperator();
+        if (!VALID_CONDITION_OPERATORS.contains(operator))
+        {
+            String msg = Messages.getMessage(
+                    Messages.JOB_CONFIG_DETECTION_RULE_CONDITION_NUMERICAL_INVALID_OPERATOR, operator);
+            throw new JobConfigurationException(msg, ErrorCodes.CONDITION_INVALID_ARGUMENT);
         }
     }
 }
