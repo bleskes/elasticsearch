@@ -123,17 +123,21 @@ class DetectorsUpdater extends AbstractUpdater
 
         if (updateParams.containsKey(DESCRIPTION))
         {
-            Object description = updateParams.get(DESCRIPTION);
-            if (!(description instanceof String))
-            {
-                String msg = Messages.getMessage(
-                        Messages.JOB_CONFIG_UPDATE_DETECTORS_DESCRIPTION_SHOULD_BE_STRING, description);
-                throw new JobConfigurationException(msg, ErrorCodes.INVALID_VALUE);
-            }
-            parsedParams.detectorDescription = (String) description;
+            parsedParams.detectorDescription = parseDescription(updateParams.get(DESCRIPTION));
         }
 
         m_Updates.add(parsedParams);
+    }
+
+    private static String parseDescription(Object description) throws JobConfigurationException
+    {
+        if (!(description instanceof String))
+        {
+            String msg = Messages.getMessage(
+                    Messages.JOB_CONFIG_UPDATE_DETECTORS_DESCRIPTION_SHOULD_BE_STRING, description);
+            throw new JobConfigurationException(msg, ErrorCodes.INVALID_VALUE);
+        }
+        return (String) description;
     }
 
     private void validateDetectorIndex(UpdateParams update, int detectorsCount)
