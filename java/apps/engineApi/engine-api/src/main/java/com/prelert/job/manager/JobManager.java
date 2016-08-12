@@ -77,6 +77,7 @@ import com.prelert.job.alert.AlertObserver;
 import com.prelert.job.audit.Auditor;
 import com.prelert.job.config.DefaultFrequency;
 import com.prelert.job.data.extraction.DataExtractorFactory;
+import com.prelert.job.detectionrules.DetectionRule;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.exceptions.JobConfigurationException;
 import com.prelert.job.exceptions.JobInUseException;
@@ -1133,6 +1134,12 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
             throws JobException
     {
         return m_JobProvider.updateDetectorDescription(jobId, detectorIndex, newDescription);
+    }
+
+    public boolean updateDetectorRules(String jobId, int detectorIndex,
+            List<DetectionRule> newDetectorRules) throws JobException
+    {
+        return m_JobProvider.updateDetectorRules(jobId, detectorIndex, newDetectorRules);
     }
 
     public boolean updateSchedulerConfig(String jobId, SchedulerConfig newSchedulerConfig)

@@ -135,6 +135,7 @@ public final class Messages
     public static final String JOB_CONFIG_UPDATE_DETECTORS_DETECTOR_INDEX_SHOULD_BE_INTEGER = "job.config.update.detectors.detector.index.should.be.integer";
     public static final String JOB_CONFIG_UPDATE_DETECTORS_MISSING_PARAMS = "job.config.update.detectors.missing.params";
     public static final String JOB_CONFIG_UPDATE_DETECTORS_DESCRIPTION_SHOULD_BE_STRING = "job.config.update.detectors.description.should.be.string";
+    public static final String JOB_CONFIG_UPDATE_DETECTOR_RULES_PARSE_ERROR = "job.config.update.detectors.rules.parse.error";
     public static final String JOB_CONFIG_UPDATE_FAILED = "job.config.update.failed";
     public static final String JOB_CONFIG_UPDATE_INVALID_KEY = "job.config.update.invalid.key";
     public static final String JOB_CONFIG_UPDATE_IGNORE_DOWNTIME_PARSE_ERROR = "job.config.update.ignore.downtime.parse.error";

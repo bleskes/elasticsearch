@@ -42,7 +42,6 @@ import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
-import com.prelert.job.persistence.*;
 import org.apache.log4j.Logger;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
@@ -94,7 +93,14 @@ import com.prelert.job.UnknownJobException;
 import com.prelert.job.audit.AuditActivity;
 import com.prelert.job.audit.AuditMessage;
 import com.prelert.job.audit.Auditor;
+import com.prelert.job.detectionrules.DetectionRule;
 import com.prelert.job.errorcodes.ErrorCodes;
+import com.prelert.job.persistence.BatchedDocumentsIterator;
+import com.prelert.job.persistence.BucketsQueryBuilder;
+import com.prelert.job.persistence.DataStoreException;
+import com.prelert.job.persistence.JobProvider;
+import com.prelert.job.persistence.QueryPage;
+import com.prelert.job.persistence.RecordsQueryBuilder;
 import com.prelert.job.quantiles.Quantiles;
 import com.prelert.job.results.AnomalyRecord;
 import com.prelert.job.results.Bucket;
@@ -1334,6 +1340,27 @@ public class ElasticsearchJobProvider implements JobProvider
                                 JobDetails.TYPE, jobId,
                                 ElasticsearchScripts.newUpdateDetectorDescription(
                                         detectorIndex, newDescription));
+    }
+
+    @Override
+    public boolean updateDetectorRules(String jobId, int detectorIndex, List<DetectionRule> newDetectorRules)
+            throws JobException
+    {
+        List<Map<String, Object>> asListOfMaps = new ArrayList<>();
+        for (DetectionRule rule : newDetectorRules)
+        {
+            asListOfMaps.add(m_ObjectMapper.convertValue(rule, new TypeReference<Map<String, Object>>() {}));
+        }
+
+        LOGGER.trace("ES API CALL: update detector rules for job " + jobId + ", detector at index "
+                + detectorIndex + " by running Groovy script update-detector-rules with params newDetectorRules="
+                + asListOfMaps);
+
+        return ElasticsearchScripts.updateViaScript(m_Client,
+                            new ElasticsearchJobId(jobId).getIndex(),
+                            JobDetails.TYPE, jobId,
+                            ElasticsearchScripts.newUpdateDetectorRules(detectorIndex, asListOfMaps));
+
     }
 
     @Override

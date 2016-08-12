@@ -27,6 +27,7 @@
 
 package com.prelert.rs.job.update;
 
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -34,29 +35,41 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.collect.Sets;
+import com.prelert.job.Detector;
 import com.prelert.job.JobDetails;
 import com.prelert.job.JobException;
 import com.prelert.job.config.DefaultDetectorDescription;
+import com.prelert.job.detectionrules.DetectionRule;
+import com.prelert.job.detectionrules.verification.DetectionRuleVerifier;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.exceptions.JobConfigurationException;
 import com.prelert.job.manager.JobManager;
 import com.prelert.job.messages.Messages;
+import com.prelert.rs.provider.JobConfigurationParseException;
 
 class DetectorsUpdater extends AbstractUpdater
 {
     private static final String DETECTOR_INDEX = "index";
     private static final String DESCRIPTION = "description";
-    private static final Set<String> REQUIRED_PARAMS = Sets.newLinkedHashSet(Arrays.asList(DETECTOR_INDEX));
-    private static final Set<String> OPTIONAL_PARAMS = Sets.newLinkedHashSet(Arrays.asList(DESCRIPTION));
+    private static final String DETECTOR_RULES = "detectorRules";
+    private static final Set<String> REQUIRED_PARAMS = Sets.newLinkedHashSet(
+            Arrays.asList(DETECTOR_INDEX));
+    private static final Set<String> OPTIONAL_PARAMS = Sets.newLinkedHashSet(
+            Arrays.asList(DESCRIPTION, DETECTOR_RULES));
 
+    private final StringWriter m_ConfigWriter;
     private List<UpdateParams> m_Updates;
 
-    public DetectorsUpdater(JobManager jobManager, JobDetails job, String updateKey)
+    public DetectorsUpdater(JobManager jobManager, JobDetails job, String updateKey, StringWriter
+            configWriter)
     {
         super(jobManager, job, updateKey);
         m_Updates = new ArrayList<>();
+        m_ConfigWriter = configWriter;
     }
 
     @Override
@@ -69,6 +82,7 @@ class DetectorsUpdater extends AbstractUpdater
         {
             validateDetectorIndex(update, detectorsCount);
             fillDefaultDescriptionIfSetEmpty(job, update);
+            validateDetectorRules(job, update);
         }
     }
 
@@ -119,6 +133,11 @@ class DetectorsUpdater extends AbstractUpdater
             parsedParams.detectorDescription = parseDescription(updateParams.get(DESCRIPTION));
         }
 
+        if (updateParams.containsKey(DETECTOR_RULES))
+        {
+            parsedParams.detectorRules = parseDetectorRules(updateParams.get(DETECTOR_RULES));
+        }
+
         m_Updates.add(parsedParams);
     }
 
@@ -145,6 +164,20 @@ class DetectorsUpdater extends AbstractUpdater
         return (String) description;
     }
 
+    private static List<DetectionRule> parseDetectorRules(Object rules) throws JobConfigurationException
+    {
+        try
+        {
+            return JSON_MAPPER.convertValue(rules, new TypeReference<List<DetectionRule>>() {});
+        }
+        catch (IllegalArgumentException e)
+        {
+            throw new JobConfigurationParseException(
+                    Messages.getMessage(Messages.JOB_CONFIG_UPDATE_DETECTOR_RULES_PARSE_ERROR),
+                    e.getCause(), ErrorCodes.INVALID_VALUE);
+        }
+    }
+
     private void validateDetectorIndex(UpdateParams update, int detectorsCount)
             throws JobConfigurationException
     {
@@ -166,13 +199,26 @@ class DetectorsUpdater extends AbstractUpdater
         }
     }
 
+    private static void validateDetectorRules(JobDetails job, UpdateParams update)
+            throws JobConfigurationException
+    {
+        if (update.detectorRules == null || update.detectorRules.isEmpty())
+        {
+            return;
+        }
+        Detector detector = job.getAnalysisConfig().getDetectors().get(update.detectorIndex);
+        for (DetectionRule rule : update.detectorRules)
+        {
+            DetectionRuleVerifier.verify(rule, detector);
+        }
+    }
+
     @Override
     void commit() throws JobException
     {
         for (UpdateParams update : m_Updates)
         {
-            if (jobManager().updateDetectorDescription(
-                    jobId(), update.detectorIndex, update.detectorDescription) == false)
+            if (!update.commit())
             {
                 throw new JobConfigurationException(
                         Messages.getMessage(Messages.JOB_CONFIG_UPDATE_FAILED),
@@ -181,14 +227,57 @@ class DetectorsUpdater extends AbstractUpdater
         }
     }
 
-    private static class UpdateParams
+    private class UpdateParams
     {
         final int detectorIndex;
         String detectorDescription;
+        List<DetectionRule> detectorRules;
 
         public UpdateParams(int detectorIndex)
         {
             this.detectorIndex = detectorIndex;
+        }
+
+        boolean commit() throws JobException
+        {
+            return commitDescription() && commitRules();
+        }
+
+        private boolean commitDescription() throws JobException
+        {
+            return detectorDescription == null
+                    || jobManager().updateDetectorDescription(jobId(), detectorIndex, detectorDescription);
+        }
+
+        private boolean commitRules() throws JobException
+        {
+            if (detectorRules == null)
+            {
+                return true;
+            }
+            if (jobManager().updateDetectorRules(jobId(), detectorIndex, detectorRules))
+            {
+                writeRules();
+                return true;
+            }
+            return false;
+        }
+
+        private void writeRules() throws JobConfigurationException
+        {
+            String rulesJson = "";
+            try
+            {
+                rulesJson = JSON_MAPPER.writeValueAsString(detectorRules);
+            }
+            catch (JsonProcessingException e)
+            {
+                throw new JobConfigurationException("Failed to write detectorRules",
+                        ErrorCodes.UNKNOWN_ERROR, e);
+            }
+            m_ConfigWriter.write("[detectorRules]\n");
+            m_ConfigWriter.write("detectorIndex = " + detectorIndex + "\n");
+            m_ConfigWriter.write("rulesJson = " + rulesJson + "\n");
         }
     }
 }

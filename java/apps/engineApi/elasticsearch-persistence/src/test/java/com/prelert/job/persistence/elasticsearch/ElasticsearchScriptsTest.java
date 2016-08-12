@@ -29,6 +29,7 @@ package com.prelert.job.persistence.elasticsearch;
 
 import static org.junit.Assert.assertEquals;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -79,6 +80,17 @@ public class ElasticsearchScriptsTest
         assertEquals(2, script.getParams().size());
         assertEquals(2, script.getParams().get("detectorIndex"));
         assertEquals("Almost Blue", script.getParams().get("newDescription"));
+    }
+
+    @Test
+    public void testNewUpdateDetectorRules()
+    {
+        List<Map<String, Object>> newRules = new ArrayList<>();
+        Script script = ElasticsearchScripts.newUpdateDetectorRules(1, newRules);
+        assertEquals("update-detector-rules", script.getScript());
+        assertEquals(2, script.getParams().size());
+        assertEquals(1, script.getParams().get("detectorIndex"));
+        assertEquals(newRules, script.getParams().get("newDetectorRules"));
     }
 
     @Test
