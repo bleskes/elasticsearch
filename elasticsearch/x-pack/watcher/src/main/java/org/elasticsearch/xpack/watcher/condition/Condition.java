@@ -43,6 +43,7 @@ public interface Condition extends ToXContent {
         protected final boolean met;
 
         public Result(String type, boolean met) {
+            // TODO: FAILURE status is never used, but a some code assumes that it is used
             this.status = Status.SUCCESS;
             this.type = type;
             this.met = met;
@@ -58,7 +59,6 @@ public interface Condition extends ToXContent {
         }
 
         public boolean met() {
-            assert status == Status.SUCCESS;
             return met;
         }
 
