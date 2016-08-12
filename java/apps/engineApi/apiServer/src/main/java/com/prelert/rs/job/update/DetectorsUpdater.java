@@ -111,15 +111,8 @@ class DetectorsUpdater extends AbstractUpdater
 
     private void parseUpdateParams(Map<String, Object> updateParams) throws JobConfigurationException
     {
-        Object detectorIndex = updateParams.get(DETECTOR_INDEX);
-        if (!(detectorIndex instanceof Integer))
-        {
-            String msg = Messages.getMessage(
-                    Messages.JOB_CONFIG_UPDATE_DETECTORS_DETECTOR_INDEX_SHOULD_BE_INTEGER,
-                    detectorIndex);
-            throw new JobConfigurationException(msg, ErrorCodes.INVALID_VALUE);
-        }
-        UpdateParams parsedParams = new UpdateParams((int) detectorIndex);
+        UpdateParams parsedParams = new UpdateParams(
+                parseDetectorIndex(updateParams.get(DETECTOR_INDEX)));
 
         if (updateParams.containsKey(DESCRIPTION))
         {
@@ -127,6 +120,18 @@ class DetectorsUpdater extends AbstractUpdater
         }
 
         m_Updates.add(parsedParams);
+    }
+
+    private static int parseDetectorIndex(Object detectorIndex) throws JobConfigurationException
+    {
+        if (!(detectorIndex instanceof Integer))
+        {
+            String msg = Messages.getMessage(
+                    Messages.JOB_CONFIG_UPDATE_DETECTORS_DETECTOR_INDEX_SHOULD_BE_INTEGER,
+                    detectorIndex);
+            throw new JobConfigurationException(msg, ErrorCodes.INVALID_VALUE);
+        }
+        return (int) detectorIndex;
     }
 
     private static String parseDescription(Object description) throws JobConfigurationException
