@@ -54,7 +54,7 @@ import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.exceptions.JobConfigurationException;
 import com.prelert.job.manager.JobManager;
 
-public class DetectorDescriptionUpdaterTest
+public class DetectorsUpdaterTest
 {
     private static final String JOB_ID = "foo";
 
@@ -89,7 +89,7 @@ public class DetectorDescriptionUpdaterTest
     public void testPrepareUpdate_GivenParamIsNotJsonObject() throws JobException, IOException
     {
         m_ExpectedException.expect(JobConfigurationException.class);
-        m_ExpectedException.expectMessage("Invalid parameters: expected [index, description]");
+        m_ExpectedException.expectMessage("Invalid update value for detectors: requires [index] and at least one of [description]");
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_VALUE));
 
@@ -102,7 +102,7 @@ public class DetectorDescriptionUpdaterTest
     public void testPrepareUpdate_GivenMissingDescriptionParam() throws JobException, IOException
     {
         m_ExpectedException.expect(JobConfigurationException.class);
-        m_ExpectedException.expectMessage("Invalid parameters: expected [index, description]");
+        m_ExpectedException.expectMessage("Invalid update value for detectors: requires [index] and at least one of [description]");
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_VALUE));
 
@@ -115,7 +115,7 @@ public class DetectorDescriptionUpdaterTest
     public void testPrepareUpdate_GivenMissingIndexParam() throws JobException, IOException
     {
         m_ExpectedException.expect(JobConfigurationException.class);
-        m_ExpectedException.expectMessage("Invalid parameters: expected [index, description]");
+        m_ExpectedException.expectMessage("Invalid update value for detectors: requires [index] and at least one of [description]");
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_VALUE));
 
@@ -128,7 +128,7 @@ public class DetectorDescriptionUpdaterTest
     public void testPrepareUpdate_GivenEmptyObject() throws JobException, IOException
     {
         m_ExpectedException.expect(JobConfigurationException.class);
-        m_ExpectedException.expectMessage("Invalid parameters: expected [index, description]");
+        m_ExpectedException.expectMessage("Invalid update value for detectors: requires [index] and at least one of [description]");
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_VALUE));
 
@@ -227,7 +227,7 @@ public class DetectorDescriptionUpdaterTest
         givenJobHasNDetectors(3);
         givenUpdateSucceeds(1, "Ipanema");
 
-        DetectorDescriptionUpdater updater = createUpdater();
+        DetectorsUpdater updater = createUpdater();
         updater.prepareUpdate(node);
 
         verify(m_JobManager, never()).updateDetectorDescription(JOB_ID, 1, "Ipanema");
@@ -245,7 +245,7 @@ public class DetectorDescriptionUpdaterTest
 
         JsonNode node = new ObjectMapper().readTree("[{\"index\":0, \"description\":\"bar\"}]");
 
-        DetectorDescriptionUpdater updater = createUpdater();
+        DetectorsUpdater updater = createUpdater();
         updater.prepareUpdate(node);
         updater.commit();
     }
@@ -257,7 +257,7 @@ public class DetectorDescriptionUpdaterTest
         givenJobHasNDetectors(3);
         givenUpdateSucceeds(1, "Ipanema");
 
-        DetectorDescriptionUpdater updater = createUpdater();
+        DetectorsUpdater updater = createUpdater();
         updater.prepareUpdate(node);
         updater.commit();
 
@@ -274,7 +274,7 @@ public class DetectorDescriptionUpdaterTest
         m_Job.getAnalysisConfig().getDetectors().get(1).setByFieldName("airline");
         givenUpdateSucceeds(1, "mean(responsetime) by airline");
 
-        DetectorDescriptionUpdater updater = createUpdater();
+        DetectorsUpdater updater = createUpdater();
         updater.prepareUpdate(node);
         updater.commit();
 
@@ -290,7 +290,7 @@ public class DetectorDescriptionUpdaterTest
         givenUpdateSucceeds(1, "Ipanema");
         givenUpdateSucceeds(0, "A Train");
 
-        DetectorDescriptionUpdater updater = createUpdater();
+        DetectorsUpdater updater = createUpdater();
         updater.prepareUpdate(node);
         updater.commit();
 
@@ -298,9 +298,9 @@ public class DetectorDescriptionUpdaterTest
         verify(m_JobManager).updateDetectorDescription(JOB_ID, 0, "A Train");
     }
 
-    private DetectorDescriptionUpdater createUpdater()
+    private DetectorsUpdater createUpdater()
     {
-        return new DetectorDescriptionUpdater(m_JobManager, m_Job, "detectors");
+        return new DetectorsUpdater(m_JobManager, m_Job, "detectors");
     }
 
     private void givenJobHasNDetectors(int n)

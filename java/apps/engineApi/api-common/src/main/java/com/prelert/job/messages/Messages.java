@@ -130,11 +130,11 @@ public final class Messages
     public static final String JOB_CONFIG_UPDATE_CATEGORIZATION_FILTERS_INVALID = "job.config.update.categorization.filters.invalid";
     public static final String JOB_CONFIG_UPDATE_CUSTOM_SETTINGS_INVALID = "job.config.update.custom.settings.invalid";
     public static final String JOB_CONFIG_UPDATE_DESCRIPTION_INVALID = "job.config.update.description.invalid";
-    public static final String JOB_CONFIG_UPDATE_DETECTOR_DESCRIPTION_INVALID = "job.config.update.detector.description.invalid";
-    public static final String JOB_CONFIG_UPDATE_DETECTOR_DESCRIPTION_INVALID_DETECTOR_INDEX = "job.config.update.detector.description.invalid.detector.index";
-    public static final String JOB_CONFIG_UPDATE_DETECTOR_DESCRIPTION_DETECTOR_INDEX_SHOULD_BE_INTEGER = "job.config.update.detector.description.detector.index.should.be.integer";
-    public static final String JOB_CONFIG_UPDATE_DETECTOR_DESCRIPTION_MISSING_PARAMS = "job.config.update.detector.description.missing.params";
-    public static final String JOB_CONFIG_UPDATE_DETECTOR_DESCRIPTION_SHOULD_BE_STRING = "job.config.update.detector.description.should.be.string";
+    public static final String JOB_CONFIG_UPDATE_DETECTORS_INVALID = "job.config.update.detectors.invalid";
+    public static final String JOB_CONFIG_UPDATE_DETECTORS_INVALID_DETECTOR_INDEX = "job.config.update.detectors.invalid.detector.index";
+    public static final String JOB_CONFIG_UPDATE_DETECTORS_DETECTOR_INDEX_SHOULD_BE_INTEGER = "job.config.update.detectors.detector.index.should.be.integer";
+    public static final String JOB_CONFIG_UPDATE_DETECTORS_MISSING_PARAMS = "job.config.update.detectors.missing.params";
+    public static final String JOB_CONFIG_UPDATE_DETECTORS_DESCRIPTION_SHOULD_BE_STRING = "job.config.update.detectors.description.should.be.string";
     public static final String JOB_CONFIG_UPDATE_FAILED = "job.config.update.failed";
     public static final String JOB_CONFIG_UPDATE_INVALID_KEY = "job.config.update.invalid.key";
     public static final String JOB_CONFIG_UPDATE_IGNORE_DOWNTIME_PARSE_ERROR = "job.config.update.ignore.downtime.parse.error";
