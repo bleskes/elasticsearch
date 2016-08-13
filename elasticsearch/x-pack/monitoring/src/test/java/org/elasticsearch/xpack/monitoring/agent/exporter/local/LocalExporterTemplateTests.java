@@ -96,4 +96,10 @@ public class LocalExporterTemplateTests extends AbstractExporterTemplateTestCase
         waitNoPendingTasksOnAll();
         assertPipelineExists(name);
     }
+
+    @AwaitsFix(bugUrl = "testing locally to determine why this is a race condition on Jenkins")
+    @Override
+    public void testCreateWhenNoExistingTemplates() throws Exception {
+
+    }
 }
