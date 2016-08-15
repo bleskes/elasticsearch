@@ -36,6 +36,7 @@ import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
@@ -45,6 +46,9 @@ import org.elasticsearch.action.admin.cluster.health.ClusterHealthRequestBuilder
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
 import org.elasticsearch.action.admin.indices.create.CreateIndexRequestBuilder;
 import org.elasticsearch.action.admin.indices.create.CreateIndexResponse;
+import org.elasticsearch.action.admin.indices.delete.DeleteIndexAction;
+import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
+import org.elasticsearch.action.admin.indices.delete.DeleteIndexResponse;
 import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsRequest;
 import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsResponse;
 import org.elasticsearch.action.get.GetRequestBuilder;
@@ -60,6 +64,7 @@ import org.elasticsearch.client.Client;
 import org.elasticsearch.client.ClusterAdminClient;
 import org.elasticsearch.client.IndicesAdminClient;
 import org.elasticsearch.cluster.health.ClusterHealthStatus;
+import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentBuilder;
@@ -171,6 +176,29 @@ public class MockClientBuilder
         }).when(m_IndicesAdminClient).exists(any(IndicesExistsRequest.class));
         when(actionFuture.get()).thenReturn(new IndicesExistsResponse(exists));
 
+        return this;
+    }
+
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    public MockClientBuilder addIndicesDeleteResponse(String index, boolean exists, boolean exception) throws InterruptedException, ExecutionException, IOException
+    {
+        DeleteIndexResponse response = DeleteIndexAction.INSTANCE.newResponse();
+        StreamInput si = mock(StreamInput.class);
+        when(si.readByte()).thenReturn((byte) 0x41);
+        when(si.readMap()).thenReturn(mock(Map.class));
+        response.readFrom(si);
+
+        ActionFuture actionFuture = mock(ActionFuture.class);
+        ArgumentCaptor<DeleteIndexRequest> requestCaptor = ArgumentCaptor.forClass(DeleteIndexRequest.class);
+
+        when(m_IndicesAdminClient.delete(requestCaptor.capture())).thenReturn(actionFuture);
+        doAnswer(invocation ->
+        {
+            DeleteIndexRequest request = (DeleteIndexRequest) invocation.getArguments()[0];
+            return request.indices()[0].equals(index) ? actionFuture : null;
+        }).when(m_IndicesAdminClient).delete(any(DeleteIndexRequest.class));
+        when(actionFuture.get()).thenReturn(response);
+        when(actionFuture.actionGet()).thenReturn(response);
         return this;
     }
 

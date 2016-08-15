@@ -68,6 +68,7 @@ import com.prelert.job.SchedulerState;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.errorcodes.ErrorCodeMatcher;
 import com.prelert.job.errorcodes.ErrorCodes;
+import com.prelert.job.persistence.DataStoreException;
 import com.prelert.job.persistence.QueryPage;
 import com.prelert.job.quantiles.Quantiles;
 import com.prelert.job.results.BucketProcessingTime;
@@ -553,6 +554,24 @@ public class ElasticsearchJobProviderTest
         Map<String, Object> response = m_MapCaptor.getValue();
         assertTrue(response.get(JobDetails.STATUS).equals(JobStatus.CLOSING));
         assertTrue(response.get(JobDetails.FINISHED_TIME).equals(now));
+    }
+
+    @Test
+    public void testDeleteJob() throws InterruptedException, ExecutionException, UnknownJobException, DataStoreException, IOException
+    {
+        String jobId = "ThisIsMyJob";
+        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME)
+                .addClusterStatusYellowResponse()
+                .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true);
+        Client client = clientBuilder.build();
+        ElasticsearchJobProvider provider = createProvider(client);
+        clientBuilder.resetIndices();
+        clientBuilder.addIndicesExistsResponse("prelertresults-" + jobId, true)
+                     .addIndicesDeleteResponse("prelertresults-" + jobId,  true,  false);
+        client = clientBuilder.build();
+
+
+        assertTrue(provider.deleteJob(jobId));
     }
 
     private ElasticsearchJobProvider createProvider(Client client)
