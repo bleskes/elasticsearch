@@ -140,7 +140,8 @@ public class ProcessFactory
                 job.getSchedulerConfig(), new TransformConfigs(job.getTransforms()), logger,
                 sr,
                 m_ResultsReaderFactory.newResultsParser(jobId,
-                                        nativeProcess.getInputStream(), logger),
+                                        nativeProcess.getInputStream(), logger,
+                                        job.getAnalysisConfig().getUsePerPartitionNormalization()),
                 filesToDelete
                 );
 

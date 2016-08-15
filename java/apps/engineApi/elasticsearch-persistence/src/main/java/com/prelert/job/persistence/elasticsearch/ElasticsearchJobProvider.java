@@ -111,6 +111,7 @@ import com.prelert.job.results.BucketProcessingTime;
 import com.prelert.job.results.CategoryDefinition;
 import com.prelert.job.results.Influencer;
 import com.prelert.job.results.ModelDebugOutput;
+import com.prelert.job.results.PartitionNormalisedProb;
 import com.prelert.job.usage.Usage;
 
 public class ElasticsearchJobProvider implements JobProvider, ListProvider
@@ -473,6 +474,8 @@ public class ElasticsearchJobProvider implements JobProvider, ListProvider
             XContentBuilder influencerMapping = ElasticsearchMappings.influencerMapping(influencers);
             XContentBuilder modelDebugMapping = ElasticsearchMappings.modelDebugOutputMapping(termFields);
             XContentBuilder processingTimeMapping = ElasticsearchMappings.processingTimeMapping();
+            XContentBuilder partitionScoreMapping = ElasticsearchMappings.bucketPartitionMaxNormalizedScores();
+
 
             ElasticsearchJobId elasticJobId = new ElasticsearchJobId(job.getId());
 
@@ -494,6 +497,7 @@ public class ElasticsearchJobProvider implements JobProvider, ListProvider
                     .addMapping(Influencer.TYPE, influencerMapping)
                     .addMapping(ModelDebugOutput.TYPE, modelDebugMapping)
                     .addMapping(BucketProcessingTime.TYPE, processingTimeMapping)
+                    .addMapping(PartitionNormalisedProb.TYPE, partitionScoreMapping)
                     .get();
             LOGGER.trace("ES API CALL: wait for yellow status " + elasticJobId.getId());
             m_Client.admin().cluster().prepareHealth(elasticJobId.getIndex())

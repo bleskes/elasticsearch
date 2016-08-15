@@ -34,6 +34,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.function.Supplier;
 
 import org.apache.log4j.Logger;
@@ -62,6 +63,7 @@ import com.prelert.job.results.BucketProcessingTime;
 import com.prelert.job.results.CategoryDefinition;
 import com.prelert.job.results.Influencer;
 import com.prelert.job.results.ModelDebugOutput;
+import com.prelert.job.results.PartitionNormalisedProb;
 
 /**
  * Saves result Buckets and Quantiles to Elasticsearch<br>
@@ -184,6 +186,35 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
                     LOGGER.error("Bulk index of AnomalyRecord has errors: "
                             + addRecordsResponse.buildFailureMessage());
                 }
+            }
+
+            if (bucket.getPerPartitionMaxProbability().isEmpty() == false)
+            {
+
+                XContentBuilder builder = jsonBuilder();
+                ElasticsearchStorageSerialiser serialiser =
+                                    new ElasticsearchStorageSerialiser(builder);
+
+                serialiser.startObject()
+                            .addTimestamp(bucket.getTimestamp())
+                            .add(JOB_ID_NAME, m_JobId.getId());
+                serialiser.startList(PartitionNormalisedProb.PARTITION_NORMALIZED_PROBS);
+                for (Entry<String, Double> entry : bucket.getPerPartitionMaxProbability().entrySet())
+                {
+                    serialiser.startObject()
+                        .add(AnomalyRecord.PARTITION_FIELD_VALUE, entry.getKey())
+                        .add(Bucket.MAX_NORMALIZED_PROBABILITY, entry.getValue())
+                        .endObject();
+                }
+                serialiser.endList().endObject();
+
+
+                LOGGER.trace("ES API CALL: index type " + PartitionNormalisedProb.TYPE +
+                        " to index " + m_JobId.getIndex() + " at epoch " + bucket.getEpoch());
+                response = m_Client.prepareIndex(m_JobId.getIndex(), PartitionNormalisedProb.TYPE)
+                        .setSource(builder)
+                        .setParent(bucket.getId())
+                        .execute().actionGet();
             }
         }
         catch (IOException e)

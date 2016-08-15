@@ -67,7 +67,7 @@ class ScoresUpdater
 
     private final String m_JobId;
     private final JobProvider m_JobProvider;
-    private final JobRenormaliser m_JobRenormaliser;
+    private final JobRenormaliser m_UpdatesPersister;
     private final NormaliserFactory m_NormaliserFactory;
     private int m_BucketSpan;
     private long m_NormalisationWindow;
@@ -78,7 +78,7 @@ class ScoresUpdater
     {
         m_JobId = jobId;
         m_JobProvider = Objects.requireNonNull(jobProvider);
-        m_JobRenormaliser = Objects.requireNonNull(jobRenormaliser);
+        m_UpdatesPersister = Objects.requireNonNull(jobRenormaliser);
         m_NormaliserFactory = Objects.requireNonNull(normaliserFactory);
     }
 
@@ -256,7 +256,7 @@ class ScoresUpdater
                 logger.trace("ES API CALL: update ID " + bucketId + " type " + Bucket.TYPE +
                         " for job " + m_JobId + " using map of new values");
 
-                m_JobRenormaliser.updateBucket(bucket);
+                m_UpdatesPersister.updateBucket(bucket);
 
                 ++counts[0];
             }
@@ -303,7 +303,7 @@ class ScoresUpdater
 
         if (!toUpdate.isEmpty())
         {
-            m_JobRenormaliser.updateRecords(bucket.getId(), toUpdate);
+            m_UpdatesPersister.updateRecords(bucket.getId(), toUpdate);
         }
     }
 
@@ -331,7 +331,7 @@ class ScoresUpdater
             {
                 if (influencer.hadBigNormalisedUpdate())
                 {
-                    m_JobRenormaliser.updateInfluencer(influencer);
+                    m_UpdatesPersister.updateInfluencer(influencer);
                     ++counts[0];
                 }
                 else

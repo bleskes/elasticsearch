@@ -62,6 +62,7 @@ import com.prelert.job.results.CategoryDefinition;
 import com.prelert.job.results.Influence;
 import com.prelert.job.results.Influencer;
 import com.prelert.job.results.ModelDebugOutput;
+import com.prelert.job.results.PartitionNormalisedProb;
 import com.prelert.job.transform.TransformConfig;
 import com.prelert.job.usage.Usage;
 
@@ -584,6 +585,50 @@ public class ElasticsearchMappings
                         .endObject()
                         .startObject(BucketInfluencer.PROBABILITY)
                             .field(TYPE, DOUBLE)
+                        .endObject()
+                    .endObject()
+                .endObject()
+            .endObject();
+    }
+
+    /**
+     * Partition normalized scores have a _parent mapping to a
+     * {@linkplain com.prelert.job.results.Bucket}.
+     *
+     * Partition field values and scores are nested objects.
+     */
+    public static XContentBuilder bucketPartitionMaxNormalizedScores()
+    throws IOException
+    {
+        return jsonBuilder()
+            .startObject()
+                .startObject(PartitionNormalisedProb.TYPE)
+                    .startObject(PARENT)
+                        .field(TYPE, Bucket.TYPE)
+                    .endObject()
+                    .startObject(ALL)
+                        .field(ENABLED, false)
+                        // analyzer must be specified even though _all is disabled
+                        // because all types in the same index must have the same
+                        // analyzer for a given field
+                        .field(ANALYZER, WHITESPACE)
+                    .endObject()
+                    .startObject(PROPERTIES)
+                        .startObject(ElasticsearchPersister.JOB_ID_NAME)
+                            .field(TYPE, STRING).field(INDEX, NOT_ANALYZED)
+                        .endObject()
+                        .startObject(ES_TIMESTAMP)
+                            .field(TYPE, DATE)
+                        .endObject()
+                        .startObject(PartitionNormalisedProb.PARTITION_NORMALIZED_PROBS)
+                        .field(TYPE, NESTED)
+                        .startObject(PROPERTIES)
+                            .startObject(AnomalyRecord.PARTITION_FIELD_VALUE)
+                                .field(TYPE, STRING).field(INDEX, NOT_ANALYZED)
+                            .endObject()
+                            .startObject(Bucket.MAX_NORMALIZED_PROBABILITY)
+                                .field(TYPE, DOUBLE)
+                            .endObject()
                         .endObject()
                     .endObject()
                 .endObject()

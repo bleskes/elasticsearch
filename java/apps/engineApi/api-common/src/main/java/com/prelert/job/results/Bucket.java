@@ -24,7 +24,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -77,12 +80,14 @@ public class Bucket implements StorageSerialisable
     private List<BucketInfluencer> m_BucketInfluencers;
     private List<Influencer> m_Influencers;
     private long m_ProcessingTimeMs;
+    private Map<String, Double> m_PerPartitionMaxProbability;
 
     public Bucket()
     {
         m_Records = Collections.emptyList();
         m_Influencers = Collections.emptyList();
         m_BucketInfluencers = new ArrayList<>();
+        setPerPartitionMaxProbability(Collections.emptyMap());
     }
 
     public String getId()
@@ -248,6 +253,56 @@ public class Bucket implements StorageSerialisable
             m_BucketInfluencers = new ArrayList<>();
         }
         m_BucketInfluencers.add(bucketInfluencer);
+    }
+
+    /**
+     * Box class for the stream collector function below
+     */
+    private final class DoubleMaxBox
+    {
+        private double value = 0.0;
+
+        public DoubleMaxBox()
+        {
+        }
+
+        public void accept(double d)
+        {
+            if (d > value)
+            {
+                value = d;
+            }
+        }
+
+        public DoubleMaxBox combine(DoubleMaxBox other)
+        {
+            return (this.value > other.value) ? this : other;
+        }
+
+        public Double value()
+        {
+            return this.value;
+        }
+    }
+
+    public Map<String, Double> calcMaxNormalizedProbabilityPerPartition()
+    {
+        m_PerPartitionMaxProbability = m_Records.stream().collect(
+                Collectors.groupingBy(AnomalyRecord::getPartitionFieldValue,
+                        Collector.of(DoubleMaxBox::new,
+                                (m, ar) -> m.accept(ar.getNormalizedProbability()),
+                                DoubleMaxBox::combine, DoubleMaxBox::value)));
+
+        return m_PerPartitionMaxProbability;
+    }
+
+    public Map<String, Double> getPerPartitionMaxProbability() {
+        return m_PerPartitionMaxProbability;
+    }
+
+    public void setPerPartitionMaxProbability(
+            Map<String, Double> m_PerPartitionMaxProbability) {
+        this.m_PerPartitionMaxProbability = m_PerPartitionMaxProbability;
     }
 
     @Override

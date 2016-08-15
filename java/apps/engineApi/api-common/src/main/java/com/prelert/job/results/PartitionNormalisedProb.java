@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -23,38 +23,12 @@
  *----------------------------------------------------------*
  *                                                          *
  *                                                          *
- ************************************************************/
-package com.prelert.job.process.output.parsing;
+ ***********************************************************/
+package com.prelert.job.results;
 
-import java.io.InputStream;
-
-import org.apache.log4j.Logger;
-
-import com.prelert.job.persistence.JobResultsPeristerFactory;
-
-/**
- * Factory method for creating new {@linkplain ResultsReader} objects
- * to parse the autodetect output.
- * Requires 2 other factories for creating the {@linkplain ResultsReader}
- *
- */
-public class ResultsReaderFactory
+public class PartitionNormalisedProb
 {
-    private final JobResultsPeristerFactory m_PersisterFactory;
-    private final RenormaliserFactory m_RenormaliserFactory;
+    public static final String TYPE = "partitionNormalizedProb";
+    public static final String PARTITION_NORMALIZED_PROBS = "partitionNormalizedProbs";
 
-    public ResultsReaderFactory(JobResultsPeristerFactory persisterFactory,
-                                RenormaliserFactory renormaliserFactory)
-    {
-        m_PersisterFactory = persisterFactory;
-        m_RenormaliserFactory = renormaliserFactory;
-    }
-
-    public ResultsReader newResultsParser(String jobId, InputStream autoDetectOutputStream,
-            Logger logger, boolean isPerPartitionNormalization)
-    {
-        return new ResultsReader(m_RenormaliserFactory.create(jobId),
-                m_PersisterFactory.jobResultsPersister(jobId),
-                autoDetectOutputStream, logger, isPerPartitionNormalization);
-    }
 }
