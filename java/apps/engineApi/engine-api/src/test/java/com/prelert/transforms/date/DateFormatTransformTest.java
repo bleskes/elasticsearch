@@ -33,6 +33,7 @@ import static org.junit.Assert.assertEquals;
 
 import static org.mockito.Mockito.mock;
 
+import java.time.ZoneOffset;
 import java.util.Collections;
 import java.util.List;
 
@@ -56,7 +57,7 @@ public class DateFormatTransformTest
         List<TransformIndex> writeIndicies = createIndexArray(new TransformIndex(2, 0));
 
         DateFormatTransform transformer = new DateFormatTransform("yyyy-MM-dd HH:mm:ss.SSSXXX",
-                                        readIndicies, writeIndicies, mock(Logger.class));
+                ZoneOffset.systemDefault(), readIndicies, writeIndicies, mock(Logger.class));
 
         String [] input = {"2014-01-01 13:42:56.500Z"};
         String [] scratch = {};
@@ -76,8 +77,8 @@ public class DateFormatTransformTest
         m_ExpectedException.expectMessage(
                 "Timestamp cannot be derived from pattern: yyyy-MM HH:mm:ss");
 
-        new DateFormatTransform("yyyy-MM HH:mm:ss", Collections.emptyList(),
-                Collections.emptyList(), mock(Logger.class));
+        new DateFormatTransform("yyyy-MM HH:mm:ss", ZoneOffset.systemDefault(),
+                Collections.emptyList(), Collections.emptyList(), mock(Logger.class));
     }
 
     @Test
@@ -91,7 +92,7 @@ public class DateFormatTransformTest
         List<TransformIndex> writeIndicies = createIndexArray(new TransformIndex(2, 0));
 
         DateFormatTransform transformer = new DateFormatTransform("yyyy-MM-dd HH:mm:ss",
-                                        readIndicies, writeIndicies, mock(Logger.class));
+                ZoneOffset.systemDefault(), readIndicies, writeIndicies, mock(Logger.class));
 
         String [] input = {"invalid"};
         String [] scratch = {};
@@ -110,7 +111,7 @@ public class DateFormatTransformTest
         List<TransformIndex> writeIndicies = createIndexArray(new TransformIndex(2, 0));
 
         DateFormatTransform transformer = new DateFormatTransform("yyyy-MM-dd HH:mm:ss",
-                                        readIndicies, writeIndicies, mock(Logger.class));
+                ZoneOffset.systemDefault(), readIndicies, writeIndicies, mock(Logger.class));
 
         String [] input = {};
         String [] scratch = {null};
@@ -129,7 +130,7 @@ public class DateFormatTransformTest
         List<TransformIndex> writeIndicies = createIndexArray(new TransformIndex(2, 0));
 
         DateFormatTransform transformer = new DateFormatTransform("e",
-                                        readIndicies, writeIndicies, mock(Logger.class));
+                ZoneOffset.systemDefault(), readIndicies, writeIndicies, mock(Logger.class));
 
     	String [] input = {"2015-02-01"};
     	String [] scratch = {};
@@ -146,7 +147,7 @@ public class DateFormatTransformTest
         List<TransformIndex> writeIndicies = createIndexArray(new TransformIndex(2, 0));
 
         DateFormatTransform transformer = new DateFormatTransform("yyyy-MM-dd HH:mm:ssXXX",
-                                        readIndicies, writeIndicies, mock(Logger.class));
+                ZoneOffset.systemDefault(), readIndicies, writeIndicies, mock(Logger.class));
 
         String [] input = {};
         String [] scratch = {"2014-01-01 00:00:00Z"};
@@ -167,7 +168,7 @@ public class DateFormatTransformTest
         List<TransformIndex> writeIndicies = createIndexArray(new TransformIndex(2, 0));
 
         DateFormatTransform transformer = new DateFormatTransform("'['yyyy-MM-dd HH:mm:ssX']'",
-                                        readIndicies, writeIndicies, mock(Logger.class));
+                ZoneOffset.systemDefault(), readIndicies, writeIndicies, mock(Logger.class));
 
         String [] input = {"[2014-06-23 00:00:00Z]"};
         String [] scratch = {};
@@ -184,7 +185,7 @@ public class DateFormatTransformTest
         List<TransformIndex> writeIndicies = createIndexArray(new TransformIndex(2, 0));
 
         DateFormatTransform transformer = new DateFormatTransform("'['dd/MMM/yyyy:HH:mm:ssX",
-                                        readIndicies, writeIndicies, mock(Logger.class));
+                ZoneOffset.systemDefault(), readIndicies, writeIndicies, mock(Logger.class));
 
         String [] input = {"[02/Jul/2013:13:36:07+0000"};
         String [] scratch = {};

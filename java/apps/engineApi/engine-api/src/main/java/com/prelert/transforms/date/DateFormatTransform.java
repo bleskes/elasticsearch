@@ -27,6 +27,7 @@
 
 package com.prelert.transforms.date;
 
+import java.time.ZoneId;
 import java.time.format.DateTimeParseException;
 import java.util.List;
 
@@ -46,13 +47,13 @@ public class DateFormatTransform extends DateTransform
     private final String m_TimeFormat;
     private final TimestampConverter m_DateToEpochConverter;
 
-    public DateFormatTransform(String timeFormat, List<TransformIndex> readIndicies,
-            List<TransformIndex> writeIndicies, Logger logger)
+    public DateFormatTransform(String timeFormat, ZoneId defaultTimezone,
+            List<TransformIndex> readIndicies, List<TransformIndex> writeIndicies, Logger logger)
     {
         super(readIndicies, writeIndicies, logger);
 
         m_TimeFormat = timeFormat;
-        m_DateToEpochConverter = DateTimeFormatterTimestampConverter.ofPattern(timeFormat);
+        m_DateToEpochConverter = DateTimeFormatterTimestampConverter.ofPattern(timeFormat, defaultTimezone);
     }
 
     @Override

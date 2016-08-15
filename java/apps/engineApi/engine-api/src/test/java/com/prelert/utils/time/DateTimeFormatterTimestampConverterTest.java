@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -31,6 +31,7 @@ import static org.junit.Assert.assertEquals;
 
 import java.text.ParseException;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeParseException;
@@ -90,9 +91,21 @@ public class DateTimeFormatterTimestampConverterTest
     @Test
     public void testToEpochSeconds_GivenPatternHasFullDateAndTimeWithoutTimeZone()
     {
-        long expected = ZonedDateTime.of(1985, 2, 18, 20, 15, 40, 0, ZoneOffset.systemDefault())
+        long expected = ZonedDateTime.of(1985, 8, 18, 20, 15, 40, 0, ZoneOffset.systemDefault())
                 .toEpochSecond();
-        assertEquals(expected, toEpochSeconds("1985-02-18 20:15:40", "yyyy-MM-dd HH:mm:ss"));
+        assertEquals(expected, toEpochSeconds("1985-08-18 20:15:40", "yyyy-MM-dd HH:mm:ss"));
+
+        expected = ZonedDateTime.of(1985, 8, 18, 20, 15, 40, 0, ZoneOffset.UTC)
+                .toEpochSecond();
+        assertEquals(expected, toEpochSeconds("1985-08-18 20:15:40", "yyyy-MM-dd HH:mm:ss", ZoneOffset.UTC));
+
+        expected = ZonedDateTime.of(1985, 8, 18, 20, 15, 40, 0, ZoneOffset.MIN)
+                .toEpochSecond();
+        assertEquals(expected, toEpochSeconds("1985-08-18 20:15:40", "yyyy-MM-dd HH:mm:ss", ZoneOffset.MIN));
+
+        expected = ZonedDateTime.of(1985, 8, 18, 20, 15, 40, 0, ZoneOffset.MAX)
+                .toEpochSecond();
+        assertEquals(expected, toEpochSeconds("1985-08-18 20:15:40", "yyyy-MM-dd HH:mm:ss", ZoneOffset.MAX));
     }
 
     @Test
@@ -131,6 +144,12 @@ public class DateTimeFormatterTimestampConverterTest
     private static long toEpochSeconds(String timestamp, String pattern)
     {
         TimestampConverter formatter = DateTimeFormatterTimestampConverter.ofPattern(pattern);
+        return formatter.toEpochSeconds(timestamp);
+    }
+
+    private static long toEpochSeconds(String timestamp, String pattern, ZoneId defaultTimezone)
+    {
+        TimestampConverter formatter = DateTimeFormatterTimestampConverter.ofPattern(pattern, defaultTimezone);
         return formatter.toEpochSeconds(timestamp);
     }
 

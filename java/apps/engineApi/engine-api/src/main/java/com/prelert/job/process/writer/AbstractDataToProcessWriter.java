@@ -28,6 +28,8 @@
 package com.prelert.job.process.writer;
 
 import java.io.IOException;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -45,6 +47,7 @@ import org.apache.log4j.Logger;
 
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataDescription;
+import com.prelert.job.DataDescription.DataFormat;
 import com.prelert.job.persistence.JobDataPersister;
 import com.prelert.job.process.exceptions.MissingFieldException;
 import com.prelert.job.status.HighProportionOfBadTimestampsException;
@@ -236,8 +239,11 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
 
         if (isDateFormatString)
         {
+            // Elasticsearch assumes UTC for dates without timezone information.
+            ZoneId defaultTimezone = m_DataDescription.getFormat() == DataFormat.ELASTICSEARCH
+                    ? ZoneOffset.UTC : ZoneOffset.systemDefault();
             m_DateTransform = new DateFormatTransform(m_DataDescription.getTimeFormat(),
-                    readIndicies, writeIndicies, m_Logger);
+                    ZoneOffset.systemDefault(), readIndicies, writeIndicies, m_Logger);
         }
         else
         {
