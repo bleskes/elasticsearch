@@ -63,7 +63,7 @@ public class JobUpdater
     private static final String BACKGROUND_PERSIST_INTERVAL_KEY = "backgroundPersistInterval";
     private static final String CATEGORIZATION_FILTERS_KEY = "categorizationFilters";
     private static final String CUSTOM_SETTINGS = "customSettings";
-    private static final String DETECTOR_KEY = "detectors";
+    private static final String DETECTORS_KEY = "detectors";
     private static final String JOB_DESCRIPTION_KEY = "description";
     private static final String IGNORE_DOWNTIME_KEY = "ignoreDowntime";
     private static final String MODEL_DEBUG_CONFIG_KEY = "modelDebugConfig";
@@ -154,7 +154,7 @@ public class JobUpdater
                 .put(BACKGROUND_PERSIST_INTERVAL_KEY, () -> new BackgroundPersistIntervalUpdater(m_JobManager, job, BACKGROUND_PERSIST_INTERVAL_KEY))
                 .put(CATEGORIZATION_FILTERS_KEY, () -> new CategorizationFiltersUpdater(m_JobManager, job, CATEGORIZATION_FILTERS_KEY))
                 .put(CUSTOM_SETTINGS, () -> new CustomSettingsUpdater(m_JobManager, job, CUSTOM_SETTINGS))
-                .put(DETECTOR_KEY, () -> new DetectorDescriptionUpdater(m_JobManager, job, DETECTOR_KEY))
+                .put(DETECTORS_KEY, () -> new DetectorsUpdater(m_JobManager, job, DETECTORS_KEY, m_ConfigWriter))
                 .put(JOB_DESCRIPTION_KEY, () -> new JobDescriptionUpdater(m_JobManager, job, JOB_DESCRIPTION_KEY))
                 .put(IGNORE_DOWNTIME_KEY, () -> new IgnoreDowntimeUpdater(m_JobManager, job, IGNORE_DOWNTIME_KEY))
                 .put(MODEL_DEBUG_CONFIG_KEY, () -> new ModelDebugConfigUpdater(m_JobManager, job, MODEL_DEBUG_CONFIG_KEY, m_ConfigWriter))

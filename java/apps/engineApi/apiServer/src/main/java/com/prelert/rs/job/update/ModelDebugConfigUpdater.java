@@ -93,7 +93,8 @@ class ModelDebugConfigUpdater extends AbstractUpdater
         }
         catch (IOException e)
         {
-            throw new JobConfigurationException("Failed to write", null, e);
+            throw new JobConfigurationException("Failed to write modelDebugConfig",
+                    ErrorCodes.UNKNOWN_ERROR, e);
         }
     }
 }

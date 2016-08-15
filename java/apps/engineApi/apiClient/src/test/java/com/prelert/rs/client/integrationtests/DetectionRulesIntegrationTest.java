@@ -68,11 +68,12 @@ public class DetectionRulesIntegrationTest extends BaseIntegrationTest
         createFarequoteWithNumericRule();
         File fareQuotePartData = StandardJobs.farequoteDataFile(m_TestDataHome);
         m_EngineApiClient.fileUpload(FAREQUOTE_NUMERIC_DETECTION_RULES_ID, fareQuotePartData, false);
+        test(m_EngineApiClient.closeJob(FAREQUOTE_NUMERIC_DETECTION_RULES_ID));
         verifyNoAalRecord();
+        testUpdatingRules();
 
         //==========================
         // Clean up test jobs
-        test(m_EngineApiClient.closeJob(FAREQUOTE_NUMERIC_DETECTION_RULES_ID));
         deleteJob(FAREQUOTE_NUMERIC_DETECTION_RULES_ID);
         m_Logger.info("All tests passed Ok");
     }
@@ -105,6 +106,16 @@ public class DetectionRulesIntegrationTest extends BaseIntegrationTest
                 .prepareGetRecords(FAREQUOTE_NUMERIC_DETECTION_RULES_ID).get();
         test(records.getHitCount() < 100);
         test(records.getDocuments().stream().filter(r -> r.getByFieldValue().equals("AAL")).count() == 0);
+    }
+
+    public void testUpdatingRules() throws IOException
+    {
+        test(m_EngineApiClient.getJob(FAREQUOTE_NUMERIC_DETECTION_RULES_ID).getDocument()
+                .getAnalysisConfig().getDetectors().get(0).getDetectorRules().isEmpty() == false);
+        String update = "{\"detectors\":[{\"index\":0,\"detectorRules\":[]}]}";
+        test(m_EngineApiClient.updateJob(FAREQUOTE_NUMERIC_DETECTION_RULES_ID, update));
+        test(m_EngineApiClient.getJob(FAREQUOTE_NUMERIC_DETECTION_RULES_ID).getDocument()
+                .getAnalysisConfig().getDetectors().get(0).getDetectorRules().isEmpty());
     }
 
     /**

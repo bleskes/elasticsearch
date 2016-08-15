@@ -35,8 +35,10 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.junit.Before;
@@ -59,6 +61,7 @@ import com.prelert.job.SchedulerConfig;
 import com.prelert.job.SchedulerConfig.DataSource;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.audit.Auditor;
+import com.prelert.job.detectionrules.DetectionRule;
 import com.prelert.job.errorcodes.ErrorCodeMatcher;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.exceptions.JobConfigurationException;
@@ -295,6 +298,25 @@ public class JobUpdaterTest
         new JobUpdater(m_JobManager, "foo").update(update);
 
         verify(m_JobManager).updateDetectorDescription("foo", 0, "the A train");
+    }
+
+    @Test
+    public void testUpdate_GivenValidDetectorRulesUpdate() throws JobException
+    {
+        String update = "{\"detectors\": [{\"index\":0,\"detectorRules\":[]}]}";
+
+        AnalysisConfig analysisConfig = new AnalysisConfig();
+        Detector detector = new Detector();
+        detector.setFunction("count");
+        analysisConfig.setDetectors(Arrays.asList(detector));
+        m_Job.setAnalysisConfig(analysisConfig);
+        List<DetectionRule> rules = new ArrayList<>();
+
+        when(m_JobManager.updateDetectorRules("foo", 0, rules)).thenReturn(true);
+
+        new JobUpdater(m_JobManager, "foo").update(update);
+
+        verify(m_JobManager).updateDetectorRules("foo", 0, rules);
     }
 
     @Test

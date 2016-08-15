@@ -31,6 +31,7 @@ import com.prelert.job.JobStatus;
 import com.prelert.job.SchedulerConfig;
 import com.prelert.job.SchedulerState;
 import com.prelert.job.UnknownJobException;
+import com.prelert.job.detectionrules.DetectionRule;
 
 /**
  * General interface for classes that persist Jobs and job data
@@ -163,9 +164,22 @@ public interface JobDetailsProvider extends Shutdownable
      * @param newDescription the new description
      * @return {@code true} if update was successful
      * @throws UnknownJobException If there is no job with id <code>jobId</code>
-     * @throws JobException If there was a problem updating the detetor
+     * @throws JobException If there was a problem updating the detector
      */
     boolean updateDetectorDescription(String jobId, int detectorIndex, String newDescription)
+            throws JobException;
+
+    /**
+     * Sets the detector rules of detector at {@code detectorIndex} of job
+     * with id {@code jobId} to {@code newDetectorRules}
+     *
+     * @param detectorIndex the zero-based index of the detector in detectors list
+     * @param newDetectorRules the new detector rules
+     * @return {@code true} if update was successful
+     * @throws UnknownJobException If there is no job with id <code>jobId</code>
+     * @throws JobException If there was a problem updating the detector
+     */
+    boolean updateDetectorRules(String jobId, int detectorIndex, List<DetectionRule> newDetectorRules)
             throws JobException;
 
     /**
