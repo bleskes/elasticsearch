@@ -17,7 +17,7 @@
 
 package org.elasticsearch.xpack.watcher.transform.chain;
 
-import org.elasticsearch.common.logging.ESLogger;
+import org.apache.logging.log4j.Logger;
 import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentBuilder;
@@ -206,7 +206,7 @@ public class ChainTransformTests extends ESTestCase {
         }
 
         public static class Factory extends TransformFactory<Transform, Result, NamedExecutableTransform> {
-            public Factory(ESLogger transformLogger) {
+            public Factory(Logger transformLogger) {
                 super(transformLogger);
             }
 
@@ -242,7 +242,7 @@ public class ChainTransformTests extends ESTestCase {
             FailingExecutableTransform.Result> {
         private static final String TYPE = "throwing";
 
-        public FailingExecutableTransform(ESLogger logger) {
+        public FailingExecutableTransform(Logger logger) {
             super(new Transform(), logger);
         }
 
@@ -275,7 +275,7 @@ public class ChainTransformTests extends ESTestCase {
         }
 
         public static class Factory extends TransformFactory<Transform, Result, FailingExecutableTransform> {
-            public Factory(ESLogger transformLogger) {
+            public Factory(Logger transformLogger) {
                 super(transformLogger);
             }
 

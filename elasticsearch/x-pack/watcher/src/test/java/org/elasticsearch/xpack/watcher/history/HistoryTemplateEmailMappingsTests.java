@@ -18,7 +18,6 @@
 package org.elasticsearch.xpack.watcher.history;
 
 import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.search.aggregations.Aggregations;
@@ -47,9 +46,9 @@ import static org.hamcrest.Matchers.notNullValue;
  * not analyzed so they can be used in aggregations
  */
 public class HistoryTemplateEmailMappingsTests extends AbstractWatcherIntegrationTestCase {
-    private static final ESLogger logger = Loggers.getLogger(HistoryTemplateEmailMappingsTests.class);
-    static final String USERNAME = "_user";
-    static final String PASSWORD = "_passwd";
+
+    private static final String USERNAME = "_user";
+    private static final String PASSWORD = "_passwd";
 
     private static EmailServer server;
 
@@ -58,6 +57,7 @@ public class HistoryTemplateEmailMappingsTests extends AbstractWatcherIntegratio
         if (server != null) {
             server.stop();
         }
+        server = null;
     }
 
     @Override
@@ -72,9 +72,9 @@ public class HistoryTemplateEmailMappingsTests extends AbstractWatcherIntegratio
 
     @BeforeClass
     public static void setupEmailServer() {
-        if(server == null) {
+        if (server == null) {
             //Need to construct the Email Server here as this happens before init()
-            server = EmailServer.localhost("2500-2600", USERNAME, PASSWORD, logger);
+            server = EmailServer.localhost("2500-2600", USERNAME, PASSWORD, Loggers.getLogger(HistoryTemplateTimeMappingsTests.class));
         }
     }
 
@@ -167,4 +167,5 @@ public class HistoryTemplateEmailMappingsTests extends AbstractWatcherIntegratio
         assertThat(terms.getBucketByKey("rt2@example.com"), notNullValue());
         assertThat(terms.getBucketByKey("rt2@example.com").getDocCount(), is(1L));
     }
+
 }

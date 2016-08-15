@@ -17,6 +17,7 @@
 
 package org.elasticsearch.xpack.watcher.actions.index;
 
+import org.apache.logging.log4j.Logger;
 import org.elasticsearch.action.DocWriteResponse;
 import org.elasticsearch.action.bulk.BulkItemResponse;
 import org.elasticsearch.action.bulk.BulkRequest;
@@ -24,7 +25,6 @@ import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.common.Nullable;
-import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentType;
@@ -50,7 +50,7 @@ public class ExecutableIndexAction extends ExecutableAction<IndexAction> {
     private final WatcherClientProxy client;
     private final TimeValue timeout;
 
-    public ExecutableIndexAction(IndexAction action, ESLogger logger, WatcherClientProxy client, @Nullable TimeValue defaultTimeout) {
+    public ExecutableIndexAction(IndexAction action, Logger logger, WatcherClientProxy client, @Nullable TimeValue defaultTimeout) {
         super(action, logger);
         this.client = client;
         this.timeout = action.timeout != null ? action.timeout : defaultTimeout;

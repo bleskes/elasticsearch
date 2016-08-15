@@ -17,8 +17,7 @@
 
 package org.elasticsearch.xpack.watcher.transport.actions.get;
 
-import java.io.IOException;
-
+import org.apache.logging.log4j.message.ParameterizedMessage;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.support.ActionFilters;
@@ -42,6 +41,8 @@ import org.elasticsearch.xpack.watcher.support.xcontent.WatcherParams;
 import org.elasticsearch.xpack.watcher.transport.actions.WatcherTransportAction;
 import org.elasticsearch.xpack.watcher.watch.Watch;
 import org.elasticsearch.xpack.watcher.watch.WatchStore;
+
+import java.io.IOException;
 
 import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 
@@ -99,7 +100,7 @@ public class TransportGetWatchAction extends WatcherTransportAction<GetWatchRequ
             }
 
         } catch (Exception e) {
-            logger.error("failed to get watch [{}]", e, request.getId());
+            logger.error(new ParameterizedMessage("failed to get watch [{}]", request.getId()), e);
             throw e;
         }
     }

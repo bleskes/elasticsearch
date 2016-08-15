@@ -17,7 +17,7 @@
 
 package org.elasticsearch.xpack.watcher.actions;
 
-import org.elasticsearch.common.logging.ESLogger;
+import org.apache.logging.log4j.Logger;
 import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.xpack.watcher.execution.WatchExecutionContext;
@@ -30,9 +30,9 @@ import java.io.IOException;
 public abstract class ExecutableAction<A extends Action> implements ToXContent {
 
     protected final A action;
-    protected final ESLogger logger;
+    protected final Logger logger;
 
-    protected ExecutableAction(A action, ESLogger logger) {
+    protected ExecutableAction(A action, Logger logger) {
         this.action = action;
         this.logger = logger;
     }
@@ -51,7 +51,7 @@ public abstract class ExecutableAction<A extends Action> implements ToXContent {
     /**
      * yack... needed to expose that for testing purposes
      */
-    public ESLogger logger() {
+    public Logger logger() {
         return logger;
     }
 

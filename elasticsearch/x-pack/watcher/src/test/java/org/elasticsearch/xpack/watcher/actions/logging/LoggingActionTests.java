@@ -17,21 +17,21 @@
 
 package org.elasticsearch.xpack.watcher.actions.logging;
 
+import org.apache.logging.log4j.Logger;
 import org.elasticsearch.ElasticsearchParseException;
 import org.elasticsearch.common.SuppressLoggerChecks;
-import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.common.xcontent.json.JsonXContent;
 import org.elasticsearch.test.ESTestCase;
+import org.elasticsearch.xpack.common.text.TextTemplate;
 import org.elasticsearch.xpack.common.text.TextTemplateEngine;
+import org.elasticsearch.xpack.notification.email.Attachment;
 import org.elasticsearch.xpack.watcher.actions.Action;
 import org.elasticsearch.xpack.watcher.execution.WatchExecutionContext;
-import org.elasticsearch.xpack.common.text.TextTemplate;
 import org.elasticsearch.xpack.watcher.test.WatcherTestUtils;
 import org.elasticsearch.xpack.watcher.watch.Payload;
-import org.elasticsearch.xpack.notification.email.Attachment;
 import org.joda.time.DateTime;
 import org.junit.Before;
 
@@ -54,16 +54,15 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-/**
- */
 public class LoggingActionTests extends ESTestCase {
-    private ESLogger actionLogger;
+
+    private Logger actionLogger;
     private LoggingLevel level;
     private TextTemplateEngine engine;
 
     @Before
     public void init() throws IOException {
-        actionLogger = mock(ESLogger.class);
+        actionLogger = mock(Logger.class);
         level = randomFrom(LoggingLevel.values());
         engine = mock(TextTemplateEngine.class);
     }
@@ -204,7 +203,7 @@ public class LoggingActionTests extends ESTestCase {
     }
 
     @SuppressLoggerChecks(reason = "mock usage")
-    static void verifyLogger(ESLogger logger, LoggingLevel level, String text) {
+    static void verifyLogger(Logger logger, LoggingLevel level, String text) {
         switch (level) {
             case ERROR:
                 verify(logger, times(1)).error(text);
@@ -225,4 +224,5 @@ public class LoggingActionTests extends ESTestCase {
                 fail("unhandled logging level [" + level.name() + "]");
         }
     }
+
 }
