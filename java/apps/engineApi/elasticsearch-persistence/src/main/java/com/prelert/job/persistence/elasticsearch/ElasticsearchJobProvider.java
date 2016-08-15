@@ -556,7 +556,6 @@ public class ElasticsearchJobProvider implements JobProvider
         Map<String, Object> update = new HashMap<>();
         update.put(JobDetails.STATUS, status);
         return updateJob(jobId, update);
-
     }
 
     @Override

@@ -235,11 +235,12 @@ public class MockClientBuilder
         return this;
     }
 
-    public MockClientBuilder prepareUpdate(String index, String type, String id)
+    public MockClientBuilder prepareUpdate(String index, String type, String id,
+                                            ArgumentCaptor<Map<String, Object>> getSource)
     {
         UpdateRequestBuilder builder = mock(UpdateRequestBuilder.class);
         when(m_Client.prepareUpdate(index, type, id)).thenReturn(builder);
-        when(builder.setDoc(any(Map.class))).thenReturn(builder);
+        when(builder.setDoc(getSource.capture())).thenReturn(builder);
         when(builder.setRetryOnConflict(any(int.class))).thenReturn(builder);
         when(builder.get()).thenReturn(mock(UpdateResponse.class));
         return this;

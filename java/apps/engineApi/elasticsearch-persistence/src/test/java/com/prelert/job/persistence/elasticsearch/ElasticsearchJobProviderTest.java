@@ -36,6 +36,7 @@ import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -54,6 +55,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
@@ -79,6 +81,8 @@ public class ElasticsearchJobProviderTest
     @Rule public ExpectedException m_ExpectedException = ExpectedException.none();
 
     @Mock private Node m_Node;
+
+    @Captor private ArgumentCaptor<Map<String, Object>> m_MapCaptor;
 
     @Before
     public void setUp() throws InterruptedException, ExecutionException
@@ -503,10 +507,12 @@ public class ElasticsearchJobProviderTest
                 .addClusterStatusYellowResponse()
                 .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true)
                 .prepareGet("prelertresults-" + job, JobDetails.TYPE, job, getResponse)
-                .prepareUpdate("prelertresults-" + job, JobDetails.TYPE, job);
+                .prepareUpdate("prelertresults-" + job, JobDetails.TYPE, job, m_MapCaptor);
         Client client = clientBuilder.build();
         ElasticsearchJobProvider provider = createProvider(client);
         assertTrue(provider.updateJob(job, map));
+        Map<String, Object> response = m_MapCaptor.getValue();
+        assertTrue(response.equals(map));
     }
 
     @Test
@@ -520,10 +526,33 @@ public class ElasticsearchJobProviderTest
                 .addClusterStatusYellowResponse()
                 .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true)
                 .prepareGet("prelertresults-" + job, JobDetails.TYPE, job, getResponse)
-                .prepareUpdate("prelertresults-" + job, JobDetails.TYPE, job);
+                .prepareUpdate("prelertresults-" + job, JobDetails.TYPE, job, m_MapCaptor);
         Client client = clientBuilder.build();
         ElasticsearchJobProvider provider = createProvider(client);
         assertTrue(provider.setJobStatus(job, JobStatus.PAUSING));
+        Map<String, Object> response = m_MapCaptor.getValue();
+        assertTrue(response.get(JobDetails.STATUS).equals(JobStatus.PAUSING));
+    }
+
+    @Test
+    public void testSetJobFinishedTimeAndStatus() throws InterruptedException, ExecutionException, UnknownJobException
+    {
+        String job = "testjob";
+
+        GetResponse getResponse = createGetResponse(true, null);
+
+        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME)
+                .addClusterStatusYellowResponse()
+                .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true)
+                .prepareGet("prelertresults-" + job, JobDetails.TYPE, job, getResponse)
+                .prepareUpdate("prelertresults-" + job, JobDetails.TYPE, job, m_MapCaptor);
+        Client client = clientBuilder.build();
+        ElasticsearchJobProvider provider = createProvider(client);
+        Date now = new Date();
+        assertTrue(provider.setJobFinishedTimeAndStatus(job, now, JobStatus.CLOSING));
+        Map<String, Object> response = m_MapCaptor.getValue();
+        assertTrue(response.get(JobDetails.STATUS).equals(JobStatus.CLOSING));
+        assertTrue(response.get(JobDetails.FINISHED_TIME).equals(now));
     }
 
     private ElasticsearchJobProvider createProvider(Client client)
