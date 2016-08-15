@@ -146,7 +146,7 @@ public class FieldStatsCachedIndexSelector implements IndexSelector
         catch (IOException e)
         {
             m_HasFieldStatsFailed = true;
-            logger.warn("Failed to select indices using the field stats API; "
+            logger.warn("Unable to select indices using the field stats API; "
                     + "falling back to using configured indices. Reason was: " + e.getMessage());
             return m_AllIndices;
         }
