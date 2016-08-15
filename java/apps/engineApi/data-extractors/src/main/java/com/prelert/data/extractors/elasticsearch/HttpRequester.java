@@ -60,6 +60,7 @@ public class HttpRequester
     private static final String GET = "GET";
     private static final String DELETE = "DELETE";
     private static final String AUTH_HEADER = "Authorization";
+    private static final String CONTENT_TYPE_HEADER = "Content-Type";
 
     private static final SSLSocketFactory TRUSTING_SOCKET_FACTORY;
     private static final HostnameVerifier TRUSTING_HOSTNAME_VERIFIER;
@@ -86,6 +87,7 @@ public class HttpRequester
     }
 
     private final String m_AuthHeader;
+    private final String m_ContentTypeHeader;
 
     public HttpRequester()
     {
@@ -94,7 +96,13 @@ public class HttpRequester
 
     public HttpRequester(String authHeader)
     {
+        this(authHeader, null);
+    }
+
+    public HttpRequester(String authHeader, String contentTypeHeader)
+    {
         m_AuthHeader = authHeader;
+        m_ContentTypeHeader = contentTypeHeader;
     }
 
     public HttpResponse get(String url, String requestBody) throws IOException
@@ -132,6 +140,10 @@ public class HttpRequester
         if (m_AuthHeader != null)
         {
             connection.setRequestProperty(AUTH_HEADER, m_AuthHeader);
+        }
+        if (m_ContentTypeHeader != null)
+        {
+            connection.setRequestProperty(CONTENT_TYPE_HEADER, m_ContentTypeHeader);
         }
         if (requestBody != null)
         {

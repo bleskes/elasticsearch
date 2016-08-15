@@ -58,6 +58,8 @@ public class DataExtractorFactoryImpl implements DataExtractorFactory
 {
     private static final Logger LOGGER = Logger.getLogger(DataExtractorFactoryImpl.class);
 
+    private static final String ELASTICSEARCH_CONTENT_TYPE = "application/json";
+
     private final PasswordManager m_PasswordManager;
 
     public DataExtractorFactoryImpl(PasswordManager passwordManager)
@@ -90,7 +92,8 @@ public class DataExtractorFactoryImpl implements DataExtractorFactory
                 Boolean.TRUE.equals(schedulerConfig.getRetrieveWholeSource()) ? null : writeObjectAsJson(job.allFields()),
                 timeField);
         HttpRequester httpRequester = new HttpRequester(createBasicAuthHeader(
-                schedulerConfig.getUsername(), schedulerConfig.getEncryptedPassword()));
+                schedulerConfig.getUsername(), schedulerConfig.getEncryptedPassword()),
+                ELASTICSEARCH_CONTENT_TYPE);
         ElasticsearchUrlBuilder urlBuilder = ElasticsearchUrlBuilder
                 .create(schedulerConfig.getBaseUrl(), schedulerConfig.getTypes());
         IndexSelector indexSelector = createIndexSelector(compatibility, httpRequester,
