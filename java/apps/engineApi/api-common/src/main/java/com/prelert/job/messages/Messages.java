@@ -93,6 +93,7 @@ public final class Messages
     public static final String JOB_CONFIG_DETECTION_RULE_CONDITION_CATEGORICAL_MISSING_OPTION = "job.config.detectionrule.condition.categorical.missing.option";
     public static final String JOB_CONFIG_DETECTION_RULE_CONDITION_INVALID_FIELD_NAME = "job.config.detectionrule.condition.invalid.fieldname";
     public static final String JOB_CONFIG_DETECTION_RULE_CONDITION_MISSING_FIELD_NAME = "job.config.detectionrule.condition.missing.fieldname";
+    public static final String JOB_CONFIG_DETECTION_RULE_CONDITION_NUMERICAL_INVALID_OPERATOR = "job.config.detectionrule.condition.numerical.invalid.operator";
     public static final String JOB_CONFIG_DETECTION_RULE_CONDITION_NUMERICAL_INVALID_OPTION = "job.config.detectionrule.condition.numerical.invalid.option";
     public static final String JOB_CONFIG_DETECTION_RULE_CONDITION_NUMERICAL_MISSING_OPTION = "job.config.detectionrule.condition.numerical.missing.option";
     public static final String JOB_CONFIG_DETECTION_RULE_CONDITION_NUMERICAL_WITH_FIELD_NAME_REQUIRES_FIELD_VALUE = "job.config.detectionrule.condition.numerical.with.fieldname.requires.fieldvalue";

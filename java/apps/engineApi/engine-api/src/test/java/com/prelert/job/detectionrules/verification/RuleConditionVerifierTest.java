@@ -229,13 +229,43 @@ public class RuleConditionVerifierTest
         RuleCondition ruleCondition = new RuleCondition();
         ruleCondition.setConditionType(RuleConditionType.NUMERICAL_ACTUAL);
         ruleCondition.setFieldValue("foo");
-        ruleCondition.setCondition(new Condition(Operator.LT, "5"));
+        ruleCondition.setCondition(new Condition(Operator.LTE, "5"));
 
         m_ExpectedException.expect(JobConfigurationException.class);
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.DETECTOR_RULE_CONDITION_MISSING_FIELD));
         m_ExpectedException.expectMessage(
                 "Invalid detector rule: missing fieldName in ruleCondition where fieldValue 'foo' is set");
+
+        RuleConditionVerifier.verify(ruleCondition);
+    }
+
+    @Test
+    public void testVerify_GivenNumericalAndOperatorEquals() throws JobConfigurationException
+    {
+        RuleCondition ruleCondition = new RuleCondition();
+        ruleCondition.setConditionType(RuleConditionType.NUMERICAL_ACTUAL);
+        ruleCondition.setCondition(new Condition(Operator.EQ, "5"));
+
+        m_ExpectedException.expect(JobConfigurationException.class);
+        m_ExpectedException.expect(
+                ErrorCodeMatcher.hasErrorCode(ErrorCodes.CONDITION_INVALID_ARGUMENT));
+        m_ExpectedException.expectMessage("Invalid detector rule: operator 'EQ' is not allowed");
+
+        RuleConditionVerifier.verify(ruleCondition);
+    }
+
+    @Test
+    public void testVerify_GivenNumericalAndOperatorMatch() throws JobConfigurationException
+    {
+        RuleCondition ruleCondition = new RuleCondition();
+        ruleCondition.setConditionType(RuleConditionType.NUMERICAL_ACTUAL);
+        ruleCondition.setCondition(new Condition(Operator.MATCH, "aaa"));
+
+        m_ExpectedException.expect(JobConfigurationException.class);
+        m_ExpectedException.expect(
+                ErrorCodeMatcher.hasErrorCode(ErrorCodes.CONDITION_INVALID_ARGUMENT));
+        m_ExpectedException.expectMessage("Invalid detector rule: operator 'MATCH' is not allowed");
 
         RuleConditionVerifier.verify(ruleCondition);
     }
@@ -258,7 +288,7 @@ public class RuleConditionVerifierTest
         ruleCondition.setConditionType(RuleConditionType.NUMERICAL_ACTUAL);
         ruleCondition.setFieldName("metric");
         ruleCondition.setFieldValue("cpu");
-        ruleCondition.setCondition(new Condition(Operator.LT, "5"));
+        ruleCondition.setCondition(new Condition(Operator.GT, "5"));
 
         RuleConditionVerifier.verify(ruleCondition);
     }
@@ -270,7 +300,7 @@ public class RuleConditionVerifierTest
         ruleCondition.setConditionType(RuleConditionType.NUMERICAL_TYPICAL);
         ruleCondition.setFieldName("metric");
         ruleCondition.setFieldValue("cpu");
-        ruleCondition.setCondition(new Condition(Operator.LT, "5"));
+        ruleCondition.setCondition(new Condition(Operator.GTE, "5"));
 
         RuleConditionVerifier.verify(ruleCondition);
     }
