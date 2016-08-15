@@ -36,6 +36,7 @@ import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 import org.elasticsearch.action.ActionFuture;
@@ -52,6 +53,8 @@ import org.elasticsearch.action.index.IndexRequestBuilder;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.action.update.UpdateRequestBuilder;
+import org.elasticsearch.action.update.UpdateResponse;
 import org.elasticsearch.client.AdminClient;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.client.ClusterAdminClient;
@@ -229,6 +232,16 @@ public class MockClientBuilder
         when(builder.setRefresh(eq(true))).thenReturn(builder);
         when(builder.execute()).thenReturn(actionFuture);
         when(actionFuture.actionGet()).thenReturn(mock(IndexResponse.class));
+        return this;
+    }
+
+    public MockClientBuilder prepareUpdate(String index, String type, String id)
+    {
+        UpdateRequestBuilder builder = mock(UpdateRequestBuilder.class);
+        when(m_Client.prepareUpdate(index, type, id)).thenReturn(builder);
+        when(builder.setDoc(any(Map.class))).thenReturn(builder);
+        when(builder.setRetryOnConflict(any(int.class))).thenReturn(builder);
+        when(builder.get()).thenReturn(mock(UpdateResponse.class));
         return this;
     }
 

@@ -490,6 +490,42 @@ public class ElasticsearchJobProviderTest
         assertTrue(result.matches(".*FAILED.*"));
     }
 
+    @Test
+    public void testUpdateJob() throws InterruptedException, ExecutionException, UnknownJobException
+    {
+        String job = "testjob";
+        Map<String, Object> map = new HashMap<>();
+        map.put("testKey",  "testValue");
+
+        GetResponse getResponse = createGetResponse(true, null);
+
+        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME)
+                .addClusterStatusYellowResponse()
+                .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true)
+                .prepareGet("prelertresults-" + job, JobDetails.TYPE, job, getResponse)
+                .prepareUpdate("prelertresults-" + job, JobDetails.TYPE, job);
+        Client client = clientBuilder.build();
+        ElasticsearchJobProvider provider = createProvider(client);
+        assertTrue(provider.updateJob(job, map));
+    }
+
+    @Test
+    public void testSetJobStatus() throws InterruptedException, ExecutionException, UnknownJobException
+    {
+        String job = "testjob";
+
+        GetResponse getResponse = createGetResponse(true, null);
+
+        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME)
+                .addClusterStatusYellowResponse()
+                .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true)
+                .prepareGet("prelertresults-" + job, JobDetails.TYPE, job, getResponse)
+                .prepareUpdate("prelertresults-" + job, JobDetails.TYPE, job);
+        Client client = clientBuilder.build();
+        ElasticsearchJobProvider provider = createProvider(client);
+        assertTrue(provider.setJobStatus(job, JobStatus.PAUSING));
+    }
+
     private ElasticsearchJobProvider createProvider(Client client)
     {
         return new ElasticsearchJobProvider(m_Node, client, 0);
