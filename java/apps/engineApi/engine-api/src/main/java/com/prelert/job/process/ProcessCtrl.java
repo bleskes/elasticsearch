@@ -46,16 +46,9 @@ import org.apache.log4j.Logger;
 
 import com.google.common.base.Strings;
 import com.prelert.job.AnalysisConfig;
-import com.prelert.job.AnalysisLimits;
 import com.prelert.job.DataDescription;
 import com.prelert.job.IgnoreDowntime;
 import com.prelert.job.JobDetails;
-import com.prelert.job.ModelDebugConfig;
-import com.prelert.job.ModelSnapshot;
-import com.prelert.job.process.writer.AnalysisLimitsWriter;
-import com.prelert.job.process.writer.FieldConfigWriter;
-import com.prelert.job.process.writer.ModelDebugConfigWriter;
-import com.prelert.job.quantiles.Quantiles;
 import com.prelert.settings.PrelertSettings;
 
 
@@ -207,14 +200,11 @@ public class ProcessCtrl
      * Arguments used by prelert_autodetect_api
      */
     public static final String BATCH_SPAN_ARG = "--batchspan=";
-    public static final String FIELD_CONFIG_ARG = "--fieldconfig=";
     public static final String INFO_ARG = "--info";
-    public static final String LIMIT_CONFIG_ARG = "--limitconfig=";
     public static final String LATENCY_ARG = "--latency=";
     public static final String RESULT_FINALIZATION_WINDOW_ARG = "--resultFinalizationWindow=";
     public static final String MULTIVARIATE_BY_FIELDS_ARG = "--multivariateByFields";
     public static final String MAX_ANOMALY_RECORDS_ARG;
-    public static final String MODEL_DEBUG_CONFIG_ARG = "--modeldebugconfig=";
     public static final String PERIOD_ARG = "--period=";
     public static final String PERSIST_INTERVAL_ARG = "--persistInterval=";
     public static final String MAX_QUANTILE_INTERVAL_ARG = "--maxQuantileInterval=";
@@ -238,8 +228,6 @@ public class ProcessCtrl
      * added to this.
      */
     public static final int BASE_MAX_QUANTILE_INTERVAL = 21600; // 6 hours
-
-    private static final String CONF_EXTENSION = ".conf";
 
     /**
      * Name of the model config file
@@ -507,99 +495,6 @@ public class ProcessCtrl
         return rng.nextInt(SECONDS_IN_HOUR);
     }
 
-    /**
-     * Sets the environment variables PRELERT_HOME and LIB_PATH (or platform
-     * variants) and starts the process in that environment. Any inherited value
-     * of LIB_PATH or PRELERT_HOME is overwritten.
-     * <code>processName</code> is not the full path it is the relative path of the
-     * program from the PRELERT_HOME/bin directory.
-     *
-     * @param job The job configuration
-     * @param quantiles if <code>null</code> this parameter is
-     * ignored else the quantiles' state is restored from this object
-     * @param logger The job's logger
-     * @param filesToDelete This method will append File objects that need to be
-     * deleted when the process completes
-     * @param modelSnapshot The model snapshot to restore on startup, or null if
-     * no model snapshot is to be restored
-     * @param ignoreDowntime If true set the ignore downtime flag overriding the
-     * setting in the job configuration
-     *
-     * @return A Java Process object
-     * @throws IOException
-     */
-    public static Process buildAutoDetect(JobDetails job, Quantiles quantiles, Logger logger,
-            List<File> filesToDelete, ModelSnapshot modelSnapshot, boolean ignoreDowntime)
-    throws IOException
-    {
-        logger.info("PRELERT_HOME is set to " + PRELERT_HOME);
-
-        String restoreSnapshotId = (modelSnapshot == null) ? null : modelSnapshot.getSnapshotId();
-        List<String> command = ProcessCtrl.buildAutoDetectCommand(job, logger,
-                                                restoreSnapshotId, ignoreDowntime);
-
-        if (job.getAnalysisLimits() != null)
-        {
-            File limitConfigFile = File.createTempFile("limitconfig", CONF_EXTENSION);
-            filesToDelete.add(limitConfigFile);
-            writeLimits(job.getAnalysisLimits(), limitConfigFile);
-            String limits = LIMIT_CONFIG_ARG + limitConfigFile.getPath();
-            command.add(limits);
-        }
-
-        if (job.getModelDebugConfig() != null && job.getModelDebugConfig().isEnabled())
-        {
-            File modelDebugConfigFile = File.createTempFile("modeldebugconfig", CONF_EXTENSION);
-            filesToDelete.add(modelDebugConfigFile);
-            writeModelDebugConfig(job.getModelDebugConfig(), modelDebugConfigFile);
-            String modelDebugConfig = MODEL_DEBUG_CONFIG_ARG + modelDebugConfigFile.getPath();
-            command.add(modelDebugConfig);
-        }
-
-        if (modelConfigFilePresent())
-        {
-            String modelConfigFile = new File(CONFIG_DIR, PRELERT_MODEL_CONF).getPath();
-            command.add(MODEL_CONFIG_ARG + modelConfigFile);
-        }
-
-        // Restoring the quantiles
-        if (quantiles != null && !quantiles.getQuantileState().isEmpty())
-        {
-            logger.info("Restoring quantiles for job '" + job.getId() + "'");
-
-            Path normalisersStateFilePath =
-                    writeNormaliserInitState(job.getId(), quantiles.getQuantileState());
-
-            String quantilesStateFileArg = QUANTILES_STATE_PATH_ARG + normalisersStateFilePath;
-            command.add(quantilesStateFileArg);
-            command.add(DELETE_STATE_FILES_ARG);
-        }
-
-        // now the actual field args
-        if (job.getAnalysisConfig() != null)
-        {
-            // write to a temporary field config file
-            File fieldConfigFile = File.createTempFile("fieldconfig", CONF_EXTENSION);
-            filesToDelete.add(fieldConfigFile);
-            try (OutputStreamWriter osw = new OutputStreamWriter(
-                    new FileOutputStream(fieldConfigFile),
-                    StandardCharsets.UTF_8))
-            {
-                new FieldConfigWriter(job.getAnalysisConfig(), osw, logger).write();
-            }
-
-            String fieldConfig = FIELD_CONFIG_ARG + fieldConfigFile.getPath();
-            command.add(fieldConfig);
-        }
-
-        // Build the process
-        logger.info("Starting autodetect process with command: " +  command);
-        ProcessBuilder pb = new ProcessBuilder(command);
-        buildEnvironment(pb);
-
-        return pb.start();
-    }
-
     static List<String> buildAutoDetectCommand(JobDetails job, Logger logger,
             String restoreSnapshotId, boolean ignoreDowntime)
     {
@@ -722,37 +617,10 @@ public class ProcessCtrl
     }
 
     /**
-     * Write the Prelert autodetect model options to <code>emptyConfFile</code>.
-     *
-     * @param emptyConfFile
-     * @throws IOException
-     */
-    private static void writeLimits(AnalysisLimits options, File emptyConfFile) throws IOException
-    {
-        try (OutputStreamWriter osw = new OutputStreamWriter(
-                new FileOutputStream(emptyConfFile),
-                StandardCharsets.UTF_8))
-        {
-            new AnalysisLimitsWriter(options, osw).write();
-        }
-    }
-
-    private static void writeModelDebugConfig(ModelDebugConfig config, File emptyConfFile)
-            throws IOException
-    {
-        try (OutputStreamWriter osw = new OutputStreamWriter(
-                new FileOutputStream(emptyConfFile),
-                StandardCharsets.UTF_8))
-        {
-            new ModelDebugConfigWriter(config, osw).write();
-        }
-    }
-
-    /**
      * Return true if there is a file PRELERT_HOME/config/prelertmodel.conf
      * @return
      */
-    private static boolean modelConfigFilePresent()
+    static boolean modelConfigFilePresent()
     {
         File f = new File(CONFIG_DIR, PRELERT_MODEL_CONF);
 
@@ -830,7 +698,7 @@ public class ProcessCtrl
      * @return The state file path
      * @throws IOException
      */
-    private static Path writeNormaliserInitState(String jobId, String state)
+    static Path writeNormaliserInitState(String jobId, String state)
     throws IOException
     {
         // createTempFile has a race condition where it may return the same
