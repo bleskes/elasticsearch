@@ -18,7 +18,6 @@
 package org.elasticsearch.xpack.watcher.input.search;
 
 import org.elasticsearch.ElasticsearchParseException;
-import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.ParseFieldMatcher;
@@ -42,9 +41,6 @@ import java.util.Set;
 
 import static java.util.Collections.unmodifiableSet;
 
-/**
- *
- */
 public class SearchInput implements Input {
 
     public static final String TYPE = "search";
@@ -139,8 +135,7 @@ public class SearchInput implements Input {
                 currentFieldName = parser.currentName();
             } else if (ParseFieldMatcher.STRICT.match(currentFieldName, Field.REQUEST)) {
                 try {
-                    request = WatcherSearchTemplateRequest.fromXContent(parser, ExecutableSearchInput.DEFAULT_SEARCH_TYPE, context,
-                                                             aggParsers, suggesters);
+                    request = WatcherSearchTemplateRequest.fromXContent(parser, ExecutableSearchInput.DEFAULT_SEARCH_TYPE);
                 } catch (ElasticsearchParseException srpe) {
                     throw new ElasticsearchParseException("could not parse [{}] input for watch [{}]. failed to parse [{}]", srpe, TYPE,
                             watchId, currentFieldName);
@@ -188,19 +183,19 @@ public class SearchInput implements Input {
 
     public static class Result extends Input.Result {
 
-        @Nullable private final SearchRequest request;
+        @Nullable private final WatcherSearchTemplateRequest request;
 
-        public Result(SearchRequest request, Payload payload) {
+        public Result(WatcherSearchTemplateRequest request, Payload payload) {
             super(TYPE, payload);
             this.request = request;
         }
 
-        public Result(@Nullable SearchRequest request, Exception e) {
+        public Result(@Nullable WatcherSearchTemplateRequest request, Exception e) {
             super(TYPE, e);
             this.request = request;
         }
 
-        public SearchRequest executedRequest() {
+        public WatcherSearchTemplateRequest executedRequest() {
             return request;
         }
 
@@ -210,7 +205,7 @@ public class SearchInput implements Input {
                 return builder;
             }
             builder.startObject(type);
-            builder.field(Field.REQUEST.getPreferredName(), new WatcherSearchTemplateRequest(request));
+            builder.field(Field.REQUEST.getPreferredName(), request);
             return builder.endObject();
         }
     }

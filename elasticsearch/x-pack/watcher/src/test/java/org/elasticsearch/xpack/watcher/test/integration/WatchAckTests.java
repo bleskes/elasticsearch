@@ -46,11 +46,12 @@ import java.util.concurrent.TimeUnit;
 
 import static org.elasticsearch.index.query.QueryBuilders.matchAllQuery;
 import static org.elasticsearch.index.query.QueryBuilders.matchQuery;
+import static org.elasticsearch.search.builder.SearchSourceBuilder.searchSource;
 import static org.elasticsearch.xpack.watcher.actions.ActionBuilders.indexAction;
 import static org.elasticsearch.xpack.watcher.client.WatchSourceBuilders.watchBuilder;
 import static org.elasticsearch.xpack.watcher.condition.ConditionBuilders.compareCondition;
 import static org.elasticsearch.xpack.watcher.input.InputBuilders.searchInput;
-import static org.elasticsearch.xpack.watcher.test.WatcherTestUtils.matchAllRequest;
+import static org.elasticsearch.xpack.watcher.test.WatcherTestUtils.templateRequest;
 import static org.elasticsearch.xpack.watcher.transform.TransformBuilders.searchTransform;
 import static org.elasticsearch.xpack.watcher.trigger.TriggerBuilders.schedule;
 import static org.elasticsearch.xpack.watcher.trigger.schedule.Schedules.cron;
@@ -84,9 +85,9 @@ public class WatchAckTests extends AbstractWatcherIntegrationTestCase {
                 .setId("_id")
                 .setSource(watchBuilder()
                         .trigger(schedule(cron("0/5 * * * * ? *")))
-                        .input(searchInput(matchAllRequest().indices("events")))
+                        .input(searchInput(templateRequest(searchSource(), "events")))
                         .condition(compareCondition("ctx.payload.hits.total", CompareCondition.Op.GT, 0L))
-                        .transform(searchTransform(matchAllRequest().indices("events")))
+                        .transform(searchTransform(templateRequest(searchSource(), "events")))
                         .addAction("_a1", indexAction("actions", "action1"))
                         .addAction("_a2", indexAction("actions", "action2"))
                         .defaultThrottlePeriod(new TimeValue(0, TimeUnit.SECONDS)))
@@ -158,9 +159,9 @@ public class WatchAckTests extends AbstractWatcherIntegrationTestCase {
                 .setId("_id")
                 .setSource(watchBuilder()
                         .trigger(schedule(cron("0/5 * * * * ? *")))
-                        .input(searchInput(matchAllRequest().indices("events")))
+                        .input(searchInput(templateRequest(searchSource(), "events")))
                         .condition(compareCondition("ctx.payload.hits.total", CompareCondition.Op.GT, 0L))
-                        .transform(searchTransform(matchAllRequest().indices("events")))
+                        .transform(searchTransform(templateRequest(searchSource(), "events")))
                         .addAction("_a1", indexAction("actions", "action1"))
                         .addAction("_a2", indexAction("actions", "action2"))
                         .defaultThrottlePeriod(new TimeValue(0, TimeUnit.SECONDS)))
@@ -239,9 +240,9 @@ public class WatchAckTests extends AbstractWatcherIntegrationTestCase {
                 .setId("_name")
                 .setSource(watchBuilder()
                         .trigger(schedule(cron("0/5 * * * * ? *")))
-                        .input(searchInput(matchAllRequest().indices("events")))
+                        .input(searchInput(templateRequest(searchSource(), "events")))
                         .condition(compareCondition("ctx.payload.hits.total", CompareCondition.Op.GT, 0L))
-                        .transform(searchTransform(matchAllRequest().indices("events")))
+                        .transform(searchTransform(templateRequest(searchSource(), "events")))
                         .addAction("_id", indexAction("actions", "action")))
                 .get();
 

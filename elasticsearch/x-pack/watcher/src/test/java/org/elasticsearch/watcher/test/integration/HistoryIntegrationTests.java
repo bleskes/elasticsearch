@@ -18,8 +18,6 @@
 package org.elasticsearch.watcher.test.integration;
 
 import org.elasticsearch.action.admin.indices.mapping.get.GetMappingsResponse;
-import org.elasticsearch.action.search.SearchRequest;
-import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.common.bytes.BytesArray;
 import org.elasticsearch.common.xcontent.XContentBuilder;
@@ -28,6 +26,7 @@ import org.elasticsearch.search.sort.SortBuilders;
 import org.elasticsearch.search.sort.SortOrder;
 import org.elasticsearch.xpack.watcher.client.WatchSourceBuilder;
 import org.elasticsearch.xpack.watcher.input.Input;
+import org.elasticsearch.xpack.watcher.support.search.WatcherSearchTemplateRequest;
 import org.elasticsearch.xpack.watcher.support.xcontent.XContentSource;
 import org.elasticsearch.xpack.watcher.test.AbstractWatcherIntegrationTestCase;
 import org.elasticsearch.xpack.watcher.transport.actions.put.PutWatchResponse;
@@ -42,7 +41,7 @@ import static org.elasticsearch.xpack.watcher.client.WatchSourceBuilders.watchBu
 import static org.elasticsearch.xpack.watcher.input.InputBuilders.chainInput;
 import static org.elasticsearch.xpack.watcher.input.InputBuilders.searchInput;
 import static org.elasticsearch.xpack.watcher.input.InputBuilders.simpleInput;
-import static org.elasticsearch.xpack.watcher.test.WatcherTestUtils.newInputSearchRequest;
+import static org.elasticsearch.xpack.watcher.test.WatcherTestUtils.templateRequest;
 import static org.elasticsearch.xpack.watcher.trigger.TriggerBuilders.schedule;
 import static org.elasticsearch.xpack.watcher.trigger.schedule.Schedules.interval;
 import static org.hamcrest.Matchers.is;
@@ -60,9 +59,9 @@ public class HistoryIntegrationTests extends AbstractWatcherIntegrationTestCase 
                 .trigger(schedule(interval("10s")))
                 .addAction("logging", loggingAction("foo"));
 
-        SearchRequestBuilder searchRequestBuilder = client().prepareSearch("foo").addSort(SortBuilders.fieldSort("inner.date").order
-                (SortOrder.DESC));
-        builder.input(chainInput().add("first", searchInput(searchRequestBuilder.request())));
+        builder.input(chainInput().add("first", searchInput(
+                templateRequest(searchSource().sort(SortBuilders.fieldSort("inner.date").order(SortOrder.DESC)), "foo")))
+        );
 
         PutWatchResponse response = watcherClient().preparePutWatch("test_watch").setSource(builder).get();
         assertThat(response.isCreated(), is(true));
@@ -76,15 +75,14 @@ public class HistoryIntegrationTests extends AbstractWatcherIntegrationTestCase 
 
     // See https://github.com/elastic/x-plugins/issues/2913
     public void testFailedInputResultWithDotsInFieldNameGetsStored() throws Exception {
-        SearchRequest sortSearchRequest = newInputSearchRequest("non-existing-index")
-                .source(searchSource()
-                        .query(matchAllQuery())
-                        .sort("trigger_event.triggered_time", SortOrder.DESC)
-                        .size(1));
+        WatcherSearchTemplateRequest request = templateRequest(searchSource()
+                .query(matchAllQuery())
+                .sort("trigger_event.triggered_time", SortOrder.DESC)
+                .size(1), "non-existing-index");
 
         // The result of the search input will be a failure, because a missing index does not exist when
         // the query is executed
-        Input.Builder input = searchInput(sortSearchRequest);
+        Input.Builder input = searchInput(request);
         // wrapping this randomly into a chained input to test this as well
         boolean useChained = randomBoolean();
         if (useChained) {

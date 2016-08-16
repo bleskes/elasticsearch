@@ -17,10 +17,8 @@
 
 package org.elasticsearch.xpack.watcher.support;
 
-import org.elasticsearch.action.search.SearchRequest;
-import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.common.util.Callback;
+import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.xpack.watcher.client.WatcherClient;
 import org.elasticsearch.xpack.watcher.test.AbstractWatcherIntegrationTestCase;
 import org.elasticsearch.xpack.watcher.transport.actions.put.PutWatchResponse;
@@ -36,13 +34,12 @@ import static org.elasticsearch.xpack.watcher.client.WatchSourceBuilders.watchBu
 import static org.elasticsearch.xpack.watcher.condition.ConditionBuilders.alwaysCondition;
 import static org.elasticsearch.xpack.watcher.input.InputBuilders.searchInput;
 import static org.elasticsearch.xpack.watcher.input.InputBuilders.simpleInput;
+import static org.elasticsearch.xpack.watcher.test.WatcherTestUtils.templateRequest;
 import static org.elasticsearch.xpack.watcher.transform.TransformBuilders.searchTransform;
 import static org.elasticsearch.xpack.watcher.trigger.TriggerBuilders.schedule;
 import static org.elasticsearch.xpack.watcher.trigger.schedule.Schedules.interval;
 import static org.hamcrest.Matchers.is;
 
-/**
- */
 public class DynamicIndexNameIntegrationTests extends AbstractWatcherIntegrationTestCase {
     @Override
     protected boolean timeWarped() {
@@ -73,14 +70,11 @@ public class DynamicIndexNameIntegrationTests extends AbstractWatcherIntegration
 
         final String indexName = "idx-" + DateTimeFormat.forPattern("YYYY.MM.dd").print(timeWarp().clock().nowUTC());
         logger.info("checking index [{}]", indexName);
-        assertBusy(new Runnable() {
-            @Override
-            public void run() {
-                flush();
-                refresh();
-                long docCount = docCount(indexName, "type", matchAllQuery());
-                assertThat(docCount, is(1L));
-            }
+        assertBusy(() -> {
+            flush();
+            refresh();
+            long docCount = docCount(indexName, "type", matchAllQuery());
+            assertThat(docCount, is(1L));
         });
     }
 
@@ -96,7 +90,7 @@ public class DynamicIndexNameIntegrationTests extends AbstractWatcherIntegration
         PutWatchResponse putWatchResponse = watcherClient.preparePutWatch("_id")
                 .setSource(watchBuilder()
                         .trigger(schedule(interval(5, IntervalSchedule.Interval.Unit.SECONDS)))
-                        .input(searchInput(new SearchRequest(indexNameDateMathExpressions).types("type"))))
+                        .input(searchInput(templateRequest(new SearchSourceBuilder(), indexNameDateMathExpressions))))
                 .get();
 
         assertThat(putWatchResponse.isCreated(), is(true));
@@ -122,7 +116,7 @@ public class DynamicIndexNameIntegrationTests extends AbstractWatcherIntegration
         PutWatchResponse putWatchResponse = watcherClient.preparePutWatch("_id")
                 .setSource(watchBuilder()
                         .trigger(schedule(interval(5, IntervalSchedule.Interval.Unit.SECONDS)))
-                        .transform(searchTransform(new SearchRequest(indexNameDateMathExpressions).types("type")))
+                        .transform(searchTransform(templateRequest(new SearchSourceBuilder(), indexNameDateMathExpressions)))
                         .addAction("log", loggingAction("heya")))
                         .get();
 
@@ -132,12 +126,8 @@ public class DynamicIndexNameIntegrationTests extends AbstractWatcherIntegration
         flush();
         refresh();
 
-        SearchResponse response = searchWatchRecords(new Callback<SearchRequestBuilder>() {
-            @Override
-            public void handle(SearchRequestBuilder builder) {
-                builder.setQuery(matchQuery("result.transform.search.request.indices", indexNameDateMathExpressions));
-            }
-        });
+        SearchResponse response = searchWatchRecords(builder ->
+                builder.setQuery(matchQuery("result.transform.search.request.indices", indexNameDateMathExpressions)));
         assertThat(response.getHits().getTotalHits(), is(1L));
     }
 }
