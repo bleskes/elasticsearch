@@ -21,6 +21,8 @@ package com.prelert.job.detectionrules;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -95,6 +97,12 @@ public class DetectionRule
     public List<RuleCondition> getRuleConditions()
     {
         return m_RuleConditions;
+    }
+
+    public Set<String> extractReferencedLists()
+    {
+        return m_RuleConditions.stream().map(RuleCondition::getValueList).filter(Objects::nonNull)
+                .collect(Collectors.toSet());
     }
 
     @Override

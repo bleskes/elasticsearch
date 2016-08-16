@@ -27,7 +27,7 @@ import com.prelert.job.UnknownJobException;
 import com.prelert.job.audit.Auditor;
 import com.prelert.job.quantiles.Quantiles;
 
-public interface JobProvider extends JobDetailsProvider, JobResultsProvider
+public interface JobProvider extends JobDetailsProvider, JobResultsProvider, ListProvider
 {
     /**
      * Return true if the data store is accessible for the given job Id

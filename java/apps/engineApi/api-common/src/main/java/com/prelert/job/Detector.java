@@ -19,6 +19,7 @@
 package com.prelert.job;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -258,7 +259,7 @@ public class Detector
 
     public Detector()
     {
-
+        // Default constructor
     }
 
     public String getDetectorDescription()
@@ -395,6 +396,13 @@ public class Detector
         List<String> analysisFields = Arrays.asList(getByFieldName(),
                 getOverFieldName(), getPartitionFieldName());
         return analysisFields.stream().filter(item -> item != null).collect(Collectors.toList());
+    }
+
+    public Set<String> extractReferencedLists()
+    {
+        return m_DetectorRules == null ? Collections.emptySet()
+                : m_DetectorRules.stream().map(DetectionRule::extractReferencedLists)
+                        .flatMap(Set::stream).collect(Collectors.toSet());
     }
 
     @Override

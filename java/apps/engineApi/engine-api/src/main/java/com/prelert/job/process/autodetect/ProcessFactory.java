@@ -30,13 +30,17 @@ package com.prelert.job.process.autodetect;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 
 import org.apache.log4j.Logger;
 
 import com.prelert.job.JobDetails;
 import com.prelert.job.JobStatus;
+import com.prelert.job.ListDocument;
 import com.prelert.job.ModelSnapshot;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.errorcodes.ErrorCodes;
@@ -98,7 +102,8 @@ public class ProcessFactory
         try
         {
             AutodetectBuilder autodetectBuilder = new AutodetectBuilder(job, filesToDelete, logger)
-                    .ignoreDowntime(ignoreDowntime);
+                    .ignoreDowntime(ignoreDowntime)
+                    .referencedLists(resolveLists(job.getAnalysisConfig().extractReferencedLists()));
 
             // if state is null or empty it will be ignored
             // else it is used to restore the quantiles
@@ -144,5 +149,23 @@ public class ProcessFactory
         logger.debug("Created process for job " + jobId);
 
         return procAndDD;
+    }
+
+    private Set<ListDocument> resolveLists(Set<String> listIds)
+    {
+        Set<ListDocument> resolved = new HashSet<>();
+        for (String listId : listIds)
+        {
+            Optional<ListDocument> list = m_JobProvider.getList(listId);
+            if (list.isPresent())
+            {
+                resolved.add(list.get());
+            }
+            else
+            {
+                LOGGER.warn("List '" + listId + "' could not be retrieved.");
+            }
+        }
+        return resolved;
     }
 }

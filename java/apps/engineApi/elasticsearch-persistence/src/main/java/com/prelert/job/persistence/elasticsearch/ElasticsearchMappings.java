@@ -42,6 +42,7 @@ import com.prelert.job.DataCounts;
 import com.prelert.job.DataDescription;
 import com.prelert.job.Detector;
 import com.prelert.job.JobDetails;
+import com.prelert.job.ListDocument;
 import com.prelert.job.ModelDebugConfig;
 import com.prelert.job.ModelSizeStats;
 import com.prelert.job.ModelSnapshot;
@@ -1241,6 +1242,23 @@ public class ElasticsearchMappings
                         .startObject(PROPERTIES)
                             .startObject(ES_TIMESTAMP)
                                 .field(TYPE, DATE)
+                            .endObject()
+                        .endObject()
+                    .endObject()
+                .endObject();
+    }
+
+    public static XContentBuilder listDocumentMapping() throws IOException
+    {
+        return jsonBuilder()
+                .startObject()
+                    .startObject(ListDocument.TYPE)
+                        .startObject(PROPERTIES)
+                            .startObject(ListDocument.ID)
+                                .field(TYPE, STRING).field(INDEX, NOT_ANALYZED)
+                            .endObject()
+                            .startObject(ListDocument.ITEMS)
+                                .field(TYPE, STRING)
                             .endObject()
                         .endObject()
                     .endObject()

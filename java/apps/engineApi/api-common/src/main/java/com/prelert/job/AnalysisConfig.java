@@ -26,6 +26,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -260,6 +261,12 @@ public class AnalysisConfig
         termFields.remove("");
 
         return termFields;
+    }
+
+    public Set<String> extractReferencedLists()
+    {
+        return m_Detectors.stream().map(Detector::extractReferencedLists)
+                .flatMap(Set::stream).collect(Collectors.toSet());
     }
 
     public Boolean getOverlappingBuckets()

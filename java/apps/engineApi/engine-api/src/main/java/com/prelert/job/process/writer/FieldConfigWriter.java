@@ -33,13 +33,16 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 import org.apache.log4j.Logger;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Strings;
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.Detector;
+import com.prelert.job.ListDocument;
 import com.prelert.job.config.DefaultDetectorDescription;
 import com.prelert.job.detectionrules.DetectionRule;
 import com.prelert.utils.PrelertStrings;
@@ -52,6 +55,7 @@ public class FieldConfigWriter
     private static final String INFLUENCER_PREFIX = "influencer.";
     private static final String CATEGORIZATION_FIELD_OPTION = " categorizationfield=";
     private static final String CATEGORIZATION_FILTER_PREFIX = "categorizationfilter.";
+    private static final String LIST_PREFIX = "list.";
 
     // Note: for the Engine API summarycountfield is currently passed as a
     // command line option to prelert_autodetect_api rather than in the field
@@ -60,14 +64,19 @@ public class FieldConfigWriter
     private static final char NEW_LINE = '\n';
 
     private final AnalysisConfig m_Config;
+    private final Set<ListDocument> m_Lists;
     private final OutputStreamWriter m_Writer;
     private final Logger m_Logger;
+    private final ObjectMapper m_ObjectMapper;
 
-    public FieldConfigWriter(AnalysisConfig config, OutputStreamWriter writer, Logger logger)
+    public FieldConfigWriter(AnalysisConfig config, Set<ListDocument> lists,
+            OutputStreamWriter writer, Logger logger)
     {
         m_Config = Objects.requireNonNull(config);
+        m_Lists = Objects.requireNonNull(lists);
         m_Writer = Objects.requireNonNull(writer);
         m_Logger = Objects.requireNonNull(logger);
+        m_ObjectMapper = new ObjectMapper();
     }
 
     /**
@@ -80,6 +89,7 @@ public class FieldConfigWriter
         StringBuilder contents = new StringBuilder();
 
         writeDetectors(contents);
+        writeLists(contents);
         writeAsEnumeratedSettings(CATEGORIZATION_FILTER_PREFIX, m_Config.getCategorizationFilters(),
                 contents, true);
 
@@ -131,11 +141,20 @@ public class FieldConfigWriter
         contents.append(DETECTOR_PREFIX).append(detectorId)
                 .append(DETECTOR_RULES_SUFFIX).append(EQUALS);
 
-        ObjectMapper objectMapper = new ObjectMapper();
-        String rulesAsJson = objectMapper.writeValueAsString(detector.getDetectorRules());
+        String rulesAsJson = m_ObjectMapper.writeValueAsString(detector.getDetectorRules());
         contents.append(rulesAsJson);
 
         contents.append(NEW_LINE);
+    }
+
+    private void writeLists(StringBuilder buffer) throws JsonProcessingException
+    {
+        for (ListDocument list : m_Lists)
+        {
+            String listAsJson = m_ObjectMapper.writeValueAsString(list.getItems());
+            buffer.append(LIST_PREFIX).append(list.getId()).append(EQUALS).append(listAsJson)
+                    .append(NEW_LINE);
+        }
     }
 
     private static void writeAsEnumeratedSettings(String settingName, List<String> values,

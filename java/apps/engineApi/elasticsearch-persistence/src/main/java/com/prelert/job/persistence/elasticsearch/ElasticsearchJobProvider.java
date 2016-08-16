@@ -83,6 +83,7 @@ import com.prelert.job.JobDetails;
 import com.prelert.job.JobException;
 import com.prelert.job.JobStatus;
 import com.prelert.job.JsonViews;
+import com.prelert.job.ListDocument;
 import com.prelert.job.ModelSizeStats;
 import com.prelert.job.ModelSnapshot;
 import com.prelert.job.ModelState;
@@ -99,6 +100,7 @@ import com.prelert.job.persistence.BatchedDocumentsIterator;
 import com.prelert.job.persistence.BucketsQueryBuilder;
 import com.prelert.job.persistence.DataStoreException;
 import com.prelert.job.persistence.JobProvider;
+import com.prelert.job.persistence.ListProvider;
 import com.prelert.job.persistence.QueryPage;
 import com.prelert.job.persistence.RecordsQueryBuilder;
 import com.prelert.job.quantiles.Quantiles;
@@ -111,7 +113,7 @@ import com.prelert.job.results.Influencer;
 import com.prelert.job.results.ModelDebugOutput;
 import com.prelert.job.usage.Usage;
 
-public class ElasticsearchJobProvider implements JobProvider
+public class ElasticsearchJobProvider implements JobProvider, ListProvider
 {
     private static final Logger LOGGER = Logger.getLogger(ElasticsearchJobProvider.class);
 
@@ -293,6 +295,7 @@ public class ElasticsearchJobProvider implements JobProvider
                                 .setSettings(prelertIndexSettings())
                                 .addMapping(AuditActivity.TYPE, ElasticsearchMappings.auditActivityMapping())
                                 .addMapping(AuditMessage.TYPE, ElasticsearchMappings.auditMessageMapping())
+                                .addMapping(ListDocument.TYPE, ElasticsearchMappings.listDocumentMapping())
                                 .get();
                 LOGGER.trace("ES API CALL: wait for yellow status " + PRELERT_INFO_INDEX);
                 m_Client.admin().cluster().prepareHealth(PRELERT_INFO_INDEX).setWaitForYellowStatus().execute().actionGet();
@@ -1445,5 +1448,41 @@ public class ElasticsearchJobProvider implements JobProvider
         // AnomalyRecord.TIMESTAMP, Influencer.TIMESTAMP and
         // ModelSnapshot.TIMESTAMP are all the same
         return sortField.equals(Bucket.TIMESTAMP) ? ElasticsearchMappings.ES_TIMESTAMP : sortField;
+    }
+
+    @Override
+    public boolean createList(ListDocument list)
+    {
+        try
+        {
+            m_Client.prepareIndex(PRELERT_INFO_INDEX, ListDocument.TYPE, list.getId())
+                    .setSource(m_ObjectMapper.writeValueAsString(list))
+                    .execute().actionGet();
+        }
+        catch (IOException | IndexNotFoundException e)
+        {
+            LOGGER.error("Error writing list", e);
+            return false;
+        }
+        return true;
+    }
+
+    @Override
+    public Optional<ListDocument> getList(String listId)
+    {
+        GetResponse response = m_Client.prepareGet(PRELERT_INFO_INDEX, ListDocument.TYPE, listId).get();
+        if (!response.isExists())
+        {
+            return Optional.empty();
+        }
+        ListDocument listDocument = m_ObjectMapper.convertValue(response.getSource(), ListDocument.class);
+        return Optional.of(listDocument);
+    }
+
+    @Override
+    public QueryPage<ListDocument> getLists()
+    {
+        // TODO Auto-generated method stub
+        return null;
     }
 }

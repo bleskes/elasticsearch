@@ -67,6 +67,7 @@ import com.prelert.job.JobException;
 import com.prelert.job.JobIdAlreadyExistsException;
 import com.prelert.job.JobSchedulerStatus;
 import com.prelert.job.JobStatus;
+import com.prelert.job.ListDocument;
 import com.prelert.job.ModelDebugConfig;
 import com.prelert.job.ModelSnapshot;
 import com.prelert.job.NoSuchModelSnapshotException;
@@ -1312,5 +1313,15 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
             }
         }
         return activeJobs;
+    }
+
+    public boolean createList(ListDocument list)
+    {
+        return m_JobProvider.createList(list);
+    }
+
+    public Optional<ListDocument> getList(String listId)
+    {
+        return m_JobProvider.getList(listId);
     }
 }

@@ -33,14 +33,17 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 
 import org.apache.log4j.Logger;
 
 import com.prelert.job.AnalysisLimits;
 import com.prelert.job.JobDetails;
+import com.prelert.job.ListDocument;
 import com.prelert.job.ModelDebugConfig;
 import com.prelert.job.ModelSnapshot;
 import com.prelert.job.process.writer.AnalysisLimitsWriter;
@@ -62,6 +65,7 @@ public class AutodetectBuilder
     private List<File> m_FilesToDelete;
     private Logger m_Logger;
     private boolean m_IgnoreDowntime;
+    private Set<ListDocument> m_ReferencedLists;
     private Optional<Quantiles> m_Quantiles;
     private Optional<ModelSnapshot> m_ModelSnapshot;
 
@@ -79,6 +83,7 @@ public class AutodetectBuilder
         m_FilesToDelete = Objects.requireNonNull(filesToDelete);
         m_Logger = Objects.requireNonNull(logger);
         m_IgnoreDowntime = false;
+        m_ReferencedLists = new HashSet<>();
         m_Quantiles = Optional.empty();
         m_ModelSnapshot = Optional.empty();
     }
@@ -92,6 +97,12 @@ public class AutodetectBuilder
     public AutodetectBuilder ignoreDowntime(boolean ignoreDowntime)
     {
         m_IgnoreDowntime = ignoreDowntime;
+        return this;
+    }
+
+    public AutodetectBuilder referencedLists(Set<ListDocument> lists)
+    {
+        m_ReferencedLists = lists;
         return this;
     }
 
@@ -225,7 +236,8 @@ public class AutodetectBuilder
                     new FileOutputStream(fieldConfigFile),
                     StandardCharsets.UTF_8))
             {
-                new FieldConfigWriter(m_Job.getAnalysisConfig(), osw, m_Logger).write();
+                new FieldConfigWriter(m_Job.getAnalysisConfig(), m_ReferencedLists, osw, m_Logger)
+                        .write();
             }
 
             String fieldConfig = FIELD_CONFIG_ARG + fieldConfigFile.getPath();
