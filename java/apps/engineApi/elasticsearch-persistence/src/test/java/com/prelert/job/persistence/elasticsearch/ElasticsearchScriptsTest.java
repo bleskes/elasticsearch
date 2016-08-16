@@ -28,18 +28,36 @@
 package com.prelert.job.persistence.elasticsearch;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
+import org.elasticsearch.client.Client;
 import org.elasticsearch.script.Script;
+import org.elasticsearch.script.ScriptService.ScriptType;
+import org.junit.Before;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
+import org.mockito.MockitoAnnotations;
+
+import com.prelert.job.JobException;
 
 public class ElasticsearchScriptsTest
 {
+    @Captor private ArgumentCaptor<Map<String, Object>> m_MapCaptor;
+
+    @Before
+    public void setUp() throws InterruptedException, ExecutionException
+    {
+        MockitoAnnotations.initMocks(this);
+    }
+
     @Test
     public void testNewUpdateBucketCount()
     {
@@ -104,5 +122,46 @@ public class ElasticsearchScriptsTest
         assertEquals("update-scheduler-config", script.getScript());
         assertEquals(1, script.getParams().size());
         assertEquals(newSchedulerConfig, script.getParams().get("newSchedulerConfig"));
+    }
+
+    @Test
+    public void testUpdateProcessingTime()
+    {
+        Long time = 135790L;
+        Script script = ElasticsearchScripts.updateProcessingTime(time);
+        System.out.println(script.getScript());
+        assertEquals("update-average-processing-time", script.getScript());
+        assertEquals(time, script.getParams().get("timeMs"));
+    }
+
+    @Test
+    public void testUpdateUpsertViaScript() throws JobException
+    {
+        String index = "idx";
+        String docId = "docId";
+        String type = "type";
+        Map<String, Object> map = new HashMap<>();
+        map.put("testKey",  "testValue");
+
+        Script script = new Script("test-script-here", ScriptType.INLINE, null, map);
+        ArgumentCaptor<Script> captor = ArgumentCaptor.forClass(Script.class);
+
+        MockClientBuilder clientBuilder = new MockClientBuilder("cluster")
+                .prepareUpdateScript(index, type, docId, captor, m_MapCaptor);
+        Client client = clientBuilder.build();
+
+        assertTrue(ElasticsearchScripts.updateViaScript(client, index, type, docId, script));
+
+        Script response = captor.getValue();
+        assertEquals(script, response);
+        assertEquals(map, response.getParams());
+
+        map.clear();
+        map.put("secondKey",  "secondValue");
+        map.put("thirdKey",  "thirdValue");
+        assertTrue(ElasticsearchScripts.upsertViaScript(client, index, type, docId, script, map));
+
+        Map<String, Object> updatedParams = m_MapCaptor.getValue();
+        assertEquals(map, updatedParams);
     }
 }

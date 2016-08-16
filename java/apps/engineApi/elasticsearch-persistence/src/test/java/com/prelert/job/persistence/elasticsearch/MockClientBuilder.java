@@ -69,6 +69,7 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.index.IndexNotFoundException;
+import org.elasticsearch.script.Script;
 import org.elasticsearch.search.sort.SortBuilder;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
@@ -269,6 +270,18 @@ public class MockClientBuilder
         UpdateRequestBuilder builder = mock(UpdateRequestBuilder.class);
         when(m_Client.prepareUpdate(index, type, id)).thenReturn(builder);
         when(builder.setDoc(getSource.capture())).thenReturn(builder);
+        when(builder.setRetryOnConflict(any(int.class))).thenReturn(builder);
+        when(builder.get()).thenReturn(mock(UpdateResponse.class));
+        return this;
+    }
+
+    public MockClientBuilder prepareUpdateScript(String index, String type, String id,
+                        ArgumentCaptor<Script> getSource, ArgumentCaptor<Map<String, Object>> getParams)
+    {
+        UpdateRequestBuilder builder = mock(UpdateRequestBuilder.class);
+        when(m_Client.prepareUpdate(index, type, id)).thenReturn(builder);
+        when(builder.setScript(getSource.capture())).thenReturn(builder);
+        when(builder.setUpsert(getParams.capture())).thenReturn(builder);
         when(builder.setRetryOnConflict(any(int.class))).thenReturn(builder);
         when(builder.get()).thenReturn(mock(UpdateResponse.class));
         return this;
