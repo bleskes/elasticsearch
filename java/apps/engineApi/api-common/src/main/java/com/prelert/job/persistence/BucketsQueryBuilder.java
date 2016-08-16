@@ -26,6 +26,8 @@
  ***********************************************************/
 package com.prelert.job.persistence;
 
+import java.util.Objects;
+
 /**
  * One time query builder for buckets.
  * Sets default values for the following parameters:
@@ -82,15 +84,31 @@ public final class BucketsQueryBuilder
         return this;
     }
 
+    /**
+     * If startTime <= 0 the parameter is not set
+     * @param startTime
+     * @return
+     */
     public BucketsQueryBuilder epochStart(long startTime)
     {
-        m_BucketsQuery.m_EpochStart = startTime;
+        if (startTime > 0)
+        {
+            m_BucketsQuery.m_EpochStart = startTime;
+        }
         return this;
     }
 
+    /**
+     * If endTime <= 0 the parameter is not set
+     * @param endTime
+     * @return
+     */
     public BucketsQueryBuilder epochEnd(long endTime)
     {
-        m_BucketsQuery.m_EpochEnd = endTime;
+        if (endTime > 0)
+        {
+            m_BucketsQuery.m_EpochEnd = endTime;
+        }
         return this;
     }
 
@@ -104,7 +122,7 @@ public final class BucketsQueryBuilder
         m_BucketsQuery = new BucketsQueryBuilder.BucketsQuery();
     }
 
-    
+
     public class BucketsQuery
     {
         private int m_Skip = 0;
@@ -115,7 +133,6 @@ public final class BucketsQueryBuilder
         private double m_NormalizedProbability = 0.0d;
         private long m_EpochStart = -1;
         private long m_EpochEnd = -1;
-
 
         public int getSkip()
         {
@@ -156,5 +173,40 @@ public final class BucketsQueryBuilder
         {
             return m_EpochEnd;
         }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(m_Skip, m_Take, m_Expand, m_IncludeInterim,
+                        m_AnomalyScoreFilter, m_NormalizedProbability,
+                        m_EpochStart, m_EpochEnd);
+        }
+
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj)
+            {
+                return true;
+            }
+            if (obj == null)
+            {
+                return false;
+            }
+            if (getClass() != obj.getClass())
+            {
+                return false;
+            }
+
+            BucketsQuery other = (BucketsQuery) obj;
+            return this.m_Skip == other.m_Skip &&
+                   this.m_Take == other.m_Take &&
+                   this.m_Expand == other.m_Expand &&
+                   this.m_IncludeInterim == other.m_IncludeInterim &&
+                   this.m_EpochStart == other.m_EpochStart &&
+                   this.m_EpochStart == other.m_EpochStart &&
+                   this.m_AnomalyScoreFilter == other.m_AnomalyScoreFilter &&
+                   this.m_NormalizedProbability == other.m_NormalizedProbability;
+        }
+
     }
 }

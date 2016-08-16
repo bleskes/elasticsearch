@@ -43,6 +43,7 @@ import javax.ws.rs.core.Response;
 import org.apache.log4j.Logger;
 
 import com.prelert.job.UnknownJobException;
+import com.prelert.job.persistence.BucketsQueryBuilder;
 import com.prelert.job.persistence.QueryPage;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
 import com.prelert.job.reader.JobDataReader;
@@ -116,18 +117,20 @@ public class Buckets extends ResourceWithJobManager
         long epochEnd = paramToEpochIfValidOrThrow(END_QUERY_PARAM, end, LOGGER);
 
         JobDataReader jobReader = jobReader();
-        QueryPage<Bucket> page;
 
-        if (epochStart > 0 || epochEnd > 0)
-        {
-            page = jobReader.buckets(jobId, expand, includeInterim, skip, take, epochStart, epochEnd,
-                    anomalySoreFilter, normalizedProbabilityFilter);
-        }
-        else
-        {
-            page = jobReader.buckets(jobId, expand, includeInterim, skip, take,
-                    anomalySoreFilter, normalizedProbabilityFilter);
-        }
+
+        BucketsQueryBuilder.BucketsQuery query =
+                    new BucketsQueryBuilder().expand(expand)
+                        .includeInterim(includeInterim)
+                        .epochStart(epochStart)
+                        .epochEnd(epochEnd)
+                        .skip(skip)
+                        .take(take)
+                        .anomalyScoreThreshold(anomalySoreFilter)
+                        .normalizedProbabilityThreshold(normalizedProbabilityFilter)
+                        .build();
+
+        QueryPage<Bucket> page = jobReader.buckets(jobId, query);
 
         Pagination<Bucket> buckets = paginationFromQueryPage(page, skip, take);
 
