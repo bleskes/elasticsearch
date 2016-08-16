@@ -30,14 +30,23 @@ package com.prelert.job.persistence;
  * One time query builder for records.
  * Sets default values for the following parameters:
  * <ul>
- *     <li>Skip = 0</li>
- *     <li>Take = {@value DEFAULT_TAKE_SIZE}</li>
- *     <li>IncludeInterim = false</li>
- *     <li>SortDescending = true</li>
- *     <li>anomalyScoreThreshold = 0.0</li>
- *     <li>normalizedProbabilityThreshold = 0.0</li>
- *     <li>epochStart = -1</li>
- *     <li>epochEnd = -1</li>
+ *     <li>Skip- Skip the first N records. This parameter is for paging
+ * if not required set to 0. Default = 0</li>
+ *     <li>Take- Take only this number of records. Default = {@value DEFAULT_TAKE_SIZE}</li>
+ *     <li>IncludeInterim- Include interim results. Default = false</li>
+ *     <li>SortField- The field to sort results by if <code>null</code> no
+ * sort is applied. Default = null</li>
+ *     <li>SortDescending- Sort in descending order. Default = true</li>
+ *     <li>anomalyScoreThreshold- Return only buckets with an anomalyScore >=
+ * this value. Default = 0.0</li>
+ *     <li>normalizedProbabilityThreshold. Return only buckets with a maxNormalizedProbability >=
+ * this value. Default = 0.0</li>
+ *     <li>epochStart- The start bucket time. A bucket with this timestamp will be
+ * included in the results. If 0 all buckets up to <code>endEpochMs</code>
+ * are returned. Default = -1</li>
+ *     <li>epochEnd- The end bucket timestamp buckets up to but NOT including this
+ * timestamp are returned. If 0 all buckets from <code>startEpochMs</code>
+ * are returned. Default = -1</li>
  * </ul>
  */
 public final class RecordsQueryBuilder

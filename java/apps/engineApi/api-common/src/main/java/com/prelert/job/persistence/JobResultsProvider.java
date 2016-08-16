@@ -33,59 +33,6 @@ import com.prelert.job.results.ModelDebugOutput;
 public interface JobResultsProvider extends Shutdownable
 {
     /**
-     * Get a page of result buckets for the job id
-     *
-     * @param jobId
-     * @param expand Include anomaly records
-     * @param includeInterim Include interim results
-     * @param skip Skip the first N Buckets. This parameter is for paging
-     * if not required set to 0.
-     * @param take Take only this number of Buckets
-     * @param anomalyScoreThreshold Return only buckets with an anomalyScore >=
-     * this value
-     * @param normalizedProbabilityThreshold Return only buckets with a maxNormalizedProbability >=
-     * this value
-     *
-     * @return QueryPage of buckets
-     * @throws UnknownJobException If the job id is no recognised
-     */
-    QueryPage<Bucket> buckets(String jobId, boolean expand, boolean includeInterim, int skip,
-            int take, double anomalyScoreThreshold, double normalizedProbabilityThreshold)
-            throws UnknownJobException;
-
-
-    /**
-     * Get the result buckets for the job id starting with bucket id =
-     * <code>startBucket</code> up to <code>endBucket</code>. One of either
-     * <code>startBucket</code> or <code>endBucket</code> should be non-zero else
-     * it is more efficient to use {@linkplain #buckets(String, boolean, int, int, double, double)}
-     *
-     * @param jobId
-     * @param expand Include anomaly records
-     * @param includeInterim Include interim results
-     * @param skip Skip the first N Buckets. This parameter is for paging
-     * if not required set to 0.
-     * @param take Take only this number of Buckets
-     * @param startEpochMs The start bucket time. A bucket with this timestamp will be
-     * included in the results. If 0 all buckets up to <code>endEpochMs</code>
-     * are returned
-     * @param endEpochMs The end bucket timestamp buckets up to but NOT including this
-     * timestamp are returned. If 0 all buckets from <code>startEpochMs</code>
-     * are returned
-     * @param anomalyScoreThreshold Return only buckets with an anomalyScore >=
-     * this value
-     * @param normalizedProbabilityThreshold Return only buckets with a maxNormalizedProbability >=
-     * this value
-     *
-     * @return QueryPage of Buckets
-     * @throws UnknownJobException If the job id is no recognised
-     */
-    QueryPage<Bucket> buckets(String jobId, boolean expand, boolean includeInterim, int skip,
-            int take, long startEpochMs, long endEpochMs, double anomalyScoreThreshold,
-            double normalizedProbabilityThreshold) throws UnknownJobException;
-
-
-    /**
      * Search for buckets with the parameters in the {@link BucketsQueryBuilder}
      * @param jobId
      * @param query
@@ -129,27 +76,6 @@ public interface JobResultsProvider extends Shutdownable
     int expandBucket(String jobId, boolean includeInterim, Bucket bucket) throws UnknownJobException;
 
     /**
-     * Get the anomaly records for the bucket.
-     * The returned records will have the <code>parent</code> member
-     * set to the parent bucket's id.
-     *
-     * @param jobId
-     * @param bucket
-     * @param skip Skip the first N Jobs. This parameter is for paging
-     * results if not required set to 0.
-     * @param take Take only this number of Jobs
-     * @param includeInterim Include interim results
-     * @param sortField The field to sort results by if <code>null</code> no
-     * sort is applied
-     * @param sortDescending Sort in descending order
-     * @return QueryPage of AnomalyRecords
-     * @throws UnknownJobException If the job id is no recognised
-     */
-    QueryPage<AnomalyRecord> bucketRecords(String jobId, Bucket bucket, int skip, int take,
-            boolean includeInterim, String sortField, boolean sortDescending)
-            throws UnknownJobException;
-
-    /**
      * Get a page of {@linkplain CategoryDefinition}s for the given <code>jobId</code>.
      *
      * @param jobId
@@ -170,63 +96,6 @@ public interface JobResultsProvider extends Shutdownable
      * @throws UnknownJobException
      */
     Optional<CategoryDefinition> categoryDefinition(String jobId, String categoryId)
-            throws UnknownJobException;
-
-    /**
-     * Get the anomaly records for all buckets.
-     * The returned records will have the {@linkplain AnomalyRecord#getParent()}
-     *  member set to the parent bucket's id.
-     *
-     * @param jobId
-     * @param skip Skip the first N records. This parameter is for paging
-     * if not required set to 0.
-     * @param take Take only this number of records
-     * @param includeInterim Include interim results
-     * @param sortField The field to sort results by if <code>null</code> no
-     * sort is applied
-     * @param sortDescending Sort in descending order
-     * @param anomalyScoreThreshold Return only buckets with an anomalyScore >=
-     * this value
-     * @param normalizedProbabilityThreshold Return only buckets with a maxNormalizedProbability >=
-     * this value
-     *
-     * @return QueryPage of AnomalyRecords
-     * @throws UnknownJobException If the job id is no recognised
-     */
-    QueryPage<AnomalyRecord> records(String jobId, int skip, int take, boolean includeInterim,
-            String sortField, boolean sortDescending, double anomalyScoreThreshold,
-            double normalizedProbabilityThreshold) throws UnknownJobException;
-
-    /**
-     * Get the anomaly records for all buckets in the given
-     * date (epoch time) range. The returned records will have the
-     * <code>parent</code> member set to the parent bucket's id.
-     *
-     * @param jobId
-     * @param skip Skip the first N records. This parameter is for paging
-     * if not required set to 0.
-     * @param take Take only this number of records
-     * @param startEpochMs The start bucket time. A bucket with this timestamp will be
-     * included in the results. If 0 all buckets up to <code>endEpochMs</code>
-     * are returned
-     * @param endEpochMs The end bucket timestamp buckets up to but NOT including this
-     * timestamp are returned. If 0 all buckets from <code>startEpochMs</code>
-     * are returned
-     * @param includeInterim Include interim results
-     * @param sortField The field to sort results by if <code>null</code> no
-     * sort is applied
-     * @param sortDescending Sort in descending order
-     * @param anomalyScoreThreshold Return only buckets with an anomalyScore >=
-     * this value
-     * @param normalizedProbabilityThreshold Return only buckets with a maxNormalizedProbability >=
-     * this value
-     *
-     * @return QueryPage of AnomalyRecords
-     * throws UnknownJobException If the job id is no recognised
-     */
-    QueryPage<AnomalyRecord> records(String jobId, int skip, int take, long startEpochMs,
-            long endEpochMs, boolean includeInterim, String sortField, boolean sortDescending,
-            double anomalyScoreThreshold, double normalizedProbabilityThreshold)
             throws UnknownJobException;
 
     /**

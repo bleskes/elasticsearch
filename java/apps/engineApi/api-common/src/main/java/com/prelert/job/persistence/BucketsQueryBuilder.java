@@ -30,16 +30,24 @@ import java.util.Objects;
 
 /**
  * One time query builder for buckets.
- * Sets default values for the following parameters:
  * <ul>
- *     <li>Skip = 0</li>
- *     <li>Take = {@value DEFAULT_TAKE_SIZE}</li>
- *     <li>Expand = false</li>
- *     <li>IncludeInterim = false</li>
- *     <li>anomalyScoreThreshold = 0.0</li>
- *     <li>normalizedProbabilityThreshold = 0.0</li>
- *     <li>epochStart = -1</li>
- *     <li>epochEnd = -1</li>
+ *     <li>Skip- Skip the first N Buckets. This parameter is for paging
+ * if not required set to 0. Default = 0</li>
+ *     <li>Take- Take only this number of Buckets. Default = {@value DEFAULT_TAKE_SIZE}</li>
+ *     <li>Expand- Include anomaly records. Default= false</li>
+ *     <li>IncludeInterim- Include interim results. Default = false</li>
+ *     <li>anomalyScoreThreshold- Return only buckets with an anomalyScore >=
+ * this value. Default = 0.0</li>
+ *     <li>normalizedProbabilityThreshold- Return only buckets with a maxNormalizedProbability >=
+ * this value. Default = 0.0</li>
+ *     <li>epochStart- The start bucket time. A bucket with this timestamp will be
+ * included in the results. If 0 all buckets up to <code>endEpochMs</code>
+ * are returned. Default = -1</li>
+ *     <li>epochEnd- The end bucket timestamp buckets up to but NOT including this
+ * timestamp are returned. If 0 all buckets from <code>startEpochMs</code>
+ * are returned. Default = -1</li>
+ *     <li>partitionValue Set the bucket's max normalised probabiltiy to this
+ * partiton field value's max normalised probability. Default = null</li>
  * </ul>
  */
 public final class BucketsQueryBuilder
@@ -83,6 +91,13 @@ public final class BucketsQueryBuilder
         m_BucketsQuery.m_NormalizedProbability = normalizedProbability;
         return this;
     }
+
+    public BucketsQueryBuilder partitionValue(String partitionValue)
+    {
+        m_BucketsQuery.m_PartitionValue = partitionValue;
+        return this;
+    }
+
 
     /**
      * If startTime <= 0 the parameter is not set
@@ -133,6 +148,7 @@ public final class BucketsQueryBuilder
         private double m_NormalizedProbability = 0.0d;
         private long m_EpochStart = -1;
         private long m_EpochEnd = -1;
+        private String m_PartitionValue = null;
 
         public int getSkip()
         {
@@ -174,11 +190,19 @@ public final class BucketsQueryBuilder
             return m_EpochEnd;
         }
 
+        /**
+         * @return Null if not set
+         */
+        public String getPartitionValue()
+        {
+            return m_PartitionValue;
+        }
+
         @Override
         public int hashCode() {
             return Objects.hash(m_Skip, m_Take, m_Expand, m_IncludeInterim,
                         m_AnomalyScoreFilter, m_NormalizedProbability,
-                        m_EpochStart, m_EpochEnd);
+                        m_EpochStart, m_EpochEnd, m_PartitionValue);
         }
 
 
@@ -205,7 +229,8 @@ public final class BucketsQueryBuilder
                    this.m_EpochStart == other.m_EpochStart &&
                    this.m_EpochStart == other.m_EpochStart &&
                    this.m_AnomalyScoreFilter == other.m_AnomalyScoreFilter &&
-                   this.m_NormalizedProbability == other.m_NormalizedProbability;
+                   this.m_NormalizedProbability == other.m_NormalizedProbability &&
+                   this.m_PartitionValue == other.m_PartitionValue;
         }
 
     }

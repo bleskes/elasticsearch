@@ -575,7 +575,6 @@ public class ElasticsearchJobProvider implements JobProvider, ListProvider
         return updateJob(jobId, update);
     }
 
-
     @Override
     public boolean deleteJob(String jobId) throws UnknownJobException, DataStoreException
     {
@@ -604,31 +603,6 @@ public class ElasticsearchJobProvider implements JobProvider, ListProvider
             LOGGER.warn(msg);
             throw new UnknownJobException(jobId, msg, errorCode);
         }
-    }
-
-    @Override
-    public QueryPage<Bucket> buckets(String jobId,
-            boolean expand, boolean includeInterim, int skip, int take,
-            double anomalyScoreThreshold, double normalizedProbabilityThreshold)
-    throws UnknownJobException
-    {
-        return buckets(jobId, expand, includeInterim, skip, take, 0, 0, anomalyScoreThreshold,
-                normalizedProbabilityThreshold);
-    }
-
-    @Override
-    public QueryPage<Bucket> buckets(String jobId, boolean expand,
-            boolean includeInterim, int skip, int take, long startEpochMs, long endEpochMs,
-            double anomalyScoreThreshold, double normalizedProbabilityThreshold)
-    throws UnknownJobException
-    {
-        QueryBuilder fb = new ResultsFilterBuilder()
-                .timeRange(ElasticsearchMappings.ES_TIMESTAMP, startEpochMs, endEpochMs)
-                .score(Bucket.ANOMALY_SCORE, anomalyScoreThreshold)
-                .score(Bucket.MAX_NORMALIZED_PROBABILITY, normalizedProbabilityThreshold)
-                .interim(Bucket.IS_INTERIM, includeInterim)
-                .build();
-        return buckets(new ElasticsearchJobId(jobId), expand, includeInterim, skip, take, fb);
     }
 
     @Override
@@ -775,9 +749,7 @@ public class ElasticsearchJobProvider implements JobProvider, ListProvider
         return bucket.getRecords().size();
     }
 
-
-    @Override
-    public QueryPage<AnomalyRecord> bucketRecords(String jobId,
+    private QueryPage<AnomalyRecord> bucketRecords(String jobId,
             Bucket bucket, int skip, int take, boolean includeInterim, String sortField, boolean descending)
     throws UnknownJobException
     {
@@ -803,7 +775,6 @@ public class ElasticsearchJobProvider implements JobProvider, ListProvider
         return records(new ElasticsearchJobId(jobId), skip, take, recordFilter, sb, SECONDARY_SORT,
                 descending);
     }
-
 
     @Override
     public QueryPage<CategoryDefinition> categoryDefinitions(String jobId, int skip, int take)
@@ -856,32 +827,6 @@ public class ElasticsearchJobProvider implements JobProvider, ListProvider
 
         return response.isExists() ? Optional.of(m_ObjectMapper.convertValue(response.getSource(),
                 CategoryDefinition.class)) : Optional.<CategoryDefinition> empty();
-    }
-
-    @Override
-    public QueryPage<AnomalyRecord> records(String jobId,
-            int skip, int take, boolean includeInterim, String sortField, boolean descending,
-            double anomalyScoreThreshold, double normalizedProbabilityThreshold)
-    throws UnknownJobException
-    {
-        return records(jobId, skip, take, 0, 0, includeInterim, sortField, descending,
-                anomalyScoreThreshold, normalizedProbabilityThreshold);
-    }
-
-    @Override
-    public QueryPage<AnomalyRecord> records(String jobId,
-            int skip, int take, long startEpochMs, long endEpochMs,
-            boolean includeInterim, String sortField, boolean descending,
-            double anomalyScoreThreshold, double normalizedProbabilityThreshold)
-    throws UnknownJobException
-    {
-        QueryBuilder fb = new ResultsFilterBuilder()
-                .timeRange(ElasticsearchMappings.ES_TIMESTAMP, startEpochMs, endEpochMs)
-                .score(AnomalyRecord.ANOMALY_SCORE, anomalyScoreThreshold)
-                .score(AnomalyRecord.NORMALIZED_PROBABILITY, normalizedProbabilityThreshold)
-                .interim(AnomalyRecord.IS_INTERIM, includeInterim)
-                .build();
-        return records(new ElasticsearchJobId(jobId), skip, take, fb, sortField, descending);
     }
 
     @Override
