@@ -51,6 +51,8 @@ import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexResponse;
 import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsRequest;
 import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsResponse;
+import org.elasticsearch.action.bulk.BulkRequestBuilder;
+import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.get.GetRequestBuilder;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.index.IndexRequestBuilder;
@@ -333,6 +335,7 @@ public class MockClientBuilder
 
         when(m_Client.prepareIndex(eq(index), any(), any())).thenReturn(builder);
         when(builder.setSource(eq(source))).thenReturn(builder);
+        when(builder.setParent(any(String.class))).thenReturn(builder);
         when(builder.setRefresh(eq(true))).thenReturn(builder);
         when(builder.execute()).thenReturn(actionFuture);
         when(actionFuture.actionGet()).thenReturn(mock(IndexResponse.class));
@@ -348,8 +351,38 @@ public class MockClientBuilder
         when(m_Client.prepareIndex(eq(index), any(), any())).thenReturn(builder);
         when(builder.setSource(getSource.capture())).thenReturn(builder);
         when(builder.setRefresh(eq(true))).thenReturn(builder);
+        when(builder.setParent(any(String.class))).thenReturn(builder);
         when(builder.execute()).thenReturn(actionFuture);
         when(actionFuture.actionGet()).thenReturn(mock(IndexResponse.class));
+        return this;
+    }
+
+    @SuppressWarnings("unchecked")
+    public MockClientBuilder prepareIndex(String index, String type, String responseId, ArgumentCaptor<XContentBuilder> getSource)
+    {
+        IndexRequestBuilder builder = mock(IndexRequestBuilder.class);
+        ListenableActionFuture<IndexResponse> actionFuture = mock(ListenableActionFuture.class);
+        IndexResponse response = mock(IndexResponse.class);
+        when(response.getId()).thenReturn(responseId);
+
+        when(m_Client.prepareIndex(eq(index), eq(type))).thenReturn(builder);
+        when(m_Client.prepareIndex(eq(index), eq(type), any(String.class))).thenReturn(builder);
+        when(builder.setSource(getSource.capture())).thenReturn(builder);
+        when(builder.setParent(any(String.class))).thenReturn(builder);
+        when(builder.setRefresh(eq(true))).thenReturn(builder);
+        when(builder.execute()).thenReturn(actionFuture);
+        when(actionFuture.actionGet()).thenReturn(response);
+        return this;
+    }
+
+    @SuppressWarnings("unchecked")
+    public MockClientBuilder prepareBulk(BulkResponse response)
+    {
+        ListenableActionFuture<BulkResponse> actionFuture = mock(ListenableActionFuture.class);
+        BulkRequestBuilder builder = mock(BulkRequestBuilder.class);
+        when(m_Client.prepareBulk()).thenReturn(builder);
+        when(builder.execute()).thenReturn(actionFuture);
+        when(actionFuture.actionGet()).thenReturn(response);
         return this;
     }
 
