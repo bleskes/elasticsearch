@@ -243,7 +243,7 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
             ZoneId defaultTimezone = m_DataDescription.getFormat() == DataFormat.ELASTICSEARCH
                     ? ZoneOffset.UTC : ZoneOffset.systemDefault();
             m_DateTransform = new DateFormatTransform(m_DataDescription.getTimeFormat(),
-                    ZoneOffset.systemDefault(), readIndicies, writeIndicies, m_Logger);
+                    defaultTimezone, readIndicies, writeIndicies, m_Logger);
         }
         else
         {
