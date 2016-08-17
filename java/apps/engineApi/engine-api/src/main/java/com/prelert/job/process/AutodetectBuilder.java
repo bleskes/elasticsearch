@@ -132,14 +132,7 @@ public class AutodetectBuilder
         List<String> command = ProcessCtrl.buildAutoDetectCommand(m_Job, m_Logger,
                 restoreSnapshotId, m_IgnoreDowntime);
 
-        if (m_Job.getAnalysisLimits() != null)
-        {
-            File limitConfigFile = File.createTempFile("limitconfig", CONF_EXTENSION);
-            m_FilesToDelete.add(limitConfigFile);
-            writeLimits(m_Job.getAnalysisLimits(), limitConfigFile);
-            String limits = LIMIT_CONFIG_ARG + limitConfigFile.getPath();
-            command.add(limits);
-        }
+        buildLimits(command);
 
         if (m_Job.getModelDebugConfig() != null && m_Job.getModelDebugConfig().isEnabled())
         {
@@ -193,6 +186,18 @@ public class AutodetectBuilder
         ProcessCtrl.buildEnvironment(pb);
 
         return pb.start();
+    }
+
+    private void buildLimits(List<String> command) throws IOException
+    {
+        if (m_Job.getAnalysisLimits() != null)
+        {
+            File limitConfigFile = File.createTempFile("limitconfig", CONF_EXTENSION);
+            m_FilesToDelete.add(limitConfigFile);
+            writeLimits(m_Job.getAnalysisLimits(), limitConfigFile);
+            String limits = LIMIT_CONFIG_ARG + limitConfigFile.getPath();
+            command.add(limits);
+        }
     }
 
     /**
