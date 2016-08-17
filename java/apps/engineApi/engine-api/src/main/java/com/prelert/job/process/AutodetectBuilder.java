@@ -133,15 +133,7 @@ public class AutodetectBuilder
                 restoreSnapshotId, m_IgnoreDowntime);
 
         buildLimits(command);
-
-        if (m_Job.getModelDebugConfig() != null && m_Job.getModelDebugConfig().isEnabled())
-        {
-            File modelDebugConfigFile = File.createTempFile("modeldebugconfig", CONF_EXTENSION);
-            m_FilesToDelete.add(modelDebugConfigFile);
-            writeModelDebugConfig(m_Job.getModelDebugConfig(), modelDebugConfigFile);
-            String modelDebugConfig = MODEL_DEBUG_CONFIG_ARG + modelDebugConfigFile.getPath();
-            command.add(modelDebugConfig);
-        }
+        buildModelDebugConfig(command);
 
         if (ProcessCtrl.modelConfigFilePresent())
         {
@@ -213,6 +205,18 @@ public class AutodetectBuilder
                 StandardCharsets.UTF_8))
         {
             new AnalysisLimitsWriter(options, osw).write();
+        }
+    }
+
+    private void buildModelDebugConfig(List<String> command) throws IOException
+    {
+        if (m_Job.getModelDebugConfig() != null && m_Job.getModelDebugConfig().isEnabled())
+        {
+            File modelDebugConfigFile = File.createTempFile("modeldebugconfig", CONF_EXTENSION);
+            m_FilesToDelete.add(modelDebugConfigFile);
+            writeModelDebugConfig(m_Job.getModelDebugConfig(), modelDebugConfigFile);
+            String modelDebugConfig = MODEL_DEBUG_CONFIG_ARG + modelDebugConfigFile.getPath();
+            command.add(modelDebugConfig);
         }
     }
 
