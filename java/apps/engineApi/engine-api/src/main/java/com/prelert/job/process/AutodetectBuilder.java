@@ -27,6 +27,7 @@
 package com.prelert.job.process;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
@@ -142,23 +143,7 @@ public class AutodetectBuilder
         }
 
         buildQuantiles(command);
-
-        // now the actual field args
-        if (m_Job.getAnalysisConfig() != null)
-        {
-            // write to a temporary field config file
-            File fieldConfigFile = File.createTempFile("fieldconfig", CONF_EXTENSION);
-            m_FilesToDelete.add(fieldConfigFile);
-            try (OutputStreamWriter osw = new OutputStreamWriter(
-                    new FileOutputStream(fieldConfigFile),
-                    StandardCharsets.UTF_8))
-            {
-                new FieldConfigWriter(m_Job.getAnalysisConfig(), osw, m_Logger).write();
-            }
-
-            String fieldConfig = FIELD_CONFIG_ARG + fieldConfigFile.getPath();
-            command.add(fieldConfig);
-        }
+        buildFieldConfig(command);
 
         // Build the process
         m_Logger.info("Starting autodetect process with command: " +  command);
@@ -232,6 +217,25 @@ public class AutodetectBuilder
             String quantilesStateFileArg = ProcessCtrl.QUANTILES_STATE_PATH_ARG + normalisersStateFilePath;
             command.add(quantilesStateFileArg);
             command.add(ProcessCtrl.DELETE_STATE_FILES_ARG);
+        }
+    }
+
+    private void buildFieldConfig(List<String> command) throws IOException, FileNotFoundException
+    {
+        if (m_Job.getAnalysisConfig() != null)
+        {
+            // write to a temporary field config file
+            File fieldConfigFile = File.createTempFile("fieldconfig", CONF_EXTENSION);
+            m_FilesToDelete.add(fieldConfigFile);
+            try (OutputStreamWriter osw = new OutputStreamWriter(
+                    new FileOutputStream(fieldConfigFile),
+                    StandardCharsets.UTF_8))
+            {
+                new FieldConfigWriter(m_Job.getAnalysisConfig(), osw, m_Logger).write();
+            }
+    
+            String fieldConfig = FIELD_CONFIG_ARG + fieldConfigFile.getPath();
+            command.add(fieldConfig);
         }
     }
 }
