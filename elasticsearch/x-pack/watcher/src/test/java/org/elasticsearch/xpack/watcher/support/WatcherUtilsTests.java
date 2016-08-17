@@ -148,6 +148,7 @@ public class WatcherUtilsTests extends ESTestCase {
 
     }
 
+    @AwaitsFix(bugUrl = "https://github.com/elastic/x-plugins/issues/3136")
     public void testDeserializeSearchRequest() throws Exception {
 
         XContentBuilder builder = jsonBuilder().startObject();
