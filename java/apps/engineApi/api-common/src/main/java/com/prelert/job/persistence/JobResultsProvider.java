@@ -46,14 +46,12 @@ public interface JobResultsProvider extends Shutdownable
      * Get the bucket at time <code>timestampMillis</code> from the job.
      *
      * @param jobId
-     * @param timestampMillis Bucket timestamp as epoch milliseconds
-     * @param expand Include anomaly records
-     * @param includeInterim Include interim results
+     * @param query The bucket query
      * @return Optional Bucket
      * @throws UnknownJobException If the job id is no recognised
      */
-    Optional<Bucket> bucket(String jobId, long timestampMillis, boolean expand,
-            boolean includeInterim) throws UnknownJobException;
+    Optional<Bucket> bucket(String jobId, BucketQueryBuilder.BucketQuery query)
+            throws UnknownJobException;
 
     /**
      * Returns a {@link BatchedDocumentsIterator} that allows querying

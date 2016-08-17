@@ -43,6 +43,7 @@ import javax.ws.rs.core.Response;
 import org.apache.log4j.Logger;
 
 import com.prelert.job.UnknownJobException;
+import com.prelert.job.persistence.BucketQueryBuilder;
 import com.prelert.job.persistence.BucketsQueryBuilder;
 import com.prelert.job.persistence.QueryPage;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
@@ -69,6 +70,7 @@ public class Buckets extends ResourceWithJobManager
     public static final String ENDPOINT = "buckets";
 
     private static final String TIMESTAMP_PARAM = "timestamp";
+    private static final String PARTITION_VALUE_PARAM = "partitionValue";
     public static final String EXPAND_QUERY_PARAM = "expand";
     public static final String INCLUDE_INTERIM_QUERY_PARAM = "includeInterim";
 
@@ -170,7 +172,6 @@ public class Buckets extends ResourceWithJobManager
     /**
      * Get an individual bucket and optionally the expanded results.
      *
-     *
      * @param jobId
      * @param timestamp
      * @param expand Return anomaly records in-line with the bucket,
@@ -186,16 +187,24 @@ public class Buckets extends ResourceWithJobManager
     public Response bucket(@PathParam("jobId") String jobId,
             @PathParam(TIMESTAMP_PARAM) String timestamp,
             @DefaultValue("false") @QueryParam(EXPAND_QUERY_PARAM) boolean expand,
-            @DefaultValue("false") @QueryParam(INCLUDE_INTERIM_QUERY_PARAM) boolean includeInterim)
+            @DefaultValue("false") @QueryParam(INCLUDE_INTERIM_QUERY_PARAM) boolean includeInterim,
+            @DefaultValue("") @QueryParam(PARTITION_VALUE_PARAM) String partitionValue)
     throws NativeProcessRunException, UnknownJobException
     {
-        LOGGER.debug(String.format("Get %sbucket %s for job %s, %s interim results",
+        LOGGER.debug(String.format("Get %sbucket %s%s for job %s, %s interim results",
                 expand ? "expanded " : "", timestamp, jobId,
-                includeInterim ? "including" : "excluding"));
+                includeInterim ? "including" : "excluding",
+                partitionValue.isEmpty() ? "" : " partition value=" + partitionValue));
 
         JobDataReader jobReader = jobReader();
         long timestampMillis = paramToEpochIfValidOrThrow(TIMESTAMP_PARAM, timestamp, LOGGER);
-        Optional<Bucket> b = jobReader.bucket(jobId, timestampMillis, expand, includeInterim);
+
+        BucketQueryBuilder query = new BucketQueryBuilder(timestampMillis)
+                                       .expand(expand)
+                                       .includeInterim(includeInterim)
+                                       .partitionValue(partitionValue);
+
+        Optional<Bucket> b = jobReader.bucket(jobId, query.build());
         SingleDocument<Bucket> bucket = singleDocFromOptional(b, Bucket.TYPE);
 
         if (bucket.isExists())

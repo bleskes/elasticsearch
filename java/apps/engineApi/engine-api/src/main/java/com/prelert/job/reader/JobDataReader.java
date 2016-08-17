@@ -35,6 +35,7 @@ import com.prelert.job.JobDetails;
 import com.prelert.job.ModelSizeStats;
 import com.prelert.job.ModelSnapshot;
 import com.prelert.job.UnknownJobException;
+import com.prelert.job.persistence.BucketQueryBuilder;
 import com.prelert.job.persistence.BucketsQueryBuilder;
 import com.prelert.job.persistence.JobProvider;
 import com.prelert.job.persistence.QueryPage;
@@ -98,13 +99,13 @@ public class JobDataReader implements Feature
      * @throws NativeProcessRunException
      * @throws UnknownJobException
      */
-    public Optional<Bucket> bucket(String jobId, long timestampMillis, boolean expand,
-                                    boolean includeInterim)
+    public Optional<Bucket> bucket(String jobId,
+                                    BucketQueryBuilder.BucketQuery query)
             throws NativeProcessRunException, UnknownJobException
     {
-        Optional<Bucket> result = m_JobProvider.bucket(jobId, timestampMillis, expand, includeInterim);
+        Optional<Bucket> result = m_JobProvider.bucket(jobId, query);
 
-        if (result.isPresent() && !expand)
+        if (result.isPresent() && !query.isExpand())
         {
             result.get().setRecords(null);
         }

@@ -39,7 +39,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 /**
  * Bucket Result POJO
  */
-@JsonIgnoreProperties({"epoch", "normalisable", "id"})
+@JsonIgnoreProperties({"epoch", "normalisable", "id", "perPartitionMaxProbability"})
 @JsonInclude(Include.NON_NULL)
 public class Bucket implements StorageSerialisable
 {
