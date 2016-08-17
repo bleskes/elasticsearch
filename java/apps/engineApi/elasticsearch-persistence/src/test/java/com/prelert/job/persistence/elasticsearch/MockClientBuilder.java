@@ -69,8 +69,10 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.index.IndexNotFoundException;
+import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.script.Script;
 import org.elasticsearch.search.sort.SortBuilder;
+import org.elasticsearch.search.sort.SortOrder;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 
@@ -232,7 +234,25 @@ public class MockClientBuilder
         when(searchRequestBuilder.setFrom(eq(skip))).thenReturn(searchRequestBuilder);
         when(searchRequestBuilder.setSize(eq(take))).thenReturn(searchRequestBuilder);
         when(searchRequestBuilder.addSort(any(SortBuilder.class))).thenReturn(searchRequestBuilder);
-        when(m_Client.prepareSearch(index)).thenReturn(searchRequestBuilder);
+        when(m_Client.prepareSearch(eq(index))).thenReturn(searchRequestBuilder);
+        return this;
+    }
+
+    public MockClientBuilder prepareSearch(String index, String type, int skip, int take, SearchResponse response,
+            ArgumentCaptor<QueryBuilder> filter)
+    {
+        SearchRequestBuilder builder = mock(SearchRequestBuilder.class);
+        when(builder.setTypes(eq(type))).thenReturn(builder);
+        when(builder.addSort(any(SortBuilder.class))).thenReturn(builder);
+        when(builder.setQuery(filter.capture())).thenReturn(builder);
+        when(builder.setPostFilter(filter.capture())).thenReturn(builder);
+        when(builder.setFrom(eq(skip))).thenReturn(builder);
+        when(builder.setSize(eq(take))).thenReturn(builder);
+        when(builder.setFetchSource(eq(true))).thenReturn(builder);
+        when(builder.addField(any(String.class))).thenReturn(builder);
+        when(builder.addSort(any(String.class), any(SortOrder.class))).thenReturn(builder);
+        when(builder.get()).thenReturn(response);
+        when(m_Client.prepareSearch(eq(index))).thenReturn(builder);
         return this;
     }
 
