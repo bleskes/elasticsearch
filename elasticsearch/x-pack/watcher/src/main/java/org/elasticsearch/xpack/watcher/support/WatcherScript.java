@@ -126,6 +126,10 @@ public class WatcherScript implements ToXContent {
     }
 
     public static WatcherScript parse(XContentParser parser) throws IOException {
+        return parse(parser, null);
+    }
+
+    public static WatcherScript parse(XContentParser parser, @Nullable String lang) throws IOException {
         XContentParser.Token token = parser.currentToken();
         if (token == XContentParser.Token.VALUE_STRING) {
             return new WatcherScript(parser.text());
@@ -136,7 +140,6 @@ public class WatcherScript implements ToXContent {
 
         String script = null;
         ScriptType type = null;
-        String lang = null;
         Map<String, Object> params = null;
 
         String currentFieldName = null;
