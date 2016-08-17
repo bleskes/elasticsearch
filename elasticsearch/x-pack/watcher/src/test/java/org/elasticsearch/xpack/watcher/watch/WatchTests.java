@@ -29,6 +29,7 @@ import org.elasticsearch.index.query.MatchAllQueryBuilder;
 import org.elasticsearch.index.query.QueryParser;
 import org.elasticsearch.indices.query.IndicesQueriesRegistry;
 import org.elasticsearch.license.XPackLicenseState;
+import org.elasticsearch.script.Script;
 import org.elasticsearch.script.ScriptService;
 import org.elasticsearch.search.SearchRequestParsers;
 import org.elasticsearch.test.ESTestCase;
@@ -91,7 +92,6 @@ import org.elasticsearch.xpack.watcher.input.search.SearchInputFactory;
 import org.elasticsearch.xpack.watcher.input.simple.ExecutableSimpleInput;
 import org.elasticsearch.xpack.watcher.input.simple.SimpleInput;
 import org.elasticsearch.xpack.watcher.input.simple.SimpleInputFactory;
-import org.elasticsearch.xpack.watcher.support.WatcherScript;
 import org.elasticsearch.xpack.watcher.support.init.proxy.WatcherClientProxy;
 import org.elasticsearch.xpack.watcher.support.search.WatcherSearchTemplateService;
 import org.elasticsearch.xpack.watcher.test.WatcherTestUtils;
@@ -375,7 +375,7 @@ public class WatchTests extends ESTestCase {
         String type = randomFrom(ScriptCondition.TYPE, AlwaysCondition.TYPE, CompareCondition.TYPE, ArrayCompareCondition.TYPE);
         switch (type) {
             case ScriptCondition.TYPE:
-                return new ExecutableScriptCondition(new ScriptCondition(WatcherScript.inline("_script").build()), logger, scriptService);
+                return new ExecutableScriptCondition(new ScriptCondition(new Script("_script")), logger, scriptService);
             case CompareCondition.TYPE:
                 return new ExecutableCompareCondition(new CompareCondition("_path", randomFrom(Op.values()), randomFrom(5, "3")), logger,
                         SystemClock.INSTANCE);
@@ -403,7 +403,7 @@ public class WatchTests extends ESTestCase {
         DateTimeZone timeZone = randomBoolean() ? DateTimeZone.UTC : null;
         switch (type) {
             case ScriptTransform.TYPE:
-                return new ExecutableScriptTransform(new ScriptTransform(WatcherScript.inline("_script").build()), logger, scriptService);
+                return new ExecutableScriptTransform(new ScriptTransform(new Script("_script")), logger, scriptService);
             case SearchTransform.TYPE:
                 SearchTransform transform = new SearchTransform(
                         templateRequest(searchSource()), timeout, timeZone);
@@ -411,14 +411,14 @@ public class WatchTests extends ESTestCase {
             default: // chain
                 SearchTransform searchTransform = new SearchTransform(
                         templateRequest(searchSource()), timeout, timeZone);
-                ScriptTransform scriptTransform = new ScriptTransform(WatcherScript.inline("_script").build());
+                ScriptTransform scriptTransform = new ScriptTransform(new Script("_script"));
 
                 ChainTransform chainTransform = new ChainTransform(Arrays.asList(searchTransform, scriptTransform));
                 return new ExecutableChainTransform(chainTransform, logger, Arrays.<ExecutableTransform>asList(
                         new ExecutableSearchTransform(new SearchTransform(
                                 templateRequest(searchSource()), timeout, timeZone),
                                 logger, client, searchTemplateService, null),
-                        new ExecutableScriptTransform(new ScriptTransform(WatcherScript.inline("_script").build()),
+                        new ExecutableScriptTransform(new ScriptTransform(new Script("_script")),
                             logger, scriptService)));
         }
     }

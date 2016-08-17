@@ -18,24 +18,22 @@
 package org.elasticsearch.xpack.watcher.transform.script;
 
 import org.elasticsearch.ElasticsearchParseException;
+import org.elasticsearch.common.ParseFieldMatcher;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentParser;
-import org.elasticsearch.xpack.watcher.support.WatcherScript;
+import org.elasticsearch.script.Script;
 import org.elasticsearch.xpack.watcher.transform.Transform;
 import org.elasticsearch.xpack.watcher.watch.Payload;
 
 import java.io.IOException;
 
-/**
- *
- */
 public class ScriptTransform implements Transform {
 
     public static final String TYPE = "script";
 
-    private final WatcherScript script;
+    private final Script script;
 
-    public ScriptTransform(WatcherScript script) {
+    public ScriptTransform(Script script) {
         this.script = script;
     }
 
@@ -44,7 +42,7 @@ public class ScriptTransform implements Transform {
         return TYPE;
     }
 
-    public WatcherScript getScript() {
+    public Script getScript() {
         return script;
     }
 
@@ -70,7 +68,7 @@ public class ScriptTransform implements Transform {
 
     public static ScriptTransform parse(String watchId, XContentParser parser) throws IOException {
         try {
-            WatcherScript script = WatcherScript.parse(parser);
+            Script script = Script.parse(parser, ParseFieldMatcher.STRICT);
             return new ScriptTransform(script);
         } catch (ElasticsearchParseException pe) {
             throw new ElasticsearchParseException("could not parse [{}] transform for watch [{}]. failed to parse script", pe, TYPE,
@@ -78,7 +76,7 @@ public class ScriptTransform implements Transform {
         }
     }
 
-    public static Builder builder(WatcherScript script) {
+    public static Builder builder(Script script) {
         return new Builder(script);
     }
 
@@ -100,9 +98,9 @@ public class ScriptTransform implements Transform {
 
     public static class Builder implements Transform.Builder<ScriptTransform> {
 
-        private final WatcherScript script;
+        private final Script script;
 
-        public Builder(WatcherScript script) {
+        public Builder(Script script) {
             this.script = script;
         }
 

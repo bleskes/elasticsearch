@@ -22,10 +22,10 @@ import org.elasticsearch.script.CompiledScript;
 import org.elasticsearch.script.ExecutableScript;
 import org.elasticsearch.script.Script;
 import org.elasticsearch.script.ScriptService;
+import org.elasticsearch.xpack.watcher.Watcher;
 import org.elasticsearch.xpack.watcher.condition.ExecutableCondition;
 import org.elasticsearch.xpack.watcher.execution.WatchExecutionContext;
 import org.elasticsearch.xpack.watcher.support.Variables;
-import org.elasticsearch.xpack.watcher.support.WatcherScript;
 
 import java.util.Collections;
 import java.util.Map;
@@ -44,12 +44,11 @@ public class ExecutableScriptCondition extends ExecutableCondition<ScriptConditi
         super(condition, logger);
         this.scriptService = scriptService;
         try {
-            Script script = new Script(condition.script.script(), condition.script.type(),
-                                       condition.script.lang(), condition.script.params());
-            compiledScript = scriptService.compile(script, WatcherScript.CTX, Collections.emptyMap());
+            Script script = new Script(condition.script.getScript(), condition.script.getType(),
+                                       condition.script.getLang(), condition.script.getParams());
+            compiledScript = scriptService.compile(script, Watcher.SCRIPT_CONTEXT, Collections.emptyMap());
         } catch (Exception e) {
-            throw invalidScript("failed to compile script [{}] with lang [{}] of type [{}]", e, condition.script.script(),
-                    condition.script.lang(), condition.script.type(), e);
+            throw invalidScript("failed to compile script [{}]", e, condition.script, e);
         }
     }
 
@@ -60,8 +59,8 @@ public class ExecutableScriptCondition extends ExecutableCondition<ScriptConditi
 
     public ScriptCondition.Result doExecute(WatchExecutionContext ctx) {
         Map<String, Object> parameters = Variables.createCtxModel(ctx, ctx.payload());
-        if (condition.script.params() != null && !condition.script.params().isEmpty()) {
-            parameters.putAll(condition.script.params());
+        if (condition.script.getParams() != null && !condition.script.getParams().isEmpty()) {
+            parameters.putAll(condition.script.getParams());
         }
         ExecutableScript executable = scriptService.executable(compiledScript, parameters);
         Object value = executable.run();
@@ -69,6 +68,6 @@ public class ExecutableScriptCondition extends ExecutableCondition<ScriptConditi
             return (Boolean) value ? ScriptCondition.Result.MET : ScriptCondition.Result.UNMET;
         }
         throw invalidScript("condition [{}] must return a boolean value (true|false) but instead returned [{}]", type(), ctx.watch().id(),
-                condition.script.script(), value);
+                condition.script, value);
     }
 }

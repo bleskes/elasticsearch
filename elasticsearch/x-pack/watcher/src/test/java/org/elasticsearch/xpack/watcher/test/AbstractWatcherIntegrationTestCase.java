@@ -36,6 +36,7 @@ import org.elasticsearch.common.xcontent.XContentHelper;
 import org.elasticsearch.common.xcontent.support.XContentMapValues;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.license.XPackLicenseState;
+import org.elasticsearch.script.ScriptSettings;
 import org.elasticsearch.xpack.XPackSettings;
 import org.elasticsearch.xpack.monitoring.Monitoring;
 import org.elasticsearch.plugins.Plugin;
@@ -118,6 +119,8 @@ import static org.hamcrest.core.IsNot.not;
  */
 @ClusterScope(scope = SUITE, numClientNodes = 0, transportClientRatio = 0, randomDynamicTemplates = false, maxNumDataNodes = 3)
 public abstract class AbstractWatcherIntegrationTestCase extends ESIntegTestCase {
+
+    public static final String WATCHER_LANG = ScriptSettings.DEFAULT_LANG;
 
     private static final boolean timeWarpEnabled = SystemPropertyUtil.getBoolean("tests.timewarp", true);
 

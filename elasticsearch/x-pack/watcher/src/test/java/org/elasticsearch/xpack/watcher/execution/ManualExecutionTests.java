@@ -24,6 +24,9 @@ import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.common.xcontent.support.XContentMapValues;
 import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.script.MockScriptPlugin;
+import org.elasticsearch.script.Script;
+import org.elasticsearch.script.ScriptService;
+import org.elasticsearch.xpack.XPackPlugin;
 import org.elasticsearch.xpack.support.clock.SystemClock;
 import org.elasticsearch.xpack.watcher.WatcherService;
 import org.elasticsearch.xpack.watcher.actions.ActionStatus;
@@ -34,7 +37,6 @@ import org.elasticsearch.xpack.watcher.condition.script.ScriptCondition;
 import org.elasticsearch.xpack.watcher.history.HistoryStore;
 import org.elasticsearch.xpack.watcher.history.WatchRecord;
 import org.elasticsearch.xpack.watcher.input.simple.SimpleInput;
-import org.elasticsearch.xpack.watcher.support.WatcherScript;
 import org.elasticsearch.xpack.watcher.support.xcontent.ObjectPath;
 import org.elasticsearch.xpack.watcher.test.AbstractWatcherIntegrationTestCase;
 import org.elasticsearch.xpack.watcher.transport.actions.delete.DeleteWatchResponse;
@@ -82,7 +84,6 @@ import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.startsWith;
 
-
 public class ManualExecutionTests extends AbstractWatcherIntegrationTestCase {
 
     @Override
@@ -122,7 +123,7 @@ public class ManualExecutionTests extends AbstractWatcherIntegrationTestCase {
 
         @Override
         public String pluginScriptLang() {
-            return WatcherScript.DEFAULT_LANG;
+            return WATCHER_LANG;
         }
     }
 
@@ -361,7 +362,7 @@ public class ManualExecutionTests extends AbstractWatcherIntegrationTestCase {
     }
 
     public void testWatchExecutionDuration() throws Exception {
-        WatcherScript script = new WatcherScript.Builder.Inline("sleep").params(singletonMap("millis", 100L)).build();
+        Script script = new Script("sleep", ScriptService.ScriptType.INLINE, null, singletonMap("millis", 100L));
         WatchSourceBuilder watchBuilder = watchBuilder()
                 .trigger(schedule(cron("0 0 0 1 * ? 2099")))
                 .input(simpleInput("foo", "bar"))
@@ -377,7 +378,7 @@ public class ManualExecutionTests extends AbstractWatcherIntegrationTestCase {
     }
 
     public void testForceDeletionOfLongRunningWatch() throws Exception {
-        WatcherScript script = new WatcherScript.Builder.Inline("sleep").params(singletonMap("millis", 10000L)).build();
+        Script script = new Script("sleep", ScriptService.ScriptType.INLINE,  null, singletonMap("millis", 10000L));
         WatchSourceBuilder watchBuilder = watchBuilder()
                 .trigger(schedule(cron("0 0 0 1 * ? 2099")))
                 .input(simpleInput("foo", "bar"))

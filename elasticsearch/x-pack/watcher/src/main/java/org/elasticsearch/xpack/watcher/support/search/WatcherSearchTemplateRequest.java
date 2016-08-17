@@ -28,7 +28,8 @@ import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentParser;
-import org.elasticsearch.xpack.watcher.support.WatcherScript;
+import org.elasticsearch.script.Script;
+import org.elasticsearch.script.ScriptService;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -49,7 +50,7 @@ public class WatcherSearchTemplateRequest implements ToXContent {
     private final String[] types;
     private final SearchType searchType;
     private final IndicesOptions indicesOptions;
-    private final WatcherScript template;
+    private final Script template;
 
     private final BytesReference searchSource;
 
@@ -61,12 +62,12 @@ public class WatcherSearchTemplateRequest implements ToXContent {
         this.indicesOptions = indicesOptions;
         // Here we convert a watch search request body into an inline search template,
         // this way if any Watcher related context variables are used, they will get resolved.
-        this.template = WatcherScript.inline(searchSource.utf8ToString()).lang(DEFAULT_LANG).build();
+        this.template = new Script(searchSource.utf8ToString(), ScriptService.ScriptType.INLINE, DEFAULT_LANG, null);
         this.searchSource = null;
     }
 
     public WatcherSearchTemplateRequest(String[] indices, String[] types, SearchType searchType, IndicesOptions indicesOptions,
-                                        WatcherScript template) {
+                                        Script template) {
         this.indices = indices;
         this.types = types;
         this.searchType = searchType;
@@ -85,7 +86,7 @@ public class WatcherSearchTemplateRequest implements ToXContent {
     }
 
     private WatcherSearchTemplateRequest(String[] indices, String[] types, SearchType searchType, IndicesOptions indicesOptions,
-                                 BytesReference searchSource, WatcherScript template) {
+                                 BytesReference searchSource, Script template) {
         this.indices = indices;
         this.types = types;
         this.searchType = searchType;
@@ -95,7 +96,7 @@ public class WatcherSearchTemplateRequest implements ToXContent {
     }
 
     @Nullable
-    public WatcherScript getTemplate() {
+    public Script getTemplate() {
         return template;
     }
 
@@ -120,11 +121,11 @@ public class WatcherSearchTemplateRequest implements ToXContent {
         return searchSource;
     }
 
-    public WatcherScript getOrCreateTemplate() {
+    public Script getOrCreateTemplate() {
         if (template != null) {
             return template;
         } else {
-            return WatcherScript.inline(searchSource.utf8ToString()).lang(DEFAULT_LANG).build();
+            return new Script(searchSource.utf8ToString(), ScriptService.ScriptType.INLINE, DEFAULT_LANG, null);
         }
     }
 
@@ -176,7 +177,7 @@ public class WatcherSearchTemplateRequest implements ToXContent {
         List<String> types = new ArrayList<>();
         IndicesOptions indicesOptions = DEFAULT_INDICES_OPTIONS;
         BytesReference searchSource = null;
-        WatcherScript template = null;
+        Script template = null;
 
         XContentParser.Token token;
         String currentFieldName = null;
@@ -259,7 +260,7 @@ public class WatcherSearchTemplateRequest implements ToXContent {
                     indicesOptions = IndicesOptions.fromOptions(ignoreUnavailable, allowNoIndices, expandOpen, expandClosed,
                             DEFAULT_INDICES_OPTIONS);
                 } else if (ParseFieldMatcher.STRICT.match(currentFieldName, TEMPLATE_FIELD)) {
-                    template = WatcherScript.parse(parser, DEFAULT_LANG);
+                    template = Script.parse(parser, ParseFieldMatcher.STRICT, DEFAULT_LANG);
                 } else {
                     throw new ElasticsearchParseException("could not read search request. unexpected object field [" +
                             currentFieldName + "]");
