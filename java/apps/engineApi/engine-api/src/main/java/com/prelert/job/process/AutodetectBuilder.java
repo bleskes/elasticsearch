@@ -141,19 +141,7 @@ public class AutodetectBuilder
             command.add(ProcessCtrl.MODEL_CONFIG_ARG + modelConfigFile);
         }
 
-        // Restoring the quantiles
-        if (m_Quantiles.isPresent() && !m_Quantiles.get().getQuantileState().isEmpty())
-        {
-            Quantiles quantiles = m_Quantiles.get();
-            m_Logger.info("Restoring quantiles for job '" + m_Job.getId() + "'");
-
-            Path normalisersStateFilePath = ProcessCtrl.writeNormaliserInitState(
-                    m_Job.getId(), quantiles.getQuantileState());
-
-            String quantilesStateFileArg = ProcessCtrl.QUANTILES_STATE_PATH_ARG + normalisersStateFilePath;
-            command.add(quantilesStateFileArg);
-            command.add(ProcessCtrl.DELETE_STATE_FILES_ARG);
-        }
+        buildQuantiles(command);
 
         // now the actual field args
         if (m_Job.getAnalysisConfig() != null)
@@ -228,6 +216,22 @@ public class AutodetectBuilder
                 StandardCharsets.UTF_8))
         {
             new ModelDebugConfigWriter(config, osw).write();
+        }
+    }
+
+    private void buildQuantiles(List<String> command) throws IOException
+    {
+        if (m_Quantiles.isPresent() && !m_Quantiles.get().getQuantileState().isEmpty())
+        {
+            Quantiles quantiles = m_Quantiles.get();
+            m_Logger.info("Restoring quantiles for job '" + m_Job.getId() + "'");
+
+            Path normalisersStateFilePath = ProcessCtrl.writeNormaliserInitState(
+                    m_Job.getId(), quantiles.getQuantileState());
+
+            String quantilesStateFileArg = ProcessCtrl.QUANTILES_STATE_PATH_ARG + normalisersStateFilePath;
+            command.add(quantilesStateFileArg);
+            command.add(ProcessCtrl.DELETE_STATE_FILES_ARG);
         }
     }
 }
