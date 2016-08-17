@@ -144,13 +144,7 @@ public class AutodetectBuilder
 
         buildQuantiles(command);
         buildFieldConfig(command);
-
-        // Build the process
-        m_Logger.info("Starting autodetect process with command: " +  command);
-        ProcessBuilder pb = new ProcessBuilder(command);
-        ProcessCtrl.buildEnvironment(pb);
-
-        return pb.start();
+        return buildProcess(command);
     }
 
     private void buildLimits(List<String> command) throws IOException
@@ -233,9 +227,17 @@ public class AutodetectBuilder
             {
                 new FieldConfigWriter(m_Job.getAnalysisConfig(), osw, m_Logger).write();
             }
-    
+
             String fieldConfig = FIELD_CONFIG_ARG + fieldConfigFile.getPath();
             command.add(fieldConfig);
         }
+    }
+
+    private Process buildProcess(List<String> command) throws IOException
+    {
+        m_Logger.info("Starting autodetect process with command: " +  command);
+        ProcessBuilder pb = new ProcessBuilder(command);
+        ProcessCtrl.buildEnvironment(pb);
+        return pb.start();
     }
 }
