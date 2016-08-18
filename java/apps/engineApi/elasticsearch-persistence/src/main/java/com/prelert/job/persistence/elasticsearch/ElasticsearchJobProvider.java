@@ -658,12 +658,15 @@ public class ElasticsearchJobProvider implements JobProvider, ListProvider
             Bucket bucket = m_ObjectMapper.convertValue(hit.getSource(), Bucket.class);
             bucket.setId(hit.getId());
 
-            if (expand && bucket.getRecordCount() > 0)
+            if (includeInterim || bucket.isInterim() == false)
             {
-                expandBucket(jobId.getId(), includeInterim, bucket);
-            }
+                if (expand && bucket.getRecordCount() > 0)
+                {
+                    expandBucket(jobId.getId(), includeInterim, bucket);
+                }
 
-            results.add(bucket);
+                results.add(bucket);
+            }
         }
 
         return new QueryPage<>(results, searchResponse.getHits().getTotalHits());
