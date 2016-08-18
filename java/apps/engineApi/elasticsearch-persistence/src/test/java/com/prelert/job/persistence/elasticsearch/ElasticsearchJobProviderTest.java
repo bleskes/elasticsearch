@@ -69,16 +69,21 @@ import com.prelert.job.JobConfiguration;
 import com.prelert.job.JobDetails;
 import com.prelert.job.JobStatus;
 import com.prelert.job.ModelSizeStats;
+import com.prelert.job.ModelSnapshot;
 import com.prelert.job.SchedulerState;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.errorcodes.ErrorCodeMatcher;
 import com.prelert.job.errorcodes.ErrorCodes;
+import com.prelert.job.persistence.BucketsQueryBuilder;
 import com.prelert.job.persistence.DataStoreException;
 import com.prelert.job.persistence.QueryPage;
+import com.prelert.job.persistence.RecordsQueryBuilder;
 import com.prelert.job.quantiles.Quantiles;
 import com.prelert.job.results.AnomalyRecord;
 import com.prelert.job.results.Bucket;
 import com.prelert.job.results.BucketProcessingTime;
+import com.prelert.job.results.CategoryDefinition;
+import com.prelert.job.results.Influencer;
 
 public class ElasticsearchJobProviderTest
 {
@@ -631,7 +636,6 @@ public class ElasticsearchJobProviderTest
         assertEquals(1l, buckets.hitCount());
         QueryBuilder query = queryBuilder.getValue();
         String queryString = query.toString();
-        System.out.println(queryString);
         assertTrue(queryString.matches("(?s).*maxNormalizedProbability[^}]*from. : 1\\.0.*must_not[^}]*term[^}]*isInterim. : .true.*"));
     }
 
@@ -661,7 +665,45 @@ public class ElasticsearchJobProviderTest
         assertEquals(1l, buckets.hitCount());
         QueryBuilder query = queryBuilder.getValue();
         String queryString = query.toString();
-        System.out.println(queryString);
+        assertTrue(queryString.matches("(?s).*maxNormalizedProbability[^}]*from. : 10\\.9.*"));
+        assertTrue(queryString.matches("(?s).*anomalyScore[^}]*from. : 5\\.1.*"));
+        assertFalse(queryString.matches("(?s).*isInterim.*"));
+    }
+
+    @Test
+    public void testBuckets_UsingBuilder() throws InterruptedException, ExecutionException, UnknownJobException, JsonParseException, IOException
+    {
+        String jobId = "TestJobIdentification";
+        Date now = new Date();
+        List<Map<String, Object>> source = new ArrayList<>();
+
+        Map<String, Object> map = new HashMap<>();
+        map.put("timestamp",  now.getTime());
+        source.add(map);
+
+        ArgumentCaptor<QueryBuilder> queryBuilder = ArgumentCaptor.forClass(QueryBuilder.class);
+        SearchResponse response = createSearchResponse(true, source);
+        int skip = 99;
+        int take = 17;
+        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME)
+                .addClusterStatusYellowResponse()
+                .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true)
+                .prepareSearch("prelertresults-" + jobId,  Bucket.TYPE,  skip,  take, response, queryBuilder);
+
+        Client client = clientBuilder.build();
+        ElasticsearchJobProvider provider = createProvider(client);
+
+        BucketsQueryBuilder bq = new BucketsQueryBuilder();
+        bq.skip(skip);
+        bq.take(take);
+        bq.anomalyScoreThreshold(5.1);
+        bq.normalizedProbabilityThreshold(10.9);
+        bq.includeInterim(true);
+
+        QueryPage<Bucket> buckets = provider.buckets(jobId, bq.build());
+        assertEquals(1l, buckets.hitCount());
+        QueryBuilder query = queryBuilder.getValue();
+        String queryString = query.toString();
         assertTrue(queryString.matches("(?s).*maxNormalizedProbability[^}]*from. : 10\\.9.*"));
         assertTrue(queryString.matches("(?s).*anomalyScore[^}]*from. : 5\\.1.*"));
         assertFalse(queryString.matches("(?s).*isInterim.*"));
@@ -793,6 +835,498 @@ public class ElasticsearchJobProviderTest
         assertEquals(1122.4, records.get(1).getTypical()[0], 0.000001);
         assertEquals(933.3, records.get(1).getActual()[0], 0.000001);
         assertEquals("irrascible", records.get(1).getFunction());
+    }
+
+    @Test
+    public void testRecords_UsingBuilder() throws InterruptedException, ExecutionException, UnknownJobException, JsonParseException, IOException
+    {
+        String jobId = "TestJobIdentification";
+        Date now = new Date();
+        List<Map<String, Object>> source = new ArrayList<>();
+
+        Map<String, Object> recordMap1 = new HashMap<>();
+        recordMap1.put("typical", 22.4);
+        recordMap1.put("actual", 33.3);
+        recordMap1.put("timestamp", now.getTime());
+        recordMap1.put("function", "irritable");
+        recordMap1.put("bucketSpan", 22);
+        recordMap1.put("_parent", "father");
+        Map<String, Object> recordMap2 = new HashMap<>();
+        recordMap2.put("typical", 1122.4);
+        recordMap2.put("actual", 933.3);
+        recordMap2.put("timestamp", now.getTime());
+        recordMap2.put("function", "irrascible");
+        recordMap2.put("bucketSpan", 22);
+        recordMap2.put("_parent", "father");
+        source.add(recordMap1);
+        source.add(recordMap2);
+
+        int skip = 14;
+        int take = 2;
+        String sortfield = "minefield";
+        ArgumentCaptor<QueryBuilder> queryBuilder = ArgumentCaptor.forClass(QueryBuilder.class);
+        SearchResponse response = createSearchResponse(true, source);
+        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME)
+                .addClusterStatusYellowResponse()
+                .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true)
+                .prepareSearch("prelertresults-" + jobId,  AnomalyRecord.TYPE,  skip,  take, response, queryBuilder);
+
+        Client client = clientBuilder.build();
+        ElasticsearchJobProvider provider = createProvider(client);
+
+        RecordsQueryBuilder rqb = new RecordsQueryBuilder();
+        rqb.skip(skip);
+        rqb.take(take);
+        rqb.epochStart(now.getTime());
+        rqb.epochEnd(now.getTime());
+        rqb.includeInterim(true);
+        rqb.sortField(sortfield);
+        rqb.anomalyScoreFilter(11.1);
+        rqb.normalizedProbability(2.2);
+
+        QueryPage<AnomalyRecord> recordPage = provider.records(jobId, rqb.build());
+        assertEquals(2L, recordPage.hitCount());
+        List<AnomalyRecord> records = recordPage.queryResults();
+        assertEquals(22.4, records.get(0).getTypical()[0], 0.000001);
+        assertEquals(33.3, records.get(0).getActual()[0], 0.000001);
+        assertEquals("irritable", records.get(0).getFunction());
+        assertEquals(1122.4, records.get(1).getTypical()[0], 0.000001);
+        assertEquals(933.3, records.get(1).getActual()[0], 0.000001);
+        assertEquals("irrascible", records.get(1).getFunction());
+    }
+
+
+    @Test
+    public void testBucketRecords() throws InterruptedException, ExecutionException, UnknownJobException, JsonParseException, IOException
+    {
+        String jobId = "TestJobIdentification";
+        Date now = new Date();
+        Bucket bucket = mock(Bucket.class);
+        when(bucket.getTimestamp()).thenReturn(now);
+
+        List<Map<String, Object>> source = new ArrayList<>();
+        Map<String, Object> recordMap1 = new HashMap<>();
+        recordMap1.put("typical", 22.4);
+        recordMap1.put("actual", 33.3);
+        recordMap1.put("timestamp", now.getTime());
+        recordMap1.put("function", "irritable");
+        recordMap1.put("bucketSpan", 22);
+        recordMap1.put("_parent", "father");
+        Map<String, Object> recordMap2 = new HashMap<>();
+        recordMap2.put("typical", 1122.4);
+        recordMap2.put("actual", 933.3);
+        recordMap2.put("timestamp", now.getTime());
+        recordMap2.put("function", "irrascible");
+        recordMap2.put("bucketSpan", 22);
+        recordMap2.put("_parent", "father");
+        source.add(recordMap1);
+        source.add(recordMap2);
+
+        int skip = 14;
+        int take = 2;
+        String sortfield = "minefield";
+        ArgumentCaptor<QueryBuilder> queryBuilder = ArgumentCaptor.forClass(QueryBuilder.class);
+        SearchResponse response = createSearchResponse(true, source);
+        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME)
+                .addClusterStatusYellowResponse()
+                .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true)
+                .prepareSearch("prelertresults-" + jobId,  AnomalyRecord.TYPE,  skip,  take, response, queryBuilder);
+
+        Client client = clientBuilder.build();
+        ElasticsearchJobProvider provider = createProvider(client);
+
+        QueryPage<AnomalyRecord> recordPage = provider.bucketRecords(jobId, bucket, skip, take, true, sortfield, true);
+
+        assertEquals(2L, recordPage.hitCount());
+        List<AnomalyRecord> records = recordPage.queryResults();
+        assertEquals(22.4, records.get(0).getTypical()[0], 0.000001);
+        assertEquals(33.3, records.get(0).getActual()[0], 0.000001);
+        assertEquals("irritable", records.get(0).getFunction());
+        assertEquals(1122.4, records.get(1).getTypical()[0], 0.000001);
+        assertEquals(933.3, records.get(1).getActual()[0], 0.000001);
+        assertEquals("irrascible", records.get(1).getFunction());
+    }
+
+    @Test
+    public void testexpandBucket() throws InterruptedException, ExecutionException, UnknownJobException, JsonParseException, IOException
+    {
+        String jobId = "TestJobIdentification";
+        Date now = new Date();
+        Bucket bucket = new Bucket();
+        bucket.setTimestamp(now);
+
+        List<Map<String, Object>> source = new ArrayList<>();
+        for (int i = 0; i < 400; i++)
+        {
+            Map<String, Object> recordMap = new HashMap<>();
+            recordMap.put("typical", 22.4 + i);
+            recordMap.put("actual", 33.3 + i);
+            recordMap.put("timestamp", now.getTime());
+            recordMap.put("function", "irritable");
+            recordMap.put("bucketSpan", 22);
+            recordMap.put("_parent", "father");
+            source.add(recordMap);
+        }
+
+        ArgumentCaptor<QueryBuilder> queryBuilder = ArgumentCaptor.forClass(QueryBuilder.class);
+        SearchResponse response = createSearchResponse(true, source);
+        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME)
+                .addClusterStatusYellowResponse()
+                .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true)
+                .prepareSearchAnySize("prelertresults-" + jobId,  AnomalyRecord.TYPE, response, queryBuilder);
+
+        Client client = clientBuilder.build();
+        ElasticsearchJobProvider provider = createProvider(client);
+
+        int records = provider.expandBucket(jobId, false, bucket);
+        assertEquals(400L, records);
+    }
+
+    @Test
+    public void testexpandBucket_WithManyRecords() throws InterruptedException, ExecutionException, UnknownJobException, JsonParseException, IOException
+    {
+        String jobId = "TestJobIdentification";
+        Date now = new Date();
+        Bucket bucket = new Bucket();
+        bucket.setTimestamp(now);
+
+        List<Map<String, Object>> source = new ArrayList<>();
+        for (int i = 0; i < 600; i++)
+        {
+            Map<String, Object> recordMap = new HashMap<>();
+            recordMap.put("typical", 22.4 + i);
+            recordMap.put("actual", 33.3 + i);
+            recordMap.put("timestamp", now.getTime());
+            recordMap.put("function", "irritable");
+            recordMap.put("bucketSpan", 22);
+            recordMap.put("_parent", "father");
+            source.add(recordMap);
+        }
+
+        ArgumentCaptor<QueryBuilder> queryBuilder = ArgumentCaptor.forClass(QueryBuilder.class);
+        SearchResponse response = createSearchResponse(true, source);
+        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME)
+                .addClusterStatusYellowResponse()
+                .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true)
+                .prepareSearchAnySize("prelertresults-" + jobId,  AnomalyRecord.TYPE, response, queryBuilder);
+
+        Client client = clientBuilder.build();
+        ElasticsearchJobProvider provider = createProvider(client);
+
+        int records = provider.expandBucket(jobId, false, bucket);
+        // This is not realistic, but is an artifact of the fact that the mock query
+        // returns all the records, not a subset
+        assertEquals(1200L, records);
+    }
+
+    @Test
+    public void testCategoryDefinitions() throws InterruptedException, ExecutionException, UnknownJobException, JsonParseException, IOException
+    {
+        String jobId = "TestJobIdentification";
+        String terms = "the terms and conditions are not valid here";
+        List<Map<String, Object>> source = new ArrayList<>();
+
+        Map<String, Object> map = new HashMap<>();
+        map.put("categoryId",  String.valueOf(map.hashCode()));
+        map.put("terms", terms);
+
+        source.add(map);
+
+        ArgumentCaptor<QueryBuilder> queryBuilder = ArgumentCaptor.forClass(QueryBuilder.class);
+        SearchResponse response = createSearchResponse(true, source);
+        int skip = 0;
+        int take = 10;
+        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME)
+                .addClusterStatusYellowResponse()
+                .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true)
+                .prepareSearch("prelertresults-" + jobId,  CategoryDefinition.TYPE,  skip,  take, response, queryBuilder);
+
+        Client client = clientBuilder.build();
+        ElasticsearchJobProvider provider = createProvider(client);
+        QueryPage<CategoryDefinition> categoryDefinitions = provider.categoryDefinitions(jobId, skip, take);
+        assertEquals(1l, categoryDefinitions.hitCount());
+        assertEquals(terms, categoryDefinitions.queryResults().get(0).getTerms());
+    }
+
+    @Test
+    public void testCategoryDefinition() throws InterruptedException, ExecutionException, UnknownJobException, JsonParseException, IOException
+    {
+        String jobId = "TestJobIdentification";
+        String terms = "the terms and conditions are not valid here";
+
+        Map<String, Object> source = new HashMap<>();
+        String categoryId = String.valueOf(source.hashCode());
+        source.put("categoryId",  categoryId);
+        source.put("terms", terms);
+
+        GetResponse getResponse = createGetResponse(true, source);
+
+        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME)
+                .addClusterStatusYellowResponse()
+                .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true)
+                .prepareGet("prelertresults-" + jobId, CategoryDefinition.TYPE, categoryId, getResponse);
+
+        Client client = clientBuilder.build();
+        ElasticsearchJobProvider provider = createProvider(client);
+        Optional<CategoryDefinition> categoryDefinition = provider.categoryDefinition(jobId, categoryId);
+        assertTrue(categoryDefinition.isPresent());
+        CategoryDefinition category = categoryDefinition.get();
+        assertEquals(terms, category.getTerms());
+    }
+
+    @Test
+    public void testInfluencers_NoInterim() throws InterruptedException, ExecutionException, UnknownJobException, JsonParseException, IOException
+    {
+        String jobId = "TestJobIdentificationForInfluencers";
+        Date now = new Date();
+        List<Map<String, Object>> source = new ArrayList<>();
+
+        Map<String, Object> recordMap1 = new HashMap<>();
+        recordMap1.put("probability", 0.555);
+        recordMap1.put("influencerFieldName", "Builder");
+        recordMap1.put("@timestamp", now.getTime());
+        recordMap1.put("influencerFieldValue", "Bob");
+        recordMap1.put("initialAnomalyScore", 22.2);
+        recordMap1.put("anomalyScore", 22.6);
+        Map<String, Object> recordMap2 = new HashMap<>();
+        recordMap2.put("probability", 0.99);
+        recordMap2.put("influencerFieldName", "Builder");
+        recordMap2.put("@timestamp", now.getTime());
+        recordMap2.put("influencerFieldValue", "James");
+        recordMap2.put("initialAnomalyScore", 5.0);
+        recordMap2.put("anomalyScore", 5.0);
+        source.add(recordMap1);
+        source.add(recordMap2);
+
+        int skip = 4;
+        int take = 3;
+        ArgumentCaptor<QueryBuilder> queryBuilder = ArgumentCaptor.forClass(QueryBuilder.class);
+        SearchResponse response = createSearchResponse(true, source);
+        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME)
+                .addClusterStatusYellowResponse()
+                .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true)
+                .prepareSearch("prelertresults-" + jobId,  Influencer.TYPE,  skip,  take, response, queryBuilder);
+
+        Client client = clientBuilder.build();
+        ElasticsearchJobProvider provider = createProvider(client);
+
+        QueryPage<Influencer> page = provider.influencers(jobId, skip, take, false);
+        assertEquals(2L, page.hitCount());
+
+        String queryString = queryBuilder.getValue().toString();
+        assertTrue(queryString.matches("(?s).*must_not[^}]*term[^}]*isInterim. : .true.*"));
+
+        List<Influencer> records = page.queryResults();
+        assertEquals("Bob", records.get(0).getInfluencerFieldValue());
+        assertEquals("Builder", records.get(0).getInfluencerFieldName());
+        assertEquals(now, records.get(0).getTimestamp());
+        assertEquals(0.555, records.get(0).getProbability(), 0.00001);
+        assertEquals(22.6, records.get(0).getAnomalyScore(), 0.00001);
+        assertEquals(22.2, records.get(0).getInitialAnomalyScore(), 0.00001);
+
+        assertEquals("James", records.get(1).getInfluencerFieldValue());
+        assertEquals("Builder", records.get(1).getInfluencerFieldName());
+        assertEquals(now, records.get(1).getTimestamp());
+        assertEquals(0.99, records.get(1).getProbability(), 0.00001);
+        assertEquals(5.0, records.get(1).getAnomalyScore(), 0.00001);
+        assertEquals(5.0, records.get(1).getInitialAnomalyScore(), 0.00001);
+    }
+
+
+    @Test
+    public void testInfluencers_WithInterim() throws InterruptedException, ExecutionException, UnknownJobException, JsonParseException, IOException
+    {
+        String jobId = "TestJobIdentificationForInfluencers";
+        Date now = new Date();
+        List<Map<String, Object>> source = new ArrayList<>();
+
+        Map<String, Object> recordMap1 = new HashMap<>();
+        recordMap1.put("probability", 0.555);
+        recordMap1.put("influencerFieldName", "Builder");
+        recordMap1.put("@timestamp", now.getTime());
+        recordMap1.put("influencerFieldValue", "Bob");
+        recordMap1.put("initialAnomalyScore", 22.2);
+        recordMap1.put("anomalyScore", 22.6);
+        Map<String, Object> recordMap2 = new HashMap<>();
+        recordMap2.put("probability", 0.99);
+        recordMap2.put("influencerFieldName", "Builder");
+        recordMap2.put("@timestamp", now.getTime());
+        recordMap2.put("influencerFieldValue", "James");
+        recordMap2.put("initialAnomalyScore", 5.0);
+        recordMap2.put("anomalyScore", 5.0);
+        source.add(recordMap1);
+        source.add(recordMap2);
+
+        int skip = 4;
+        int take = 3;
+        ArgumentCaptor<QueryBuilder> queryBuilder = ArgumentCaptor.forClass(QueryBuilder.class);
+        SearchResponse response = createSearchResponse(true, source);
+        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME)
+                .addClusterStatusYellowResponse()
+                .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true)
+                .prepareSearch("prelertresults-" + jobId,  Influencer.TYPE,  skip,  take, response, queryBuilder);
+
+        Client client = clientBuilder.build();
+        ElasticsearchJobProvider provider = createProvider(client);
+
+        QueryPage<Influencer> page = provider.influencers(jobId, skip, take, true);
+        assertEquals(2L, page.hitCount());
+
+        String queryString = queryBuilder.getValue().toString();
+        assertFalse(queryString.matches("(?s).*isInterim.*"));
+
+        List<Influencer> records = page.queryResults();
+        assertEquals("Bob", records.get(0).getInfluencerFieldValue());
+        assertEquals("Builder", records.get(0).getInfluencerFieldName());
+        assertEquals(now, records.get(0).getTimestamp());
+        assertEquals(0.555, records.get(0).getProbability(), 0.00001);
+        assertEquals(22.6, records.get(0).getAnomalyScore(), 0.00001);
+        assertEquals(22.2, records.get(0).getInitialAnomalyScore(), 0.00001);
+
+        assertEquals("James", records.get(1).getInfluencerFieldValue());
+        assertEquals("Builder", records.get(1).getInfluencerFieldName());
+        assertEquals(now, records.get(1).getTimestamp());
+        assertEquals(0.99, records.get(1).getProbability(), 0.00001);
+        assertEquals(5.0, records.get(1).getAnomalyScore(), 0.00001);
+        assertEquals(5.0, records.get(1).getInitialAnomalyScore(), 0.00001);
+    }
+
+    @Test
+    public void testInfluencer() throws InterruptedException, ExecutionException, UnknownJobException, JsonParseException, IOException
+    {
+        String jobId = "TestJobIdentificationForInfluencers";
+        String influencerId = "ThisIsAnInfluencerId";
+
+        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME)
+                .addClusterStatusYellowResponse()
+                .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true);
+
+        Client client = clientBuilder.build();
+        ElasticsearchJobProvider provider = createProvider(client);
+
+        try
+        {
+            provider.influencer(jobId, influencerId);
+            assertTrue(false);
+        }
+        catch (IllegalStateException e)
+        {
+        }
+    }
+
+    @Test
+    public void testModelSnapshots() throws InterruptedException, ExecutionException, UnknownJobException, JsonParseException, IOException
+    {
+        String jobId = "TestJobIdentificationForInfluencers";
+        Date now = new Date();
+        List<Map<String, Object>> source = new ArrayList<>();
+
+        Map<String, Object> recordMap1 = new HashMap<>();
+        recordMap1.put("description", "snapshot1");
+        recordMap1.put("restorePriority", 1);
+        recordMap1.put("@timestamp", now.getTime());
+        recordMap1.put("snapshotDocCount", 5);
+        recordMap1.put("latestRecordTimeStamp", now.getTime());
+        recordMap1.put("latestResultTimeStamp", now.getTime());
+        Map<String, Object> recordMap2 = new HashMap<>();
+        recordMap2.put("description", "snapshot2");
+        recordMap2.put("restorePriority", 999);
+        recordMap2.put("@timestamp", now.getTime());
+        recordMap2.put("snapshotDocCount", 6);
+        recordMap2.put("latestRecordTimeStamp", now.getTime());
+        recordMap2.put("latestResultTimeStamp", now.getTime());
+        source.add(recordMap1);
+        source.add(recordMap2);
+
+        int skip = 4;
+        int take = 3;
+        ArgumentCaptor<QueryBuilder> queryBuilder = ArgumentCaptor.forClass(QueryBuilder.class);
+        SearchResponse response = createSearchResponse(true, source);
+        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME)
+                .addClusterStatusYellowResponse()
+                .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true)
+                .prepareSearch("prelertresults-" + jobId,  ModelSnapshot.TYPE,  skip,  take, response, queryBuilder);
+
+        Client client = clientBuilder.build();
+        ElasticsearchJobProvider provider = createProvider(client);
+
+        QueryPage<ModelSnapshot> page = provider.modelSnapshots(jobId, skip, take);
+        assertEquals(2L, page.hitCount());
+        List<ModelSnapshot> snapshots = page.queryResults();
+
+        assertEquals(now, snapshots.get(0).getTimestamp());
+        assertEquals(now, snapshots.get(0).getLatestRecordTimeStamp());
+        assertEquals(now, snapshots.get(0).getLatestResultTimeStamp());
+        assertEquals("snapshot1", snapshots.get(0).getDescription());
+        assertEquals(1L, snapshots.get(0).getRestorePriority());
+        assertEquals(5, snapshots.get(0).getSnapshotDocCount());
+
+        assertEquals(now, snapshots.get(1).getTimestamp());
+        assertEquals(now, snapshots.get(1).getLatestRecordTimeStamp());
+        assertEquals(now, snapshots.get(1).getLatestResultTimeStamp());
+        assertEquals("snapshot2", snapshots.get(1).getDescription());
+        assertEquals(999L, snapshots.get(1).getRestorePriority());
+        assertEquals(6, snapshots.get(1).getSnapshotDocCount());
+    }
+
+
+    @Test
+    public void testModelSnapshots_WithDescription() throws InterruptedException, ExecutionException, UnknownJobException, JsonParseException, IOException
+    {
+        String jobId = "TestJobIdentificationForInfluencers";
+        Date now = new Date();
+        List<Map<String, Object>> source = new ArrayList<>();
+
+        Map<String, Object> recordMap1 = new HashMap<>();
+        recordMap1.put("description", "snapshot1");
+        recordMap1.put("restorePriority", 1);
+        recordMap1.put("@timestamp", now.getTime());
+        recordMap1.put("snapshotDocCount", 5);
+        recordMap1.put("latestRecordTimeStamp", now.getTime());
+        recordMap1.put("latestResultTimeStamp", now.getTime());
+        Map<String, Object> recordMap2 = new HashMap<>();
+        recordMap2.put("description", "snapshot2");
+        recordMap2.put("restorePriority", 999);
+        recordMap2.put("@timestamp", now.getTime());
+        recordMap2.put("snapshotDocCount", 6);
+        recordMap2.put("latestRecordTimeStamp", now.getTime());
+        recordMap2.put("latestResultTimeStamp", now.getTime());
+        source.add(recordMap1);
+        source.add(recordMap2);
+
+        int skip = 4;
+        int take = 3;
+        ArgumentCaptor<QueryBuilder> queryBuilder = ArgumentCaptor.forClass(QueryBuilder.class);
+        SearchResponse response = createSearchResponse(true, source);
+        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME)
+                .addClusterStatusYellowResponse()
+                .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true)
+                .prepareSearch("prelertresults-" + jobId,  ModelSnapshot.TYPE,  skip,  take, response, queryBuilder);
+
+        Client client = clientBuilder.build();
+        ElasticsearchJobProvider provider = createProvider(client);
+
+        QueryPage<ModelSnapshot> page = provider.modelSnapshots(jobId, skip, take, 0, 0,
+                "sortfield", true, "snappyId", "description1");
+        assertEquals(2L, page.hitCount());
+        List<ModelSnapshot> snapshots = page.queryResults();
+
+        assertEquals(now, snapshots.get(0).getTimestamp());
+        assertEquals(now, snapshots.get(0).getLatestRecordTimeStamp());
+        assertEquals(now, snapshots.get(0).getLatestResultTimeStamp());
+        assertEquals("snapshot1", snapshots.get(0).getDescription());
+        assertEquals(1L, snapshots.get(0).getRestorePriority());
+        assertEquals(5, snapshots.get(0).getSnapshotDocCount());
+
+        assertEquals(now, snapshots.get(1).getTimestamp());
+        assertEquals(now, snapshots.get(1).getLatestRecordTimeStamp());
+        assertEquals(now, snapshots.get(1).getLatestResultTimeStamp());
+        assertEquals("snapshot2", snapshots.get(1).getDescription());
+        assertEquals(999L, snapshots.get(1).getRestorePriority());
+        assertEquals(6, snapshots.get(1).getSnapshotDocCount());
+
+        String queryString = queryBuilder.getValue().toString();
+        assertTrue(queryString.matches("(?s).*snapshotId. : .snappyId.*description. : .description1.*"));
     }
 
     private ElasticsearchJobProvider createProvider(Client client)

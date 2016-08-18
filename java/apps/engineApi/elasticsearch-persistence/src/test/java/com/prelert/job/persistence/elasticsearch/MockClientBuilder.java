@@ -256,6 +256,24 @@ public class MockClientBuilder
         return this;
     }
 
+    public MockClientBuilder prepareSearchAnySize(String index, String type, SearchResponse response,
+            ArgumentCaptor<QueryBuilder> filter)
+    {
+        SearchRequestBuilder builder = mock(SearchRequestBuilder.class);
+        when(builder.setTypes(eq(type))).thenReturn(builder);
+        when(builder.addSort(any(SortBuilder.class))).thenReturn(builder);
+        when(builder.setQuery(filter.capture())).thenReturn(builder);
+        when(builder.setPostFilter(filter.capture())).thenReturn(builder);
+        when(builder.setFrom(any(Integer.class))).thenReturn(builder);
+        when(builder.setSize(any(Integer.class))).thenReturn(builder);
+        when(builder.setFetchSource(eq(true))).thenReturn(builder);
+        when(builder.addField(any(String.class))).thenReturn(builder);
+        when(builder.addSort(any(String.class), any(SortOrder.class))).thenReturn(builder);
+        when(builder.get()).thenReturn(response);
+        when(m_Client.prepareSearch(eq(index))).thenReturn(builder);
+        return this;
+    }
+
     @SuppressWarnings("unchecked")
     public MockClientBuilder prepareIndex(String index, String source)
     {
