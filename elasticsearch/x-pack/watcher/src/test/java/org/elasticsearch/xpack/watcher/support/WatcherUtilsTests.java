@@ -42,6 +42,7 @@ import java.util.Map;
 
 import static java.util.Collections.singletonMap;
 import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
+import static org.elasticsearch.script.ScriptService.ScriptType;
 import static org.elasticsearch.xpack.watcher.input.search.ExecutableSearchInput.DEFAULT_SEARCH_TYPE;
 import static org.elasticsearch.xpack.watcher.support.WatcherDateTimeUtils.formatDate;
 import static org.elasticsearch.xpack.watcher.support.WatcherUtils.flattenModel;
@@ -97,7 +98,6 @@ public class WatcherUtilsTests extends ESTestCase {
         assertThat(result, equalTo(expected));
     }
 
-    @AwaitsFix(bugUrl = "https://github.com/elastic/x-plugins/issues/3134")
     public void testSerializeSearchRequest() throws Exception {
         String[] expectedIndices = generateRandomStringArray(5, 5, true);
         String[] expectedTypes = generateRandomStringArray(2, 5, true);
@@ -117,8 +117,10 @@ public class WatcherUtilsTests extends ESTestCase {
                 }
             }
             String text = randomAsciiOfLengthBetween(1, 5);
-            expectedTemplate = randomFrom(WatcherScript.inline(text), WatcherScript.file(text),
-                WatcherScript.indexed(text)).params(params).build();
+            expectedTemplate = randomFrom(WatcherScript.inline(text), WatcherScript.file(text), WatcherScript.indexed(text))
+                    .lang(randomBoolean() ? null : "mustache")
+                    .params(params)
+                    .build();
             request = new WatcherSearchTemplateRequest(expectedIndices, expectedTypes, expectedSearchType,
                     expectedIndicesOptions, expectedTemplate);
         } else {
@@ -140,15 +142,19 @@ public class WatcherUtilsTests extends ESTestCase {
         assertThat(result.getTypes(), arrayContainingInAnyOrder(expectedTypes != null ? expectedTypes : new String[0]));
         assertThat(result.getIndicesOptions(), equalTo(expectedIndicesOptions));
         assertThat(result.getSearchType(), equalTo(expectedSearchType));
+
+        assertNotNull(result.getTemplate());
+        assertThat(result.getTemplate().lang(), equalTo("mustache"));
         if (expectedSource == null) {
-            assertThat(result.getTemplate(), equalTo(expectedTemplate));
+            assertThat(result.getTemplate().script(), equalTo(expectedTemplate.script()));
+            assertThat(result.getTemplate().type(), equalTo(expectedTemplate.type()));
+            assertThat(result.getTemplate().params(), equalTo(expectedTemplate.params()));
         } else {
             assertThat(result.getTemplate().script(), equalTo(expectedSource.utf8ToString()));
+            assertThat(result.getTemplate().type(), equalTo(ScriptType.INLINE));
         }
-
     }
 
-    @AwaitsFix(bugUrl = "https://github.com/elastic/x-plugins/issues/3136")
     public void testDeserializeSearchRequest() throws Exception {
 
         XContentBuilder builder = jsonBuilder().startObject();
@@ -212,7 +218,9 @@ public class WatcherUtilsTests extends ESTestCase {
             }
             String text = randomAsciiOfLengthBetween(1, 5);
             template = randomFrom(WatcherScript.inline(text), WatcherScript.file(text), WatcherScript.indexed(text))
-                .params(params).build();
+                    .lang(randomBoolean() ? null : "mustache")
+                    .params(params)
+                    .build();
             builder.field("template", template);
         }
         builder.endObject();
@@ -230,7 +238,14 @@ public class WatcherUtilsTests extends ESTestCase {
         } else {
             assertThat(result.getSearchSource().utf8ToString(), equalTo(source.utf8ToString()));
         }
-        assertThat(result.getTemplate(), equalTo(template));
+        if (template == null) {
+            assertThat(result.getTemplate(), nullValue());
+        } else {
+            assertThat(result.getTemplate().script(), equalTo(template.script()));
+            assertThat(result.getTemplate().type(), equalTo(template.type()));
+            assertThat(result.getTemplate().params(), equalTo(template.params()));
+            assertThat(result.getTemplate().lang(), equalTo("mustache"));
+        }
     }
 
 }
