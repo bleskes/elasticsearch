@@ -43,7 +43,7 @@ public class SecuritySettingsTests extends ESTestCase {
         Settings settings = Settings.builder().put("tribe.t1.cluster.name", "non_existing")
                 .put("tribe.t2.cluster.name", "non_existing").build();
 
-        Settings additionalSettings = Security.additionalSettings(settings);
+        Settings additionalSettings = Security.additionalSettings(settings, false);
 
 
         assertThat(additionalSettings.getAsArray("tribe.t1.plugin.mandatory", null), arrayContaining(XPackPlugin.NAME));
@@ -56,7 +56,7 @@ public class SecuritySettingsTests extends ESTestCase {
 
         //simulate what PluginsService#updatedSettings does to make sure we don't override existing mandatory plugins
         try {
-            Settings.builder().put(settings).put(Security.additionalSettings(settings)).build();
+            Settings.builder().put(settings).put(Security.additionalSettings(settings, false)).build();
             fail("security cannot change the value of a setting that is already defined, so a exception should be thrown");
         } catch (IllegalStateException e) {
             assertThat(e.getMessage(), containsString(XPackPlugin.NAME));
@@ -69,7 +69,7 @@ public class SecuritySettingsTests extends ESTestCase {
                 .putArray("tribe.t1.plugin.mandatory", "test_plugin", XPackPlugin.NAME).build();
 
         //simulate what PluginsService#updatedSettings does to make sure we don't override existing mandatory plugins
-        Settings finalSettings = Settings.builder().put(settings).put(Security.additionalSettings(settings)).build();
+        Settings finalSettings = Settings.builder().put(settings).put(Security.additionalSettings(settings, false)).build();
 
         String[] finalMandatoryPlugins = finalSettings.getAsArray("tribe.t1.plugin.mandatory", null);
         assertThat(finalMandatoryPlugins, notNullValue());
@@ -82,7 +82,7 @@ public class SecuritySettingsTests extends ESTestCase {
         Settings settings = Settings.builder().put("tribe.t1.cluster.name", "non_existing")
                 .put("tribe.t2.cluster.name", "non_existing").build();
 
-        Settings additionalSettings = Security.additionalSettings(settings);
+        Settings additionalSettings = Security.additionalSettings(settings, false);
 
         assertThat(additionalSettings.getAsBoolean(TRIBE_T1_SECURITY_ENABLED, null), equalTo(true));
         assertThat(additionalSettings.getAsBoolean(TRIBE_T2_SECURITY_ENABLED, null), equalTo(true));
@@ -94,7 +94,7 @@ public class SecuritySettingsTests extends ESTestCase {
                 .put("tribe.t2.cluster.name", "non_existing").build();
 
         try {
-            Security.additionalSettings(settings);
+            Security.additionalSettings(settings, false);
             fail("security cannot change the value of a setting that is already defined, so a exception should be thrown");
         } catch (IllegalStateException e) {
             assertThat(e.getMessage(), containsString(TRIBE_T1_SECURITY_ENABLED));
@@ -108,7 +108,7 @@ public class SecuritySettingsTests extends ESTestCase {
                 .putArray("tribe.t1.plugin.mandatory", "test_plugin", XPackPlugin.NAME).build();
 
         try {
-            Security.additionalSettings(settings);
+            Security.additionalSettings(settings, false);
             fail("security cannot change the value of a setting that is already defined, so a exception should be thrown");
         } catch (IllegalStateException e) {
             assertThat(e.getMessage(), containsString(TRIBE_T1_SECURITY_ENABLED));
@@ -124,7 +124,7 @@ public class SecuritySettingsTests extends ESTestCase {
                 .putArray("xpack.security.something.else.here", new String[] { "foo", "bar" })
                 .build();
 
-        Settings additionalSettings = Security.additionalSettings(settings);
+        Settings additionalSettings = Security.additionalSettings(settings, false);
 
         assertThat(additionalSettings.get("xpack.security.foo"), nullValue());
         assertThat(additionalSettings.get("xpack.security.bar"), nullValue());
