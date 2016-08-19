@@ -259,7 +259,14 @@ public class AutoDetectResultsParser
 
                         logger.debug("Quantiles parsed from output - will " +
                                     "trigger renormalisation of scores");
-                        renormaliser.renormalise(quantiles, logger);
+                        if (m_IsPerPartitionNormalization)
+                        {
+                            renormaliser.renormaliseWithPartition(quantiles, logger);
+                        }
+                        else
+                        {
+                            renormaliser.renormalise(quantiles, logger);
+                        }
                         break;
                     case ModelSnapshot.SNAPSHOT_ID:
                         ModelSnapshot modelSnapshot = new ModelSnapshotParser(parser).parseJsonAfterStartObject();

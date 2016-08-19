@@ -130,7 +130,7 @@ public class ScoresUpdaterTest
         buckets.add(bucket);
         givenProviderReturnsBuckets(DEFAULT_START_TIME, DEFAULT_END_TIME, buckets);
 
-        m_ScoresUpdater.update(QUANTILES_STATE, 3600, 0, m_Logger);
+        m_ScoresUpdater.update(QUANTILES_STATE, 3600, 0, false, m_Logger);
 
         verifyNormaliserWasInvoked(0);
         verifyBucketWasNotUpdated(bucket);
@@ -149,7 +149,7 @@ public class ScoresUpdaterTest
         buckets.add(bucket);
         givenProviderReturnsBuckets(DEFAULT_START_TIME, DEFAULT_END_TIME, buckets);
 
-        m_ScoresUpdater.update(QUANTILES_STATE, 3600, 0, m_Logger);
+        m_ScoresUpdater.update(QUANTILES_STATE, 3600, 0, false, m_Logger);
 
         verifyNormaliserWasInvoked(0);
         verifyBucketWasNotUpdated(bucket);
@@ -168,7 +168,7 @@ public class ScoresUpdaterTest
         buckets.add(bucket);
         givenProviderReturnsBuckets(DEFAULT_START_TIME, DEFAULT_END_TIME, buckets);
 
-        m_ScoresUpdater.update(QUANTILES_STATE, 3600, 0, m_Logger);
+        m_ScoresUpdater.update(QUANTILES_STATE, 3600, 0, false, m_Logger);
 
         verifyNormaliserWasInvoked(1);
         verifyBucketWasNotUpdated(bucket);
@@ -195,7 +195,7 @@ public class ScoresUpdaterTest
         buckets.add(bucket);
         givenProviderReturnsBuckets(DEFAULT_START_TIME, DEFAULT_END_TIME, buckets);
 
-        m_ScoresUpdater.update(QUANTILES_STATE, 3600, 0, m_Logger);
+        m_ScoresUpdater.update(QUANTILES_STATE, 3600, 0, false, m_Logger);
 
         verifyNormaliserWasInvoked(1);
         verifyBucketWasNotUpdated(bucket);
@@ -217,7 +217,7 @@ public class ScoresUpdaterTest
         buckets.add(bucket);
         givenProviderReturnsBuckets(DEFAULT_START_TIME, DEFAULT_END_TIME, buckets);
 
-        m_ScoresUpdater.update(QUANTILES_STATE, 3600, 0, m_Logger);
+        m_ScoresUpdater.update(QUANTILES_STATE, 3600, 0, false, m_Logger);
 
         verifyNormaliserWasInvoked(1);
         verifyBucketWasUpdated(bucket);
@@ -247,7 +247,7 @@ public class ScoresUpdaterTest
         buckets.add(bucket);
         givenProviderReturnsBuckets(DEFAULT_START_TIME, DEFAULT_END_TIME, buckets);
 
-        m_ScoresUpdater.update(QUANTILES_STATE, 3600, 0, m_Logger);
+        m_ScoresUpdater.update(QUANTILES_STATE, 3600, 0, false, m_Logger);
 
         verifyNormaliserWasInvoked(1);
         verifyBucketWasNotUpdated(bucket);
@@ -277,7 +277,7 @@ public class ScoresUpdaterTest
         buckets.add(bucket);
         givenProviderReturnsBuckets(DEFAULT_START_TIME, DEFAULT_END_TIME, buckets);
 
-        m_ScoresUpdater.update(QUANTILES_STATE, 3600, 0, m_Logger);
+        m_ScoresUpdater.update(QUANTILES_STATE, 3600, 0, false, m_Logger);
 
         verifyNormaliserWasInvoked(1);
         verifyBucketWasUpdated(bucket);
@@ -311,7 +311,7 @@ public class ScoresUpdaterTest
 
         givenProviderReturnsBuckets(DEFAULT_START_TIME, DEFAULT_END_TIME, batch1, batch2);
 
-        m_ScoresUpdater.update(QUANTILES_STATE, 3600, 0, m_Logger);
+        m_ScoresUpdater.update(QUANTILES_STATE, 3600, 0, false, m_Logger);
 
         verifyNormaliserWasInvoked(1);
 
@@ -350,7 +350,7 @@ public class ScoresUpdaterTest
         batch.add(bucket2);
         givenProviderReturnsBuckets(DEFAULT_START_TIME, DEFAULT_END_TIME, batch);
 
-        m_ScoresUpdater.update(QUANTILES_STATE, 3600, 0, m_Logger);
+        m_ScoresUpdater.update(QUANTILES_STATE, 3600, 0, false, m_Logger);
 
         verifyNormaliserWasInvoked(2);
 
@@ -371,7 +371,7 @@ public class ScoresUpdaterTest
         influencers.add(influencer);
         givenProviderReturnsInfluencers(DEFAULT_START_TIME, DEFAULT_END_TIME, influencers);
 
-        m_ScoresUpdater.update(QUANTILES_STATE, 3600, 0, m_Logger);
+        m_ScoresUpdater.update(QUANTILES_STATE, 3600, 0, false, m_Logger);
 
         verifyNormaliserWasInvoked(1);
         verifyInfluencerWasUpdated(influencer);
@@ -393,7 +393,7 @@ public class ScoresUpdaterTest
         givenProviderReturnsBuckets(3600000, 2595600000L, buckets);
         givenProviderReturnsNoInfluencers(3600000, 2595600000L);
 
-        m_ScoresUpdater.update(QUANTILES_STATE, 2595600000L, 0, m_Logger);
+        m_ScoresUpdater.update(QUANTILES_STATE, 2595600000L, 0, false, m_Logger);
 
         verifyNormaliserWasInvoked(1);
         verifyBucketWasUpdated(bucket);
@@ -419,7 +419,7 @@ public class ScoresUpdaterTest
         givenProviderReturnsBuckets(3600000, 8643600000L, buckets);
         givenProviderReturnsNoInfluencers(3600000, 8643600000L);
 
-        m_ScoresUpdater.update(QUANTILES_STATE, 8643600000L, 0, m_Logger);
+        m_ScoresUpdater.update(QUANTILES_STATE, 8643600000L, 0, false, m_Logger);
 
         verifyNormaliserWasInvoked(1);
         verifyBucketWasUpdated(bucket);
@@ -445,7 +445,7 @@ public class ScoresUpdaterTest
         givenProviderReturnsBuckets(3600000, 90000000L, buckets);
         givenProviderReturnsNoInfluencers(3600000, 90000000L);
 
-        m_ScoresUpdater.update(QUANTILES_STATE, 90000000L, 0, m_Logger);
+        m_ScoresUpdater.update(QUANTILES_STATE, 90000000L, 0, false, m_Logger);
 
         verifyNormaliserWasInvoked(1);
         verifyBucketWasUpdated(bucket);
@@ -471,7 +471,7 @@ public class ScoresUpdaterTest
         givenProviderReturnsBuckets(2700000, 90000000L, buckets);
         givenProviderReturnsNoInfluencers(2700000, 90000000L);
 
-        m_ScoresUpdater.update(QUANTILES_STATE, 90000000L, 900000, m_Logger);
+        m_ScoresUpdater.update(QUANTILES_STATE, 90000000L, 900000, false, m_Logger);
 
         verifyNormaliserWasInvoked(1);
         verifyBucketWasUpdated(bucket);
@@ -520,7 +520,7 @@ public class ScoresUpdaterTest
 
     private void givenBuckets(long startTime, long endTime, List<Deque<Bucket>> batches)
     {
-        BatchedDocumentsIterator<Bucket> iterator = new MockBatchedDocumentsIterator<Bucket>(startTime,
+        BatchedDocumentsIterator<Bucket> iterator = new MockBatchedDocumentsIterator<>(startTime,
                 endTime, batches);
         when(m_JobProvider.newBatchedBucketsIterator(JOB_ID)).thenReturn(iterator);
     }
@@ -535,7 +535,7 @@ public class ScoresUpdaterTest
     {
         List<Deque<Influencer>> batches = new ArrayList<>();
         batches.add(new ArrayDeque<>(influencers));
-        BatchedDocumentsIterator<Influencer> iterator = new MockBatchedDocumentsIterator<Influencer>(
+        BatchedDocumentsIterator<Influencer> iterator = new MockBatchedDocumentsIterator<>(
                 startTime, endTime, batches);
         when(m_JobProvider.newBatchedInfluencersIterator(JOB_ID)).thenReturn(iterator);
     }

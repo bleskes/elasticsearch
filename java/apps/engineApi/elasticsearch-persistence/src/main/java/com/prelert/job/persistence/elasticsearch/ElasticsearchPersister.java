@@ -133,6 +133,7 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
             IndexResponse response = m_Client.prepareIndex(m_JobId.getIndex(), Bucket.TYPE)
                     .setSource(content)
                     .execute().actionGet();
+
             bucket.setId(response.getId());
 
             persistBucketInfluencersStandalone(bucket.getId(), bucket.getBucketInfluencers(),
@@ -188,37 +189,53 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
                 }
             }
 
-            if (bucket.getPerPartitionMaxProbability().isEmpty() == false)
-            {
-
-                XContentBuilder builder = jsonBuilder();
-                ElasticsearchStorageSerialiser serialiser =
-                                    new ElasticsearchStorageSerialiser(builder);
-
-                serialiser.startObject()
-                            .addTimestamp(bucket.getTimestamp())
-                            .add(JOB_ID_NAME, m_JobId.getId());
-                serialiser.startList(PartitionNormalisedProb.PARTITION_NORMALIZED_PROBS);
-                for (Entry<String, Double> entry : bucket.getPerPartitionMaxProbability().entrySet())
-                {
-                    serialiser.startObject()
-                        .add(AnomalyRecord.PARTITION_FIELD_VALUE, entry.getKey())
-                        .add(Bucket.MAX_NORMALIZED_PROBABILITY, entry.getValue())
-                        .endObject();
-                }
-                serialiser.endList().endObject();
-
-
-                LOGGER.trace("ES API CALL: index type " + PartitionNormalisedProb.TYPE +
-                        " to index " + m_JobId.getIndex() + " at epoch " + bucket.getEpoch());
-                response = m_Client.prepareIndex(m_JobId.getIndex(), PartitionNormalisedProb.TYPE)
-                        .setSource(builder)
-                        .execute().actionGet();
-            }
+            persistPerPartitionMaxProbabilities(bucket);
         }
         catch (IOException e)
         {
             LOGGER.error("Error writing bucket state", e);
+        }
+    }
+
+    private void persistPerPartitionMaxProbabilities(Bucket bucket)
+    {
+        if (bucket.getPerPartitionMaxProbability().isEmpty())
+        {
+            return;
+        }
+
+        try
+        {
+            XContentBuilder builder = jsonBuilder();
+            ElasticsearchStorageSerialiser serialiser =
+                    new ElasticsearchStorageSerialiser(builder);
+
+            serialiser.startObject()
+            .addTimestamp(bucket.getTimestamp())
+            .add(JOB_ID_NAME, m_JobId.getId());
+            serialiser.startList(PartitionNormalisedProb.PARTITION_NORMALIZED_PROBS);
+            for (Entry<String, Double> entry : bucket.getPerPartitionMaxProbability().entrySet())
+            {
+                serialiser.startObject()
+                .add(AnomalyRecord.PARTITION_FIELD_VALUE, entry.getKey())
+                .add(Bucket.MAX_NORMALIZED_PROBABILITY, entry.getValue())
+                .endObject();
+            }
+            serialiser.endList().endObject();
+
+            LOGGER.trace("ES API CALL: index type " + PartitionNormalisedProb.TYPE +
+                    " to index " + m_JobId.getIndex() + " at epoch " + bucket.getEpoch());
+            IndexResponse response = m_Client.prepareIndex(m_JobId.getIndex(), PartitionNormalisedProb.TYPE)
+            .setSource(builder)
+            .setId(bucket.getId())
+            .execute().actionGet();
+
+            LOGGER.info(response.getId());
+        }
+        catch (IOException e)
+        {
+            LOGGER.error("Error updating bucket per partition max normalized scores", e);
+            return;
         }
     }
 
@@ -403,6 +420,8 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
             LOGGER.error("Error updating standalone bucket influencer state", e);
             return;
         }
+
+        persistPerPartitionMaxProbabilities(bucket);
     }
 
     private void persistBucketInfluencersStandalone(String bucketId, List<BucketInfluencer> bucketInfluencers,

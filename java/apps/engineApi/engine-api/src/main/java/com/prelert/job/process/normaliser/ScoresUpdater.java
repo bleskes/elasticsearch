@@ -125,15 +125,17 @@ class ScoresUpdater
      * @param logger
      */
     public void update(String quantilesState, long endBucketEpochMs, long windowExtensionMs,
-            Logger logger)
+            boolean perPartitionNormalisation, Logger logger)
     {
         updateJobDetails();
         Normaliser normaliser = m_NormaliserFactory.create(m_JobId, logger);
         int[] counts = { 0, 0 };
         try
         {
-            updateBuckets(normaliser, quantilesState, endBucketEpochMs, windowExtensionMs, counts, logger);
-            updateInfluencers(normaliser, quantilesState, endBucketEpochMs, windowExtensionMs, counts, logger);
+            updateBuckets(normaliser, quantilesState, endBucketEpochMs,
+                  windowExtensionMs, counts, perPartitionNormalisation, logger);
+            updateInfluencers(normaliser, quantilesState, endBucketEpochMs,
+                  windowExtensionMs, counts, logger);
         }
         catch (UnknownJobException uje)
         {
@@ -150,7 +152,9 @@ class ScoresUpdater
     }
 
     private void updateBuckets(Normaliser normaliser, String quantilesState, long endBucketEpochMs,
-            long windowExtensionMs, int[] counts, Logger logger) throws UnknownJobException, NativeProcessRunException
+            long windowExtensionMs, int[] counts, boolean perPartitionNormalisation,
+            Logger logger)
+    throws UnknownJobException, NativeProcessRunException
     {
         BatchedDocumentsIterator<Bucket> bucketsIterator =
                 m_JobProvider.newBatchedBucketsIterator(m_JobId)
@@ -194,7 +198,8 @@ class ScoresUpdater
                 if (batchRecordCount >= TARGET_RECORDS_TO_RENORMALISE)
                 {
                     normaliseBuckets(normaliser, bucketsToRenormalise, quantilesState,
-                            batchRecordCount, skipped, counts, logger);
+                            batchRecordCount, skipped, counts,
+                            perPartitionNormalisation, logger);
 
                     bucketsToRenormalise = new ArrayList<>();
                     batchRecordCount = 0;
@@ -205,7 +210,8 @@ class ScoresUpdater
         if (!bucketsToRenormalise.isEmpty())
         {
             normaliseBuckets(normaliser, bucketsToRenormalise, quantilesState,
-                    batchRecordCount, skipped, counts, logger);
+                    batchRecordCount, skipped, counts,
+                    perPartitionNormalisation, logger);
         }
     }
 
@@ -215,7 +221,8 @@ class ScoresUpdater
     }
 
     private void normaliseBuckets(Normaliser normaliser, List<Bucket> buckets,
-            String quantilesState, int recordCount, int skipped, int[] counts, Logger logger)
+            String quantilesState, int recordCount, int skipped, int[] counts,
+            boolean perPartitionNormalisation, Logger logger)
             throws NativeProcessRunException, UnknownJobException
     {
         logger.debug("Will renormalize a batch of " + buckets.size()
@@ -228,7 +235,7 @@ class ScoresUpdater
 
         for (Bucket bucket : buckets)
         {
-            updateSingleBucket(bucket, counts, logger);
+            updateSingleBucket(bucket, counts, perPartitionNormalisation, logger);
         }
     }
 
@@ -240,13 +247,15 @@ class ScoresUpdater
      * element 1 if we don't
      * @param logger
      */
-    private void updateSingleBucket(Bucket bucket, int[] counts, Logger logger)
+    private void updateSingleBucket(Bucket bucket, int[] counts,
+                boolean perPartitionNormalisation, Logger logger)
     {
-        updateBucketIfItHasBigChange(bucket, counts, logger);
+        updateBucketIfItHasBigChange(bucket, counts, perPartitionNormalisation, logger);
         updateRecordsThatHaveBigChange(bucket, counts, logger);
     }
 
-    private void updateBucketIfItHasBigChange(Bucket bucket, int[] counts, Logger logger)
+    private void updateBucketIfItHasBigChange(Bucket bucket, int[] counts,
+                        boolean perPartitionNormalisation, Logger logger)
     {
         String bucketId = bucket.getId();
         if (bucketId != null)
@@ -256,6 +265,10 @@ class ScoresUpdater
                 logger.trace("ES API CALL: update ID " + bucketId + " type " + Bucket.TYPE +
                         " for job " + m_JobId + " using map of new values");
 
+                if (perPartitionNormalisation)
+                {
+                    bucket.calcMaxNormalizedProbabilityPerPartition();
+                }
                 m_UpdatesPersister.updateBucket(bucket);
 
                 ++counts[0];
