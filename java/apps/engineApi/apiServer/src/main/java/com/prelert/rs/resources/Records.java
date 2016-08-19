@@ -76,6 +76,11 @@ public class Records extends ResourceWithJobManager
      * Sort direction
      */
     public static final String DESCENDING_ORDER = "desc";
+    /**
+     * Partition value
+     */
+    public static final String PARTITION_VALUE = "partitionValue";
+
 
     /**
      * Get all the records (in pages) for the job optionally filtered
@@ -105,7 +110,7 @@ public class Records extends ResourceWithJobManager
             @DefaultValue("true") @QueryParam(DESCENDING_ORDER) boolean descending,
             @DefaultValue("0.0") @QueryParam(AnomalyRecord.ANOMALY_SCORE) double anomalyScoreFilter,
             @DefaultValue("0.0") @QueryParam(AnomalyRecord.NORMALIZED_PROBABILITY) double normalizedProbabilityFilter,
-            @DefaultValue("") @QueryParam(AnomalyRecord.PARTITION_FIELD_VALUE) String partitionFieldValue)
+            @DefaultValue("") @QueryParam(PARTITION_VALUE) String partitionFieldValue)
     throws NativeProcessRunException, UnknownJobException
     {
         LOGGER.debug(String.format("Get records for job %s. skip = %d, take = %d"

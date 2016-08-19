@@ -592,8 +592,9 @@ public class ElasticsearchMappings
     }
 
     /**
-     * Partition normalized scores have a _parent mapping to a
-     * {@linkplain com.prelert.job.results.Bucket}.
+     * Partition normalized scores. There is one per bucket
+     * so the timestamp is sufficient to uniquely identify
+     * the document per bucket per job
      *
      * Partition field values and scores are nested objects.
      */
@@ -603,9 +604,6 @@ public class ElasticsearchMappings
         return jsonBuilder()
             .startObject()
                 .startObject(PartitionNormalisedProb.TYPE)
-                    .startObject(PARENT)
-                        .field(TYPE, Bucket.TYPE)
-                    .endObject()
                     .startObject(ALL)
                         .field(ENABLED, false)
                         // analyzer must be specified even though _all is disabled

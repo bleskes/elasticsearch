@@ -1477,6 +1477,70 @@ public class ElasticsearchJobProviderTest
         assertTrue(queryString.matches("(?s).*snapshotId. : .snappyId.*description. : .description1.*"));
     }
 
+    public void testMergePartitionScoresIntoBucket()
+            throws InterruptedException, ExecutionException
+    {
+        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME)
+                .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true)
+                                        .addClusterStatusYellowResponse();
+
+        ElasticsearchJobProvider provider = createProvider(clientBuilder.build());
+
+        List<ElasticsearchJobProvider.ScoreTimestamp> scores = new ArrayList<>();
+        scores.add(provider.new ScoreTimestamp(new Date(2), 1.0));
+        scores.add(provider.new ScoreTimestamp(new Date(3), 2.0));
+        scores.add(provider.new ScoreTimestamp(new Date(5), 3.0));
+
+        List<Bucket> buckets = new ArrayList<>();
+        buckets.add(createBucketAtEpochTime(1));
+        buckets.add(createBucketAtEpochTime(2));
+        buckets.add(createBucketAtEpochTime(3));
+        buckets.add(createBucketAtEpochTime(4));
+        buckets.add(createBucketAtEpochTime(5));
+        buckets.add(createBucketAtEpochTime(6));
+
+        provider.mergePartitionScoresIntoBucket(scores, buckets);
+        assertEquals(0.0, buckets.get(0).getMaxNormalizedProbability(), 0.001);
+        assertEquals(1.0, buckets.get(1).getMaxNormalizedProbability(), 0.001);
+        assertEquals(2.0, buckets.get(2).getMaxNormalizedProbability(), 0.001);
+        assertEquals(0.0, buckets.get(3).getMaxNormalizedProbability(), 0.001);
+        assertEquals(3.0, buckets.get(4).getMaxNormalizedProbability(), 0.001);
+        assertEquals(0.0, buckets.get(5).getMaxNormalizedProbability(), 0.001);
+    }
+
+    @Test
+    public void testMergePartitionScoresIntoBucket_WithEmptyScoresList()
+            throws InterruptedException, ExecutionException
+    {
+        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME)
+                .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true)
+                                        .addClusterStatusYellowResponse();
+
+        ElasticsearchJobProvider provider = createProvider(clientBuilder.build());
+
+        List<ElasticsearchJobProvider.ScoreTimestamp> scores = new ArrayList<>();
+
+        List<Bucket> buckets = new ArrayList<>();
+        buckets.add(createBucketAtEpochTime(1));
+        buckets.add(createBucketAtEpochTime(2));
+        buckets.add(createBucketAtEpochTime(3));
+        buckets.add(createBucketAtEpochTime(4));
+
+        provider.mergePartitionScoresIntoBucket(scores, buckets);
+        assertEquals(0.0, buckets.get(0).getMaxNormalizedProbability(), 0.001);
+        assertEquals(0.0, buckets.get(1).getMaxNormalizedProbability(), 0.001);
+        assertEquals(0.0, buckets.get(2).getMaxNormalizedProbability(), 0.001);
+        assertEquals(0.0, buckets.get(3).getMaxNormalizedProbability(), 0.001);
+    }
+
+    private Bucket createBucketAtEpochTime(long epoch)
+    {
+        Bucket b = new Bucket();
+        b.setTimestamp(new Date(epoch));
+        b.setMaxNormalizedProbability(10.0);
+        return b;
+    }
+
     private ElasticsearchJobProvider createProvider(Client client)
     {
         return new ElasticsearchJobProvider(m_Node, client, 0);

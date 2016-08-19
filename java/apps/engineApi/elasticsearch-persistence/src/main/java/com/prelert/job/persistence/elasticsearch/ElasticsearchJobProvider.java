@@ -35,6 +35,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -89,6 +90,8 @@ import com.prelert.job.ModelSizeStats;
 import com.prelert.job.ModelSnapshot;
 import com.prelert.job.ModelState;
 import com.prelert.job.NoSuchModelSnapshotException;
+import com.prelert.job.persistence.*;
+import com.prelert.job.persistence.BucketsQueryBuilder.BucketsQuery;
 import com.prelert.job.SchedulerConfig;
 import com.prelert.job.SchedulerState;
 import com.prelert.job.UnknownJobException;
@@ -607,7 +610,7 @@ public class ElasticsearchJobProvider implements JobProvider, ListProvider
     }
 
     @Override
-    public QueryPage<Bucket> buckets(String jobId, BucketsQueryBuilder.BucketsQuery query)
+    public QueryPage<Bucket> buckets(String jobId, BucketsQuery query)
     throws UnknownJobException
     {
         QueryBuilder fb = new ResultsFilterBuilder()
@@ -617,11 +620,72 @@ public class ElasticsearchJobProvider implements JobProvider, ListProvider
                 .interim(Bucket.IS_INTERIM, query.isIncludeInterim())
                 .build();
 
-        return buckets(new ElasticsearchJobId(jobId), query.isExpand(), query.isIncludeInterim(),
-                    query.getSkip(), query.getTake(), fb);
+        ElasticsearchJobId elasticJobId = new ElasticsearchJobId(jobId);
+        QueryPage<Bucket> buckets = buckets(elasticJobId,
+                            query.isIncludeInterim(),
+                            query.getSkip(), query.getTake(), fb);
+
+
+        if (Strings.isNullOrEmpty(query.getPartitionValue()))
+        {
+            for (Bucket b : buckets.queryResults())
+            {
+                if (query.isExpand()  && b.getRecordCount() > 0)
+                {
+                    expandBucket(jobId, query.isIncludeInterim(), b);
+                }
+            }
+        }
+        else
+        {
+            List<ScoreTimestamp> scores =
+                    partitionScores(elasticJobId,
+                            query.getEpochStart(), query.getEpochEnd(),
+                            query.getPartitionValue());
+
+            mergePartitionScoresIntoBucket(scores, buckets.queryResults());
+
+            for (Bucket b : buckets.queryResults())
+            {
+                if (query.isExpand() && b.getRecordCount() > 0)
+                {
+                    this.expandBucketForPartitionValue(jobId,
+                                                    query.isIncludeInterim(),
+                                                    b, query.getPartitionValue());
+                }
+            }
+        }
+
+        return buckets;
     }
 
-    private QueryPage<Bucket> buckets(ElasticsearchJobId jobId, boolean expand, boolean includeInterim,
+    void mergePartitionScoresIntoBucket(List<ScoreTimestamp> scores,
+                                            List<Bucket> buckets)
+    {
+        Iterator<ScoreTimestamp> itr = scores.iterator();
+        ScoreTimestamp score = itr.hasNext() ? itr.next() : null;
+        for (Bucket b : buckets)
+        {
+            if (score ==  null)
+            {
+                b.setMaxNormalizedProbability(0.0);
+            }
+            else
+            {
+                if (score.timestamp.equals(b.getTimestamp()))
+                {
+                    b.setMaxNormalizedProbability(score.score);
+                    score = itr.hasNext() ? itr.next() : null;
+                }
+                else
+                {
+                    b.setMaxNormalizedProbability(0.0);
+                }
+            }
+        }
+    }
+
+    private QueryPage<Bucket> buckets(ElasticsearchJobId jobId, boolean includeInterim,
             int skip, int take, QueryBuilder fb) throws UnknownJobException
     {
         SortBuilder sb = new FieldSortBuilder(ElasticsearchMappings.ES_TIMESTAMP)
@@ -660,11 +724,6 @@ public class ElasticsearchJobProvider implements JobProvider, ListProvider
 
             if (includeInterim || bucket.isInterim() == false)
             {
-                if (expand && bucket.getRecordCount() > 0)
-                {
-                    expandBucket(jobId.getId(), includeInterim, bucket);
-                }
-
                 results.add(bucket);
             }
         }
@@ -726,10 +785,14 @@ public class ElasticsearchJobProvider implements JobProvider, ListProvider
             }
             else
             {
-                bucket.setMaxNormalizedProbability(
-                        partitionScores(elasticJobId, query.getTimestamp(),
-                                query.getPartitionValue()));
+                List<ScoreTimestamp> scores =
+                        partitionScores(elasticJobId,
+                                query.getTimestamp(), query.getTimestamp() +1,
+                                query.getPartitionValue());
 
+
+                bucket.setMaxNormalizedProbability(scores.isEmpty() == false ?
+                                scores.get(0).score : 0.0d);
                 if (query.isExpand() && bucket.getRecordCount() > 0)
                 {
                     this.expandBucketForPartitionValue(jobId, query.isIncludeInterim(),
@@ -743,17 +806,33 @@ public class ElasticsearchJobProvider implements JobProvider, ListProvider
         return doc;
     }
 
-    private double partitionScores(ElasticsearchJobId jobId, long timestampMillis,
-                                String partitionFieldValue)
+    final class ScoreTimestamp
+    {
+        double score;
+        Date timestamp;
+
+        public ScoreTimestamp(Date timestamp, double score)
+        {
+            this.score = score;
+            this.timestamp = timestamp;
+        }
+    }
+
+    private List<ScoreTimestamp> partitionScores(ElasticsearchJobId jobId, long epochStart,
+                        long epochEnd, String partitionFieldValue)
     throws UnknownJobException
     {
-        QueryBuilder recordFilter =
-                QueryBuilders.termQuery(ElasticsearchMappings.ES_TIMESTAMP,
-                        timestampMillis);
+        QueryBuilder qb = new ResultsFilterBuilder()
+                .timeRange(ElasticsearchMappings.ES_TIMESTAMP, epochStart, epochEnd)
+                .build();
+
+        SortBuilder sb = new FieldSortBuilder(ElasticsearchMappings.ES_TIMESTAMP)
+                .order(SortOrder.ASC);
 
         SearchRequestBuilder searchBuilder = m_Client
                         .prepareSearch(jobId.getIndex())
-                        .setPostFilter(recordFilter)
+                        .setPostFilter(qb)
+                        .addSort(sb)
                         .setTypes(PartitionNormalisedProb.TYPE);
 
         SearchResponse searchResponse;
@@ -765,6 +844,8 @@ public class ElasticsearchJobProvider implements JobProvider, ListProvider
         {
             throw new UnknownJobException(jobId.getId());
         }
+
+        List<ScoreTimestamp> results = new ArrayList<>();
 
         // expect 1 document per bucket
         if (searchResponse.getHits().totalHits() > 0)
@@ -778,12 +859,14 @@ public class ElasticsearchJobProvider implements JobProvider, ListProvider
             {
                 if (partitionFieldValue.equals(prob.get(AnomalyRecord.PARTITION_FIELD_VALUE)))
                 {
-                    return (Double) prob.get(Bucket.MAX_NORMALIZED_PROBABILITY);
+                    Date ts = m_ObjectMapper.convertValue(m.get(ElasticsearchMappings.ES_TIMESTAMP), Date.class);
+                    results.add(new ScoreTimestamp(ts,
+                                    (Double) prob.get(Bucket.MAX_NORMALIZED_PROBABILITY)));
                 }
             }
         }
 
-        return 0.0;
+        return results;
     }
 
     public int expandBucketForPartitionValue(String jobId, boolean includeInterim, Bucket bucket,

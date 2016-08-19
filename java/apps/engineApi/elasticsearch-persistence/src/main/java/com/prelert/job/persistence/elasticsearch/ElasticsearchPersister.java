@@ -213,7 +213,6 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
                         " to index " + m_JobId.getIndex() + " at epoch " + bucket.getEpoch());
                 response = m_Client.prepareIndex(m_JobId.getIndex(), PartitionNormalisedProb.TYPE)
                         .setSource(builder)
-                        .setParent(bucket.getId())
                         .execute().actionGet();
             }
         }

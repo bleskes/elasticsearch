@@ -28,6 +28,8 @@ package com.prelert.job.persistence;
 
 import java.util.Objects;
 
+import com.google.common.base.Strings;
+
 /**
  * One time query builder for buckets.
  * <ul>
@@ -46,8 +48,8 @@ import java.util.Objects;
  *     <li>epochEnd- The end bucket timestamp buckets up to but NOT including this
  * timestamp are returned. If 0 all buckets from <code>startEpochMs</code>
  * are returned. Default = -1</li>
- *     <li>partitionValue Set the bucket's max normalised probabiltiy to this
- * partiton field value's max normalised probability. Default = null</li>
+ *     <li>partitionValue Set the bucket's max normalised probability to this
+ * partition field value's max normalised probability. Default = null</li>
  * </ul>
  */
 public final class BucketsQueryBuilder
@@ -92,9 +94,16 @@ public final class BucketsQueryBuilder
         return this;
     }
 
+    /**
+     * @param partitionValue Not set if null or empty
+     * @return
+     */
     public BucketsQueryBuilder partitionValue(String partitionValue)
     {
-        m_BucketsQuery.m_PartitionValue = partitionValue;
+        if (!Strings.isNullOrEmpty(partitionValue))
+        {
+            m_BucketsQuery.m_PartitionValue = partitionValue;
+        }
         return this;
     }
 

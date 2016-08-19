@@ -104,7 +104,8 @@ public class Buckets extends ResourceWithJobManager
             @DefaultValue("") @QueryParam(START_QUERY_PARAM) String start,
             @DefaultValue("") @QueryParam(END_QUERY_PARAM) String end,
             @DefaultValue("0.0") @QueryParam(Bucket.ANOMALY_SCORE) double anomalySoreFilter,
-            @DefaultValue("0.0") @QueryParam(Bucket.MAX_NORMALIZED_PROBABILITY) double normalizedProbabilityFilter)
+            @DefaultValue("0.0") @QueryParam(Bucket.MAX_NORMALIZED_PROBABILITY) double normalizedProbabilityFilter,
+            @DefaultValue("") @QueryParam(PARTITION_VALUE_PARAM) String partitionValue)
     throws UnknownJobException
     {
         LOGGER.debug(String.format("Get %sbuckets for job %s. skip = %d, take = %d"
@@ -120,7 +121,6 @@ public class Buckets extends ResourceWithJobManager
 
         JobDataReader jobReader = jobReader();
 
-
         BucketsQueryBuilder.BucketsQuery query =
                     new BucketsQueryBuilder().expand(expand)
                         .includeInterim(includeInterim)
@@ -130,6 +130,7 @@ public class Buckets extends ResourceWithJobManager
                         .take(take)
                         .anomalyScoreThreshold(anomalySoreFilter)
                         .normalizedProbabilityThreshold(normalizedProbabilityFilter)
+                        .partitionValue(partitionValue)
                         .build();
 
         QueryPage<Bucket> page = jobReader.buckets(jobId, query);
