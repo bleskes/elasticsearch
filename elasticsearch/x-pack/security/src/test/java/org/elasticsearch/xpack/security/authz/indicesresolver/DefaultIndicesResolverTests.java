@@ -34,7 +34,6 @@ import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.support.IndicesOptions;
 import org.elasticsearch.client.Requests;
 import org.elasticsearch.cluster.ClusterState;
-import org.elasticsearch.cluster.metadata.AliasAction;
 import org.elasticsearch.cluster.metadata.AliasMetaData;
 import org.elasticsearch.cluster.metadata.IndexMetaData;
 import org.elasticsearch.cluster.metadata.IndexNameExpressionResolver;
@@ -394,8 +393,8 @@ public class DefaultIndicesResolverTests extends ESTestCase {
 
     public void testResolveIndicesAliasesRequestDeleteActions() {
         IndicesAliasesRequest request = new IndicesAliasesRequest();
-        request.addAliasAction(AliasAction.newRemoveAliasAction("foo", "foofoobar"));
-        request.addAliasAction(AliasAction.newRemoveAliasAction("foofoo", "barbaz"));
+        request.addAliasAction(AliasActions.remove().index("foo").alias("foofoobar"));
+        request.addAliasAction(AliasActions.remove().index("foofoo").alias("barbaz"));
         Set<String> indices = defaultIndicesResolver.resolve(user, IndicesAliasesAction.NAME, request, metaData);
         //the union of all indices and aliases gets returned
         String[] expectedIndices = new String[]{"foo", "foofoobar", "foofoo", "barbaz"};
@@ -409,8 +408,8 @@ public class DefaultIndicesResolverTests extends ESTestCase {
 
     public void testResolveIndicesAliasesRequestDeleteActionsMissingIndex() {
         IndicesAliasesRequest request = new IndicesAliasesRequest();
-        request.addAliasAction(AliasAction.newRemoveAliasAction("foo", "foofoobar"));
-        request.addAliasAction(AliasAction.newRemoveAliasAction("missing_index", "missing_alias"));
+        request.addAliasAction(AliasActions.remove().index("foo").alias("foofoobar"));
+        request.addAliasAction(AliasActions.remove().index("missing_index").alias("missing_alias"));
         Set<String> indices = defaultIndicesResolver.resolve(user, IndicesAliasesAction.NAME, request, metaData);
         //the union of all indices and aliases gets returned, doesn't matter is some of them don't exist
         String[] expectedIndices = new String[]{"foo", "foofoobar", "missing_index", "missing_alias"};
@@ -424,8 +423,8 @@ public class DefaultIndicesResolverTests extends ESTestCase {
 
     public void testResolveWildcardsIndicesAliasesRequestDeleteActions() {
         IndicesAliasesRequest request = new IndicesAliasesRequest();
-        request.addAliasAction(AliasAction.newRemoveAliasAction("foo*", "foofoobar"));
-        request.addAliasAction(AliasAction.newRemoveAliasAction("bar*", "barbaz"));
+        request.addAliasAction(AliasActions.remove().index("foo*").alias("foofoobar"));
+        request.addAliasAction(AliasActions.remove().index("bar*").alias("barbaz"));
         Set<String> indices = defaultIndicesResolver.resolve(user, IndicesAliasesAction.NAME, request, metaData);
         //union of all resolved indices and aliases gets returned, based on what user is authorized for
         String[] expectedIndices = new String[]{"foofoobar", "foofoo", "bar", "barbaz"};
@@ -440,8 +439,8 @@ public class DefaultIndicesResolverTests extends ESTestCase {
 
     public void testResolveAliasesWildcardsIndicesAliasesRequestDeleteActions() {
         IndicesAliasesRequest request = new IndicesAliasesRequest();
-        request.addAliasAction(AliasAction.newRemoveAliasAction("*", "foo*"));
-        request.addAliasAction(AliasAction.newRemoveAliasAction("*bar", "foo*"));
+        request.addAliasAction(AliasActions.remove().index("*").alias("foo*"));
+        request.addAliasAction(AliasActions.remove().index("*bar").alias("foo*"));
         Set<String> indices = defaultIndicesResolver.resolve(user, IndicesAliasesAction.NAME, request, metaData);
         //union of all resolved indices and aliases gets returned, based on what user is authorized for
         //note that the index side will end up containing matching aliases too, which is fine, as es core would do
@@ -458,8 +457,8 @@ public class DefaultIndicesResolverTests extends ESTestCase {
 
     public void testResolveAllAliasesWildcardsIndicesAliasesRequestDeleteActions() {
         IndicesAliasesRequest request = new IndicesAliasesRequest();
-        request.addAliasAction(AliasAction.newRemoveAliasAction("*", "_all"));
-        request.addAliasAction(new IndicesAliasesRequest.AliasActions(AliasAction.Type.REMOVE, "_all", new String[]{"_all", "explicit"}));
+        request.addAliasAction(AliasActions.remove().index("*").alias("_all"));
+        request.addAliasAction(AliasActions.remove().index("_all").aliases("_all", "explicit"));
         Set<String> indices = defaultIndicesResolver.resolve(user, IndicesAliasesAction.NAME, request, metaData);
         //union of all resolved indices and aliases gets returned, based on what user is authorized for
         //note that the index side will end up containing matching aliases too, which is fine, as es core would do
@@ -476,9 +475,9 @@ public class DefaultIndicesResolverTests extends ESTestCase {
 
     public void testResolveAliasesWildcardsIndicesAliasesRequestDeleteActionsNoAuthorizedIndices() {
         IndicesAliasesRequest request = new IndicesAliasesRequest();
-        request.addAliasAction(AliasAction.newRemoveAliasAction("foo*", "foo*"));
+        request.addAliasAction(AliasActions.remove().index("foo*").alias("foo*"));
         //no authorized aliases match bar*, hence this action fails and makes the whole request fail
-        request.addAliasAction(AliasAction.newRemoveAliasAction("*bar", "bar*"));
+        request.addAliasAction(AliasActions.remove().index("*bar").alias("bar*"));
         try {
             defaultIndicesResolver.resolve(user, IndicesAliasesAction.NAME, request, metaData);
             fail("Expected IndexNotFoundException");
@@ -489,8 +488,8 @@ public class DefaultIndicesResolverTests extends ESTestCase {
 
     public void testResolveWildcardsIndicesAliasesRequestAddAndDeleteActions() {
         IndicesAliasesRequest request = new IndicesAliasesRequest();
-        request.addAliasAction(AliasAction.newRemoveAliasAction("foo*", "foofoobar"));
-        request.addAliasAction(AliasAction.newAddAliasAction("bar*", "foofoobar"));
+        request.addAliasAction(AliasActions.remove().index("foo*").alias("foofoobar"));
+        request.addAliasAction(AliasActions.add().index("bar*").alias("foofoobar"));
         Set<String> indices = defaultIndicesResolver.resolve(user, IndicesAliasesAction.NAME, request, metaData);
         //union of all resolved indices and aliases gets returned, based on what user is authorized for
         String[] expectedIndices = new String[]{"foofoobar", "foofoo", "bar"};
