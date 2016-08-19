@@ -180,9 +180,18 @@ public class RecordsRequestBuilder extends BaseJobRequestBuilder<AnomalyRecord>
         return this;
     }
 
-    public RecordsRequestBuilder partitionFieldValue(String partitionFieldValue)
+    /**
+     * Filter the resulting {@linkplain AnomalyRecord}s so that only those with
+     * {@linkplain AnomalyRecord#getPartitionFieldValue()} equal to
+     * <code>partitionValue</code> are returned.<br>
+     *
+     * @param partitionValue
+     * @return
+     * @throws UnsupportedEncodingException
+     */
+    public RecordsRequestBuilder partitionFieldValue(String partitionValue)
     {
-        m_Params.put(PARTITION_FIELD_VALUE, partitionFieldValue);
+        m_Params.put(PARTITION_VALUE, partitionValue);
         return this;
     }
 

@@ -25,6 +25,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.prelert.job.results.AnomalyRecord;
 import com.prelert.job.results.Bucket;
 import com.prelert.rs.data.Pagination;
 
@@ -166,6 +167,32 @@ public class BucketsRequestBuilder extends BaseJobRequestBuilder<Bucket>
     public BucketsRequestBuilder end(String value) throws UnsupportedEncodingException
     {
         m_Params.put(END_QUERY_PARAM, URLEncoder.encode(value, UTF8));
+        return this;
+    }
+
+    /**
+     * When used in conjunction with {@linkplain #expand(boolean)} the bucket's
+     * {@link AnomalyRecord}s are filtered so that only those with
+     * {@linkplain AnomalyRecord#getPartitionFieldValue()} equal to
+     * <code>partitionValue</code> are returned.<br>
+     *
+     * If the job was configured with Per Partition Normalization
+     * {@linkplain Bucket#getMaxNormalizedProbability()} and
+     * {@linkplain Bucket#getAnomalyScore()} return values normalized for
+     * the given partition field value.<br>
+     *
+     * If <code>partitionValue</code> is not a recognised partition field
+     * value or the job wasn't configured with Per Partition Normalization then
+     * {@linkplain Bucket#getMaxNormalizedProbability()} and
+     * {@linkplain Bucket#getAnomalyScore()} will both be set to zero.
+     *
+     * @param partitionValue
+     * @return
+     * @throws UnsupportedEncodingException
+     */
+    public BucketsRequestBuilder partitionFieldValue(String partitionValue) throws UnsupportedEncodingException
+    {
+        m_Params.put(PARTITION_VALUE, URLEncoder.encode(partitionValue, UTF8));
         return this;
     }
 
